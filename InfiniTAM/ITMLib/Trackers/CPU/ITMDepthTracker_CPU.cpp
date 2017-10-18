@@ -12,6 +12,14 @@ ITMDepthTracker_CPU::ITMDepthTracker_CPU(Vector2i imgSize, TrackerIterationType 
 
 ITMDepthTracker_CPU::~ITMDepthTracker_CPU(void) { }
 
+/**
+ * \brief Compute gradient and Hessian matrix of the new depth fitted to global data
+ * \param f [out] the local estimates to the optimization objective function //TODO: verify --Greg(?)
+ * \param nabla [out] local gradient based on depth
+ * \param hessian [out] local hessian approximation based on depth
+ * \param approxInvPose current inverse camera pose estimation
+ * \return number of points for which the current computation is valid
+ */
 int ITMDepthTracker_CPU::ComputeGandH(float &f, float *nabla, float *hessian, Matrix4f approxInvPose)
 {
 	Vector4f *pointsMap = sceneHierarchyLevel->pointsMap->GetData(MEMORYDEVICE_CPU);

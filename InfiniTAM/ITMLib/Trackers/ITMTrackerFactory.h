@@ -27,6 +27,8 @@
 #endif
 
 #include "../../ORUtils/KeyValueConfig.h"
+#include "CPU/ITMKillingTracker_CPU.h"
+#include "CUDA/ITMKillingTracker_CUDA.h"
 
 namespace ITMLib
 {
@@ -55,6 +57,8 @@ namespace ITMLib
 			TRACKER_EXTENDEDIMU,
 			//! Identifies a tracker that forces tracking to fail
 			TRACKER_FORCEFAIL,
+			//! Identifies a tracker based on depth and color images that tracks dynamic scenes using a softened Killing constraint
+			TRACKER_KILLING
 		} TrackerType;
 
 		struct Maker {
@@ -85,6 +89,7 @@ namespace ITMLib
 			makers.push_back(Maker("imuicp", "Combined IMU and depth based ICP tracker", TRACKER_IMU, &MakeIMUTracker));
 			makers.push_back(Maker("extendedimu", "Combined IMU and depth + colour ICP tracker", TRACKER_EXTENDEDIMU, &MakeExtendedIMUTracker));
 			makers.push_back(Maker("forcefail", "Force fail tracker", TRACKER_FORCEFAIL, &MakeForceFailTracker));
+			makers.push_back(Maker("killing", "Dynamic scene tracker with softened Killing constraint", TRACKER_KILLING, &MakeKillingTracker));
 		}
 
 	public:
@@ -258,13 +263,27 @@ namespace ITMLib
 		return ret;
 	}
 
-	/**
-	* \brief Makes an Extended tracker.
-	*/
-	static ITMTracker *MakeExtendedTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, ITMLibSettings::DeviceType deviceType, const ORUtils::KeyValueConfig & cfg,
-		const ITMLowLevelEngine *lowLevelEngine, ITMIMUCalibrator *imuCalibrator, const ITMSceneParams *sceneParams)
-	{
-		const char *levelSetup = "rrbb";
+	template<
+			typename TTracker_CPU
+#ifndef COMPILE_WITHOUT_CUDA
+			,typename TTracker_CUDA
+#endif
+#ifdef COMPILE_WITH_METAL
+			,typename TTracker_METAL
+#endif
+	>
+	static ITMTracker *MakeExtendedLikeTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, ITMLibSettings::DeviceType deviceType, const ORUtils::KeyValueConfig & cfg,
+	                                                 const ITMLowLevelEngine *lowLevelEngine, ITMIMUCalibrator *imuCalibrator, const ITMSceneParams *sceneParams) {
+
+		//ensure template arguments derive from correct types
+		static_assert(std::is_base_of<ITMExtendedTracker_CPU, TTracker_CPU>::value, "TTracker_CPU must be derived from ITMExtendedTracker_CPU");
+#ifndef COMPILE_WITHOUT_CUDA
+		static_assert(std::is_base_of<ITMExtendedTracker_CUDA, TTracker_CUDA>::value, "TTracker_CUDA must be derived from ITMExtendedTracker_CUDA");
+#endif
+#ifdef COMPILE_WITH_METAL
+		static_assert(std::is_base_of<ITMExtendedTracker_Metal, TTracker_METAL>::value, "TTracker_CUDA must be derived from ITMExtendedTracker_CUDA");
+#endif
+		const char* levelSetup = "rrbb";
 		bool useDepth = true;
 		bool useColour = false;
 		float colourWeight = 0.3f;
@@ -288,72 +307,120 @@ namespace ITMLib
 
 		cfg.parseBoolProperty("useDepth", "use ICP based tracking", useDepth, verbose);
 		cfg.parseBoolProperty("useColour", "use colour based tracking", useColour, verbose);
-		cfg.parseFltProperty("colourWeight", "weight used to scale colour errors and jacobians when both useColour and useWeights are set", colourWeight, verbose);
+		cfg.parseFltProperty("colourWeight",
+		                     "weight used to scale colour errors and jacobians when both useColour and useWeights are set",
+		                     colourWeight, verbose);
 		cfg.parseFltProperty("minstep", "step size threshold for convergence", smallStepSizeCriterion, verbose);
-		cfg.parseFltProperty("outlierSpaceC", "space outlier threshold at coarsest level", outlierSpaceDistanceCoarse, verbose);
-		cfg.parseFltProperty("outlierSpaceF", "space outlier threshold at finest level", outlierSpaceDistanceFine, verbose);
-		cfg.parseFltProperty("outlierColourC", "colour outlier threshold at coarsest level", outlierColourDistanceCoarse, verbose);
-		cfg.parseFltProperty("outlierColourF", "colour outlier threshold at finest level", outlierColourDistanceFine, verbose);
-		cfg.parseFltProperty("minColourGradient", "minimum colour gradient for a pixel to be used in the tracking", minColourGradient, verbose);
-		cfg.parseIntProperty("numiterC", "maximum number of iterations at coarsest level", numIterationsCoarse, verbose);
+		cfg.parseFltProperty("outlierSpaceC", "space outlier threshold at coarsest level", outlierSpaceDistanceCoarse,
+		                     verbose);
+		cfg.parseFltProperty("outlierSpaceF", "space outlier threshold at finest level", outlierSpaceDistanceFine,
+		                     verbose);
+		cfg.parseFltProperty("outlierColourC", "colour outlier threshold at coarsest level",
+		                     outlierColourDistanceCoarse, verbose);
+		cfg.parseFltProperty("outlierColourF", "colour outlier threshold at finest level", outlierColourDistanceFine,
+		                     verbose);
+		cfg.parseFltProperty("minColourGradient", "minimum colour gradient for a pixel to be used in the tracking",
+		                     minColourGradient, verbose);
+		cfg.parseIntProperty("numiterC", "maximum number of iterations at coarsest level", numIterationsCoarse,
+		                     verbose);
 		cfg.parseIntProperty("numiterF", "maximum number of iterations at finest level", numIterationsFine, verbose);
 		cfg.parseFltProperty("tukeyCutOff", "cutoff for the tukey m-estimator", tukeyCutOff, verbose);
-		cfg.parseIntProperty("framesToSkip", "number of frames to skip before depth pixel is used for tracking", framesToSkip, verbose);
-		cfg.parseIntProperty("framesToWeight", "number of frames to weight each depth pixel for before using it fully", framesToWeight, verbose);
+		cfg.parseIntProperty("framesToSkip", "number of frames to skip before depth pixel is used for tracking",
+		                     framesToSkip, verbose);
+		cfg.parseIntProperty("framesToWeight", "number of frames to weight each depth pixel for before using it fully",
+		                     framesToWeight, verbose);
 		cfg.parseFltProperty("failureDec", "threshold for the failure detection", failureDetectorThd, verbose);
 
-		ITMExtendedTracker *ret = NULL;
-		switch (deviceType)
-		{
-		case ITMLibSettings::DEVICE_CPU:
-			ret = new ITMExtendedTracker_CPU(imgSize_d,
-											 imgSize_rgb,
-											 useDepth,
-											 useColour,
-											 colourWeight,
-											 &(levels[0]),
-											 static_cast<int>(levels.size()),
-											 smallStepSizeCriterion,
-											 failureDetectorThd,
-											 sceneParams->viewFrustum_min,
-											 sceneParams->viewFrustum_max,
-											 minColourGradient,
-											 tukeyCutOff,
-											 framesToSkip,
-											 framesToWeight,
-											 lowLevelEngine);
-			break;
-		case ITMLibSettings::DEVICE_CUDA:
+		ITMExtendedTracker* ret = NULL;
+		switch (deviceType) {
+			case ITMLibSettings::DEVICE_CPU:
+				ret = new TTracker_CPU(imgSize_d,
+		                                 imgSize_rgb,
+		                                 useDepth,
+		                                 useColour,
+		                                 colourWeight,
+		                                 &(levels[0]),
+		                                 static_cast<int>(levels.size()),
+		                                 smallStepSizeCriterion,
+		                                 failureDetectorThd,
+		                                 sceneParams->viewFrustum_min,
+		                                 sceneParams->viewFrustum_max,
+		                                 minColourGradient,
+		                                 tukeyCutOff,
+		                                 framesToSkip,
+		                                 framesToWeight,
+		                                 lowLevelEngine);
+				break;
+			case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-			ret = new ITMExtendedTracker_CUDA(imgSize_d,
-												imgSize_rgb,
-												useDepth,
-												useColour,
-												colourWeight,
-												&(levels[0]),
-												static_cast<int>(levels.size()),
-												smallStepSizeCriterion,
-												failureDetectorThd,
-												sceneParams->viewFrustum_min,
-												sceneParams->viewFrustum_max,
-												minColourGradient,
-												tukeyCutOff,
-												framesToSkip,
-												framesToWeight,
-												lowLevelEngine);
+				ret = new TTracker_CUDA(imgSize_d,
+	                                  imgSize_rgb,
+	                                  useDepth,
+	                                  useColour,
+	                                  colourWeight,
+	                                  &(levels[0]),
+	                                  static_cast<int>(levels.size()),
+	                                  smallStepSizeCriterion,
+	                                  failureDetectorThd,
+	                                  sceneParams->viewFrustum_min,
+	                                  sceneParams->viewFrustum_max,
+	                                  minColourGradient,
+	                                  tukeyCutOff,
+	                                  framesToSkip,
+	                                  framesToWeight,
+	                                  lowLevelEngine);
 #endif
-			break;
-		case ITMLibSettings::DEVICE_METAL:
+				break;
+			case ITMLibSettings::DEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
-			ret = new ITMExtendedTracker_Metal(imgSize_d, imgSize_rgb, useDepth, useColour, colourWeight, &(levels[0]), static_cast<int>(levels.size()), smallStepSizeCriterion, failureDetectorThd,
+				ret = new TTracker_METAL(imgSize_d, imgSize_rgb, useDepth, useColour, colourWeight, &(levels[0]), static_cast<int>(levels.size()), smallStepSizeCriterion, failureDetectorThd,
 				scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, tukeyCutOff, framesToSkip, framesToWeight, lowLevelEngine);
 #endif
-			break;
+				break;
 		}
 
 		if (ret == NULL) DIEWITHEXCEPTION("Failed to make extended tracker");
-		ret->SetupLevels(numIterationsCoarse, numIterationsFine, outlierSpaceDistanceCoarse, outlierSpaceDistanceFine, outlierColourDistanceCoarse, outlierColourDistanceFine);
+		ret->SetupLevels(numIterationsCoarse, numIterationsFine, outlierSpaceDistanceCoarse, outlierSpaceDistanceFine,
+		                 outlierColourDistanceCoarse, outlierColourDistanceFine);
 		return ret;
+	}
+	/**
+	* \brief Makes an Extended tracker.
+	*/
+	static ITMTracker *MakeExtendedTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, ITMLibSettings::DeviceType deviceType, const ORUtils::KeyValueConfig & cfg,
+		const ITMLowLevelEngine *lowLevelEngine, ITMIMUCalibrator *imuCalibrator, const ITMSceneParams *sceneParams)
+	{
+		return
+				MakeExtendedLikeTracker<
+				ITMExtendedTracker_CPU
+#ifndef COMPILE_WITHOUT_CUDA
+				,ITMExtendedTracker_CUDA
+#endif
+#ifdef COMPILE_WITH_METAL
+				,ITMExtendedTracker_Metal
+#endif
+				>(imgSize_rgb, imgSize_d, deviceType, cfg, lowLevelEngine, imuCalibrator, sceneParams);
+
+
+	}
+
+	/**
+	 * \brief Makes a KillingFusion dynamic-scene tracker.
+	 */
+	static ITMTracker* MakeKillingTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d,
+	                                       ITMLibSettings::DeviceType deviceType,
+	                                       const ORUtils::KeyValueConfig& cfg,
+	                                       const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
+	                                       const ITMSceneParams* sceneParams) {
+		return 				MakeExtendedLikeTracker<
+				ITMKillingTracker_CPU
+#ifndef COMPILE_WITHOUT_CUDA
+				, ITMKillingTracker_CUDA
+#endif
+#ifdef COMPILE_WITH_METAL
+				, ITMKillingTracker_Metal //TODO
+#endif
+		>(imgSize_rgb, imgSize_d, deviceType, cfg, lowLevelEngine, imuCalibrator, sceneParams);
 	}
 
 	/**

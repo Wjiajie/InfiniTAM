@@ -125,6 +125,16 @@ ITMExtendedTracker::~ITMExtendedTracker(void)
 	delete svmClassifier;
 }
 
+/**
+ * \brief set up thresholds and number of iterations for each level of the image hierarchy
+ * The specific numbers for each level of the hierarchy will be linearly interpolated between the specified coarse and fine values
+ * \param numIterCoarse number of iterations at the coarsest level of the image hierarchy
+ * \param numIterFine number of iterations at the finest level of the image hierarchy
+ * \param spaceThreshCoarse Euclidean distance threshold for ICP for the coarsest level of the image hierarchy
+ * \param spaceThreshFine Euclidean distance threshold for ICP for the finest level of the image hierarchy
+ * \param colourThreshCoarse color-space distance threshold for ICP for the coarsest level of the image hierarchy
+ * \param colourThreshFine color-space distance threshold for ICP for the finest level of the image hierarchy
+ */
 void ITMExtendedTracker::SetupLevels(int numIterCoarse, int numIterFine, float spaceThreshCoarse, float spaceThreshFine, float colourThreshCoarse, float colourThreshFine)
 {
 	int noHierarchyLevels = viewHierarchy_Depth->GetNoLevels();
@@ -409,9 +419,12 @@ void ITMExtendedTracker::UpdatePoseQuality(int noValidPoints_old, float *hessian
 
 void ITMExtendedTracker::TrackCamera(ITMTrackingState *trackingState, const ITMView *view)
 {
+	// bookkeeping
 	if (trackingState->age_pointCloud >= 0) trackingState->framesProcessed++;
 	else trackingState->framesProcessed = 0;
 
+	// populate view-related instance members, initialize base level of image hiararchies,
+	// compute first-level gradients for RGB if necessary
 	this->SetEvaluationData(trackingState, view);
 	this->PrepareForEvaluation();
 
@@ -428,6 +441,7 @@ void ITMExtendedTracker::TrackCamera(ITMTrackingState *trackingState, const ITMV
 	int noValidPoints_depth_good = 0;
 	memset(hessian_depth_good, 0, sizeof(hessian_depth_good));
 
+	// traverse depth hierarchy
 	for (int levelId = viewHierarchy_Depth->GetNoLevels() - 1; levelId >= 0; levelId--)
 	{
 		SetEvaluationParams(levelId);
@@ -440,6 +454,7 @@ void ITMExtendedTracker::TrackCamera(ITMTrackingState *trackingState, const ITMV
 		float f_old = std::numeric_limits<float>::max();
 		float lambda = 1.0;
 
+		// optimize camera pose at this image hierarchy level up to the specified number of iterations
 		for (int iterNo = 0; iterNo < noIterationsPerLevel[levelId]; iterNo++)
 		{
 			float hessian_depth[6 * 6], hessian_RGB[6 * 6];

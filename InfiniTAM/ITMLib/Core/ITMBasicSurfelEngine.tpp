@@ -213,7 +213,10 @@ ITMTrackingState::TrackingResult ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITM
 	}
 
 	//relocalisation
+
+#if 0 //TODO: explain not compiled block in comment (see below)? --Greg(GitHub:Algomorph)
 	int addKeyframeIdx = -1;
+#endif
 	if (settings->behaviourOnFailure == ITMLibSettings::FAILUREMODE_RELOCALISE)
 	{
 		if (trackerResult == ITMTrackingState::TRACKING_GOOD && relocalisationCount > 0) relocalisationCount--;
@@ -243,11 +246,11 @@ ITMTrackingState::TrackingResult ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITM
 		}
 	}
 
-	bool didFusion = false;
+	//bool didFusion = false; //TODO: set but not used. Remove? --Greg(github:Algomorph)
 	if ((trackerResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) && (relocalisationCount == 0)) {
 		// fusion
 		denseSurfelMapper->ProcessFrame(view, trackingState, surfelScene, surfelRenderState_live);
-		didFusion = true;
+		//didFusion = true; //TODO: set but not used. Remove? --Greg(github:Algomorph)
 		if (framesProcessed > 50) trackingInitialised = true;
 
 		framesProcessed++;
@@ -259,7 +262,7 @@ ITMTrackingState::TrackingResult ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITM
 		trackingController->Prepare(trackingState, surfelScene, view, surfelVisualisationEngine, surfelRenderState_live);
 		surfelVisualisationEngine->FindSurfaceSuper(surfelScene, trackingState->pose_d, &view->calib.intrinsics_d, USR_RENDER, surfelRenderState_live);
 
-#if 0
+#if 0 //TODO: explain not compiled block in comment? --Greg(GitHub:Algomorph)
 		if (addKeyframeIdx >= 0)
 		{
 			ORUtils::MemoryBlock<Vector4u>::MemoryCopyDirection memoryCopyDirection =

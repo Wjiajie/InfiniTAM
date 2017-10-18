@@ -36,7 +36,8 @@ namespace ITMLib
 		{
 			LIBMODE_BASIC,
 			LIBMODE_BASIC_SURFELS,
-			LIBMODE_LOOPCLOSURE
+			LIBMODE_LOOPCLOSURE,
+			LIBMODE_KILLING //for basic KillingFusion mode, refer to DOI 10.1109/CVPR.2017.581
 		}LibMode;
 
 		/// Select the type of device to use

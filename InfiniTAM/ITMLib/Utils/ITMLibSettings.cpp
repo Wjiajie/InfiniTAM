@@ -42,8 +42,10 @@ ITMLibSettings::ITMLibSettings(void)
 	behaviourOnFailure = FAILUREMODE_IGNORE;
 
 	/// switch between various library modes - basic, with loop closure, etc.
-	libMode = LIBMODE_BASIC;
+	//libMode = LIBMODE_BASIC;
+	//libMode = LIBMODE_LOOPCLOSURE;
 	//libMode = LIBMODE_BASIC_SURFELS;
+	libMode = LIBMODE_KILLING;
 
 	//// Default ICP tracking
 	//trackerConfig = "type=icp,levels=rrrbb,minstep=1e-3,"
@@ -75,6 +77,15 @@ ITMLibSettings::ITMLibSettings(void)
 	{
 		trackerConfig = "extended,levels=rrbb,minstep=1e-4,outlierSpaceC=0.1,outlierSpaceF=0.004,numiterC=20,numiterF=20,tukeyCutOff=8,framesToSkip=0,framesToWeight=1,failureDec=20.0";
 	}
+	// Killing-constraint tracking
+	if(libMode == LIBMODE_KILLING)
+	{
+		trackerConfig = "type=killing,levels=rrbb,useDepth=1,minstep=1e-4,"
+				"outlierSpaceC=0.1,outlierSpaceF=0.004,"
+				"numiterC=20,numiterF=50,tukeyCutOff=8,"
+				"framesToSkip=20,framesToWeight=50,failureDec=20.0";
+	}
+
 }
 
 MemoryDeviceType ITMLibSettings::GetMemoryType() const

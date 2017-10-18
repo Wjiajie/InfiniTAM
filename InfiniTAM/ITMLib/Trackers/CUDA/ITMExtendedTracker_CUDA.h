@@ -6,7 +6,8 @@
 
 namespace ITMLib
 {
-	class ITMExtendedTracker_CUDA : public ITMExtendedTracker
+	//N.B. public virtual inheritance here to avoid the deadly-diamond problem in ITMKillingTracker_CUDA
+	class ITMExtendedTracker_CUDA : public virtual ITMExtendedTracker
 	{
 	public:
 		struct AccuCell;

@@ -6,7 +6,8 @@
 
 namespace ITMLib
 {
-	class ITMExtendedTracker_CPU : public ITMExtendedTracker
+	//N.B. public virtual inheritance here to avoid the deadly-diamond problem in ITMKillingTracker_CPU
+	class ITMExtendedTracker_CPU : public virtual ITMExtendedTracker
 	{
 	protected:
 		int ComputeGandH_Depth(float &f, float *nabla, float *hessian, Matrix4f approxInvPose);
