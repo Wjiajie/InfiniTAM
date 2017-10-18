@@ -38,7 +38,9 @@ Core/ITMBasicEngine.tpp
 Core/ITMBasicSurfelEngine.tpp
 Core/ITMDenseMapper.tpp
 Core/ITMDenseSurfelMapper.tpp
+Core/ITMDenseDynamicMapper.tpp
 Core/ITMMultiEngine.tpp
+Core/ITMKillingEngine.tpp
 )
 
 SET(ITMLIB_CORE_HEADERS
@@ -46,9 +48,11 @@ Core/ITMBasicEngine.h
 Core/ITMBasicSurfelEngine.h
 Core/ITMDenseMapper.h
 Core/ITMDenseSurfelMapper.h
+Core/ITMDenseDynamicMapper.h
 Core/ITMMainEngine.h
 Core/ITMMultiEngine.h
 Core/ITMTrackingController.h
+Core/ITMKillingEngine.h
 )
 
 ##
@@ -368,6 +372,7 @@ Objects/Scene/ITMSurfelScene.h
 Objects/Scene/ITMSurfelTypes.h
 Objects/Scene/ITMVoxelBlockHash.h
 Objects/Scene/ITMVoxelTypes.h
+Objects/Scene/ITMWarpFieldTypes.h
 )
 
 ##
@@ -399,7 +404,8 @@ SET(ITMLIB_TRACKERS_CPU_SOURCES
 Trackers/CPU/ITMColorTracker_CPU.cpp
 Trackers/CPU/ITMDepthTracker_CPU.cpp
 Trackers/CPU/ITMExtendedTracker_CPU.cpp
-        Trackers/CPU/ITMKillingTracker_CPU.cpp
+Trackers/CPU/ITMKillingTracker_CPU.cpp
+        Trackers/CPU/ITMSceneMotionTracker_CPU.tpp
 )
 
 SET(ITMLIB_TRACKERS_CPU_HEADERS
@@ -407,6 +413,7 @@ Trackers/CPU/ITMColorTracker_CPU.h
 Trackers/CPU/ITMDepthTracker_CPU.h
 Trackers/CPU/ITMExtendedTracker_CPU.h
 Trackers/CPU/ITMKillingTracker_CPU.h
+Trackers/CPU/ITMSceneMotionTracker_CPU.h
 )
 
 ##
@@ -415,6 +422,7 @@ Trackers/CUDA/ITMColorTracker_CUDA.cu
 Trackers/CUDA/ITMDepthTracker_CUDA.cu
 Trackers/CUDA/ITMExtendedTracker_CUDA.cu
 Trackers/CUDA/ITMKillingTracker_CUDA.cu
+        Trackers/CUDA/ITMSceneMotionTracker_CUDA.tcu
 )
 
 SET(ITMLIB_TRACKERS_CUDA_HEADERS
@@ -422,6 +430,7 @@ Trackers/CUDA/ITMColorTracker_CUDA.h
 Trackers/CUDA/ITMDepthTracker_CUDA.h
 Trackers/CUDA/ITMExtendedTracker_CUDA.h
 Trackers/CUDA/ITMKillingTracker_CUDA.h
+Trackers/CUDA/ITMSceneMotionTracker_CUDA.h
 )
 
 ##
@@ -433,6 +442,8 @@ Trackers/Interface/ITMFileBasedTracker.cpp
 Trackers/Interface/ITMForceFailTracker.cpp
 Trackers/Interface/ITMIMUTracker.cpp
 Trackers/Interface/ITMKillingTracker.cpp
+Trackers/Interface/ITMSceneMotionTracker.tpp
+
 )
 
 SET(ITMLIB_TRACKERS_INTERFACE_HEADERS
@@ -445,6 +456,7 @@ Trackers/Interface/ITMForceFailTracker.h
 Trackers/Interface/ITMIMUTracker.h
 Trackers/Interface/ITMTracker.h
 Trackers/Interface/ITMKillingTracker.h
+Trackers/Interface/ITMSceneMotionTracker.h
 )
 
 ##

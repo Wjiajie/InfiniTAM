@@ -271,7 +271,7 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
 	break;
 	case 'w':
 	{
-		printf("saving scene to model ... ");
+		printf("saving canonical_scene to model ... ");
 		uiEngine->mainEngine->SaveSceneToMesh("mesh.stl");
 		printf("done\n");
 	}
@@ -287,7 +287,7 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
 	break;
 	case 'k':
 	{
-		printf("saving scene to disk ... ");
+		printf("saving canonical_scene to disk ... ");
 		
 		try
 		{
@@ -302,7 +302,7 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
 	break;
 	case 'l':
 	{
-		printf("loading scene from disk ... ");
+		printf("loading canonical_scene from disk ... ");
 
 		try
 		{

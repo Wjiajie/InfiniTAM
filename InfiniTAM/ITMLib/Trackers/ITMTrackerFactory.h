@@ -29,6 +29,9 @@
 #include "../../ORUtils/KeyValueConfig.h"
 #include "CPU/ITMKillingTracker_CPU.h"
 #include "CUDA/ITMKillingTracker_CUDA.h"
+#include "Interface/ITMSceneMotionTracker.h"
+#include "CPU/ITMSceneMotionTracker_CPU.h"
+#include "CUDA/ITMSceneMotionTracker_CUDA.h"
 
 namespace ITMLib
 {
@@ -89,7 +92,7 @@ namespace ITMLib
 			makers.push_back(Maker("imuicp", "Combined IMU and depth based ICP tracker", TRACKER_IMU, &MakeIMUTracker));
 			makers.push_back(Maker("extendedimu", "Combined IMU and depth + colour ICP tracker", TRACKER_EXTENDEDIMU, &MakeExtendedIMUTracker));
 			makers.push_back(Maker("forcefail", "Force fail tracker", TRACKER_FORCEFAIL, &MakeForceFailTracker));
-			makers.push_back(Maker("killing", "Dynamic scene tracker with softened Killing constraint", TRACKER_KILLING, &MakeKillingTracker));
+			makers.push_back(Maker("killing", "Dynamic canonical_scene tracker with softened Killing constraint", TRACKER_KILLING, &MakeKillingTracker));
 		}
 
 	public:
@@ -374,7 +377,7 @@ namespace ITMLib
 			case ITMLibSettings::DEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
 				ret = new TTracker_METAL(imgSize_d, imgSize_rgb, useDepth, useColour, colourWeight, &(levels[0]), static_cast<int>(levels.size()), smallStepSizeCriterion, failureDetectorThd,
-				scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, tukeyCutOff, framesToSkip, framesToWeight, lowLevelEngine);
+				canonical_scene->sceneParams->viewFrustum_min, canonical_scene->sceneParams->viewFrustum_max, tukeyCutOff, framesToSkip, framesToWeight, lowLevelEngine);
 #endif
 				break;
 		}
@@ -517,5 +520,36 @@ namespace ITMLib
 	{
 		return new ITMForceFailTracker;
 	}
+
+		/**
+	  * \brief Makes a scene motion tracking
+	  *
+	  * \param deviceType  The device on which the scene motion tracking should operate.
+	  */
+		template <typename TVoxel, typename TWarpField, typename TIndex>
+		static ITMSceneMotionTracker<TVoxel,TWarpField,TIndex> *MakeSceneMotionTracker(ITMLibSettings::DeviceType deviceType)
+		{
+			ITMSceneMotionTracker<TVoxel,TWarpField,TIndex> *sceneRecoEngine = NULL;
+
+			switch(deviceType)
+			{
+				case ITMLibSettings::DEVICE_CPU:
+					sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxel,TWarpField,TIndex>;
+					break;
+				case ITMLibSettings::DEVICE_CUDA:
+#ifndef COMPILE_WITHOUT_CUDA
+					sceneRecoEngine = new ITMSceneMotionTracker_CUDA<TVoxel,TWarpField,TIndex>;
+#endif
+					break;
+				case ITMLibSettings::DEVICE_METAL:
+#ifdef COMPILE_WITH_METAL
+					//TODO
+					DIEWITHEXCEPTION("Motion Scene Tracking not yet implemented on Metal")
+#endif
+					break;
+			}
+
+			return sceneRecoEngine;
+		}
 };
 }

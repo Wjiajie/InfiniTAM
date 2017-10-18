@@ -13,26 +13,13 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#pragma once
+#include "ITMSceneMotionTracker_CPU.h"
 
-#include "ITMExtendedTracker.h"
-
-
-namespace ITMLib{
-	class ITMKillingTracker : public virtual ITMExtendedTracker  {
-
-	public:
-
-		ITMKillingTracker(const Vector2i& imgSize_d, const Vector2i& imgSize_rgb, bool useDepth, bool useColour,
-		                  float colourWeight, TrackerIterationType* trackingRegime, int noHierarchyLevels,
-		                  float terminationThreshold, float failureDetectorThreshold, float viewFrustum_min,
-		                  float viewFrustum_max, float minColourGradient, float tukeyCutOff, int framesToSkip,
-		                  int framesToWeight, const ITMLowLevelEngine* lowLevelEngine, MemoryDeviceType memoryType);
-
-		void TrackCamera(ITMTrackingState *trackingState, const ITMView *view) override;
-
-	};
-}//namespace ITMLib
-
-
-
+using namespace ITMLib;
+template<class TVoxel, class TWarpField, class TIndex>
+float ITMSceneMotionTracker_CPU::PerformUpdateIteration(ITMScene<TVoxel, TIndex>* canonical_scene,
+                                                        ITMScene<TVoxel, TIndex>* live_scene,
+                                                        ITMScene<TWarpField, TIndex>* warp_field) {
+	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");
+	return 0;
+}

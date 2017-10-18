@@ -118,7 +118,7 @@ ITMTrackingState* ITMMultiEngine<TVoxel, TIndex>::GetTrackingState(void)
 	return mapManager->getLocalMap(idx)->trackingState;
 }
 
-// -whenever a new local scene is added, add to list of "to be established 3D relations"
+// -whenever a new local canonical_scene is added, add to list of "to be established 3D relations"
 // - whenever a relocalisation is detected, add to the same list, preserving any existing information on that 3D relation
 //
 // - for all 3D relations to be established :
@@ -156,7 +156,7 @@ ITMTrackingState::TrackingResult ITMMultiEngine<TVoxel, TIndex>::ProcessFrame(IT
 	// if there is a "primary data index", process it
 	if (primaryDataIdx >= 0) todoList.push_back(TodoListEntry(primaryDataIdx, true, true, true));
 
-	// after primary local map, make sure to process all relocalisations, new scenes and loop closures
+	// after primary local map, make sure to process all relocalizations, new scenes and loop closures
 	for (int i = 0; i < mActiveDataManager->numActiveLocalMaps(); ++i)
 	{
 		switch (mActiveDataManager->getLocalMapType(i))
@@ -174,10 +174,10 @@ ITMTrackingState::TrackingResult ITMMultiEngine<TVoxel, TIndex>::ProcessFrame(IT
 	bool primaryTrackingSuccess = false;
 	for (size_t i = 0; i < todoList.size(); ++i)
 	{
-		// - first pass of the todo list is for primary local map and ongoing relocalisation and loopclosure attempts
+		// - first pass of the todo list is for primary local map and ongoing relocalization and loop closure attempts
 		// - an element with id -1 marks the end of the first pass, a request to call the loop closure detection engine, and
 		//   the start of the second pass
-		// - second tracking pass will be about newly detected loop closures, relocalisations, etc.
+		// - second tracking pass will be about newly detected loop closures, relocalizations, etc.
 
 		if (todoList[i].dataId == -1)
 		{
@@ -219,7 +219,7 @@ ITMTrackingState::TrackingResult ITMMultiEngine<TVoxel, TIndex>::ProcessFrame(IT
 		int currentLocalMapIdx = mActiveDataManager->getLocalMapIndex(todoList[i].dataId);
 		currentLocalMap = mapManager->getLocalMap(currentLocalMapIdx);
 
-		// if a new relocalisation/loopclosure is started, this will do the initial raycasting before tracking can start
+		// if a new relocalization/loop closure is started, this will do the initial raycasting before tracking can start
 		if (todoList[i].preprepare) 
 		{
 			denseMapper->UpdateVisibleList(view, currentLocalMap->trackingState, currentLocalMap->scene, currentLocalMap->renderState);
@@ -231,7 +231,7 @@ ITMTrackingState::TrackingResult ITMMultiEngine<TVoxel, TIndex>::ProcessFrame(IT
 			int dataId = todoList[i].dataId;
 
 #ifdef DEBUG_MULTISCENE
-			int blocksInUse = currentLocalMap->scene->index.getNumAllocatedVoxelBlocks() - currentLocalMap->scene->localVBA.lastFreeBlockId - 1;
+			int blocksInUse = currentLocalMap->canonical_scene->index.getNumAllocatedVoxelBlocks() - currentLocalMap->canonical_scene->localVBA.lastFreeBlockId - 1;
 			fprintf(stderr, " %i%s (%i)", currentLocalMapIdx, (todoList[i].dataId == primaryDataIdx) ? "*" : "", blocksInUse);
 #endif
 

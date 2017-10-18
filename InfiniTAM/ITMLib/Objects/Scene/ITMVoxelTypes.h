@@ -16,6 +16,7 @@ struct ITMVoxel_f_rgb
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -47,6 +48,7 @@ struct ITMVoxel_s_rgb
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	short sdf;
@@ -77,6 +79,7 @@ struct ITMVoxel_s
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	short sdf;
@@ -101,6 +104,7 @@ struct ITMVoxel_f
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -125,6 +129,7 @@ struct ITMVoxel_f_conf
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -142,47 +147,17 @@ struct ITMVoxel_f_conf
 	}
 };
 
-struct ITMVoxel_f_rgb_conf
-{
-	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return 1.0f; }
-	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
-	_CPU_AND_GPU_CODE_ static float floatToValue(float x) { return x; }
-
-	static const CONSTPTR(bool) hasColorInformation = true;
-	static const CONSTPTR(bool) hasConfidenceInformation = true;
-	static const CONSTPTR(bool) hasSemanticInformation = false;
-
-	/** Value of the truncated signed distance transformation. */
-	float sdf;
-	/** Number of fused observations that make up @p sdf. */
-	uchar w_depth;
-	/** Padding that may or may not improve performance on certain GPUs */
-	//uchar pad;
-	/** RGB colour information stored for this voxel. */
-	Vector3u clr;
-	/** Number of observations that made up @p clr. */
-	uchar w_color;
-	float confidence;
-
-	_CPU_AND_GPU_CODE_ ITMVoxel_f_rgb_conf()
-	{
-		sdf = SDF_initialValue();
-		w_depth = 0;
-		confidence = 0.0f;
-		clr = Vector3u((uchar)0);
-		w_color = 0;
-	}
-};
 
 struct ITMVoxel_s_rgb_conf
 {
-	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return 1.0f; }
-	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
-	_CPU_AND_GPU_CODE_ static float floatToValue(float x) { return x; }
+	_CPU_AND_GPU_CODE_ static short SDF_initialValue() { return 32767; }
+	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return (float)(x) / 32767.0f; }
+	_CPU_AND_GPU_CODE_ static short floatToValue(float x) { return (short)((x) * 32767.0f); }
 
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	short sdf;
@@ -206,7 +181,9 @@ struct ITMVoxel_s_rgb_conf
 	}
 };
 
-struct ITMVoxel_f_rgb_conf_seg
+
+
+struct ITMVoxel_f_rgb_conf
 {
 	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return 1.0f; }
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
@@ -215,6 +192,7 @@ struct ITMVoxel_f_rgb_conf_seg
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -227,16 +205,49 @@ struct ITMVoxel_f_rgb_conf_seg
 	/** Number of observations that made up @p clr. */
 	uchar w_color;
 	float confidence;
-	/** Index of the segment assigned to this voxel**/
-	uchar segment;
 
-	_CPU_AND_GPU_CODE_ ITMVoxel_f_rgb_conf_seg()
+	_CPU_AND_GPU_CODE_ ITMVoxel_f_rgb_conf()
 	{
 		sdf = SDF_initialValue();
 		w_depth = 0;
 		confidence = 0.0f;
 		clr = Vector3u((uchar)0);
 		w_color = 0;
-		segment = 0;
+	}
+};
+
+struct ITMVoxel_f_killing
+{
+	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return 1.0f; }
+	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
+	_CPU_AND_GPU_CODE_ static float floatToValue(float x) { return x; }
+
+	static const CONSTPTR(bool) hasColorInformation = true;
+	static const CONSTPTR(bool) hasConfidenceInformation = true;
+	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasTrilinearWeightInformation = true;
+
+	/** Value of the truncated signed distance transformation. */
+	float sdf;
+	/** Number of fused observations that make up @p sdf. */
+	uchar w_depth;
+	/** Padding that may or may not improve performance on certain GPUs */
+	//uchar pad;
+	/** RGB colour information stored for this voxel. */
+	Vector3u clr;
+	/** Trilinear weight information stored for this voxel. */
+	Vector3u trilienar_weights;
+	/** Number of observations that made up @p clr. */
+	uchar w_color;
+	float confidence;
+
+	_CPU_AND_GPU_CODE_ ITMVoxel_f_killing()
+	{
+		sdf = SDF_initialValue();
+		w_depth = 0;
+		confidence = 0.0f;
+		clr = Vector3u((uchar)0);
+		trilienar_weights = Vector3u((uchar)0);
+		w_color = 0;
 	}
 };

@@ -89,7 +89,7 @@ namespace ORUtils
 
 		SE3Pose(void);
 
-		friend std::ostream& operator<<(std::ostream& os, const SE3Pose& dt) {
+		friend std::ostream& operator<<(std::ostream& os, const SE3Pose& dt){
 			os << dt.M;
 			return os;
 		}
@@ -98,5 +98,6 @@ namespace ORUtils
 		*/
 		static SE3Pose exp(const Vector6<float>& tangent);
 	};
+
 }
 

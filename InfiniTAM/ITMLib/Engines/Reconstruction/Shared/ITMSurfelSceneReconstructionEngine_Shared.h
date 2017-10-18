@@ -442,7 +442,7 @@ inline void find_corresponding_surfel(int locId, const Matrix4f& invT, const flo
     return;
   }
 
-  // Otherwise, find corresponding surfels in the scene and pick the best one (if any).
+  // Otherwise, find corresponding surfels in the canonical_scene and pick the best one (if any).
   int bestSurfelIndex = -1;
   float bestSurfelConfidence = 0.0f;
   int ux = locId % depthMapWidth, uy = locId / depthMapWidth;

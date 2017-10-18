@@ -4,8 +4,11 @@
 #include "Core/ITMBasicEngine.tpp"
 #include "Core/ITMBasicSurfelEngine.tpp"
 #include "Core/ITMMultiEngine.tpp"
+#include "Core/ITMKillingEngine.tpp"
 #include "Core/ITMDenseMapper.tpp"
 #include "Core/ITMDenseSurfelMapper.tpp"
+#include "Trackers/Interface/ITMSceneMotionTracker.tpp"
+#include "Core/ITMDenseDynamicMapper.tpp"
 #include "Engines/Meshing/CPU/ITMMeshingEngine_CPU.tpp"
 #include "Engines/Meshing/CPU/ITMMultiMeshingEngine_CPU.tpp"
 #include "Engines/MultiScene/ITMMapGraphManager.tpp"
@@ -28,7 +31,10 @@ namespace ITMLib
 	template class ITMBasicSurfelEngine<ITMSurfel_grey>;
 	template class ITMBasicSurfelEngine<ITMSurfel_rgb>;
 	template class ITMMultiEngine<ITMVoxel, ITMVoxelIndex>;
+	template class ITMKillingEngine<ITMVoxel, ITMWarpField, ITMVoxelIndex>;
 	template class ITMDenseMapper<ITMVoxel, ITMVoxelIndex>;
+	template class ITMSceneMotionTracker<ITMVoxel, ITMWarpField, ITMVoxelIndex>;
+	template class ITMDenseDynamicMapper<ITMVoxel, ITMWarpField, ITMVoxelIndex>;
 	template class ITMVoxelMapGraphManager<ITMVoxel, ITMVoxelIndex>;
 	template class ITMVisualisationEngine_CPU<ITMVoxel, ITMVoxelIndex>;
 	template class ITMMeshingEngine_CPU<ITMVoxel, ITMVoxelIndex>;

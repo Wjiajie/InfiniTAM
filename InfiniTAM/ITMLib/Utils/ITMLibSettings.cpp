@@ -80,10 +80,17 @@ ITMLibSettings::ITMLibSettings(void)
 	// Killing-constraint tracking
 	if(libMode == LIBMODE_KILLING)
 	{
-		trackerConfig = "type=killing,levels=rrbb,useDepth=1,minstep=1e-4,"
-				"outlierSpaceC=0.1,outlierSpaceF=0.004,"
-				"numiterC=20,numiterF=50,tukeyCutOff=8,"
-				"framesToSkip=20,framesToWeight=50,failureDec=20.0";
+//		trackerConfig = "type=killing,levels=rrbb,useDepth=1,minstep=1e-4,"
+//				"outlierSpaceC=0.1,outlierSpaceF=0.004,"
+//				"numiterC=20,numiterF=50,tukeyCutOff=8,"
+//				"framesToSkip=20,framesToWeight=50,failureDec=20.0";
+		//// For hybrid intensity+depth tracking:
+		trackerConfig = "type=killing,levels=bbb,useDepth=1,useColour=1,"
+						  "colourWeight=0.3,minstep=1e-4,"
+						  "outlierColourC=0.175,outlierColourF=0.005,"
+						  "outlierSpaceC=0.1,outlierSpaceF=0.004,"
+						  "numiterC=20,numiterF=50,tukeyCutOff=8,"
+						  "framesToSkip=20,framesToWeight=50,failureDec=20.0";
 	}
 
 }

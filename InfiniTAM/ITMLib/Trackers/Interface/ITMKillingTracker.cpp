@@ -13,14 +13,10 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+#include <iostream>
 #include "ITMKillingTracker.h"
 
 using namespace ITMLib;
-
-void ITMLib::ITMKillingTracker::TrackCamera(ITMLib::ITMTrackingState* trackingState, const ITMLib::ITMView* view) {
-	//obtain initial camera alignment
-	ITMExtendedTracker::TrackCamera(trackingState, view);
-}
 
 ITMKillingTracker::ITMKillingTracker(const Vector2i& imgSize_d, const Vector2i& imgSize_rgb, bool useDepth,
                                      bool useColour, float colourWeight, TrackerIterationType* trackingRegime,
@@ -31,6 +27,25 @@ ITMKillingTracker::ITMKillingTracker(const Vector2i& imgSize_d, const Vector2i& 
 		: ITMExtendedTracker(imgSize_d, imgSize_rgb, useDepth, useColour, colourWeight, trackingRegime,
 		                     noHierarchyLevels, terminationThreshold, failureDetectorThreshold, viewFrustum_min,
 		                     viewFrustum_max, minColourGradient, tukeyCutOff, framesToSkip, framesToWeight,
-		                     lowLevelEngine, memoryType) {
+		                     lowLevelEngine, memoryType) {}
+
+void ITMLib::ITMKillingTracker::TrackCamera(ITMLib::ITMTrackingState* trackingState, const ITMLib::ITMView* view) {
+	//obtain initial camera alignment
+	ITMExtendedTracker::TrackCamera(trackingState, view);
+	switch (trackingState->trackerResult){
+		case ITMTrackingState::TrackingResult::TRACKING_FAILED:
+			std::cout << "Tracking failed" << std::endl;
+			std::cout << *(trackingState->pose_d) << std::endl;
+			break;
+		case ITMTrackingState::TrackingResult::TRACKING_GOOD:
+			std::cout << "Tracking good" << std::endl;
+			std::cout << *(trackingState->pose_d) << std::endl;
+			break;
+		case ITMTrackingState::TrackingResult::TRACKING_POOR:
+			std::cout << "Tracking poor" << std::endl;
+			std::cout << *(trackingState->pose_d) << std::endl;
+			break;
+	}
 
 }
+

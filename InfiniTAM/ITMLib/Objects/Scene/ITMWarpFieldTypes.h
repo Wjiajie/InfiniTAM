@@ -15,24 +15,24 @@
 //  ================================================================
 #pragma once
 
-#include "ITMExtendedTracker.h"
+#include "../../Utils/ITMMath.h"
 
+struct ITMVoxel_warp_t
+{
+	_CPU_AND_GPU_CODE_ static short SDF_initialValue() { return 32767; }
+	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
+	_CPU_AND_GPU_CODE_ static short floatToValue(float x) { return x; }
 
-namespace ITMLib{
-	class ITMKillingTracker : public virtual ITMExtendedTracker  {
+	static const CONSTPTR(bool) hasColorInformation = false;
+	static const CONSTPTR(bool) hasConfidenceInformation = false;
+	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
 
-	public:
+	/** vector translating a the current point to a different location **/
+	Vector3f warp_t;
 
-		ITMKillingTracker(const Vector2i& imgSize_d, const Vector2i& imgSize_rgb, bool useDepth, bool useColour,
-		                  float colourWeight, TrackerIterationType* trackingRegime, int noHierarchyLevels,
-		                  float terminationThreshold, float failureDetectorThreshold, float viewFrustum_min,
-		                  float viewFrustum_max, float minColourGradient, float tukeyCutOff, int framesToSkip,
-		                  int framesToWeight, const ITMLowLevelEngine* lowLevelEngine, MemoryDeviceType memoryType);
-
-		void TrackCamera(ITMTrackingState *trackingState, const ITMView *view) override;
-
-	};
-}//namespace ITMLib
-
-
-
+	_CPU_AND_GPU_CODE_ ITMVoxel_warp_t()
+	{
+		warp_t = Vector3f(0.f);
+	}
+};

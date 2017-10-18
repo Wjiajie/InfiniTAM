@@ -23,4 +23,5 @@ namespace ITMLib
 	template class ITMSurfelSceneReconstructionEngine_CUDA<ITMSurfel_rgb>;
 	template class ITMSurfelVisualisationEngine_CUDA<ITMSurfel_grey>;
 	template class ITMSurfelVisualisationEngine_CUDA<ITMSurfel_rgb>;
+
 }

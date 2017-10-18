@@ -17,6 +17,7 @@
 #include "../../ITMLib/Core/ITMBasicEngine.h"
 #include "../../ITMLib/Core/ITMBasicSurfelEngine.h"
 #include "../../ITMLib/Core/ITMMultiEngine.h"
+#include "../../ITMLib/Core/ITMKillingEngine.h"
 
 using namespace InfiniTAM::Engine;
 using namespace InputSource;
@@ -195,7 +196,8 @@ try
 		mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelIndex>(internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize());
 		break;
 	case ITMLibSettings::LIBMODE_KILLING:
-		mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelIndex>(internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize());
+		//mainEngine = new ITMMultiEngine<ITMVoxel_s_rgb_conf, ITMVoxelIndex>(internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize());
+		mainEngine = new ITMKillingEngine<ITMVoxel,ITMWarpField, ITMVoxelIndex>(internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize());
 		break;
 	default: 
 		throw std::runtime_error("Unsupported library mode!");

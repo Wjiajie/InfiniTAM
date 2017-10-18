@@ -190,7 +190,7 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::AddNewSurfels(ITMSurfelSc
   this->m_newPointsPrefixSumMB->UpdateHostFromDevice();
 #endif
 
-  // Add the new surfels to the scene.
+  // Add the new surfels to the canonical_scene.
   const size_t newSurfelCount = static_cast<size_t>(this->m_newPointsPrefixSumMB->GetElement(pixelCount, MEMORYDEVICE_CUDA));
   TSurfel *newSurfels = scene->AllocateSurfels(newSurfelCount);
   const ITMSurfelSceneParams& sceneParams = scene->GetParams();
@@ -223,7 +223,7 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::AddNewSurfels(ITMSurfelSc
   ORcudaKernelCheck;
 
 #if DEBUGGING
-  scene->GetSurfels()->UpdateHostFromDevice();
+  canonical_scene->GetSurfels()->UpdateHostFromDevice();
 #endif
 }
 
@@ -295,7 +295,7 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::MarkBadSurfels(ITMSurfelS
 {
   const int surfelCount = static_cast<int>(scene->GetSurfelCount());
 
-  // If the scene is empty, early out.
+  // If the canonical_scene is empty, early out.
   if(surfelCount == 0) return;
 
   const ITMSurfelSceneParams& sceneParams = scene->GetParams();
@@ -324,7 +324,7 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::MarkBadSurfels(ITMSurfelS
   ORcudaKernelCheck;
 
 #if DEBUGGING
-  scene->GetSurfels()->UpdateHostFromDevice();
+  canonical_scene->GetSurfels()->UpdateHostFromDevice();
   this->m_surfelRemovalMaskMB->UpdateHostFromDevice();
 #endif
 }
@@ -437,7 +437,7 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::RemoveMarkedSurfels(ITMSu
 {
   const int surfelCount = static_cast<int>(scene->GetSurfelCount());
 
-  // If the scene is empty, early out.
+  // If the canonical_scene is empty, early out.
   if(surfelCount == 0) return;
 
   unsigned int *surfelRemovalMask = this->m_surfelRemovalMaskMB->GetData(MEMORYDEVICE_CUDA);

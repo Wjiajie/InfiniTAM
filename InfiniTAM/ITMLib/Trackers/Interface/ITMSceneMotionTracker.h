@@ -15,23 +15,24 @@
 //  ================================================================
 #pragma once
 
-#include "ITMExtendedTracker.h"
 
+#include "../../Objects/Scene/ITMScene.h"
 
 namespace ITMLib{
-	class ITMKillingTracker : public virtual ITMExtendedTracker  {
+	template<class TVoxel, class TWarpField, class TIndex>
+	class ITMSceneMotionTracker {
+	protected:
+		virtual float PerformUpdateIteration(ITMScene<TVoxel,TIndex> *canonical_scene,
+		                            ITMScene<TVoxel,TIndex> *live_scene,
+		                            ITMScene<TWarpField,TIndex> *warp_field) = 0;
 
 	public:
-
-		ITMKillingTracker(const Vector2i& imgSize_d, const Vector2i& imgSize_rgb, bool useDepth, bool useColour,
-		                  float colourWeight, TrackerIterationType* trackingRegime, int noHierarchyLevels,
-		                  float terminationThreshold, float failureDetectorThreshold, float viewFrustum_min,
-		                  float viewFrustum_max, float minColourGradient, float tukeyCutOff, int framesToSkip,
-		                  int framesToWeight, const ITMLowLevelEngine* lowLevelEngine, MemoryDeviceType memoryType);
-
-		void TrackCamera(ITMTrackingState *trackingState, const ITMView *view) override;
-
+		void UpdateWarpField(ITMScene<TVoxel,TIndex> *canonical_scene,
+		                     ITMScene<TVoxel,TIndex> *live_scene,
+		                     ITMScene<TWarpField,TIndex> *warp_field);
 	};
+
+
 }//namespace ITMLib
 
 
