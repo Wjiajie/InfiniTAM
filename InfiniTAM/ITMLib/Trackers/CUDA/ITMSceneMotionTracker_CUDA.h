@@ -15,12 +15,12 @@
 //  ================================================================
 #pragma once
 
-
 #include "../Interface/ITMSceneMotionTracker.h"
 
 namespace ITMLib{
 	template<class TVoxel, class TWarpField, class TIndex>
-	class ITMSceneMotionTracker_CUDA : public ITMSceneMotionTracker {
+	class ITMSceneMotionTracker_CUDA :
+			public ITMSceneMotionTracker<TVoxel, TWarpField, TIndex> {
 	protected:
 		float PerformUpdateIteration(ITMScene<TVoxel,TIndex> *canonical_scene,
 		                             ITMScene<TVoxel,TIndex> *live_scene,

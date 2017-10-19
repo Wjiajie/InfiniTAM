@@ -19,7 +19,8 @@
 
 namespace ITMLib{
 	template<class TVoxel, class TWarpField, class TIndex>
-	class ITMSceneMotionTracker_CPU : public ITMSceneMotionTracker {
+	class ITMSceneMotionTracker_CPU :
+			public ITMSceneMotionTracker<TVoxel, TWarpField, TIndex> {
 	protected:
 		float PerformUpdateIteration(ITMScene<TVoxel,TIndex> *canonical_scene,
 		                             ITMScene<TVoxel,TIndex> *live_scene,

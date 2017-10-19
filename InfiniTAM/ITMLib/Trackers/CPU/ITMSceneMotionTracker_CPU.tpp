@@ -17,7 +17,7 @@
 
 using namespace ITMLib;
 template<class TVoxel, class TWarpField, class TIndex>
-float ITMSceneMotionTracker_CPU::PerformUpdateIteration(ITMScene<TVoxel, TIndex>* canonical_scene,
+float ITMSceneMotionTracker_CPU<TVoxel, TWarpField, TIndex>::PerformUpdateIteration(ITMScene<TVoxel, TIndex>* canonical_scene,
                                                         ITMScene<TVoxel, TIndex>* live_scene,
                                                         ITMScene<TWarpField, TIndex>* warp_field) {
 	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");

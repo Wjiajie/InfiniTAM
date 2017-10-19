@@ -7,7 +7,6 @@
 #include "Core/ITMKillingEngine.tpp"
 #include "Core/ITMDenseMapper.tpp"
 #include "Core/ITMDenseSurfelMapper.tpp"
-#include "Trackers/Interface/ITMSceneMotionTracker.tpp"
 #include "Core/ITMDenseDynamicMapper.tpp"
 #include "Engines/Meshing/CPU/ITMMeshingEngine_CPU.tpp"
 #include "Engines/Meshing/CPU/ITMMultiMeshingEngine_CPU.tpp"
@@ -24,6 +23,8 @@
 #include "Engines/Visualisation/Interface/ITMSurfelVisualisationEngine.tpp"
 #include "Engines/Visualisation/Interface/ITMVisualisationEngine.h"
 #include "Trackers/ITMTrackerFactory.h"
+#include "Trackers/Interface/ITMSceneMotionTracker.tpp"
+#include "Trackers/CPU/ITMSceneMotionTracker_CPU.tpp"
 
 namespace ITMLib
 {
@@ -33,7 +34,6 @@ namespace ITMLib
 	template class ITMMultiEngine<ITMVoxel, ITMVoxelIndex>;
 	template class ITMKillingEngine<ITMVoxel, ITMWarpField, ITMVoxelIndex>;
 	template class ITMDenseMapper<ITMVoxel, ITMVoxelIndex>;
-	template class ITMSceneMotionTracker<ITMVoxel, ITMWarpField, ITMVoxelIndex>;
 	template class ITMDenseDynamicMapper<ITMVoxel, ITMWarpField, ITMVoxelIndex>;
 	template class ITMVoxelMapGraphManager<ITMVoxel, ITMVoxelIndex>;
 	template class ITMVisualisationEngine_CPU<ITMVoxel, ITMVoxelIndex>;
@@ -41,6 +41,8 @@ namespace ITMLib
 	template class ITMMultiMeshingEngine_CPU<ITMVoxel, ITMVoxelIndex>;
 	template class ITMSwappingEngine_CPU<ITMVoxel, ITMVoxelIndex>;
 	template class ITMSceneReconstructionEngine_CPU<ITMVoxel, ITMVoxelIndex>;
+	template class ITMSceneMotionTracker<ITMVoxel, ITMWarpField, ITMVoxelIndex>;
+	template class ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarpField, ITMVoxelIndex>;
 
 	template class ITMDenseSurfelMapper<ITMSurfel_grey>;
 	template class ITMDenseSurfelMapper<ITMSurfel_rgb>;
