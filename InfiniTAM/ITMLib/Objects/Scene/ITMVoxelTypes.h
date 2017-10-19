@@ -181,8 +181,6 @@ struct ITMVoxel_s_rgb_conf
 	}
 };
 
-
-
 struct ITMVoxel_f_rgb_conf
 {
 	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return 1.0f; }
@@ -225,7 +223,7 @@ struct ITMVoxel_f_killing
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
-	static const CONSTPTR(bool) hasTrilinearWeightInformation = true;
+	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -235,8 +233,8 @@ struct ITMVoxel_f_killing
 	//uchar pad;
 	/** RGB colour information stored for this voxel. */
 	Vector3u clr;
-	/** Trilinear weight information stored for this voxel. */
-	Vector3u trilienar_weights;
+	/** Trilinear weight information stored for this voxel. //TODO: remove, with the check --NOT REALLY NEEDED, can be computed on the fly -Greg (GitHub:Algomorph) */
+	//Vector3u trilienar_weights;
 	/** Number of observations that made up @p clr. */
 	uchar w_color;
 	float confidence;
@@ -247,7 +245,7 @@ struct ITMVoxel_f_killing
 		w_depth = 0;
 		confidence = 0.0f;
 		clr = Vector3u((uchar)0);
-		trilienar_weights = Vector3u((uchar)0);
+		//trilienar_weights = Vector3u((uchar)0);
 		w_color = 0;
 	}
 };

@@ -22,9 +22,9 @@ namespace ITMLib{
 	class ITMSceneMotionTracker_CPU :
 			public ITMSceneMotionTracker<TVoxel, TWarpField, TIndex> {
 	protected:
-		float PerformUpdateIteration(ITMScene<TVoxel,TIndex> *canonical_scene,
-		                             ITMScene<TVoxel,TIndex> *live_scene,
-		                             ITMScene<TWarpField,TIndex> *warp_field) override;
+		float PerformUpdateIteration(ITMScene<TVoxel,TIndex> *canonicalScene,
+		                             ITMScene<TVoxel,TIndex> *liveScene,
+		                             ITMScene<TWarpField,TIndex> *warpField) override;
 	};
 
 
