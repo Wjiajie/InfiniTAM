@@ -36,6 +36,7 @@ namespace ITMLib
 
 		ITMScene<TVoxel, TIndex> *canonical_scene;
 		ITMScene<TVoxel, TIndex> *live_scene;
+		ITMScene<TVoxel, TIndex> *deformed_live_scene;
 		ITMScene<TWarpField, TIndex> *warp_field;
 		ITMRenderState *renderState_live;
 		ITMRenderState *renderState_freeview;

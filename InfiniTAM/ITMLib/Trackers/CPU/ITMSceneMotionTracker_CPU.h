@@ -17,14 +17,17 @@
 
 #include "../Interface/ITMSceneMotionTracker.h"
 
-namespace ITMLib{
+namespace ITMLib {
 	template<class TVoxel, class TWarpField, class TIndex>
 	class ITMSceneMotionTracker_CPU :
 			public ITMSceneMotionTracker<TVoxel, TWarpField, TIndex> {
+	public:
+		float UpdateWarpField(ITMScene <TVoxel, TIndex>* canonicalScene,
+		                      ITMScene <TVoxel, TIndex>* liveScene,
+		                      ITMScene <TWarpField, TIndex>* warpField) override;
 	protected:
-		float PerformUpdateIteration(ITMScene<TVoxel,TIndex> *canonicalScene,
-		                             ITMScene<TVoxel,TIndex> *liveScene,
-		                             ITMScene<TWarpField,TIndex> *warpField) override;
+		void DeformScene(ITMScene <TVoxel, TIndex>* sceneOld, ITMScene <TVoxel, TIndex>* sceneNew,
+		                 ITMScene <TWarpField, TIndex>* warpField) override;
 	};
 
 

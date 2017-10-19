@@ -16,10 +16,18 @@
 #include "ITMSceneMotionTracker_CUDA.h"
 
 using namespace ITMLib;
+
 template<class TVoxel, class TWarpField, class TIndex>
-float ITMSceneMotionTracker_CUDA<TVoxel, TWarpField, TIndex>::PerformUpdateIteration(ITMScene<TVoxel, TIndex>* canonical_scene,
-                                                        ITMScene<TVoxel, TIndex>* live_scene,
-                                                        ITMScene<TWarpField, TIndex>* warp_field) {
+float ITMSceneMotionTracker_CUDA<TVoxel, TWarpField, TIndex>::UpdateWarpField(ITMScene<TVoxel, TIndex>* canonicalScene,
+                                                                              ITMScene<TVoxel, TIndex>* liveScene,
+                                                                              ITMScene<TWarpField, TIndex>* warpField) {
 	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");
 	return 0;
+}
+
+template<class TVoxel, class TWarpField, class TIndex>
+void ITMSceneMotionTracker_CUDA<TVoxel, TWarpField, TIndex>::DeformScene(
+		ITMScene<TVoxel, TIndex>* sceneOld, ITMScene<TVoxel, TIndex>* sceneNew,
+		ITMScene<TWarpField, TIndex>* warpField) {
+	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");
 }

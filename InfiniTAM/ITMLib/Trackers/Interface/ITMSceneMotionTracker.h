@@ -22,14 +22,17 @@ namespace ITMLib{
 	template<class TVoxel, class TWarpField, class TIndex>
 	class ITMSceneMotionTracker {
 	protected:
-		virtual float PerformUpdateIteration(ITMScene<TVoxel,TIndex> *canonical_scene,
-		                            ITMScene<TVoxel,TIndex> *live_scene,
-		                            ITMScene<TWarpField,TIndex> *warp_field) = 0;
+
+		virtual void DeformScene(ITMScene <TVoxel, TIndex>* scene_old, ITMScene <TVoxel, TIndex>* scene_new, ITMScene <TWarpField, TIndex>* warp_field) = 0;
 
 	public:
-		void UpdateWarpField(ITMScene<TVoxel,TIndex> *canonical_scene,
-		                     ITMScene<TVoxel,TIndex> *live_scene,
-		                     ITMScene<TWarpField,TIndex> *warp_field);
+		virtual float UpdateWarpField(ITMScene <TVoxel, TIndex>* canonical_scene,
+		                              ITMScene <TVoxel, TIndex>* live_scene,
+		                              ITMScene <TWarpField, TIndex>* warp_field) = 0;
+		void PerformSceneTrackingIteration(ITMScene <TVoxel, TIndex>* canonical_scene,
+		                                   ITMScene <TVoxel, TIndex>* live_scene,
+		                                   ITMScene <TVoxel, TIndex>* deformed_scene,
+		                                   ITMScene <TWarpField, TIndex>* warp_field);
 	};
 
 

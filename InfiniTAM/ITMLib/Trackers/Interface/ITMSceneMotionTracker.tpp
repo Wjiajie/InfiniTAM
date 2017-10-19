@@ -19,15 +19,12 @@
 using namespace ITMLib;
 
 template<class TVoxel, class TWarpField, class TIndex>
-void ITMSceneMotionTracker<TVoxel, TWarpField, TIndex>::UpdateWarpField(ITMScene<TVoxel, TIndex>* canonical_scene,
-                                                                        ITMScene<TVoxel, TIndex>* live_scene,
-                                                                        ITMScene<TWarpField, TIndex>* warp_field) {
+void ITMSceneMotionTracker<TVoxel, TWarpField, TIndex>::PerformSceneTrackingIteration(
+		ITMScene<TVoxel, TIndex>* canonical_scene,
+		ITMScene<TVoxel, TIndex>* live_scene,
+		ITMScene<TVoxel, TIndex>* deformed_scene,
+		ITMScene<TWarpField, TIndex>* warp_field) {
 
-	float error = std::numeric_limits<float>::infinity();
-	const int max_iteration_count = 100;
-	const float error_threshold = 0.1;
-	for(int iteration = 0; error < error_threshold || iteration < max_iteration_count; iteration++){
-		error = this->PerformUpdateIteration(canonical_scene,live_scene,warp_field);
-	}
+
 	DIEWITHEXCEPTION("Warp field updates not yet fully implemented");
 }

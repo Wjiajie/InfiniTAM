@@ -26,6 +26,8 @@ ITMKillingEngine<TVoxel, TWarpField, TIndex>::ITMKillingEngine(const ITMLibSetti
 	MemoryDeviceType memoryType = settings->GetMemoryType();
 	this->canonical_scene = new ITMScene<TVoxel,TIndex>(&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 	this->live_scene = new ITMScene<TVoxel,TIndex>(&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
+	this->warp_field = new ITMScene<TWarpField,TIndex>(&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
+	this->deformed_live_scene = new ITMScene<TVoxel,TIndex>(&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 
 	const ITMLibSettings::DeviceType deviceType = settings->deviceType;
 
@@ -77,6 +79,9 @@ ITMKillingEngine<TVoxel,TWarpField,TIndex>::~ITMKillingEngine()
 	if (renderState_freeview != NULL) delete renderState_freeview;
 
 	delete canonical_scene;
+	delete live_scene;
+	delete deformed_live_scene;
+	delete warp_field;
 
 	delete denseMapper;
 	delete trackingController;
@@ -169,6 +174,7 @@ void ITMKillingEngine<TVoxel,TWarpField,TIndex>::resetAll()
 {
 	denseMapper->ResetScene(canonical_scene);
 	denseMapper->ResetScene(live_scene);
+	denseMapper->ResetScene(deformed_live_scene);
 	denseMapper->ResetWarp(warp_field);
 	trackingState->Reset();
 }
@@ -307,7 +313,9 @@ ITMTrackingState::TrackingResult ITMKillingEngine<TVoxel,TWarpField,TIndex>::Pro
 	bool didFusion = false;
 	if ((trackerResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) && (relocalisationCount == 0)) {
 		// fusion
-		denseMapper->ProcessFrame(view, trackingState, canonical_scene, live_scene, warp_field, renderState_live);
+		denseMapper->ProcessFrame(view, trackingState,
+		                          canonical_scene, live_scene, deformed_live_scene, warp_field,
+		                          renderState_live);
 		didFusion = true;
 		if (framesProcessed > 50) trackingInitialised = true;
 

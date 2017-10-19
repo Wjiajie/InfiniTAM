@@ -86,6 +86,10 @@ namespace ITMLib
 		MemoryDeviceType memoryType;
 
 	public:
+		MemoryDeviceType getMemoryType(){
+			return memoryType;
+		}
+
 		ITMVoxelBlockHash(MemoryDeviceType memoryType)
 		{
 			this->memoryType = memoryType;
