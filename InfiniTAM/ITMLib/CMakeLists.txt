@@ -405,7 +405,7 @@ Trackers/CPU/ITMColorTracker_CPU.cpp
 Trackers/CPU/ITMDepthTracker_CPU.cpp
 Trackers/CPU/ITMExtendedTracker_CPU.cpp
 Trackers/CPU/ITMKillingTracker_CPU.cpp
-        Trackers/CPU/ITMSceneMotionTracker_CPU.tpp
+Trackers/CPU/ITMSceneMotionTracker_CPU.tpp
 )
 
 SET(ITMLIB_TRACKERS_CPU_HEADERS
@@ -422,7 +422,7 @@ Trackers/CUDA/ITMColorTracker_CUDA.cu
 Trackers/CUDA/ITMDepthTracker_CUDA.cu
 Trackers/CUDA/ITMExtendedTracker_CUDA.cu
 Trackers/CUDA/ITMKillingTracker_CUDA.cu
-        Trackers/CUDA/ITMSceneMotionTracker_CUDA.tcu
+Trackers/CUDA/ITMSceneMotionTracker_CUDA.tcu
 )
 
 SET(ITMLIB_TRACKERS_CUDA_HEADERS
@@ -464,6 +464,7 @@ SET(ITMLIB_TRACKERS_SHARED_HEADERS
 Trackers/Shared/ITMColorTracker_Shared.h
 Trackers/Shared/ITMDepthTracker_Shared.h
 Trackers/Shared/ITMExtendedTracker_Shared.h
+Trackers/Shared/ITMSceneMotionTracker_Shared.h
 )
 
 ##
