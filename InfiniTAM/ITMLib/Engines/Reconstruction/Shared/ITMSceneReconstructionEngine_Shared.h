@@ -205,15 +205,21 @@ _CPU_AND_GPU_CODE_ inline void buildHashAllocAndVisibleTypePP(DEVICEPTR(uchar) *
 	pt_buff = pt_camera_f * (1.0f + mu / norm); pt_buff.w = 1.0f;
 	point_e = TO_VECTOR3(invM_d * pt_buff) * oneOverVoxelSize;
 
+	// segment from start of the (truncated SDF) band, through the observed point, and to the opposite (occluded)
+	// end of the (truncated SDF) band, along the ray cast from the camera through the point, in camera space
 	direction = point_e - point;
+
 	norm = sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
+	// number of steps to take along the truncated SDF band
 	noSteps = (int)ceil(2.0f*norm);
 
+	// a single stride along the sdf band segment from one step to the next
 	direction /= (float)(noSteps - 1);
 
 	//add neighbouring blocks
 	for (int i = 0; i < noSteps; i++)
 	{
+		//find block position at current step
 		blockPos = TO_SHORT_FLOOR3(point);
 
 		//compute index in hash table

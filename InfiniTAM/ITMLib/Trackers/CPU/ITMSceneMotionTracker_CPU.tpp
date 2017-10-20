@@ -38,59 +38,41 @@ template<class TVoxel, class TWarpField, class TIndex>
 void ITMSceneMotionTracker_CPU<TVoxel, TWarpField, TIndex>::DeformScene(ITMScene<TVoxel, TIndex>* sceneOld,
                                                                         ITMScene<TVoxel, TIndex>* sceneNew,
                                                                         ITMScene<TWarpField, TIndex>* warpField) {
-	const TVoxel* oldLocalVBA = sceneOld->localVBA.GetVoxelBlocks();
-	const TWarpField* warpLocalVBA = warpField->localVBA.GetVoxelBlocks();
-	const TVoxel* newLocalVBA = sceneNew->localVBA.GetVoxelBlocks();
+	const TVoxel* oldVoxelBlocks = sceneOld->localVBA.GetVoxelBlocks();
+	const TWarpField* warpVoxelBlocks = warpField->localVBA.GetVoxelBlocks();
+
+	TVoxel* newVoxelBlocks = sceneNew->localVBA.GetVoxelBlocks();
 
 	//should match //TODO: maybe combine warp field and the live scene into a single voxel grid to accelerate lookups(?)
 	const ITMHashEntry* oldHashTable = sceneOld->index.GetEntries();
 	const ITMHashEntry* warpHashTable = warpField->index.GetEntries();
+
+	ITMHashEntry* newHashTable = sceneNew->index.GetEntries();
 	int noTotalLiveEntries = sceneOld->index.noTotalEntries;
 
 
 	for (int entryId = 0; entryId < noTotalLiveEntries; entryId++) {
-		Vector3i liveHashEntryPosition;
+		Vector3i oldHashEntryPosition;
 		const ITMHashEntry& currentLiveHashEntry = oldHashTable[entryId];
 
 		if (currentLiveHashEntry.ptr < 0) continue;
 
 		//position of the current entry in 3D space
-		liveHashEntryPosition = currentLiveHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		oldHashEntryPosition = currentLiveHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-					const int neighborCount = 8;
-					Vector3f points[neighborCount];
-					Vector3f warps[neighborCount];
-					Vector3f projectedPoints[neighborCount];
-					float sdfVals[neighborCount];
-					Vector3u colorVals[neighborCount];
-
-					Vector3i livePointPosition = liveHashEntryPosition + Vector3i(x, y, z);
-					int vmIndex;
-					//look up current neighbors & their warps
-					findPointNeighborWarp_t(warps, livePointPosition, warpLocalVBA, warpHashTable);
-					findPointNeighbor_PositionsSdfColor(points, sdfVals, colorVals, livePointPosition, oldLocalVBA,
-					                                    oldHashTable);
-
-					//apply warp directly and find average
-					Vector3f averageProjectedPoint;
-					for (int iVoxel = 0; iVoxel < neighborCount; iVoxel++){
-						projectedPoints[iVoxel] = points[iVoxel] + warps[iVoxel];
-						averageProjectedPoint += projectedPoints[iVoxel];
+					Vector3i oldVoxelPosition = oldHashEntryPosition + Vector3i(x, y, z);
+					bool foundVoxel;
+					TVoxel oldVoxel = readVoxel(oldVoxelBlocks, oldHashTable, oldVoxelPosition, foundVoxel);
+					if(!foundVoxel){
+						continue;
 					}
-					averageProjectedPoint /= neighborCount;
-					Vector3i closestTargetPoint = Vector3i(static_cast<const int>(std::round(averageProjectedPoint.x)),
-					                                       static_cast<const int>(std::round(averageProjectedPoint.y)),
-					                                       static_cast<const int>(std::round(averageProjectedPoint.z)));
+					TWarpField warpVoxel = readVoxel(warpVoxelBlocks, warpHashTable, oldVoxelPosition, foundVoxel);
+					Vector3f projectedPosition = oldVoxelPosition.toFloat() + warpVoxel.warp_t;
 
-
-					float sdfCanonical;
-					Vector3u colorCanonical;
-//					interpolateTrilinearly(sdfCanonical, colorCanonical, sdfVals, colorVals, points,
-//					                     livePointPosition);
-
+					distributeTrilinearly(oldVoxel, projectedPosition, newVoxelBlocks, newHashTable, sceneNew);
 				}
 			}
 		}
