@@ -13,6 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+#include <cmath>
 #include "ITMSceneMotionTracker_CPU.h"
 #include "../Shared/ITMSceneMotionTracker_Shared.h"
 
@@ -24,7 +25,8 @@ template<class TVoxel, class TWarpField, class TIndex>
 float
 ITMSceneMotionTracker_CPU<TVoxel, TWarpField, TIndex>::UpdateWarpField(ITMScene<TVoxel, TIndex>* canonicalScene,
                                                                        ITMScene<TVoxel, TIndex>* liveScene,
-                                                                       ITMScene<TWarpField, TIndex>* warpField) {
+                                                                       ITMScene<TWarpField, TIndex>* warpField,
+                                                                       ITMScene <TWarpField, TIndex>* warpFieldDelta) {
 
 	//TODO
 
@@ -49,7 +51,6 @@ void ITMSceneMotionTracker_CPU<TVoxel, TWarpField, TIndex>::DeformScene(ITMScene
 	for (int entryId = 0; entryId < noTotalLiveEntries; entryId++) {
 		Vector3i liveHashEntryPosition;
 		const ITMHashEntry& currentLiveHashEntry = oldHashTable[entryId];
-		const ITMHashEntry& currentWarpHashEntry = warpHashTable[entryId];
 
 		if (currentLiveHashEntry.ptr < 0) continue;
 
@@ -61,18 +62,33 @@ void ITMSceneMotionTracker_CPU<TVoxel, TWarpField, TIndex>::DeformScene(ITMScene
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					const int neighborCount = 8;
 					Vector3f points[neighborCount];
+					Vector3f warps[neighborCount];
+					Vector3f projectedPoints[neighborCount];
 					float sdfVals[neighborCount];
 					Vector3u colorVals[neighborCount];
 
 					Vector3i livePointPosition = liveHashEntryPosition + Vector3i(x, y, z);
 					int vmIndex;
-					Vector3f warp_t = readVoxel(warpLocalVBA, warpHashTable, livePointPosition, vmIndex).warp_t;
-					//use truncated value here, for it will yield the correct neighbors during lookup
-					findPointNeighborsGeneric(points, sdfVals, colorVals, livePointPosition,
-					                          oldLocalVBA, oldHashTable);
+					//look up current neighbors & their warps
+					findPointNeighborWarp_t(warps, livePointPosition, warpLocalVBA, warpHashTable);
+					findPointNeighbor_PositionsSdfColor(points, sdfVals, colorVals, livePointPosition, oldLocalVBA,
+					                                    oldHashTable);
+
+					//apply warp directly and find average
+					Vector3f averageProjectedPoint;
+					for (int iVoxel = 0; iVoxel < neighborCount; iVoxel++){
+						projectedPoints[iVoxel] = points[iVoxel] + warps[iVoxel];
+						averageProjectedPoint += projectedPoints[iVoxel];
+					}
+					averageProjectedPoint /= neighborCount;
+					Vector3i closestTargetPoint = Vector3i(static_cast<const int>(std::round(averageProjectedPoint.x)),
+					                                       static_cast<const int>(std::round(averageProjectedPoint.y)),
+					                                       static_cast<const int>(std::round(averageProjectedPoint.z)));
+
+
 					float sdfCanonical;
 					Vector3u colorCanonical;
-//					interpolateTrilinear(sdfCanonical, colorCanonical, sdfVals, colorVals, points,
+//					interpolateTrilinearly(sdfCanonical, colorCanonical, sdfVals, colorVals, points,
 //					                     livePointPosition);
 
 				}

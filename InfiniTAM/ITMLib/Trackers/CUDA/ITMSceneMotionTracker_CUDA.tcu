@@ -20,7 +20,8 @@ using namespace ITMLib;
 template<class TVoxel, class TWarpField, class TIndex>
 float ITMSceneMotionTracker_CUDA<TVoxel, TWarpField, TIndex>::UpdateWarpField(ITMScene<TVoxel, TIndex>* canonicalScene,
                                                                               ITMScene<TVoxel, TIndex>* liveScene,
-                                                                              ITMScene<TWarpField, TIndex>* warpField) {
+                                                                              ITMScene<TWarpField, TIndex>* warpField,
+                                                                              ITMScene <TWarpField, TIndex>* warpFieldDelta) {
 	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");
 	return 0;
 }

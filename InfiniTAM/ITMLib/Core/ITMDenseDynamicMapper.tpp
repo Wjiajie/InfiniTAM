@@ -49,14 +49,12 @@ void ITMDenseDynamicMapper<TVoxel,TWarpField,TIndex>::ResetWarp(ITMScene<TWarpFi
 }
 
 template<class TVoxel, class TWarpField, class TIndex>
-void ITMDenseDynamicMapper<TVoxel,TWarpField,TIndex>::ProcessFrame(
-		const ITMView *view,
-		const ITMTrackingState *trackingState,
-		ITMScene<TVoxel,TIndex> *canonical_scene,
-		ITMScene<TVoxel,TIndex> *live_scene,
-		ITMScene<TVoxel,TIndex> *deformed_live_scene,
-		ITMScene<TWarpField,TIndex> *warp_field,
-		ITMRenderState *renderState)
+void ITMDenseDynamicMapper<TVoxel,TWarpField,TIndex>::ProcessFrame(const ITMView* view,
+                                                                   const ITMTrackingState* trackingState,
+                                                                   ITMScene<TVoxel, TIndex>* canonical_scene,
+                                                                   ITMScene<TVoxel, TIndex>* live_scene,
+                                                                   ITMScene<TWarpField, TIndex>* warp_field,
+                                                                   ITMRenderState* renderState)
 {
 	// clear out the live-frame SDF
 	sceneRecoEngine->ResetScene(live_scene);
@@ -68,17 +66,7 @@ void ITMDenseDynamicMapper<TVoxel,TWarpField,TIndex>::ProcessFrame(
 	sceneRecoEngine->IntegrateIntoScene(live_scene, view, trackingState, renderState);
 
 
-	float energy = std::numeric_limits<float>::infinity();
-	const int max_iteration_count = 100; //TODO -- make parameter
-	const float energy_threshold = 0.1; //TODO -- make parameter
-	energy = sceneMotionTracker->UpdateWarpField(canonical_scene,live_scene,warp_field);//don't need to update live scene on first iteration
-	for(int iteration = 1; energy < energy_threshold || iteration < max_iteration_count; iteration++){
-		sceneMotionTracker->PerformSceneTrackingIteration(canonical_scene, live_scene, deformed_live_scene, warp_field);
-		delete live_scene;
-		live_scene = deformed_live_scene;
-		deformed_live_scene = new ITMScene<TVoxel,TIndex>(live_scene->sceneParams, live_scene->globalCache == NULL
-				, live_scene->index.getMemoryType());
-	}
+	sceneMotionTracker->ProcessFrame(canonical_scene,live_scene,warp_field);
 
 
 	//TODO: update canonical_scene from live_scene
