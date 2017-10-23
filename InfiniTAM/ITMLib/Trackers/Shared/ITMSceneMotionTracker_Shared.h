@@ -117,20 +117,12 @@ inline void allocateHashEntry(Vector3i& voxelLocation,
  * \param localVBA the voxel grid
  * \param hashTable the hash table index of the voxel entries
  */
-template<typename TVoxel, typename TIndex>
 _CPU_AND_GPU_CODE_
-inline void findOrAllocatePointNeighbors(THREADPTR(Vector3f)* p,
-                                         THREADPTR(int) voxelIndexes[8],
-                                         Vector3i& blockLocation,
-                                         ITMHashEntry* hashTable,
-                                         ITMScene<TVoxel, TIndex>* scene) {
+inline void findOrAllocatePointNeighbors(Vector3f* p, int voxelIndexes[8], Vector3i& blockLocation, ITMHashEntry* hashTable,
+                                         int& lastFreeVoxelBlockId, int& lastFreeExcessListId,
+                                         int* voxelAllocationList, int* excessAllocationList) {
 	int foundPoint;
 	Vector3i location;
-
-	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
-	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
-	int* voxelAllocationList = scene->localVBA.GetAllocationList();
-	int* excessAllocationList = scene->index.GetExcessAllocationList();
 
 	ITMLib::ITMVoxelBlockHash::IndexCache cache;
 
@@ -154,8 +146,6 @@ inline void findOrAllocatePointNeighbors(THREADPTR(Vector3f)* p,
 	PROCESS_VOXEL(Vector3i(1, 1, 1), 7);
 #undef PROCESS_VOXEL
 
-	scene->localVBA.lastFreeBlockId = lastFreeExcessListId;
-	scene->index.SetLastFreeExcessListId(lastFreeExcessListId);
 }
 
 
@@ -191,13 +181,13 @@ inline void findPointNeighbor_PositionsSdfColor(THREADPTR(Vector3f)* p,
     colorVals[index] = voxel.clr;
 
 	PROCESS_VOXEL(Vector3i(0, 0, 0), 0);
-	PROCESS_VOXEL(Vector3i(0, 0, 1), 0);
-	PROCESS_VOXEL(Vector3i(0, 1, 0), 0);
-	PROCESS_VOXEL(Vector3i(0, 1, 1), 0);
-	PROCESS_VOXEL(Vector3i(1, 0, 0), 0);
-	PROCESS_VOXEL(Vector3i(1, 0, 1), 0);
-	PROCESS_VOXEL(Vector3i(1, 1, 0), 0);
-	PROCESS_VOXEL(Vector3i(1, 1, 1), 0);
+	PROCESS_VOXEL(Vector3i(0, 0, 1), 1);
+	PROCESS_VOXEL(Vector3i(0, 1, 0), 2);
+	PROCESS_VOXEL(Vector3i(0, 1, 1), 3);
+	PROCESS_VOXEL(Vector3i(1, 0, 0), 4);
+	PROCESS_VOXEL(Vector3i(1, 0, 1), 5);
+	PROCESS_VOXEL(Vector3i(1, 1, 0), 6);
+	PROCESS_VOXEL(Vector3i(1, 1, 1), 7);
 #undef PROCESS_VOXEL
 }
 
@@ -264,12 +254,15 @@ inline void computeTrilinearCoefficients(Vector3f& targetPoint, Vector3f& point0
  * \param localVBA the voxel grid
  * \param hashTable the hash table index of the voxel entries
  */
-template<typename TVoxel, typename TIndex>
+template<typename TVoxel>
 _CPU_AND_GPU_CODE_
 inline void distributeTrilinearly(const TVoxel& voxel, Vector3f& pointPosition,
                                   TVoxel* voxelData,
                                   ITMHashEntry* hashTable,
-                                  ITMScene<TVoxel, TIndex>* sceneNew) {
+                                  int& lastFreeVoxelBlockId,
+                                  int& lastFreeExcessListId,
+                                  int* voxelAllocationList,
+                                  int* excessAllocationList) {
 	const int neighborCount = 8;
 
 	//TODO: provide alternatives for voxel types that do not support all of these values.
@@ -285,7 +278,8 @@ inline void distributeTrilinearly(const TVoxel& voxel, Vector3f& pointPosition,
 	int neighborIndices[neighborCount];
 
 	// find the actual neighbors and compute their 3D coordinates in Vector3f format
-	findOrAllocatePointNeighbors(neighborPositions, neighborIndices, neighbor0BlockLocation,hashTable, sceneNew);
+	findOrAllocatePointNeighbors(neighborPositions, neighborIndices, neighbor0BlockLocation, hashTable,
+	                             lastFreeVoxelBlockId, lastFreeExcessListId, voxelAllocationList,excessAllocationList);
 
 	//compute the trilinear coefficients for each neighbor
 	float trilinearCoefficients[neighborCount];

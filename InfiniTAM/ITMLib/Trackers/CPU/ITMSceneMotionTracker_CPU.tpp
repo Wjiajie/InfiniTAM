@@ -50,6 +50,10 @@ void ITMSceneMotionTracker_CPU<TVoxel, TWarpField, TIndex>::DeformScene(ITMScene
 	ITMHashEntry* newHashTable = sceneNew->index.GetEntries();
 	int noTotalLiveEntries = sceneOld->index.noTotalEntries;
 
+	int lastFreeVoxelBlockId = sceneNew->localVBA.lastFreeBlockId;
+	int lastFreeExcessListId = sceneNew->index.GetLastFreeExcessListId();
+	int* voxelAllocationList = sceneNew->localVBA.GetAllocationList();
+	int* excessAllocationList = sceneNew->index.GetExcessAllocationList();
 
 	for (int entryId = 0; entryId < noTotalLiveEntries; entryId++) {
 		Vector3i oldHashEntryPosition;
@@ -72,11 +76,15 @@ void ITMSceneMotionTracker_CPU<TVoxel, TWarpField, TIndex>::DeformScene(ITMScene
 					TWarpField warpVoxel = readVoxel(warpVoxelBlocks, warpHashTable, oldVoxelPosition, foundVoxel);
 					Vector3f projectedPosition = oldVoxelPosition.toFloat() + warpVoxel.warp_t;
 
-					distributeTrilinearly(oldVoxel, projectedPosition, newVoxelBlocks, newHashTable, sceneNew);
+					distributeTrilinearly(oldVoxel, projectedPosition, newVoxelBlocks, newHashTable,
+					                      lastFreeVoxelBlockId,lastFreeExcessListId,
+					                      voxelAllocationList,excessAllocationList);
 				}
 			}
 		}
 	}
+	sceneNew->localVBA.lastFreeBlockId = lastFreeExcessListId;
+	sceneNew->index.SetLastFreeExcessListId(lastFreeExcessListId);
 	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");
 }
 
