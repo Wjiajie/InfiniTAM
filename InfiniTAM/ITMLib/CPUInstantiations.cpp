@@ -32,17 +32,17 @@ namespace ITMLib
 	template class ITMBasicSurfelEngine<ITMSurfel_grey>;
 	template class ITMBasicSurfelEngine<ITMSurfel_rgb>;
 	template class ITMMultiEngine<ITMVoxel, ITMVoxelIndex>;
-	template class ITMKillingEngine<ITMVoxel, ITMWarpField, ITMVoxelIndex>;
+	template class ITMKillingEngine<ITMVoxel, ITMVoxelIndex>;
 	template class ITMDenseMapper<ITMVoxel, ITMVoxelIndex>;
-	template class ITMDenseDynamicMapper<ITMVoxel, ITMWarpField, ITMVoxelIndex>;
+	template class ITMDenseDynamicMapper<ITMVoxel, ITMVoxelIndex>;
 	template class ITMVoxelMapGraphManager<ITMVoxel, ITMVoxelIndex>;
 	template class ITMVisualisationEngine_CPU<ITMVoxel, ITMVoxelIndex>;
 	template class ITMMeshingEngine_CPU<ITMVoxel, ITMVoxelIndex>;
 	template class ITMMultiMeshingEngine_CPU<ITMVoxel, ITMVoxelIndex>;
 	template class ITMSwappingEngine_CPU<ITMVoxel, ITMVoxelIndex>;
 	template class ITMSceneReconstructionEngine_CPU<ITMVoxel, ITMVoxelIndex>;
-	template class ITMSceneMotionTracker<ITMVoxel, ITMWarpField, ITMVoxelIndex>;
-	template class ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarpField, ITMVoxelIndex>;
+	template class ITMSceneMotionTracker<ITMVoxel, ITMVoxelIndex>;
+	template class ITMSceneMotionTracker_CPU<ITMVoxel, ITMVoxelIndex>;
 
 	template class ITMDenseSurfelMapper<ITMSurfel_grey>;
 	template class ITMDenseSurfelMapper<ITMSurfel_rgb>;

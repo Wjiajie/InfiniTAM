@@ -238,6 +238,8 @@ struct ITMVoxel_f_killing
 	/** Number of observations that made up @p clr. */
 	uchar w_color;
 	float confidence;
+	/** vector translating the current point to a different location **/
+	Vector3f warp_t;
 
 	_CPU_AND_GPU_CODE_ ITMVoxel_f_killing()
 	{
@@ -247,5 +249,6 @@ struct ITMVoxel_f_killing
 		clr = Vector3u((uchar)0);
 		//trilienar_weights = Vector3u((uchar)0);
 		w_color = 0;
+		warp_t = Vector3f(0.f);
 	}
 };

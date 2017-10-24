@@ -21,19 +21,17 @@
 #include "../Trackers/Interface/ITMSceneMotionTracker.h"
 
 namespace ITMLib{
-template<class TVoxel, class TWarpField, class TIndex>
+template<class TVoxel, class TIndex>
 class ITMDenseDynamicMapper {
 
 	private:
 		ITMSceneReconstructionEngine<TVoxel,TIndex> *sceneRecoEngine;
-		ITMSceneReconstructionEngine<TWarpField,TIndex> *warpCleaner;
 		ITMSwappingEngine<TVoxel,TIndex> *swappingEngine;
-		ITMSceneMotionTracker<TVoxel,TWarpField,TIndex> *sceneMotionTracker;
+		ITMSceneMotionTracker<TVoxel,TIndex> *sceneMotionTracker;
 		ITMLibSettings::SwappingMode swappingMode;
 
 	public:
 		void ResetScene(ITMScene<TVoxel,TIndex> *scene) const;
-		void ResetWarp(ITMScene<TWarpField,TIndex> *warp) const;
 
 		/**
 		* \brief Tracks motions of all points between frames and fuses the new data into the canonical frame
@@ -54,7 +52,6 @@ class ITMDenseDynamicMapper {
 		                  const ITMTrackingState* trackingState,
 		                  ITMScene <TVoxel, TIndex>* canonical_scene,
 		                  ITMScene <TVoxel, TIndex>* live_scene,
-		                  ITMScene <TWarpField, TIndex>* warp_field,
 		                  ITMRenderState* renderState_live);
 
 		/// Update the visible list (this can be called to update the visible list when fusion is turned off)

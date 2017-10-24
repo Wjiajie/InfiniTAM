@@ -16,8 +16,8 @@
 
 using namespace ITMLib;
 
-template <typename TVoxel, typename TWarpField, typename TIndex>
-ITMKillingEngine<TVoxel, TWarpField, TIndex>::ITMKillingEngine(const ITMLibSettings *settings, const ITMRGBDCalib& calib, Vector2i imgSize_rgb, Vector2i imgSize_d)
+template <typename TVoxel,  typename TIndex>
+ITMKillingEngine<TVoxel,  TIndex>::ITMKillingEngine(const ITMLibSettings *settings, const ITMRGBDCalib& calib, Vector2i imgSize_rgb, Vector2i imgSize_d)
 {
 	this->settings = settings;
 
@@ -26,8 +26,6 @@ ITMKillingEngine<TVoxel, TWarpField, TIndex>::ITMKillingEngine(const ITMLibSetti
 	MemoryDeviceType memoryType = settings->GetMemoryType();
 	this->canonical_scene = new ITMScene<TVoxel,TIndex>(&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 	this->live_scene = new ITMScene<TVoxel,TIndex>(&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
-	this->warp_field = new ITMScene<TWarpField,TIndex>(&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
-
 	const ITMLibSettings::DeviceType deviceType = settings->deviceType;
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
@@ -38,10 +36,9 @@ ITMKillingEngine<TVoxel, TWarpField, TIndex>::ITMKillingEngine(const ITMLibSetti
 	if (settings->createMeshingEngine)
 		meshingEngine = ITMMeshingEngineFactory::MakeMeshingEngine<TVoxel,TIndex>(deviceType);
 
-	denseMapper = new ITMDenseDynamicMapper<TVoxel, TWarpField, TIndex>(settings);
+	denseMapper = new ITMDenseDynamicMapper<TVoxel,  TIndex>(settings);
 	denseMapper->ResetScene(canonical_scene);
 	denseMapper->ResetScene(live_scene);
-	denseMapper->ResetWarp(warp_field);
 
 	imuCalibrator = new ITMIMUCalibrator_iPad();
 	tracker = ITMTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, settings, lowLevelEngine, imuCalibrator, canonical_scene->sceneParams);
@@ -71,15 +68,14 @@ ITMKillingEngine<TVoxel, TWarpField, TIndex>::ITMKillingEngine(const ITMLibSetti
 	framesProcessed = 0;
 }
 
-template <typename TVoxel, typename TWarpField, typename TIndex>
-ITMKillingEngine<TVoxel,TWarpField,TIndex>::~ITMKillingEngine()
+template <typename TVoxel,  typename TIndex>
+ITMKillingEngine<TVoxel,TIndex>::~ITMKillingEngine()
 {
 	delete renderState_live;
 	if (renderState_freeview != NULL) delete renderState_freeview;
 
 	delete canonical_scene;
 	delete live_scene;
-	delete warp_field;
 
 	delete denseMapper;
 	delete trackingController;
@@ -101,8 +97,8 @@ ITMKillingEngine<TVoxel,TWarpField,TIndex>::~ITMKillingEngine()
 	if (meshingEngine != NULL) delete meshingEngine;
 }
 
-template <typename TVoxel, typename TWarpField, typename TIndex>
-void ITMKillingEngine<TVoxel,TWarpField,TIndex>::SaveSceneToMesh(const char *objFileName)
+template <typename TVoxel,  typename TIndex>
+void ITMKillingEngine<TVoxel,TIndex>::SaveSceneToMesh(const char *objFileName)
 {
 	if (meshingEngine == NULL) return;
 
@@ -114,8 +110,8 @@ void ITMKillingEngine<TVoxel,TWarpField,TIndex>::SaveSceneToMesh(const char *obj
 	delete mesh;
 }
 
-template <typename TVoxel, typename TWarpField, typename TIndex>
-void ITMKillingEngine<TVoxel,TWarpField, TIndex>::SaveToFile()
+template <typename TVoxel,  typename TIndex>
+void ITMKillingEngine<TVoxel, TIndex>::SaveToFile()
 {
 	// throws error if any of the saves fail
 
@@ -131,8 +127,8 @@ void ITMKillingEngine<TVoxel,TWarpField, TIndex>::SaveToFile()
 	canonical_scene->SaveToDirectory(sceneOutputDirectory);
 }
 
-template <typename TVoxel, typename TWarpField, typename TIndex>
-void ITMKillingEngine<TVoxel,TWarpField, TIndex>::LoadFromFile()
+template <typename TVoxel,  typename TIndex>
+void ITMKillingEngine<TVoxel, TIndex>::LoadFromFile()
 {
 	std::string saveInputDirectory = "State/";
 	std::string relocaliserInputDirectory = saveInputDirectory + "Relocaliser/", sceneInputDirectory = saveInputDirectory + "Scene/";
@@ -167,12 +163,11 @@ void ITMKillingEngine<TVoxel,TWarpField, TIndex>::LoadFromFile()
 	}
 }
 
-template <typename TVoxel, typename TWarpField, typename TIndex>
-void ITMKillingEngine<TVoxel,TWarpField,TIndex>::resetAll()
+template <typename TVoxel,  typename TIndex>
+void ITMKillingEngine<TVoxel,TIndex>::resetAll()
 {
 	denseMapper->ResetScene(canonical_scene);
 	denseMapper->ResetScene(live_scene);
-	denseMapper->ResetWarp(warp_field);
 	trackingState->Reset();
 }
 
@@ -249,8 +244,8 @@ static void QuaternionFromRotationMatrix(const double *matrix, double *q) {
 }
 #endif
 
-template <typename TVoxel,typename TWarpField, typename TIndex>
-ITMTrackingState::TrackingResult ITMKillingEngine<TVoxel,TWarpField,TIndex>::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement)
+template <typename TVoxel, typename TIndex>
+ITMTrackingState::TrackingResult ITMKillingEngine<TVoxel,TIndex>::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement)
 {
 	// prepare image and turn it into a depth image
 	if (imuMeasurement == NULL) viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useBilateralFilter);
@@ -310,7 +305,7 @@ ITMTrackingState::TrackingResult ITMKillingEngine<TVoxel,TWarpField,TIndex>::Pro
 	bool didFusion = false;
 	if ((trackerResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) && (relocalisationCount == 0)) {
 		// fusion
-		denseMapper->ProcessFrame(view, trackingState, canonical_scene, live_scene, warp_field, renderState_live);
+		denseMapper->ProcessFrame(view, trackingState, canonical_scene, live_scene, renderState_live);
 		didFusion = true;
 		if (framesProcessed > 50) trackingInitialised = true;
 
@@ -349,14 +344,14 @@ ITMTrackingState::TrackingResult ITMKillingEngine<TVoxel,TWarpField,TIndex>::Pro
 	return trackerResult;
 }
 
-template <typename TVoxel, typename TWarpField, typename TIndex>
-Vector2i ITMKillingEngine<TVoxel,TWarpField,TIndex>::GetImageSize(void) const
+template <typename TVoxel,  typename TIndex>
+Vector2i ITMKillingEngine<TVoxel,TIndex>::GetImageSize(void) const
 {
 	return renderState_live->raycastImage->noDims;
 }
 
-template <typename TVoxel, typename TWarpField, typename TIndex>
-void ITMKillingEngine<TVoxel,TWarpField,TIndex>::GetImage(ITMUChar4Image *out, GetImageType getImageType, ORUtils::SE3Pose *pose, ITMIntrinsics *intrinsics)
+template <typename TVoxel,  typename TIndex>
+void ITMKillingEngine<TVoxel,TIndex>::GetImage(ITMUChar4Image *out, GetImageType getImageType, ORUtils::SE3Pose *pose, ITMIntrinsics *intrinsics)
 {
 	if (view == NULL) return;
 
@@ -444,20 +439,20 @@ void ITMKillingEngine<TVoxel,TWarpField,TIndex>::GetImage(ITMUChar4Image *out, G
 	};
 }
 
-template <typename TVoxel, typename TWarpField, typename TIndex>
-void ITMKillingEngine<TVoxel,TWarpField,TIndex>::turnOnTracking() { trackingActive = true; }
+template <typename TVoxel,  typename TIndex>
+void ITMKillingEngine<TVoxel,TIndex>::turnOnTracking() { trackingActive = true; }
 
-template <typename TVoxel, typename TWarpField, typename TIndex>
-void ITMKillingEngine<TVoxel,TWarpField,TIndex>::turnOffTracking() { trackingActive = false; }
+template <typename TVoxel,  typename TIndex>
+void ITMKillingEngine<TVoxel,TIndex>::turnOffTracking() { trackingActive = false; }
 
-template <typename TVoxel, typename TWarpField, typename TIndex>
-void ITMKillingEngine<TVoxel,TWarpField,TIndex>::turnOnIntegration() { fusionActive = true; }
+template <typename TVoxel,  typename TIndex>
+void ITMKillingEngine<TVoxel,TIndex>::turnOnIntegration() { fusionActive = true; }
 
-template <typename TVoxel, typename TWarpField, typename TIndex>
-void ITMKillingEngine<TVoxel,TWarpField,TIndex>::turnOffIntegration() { fusionActive = false; }
+template <typename TVoxel,  typename TIndex>
+void ITMKillingEngine<TVoxel,TIndex>::turnOffIntegration() { fusionActive = false; }
 
-template <typename TVoxel, typename TWarpField, typename TIndex>
-void ITMKillingEngine<TVoxel,TWarpField,TIndex>::turnOnMainProcessing() { mainProcessingActive = true; }
+template <typename TVoxel,  typename TIndex>
+void ITMKillingEngine<TVoxel,TIndex>::turnOnMainProcessing() { mainProcessingActive = true; }
 
-template <typename TVoxel, typename TWarpField, typename TIndex>
-void ITMKillingEngine<TVoxel,TWarpField,TIndex>::turnOffMainProcessing() { mainProcessingActive = false; }
+template <typename TVoxel,  typename TIndex>
+void ITMKillingEngine<TVoxel,TIndex>::turnOffMainProcessing() { mainProcessingActive = false; }

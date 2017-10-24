@@ -19,22 +19,19 @@
 #include "../../Objects/Scene/ITMScene.h"
 
 namespace ITMLib {
-	template<class TVoxel, class TWarpField, class TIndex>
+	template<class TVoxel, class TIndex>
 	class ITMSceneMotionTracker {
 	protected:
 
-		virtual void DeformScene(ITMScene <TVoxel, TIndex>* scene_old, ITMScene <TVoxel, TIndex>* scene_new,
-		                         ITMScene <TWarpField, TIndex>* warp_field) = 0;
+		virtual void DeformScene(ITMScene <TVoxel, TIndex>* sceneOld, ITMScene <TVoxel, TIndex>* sceneNew) = 0;
 
-		virtual float UpdateWarpField(ITMScene <TVoxel, TIndex>* canonical_scene, ITMScene <TVoxel, TIndex>* live_scene,
-		                              ITMScene <TWarpField, TIndex>* warp_field,
-		                              ITMScene <TWarpField, TIndex>* warp_field_delta) = 0;
+		virtual float UpdateWarpField(ITMScene <TVoxel, TIndex>* canonicalScene,
+		                              ITMScene <TVoxel, TIndex>* liveScene) = 0;
 
 	public:
 
 		void ProcessFrame(ITMScene <TVoxel, TIndex>* canonicalScene,
-		                  ITMScene <TVoxel, TIndex>* liveScene,
-		                  ITMScene <TWarpField, TIndex>* warpField);
+		                  ITMScene <TVoxel, TIndex>* liveScene);
 	};
 
 

@@ -23,7 +23,7 @@
 #include <boost/test/unit_test.hpp>
 
 
-//local
+//ITMlib
 #include "../ITMLib/ITMLibDefines.h"
 #include "../ITMLib/Objects/Scene/ITMScene.h"
 #include "../ITMLib/Objects/Scene/ITMRepresentationAccess.h"
@@ -32,12 +32,16 @@
 #include "../ITMLib/Engines/Reconstruction/Interface/ITMSceneReconstructionEngine.h"
 #include "../ITMLib/Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
 
+//local
+#include "TestUtils.h"
+
 using namespace ITMLib;
 
 int i = 1;
-BOOST_AUTO_TEST_CASE( test_voxel_allocation )
+BOOST_AUTO_TEST_CASE( test1 )
 {
 	ITMLibSettings *settings = new ITMLibSettings();
+	settings->deviceType = ITMLibSettings::DEVICE_CUDA;
 	ITMScene<ITMVoxel, ITMVoxelIndex> *scene = new ITMScene<ITMVoxel,ITMVoxelIndex>(&settings->sceneParams,
 	                                                                                settings->swappingMode ==    ITMLibSettings::SWAPPINGMODE_ENABLED, settings->GetMemoryType());
 
@@ -50,8 +54,7 @@ BOOST_AUTO_TEST_CASE( test_voxel_allocation )
 	int* excessAllocationList = scene->index.GetExcessAllocationList();
 	Vector3i voxel1Position(0,0,0);
 	ITMHashEntry* hashTable = scene->index.GetEntries();
-	allocateHashEntry(voxel1Position, hashTable,
-	                  lastFreeVoxelBlockId, lastFreeExcessListId,voxelAllocationList,excessAllocationList);
+	//TODO
 	scene->localVBA.lastFreeBlockId = lastFreeExcessListId;
 	scene->index.SetLastFreeExcessListId(lastFreeExcessListId);
 

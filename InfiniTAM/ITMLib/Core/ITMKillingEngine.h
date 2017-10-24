@@ -16,7 +16,7 @@
 
 namespace ITMLib
 {
-	template <typename TVoxel, typename TWarpField, typename TIndex>
+	template <typename TVoxel, typename TIndex>
 	class ITMKillingEngine : public ITMMainEngine
 	{
 	private:
@@ -31,12 +31,11 @@ namespace ITMLib
 		ITMMeshingEngine<TVoxel, TIndex> *meshingEngine;
 
 		ITMViewBuilder *viewBuilder;
-		ITMDenseDynamicMapper<TVoxel, TWarpField, TIndex> *denseMapper;
+		ITMDenseDynamicMapper<TVoxel, TIndex> *denseMapper;
 		ITMTrackingController *trackingController;
 
 		ITMScene<TVoxel, TIndex> *canonical_scene;
 		ITMScene<TVoxel, TIndex> *live_scene;
-		ITMScene<TWarpField, TIndex> *warp_field;
 		ITMRenderState *renderState_live;
 		ITMRenderState *renderState_freeview;
 

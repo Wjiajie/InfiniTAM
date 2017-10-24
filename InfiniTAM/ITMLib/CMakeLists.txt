@@ -372,8 +372,7 @@ Objects/Scene/ITMSurfelScene.h
 Objects/Scene/ITMSurfelTypes.h
 Objects/Scene/ITMVoxelBlockHash.h
 Objects/Scene/ITMVoxelTypes.h
-Objects/Scene/ITMWarpFieldTypes.h
-)
+        )
 
 ##
 SET(ITMLIB_OBJECTS_TRACKING_HEADERS

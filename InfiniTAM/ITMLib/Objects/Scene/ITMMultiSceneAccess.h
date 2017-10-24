@@ -94,7 +94,10 @@ _CPU_AND_GPU_CODE_ inline float readFromSDF_float_interpolated(const TMultiVoxel
 }
 
 template<class TMultiVoxel, class TMultiIndex>
-_CPU_AND_GPU_CODE_ inline Vector4f readFromSDF_color4u_interpolated(const TMultiVoxel *voxelData, const TMultiIndex *voxelIndex, const Vector3f & point, ITMLib::ITMMultiCache & _cache)
+_CPU_AND_GPU_CODE_ inline Vector4f readFromSDF_color4u_interpolated(const TMultiVoxel *voxelData,
+                                                                    const TMultiIndex *voxelIndex,
+                                                                    const Vector3f & point,
+                                                                    ITMLib::ITMMultiCache & _cache)
 {
 	typedef typename TMultiIndex::IndexType TIndex;
 

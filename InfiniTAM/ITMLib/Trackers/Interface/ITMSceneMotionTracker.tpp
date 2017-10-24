@@ -18,25 +18,20 @@
 
 using namespace ITMLib;
 
-template<class TVoxel, class TWarpField, class TIndex>
-void ITMSceneMotionTracker<TVoxel, TWarpField, TIndex>::ProcessFrame(ITMScene<TVoxel, TIndex>* canonicalScene,
-                                                                     ITMScene<TVoxel, TIndex>* liveScene,
-                                                                     ITMScene<TWarpField, TIndex>* warpField) {
+template<class TVoxel, class TIndex>
+void ITMSceneMotionTracker<TVoxel, TIndex>::ProcessFrame(ITMScene<TVoxel, TIndex>* canonicalScene,
+                                                                     ITMScene<TVoxel, TIndex>* liveScene) {
 
-	float energy = std::numeric_limits<float>::infinity();
+	float max_vector_update = std::numeric_limits<float>::infinity();
 	const int max_iteration_count = 100; //TODO -- make parameter
-	const float energy_threshold = 0.1; //TODO -- make parameter
+	const float max_vector_update_threshold = 0.1; //TODO -- make parameter
+	const float update_factor = 0.1; //TODO -- make parameter
+	const float killing_term_damping_factor = 0.1;
+	const float weight_killing_term = 0.1;
+	const float weight_level_set_term = 0.1;
 
-
-
-	for(int iteration = 1; energy < energy_threshold || iteration < max_iteration_count; iteration++){
-		ITMScene<TVoxel, TIndex>* deformedLiveScene = new ITMScene<TVoxel,TIndex>(liveScene->sceneParams, liveScene->globalCache == NULL
-				, liveScene->index.getMemoryType());
-		ITMScene<TWarpField, TIndex>* warpFieldDelta = new ITMScene<TWarpField,TIndex>(warpField->sceneParams, warpField->globalCache == NULL
-				, warpField->index.getMemoryType());
-		delete liveScene;
-		liveScene = deformedLiveScene;
-		DeformScene(liveScene,deformedLiveScene,warpField);
+	for(int iteration = 1; max_vector_update < max_vector_update_threshold || iteration < max_iteration_count; iteration++){
+		max_vector_update = UpdateWarpField(canonicalScene,liveScene);
 	}
 
 

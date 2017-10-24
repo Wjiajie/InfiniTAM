@@ -21,74 +21,62 @@ using namespace ITMLib;
 
 
 
-template<class TVoxel, class TWarpField, class TIndex>
+template<class TVoxel, class TIndex>
 float
-ITMSceneMotionTracker_CPU<TVoxel, TWarpField, TIndex>::UpdateWarpField(ITMScene<TVoxel, TIndex>* canonicalScene,
-                                                                       ITMScene<TVoxel, TIndex>* liveScene,
-                                                                       ITMScene<TWarpField, TIndex>* warpField,
-                                                                       ITMScene <TWarpField, TIndex>* warpFieldDelta) {
+ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TIndex>* canonicalScene,
+                                                                       ITMScene<TVoxel, TIndex>* liveScene) {
 
-	//TODO
+	const TVoxel* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
+	const TVoxel* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
+
+	const ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
+	const ITMHashEntry* liveHashTable = liveScene->index.GetEntries();
+
+	int noTotalEntries = canonicalScene->index.noTotalEntries;
+
+	typename TIndex::IndexCache cacheCanonical;
+	typename TIndex::IndexCache cacheLive;
+
+	float sdf_z_buffer[SDF_BLOCK_SIZE][SDF_BLOCK_SIZE];
+	Vector3f color_z_buffer[SDF_BLOCK_SIZE][SDF_BLOCK_SIZE];
+	bool z_buffer[SDF_BLOCK_SIZE][SDF_BLOCK_SIZE];
+
+
+
+	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+		Vector3i canonicalHashEntryPosition;
+		const ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[entryId];
+
+		if (currentCanonicalHashEntry.ptr < 0) continue;
+
+		//position of the current entry in 3D space
+		canonicalHashEntryPosition = currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+
+		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+					Vector3i voxelPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
+					int foundVoxel;
+					TVoxel canonicalVoxel = readVoxel(canonicalVoxels, canonicalHashTable, voxelPosition, foundVoxel, cacheCanonical);
+					if(foundVoxel){
+						Vector3f projectedPosition = voxelPosition.toFloat() + canonicalVoxel.warp_t;
+						float sdf;
+						Vector3f color;
+						interpolateTrilinearly(liveVoxels,liveHashTable,projectedPosition,cacheLive,sdf,color);
+
+					}
+				}
+			}
+		}
+	}
 
 	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");
 	return 0;
 }
 
-template<class TVoxel, class TWarpField, class TIndex>
-void ITMSceneMotionTracker_CPU<TVoxel, TWarpField, TIndex>::DeformScene(ITMScene<TVoxel, TIndex>* sceneOld,
-                                                                        ITMScene<TVoxel, TIndex>* sceneNew,
-                                                                        ITMScene<TWarpField, TIndex>* warpField) {
-	const TVoxel* oldVoxelBlocks = sceneOld->localVBA.GetVoxelBlocks();
-	const TWarpField* warpVoxelBlocks = warpField->localVBA.GetVoxelBlocks();
+template<class TVoxel, class TIndex>
+void ITMSceneMotionTracker_CPU<TVoxel, TIndex>::DeformScene(ITMScene<TVoxel, TIndex>* sceneOld,
+                                                                        ITMScene<TVoxel, TIndex>* sceneNew) {
 
-	TVoxel* newVoxelBlocks = sceneNew->localVBA.GetVoxelBlocks();
-
-	//should match //TODO: maybe combine warp field and the live scene into a single voxel grid to accelerate lookups(?)
-	const ITMHashEntry* oldHashTable = sceneOld->index.GetEntries();
-	const ITMHashEntry* warpHashTable = warpField->index.GetEntries();
-
-	ITMHashEntry* newHashTable = sceneNew->index.GetEntries();
-	int noTotalLiveEntries = sceneOld->index.noTotalEntries;
-
-	int lastFreeVoxelBlockId = sceneNew->localVBA.lastFreeBlockId;
-	int lastFreeExcessListId = sceneNew->index.GetLastFreeExcessListId();
-	int* voxelAllocationList = sceneNew->localVBA.GetAllocationList();
-	int* excessAllocationList = sceneNew->index.GetExcessAllocationList();
-
-	for (int entryId = 0; entryId < noTotalLiveEntries; entryId++) {
-		Vector3i oldHashEntryPosition;
-		const ITMHashEntry& currentLiveHashEntry = oldHashTable[entryId];
-
-		if (currentLiveHashEntry.ptr < 0) continue;
-
-		//position of the current entry in 3D space
-		oldHashEntryPosition = currentLiveHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-
-		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-					Vector3i oldVoxelPosition = oldHashEntryPosition + Vector3i(x, y, z);
-					bool foundVoxel;
-					TVoxel oldVoxel = readVoxel(oldVoxelBlocks, oldHashTable, oldVoxelPosition, foundVoxel);
-					if(!foundVoxel){
-						continue;
-					}
-					TWarpField warpVoxel = readVoxel(warpVoxelBlocks, warpHashTable, oldVoxelPosition, foundVoxel);
-					Vector3f projectedPosition = oldVoxelPosition.toFloat() + warpVoxel.warp_t;
-
-					distributeTrilinearly(oldVoxel, projectedPosition, newVoxelBlocks, newHashTable,
-					                      lastFreeVoxelBlockId,lastFreeExcessListId,
-					                      voxelAllocationList,excessAllocationList);
-				}
-			}
-		}
-	}
-	sceneNew->localVBA.lastFreeBlockId = lastFreeExcessListId;
-	sceneNew->index.SetLastFreeExcessListId(lastFreeExcessListId);
 	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");
 }
-
-
-
-
-

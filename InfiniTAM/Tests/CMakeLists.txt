@@ -22,6 +22,9 @@ if(BUILD_TESTS)
     SET(sources
             AllTests.cpp
             )
+    SET(headers
+            TestUtils.h
+            )
 
     ################################
     # Specify the libraries to use #

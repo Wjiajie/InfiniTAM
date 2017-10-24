@@ -17,137 +17,6 @@
 
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
 
-_CPU_AND_GPU_CODE_
-inline void allocateHashEntry(Vector3i& voxelLocation,
-                              ITMHashEntry* hashTable,
-                              int& lastFreeVoxelBlockId,
-                              int& lastFreeExcessListId,
-                              int* voxelAllocationList,
-                              int* excessAllocationList) {
-	int vbaIdx, exlIdx;
-
-	Vector3s blockPos = voxelLocation.toShortFloor();
-	int hashIdx = hashIndex(blockPos);
-	//check if hash table contains entry
-	bool isFound = false;
-
-	ITMHashEntry hashEntry = hashTable[hashIdx];
-
-	if (!(IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= -1)) {
-		bool isExcess = false;
-		if (hashEntry.ptr >= -1) //search excess list only if there is no room in ordered part
-		{
-			while (hashEntry.offset >= 1) {
-				hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
-				hashEntry = hashTable[hashIdx];
-
-				if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= -1) {
-					//entry has been streamed out but is visible or in memory and visible
-					isFound = true;
-					break;
-				}
-			}
-			isExcess = true;
-		}
-
-		if (!isFound) //still not found
-		{
-			//allocate
-			if (isExcess) {
-				//needs allocation in the excess list
-				vbaIdx = lastFreeVoxelBlockId;
-				lastFreeVoxelBlockId--;
-				exlIdx = lastFreeExcessListId;
-				lastFreeExcessListId--;
-
-				if (vbaIdx >= 0 && exlIdx >= 0) //there is room in the voxel block array and excess list
-				{
-					Vector4s pt_block_all(blockPos.x, blockPos.y, blockPos.z, 1);
-					ITMHashEntry hashEntry;
-					hashEntry.pos.x = pt_block_all.x;
-					hashEntry.pos.y = pt_block_all.y;
-					hashEntry.pos.z = pt_block_all.z;
-					hashEntry.ptr = voxelAllocationList[vbaIdx];
-					hashEntry.offset = 0;
-
-					int exlOffset = excessAllocationList[exlIdx];
-
-					hashTable[hashIdx].offset = exlOffset + 1; //connect to child
-
-					hashTable[SDF_BUCKET_NUM + exlOffset] = hashEntry; //add child to the excess list
-				} else {
-					// No need to mark the entry as not visible since buildHashAllocAndVisibleTypePP did not mark it.
-					// Restore previous value to avoid leaks.
-					lastFreeVoxelBlockId++;
-					lastFreeExcessListId++;
-				}
-			} else {
-				//needs allocation, fits in the ordered list
-				vbaIdx = lastFreeVoxelBlockId;
-				lastFreeVoxelBlockId--;
-				if (vbaIdx >= 0) //there is room in the voxel block array
-				{
-					Vector4s pt_block_all(blockPos.x, blockPos.y, blockPos.z, 1);
-
-					ITMHashEntry hashEntry;
-					hashEntry.pos.x = pt_block_all.x;
-					hashEntry.pos.y = pt_block_all.y;
-					hashEntry.pos.z = pt_block_all.z;
-					hashEntry.ptr = voxelAllocationList[vbaIdx];
-					hashEntry.offset = 0;
-
-					hashTable[hashIdx] = hashEntry;
-				} else {
-					// Restore previous value to avoid leaks.
-					lastFreeVoxelBlockId++;
-				}
-			}
-		}
-	}
-}
-
-//TODO: assume we do have color for now. Make provisions later to account for TVoxel with no color. -Greg (GitHub:Algomorph)
-/**
- * \brief find neighboring voxels and write their pointers to array
- * This is different from findPointNeighbors because it returns 1.0 for truncated voxels and voxels beyond the scene boundary.
- * \tparam TVoxel the voxel type
- * \param p [out] pointer to memory where to store 8 values Vector3i for all the neighbors
- * \param sdf [out] pointer to memory where to store 8 SDF values for all the neighbors
- * \param blockLocation the actual block location
- * \param localVBA the voxel grid
- * \param hashTable the hash table index of the voxel entries
- */
-_CPU_AND_GPU_CODE_
-inline void findOrAllocatePointNeighbors(Vector3f* p, int voxelIndexes[8], Vector3i& blockLocation, ITMHashEntry* hashTable,
-                                         int& lastFreeVoxelBlockId, int& lastFreeExcessListId,
-                                         int* voxelAllocationList, int* excessAllocationList) {
-	int foundPoint;
-	Vector3i location;
-
-	ITMLib::ITMVoxelBlockHash::IndexCache cache;
-
-#define PROCESS_VOXEL(localPos, index) \
-    location = blockLocation + (localPos);\
-    p[index] = (location).toFloat();\
-    voxelIndexes[index] = findVoxel(hashTable, location, foundPoint, cache);\
-	if (!foundPoint) {\
-		allocateHashEntry(location, hashTable, lastFreeVoxelBlockId,\
-		                  lastFreeExcessListId, voxelAllocationList, excessAllocationList);\
-		voxelIndexes[index] = findVoxel(hashTable, location, foundPoint, cache);\
-	}
-
-	PROCESS_VOXEL(Vector3i(0, 0, 0), 0);
-	PROCESS_VOXEL(Vector3i(0, 0, 1), 1);
-	PROCESS_VOXEL(Vector3i(0, 1, 0), 2);
-	PROCESS_VOXEL(Vector3i(0, 1, 1), 3);
-	PROCESS_VOXEL(Vector3i(1, 0, 0), 4);
-	PROCESS_VOXEL(Vector3i(1, 0, 1), 5);
-	PROCESS_VOXEL(Vector3i(1, 1, 0), 6);
-	PROCESS_VOXEL(Vector3i(1, 1, 1), 7);
-#undef PROCESS_VOXEL
-
-}
-
 
 //TODO: assume we do have color for now. Make provisions later to account for TVoxel with no color. -Greg (GitHub:Algomorph)
 /**
@@ -218,89 +87,111 @@ inline void findPointNeighborWarp_t(THREADPTR(Vector3f)* warpVals,
 #undef PROCESS_VOXEL
 }
 
-/**
- * \brief Compute trilienar coefficients for the given target point
- * \param targetPoint [in] an arbitrary point located inside a regular voxel grid
- * \param point000 [in] location of the voxel that coincides wit the truncated coordinates of the target point
- * \param point111 [in] location of the voxel with an increment of one (voxel) in each direction from point000
- * \param coefficients [out] the resulting trilinear coefficients
- *
- */
-_CPU_AND_GPU_CODE_
-inline void computeTrilinearCoefficients(Vector3f& targetPoint, Vector3f& point000, Vector3f& point111,
-                                         float* trilinearCoefficients) {
-	Vector3f ratios = (targetPoint - point000) / (point111 - point000);
-	Vector3f invRatios = Vector3f(1.f) - ratios;
-	float ratio_00 = invRatios.y * invRatios.z;
-	float ratio_01 = invRatios.y * ratios.z;
-	float ratio_10 = ratios.y * invRatios.z;
-	float ratio_11 = ratios.y * ratios.z;
-	trilinearCoefficients[0] = ratio_00 * invRatios.x;
-	trilinearCoefficients[1] = ratio_01 * invRatios.x;
-	trilinearCoefficients[2] = ratio_10 * invRatios.x;
-	trilinearCoefficients[3] = ratio_11 * invRatios.x;
-	trilinearCoefficients[4] = ratio_00 * ratios.x;
-	trilinearCoefficients[5] = ratio_01 * ratios.x;
-	trilinearCoefficients[6] = ratio_10 * ratios.x;
-	trilinearCoefficients[7] = ratio_11 * ratios.x;
-}
 
+//TODO: assume we do have color for now. Make provisions later to account for TVoxel with no color. -Greg (GitHub:Algomorph)
 /**
- * \brief Distribute the value at an arbitrary target point to the nearest 8 voxels using a trilinear interpolation scheme
- * \tparam TVoxel type of voxel
- * \tparam TIndex type of index used
- * \param voxel a pseudo-voxel that contains all the values at the arbitrary target point (usually, it would come from a different voxel grid)
- * \param pointPosition the target point position in 3D space (in voxel units)
+ * \brief find neighboring voxels and write their pointers to array
+ * This is different from findPointNeighbors because it returns 1.0 for truncated voxels and voxels beyond the scene boundary.
+ * \tparam TVoxel the voxel type
+ * \param voxelPositions [out] pointer to memory where to store 8 values Vector3i for all the neighbors
+ * \param sdf [out] pointer to memory where to store 8 SDF values for all the neighbors
+ * \param voxelLocation the actual voxel location
  * \param localVBA the voxel grid
  * \param hashTable the hash table index of the voxel entries
  */
-template<typename TVoxel>
 _CPU_AND_GPU_CODE_
-inline void distributeTrilinearly(const TVoxel& voxel, Vector3f& pointPosition,
-                                  TVoxel* voxelData,
-                                  ITMHashEntry* hashTable,
-                                  int& lastFreeVoxelBlockId,
-                                  int& lastFreeExcessListId,
-                                  int* voxelAllocationList,
-                                  int* excessAllocationList) {
-	const int neighborCount = 8;
+inline void findPointNeighbors2(THREADPTR(Vector3f) *voxelPositions, THREADPTR(int) voxelIndexes[8],
+                                const CONSTPTR(Vector3i)& baseVoxelPosition,
+                                const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData) *voxelIndex,
+                                THREADPTR(ITMLib::ITMVoxelBlockHash::IndexCache) & cache) {
+	int foundPoint;
+	Vector3i location;
 
-	//TODO: provide alternatives for voxel types that do not support all of these values.
-	Vector3f colorF = voxel.clr.toFloat();
-	float sdf = voxel.sdf;
-	uchar w_depth = voxel.w_depth;
-	uchar w_color = voxel.w_color;
-	float confidence = voxel.confidence;
+#define PROCESS_VOXEL(localPos, index) \
+    location = baseVoxelPosition + (localPos);\
+    voxelPositions[index] = (location).toFloat();\
+    voxelIndexes[index] = findVoxel(voxelIndex, location, foundPoint, cache);\
 
-	// determine neighborhood starting coordinate, i.e. point000 for trilinear weight scheme
-	Vector3i neighbor0BlockLocation = pointPosition.toIntRound() - Vector3i(1);
-	Vector3f neighborPositions[neighborCount];
-	int neighborIndices[neighborCount];
-
-	// find the actual neighbors and compute their 3D coordinates in Vector3f format
-	findOrAllocatePointNeighbors(neighborPositions, neighborIndices, neighbor0BlockLocation, hashTable,
-	                             lastFreeVoxelBlockId, lastFreeExcessListId, voxelAllocationList,excessAllocationList);
-
-	//compute the trilinear coefficients for each neighbor
-	float trilinearCoefficients[neighborCount];
-	computeTrilinearCoefficients(pointPosition, neighborPositions[0], neighborPositions[1], trilinearCoefficients);
-
-	//apply contribution of the sdf and color values to each neighbor weighed by the neighbor's coefficient
-	for (int iVoxel = 0; iVoxel < neighborCount; iVoxel++) {
-		TVoxel* neighbor = &voxelData[neighborIndices[iVoxel]];
-		float weight = trilinearCoefficients[iVoxel];
-		neighbor->sdf += weight * sdf;
-		neighbor->clr += (weight * colorF).toIntRound().toUChar();
-		neighbor->w_depth += weight * w_depth;
-		neighbor->w_color += weight * w_color;
-		neighbor->confidence += weight * confidence;
-	}
-
+	PROCESS_VOXEL(Vector3i(0, 0, 0), 0);
+	PROCESS_VOXEL(Vector3i(0, 0, 1), 1);
+	PROCESS_VOXEL(Vector3i(0, 1, 0), 2);
+	PROCESS_VOXEL(Vector3i(0, 1, 1), 3);
+	PROCESS_VOXEL(Vector3i(1, 0, 0), 4);
+	PROCESS_VOXEL(Vector3i(1, 0, 1), 5);
+	PROCESS_VOXEL(Vector3i(1, 1, 0), 6);
+	PROCESS_VOXEL(Vector3i(1, 1, 1), 7);
+#undef PROCESS_VOXEL
 
 }
 
-inline void interpolateTrilinearly(float& sdf, Vector3u& color, float* sdfVals, Vector3u* colorVals, Vector3f* points,
-                                   Vector3f pointPosition) {
+template<class TVoxel, class TIndex>
+inline void interpolateTrilinearly(const CONSTPTR(TVoxel) *voxelData,
+                                   const CONSTPTR(TIndex) *voxelIndex,
+                                   const THREADPTR(Vector3f) & point,
+                                   THREADPTR(ITMLib::ITMVoxelBlockHash::IndexCache) & cache,
+                                   THREADPTR(float)& sdf, THREADPTR(Vector3f)& color) {
+	float sdfRes1, sdfRes2, sdfV1, sdfV2;
+	Vector3f colorRes1, colorRes2, colorV1, colorV2;
+	int vmIndex = false;
+	Vector3f coeff; Vector3i pos; TO_INT_FLOOR3(pos, coeff, point);
+	{
+		const TVoxel & v = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 0, 0), vmIndex, cache);
+		sdfV1 = v.sdf;
+		colorV1 = v.clr.toFloat();
+	}
+	{
+		const TVoxel & v = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 0, 0), vmIndex, cache);
+		sdfV2 = v.sdf;
+		colorV2 = v.clr.toFloat();
+	}
+	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
+	colorRes1 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
+
+	{
+		const TVoxel & v = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 1, 0), vmIndex, cache);
+		sdfV1 = v.sdf;
+		colorV1 = v.clr.toFloat();
+	}
+	{
+		const TVoxel & v = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 1, 0), vmIndex, cache);
+		sdfV2 = v.sdf;
+		colorV2 = v.clr.toFloat();
+	}
+	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
+	colorRes1 = (1.0f - coeff.y) * colorRes1 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
+
+	{
+		const TVoxel & v = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 0, 1), vmIndex, cache);
+		sdfV1 = v.sdf;
+		colorV1 = v.clr.toFloat();
+	}
+	{
+		const TVoxel & v = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 0, 1), vmIndex, cache);
+		sdfV2 = v.sdf;
+		colorV2 = v.clr.toFloat();
+	}
+	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
+	colorRes2 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
+
+	{
+		const TVoxel & v = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 1, 1), vmIndex, cache);
+		sdfV1 = v.sdf;
+		colorV1 = v.clr.toFloat();
+	}
+	{
+		const TVoxel & v = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 1, 1), vmIndex, cache);
+		sdfV2 = v.sdf;
+		colorV2 = v.clr.toFloat();
+	}
+	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
+	colorRes2 = (1.0f - coeff.y) * colorRes2 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
+	sdf = TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
+	color = (1.0f - coeff.z) * colorRes1 + coeff.z * colorRes2;
+}
+
+inline void interpolateTrilinearly_sdfAndColor(float& sdf, Vector3u& color, float* sdfVals, Vector3u* colorVals,
+                                               Vector3f* points,
+                                               Vector3f pointPosition) {
 	const int neighborCount = 8;
 	Vector3f colorValsF[neighborCount];
 	for (int iVoxel = 0; iVoxel < neighborCount; iVoxel++) {
