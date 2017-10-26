@@ -34,11 +34,8 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 
 	float mu = canonicalScene->sceneParams->mu;
 
-	typename TIndex::IndexCache cacheCanonical;
+	typename TIndex::IndexCache canonicalCache;
 	typename TIndex::IndexCache cacheLive;
-
-
-//#define USE_CENTRAL_DIFFERENCE
 
 
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
@@ -58,7 +55,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					int foundVoxel;
 					TVoxel canonicalVoxel =
 							readVoxel(canonicalVoxels, canonicalHashTable, originalPosition, foundVoxel,
-							          cacheCanonical);
+							          canonicalCache);
 
 					if (foundVoxel) {
 
@@ -77,24 +74,24 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 
 						warpedSdfForward = ComputeWarpedTrilinearStep<TVoxel, TIndex, typename TIndex::IndexCache>(
 								originalPosition, projectedPosition, 1,
-								canonicalVoxels, canonicalHashTable, cacheCanonical,
+								canonicalVoxels, canonicalHashTable, canonicalCache,
 								liveVoxels, liveHashTable, cacheLive,
 								warpedColorForward1);
-
+#define USE_CENTRAL_DIFFERENCE
 #ifdef USE_CENTRAL_DIFFERENCE
 						Vector3f warpedSdfBackward1;
 						Vector3f warpedColorBackward1[3];
 
 						warpedSdfBackward1 = ComputeWarpedTrilinearStep<TVoxel, TIndex, typename TIndex::IndexCache>(
 								originalPosition, projectedPosition, -1, canonicalVoxels, canonicalHashTable,
-								cacheCanonical, liveVoxels, liveHashTable, cacheLive, warpedColorBackward1);
+								canonicalCache, liveVoxels, liveHashTable, cacheLive, warpedColorBackward1);
 #else
 						Vector3f warpedSdfForward2;
 						Vector3f warpedColorForward2[3];
 
 						warpedSdfForward = ComputeWarpedTrilinearStep<TVoxel, TIndex, typename TIndex::IndexCache>(
 								originalPosition, projectedPosition, 2,
-								canonicalVoxels, canonicalHashTable, cacheCanonical,
+								canonicalVoxels, canonicalHashTable, canonicalCache,
 								liveVoxels, liveHashTable, cacheLive,
 								warpedColorForward2);
 #endif
@@ -107,7 +104,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 						warpedSdfCorners.x =
 								ComputeWarpedTrilinear<TVoxel, TIndex, typename TIndex::IndexCache>(
 										originalPosition, projectedPosition, positionShift,
-										canonicalVoxels, canonicalHashTable, cacheCanonical,
+										canonicalVoxels, canonicalHashTable, canonicalCache,
 										liveVoxels, liveHashTable, cacheLive,
 										warpedColorCorners[0]);
 
@@ -115,7 +112,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 						warpedSdfCorners.y =
 								ComputeWarpedTrilinear<TVoxel, TIndex, typename TIndex::IndexCache>(
 										originalPosition, projectedPosition, positionShift,
-										canonicalVoxels, canonicalHashTable, cacheCanonical,
+										canonicalVoxels, canonicalHashTable, canonicalCache,
 										liveVoxels, liveHashTable, cacheLive,
 										warpedColorCorners[1]);
 
@@ -123,7 +120,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 						warpedSdfCorners.z =
 								ComputeWarpedTrilinear<TVoxel, TIndex, typename TIndex::IndexCache>(
 										originalPosition, projectedPosition, positionShift,
-										canonicalVoxels, canonicalHashTable, cacheCanonical,
+										canonicalVoxels, canonicalHashTable, canonicalCache,
 										liveVoxels, liveHashTable, cacheLive,
 										warpedColorCorners[2]);
 
@@ -144,13 +141,13 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 						//first, compute [delta_xx(phi(psi)), delta_yy(phi(psi)), delta_zz(phi(psi))]^T
 #ifdef USE_CENTRAL_DIFFERENCE
 						Vector3f sdfDerivatives_xx_yy_zz =
-								warpedSdfForward - Vector3f(2.0f * warpedSdf) + warpedSdfBackward1 ;
-						Vector3f colorDerivatives_xx_yy_zz = squareFiniteCentralDifferenceColor(
+								warpedSdfForward - Vector3f(2.0f * warpedSdf) + warpedSdfBackward1;
+						Vector3f clrDerivatives_xx_yy_zz = squareFiniteCentralDifferenceColor(
 								warpedColorForward1, warpedColor, warpedColorBackward1);
 #else
 						Vector3f sdfDerivatives_xx_yy_zz =
 								warpedSdfForward2 - 2 * warpedSdfForward + Vector3f(warpedSdf);
-						Vector3f colorDerivatives_xx_yy_zz = squareFiniteForward2DifferenceColor(
+						Vector3f clrDerivatives_xx_yy_zz = squareFiniteForward2DifferenceColor(
 								warpedColor, warpedColorForward1, warpedColorForward2);
 #endif
 						//=== corner-voxel auxiliary derivatives for later 2nd derivative approximations
@@ -186,13 +183,15 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 						Vector3f clrDerivatives_xz_yx_zy = cornerColorDerivatives2 - colorDerivatives_x_y_z;
 
 						// @formatter:off
-						Matrix3f sdfHessianMatrix(sdfDerivatives_xx_yy_zz.x, sdfDerivatives_xy_yz_zx.x, sdfDerivatives_xz_yx_zy.x,
-						                          sdfDerivatives_xz_yx_zy.y, sdfDerivatives_xx_yy_zz.y, sdfDerivatives_xy_yz_zx.y,
-						                          sdfDerivatives_xy_yz_zx.z, sdfDerivatives_xz_yx_zy.z, sdfDerivatives_xx_yy_zz.z);
+						//Note: Matrix3f init is column-major
+						Matrix3f sdfHessianMatrix(sdfDerivatives_xx_yy_zz.x, sdfDerivatives_xz_yx_zy.y, sdfDerivatives_xy_yz_zx.z,//r1
+						                          sdfDerivatives_xy_yz_zx.x, sdfDerivatives_xx_yy_zz.y, sdfDerivatives_xz_yx_zy.z,//r2
+						                          sdfDerivatives_xz_yx_zy.x, sdfDerivatives_xy_yz_zx.y, sdfDerivatives_xx_yy_zz.z);//r3
 
-						Matrix3f clrHessianMatrix(colorDerivatives_xx_yy_zz.x, clrDerivatives_xy_yz_zx.x,   clrDerivatives_xz_yx_zy.x,
-						                          clrDerivatives_xz_yx_zy.y,   colorDerivatives_xx_yy_zz.y, clrDerivatives_xy_yz_zx.y,
-						                          clrDerivatives_xy_yz_zx.z,   clrDerivatives_xz_yx_zy.z,   colorDerivatives_xx_yy_zz.z);
+						//Note: Matrix3f init is column-major
+						Matrix3f clrHessianMatrix(clrDerivatives_xx_yy_zz.x,clrDerivatives_xz_yx_zy.y,clrDerivatives_xy_yz_zx.z,
+						                          clrDerivatives_xy_yz_zx.x,clrDerivatives_xx_yy_zz.y,clrDerivatives_xz_yx_zy.z,
+						                          clrDerivatives_xz_yx_zy.x,clrDerivatives_xy_yz_zx.y,clrDerivatives_xx_yy_zz.z);
 						// @formatter:on
 						//=================================== DATA TERM ================================================
 						//Compute data term error / energy
@@ -216,7 +215,32 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 
 						Vector3f deltaELevelSet = deltaELevelSetSdf;
 
+						//=================================== KILLING TERM =============================================
 
+						Matrix3f warpJacobian;
+						Matrix3f warpHessian[3];
+						ComputePerPointWarpJacobianAndHessian<TVoxel, TIndex, typename TIndex::IndexCache>(
+								canonicalVoxel.warp_t, originalPosition, canonicalVoxels, canonicalHashTable,
+								canonicalCache, warpJacobian, warpHessian);
+						const float gamma = ITMSceneMotionTracker<TVoxel, TIndex>::killingTermDampingFactor;
+						// |u_x, u_y, u_z|       |m00, m10, m20|
+						// |v_x, v_y, v_z|       |m01, m11, m21|
+						// |w_x, w_y, w_z|       |m02, m12, m22|
+						Vector3f stackedVector0((1.0f + gamma) * warpJacobian.m00,
+						                        warpJacobian.m10 + gamma * warpJacobian.m01,
+						                        warpJacobian.m20 + gamma * warpJacobian.m02);
+						Vector3f stackedVector1(warpJacobian.m01 + gamma * warpJacobian.m10,
+						                        (1.0f + gamma) * warpJacobian.m11,
+						                        warpJacobian.m21 + gamma * warpJacobian.m12);
+						Vector3f stackedVector2(warpJacobian.m02 * gamma * warpJacobian.m20,
+						                        warpJacobian.m12 + gamma * warpJacobian.m21,
+						                        (1.0f + gamma) * warpJacobian.m22);
+
+						Vector3f deltaEKilling = 2.0f *
+						                         warpHessian[0] * stackedVector0 +
+						                         warpHessian[1] * stackedVector1 +
+						                         warpHessian[2] * stackedVector2;
+						Vector3f deltaE = deltaEData + deltaELevelSet + deltaEKilling;
 
 					}
 				}

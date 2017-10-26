@@ -299,6 +299,11 @@ namespace ORUtils {
 			return res += rhs;
 		}
 
+		_CPU_AND_GPU_CODE_ inline friend Matrix3 operator - (const Matrix3 &lhs, const Matrix3 &rhs) {
+			Matrix3 res(lhs.m);
+			return res -= rhs;
+		}
+
 		_CPU_AND_GPU_CODE_ inline Vector3<T> operator *(const Vector3<T> &rhs) const {
 			Vector3<T> r;
 			r[0] = this->m[0] * rhs[0] + this->m[3] * rhs[1] + this->m[6] * rhs[2];

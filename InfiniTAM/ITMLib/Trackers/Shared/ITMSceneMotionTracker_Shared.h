@@ -18,6 +18,53 @@
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
 
 
+/**
+ * \brief find neighboring SDF values and point locations.
+ * This is different from findPointNeighbors because it returns 1.0 for truncated voxels and voxels beyond the scene boundary.
+ * \tparam TVoxel the voxel type
+ * \param p [out] pointer to memory where to store 8 values Vector3i for all the neighbors
+ * \param sdf [out] pointer to memory where to store 8 SDF values for all the neighbors
+ * \param voxelPosition the actual block location
+ * \param localVBA the voxel grid
+ * \param hashTable the hash table index of the voxel entries
+ */
+template<typename TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* warp_tData, //x8
+                                                   const CONSTPTR(Vector3i)& voxelPosition,
+                                                   const CONSTPTR(TVoxel)* voxelData,
+                                                   const CONSTPTR(ITMHashEntry)* hashTable,
+                                                   THREADPTR(TCache)& cache) {
+	int vmIndex;
+	Vector3i localBlockLocation;
+
+	Vector3i(0, 0, 0);
+	TVoxel voxel;
+#define PROCESS_VOXEL(location, index)\
+    localBlockLocation = voxelPosition + (location);\
+    voxel = readVoxel(voxelData, hashTable, localBlockLocation, vmIndex, cache);\
+    warp_tData[index] = voxel.warp_t;\
+
+	//necessary for 2nd derivatives in same direction, i.e. xx and zz
+	PROCESS_VOXEL(Vector3i(-1, 0, 0), 0);
+	PROCESS_VOXEL(Vector3i(0, -1, 0), 1);
+	PROCESS_VOXEL(Vector3i(0, 0, -1), 2);
+
+	//necessary for 1st derivatives
+	PROCESS_VOXEL(Vector3i(0, 0, 1), 3);
+	PROCESS_VOXEL(Vector3i(0, 1, 0), 4);
+	PROCESS_VOXEL(Vector3i(1, 0, 0), 5);
+
+	//necessary for 2nd derivatives in varying directions, i.e. xy and yx
+	PROCESS_VOXEL(Vector3i(1, 1, 0), 6);
+	PROCESS_VOXEL(Vector3i(0, 1, 1), 7);//yz corner
+	PROCESS_VOXEL(Vector3i(1, 0, 1), 8);
+
+
+#undef PROCESS_VOXEL
+}
+
+
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
@@ -31,58 +78,31 @@ inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
 	Vector3f coeff;
 	Vector3i pos;
 	TO_INT_FLOOR3(pos, coeff, point);
-	{
-		const TVoxel& v = readVoxel(voxelData, hashIndex, pos + Vector3i(0, 0, 0), vmIndex, cache);
-		sdfV1 = v.sdf;
-		colorV1 = v.clr.toFloat();
-	}
-	{
-		const TVoxel& v = readVoxel(voxelData, hashIndex, pos + Vector3i(1, 0, 0), vmIndex, cache);
-		sdfV2 = v.sdf;
-		colorV2 = v.clr.toFloat();
-	}
+#define PROCESS_VOXEL(suffix, coord)\
+    {\
+        const TVoxel& v = readVoxel(voxelData, hashIndex, pos + (coord), vmIndex, cache);\
+        sdfV##suffix = v.sdf;\
+        colorV##suffix = v.clr.toFloat();\
+    }
+	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
+	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
 	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
 	colorRes1 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
-
-	{
-		const TVoxel& v = readVoxel(voxelData, hashIndex, pos + Vector3i(0, 1, 0), vmIndex, cache);
-		sdfV1 = v.sdf;
-		colorV1 = v.clr.toFloat();
-	}
-	{
-		const TVoxel& v = readVoxel(voxelData, hashIndex, pos + Vector3i(1, 1, 0), vmIndex, cache);
-		sdfV2 = v.sdf;
-		colorV2 = v.clr.toFloat();
-	}
+	PROCESS_VOXEL(1, Vector3i(0, 1, 0))
+	PROCESS_VOXEL(2, Vector3i(1, 1, 0))
 	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
 	colorRes1 = (1.0f - coeff.y) * colorRes1 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
-
-	{
-		const TVoxel& v = readVoxel(voxelData, hashIndex, pos + Vector3i(0, 0, 1), vmIndex, cache);
-		sdfV1 = v.sdf;
-		colorV1 = v.clr.toFloat();
-	}
-	{
-		const TVoxel& v = readVoxel(voxelData, hashIndex, pos + Vector3i(1, 0, 1), vmIndex, cache);
-		sdfV2 = v.sdf;
-		colorV2 = v.clr.toFloat();
-	}
+	PROCESS_VOXEL(1, Vector3i(0, 0, 1))
+	PROCESS_VOXEL(2, Vector3i(1, 0, 1))
 	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
 	colorRes2 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
+	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
+	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
 
-	{
-		const TVoxel& v = readVoxel(voxelData, hashIndex, pos + Vector3i(0, 1, 1), vmIndex, cache);
-		sdfV1 = v.sdf;
-		colorV1 = v.clr.toFloat();
-	}
-	{
-		const TVoxel& v = readVoxel(voxelData, hashIndex, pos + Vector3i(1, 1, 1), vmIndex, cache);
-		sdfV2 = v.sdf;
-		colorV2 = v.clr.toFloat();
-	}
 	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
 	colorRes2 = (1.0f - coeff.y) * colorRes2 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
 	color = (1.0f - coeff.z) * colorRes1 + coeff.z * colorRes2;
+#undef PROCESS_VOXEL
 	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
 }
 
@@ -97,45 +117,25 @@ inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
 	Vector3f coeff;
 	Vector3i pos;
 	TO_INT_FLOOR3(pos, coeff, point);
-	{
-		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + Vector3i(0, 0, 0), vmIndex, cache);
-		sdfV1 = v.sdf;
-	}
-	{
-		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + Vector3i(1, 0, 0), vmIndex, cache);
-		sdfV2 = v.sdf;
-	}
+#define PROCESS_VOXEL(suffix, coord)\
+    {\
+        const TVoxel& v = readVoxel(voxelData, hashIndex, pos + (coord), vmIndex, cache);\
+        sdfV##suffix = v.sdf;\
+    }
+	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
+	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
 	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
-
-	{
-		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + Vector3i(0, 1, 0), vmIndex, cache);
-		sdfV1 = v.sdf;
-	}
-	{
-		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + Vector3i(1, 1, 0), vmIndex, cache);
-		sdfV2 = v.sdf;
-	}
+	PROCESS_VOXEL(1, Vector3i(0, 1, 0))
+	PROCESS_VOXEL(2, Vector3i(1, 1, 0))
 	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
-
-	{
-		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + Vector3i(0, 0, 1), vmIndex, cache);
-		sdfV1 = v.sdf;
-	}
-	{
-		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + Vector3i(1, 0, 1), vmIndex, cache);
-		sdfV2 = v.sdf;
-	}
+	PROCESS_VOXEL(1, Vector3i(0, 0, 1))
+	PROCESS_VOXEL(2, Vector3i(1, 0, 1))
 	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
+	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
+	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
 
-	{
-		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + Vector3i(0, 1, 1), vmIndex, cache);
-		sdfV1 = v.sdf;
-	}
-	{
-		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + Vector3i(1, 1, 1), vmIndex, cache);
-		sdfV2 = v.sdf;
-	}
 	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
+#undef PROCESS_VOXEL
 	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
 }
 
@@ -254,11 +254,12 @@ inline Vector3f squareFiniteCentralDifferenceColor(const CONSTPTR(Vector3f)* for
 }
 
 _CPU_AND_GPU_CODE_
-inline Vector3f squareFiniteForward2DifferenceColor(const CONSTPTR(Vector3f)& central, const CONSTPTR(Vector3f)* forward1,
-                                                   const CONSTPTR(Vector3f)* forward2) {
-	Vector3f difference0 = forward2[0] - 2.0*forward1[0] + central;
-	Vector3f difference1 = forward2[1] - 2.0*forward1[1] + central;
-	Vector3f difference2 = forward2[2] - 2.0*forward1[2] + central;
+inline Vector3f
+squareFiniteForward2DifferenceColor(const CONSTPTR(Vector3f)& central, const CONSTPTR(Vector3f)* forward1,
+                                    const CONSTPTR(Vector3f)* forward2) {
+	Vector3f difference0 = forward2[0] - 2.0 * forward1[0] + central;
+	Vector3f difference1 = forward2[1] - 2.0 * forward1[1] + central;
+	Vector3f difference2 = forward2[2] - 2.0 * forward1[2] + central;
 	return Vector3f(dot(difference0, difference0), dot(difference1, difference1), dot(difference2, difference2));
 }
 
@@ -278,152 +279,100 @@ inline Vector3f ComputeWarpedTrilinearStep(const CONSTPTR(Vector3i)& originalPos
 	Vector3f warpedSdfStep;
 
 	//used to compute finite difference in the x direction, i.e. delta_x(applyWarp(LiveSDF,Warp))
-	warpedSdfStep.x = ComputeWarpedTrilinear<TVoxel, TIndex, typename TIndex::IndexCache>(originalPosition,
-	                                                                                      projectedPosition,
-	                                                                                      0,
-	                                                                                      stepSize,
-	                                                                                      canonicalVoxels,
-	                                                                                      canonicalHashTable,
-	                                                                                      cacheCanonical,
-	                                                                                      liveVoxels, liveHashTable,
-	                                                                                      cacheLive,
-	                                                                                      warpedColorStep[0]);
+	warpedSdfStep.x = ComputeWarpedTrilinear<TVoxel, TIndex, TCache>(originalPosition, projectedPosition, 0, stepSize,
+	                                                                 canonicalVoxels, canonicalHashTable,
+	                                                                 cacheCanonical,
+	                                                                 liveVoxels, liveHashTable, cacheLive,
+	                                                                 warpedColorStep[0]);
 	//used to compute finite difference y direction, i.e. for later computing delta_y(applyWarp(LiveSDF,Warp))
-	warpedSdfStep.y = ComputeWarpedTrilinear<TVoxel, TIndex, typename TIndex::IndexCache>(originalPosition,
-	                                                                                      projectedPosition,
-	                                                                                      1,
-	                                                                                      stepSize,
-	                                                                                      canonicalVoxels,
-	                                                                                      canonicalHashTable,
-	                                                                                      cacheCanonical,
-	                                                                                      liveVoxels, liveHashTable,
-	                                                                                      cacheLive,
-	                                                                                      warpedColorStep[1]);
+	warpedSdfStep.y = ComputeWarpedTrilinear<TVoxel, TIndex, TCache>(originalPosition, projectedPosition, 1, stepSize,
+	                                                                 canonicalVoxels, canonicalHashTable,
+	                                                                 cacheCanonical,
+	                                                                 liveVoxels, liveHashTable, cacheLive,
+	                                                                 warpedColorStep[1]);
 	//compute gradient factor in the z direction, i.e. delta_z(applyWarp(LiveSDF,Warp))
-	warpedSdfStep.z = ComputeWarpedTrilinear<TVoxel, TIndex, typename TIndex::IndexCache>(originalPosition,
-	                                                                                      projectedPosition,
-	                                                                                      2,
-	                                                                                      stepSize,
-	                                                                                      canonicalVoxels,
-	                                                                                      canonicalHashTable,
-	                                                                                      cacheCanonical,
-	                                                                                      liveVoxels, liveHashTable,
-	                                                                                      cacheLive,
-	                                                                                      warpedColorStep[2]);
+	warpedSdfStep.z = ComputeWarpedTrilinear<TVoxel, TIndex, TCache>(originalPosition, projectedPosition, 2, stepSize,
+	                                                                 canonicalVoxels, canonicalHashTable,
+	                                                                 cacheCanonical,
+	                                                                 liveVoxels, liveHashTable, cacheLive,
+	                                                                 warpedColorStep[2]);
 	return warpedSdfStep;
 }
 
 template<typename TVoxel, typename TIndex, typename TCache>
 _CPU_AND_GPU_CODE_
-inline bool ComputeWarpedTrilinear27Neighborhood(const CONSTPTR(Vector3i)& originalPosition,
-                                                 const CONSTPTR(TVoxel)* canonicalVoxels,
-                                                 const CONSTPTR(ITMHashEntry)* canonicalHashTable,
-                                                 THREADPTR(TCache)& cacheCanonical,
-                                                 const CONSTPTR(TVoxel)* liveVoxels,
-                                                 const CONSTPTR(ITMHashEntry)* liveHashTable,
-                                                 THREADPTR(TCache)& cacheLive,
-                                                 THREADPTR(float)* warpedSdfValues, //x27
-                                                 THREADPTR(Vector3f)* warpedColorValues //x27
+inline void ComputePerPointWarpJacobianAndHessian(const CONSTPTR(Vector3f)& originalWarp_t,
+                                                  const CONSTPTR(Vector3i)& originalPosition,
+                                                  const CONSTPTR(TVoxel)* voxels,
+                                                  const CONSTPTR(ITMHashEntry)* hashTable,
+                                                  THREADPTR(TCache)& cache,
+                                                  THREADPTR(Matrix3f)& jacobian,
+                                                  THREADPTR(Matrix3f)* hessian //x3
+
 ) {
-	int foundVoxel;
-	TVoxel canonicalVoxel =
-			readVoxel(canonicalVoxels, canonicalHashTable, originalPosition, foundVoxel,
-			          cacheCanonical);
-	if (!foundVoxel) {
-		return false;
-	}
-	//find value at direct location of voxel projected with the warp vector
-	Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
+	//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
+	Vector3f warp_tNeighbors[8];
+	findPoint2ndDerivativeNeighborhoodWarp(warp_tNeighbors, //x8
+	                                       originalPosition,
+	                                       voxels,
+	                                       hashTable,
+	                                       cache);
 
-	//assume cubic kernel
-	const int kernelRowSize = 3;
-	const int kernelPlaneSize = kernelRowSize * kernelRowSize;
-	const int kernelCenterShift = (kernelRowSize - 1) / 2;
-	const int kernelStop = kernelCenterShift + 1;
+	// |u_x, u_y, u_z|       |m00, m10, m20|
+	// |v_x, v_y, v_z|       |m01, m11, m21|
+	// |w_x, w_y, w_z|       |m02, m12, m22|
+	jacobian.setColumn(0, warp_tNeighbors[3] - originalWarp_t);//1st derivative in x
+	jacobian.setColumn(1, warp_tNeighbors[4] - originalWarp_t);//1st derivative in y
+	jacobian.setColumn(2, warp_tNeighbors[5] - originalWarp_t);//1st derivative in z
 
-	//find values at kernel locations
-	for (int z = -kernelCenterShift, zIx = 0; z < kernelStop; z++, zIx += kernelPlaneSize) {
-		for (int y = -kernelCenterShift, yIx = 0; y < kernelStop; y++, yIx += kernelRowSize) {
-			for (int x = -kernelCenterShift; x < kernelStop; x++) {
-				Vector3i positionShift(x, y, z);
-				int linearIndex = zIx + yIx + x;
-				warpedSdfValues[linearIndex] = ComputeWarpedTrilinear<TVoxel, TIndex, typename TIndex::IndexCache>(
-						originalPosition, projectedPosition, positionShift,
-						canonicalVoxels, canonicalHashTable, cacheCanonical,
-						liveVoxels, liveHashTable, cacheLive,
-						warpedColorValues[linearIndex]);
-			}
-		}
-	}
-	return true;
-};
+	Matrix3f backwardDifferences;
 
-template<typename TVoxel, typename TIndex, typename TCache>
-_CPU_AND_GPU_CODE_
-inline void Compute3DGradient(
-		THREADPTR(float)* warpedSdfValues, //x27
-		THREADPTR(Vector3f)* warpedColorValues, //x27
-		THREADPTR(Vector3f)& warpedSdfGradient,
-		THREADPTR(Vector3f)* warpedColorGradient //x3
-) {
-	//apply 3D Sobel-Feldman operator
+	// |u_x, u_y, u_z|
+	// |v_x, v_y, v_z|
+	// |w_x, w_y, w_z|
+	backwardDifferences.setColumn(0, warp_tNeighbors[0] - originalWarp_t);//1st derivative in x
+	backwardDifferences.setColumn(0, warp_tNeighbors[1] - originalWarp_t);//1st derivative in y
+	backwardDifferences.setColumn(0, warp_tNeighbors[2] - originalWarp_t);//1st derivative in z
 
-	//N.B. commented values left for clarity of code, please DO NOT ERASE
-// @formatter:off
-	float warpedSdfGradXandGradYShared = 2.0f * (warpedSdfValues[9] +
-	                                             warpedSdfValues[11] +
-	                                             warpedSdfValues[17] +
-	                                             warpedSdfValues[15]) +
+	//second derivatives in same direction
+	// |u_xx, u_yy, u_zz|       |m00, m10, m20|
+	// |v_xx, v_yy, v_zz|       |m01, m11, m21|
+	// |w_xx, w_yy, w_zz|       |m02, m12, m22|
+	Matrix3f dd_XX_YY_ZZ = jacobian - backwardDifferences;
 
-	                                     warpedSdfValues[0] +
-	                                   /*warpedSdfValues[9]  * 2.0f +*/
-	                                     warpedSdfValues[18] +
+	Matrix3f neighborDifferences;
+	neighborDifferences.setColumn(0, warp_tNeighbors[6] - warp_tNeighbors[4]);//(0,1,0)->(1,1,0)
+	neighborDifferences.setColumn(0, warp_tNeighbors[7] - warp_tNeighbors[5]);//(0,0,1)->(0,1,1)
+	neighborDifferences.setColumn(0, warp_tNeighbors[8] - warp_tNeighbors[3]);//(1,0,0)->(1,0,1)
 
-	                                     warpedSdfValues[2] +
-	                                   /*warpedSdfValues[11] * 2.0f +*/
-	                                     warpedSdfValues[20] +
+	//second derivatives in different directions
+	// |u_xy, u_yz, u_zx|      |m00, m10, m20|
+	// |v_xy, v_yz, v_zx|      |m01, m11, m21|
+	// |w_xy, w_yz, w_zx|      |m02, m12, m22|
+	Matrix3f dd_XY_YZ_ZX = neighborDifferences - jacobian;
 
-	                                     warpedSdfValues[8] +
-	                                   /*warpedSdfValues[17] * 2.0f +*/
-	                                     warpedSdfValues[26] +
+	// |0, 3, 6|     |m00, m10, m20|      |u_xx, u_xy, u_zx|
+	// |1, 4, 7|     |m01, m11, m21|      |u_xy, u_yy, u_yz|
+	// |2, 5, 8|     |m02, m12, m22|      |u_zx, u_yz, u_zz|
+	float valsU[] = {dd_XX_YY_ZZ.m00, dd_XY_YZ_ZX.m00, dd_XY_YZ_ZX.m20,
+	                 dd_XY_YZ_ZX.m00, dd_XX_YY_ZZ.m10, dd_XY_YZ_ZX.m10,
+	                 dd_XY_YZ_ZX.m20, dd_XY_YZ_ZX.m10, dd_XX_YY_ZZ.m20};
+	hessian[0].setValues(valsU);
 
-	                                     warpedSdfValues[6] +
-	                                   /*warpedSdfValues[15] * 2.0f +*/
-	                                     warpedSdfValues[24];
+	// |0, 3, 6|     |m00, m10, m20|      |v_xx, v_xy, v_zx|
+	// |1, 4, 7|     |m01, m11, m21|      |v_xy, v_yy, v_yz|
+	// |2, 5, 8|     |m02, m12, m22|      |v_zx, v_yz, v_zz|
+	float valsV[] = {dd_XX_YY_ZZ.m01, dd_XY_YZ_ZX.m01, dd_XY_YZ_ZX.m21,
+	                 dd_XY_YZ_ZX.m01, dd_XX_YY_ZZ.m11, dd_XY_YZ_ZX.m11,
+	                 dd_XY_YZ_ZX.m21, dd_XY_YZ_ZX.m11, dd_XX_YY_ZZ.m21};
+	hessian[1].setValues(valsV);
 
-	float warpedSdfGradXandGradZShared = 2.0f * (warpedSdfValues[3] + warpedSdfValues[5] +
-	                                             warpedSdfValues[21] + warpedSdfValues[23]);
-	float warpedSdfGradYandGradZShared = 2.0f * (warpedSdfValues[1] + warpedSdfValues[19] +
-	                                             warpedSdfValues[7] + warpedSdfValues[25]);
+	// |0, 3, 6|     |m00, m10, m20|      |u_xx, u_xy, u_zx|
+	// |1, 4, 7|     |m01, m11, m21|      |u_xy, u_yy, u_yz|
+	// |2, 5, 8|     |m02, m12, m22|      |u_zx, u_yz, u_zz|
+	float valsW[] = {dd_XX_YY_ZZ.m02, dd_XY_YZ_ZX.m02, dd_XY_YZ_ZX.m22,
+	                 dd_XY_YZ_ZX.m02, dd_XX_YY_ZZ.m12, dd_XY_YZ_ZX.m12,
+	                 dd_XY_YZ_ZX.m22, dd_XY_YZ_ZX.m12, dd_XX_YY_ZZ.m22};
+	hessian[2].setValues(valsW);
 
-	warpedSdfGradient.x =
-			  warpedSdfGradXandGradYShared + warpedSdfGradXandGradZShared +
-			/*warpedSdfValues[0]          + warpedSdfValues[3] *2.0f    + warpedSdfGradient[6] +*/
-			/*warpedSdfValues[9] *2.0f*/  + warpedSdfValues[12] * 4.0f/*+ warpedSdfGradient[15]*2.0f +*/
-			/*warpedSdfValues[18]         + warpedSdfValues[21]*2.0f    + warpedSdfGradient[24] +*/
-
-			/*warpedSdfValues[2]          + warpedSdfValues[5] *2.0f    + warpedSdfGradient[8] +*/
-			/*warpedSdfValues[11]*2.0f*/  + warpedSdfValues[14] * 4.0f/*+ warpedSdfGradient[17]*2.0f +*/
-		    /*warpedSdfValues[20]         + warpedSdfValues[23]*2.0f    + warpedSdfGradient[26]*/;
-
-	warpedSdfGradient.y =
-			  warpedSdfGradXandGradYShared + warpedSdfGradYandGradZShared +
-			/*warpedSdfValues[0]          + warpedSdfValues[1] *2.0f    + warpedSdfValues[2]*/
-			/*warpedSdfValues[9] *2.0f*/  + warpedSdfValues[10] * 4.0f/*+ warpedSdfValues[11]*2.0f*/
-			/*warpedSdfValues[18]         + warpedSdfValues[19]*2.0f    + warpedSdfValues[20]*/
-
-			/*warpedSdfGradient[6]        + warpedSdfValues[7] *2.0f    + warpedSdfGradient[8] +*/
-			/*warpedSdfGradient[15]*2.0f*/+ warpedSdfValues[16] * 4.0f/*+ warpedSdfGradient[17]*2.0f +*/
-		    /*warpedSdfGradient[24]       + warpedSdfValues[25]*2.0f    + warpedSdfGradient[26]*/;
-	warpedSdfGradient.z =
-			  warpedSdfGradXandGradZShared + warpedSdfGradYandGradZShared +
-			  warpedSdfValues[0]         /*+ warpedSdfValues[1] *2.0f*/  + warpedSdfGradient[2] +
-			/*warpedSdfValues[3] *2.0f  */ + warpedSdfValues[4] * 4.0f  +/*warpedSdfGradient[5]*2.0f +*/
-			  warpedSdfValues[6]         /*+ warpedSdfValues[7] *2.0f*/  + warpedSdfGradient[8] +
-
-			  warpedSdfValues[18]        /*+ warpedSdfValues[19]*2.0f*/  + warpedSdfGradient[20]
-			/*warpedSdfValues[21]*2.0f  +*/+ warpedSdfValues[22] * 4.0f +/*warpedSdfGradient[23]*2.0f +*/
-			  warpedSdfValues[24]        /*+ warpedSdfValues[25]*2.0f*/  + warpedSdfGradient[26];
-
-// @formatter:on
 };
