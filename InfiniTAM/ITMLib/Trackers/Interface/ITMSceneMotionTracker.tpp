@@ -22,16 +22,11 @@ template<class TVoxel, class TIndex>
 void ITMSceneMotionTracker<TVoxel, TIndex>::ProcessFrame(ITMScene<TVoxel, TIndex>* canonicalScene,
                                                                      ITMScene<TVoxel, TIndex>* liveScene) {
 
-	float max_vector_update = std::numeric_limits<float>::infinity();
-	const int max_iteration_count = 100; //TODO -- make parameter
-	const float max_vector_update_threshold = 0.1; //TODO -- make parameter
-	const float update_factor = 0.1; //TODO -- make parameter
-	const float killing_term_damping_factor = 0.1;
-	const float weight_killing_term = 0.1;
-	const float weight_level_set_term = 0.1;
+	float maxVectorUpdate = std::numeric_limits<float>::infinity();
 
-	for(int iteration = 1; max_vector_update < max_vector_update_threshold || iteration < max_iteration_count; iteration++){
-		max_vector_update = UpdateWarpField(canonicalScene,liveScene);
+
+	for(int iteration = 1; maxVectorUpdate < maxVectorUpdateThreshold || iteration < maxIterationCount; iteration++){
+		maxVectorUpdate = UpdateWarpField(canonicalScene,liveScene);
 	}
 
 

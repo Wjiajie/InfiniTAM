@@ -27,7 +27,16 @@ namespace ITMLib {
 
 		virtual float UpdateWarpField(ITMScene <TVoxel, TIndex>* canonicalScene,
 		                              ITMScene <TVoxel, TIndex>* liveScene) = 0;
-
+		//TODO -- make all of these parameters
+		const int maxIterationCount = 100;
+		const float maxVectorUpdateThreshold = 0.1;
+		const float gradientDescentUpdateFactor = 0.1;
+		const float killingTermDampingFactor = 0.1;
+		const float weightKillingTerm = 0.1;
+		const float weightLevelSetTerm = 0.1;
+		const float weightColorDataTerm = 0.0;
+		const float colorSdfThreshold = 0.25;
+		const float epsilon = 1.0e-10;
 	public:
 
 		void ProcessFrame(ITMScene <TVoxel, TIndex>* canonicalScene,

@@ -214,7 +214,7 @@ struct ITMVoxel_f_rgb_conf
 	}
 };
 
-struct ITMVoxel_f_killing
+struct ITMVoxel_f_dynamic
 {
 	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return 1.0f; }
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
@@ -241,7 +241,7 @@ struct ITMVoxel_f_killing
 	/** vector translating the current point to a different location **/
 	Vector3f warp_t;
 
-	_CPU_AND_GPU_CODE_ ITMVoxel_f_killing()
+	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic()
 	{
 		sdf = SDF_initialValue();
 		w_depth = 0;

@@ -206,6 +206,7 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::IntegrateInto
 	if(renderState_vh->noVisibleEntries == 0) return;
 
 	M_d = trackingState->pose_d->GetM();
+	// compute modelview matrix of the RGB camera
 	if (TVoxel::hasColorInformation) M_rgb = view->calib.trafo_rgb_to_depth.calib_inv * M_d;
 
 	projParams_d = view->calib.intrinsics_d.projectionParamsSimple.all;
@@ -306,9 +307,20 @@ namespace
 // device functions
 
 template<class TVoxel, bool stopMaxW>
-__global__ void integrateIntoScene_device(TVoxel *voxelArray, const ITMPlainVoxelArray::ITMVoxelArrayInfo *arrayInfo,
-	const Vector4u *rgb, Vector2i rgbImgSize, const float *depth, const float *confidence, Vector2i depthImgSize, Matrix4f M_d, Matrix4f M_rgb, Vector4f projParams_d, 
-	Vector4f projParams_rgb, float _voxelSize, float mu, int maxW)
+__global__ void integrateIntoScene_device(TVoxel *voxelArray,
+                                          const ITMPlainVoxelArray::ITMVoxelArrayInfo *arrayInfo,
+                                          const Vector4u *rgb,
+                                          Vector2i rgbImgSize,
+                                          const float *depth,
+                                          const float *confidence,
+                                          Vector2i depthImgSize,
+                                          Matrix4f M_d,
+                                          Matrix4f M_rgb,
+                                          Vector4f projParams_d,
+                                          Vector4f projParams_rgb,
+                                          float _voxelSize,
+                                          float mu,
+                                          int maxW)
 {
 	int x = blockIdx.x*blockDim.x+threadIdx.x;
 	int y = blockIdx.y*blockDim.y+threadIdx.y;
