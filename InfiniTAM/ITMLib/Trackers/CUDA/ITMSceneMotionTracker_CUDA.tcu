@@ -23,9 +23,3 @@ float ITMSceneMotionTracker_CUDA<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxe
 	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");
 	return 0;
 }
-
-template<class TVoxel, class TIndex>
-void ITMSceneMotionTracker_CUDA<TVoxel, TIndex>::DeformScene(
-		ITMScene<TVoxel, TIndex>* sceneOld, ITMScene<TVoxel, TIndex>* sceneNew) {
-	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");
-}

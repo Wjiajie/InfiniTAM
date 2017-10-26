@@ -23,8 +23,6 @@ namespace ITMLib {
 	class ITMSceneMotionTracker {
 	protected:
 
-		virtual void DeformScene(ITMScene <TVoxel, TIndex>* sceneOld, ITMScene <TVoxel, TIndex>* sceneNew) = 0;
-
 		virtual float UpdateWarpField(ITMScene <TVoxel, TIndex>* canonicalScene,
 		                              ITMScene <TVoxel, TIndex>* liveScene) = 0;
 		//TODO -- make all of these parameters
