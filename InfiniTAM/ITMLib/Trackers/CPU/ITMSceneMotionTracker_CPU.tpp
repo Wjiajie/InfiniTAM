@@ -62,19 +62,28 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 						//Jacobean and Hessian of the live scene sampled at warped location + deltas,
 						//as well as local Jacobean and Hessian of the warp field itself
 						float warpedSdf;
+						bool useColor = true;
 						Vector3f warpedColor;
 						Vector3f warpedSdfJacobean;
 						Vector3f warpedColorJacobean;
 						Matrix3f warpedSdfHessian;
 
-						//TODO: compute without color if canonical sdf < 0.25f
-						ComputePerPointWarpedLiveJacobianAndHessian<TVoxel, TIndex, typename TIndex::IndexCache>
-								(originalPosition, canonicalVoxel.warp_t,
-								 canonicalVoxels, canonicalHashTable, canonicalCache,
-								 liveVoxels, liveHashTable, liveCache,
-								 warpedSdf, warpedColor,
-								 warpedSdfJacobean, warpedColorJacobean,
-								 warpedSdfHessian);
+						if(canonicalVoxel.sdf > 0.25f){
+							useColor = false;
+							ComputePerPointWarpedLiveJacobianAndHessian<TVoxel, TIndex, typename TIndex::IndexCache>
+									(originalPosition, canonicalVoxel.warp_t,
+									 canonicalVoxels, canonicalHashTable, canonicalCache,
+									 liveVoxels, liveHashTable, liveCache,
+									 warpedSdf, warpedSdfJacobean, warpedSdfHessian);
+						}else{
+							useColor = true;
+							ComputePerPointWarpedLiveJacobianAndHessian<TVoxel, TIndex, typename TIndex::IndexCache>
+									(originalPosition, canonicalVoxel.warp_t,
+									 canonicalVoxels, canonicalHashTable, canonicalCache,
+									 liveVoxels, liveHashTable, liveCache,
+									 warpedSdf, warpedColor, warpedSdfJacobean, warpedColorJacobean, warpedSdfHessian);
+						}
+
 
 						Matrix3f warpJacobian;
 						Matrix3f warpHessian[3];
@@ -84,17 +93,13 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 						//=================================== DATA TERM ================================================
 						//Compute data term error / energy
 						float energySdf = warpedSdf - canonicalVoxel.sdf;
-						float energyColor = ITMSceneMotionTracker<TVoxel, TIndex>::weightColorDataTerm *
-						                    squareDistance(warpedColor, canonicalVoxel.clr.toFloat());
 
-						//The following are the multiplying the base data error by the components of the
-						//of the delta(appyWarp(LiveSDF,Warp)) vector, equation 10
-						//of the supplementary materials for KillingFusion, top line, to compute the data term's
-						//contribution to the warp field update.
-
-						Vector3f deltaEDataSdf = warpedSdfJacobean * energySdf;
-						Vector3f deltaEDataColor = warpedColorJacobean * energyColor;
-						Vector3f deltaEData = deltaEDataSdf + deltaEDataColor;
+						Vector3f deltaEData = warpedSdfJacobean * energySdf;
+						if(useColor){
+							float energyColor = ITMSceneMotionTracker<TVoxel, TIndex>::weightColorDataTerm *
+							                    squareDistance(warpedColor, canonicalVoxel.clr.toFloat());
+							deltaEData += warpedColorJacobean * energyColor;
+						}
 
 						//=================================== LEVEL SET TERM ===========================================
 						Vector3f deltaELevelSet =
