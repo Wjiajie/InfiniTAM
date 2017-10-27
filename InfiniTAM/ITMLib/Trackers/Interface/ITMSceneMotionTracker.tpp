@@ -28,7 +28,4 @@ void ITMSceneMotionTracker<TVoxel, TIndex>::ProcessFrame(ITMScene<TVoxel, TIndex
 	for(int iteration = 1; maxVectorUpdate < maxVectorUpdateThreshold || iteration < maxIterationCount; iteration++){
 		maxVectorUpdate = UpdateWarpField(canonicalScene,liveScene);
 	}
-
-
-	DIEWITHEXCEPTION("Warp field updates not yet fully implemented");
 }

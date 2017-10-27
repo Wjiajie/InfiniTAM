@@ -51,32 +51,34 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					Vector3i originalPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
 
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-					TVoxel canonicalVoxel = localVoxelBlock[locId];
+
+					TVoxel& canonicalVoxel = localVoxelBlock[locId];
 
 					//=================================== PRELIMINARIES ================================================
 					//Jacobean and Hessian of the live scene sampled at warped location + deltas,
 					//as well as local Jacobean and Hessian of the warp field itself
-					float warpedSdf;
+					float liveSdf;
 					bool useColor;
-					Vector3f warpedColor;
-					Vector3f warpedSdfJacobean;
-					Vector3f warpedColorJacobean;
-					Matrix3f warpedSdfHessian;
+					float canonicalSdf = TVoxel::valueToFloat(canonicalVoxel.sdf);
+					Vector3f liveColor;
+					Vector3f liveSdfJacobean;
+					Vector3f liveColorJacobean;
+					Matrix3f liveSdfHessian;
 
-					if (canonicalVoxel.sdf > 0.25f) {
+					if (canonicalSdf > 0.25f) {
 						useColor = false;
 						ComputePerPointWarpedLiveJacobianAndHessian<TVoxel, TIndex, typename TIndex::IndexCache>
 								(originalPosition, canonicalVoxel.warp_t,
 								 canonicalVoxels, canonicalHashTable, canonicalCache,
 								 liveVoxels, liveHashTable, liveCache,
-								 warpedSdf, warpedSdfJacobean, warpedSdfHessian);
+								 liveSdf, liveSdfJacobean, liveSdfHessian);
 					} else {
 						useColor = true;
 						ComputePerPointWarpedLiveJacobianAndHessian<TVoxel, TIndex, typename TIndex::IndexCache>
 								(originalPosition, canonicalVoxel.warp_t,
 								 canonicalVoxels, canonicalHashTable, canonicalCache,
 								 liveVoxels, liveHashTable, liveCache,
-								 warpedSdf, warpedColor, warpedSdfJacobean, warpedColorJacobean, warpedSdfHessian);
+								 liveSdf, liveColor, liveSdfJacobean, liveColorJacobean, liveSdfHessian);
 					}
 
 
@@ -88,19 +90,19 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 
 					//=================================== DATA TERM ====================================================
 					//Compute data term error / energy
-					float energySdf = warpedSdf - canonicalVoxel.sdf;
+					float energySdf = liveSdf - canonicalSdf;
 
-					Vector3f deltaEData = warpedSdfJacobean * energySdf;
+					Vector3f deltaEData = liveSdfJacobean * energySdf;
 					if (useColor) {
 						float energyColor = ITMSceneMotionTracker<TVoxel, TIndex>::weightColorDataTerm *
-						                    squareDistance(warpedColor, canonicalVoxel.clr.toFloat());
-						deltaEData += warpedColorJacobean * energyColor;
+						                    squareDistance(liveColor, TO_FLOAT3(canonicalVoxel.clr) / 255.f);
+						deltaEData += liveColorJacobean * energyColor;
 					}
 
 					//=================================== LEVEL SET TERM ===============================================
 					Vector3f deltaELevelSet =
-							(warpedSdfJacobean - Vector3f(1.0)) * (warpedSdfHessian * warpedSdfJacobean) /
-							(warpedSdfJacobean + Vector3f(ITMSceneMotionTracker<TVoxel, TIndex>::epsilon));
+							(liveSdfJacobean - Vector3f(1.0)) * (liveSdfHessian * liveSdfJacobean) /
+							(liveSdfJacobean + Vector3f(ITMSceneMotionTracker<TVoxel, TIndex>::epsilon));
 
 					//=================================== KILLING TERM =================================================
 
@@ -133,13 +135,79 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 						maxVectorUpdate = vecLength;
 					}
 
-					localVoxelBlock[locId].warp_t = canonicalVoxel.warp_t - warpUpdate;
+					canonicalVoxel.warp_t -= warpUpdate;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+template<typename TVoxel, typename TIndex>
+void ITMSceneMotionTracker_CPU<TVoxel,TIndex>::IntegrateLiveFrame(ITMScene<TVoxel, TIndex>* canonicalScene,
+                                                   ITMScene<TVoxel, TIndex>* liveScene) {
+	TVoxel* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
+	typename TIndex::IndexCache canonicalCache;
+
+	const TVoxel* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* liveHashTable = liveScene->index.GetEntries();
+	typename TIndex::IndexCache liveCache;
+
+	int maxW = canonicalScene->sceneParams->maxW;
+
+	int noTotalEntries = canonicalScene->index.noTotalEntries;
+
+	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+		Vector3i canonicalHashEntryPosition;
+		const ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[entryId];
+
+		if (currentCanonicalHashEntry.ptr < 0) continue;
+
+		//position of the current entry in 3D space
+		canonicalHashEntryPosition = currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		TVoxel* localVoxelBlock = &(canonicalVoxels[currentCanonicalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+
+		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+					Vector3i originalPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
+					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+					TVoxel& canonicalVoxel = localVoxelBlock[locId];
+					int oldWDepth, oldWColor;
+					float oldSdf;
+					oldSdf = canonicalVoxel.sdf;
+					Vector3f oldColor = TO_FLOAT3(canonicalVoxel.clr) / 255.0f;
+					oldWDepth = canonicalVoxel.w_depth;
+					oldWColor = canonicalVoxel.w_color;
+
+					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
+
+					Vector3f liveColor;
+					int liveWDepth, liveWColor;
+					float liveConfidence;
+					float liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache,
+					                                       liveColor, liveWDepth, liveWColor, liveConfidence);
+
+					float newSdf = oldWDepth * oldSdf + liveWDepth * liveSdf;
+					float newWDepth = oldWDepth + liveWDepth;
+					newSdf /= newWDepth;
+					newWDepth = MIN(newWDepth, maxW);
+
+					Vector3f newColor = oldWColor * oldColor + liveWColor * liveColor;
+					float newWColor = oldWColor + liveWColor;
+					newColor /= newWColor;
+					newWColor = MIN(newWDepth, maxW);
+
+					canonicalVoxel.sdf = TVoxel::floatToValue(newSdf);
+					canonicalVoxel.w_depth = (uchar)newWDepth;
+					canonicalVoxel.clr = TO_UCHAR3(newColor * 255.0f);
+					canonicalVoxel.w_color = (uchar)newWColor;
+					canonicalVoxel.confidence += liveConfidence;
 				}
 			}
 		}
 	}
 
-	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");
-	return 0;
 }
 

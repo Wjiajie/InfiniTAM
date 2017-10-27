@@ -25,6 +25,7 @@ namespace ITMLib {
 
 	protected:
 		float UpdateWarpField(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <TVoxel, TIndex>* liveScene) override;
+		void IntegrateLiveFrame(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <TVoxel, TIndex>* liveScene) override;
 	};
 
 

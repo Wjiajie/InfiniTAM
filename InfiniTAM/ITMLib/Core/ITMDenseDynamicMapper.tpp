@@ -51,17 +51,16 @@ void ITMDenseDynamicMapper<TVoxel, TIndex>::ProcessFrame(const ITMView* view,
 	// clear out the live-frame SDF
 	sceneRecoEngine->ResetScene(live_scene);
 
-	//** construct the live-frame SDF
+	//** construct the new live-frame SDF
 	// allocation
 	sceneRecoEngine->AllocateSceneFromDepth(live_scene, view, trackingState, renderState);
 	// integration
 	sceneRecoEngine->IntegrateIntoScene(live_scene, view, trackingState, renderState);
 
-
 	sceneMotionTracker->ProcessFrame(canonical_scene, live_scene);
 
 
-	//TODO: update canonical_scene from live_scene
+	//TODO: fuse live_scene into canonical_scene using warp
 
 	if (swappingEngine != NULL) {
 		// swapping: CPU -> GPU
