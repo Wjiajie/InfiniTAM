@@ -54,6 +54,11 @@ class ITMDenseDynamicMapper {
 		                  ITMScene <TVoxel, TIndex>* live_scene,
 		                  ITMRenderState* renderState_live);
 
+		void ProcessInitialFrame(const ITMView* view,
+		                  const ITMTrackingState* trackingState,
+		                  ITMScene <TVoxel, TIndex>* canonical_scene,
+		                  ITMRenderState* renderState_live);
+
 		/// Update the visible list (this can be called to update the visible list when fusion is turned off)
 		void UpdateVisibleList(const ITMView *view, const ITMTrackingState *trackingState, ITMScene<TVoxel, TIndex> *scene, ITMRenderState *renderState, bool resetVisibleList = false);
 

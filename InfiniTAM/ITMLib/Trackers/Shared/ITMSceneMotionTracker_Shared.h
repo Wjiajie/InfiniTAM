@@ -16,6 +16,7 @@
 #pragma once
 
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
+#include "../../Objects/Scene/ITMTrilinearInterpolation.h"
 
 template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
@@ -53,240 +54,6 @@ inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* warp_tDa
 #undef PROCESS_VOXEL
 }
 
-//pick maximum weights, get confidence
-template<class TVoxel, typename TCache>
-_CPU_AND_GPU_CODE_
-inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
-                                    const CONSTPTR(ITMHashEntry)* hashIndex,
-                                    const THREADPTR(Vector3f)& point,
-                                    THREADPTR(TCache)& cache,
-                                    THREADPTR(Vector3f)& color,
-                                    THREADPTR(int)& wDepth,
-                                    THREADPTR(int)& wColor,
-                                    THREADPTR(float)& confidence) {
-	float sdfRes1, sdfRes2, sdfV1, sdfV2;
-	Vector3f colorRes1, colorRes2, colorV1, colorV2;
-	float confRes1, confRes2, confV1, confV2;
-	int vmIndex = false;
-	Vector3f coeff;
-	Vector3i pos;
-	TO_INT_FLOOR3(pos, coeff, point);
-
-#define PROCESS_VOXEL(suffix, coord)\
-    {\
-        const TVoxel& v = readVoxel(voxelData, hashIndex, pos + (coord), vmIndex, cache);\
-        sdfV##suffix = v.sdf;\
-        colorV##suffix = TO_FLOAT3(v.clr);\
-		confV##suffix = v.confidence;\
-		if (v.w_depth > wDepth) wDepth = v.w_depth;\
-		if (v.w_color > wColor) wColor = v.w_color;\
-    }
-	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
-	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
-	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
-	colorRes1 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
-	confRes1 = (1.0f - coeff.x) * confV1 + coeff.x * confV2;
-	PROCESS_VOXEL(1, Vector3i(0, 1, 0))
-	PROCESS_VOXEL(2, Vector3i(1, 1, 0))
-	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
-	colorRes1 = (1.0f - coeff.y) * colorRes1 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
-	confRes1 = (1.0f - coeff.y) * confRes1 + coeff.y * ((1.0f - coeff.x) * confV1 + coeff.x * confV2);
-	PROCESS_VOXEL(1, Vector3i(0, 0, 1))
-	PROCESS_VOXEL(2, Vector3i(1, 0, 1))
-	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
-	colorRes2 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
-	confRes2 = (1.0f - coeff.x) * confV1 + coeff.x * confV2;
-	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
-	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
-	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
-	colorRes2 = (1.0f - coeff.y) * colorRes2 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
-	confRes2 = (1.0f - coeff.y) * confRes2 + coeff.y * ((1.0f - coeff.x) * confV1 + coeff.x * confV2);
-	color = ((1.0f - coeff.z) * colorRes1 + coeff.z * colorRes2) / 255.0f;
-	confidence = (1.0f - coeff.z) * confRes1 + coeff.z * confRes2;
-#undef PROCESS_VOXEL
-	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
-}
-
-//pick maximum weights, get confidence
-template<class TVoxel, typename TCache>
-_CPU_AND_GPU_CODE_
-inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
-                                    const CONSTPTR(ITMHashEntry)* hashIndex,
-                                    const THREADPTR(Vector3f)& point,
-                                    THREADPTR(TCache)& cache,
-                                    THREADPTR(Vector3f)& color,
-                                    THREADPTR(int)& wDepth,
-                                    THREADPTR(int)& wColor) {
-	float sdfRes1, sdfRes2, sdfV1, sdfV2;
-	Vector3f colorRes1, colorRes2, colorV1, colorV2;
-	int vmIndex = false;
-	Vector3f coeff;
-	Vector3i pos;
-	TO_INT_FLOOR3(pos, coeff, point);
-
-#define PROCESS_VOXEL(suffix, coord)\
-    {\
-        const TVoxel& v = readVoxel(voxelData, hashIndex, pos + (coord), vmIndex, cache);\
-        sdfV##suffix = v.sdf;\
-        colorV##suffix = TO_FLOAT3(v.clr);\
-		if (v.w_depth > wDepth) wDepth = v.w_depth;\
-		if (v.w_color > wColor) wColor = v.w_color;\
-    }
-	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
-	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
-	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
-	colorRes1 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
-	PROCESS_VOXEL(1, Vector3i(0, 1, 0))
-	PROCESS_VOXEL(2, Vector3i(1, 1, 0))
-	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
-	colorRes1 = (1.0f - coeff.y) * colorRes1 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
-	PROCESS_VOXEL(1, Vector3i(0, 0, 1))
-	PROCESS_VOXEL(2, Vector3i(1, 0, 1))
-	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
-	colorRes2 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
-	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
-	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
-	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
-	colorRes2 = (1.0f - coeff.y) * colorRes2 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
-	color = ((1.0f - coeff.z) * colorRes1 + coeff.z * colorRes2) / 255.0f;
-
-#undef PROCESS_VOXEL
-	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
-}
-
-//sdf, color, and interpolated weights
-template<class TVoxel, typename TCache>
-_CPU_AND_GPU_CODE_
-inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
-                                    const CONSTPTR(ITMHashEntry)* hashIndex,
-                                    const THREADPTR(Vector3f)& point,
-                                    THREADPTR(TCache)& cache,
-                                    THREADPTR(Vector3f)& color,
-									THREADPTR(float)& wDepth,
-									THREADPTR(float)& wColor) {
-	float sdfRes1, sdfRes2, sdfV1, sdfV2;
-	float wDepthRes1, wDepthRes2, wDepthV1, wDepthV2;
-	float wColorRes1, wColorRes2, wColorV1, wColorV2;
-	Vector3f colorRes1, colorRes2, colorV1, colorV2;
-	int vmIndex = false;
-	Vector3f coeff;
-	Vector3i pos;
-	TO_INT_FLOOR3(pos, coeff, point);
-
-#define PROCESS_VOXEL(suffix, coord)\
-    {\
-        const TVoxel& v = readVoxel(voxelData, hashIndex, pos + (coord), vmIndex, cache);\
-        sdfV##suffix = v.sdf;\
-        colorV##suffix = TO_FLOAT3(v.clr);\
-		wDepthV##suffix = v.w_depth;\
-		wColorV##suffix = v.w_color;\
-    }
-	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
-	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
-	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
-	colorRes1 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
-	wDepthRes1 = (1.0f - coeff.x) * wDepthV1 + coeff.x * wDepthV2;
-	wColorRes1 = (1.0f - coeff.x) * wColorV1 + coeff.x * wColorV2;
-	PROCESS_VOXEL(1, Vector3i(0, 1, 0))
-	PROCESS_VOXEL(2, Vector3i(1, 1, 0))
-	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
-	colorRes1 = (1.0f - coeff.y) * colorRes1 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
-	wDepthRes1 = (1.0f - coeff.y) * wDepthRes1 + coeff.y * ((1.0f - coeff.x) * wDepthV1 + coeff.x * wDepthV2);
-	wColorRes1 = (1.0f - coeff.y) * wColorRes1 + coeff.y * ((1.0f - coeff.x) * wColorV1 + coeff.x * wColorV2);
-	PROCESS_VOXEL(1, Vector3i(0, 0, 1))
-	PROCESS_VOXEL(2, Vector3i(1, 0, 1))
-	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
-	colorRes2 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
-	wDepthRes2 = (1.0f - coeff.x) * wDepthV1 + coeff.x * wDepthV2;
-	wColorRes2 = (1.0f - coeff.x) * wColorV1 + coeff.x * wColorV2;
-	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
-	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
-	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
-	colorRes2 = (1.0f - coeff.y) * colorRes2 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
-	wDepthRes2 = (1.0f - coeff.y) * wDepthRes2 + coeff.y * ((1.0f - coeff.x) * wDepthV1 + coeff.x * wDepthV2);
-	wColorRes2 = (1.0f - coeff.y) * wColorRes2 + coeff.y * ((1.0f - coeff.x) * wColorV1 + coeff.x * wColorV2);
-	
-	color = ((1.0f - coeff.z) * colorRes1 + coeff.z * colorRes2) / 255.0f;
-	wDepth = (1.0f - coeff.z) * wDepthRes1 + coeff.z * wDepthRes2;
-	wColor = (1.0f - coeff.z) * wColorRes1 + coeff.z * wColorRes2;
-#undef PROCESS_VOXEL
-	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
-}
-
-//sdf and color
-template<class TVoxel, typename TCache>
-_CPU_AND_GPU_CODE_
-inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
-                                    const CONSTPTR(ITMHashEntry)* hashIndex,
-                                    const THREADPTR(Vector3f)& point,
-                                    THREADPTR(TCache)& cache,
-                                    THREADPTR(Vector3f)& color) {
-	float sdfRes1, sdfRes2, sdfV1, sdfV2;
-	Vector3f colorRes1, colorRes2, colorV1, colorV2;
-	int vmIndex = false;
-	Vector3f coeff;
-	Vector3i pos;
-	TO_INT_FLOOR3(pos, coeff, point);
-#define PROCESS_VOXEL(suffix, coord)\
-    {\
-        const TVoxel& v = readVoxel(voxelData, hashIndex, pos + (coord), vmIndex, cache);\
-        sdfV##suffix = v.sdf;\
-        colorV##suffix = TO_FLOAT3(v.clr);\
-    }
-	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
-	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
-	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
-	colorRes1 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
-	PROCESS_VOXEL(1, Vector3i(0, 1, 0))
-	PROCESS_VOXEL(2, Vector3i(1, 1, 0))
-	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
-	colorRes1 = (1.0f - coeff.y) * colorRes1 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
-	PROCESS_VOXEL(1, Vector3i(0, 0, 1))
-	PROCESS_VOXEL(2, Vector3i(1, 0, 1))
-	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
-	colorRes2 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
-	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
-	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
-
-	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
-	colorRes2 = (1.0f - coeff.y) * colorRes2 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
-	color = ((1.0f - coeff.z) * colorRes1 + coeff.z * colorRes2) / 255.0f;
-#undef PROCESS_VOXEL
-	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
-}
-
-template<class TVoxel, typename TCache>
-_CPU_AND_GPU_CODE_
-inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
-                                    const CONSTPTR(ITMHashEntry)* voxelHash,
-                                    const THREADPTR(Vector3f)& point,
-                                    THREADPTR(TCache)& cache) {
-	float sdfRes1, sdfRes2, sdfV1, sdfV2;
-	int vmIndex = false;
-	Vector3f coeff;
-	Vector3i pos;
-	TO_INT_FLOOR3(pos, coeff, point);
-#define PROCESS_VOXEL(suffix, coord)\
-    {\
-        const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (coord), vmIndex, cache);\
-        sdfV##suffix = v.sdf;\
-    }
-	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
-	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
-	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
-	PROCESS_VOXEL(1, Vector3i(0, 1, 0))
-	PROCESS_VOXEL(2, Vector3i(1, 1, 0))
-	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
-	PROCESS_VOXEL(1, Vector3i(0, 0, 1))
-	PROCESS_VOXEL(2, Vector3i(1, 0, 1))
-	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
-	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
-	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
-
-	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
-#undef PROCESS_VOXEL
-	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
-}
 
 template<typename TVoxel, typename TIndex, typename TCache>
 _CPU_AND_GPU_CODE_
@@ -312,6 +79,7 @@ inline float ComputeWarpedTrilinear(const CONSTPTR(Vector3i)& originalPosition,
 	return interpolateTrilinearly(liveVoxels, liveHashTable, shiftedProjectedPosition, cacheLive,
 	                              deltaEColorValue);
 }
+
 
 template<typename TVoxel, typename TIndex, typename TCache>
 _CPU_AND_GPU_CODE_
@@ -479,10 +247,43 @@ inline Vector3f ComputeWarpedTrilinearStep(const CONSTPTR(Vector3i)& originalPos
 	return warpedSdfStep;
 }
 
+//_DEBUG
+// this is the correct function
+template<typename TVoxel, typename TIndex, typename TCache>
+_CPU_AND_GPU_CODE_
+inline void ComputePerPointWarpedLiveJacobianAlt2(const CONSTPTR(Vector3i)& originalPosition,
+                                                  const CONSTPTR(Vector3f)& originalWarp_t,
+                                                  const CONSTPTR(TVoxel)* canonicalVoxels,
+                                                  const CONSTPTR(ITMHashEntry)* canonicalHashTable,
+                                                  THREADPTR(TCache)& canonicalCache,
+                                                  const CONSTPTR(TVoxel)* liveVoxels,
+                                                  const CONSTPTR(ITMHashEntry)* liveHashTable,
+                                                  THREADPTR(TCache)& liveCache,
+                                                  THREADPTR(float)& warpedSdf,
+                                                  THREADPTR(Vector3f)& sdfJacobean){
+	Vector3f projectedPosition = originalPosition.toFloat() + originalWarp_t;
+	warpedSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache);
+
+	Vector3f warpedSdfForward;
+	Vector3f positionShift = Vector3f(1, 0, 0);
+	projectedPosition = originalPosition.toFloat() + originalWarp_t + positionShift;
+	warpedSdfForward.x = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache);
+
+	positionShift = Vector3f(0, 1, 0);
+	projectedPosition = originalPosition.toFloat() + originalWarp_t + positionShift;
+	warpedSdfForward.y = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache);
+
+	positionShift = Vector3f(0, 0, 1);
+	projectedPosition = originalPosition.toFloat() + originalWarp_t + positionShift;
+	warpedSdfForward.z = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache);
+
+	sdfJacobean = warpedSdfForward - Vector3f(warpedSdf);
+};
+
 //with color
 template<typename TVoxel, typename TIndex, typename TCache>
 _CPU_AND_GPU_CODE_
-inline Vector3f ComputePerPointWarpedLiveJacobianAndHessian(const CONSTPTR(Vector3i)& originalPosition,
+inline void ComputePerPointWarpedLiveJacobianAndHessian(const CONSTPTR(Vector3i)& originalPosition,
                                                             const CONSTPTR(Vector3f)& originalWarp_t,
                                                             const CONSTPTR(TVoxel)* canonicalVoxels,
                                                             const CONSTPTR(ITMHashEntry)* canonicalHashTable,
@@ -585,20 +386,35 @@ inline Vector3f ComputePerPointWarpedLiveJacobianAndHessian(const CONSTPTR(Vecto
 			warpedSdfCorners.x - warpedSdfForward.y,
 			warpedSdfCorners.y - warpedSdfForward.z,
 			warpedSdfCorners.z - warpedSdfForward.x);
+	//Along the x axis, case 2: (0,0,1)->(1,0,1)
+	//Along the y axis, case 2: (1,0,0)->(1,1,0)
+	//Along the z axis, case 2: (0,1,0)->(0,1,1)
+	Vector3f cornerSdfDerivatives2 = Vector3f(
+			warpedSdfCorners.z - warpedSdfForward.x,
+			warpedSdfCorners.x - warpedSdfForward.z,
+			warpedSdfCorners.y - warpedSdfForward.y);
+
 
 	//===Compute the 2nd partial derivatives for different direction sequences
 	Vector3f sdfDerivatives_xy_yz_zx = cornerSdfDerivatives - sdfJacobean;
+	Vector3f sdfDerivatives_xz_yx_zy = cornerSdfDerivatives2 - sdfJacobean;
 
-	float vals[] = {sdfDerivatives_xx_yy_zz.x, sdfDerivatives_xy_yz_zx.x, sdfDerivatives_xy_yz_zx.z,//r1
-	                sdfDerivatives_xy_yz_zx.x, sdfDerivatives_xx_yy_zz.y, sdfDerivatives_xy_yz_zx.y,//r2
-	                sdfDerivatives_xy_yz_zx.z, sdfDerivatives_xy_yz_zx.y, sdfDerivatives_xx_yy_zz.z};
+
+	float vals[] = {sdfDerivatives_xx_yy_zz.x, sdfDerivatives_xz_yx_zy.y, sdfDerivatives_xy_yz_zx.z,//r1
+	                sdfDerivatives_xy_yz_zx.x, sdfDerivatives_xx_yy_zz.y, sdfDerivatives_xz_yx_zy.z,//r2
+	                sdfDerivatives_xz_yx_zy.x, sdfDerivatives_xy_yz_zx.y, sdfDerivatives_xx_yy_zz.z};//
+
+//	float vals[] = {sdfDerivatives_xx_yy_zz.x, sdfDerivatives_xy_yz_zx.x, sdfDerivatives_xy_yz_zx.z,//r1
+//	                sdfDerivatives_xy_yz_zx.x, sdfDerivatives_xx_yy_zz.y, sdfDerivatives_xy_yz_zx.y,//r2
+//	                sdfDerivatives_xy_yz_zx.z, sdfDerivatives_xy_yz_zx.y, sdfDerivatives_xx_yy_zz.z};
 	sdfHessian.setValues(vals);
 };
+
 
 //without color
 template<typename TVoxel, typename TIndex, typename TCache>
 _CPU_AND_GPU_CODE_
-inline Vector3f ComputePerPointWarpedLiveJacobianAndHessian(const CONSTPTR(Vector3i)& originalPosition,
+inline void ComputePerPointWarpedLiveJacobianAndHessian(const CONSTPTR(Vector3i)& originalPosition,
                                                             const CONSTPTR(Vector3f)& originalWarp_t,
                                                             const CONSTPTR(TVoxel)* canonicalVoxels,
                                                             const CONSTPTR(ITMHashEntry)* canonicalHashTable,
@@ -705,8 +521,9 @@ inline void ComputePerPointWarpJacobianAndHessian(const CONSTPTR(Vector3f)& orig
                                                   THREADPTR(Matrix3f)* hessian //x3
 
 ) {
+	//    0        1        2          3         4         5           6         7         8
 	//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
-	Vector3f warp_tNeighbors[8];
+	Vector3f warp_tNeighbors[9];
 	findPoint2ndDerivativeNeighborhoodWarp(warp_tNeighbors, //x8
 	                                       originalPosition,
 	                                       voxels,
@@ -725,9 +542,9 @@ inline void ComputePerPointWarpJacobianAndHessian(const CONSTPTR(Vector3f)& orig
 	// |u_x, u_y, u_z|
 	// |v_x, v_y, v_z|
 	// |w_x, w_y, w_z|
-	backwardDifferences.setColumn(0, warp_tNeighbors[0] - originalWarp_t);//1st derivative in x
-	backwardDifferences.setColumn(0, warp_tNeighbors[1] - originalWarp_t);//1st derivative in y
-	backwardDifferences.setColumn(0, warp_tNeighbors[2] - originalWarp_t);//1st derivative in z
+	backwardDifferences.setColumn(0, originalWarp_t - warp_tNeighbors[0]);//1st derivative in x
+	backwardDifferences.setColumn(1, originalWarp_t - warp_tNeighbors[1]);//1st derivative in y
+	backwardDifferences.setColumn(2, originalWarp_t - warp_tNeighbors[2]);//1st derivative in z
 
 	//second derivatives in same direction
 	// |u_xx, u_yy, u_zz|       |m00, m10, m20|
@@ -737,8 +554,16 @@ inline void ComputePerPointWarpJacobianAndHessian(const CONSTPTR(Vector3f)& orig
 
 	Matrix3f neighborDifferences;
 	neighborDifferences.setColumn(0, warp_tNeighbors[6] - warp_tNeighbors[4]);//(0,1,0)->(1,1,0)
-	neighborDifferences.setColumn(0, warp_tNeighbors[7] - warp_tNeighbors[5]);//(0,0,1)->(0,1,1)
-	neighborDifferences.setColumn(0, warp_tNeighbors[8] - warp_tNeighbors[3]);//(1,0,0)->(1,0,1)
+	neighborDifferences.setColumn(1, warp_tNeighbors[7] - warp_tNeighbors[5]);//(0,0,1)->(0,1,1)
+	neighborDifferences.setColumn(2, warp_tNeighbors[8] - warp_tNeighbors[3]);//(1,0,0)->(1,0,1)
+
+#ifdef EXTRA_DEBUG //TODO: remove after optimizer starts working correctly
+	Matrix3f neighborDifferences2;
+	neighborDifferences2.setColumn(0, warp_tNeighbors[8] - warp_tNeighbors[5]);//(0,0,1)->(1,0,1)
+	neighborDifferences2.setColumn(1, warp_tNeighbors[6] - warp_tNeighbors[3]);//(1,0,0)->(1,1,0)
+	neighborDifferences2.setColumn(2, warp_tNeighbors[7] - warp_tNeighbors[4]);//(0,1,0)->(0,1,1)
+
+#endif
 
 	//second derivatives in different directions
 	// |u_xy, u_yz, u_zx|      |m00, m10, m20|
@@ -746,28 +571,46 @@ inline void ComputePerPointWarpJacobianAndHessian(const CONSTPTR(Vector3f)& orig
 	// |w_xy, w_yz, w_zx|      |m02, m12, m22|
 	Matrix3f dd_XY_YZ_ZX = neighborDifferences - jacobean;
 
-	// |0, 3, 6|     |m00, m10, m20|      |u_xx, u_xy, u_zx|
+#ifdef EXTRA_DEBUG
+	// |u_xz, u_yx, u_zy|      |m00, m10, m20|
+	// |v_xz, v_yx, v_zy|      |m01, m11, m21|
+	// |w_xz, w_yx, w_zy|      |m02, m12, m22|
+	Matrix3f dd_XZ_YX_ZY = neighborDifferences2 - jacobean;
+
+	Matrix3f dd_comp;
+	dd_comp.setColumn(0, dd_XZ_YX_ZY.getColumn(1));
+	dd_comp.setColumn(1, dd_XZ_YX_ZY.getColumn(2));
+	dd_comp.setColumn(2, dd_XZ_YX_ZY.getColumn(0));
+
+	if(dd_XY_YZ_ZX.getColumn(0) != dd_XZ_YX_ZY.getColumn(1) ||
+			dd_XY_YZ_ZX.getColumn(1) != dd_XZ_YX_ZY.getColumn(2) ||
+				dd_XY_YZ_ZX.getColumn(2) != dd_XZ_YX_ZY.getColumn(0)){
+		std::cout << std::endl << dd_XY_YZ_ZX << std::endl << dd_comp << std::endl <<std::endl;
+	}
+#endif
+
+	// |0, 3, 6|     |m00, m10, m20|      |u_xx, u_xy, u_xz|
 	// |1, 4, 7|     |m01, m11, m21|      |u_xy, u_yy, u_yz|
-	// |2, 5, 8|     |m02, m12, m22|      |u_zx, u_yz, u_zz|
-	float valsU[] = {dd_XX_YY_ZZ.m00, dd_XY_YZ_ZX.m00, dd_XY_YZ_ZX.m20,
-	                 dd_XY_YZ_ZX.m00, dd_XX_YY_ZZ.m10, dd_XY_YZ_ZX.m10,
-	                 dd_XY_YZ_ZX.m20, dd_XY_YZ_ZX.m10, dd_XX_YY_ZZ.m20};
+	// |2, 5, 8|     |m02, m12, m22|      |u_xz, u_yz, u_zz|
+	float valsU[9] = {dd_XX_YY_ZZ.m00, dd_XY_YZ_ZX.m00, dd_XY_YZ_ZX.m20,
+	                  dd_XY_YZ_ZX.m00, dd_XX_YY_ZZ.m10, dd_XY_YZ_ZX.m10,
+	                  dd_XY_YZ_ZX.m20, dd_XY_YZ_ZX.m10, dd_XX_YY_ZZ.m20};
 	hessian[0].setValues(valsU);
 
-	// |0, 3, 6|     |m00, m10, m20|      |v_xx, v_xy, v_zx|
+	// |0, 3, 6|     |m00, m10, m20|      |v_xx, v_xy, v_xz|
 	// |1, 4, 7|     |m01, m11, m21|      |v_xy, v_yy, v_yz|
-	// |2, 5, 8|     |m02, m12, m22|      |v_zx, v_yz, v_zz|
-	float valsV[] = {dd_XX_YY_ZZ.m01, dd_XY_YZ_ZX.m01, dd_XY_YZ_ZX.m21,
-	                 dd_XY_YZ_ZX.m01, dd_XX_YY_ZZ.m11, dd_XY_YZ_ZX.m11,
-	                 dd_XY_YZ_ZX.m21, dd_XY_YZ_ZX.m11, dd_XX_YY_ZZ.m21};
+	// |2, 5, 8|     |m02, m12, m22|      |v_xz, v_yz, v_zz|
+	float valsV[9] = {dd_XX_YY_ZZ.m01, dd_XY_YZ_ZX.m01, dd_XY_YZ_ZX.m21,
+	                  dd_XY_YZ_ZX.m01, dd_XX_YY_ZZ.m11, dd_XY_YZ_ZX.m11,
+	                  dd_XY_YZ_ZX.m21, dd_XY_YZ_ZX.m11, dd_XX_YY_ZZ.m21};
 	hessian[1].setValues(valsV);
 
-	// |0, 3, 6|     |m00, m10, m20|      |u_xx, u_xy, u_zx|
-	// |1, 4, 7|     |m01, m11, m21|      |u_xy, u_yy, u_yz|
-	// |2, 5, 8|     |m02, m12, m22|      |u_zx, u_yz, u_zz|
-	float valsW[] = {dd_XX_YY_ZZ.m02, dd_XY_YZ_ZX.m02, dd_XY_YZ_ZX.m22,
-	                 dd_XY_YZ_ZX.m02, dd_XX_YY_ZZ.m12, dd_XY_YZ_ZX.m12,
-	                 dd_XY_YZ_ZX.m22, dd_XY_YZ_ZX.m12, dd_XX_YY_ZZ.m22};
+	// |0, 3, 6|     |m00, m10, m20|      |w_xx, w_xy, w_xz|
+	// |1, 4, 7|     |m01, m11, m21|      |w_xy, w_yy, w_yz|
+	// |2, 5, 8|     |m02, m12, m22|      |w_xz, w_yz, w_zz|
+	float valsW[9] = {dd_XX_YY_ZZ.m02, dd_XY_YZ_ZX.m02, dd_XY_YZ_ZX.m22,
+	                  dd_XY_YZ_ZX.m02, dd_XX_YY_ZZ.m12, dd_XY_YZ_ZX.m12,
+	                  dd_XY_YZ_ZX.m22, dd_XY_YZ_ZX.m12, dd_XX_YY_ZZ.m22};
 	hessian[2].setValues(valsW);
 
 };

@@ -196,7 +196,6 @@ try
 		mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelIndex>(internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize());
 		break;
 	case ITMLibSettings::LIBMODE_KILLING:
-		//mainEngine = new ITMMultiEngine<ITMVoxel_s_rgb_conf, ITMVoxelIndex>(internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize());
 		mainEngine = new ITMKillingEngine<ITMVoxel, ITMVoxelIndex>(internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize());
 		break;
 	default: 

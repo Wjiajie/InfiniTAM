@@ -22,7 +22,7 @@ namespace ITMLib
 	private:
 		const ITMLibSettings *settings;
 
-		bool trackingActive, fusionActive, mainProcessingActive, trackingInitialised;
+		bool trackingActive, fusionActive, mainProcessingActive, trackingInitialised, fusionInitialized;
 		int framesProcessed, relocalisationCount;
 
 		ITMLowLevelEngine *lowLevelEngine;

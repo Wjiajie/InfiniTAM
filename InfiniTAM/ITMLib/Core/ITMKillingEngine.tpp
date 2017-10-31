@@ -66,6 +66,7 @@ ITMKillingEngine<TVoxel,  TIndex>::ITMKillingEngine(const ITMLibSettings *settin
 	trackingInitialised = false;
 	relocalisationCount = 0;
 	framesProcessed = 0;
+	fusionInitialized = false;
 }
 
 template <typename TVoxel,  typename TIndex>
@@ -294,8 +295,9 @@ ITMTrackingState::TrackingResult ITMKillingEngine<TVoxel,TIndex>::ProcessFrame(I
 			const FernRelocLib::PoseDatabase::PoseInScene & keyframe = relocaliser->RetrievePose(NN);
 			trackingState->pose_d->SetFrom(&keyframe.pose);
 
-			denseMapper->UpdateVisibleList(view, trackingState, live_scene, renderState_live, true);
-			trackingController->Prepare(trackingState, live_scene, view, visualisationEngine, renderState_live);
+			//denseMapper->UpdateVisibleList(view, trackingState, live_scene, renderState_live, true);
+			denseMapper->UpdateVisibleList(view, trackingState, canonical_scene, renderState_live, true);
+			trackingController->Prepare(trackingState, canonical_scene, view, visualisationEngine, renderState_live);
 			trackingController->Track(trackingState, view);
 
 			trackerResult = trackingState->trackerResult;
@@ -304,8 +306,14 @@ ITMTrackingState::TrackingResult ITMKillingEngine<TVoxel,TIndex>::ProcessFrame(I
 
 	bool didFusion = false;
 	if ((trackerResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) && (relocalisationCount == 0)) {
-		// fusion
-		denseMapper->ProcessFrame(view, trackingState, canonical_scene, live_scene, renderState_live);
+		if(!fusionInitialized){
+			// fusion
+			denseMapper->ProcessInitialFrame(view, trackingState, canonical_scene, renderState_live);
+			fusionInitialized = true;
+		}else{
+			// fusion
+			denseMapper->ProcessFrame(view, trackingState, canonical_scene, live_scene, renderState_live);
+		}
 		didFusion = true;
 		if (framesProcessed > 50) trackingInitialised = true;
 

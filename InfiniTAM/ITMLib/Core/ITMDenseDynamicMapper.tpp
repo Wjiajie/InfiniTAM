@@ -48,6 +48,8 @@ void ITMDenseDynamicMapper<TVoxel, TIndex>::ProcessFrame(const ITMView* view,
                                                          ITMScene<TVoxel, TIndex>* canonical_scene,
                                                          ITMScene<TVoxel, TIndex>* live_scene,
                                                          ITMRenderState* renderState) {
+
+
 	// clear out the live-frame SDF
 	sceneRecoEngine->ResetScene(live_scene);
 
@@ -58,9 +60,6 @@ void ITMDenseDynamicMapper<TVoxel, TIndex>::ProcessFrame(const ITMView* view,
 	sceneRecoEngine->IntegrateIntoScene(live_scene, view, trackingState, renderState);
 
 	sceneMotionTracker->ProcessFrame(canonical_scene, live_scene);
-
-
-	//TODO: fuse live_scene into canonical_scene using warp
 
 	if (swappingEngine != NULL) {
 		// swapping: CPU -> GPU
@@ -87,4 +86,35 @@ ITMDenseDynamicMapper<TVoxel, TIndex>::UpdateVisibleList(const ITMView* view, co
                                                          ITMScene<TVoxel, TIndex>* scene, ITMRenderState* renderState,
                                                          bool resetVisibleList) {
 	sceneRecoEngine->AllocateSceneFromDepth(scene, view, trackingState, renderState, true, resetVisibleList);
+}
+
+template<class TVoxel, class TIndex>
+void
+ITMDenseDynamicMapper<TVoxel, TIndex>::ProcessInitialFrame(const ITMView* view, const ITMTrackingState* trackingState,
+                                                           ITMScene<TVoxel, TIndex>* canonical_scene,
+                                                           ITMRenderState* renderState) {
+
+	//** construct the new live-frame SDF
+	// allocation
+	sceneRecoEngine->AllocateSceneFromDepth(canonical_scene, view, trackingState, renderState);
+	// integration
+	sceneRecoEngine->IntegrateIntoScene(canonical_scene, view, trackingState, renderState);
+
+	if (swappingEngine != NULL) {
+		// swapping: CPU -> GPU
+		if (swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED)
+			swappingEngine->IntegrateGlobalIntoLocal(canonical_scene, renderState);
+
+		// swapping: GPU -> CPU
+		switch (swappingMode) {
+			case ITMLibSettings::SWAPPINGMODE_ENABLED:
+				swappingEngine->SaveToGlobalMemory(canonical_scene, renderState);
+				break;
+			case ITMLibSettings::SWAPPINGMODE_DELETE:
+				swappingEngine->CleanLocalMemory(canonical_scene, renderState);
+				break;
+			case ITMLibSettings::SWAPPINGMODE_DISABLED:
+				break;
+		}
+	}
 }

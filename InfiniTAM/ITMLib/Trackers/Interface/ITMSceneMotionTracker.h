@@ -26,7 +26,7 @@ namespace ITMLib {
 		virtual float UpdateWarpField(ITMScene <TVoxel, TIndex>* canonicalScene,
 		                              ITMScene <TVoxel, TIndex>* liveScene) = 0;
 
-		virtual void IntegrateLiveFrame(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <TVoxel, TIndex>* liveScene) = 0;
+		virtual void FuseFrame(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <TVoxel, TIndex>* liveScene) = 0;
 		//TODO -- make all of these parameters
 		const int maxIterationCount = 100;
 		const float maxVectorUpdateThreshold = 0.1;

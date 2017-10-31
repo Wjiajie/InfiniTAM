@@ -44,6 +44,15 @@ namespace ITMLib
 
 		ITMSceneParams(void) {}
 
+		/**
+		 * \brief standard constructor setting all elements to passed-in values
+		 * \param mu width of the band (in meters) of the truncated signed distance transform
+		 * \param maxW maximum number of observations per voxel which are averaged, after this a sliding average is computed
+		 * \param voxelSize voxelSize (in meters)
+		 * \param viewFrustum_min distance (in meters) to near clipping plane of the view frustum, closer than which nothing is considered
+		 * \param viewFrustum_max distance (in meters) to far clipping plane of the view frustum, farther than which nothing is considered
+		 * \param stopIntegratingAtMaxW defines behavior after maxW observations have been gathered for a specific point
+		 */
 		ITMSceneParams(float mu, int maxW, float voxelSize, 
 			float viewFrustum_min, float viewFrustum_max, bool stopIntegratingAtMaxW)
 		{

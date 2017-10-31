@@ -24,8 +24,11 @@ void ITMSceneMotionTracker<TVoxel, TIndex>::ProcessFrame(ITMScene<TVoxel, TIndex
 
 	float maxVectorUpdate = std::numeric_limits<float>::infinity();
 
-
-	for(int iteration = 1; maxVectorUpdate < maxVectorUpdateThreshold || iteration < maxIterationCount; iteration++){
+	for(int iteration = 0; maxVectorUpdate > maxVectorUpdateThreshold && iteration < maxIterationCount; iteration++){
+		std::cout << "Iteration: " << iteration << std::endl;
 		maxVectorUpdate = UpdateWarpField(canonicalScene,liveScene);
+		std::cout << " Max vector update: " << maxVectorUpdate << std::endl;
 	}
+
+	this->FuseFrame(canonicalScene, liveScene);
 }

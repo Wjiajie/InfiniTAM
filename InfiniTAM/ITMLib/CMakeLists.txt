@@ -367,12 +367,13 @@ Objects/Scene/ITMLocalVBA.h
 Objects/Scene/ITMMultiSceneAccess.h
 Objects/Scene/ITMPlainVoxelArray.h
 Objects/Scene/ITMRepresentationAccess.h
+Objects/Scene/ITMTrilinearInterpolation.h
 Objects/Scene/ITMScene.h
 Objects/Scene/ITMSurfelScene.h
 Objects/Scene/ITMSurfelTypes.h
 Objects/Scene/ITMVoxelBlockHash.h
 Objects/Scene/ITMVoxelTypes.h
-        )
+)
 
 ##
 SET(ITMLIB_OBJECTS_TRACKING_HEADERS
