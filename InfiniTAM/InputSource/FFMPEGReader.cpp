@@ -40,6 +40,7 @@ class FFMPEGReader::PrivateData {
 	public:
 	PrivateData(void)
 	{
+		av_log_set_level(AV_LOG_QUIET);
 		depthStreamIdx = colorStreamIdx = -1;
 		av_init_packet(&packet);
 		packet.data = NULL;

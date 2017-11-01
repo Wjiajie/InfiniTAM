@@ -42,6 +42,9 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 	double aveCanonicaSdf = 0.0;
 	int canonicalSdfCount = 0;
 	double aveLiveSdf = 0.0;
+	Vector3f trackedDataUpdate;
+	Vector3f maxKillingUpdate;
+	float maxKillingUpdateLength = 0.0;
 	double totalDataEnergy = 0.0;
 	double totalLevelSetEnergy = 0.0;
 	double totalKillingEnergy = 0.0;
@@ -54,7 +57,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 	//compute the update, don't apply yet (computation depends on previous warp for neighbors,
 	// no practical way to keep those buffered with the hash in mind)
 #ifdef WITH_OPENMP
-	#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf,canonicalSdfCount,aveLiveSdf,totalDataEnergy,totalLevelSetEnergy,totalKillingEnergy)
+#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, canonicalSdfCount, aveLiveSdf, totalDataEnergy, totalLevelSetEnergy, totalKillingEnergy)
 #endif
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 		Vector3i canonicalHashEntryPosition;
@@ -87,7 +90,13 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
 					liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache);
 					//_DEBUG
-					if (std::abs(canonicalVoxel.sdf - 1.0f) < epsilon || std::abs(liveSdf - 1.0f) < epsilon) continue;
+					//almost no restriction
+					//if (std::abs(canonicalVoxel.sdf - 1.0f) < epsilon && std::abs(liveSdf - 1.0f) < epsilon) continue;
+					//if (std::abs(canonicalVoxel.sdf - 1.0f) < epsilon) continue;
+					//if (std::abs(liveSdf - 1.0f) < epsilon) continue;
+					//most restrictive
+					//if (std::abs(canonicalVoxel.sdf - 1.0f) < epsilon || std::abs(liveSdf - 1.0f) < epsilon) continue;
+
 
 
 					bool useColor;
@@ -158,25 +167,26 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					// |v_x, v_y, v_z|       |m01, m11, m21|
 					// |w_x, w_y, w_z|       |m02, m12, m22|
 					Matrix3f& J = warpJacobean;
+					// @formatter:off
 					//(1+gamma) * u_x
 					Vector3f stackedVector0((onePlusGamma) * J.m00,
-							//u_y + gamma * v_x
+											//u_y + gamma * v_x
 							                J.m10 + gamma * J.m01,
-							//u_z + gamma * w_x
+											//u_z + gamma * w_x
 							                J.m20 + gamma * J.m02);
-					//v_x + gamma * u_y
+											//v_x + gamma * u_y
 					Vector3f stackedVector1(J.m01 + gamma * J.m10,
-							//(1+gamma) * v_y
+											//(1+gamma) * v_y
 							                (onePlusGamma) * J.m11,
-							//v_z + gamma * w_y
+											//v_z + gamma * w_y
 							                J.m21 + gamma * J.m12);
-					//w_x * gamma * u_z
+											//w_x * gamma * u_z
 					Vector3f stackedVector2(J.m02 + gamma * J.m20,
-							//w_y + gamma * v_z
+											//w_y + gamma * v_z
 							                J.m12 + gamma * J.m21,
-							//(1+gamma) * w_z
+											//(1+gamma) * w_z
 							                (onePlusGamma) * J.m22);
-
+					// @formatter:on
 					Vector3f deltaEKilling = 2.0f *
 					                         (warpHessian[0] * stackedVector0 +
 					                          warpHessian[1] * stackedVector1 +
@@ -251,6 +261,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					const float weightKilling = ITMSceneMotionTracker<TVoxel, TIndex>::weightKillingTerm;
 					const float weightLevelSet = ITMSceneMotionTracker<TVoxel, TIndex>::weightLevelSetTerm;
 					const float learningRate = ITMSceneMotionTracker<TVoxel, TIndex>::gradientDescentLearningRate;
+					//_DEBUG
 					//Vector3f deltaE = deltaEData;
 					Vector3f deltaE = deltaEData + weightKilling * deltaEKilling;
 					//Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet;
@@ -258,17 +269,25 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					Vector3f warpUpdate = learningRate * deltaE;
 					float vecLength = length(warpUpdate);
 
+					//_DEBUG
+					float killingLength = length(deltaEKilling);
+
 					//need thread lock here to ensure atomic updates to maxVectorUpdate
 #pragma omp critical(maxVectorUpdate)
 					{
 						if (maxVectorUpdate < vecLength) {
 							maxVectorUpdate = vecLength;
 						}
+						if (maxKillingUpdateLength < killingLength){
+							maxKillingUpdateLength = killingLength;
+							maxKillingUpdate = weightKilling * deltaEKilling;
+							trackedDataUpdate = deltaEData;
+						}
 					};
 
 					canonicalVoxel.warp_t_update = TO_SHORT_FLOOR3((warpUpdate * FLOAT_TO_SHORT_CONVERSION_FACTOR));
 
-					//debug stats //TODO: openmp reduction clause
+					//debug stats
 					aveCanonicaSdf += canonicalSdf;
 					aveLiveSdf += liveSdf;
 					canonicalSdfCount += 1;
@@ -283,9 +302,9 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 //						DIEWITHEXCEPTION("NAN encountered");
 //					}
 					//voxel is 5mm, so 10 voxels is 5 cm
-					if (deltaE.x > 10.0f || deltaE.y > 10.0f || deltaE.z > 10.0f) {
-						//std::cout << entryId << " " << locId << std::endl;
-					}
+					//if (deltaE.x > 10.0f || deltaE.y > 10.0f || deltaE.z > 10.0f) {
+					//std::cout << entryId << " " << locId << std::endl;
+					//}
 					//std::cout << entryId << " " << locId << " " << Vector3i(x,y,z) << " " << deltaE << std::endl;
 //					if(entryId == 7861 && locId == 206){
 //						//std::cout << deltaE << warpUpdate;
@@ -324,6 +343,9 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 	aveCanonicaSdf /= canonicalSdfCount;
 	aveLiveSdf /= canonicalSdfCount;
 	totalEnergy = totalDataEnergy + totalLevelSetEnergy + totalKillingEnergy;
+	std::cout << " Max Killing update: " << maxKillingUpdate
+	          << " Corresp. data update: " << trackedDataUpdate
+	          << std::endl;
 	std::cout << " Data term energy: " << totalDataEnergy
 	          << " Level set term energy: " << totalLevelSetEnergy
 	          << " Killing term energy: " << totalKillingEnergy
