@@ -26,12 +26,14 @@ class ITMDenseDynamicMapper {
 
 	private:
 		ITMSceneReconstructionEngine<TVoxel,TIndex> *sceneRecoEngine;
+		ITMSceneReconstructionEngine<ITMVoxelAux,TIndex> *liveSceneRecoEngine;
 		ITMSwappingEngine<TVoxel,TIndex> *swappingEngine;
 		ITMSceneMotionTracker<TVoxel,TIndex> *sceneMotionTracker;
 		ITMLibSettings::SwappingMode swappingMode;
 
 	public:
 		void ResetScene(ITMScene<TVoxel,TIndex> *scene) const;
+		void ResetLiveScene(ITMScene<ITMVoxelAux,TIndex> *live_scene) const;
 
 		/**
 		* \brief Tracks motions of all points between frames and fuses the new data into the canonical frame
@@ -51,7 +53,7 @@ class ITMDenseDynamicMapper {
 		void ProcessFrame(const ITMView* view,
 		                  const ITMTrackingState* trackingState,
 		                  ITMScene <TVoxel, TIndex>* canonical_scene,
-		                  ITMScene <TVoxel, TIndex>* live_scene,
+		                  ITMScene <ITMVoxelAux, TIndex>* live_scene,
 		                  ITMRenderState* renderState_live);
 
 		void ProcessInitialFrame(const ITMView* view,

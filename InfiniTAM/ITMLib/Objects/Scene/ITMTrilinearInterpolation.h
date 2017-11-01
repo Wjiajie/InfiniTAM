@@ -219,6 +219,7 @@ inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
 	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
 }
 
+//sdf without color
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,

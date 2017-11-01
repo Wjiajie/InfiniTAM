@@ -15,18 +15,19 @@
 //  ================================================================
 #include <limits>
 #include "ITMSceneMotionTracker.h"
+#include "../../ITMLibDefines.h"
 
 using namespace ITMLib;
 
 template<class TVoxel, class TIndex>
 void ITMSceneMotionTracker<TVoxel, TIndex>::ProcessFrame(ITMScene<TVoxel, TIndex>* canonicalScene,
-                                                                     ITMScene<TVoxel, TIndex>* liveScene) {
+                                                                     ITMScene<ITMVoxelAux, TIndex>* liveScene) {
 
 	float maxVectorUpdate = std::numeric_limits<float>::infinity();
 
 	for(int iteration = 0; maxVectorUpdate > maxVectorUpdateThreshold && iteration < maxIterationCount; iteration++){
 		std::cout << "Iteration: " << iteration << std::endl;
-		maxVectorUpdate = UpdateWarpField(canonicalScene,liveScene);
+		maxVectorUpdate = UpdateWarpField(canonicalScene, liveScene);
 		std::cout << " Max vector update: " << maxVectorUpdate << std::endl;
 	}
 

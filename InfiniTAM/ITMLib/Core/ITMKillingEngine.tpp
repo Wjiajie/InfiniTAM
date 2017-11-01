@@ -11,6 +11,7 @@
 
 #include "../../ORUtils/NVTimer.h"
 #include "../../ORUtils/FileUtils.h"
+#include "../ITMLibDefines.h"
 
 //#define OUTPUT_TRAJECTORY_QUATERNIONS
 
@@ -25,7 +26,7 @@ ITMKillingEngine<TVoxel,  TIndex>::ITMKillingEngine(const ITMLibSettings *settin
 
 	MemoryDeviceType memoryType = settings->GetMemoryType();
 	this->canonical_scene = new ITMScene<TVoxel,TIndex>(&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
-	this->live_scene = new ITMScene<TVoxel,TIndex>(&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
+	this->live_scene = new ITMScene<ITMVoxelAux,TIndex>(&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 	const ITMLibSettings::DeviceType deviceType = settings->deviceType;
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
@@ -38,7 +39,7 @@ ITMKillingEngine<TVoxel,  TIndex>::ITMKillingEngine(const ITMLibSettings *settin
 
 	denseMapper = new ITMDenseDynamicMapper<TVoxel,  TIndex>(settings);
 	denseMapper->ResetScene(canonical_scene);
-	denseMapper->ResetScene(live_scene);
+	denseMapper->ResetLiveScene(live_scene);
 
 	imuCalibrator = new ITMIMUCalibrator_iPad();
 	tracker = ITMTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, settings, lowLevelEngine, imuCalibrator, canonical_scene->sceneParams);
@@ -168,7 +169,7 @@ template <typename TVoxel,  typename TIndex>
 void ITMKillingEngine<TVoxel,TIndex>::resetAll()
 {
 	denseMapper->ResetScene(canonical_scene);
-	denseMapper->ResetScene(live_scene);
+	denseMapper->ResetLiveScene(live_scene);
 	trackingState->Reset();
 }
 

@@ -18,12 +18,15 @@
 #include "../Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
 #include "../Engines/Swapping/ITMSwappingEngineFactory.h"
 #include "../Trackers/ITMTrackerFactory.h"
+#include "../ITMLibDefines.h"
 
 using namespace ITMLib;
 
 template<class TVoxel, class TIndex>
 ITMDenseDynamicMapper<TVoxel, TIndex>::ITMDenseDynamicMapper(const ITMLibSettings* settings) {
 	sceneRecoEngine = ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel, TIndex>(
+			settings->deviceType);
+	liveSceneRecoEngine = ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxelAux, TIndex>(
 			settings->deviceType);
 	swappingEngine = settings->swappingMode != ITMLibSettings::SWAPPINGMODE_DISABLED
 	                 ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxel, TIndex>(settings->deviceType) : NULL;
@@ -41,23 +44,30 @@ template<class TVoxel, class TIndex>
 void ITMDenseDynamicMapper<TVoxel, TIndex>::ResetScene(ITMScene<TVoxel, TIndex>* scene) const {
 	sceneRecoEngine->ResetScene(scene);
 }
+template<class TVoxel, class TIndex>
+void ITMDenseDynamicMapper<TVoxel, TIndex>::ResetLiveScene(ITMScene<ITMVoxelAux, TIndex>* live_scene) const {
+	liveSceneRecoEngine->ResetScene(live_scene);
+}
+
+
+
 
 template<class TVoxel, class TIndex>
 void ITMDenseDynamicMapper<TVoxel, TIndex>::ProcessFrame(const ITMView* view,
                                                          const ITMTrackingState* trackingState,
                                                          ITMScene<TVoxel, TIndex>* canonical_scene,
-                                                         ITMScene<TVoxel, TIndex>* live_scene,
+                                                         ITMScene<ITMVoxel_f_rgb_conf, TIndex>* live_scene,
                                                          ITMRenderState* renderState) {
 
 
 	// clear out the live-frame SDF
-	sceneRecoEngine->ResetScene(live_scene);
+	liveSceneRecoEngine->ResetScene(live_scene);
 
 	//** construct the new live-frame SDF
 	// allocation
-	sceneRecoEngine->AllocateSceneFromDepth(live_scene, view, trackingState, renderState);
+	liveSceneRecoEngine->AllocateSceneFromDepth(live_scene, view, trackingState, renderState);
 	// integration
-	sceneRecoEngine->IntegrateIntoScene(live_scene, view, trackingState, renderState);
+	liveSceneRecoEngine->IntegrateIntoScene(live_scene, view, trackingState, renderState);
 
 	sceneMotionTracker->ProcessFrame(canonical_scene, live_scene);
 
@@ -118,3 +128,4 @@ ITMDenseDynamicMapper<TVoxel, TIndex>::ProcessInitialFrame(const ITMView* view, 
 		}
 	}
 }
+

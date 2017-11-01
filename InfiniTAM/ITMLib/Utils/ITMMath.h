@@ -8,6 +8,10 @@
 #define NULL 0
 #endif
 
+#ifndef FLOAT_TO_SHORT_CONVERSION_FACTOR
+#define FLOAT_TO_SHORT_CONVERSION_FACTOR 32767.0f
+#endif
+
 #ifndef __METALC__
 
 typedef unsigned char uchar;
@@ -39,6 +43,7 @@ typedef class ORUtils::Vector4<short> Vector4s;
 typedef class ORUtils::Vector4<uchar> Vector4u;
 
 typedef class ORUtils::Vector6<float> Vector6f;
+
 
 #ifndef TO_INT_ROUND3
 #define TO_INT_ROUND3(x) (x).toIntRound()

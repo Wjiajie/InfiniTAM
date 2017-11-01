@@ -35,7 +35,7 @@ namespace ITMLib
 		ITMTrackingController *trackingController;
 
 		ITMScene<TVoxel, TIndex> *canonical_scene;
-		ITMScene<TVoxel, TIndex> *live_scene;
+		ITMScene<ITMVoxelAux, TIndex> *live_scene;
 		ITMRenderState *renderState_live;
 		ITMRenderState *renderState_freeview;
 

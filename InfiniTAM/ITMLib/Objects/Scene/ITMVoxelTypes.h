@@ -240,6 +240,8 @@ struct ITMVoxel_f_dynamic
 	float confidence;
 	/** vector translating the current point to a different location **/
 	Vector3f warp_t;
+	/** used for intermediate update results **/
+	Vector3s warp_t_update;
 
 	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic()
 	{
