@@ -96,7 +96,78 @@ inline void ComputePerPointWarpedLiveJacobianAndHessian(const CONSTPTR(Vector3i)
 	                sdfDerivatives_xy_yz_zx.z, sdfDerivatives_xy_yz_zx.y, sdfDerivatives_xx_yy_zz.z};
 	sdfHessian.setValues(vals);
 };
+//_DEBUG
 
+//without color
+template<typename TVoxel, typename TIndex, typename TCache>
+_CPU_AND_GPU_CODE_
+inline void ComputePerPointWarpedLiveJacobianAndHessianAlt(const CONSTPTR(Vector3i)& originalPosition,
+                                                        const CONSTPTR(Vector3f)& originalWarp_t,
+                                                        const CONSTPTR(TVoxel)* canonicalVoxels,
+                                                        const CONSTPTR(ITMHashEntry)* canonicalHashTable,
+                                                        THREADPTR(TCache)& canonicalCache,
+                                                        const CONSTPTR(ITMVoxelAux)* liveVoxels,
+                                                        const CONSTPTR(ITMHashEntry)* liveHashTable,
+                                                        THREADPTR(TCache)& liveCache,
+                                                        THREADPTR(float)& warpedSdf,
+                                                        THREADPTR(Vector3f)& sdfJacobian,
+                                                        THREADPTR(Matrix3f)& sdfHessian,
+                                                           const CONSTPTR(bool) printResult = false) {
+	//position projected with the current warp
+	Vector3f currentProjectedPosition = originalPosition.toFloat() + originalWarp_t;
+
+	//=== shifted warped sdf locations, shift vector, alternative projected position
+	warpedSdf = interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition, liveCache);
+
+	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
+	// === forward by 1 in each direction
+	Vector3f warpedSdfForward(
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1.f, 0, 0), liveCache),
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1.f, 0), liveCache),
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0.f, 1), liveCache));
+	// === back by 1 in each direction
+	Vector3f warpedSdfBackward(
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(-1, 0, 0), liveCache),
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, -1, 0), liveCache),
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, -1), liveCache)
+	);
+	// === x-y, y-z, and x-z plane forward corners for 2nd derivatives
+	Vector3f warpedSdfCorners(
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 1, 0), liveCache),
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 1), liveCache),
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 1), liveCache));
+
+
+	//=========== COMPUTE JACOBIAN =====================================================================================
+	sdfJacobian = warpedSdfForward - Vector3f(warpedSdf);
+
+	//=========== COMPUTE 2ND PARTIAL DERIVATIVES IN SAME DIRECTION ====================================================
+	Vector3f sdfDerivatives_xx_yy_zz = warpedSdfForward - Vector3f(2.0f * warpedSdf) + warpedSdfBackward;
+
+	//=== corner-voxel auxiliary derivatives for later 2nd derivative approximations
+	//Along the x axis, case 1: (0,1,0)->(1,1,0)
+	//Along the y axis, case 1: (0,0,1)->(0,1,1)
+	//Along the z axis, case 1: (1,0,0)->(1,0,1)
+	Vector3f cornerSdfDerivatives = Vector3f(
+			warpedSdfCorners.x - warpedSdfForward.y,
+			warpedSdfCorners.y - warpedSdfForward.z,
+			warpedSdfCorners.z - warpedSdfForward.x);
+
+	//===Compute the 2nd partial derivatives for different direction sequences
+	Vector3f sdfDerivatives_xy_yz_zx = cornerSdfDerivatives - sdfJacobian;
+
+	float vals[] = {sdfDerivatives_xx_yy_zz.x, sdfDerivatives_xy_yz_zx.x, sdfDerivatives_xy_yz_zx.z,//r1
+	                sdfDerivatives_xy_yz_zx.x, sdfDerivatives_xx_yy_zz.y, sdfDerivatives_xy_yz_zx.y,//r2
+	                sdfDerivatives_xy_yz_zx.z, sdfDerivatives_xy_yz_zx.y, sdfDerivatives_xx_yy_zz.z};
+	sdfHessian.setValues(vals);
+
+	if(printResult){
+		std::cout << "Warped SDF Forward: " << warpedSdfForward << std::endl;
+		std::cout << "Warped SDF Backward: " << warpedSdfBackward << std::endl;
+		std::cout << "Warped SDF Corners: " << warpedSdfCorners << std::endl;
+		std::cout << "Warped SDF Jacobian: " << sdfJacobian << std::endl << std::endl;
+	}
+};
 //without color
 template<typename TVoxel, typename TIndex, typename TCache>
 _CPU_AND_GPU_CODE_
@@ -127,8 +198,8 @@ inline void ComputePerPointWarpedLiveJacobianAndHessian(const CONSTPTR(Vector3i)
 	Vector3f warpedSdfBackward(
 			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(-1, 0, 0), liveCache),
 			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, -1, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, -1),
-			                       liveCache));
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, -1), liveCache)
+	);
 	// === x-y, y-z, and x-z plane forward corners for 2nd derivatives
 	Vector3f warpedSdfCorners(
 			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 1, 0), liveCache),
@@ -269,18 +340,24 @@ inline void ComputePerPointWarpJacobianAndHessianAlt(const CONSTPTR(Vector3f)& o
 	                                          cache);
 
 	boundary = false;
+	int bNeighbors = 0;
 	for (int iNeightbor = 0; iNeightbor < neighborhoodSize; iNeightbor++) {
 		if (!found[iNeightbor]) {
-			boundary = true;
+			//boundary = true;
+			warp_tNeighbors[iNeightbor] = originalWarp_t;
+			bNeighbors++;
 		}
+	}
+	if(bNeighbors > 3){
+		boundary = true;
 	}
 	// |u_x, u_y, u_z|       |m00, m10, m20|
 	// |v_x, v_y, v_z|       |m01, m11, m21|
 	// |w_x, w_y, w_z|       |m02, m12, m22|
 	Vector3f zeroVector(0.0f);
-	jacobian.setColumn(0, found[3] ? warp_tNeighbors[3] - originalWarp_t : zeroVector);//1st derivative in x
-	jacobian.setColumn(1, found[4] ? warp_tNeighbors[4] - originalWarp_t : zeroVector);//1st derivative in y
-	jacobian.setColumn(2, found[5] ? warp_tNeighbors[5] - originalWarp_t : zeroVector);//1st derivative in z
+	jacobian.setColumn(0, warp_tNeighbors[3] - originalWarp_t );//1st derivative in x
+	jacobian.setColumn(1, warp_tNeighbors[4] - originalWarp_t );//1st derivative in y
+	jacobian.setColumn(2, warp_tNeighbors[5] - originalWarp_t );//1st derivative in z
 
 
 
@@ -288,9 +365,9 @@ inline void ComputePerPointWarpJacobianAndHessianAlt(const CONSTPTR(Vector3f)& o
 	// |u_x, u_y, u_z|
 	// |v_x, v_y, v_z|
 	// |w_x, w_y, w_z|
-	backwardDifferences.setColumn(0, found[0] ? originalWarp_t - warp_tNeighbors[0] : zeroVector);//1st derivative in x
-	backwardDifferences.setColumn(1, found[1] ? originalWarp_t - warp_tNeighbors[1] : zeroVector);//1st derivative in y
-	backwardDifferences.setColumn(2, found[2] ? originalWarp_t - warp_tNeighbors[2] : zeroVector);//1st derivative in z
+	backwardDifferences.setColumn(0, originalWarp_t - warp_tNeighbors[0] );//1st derivative in x
+	backwardDifferences.setColumn(1, originalWarp_t - warp_tNeighbors[1] );//1st derivative in y
+	backwardDifferences.setColumn(2, originalWarp_t - warp_tNeighbors[2] );//1st derivative in z
 
 	//second derivatives in same direction
 	// |u_xx, u_yy, u_zz|       |m00, m10, m20|
@@ -299,12 +376,9 @@ inline void ComputePerPointWarpJacobianAndHessianAlt(const CONSTPTR(Vector3f)& o
 	Matrix3f dd_XX_YY_ZZ = jacobian - backwardDifferences;
 
 	Matrix3f neighborDifferences;
-	neighborDifferences.setColumn(0, found[6] && found[4] ? warp_tNeighbors[6] - warp_tNeighbors[4]
-	                                                      : zeroVector);//(0,1,0)->(1,1,0)
-	neighborDifferences.setColumn(1, found[7] && found[5] ? warp_tNeighbors[7] - warp_tNeighbors[5]
-	                                                      : zeroVector);//(0,0,1)->(0,1,1)
-	neighborDifferences.setColumn(2, found[8] && found[3] ? warp_tNeighbors[8] - warp_tNeighbors[3]
-	                                                      : zeroVector);//(1,0,0)->(1,0,1)
+	neighborDifferences.setColumn(0, warp_tNeighbors[6] - warp_tNeighbors[4]);//(0,1,0)->(1,1,0)
+	neighborDifferences.setColumn(1, warp_tNeighbors[7] - warp_tNeighbors[5]);//(0,0,1)->(0,1,1)
+	neighborDifferences.setColumn(2, warp_tNeighbors[8] - warp_tNeighbors[3]);//(1,0,0)->(1,0,1)
 
 
 	//second derivatives in different directions

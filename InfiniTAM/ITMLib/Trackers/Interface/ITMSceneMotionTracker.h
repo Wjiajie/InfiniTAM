@@ -30,6 +30,8 @@ namespace ITMLib {
 		//TODO -- make all of these parameters
 		const int maxIterationCount = 300;
 		const float maxVectorUpdateThresholdMeters = 0.0001f;//m
+		//_DEBUG
+		//const float gradientDescentLearningRate = 1.0f;
 		const float gradientDescentLearningRate = 0.1f;
 		//_DEBUG
 		const float rigidityEnforcementFactor = 0.0f;
@@ -37,7 +39,9 @@ namespace ITMLib {
 		const float weightKillingTerm = 0.5f;
 		const float weightLevelSetTerm = 0.2f;
 		const float weightColorDataTerm = 0.0f;
-		const float colorSdfThreshold = 0.25f;
+		//_DEBUG
+		const float colorSdfThreshold = -1.00f;
+		//const float colorSdfThreshold = 0.25f;
 		const float epsilon = 1.0e-10f;
 
 		float maxVectorUpdateThresholdVoxels;
