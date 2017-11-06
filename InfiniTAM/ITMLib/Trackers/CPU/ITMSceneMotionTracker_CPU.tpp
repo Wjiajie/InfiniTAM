@@ -41,8 +41,9 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 #define _DEBUG
 #ifdef _DEBUG
 	double aveCanonicaSdf = 0.0;
-	int canonicalSdfCount = 0;
+	int consideredVoxelCount = 0;
 	double aveLiveSdf = 0.0;
+	double aveSdfDiff = 0.0;
 	Vector3f trackedDataUpdate;
 	Vector3f maxKillingUpdate;
 	float maxKillingUpdateLength = 0.0;
@@ -60,7 +61,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 	//compute the update, don't apply yet (computation depends on previous warp for neighbors,
 	// no practical way to keep those buffered with the hash in mind)
 #ifdef WITH_OPENMP
-	#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, canonicalSdfCount, aveLiveSdf, totalDataEnergy, totalLevelSetEnergy, totalSmoothnessEnergy, totalKillingEnergy, aveWarpDist)
+	#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, consideredVoxelCount, aveLiveSdf, totalDataEnergy, totalLevelSetEnergy, totalSmoothnessEnergy, totalKillingEnergy, aveWarpDist, aveSdfDiff)
 #endif
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 		Vector3i canonicalHashEntryPosition;
@@ -85,8 +86,6 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 
 					TVoxel& canonicalVoxel = localVoxelBlock[locId];
 
-
-
 					//=================================== PRELIMINARIES ================================================
 					//Jacobian and Hessian of the live scene sampled at warped location + deltas,
 					//as well as local Jacobian and Hessian of the warp field itself
@@ -102,8 +101,6 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					//if (std::abs(liveSdf - 1.0f) < epsilon) continue;
 					//most restrictive
 					if (std::abs(canonicalVoxel.sdf - 1.0f) < epsilon || std::abs(liveSdf - 1.0f) < epsilon) continue;
-
-
 
 					bool useColor;
 					float canonicalSdf = TVoxel::valueToFloat(canonicalVoxel.sdf);
@@ -213,16 +210,16 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					                            dot(warpJacobianTranspose.getColumn(2), warpJacobian.getColumn(2)));
 
 					//=================================== FINAL UPDATE =================================================
-					//const float weightKilling = ITMSceneMotionTracker<TVoxel, TIndex>::weightKillingTerm;
+					const float weightKilling = ITMSceneMotionTracker<TVoxel, TIndex>::weightKillingTerm;
 					//_DEBUG
-					const float weightKilling = 0.5;
+					//const float weightKilling = 0.5;
 					const float weightLevelSet = ITMSceneMotionTracker<TVoxel, TIndex>::weightLevelSetTerm;
 					const float learningRate = ITMSceneMotionTracker<TVoxel, TIndex>::gradientDescentLearningRate;
 					//_DEBUG
-					//Vector3f deltaE = deltaEData;
+					Vector3f deltaE = deltaEData;
 					//Vector3f deltaE = deltaEData + weightKilling * deltaEKilling;
-					Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet;
-					//Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet + weightKilling * deltaEKilling;
+					//Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet;
+					//Vector3f deltaE = -deltaEData + weightLevelSet * deltaELevelSet + weightKilling * deltaEKilling;
 					Vector3f warpUpdate = learningRate * deltaE;
 					float vecLength = length(warpUpdate);
 
@@ -249,12 +246,13 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					//debug stats
 					aveCanonicaSdf += canonicalSdf;
 					aveLiveSdf += liveSdf;
-					canonicalSdfCount += 1;
+					consideredVoxelCount += 1;
 					totalDataEnergy += (diffSdf * diffSdf);
 					totalLevelSetEnergy += weightLevelSet * 0.5 * (sdfJacobianNormMinusOne * sdfJacobianNormMinusOne);
 					totalKillingEnergy += weightKilling * localKillingEnergy;
 					totalSmoothnessEnergy += weightKilling * localSmoothnessEnergy;
 					aveWarpDist += length(canonicalVoxel.warp_t);
+					aveSdfDiff += diffSdf;
 
 					//80280 252 4, 7, 3 -1.53724, -1.53811, 0
 					//_DEBUG
@@ -313,9 +311,10 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 		}
 	}
 	//_DEBUG
-	aveCanonicaSdf /= canonicalSdfCount;
-	aveLiveSdf /= canonicalSdfCount;
-	aveWarpDist /= canonicalSdfCount;
+	aveCanonicaSdf /= consideredVoxelCount;
+	aveLiveSdf /= consideredVoxelCount;
+	aveWarpDist /= consideredVoxelCount;
+	aveSdfDiff /= consideredVoxelCount;
 	totalEnergy = totalDataEnergy + totalLevelSetEnergy + totalKillingEnergy;
 	const std::string red("\033[0;31m");
 	const std::string green("\033[0;32m");
@@ -330,7 +329,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 	          << " Total: " << totalEnergy << green
 	          <<  " No Killing: " << totalDataEnergy + totalLevelSetEnergy << reset
 	          <<  " No Level Set: " << totalDataEnergy + totalKillingEnergy;
-	std::cout << std:: endl << " Ave canonical SDF: " << aveCanonicaSdf << " Ave live SDF: " << aveLiveSdf << " Considered voxel count: " << canonicalSdfCount << " Ave warp distance: " << aveWarpDist;
+	std::cout << std:: endl << " Ave canonical SDF: " << aveCanonicaSdf << " Ave live SDF: " << aveLiveSdf << " Ave sdf difference: " << aveSdfDiff << " Considered voxel count: " << consideredVoxelCount << " Ave warp distance: " << aveWarpDist;
 	//_DEBUG
 //	std::cout << std::endl;
 //	for(int iBin =0 ; iBin < histBinCount; iBin++){
@@ -410,3 +409,6 @@ void ITMSceneMotionTracker_CPU<TVoxel, TIndex>::FuseFrame(ITMScene<TVoxel, TInde
 	}
 
 }
+
+template<typename TVoxel, typename TIndex>
+ITMSceneMotionTracker_CPU<TVoxel,TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params) : ITMSceneMotionTracker<TVoxel,TIndex>(params) {}

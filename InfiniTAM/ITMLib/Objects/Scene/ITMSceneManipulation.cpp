@@ -22,7 +22,6 @@
 
 namespace ITMLib {
 
-
 	bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition,
 	                           ITMHashEntry* hashTable,
 	                           ITMHashEntry*& resultEntry,
@@ -73,11 +72,13 @@ namespace ITMLib {
 				resultEntry = &hashTable[resultEntryIndex];
 				lastFreeVoxelBlockId--;
 				return true;
+			}else{
+				return false;
 			}
 		} else {
 			//HashEntry already exists, return the pointer to it
 			resultEntry = &hashTable[resultEntryIndex];
-
+			return true;
 		}
 	}
 

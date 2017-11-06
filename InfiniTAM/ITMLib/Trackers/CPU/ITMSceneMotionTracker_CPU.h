@@ -23,6 +23,8 @@ namespace ITMLib {
 			public ITMSceneMotionTracker<TVoxel, TIndex> {
 	public:
 
+		ITMSceneMotionTracker_CPU(const ITMSceneParams& params);
+
 	protected:
 
 		float UpdateWarpField(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <ITMVoxelAux, TIndex>* liveScene) override;

@@ -25,8 +25,9 @@ void ITMSceneMotionTracker<TVoxel, TIndex>::ProcessFrame(ITMScene<TVoxel, TIndex
 
 	float maxVectorUpdate = std::numeric_limits<float>::infinity();
 
+	std::cout << "Desired warp update (voxels) below " << maxVectorUpdateThresholdVoxels << std::endl;
 	//_DEBUG //TODO: remove temporary update limit
-	for(int iteration = 0; maxVectorUpdate > maxVectorUpdateThreshold && iteration < 100/*maxIterationCount*/; iteration++){
+	for(int iteration = 0; maxVectorUpdate > maxVectorUpdateThresholdVoxels && iteration < maxIterationCount; iteration++){
 		const std::string red("\033[0;31m");
 		const std::string reset("\033[0m");
 		std::cout << red << "Iteration: " << iteration << reset;// << std::endl;
@@ -36,3 +37,5 @@ void ITMSceneMotionTracker<TVoxel, TIndex>::ProcessFrame(ITMScene<TVoxel, TIndex
 
 	this->FuseFrame(canonicalScene, liveScene);
 }
+template<class TVoxel, class TIndex>
+ITMSceneMotionTracker<TVoxel, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params) : maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize) {}

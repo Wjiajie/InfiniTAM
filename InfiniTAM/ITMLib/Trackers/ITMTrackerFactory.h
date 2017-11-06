@@ -527,18 +527,18 @@ namespace ITMLib
 	  * \param deviceType  The device on which the scene motion tracking should operate.
 	  */
 	template <typename TVoxel, typename TIndex>
-	static ITMSceneMotionTracker<TVoxel,TIndex> *MakeSceneMotionTracker(ITMLibSettings::DeviceType deviceType)
+	static ITMSceneMotionTracker<TVoxel,TIndex> *MakeSceneMotionTracker(const ITMLibSettings::DeviceType& deviceType, const ITMSceneParams& sceneParams)
 	{
 		ITMSceneMotionTracker<TVoxel,TIndex> *sceneRecoEngine = NULL;
 
 		switch(deviceType)
 		{
 			case ITMLibSettings::DEVICE_CPU:
-				sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxel,TIndex>;
+				sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxel,TIndex>(sceneParams);
 				break;
 			case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-				sceneRecoEngine = new ITMSceneMotionTracker_CUDA<TVoxel,TIndex>;
+				sceneRecoEngine = new ITMSceneMotionTracker_CUDA<TVoxel,TIndex>(sceneParams);
 #endif
 				break;
 			case ITMLibSettings::DEVICE_METAL:

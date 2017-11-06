@@ -28,8 +28,8 @@ namespace ITMLib {
 
 		virtual void FuseFrame(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <ITMVoxelAux, TIndex>* liveScene) = 0;
 		//TODO -- make all of these parameters
-		const int maxIterationCount = 100;
-		const float maxVectorUpdateThreshold = 0.1f;
+		const int maxIterationCount = 300;
+		const float maxVectorUpdateThresholdMeters = 0.0001f;//m
 		const float gradientDescentLearningRate = 0.1f;
 		//_DEBUG
 		//const float rigidityEnforcementFactor = 0.0f;
@@ -40,8 +40,9 @@ namespace ITMLib {
 		const float colorSdfThreshold = 0.25f;
 		const float epsilon = 1.0e-10f;
 
+		float maxVectorUpdateThresholdVoxels;
 	public:
-
+		explicit ITMSceneMotionTracker(const ITMSceneParams& params);
 		void ProcessFrame(ITMScene <TVoxel, TIndex>* canonicalScene,
 		                  ITMScene <ITMVoxelAux, TIndex>* liveScene);
 	};

@@ -36,7 +36,7 @@ ITMDenseDynamicMapper<TVoxel, TIndex>::ITMDenseDynamicMapper(const ITMLibSetting
 			settings->deviceType);
 	swappingEngine = settings->swappingMode != ITMLibSettings::SWAPPINGMODE_DISABLED
 	                 ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxel, TIndex>(settings->deviceType) : NULL;
-	sceneMotionTracker = ITMTrackerFactory::MakeSceneMotionTracker<TVoxel, TIndex>(settings->deviceType);
+	sceneMotionTracker = ITMTrackerFactory::MakeSceneMotionTracker<TVoxel, TIndex>(settings->deviceType, settings->sceneParams);
 	swappingMode = settings->swappingMode;
 }
 
@@ -70,13 +70,14 @@ void ITMDenseDynamicMapper<TVoxel, TIndex>::ProcessFrame(const ITMView* view,
 	liveSceneRecoEngine->ResetScene(live_scene);
 
 	//** construct the new live-frame SDF
-	//_DEBUG
+	//_DEBUG -- restore
 	// allocation
 	//liveSceneRecoEngine->AllocateSceneFromDepth(live_scene, view, trackingState, renderState);
 	// integration
 	//liveSceneRecoEngine->IntegrateIntoScene(live_scene, view, trackingState, renderState);
+	//_DEBUG
 	auto start = std::chrono::steady_clock::now();
-	CopySceneWithOffset_CPU(*live_scene,*canonical_scene, Vector3i(5,5,5));
+	CopySceneWithOffset_CPU(*live_scene,*canonical_scene, Vector3i(2,2,2));
 	auto end = std::chrono::steady_clock::now();
 	auto diff = end - start;
 	std::cout << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
