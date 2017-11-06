@@ -832,6 +832,7 @@ namespace ORUtils {
 		return r;
 	}
 
+
 	// return the normalized version of the vector
 	template< class T> _CPU_AND_GPU_CODE_ inline T normalize(const T &vec)	{
 		typename T::value_type sum = length(vec);

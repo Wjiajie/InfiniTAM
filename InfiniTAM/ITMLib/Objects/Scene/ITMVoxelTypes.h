@@ -252,5 +252,6 @@ struct ITMVoxel_f_dynamic
 		//trilienar_weights = Vector3u((uchar)0);
 		w_color = 0;
 		warp_t = Vector3f(0.f);
+		warp_t_update = Vector3s((short)0);
 	}
 };

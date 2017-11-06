@@ -12,6 +12,7 @@
 #include "../../../ORUtils/MemoryBlock.h"
 #include "../../../ORUtils/MemoryBlockPersister.h"
 
+//TODO: this (and the like) should be renamed to SDF_HASH_ENTRY_SIZE to avoid naming ambiguity -Greg(GitHub:Algomorph)
 #define SDF_BLOCK_SIZE 8				// SDF block size
 #define SDF_BLOCK_SIZE3 512				// SDF_BLOCK_SIZE3 = SDF_BLOCK_SIZE * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE
 

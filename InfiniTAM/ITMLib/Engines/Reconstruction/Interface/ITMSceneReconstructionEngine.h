@@ -28,10 +28,18 @@ namespace ITMLib
 		*/
 		virtual void ResetScene(ITMScene<TVoxel, TIndex> *scene) = 0;
 
-		/** Given a view with a new depth image, compute the
+
+		/**
+		 * \brief Given a view with a new depth image, compute the
 		    visible blocks, allocate them and update the hash
 		    table so that the new image data can be integrated.
-		*/
+		 * \param scene [out] the scene whose hash needs additional allocations
+		 * \param view [in] a view with a new depth image
+		 * \param trackingState [in] tracking state from previous frame to new frame that corresponds to the given view
+		 * \param renderState [in] the current renderState with information about which hash entries are visible
+		 * \param onlyUpdateVisibleList [in] whether we want to allocate only the hash entry blocks currently visible
+		 * \param resetVisibleList  [in] reset visibility list upon completion
+		 */
 		virtual void AllocateSceneFromDepth(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, const ITMTrackingState *trackingState,
 			const ITMRenderState *renderState, bool onlyUpdateVisibleList = false, bool resetVisibleList = false) = 0;
 

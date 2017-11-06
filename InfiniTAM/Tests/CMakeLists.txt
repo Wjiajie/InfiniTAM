@@ -20,10 +20,10 @@ if(BUILD_TESTS)
     # Specify the project files #
     #############################
     SET(sources
-            AllTests.cpp
+            AllTests.cpp TestUtils.cpp Instantiations.cpp
             )
     SET(headers
-            TestUtils.h
+            TestUtils.h TestUtils.tpp
             )
 
     ################################

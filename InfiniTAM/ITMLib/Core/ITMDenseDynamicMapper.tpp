@@ -13,12 +13,18 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include <limits>
+//stdlib
+//#include <limits>
+#include <chrono>
+
+
+//local
 #include "ITMDenseDynamicMapper.h"
+#include "../ITMLibDefines.h"
 #include "../Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
 #include "../Engines/Swapping/ITMSwappingEngineFactory.h"
 #include "../Trackers/ITMTrackerFactory.h"
-#include "../ITMLibDefines.h"
+#include "../Objects/Scene/ITMSceneManipulation.h"
 
 using namespace ITMLib;
 
@@ -64,10 +70,16 @@ void ITMDenseDynamicMapper<TVoxel, TIndex>::ProcessFrame(const ITMView* view,
 	liveSceneRecoEngine->ResetScene(live_scene);
 
 	//** construct the new live-frame SDF
+	//_DEBUG
 	// allocation
-	liveSceneRecoEngine->AllocateSceneFromDepth(live_scene, view, trackingState, renderState);
+	//liveSceneRecoEngine->AllocateSceneFromDepth(live_scene, view, trackingState, renderState);
 	// integration
-	liveSceneRecoEngine->IntegrateIntoScene(live_scene, view, trackingState, renderState);
+	//liveSceneRecoEngine->IntegrateIntoScene(live_scene, view, trackingState, renderState);
+	auto start = std::chrono::steady_clock::now();
+	CopySceneWithOffset_CPU(*live_scene,*canonical_scene, Vector3i(5,5,5));
+	auto end = std::chrono::steady_clock::now();
+	auto diff = end - start;
+	std::cout << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 
 	sceneMotionTracker->ProcessFrame(canonical_scene, live_scene);
 
@@ -107,6 +119,7 @@ ITMDenseDynamicMapper<TVoxel, TIndex>::ProcessInitialFrame(const ITMView* view, 
 	//** construct the new live-frame SDF
 	// allocation
 	sceneRecoEngine->AllocateSceneFromDepth(canonical_scene, view, trackingState, renderState);
+
 	// integration
 	sceneRecoEngine->IntegrateIntoScene(canonical_scene, view, trackingState, renderState);
 

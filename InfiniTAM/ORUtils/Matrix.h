@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <ostream>
+#include <numeric>
 
 /************************************************************************/
 /* WARNING: the following 3x3 and 4x4 matrix are using column major, to	*/
@@ -257,6 +258,7 @@ namespace ORUtils {
 		_CPU_AND_GPU_CODE_ inline void getValues(T *mp) const	{ memcpy(mp, this->m, sizeof(T) * 9); }
 		_CPU_AND_GPU_CODE_ inline const T *getValues() const { return this->m; }
 		_CPU_AND_GPU_CODE_ inline Vector3<T> getScale() const { return Vector3<T>(this->m00, this->m11, this->m22); }
+		_CPU_AND_GPU_CODE_ inline T sum() const { return std::accumulate(this->m, this->m+9, 0); }
 
 		// Element access
 		_CPU_AND_GPU_CODE_ inline T &operator()(int x, int y)	{ return at(x, y); }
@@ -456,7 +458,5 @@ namespace ORUtils {
 			return os;
 		}
 	};
-
-
 }
 

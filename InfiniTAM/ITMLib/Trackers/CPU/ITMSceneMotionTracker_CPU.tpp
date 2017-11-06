@@ -14,6 +14,7 @@
 //  limitations under the License.
 //  ================================================================
 #include <cmath>
+#include <iomanip>
 #include "ITMSceneMotionTracker_CPU.h"
 #include "../Shared/ITMSceneMotionTracker_Shared.h"
 #include "../../ITMLibDefines.h"
@@ -47,8 +48,10 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 	float maxKillingUpdateLength = 0.0;
 	double totalDataEnergy = 0.0;
 	double totalLevelSetEnergy = 0.0;
+	double totalSmoothnessEnergy = 0.0;
 	double totalKillingEnergy = 0.0;
 	double totalEnergy = 0.0;
+	double aveWarpDist = 0.0;
 #endif
 
 	const float epsilon = ITMSceneMotionTracker<TVoxel, TIndex>::epsilon;
@@ -57,7 +60,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 	//compute the update, don't apply yet (computation depends on previous warp for neighbors,
 	// no practical way to keep those buffered with the hash in mind)
 #ifdef WITH_OPENMP
-#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, canonicalSdfCount, aveLiveSdf, totalDataEnergy, totalLevelSetEnergy, totalKillingEnergy)
+	#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, canonicalSdfCount, aveLiveSdf, totalDataEnergy, totalLevelSetEnergy, totalSmoothnessEnergy, totalKillingEnergy, aveWarpDist)
 #endif
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 		Vector3i canonicalHashEntryPosition;
@@ -66,7 +69,10 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 		if (currentCanonicalHashEntry.ptr < 0) continue;
 
 		//position of the current entry in 3D space
+
 		canonicalHashEntryPosition = currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		//_DEBUG
+		//std::cout << std::endl << "HASH POS: " << canonicalHashEntryPosition << std::endl;
 		TVoxel* localVoxelBlock = &(canonicalVoxels[currentCanonicalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
 
@@ -82,8 +88,8 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 
 
 					//=================================== PRELIMINARIES ================================================
-					//Jacobean and Hessian of the live scene sampled at warped location + deltas,
-					//as well as local Jacobean and Hessian of the warp field itself
+					//Jacobian and Hessian of the live scene sampled at warped location + deltas,
+					//as well as local Jacobian and Hessian of the warp field itself
 					float liveSdf;
 
 					//_DEBUG
@@ -95,78 +101,69 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					//if (std::abs(canonicalVoxel.sdf - 1.0f) < epsilon) continue;
 					//if (std::abs(liveSdf - 1.0f) < epsilon) continue;
 					//most restrictive
-					//if (std::abs(canonicalVoxel.sdf - 1.0f) < epsilon || std::abs(liveSdf - 1.0f) < epsilon) continue;
+					if (std::abs(canonicalVoxel.sdf - 1.0f) < epsilon || std::abs(liveSdf - 1.0f) < epsilon) continue;
 
 
 
 					bool useColor;
 					float canonicalSdf = TVoxel::valueToFloat(canonicalVoxel.sdf);
 					Vector3f liveColor;
-					Vector3f liveSdfJacobean;
-					Vector3f liveColorJacobean;
+					Vector3f liveSdfJacobian;
+					Vector3f liveColorJacobian;
 					Matrix3f liveSdfHessian;
 
-					if (canonicalSdf > 0.25f) {
+					if (canonicalSdf > ITMSceneMotionTracker<TVoxel, TIndex>::colorSdfThreshold) {
 						useColor = false;
 						ComputePerPointWarpedLiveJacobianAndHessian<TVoxel, TIndex, typename TIndex::IndexCache>
 								(originalPosition, canonicalVoxel.warp_t,
 								 canonicalVoxels, canonicalHashTable, canonicalCache,
 								 liveVoxels, liveHashTable, liveCache,
-								 liveSdf, liveSdfJacobean, liveSdfHessian);
+								 liveSdf, liveSdfJacobian, liveSdfHessian);
 					} else {
 						useColor = true;
 						ComputePerPointWarpedLiveJacobianAndHessian<TVoxel, TIndex, typename TIndex::IndexCache>
 								(originalPosition, canonicalVoxel.warp_t,
 								 canonicalVoxels, canonicalHashTable, canonicalCache,
 								 liveVoxels, liveHashTable, liveCache,
-								 liveSdf, liveColor, liveSdfJacobean, liveColorJacobean, liveSdfHessian);
+								 liveSdf, liveColor, liveSdfJacobian, liveColorJacobian, liveSdfHessian);
 					}
-
-					//_DEBUG
-					//std::cout << "J1: " << std::endl << liveSdfJacobean << std::endl <<"J2: " << std::endl << liveSdfJacobeanAlt1 << std::endl <<std::endl;
-
-
-//					if(entryId == 7861 && locId == 206){
-//						int vmIndex;
-//						//TVoxel voxel = readVoxel(canonicalVoxels, canonicalHashTable, originalPosition + Vector3i(0,1,0), vmIndex, canonicalCache);
-//						//TVoxel voxel2 = readVoxel(canonicalVoxels, canonicalHashTable, originalPosition + Vector3i(-1,0,0), vmIndex, canonicalCache);
-//						std::cout << "hi" << std::endl;
-//					}
-					Matrix3f warpJacobean;
+					Matrix3f warpJacobian;
 					Matrix3f warpHessian[3] = {Matrix3f(), Matrix3f(), Matrix3f()};
 					ComputePerPointWarpJacobianAndHessian<TVoxel, TIndex, typename TIndex::IndexCache>(
 							canonicalVoxel.warp_t, originalPosition, canonicalVoxels, canonicalHashTable,
-							canonicalCache, warpJacobean, warpHessian);
+							canonicalCache, warpJacobian, warpHessian);
+					//_DEBUG
+//					ComputePerPointWarpJacobianAndHessianAlt<TVoxel, TIndex, typename TIndex::IndexCache>(
+//							canonicalVoxel.warp_t, originalPosition, canonicalVoxels, canonicalHashTable,
+//							canonicalCache, warpJacobian, warpHessian);
 
 					//=================================== DATA TERM ====================================================
 					//Compute data term error / energy
 					float diffSdf = liveSdf - canonicalSdf;
 
 					//_DEBUG
-					Vector3f deltaEData = liveSdfJacobean * diffSdf;
-					//Vector3f deltaEData = liveSdfJacobean * diffSdf;
+					Vector3f deltaEData = liveSdfJacobian * diffSdf;
+					//Vector3f deltaEData = liveSdfJacobian * diffSdf;
 					if (useColor) {
 						float diffColor = ITMSceneMotionTracker<TVoxel, TIndex>::weightColorDataTerm *
 						                  squareDistance(liveColor, TO_FLOAT3(canonicalVoxel.clr) / 255.f);
-						deltaEData += liveColorJacobean * diffColor;
+						deltaEData += liveColorJacobian * diffColor;
 					}
 
 					//=================================== LEVEL SET TERM ===============================================
-					float sdfJacobianNorm = length(liveSdfJacobean);
+					float sdfJacobianNorm = length(liveSdfJacobian);
 					float sdfJacobianNormMinusOne = sdfJacobianNorm - 1.0f;
 					Vector3f deltaELevelSet =
-							sdfJacobianNormMinusOne * (liveSdfHessian * liveSdfJacobean) /
+							sdfJacobianNormMinusOne * (liveSdfHessian * liveSdfJacobian) /
 							(sdfJacobianNorm + ITMSceneMotionTracker<TVoxel, TIndex>::epsilon);
 
 					//=================================== KILLING TERM =================================================
-
-
-					const float gamma = ITMSceneMotionTracker<TVoxel, TIndex>::killingTermDampingFactor;
-					float onePlusGamma = 1 + gamma;
+					const float gamma = ITMSceneMotionTracker<TVoxel, TIndex>::rigidityEnforcementFactor;
+					float onePlusGamma = 1.0f + gamma;
 					// |u_x, u_y, u_z|       |m00, m10, m20|
 					// |v_x, v_y, v_z|       |m01, m11, m21|
 					// |w_x, w_y, w_z|       |m02, m12, m22|
-					Matrix3f& J = warpJacobean;
+					Matrix3f& J = warpJacobian;
 					// @formatter:off
 					//(1+gamma) * u_x
 					Vector3f stackedVector0((onePlusGamma) * J.m00,
@@ -191,80 +188,40 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					                         (warpHessian[0] * stackedVector0 +
 					                          warpHessian[1] * stackedVector1 +
 					                          warpHessian[2] * stackedVector2);
-
 					//_DEBUG
-					//alternative/naive struct lookup way to compute deltaEKilling:
-					// JACOBEAN
-					// |u_x, u_y, u_z|       |m00, m10, m20|
-					// |v_x, v_y, v_z|       |m01, m11, m21|
-					// |w_x, w_y, w_z|       |m02, m12, m22|
-					// HESSIAN U
-					// |0, 3, 6|     |m00, m10, m20|      |u_xx, u_xy, u_xz|
-					// |1, 4, 7|     |m01, m11, m21|      |u_xy, u_yy, u_yz|
-					// |2, 5, 8|     |m02, m12, m22|      |u_xz, u_yz, u_zz|
-					// HESSIAN V
-					// |0, 3, 6|     |m00, m10, m20|      |v_xx, v_xy, v_xz|
-					// |1, 4, 7|     |m01, m11, m21|      |v_xy, v_yy, v_yz|
-					// |2, 5, 8|     |m02, m12, m22|      |v_xz, v_yz, v_zz|
-					// HESSIAN W
-					// |0, 3, 6|     |m00, m10, m20|      |w_xx, w_xy, w_xz|
-					// |1, 4, 7|     |m01, m11, m21|      |w_xy, w_yy, w_yz|
-					// |2, 5, 8|     |m02, m12, m22|      |w_xz, w_yz, w_zz|
-					Matrix3f& H_u = warpHessian[0];
-					Matrix3f& H_v = warpHessian[1];
-					Matrix3f& H_w = warpHessian[2];
+//					Vector3f stackedSmVector0 = J.getRow(0);
+//					Vector3f stackedSmVector1 = J.getRow(1);
+//					Vector3f stackedSmVector2 = J.getRow(2);
+//					Vector3f deltaESmooth = 2.0f*(warpHessian[0] * stackedSmVector0 +
+//					                              warpHessian[1] * stackedSmVector1 +
+//					                              warpHessian[2] * stackedSmVector2);
 					//_DEBUG
-					Vector3f deltaEKillingAlt = 2.0f * Vector3f(
-							//(1 + gamma) *u_x   *u_xx    + (u_y  + gamma*v_x)   * u_xy    + (u_z + gamma*w_x)    *u_xx
-							onePlusGamma * J.m00 * H_u.m00 + (J.m10 + gamma * J.m01) * H_u.m10 +
-							(J.m20 + gamma * J.m02) * H_u.m20 +
-							//(v_x + gamma*u_y)  *v_xx	  + (1 + gamma)*v_y      * v_xy    + (v_z + gamma*w_y)    *v_xz
-							(J.m01 + gamma * J.m10) * H_v.m00 + onePlusGamma * J.m11 * H_v.m10 +
-							(J.m21 + gamma * J.m12) * H_v.m20 +
-							//(w_x + gamma*u_z)  *w_xx    + (w_y  + gamma* v_z)  * w_xy    + (1 + gamma)*w_z      *w_xz
-							(J.m02 + gamma * J.m20) * H_w.m00 + (J.m12 + gamma * J.m21) * H_w.m10 +
-							onePlusGamma * J.m22 * H_w.m20,
-
-							//(1 + gamma) *u_x   *u_xy    + (u_y  + gamma*v_x)   * u_yy    + (u_z + gamma*w_x)    *u_yz
-							onePlusGamma * J.m00 * H_u.m01 + (J.m10 + gamma * J.m01) * H_u.m11 +
-							(J.m20 + gamma * J.m02) * H_u.m21 +
-							//(v_x + gamma*u_y)  *v_xy	  + (1 + gamma)*v_y      * v_yy    + (v_z + gamma*w_y)    *v_yz
-							(J.m01 + gamma * J.m10) * H_v.m01 + onePlusGamma * J.m11 * H_v.m11 +
-							(J.m21 + gamma * J.m12) * H_v.m21 +
-							//(w_x + gamma*u_z)  *w_xy    + (w_y  + gamma* v_z)  * w_yy    + (1 + gamma)*w_z      *w_yz
-							(J.m02 + gamma * J.m20) * H_w.m01 + (J.m12 + gamma * J.m21) * H_w.m11 +
-							onePlusGamma * J.m22 * H_w.m21,
-
-							//(1 + gamma) *u_x   *u_xz    + (u_y  + gamma*v_x)   * u_yz    + (u_z + gamma*w_x)    *u_zz
-							onePlusGamma * J.m00 * H_u.m02 + (J.m10 + gamma * J.m01) * H_u.m12 +
-							(J.m20 + gamma * J.m02) * H_u.m22 +
-							//(v_x + gamma*u_y)  *v_xz	  + (1 + gamma)*v_y      * v_yz    + (v_z + gamma*w_y)    *v_zz
-							(J.m01 + gamma * J.m10) * H_v.m02 + onePlusGamma * J.m11 * H_v.m12 +
-							(J.m21 + gamma * J.m12) * H_v.m22 +
-							(J.m02 + gamma * J.m20) * H_w.m02 + (J.m12 + gamma * J.m21) * H_w.m12 +
-							onePlusGamma * J.m22 * H_w.m22
-
-					);
+//					if(sum(deltaESmooth - deltaEKilling) > 1.0e-10f){
+//						std::cout << "ERROR!" << std::endl;
+//					}
 
 					//_DEBUG
 					// KillingTerm Energy
-					Matrix3f warpJacobeanTranspose = warpJacobean.t();
-					float localKillingEnergy = (dot(warpJacobean.getColumn(0), warpJacobean.getColumn(0)) +
-					                            dot(warpJacobean.getColumn(1), warpJacobean.getColumn(1)) +
-					                            dot(warpJacobean.getColumn(2), warpJacobean.getColumn(2))) +
+					Matrix3f warpJacobianTranspose = warpJacobian.t();
+					float localSmoothnessEnergy = dot(warpJacobian.getColumn(0), warpJacobian.getColumn(0)) +
+					                              dot(warpJacobian.getColumn(1), warpJacobian.getColumn(1)) +
+					                              dot(warpJacobian.getColumn(2), warpJacobian.getColumn(2));
+					float localKillingEnergy = localSmoothnessEnergy +
 					                           gamma *
-					                           (dot(warpJacobeanTranspose.getColumn(0), warpJacobean.getColumn(0)) +
-					                            dot(warpJacobeanTranspose.getColumn(1), warpJacobean.getColumn(1)) +
-					                            dot(warpJacobeanTranspose.getColumn(2), warpJacobean.getColumn(2)));
+					                           (dot(warpJacobianTranspose.getColumn(0), warpJacobian.getColumn(0)) +
+					                            dot(warpJacobianTranspose.getColumn(1), warpJacobian.getColumn(1)) +
+					                            dot(warpJacobianTranspose.getColumn(2), warpJacobian.getColumn(2)));
 
 					//=================================== FINAL UPDATE =================================================
-					const float weightKilling = ITMSceneMotionTracker<TVoxel, TIndex>::weightKillingTerm;
+					//const float weightKilling = ITMSceneMotionTracker<TVoxel, TIndex>::weightKillingTerm;
+					//_DEBUG
+					const float weightKilling = 0.5;
 					const float weightLevelSet = ITMSceneMotionTracker<TVoxel, TIndex>::weightLevelSetTerm;
 					const float learningRate = ITMSceneMotionTracker<TVoxel, TIndex>::gradientDescentLearningRate;
 					//_DEBUG
 					//Vector3f deltaE = deltaEData;
-					Vector3f deltaE = deltaEData + weightKilling * deltaEKilling;
-					//Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet;
+					//Vector3f deltaE = deltaEData + weightKilling * deltaEKilling;
+					Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet;
 					//Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet + weightKilling * deltaEKilling;
 					Vector3f warpUpdate = learningRate * deltaE;
 					float vecLength = length(warpUpdate);
@@ -273,7 +230,9 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					float killingLength = length(deltaEKilling);
 
 					//need thread lock here to ensure atomic updates to maxVectorUpdate
-#pragma omp critical(maxVectorUpdate)
+#ifdef WITH_OPENMP
+	#pragma omp critical(maxVectorUpdate)
+#endif
 					{
 						if (maxVectorUpdate < vecLength) {
 							maxVectorUpdate = vecLength;
@@ -292,8 +251,10 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					aveLiveSdf += liveSdf;
 					canonicalSdfCount += 1;
 					totalDataEnergy += (diffSdf * diffSdf);
-					totalLevelSetEnergy += 0.5 * (sdfJacobianNormMinusOne * sdfJacobianNormMinusOne);
-					totalKillingEnergy += localKillingEnergy;
+					totalLevelSetEnergy += weightLevelSet * 0.5 * (sdfJacobianNormMinusOne * sdfJacobianNormMinusOne);
+					totalKillingEnergy += weightKilling * localKillingEnergy;
+					totalSmoothnessEnergy += weightKilling * localSmoothnessEnergy;
+					aveWarpDist += length(canonicalVoxel.warp_t);
 
 					//80280 252 4, 7, 3 -1.53724, -1.53811, 0
 					//_DEBUG
@@ -316,17 +277,20 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 		}
 	}
 	//Apply the update
+
+	//_DEBUG
+	//Warp Update Length Histogram
+	// <20%, 40%, 60%, 80%, 100%
+	const int histBinCount = 10;
+	int bins[histBinCount] = {0};
+
 #ifdef WITH_OPENMP
-#pragma omp parallel for
+ #pragma omp parallel for
 #endif
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
-		Vector3i canonicalHashEntryPosition;
 		const ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[entryId];
 
 		if (currentCanonicalHashEntry.ptr < 0) continue;
-
-		//position of the current entry in 3D space
-		canonicalHashEntryPosition = currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 		TVoxel* localVoxelBlock = &(canonicalVoxels[currentCanonicalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
 
@@ -335,22 +299,43 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxel& canonicalVoxel = localVoxelBlock[locId];
-					canonicalVoxel.warp_t -= TO_FLOAT3(canonicalVoxel.warp_t_update) / FLOAT_TO_SHORT_CONVERSION_FACTOR;
+					//_DEBUG
+					Vector3f update = TO_FLOAT3(canonicalVoxel.warp_t_update) / FLOAT_TO_SHORT_CONVERSION_FACTOR;
+					float updateLength = length(update);
+					int binIdx = std::min(histBinCount-1,(int)(updateLength*histBinCount / maxVectorUpdate));
+					bins[binIdx] ++;
+					canonicalVoxel.warp_t -= update;
+					//END _DEBUG
+					//canonicalVoxel.warp_t -= TO_FLOAT3(canonicalVoxel.warp_t_update) / FLOAT_TO_SHORT_CONVERSION_FACTOR;
+
 				}
 			}
 		}
 	}
+	//_DEBUG
 	aveCanonicaSdf /= canonicalSdfCount;
 	aveLiveSdf /= canonicalSdfCount;
+	aveWarpDist /= canonicalSdfCount;
 	totalEnergy = totalDataEnergy + totalLevelSetEnergy + totalKillingEnergy;
-	std::cout << " Max Killing update: " << maxKillingUpdate
-	          << " Corresp. data update: " << trackedDataUpdate
-	          << std::endl;
-	std::cout << " Data term energy: " << totalDataEnergy
-	          << " Level set term energy: " << totalLevelSetEnergy
-	          << " Killing term energy: " << totalKillingEnergy
-	          << " Total energy: " << totalEnergy;
-	//std::cout << " Ave canonical SDF: " << aveCanonicaSdf << " Ave live SDF: " << aveLiveSdf << " 'proper' voxel count: " << canonicalSdfCount;
+	const std::string red("\033[0;31m");
+	const std::string green("\033[0;32m");
+	const std::string yellow("\033[0;33m");
+	const std::string cyan("\033[0;36m");
+	const std::string reset("\033[0m");
+//	std::cout << " Max Killing update: " << maxKillingUpdate << " Corresp. data update: " << trackedDataUpdate << std::endl;
+	std::cout << " [ENERGY] Data term: " << totalDataEnergy
+	          << " Level set term: " << totalLevelSetEnergy << cyan
+	          << " Smoothness term: " << totalSmoothnessEnergy << yellow
+	          << " Killing term: " << totalKillingEnergy << reset
+	          << " Total: " << totalEnergy << green
+	          <<  " No Killing: " << totalDataEnergy + totalLevelSetEnergy << reset
+	          <<  " No Level Set: " << totalDataEnergy + totalKillingEnergy;
+	std::cout << std:: endl << " Ave canonical SDF: " << aveCanonicaSdf << " Ave live SDF: " << aveLiveSdf << " Considered voxel count: " << canonicalSdfCount << " Ave warp distance: " << aveWarpDist;
+	//_DEBUG
+//	std::cout << std::endl;
+//	for(int iBin =0 ; iBin < histBinCount; iBin++){
+//		std::cout << std::setfill(' ') << std::setw(7) << bins[iBin] << "  ";
+//	}
 	return maxVectorUpdate;
 }
 
@@ -380,6 +365,7 @@ void ITMSceneMotionTracker_CPU<TVoxel, TIndex>::FuseFrame(ITMScene<TVoxel, TInde
 
 		//position of the current entry in 3D space
 		canonicalHashEntryPosition = currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+
 		TVoxel* localVoxelBlock = &(canonicalVoxels[currentCanonicalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {

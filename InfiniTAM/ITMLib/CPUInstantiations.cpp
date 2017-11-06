@@ -1,6 +1,7 @@
 // Copyright 2014-2017 Oxford University Innovation Limited and the authors of InfiniTAM
 
 #include "ITMLibDefines.h"
+#include "Objects/Scene/ITMSceneManipulation.tpp"
 #include "Core/ITMBasicEngine.tpp"
 #include "Core/ITMBasicSurfelEngine.tpp"
 #include "Core/ITMMultiEngine.tpp"
@@ -59,4 +60,10 @@ namespace ITMLib
 	template class ITMSurfelVisualisationEngine_CPU<ITMSurfel_rgb>;
 	template struct ITMSurfelVisualisationEngineFactory<ITMSurfel_grey>;
 	template struct ITMSurfelVisualisationEngineFactory<ITMSurfel_rgb>;
+
+	//functions
+	template void CopySceneWithOffset_CPU<ITMVoxel,ITMVoxelIndex>(ITMScene<ITMVoxel, ITMVoxelIndex>& destination, ITMScene<ITMVoxel, ITMVoxelIndex>& source, Vector3i offset);
+	template bool SetVoxel_CPU<ITMVoxel,ITMVoxelIndex>(ITMScene<ITMVoxel, ITMVoxelIndex>& scene, Vector3i at, ITMVoxel voxel);
+	template bool SetVoxel_CPU<ITMVoxelAux,ITMVoxelIndex>(ITMScene<ITMVoxelAux, ITMVoxelIndex>& scene, Vector3i at, ITMVoxelAux voxel);
+	template ITMVoxel ReadVoxel<ITMVoxel,ITMVoxelIndex>(ITMScene<ITMVoxel, ITMVoxelIndex>& scene, Vector3i at);
 }

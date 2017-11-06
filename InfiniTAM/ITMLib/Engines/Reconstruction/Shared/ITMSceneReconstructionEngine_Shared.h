@@ -186,7 +186,7 @@ _CPU_AND_GPU_CODE_ inline void buildHashAllocAndVisibleTypePP(DEVICEPTR(uchar) *
 	float oneOverVoxelSize, const CONSTPTR(ITMHashEntry) *hashTable, float viewFrustum_min, float viewFrustum_max)
 {
 	float depth_measure; unsigned int hashIdx; int noSteps;
-	Vector4f pt_camera_f; Vector3f point_e, point, direction; Vector3s blockPos;
+	Vector4f pt_camera_f; Vector3f bandEndHashEntryPosition, bandStartHashEntryPosition, direction; Vector3s hashEntryPosition;
 
 	depth_measure = depth[x + y * imgSize.x];
 	if (depth_measure <= 0 || (depth_measure - mu) < 0 || (depth_measure - mu) < viewFrustum_min || (depth_measure + mu) > viewFrustum_max) return;
@@ -200,14 +200,14 @@ _CPU_AND_GPU_CODE_ inline void buildHashAllocAndVisibleTypePP(DEVICEPTR(uchar) *
 	Vector4f pt_buff;
 	
 	pt_buff = pt_camera_f * (1.0f - mu / norm); pt_buff.w = 1.0f;
-	point = TO_VECTOR3(invM_d * pt_buff) * oneOverVoxelSize;
+	bandStartHashEntryPosition = TO_VECTOR3(invM_d * pt_buff) * oneOverVoxelSize;
 
 	pt_buff = pt_camera_f * (1.0f + mu / norm); pt_buff.w = 1.0f;
-	point_e = TO_VECTOR3(invM_d * pt_buff) * oneOverVoxelSize;
+	bandEndHashEntryPosition = TO_VECTOR3(invM_d * pt_buff) * oneOverVoxelSize;
 
 	// segment from start of the (truncated SDF) band, through the observed point, and to the opposite (occluded)
 	// end of the (truncated SDF) band, along the ray cast from the camera through the point, in camera space
-	direction = point_e - point;
+	direction = bandEndHashEntryPosition - bandStartHashEntryPosition;
 
 	norm = sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
 	// number of steps to take along the truncated SDF band
@@ -220,17 +220,17 @@ _CPU_AND_GPU_CODE_ inline void buildHashAllocAndVisibleTypePP(DEVICEPTR(uchar) *
 	for (int i = 0; i < noSteps; i++)
 	{
 		//find block position at current step
-		blockPos = TO_SHORT_FLOOR3(point);
+		hashEntryPosition = TO_SHORT_FLOOR3(bandStartHashEntryPosition);
 
 		//compute index in hash table
-		hashIdx = hashIndex(blockPos);
+		hashIdx = hashIndex(hashEntryPosition);
 
 		//check if hash table contains entry
 		bool isFound = false;
 
 		ITMHashEntry hashEntry = hashTable[hashIdx];
 
-		if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= -1)
+		if (IS_EQUAL3(hashEntry.pos, hashEntryPosition) && hashEntry.ptr >= -1)
 		{
 			//entry has been streamed out but is visible or in memory and visible
 			entriesVisibleType[hashIdx] = (hashEntry.ptr == -1) ? 2 : 1;
@@ -241,14 +241,14 @@ _CPU_AND_GPU_CODE_ inline void buildHashAllocAndVisibleTypePP(DEVICEPTR(uchar) *
 		if (!isFound)
 		{
 			bool isExcess = false;
-			if (hashEntry.ptr >= -1) //seach excess list only if there is no room in ordered part
+			if (hashEntry.ptr >= -1) //search excess list only if there is no room in ordered part
 			{
 				while (hashEntry.offset >= 1)
 				{
 					hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
 					hashEntry = hashTable[hashIdx];
 
-					if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= -1)
+					if (IS_EQUAL3(hashEntry.pos, hashEntryPosition) && hashEntry.ptr >= -1)
 					{
 						//entry has been streamed out but is visible or in memory and visible
 						entriesVisibleType[hashIdx] = (hashEntry.ptr == -1) ? 2 : 1;
@@ -266,11 +266,11 @@ _CPU_AND_GPU_CODE_ inline void buildHashAllocAndVisibleTypePP(DEVICEPTR(uchar) *
 				entriesAllocType[hashIdx] = isExcess ? 2 : 1; //needs allocation 
 				if (!isExcess) entriesVisibleType[hashIdx] = 1; //new entry is visible
 
-				blockCoords[hashIdx] = Vector4s(blockPos.x, blockPos.y, blockPos.z, 1);
+				blockCoords[hashIdx] = Vector4s(hashEntryPosition.x, hashEntryPosition.y, hashEntryPosition.z, 1);
 			}
 		}
 
-		point += direction;
+		bandStartHashEntryPosition += direction;
 	}
 }
 
