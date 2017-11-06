@@ -60,17 +60,13 @@ namespace ITMLib {
 		TVoxel* voxels = scene.localVBA.GetVoxelBlocks();
 		int* voxelAllocationList = scene.localVBA.GetAllocationList();
 		int* excessAllocationList = scene.index.GetExcessAllocationList();
-		Vector3s hashEntryPosition(at.x / SDF_BLOCK_SIZE, at.y / SDF_BLOCK_SIZE, at.z / SDF_BLOCK_SIZE);
-		if (AllocateHashEntry_CPU(hashEntryPosition, hashTable, entry,
+		Vector3i blockPos;
+		int linearIdx = pointToVoxelBlockPos(at, blockPos);
+		if (AllocateHashEntry_CPU(TO_SHORT_FLOOR3(blockPos), hashTable, entry,
 		                          lastFreeVoxelBlockId, lastFreeExcessListId, voxelAllocationList,
 		                          excessAllocationList)) {
 			TVoxel* localVoxelBlock = &(voxels[entry->ptr * (SDF_BLOCK_SIZE3)]);
-			Vector3s globalPos = entry->pos;
-			Vector3i localPos = Vector3i(at.x - globalPos.x * SDF_BLOCK_SIZE,
-			                             at.y - globalPos.y * SDF_BLOCK_SIZE,
-			                             at.z - globalPos.z * SDF_BLOCK_SIZE);
-			int locId = localPos.x + localPos.y * SDF_BLOCK_SIZE + localPos.z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-			localVoxelBlock[locId] = voxel;
+			localVoxelBlock[linearIdx] = voxel;
 		} else {
 			return false;
 		}

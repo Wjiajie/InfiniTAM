@@ -77,10 +77,10 @@ void ITMDenseDynamicMapper<TVoxel, TIndex>::ProcessFrame(const ITMView* view,
 	//liveSceneRecoEngine->IntegrateIntoScene(live_scene, view, trackingState, renderState);
 	//_DEBUG
 	auto start = std::chrono::steady_clock::now();
-	CopySceneWithOffset_CPU(*live_scene,*canonical_scene, Vector3i(2,2,2));
+	CopySceneWithOffset_CPU(*live_scene,*canonical_scene, Vector3i(0,0,0));
 	auto end = std::chrono::steady_clock::now();
 	auto diff = end - start;
-	std::cout << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
+	std::cout << "Scene copy time: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 
 	sceneMotionTracker->ProcessFrame(canonical_scene, live_scene);
 

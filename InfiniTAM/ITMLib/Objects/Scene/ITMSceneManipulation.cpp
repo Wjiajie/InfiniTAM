@@ -82,12 +82,12 @@ namespace ITMLib {
 		}
 	}
 
-	void CopySceneWithOffset_CPU(ITMScene<ITMVoxelAux, ITMVoxelIndex>& dest, ITMScene<ITMVoxel, ITMVoxelIndex>& source,
+	void CopySceneWithOffset_CPU(ITMScene<ITMVoxelAux, ITMVoxelIndex>& destination, ITMScene<ITMVoxel, ITMVoxelIndex>& source,
 	                             Vector3i offset) {
 		ITMVoxel* originalVoxels = source.localVBA.GetVoxelBlocks();
 		const ITMHashEntry* originalHashTable = source.index.GetEntries();
-		typename ITMVoxelIndex::IndexCache originalCache;
 		int noTotalEntries = source.index.noTotalEntries;
+		int sdfBelow1Count = 0;
 
 		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 			Vector3i canonicalHashEntryPosition;
@@ -103,18 +103,32 @@ namespace ITMLib {
 					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 						Vector3i originalPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
 						Vector3i offsetPosition = originalPosition + offset;
+
+						//_DEBUG
+						//Vector3i test(-135,-216,574);
+//						Vector3i test(-136,-215,575);
+//						if(originalPosition == test){
+//							std::cout << "HI" << std::endl;
+//						}
+
 						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 						ITMVoxel& voxelSource = localVoxelBlock[locId];
 						ITMVoxelAux voxelDest;
 						voxelDest.sdf = voxelSource.sdf;
+						//_DEBUG
+						if((1.0f - fabs(voxelSource.sdf)) > 1.0e-10f){
+							sdfBelow1Count++;
+						}
 						voxelDest.clr = voxelSource.clr;
 						voxelDest.w_color = voxelSource.w_color;
 						voxelDest.w_depth = voxelSource.w_depth;
 						voxelDest.confidence = voxelSource.confidence;
-						SetVoxel_CPU<ITMVoxelAux, ITMVoxelIndex>(dest, offsetPosition, voxelDest);
+						SetVoxel_CPU<ITMVoxelAux, ITMVoxelIndex>(destination, offsetPosition, voxelDest);
 					}
 				}
 			}
 		}
+		//_DEBUG
+		std::cout << "Count of voxels with ||SDF|| < 1.0 in source: " << sdfBelow1Count << std::endl;
 	}
 }//namespace ITMLib

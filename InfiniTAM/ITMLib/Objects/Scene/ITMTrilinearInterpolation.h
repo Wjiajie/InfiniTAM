@@ -16,7 +16,6 @@
 #pragma once
 
 
-
 //pick maximum weights, get confidence
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
@@ -41,9 +40,9 @@ inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
         const TVoxel& v = readVoxel(voxelData, hashIndex, pos + (coord), vmIndex, cache);\
         sdfV##suffix = v.sdf;\
         colorV##suffix = TO_FLOAT3(v.clr);\
-		confV##suffix = v.confidence;\
-		if (v.w_depth > wDepth) wDepth = v.w_depth;\
-		if (v.w_color > wColor) wColor = v.w_color;\
+        confV##suffix = v.confidence;\
+        if (v.w_depth > wDepth) wDepth = v.w_depth;\
+        if (v.w_color > wColor) wColor = v.w_color;\
     }
 	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
 	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
@@ -93,8 +92,8 @@ inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
         const TVoxel& v = readVoxel(voxelData, hashIndex, pos + (coord), vmIndex, cache);\
         sdfV##suffix = v.sdf;\
         colorV##suffix = TO_FLOAT3(v.clr);\
-		if (v.w_depth > wDepth) wDepth = v.w_depth;\
-		if (v.w_color > wColor) wColor = v.w_color;\
+        if (v.w_depth > wDepth) wDepth = v.w_depth;\
+        if (v.w_color > wColor) wColor = v.w_color;\
     }
 	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
 	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
@@ -142,8 +141,8 @@ inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
         const TVoxel& v = readVoxel(voxelData, hashIndex, pos + (coord), vmIndex, cache);\
         sdfV##suffix = v.sdf;\
         colorV##suffix = TO_FLOAT3(v.clr);\
-		wDepthV##suffix = v.w_depth;\
-		wColorV##suffix = v.w_color;\
+        wDepthV##suffix = v.w_depth;\
+        wColorV##suffix = v.w_color;\
     }
 	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
 	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
@@ -247,8 +246,83 @@ inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
 	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
 	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
 	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
-
 	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
 #undef PROCESS_VOXEL
-	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
+	float sdf = TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
+
+	return sdf;
+}
+
+
+template<class TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline void findPointNeighbors(THREADPTR(Vector3f)* p,
+                               THREADPTR(float)* sdf,
+                               const CONSTPTR(Vector3i) blockLocation,
+                               const CONSTPTR(TVoxel)* localVBA,
+                               const CONSTPTR(ITMHashEntry)* hashTable,
+                               THREADPTR(TCache)& cache) {
+	int vmIndex;
+	Vector3i localBlockLocation;
+
+	Vector3i(0, 0, 0);
+	TVoxel voxel;
+#define PROCESS_VOXEL(location, index)\
+    localBlockLocation = blockLocation + (location);\
+    p[index] = localBlockLocation.toFloat();\
+    voxel = readVoxel(localVBA, hashTable, localBlockLocation, vmIndex, cache);\
+    sdf[index] = TVoxel::valueToFloat(voxel.sdf);
+
+	PROCESS_VOXEL(Vector3i(0, 0, 0), 0);
+	PROCESS_VOXEL(Vector3i(0, 0, 1), 1);
+	PROCESS_VOXEL(Vector3i(0, 1, 0), 2);
+	PROCESS_VOXEL(Vector3i(0, 1, 1), 3);
+	PROCESS_VOXEL(Vector3i(1, 0, 0), 4);
+	PROCESS_VOXEL(Vector3i(1, 0, 1), 5);
+	PROCESS_VOXEL(Vector3i(1, 1, 0), 6);
+	PROCESS_VOXEL(Vector3i(1, 1, 1), 7);
+#undef PROCESS_VOXEL
+}
+
+//_DEBUG
+//sdf without color
+template<class TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline float interpolateTrilinearlyAlt(const CONSTPTR(TVoxel)* voxelData,
+                                       const CONSTPTR(ITMHashEntry)* voxelHash,
+                                       const THREADPTR(Vector3f)& point,
+                                       THREADPTR(TCache)& cache) {
+	const int neighborCount = 8;
+	Vector3f points[neighborCount];
+	float sdfVals[neighborCount];
+	findPointNeighbors(points, sdfVals, point.toIntFloor(), voxelData, voxelHash, cache);
+	float sdf;
+
+	Vector3f ratios = (point - points[0]) / (points[7] - points[0]);
+	Vector3f invRatios = Vector3f(1.f) - ratios;
+	Vector3f coeff;
+	point.toIntFloor(coeff);
+
+//#define INTERPOLATE_TRILINEAR(type, prefix, output, array, ratios, invRatios)\
+//                    type prefix##_00 = (array)[0]*(invRatios).x + (array)[4]*(ratios).x;\
+//                    type prefix##_01 = (array)[1]*(invRatios).x + (array)[5]*(ratios).x;\
+//                    type prefix##_10 = (array)[2]*(invRatios).x + (array)[6]*(ratios).x;\
+//                    type prefix##_11 = (array)[3]*(invRatios).x + (array)[7]*(ratios).x;\
+//                    type prefix##_0 = prefix##_00*(invRatios).y + prefix##_10*(ratios).y;\
+//                    type prefix##_1 = prefix##_01*(invRatios).y + prefix##_11*(ratios).y;\
+//                    (output) = prefix##_0*(invRatios).z + prefix##_1 * (ratios).z;
+//	INTERPOLATE_TRILINEAR(float, sdf, sdf, sdfVals, ratios, invRatios);
+//#undef INTERPOLATE_TRILINEAR
+    float sdf_00 = sdfVals[0]*(invRatios).x + sdfVals[4]*(ratios).x;
+    float sdf_01 = sdfVals[1]*(invRatios).x + sdfVals[5]*(ratios).x;
+    float sdf_10 = sdfVals[2]*(invRatios).x + sdfVals[6]*(ratios).x;
+    float sdf_11 = sdfVals[3]*(invRatios).x + sdfVals[7]*(ratios).x;
+    float sdf_0 = sdf_00*(invRatios).y + sdf_10*(ratios).y;
+    float sdf_1 = sdf_01*(invRatios).y + sdf_11*(ratios).y;
+	sdf = sdf_0*(invRatios).z + sdf_1 * (ratios).z;
+	//_DEBUG
+//	if (1.0f - std::abs(sdf) < 10e-10){
+//
+//	}
+	return sdf;
 }

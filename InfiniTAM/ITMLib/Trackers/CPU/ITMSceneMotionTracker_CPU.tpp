@@ -61,7 +61,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 	//compute the update, don't apply yet (computation depends on previous warp for neighbors,
 	// no practical way to keep those buffered with the hash in mind)
 #ifdef WITH_OPENMP
-	#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, consideredVoxelCount, aveLiveSdf, totalDataEnergy, totalLevelSetEnergy, totalSmoothnessEnergy, totalKillingEnergy, aveWarpDist, aveSdfDiff)
+	//#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, consideredVoxelCount, aveLiveSdf, totalDataEnergy, totalLevelSetEnergy, totalSmoothnessEnergy, totalKillingEnergy, aveWarpDist, aveSdfDiff)
 #endif
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 		Vector3i canonicalHashEntryPosition;
@@ -95,12 +95,23 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
 					liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache);
 					//_DEBUG
+					if (1.0f - std::abs(liveSdf) < 10e-10) {
+						float liveSdfAlt = interpolateTrilinearlyAlt(liveVoxels, liveHashTable, projectedPosition,
+						                                             liveCache);
+						//if(std::abs(liveSdfAlt - liveSdf) > epsilon){
+						//std::cout << "Mismatching interpolation: " << liveSdf << " v.s. " << liveSdfAlt << std::endl;
+						//}
+					}
+
+
+					//_DEBUG
 					//almost no restriction
-					//if (std::abs(canonicalVoxel.sdf - 1.0f) < epsilon && std::abs(liveSdf - 1.0f) < epsilon) continue;
-					//if (std::abs(canonicalVoxel.sdf - 1.0f) < epsilon) continue;
-					//if (std::abs(liveSdf - 1.0f) < epsilon) continue;
+					//if (1.0f - std::abs(canonicalVoxel.sdf) < epsilon && 1.0f - std::abs(liveSdf) < epsilon) continue;
+					//if (1.0f - std::abs(canonicalVoxel.sdf) < epsilon) continue;
+					//if (1.0f - std::abs(liveSdf) < epsilon) continue;
+
 					//most restrictive
-					if (std::abs(canonicalVoxel.sdf - 1.0f) < epsilon || std::abs(liveSdf - 1.0f) < epsilon) continue;
+					if (1.0f - std::abs(canonicalVoxel.sdf) < epsilon || 1.0f - fabs(liveSdf) < epsilon) continue;
 
 					bool useColor;
 					float canonicalSdf = TVoxel::valueToFloat(canonicalVoxel.sdf);
@@ -228,13 +239,13 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 
 					//need thread lock here to ensure atomic updates to maxVectorUpdate
 #ifdef WITH_OPENMP
-	#pragma omp critical(maxVectorUpdate)
+#pragma omp critical(maxVectorUpdate)
 #endif
 					{
 						if (maxVectorUpdate < vecLength) {
 							maxVectorUpdate = vecLength;
 						}
-						if (maxKillingUpdateLength < killingLength){
+						if (maxKillingUpdateLength < killingLength) {
 							maxKillingUpdateLength = killingLength;
 							maxKillingUpdate = weightKilling * deltaEKilling;
 							trackedDataUpdate = deltaEData;
@@ -283,7 +294,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 	int bins[histBinCount] = {0};
 
 #ifdef WITH_OPENMP
- #pragma omp parallel for
+#pragma omp parallel for
 #endif
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 		const ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[entryId];
@@ -300,8 +311,11 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					//_DEBUG
 					Vector3f update = TO_FLOAT3(canonicalVoxel.warp_t_update) / FLOAT_TO_SHORT_CONVERSION_FACTOR;
 					float updateLength = length(update);
-					int binIdx = std::min(histBinCount-1,(int)(updateLength*histBinCount / maxVectorUpdate));
-					bins[binIdx] ++;
+					int binIdx = 0;
+					if(maxVectorUpdate > 0){
+						binIdx = std::min(histBinCount - 1, (int) (updateLength * histBinCount / maxVectorUpdate));
+					}
+					bins[binIdx]++;
 					canonicalVoxel.warp_t -= update;
 					//END _DEBUG
 					//canonicalVoxel.warp_t -= TO_FLOAT3(canonicalVoxel.warp_t_update) / FLOAT_TO_SHORT_CONVERSION_FACTOR;
@@ -327,9 +341,11 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 	          << " Smoothness term: " << totalSmoothnessEnergy << yellow
 	          << " Killing term: " << totalKillingEnergy << reset
 	          << " Total: " << totalEnergy << green
-	          <<  " No Killing: " << totalDataEnergy + totalLevelSetEnergy << reset
-	          <<  " No Level Set: " << totalDataEnergy + totalKillingEnergy;
-	std::cout << std:: endl << " Ave canonical SDF: " << aveCanonicaSdf << " Ave live SDF: " << aveLiveSdf << " Ave sdf difference: " << aveSdfDiff << " Considered voxel count: " << consideredVoxelCount << " Ave warp distance: " << aveWarpDist;
+	          << " No Killing: " << totalDataEnergy + totalLevelSetEnergy << reset
+	          << " No Level Set: " << totalDataEnergy + totalKillingEnergy;
+	std::cout << std::endl << " Ave canonical SDF: " << aveCanonicaSdf << " Ave live SDF: " << aveLiveSdf
+	          << " Ave sdf difference: " << aveSdfDiff << " Considered voxel count: " << consideredVoxelCount
+	          << " Ave warp distance: " << aveWarpDist;
 	//_DEBUG
 //	std::cout << std::endl;
 //	for(int iBin =0 ; iBin < histBinCount; iBin++){
@@ -411,4 +427,5 @@ void ITMSceneMotionTracker_CPU<TVoxel, TIndex>::FuseFrame(ITMScene<TVoxel, TInde
 }
 
 template<typename TVoxel, typename TIndex>
-ITMSceneMotionTracker_CPU<TVoxel,TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params) : ITMSceneMotionTracker<TVoxel,TIndex>(params) {}
+ITMSceneMotionTracker_CPU<TVoxel, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params)
+		: ITMSceneMotionTracker<TVoxel, TIndex>(params) {}
