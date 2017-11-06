@@ -32,8 +32,8 @@ namespace ITMLib {
 		const float maxVectorUpdateThresholdMeters = 0.0001f;//m
 		const float gradientDescentLearningRate = 0.1f;
 		//_DEBUG
-		//const float rigidityEnforcementFactor = 0.0f;
-		const float rigidityEnforcementFactor = 0.1f;
+		const float rigidityEnforcementFactor = 0.0f;
+		//const float rigidityEnforcementFactor = 0.1f;
 		const float weightKillingTerm = 0.5f;
 		const float weightLevelSetTerm = 0.2f;
 		const float weightColorDataTerm = 0.0f;

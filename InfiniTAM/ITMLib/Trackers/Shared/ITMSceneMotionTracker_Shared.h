@@ -52,17 +52,18 @@ inline void ComputePerPointWarpedLiveJacobianAndHessian(const CONSTPTR(Vector3i)
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
 	// === forward by 1 in each direction
 	Vector3f warpedSdfForward(
-			interpolateTrilinearly(liveVoxels, liveHashTable,currentProjectedPosition + Vector3f(1, 0, 0), liveCache,
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 0), liveCache,
 			                       warpedColorForward[0]),
-			interpolateTrilinearly(liveVoxels, liveHashTable,currentProjectedPosition + Vector3f(0, 1, 0), liveCache,
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 0), liveCache,
 			                       warpedColorForward[1]),
-			interpolateTrilinearly(liveVoxels, liveHashTable,currentProjectedPosition + Vector3f(0, 0, 1), liveCache,
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, 1), liveCache,
 			                       warpedColorForward[2]));
 	// === back by 1 in each direction
 	Vector3f warpedSdfBackward(
 			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(-1, 0, 0), liveCache),
 			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, -1, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, -1), liveCache));
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, -1),
+			                       liveCache));
 	// === x-y, y-z, and x-z plane forward corners for 2nd derivatives
 	Vector3f warpedSdfCorners(
 			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 1, 0), liveCache),
@@ -119,14 +120,15 @@ inline void ComputePerPointWarpedLiveJacobianAndHessian(const CONSTPTR(Vector3i)
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
 	// === forward by 1 in each direction
 	Vector3f warpedSdfForward(
-			interpolateTrilinearly(liveVoxels, liveHashTable,currentProjectedPosition + Vector3f(1, 0, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable,currentProjectedPosition + Vector3f(0, 1, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable,currentProjectedPosition + Vector3f(0, 0, 1), liveCache));
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 0), liveCache),
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 0), liveCache),
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, 1), liveCache));
 	// === back by 1 in each direction
 	Vector3f warpedSdfBackward(
 			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(-1, 0, 0), liveCache),
 			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, -1, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, -1), liveCache));
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, -1),
+			                       liveCache));
 	// === x-y, y-z, and x-z plane forward corners for 2nd derivatives
 	Vector3f warpedSdfCorners(
 			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 1, 0), liveCache),
@@ -161,20 +163,21 @@ template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void findPoint2ndDerivativeNeighborhoodWarpAlt(THREADPTR(Vector3f)* warp_tData, //x8
                                                       THREADPTR(bool)* found, //x8
-	                                                   const CONSTPTR(Vector3i)& voxelPosition,
-	                                                   const CONSTPTR(TVoxel)* voxelData,
-	                                                   const CONSTPTR(ITMHashEntry)* hashTable,
-	                                                   THREADPTR(TCache)& cache) {
+                                                      const CONSTPTR(Vector3i)& voxelPosition,
+                                                      const CONSTPTR(TVoxel)* voxelData,
+                                                      const CONSTPTR(ITMHashEntry)* hashTable,
+                                                      THREADPTR(TCache)& cache) {
 	int vmIndex;
 //	const std::string yellow("\033[0;33m");
 //	const std::string reset("\033[0m");
 //	std::cout << std::endl << yellow  << voxelPosition << reset;
-
+	TVoxel voxel;
 #define PROCESS_VOXEL(location, index)\
-	warp_tData[index] = readVoxel(voxelData, hashTable, voxelPosition + (location), vmIndex, cache).warp_t;\
-	found[index] = vmIndex != 0\
-	/*_DEBUG*/\
-	//std::cout << std::endl << voxelPosition + (location) << " " << (vmIndex & 1);\
+    voxel = readVoxel(voxelData, hashTable, voxelPosition + (location), vmIndex, cache);\
+    warp_tData[index] = voxel.warp_t;\
+    found[index] = vmIndex != 0 && (1.0 - std::abs(voxel.sdf)) > 1.0e-8;\
+    /*_DEBUG*/\
+    //std::cout << std::endl << voxelPosition + (location) << " " << (vmIndex & 1);\
 	//_DEBUG\
     //warp_tData[index] = TO_FLOAT3(voxel.warp_t_update) / FLOAT_TO_SHORT_CONVERSION_FACTOR;\
 
@@ -212,9 +215,9 @@ inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* warp_tDa
 #endif
 
 #define PROCESS_VOXEL(location, index)\
-	warp_tData[index] = readVoxel(voxelData, hashTable, voxelPosition + (location), vmIndex, cache).warp_t;\
-	/*_DEBUG*/\
-	//std::cout << std::endl << voxelPosition + (location) << " " << (vmIndex & 1);\
+    warp_tData[index] = readVoxel(voxelData, hashTable, voxelPosition + (location), vmIndex, cache).warp_t;\
+    /*_DEBUG*/\
+    //std::cout << std::endl << voxelPosition + (location) << " " << (vmIndex & 1);\
 	//_DEBUG\
     //warp_tData[index] = TO_FLOAT3(voxel.warp_t_update) / FLOAT_TO_SHORT_CONVERSION_FACTOR;\
 
@@ -248,7 +251,9 @@ inline void ComputePerPointWarpJacobianAndHessianAlt(const CONSTPTR(Vector3f)& o
                                                      const CONSTPTR(ITMHashEntry)* hashTable,
                                                      THREADPTR(TCache)& cache,
                                                      THREADPTR(Matrix3f)& jacobian,
-                                                     THREADPTR(Matrix3f)* hessian //x3
+                                                     THREADPTR(Matrix3f)* hessian, //x3
+                                                     bool& boundary,
+                                                     bool printResult = false
 
 ) {
 	//    0        1        2          3         4         5           6         7         8
@@ -263,21 +268,29 @@ inline void ComputePerPointWarpJacobianAndHessianAlt(const CONSTPTR(Vector3f)& o
 	                                          hashTable,
 	                                          cache);
 
+	boundary = false;
+	for (int iNeightbor = 0; iNeightbor < neighborhoodSize; iNeightbor++) {
+		if (!found[iNeightbor]) {
+			boundary = true;
+		}
+	}
 	// |u_x, u_y, u_z|       |m00, m10, m20|
 	// |v_x, v_y, v_z|       |m01, m11, m21|
 	// |w_x, w_y, w_z|       |m02, m12, m22|
 	Vector3f zeroVector(0.0f);
-	jacobian.setColumn(0, found[3]? warp_tNeighbors[3] - originalWarp_t : zeroVector);//1st derivative in x
-	jacobian.setColumn(1, found[4]? warp_tNeighbors[4] - originalWarp_t : zeroVector);//1st derivative in y
-	jacobian.setColumn(2, found[5]? warp_tNeighbors[5] - originalWarp_t : zeroVector);//1st derivative in z
+	jacobian.setColumn(0, found[3] ? warp_tNeighbors[3] - originalWarp_t : zeroVector);//1st derivative in x
+	jacobian.setColumn(1, found[4] ? warp_tNeighbors[4] - originalWarp_t : zeroVector);//1st derivative in y
+	jacobian.setColumn(2, found[5] ? warp_tNeighbors[5] - originalWarp_t : zeroVector);//1st derivative in z
+
+
 
 	Matrix3f backwardDifferences;
 	// |u_x, u_y, u_z|
 	// |v_x, v_y, v_z|
 	// |w_x, w_y, w_z|
-	backwardDifferences.setColumn(0, found[0]? originalWarp_t - warp_tNeighbors[0] : zeroVector);//1st derivative in x
-	backwardDifferences.setColumn(1, found[1]? originalWarp_t - warp_tNeighbors[1] : zeroVector);//1st derivative in y
-	backwardDifferences.setColumn(2, found[2]? originalWarp_t - warp_tNeighbors[2] : zeroVector);//1st derivative in z
+	backwardDifferences.setColumn(0, found[0] ? originalWarp_t - warp_tNeighbors[0] : zeroVector);//1st derivative in x
+	backwardDifferences.setColumn(1, found[1] ? originalWarp_t - warp_tNeighbors[1] : zeroVector);//1st derivative in y
+	backwardDifferences.setColumn(2, found[2] ? originalWarp_t - warp_tNeighbors[2] : zeroVector);//1st derivative in z
 
 	//second derivatives in same direction
 	// |u_xx, u_yy, u_zz|       |m00, m10, m20|
@@ -286,9 +299,12 @@ inline void ComputePerPointWarpJacobianAndHessianAlt(const CONSTPTR(Vector3f)& o
 	Matrix3f dd_XX_YY_ZZ = jacobian - backwardDifferences;
 
 	Matrix3f neighborDifferences;
-	neighborDifferences.setColumn(0, found[6] && found[4]? warp_tNeighbors[6] - warp_tNeighbors[4]: zeroVector);//(0,1,0)->(1,1,0)
-	neighborDifferences.setColumn(1, found[7] && found[5]? warp_tNeighbors[7] - warp_tNeighbors[5]: zeroVector);//(0,0,1)->(0,1,1)
-	neighborDifferences.setColumn(2, found[8] && found[3]? warp_tNeighbors[8] - warp_tNeighbors[3]: zeroVector);//(1,0,0)->(1,0,1)
+	neighborDifferences.setColumn(0, found[6] && found[4] ? warp_tNeighbors[6] - warp_tNeighbors[4]
+	                                                      : zeroVector);//(0,1,0)->(1,1,0)
+	neighborDifferences.setColumn(1, found[7] && found[5] ? warp_tNeighbors[7] - warp_tNeighbors[5]
+	                                                      : zeroVector);//(0,0,1)->(0,1,1)
+	neighborDifferences.setColumn(2, found[8] && found[3] ? warp_tNeighbors[8] - warp_tNeighbors[3]
+	                                                      : zeroVector);//(1,0,0)->(1,0,1)
 
 
 	//second derivatives in different directions
@@ -321,19 +337,43 @@ inline void ComputePerPointWarpJacobianAndHessianAlt(const CONSTPTR(Vector3f)& o
 	                  dd_XY_YZ_ZX.m02, dd_XX_YY_ZZ.m12, dd_XY_YZ_ZX.m12,
 	                  dd_XY_YZ_ZX.m22, dd_XY_YZ_ZX.m12, dd_XX_YY_ZZ.m22};
 	hessian[2].setValues(valsW);
+	if (printResult) {
+		const std::string yellow("\033[0;33m");
+		const std::string cyan("\033[0;36m");
+		const std::string green("\033[0;32m");
+		const std::string reset("\033[0m");
+		//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
+		Vector3i neighborPositions[] = {Vector3i(-1, 0, 0), Vector3i(0, -1, 0), Vector3i(0, 0, -1), Vector3i(1, 0, 0),
+		                                Vector3i(0, 1, 0), Vector3i(0, 0, 1), Vector3i(1, 1, 0), Vector3i(0, 1, 1),
+		                                Vector3i(1, 0, 1),};
+		std::cout << "Boundary neighbors: ";
+		for (int iNeightbor = 0; iNeightbor < neighborhoodSize; iNeightbor++) {
+			if (!found[iNeightbor]) {
+				std::cout << iNeightbor << ", ";
+			}
+		}
+		std::cout << std::endl << green;
+		std::cout << "Neighbors' warps: " << std::endl;
+		for (int iNeightbor = 0; iNeightbor < neighborhoodSize; iNeightbor++) {
+			std::cout << neighborPositions[iNeightbor] << ": " << warp_tNeighbors[iNeightbor] << ", " << std::endl;
+		}
 
+		std::cout << std::endl << yellow;
+		std::cout << "Jacobian: " << std::endl << jacobian << std::endl << cyan;
+		std::cout << "Hessian: " << std::endl << hessian[0] << hessian[1] << hessian[2] << reset << std::endl;
+	}
 };
 
 
 template<typename TVoxel, typename TIndex, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void ComputePerPointWarpJacobianAndHessian(const CONSTPTR(Vector3f)& originalWarp_t,
-                                                     const CONSTPTR(Vector3i)& originalPosition,
-                                                     const CONSTPTR(TVoxel)* voxels,
-                                                     const CONSTPTR(ITMHashEntry)* hashTable,
-                                                     THREADPTR(TCache)& cache,
-                                                     THREADPTR(Matrix3f)& jacobian,
-                                                     THREADPTR(Matrix3f)* hessian //x3
+                                                  const CONSTPTR(Vector3i)& originalPosition,
+                                                  const CONSTPTR(TVoxel)* voxels,
+                                                  const CONSTPTR(ITMHashEntry)* hashTable,
+                                                  THREADPTR(TCache)& cache,
+                                                  THREADPTR(Matrix3f)& jacobian,
+                                                  THREADPTR(Matrix3f)* hessian //x3
 
 ) {
 	//    0        1        2          3         4         5           6         7         8
@@ -360,9 +400,9 @@ inline void ComputePerPointWarpJacobianAndHessian(const CONSTPTR(Vector3f)& orig
 	int vmIndex;
 	Vector3i localBlockLocation;
 #define PROCESS_VOXEL(location, index)\
-    localBlockLocation = originalPosition + (location);\
-    voxel = readVoxel(voxels, hashTable, localBlockLocation, vmIndex, cache);\
-    warpNeighbors2[index] = voxel.warp_t;\
+	localBlockLocation = originalPosition + (location);\
+	voxel = readVoxel(voxels, hashTable, localBlockLocation, vmIndex, cache);\
+	warpNeighbors2[index] = voxel.warp_t;\
 
 	//necessary for 2nd derivatives in same direction, i.e. xx and zz
 	PROCESS_VOXEL(Vector3i(2, 0, 0), 0);
