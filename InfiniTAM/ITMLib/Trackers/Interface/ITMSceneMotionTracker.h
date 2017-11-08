@@ -15,7 +15,9 @@
 //  ================================================================
 #pragma once
 
-
+//_DEBUG
+#include <opencv2/core/mat.hpp>
+//local
 #include "../../Objects/Scene/ITMScene.h"
 
 namespace ITMLib {
@@ -25,6 +27,17 @@ namespace ITMLib {
 
 		virtual float UpdateWarpField(ITMScene <TVoxel, TIndex>* canonicalScene,
 		                              ITMScene <ITMVoxelAux, TIndex>* liveScene) = 0;
+
+		//START _DEBUG
+		virtual cv::Mat DrawCanonicalSceneImage(ITMScene <TVoxel, TIndex>* scene) = 0;
+
+		virtual cv::Mat DrawLiveSceneImage(ITMScene <ITMVoxelAux, TIndex>* scene) = 0;
+
+		virtual cv::Mat DrawWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene) = 0;
+
+		const std::string iterationFramesFolder = "/media/algomorph/Data/4dmseg/Killing/iteration_frames/";
+		//END _DEBUG
+
 
 		virtual void FuseFrame(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <ITMVoxelAux, TIndex>* liveScene) = 0;
 		//TODO -- make all of these parameters

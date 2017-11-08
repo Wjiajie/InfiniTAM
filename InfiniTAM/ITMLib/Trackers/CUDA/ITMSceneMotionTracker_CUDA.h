@@ -26,6 +26,20 @@ namespace ITMLib {
 		ITMSceneMotionTracker_CUDA(const ITMSceneParams& params);
 
 	protected:
+
+		//START _DEBUG
+		cv::Mat DrawCanonicalSceneImage(ITMScene <TVoxel, TIndex>* scene) override {
+			return cv::Mat();
+		};
+
+		cv::Mat DrawLiveSceneImage(ITMScene <ITMVoxelAux, TIndex>* scene) override {
+			return cv::Mat();
+		}
+		cv::Mat DrawWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene) override{
+			return cv::Mat();
+		}
+		//END _DEBUG
+
 		void FuseFrame(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <ITMVoxelAux, TIndex>* liveScene) override;
 		float UpdateWarpField(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <ITMVoxelAux, TIndex>* liveScene) override;
 	};

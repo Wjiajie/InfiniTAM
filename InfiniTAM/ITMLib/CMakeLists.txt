@@ -15,6 +15,9 @@ SET(targetname ITMLib)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseCUDA.cmake)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseOpenMP.cmake)
 
+#_DEBUG
+find_package(OpenCV REQUIRED core highgui imgproc imgcodecs)
+
 #############################
 # Specify the project files #
 #############################
@@ -634,3 +637,7 @@ SOURCE_GROUP(Utils FILES ${ITMLIB_UTILS_SOURCES} ${ITMLIB_UTILS_HEADERS})
 ##########################################
 
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
+
+#_DEBUG
+target_include_directories(${targetname} PUBLIC ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(${targetname} ${OpenCV_LIBS})
