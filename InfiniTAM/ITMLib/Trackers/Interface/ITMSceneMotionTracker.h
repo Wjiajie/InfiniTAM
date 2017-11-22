@@ -34,6 +34,11 @@ namespace ITMLib {
 		virtual cv::Mat DrawLiveSceneImage(ITMScene <ITMVoxelAux, TIndex>* scene) = 0;
 
 		virtual cv::Mat DrawWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene) = 0;
+		virtual void MarkWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene, cv::Mat& image, Vector3i position) = 0;
+
+		//const Vector3i testPos = Vector3i(-62, 102, 559);
+		const Vector3i testPos = Vector3i(42, -73, 228);
+		Vector3i altTestVoxel;
 
 		const std::string iterationFramesFolder = "/media/algomorph/Data/4dmseg/Killing/iteration_frames/";
 		//END _DEBUG
@@ -49,7 +54,9 @@ namespace ITMLib {
 		//_DEBUG
 		const float rigidityEnforcementFactor = 0.0f;
 		//const float rigidityEnforcementFactor = 0.1f;
-		const float weightKillingTerm = 0.5f;
+		//const float weightKillingTerm = 0.5f;
+		//_DEBUG
+		const float weightKillingTerm = 0.1f;
 		const float weightLevelSetTerm = 0.2f;
 		const float weightColorDataTerm = 0.0f;
 		//_DEBUG

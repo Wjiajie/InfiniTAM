@@ -31,6 +31,7 @@ void ITMSceneMotionTracker_CUDA<TVoxel, TIndex>::FuseFrame(ITMScene<TVoxel, TInd
 	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");
 }
 template<class TVoxel, class TIndex>
-ITMSceneMotionTracker_CUDA<TVoxel, TIndex>::ITMSceneMotionTracker_CUDA(const ITMSceneParams& params) : ITMSceneMotionTracker<TVoxel, TIndex>(params) {
+ITMSceneMotionTracker_CUDA<TVoxel, TIndex>::ITMSceneMotionTracker_CUDA(const ITMSceneParams& params) :
+		ITMSceneMotionTracker<TVoxel, TIndex>(params) {
 
 }

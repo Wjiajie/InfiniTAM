@@ -24,6 +24,7 @@
 //local
 #include "ITMSceneMotionTracker.h"
 #include "../../ITMLibDefines.h"
+#include "../../Objects/Scene/ITMSceneManipulation.h"
 
 using namespace ITMLib;
 
@@ -48,18 +49,33 @@ void ITMSceneMotionTracker<TVoxel, TIndex>::ProcessFrame(ITMScene<TVoxel, TIndex
 	cv::Mat blank = cv::Mat::zeros(liveImg.rows, liveImg.cols, CV_8UC1);
 	//END _DEBUG
 
-	//_DEBUG -- condition
+	TVoxel vox = ReadVoxel(*canonicalScene,testPos);
+	vox.warp_t = Vector3f(0,0,0);
+	SetVoxel_CPU(*canonicalScene,testPos,vox);
+
+	//_DEBUG
+	altTestVoxel = testPos + Vector3i(0,-1,0);
+
+	std::cout << "Second voxel marked: " << altTestVoxel << std::endl;
+
 	for(int iteration = 0; maxVectorUpdate > maxVectorUpdateThresholdVoxels && iteration < maxIterationCount; iteration++){
 		const std::string red("\033[0;31m");
 		const std::string reset("\033[0m");
 		//START _DEBUG
 		cv::Mat warpImg = DrawWarpedSceneImage(canonicalScene) * 255.0f;
-		cv::Mat warpImgChannel, warpImgOut, mask, liveImgChannel;
+		cv::Mat warpImgChannel, warpImgOut, mask, liveImgChannel, markChannel;
+		blank.copyTo(markChannel);
+		//testPos = Vector3i(42, -73, 228);
+		MarkWarpedSceneImage(canonicalScene,markChannel, testPos);
+
+		//(74, −48, 228)
+		MarkWarpedSceneImage(canonicalScene,markChannel, altTestVoxel);
 		liveImgChannel = cv::Mat::zeros(warpImg.rows,warpImg.cols, CV_8UC1);
 		warpImg.convertTo(warpImgChannel, CV_8UC1);
 		cv::threshold(warpImgChannel, mask, 1.0, 1.0, cv::THRESH_BINARY_INV);
 		liveImgTemplate.copyTo(liveImgChannel, mask);
-		cv::Mat channels[3] = {liveImgTemplate, warpImgChannel, blank};
+
+		cv::Mat channels[3] = {liveImgTemplate, warpImgChannel, markChannel};
 
 		cv::merge(channels, 3, warpImgOut);
 		std::stringstream numStringStream;

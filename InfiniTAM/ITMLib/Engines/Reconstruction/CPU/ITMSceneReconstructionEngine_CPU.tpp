@@ -371,6 +371,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMPlainVoxelArray>::IntegrateInto
 		int tmp = locId - z * scene->index.getVolumeSize().x*scene->index.getVolumeSize().y;
 		int y = tmp / scene->index.getVolumeSize().x;
 		int x = tmp - y * scene->index.getVolumeSize().x;
+
 		Vector4f pt_model;
 
 		if (stopIntegratingAtMaxW) if (voxelArray[locId].w_depth == maxW) continue;

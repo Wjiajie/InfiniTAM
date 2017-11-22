@@ -241,7 +241,9 @@ struct ITMVoxel_f_dynamic
 	/** vector translating the current point to a different location **/
 	Vector3f warp_t;
 	/** used for intermediate update results **/
-	Vector3s warp_t_update;
+	//TODO: figure out how to use the short vec for update correctly
+	//Vector3s warp_t_update;
+	Vector3f warp_t_update;
 
 	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic()
 	{
@@ -251,7 +253,10 @@ struct ITMVoxel_f_dynamic
 		clr = Vector3u((uchar)0);
 		//trilienar_weights = Vector3u((uchar)0);
 		w_color = 0;
-		warp_t = Vector3f(0.f);
-		warp_t_update = Vector3s((short)0);
+		//warp_t = Vector3f(0.f);
+		//_DEBUG
+		warp_t = Vector3f(1,1,0);
+		warp_t_update = Vector3f(0.0f);
+		//warp_t_update = Vector3s((short)0);
 	}
 };

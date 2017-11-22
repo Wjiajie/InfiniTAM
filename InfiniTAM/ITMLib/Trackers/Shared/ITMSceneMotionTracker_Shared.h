@@ -96,8 +96,7 @@ inline void ComputePerPointWarpedLiveJacobianAndHessian(const CONSTPTR(Vector3i)
 	                sdfDerivatives_xy_yz_zx.z, sdfDerivatives_xy_yz_zx.y, sdfDerivatives_xx_yy_zz.z};
 	sdfHessian.setValues(vals);
 };
-//_DEBUG
-
+//_DEBUG -- this is exactly the same code as the one w/o the Alt, but with optional result-printing
 //without color
 template<typename TVoxel, typename TIndex, typename TCache>
 _CPU_AND_GPU_CODE_

@@ -24,7 +24,7 @@ namespace ITMLib {
 			public ITMSceneMotionTracker<TVoxel, TIndex> {
 	public:
 
-		ITMSceneMotionTracker_CPU(const ITMSceneParams& params);
+		explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params);
 
 	protected:
 		//START _DEBUG
@@ -51,14 +51,14 @@ namespace ITMLib {
 
 	private:
 		//debug image stuff START _DEBUG
-		const Vector3i testPos = Vector3i(-62, 102, 559);
+		const bool absFillingStrategy = false;
 		const int imageSizeVoxels = 100;
 		const int imageHalfSizeVoxels = imageSizeVoxels / 2;
-		const int imgRangeStartX = testPos.x-imageHalfSizeVoxels;
-		const int imgRangeEndX = testPos.x+imageHalfSizeVoxels;
-		const int imgRangeStartY = testPos.y-imageHalfSizeVoxels;
-		const int imgRangeEndY = testPos.y+imageHalfSizeVoxels;
-		const int imgZSlice = testPos.z;
+		const int imgRangeStartX = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos).x-imageHalfSizeVoxels;
+		const int imgRangeEndX = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos).x+imageHalfSizeVoxels;
+		const int imgRangeStartY = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos).y-imageHalfSizeVoxels;
+		const int imgRangeEndY = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos).y+imageHalfSizeVoxels;
+		const int imgZSlice = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos).z;
 
 		const int imgVoxelRangeX = imgRangeEndX - imgRangeStartX;
 		const int imgVoxelRangeY = imgRangeEndY - imgRangeStartY;
@@ -68,8 +68,6 @@ namespace ITMLib {
 		const int imgPixelRangeX = static_cast<int>(imgToVoxelScale * imgVoxelRangeX);
 		const int imgPixelRangeY = static_cast<int>(imgToVoxelScale * imgVoxelRangeY);
 
-
-
 		bool isVoxelInImgRange(int x, int y, int z);
 		bool isVoxelBlockInImgRange(Vector3i blockVoxelCoords);
 		Vector2i getVoxelImgCoords(int x, int y);
@@ -78,6 +76,8 @@ namespace ITMLib {
 		bool isVoxelBlockInImgRangeTolerance(Vector3i blockVoxelCoords, int tolerance);
 
 		Vector2i getVoxelImgCoords(float x, float y);
+
+		void MarkWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene, cv::Mat& image, Vector3i position) override;
 	};
 
 

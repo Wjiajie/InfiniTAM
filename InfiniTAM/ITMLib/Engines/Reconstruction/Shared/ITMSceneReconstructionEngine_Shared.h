@@ -27,7 +27,10 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 
 	// check whether voxel needs updating
 	eta = depth_measure - pt_camera.z;
-	if (eta < -mu) return eta;
+	if (eta < -mu){
+		voxel.sdf = TVoxel::floatToValue(-1.0);
+		return eta;
+	}
 
 	// compute updated SDF value and reliability
 	oldF = TVoxel::valueToFloat(voxel.sdf); oldW = voxel.w_depth;
@@ -70,7 +73,10 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 
 	// check whether voxel needs updating
 	eta = depth_measure - pt_camera.z;
-	if (eta < -mu) return eta;
+	if (eta < -mu){
+		voxel.sdf = TVoxel::floatToValue(-1.0);
+		return eta;
+	}
 
 	// compute updated SDF value and reliability
 	oldF = TVoxel::valueToFloat(voxel.sdf); oldW = voxel.w_depth;

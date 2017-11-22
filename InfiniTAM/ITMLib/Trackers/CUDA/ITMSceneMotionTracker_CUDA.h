@@ -38,6 +38,9 @@ namespace ITMLib {
 		cv::Mat DrawWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene) override{
 			return cv::Mat();
 		}
+
+		void MarkWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene, cv::Mat& image, Vector3i position) override {
+		}
 		//END _DEBUG
 
 		void FuseFrame(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <ITMVoxelAux, TIndex>* liveScene) override;
