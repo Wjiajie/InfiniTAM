@@ -35,26 +35,27 @@ void ITMSceneMotionTracker<TVoxel, TIndex>::ProcessFrame(ITMScene<TVoxel, TIndex
 	float maxVectorUpdate = std::numeric_limits<float>::infinity();
 
 	//START _DEBUG
-	std::cout << "Desired warp update (voxels) below " << maxVectorUpdateThresholdVoxels << std::endl;
-	cv::Mat canonicalImg = DrawCanonicalSceneImage(canonicalScene) * 255.0f;
-	cv::Mat canonicalImgOut;
-	canonicalImg.convertTo(canonicalImgOut, CV_8UC1);
-	cv::cvtColor(canonicalImgOut, canonicalImgOut, cv::COLOR_GRAY2BGR);
-	cv::imwrite(iterationFramesFolder + "canonical.png", canonicalImgOut);
-	cv::Mat liveImg = DrawLiveSceneImage(liveScene) * 255.0f;
-	cv::Mat liveImgTemplate,liveImgOut;
-	liveImg.convertTo(liveImgTemplate, CV_8UC1);
-	cv::cvtColor(liveImgTemplate, liveImgOut, cv::COLOR_GRAY2BGR);
-	cv::imwrite(iterationFramesFolder + "live.png", liveImgOut);
-	cv::Mat blank = cv::Mat::zeros(liveImg.rows, liveImg.cols, CV_8UC1);
+//	std::cout << "Desired warp update (voxels) below " << maxVectorUpdateThresholdVoxels << std::endl;
+//	cv::Mat canonicalImg = DrawCanonicalSceneImage(canonicalScene) * 255.0f;
+//	cv::Mat canonicalImgOut;
+//	canonicalImg.convertTo(canonicalImgOut, CV_8UC1);
+//	cv::cvtColor(canonicalImgOut, canonicalImgOut, cv::COLOR_GRAY2BGR);
+//	cv::imwrite(iterationFramesFolder + "canonical.png", canonicalImgOut);
+//	cv::Mat liveImg = DrawLiveSceneImage(liveScene) * 255.0f;
+//	cv::Mat liveImgTemplate,liveImgOut;
+//	liveImg.convertTo(liveImgTemplate, CV_8UC1);
+//	cv::cvtColor(liveImgTemplate, liveImgOut, cv::COLOR_GRAY2BGR);
+//	cv::imwrite(iterationFramesFolder + "live.png", liveImgOut);
+//	cv::Mat blank = cv::Mat::zeros(liveImg.rows, liveImg.cols, CV_8UC1);
 	//END _DEBUG
 
-	TVoxel vox = ReadVoxel(*canonicalScene,testPos);
-	vox.warp_t = Vector3f(0,0,0);
-	SetVoxel_CPU(*canonicalScene,testPos,vox);
+	//_DEBUG
+	//TVoxel vox = ReadVoxel(*canonicalScene,testPos);
+	//vox.warp_t = Vector3f(0,0,0);
+	//SetVoxel_CPU(*canonicalScene,testPos,vox);
 
 	//_DEBUG
-	altTestVoxel = testPos + Vector3i(0,-1,0);
+	//altTestVoxel = testPos + Vector3i(0,-1,0);
 
 	std::cout << "Second voxel marked: " << altTestVoxel << std::endl;
 
@@ -62,26 +63,26 @@ void ITMSceneMotionTracker<TVoxel, TIndex>::ProcessFrame(ITMScene<TVoxel, TIndex
 		const std::string red("\033[0;31m");
 		const std::string reset("\033[0m");
 		//START _DEBUG
-		cv::Mat warpImg = DrawWarpedSceneImage(canonicalScene) * 255.0f;
-		cv::Mat warpImgChannel, warpImgOut, mask, liveImgChannel, markChannel;
-		blank.copyTo(markChannel);
-		//testPos = Vector3i(42, -73, 228);
-		MarkWarpedSceneImage(canonicalScene,markChannel, testPos);
-
-		//(74, −48, 228)
-		MarkWarpedSceneImage(canonicalScene,markChannel, altTestVoxel);
-		liveImgChannel = cv::Mat::zeros(warpImg.rows,warpImg.cols, CV_8UC1);
-		warpImg.convertTo(warpImgChannel, CV_8UC1);
-		cv::threshold(warpImgChannel, mask, 1.0, 1.0, cv::THRESH_BINARY_INV);
-		liveImgTemplate.copyTo(liveImgChannel, mask);
-
-		cv::Mat channels[3] = {liveImgTemplate, warpImgChannel, markChannel};
-
-		cv::merge(channels, 3, warpImgOut);
-		std::stringstream numStringStream;
-		numStringStream << std::setw(3) << std::setfill('0') << iteration;
-		std::string image_name = iterationFramesFolder + "warp" + numStringStream.str() + ".png";
-		cv::imwrite(image_name, warpImgOut);
+//		cv::Mat warpImg = DrawWarpedSceneImage(canonicalScene) * 255.0f;
+//		cv::Mat warpImgChannel, warpImgOut, mask, liveImgChannel, markChannel;
+//		blank.copyTo(markChannel);
+//		//testPos = Vector3i(42, -73, 228);
+//		MarkWarpedSceneImage(canonicalScene,markChannel, testPos);
+//
+//		//(74, −48, 228)
+//		MarkWarpedSceneImage(canonicalScene,markChannel, altTestVoxel);
+//		liveImgChannel = cv::Mat::zeros(warpImg.rows,warpImg.cols, CV_8UC1);
+//		warpImg.convertTo(warpImgChannel, CV_8UC1);
+//		cv::threshold(warpImgChannel, mask, 1.0, 1.0, cv::THRESH_BINARY_INV);
+//		liveImgTemplate.copyTo(liveImgChannel, mask);
+//
+//		cv::Mat channels[3] = {liveImgTemplate, warpImgChannel, markChannel};
+//
+//		cv::merge(channels, 3, warpImgOut);
+//		std::stringstream numStringStream;
+//		numStringStream << std::setw(3) << std::setfill('0') << iteration;
+//		std::string image_name = iterationFramesFolder + "warp" + numStringStream.str() + ".png";
+//		cv::imwrite(image_name, warpImgOut);
 		//END _DEBUG
 
 		std::cout << red << "Iteration: " << iteration << reset;// << std::endl;

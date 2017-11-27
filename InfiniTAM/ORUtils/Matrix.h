@@ -35,10 +35,20 @@ namespace ORUtils {
 
 	template <class T> struct Matrix3_{
 		union { // Warning: see the header in this file for the special matrix order
-			struct {
+			struct { //ordered struct representation
 				T m00, m01, m02; // |0, 3, 6|     |m00, m10, m20|
 				T m10, m11, m12; // |1, 4, 7|     |m01, m11, m21|
 				T m20, m21, m22; // |2, 5, 8|     |m02, m12, m22|
+			};
+			struct { //Jacobian struct representation
+				T u_x, v_x, w_x; // |0, 3, 6|     |u_x, u_y, u_z|
+				T u_y, v_y, w_y; // |1, 4, 7|     |v_x, v_y, v_z|
+				T u_z, v_z, w_z; // |2, 5, 8|     |w_x, w_y, w_z|
+			};
+			struct { //Hermitian struct representation
+				T xx, xy, xz; // |0, 3, 6|    |xx, yy, zx|
+				T yx, yy, yz; // |1, 4, 7|    |xy, yy, zy|
+				T zx, zy, zz; // |2, 5, 8|    |xz, yz, zz|
 			};
 			T m[9];
 		};

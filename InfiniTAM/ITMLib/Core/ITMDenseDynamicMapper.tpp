@@ -70,17 +70,19 @@ void ITMDenseDynamicMapper<TVoxel, TIndex>::ProcessFrame(const ITMView* view,
 	liveSceneRecoEngine->ResetScene(live_scene);
 
 	//** construct the new live-frame SDF
-	//_DEBUG -- restore
+
 	// allocation
-	//liveSceneRecoEngine->AllocateSceneFromDepth(live_scene, view, trackingState, renderState);
+	liveSceneRecoEngine->AllocateSceneFromDepth(live_scene, view, trackingState, renderState);
 	// integration
-	//liveSceneRecoEngine->IntegrateIntoScene(live_scene, view, trackingState, renderState);
-	//_DEBUG
-	auto start = std::chrono::steady_clock::now();
-	CopySceneWithOffset_CPU(*live_scene,*canonical_scene, Vector3i(1,1,0));
-	auto end = std::chrono::steady_clock::now();
-	auto diff = end - start;
-	std::cout << "Scene copy time: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
+	liveSceneRecoEngine->IntegrateIntoScene(live_scene, view, trackingState, renderState);
+
+	//BEGIN _DEBUG
+//	auto start = std::chrono::steady_clock::now();
+//	CopySceneWithOffset_CPU(*live_scene,*canonical_scene, Vector3i(1,1,0));
+//	auto end = std::chrono::steady_clock::now();
+//	auto diff = end - start;
+//	std::cout << "Scene copy time: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
+	//END _DEBUG
 
 	sceneMotionTracker->ProcessFrame(canonical_scene, live_scene);
 

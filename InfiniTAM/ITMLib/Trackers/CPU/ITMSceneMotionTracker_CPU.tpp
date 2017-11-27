@@ -13,7 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#define PRINT_SINGLE_VOXEL_RESULT
+//#define PRINT_SINGLE_VOXEL_RESULT
 
 //stdlib
 #include <cmath>
@@ -260,6 +260,23 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 //						std::cout << "ERROR!" << std::endl;
 //					}
 
+					//BEGIN _DEBUG
+					// |0, 3, 6|     |m00, m10, m20|      |u_xx, u_xy, u_xz|
+					// |1, 4, 7|     |m01, m11, m21|      |u_xy, u_yy, u_yz|
+					// |2, 5, 8|     |m02, m12, m22|      |u_xz, u_yz, u_zz|
+					Matrix3f& H_u = warpHessian[0];
+					Matrix3f& H_v = warpHessian[1];
+					Matrix3f& H_w = warpHessian[2];
+
+					float altKillingDeltaEu = -2.0f*((1+gamma)*H_u.xx + (H_u.yy) + (H_u.zz) + gamma*H_v.xy + gamma*H_w.xz);
+					float altKillingDeltaEv = -2.0f*((1+gamma)*H_v.yy + (H_v.zz) + (H_v.xx) + gamma*H_u.xy + gamma*H_w.yz);
+					float altKillingDeltaEw = -2.0f*((1+gamma)*H_w.zz + (H_w.xx) + (H_w.yy) + gamma*H_v.yz + gamma*H_u.xz);
+
+					Vector3f deltaEKillingAlt = Vector3f(altKillingDeltaEu,
+					                                     altKillingDeltaEv,
+					                                     altKillingDeltaEw);
+							//END _DEBUG
+
 					//_DEBUG
 					// KillingTerm Energy
 					Matrix3f warpJacobianTranspose = warpJacobian.t();
@@ -280,10 +297,10 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					const float learningRate = ITMSceneMotionTracker<TVoxel, TIndex>::gradientDescentLearningRate;
 					//_DEBUG
 					//Vector3f deltaE = deltaEData;
-					Vector3f deltaE = weightKilling * deltaEKilling;
+					//Vector3f deltaE = weightKilling * deltaEKillingAlt;
 					//Vector3f deltaE = deltaEData + weightKilling * deltaEKilling;
 					//Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet;
-					//Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet + weightKilling * deltaEKilling;
+					Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet + weightKilling * deltaEKillingAlt;
 
 					//_DEBUG
 					//temporarily disable the z-axis updates
