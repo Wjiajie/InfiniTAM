@@ -14,9 +14,13 @@
 //  limitations under the License.
 //  ================================================================
 #pragma once
+
 #include "../ITMLib/ITMLibDefines.h"
 
 #include "../ITMLib/Objects/Scene/ITMRepresentationAccess.h"
 #include "../ITMLib/Objects/Scene/ITMScene.h"
 
 using namespace ITMLib;
+
+template<class TVoxel, class TIndex>
+void GenerateTestScene01(ITMScene<TVoxel, TIndex>& scene);

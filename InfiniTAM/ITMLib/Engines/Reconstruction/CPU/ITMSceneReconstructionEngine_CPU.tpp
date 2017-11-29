@@ -78,7 +78,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 	//bool approximateIntegration = !trackingState->requiresFullRendering;
 
 #ifdef WITH_OPENMP
-	#pragma omp parallel for
+	//#pragma omp parallel for
 #endif
 	for (int entryId = 0; entryId < noVisibleEntries; entryId++)
 	{
@@ -107,6 +107,11 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 			pt_model.y = (float)(globalPos.y + y) * voxelSize;
 			pt_model.z = (float)(globalPos.z + z) * voxelSize;
 			pt_model.w = 1.0f;
+
+			Vector3i voxelPos = globalPos + Vector3i(x,y,z);
+			if(voxelPos == Vector3i(179, -85, 542)){
+				std::cout << "HI" << std::endl;
+			}
 
 			ComputeUpdatedVoxelInfo<TVoxel::hasColorInformation,TVoxel::hasConfidenceInformation, TVoxel>::compute(localVoxelBlock[locId], pt_model, M_d, 
 				projParams_d, M_rgb, projParams_rgb, mu, maxW, depth, confidence, depthImgSize, rgb, rgbImgSize);

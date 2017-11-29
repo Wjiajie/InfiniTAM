@@ -233,15 +233,14 @@ struct ITMVoxel_f_dynamic
 	//uchar pad;
 	/** RGB colour information stored for this voxel. */
 	Vector3u clr;
-	/** Trilinear weight information stored for this voxel. //TODO: remove, with the check --NOT REALLY NEEDED, can be computed on the fly -Greg (GitHub:Algomorph) */
-	//Vector3u trilienar_weights;
+	/** Trilinear weight information stored for this voxel.
 	/** Number of observations that made up @p clr. */
 	uchar w_color;
 	float confidence;
 	/** vector translating the current point to a different location **/
 	Vector3f warp_t;
 	/** used for intermediate update results **/
-	//TODO: figure out how to use the short vec for update correctly
+	//TODO: figure out how to use the short vec for update correctly -Greg (GitHub: Algomorph)
 	//Vector3s warp_t_update;
 	Vector3f warp_t_update;
 
@@ -251,11 +250,10 @@ struct ITMVoxel_f_dynamic
 		w_depth = 0;
 		confidence = 0.0f;
 		clr = Vector3u((uchar)0);
-		//trilienar_weights = Vector3u((uchar)0);
 		w_color = 0;
-		//warp_t = Vector3f(0.f);
+		warp_t = Vector3f(0.f);
 		//_DEBUG
-		warp_t = Vector3f(1,1,0);
+		//warp_t = Vector3f(1,1,0);
 		warp_t_update = Vector3f(0.0f);
 		//warp_t_update = Vector3s((short)0);
 	}

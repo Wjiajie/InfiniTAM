@@ -15,13 +15,58 @@
 //  ================================================================
 #include "ITMSceneMotionTracker_CUDA.h"
 #include "../../ITMLibDefines.h"
+#include "../../Utils/ITMCUDAUtils.h"
+#include "../../../ORUtils/CUDADefines.h"
 
 using namespace ITMLib;
+
+template<typename TVoxel>
+__global__ void computeWarpUpdate_device(TVoxel* canonicalVoxelArray,
+                                         const ITMHashEntry* hashTable,
+                                         int noTotalEntries) {
+//	Vector3i globalPos;
+//	int entryId = visibleEntryIDs[blockIdx.x];
+//
+//	const ITMHashEntry &currentHashEntry = hashTable[entryId];
+//
+//	if (currentHashEntry.ptr < 0) return;
+//
+//	globalPos = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+//
+//	TVoxel *localVoxelBlock = &(localVBA[currentHashEntry.ptr * SDF_BLOCK_SIZE3]);
+//
+//	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
+	//TODO
+
+}
 
 template<class TVoxel, class TIndex>
 float ITMSceneMotionTracker_CUDA<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TIndex>* canonicalScene,
                                                                   ITMScene<ITMVoxelAux, TIndex>* liveScene) {
-	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");
+	TVoxel* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
+	typename TIndex::IndexCache canonicalCache;
+
+	const ITMVoxelAux* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* liveHashTable = liveScene->index.GetEntries();
+	typename TIndex::IndexCache liveCache;
+
+	int noTotalEntries = canonicalScene->index.noTotalEntries;
+	float maxVectorUpdate = 0.0f;
+
+	dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+	dim3 gridSize(SDF_LOCAL_BLOCK_NUM / 16, 16);
+
+	{// compute warp updates for all voxel hash blocks
+		//TODO: figure out the cuda blocks / data correspondences here to pull the proper voxel out
+		computeWarpUpdate_device << < gridSize, cudaBlockSize >> >
+		                                        (canonicalVoxels, canonicalHashTable, noTotalEntries);
+	}
+
+	{// apply the warp updates to all voxel hash blocks
+		//TODO
+	}
+
 	return 0;
 }
 
@@ -30,6 +75,7 @@ void ITMSceneMotionTracker_CUDA<TVoxel, TIndex>::FuseFrame(ITMScene<TVoxel, TInd
                                                            ITMScene<ITMVoxelAux, TIndex>* liveScene) {
 	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");
 }
+
 template<class TVoxel, class TIndex>
 ITMSceneMotionTracker_CUDA<TVoxel, TIndex>::ITMSceneMotionTracker_CUDA(const ITMSceneParams& params) :
 		ITMSceneMotionTracker<TVoxel, TIndex>(params) {

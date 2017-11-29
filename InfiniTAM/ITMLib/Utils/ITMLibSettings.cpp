@@ -8,9 +8,10 @@ using namespace ITMLib;
 
 ITMLibSettings::ITMLibSettings(void)
 
-: sceneParams(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article
+
+: sceneParams(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG
     //mu(m), maxW, voxel size(m), clipping min, clipping max, stopIntegratingAtMaxW
-	//sceneParams(0.02f, 100, 0.005f, 0.2f, 3.0f, false),//standard
+	//sceneParams(0.02f, 100, 0.005f, 0.2f, 3.0f, false),//standard InfiniTAM values
 	surfelSceneParams(0.5f, 0.6f, static_cast<float>(20 * M_PI / 180), 0.01f, 0.004f, 3.5f, 25.0f, 4, 1.0f, 5.0f, 20, 10000000, true, true)
 {
 	// skips every other point when using the colour renderer for creating a point cloud
@@ -30,6 +31,7 @@ ITMLibSettings::ITMLibSettings(void)
 #endif
 #endif
 
+	//_DEBUG
 	deviceType = DEVICE_CPU;
 
 	/// how swapping works: disabled, fully enabled (still with dragons) and delete what's not visible - not supported in loop closure version
@@ -39,7 +41,7 @@ ITMLibSettings::ITMLibSettings(void)
 	useApproximateRaycast = false;
 
 	/// enable or disable bilateral depth filtering
-	useBilateralFilter = false;
+	useBilateralFilter = true;
 
 	/// what to do on tracker failure: ignore, relocalise or stop integration - not supported in loop closure version
 	behaviourOnFailure = FAILUREMODE_IGNORE;
@@ -48,7 +50,7 @@ ITMLibSettings::ITMLibSettings(void)
 	//libMode = LIBMODE_BASIC;
 	//libMode = LIBMODE_LOOPCLOSURE;
 	//libMode = LIBMODE_BASIC_SURFELS;
-	libMode = LIBMODE_KILLING;
+	libMode = LIBMODE_KILLING;//_DEBUG
 
 	//// Default ICP tracking
 	//trackerConfig = "type=icp,levels=rrrbb,minstep=1e-3,"

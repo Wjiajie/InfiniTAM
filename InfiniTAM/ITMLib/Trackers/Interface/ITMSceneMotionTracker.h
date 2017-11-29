@@ -35,10 +35,12 @@ namespace ITMLib {
 
 		virtual cv::Mat DrawWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene) = 0;
 		virtual void MarkWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene, cv::Mat& image, Vector3i position) = 0;
+//178, -85, 544
+		const Vector3i testPos1 = Vector3i(178, -85, 544);
+		const Vector3i testPos2 = Vector3i(178, -85, 543);
+		const Vector3i testPos3 = Vector3i(179, -84, 544);
+		const Vector3i testPos4 = Vector3i(179, -85, 545);
 
-		//const Vector3i testPos = Vector3i(-62, 102, 559);
-		const Vector3i testPos = Vector3i(42, -73, 228);
-		Vector3i altTestVoxel;
 
 		const std::string iterationFramesFolder = "/media/algomorph/Data/4dmseg/Killing/iteration_frames/";
 		//END _DEBUG
@@ -46,7 +48,7 @@ namespace ITMLib {
 
 		virtual void FuseFrame(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <ITMVoxelAux, TIndex>* liveScene) = 0;
 		//TODO -- make all of these parameters
-		const int maxIterationCount = 300;
+		const int maxIterationCount = 800;
 		const float maxVectorUpdateThresholdMeters = 0.0001f;//m
 		//_DEBUG
 		//const float gradientDescentLearningRate = 1.0f;
@@ -59,7 +61,7 @@ namespace ITMLib {
 		//_DEBUG
 		const float colorSdfThreshold = -1.00f;
 		//const float colorSdfThreshold = 0.25f;
-		const float epsilon = 1.0e-10f;
+		const float epsilon = FLT_EPSILON;
 
 		float maxVectorUpdateThresholdVoxels;
 	public:

@@ -30,6 +30,7 @@ namespace ITMLib {
 		//START _DEBUG
 		template<typename TTVoxel>
 		cv::Mat DrawSceneImage(ITMScene <TTVoxel, TIndex>* scene);
+
 		template<typename TTVoxel>
 		cv::Mat DrawWarpedSceneImageTemplated(ITMScene <TTVoxel, TIndex>* scene);
 
@@ -44,9 +45,19 @@ namespace ITMLib {
 		cv::Mat DrawLiveSceneImage(ITMScene <ITMVoxelAux, TIndex>* scene) override {
 			return DrawSceneImage(scene);
 		}
+
+		//timers
+		double timeWarpUpdateCompute = 0.0;
+		double timeDataJandHCompute = 0.0;
+		double timeWarpJandHCompute = 0.0;
+		double timeUpdateTermCompute = 0.0;
+		double timeWarpUpdateApply = 0.0;
+
 		//END _DEBUG
 
-		float UpdateWarpField(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <ITMVoxelAux, TIndex>* liveScene) override;
+		float
+		UpdateWarpField(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <ITMVoxelAux, TIndex>* liveScene) override;
+
 		void FuseFrame(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <ITMVoxelAux, TIndex>* liveScene) override;
 
 	private:
@@ -54,11 +65,11 @@ namespace ITMLib {
 		const bool absFillingStrategy = false;
 		const int imageSizeVoxels = 100;
 		const int imageHalfSizeVoxels = imageSizeVoxels / 2;
-		const int imgRangeStartX = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos).x-imageHalfSizeVoxels;
-		const int imgRangeEndX = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos).x+imageHalfSizeVoxels;
-		const int imgRangeStartY = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos).y-imageHalfSizeVoxels;
-		const int imgRangeEndY = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos).y+imageHalfSizeVoxels;
-		const int imgZSlice = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos).z;
+		const int imgRangeStartX = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos1).x - imageHalfSizeVoxels;
+		const int imgRangeEndX = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos1).x + imageHalfSizeVoxels;
+		const int imgRangeStartY = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos1).y - imageHalfSizeVoxels;
+		const int imgRangeEndY = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos1).y + imageHalfSizeVoxels;
+		const int imgZSlice = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos1).z;
 
 		const int imgVoxelRangeX = imgRangeEndX - imgRangeStartX;
 		const int imgVoxelRangeY = imgRangeEndY - imgRangeStartY;
@@ -69,7 +80,9 @@ namespace ITMLib {
 		const int imgPixelRangeY = static_cast<int>(imgToVoxelScale * imgVoxelRangeY);
 
 		bool isVoxelInImgRange(int x, int y, int z);
+
 		bool isVoxelBlockInImgRange(Vector3i blockVoxelCoords);
+
 		Vector2i getVoxelImgCoords(int x, int y);
 		//END _DEBUG
 
@@ -79,8 +92,6 @@ namespace ITMLib {
 
 		void MarkWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene, cv::Mat& image, Vector3i position) override;
 	};
-
-
 
 
 }//namespace ITMLib

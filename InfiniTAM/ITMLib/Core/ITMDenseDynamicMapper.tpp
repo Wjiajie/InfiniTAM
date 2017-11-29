@@ -25,6 +25,7 @@
 #include "../Engines/Swapping/ITMSwappingEngineFactory.h"
 #include "../Trackers/ITMTrackerFactory.h"
 #include "../Objects/Scene/ITMSceneManipulation.h"
+#include "../../Tests/TestUtils.h"
 
 using namespace ITMLib;
 
@@ -69,21 +70,23 @@ void ITMDenseDynamicMapper<TVoxel, TIndex>::ProcessFrame(const ITMView* view,
 	// clear out the live-frame SDF
 	liveSceneRecoEngine->ResetScene(live_scene);
 
+#ifndef CONSTANT_OFFSET_TEST
 	//** construct the new live-frame SDF
 
 	// allocation
 	liveSceneRecoEngine->AllocateSceneFromDepth(live_scene, view, trackingState, renderState);
 	// integration
 	liveSceneRecoEngine->IntegrateIntoScene(live_scene, view, trackingState, renderState);
-
+#else
 	//BEGIN _DEBUG
-//	auto start = std::chrono::steady_clock::now();
-//	CopySceneWithOffset_CPU(*live_scene,*canonical_scene, Vector3i(1,1,0));
-//	auto end = std::chrono::steady_clock::now();
-//	auto diff = end - start;
-//	std::cout << "Scene copy time: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
+	//GenerateTestScene01(*canonical_scene);
+	auto start = std::chrono::steady_clock::now();
+	CopySceneWithOffset_CPU(*live_scene,*canonical_scene, Vector3i(5,0,0));
+	auto end = std::chrono::steady_clock::now();
+	auto diff = end - start;
+	std::cout << "Scene copy time: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 	//END _DEBUG
-
+#endif
 	sceneMotionTracker->ProcessFrame(canonical_scene, live_scene);
 
 	if (swappingEngine != NULL) {

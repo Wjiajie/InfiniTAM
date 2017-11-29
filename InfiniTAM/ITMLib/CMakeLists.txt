@@ -25,6 +25,7 @@ find_package(OpenCV REQUIRED core highgui imgproc imgcodecs)
 ##
 SET(ITMLIB_TOPLEVEL_CPU_SOURCES
 CPUInstantiations.cpp
+../Tests/Instantiations.cpp #_DEBUG
 )
 
 SET(ITMLIB_TOPLEVEL_CUDA_SOURCES

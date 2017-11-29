@@ -23,7 +23,7 @@ namespace ITMLib {
 			public ITMSceneMotionTracker<TVoxel, TIndex> {
 	public:
 
-		ITMSceneMotionTracker_CUDA(const ITMSceneParams& params);
+		explicit ITMSceneMotionTracker_CUDA(const ITMSceneParams& params);
 
 	protected:
 

@@ -15,6 +15,7 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 
 	// project point into image
 	pt_camera = M_d * pt_model;
+	// if point is behind the camera, don't modify any voxels
 	if (pt_camera.z <= 0) return -1;
 
 	pt_image.x = projParams_d.x * pt_camera.x / pt_camera.z + projParams_d.z;
@@ -27,10 +28,15 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 
 	// check whether voxel needs updating
 	eta = depth_measure - pt_camera.z;
+	//_DEBUG
+#ifdef SET_BAND_OVERSHOOT_TO_NEGATIVE_1
 	if (eta < -mu){
 		voxel.sdf = TVoxel::floatToValue(-1.0);
 		return eta;
 	}
+#else
+	if (eta < -mu) return eta;
+#endif
 
 	// compute updated SDF value and reliability
 	oldF = TVoxel::valueToFloat(voxel.sdf); oldW = voxel.w_depth;
@@ -60,6 +66,7 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 
 	// project point into image
 	pt_camera = M_d * pt_model;
+	// if the point is behind the camera, don't make any changes to SDF and return -1 to short-circuit further updates
 	if (pt_camera.z <= 0) return -1;
 
 	pt_image.x = projParams_d.x * pt_camera.x / pt_camera.z + projParams_d.z;
@@ -73,10 +80,16 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 
 	// check whether voxel needs updating
 	eta = depth_measure - pt_camera.z;
+	//_DEBUG
+#ifdef SET_BAND_OVERSHOOT_TO_NEGATIVE_1
 	if (eta < -mu){
 		voxel.sdf = TVoxel::floatToValue(-1.0);
 		return eta;
 	}
+#else
+	//the voxel is beyond the narrow band, on the other side of the surface. Don't make any updates to SDF.
+	if (eta < -mu) return eta;
+#endif
 
 	// compute updated SDF value and reliability
 	oldF = TVoxel::valueToFloat(voxel.sdf); oldW = voxel.w_depth;

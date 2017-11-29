@@ -18,3 +18,5 @@
 #include "TestUtils.tpp"
 #include "../ITMLib/ITMLibDefines.h"
 
+template void GenerateTestScene01<ITMVoxel,ITMVoxelIndex>(ITMScene<ITMVoxel, ITMVoxelIndex>& destination);
+

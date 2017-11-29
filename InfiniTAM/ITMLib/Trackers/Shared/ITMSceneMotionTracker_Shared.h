@@ -188,17 +188,17 @@ inline void ComputePerPointWarpedLiveJacobianAndHessian(const CONSTPTR(Vector3i)
 	warpedSdf = interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition, liveCache);
 
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
-	// === forward by 1 in each direction
-	Vector3f warpedSdfForward(
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, 1), liveCache));
 	// === back by 1 in each direction
 	Vector3f warpedSdfBackward(
 			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(-1, 0, 0), liveCache),
 			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, -1, 0), liveCache),
 			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, -1), liveCache)
 	);
+	// === forward by 1 in each direction
+	Vector3f warpedSdfForward(
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 0), liveCache),
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 0), liveCache),
+			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, 1), liveCache));
 	// === x-y, y-z, and x-z plane forward corners for 2nd derivatives
 	Vector3f warpedSdfCorners(
 			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 1, 0), liveCache),
@@ -238,21 +238,14 @@ inline void findPoint2ndDerivativeNeighborhoodWarpAlt(THREADPTR(Vector3f)* warp_
                                                       const CONSTPTR(ITMHashEntry)* hashTable,
                                                       THREADPTR(TCache)& cache) {
 	int vmIndex;
-//	const std::string yellow("\033[0;33m");
-//	const std::string reset("\033[0m");
-//	std::cout << std::endl << yellow  << voxelPosition << reset;
+
 	TVoxel voxel;
 #define PROCESS_VOXEL(location, index)\
     voxel = readVoxel(voxelData, hashTable, voxelPosition + (location), vmIndex, cache);\
     warp_tData[index] = voxel.warp_t;\
-    found[index] = vmIndex != 0 && (1.0 - std::abs(voxel.sdf)) > 1.0e-8;\
-    /*_DEBUG*/\
-    //std::cout << std::endl << voxelPosition + (location) << " " << (vmIndex & 1);\
-	//_DEBUG\
-    //warp_tData[index] = TO_FLOAT3(voxel.warp_t_update) / FLOAT_TO_SHORT_CONVERSION_FACTOR;\
+    found[index] = vmIndex != 0 && (1.0 - std::abs(voxel.sdf)) > 1.0e-8;
 
-
-	//necessary for 2nd derivatives in same direction, i.e. xx and zz
+	//necessary for 2nd derivatives in same direction, e.g. xx and zz
 	PROCESS_VOXEL(Vector3i(-1, 0, 0), 0);
 	PROCESS_VOXEL(Vector3i(0, -1, 0), 1);
 	PROCESS_VOXEL(Vector3i(0, 0, -1), 2);
@@ -262,12 +255,11 @@ inline void findPoint2ndDerivativeNeighborhoodWarpAlt(THREADPTR(Vector3f)* warp_
 	PROCESS_VOXEL(Vector3i(0, 1, 0), 4);
 	PROCESS_VOXEL(Vector3i(0, 0, 1), 5);
 
-	//necessary for 2nd derivatives in varying directions, i.e. xy and yx
+	//necessary for 2nd derivatives in mixed directions, e.g. xy and yz
 	PROCESS_VOXEL(Vector3i(1, 1, 0), 6);//xy corner
 	PROCESS_VOXEL(Vector3i(0, 1, 1), 7);//yz corner
 	PROCESS_VOXEL(Vector3i(1, 0, 1), 8);//xz corner
 #undef PROCESS_VOXEL
-//	std::cout << std::endl;
 }
 
 template<typename TVoxel, typename TCache>
@@ -278,6 +270,7 @@ inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* warp_tDa
                                                    const CONSTPTR(ITMHashEntry)* hashTable,
                                                    THREADPTR(TCache)& cache) {
 	int vmIndex;
+	//_DEBUG
 #ifdef DEBUG_PRINT
 	const std::string yellow("\033[0;33m");
 	const std::string reset("\033[0m");
@@ -307,27 +300,29 @@ inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* warp_tDa
 	PROCESS_VOXEL(Vector3i(0, 1, 1), 7);//yz corner
 	PROCESS_VOXEL(Vector3i(1, 0, 1), 8);//xz corner
 #undef PROCESS_VOXEL
+	//_DEBUG
 #ifdef DEBUG_PRINT
 	std::cout << std::endl;
 #endif
 }
 
-//_DEBUG
+//_DEBUG -- treats boundary voxels specially
 template<typename TVoxel, typename TIndex, typename TCache>
 _CPU_AND_GPU_CODE_
-inline void ComputePerPointWarpJacobianAndHessianAlt(const CONSTPTR(Vector3f)& originalWarp_t,
-                                                     const CONSTPTR(Vector3i)& originalPosition,
-                                                     const CONSTPTR(TVoxel)* voxels,
-                                                     const CONSTPTR(ITMHashEntry)* hashTable,
-                                                     THREADPTR(TCache)& cache,
-                                                     THREADPTR(Matrix3f)& jacobian,
-                                                     THREADPTR(Matrix3f)* hessian, //x3
-                                                     bool& boundary,
-                                                     bool printResult = false
+inline void ComputePerPointWarpJacobianAndHessianBoundaries(const CONSTPTR(Vector3f)& originalWarp_t,
+                                                            const CONSTPTR(Vector3i)& originalPosition,
+                                                            const CONSTPTR(TVoxel)* voxels,
+                                                            const CONSTPTR(ITMHashEntry)* hashTable,
+                                                            THREADPTR(TCache)& cache,
+                                                            THREADPTR(Matrix3f)& jacobian,
+                                                            THREADPTR(Matrix3f)* hessian, //x3
+                                                            bool& boundary,
+                                                            bool printResult = false
 
 ) {
 	//    0        1        2          3         4         5           6         7         8
 	//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
+	const int eightConnectedNeighbors = 6;
 	const int neighborhoodSize = 9;
 	Vector3f warp_tNeighbors[neighborhoodSize];
 	bool found[neighborhoodSize];
@@ -338,17 +333,17 @@ inline void ComputePerPointWarpJacobianAndHessianAlt(const CONSTPTR(Vector3f)& o
 	                                          hashTable,
 	                                          cache);
 
-	boundary = false;
-	int bNeighbors = 0;
-	for (int iNeightbor = 0; iNeightbor < neighborhoodSize; iNeightbor++) {
-		if (!found[iNeightbor]) {
+	boundary = true;
+	for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
+		if (!found[iNeighbor]) {
 			//boundary = true;
-			warp_tNeighbors[iNeightbor] = originalWarp_t;
-			bNeighbors++;
+			warp_tNeighbors[iNeighbor] = originalWarp_t;
+		}else if(iNeighbor < eightConnectedNeighbors){
+			boundary = false;
 		}
 	}
-	if(bNeighbors > 3){
-		boundary = true;
+	if(boundary){
+		return;
 	}
 	// |u_x, u_y, u_z|       |m00, m10, m20|
 	// |v_x, v_y, v_z|       |m01, m11, m21|
