@@ -334,16 +334,17 @@ inline void ComputePerPointWarpJacobianAndHessianBoundaries(const CONSTPTR(Vecto
 	                                          cache);
 
 	boundary = true;
+	int eightConnectedNeightborCount = 0;
 	for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
 		if (!found[iNeighbor]) {
 			//boundary = true;
 			warp_tNeighbors[iNeighbor] = originalWarp_t;
 		}else if(iNeighbor < eightConnectedNeighbors){
-			boundary = false;
+			eightConnectedNeightborCount+=1;
 		}
 	}
-	if(boundary){
-		return;
+	if(eightConnectedNeightborCount > 1){
+		boundary = false;
 	}
 	// |u_x, u_y, u_z|       |m00, m10, m20|
 	// |v_x, v_y, v_z|       |m01, m11, m21|

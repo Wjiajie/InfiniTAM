@@ -13,9 +13,10 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#define PRINT_SINGLE_VOXEL_RESULT
+//#define PRINT_SINGLE_VOXEL_RESULT
 #define PRINT_MAX_WARP
 #define PRINT_ENERGY_STATS
+#define PRINT_ADDITIONAL_STATS
 #define PRINT_DEBUG_HISTOGRAM
 #define WARP_BOUNDARY_SPECIAL_TREATMENT
 //#define OPENMP_WARP_UPDATE_COMPUTE_DISABLE
@@ -227,11 +228,9 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					ComputePerPointWarpJacobianAndHessianBoundaries<TVoxel, TIndex, typename TIndex::IndexCache>(
 							canonicalVoxel.warp_t, originalPosition, canonicalVoxels, canonicalHashTable,
 							canonicalCache, warpJacobian, warpHessian, boundary, printResult);
-					if(boundary){
-						//erase boundary voxel, to try to avoid it in the next iteration
-						localVoxelBlock[locId].sdf = TVoxel::SDF_initialValue();
-						continue;
-					}
+#ifdef PRINT_ADDITIONAL_STATS
+					if (boundary) boundaryVoxelCount++;
+#endif
 #endif
 					TOC(timeWarpJandHCompute);
 					TIC(timeUpdateTermCompute);
@@ -296,10 +295,17 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					Matrix3f& H_u = warpHessian[0];
 					Matrix3f& H_v = warpHessian[1];
 					Matrix3f& H_w = warpHessian[2];
+					float KillingDeltaEu, KillingDeltaEv, KillingDeltaEw;
 
-					float KillingDeltaEu = -2.0f*((onePlusGamma)*H_u.xx + (H_u.yy) + (H_u.zz) + gamma*H_v.xy + gamma*H_w.xz);
-					float KillingDeltaEv = -2.0f*((onePlusGamma)*H_v.yy + (H_v.zz) + (H_v.xx) + gamma*H_u.xy + gamma*H_w.yz);
-					float KillingDeltaEw = -2.0f*((onePlusGamma)*H_w.zz + (H_w.xx) + (H_w.yy) + gamma*H_v.yz + gamma*H_u.xz);
+					if(boundary){
+						KillingDeltaEu = -2.0f*(H_u.xx + H_u.yy + H_u.zz);
+						KillingDeltaEv = -2.0f*(H_v.yy + H_v.zz + H_v.xx);
+						KillingDeltaEw = -2.0f*(H_w.zz + H_w.xx + H_w.yy);
+					}else{
+						KillingDeltaEu = -2.0f*((onePlusGamma)*H_u.xx + (H_u.yy) + (H_u.zz) + gamma*H_v.xy + gamma*H_w.xz);
+						KillingDeltaEv = -2.0f*((onePlusGamma)*H_v.yy + (H_v.zz) + (H_v.xx) + gamma*H_u.xy + gamma*H_w.yz);
+						KillingDeltaEw = -2.0f*((onePlusGamma)*H_w.zz + (H_w.xx) + (H_w.yy) + gamma*H_v.yz + gamma*H_u.xz);
+					}
 
 					Vector3f deltaEKilling = Vector3f(KillingDeltaEu,
 					                                  KillingDeltaEv,
@@ -315,7 +321,8 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					float localSmoothnessEnergy = dot(warpJacobian.getColumn(0), warpJacobian.getColumn(0)) +
 					                              dot(warpJacobian.getColumn(1), warpJacobian.getColumn(1)) +
 					                              dot(warpJacobian.getColumn(2), warpJacobian.getColumn(2));
-					float localKillingEnergy = localSmoothnessEnergy +
+
+					float localKillingEnergy = boundary? localSmoothnessEnergy : localSmoothnessEnergy +
 					                           gamma *
 					                           (dot(warpJacobianTranspose.getColumn(0), warpJacobian.getColumn(0)) +
 					                            dot(warpJacobianTranspose.getColumn(1), warpJacobian.getColumn(1)) +
@@ -371,12 +378,12 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					aveCanonicaSdf += canonicalSdf;
 					aveLiveSdf += liveSdf;
 					aveSdfDiff += diffSdf;
-					aveWarpDist += length(canonicalVoxel.warp_t);
+					aveWarpDist += ORUtils::length(canonicalVoxel.warp_t);
 					if (boundary) {
-						aveWarpDistBoundary += length(canonicalVoxel.warp_t);
+						aveWarpDistBoundary += ORUtils::length(canonicalVoxel.warp_t);
 					}
 					consideredVoxelCount += 1;
-					if (boundary) boundaryVoxelCount++;
+
 #endif
 #ifdef PRINT_ENERGY_STATS
 					totalDataEnergy += 0.5 * (diffSdf * diffSdf);
@@ -421,7 +428,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					//Vector3f update = TO_FLOAT3(canonicalVoxel.warp_t_update) / FLOAT_TO_SHORT_CONVERSION_FACTOR;
 					Vector3f update = canonicalVoxel.warp_t_update;
 					canonicalVoxel.warp_t -= update;
-					float warpLength = length(canonicalVoxel.warp_t);
+					float warpLength = ORUtils::length(canonicalVoxel.warp_t);
 					int binIdx = 0;
 #ifdef PRINT_MAX_WARP
 					if(warpLength == maxWarpLength){
@@ -484,6 +491,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 		std::cout << " Boundary voxel count: " << boundaryVoxelCount
 		          << " Boundary ave w. dist.: " << aveWarpDistBoundary;
 	}
+	std::cout << std::endl;
 #endif
 	//start _DEBUG
 #ifdef PRINT_MAX_WARP
@@ -503,6 +511,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 #endif
 	//end _DEBUG
 	return maxVectorUpdate;
+
 }
 
 template<typename TVoxel, typename TIndex>
