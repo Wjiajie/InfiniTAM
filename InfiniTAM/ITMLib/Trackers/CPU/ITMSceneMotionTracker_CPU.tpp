@@ -13,7 +13,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-//#define PRINT_SINGLE_VOXEL_RESULT
+//#define PRINT_TIME_STATS
+#define PRINT_SINGLE_VOXEL_RESULT
 #define PRINT_MAX_WARP
 #define PRINT_ENERGY_STATS
 #define PRINT_ADDITIONAL_STATS
@@ -88,7 +89,6 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 	double totalEnergy = 0.0;
 #endif
 
-
 	const std::string red("\033[0;31m");
 	const std::string green("\033[0;32m");
 	const std::string yellow("\033[0;33m");
@@ -124,7 +124,6 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 	//compute the update, don't apply yet (computation depends on previous warp for neighbors,
 	// no practical way to keep those buffered with the hash in mind)
 #ifdef WITH_OPENMP
-
 #ifndef OPENMP_WARP_UPDATE_COMPUTE_DISABLE
 
 #if defined(PRINT_ADDITIONAL_STATS) && defined(PRINT_ENERGY_STATS)
@@ -168,17 +167,22 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					float liveSdf;
 					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
 					liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache);
+					float canonicalSdf = TVoxel::valueToFloat(canonicalVoxel.sdf);
 
 					//_DEBUG
 					//almost no restriction -- Mira's case
-					if (1.0f - std::abs(canonicalVoxel.sdf) < epsilon && 1.0f - std::abs(liveSdf) < epsilon) continue;
-					//if (1.0f - std::abs(canonicalVoxel.sdf) < epsilon) continue;//only source restriction
-					//if (1.0f - std::abs(liveSdf) < epsilon) continue;
-					//most restrictive
-					//if (1.0f - std::abs(canonicalVoxel.sdf) < epsilon || 1.0f - fabs(liveSdf) < epsilon) continue;
+					bool emptyInCanonical = 1.0f - std::abs(canonicalSdf) < epsilon;
+					bool emptyInLive = 1.0f - std::abs(liveSdf) < epsilon;
+					if (emptyInCanonical && emptyInLive) continue;
+
+					if (emptyInCanonical) {
+						canonicalSdf = std::copysign(canonicalSdf, liveSdf);
+					} else if (emptyInLive) {
+						liveSdf = std::copysign(liveSdf, canonicalSdf);
+					}
 
 					bool useColor;
-					float canonicalSdf = TVoxel::valueToFloat(canonicalVoxel.sdf);
+
 					Vector3f liveColor, liveSdfJacobian, liveColorJacobian;
 					Matrix3f liveSdfHessian;
 					//_DEBUG
@@ -187,10 +191,12 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					if (originalPosition == (ITMSceneMotionTracker<TVoxel, TIndex>::testPos1)) {
 						printResult = true;
 						std::cout << std::endl << "Source SDF vs. target SDF: " << canonicalSdf
-						          << "-->" << liveSdf << std::endl << "Warp: " << canonicalVoxel.warp_t << std::endl;
+								  << "-->" << liveSdf << std::endl << "Warp: " << canonicalVoxel.warp_t << std::endl;
 					}
 #endif
+#ifdef PRINT_TIME_STATS
 					TIC(timeDataJandHCompute);
+#endif
 					if (std::abs(canonicalSdf) > ITMSceneMotionTracker<TVoxel, TIndex>::colorSdfThreshold) {
 						useColor = false;
 #ifndef PRINT_SINGLE_VOXEL_RESULT
@@ -215,8 +221,10 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 								 liveVoxels, liveHashTable, liveCache,
 								 liveSdf, liveColor, liveSdfJacobian, liveColorJacobian, liveSdfHessian);
 					}
+#ifdef PRINT_TIME_STATS
 					TOC(timeDataJandHCompute);
 					TIC(timeWarpJandHCompute);
+#endif
 					Matrix3f warpJacobian;
 					Matrix3f warpHessian[3];// = {Matrix3f(), Matrix3f(), Matrix3f()};
 #ifndef WARP_BOUNDARY_SPECIAL_TREATMENT
@@ -225,15 +233,17 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 							canonicalCache, warpJacobian, warpHessian);
 					//_DEBUG --only one of the above/below statements should remain in the end, prob. the one below
 #else
-					ComputePerPointWarpJacobianAndHessianBoundaries<TVoxel, TIndex, typename TIndex::IndexCache>(
+					ComputePerPointWarpJacobianAndHessianBoundaries2<TVoxel, TIndex, typename TIndex::IndexCache>(
 							canonicalVoxel.warp_t, originalPosition, canonicalVoxels, canonicalHashTable,
 							canonicalCache, warpJacobian, warpHessian, boundary, printResult);
 #ifdef PRINT_ADDITIONAL_STATS
 					if (boundary) boundaryVoxelCount++;
 #endif
 #endif
+#ifdef PRINT_TIME_STATS
 					TOC(timeWarpJandHCompute);
 					TIC(timeUpdateTermCompute);
+#endif
 					//=================================== DATA TERM ====================================================
 					//Compute data term error / energy
 					float diffSdf = liveSdf - canonicalSdf;
@@ -297,21 +307,22 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					Matrix3f& H_w = warpHessian[2];
 					float KillingDeltaEu, KillingDeltaEv, KillingDeltaEw;
 
-					if(boundary){
-						KillingDeltaEu = -2.0f*(H_u.xx + H_u.yy + H_u.zz);
-						KillingDeltaEv = -2.0f*(H_v.yy + H_v.zz + H_v.xx);
-						KillingDeltaEw = -2.0f*(H_w.zz + H_w.xx + H_w.yy);
-					}else{
+//					if(boundary){
+//						KillingDeltaEu = -2.0f*(H_u.xx + H_u.yy + H_u.zz);
+//						KillingDeltaEv = -2.0f*(H_v.yy + H_v.zz + H_v.xx);
+//						KillingDeltaEw = -2.0f*(H_w.zz + H_w.xx + H_w.yy);
+//					}else{
 						KillingDeltaEu = -2.0f*((onePlusGamma)*H_u.xx + (H_u.yy) + (H_u.zz) + gamma*H_v.xy + gamma*H_w.xz);
 						KillingDeltaEv = -2.0f*((onePlusGamma)*H_v.yy + (H_v.zz) + (H_v.xx) + gamma*H_u.xy + gamma*H_w.yz);
 						KillingDeltaEw = -2.0f*((onePlusGamma)*H_w.zz + (H_w.xx) + (H_w.yy) + gamma*H_v.yz + gamma*H_u.xz);
-					}
+//					}
 
 					Vector3f deltaEKilling = Vector3f(KillingDeltaEu,
 					                                  KillingDeltaEv,
 					                                  KillingDeltaEw);
-
+#ifdef PRINT_TIME_STATS
 					TOC(timeUpdateTermCompute);
+#endif
 					//_DEBUG
 #ifdef PRINT_ENERGY_STATS
 					//=================================== ENERGY =======================================================
@@ -322,7 +333,12 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					                              dot(warpJacobian.getColumn(1), warpJacobian.getColumn(1)) +
 					                              dot(warpJacobian.getColumn(2), warpJacobian.getColumn(2));
 
-					float localKillingEnergy = boundary? localSmoothnessEnergy : localSmoothnessEnergy +
+//					float localKillingEnergy = boundary? localSmoothnessEnergy : localSmoothnessEnergy +
+//					                           gamma *
+//					                           (dot(warpJacobianTranspose.getColumn(0), warpJacobian.getColumn(0)) +
+//					                            dot(warpJacobianTranspose.getColumn(1), warpJacobian.getColumn(1)) +
+//					                            dot(warpJacobianTranspose.getColumn(2), warpJacobian.getColumn(2)));
+					float localKillingEnergy = localSmoothnessEnergy +
 					                           gamma *
 					                           (dot(warpJacobianTranspose.getColumn(0), warpJacobian.getColumn(0)) +
 					                            dot(warpJacobianTranspose.getColumn(1), warpJacobian.getColumn(1)) +
@@ -396,8 +412,9 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 			}
 		}
 	}
-
+#ifdef PRINT_TIME_STATS
 	TOC(timeWarpUpdateCompute);
+#endif
 
 	//Apply the update
 #ifdef PRINT_DEBUG_HISTOGRAM

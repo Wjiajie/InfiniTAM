@@ -36,8 +36,8 @@ namespace ITMLib {
 		virtual cv::Mat DrawWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene) = 0;
 		virtual void MarkWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene, cv::Mat& image, Vector3i position) = 0;
 //178, -85, 544
-		const Vector3i testPos1 = Vector3i(34, 55, 362);
-		const Vector3i testPos2 = Vector3i(34, 54, 362);
+		const Vector3i testPos1 = Vector3i(42, 55, 362);
+		const Vector3i testPos2 = Vector3i(34, 55, 362);
 		const Vector3i testPos3 = Vector3i(33, 55, 362);
 		const Vector3i testPos4 = Vector3i(33, 54, 362);
 
