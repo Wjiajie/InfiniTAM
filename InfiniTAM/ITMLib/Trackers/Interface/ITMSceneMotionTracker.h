@@ -21,39 +21,21 @@
 #include "../../Objects/Scene/ITMScene.h"
 
 namespace ITMLib {
-	template<class TVoxel, class TIndex>
+	template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 	class ITMSceneMotionTracker {
 	protected:
 
-		virtual float UpdateWarpField(ITMScene <TVoxel, TIndex>* canonicalScene,
-		                              ITMScene <ITMVoxelAux, TIndex>* liveScene) = 0;
-
-		//START _DEBUG
-		virtual cv::Mat DrawCanonicalSceneImage(ITMScene <TVoxel, TIndex>* scene) = 0;
-
-		virtual cv::Mat DrawLiveSceneImage(ITMScene <ITMVoxelAux, TIndex>* scene) = 0;
-
-		virtual cv::Mat DrawWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene) = 0;
-		virtual void MarkWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene, cv::Mat& image, Vector3i position) = 0;
-//178, -85, 544
-		const Vector3i testPos1 = Vector3i(42, 55, 362);
-		const Vector3i testPos2 = Vector3i(34, 55, 362);
-		const Vector3i testPos3 = Vector3i(33, 55, 362);
-		const Vector3i testPos4 = Vector3i(33, 54, 362);
+		virtual float UpdateWarpField(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+		                              ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
+		virtual void AllocateBoundaryHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene) = 0;
+		virtual void EraseBoundaryHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene) = 0;
 
 
-		const std::string iterationFramesFolder = "/media/algomorph/Data/4dmseg/Killing/iteration_frames/";
-		//END _DEBUG
-
-
-		virtual void FuseFrame(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <ITMVoxelAux, TIndex>* liveScene) = 0;
+		virtual void FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
 		//TODO -- make all of these parameters
 		const int maxIterationCount = 800;
 		const float maxVectorUpdateThresholdMeters = 0.0001f;//m
-		//_DEBUG
-		//const float gradientDescentLearningRate = 1.0f;
 		const float gradientDescentLearningRate = 0.1f;
-		//_DEBUG
 		const float rigidityEnforcementFactor = 0.1f;
 		const float weightKillingTerm = 0.5f;
 		const float weightLevelSetTerm = 0.2f;
@@ -66,8 +48,8 @@ namespace ITMLib {
 		float maxVectorUpdateThresholdVoxels;
 	public:
 		explicit ITMSceneMotionTracker(const ITMSceneParams& params);
-		void ProcessFrame(ITMScene <TVoxel, TIndex>* canonicalScene,
-		                  ITMScene <ITMVoxelAux, TIndex>* liveScene);
+		void ProcessFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+		                  ITMScene <TVoxelLive, TIndex>* liveScene);
 	};
 
 

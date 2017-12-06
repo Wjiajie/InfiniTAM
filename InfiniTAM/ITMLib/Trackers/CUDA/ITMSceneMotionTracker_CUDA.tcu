@@ -14,14 +14,13 @@
 //  limitations under the License.
 //  ================================================================
 #include "ITMSceneMotionTracker_CUDA.h"
-#include "../../ITMLibDefines.h"
 #include "../../Utils/ITMCUDAUtils.h"
 #include "../../../ORUtils/CUDADefines.h"
 
 using namespace ITMLib;
 
-template<typename TVoxel>
-__global__ void computeWarpUpdate_device(TVoxel* canonicalVoxelArray,
+template<typename TVoxelCanonical>
+__global__ void computeWarpUpdate_device(TVoxelCanonical* canonicalVoxelArray,
                                          const ITMHashEntry* hashTable,
                                          int noTotalEntries) {
 //	Vector3i globalPos;
@@ -33,21 +32,22 @@ __global__ void computeWarpUpdate_device(TVoxel* canonicalVoxelArray,
 //
 //	globalPos = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 //
-//	TVoxel *localVoxelBlock = &(localVBA[currentHashEntry.ptr * SDF_BLOCK_SIZE3]);
+//	TVoxelCanonical *localVoxelBlock = &(localVBA[currentHashEntry.ptr * SDF_BLOCK_SIZE3]);
 //
 //	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
 	//TODO
 
 }
 
-template<class TVoxel, class TIndex>
-float ITMSceneMotionTracker_CUDA<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TIndex>* canonicalScene,
-                                                                  ITMScene<ITMVoxelAux, TIndex>* liveScene) {
-	TVoxel* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+float ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+		ITMScene<TVoxelLive, TIndex>* liveScene) {
+	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
 	typename TIndex::IndexCache canonicalCache;
 
-	const ITMVoxelAux* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
+	const TVoxelLive* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* liveHashTable = liveScene->index.GetEntries();
 	typename TIndex::IndexCache liveCache;
 
@@ -70,14 +70,28 @@ float ITMSceneMotionTracker_CUDA<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxe
 	return 0;
 }
 
-template<class TVoxel, class TIndex>
-void ITMSceneMotionTracker_CUDA<TVoxel, TIndex>::FuseFrame(ITMScene<TVoxel, TIndex>* canonicalScene,
-                                                           ITMScene<ITMVoxelAux, TIndex>* liveScene) {
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void
+ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+                                                                           ITMScene<TVoxelLive, TIndex>* liveScene) {
 	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");
 }
 
-template<class TVoxel, class TIndex>
-ITMSceneMotionTracker_CUDA<TVoxel, TIndex>::ITMSceneMotionTracker_CUDA(const ITMSceneParams& params) :
-		ITMSceneMotionTracker<TVoxel, TIndex>(params) {
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CUDA(
+		const ITMSceneParams& params) :
+		ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params) {
 
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::AllocateBoundaryHashBlocks(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
+	DIEWITHEXCEPTION("Scene boundary voxel allocation not yet implemented");
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::EraseBoundaryHashBlocks(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
+	DIEWITHEXCEPTION("Scene boundary voxel erasing not yet implemented");
 }

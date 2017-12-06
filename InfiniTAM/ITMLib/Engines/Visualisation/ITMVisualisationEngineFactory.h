@@ -42,7 +42,7 @@ struct ITMVisualisationEngineFactory
         break;
       case ITMLibSettings::DEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
-        visualisationEngine = new ITMVisualisationEngine_Metal<TVoxel,TIndex>;
+        visualisationEngine = new ITMVisualisationEngine_Metal<TVoxelCanonical,TIndex>;
 #endif
         break;
     }

@@ -33,7 +33,7 @@ namespace ITMLib {
 	                             Vector3i offset);
 
 	//TODO -make this suitable for source/dest scenes with different voxel types somehow -Greg (Github: Algomorph)
-	void CopySceneWithOffset_CPU(ITMScene <ITMVoxelAux, ITMVoxelIndex>& destination,
+	void CopySceneWithOffset_CPU(ITMScene <ITMVoxelLive, ITMVoxelIndex>& destination,
 	                             ITMScene <ITMVoxel, ITMVoxelIndex>& source,
 	                             Vector3i offset);
 
@@ -50,7 +50,7 @@ namespace ITMLib {
 	void CopySceneWithOffset_CPU(ITMScene <TVoxel, TIndex>& destination, ITMScene <TVoxel, TIndex>& source, Vector3i offset);
 
 	void
-	CopySceneWithOffset_CPU(ITMScene <ITMVoxelAux, ITMVoxelIndex>& destination, ITMScene <ITMVoxel, ITMVoxelIndex>& source,
+	CopySceneWithOffset_CPU(ITMScene <ITMVoxelLive, ITMVoxelIndex>& destination, ITMScene <ITMVoxel, ITMVoxelIndex>& source,
 	                        Vector3i offset);
 
 	template<class TVoxel, class TIndex>

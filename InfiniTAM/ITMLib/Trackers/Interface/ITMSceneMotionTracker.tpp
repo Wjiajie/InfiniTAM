@@ -15,66 +15,69 @@
 //  ================================================================
 //stdlib
 #include <limits>
+#include <iomanip>
 
 //_DEBUG (opencv)
 #include <opencv2/imgcodecs.hpp>
 #include <opencv/cv.hpp>
-#include <iomanip>
+//_DEBUG (local)
+#define DRAW_IMAGE
+#ifdef DRAW_IMAGE
+#include "../../Utils/ITMSceneSliceRasterizer.h"
+#endif
 
 //local
 #include "ITMSceneMotionTracker.h"
-#include "../../ITMLibDefines.h"
 #include "../../Objects/Scene/ITMSceneManipulation.h"
+
+
 
 using namespace ITMLib;
 
-template<typename TVoxel, typename TIndex>
-void ITMSceneMotionTracker<TVoxel, TIndex>::ProcessFrame(ITMScene<TVoxel, TIndex>* canonicalScene,
-                                                         ITMScene<ITMVoxelAux, TIndex>* liveScene) {
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+                                                         ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	float maxVectorUpdate = std::numeric_limits<float>::infinity();
 
 	//START _DEBUG
-#define DRAW_IMAGE
+
 #ifdef DRAW_IMAGE
 	std::cout << "Desired warp update (voxels) below " << maxVectorUpdateThresholdVoxels << std::endl;
-	cv::Mat canonicalImg = DrawCanonicalSceneImage(canonicalScene) * 255.0f;
+	cv::Mat canonicalImg = ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawCanonicalSceneImage(canonicalScene) * 255.0f;
 	cv::Mat canonicalImgOut;
 	canonicalImg.convertTo(canonicalImgOut, CV_8UC1);
 	cv::cvtColor(canonicalImgOut, canonicalImgOut, cv::COLOR_GRAY2BGR);
-	cv::imwrite(iterationFramesFolder + "canonical.png", canonicalImgOut);
-	cv::Mat liveImg = DrawLiveSceneImage(liveScene) * 255.0f;
+	cv::imwrite(ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolder + "canonical.png", canonicalImgOut);
+	cv::Mat liveImg = ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawLiveSceneImage(liveScene) * 255.0f;
 	cv::Mat liveImgTemplate, liveImgOut;
 	liveImg.convertTo(liveImgTemplate, CV_8UC1);
 	cv::cvtColor(liveImgTemplate, liveImgOut, cv::COLOR_GRAY2BGR);
-	cv::imwrite(iterationFramesFolder + "live.png", liveImgOut);
+	cv::imwrite(ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolder + "live.png", liveImgOut);
 	cv::Mat blank = cv::Mat::zeros(liveImg.rows, liveImg.cols, CV_8UC1);
 #endif
 	//END _DEBUG
 
 	//_DEBUG
-	//TVoxel vox = ReadVoxel(*canonicalScene,testPos1);
+	//TVoxelCanonical vox = ReadVoxel(*canonicalScene,testPos1);
 	//vox.warp_t = Vector3f(0,0,0);
 	//SetVoxel_CPU(*canonicalScene,testPos1,vox);
 
-	//_DEBUG
-	//testPos2 = testPos1 + Vector3i(0,-1,0);
-	//std::cout << "Second voxel marked: " << testPos2 << std::endl;
+	//AllocateBoundaryHashBlocks(canonicalScene);
 
-	//_DEBUG -- remove /X.0F
 	for (int iteration = 0;
-	     maxVectorUpdate > maxVectorUpdateThresholdVoxels/*/2.0F*/ && iteration < maxIterationCount; iteration++) {
+	     maxVectorUpdate > maxVectorUpdateThresholdVoxels && iteration < maxIterationCount; iteration++) {
 		const std::string red("\033[0;31m");
 		const std::string reset("\033[0m");
 		//START _DEBUG
 #ifdef DRAW_IMAGE
-		cv::Mat warpImg = DrawWarpedSceneImage(canonicalScene) * 255.0f;
+		cv::Mat warpImg = ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpedSceneImage(canonicalScene) * 255.0f;
 		cv::Mat warpImgChannel, warpImgOut, mask, liveImgChannel, markChannel;
 		blank.copyTo(markChannel);
-		MarkWarpedSceneImage(canonicalScene, markChannel, testPos1);
-		MarkWarpedSceneImage(canonicalScene, markChannel, testPos2);
-		MarkWarpedSceneImage(canonicalScene, markChannel, testPos3);
-		MarkWarpedSceneImage(canonicalScene, markChannel, testPos4);
+		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSceneImage(canonicalScene, markChannel, ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos1);
+		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSceneImage(canonicalScene, markChannel, ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos2);
+		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive,TIndex>::MarkWarpedSceneImage(canonicalScene, markChannel, ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive,TIndex>::testPos3);
+		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive,TIndex>::MarkWarpedSceneImage(canonicalScene, markChannel, ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive,TIndex>::testPos4);
 		liveImgChannel = cv::Mat::zeros(warpImg.rows, warpImg.cols, CV_8UC1);
 		warpImg.convertTo(warpImgChannel, CV_8UC1);
 		cv::threshold(warpImgChannel, mask, 1.0, 1.0, cv::THRESH_BINARY_INV);
@@ -85,7 +88,7 @@ void ITMSceneMotionTracker<TVoxel, TIndex>::ProcessFrame(ITMScene<TVoxel, TIndex
 		cv::merge(channels, 3, warpImgOut);
 		std::stringstream numStringStream;
 		numStringStream << std::setw(3) << std::setfill('0') << iteration;
-		std::string image_name = iterationFramesFolder + "warp" + numStringStream.str() + ".png";
+		std::string image_name = ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive,TIndex>::iterationFramesFolder + "warp" + numStringStream.str() + ".png";
 		cv::imwrite(image_name, warpImgOut);
 #endif
 		//END _DEBUG
@@ -100,6 +103,6 @@ void ITMSceneMotionTracker<TVoxel, TIndex>::ProcessFrame(ITMScene<TVoxel, TIndex
 	this->FuseFrame(canonicalScene, liveScene);
 }
 
-template<typename TVoxel, typename TIndex>
-ITMSceneMotionTracker<TVoxel, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params) :
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params) :
 		maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize) {}

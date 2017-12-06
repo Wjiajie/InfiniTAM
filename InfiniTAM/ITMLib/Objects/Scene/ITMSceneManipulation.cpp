@@ -82,7 +82,7 @@ namespace ITMLib {
 		}
 	}
 
-	void CopySceneWithOffset_CPU(ITMScene<ITMVoxelAux, ITMVoxelIndex>& destination, ITMScene<ITMVoxel, ITMVoxelIndex>& source,
+	void CopySceneWithOffset_CPU(ITMScene<ITMVoxelLive, ITMVoxelIndex>& destination, ITMScene<ITMVoxel, ITMVoxelIndex>& source,
 	                             Vector3i offset) {
 		ITMVoxel* originalVoxels = source.localVBA.GetVoxelBlocks();
 		const ITMHashEntry* originalHashTable = source.index.GetEntries();
@@ -113,7 +113,7 @@ namespace ITMLib {
 
 						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 						ITMVoxel& voxelSource = localVoxelBlock[locId];
-						ITMVoxelAux voxelDest;
+						ITMVoxelLive voxelDest;
 						voxelDest.sdf = voxelSource.sdf;
 						//_DEBUG
 						if((1.0f - fabs(voxelSource.sdf)) > 1.0e-10f){
@@ -123,7 +123,7 @@ namespace ITMLib {
 						voxelDest.w_color = voxelSource.w_color;
 						voxelDest.w_depth = voxelSource.w_depth;
 						voxelDest.confidence = voxelSource.confidence;
-						SetVoxel_CPU<ITMVoxelAux, ITMVoxelIndex>(destination, offsetPosition, voxelDest);
+						SetVoxel_CPU<ITMVoxelLive, ITMVoxelIndex>(destination, offsetPosition, voxelDest);
 					}
 				}
 			}

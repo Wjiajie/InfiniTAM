@@ -16,7 +16,7 @@
 
 namespace ITMLib
 {
-	template <typename TVoxel, typename TIndex>
+	template <typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 	class ITMKillingEngine : public ITMMainEngine
 	{
 	private:
@@ -26,16 +26,16 @@ namespace ITMLib
 		int framesProcessed, relocalisationCount;
 
 		ITMLowLevelEngine *lowLevelEngine;
-		ITMVisualisationEngine<TVoxel, TIndex> *visualisationEngine;
+		ITMVisualisationEngine<TVoxelCanonical, TIndex> *visualisationEngine;
 
-		ITMMeshingEngine<TVoxel, TIndex> *meshingEngine;
+		ITMMeshingEngine<TVoxelCanonical, TIndex> *meshingEngine;
 
 		ITMViewBuilder *viewBuilder;
-		ITMDenseDynamicMapper<TVoxel, TIndex> *denseMapper;
+		ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex> *denseMapper;
 		ITMTrackingController *trackingController;
 
-		ITMScene<TVoxel, TIndex> *canonical_scene;
-		ITMScene<ITMVoxelAux, TIndex> *live_scene;
+		ITMScene<TVoxelCanonical, TIndex> *canonical_scene;
+		ITMScene<ITMVoxelLive, TIndex> *live_scene;
 		ITMRenderState *renderState_live;
 		ITMRenderState *renderState_freeview;
 
@@ -56,7 +56,7 @@ namespace ITMLib
 		ITMTrackingState* GetTrackingState(void) { return trackingState; }
 
 		/// Gives access to the internal world representation
-		ITMScene<TVoxel, TIndex>* GetScene(void) { return canonical_scene; }
+		ITMScene<TVoxelCanonical, TIndex>* GetScene(void) { return canonical_scene; }
 
 		ITMTrackingState::TrackingResult ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement = NULL);
 

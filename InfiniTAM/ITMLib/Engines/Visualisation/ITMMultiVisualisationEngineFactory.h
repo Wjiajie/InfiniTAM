@@ -42,7 +42,7 @@ namespace ITMLib
 				break;
 			case ITMLibSettings::DEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
-				visualisationEngine = new ITMMultiVisualisationEngine_CPU<TVoxel, TIndex>;
+				visualisationEngine = new ITMMultiVisualisationEngine_CPU<TVoxelCanonical, TIndex>;
 #endif
 				break;
 			}

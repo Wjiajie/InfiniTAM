@@ -18,33 +18,19 @@
 #include "../Interface/ITMSceneMotionTracker.h"
 
 namespace ITMLib {
-	template<class TVoxel, class TIndex>
+	template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 	class ITMSceneMotionTracker_CUDA :
-			public ITMSceneMotionTracker<TVoxel, TIndex> {
+			public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex> {
 	public:
 
 		explicit ITMSceneMotionTracker_CUDA(const ITMSceneParams& params);
 
 	protected:
 
-		//START _DEBUG
-		cv::Mat DrawCanonicalSceneImage(ITMScene <TVoxel, TIndex>* scene) override {
-			return cv::Mat();
-		};
-
-		cv::Mat DrawLiveSceneImage(ITMScene <ITMVoxelAux, TIndex>* scene) override {
-			return cv::Mat();
-		}
-		cv::Mat DrawWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene) override{
-			return cv::Mat();
-		}
-
-		void MarkWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene, cv::Mat& image, Vector3i position) override {
-		}
-		//END _DEBUG
-
-		void FuseFrame(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <ITMVoxelAux, TIndex>* liveScene) override;
-		float UpdateWarpField(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <ITMVoxelAux, TIndex>* liveScene) override;
+		void FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
+		float UpdateWarpField(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
+		void AllocateBoundaryHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene) override;
+		void EraseBoundaryHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene) override;
 	};
 
 

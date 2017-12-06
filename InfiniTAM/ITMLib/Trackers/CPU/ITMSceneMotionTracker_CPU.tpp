@@ -14,13 +14,17 @@
 //  limitations under the License.
 //  ================================================================
 //#define PRINT_TIME_STATS
-#define PRINT_SINGLE_VOXEL_RESULT
+//#define PRINT_SINGLE_VOXEL_RESULT
+
+#define _DEBUG
+#ifdef _DEBUG
 #define PRINT_MAX_WARP
 #define PRINT_ENERGY_STATS
 #define PRINT_ADDITIONAL_STATS
 #define PRINT_DEBUG_HISTOGRAM
 #define WARP_BOUNDARY_SPECIAL_TREATMENT
 //#define OPENMP_WARP_UPDATE_COMPUTE_DISABLE
+#endif //_DEBUG
 
 //stdlib
 #include <cmath>
@@ -52,16 +56,16 @@
 
 using namespace ITMLib;
 
-template<typename TVoxel, typename TIndex>
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 float
-ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TIndex>* canonicalScene,
-                                                           ITMScene<ITMVoxelAux, TIndex>* liveScene) {
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+                                                           ITMScene<TVoxelLive, TIndex>* liveScene) {
 
-	TVoxel* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
+	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
 	typename TIndex::IndexCache canonicalCache;
 
-	const ITMVoxelAux* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
+	const TVoxelLive* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* liveHashTable = liveScene->index.GetEntries();
 	typename TIndex::IndexCache liveCache;
 
@@ -69,7 +73,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 	float maxVectorUpdate = 0.0f;
 
 	//_DEBUG
-#define _DEBUG
+
 #ifdef _DEBUG
 #ifdef PRINT_ADDITIONAL_STATS
 	double aveCanonicaSdf = 0.0;
@@ -80,7 +84,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 	double aveWarpDistBoundary = 0.0;
 	int boundaryVoxelCount = 0;
 #endif
-	float maxWarpLength = 0.0;
+
 #ifdef PRINT_ENERGY_STATS
 	double totalDataEnergy = 0.0;
 	double totalLevelSetEnergy = 0.0;
@@ -88,36 +92,15 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 	double totalKillingEnergy = 0.0;
 	double totalEnergy = 0.0;
 #endif
-
+	float maxWarpLength = 0.0;
 	const std::string red("\033[0;31m");
 	const std::string green("\033[0;32m");
 	const std::string yellow("\033[0;33m");
 	const std::string cyan("\033[0;36m");
 	const std::string reset("\033[0m");
-
-	//debug image stuff
-	const int imgRangeStartX = -262;
-	const int imgRangeEndX = 138;
-	const int imgRangeStartY = -98;
-	const int imgRangeEndY = 338;
-	const int imgZSlice = 559;
-
-	const int imgVoxelRangeX = imgRangeEndX - imgRangeStartX;
-	const int imgVoxelRangeY = imgRangeEndY - imgRangeStartY;
-
-	const float imgToVoxelScale = 4.0;
-
-	const int imgPixelRangeX = static_cast<int>(imgToVoxelScale * imgVoxelRangeX);
-	const int imgPixelRangeY = static_cast<int>(imgToVoxelScale * imgVoxelRangeY);
-
-	cv::Mat source = cv::Mat::ones(imgPixelRangeX, imgPixelRangeY, CV_32F);
-	cv::Mat target = cv::Mat::ones(imgPixelRangeX, imgPixelRangeY, CV_32F);
-	cv::Mat warped = cv::Mat::ones(imgPixelRangeX, imgPixelRangeY, CV_32F);
-
-
 #endif
 
-	const float epsilon = ITMSceneMotionTracker<TVoxel, TIndex>::epsilon;
+	const float epsilon = ITMSceneMotionTracker<TVoxelCanonical,TVoxelLive,TIndex>::epsilon;
 
 	TIC(timeWarpUpdateCompute);
 
@@ -151,7 +134,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 		canonicalHashEntryPosition = currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 		//_DEBUG
 		//std::cout << std::endl << "HASH POS: " << canonicalHashEntryPosition << std::endl;
-		TVoxel* localVoxelBlock = &(canonicalVoxels[currentCanonicalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		TVoxelCanonical* localVoxelBlock = &(canonicalVoxels[currentCanonicalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
 
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
@@ -159,7 +142,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					Vector3i originalPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-					TVoxel& canonicalVoxel = localVoxelBlock[locId];
+					TVoxelCanonical& canonicalVoxel = localVoxelBlock[locId];
 
 					//=================================== PRELIMINARIES ================================================
 					//Jacobian and Hessian of the live scene sampled at warped location + deltas,
@@ -167,7 +150,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					float liveSdf;
 					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
 					liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache);
-					float canonicalSdf = TVoxel::valueToFloat(canonicalVoxel.sdf);
+					float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
 
 					//_DEBUG
 					//almost no restriction -- Mira's case
@@ -188,7 +171,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					//_DEBUG
 					bool boundary, printResult = false;
 #ifdef PRINT_SINGLE_VOXEL_RESULT
-					if (originalPosition == (ITMSceneMotionTracker<TVoxel, TIndex>::testPos1)) {
+					if (originalPosition == (ITMSceneSliceRasterizer<TVoxelCanonical,TIndex>::testPos1)) {
 						printResult = true;
 						std::cout << std::endl << "Source SDF vs. target SDF: " << canonicalSdf
 								  << "-->" << liveSdf << std::endl << "Warp: " << canonicalVoxel.warp_t << std::endl;
@@ -197,17 +180,17 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 #ifdef PRINT_TIME_STATS
 					TIC(timeDataJandHCompute);
 #endif
-					if (std::abs(canonicalSdf) > ITMSceneMotionTracker<TVoxel, TIndex>::colorSdfThreshold) {
+					if (std::abs(canonicalSdf) > ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::colorSdfThreshold) {
 						useColor = false;
 #ifndef PRINT_SINGLE_VOXEL_RESULT
-						ComputePerPointWarpedLiveJacobianAndHessian<TVoxel, TIndex, typename TIndex::IndexCache>
+						ComputePerPointWarpedLiveJacobianAndHessian<TVoxelCanonical, TVoxelLive, TIndex, typename TIndex::IndexCache>
 								(originalPosition, canonicalVoxel.warp_t,
 								 canonicalVoxels, canonicalHashTable, canonicalCache,
 								 liveVoxels, liveHashTable, liveCache,
 								 liveSdf, liveSdfJacobian, liveSdfHessian);
 #else
 						//_DEBUG
-						ComputePerPointWarpedLiveJacobianAndHessianAlt<TVoxel, TIndex, typename TIndex::IndexCache>
+						ComputePerPointWarpedLiveJacobianAndHessianAlt<TVoxelCanonical, TIndex, typename TIndex::IndexCache>
 								(originalPosition, canonicalVoxel.warp_t,
 								 canonicalVoxels, canonicalHashTable, canonicalCache,
 								 liveVoxels, liveHashTable, liveCache,
@@ -215,7 +198,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 #endif
 					} else {
 						useColor = true;
-						ComputePerPointWarpedLiveJacobianAndHessian<TVoxel, TIndex, typename TIndex::IndexCache>
+						ComputePerPointWarpedLiveJacobianAndHessian<TVoxelCanonical, TVoxelLive, TIndex, typename TIndex::IndexCache>
 								(originalPosition, canonicalVoxel.warp_t,
 								 canonicalVoxels, canonicalHashTable, canonicalCache,
 								 liveVoxels, liveHashTable, liveCache,
@@ -228,12 +211,12 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					Matrix3f warpJacobian;
 					Matrix3f warpHessian[3];// = {Matrix3f(), Matrix3f(), Matrix3f()};
 #ifndef WARP_BOUNDARY_SPECIAL_TREATMENT
-					ComputePerPointWarpJacobianAndHessian<TVoxel, TIndex, typename TIndex::IndexCache>(
+					ComputePerPointWarpJacobianAndHessian<TVoxelCanonical, TIndex, typename TIndex::IndexCache>(
 							canonicalVoxel.warp_t, originalPosition, canonicalVoxels, canonicalHashTable,
 							canonicalCache, warpJacobian, warpHessian);
 					//_DEBUG --only one of the above/below statements should remain in the end, prob. the one below
 #else
-					ComputePerPointWarpJacobianAndHessianBoundaries2<TVoxel, TIndex, typename TIndex::IndexCache>(
+					ComputePerPointWarpJacobianAndHessianBoundaries<TVoxelCanonical, TIndex, typename TIndex::IndexCache>(
 							canonicalVoxel.warp_t, originalPosition, canonicalVoxels, canonicalHashTable,
 							canonicalCache, warpJacobian, warpHessian, boundary, printResult);
 #ifdef PRINT_ADDITIONAL_STATS
@@ -250,8 +233,9 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 
 					Vector3f deltaEData = liveSdfJacobian * diffSdf;
 					if (useColor) {
-						float diffColor = ITMSceneMotionTracker<TVoxel, TIndex>::weightColorDataTerm *
-						                  squareDistance(liveColor, TO_FLOAT3(canonicalVoxel.clr) / 255.f);
+						float diffColor =
+								ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightColorDataTerm *
+						        squareDistance(liveColor, TO_FLOAT3(canonicalVoxel.clr) / 255.f);
 						deltaEData += liveColorJacobian * diffColor;
 					}
 
@@ -260,10 +244,10 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 					float sdfJacobianNormMinusOne = sdfJacobianNorm - 1.0f;
 					Vector3f deltaELevelSet =
 							sdfJacobianNormMinusOne * (liveSdfHessian * liveSdfJacobian) /
-							(sdfJacobianNorm + ITMSceneMotionTracker<TVoxel, TIndex>::epsilon);
+							(sdfJacobianNorm + ITMSceneMotionTracker<TVoxelCanonical,TVoxelLive, TIndex>::epsilon);
 
 					//=================================== KILLING TERM =================================================
-					const float gamma = ITMSceneMotionTracker<TVoxel, TIndex>::rigidityEnforcementFactor;
+					const float gamma = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::rigidityEnforcementFactor;
 					float onePlusGamma = 1.0f + gamma;
 #ifdef COMPUTE_KILLING_OLD
 
@@ -346,11 +330,11 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 #endif
 
 					//=================================== FINAL UPDATE =================================================
-					const float weightKilling = ITMSceneMotionTracker<TVoxel, TIndex>::weightKillingTerm;
+					const float weightKilling = ITMSceneMotionTracker<TVoxelCanonical,TVoxelLive, TIndex>::weightKillingTerm;
 					//_DEBUG
 					//const float weightKilling = 0.5;
-					const float weightLevelSet = ITMSceneMotionTracker<TVoxel, TIndex>::weightLevelSetTerm;
-					const float learningRate = ITMSceneMotionTracker<TVoxel, TIndex>::gradientDescentLearningRate;
+					const float weightLevelSet = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightLevelSetTerm;
+					const float learningRate = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::gradientDescentLearningRate;
 					//_DEBUG
 					//Vector3f deltaE = deltaEData;
 					//Vector3f deltaE = weightKilling * deltaEKilling;
@@ -432,14 +416,14 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 		const ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[entryId];
 
 		if (currentCanonicalHashEntry.ptr < 0) continue;
-		TVoxel* localVoxelBlock = &(canonicalVoxels[currentCanonicalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		TVoxelCanonical* localVoxelBlock = &(canonicalVoxels[currentCanonicalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
 
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-					TVoxel& canonicalVoxel = localVoxelBlock[locId];
+					TVoxelCanonical& canonicalVoxel = localVoxelBlock[locId];
 #ifdef PRINT_DEBUG_HISTOGRAM
 					//_DEBUG
 					//Vector3f update = TO_FLOAT3(canonicalVoxel.warp_t_update) / FLOAT_TO_SHORT_CONVERSION_FACTOR;
@@ -474,8 +458,9 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 			}
 		}
 	}
-
+#ifdef PRINT_TIME_STATS
 	TOC(timeWarpUpdateApply);
+#endif
 
 #ifdef PRINT_ENERGY_STATS
 	totalEnergy = totalDataEnergy + totalLevelSetEnergy + totalKillingEnergy;
@@ -531,14 +516,14 @@ ITMSceneMotionTracker_CPU<TVoxel, TIndex>::UpdateWarpField(ITMScene<TVoxel, TInd
 
 }
 
-template<typename TVoxel, typename TIndex>
-void ITMSceneMotionTracker_CPU<TVoxel, TIndex>::FuseFrame(ITMScene<TVoxel, TIndex>* canonicalScene,
-                                                          ITMScene<ITMVoxelAux, TIndex>* liveScene) {
-	TVoxel* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(ITMScene<TVoxelCanonical,
+		TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
+	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
 	typename TIndex::IndexCache canonicalCache;
 
-	const ITMVoxelAux* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
+	const TVoxelLive* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* liveHashTable = liveScene->index.GetEntries();
 	typename TIndex::IndexCache liveCache;
 
@@ -558,14 +543,14 @@ void ITMSceneMotionTracker_CPU<TVoxel, TIndex>::FuseFrame(ITMScene<TVoxel, TInde
 		//position of the current entry in 3D space
 		canonicalHashEntryPosition = currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 
-		TVoxel* localVoxelBlock = &(canonicalVoxels[currentCanonicalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		TVoxelCanonical* localVoxelBlock = &(canonicalVoxels[currentCanonicalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					Vector3i originalPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-					TVoxel& canonicalVoxel = localVoxelBlock[locId];
+					TVoxelCanonical& canonicalVoxel = localVoxelBlock[locId];
 					int oldWDepth, oldWColor;
 					float oldSdf;
 					oldSdf = canonicalVoxel.sdf;
@@ -591,7 +576,7 @@ void ITMSceneMotionTracker_CPU<TVoxel, TIndex>::FuseFrame(ITMScene<TVoxel, TInde
 					newColor /= newWColor;
 					newWColor = MIN(newWDepth, maxW);
 
-					canonicalVoxel.sdf = TVoxel::floatToValue(newSdf);
+					canonicalVoxel.sdf = TVoxelCanonical::floatToValue(newSdf);
 					canonicalVoxel.w_depth = (uchar) newWDepth;
 					canonicalVoxel.clr = TO_UCHAR3(newColor * 255.0f);
 					canonicalVoxel.w_color = (uchar) newWColor;
@@ -603,214 +588,62 @@ void ITMSceneMotionTracker_CPU<TVoxel, TIndex>::FuseFrame(ITMScene<TVoxel, TInde
 
 }
 
-template<typename TVoxel, typename TIndex>
-ITMSceneMotionTracker_CPU<TVoxel, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params)
-		: ITMSceneMotionTracker<TVoxel, TIndex>(params) {
-
-	cv::Mat source = cv::Mat::ones(imgPixelRangeX, imgPixelRangeY, CV_32F);
-	cv::Mat target = cv::Mat::ones(imgPixelRangeX, imgPixelRangeY, CV_32F);
-	cv::Mat warped = cv::Mat::ones(imgPixelRangeX, imgPixelRangeY, CV_32F);
-}
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params)
+		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params) {}
 
 
-template<typename TVoxel, typename TIndex>
-void ITMSceneMotionTracker_CPU<TVoxel, TIndex>::MarkWarpedSceneImage(ITMScene<TVoxel, TIndex>* scene, cv::Mat& image,
-                                                                     Vector3i position) {
-	bool vmIndex;
-	TVoxel voxel = readVoxel(scene->localVBA.GetVoxelBlocks(), scene->index.GetEntries(), position, vmIndex);
-	Vector3f projectedPosition = position.toFloat() + voxel.warp_t;
-	Vector3i projectedPositionFloored = projectedPosition.toIntFloor();
-	if (!isVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, position.z-1) &&
-		!isVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, position.z) &&
-		!isVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, position.z+1)) return;
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateBoundaryHashBlocks(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
+	int entryCount = canonicalScene->index.noTotalEntries;
+	Vector3s* blockCoords = this->blockCoords->GetData(MEMORYDEVICE_CPU);
+	uchar* entriesAllocType = this->entriesAllocType->GetData(MEMORYDEVICE_CPU);
+	memset(entriesAllocType, ITMLib::NO_CHANGE, static_cast<size_t>(entryCount));
 
-	Vector2i imgCoords = getVoxelImgCoords(projectedPosition.x, projectedPosition.y);
-	const int voxelOnImageSize = static_cast<int>(imgToVoxelScale);
-	float sdfRepr;
-	//sdfRepr = std::abs(voxel.sdf);
-	sdfRepr = 1.0f;// - sdfRepr*.6f;
+	const short neighborhoodSize = 3;//must be an odd positive integer greater than 1.
+	const short neighborhoodRangeStart = - neighborhoodSize / 2;
+	const short neighborhoodRangeEnd = neighborhoodSize / 2 + 1;
 
-	//fill a pixel block with the source scene value
-	for (int row = imgCoords.y; row < imgCoords.y + voxelOnImageSize / 2; row++) {
-		for (int col = imgCoords.x; col < imgCoords.x + voxelOnImageSize / 2; col++) {
-//#pragma omp critical(PixelUpdate)
-			image.at<uchar>(row, col) = static_cast<uchar>(sdfRepr * 255.0f);
-		}
-	}
-};
-
-//START _DEBUG
-template<typename TVoxel, typename TIndex>
-template<typename TTVoxel>
-cv::Mat ITMSceneMotionTracker_CPU<TVoxel, TIndex>::DrawWarpedSceneImageTemplated(ITMScene<TTVoxel, TIndex>* scene) {
-#ifdef IMAGE_BLACK_BACKGROUND
-	//use if default voxel SDF value is -1.0
-	cv::Mat img = cv::Mat::zeros(imgPixelRangeX, imgPixelRangeY, CV_32F);
-#else
-	//use if default voxel SDF value is 1.0
-	cv::Mat img = cv::Mat::ones(imgPixelRangeX, imgPixelRangeY, CV_32F);
-#endif
-
-	TTVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
-	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
-	int noTotalEntries = scene->index.noTotalEntries;
+	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
 	typename TIndex::IndexCache canonicalCache;
-
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
-	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
-		Vector3i currentBlockPositionVoxels;
-		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
-
-		if (currentHashEntry.ptr < 0) continue;
-
-		//position of the current entry in 3D space
-		currentBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-
-		if (!isVoxelBlockInImgRangeTolerance(currentBlockPositionVoxels, 5)) continue;
-
-		TTVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-
-		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-					Vector3i originalPosition = currentBlockPositionVoxels + Vector3i(x, y, z);
-					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-					TTVoxel& voxel = localVoxelBlock[locId];
-					Vector3f projectedPosition = originalPosition.toFloat() + voxel.warp_t;
-					Vector3i projectedPositionFloored = projectedPosition.toIntFloor();
-					if (!isVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y,
-					                       originalPosition.z))
-						continue;
-					//if (originalPosition == ITMSceneMotionTracker<TVoxel, TIndex>::testPos1) continue;
-
-					Vector2i imgCoords = getVoxelImgCoords(projectedPosition.x, projectedPosition.y);
-					const int voxelOnImageSize = static_cast<int>(imgToVoxelScale);
-					float sdfRepr;
-					sdfRepr = absFillingStrategy ? std::abs(voxel.sdf) : (voxel.sdf + 1.0) / 2.0;
-//					const bool invert = absFillingStrategy;
-//					if (invert) {
-//						sdfRepr = 1.0f - sdfRepr * .6f;
-//					} else {
-//						sdfRepr = 0.4f + sdfRepr * 0.6f;
-//					}
-
-					//fill a pixel block with the source scene value
-					for (int row = imgCoords.y; row < imgCoords.y + voxelOnImageSize / 2; row++) {
-						for (int col = imgCoords.x; col < imgCoords.x + voxelOnImageSize / 2; col++) {
-
-//#pragma omp critical(PixelUpdate)
-							img.at<float>(row, col) = sdfRepr;
-						}
+	for (int entryId = 0; entryId < entryCount; entryId++) {
+		const ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[entryId];
+		Vector3s hashBlockCoords = currentCanonicalHashEntry.pos;
+		Vector3s testBlockLocation;
+		for(short x = neighborhoodRangeStart; x < neighborhoodRangeEnd; x++){
+			for (short y = neighborhoodRangeStart; y < neighborhoodRangeEnd; y++){
+				for (short z = neighborhoodRangeStart; z < neighborhoodRangeEnd; z++){
+					//compute neighbor hash block position
+					if( x == 0 && y == 0 && z == 0) continue;
+					testBlockLocation = hashBlockCoords + Vector3s(x,y,z);
+					//compute index in hash table
+					int hashIdx = hashIndex(testBlockLocation);
+					short entryAllocType = entriesAllocType[hashIdx];
+					switch(entryAllocType){
+						case NEEDS_TO_BE_PRESERVED:
+							entriesAllocType[hashIdx] = DOESNT_NEED_ALLOCATION;
+							//fall through to compute the alloc type
+						case NO_CHANGE:
+							ComputeHashBlockAllocType(entriesAllocType,blockCoords,hashIdx,
+							                          testBlockLocation,canonicalHashTable,canonicalCache);
+							break;
+						default: //do nothing
+							break;
 					}
 				}
 			}
 		}
 	}
-
-	return img;
-}
-//END _DEBUG
-
-//START _DEBUG
-template<typename TVoxel, typename TIndex>
-template<typename TTVoxel>
-cv::Mat ITMSceneMotionTracker_CPU<TVoxel, TIndex>::DrawSceneImage(ITMScene<TTVoxel, TIndex>* scene) {
-#ifdef IMAGE_BLACK_BACKGROUND
-	//use if default voxel SDF value is -1.0
-	cv::Mat img = cv::Mat::zeros(imgPixelRangeX, imgPixelRangeY, CV_32F);
-#else
-	//use if default voxel SDF value is 1.0
-	cv::Mat img = cv::Mat::ones(imgPixelRangeX, imgPixelRangeY, CV_32F);
-#endif
-	TTVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
-	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
-	int noTotalEntries = scene->index.noTotalEntries;
-	typename TIndex::IndexCache canonicalCache;
-
-	std::unordered_set<float> valueSet = {};
-
-	int numPixelsFilled = 0;
-
-#ifdef WITH_OPENMP
-#pragma omp parallel for
-#endif
-	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
-		Vector3i currentBlockPositionVoxels;
-		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
-
-		if (currentHashEntry.ptr < 0) continue;
-
-		//position of the current entry in 3D space
-		currentBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-
-		if (!isVoxelBlockInImgRange(currentBlockPositionVoxels)) continue;
-
-		TTVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-
-		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-					Vector3i originalPosition = currentBlockPositionVoxels + Vector3i(x, y, z);
-					if (!isVoxelInImgRange(originalPosition.x, originalPosition.y, originalPosition.z)) continue;
-
-					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-					TTVoxel& voxel = localVoxelBlock[locId];
-					Vector2i imgCoords = getVoxelImgCoords(originalPosition.x, originalPosition.y);
-					const int voxelOnImageSize = static_cast<int>(imgToVoxelScale);
-					for (int row = imgCoords.y; row < imgCoords.y + voxelOnImageSize; row++) {
-						for (int col = imgCoords.x; col < imgCoords.x + voxelOnImageSize; col++) {
-							float sdfRepr = absFillingStrategy ? std::abs(voxel.sdf) : (voxel.sdf + 1.0) / 2.0;
-							img.at<float>(row, col) = sdfRepr;
-#pragma omp critical(PixelUniquesUpdate)
-							valueSet.insert(sdfRepr);
-							//std::cout<< sdfRepr << std::endl;
-							numPixelsFilled++;
-						}
-					}
-				}
-			}
-		}
-	}
-	std::cout << "Filled " << numPixelsFilled << " pixels with " << valueSet.size() << " unique values" << std::endl;
-	return img;
 }
 
-template<typename TVoxel, typename TIndex>
-bool ITMSceneMotionTracker_CPU<TVoxel, TIndex>::isVoxelInImgRange(int x, int y, int z) {
-	return (z == imgZSlice && x >= imgRangeStartX && x < imgRangeEndX && y > imgRangeStartY && y < imgRangeEndY);
-}
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::EraseBoundaryHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
 
-template<typename TVoxel, typename TIndex>
-Vector2i ITMSceneMotionTracker_CPU<TVoxel, TIndex>::getVoxelImgCoords(int x, int y) {
-	return Vector2i(static_cast<int>(imgToVoxelScale * (x - imgRangeStartX)),
-	                imgPixelRangeY - static_cast<int>(imgToVoxelScale * (y - imgRangeStartY)));
-}
-
-template<typename TVoxel, typename TIndex>
-Vector2i ITMSceneMotionTracker_CPU<TVoxel, TIndex>::getVoxelImgCoords(float x, float y) {
-	return Vector2i(static_cast<int>(imgToVoxelScale * (x - imgRangeStartX)),
-	                imgPixelRangeY - static_cast<int>(imgToVoxelScale * (y - imgRangeStartY)));
-}
-
-template<typename TVoxel, typename TIndex>
-bool ITMSceneMotionTracker_CPU<TVoxel, TIndex>::isVoxelBlockInImgRange(Vector3i blockVoxelCoords) {
-	Vector3i& bvc0 = blockVoxelCoords;
-	Vector3i bvc1 = blockVoxelCoords + Vector3i(SDF_BLOCK_SIZE);
-	return !(imgZSlice >= bvc1.z || imgZSlice < bvc0.z) &&
-	       !(imgRangeStartX >= bvc1.x || imgRangeEndX < bvc0.x) &&
-	       !(imgRangeStartY >= bvc1.y || imgRangeEndY < bvc0.y);
-}
-
-template<typename TVoxel, typename TIndex>
-bool
-ITMSceneMotionTracker_CPU<TVoxel, TIndex>::isVoxelBlockInImgRangeTolerance(Vector3i blockVoxelCoords, int tolerance) {
-	Vector3i& bvc0 = blockVoxelCoords;
-	Vector3i bvc1 = blockVoxelCoords + Vector3i(SDF_BLOCK_SIZE);
-	return !(imgZSlice >= bvc1.z || imgZSlice < bvc0.z) &&
-	       !(imgRangeStartX - tolerance >= bvc1.x || imgRangeEndX + tolerance < bvc0.x) &&
-	       !(imgRangeStartY - tolerance >= bvc1.y || imgRangeEndY + tolerance < bvc0.y);
 }
 //END _DEBUG
 

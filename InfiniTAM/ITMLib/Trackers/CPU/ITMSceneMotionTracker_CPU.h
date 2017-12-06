@@ -17,34 +17,19 @@
 
 #include <opencv2/core/mat.hpp>
 #include "../Interface/ITMSceneMotionTracker.h"
+#include "../../Utils/ITMLibHashBlockProperties.h"
 
 namespace ITMLib {
-	template<typename TVoxel, typename TIndex>
+	template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 	class ITMSceneMotionTracker_CPU :
-			public ITMSceneMotionTracker<TVoxel, TIndex> {
+			public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex> {
 	public:
 
 		explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params);
 
 	protected:
 		//START _DEBUG
-		template<typename TTVoxel>
-		cv::Mat DrawSceneImage(ITMScene <TTVoxel, TIndex>* scene);
 
-		template<typename TTVoxel>
-		cv::Mat DrawWarpedSceneImageTemplated(ITMScene <TTVoxel, TIndex>* scene);
-
-		cv::Mat DrawCanonicalSceneImage(ITMScene <TVoxel, TIndex>* scene) override {
-			return DrawSceneImage(scene);
-		}
-
-		cv::Mat DrawWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene) override {
-			return DrawWarpedSceneImageTemplated(scene);
-		}
-
-		cv::Mat DrawLiveSceneImage(ITMScene <ITMVoxelAux, TIndex>* scene) override {
-			return DrawSceneImage(scene);
-		}
 
 		//timers
 		double timeWarpUpdateCompute = 0.0;
@@ -56,42 +41,18 @@ namespace ITMLib {
 		//END _DEBUG
 
 		float
-		UpdateWarpField(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <ITMVoxelAux, TIndex>* liveScene) override;
+		UpdateWarpField(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
 
+		void AllocateBoundaryHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene) override;
+		void EraseBoundaryHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene) override;
 
-		void FuseFrame(ITMScene <TVoxel, TIndex>* canonicalScene, ITMScene <ITMVoxelAux, TIndex>* liveScene) override;
+		void FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
 
 	private:
-		//debug image stuff START _DEBUG
-		const bool absFillingStrategy = false;
-		const int imageSizeVoxels = 100;
-		const int imageHalfSizeVoxels = imageSizeVoxels / 2;
-		const int imgRangeStartX = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos1).x - imageHalfSizeVoxels;
-		const int imgRangeEndX = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos1).x + imageHalfSizeVoxels;
-		const int imgRangeStartY = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos1).y - imageHalfSizeVoxels;
-		const int imgRangeEndY = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos1).y + imageHalfSizeVoxels;
-		const int imgZSlice = (ITMSceneMotionTracker<TVoxel, TIndex>::testPos1).z;
 
-		const int imgVoxelRangeX = imgRangeEndX - imgRangeStartX;
-		const int imgVoxelRangeY = imgRangeEndY - imgRangeStartY;
+		ORUtils::MemoryBlock<unsigned char> *entriesAllocType;
+		ORUtils::MemoryBlock<Vector3s> *blockCoords;
 
-		const float imgToVoxelScale = 16.0;
-
-		const int imgPixelRangeX = static_cast<int>(imgToVoxelScale * imgVoxelRangeX);
-		const int imgPixelRangeY = static_cast<int>(imgToVoxelScale * imgVoxelRangeY);
-
-		bool isVoxelInImgRange(int x, int y, int z);
-
-		bool isVoxelBlockInImgRange(Vector3i blockVoxelCoords);
-
-		Vector2i getVoxelImgCoords(int x, int y);
-		//END _DEBUG
-
-		bool isVoxelBlockInImgRangeTolerance(Vector3i blockVoxelCoords, int tolerance);
-
-		Vector2i getVoxelImgCoords(float x, float y);
-
-		void MarkWarpedSceneImage(ITMScene <TVoxel, TIndex>* scene, cv::Mat& image, Vector3i position) override;
 	};
 
 

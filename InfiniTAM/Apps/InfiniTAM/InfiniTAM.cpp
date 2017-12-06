@@ -196,7 +196,7 @@ try
 		mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelIndex>(internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize());
 		break;
 	case ITMLibSettings::LIBMODE_KILLING:
-		mainEngine = new ITMKillingEngine<ITMVoxel, ITMVoxelIndex>(internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize());
+		mainEngine = new ITMKillingEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize());
 		break;
 	default: 
 		throw std::runtime_error("Unsupported library mode!");

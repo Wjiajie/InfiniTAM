@@ -21,19 +21,19 @@
 #include "../Trackers/Interface/ITMSceneMotionTracker.h"
 
 namespace ITMLib{
-template<class TVoxel, class TIndex>
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMDenseDynamicMapper {
 
 	private:
-		ITMSceneReconstructionEngine<TVoxel,TIndex> *sceneRecoEngine;
-		ITMSceneReconstructionEngine<ITMVoxelAux,TIndex> *liveSceneRecoEngine;
-		ITMSwappingEngine<TVoxel,TIndex> *swappingEngine;
-		ITMSceneMotionTracker<TVoxel,TIndex> *sceneMotionTracker;
+		ITMSceneReconstructionEngine<TVoxelCanonical,TIndex> *sceneRecoEngine;
+		ITMSceneReconstructionEngine<TVoxelLive,TIndex> *liveSceneRecoEngine;
+		ITMSwappingEngine<TVoxelCanonical,TIndex> *swappingEngine;
+		ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex> *sceneMotionTracker;
 		ITMLibSettings::SwappingMode swappingMode;
 
 	public:
-		void ResetScene(ITMScene<TVoxel,TIndex> *scene) const;
-		void ResetLiveScene(ITMScene<ITMVoxelAux,TIndex> *live_scene) const;
+		void ResetScene(ITMScene<TVoxelCanonical,TIndex> *scene) const;
+		void ResetLiveScene(ITMScene<TVoxelLive,TIndex> *live_scene) const;
 
 		/**
 		* \brief Tracks motions of all points between frames and fuses the new data into the canonical frame
@@ -52,17 +52,17 @@ class ITMDenseDynamicMapper {
 		*/
 		void ProcessFrame(const ITMView* view,
 		                  const ITMTrackingState* trackingState,
-		                  ITMScene <TVoxel, TIndex>* canonical_scene,
-		                  ITMScene <ITMVoxelAux, TIndex>* live_scene,
+		                  ITMScene <TVoxelCanonical, TIndex>* canonical_scene,
+		                  ITMScene <TVoxelLive, TIndex>* live_scene,
 		                  ITMRenderState* renderState_live);
 
 		void ProcessInitialFrame(const ITMView* view,
 		                  const ITMTrackingState* trackingState,
-		                  ITMScene <TVoxel, TIndex>* canonical_scene,
+		                  ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 		                  ITMRenderState* renderState_live);
 
 		/// Update the visible list (this can be called to update the visible list when fusion is turned off)
-		void UpdateVisibleList(const ITMView *view, const ITMTrackingState *trackingState, ITMScene<TVoxel, TIndex> *scene, ITMRenderState *renderState, bool resetVisibleList = false);
+		void UpdateVisibleList(const ITMView *view, const ITMTrackingState *trackingState, ITMScene<TVoxelCanonical, TIndex> *scene, ITMRenderState *renderState, bool resetVisibleList = false);
 
 		/** \brief Constructor
 		    Ommitting a separate image size for the depth images

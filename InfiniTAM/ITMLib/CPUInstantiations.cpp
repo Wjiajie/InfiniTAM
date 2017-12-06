@@ -26,26 +26,31 @@
 #include "Trackers/ITMTrackerFactory.h"
 #include "Trackers/Interface/ITMSceneMotionTracker.tpp"
 #include "Trackers/CPU/ITMSceneMotionTracker_CPU.tpp"
+#include "Utils/ITMSceneSliceRasterizer.tpp"
 
 namespace ITMLib
 {
+	//voxel fusion
 	template class ITMBasicEngine<ITMVoxel, ITMVoxelIndex>;
 	template class ITMBasicSurfelEngine<ITMSurfel_grey>;
 	template class ITMBasicSurfelEngine<ITMSurfel_rgb>;
 	template class ITMMultiEngine<ITMVoxel, ITMVoxelIndex>;
-	template class ITMKillingEngine<ITMVoxel, ITMVoxelIndex>;
 	template class ITMDenseMapper<ITMVoxel, ITMVoxelIndex>;
-	template class ITMDenseDynamicMapper<ITMVoxel, ITMVoxelIndex>;
 	template class ITMVoxelMapGraphManager<ITMVoxel, ITMVoxelIndex>;
 	template class ITMVisualisationEngine_CPU<ITMVoxel, ITMVoxelIndex>;
 	template class ITMMeshingEngine_CPU<ITMVoxel, ITMVoxelIndex>;
 	template class ITMMultiMeshingEngine_CPU<ITMVoxel, ITMVoxelIndex>;
 	template class ITMSwappingEngine_CPU<ITMVoxel, ITMVoxelIndex>;
-	template class ITMSceneReconstructionEngine_CPU<ITMVoxel, ITMVoxelIndex>;
-	template class ITMSceneReconstructionEngine_CPU<ITMVoxelAux, ITMVoxelIndex>;
-	template class ITMSceneMotionTracker<ITMVoxel, ITMVoxelIndex>;
-	template class ITMSceneMotionTracker_CPU<ITMVoxel, ITMVoxelIndex>;
 
+	//dynamic-fusion-specific
+	template class ITMKillingEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+	template class ITMDenseDynamicMapper<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+	template class ITMSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
+	template class ITMSceneReconstructionEngine_CPU<ITMVoxelLive, ITMVoxelIndex>;
+	template class ITMSceneMotionTracker<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+	template class ITMSceneMotionTracker_CPU<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+
+	//surfel fusion
 	template class ITMDenseSurfelMapper<ITMSurfel_grey>;
 	template class ITMDenseSurfelMapper<ITMSurfel_rgb>;
 	template class ITMSurfelSceneReconstructionEngine<ITMSurfel_grey>;
@@ -61,9 +66,16 @@ namespace ITMLib
 	template struct ITMSurfelVisualisationEngineFactory<ITMSurfel_grey>;
 	template struct ITMSurfelVisualisationEngineFactory<ITMSurfel_rgb>;
 
-	//functions
-	template void CopySceneWithOffset_CPU<ITMVoxel,ITMVoxelIndex>(ITMScene<ITMVoxel, ITMVoxelIndex>& destination, ITMScene<ITMVoxel, ITMVoxelIndex>& source, Vector3i offset);
-	template bool SetVoxel_CPU<ITMVoxel,ITMVoxelIndex>(ITMScene<ITMVoxel, ITMVoxelIndex>& scene, Vector3i at, ITMVoxel voxel);
-	template bool SetVoxel_CPU<ITMVoxelAux,ITMVoxelIndex>(ITMScene<ITMVoxelAux, ITMVoxelIndex>& scene, Vector3i at, ITMVoxelAux voxel);
-	template ITMVoxel ReadVoxel<ITMVoxel,ITMVoxelIndex>(ITMScene<ITMVoxel, ITMVoxelIndex>& scene, Vector3i at);
+	//dynamic fusion
+	template class ITMSceneSliceRasterizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+
+	//scene manipulation functions
+	template void CopySceneWithOffset_CPU<ITMVoxelCanonical,ITMVoxelIndex>(
+			ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& destination,
+			ITMScene<ITMVoxel, ITMVoxelIndex>& source, Vector3i offset);
+	template bool SetVoxel_CPU<ITMVoxelCanonical,ITMVoxelIndex>(ITMScene<ITMVoxelCanonical,
+			ITMVoxelIndex>& scene, Vector3i at, ITMVoxelCanonical voxel);
+	template bool SetVoxel_CPU<ITMVoxelLive,ITMVoxelIndex>(ITMScene<ITMVoxelLive, ITMVoxelIndex>& scene,
+	                                                       Vector3i at, ITMVoxelLive voxel);
+	template ITMVoxel ReadVoxel<ITMVoxelCanonical,ITMVoxelIndex>(ITMScene<ITMVoxel, ITMVoxelIndex>& scene, Vector3i at);
 }

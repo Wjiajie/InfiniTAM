@@ -25,7 +25,6 @@ find_package(OpenCV REQUIRED core highgui imgproc imgcodecs)
 ##
 SET(ITMLIB_TOPLEVEL_CPU_SOURCES
 CPUInstantiations.cpp
-../Tests/Instantiations.cpp #_DEBUG
 )
 
 SET(ITMLIB_TOPLEVEL_CUDA_SOURCES
@@ -482,17 +481,20 @@ Trackers/Shared/ITMSceneMotionTracker_Shared.h
 ##
 SET(ITMLIB_UTILS_SOURCES
 Utils/ITMLibSettings.cpp
+        Utils/ITMSceneSliceRasterizer.tpp
 )
 
 SET(ITMLIB_UTILS_HEADERS
 Utils/ITMCUDAUtils.h
 Utils/ITMImageTypes.h
+Utils/ITMLibHashBlockProperties.h
 Utils/ITMLibSettings.h
 Utils/ITMMath.h
 Utils/ITMMemoryBlockTypes.h
 Utils/ITMPixelUtils.h
 Utils/ITMProjectionUtils.h
 Utils/ITMSceneParams.h
+        Utils/ITMSceneSliceRasterizer.h
 Utils/ITMSurfelSceneParams.h
 )
 

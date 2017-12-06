@@ -42,7 +42,7 @@ struct ITMSceneReconstructionEngineFactory
         break;
       case ITMLibSettings::DEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
-        sceneRecoEngine = new ITMSceneReconstructionEngine_Metal<TVoxel,TIndex>;
+        sceneRecoEngine = new ITMSceneReconstructionEngine_Metal<TVoxelCanonical,TIndex>;
 #endif
         break;
     }

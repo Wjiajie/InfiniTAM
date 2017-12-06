@@ -42,7 +42,7 @@ struct ITMSwappingEngineFactory
         break;
       case ITMLibSettings::DEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
-        swappingEngine = new ITMSwappingEngine_CPU<TVoxel,TIndex>;
+        swappingEngine = new ITMSwappingEngine_CPU<TVoxelCanonical,TIndex>;
 #endif
         break;
     }
