@@ -44,12 +44,15 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(IT
 
 #ifdef DRAW_IMAGE
 	std::cout << "Desired warp update (voxels) below " << maxVectorUpdateThresholdVoxels << std::endl;
-	cv::Mat canonicalImg = ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawCanonicalSceneImage(canonicalScene) * 255.0f;
+	cv::Mat canonicalImg =
+			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawCanonicalSceneImageAroundPoint(
+					canonicalScene) * 255.0f;
 	cv::Mat canonicalImgOut;
 	canonicalImg.convertTo(canonicalImgOut, CV_8UC1);
 	cv::cvtColor(canonicalImgOut, canonicalImgOut, cv::COLOR_GRAY2BGR);
 	cv::imwrite(ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolder + "canonical.png", canonicalImgOut);
-	cv::Mat liveImg = ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawLiveSceneImage(liveScene) * 255.0f;
+	cv::Mat liveImg =
+			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawLiveSceneImageAroundPoint(liveScene) * 255.0f;
 	cv::Mat liveImgTemplate, liveImgOut;
 	liveImg.convertTo(liveImgTemplate, CV_8UC1);
 	cv::cvtColor(liveImgTemplate, liveImgOut, cv::COLOR_GRAY2BGR);
@@ -71,13 +74,22 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(IT
 		const std::string reset("\033[0m");
 		//START _DEBUG
 #ifdef DRAW_IMAGE
-		cv::Mat warpImg = ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpedSceneImage(canonicalScene) * 255.0f;
+		cv::Mat warpImg = ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpedSceneImageAroundPoint(
+				canonicalScene) * 255.0f;
 		cv::Mat warpImgChannel, warpImgOut, mask, liveImgChannel, markChannel;
 		blank.copyTo(markChannel);
-		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSceneImage(canonicalScene, markChannel, ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos1);
-		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSceneImage(canonicalScene, markChannel, ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos2);
-		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive,TIndex>::MarkWarpedSceneImage(canonicalScene, markChannel, ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive,TIndex>::testPos3);
-		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive,TIndex>::MarkWarpedSceneImage(canonicalScene, markChannel, ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive,TIndex>::testPos4);
+		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSceneImageAroundPoint(canonicalScene,
+		                                                                                              markChannel,
+		                                                                                              ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos1);
+		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSceneImageAroundPoint(canonicalScene,
+		                                                                                              markChannel,
+		                                                                                              ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos2);
+		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSceneImageAroundPoint(canonicalScene,
+		                                                                                              markChannel,
+		                                                                                              ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos3);
+		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSceneImageAroundPoint(canonicalScene,
+		                                                                                              markChannel,
+		                                                                                              ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos4);
 		liveImgChannel = cv::Mat::zeros(warpImg.rows, warpImg.cols, CV_8UC1);
 		warpImg.convertTo(warpImgChannel, CV_8UC1);
 		cv::threshold(warpImgChannel, mask, 1.0, 1.0, cv::THRESH_BINARY_INV);

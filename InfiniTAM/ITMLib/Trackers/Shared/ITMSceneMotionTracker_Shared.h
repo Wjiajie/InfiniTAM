@@ -311,18 +311,19 @@ inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* warp_tDa
 #endif
 }
 
+//TODO: after convergence works, pick one of these below two functions that yields best result, optimize out the debug printing stuff / boundary reporting as necessary -Greg (GitHub:Algomorph)
 //_DEBUG -- treats boundary voxels specially
 template<typename TVoxel, typename TIndex, typename TCache>
 _CPU_AND_GPU_CODE_
-inline void ComputePerPointWarpJacobianAndHessianBoundaries(const CONSTPTR(Vector3f)& originalWarp_t,
-                                                            const CONSTPTR(Vector3i)& originalPosition,
-                                                            const CONSTPTR(TVoxel)* voxels,
-                                                            const CONSTPTR(ITMHashEntry)* hashTable,
-                                                            THREADPTR(TCache)& cache,
-                                                            THREADPTR(Matrix3f)& jacobian,
-                                                            THREADPTR(Matrix3f)* hessian, //x3
-                                                            bool& boundary,
-                                                            bool printResult = false
+inline void ComputePerPointWarpJacobianAndHessianBoundariesV1(const CONSTPTR(Vector3f)& originalWarp_t,
+                                                              const CONSTPTR(Vector3i)& originalPosition,
+                                                              const CONSTPTR(TVoxel)* voxels,
+                                                              const CONSTPTR(ITMHashEntry)* hashTable,
+                                                              THREADPTR(TCache)& cache,
+                                                              THREADPTR(Matrix3f)& jacobian,
+                                                              THREADPTR(Matrix3f)* hessian, //x3
+                                                              bool& boundary,
+                                                              bool printResult = false
 
 ) {
 	//    0        1        2          3         4         5           6         7         8
@@ -441,15 +442,15 @@ inline void ComputePerPointWarpJacobianAndHessianBoundaries(const CONSTPTR(Vecto
 //_DEBUG -- treats boundary voxels specially
 template<typename TVoxel, typename TIndex, typename TCache>
 _CPU_AND_GPU_CODE_
-inline void ComputePerPointWarpJacobianAndHessianBoundaries2(const CONSTPTR(Vector3f)& originalWarp_t,
-                                                             const CONSTPTR(Vector3i)& originalPosition,
-                                                             const CONSTPTR(TVoxel)* voxels,
-                                                             const CONSTPTR(ITMHashEntry)* hashTable,
-                                                             THREADPTR(TCache)& cache,
-                                                             THREADPTR(Matrix3f)& jacobian,
-                                                             THREADPTR(Matrix3f)* hessian, //x3
-                                                             bool& boundary,
-                                                             bool printResult = false
+inline void ComputePerPointWarpJacobianAndHessianBoundariesV2(const CONSTPTR(Vector3f)& originalWarp_t,
+                                                              const CONSTPTR(Vector3i)& originalPosition,
+                                                              const CONSTPTR(TVoxel)* voxels,
+                                                              const CONSTPTR(ITMHashEntry)* hashTable,
+                                                              THREADPTR(TCache)& cache,
+                                                              THREADPTR(Matrix3f)& jacobian,
+                                                              THREADPTR(Matrix3f)* hessian, //x3
+                                                              bool& boundary,
+                                                              bool printResult = false
 
 ) {
 	//    0        1        2          3         4         5           6         7         8

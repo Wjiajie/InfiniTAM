@@ -19,6 +19,7 @@
 
 using namespace ITMLib;
 
+//====================================== DEFINE CONSTANTS ==============================================================
 // voxels to highlight and use as drawing canvas center
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos1 = Vector3i(54, -21, 286);
@@ -63,10 +64,12 @@ const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgPixel
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgPixelRangeY = static_cast<int>(imgToVoxelScale * imgVoxelRangeY);
 
+// ============================================ END CONSTANT DEFINITIONS ===============================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 template <typename TVoxel>
-cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawSceneImage(ITMScene<TVoxel, TIndex>* scene) {
+cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawSceneImageAroundPoint(
+		ITMScene<TVoxel, TIndex>* scene) {
 #ifdef IMAGE_BLACK_BACKGROUND
 	//use if default voxel SDF value is -1.0
 	cv::Mat img = cv::Mat::zeros(imgPixelRangeX, imgPixelRangeY, CV_32F);
@@ -84,7 +87,7 @@ cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawSceneI
 	int numPixelsFilled = 0;
 
 #ifdef WITH_OPENMP
-#pragma omp parallel for
+#pragma omp parallel for reduction(+:numPixelsFilled)
 #endif
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 		Vector3i currentBlockPositionVoxels;
@@ -113,17 +116,12 @@ cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawSceneI
 						for (int col = imgCoords.x; col < imgCoords.x + voxelOnImageSize; col++) {
 							float sdfRepr = absFillingStrategy ? std::abs(voxel.sdf) : (voxel.sdf + 1.0) / 2.0;
 							img.at<float>(row, col) = sdfRepr;
-#pragma omp critical(PixelUniquesUpdate)
-							valueSet.insert(sdfRepr);
-							//std::cout<< sdfRepr << std::endl;
-							numPixelsFilled++;
 						}
 					}
 				}
 			}
 		}
 	}
-	std::cout << "Filled " << numPixelsFilled << " pixels with " << valueSet.size() << " unique values" << std::endl;
 	return img;
 }
 
@@ -171,24 +169,14 @@ cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarped
 					if (!IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y,
 					                       originalPosition.z))
 						continue;
-					//if (originalPosition == ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::testPos1) continue;
 
 					Vector2i imgCoords = GetVoxelImgCoords(projectedPosition.x, projectedPosition.y);
 					const int voxelOnImageSize = static_cast<int>(imgToVoxelScale);
 					float sdfRepr;
 					sdfRepr = absFillingStrategy ? std::abs(voxel.sdf) : (voxel.sdf + 1.0) / 2.0;
-//					const bool invert = absFillingStrategy;
-//					if (invert) {
-//						sdfRepr = 1.0f - sdfRepr * .6f;
-//					} else {
-//						sdfRepr = 0.4f + sdfRepr * 0.6f;
-//					}
-
 					//fill a pixel block with the source scene value
 					for (int row = imgCoords.y; row < imgCoords.y + voxelOnImageSize / 2; row++) {
 						for (int col = imgCoords.x; col < imgCoords.x + voxelOnImageSize / 2; col++) {
-
-//#pragma omp critical(PixelUpdate)
 							img.at<float>(row, col) = sdfRepr;
 						}
 					}
@@ -200,30 +188,44 @@ cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarped
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawCanonicalSceneImage(ITMScene<TVoxelCanonical, TIndex>* scene) {
-	return DrawSceneImage(scene);
+cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawCanonicalSceneImageAroundPoint(
+		ITMScene<TVoxelCanonical, TIndex>* scene) {
+	return DrawSceneImageAroundPoint(scene);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawLiveSceneImage(ITMScene<TVoxelLive, TIndex>* scene) {
-	return DrawSceneImage(scene);
+cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawLiveSceneImageAroundPoint(
+		ITMScene<TVoxelLive, TIndex>* scene) {
+	return DrawSceneImageAroundPoint(scene);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpedSceneImage(ITMScene<TVoxelCanonical, TIndex>* scene) {
+cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpedSceneImageAroundPoint(
+		ITMScene<TVoxelCanonical, TIndex>* scene) {
 	return DrawWarpedSceneImageTemplated(scene);
 }
 
+/**
+ * \brief Mark/highlight the (warped) voxel on an image generated from the given scene's voxels
+ * around a specific (potentially, different) point
+ * \tparam TVoxelCanonical canonical voxel type
+ * \tparam TVoxelLive live voxel type
+ * \tparam TIndex index structure type
+ * \param scene the voxel grid the image was generated from
+ * \param imageToMarkOn the image that was generated from the warped vosel positions that should be marked
+ * \param positionOfVoxelToMark voxel position (before warp application) of the voxel to highlight/mark
+ */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSceneImage(ITMScene<TVoxelCanonical, TIndex>* scene, cv::Mat& image,
-                                                              Vector3i position) {
+void ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSceneImageAroundPoint(
+		ITMScene<TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn,
+		Vector3i positionOfVoxelToMark) {
 	bool vmIndex;
-	TVoxelCanonical voxel = readVoxel(scene->localVBA.GetVoxelBlocks(), scene->index.GetEntries(), position, vmIndex);
-	Vector3f projectedPosition = position.toFloat() + voxel.warp_t;
+	TVoxelCanonical voxel = readVoxel(scene->localVBA.GetVoxelBlocks(), scene->index.GetEntries(), positionOfVoxelToMark, vmIndex);
+	Vector3f projectedPosition = positionOfVoxelToMark.toFloat() + voxel.warp_t;
 	Vector3i projectedPositionFloored = projectedPosition.toIntFloor();
-	if (!IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, position.z - 1) &&
-	    !IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, position.z) &&
-	    !IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, position.z + 1)) return;
+	if (!IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, positionOfVoxelToMark.z - 1) &&
+	    !IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, positionOfVoxelToMark.z) &&
+	    !IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, positionOfVoxelToMark.z + 1)) return;
 
 	Vector2i imgCoords = GetVoxelImgCoords(projectedPosition.x, projectedPosition.y);
 	const int voxelOnImageSize = static_cast<int>(imgToVoxelScale);
@@ -234,8 +236,7 @@ void ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSce
 	//fill a pixel block with the source scene value
 	for (int row = imgCoords.y; row < imgCoords.y + voxelOnImageSize / 2; row++) {
 		for (int col = imgCoords.x; col < imgCoords.x + voxelOnImageSize / 2; col++) {
-//#pragma omp critical(PixelUpdate)
-			image.at<uchar>(row, col) = static_cast<uchar>(sdfRepr * 255.0f);
+			imageToMarkOn.at<uchar>(row, col) = static_cast<uchar>(sdfRepr * 255.0f);
 		}
 	}
 

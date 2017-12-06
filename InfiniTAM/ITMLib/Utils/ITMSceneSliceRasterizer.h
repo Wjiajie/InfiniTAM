@@ -24,11 +24,13 @@ namespace ITMLib {
 template <typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMSceneSliceRasterizer {
 
+	//TODO: positions of voxels to highlight / draw around should be defined extenally in the user code, not as class static members. -Greg (GitHub: Algomorph)
 public:
-	static cv::Mat DrawCanonicalSceneImage(ITMScene <TVoxelCanonical, TIndex>* scene);
-	static cv::Mat DrawLiveSceneImage(ITMScene <TVoxelLive, TIndex>* scene);
-	static cv::Mat DrawWarpedSceneImage(ITMScene <TVoxelCanonical, TIndex>* scene);
-	static void MarkWarpedSceneImage(ITMScene <TVoxelCanonical, TIndex>* scene, cv::Mat& image, Vector3i position);
+	static cv::Mat DrawCanonicalSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene);
+	static cv::Mat DrawLiveSceneImageAroundPoint(ITMScene<TVoxelLive, TIndex>* scene);
+	static cv::Mat DrawWarpedSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene);
+	static void MarkWarpedSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn,
+	                                            Vector3i positionOfVoxelToMark);
 
 	// voxels to highlight and use as drawing canvas center
 	static const Vector3i testPos1;
@@ -40,7 +42,7 @@ public:
 
 protected:
 	template<typename TTVoxel>
-	static cv::Mat DrawSceneImage(ITMScene <TTVoxel, TIndex>* scene);
+	static cv::Mat DrawSceneImageAroundPoint(ITMScene<TTVoxel, TIndex>* scene);
 	template<typename TTVoxel>
 	static cv::Mat DrawWarpedSceneImageTemplated(ITMScene <TTVoxel, TIndex>* scene);
 

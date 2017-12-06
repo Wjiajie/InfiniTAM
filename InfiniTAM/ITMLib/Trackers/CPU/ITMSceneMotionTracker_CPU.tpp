@@ -216,7 +216,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 							canonicalCache, warpJacobian, warpHessian);
 					//_DEBUG --only one of the above/below statements should remain in the end, prob. the one below
 #else
-					ComputePerPointWarpJacobianAndHessianBoundaries<TVoxelCanonical, TIndex, typename TIndex::IndexCache>(
+					ComputePerPointWarpJacobianAndHessianBoundariesV1<TVoxelCanonical, TIndex, typename TIndex::IndexCache>(
 							canonicalVoxel.warp_t, originalPosition, canonicalVoxels, canonicalHashTable,
 							canonicalCache, warpJacobian, warpHessian, boundary, printResult);
 #ifdef PRINT_ADDITIONAL_STATS
@@ -249,40 +249,6 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					//=================================== KILLING TERM =================================================
 					const float gamma = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::rigidityEnforcementFactor;
 					float onePlusGamma = 1.0f + gamma;
-#ifdef COMPUTE_KILLING_OLD
-
-					// |u_x, u_y, u_z|       |m00, m10, m20|
-					// |v_x, v_y, v_z|       |m01, m11, m21|
-					// |w_x, w_y, w_z|       |m02, m12, m22|
-					Matrix3f& J = warpJacobian;
-					// @formatter:off
-											//(1+gamma) * u_x
-					Vector3f stackedVector0((onePlusGamma) * J.m00,
-											//u_y + gamma * v_x
-											J.m10 + gamma * J.m01,
-											//u_z + gamma * w_x
-											J.m20 + gamma * J.m02);
-
-											//v_x + gamma * u_y
-					Vector3f stackedVector1(J.m01 + gamma * J.m10,
-											//(1+gamma) * v_y
-											(onePlusGamma) * J.m11,
-											//v_z + gamma * w_y
-											J.m21 + gamma * J.m12);
-
-											//w_x * gamma * u_z
-					Vector3f stackedVector2(J.m02 + gamma * J.m20,
-											//w_y + gamma * v_z
-											J.m12 + gamma * J.m21,
-											//(1+gamma) * w_z
-											(onePlusGamma) * J.m22);
-					// @formatter:on
-					Vector3f deltaEKillingOld = -2.0f *
-											 (warpHessian[0] * stackedVector0 +
-											  warpHessian[1] * stackedVector1 +
-											  warpHessian[2] * stackedVector2);
-
-#endif
 					// |0, 3, 6|     |m00, m10, m20|      |u_xx, u_xy, u_xz|
 					// |1, 4, 7|     |m01, m11, m21|      |u_xy, u_yy, u_yz|
 					// |2, 5, 8|     |m02, m12, m22|      |u_xz, u_yz, u_zz|
@@ -291,15 +257,11 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					Matrix3f& H_w = warpHessian[2];
 					float KillingDeltaEu, KillingDeltaEv, KillingDeltaEw;
 
-//					if(boundary){
-//						KillingDeltaEu = -2.0f*(H_u.xx + H_u.yy + H_u.zz);
-//						KillingDeltaEv = -2.0f*(H_v.yy + H_v.zz + H_v.xx);
-//						KillingDeltaEw = -2.0f*(H_w.zz + H_w.xx + H_w.yy);
-//					}else{
-						KillingDeltaEu = -2.0f*((onePlusGamma)*H_u.xx + (H_u.yy) + (H_u.zz) + gamma*H_v.xy + gamma*H_w.xz);
-						KillingDeltaEv = -2.0f*((onePlusGamma)*H_v.yy + (H_v.zz) + (H_v.xx) + gamma*H_u.xy + gamma*H_w.yz);
-						KillingDeltaEw = -2.0f*((onePlusGamma)*H_w.zz + (H_w.xx) + (H_w.yy) + gamma*H_v.yz + gamma*H_u.xz);
-//					}
+
+					KillingDeltaEu = -2.0f*((onePlusGamma)*H_u.xx + (H_u.yy) + (H_u.zz) + gamma*H_v.xy + gamma*H_w.xz);
+					KillingDeltaEv = -2.0f*((onePlusGamma)*H_v.yy + (H_v.zz) + (H_v.xx) + gamma*H_u.xy + gamma*H_w.yz);
+					KillingDeltaEw = -2.0f*((onePlusGamma)*H_w.zz + (H_w.xx) + (H_w.yy) + gamma*H_v.yz + gamma*H_u.xz);
+
 
 					Vector3f deltaEKilling = Vector3f(KillingDeltaEu,
 					                                  KillingDeltaEv,
@@ -317,11 +279,6 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					                              dot(warpJacobian.getColumn(1), warpJacobian.getColumn(1)) +
 					                              dot(warpJacobian.getColumn(2), warpJacobian.getColumn(2));
 
-//					float localKillingEnergy = boundary? localSmoothnessEnergy : localSmoothnessEnergy +
-//					                           gamma *
-//					                           (dot(warpJacobianTranspose.getColumn(0), warpJacobian.getColumn(0)) +
-//					                            dot(warpJacobianTranspose.getColumn(1), warpJacobian.getColumn(1)) +
-//					                            dot(warpJacobianTranspose.getColumn(2), warpJacobian.getColumn(2)));
 					float localKillingEnergy = localSmoothnessEnergy +
 					                           gamma *
 					                           (dot(warpJacobianTranspose.getColumn(0), warpJacobian.getColumn(0)) +
