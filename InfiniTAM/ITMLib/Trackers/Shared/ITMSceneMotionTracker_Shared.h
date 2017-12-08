@@ -233,6 +233,7 @@ inline void ComputePerPointWarpedLiveJacobianAndHessian(const CONSTPTR(Vector3i)
 	sdfHessian.setValues(vals);
 };
 
+#define WARP_BOUNDARY_SPECIAL_TREATMENT 1
 //_DEBUG
 template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
@@ -243,12 +244,18 @@ inline void findPoint2ndDerivativeNeighborhoodWarpBoundaries(THREADPTR(Vector3f)
                                                              const CONSTPTR(ITMHashEntry)* hashTable,
                                                              THREADPTR(TCache)& cache) {
 	int vmIndex;
+#if defined(WARP_BOUNDARY_SPECIAL_TREATMENT) && WARP_BOUNDARY_SPECIAL_TREATMENT == 2
+#define FOUND_CHECK(index) found[index] = vmIndex != 0 && (1.0 - std::abs(voxel.sdf)) > 1.0e-8;
+#else
+#define FOUND_CHECK(index) found[index] = vmIndex != 0;
+#endif
 
 	TVoxel voxel;
 #define PROCESS_VOXEL(location, index)\
     voxel = readVoxel(voxelData, hashTable, voxelPosition + (location), vmIndex, cache);\
     warp_tData[index] = voxel.warp_t;\
-    found[index] = vmIndex != 0;// && (1.0 - std::abs(voxel.sdf)) > 1.0e-8; //TODO: not sure -Greg (GitHub: Algomorph)
+	FOUND_CHECK(index)
+
 
 	//necessary for 2nd derivatives in same direction, e.g. xx and zz
 	PROCESS_VOXEL(Vector3i(-1, 0, 0), 0);
@@ -265,6 +272,7 @@ inline void findPoint2ndDerivativeNeighborhoodWarpBoundaries(THREADPTR(Vector3f)
 	PROCESS_VOXEL(Vector3i(0, 1, 1), 7);//yz corner
 	PROCESS_VOXEL(Vector3i(1, 0, 1), 8);//xz corner
 #undef PROCESS_VOXEL
+#undef FOUND_CHECK
 }
 
 template<typename TVoxel, typename TCache>
@@ -339,18 +347,14 @@ inline void ComputePerPointWarpJacobianAndHessianBoundariesV1(const CONSTPTR(Vec
 	                                                 hashTable,
 	                                                 cache);
 
-	boundary = true;
-	int sixConnectedNeightborCount = 0;
+
+
 	for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
 		if (!found[iNeighbor]) {
 			//boundary = true;
 			warp_tNeighbors[iNeighbor] = originalWarp_t;
-		} else if (iNeighbor < eightConnectedNeighbors) {
-			sixConnectedNeightborCount += 1;
+			boundary = true;
 		}
-	}
-	if (sixConnectedNeightborCount > 1) {
-		boundary = false;
 	}
 	// |u_x, u_y, u_z|       |m00, m10, m20|
 	// |v_x, v_y, v_z|       |m01, m11, m21|

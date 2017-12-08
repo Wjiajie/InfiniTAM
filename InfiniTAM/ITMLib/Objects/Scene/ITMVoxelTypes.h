@@ -183,7 +183,7 @@ struct ITMVoxel_s_rgb_conf
 
 struct ITMVoxel_f_rgb_conf
 {
-	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return 1.0f; }
+	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return -1.0f; }
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
 	_CPU_AND_GPU_CODE_ static float floatToValue(float x) { return x; }
 
@@ -216,7 +216,7 @@ struct ITMVoxel_f_rgb_conf
 
 struct ITMVoxel_f_dynamic
 {
-	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return 1.0f; }
+	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return -1.0f; }
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
 	_CPU_AND_GPU_CODE_ static float floatToValue(float x) { return x; }
 

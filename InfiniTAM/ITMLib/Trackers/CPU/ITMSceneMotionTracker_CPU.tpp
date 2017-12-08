@@ -22,7 +22,7 @@
 #define PRINT_ENERGY_STATS
 #define PRINT_ADDITIONAL_STATS
 #define PRINT_DEBUG_HISTOGRAM
-#define WARP_BOUNDARY_SPECIAL_TREATMENT
+
 //#define OPENMP_WARP_UPDATE_COMPUTE_DISABLE
 #endif //_DEBUG
 
@@ -92,7 +92,9 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 	double totalKillingEnergy = 0.0;
 	double totalEnergy = 0.0;
 #endif
+
 	float maxWarpLength = 0.0;
+	float maxWarpUpdateLength = 0.0;
 	const std::string red("\033[0;31m");
 	const std::string green("\033[0;32m");
 	const std::string yellow("\033[0;33m");
@@ -210,15 +212,22 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #endif
 					Matrix3f warpJacobian;
 					Matrix3f warpHessian[3];// = {Matrix3f(), Matrix3f(), Matrix3f()};
-#ifndef WARP_BOUNDARY_SPECIAL_TREATMENT
-					ComputePerPointWarpJacobianAndHessian<TVoxelCanonical, TIndex, typename TIndex::IndexCache>(
-							canonicalVoxel.warp_t, originalPosition, canonicalVoxels, canonicalHashTable,
-							canonicalCache, warpJacobian, warpHessian);
-					//_DEBUG --only one of the above/below statements should remain in the end, prob. the one below
-#else
+#if defined(WARP_BOUNDARY_SPECIAL_TREATMENT)
+#if (WARP_BOUNDARY_SPECIAL_TREATMENT == 1)
 					ComputePerPointWarpJacobianAndHessianBoundariesV1<TVoxelCanonical, TIndex, typename TIndex::IndexCache>(
 							canonicalVoxel.warp_t, originalPosition, canonicalVoxels, canonicalHashTable,
 							canonicalCache, warpJacobian, warpHessian, boundary, printResult);
+					//_DEBUG --only one of the above/below statements should remain in the end, prob. the one below
+#elif (WARP_BOUNDARY_SPECIAL_TREATMENT == 2)
+					ComputePerPointWarpJacobianAndHessianBoundariesV2<TVoxelCanonical, TIndex, typename TIndex::IndexCache>(
+							canonicalVoxel.warp_t, originalPosition, canonicalVoxels, canonicalHashTable,
+							canonicalCache, warpJacobian, warpHessian, boundary, printResult);
+					//_DEBUG --only one of the above/below statements should remain in the end, prob. the one below
+#endif
+#else
+					ComputePerPointWarpJacobianAndHessian<TVoxelCanonical, TIndex, typename TIndex::IndexCache>(
+							canonicalVoxel.warp_t, originalPosition, canonicalVoxels, canonicalHashTable,
+							canonicalCache, warpJacobian, warpHessian);
 #ifdef PRINT_ADDITIONAL_STATS
 					if (boundary) boundaryVoxelCount++;
 #endif

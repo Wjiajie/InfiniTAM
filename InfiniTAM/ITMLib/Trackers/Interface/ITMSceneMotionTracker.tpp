@@ -42,6 +42,15 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(IT
 
 	//START _DEBUG
 
+	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderCanonicalSceneSlices(canonicalScene,
+	                                                                                         ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::AXIS_X,
+	                                                                                         "_X");
+	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderCanonicalSceneSlices(canonicalScene,
+	                                                                                         ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::AXIS_Y,
+	                                                                                         "_Y");
+	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderCanonicalSceneSlices(canonicalScene,
+	                                                                                         ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::AXIS_Z,
+	                                                                                         "_Z");
 #ifdef DRAW_IMAGE
 	std::cout << "Desired warp update (voxels) below " << maxVectorUpdateThresholdVoxels << std::endl;
 	cv::Mat canonicalImg =
@@ -66,7 +75,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(IT
 	//vox.warp_t = Vector3f(0,0,0);
 	//SetVoxel_CPU(*canonicalScene,testPos1,vox);
 
-	//AllocateBoundaryHashBlocks(canonicalScene);
+	AllocateBoundaryHashBlocks(canonicalScene);
 
 	for (int iteration = 0;
 	     maxVectorUpdate > maxVectorUpdateThresholdVoxels && iteration < maxIterationCount; iteration++) {

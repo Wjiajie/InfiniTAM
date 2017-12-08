@@ -26,6 +26,16 @@ class ITMSceneSliceRasterizer {
 
 	//TODO: positions of voxels to highlight / draw around should be defined extenally in the user code, not as class static members. -Greg (GitHub: Algomorph)
 public:
+
+	enum Axis{
+		AXIS_X = 0,
+		AXIS_Y = 1,
+		AXIS_Z = 3
+	};
+
+	static void
+	RenderCanonicalSceneSlices(ITMScene<TVoxelCanonical, TIndex>* scene, Axis axis, const std::string pathPostfix);
+	static void RenderLiveSceneSlices(ITMScene<TVoxelLive, TIndex>* scene, Axis axis);
 	static cv::Mat DrawCanonicalSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene);
 	static cv::Mat DrawLiveSceneImageAroundPoint(ITMScene<TVoxelLive, TIndex>* scene);
 	static cv::Mat DrawWarpedSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene);
@@ -39,12 +49,21 @@ public:
 	static const Vector3i testPos4;
 // where to save the images
 	static const std::string iterationFramesFolder;
+	static const std::string canonicalSceneRasterizedFolder;
+	static const std::string liveSceneRasterizedFolder;
 
 protected:
-	template<typename TTVoxel>
-	static cv::Mat DrawSceneImageAroundPoint(ITMScene<TTVoxel, TIndex>* scene);
-	template<typename TTVoxel>
-	static cv::Mat DrawWarpedSceneImageTemplated(ITMScene <TTVoxel, TIndex>* scene);
+	template<typename TVoxel>
+	static void RenderSceneSlices(ITMScene<TVoxel, TIndex>* scene,
+		                              Axis axis,
+		                              const std::string& outputFolder,
+		                              bool verbose = false);
+	template<typename TVoxel>
+	static void ComputeSceneVoxelBounds(ITMScene<TVoxel, TIndex>* scene, Vector3i& minVoxelPoint, Vector3i& maxVoxelPoint);
+	template<typename TVoxel>
+	static cv::Mat DrawSceneImageAroundPoint(ITMScene<TVoxel, TIndex>* scene);
+	template<typename TVoxel>
+	static cv::Mat DrawWarpedSceneImageTemplated(ITMScene <TVoxel, TIndex>* scene);
 
 
 	static Vector2i GetVoxelImgCoords(int x, int y);

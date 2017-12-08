@@ -5,7 +5,7 @@
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../../Utils/ITMPixelUtils.h"
 
-#define SET_BAND_OVERSHOOT_TO_NEGATIVE_1
+//#define SET_BAND_OVERSHOOT_TO_NEGATIVE_1
 
 template<class TVoxel>
 _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &voxel, const THREADPTR(Vector4f) & pt_model, const CONSTPTR(Matrix4f) & M_d,

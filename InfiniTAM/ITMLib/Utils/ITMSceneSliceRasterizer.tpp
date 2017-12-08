@@ -33,6 +33,12 @@ const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::tes
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolder =
 		"/media/algomorph/Data/4dmseg/Killing/iteration_frames/";
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const std::string ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::canonicalSceneRasterizedFolder =
+		"/media/algomorph/Data/4dmseg/Killing/canonical_rasterized";
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const std::string ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::liveSceneRasterizedFolder =
+		"/media/algomorph/Data/4dmseg/Killing/live_rasterized";
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const bool ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::absFillingStrategy = false;
@@ -41,11 +47,13 @@ const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imageSiz
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imageHalfSizeVoxels = imageSizeVoxels / 2;
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgRangeStartX = testPos1.x - imageHalfSizeVoxels;
+const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgRangeStartX =
+		testPos1.x - imageHalfSizeVoxels;
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgRangeEndX = testPos1.x + imageHalfSizeVoxels;
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgRangeStartY = testPos1.y - imageHalfSizeVoxels;
+const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgRangeStartY =
+		testPos1.y - imageHalfSizeVoxels;
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgRangeEndY = testPos1.y + imageHalfSizeVoxels;
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -60,14 +68,16 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const float ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgToVoxelScale = 16.0;
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgPixelRangeX = static_cast<int>(imgToVoxelScale * imgVoxelRangeX);
+const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgPixelRangeX = static_cast<int>(
+		imgToVoxelScale * imgVoxelRangeX);
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgPixelRangeY = static_cast<int>(imgToVoxelScale * imgVoxelRangeY);
+const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgPixelRangeY = static_cast<int>(
+		imgToVoxelScale * imgVoxelRangeY);
 
 // ============================================ END CONSTANT DEFINITIONS ===============================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-template <typename TVoxel>
+template<typename TVoxel>
 cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawSceneImageAroundPoint(
 		ITMScene<TVoxel, TIndex>* scene) {
 #ifdef IMAGE_BLACK_BACKGROUND
@@ -128,7 +138,8 @@ cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawSceneI
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 template<typename TVoxel>
-cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpedSceneImageTemplated(ITMScene<TVoxel, TIndex>* scene) {
+cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpedSceneImageTemplated(
+		ITMScene<TVoxel, TIndex>* scene) {
 #ifdef IMAGE_BLACK_BACKGROUND
 	//use if default voxel SDF value is -1.0
 	cv::Mat img = cv::Mat::zeros(imgPixelRangeX, imgPixelRangeY, CV_32F);
@@ -220,12 +231,14 @@ void ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSce
 		ITMScene<TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn,
 		Vector3i positionOfVoxelToMark) {
 	bool vmIndex;
-	TVoxelCanonical voxel = readVoxel(scene->localVBA.GetVoxelBlocks(), scene->index.GetEntries(), positionOfVoxelToMark, vmIndex);
+	TVoxelCanonical voxel = readVoxel(scene->localVBA.GetVoxelBlocks(), scene->index.GetEntries(),
+	                                  positionOfVoxelToMark, vmIndex);
 	Vector3f projectedPosition = positionOfVoxelToMark.toFloat() + voxel.warp_t;
 	Vector3i projectedPositionFloored = projectedPosition.toIntFloor();
 	if (!IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, positionOfVoxelToMark.z - 1) &&
 	    !IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, positionOfVoxelToMark.z) &&
-	    !IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, positionOfVoxelToMark.z + 1)) return;
+	    !IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, positionOfVoxelToMark.z + 1))
+		return;
 
 	Vector2i imgCoords = GetVoxelImgCoords(projectedPosition.x, projectedPosition.y);
 	const int voxelOnImageSize = static_cast<int>(imgToVoxelScale);
@@ -270,12 +283,196 @@ bool ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::IsVoxelBlockI
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::IsVoxelBlockInImgRangeTolerance(Vector3i blockVoxelCoords, int tolerance) {
+bool
+ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::IsVoxelBlockInImgRangeTolerance(Vector3i blockVoxelCoords,
+                                                                                              int tolerance) {
 	Vector3i& bvc0 = blockVoxelCoords;
 	Vector3i bvc1 = blockVoxelCoords + Vector3i(SDF_BLOCK_SIZE);
 	return !(imgZSlice >= bvc1.z || imgZSlice < bvc0.z) &&
 	       !(imgRangeStartX - tolerance >= bvc1.x || imgRangeEndX + tolerance < bvc0.x) &&
 	       !(imgRangeStartY - tolerance >= bvc1.y || imgRangeEndY + tolerance < bvc0.y);
+}
+
+//START _DEBUG
+#define TIC(var)\
+    auto start_##var = std::chrono::steady_clock::now();
+
+#define TOC(var)\
+    auto end_##var = std::chrono::steady_clock::now();\
+    auto diff_##var = end_##var - start_##var;\
+    var += std::chrono::duration <double, std::milli> (diff_##var).count();
+//end _DEBUG
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel>
+void
+ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlices(ITMScene<TVoxel, TIndex>* scene,
+                                                                                Axis axis,
+                                                                                const std::string& outputFolder,
+                                                                                bool verbose) {
+
+	Vector3i minPoint, maxPoint;
+
+	float timer;
+	TIC(timer);
+
+	ComputeSceneVoxelBounds<TVoxel>(scene, minPoint, maxPoint);
+	std::cout << "Voxel ranges ( min x,y,z; max x, y,z): " << minPoint << "; " << maxPoint << std::endl;
+
+	int imageSizeX, imageSizeY, imageSizeZ;
+	imageSizeX = maxPoint.x - minPoint.x;
+	imageSizeY = maxPoint.y - minPoint.y;
+	imageSizeZ = maxPoint.z - minPoint.z;
+
+	cv::Size imSize;
+	int imageCount = 0;
+	switch (axis) {
+		case AXIS_X:
+			imSize = cv::Size(imageSizeZ, imageSizeY);
+			imageCount = imageSizeX;
+			break;
+		case AXIS_Y:
+			imSize = cv::Size(imageSizeX, imageSizeZ);
+			imageCount = imageSizeY;
+			break;
+		case AXIS_Z:
+			imSize = cv::Size(imageSizeX, imageSizeY);
+			imageCount = imageSizeZ;
+			break;
+	}
+	std::vector<cv::Mat> images;
+	images.reserve(static_cast<unsigned long>(imageCount));
+
+	//generate image stack
+	for (int iImage = 0; iImage < imageCount; iImage++) {
+		images.push_back(cv::Mat::zeros(imSize, CV_8UC1));
+	}
+
+	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* hashTable = scene->index.GetEntries();
+	int noTotalEntries = scene->index.noTotalEntries;
+
+	//fill the images with awesomeness
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+
+		const ITMHashEntry& currentHashEntry = hashTable[entryId];
+
+		if (currentHashEntry.ptr < 0) continue;
+
+		//position of the current entry in 3D space
+		Vector3i currentHashBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+
+		TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+					Vector3i voxelPosition = currentHashBlockPositionVoxels + Vector3i(x, y, z);
+					Vector3i absoluteCoordinate = voxelPosition - minPoint; // move origin to minPoint
+					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+					TVoxel& voxel = localVoxelBlock[locId];
+					//determine pixel coordinate
+					Vector2i pixelCoordinate;
+					int iImage;
+					switch (axis) {
+						case AXIS_X:
+							//Y-Z plane
+							pixelCoordinate.x = absoluteCoordinate.z;
+							pixelCoordinate.y = absoluteCoordinate.y;
+							iImage = absoluteCoordinate.x;
+							break;
+						case AXIS_Y:
+							//Z-X plane
+							pixelCoordinate.x = absoluteCoordinate.x;
+							pixelCoordinate.y = absoluteCoordinate.z;
+							iImage = absoluteCoordinate.y;
+							break;
+						case AXIS_Z:
+							//X-Y plane
+							pixelCoordinate.x = absoluteCoordinate.x;
+							pixelCoordinate.y = absoluteCoordinate.y;
+							iImage = absoluteCoordinate.z;
+							break;
+					}
+					float sdfRepr = absFillingStrategy ? std::abs(voxel.sdf) : (voxel.sdf + 1.0) / 2.0;
+					images[iImage].at<uchar>(pixelCoordinate.y, pixelCoordinate.x) = static_cast<uchar>(sdfRepr *
+					                                                                                    255.0);
+
+				}
+			}
+		}
+	}
+	for (int iImage = 0; iImage < imageCount; iImage++) {
+		std::stringstream ss;
+		ss << outputFolder << "/slice" << std::setfill('0') << std::setw(5) << iImage << ".png";
+		cv::imwrite(ss.str(), images[iImage]);
+		if(verbose){
+			std::cout << "Writing " << ss.str() << std::endl;
+		}
+	}
+
+	TOC(timer);
+	if(verbose) {
+		std::cout << "Total time for rasterization procedure: " << timer << " ms." << std::endl;
+	}
+
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel>
+void
+ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::ComputeSceneVoxelBounds(ITMScene<TVoxel, TIndex>* scene,
+                                                                                      Vector3i& minVoxelPoint,
+                                                                                      Vector3i& maxVoxelPoint) {
+
+	minVoxelPoint = maxVoxelPoint = Vector3i(0);
+	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
+	int noTotalEntries = scene->index.noTotalEntries;
+
+	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+
+		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
+
+		if (currentHashEntry.ptr < 0) continue;
+
+		//position of the current entry in 3D space
+		Vector3i currentHashBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		Vector3i hashBlockLimitPositionVoxels = (currentHashEntry.pos.toInt() + Vector3i(1, 1, 1)) * SDF_BLOCK_SIZE;
+
+		if (minVoxelPoint.x > currentHashBlockPositionVoxels.x) {
+			minVoxelPoint.x = currentHashBlockPositionVoxels.x;
+		}
+		if (maxVoxelPoint.x < hashBlockLimitPositionVoxels.x) {
+			maxVoxelPoint.x = hashBlockLimitPositionVoxels.x;
+		}
+		if (minVoxelPoint.y > currentHashBlockPositionVoxels.y) {
+			minVoxelPoint.y = currentHashBlockPositionVoxels.y;
+		}
+		if (maxVoxelPoint.y < hashBlockLimitPositionVoxels.y) {
+			maxVoxelPoint.y = hashBlockLimitPositionVoxels.y;
+		}
+		if (minVoxelPoint.z > currentHashBlockPositionVoxels.z) {
+			minVoxelPoint.z = currentHashBlockPositionVoxels.z;
+		}
+		if (maxVoxelPoint.z < hashBlockLimitPositionVoxels.z) {
+			maxVoxelPoint.z = hashBlockLimitPositionVoxels.z;
+		}
+	}
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderCanonicalSceneSlices(ITMScene<TVoxelCanonical, TIndex>* scene, Axis axis, const std::string pathPostfix) {
+	RenderSceneSlices<TVoxelCanonical>(scene, axis, canonicalSceneRasterizedFolder + pathPostfix, false);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void
+ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderLiveSceneSlices(ITMScene<TVoxelLive, TIndex>* scene,
+                                                                                    Axis axis) {
+	RenderSceneSlices<TVoxelLive>(scene, axis, liveSceneRasterizedFolder, false);
 }
 
 
