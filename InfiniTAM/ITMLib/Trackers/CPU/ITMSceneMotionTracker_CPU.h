@@ -26,10 +26,10 @@ namespace ITMLib {
 	public:
 
 		explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params);
+		virtual ~ITMSceneMotionTracker_CPU();
 
 	protected:
 		//START _DEBUG
-
 
 		//timers
 		double timeWarpUpdateCompute = 0.0;
@@ -43,13 +43,14 @@ namespace ITMLib {
 		float
 		UpdateWarpField(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
 
-		void AllocateBoundaryHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene) override;
+		void AllocateBoundaryHashBlocks(
+				ITMScene <TVoxelCanonical, TIndex>* canonicalScene) override;
 		void EraseBoundaryHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene) override;
 
 		void FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
 
 	private:
-
+		ORUtils::MemoryBlock<bool> *entriesAllocFill;
 		ORUtils::MemoryBlock<unsigned char> *entriesAllocType;
 		ORUtils::MemoryBlock<Vector3s> *blockCoords;
 

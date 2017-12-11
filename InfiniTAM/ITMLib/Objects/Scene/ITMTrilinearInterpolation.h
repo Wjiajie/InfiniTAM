@@ -218,6 +218,44 @@ inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
 	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
 }
 
+//sdf without color, found/not
+template<class TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
+                                    const CONSTPTR(ITMHashEntry)* voxelHash,
+                                    const THREADPTR(Vector3f)& point,
+                                    THREADPTR(TCache)& cache,
+                                    THREADPTR(bool)& found) {
+	float sdfRes1, sdfRes2, sdfV1, sdfV2;
+	int vmIndex = false;
+	Vector3f coeff;
+	Vector3i pos;
+	found = false;
+	TO_INT_FLOOR3(pos, coeff, point);
+#define PROCESS_VOXEL(suffix, coord)\
+    {\
+        const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (coord), vmIndex, cache);\
+        sdfV##suffix = v.sdf;\
+		found = found | (vmIndex != 0);\
+    }
+	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
+	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
+	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
+	PROCESS_VOXEL(1, Vector3i(0, 1, 0))
+	PROCESS_VOXEL(2, Vector3i(1, 1, 0))
+	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
+	PROCESS_VOXEL(1, Vector3i(0, 0, 1))
+	PROCESS_VOXEL(2, Vector3i(1, 0, 1))
+	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
+	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
+	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
+	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
+#undef PROCESS_VOXEL
+	float sdf = TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
+
+	return sdf;
+}
+
 //sdf without color
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_

@@ -22,13 +22,13 @@ using namespace ITMLib;
 //====================================== DEFINE CONSTANTS ==============================================================
 // voxels to highlight and use as drawing canvas center
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos1 = Vector3i(54, -21, 286);
+const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos1 = Vector3i(-146, -34, 622);
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos2 = Vector3i(54, -20, 286);
+const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos2 = Vector3i(-17, -102, 271);
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos3 = Vector3i(53, -21, 286);
+const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos3 = Vector3i(-17, 153, 413);
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos4 = Vector3i(53, -20, 286);
+const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos4 = Vector3i(258, 8, 539);
 // where to save the images
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolder =
@@ -408,13 +408,13 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlices(
 		std::stringstream ss;
 		ss << outputFolder << "/slice" << std::setfill('0') << std::setw(5) << iImage << ".png";
 		cv::imwrite(ss.str(), images[iImage]);
-		if(verbose){
+		if (verbose) {
 			std::cout << "Writing " << ss.str() << std::endl;
 		}
 	}
 
 	TOC(timer);
-	if(verbose) {
+	if (verbose) {
 		std::cout << "Total time for rasterization procedure: " << timer << " ms." << std::endl;
 	}
 
@@ -464,7 +464,8 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::ComputeSceneVoxelB
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderCanonicalSceneSlices(ITMScene<TVoxelCanonical, TIndex>* scene, Axis axis, const std::string pathPostfix) {
+void ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderCanonicalSceneSlices(
+		ITMScene<TVoxelCanonical, TIndex>* scene, Axis axis, const std::string pathPostfix) {
 	RenderSceneSlices<TVoxelCanonical>(scene, axis, canonicalSceneRasterizedFolder + pathPostfix, false);
 }
 

@@ -27,7 +27,8 @@ namespace ITMLib {
 
 		virtual float UpdateWarpField(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 		                              ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
-		virtual void AllocateBoundaryHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene) = 0;
+		virtual void AllocateBoundaryHashBlocks(
+				ITMScene <TVoxelCanonical, TIndex>* canonicalScene) = 0;
 		virtual void EraseBoundaryHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene) = 0;
 
 

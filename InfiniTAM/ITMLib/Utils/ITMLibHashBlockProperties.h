@@ -25,9 +25,7 @@ namespace ITMLib {
 		NO_CHANGE = 0,
 		NEEDS_ALLOC_IN_ORDERED_LIST = 1,
 		NEEDS_ALLOC_IN_EXCESS_LIST = 2,
-		NEEDS_TO_BE_PRESERVED = 3,
-		DOESNT_NEED_ALLOCATION = 4,
-		IS_IN_BORDER_STATE = 5 //TODO: probably not needed -Greg (GitHub: Algomorph)
+		BOUNDARY_STATE = 3,
 	};
 	enum HashBlockPtrFlag : int {
 		ENTRY_REMOVED = -1,

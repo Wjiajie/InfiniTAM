@@ -41,7 +41,7 @@ ITMLibSettings::ITMLibSettings(void)
 	useApproximateRaycast = false;
 
 	/// enable or disable bilateral depth filtering
-	useBilateralFilter = true;
+	useBilateralFilter = false;
 
 	/// what to do on tracker failure: ignore, relocalise or stop integration - not supported in loop closure version
 	behaviourOnFailure = FAILUREMODE_IGNORE;
