@@ -39,7 +39,7 @@ static void CreateDefaultImageSource(ImageSourceEngine* & imageSource, IMUSource
 	if (strcmp(calibFile, "viewer") == 0)
 	{
 		imageSource = new BlankImageGenerator("", Vector2i(640, 480));
-		printf("starting in viewer mode: make sure to press n first to initiliase the views ... \n");
+		printf("starting in viewer mode: make sure to press n first to initialize the views ... \n");
 		return;
 	}
 

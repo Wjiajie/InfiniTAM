@@ -35,7 +35,9 @@ public:
 
 	static void
 	RenderCanonicalSceneSlices(ITMScene<TVoxelCanonical, TIndex>* scene, Axis axis, const std::string pathPostfix);
-	static void RenderLiveSceneSlices(ITMScene<TVoxelLive, TIndex>* scene, Axis axis);
+	static void RenderLiveSceneSlices(ITMScene<TVoxelLive, TIndex>* scene,
+		                                  Axis axis,
+		                                  const std::string pathPostfix);
 	static cv::Mat DrawCanonicalSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene);
 	static cv::Mat DrawLiveSceneImageAroundPoint(ITMScene<TVoxelLive, TIndex>* scene);
 	static cv::Mat DrawWarpedSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene);

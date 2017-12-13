@@ -22,11 +22,11 @@ using namespace ITMLib;
 //====================================== DEFINE CONSTANTS ==============================================================
 // voxels to highlight and use as drawing canvas center
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos1 = Vector3i(-146, -34, 622);
+const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos1 = Vector3i(-146, -34, 622);//
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos2 = Vector3i(-17, -102, 271);
+const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos2 = Vector3i(-146, -34, 622);//0.154574
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos3 = Vector3i(-17, 153, 413);
+const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos3 = Vector3i(-208, -27, 383);//0.0931224
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos4 = Vector3i(258, 8, 539);
 // where to save the images
@@ -326,18 +326,22 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlices(
 
 	cv::Size imSize;
 	int imageCount = 0;
+	int indexOffset = 0;
 	switch (axis) {
 		case AXIS_X:
 			imSize = cv::Size(imageSizeZ, imageSizeY);
 			imageCount = imageSizeX;
+			indexOffset = minPoint.x;
 			break;
 		case AXIS_Y:
 			imSize = cv::Size(imageSizeX, imageSizeZ);
 			imageCount = imageSizeY;
+			indexOffset = minPoint.y;
 			break;
 		case AXIS_Z:
 			imSize = cv::Size(imageSizeX, imageSizeY);
 			imageCount = imageSizeZ;
+			indexOffset = minPoint.z;
 			break;
 	}
 	std::vector<cv::Mat> images;
@@ -345,7 +349,7 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlices(
 
 	//generate image stack
 	for (int iImage = 0; iImage < imageCount; iImage++) {
-		images.push_back(cv::Mat::zeros(imSize, CV_8UC1));
+		images.push_back(cv::Mat::zeros(imSize, CV_8UC3));
 	}
 
 	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
@@ -397,8 +401,14 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlices(
 							break;
 					}
 					float sdfRepr = absFillingStrategy ? std::abs(voxel.sdf) : (voxel.sdf + 1.0) / 2.0;
-					images[iImage].at<uchar>(pixelCoordinate.y, pixelCoordinate.x) = static_cast<uchar>(sdfRepr *
-					                                                                                    255.0);
+					uchar colorChar = static_cast<uchar>(sdfRepr *255.0);
+					cv::Vec3b color = cv::Vec3b::all(colorChar);
+					if(voxelPosition == testPos1){
+						color.val[0] = 0;
+						color.val[2] = 0;
+						color.val[2] = static_cast<uchar>(255.0);
+					}
+					images[iImage].at<cv::Vec3b>(pixelCoordinate.y, pixelCoordinate.x) = color;
 
 				}
 			}
@@ -406,7 +416,7 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlices(
 	}
 	for (int iImage = 0; iImage < imageCount; iImage++) {
 		std::stringstream ss;
-		ss << outputFolder << "/slice" << std::setfill('0') << std::setw(5) << iImage << ".png";
+		ss << outputFolder << "/slice" << std::setfill('0') << std::setw(5) << iImage+indexOffset << ".png";
 		cv::imwrite(ss.str(), images[iImage]);
 		if (verbose) {
 			std::cout << "Writing " << ss.str() << std::endl;
@@ -472,8 +482,9 @@ void ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderCanonic
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
 ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderLiveSceneSlices(ITMScene<TVoxelLive, TIndex>* scene,
-                                                                                    Axis axis) {
-	RenderSceneSlices<TVoxelLive>(scene, axis, liveSceneRasterizedFolder, false);
+                                                                                    Axis axis,
+                                                                                    const std::string pathPostfix) {
+	RenderSceneSlices<TVoxelLive>(scene, axis, liveSceneRasterizedFolder + pathPostfix, false);
 }
 
 

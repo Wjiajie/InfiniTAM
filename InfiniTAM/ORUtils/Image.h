@@ -82,10 +82,39 @@ namespace ORUtils
 			std::swap(this->noDims, rhs.noDims);
 		}
 
+		friend bool operator== (const Image<T>& rhs, const Image<T>& lhs){
+			if(rhs.noDims != lhs.noDims || rhs.isAllocated_CPU != lhs.isAllocated_CPU || rhs.isAllocated_CUDA != lhs.isAllocated_CUDA){
+				return false;
+			}
+			if(rhs.isAllocated_CPU){
+				for(int iElement = 0; iElement < rhs.dataSize; iElement++){
+					T rhsElement = rhs.GetElement(iElement,MEMORYDEVICE_CPU);
+					T lhsElement = lhs.GetElement(iElement,MEMORYDEVICE_CPU);
+					if(rhsElement != lhsElement){
+						return false;
+					}
+				}
+			}else{
+				for(int iElement = 0; iElement < rhs.dataSize; iElement++){
+					T rhsElement = rhs.GetElement(iElement,MEMORYDEVICE_CUDA);
+					T lhsElement = lhs.GetElement(iElement,MEMORYDEVICE_CUDA);
+					if(rhsElement != lhsElement){
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+
+		friend bool operator!= (const Image<T>& rhs, const Image<T>& lhs){
+			return !(rhs == lhs);
+		}
+
 		// Suppress the default copy constructor and assignment operator
 		Image(const Image&);
 		Image& operator=(const Image&);
 	};
+
 }
 
 #endif
