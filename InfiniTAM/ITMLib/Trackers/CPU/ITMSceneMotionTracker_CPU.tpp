@@ -286,6 +286,12 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					float warpUpdateLength = length(warpUpdate);//meters
 					//_DEBUG
 					float warpLength = ORUtils::length(canonicalVoxel.warp_t - warpUpdate);
+					float warpUpdateToggle = ORUtils::length(canonicalVoxel.warp_t_update + warpUpdate);
+					float warpUpdateDiff = ORUtils::length(canonicalVoxel.warp_t_update - warpUpdate);
+					//TODO: this is a bad way to do convergence. Use something like Adam instead, maybe? --Greg
+					if(warpUpdateToggle < 0.01 && warpUpdateDiff > 0.05){
+						warpUpdate *= 0.5;
+					}
 
 					//need thread lock here to ensure atomic updates to maxWarpUpdateLength
 #ifdef WITH_OPENMP
@@ -572,8 +578,8 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateBou
 	uchar* entriesAllocType = this->canonicalEntriesAllocType->GetData(MEMORYDEVICE_CPU);
 	AllocateBoundaryHashBlocks<TVoxelCanonical>(canonicalScene,entriesAllocType);
 	entriesAllocType = this->liveEntriesAllocType->GetData(MEMORYDEVICE_CPU);
-	memset(entriesAllocType, ITMLib::NO_CHANGE, static_cast<size_t>(TIndex::noTotalEntries));
-	AllocateBoundaryHashBlocks<TVoxelLive>(liveScene,entriesAllocType);
+	//memset(entriesAllocType, ITMLib::NO_CHANGE, static_cast<size_t>(TIndex::noTotalEntries));
+//	AllocateBoundaryHashBlocks<TVoxelLive>(liveScene,entriesAllocType);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

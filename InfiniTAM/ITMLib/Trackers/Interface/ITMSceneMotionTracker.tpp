@@ -21,9 +21,9 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv/cv.hpp>
 //_DEBUG (local)
-#define RASTERIZE_CANONICAL_SCENE
-#define RASTERIZE_LIVE_SCENE
-#define DRAW_IMAGE
+//#define RASTERIZE_CANONICAL_SCENE
+//#define RASTERIZE_LIVE_SCENE
+//#define DRAW_IMAGE
 #if defined(DRAW_IMAGE) || defined(RASTERIZE_CANONICAL_SCENE) || defined(RASTERIZE_LIVE_SCENE)
 
 #include "../../Utils/ITMSceneSliceRasterizer.h"
