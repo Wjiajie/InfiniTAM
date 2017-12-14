@@ -22,7 +22,7 @@ using namespace ITMLib;
 //====================================== DEFINE CONSTANTS ==============================================================
 // voxels to highlight and use as drawing canvas center
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos1 = Vector3i(-146, -34, 622);//
+const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos1 = Vector3i(-208, -27, 383);//
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos2 = Vector3i(-146, -34, 622);//0.154574
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -405,7 +405,7 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlices(
 					cv::Vec3b color = cv::Vec3b::all(colorChar);
 					if(voxelPosition == testPos1){
 						color.val[0] = 0;
-						color.val[2] = 0;
+						color.val[1] = 0;
 						color.val[2] = static_cast<uchar>(255.0);
 					}
 					images[iImage].at<cv::Vec3b>(pixelCoordinate.y, pixelCoordinate.x) = color;

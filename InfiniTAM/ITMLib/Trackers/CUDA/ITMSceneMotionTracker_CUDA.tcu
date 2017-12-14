@@ -85,13 +85,6 @@ ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionT
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::AllocateBoundaryHashBlocks(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::AllocateBoundaryHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 	DIEWITHEXCEPTION("Scene boundary voxel allocation not yet implemented");
-}
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::EraseBoundaryHashBlocks(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
-	DIEWITHEXCEPTION("Scene boundary voxel erasing not yet implemented");
 }

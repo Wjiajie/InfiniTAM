@@ -21,36 +21,40 @@
 #include "../../Objects/Scene/ITMScene.h"
 
 namespace ITMLib {
-	template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-	class ITMSceneMotionTracker {
-	protected:
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+class ITMSceneMotionTracker {
+protected:
 
-		virtual float UpdateWarpField(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-		                              ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
-		virtual void AllocateBoundaryHashBlocks(
-				ITMScene <TVoxelCanonical, TIndex>* canonicalScene) = 0;
+	virtual float UpdateWarpField(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+	                              ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
+
+	virtual void AllocateBoundaryHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+	                                        ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
 
 
-		virtual void FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
-		//TODO -- make all of these parameters
-		const int maxIterationCount = 800;
-		const float maxVectorUpdateThresholdMeters = 0.0001f;//m
-		const float gradientDescentLearningRate = 0.1f;
-		const float rigidityEnforcementFactor = 0.1f;
-		const float weightKillingTerm = 0.5f;
-		const float weightLevelSetTerm = 0.2f;
-		const float weightColorDataTerm = 0.0f;
-		//_DEBUG
-		const float colorSdfThreshold = -1.00f;
-		//const float colorSdfThreshold = 0.25f;
-		const float epsilon = FLT_EPSILON;
+	virtual void
+	FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
 
-		float maxVectorUpdateThresholdVoxels;
-	public:
-		explicit ITMSceneMotionTracker(const ITMSceneParams& params);
-		void ProcessFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-		                  ITMScene <TVoxelLive, TIndex>* liveScene);
-	};
+	//TODO -- make all of these parameters
+	const int maxIterationCount = 800;
+	const float maxVectorUpdateThresholdMeters = 0.0001f;//m
+	const float gradientDescentLearningRate = 0.1f;
+	const float rigidityEnforcementFactor = 0.1f;
+	const float weightKillingTerm = 0.5f;
+	const float weightLevelSetTerm = 0.2f;
+	const float weightColorDataTerm = 0.0f;
+	//_DEBUG
+	const float colorSdfThreshold = -1.00f;
+	//const float colorSdfThreshold = 0.25f;
+	const float epsilon = FLT_EPSILON;
+
+	float maxVectorUpdateThresholdVoxels;
+public:
+	explicit ITMSceneMotionTracker(const ITMSceneParams& params);
+
+	void ProcessFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+	                  ITMScene <TVoxelLive, TIndex>* liveScene);
+};
 
 
 }//namespace ITMLib

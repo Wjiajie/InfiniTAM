@@ -21,8 +21,8 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv/cv.hpp>
 //_DEBUG (local)
-//#define RASTERIZE_CANONICAL_SCENE
-//#define RASTERIZE_LIVE_SCENE
+#define RASTERIZE_CANONICAL_SCENE
+#define RASTERIZE_LIVE_SCENE
 #define DRAW_IMAGE
 #if defined(DRAW_IMAGE) || defined(RASTERIZE_CANONICAL_SCENE) || defined(RASTERIZE_LIVE_SCENE)
 
@@ -43,7 +43,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 		ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	float maxVectorUpdate = std::numeric_limits<float>::infinity();
-	AllocateBoundaryHashBlocks(canonicalScene);
+	AllocateBoundaryHashBlocks(canonicalScene, liveScene);
 	//START _DEBUG
 #ifdef RASTERIZE_CANONICAL_SCENE
 	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderCanonicalSceneSlices(
