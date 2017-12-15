@@ -110,7 +110,7 @@ namespace ITMLib {
 						voxelDest.clr = voxelSource.clr;
 						voxelDest.w_color = voxelSource.w_color;
 						voxelDest.w_depth = voxelSource.w_depth;
-						voxelDest.confidence = voxelSource.confidence;
+						//voxelDest.confidence = voxelSource.confidence;
 						SetVoxel_CPU<ITMVoxelLive, ITMVoxelIndex>(destination, offsetPosition, voxelDest);
 					}
 				}

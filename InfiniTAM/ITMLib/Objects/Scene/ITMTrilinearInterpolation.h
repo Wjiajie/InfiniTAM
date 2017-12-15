@@ -15,60 +15,60 @@
 //  ================================================================
 #pragma once
 
-
-//pick maximum weights, get confidence
-template<class TVoxel, typename TCache>
-_CPU_AND_GPU_CODE_
-inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
-                                    const CONSTPTR(ITMHashEntry)* hashIndex,
-                                    const THREADPTR(Vector3f)& point,
-                                    THREADPTR(TCache)& cache,
-                                    THREADPTR(Vector3f)& color,
-                                    THREADPTR(int)& wDepth,
-                                    THREADPTR(int)& wColor,
-                                    THREADPTR(float)& confidence) {
-	float sdfRes1, sdfRes2, sdfV1, sdfV2;
-	Vector3f colorRes1, colorRes2, colorV1, colorV2;
-	float confRes1, confRes2, confV1, confV2;
-	int vmIndex = false;
-	Vector3f coeff;
-	Vector3i pos;
-	TO_INT_FLOOR3(pos, coeff, point);
-
-#define PROCESS_VOXEL(suffix, coord)\
-    {\
-        const TVoxel& v = readVoxel(voxelData, hashIndex, pos + (coord), vmIndex, cache);\
-        sdfV##suffix = v.sdf;\
-        colorV##suffix = TO_FLOAT3(v.clr);\
-        confV##suffix = v.confidence;\
-        if (v.w_depth > wDepth) wDepth = v.w_depth;\
-        if (v.w_color > wColor) wColor = v.w_color;\
-    }
-	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
-	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
-	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
-	colorRes1 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
-	confRes1 = (1.0f - coeff.x) * confV1 + coeff.x * confV2;
-	PROCESS_VOXEL(1, Vector3i(0, 1, 0))
-	PROCESS_VOXEL(2, Vector3i(1, 1, 0))
-	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
-	colorRes1 = (1.0f - coeff.y) * colorRes1 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
-	confRes1 = (1.0f - coeff.y) * confRes1 + coeff.y * ((1.0f - coeff.x) * confV1 + coeff.x * confV2);
-	PROCESS_VOXEL(1, Vector3i(0, 0, 1))
-	PROCESS_VOXEL(2, Vector3i(1, 0, 1))
-	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
-	colorRes2 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
-	confRes2 = (1.0f - coeff.x) * confV1 + coeff.x * confV2;
-	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
-	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
-	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
-	colorRes2 = (1.0f - coeff.y) * colorRes2 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
-	confRes2 = (1.0f - coeff.y) * confRes2 + coeff.y * ((1.0f - coeff.x) * confV1 + coeff.x * confV2);
-	color = ((1.0f - coeff.z) * colorRes1 + coeff.z * colorRes2) / 255.0f;
-	confidence = (1.0f - coeff.z) * confRes1 + coeff.z * confRes2;
-#undef PROCESS_VOXEL
-	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
-}
+//
+////pick maximum weights, get confidence
+//template<class TVoxel, typename TCache>
+//_CPU_AND_GPU_CODE_
+//inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
+//                                    const CONSTPTR(ITMHashEntry)* hashIndex,
+//                                    const THREADPTR(Vector3f)& point,
+//                                    THREADPTR(TCache)& cache,
+//                                    THREADPTR(Vector3f)& color,
+//                                    THREADPTR(int)& wDepth,
+//                                    THREADPTR(int)& wColor,
+//                                    THREADPTR(float)& confidence) {
+//	float sdfRes1, sdfRes2, sdfV1, sdfV2;
+//	Vector3f colorRes1, colorRes2, colorV1, colorV2;
+//	float confRes1, confRes2, confV1, confV2;
+//	int vmIndex = false;
+//	Vector3f coeff;
+//	Vector3i pos;
+//	TO_INT_FLOOR3(pos, coeff, point);
+//
+//#define PROCESS_VOXEL(suffix, coord)\
+//    {\
+//        const TVoxel& v = readVoxel(voxelData, hashIndex, pos + (coord), vmIndex, cache);\
+//        sdfV##suffix = v.sdf;\
+//        colorV##suffix = TO_FLOAT3(v.clr);\
+//        confV##suffix = v.confidence;\
+//        if (v.w_depth > wDepth) wDepth = v.w_depth;\
+//        if (v.w_color > wColor) wColor = v.w_color;\
+//    }
+//	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
+//	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
+//	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
+//	colorRes1 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
+//	confRes1 = (1.0f - coeff.x) * confV1 + coeff.x * confV2;
+//	PROCESS_VOXEL(1, Vector3i(0, 1, 0))
+//	PROCESS_VOXEL(2, Vector3i(1, 1, 0))
+//	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
+//	colorRes1 = (1.0f - coeff.y) * colorRes1 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
+//	confRes1 = (1.0f - coeff.y) * confRes1 + coeff.y * ((1.0f - coeff.x) * confV1 + coeff.x * confV2);
+//	PROCESS_VOXEL(1, Vector3i(0, 0, 1))
+//	PROCESS_VOXEL(2, Vector3i(1, 0, 1))
+//	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
+//	colorRes2 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
+//	confRes2 = (1.0f - coeff.x) * confV1 + coeff.x * confV2;
+//	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
+//	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
+//	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
+//	colorRes2 = (1.0f - coeff.y) * colorRes2 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
+//	confRes2 = (1.0f - coeff.y) * confRes2 + coeff.y * ((1.0f - coeff.x) * confV1 + coeff.x * confV2);
+//	color = ((1.0f - coeff.z) * colorRes1 + coeff.z * colorRes2) / 255.0f;
+//	confidence = (1.0f - coeff.z) * confRes1 + coeff.z * confRes2;
+//#undef PROCESS_VOXEL
+//	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
+//}
 
 //pick maximum weights, get confidence
 template<class TVoxel, typename TCache>

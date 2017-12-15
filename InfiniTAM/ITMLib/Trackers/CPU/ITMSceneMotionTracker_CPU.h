@@ -43,8 +43,8 @@ namespace ITMLib {
 		float
 		UpdateWarpField(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
 
-		void AllocateBoundaryHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-				                                ITMScene <TVoxelLive, TIndex>* liveScene) override;
+		void AllocateNewCanonicalHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+		                                    ITMScene<TVoxelLive, TIndex>* liveScene) override;
 
 
 		void FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;

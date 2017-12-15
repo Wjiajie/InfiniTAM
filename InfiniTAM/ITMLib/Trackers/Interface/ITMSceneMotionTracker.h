@@ -28,8 +28,8 @@ protected:
 	virtual float UpdateWarpField(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                              ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
 
-	virtual void AllocateBoundaryHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-	                                        ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
+	virtual void AllocateNewCanonicalHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+	                                            ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
 
 
 	virtual void

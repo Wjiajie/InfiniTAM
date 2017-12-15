@@ -289,7 +289,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					float warpUpdateToggle = ORUtils::length(canonicalVoxel.warp_t_update + warpUpdate);
 					float warpUpdateDiff = ORUtils::length(canonicalVoxel.warp_t_update - warpUpdate);
 					//TODO: this is a bad way to do convergence. Use something like Adam instead, maybe? --Greg
-					if(warpUpdateToggle < 0.01 && warpUpdateDiff > 0.05){
+					if (warpUpdateToggle < 0.01 && warpUpdateDiff > 0.05) {
 						warpUpdate *= 0.5;
 					}
 
@@ -525,7 +525,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					int liveWDepth, liveWColor;
 					float liveConfidence;
 					float liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache,
-					                                       liveColor, liveWDepth, liveWColor, liveConfidence);
+					                                       liveColor, liveWDepth, liveWColor);
 
 					float newSdf = oldWDepth * oldSdf + liveWDepth * liveSdf;
 					float newWDepth = oldWDepth + liveWDepth;
@@ -574,12 +574,16 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneMotionT
 
 //========================================= END CONSTRUCTORS AND DESTRUCTORS============================================
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateBoundaryHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNewCanonicalHashBlocks(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 	uchar* entriesAllocType = this->canonicalEntriesAllocType->GetData(MEMORYDEVICE_CPU);
-	AllocateBoundaryHashBlocks<TVoxelCanonical>(canonicalScene,entriesAllocType);
+	AllocateBoundaryHashBlocks<TVoxelCanonical>(canonicalScene, entriesAllocType);
 	entriesAllocType = this->liveEntriesAllocType->GetData(MEMORYDEVICE_CPU);
+	/*TODO: determine whether the below code really needs to be there.
+	 If not, remove the templated version of the AllocateBoundaryHashBlocks (unneded complexity due to template)
+	 -Greg (GitHub: Algomorph)*/
 	//memset(entriesAllocType, ITMLib::NO_CHANGE, static_cast<size_t>(TIndex::noTotalEntries));
-//	AllocateBoundaryHashBlocks<TVoxelLive>(liveScene,entriesAllocType);
+//	AllocateNewCanonicalHashBlocks<TVoxelLive>(liveScene,entriesAllocType);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

@@ -17,7 +17,7 @@ typedef ITMLib::ITMSurfel_rgb ITMSurfelT;
 */
 typedef ITMVoxel_f_dynamic ITMVoxel;
 typedef ITMVoxel_f_dynamic ITMVoxelCanonical;
-typedef ITMVoxel_f_rgb_conf ITMVoxelLive;
+typedef ITMVoxel_f_rgb ITMVoxelLive;
 
 
 /** This chooses the way the voxels are addressed and indexed. At the moment,

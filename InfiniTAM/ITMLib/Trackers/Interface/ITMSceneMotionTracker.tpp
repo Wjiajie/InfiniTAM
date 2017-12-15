@@ -43,7 +43,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 		ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	float maxVectorUpdate = std::numeric_limits<float>::infinity();
-	AllocateBoundaryHashBlocks(canonicalScene, liveScene);
+	AllocateNewCanonicalHashBlocks(canonicalScene, liveScene);
 	//START _DEBUG
 #ifdef RASTERIZE_CANONICAL_SCENE
 	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderCanonicalSceneSlices(
