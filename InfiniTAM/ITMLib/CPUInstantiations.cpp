@@ -43,12 +43,16 @@ namespace ITMLib
 	template class ITMSwappingEngine_CPU<ITMVoxel, ITMVoxelIndex>;
 
 	//dynamic-fusion-specific
+	template class ITMSwappingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 	template class ITMKillingEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 	template class ITMDenseDynamicMapper<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 	template class ITMSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 	template class ITMSceneReconstructionEngine_CPU<ITMVoxelLive, ITMVoxelIndex>;
 	template class ITMSceneMotionTracker<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 	template class ITMSceneMotionTracker_CPU<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+	template class ITMVisualisationEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
+	template class ITMVisualisationEngine_CPU<ITMVoxelLive, ITMVoxelIndex>;
+	template class ITMMeshingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 
 	//surfel fusion
 	template class ITMDenseSurfelMapper<ITMSurfel_grey>;
@@ -72,10 +76,10 @@ namespace ITMLib
 	//scene manipulation functions
 	template void CopySceneWithOffset_CPU<ITMVoxelCanonical,ITMVoxelIndex>(
 			ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& destination,
-			ITMScene<ITMVoxel, ITMVoxelIndex>& source, Vector3i offset);
+			ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& source, Vector3i offset);
 	template bool SetVoxel_CPU<ITMVoxelCanonical,ITMVoxelIndex>(ITMScene<ITMVoxelCanonical,
 			ITMVoxelIndex>& scene, Vector3i at, ITMVoxelCanonical voxel);
 	template bool SetVoxel_CPU<ITMVoxelLive,ITMVoxelIndex>(ITMScene<ITMVoxelLive, ITMVoxelIndex>& scene,
 	                                                       Vector3i at, ITMVoxelLive voxel);
-	template ITMVoxel ReadVoxel<ITMVoxelCanonical,ITMVoxelIndex>(ITMScene<ITMVoxel, ITMVoxelIndex>& scene, Vector3i at);
+	//template ITMVoxel ReadVoxel<ITMVoxelCanonical,ITMVoxelIndex>(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& scene, Vector3i at);
 }

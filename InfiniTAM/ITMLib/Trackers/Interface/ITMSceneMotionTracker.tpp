@@ -125,6 +125,9 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 
 		std::cout << " Max update: " << maxVectorUpdate << std::endl;
 	}
+	//_DEBUG
+	canonicalScene->SaveToDirectory("/media/algomorph/Data/4dmseg/Killing/scene_canonical_saved/");
+	liveScene->SaveToDirectory("/media/algomorph/Data/4dmseg/Killing/scene_live_saved");
 
 	this->FuseFrame(canonicalScene, liveScene);
 }

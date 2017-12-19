@@ -55,7 +55,6 @@ namespace ITMLib {
 
 		ORUtils::MemoryBlock<bool> *entriesAllocFill;
 		ORUtils::MemoryBlock<unsigned char> *canonicalEntriesAllocType;
-		ORUtils::MemoryBlock<unsigned char> *liveEntriesAllocType;
 		ORUtils::MemoryBlock<Vector3s> *blockCoords;
 
 	};

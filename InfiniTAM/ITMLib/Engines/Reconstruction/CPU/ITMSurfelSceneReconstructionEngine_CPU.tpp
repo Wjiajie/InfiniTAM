@@ -30,7 +30,7 @@ void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::AddNewSurfels(ITMSurfelSce
     newPointsPrefixSum[i] = newPointsPrefixSum[i-1] + newPointsMask[i-1];
   }
 
-  // Add the new surfels to the canonical_scene.
+  // Add the new surfels to the scene.
   const size_t newSurfelCount = static_cast<size_t>(newPointsPrefixSum[pixelCount]);
   TSurfel *newSurfels = scene->AllocateSurfels(newSurfelCount);
   if(newSurfels == NULL) return;
@@ -119,7 +119,7 @@ void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::MarkBadSurfels(ITMSurfelSc
 {
   const int surfelCount = static_cast<int>(scene->GetSurfelCount());
 
-  // If the canonical_scene is empty, early out.
+  // If the scene is empty, early out.
   if(surfelCount == 0) return;
 
   const ITMSurfelSceneParams& sceneParams = scene->GetParams();
@@ -249,9 +249,9 @@ void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::PreprocessDepthMap(const I
 template <typename TSurfel>
 void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::RemoveMarkedSurfels(ITMSurfelScene<TSurfel> *scene) const
 {
-  // Remove marked surfels from the canonical_scene.
+  // Remove marked surfels from the scene.
   // TODO: This is is currently unimplemented on CPU. It's not worth implementing it at the moment,
-  // because we're going to need to change the canonical_scene representation to something better anyway.
+  // because we're going to need to change the scene representation to something better anyway.
 }
 
 }

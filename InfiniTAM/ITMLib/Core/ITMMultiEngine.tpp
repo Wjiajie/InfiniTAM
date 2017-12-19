@@ -118,7 +118,7 @@ ITMTrackingState* ITMMultiEngine<TVoxel, TIndex>::GetTrackingState(void)
 	return mapManager->getLocalMap(idx)->trackingState;
 }
 
-// -whenever a new local canonical_scene is added, add to list of "to be established 3D relations"
+// -whenever a new local scene is added, add to list of "to be established 3D relations"
 // - whenever a relocalisation is detected, add to the same list, preserving any existing information on that 3D relation
 //
 // - for all 3D relations to be established :
@@ -231,7 +231,7 @@ ITMTrackingState::TrackingResult ITMMultiEngine<TVoxel, TIndex>::ProcessFrame(IT
 			int dataId = todoList[i].dataId;
 
 #ifdef DEBUG_MULTISCENE
-			int blocksInUse = currentLocalMap->canonical_scene->index.getNumAllocatedVoxelBlocks() - currentLocalMap->canonical_scene->localVBA.lastFreeBlockId - 1;
+			int blocksInUse = currentLocalMap->scene->index.getNumAllocatedVoxelBlocks() - currentLocalMap->scene->localVBA.lastFreeBlockId - 1;
 			fprintf(stderr, " %i%s (%i)", currentLocalMapIdx, (todoList[i].dataId == primaryDataIdx) ? "*" : "", blocksInUse);
 #endif
 

@@ -150,14 +150,14 @@ void ITMBasicEngine<TVoxel, TIndex>::LoadFromFile()
 		throw std::runtime_error("Could not load relocaliser: " + std::string(e.what()));
 	}
 
-	try // load canonical_scene
+	try // load scene
 	{
 		scene->LoadFromDirectory(sceneInputDirectory);
 	}
 	catch (std::runtime_error &e)
 	{
 		denseMapper->ResetScene(scene);
-		throw std::runtime_error("Could not load canonical_scene:" + std::string(e.what()));
+		throw std::runtime_error("Could not load scene:" + std::string(e.what()));
 	}
 }
 

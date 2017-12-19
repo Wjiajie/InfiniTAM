@@ -22,41 +22,41 @@ namespace ITMLib
 	private:
 		const ITMLibSettings *settings;
 
-		bool trackingActive, fusionActive, mainProcessingActive, trackingInitialised, fusionInitialized;
+		bool trackingActive, fusionActive, mainProcessingActive, trackingInitialised;
 		int framesProcessed, relocalisationCount;
 
-		ITMLowLevelEngine *lowLevelEngine;
-		ITMVisualisationEngine<TVoxelCanonical, TIndex> *visualisationEngine;
+		ITMLowLevelEngine* lowLevelEngine;
+		ITMVisualisationEngine<TVoxelLive, TIndex>* visualisationEngine;
 
-		ITMMeshingEngine<TVoxelCanonical, TIndex> *meshingEngine;
+		ITMMeshingEngine<TVoxelCanonical, TIndex>* meshingEngine;
 
-		ITMViewBuilder *viewBuilder;
-		ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex> *denseMapper;
-		ITMTrackingController *trackingController;
+		ITMViewBuilder* viewBuilder;
+		ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>* denseMapper;
+		ITMTrackingController* trackingController;
 
-		ITMScene<TVoxelCanonical, TIndex> *canonical_scene;
-		ITMScene<ITMVoxelLive, TIndex> *live_scene;
-		ITMRenderState *renderState_live;
-		ITMRenderState *renderState_freeview;
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
+		ITMScene<TVoxelLive, TIndex>* liveScene;
+		ITMRenderState* renderState_live;
+		ITMRenderState* renderState_freeview;
 
-		ITMTracker *tracker;
-		ITMIMUCalibrator *imuCalibrator;
+		ITMTracker* tracker;
+		ITMIMUCalibrator* imuCalibrator;
 
-		FernRelocLib::Relocaliser<float> *relocaliser;
-		ITMUChar4Image *kfRaycast;
+		FernRelocLib::Relocaliser<float>* relocaliser;
+		ITMUChar4Image* kfRaycast;
 
 		/// Pointer for storing the current input frame
-		ITMView *view;
+		ITMView* view;
 
 		/// Pointer to the current camera pose and additional tracking information
-		ITMTrackingState *trackingState;
+		ITMTrackingState* trackingState;
 
 	public:
 		ITMView* GetView(void) { return view; }
 		ITMTrackingState* GetTrackingState(void) { return trackingState; }
 
 		/// Gives access to the internal world representation
-		ITMScene<TVoxelCanonical, TIndex>* GetScene(void) { return canonical_scene; }
+		ITMScene<TVoxelCanonical, TIndex>* GetScene(void) { return canonicalScene; }
 
 		ITMTrackingState::TrackingResult ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement = NULL);
 

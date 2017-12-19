@@ -557,22 +557,30 @@ inline void ComputePerPointWarpJacobianAndHessian(const CONSTPTR(Vector3f)& orig
 	}
 };
 
-template<typename TCache>
+
+//TODO: refactor so this just simply returns the resulting allocation type (and updates hashIdx) -Greg (GitHub: Algomorph)
+/**
+ * \brief Determines whether the hash block at the specified block position needs it's voxels to be allocated, as well
+ * as whether they should be allocated in the excess list or the ordered list of the hash table.
+ * \param[in,out] entriesAllocType  array where to set the allocation type at final hashIdx index
+ * \param[in,out] blockCoords  array block coordinates for the new hash blocks at final hashIdx index
+ * \param[in,out] hashIdx  final index of the hash block to be allocated (may be updated based on hash closed chaining)
+ * \param[in] hashBlockPosition  position of the hash block to check / allocate
+ * \param[in] hashTable  hash table with existing blocks
+ * \return true if the block needs allocation, false otherwise
+ */
 _CPU_AND_GPU_CODE_
-inline void ComputeHashBlockAllocType(DEVICEPTR(uchar)* entriesAllocType,
-                                      DEVICEPTR(Vector3s)* blockCoords,
-                                      THREADPTR(int)& hashIdx,
-                                      const CONSTPTR(Vector3s)& hashBlockPosition,
-                                      const CONSTPTR(ITMHashEntry)* hashTable,
-                                      THREADPTR(TCache)& cache) {
+inline bool NeedsAllocation(DEVICEPTR(uchar)* entriesAllocType,
+                            DEVICEPTR(Vector3s)* blockCoords,
+                            THREADPTR(int)& hashIdx,
+                            const CONSTPTR(Vector3s)& hashBlockPosition,
+                            const CONSTPTR(ITMHashEntry)* hashTable) {
 
 
 	ITMHashEntry hashEntry = hashTable[hashIdx];
 	//check if hash table contains entry
 
 	if (!(IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1)) {
-		bool isFound = false;
-		bool isExcess = false;
 		if (hashEntry.ptr >= -1) {
 			//search excess list only if there is no room in ordered part
 			while (hashEntry.offset >= 1) {
@@ -580,19 +588,18 @@ inline void ComputeHashBlockAllocType(DEVICEPTR(uchar)* entriesAllocType,
 				hashEntry = hashTable[hashIdx];
 
 				if (IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1) {
-					isFound = true;
-					break;
+					return false;
 				}
 			}
-			isExcess = true;
-		}
-		if (!isFound) {
-			//still not found
-			entriesAllocType[hashIdx] = isExcess ?
-			                            ITMLib::NEEDS_ALLOC_IN_EXCESS_LIST :
-			                            ITMLib::NEEDS_ALLOC_IN_ORDERED_LIST; //needs allocation
+			entriesAllocType[hashIdx] = ITMLib::NEEDS_ALLOC_IN_EXCESS_LIST;
 			blockCoords[hashIdx] = hashBlockPosition;
+			return true;
 		}
+		entriesAllocType[hashIdx] = ITMLib::NEEDS_ALLOC_IN_ORDERED_LIST;
+		blockCoords[hashIdx] = hashBlockPosition;
+		return true;
 	}
+	// already have hash block, no allocation needed
+	return false;
 
 };

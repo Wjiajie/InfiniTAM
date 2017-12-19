@@ -92,7 +92,7 @@ namespace ITMLib
 			makers.push_back(Maker("imuicp", "Combined IMU and depth based ICP tracker", TRACKER_IMU, &MakeIMUTracker));
 			makers.push_back(Maker("extendedimu", "Combined IMU and depth + colour ICP tracker", TRACKER_EXTENDEDIMU, &MakeExtendedIMUTracker));
 			makers.push_back(Maker("forcefail", "Force fail tracker", TRACKER_FORCEFAIL, &MakeForceFailTracker));
-			makers.push_back(Maker("killing", "Dynamic canonical_scene tracker with softened Killing constraint", TRACKER_KILLING, &MakeKillingTracker));
+			makers.push_back(Maker("killing", "Dynamic scene tracker with softened Killing constraint", TRACKER_KILLING, &MakeKillingTracker));
 		}
 
 	public:
@@ -377,7 +377,7 @@ namespace ITMLib
 			case ITMLibSettings::DEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
 				ret = new TTracker_METAL(imgSize_d, imgSize_rgb, useDepth, useColour, colourWeight, &(levels[0]), static_cast<int>(levels.size()), smallStepSizeCriterion, failureDetectorThd,
-				canonical_scene->sceneParams->viewFrustum_min, canonical_scene->sceneParams->viewFrustum_max, tukeyCutOff, framesToSkip, framesToWeight, lowLevelEngine);
+				scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, tukeyCutOff, framesToSkip, framesToWeight, lowLevelEngine);
 #endif
 				break;
 		}

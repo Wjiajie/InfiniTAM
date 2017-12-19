@@ -43,8 +43,8 @@ void ITMColorTracker::TrackCamera(ITMTrackingState *trackingState, const ITMView
 
 	trackingState->pose_d->Coerce();
 
-	//printf(">> %f %f %f %f %f %f\n", canonical_scene->pose->params.each.rx, canonical_scene->pose->params.each.ry, canonical_scene->pose->params.each.rz,
-	//	canonical_scene->pose->params.each.tx, canonical_scene->pose->params.each.ty, canonical_scene->pose->params.each.tz);
+	//printf(">> %f %f %f %f %f %f\n", scene->pose->params.each.rx, scene->pose->params.each.ry, scene->pose->params.each.rz,
+	//	scene->pose->params.each.tx, scene->pose->params.each.ty, scene->pose->params.each.tz);
 }
 
 void ITMColorTracker::PrepareForEvaluation(const ITMView *view)

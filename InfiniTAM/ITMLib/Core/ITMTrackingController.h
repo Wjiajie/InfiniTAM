@@ -62,6 +62,16 @@ namespace ITMLib
 			}
 		}
 
+		/**
+		 * \brief
+		 * \tparam TVoxel
+		 * \tparam TIndex
+		 * \param trackingState
+		 * \param scene
+		 * \param view
+		 * \param visualisationEngine
+		 * \param renderState
+		 */
 		template <typename TVoxel, typename TIndex>
 		void Prepare(ITMTrackingState *trackingState, const ITMScene<TVoxel,TIndex> *scene, const ITMView *view,
 			const ITMVisualisationEngine<TVoxel,TIndex> *visualisationEngine, ITMRenderState *renderState)

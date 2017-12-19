@@ -15,7 +15,7 @@
 //  ================================================================
 #pragma once
 
-//
+//_DEBUG
 ////pick maximum weights, get confidence
 //template<class TVoxel, typename TCache>
 //_CPU_AND_GPU_CODE_
@@ -70,6 +70,80 @@
 //	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
 //}
 
+
+//_DEBUG -- special treatment of truncated values
+//sdf, color, pick maximum weights, get confidence
+template<class TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline float interpolateTrilinearly_Corrected(const CONSTPTR(TVoxel)* voxelData,
+                                              const CONSTPTR(ITMHashEntry)* voxelHash,
+                                              const THREADPTR(Vector3f)& point,
+                                              THREADPTR(TCache)& cache,
+                                              THREADPTR(Vector3f)& color,
+                                              THREADPTR(float)& confidence,
+											  THREADPTR(bool)& struckNarrowBand) {
+	float sdfRes1, sdfRes2;
+	float confRes1, confRes2;
+	Vector3f clrRes1, clrRes2;
+	int vmIndex = false;
+	Vector3f coeff;
+	Vector3i pos;
+
+	TO_INT_FLOOR3(pos, coeff, point);
+	const int neighborCount = 8;
+	float sdfs[neighborCount];
+	Vector3f colors[neighborCount];
+	float confs[neighborCount];
+	bool found[neighborCount] = {0};
+	const Vector3i positions[neighborCount] = {Vector3i(0, 0, 0), Vector3i(1, 0, 0),
+	                                           Vector3i(0, 1, 0), Vector3i(1, 1, 0),
+	                                           Vector3i(0, 0, 1), Vector3i(1, 0, 1),
+	                                           Vector3i(0, 1, 1), Vector3i(1, 1, 1)};
+	float sumFound = 0.0f;
+	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
+		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (positions[iNeighbor]), vmIndex, cache);
+		sdfs[iNeighbor] = TVoxel::valueToFloat(v.sdf);
+		confs[iNeighbor] = v.confidence;
+		colors[iNeighbor] = TO_FLOAT3(v.clr);
+		bool foundCur = vmIndex != 0;
+		struckNarrowBand |= foundCur;
+		found[iNeighbor] = foundCur;
+		sumFound += foundCur * v.sdf;
+	}
+	if(!struckNarrowBand){
+		return 0.0f;
+	}
+
+	float truncated = std::copysign(1.0f,sumFound);
+	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
+		if(!found[iNeighbor]){
+			sdfs[iNeighbor] = truncated;
+		}
+	}
+
+
+	float oneMinusCoeffX = 1.0f - coeff.x;
+	float oneMinusCoeffY = 1.0f - coeff.y;
+
+	sdfRes1 = oneMinusCoeffY * (oneMinusCoeffX * sdfs[0] + coeff.x * sdfs[1])
+	          + coeff.y * (oneMinusCoeffX * sdfs[2] + coeff.x * sdfs[3]);
+	sdfRes2 = oneMinusCoeffY * (oneMinusCoeffX * sdfs[4] + coeff.x * sdfs[5])
+	          + coeff.y * (oneMinusCoeffX * sdfs[6] + coeff.x * sdfs[7]);
+	confRes1 = oneMinusCoeffY * (oneMinusCoeffX * confs[0] + coeff.x * confs[1])
+	          + coeff.y * (oneMinusCoeffX * confs[2] + coeff.x * confs[3]);
+	confRes2 = oneMinusCoeffY * (oneMinusCoeffX * confs[4] + coeff.x * confs[5])
+	          + coeff.y * (oneMinusCoeffX * confs[6] + coeff.x * confs[7]);
+	clrRes1 = oneMinusCoeffY * (oneMinusCoeffX * colors[0] + coeff.x * colors[1])
+	          + coeff.y * (oneMinusCoeffX * colors[2] + coeff.x * colors[3]);
+	clrRes2 = oneMinusCoeffY * (oneMinusCoeffX * colors[4] + coeff.x * colors[5])
+	          + coeff.y * (oneMinusCoeffX * colors[6] + coeff.x * colors[7]);
+
+	float sdf = (1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2;
+	confidence = (1.0f - coeff.z) * confRes1 + coeff.z * confRes2;
+	color = (1.0f - coeff.z) * clrRes1 + coeff.z * clrRes2;
+	return sdf;
+}
+
 //pick maximum weights, get confidence
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
@@ -79,9 +153,11 @@ inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
                                     THREADPTR(TCache)& cache,
                                     THREADPTR(Vector3f)& color,
                                     THREADPTR(int)& wDepth,
-                                    THREADPTR(int)& wColor) {
+                                    THREADPTR(int)& wColor,
+                                    THREADPTR(float)& confidence) {
 	float sdfRes1, sdfRes2, sdfV1, sdfV2;
 	Vector3f colorRes1, colorRes2, colorV1, colorV2;
+	float confRes1, confRes2, confV1, confV2;
 	int vmIndex = false;
 	Vector3f coeff;
 	Vector3i pos;
@@ -92,6 +168,7 @@ inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
         const TVoxel& v = readVoxel(voxelData, hashIndex, pos + (coord), vmIndex, cache);\
         sdfV##suffix = v.sdf;\
         colorV##suffix = TO_FLOAT3(v.clr);\
+        confV##suffix = v.confidence;\
         if (v.w_depth > wDepth) wDepth = v.w_depth;\
         if (v.w_color > wColor) wColor = v.w_color;\
     }
@@ -99,20 +176,24 @@ inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
 	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
 	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
 	colorRes1 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
+	confRes1 = (1.0f - coeff.x) * confV1 + coeff.x * confV2;
 	PROCESS_VOXEL(1, Vector3i(0, 1, 0))
 	PROCESS_VOXEL(2, Vector3i(1, 1, 0))
 	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
 	colorRes1 = (1.0f - coeff.y) * colorRes1 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
+	confRes1 = (1.0f - coeff.y) * confRes1 + coeff.y * ((1.0f - coeff.x) * confV1 + coeff.x * confV2);
 	PROCESS_VOXEL(1, Vector3i(0, 0, 1))
 	PROCESS_VOXEL(2, Vector3i(1, 0, 1))
 	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
 	colorRes2 = (1.0f - coeff.x) * colorV1 + coeff.x * colorV2;
+	confRes2 = (1.0f - coeff.x) * confV1 + coeff.x * confV2;
 	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
 	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
 	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
 	colorRes2 = (1.0f - coeff.y) * colorRes2 + coeff.y * ((1.0f - coeff.x) * colorV1 + coeff.x * colorV2);
+	confRes2 = (1.0f - coeff.y) * confRes2 + coeff.y * ((1.0f - coeff.x) * confV1 + coeff.x * confV2);
 	color = ((1.0f - coeff.z) * colorRes1 + coeff.z * colorRes2) / 255.0f;
-
+	confidence = (1.0f - coeff.z) * confRes1 + coeff.z * confRes2;
 #undef PROCESS_VOXEL
 	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
 }
@@ -218,6 +299,7 @@ inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
 	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
 }
 
+//_DEBUG -- special treatment of truncated values
 //sdf without color, found/not
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
@@ -249,7 +331,7 @@ inline float interpolateTrilinearly_Corrected(const CONSTPTR(TVoxel)* voxelData,
 	float truncated = std::copysign(1.0f,sumFound);
 	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
 		if(!found[iNeighbor]){
-			sdfs[iNeighbor] = -1.0;
+			sdfs[iNeighbor] = truncated;
 		}
 	}
 
@@ -284,7 +366,7 @@ inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
     {\
         const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (coord), vmIndex, cache);\
         sdfV##suffix = v.sdf;\
-        found = found | (vmIndex != 0);\
+        found |= (vmIndex != 0);\
     }
 	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
 	PROCESS_VOXEL(2, Vector3i(1, 0, 0))

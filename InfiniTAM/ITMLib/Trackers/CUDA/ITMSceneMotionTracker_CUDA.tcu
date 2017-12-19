@@ -16,6 +16,7 @@
 #include "ITMSceneMotionTracker_CUDA.h"
 #include "../../Utils/ITMCUDAUtils.h"
 #include "../../../ORUtils/CUDADefines.h"
+#include "../../Objects/Views/ITMView.h"
 
 using namespace ITMLib;
 
@@ -67,7 +68,8 @@ float ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWar
 		//TODO
 	}
 
-	return 0;
+	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");
+	//return 0.f;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

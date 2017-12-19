@@ -82,9 +82,9 @@ namespace ITMLib {
 		}
 	}
 
-	void CopySceneWithOffset_CPU(ITMScene<ITMVoxelLive, ITMVoxelIndex>& destination, ITMScene<ITMVoxel, ITMVoxelIndex>& source,
+	void CopySceneWithOffset_CPU(ITMScene<ITMVoxelLive, ITMVoxelIndex>& destination, ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& source,
 	                             Vector3i offset) {
-		ITMVoxel* originalVoxels = source.localVBA.GetVoxelBlocks();
+		ITMVoxelCanonical* originalVoxels = source.localVBA.GetVoxelBlocks();
 		const ITMHashEntry* originalHashTable = source.index.GetEntries();
 		int noTotalEntries = source.index.noTotalEntries;
 
@@ -96,7 +96,7 @@ namespace ITMLib {
 			//position of the current entry in 3D space
 			canonicalHashEntryPosition = currentOriginalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 
-			ITMVoxel* localVoxelBlock = &(originalVoxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			ITMVoxelCanonical* localVoxelBlock = &(originalVoxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
@@ -104,7 +104,7 @@ namespace ITMLib {
 						Vector3i offsetPosition = originalPosition + offset;
 
 						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-						ITMVoxel& voxelSource = localVoxelBlock[locId];
+						ITMVoxelCanonical& voxelSource = localVoxelBlock[locId];
 						ITMVoxelLive voxelDest;
 						voxelDest.sdf = voxelSource.sdf;
 						voxelDest.clr = voxelSource.clr;

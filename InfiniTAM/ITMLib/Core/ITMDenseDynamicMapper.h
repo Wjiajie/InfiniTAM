@@ -56,13 +56,14 @@ class ITMDenseDynamicMapper {
 		                  ITMScene <TVoxelLive, TIndex>* live_scene,
 		                  ITMRenderState* renderState_live);
 
-		void ProcessInitialFrame(const ITMView* view,
-		                  const ITMTrackingState* trackingState,
-		                  ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-		                  ITMRenderState* renderState_live);
+	//TODO: remove --Greg (GitHub:Algomorph)
+//		void ProcessInitialFrame(const ITMView* view,
+//		                  const ITMTrackingState* trackingState,
+//		                  ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+//		                  ITMRenderState* renderState_live);
 
 		/// Update the visible list (this can be called to update the visible list when fusion is turned off)
-		void UpdateVisibleList(const ITMView *view, const ITMTrackingState *trackingState, ITMScene<TVoxelCanonical, TIndex> *scene, ITMRenderState *renderState, bool resetVisibleList = false);
+		void UpdateVisibleList(const ITMView *view, const ITMTrackingState *trackingState, ITMScene<TVoxelLive, TIndex> *scene, ITMRenderState *renderState, bool resetVisibleList = false);
 
 		/** \brief Constructor
 		    Ommitting a separate image size for the depth images

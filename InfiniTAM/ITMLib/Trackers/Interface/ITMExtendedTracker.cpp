@@ -66,7 +66,7 @@ ITMExtendedTracker::ITMExtendedTracker(Vector2i imgSize_d,
 		projectedIntensityHierarchy = NULL;
 	}
 
-	// We need the canonical_scene hierarchy (ICP and Normal raycasts) only if depth is used for tracking.
+	// We need the scene hierarchy (ICP and Normal raycasts) only if depth is used for tracking.
 	if (useDepth)
 	{
 		sceneHierarchy = new ITMImageHierarchy<ITMSceneHierarchyLevel>(imgSize_d, trackingRegime, noHierarchyLevels, memoryType, true);
