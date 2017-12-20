@@ -3,6 +3,7 @@
 #pragma once
 
 #include "../../Utils/ITMMath.h"
+#include "../../Utils/ITMLibVoxelProperties.h"
 
 /** \brief
     Stores the information of a single voxel in the volume
@@ -16,7 +17,6 @@ struct ITMVoxel_f_rgb
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
-	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -48,7 +48,6 @@ struct ITMVoxel_s_rgb
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
-	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	short sdf;
@@ -79,7 +78,6 @@ struct ITMVoxel_s
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
-	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	short sdf;
@@ -104,7 +102,6 @@ struct ITMVoxel_f
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
-	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -129,7 +126,6 @@ struct ITMVoxel_f_conf
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
-	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -157,7 +153,6 @@ struct ITMVoxel_s_rgb_conf
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
-	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	short sdf;
@@ -190,7 +185,6 @@ struct ITMVoxel_f_rgb_conf
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
-	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -222,8 +216,7 @@ struct ITMVoxel_f_dynamic
 
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
-	static const CONSTPTR(bool) hasSemanticInformation = false;
-	static const CONSTPTR(bool) hasTrilinearWeightInformation = false;
+	static const CONSTPTR(bool) hasSemanticInformation = true;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -231,6 +224,8 @@ struct ITMVoxel_f_dynamic
 	uchar w_depth;
 	/** Padding that may or may not improve performance on certain GPUs */
 	//uchar pad;
+	/** negative values are special flags, positive values are segment indices */
+	char flags;
 	/** RGB colour information stored for this voxel. */
 	Vector3u clr;
 	/** Trilinear weight information stored for this voxel.
@@ -246,6 +241,7 @@ struct ITMVoxel_f_dynamic
 
 	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic()
 	{
+		flags = ITMLib::KNOWN;
 		sdf = SDF_initialValue();
 		w_depth = 0;
 		confidence = 0.0f;

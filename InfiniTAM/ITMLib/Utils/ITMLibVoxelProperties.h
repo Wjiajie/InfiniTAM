@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 11/30/17.
+//  Created by Gregory Kramida on 12/20/17.
 //  Copyright (c) 2017-2025 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -14,22 +14,10 @@
 //  limitations under the License.
 //  ================================================================
 #pragma once
+
 namespace ITMLib {
-enum HashBlockVisibility : unsigned char {
-	VISIBLE_AT_PREVIOUS_FRAME_AND_UNSTREAMED = 3,
-	STREAMED_OUT_AND_VISIBLE = 2,
-	IN_MEMORY_AND_VISIBLE = 1,
-	INVISIBLE = 0
+enum VoxelFlags : char{
+	UNKNOWN = -1,
+	KNOWN = 0
 };
-enum HashBlockChangeType : unsigned char {
-	NO_CHANGE = 0,
-	NEEDS_ALLOC_IN_ORDERED_LIST = 1,
-	NEEDS_ALLOC_IN_EXCESS_LIST = 2,
-	BOUNDARY_STATE = 3,
-};
-enum HashBlockPtrFlag : int {
-	ENTRY_REMOVED = -1,
-	ENTRY_EMPTY_POSITIVE = -2,
-	ENTRY_EMPTY_NEGATIVE = -3
-};
-}//end namespace ITMLib
+}//namespace ITMLib

@@ -416,7 +416,9 @@ Trackers/CPU/ITMColorTracker_CPU.cpp
 Trackers/CPU/ITMDepthTracker_CPU.cpp
 Trackers/CPU/ITMExtendedTracker_CPU.cpp
 Trackers/CPU/ITMKillingTracker_CPU.cpp
+Trackers/CPU/ITMSceneMotionTracker_CPU_UpdateWarp.tpp
 Trackers/CPU/ITMSceneMotionTracker_CPU.tpp
+
 )
 
 SET(ITMLIB_TRACKERS_CPU_HEADERS
@@ -488,6 +490,7 @@ SET(ITMLIB_UTILS_HEADERS
 Utils/ITMCUDAUtils.h
 Utils/ITMImageTypes.h
 Utils/ITMLibHashBlockProperties.h
+Utils/ITMLibVoxelProperties.h
 Utils/ITMLibSettings.h
 Utils/ITMMath.h
 Utils/ITMMemoryBlockTypes.h

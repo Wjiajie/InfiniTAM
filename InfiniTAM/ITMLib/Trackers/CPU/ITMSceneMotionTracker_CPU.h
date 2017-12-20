@@ -50,9 +50,6 @@ namespace ITMLib {
 		void FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
 
 	private:
-		template <typename TVoxel>
-		void AllocateBoundaryHashBlocks(ITMScene <TVoxel, TIndex>* scene, uchar* entriesAllocType);
-
 		ORUtils::MemoryBlock<bool> *entriesAllocFill;
 		ORUtils::MemoryBlock<unsigned char> *canonicalEntriesAllocType;
 		ORUtils::MemoryBlock<Vector3s> *blockCoords;
