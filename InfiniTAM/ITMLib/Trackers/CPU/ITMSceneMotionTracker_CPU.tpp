@@ -70,7 +70,16 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneMotionT
 
 
 
-
+//========================================= HASH BLOCK ALLOCATION AT EACH FRAME ========================================
+/**
+ * \brief Allocates new hash blocks in the canonical (reference) frame at each frame to accommodate potential new
+ * data arising from sensor motion and discovery of previously unseen surfaces
+ * \tparam TVoxelCanonical type of voxels in the canonical scene
+ * \tparam TVoxelLive type of voxels in the live scene
+ * \tparam TIndex index used in scenes
+ * \param canonicalScene the canonical (reference) scene
+ * \param liveScene the live (target) scene
+ */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNewCanonicalHashBlocks(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
@@ -116,12 +125,12 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 	int countVoxelHashBlocksToAllocate = 0;
 
 #ifdef WITH_OPENMP
- #pragma omp parallel for reduction(+:countVoxelHashBlocksToAllocate)//_DEBUG
+#pragma omp parallel for reduction(+:countVoxelHashBlocksToAllocate)//_DEBUG
 #endif
 	for (int liveHashBlockIndex = 0; liveHashBlockIndex < entryCount; liveHashBlockIndex++) {
 		const ITMHashEntry& currentLiveHashBlock = liveHashTable[liveHashBlockIndex];
 		//skip unfilled live blocks
-		if (currentLiveHashBlock.ptr < 0){
+		if (currentLiveHashBlock.ptr < 0) {
 			continue;
 		}
 		Vector3s liveHashBlockCoords = currentLiveHashBlock.pos;
@@ -136,7 +145,8 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 		}
 	}
 	//_DEBUG
-	std::cout << "Number of live blocks without canonical correspondences: " << countVoxelHashBlocksToAllocate << std::endl;
+	std::cout << "Number of live blocks without canonical correspondences: " << countVoxelHashBlocksToAllocate
+	          << std::endl;
 
 
 #ifdef WITH_OPENMP
@@ -240,6 +250,10 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 	canonicalScene->index.SetLastFreeExcessListId(lastFreeExcessListId);
 }
 
+// ========================================== END CANONCICAL HASH BLOCK ALLOCATION =====================================
+
+// ========================================== FUSION ===================================================================
+
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(ITMScene<TVoxelCanonical,
 		TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
@@ -251,23 +265,26 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 	const ITMHashEntry* liveHashTable = liveScene->index.GetEntries();
 	typename TIndex::IndexCache liveCache;
 
-	int maxW = canonicalScene->sceneParams->maxW;
+	int maximumWeight = canonicalScene->sceneParams->maxW;
 
 	int noTotalEntries = canonicalScene->index.noTotalEntries;
+	uchar* entriesAllocType = this->canonicalEntriesAllocType->GetData(MEMORYDEVICE_CPU);
+
 	//_DEBUG
 	int allTruncatedInLiveCount = 0;
 
 #ifdef WITH_OPENMP
-#pragma omp parallel for reduction(+:allTruncatedInLiveCount)
+	//#pragma omp parallel for reduction(+:allTruncatedInLiveCount)
 #endif
-	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+	for (int hashBlockIndex = 0; hashBlockIndex < noTotalEntries; hashBlockIndex++) {
 		Vector3i canonicalHashEntryPosition;
-		const ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[entryId];
+		const ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[hashBlockIndex];
 
 		if (currentCanonicalHashEntry.ptr < 0) continue;
 
-		//position of the current entry in 3D space
+		//position of the current hash block entry in 3D space (in voxel units)
 		canonicalHashEntryPosition = currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		//pointer to the voxels in the block
 		TVoxelCanonical* localVoxelBlock = &(canonicalVoxels[currentCanonicalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
@@ -281,9 +298,10 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					float oldSdf;
 					oldSdf = canonicalVoxel.sdf;
 					Vector3f oldColor = TO_FLOAT3(canonicalVoxel.clr) / 255.0f;
-					oldWDepth = canonicalVoxel.w_depth;
-					oldWColor = canonicalVoxel.w_color;
+					oldWDepth = canonicalVoxel.w_depth; //0 for UNKNOWN voxels
+					oldWColor = canonicalVoxel.w_color; //0 for UNKNOWN voxels
 
+					//projected position of the sdf point to the most recent frame
 					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
 
 					Vector3f liveColor;
@@ -294,27 +312,34 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					float liveSdf = interpolateTrilinearly_Corrected(liveVoxels, liveHashTable, projectedPosition,
 					                                                 liveCache, liveColor, liveConfidence,
 					                                                 struckNarrowBand);
-					if(!struckNarrowBand){
+					if (!struckNarrowBand) {
 						allTruncatedInLiveCount++;//_DEBUG
 						continue;
 					}
 					float newSdf = oldWDepth * oldSdf + liveWDepth * liveSdf;
 					float newWDepth = oldWDepth + liveWDepth;
 					newSdf /= newWDepth;
-					newWDepth = MIN(newWDepth, maxW);
+					newWDepth = MIN(newWDepth, maximumWeight);
 
 					Vector3f newColor = oldWColor * oldColor + liveWColor * liveColor;
 					float newWColor = oldWColor + liveWColor;
 					newColor /= newWColor;
-					newWColor = MIN(newWDepth, maxW);
+					newWColor = MIN(newWDepth, maximumWeight);
 
 					canonicalVoxel.sdf = TVoxelCanonical::floatToValue(newSdf);
 					canonicalVoxel.w_depth = (uchar) newWDepth;
 					canonicalVoxel.clr = TO_UCHAR3(newColor * 255.0f);
 					canonicalVoxel.w_color = (uchar) newWColor;
 					canonicalVoxel.confidence += liveConfidence;
+					if (canonicalVoxel.flags == ITMLib::UNKNOWN) {
+						canonicalVoxel.flags = ITMLib::KNOWN;
+						entriesAllocType[hashBlockIndex] = ITMLib::NO_CHANGE;
+					}
 				}
 			}
 		}
 	}
+	//_DEBUG
+	std::cout << "Number of lookups that missed the narrow band in live (target) frame during fusion: "
+	          << allTruncatedInLiveCount << std::endl;
 }

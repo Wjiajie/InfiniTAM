@@ -27,6 +27,7 @@
 #include "Trackers/Interface/ITMSceneMotionTracker.tpp"
 #include "Trackers/CPU/ITMSceneMotionTracker_CPU.tpp"
 #include "Utils/ITMSceneSliceRasterizer.tpp"
+#include "Utils/ITMLibSceneWarpFileIO.tpp"
 
 namespace ITMLib
 {
@@ -53,6 +54,7 @@ namespace ITMLib
 	template class ITMVisualisationEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 	template class ITMVisualisationEngine_CPU<ITMVoxelLive, ITMVoxelIndex>;
 	template class ITMMeshingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
+	template class ITMLibSceneWarpFileIO<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 
 	//surfel fusion
 	template class ITMDenseSurfelMapper<ITMSurfel_grey>;

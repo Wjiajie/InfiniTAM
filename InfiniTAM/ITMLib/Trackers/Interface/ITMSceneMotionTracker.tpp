@@ -33,9 +33,13 @@
 //local
 #include "ITMSceneMotionTracker.h"
 #include "../../Objects/Scene/ITMSceneManipulation.h"
+#include "../../Utils/ITMLibSceneWarpFileIO.h"
 
 
 using namespace ITMLib;
+
+//_DEBUG
+static int iFrame = 0;
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
@@ -83,9 +87,29 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 #endif
 	//END _DEBUG
 
-
-	for (int iteration = 0;
-	     maxVectorUpdate > maxVectorUpdateThresholdVoxels && iteration < maxIterationCount; iteration++) {
+	//START _DEBUG
+	ITMLibSceneWarpFileIO<TVoxelCanonical,TVoxelLive,TIndex> sceneLogger("/media/algomorph/Data/4dmseg/Killing/scene", canonicalScene,liveScene);
+	const int frameToSave = 1;
+//#define SAVE_FRAME
+#define LOAD_FRAME
+#ifdef SAVE_FRAME
+	if(iFrame == frameToSave){
+		sceneLogger.SaveScenes();
+		sceneLogger.StartSavingWarpState();
+		sceneLogger.SaveCurrentWarpState();
+	}
+#endif
+#ifdef LOAD_FRAME
+	if(iFrame == frameToSave){
+		sceneLogger.LoadScenes();
+		sceneLogger.StartLoadingWarpState();
+		while(sceneLogger.LoadNextWarpState()){};
+		sceneLogger.StopLoadingWarpState();
+	}
+#endif
+	//END DEBUG
+	for (int iteration = 0; maxVectorUpdate > maxVectorUpdateThresholdVoxels && iteration < maxIterationCount;
+	     iteration++) {
 		const std::string red("\033[0;31m");
 		const std::string reset("\033[0m");
 		//START _DEBUG
@@ -121,13 +145,25 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 
 		std::cout << red << "Iteration: " << iteration << reset;// << std::endl;
 		maxVectorUpdate = UpdateWarpField(canonicalScene, liveScene);
-
+		//START _DEBUG
+#ifdef SAVE_FRAME
+		if(iFrame == frameToSave){
+			sceneLogger.SaveCurrentWarpState();
+		}
+#endif
+		//END _DEBUG
 
 		std::cout << " Max update: " << maxVectorUpdate << std::endl;
 	}
-	//_DEBUG
-	canonicalScene->SaveToDirectory("/media/algomorph/Data/4dmseg/Killing/scene_canonical_saved/");
-	liveScene->SaveToDirectory("/media/algomorph/Data/4dmseg/Killing/scene_live_saved");
+	//START _DEBUG
+	if(iFrame == frameToSave){
+#ifdef SAVE_FRAME
+		sceneLogger.StopSavingWarpState();
+#endif
+	}
+	iFrame++;
+	//END _DEBUG
+
 
 	this->FuseFrame(canonicalScene, liveScene);
 }

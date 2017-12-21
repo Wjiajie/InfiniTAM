@@ -15,8 +15,10 @@ SET(targetname ITMLib)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseCUDA.cmake)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseOpenMP.cmake)
 
-#_DEBUG
+#BEGIN _DEBUG
 find_package(OpenCV REQUIRED core highgui imgproc imgcodecs)
+find_package(Boost REQUIRED filesystem)
+#END _DEBUG
 
 #############################
 # Specify the project files #
@@ -483,7 +485,8 @@ Trackers/Shared/ITMSceneMotionTracker_Shared.h
 ##
 SET(ITMLIB_UTILS_SOURCES
 Utils/ITMLibSettings.cpp
-        Utils/ITMSceneSliceRasterizer.tpp
+Utils/ITMSceneSliceRasterizer.tpp
+        Utils/ITMLibSceneWarpFileIO.tpp
 )
 
 SET(ITMLIB_UTILS_HEADERS
@@ -497,8 +500,9 @@ Utils/ITMMemoryBlockTypes.h
 Utils/ITMPixelUtils.h
 Utils/ITMProjectionUtils.h
 Utils/ITMSceneParams.h
-        Utils/ITMSceneSliceRasterizer.h
+Utils/ITMSceneSliceRasterizer.h
 Utils/ITMSurfelSceneParams.h
+        Utils/ITMLibSceneWarpFileIO.h
 )
 
 #################################################################
@@ -645,5 +649,5 @@ SOURCE_GROUP(Utils FILES ${ITMLIB_UTILS_SOURCES} ${ITMLIB_UTILS_HEADERS})
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
 
 #_DEBUG
-target_include_directories(${targetname} PUBLIC ${OpenCV_INCLUDE_DIRS})
-target_link_libraries(${targetname} ${OpenCV_LIBS})
+target_include_directories(${targetname} PUBLIC ${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+target_link_libraries(${targetname} ${OpenCV_LIBS} ${Boost_LIBRARIES})
