@@ -20,11 +20,14 @@
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
 
 using namespace ITMLib;
-class ITMLibSceneWarpFileIO;
+namespace ITMLib{
+	template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+	class ITMLibSceneWarpFileIO;
+}
 
 class SDFViz {
 private:
-	ITMLibSceneWarpFileIO* sceneLogger;
+	ITMLibSceneWarpFileIO<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
 	ITMScene<ITMVoxelCanonical,ITMVoxelIndex>* canonicalScene;
 	ITMScene<ITMVoxelLive,ITMVoxelIndex>* liveScene;
 
