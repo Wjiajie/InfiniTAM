@@ -91,7 +91,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 	ITMLibSceneWarpFileIO<TVoxelCanonical,TVoxelLive,TIndex> sceneLogger("/media/algomorph/Data/4dmseg/Killing/scene", canonicalScene,liveScene);
 	const int frameToSave = 1;
 //#define SAVE_FRAME
-#define LOAD_FRAME
+//#define LOAD_FRAME
 #ifdef SAVE_FRAME
 	if(iFrame == frameToSave){
 		sceneLogger.SaveScenes();
