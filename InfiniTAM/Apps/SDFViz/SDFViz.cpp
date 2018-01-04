@@ -21,11 +21,8 @@
 #include <vtkActor.h>
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
-#include <vtkRenderWindowInteractor.h>
 #include <vtkProperty.h>
 #include <vtkCamera.h>
-#include <vtk-8.1/vtkInteractorStyleTrackballActor.h>
-#include <vtk-8.1/vtkInteractorStyleTrackballCamera.h>
 #include <vtk-8.1/vtkVertexGlyphFilter.h>
 #include <vtk-8.1/vtkPointData.h>
 #include <vtk-8.1/vtkNamedColors.h>
@@ -36,53 +33,75 @@
 
 int SDFViz::run() {
 
-	//Generate random test voxel array, geometries, and actors
-	const int sceneWidthVoxels = 20;
-	const int sceneHeightVoxels = 20;
-	const int sceneDepthVoxels = 20;
-	const int centerX = sceneWidthVoxels / 2;
-	const int centerY = sceneHeightVoxels / 2;
-	const int centerZ = sceneDepthVoxels / 2;
-	const int voxelCount = sceneWidthVoxels * sceneHeightVoxels * sceneDepthVoxels;
-	const double voxelDrawSize = 0.2;
 
-	float testSdfValues[sceneDepthVoxels][sceneHeightVoxels][sceneWidthVoxels];
+	//read scenes from disk
+	sceneLogger->LoadScenes();
+
+	ITMVoxelCanonical* voxelBlocks = canonicalScene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
+	int noTotalEntries = canonicalScene->index.noTotalEntries;
+	ITMVoxelIndex::IndexCache canonicalCache;
 
 	vtkSmartPointer<vtkPoints> points =
 			vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkUnsignedCharArray> colors =
 			vtkSmartPointer<vtkUnsignedCharArray>::New();
-	colors->SetNumberOfComponents(3);
+	colors->SetNumberOfComponents(4);
 	colors->SetName ("Colors");
 
-	//0.4, 0.8, 0.3
-	unsigned char subtleGreen[3] = {100, 220, 75};
+	double voxelDrawSize = 1.0;
+
 	// Setup colors
 	vtkSmartPointer<vtkNamedColors> namedColors =
 			vtkSmartPointer<vtkNamedColors>::New();
+	//0.4, 0.8, 0.3
+	unsigned char subtleGreen[3] = {100, 220, 75};
+	unsigned char subtleRed[3] = {220, 100, 75};
+	int pointCount = 0;
 
-	for (int z = 0; z < sceneDepthVoxels; z++) {
-		for (int y = 0; y < sceneHeightVoxels; y++) {
-			for (int x = 0; x < sceneWidthVoxels; x++) {
-				float SdfValue = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-				testSdfValues[z][x][y] = SdfValue;
+	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+		Vector3i currentBlockPositionVoxels;
+		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
 
-				points->InsertNextPoint (voxelDrawSize * (x - centerX), voxelDrawSize * (y - centerY),
-				                         voxelDrawSize * (z - centerZ));
+		if (currentHashEntry.ptr < 0) continue;
 
-				unsigned char sdfColor[3] = {static_cast<unsigned char>(subtleGreen[0]*SdfValue),
-				                             static_cast<unsigned char>(subtleGreen[1]*SdfValue),
-				                             static_cast<unsigned char>(subtleGreen[2]*SdfValue)};
-				colors->InsertNextTypedTuple(sdfColor);
+		//position of the current entry in 3D space
+		currentBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+
+		ITMVoxelCanonical* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+
+		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+					Vector3i originalPositionVoxels = currentBlockPositionVoxels + Vector3i(x, y, z);
+					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+					ITMVoxelCanonical& voxel = localVoxelBlock[locId];
+					Vector3f projectedPositionVoxels = originalPositionVoxels.toFloat() + voxel.warp_t;
+					bool isNegative = voxel.sdf < 0.0f;
+					double sdfValueMapped = 1.0 - std::abs(voxel.sdf);
+					points->InsertNextPoint (voxelDrawSize * originalPositionVoxels.x,
+					                         voxelDrawSize * originalPositionVoxels.y,
+					                         voxelDrawSize * originalPositionVoxels.z);
+					if(isNegative){
+						unsigned char sdfColor[4] = {static_cast<unsigned char>(subtleRed[0]*sdfValueMapped),
+						                             static_cast<unsigned char>(subtleRed[1]*sdfValueMapped),
+						                             static_cast<unsigned char>(subtleRed[2]*sdfValueMapped),
+								                     static_cast<unsigned char>(80 + 225*sdfValueMapped)};
+						colors->InsertNextTypedTuple(sdfColor);
+					}else{
+						unsigned char sdfColor[4] = {static_cast<unsigned char>(subtleGreen[0]*sdfValueMapped),
+						                             static_cast<unsigned char>(subtleGreen[1]*sdfValueMapped),
+						                             static_cast<unsigned char>(subtleGreen[2]*sdfValueMapped),
+								                     static_cast<unsigned char>(80 + 225*sdfValueMapped)};
+						colors->InsertNextTypedTuple(sdfColor);
+					}
+
+					pointCount++;
+				}
 			}
 		}
 	}
-//	points->InsertNextPoint (0.0, 0.0, 0.0);
-//	points->InsertNextPoint (1.0, 0.0, 0.0);
-//	points->InsertNextPoint (0.0, 1.0, 0.0);
-//	colors->InsertNextTypedTuple(namedColors->GetColor3ub("Tomato").GetData());
-//	colors->InsertNextTypedTuple(namedColors->GetColor3ub("Mint").GetData());
-//	colors->InsertNextTypedTuple(namedColors->GetColor3ub("Peacock").GetData());
+	std::cout << "Total points in scene: " << pointCount << std::endl;
 
 	vtkSmartPointer<vtkPolyData> pointsPolydata =
 			vtkSmartPointer<vtkPolyData>::New();
@@ -142,6 +161,7 @@ SDFViz::~SDFViz() {
 	delete sceneLogger;
 }
 
+
 void SDFViz::initializeRendering() {
 
 	renderer = vtkSmartPointer<vtkRenderer>::New();
@@ -154,7 +174,8 @@ void SDFViz::initializeRendering() {
 	renderWindow->AddRenderer(renderer);
 
 	renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-	vtkSmartPointer<vtkInteractorStyle> interactorStyle = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
+	vtkSmartPointer<KeyPressInteractorStyle> interactorStyle = vtkSmartPointer<KeyPressInteractorStyle>::New();
+	interactorStyle->parent = this;
 	interactorStyle->SetMouseWheelMotionFactor(0.05);
 
 	renderWindowInteractor->SetInteractorStyle(interactorStyle);
@@ -162,3 +183,20 @@ void SDFViz::initializeRendering() {
 
 }
 
+vtkStandardNewMacro(KeyPressInteractorStyle);
+void KeyPressInteractorStyle::OnKeyPress() {
+
+	{
+		// Get the keypress
+		vtkRenderWindowInteractor *rwi = this->Interactor;
+		std::string key = rwi->GetKeySym();
+
+		if(key == "c" && parent != nullptr)
+		{
+			std::cout << "Current camera position: " << parent->renderer->GetActiveCamera()->GetPosition();
+		}
+
+		// Forward events
+		vtkInteractorStyleTrackballCamera::OnKeyPress();
+	}
+}

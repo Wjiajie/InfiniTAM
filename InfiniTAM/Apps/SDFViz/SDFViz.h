@@ -15,8 +15,12 @@
 //  ================================================================
 #pragma once
 
-//local
+
 #include <vtk-8.1/vtkSmartPointer.h>
+#include <vtk-8.1/vtkInteractorStyleTrackballCamera.h>
+#include <vtk-8.1/vtkRenderWindowInteractor.h>
+#include <vtk-8.1/vtkObjectFactory.h>
+//local
 #include "../../ITMLib/ITMLibDefines.h"
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
 
@@ -29,9 +33,25 @@ namespace ITMLib{
 
 class vtkRenderer;
 class vtkRenderWindow;
-class vtkRenderWindowInteractor;
+class SDFViz;
+
+
+
+class KeyPressInteractorStyle : public vtkInteractorStyleTrackballCamera
+{
+
+
+public:
+	static KeyPressInteractorStyle* New();
+vtkTypeMacro(KeyPressInteractorStyle, vtkInteractorStyleTrackballCamera);
+	SDFViz* parent;
+
+	virtual void OnKeyPress();
+
+};
 
 class SDFViz {
+	friend class KeyPressInteractorStyle;
 private:
 
 	//================= MEMBERS =================
@@ -58,11 +78,11 @@ private:
 
 	//================ METHODS ====================
 	void initializeRendering();
+
 public:
 	SDFViz();
 	virtual ~SDFViz();
 	int run();
 
 };
-
 
