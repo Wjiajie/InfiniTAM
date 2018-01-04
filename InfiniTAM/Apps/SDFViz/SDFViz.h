@@ -16,6 +16,7 @@
 #pragma once
 
 //local
+#include <vtk-8.1/vtkSmartPointer.h>
 #include "../../ITMLib/ITMLibDefines.h"
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
 
@@ -25,12 +26,38 @@ namespace ITMLib{
 	class ITMLibSceneWarpFileIO;
 }
 
+
+class vtkRenderer;
+class vtkRenderWindow;
+class vtkRenderWindowInteractor;
+
 class SDFViz {
 private:
+
+	//================= MEMBERS =================
+	//data loader
 	ITMLibSceneWarpFileIO<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
+
+	//data structures
 	ITMScene<ITMVoxelCanonical,ITMVoxelIndex>* canonicalScene;
 	ITMScene<ITMVoxelLive,ITMVoxelIndex>* liveScene;
 
+	//visualization setup
+	// The renderer generates the image
+	// which is then displayed on the render window.
+	// It can be thought of as a scene to which the actor is added
+	vtkSmartPointer<vtkRenderer> renderer;
+	// The render window is the actual GUI window
+	// that appears on the computer screen
+	vtkSmartPointer<vtkRenderWindow> renderWindow;
+
+	// The render window interactor captures mouse events
+	// and will perform appropriate camera or actor manipulation
+	// depending on the nature of the events.
+	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
+
+	//================ METHODS ====================
+	void initializeRendering();
 public:
 	SDFViz();
 	virtual ~SDFViz();

@@ -25,79 +25,114 @@
 #include <vtkProperty.h>
 #include <vtkCamera.h>
 #include <vtk-8.1/vtkInteractorStyleTrackballActor.h>
+#include <vtk-8.1/vtkInteractorStyleTrackballCamera.h>
+#include <vtk-8.1/vtkVertexGlyphFilter.h>
+#include <vtk-8.1/vtkPointData.h>
+#include <vtk-8.1/vtkNamedColors.h>
 
 //local
 #include "../../ITMLib/Utils/ITMLibSceneWarpFileIO.h"
 #include "../../ITMLib/Utils/ITMLibSettings.h"
 
-
 int SDFViz::run() {
-	// This creates a polygonal cylinder model with eight circumferential facets
-	// (i.e, in practice an octagonal prism).
-	vtkSmartPointer<vtkCylinderSource> cylinder =
-			vtkSmartPointer<vtkCylinderSource>::New();
-	cylinder->SetResolution(8);
 
-	// The mapper is responsible for pushing the geometry into the graphics library.
-	// It may also do color mapping, if scalars or other attributes are defined.
-	vtkSmartPointer<vtkPolyDataMapper> cylinderMapper =
+	//Generate random test voxel array, geometries, and actors
+	const int sceneWidthVoxels = 20;
+	const int sceneHeightVoxels = 20;
+	const int sceneDepthVoxels = 20;
+	const int centerX = sceneWidthVoxels / 2;
+	const int centerY = sceneHeightVoxels / 2;
+	const int centerZ = sceneDepthVoxels / 2;
+	const int voxelCount = sceneWidthVoxels * sceneHeightVoxels * sceneDepthVoxels;
+	const double voxelDrawSize = 0.2;
+
+	float testSdfValues[sceneDepthVoxels][sceneHeightVoxels][sceneWidthVoxels];
+
+	vtkSmartPointer<vtkPoints> points =
+			vtkSmartPointer<vtkPoints>::New();
+	vtkSmartPointer<vtkUnsignedCharArray> colors =
+			vtkSmartPointer<vtkUnsignedCharArray>::New();
+	colors->SetNumberOfComponents(3);
+	colors->SetName ("Colors");
+
+	//0.4, 0.8, 0.3
+	unsigned char subtleGreen[3] = {100, 220, 75};
+	// Setup colors
+	vtkSmartPointer<vtkNamedColors> namedColors =
+			vtkSmartPointer<vtkNamedColors>::New();
+
+	for (int z = 0; z < sceneDepthVoxels; z++) {
+		for (int y = 0; y < sceneHeightVoxels; y++) {
+			for (int x = 0; x < sceneWidthVoxels; x++) {
+				float SdfValue = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+				testSdfValues[z][x][y] = SdfValue;
+
+				points->InsertNextPoint (voxelDrawSize * (x - centerX), voxelDrawSize * (y - centerY),
+				                         voxelDrawSize * (z - centerZ));
+
+				unsigned char sdfColor[3] = {static_cast<unsigned char>(subtleGreen[0]*SdfValue),
+				                             static_cast<unsigned char>(subtleGreen[1]*SdfValue),
+				                             static_cast<unsigned char>(subtleGreen[2]*SdfValue)};
+				colors->InsertNextTypedTuple(sdfColor);
+			}
+		}
+	}
+//	points->InsertNextPoint (0.0, 0.0, 0.0);
+//	points->InsertNextPoint (1.0, 0.0, 0.0);
+//	points->InsertNextPoint (0.0, 1.0, 0.0);
+//	colors->InsertNextTypedTuple(namedColors->GetColor3ub("Tomato").GetData());
+//	colors->InsertNextTypedTuple(namedColors->GetColor3ub("Mint").GetData());
+//	colors->InsertNextTypedTuple(namedColors->GetColor3ub("Peacock").GetData());
+
+	vtkSmartPointer<vtkPolyData> pointsPolydata =
+			vtkSmartPointer<vtkPolyData>::New();
+
+	pointsPolydata->SetPoints(points);
+
+	vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter =
+			vtkSmartPointer<vtkVertexGlyphFilter>::New();
+	vertexFilter->SetInputData(pointsPolydata);
+	vertexFilter->Update();
+
+	vtkSmartPointer<vtkPolyData> polydata =
+			vtkSmartPointer<vtkPolyData>::New();
+	polydata->ShallowCopy(vertexFilter->GetOutput());
+
+	polydata->GetPointData()->SetScalars(colors);
+
+	// Visualization
+	vtkSmartPointer<vtkPolyDataMapper> mapper =
 			vtkSmartPointer<vtkPolyDataMapper>::New();
-	cylinderMapper->SetInputConnection(cylinder->GetOutputPort());
+	mapper->SetInputData(polydata);
 
-	// The actor is a grouping mechanism: besides the geometry (mapper), it
-	// also has a property, transformation matrix, and/or texture map.
-	// Here we set its color and rotate it around the X and Y axes.
-	vtkSmartPointer<vtkActor> cylinderActor =
+	vtkSmartPointer<vtkActor> actor =
 			vtkSmartPointer<vtkActor>::New();
-	cylinderActor->SetMapper(cylinderMapper);
-	cylinderActor->GetProperty()->SetColor(1.0000, 0.3882, 0.2784);
-	cylinderActor->RotateX(30.0);
-	cylinderActor->RotateY(-45.0);
+	actor->SetMapper(mapper);
+	actor->GetProperty()->SetPointSize(8);
+	renderer->AddActor(actor);
 
-	// The renderer generates the image
-	// which is then displayed on the render window.
-	// It can be thought of as a scene to which the actor is added
-	vtkSmartPointer<vtkRenderer> renderer =
-			vtkSmartPointer<vtkRenderer>::New();
-	renderer->AddActor(cylinderActor);
-	renderer->SetBackground(0.1, 0.2, 0.4);
-	// Zoom in a little by accessing the camera and invoking its "Zoom" method.
-	renderer->ResetCamera();
-	renderer->GetActiveCamera()->Zoom(1.5);
+	//renderer->GetActiveCamera()->SetPosition(0.0,0.0,-1.0);
+	//renderer->ResetCamera();
+	//renderer->GetActiveCamera()->Zoom(1.5);
 
-	// The render window is the actual GUI window
-	// that appears on the computer screen
-	vtkSmartPointer<vtkRenderWindow> renderWindow =
-			vtkSmartPointer<vtkRenderWindow>::New();
-	renderWindow->SetSize(200, 200);
-	renderWindow->AddRenderer(renderer);
-
-	// The render window interactor captures mouse events
-	// and will perform appropriate camera or actor manipulation
-	// depending on the nature of the events.
-	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor =
-			vtkSmartPointer<vtkRenderWindowInteractor>::New();
-	vtkSmartPointer<vtkInteractorStyle> interactorStyle = vtkSmartPointer<vtkInteractorStyleTrackballActor>::New();
-
-	renderWindowInteractor->SetInteractorStyle(interactorStyle);
-	renderWindowInteractor->SetRenderWindow(renderWindow);
-
-	// This starts the event loop and as a side effect causes an initial render.
+	renderWindow->Render();
 	renderWindowInteractor->Start();
 
 	return EXIT_SUCCESS;
 }
 
 SDFViz::SDFViz() {
-	ITMLibSettings *settings = new ITMLibSettings();
+	ITMLibSettings* settings = new ITMLibSettings();
 	MemoryDeviceType memoryType = settings->GetMemoryType();
 	canonicalScene = new ITMScene<ITMVoxelCanonical, ITMVoxelIndex>(&settings->sceneParams, settings->swappingMode ==
-	                                                              ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                      memoryType);
+	                                                                                        ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                                memoryType);
 	liveScene = new ITMScene<ITMVoxelLive, ITMVoxelIndex>(&settings->sceneParams, settings->swappingMode ==
-	                                                                             ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                     memoryType);
-	sceneLogger = new ITMLibSceneWarpFileIO<ITMVoxelCanonical,ITMVoxelLive,ITMVoxelIndex>("/media/algomorph/Data/4dmseg/Killing/scene", canonicalScene, liveScene);
+	                                                                              ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                      memoryType);
+	sceneLogger = new ITMLibSceneWarpFileIO<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
+			"/media/algomorph/Data/4dmseg/Killing/scene", canonicalScene, liveScene);
+	initializeRendering();
 }
 
 
@@ -105,5 +140,25 @@ SDFViz::~SDFViz() {
 	delete canonicalScene;
 	delete liveScene;
 	delete sceneLogger;
+}
+
+void SDFViz::initializeRendering() {
+
+	renderer = vtkSmartPointer<vtkRenderer>::New();
+
+	renderer->SetBackground(0.0, 0.0, 0.0);
+	//renderer->SetBackground(1.0, 1.0, 1.0);
+
+	renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
+	renderWindow->SetSize(1280, 768);
+	renderWindow->AddRenderer(renderer);
+
+	renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
+	vtkSmartPointer<vtkInteractorStyle> interactorStyle = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
+	interactorStyle->SetMouseWheelMotionFactor(0.05);
+
+	renderWindowInteractor->SetInteractorStyle(interactorStyle);
+	renderWindowInteractor->SetRenderWindow(renderWindow);
+
 }
 
