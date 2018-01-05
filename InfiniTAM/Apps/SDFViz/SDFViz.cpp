@@ -46,7 +46,7 @@ int SDFViz::run() {
 			vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkUnsignedCharArray> colors =
 			vtkSmartPointer<vtkUnsignedCharArray>::New();
-	colors->SetNumberOfComponents(4);
+	colors->SetNumberOfComponents(3);
 	colors->SetName ("Colors");
 
 	double voxelDrawSize = 1.0;
@@ -83,16 +83,14 @@ int SDFViz::run() {
 					                         voxelDrawSize * originalPositionVoxels.y,
 					                         voxelDrawSize * originalPositionVoxels.z);
 					if(isNegative){
-						unsigned char sdfColor[4] = {static_cast<unsigned char>(subtleRed[0]*sdfValueMapped),
+						unsigned char sdfColor[3] = {static_cast<unsigned char>(subtleRed[0]*sdfValueMapped),
 						                             static_cast<unsigned char>(subtleRed[1]*sdfValueMapped),
-						                             static_cast<unsigned char>(subtleRed[2]*sdfValueMapped),
-								                     static_cast<unsigned char>(80 + 225*sdfValueMapped)};
+						                             static_cast<unsigned char>(subtleRed[2]*sdfValueMapped)};
 						colors->InsertNextTypedTuple(sdfColor);
 					}else{
-						unsigned char sdfColor[4] = {static_cast<unsigned char>(subtleGreen[0]*sdfValueMapped),
+						unsigned char sdfColor[3] = {static_cast<unsigned char>(subtleGreen[0]*sdfValueMapped),
 						                             static_cast<unsigned char>(subtleGreen[1]*sdfValueMapped),
-						                             static_cast<unsigned char>(subtleGreen[2]*sdfValueMapped),
-								                     static_cast<unsigned char>(80 + 225*sdfValueMapped)};
+						                             static_cast<unsigned char>(subtleGreen[2]*sdfValueMapped)};
 						colors->InsertNextTypedTuple(sdfColor);
 					}
 
@@ -130,7 +128,9 @@ int SDFViz::run() {
 	actor->GetProperty()->SetPointSize(8);
 	renderer->AddActor(actor);
 
-	//renderer->GetActiveCamera()->SetPosition(0.0,0.0,-1.0);
+	renderer->GetActiveCamera()->SetPosition(-85,200,-460.);
+	renderer->GetActiveCamera()->SetFocalPoint(85, -40, 460);
+	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
 	//renderer->ResetCamera();
 	//renderer->GetActiveCamera()->Zoom(1.5);
 
@@ -193,7 +193,17 @@ void KeyPressInteractorStyle::OnKeyPress() {
 
 		if(key == "c" && parent != nullptr)
 		{
-			std::cout << "Current camera position: " << parent->renderer->GetActiveCamera()->GetPosition();
+			double x,y,z;
+			double xFocalPoint, yFocalPoint, zFocalPoint;
+			double xUpVector, yUpVector,zUpVector;
+			parent->renderer->GetActiveCamera()->GetPosition(x,y,z);
+			parent->renderer->GetActiveCamera()->GetFocalPoint(xFocalPoint,yFocalPoint,zFocalPoint);
+			parent->renderer->GetActiveCamera()->GetViewUp(xUpVector,yUpVector,zUpVector);
+			std::cout << "Camera:" << std::endl;
+			std::cout << "  Current position: " << x << ", " << y << ", " << z << std::endl;
+			std::cout << "  Current focal point: " << xFocalPoint << ", " << yFocalPoint << ", " << zFocalPoint << std::endl;
+			std::cout << "  Current up-vector: " << xUpVector << ", " << yUpVector << ", " << zUpVector << std::endl;
+			std::cout.flush();
 		}
 
 		// Forward events
