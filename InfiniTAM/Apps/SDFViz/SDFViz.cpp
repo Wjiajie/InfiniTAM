@@ -26,9 +26,10 @@
 #include <vtk-8.1/vtkVertexGlyphFilter.h>
 #include <vtk-8.1/vtkPointData.h>
 #include <vtk-8.1/vtkNamedColors.h>
+#include <vtk-8.1/vtkGenericGlyph3DFilter.h>
 
 //local
-#include "../../ITMLib/Utils/ITMLibSceneWarpFileIO.h"
+#include "../../ITMLib/Utils/ITMSceneWarpFileIO.h"
 #include "../../ITMLib/Utils/ITMLibSettings.h"
 
 int SDFViz::run() {
@@ -63,6 +64,7 @@ int SDFViz::run() {
 		Vector3i currentBlockPositionVoxels;
 		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
 
+		//skip unfilled hash
 		if (currentHashEntry.ptr < 0) continue;
 
 		//position of the current entry in 3D space
@@ -101,19 +103,28 @@ int SDFViz::run() {
 	}
 	std::cout << "Total points in scene: " << pointCount << std::endl;
 
-	vtkSmartPointer<vtkPolyData> pointsPolydata =
+	vtkSmartPointer<vtkPolyData> pointFilterInputPolydada =
 			vtkSmartPointer<vtkPolyData>::New();
 
-	pointsPolydata->SetPoints(points);
-
+	pointFilterInputPolydada->SetPoints(points);
+#define VERTEX_GLYPH_FILTER
+#ifdef VERTEX_GLYPH_FILTER
+	//converts points to vertices
 	vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter =
 			vtkSmartPointer<vtkVertexGlyphFilter>::New();
-	vertexFilter->SetInputData(pointsPolydata);
+	vertexFilter->SetInputData(pointFilterInputPolydada);
 	vertexFilter->Update();
+#else
+	vtkSmartPointer<vtkGenericGlyph3DFilter> vertexFilter =
+			vtkSmartPointer<vtkGenericGlyph3DFilter>::New();
+	vertexFilter->SetInputData(pointFilterInputPolydada);
+	vertexFilter->Update();
+#endif
 
 	vtkSmartPointer<vtkPolyData> polydata =
 			vtkSmartPointer<vtkPolyData>::New();
 	polydata->ShallowCopy(vertexFilter->GetOutput());
+	vtkPointData* pointDataRawPtr = polydata->GetPointData();
 
 	polydata->GetPointData()->SetScalars(colors);
 
@@ -149,7 +160,7 @@ SDFViz::SDFViz() {
 	liveScene = new ITMScene<ITMVoxelLive, ITMVoxelIndex>(&settings->sceneParams, settings->swappingMode ==
 	                                                                              ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                      memoryType);
-	sceneLogger = new ITMLibSceneWarpFileIO<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
+	sceneLogger = new ITMSceneWarpFileIO<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
 			"/media/algomorph/Data/4dmseg/Killing/scene", canonicalScene, liveScene);
 	initializeRendering();
 }

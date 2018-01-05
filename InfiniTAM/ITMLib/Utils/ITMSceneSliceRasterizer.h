@@ -61,8 +61,6 @@ protected:
 		                              const std::string& outputFolder,
 		                              bool verbose = false);
 	template<typename TVoxel>
-	static void ComputeSceneVoxelBounds(ITMScene<TVoxel, TIndex>* scene, Vector3i& minVoxelPoint, Vector3i& maxVoxelPoint);
-	template<typename TVoxel>
 	static cv::Mat DrawSceneImageAroundPoint(ITMScene<TVoxel, TIndex>* scene);
 	template<typename TVoxel>
 	static cv::Mat DrawWarpedSceneImageTemplated(ITMScene <TVoxel, TIndex>* scene);

@@ -27,7 +27,7 @@
 using namespace ITMLib;
 namespace ITMLib{
 	template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-	class ITMLibSceneWarpFileIO;
+	class ITMSceneWarpFileIO;
 }
 
 
@@ -56,7 +56,7 @@ private:
 
 	//================= MEMBERS =================
 	//data loader
-	ITMLibSceneWarpFileIO<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
+	ITMSceneWarpFileIO<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
 
 	//data structures
 	ITMScene<ITMVoxelCanonical,ITMVoxelIndex>* canonicalScene;

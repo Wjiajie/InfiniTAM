@@ -16,6 +16,7 @@
 #include <unordered_set>
 #include "ITMSceneSliceRasterizer.h"
 #include "../Objects/Scene/ITMRepresentationAccess.h"
+#include "ITMSceneStatisticsCalculator.h"
 
 using namespace ITMLib;
 
@@ -316,7 +317,8 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlices(
 	float timer;
 	TIC(timer);
 
-	ComputeSceneVoxelBounds<TVoxel>(scene, minPoint, maxPoint);
+	ITMSceneStatisticsCalculator<TVoxel,TIndex> calculator;
+	calculator.ComputeSceneVoxelBounds(scene, minPoint, maxPoint);
 	std::cout << "Voxel ranges ( min x,y,z; max x, y,z): " << minPoint << "; " << maxPoint << std::endl;
 
 	int imageSizeX, imageSizeY, imageSizeZ;
@@ -430,48 +432,6 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlices(
 
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-template<typename TVoxel>
-void
-ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::ComputeSceneVoxelBounds(ITMScene<TVoxel, TIndex>* scene,
-                                                                                      Vector3i& minVoxelPoint,
-                                                                                      Vector3i& maxVoxelPoint) {
-
-	minVoxelPoint = maxVoxelPoint = Vector3i(0);
-	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
-	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
-	int noTotalEntries = scene->index.noTotalEntries;
-
-	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
-
-		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
-
-		if (currentHashEntry.ptr < 0) continue;
-
-		//position of the current entry in 3D space
-		Vector3i currentHashBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-		Vector3i hashBlockLimitPositionVoxels = (currentHashEntry.pos.toInt() + Vector3i(1, 1, 1)) * SDF_BLOCK_SIZE;
-
-		if (minVoxelPoint.x > currentHashBlockPositionVoxels.x) {
-			minVoxelPoint.x = currentHashBlockPositionVoxels.x;
-		}
-		if (maxVoxelPoint.x < hashBlockLimitPositionVoxels.x) {
-			maxVoxelPoint.x = hashBlockLimitPositionVoxels.x;
-		}
-		if (minVoxelPoint.y > currentHashBlockPositionVoxels.y) {
-			minVoxelPoint.y = currentHashBlockPositionVoxels.y;
-		}
-		if (maxVoxelPoint.y < hashBlockLimitPositionVoxels.y) {
-			maxVoxelPoint.y = hashBlockLimitPositionVoxels.y;
-		}
-		if (minVoxelPoint.z > currentHashBlockPositionVoxels.z) {
-			minVoxelPoint.z = currentHashBlockPositionVoxels.z;
-		}
-		if (maxVoxelPoint.z < hashBlockLimitPositionVoxels.z) {
-			maxVoxelPoint.z = hashBlockLimitPositionVoxels.z;
-		}
-	}
-}
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderCanonicalSceneSlices(

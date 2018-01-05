@@ -13,7 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "ITMLibSceneWarpFileIO.h"
+#include "ITMSceneWarpFileIO.h"
 
 //boost
 #include <boost/filesystem.hpp>
@@ -24,7 +24,7 @@ using namespace ITMLib;
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::ITMLibSceneWarpFileIO(
+ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneWarpFileIO(
 		std::string path,
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 		ITMScene<TVoxelLive, TIndex>* liveScene) :
@@ -40,7 +40,7 @@ ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::ITMLibSceneWarpFileI
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes() {
+bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes() {
 	if (!fs::is_directory(this->path)) {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
@@ -54,7 +54,7 @@ bool ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes() {
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenes() {
+bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenes() {
 	if (!fs::is_directory(this->path)) {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
@@ -68,7 +68,7 @@ bool ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenes() {
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarpState() {
+bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarpState() {
 	if (!fs::is_directory(path)) {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
@@ -81,12 +81,12 @@ bool ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarp
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StopSavingWarpState() {
+void ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StopSavingWarpState() {
 	currentWarpOFStream.close();
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::SaveCurrentWarpState() {
+bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::SaveCurrentWarpState() {
 
 	if(!currentWarpOFStream){
 		std::cout << "Current warp-update OFStream cannot be saved to for whatever reason." << std::endl;
@@ -119,7 +119,7 @@ bool ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::SaveCurrentWarp
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StartLoadingWarpState() {
+bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StartLoadingWarpState() {
 	if (!fs::is_directory(this->path)) {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
@@ -132,12 +132,12 @@ bool ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StartLoadingWar
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StopLoadingWarpState() {
+void ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StopLoadingWarpState() {
 	currentWarpIFStream.close();
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadNextWarpState() {
+bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadNextWarpState() {
 	if(!currentWarpIFStream){
 		std::cout << "Attempted to read warp state with IFStream being in a bad state."
 				" Was 'StartLoadingWarpState()' called?" << std::endl;
@@ -180,7 +180,7 @@ bool ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadNextWarpSta
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMLibSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadPreviousWarpState() {
+bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadPreviousWarpState() {
 	if(iUpdate < 1){
 		return false;
 	}

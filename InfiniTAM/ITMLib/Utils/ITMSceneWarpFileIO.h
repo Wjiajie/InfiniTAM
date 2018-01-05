@@ -26,11 +26,11 @@ namespace fs = boost::filesystem;
 namespace ITMLib{
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-class ITMLibSceneWarpFileIO {
+class ITMSceneWarpFileIO {
 
 public:
-	ITMLibSceneWarpFileIO(std::string path, ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
-	ITMLibSceneWarpFileIO() = delete;//disable default constructor generation
+	ITMSceneWarpFileIO(std::string path, ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
+	ITMSceneWarpFileIO() = delete;//disable default constructor generation
 
 	bool SaveScenes();
 

@@ -385,7 +385,7 @@ Objects/Scene/ITMSceneManipulation.h
 ##
 SET(ITMLIB_OBJECTS_SCENE_SOURCES
 Objects/Scene/ITMSceneManipulation.cpp
-        Objects/Scene/ITMSceneManipulation.tpp
+Objects/Scene/ITMSceneManipulation.tpp
 )
 
 ##
@@ -458,7 +458,6 @@ Trackers/Interface/ITMForceFailTracker.cpp
 Trackers/Interface/ITMIMUTracker.cpp
 Trackers/Interface/ITMKillingTracker.cpp
 Trackers/Interface/ITMSceneMotionTracker.tpp
-
 )
 
 SET(ITMLIB_TRACKERS_INTERFACE_HEADERS
@@ -486,14 +485,15 @@ Trackers/Shared/ITMSceneMotionTracker_Shared.h
 SET(ITMLIB_UTILS_SOURCES
 Utils/ITMLibSettings.cpp
 Utils/ITMSceneSliceRasterizer.tpp
-        Utils/ITMLibSceneWarpFileIO.tpp
+Utils/ITMSceneWarpFileIO.tpp
+Utils/ITMSceneStatisticsCalculator.tpp
 )
 
 SET(ITMLIB_UTILS_HEADERS
 Utils/ITMCUDAUtils.h
 Utils/ITMImageTypes.h
-Utils/ITMLibHashBlockProperties.h
-Utils/ITMLibVoxelProperties.h
+Utils/ITMHashBlockProperties.h
+Utils/ITMVoxelProperties.h
 Utils/ITMLibSettings.h
 Utils/ITMMath.h
 Utils/ITMMemoryBlockTypes.h
@@ -502,7 +502,8 @@ Utils/ITMProjectionUtils.h
 Utils/ITMSceneParams.h
 Utils/ITMSceneSliceRasterizer.h
 Utils/ITMSurfelSceneParams.h
-        Utils/ITMLibSceneWarpFileIO.h
+Utils/ITMSceneWarpFileIO.h
+Utils/ITMSceneStatisticsCalculator.h
 )
 
 #################################################################

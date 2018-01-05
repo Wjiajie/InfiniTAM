@@ -17,7 +17,7 @@
 
 #include <opencv2/core/mat.hpp>
 #include "../Interface/ITMSceneMotionTracker.h"
-#include "../../Utils/ITMLibHashBlockProperties.h"
+#include "../../Utils/ITMHashBlockProperties.h"
 
 namespace ITMLib {
 	template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

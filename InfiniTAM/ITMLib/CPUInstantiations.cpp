@@ -1,6 +1,7 @@
 // Copyright 2014-2017 Oxford University Innovation Limited and the authors of InfiniTAM
 
 #include "ITMLibDefines.h"
+//Note: ".tpp" files have to be included for all explicit instanciations in order to link properly
 #include "Objects/Scene/ITMSceneManipulation.tpp"
 #include "Core/ITMBasicEngine.tpp"
 #include "Core/ITMBasicSurfelEngine.tpp"
@@ -27,7 +28,8 @@
 #include "Trackers/Interface/ITMSceneMotionTracker.tpp"
 #include "Trackers/CPU/ITMSceneMotionTracker_CPU.tpp"
 #include "Utils/ITMSceneSliceRasterizer.tpp"
-#include "Utils/ITMLibSceneWarpFileIO.tpp"
+#include "Utils/ITMSceneStatisticsCalculator.tpp"
+#include "Utils/ITMSceneWarpFileIO.tpp"
 
 namespace ITMLib
 {
@@ -54,7 +56,7 @@ namespace ITMLib
 	template class ITMVisualisationEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 	template class ITMVisualisationEngine_CPU<ITMVoxelLive, ITMVoxelIndex>;
 	template class ITMMeshingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
-	template class ITMLibSceneWarpFileIO<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+	template class ITMSceneWarpFileIO<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 
 	//surfel fusion
 	template class ITMDenseSurfelMapper<ITMSurfel_grey>;
@@ -72,8 +74,11 @@ namespace ITMLib
 	template struct ITMSurfelVisualisationEngineFactory<ITMSurfel_grey>;
 	template struct ITMSurfelVisualisationEngineFactory<ITMSurfel_rgb>;
 
-	//dynamic fusion
+	//TODO: Cleanup -Greg (GitHub: Algomorph)
+	//dynamic fusion utilities
 	template class ITMSceneSliceRasterizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+	template class ITMSceneStatisticsCalculator<ITMVoxelCanonical,ITMVoxelIndex>;
+	template class ITMSceneStatisticsCalculator<ITMVoxelLive,ITMVoxelIndex>;
 
 	//scene manipulation functions
 	template void CopySceneWithOffset_CPU<ITMVoxelCanonical,ITMVoxelIndex>(
