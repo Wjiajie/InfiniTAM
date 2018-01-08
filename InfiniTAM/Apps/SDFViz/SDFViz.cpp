@@ -49,12 +49,16 @@ int SDFViz::run() {
 	vtkSmartPointer<vtkUnsignedCharArray> colors =
 			vtkSmartPointer<vtkUnsignedCharArray>::New();
 	colors->SetNumberOfComponents(3);
-	colors->SetName ("Colors");
+	colors->SetName("Colors");
 
-	ITMSceneStatisticsCalculator<ITMVoxelCanonical,ITMVoxelIndex> statCalculator;
+	ITMSceneStatisticsCalculator<ITMVoxelCanonical, ITMVoxelIndex> statCalculator;
 	Vector3i minPoint, maxPoint;
-	statCalculator.ComputeSceneVoxelBounds(canonicalScene, minPoint,maxPoint);
+	statCalculator.ComputeSceneVoxelBounds(canonicalScene, minPoint, maxPoint);
 	std::cout << "Voxel ranges ( min x,y,z; max x,y,z): " << minPoint << "; " << maxPoint << std::endl;
+
+	//(temporary) restrict scene bounds to these coordinates:
+	Vector3i minAllowedPoint(-100, -150, 0);
+	Vector3i maxAllowedPoint(200, 50, 300);
 
 	double voxelDrawSize = 1.0;
 
@@ -66,15 +70,26 @@ int SDFViz::run() {
 	unsigned char subtleRed[3] = {220, 100, 75};
 	int pointCount = 0;
 
+
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
-		Vector3i currentBlockPositionVoxels;
 		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
 
 		//skip unfilled hash
 		if (currentHashEntry.ptr < 0) continue;
 
 		//position of the current entry in 3D space
-		currentBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		Vector3i currentBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		Vector3i cornerOfBlockCoordinates(currentBlockPositionVoxels.x + SDF_BLOCK_SIZE-1,
+		                                  currentBlockPositionVoxels.y + SDF_BLOCK_SIZE-1,
+		                                  currentBlockPositionVoxels.z + SDF_BLOCK_SIZE-1);
+		if (currentBlockPositionVoxels.x > maxAllowedPoint.x ||
+		    currentBlockPositionVoxels.y > maxAllowedPoint.y ||
+		    currentBlockPositionVoxels.z > maxAllowedPoint.z ||
+			cornerOfBlockCoordinates.x < minAllowedPoint.x ||
+			cornerOfBlockCoordinates.y < minAllowedPoint.y ||
+			cornerOfBlockCoordinates.z < minAllowedPoint.z){
+			continue;//out of bounds
+		}
 
 		ITMVoxelCanonical* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
@@ -86,19 +101,19 @@ int SDFViz::run() {
 					ITMVoxelCanonical& voxel = localVoxelBlock[locId];
 					Vector3f projectedPositionVoxels = originalPositionVoxels.toFloat() + voxel.warp_t;
 					bool isNegative = voxel.sdf < 0.0f;
-					double sdfValueMapped = 1.0 - std::abs(voxel.sdf);
-					points->InsertNextPoint (voxelDrawSize * originalPositionVoxels.x,
-					                         voxelDrawSize * originalPositionVoxels.y,
-					                         voxelDrawSize * originalPositionVoxels.z);
-					if(isNegative){
-						unsigned char sdfColor[3] = {static_cast<unsigned char>(subtleRed[0]*sdfValueMapped),
-						                             static_cast<unsigned char>(subtleRed[1]*sdfValueMapped),
-						                             static_cast<unsigned char>(subtleRed[2]*sdfValueMapped)};
+					double sdfValueMapped = 0.2 + (voxel.sdf + 1.0) * 0.4;
+					points->InsertNextPoint(voxelDrawSize * originalPositionVoxels.x,
+					                        voxelDrawSize * originalPositionVoxels.y,
+					                        voxelDrawSize * originalPositionVoxels.z);
+					if (isNegative) {
+						unsigned char sdfColor[3] = {static_cast<unsigned char>(subtleRed[0] * sdfValueMapped),
+						                             static_cast<unsigned char>(subtleRed[1] * sdfValueMapped),
+						                             static_cast<unsigned char>(subtleRed[2] * sdfValueMapped)};
 						colors->InsertNextTypedTuple(sdfColor);
-					}else{
-						unsigned char sdfColor[3] = {static_cast<unsigned char>(subtleGreen[0]*sdfValueMapped),
-						                             static_cast<unsigned char>(subtleGreen[1]*sdfValueMapped),
-						                             static_cast<unsigned char>(subtleGreen[2]*sdfValueMapped)};
+					} else {
+						unsigned char sdfColor[3] = {static_cast<unsigned char>(subtleGreen[0] * sdfValueMapped),
+						                             static_cast<unsigned char>(subtleGreen[1] * sdfValueMapped),
+						                             static_cast<unsigned char>(subtleGreen[2] * sdfValueMapped)};
 						colors->InsertNextTypedTuple(sdfColor);
 					}
 
@@ -123,6 +138,7 @@ int SDFViz::run() {
 #else
 	vtkSmartPointer<vtkGenericGlyph3DFilter> vertexFilter =
 			vtkSmartPointer<vtkGenericGlyph3DFilter>::New();
+
 	vertexFilter->SetInputData(pointFilterInputPolydada);
 	vertexFilter->Update();
 #endif
@@ -130,7 +146,6 @@ int SDFViz::run() {
 	vtkSmartPointer<vtkPolyData> polydata =
 			vtkSmartPointer<vtkPolyData>::New();
 	polydata->ShallowCopy(vertexFilter->GetOutput());
-	//vtkPointData* pointDataRawPtr = polydata->GetPointData();
 
 	polydata->GetPointData()->SetScalars(colors);
 
@@ -145,7 +160,7 @@ int SDFViz::run() {
 	actor->GetProperty()->SetPointSize(8);
 	renderer->AddActor(actor);
 
-	renderer->GetActiveCamera()->SetPosition(-85,200,-460.);
+	renderer->GetActiveCamera()->SetPosition(-85, 200, -460.);
 	renderer->GetActiveCamera()->SetFocalPoint(85, -40, 460);
 	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
 	//renderer->ResetCamera();
@@ -201,24 +216,25 @@ void SDFViz::initializeRendering() {
 }
 
 vtkStandardNewMacro(KeyPressInteractorStyle);
+
 void KeyPressInteractorStyle::OnKeyPress() {
 
 	{
 		// Get the keypress
-		vtkRenderWindowInteractor *rwi = this->Interactor;
+		vtkRenderWindowInteractor* rwi = this->Interactor;
 		std::string key = rwi->GetKeySym();
 
-		if(key == "c" && parent != nullptr)
-		{
-			double x,y,z;
+		if (key == "c" && parent != nullptr) {
+			double x, y, z;
 			double xFocalPoint, yFocalPoint, zFocalPoint;
-			double xUpVector, yUpVector,zUpVector;
-			parent->renderer->GetActiveCamera()->GetPosition(x,y,z);
-			parent->renderer->GetActiveCamera()->GetFocalPoint(xFocalPoint,yFocalPoint,zFocalPoint);
-			parent->renderer->GetActiveCamera()->GetViewUp(xUpVector,yUpVector,zUpVector);
+			double xUpVector, yUpVector, zUpVector;
+			parent->renderer->GetActiveCamera()->GetPosition(x, y, z);
+			parent->renderer->GetActiveCamera()->GetFocalPoint(xFocalPoint, yFocalPoint, zFocalPoint);
+			parent->renderer->GetActiveCamera()->GetViewUp(xUpVector, yUpVector, zUpVector);
 			std::cout << "Camera:" << std::endl;
 			std::cout << "  Current position: " << x << ", " << y << ", " << z << std::endl;
-			std::cout << "  Current focal point: " << xFocalPoint << ", " << yFocalPoint << ", " << zFocalPoint << std::endl;
+			std::cout << "  Current focal point: " << xFocalPoint << ", " << yFocalPoint << ", " << zFocalPoint
+			          << std::endl;
 			std::cout << "  Current up-vector: " << xUpVector << ", " << yUpVector << ", " << zUpVector << std::endl;
 			std::cout.flush();
 		}
