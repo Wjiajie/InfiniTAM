@@ -31,6 +31,7 @@
 //local
 #include "../../ITMLib/Utils/ITMSceneWarpFileIO.h"
 #include "../../ITMLib/Utils/ITMLibSettings.h"
+#include "../../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
 
 int SDFViz::run() {
 
@@ -49,6 +50,11 @@ int SDFViz::run() {
 			vtkSmartPointer<vtkUnsignedCharArray>::New();
 	colors->SetNumberOfComponents(3);
 	colors->SetName ("Colors");
+
+	ITMSceneStatisticsCalculator<ITMVoxelCanonical,ITMVoxelIndex> statCalculator;
+	Vector3i minPoint, maxPoint;
+	statCalculator.ComputeSceneVoxelBounds(canonicalScene, minPoint,maxPoint);
+	std::cout << "Voxel ranges ( min x,y,z; max x,y,z): " << minPoint << "; " << maxPoint << std::endl;
 
 	double voxelDrawSize = 1.0;
 
@@ -124,7 +130,7 @@ int SDFViz::run() {
 	vtkSmartPointer<vtkPolyData> polydata =
 			vtkSmartPointer<vtkPolyData>::New();
 	polydata->ShallowCopy(vertexFilter->GetOutput());
-	vtkPointData* pointDataRawPtr = polydata->GetPointData();
+	//vtkPointData* pointDataRawPtr = polydata->GetPointData();
 
 	polydata->GetPointData()->SetScalars(colors);
 
