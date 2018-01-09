@@ -27,6 +27,9 @@
 #include <vtk-8.1/vtkPointData.h>
 #include <vtk-8.1/vtkNamedColors.h>
 #include <vtk-8.1/vtkGenericGlyph3DFilter.h>
+#include <vtk-8.1/vtkSphereSource.h>
+#include <vtk-8.1/vtkBridgeDataSet.h>
+#include <vtk-8.1/vtkGlyph3D.h>
 
 //local
 #include "../../ITMLib/Utils/ITMSceneWarpFileIO.h"
@@ -48,8 +51,8 @@ int SDFViz::run() {
 			vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkUnsignedCharArray> colors =
 			vtkSmartPointer<vtkUnsignedCharArray>::New();
-	colors->SetNumberOfComponents(3);
-	colors->SetName("Colors");
+	colors->SetNumberOfComponents(3);//TODO: #components --Greg (GitHub: Algomorph)
+	colors->SetName("colors");
 
 	ITMSceneStatisticsCalculator<ITMVoxelCanonical, ITMVoxelIndex> statCalculator;
 	Vector3i minPoint, maxPoint;
@@ -62,10 +65,10 @@ int SDFViz::run() {
 
 	double voxelDrawSize = 1.0;
 
-	// Setup colors
+	// Set up colors
 	vtkSmartPointer<vtkNamedColors> namedColors =
 			vtkSmartPointer<vtkNamedColors>::New();
-	//0.4, 0.8, 0.3
+
 	unsigned char subtleGreen[3] = {100, 220, 75};
 	unsigned char subtleRed[3] = {220, 100, 75};
 	int pointCount = 0;
@@ -79,9 +82,9 @@ int SDFViz::run() {
 
 		//position of the current entry in 3D space
 		Vector3i currentBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-		Vector3i cornerOfBlockCoordinates(currentBlockPositionVoxels.x + SDF_BLOCK_SIZE-1,
-		                                  currentBlockPositionVoxels.y + SDF_BLOCK_SIZE-1,
-		                                  currentBlockPositionVoxels.z + SDF_BLOCK_SIZE-1);
+		Vector3i cornerOfBlockCoordinates(currentBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1,
+		                                  currentBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1,
+		                                  currentBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1);
 		if (currentBlockPositionVoxels.x > maxAllowedPoint.x ||
 		    currentBlockPositionVoxels.y > maxAllowedPoint.y ||
 		    currentBlockPositionVoxels.z > maxAllowedPoint.z ||
@@ -101,72 +104,81 @@ int SDFViz::run() {
 					ITMVoxelCanonical& voxel = localVoxelBlock[locId];
 					Vector3f projectedPositionVoxels = originalPositionVoxels.toFloat() + voxel.warp_t;
 					bool isNegative = voxel.sdf < 0.0f;
-					double sdfValueMapped = 0.2 + (voxel.sdf + 1.0) * 0.4;
+					double sdfValueMapped = 1.0 - std::abs(voxel.sdf);
+					//double sdfValueMapped = 0.2 + (voxel.sdf + 1.0) * 0.4;
+					//double sdfValueMapped = 0.2 + (voxel.sdf + 1.0) * 0.4;
 					points->InsertNextPoint(voxelDrawSize * originalPositionVoxels.x,
 					                        voxelDrawSize * originalPositionVoxels.y,
 					                        voxelDrawSize * originalPositionVoxels.z);
-					if (isNegative) {
-						unsigned char sdfColor[3] = {static_cast<unsigned char>(subtleRed[0] * sdfValueMapped),
-						                             static_cast<unsigned char>(subtleRed[1] * sdfValueMapped),
-						                             static_cast<unsigned char>(subtleRed[2] * sdfValueMapped)};
-						colors->InsertNextTypedTuple(sdfColor);
-					} else {
-						unsigned char sdfColor[3] = {static_cast<unsigned char>(subtleGreen[0] * sdfValueMapped),
-						                             static_cast<unsigned char>(subtleGreen[1] * sdfValueMapped),
-						                             static_cast<unsigned char>(subtleGreen[2] * sdfValueMapped)};
-						colors->InsertNextTypedTuple(sdfColor);
-					}
-
+//					if (isNegative) {
+//						unsigned char sdfColor[4] = {static_cast<unsigned char>(subtleRed[0] * sdfValueMapped),
+//						                             static_cast<unsigned char>(subtleRed[1] * sdfValueMapped),
+//						                             static_cast<unsigned char>(subtleRed[2] * sdfValueMapped),
+//						                             static_cast<unsigned char>(255.0 * sdfValueMapped)};
+//						colors->InsertNextTypedTuple(sdfColor);
+//					} else {
+//						unsigned char sdfColor[4] = {static_cast<unsigned char>(subtleGreen[0] * sdfValueMapped),
+//						                             static_cast<unsigned char>(subtleGreen[1] * sdfValueMapped),
+//						                             static_cast<unsigned char>(subtleGreen[2] * sdfValueMapped),
+//						                             static_cast<unsigned char>(255.0 * sdfValueMapped)};
+//						colors->InsertNextTypedTuple(sdfColor);
+//					};
+					colors->InsertNextTypedTuple(subtleGreen);
 					pointCount++;
 				}
+
+
 			}
 		}
 	}
-	std::cout << "Total points in scene: " << pointCount << std::endl;
 
-	vtkSmartPointer<vtkPolyData> pointFilterInputPolydada =
-			vtkSmartPointer<vtkPolyData>::New();
+	std::cout << "Total points in scene: " << pointCount <<std::endl;
 
-	pointFilterInputPolydada->SetPoints(points);
-#define VERTEX_GLYPH_FILTER
-#ifdef VERTEX_GLYPH_FILTER
-	//converts points to vertices
-	vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter =
-			vtkSmartPointer<vtkVertexGlyphFilter>::New();
-	vertexFilter->SetInputData(pointFilterInputPolydada);
-	vertexFilter->Update();
-#else
-	vtkSmartPointer<vtkGenericGlyph3DFilter> vertexFilter =
-			vtkSmartPointer<vtkGenericGlyph3DFilter>::New();
+	//Points pipeline
+	vtkSmartPointer<vtkPolyData> pointsPolydada = vtkSmartPointer<vtkPolyData>::New();
+	pointsPolydada->SetPoints(points);
+	pointsPolydada->GetPointData()->SetScalars(colors);
 
-	vertexFilter->SetInputData(pointFilterInputPolydada);
-	vertexFilter->Update();
-#endif
+	//Individual voxel shape
+	vtkSmartPointer<vtkSphereSource> sphere = vtkSmartPointer<vtkSphereSource>::New();
+	sphere->SetThetaResolution(6);
+	sphere->SetPhiResolution(6);
+	sphere->SetRadius(voxelDrawSize/2);
+	sphere->Update();
 
-	vtkSmartPointer<vtkPolyData> polydata =
-			vtkSmartPointer<vtkPolyData>::New();
-	polydata->ShallowCopy(vertexFilter->GetOutput());
 
-	polydata->GetPointData()->SetScalars(colors);
+	vtkSmartPointer<vtkGlyph3D> filter =
+			vtkSmartPointer<vtkGlyph3D>::New();
+	filter->SetInputData(pointsPolydada);
+	filter->ScalingOff();
+	filter->SetScaleFactor(1.0);
+	filter->SetRange(1.0,1.0);
+	filter->SetSourceConnection(sphere->GetOutputPort());
+	//filter->ScalingOn();
 
-	// Visualization
-	vtkSmartPointer<vtkPolyDataMapper> mapper =
-			vtkSmartPointer<vtkPolyDataMapper>::New();
-	mapper->SetInputData(polydata);
+	filter->SetColorModeToColorByScalar();
 
-	vtkSmartPointer<vtkActor> actor =
-			vtkSmartPointer<vtkActor>::New();
+	filter->Update();
+
+
+// Visualization
+	vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	mapper->SetInputConnection(filter->GetOutputPort());
+
+
+	vtkSmartPointer<vtkActor> actor =vtkSmartPointer<vtkActor>::New();
 	actor->SetMapper(mapper);
-	actor->GetProperty()->SetPointSize(8);
+	//actor->GetProperty()->SetPointSize(8);
 	renderer->AddActor(actor);
 
-	renderer->GetActiveCamera()->SetPosition(-85, 200, -460.);
-	renderer->GetActiveCamera()->SetFocalPoint(85, -40, 460);
-	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
-	//renderer->ResetCamera();
-	//renderer->GetActiveCamera()->Zoom(1.5);
+//	renderer->GetActiveCamera()->SetPosition(-85, 200, -460.);
+//	renderer->GetActiveCamera()->SetFocalPoint(85, -40, 460);
+//	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
+    renderer->ResetCamera();
+//renderer->GetActiveCamera()->Zoom(1.5);
 
 	renderWindow->Render();
+
 	renderWindowInteractor->Start();
 
 	return EXIT_SUCCESS;
@@ -175,12 +187,10 @@ int SDFViz::run() {
 SDFViz::SDFViz() {
 	ITMLibSettings* settings = new ITMLibSettings();
 	MemoryDeviceType memoryType = settings->GetMemoryType();
-	canonicalScene = new ITMScene<ITMVoxelCanonical, ITMVoxelIndex>(&settings->sceneParams, settings->swappingMode ==
-	                                                                                        ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                                memoryType);
-	liveScene = new ITMScene<ITMVoxelLive, ITMVoxelIndex>(&settings->sceneParams, settings->swappingMode ==
-	                                                                              ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                      memoryType);
+	canonicalScene = new ITMScene<ITMVoxelCanonical, ITMVoxelIndex>(
+			&settings->sceneParams, settings->swappingMode ==ITMLibSettings::SWAPPINGMODE_ENABLED,memoryType);
+	liveScene = new ITMScene<ITMVoxelLive, ITMVoxelIndex>(
+			&settings->sceneParams, settings->swappingMode ==ITMLibSettings::SWAPPINGMODE_ENABLED,memoryType);
 	sceneLogger = new ITMSceneWarpFileIO<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
 			"/media/algomorph/Data/4dmseg/Killing/scene", canonicalScene, liveScene);
 	initializeRendering();
