@@ -42,6 +42,7 @@ public:
 	bool LoadNextWarpState();
 	bool LoadPreviousWarpState();
 	void StopLoadingWarpState();
+	bool IsLoadingWarpState();
 
 	bool LoadScenes();
 

@@ -113,7 +113,7 @@ int SDFViz::run() {
 					                        maxVoxelDrawSize * originalPositionVoxels.y,
 					                        maxVoxelDrawSize * originalPositionVoxels.z);
 
-					float nextDataValue[2] = {voxelScale, voxelColor};
+					float nextDataValue[2] = {voxelScale,  voxelColor };
 					pointAttributeData->InsertNextTypedTuple(nextDataValue);
 					pointCount++;
 				}
@@ -123,7 +123,7 @@ int SDFViz::run() {
 		}
 	}
 
-	std::cout << "Total points in scene: " << pointCount <<std::endl;
+	std::cout << "Total points for visualization: " << pointCount <<std::endl;
 
 	//Points pipeline
 	vtkSmartPointer<vtkPolyData> pointsPolydada = vtkSmartPointer<vtkPolyData>::New();
@@ -150,16 +150,21 @@ int SDFViz::run() {
 	glyph->SetColorModeToColorByScalar();
 
 	// Create the color map
-	vtkSmartPointer<vtkLookupTable> colorLookupTable =
+	vtkSmartPointer<vtkLookupTable> canonicalColorLookupTable =
 			vtkSmartPointer<vtkLookupTable>::New();
-	colorLookupTable->SetTableRange(0.0, 1.0);
-	colorLookupTable->Build();
+	canonicalColorLookupTable->SetTableRange(0.0, 1.0);
+	canonicalColorLookupTable->SetNumberOfTableValues(2);
+	canonicalColorLookupTable->SetNumberOfColors(2);
+	canonicalColorLookupTable->SetTableValue(0, 0.141, 0.215, 0.396, 1.0);
+	canonicalColorLookupTable->SetTableValue(1, 0.717, 0.788, 0.960, 1.0);
+	canonicalColorLookupTable->Build();
 
 	// set up mapper
 	vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 	mapper->SetInputConnection(glyph->GetOutputPort());
 	mapper->ScalarVisibilityOn();
 	mapper->SetColorModeToMapScalars();
+	mapper->SetLookupTable(canonicalColorLookupTable);
 	mapper->ColorByArrayComponent("data",1);
 
 
@@ -167,10 +172,10 @@ int SDFViz::run() {
 	actor->SetMapper(mapper);
 	renderer->AddActor(actor);
 
-//	renderer->GetActiveCamera()->SetPosition(-85, 200, -460.);
-//	renderer->GetActiveCamera()->SetFocalPoint(85, -40, 460);
-//	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
-    renderer->ResetCamera();
+	renderer->GetActiveCamera()->SetPosition(7.0, 22.0, -72.66);
+	renderer->GetActiveCamera()->SetFocalPoint(0.5, -40.5, 230.0);
+	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
+    //renderer->ResetCamera();
 
 	renderWindow->Render();
 
@@ -195,6 +200,7 @@ SDFViz::SDFViz() {
 SDFViz::~SDFViz() {
 	delete canonicalScene;
 	delete liveScene;
+	sceneLogger->StopLoadingWarpState();
 	delete sceneLogger;
 }
 

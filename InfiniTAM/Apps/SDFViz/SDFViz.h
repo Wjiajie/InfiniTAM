@@ -25,9 +25,9 @@
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
 
 using namespace ITMLib;
-namespace ITMLib{
-	template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-	class ITMSceneWarpFileIO;
+namespace ITMLib {
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+class ITMSceneWarpFileIO;
 }
 
 
@@ -35,14 +35,16 @@ class vtkRenderer;
 class vtkRenderWindow;
 class SDFViz;
 
-
-
-class KeyPressInteractorStyle : public vtkInteractorStyleTrackballCamera
-{
+/**
+ * \brief A standard VTK trackball interator style with added functionality for
+ * some keyboard keys
+ */
+class KeyPressInteractorStyle : public vtkInteractorStyleTrackballCamera {
 
 
 public:
 	static KeyPressInteractorStyle* New();
+
 vtkTypeMacro(KeyPressInteractorStyle, vtkInteractorStyleTrackballCamera);
 	SDFViz* parent;
 
@@ -50,17 +52,21 @@ vtkTypeMacro(KeyPressInteractorStyle, vtkInteractorStyleTrackballCamera);
 
 };
 
+/**
+ * \brief SDF Visualization application main class.
+ */
 class SDFViz {
 	friend class KeyPressInteractorStyle;
+
 private:
 
 	//================= MEMBERS =================
 	//data loader
-	ITMSceneWarpFileIO<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
+	ITMSceneWarpFileIO <ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
 
 	//data structures
-	ITMScene<ITMVoxelCanonical,ITMVoxelIndex>* canonicalScene;
-	ITMScene<ITMVoxelLive,ITMVoxelIndex>* liveScene;
+	ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene;
+	ITMScene<ITMVoxelLive, ITMVoxelIndex>* liveScene;
 
 	//visualization setup
 	// The renderer generates the image
@@ -81,7 +87,9 @@ private:
 
 public:
 	SDFViz();
+
 	virtual ~SDFViz();
+
 	int run();
 
 };

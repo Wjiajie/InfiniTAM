@@ -49,6 +49,7 @@ bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes() {
 	std::cout.flush();
 	liveScene->SaveToDirectory(livePath.string());
 	canonicalScene->SaveToDirectory(canonicalPath.string());
+	std::cout <<"Scenes saved." << std::endl;
 	return true;
 }
 
@@ -63,6 +64,7 @@ bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenes() {
 	std::cout.flush();
 	liveScene->LoadFromDirectory(livePath.c_str());
 	canonicalScene->LoadFromDirectory(canonicalPath.c_str());
+	std::cout <<"Scenes loaded." << std::endl;
 	return true;
 }
 
@@ -134,7 +136,10 @@ bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StartLoadingWarpSt
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StopLoadingWarpState() {
 	currentWarpIFStream.close();
+
 }
+
+
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadNextWarpState() {
@@ -209,6 +214,11 @@ bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadPreviousWarpSt
 
 	return true;
 
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::IsLoadingWarpState() {
+	return this->currentWarpIFStream.is_open();
 }
 
 
