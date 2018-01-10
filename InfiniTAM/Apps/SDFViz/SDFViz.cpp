@@ -46,31 +46,15 @@ int SDFViz::run() {
 	ITMVoxelCanonical* voxelBlocks = canonicalScene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
 	int noTotalEntries = canonicalScene->index.noTotalEntries;
-	ITMVoxelIndex::IndexCache canonicalCache;
 
 	//holds raw point data
 	vtkSmartPointer<vtkPoints> points =
 			vtkSmartPointer<vtkPoints>::New();
 
-//	holds point color attribute
-	vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
-	colors->SetNumberOfComponents(3);
-	colors->SetName("color");
-	//holds point scale attribute
-	vtkSmartPointer<vtkFloatArray> colorsFloat = vtkSmartPointer<vtkFloatArray>::New();
-	colorsFloat->SetName("color");
-
-	// Create the color map
-	vtkSmartPointer<vtkLookupTable> colorLookupTable =
-			vtkSmartPointer<vtkLookupTable>::New();
-	colorLookupTable->SetTableRange(0.0, 1.0);
-	//colorLookupTable->Set
-	colorLookupTable->Build();
-
-	//holds point scale attribute
-	vtkSmartPointer<vtkFloatArray> scales = vtkSmartPointer<vtkFloatArray>::New();
-	scales->SetNumberOfComponents(2);
-	scales->SetName("scale");
+	//holds point data attribute
+	vtkSmartPointer<vtkFloatArray> pointAttributeData = vtkSmartPointer<vtkFloatArray>::New();
+	pointAttributeData->SetNumberOfComponents(2);
+	pointAttributeData->SetName("data");
 
 	ITMSceneStatisticsCalculator<ITMVoxelCanonical, ITMVoxelIndex> statCalculator;
 	Vector3i minPoint, maxPoint;
@@ -124,14 +108,13 @@ int SDFViz::run() {
 					bool isNegative = voxel.sdf < 0.0f;
 					float voxelScale = 1.0f - std::abs(voxel.sdf);
 					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
-					//double voxelScale = 0.2 + (voxel.sdf + 1.0) * 0.4;
+
 					points->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
 					                        maxVoxelDrawSize * originalPositionVoxels.y,
 					                        maxVoxelDrawSize * originalPositionVoxels.z);
 
 					float nextDataValue[2] = {voxelScale, voxelColor};
-					scales->InsertNextTypedTuple(nextDataValue);
-
+					pointAttributeData->InsertNextTypedTuple(nextDataValue);
 					pointCount++;
 				}
 
@@ -146,8 +129,8 @@ int SDFViz::run() {
 	vtkSmartPointer<vtkPolyData> pointsPolydada = vtkSmartPointer<vtkPolyData>::New();
 	pointsPolydada->SetPoints(points);
 
-	pointsPolydada->GetPointData()->AddArray(scales);
-	pointsPolydada->GetPointData()->SetActiveScalars("scale");
+	pointsPolydada->GetPointData()->AddArray(pointAttributeData);
+	pointsPolydada->GetPointData()->SetActiveScalars("data");
 
 	//Individual voxel shape
 	vtkSmartPointer<vtkSphereSource> sphere = vtkSmartPointer<vtkSphereSource>::New();
@@ -166,12 +149,18 @@ int SDFViz::run() {
 	glyph->SetScaleFactor(1.0);
 	glyph->SetColorModeToColorByScalar();
 
+	// Create the color map
+	vtkSmartPointer<vtkLookupTable> colorLookupTable =
+			vtkSmartPointer<vtkLookupTable>::New();
+	colorLookupTable->SetTableRange(0.0, 1.0);
+	colorLookupTable->Build();
+
 	// set up mapper
 	vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 	mapper->SetInputConnection(glyph->GetOutputPort());
 	mapper->ScalarVisibilityOn();
 	mapper->SetColorModeToMapScalars();
-	mapper->ColorByArrayComponent("scale",1);
+	mapper->ColorByArrayComponent("data",1);
 
 
 	vtkSmartPointer<vtkActor> actor =vtkSmartPointer<vtkActor>::New();
@@ -182,7 +171,6 @@ int SDFViz::run() {
 //	renderer->GetActiveCamera()->SetFocalPoint(85, -40, 460);
 //	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
     renderer->ResetCamera();
-//renderer->GetActiveCamera()->Zoom(1.5);
 
 	renderWindow->Render();
 
