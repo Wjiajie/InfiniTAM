@@ -69,6 +69,7 @@ int SDFViz::run() {
 
 	//holds point scale attribute
 	vtkSmartPointer<vtkFloatArray> scales = vtkSmartPointer<vtkFloatArray>::New();
+	scales->SetNumberOfComponents(2);
 	scales->SetName("scale");
 
 	ITMSceneStatisticsCalculator<ITMVoxelCanonical, ITMVoxelIndex> statCalculator;
@@ -127,23 +128,9 @@ int SDFViz::run() {
 					points->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
 					                        maxVoxelDrawSize * originalPositionVoxels.y,
 					                        maxVoxelDrawSize * originalPositionVoxels.z);
-					scales->InsertNextValue(voxelScale);
-					colorsFloat->InsertNextValue(voxelColor);
 
-//					if (isNegative) {
-//						unsigned char sdfColor[4] = {static_cast<unsigned char>(subtleRed[0] * voxelScale),
-//						                             static_cast<unsigned char>(subtleRed[1] * voxelScale),
-//						                             static_cast<unsigned char>(subtleRed[2] * voxelScale),
-//						                             static_cast<unsigned char>(255.0 * voxelScale)};
-//						colorsFloat->InsertNextTypedTuple(sdfColor);
-//					} else {
-//						unsigned char sdfColor[4] = {static_cast<unsigned char>(subtleGreen[0] * voxelScale),
-//						                             static_cast<unsigned char>(subtleGreen[1] * voxelScale),
-//						                             static_cast<unsigned char>(subtleGreen[2] * voxelScale),
-//						                             static_cast<unsigned char>(255.0 * voxelScale)};
-//						colorsFloat->InsertNextTypedTuple(sdfColor);
-//					};
-					colors->InsertNextTypedTuple(subtleGreen);
+					float nextDataValue[2] = {voxelScale, voxelColor};
+					scales->InsertNextTypedTuple(nextDataValue);
 
 					pointCount++;
 				}
@@ -159,11 +146,8 @@ int SDFViz::run() {
 	vtkSmartPointer<vtkPolyData> pointsPolydada = vtkSmartPointer<vtkPolyData>::New();
 	pointsPolydada->SetPoints(points);
 
-	pointsPolydada->GetPointData()->AddArray(colorsFloat);
 	pointsPolydada->GetPointData()->AddArray(scales);
 	pointsPolydada->GetPointData()->SetActiveScalars("scale");
-
-
 
 	//Individual voxel shape
 	vtkSmartPointer<vtkSphereSource> sphere = vtkSmartPointer<vtkSphereSource>::New();
@@ -172,32 +156,26 @@ int SDFViz::run() {
 	sphere->SetRadius(maxVoxelDrawSize/2);
 	sphere->Update();
 
+	//set up glyphs
+	vtkSmartPointer<vtkGlyph3D> glyph = vtkSmartPointer<vtkGlyph3D>::New();
+	glyph->SetInputData(pointsPolydada);
+	glyph->SetSourceConnection(sphere->GetOutputPort());
+	glyph->ScalingOn();
+	glyph->ClampingOff();
+	glyph->SetScaleModeToScaleByScalar();
+	glyph->SetScaleFactor(1.0);
+	glyph->SetColorModeToColorByScalar();
 
-// Visualization
-	vtkSmartPointer<vtkGlyph3DMapper> mapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
-	mapper->SetSourceConnection(sphere->GetOutputPort());
-	mapper->SetInputData(pointsPolydada);
-
-	mapper->ScalingOn();
-
-	mapper->SetScaleModeToScaleByMagnitude();
+	// set up mapper
+	vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	mapper->SetInputConnection(glyph->GetOutputPort());
+	mapper->ScalarVisibilityOn();
 	mapper->SetColorModeToMapScalars();
-	mapper->SetScalarModeToUsePointData();
-
-	mapper->SetScaleFactor(1.0);
-	mapper->SetScaleArray("scale");
-	mapper->SelectColorArray("color");
-
-	//mapper->SetColorModeToDirectScalars();
-
-
-
-	//mapper->SetInputConnection(filter->GetOutputPort());
+	mapper->ColorByArrayComponent("scale",1);
 
 
 	vtkSmartPointer<vtkActor> actor =vtkSmartPointer<vtkActor>::New();
 	actor->SetMapper(mapper);
-	//actor->GetProperty()->SetPointSize(8);
 	renderer->AddActor(actor);
 
 //	renderer->GetActiveCamera()->SetPosition(-85, 200, -460.);
