@@ -15,11 +15,11 @@
 //  ================================================================
 #pragma once
 
+#include <vtkSmartPointer.h>
+#include <vtkInteractorStyleTrackballCamera.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkObjectFactory.h>
 
-#include <vtk-8.1/vtkSmartPointer.h>
-#include <vtk-8.1/vtkInteractorStyleTrackballCamera.h>
-#include <vtk-8.1/vtkRenderWindowInteractor.h>
-#include <vtk-8.1/vtkObjectFactory.h>
 //local
 #include "../../ITMLib/ITMLibDefines.h"
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
@@ -33,6 +33,9 @@ class ITMSceneWarpFileIO;
 
 class vtkRenderer;
 class vtkRenderWindow;
+class vtkPoints;
+class vtkPolyData;
+
 class SDFViz;
 
 /**
@@ -68,6 +71,12 @@ private:
 	ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene;
 	ITMScene<ITMVoxelLive, ITMVoxelIndex>* liveScene;
 
+	// Structures for rendering scene geometry with VTK
+	vtkSmartPointer<vtkPoints> canonicalPoints;
+	vtkSmartPointer<vtkPolyData> canonicalPolydata;
+	vtkSmartPointer<vtkPoints> livePoints;
+	vtkSmartPointer<vtkPolyData> livePolydata;
+
 	//visualization setup
 	// The renderer generates the image
 	// which is then displayed on the render window.
@@ -76,6 +85,10 @@ private:
 	// The render window is the actual GUI window
 	// that appears on the computer screen
 	vtkSmartPointer<vtkRenderWindow> renderWindow;
+	// Rendering limits/boundaries
+	// (probably temporary since more elaborate methods of not rendering distant voxels will be employed later)
+	Vector3i minAllowedPoint;
+	Vector3i maxAllowedPoint;
 
 	// The render window interactor captures mouse events
 	// and will perform appropriate camera or actor manipulation
@@ -83,9 +96,20 @@ private:
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
 
 	//================ METHODS ====================
-	void initializeRendering();
-
+	void InitializeRendering();
+	bool HashBlockIsAtLeastPartiallyWithinBounds(Vector3i hashBlockPositionVoxels);
+	template<typename TVoxel>
+	void GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPoints>& points,
+	                                vtkSmartPointer<vtkPolyData>& polydata);
+	void DrawLegend();
 public:
+
+	static const double maxVoxelDrawSize;
+	static const double canonicalNegativeSDFColor[4];
+	static const double canonicalPositiveSDFColor[4];
+	static const double liveNegativeSDFColor[4];
+	static const double livePositiveSDFColor[4];
+
 	SDFViz();
 
 	virtual ~SDFViz();
