@@ -63,22 +63,6 @@ int SDFViz::run() {
 	sphere->SetRadius(maxVoxelDrawSize / 2);
 	sphere->Update();
 
-	// set up glyphs
-	auto SetUpGlyph = [&sphere](vtkSmartPointer<vtkPolyData>& polydata, vtkSmartPointer<vtkGlyph3D>& glyph) {
-		glyph->SetInputData(polydata);
-		glyph->SetSourceConnection(sphere->GetOutputPort());
-		glyph->ScalingOn();
-		glyph->ClampingOff();
-		glyph->SetScaleModeToScaleByScalar();
-		glyph->SetScaleFactor(1.0);
-		glyph->SetColorModeToColorByScalar();
-	};
-	vtkSmartPointer<vtkGlyph3D> canonicalGlyph = vtkSmartPointer<vtkGlyph3D>::New();
-	vtkSmartPointer<vtkGlyph3D> liveGlyph = vtkSmartPointer<vtkGlyph3D>::New();
-	SetUpGlyph(canonicalPolydata, canonicalGlyph);
-	SetUpGlyph(livePolydata, liveGlyph);
-
-
 	// Create the color maps
 	auto SetUpSDFColorLookupTable = [](vtkSmartPointer<vtkLookupTable>& table,
 	                                   const double rgbaFirstColor[4], const double rgbaSecondColor[4]) {
@@ -94,6 +78,25 @@ int SDFViz::run() {
 	SetUpSDFColorLookupTable(canonicalColorLookupTable, canonicalNegativeSDFColor, canonicalPositiveSDFColor);
 	SetUpSDFColorLookupTable(liveColorLookupTable, liveNegativeSDFColor, livePositiveSDFColor);
 
+#ifdef USE_CPU_GLYPH
+	// set up glyphs
+	auto SetUpGlyph = [&sphere](vtkSmartPointer<vtkPolyData>& polydata, vtkSmartPointer<vtkGlyph3D>& glyph) {
+		glyph->SetInputData(polydata);
+		glyph->SetSourceConnection(sphere->GetOutputPort());
+		glyph->ScalingOn();
+		glyph->ClampingOff();
+		glyph->SetScaleModeToScaleByScalar();
+		glyph->SetScaleFactor(1.0);
+		glyph->SetColorModeToColorByScalar();
+	};
+
+	vtkSmartPointer<vtkGlyph3D> canonicalGlyph = vtkSmartPointer<vtkGlyph3D>::New();
+	vtkSmartPointer<vtkGlyph3D> liveGlyph = vtkSmartPointer<vtkGlyph3D>::New();
+	SetUpGlyph(canonicalPolydata, canonicalGlyph);
+	SetUpGlyph(livePolydata, liveGlyph);
+
+
+
 	// set up mappers
 	auto SetUpSceneMapper = [](vtkSmartPointer<vtkPolyDataMapper>& mapper,
 	                           vtkSmartPointer<vtkLookupTable>& table,
@@ -108,6 +111,9 @@ int SDFViz::run() {
 	vtkSmartPointer<vtkPolyDataMapper> liveMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 	SetUpSceneMapper(canonicalMapper, canonicalColorLookupTable, canonicalGlyph);
 	SetUpSceneMapper(liveMapper, liveColorLookupTable, liveGlyph);
+#else
+
+#endif
 
 	vtkSmartPointer<vtkActor> canonicalActor = vtkSmartPointer<vtkActor>::New();
 	canonicalActor->SetMapper(canonicalMapper);
@@ -192,10 +198,20 @@ bool SDFViz::HashBlockIsAtLeastPartiallyWithinBounds(Vector3i hashBlockPositionV
 template<typename TVoxel>
 void SDFViz::GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPoints>& points,
                                         vtkSmartPointer<vtkPolyData>& polydata) {
+#ifdef USE_CPU_GLYPH
 	//holds point data attribute
 	vtkSmartPointer<vtkFloatArray> pointAttributeData = vtkSmartPointer<vtkFloatArray>::New();
 	pointAttributeData->SetNumberOfComponents(2);
 	pointAttributeData->SetName("data");
+#else
+	//holds color for each voxel
+	vtkSmartPointer<vtkFloatArray> colorAttribute = vtkSmartPointer<vtkFloatArray>::New();
+	colorAttribute->SetName("color");
+
+	//holds scale of each voxel
+	vtkSmartPointer<vtkFloatArray> scaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
+	scaleAttribute->SetName("scale");
+#endif
 	int pointCount = 0;//stat logging
 	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
@@ -229,9 +245,12 @@ void SDFViz::GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, 
 					points->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
 					                        maxVoxelDrawSize * originalPositionVoxels.y,
 					                        maxVoxelDrawSize * originalPositionVoxels.z);
-
+#ifdef USE_CPU_GLYPH
 					float nextDataValue[2] = {voxelScale, voxelColor};
 					pointAttributeData->InsertNextTypedTuple(nextDataValue);
+#endif
+					scaleAttribute->InsertNextValue(voxelScale);
+					colorAttribute->InsertNextValue(voxelColor);
 					pointCount++;
 				}
 			}
@@ -242,8 +261,15 @@ void SDFViz::GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, 
 
 	//Points pipeline
 	polydata->SetPoints(points);
+	//TODO: pointAttributeData is candidate for removal (by GitHub:Algomorph)
+#ifdef USE_CPU_GLYPH
 	polydata->GetPointData()->AddArray(pointAttributeData);
 	polydata->GetPointData()->SetActiveScalars("data");
+#else
+	polydata->GetPointData()->AddArray(colorAttribute);
+	polydata->GetPointData()->AddArray(scaleAttribute);
+	polydata->GetPointData()->SetActiveScalars("color");
+#endif
 }
 
 void SDFViz::DrawLegend() {
