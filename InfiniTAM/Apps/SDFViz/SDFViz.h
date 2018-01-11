@@ -60,10 +60,25 @@ vtkTypeMacro(KeyPressInteractorStyle, vtkInteractorStyleTrackballCamera);
  */
 class SDFViz {
 	friend class KeyPressInteractorStyle;
+public:
+	//================= CONSTANTS ================
+	static const double maxVoxelDrawSize;
+	static const double canonicalNegativeSDFColor[4];
+	static const double canonicalPositiveSDFColor[4];
+	static const double liveNegativeSDFColor[4];
+	static const double livePositiveSDFColor[4];
+
+	//================= CONSTRUCTORS/DESTRUCTORS =
+	SDFViz();
+	virtual ~SDFViz();
+	//================= METHODS ==================
+	int run();
 
 private:
-
-	//================= MEMBERS =================
+	//================= CONSTANTS ================
+	static const char* colorPointAttributeName;
+	static const char* scalePointAttributeName;
+	//================= FIELDS ===================
 	//data loader
 	ITMSceneWarpFileIO <ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
 
@@ -95,26 +110,13 @@ private:
 	// depending on the nature of the events.
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
 
-	//================ METHODS ====================
+	//================ METHODS =====================
 	void InitializeRendering();
 	bool HashBlockIsAtLeastPartiallyWithinBounds(Vector3i hashBlockPositionVoxels);
 	template<typename TVoxel>
 	void GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPoints>& points,
 	                                vtkSmartPointer<vtkPolyData>& polydata);
 	void DrawLegend();
-public:
-
-	static const double maxVoxelDrawSize;
-	static const double canonicalNegativeSDFColor[4];
-	static const double canonicalPositiveSDFColor[4];
-	static const double liveNegativeSDFColor[4];
-	static const double livePositiveSDFColor[4];
-
-	SDFViz();
-
-	virtual ~SDFViz();
-
-	int run();
 
 };
 

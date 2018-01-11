@@ -38,11 +38,16 @@
 #include "../../ITMLib/Utils/ITMLibSettings.h"
 #include "../../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
 
+//** public **
 const double SDFViz::maxVoxelDrawSize = 1.0;
 const double SDFViz::canonicalNegativeSDFColor[4] = {0.141, 0.215, 0.396, 1.0};
 const double SDFViz::canonicalPositiveSDFColor[4] = {0.717, 0.788, 0.960, 1.0};
 const double SDFViz::liveNegativeSDFColor[4] = {0.101, 0.219, 0.125, 0.6};
 const double SDFViz::livePositiveSDFColor[4] = {0.717, 0.882, 0.749, 0.6};
+
+//** private **
+const char* SDFViz::colorPointAttributeName = "color";
+const char* SDFViz::scalePointAttributeName = "scale";
 
 int SDFViz::run() {
 	//read scenes from disk
@@ -99,8 +104,8 @@ int SDFViz::run() {
 
 	// set up mappers
 	auto SetUpSceneMapper = [](vtkSmartPointer<vtkPolyDataMapper>& mapper,
-	                           vtkSmartPointer<vtkLookupTable>& table,
-	                           vtkSmartPointer<vtkGlyph3D>& glyph) {
+							   vtkSmartPointer<vtkLookupTable>& table,
+							   vtkSmartPointer<vtkGlyph3D>& glyph) {
 		mapper->SetInputConnection(glyph->GetOutputPort());
 		mapper->ScalarVisibilityOn();
 		mapper->SetColorModeToMapScalars();
@@ -112,7 +117,24 @@ int SDFViz::run() {
 	SetUpSceneMapper(canonicalMapper, canonicalColorLookupTable, canonicalGlyph);
 	SetUpSceneMapper(liveMapper, liveColorLookupTable, liveGlyph);
 #else
-
+	// set up mappers
+	auto SetUpSceneMapper = [&sphere](vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+	                           vtkSmartPointer<vtkLookupTable>& table,
+	                           vtkSmartPointer<vtkPolyData>& pointsPolydata) {
+		mapper->SetInputData(pointsPolydata);
+		mapper->SetSourceConnection(sphere->GetOutputPort());
+		mapper->SetLookupTable(table);
+		mapper->ScalingOn();
+		mapper->ScalarVisibilityOn();
+		mapper->SetScalarModeToUsePointData();
+		mapper->SetColorModeToMapScalars();
+		mapper->SetScaleModeToScaleByMagnitude();
+		mapper->SetScaleArray(scalePointAttributeName);
+	};
+	vtkSmartPointer<vtkGlyph3DMapper> canonicalMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	vtkSmartPointer<vtkGlyph3DMapper> liveMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	SetUpSceneMapper(canonicalMapper,canonicalColorLookupTable,canonicalPolydata);
+	SetUpSceneMapper(liveMapper,liveColorLookupTable,livePolydata);
 #endif
 
 	vtkSmartPointer<vtkActor> canonicalActor = vtkSmartPointer<vtkActor>::New();
@@ -206,11 +228,11 @@ void SDFViz::GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, 
 #else
 	//holds color for each voxel
 	vtkSmartPointer<vtkFloatArray> colorAttribute = vtkSmartPointer<vtkFloatArray>::New();
-	colorAttribute->SetName("color");
+	colorAttribute->SetName(colorPointAttributeName);
 
 	//holds scale of each voxel
 	vtkSmartPointer<vtkFloatArray> scaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
-	scaleAttribute->SetName("scale");
+	scaleAttribute->SetName(scalePointAttributeName);
 #endif
 	int pointCount = 0;//stat logging
 	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
@@ -268,7 +290,7 @@ void SDFViz::GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, 
 #else
 	polydata->GetPointData()->AddArray(colorAttribute);
 	polydata->GetPointData()->AddArray(scaleAttribute);
-	polydata->GetPointData()->SetActiveScalars("color");
+	polydata->GetPointData()->SetActiveScalars(colorPointAttributeName);
 #endif
 }
 
