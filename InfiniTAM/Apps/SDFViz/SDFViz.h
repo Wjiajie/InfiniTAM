@@ -31,11 +31,6 @@ class ITMSceneWarpFileIO;
 }
 
 
-class vtkRenderer;
-class vtkRenderWindow;
-class vtkPoints;
-class vtkPolyData;
-
 class SDFViz;
 
 /**
@@ -54,6 +49,12 @@ vtkTypeMacro(KeyPressInteractorStyle, vtkInteractorStyleTrackballCamera);
 	virtual void OnKeyPress();
 
 };
+
+class vtkRenderer;
+class vtkRenderWindow;
+class vtkPoints;
+class vtkPolyData;
+class vtkGlyph3DMapper;
 
 /**
  * \brief SDF Visualization application main class.
@@ -87,10 +88,11 @@ private:
 	ITMScene<ITMVoxelLive, ITMVoxelIndex>* liveScene;
 
 	// Structures for rendering scene geometry with VTK
-	vtkSmartPointer<vtkPoints> canonicalPoints;
 	vtkSmartPointer<vtkPolyData> canonicalPolydata;
-	vtkSmartPointer<vtkPoints> livePoints;
 	vtkSmartPointer<vtkPolyData> livePolydata;
+	//TODO: not certain if we need the mappers to be member variables yet -Greg (GitHub: Algomorph)
+	vtkSmartPointer<vtkGlyph3DMapper> canonicalMapper;
+	vtkSmartPointer<vtkGlyph3DMapper> liveMapper;
 
 	//visualization setup
 	// The renderer generates the image
@@ -114,9 +116,9 @@ private:
 	void InitializeRendering();
 	bool HashBlockIsAtLeastPartiallyWithinBounds(Vector3i hashBlockPositionVoxels);
 	template<typename TVoxel>
-	void GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPoints>& points,
-	                                vtkSmartPointer<vtkPolyData>& polydata);
+	void GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPolyData>& polydata);
 	void DrawLegend();
+	void TestPointShift();
 
 };
 

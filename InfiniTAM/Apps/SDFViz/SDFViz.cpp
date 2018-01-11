@@ -58,8 +58,8 @@ int SDFViz::run() {
 	statCalculator.ComputeSceneVoxelBounds(canonicalScene, minPoint, maxPoint);
 	std::cout << "Voxel ranges ( min x,y,z; max x,y,z): " << minPoint << "; " << maxPoint << std::endl;
 
-	GenerateInitialScenePoints(canonicalScene, canonicalPoints, canonicalPolydata);
-	GenerateInitialScenePoints(liveScene, livePoints, livePolydata);
+	GenerateInitialScenePoints(canonicalScene, canonicalPolydata);
+	GenerateInitialScenePoints(liveScene, livePolydata);
 
 	//Individual voxel shape
 	vtkSmartPointer<vtkSphereSource> sphere = vtkSmartPointer<vtkSphereSource>::New();
@@ -83,7 +83,7 @@ int SDFViz::run() {
 	SetUpSDFColorLookupTable(canonicalColorLookupTable, canonicalNegativeSDFColor, canonicalPositiveSDFColor);
 	SetUpSDFColorLookupTable(liveColorLookupTable, liveNegativeSDFColor, livePositiveSDFColor);
 
-#ifdef USE_CPU_GLYPH
+#ifdef USE_CPU_GLYPH //_DEBUG
 	// set up glyphs
 	auto SetUpGlyph = [&sphere](vtkSmartPointer<vtkPolyData>& polydata, vtkSmartPointer<vtkGlyph3D>& glyph) {
 		glyph->SetInputData(polydata);
@@ -99,8 +99,6 @@ int SDFViz::run() {
 	vtkSmartPointer<vtkGlyph3D> liveGlyph = vtkSmartPointer<vtkGlyph3D>::New();
 	SetUpGlyph(canonicalPolydata, canonicalGlyph);
 	SetUpGlyph(livePolydata, liveGlyph);
-
-
 
 	// set up mappers
 	auto SetUpSceneMapper = [](vtkSmartPointer<vtkPolyDataMapper>& mapper,
@@ -131,12 +129,11 @@ int SDFViz::run() {
 		mapper->SetScaleModeToScaleByMagnitude();
 		mapper->SetScaleArray(scalePointAttributeName);
 	};
-	vtkSmartPointer<vtkGlyph3DMapper> canonicalMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
-	vtkSmartPointer<vtkGlyph3DMapper> liveMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	canonicalMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	liveMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
 	SetUpSceneMapper(canonicalMapper,canonicalColorLookupTable,canonicalPolydata);
 	SetUpSceneMapper(liveMapper,liveColorLookupTable,livePolydata);
 #endif
-
 	vtkSmartPointer<vtkActor> canonicalActor = vtkSmartPointer<vtkActor>::New();
 	canonicalActor->SetMapper(canonicalMapper);
 	vtkSmartPointer<vtkActor> liveActor = vtkSmartPointer<vtkActor>::New();
@@ -158,8 +155,6 @@ int SDFViz::run() {
 SDFViz::SDFViz() :
 		minAllowedPoint(-100, -150, 0),
 		maxAllowedPoint(200, 50, 300),
-		canonicalPoints(vtkSmartPointer<vtkPoints>::New()),
-		livePoints(vtkSmartPointer<vtkPoints>::New()),
 		canonicalPolydata(vtkSmartPointer<vtkPolyData>::New()),
 		livePolydata(vtkSmartPointer<vtkPolyData>::New()) {
 	auto* settings = new ITMLibSettings();
@@ -218,9 +213,9 @@ bool SDFViz::HashBlockIsAtLeastPartiallyWithinBounds(Vector3i hashBlockPositionV
 
 
 template<typename TVoxel>
-void SDFViz::GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPoints>& points,
-                                        vtkSmartPointer<vtkPolyData>& polydata) {
-#ifdef USE_CPU_GLYPH
+void SDFViz::GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPolyData>& polydata) {
+	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+#ifdef USE_CPU_GLYPH //_DEBUG
 	//holds point data attribute
 	vtkSmartPointer<vtkFloatArray> pointAttributeData = vtkSmartPointer<vtkFloatArray>::New();
 	pointAttributeData->SetNumberOfComponents(2);
@@ -267,7 +262,7 @@ void SDFViz::GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, 
 					points->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
 					                        maxVoxelDrawSize * originalPositionVoxels.y,
 					                        maxVoxelDrawSize * originalPositionVoxels.z);
-#ifdef USE_CPU_GLYPH
+#ifdef USE_CPU_GLYPH //_DEBUG
 					float nextDataValue[2] = {voxelScale, voxelColor};
 					pointAttributeData->InsertNextTypedTuple(nextDataValue);
 #endif
@@ -284,7 +279,7 @@ void SDFViz::GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, 
 	//Points pipeline
 	polydata->SetPoints(points);
 	//TODO: pointAttributeData is candidate for removal (by GitHub:Algomorph)
-#ifdef USE_CPU_GLYPH
+#ifdef USE_CPU_GLYPH //_DEBUG
 	polydata->GetPointData()->AddArray(pointAttributeData);
 	polydata->GetPointData()->SetActiveScalars("data");
 #else
@@ -292,6 +287,32 @@ void SDFViz::GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, 
 	polydata->GetPointData()->AddArray(scaleAttribute);
 	polydata->GetPointData()->SetActiveScalars(colorPointAttributeName);
 #endif
+}
+
+
+void SDFViz::TestPointShift() {
+	vtkPoints* points = canonicalPolydata->GetPoints();
+	double ave[3];
+	int pointCount = 0;
+	for(int iPoint = 0; iPoint < points->GetNumberOfPoints(); iPoint++){
+		double point[3];
+		points->GetPoint(iPoint, point);
+		ave[0] += point[0];
+		ave[1] += point[1];
+		ave[2] += point[2];
+		point[0] += 10.0;
+		point[1] += 10.0;
+		point[2] += 10.0;
+		points->SetPoint(iPoint, point);
+		pointCount ++;
+	}
+	ave[0] /= pointCount;
+	ave[1] /= pointCount;
+	ave[2] /= pointCount;
+	std::cout << "Average point: " << ave[0] << ", " << ave[1] << ", " << ave[2] << std::endl;
+
+	canonicalPolydata->Modified();
+	renderWindow->Render();
 }
 
 void SDFViz::DrawLegend() {
@@ -307,20 +328,21 @@ void SDFViz::DrawLegend() {
 	legend->SetEntry(3, legendSphere->GetOutput(), "Negative Live", (double*) liveNegativeSDFColor);
 
 	legend->GetPositionCoordinate()->SetCoordinateSystemToView();
-	legend->GetPositionCoordinate()->SetValue(.5, -1.0);//x = .5
+	legend->GetPositionCoordinate()->SetValue(0.8, -1.0);
 	legend->GetPosition2Coordinate()->SetCoordinateSystemToView();
-	legend->GetPosition2Coordinate()->SetValue(1.0, -0.5); //y = -.5
+	legend->GetPosition2Coordinate()->SetValue(1.0, -0.7);
 
 	//set up legend background
 	vtkSmartPointer<vtkNamedColors> colors =
 			vtkSmartPointer<vtkNamedColors>::New();
 	legend->UseBackgroundOn();
 	double background[4];
-	colors->GetColor("warm_grey", background);
+	colors->GetColor("black", background);
 	legend->SetBackgroundColor(background);
 
 	renderer->AddActor(legend);
 }
+
 
 
 vtkStandardNewMacro(KeyPressInteractorStyle);
@@ -344,6 +366,11 @@ void KeyPressInteractorStyle::OnKeyPress() {
 		          << std::endl;
 		std::cout << "  Current up-vector: " << xUpVector << ", " << yUpVector << ", " << zUpVector << std::endl;
 		std::cout.flush();
+	}
+
+	if (key == "t" && parent != nullptr){
+		parent->TestPointShift();
+		std::cout <<"Point shift test conducted." << std::endl;
 	}
 
 	// Forward events
