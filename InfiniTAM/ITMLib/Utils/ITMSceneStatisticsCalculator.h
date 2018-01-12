@@ -22,7 +22,8 @@ namespace ITMLib {
 template<typename TVoxel, typename TIndex>
 class ITMSceneStatisticsCalculator {
 public:
-	void ComputeSceneVoxelBounds(ITMScene<TVoxel, TIndex>* scene, Vector3i& minVoxelPoint, Vector3i& maxVoxelPoint);
+	void ComputeVoxelBounds(ITMScene<TVoxel, TIndex>* scene, Vector3i& minVoxelPoint, Vector3i& maxVoxelPoint);
+	int ComputeHashedVoxelCount(ITMScene<TVoxel, TIndex>* scene);
 
 };
 

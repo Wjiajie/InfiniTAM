@@ -33,7 +33,7 @@
 //local
 #include "ITMSceneMotionTracker.h"
 #include "../../Objects/Scene/ITMSceneManipulation.h"
-#include "../../Utils/ITMSceneWarpFileIO.h"
+#include "../../Utils/ITMSceneLogger.h"
 
 
 using namespace ITMLib;
@@ -88,7 +88,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 	//END _DEBUG
 
 	//START _DEBUG
-	ITMSceneWarpFileIO<TVoxelCanonical,TVoxelLive,TIndex> sceneLogger("/media/algomorph/Data/4dmseg/Killing/scene", canonicalScene,liveScene);
+	ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex> sceneLogger("/media/algomorph/Data/4dmseg/Killing/scene", canonicalScene,liveScene);
 	const int frameToSave = 1;
 //#define SAVE_FRAME
 //#define LOAD_FRAME

@@ -21,15 +21,16 @@
 using namespace ITMLib;
 
 template<typename TVoxel, typename TIndex>
-void ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeSceneVoxelBounds(ITMScene <TVoxel, TIndex>* scene,
-                                                                           Vector3i& minVoxelPoint,
-                                                                           Vector3i& maxVoxelPoint) {
+void ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeVoxelBounds(ITMScene<TVoxel, TIndex>* scene,
+                                                                      Vector3i& minVoxelPoint,
+                                                                      Vector3i& maxVoxelPoint) {
 
 	minVoxelPoint = maxVoxelPoint = Vector3i(0);
 	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
 
+	//TODO: if OpenMP standard is 3.1 or above, use OpenMP parallel for reduction clause with (max:maxVoxelPointX,...) -Greg (GitHub: Algomorph)
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 
 		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
@@ -59,4 +60,22 @@ void ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeSceneVoxelBounds(ITMSc
 			maxVoxelPoint.z = hashBlockLimitPositionVoxels.z;
 		}
 	}
+}
+
+template<typename TVoxel, typename TIndex>
+int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeHashedVoxelCount(ITMScene<TVoxel, TIndex>* scene) {
+	int count = 0;
+
+	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
+	int noTotalEntries = scene->index.noTotalEntries;
+#ifdef WITH_OPENMP
+#pragma omp parallel for reduction(+:count)
+#endif
+	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
+		if (currentHashEntry.ptr < 0) continue;
+		count += SDF_BLOCK_SIZE3;
+	}
+	return count;
 }

@@ -485,7 +485,7 @@ Trackers/Shared/ITMSceneMotionTracker_Shared.h
 SET(ITMLIB_UTILS_SOURCES
 Utils/ITMLibSettings.cpp
 Utils/ITMSceneSliceRasterizer.tpp
-Utils/ITMSceneWarpFileIO.tpp
+    Utils/ITMSceneLogger.tpp
 Utils/ITMSceneStatisticsCalculator.tpp
 )
 
@@ -502,7 +502,7 @@ Utils/ITMProjectionUtils.h
 Utils/ITMSceneParams.h
 Utils/ITMSceneSliceRasterizer.h
 Utils/ITMSurfelSceneParams.h
-Utils/ITMSceneWarpFileIO.h
+    Utils/ITMSceneLogger.h
 Utils/ITMSceneStatisticsCalculator.h
 )
 

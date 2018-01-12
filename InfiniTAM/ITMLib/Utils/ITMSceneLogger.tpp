@@ -13,7 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "ITMSceneWarpFileIO.h"
+#include "ITMSceneLogger.h"
 
 //boost
 #include <boost/filesystem.hpp>
@@ -24,7 +24,7 @@ using namespace ITMLib;
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneWarpFileIO(
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 		std::string path,
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 		ITMScene<TVoxelLive, TIndex>* liveScene) :
@@ -40,7 +40,7 @@ ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneWarpFileIO(
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes() {
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes() {
 	if (!fs::is_directory(this->path)) {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
@@ -55,7 +55,7 @@ bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes() {
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenes() {
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenes() {
 	if (!fs::is_directory(this->path)) {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
@@ -64,13 +64,15 @@ bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenes() {
 	std::cout.flush();
 	liveScene->LoadFromDirectory(livePath.c_str());
 	canonicalScene->LoadFromDirectory(canonicalPath.c_str());
+	ITMSceneStatisticsCalculator<TVoxelCanonical,TIndex> statisticsCalculator;
+	this->voxelCount = statisticsCalculator.ComputeHashedVoxelCount(canonicalScene);
 	std::cout <<"Scenes loaded." << std::endl;
 	return true;
 }
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarpState() {
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarpState() {
 	if (!fs::is_directory(path)) {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
@@ -83,12 +85,12 @@ bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarpSta
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StopSavingWarpState() {
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StopSavingWarpState() {
 	currentWarpOFStream.close();
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::SaveCurrentWarpState() {
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveCurrentWarpState() {
 
 	if(!currentWarpOFStream){
 		std::cout << "Current warp-update OFStream cannot be saved to for whatever reason." << std::endl;
@@ -121,7 +123,11 @@ bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::SaveCurrentWarpSta
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StartLoadingWarpState() {
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartLoadingWarpState() {
+	if (this->voxelCount == -1){
+		std::cout << "Hashed voxel count has not been obtained. Have the scenes been loaded successfully?" <<std::endl;
+		return false;
+	}
 	if (!fs::is_directory(this->path)) {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
@@ -133,8 +139,9 @@ bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StartLoadingWarpSt
 	return true;
 }
 
+
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StopLoadingWarpState() {
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StopLoadingWarpState() {
 	currentWarpIFStream.close();
 
 }
@@ -142,7 +149,7 @@ void ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::StopLoadingWarpSta
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadNextWarpState() {
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadNextWarpState() {
 	if(!currentWarpIFStream){
 		std::cout << "Attempted to read warp state with IFStream being in a bad state."
 				" Was 'StartLoadingWarpState()' called?" << std::endl;
@@ -185,12 +192,17 @@ bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadNextWarpState(
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadPreviousWarpState() {
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadPreviousWarpState() {
 	if(iUpdate < 1){
 		return false;
 	}
 
 	currentWarpIFStream.seekg( -(voxelCount*2*sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
+
+	if(!currentWarpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
+		std::cout << "Read warp state attempt failed." << std::endl;
+		return false;
+	}
 
 	TVoxelCanonical* voxels = canonicalScene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashBlocks = canonicalScene->index.GetEntries();
@@ -217,9 +229,97 @@ bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::LoadPreviousWarpSt
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneWarpFileIO<TVoxelCanonical, TVoxelLive, TIndex>::IsLoadingWarpState() {
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsLoadingWarpState() {
 	return this->currentWarpIFStream.is_open();
 }
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferNextWarpState() {
+	if(!currentWarpIFStream){
+		std::cout << "Attempted to read warp state with IFStream being in a bad state."
+				" Was 'StartLoadingWarpState()' called?" << std::endl;
+		return  false;
+	}
+	if(voxelCount == -1){
+		std::cout << "Attempted to read warp state without knowing voxel count apriori."
+				" Were scenes loaded successfully?" << std::endl;
+		return  false;
+	}
+	//read in the number of the current update.
+	if(!currentWarpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
+		std::cout << "Read warp state attempt failed." << std::endl;
+		return false;
+	}
+
+	if(warpBuffer == NULL){
+		//allocate warp buffer
+		warpBuffer = new Vector3f[voxelCount*2];
+	}
+	currentWarpIFStream.read(reinterpret_cast<char*>(warpBuffer),sizeof(Vector3f)*voxelCount*2);
+
+	return false;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferPreviousWarpState() {
+	if(iUpdate < 1){
+		return false;
+	}
+
+	currentWarpIFStream.seekg( -(voxelCount*2*sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
+	//read in the number of the current update.
+	if(!currentWarpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
+		std::cout << "Read warp state attempt failed." << std::endl;
+		return false;
+	}
+
+	currentWarpIFStream.read(reinterpret_cast<char*>(warpBuffer),sizeof(Vector3f)*voxelCount*2);
+
+	return false;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneLogger() {
+	delete[] warpBuffer;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::CopyWarpBuffer(float* warpDestination,
+                                                                         float* warpUpdateDestination, int& iUpdate) {
+	if(!warpBuffer) return false;
+	memcpy(reinterpret_cast<void*>(warpDestination),reinterpret_cast<void*>(warpBuffer), sizeof(Vector3f)*voxelCount);
+	memcpy(reinterpret_cast<void*>(warpDestination),reinterpret_cast<void*>(warpBuffer + voxelCount), sizeof(Vector3f)*voxelCount);
+	iUpdate = this->iUpdate;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::CopyWarpAt(int index, float voxelWarpDestination[3]) const {
+	memcpy(reinterpret_cast<void*>(voxelWarpDestination),reinterpret_cast<void*>(warpBuffer + index*2), sizeof(Vector3f));
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::CopyWarpAt(int index, float* voxelWarpDestination,
+                                                                     float* voxelUpdateDestination) const {
+	memcpy(reinterpret_cast<void*>(voxelWarpDestination),reinterpret_cast<void*>(warpBuffer + index*2), sizeof(Vector3f));
+	memcpy(reinterpret_cast<void*>(voxelUpdateDestination),reinterpret_cast<void*>(warpBuffer + index*2 + 1), sizeof(Vector3f));
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const float* ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::WarpAt(int index) const {
+	return reinterpret_cast<const float*>(warpBuffer + index*2);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const float* ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::UpdateAt(int index) const {
+	return reinterpret_cast<const float*>(warpBuffer + index*2 + 1);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelCount() const {
+	if(voxelCount == -1) return 0;
+	return voxelCount;
+}
+
 
 
 

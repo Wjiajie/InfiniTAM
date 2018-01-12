@@ -318,7 +318,7 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlices(
 	TIC(timer);
 
 	ITMSceneStatisticsCalculator<TVoxel,TIndex> calculator;
-	calculator.ComputeSceneVoxelBounds(scene, minPoint, maxPoint);
+	calculator.ComputeVoxelBounds(scene, minPoint, maxPoint);
 	std::cout << "Voxel ranges ( min x,y,z; max x,y,z): " << minPoint << "; " << maxPoint << std::endl;
 
 	int imageSizeX, imageSizeY, imageSizeZ;

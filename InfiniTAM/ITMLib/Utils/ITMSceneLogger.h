@@ -25,13 +25,19 @@ namespace fs = boost::filesystem;
 
 namespace ITMLib{
 
+/**
+ * \brief Wraps the functionality of saving canonical/live scenes for dynamic fusion along with warp changes during optimization between frames.
+ * \tparam TVoxelCanonical Type of canonical ("initial"/"source"/"reference") scene voxels
+ * \tparam TVoxelLive Type of live ("streaming"/"target") scene voxels
+ * \tparam TIndex Type of index used for the voxel scenes
+ */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-class ITMSceneWarpFileIO {
+class ITMSceneLogger {
 
 public:
-	ITMSceneWarpFileIO(std::string path, ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
-	ITMSceneWarpFileIO() = delete;//disable default constructor generation
-
+	ITMSceneLogger(std::string path, ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
+	ITMSceneLogger() = delete;//disable default constructor generation
+	virtual ~ITMSceneLogger();
 	bool SaveScenes();
 
 	bool StartSavingWarpState();
@@ -40,11 +46,19 @@ public:
 
 	bool StartLoadingWarpState();
 	bool LoadNextWarpState();
+	bool BufferNextWarpState();
+	bool BufferPreviousWarpState();
 	bool LoadPreviousWarpState();
 	void StopLoadingWarpState();
 	bool IsLoadingWarpState();
-
+	bool CopyWarpBuffer(float* warpDestination,
+		                    float* warpUpdateDestination, int& iUpdate);
+	bool CopyWarpAt(int index, float voxelWarpDestination[3]) const;
+	bool CopyWarpAt(int index, float voxelWarpDestination[3], float voxelUpdateDestination[3]) const;
+	const float* WarpAt(int index) const;
+	const float* UpdateAt(int index) const;
 	bool LoadScenes();
+	int GetVoxelCount() const;
 
 private:
 
@@ -58,6 +72,8 @@ private:
 	std::ifstream currentWarpIFStream;
 	unsigned int iUpdate = 0;
 	int voxelCount = -1;
+	Vector3f* warpBuffer = NULL;
+
 
 };
 

@@ -30,11 +30,16 @@
 #include <vtkFloatArray.h>
 #include <vtkGlyph3DMapper.h>
 #include <vtkLookupTable.h>
-#include <vtk-8.1/vtkLegendBoxActor.h>
-#include <vtk-8.1/vtkNamedColors.h>
+#include <vtkLegendBoxActor.h>
+#include <vtkNamedColors.h>
+#include <vtkClipPolyData.h>
+#include <vtkCubeSource.h>
+#include <vtkBox.h>
+#include <vtkPlane.h>
+#include <vtk-8.1/vtkExtractPolyDataGeometry.h>
 
 //local
-#include "../../ITMLib/Utils/ITMSceneWarpFileIO.h"
+#include "../../ITMLib/Utils/ITMSceneLogger.h"
 #include "../../ITMLib/Utils/ITMLibSettings.h"
 #include "../../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
 
@@ -55,11 +60,11 @@ int SDFViz::run() {
 
 	ITMSceneStatisticsCalculator<ITMVoxelCanonical, ITMVoxelIndex> statCalculator;
 	Vector3i minPoint, maxPoint;
-	statCalculator.ComputeSceneVoxelBounds(canonicalScene, minPoint, maxPoint);
+	statCalculator.ComputeVoxelBounds(canonicalScene, minPoint, maxPoint);
 	std::cout << "Voxel ranges ( min x,y,z; max x,y,z): " << minPoint << "; " << maxPoint << std::endl;
 
-	GenerateInitialScenePoints(canonicalScene, canonicalPolydata);
-	GenerateInitialScenePoints(liveScene, livePolydata);
+	PrepareSceneForRendering(canonicalScene, canonicalPolydata);
+	PrepareSceneForRendering(liveScene, livePolydata);
 
 	//Individual voxel shape
 	vtkSmartPointer<vtkSphereSource> sphere = vtkSmartPointer<vtkSphereSource>::New();
@@ -78,10 +83,38 @@ int SDFViz::run() {
 		table->SetTableValue(1, rgbaSecondColor);
 		table->Build();
 	};
+
 	vtkSmartPointer<vtkLookupTable> canonicalColorLookupTable = vtkSmartPointer<vtkLookupTable>::New();
 	vtkSmartPointer<vtkLookupTable> liveColorLookupTable = vtkSmartPointer<vtkLookupTable>::New();
 	SetUpSDFColorLookupTable(canonicalColorLookupTable, canonicalNegativeSDFColor, canonicalPositiveSDFColor);
 	SetUpSDFColorLookupTable(liveColorLookupTable, liveNegativeSDFColor, livePositiveSDFColor);
+
+
+
+	//set up clipping for data
+#define USE_CLIPPING
+#ifdef USE_CLIPPING
+	vtkSmartPointer<vtkBox> implicitClippingBox = vtkSmartPointer<vtkBox>::New();
+
+	implicitClippingBox->SetBounds(minAllowedPoint.x * maxVoxelDrawSize, maxAllowedPoint.x * maxVoxelDrawSize,
+	                               minAllowedPoint.y * maxVoxelDrawSize, maxAllowedPoint.y * maxVoxelDrawSize,
+	                               minAllowedPoint.z * maxVoxelDrawSize, maxAllowedPoint.z * maxVoxelDrawSize);
+
+	vtkSmartPointer<vtkExtractPolyDataGeometry> canonicalExtractor = vtkSmartPointer<vtkExtractPolyDataGeometry>::New();
+	canonicalExtractor->SetImplicitFunction(implicitClippingBox);
+	canonicalExtractor->SetInputData(canonicalPolydata);
+	canonicalExtractor->ExtractInsideOn();
+	canonicalExtractor->Update();
+
+
+	vtkSmartPointer<vtkExtractPolyDataGeometry> liveExtractor = vtkSmartPointer<vtkExtractPolyDataGeometry>::New();
+	liveExtractor->SetImplicitFunction(implicitClippingBox);
+	liveExtractor->SetInputData(livePolydata);
+	canonicalExtractor->ExtractInsideOn();
+	canonicalExtractor->Update();
+
+#endif
+
 
 #ifdef USE_CPU_GLYPH //_DEBUG
 	// set up glyphs
@@ -115,10 +148,31 @@ int SDFViz::run() {
 	SetUpSceneMapper(canonicalMapper, canonicalColorLookupTable, canonicalGlyph);
 	SetUpSceneMapper(liveMapper, liveColorLookupTable, liveGlyph);
 #else
+#ifdef USE_CLIPPING
 	// set up mappers
 	auto SetUpSceneMapper = [&sphere](vtkSmartPointer<vtkGlyph3DMapper>& mapper,
-	                           vtkSmartPointer<vtkLookupTable>& table,
-	                           vtkSmartPointer<vtkPolyData>& pointsPolydata) {
+	                                  vtkSmartPointer<vtkLookupTable>& table,
+	                                  vtkSmartPointer<vtkExtractPolyDataGeometry> extractor) {
+		mapper->SetInputConnection(extractor->GetOutputPort());
+		mapper->SetSourceConnection(sphere->GetOutputPort());
+		mapper->SetLookupTable(table);
+		mapper->ScalingOn();
+		mapper->ScalarVisibilityOn();
+		mapper->SetScalarModeToUsePointData();
+		mapper->SetColorModeToMapScalars();
+		mapper->SetScaleModeToScaleByMagnitude();
+		mapper->SetScaleArray(scalePointAttributeName);
+		mapper->Update();
+	};
+	canonicalMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	liveMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	SetUpSceneMapper(canonicalMapper, canonicalColorLookupTable, canonicalExtractor);
+	SetUpSceneMapper(liveMapper, liveColorLookupTable, liveExtractor);
+#else
+	// set up mappers
+	auto SetUpSceneMapper = [&sphere](vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+									  vtkSmartPointer<vtkLookupTable>& table,
+									  vtkSmartPointer<vtkPolyData>& pointsPolydata) {
 		mapper->SetInputData(pointsPolydata);
 		mapper->SetSourceConnection(sphere->GetOutputPort());
 		mapper->SetLookupTable(table);
@@ -131,9 +185,10 @@ int SDFViz::run() {
 	};
 	canonicalMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
 	liveMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
-	SetUpSceneMapper(canonicalMapper,canonicalColorLookupTable,canonicalPolydata);
-	SetUpSceneMapper(liveMapper,liveColorLookupTable,livePolydata);
+	SetUpSceneMapper(canonicalMapper, canonicalColorLookupTable, canonicalPolydata);
+	SetUpSceneMapper(liveMapper, liveColorLookupTable, livePolydata);
 #endif
+#endif // ndef USE_CPU_GLYPH
 	vtkSmartPointer<vtkActor> canonicalActor = vtkSmartPointer<vtkActor>::New();
 	canonicalActor->SetMapper(canonicalMapper);
 	vtkSmartPointer<vtkActor> liveActor = vtkSmartPointer<vtkActor>::New();
@@ -144,7 +199,7 @@ int SDFViz::run() {
 	renderer->GetActiveCamera()->SetPosition(7.0, 22.0, -72.66);
 	renderer->GetActiveCamera()->SetFocalPoint(0.5, -40.5, 230.0);
 	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
-	//renderer->ResetCamera();//used when need to choose new better initial camera pose manually
+//	renderer->ResetCamera();//used when need to choose new better initial camera pose manually
 
 	renderWindow->Render();
 	renderWindowInteractor->Start();
@@ -163,7 +218,7 @@ SDFViz::SDFViz() :
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 	liveScene = new ITMScene<ITMVoxelLive, ITMVoxelIndex>(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
-	sceneLogger = new ITMSceneWarpFileIO<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
+	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
 			"/media/algomorph/Data/4dmseg/Killing/scene", canonicalScene, liveScene);
 	InitializeRendering();
 	DrawLegend();
@@ -199,6 +254,7 @@ void SDFViz::InitializeRendering() {
 
 }
 
+//TODO: Deprecated, remove -Greg (GitHub: Algomorph)
 bool SDFViz::HashBlockIsAtLeastPartiallyWithinBounds(Vector3i hashBlockPositionVoxels) {
 	Vector3i cornerOfBlockCoordinates(hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1,
 	                                  hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1,
@@ -213,7 +269,8 @@ bool SDFViz::HashBlockIsAtLeastPartiallyWithinBounds(Vector3i hashBlockPositionV
 
 
 template<typename TVoxel>
-void SDFViz::GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPolyData>& polydata) {
+void
+SDFViz::PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPolyData>& polydata) {
 	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 #ifdef USE_CPU_GLYPH //_DEBUG
 	//holds point data attribute
@@ -242,10 +299,6 @@ void SDFViz::GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, 
 
 		//position of the current entry in 3D space
 		Vector3i currentBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-
-		if (!HashBlockIsAtLeastPartiallyWithinBounds(currentBlockPositionVoxels)) {
-			continue;
-		}
 
 		TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
@@ -294,7 +347,7 @@ void SDFViz::TestPointShift() {
 	vtkPoints* points = canonicalPolydata->GetPoints();
 	double ave[3];
 	int pointCount = 0;
-	for(int iPoint = 0; iPoint < points->GetNumberOfPoints(); iPoint++){
+	for (int iPoint = 0; iPoint < points->GetNumberOfPoints(); iPoint++) {
 		double point[3];
 		points->GetPoint(iPoint, point);
 		ave[0] += point[0];
@@ -304,7 +357,7 @@ void SDFViz::TestPointShift() {
 		point[1] += 10.0;
 		point[2] += 10.0;
 		points->SetPoint(iPoint, point);
-		pointCount ++;
+		pointCount++;
 	}
 	ave[0] /= pointCount;
 	ave[1] /= pointCount;
@@ -313,6 +366,19 @@ void SDFViz::TestPointShift() {
 
 	canonicalPolydata->Modified();
 	renderWindow->Render();
+}
+
+
+bool SDFViz::NextWarps() {
+	vtkSmartPointer<vtkFloatArray> warps = vtkSmartPointer<vtkFloatArray>::New();
+	warps->SetNumberOfComponents(3);
+	//TODO
+	return true;
+}
+
+bool SDFViz::PreviousWarps() {
+	//TODO
+	return false;
 }
 
 void SDFViz::DrawLegend() {
@@ -344,7 +410,6 @@ void SDFViz::DrawLegend() {
 }
 
 
-
 vtkStandardNewMacro(KeyPressInteractorStyle);
 
 void KeyPressInteractorStyle::OnKeyPress() {
@@ -353,25 +418,45 @@ void KeyPressInteractorStyle::OnKeyPress() {
 	vtkRenderWindowInteractor* rwi = this->Interactor;
 	std::string key = rwi->GetKeySym();
 
-	if (key == "c" && parent != nullptr) {
-		double x, y, z;
-		double xFocalPoint, yFocalPoint, zFocalPoint;
-		double xUpVector, yUpVector, zUpVector;
-		parent->renderer->GetActiveCamera()->GetPosition(x, y, z);
-		parent->renderer->GetActiveCamera()->GetFocalPoint(xFocalPoint, yFocalPoint, zFocalPoint);
-		parent->renderer->GetActiveCamera()->GetViewUp(xUpVector, yUpVector, zUpVector);
-		std::cout << "Camera:" << std::endl;
-		std::cout << "  Current position: " << x << ", " << y << ", " << z << std::endl;
-		std::cout << "  Current focal point: " << xFocalPoint << ", " << yFocalPoint << ", " << zFocalPoint
-		          << std::endl;
-		std::cout << "  Current up-vector: " << xUpVector << ", " << yUpVector << ", " << zUpVector << std::endl;
-		std::cout.flush();
-	}
 
-	if (key == "t" && parent != nullptr){
-		parent->TestPointShift();
-		std::cout <<"Point shift test conducted." << std::endl;
+	if (parent != nullptr) {
+		if (key == "c") {
+			double x, y, z;
+			double xFocalPoint, yFocalPoint, zFocalPoint;
+			double xUpVector, yUpVector, zUpVector;
+			parent->renderer->GetActiveCamera()->GetPosition(x, y, z);
+			parent->renderer->GetActiveCamera()->GetFocalPoint(xFocalPoint, yFocalPoint, zFocalPoint);
+			parent->renderer->GetActiveCamera()->GetViewUp(xUpVector, yUpVector, zUpVector);
+			std::cout << "Camera:" << std::endl;
+			std::cout << "  Current position: " << x << ", " << y << ", " << z << std::endl;
+			std::cout << "  Current focal point: " << xFocalPoint << ", " << yFocalPoint << ", " << zFocalPoint
+			          << std::endl;
+			std::cout << "  Current up-vector: " << xUpVector << ", " << yUpVector << ", " << zUpVector << std::endl;
+			std::cout.flush();
+		}
+		if (key == "t") {
+			parent->TestPointShift();
+			std::cout << "Point shift test conducted." << std::endl;
+		}
+		if (key == "Right") {
+			std::cout << "Loading next iteration warp & updates." << std::endl;
+			if (parent->NextWarps()) {
+				std::cout << "Next warps loaded and display updated." << std::endl;
+			} else {
+				std::cout << "Could not load next iteration warp & updates." << std::endl;
+			}
+
+		}
+		if (key == "Left") {
+			std::cout << "Loading previous iteration warp & updates." << std::endl;
+			if (parent->PreviousWarps()) {
+				std::cout << "Previous warps loaded and display updated." << std::endl;
+			} else {
+				std::cout << "Could not load previous iteration warp & updates." << std::endl;
+			}
+		}
 	}
+	std::cout << "Key symbol: " << key << std::endl;
 
 	// Forward events
 	vtkInteractorStyleTrackballCamera::OnKeyPress();

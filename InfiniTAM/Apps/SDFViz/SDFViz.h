@@ -27,7 +27,7 @@
 using namespace ITMLib;
 namespace ITMLib {
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-class ITMSceneWarpFileIO;
+class ITMSceneLogger;
 }
 
 
@@ -81,7 +81,7 @@ private:
 	static const char* scalePointAttributeName;
 	//================= FIELDS ===================
 	//data loader
-	ITMSceneWarpFileIO <ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
+	ITMSceneLogger <ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
 
 	//data structures
 	ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene;
@@ -116,9 +116,11 @@ private:
 	void InitializeRendering();
 	bool HashBlockIsAtLeastPartiallyWithinBounds(Vector3i hashBlockPositionVoxels);
 	template<typename TVoxel>
-	void GenerateInitialScenePoints(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPolyData>& polydata);
+	void PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPolyData>& polydata);
 	void DrawLegend();
 	void TestPointShift();
+	bool NextWarps();
+	bool PreviousWarps();
 
 };
 
