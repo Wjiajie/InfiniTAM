@@ -35,8 +35,12 @@
 #include <vtkClipPolyData.h>
 #include <vtkCubeSource.h>
 #include <vtkBox.h>
-#include <vtkPlane.h>
-#include <vtk-8.1/vtkExtractPolyDataGeometry.h>
+#include <vtkExtractPolyDataGeometry.h>
+#include <vtkImageData.h>
+#include <vtk-8.1/vtkDataSetMapper.h>
+#include <vtk-8.1/vtkStructuredGrid.h>
+#include <vtk-8.1/vtkUnstructuredGrid.h>
+#include <vtk-8.1/vtkUniformGrid.h>
 
 //local
 #include "../../ITMLib/Utils/ITMSceneLogger.h"
@@ -54,17 +58,37 @@ const double SDFViz::livePositiveSDFColor[4] = {0.717, 0.882, 0.749, 0.6};
 const char* SDFViz::colorPointAttributeName = "color";
 const char* SDFViz::scalePointAttributeName = "scale";
 
+
+SDFViz::SDFViz() :
+		minAllowedPoint(-100, -150, 0),
+		maxAllowedPoint(200, 50, 300),
+		canonicalVoxelPolydata(vtkSmartPointer<vtkPolyData>::New()),
+		liveVoxelPolydata(vtkSmartPointer<vtkPolyData>::New()),
+		canonicalHashBlockGrid(vtkSmartPointer<vtkPolyData>::New()),
+		liveHashBlockGrid(vtkSmartPointer<vtkPolyData>::New()) {
+	auto* settings = new ITMLibSettings();
+	MemoryDeviceType memoryType = settings->GetMemoryType();
+	canonicalScene = new ITMScene<ITMVoxelCanonical, ITMVoxelIndex>(
+			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
+	liveScene = new ITMScene<ITMVoxelLive, ITMVoxelIndex>(
+			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
+	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
+			"/media/algomorph/Data/4dmseg/Killing/scene", canonicalScene, liveScene);
+	InitializeRendering();
+	DrawLegend();
+}
+
 int SDFViz::run() {
 	//read scenes from disk
 	sceneLogger->LoadScenes();
 
 	ITMSceneStatisticsCalculator<ITMVoxelCanonical, ITMVoxelIndex> statCalculator;
-	Vector3i minPoint, maxPoint;
+
 	statCalculator.ComputeVoxelBounds(canonicalScene, minPoint, maxPoint);
 	std::cout << "Voxel ranges ( min x,y,z; max x,y,z): " << minPoint << "; " << maxPoint << std::endl;
 
-	PrepareSceneForRendering(canonicalScene, canonicalPolydata);
-	PrepareSceneForRendering(liveScene, livePolydata);
+	PrepareSceneForRendering(canonicalScene, canonicalVoxelPolydata, canonicalHashBlockGrid);
+	PrepareSceneForRendering(liveScene, liveVoxelPolydata, liveHashBlockGrid);
 
 	//Individual voxel shape
 	vtkSmartPointer<vtkSphereSource> sphere = vtkSmartPointer<vtkSphereSource>::New();
@@ -72,6 +96,25 @@ int SDFViz::run() {
 	sphere->SetPhiResolution(6);
 	sphere->SetRadius(maxVoxelDrawSize / 2);
 	sphere->Update();
+
+	//Voxel hash block shape
+	vtkSmartPointer<vtkCubeSource> cube = vtkSmartPointer<vtkCubeSource>::New();
+	cube->SetBounds(0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE);
+
+	//mappers for voxel blocks
+	auto SetUpSceneHashBlockMapper = [&cube](vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+	                                         vtkSmartPointer<vtkPolyData>& pointsPolydata) {
+		mapper->SetInputData(pointsPolydata);
+		mapper->SetSourceConnection(cube->GetOutputPort());
+		mapper->ScalarVisibilityOff();
+		mapper->ScalingOff();
+		mapper->SetScaleFactor(1.0);
+	};
+	vtkSmartPointer<vtkGlyph3DMapper> canonicalHashBlockMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	vtkSmartPointer<vtkGlyph3DMapper> liveHashBlockMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	SetUpSceneHashBlockMapper(canonicalHashBlockMapper, canonicalHashBlockGrid);
+	SetUpSceneHashBlockMapper(liveHashBlockMapper, liveHashBlockGrid);
+
 
 	// Create the color maps
 	auto SetUpSDFColorLookupTable = [](vtkSmartPointer<vtkLookupTable>& table,
@@ -102,14 +145,14 @@ int SDFViz::run() {
 
 	vtkSmartPointer<vtkExtractPolyDataGeometry> canonicalExtractor = vtkSmartPointer<vtkExtractPolyDataGeometry>::New();
 	canonicalExtractor->SetImplicitFunction(implicitClippingBox);
-	canonicalExtractor->SetInputData(canonicalPolydata);
+	canonicalExtractor->SetInputData(canonicalVoxelPolydata);
 	canonicalExtractor->ExtractInsideOn();
 	canonicalExtractor->Update();
 
 
 	vtkSmartPointer<vtkExtractPolyDataGeometry> liveExtractor = vtkSmartPointer<vtkExtractPolyDataGeometry>::New();
 	liveExtractor->SetImplicitFunction(implicitClippingBox);
-	liveExtractor->SetInputData(livePolydata);
+	liveExtractor->SetInputData(liveVoxelPolydata);
 	canonicalExtractor->ExtractInsideOn();
 	canonicalExtractor->Update();
 
@@ -130,11 +173,11 @@ int SDFViz::run() {
 
 	vtkSmartPointer<vtkGlyph3D> canonicalGlyph = vtkSmartPointer<vtkGlyph3D>::New();
 	vtkSmartPointer<vtkGlyph3D> liveGlyph = vtkSmartPointer<vtkGlyph3D>::New();
-	SetUpGlyph(canonicalPolydata, canonicalGlyph);
-	SetUpGlyph(livePolydata, liveGlyph);
+	SetUpGlyph(canonicalVoxelPolydata, canonicalGlyph);
+	SetUpGlyph(liveVoxelPolydata, liveGlyph);
 
 	// set up mappers
-	auto SetUpSceneMapper = [](vtkSmartPointer<vtkPolyDataMapper>& mapper,
+	auto SetUpSceneVoxelMapper = [](vtkSmartPointer<vtkPolyDataMapper>& mapper,
 							   vtkSmartPointer<vtkLookupTable>& table,
 							   vtkSmartPointer<vtkGlyph3D>& glyph) {
 		mapper->SetInputConnection(glyph->GetOutputPort());
@@ -145,14 +188,14 @@ int SDFViz::run() {
 	};
 	vtkSmartPointer<vtkPolyDataMapper> canonicalMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 	vtkSmartPointer<vtkPolyDataMapper> liveMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	SetUpSceneMapper(canonicalMapper, canonicalColorLookupTable, canonicalGlyph);
-	SetUpSceneMapper(liveMapper, liveColorLookupTable, liveGlyph);
+	SetUpSceneVoxelMapper(canonicalMapper, canonicalColorLookupTable, canonicalGlyph);
+	SetUpSceneVoxelMapper(liveMapper, liveColorLookupTable, liveGlyph);
 #else
 #ifdef USE_CLIPPING
-	// set up mappers
-	auto SetUpSceneMapper = [&sphere](vtkSmartPointer<vtkGlyph3DMapper>& mapper,
-	                                  vtkSmartPointer<vtkLookupTable>& table,
-	                                  vtkSmartPointer<vtkExtractPolyDataGeometry> extractor) {
+	// set up scene voxel mappers
+	auto SetUpSceneVoxelMapper = [&sphere](vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+	                                       vtkSmartPointer<vtkLookupTable>& table,
+	                                       vtkSmartPointer<vtkExtractPolyDataGeometry> extractor) {
 		mapper->SetInputConnection(extractor->GetOutputPort());
 		mapper->SetSourceConnection(sphere->GetOutputPort());
 		mapper->SetLookupTable(table);
@@ -166,11 +209,12 @@ int SDFViz::run() {
 	};
 	canonicalMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
 	liveMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
-	SetUpSceneMapper(canonicalMapper, canonicalColorLookupTable, canonicalExtractor);
-	SetUpSceneMapper(liveMapper, liveColorLookupTable, liveExtractor);
+	SetUpSceneVoxelMapper(canonicalMapper, canonicalColorLookupTable, canonicalExtractor);
+	SetUpSceneVoxelMapper(liveMapper, liveColorLookupTable, liveExtractor);
+
 #else
 	// set up mappers
-	auto SetUpSceneMapper = [&sphere](vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+	auto SetUpSceneVoxelMapper = [&sphere](vtkSmartPointer<vtkGlyph3DMapper>& mapper,
 									  vtkSmartPointer<vtkLookupTable>& table,
 									  vtkSmartPointer<vtkPolyData>& pointsPolydata) {
 		mapper->SetInputData(pointsPolydata);
@@ -185,17 +229,35 @@ int SDFViz::run() {
 	};
 	canonicalMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
 	liveMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
-	SetUpSceneMapper(canonicalMapper, canonicalColorLookupTable, canonicalPolydata);
-	SetUpSceneMapper(liveMapper, liveColorLookupTable, livePolydata);
+	SetUpSceneVoxelMapper(canonicalMapper, canonicalColorLookupTable, canonicalVoxelPolydata);
+	SetUpSceneVoxelMapper(liveMapper, liveColorLookupTable, liveVoxelPolydata);
 #endif
 #endif // ndef USE_CPU_GLYPH
-	vtkSmartPointer<vtkActor> canonicalActor = vtkSmartPointer<vtkActor>::New();
-	canonicalActor->SetMapper(canonicalMapper);
-	vtkSmartPointer<vtkActor> liveActor = vtkSmartPointer<vtkActor>::New();
-	liveActor->SetMapper(liveMapper);
+	canonicalVoxelActor = vtkSmartPointer<vtkActor>::New();
+	canonicalVoxelActor->SetMapper(canonicalMapper);
+	liveVoxelActor = vtkSmartPointer<vtkActor>::New();
+	liveVoxelActor->SetMapper(liveMapper);
 
-	renderer->AddActor(canonicalActor);
-	renderer->AddActor(liveActor);
+	canonicalHashBlockActor = vtkSmartPointer<vtkActor>::New();
+	canonicalHashBlockActor->SetMapper(canonicalHashBlockMapper);
+	canonicalHashBlockActor->GetProperty()->SetRepresentationToWireframe();
+	canonicalHashBlockActor->GetProperty()->SetColor(0.286, 0.623, 0.854);
+	canonicalHashBlockActor->VisibilityOff();
+
+	liveHashBlockActor = vtkSmartPointer<vtkActor>::New();
+	liveHashBlockActor->SetMapper(liveHashBlockMapper);
+	liveHashBlockActor->GetProperty()->SetRepresentationToWireframe();
+	liveHashBlockActor->GetProperty()->SetColor(0.537, 0.819, 0.631);
+	liveHashBlockActor->GetProperty()->SetEdgeColor(0.537, 0.819, 0.631);
+	liveHashBlockActor->VisibilityOff();
+
+
+	renderer->AddActor(canonicalVoxelActor);
+	renderer->AddActor(liveVoxelActor);
+	renderer->AddActor(canonicalHashBlockActor);
+	renderer->AddActor(liveHashBlockActor);
+
+
 	renderer->GetActiveCamera()->SetPosition(7.0, 22.0, -72.66);
 	renderer->GetActiveCamera()->SetFocalPoint(0.5, -40.5, 230.0);
 	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
@@ -205,23 +267,6 @@ int SDFViz::run() {
 	renderWindowInteractor->Start();
 
 	return EXIT_SUCCESS;
-}
-
-SDFViz::SDFViz() :
-		minAllowedPoint(-100, -150, 0),
-		maxAllowedPoint(200, 50, 300),
-		canonicalPolydata(vtkSmartPointer<vtkPolyData>::New()),
-		livePolydata(vtkSmartPointer<vtkPolyData>::New()) {
-	auto* settings = new ITMLibSettings();
-	MemoryDeviceType memoryType = settings->GetMemoryType();
-	canonicalScene = new ITMScene<ITMVoxelCanonical, ITMVoxelIndex>(
-			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
-	liveScene = new ITMScene<ITMVoxelLive, ITMVoxelIndex>(
-			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
-	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
-			"/media/algomorph/Data/4dmseg/Killing/scene", canonicalScene, liveScene);
-	InitializeRendering();
-	DrawLegend();
 }
 
 
@@ -254,24 +299,14 @@ void SDFViz::InitializeRendering() {
 
 }
 
-//TODO: Deprecated, remove -Greg (GitHub: Algomorph)
-bool SDFViz::HashBlockIsAtLeastPartiallyWithinBounds(Vector3i hashBlockPositionVoxels) {
-	Vector3i cornerOfBlockCoordinates(hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1,
-	                                  hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1,
-	                                  hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1);
-	return !(hashBlockPositionVoxels.x > maxAllowedPoint.x ||
-	         hashBlockPositionVoxels.y > maxAllowedPoint.y ||
-	         hashBlockPositionVoxels.z > maxAllowedPoint.z ||
-	         cornerOfBlockCoordinates.x < minAllowedPoint.x ||
-	         cornerOfBlockCoordinates.y < minAllowedPoint.y ||
-	         cornerOfBlockCoordinates.z < minAllowedPoint.z);
-}
-
 
 template<typename TVoxel>
 void
-SDFViz::PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPolyData>& polydata) {
+SDFViz::PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPolyData>& polydata,
+                                 vtkSmartPointer<vtkPolyData>& hashBlockGrid) {
 	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+	vtkSmartPointer<vtkPoints> hashBlockPoints = vtkSmartPointer<vtkPoints>::New();
+
 #ifdef USE_CPU_GLYPH //_DEBUG
 	//holds point data attribute
 	vtkSmartPointer<vtkFloatArray> pointAttributeData = vtkSmartPointer<vtkFloatArray>::New();
@@ -286,7 +321,7 @@ SDFViz::PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmar
 	vtkSmartPointer<vtkFloatArray> scaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
 	scaleAttribute->SetName(scalePointAttributeName);
 #endif
-	int pointCount = 0;//stat logging
+
 	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
@@ -300,11 +335,21 @@ SDFViz::PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmar
 		//position of the current entry in 3D space
 		Vector3i currentBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 
+		//_DEBUG
+		//const double halfBlock = SDF_BLOCK_SIZE * maxVoxelDrawSize / 2;
+		const double halfBlock = 0.0;
+
+		//draw hash block
+		hashBlockPoints->InsertNextPoint(currentBlockPositionVoxels.x + halfBlock,
+		                                 currentBlockPositionVoxels.y + halfBlock,
+		                                 currentBlockPositionVoxels.z + halfBlock);
+
 		TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+
 					Vector3i originalPositionVoxels = currentBlockPositionVoxels + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxel& voxel = localVoxelBlock[locId];
@@ -321,13 +366,13 @@ SDFViz::PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmar
 #endif
 					scaleAttribute->InsertNextValue(voxelScale);
 					colorAttribute->InsertNextValue(voxelColor);
-					pointCount++;
 				}
 			}
 		}
 	}
 
-	std::cout << "Scene points for visualization: " << pointCount << std::endl;
+	std::cout << "Total scene points: " << points->GetNumberOfPoints() << std::endl;
+	std::cout << "Total allocated hash blocks: " << hashBlockPoints->GetNumberOfPoints() << std::endl;
 
 	//Points pipeline
 	polydata->SetPoints(points);
@@ -340,11 +385,12 @@ SDFViz::PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmar
 	polydata->GetPointData()->AddArray(scaleAttribute);
 	polydata->GetPointData()->SetActiveScalars(colorPointAttributeName);
 #endif
+	hashBlockGrid->SetPoints(hashBlockPoints);
 }
 
 
 void SDFViz::TestPointShift() {
-	vtkPoints* points = canonicalPolydata->GetPoints();
+	vtkPoints* points = canonicalVoxelPolydata->GetPoints();
 	double ave[3];
 	int pointCount = 0;
 	for (int iPoint = 0; iPoint < points->GetNumberOfPoints(); iPoint++) {
@@ -364,7 +410,7 @@ void SDFViz::TestPointShift() {
 	ave[2] /= pointCount;
 	std::cout << "Average point: " << ave[0] << ", " << ave[1] << ", " << ave[2] << std::endl;
 
-	canonicalPolydata->Modified();
+	canonicalVoxelPolydata->Modified();
 	renderWindow->Render();
 }
 
@@ -409,6 +455,26 @@ void SDFViz::DrawLegend() {
 	renderer->AddActor(legend);
 }
 
+void SDFViz::ToggleCanonicalHashBlockVisibility() {
+	canonicalHashBlockActor->SetVisibility(!canonicalHashBlockActor->GetVisibility());
+	renderWindow->Render();
+}
+
+void SDFViz::ToggleLiveHashBlockVisibility() {
+	liveHashBlockActor->SetVisibility(!liveHashBlockActor->GetVisibility());
+	renderWindow->Render();
+}
+
+void SDFViz::ToggleCanonicalVoxelVisibility() {
+	canonicalVoxelActor->SetVisibility(!canonicalVoxelActor->GetVisibility());
+	renderWindow->Render();
+}
+
+void SDFViz::ToggleLiveVoxelVisibility() {
+	canonicalVoxelActor->SetVisibility(!canonicalVoxelActor->GetVisibility());
+	renderWindow->Render();
+}
+
 
 vtkStandardNewMacro(KeyPressInteractorStyle);
 
@@ -421,6 +487,7 @@ void KeyPressInteractorStyle::OnKeyPress() {
 
 	if (parent != nullptr) {
 		if (key == "c") {
+			//record camera position
 			double x, y, z;
 			double xFocalPoint, yFocalPoint, zFocalPoint;
 			double xUpVector, yUpVector, zUpVector;
@@ -431,9 +498,27 @@ void KeyPressInteractorStyle::OnKeyPress() {
 			std::cout << "  Current position: " << x << ", " << y << ", " << z << std::endl;
 			std::cout << "  Current focal point: " << xFocalPoint << ", " << yFocalPoint << ", " << zFocalPoint
 			          << std::endl;
-			std::cout << "  Current up-vector: " << xUpVector << ", " << yUpVector << ", " << zUpVector << std::endl;
+			std::cout << "  Current up-vector: " << xUpVector << ", " << yUpVector << ", " << zUpVector
+			          << std::endl;
 			std::cout.flush();
 		}
+		if (key == "v"){
+			//toggle voxel blocks visibility
+			if(rwi->GetAltKey()){
+				parent->ToggleLiveVoxelVisibility();
+			}else{
+				parent->ToggleCanonicalVoxelVisibility();
+			}
+		}
+		if (key == "h"){
+			//toggle hash blocks visibility
+			if(rwi->GetAltKey()){
+				parent->ToggleLiveHashBlockVisibility();
+			}else{
+				parent->ToggleCanonicalHashBlockVisibility();
+			}
+		}
+
 		if (key == "t") {
 			parent->TestPointShift();
 			std::cout << "Point shift test conducted." << std::endl;

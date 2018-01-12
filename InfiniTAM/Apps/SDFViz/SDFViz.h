@@ -54,6 +54,8 @@ class vtkRenderer;
 class vtkRenderWindow;
 class vtkPoints;
 class vtkPolyData;
+class vtkImageData;
+class vtkStructuredGrid;
 class vtkGlyph3DMapper;
 
 /**
@@ -88,9 +90,17 @@ private:
 	ITMScene<ITMVoxelLive, ITMVoxelIndex>* liveScene;
 
 	// Structures for rendering scene geometry with VTK
-	vtkSmartPointer<vtkPolyData> canonicalPolydata;
-	vtkSmartPointer<vtkPolyData> livePolydata;
-	//TODO: not certain if we need the mappers to be member variables yet -Greg (GitHub: Algomorph)
+	vtkSmartPointer<vtkPolyData> canonicalVoxelPolydata;
+	vtkSmartPointer<vtkPolyData> liveVoxelPolydata;
+	vtkSmartPointer<vtkActor> canonicalVoxelActor;
+	vtkSmartPointer<vtkActor> liveVoxelActor;
+
+	vtkSmartPointer<vtkPolyData> canonicalHashBlockGrid;
+	vtkSmartPointer<vtkActor> canonicalHashBlockActor;
+	vtkSmartPointer<vtkPolyData> liveHashBlockGrid;
+	vtkSmartPointer<vtkActor> liveHashBlockActor;
+
+	//TODO: not certain if we need the mappers to be fields yet -Greg (GitHub: Algomorph)
 	vtkSmartPointer<vtkGlyph3DMapper> canonicalMapper;
 	vtkSmartPointer<vtkGlyph3DMapper> liveMapper;
 
@@ -102,6 +112,8 @@ private:
 	// The render window is the actual GUI window
 	// that appears on the computer screen
 	vtkSmartPointer<vtkRenderWindow> renderWindow;
+
+	Vector3i minPoint, maxPoint;
 	// Rendering limits/boundaries
 	// (probably temporary since more elaborate methods of not rendering distant voxels will be employed later)
 	Vector3i minAllowedPoint;
@@ -114,13 +126,22 @@ private:
 
 	//================ METHODS =====================
 	void InitializeRendering();
-	bool HashBlockIsAtLeastPartiallyWithinBounds(Vector3i hashBlockPositionVoxels);
+
 	template<typename TVoxel>
-	void PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPolyData>& polydata);
+	void PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPolyData>& polydata,
+		                              vtkSmartPointer<vtkPolyData>& hashBlockGrid);
 	void DrawLegend();
 	void TestPointShift();
 	bool NextWarps();
 	bool PreviousWarps();
 
+	void ToggleCanonicalHashBlockVisibility();
+	void ToggleLiveHashBlockVisibility();
+
+	void ToggleCanonicalVoxelVisibility();
+	void ToggleLiveVoxelVisibility();
+
+
 };
+
 
