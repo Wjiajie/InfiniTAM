@@ -37,6 +37,7 @@
 #include <vtkBox.h>
 #include <vtkExtractPolyDataGeometry.h>
 #include <vtkImageData.h>
+#include <vtkSetGet.h>
 #include <vtk-8.1/vtkDataSetMapper.h>
 #include <vtk-8.1/vtkStructuredGrid.h>
 #include <vtk-8.1/vtkUnstructuredGrid.h>
@@ -81,6 +82,8 @@ SDFViz::SDFViz() :
 int SDFViz::run() {
 	//read scenes from disk
 	sceneLogger->LoadScenes();
+	sceneLogger->StartLoadingWarpState();
+	InitializeWarpBuffers();
 
 	ITMSceneStatisticsCalculator<ITMVoxelCanonical, ITMVoxelIndex> statCalculator;
 
@@ -233,18 +236,18 @@ int SDFViz::run() {
 	SetUpSceneVoxelMapper(liveMapper, liveColorLookupTable, liveVoxelPolydata);
 #endif
 #endif // ndef USE_CPU_GLYPH
-	canonicalVoxelActor = vtkSmartPointer<vtkActor>::New();
+	canonicalVoxelActor = vtkSmartPointer<vtkActor>::New();//TODO: move to constructor
 	canonicalVoxelActor->SetMapper(canonicalMapper);
-	liveVoxelActor = vtkSmartPointer<vtkActor>::New();
+	liveVoxelActor = vtkSmartPointer<vtkActor>::New();//TODO: move to constructor
 	liveVoxelActor->SetMapper(liveMapper);
 
-	canonicalHashBlockActor = vtkSmartPointer<vtkActor>::New();
+	canonicalHashBlockActor = vtkSmartPointer<vtkActor>::New();//TODO: move to constructor
 	canonicalHashBlockActor->SetMapper(canonicalHashBlockMapper);
 	canonicalHashBlockActor->GetProperty()->SetRepresentationToWireframe();
 	canonicalHashBlockActor->GetProperty()->SetColor(0.286, 0.623, 0.854);
 	canonicalHashBlockActor->VisibilityOff();
 
-	liveHashBlockActor = vtkSmartPointer<vtkActor>::New();
+	liveHashBlockActor = vtkSmartPointer<vtkActor>::New();//TODO: move to constructor
 	liveHashBlockActor->SetMapper(liveHashBlockMapper);
 	liveHashBlockActor->GetProperty()->SetRepresentationToWireframe();
 	liveHashBlockActor->GetProperty()->SetColor(0.537, 0.819, 0.631);
@@ -287,6 +290,7 @@ void SDFViz::InitializeRendering() {
 
 	renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
 	renderWindow->SetSize(1280, 768);
+	renderWindow->SetWindowName("SDF Viz (pre-alpha)");//TODO insert git hash here --Greg (GitHub:Algomorph)
 	renderWindow->AddRenderer(renderer);
 
 	renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
@@ -371,8 +375,8 @@ SDFViz::PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmar
 		}
 	}
 
-	std::cout << "Total scene points: " << points->GetNumberOfPoints() << std::endl;
-	std::cout << "Total allocated hash blocks: " << hashBlockPoints->GetNumberOfPoints() << std::endl;
+	std::cout << "Scene voxel count: " << points->GetNumberOfPoints() << std::endl;
+	std::cout << "Allocated hash block count: " << hashBlockPoints->GetNumberOfPoints() << std::endl;
 
 	//Points pipeline
 	polydata->SetPoints(points);
@@ -416,9 +420,22 @@ void SDFViz::TestPointShift() {
 
 
 bool SDFViz::NextWarps() {
-	vtkSmartPointer<vtkFloatArray> warps = vtkSmartPointer<vtkFloatArray>::New();
-	warps->SetNumberOfComponents(3);
-	//TODO
+	if(!sceneLogger->BufferNextWarpState(this->warpBuffer->GetVoidPointer(0))){
+		return false;
+	}
+
+	vtkPoints* voxels = canonicalVoxelPolydata->GetPoints();
+	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
+	auto* warpRawData = reinterpret_cast<float*>(this->warpBuffer->GetVoidPointer(0));
+	const auto pointCount = static_cast<const int>(voxels->GetNumberOfPoints());
+	for(int iVoxel = 0; iVoxel < pointCount; iVoxel++){
+		//use 1st 3-float field out of 2 for the warp buffer entry
+		pointRawData[iVoxel*3 + 0] += warpRawData[iVoxel*6 + 0];
+		pointRawData[iVoxel*3 + 1] += warpRawData[iVoxel*6 + 1];
+		pointRawData[iVoxel*3 + 2] += warpRawData[iVoxel*6 + 2];
+	}
+	canonicalVoxelPolydata->Modified();
+	renderWindow->Render();
 	return true;
 }
 
@@ -471,8 +488,17 @@ void SDFViz::ToggleCanonicalVoxelVisibility() {
 }
 
 void SDFViz::ToggleLiveVoxelVisibility() {
-	canonicalVoxelActor->SetVisibility(!canonicalVoxelActor->GetVisibility());
+	liveVoxelActor->SetVisibility(!liveVoxelActor->GetVisibility());
 	renderWindow->Render();
+}
+
+void SDFViz::InitializeWarpBuffers() {
+	if(!sceneLogger->GetScenesLoaded()){
+		DIEWITHEXCEPTION("Scenes not yet loaded, cannot initialize WarpBuffers");
+	}
+	this->warpBuffer = vtkSmartPointer<vtkFloatArray>::New();
+	warpBuffer->SetNumberOfComponents(3);
+	warpBuffer->SetNumberOfTuples(sceneLogger->GetVoxelCount()*2);
 }
 
 

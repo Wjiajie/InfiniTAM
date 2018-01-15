@@ -57,6 +57,7 @@ class vtkPolyData;
 class vtkImageData;
 class vtkStructuredGrid;
 class vtkGlyph3DMapper;
+class vtkFloatArray;
 
 /**
  * \brief SDF Visualization application main class.
@@ -104,6 +105,9 @@ private:
 	vtkSmartPointer<vtkGlyph3DMapper> canonicalMapper;
 	vtkSmartPointer<vtkGlyph3DMapper> liveMapper;
 
+	//Holds warp & warp update state for the canonical scene
+	vtkSmartPointer<vtkFloatArray> warpBuffer;
+
 	//visualization setup
 	// The renderer generates the image
 	// which is then displayed on the render window.
@@ -126,6 +130,8 @@ private:
 
 	//================ METHODS =====================
 	void InitializeRendering();
+	//scene voxel size should be known
+	void InitializeWarpBuffers();
 
 	template<typename TVoxel>
 	void PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPolyData>& polydata,

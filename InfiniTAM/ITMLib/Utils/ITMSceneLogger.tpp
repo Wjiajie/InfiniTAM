@@ -257,7 +257,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferNextWarpState() 
 	}
 	currentWarpIFStream.read(reinterpret_cast<char*>(warpBuffer),sizeof(Vector3f)*voxelCount*2);
 
-	return false;
+	return true;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -275,7 +275,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferPreviousWarpStat
 
 	currentWarpIFStream.read(reinterpret_cast<char*>(warpBuffer),sizeof(Vector3f)*voxelCount*2);
 
-	return false;
+	return true;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -318,6 +318,56 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelCount() const {
 	if(voxelCount == -1) return 0;
 	return voxelCount;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferNextWarpState(void* externalBuffer) {
+	if(!currentWarpIFStream){
+		std::cout << "Attempted to read warp state with IFStream being in a bad state."
+				" Was 'StartLoadingWarpState()' called?" << std::endl;
+		return  false;
+	}
+	if(voxelCount == -1){
+		std::cout << "Attempted to read warp state without knowing voxel count apriori."
+				" Were scenes loaded successfully?" << std::endl;
+		return  false;
+	}
+	//read in the number of the current update.
+	if(!currentWarpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
+		std::cout << "Read warp state attempt failed." << std::endl;
+		return false;
+	}
+
+	if(warpBuffer == NULL){
+		//allocate warp buffer
+		warpBuffer = new Vector3f[voxelCount*2];
+	}
+	currentWarpIFStream.read(reinterpret_cast<char*>(externalBuffer),sizeof(Vector3f)*voxelCount*2);
+
+	return true;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferPreviousWarpState(void* externalBuffer) {
+	if(iUpdate < 1){
+		return false;
+	}
+
+	currentWarpIFStream.seekg( -(voxelCount*2*sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
+	//read in the number of the current update.
+	if(!currentWarpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
+		std::cout << "Read warp state attempt failed." << std::endl;
+		return false;
+	}
+
+	currentWarpIFStream.read(reinterpret_cast<char*>(warpBuffer),sizeof(Vector3f)*voxelCount*2);
+
+	return true;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetScenesLoaded() const {
+	return voxelCount != -1;
 }
 
 

@@ -48,6 +48,8 @@ public:
 	bool LoadNextWarpState();
 	bool BufferNextWarpState();
 	bool BufferPreviousWarpState();
+	bool BufferNextWarpState(void* externalBuffer);
+	bool BufferPreviousWarpState(void* externalBuffer);
 	bool LoadPreviousWarpState();
 	void StopLoadingWarpState();
 	bool IsLoadingWarpState();
@@ -59,6 +61,7 @@ public:
 	const float* UpdateAt(int index) const;
 	bool LoadScenes();
 	int GetVoxelCount() const;
+	bool GetScenesLoaded() const;
 
 private:
 
