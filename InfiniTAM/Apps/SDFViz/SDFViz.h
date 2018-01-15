@@ -135,7 +135,6 @@ private:
 	void PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPolyData>& polydata,
 		                              vtkSmartPointer<vtkPolyData>& hashBlockGrid);
 	void DrawLegend();
-	void TestPointShift();
 	void UpdateVoxelPositionsFromWarpBuffer();
 	bool NextWarps();
 	bool PreviousWarps();
@@ -145,6 +144,9 @@ private:
 
 	void ToggleCanonicalVoxelVisibility();
 	void ToggleLiveVoxelVisibility();
+
+	void DecreaseCanonicalVoxelOpacity();
+	void IncreaseCanonicalVoxelOpacity();
 
 
 };

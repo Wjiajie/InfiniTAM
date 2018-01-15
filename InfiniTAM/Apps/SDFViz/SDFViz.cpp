@@ -38,10 +38,10 @@
 #include <vtkExtractPolyDataGeometry.h>
 #include <vtkImageData.h>
 #include <vtkSetGet.h>
-#include <vtk-8.1/vtkDataSetMapper.h>
-#include <vtk-8.1/vtkStructuredGrid.h>
-#include <vtk-8.1/vtkUnstructuredGrid.h>
-#include <vtk-8.1/vtkUniformGrid.h>
+#include <vtkDataSetMapper.h>
+#include <vtkStructuredGrid.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkUniformGrid.h>
 
 //local
 #include "../../ITMLib/Utils/ITMSceneLogger.h"
@@ -394,32 +394,6 @@ SDFViz::PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmar
 	hashBlockGrid->SetPoints(hashBlockPoints);
 }
 
-
-void SDFViz::TestPointShift() {
-	vtkPoints* points = canonicalVoxelPolydata->GetPoints();
-	double ave[3];
-	int pointCount = 0;
-	for (int iPoint = 0; iPoint < points->GetNumberOfPoints(); iPoint++) {
-		double point[3];
-		points->GetPoint(iPoint, point);
-		ave[0] += point[0];
-		ave[1] += point[1];
-		ave[2] += point[2];
-		point[0] += 10.0;
-		point[1] += 10.0;
-		point[2] += 10.0;
-		points->SetPoint(iPoint, point);
-		pointCount++;
-	}
-	ave[0] /= pointCount;
-	ave[1] /= pointCount;
-	ave[2] /= pointCount;
-	std::cout << "Average point: " << ave[0] << ", " << ave[1] << ", " << ave[2] << std::endl;
-
-	canonicalVoxelPolydata->Modified();
-	renderWindow->Render();
-}
-
 void SDFViz::UpdateVoxelPositionsFromWarpBuffer() {
 	vtkPoints* voxels = canonicalVoxelPolydata->GetPoints();
 	auto* initialPointRawData = reinterpret_cast<float*>(canonicalInitialPoints->GetVoidPointer(0));
@@ -510,6 +484,15 @@ void SDFViz::InitializeWarpBuffers() {
 	warpBuffer->SetNumberOfTuples(sceneLogger->GetVoxelCount()*2);
 }
 
+void SDFViz::DecreaseCanonicalVoxelOpacity() {
+	canonicalVoxelActor->GetProperty()->SetOpacity(std::max(0.0,canonicalVoxelActor->GetProperty()->GetOpacity() - 0.05));
+	renderWindow->Render();
+}
+
+void SDFViz::IncreaseCanonicalVoxelOpacity() {
+	canonicalVoxelActor->GetProperty()->SetOpacity(std::min(1.0,canonicalVoxelActor->GetProperty()->GetOpacity() + 0.05));
+	renderWindow->Render();
+}
 
 
 vtkStandardNewMacro(KeyPressInteractorStyle);
@@ -537,29 +520,21 @@ void KeyPressInteractorStyle::OnKeyPress() {
 			std::cout << "  Current up-vector: " << xUpVector << ", " << yUpVector << ", " << zUpVector
 			          << std::endl;
 			std::cout.flush();
-		}
-		if (key == "v"){
+		} else if (key == "v"){
 			//toggle voxel blocks visibility
 			if(rwi->GetAltKey()){
 				parent->ToggleCanonicalVoxelVisibility();
 			}else{
 				parent->ToggleLiveVoxelVisibility();
 			}
-		}
-		if (key == "h"){
+		} else if (key == "h"){
 			//toggle hash blocks visibility
 			if(rwi->GetAltKey()){
 				parent->ToggleCanonicalHashBlockVisibility();
 			}else{
 				parent->ToggleLiveHashBlockVisibility();
 			}
-		}
-
-		if (key == "t") {
-			parent->TestPointShift();
-			std::cout << "Point shift test conducted." << std::endl;
-		}
-		if (key == "Right") {
+		} else if (key == "period") {
 			std::cout << "Loading next iteration warp & updates." << std::endl;
 			if (parent->NextWarps()) {
 				std::cout << "Next warps loaded and display updated." << std::endl;
@@ -567,15 +542,19 @@ void KeyPressInteractorStyle::OnKeyPress() {
 				std::cout << "Could not load next iteration warp & updates." << std::endl;
 			}
 
-		}
-		if (key == "Left") {
+		} else if (key == "comma") {
 			std::cout << "Loading previous iteration warp & updates." << std::endl;
 			if (parent->PreviousWarps()) {
 				std::cout << "Previous warps loaded and display updated." << std::endl;
 			} else {
 				std::cout << "Could not load previous iteration warp & updates." << std::endl;
 			}
+		} else if (key == "minus" || key == "KP_Subtract"){
+			parent->DecreaseCanonicalVoxelOpacity();
+		} else if (key == "equal" || key == "KP_Add"){
+			parent->IncreaseCanonicalVoxelOpacity();
 		}
+
 	}
 	std::cout << "Key symbol: " << key << std::endl;
 
