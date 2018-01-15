@@ -197,7 +197,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadPreviousWarpState(
 		return false;
 	}
 
-	currentWarpIFStream.seekg( -(voxelCount*2*sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
+	currentWarpIFStream.seekg( -2*(voxelCount*2*sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
 
 	if(!currentWarpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
 		std::cout << "Read warp state attempt failed." << std::endl;
@@ -266,7 +266,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferPreviousWarpStat
 		return false;
 	}
 
-	currentWarpIFStream.seekg( -(voxelCount*2*sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
+	currentWarpIFStream.seekg( -2*(voxelCount*2*sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
 	//read in the number of the current update.
 	if(!currentWarpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
 		std::cout << "Read warp state attempt failed." << std::endl;
@@ -337,13 +337,8 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferNextWarpState(vo
 		std::cout << "Read warp state attempt failed." << std::endl;
 		return false;
 	}
-
-	if(warpBuffer == NULL){
-		//allocate warp buffer
-		warpBuffer = new Vector3f[voxelCount*2];
-	}
 	currentWarpIFStream.read(reinterpret_cast<char*>(externalBuffer),sizeof(Vector3f)*voxelCount*2);
-
+	std::cout << "Read warp state for iteration " << iUpdate << std::endl;
 	return true;
 }
 
@@ -353,14 +348,15 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferPreviousWarpStat
 		return false;
 	}
 
-	currentWarpIFStream.seekg( -(voxelCount*2*sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
+	currentWarpIFStream.seekg( -2*(voxelCount*2*sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
 	//read in the number of the current update.
 	if(!currentWarpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
 		std::cout << "Read warp state attempt failed." << std::endl;
 		return false;
 	}
 
-	currentWarpIFStream.read(reinterpret_cast<char*>(warpBuffer),sizeof(Vector3f)*voxelCount*2);
+	currentWarpIFStream.read(reinterpret_cast<char*>(externalBuffer),sizeof(Vector3f)*voxelCount*2);
+	std::cout << "Read warp state for iteration " << iUpdate << std::endl;
 
 	return true;
 }

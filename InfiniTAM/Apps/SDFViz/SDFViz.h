@@ -91,19 +91,17 @@ private:
 	ITMScene<ITMVoxelLive, ITMVoxelIndex>* liveScene;
 
 	// Structures for rendering scene geometry with VTK
+	// **individual voxels**
+	vtkSmartPointer<vtkPoints> canonicalInitialPoints;
 	vtkSmartPointer<vtkPolyData> canonicalVoxelPolydata;
 	vtkSmartPointer<vtkPolyData> liveVoxelPolydata;
 	vtkSmartPointer<vtkActor> canonicalVoxelActor;
 	vtkSmartPointer<vtkActor> liveVoxelActor;
-
+	// **hash blocks**
 	vtkSmartPointer<vtkPolyData> canonicalHashBlockGrid;
 	vtkSmartPointer<vtkActor> canonicalHashBlockActor;
 	vtkSmartPointer<vtkPolyData> liveHashBlockGrid;
 	vtkSmartPointer<vtkActor> liveHashBlockActor;
-
-	//TODO: not certain if we need the mappers to be fields yet -Greg (GitHub: Algomorph)
-	vtkSmartPointer<vtkGlyph3DMapper> canonicalMapper;
-	vtkSmartPointer<vtkGlyph3DMapper> liveMapper;
 
 	//Holds warp & warp update state for the canonical scene
 	vtkSmartPointer<vtkFloatArray> warpBuffer;
@@ -138,6 +136,7 @@ private:
 		                              vtkSmartPointer<vtkPolyData>& hashBlockGrid);
 	void DrawLegend();
 	void TestPointShift();
+	void UpdateVoxelPositionsFromWarpBuffer();
 	bool NextWarps();
 	bool PreviousWarps();
 

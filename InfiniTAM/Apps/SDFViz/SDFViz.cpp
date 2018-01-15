@@ -63,6 +63,7 @@ const char* SDFViz::scalePointAttributeName = "scale";
 SDFViz::SDFViz() :
 		minAllowedPoint(-100, -150, 0),
 		maxAllowedPoint(200, 50, 300),
+		canonicalInitialPoints(vtkSmartPointer<vtkPoints>::New()),
 		canonicalVoxelPolydata(vtkSmartPointer<vtkPolyData>::New()),
 		liveVoxelPolydata(vtkSmartPointer<vtkPolyData>::New()),
 		canonicalHashBlockGrid(vtkSmartPointer<vtkPolyData>::New()),
@@ -91,6 +92,7 @@ int SDFViz::run() {
 	std::cout << "Voxel ranges ( min x,y,z; max x,y,z): " << minPoint << "; " << maxPoint << std::endl;
 
 	PrepareSceneForRendering(canonicalScene, canonicalVoxelPolydata, canonicalHashBlockGrid);
+	canonicalInitialPoints->DeepCopy(canonicalVoxelPolydata->GetPoints());
 	PrepareSceneForRendering(liveScene, liveVoxelPolydata, liveHashBlockGrid);
 
 	//Individual voxel shape
@@ -210,8 +212,8 @@ int SDFViz::run() {
 		mapper->SetScaleArray(scalePointAttributeName);
 		mapper->Update();
 	};
-	canonicalMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
-	liveMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	vtkSmartPointer<vtkGlyph3DMapper> canonicalMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	vtkSmartPointer<vtkGlyph3DMapper> liveMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
 	SetUpSceneVoxelMapper(canonicalMapper, canonicalColorLookupTable, canonicalExtractor);
 	SetUpSceneVoxelMapper(liveMapper, liveColorLookupTable, liveExtractor);
 
@@ -230,8 +232,8 @@ int SDFViz::run() {
 		mapper->SetScaleModeToScaleByMagnitude();
 		mapper->SetScaleArray(scalePointAttributeName);
 	};
-	canonicalMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
-	liveMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	vtkSmartPointer<vtkGlyph3DMapper> canonicalMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	vtkSmartPointer<vtkGlyph3DMapper> liveMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
 	SetUpSceneVoxelMapper(canonicalMapper, canonicalColorLookupTable, canonicalVoxelPolydata);
 	SetUpSceneVoxelMapper(liveMapper, liveColorLookupTable, liveVoxelPolydata);
 #endif
@@ -418,30 +420,37 @@ void SDFViz::TestPointShift() {
 	renderWindow->Render();
 }
 
+void SDFViz::UpdateVoxelPositionsFromWarpBuffer() {
+	vtkPoints* voxels = canonicalVoxelPolydata->GetPoints();
+	auto* initialPointRawData = reinterpret_cast<float*>(canonicalInitialPoints->GetVoidPointer(0));
+	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
+	auto* warpRawData = reinterpret_cast<float*>(warpBuffer->GetVoidPointer(0));
+
+	const auto pointCount = static_cast<const int>(voxels->GetNumberOfPoints());
+	for(int iVoxel = 0; iVoxel < pointCount; iVoxel++){
+		//use 1st 3-float field out of 2 for the warp buffer entry
+		pointRawData[iVoxel*3 + 0] = initialPointRawData[iVoxel*3 + 0] + warpRawData[iVoxel*6 + 0];
+		pointRawData[iVoxel*3 + 1] = initialPointRawData[iVoxel*3 + 1] + warpRawData[iVoxel*6 + 1];
+		pointRawData[iVoxel*3 + 2] = initialPointRawData[iVoxel*3 + 2] + warpRawData[iVoxel*6 + 2];
+	}
+	canonicalVoxelPolydata->Modified();
+	renderWindow->Render();
+}
 
 bool SDFViz::NextWarps() {
 	if(!sceneLogger->BufferNextWarpState(this->warpBuffer->GetVoidPointer(0))){
 		return false;
 	}
-
-	vtkPoints* voxels = canonicalVoxelPolydata->GetPoints();
-	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
-	auto* warpRawData = reinterpret_cast<float*>(this->warpBuffer->GetVoidPointer(0));
-	const auto pointCount = static_cast<const int>(voxels->GetNumberOfPoints());
-	for(int iVoxel = 0; iVoxel < pointCount; iVoxel++){
-		//use 1st 3-float field out of 2 for the warp buffer entry
-		pointRawData[iVoxel*3 + 0] += warpRawData[iVoxel*6 + 0];
-		pointRawData[iVoxel*3 + 1] += warpRawData[iVoxel*6 + 1];
-		pointRawData[iVoxel*3 + 2] += warpRawData[iVoxel*6 + 2];
-	}
-	canonicalVoxelPolydata->Modified();
-	renderWindow->Render();
+	UpdateVoxelPositionsFromWarpBuffer();
 	return true;
 }
 
 bool SDFViz::PreviousWarps() {
-	//TODO
-	return false;
+	if(!sceneLogger->BufferPreviousWarpState(this->warpBuffer->GetVoidPointer(0))){
+		return false;
+	}
+	UpdateVoxelPositionsFromWarpBuffer();
+	return true;
 }
 
 void SDFViz::DrawLegend() {
@@ -502,6 +511,7 @@ void SDFViz::InitializeWarpBuffers() {
 }
 
 
+
 vtkStandardNewMacro(KeyPressInteractorStyle);
 
 void KeyPressInteractorStyle::OnKeyPress() {
@@ -531,17 +541,17 @@ void KeyPressInteractorStyle::OnKeyPress() {
 		if (key == "v"){
 			//toggle voxel blocks visibility
 			if(rwi->GetAltKey()){
-				parent->ToggleLiveVoxelVisibility();
-			}else{
 				parent->ToggleCanonicalVoxelVisibility();
+			}else{
+				parent->ToggleLiveVoxelVisibility();
 			}
 		}
 		if (key == "h"){
 			//toggle hash blocks visibility
 			if(rwi->GetAltKey()){
-				parent->ToggleLiveHashBlockVisibility();
-			}else{
 				parent->ToggleCanonicalHashBlockVisibility();
+			}else{
+				parent->ToggleLiveHashBlockVisibility();
 			}
 		}
 
