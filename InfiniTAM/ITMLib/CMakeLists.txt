@@ -485,7 +485,8 @@ Trackers/Shared/ITMSceneMotionTracker_Shared.h
 SET(ITMLIB_UTILS_SOURCES
 Utils/ITMLibSettings.cpp
 Utils/ITMSceneSliceRasterizer.tpp
-    Utils/ITMSceneLogger.tpp
+Utils/ITMSceneLogger.tpp
+Utils/ITMIntArrayMap3D.cpp
 Utils/ITMSceneStatisticsCalculator.tpp
 )
 
@@ -502,7 +503,8 @@ Utils/ITMProjectionUtils.h
 Utils/ITMSceneParams.h
 Utils/ITMSceneSliceRasterizer.h
 Utils/ITMSurfelSceneParams.h
-    Utils/ITMSceneLogger.h
+Utils/ITMSceneLogger.h
+Utils/ITMIntArrayMap3D.h
 Utils/ITMSceneStatisticsCalculator.h
 )
 

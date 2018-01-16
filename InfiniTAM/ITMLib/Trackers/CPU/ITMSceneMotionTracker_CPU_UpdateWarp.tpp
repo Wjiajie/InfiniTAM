@@ -14,6 +14,9 @@
 //  limitations under the License.
 //  ================================================================
 #pragma once
+
+
+
 //stdlib
 #include <chrono>
 
@@ -100,14 +103,14 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 
 #endif// ndef OPENMP_WARP_UPDATE_COMPUTE_DISABLE
 #endif// WITH_OPENMP
-	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+	for (int hashEntryId = 0; hashEntryId < noTotalEntries; hashEntryId++) {
 		Vector3i canonicalHashEntryPosition;
-		const ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[entryId];
+		const ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[hashEntryId];
 		if (currentCanonicalHashEntry.ptr < 0) continue;
 		//position of the current entry in 3D space
 		canonicalHashEntryPosition = currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 		//_DEBUG
-		//std::cout << std::endl << "HASH POS: " << currentCanonicalHashEntry.pos << ": " << entryId << std::endl;
+		//std::cout << std::endl << "HASH POS: " << currentCanonicalHashEntry.pos << ": " << hashEntryId << std::endl;
 		TVoxelCanonical* localVoxelBlock = &(canonicalVoxels[currentCanonicalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
@@ -272,7 +275,17 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					//TODO: this is a bad way to do convergence. Use something like Adam instead, maybe? --Greg
 					//TODO: figure out the exact conditions causing these oscillations, maybe nothing fancy is necessary here --Greg(GitHub: Algomorph)
 					if (warpUpdateToggle < 0.01 && warpUpdateDiff > 0.05) {
-						warpUpdate *= 0.5;//magic!
+						//We think that an oscillation has been detected
+#ifdef LOG_HIGHLIGHTS
+						int& currentFrame = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
+						const int& frameOfInterest = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::frameOfInterest;
+						int& currentIteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
+						if(currentFrame == frameOfInterest){
+							ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::sceneLogger
+									.LogHighlight(hashEntryId,locId,currentFrame,currentIteration);
+						}
+#endif
+						//warpUpdate *= 0.5;//magic! -UNDO THE MAGIC FOR DEBUGGING FURTHER
 					}
 					//END _DEBUG
 

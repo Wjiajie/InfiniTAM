@@ -17,17 +17,10 @@
 #include <limits>
 #include <iomanip>
 
+#ifdef _DEBUG
 //_DEBUG (opencv)
 #include <opencv2/imgcodecs.hpp>
 #include <opencv/cv.hpp>
-//_DEBUG (local)
-//#define RASTERIZE_CANONICAL_SCENE
-//#define RASTERIZE_LIVE_SCENE
-//#define DRAW_IMAGE
-#if defined(DRAW_IMAGE) || defined(RASTERIZE_CANONICAL_SCENE) || defined(RASTERIZE_LIVE_SCENE)
-
-#include "../../Utils/ITMSceneSliceRasterizer.h"
-
 #endif
 
 //local
@@ -38,8 +31,13 @@
 
 using namespace ITMLib;
 
-//_DEBUG
-static int iFrame = 0;
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params) :
+		maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize),
+		sceneLogger("/media/algomorph/Data/4dmseg/Killing/scene")
+{}
+
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
@@ -88,19 +86,18 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 	//END _DEBUG
 
 	//START _DEBUG
-	ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex> sceneLogger("/media/algomorph/Data/4dmseg/Killing/scene", canonicalScene,liveScene);
-	const int frameToSave = 1;
-//#define SAVE_FRAME
-//#define LOAD_FRAME
+#ifdef _LOGGER
+	sceneLogger.SetScenes(canonicalScene,liveScene);
+#endif
 #ifdef SAVE_FRAME
-	if(iFrame == frameToSave){
+	if(currentFrameIx == frameOfInterest){
 		sceneLogger.SaveScenes();
 		sceneLogger.StartSavingWarpState();
 		sceneLogger.SaveCurrentWarpState();
 	}
 #endif
 #ifdef LOAD_FRAME
-	if(iFrame == frameToSave){
+	if(currentFrameIx == frameOfInterest){
 		sceneLogger.LoadScenes();
 		sceneLogger.StartLoadingWarpState();
 		while(sceneLogger.LoadNextWarpState()){};
@@ -108,7 +105,8 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 	}
 #endif
 	//END DEBUG
-	for (int iteration = 0; maxVectorUpdate > maxVectorUpdateThresholdVoxels && iteration < maxIterationCount;
+	//_DEBUG >>change iteration back from member variable to local variable
+	for (iteration = 0; maxVectorUpdate > maxVectorUpdateThresholdVoxels && iteration < maxIterationCount;
 	     iteration++) {
 		const std::string red("\033[0;31m");
 		const std::string reset("\033[0m");
@@ -147,27 +145,24 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 		maxVectorUpdate = UpdateWarpField(canonicalScene, liveScene);
 		//START _DEBUG
 #ifdef SAVE_FRAME
-		if(iFrame == frameToSave){
+		if(currentFrameIx == frameOfInterest){
 			sceneLogger.SaveCurrentWarpState();
 		}
 #endif
 		//END _DEBUG
-
 		std::cout << " Max update: " << maxVectorUpdate << std::endl;
 	}
 	//START _DEBUG
-	if(iFrame == frameToSave){
+	if(currentFrameIx == frameOfInterest){
 #ifdef SAVE_FRAME
 		sceneLogger.StopSavingWarpState();
 #endif
+#ifdef LOG_HIGHLIGHTS
+		sceneLogger.SaveHighlights();
+#endif
 	}
-	iFrame++;
+	currentFrameIx++;
 	//END _DEBUG
-
 
 	this->FuseFrame(canonicalScene, liveScene);
 }
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params) :
-		maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize) {}

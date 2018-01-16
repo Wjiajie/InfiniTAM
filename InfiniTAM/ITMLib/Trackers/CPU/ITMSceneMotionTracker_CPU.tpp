@@ -14,17 +14,7 @@
 //  limitations under the License.
 //  ================================================================
 
-#define _DEBUG
-#ifdef _DEBUG
-//#define PRINT_TIME_STATS -- needs rearranging of TICs and TOCs
-//#define PRINT_SINGLE_VOXEL_RESULT
-#define PRINT_MAX_WARP
-#define PRINT_ENERGY_STATS
-#define PRINT_ADDITIONAL_STATS
-#define PRINT_DEBUG_HISTOGRAM
 
-//#define OPENMP_WARP_UPDATE_COMPUTE_DISABLE
-#endif //_DEBUG
 
 //stdlib
 #include <cmath>

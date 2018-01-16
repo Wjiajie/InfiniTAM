@@ -29,11 +29,12 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 		ITMScene<TVoxelLive, TIndex>* liveScene) :
 		path(path),
-		warpUpdatesPath(this->path / "warp_updates.dat"),
 		canonicalPath(this->path / "canonical"),
 		livePath(this->path / "live"),
 		canonicalScene(canonicalScene),
-		liveScene(liveScene) {
+		liveScene(liveScene),
+		warpUpdatesPath(this->path / "warp_updates.dat"),
+		highlightsPath(this->path / "highlights.dat"){
 	if (!fs::create_directories(this->path) && !fs::is_directory(this->path)){
 		DIEWITHEXCEPTION(std::string("Could not create the directory '") + path + "'. Exiting.");
 	}
@@ -41,6 +42,10 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes() {
+	if(!liveScene || !canonicalScene){
+		std::cerr << "At least one of the two scenes, canonical/live, was not set to an actual scene. "
+		          << __FILE__ << ":" << __LINE__ << std::endl;
+	}
 	if (!fs::is_directory(this->path)) {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
@@ -56,6 +61,10 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes() {
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenes() {
+	if(!liveScene || !canonicalScene){
+		std::cerr << "At least one of the two scenes, canonical/live, was not set to an actual scene. "
+		          << __FILE__ << ":" << __LINE__ << std::endl;
+	}
 	if (!fs::is_directory(this->path)) {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
@@ -365,6 +374,54 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetScenesLoaded() const {
 	return voxelCount != -1;
 }
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LogHighlight(
+		int hashId, int voxelLocalIndex, int frameNumber, int iterationNumber) {
+	highlights.InsertOrdered(hashId,voxelLocalIndex,frameNumber,iterationNumber);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveHighlights() {
+	if (!fs::is_directory(this->path)) {
+		std::cout << "The directory '" << path << "' was not found.";
+		return false;
+	}
+	if(!this->highlights.SaveToFile(highlightsPath.c_str())){
+		std::cerr << "Could not save highlights to " << highlightsPath << std::endl;
+		return false;
+	}else{
+		std::cout << "Saved highlights to" << highlightsPath << std::endl;
+		return true;
+	}
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadHighlights() {
+	if (!fs::is_directory(this->path)) {
+		std::cout << "The directory '" << path << "' was not found.";
+		return false;
+	}
+	if(!this->highlights.LoadFromFile(highlightsPath.c_str())){
+		std::cout << "Could not load highlights from " << highlightsPath << std::endl;
+		return false;
+	}else{
+		std::cout << "Loaded highlights from " << highlightsPath << std::endl;
+		return true;
+	}
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetScenes(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
+	this->liveScene = liveScene;
+	this->canonicalScene = canonicalScene;
+
+}
+
+
+
+
 
 
 
