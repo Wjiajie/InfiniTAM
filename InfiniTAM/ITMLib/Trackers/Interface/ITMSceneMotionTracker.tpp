@@ -150,7 +150,6 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 		}
 #endif
 		//END _DEBUG
-		std::cout << " Max update: " << maxVectorUpdate << std::endl;
 	}
 	//START _DEBUG
 	if(currentFrameIx == frameOfInterest){
@@ -158,6 +157,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 		sceneLogger.StopSavingWarpState();
 #endif
 #ifdef LOG_HIGHLIGHTS
+		sceneLogger.PrintHighlights();
 		sceneLogger.SaveHighlights();
 #endif
 	}

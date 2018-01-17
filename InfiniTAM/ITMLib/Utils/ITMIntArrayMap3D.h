@@ -22,13 +22,24 @@
 namespace ITMLib {
 class ITMIntArrayMap3D {
 public:
-	ITMIntArrayMap3D();
+	ITMIntArrayMap3D(const char* prefixLevel3, const char* prefixLevel2, const char* prefixLevel1,
+	                 const char* prefixLevel0);
+
 	bool InsertOrdered(int keyLevel3, int keyLevel2, int keyLevel1, int valueLevel0);
+
 	bool SaveToFile(const char* path);
+
 	bool LoadFromFile(const char* path);
+	bool LoadFromTextFile(const char* path);
+
+	friend std::ostream& operator<<(std::ostream& stream, const ITMIntArrayMap3D& intArrayMap3D);
 
 private:
 	std::map<int, std::map<int, std::map<int, std::vector<int>>>> internalMap;
+	const char* prefixLevel3;
+	const char* prefixLevel2;
+	const char* prefixLevel1;
+	const char* prefixLevel0;
 
 };
 }

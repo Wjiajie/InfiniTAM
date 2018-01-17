@@ -66,6 +66,7 @@ public:
 	//*** saving of meta-information
 	void LogHighlight(int hashId, int voxelLocalIndex, int frameNumber, int iterationNumber);
 	bool SaveHighlights();
+	void PrintHighlights();
 	bool LoadHighlights();
 
 

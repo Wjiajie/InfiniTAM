@@ -374,11 +374,11 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					//canonicalVoxel.warp_t -= TO_FLOAT3(canonicalVoxel.warp_t_update) / FLOAT_TO_SHORT_CONVERSION_FACTOR;
 					//END _DEBUG --  short conv. working/not
 					canonicalVoxel.warp_t -= canonicalVoxel.warp_t_update;
-#if defined(PRINT_DEBUG_HISTOGRAM) || defined(PRINT_MAX_WARP)
+#if defined(PRINT_DEBUG_HISTOGRAM) || defined(PRINT_MAX_WARP_AND_UPDATE)
 					float warpLength = ORUtils::length(canonicalVoxel.warp_t);
 					float warpUpdateLength = ORUtils::length(canonicalVoxel.warp_t_update);
 #endif
-#ifdef PRINT_MAX_WARP
+#ifdef PRINT_MAX_WARP_AND_UPDATE
 					if (maxWarpLength > 0.0f && warpLength == maxWarpLength) {
 						std::cout << " Max warp pos: "
 						          << currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE + Vector3i(x, y, z);
@@ -388,7 +388,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						std::cout << " Max update pos: "
 						          << currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE + Vector3i(x, y, z);
 					}
-#endif //PRINT_MAX_WARP
+#endif //PRINT_MAX_WARP_AND_UPDATE
 #ifdef PRINT_DEBUG_HISTOGRAM
 					int binIdx = 0;
 					if (maxWarpLength > 0) {
@@ -465,8 +465,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 	}
 	std::cout << std::endl;
 #endif
-#ifdef PRINT_MAX_WARP
-	std::cout << "Max warp: " << maxWarpLength;
+#ifdef PRINT_MAX_WARP_AND_UPDATE
+	std::cout << "Max warp: " << maxWarpLength << " Max update: " << maxWarpUpdateLength << std::endl;
 #endif
 	//end _DEBUG
 	return maxWarpUpdateLength;

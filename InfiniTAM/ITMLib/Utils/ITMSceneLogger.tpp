@@ -34,6 +34,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 		canonicalScene(canonicalScene),
 		liveScene(liveScene),
 		warpUpdatesPath(this->path / "warp_updates.dat"),
+		highlights("Hash ID", "Local voxel ix", "Frame", "Iteration"),
 		highlightsPath(this->path / "highlights.dat"){
 	if (!fs::create_directories(this->path) && !fs::is_directory(this->path)){
 		DIEWITHEXCEPTION(std::string("Could not create the directory '") + path + "'. Exiting.");
@@ -396,6 +397,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveHighlights() {
 	}
 }
 
+
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadHighlights() {
 	if (!fs::is_directory(this->path)) {
@@ -417,6 +419,12 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetScenes(
 	this->liveScene = liveScene;
 	this->canonicalScene = canonicalScene;
 
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::PrintHighlights() {
+	std::cout <<"*** Highlights ***" << std::endl;
+	std::cout << this->highlights << std::endl;
 }
 
 

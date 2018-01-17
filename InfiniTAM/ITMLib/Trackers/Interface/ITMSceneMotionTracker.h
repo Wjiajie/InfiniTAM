@@ -43,11 +43,11 @@
 //*** DEBUG OUTPUT MESSAGES FOR UPDATE WARP ON CPU ***
 //#define PRINT_TIME_STATS //-- needs rearranging of TICs and TOCs
 //#define PRINT_SINGLE_VOXEL_RESULT //Caution: very verbose!
-#define PRINT_MAX_WARP
+#define PRINT_MAX_WARP_AND_UPDATE
 #define PRINT_ENERGY_STATS
 #define PRINT_ADDITIONAL_STATS
 #define PRINT_DEBUG_HISTOGRAM
-#define OPENMP_WARP_UPDATE_COMPUTE_DISABLE
+//#define OPENMP_WARP_UPDATE_COMPUTE_DISABLE
 //***
 
 #endif //ifdef _DEBUG
@@ -72,7 +72,7 @@ protected:
 	FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
 
 	//TODO -- make all of these parameters
-	const int maxIterationCount = 800;
+	const int maxIterationCount = 200;
 	const float maxVectorUpdateThresholdMeters = 0.0001f;//m
 	const float gradientDescentLearningRate = 0.1f;
 	const float rigidityEnforcementFactor = 0.1f;
