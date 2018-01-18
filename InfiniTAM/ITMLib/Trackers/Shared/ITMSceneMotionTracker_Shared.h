@@ -17,6 +17,7 @@
 
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../Objects/Scene/ITMTrilinearInterpolation.h"
+#include "../../Utils/ITMHashBlockProperties.h"
 
 
 _CPU_AND_GPU_CODE_

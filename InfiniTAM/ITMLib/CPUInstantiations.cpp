@@ -88,5 +88,5 @@ namespace ITMLib
 			ITMVoxelIndex>& scene, Vector3i at, ITMVoxelCanonical voxel);
 	template bool SetVoxel_CPU<ITMVoxelLive,ITMVoxelIndex>(ITMScene<ITMVoxelLive, ITMVoxelIndex>& scene,
 	                                                       Vector3i at, ITMVoxelLive voxel);
-	//template ITMVoxel ReadVoxel<ITMVoxelCanonical,ITMVoxelIndex>(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& scene, Vector3i at);
+	template ITMVoxelCanonical ReadVoxel<ITMVoxelCanonical,ITMVoxelIndex>(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& scene, Vector3i at);
 }

@@ -30,16 +30,18 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos3 = Vector3i(-208, -27, 383);//0.0931224
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos4 = Vector3i(258, 8, 539);
+
+//TODO: generalize to handle different paths -Greg (GitHub:Algomorph)
 // where to save the images
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolder =
-		"/media/algomorph/Data/4dmseg/Killing/iteration_frames/";
+		"/media/algomorph/Data/Reconstruction/debug_output/iteration_frames/";
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::canonicalSceneRasterizedFolder =
-		"/media/algomorph/Data/4dmseg/Killing/canonical_rasterized";
+		"/media/algomorph/Data/Reconstruction/debug_output/canonical_rasterized";
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::liveSceneRasterizedFolder =
-		"/media/algomorph/Data/4dmseg/Killing/live_rasterized";
+		"/media/algomorph/Data/Reconstruction/debug_output/live_rasterized";
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const bool ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::absFillingStrategy = false;

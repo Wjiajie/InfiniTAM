@@ -35,33 +35,34 @@
 
 //local
 #include "TestUtils.h"
+#include "../ITMLib/Utils/ITMIntArrayMap3D.h"
 
 using namespace ITMLib;
 
-int i = 1;
+
 BOOST_AUTO_TEST_CASE( testSetVoxelAndCopyScene )
 {
 	ITMLibSettings *settings = new ITMLibSettings();
 	settings->deviceType = ITMLibSettings::DEVICE_CPU;
-	ITMScene<ITMVoxel, ITMVoxelIndex> scene(&settings->sceneParams,
+	ITMScene<ITMVoxelCanonical, ITMVoxelIndex> scene(&settings->sceneParams,
 	                                        settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                        settings->GetMemoryType());
 
-	ITMSceneReconstructionEngine<ITMVoxel,ITMVoxelIndex> * sceneRecoEngine = ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel,ITMVoxelIndex>(settings->deviceType);
+	ITMSceneReconstructionEngine<ITMVoxelCanonical,ITMVoxelIndex> * sceneRecoEngine = ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxelCanonical,ITMVoxelIndex>(settings->deviceType);
 	sceneRecoEngine->ResetScene(&scene);
-	ITMSceneReconstructionEngine<ITMVoxelAux,ITMVoxelIndex> * sceneRecoEngineAux = ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxelAux,ITMVoxelIndex>(settings->deviceType);
+	ITMSceneReconstructionEngine<ITMVoxelLive,ITMVoxelIndex> * sceneRecoEngineAux = ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxelLive,ITMVoxelIndex>(settings->deviceType);
 
 
 
-	ITMVoxel voxelZero;
+	ITMVoxelCanonical voxelZero;
 	voxelZero.sdf = 0.0f;
 	SetVoxel_CPU(scene,Vector3i(0,0,0),voxelZero);
-	ITMVoxel out;
+	ITMVoxelCanonical out;
 	out = ReadVoxel(scene,Vector3i(0,0,0));
 	BOOST_ASSERT(out.sdf == voxelZero.sdf);
-	ITMVoxel voxelHalf;
+	ITMVoxelCanonical voxelHalf;
 	voxelHalf.sdf = 0.5f;
-	voxelHalf.confidence = 12.0f;
+
 	SetVoxel_CPU(scene, Vector3i(1,1,1), voxelHalf);
 	out = ReadVoxel(scene, Vector3i(1,1,1));
 	BOOST_ASSERT(out.sdf == voxelHalf.sdf);
@@ -77,7 +78,7 @@ BOOST_AUTO_TEST_CASE( testSetVoxelAndCopyScene )
 	BOOST_ASSERT(out.sdf == voxelZero.sdf);
 
 	Vector3i offset(34,6,-9);
-	ITMScene<ITMVoxel, ITMVoxelIndex> scene2(&settings->sceneParams,
+	ITMScene<ITMVoxelCanonical, ITMVoxelIndex> scene2(&settings->sceneParams,
 	                                        settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                        settings->GetMemoryType());
 	sceneRecoEngine->ResetScene(&scene2);
@@ -91,10 +92,11 @@ BOOST_AUTO_TEST_CASE( testSetVoxelAndCopyScene )
 	out = ReadVoxel(scene2, Vector3i(1,1,1)+offset);
 	BOOST_ASSERT(out.sdf == voxelHalf.sdf);
 
-	ITMScene<ITMVoxelAux, ITMVoxelIndex> scene3(&settings->sceneParams,
+	ITMScene<ITMVoxelLive, ITMVoxelIndex> scene3(&settings->sceneParams,
 	                                         settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                         settings->GetMemoryType());
 	sceneRecoEngineAux->ResetScene(&scene3);
+	//TODO: trans-voxel-type-copying re-implement -Greg (GitHub: Algomorph)
 	CopySceneWithOffset_CPU(scene3,scene,offset);
 	out = ReadVoxel(scene2, voxelPos+offset);
 	BOOST_ASSERT(out.sdf == voxelZero.sdf);
@@ -109,4 +111,27 @@ BOOST_AUTO_TEST_CASE( testSetVoxelAndCopyScene )
 
 	delete settings;
 	delete sceneRecoEngine;
+}
+
+BOOST_AUTO_TEST_CASE( testITMIntArrayMap3D )
+{
+	ITMIntArrayMap3D map ("one", "two", "three", "four");
+	const int maxElementsOnEachLevel = 3;
+
+	for(int keyLevel3 = 0; keyLevel3 < maxElementsOnEachLevel; keyLevel3++){
+		for(int keyLevel2 = 0; keyLevel2 < maxElementsOnEachLevel; keyLevel2++){
+			for(int keyLevel1 = 0; keyLevel1 <maxElementsOnEachLevel; keyLevel1++){
+				for(int valueLevel0 =0; valueLevel0 < maxElementsOnEachLevel; valueLevel0++){
+					map.InsertOrdered(keyLevel3,keyLevel2,keyLevel1,valueLevel0);
+				}
+			}
+		}
+	}
+	std::cout << __FILE__ << ": " << __LINE__ << ": map to save." << std::endl;
+	std::cout << map << std::endl;
+	const char* testFilename = "int_array_map_test.dat";
+	map.SaveToFile("int_array_map_test.dat");
+	ITMIntArrayMap3D map2 ("one", "two", "three", "four");
+	map2.LoadFromFile(testFilename);
+	BOOST_ASSERT(map == map2);
 }

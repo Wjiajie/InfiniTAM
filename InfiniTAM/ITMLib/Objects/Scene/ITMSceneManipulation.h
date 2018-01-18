@@ -17,7 +17,6 @@
 
 #include "ITMScene.h"
 #include "../../ITMLibDefines.h"
-
 namespace ITMLib {
 	bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition,
 	                           ITMHashEntry* hashTable,
@@ -34,7 +33,7 @@ namespace ITMLib {
 
 	//TODO -make this suitable for source/dest scenes with different voxel types somehow -Greg (Github: Algomorph)
 	void CopySceneWithOffset_CPU(ITMScene <ITMVoxelLive, ITMVoxelIndex>& destination,
-	                             ITMScene <ITMVoxel, ITMVoxelIndex>& source,
+	                             ITMScene <ITMVoxelCanonical, ITMVoxelIndex>& source,
 	                             Vector3i offset);
 
 	template<class TVoxel, class TIndex>

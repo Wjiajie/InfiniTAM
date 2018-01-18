@@ -32,6 +32,8 @@ public:
 	bool LoadFromFile(const char* path);
 	bool LoadFromTextFile(const char* path);
 
+	bool operator==(const ITMIntArrayMap3D &other) const;
+
 	friend std::ostream& operator<<(std::ostream& stream, const ITMIntArrayMap3D& intArrayMap3D);
 
 private:

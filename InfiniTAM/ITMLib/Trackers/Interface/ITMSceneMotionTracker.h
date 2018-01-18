@@ -23,10 +23,10 @@
 #ifdef _LOGGER
 
 #include "../../Utils/ITMSceneLogger.h"
-#define SAVE_FRAME
+//#define SAVE_FRAME
 //#define LOAD_FRAME
-#define LOG_HIGHLIGHTS
-//#define LOG_HIGHLIGHT_REGIONS //TODO
+//#define LOG_HIGHLIGHTS
+#define LOG_HIGHLIGHT_REGIONS
 
 #endif //ifdef _LOGGER
 

@@ -233,9 +233,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadPreviousWarpState(
 			}
 		}
 	}
-
 	return true;
-
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -407,7 +405,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadHighlights() {
 	if(!this->highlights.LoadFromFile(highlightsPath.c_str())){
 		std::cout << "Could not load highlights from " << highlightsPath << std::endl;
 		return false;
-	}else{
+	} else {
 		std::cout << "Loaded highlights from " << highlightsPath << std::endl;
 		return true;
 	}
@@ -418,7 +416,6 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetScenes(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 	this->liveScene = liveScene;
 	this->canonicalScene = canonicalScene;
-
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -426,13 +423,3 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::PrintHighlights() {
 	std::cout <<"*** Highlights ***" << std::endl;
 	std::cout << this->highlights << std::endl;
 }
-
-
-
-
-
-
-
-
-
-

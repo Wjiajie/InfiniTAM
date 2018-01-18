@@ -75,7 +75,7 @@ SDFViz::SDFViz() :
 	liveScene = new ITMScene<ITMVoxelLive, ITMVoxelIndex>(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
-			"/media/algomorph/Data/4dmseg/Killing/scene", canonicalScene, liveScene);
+			"/media/algomorph/Data/Reconstruction/debug_output/scene", canonicalScene, liveScene);
 	InitializeRendering();
 	DrawLegend();
 }

@@ -16,8 +16,7 @@
 #pragma once
 
 //stdlib
-#include <unordered_set>
-#include <unordered_map>
+#include <set>
 
 
 //local
@@ -25,14 +24,14 @@
 #include "ITMIntArrayMap3D.h"
 
 
+
 //TODO: eventually replace boost::filesystem with stdlib filesystem when that is no longer experimental -Greg (GitHub: Algomorph)
-//TODO: add HAVE_BOOST guards -Greg (GitHub: Algomorph)
+//TODO: add HAVE_BOOST guards / CMake optional boost support -Greg (GitHub: Algomorph)
 
 //boost
 #include <boost/filesystem.hpp>
 
 namespace fs = boost::filesystem;
-
 
 namespace ITMLib{
 
@@ -52,7 +51,6 @@ public:
 	virtual ~ITMSceneLogger();
 
 	//*** setters / preparation
-
 	void SetScenes(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
 
 	//*** scene loading/saving
@@ -69,7 +67,6 @@ public:
 	void PrintHighlights();
 	bool LoadHighlights();
 
-
 	//** warp-state saving/loading
 	bool StartSavingWarpState();
 	bool SaveCurrentWarpState();
@@ -83,12 +80,18 @@ public:
 	bool LoadPreviousWarpState();
 	void StopLoadingWarpState();
 	bool IsLoadingWarpState();
-	bool CopyWarpBuffer(float* warpDestination,
-		                    float* warpUpdateDestination, int& iUpdate);
+	bool CopyWarpBuffer(float* warpDestination, float* warpUpdateDestination, int& iUpdate);
 	bool CopyWarpAt(int index, float voxelWarpDestination[3]) const;
 	bool CopyWarpAt(int index, float voxelWarpDestination[3], float voxelUpdateDestination[3]) const;
 	const float* WarpAt(int index) const;
 	const float* UpdateAt(int index) const;
+
+	class InterestRegionInfo{
+		static const hashBlockCount = 27;
+		int centerHashBlockId = 0;
+		int hashBlockIds[hashBlockCount] = {0};
+		fs::path filename;
+	};
 
 private:
 
@@ -101,10 +104,10 @@ private:
 	ITMScene<TVoxelLive, TIndex>* liveScene;
 // *** scene meta-information + reading/writing
 	int voxelCount = -1;
-// map of hash blocks to voxels, voxels to frame numbers, frame numbers to iteration numbers
+	// map of hash blocks to voxels, voxels to frame numbers, frame numbers to iteration numbers
 	ITMIntArrayMap3D highlights;
 	fs::path highlightsPath;
-
+	std::map<int,InterestRegionInfo> interestRegionInfoByHashId;
 
 // *** optimization warp-updates reading/writing
 	fs::path warpUpdatesPath;

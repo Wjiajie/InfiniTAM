@@ -35,7 +35,7 @@ using namespace ITMLib;
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params) :
 		maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize),
-		sceneLogger("/media/algomorph/Data/4dmseg/Killing/scene")
+		sceneLogger("/media/algomorph/Data/Reconstruction/debug_output/scene")
 {}
 
 
