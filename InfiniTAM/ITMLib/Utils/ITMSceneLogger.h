@@ -60,60 +60,38 @@ public:
 
 	//*** scene loading/saving
 	bool SaveScenes();
-
 	bool LoadScenes();
 
 	//*** information getters
 	int GetVoxelCount() const;
-
 	bool GetScenesLoaded() const;
 
 	//*** saving of meta-information & interest regions
 	void LogHighlight(int hashId, int voxelLocalIndex, int frameNumber, int iterationNumber);
-
 	bool SaveHighlights();
-
 	void PrintHighlights();
-
 	bool LoadHighlights();
-
 	void SetUpInterestRegionsForSaving();
-
 	void SaveAllInterestRegionWarps();
+	void SetUpInterestRegionsForLoading();
 
 	//** global warp-state saving/loading
 	bool StartSavingWarpState();
-
 	bool SaveCurrentWarpState();
-
 	void StopSavingWarpState();
-
 	bool StartLoadingWarpState();
-
 	bool LoadNextWarpState();
-
 	bool BufferNextWarpState();
-
 	bool BufferPreviousWarpState();
-
 	bool BufferNextWarpState(void* externalBuffer);
-
 	bool BufferPreviousWarpState(void* externalBuffer);
-
 	bool LoadPreviousWarpState();
-
 	void StopLoadingWarpState();
-
 	bool IsLoadingWarpState();
-
 	bool CopyWarpBuffer(float* warpDestination, float* warpUpdateDestination, int& iUpdate);
-
 	bool CopyWarpAt(int index, float voxelWarpDestination[3]) const;
-
 	bool CopyWarpAt(int index, float voxelWarpDestination[3], float voxelUpdateDestination[3]) const;
-
 	const float* WarpAt(int index) const;
-
 	const float* UpdateAt(int index) const;
 
 	/**
@@ -134,6 +112,8 @@ public:
 		void BufferNextWarpState(void* externalBuffer);
 
 		void BufferPreviousWarpState(void* externalBuffer);
+
+		const std::vector<int>& GetHashBlockIds() const;
 
 		virtual ~InterestRegionInfo();
 

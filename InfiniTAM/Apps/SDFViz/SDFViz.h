@@ -51,12 +51,19 @@ vtkTypeMacro(KeyPressInteractorStyle, vtkInteractorStyleTrackballCamera);
 };
 
 class vtkRenderer;
+
 class vtkRenderWindow;
+
 class vtkPoints;
+
 class vtkPolyData;
+
 class vtkImageData;
+
 class vtkStructuredGrid;
+
 class vtkGlyph3DMapper;
+
 class vtkFloatArray;
 
 /**
@@ -64,6 +71,7 @@ class vtkFloatArray;
  */
 class SDFViz {
 	friend class KeyPressInteractorStyle;
+
 public:
 	//================= CONSTANTS ================
 	static const double maxVoxelDrawSize;
@@ -133,7 +141,7 @@ private:
 
 	template<typename TVoxel>
 	void PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPolyData>& polydata,
-		                              vtkSmartPointer<vtkPolyData>& hashBlockGrid);
+	                              vtkSmartPointer<vtkPolyData>& hashBlockGrid);
 	void DrawLegend();
 	void UpdateVoxelPositionsFromWarpBuffer();
 	bool NextWarps();

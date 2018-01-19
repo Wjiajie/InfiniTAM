@@ -445,6 +445,9 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 	if(this->voxelCount == -1){
 		DIEWITHEXCEPTION("Attempted to set up interest regions before loading the scenes. Aborting.");
 	}
+	interestRegionInfos.clear();
+	interestRegionInfoByHashId.clear();
+
 	const TVoxelCanonical* voxels = canonicalScene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashBlocks = canonicalScene->index.GetEntries();
 	int hashBlockCount = canonicalScene->index.noTotalEntries;
@@ -481,6 +484,30 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveAllInterestRegionW
 	for(std::shared_ptr<InterestRegionInfo> info: interestRegionInfos){
 		info->SaveCurrentWarpState();
 	}
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForLoading() {
+	if(this->voxelCount == -1){
+		DIEWITHEXCEPTION("Attempted to set up interest regions before loading the scenes. Aborting.");
+	}
+	interestRegionInfos.clear();
+	interestRegionInfoByHashId.clear();
+
+	std::regex regionFileRegex(InterestRegionInfo::prefix + "\\d+" + binaryFileExtension);
+	std::smatch match;
+	std::vector<fs::path> regionPaths;
+	for(fs::directory_iterator itr{path};itr != fs::directory_iterator{}; itr++){
+		std::string filename = fs::basename(itr->path());
+		if(fs::is_regular_file(itr->path()) && std::regex_match(filename, match, regionFileRegex)){
+			std::shared_ptr<InterestRegionInfo> info(new InterestRegionInfo(itr->path(),*this));
+			for(const int iHashBlockId : info->GetHashBlockIds()){
+				interestRegionInfoByHashId[iHashBlockId] = info;
+			}
+			interestRegionInfos.push_back(info);
+		}
+	}
+
 };
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -614,4 +641,9 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::Interes
 	}
 	isLoading = true;
 	isSaving = false;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const std::vector<int>& ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::GetHashBlockIds() const{
+	return this->hashBlockIds;
 }
