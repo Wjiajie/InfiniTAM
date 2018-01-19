@@ -26,11 +26,12 @@ public:
 	                 const char* prefixLevel0);
 
 	bool InsertOrdered(int keyLevel3, int keyLevel2, int keyLevel1, int valueLevel0);
-
 	bool SaveToFile(const char* path);
-
 	bool LoadFromFile(const char* path);
-	bool LoadFromTextFile(const char* path);
+	std::vector<int> GetLevel3Keys();
+	std::vector<int> GetOuterLevelKeys(){
+		return GetLevel3Keys();
+	};
 
 	bool operator==(const ITMIntArrayMap3D &other) const;
 

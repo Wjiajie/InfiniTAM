@@ -135,40 +135,6 @@ std::ostream& operator<<(std::ostream& stream, const ITMIntArrayMap3D& intArrayM
 }
 }//namespace ITMLib
 
-bool ITMIntArrayMap3D::LoadFromTextFile(const char* path) {
-	internalMap.clear();
-	std::ifstream file = std::ifstream(path, std::ios::in);
-	if (!file) {
-		std::cerr << ("Could not open " + std::string(path) + " for writing") << std::endl;
-		return false;
-	}
-	int level3ElementCount, level2ElementCount, level1ElementCount, level0ElementCount;
-	int level3Element, level2Element, level1Element, level0Element;
-	file.read(reinterpret_cast<char*>(&level3ElementCount), sizeof(int));
-	for (int iLevel3Element = 0; iLevel3Element < level3ElementCount; iLevel3Element++) {
-		file.read(reinterpret_cast<char*>(&level3Element), sizeof(int));
-		internalMap[level3Element] = std::map<int, std::map<int, std::vector<int>>>();
-		file.read(reinterpret_cast<char*>(&level2ElementCount), sizeof(int));
-		for (int iLevel2Element = 0; iLevel2Element < level2ElementCount; iLevel2Element++) {
-			file.read(reinterpret_cast<char*>(&level2Element), sizeof(int));
-			internalMap[level3Element][level2Element] = std::map<int, std::vector<int>>();
-			file.read(reinterpret_cast<char*>(&level1ElementCount), sizeof(int));
-			for (int iLevel1Element = 0; iLevel1Element < level1ElementCount; iLevel1Element++) {
-				file.read(reinterpret_cast<char*>(&level1Element), sizeof(int));
-				internalMap[level3Element][level2Element][level1Element] = std::vector<int>();
-				std::vector<int>& array = internalMap[level3Element][level2Element][level1Element];
-				file.read(reinterpret_cast<char*>(&level0ElementCount), sizeof(int));
-				for (int iLevel0Element = 0; iLevel0Element < level1ElementCount; iLevel0Element++) {
-					file.read(reinterpret_cast<char*>(&level0Element), sizeof(int));
-					array.push_back(level0Element);
-				}
-			}
-		}
-	}
-	file.close();
-	return true;
-}
-
 bool ITMIntArrayMap3D::operator==(const ITMIntArrayMap3D& other) const {
 	if(internalMap.size() != other.internalMap.size()){
 		return false;
@@ -207,4 +173,12 @@ bool ITMIntArrayMap3D::operator==(const ITMIntArrayMap3D& other) const {
 		itThisLevel3++; itOtherLevel3++;
 	}
 	return true;
+}
+
+std::vector<int> ITMIntArrayMap3D::GetLevel3Keys() {
+	std::vector<int> keys;
+	for (auto& iter : internalMap) {
+		keys.push_back(iter.first);
+	}
+	return keys;
 }

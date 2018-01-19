@@ -33,7 +33,7 @@
 
 namespace fs = boost::filesystem;
 
-namespace ITMLib{
+namespace ITMLib {
 
 /**
  * \brief Wraps the functionality of saving canonical/live scenes for dynamic fusion along with warp changes during optimization between frames.
@@ -45,8 +45,13 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMSceneLogger {
 
 public:
+	//*** static constants
+	static const std::string binaryFileExtension;
+
 	//*** constructors/destructors
-	ITMSceneLogger(std::string path, ITMScene<TVoxelCanonical, TIndex>* canonicalScene=NULL, ITMScene<TVoxelLive, TIndex>* liveScene=NULL);
+	ITMSceneLogger(std::string path, ITMScene<TVoxelCanonical, TIndex>* canonicalScene = NULL,
+	               ITMScene<TVoxelLive, TIndex>* liveScene = NULL);
+
 	ITMSceneLogger() = delete;//disable default constructor generation
 	virtual ~ITMSceneLogger();
 
@@ -55,43 +60,96 @@ public:
 
 	//*** scene loading/saving
 	bool SaveScenes();
+
 	bool LoadScenes();
 
 	//*** information getters
 	int GetVoxelCount() const;
+
 	bool GetScenesLoaded() const;
 
-	//*** saving of meta-information
+	//*** saving of meta-information & interest regions
 	void LogHighlight(int hashId, int voxelLocalIndex, int frameNumber, int iterationNumber);
+
 	bool SaveHighlights();
+
 	void PrintHighlights();
+
 	bool LoadHighlights();
 
-	//** warp-state saving/loading
+	void SetUpInterestRegionsForSaving();
+
+	void SaveAllInterestRegionWarps();
+
+	//** global warp-state saving/loading
 	bool StartSavingWarpState();
+
 	bool SaveCurrentWarpState();
+
 	void StopSavingWarpState();
+
 	bool StartLoadingWarpState();
+
 	bool LoadNextWarpState();
+
 	bool BufferNextWarpState();
+
 	bool BufferPreviousWarpState();
+
 	bool BufferNextWarpState(void* externalBuffer);
+
 	bool BufferPreviousWarpState(void* externalBuffer);
+
 	bool LoadPreviousWarpState();
+
 	void StopLoadingWarpState();
+
 	bool IsLoadingWarpState();
+
 	bool CopyWarpBuffer(float* warpDestination, float* warpUpdateDestination, int& iUpdate);
+
 	bool CopyWarpAt(int index, float voxelWarpDestination[3]) const;
+
 	bool CopyWarpAt(int index, float voxelWarpDestination[3], float voxelUpdateDestination[3]) const;
+
 	const float* WarpAt(int index) const;
+
 	const float* UpdateAt(int index) const;
 
-	class InterestRegionInfo{
-		static const hashBlockCount = 27;
-		int centerHashBlockId = 0;
-		int hashBlockIds[hashBlockCount] = {0};
-		fs::path filename;
+	/**
+	 * \brief cube-shaped interest region with fixed edge length consistent of hash blocks within the scene
+	 */
+	class InterestRegionInfo {
+	public:
+		static constexpr int edgeLengthHashBlocks = 3;
+		static constexpr int maxHashBlockCount = edgeLengthHashBlocks * edgeLengthHashBlocks * edgeLengthHashBlocks;
+		static const Vector3s blockTraversalOrder[];
+		static const std::string prefix;
+
+		InterestRegionInfo(std::vector<int>& hashBlockIds, int centerHashBlockId,
+		                   ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>& parent);
+		InterestRegionInfo(fs::path path, ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>& parent);
+		void SaveCurrentWarpState();
+
+		void BufferNextWarpState(void* externalBuffer);
+
+		void BufferPreviousWarpState(void* externalBuffer);
+
+		virtual ~InterestRegionInfo();
+
+	private:
+		bool isLoading = false;
+		bool isSaving = false;
+		int centerHashBlockId;
+		std::vector<int> hashBlockIds;
+		fs::path path;
+		std::ofstream ofStream;
+		std::ifstream ifStream;
+		ITMSceneLogger& parent;
+		int iUpdate = 0;
+		int voxelCount;
 	};
+
 
 private:
 
@@ -107,12 +165,13 @@ private:
 	// map of hash blocks to voxels, voxels to frame numbers, frame numbers to iteration numbers
 	ITMIntArrayMap3D highlights;
 	fs::path highlightsPath;
-	std::map<int,InterestRegionInfo> interestRegionInfoByHashId;
+	std::map<int, std::shared_ptr<InterestRegionInfo>> interestRegionInfoByHashId;
+	std::vector<std::shared_ptr<InterestRegionInfo>> interestRegionInfos;
 
 // *** optimization warp-updates reading/writing
 	fs::path warpUpdatesPath;
-	std::ofstream currentWarpOFStream;
-	std::ifstream currentWarpIFStream;
+	std::ofstream warpOFStream;
+	std::ifstream warpIFStream;
 	unsigned int iUpdate = 0;
 	Vector3f* warpBuffer = NULL;
 

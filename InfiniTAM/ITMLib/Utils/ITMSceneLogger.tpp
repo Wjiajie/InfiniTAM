@@ -15,13 +15,20 @@
 //  ================================================================
 #include "ITMSceneLogger.h"
 
+#include <regex>
+
 //boost
 #include <boost/filesystem.hpp>
+
+//local
+#include "../Objects/Scene/ITMRepresentationAccess.h"
 
 namespace fs = boost::filesystem;
 
 using namespace ITMLib;
 
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::binaryFileExtension = ".dat";
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
@@ -33,9 +40,9 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 		livePath(this->path / "live"),
 		canonicalScene(canonicalScene),
 		liveScene(liveScene),
-		warpUpdatesPath(this->path / "warp_updates.dat"),
+		warpUpdatesPath(this->path / ("warp_updates" + binaryFileExtension)),
 		highlights("Hash ID", "Local voxel ix", "Frame", "Iteration"),
-		highlightsPath(this->path / "highlights.dat"){
+		highlightsPath(this->path / ("highlights" + binaryFileExtension)){
 	if (!fs::create_directories(this->path) && !fs::is_directory(this->path)){
 		DIEWITHEXCEPTION(std::string("Could not create the directory '") + path + "'. Exiting.");
 	}
@@ -87,8 +94,8 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarpState()
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
 	}
-	currentWarpOFStream = std::ofstream(warpUpdatesPath.c_str(),std::ofstream::binary | std::ofstream::out);
-	if (!currentWarpOFStream) throw std::runtime_error("Could not open " + warpUpdatesPath.string() + " for writing");
+	warpOFStream = std::ofstream(warpUpdatesPath.c_str(),std::ofstream::binary | std::ofstream::out);
+	if (!warpOFStream) throw std::runtime_error("Could not open " + warpUpdatesPath.string() + " for writing");
 
 	iUpdate = 0;
 	return true;
@@ -96,17 +103,17 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarpState()
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StopSavingWarpState() {
-	currentWarpOFStream.close();
+	warpOFStream.close();
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveCurrentWarpState() {
 
-	if(!currentWarpOFStream){
+	if(!warpOFStream){
 		std::cout << "Current warp-update OFStream cannot be saved to for whatever reason." << std::endl;
 		return false;
 	}
-	currentWarpOFStream.write(reinterpret_cast<const char* >(&this->iUpdate), sizeof(unsigned int));
+	warpOFStream.write(reinterpret_cast<const char* >(&this->iUpdate), sizeof(unsigned int));
 	const TVoxelCanonical* voxels = canonicalScene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashBlocks = canonicalScene->index.GetEntries();
 	int hashBlockCount = canonicalScene->index.noTotalEntries;
@@ -120,8 +127,8 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveCurrentWarpState()
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					const TVoxelCanonical& voxel = localVoxelBlock[ixVoxelInHashBlock];
-					currentWarpOFStream.write(reinterpret_cast<const char* >(&voxel.warp_t), sizeof(Vector3f));
-					currentWarpOFStream.write(reinterpret_cast<const char* >(&voxel.warp_t_update), sizeof(Vector3f));
+					warpOFStream.write(reinterpret_cast<const char* >(&voxel.warp_t), sizeof(Vector3f));
+					warpOFStream.write(reinterpret_cast<const char* >(&voxel.warp_t_update), sizeof(Vector3f));
 				}
 			}
 		}
@@ -143,8 +150,8 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartLoadingWarpState(
 		return false;
 	}
 
-	currentWarpIFStream = std::ifstream(warpUpdatesPath.c_str(), std::ios::binary | std::ios::in);
-	if (!currentWarpIFStream) throw std::runtime_error("Could not open " + warpUpdatesPath.string() + " for reading");
+	warpIFStream = std::ifstream(warpUpdatesPath.c_str(), std::ios::binary | std::ios::in);
+	if (!warpIFStream) throw std::runtime_error("Could not open " + warpUpdatesPath.string() + " for reading");
 	iUpdate = 0;
 	return true;
 }
@@ -152,7 +159,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartLoadingWarpState(
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StopLoadingWarpState() {
-	currentWarpIFStream.close();
+	warpIFStream.close();
 
 }
 
@@ -160,12 +167,12 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StopLoadingWarpState()
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadNextWarpState() {
-	if(!currentWarpIFStream){
+	if(!warpIFStream){
 		std::cout << "Attempted to read warp state with IFStream being in a bad state."
 				" Was 'StartLoadingWarpState()' called?" << std::endl;
 		return  false;
 	}
-	if(!currentWarpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
+	if(!warpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
 		std::cout << "Read warp state attempt failed." << std::endl;
 		return false;
 	}
@@ -185,8 +192,8 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadNextWarpState() {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxelCanonical& voxel = localVoxelBlock[ixVoxelInHashBlock];
-					currentWarpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t),sizeof(Vector3f));
-					currentWarpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t_update),sizeof(Vector3f));
+					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t),sizeof(Vector3f));
+					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t_update),sizeof(Vector3f));
 					float warpUpdateLength = ORUtils::length(voxel.warp_t_update);
 					if(warpUpdateLength > maxWarpUpdateLength){
 						maxWarpUpdateLength = warpUpdateLength;
@@ -207,9 +214,9 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadPreviousWarpState(
 		return false;
 	}
 
-	currentWarpIFStream.seekg( -2*(voxelCount*2*sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
+	warpIFStream.seekg( -2*(voxelCount*2*sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
 
-	if(!currentWarpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
+	if(!warpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
 		std::cout << "Read warp state attempt failed." << std::endl;
 		return false;
 	}
@@ -227,8 +234,8 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadPreviousWarpState(
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxelCanonical& voxel = localVoxelBlock[ixVoxelInHashBlock];
-					currentWarpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t),sizeof(Vector3f));
-					currentWarpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t_update),sizeof(Vector3f));
+					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t),sizeof(Vector3f));
+					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t_update),sizeof(Vector3f));
 				}
 			}
 		}
@@ -238,12 +245,12 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadPreviousWarpState(
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsLoadingWarpState() {
-	return this->currentWarpIFStream.is_open();
+	return this->warpIFStream.is_open();
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferNextWarpState() {
-	if(!currentWarpIFStream){
+	if(!warpIFStream){
 		std::cout << "Attempted to read warp state with IFStream being in a bad state."
 				" Was 'StartLoadingWarpState()' called?" << std::endl;
 		return  false;
@@ -254,7 +261,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferNextWarpState() 
 		return  false;
 	}
 	//read in the number of the current update.
-	if(!currentWarpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
+	if(!warpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
 		std::cout << "Read warp state attempt failed." << std::endl;
 		return false;
 	}
@@ -263,7 +270,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferNextWarpState() 
 		//allocate warp buffer
 		warpBuffer = new Vector3f[voxelCount*2];
 	}
-	currentWarpIFStream.read(reinterpret_cast<char*>(warpBuffer),sizeof(Vector3f)*voxelCount*2);
+	warpIFStream.read(reinterpret_cast<char*>(warpBuffer),sizeof(Vector3f)*voxelCount*2);
 
 	return true;
 }
@@ -274,14 +281,14 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferPreviousWarpStat
 		return false;
 	}
 
-	currentWarpIFStream.seekg( -2*(voxelCount*2*sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
+	warpIFStream.seekg( -2*(voxelCount*2*sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
 	//read in the number of the current update.
-	if(!currentWarpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
+	if(!warpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
 		std::cout << "Read warp state attempt failed." << std::endl;
 		return false;
 	}
 
-	currentWarpIFStream.read(reinterpret_cast<char*>(warpBuffer),sizeof(Vector3f)*voxelCount*2);
+	warpIFStream.read(reinterpret_cast<char*>(warpBuffer),sizeof(Vector3f)*voxelCount*2);
 
 	return true;
 }
@@ -330,7 +337,7 @@ int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelCount() const {
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferNextWarpState(void* externalBuffer) {
-	if(!currentWarpIFStream){
+	if(!warpIFStream){
 		std::cout << "Attempted to read warp state with IFStream being in a bad state."
 				" Was 'StartLoadingWarpState()' called?" << std::endl;
 		return  false;
@@ -341,11 +348,11 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferNextWarpState(vo
 		return  false;
 	}
 	//read in the number of the current update.
-	if(!currentWarpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
+	if(!warpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
 		std::cout << "Read warp state attempt failed." << std::endl;
 		return false;
 	}
-	currentWarpIFStream.read(reinterpret_cast<char*>(externalBuffer),sizeof(Vector3f)*voxelCount*2);
+	warpIFStream.read(reinterpret_cast<char*>(externalBuffer),sizeof(Vector3f)*voxelCount*2);
 	std::cout << "Read warp state for iteration " << iUpdate << std::endl;
 	return true;
 }
@@ -356,14 +363,14 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferPreviousWarpStat
 		return false;
 	}
 
-	currentWarpIFStream.seekg( -2*(voxelCount*2*sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
+	warpIFStream.seekg( -2*(voxelCount*2*sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
 	//read in the number of the current update.
-	if(!currentWarpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
+	if(!warpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
 		std::cout << "Read warp state attempt failed." << std::endl;
 		return false;
 	}
 
-	currentWarpIFStream.read(reinterpret_cast<char*>(externalBuffer),sizeof(Vector3f)*voxelCount*2);
+	warpIFStream.read(reinterpret_cast<char*>(externalBuffer),sizeof(Vector3f)*voxelCount*2);
 	std::cout << "Read warp state for iteration " << iUpdate << std::endl;
 
 	return true;
@@ -422,4 +429,189 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::PrintHighlights() {
 	std::cout <<"*** Highlights ***" << std::endl;
 	std::cout << this->highlights << std::endl;
+}
+
+/**
+ * \brief Set up the interest regions whose warps to save into individual files based on
+ * (a) highlights (which have to be loaded / defined)
+ * (b) existing canonical scene (which have to be loaded)
+ *
+ * \tparam TVoxelCanonical
+ * \tparam TVoxelLive
+ * \tparam TIndex
+ */
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving() {
+	if(this->voxelCount == -1){
+		DIEWITHEXCEPTION("Attempted to set up interest regions before loading the scenes. Aborting.");
+	}
+	const TVoxelCanonical* voxels = canonicalScene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* hashBlocks = canonicalScene->index.GetEntries();
+	int hashBlockCount = canonicalScene->index.noTotalEntries;
+
+	//traverse hash blocks where anomalies/errors/oscillations occur
+	for(int centerHashId : highlights.GetOuterLevelKeys()){
+		const ITMHashEntry& hashEntry = hashBlocks[centerHashId];
+		const ITMHashEntry& currentHashBlock = hashBlocks[centerHashId];
+		if(currentHashBlock.ptr < 0) {
+			throw std::runtime_error("Got hash Id " + std::to_string(centerHashId)
+			                         + " in the highlights that doesn't correspond to a populated block in the scene");
+		}
+		std::vector<int> regionHashIds;
+		Vector3s centerBlockPos = currentHashBlock.pos;
+		//traverse neighborhood of the interest hash block in a predefined order
+		for(Vector3s offset : InterestRegionInfo::blockTraversalOrder){
+			int iHashBlock = hashIndex(centerBlockPos+offset);
+			if(iHashBlock >= 0 && iHashBlock < hashBlockCount && hashBlocks[iHashBlock].ptr >= 0){
+				regionHashIds.push_back(iHashBlock);
+			}
+		}
+		std::shared_ptr<InterestRegionInfo> info(new InterestRegionInfo(regionHashIds,centerHashId, *this));
+		//instert the same region into map by the hash blocks it contains
+		for(int regionHashBlockId : regionHashIds){
+			interestRegionInfoByHashId[regionHashBlockId] = info;
+		}
+		interestRegionInfos.push_back(info);
+	}
+
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveAllInterestRegionWarps() {
+	for(std::shared_ptr<InterestRegionInfo> info: interestRegionInfos){
+		info->SaveCurrentWarpState();
+	}
+};
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const Vector3s ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::blockTraversalOrder[] = 
+		{Vector3s(-1,-1,-1), Vector3s(-1,-1, 0), Vector3s(-1,-1, 1),
+		 Vector3s(-1, 0,-1), Vector3s(-1, 0, 0), Vector3s(-1, 0, 1),
+		 Vector3s(-1, 1,-1), Vector3s(-1, 1, 0), Vector3s(-1, 1, 1),
+		 
+		 Vector3s( 0,-1,-1), Vector3s( 0,-1, 0), Vector3s( 0,-1, 1),
+		 Vector3s( 0, 0,-1), Vector3s( 0, 0, 0), Vector3s( 0, 0, 1),
+		 Vector3s( 0, 1,-1), Vector3s( 0, 1, 0), Vector3s( 0, 1, 1),
+
+		 Vector3s( 1,-1,-1), Vector3s( 1,-1, 0), Vector3s( 1,-1, 1),
+		 Vector3s( 1, 0,-1), Vector3s( 1, 0, 0), Vector3s( 1, 0, 1),
+		 Vector3s( 1, 1,-1), Vector3s( 1, 1, 0), Vector3s( 1, 1, 1)};
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::prefix = "region_";
+/**
+ * \brief Make an interest region info for saving warps to disk
+ * \tparam TVoxelCanonical
+ * \tparam TVoxelLive
+ * \tparam TIndex
+ * \param hashBlockIds all hash block ids in the region
+ * \param centerHashBlockId the central hash block (where the highlight/anomaly occurs)
+ * \param parent parent logger
+ */
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::InterestRegionInfo(
+		std::vector<int>& hashBlockIds, int centerHashBlockId,
+		ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>& parent):
+		centerHashBlockId(centerHashBlockId),
+		hashBlockIds(hashBlockIds),
+		path(parent.path / fs::path(prefix + std::to_string(centerHashBlockId) + binaryFileExtension)),
+		ifStream(),
+		ofStream(std::ofstream(path.c_str(),std::ios::binary | std::ios::out)),
+		parent(parent),
+		voxelCount(static_cast<int>(hashBlockIds.size()) * SDF_BLOCK_SIZE3){
+	if (!ofStream) throw std::runtime_error("Could not open " + path.string() + " for writing");
+	//write region header
+	ofStream.write(reinterpret_cast<const char* >(&centerHashBlockId), sizeof(unsigned int));
+	size_t hashBlockCount = hashBlockIds.size();
+	ofStream.write(reinterpret_cast<const char* >(&hashBlockCount), sizeof(size_t));
+	for(int hashBlockId : hashBlockIds){
+		ofStream.write(reinterpret_cast<const char* >(&hashBlockId), sizeof(int));
+	}
+	isSaving = true;
+	isLoading = false;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::~InterestRegionInfo() {
+	ofStream.close();
+	ifStream.close();
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SaveCurrentWarpState() {
+	if(isLoading){
+		throw std::runtime_error("Attempting to save region made for loading (not allowed). Use alternative constructor.");
+	}
+
+	ofStream.write(reinterpret_cast<const char* >(&iUpdate), sizeof(unsigned int));
+	const TVoxelCanonical* voxels = parent.canonicalScene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* hashBlocks = parent.canonicalScene->index.GetEntries();
+	for(int iHashBlock : hashBlockIds){
+		const ITMHashEntry& currentHashBlock = hashBlocks[iHashBlock];
+		if(currentHashBlock.ptr < 0) continue;
+		const TVoxelCanonical* localVoxelBlock = &(voxels[currentHashBlock.ptr * (SDF_BLOCK_SIZE3)]);
+		//TODO: make static inline, reuse above in write warp updates -Greg (GitHub: Algomorph)
+		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+					int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+					const TVoxelCanonical& voxel = localVoxelBlock[ixVoxelInHashBlock];
+					ofStream.write(reinterpret_cast<const char* >(&voxel.warp_t), sizeof(Vector3f));
+					ofStream.write(reinterpret_cast<const char* >(&voxel.warp_t_update), sizeof(Vector3f));
+				}
+			}
+		}
+	}
+
+	iUpdate++;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::BufferNextWarpState(void* externalBuffer) {
+	if(isSaving){
+		throw std::runtime_error("Attempting to load while saving (not allowed).");
+	}
+
+	//read in the number of the current update.
+	if(!ifStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
+		throw std::runtime_error("Read region warp state attempt failed for region " + std::to_string(centerHashBlockId));
+	}
+
+	ifStream.read(reinterpret_cast<char*>(externalBuffer),sizeof(Vector3f)*voxelCount*2);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::BufferPreviousWarpState(void* externalBuffer) {
+	ifStream.seekg( -2*(voxelCount*2*sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
+
+	//read in the number of the current update.
+	if(!ifStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
+		throw std::runtime_error("Read region warp state attempt failed for region " + std::to_string(centerHashBlockId));
+	}
+
+	ifStream.read(reinterpret_cast<char*>(externalBuffer),sizeof(Vector3f)*voxelCount*2);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::InterestRegionInfo(
+		fs::path path, ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>& parent):
+	path(path),
+	ifStream(std::ifstream(path.c_str(), std::ios::binary | std::ios::in)),
+	parent(parent){
+
+	if (!ifStream) throw std::runtime_error("Could not open " + path.string() + " for reading.");
+	hashBlockIds.clear();
+	//read region header
+	ifStream.read(reinterpret_cast<char*>(&centerHashBlockId), sizeof(unsigned int));
+	size_t hashBlockCount;
+	ifStream.read(reinterpret_cast<char* >(&hashBlockCount), sizeof(size_t));
+	for(int iHashBlockId = 0 ; iHashBlockId < hashBlockCount; iHashBlockId++){
+		int hashBlockId;
+		ifStream.read(reinterpret_cast<char*>(&hashBlockId), sizeof(int));
+		hashBlockIds.push_back(hashBlockId);
+	}
+	isLoading = true;
+	isSaving = false;
 }
