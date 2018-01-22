@@ -15,21 +15,44 @@
 //  ================================================================
 #pragma once
 
-
+//VTK
 #include <vtkSmartPointer.h>
+
+//ITMLib
+#include "../../ITMLib/Objects/Scene/ITMScene.h"
 
 class vtkPoints;
 class vtkPolyData;
 class vtkActor;
 
+using namespace ITMLib;
+
 template <typename TVoxel, typename TIndex>
 class SDFSceneVizPipe {
+public:
+	//================= CONSTANTS ================
+	static const double maxVoxelDrawSize;
+	static const char* colorPointAttributeName;
+	static const char* scalePointAttributeName;
+
+	SDFSceneVizPipe(double* negativeSDFVoxelColor, double* positiveSDFVoxelColor, double* hashBlockEdgeColor);
+	~SDFSceneVizPipe();
+	void PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry, vtkAlgorithmOutput* hashBlockSourceGeometry);
+
+	ITMScene<TVoxel, TIndex>* GetScene();
 private:
+	void PrepareSceneForRendering();
+
+	ITMScene<TVoxel, TIndex>* scene;
+	// **individual voxels**
 	vtkSmartPointer<vtkPoints> initialPoints;
 	vtkSmartPointer<vtkPolyData> voxelPolydata;
 	vtkSmartPointer<vtkActor> voxelActor;
+	// **hash block grid**
 	vtkSmartPointer<vtkPolyData> hashBlockGrid;
 	vtkSmartPointer<vtkActor> hashBlockActor;
 };
+
+
 
 

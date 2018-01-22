@@ -15,14 +15,17 @@
 //  ================================================================
 #pragma once
 
+//VTK
 #include <vtkSmartPointer.h>
 #include <vtkInteractorStyleTrackballCamera.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkObjectFactory.h>
-#include <vtk-8.1/vtkGlyph3D.h>
-#include <vtk-8.1/vtkExtractPolyDataGeometry.h>
+#include <vtkExtractPolyDataGeometry.h>
 
 //local
+#include "SDFSceneVizPipe.tpp"
+
+//ITMLib
 #include "../../ITMLib/ITMLibDefines.h"
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
 
@@ -64,6 +67,8 @@ class vtkImageData;
 
 class vtkStructuredGrid;
 
+class vtkGlyph3D;
+
 class vtkGlyph3DMapper;
 
 class vtkFloatArray;
@@ -80,11 +85,13 @@ class SDFViz {
 
 public:
 	//================= CONSTANTS ================
-	static const double maxVoxelDrawSize;
-	static const double canonicalNegativeSDFColor[4];
-	static const double canonicalPositiveSDFColor[4];
-	static const double liveNegativeSDFColor[4];
-	static const double livePositiveSDFColor[4];
+	static const double canonicalNegativeSDFVoxelColor[4];
+	static const double canonicalPositiveSDFVoxelColor[4];
+	static const double canonicalHashBlockEdgeColor[3];
+	static const double liveNegativeSDFVoxelColor[4];
+	static const double livePositiveSDFVoxelColor[4];
+	static const double liveHashBlockEdgeColor[3];
+
 
 	//================= CONSTRUCTORS/DESTRUCTORS =
 	SDFViz();
@@ -94,31 +101,10 @@ public:
 
 private:
 	//================= CONSTANTS ================
-	static const char* colorPointAttributeName;
-	static const char* scalePointAttributeName;
+
 	//================= FIELDS ===================
 	//data loader
 	ITMSceneLogger <ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
-
-	//data structures
-	ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene;
-	ITMScene<ITMVoxelLive, ITMVoxelIndex>* liveScene;
-
-	// Structures for rendering scene geometry with VTK
-	// **individual voxels**
-	vtkSmartPointer<vtkPoints> canonicalInitialPoints;
-	vtkSmartPointer<vtkPolyData> canonicalVoxelPolydata;
-	vtkSmartPointer<vtkActor> canonicalVoxelActor;
-	vtkSmartPointer<vtkPolyData> liveVoxelPolydata;
-	vtkSmartPointer<vtkActor> liveVoxelActor;
-	// **hash blocks**
-	vtkSmartPointer<vtkPolyData> canonicalHashBlockGrid;
-	vtkSmartPointer<vtkActor> canonicalHashBlockActor;
-	vtkSmartPointer<vtkPolyData> liveHashBlockGrid;
-	vtkSmartPointer<vtkActor> liveHashBlockActor;
-
-	//Holds warp & warp update state for the canonical scene
-	vtkSmartPointer<vtkFloatArray> warpBuffer;
 
 	//visualization setup
 	// The renderer generates the image
@@ -128,27 +114,29 @@ private:
 	// The render window is the actual GUI window
 	// that appears on the computer screen
 	vtkSmartPointer<vtkRenderWindow> renderWindow;
-
-	Vector3i minPoint, maxPoint;
-	// Rendering limits/boundaries
-	// (probably temporary since more elaborate methods of not rendering distant voxels will be employed later)
-	Vector3i minAllowedPoint;
-	Vector3i maxAllowedPoint;
-
 	// The render window interactor captures mouse events
 	// and will perform appropriate camera or actor manipulation
 	// depending on the nature of the events.
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
+
+	// Structures for rendering scene geometry with VTK
+	SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex> canonicalScenePipe;
+	SDFSceneVizPipe<ITMVoxelLive, ITMVoxelIndex> liveScenePipe;
+
+	//Holds warp & warp update state for the canonical scene
+	vtkSmartPointer<vtkFloatArray> warpBuffer;
+
+	Vector3i minPoint, maxPoint;
+	// Rendering limits/boundaries
+	// (probably temporary since more elaborate methods of rendering voxel subset will be employed later)
+	Vector3i minAllowedPoint;
+	Vector3i maxAllowedPoint;
 
 	//================ METHODS =====================
 	void InitializeRendering();
 	//scene voxel size should be known
 	void InitializeWarpBuffers();
 
-	//setup
-	template<typename TVoxel>
-	void PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPolyData>& polydata,
-	                              vtkSmartPointer<vtkPolyData>& hashBlockGrid);
 	void DrawLegend();
 
 	void SetUpSceneHashBlockMapper(vtkAlgorithmOutput* sourceOutput,
