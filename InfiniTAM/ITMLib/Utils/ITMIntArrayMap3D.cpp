@@ -106,7 +106,7 @@ bool ITMIntArrayMap3D::LoadFromFile(const char* path) {
 				internalMap[level3Element][level2Element][level1Element] = std::vector<int>();
 				std::vector<int>& array = internalMap[level3Element][level2Element][level1Element];
 				file.read(reinterpret_cast<char*>(&level0ElementCount), sizeof(size_t));
-				for (int iLevel0Element = 0; iLevel0Element < level1ElementCount; iLevel0Element++) {
+				for (int iLevel0Element = 0; iLevel0Element < level0ElementCount; iLevel0Element++) {
 					file.read(reinterpret_cast<char*>(&level0Element), sizeof(int));
 					array.push_back(level0Element);
 				}
@@ -181,4 +181,32 @@ std::vector<int> ITMIntArrayMap3D::GetLevel3Keys() {
 		keys.push_back(iter.first);
 	}
 	return keys;
+}
+
+ITMIntArrayMap3D ITMIntArrayMap3D::FilterBasedOnLevel0Lengths(int minThreshold) {
+	ITMIntArrayMap3D filtered(prefixLevel3,prefixLevel2,prefixLevel1,prefixLevel0);
+	for (std::pair<int, std::map<int, std::map<int, std::vector<int>>>> elementLevel3 : internalMap) {
+		for (std::pair<int, std::map<int, std::vector<int>>> elementLevel2 : elementLevel3.second) {
+			for (std::pair<int, std::vector<int>> elementLevel1 : elementLevel2.second) {
+				if(elementLevel1.second.size() >= minThreshold){
+					for (int value : elementLevel1.second){
+						filtered.InsertOrdered(elementLevel3.first,elementLevel2.first,elementLevel1.first,value);
+					}
+				}
+			}
+		}
+	}
+	return filtered;
+}
+
+bool ITMIntArrayMap3D::SaveToTextFile(const char* path) {
+	std::ofstream file = std::ofstream(path, std::ios::out);
+	if (!file) {
+		std::cerr << ("Could not open " + std::string(path) + " for writing") << std::endl;
+		return false;
+	}
+	file << *this << std::endl;
+//	std::cout << "blah" << std::endl;
+//	std::cout << *this << std::endl;
+	file.close();
 }

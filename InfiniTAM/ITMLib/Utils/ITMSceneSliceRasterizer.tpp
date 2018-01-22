@@ -296,16 +296,6 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::IsVoxelBlockInImgR
 	       !(imgRangeStartY - tolerance >= bvc1.y || imgRangeEndY + tolerance < bvc0.y);
 }
 
-//START _DEBUG
-#define TIC(var)\
-    auto start_##var = std::chrono::steady_clock::now();
-
-#define TOC(var)\
-    auto end_##var = std::chrono::steady_clock::now();\
-    auto diff_##var = end_##var - start_##var;\
-    var += std::chrono::duration <double, std::milli> (diff_##var).count();
-//end _DEBUG
-
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 template<typename TVoxel>
 void
@@ -428,9 +418,11 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlices(
 	}
 
 	TOC(timer);
+#ifdef PRINT_TIME_STATS
 	if (verbose) {
 		std::cout << "Total time for rasterization procedure: " << timer << " ms." << std::endl;
 	}
+#endif
 
 }
 

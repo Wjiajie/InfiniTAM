@@ -35,6 +35,7 @@ CUDAInstantiations.cu
 
 SET(ITMLIB_TOPLEVEL_HEADERS
 ITMLibDefines.h
+TempDebugDefines.h
 )
 
 ##

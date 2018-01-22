@@ -29,6 +29,8 @@ using namespace ITMLib;
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::binaryFileExtension = ".dat";
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::textFileExtension = ".txt";
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
@@ -42,7 +44,8 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 		liveScene(liveScene),
 		warpUpdatesPath(this->path / ("warp_updates" + binaryFileExtension)),
 		highlights("Hash ID", "Local voxel ix", "Frame", "Iteration"),
-		highlightsPath(this->path / ("highlights" + binaryFileExtension)){
+		highlightsBinaryPath(this->path / ("highlights" + binaryFileExtension)),
+        highlightsTextPath(this->path / ("highlights" + textFileExtension)){
 	if (!fs::create_directories(this->path) && !fs::is_directory(this->path)){
 		DIEWITHEXCEPTION(std::string("Could not create the directory '") + path + "'. Exiting.");
 	}
@@ -393,13 +396,19 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveHighlights() {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
 	}
-	if(!this->highlights.SaveToFile(highlightsPath.c_str())){
-		std::cerr << "Could not save highlights to " << highlightsPath << std::endl;
+	if(!this->highlights.SaveToFile(highlightsBinaryPath.c_str())){
+		std::cerr << "Could not save highlights to " << highlightsBinaryPath << std::endl;
 		return false;
 	}else{
-		std::cout << "Saved highlights to" << highlightsPath << std::endl;
-		return true;
+		std::cout << "Saved highlights to" << highlightsBinaryPath << std::endl;
 	}
+	if(!this->highlights.SaveToTextFile(highlightsTextPath.c_str())){
+		std::cerr << "Could not save highlights to " << highlightsTextPath << std::endl;
+		return false;
+	}else{
+		std::cout << "Saved highlights to" << highlightsTextPath << std::endl;
+	}
+	return true;
 }
 
 
@@ -409,11 +418,11 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadHighlights() {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
 	}
-	if(!this->highlights.LoadFromFile(highlightsPath.c_str())){
-		std::cout << "Could not load highlights from " << highlightsPath << std::endl;
+	if(!this->highlights.LoadFromFile(highlightsBinaryPath.c_str())){
+		std::cout << "Could not load highlights from " << highlightsBinaryPath << std::endl;
 		return false;
 	} else {
-		std::cout << "Loaded highlights from " << highlightsPath << std::endl;
+		std::cout << "Loaded highlights from " << highlightsBinaryPath << std::endl;
 		return true;
 	}
 }
@@ -431,14 +440,16 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::PrintHighlights() {
 	std::cout << this->highlights << std::endl;
 }
 
+
+
 /**
  * \brief Set up the interest regions whose warps to save into individual files based on
  * (a) highlights (which have to be loaded / defined)
  * (b) existing canonical scene (which have to be loaded)
  *
- * \tparam TVoxelCanonical
- * \tparam TVoxelLive
- * \tparam TIndex
+ * \tparam TVoxelCanonical type of voxel in canonical scene
+ * \tparam TVoxelLive type of voxel in live scene
+ * \tparam TIndex type of voxel index structure
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving() {
@@ -448,13 +459,11 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 	interestRegionInfos.clear();
 	interestRegionInfoByHashId.clear();
 
-	const TVoxelCanonical* voxels = canonicalScene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashBlocks = canonicalScene->index.GetEntries();
 	int hashBlockCount = canonicalScene->index.noTotalEntries;
 
 	//traverse hash blocks where anomalies/errors/oscillations occur
 	for(int centerHashId : highlights.GetOuterLevelKeys()){
-		const ITMHashEntry& hashEntry = hashBlocks[centerHashId];
 		const ITMHashEntry& currentHashBlock = hashBlocks[centerHashId];
 		if(currentHashBlock.ptr < 0) {
 			throw std::runtime_error("Got hash Id " + std::to_string(centerHashId)
@@ -469,7 +478,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 				regionHashIds.push_back(iHashBlock);
 			}
 		}
-		std::shared_ptr<InterestRegionInfo> info(new InterestRegionInfo(regionHashIds,centerHashId, *this));
+		std::shared_ptr<InterestRegionInfo> info(new InterestRegionInfo(regionHashIds, centerHashId, *this));
 		//instert the same region into map by the hash blocks it contains
 		for(int regionHashBlockId : regionHashIds){
 			interestRegionInfoByHashId[regionHashBlockId] = info;
@@ -486,6 +495,13 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveAllInterestRegionW
 	}
 }
 
+/**
+ * \brief Set up all interest regions for loading based on the files in current active directory for the loader.
+ * \details The files should follow the interest region naming convention
+ * \tparam TVoxelCanonical
+ * \tparam TVoxelLive
+ * \tparam TIndex
+ */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForLoading() {
 	if(this->voxelCount == -1){
@@ -508,6 +524,11 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 		}
 	}
 
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::FilterHighlights(int anomalyFrameCountMinimum) {
+	highlights = highlights.FilterBasedOnLevel0Lengths(anomalyFrameCountMinimum);
 };
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -527,10 +548,10 @@ const Vector3s ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegi
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::prefix = "region_";
 /**
- * \brief Make an interest region info for saving warps to disk
- * \tparam TVoxelCanonical
- * \tparam TVoxelLive
- * \tparam TIndex
+ * \brief Make an interest region info for saving warps in a specific hash block neighborhood to disk
+ * \tparam TVoxelCanonical type of canonical/reference scene voxels
+ * \tparam TVoxelLive type of live/target scene voxels
+ * \tparam TIndex indexing structure
  * \param hashBlockIds all hash block ids in the region
  * \param centerHashBlockId the central hash block (where the highlight/anomaly occurs)
  * \param parent parent logger

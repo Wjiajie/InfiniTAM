@@ -47,6 +47,7 @@ class ITMSceneLogger {
 public:
 	//*** static constants
 	static const std::string binaryFileExtension;
+	static const std::string textFileExtension;
 
 	//*** constructors/destructors
 	ITMSceneLogger(std::string path, ITMScene<TVoxelCanonical, TIndex>* canonicalScene = NULL,
@@ -71,6 +72,7 @@ public:
 	bool SaveHighlights();
 	void PrintHighlights();
 	bool LoadHighlights();
+	void FilterHighlights(int anomalyFrameCountMinimum);
 	void SetUpInterestRegionsForSaving();
 	void SaveAllInterestRegionWarps();
 	void SetUpInterestRegionsForLoading();
@@ -144,7 +146,8 @@ private:
 	int voxelCount = -1;
 	// map of hash blocks to voxels, voxels to frame numbers, frame numbers to iteration numbers
 	ITMIntArrayMap3D highlights;
-	fs::path highlightsPath;
+	fs::path highlightsBinaryPath;
+	fs::path highlightsTextPath;
 	std::map<int, std::shared_ptr<InterestRegionInfo>> interestRegionInfoByHashId;
 	std::vector<std::shared_ptr<InterestRegionInfo>> interestRegionInfos;
 

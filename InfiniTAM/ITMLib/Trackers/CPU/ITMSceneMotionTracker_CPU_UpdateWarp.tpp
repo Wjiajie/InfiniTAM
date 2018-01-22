@@ -24,15 +24,7 @@
 #include "ITMSceneMotionTracker_CPU.h"
 #include "../Shared/ITMSceneMotionTracker_Shared.h"
 
-//START _DEBUG
-#define TIC(var)\
-    auto start_##var = std::chrono::steady_clock::now();
 
-#define TOC(var)\
-    auto end_##var = std::chrono::steady_clock::now();\
-    auto diff_##var = end_##var - start_##var;\
-    var += std::chrono::duration <double, std::milli> (diff_##var).count();
-//end _DEBUG
 using namespace ITMLib;
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

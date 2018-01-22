@@ -15,42 +15,7 @@
 //  ================================================================
 #pragma once
 
-#define _DEBUG
-#ifdef _DEBUG
-
-//*** LOGGING FOR 3D VISUAL DEBUGGING***
-#define _LOGGER
-#ifdef _LOGGER
-
-#include "../../Utils/ITMSceneLogger.h"
-//#define SAVE_FRAME
-//#define LOAD_FRAME
-//#define LOG_HIGHLIGHTS
-#define LOG_HIGHLIGHT_REGIONS
-
-#endif //ifdef _LOGGER
-
-#include <opencv2/core/mat.hpp>
-
-//*** 2D RASTERIZATION FOR VISUAL DEBUGGING ***
-//#define RASTERIZE_CANONICAL_SCENE
-//#define RASTERIZE_LIVE_SCENE
-//#define DRAW_IMAGE
-#if defined(DRAW_IMAGE) || defined(RASTERIZE_CANONICAL_SCENE) || defined(RASTERIZE_LIVE_SCENE)
-#include "../../Utils/ITMSceneSliceRasterizer.h"
-#endif
-
-//*** DEBUG OUTPUT MESSAGES FOR UPDATE WARP ON CPU ***
-//#define PRINT_TIME_STATS //-- needs rearranging of TICs and TOCs
-//#define PRINT_SINGLE_VOXEL_RESULT //Caution: very verbose!
-#define PRINT_MAX_WARP_AND_UPDATE
-#define PRINT_ENERGY_STATS
-#define PRINT_ADDITIONAL_STATS
-#define PRINT_DEBUG_HISTOGRAM
-//#define OPENMP_WARP_UPDATE_COMPUTE_DISABLE
-//***
-
-#endif //ifdef _DEBUG
+#include "../../TempDebugDefines.h"
 
 //local
 #include "../../Objects/Scene/ITMScene.h"

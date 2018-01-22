@@ -89,6 +89,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 #ifdef _LOGGER
 	sceneLogger.SetScenes(canonicalScene,liveScene);
 #endif
+
 #ifdef SAVE_FRAME
 	if(currentFrameIx == frameOfInterest){
 		sceneLogger.SaveScenes();
@@ -102,6 +103,16 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 		sceneLogger.StartLoadingWarpState();
 		while(sceneLogger.LoadNextWarpState()){};
 		sceneLogger.StopLoadingWarpState();
+	}
+#endif
+#ifdef LOG_HIGHLIGHT_REGIONS
+	if(currentFrameIx == frameOfInterest) {
+		sceneLogger.LoadScenes();
+		sceneLogger.LoadHighlights();
+		sceneLogger.FilterHighlights(15);//only keep oscillations that occur for the same voxels more than 15 times
+		std::cout << "Highlights after filtering: " << std::endl;
+		sceneLogger.PrintHighlights();
+		sceneLogger.SetUpInterestRegionsForSaving();
 	}
 #endif
 	//END DEBUG
@@ -147,6 +158,11 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 #ifdef SAVE_FRAME
 		if(currentFrameIx == frameOfInterest){
 			sceneLogger.SaveCurrentWarpState();
+		}
+#endif
+#ifdef LOG_HIGHLIGHT_REGIONS
+		if(currentFrameIx == frameOfInterest){
+			sceneLogger.SaveAllInterestRegionWarps();
 		}
 #endif
 		//END _DEBUG

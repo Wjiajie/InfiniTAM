@@ -27,7 +27,10 @@ public:
 
 	bool InsertOrdered(int keyLevel3, int keyLevel2, int keyLevel1, int valueLevel0);
 	bool SaveToFile(const char* path);
+	bool SaveToTextFile(const char* path);
 	bool LoadFromFile(const char* path);
+	ITMIntArrayMap3D FilterBasedOnLevel0Lengths(int minThreshold);
+
 	std::vector<int> GetLevel3Keys();
 	std::vector<int> GetOuterLevelKeys(){
 		return GetLevel3Keys();

@@ -130,8 +130,23 @@ BOOST_AUTO_TEST_CASE( testITMIntArrayMap3D )
 	std::cout << __FILE__ << ": " << __LINE__ << ": map to save." << std::endl;
 	std::cout << map << std::endl;
 	const char* testFilename = "int_array_map_test.dat";
-	map.SaveToFile("int_array_map_test.dat");
+	map.SaveToFile(testFilename);
 	ITMIntArrayMap3D map2 ("one", "two", "three", "four");
 	map2.LoadFromFile(testFilename);
 	BOOST_ASSERT(map == map2);
+
+
+	ITMIntArrayMap3D map3 ("one", "two", "three", "four");
+	map3.InsertOrdered(84651,358,1,5);
+	map3.InsertOrdered(84651,358,1,6);
+	map3.InsertOrdered(102821,436,1,1);
+	map3.InsertOrdered(155667, 495,1,2);
+	map3.InsertOrdered(179874, 446,1,28);
+	map3.InsertOrdered(179874, 446,1,30);
+	map3.SaveToFile(testFilename);
+	ITMIntArrayMap3D map4 ("one", "two", "three", "four");
+	map4.LoadFromFile(testFilename);
+	BOOST_ASSERT(map3 == map4);
 }
+
+
