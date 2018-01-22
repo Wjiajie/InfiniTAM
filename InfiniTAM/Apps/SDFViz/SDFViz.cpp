@@ -44,6 +44,9 @@
 #include <vtkUniformGrid.h>
 
 //local
+#include "SDFSceneVizPipe.tpp"
+
+//ITMLib
 #include "../../ITMLib/Utils/ITMSceneLogger.h"
 #include "../../ITMLib/Utils/ITMLibSettings.h"
 #include "../../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
@@ -106,38 +109,17 @@ int SDFViz::run() {
 	vtkSmartPointer<vtkCubeSource> cube = vtkSmartPointer<vtkCubeSource>::New();
 	cube->SetBounds(0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE);
 
-	//mappers for voxel blocks
-	auto SetUpSceneHashBlockMapper = [&cube](vtkSmartPointer<vtkGlyph3DMapper>& mapper,
-	                                         vtkSmartPointer<vtkPolyData>& pointsPolydata) {
-		mapper->SetInputData(pointsPolydata);
-		mapper->SetSourceConnection(cube->GetOutputPort());
-		mapper->ScalarVisibilityOff();
-		mapper->ScalingOff();
-		mapper->SetScaleFactor(1.0);
-	};
+	// Set up hash block visualization
 	vtkSmartPointer<vtkGlyph3DMapper> canonicalHashBlockMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
 	vtkSmartPointer<vtkGlyph3DMapper> liveHashBlockMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
-	SetUpSceneHashBlockMapper(canonicalHashBlockMapper, canonicalHashBlockGrid);
-	SetUpSceneHashBlockMapper(liveHashBlockMapper, liveHashBlockGrid);
-
+	SetUpSceneHashBlockMapper(cube->GetOutputPort(), canonicalHashBlockMapper, canonicalHashBlockGrid);
+	SetUpSceneHashBlockMapper(cube->GetOutputPort(), liveHashBlockMapper, liveHashBlockGrid);
 
 	// Create the color maps
-	auto SetUpSDFColorLookupTable = [](vtkSmartPointer<vtkLookupTable>& table,
-	                                   const double rgbaFirstColor[4], const double rgbaSecondColor[4]) {
-		table->SetTableRange(0.0, 1.0);
-		table->SetNumberOfTableValues(2);
-		table->SetNumberOfColors(2);
-		table->SetTableValue(0, rgbaFirstColor);
-		table->SetTableValue(1, rgbaSecondColor);
-		table->Build();
-	};
-
 	vtkSmartPointer<vtkLookupTable> canonicalColorLookupTable = vtkSmartPointer<vtkLookupTable>::New();
 	vtkSmartPointer<vtkLookupTable> liveColorLookupTable = vtkSmartPointer<vtkLookupTable>::New();
 	SetUpSDFColorLookupTable(canonicalColorLookupTable, canonicalNegativeSDFColor, canonicalPositiveSDFColor);
 	SetUpSDFColorLookupTable(liveColorLookupTable, liveNegativeSDFColor, livePositiveSDFColor);
-
-
 
 	//set up clipping for data
 #define USE_CLIPPING
@@ -154,43 +136,21 @@ int SDFViz::run() {
 	canonicalExtractor->ExtractInsideOn();
 	canonicalExtractor->Update();
 
-
 	vtkSmartPointer<vtkExtractPolyDataGeometry> liveExtractor = vtkSmartPointer<vtkExtractPolyDataGeometry>::New();
 	liveExtractor->SetImplicitFunction(implicitClippingBox);
 	liveExtractor->SetInputData(liveVoxelPolydata);
 	canonicalExtractor->ExtractInsideOn();
 	canonicalExtractor->Update();
-
 #endif
 
 
 #ifdef USE_CPU_GLYPH //_DEBUG
 	// set up glyphs
-	auto SetUpGlyph = [&sphere](vtkSmartPointer<vtkPolyData>& polydata, vtkSmartPointer<vtkGlyph3D>& glyph) {
-		glyph->SetInputData(polydata);
-		glyph->SetSourceConnection(sphere->GetOutputPort());
-		glyph->ScalingOn();
-		glyph->ClampingOff();
-		glyph->SetScaleModeToScaleByScalar();
-		glyph->SetScaleFactor(1.0);
-		glyph->SetColorModeToColorByScalar();
-	};
-
 	vtkSmartPointer<vtkGlyph3D> canonicalGlyph = vtkSmartPointer<vtkGlyph3D>::New();
 	vtkSmartPointer<vtkGlyph3D> liveGlyph = vtkSmartPointer<vtkGlyph3D>::New();
-	SetUpGlyph(canonicalVoxelPolydata, canonicalGlyph);
-	SetUpGlyph(liveVoxelPolydata, liveGlyph);
+	SetUpGlyph(sphere->getOutputPort(), canonicalVoxelPolydata, canonicalGlyph);
+	SetUpGlyph(sphere->getOutputPort(), liveVoxelPolydata, liveGlyph);
 
-	// set up mappers
-	auto SetUpSceneVoxelMapper = [](vtkSmartPointer<vtkPolyDataMapper>& mapper,
-							   vtkSmartPointer<vtkLookupTable>& table,
-							   vtkSmartPointer<vtkGlyph3D>& glyph) {
-		mapper->SetInputConnection(glyph->GetOutputPort());
-		mapper->ScalarVisibilityOn();
-		mapper->SetColorModeToMapScalars();
-		mapper->SetLookupTable(table);
-		mapper->ColorByArrayComponent("data", 1);
-	};
 	vtkSmartPointer<vtkPolyDataMapper> canonicalMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 	vtkSmartPointer<vtkPolyDataMapper> liveMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 	SetUpSceneVoxelMapper(canonicalMapper, canonicalColorLookupTable, canonicalGlyph);
@@ -198,44 +158,16 @@ int SDFViz::run() {
 #else
 #ifdef USE_CLIPPING
 	// set up scene voxel mappers
-	auto SetUpSceneVoxelMapper = [&sphere](vtkSmartPointer<vtkGlyph3DMapper>& mapper,
-	                                       vtkSmartPointer<vtkLookupTable>& table,
-	                                       vtkSmartPointer<vtkExtractPolyDataGeometry> extractor) {
-		mapper->SetInputConnection(extractor->GetOutputPort());
-		mapper->SetSourceConnection(sphere->GetOutputPort());
-		mapper->SetLookupTable(table);
-		mapper->ScalingOn();
-		mapper->ScalarVisibilityOn();
-		mapper->SetScalarModeToUsePointData();
-		mapper->SetColorModeToMapScalars();
-		mapper->SetScaleModeToScaleByMagnitude();
-		mapper->SetScaleArray(scalePointAttributeName);
-		mapper->Update();
-	};
 	vtkSmartPointer<vtkGlyph3DMapper> canonicalMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
 	vtkSmartPointer<vtkGlyph3DMapper> liveMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
-	SetUpSceneVoxelMapper(canonicalMapper, canonicalColorLookupTable, canonicalExtractor);
-	SetUpSceneVoxelMapper(liveMapper, liveColorLookupTable, liveExtractor);
-
+	SetUpSceneVoxelMapper(sphere->GetOutputPort(),canonicalMapper, canonicalColorLookupTable, canonicalExtractor);
+	SetUpSceneVoxelMapper(sphere->GetOutputPort(),liveMapper, liveColorLookupTable, liveExtractor);
 #else
 	// set up mappers
-	auto SetUpSceneVoxelMapper = [&sphere](vtkSmartPointer<vtkGlyph3DMapper>& mapper,
-									  vtkSmartPointer<vtkLookupTable>& table,
-									  vtkSmartPointer<vtkPolyData>& pointsPolydata) {
-		mapper->SetInputData(pointsPolydata);
-		mapper->SetSourceConnection(sphere->GetOutputPort());
-		mapper->SetLookupTable(table);
-		mapper->ScalingOn();
-		mapper->ScalarVisibilityOn();
-		mapper->SetScalarModeToUsePointData();
-		mapper->SetColorModeToMapScalars();
-		mapper->SetScaleModeToScaleByMagnitude();
-		mapper->SetScaleArray(scalePointAttributeName);
-	};
 	vtkSmartPointer<vtkGlyph3DMapper> canonicalMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
 	vtkSmartPointer<vtkGlyph3DMapper> liveMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
-	SetUpSceneVoxelMapper(canonicalMapper, canonicalColorLookupTable, canonicalVoxelPolydata);
-	SetUpSceneVoxelMapper(liveMapper, liveColorLookupTable, liveVoxelPolydata);
+	SetUpSceneVoxelMapper(sphere->GetOutputPort(), canonicalMapper, canonicalColorLookupTable, canonicalVoxelPolydata);
+	SetUpSceneVoxelMapper(sphere->GetOutputPort(), liveMapper, liveColorLookupTable, liveVoxelPolydata);
 #endif
 #endif // ndef USE_CPU_GLYPH
 	canonicalVoxelActor = vtkSmartPointer<vtkActor>::New();//TODO: move to constructor
@@ -255,7 +187,6 @@ int SDFViz::run() {
 	liveHashBlockActor->GetProperty()->SetColor(0.537, 0.819, 0.631);
 	liveHashBlockActor->GetProperty()->SetEdgeColor(0.537, 0.819, 0.631);
 	liveHashBlockActor->VisibilityOff();
-
 
 	renderer->AddActor(canonicalVoxelActor);
 	renderer->AddActor(liveVoxelActor);
@@ -492,6 +423,78 @@ void SDFViz::DecreaseCanonicalVoxelOpacity() {
 void SDFViz::IncreaseCanonicalVoxelOpacity() {
 	canonicalVoxelActor->GetProperty()->SetOpacity(std::min(1.0,canonicalVoxelActor->GetProperty()->GetOpacity() + 0.05));
 	renderWindow->Render();
+}
+
+void SDFViz::SetUpSceneHashBlockMapper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+                                       vtkSmartPointer<vtkPolyData>& pointsPolydata) {
+	mapper->SetInputData(pointsPolydata);
+	mapper->SetSourceConnection(sourceOutput);
+	mapper->ScalarVisibilityOff();
+	mapper->ScalingOff();
+	mapper->SetScaleFactor(1.0);
+}
+
+void SDFViz::SetUpSDFColorLookupTable(vtkSmartPointer<vtkLookupTable>& table, const double* rgbaFirstColor,
+                                      const double* rgbaSecondColor) {
+	table->SetTableRange(0.0, 1.0);
+	table->SetNumberOfTableValues(2);
+	table->SetNumberOfColors(2);
+	table->SetTableValue(0, rgbaFirstColor);
+	table->SetTableValue(1, rgbaSecondColor);
+	table->Build();
+}
+
+void SDFViz::SetUpGlyph(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkPolyData>& polydata,
+                        vtkSmartPointer<vtkGlyph3D>& glyph) {
+	glyph->SetInputData(polydata);
+	glyph->SetSourceConnection(sourceOutput);
+	glyph->ScalingOn();
+	glyph->ClampingOff();
+	glyph->SetScaleModeToScaleByScalar();
+	glyph->SetScaleFactor(1.0);
+	glyph->SetColorModeToColorByScalar();
+}
+
+//CPU glyph version
+void SDFViz::SetUpSceneVoxelMapper(vtkSmartPointer<vtkPolyDataMapper>& mapper, vtkSmartPointer<vtkLookupTable>& table,
+                                   vtkSmartPointer<vtkGlyph3D>& glyph) {
+	mapper->SetInputConnection(glyph->GetOutputPort());
+	mapper->ScalarVisibilityOn();
+	mapper->SetColorModeToMapScalars();
+	mapper->SetLookupTable(table);
+	mapper->ColorByArrayComponent("data", 1);
+}
+
+//GPU glyph version with filtering
+void SDFViz::SetUpSceneVoxelMapper(vtkAlgorithmOutput* sourceOutput,
+                                   vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+                                   vtkSmartPointer<vtkLookupTable>& table,
+                                   vtkSmartPointer<vtkExtractPolyDataGeometry> extractor) {
+	mapper->SetInputConnection(extractor->GetOutputPort());
+	mapper->SetSourceConnection(sourceOutput);
+	mapper->SetLookupTable(table);
+	mapper->ScalingOn();
+	mapper->ScalarVisibilityOn();
+	mapper->SetScalarModeToUsePointData();
+	mapper->SetColorModeToMapScalars();
+	mapper->SetScaleModeToScaleByMagnitude();
+	mapper->SetScaleArray(scalePointAttributeName);
+	mapper->Update();
+}
+
+//GPU glyph version w/o filtering
+void SDFViz::SetUpSceneVoxelMapper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+                                   vtkSmartPointer<vtkLookupTable>& table,
+                                   vtkSmartPointer<vtkPolyData>& pointsPolydata) {
+	mapper->SetInputData(pointsPolydata);
+	mapper->SetSourceConnection(sourceOutput);
+	mapper->SetLookupTable(table);
+	mapper->ScalingOn();
+	mapper->ScalarVisibilityOn();
+	mapper->SetScalarModeToUsePointData();
+	mapper->SetColorModeToMapScalars();
+	mapper->SetScaleModeToScaleByMagnitude();
+	mapper->SetScaleArray(scalePointAttributeName);
 }
 
 

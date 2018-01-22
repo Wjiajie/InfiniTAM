@@ -30,10 +30,12 @@ include(${PROJECT_SOURCE_DIR}/cmake/UseUVC.cmake)
 set(sources
     main.cpp
     SDFViz.cpp
+    SDFSceneVizPipe.tpp
     )
 
 set(headers
     SDFViz.h
+    SDFSceneVizPipe.h
     )
 
 #############################

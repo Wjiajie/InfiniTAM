@@ -19,6 +19,8 @@
 #include <vtkInteractorStyleTrackballCamera.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkObjectFactory.h>
+#include <vtk-8.1/vtkGlyph3D.h>
+#include <vtk-8.1/vtkExtractPolyDataGeometry.h>
 
 //local
 #include "../../ITMLib/ITMLibDefines.h"
@@ -66,6 +68,10 @@ class vtkGlyph3DMapper;
 
 class vtkFloatArray;
 
+class vtkAlgorithmOutput;
+
+class vtkLookupTable;
+
 /**
  * \brief SDF Visualization application main class.
  */
@@ -102,8 +108,8 @@ private:
 	// **individual voxels**
 	vtkSmartPointer<vtkPoints> canonicalInitialPoints;
 	vtkSmartPointer<vtkPolyData> canonicalVoxelPolydata;
-	vtkSmartPointer<vtkPolyData> liveVoxelPolydata;
 	vtkSmartPointer<vtkActor> canonicalVoxelActor;
+	vtkSmartPointer<vtkPolyData> liveVoxelPolydata;
 	vtkSmartPointer<vtkActor> liveVoxelActor;
 	// **hash blocks**
 	vtkSmartPointer<vtkPolyData> canonicalHashBlockGrid;
@@ -139,14 +145,38 @@ private:
 	//scene voxel size should be known
 	void InitializeWarpBuffers();
 
+	//setup
 	template<typename TVoxel>
 	void PrepareSceneForRendering(ITMScene<TVoxel, ITMVoxelIndex>* scene, vtkSmartPointer<vtkPolyData>& polydata,
 	                              vtkSmartPointer<vtkPolyData>& hashBlockGrid);
 	void DrawLegend();
+
+	void SetUpSceneHashBlockMapper(vtkAlgorithmOutput* sourceOutput,
+	                               vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+	                               vtkSmartPointer<vtkPolyData>& pointsPolydata);
+	void SetUpSDFColorLookupTable(vtkSmartPointer<vtkLookupTable>& table,
+	                              const double rgbaFirstColor[4], const double rgbaSecondColor[4]);
+	void SetUpGlyph(vtkAlgorithmOutput* sourceOutput,
+	                vtkSmartPointer<vtkPolyData>& polydata, vtkSmartPointer<vtkGlyph3D>& glyph);
+	void SetUpSceneVoxelMapper(vtkSmartPointer<vtkPolyDataMapper>& mapper,
+	                           vtkSmartPointer<vtkLookupTable>& table,
+	                           vtkSmartPointer<vtkGlyph3D>& glyph);
+	void SetUpSceneVoxelMapper(vtkAlgorithmOutput* sourceOutput,
+	                           vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+	                           vtkSmartPointer<vtkLookupTable>& table,
+	                           vtkSmartPointer<vtkExtractPolyDataGeometry> extractor);
+	void SetUpSceneVoxelMapper(vtkAlgorithmOutput* sourceOutput,
+	                           vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+	                           vtkSmartPointer<vtkLookupTable>& table,
+	                           vtkSmartPointer<vtkPolyData>& pointsPolydata);
+
+
 	void UpdateVoxelPositionsFromWarpBuffer();
 	bool NextWarps();
 	bool PreviousWarps();
 
+
+	//** visibility / opacity **
 	void ToggleCanonicalHashBlockVisibility();
 	void ToggleLiveHashBlockVisibility();
 
