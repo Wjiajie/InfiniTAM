@@ -62,6 +62,8 @@ public:
 	//*** scene loading/saving
 	bool SaveScenes();
 	bool LoadScenes();
+	bool SaveScenesCompact();
+	bool LoadScenesCompact();
 
 	//*** information getters
 	int GetVoxelCount() const;

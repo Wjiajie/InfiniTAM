@@ -92,6 +92,55 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenes() {
 	return true;
 }
 
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenesCompact() {
+	if(!liveScene || !canonicalScene){
+		std::cerr << "At least one of the two scenes, canonical/live, was not set to an actual scene. "
+		          << __FILE__ << ":" << __LINE__ << std::endl;
+	}
+	if (!fs::is_directory(this->path)) {
+		std::cout << "The directory '" << path << "' was not found.";
+		return false;
+	}
+	std::cout <<"Saving scenes for current frame (this might take awhile)..." << std::endl;
+	std::cout.flush();
+	liveScene->SaveToDirectoryCompact_CPU(livePath.string());
+	canonicalScene->SaveToDirectoryCompact_CPU(canonicalPath.string());
+	ITMSceneStatisticsCalculator<TVoxelCanonical,TIndex> statisticsCalculator;
+	this->voxelCount = statisticsCalculator.ComputeHashedVoxelCount(canonicalScene);
+	std::cout <<"Scenes saved." << std::endl;
+	return true;
+};
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenesCompact() {
+	if(!liveScene || !canonicalScene){
+		std::cerr << "At least one of the two scenes, canonical/live, was not set to an actual scene. "
+		          << __FILE__ << ":" << __LINE__ << std::endl;
+	}
+	if (!fs::is_directory(this->path)) {
+		std::cout << "The directory '" << path << "' was not found.";
+		return false;
+	}
+	std::cout <<"Loading scenes for current frame (this might take awhile)..." << std::endl;
+	std::cout.flush();
+	ITMSceneReconstructionEngine<TVoxelCanonical, TIndex>* reconstructionEngineCanonical =
+			ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelCanonical, TIndex>(
+					ITMLibSettings::DEVICE_CPU);
+	ITMSceneReconstructionEngine<TVoxelLive, TIndex>* reconstructionEngineLive =
+			ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelLive, TIndex>(
+					ITMLibSettings::DEVICE_CPU);
+	reconstructionEngineCanonical->ResetScene(canonicalScene);
+	reconstructionEngineLive->ResetScene(liveScene);
+	liveScene->LoadFromDirectoryCompact_CPU(livePath.c_str());
+	canonicalScene->LoadFromDirectoryCompact_CPU(canonicalPath.c_str());
+	ITMSceneStatisticsCalculator<TVoxelCanonical,TIndex> statisticsCalculator;
+	this->voxelCount = statisticsCalculator.ComputeHashedVoxelCount(canonicalScene);
+	std::cout <<"Scenes loaded." << std::endl;
+	delete reconstructionEngineCanonical;
+	delete reconstructionEngineLive;
+	return true;
+}
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarpState() {
@@ -531,7 +580,8 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::FilterHighlights(int anomalyFrameCountMinimum) {
 	highlights = highlights.FilterBasedOnLevel0Lengths(anomalyFrameCountMinimum);
-};
+}
+
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const Vector3s ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::blockTraversalOrder[] = 

@@ -36,6 +36,7 @@
 //local
 #include "TestUtils.h"
 #include "../ITMLib/Utils/ITMIntArrayMap3D.h"
+#include "../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
 
 using namespace ITMLib;
 
@@ -151,8 +152,46 @@ BOOST_AUTO_TEST_CASE( testITMIntArrayMap3D )
 
 
 BOOST_AUTO_TEST_CASE( testLogTestScene){
-	std::cout << sizeof(ITMVoxelCanonical) << std::endl;
-	std::cout.flush();
 	GenerateAndLogKillingScene01();
 
+}
+
+BOOST_AUTO_TEST_CASE( testSceneSaveLoadCompact){
+	auto settings = new ITMLibSettings();
+
+	auto scene1 = new ITMScene<ITMVoxelCanonical, ITMVoxelIndex>(
+			&settings->sceneParams, settings->swappingMode ==
+			                        ITMLibSettings::SWAPPINGMODE_ENABLED, settings->GetMemoryType());
+
+	auto scene2 = new ITMScene<ITMVoxelCanonical, ITMVoxelIndex>(
+			&settings->sceneParams, settings->swappingMode ==
+			                        ITMLibSettings::SWAPPINGMODE_ENABLED, settings->GetMemoryType());
+
+
+	printf("Hola\n");
+	GenerateTestScene01(*scene1);
+	std::string path = "test_";
+	scene1->SaveToDirectoryCompact_CPU(path);
+
+	printf("Hello\n");
+	ITMSceneReconstructionEngine<ITMVoxelCanonical, ITMVoxelIndex>* reconstructionEngine =
+			ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxelCanonical, ITMVoxelIndex>(
+					ITMLibSettings::DEVICE_CPU);
+	printf("Hi\n");
+	reconstructionEngine->ResetScene(scene2);
+	printf("Nyan\n");
+	scene2->LoadFromDirectoryCompact_CPU(path);
+	printf("Hhehehehe\n");
+	ITMSceneStatisticsCalculator<ITMVoxelCanonical, ITMVoxelIndex> calc;
+	std::vector<int> hashes1 = calc.GetFilledHashBlockIds(scene1);
+	std::vector<int> hashes2 = calc.GetFilledHashBlockIds(scene2);
+
+	BOOST_ASSERT(hashes1.size() == hashes2.size());
+	for (int iHash = 0; iHash < hashes1.size(); iHash++){
+		BOOST_ASSERT(hashes1[iHash] == hashes2[iHash]);
+	}
+
+	delete settings;
+	delete scene1;
+	delete scene2;
 }

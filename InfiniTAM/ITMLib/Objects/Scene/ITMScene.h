@@ -48,7 +48,7 @@ namespace ITMLib
 			std::ofstream ofStream = std::ofstream(path.c_str(),std::ios_base::binary | std::ios_base::out);
 			if (!ofStream) throw std::runtime_error("Could not open '" + path + "' for writing.");
 
-			TVoxel* voxelBlocks = localVBA.GetVoxelBlocks();
+			const TVoxel* voxelBlocks = localVBA.GetVoxelBlocks();
 			const ITMHashEntry* canonicalHashTable = index.GetEntries();
 			int noTotalEntries = index.noTotalEntries;
 			//count filled entries
@@ -69,12 +69,13 @@ namespace ITMLib
 				if (currentHashEntry.ptr < 0) continue;
 				ofStream.write(reinterpret_cast<const char* >(&entryId), sizeof(int));
 				ofStream.write(reinterpret_cast<const char* >(&currentHashEntry), sizeof(ITMHashEntry));
-				TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-				ofStream.write(reinterpret_cast<const char* >(&localVoxelBlock), sizeof(TVoxel)*SDF_BLOCK_SIZE3);
+				const TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+				ofStream.write(reinterpret_cast<const char* >(localVoxelBlock), sizeof(TVoxel)*SDF_BLOCK_SIZE3);
 			}
 		}
 
-		void LoadFromDirectoryCompact_CPU(const std::string &outputDirectory) const{
+		void LoadFromDirectoryCompact_CPU(const std::string &outputDirectory)
+		{
 			std::string path = outputDirectory + "compact.dat";
 			std::ifstream ifStream = std::ifstream(path.c_str(),std::ios_base::binary | std::ios_base::in);
 			if (!ifStream) throw std::runtime_error("Could not open '" + path + "' for reading.");
@@ -88,10 +89,10 @@ namespace ITMLib
 			for (int iEntry = 0; iEntry < allocatedHashBlockCount; iEntry++) {
 				int entryId;
 				ifStream.read(reinterpret_cast<char* >(&entryId), sizeof(int));
-				ITMHashEntry& currentHashEntry = canonicalHashTable[iEntry];
+				ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
 				ifStream.read(reinterpret_cast<char* >(&currentHashEntry), sizeof(ITMHashEntry));
 				TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-				ifStream.read(reinterpret_cast<char* >(&localVoxelBlock), sizeof(TVoxel)*SDF_BLOCK_SIZE3);
+				ifStream.read(reinterpret_cast<char* >(localVoxelBlock), sizeof(TVoxel)*SDF_BLOCK_SIZE3);
 			}
 		}
 
