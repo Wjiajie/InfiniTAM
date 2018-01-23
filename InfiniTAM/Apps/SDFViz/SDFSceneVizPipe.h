@@ -17,6 +17,7 @@
 
 //VTK
 #include <vtkSmartPointer.h>
+#include <vtk-8.1/vtkExtractPolyDataGeometry.h>
 
 //ITMLib
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
@@ -35,22 +36,56 @@ public:
 	static const char* colorPointAttributeName;
 	static const char* scalePointAttributeName;
 
-	SDFSceneVizPipe(double* negativeSDFVoxelColor, double* positiveSDFVoxelColor, double* hashBlockEdgeColor);
+	SDFSceneVizPipe(std::array<double,4> negativeSDFVoxelColor,
+	                std::array<double,4> positiveSDFVoxelColor,
+	                std::array<double,3> hashBlockEdgeColor);
 	~SDFSceneVizPipe();
 	void PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry, vtkAlgorithmOutput* hashBlockSourceGeometry);
+	void UpdatePointPositionsFromBuffer(void* buffer);
 
 	ITMScene<TVoxel, TIndex>* GetScene();
+	vtkSmartPointer<vtkActor>& GetVoxelActor();
+	vtkSmartPointer<vtkActor>& GetHashBlockActor();
+
 private:
 	void PrepareSceneForRendering();
 
 	ITMScene<TVoxel, TIndex>* scene;
-	// **individual voxels**
+	// ** individual voxels **
 	vtkSmartPointer<vtkPoints> initialPoints;
 	vtkSmartPointer<vtkPolyData> voxelPolydata;
+	vtkSmartPointer<vtkLookupTable> voxelColorLookupTable;
+	vtkSmartPointer<vtkGlyph3DMapper> voxelMapper;
 	vtkSmartPointer<vtkActor> voxelActor;
-	// **hash block grid**
+	// ** hash block grid **
 	vtkSmartPointer<vtkPolyData> hashBlockGrid;
 	vtkSmartPointer<vtkActor> hashBlockActor;
+	vtkSmartPointer<vtkGlyph3DMapper> hashBlockMapper;
+
+	// ** colors **
+	std::array<double, 4> negativeVoxelColor;
+	std::array<double, 4> positiveVoxelColor;
+	std::array<double, 3> hashBlockEdgeColor;
+	// ** Rendering limits/boundaries **
+	// (probably temporary since more elaborate methods of rendering voxel subset will be employed later)
+	Vector3i minAllowedPoint;
+	Vector3i maxAllowedPoint;
+	Vector3i minPoint, maxPoint;
+
+
+	void SetUpSceneHashBlockMapper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+	                               vtkSmartPointer<vtkPolyData>& pointsPolydata);
+	void SetUpSDFColorLookupTable(vtkSmartPointer<vtkLookupTable>& table, const double* rgbaFirstColor,
+	                              const double* rgbaSecondColor);
+	void SetUpGlyph(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkPolyData>& polydata,
+	                vtkSmartPointer<vtkGlyph3D>& glyph);
+	void SetUpSceneVoxelMapper(vtkSmartPointer<vtkPolyDataMapper>& mapper, vtkSmartPointer<vtkLookupTable>& table,
+	                           vtkSmartPointer<vtkGlyph3D>& glyph);
+	void SetUpSceneVoxelMapper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+	                           vtkSmartPointer<vtkLookupTable>& table,
+	                           vtkSmartPointer<vtkExtractPolyDataGeometry> extractor);
+	void SetUpSceneVoxelMapper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+	                           vtkSmartPointer<vtkLookupTable>& table, vtkSmartPointer<vtkPolyData>& pointsPolydata);
 };
 
 

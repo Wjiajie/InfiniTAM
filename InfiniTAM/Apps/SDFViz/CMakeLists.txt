@@ -31,6 +31,7 @@ set(sources
     main.cpp
     SDFViz.cpp
     SDFSceneVizPipe.tpp
+    ExplicitInstantiations.cpp
     )
 
 set(headers

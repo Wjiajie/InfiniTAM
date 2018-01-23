@@ -17,12 +17,18 @@
 #include <vtkActor.h>
 #include <vtkFloatArray.h>
 #include <vtkPointData.h>
+#include <vtk-8.1/vtkGlyph3DMapper.h>
+#include <vtk-8.1/vtkBox.h>
+#include <vtkProperty.h>
+#include <vtkLookupTable.h>
+#include <vtkPolyDataMapper.h>
 
 //Local
 #include "SDFSceneVizPipe.h"
 
 //ITMLib
 #include "../../ITMLib/Utils/ITMLibSettings.h"
+#include "../../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
 
 template<typename TVoxel, typename TIndex>
 const double SDFSceneVizPipe<TVoxel, TIndex>::maxVoxelDrawSize = 1.0;
@@ -32,21 +38,36 @@ template<typename TVoxel, typename TIndex>
 const char* SDFSceneVizPipe<TVoxel, TIndex>::scalePointAttributeName = "scale";
 
 template<typename TVoxel, typename TIndex>
-SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(double* negativeSDFVoxelColor, double* positiveSDFVoxelColor, double* hashBlockEdgeColor)
+SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(std::array<double, 4> negativeSDFVoxelColor,
+                                                 std::array<double, 4> positiveSDFVoxelColor,
+                                                 std::array<double, 3> hashBlockEdgeColor)
 		:
 		initialPoints(vtkSmartPointer<vtkPoints>::New()),
+
 		voxelPolydata(vtkSmartPointer<vtkPolyData>::New()),
+		voxelColorLookupTable(vtkSmartPointer<vtkLookupTable>::New()),
+		voxelMapper(vtkSmartPointer<vtkGlyph3DMapper>::New()),
 		voxelActor(vtkSmartPointer<vtkActor>::New()),
+
 		hashBlockGrid(vtkSmartPointer<vtkPolyData>::New()),
-		hashBlockActor(vtkSmartPointer<vtkActor>::New()){
+		hashBlockActor(vtkSmartPointer<vtkActor>::New()),
+		hashBlockMapper(vtkSmartPointer<vtkGlyph3DMapper>::New()),
+
+		negativeVoxelColor(negativeSDFVoxelColor),
+		positiveVoxelColor(positiveSDFVoxelColor),
+		hashBlockEdgeColor(hashBlockEdgeColor),
+
+		minAllowedPoint(-100, -150, 0),
+		maxAllowedPoint(200, 50, 300) {
 	auto* settings = new ITMLibSettings();
 	scene = new ITMScene<TVoxel, TIndex>(
 			&settings->sceneParams, settings->swappingMode ==
-					ITMLibSettings::SWAPPINGMODE_ENABLED, settings->GetMemoryType());
+			                        ITMLibSettings::SWAPPINGMODE_ENABLED, settings->GetMemoryType());
 	delete settings;
 
 
 }
+
 template<typename TVoxel, typename TIndex>
 SDFSceneVizPipe<TVoxel, TIndex>::~SDFSceneVizPipe() {
 	delete scene;
@@ -143,22 +164,173 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PrepareSceneForRendering() {
 }
 
 template<typename TVoxel, typename TIndex>
-void SDFSceneVizPipe<TVoxel, TIndex>::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry, vtkAlgorithmOutput* hashBlockSourceGeometry) {
+void SDFSceneVizPipe<TVoxel, TIndex>::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
+                                                      vtkAlgorithmOutput* hashBlockSourceGeometry) {
 	PrepareSceneForRendering();
 	initialPoints->DeepCopy(voxelPolydata->GetPoints());
 
+	ITMSceneStatisticsCalculator<TVoxel, TIndex> statCalculator;
+
+	statCalculator.ComputeVoxelBounds(scene, minPoint, maxPoint);
+	std::cout << "Voxel ranges ( min x,y,z; max x,y,z): " << minPoint << "; " << maxPoint << std::endl;
+
 	// Set up hash block visualization
-	vtkSmartPointer<vtkGlyph3DMapper> canonicalHashBlockMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
-	SetUpSceneHashBlockMapper(cube->GetOutputPort(), canonicalHashBlockMapper, canonicalHashBlockGrid);
-
+	//TODO: remove member arguments
+	SetUpSceneHashBlockMapper(voxelSourceGeometry, hashBlockMapper, hashBlockGrid);
 	// Create the color maps
-	vtkSmartPointer<vtkLookupTable> canonicalColorLookupTable = vtkSmartPointer<vtkLookupTable>::New();
-	SetUpSDFColorLookupTable(canonicalColorLookupTable, canonicalNegativeSDFVoxelColor, canonicalPositiveSDFVoxelColor);
+	SetUpSDFColorLookupTable(voxelColorLookupTable, negativeVoxelColor.data(), positiveVoxelColor.data());
 
+
+	//set up clipping for data
+#define USE_CLIPPING
+#ifdef USE_CLIPPING
+	vtkSmartPointer<vtkBox> implicitClippingBox = vtkSmartPointer<vtkBox>::New();
+
+	implicitClippingBox->SetBounds(minAllowedPoint.x * maxVoxelDrawSize, maxAllowedPoint.x * maxVoxelDrawSize,
+	                               minAllowedPoint.y * maxVoxelDrawSize, maxAllowedPoint.y * maxVoxelDrawSize,
+	                               minAllowedPoint.z * maxVoxelDrawSize, maxAllowedPoint.z * maxVoxelDrawSize);
+
+	vtkSmartPointer<vtkExtractPolyDataGeometry> voxelExtractor = vtkSmartPointer<vtkExtractPolyDataGeometry>::New();
+	voxelExtractor->SetImplicitFunction(implicitClippingBox);
+	voxelExtractor->SetInputData(voxelPolydata);
+	voxelExtractor->ExtractInsideOn();
+	voxelExtractor->Update();
+#endif
+
+
+#ifdef USE_CPU_GLYPH //_DEBUG
+	// set up glyphs
+	vtkSmartPointer<vtkGlyph3D> canonicalGlyph = vtkSmartPointer<vtkGlyph3D>::New();
+	SetUpGlyph(sphere->getOutputPort(), canonicalVoxelPolydata, canonicalGlyph);
+	SetUpSceneVoxelMapper(canonicalMapper, canonicalColorLookupTable, canonicalGlyph);
+#else
+#ifdef USE_CLIPPING
+	// set up scene voxel mappers
+	SetUpSceneVoxelMapper(voxelSourceGeometry, voxelMapper, voxelColorLookupTable, voxelExtractor);
+#else
+	// set up mappers
+	vtkSmartPointer<vtkGlyph3DMapper> canonicalMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	vtkSmartPointer<vtkGlyph3DMapper> liveMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	SetUpSceneVoxelMapper(sphere->GetOutputPort(), canonicalMapper, canonicalColorLookupTable, canonicalVoxelPolydata);
+#endif
+#endif // ndef USE_CPU_GLYPH
 
 	voxelActor->SetMapper(voxelMapper);
 	hashBlockActor->SetMapper(hashBlockMapper);
 	hashBlockActor->GetProperty()->SetRepresentationToWireframe();
-	hashBlockActor->GetProperty()->SetColor(hashBlockEdgeColor);
+	hashBlockActor->GetProperty()->SetColor(hashBlockEdgeColor.data());
 	hashBlockActor->VisibilityOff();
 }
+
+
+template<typename TVoxel, typename TIndex>
+void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneHashBlockMapper(vtkAlgorithmOutput* sourceOutput,
+                                                                vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+                                                                vtkSmartPointer<vtkPolyData>& pointsPolydata) {
+	mapper->SetInputData(pointsPolydata);
+	mapper->SetSourceConnection(sourceOutput);
+	mapper->ScalarVisibilityOff();
+	mapper->ScalingOff();
+	mapper->SetScaleFactor(1.0);
+}
+
+template<typename TVoxel, typename TIndex>
+void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSDFColorLookupTable(vtkSmartPointer<vtkLookupTable>& table,
+                                                               const double* rgbaFirstColor,
+                                                               const double* rgbaSecondColor) {
+	table->SetTableRange(0.0, 1.0);
+	table->SetNumberOfTableValues(2);
+	table->SetNumberOfColors(2);
+	table->SetTableValue(0, rgbaFirstColor);
+	table->SetTableValue(1, rgbaSecondColor);
+	table->Build();
+}
+
+template<typename TVoxel, typename TIndex>
+void
+SDFSceneVizPipe<TVoxel, TIndex>::SetUpGlyph(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkPolyData>& polydata,
+                                            vtkSmartPointer<vtkGlyph3D>& glyph) {
+	glyph->SetInputData(polydata);
+	glyph->SetSourceConnection(sourceOutput);
+	glyph->ScalingOn();
+	glyph->ClampingOff();
+	glyph->SetScaleModeToScaleByScalar();
+	glyph->SetScaleFactor(1.0);
+	glyph->SetColorModeToColorByScalar();
+}
+
+//CPU glyph version
+template<typename TVoxel, typename TIndex>
+void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneVoxelMapper(vtkSmartPointer<vtkPolyDataMapper>& mapper,
+                                                            vtkSmartPointer<vtkLookupTable>& table,
+                                                            vtkSmartPointer<vtkGlyph3D>& glyph) {
+	mapper->SetInputConnection(glyph->GetOutputPort());
+	mapper->ScalarVisibilityOn();
+	mapper->SetColorModeToMapScalars();
+	mapper->SetLookupTable(table);
+	mapper->ColorByArrayComponent("data", 1);
+}
+
+//GPU glyph version with filtering
+template<typename TVoxel, typename TIndex>
+void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneVoxelMapper(vtkAlgorithmOutput* sourceOutput,
+                                                            vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+                                                            vtkSmartPointer<vtkLookupTable>& table,
+                                                            vtkSmartPointer<vtkExtractPolyDataGeometry> extractor) {
+	mapper->SetInputConnection(extractor->GetOutputPort());
+	mapper->SetSourceConnection(sourceOutput);
+	mapper->SetLookupTable(table);
+	mapper->ScalingOn();
+	mapper->ScalarVisibilityOn();
+	mapper->SetScalarModeToUsePointData();
+	mapper->SetColorModeToMapScalars();
+	mapper->SetScaleModeToScaleByMagnitude();
+	mapper->SetScaleArray(scalePointAttributeName);
+	mapper->Update();
+}
+
+//GPU glyph version w/o filtering
+template<typename TVoxel, typename TIndex>
+void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneVoxelMapper(
+		vtkAlgorithmOutput* sourceOutput,
+		vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+		vtkSmartPointer<vtkLookupTable>& table,
+		vtkSmartPointer<vtkPolyData>& pointsPolydata) {
+	mapper->SetInputData(pointsPolydata);
+	mapper->SetSourceConnection(sourceOutput);
+	mapper->SetLookupTable(table);
+	mapper->ScalingOn();
+	mapper->ScalarVisibilityOn();
+	mapper->SetScalarModeToUsePointData();
+	mapper->SetColorModeToMapScalars();
+	mapper->SetScaleModeToScaleByMagnitude();
+	mapper->SetScaleArray(scalePointAttributeName);
+}
+
+template<typename TVoxel, typename TIndex>
+vtkSmartPointer<vtkActor>& SDFSceneVizPipe<TVoxel, TIndex>::GetVoxelActor() {
+	return voxelActor;
+}
+
+template<typename TVoxel, typename TIndex>
+vtkSmartPointer<vtkActor>& SDFSceneVizPipe<TVoxel, TIndex>::GetHashBlockActor() {
+	return hashBlockActor;
+}
+
+template<typename TVoxel, typename TIndex>
+void SDFSceneVizPipe<TVoxel, TIndex>::UpdatePointPositionsFromBuffer(void* buffer) {
+	vtkPoints* voxels = voxelPolydata->GetPoints();
+	auto* initialPointRawData = reinterpret_cast<float*>(initialPoints->GetVoidPointer(0));
+	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
+	auto* warpRawData = reinterpret_cast<float*>(buffer);
+
+	const auto pointCount = static_cast<const int>(voxels->GetNumberOfPoints());
+	for (int iVoxel = 0; iVoxel < pointCount; iVoxel++) {
+		//use 1st 3-float field out of 2 for the warp buffer entry
+		pointRawData[iVoxel * 3 + 0] = initialPointRawData[iVoxel * 3 + 0] + warpRawData[iVoxel * 6 + 0];
+		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] + warpRawData[iVoxel * 6 + 1];
+		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] + warpRawData[iVoxel * 6 + 2];
+	}
+	voxelPolydata->Modified();
+}
+
