@@ -17,69 +17,104 @@
 #include "ITMSceneManipulation.h"
 #include "ITMScene.h"
 #include "ITMRepresentationAccess.h"
+#include "../../Utils/ITMLibSettings.h"
+#include "../../Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
+
 
 namespace ITMLib {
 
 
-	template<class TVoxel, class TIndex>
-	void CopySceneWithOffset_CPU(ITMScene <TVoxel, TIndex>& destination, ITMScene <TVoxel, TIndex>& source, Vector3i offset) {
-		TVoxel* originalVoxels = source.localVBA.GetVoxelBlocks();
-		const ITMHashEntry* originalHashTable = source.index.GetEntries();
-		typename TIndex::IndexCache originalCache;
-		int noTotalEntries = source.index.noTotalEntries;
+template<class TVoxel, class TIndex>
+void CopySceneWithOffset_CPU(ITMScene<TVoxel, TIndex>& destination, ITMScene<TVoxel, TIndex>& source, Vector3i offset) {
+	ITMSceneReconstructionEngine<TVoxel, TIndex>* reconstructionEngine =
+			ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel, TIndex>(
+					ITMLibSettings::DEVICE_CPU);
 
-		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
-			Vector3i canonicalHashEntryPosition;
-			const ITMHashEntry& currentOriginalHashEntry = originalHashTable[entryId];
-			if (currentOriginalHashEntry.ptr < 0) continue;
+	reconstructionEngine->ResetScene(&destination);
 
-			//position of the current entry in 3D space
-			canonicalHashEntryPosition = currentOriginalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+	TVoxel* originalVoxels = source.localVBA.GetVoxelBlocks();
+	const ITMHashEntry* originalHashTable = source.index.GetEntries();
+	typename TIndex::IndexCache originalCache;
+	int noTotalEntries = source.index.noTotalEntries;
 
-			TVoxel* localVoxelBlock = &(originalVoxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						Vector3i originalPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
-						Vector3i offsetPosition = originalPosition + offset;
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-						SetVoxel_CPU(destination, offsetPosition, localVoxelBlock[locId]);
-					}
+	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+		Vector3i canonicalHashEntryPosition;
+		const ITMHashEntry& currentOriginalHashEntry = originalHashTable[entryId];
+		if (currentOriginalHashEntry.ptr < 0) continue;
+
+		//position of the current entry in 3D space
+		canonicalHashEntryPosition = currentOriginalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+
+		TVoxel* localVoxelBlock = &(originalVoxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+					Vector3i originalPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
+					Vector3i offsetPosition = originalPosition + offset;
+					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+					SetVoxel_CPU(destination, offsetPosition, localVoxelBlock[locId]);
 				}
 			}
 		}
-
 	}
 
-	template<class TVoxel, class TIndex>
-	bool SetVoxel_CPU(ITMScene<TVoxel, TIndex>& scene, Vector3i at, TVoxel voxel) {
-		int lastFreeVoxelBlockId = scene.localVBA.lastFreeBlockId;
-		int lastFreeExcessListId = scene.index.GetLastFreeExcessListId();
-		ITMHashEntry* hashTable = scene.index.GetEntries();
-		ITMHashEntry* entry = NULL;
-		TVoxel* voxels = scene.localVBA.GetVoxelBlocks();
-		int* voxelAllocationList = scene.localVBA.GetAllocationList();
-		int* excessAllocationList = scene.index.GetExcessAllocationList();
-		Vector3i blockPos;
-		int linearIdx = pointToVoxelBlockPos(at, blockPos);
-		if (AllocateHashEntry_CPU(TO_SHORT_FLOOR3(blockPos), hashTable, entry,
-		                          lastFreeVoxelBlockId, lastFreeExcessListId, voxelAllocationList,
-		                          excessAllocationList)) {
-			TVoxel* localVoxelBlock = &(voxels[entry->ptr * (SDF_BLOCK_SIZE3)]);
-			localVoxelBlock[linearIdx] = voxel;
-		} else {
-			return false;
-		}
-		scene.localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
-		scene.index.SetLastFreeExcessListId(lastFreeExcessListId);
-		return true;
-	};
+}
 
-	template<class TVoxel, class TIndex>
-	TVoxel ReadVoxel(ITMScene<TVoxel, TIndex>& scene, Vector3i at) {
-		TVoxel* voxels = scene.localVBA.GetVoxelBlocks();
-		ITMHashEntry* hashTable = scene.index.GetEntries();
-		int vmIndex;
-		return readVoxel(voxels, hashTable, at, vmIndex);
-	};
+template<class TVoxel, class TIndex>
+bool SetVoxel_CPU(ITMScene<TVoxel, TIndex>& scene, Vector3i at, TVoxel voxel) {
+	int lastFreeVoxelBlockId = scene.localVBA.lastFreeBlockId;
+	int lastFreeExcessListId = scene.index.GetLastFreeExcessListId();
+	ITMHashEntry* hashTable = scene.index.GetEntries();
+	ITMHashEntry* entry = NULL;
+	TVoxel* voxels = scene.localVBA.GetVoxelBlocks();
+	int* voxelAllocationList = scene.localVBA.GetAllocationList();
+	int* excessAllocationList = scene.index.GetExcessAllocationList();
+	Vector3i blockPos;
+	int linearIdx = pointToVoxelBlockPos(at, blockPos);
+	if (AllocateHashEntry_CPU(TO_SHORT_FLOOR3(blockPos), hashTable, entry,
+	                          lastFreeVoxelBlockId, lastFreeExcessListId, voxelAllocationList,
+	                          excessAllocationList)) {
+		TVoxel* localVoxelBlock = &(voxels[entry->ptr * (SDF_BLOCK_SIZE3)]);
+		localVoxelBlock[linearIdx] = voxel;
+	} else {
+		return false;
+	}
+	scene.localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
+	scene.index.SetLastFreeExcessListId(lastFreeExcessListId);
+	return true;
+};
+
+template<class TVoxel, class TIndex>
+void OffsetWarps(ITMScene<TVoxel, TIndex>& scene, Vector3f offset) {
+	TVoxel* originalVoxels = scene.localVBA.GetVoxelBlocks();
+	const ITMHashEntry* originalHashTable = scene.index.GetEntries();
+	typename TIndex::IndexCache originalCache;
+	int noTotalEntries = scene.index.noTotalEntries;
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+		const ITMHashEntry& currentOriginalHashEntry = originalHashTable[entryId];
+		if (currentOriginalHashEntry.ptr < 0) continue;
+		TVoxel* localVoxelBlock = &(originalVoxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+					//Vector3i originalPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
+					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+					localVoxelBlock[locId].warp_t_update = offset;
+					localVoxelBlock[locId].warp_t += offset;
+				}
+			}
+		}
+	}
+}
+
+template<class TVoxel, class TIndex>
+TVoxel ReadVoxel(ITMScene<TVoxel, TIndex>& scene, Vector3i at) {
+	TVoxel* voxels = scene.localVBA.GetVoxelBlocks();
+	ITMHashEntry* hashTable = scene.index.GetEntries();
+	int vmIndex;
+	return readVoxel(voxels, hashTable, at, vmIndex);
+};
 }

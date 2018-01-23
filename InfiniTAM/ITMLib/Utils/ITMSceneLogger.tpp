@@ -65,6 +65,8 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes() {
 	std::cout.flush();
 	liveScene->SaveToDirectory(livePath.string());
 	canonicalScene->SaveToDirectory(canonicalPath.string());
+	ITMSceneStatisticsCalculator<TVoxelCanonical,TIndex> statisticsCalculator;
+	this->voxelCount = statisticsCalculator.ComputeHashedVoxelCount(canonicalScene);
 	std::cout <<"Scenes saved." << std::endl;
 	return true;
 }

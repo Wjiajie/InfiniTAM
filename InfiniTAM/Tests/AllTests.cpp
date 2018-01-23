@@ -150,3 +150,6 @@ BOOST_AUTO_TEST_CASE( testITMIntArrayMap3D )
 }
 
 
+BOOST_AUTO_TEST_CASE( testLogTestScene){
+	GenerateAndLogKillingScene01();
+}

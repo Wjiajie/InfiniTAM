@@ -17,45 +17,56 @@
 
 #include "ITMScene.h"
 #include "../../ITMLibDefines.h"
+
+//TODO: Make GPU versions -Greg (GitHub: Algomorph)
+
 namespace ITMLib {
-	bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition,
-	                           ITMHashEntry* hashTable,
-	                           ITMHashEntry*& resultEntry,
-	                           int& lastFreeVoxelBlockId,
-	                           int& lastFreeExcessListId,
-	                           const int* voxelAllocationList,
-	                           const int* excessAllocationList);
+bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition,
+                           ITMHashEntry* hashTable,
+                           ITMHashEntry*& resultEntry,
+                           int& lastFreeVoxelBlockId,
+                           int& lastFreeExcessListId,
+                           const int* voxelAllocationList,
+                           const int* excessAllocationList);
 
-	template<class TVoxel, class TIndex>
-	void CopySceneWithOffset_CPU(ITMScene <TVoxel, TIndex>& destination,
-	                             ITMScene <TVoxel, TIndex>& source,
-	                             Vector3i offset);
+template<class TVoxel, class TIndex>
+void CopySceneWithOffset_CPU(ITMScene <TVoxel, TIndex>& destination,
+                             ITMScene <TVoxel, TIndex>& source,
+                             Vector3i offset);
 
-	//TODO -make this suitable for source/dest scenes with different voxel types somehow -Greg (Github: Algomorph)
-	void CopySceneWithOffset_CPU(ITMScene <ITMVoxelLive, ITMVoxelIndex>& destination,
-	                             ITMScene <ITMVoxelCanonical, ITMVoxelIndex>& source,
-	                             Vector3i offset);
+//TODO -make this suitable for source/dest scenes with different voxel types somehow -Greg (Github: Algomorph)
+void CopySceneWithOffset_CPU(ITMScene <ITMVoxelLive, ITMVoxelIndex>& destination,
+                             ITMScene <ITMVoxelCanonical, ITMVoxelIndex>& source,
+                             Vector3i offset);
 
-	template<class TVoxel, class TIndex>
-	TVoxel ReadVoxel(ITMScene <TVoxel, TIndex>& scene, Vector3i at);
+void CopySceneWithOffset_CPU(ITMScene <ITMVoxelCanonical, ITMVoxelIndex>& destination,
+                             ITMScene <ITMVoxelLive, ITMVoxelIndex>& source,
+                             Vector3i offset);
 
-
-
-	template<class TVoxel, class TIndex>
-	bool SetVoxel_CPU(ITMScene <TVoxel, TIndex>& scene, Vector3i at, TVoxel voxel);
-
-
-	template<class TVoxel, class TIndex>
-	void CopySceneWithOffset_CPU(ITMScene <TVoxel, TIndex>& destination, ITMScene <TVoxel, TIndex>& source, Vector3i offset);
-
-	void
-	CopySceneWithOffset_CPU(ITMScene <ITMVoxelLive, ITMVoxelIndex>& destination, ITMScene <ITMVoxel, ITMVoxelIndex>& source,
-	                        Vector3i offset);
-
-	template<class TVoxel, class TIndex>
-	TVoxel ReadVoxel(ITMScene <TVoxel, TIndex>& scene, Vector3i at);
+template<class TVoxel, class TIndex>
+TVoxel ReadVoxel(ITMScene <TVoxel, TIndex>& scene, Vector3i at);
 
 
-	template<class TVoxel, class TIndex>
-	bool SetVoxel_CPU(ITMScene <TVoxel, TIndex>& scene, Vector3i at, TVoxel voxel);
+template<class TVoxel, class TIndex>
+bool SetVoxel_CPU(ITMScene <TVoxel, TIndex>& scene, Vector3i at, TVoxel voxel);
+
+
+template<class TVoxel, class TIndex>
+void
+CopySceneWithOffset_CPU(ITMScene <TVoxel, TIndex>& destination, ITMScene <TVoxel, TIndex>& source, Vector3i offset);
+
+void CopySceneWithOffset_CPU(ITMScene <ITMVoxelLive, ITMVoxelIndex>& destination,
+                             ITMScene <ITMVoxel, ITMVoxelIndex>& source,Vector3i offset);
+void CopySceneWithOffset_CPU(ITMScene <ITMVoxelCanonical, ITMVoxelIndex>& destination,
+                             ITMScene <ITMVoxelLive, ITMVoxelIndex>& source, Vector3i offset);
+
+template<class TVoxel, class TIndex>
+void OffsetWarps(ITMScene <TVoxel, TIndex>& scene, Vector3f offset);
+
+template<class TVoxel, class TIndex>
+TVoxel ReadVoxel(ITMScene <TVoxel, TIndex>& scene, Vector3i at);
+
+
+template<class TVoxel, class TIndex>
+bool SetVoxel_CPU(ITMScene <TVoxel, TIndex>& scene, Vector3i at, TVoxel voxel);
 }//namespace ITMLib

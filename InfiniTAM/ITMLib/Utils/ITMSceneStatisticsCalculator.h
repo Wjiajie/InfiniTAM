@@ -24,6 +24,7 @@ class ITMSceneStatisticsCalculator {
 public:
 	void ComputeVoxelBounds(ITMScene<TVoxel, TIndex>* scene, Vector3i& minVoxelPoint, Vector3i& maxVoxelPoint);
 	int ComputeHashedVoxelCount(ITMScene<TVoxel, TIndex>* scene);
+	std::vector<int> GetFilledHashBlockIds(ITMScene<TVoxel, TIndex>* scene);
 
 };
 

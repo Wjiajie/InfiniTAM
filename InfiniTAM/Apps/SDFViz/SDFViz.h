@@ -126,9 +126,6 @@ private:
 	//Holds warp & warp update state for the canonical scene
 	vtkSmartPointer<vtkFloatArray> warpBuffer;
 
-
-
-
 	//================ METHODS =====================
 	void InitializeRendering();
 	//scene voxel size should be known

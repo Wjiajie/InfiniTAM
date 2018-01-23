@@ -66,7 +66,6 @@ template<typename TVoxel, typename TIndex>
 int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeHashedVoxelCount(ITMScene<TVoxel, TIndex>* scene) {
 	int count = 0;
 
-	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
 #ifdef WITH_OPENMP
@@ -78,4 +77,17 @@ int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeHashedVoxelCount(ITMSce
 		count += SDF_BLOCK_SIZE3;
 	}
 	return count;
+}
+
+template<typename TVoxel, typename TIndex>
+std::vector<int> ITMSceneStatisticsCalculator<TVoxel, TIndex>::GetFilledHashBlockIds(ITMScene<TVoxel, TIndex>* scene) {
+	std::vector<int> ids;
+	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
+	int noTotalEntries = scene->index.noTotalEntries;
+	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
+		if (currentHashEntry.ptr < 0) continue;
+		ids.push_back(entryId);
+	}
+	return ids;
 }

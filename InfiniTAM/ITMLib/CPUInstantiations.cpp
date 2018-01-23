@@ -89,4 +89,5 @@ namespace ITMLib
 	template bool SetVoxel_CPU<ITMVoxelLive,ITMVoxelIndex>(ITMScene<ITMVoxelLive, ITMVoxelIndex>& scene,
 	                                                       Vector3i at, ITMVoxelLive voxel);
 	template ITMVoxelCanonical ReadVoxel<ITMVoxelCanonical,ITMVoxelIndex>(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& scene, Vector3i at);
+	template void OffsetWarps<ITMVoxelCanonical,ITMVoxelIndex>(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& destination, Vector3f offset);
 }

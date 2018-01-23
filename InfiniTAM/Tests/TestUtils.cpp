@@ -15,4 +15,56 @@
 //  ================================================================
 #include "TestUtils.h"
 
+#include "../ITMLib/ITMLibDefines.h"
+#include "../ITMLib/Utils/ITMLibSettings.h"
+#include "../ITMLib/Objects/Scene/ITMSceneManipulation.h"
+#include "../ITMLib/Utils/ITMSceneLogger.h"
+#include "../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
 
+using namespace ITMLib;
+
+void GenerateAndLogKillingScene01() {
+	auto settings = new ITMLibSettings();
+	auto canonicalScene = new ITMScene<ITMVoxelCanonical, ITMVoxelIndex>(
+			&settings->sceneParams, settings->swappingMode ==
+			                        ITMLibSettings::SWAPPINGMODE_ENABLED, settings->GetMemoryType());
+	auto liveScene = new ITMScene<ITMVoxelLive, ITMVoxelIndex>(
+			&settings->sceneParams, settings->swappingMode ==
+			                        ITMLibSettings::SWAPPINGMODE_ENABLED, settings->GetMemoryType());
+
+	const std::string testScenePath = "/media/algomorph/Data/Reconstruction/debug_output/test_scene";
+	GenerateTestScene01(*canonicalScene);
+	Vector3i offset(5, 0, 0);
+	CopySceneWithOffset_CPU(*liveScene, *canonicalScene,offset);
+	ITMSceneStatisticsCalculator<ITMVoxelCanonical, ITMVoxelIndex> calc;
+//	std::vector<int> hashes = calc.GetFilledHashBlockIds(canonicalScene);
+//	std::cout << "{";
+//	std::copy(hashes.begin(), hashes.end(), std::ostream_iterator<int>(std::cout, " "));
+//	std::cout << "}";
+//	std::cout.flush();
+	ITMSceneLogger<ITMVoxelCanonical,ITMVoxelLive,ITMVoxelIndex> logger(testScenePath,canonicalScene,liveScene);
+	logger.SaveScenes();
+
+	logger.LogHighlight(0,0,1,0);
+	logger.LogHighlight(0,0,1,1);
+	logger.LogHighlight(0,0,1,2);
+	logger.LogHighlight(0,0,1,4);
+	logger.LogHighlight(0,0,1,7);
+	logger.LogHighlight(0,0,1,8);
+	logger.SaveHighlights();
+	logger.StartSavingWarpState();
+	logger.SetUpInterestRegionsForSaving();
+	logger.SaveCurrentWarpState();
+	Vector3f iterationIncrement(0.1,0,0);
+	int iterationCount = static_cast<int>(offset.x / iterationIncrement.x);
+	for(int iteration = 0; iteration < iterationCount; iteration++){
+		OffsetWarps(*canonicalScene,iterationIncrement);
+		logger.SaveCurrentWarpState();
+	}
+	logger.StopSavingWarpState();
+
+
+	delete canonicalScene;
+	delete liveScene;
+	delete settings;
+}
