@@ -151,5 +151,8 @@ BOOST_AUTO_TEST_CASE( testITMIntArrayMap3D )
 
 
 BOOST_AUTO_TEST_CASE( testLogTestScene){
+	std::cout << sizeof(ITMVoxelCanonical) << std::endl;
+	std::cout.flush();
 	GenerateAndLogKillingScene01();
+
 }

@@ -49,4 +49,3 @@ void GenerateTestScene01(ITMScene<TVoxel, TIndex>& scene) {
 	}
 
 }
-
