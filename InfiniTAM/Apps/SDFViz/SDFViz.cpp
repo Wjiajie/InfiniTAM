@@ -100,14 +100,15 @@ int SDFViz::run() {
 
 	renderer->AddActor(canonicalScenePipe.GetVoxelActor());
 	renderer->AddActor(liveScenePipe.GetVoxelActor());
-	renderer->AddActor(canonicalScenePipe.GetVoxelActor());
-	renderer->AddActor(liveScenePipe.GetVoxelActor());
+	renderer->AddActor(canonicalScenePipe.GetHashBlockActor());
+	renderer->AddActor(liveScenePipe.GetHashBlockActor());
 
+// bucket scene camera params
+//	renderer->GetActiveCamera()->SetPosition(7.0, 22.0, -72.66);
+//	renderer->GetActiveCamera()->SetFocalPoint(0.5, -40.5, 230.0);
+//	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
 
-	renderer->GetActiveCamera()->SetPosition(7.0, 22.0, -72.66);
-	renderer->GetActiveCamera()->SetFocalPoint(0.5, -40.5, 230.0);
-	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
-//	renderer->ResetCamera();//used when need to choose new better initial camera pose manually
+	renderer->ResetCamera();//used when need to choose new better initial camera pose manually
 
 	renderWindow->Render();
 	renderWindowInteractor->Start();

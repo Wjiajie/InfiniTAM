@@ -389,6 +389,11 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferNextWarpState(vo
 		return  false;
 	}
 	//read in the number of the current update.
+	if(warpIFStream.peek() == EOF){
+		std::cout << "At end of warp file." << std::endl;
+		return false;
+	}
+
 	if(!warpIFStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
 		std::cout << "Read warp state attempt failed." << std::endl;
 		return false;
@@ -673,7 +678,6 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::BufferN
 	if(isSaving){
 		throw std::runtime_error("Attempting to load while saving (not allowed).");
 	}
-
 	//read in the number of the current update.
 	if(!ifStream.read(reinterpret_cast<char*>(&iUpdate),sizeof(unsigned int))){
 		throw std::runtime_error("Read region warp state attempt failed for region " + std::to_string(centerHashBlockId));

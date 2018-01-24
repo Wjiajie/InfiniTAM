@@ -48,7 +48,7 @@ public:
 	vtkSmartPointer<vtkActor>& GetHashBlockActor();
 
 private:
-	void PrepareSceneForRendering();
+	void PreparePointsForRendering();
 
 	ITMScene<TVoxel, TIndex>* scene;
 	// ** individual voxels **
@@ -73,8 +73,7 @@ private:
 	Vector3i minPoint, maxPoint;
 
 
-	void SetUpSceneHashBlockMapper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
-	                               vtkSmartPointer<vtkPolyData>& pointsPolydata);
+	void SetUpSceneHashBlockMapper(vtkAlgorithmOutput* sourceOutput);
 	void SetUpSDFColorLookupTable(vtkSmartPointer<vtkLookupTable>& table, const double* rgbaFirstColor,
 	                              const double* rgbaSecondColor);
 	void SetUpGlyph(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkPolyData>& polydata,
