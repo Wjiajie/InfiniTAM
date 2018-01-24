@@ -53,12 +53,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes() {
-	if(!liveScene || !canonicalScene){
-		std::cerr << "At least one of the two scenes, canonical/live, was not set to an actual scene. "
-		          << __FILE__ << ":" << __LINE__ << std::endl;
-	}
-	if (!fs::is_directory(this->path)) {
-		std::cout << "The directory '" << path << "' was not found.";
+	if (!CheckDirectory()) {
 		return false;
 	}
 	std::cout <<"Saving scenes for current frame (this might take awhile)..." << std::endl;
@@ -74,12 +69,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes() {
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenes() {
-	if(!liveScene || !canonicalScene){
-		std::cerr << "At least one of the two scenes, canonical/live, was not set to an actual scene. "
-		          << __FILE__ << ":" << __LINE__ << std::endl;
-	}
-	if (!fs::is_directory(this->path)) {
-		std::cout << "The directory '" << path << "' was not found.";
+	if (!CheckDirectory()) {
 		return false;
 	}
 	std::cout <<"Loading scenes for current frame (this might take awhile)..." << std::endl;
@@ -114,16 +104,12 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenesCompact() {
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenesCompact() {
-	if(!liveScene || !canonicalScene){
-		std::cerr << "At least one of the two scenes, canonical/live, was not set to an actual scene. "
-		          << __FILE__ << ":" << __LINE__ << std::endl;
-	}
-	if (!fs::is_directory(this->path)) {
-		std::cout << "The directory '" << path << "' was not found.";
+	if (!CheckDirectory()) {
 		return false;
 	}
 	std::cout <<"Loading scenes for current frame (this might take awhile)..." << std::endl;
 	std::cout.flush();
+
 	ITMSceneReconstructionEngine<TVoxelCanonical, TIndex>* reconstructionEngineCanonical =
 			ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelCanonical, TIndex>(
 					ITMLibSettings::DEVICE_CPU);
@@ -132,6 +118,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenesCompact() {
 					ITMLibSettings::DEVICE_CPU);
 	reconstructionEngineCanonical->ResetScene(canonicalScene);
 	reconstructionEngineLive->ResetScene(liveScene);
+
 	liveScene->LoadFromDirectoryCompact_CPU(livePath.c_str());
 	canonicalScene->LoadFromDirectoryCompact_CPU(canonicalPath.c_str());
 	ITMSceneStatisticsCalculator<TVoxelCanonical,TIndex> statisticsCalculator;
@@ -544,6 +531,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveAllInterestRegionW
 	for(std::shared_ptr<InterestRegionInfo> info: interestRegionInfos){
 		info->SaveCurrentWarpState();
 	}
+	std::cout << "Saved all interest region warps." << std::endl;
 }
 
 /**
@@ -580,6 +568,19 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::FilterHighlights(int anomalyFrameCountMinimum) {
 	highlights = highlights.FilterBasedOnLevel0Lengths(anomalyFrameCountMinimum);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::CheckDirectory() {
+	if(!liveScene || !canonicalScene){
+		std::cerr << "At least one of the two scenes, canonical/live, was not set to an actual scene. "
+		          << __FILE__ << ":" << __LINE__ << std::endl;
+	}
+	if (!fs::is_directory(this->path)) {
+		std::cout << "The directory '" << path << "' was not found.";
+		return false;
+	}
+	return true;
 }
 
 
@@ -720,3 +721,4 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::vector<int>& ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::GetHashBlockIds() const{
 	return this->hashBlockIds;
 }
+

@@ -122,6 +122,7 @@ public:
 		virtual ~InterestRegionInfo();
 
 	private:
+		// ** member variables **
 		bool isLoading = false;
 		bool isSaving = false;
 		int centerHashBlockId;
@@ -132,10 +133,11 @@ public:
 		ITMSceneLogger& parent;
 		int iUpdate = 0;
 		int voxelCount;
+
 	};
 
-
 private:
+//========= MEMBER VARIABLES ==================
 
 // *** root folder
 	fs::path path;
@@ -157,8 +159,14 @@ private:
 	fs::path warpUpdatesPath;
 	std::ofstream warpOFStream;
 	std::ifstream warpIFStream;
+	//TODO: the way these update numbers are tracked are less than ideal (see comment below) -Greg (GitHub: Algomorph)
+	// There is no way to ensure proper iteration number, since it is not kept track of in the scene.
+	// It would be ideal to extend the scene class and log that number there, since it reflects the state of the scene.
 	unsigned int iUpdate = 0;
 	Vector3f* warpBuffer = NULL;
+
+//======== MEMBER FUNCTIONS =====================
+	bool CheckDirectory();
 
 };
 

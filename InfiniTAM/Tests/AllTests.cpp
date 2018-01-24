@@ -168,20 +168,19 @@ BOOST_AUTO_TEST_CASE( testSceneSaveLoadCompact){
 			                        ITMLibSettings::SWAPPINGMODE_ENABLED, settings->GetMemoryType());
 
 
-	printf("Hola\n");
 	GenerateTestScene01(*scene1);
 	std::string path = "test_";
 	scene1->SaveToDirectoryCompact_CPU(path);
 
-	printf("Hello\n");
+
 	ITMSceneReconstructionEngine<ITMVoxelCanonical, ITMVoxelIndex>* reconstructionEngine =
 			ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxelCanonical, ITMVoxelIndex>(
 					ITMLibSettings::DEVICE_CPU);
-	printf("Hi\n");
+
 	reconstructionEngine->ResetScene(scene2);
-	printf("Nyan\n");
+
 	scene2->LoadFromDirectoryCompact_CPU(path);
-	printf("Hhehehehe\n");
+
 	ITMSceneStatisticsCalculator<ITMVoxelCanonical, ITMVoxelIndex> calc;
 	std::vector<int> hashes1 = calc.GetFilledHashBlockIds(scene1);
 	std::vector<int> hashes2 = calc.GetFilledHashBlockIds(scene2);

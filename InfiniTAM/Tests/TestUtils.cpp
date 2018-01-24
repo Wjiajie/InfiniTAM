@@ -39,7 +39,7 @@ void GenerateAndLogKillingScene01() {
 
 
 	ITMSceneLogger<ITMVoxelCanonical,ITMVoxelLive,ITMVoxelIndex> logger(testScenePath,canonicalScene,liveScene);
-	logger.SaveScenes();
+	logger.SaveScenesCompact();
 
 	logger.LogHighlight(0,0,1,0);
 	logger.LogHighlight(0,0,1,1);
@@ -56,6 +56,7 @@ void GenerateAndLogKillingScene01() {
 	for(int iteration = 0; iteration < iterationCount; iteration++){
 		OffsetWarps(*canonicalScene,iterationIncrement);
 		logger.SaveCurrentWarpState();
+		logger.SaveAllInterestRegionWarps();
 	}
 	logger.StopSavingWarpState();
 

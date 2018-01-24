@@ -80,7 +80,7 @@ SDFViz::SDFViz() :
 
 int SDFViz::run() {
 	//read scenes from disk
-	sceneLogger->LoadScenes();
+	sceneLogger->LoadScenesCompact();
 	sceneLogger->StartLoadingWarpState();
 	InitializeWarpBuffers();
 
