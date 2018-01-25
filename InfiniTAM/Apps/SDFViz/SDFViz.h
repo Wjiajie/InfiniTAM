@@ -88,6 +88,8 @@ public:
 	//================= CONSTANTS ================
 	static const std::array<double,4> canonicalNegativeSDFVoxelColor;
 	static const std::array<double,4> canonicalPositiveSDFVoxelColor;
+	static const std::array<double,4> canonicalNegativeInterestSDFVoxelColor;
+	static const std::array<double,4> canonicalPositiveInterestSDFVoxelColor;
 	static const std::array<double,3> canonicalHashBlockEdgeColor;
 	static const std::array<double,4> liveNegativeSDFVoxelColor;
 	static const std::array<double,4> livePositiveSDFVoxelColor;

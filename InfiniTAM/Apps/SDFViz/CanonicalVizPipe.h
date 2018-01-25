@@ -29,22 +29,30 @@ public:
 	void UpdatePointPositionsFromBuffer(void* buffer);
 	void SetInterestRegionHashes(std::set<int> interestRegions);
 
+	vtkSmartPointer<vtkActor>& GetInterestVoxelActor();
+
+	void PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeometry);
+
 protected:
 	void PreparePointsForRendering() override;
 	vtkSmartPointer<vtkPoints> initialPoints;
 
 private:
-// ** colors **
+	// ** colors **
 	std::array<double, 4> negativeInterestVoxelColor;
 	std::array<double, 4> positiveInterestVoxelColor;
 
+	const char* interestColorArrayName = "interest_color";
+	const char* interestScaleArrayName = "interest_scale";
+
 	bool interestRegionHashesAreSet = false;
+	bool preparePipelineWasCalled = false;
 	std::set<int> interestRegionHashes;
 
 	// ** individual voxels **
 	vtkSmartPointer<vtkPolyData> interestVoxelPolydata;
 	vtkSmartPointer<vtkLookupTable> interestVoxelColorLookupTable;
-	vtkSmartPointer<vtkGlyph3DMapper> inverstVoxelMapper;
+	vtkSmartPointer<vtkGlyph3DMapper> interestVoxelMapper;
 	vtkSmartPointer<vtkActor> interestVoxelActor;
 
 };

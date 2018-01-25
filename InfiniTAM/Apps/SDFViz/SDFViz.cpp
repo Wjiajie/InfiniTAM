@@ -55,6 +55,8 @@
 
 const std::array<double,4>  SDFViz::canonicalNegativeSDFVoxelColor = {0.141, 0.215, 0.396, 1.0};
 const std::array<double,4>  SDFViz::canonicalPositiveSDFVoxelColor = {0.717, 0.788, 0.960, 1.0};
+const std::array<double,4>  SDFViz::canonicalNegativeInterestSDFVoxelColor = {0.690, 0.878, 0.902, 1.0};
+const std::array<double,4>  SDFViz::canonicalPositiveInterestSDFVoxelColor = {0.000, 1.000, 1.000, 1.0};
 const std::array<double,3>  SDFViz::canonicalHashBlockEdgeColor = {0.286, 0.623, 0.854};
 const std::array<double,4>  SDFViz::liveNegativeSDFVoxelColor = {0.101, 0.219, 0.125, 0.6};
 const std::array<double,4>  SDFViz::livePositiveSDFVoxelColor = {0.717, 0.882, 0.749, 0.6};
@@ -67,6 +69,8 @@ SDFViz::SDFViz() :
 
 		canonicalScenePipe(canonicalNegativeSDFVoxelColor,
 		                   canonicalPositiveSDFVoxelColor,
+		                   canonicalNegativeInterestSDFVoxelColor,
+		                   canonicalPositiveInterestSDFVoxelColor,
 		                   canonicalHashBlockEdgeColor),
 		liveScenePipe(liveNegativeSDFVoxelColor,
 		              livePositiveSDFVoxelColor,
@@ -97,13 +101,17 @@ int SDFViz::run() {
 	vtkSmartPointer<vtkCubeSource> cube = vtkSmartPointer<vtkCubeSource>::New();
 	cube->SetBounds(0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE);
 
+	// set up viz pipelines
 	canonicalScenePipe.SetInterestRegionHashes(sceneLogger->GetInterestRegionHashes());
 	canonicalScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
+	canonicalScenePipe.PrepareInterestRegions(sphere->GetOutputPort());
 	liveScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
 
+	// add actors
 	renderer->AddActor(canonicalScenePipe.GetVoxelActor());
-	renderer->AddActor(liveScenePipe.GetVoxelActor());
+	renderer->AddActor(canonicalScenePipe.GetInterestVoxelActor());
 	renderer->AddActor(canonicalScenePipe.GetHashBlockActor());
+	renderer->AddActor(liveScenePipe.GetVoxelActor());
 	renderer->AddActor(liveScenePipe.GetHashBlockActor());
 
 // bucket scene camera params

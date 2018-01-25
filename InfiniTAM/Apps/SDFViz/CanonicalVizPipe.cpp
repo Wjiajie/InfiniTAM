@@ -13,9 +13,18 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include <vtk-8.1/vtkFloatArray.h>
-#include "vtkPolyData.h"
-#include "vtkPointData.h"
+
+
+//stdlib
+#include <utility>
+
+#include <vtkFloatArray.h>
+#include <vtkPolyData.h>
+#include <vtkPointData.h>
+#include <vtkActor.h>
+#include <vtkGlyph3DMapper.h>
+#include <vtkLookupTable.h>
+
 #include "CanonicalVizPipe.h"
 
 CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& negativeNonInterestVoxelColor,
@@ -27,8 +36,14 @@ CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& negativeNonInter
 				negativeNonInterestVoxelColor, positiveNonInterestVoxelColor, hashBlockEdgeColor),
 		initialPoints(vtkSmartPointer<vtkPoints>::New()),
 		negativeInterestVoxelColor(negativeInterestVoxelColor),
-		positiveInterestVoxelColor(positiveInterestVoxelColor)
-		{}
+		positiveInterestVoxelColor(positiveInterestVoxelColor),
+		interestVoxelPolydata(vtkSmartPointer<vtkPolyData>::New()),
+        interestVoxelColorLookupTable(vtkSmartPointer<vtkLookupTable>::New()),
+		interestVoxelMapper(vtkSmartPointer<vtkGlyph3DMapper>::New()),
+		interestVoxelActor(vtkSmartPointer<vtkActor>::New()){
+	SetUpSDFColorLookupTable(interestVoxelColorLookupTable, negativeInterestVoxelColor.data(),
+	                         positiveInterestVoxelColor.data());
+}
 
 void CanonicalVizPipe::PreparePointsForRendering() {
 
@@ -39,12 +54,7 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 	vtkSmartPointer<vtkPoints> nonInterestVoxelPoints = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkPoints> interestVoxelPoints = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkPoints> hashBlockPoints = vtkSmartPointer<vtkPoints>::New();
-#ifdef USE_CPU_GLYPH //_DEBUG
-	//holds point data attribute
-	vtkSmartPointer<vtkFloatArray> pointAttributeData = vtkSmartPointer<vtkFloatArray>::New();
-	pointAttributeData->SetNumberOfComponents(2);
-	pointAttributeData->SetName("data");
-#else
+
 	//holds color for each voxel
 	vtkSmartPointer<vtkFloatArray> nonInterestColorAttribute = vtkSmartPointer<vtkFloatArray>::New();
 	nonInterestColorAttribute->SetName(colorPointAttributeName);
@@ -53,11 +63,10 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 	nonInterestScaleAttribute->SetName(scalePointAttributeName);
 	//holds color for each voxel
 	vtkSmartPointer<vtkFloatArray> interestColorAttribute = vtkSmartPointer<vtkFloatArray>::New();
-	nonInterestColorAttribute->SetName(colorPointAttributeName);
+	interestColorAttribute->SetName(colorPointAttributeName);
 	//holds scale of each voxel
 	vtkSmartPointer<vtkFloatArray> interestScaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
-	nonInterestScaleAttribute->SetName(scalePointAttributeName);
-#endif
+	interestScaleAttribute->SetName(scalePointAttributeName);
 
 	ITMVoxelCanonical* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
@@ -71,6 +80,7 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 		if (currentHashEntry.ptr < 0) continue;
 
 		bool inInterestRegion = interestRegionHashes.find(entryId) != interestRegionHashes.end();
+		//bool inInterestRegion = false;
 
 		//position of the current entry in 3D space
 		Vector3i currentBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
@@ -89,28 +99,21 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-
 					Vector3i originalPositionVoxels = currentBlockPositionVoxels + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					ITMVoxelCanonical& voxel = localVoxelBlock[locId];
-					//Vector3f projectedPositionVoxels = originalPositionVoxels.toFloat() + voxel.warp_t;
 					float voxelScale = 1.0f - std::abs(voxel.sdf);
 					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
-
 					if (inInterestRegion) {
 						interestVoxelPoints->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
 						                                     maxVoxelDrawSize * originalPositionVoxels.y,
 						                                     maxVoxelDrawSize * originalPositionVoxels.z);
 						interestScaleAttribute->InsertNextValue(voxelScale);
-						interestScaleAttribute->InsertNextValue(voxelColor);
-					}else{
+						interestColorAttribute->InsertNextValue(voxelColor);
+					} else {
 						nonInterestVoxelPoints->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
-						                        maxVoxelDrawSize * originalPositionVoxels.y,
-						                        maxVoxelDrawSize * originalPositionVoxels.z);
-#ifdef USE_CPU_GLYPH //_DEBUG
-						float nextDataValue[2] = {voxelScale, voxelColor};
-						pointAttributeData->InsertNextTypedTuple(nextDataValue);
-#endif
+						                                        maxVoxelDrawSize * originalPositionVoxels.y,
+						                                        maxVoxelDrawSize * originalPositionVoxels.z);
 						nonInterestScaleAttribute->InsertNextValue(voxelScale);
 						nonInterestColorAttribute->InsertNextValue(voxelColor);
 					}
@@ -122,23 +125,22 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 	std::cout << "Scene voxel count: " << nonInterestVoxelPoints->GetNumberOfPoints() << std::endl;
 	std::cout << "Allocated hash block count: " << hashBlockPoints->GetNumberOfPoints() << std::endl;
 
+
 	//Points pipeline
 	voxelPolydata->SetPoints(nonInterestVoxelPoints);
 	interestVoxelPolydata->SetPoints(interestVoxelPoints);
-	//TODO: pointAttributeData is candidate for removal (by GitHub:Algomorph)
-#ifdef USE_CPU_GLYPH //_DEBUG
-	voxelPolydata->GetPointData()->AddArray(pointAttributeData);
-	voxelPolydata->GetPointData()->SetActiveScalars("data");
-#else
-	voxelPolydata->GetPointData()->AddArray(nonInterestColorAttribute);
+
 	voxelPolydata->GetPointData()->AddArray(nonInterestScaleAttribute);
+	voxelPolydata->GetPointData()->AddArray(nonInterestColorAttribute);
 	voxelPolydata->GetPointData()->SetActiveScalars(colorPointAttributeName);
-	interestVoxelPolydata->GetPointData()->AddArray(interestColorAttribute);
+
 	interestVoxelPolydata->GetPointData()->AddArray(interestScaleAttribute);
+	interestVoxelPolydata->GetPointData()->AddArray(interestColorAttribute);
 	interestVoxelPolydata->GetPointData()->SetActiveScalars(colorPointAttributeName);
-#endif
+
 	hashBlockGrid->SetPoints(hashBlockPoints);
 	initialPoints->DeepCopy(voxelPolydata->GetPoints());
+	preparePipelineWasCalled = true;
 }
 
 void CanonicalVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
@@ -158,6 +160,22 @@ void CanonicalVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
 }
 
 void CanonicalVizPipe::SetInterestRegionHashes(std::set<int> interestRegions) {
-	this->interestRegionHashes = interestRegions;
+	this->interestRegionHashes = std::move(interestRegions);
 	interestRegionHashesAreSet = true;
+}
+
+void CanonicalVizPipe::PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeometry) {
+	if (!preparePipelineWasCalled) {
+		DIEWITHEXCEPTION("PreparePipeline needs to be called first.");
+	}
+
+	// set up voxel mapper
+	SetUpSceneVoxelMapper(voxelSourceGeometry, interestVoxelMapper, interestVoxelColorLookupTable, interestVoxelPolydata);
+
+	// set up voxel actor
+	interestVoxelActor->SetMapper(interestVoxelMapper);
+}
+
+vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetInterestVoxelActor() {
+	return interestVoxelActor;
 }

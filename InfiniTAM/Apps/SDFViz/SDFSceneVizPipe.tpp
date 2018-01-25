@@ -17,8 +17,8 @@
 #include <vtkActor.h>
 #include <vtkFloatArray.h>
 #include <vtkPointData.h>
-#include <vtk-8.1/vtkGlyph3DMapper.h>
-#include <vtk-8.1/vtkBox.h>
+#include <vtkGlyph3DMapper.h>
+#include <vtkBox.h>
 #include <vtkProperty.h>
 #include <vtkLookupTable.h>
 #include <vtkPolyDataMapper.h>
@@ -80,12 +80,7 @@ template<typename TVoxel, typename TIndex>
 void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkPoints> hashBlockPoints = vtkSmartPointer<vtkPoints>::New();
-#ifdef USE_CPU_GLYPH //_DEBUG
-	//holds point data attribute
-	vtkSmartPointer<vtkFloatArray> pointAttributeData = vtkSmartPointer<vtkFloatArray>::New();
-	pointAttributeData->SetNumberOfComponents(2);
-	pointAttributeData->SetName("data");
-#else
+
 	//holds color for each voxel
 	vtkSmartPointer<vtkFloatArray> colorAttribute = vtkSmartPointer<vtkFloatArray>::New();
 	colorAttribute->SetName(colorPointAttributeName);
@@ -93,7 +88,6 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 	//holds scale of each voxel
 	vtkSmartPointer<vtkFloatArray> scaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
 	scaleAttribute->SetName(scalePointAttributeName);
-#endif
 
 	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
@@ -122,21 +116,16 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-
 					Vector3i originalPositionVoxels = currentBlockPositionVoxels + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxel& voxel = localVoxelBlock[locId];
-					//Vector3f projectedPositionVoxels = originalPositionVoxels.toFloat() + voxel.warp_t;
 					float voxelScale = 1.0f - std::abs(voxel.sdf);
 					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
 
 					points->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
 					                        maxVoxelDrawSize * originalPositionVoxels.y,
 					                        maxVoxelDrawSize * originalPositionVoxels.z);
-#ifdef USE_CPU_GLYPH //_DEBUG
-					float nextDataValue[2] = {voxelScale, voxelColor};
-					pointAttributeData->InsertNextTypedTuple(nextDataValue);
-#endif
+
 					scaleAttribute->InsertNextValue(voxelScale);
 					colorAttribute->InsertNextValue(voxelColor);
 				}
@@ -150,14 +139,11 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 	//Points pipeline
 	voxelPolydata->SetPoints(points);
 	//TODO: pointAttributeData is candidate for removal (by GitHub:Algomorph)
-#ifdef USE_CPU_GLYPH //_DEBUG
-	voxelPolydata->GetPointData()->AddArray(pointAttributeData);
-	voxelPolydata->GetPointData()->SetActiveScalars("data");
-#else
+
 	voxelPolydata->GetPointData()->AddArray(colorAttribute);
 	voxelPolydata->GetPointData()->AddArray(scaleAttribute);
 	voxelPolydata->GetPointData()->SetActiveScalars(colorPointAttributeName);
-#endif
+
 	hashBlockGrid->SetPoints(hashBlockPoints);
 }
 
@@ -165,50 +151,22 @@ template<typename TVoxel, typename TIndex>
 void SDFSceneVizPipe<TVoxel, TIndex>::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry, vtkAlgorithmOutput* hashBlockSourceGeometry) {
 	PreparePointsForRendering();
 
-
+	// scene statistics
 	ITMSceneStatisticsCalculator<TVoxel, TIndex> statCalculator;
-
 	statCalculator.ComputeVoxelBounds(scene, minPoint, maxPoint);
 	std::cout << "Voxel ranges ( min x,y,z; max x,y,z): " << minPoint << "; " << maxPoint << std::endl;
 
-	// Set up hash block visualization
+	// set up hash block mapper
 	SetUpSceneHashBlockMapper(hashBlockSourceGeometry, hashBlockMapper, hashBlockGrid);
 
-	//set up clipping for data
-#define USE_CLIPPING
-#ifdef USE_CLIPPING
-	vtkSmartPointer<vtkBox> implicitClippingBox = vtkSmartPointer<vtkBox>::New();
+	// set up voxel mapper
+	SetUpSceneVoxelMapper(voxelSourceGeometry, voxelMapper, voxelColorLookupTable, voxelPolydata);
 
-	implicitClippingBox->SetBounds(minAllowedPoint.x * maxVoxelDrawSize, maxAllowedPoint.x * maxVoxelDrawSize,
-	                               minAllowedPoint.y * maxVoxelDrawSize, maxAllowedPoint.y * maxVoxelDrawSize,
-	                               minAllowedPoint.z * maxVoxelDrawSize, maxAllowedPoint.z * maxVoxelDrawSize);
-
-	vtkSmartPointer<vtkExtractPolyDataGeometry> voxelExtractor = vtkSmartPointer<vtkExtractPolyDataGeometry>::New();
-	voxelExtractor->SetImplicitFunction(implicitClippingBox);
-	voxelExtractor->SetInputData(voxelPolydata);
-	voxelExtractor->ExtractInsideOn();
-	voxelExtractor->Update();
-#endif
-
-#ifdef USE_CPU_GLYPH //_DEBUG
-	// set up glyphs
-	vtkSmartPointer<vtkGlyph3D> canonicalGlyph = vtkSmartPointer<vtkGlyph3D>::New();
-	SetUpGlyph(sphere->getOutputPort(), canonicalVoxelPolydata, canonicalGlyph);
-	SetUpSceneVoxelMapper(canonicalMapper, canonicalColorLookupTable, canonicalGlyph);
-#else
-#ifdef USE_CLIPPING
-	// set up scene voxel mappers
-	SetUpSceneVoxelMapper(voxelSourceGeometry, voxelMapper,voxelColorLookupTable, voxelExtractor);
-#else
-	// set up mappers
-	vtkSmartPointer<vtkGlyph3DMapper> canonicalMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
-	vtkSmartPointer<vtkGlyph3DMapper> liveMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
-	SetUpSceneVoxelMapper(sphere->GetOutputPort(), canonicalMapper, canonicalColorLookupTable, canonicalVoxelPolydata);
-#endif
-#endif // ndef USE_CPU_GLYPH
-
+	// set up voxel actor
 	voxelActor->SetMapper(voxelMapper);
+	voxelActor->VisibilityOff();
 
+	// set up hash block actor
 	hashBlockActor->SetMapper(hashBlockMapper);
 	hashBlockActor->GetProperty()->SetRepresentationToWireframe();
 	hashBlockActor->GetProperty()->SetColor(hashBlockEdgeColor.data());
@@ -273,11 +231,11 @@ void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneVoxelMapper(vtkAlgorithmOutput* 
 	mapper->SetSourceConnection(sourceOutput);
 	mapper->SetLookupTable(table);
 	mapper->ScalingOn();
+	mapper->SetScaleModeToScaleByMagnitude();
+	mapper->SetScaleArray(scalePointAttributeName);
 	mapper->ScalarVisibilityOn();
 	mapper->SetScalarModeToUsePointData();
 	mapper->SetColorModeToMapScalars();
-	mapper->SetScaleModeToScaleByMagnitude();
-	mapper->SetScaleArray(scalePointAttributeName);
 	mapper->Update();
 }
 
@@ -292,11 +250,12 @@ void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneVoxelMapper(
 	mapper->SetSourceConnection(sourceOutput);
 	mapper->SetLookupTable(table);
 	mapper->ScalingOn();
+	mapper->SetScaleArray(scalePointAttributeName);
+	mapper->SetScaleModeToScaleByMagnitude();
 	mapper->ScalarVisibilityOn();
 	mapper->SetScalarModeToUsePointData();
 	mapper->SetColorModeToMapScalars();
-	mapper->SetScaleModeToScaleByMagnitude();
-	mapper->SetScaleArray(scalePointAttributeName);
+
 }
 
 template<typename TVoxel, typename TIndex>
