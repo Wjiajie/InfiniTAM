@@ -25,6 +25,7 @@
 
 //TODO: eventually replace boost::filesystem with stdlib filesystem when that is no longer experimental -Greg (GitHub: Algomorph)
 //TODO: add HAVE_BOOST guards / CMake optional boost support -Greg (GitHub: Algomorph)
+//TODO: warpByteSize should be a constant and used throughout the .tpp where it is appropriate (instead of 2*sizeof(Vector3f)) -Greg (GitHub: Algomorph)
 
 //boost
 #include <boost/filesystem.hpp>
@@ -52,6 +53,7 @@ public:
 	 * \brief cube-shaped interest region with fixed edge length consistent of hash blocks within the scene
 	 */
 	class InterestRegionInfo {
+		friend class ITMSceneLogger;
 	public:
 		static constexpr int edgeLengthHashBlocks = 3;
 		static constexpr int maxHashBlockCount = edgeLengthHashBlocks * edgeLengthHashBlocks * edgeLengthHashBlocks;
@@ -67,7 +69,8 @@ public:
 
 		void BufferPreviousWarpState(void* externalBuffer);
 
-		const std::vector<int>& GetHashBlockIds() const;
+		const std::vector<int>& GetHashes() const;
+
 
 		virtual ~InterestRegionInfo();
 
@@ -106,9 +109,10 @@ public:
 	//*** information getters
 	int GetVoxelCount() const;
 	bool GetScenesLoaded() const;
+	bool GetInterestRegionsSetUp() const;
 	const std::map<int, std::shared_ptr<InterestRegionInfo>>& GetInterestRegionsByHash();
 	const ITMIntArrayMap3D& GetHighlights();
-	std::set<int> GetInterestRegionHashes();
+	std::vector<int> GetInterestRegionHashes();
 
 	//*** saving of meta-information & interest regions
 	void LogHighlight(int hashId, int voxelLocalIndex, int frameNumber, int iterationNumber);
@@ -119,7 +123,10 @@ public:
 	void SetUpInterestRegionsForSaving();
 	void SaveAllInterestRegionWarps();
 	void SetUpInterestRegionsForLoading();
+	bool BufferNextInterestWarpState(void* externalBuffer);
+	bool BufferPreviousInterestWarpState(void* externalBuffer);
 	bool IsHashInInterestRegion(int hashId);
+	int GetTotalInterestVoxelCount();
 
 	//** global warp-state saving/loading
 	bool StartSavingWarpState();
@@ -151,6 +158,7 @@ private:
 	fs::path livePath;
 	ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
 	ITMScene<TVoxelLive, TIndex>* liveScene;
+
 // *** scene meta-information + reading/writing
 	int voxelCount = -1;
 	// map of hash blocks to voxels, voxels to frame numbers, frame numbers to iteration numbers
@@ -159,6 +167,7 @@ private:
 	fs::path highlightsTextPath;
 	std::map<int, std::shared_ptr<InterestRegionInfo>> interestRegionInfoByHashId;
 	std::vector<std::shared_ptr<InterestRegionInfo>> interestRegionInfos;
+	bool interestRegionsHaveBeenSetUp = false;
 
 // *** optimization warp-updates reading/writing
 	fs::path warpUpdatesPath;

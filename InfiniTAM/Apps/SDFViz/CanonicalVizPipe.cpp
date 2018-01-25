@@ -34,13 +34,14 @@ CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& negativeNonInter
                                    const std::array<double, 3>& hashBlockEdgeColor) :
 		SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex>(
 				negativeNonInterestVoxelColor, positiveNonInterestVoxelColor, hashBlockEdgeColor),
-		initialPoints(vtkSmartPointer<vtkPoints>::New()),
+		initialNonInterestPoints(vtkSmartPointer<vtkPoints>::New()),
+		initialInterestPoints(vtkSmartPointer<vtkPoints>::New()),
 		negativeInterestVoxelColor(negativeInterestVoxelColor),
 		positiveInterestVoxelColor(positiveInterestVoxelColor),
 		interestVoxelPolydata(vtkSmartPointer<vtkPolyData>::New()),
-        interestVoxelColorLookupTable(vtkSmartPointer<vtkLookupTable>::New()),
+		interestVoxelColorLookupTable(vtkSmartPointer<vtkLookupTable>::New()),
 		interestVoxelMapper(vtkSmartPointer<vtkGlyph3DMapper>::New()),
-		interestVoxelActor(vtkSmartPointer<vtkActor>::New()){
+		interestVoxelActor(vtkSmartPointer<vtkActor>::New()) {
 	SetUpSDFColorLookupTable(interestVoxelColorLookupTable, negativeInterestVoxelColor.data(),
 	                         positiveInterestVoxelColor.data());
 }
@@ -70,21 +71,29 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 
 	ITMVoxelCanonical* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
-	int noTotalEntries = scene->index.noTotalEntries;
+	int hashBlockCount = scene->index.noTotalEntries;
 
-	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
-
-		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
-
+	totalVoxelCount = 0;
+	interestRegionRanges.clear();
+	bool inInterestRegion = false;
+	std::tuple<int, int> currentInterestRegionRange;
+	for (int hash = 0; hash < hashBlockCount; hash++) {
+		const ITMHashEntry& currentHashEntry = canonicalHashTable[hash];
 		//skip unfilled hash
 		if (currentHashEntry.ptr < 0) continue;
-
-		bool inInterestRegion = interestRegionHashes.find(entryId) != interestRegionHashes.end();
-		//bool inInterestRegion = false;
-
+		bool inInterestRegionNewVal = interestRegionHashSet.find(hash) != interestRegionHashSet.end();
+		if (!inInterestRegion && inInterestRegionNewVal) {
+			//start range
+			std::get<0>(currentInterestRegionRange) = totalVoxelCount;
+		}
+		if (inInterestRegion && !inInterestRegionNewVal) {
+			//end range
+			std::get<1>(currentInterestRegionRange) = totalVoxelCount;
+			interestRegionRanges.push_back(currentInterestRegionRange);
+		}
+		inInterestRegion = inInterestRegionNewVal;
 		//position of the current entry in 3D space
 		Vector3i currentBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-
 		//_DEBUG
 		//const double halfBlock = SDF_BLOCK_SIZE * maxVoxelDrawSize / 2;
 		const double halfBlock = 0.0;
@@ -93,6 +102,8 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 		hashBlockPoints->InsertNextPoint(currentBlockPositionVoxels.x + halfBlock,
 		                                 currentBlockPositionVoxels.y + halfBlock,
 		                                 currentBlockPositionVoxels.z + halfBlock);
+		totalVoxelCount += SDF_BLOCK_SIZE3;
+		if (inInterestRegion) continue;
 
 		ITMVoxelCanonical* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
@@ -105,11 +116,7 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 					float voxelScale = 1.0f - std::abs(voxel.sdf);
 					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
 					if (inInterestRegion) {
-						interestVoxelPoints->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
-						                                     maxVoxelDrawSize * originalPositionVoxels.y,
-						                                     maxVoxelDrawSize * originalPositionVoxels.z);
-						interestScaleAttribute->InsertNextValue(voxelScale);
-						interestColorAttribute->InsertNextValue(voxelColor);
+
 					} else {
 						nonInterestVoxelPoints->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
 						                                        maxVoxelDrawSize * originalPositionVoxels.y,
@@ -117,14 +124,34 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 						nonInterestScaleAttribute->InsertNextValue(voxelScale);
 						nonInterestColorAttribute->InsertNextValue(voxelColor);
 					}
+
 				}
 			}
 		}
 	}
-
-	std::cout << "Scene voxel count: " << nonInterestVoxelPoints->GetNumberOfPoints() << std::endl;
-	std::cout << "Allocated hash block count: " << hashBlockPoints->GetNumberOfPoints() << std::endl;
-
+	for (int hash : interestRegionHashes) {
+		const ITMHashEntry& currentHashEntry = canonicalHashTable[hash];
+		//skip unfilled hash
+		if (currentHashEntry.ptr < 0) continue;
+		ITMVoxelCanonical* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		Vector3i currentBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+					Vector3i originalPositionVoxels = currentBlockPositionVoxels + Vector3i(x, y, z);
+					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+					ITMVoxelCanonical& voxel = localVoxelBlock[locId];
+					float voxelScale = 1.0f - std::abs(voxel.sdf);
+					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
+					interestVoxelPoints->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
+					                                     maxVoxelDrawSize * originalPositionVoxels.y,
+					                                     maxVoxelDrawSize * originalPositionVoxels.z);
+					interestScaleAttribute->InsertNextValue(voxelScale);
+					interestColorAttribute->InsertNextValue(voxelColor);
+				}
+			}
+		}
+	}
 
 	//Points pipeline
 	voxelPolydata->SetPoints(nonInterestVoxelPoints);
@@ -139,18 +166,39 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 	interestVoxelPolydata->GetPointData()->SetActiveScalars(colorPointAttributeName);
 
 	hashBlockGrid->SetPoints(hashBlockPoints);
-	initialPoints->DeepCopy(voxelPolydata->GetPoints());
+	initialNonInterestPoints->DeepCopy(voxelPolydata->GetPoints());
+	initialInterestPoints->DeepCopy(interestVoxelPolydata->GetPoints());
 	preparePipelineWasCalled = true;
 }
 
 void CanonicalVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
 	vtkPoints* voxels = voxelPolydata->GetPoints();
-	auto* initialPointRawData = reinterpret_cast<float*>(initialPoints->GetVoidPointer(0));
+	auto* initialPointRawData = reinterpret_cast<float*>(initialNonInterestPoints->GetVoidPointer(0));
 	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
 	auto* warpRawData = reinterpret_cast<float*>(buffer);
 
-	const auto pointCount = static_cast<const int>(voxels->GetNumberOfPoints());
-	for (int iVoxel = 0; iVoxel < pointCount; iVoxel++) {
+	std::tuple<int, int> nextInterestRegionRange;
+	bool hasMoreInterestRegions = false;
+	int interestRegionIx = 0;
+	if (interestRegionRanges.size() > 0) {
+		nextInterestRegionRange = interestRegionRanges[interestRegionIx];
+		hasMoreInterestRegions = true;
+	}
+	//TODO: parallelize (the way interest regions are handled right now is a problem) -Greg (GitHub: Algomorph)
+	for (int iVoxel = 0; iVoxel < totalVoxelCount; iVoxel++) {
+		//skip over the intererest region voxels
+		if (hasMoreInterestRegions && iVoxel > std::get<0>(nextInterestRegionRange)) {
+			if (iVoxel < std::get<1>(nextInterestRegionRange)) {
+				continue;
+			} else {
+				interestRegionIx++;
+				if (interestRegionIx == interestRegionRanges.size()) {
+					hasMoreInterestRegions = false;
+				} else {
+					nextInterestRegionRange = interestRegionRanges[interestRegionIx];
+				}
+			}
+		}
 		//use 1st 3-float field out of 2 for the warp buffer entry
 		pointRawData[iVoxel * 3 + 0] = initialPointRawData[iVoxel * 3 + 0] + warpRawData[iVoxel * 6 + 0];
 		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] + warpRawData[iVoxel * 6 + 1];
@@ -159,8 +207,11 @@ void CanonicalVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
 	voxelPolydata->Modified();
 }
 
-void CanonicalVizPipe::SetInterestRegionHashes(std::set<int> interestRegions) {
+void CanonicalVizPipe::SetInterestRegionHashes(std::vector<int> interestRegions) {
 	this->interestRegionHashes = std::move(interestRegions);
+	for (int hash : interestRegionHashes) {
+		interestRegionHashSet.insert(hash);
+	}
 	interestRegionHashesAreSet = true;
 }
 
@@ -170,7 +221,8 @@ void CanonicalVizPipe::PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeo
 	}
 
 	// set up voxel mapper
-	SetUpSceneVoxelMapper(voxelSourceGeometry, interestVoxelMapper, interestVoxelColorLookupTable, interestVoxelPolydata);
+	SetUpSceneVoxelMapper(voxelSourceGeometry, interestVoxelMapper, interestVoxelColorLookupTable,
+	                      interestVoxelPolydata);
 
 	// set up voxel actor
 	interestVoxelActor->SetMapper(interestVoxelMapper);
@@ -178,4 +230,22 @@ void CanonicalVizPipe::PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeo
 
 vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetInterestVoxelActor() {
 	return interestVoxelActor;
+}
+
+// assumes (1) buffers are ordered by interest region central hash (2) there is no overlap between interest regions
+void CanonicalVizPipe::UpdateInterestRegionsFromBuffers(void* buffer) {
+	vtkPoints* voxels = interestVoxelPolydata->GetPoints();
+
+	auto* initialPointRawData = reinterpret_cast<float*>(initialNonInterestPoints->GetVoidPointer(0));
+	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
+	auto* warpRawData = reinterpret_cast<float*>(buffer);
+
+	//TODO: parallelize with OpenMP  -Greg (GitHub: Algomorph)
+	for (int iVoxel = 0; iVoxel < voxels->GetNumberOfPoints(); iVoxel++) {
+		//use 1st 3-float field out of 2 for the warp buffer entry
+		pointRawData[iVoxel * 3 + 0] = initialPointRawData[iVoxel * 3 + 0] + warpRawData[iVoxel * 6 + 0];
+		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] + warpRawData[iVoxel * 6 + 1];
+		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] + warpRawData[iVoxel * 6 + 2];
+	}
+	interestVoxelPolydata->Modified();
 }

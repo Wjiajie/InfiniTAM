@@ -27,7 +27,8 @@ public:
 	                 const std::array<double, 3>& hashBlockEdgeColor);
 
 	void UpdatePointPositionsFromBuffer(void* buffer);
-	void SetInterestRegionHashes(std::set<int> interestRegions);
+	void UpdateInterestRegionsFromBuffers(void* buffer);
+	void SetInterestRegionHashes(std::vector<int> interestRegions);
 
 	vtkSmartPointer<vtkActor>& GetInterestVoxelActor();
 
@@ -35,19 +36,21 @@ public:
 
 protected:
 	void PreparePointsForRendering() override;
-	vtkSmartPointer<vtkPoints> initialPoints;
+	vtkSmartPointer<vtkPoints> initialNonInterestPoints;
+	vtkSmartPointer<vtkPoints> initialInterestPoints;
 
 private:
 	// ** colors **
 	std::array<double, 4> negativeInterestVoxelColor;
 	std::array<double, 4> positiveInterestVoxelColor;
 
-	const char* interestColorArrayName = "interest_color";
-	const char* interestScaleArrayName = "interest_scale";
-
 	bool interestRegionHashesAreSet = false;
 	bool preparePipelineWasCalled = false;
-	std::set<int> interestRegionHashes;
+	std::vector<int> interestRegionHashes;
+	std::set<int> interestRegionHashSet;
+	int totalVoxelCount = 0;//includes both interest regions and the rest
+	std::vector<std::tuple<int,int>> interestRegionRanges;
+
 
 	// ** individual voxels **
 	vtkSmartPointer<vtkPolyData> interestVoxelPolydata;
@@ -56,5 +59,3 @@ private:
 	vtkSmartPointer<vtkActor> interestVoxelActor;
 
 };
-
-

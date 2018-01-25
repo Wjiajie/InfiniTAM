@@ -156,25 +156,34 @@ void SDFViz::InitializeRendering() {
 
 }
 
-void SDFViz::UpdateVoxelPositionsFromWarpBuffer() {
-	canonicalScenePipe.UpdatePointPositionsFromBuffer(warpBuffer->GetVoidPointer(0));
+bool SDFViz::NextNonInterestWarps() {
+	if (!sceneLogger->BufferNextWarpState(this->allWarpBuffer->GetVoidPointer(0))) {
+		return false;
+	}
+	canonicalScenePipe.UpdatePointPositionsFromBuffer(allWarpBuffer->GetVoidPointer(0));
+	renderWindow->Render();
+	return true;
+}
+
+bool SDFViz::PreviousNonInterestWarps() {
+	if (!sceneLogger->BufferPreviousWarpState(this->allWarpBuffer->GetVoidPointer(0))) {
+		return false;
+	}
+	canonicalScenePipe.UpdatePointPositionsFromBuffer(allWarpBuffer->GetVoidPointer(0));
+	renderWindow->Render();
+	return true;
+}
+
+bool SDFViz::NextInterestWarps() {
+	sceneLogger->BufferNextInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0));
+	canonicalScenePipe.UpdateInterestRegionsFromBuffers(this->interestWarpBuffer->GetVoidPointer(0));
 	renderWindow->Render();
 }
 
-bool SDFViz::NextWarps() {
-	if (!sceneLogger->BufferNextWarpState(this->warpBuffer->GetVoidPointer(0))) {
-		return false;
-	}
-	UpdateVoxelPositionsFromWarpBuffer();
-	return true;
-}
-
-bool SDFViz::PreviousWarps() {
-	if (!sceneLogger->BufferPreviousWarpState(this->warpBuffer->GetVoidPointer(0))) {
-		return false;
-	}
-	UpdateVoxelPositionsFromWarpBuffer();
-	return true;
+bool SDFViz::PreviousInterestWarps() {
+	sceneLogger->BufferPreviousInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0));
+	canonicalScenePipe.UpdateInterestRegionsFromBuffers(this->interestWarpBuffer->GetVoidPointer(0));
+	renderWindow->Render();
 }
 
 void SDFViz::DrawLegend() {
@@ -231,9 +240,16 @@ void SDFViz::InitializeWarpBuffers() {
 	if (!sceneLogger->GetScenesLoaded()) {
 		DIEWITHEXCEPTION("Scenes not yet loaded, cannot initialize WarpBuffers");
 	}
-	this->warpBuffer = vtkSmartPointer<vtkFloatArray>::New();
-	warpBuffer->SetNumberOfComponents(3);
-	warpBuffer->SetNumberOfTuples(sceneLogger->GetVoxelCount() * 2);
+	if (!sceneLogger->GetInterestRegionsSetUp()){
+		DIEWITHEXCEPTION("Interest regions haven't been set up, cannot initialize WarpBuffers");
+	}
+	this->allWarpBuffer = vtkSmartPointer<vtkFloatArray>::New();
+	allWarpBuffer->SetNumberOfComponents(3);
+	allWarpBuffer->SetNumberOfTuples(sceneLogger->GetVoxelCount() * 2);
+	this->interestWarpBuffer = vtkSmartPointer<vtkFloatArray>::New();
+	interestWarpBuffer->SetNumberOfComponents(3);
+	interestWarpBuffer->SetNumberOfTuples(sceneLogger->GetTotalInterestVoxelCount() * 2);
+
 }
 
 void SDFViz::DecreaseCanonicalVoxelOpacity() {
@@ -247,6 +263,8 @@ void SDFViz::IncreaseCanonicalVoxelOpacity() {
 			std::max(0.0, canonicalScenePipe.GetVoxelActor()->GetProperty()->GetOpacity() + 0.05));
 	renderWindow->Render();
 }
+
+
 
 vtkStandardNewMacro(KeyPressInteractorStyle);
 
@@ -289,7 +307,7 @@ void KeyPressInteractorStyle::OnKeyPress() {
 			}
 		} else if (key == "period") {
 			std::cout << "Loading next iteration warp & updates." << std::endl;
-			if (parent->NextWarps()) {
+			if (parent->NextNonInterestWarps()) {
 				std::cout << "Next warps loaded and display updated." << std::endl;
 			} else {
 				std::cout << "Could not load next iteration warp & updates." << std::endl;
@@ -297,7 +315,7 @@ void KeyPressInteractorStyle::OnKeyPress() {
 
 		} else if (key == "comma") {
 			std::cout << "Loading previous iteration warp & updates." << std::endl;
-			if (parent->PreviousWarps()) {
+			if (parent->PreviousNonInterestWarps()) {
 				std::cout << "Previous warps loaded and display updated." << std::endl;
 			} else {
 				std::cout << "Could not load previous iteration warp & updates." << std::endl;
@@ -306,6 +324,10 @@ void KeyPressInteractorStyle::OnKeyPress() {
 			parent->DecreaseCanonicalVoxelOpacity();
 		} else if (key == "equal" || key == "KP_Add") {
 			parent->IncreaseCanonicalVoxelOpacity();
+		} else if (key == "bracketright"){
+			parent->NextInterestWarps();
+		} else if (key == "bracketleft"){
+			parent->PreviousInterestWarps();
 		}
 
 	}

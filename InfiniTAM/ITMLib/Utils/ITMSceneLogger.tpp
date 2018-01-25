@@ -514,21 +514,41 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 		}
 		std::vector<int> regionHashIds;
 		Vector3s centerBlockPos = currentHashBlock.pos;
+
 		//traverse neighborhood of the interest hash block in a predefined order
+		std::shared_ptr<InterestRegionInfo> overlappingRegion;
+		std::set<int> nonOverlappingHashes;
+		overlappingRegion.reset();
 		for(Vector3s offset : InterestRegionInfo::blockTraversalOrder){
-			int iHashBlock = hashIndex(centerBlockPos+offset);
-			if(iHashBlock >= 0 && iHashBlock < hashBlockCount && hashBlocks[iHashBlock].ptr >= 0){
-				regionHashIds.push_back(iHashBlock);
+			int hash = hashIndex(centerBlockPos+offset);
+			if(hash >= 0 && hash < hashBlockCount && hashBlocks[hash].ptr >= 0){
+				regionHashIds.push_back(hash);
+				//hash is in another interest region, a merge is necessary to ensure there is no overlap between regions
+				if(interestRegionInfoByHashId.find(hash) != interestRegionInfoByHashId.end()){
+					overlappingRegion = interestRegionInfoByHashId[hash];
+					overlappingRegion->hashBlockIds.push_back(hash);
+					overlappingRegion->voxelCount += SDF_BLOCK_SIZE3;
+				}else{
+					nonOverlappingHashes.insert(hash);
+				}
 			}
 		}
-		std::shared_ptr<InterestRegionInfo> info(new InterestRegionInfo(regionHashIds, centerHashId, *this));
-		//instert the same region into map by the hash blocks it contains
-		for(int regionHashBlockId : regionHashIds){
-			interestRegionInfoByHashId[regionHashBlockId] = info;
+		if(overlappingRegion){
+			//overlapping with 'some other region(s)', insert the remaining hashes into one of them
+			for(int hash : nonOverlappingHashes){
+				overlappingRegion->hashBlockIds.push_back(hash);
+				overlappingRegion->voxelCount += SDF_BLOCK_SIZE3;
+			}
+		}else{
+			std::shared_ptr<InterestRegionInfo> info(new InterestRegionInfo(regionHashIds, centerHashId, *this));
+			//instert the same region into map by the hash blocks it contains
+			for(int regionHashBlockId : regionHashIds){
+				interestRegionInfoByHashId[regionHashBlockId] = info;
+			}
+			interestRegionInfos.push_back(info);
 		}
-		interestRegionInfos.push_back(info);
 	}
-
+	interestRegionsHaveBeenSetUp = true;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -561,13 +581,13 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 		std::string filename = itr->path().filename().string();
 		if(fs::is_regular_file(itr->path()) && std::regex_match(filename, match, regionFileRegex)){
 			std::shared_ptr<InterestRegionInfo> info(new InterestRegionInfo(itr->path(),*this));
-			for(const int iHashBlockId : info->GetHashBlockIds()){
+			for(const int iHashBlockId : info->GetHashes()){
 				interestRegionInfoByHashId[iHashBlockId] = info;
 			}
 			interestRegionInfos.push_back(info);
 		}
 	}
-
+	interestRegionsHaveBeenSetUp = true;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -605,12 +625,48 @@ const ITMIntArrayMap3D& ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::Get
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-std::set<int> ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestRegionHashes() {
-	std::set<int> hashes;
-	for (auto it = interestRegionInfoByHashId.begin(); it != interestRegionInfoByHashId.end(); it++){
-		hashes.insert(it->first);
+std::vector<int> ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestRegionHashes() {
+	std::vector<int> hashes;
+	for(std::shared_ptr<InterestRegionInfo> info: interestRegionInfos){
+		for(int hash : info->GetHashes()){
+			hashes.push_back(hash);
+		}
 	}
 	return hashes;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferNextInterestWarpState(void* externalBuffer) {
+	char* cursor = reinterpret_cast<char*>(externalBuffer);
+	for(std::shared_ptr<InterestRegionInfo> info: interestRegionInfos){
+		int byteSize = info->voxelCount * 2 * sizeof(Vector3f);
+		info->BufferNextWarpState(cursor);
+		cursor += byteSize;
+	}
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferPreviousInterestWarpState(void* externalBuffer) {
+	char* cursor = reinterpret_cast<char*>(externalBuffer);
+	for(std::shared_ptr<InterestRegionInfo> info: interestRegionInfos){
+		int byteSize = info->voxelCount * 2 * sizeof(Vector3f);
+		info->BufferPreviousWarpState(cursor);
+		cursor += byteSize;
+	}
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetTotalInterestVoxelCount() {
+	int total = 0;
+	for(std::shared_ptr<InterestRegionInfo> info: interestRegionInfos){
+		total += info->voxelCount;
+	}
+	return total;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestRegionsSetUp() const {
+	return this->interestRegionsHaveBeenSetUp;
 }
 
 
@@ -741,13 +797,14 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::Interes
 		int hashBlockId;
 		ifStream.read(reinterpret_cast<char*>(&hashBlockId), sizeof(int));
 		hashBlockIds.push_back(hashBlockId);
+		voxelCount += SDF_BLOCK_SIZE3;
 	}
 	isLoading = true;
 	isSaving = false;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::vector<int>& ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::GetHashBlockIds() const{
+const std::vector<int>& ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::GetHashes() const{
 	return this->hashBlockIds;
 }
 

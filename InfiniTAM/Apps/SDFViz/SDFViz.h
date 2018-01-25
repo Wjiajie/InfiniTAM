@@ -127,7 +127,8 @@ private:
 	SDFSceneVizPipe<ITMVoxelLive, ITMVoxelIndex> liveScenePipe;
 
 	//Holds warp & warp update state for the canonical scene
-	vtkSmartPointer<vtkFloatArray> warpBuffer;
+	vtkSmartPointer<vtkFloatArray> allWarpBuffer;
+	vtkSmartPointer<vtkFloatArray> interestWarpBuffer;
 
 	//================ MEMBER FUNCTIONS =====================
 	void InitializeRendering();
@@ -136,11 +137,10 @@ private:
 
 	void DrawLegend();
 
-
-	void UpdateVoxelPositionsFromWarpBuffer();
-	bool NextWarps();
-	bool PreviousWarps();
-
+	bool NextNonInterestWarps();
+	bool PreviousNonInterestWarps();
+	bool NextInterestWarps();
+	bool PreviousInterestWarps();
 
 	//** visibility / opacity **
 	void ToggleCanonicalHashBlockVisibility();
