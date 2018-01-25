@@ -554,11 +554,11 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 	interestRegionInfos.clear();
 	interestRegionInfoByHashId.clear();
 
-	std::regex regionFileRegex(InterestRegionInfo::prefix + "\\d+" + binaryFileExtension);
+	std::regex regionFileRegex(InterestRegionInfo::prefix + "\\d+"+binaryFileExtension);
 	std::smatch match;
 	std::vector<fs::path> regionPaths;
 	for(fs::directory_iterator itr{path};itr != fs::directory_iterator{}; itr++){
-		std::string filename = fs::basename(itr->path());
+		std::string filename = itr->path().filename().string();
 		if(fs::is_regular_file(itr->path()) && std::regex_match(filename, match, regionFileRegex)){
 			std::shared_ptr<InterestRegionInfo> info(new InterestRegionInfo(itr->path(),*this));
 			for(const int iHashBlockId : info->GetHashBlockIds()){
@@ -586,6 +586,31 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::CheckDirectory() {
 		return false;
 	}
 	return true;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsHashInInterestRegion(int hashId) {
+	return (this->interestRegionInfoByHashId.find(hashId) == this->interestRegionInfoByHashId.end());
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const std::map<int, std::shared_ptr<typename ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex>::InterestRegionInfo>>&
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestRegionsByHash() {
+	return this->interestRegionInfoByHashId;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const ITMIntArrayMap3D& ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetHighlights() {
+	return highlights;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+std::set<int> ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestRegionHashes() {
+	std::set<int> hashes;
+	for (auto it = interestRegionInfoByHashId.begin(); it != interestRegionInfoByHashId.end(); it++){
+		hashes.insert(it->first);
+	}
+	return hashes;
 }
 
 
@@ -725,4 +750,5 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::vector<int>& ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::GetHashBlockIds() const{
 	return this->hashBlockIds;
 }
+
 

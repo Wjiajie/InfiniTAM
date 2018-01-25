@@ -81,6 +81,8 @@ SDFViz::SDFViz() :
 int SDFViz::run() {
 	//read scenes from disk
 	sceneLogger->LoadScenesCompact();
+	sceneLogger->LoadHighlights();
+	sceneLogger->SetUpInterestRegionsForLoading();
 	sceneLogger->StartLoadingWarpState();
 	InitializeWarpBuffers();
 
@@ -95,8 +97,9 @@ int SDFViz::run() {
 	vtkSmartPointer<vtkCubeSource> cube = vtkSmartPointer<vtkCubeSource>::New();
 	cube->SetBounds(0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE);
 
-	canonicalScenePipe.PreparePipeline(sphere->GetOutputPort(),cube->GetOutputPort());
-	liveScenePipe.PreparePipeline(sphere->GetOutputPort(),cube->GetOutputPort());
+	canonicalScenePipe.SetInterestRegionHashes(sceneLogger->GetInterestRegionHashes());
+	canonicalScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
+	liveScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
 
 	renderer->AddActor(canonicalScenePipe.GetVoxelActor());
 	renderer->AddActor(liveScenePipe.GetVoxelActor());

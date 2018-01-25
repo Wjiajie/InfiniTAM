@@ -23,8 +23,6 @@
 #include "../Objects/Scene/ITMScene.h"
 #include "ITMIntArrayMap3D.h"
 
-
-
 //TODO: eventually replace boost::filesystem with stdlib filesystem when that is no longer experimental -Greg (GitHub: Algomorph)
 //TODO: add HAVE_BOOST guards / CMake optional boost support -Greg (GitHub: Algomorph)
 
@@ -45,59 +43,11 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMSceneLogger {
 
 public:
-	//*** static constants
+// === STATIC CONSTANTS ===
 	static const std::string binaryFileExtension;
 	static const std::string textFileExtension;
 
-	//*** constructors/destructors
-	ITMSceneLogger(std::string path, ITMScene<TVoxelCanonical, TIndex>* canonicalScene = NULL,
-	               ITMScene<TVoxelLive, TIndex>* liveScene = NULL);
-
-	ITMSceneLogger() = delete;//disable default constructor generation
-	virtual ~ITMSceneLogger();
-
-	//*** setters / preparation
-	void SetScenes(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
-
-	//*** scene loading/saving
-	bool SaveScenes();
-	bool LoadScenes();
-	bool SaveScenesCompact();
-	bool LoadScenesCompact();
-
-	//*** information getters
-	int GetVoxelCount() const;
-	bool GetScenesLoaded() const;
-
-	//*** saving of meta-information & interest regions
-	void LogHighlight(int hashId, int voxelLocalIndex, int frameNumber, int iterationNumber);
-	bool SaveHighlights();
-	void PrintHighlights();
-	bool LoadHighlights();
-	void FilterHighlights(int anomalyFrameCountMinimum);
-	void SetUpInterestRegionsForSaving();
-	void SaveAllInterestRegionWarps();
-	void SetUpInterestRegionsForLoading();
-
-	//** global warp-state saving/loading
-	bool StartSavingWarpState();
-	bool SaveCurrentWarpState();
-	void StopSavingWarpState();
-	bool StartLoadingWarpState();
-	bool LoadNextWarpState();
-	bool BufferNextWarpState();
-	bool BufferPreviousWarpState();
-	bool BufferNextWarpState(void* externalBuffer);
-	bool BufferPreviousWarpState(void* externalBuffer);
-	bool LoadPreviousWarpState();
-	void StopLoadingWarpState();
-	bool IsLoadingWarpState();
-	bool CopyWarpBuffer(float* warpDestination, float* warpUpdateDestination, int& iUpdate);
-	bool CopyWarpAt(int index, float voxelWarpDestination[3]) const;
-	bool CopyWarpAt(int index, float voxelWarpDestination[3], float voxelUpdateDestination[3]) const;
-	const float* WarpAt(int index) const;
-	const float* UpdateAt(int index) const;
-
+// === PUBLIC INNER CLASSES ===
 	/**
 	 * \brief cube-shaped interest region with fixed edge length consistent of hash blocks within the scene
 	 */
@@ -135,6 +85,61 @@ public:
 		int voxelCount;
 
 	};
+
+// === CONSTRUCTORS / DESTRUCTORS ===
+	ITMSceneLogger(std::string path, ITMScene<TVoxelCanonical, TIndex>* canonicalScene = NULL,
+	               ITMScene<TVoxelLive, TIndex>* liveScene = NULL);
+
+	ITMSceneLogger() = delete;//disable default constructor generation
+	virtual ~ITMSceneLogger();
+
+// === MEMBER FUNCTIONS ===
+	//*** setters / preparation
+	void SetScenes(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
+
+	//*** scene loading/saving
+	bool SaveScenes();
+	bool LoadScenes();
+	bool SaveScenesCompact();
+	bool LoadScenesCompact();
+
+	//*** information getters
+	int GetVoxelCount() const;
+	bool GetScenesLoaded() const;
+	const std::map<int, std::shared_ptr<InterestRegionInfo>>& GetInterestRegionsByHash();
+	const ITMIntArrayMap3D& GetHighlights();
+	std::set<int> GetInterestRegionHashes();
+
+	//*** saving of meta-information & interest regions
+	void LogHighlight(int hashId, int voxelLocalIndex, int frameNumber, int iterationNumber);
+	bool SaveHighlights();
+	void PrintHighlights();
+	bool LoadHighlights();
+	void FilterHighlights(int anomalyFrameCountMinimum);
+	void SetUpInterestRegionsForSaving();
+	void SaveAllInterestRegionWarps();
+	void SetUpInterestRegionsForLoading();
+	bool IsHashInInterestRegion(int hashId);
+
+	//** global warp-state saving/loading
+	bool StartSavingWarpState();
+	bool SaveCurrentWarpState();
+	void StopSavingWarpState();
+	bool StartLoadingWarpState();
+	bool LoadNextWarpState();
+	bool BufferNextWarpState();
+	bool BufferPreviousWarpState();
+	bool BufferNextWarpState(void* externalBuffer);
+	bool BufferPreviousWarpState(void* externalBuffer);
+	bool LoadPreviousWarpState();
+	void StopLoadingWarpState();
+	bool IsLoadingWarpState();
+	bool CopyWarpBuffer(float* warpDestination, float* warpUpdateDestination, int& iUpdate);
+	bool CopyWarpAt(int index, float voxelWarpDestination[3]) const;
+	bool CopyWarpAt(int index, float voxelWarpDestination[3], float voxelUpdateDestination[3]) const;
+	const float* WarpAt(int index) const;
+	const float* UpdateAt(int index) const;
+
 
 private:
 //========= MEMBER VARIABLES ==================

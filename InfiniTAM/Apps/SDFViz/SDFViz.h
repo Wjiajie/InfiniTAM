@@ -28,6 +28,7 @@
 //ITMLib
 #include "../../ITMLib/ITMLibDefines.h"
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
+#include "CanonicalVizPipe.h"
 
 using namespace ITMLib;
 namespace ITMLib {
@@ -96,13 +97,13 @@ public:
 	//================= CONSTRUCTORS/DESTRUCTORS =
 	SDFViz();
 	virtual ~SDFViz();
-	//================= METHODS ==================
+	//================= MEMBER FUNCTIONS ==================
 	int run();
 
 private:
 	//================= CONSTANTS ================
 
-	//================= FIELDS ===================
+	//================= MEMBER VARIABLES ===================
 	//data loader
 	ITMSceneLogger <ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
 
@@ -120,13 +121,13 @@ private:
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
 
 	// Structures for rendering scene geometry with VTK
-	SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex> canonicalScenePipe;
+	CanonicalVizPipe canonicalScenePipe;
 	SDFSceneVizPipe<ITMVoxelLive, ITMVoxelIndex> liveScenePipe;
 
 	//Holds warp & warp update state for the canonical scene
 	vtkSmartPointer<vtkFloatArray> warpBuffer;
 
-	//================ METHODS =====================
+	//================ MEMBER FUNCTIONS =====================
 	void InitializeRendering();
 	//scene voxel size should be known
 	void InitializeWarpBuffers();

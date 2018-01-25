@@ -17,5 +17,6 @@
 #include "SDFSceneVizPipe.tpp"
 #include "../../ITMLib/ITMLibDefines.h"
 
+
 template class SDFSceneVizPipe<ITMVoxelCanonical,ITMVoxelIndex>;
 template class SDFSceneVizPipe<ITMVoxelLive,ITMVoxelIndex>;
