@@ -206,7 +206,6 @@ bool ITMIntArrayMap3D::SaveToTextFile(const char* path) {
 		return false;
 	}
 	file << *this << std::endl;
-//	std::cout << "blah" << std::endl;
-//	std::cout << *this << std::endl;
 	file.close();
+	return true;
 }

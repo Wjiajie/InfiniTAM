@@ -171,4 +171,23 @@ void CopySceneWithOffset_CPU(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& destina
 	}
 }
 
+
+int
+FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, const THREADPTR(Vector3s)& at) {
+	int hash = hashIndex(at);
+	while (true)
+	{
+		ITMHashEntry hashEntry = voxelIndex[hash];
+
+		if (IS_EQUAL3(hashEntry.pos, at) && hashEntry.ptr >= 0)
+		{
+			return hash;
+		}
+
+		if (hashEntry.offset < 1) break;
+		hash = SDF_BUCKET_NUM + hashEntry.offset - 1;
+	}
+	return -1;
+};
+
 }//namespace ITMLib

@@ -46,6 +46,8 @@ void CopySceneWithOffset_CPU(ITMScene <ITMVoxelCanonical, ITMVoxelIndex>& destin
 template<class TVoxel, class TIndex>
 TVoxel ReadVoxel(ITMScene <TVoxel, TIndex>& scene, Vector3i at);
 
+int FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, const THREADPTR(Vector3s)& at);
+
 
 template<class TVoxel, class TIndex>
 bool SetVoxel_CPU(ITMScene <TVoxel, TIndex>& scene, Vector3i at, TVoxel voxel);

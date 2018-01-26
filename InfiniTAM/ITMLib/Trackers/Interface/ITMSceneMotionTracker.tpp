@@ -92,14 +92,16 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 
 #ifdef SAVE_FRAME
 	if(currentFrameIx == frameOfInterest){
-		sceneLogger.SaveScenes();
+		sceneLogger.SaveScenesCompact();
+#ifdef SAVE_WARP
 		sceneLogger.StartSavingWarpState();
 		sceneLogger.SaveCurrentWarpState();
+#endif
 	}
 #endif
 #ifdef LOAD_FRAME
 	if(currentFrameIx == frameOfInterest){
-		sceneLogger.LoadScenes();
+		sceneLogger.LoadScenesCompact();
 		sceneLogger.StartLoadingWarpState();
 		while(sceneLogger.LoadNextWarpState()){};
 		sceneLogger.StopLoadingWarpState();
@@ -155,7 +157,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 		std::cout << red << "Iteration: " << iteration << reset;// << std::endl;
 		maxVectorUpdate = UpdateWarpField(canonicalScene, liveScene);
 		//START _DEBUG
-#ifdef SAVE_FRAME
+#ifdef SAVE_WARP
 		if(currentFrameIx == frameOfInterest){
 			sceneLogger.SaveCurrentWarpState();
 		}
@@ -169,7 +171,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 	}
 	//START _DEBUG
 	if(currentFrameIx == frameOfInterest){
-#ifdef SAVE_FRAME
+#ifdef SAVE_WARP
 		sceneLogger.StopSavingWarpState();
 #endif
 #ifdef LOG_HIGHLIGHTS

@@ -76,7 +76,7 @@ SDFViz::SDFViz() :
 		              livePositiveSDFVoxelColor,
 		              liveHashBlockEdgeColor) {
 	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
-			"/media/algomorph/Data/Reconstruction/debug_output/test_scene",
+			"/media/algomorph/Data/Reconstruction/debug_output/scene",
 			canonicalScenePipe.GetScene(), liveScenePipe.GetScene());
 	InitializeRendering();
 	DrawLegend();

@@ -27,6 +27,15 @@
 
 #include "CanonicalVizPipe.h"
 
+//DEBUG
+template<typename T>
+std::ostream& operator<<(std::ostream& os, std::vector<T> vec) {
+	os << "{ ";
+	std::copy(vec.begin(), vec.end(), std::ostream_iterator<T>(os, " "));
+	os << "}";
+	return os;
+}
+
 CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& negativeNonInterestVoxelColor,
                                    const std::array<double, 4>& positiveNonInterestVoxelColor,
                                    const std::array<double, 4>& negativeInterestVoxelColor,
@@ -115,15 +124,11 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 					ITMVoxelCanonical& voxel = localVoxelBlock[locId];
 					float voxelScale = 1.0f - std::abs(voxel.sdf);
 					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
-					if (inInterestRegion) {
-
-					} else {
-						nonInterestVoxelPoints->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
-						                                        maxVoxelDrawSize * originalPositionVoxels.y,
-						                                        maxVoxelDrawSize * originalPositionVoxels.z);
-						nonInterestScaleAttribute->InsertNextValue(voxelScale);
-						nonInterestColorAttribute->InsertNextValue(voxelColor);
-					}
+					nonInterestVoxelPoints->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
+					                                        maxVoxelDrawSize * originalPositionVoxels.y,
+					                                        maxVoxelDrawSize * originalPositionVoxels.z);
+					nonInterestScaleAttribute->InsertNextValue(voxelScale);
+					nonInterestColorAttribute->InsertNextValue(voxelColor);
 
 				}
 			}
@@ -236,7 +241,7 @@ vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetInterestVoxelActor() {
 void CanonicalVizPipe::UpdateInterestRegionsFromBuffers(void* buffer) {
 	vtkPoints* voxels = interestVoxelPolydata->GetPoints();
 
-	auto* initialPointRawData = reinterpret_cast<float*>(initialNonInterestPoints->GetVoidPointer(0));
+	auto* initialPointRawData = reinterpret_cast<float*>(initialInterestPoints->GetVoidPointer(0));
 	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
 	auto* warpRawData = reinterpret_cast<float*>(buffer);
 

@@ -116,5 +116,6 @@ TVoxel ReadVoxel(ITMScene<TVoxel, TIndex>& scene, Vector3i at) {
 	ITMHashEntry* hashTable = scene.index.GetEntries();
 	int vmIndex;
 	return readVoxel(voxels, hashTable, at, vmIndex);
-};
+}
+
 }

@@ -520,7 +520,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 		std::set<int> nonOverlappingHashes;
 		overlappingRegion.reset();
 		for(Vector3s offset : InterestRegionInfo::blockTraversalOrder){
-			int hash = hashIndex(centerBlockPos+offset);
+			int hash = FindHashBlock(hashBlocks,centerBlockPos + offset);
 			if(hash >= 0 && hash < hashBlockCount && hashBlocks[hash].ptr >= 0){
 				regionHashIds.push_back(hash);
 				//hash is in another interest region, a merge is necessary to ensure there is no overlap between regions
@@ -549,6 +549,15 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 		}
 	}
 	interestRegionsHaveBeenSetUp = true;
+}
+
+//DEBUG
+template<typename T>
+std::ostream& operator<<(std::ostream& os, std::vector<T> vec) {
+	os << "{ ";
+	std::copy(vec.begin(), vec.end(), std::ostream_iterator<T>(os, " "));
+	os << "}";
+	return os;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -587,6 +596,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 			interestRegionInfos.push_back(info);
 		}
 	}
+
 	interestRegionsHaveBeenSetUp = true;
 }
 
@@ -749,7 +759,6 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::Sa
 			}
 		}
 	}
-
 	iUpdate++;
 }
 
@@ -787,6 +796,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::Interes
 	ifStream(std::ifstream(path.c_str(), std::ios::binary | std::ios::in)),
 	parent(parent){
 
+	voxelCount = 0;
 	if (!ifStream) throw std::runtime_error("Could not open " + path.string() + " for reading.");
 	hashBlockIds.clear();
 	//read region header
