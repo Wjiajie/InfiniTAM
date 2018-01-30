@@ -18,6 +18,7 @@
 //stdlib
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 using namespace ITMLib;
 
@@ -209,3 +210,58 @@ bool ITMIntArrayMap3D::SaveToTextFile(const char* path) {
 	file.close();
 	return true;
 }
+
+ITMIntArrayMap3D::ITMIntArrayMap3D(const ITMIntArrayMap3D& intArrayMap) {
+	for (std::pair<int, std::map<int, std::map<int, std::vector<int>>>> elementLevel3 : intArrayMap.internalMap) {
+		for (std::pair<int, std::map<int, std::vector<int>>> elementLevel2 : elementLevel3.second) {
+			for (std::pair<int, std::vector<int>> elementLevel1 : elementLevel2.second) {
+				for (int value : elementLevel1.second){
+					this->InsertOrdered(elementLevel3.first,elementLevel2.first,elementLevel1.first,value);
+				}
+			}
+		}
+	}
+}
+
+ITMIntArrayMap3D::~ITMIntArrayMap3D() {
+}
+
+ITMIntArrayMap3D& ITMIntArrayMap3D::operator=(ITMIntArrayMap3D&& other) noexcept {
+	if(this == &other){
+		return *this;
+	}
+	this->internalMap = other.internalMap;
+	prefixLevel0 = other.prefixLevel0;
+	prefixLevel1 = other.prefixLevel1;
+	prefixLevel2 = other.prefixLevel2;
+	prefixLevel3 = other.prefixLevel3;
+}
+
+ITMIntArrayMap3D::ITMIntArrayMap3D() :internalMap(),
+                                      prefixLevel3("level3"),
+                                      prefixLevel2("level2"),
+                                      prefixLevel1("level1"),
+                                      prefixLevel0("level0") {}
+
+ITMIntArrayMap3D& ITMIntArrayMap3D::operator=(ITMIntArrayMap3D& other) {
+	ITMIntArrayMap3D tmp(other);
+	*this = std::move(tmp);
+	return *this;
+}
+
+bool ITMIntArrayMap3D::Contains(int keyLevel3, int keyLevel2, int keyLevel1, int valueLevel0) {
+	if (this->internalMap.find(keyLevel3) == (this->internalMap).end()) { return false;}
+	auto& valueLevel3 = internalMap[keyLevel3];
+	if (valueLevel3.find(keyLevel2) == valueLevel3.end()) { return false;}
+	auto& valueLevel2 = valueLevel3[keyLevel2];
+	if (valueLevel2.find(keyLevel1) == valueLevel2.end()) { return false; }
+	std::vector<int>& valueLevel1 = valueLevel2[keyLevel1];
+	return !(std::find(valueLevel1.begin(), valueLevel1.end(), valueLevel0) == valueLevel1.end());
+}
+
+bool ITMIntArrayMap3D::Contains(int keyLevel3, int keyLevel2) {
+	if (this->internalMap.find(keyLevel3) == (this->internalMap).end()) { return false;}
+	auto& valueLevel3 = internalMap[keyLevel3];
+	return !(valueLevel3.find(keyLevel2) == valueLevel3.end());
+}
+

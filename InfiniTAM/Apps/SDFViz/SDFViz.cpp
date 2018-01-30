@@ -42,6 +42,8 @@
 #include <vtkStructuredGrid.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkUniformGrid.h>
+#include <vtkTextActor.h>
+#include <vtkTextProperty.h>
 
 //local
 #include "SDFSceneVizPipe.h"
@@ -53,17 +55,21 @@
 
 //** public **
 
-const std::array<double,4>  SDFViz::canonicalNegativeSDFVoxelColor = {0.141, 0.215, 0.396, 1.0};
-const std::array<double,4>  SDFViz::canonicalPositiveSDFVoxelColor = {0.717, 0.788, 0.960, 1.0};
-const std::array<double,4>  SDFViz::canonicalNegativeInterestSDFVoxelColor = {0.690, 0.878, 0.902, 1.0};
-const std::array<double,4>  SDFViz::canonicalPositiveInterestSDFVoxelColor = {0.000, 1.000, 1.000, 1.0};
-const std::array<double,3>  SDFViz::canonicalHashBlockEdgeColor = {0.286, 0.623, 0.854};
-const std::array<double,4>  SDFViz::liveNegativeSDFVoxelColor = {0.101, 0.219, 0.125, 0.6};
-const std::array<double,4>  SDFViz::livePositiveSDFVoxelColor = {0.717, 0.882, 0.749, 0.6};
-const std::array<double,3>  SDFViz::liveHashBlockEdgeColor = {0.537, 0.819, 0.631};
+const std::array<double, 4>  SDFViz::canonicalNegativeSDFVoxelColor = {0.141, 0.215, 0.396, 1.0};
+const std::array<double, 4>  SDFViz::canonicalPositiveSDFVoxelColor = {0.717, 0.788, 0.960, 1.0};
+const std::array<double, 4>  SDFViz::canonicalNegativeInterestSDFVoxelColor = {0.690, 0.878, 0.902, 1.0};
+const std::array<double, 4>  SDFViz::canonicalPositiveInterestSDFVoxelColor = {0.000, 1.000, 1.000, 1.0};
+const std::array<double, 4>  SDFViz::canonicalHighlightSDFVoxelColor = {1.000, 0.647, 0.000, 1.0};
+const std::array<double, 3>  SDFViz::canonicalHashBlockEdgeColor = {0.286, 0.623, 0.854};
+const std::array<double, 4>  SDFViz::liveNegativeSDFVoxelColor = {0.101, 0.219, 0.125, 0.6};
+const std::array<double, 4>  SDFViz::livePositiveSDFVoxelColor = {0.717, 0.882, 0.749, 0.6};
+const std::array<double, 3>  SDFViz::liveHashBlockEdgeColor = {0.537, 0.819, 0.631};
 //** private **
 
-
+inline bool ends_with(std::string const& value, std::string const& ending) {
+	if (ending.size() > value.size()) return false;
+	return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+}
 
 SDFViz::SDFViz() :
 
@@ -71,15 +77,22 @@ SDFViz::SDFViz() :
 		                   canonicalPositiveSDFVoxelColor,
 		                   canonicalNegativeInterestSDFVoxelColor,
 		                   canonicalPositiveInterestSDFVoxelColor,
+		                   canonicalHighlightSDFVoxelColor,
 		                   canonicalHashBlockEdgeColor),
 		liveScenePipe(liveNegativeSDFVoxelColor,
 		              livePositiveSDFVoxelColor,
-		              liveHashBlockEdgeColor) {
+		              liveHashBlockEdgeColor),
+		iterationIndicator(vtkSmartPointer<vtkTextActor>::New()){
 	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
+#ifdef USE_TEST_SCENE
+			"/media/algomorph/Data/Reconstruction/debug_output/test_scene",
+#else
 			"/media/algomorph/Data/Reconstruction/debug_output/scene",
+#endif
 			canonicalScenePipe.GetScene(), liveScenePipe.GetScene());
 	InitializeRendering();
 	DrawLegend();
+	DrawIterationCounter();
 }
 
 int SDFViz::run() {
@@ -102,7 +115,7 @@ int SDFViz::run() {
 	cube->SetBounds(0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE);
 
 	// set up viz pipelines
-	canonicalScenePipe.SetInterestRegionHashes(sceneLogger->GetInterestRegionHashes());
+	canonicalScenePipe.SetInterestRegionInfo(sceneLogger->GetInterestRegionHashes(),sceneLogger->GetHighlights());
 	canonicalScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
 	canonicalScenePipe.PrepareInterestRegions(sphere->GetOutputPort());
 	liveScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
@@ -114,12 +127,22 @@ int SDFViz::run() {
 	renderer->AddActor(liveScenePipe.GetVoxelActor());
 	renderer->AddActor(liveScenePipe.GetHashBlockActor());
 
-// bucket scene camera params
+
+#ifdef USE_TEST_SCENE
+		renderer->ResetCamera();
+#else
+		// bucket scene camera params (focus interest region)
+		renderer->GetActiveCamera()->SetPosition(134.377, 30.856, 595.223);
+		renderer->GetActiveCamera()->SetFocalPoint(135.753000, 31.817580, 595.062400);
+		renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
+
+		// bucket scene camera params (focus bucket)
 //	renderer->GetActiveCamera()->SetPosition(7.0, 22.0, -72.66);
 //	renderer->GetActiveCamera()->SetFocalPoint(0.5, -40.5, 230.0);
 //	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
+		//renderer->ResetCamera();//used when need to choose new better initial camera pose manually
+#endif
 
-	renderer->ResetCamera();//used when need to choose new better initial camera pose manually
 
 	renderWindow->Render();
 	renderWindowInteractor->Start();
@@ -157,7 +180,7 @@ void SDFViz::InitializeRendering() {
 }
 
 bool SDFViz::NextNonInterestWarps() {
-	if (!sceneLogger->BufferNextWarpState(this->allWarpBuffer->GetVoidPointer(0))) {
+	if (!sceneLogger->BufferCurrentWarpState(this->allWarpBuffer->GetVoidPointer(0))) {
 		return false;
 	}
 	canonicalScenePipe.UpdatePointPositionsFromBuffer(allWarpBuffer->GetVoidPointer(0));
@@ -175,33 +198,44 @@ bool SDFViz::PreviousNonInterestWarps() {
 }
 
 bool SDFViz::NextInterestWarps() {
-	sceneLogger->BufferNextInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0));
+	UpdateIterationIndicator(sceneLogger->GetIterationCursor());
+	sceneLogger->BufferCurrentInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0));
 	canonicalScenePipe.UpdateInterestRegionsFromBuffers(this->interestWarpBuffer->GetVoidPointer(0));
 	renderWindow->Render();
 }
 
 bool SDFViz::PreviousInterestWarps() {
-	sceneLogger->BufferPreviousInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0));
+	if(sceneLogger->BufferPreviousInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0))){
+		UpdateIterationIndicator(sceneLogger->GetIterationCursor() == 0 ? 0 : sceneLogger->GetIterationCursor()-1);
+	}
 	canonicalScenePipe.UpdateInterestRegionsFromBuffers(this->interestWarpBuffer->GetVoidPointer(0));
 	renderWindow->Render();
 }
 
 void SDFViz::DrawLegend() {
 	vtkSmartPointer<vtkLegendBoxActor> legend = vtkSmartPointer<vtkLegendBoxActor>::New();
-	legend->SetNumberOfEntries(4);
+	legend->SetNumberOfEntries(7);
 	vtkSmartPointer<vtkSphereSource> legendSphere = vtkSmartPointer<vtkSphereSource>::New();
 	legendSphere->Update();
 
 	//set up legend entries
-	legend->SetEntry(0, legendSphere->GetOutput(), "Positive Canonical", (double*) canonicalPositiveSDFVoxelColor.data());
-	legend->SetEntry(1, legendSphere->GetOutput(), "Negative Canonical", (double*) canonicalNegativeSDFVoxelColor.data());
-	legend->SetEntry(2, legendSphere->GetOutput(), "Positive Live", (double*) livePositiveSDFVoxelColor.data());
-	legend->SetEntry(3, legendSphere->GetOutput(), "Negative Live", (double*) liveNegativeSDFVoxelColor.data());
+	legend->SetEntry(0, legendSphere->GetOutput(), "Positive Interest",
+	                 (double*) canonicalPositiveInterestSDFVoxelColor.data());
+	legend->SetEntry(1, legendSphere->GetOutput(), "Negative Interest",
+	                 (double*) canonicalNegativeInterestSDFVoxelColor.data());
+	legend->SetEntry(2, legendSphere->GetOutput(), "Highlight",
+	                 (double*) canonicalHighlightSDFVoxelColor.data());
+	legend->SetEntry(3, legendSphere->GetOutput(), "Positive Canonical",
+	                 (double*) canonicalPositiveSDFVoxelColor.data());
+	legend->SetEntry(4, legendSphere->GetOutput(), "Negative Canonical",
+	                 (double*) canonicalNegativeSDFVoxelColor.data());
+	legend->SetEntry(5, legendSphere->GetOutput(), "Positive Live", (double*) livePositiveSDFVoxelColor.data());
+	legend->SetEntry(6, legendSphere->GetOutput(), "Negative Live", (double*) liveNegativeSDFVoxelColor.data());
 
 	legend->GetPositionCoordinate()->SetCoordinateSystemToView();
 	legend->GetPositionCoordinate()->SetValue(0.8, -1.0);
 	legend->GetPosition2Coordinate()->SetCoordinateSystemToView();
-	legend->GetPosition2Coordinate()->SetValue(1.0, -0.7);
+	legend->GetPosition2Coordinate()->SetValue(1.0, -0.5);
 
 	//set up legend background
 	vtkSmartPointer<vtkNamedColors> colors =
@@ -212,6 +246,23 @@ void SDFViz::DrawLegend() {
 	legend->SetBackgroundColor(background);
 
 	renderer->AddActor(legend);
+}
+
+void SDFViz::DrawIterationCounter() {
+
+	iterationIndicator->SetInput("0");
+	iterationIndicator->GetPositionCoordinate()->SetCoordinateSystemToView();
+	iterationIndicator->GetPositionCoordinate()->SetValue(-0.95,0.9);
+	iterationIndicator->GetPosition2Coordinate()->SetCoordinateSystemToView();
+	iterationIndicator->GetPosition2Coordinate()->SetValue(-0.9,1.0);
+	iterationIndicator->GetTextProperty()->SetFontSize(24);
+	iterationIndicator->GetTextProperty()->SetColor(0.1, 0.8, 0.5);
+
+	renderer->AddActor2D(iterationIndicator);
+}
+
+void SDFViz::UpdateIterationIndicator(unsigned int newValue){
+	iterationIndicator->SetInput(std::to_string(newValue).c_str());
 }
 
 void SDFViz::ToggleCanonicalHashBlockVisibility() {
@@ -240,7 +291,7 @@ void SDFViz::InitializeWarpBuffers() {
 	if (!sceneLogger->GetScenesLoaded()) {
 		DIEWITHEXCEPTION("Scenes not yet loaded, cannot initialize WarpBuffers");
 	}
-	if (!sceneLogger->GetInterestRegionsSetUp()){
+	if (!sceneLogger->GetInterestRegionsSetUp()) {
 		DIEWITHEXCEPTION("Interest regions haven't been set up, cannot initialize WarpBuffers");
 	}
 	this->allWarpBuffer = vtkSmartPointer<vtkFloatArray>::New();
@@ -263,7 +314,6 @@ void SDFViz::IncreaseCanonicalVoxelOpacity() {
 			std::max(0.0, canonicalScenePipe.GetVoxelActor()->GetProperty()->GetOpacity() + 0.05));
 	renderWindow->Render();
 }
-
 
 
 vtkStandardNewMacro(KeyPressInteractorStyle);
@@ -324,10 +374,12 @@ void KeyPressInteractorStyle::OnKeyPress() {
 			parent->DecreaseCanonicalVoxelOpacity();
 		} else if (key == "equal" || key == "KP_Add") {
 			parent->IncreaseCanonicalVoxelOpacity();
-		} else if (key == "bracketright"){
+		} else if (key == "bracketright") {
 			parent->NextInterestWarps();
-		} else if (key == "bracketleft"){
+			std::cout << "Loading next interest voxel warps." << std::endl;
+		} else if (key == "bracketleft") {
 			parent->PreviousInterestWarps();
+			std::cout << "Loading previous]] interest voxel warps." << std::endl;
 		}
 
 	}

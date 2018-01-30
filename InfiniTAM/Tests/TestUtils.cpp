@@ -51,6 +51,7 @@ void GenerateAndLogKillingScene01() {
 	logger.StartSavingWarpState();
 	logger.SetUpInterestRegionsForSaving();
 	logger.SaveCurrentWarpState();
+	logger.SaveAllInterestRegionWarps();
 	Vector3f iterationIncrement(0.1,0,0);
 	int iterationCount = static_cast<int>(offset.x / iterationIncrement.x);
 	for(int iteration = 0; iteration < iterationCount; iteration++){

@@ -27,6 +27,19 @@
 //TODO: add HAVE_BOOST guards / CMake optional boost support -Greg (GitHub: Algomorph)
 //TODO: warpByteSize should be a constant and used throughout the .tpp where it is appropriate (instead of 2*sizeof(Vector3f)) -Greg (GitHub: Algomorph)
 
+//TODO: need only 3 public buffering/reading methods & 2 seek methods (described below) -Greg (GitHub: Algomorph)
+/*
+ * This would keep iIteration consistent for both interest regions & general warps
+ * Buffering:
+ * 1) Buffer interest warps & advance file cursor for general warps
+ * 2) Buffer general warps & advance file cursors for all interest warps
+ * 3) Buffer both interest & general warps
+ *
+ * Seeking:
+ * 1) Move all file cursors to previous (if possible)
+ * 2) Move all file cursors to arbitrary iIteration (if possible) -- should peek one-by-one if iteration count is unknown,
+ * but move directly to proper position when iteration count becomes known (end of file is reached)
+ */
 //boost
 #include <boost/filesystem.hpp>
 
@@ -55,19 +68,18 @@ public:
 	class InterestRegionInfo {
 		friend class ITMSceneLogger;
 	public:
-		static constexpr int edgeLengthHashBlocks = 3;
-		static constexpr int maxHashBlockCount = edgeLengthHashBlocks * edgeLengthHashBlocks * edgeLengthHashBlocks;
 		static const Vector3s blockTraversalOrder[];
 		static const std::string prefix;
 
 		InterestRegionInfo(std::vector<int>& hashBlockIds, int centerHashBlockId,
 		                   ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>& parent);
 		InterestRegionInfo(fs::path path, ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>& parent);
+
 		void SaveCurrentWarpState();
-
-		void BufferNextWarpState(void* externalBuffer);
-
-		void BufferPreviousWarpState(void* externalBuffer);
+		bool BufferCurrentWarpState(void* externalBuffer);
+		bool SeekPrevious();
+		unsigned int GetIterationCursor() const;
+		size_t GetIterationWarpBytesize() const;
 
 		const std::vector<int>& GetHashes() const;
 
@@ -84,8 +96,9 @@ public:
 		std::ofstream ofStream;
 		std::ifstream ifStream;
 		ITMSceneLogger& parent;
-		int iUpdate = 0;
+		unsigned int iterationCursor = 0;
 		int voxelCount;
+
 
 	};
 
@@ -107,12 +120,14 @@ public:
 	bool LoadScenesCompact();
 
 	//*** information getters
+	std::string GetPath() const;
 	int GetVoxelCount() const;
 	bool GetScenesLoaded() const;
 	bool GetInterestRegionsSetUp() const;
+	unsigned int GetIterationCursor() const;
 	const std::map<int, std::shared_ptr<InterestRegionInfo>>& GetInterestRegionsByHash();
-	const ITMIntArrayMap3D& GetHighlights();
-	std::vector<int> GetInterestRegionHashes();
+	ITMIntArrayMap3D GetHighlights() const;
+	std::vector<int> GetInterestRegionHashes() const;
 
 	//*** saving of meta-information & interest regions
 	void LogHighlight(int hashId, int voxelLocalIndex, int frameNumber, int iterationNumber);
@@ -123,23 +138,25 @@ public:
 	void SetUpInterestRegionsForSaving();
 	void SaveAllInterestRegionWarps();
 	void SetUpInterestRegionsForLoading();
-	bool BufferNextInterestWarpState(void* externalBuffer);
+	bool BufferCurrentInterestWarpState(void* externalBuffer);
 	bool BufferPreviousInterestWarpState(void* externalBuffer);
 	bool IsHashInInterestRegion(int hashId);
 	int GetTotalInterestVoxelCount();
 
 	//** global warp-state saving/loading
 	bool StartSavingWarpState();
-	bool SaveCurrentWarpState();
 	void StopSavingWarpState();
 	bool StartLoadingWarpState();
-	bool LoadNextWarpState();
+	void StopLoadingWarpState();
+
+	bool SaveCurrentWarpState();
+	bool LoadCurrentWarpState();
 	bool BufferNextWarpState();
 	bool BufferPreviousWarpState();
-	bool BufferNextWarpState(void* externalBuffer);
+	bool BufferCurrentWarpState(void* externalBuffer);
 	bool BufferPreviousWarpState(void* externalBuffer);
 	bool LoadPreviousWarpState();
-	void StopLoadingWarpState();
+
 	bool IsLoadingWarpState();
 	bool CopyWarpBuffer(float* warpDestination, float* warpUpdateDestination, int& iUpdate);
 	bool CopyWarpAt(int index, float voxelWarpDestination[3]) const;
@@ -176,7 +193,7 @@ private:
 	//TODO: the way these update numbers are tracked are less than ideal (see comment below) -Greg (GitHub: Algomorph)
 	// There is no way to ensure proper iteration number, since it is not kept track of in the scene.
 	// It would be ideal to extend the scene class and log that number there, since it reflects the state of the scene.
-	unsigned int iUpdate = 0;
+	unsigned int iterationCursor = 0;
 	Vector3f* warpBuffer = NULL;
 
 //======== MEMBER FUNCTIONS =====================

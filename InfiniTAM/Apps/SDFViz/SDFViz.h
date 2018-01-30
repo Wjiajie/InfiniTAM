@@ -15,6 +15,8 @@
 //  ================================================================
 #pragma once
 
+//#define USE_TEST_SCENE
+
 //VTK
 #include <vtkSmartPointer.h>
 #include <vtkInteractorStyleTrackballCamera.h>
@@ -78,6 +80,8 @@ class vtkAlgorithmOutput;
 
 class vtkLookupTable;
 
+class vtkTextActor;
+
 /**
  * \brief SDF Visualization application main class.
  */
@@ -90,6 +94,7 @@ public:
 	static const std::array<double,4> canonicalPositiveSDFVoxelColor;
 	static const std::array<double,4> canonicalNegativeInterestSDFVoxelColor;
 	static const std::array<double,4> canonicalPositiveInterestSDFVoxelColor;
+	static const std::array<double,4> canonicalHighlightSDFVoxelColor;
 	static const std::array<double,3> canonicalHashBlockEdgeColor;
 	static const std::array<double,4> liveNegativeSDFVoxelColor;
 	static const std::array<double,4> livePositiveSDFVoxelColor;
@@ -121,6 +126,7 @@ private:
 	// and will perform appropriate camera or actor manipulation
 	// depending on the nature of the events.
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
+	vtkSmartPointer<vtkTextActor> iterationIndicator;
 
 	// Structures for rendering scene geometry with VTK
 	CanonicalVizPipe canonicalScenePipe;
@@ -136,6 +142,7 @@ private:
 	void InitializeWarpBuffers();
 
 	void DrawLegend();
+	void DrawIterationCounter();
 
 	bool NextNonInterestWarps();
 	bool PreviousNonInterestWarps();
@@ -153,6 +160,7 @@ private:
 	void IncreaseCanonicalVoxelOpacity();
 
 
+	void UpdateIterationIndicator(unsigned int newValue);
 };
 
 

@@ -30,6 +30,8 @@
 #include "../../ITMLib/Utils/ITMLibSettings.h"
 #include "../../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
 
+
+
 template<typename TVoxel, typename TIndex>
 const double SDFSceneVizPipe<TVoxel, TIndex>::maxVoxelDrawSize = 1.0;
 template<typename TVoxel, typename TIndex>
@@ -53,10 +55,7 @@ SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(std::array<double, 4> negativeS
 
 		negativeVoxelColor(negativeSDFVoxelColor),
 		positiveVoxelColor(positiveSDFVoxelColor),
-		hashBlockEdgeColor(hashBlockEdgeColor),
-
-		minAllowedPoint(-100, -150, 0),
-		maxAllowedPoint(200, 50, 300) {
+		hashBlockEdgeColor(hashBlockEdgeColor) {
 	auto* settings = new ITMLibSettings();
 	scene = new ITMScene<TVoxel, TIndex>(
 			&settings->sceneParams, settings->swappingMode ==
@@ -119,7 +118,7 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 					Vector3i originalPositionVoxels = currentBlockPositionVoxels + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxel& voxel = localVoxelBlock[locId];
-					float voxelScale = 1.0f - std::abs(voxel.sdf);
+					float voxelScale = COMPUTE_VOXEL_SCALE(voxel);
 					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
 
 					points->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
@@ -193,7 +192,6 @@ void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSDFColorLookupTable(vtkSmartPointer<v
 	table->SetNumberOfColors(2);
 	table->SetTableValue(0, rgbaFirstColor);
 	table->SetTableValue(1, rgbaSecondColor);
-	table->Build();
 }
 
 template<typename TVoxel, typename TIndex>

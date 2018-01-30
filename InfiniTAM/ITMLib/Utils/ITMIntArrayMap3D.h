@@ -22,8 +22,15 @@
 namespace ITMLib {
 class ITMIntArrayMap3D {
 public:
+	ITMIntArrayMap3D();
 	ITMIntArrayMap3D(const char* prefixLevel3, const char* prefixLevel2, const char* prefixLevel1,
 	                 const char* prefixLevel0);
+	ITMIntArrayMap3D(const ITMIntArrayMap3D& intArrayMap);
+	ITMIntArrayMap3D& operator=(ITMIntArrayMap3D& other);
+	ITMIntArrayMap3D& operator=(ITMIntArrayMap3D&& other) noexcept;
+	bool operator==(const ITMIntArrayMap3D &other) const;
+
+	~ITMIntArrayMap3D();
 
 	bool InsertOrdered(int keyLevel3, int keyLevel2, int keyLevel1, int valueLevel0);
 	bool SaveToFile(const char* path);
@@ -31,12 +38,14 @@ public:
 	bool LoadFromFile(const char* path);
 	ITMIntArrayMap3D FilterBasedOnLevel0Lengths(int minThreshold);
 
+
 	std::vector<int> GetLevel3Keys();
 	std::vector<int> GetOuterLevelKeys(){
 		return GetLevel3Keys();
 	};
+	bool Contains(int keyLevel3, int keyLevel2, int keyLevel1, int valueLevel0);
+	bool Contains(int keyLevel3, int keyLevel2);
 
-	bool operator==(const ITMIntArrayMap3D &other) const;
 
 	friend std::ostream& operator<<(std::ostream& stream, const ITMIntArrayMap3D& intArrayMap3D);
 

@@ -23,6 +23,8 @@
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
 #include "../../ITMLib/Utils/ITMSceneLogger.h"
 
+#define COMPUTE_VOXEL_SCALE(voxel) (1.0f - 0.9f * std::abs(voxel.sdf))
+
 class vtkPoints;
 class vtkPolyData;
 class vtkActor;
@@ -89,10 +91,7 @@ private:
 	std::array<double, 4> negativeVoxelColor;
 	std::array<double, 4> positiveVoxelColor;
 	std::array<double, 3> hashBlockEdgeColor;
-	// ** Rendering limits/boundaries **
-	// (probably temporary since more elaborate methods of rendering voxel subset will be employed later)
-	Vector3i minAllowedPoint;
-	Vector3i maxAllowedPoint;
+	// ** scene limits/boundaries **
 	Vector3i minPoint, maxPoint;
 
 

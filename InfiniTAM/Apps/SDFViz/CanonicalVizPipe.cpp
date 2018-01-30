@@ -40,6 +40,7 @@ CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& negativeNonInter
                                    const std::array<double, 4>& positiveNonInterestVoxelColor,
                                    const std::array<double, 4>& negativeInterestVoxelColor,
                                    const std::array<double, 4>& positiveInterestVoxelColor,
+                                   const std::array<double, 4>& highlightVoxelColor,
                                    const std::array<double, 3>& hashBlockEdgeColor) :
 		SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex>(
 				negativeNonInterestVoxelColor, positiveNonInterestVoxelColor, hashBlockEdgeColor),
@@ -47,12 +48,13 @@ CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& negativeNonInter
 		initialInterestPoints(vtkSmartPointer<vtkPoints>::New()),
 		negativeInterestVoxelColor(negativeInterestVoxelColor),
 		positiveInterestVoxelColor(positiveInterestVoxelColor),
+		highlightVoxelColor(highlightVoxelColor),
 		interestVoxelPolydata(vtkSmartPointer<vtkPolyData>::New()),
 		interestVoxelColorLookupTable(vtkSmartPointer<vtkLookupTable>::New()),
 		interestVoxelMapper(vtkSmartPointer<vtkGlyph3DMapper>::New()),
 		interestVoxelActor(vtkSmartPointer<vtkActor>::New()) {
-	SetUpSDFColorLookupTable(interestVoxelColorLookupTable, negativeInterestVoxelColor.data(),
-	                         positiveInterestVoxelColor.data());
+	SetUpHighlightSDFColorLookupTable(interestVoxelColorLookupTable, negativeInterestVoxelColor.data(),
+	                                  positiveInterestVoxelColor.data(), highlightVoxelColor.data());
 }
 
 void CanonicalVizPipe::PreparePointsForRendering() {
@@ -72,7 +74,7 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 	vtkSmartPointer<vtkFloatArray> nonInterestScaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
 	nonInterestScaleAttribute->SetName(scalePointAttributeName);
 	//holds color for each voxel
-	vtkSmartPointer<vtkFloatArray> interestColorAttribute = vtkSmartPointer<vtkFloatArray>::New();
+	vtkSmartPointer<vtkIntArray> interestColorAttribute = vtkSmartPointer<vtkIntArray>::New();
 	interestColorAttribute->SetName(colorPointAttributeName);
 	//holds scale of each voxel
 	vtkSmartPointer<vtkFloatArray> interestScaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
@@ -122,7 +124,7 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 					Vector3i originalPositionVoxels = currentBlockPositionVoxels + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					ITMVoxelCanonical& voxel = localVoxelBlock[locId];
-					float voxelScale = 1.0f - std::abs(voxel.sdf);
+					float voxelScale = COMPUTE_VOXEL_SCALE(voxel);
 					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
 					nonInterestVoxelPoints->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
 					                                        maxVoxelDrawSize * originalPositionVoxels.y,
@@ -145,9 +147,13 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					Vector3i originalPositionVoxels = currentBlockPositionVoxels + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+
 					ITMVoxelCanonical& voxel = localVoxelBlock[locId];
-					float voxelScale = 1.0f - std::abs(voxel.sdf);
-					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
+					float voxelScale = COMPUTE_VOXEL_SCALE(voxel);
+					//[0.0,1.0) == negative
+					//[1.0-2.0) == positive
+					//3.0 == highlight
+					int voxelColor = highlights.Contains(hash, locId) ? 2 : voxel.sdf < 0.0f ? 0 : 1;
 					interestVoxelPoints->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
 					                                     maxVoxelDrawSize * originalPositionVoxels.y,
 					                                     maxVoxelDrawSize * originalPositionVoxels.z);
@@ -185,7 +191,7 @@ void CanonicalVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
 	std::tuple<int, int> nextInterestRegionRange;
 	bool hasMoreInterestRegions = false;
 	int interestRegionIx = 0;
-	if (interestRegionRanges.size() > 0) {
+	if (!interestRegionRanges.empty()) {
 		nextInterestRegionRange = interestRegionRanges[interestRegionIx];
 		hasMoreInterestRegions = true;
 	}
@@ -212,9 +218,10 @@ void CanonicalVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
 	voxelPolydata->Modified();
 }
 
-void CanonicalVizPipe::SetInterestRegionHashes(std::vector<int> interestRegions) {
-	this->interestRegionHashes = std::move(interestRegions);
-	for (int hash : interestRegionHashes) {
+void CanonicalVizPipe::SetInterestRegionInfo(std::vector<int> interestRegionHashes, ITMIntArrayMap3D highlights) {
+	this->highlights = highlights;
+	this->interestRegionHashes = std::move(interestRegionHashes);
+	for (int hash : this->interestRegionHashes) {
 		interestRegionHashSet.insert(hash);
 	}
 	interestRegionHashesAreSet = true;
@@ -228,6 +235,8 @@ void CanonicalVizPipe::PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeo
 	// set up voxel mapper
 	SetUpSceneVoxelMapper(voxelSourceGeometry, interestVoxelMapper, interestVoxelColorLookupTable,
 	                      interestVoxelPolydata);
+	interestVoxelMapper->SetScalarRange(0.0, 3.0);
+	interestVoxelMapper->InterpolateScalarsBeforeMappingOff();
 
 	// set up voxel actor
 	interestVoxelActor->SetMapper(interestVoxelMapper);
@@ -253,4 +262,17 @@ void CanonicalVizPipe::UpdateInterestRegionsFromBuffers(void* buffer) {
 		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] + warpRawData[iVoxel * 6 + 2];
 	}
 	interestVoxelPolydata->Modified();
+}
+
+void CanonicalVizPipe::SetUpHighlightSDFColorLookupTable(vtkSmartPointer<vtkLookupTable>& table,
+                                                         const double* rgbaFirstColor,
+                                                         const double* rgbaSecondColor,
+                                                         const double* rgbaHighlightColor) {
+	table->SetTableRange(0.0, 3.0);
+	table->SetNumberOfTableValues(3);
+	table->SetNumberOfColors(3);
+	table->SetTableValue(0, rgbaFirstColor);
+	table->SetTableValue(1, rgbaSecondColor);
+	table->SetTableValue(2, rgbaHighlightColor);
+	table->SetNanColor(0.4,0.7,0.1,1.0);
 }

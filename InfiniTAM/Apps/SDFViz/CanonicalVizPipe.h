@@ -24,11 +24,12 @@ public:
 	                 const std::array<double, 4>& positiveNonInterestVoxelColor,
 	                 const std::array<double, 4>& negativeInterestVoxelColor,
 	                 const std::array<double, 4>& positiveInterestVoxelColor,
+	                 const std::array<double, 4>& highlightVoxelColor,
 	                 const std::array<double, 3>& hashBlockEdgeColor);
 
 	void UpdatePointPositionsFromBuffer(void* buffer);
 	void UpdateInterestRegionsFromBuffers(void* buffer);
-	void SetInterestRegionHashes(std::vector<int> interestRegions);
+	void SetInterestRegionInfo(std::vector<int> interestRegionHashes, ITMIntArrayMap3D highlights);
 
 	vtkSmartPointer<vtkActor>& GetInterestVoxelActor();
 
@@ -43,6 +44,7 @@ private:
 	// ** colors **
 	std::array<double, 4> negativeInterestVoxelColor;
 	std::array<double, 4> positiveInterestVoxelColor;
+	std::array<double, 4> highlightVoxelColor;
 
 	bool interestRegionHashesAreSet = false;
 	bool preparePipelineWasCalled = false;
@@ -50,6 +52,7 @@ private:
 	std::set<int> interestRegionHashSet;
 	int totalVoxelCount = 0;//includes both interest regions and the rest
 	std::vector<std::tuple<int,int>> interestRegionRanges;
+	ITMIntArrayMap3D highlights;
 
 
 	// ** individual voxels **
@@ -58,4 +61,6 @@ private:
 	vtkSmartPointer<vtkGlyph3DMapper> interestVoxelMapper;
 	vtkSmartPointer<vtkActor> interestVoxelActor;
 
+	void SetUpHighlightSDFColorLookupTable(vtkSmartPointer<vtkLookupTable>& table, const double* rgbaFirstColor,
+	                                       const double* rgbaSecondColor, const double* rgbaHighlightColor);
 };

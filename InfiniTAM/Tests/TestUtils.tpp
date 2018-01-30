@@ -30,7 +30,8 @@ void GenerateTestScene01(ITMScene<TVoxel, TIndex>& scene) {
 	reconstructionEngine->ResetScene(&scene);
 	const int narrowBandThicknessVoxels = 10;
 	int xOffset = 8;
-	int surfaceSizeVoxels = 16; //in both y and z directions here
+	int surfaceSizeVoxelsZ = 16;
+	int surfaceSizeVoxelsY = 64;
 
 	for (int iVoxelAcrossBand = 0; iVoxelAcrossBand < narrowBandThicknessVoxels + 1; iVoxelAcrossBand++) {
 
@@ -40,8 +41,8 @@ void GenerateTestScene01(ITMScene<TVoxel, TIndex>& scene) {
 		TVoxel voxelPos, voxelNeg;
 		voxelPos.sdf = sdfValue;
 		voxelNeg.sdf = -sdfValue;
-		for (int z = 0; z < surfaceSizeVoxels; z++) {
-			for (int y = 0; y < surfaceSizeVoxels; y++) {
+		for (int z = 0; z < surfaceSizeVoxelsZ; z++) {
+			for (int y = 0; y < surfaceSizeVoxelsY; y++) {
 				SetVoxel_CPU(scene, Vector3i(xPos, y, z), voxelPos);
 				SetVoxel_CPU(scene, Vector3i(xNeg, y, z), voxelNeg);
 			}
