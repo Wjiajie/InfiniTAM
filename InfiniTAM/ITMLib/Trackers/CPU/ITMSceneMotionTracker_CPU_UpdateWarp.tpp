@@ -277,7 +277,9 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 									.LogHighlight(hashEntryId,locId,currentFrame,currentIteration);
 						}
 #endif
-						//warpUpdate *= 0.5;//magic! -UNDO THE MAGIC FOR DEBUGGING FURTHER
+#ifdef OLD_UGLY_WAY
+						warpUpdate *= 0.5;//magic! -UNDO THE MAGIC FOR DEBUGGING OSCILLATIONS FURTHER
+#endif
 					}
 					//END _DEBUG
 

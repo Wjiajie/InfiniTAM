@@ -27,6 +27,7 @@ find_package(Boost REQUIRED filesystem)
 ##
 SET(ITMLIB_TOPLEVEL_CPU_SOURCES
 CPUInstantiations.cpp
+DynamicFusionCPUInstantiations.cpp
 )
 
 SET(ITMLIB_TOPLEVEL_CUDA_SOURCES
@@ -495,7 +496,7 @@ SET(ITMLIB_UTILS_HEADERS
 Utils/ITMCUDAUtils.h
 Utils/ITMImageTypes.h
 Utils/ITMHashBlockProperties.h
-Utils/ITMVoxelProperties.h
+    Utils/ITMVoxelFlags.h
 Utils/ITMLibSettings.h
 Utils/ITMMath.h
 Utils/ITMMemoryBlockTypes.h

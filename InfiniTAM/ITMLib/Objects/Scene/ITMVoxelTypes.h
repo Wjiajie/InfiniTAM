@@ -3,7 +3,7 @@
 #pragma once
 
 #include "../../Utils/ITMMath.h"
-#include "../../Utils/ITMVoxelProperties.h"
+#include "../../Utils/ITMVoxelFlags.h"
 
 /** \brief
     Stores the information of a single voxel in the volume
@@ -241,7 +241,7 @@ struct ITMVoxel_f_dynamic
 
 	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic()
 	{
-		flags = ITMLib::KNOWN;
+		flags = ITMLib::UNKNOWN;
 		sdf = SDF_initialValue();
 		w_depth = 0;
 		confidence = 0.0f;

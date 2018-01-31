@@ -5,17 +5,35 @@
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../../Utils/ITMPixelUtils.h"
 
-//#define SET_BAND_OVERSHOOT_TO_NEGATIVE_1
-
+/**
+ * \brief Voxel update without confidence computation
+ * \tparam TVoxel
+ * \param voxel
+ * \param pt_model
+ * \param M_d
+ * \param projParams_d
+ * \param mu
+ * \param maxW
+ * \param depth
+ * \param imgSize
+ * \return -1 if voxel point is behind camera or depth value is invalid (0.0f),
+ * distance between voxel point & measured surface depth along camera ray otherwise
+ */
 template<class TVoxel>
-_CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &voxel, const THREADPTR(Vector4f) & pt_model, const CONSTPTR(Matrix4f) & M_d,
-	const CONSTPTR(Vector4f) & projParams_d, float mu, int maxW, const CONSTPTR(float) *depth, const CONSTPTR(Vector2i) & imgSize)
+_CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(
+		DEVICEPTR(TVoxel) &voxel,
+		const THREADPTR(Vector4f) & pt_model,
+		const CONSTPTR(Matrix4f) & M_d,
+		const CONSTPTR(Vector4f) & projParams_d,
+		float mu, int maxW,
+		const CONSTPTR(float) *depth,
+		const CONSTPTR(Vector2i) & imgSize)
 {
 	Vector4f pt_camera; Vector2f pt_image;
 	float depth_measure, eta, oldF, newF;
 	int oldW, newW;
 
-	// project point into image
+	// project point into image (voxel point in camera coordinates)
 	pt_camera = M_d * pt_model;
 	// if point is behind the camera, don't modify any voxels
 	if (pt_camera.z <= 0) return -1;
@@ -29,16 +47,12 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 	if (depth_measure <= 0.0f) return -1;
 
 	// check whether voxel needs updating
+	// eta = [depth at pixel corresp. to current ray] - [depth of voxel point along the ray]
+	// effectively, eta is the distance between measured surface & voxel point
 	eta = depth_measure - pt_camera.z;
-	//_DEBUG
-#ifdef SET_BAND_OVERSHOOT_TO_NEGATIVE_1
-	if (eta < -mu){
-		voxel.sdf = TVoxel::floatToValue(-1.0);
-		return eta;
-	}
-#else
+
+	//the voxel is beyond the narrow band, on the other side of the surface. Don't make any updates to SDF.
 	if (eta < -mu) return eta;
-#endif
 
 	// compute updated SDF value and reliability
 	oldF = TVoxel::valueToFloat(voxel.sdf); oldW = voxel.w_depth;
@@ -57,10 +71,31 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 
 	return eta;
 }
-
+/**
+ * \brief Voxel update with confidence computation
+ * \tparam TVoxel
+ * \param voxel
+ * \param pt_model
+ * \param M_d
+ * \param projParams_d
+ * \param mu
+ * \param maxW
+ * \param depth
+ * \param confidence
+ * \param imgSize
+ * \return -1 if voxel point is behind camera or depth value is invalid (0.0f),
+ * distance between voxel point & measured surface depth along camera ray otherwise
+ */
 template<class TVoxel>
-_CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &voxel, const THREADPTR(Vector4f) & pt_model, const CONSTPTR(Matrix4f) & M_d,
-	const CONSTPTR(Vector4f) & projParams_d, float mu, int maxW, const CONSTPTR(float) *depth, const CONSTPTR(float) *confidence, const CONSTPTR(Vector2i) & imgSize)
+_CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(
+		DEVICEPTR(TVoxel) &voxel,
+		const THREADPTR(Vector4f) & pt_model,
+		const CONSTPTR(Matrix4f) & M_d,
+		const CONSTPTR(Vector4f) & projParams_d,
+		float mu, int maxW,
+		const CONSTPTR(float) *depth,
+		const CONSTPTR(float) *confidence,
+		const CONSTPTR(Vector2i) & imgSize)
 {
 	Vector4f pt_camera; Vector2f pt_image;
 	float depth_measure, eta, oldF, newF;
@@ -82,16 +117,9 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 
 	// check whether voxel needs updating
 	eta = depth_measure - pt_camera.z;
-	//_DEBUG
-#ifdef SET_BAND_OVERSHOOT_TO_NEGATIVE_1
-	if (eta < -mu){
-		voxel.sdf = TVoxel::floatToValue(-1.0);
-		return eta;
-	}
-#else
+
 	//the voxel is beyond the narrow band, on the other side of the surface. Don't make any updates to SDF.
 	if (eta < -mu) return eta;
-#endif
 
 	// compute updated SDF value and reliability
 	oldF = TVoxel::valueToFloat(voxel.sdf); oldW = voxel.w_depth;
@@ -111,8 +139,14 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 }
 
 template<class TVoxel>
-_CPU_AND_GPU_CODE_ inline void computeUpdatedVoxelColorInfo(DEVICEPTR(TVoxel) &voxel, const THREADPTR(Vector4f) & pt_model, const CONSTPTR(Matrix4f) & M_rgb,
-	const CONSTPTR(Vector4f) & projParams_rgb, float mu, uchar maxW, float eta, const CONSTPTR(Vector4u) *rgb, const CONSTPTR(Vector2i) & imgSize)
+_CPU_AND_GPU_CODE_ inline void computeUpdatedVoxelColorInfo(
+		DEVICEPTR(TVoxel) &voxel,
+		const THREADPTR(Vector4f) & pt_model,
+		const CONSTPTR(Matrix4f) & M_rgb,
+		const CONSTPTR(Vector4f) & projParams_rgb,
+		float mu, uchar maxW, float eta,
+		const CONSTPTR(Vector4u) *rgb,
+		const CONSTPTR(Vector2i) & imgSize)
 {
 	Vector4f pt_camera; Vector2f pt_image;
 	Vector3f rgb_measure, oldC, newC; Vector3u buffV3u;
@@ -144,64 +178,105 @@ _CPU_AND_GPU_CODE_ inline void computeUpdatedVoxelColorInfo(DEVICEPTR(TVoxel) &v
 	voxel.w_color = (uchar)newW;
 }
 
-template<bool hasColor, bool hasConfidence, class TVoxel> struct ComputeUpdatedVoxelInfo;
+template<bool hasColor, bool hasConfidence, bool hasSemanticInformation, class TVoxel> struct ComputeUpdatedVoxelInfo;
 
+//================= VOXEL UPDATES FOR VOXELS WITH NO SEMANTIC INFORMATION ==============================================
+//arguments to the "compute" member function should always be the same
+#define COMPUTE_VOXEL_UPDATE_PARAMETERS \
+DEVICEPTR(TVoxel) & voxel, const THREADPTR(Vector4f) & pt_model,\
+const CONSTPTR(Matrix4f) & M_d, const CONSTPTR(Vector4f) & projParams_d,\
+const CONSTPTR(Matrix4f) & M_rgb, const CONSTPTR(Vector4f) & projParams_rgb,\
+float mu, int maxW,\
+const CONSTPTR(float) *depth, const CONSTPTR(float) *confidence, const CONSTPTR(Vector2i) & imgSize_d,\
+const CONSTPTR(Vector4u) *rgb, const CONSTPTR(Vector2i) & imgSize_rgb
+//TODO: the magic value 0.25f used to determine the cutoff distance for color processing should be pre-defined either as a constant or a preprocessor define -Greg (GitHub:Algomorph)
+#define COMPUTE_COLOR_CHECK if ((eta > mu) || (fabs(eta / mu) > 0.25f)) return;
+
+// no color, no confidence, no semantic info
 template<class TVoxel>
-struct ComputeUpdatedVoxelInfo<false, false, TVoxel> {
-	_CPU_AND_GPU_CODE_ static void compute(DEVICEPTR(TVoxel) & voxel, const THREADPTR(Vector4f) & pt_model,
-		const CONSTPTR(Matrix4f) & M_d, const CONSTPTR(Vector4f) & projParams_d,
-		const CONSTPTR(Matrix4f) & M_rgb, const CONSTPTR(Vector4f) & projParams_rgb,
-		float mu, int maxW,
-		const CONSTPTR(float) *depth, const CONSTPTR(float) *confidence, const CONSTPTR(Vector2i) & imgSize_d,
-		const CONSTPTR(Vector4u) *rgb, const CONSTPTR(Vector2i) & imgSize_rgb)
+struct ComputeUpdatedVoxelInfo<false, false, false, TVoxel> {
+	_CPU_AND_GPU_CODE_ static void compute(COMPUTE_VOXEL_UPDATE_PARAMETERS)
 	{
 		computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, imgSize_d);
 	}
 };
-
+// with color, no confidence, no semantic info
 template<class TVoxel>
-struct ComputeUpdatedVoxelInfo<true, false, TVoxel> {
-	_CPU_AND_GPU_CODE_ static void compute(DEVICEPTR(TVoxel) & voxel, const THREADPTR(Vector4f) & pt_model,
-		const THREADPTR(Matrix4f) & M_d, const THREADPTR(Vector4f) & projParams_d,
-		const THREADPTR(Matrix4f) & M_rgb, const THREADPTR(Vector4f) & projParams_rgb,
-		float mu, int maxW,
-		const CONSTPTR(float) *depth, const CONSTPTR(float) *confidence, const CONSTPTR(Vector2i) & imgSize_d,
-		const CONSTPTR(Vector4u) *rgb, const THREADPTR(Vector2i) & imgSize_rgb)
+struct ComputeUpdatedVoxelInfo<true, false, false, TVoxel> {
+	_CPU_AND_GPU_CODE_ static void compute(COMPUTE_VOXEL_UPDATE_PARAMETERS)
 	{
 		float eta = computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, imgSize_d);
-		if ((eta > mu) || (fabs(eta / mu) > 0.25f)) return;
+		COMPUTE_COLOR_CHECK
 		computeUpdatedVoxelColorInfo(voxel, pt_model, M_rgb, projParams_rgb, mu, maxW, eta, rgb, imgSize_rgb);
 	}
 };
-
+// no color, with confidence, no semantic info
 template<class TVoxel>
-struct ComputeUpdatedVoxelInfo<false, true, TVoxel> {
-	_CPU_AND_GPU_CODE_ static void compute(DEVICEPTR(TVoxel) & voxel, const THREADPTR(Vector4f) & pt_model,
-		const CONSTPTR(Matrix4f) & M_d, const CONSTPTR(Vector4f) & projParams_d,
-		const CONSTPTR(Matrix4f) & M_rgb, const CONSTPTR(Vector4f) & projParams_rgb,
-		float mu, int maxW,
-		const CONSTPTR(float) *depth, const CONSTPTR(float) *confidence, const CONSTPTR(Vector2i) & imgSize_d,
-		const CONSTPTR(Vector4u) *rgb, const CONSTPTR(Vector2i) & imgSize_rgb)
+struct ComputeUpdatedVoxelInfo<false, true, false, TVoxel> {
+	_CPU_AND_GPU_CODE_ static void compute(COMPUTE_VOXEL_UPDATE_PARAMETERS)
 	{
 		computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, confidence, imgSize_d);
 	}
 };
-
+// with color, with confidence, no semantic info
 template<class TVoxel>
-struct ComputeUpdatedVoxelInfo<true, true, TVoxel> {
-	_CPU_AND_GPU_CODE_ static void compute(DEVICEPTR(TVoxel) & voxel, const THREADPTR(Vector4f) & pt_model,
-		const THREADPTR(Matrix4f) & M_d, const THREADPTR(Vector4f) & projParams_d,
-		const THREADPTR(Matrix4f) & M_rgb, const THREADPTR(Vector4f) & projParams_rgb,
-		float mu, int maxW,
-		const CONSTPTR(float) *depth, const CONSTPTR(float) *confidence, const CONSTPTR(Vector2i) & imgSize_d,
-		const CONSTPTR(Vector4u) *rgb, const THREADPTR(Vector2i) & imgSize_rgb)
+struct ComputeUpdatedVoxelInfo<true, true, false, TVoxel> {
+	_CPU_AND_GPU_CODE_ static void compute(COMPUTE_VOXEL_UPDATE_PARAMETERS)
 	{
 		float eta = computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, confidence, imgSize_d);
-		if ((eta > mu) || (fabs(eta / mu) > 0.25f)) return;
+		COMPUTE_COLOR_CHECK
+		computeUpdatedVoxelColorInfo(voxel, pt_model, M_rgb, projParams_rgb, mu, maxW, eta, rgb, imgSize_rgb);
+	}
+};
+//================= VOXEL UPDATES FOR VOXELS WITH SEMANTIC INFORMATION =================================================
+// no color, no confidence, with semantic info
+#define FLAG_UPDATE_CHECK \
+	if(eta < -mu) return; //assumes narrow band half-thickness mu is smaller than 1 meter \
+	if(voxel.flags == ITMLib::UNKNOWN){ voxel.flags = ITMLib::KNOWN; }
+template<class TVoxel>
+struct ComputeUpdatedVoxelInfo<false, false, true, TVoxel> {
+	_CPU_AND_GPU_CODE_ static void compute(COMPUTE_VOXEL_UPDATE_PARAMETERS)
+	{
+		float eta = computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, imgSize_d);
+		FLAG_UPDATE_CHECK
+	}
+};
+// with color, no confidence, with semantic info
+template<class TVoxel>
+struct ComputeUpdatedVoxelInfo<true, false, true, TVoxel> {
+	_CPU_AND_GPU_CODE_ static void compute(COMPUTE_VOXEL_UPDATE_PARAMETERS)
+	{
+		float eta = computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, imgSize_d);
+		FLAG_UPDATE_CHECK
+		COMPUTE_COLOR_CHECK
+		computeUpdatedVoxelColorInfo(voxel, pt_model, M_rgb, projParams_rgb, mu, maxW, eta, rgb, imgSize_rgb);
+	}
+};
+// no color, with confidence, with semantic info
+template<class TVoxel>
+struct ComputeUpdatedVoxelInfo<false, true, true, TVoxel> {
+	_CPU_AND_GPU_CODE_ static void compute(COMPUTE_VOXEL_UPDATE_PARAMETERS)
+	{
+		float eta = computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, confidence, imgSize_d);
+		FLAG_UPDATE_CHECK
+	}
+};
+// with color, with confidence, with semantic info
+template<class TVoxel>
+struct ComputeUpdatedVoxelInfo<true, true, true, TVoxel> {
+	_CPU_AND_GPU_CODE_ static void compute(COMPUTE_VOXEL_UPDATE_PARAMETERS)
+	{
+		float eta = computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, confidence, imgSize_d);
+		FLAG_UPDATE_CHECK
+		COMPUTE_COLOR_CHECK
 		computeUpdatedVoxelColorInfo(voxel, pt_model, M_rgb, projParams_rgb, mu, maxW, eta, rgb, imgSize_rgb);
 	}
 };
 
+#undef COMPUTE_COLOR_CHECK
+#undef FLAG_UPDATE_CHECK
+#undef COMPUTE_VOXEL_UPDATE_PARAMETERS
+//======================================================================================================================
 _CPU_AND_GPU_CODE_ inline void buildHashAllocAndVisibleTypePP(DEVICEPTR(uchar) *entriesAllocType, DEVICEPTR(uchar) *entriesVisibleType, int x, int y,
 	DEVICEPTR(Vector4s) *blockCoords, const CONSTPTR(float) *depth, Matrix4f invM_d, Vector4f projParams_d, float mu, Vector2i imgSize,
 	float oneOverVoxelSize, const CONSTPTR(ITMHashEntry) *hashTable, float viewFrustum_min, float viewFrustum_max)

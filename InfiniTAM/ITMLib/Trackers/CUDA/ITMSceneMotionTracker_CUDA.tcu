@@ -53,7 +53,7 @@ float ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWar
 	typename TIndex::IndexCache liveCache;
 
 	int noTotalEntries = canonicalScene->index.noTotalEntries;
-	float maxVectorUpdate = 0.0f;
+	//float maxVectorUpdate = 0.0f;
 
 	dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
 	dim3 gridSize(SDF_LOCAL_BLOCK_NUM / 16, 16);

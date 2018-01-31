@@ -17,7 +17,7 @@
 
 namespace ITMLib {
 enum VoxelFlags : char{
-	UNKNOWN = -1,
-	KNOWN = 0
+	UNKNOWN = 0,
+	KNOWN = 1
 };
 }//namespace ITMLib
