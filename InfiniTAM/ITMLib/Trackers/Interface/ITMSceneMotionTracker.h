@@ -32,7 +32,7 @@ protected:
 	virtual void AllocateNewCanonicalHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                                            ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
 
-
+	//TODO -- FuseFrame should probably be moved to a new type of ReconstructionEngine specifically for dynamic fusion -Greg (GitHub:Algomorph)
 	virtual void
 	FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
 

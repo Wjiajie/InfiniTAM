@@ -16,8 +16,10 @@
 #pragma once
 
 namespace ITMLib {
-enum VoxelFlags : char{
-	UNKNOWN = 0,
-	KNOWN = 1
+enum VoxelFlags : unsigned char{
+	VOXEL_UNKNOWN = 0,
+	VOXEL_KNOWN = 1,
+	VOXEL_OSCILLATION_DETECTED_ONCE = 2,
+	VOXEL_OSCILLATION_DETECTED_TWICE = 4
 };
 }//namespace ITMLib

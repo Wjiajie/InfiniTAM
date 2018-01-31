@@ -208,6 +208,41 @@ struct ITMVoxel_f_rgb_conf
 	}
 };
 
+//TODO: perhaps make a new type for 1-frame sdf (for dynamic/Killing fusion) without w_depth, w_color, or confidence? - Greg (GitHub: Algomorph)
+
+struct ITMVoxel_f_rgb_conf_flags
+{
+	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return -1.0f; }
+	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
+	_CPU_AND_GPU_CODE_ static float floatToValue(float x) { return x; }
+
+	static const CONSTPTR(bool) hasColorInformation = true;
+	static const CONSTPTR(bool) hasConfidenceInformation = true;
+	static const CONSTPTR(bool) hasSemanticInformation = true;
+
+	/** Value of the truncated signed distance transformation. */
+	float sdf;
+	/** Number of fused observations that make up @p sdf. */
+	uchar w_depth;
+	/** refer to ITMVoxelFlags for flag bit array values */
+	unsigned char flags;
+	/** RGB colour information stored for this voxel. */
+	Vector3u clr;
+	/** Number of observations that made up @p clr. */
+	uchar w_color;
+	float confidence;
+
+	_CPU_AND_GPU_CODE_ ITMVoxel_f_rgb_conf_flags()
+	{
+		flags = ITMLib::VOXEL_UNKNOWN;
+		sdf = SDF_initialValue();
+		w_depth = 0;
+		confidence = 0.0f;
+		clr = Vector3u((uchar)0);
+		w_color = 0;
+	}
+};
+
 struct ITMVoxel_f_dynamic
 {
 	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return -1.0f; }
@@ -222,10 +257,8 @@ struct ITMVoxel_f_dynamic
 	float sdf;
 	/** Number of fused observations that make up @p sdf. */
 	uchar w_depth;
-	/** Padding that may or may not improve performance on certain GPUs */
-	//uchar pad;
-	/** negative values are special flags, positive values are segment indices */
-	char flags;
+	/** refer to ITMVoxelFlags for flag bit array values */
+	unsigned char flags;
 	/** RGB colour information stored for this voxel. */
 	Vector3u clr;
 	/** Trilinear weight information stored for this voxel.
@@ -241,7 +274,7 @@ struct ITMVoxel_f_dynamic
 
 	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic()
 	{
-		flags = ITMLib::UNKNOWN;
+		flags = ITMLib::VOXEL_UNKNOWN;
 		sdf = SDF_initialValue();
 		w_depth = 0;
 		confidence = 0.0f;

@@ -34,7 +34,6 @@ void CopySceneWithOffset_CPU(ITMScene<TVoxel, TIndex>& destination, ITMScene<TVo
 
 	TVoxel* originalVoxels = source.localVBA.GetVoxelBlocks();
 	const ITMHashEntry* originalHashTable = source.index.GetEntries();
-	typename TIndex::IndexCache originalCache;
 	int noTotalEntries = source.index.noTotalEntries;
 
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
@@ -83,12 +82,14 @@ bool SetVoxel_CPU(ITMScene<TVoxel, TIndex>& scene, Vector3i at, TVoxel voxel) {
 	scene.index.SetLastFreeExcessListId(lastFreeExcessListId);
 	return true;
 };
+#define BEGIN_VOXEL_TRAVERSAL_LOOP(scene) \
 
+
+#define END_VOXEL_TRAVERSAL_LOOP
 template<class TVoxel, class TIndex>
 void OffsetWarps(ITMScene<TVoxel, TIndex>& scene, Vector3f offset) {
-	TVoxel* originalVoxels = scene.localVBA.GetVoxelBlocks();
+	TVoxel* voxels = scene.localVBA.GetVoxelBlocks();
 	const ITMHashEntry* originalHashTable = scene.index.GetEntries();
-	typename TIndex::IndexCache originalCache;
 	int noTotalEntries = scene.index.noTotalEntries;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -96,7 +97,7 @@ void OffsetWarps(ITMScene<TVoxel, TIndex>& scene, Vector3f offset) {
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 		const ITMHashEntry& currentOriginalHashEntry = originalHashTable[entryId];
 		if (currentOriginalHashEntry.ptr < 0) continue;
-		TVoxel* localVoxelBlock = &(originalVoxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		TVoxel* localVoxelBlock = &(voxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {

@@ -563,6 +563,7 @@ inline void ComputePerPointWarpJacobianAndHessian(const CONSTPTR(Vector3f)& orig
 /**
  * \brief Determines whether the hash block at the specified block position needs it's voxels to be allocated, as well
  * as whether they should be allocated in the excess list or the ordered list of the hash table.
+ * If any of these are true, marks the corresponding entry in \param entriesAllocType
  * \param[in,out] entriesAllocType  array where to set the allocation type at final hashIdx index
  * \param[in,out] blockCoords  array block coordinates for the new hash blocks at final hashIdx index
  * \param[in,out] hashIdx  final index of the hash block to be allocated (may be updated based on hash closed chaining)
@@ -571,11 +572,11 @@ inline void ComputePerPointWarpJacobianAndHessian(const CONSTPTR(Vector3f)& orig
  * \return true if the block needs allocation, false otherwise
  */
 _CPU_AND_GPU_CODE_
-inline bool NeedsAllocation(DEVICEPTR(uchar)* entriesAllocType,
-                            DEVICEPTR(Vector3s)* blockCoords,
-                            THREADPTR(int)& hashIdx,
-                            const CONSTPTR(Vector3s)& hashBlockPosition,
-                            const CONSTPTR(ITMHashEntry)* hashTable) {
+inline bool MarkIfNeedsAllocation(DEVICEPTR(uchar)* entriesAllocType,
+                                  DEVICEPTR(Vector3s)* blockCoords,
+                                  THREADPTR(int)& hashIdx,
+                                  const CONSTPTR(Vector3s)& hashBlockPosition,
+                                  const CONSTPTR(ITMHashEntry)* hashTable) {
 
 
 	ITMHashEntry hashEntry = hashTable[hashIdx];

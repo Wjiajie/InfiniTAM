@@ -4,6 +4,7 @@
 
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../../Utils/ITMPixelUtils.h"
+#include "../../../Utils/ITMVoxelFlags.h"
 
 /**
  * \brief Voxel update without confidence computation
@@ -231,8 +232,8 @@ struct ComputeUpdatedVoxelInfo<true, true, false, TVoxel> {
 //================= VOXEL UPDATES FOR VOXELS WITH SEMANTIC INFORMATION =================================================
 // no color, no confidence, with semantic info
 #define FLAG_UPDATE_CHECK \
-	if(eta < -mu) return; //assumes narrow band half-thickness mu is smaller than 1 meter \
-	if(voxel.flags == ITMLib::UNKNOWN){ voxel.flags = ITMLib::KNOWN; }
+	if(eta < -mu) return; /*assumes narrow band half-thickness mu is smaller than 1 meter*/\
+	if(voxel.flags == ITMLib::VoxelFlags::VOXEL_UNKNOWN){ voxel.flags = ITMLib::VoxelFlags::VOXEL_KNOWN; }
 template<class TVoxel>
 struct ComputeUpdatedVoxelInfo<false, false, true, TVoxel> {
 	_CPU_AND_GPU_CODE_ static void compute(COMPUTE_VOXEL_UPDATE_PARAMETERS)

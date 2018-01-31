@@ -105,12 +105,6 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 	                                   Vector3i(0, 0, 7), Vector3i(3, 0, 7), Vector3i(7, 0, 7),
 	                                   Vector3i(0, 3, 7), Vector3i(3, 3, 7), Vector3i(7, 3, 7),
 	                                   Vector3i(0, 7, 7), Vector3i(4, 7, 7), Vector3i(7, 7, 7)};
-	TVoxelCanonical positiveHashEntry[SDF_BLOCK_SIZE3];
-	for (int iVoxel = 0; iVoxel < SDF_BLOCK_SIZE3; iVoxel++) {
-		positiveHashEntry[iVoxel] = TVoxelCanonical();
-		positiveHashEntry[iVoxel].flags = ITMLib::UNKNOWN;
-	}
-
 	//_DEBUG
 	int countVoxelHashBlocksToAllocate = 0;
 
@@ -127,8 +121,8 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 
 		//try to find a corresponding canonical block, and mark it for allocation if not found
 		int canonicalBlockIndex = hashIndex(liveHashBlockCoords);
-		if (NeedsAllocation(entriesAllocType, blockCoords, canonicalBlockIndex, liveHashBlockCoords,
-		                    canonicalHashTable)) {
+		if (MarkIfNeedsAllocation(entriesAllocType, blockCoords, canonicalBlockIndex, liveHashBlockCoords,
+		                          canonicalHashTable)) {
 			//_DEBUG
 			countVoxelHashBlocksToAllocate++;
 			//end _DEBUG
@@ -160,15 +154,8 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 					unsigned char entryAllocType = entriesAllocType[hashIdx];
 
 					if (entryAllocType == ITMLib::NO_CHANGE &&
-					    NeedsAllocation(entriesAllocType, blockCoords, hashIdx, currentBlockLocation,
-					                    canonicalHashTable)) {
-						//_DEBUG (older alternative solution)
-						Vector3i& testVoxelLocation = testVoxelLocations[iNeighbor];
-						int locId = testVoxelLocation.x + testVoxelLocation.y * SDF_BLOCK_SIZE +
-						            testVoxelLocation.z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-						entriesAllocFill[hashIdx] = localCanonicalVoxelBlock[locId].sdf + 1.0f > FLT_EPSILON;
-
-						//_DEBUG
+							MarkIfNeedsAllocation(entriesAllocType, blockCoords, hashIdx, currentBlockLocation,
+							                      canonicalHashTable)) {
 						countVoxelHashBlocksToAllocate++;
 					}
 					iNeighbor++;
@@ -194,14 +181,6 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 					hashEntry.pos = blockCoords[iTargetHashBlock];
 					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
 					hashEntry.offset = 0;
-//_DEBUG older alternative solution
-//					if (entriesAllocFill[iTargetHashBlock]) {
-//						TVoxelCanonical* localVoxelBlock = &(canonicalVoxels[hashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-//						memcpy(localVoxelBlock, &positiveHashEntry, SDF_BLOCK_SIZE3 * sizeof(TVoxelCanonical));
-//					}
-					TVoxelCanonical* localVoxelBlock = &(canonicalVoxels[hashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-					memcpy(localVoxelBlock, &positiveHashEntry, SDF_BLOCK_SIZE3 * sizeof(TVoxelCanonical));
-
 					canonicalHashTable[iTargetHashBlock] = hashEntry;
 					entriesAllocType[iTargetHashBlock] = ITMLib::BOUNDARY_STATE;
 					lastFreeVoxelBlockId--;
@@ -217,15 +196,6 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 					hashEntry.pos = blockCoords[iTargetHashBlock];
 					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
 					hashEntry.offset = 0;
-//_DEBUG older alternative solution
-//					if (entriesAllocFill[iTargetHashBlock]) {
-//						TVoxelCanonical* localVoxelBlock = &(canonicalVoxels[hashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-//						memcpy(localVoxelBlock, &positiveHashEntry, SDF_BLOCK_SIZE3 * sizeof(TVoxelCanonical));
-//					}
-//END _DEBUG
-					TVoxelCanonical* localVoxelBlock = &(canonicalVoxels[hashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-					memcpy(localVoxelBlock, &positiveHashEntry, SDF_BLOCK_SIZE3 * sizeof(TVoxelCanonical));
-
 					int exlOffset = excessAllocationList[lastFreeExcessListId];
 					canonicalHashTable[iTargetHashBlock].offset = exlOffset + 1; //connect to child
 					canonicalHashTable[SDF_BUCKET_NUM + exlOffset] = hashEntry; //add child to the excess list
@@ -261,14 +231,18 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 	uchar* entriesAllocType = this->canonicalEntriesAllocType->GetData(MEMORYDEVICE_CPU);
 
 	//_DEBUG
-	int allTruncatedInLiveCount = 0;
+	int missedNarrowBandCount = 0;
+	int sdfTruncatedCount = 0;
+	float totalConf = 0.0f;
+
+	int voxelsBecameKnown = 0;//_DEBUG
 
 #ifdef WITH_OPENMP
-	//#pragma omp parallel for reduction(+:allTruncatedInLiveCount)
+	//#pragma omp parallel for reduction(+:missedNarrowBandCount, sdfTruncatedCount, totalConf)
 #endif
-	for (int hashBlockIndex = 0; hashBlockIndex < noTotalEntries; hashBlockIndex++) {
+	for (int hash = 0; hash < noTotalEntries; hash++) {
 		Vector3i canonicalHashEntryPosition;
-		const ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[hashBlockIndex];
+		const ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[hash];
 
 		if (currentCanonicalHashEntry.ptr < 0) continue;
 
@@ -288,8 +262,8 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					float oldSdf;
 					oldSdf = canonicalVoxel.sdf;
 					Vector3f oldColor = TO_FLOAT3(canonicalVoxel.clr) / 255.0f;
-					oldWDepth = canonicalVoxel.w_depth; //0 for UNKNOWN voxels
-					oldWColor = canonicalVoxel.w_color; //0 for UNKNOWN voxels
+					oldWDepth = canonicalVoxel.w_depth; //0 for VOXEL_UNKNOWN voxels
+					oldWColor = canonicalVoxel.w_color; //0 for VOXEL_UNKNOWN voxels
 
 					//projected position of the sdf point to the most recent frame
 					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
@@ -299,11 +273,17 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					int liveWDepth = 1;
 					int liveWColor = 1;
 					bool struckNarrowBand;
-					float liveSdf = interpolateTrilinearly_Corrected(liveVoxels, liveHashTable, projectedPosition,
+
+					float liveSdf = interpolateTrilinearly_Corrected2(liveVoxels, liveHashTable, projectedPosition,
 					                                                 liveCache, liveColor, liveConfidence,
 					                                                 struckNarrowBand);
-					if (!struckNarrowBand) {
-						allTruncatedInLiveCount++;//_DEBUG
+					if (!struckNarrowBand || 1.0 - std::abs(liveSdf)  < FLT_EPSILON ) {
+//						if(!struckNarrowBand){
+//							missedNarrowBandCount++;//_DEBUG
+//						}
+//						if(std::abs(liveSdf) - 1.0 < FLT_EPSILON){
+//							sdfTruncatedCount++;//_DEBUG
+//						}
 						continue;
 					}
 					float newSdf = oldWDepth * oldSdf + liveWDepth * liveSdf;
@@ -321,15 +301,22 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					canonicalVoxel.clr = TO_UCHAR3(newColor * 255.0f);
 					canonicalVoxel.w_color = (uchar) newWColor;
 					canonicalVoxel.confidence += liveConfidence;
-					if (canonicalVoxel.flags == ITMLib::UNKNOWN) {
-						canonicalVoxel.flags = ITMLib::KNOWN;
-						entriesAllocType[hashBlockIndex] = ITMLib::NO_CHANGE;
+					totalConf += liveConfidence;
+					if (canonicalVoxel.flags == ITMLib::VOXEL_UNKNOWN) {
+						canonicalVoxel.flags &= ITMLib::VOXEL_KNOWN;
+						//voxelsBecameKnown++;//_DEBUG
+						entriesAllocType[hash] = ITMLib::NO_CHANGE;
 					}
 				}
 			}
 		}
 	}
 	//_DEBUG
-	std::cout << "Number of lookups that missed the narrow band in live (target) frame during fusion: "
-	          << allTruncatedInLiveCount << std::endl;
+//  std::cout << "Number of discovered voxels in canonical: " << voxelsBecameKnown << std::endl;
+//	std::cout << "Number of lookups that missed the narrow band in live (target) frame during fusion: "
+//	          << missedNarrowBandCount << std::endl;
+//	std::cout << "Number of lookups that resulted in truncated value in live (target) frame during fusion: "
+//	          << sdfTruncatedCount << std::endl;
+	std::cout << "Total confidence added from live frame: "
+	          << totalConf << std::endl;
 }

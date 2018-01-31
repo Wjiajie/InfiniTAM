@@ -79,6 +79,27 @@ int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeHashedVoxelCount(ITMSce
 	return count;
 }
 
+template<bool hasSemanticInformation, typename TVoxel, typename TIndex> struct InlineComputeKnownVoxelCount;
+
+template<class TVoxel, typename TIndex>
+struct InlineComputeKnownVoxelCount<false, TVoxel, TIndex>{
+	static void compute(ITMScene<TVoxel, TIndex>* scene){
+		DIEWITHEXCEPTION("Voxels need to have semantic information to be marked as known or unknown.");
+	}
+};
+template<class TVoxel, typename TIndex>
+struct InlineComputeKnownVoxelCount<true, TVoxel, TIndex>{
+	static void compute(ITMScene<TVoxel, TIndex>* scene){
+
+	}
+};
+
+template<typename TVoxel, typename TIndex>
+int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeKnownVoxelCount(ITMScene<TVoxel, TIndex>* scene){
+	InlineComputeKnownVoxelCount<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene);
+
+};
+
 template<typename TVoxel, typename TIndex>
 std::vector<int> ITMSceneStatisticsCalculator<TVoxel, TIndex>::GetFilledHashBlockIds(ITMScene<TVoxel, TIndex>* scene) {
 	std::vector<int> ids;
@@ -91,3 +112,6 @@ std::vector<int> ITMSceneStatisticsCalculator<TVoxel, TIndex>::GetFilledHashBloc
 	}
 	return ids;
 }
+
+
+
