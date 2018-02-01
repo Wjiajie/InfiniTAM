@@ -26,7 +26,6 @@ public:
 	int ComputeHashedVoxelCount(ITMScene<TVoxel, TIndex>* scene);
 	std::vector<int> GetFilledHashBlockIds(ITMScene<TVoxel, TIndex>* scene);
 
-	template<typename TIndex, typename TVoxel>
 	int ComputeKnownVoxelCount(ITMScene<TVoxel, TIndex>* scene);
 };
 

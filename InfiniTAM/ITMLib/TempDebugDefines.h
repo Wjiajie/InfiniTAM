@@ -71,6 +71,7 @@
 #define TOC(var)
 #endif
 
+//#define OLD_UGLY_WAY
 
 #endif //ifdef _DEBUG
 

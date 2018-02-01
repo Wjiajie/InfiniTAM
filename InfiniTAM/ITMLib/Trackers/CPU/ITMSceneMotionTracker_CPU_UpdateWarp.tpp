@@ -54,6 +54,9 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 	double aveWarpDist = 0.0;
 	double aveWarpDistBoundary = 0.0;
 	int boundaryVoxelCount = 0;
+
+	int voxelOscillationCount = 0;
+	int ignoredVoxelOscillationCount = 0;
 #endif
 
 #ifdef PRINT_ENERGY_STATS
@@ -82,10 +85,10 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #ifndef OPENMP_WARP_UPDATE_COMPUTE_DISABLE
 
 #if defined(PRINT_ADDITIONAL_STATS) && defined(PRINT_ENERGY_STATS)
-#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, consideredVoxelCount, aveLiveSdf, aveWarpDist, aveSdfDiff, boundaryVoxelCount, aveWarpDistBoundary, totalDataEnergy, totalLevelSetEnergy, totalSmoothnessEnergy, totalKillingEnergy)
+#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, consideredVoxelCount, aveLiveSdf, aveWarpDist, aveSdfDiff, boundaryVoxelCount, aveWarpDistBoundary, totalDataEnergy, totalLevelSetEnergy, totalSmoothnessEnergy, totalKillingEnergy, voxelOscillationCount, ignoredVoxelOscillationCount)
 #else
 #if defined(PRINT_ADDITIONAL_STATS)
-#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, consideredVoxelCount, aveLiveSdf, aveWarpDist, aveSdfDiff, boundaryVoxelCount, aveWarpDistBoundary)
+#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, consideredVoxelCount, aveLiveSdf, aveWarpDist, aveSdfDiff, boundaryVoxelCount, aveWarpDistBoundary, voxelOscillationCount, ignoredVoxelOscillationCount)
 #elif defined(PRINT_ENERGY_STATS)
 #pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:totalDataEnergy, totalLevelSetEnergy, totalSmoothnessEnergy, totalKillingEnergy)
 #else
@@ -94,13 +97,15 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #endif //both sets of debug vars
 
 #endif// ndef OPENMP_WARP_UPDATE_COMPUTE_DISABLE
-#endif// WITH_OPENMP
+#else
 	//_DEBUG
-	int emptyInLiveCount = 0;
-	int emptyInCanonicalCount = 0;
-	for (int hashEntryId = 0; hashEntryId < noTotalEntries; hashEntryId++) {
+	std::vector<std::tuple<int,int>> voxelOscillations;
+#endif// WITH_OPENMP
+
+
+	for (int hash = 0; hash < noTotalEntries; hash++) {
 		Vector3i canonicalHashEntryPosition;
-		const ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[hashEntryId];
+		const ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[hash];
 		if (currentCanonicalHashEntry.ptr < 0) continue;
 		//position of the current entry in 3D space
 		canonicalHashEntryPosition = currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
@@ -115,17 +120,20 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					//=================================== PRELIMINARIES ================================================
 					//Jacobian and Hessian of the live scene sampled at warped location + deltas,
 					//as well as local Jacobian and Hessian of the warp field itself
-					float liveSdf; bool nonEmptyInLive;
+					float liveSdf; bool foundInLive;
 					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
 					liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache,
-					                                 nonEmptyInLive);
+					                                 foundInLive);
 
 					//almost no restriction -- Mira's case with addition of VOXEL_UNKNOWN flag checking
 					bool emptyInCanonical = canonicalVoxel.flags == ITMLib::VOXEL_UNKNOWN;
-					if(emptyInCanonical) emptyInCanonical++;
-					if(!nonEmptyInLive) emptyInLiveCount++;
-					if ((emptyInCanonical && !nonEmptyInLive) ||
-							(canonicalVoxel.flags & VOXEL_OSCILLATION_DETECTED_TWICE)) continue;
+					bool emptyInLive = !foundInLive || (1.0 - std::abs(liveSdf) < FLT_EPSILON);
+					bool ignoreVoxelDueToOscillation = canonicalVoxel.flags & VOXEL_OSCILLATION_DETECTED_TWICE;
+#ifdef PRINT_ADDITIONAL_STATS
+					if(ignoreVoxelDueToOscillation) ignoredVoxelOscillationCount++;
+#endif
+					if ((emptyInCanonical && emptyInLive) ||
+							ignoreVoxelDueToOscillation) continue;
 
 					float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
 
@@ -269,6 +277,12 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					const float maxVectorUpdateThresholdVoxels = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::maxVectorUpdateThresholdVoxels;
 					if (distanceFromTwoIterationsAgo < maxVectorUpdateThresholdVoxels && distanceTraveledInTwoIterations > maxVectorUpdateThresholdVoxels*2) {
 						//We think that an oscillation has been detected
+#ifdef PRINT_ADDITIONAL_STATS
+						voxelOscillationCount++;
+#ifndef WITH_OPENMP
+						voxelOscillations.push_back(std::tuple<int,int>(hash,locId));
+#endif
+#endif
 #ifdef LOG_HIGHLIGHTS
 						int& currentFrame = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
 						const int& frameOfInterest = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::frameOfInterest;
@@ -281,13 +295,15 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #ifdef OLD_UGLY_WAY
 						warpUpdate *= 0.5;//magic! -UNDO THE MAGIC FOR DEBUGGING OSCILLATIONS FURTHER
 #else //new super-awesome way (that still doesn't address the cause, but, oh well)
+
 						//TODO: do we need the iteration check? Verify -Greg (GitHub: Algomorph)
 						//TODO: magic value 10 should be fine-tuned and set as constant or parameter -Greg (GitHub: Algomorph)
-						if( ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration > 10) {
+						if( ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration > 15) {
 							if (!(canonicalVoxel.flags & VOXEL_OSCILLATION_DETECTED_ONCE)) {
 								canonicalVoxel.flags |= VOXEL_OSCILLATION_DETECTED_ONCE;
 							} else {
 								canonicalVoxel.flags |= VOXEL_OSCILLATION_DETECTED_TWICE;
+								continue;
 							}
 						}
 #endif
@@ -308,9 +324,6 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					};
 
 					canonicalVoxel.warp_t_update = warpUpdate;
-					//TODO: this (below) doesn't work for values > 1.0 -Greg (GitHub: Algomorph)
-					//canonicalVoxel.warp_t_update = TO_SHORT_FLOOR3((warpUpdate * FLOAT_TO_SHORT_CONVERSION_FACTOR));
-
 #ifdef PRINT_SINGLE_VOXEL_RESULT
 					if (printResult) {
 						std::cout << "Data update: " << deltaEData;
@@ -374,9 +387,6 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxelCanonical& canonicalVoxel = localVoxelBlock[locId];
-					//reset optimization-specific flags
-					canonicalVoxel.flags &= ~ITMLib::VOXEL_OSCILLATION_DETECTED_TWICE;
-					canonicalVoxel.flags &= ~ITMLib::VOXEL_OSCILLATION_DETECTED_ONCE;
 
 					canonicalVoxel.warp_t -= canonicalVoxel.warp_t_update;
 #if defined(PRINT_DEBUG_HISTOGRAM) || defined(PRINT_MAX_WARP_AND_UPDATE)
@@ -437,16 +447,27 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 	if (boundaryVoxelCount > 0) {
 		aveWarpDistBoundary /= boundaryVoxelCount;
 	}
-	std::cout << " Ave canonical SDF: " << aveCanonicaSdf
-	          << " Ave live SDF: " << aveLiveSdf
-	          << " Ave SDF diff: " << aveSdfDiff
+	std::cout //<< " Ave canonical SDF: " << aveCanonicaSdf
+	          //<< " Ave live SDF: " << aveLiveSdf
+	          //<< " Ave SDF diff: " << aveSdfDiff
 	          << " Used voxel count: " << consideredVoxelCount
-	          << " Ave warp distance: " << aveWarpDist;
+	          //<< " Ave warp distance: " << aveWarpDist
+	          << " Oscillation ct: " << voxelOscillationCount
+	          << " I-oscillation ct: " << ignoredVoxelOscillationCount;
+#ifndef WITH_OPENMP
+	std::cout << "Oscillation locations: {";
 
-	if (boundaryVoxelCount > 0) {
-		std::cout << " Boundary voxel count: " << boundaryVoxelCount
-		          << " Boundary ave w. dist.: " << aveWarpDistBoundary;
+	for(auto entry : voxelOscillations){
+		std::cout << std::get<0>(entry) <<"-" << std::get<1>(entry) << ", ";
 	}
+	std::cout << "}" << std::endl;
+#endif
+
+//	if (boundaryVoxelCount > 0) {
+//		std::cout << " Boundary voxel count: " << boundaryVoxelCount
+//		          << " Boundary ave w. dist.: " << aveWarpDistBoundary;
+//	}
+
 	std::cout << std::endl;
 #endif
 	//start _DEBUG
@@ -474,9 +495,6 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 	std::cout << "Max warp: " << maxWarpLength << " Max update: " << maxWarpUpdateLength << std::endl;
 #endif
 	//end _DEBUG
-	//_DEBUG
-	std::cout << "empty in live: " << emptyInLiveCount << std::endl;
-	std::cout << "empty in canonical: " << emptyInCanonicalCount << std::endl;
 	return maxWarpUpdateLength;
 
 }

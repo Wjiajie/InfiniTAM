@@ -51,9 +51,9 @@ protected:
 
 	float maxVectorUpdateThresholdVoxels;
 
+	int iteration;//_DEBUG?
 #ifdef _LOGGER
 	int currentFrameIx = 0;
-	int iteration;
 	const int frameOfInterest = 1;
 	ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex> sceneLogger;
 #endif

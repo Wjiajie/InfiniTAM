@@ -83,20 +83,26 @@ template<bool hasSemanticInformation, typename TVoxel, typename TIndex> struct I
 
 template<class TVoxel, typename TIndex>
 struct InlineComputeKnownVoxelCount<false, TVoxel, TIndex>{
-	static void compute(ITMScene<TVoxel, TIndex>* scene){
+	static int compute(ITMScene<TVoxel, TIndex>* scene){
 		DIEWITHEXCEPTION("Voxels need to have semantic information to be marked as known or unknown.");
 	}
 };
 template<class TVoxel, typename TIndex>
 struct InlineComputeKnownVoxelCount<true, TVoxel, TIndex>{
-	static void compute(ITMScene<TVoxel, TIndex>* scene){
-
+	static int compute(ITMScene<TVoxel, TIndex>* scene){
+		InlineComputeKnownVoxelCount instance;
+		VoxelTraversal(*scene,instance);
+		return instance.count;
+	}
+	int count = 0;
+	void operator()(TVoxel& voxel){
+		count += voxel.flags != ITMLib::VOXEL_UNKNOWN;
 	}
 };
 
 template<typename TVoxel, typename TIndex>
 int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeKnownVoxelCount(ITMScene<TVoxel, TIndex>* scene){
-	InlineComputeKnownVoxelCount<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene);
+	return InlineComputeKnownVoxelCount<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene);
 
 };
 

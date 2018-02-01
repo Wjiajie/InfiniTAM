@@ -37,12 +37,11 @@ void CopySceneWithOffset_CPU(ITMScene<TVoxel, TIndex>& destination, ITMScene<TVo
 	int noTotalEntries = source.index.noTotalEntries;
 
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
-		Vector3i canonicalHashEntryPosition;
 		const ITMHashEntry& currentOriginalHashEntry = originalHashTable[entryId];
 		if (currentOriginalHashEntry.ptr < 0) continue;
 
-		//position of the current entry in 3D space
-		canonicalHashEntryPosition = currentOriginalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		//position of the current entry in 3D space (in voxel units)
+		Vector3i canonicalHashEntryPosition = currentOriginalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 
 		TVoxel* localVoxelBlock = &(originalVoxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
@@ -82,26 +81,23 @@ bool SetVoxel_CPU(ITMScene<TVoxel, TIndex>& scene, Vector3i at, TVoxel voxel) {
 	scene.index.SetLastFreeExcessListId(lastFreeExcessListId);
 	return true;
 };
-#define BEGIN_VOXEL_TRAVERSAL_LOOP(scene) \
 
 
-#define END_VOXEL_TRAVERSAL_LOOP
 template<class TVoxel, class TIndex>
 void OffsetWarps(ITMScene<TVoxel, TIndex>& scene, Vector3f offset) {
 	TVoxel* voxels = scene.localVBA.GetVoxelBlocks();
-	const ITMHashEntry* originalHashTable = scene.index.GetEntries();
+	const ITMHashEntry* hashTable = scene.index.GetEntries();
 	int noTotalEntries = scene.index.noTotalEntries;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
-		const ITMHashEntry& currentOriginalHashEntry = originalHashTable[entryId];
-		if (currentOriginalHashEntry.ptr < 0) continue;
-		TVoxel* localVoxelBlock = &(voxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		const ITMHashEntry& currentHashEntry = hashTable[entryId];
+		if (currentHashEntry.ptr < 0) continue;
+		TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-					//Vector3i originalPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					localVoxelBlock[locId].warp_t_update = offset;
 					localVoxelBlock[locId].warp_t += offset;

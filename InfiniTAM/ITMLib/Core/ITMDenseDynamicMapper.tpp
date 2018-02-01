@@ -24,6 +24,7 @@
 #include "../Engines/Swapping/ITMSwappingEngineFactory.h"
 #include "../Trackers/ITMTrackerFactory.h"
 #include "../Objects/Scene/ITMSceneManipulation.h"
+#include "../Utils/ITMSceneStatisticsCalculator.h"
 
 using namespace ITMLib;
 
@@ -60,34 +61,39 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetLiveScene(
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(const ITMView* view,
                                                          const ITMTrackingState* trackingState,
-                                                         ITMScene<TVoxelCanonical, TIndex>* canonical_scene,
-                                                         ITMScene<TVoxelLive, TIndex>* live_scene,
+                                                         ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+                                                         ITMScene<TVoxelLive, TIndex>* liveScene,
                                                          ITMRenderState* renderState) {
 
 
 	// clear out the live-frame SDF
-	liveSceneRecoEngine->ResetScene(live_scene);
+	liveSceneRecoEngine->ResetScene(liveScene);
 
 	//** construct the new live-frame SDF
 	// allocation
-	liveSceneRecoEngine->AllocateSceneFromDepth(live_scene, view, trackingState, renderState);
+	liveSceneRecoEngine->AllocateSceneFromDepth(liveScene, view, trackingState, renderState);
 	// integration
-	liveSceneRecoEngine->IntegrateIntoScene(live_scene, view, trackingState, renderState);
+	liveSceneRecoEngine->IntegrateIntoScene(liveScene, view, trackingState, renderState);
+	ITMSceneStatisticsCalculator<TVoxelLive,TIndex> calculator;
+	std::cout << "Known voxels in live scene before fusion: "  << calculator.ComputeKnownVoxelCount(liveScene) << std::endl;
+	ITMSceneStatisticsCalculator<TVoxelCanonical,TIndex> calculator2;
+	std::cout << "Total voxels in canonical scene before fusion: "  << calculator2.ComputeHashedVoxelCount(canonicalScene) << std::endl;
+	sceneMotionTracker->ProcessFrame(canonicalScene, liveScene);
+	std::cout << "Known voxels in canonical scene after fusion: "  << calculator2.ComputeKnownVoxelCount(canonicalScene) << std::endl;
 
-	sceneMotionTracker->ProcessFrame(canonical_scene, live_scene);
 
 	if (swappingEngine != NULL) {
 		// swapping: CPU -> GPU
 		if (swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED)
-			swappingEngine->IntegrateGlobalIntoLocal(canonical_scene, renderState);
+			swappingEngine->IntegrateGlobalIntoLocal(canonicalScene, renderState);
 
 		// swapping: GPU -> CPU
 		switch (swappingMode) {
 			case ITMLibSettings::SWAPPINGMODE_ENABLED:
-				swappingEngine->SaveToGlobalMemory(canonical_scene, renderState);
+				swappingEngine->SaveToGlobalMemory(canonicalScene, renderState);
 				break;
 			case ITMLibSettings::SWAPPINGMODE_DELETE:
-				swappingEngine->CleanLocalMemory(canonical_scene, renderState);
+				swappingEngine->CleanLocalMemory(canonicalScene, renderState);
 				break;
 			case ITMLibSettings::SWAPPINGMODE_DISABLED:
 				break;

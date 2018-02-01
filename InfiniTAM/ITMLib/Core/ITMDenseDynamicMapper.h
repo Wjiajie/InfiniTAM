@@ -46,14 +46,14 @@ class ITMDenseDynamicMapper {
 		* \tparam TIndex type of index used by the voxel grid
 		* \param view view with the new (incoming) depth/color data
 		* \param trackingState best estimate of the camera tracking from previous to new frame so far
-		* \param canonical_scene - canonical/reference 3D scene where all data is fused/aggregated
-		* \param live_scene - live/target 3D scene generated from the incoming single frame of the video
+		* \param canonicalScene - canonical/reference 3D scene where all data is fused/aggregated
+		* \param liveScene - live/target 3D scene generated from the incoming single frame of the video
 		* \param renderState
 		*/
 		void ProcessFrame(const ITMView* view,
 		                  const ITMTrackingState* trackingState,
-		                  ITMScene <TVoxelCanonical, TIndex>* canonical_scene,
-		                  ITMScene <TVoxelLive, TIndex>* live_scene,
+		                  ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+		                  ITMScene <TVoxelLive, TIndex>* liveScene,
 		                  ITMRenderState* renderState_live);
 
 		/// Update the visible list (this can be called to update the visible list when fusion is turned off)

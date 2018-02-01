@@ -32,6 +32,7 @@
 #include "ITMSceneMotionTracker_CPU.h"
 #include "ITMSceneMotionTracker_CPU_UpdateWarp.tpp"
 #include "../Shared/ITMSceneMotionTracker_Shared.h"
+#include "../../Utils/ITMSceneStatisticsCalculator.h"
 
 
 using namespace ITMLib;
@@ -235,8 +236,6 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 	int sdfTruncatedCount = 0;
 	float totalConf = 0.0f;
 
-	int voxelsBecameKnown = 0;//_DEBUG
-
 #ifdef WITH_OPENMP
 	//#pragma omp parallel for reduction(+:missedNarrowBandCount, sdfTruncatedCount, totalConf)
 #endif
@@ -257,6 +256,9 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					Vector3i originalPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxelCanonical& canonicalVoxel = localVoxelBlock[locId];
+					//reset optimization-specific flags
+					canonicalVoxel.flags &= ~ITMLib::VOXEL_OSCILLATION_DETECTED_TWICE;
+					canonicalVoxel.flags &= ~ITMLib::VOXEL_OSCILLATION_DETECTED_ONCE;
 
 					int oldWDepth, oldWColor;
 					float oldSdf;
@@ -278,12 +280,12 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					                                                 liveCache, liveColor, liveConfidence,
 					                                                 struckNarrowBand);
 					if (!struckNarrowBand || 1.0 - std::abs(liveSdf)  < FLT_EPSILON ) {
-//						if(!struckNarrowBand){
-//							missedNarrowBandCount++;//_DEBUG
-//						}
-//						if(std::abs(liveSdf) - 1.0 < FLT_EPSILON){
-//							sdfTruncatedCount++;//_DEBUG
-//						}
+						if(!struckNarrowBand){
+							missedNarrowBandCount++;//_DEBUG
+						}
+						if(1.0 - std::abs(liveSdf) < FLT_EPSILON){
+							sdfTruncatedCount++;//_DEBUG
+						}
 						continue;
 					}
 					float newSdf = oldWDepth * oldSdf + liveWDepth * liveSdf;
@@ -303,20 +305,20 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					canonicalVoxel.confidence += liveConfidence;
 					totalConf += liveConfidence;
 					if (canonicalVoxel.flags == ITMLib::VOXEL_UNKNOWN) {
-						canonicalVoxel.flags &= ITMLib::VOXEL_KNOWN;
-						//voxelsBecameKnown++;//_DEBUG
+						canonicalVoxel.flags |= ITMLib::VOXEL_KNOWN;
 						entriesAllocType[hash] = ITMLib::NO_CHANGE;
 					}
 				}
 			}
 		}
 	}
+
 	//_DEBUG
-//  std::cout << "Number of discovered voxels in canonical: " << voxelsBecameKnown << std::endl;
-//	std::cout << "Number of lookups that missed the narrow band in live (target) frame during fusion: "
-//	          << missedNarrowBandCount << std::endl;
-//	std::cout << "Number of lookups that resulted in truncated value in live (target) frame during fusion: "
-//	          << sdfTruncatedCount << std::endl;
+	std::cout << "Number of lookups that missed the narrow band in live (target) frame during fusion: "
+	          << missedNarrowBandCount << std::endl;
+	std::cout << "Number of lookups that resulted in truncated value in live (target) frame during fusion: "
+	          << sdfTruncatedCount << std::endl;
 	std::cout << "Total confidence added from live frame: "
 	          << totalConf << std::endl;
+
 }
