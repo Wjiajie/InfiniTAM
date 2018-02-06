@@ -57,6 +57,9 @@ protected:
 	const int frameOfInterest = 1;
 	ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex> sceneLogger;
 #endif
+#ifdef WRITE_ENERGY_STATS_TO_FILE
+	std::ofstream energy_stat_file;
+#endif
 
 public:
 	explicit ITMSceneMotionTracker(const ITMSceneParams& params);

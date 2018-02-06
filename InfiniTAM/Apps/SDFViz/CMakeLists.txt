@@ -8,6 +8,7 @@
 
 set(targetname SDFViz)
 
+
 ################################
 # Specify the libraries to use #
 ################################
@@ -71,5 +72,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/LinkUVC.cmake)
 # Extra libraries (this project only)
 #################################
 find_package(VTK REQUIRED)
+find_package(Boost COMPONENTS program_options REQUIRED)
+
 include(${VTK_USE_FILE})
-target_link_libraries(${targetname} ${VTK_LIBRARIES} ITMLib ORUtils)
+target_link_libraries(${targetname} ${VTK_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ITMLib ORUtils)

@@ -102,7 +102,7 @@ public:
 
 
 	//================= CONSTRUCTORS/DESTRUCTORS =
-	SDFViz();
+	SDFViz(std::string pathToScene);
 	virtual ~SDFViz();
 	//================= MEMBER FUNCTIONS ==================
 	int run();
@@ -162,5 +162,3 @@ private:
 
 	void UpdateIterationIndicator(unsigned int newValue);
 };
-
-

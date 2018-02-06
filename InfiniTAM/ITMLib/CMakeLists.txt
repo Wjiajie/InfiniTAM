@@ -17,6 +17,7 @@ INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseOpenMP.cmake)
 
 #BEGIN _DEBUG
 find_package(OpenCV REQUIRED core highgui imgproc imgcodecs)
+#TODO: make optional -Greg (GitHub: Algomorph)
 find_package(Boost REQUIRED filesystem)
 #END _DEBUG
 
@@ -489,14 +490,16 @@ Utils/ITMLibSettings.cpp
 Utils/ITMSceneSliceRasterizer.tpp
 Utils/ITMSceneLogger.tpp
 Utils/ITMIntArrayMap3D.cpp
+Utils/ITM3DNestedMap.tpp
 Utils/ITMSceneStatisticsCalculator.tpp
+Utils/ITMDynamicVoxelIterationInfo.cpp
 )
 
 SET(ITMLIB_UTILS_HEADERS
 Utils/ITMCUDAUtils.h
 Utils/ITMImageTypes.h
 Utils/ITMHashBlockProperties.h
-    Utils/ITMVoxelFlags.h
+Utils/ITMVoxelFlags.h
 Utils/ITMLibSettings.h
 Utils/ITMMath.h
 Utils/ITMMemoryBlockTypes.h
@@ -507,7 +510,9 @@ Utils/ITMSceneSliceRasterizer.h
 Utils/ITMSurfelSceneParams.h
 Utils/ITMSceneLogger.h
 Utils/ITMIntArrayMap3D.h
+Utils/ITM3DNestedMap.h
 Utils/ITMSceneStatisticsCalculator.h
+Utils/ITMDynamicVoxelIterationInfo.h
 )
 
 #################################################################

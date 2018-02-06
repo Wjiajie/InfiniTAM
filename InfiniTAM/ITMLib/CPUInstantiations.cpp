@@ -1,7 +1,7 @@
 // Copyright 2014-2017 Oxford University Innovation Limited and the authors of InfiniTAM
 
 #include "ITMLibDefines.h"
-//Note: ".tpp" files have to be included for all explicit instanciations in order to link properly
+//Note: ".tpp" files have to be included for all explicit instantiations in order to link properly
 
 #include "Core/ITMBasicEngine.tpp"
 #include "Core/ITMBasicSurfelEngine.tpp"

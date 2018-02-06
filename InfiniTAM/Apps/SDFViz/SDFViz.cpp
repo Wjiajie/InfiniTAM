@@ -71,7 +71,7 @@ inline bool ends_with(std::string const& value, std::string const& ending) {
 	return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 }
 
-SDFViz::SDFViz() :
+SDFViz::SDFViz(std::string pathToScene) :
 
 		canonicalScenePipe(canonicalNegativeSDFVoxelColor,
 		                   canonicalPositiveSDFVoxelColor,
@@ -84,10 +84,10 @@ SDFViz::SDFViz() :
 		              liveHashBlockEdgeColor),
 		iterationIndicator(vtkSmartPointer<vtkTextActor>::New()){
 	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
-#ifdef USE_TEST_SCENE
+#ifdef USE_TEST_SCENE//_DEBUG
 			"/media/algomorph/Data/Reconstruction/debug_output/test_scene",
 #else
-			"/media/algomorph/Data/Reconstruction/debug_output/scene",
+			pathToScene,
 #endif
 			canonicalScenePipe.GetScene(), liveScenePipe.GetScene());
 	InitializeRendering();
@@ -143,7 +143,6 @@ int SDFViz::run() {
 		//renderer->ResetCamera();//used when need to choose new better initial camera pose manually
 #endif
 
-
 	renderWindow->Render();
 	renderWindowInteractor->Start();
 
@@ -165,7 +164,8 @@ void SDFViz::InitializeRendering() {
 	//renderer->SetBackground(1.0, 1.0, 1.0);
 
 	renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-	renderWindow->SetSize(1280, 768);
+	renderWindow->SetSize(renderWindow->GetScreenSize());
+
 	renderWindow->SetWindowName("SDF Viz (pre-alpha)");//TODO insert git hash here --Greg (GitHub:Algomorph)
 	renderWindow->AddRenderer(renderer);
 

@@ -14,9 +14,29 @@
 //  limitations under the License.
 //  ================================================================
 #include "SDFViz.h"
+#include <boost/program_options.hpp>
 
-int main(int, char* []) {
+namespace bpo = boost::program_options;
 
-	SDFViz application;
-	application.run();
+int main(int argc, const char* argv[]) {
+	try{
+		bpo::options_description description{"Options"};
+		description.add_options()
+				("help,h", "Help screen")
+				("directory,d",bpo::value<std::string>()->default_value("/media/algomorph/Data/Reconstruction/debug_output/scene"),
+				 "Directory where to load the SDF scene from.");
+
+		bpo::variables_map vm;
+		bpo::store(bpo::parse_command_line(argc, argv, description), vm);
+		bpo::notify(vm);
+
+		if (vm.count("help")){
+			std::cout << description << std::endl;
+		}else{
+			SDFViz application(vm["directory"].as<std::string>());
+			application.run();
+		}
+	}catch(const bpo::error &ex){
+		std::cerr << ex.what() << std::endl;
+	}
 }

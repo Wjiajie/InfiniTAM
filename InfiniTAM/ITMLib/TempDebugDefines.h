@@ -27,12 +27,21 @@
 
 #include "Utils/ITMSceneLogger.h"
 //#define SAVE_FRAME
+
 #ifdef SAVE_FRAME
-//#define SAVE_WARP
-//#define LOG_HIGHLIGHTS
+#define SAVE_WARP
+#define LOG_HIGHLIGHTS
+#else
+#define LOG_INTEREST_REGIONS //loads the scene at the frame and saves warps for interest regions
+#ifdef LOG_INTEREST_REGIONS
+//#define FILTER_HIGHLIGHTS
+#ifdef FILTER_HIGHLIGHTS
+#define HIGHLIGHT_MIN_RECURRENCES 4
 #endif
-//#define LOG_HIGHLIGHT_REGIONS
-//#define LOAD_FRAME
+#endif //LOG INTEREST REGIONS
+//#define LOAD_FRAME //simply loads the scene at the frame before optimization
+#endif //SAVE FRAME
+
 
 #endif //ifdef _LOGGER
 
@@ -60,7 +69,6 @@
 
 #ifdef PRINT_TIME_STATS
 #define TIC(var)\
-    auto start_##var = std::chrono::steady_clock::now();
 
 #define TOC(var)\
     auto end_##var = std::chrono::steady_clock::now();\
@@ -71,9 +79,9 @@
 #define TOC(var)
 #endif
 
-//#define OLD_UGLY_WAY
+#define OLD_UGLY_WAY
+#ifdef PRINT_ENERGY_STATS
+#define WRITE_ENERGY_STATS_TO_FILE
+#endif
 
 #endif //ifdef _DEBUG
-
-
-

@@ -83,6 +83,10 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 	            liveImgOut);
 	cv::Mat blank = cv::Mat::zeros(liveImg.rows, liveImg.cols, CV_8UC1);
 #endif
+#ifdef WRITE_ENERGY_STATS_TO_FILE
+	const std::string energy_stat_file_path = "/media/algomorph/Data/Reconstruction/debug_output/energy_stats.txt";
+	energy_stat_file = std::ofstream(energy_stat_file_path.c_str(),std::ios_base::out);
+#endif
 	//END _DEBUG
 
 	//START _DEBUG
@@ -107,12 +111,14 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 		sceneLogger.StopLoadingWarpState();
 	}
 #endif
-#ifdef LOG_HIGHLIGHT_REGIONS
+#ifdef LOG_INTEREST_REGIONS
 	if(currentFrameIx == frameOfInterest) {
-		sceneLogger.LoadScenes();
+		sceneLogger.LoadScenesCompact();
 		sceneLogger.LoadHighlights();
-		sceneLogger.FilterHighlights(15);//only keep oscillations that occur for the same voxels more than 15 times
+#ifdef FILTER_HIGHLIGHTS
+		sceneLogger.FilterHighlights(HIGHLIGHT_MIN_RECURRENCES);//only keep oscillations that occur for the same voxels more than N times
 		std::cout << "Highlights after filtering: " << std::endl;
+#endif
 		sceneLogger.PrintHighlights();
 		sceneLogger.SetUpInterestRegionsForSaving();
 	}
@@ -162,7 +168,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 			sceneLogger.SaveCurrentWarpState();
 		}
 #endif
-#ifdef LOG_HIGHLIGHT_REGIONS
+#ifdef LOG_INTEREST_REGIONS
 		if(currentFrameIx == frameOfInterest){
 			sceneLogger.SaveAllInterestRegionWarps();
 		}
@@ -180,6 +186,9 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 #endif
 	}
 	currentFrameIx++;
+#ifdef WRITE_ENERGY_STATS_TO_FILE
+	energy_stat_file.close();
+#endif
 	//END _DEBUG
 
 	this->FuseFrame(canonicalScene, liveScene);

@@ -15,7 +15,7 @@
 //  ================================================================
 #include "ITMLibDefines.h"
 
-//Note: ".tpp" files have to be included for all explicit instanciations in order to link properly
+//Note: ".tpp" files have to be included for all explicit instantiations in order to link properly
 #include "Objects/Scene/ITMSceneManipulation.tpp"
 #include "Core/ITMKillingEngine.tpp"
 #include "Core/ITMDenseDynamicMapper.tpp"
@@ -28,6 +28,8 @@
 #include "Utils/ITMSceneSliceRasterizer.tpp"
 #include "Utils/ITMSceneStatisticsCalculator.tpp"
 #include "Utils/ITMSceneLogger.tpp"
+#include "Utils/ITM3DNestedMap.tpp"
+#include "Utils/ITMDynamicVoxelIterationInfo.h"
 
 //dynamic fusion
 template class ITMSwappingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
@@ -47,6 +49,8 @@ template class ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 template class ITMSceneSliceRasterizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 template class ITMSceneStatisticsCalculator<ITMVoxelCanonical,ITMVoxelIndex>;
 template class ITMSceneStatisticsCalculator<ITMVoxelLive,ITMVoxelIndex>;
+template class ITM3DNestedMap<int>;
+template class ITM3DNestedMap<ITMDynamicVoxelIterationInfo>;
 
 //scene manipulation functions
 template void CopySceneWithOffset_CPU<ITMVoxelCanonical,ITMVoxelIndex>(

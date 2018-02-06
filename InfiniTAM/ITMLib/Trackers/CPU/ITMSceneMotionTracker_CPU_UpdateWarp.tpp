@@ -23,6 +23,7 @@
 //local
 #include "ITMSceneMotionTracker_CPU.h"
 #include "../Shared/ITMSceneMotionTracker_Shared.h"
+#include "../../Utils/ITMVoxelFlags.h"
 
 
 using namespace ITMLib;
@@ -46,7 +47,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 
 	//_DEBUG
 #ifdef _DEBUG
-	#ifdef PRINT_ADDITIONAL_STATS
+#ifdef PRINT_ADDITIONAL_STATS
 	double aveCanonicaSdf = 0.0;
 	double aveLiveSdf = 0.0;
 	double aveSdfDiff = 0.0;
@@ -57,7 +58,11 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 
 	int voxelOscillationCount = 0;
 	int ignoredVoxelOscillationCount = 0;
-#endif
+#ifndef WITH_OPENMP
+//_DEBUG
+	std::vector<std::tuple<int, int>> voxelOscillations;
+#endif // WITH_OPENMP
+#endif // PRINT_ADDITIONAL_STATS
 
 #ifdef PRINT_ENERGY_STATS
 	double totalDataEnergy = 0.0;
@@ -98,8 +103,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 
 #endif// ndef OPENMP_WARP_UPDATE_COMPUTE_DISABLE
 #else
-	//_DEBUG
-	std::vector<std::tuple<int,int>> voxelOscillations;
+
 #endif// WITH_OPENMP
 
 
@@ -117,33 +121,33 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxelCanonical& canonicalVoxel = localVoxelBlock[locId];
 
-					//=================================== PRELIMINARIES ================================================
-					//Jacobian and Hessian of the live scene sampled at warped location + deltas,
-					//as well as local Jacobian and Hessian of the warp field itself
-					float liveSdf; bool foundInLive;
+					//=================================== TRUNCATION REGION CHECKS =====================================
+					float liveSdf;
+					bool foundInLive;
 					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
 					liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache,
 					                                 foundInLive);
 
 					//almost no restriction -- Mira's case with addition of VOXEL_UNKNOWN flag checking
 					bool emptyInCanonical = canonicalVoxel.flags == ITMLib::VOXEL_UNKNOWN;
+					// the latter condition needs to be included since sometimes, even if some live voxels in the lookup
+					// neighborhood are non-truncated, they ally may be a whole voxel away from the warped position,
+					// which would then result in a live SDF lookup equivalent to that in a truncated region.
 					bool emptyInLive = !foundInLive || (1.0 - std::abs(liveSdf) < FLT_EPSILON);
-					bool ignoreVoxelDueToOscillation = canonicalVoxel.flags & VOXEL_OSCILLATION_DETECTED_TWICE;
+					bool ignoreVoxelDueToOscillation = canonicalVoxel.flags & ITMLib::VOXEL_OSCILLATION_DETECTED_TWICE;
 #ifdef PRINT_ADDITIONAL_STATS
-					if(ignoreVoxelDueToOscillation) ignoredVoxelOscillationCount++;
+					if (ignoreVoxelDueToOscillation) ignoredVoxelOscillationCount++;
 #endif
 					if ((emptyInCanonical && emptyInLive) ||
-							ignoreVoxelDueToOscillation) continue;
+					    ignoreVoxelDueToOscillation)
+						continue;
 
 					float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
-
 					bool useColor;
-
-					Vector3f liveColor, liveSdfJacobian, liveColorJacobian;
-					Matrix3f liveSdfHessian;
-
+					Vector3f liveColor, liveSdfJacobian, liveColorJacobian, lookupSdfJacobian;
+					Matrix3f lookupSdfHessian;
 					//_DEBUG
-					bool boundary, printResult = false;
+					bool boundary = false, printResult = false;
 #ifdef PRINT_SINGLE_VOXEL_RESULT
 					if (originalPosition == (ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos1)) {
 						printResult = true;
@@ -157,30 +161,50 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #ifdef PRINT_TIME_STATS
 					TIC(timeDataJandHCompute);
 #endif
+
+					//================================ RETRIEVE NEIGHBOR'S WARPS =======================================
+					const int neighborhoodSize = 9;
+					Vector3f warp_tNeighbors[neighborhoodSize];
+					bool neighborFound[neighborhoodSize];
+					//    0        1        2          3         4         5           6         7         8
+					//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
+					findPoint2ndDerivativeNeighborhoodWarp(warp_tNeighbors/*x9*/, neighborFound, originalPosition,
+					                                       canonicalVoxels, canonicalHashTable, canonicalCache);
+					for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
+						if (!neighborFound[iNeighbor]) {
+							warp_tNeighbors[iNeighbor] = canonicalVoxel.warp_t;
+							boundary = true;
+						}
+					}
+#ifdef PRINT_ADDITIONAL_STATS
+					if (boundary) boundaryVoxelCount++;
+#endif
+					// =============================== DATA & LEVEL SET TERMS ==========================================
 					Vector3f deltaEData = Vector3f(0.0f);
 					Vector3f deltaELevelSet = Vector3f(0.0f);
-					float diffSdf = 0.0f;
-					float sdfJacobianNormMinusOne = 0.0f;
-					//for voxels in canonical that are unknown, we completely disregard the data and level set terms:
-					//there is no information
-					if(!emptyInCanonical){
+					float diffSdf = 0.0f, sdfJacobianNormMinusUnity = 0.0f;
+					//if we are in the truncated region of canonical or live, we completely disregard the data and level set terms:
+					//there is no sufficient information to compute those terms. There we rely solely on the killing regularizer
+					if (!(emptyInCanonical || emptyInLive)) {
+						//=================================== DATA TERM ================================================
 						if (std::abs(canonicalSdf) >
 						    ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::colorSdfThreshold) {
 							useColor = false;
-							ComputePerPointWarpedLiveJacobianAndHessian<TVoxelCanonical, TVoxelLive, TIndex, typename TIndex::IndexCache>
+							//This is jacobian of the live frame at the lookup (warped) position
+							ComputePerPointWarpedLiveJacobian<TVoxelCanonical, TVoxelLive, TIndex, typename TIndex::IndexCache>
 									(originalPosition, canonicalVoxel.warp_t,
 									 canonicalVoxels, canonicalHashTable, canonicalCache,
 									 liveVoxels, liveHashTable, liveCache,
-									 liveSdf, liveSdfJacobian, liveSdfHessian, printResult);
+									 liveSdf, liveSdfJacobian, printResult);
 						} else {
 							useColor = true;
-							ComputePerPointWarpedLiveJacobianAndHessian<TVoxelCanonical, TVoxelLive, TIndex, typename TIndex::IndexCache>
+							//This is jacobian of the live frame at the lookup (warped) position
+							ComputePerPointWarpedLiveJacobian<TVoxelCanonical, TVoxelLive, TIndex, typename TIndex::IndexCache>
 									(originalPosition, canonicalVoxel.warp_t,
 									 canonicalVoxels, canonicalHashTable, canonicalCache,
 									 liveVoxels, liveHashTable, liveCache,
-									 liveSdf, liveColor, liveSdfJacobian, liveColorJacobian, liveSdfHessian);
+									 liveSdf, liveColor, liveSdfJacobian, liveColorJacobian);
 						}
-						//=================================== DATA TERM ====================================================
 						//Compute data term error / energy
 						diffSdf = liveSdf - canonicalSdf;
 
@@ -191,14 +215,17 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 									squareDistance(liveColor, TO_FLOAT3(canonicalVoxel.clr) / 255.f);
 							deltaEData += liveColorJacobian * diffColor;
 						}
-
 						//=================================== LEVEL SET TERM ===============================================
-						float sdfJacobianNorm = length(liveSdfJacobian);
-						sdfJacobianNormMinusOne = sdfJacobianNorm - 1.0f;
+						ComputeLookupJacobianAndHessian(warp_tNeighbors, originalPosition, liveSdf, liveVoxels,
+						                                liveHashTable, liveCache, lookupSdfJacobian, lookupSdfHessian,
+						                                printResult);
+						float sdfJacobianNorm = length(lookupSdfJacobian);
+						sdfJacobianNormMinusUnity = sdfJacobianNorm - 1.f;
 						deltaELevelSet =
-								sdfJacobianNormMinusOne * (liveSdfHessian * liveSdfJacobian) /
+								sdfJacobianNormMinusUnity * (lookupSdfJacobian * lookupSdfJacobian) /
 								(sdfJacobianNorm + ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::epsilon);
 					}
+					//=================================== KILLING TERM =================================================
 #ifdef PRINT_TIME_STATS
 					TOC(timeDataJandHCompute);
 					TIC(timeWarpJandHCompute);
@@ -207,16 +234,14 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					Matrix3f warpHessian[3];
 
 					ComputePerPointWarpJacobianAndHessian<TVoxelCanonical, TIndex, typename TIndex::IndexCache>(
-							canonicalVoxel.warp_t, originalPosition, canonicalVoxels, canonicalHashTable,
-							canonicalCache, warpJacobian, warpHessian, boundary, printResult);
-#ifdef PRINT_ADDITIONAL_STATS
-					if (boundary) boundaryVoxelCount++;
-#endif
+							canonicalVoxel.warp_t, originalPosition, warp_tNeighbors, neighborFound,
+							warpJacobian, warpHessian, printResult);
+
 #ifdef PRINT_TIME_STATS
 					TOC(timeWarpJandHCompute);
 					TIC(timeUpdateTermCompute);
 #endif
-					//=================================== KILLING TERM =================================================
+
 					const float gamma = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::rigidityEnforcementFactor;
 					float onePlusGamma = 1.0f + gamma;
 					// |0, 3, 6|     |m00, m10, m20|      |u_xx, u_xy, u_xz|
@@ -275,12 +300,13 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					//TODO: this is a bad way to do convergence. Use something like Adam instead, maybe? --Greg
 					//TODO: figure out the exact conditions causing these oscillations, maybe nothing fancy is necessary here --Greg(GitHub: Algomorph)
 					const float maxVectorUpdateThresholdVoxels = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::maxVectorUpdateThresholdVoxels;
-					if (distanceFromTwoIterationsAgo < maxVectorUpdateThresholdVoxels && distanceTraveledInTwoIterations > maxVectorUpdateThresholdVoxels*2) {
+					if (distanceFromTwoIterationsAgo < maxVectorUpdateThresholdVoxels &&
+					    distanceTraveledInTwoIterations >= maxVectorUpdateThresholdVoxels * 2) {
 						//We think that an oscillation has been detected
 #ifdef PRINT_ADDITIONAL_STATS
 						voxelOscillationCount++;
 #ifndef WITH_OPENMP
-						voxelOscillations.push_back(std::tuple<int,int>(hash,locId));
+						voxelOscillations.push_back(std::tuple<int, int>(hash, locId));
 #endif
 #endif
 #ifdef LOG_HIGHLIGHTS
@@ -289,7 +315,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						int& currentIteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
 						if(currentFrame == frameOfInterest){
 							ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::sceneLogger
-									.LogHighlight(hashEntryId,locId,currentFrame,currentIteration);
+									.LogHighlight(hash,locId,currentFrame,currentIteration);
 						}
 #endif
 #ifdef OLD_UGLY_WAY
@@ -297,7 +323,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #else //new super-awesome way (that still doesn't address the cause, but, oh well)
 
 						//TODO: do we need the iteration check? Verify -Greg (GitHub: Algomorph)
-						//TODO: magic value 10 should be fine-tuned and set as constant or parameter -Greg (GitHub: Algomorph)
+						//TODO: magic value should be fine-tuned and set as constant or parameter -Greg (GitHub: Algomorph)
 						if( ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration > 15) {
 							if (!(canonicalVoxel.flags & VOXEL_OSCILLATION_DETECTED_ONCE)) {
 								canonicalVoxel.flags |= VOXEL_OSCILLATION_DETECTED_ONCE;
@@ -349,7 +375,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #endif
 #ifdef PRINT_ENERGY_STATS
 					totalDataEnergy += 0.5 * (diffSdf * diffSdf);
-					totalLevelSetEnergy += weightLevelSet * 0.5 * (sdfJacobianNormMinusOne * sdfJacobianNormMinusOne);
+					totalLevelSetEnergy +=
+							weightLevelSet * 0.5 * (sdfJacobianNormMinusUnity * sdfJacobianNormMinusUnity);
 					totalKillingEnergy += weightKilling * localKillingEnergy;
 					totalSmoothnessEnergy += weightKilling * localSmoothnessEnergy;
 #endif
@@ -437,6 +464,11 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 //	          << " No Killing: " << totalDataEnergy + totalLevelSetEnergy << reset
 //	          << " No Level Set: " << totalDataEnergy + totalKillingEnergy;
 	std::cout << std::endl;
+#ifdef WRITE_ENERGY_STATS_TO_FILE
+	std::ofstream& energy_stat_file = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::energy_stat_file;
+	energy_stat_file << totalDataEnergy << ", " << totalLevelSetEnergy << ", " << totalSmoothnessEnergy << ", "
+	                 << totalKillingEnergy << ", " << totalEnergy << std::endl;
+#endif
 #endif
 #ifdef PRINT_ADDITIONAL_STATS
 	//_DEBUG
@@ -448,17 +480,17 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 		aveWarpDistBoundary /= boundaryVoxelCount;
 	}
 	std::cout //<< " Ave canonical SDF: " << aveCanonicaSdf
-	          //<< " Ave live SDF: " << aveLiveSdf
-	          //<< " Ave SDF diff: " << aveSdfDiff
-	          << " Used voxel count: " << consideredVoxelCount
-	          //<< " Ave warp distance: " << aveWarpDist
-	          << " Oscillation ct: " << voxelOscillationCount
-	          << " I-oscillation ct: " << ignoredVoxelOscillationCount;
+			//<< " Ave live SDF: " << aveLiveSdf
+			//<< " Ave SDF diff: " << aveSdfDiff
+			<< " Used voxel count: " << consideredVoxelCount
+			//<< " Ave warp distance: " << aveWarpDist
+			<< " Oscillation ct: " << voxelOscillationCount
+			<< " I-oscillation ct: " << ignoredVoxelOscillationCount;
 #ifndef WITH_OPENMP
-	std::cout << "Oscillation locations: {";
+	std::cout << " Oscillation locations: {";
 
-	for(auto entry : voxelOscillations){
-		std::cout << std::get<0>(entry) <<"-" << std::get<1>(entry) << ", ";
+	for (auto entry : voxelOscillations) {
+		std::cout << std::get<0>(entry) << "-" << std::get<1>(entry) << ", ";
 	}
 	std::cout << "}" << std::endl;
 #endif
