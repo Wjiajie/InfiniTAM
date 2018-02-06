@@ -57,26 +57,14 @@ inline void ComputeLookupJacobianAndHessian(const CONSTPTR(Vector3f*) warp_tNeig
 			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_yCenter_WarpForward, liveCache),
 			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_zCenter_WarpForward, liveCache));
 
-	// === check lookups for voxels forward by 1 in x, y, z of the canonical frame,
-	// decrease u, v, w by 1 in each direction
-	// (vectors like Vector3f(1.f, 0.f, 0.f) implicitly subtracted from voxel position to get centerPos)
-	Vector3f lookupPos_xForward_WarpBack = centerPos + warp_tNeighbors[3];
-	Vector3f lookupPos_yForward_WarpBack = centerPos + warp_tNeighbors[4];
-	Vector3f lookupPos_zForward_WarpBack = centerPos + warp_tNeighbors[5];
-	Vector3f lookupSdf_Forward_WarpBack(
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_xForward_WarpBack, liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_yForward_WarpBack, liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_zForward_WarpBack, liveCache)
-	);
-
 	// === check lookups for voxels forward by 1 in x, y, z of the canonical frame, use their own warps
-	Vector3f lookupPos_xForward_WarpCenter = lookupPos_xForward_WarpBack + Vector3f(1.f, 0.f, 0.f);
-	Vector3f lookupPos_yForward_WarpCenter = lookupPos_yForward_WarpBack + Vector3f(0.f, 1.f, 0.f);
-	Vector3f lookupPos_zForward_WarpCenter = lookupPos_zForward_WarpBack + Vector3f(0.f, 0.f, 1.f);
+	Vector3f lookupPos_xForward_WarpCenter = lookupPos_xCenter_WarpForward + warp_tNeighbors[3];
+	Vector3f lookupPos_yForward_WarpCenter = lookupPos_yCenter_WarpForward + warp_tNeighbors[4];
+	Vector3f lookupPos_zForward_WarpCenter = lookupPos_zCenter_WarpForward + warp_tNeighbors[5];
 	Vector3f lookupSdf_Forward_WarpCenter(
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_xForward_WarpBack, liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_yForward_WarpBack, liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_zForward_WarpBack, liveCache)
+			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_xForward_WarpCenter, liveCache),
+			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_yForward_WarpCenter, liveCache),
+			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_zForward_WarpCenter, liveCache)
 	);
 
 	// === check lookups for voxels forward by 1 in x, y, z of the canonical frame, use their own warps
@@ -84,9 +72,9 @@ inline void ComputeLookupJacobianAndHessian(const CONSTPTR(Vector3f*) warp_tNeig
 	Vector3f lookupPos_yForward_WarpForward = lookupPos_yForward_WarpCenter + Vector3f(0.f, 1.f, 0.f);
 	Vector3f lookupPos_zForward_WarpForward = lookupPos_zForward_WarpCenter + Vector3f(0.f, 0.f, 1.f);
 	Vector3f lookupSdf_Forward_WarpForward(
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_xForward_WarpCenter, liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_yForward_WarpCenter, liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_zForward_WarpCenter, liveCache)
+			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_xForward_WarpForward, liveCache),
+			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_yForward_WarpForward, liveCache),
+			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_zForward_WarpForward, liveCache)
 	);
 
 	//    0        1        2          3         4         5           6         7         8
