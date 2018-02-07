@@ -81,6 +81,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #endif
 
 	const float epsilon = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::epsilon;
+	// fraction of narrow band (non-truncated region) half-width that a voxel spans
+	const float unity = liveScene->sceneParams->voxelSize / liveScene->sceneParams->mu;
 
 	TIC(timeWarpUpdateCompute);
 
@@ -144,8 +146,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 
 					float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
 					bool useColor;
-					Vector3f liveColor, liveSdfJacobian, liveColorJacobian, lookupSdfJacobian;
-					Matrix3f lookupSdfHessian;
+					Vector3f liveColor, liveSdfJacobian, liveColorJacobian, liveSdf_Center_WarpForward;
+					Matrix3f warpedSdfHessian;
 					//_DEBUG
 					bool boundary = false, printResult = false;
 #ifdef PRINT_SINGLE_VOXEL_RESULT
@@ -183,6 +185,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					Vector3f deltaEData = Vector3f(0.0f);
 					Vector3f deltaELevelSet = Vector3f(0.0f);
 					float diffSdf = 0.0f, sdfJacobianNormMinusUnity = 0.0f;
+
 					//if we are in the truncated region of canonical or live, we completely disregard the data and level set terms:
 					//there is no sufficient information to compute those terms. There we rely solely on the killing regularizer
 					if (!(emptyInCanonical || emptyInLive)) {
@@ -191,19 +194,24 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						    ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::colorSdfThreshold) {
 							useColor = false;
 							//This is jacobian of the live frame at the lookup (warped) position
-							ComputePerPointWarpedLiveJacobian<TVoxelCanonical, TVoxelLive, TIndex, typename TIndex::IndexCache>
-									(originalPosition, canonicalVoxel.warp_t,
-									 canonicalVoxels, canonicalHashTable, canonicalCache,
-									 liveVoxels, liveHashTable, liveCache,
-									 liveSdf, liveSdfJacobian, printResult);
+							ComputePerPointWarpedLiveJacobian
+									(originalPosition,
+									 canonicalVoxel.warp_t,
+
+									 liveVoxels,
+									 liveHashTable,
+									 liveCache,
+
+									 liveSdf, liveSdfJacobian,
+									 liveSdf_Center_WarpForward, printResult);
 						} else {
 							useColor = true;
 							//This is jacobian of the live frame at the lookup (warped) position
-							ComputePerPointWarpedLiveJacobian<TVoxelCanonical, TVoxelLive, TIndex, typename TIndex::IndexCache>
+							ComputePerPointWarpedLiveJacobian
 									(originalPosition, canonicalVoxel.warp_t,
-									 canonicalVoxels, canonicalHashTable, canonicalCache,
 									 liveVoxels, liveHashTable, liveCache,
-									 liveSdf, liveColor, liveSdfJacobian, liveColorJacobian);
+									 liveSdf, liveColor, liveSdfJacobian,
+									 liveSdf_Center_WarpForward, liveColorJacobian);
 						}
 						//Compute data term error / energy
 						diffSdf = liveSdf - canonicalSdf;
@@ -216,13 +224,15 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 							deltaEData += liveColorJacobian * diffColor;
 						}
 						//=================================== LEVEL SET TERM ===============================================
-						ComputeLookupJacobianAndHessian(warp_tNeighbors, originalPosition, liveSdf, liveVoxels,
-						                                liveHashTable, liveCache, lookupSdfJacobian, lookupSdfHessian,
-						                                printResult);
-						float sdfJacobianNorm = length(lookupSdfJacobian);
-						sdfJacobianNormMinusUnity = sdfJacobianNorm - 1.f;
+						ComputeWarpHessian(warp_tNeighbors, originalPosition, liveSdfJacobian,
+						                   liveSdf_Center_WarpForward, liveSdf, liveVoxels,
+						                   liveHashTable, liveCache, warpedSdfHessian,
+						                   printResult);
+						float sdfJacobianNorm = length(liveSdfJacobian);
+
+						sdfJacobianNormMinusUnity = sdfJacobianNorm - unity;
 						deltaELevelSet =
-								sdfJacobianNormMinusUnity * (lookupSdfJacobian * lookupSdfJacobian) /
+								sdfJacobianNormMinusUnity * (liveSdfJacobian * liveSdfJacobian) /
 								(sdfJacobianNorm + ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::epsilon);
 					}
 					//=================================== KILLING TERM =================================================
@@ -287,9 +297,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					//=================================== FINAL UPDATE =================================================
 					const float weightKilling = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightKillingTerm;
 					const float weightLevelSet = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightLevelSetTerm;
-					const float learningRate = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::gradientDescentLearningRate;;
+					const float learningRate = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::gradientDescentLearningRate;
 					Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet + weightKilling * deltaEKilling;
-
 
 					Vector3f warpUpdate = learningRate * deltaE;
 					float warpUpdateLength = length(warpUpdate);//meters

@@ -32,7 +32,7 @@
 #define SAVE_WARP
 #define LOG_HIGHLIGHTS
 #else
-#define LOG_INTEREST_REGIONS //loads the scene at the frame and saves warps for interest regions
+//#define LOG_INTEREST_REGIONS //loads the scene at the frame and saves warps for interest regions
 #ifdef LOG_INTEREST_REGIONS
 //#define FILTER_HIGHLIGHTS
 #ifdef FILTER_HIGHLIGHTS

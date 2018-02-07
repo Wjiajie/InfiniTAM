@@ -221,7 +221,7 @@ ITM3DNestedMap<T>::ITM3DNestedMap(const ITM3DNestedMap<T>& nestedMap3D) {
 	for (auto elementLevel3 : nestedMap3D.internalMap) {
 		for (auto elementLevel2 : elementLevel3.second) {
 			for (auto elementLevel1 : elementLevel2.second) {
-				for (int value : elementLevel1.second){
+				for (T value : elementLevel1.second){
 					this->InsertOrdered(elementLevel3.first,elementLevel2.first,elementLevel1.first,value);
 				}
 			}

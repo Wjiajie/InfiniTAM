@@ -27,194 +27,157 @@ inline float squareDistance(const CONSTPTR(Vector3f)& vec1,
 	return dot(difference, difference);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex, typename TCache>
+// =====================================================================================================================
+// ========================================== LOOKUP JACOBIAN AND HESSIAN ==============================================
+// =====================================================================================================================
+// This function samples the live scene using warps of canonical voxels in a neighborhood around a particular voxel.
+// From the computed values, the gradient (jacobian) is computed, as well as its derivative ("hessian") with respect
+// to changing the warp at the current voxel.
+template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
-inline void ComputeLookupJacobianAndHessian(const CONSTPTR(Vector3f*) warp_tNeighbors,
-                                            const CONSTPTR(Vector3i)& originalPosition,
-                                            const CONSTPTR(float)& warpedSdf,//lookup value at center warp_t
-
-                                            const CONSTPTR(TVoxelLive)* liveVoxels,
-                                            const CONSTPTR(ITMHashEntry)* liveHashTable,
-                                            THREADPTR(TCache)& liveCache,
-
-                                            THREADPTR(Vector3f)& lookupSdfJacobian,
-                                            THREADPTR(Matrix3f)& lookupSdfHessian,
-                                            bool printResult) {
+inline void ComputeWarpHessian(const CONSTPTR(Vector3f*) warp_tNeighbors,
+                               const CONSTPTR(Vector3i)& voxelPosition,
+                               const CONSTPTR(Vector3f)& liveSdfJacobian,//in
+                               const CONSTPTR(Vector3f)& liveSdf_Center_WarpForward,
+                               const CONSTPTR(float)& warpedSdf,//lookup value at center warp_t
+                               const CONSTPTR(TVoxel)* liveVoxels,
+                               const CONSTPTR(ITMHashEntry)* liveHashTable,
+                               THREADPTR(TCache)& liveCache,
+                               THREADPTR(Matrix3f)& warpedSdfHessian, //out
+                               bool printResult) {
 	//    0        1        2          3         4         5           6         7         8
 	//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
 
-	Vector3f centerPos = originalPosition.toFloat();
-
+	Vector3f centerPos = voxelPosition.toFloat();
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
-	Vector3f lookupSdf_Center_WarpCenter(warpedSdf);
-
-	// === decrease u, v, w by 1 in each direction
-	Vector3f lookupPos_xCenter_WarpForward = centerPos + Vector3f(1.f, 0.f, 0.f);
-	Vector3f lookupPos_yCenter_WarpForward = centerPos + Vector3f(0.f, 1.f, 0.f);
-	Vector3f lookupPos_zCenter_WarpForward = centerPos + Vector3f(0.f, 0.f, 1.f);
-	Vector3f lookupSdf_Center_WarpForward(
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_xCenter_WarpForward, liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_yCenter_WarpForward, liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_zCenter_WarpForward, liveCache));
 
 	// === check lookups for voxels forward by 1 in x, y, z of the canonical frame, use their own warps
-	Vector3f lookupPos_xForward_WarpCenter = lookupPos_xCenter_WarpForward + warp_tNeighbors[3];
-	Vector3f lookupPos_yForward_WarpCenter = lookupPos_yCenter_WarpForward + warp_tNeighbors[4];
-	Vector3f lookupPos_zForward_WarpCenter = lookupPos_zCenter_WarpForward + warp_tNeighbors[5];
+	Vector3f lookupPos_xForward_WarpCenter = centerPos + Vector3f(1.f, 0.f, 0.f) + warp_tNeighbors[3];
+	Vector3f lookupPos_yForward_WarpCenter = centerPos + Vector3f(0.f, 1.f, 0.f) + warp_tNeighbors[4];
+	Vector3f lookupPos_zForward_WarpCenter = centerPos + Vector3f(0.f, 0.f, 1.f) + warp_tNeighbors[5];
 	Vector3f lookupSdf_Forward_WarpCenter(
 			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_xForward_WarpCenter, liveCache),
 			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_yForward_WarpCenter, liveCache),
 			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_zForward_WarpCenter, liveCache)
 	);
 
-	// === check lookups for voxels forward by 1 in x, y, z of the canonical frame, use their own warps
-	Vector3f lookupPos_xForward_WarpForward = lookupPos_xForward_WarpCenter + Vector3f(1.f, 0.f, 0.f);
-	Vector3f lookupPos_yForward_WarpForward = lookupPos_yForward_WarpCenter + Vector3f(0.f, 1.f, 0.f);
-	Vector3f lookupPos_zForward_WarpForward = lookupPos_zForward_WarpCenter + Vector3f(0.f, 0.f, 1.f);
-	Vector3f lookupSdf_Forward_WarpForward(
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_xForward_WarpForward, liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_yForward_WarpForward, liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_zForward_WarpForward, liveCache)
-	);
-
-	//    0        1        2          3         4         5           6         7         8
-	//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
-	// === u-y, u-z, v-x, v-z, w-x, and w-y plane forward corners for 2nd derivatives
-	Vector3f cornerSdf_uy = centerPos + warp_tNeighbors[4] + Vector3f(1.f, 1.f, 0.f);
-	Vector3f cornerSdf_uz = centerPos + warp_tNeighbors[5] + Vector3f(1.f, 0.f, 1.f);
-	Vector3f cornerSdf_vx = centerPos + warp_tNeighbors[3] + Vector3f(1.f, 1.f, 0.f);
-	Vector3f cornerSdf_vz = centerPos + warp_tNeighbors[5] + Vector3f(1.f, 0.f, 1.f);
-	Vector3f cornerSdf_wx = centerPos + warp_tNeighbors[3] + Vector3f(1.f, 0.f, 1.f);
-	Vector3f cornerSdf_wy = centerPos + warp_tNeighbors[4] + Vector3f(0.f, 1.f, 1.f);
-	Vector3f lookupSdfCorners1(
-			interpolateTrilinearly(liveVoxels, liveHashTable, cornerSdf_uy, liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, cornerSdf_vx, liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, cornerSdf_wx, liveCache));
-	Vector3f lookupSdfCorners2(
-			interpolateTrilinearly(liveVoxels, liveHashTable, cornerSdf_uz, liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, cornerSdf_vz, liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, cornerSdf_wy, liveCache));
-
-	//=========== COMPUTE JACOBIAN =====================================================================================
-	//simple difference between live lookups neighboring by 1 unit in canonical space
-
-	lookupSdfJacobian = lookupSdf_Forward_WarpCenter - lookupSdf_Center_WarpCenter;
-
 	//=========== COMPUTE 2ND PARTIAL DERIVATIVES IN SAME DIRECTION ====================================================
+	//we keep the neighbors warps fixed, but we see how the gradient (jacobian above) changes if we change current
+	//voxel's warp
 	Vector3f sdfDerivatives_ux_vy_wz =
-			(lookupSdf_Forward_WarpForward - lookupSdf_Center_WarpForward) - lookupSdfJacobian;
+			(lookupSdf_Forward_WarpCenter - liveSdf_Center_WarpForward) - liveSdfJacobian;
 
-	//=== corner-voxel auxiliary first partial derivatives for later 2nd derivative approximations
-	// uy - u
+	//=== corner-voxel auxiliary first partial first derivatives for later 2nd derivative approximations
 	// vx - v
-	// wx - w
-	Vector3f cornerSdfFirstDerivatives1 = lookupSdfCorners1 - lookupSdf_Center_WarpForward;
+	// uy - u
 	// uz - u
-	// vz - v
+	Vector3f changedWarpFirstDerivatives1 = lookupSdf_Forward_WarpCenter - Vector3f(liveSdf_Center_WarpForward.v,
+	                                                                                liveSdf_Center_WarpForward.u,
+	                                                                                liveSdf_Center_WarpForward.u);
+	// wx - w
 	// wy - w
-	Vector3f cornerSdfFirstDerivatives2 = lookupSdfCorners2 - lookupSdf_Center_WarpForward;
+	// vz - v
+	Vector3f changedWarpFirstDerivatives2 = lookupSdf_Forward_WarpCenter - Vector3f(liveSdf_Center_WarpForward.w,
+	                                                                                liveSdf_Center_WarpForward.w,
+	                                                                                liveSdf_Center_WarpForward.u);
 
 	//===Compute the 2nd partial derivatives for different direction sequences
-	Vector3f sdfDerivatives_uy_vx_wx = Vector3f(cornerSdfFirstDerivatives1.x - lookupSdfJacobian.y,
-	                                            cornerSdfFirstDerivatives1.y - lookupSdfJacobian.x,
-	                                            cornerSdfFirstDerivatives1.z - lookupSdfJacobian.x);
-	Vector3f sdfDerivatives_uz_vz_wy = Vector3f(cornerSdfFirstDerivatives2.x - lookupSdfJacobian.z,
-	                                            cornerSdfFirstDerivatives2.y - lookupSdfJacobian.z,
-	                                            cornerSdfFirstDerivatives2.z - lookupSdfJacobian.y);
+	Vector3f sdfDerivatives_vx_uy_uz = changedWarpFirstDerivatives1 - liveSdfJacobian;
+	Vector3f sdfDerivatives_wx_wy_vz = changedWarpFirstDerivatives2 - liveSdfJacobian;
 
-	//Hessian:
+	// "Hessian":
 	// ux uy uz
 	// vx vy vz
- 	// wx wy wz, column-major:
-	float vals[] = {sdfDerivatives_ux_vy_wz.x, sdfDerivatives_uy_vx_wx.y, sdfDerivatives_uy_vx_wx.z,//col 1
-	                sdfDerivatives_uy_vx_wx.x, sdfDerivatives_ux_vy_wz.y, sdfDerivatives_uz_vz_wy.z,//col 2
-	                sdfDerivatives_uz_vz_wy.x, sdfDerivatives_uz_vz_wy.y, sdfDerivatives_ux_vy_wz.z};
-	lookupSdfHessian.setValues(vals);
+	// wx wy wz, column-major:
+	float vals[] = {sdfDerivatives_ux_vy_wz[0], sdfDerivatives_vx_uy_uz[0], sdfDerivatives_wx_wy_vz[0],//col 1
+	                sdfDerivatives_vx_uy_uz[1], sdfDerivatives_ux_vy_wz[1], sdfDerivatives_wx_wy_vz[1],//col 2
+	                sdfDerivatives_vx_uy_uz[2], sdfDerivatives_wx_wy_vz[2], sdfDerivatives_ux_vy_wz[2]};
+
+	warpedSdfHessian.setValues(vals);
 
 	if (printResult) {
-		std::cout << "Back-projected SDF Jacobian: " << lookupSdfJacobian << std::endl << std::endl;
+		std::cout << "Back-projected SDF Jacobian: " << liveSdfJacobian << std::endl << std::endl;
 	}
-
-
 };
 
 // =====================================================================================================================
 // ================================================= WARPED LIVE JACOBIAN ==============================================
 // =====================================================================================================================
-// this set of functions simply computes the jacobian of the live frame at an interpolated warped position, without
+// this set of functions simply computes the jacobian of the live scene at an interpolated warped position, without
 // computing the hessian. The jacobian vector defines the direction of data term's contribution to the warp updates.
 
 // with color
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex, typename TCache>
+template<typename TVoxelLive, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void ComputePerPointWarpedLiveJacobian(const CONSTPTR(Vector3i)& originalPosition,
                                               const CONSTPTR(Vector3f)& originalWarp_t,
-                                              const CONSTPTR(TVoxelCanonical)* canonicalVoxels,
-                                              const CONSTPTR(ITMHashEntry)* canonicalHashTable,
-                                              THREADPTR(TCache)& canonicalCache,
                                               const CONSTPTR(TVoxelLive)* liveVoxels,
                                               const CONSTPTR(ITMHashEntry)* liveHashTable,
                                               THREADPTR(TCache)& liveCache,
-                                              const CONSTPTR(float)& warpedSdf,
-                                              const CONSTPTR(Vector3f)& warpedColor,
-                                              THREADPTR(Vector3f)& sdfJacobian,
+                                              const CONSTPTR(float)& liveSdf,
+                                              const CONSTPTR(Vector3f)& liveColor,
+                                              THREADPTR(Vector3f)& liveSdfJacobian,
+                                              THREADPTR(Vector3f)& liveSdf_Center_WarpForward,
                                               THREADPTR(Vector3f)& colorJacobian) {
 	//position projected with the current warp
-	Vector3f currentProjectedPosition = originalPosition.toFloat() + originalWarp_t;
+	Vector3f centerPos = originalPosition.toFloat();
+	Vector3f projectedPosition = centerPos + originalWarp_t;
+	Vector3f warpedSdf_Center_WarpCenter(liveSdf);
 
 	//=== shifted warped sdf locations, shift vector, alternative projected position
-	//warpedSdf = interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition, liveCache, warpedColor);
-	Vector3f warpedColorForward[3];
+	Vector3f warpedColor_Center_WarpForward[3];
 
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
 	// === forward by 1 in each direction
-	Vector3f warpedSdfForward(
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 0), liveCache,
-			                       warpedColorForward[0]),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 0), liveCache,
-			                       warpedColorForward[1]),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, 1), liveCache,
-			                       warpedColorForward[2]));
+	liveSdf_Center_WarpForward = Vector3f(
+			interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(1, 0, 0), liveCache,
+			                       warpedColor_Center_WarpForward[0]),
+			interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(0, 1, 0), liveCache,
+			                       warpedColor_Center_WarpForward[1]),
+			interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(0, 0, 1), liveCache,
+			                       warpedColor_Center_WarpForward[2]));
 	//=========== COMPUTE JACOBIAN =====================================================================================
-	sdfJacobian = warpedSdfForward - Vector3f(warpedSdf);
+	liveSdfJacobian = liveSdf_Center_WarpForward - warpedSdf_Center_WarpCenter;
 	colorJacobian = Vector3f(
-			squareDistance(warpedColorForward[0], warpedColor),
-			squareDistance(warpedColorForward[1], warpedColor),
-			squareDistance(warpedColorForward[2], warpedColor));
+			squareDistance(warpedColor_Center_WarpForward[0], liveColor),
+			squareDistance(warpedColor_Center_WarpForward[1], liveColor),
+			squareDistance(warpedColor_Center_WarpForward[2], liveColor));
 };
 
 //without color
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex, typename TCache>
+template<typename TVoxelLive, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void ComputePerPointWarpedLiveJacobian(const CONSTPTR(Vector3i)& originalPosition,
                                               const CONSTPTR(Vector3f)& originalWarp_t,
-                                              const CONSTPTR(TVoxelCanonical)* canonicalVoxels,
-                                              const CONSTPTR(ITMHashEntry)* canonicalHashTable,
-                                              THREADPTR(TCache)& canonicalCache,
+
                                               const CONSTPTR(TVoxelLive)* liveVoxels,
                                               const CONSTPTR(ITMHashEntry)* liveHashTable,
                                               THREADPTR(TCache)& liveCache,
-                                              const CONSTPTR(float) warpedSdf,
+
+                                              const CONSTPTR(float) liveSdf,
                                               THREADPTR(Vector3f)& liveSdfJacobian,
+                                              THREADPTR(Vector3f)& liveSdf_Center_WarpForward,
                                               const CONSTPTR(bool) printResult = false) {
 	//position projected with the current warp
-	Vector3f currentProjectedPosition = originalPosition.toFloat() + originalWarp_t;
+	Vector3f centerPos = originalPosition.toFloat();
+	Vector3f projectedPosition = centerPos + originalWarp_t;
+	Vector3f warpedSdf_Center_WarpCenter(liveSdf);
 
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
 	// === forward by 1 in each direction
-	Vector3f warpedSdfForward(
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1.f, 0.f, 0.f),
+	Vector3f warpedSdf_Center_WarpForward(
+			interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(1.f, 0.f, 0.f),
 			                       liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0.f, 1.f, 0.f),
+			interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(0.f, 1.f, 0.f),
 			                       liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0.f, 0.f, 1.f),
+			interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(0.f, 0.f, 1.f),
 			                       liveCache));
 	//=========== COMPUTE JACOBIAN =====================================================================================
-	liveSdfJacobian = warpedSdfForward - Vector3f(warpedSdf);
+	liveSdfJacobian = warpedSdf_Center_WarpForward - warpedSdf_Center_WarpCenter;
 
 	//=========== PRINT RESULT IF REQUESTED ============================================================================
 	if (printResult) {
-		std::cout << "Live SDF Forward at warp: " << warpedSdfForward << std::endl;
+		std::cout << "Live SDF Forward at warp: " << warpedSdf_Center_WarpForward << std::endl;
 		std::cout << "Live SDF Jacobian at warp: " << liveSdfJacobian << std::endl;
 	}
 }

@@ -50,7 +50,7 @@ template class ITMSceneSliceRasterizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxel
 template class ITMSceneStatisticsCalculator<ITMVoxelCanonical,ITMVoxelIndex>;
 template class ITMSceneStatisticsCalculator<ITMVoxelLive,ITMVoxelIndex>;
 template class ITM3DNestedMap<int>;
-template class ITM3DNestedMap<ITMDynamicVoxelIterationInfo>;
+//template class ITM3DNestedMap<ITMDynamicVoxelIterationInfo>;//TODO: Implement missing methods -Greg (GitHub: Algomorph)
 
 //scene manipulation functions
 template void CopySceneWithOffset_CPU<ITMVoxelCanonical,ITMVoxelIndex>(

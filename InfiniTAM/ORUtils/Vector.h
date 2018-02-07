@@ -27,7 +27,8 @@ namespace ORUtils {
 			struct{ T x, y, z; }; // standard names for components
 			struct{ T r, g, b; }; // standard names for components
 			struct{ T s, t, p; }; // standard names for components
-			T v[3];
+			struct{ T u, v, w; }; // standard names for components
+			T values[3];
 		};
 	};
 
@@ -254,16 +255,16 @@ namespace ORUtils {
 			return Vector3<float>((float)this->x * norm, (float)this->y * norm, (float)this->z * norm);
 		}
 
-		_CPU_AND_GPU_CODE_ const T *getValues() const	{ return this->v; }
+		_CPU_AND_GPU_CODE_ const T *getValues() const	{ return this->values; }
 		_CPU_AND_GPU_CODE_ Vector3<T> &setValues(const T *rhs) { this->x = rhs[0]; this->y = rhs[1]; this->z = rhs[2]; return *this; }
 
 		// indexing operators
-		_CPU_AND_GPU_CODE_ T &operator [](int i) { return this->v[i]; }
-		_CPU_AND_GPU_CODE_ const T &operator [](int i) const { return this->v[i]; }
+		_CPU_AND_GPU_CODE_ T &operator [](int i) { return this->values[i]; }
+		_CPU_AND_GPU_CODE_ const T &operator [](int i) const { return this->values[i]; }
 
 		// type-cast operators
-		_CPU_AND_GPU_CODE_ operator T *()	{ return this->v; }
-		_CPU_AND_GPU_CODE_ operator const T *() const { return this->v; }
+		_CPU_AND_GPU_CODE_ operator T *()	{ return this->values; }
+		_CPU_AND_GPU_CODE_ operator const T *() const { return this->values; }
 
 		////////////////////////////////////////////////////////
 		//  Math operators
