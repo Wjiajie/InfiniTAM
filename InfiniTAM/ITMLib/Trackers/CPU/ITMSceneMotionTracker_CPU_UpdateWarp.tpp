@@ -146,7 +146,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 
 					float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
 					bool useColor;
-					Vector3f liveColor, liveSdfJacobian, liveColorJacobian, liveSdf_Center_WarpForward;
+					Vector3f liveColor, liveSdfJacobian, liveColorJacobian, liveSdf_Center_WarpForward, warpedSdfJacobian;
 					Matrix3f warpedSdfHessian;
 					//_DEBUG
 					bool boundary = false, printResult = false;
@@ -188,7 +188,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 
 					//if we are in the truncated region of canonical or live, we completely disregard the data and level set terms:
 					//there is no sufficient information to compute those terms. There we rely solely on the killing regularizer
-					if (!(emptyInCanonical || emptyInLive)) {
+					//if (!emptyInCanonical) {//_DEBUG
+					if (!emptyInCanonical && !emptyInLive) {
 						//=================================== DATA TERM ================================================
 						if (std::abs(canonicalSdf) >
 						    ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::colorSdfThreshold) {
@@ -224,16 +225,14 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 							deltaEData += liveColorJacobian * diffColor;
 						}
 						//=================================== LEVEL SET TERM ===============================================
-						ComputeWarpHessian(warp_tNeighbors, originalPosition, liveSdfJacobian,
+						ComputeWarpHessian(warp_tNeighbors, originalPosition,
 						                   liveSdf_Center_WarpForward, liveSdf, liveVoxels,
-						                   liveHashTable, liveCache, warpedSdfHessian,
-						                   printResult);
-						float sdfJacobianNorm = length(liveSdfJacobian);
-
+						                   liveHashTable, liveCache, warpedSdfJacobian, warpedSdfHessian, printResult);
+						float sdfJacobianNorm = length(warpedSdfJacobian);
 						sdfJacobianNormMinusUnity = sdfJacobianNorm - unity;
 						deltaELevelSet =
-								sdfJacobianNormMinusUnity * (liveSdfJacobian * liveSdfJacobian) /
-								(sdfJacobianNorm + ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::epsilon);
+								sdfJacobianNormMinusUnity * (warpedSdfHessian * warpedSdfJacobian) /
+								(sdfJacobianNorm + epsilon);
 					}
 					//=================================== KILLING TERM =================================================
 #ifdef PRINT_TIME_STATS
@@ -304,6 +303,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					float warpUpdateLength = length(warpUpdate);//meters
 					//BEGIN _DEBUG
 					float warpLength = ORUtils::length(canonicalVoxel.warp_t - warpUpdate);
+#ifdef OSCILLATION_TREATMENT
 					float distanceFromTwoIterationsAgo = ORUtils::length(canonicalVoxel.warp_t_update + warpUpdate);
 					float distanceTraveledInTwoIterations = ORUtils::length(canonicalVoxel.warp_t_update - warpUpdate);
 					//TODO: this is a bad way to do convergence. Use something like Adam instead, maybe? --Greg
@@ -343,6 +343,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						}
 #endif
 					}
+#endif
 					//END _DEBUG
 
 					//need thread lock here to ensure atomic updates to maxWarpUpdateLength

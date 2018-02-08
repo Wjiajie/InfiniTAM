@@ -28,7 +28,7 @@ inline float squareDistance(const CONSTPTR(Vector3f)& vec1,
 }
 
 // =====================================================================================================================
-// ========================================== LOOKUP JACOBIAN AND HESSIAN ==============================================
+// ========================================== WARPED JACOBIAN AND HESSIAN ==============================================
 // =====================================================================================================================
 // This function samples the live scene using warps of canonical voxels in a neighborhood around a particular voxel.
 // From the computed values, the gradient (jacobian) is computed, as well as its derivative ("hessian") with respect
@@ -37,17 +37,17 @@ template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void ComputeWarpHessian(const CONSTPTR(Vector3f*) warp_tNeighbors,
                                const CONSTPTR(Vector3i)& voxelPosition,
-                               const CONSTPTR(Vector3f)& liveSdfJacobian,//in
                                const CONSTPTR(Vector3f)& liveSdf_Center_WarpForward,
-                               const CONSTPTR(float)& warpedSdf,//lookup value at center warp_t
+                               const CONSTPTR(float)& liveSdf,//lookup value at center warp_t
                                const CONSTPTR(TVoxel)* liveVoxels,
                                const CONSTPTR(ITMHashEntry)* liveHashTable,
                                THREADPTR(TCache)& liveCache,
+                               THREADPTR(Vector3f)& warpedSdfJacobian, //out
                                THREADPTR(Matrix3f)& warpedSdfHessian, //out
                                bool printResult) {
 	//    0        1        2          3         4         5           6         7         8
 	//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
-
+	Vector3f warpedSdf_Center_WarpCenter(liveSdf);
 	Vector3f centerPos = voxelPosition.toFloat();
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
 
@@ -55,35 +55,37 @@ inline void ComputeWarpHessian(const CONSTPTR(Vector3f*) warp_tNeighbors,
 	Vector3f lookupPos_xForward_WarpCenter = centerPos + Vector3f(1.f, 0.f, 0.f) + warp_tNeighbors[3];
 	Vector3f lookupPos_yForward_WarpCenter = centerPos + Vector3f(0.f, 1.f, 0.f) + warp_tNeighbors[4];
 	Vector3f lookupPos_zForward_WarpCenter = centerPos + Vector3f(0.f, 0.f, 1.f) + warp_tNeighbors[5];
-	Vector3f lookupSdf_Forward_WarpCenter(
+	Vector3f warpedSdf_Forward_WarpCenter(
 			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_xForward_WarpCenter, liveCache),
 			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_yForward_WarpCenter, liveCache),
 			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_zForward_WarpCenter, liveCache)
 	);
+	//=========== WARPED SDF JACOBIAN ==================================================================================
+	warpedSdfJacobian = warpedSdf_Forward_WarpCenter - warpedSdf_Center_WarpCenter;
 
 	//=========== COMPUTE 2ND PARTIAL DERIVATIVES IN SAME DIRECTION ====================================================
 	//we keep the neighbors warps fixed, but we see how the gradient (jacobian above) changes if we change current
 	//voxel's warp
 	Vector3f sdfDerivatives_ux_vy_wz =
-			(lookupSdf_Forward_WarpCenter - liveSdf_Center_WarpForward) - liveSdfJacobian;
+			(warpedSdf_Forward_WarpCenter - liveSdf_Center_WarpForward) - warpedSdfJacobian;
 
 	//=== corner-voxel auxiliary first partial first derivatives for later 2nd derivative approximations
 	// vx - v
 	// uy - u
 	// uz - u
-	Vector3f changedWarpFirstDerivatives1 = lookupSdf_Forward_WarpCenter - Vector3f(liveSdf_Center_WarpForward.v,
+	Vector3f changedWarpFirstDerivatives1 = warpedSdf_Forward_WarpCenter - Vector3f(liveSdf_Center_WarpForward.v,
 	                                                                                liveSdf_Center_WarpForward.u,
 	                                                                                liveSdf_Center_WarpForward.u);
 	// wx - w
 	// wy - w
 	// vz - v
-	Vector3f changedWarpFirstDerivatives2 = lookupSdf_Forward_WarpCenter - Vector3f(liveSdf_Center_WarpForward.w,
+	Vector3f changedWarpFirstDerivatives2 = warpedSdf_Forward_WarpCenter - Vector3f(liveSdf_Center_WarpForward.w,
 	                                                                                liveSdf_Center_WarpForward.w,
 	                                                                                liveSdf_Center_WarpForward.u);
 
 	//===Compute the 2nd partial derivatives for different direction sequences
-	Vector3f sdfDerivatives_vx_uy_uz = changedWarpFirstDerivatives1 - liveSdfJacobian;
-	Vector3f sdfDerivatives_wx_wy_vz = changedWarpFirstDerivatives2 - liveSdfJacobian;
+	Vector3f sdfDerivatives_vx_uy_uz = changedWarpFirstDerivatives1 - warpedSdfJacobian;
+	Vector3f sdfDerivatives_wx_wy_vz = changedWarpFirstDerivatives2 - warpedSdfJacobian;
 
 	// "Hessian":
 	// ux uy uz
@@ -96,7 +98,7 @@ inline void ComputeWarpHessian(const CONSTPTR(Vector3f*) warp_tNeighbors,
 	warpedSdfHessian.setValues(vals);
 
 	if (printResult) {
-		std::cout << "Back-projected SDF Jacobian: " << liveSdfJacobian << std::endl << std::endl;
+		std::cout << "Back-projected SDF Jacobian: " << warpedSdfJacobian << std::endl << std::endl;
 	}
 };
 
@@ -192,9 +194,6 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex, typenam
 _CPU_AND_GPU_CODE_
 inline void ComputePerPointWarpedLiveJacobianAndHessian(const CONSTPTR(Vector3i)& originalPosition,
                                                         const CONSTPTR(Vector3f)& originalWarp_t,
-                                                        const CONSTPTR(TVoxelCanonical)* canonicalVoxels,
-                                                        const CONSTPTR(ITMHashEntry)* canonicalHashTable,
-                                                        THREADPTR(TCache)& canonicalCache,
                                                         const CONSTPTR(TVoxelLive)* liveVoxels,
                                                         const CONSTPTR(ITMHashEntry)* liveHashTable,
                                                         THREADPTR(TCache)& liveCache,

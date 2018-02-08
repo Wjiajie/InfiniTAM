@@ -86,6 +86,8 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 #ifdef WRITE_ENERGY_STATS_TO_FILE
 	const std::string energy_stat_file_path = "/media/algomorph/Data/Reconstruction/debug_output/energy_stats.txt";
 	energy_stat_file = std::ofstream(energy_stat_file_path.c_str(),std::ios_base::out);
+	energy_stat_file << "data" << "," << "level_set" << "," << "smoothness" << ","
+	                 << "killing" << "," << "total" << std::endl;
 #endif
 	//END _DEBUG
 

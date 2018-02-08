@@ -79,7 +79,12 @@
 #define TOC(var)
 #endif
 
+//#define OSCILLATION_TREATMENT
+#ifdef OSCILLATION_TREATMENT
 #define OLD_UGLY_WAY
+#endif
+
+
 #ifdef PRINT_ENERGY_STATS
 #define WRITE_ENERGY_STATS_TO_FILE
 #endif
