@@ -54,7 +54,6 @@ protected:
 	int iteration;//_DEBUG?
 #ifdef _LOGGER
 	int currentFrameIx = 0;
-	const int frameOfInterest = 1;
 	ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex> sceneLogger;
 #endif
 #ifdef WRITE_ENERGY_STATS_TO_FILE

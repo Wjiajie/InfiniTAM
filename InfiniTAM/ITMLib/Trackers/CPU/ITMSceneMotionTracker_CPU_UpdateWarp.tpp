@@ -81,6 +81,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #endif
 
 	const float epsilon = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::epsilon;
+	const int iteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
 	// fraction of narrow band (non-truncated region) half-width that a voxel spans
 	const float unity = liveScene->sceneParams->voxelSize / liveScene->sceneParams->mu;
 
@@ -194,7 +195,14 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						if (std::abs(canonicalSdf) >
 						    ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::colorSdfThreshold) {
 							useColor = false;
+
+#ifdef OLD_LEVEL_SET_TERM
 							//This is jacobian of the live frame at the lookup (warped) position
+							ComputePerPointLiveJacobianAndHessian(originalPosition,
+																  canonicalVoxel.warp_t, liveVoxels,
+																  liveHashTable, liveCache, liveSdf,
+																  liveSdfJacobian, warpedSdfHessian, printResult);
+#else
 							ComputePerPointWarpedLiveJacobian
 									(originalPosition,
 									 canonicalVoxel.warp_t,
@@ -205,14 +213,30 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 
 									 liveSdf, liveSdfJacobian,
 									 liveSdf_Center_WarpForward, printResult);
+#endif
 						} else {
 							useColor = true;
+#ifdef OLD_LEVEL_SET_TERM
 							//This is jacobian of the live frame at the lookup (warped) position
+							ComputePerPointLiveJacobianAndHessian(originalPosition,
+																  canonicalVoxel.warp_t,
+																  liveVoxels,
+																  liveHashTable,
+
+																  liveCache,
+																  liveSdf,
+
+																  liveColor,
+																  liveSdfJacobian,
+																  liveColorJacobian,
+																  warpedSdfHessian);
+#else
 							ComputePerPointWarpedLiveJacobian
 									(originalPosition, canonicalVoxel.warp_t,
 									 liveVoxels, liveHashTable, liveCache,
 									 liveSdf, liveColor, liveSdfJacobian,
 									 liveSdf_Center_WarpForward, liveColorJacobian);
+#endif
 						}
 						//Compute data term error / energy
 						diffSdf = liveSdf - canonicalSdf;
@@ -225,14 +249,23 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 							deltaEData += liveColorJacobian * diffColor;
 						}
 						//=================================== LEVEL SET TERM ===============================================
-						ComputeWarpHessian(warp_tNeighbors, originalPosition,
-						                   liveSdf_Center_WarpForward, liveSdf, liveVoxels,
-						                   liveHashTable, liveCache, warpedSdfJacobian, warpedSdfHessian, printResult);
+#ifdef OLD_LEVEL_SET_TERM
+						float sdfJacobianNorm = length(liveSdfJacobian);
+						sdfJacobianNormMinusUnity = sdfJacobianNorm - unity;
+						deltaELevelSet =
+								sdfJacobianNormMinusUnity * (warpedSdfHessian * liveSdfJacobian) /
+								(sdfJacobianNorm + epsilon);
+#else
+						ComputeWarpedJacobianAndHessian(warp_tNeighbors, originalPosition,
+						                                liveSdf_Center_WarpForward, liveSdf, liveVoxels,
+						                                liveHashTable, liveCache, warpedSdfJacobian, warpedSdfHessian,
+						                                printResult);
 						float sdfJacobianNorm = length(warpedSdfJacobian);
 						sdfJacobianNormMinusUnity = sdfJacobianNorm - unity;
 						deltaELevelSet =
 								sdfJacobianNormMinusUnity * (warpedSdfHessian * warpedSdfJacobian) /
 								(sdfJacobianNorm + epsilon);
+#endif
 					}
 					//=================================== KILLING TERM =================================================
 #ifdef PRINT_TIME_STATS
@@ -297,13 +330,32 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					const float weightKilling = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightKillingTerm;
 					const float weightLevelSet = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightLevelSetTerm;
 					const float learningRate = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::gradientDescentLearningRate;
+					//_DEBUG
 					Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet + weightKilling * deltaEKilling;
+					//Vector3f deltaE = deltaEData + weightKilling * deltaEKilling;
+					//Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet;
+					//Vector3f deltaE = deltaEData;
 
 					Vector3f warpUpdate = learningRate * deltaE;
 					float warpUpdateLength = length(warpUpdate);//meters
 					//BEGIN _DEBUG
 					float warpLength = ORUtils::length(canonicalVoxel.warp_t - warpUpdate);
-#ifdef OSCILLATION_TREATMENT
+#if defined(PRINT_ENERGY_STATS) || defined(LOG_HIGHLIGHTS)
+					double dataEnergy = 0.5 * (diffSdf * diffSdf);
+					double levelSetEnergy =
+							weightLevelSet * 0.5 * (sdfJacobianNormMinusUnity * sdfJacobianNormMinusUnity);
+					double killingEnergy = weightKilling * localKillingEnergy;
+					double smoothnessEnergy = weightKilling * localSmoothnessEnergy;
+					double totalVoxelEnergy = dataEnergy + levelSetEnergy + killingEnergy * smoothnessEnergy;
+#ifdef PRINT_ENERGY_STATS
+					totalDataEnergy += dataEnergy;
+					totalLevelSetEnergy += levelSetEnergy;
+					totalKillingEnergy += killingEnergy;
+					totalSmoothnessEnergy += smoothnessEnergy;
+
+#endif //defined(PRINT_ENERGY_STATS)
+#endif//defined(PRINT_ENERGY_STATS) || defined(LOG_HIGHLIGHTS)
+#ifdef OSCILLATION_DETECTION
 					float distanceFromTwoIterationsAgo = ORUtils::length(canonicalVoxel.warp_t_update + warpUpdate);
 					float distanceTraveledInTwoIterations = ORUtils::length(canonicalVoxel.warp_t_update - warpUpdate);
 					//TODO: this is a bad way to do convergence. Use something like Adam instead, maybe? --Greg
@@ -320,13 +372,25 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #endif
 #ifdef LOG_HIGHLIGHTS
 						int& currentFrame = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
-						const int& frameOfInterest = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::frameOfInterest;
-						int& currentIteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
-						if(currentFrame == frameOfInterest){
+
+						Vector3f canonicalWarp = canonicalVoxel.warp_t;
+						Vector3f warpUpdateData = learningRate * deltaEData;
+						Vector3f warpUpdateLevelSet = learningRate * weightLevelSet * deltaELevelSet;
+						Vector3f warpUpdateKilling = learningRate * weightKilling * deltaEKilling;
+						std::array<ITMNeighborVoxelIterationInfo, 9> neighbors;
+						ITMHighlightIterationInfo info = {hash, locId, iteration, canonicalWarp, canonicalSdf, liveSdf,
+						                                  warpUpdate, warpUpdateData, warpUpdateLevelSet,
+						                                  warpUpdateKilling, totalVoxelEnergy, dataEnergy,
+						                                  levelSetEnergy, smoothnessEnergy, killingEnergy,
+						                                  liveSdfJacobian, warpedSdfJacobian, warpedSdfHessian,
+						                                  warpJacobian, warpHessian[0], warpHessian[1], warpHessian[2],
+						                                  neighbors};
+						if (currentFrame == FRAME_OF_INTEREST) {
 							ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::sceneLogger
-									.LogHighlight(hash,locId,currentFrame,currentIteration);
+									.LogHighlight(hash, locId, currentFrame, info);
 						}
 #endif
+#ifdef OSCILLATION_TREATMENT
 #ifdef OLD_UGLY_WAY
 						warpUpdate *= 0.5;//magic! -UNDO THE MAGIC FOR DEBUGGING OSCILLATIONS FURTHER
 #else //new super-awesome way (that still doesn't address the cause, but, oh well)
@@ -342,6 +406,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 							}
 						}
 #endif
+#endif //OSCILLATION_TREATMENT
 					}
 #endif
 					//END _DEBUG
@@ -382,13 +447,6 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					}
 					consideredVoxelCount += 1;
 
-#endif
-#ifdef PRINT_ENERGY_STATS
-					totalDataEnergy += 0.5 * (diffSdf * diffSdf);
-					totalLevelSetEnergy +=
-							weightLevelSet * 0.5 * (sdfJacobianNormMinusUnity * sdfJacobianNormMinusUnity);
-					totalKillingEnergy += weightKilling * localKillingEnergy;
-					totalSmoothnessEnergy += weightKilling * localSmoothnessEnergy;
 #endif
 
 				}

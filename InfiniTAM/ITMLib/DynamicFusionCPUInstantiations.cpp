@@ -29,7 +29,7 @@
 #include "Utils/ITMSceneStatisticsCalculator.tpp"
 #include "Utils/ITMSceneLogger.tpp"
 #include "Utils/ITM3DNestedMap.tpp"
-#include "Utils/ITMDynamicVoxelIterationInfo.h"
+#include "Utils/ITMNeighborVoxelIterationInfo.h"
 
 //dynamic fusion
 template class ITMSwappingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
@@ -50,7 +50,7 @@ template class ITMSceneSliceRasterizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxel
 template class ITMSceneStatisticsCalculator<ITMVoxelCanonical,ITMVoxelIndex>;
 template class ITMSceneStatisticsCalculator<ITMVoxelLive,ITMVoxelIndex>;
 template class ITM3DNestedMap<int>;
-//template class ITM3DNestedMap<ITMDynamicVoxelIterationInfo>;//TODO: Implement missing methods -Greg (GitHub: Algomorph)
+template class ITM3DNestedMap<ITMHighlightIterationInfo>;//TODO: Implement missing methods -Greg (GitHub: Algomorph)
 
 //scene manipulation functions
 template void CopySceneWithOffset_CPU<ITMVoxelCanonical,ITMVoxelIndex>(

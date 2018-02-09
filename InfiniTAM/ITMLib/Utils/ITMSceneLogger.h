@@ -22,6 +22,8 @@
 //local
 #include "../Objects/Scene/ITMScene.h"
 #include "ITMIntArrayMap3D.h"
+#include "ITM3DNestedMap.h"
+#include "ITMNeighborVoxelIterationInfo.h"
 
 //TODO: eventually replace boost::filesystem with stdlib filesystem when that is no longer experimental -Greg (GitHub: Algomorph)
 //TODO: add HAVE_BOOST guards / CMake optional boost support -Greg (GitHub: Algomorph)
@@ -126,11 +128,11 @@ public:
 	bool GetInterestRegionsSetUp() const;
 	unsigned int GetIterationCursor() const;
 	const std::map<int, std::shared_ptr<InterestRegionInfo>>& GetInterestRegionsByHash();
-	ITMIntArrayMap3D GetHighlights() const;
+	ITM3DNestedMap<ITMHighlightIterationInfo> GetHighlights() const;
 	std::vector<int> GetInterestRegionHashes() const;
 
 	//*** saving of meta-information & interest regions
-	void LogHighlight(int hashId, int voxelLocalIndex, int frameNumber, int iterationNumber);
+	void LogHighlight(int hashId, int voxelLocalIndex, int frameNumber, ITMHighlightIterationInfo info);
 	bool SaveHighlights();
 	void PrintHighlights();
 	bool LoadHighlights();
@@ -179,7 +181,7 @@ private:
 // *** scene meta-information + reading/writing
 	int voxelCount = -1;
 	// map of hash blocks to voxels, voxels to frame numbers, frame numbers to iteration numbers
-	ITMIntArrayMap3D highlights;
+	ITM3DNestedMap<ITMHighlightIterationInfo> highlights;
 	fs::path highlightsBinaryPath;
 	fs::path highlightsTextPath;
 	std::map<int, std::shared_ptr<InterestRegionInfo>> interestRegionInfoByHashId;

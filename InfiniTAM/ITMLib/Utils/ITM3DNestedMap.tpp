@@ -71,7 +71,7 @@ bool ITM3DNestedMap<T>::SaveToFile(const char* path) {
 				file.write(reinterpret_cast<const char* >(&elementLevel1.first), sizeof(int));
 				size_t sizeLevel0 = elementLevel1.second.size();
 				file.write(reinterpret_cast<const char* >(&sizeLevel0), sizeof(size_t));
-				for (int elementLevel0 : elementLevel1.second) {
+				for (auto elementLevel0 : elementLevel1.second) {
 					file.write(reinterpret_cast<const char* >(&elementLevel0), sizeof(T));
 				}
 			}

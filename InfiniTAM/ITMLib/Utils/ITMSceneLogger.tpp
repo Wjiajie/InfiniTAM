@@ -43,7 +43,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 		canonicalScene(canonicalScene),
 		liveScene(liveScene),
 		warpUpdatesPath(this->path / ("warp_updates" + binaryFileExtension)),
-		highlights("Hash ID", "Local voxel ix", "Frame", "Iteration"),
+		highlights("Hash ID", "Local voxel ix", "Frame", ""),
 		highlightsBinaryPath(this->path / ("highlights" + binaryFileExtension)),
 		highlightsTextPath(this->path / ("highlights" + textFileExtension)) {
 	if (!fs::create_directories(this->path) && !fs::is_directory(this->path)) {
@@ -433,8 +433,8 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetScenesLoaded() cons
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LogHighlight(
-		int hashId, int voxelLocalIndex, int frameNumber, int iterationNumber) {
-	highlights.InsertOrdered(hashId, voxelLocalIndex, frameNumber, iterationNumber);
+		int hashId, int voxelLocalIndex, int frameNumber, ITMHighlightIterationInfo info) {
+	highlights.InsertOrdered(hashId, voxelLocalIndex, frameNumber, info);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -636,8 +636,8 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestRegionsByHash() 
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMIntArrayMap3D ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetHighlights() const {
-	return ITMIntArrayMap3D(highlights);
+ITM3DNestedMap<ITMHighlightIterationInfo> ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetHighlights() const {
+	return ITM3DNestedMap<ITMHighlightIterationInfo>(highlights);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

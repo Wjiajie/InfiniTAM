@@ -25,14 +25,19 @@
 #define _LOGGER
 #ifdef _LOGGER
 
+#define OSCILLATION_DETECTION
+
 #include "Utils/ITMSceneLogger.h"
+#define FRAME_OF_INTEREST 1
 //#define SAVE_FRAME
 
 #ifdef SAVE_FRAME
 #define SAVE_WARP
+#ifdef OSCILLATION_DETECTION
 #define LOG_HIGHLIGHTS
+#endif
 #else
-//#define LOG_INTEREST_REGIONS //loads the scene at the frame and saves warps for interest regions
+#define LOG_INTEREST_REGIONS //loads the scene at the frame and saves warps for interest regions
 #ifdef LOG_INTEREST_REGIONS
 //#define FILTER_HIGHLIGHTS
 #ifdef FILTER_HIGHLIGHTS
@@ -79,10 +84,12 @@
 #define TOC(var)
 #endif
 
+#ifdef OSCILLATION_DETECTION
 //#define OSCILLATION_TREATMENT
 #ifdef OSCILLATION_TREATMENT
 #define OLD_UGLY_WAY
 #endif
+#endif //OSCILLATION_DETECTION
 
 
 #ifdef PRINT_ENERGY_STATS

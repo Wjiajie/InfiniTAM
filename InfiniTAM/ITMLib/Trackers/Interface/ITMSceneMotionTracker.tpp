@@ -84,7 +84,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 	cv::Mat blank = cv::Mat::zeros(liveImg.rows, liveImg.cols, CV_8UC1);
 #endif
 #ifdef WRITE_ENERGY_STATS_TO_FILE
-	const std::string energy_stat_file_path = "/media/algomorph/Data/Reconstruction/debug_output/energy_stats.txt";
+	const std::string energy_stat_file_path = "/media/algomorph/Data/Reconstruction/debug_output/energy_stats2.txt";
 	energy_stat_file = std::ofstream(energy_stat_file_path.c_str(),std::ios_base::out);
 	energy_stat_file << "data" << "," << "level_set" << "," << "smoothness" << ","
 	                 << "killing" << "," << "total" << std::endl;
@@ -97,7 +97,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 #endif
 
 #ifdef SAVE_FRAME
-	if(currentFrameIx == frameOfInterest){
+	if(currentFrameIx == FRAME_OF_INTEREST){
 		sceneLogger.SaveScenesCompact();
 #ifdef SAVE_WARP
 		sceneLogger.StartSavingWarpState();
@@ -166,7 +166,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 		maxVectorUpdate = UpdateWarpField(canonicalScene, liveScene);
 		//START _DEBUG
 #ifdef SAVE_WARP
-		if(currentFrameIx == frameOfInterest){
+		if(currentFrameIx == FRAME_OF_INTEREST){
 			sceneLogger.SaveCurrentWarpState();
 		}
 #endif
@@ -178,7 +178,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 		//END _DEBUG
 	}
 	//START _DEBUG
-	if(currentFrameIx == frameOfInterest){
+	if(currentFrameIx == FRAME_OF_INTEREST){
 #ifdef SAVE_WARP
 		sceneLogger.StopSavingWarpState();
 #endif
@@ -192,6 +192,6 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 	energy_stat_file.close();
 #endif
 	//END _DEBUG
-
+//#define OLD_LEVEL_SET_TERM
 	this->FuseFrame(canonicalScene, liveScene);
 }

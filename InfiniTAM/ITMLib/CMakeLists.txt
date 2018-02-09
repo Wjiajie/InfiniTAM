@@ -492,7 +492,7 @@ Utils/ITMSceneLogger.tpp
 Utils/ITMIntArrayMap3D.cpp
 Utils/ITM3DNestedMap.tpp
 Utils/ITMSceneStatisticsCalculator.tpp
-Utils/ITMDynamicVoxelIterationInfo.cpp
+    Utils/ITMNeighborVoxelIterationInfo.cpp
 )
 
 SET(ITMLIB_UTILS_HEADERS
@@ -512,7 +512,7 @@ Utils/ITMSceneLogger.h
 Utils/ITMIntArrayMap3D.h
 Utils/ITM3DNestedMap.h
 Utils/ITMSceneStatisticsCalculator.h
-Utils/ITMDynamicVoxelIterationInfo.h
+    Utils/ITMNeighborVoxelIterationInfo.h
 )
 
 #################################################################

@@ -23,18 +23,37 @@ using namespace InfiniTAM::Engine;
 using namespace InputSource;
 using namespace ITMLib;
 
+
 /** Create a default source of depth images from a list of command line
     arguments. Typically, @para arg1 would identify the calibration file to
     use, @para arg2 the colour images, @para arg3 the depth images and
     @para arg4 the IMU images. If images are omitted, some live sources will
     be tried.
 */
-static void CreateDefaultImageSource(ImageSourceEngine* & imageSource, IMUSourceEngine* & imuSource, const char *arg1, const char *arg2, const char *arg3, const char *arg4)
+static void CreateDefaultImageSource(ImageSourceEngine* & imageSource, IMUSourceEngine* & imuSource, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5)
 {
 	const char *calibFile = arg1;
 	const char *filename1 = arg2;
 	const char *filename2 = arg3;
-	const char *filename_imu = arg4;
+	const char *filename3 = NULL;
+	const char *filename_imu = NULL;
+	std::string fourthArgument = arg4;
+	if(arg5 == NULL)
+	{
+		if(fourthArgument.find("%") == std::string::npos)
+		{
+			filename_imu = arg4;
+		}
+		else
+		{
+			filename3 = arg4;
+		}
+	}
+	else
+	{
+		filename_imu = arg5;
+	}
+
 
 	if (strcmp(calibFile, "viewer") == 0)
 	{
@@ -48,6 +67,9 @@ static void CreateDefaultImageSource(ImageSourceEngine* & imageSource, IMUSource
 	if ((imageSource == NULL) && (filename2 != NULL))
 	{
 		printf("using rgb images: %s\nusing depth images: %s\n", filename1, filename2);
+		if ( filename3 != NULL){
+			printf("using mask images: %s\n",filename3);
+		}
 		if (filename_imu == NULL)
 		{
 			ImageMaskPathGenerator pathGenerator(filename1, filename2);
@@ -147,6 +169,7 @@ try
 	const char *arg2 = NULL;
 	const char *arg3 = NULL;
 	const char *arg4 = NULL;
+	const char *arg5 = NULL;
 
 	int arg = 1;
 	do {
@@ -157,6 +180,8 @@ try
 		if (argv[arg] != NULL) arg3 = argv[arg]; else break;
 		++arg;
 		if (argv[arg] != NULL) arg4 = argv[arg]; else break;
+		++arg;
+		if (argv[arg] != NULL) arg5 = argv[arg]; else break;
 	} while (false);
 
 	if (arg == 1) {
@@ -174,7 +199,7 @@ try
 	ImageSourceEngine *imageSource = NULL;
 	IMUSourceEngine *imuSource = NULL;
 
-	CreateDefaultImageSource(imageSource, imuSource, arg1, arg2, arg3, arg4);
+	CreateDefaultImageSource(imageSource, imuSource, arg1, arg2, arg3, arg4, arg5);
 	if (imageSource==NULL)
 	{
 		std::cout << "failed to open any image stream" << std::endl;
