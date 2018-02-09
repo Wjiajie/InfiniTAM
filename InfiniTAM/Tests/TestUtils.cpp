@@ -41,12 +41,13 @@ void GenerateAndLogKillingScene01() {
 	ITMSceneLogger<ITMVoxelCanonical,ITMVoxelLive,ITMVoxelIndex> logger(testScenePath,canonicalScene,liveScene);
 	logger.SaveScenesCompact();
 
-	logger.LogHighlight(0,0,1,0);
-	logger.LogHighlight(0,0,1,1);
-	logger.LogHighlight(0,0,1,2);
-	logger.LogHighlight(0,0,1,4);
-	logger.LogHighlight(0,0,1,7);
-	logger.LogHighlight(0,0,1,8);
+	//TODO: fix with new highlight system --Greg (GitHub:Algomorph)
+//	logger.LogHighlight(0,0,1,0);
+//	logger.LogHighlight(0,0,1,1);
+//	logger.LogHighlight(0,0,1,2);
+//	logger.LogHighlight(0,0,1,4);
+//	logger.LogHighlight(0,0,1,7);
+//	logger.LogHighlight(0,0,1,8);
 	logger.SaveHighlights();
 	logger.StartSavingWarpState();
 	logger.SetUpInterestRegionsForSaving();

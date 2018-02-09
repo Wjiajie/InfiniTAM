@@ -38,6 +38,7 @@
 #include "TestUtils.h"
 #include "../ITMLib/Utils/ITMIntArrayMap3D.h"
 #include "../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
+#include "../ORUtils/FileUtils.h"
 
 using namespace ITMLib;
 
@@ -194,4 +195,20 @@ BOOST_AUTO_TEST_CASE( testSceneSaveLoadCompact){
 	delete settings;
 	delete scene1;
 	delete scene2;
+}
+
+
+BOOST_AUTO_TEST_CASE( testImageMaskReader){
+
+//	ITMUChar4Image* rgb = new ITMUChar4Image(true, false);
+//	ITMShortImage* depth = new ITMShortImage(true, false);
+//	ITMUCharImage* mask = new ITMUCharImage(true, false);
+//
+//	BOOST_ASSERT(ReadImageFromFile(rgb, "frames/color_000000.png"));
+//	BOOST_ASSERT(ReadImageFromFile(depth, "frames/depth_000000.png"));
+//	BOOST_ASSERT(ReadImageFromFile(mask, "frames/omask_000000.png"));
+//
+//	delete rgb;
+//	delete depth;
+//	delete mask;
 }
