@@ -12,6 +12,7 @@ void SaveImageToFile(const ORUtils::Image<short>* image, const char* fileName);
 void SaveImageToFile(const ORUtils::Image<float>* image, const char* fileName);
 bool ReadImageFromFile(ORUtils::Image<ORUtils::Vector4<unsigned char> >* image, const char* fileName);
 bool ReadImageFromFile(ORUtils::Image<short> *image, const char *fileName);
+bool ReadImageFromFile(ORUtils::Image<unsigned char> *image, const char *fileName);
 
 void MakeDir(const char *fileName);
 

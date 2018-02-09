@@ -319,6 +319,7 @@ namespace ORUtils
 		MemoryBlock(const MemoryBlock&);
 		MemoryBlock& operator=(const MemoryBlock&);
 	};
+
 }
 
 #endif

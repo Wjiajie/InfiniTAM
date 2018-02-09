@@ -28,10 +28,14 @@ ITMLib::ITMRGBDCalib BaseImageSourceEngine::getCalib() const
   return calib;
 }
 
-ImageMaskPathGenerator::ImageMaskPathGenerator(const char *rgbImageMask_, const char *depthImageMask_)
+ImageMaskPathGenerator::ImageMaskPathGenerator(const char* rgbImageMask_, const char* depthImageMask_, const char* maskImageMask_) :
+		hasMaskImagePaths(maskImageMask_ != NULL)
 {
 	strncpy(rgbImageMask, rgbImageMask_, BUF_SIZE);
 	strncpy(depthImageMask, depthImageMask_, BUF_SIZE);
+	if(hasMaskImagePaths){
+		strncpy(maskImageMask, maskImageMask_, BUF_SIZE);
+	}
 }
 
 std::string ImageMaskPathGenerator::getRgbImagePath(size_t currentFrameNo) const
@@ -48,11 +52,26 @@ std::string ImageMaskPathGenerator::getDepthImagePath(size_t currentFrameNo) con
 	return std::string(str);
 }
 
-ImageListPathGenerator::ImageListPathGenerator(const std::vector<std::string>& rgbImagePaths_, const std::vector<std::string>& depthImagePaths_)
+std::string ImageMaskPathGenerator::getMaskImagePath(size_t currentFrameNo) const {
+	if(hasMaskImagePaths){
+		char str[BUF_SIZE];
+		sprintf(str, maskImageMask, currentFrameNo);
+		return std::string(str);
+	}
+	return std::string();
+}
+
+
+ImageListPathGenerator::ImageListPathGenerator(const std::vector<std::string>& rgbImagePaths_,
+                                               const std::vector<std::string>& depthImagePaths_,
+                                               const std::vector<std::string>& maskImagePaths_)
 	: depthImagePaths(depthImagePaths_),
-	  rgbImagePaths(rgbImagePaths_)
+	  rgbImagePaths(rgbImagePaths_),
+	  maskImagePaths(maskImagePaths_),
+	  hasMaskImagePaths(true)
 {
 	if(rgbImagePaths.size() != depthImagePaths.size()) DIEWITHEXCEPTION("error: the rgb and depth image path lists do not have the same size");
+	if(rgbImagePaths.size() != maskImagePaths.size()) DIEWITHEXCEPTION("error: the rgb and mask image path lists do not have the same size");
 }
 
 std::string ImageListPathGenerator::getRgbImagePath(size_t currentFrameNo) const
@@ -65,9 +84,23 @@ std::string ImageListPathGenerator::getDepthImagePath(size_t currentFrameNo) con
 	return currentFrameNo < imageCount() ? depthImagePaths[currentFrameNo] : "";
 }
 
+std::string ImageListPathGenerator::getMaskImagePath(size_t currentFrameNo) const
+{
+	return hasMaskImagePaths ? currentFrameNo < imageCount() ? maskImagePaths[currentFrameNo] : "" : "";
+}
+
 size_t ImageListPathGenerator::imageCount() const
 {
 	return rgbImagePaths.size();
+}
+
+ImageListPathGenerator::ImageListPathGenerator(const std::vector<std::string>& rgbImagePaths_,
+                                               const std::vector<std::string>& depthImagePaths_) :
+		depthImagePaths(depthImagePaths_),
+		rgbImagePaths(rgbImagePaths_),
+		hasMaskImagePaths(false)
+{
+	if(rgbImagePaths.size() != depthImagePaths.size()) DIEWITHEXCEPTION("error: the rgb and depth image path lists do not have the same size");
 }
 
 template <typename PathGenerator>
@@ -80,19 +113,7 @@ ImageFileReader<PathGenerator>::ImageFileReader(const char *calibFilename, const
 
 	cached_rgb = new ITMUChar4Image(true, false);
 	cached_depth = new ITMShortImage(true, false);
-	cacheIsValid = false;
-}
-
-template <typename PathGenerator>
-ImageFileReader<PathGenerator>::ImageFileReader(const char *calibFilename, const PathGenerator& pathGenerator_, size_t initialFrameNo)
-	: BaseImageSourceEngine(calibFilename),
-	  pathGenerator(pathGenerator_)
-{
-	currentFrameNo = initialFrameNo;
-	cachedFrameNo = -1;
-
-	cached_rgb = new ITMUChar4Image(true, false);
-	cached_depth = new ITMShortImage(true, false);
+	cached_mask = new ITMUCharImage(true, false);
 	cacheIsValid = false;
 }
 
@@ -126,6 +147,18 @@ void ImageFileReader<PathGenerator>::loadIntoCache(void) const
 	}
 
 	if ((cached_rgb->noDims.x <= 0) && (cached_depth->noDims.x <= 0)) cacheIsValid = false;
+
+	if(pathGenerator.hasMaskImagePaths){
+		std::string maskPath = pathGenerator.getMaskImagePath(currentFrameNo);
+		if (!ReadImageFromFile(cached_mask, maskPath.c_str()))
+		{
+			if (cached_mask->noDims.x > 0) cacheIsValid = false;
+			printf("error reading file '%s'\n", maskPath.c_str());
+		}else{
+			cached_depth->ApplyMask(*cached_mask);
+			cached_rgb->ApplyMask(*cached_mask);
+		}
+	}
 }
 
 template <typename PathGenerator>
@@ -157,6 +190,11 @@ Vector2i ImageFileReader<PathGenerator>::getRGBImageSize(void) const
 {
 	loadIntoCache();
 	return cached_rgb->noDims;
+}
+
+template<typename PathGenerator>
+bool ImageFileReader<PathGenerator>::hasMaskImages(void) const {
+	return this->pathGenerator.hasMaskImagePaths;
 }
 
 CalibSource::CalibSource(const char *calibFilename, Vector2i setImageSize, float ratio)

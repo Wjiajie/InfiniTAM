@@ -114,7 +114,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 	}
 #endif
 #ifdef LOG_INTEREST_REGIONS
-	if(currentFrameIx == frameOfInterest) {
+	if(currentFrameIx == FRAME_OF_INTEREST) {
 		sceneLogger.LoadScenesCompact();
 		sceneLogger.LoadHighlights();
 #ifdef FILTER_HIGHLIGHTS
@@ -171,7 +171,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 		}
 #endif
 #ifdef LOG_INTEREST_REGIONS
-		if(currentFrameIx == frameOfInterest){
+		if(currentFrameIx == FRAME_OF_INTEREST){
 			sceneLogger.SaveAllInterestRegionWarps();
 		}
 #endif

@@ -429,6 +429,45 @@ bool ReadImageFromFile(ORUtils::Image<short> *image, const char *fileName)
 	return true;
 }
 
+
+bool ReadImageFromFile(ORUtils::Image<unsigned char> *image, const char *fileName)
+{
+	PNGReaderData pngData;
+	bool usepng = false;
+
+	int xsize, ysize;
+	FormatType type;
+	bool binary;
+	FILE *f = fopen(fileName, "rb");
+	if (f == NULL) return false;
+	type = pnm_readheader(f, &xsize, &ysize, &binary);
+	if (type != MONO_8u) {
+		fclose(f);
+		f = fopen(fileName, "rb");
+		type = png_readheader(f, xsize, ysize, pngData);
+		if (type != MONO_8u) {
+			fclose(f);
+			return false;
+		}
+		usepng = true;
+	}
+
+	ORUtils::Vector2<int> newSize(xsize, ysize);
+	image->ChangeDims(newSize);
+
+	unsigned char *data = (unsigned char*) image->GetData(MEMORYDEVICE_CPU);
+
+	if (usepng) {
+		if (!png_readdata(f, xsize, ysize, pngData, data)) { fclose(f); delete[] data; return false; }
+	} else if (binary) {
+		if (!pnm_readdata_binary(f, xsize, ysize, MONO_8u, data)) { fclose(f); delete[] data; return false; }
+	} else {
+		if (!pnm_readdata_ascii(f, xsize, ysize, MONO_8u, data)) { fclose(f); delete[] data; return false; }
+	}
+	fclose(f);
+	return true;
+}
+
 void MakeDir(const char *dirName)
 {
 #if defined _MSC_VER

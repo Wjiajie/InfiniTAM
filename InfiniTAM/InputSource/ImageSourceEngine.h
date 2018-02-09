@@ -85,11 +85,13 @@ namespace InputSource {
 		static const int BUF_SIZE = 2048;
 		char rgbImageMask[BUF_SIZE];
 		char depthImageMask[BUF_SIZE];
-
+		char maskImageMask[BUF_SIZE];
 	public:
-		ImageMaskPathGenerator(const char *rgbImageMask, const char *depthImageMask);
+		const bool hasMaskImagePaths;
+		ImageMaskPathGenerator(const char* rgbImageMask, const char* depthImageMask, const char* maskImageMask = NULL);
 		std::string getRgbImagePath(size_t currentFrameNo) const;
 		std::string getDepthImagePath(size_t currentFrameNo) const;
+		std::string getMaskImagePath(size_t currentFrameNo) const;
 	};
 
 	class ImageListPathGenerator
@@ -97,14 +99,21 @@ namespace InputSource {
 	private:
 		std::vector<std::string> depthImagePaths;
 		std::vector<std::string> rgbImagePaths;
+		std::vector<std::string> maskImagePaths;
 
 		size_t imageCount() const;
 
 	public:
-		ImageListPathGenerator(const std::vector<std::string>& rgbImagePaths_, const std::vector<std::string>& depthImagePaths_);
+		const bool hasMaskImagePaths;
+		ImageListPathGenerator(const std::vector<std::string>& rgbImagePaths_,
+		                       const std::vector<std::string>& depthImagePaths_);
+		ImageListPathGenerator(const std::vector<std::string>& rgbImagePaths_,
+				                       const std::vector<std::string>& depthImagePaths_,
+				                       const std::vector<std::string>& maskImagePaths_);
 		std::string getRgbImagePath(size_t currentFrameNo) const;
 		std::string getDepthImagePath(size_t currentFrameNo) const;
 
+		std::string getMaskImagePath(size_t currentFrameNo) const;
 	};
 
 	template <typename PathGenerator>
@@ -113,6 +122,7 @@ namespace InputSource {
 	private:
 		ITMUChar4Image *cached_rgb;
 		ITMShortImage *cached_depth;
+		ITMUCharImage *cached_mask;
 
 		void loadIntoCache() const;
 		mutable size_t cachedFrameNo;
@@ -125,6 +135,7 @@ namespace InputSource {
 		ImageFileReader(const char *calibFilename, const PathGenerator& pathGenerator_, size_t initialFrameNo = 0);
 		~ImageFileReader();
 
+		bool hasMaskImages(void) const;
 		bool hasMoreImages(void) const;
 		void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth);
 		Vector2i getDepthImageSize(void) const;
