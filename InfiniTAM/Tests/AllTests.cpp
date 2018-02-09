@@ -200,15 +200,20 @@ BOOST_AUTO_TEST_CASE( testSceneSaveLoadCompact){
 
 BOOST_AUTO_TEST_CASE( testImageMaskReader){
 
-//	ITMUChar4Image* rgb = new ITMUChar4Image(true, false);
-//	ITMShortImage* depth = new ITMShortImage(true, false);
-//	ITMUCharImage* mask = new ITMUCharImage(true, false);
-//
-//	BOOST_ASSERT(ReadImageFromFile(rgb, "frames/color_000000.png"));
-//	BOOST_ASSERT(ReadImageFromFile(depth, "frames/depth_000000.png"));
-//	BOOST_ASSERT(ReadImageFromFile(mask, "frames/omask_000000.png"));
-//
-//	delete rgb;
-//	delete depth;
-//	delete mask;
+	ITMUChar4Image* rgb = new ITMUChar4Image(true, false);
+	ITMShortImage* depth = new ITMShortImage(true, false);
+	ITMUCharImage* mask = new ITMUCharImage(true, false);
+
+	BOOST_ASSERT(ReadImageFromFile(rgb, "frames/color_000000.png"));
+	BOOST_ASSERT(ReadImageFromFile(depth, "frames/depth_000000.png"));
+	BOOST_ASSERT(ReadImageFromFile(mask, "frames/omask_000000.png"));
+
+	rgb->ApplyMask(*mask,Vector4u((unsigned char)0));
+	depth->ApplyMask(*mask,0);
+	SaveImageToFile(rgb, "frames/color_000000_masked.pnm");
+	SaveImageToFile(depth, "frames/depth_000000_masked.pnm");
+
+	delete rgb;
+	delete depth;
+	delete mask;
 }

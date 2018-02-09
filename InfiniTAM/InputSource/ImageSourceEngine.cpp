@@ -155,8 +155,9 @@ void ImageFileReader<PathGenerator>::loadIntoCache(void) const
 			if (cached_mask->noDims.x > 0) cacheIsValid = false;
 			printf("error reading file '%s'\n", maskPath.c_str());
 		}else{
-			cached_depth->ApplyMask(*cached_mask);
-			cached_rgb->ApplyMask(*cached_mask);
+			Vector4u blackRGB((unsigned char)0);
+			cached_depth->ApplyMask(*cached_mask, 0);
+			cached_rgb->ApplyMask(*cached_mask,blackRGB);
 		}
 	}
 }

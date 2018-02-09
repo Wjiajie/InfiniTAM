@@ -37,16 +37,19 @@ static void CreateDefaultImageSource(ImageSourceEngine* & imageSource, IMUSource
 	const char *filename2 = arg3;
 	const char *filename3 = NULL;
 	const char *filename_imu = NULL;
-	std::string fourthArgument = arg4;
+
 	if(arg5 == NULL)
 	{
-		if(fourthArgument.find("%") == std::string::npos)
-		{
-			filename_imu = arg4;
-		}
-		else
-		{
-			filename3 = arg4;
+		if(arg4 != NULL){
+			std::string fourthArgument(arg4);
+			if(fourthArgument.find("%") == std::string::npos)
+			{
+				filename_imu = arg4;
+			}
+			else
+			{
+				filename3 = arg4;
+			}
 		}
 	}
 	else

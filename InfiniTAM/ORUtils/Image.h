@@ -82,7 +82,7 @@ public:
 	}
 
 	template <typename TMask>
-	void ApplyMask(const Image<TMask>& maskImage);
+	void ApplyMask(const Image<TMask>& maskImage, T blankElement);
 
 	friend bool operator==(const Image<T>& rhs, const Image<T>& lhs) {
 		if (rhs.noDims != lhs.noDims || rhs.isAllocated_CPU != lhs.isAllocated_CPU ||
@@ -121,7 +121,7 @@ public:
 
 template<typename T>
 template <typename TMask>
-void Image<T>::ApplyMask(const Image<TMask>& maskImage) {
+void Image<T>::ApplyMask(const Image<TMask>& maskImage, T blankElement) {
 	if (!this->isAllocated_CPU || !maskImage.IsAllocated_CPU()) {
 		DIEWITHEXCEPTION("Cannot apply mask, either mask or source image or both are not allocated for CPU.");
 	}
@@ -129,7 +129,6 @@ void Image<T>::ApplyMask(const Image<TMask>& maskImage) {
 		DIEWITHEXCEPTION("Source and mask image dimensions must match.");
 	}
 	for (int iElement = 0; iElement < maskImage.dataSize; iElement++) {
-		T blankElement;
 		this->data_cpu[iElement] = maskImage.GetElement(iElement,MEMORYDEVICE_CPU)  ? this->data_cpu[iElement] : blankElement;
 	}
 }
