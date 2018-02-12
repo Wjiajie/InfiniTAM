@@ -129,7 +129,9 @@ void Image<T>::ApplyMask(const Image<TMask>& maskImage, T blankElement) {
 		DIEWITHEXCEPTION("Source and mask image dimensions must match.");
 	}
 	for (int iElement = 0; iElement < maskImage.dataSize; iElement++) {
-		this->data_cpu[iElement] = maskImage.GetElement(iElement,MEMORYDEVICE_CPU)  ? this->data_cpu[iElement] : blankElement;
+		if(!maskImage.GetElement(iElement,MEMORYDEVICE_CPU)){
+			this->data_cpu[iElement] = blankElement;
+		}
 	}
 }
 }//namespace ORUtils

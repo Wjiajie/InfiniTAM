@@ -75,7 +75,7 @@ static void CreateDefaultImageSource(ImageSourceEngine* & imageSource, IMUSource
 		}
 		if (filename_imu == NULL)
 		{
-			ImageMaskPathGenerator pathGenerator(filename1, filename2, nullptr);
+			ImageMaskPathGenerator pathGenerator(filename1, filename2, filename3);
 			imageSource = new ImageFileReader<ImageMaskPathGenerator>(calibFile, pathGenerator);
 		}
 		else

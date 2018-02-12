@@ -39,6 +39,7 @@
 #include "../ITMLib/Utils/ITMIntArrayMap3D.h"
 #include "../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
 #include "../ORUtils/FileUtils.h"
+#include "../InputSource/ImageSourceEngine.h"
 
 using namespace ITMLib;
 
@@ -198,22 +199,41 @@ BOOST_AUTO_TEST_CASE( testSceneSaveLoadCompact){
 }
 
 
-BOOST_AUTO_TEST_CASE( testImageMaskReader){
+BOOST_AUTO_TEST_CASE(testImageMaskReader){
 
-	ITMUChar4Image* rgb = new ITMUChar4Image(true, false);
-	ITMShortImage* depth = new ITMShortImage(true, false);
+	using namespace InputSource;
+	auto* rgb = new ITMUChar4Image(true, false);
+	auto* depth = new ITMShortImage(true, false);
+	auto* gtMaskedRgb = new ITMUChar4Image(true, false);
+	auto* gtMaskedDepth = new ITMShortImage(true, false);
+
 	ITMUCharImage* mask = new ITMUCharImage(true, false);
 
-	BOOST_ASSERT(ReadImageFromFile(rgb, "frames/color_000000.png"));
-	BOOST_ASSERT(ReadImageFromFile(depth, "frames/depth_000000.png"));
+	InputSource::ImageMaskPathGenerator pathGenerator("frames/color_%06i.png", "frames/depth_%06i.png", "frames/omask_%06i.png");
+	InputSource::ImageSourceEngine* imageSource = new InputSource::ImageFileReader<InputSource::ImageMaskPathGenerator>("frames/snoopy_calib.txt", pathGenerator);
+	imageSource->getImages(rgb,depth);
+
+//	BOOST_ASSERT(ReadImageFromFile(rgb, "frames/color_000000.png"));
+//	BOOST_ASSERT(ReadImageFromFile(depth, "frames/depth_000000.png"));
 	BOOST_ASSERT(ReadImageFromFile(mask, "frames/omask_000000.png"));
 
-	rgb->ApplyMask(*mask,Vector4u((unsigned char)0));
-	depth->ApplyMask(*mask,0);
-	SaveImageToFile(rgb, "frames/color_000000_masked.pnm");
-	SaveImageToFile(depth, "frames/depth_000000_masked.pnm");
+//	rgb->ApplyMask(*mask,Vector4u((unsigned char)0));
+//	depth->ApplyMask(*mask,0);
+
+//	SaveImageToFile(rgb, "frames/color_000000_masked2.pnm");
+//	SaveImageToFile(depth, "frames/depth_000000_masked2.pnm");
+
+	ReadImageFromFile(gtMaskedRgb, "frames/color_000000.png");
+	gtMaskedRgb->ApplyMask(*mask, Vector4u((unsigned char)0));
+	ReadImageFromFile(gtMaskedDepth, "frames/depth_000000_masked.pnm");
+
+	BOOST_ASSERT(*rgb == *gtMaskedRgb);
+	BOOST_ASSERT(*depth == *gtMaskedDepth);
 
 	delete rgb;
 	delete depth;
-	delete mask;
+	//delete mask;
+	delete imageSource;
+	delete gtMaskedDepth;
+	delete gtMaskedRgb;
 }
