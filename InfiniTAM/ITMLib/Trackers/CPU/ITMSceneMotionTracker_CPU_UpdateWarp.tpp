@@ -331,10 +331,17 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					const float weightLevelSet = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightLevelSetTerm;
 					const float learningRate = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::gradientDescentLearningRate;
 					//_DEBUG
+#if !defined(WARP_COMPUTE_MODE) || WARP_COMPUTE_MODE == WARP_COMPUTE_MODE_FULL
 					Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet + weightKilling * deltaEKilling;
-					//Vector3f deltaE = deltaEData + weightKilling * deltaEKilling;
-					//Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet;
-					//Vector3f deltaE = deltaEData;
+#elif WARP_COMPUTE_MODE == WARP_COMPUTE_MODE_NO_LEVEL_SET
+					Vector3f deltaE = deltaEData + weightKilling * deltaEKilling;
+#elif WARP_COMPUTE_MODE == WARP_COMPUTE_MODE_NO_KILLING
+					Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet;
+#elif WARP_COMPUTE_MODE == WARP_COMPUTE_MODE_DATA_ONLY
+					Vector3f deltaE = deltaEData;
+#else
+					DIEWITHEXCEPTION("WARP_COMPUTE_MODE not defined!");
+#endif
 
 					Vector3f warpUpdate = learningRate * deltaE;
 					float warpUpdateLength = length(warpUpdate);//meters
