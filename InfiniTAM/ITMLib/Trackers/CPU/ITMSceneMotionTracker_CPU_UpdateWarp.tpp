@@ -371,13 +371,15 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #endif
 #endif
 #ifdef LOG_HIGHLIGHTS
-						int& currentFrame = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
+						const int& currentFrame = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
 
 						Vector3f canonicalWarp = canonicalVoxel.warp_t;
 						Vector3f warpUpdateData = learningRate * deltaEData;
 						Vector3f warpUpdateLevelSet = learningRate * weightLevelSet * deltaELevelSet;
 						Vector3f warpUpdateKilling = learningRate * weightKilling * deltaEKilling;
 						std::array<ITMNeighborVoxelIterationInfo, 9> neighbors;
+						FindHighlightNeighborInfo(neighbors,originalPosition,hash,canonicalVoxels,
+						                          canonicalHashTable, liveVoxels,liveHashTable,liveCache);
 						ITMHighlightIterationInfo info = {hash, locId, iteration, canonicalWarp, canonicalSdf, liveSdf,
 						                                  warpUpdate, warpUpdateData, warpUpdateLevelSet,
 						                                  warpUpdateKilling, totalVoxelEnergy, dataEnergy,

@@ -28,7 +28,7 @@
 #define OSCILLATION_DETECTION
 
 #include "Utils/ITMSceneLogger.h"
-#define FRAME_OF_INTEREST 1
+#define FRAME_OF_INTEREST 2
 //#define SAVE_FRAME
 
 #ifdef SAVE_FRAME
@@ -37,11 +37,11 @@
 #define LOG_HIGHLIGHTS
 #endif
 #else
-//#define LOG_INTEREST_REGIONS //loads the scene at the frame and saves warps for interest regions
+#define LOG_INTEREST_REGIONS //loads the scene at the frame and saves warps for interest regions
 #ifdef LOG_INTEREST_REGIONS
 #define FILTER_HIGHLIGHTS
 #ifdef FILTER_HIGHLIGHTS
-#define HIGHLIGHT_MIN_RECURRENCES 4
+#define HIGHLIGHT_MIN_RECURRENCES 10
 #endif
 #endif //LOG INTEREST REGIONS
 //#define LOAD_FRAME //simply loads the scene at the frame before optimization
