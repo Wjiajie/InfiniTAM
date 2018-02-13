@@ -25,6 +25,7 @@
 #include <vtkGlyph3DMapper.h>
 #include <vtkLookupTable.h>
 
+//local
 #include "CanonicalVizPipe.h"
 
 //DEBUG
@@ -40,10 +41,11 @@ CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& negativeNonInter
                                    const std::array<double, 4>& positiveNonInterestVoxelColor,
                                    const std::array<double, 4>& negativeInterestVoxelColor,
                                    const std::array<double, 4>& positiveInterestVoxelColor,
-                                   const std::array<double, 4>& highlightVoxelColor,
-                                   const std::array<double, 3>& hashBlockEdgeColor) :
+                                   const std::array<double, 4>& highlightVoxelColor, const std::array<double, 3>& hashBlockEdgeColor,
+                                   int frameIx) :
 		SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex>(
 				negativeNonInterestVoxelColor, positiveNonInterestVoxelColor, hashBlockEdgeColor),
+		frameIx(frameIx),
 		initialNonInterestPoints(vtkSmartPointer<vtkPoints>::New()),
 		initialInterestPoints(vtkSmartPointer<vtkPoints>::New()),
 		negativeInterestVoxelColor(negativeInterestVoxelColor),
@@ -136,6 +138,7 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 			}
 		}
 	}
+	int currentInterestPointIndex = 0;
 	for (int hash : interestRegionHashes) {
 		const ITMHashEntry& currentHashEntry = canonicalHashTable[hash];
 		//skip unfilled hash
@@ -153,12 +156,22 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 					//[0.0,1.0) == negative
 					//[1.0-2.0) == positive
 					//3.0 == highlight
-					int voxelColor = highlights.Contains(hash, locId) ? 2 : voxel.sdf < 0.0f ? 0 : 1;
+					int voxelColor;
+					if (highlights.Contains(hash, locId, frameIx)) {
+						voxelColor = 2;
+						const std::vector<ITMHighlightIterationInfo> info = *(highlights.GetLevel1ValueAt(hash,locId, frameIx));
+						highlightIndexes.InsertOrdered(hash,locId,frameIx,currentInterestPointIndex);
+					} else {
+						voxelColor = voxel.sdf < 0.0f ? 0 : 1;
+					}
+
 					interestVoxelPoints->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
 					                                     maxVoxelDrawSize * originalPositionVoxels.y,
 					                                     maxVoxelDrawSize * originalPositionVoxels.z);
+
 					interestScaleAttribute->InsertNextValue(voxelScale);
 					interestColorAttribute->InsertNextValue(voxelColor);
+					currentInterestPointIndex++;
 				}
 			}
 		}
@@ -218,7 +231,8 @@ void CanonicalVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
 	voxelPolydata->Modified();
 }
 
-void CanonicalVizPipe::SetInterestRegionInfo(std::vector<int> interestRegionHashes, ITM3DNestedMap<ITMHighlightIterationInfo> highlights) {
+void CanonicalVizPipe::SetInterestRegionInfo(std::vector<int> interestRegionHashes,
+                                             ITM3DNestedMap<ITMHighlightIterationInfo> highlights) {
 	this->highlights = highlights;
 	this->interestRegionHashes = std::move(interestRegionHashes);
 	for (int hash : this->interestRegionHashes) {
@@ -274,5 +288,15 @@ void CanonicalVizPipe::SetUpHighlightSDFColorLookupTable(vtkSmartPointer<vtkLook
 	table->SetTableValue(0, rgbaFirstColor);
 	table->SetTableValue(1, rgbaSecondColor);
 	table->SetTableValue(2, rgbaHighlightColor);
-	table->SetNanColor(0.4,0.7,0.1,1.0);
+	table->SetNanColor(0.4, 0.7, 0.1, 1.0);
+}
+
+Vector3d CanonicalVizPipe::GetHighlightPosition(int hash, int locId) {
+	Vector3d pos;
+	this->interestVoxelPolydata->GetPoints()->GetPoint((*this->highlightIndexes.GetLevel1ValueAt(hash,locId,frameIx))[0], pos.values);
+	return pos;
+}
+
+void CanonicalVizPipe::SetFrameIndex(int frameIx) {
+	this->frameIx = frameIx;
 }

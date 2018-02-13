@@ -158,7 +158,7 @@ class UpdatableTextView
 	{
 		((Activity) mContext).runOnUiThread(new Runnable() {
 		        @Override
-		        public void run() {
+		        public void Run() {
 				(mTextView).setText(text);
 			}
 		});

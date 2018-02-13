@@ -66,19 +66,12 @@ const std::array<double, 4>  SDFViz::livePositiveSDFVoxelColor = {0.717, 0.882, 
 const std::array<double, 3>  SDFViz::liveHashBlockEdgeColor = {0.537, 0.819, 0.631};
 //** private **
 
-inline bool ends_with(std::string const& value, std::string const& ending) {
-	if (ending.size() > value.size()) return false;
-	return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
-}
-
 SDFViz::SDFViz(std::string pathToScene) :
 
-		canonicalScenePipe(canonicalNegativeSDFVoxelColor,
-		                   canonicalPositiveSDFVoxelColor,
-		                   canonicalNegativeInterestSDFVoxelColor,
-		                   canonicalPositiveInterestSDFVoxelColor,
-		                   canonicalHighlightSDFVoxelColor,
-		                   canonicalHashBlockEdgeColor),
+		canonicalScenePipe(canonicalNegativeSDFVoxelColor, canonicalPositiveSDFVoxelColor,
+		                   canonicalNegativeInterestSDFVoxelColor, canonicalPositiveInterestSDFVoxelColor,
+		                   canonicalHighlightSDFVoxelColor, canonicalHashBlockEdgeColor,
+		                   0),
 		liveScenePipe(liveNegativeSDFVoxelColor,
 		              livePositiveSDFVoxelColor,
 		              liveHashBlockEdgeColor),
@@ -91,12 +84,13 @@ SDFViz::SDFViz(std::string pathToScene) :
 	DrawIterationCounter();
 }
 
-int SDFViz::run() {
+int SDFViz::Run() {
 	//read scenes from disk
 	sceneLogger->LoadScenesCompact();
 	sceneLogger->LoadHighlights();
 	sceneLogger->SetUpInterestRegionsForLoading();
-	sceneLogger->StartLoadingWarpState();
+	sceneLogger->StartLoadingWarpState(frameIx);
+	canonicalScenePipe.SetFrameIndex(frameIx);
 	InitializeWarpBuffers();
 
 	//Individual voxel shape
@@ -111,7 +105,9 @@ int SDFViz::run() {
 	cube->SetBounds(0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE);
 
 	// set up viz pipelines
-	canonicalScenePipe.SetInterestRegionInfo(sceneLogger->GetInterestRegionHashes(), sceneLogger->GetHighlights());
+	highlights = sceneLogger->GetHighlights();
+
+	canonicalScenePipe.SetInterestRegionInfo(sceneLogger->GetInterestRegionHashes(), highlights);
 	canonicalScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
 	canonicalScenePipe.PrepareInterestRegions(sphere->GetOutputPort());
 	liveScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
@@ -123,18 +119,10 @@ int SDFViz::run() {
 	renderer->AddActor(liveScenePipe.GetVoxelActor());
 	renderer->AddActor(liveScenePipe.GetHashBlockActor());
 
-	renderer->ResetCamera();
-
-	// bucket scene camera params (focus interest region)
-//	renderer->GetActiveCamera()->SetPosition(134.377, 30.856, 595.223);
-//	renderer->GetActiveCamera()->SetFocalPoint(135.753000, 31.817580, 595.062400);
-//	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
-
-	// bucket scene camera params (focus bucket)
-//	renderer->GetActiveCamera()->SetPosition(7.0, 22.0, -72.66);
-//	renderer->GetActiveCamera()->SetFocalPoint(0.5, -40.5, 230.0);
-//	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
-	//renderer->ResetCamera();//used when need to choose new better initial camera pose manually
+	// set up initial camera position & orientation
+	currentHighlight = highlights.GetFirstLevel1Value();
+	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[0];
+	MoveFocusToHighlightAt(highlightNew.hash,highlightNew.localId);
 
 	renderWindow->Render();
 	renderWindowInteractor->Start();
@@ -154,7 +142,6 @@ void SDFViz::InitializeRendering() {
 	renderer = vtkSmartPointer<vtkRenderer>::New();
 
 	renderer->SetBackground(0.0, 0.0, 0.0);
-	//renderer->SetBackground(1.0, 1.0, 1.0);
 
 	renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
 	renderWindow->SetSize(renderWindow->GetScreenSize());
@@ -243,7 +230,7 @@ void SDFViz::DrawLegend() {
 
 void SDFViz::DrawIterationCounter() {
 
-	iterationIndicator->SetInput("0");
+	iterationIndicator->SetInput("Iteration: 0");
 	iterationIndicator->GetPositionCoordinate()->SetCoordinateSystemToView();
 	iterationIndicator->GetPositionCoordinate()->SetValue(-0.95, 0.9);
 	iterationIndicator->GetPosition2Coordinate()->SetCoordinateSystemToView();
@@ -255,7 +242,7 @@ void SDFViz::DrawIterationCounter() {
 }
 
 void SDFViz::UpdateIterationIndicator(unsigned int newValue) {
-	iterationIndicator->SetInput(std::to_string(newValue).c_str());
+	iterationIndicator->SetInput(("Iteration: " + std::to_string(newValue)).c_str());
 }
 
 void SDFViz::ToggleCanonicalHashBlockVisibility() {
@@ -279,6 +266,7 @@ void SDFViz::ToggleLiveVoxelVisibility() {
 	liveScenePipe.GetVoxelActor()->SetVisibility(!liveScenePipe.GetVoxelActor()->GetVisibility());
 	renderWindow->Render();
 }
+
 
 void SDFViz::InitializeWarpBuffers() {
 	if (!sceneLogger->GetScenesLoaded()) {
@@ -306,6 +294,34 @@ void SDFViz::IncreaseCanonicalVoxelOpacity() {
 	canonicalScenePipe.GetVoxelActor()->GetProperty()->SetOpacity(
 			std::max(0.0, canonicalScenePipe.GetVoxelActor()->GetProperty()->GetOpacity() + 0.05));
 	renderWindow->Render();
+}
+
+void SDFViz::MoveFocusToHighlightAt(int hash, int localId){
+	Vector3d position = canonicalScenePipe.GetHighlightPosition(hash, localId);
+	std::cout << "Now viewing highlight at hash " << hash << ", voxel "
+	          << localId << " in the canonical frame." << std::endl;
+	renderer->GetActiveCamera()->SetFocalPoint(position.values);
+	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
+	position.x -= 0.9;
+	position.y -= 0.5;
+	position.z -= 1.0;
+
+	renderer->GetActiveCamera()->SetPosition(position.values);
+	renderWindow->Render();
+}
+
+void SDFViz::MoveFocusToNextHighlight() {
+	const ITMHighlightIterationInfo& highlightOld = (*currentHighlight)[0];
+	currentHighlight = highlights.GetLevel1ValueAfter(highlightOld.hash, highlightOld.localId, highlightOld.frame);
+	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[0];
+	MoveFocusToHighlightAt(highlightNew.hash,highlightNew.localId);
+}
+
+void SDFViz::MoveFocusToPreviousHighlight() {
+	const ITMHighlightIterationInfo& highlightOld = (*currentHighlight)[0];
+	currentHighlight = highlights.GetLevel1ValueBefore(highlightOld.hash, highlightOld.localId, highlightOld.frame);
+	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[0];
+	MoveFocusToHighlightAt(highlightNew.hash,highlightNew.localId);
 }
 
 
@@ -373,7 +389,15 @@ void KeyPressInteractorStyle::OnKeyPress() {
 		} else if (key == "bracketleft") {
 			parent->PreviousInterestWarps();
 			std::cout << "Loading previous]] interest voxel warps." << std::endl;
+		} else if (key == "Prior") {
+			parent->MoveFocusToPreviousHighlight();
+		} else if (key == "Next") {
+			parent->MoveFocusToNextHighlight();
+		} else if (key == "Escape") {
+			rwi->TerminateApp();
+			std::cout << "Exiting application..." << std::endl;
 		}
+
 
 	}
 	std::cout << "Key symbol: " << key << std::endl;

@@ -61,7 +61,7 @@ class InfiniTAMProcessor implements Runnable
 		stopRequested = true;
 	}
 
-	public void run()
+	public void Run()
 	{
 		int usb_fd = InfiniTAMApplication.getApplication().waitForUSBPermission();
 		stopRequested = false;

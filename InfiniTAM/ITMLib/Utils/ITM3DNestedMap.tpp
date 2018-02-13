@@ -259,14 +259,26 @@ ITM3DNestedMap<T>& ITM3DNestedMap<T>::operator=(ITM3DNestedMap& other) {
 	return *this;
 }
 
+
 template<typename T>
-bool ITM3DNestedMap<T>::Contains(int keyLevel3, int keyLevel2, int keyLevel1, T valueLevel0) {
+bool ITM3DNestedMap<T>::Contains(int keyLevel3, int keyLevel2, int keyLevel1) {
 	if (this->internalMap.find(keyLevel3) == (this->internalMap).end()) { return false;}
 	auto& valueLevel3 = internalMap[keyLevel3];
 	if (valueLevel3.find(keyLevel2) == valueLevel3.end()) { return false;}
 	auto& valueLevel2 = valueLevel3[keyLevel2];
-	if (valueLevel2.find(keyLevel1) == valueLevel2.end()) { return false; }
-	std::vector<T>& valueLevel1 = valueLevel2[keyLevel1];
+	return valueLevel2.find(keyLevel1) != valueLevel2.end();
+}
+
+template<typename T>
+bool ITM3DNestedMap<T>::Contains(int keyLevel3, int keyLevel2, int keyLevel1, T valueLevel0) {
+	if (this->internalMap.find(keyLevel3) == (this->internalMap).end()) { return false;}
+	auto& valueLevel3 = internalMap[keyLevel3];
+	auto iteratorLevel3 = valueLevel3.find(keyLevel2);
+	if (iteratorLevel3 == valueLevel3.end()) { return false;}
+	auto& valueLevel2 = (*iteratorLevel3).second;
+	auto iteratorLevel2 = valueLevel2.find(keyLevel1);
+	if (iteratorLevel2 == valueLevel2.end()) { return false; }
+	std::vector<T>& valueLevel1 = (*iteratorLevel2).second;
 	return !(std::find(valueLevel1.begin(), valueLevel1.end(), valueLevel0) == valueLevel1.end());
 }
 
@@ -276,4 +288,94 @@ bool ITM3DNestedMap<T>::Contains(int keyLevel3, int keyLevel2) {
 	auto& valueLevel3 = internalMap[keyLevel3];
 	return !(valueLevel3.find(keyLevel2) == valueLevel3.end());
 }
+
+template<typename T>
+const std::vector<T>* ITM3DNestedMap<T>::GetFirstLevel1Value() const{
+	if(internalMap.empty()) return nullptr;
+	return &(*(*(*this->internalMap.begin()).second.begin()).second.begin()).second;
+}
+
+template<typename T>
+const std::vector<T>* ITM3DNestedMap<T>::GetLastLevel1Value() const {
+	if(internalMap.empty()) return nullptr;
+	return &(*(--(*(--(*(--this->internalMap.end())).second.end())).second.end())).second;
+}
+
+template<typename T>
+const std::vector<T>* ITM3DNestedMap<T>::GetLevel1ValueAfter(int keyLevel3, int keyLevel2, int keyLevel1) const {
+	auto iteratorLevel3 = this->internalMap.find(keyLevel3);
+	//check if top-level map contains third-level key, if it doesn't, return null pointer
+	if (iteratorLevel3 == (this->internalMap).end()) { return nullptr; }
+	//if it does, we have to check the second level to see if we can retrieve the next level1 element
+	auto& valueLevel3 = (*iteratorLevel3).second;
+	auto iteratorLevel2 = valueLevel3.find(keyLevel2);
+	//if the second level doesn't contain the original 2nd level key, return null pointer
+	if (iteratorLevel2 == valueLevel3.end()) { return nullptr; }
+	//otherwise, it does, we have to check the third level to see if we can retrieve the next level1 element
+	auto& valueLevel2 = (*iteratorLevel2).second;
+	auto iteratorLevel1 = valueLevel2.find(keyLevel1);
+	//if we could not find the original level 1 key in the level 1 map, return nullptr
+	if (iteratorLevel1 == valueLevel2.end()) { return nullptr; }
+	//otherwise, we have to check if level 1 map has more elements and return the next one if it does
+	iteratorLevel1++;
+	if (iteratorLevel1 != valueLevel2.end()) { return &(*iteratorLevel1).second; }
+	//there are no elements left in the current level 1 map, have to seek the next level 1 map in the level 2 map
+	iteratorLevel2++;
+	//if there are more elements in the current level 2 map, return the first element in the first one
+	if (iteratorLevel2 != valueLevel3.end()) { return &(*(*iteratorLevel2).second.begin()).second; }
+	// otherwise, we have to check the next level 2 map in the level 3 Map
+	iteratorLevel3++;
+	if (iteratorLevel3 != internalMap.end()) { return &(*(*(*iteratorLevel3).second.begin()).second.begin()).second; }
+	// the provided keys had to point to the very last element of the map. Rewind to the first element.
+	return GetFirstLevel1Value();
+}
+
+template<typename T>
+const std::vector<T>* ITM3DNestedMap<T>::GetLevel1ValueBefore(int keyLevel3, int keyLevel2, int keyLevel1) const {
+	auto iteratorLevel3 = this->internalMap.find(keyLevel3);
+	//check if top-level map contains third-level key, if it doesn't, return null pointer
+	if (iteratorLevel3 == (this->internalMap).end()) { return nullptr; }
+	//if it does, we have to check the second level to see if we can retrieve the next level1 element
+	auto& valueLevel3 = (*iteratorLevel3).second;
+	auto iteratorLevel2 = valueLevel3.find(keyLevel2);
+	//if the second level doesn't contain the original 2nd level key, return null pointer
+	if (iteratorLevel2 == valueLevel3.end()) { return nullptr; }
+	//otherwise, it does, we have to check the third level to see if we can retrieve the next level1 element
+	auto& valueLevel2 = (*iteratorLevel2).second;
+	auto iteratorLevel1 = valueLevel2.find(keyLevel1);
+	//if we could not find the original level 1 key in the level 1 map, return nullptr
+	if (iteratorLevel1 == valueLevel2.end()) { return nullptr; }
+	//otherwise, we have to check if level 1 map has more elements and return the previous one if it does
+	if (iteratorLevel1 != valueLevel2.begin()) { return &(*(--iteratorLevel1)).second; }
+	//there are no elements left in the current level 1 map, have to seek the next level 1 map in the level 2 map
+	//if there are more elements in the current level 2 map, return the last element in the last one
+	if (iteratorLevel2 != valueLevel3.begin()) { return &(*(--(*(--iteratorLevel2)).second.end())).second; }
+	// otherwise, we have to check the next level 2 map in the level 3 Map
+	if (iteratorLevel3 != internalMap.begin()) { return &(*(--(*(--(*(--iteratorLevel3)).second.end())).second.end())).second; }
+	// the provided keys had to point to the very first element of the map. Fast-forward to the last element to loop around.
+	return GetLastLevel1Value();
+}
+
+template<typename T>
+const std::vector<T>* ITM3DNestedMap<T>::GetLevel1ValueAt(int keyLevel3, int keyLevel2, int keyLevel1) const {
+	auto iteratorLevel3 = this->internalMap.find(keyLevel3);
+	//check if top-level map contains third-level key, if it doesn't, return null pointer
+	if (iteratorLevel3 == (this->internalMap).end()) { return nullptr; }
+	//if it does, we have to check the second level to see if we can retrieve the next level1 element
+	auto& valueLevel3 = (*iteratorLevel3).second;
+	auto iteratorLevel2 = valueLevel3.find(keyLevel2);
+	//if the second level doesn't contain the original 2nd level key, return null pointer
+	if (iteratorLevel2 == valueLevel3.end()) { return nullptr; }
+	//otherwise, it does, we have to check the third level to see if we can retrieve the next level1 element
+	auto& valueLevel2 = (*iteratorLevel2).second;
+	auto iteratorLevel1 = valueLevel2.find(keyLevel1);
+	//if we could not find the original level 1 key in the level 1 map, return nullptr
+	return iteratorLevel1 == valueLevel2.end() ? nullptr : &(*iteratorLevel1).second;
+}
+
+
+
+
+
+
 

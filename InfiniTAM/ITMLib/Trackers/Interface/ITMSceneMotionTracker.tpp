@@ -100,7 +100,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 	if(currentFrameIx == FRAME_OF_INTEREST){
 		sceneLogger.SaveScenesCompact();
 #ifdef SAVE_WARP
-		sceneLogger.StartSavingWarpState();
+		sceneLogger.StartSavingWarpState(FRAME_OF_INTEREST);
 		sceneLogger.SaveCurrentWarpState();
 #endif
 	}

@@ -49,7 +49,7 @@ void GenerateAndLogKillingScene01() {
 //	logger.LogHighlight(0,0,1,7);
 //	logger.LogHighlight(0,0,1,8);
 	logger.SaveHighlights();
-	logger.StartSavingWarpState();
+	logger.StartSavingWarpState(0);
 	logger.SetUpInterestRegionsForSaving();
 	logger.SaveCurrentWarpState();
 	logger.SaveAllInterestRegionWarps();

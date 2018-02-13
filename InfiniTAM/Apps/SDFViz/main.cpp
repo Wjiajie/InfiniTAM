@@ -34,7 +34,7 @@ int main(int argc, const char* argv[]) {
 			std::cout << description << std::endl;
 		}else{
 			SDFViz application(vm["directory"].as<std::string>());
-			application.run();
+			application.Run();
 		}
 	}catch(const bpo::error &ex){
 		std::cerr << ex.what() << std::endl;

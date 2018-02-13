@@ -380,7 +380,9 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						std::array<ITMNeighborVoxelIterationInfo, 9> neighbors;
 						FindHighlightNeighborInfo(neighbors,originalPosition,hash,canonicalVoxels,
 						                          canonicalHashTable, liveVoxels,liveHashTable,liveCache);
-						ITMHighlightIterationInfo info = {hash, locId, iteration, canonicalWarp, canonicalSdf, liveSdf,
+
+						ITMHighlightIterationInfo info = {hash, locId, currentFrame, iteration, originalPosition,
+						                                  canonicalWarp, canonicalSdf, liveSdf,
 						                                  warpUpdate, warpUpdateData, warpUpdateLevelSet,
 						                                  warpUpdateKilling, totalVoxelEnergy, dataEnergy,
 						                                  levelSetEnergy, smoothnessEnergy, killingEnergy,

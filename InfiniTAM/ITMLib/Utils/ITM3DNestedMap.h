@@ -42,11 +42,19 @@ public:
 	ITM3DNestedMap FilterBasedOnLevel0Lengths(int minThreshold);
 
 
+	const std::vector<T>* GetFirstLevel1Value() const;
+	const std::vector<T>* GetLastLevel1Value() const;
+	const std::vector<T>* GetLevel1ValueAfter(int keyLevel3, int keyLevel2, int keyLevel1) const;
+	const std::vector<T>* GetLevel1ValueBefore(int keyLevel3, int keyLevel2, int keyLevel1) const;
+	const std::vector<T>* GetLevel1ValueAt(int keyLevel3, int keyLevel2, int keyLevel1) const;
+
+
 	std::vector<int> GetLevel3Keys();
 	std::vector<int> GetOuterLevelKeys(){
 		return GetLevel3Keys();
 	};
 	bool Contains(int keyLevel3, int keyLevel2, int keyLevel1, T valueLevel0);
+	bool Contains(int keyLevel3, int keyLevel2, int keyLevel1);
 	bool Contains(int keyLevel3, int keyLevel2);
 
 

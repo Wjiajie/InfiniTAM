@@ -278,8 +278,8 @@ void ITMExtendedTracker_CUDA::ProjectCurrentIntensityFrame(ITMFloat4Image *point
 	const Vector2i imageSize_rgb = intensity_in->noDims;
 	const Vector2i imageSize_depth = depth_in->noDims; // Also the size of the projected image
 
-	points_out->ChangeDims(imageSize_depth); // Actual reallocation should happen only once per run.
-	intensity_out->ChangeDims(imageSize_depth); // Actual reallocation should happen only once per run.
+	points_out->ChangeDims(imageSize_depth); // Actual reallocation should happen only once per Run.
+	intensity_out->ChangeDims(imageSize_depth); // Actual reallocation should happen only once per Run.
 
 	const float *depths = depth_in->GetData(MEMORYDEVICE_CUDA);
 	const float *intensityIn = intensity_in->GetData(MEMORYDEVICE_CUDA);

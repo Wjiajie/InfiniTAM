@@ -99,7 +99,7 @@ bool ITMGlobalAdjustmentEngine::runGlobalAdjustment(bool blockingWait)
 	if (blockingWait) privateData->workingData_mutex.lock();
 	else if (!privateData->workingData_mutex.try_lock()) return false;
 
-	// now run the actual global adjustment
+	// now Run the actual global adjustment
 	workingData->prepareEvaluations();
 	MiniSlamGraph::SlamGraphErrorFunction errf(*workingData);
 	MiniSlamGraph::SlamGraphErrorFunction::Parameters para(*workingData);

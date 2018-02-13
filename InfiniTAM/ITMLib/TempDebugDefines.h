@@ -30,7 +30,7 @@
 #include "Utils/ITMSceneLogger.h"
 #define SCENE_PATH "/media/algomorph/Data/Reconstruction/debug_output/scene_snoopy_frame_2"
 #define FRAME_OF_INTEREST 2
-//#define SAVE_FRAME
+#define SAVE_FRAME
 
 #ifdef SAVE_FRAME
 #define SAVE_WARP

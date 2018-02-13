@@ -47,7 +47,7 @@ To actually build it:
 
 To get OpenNI running:
 
-  - Get the latest sources, go to OpenNI2/Packaging and run
+  - Get the latest sources, go to OpenNI2/Packaging and Run
 
     ./ReleaseVersion.py android
 

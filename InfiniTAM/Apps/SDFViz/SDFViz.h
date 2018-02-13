@@ -32,6 +32,7 @@
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
 #include "CanonicalVizPipe.h"
 
+
 using namespace ITMLib;
 namespace ITMLib {
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -59,27 +60,16 @@ vtkTypeMacro(KeyPressInteractorStyle, vtkInteractorStyleTrackballCamera);
 };
 
 class vtkRenderer;
-
 class vtkRenderWindow;
-
 class vtkPoints;
-
 class vtkPolyData;
-
 class vtkImageData;
-
 class vtkStructuredGrid;
-
 class vtkGlyph3D;
-
 class vtkGlyph3DMapper;
-
 class vtkFloatArray;
-
 class vtkAlgorithmOutput;
-
 class vtkLookupTable;
-
 class vtkTextActor;
 
 /**
@@ -90,29 +80,29 @@ class SDFViz {
 
 public:
 	//================= CONSTANTS ================
-	static const std::array<double,4> canonicalNegativeSDFVoxelColor;
-	static const std::array<double,4> canonicalPositiveSDFVoxelColor;
-	static const std::array<double,4> canonicalNegativeInterestSDFVoxelColor;
-	static const std::array<double,4> canonicalPositiveInterestSDFVoxelColor;
-	static const std::array<double,4> canonicalHighlightSDFVoxelColor;
-	static const std::array<double,3> canonicalHashBlockEdgeColor;
-	static const std::array<double,4> liveNegativeSDFVoxelColor;
-	static const std::array<double,4> livePositiveSDFVoxelColor;
-	static const std::array<double,3> liveHashBlockEdgeColor;
+	static const std::array<double, 4> canonicalNegativeSDFVoxelColor;
+	static const std::array<double, 4> canonicalPositiveSDFVoxelColor;
+	static const std::array<double, 4> canonicalNegativeInterestSDFVoxelColor;
+	static const std::array<double, 4> canonicalPositiveInterestSDFVoxelColor;
+	static const std::array<double, 4> canonicalHighlightSDFVoxelColor;
+	static const std::array<double, 3> canonicalHashBlockEdgeColor;
+	static const std::array<double, 4> liveNegativeSDFVoxelColor;
+	static const std::array<double, 4> livePositiveSDFVoxelColor;
+	static const std::array<double, 3> liveHashBlockEdgeColor;
 
 
 	//================= CONSTRUCTORS/DESTRUCTORS =
 	SDFViz(std::string pathToScene);
 	virtual ~SDFViz();
 	//================= MEMBER FUNCTIONS ==================
-	int run();
+	int Run();
 
 private:
 	//================= CONSTANTS ================
 
 	//================= MEMBER VARIABLES ===================
 	//data loader
-	ITMSceneLogger <ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
+	ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
 
 	//visualization setup
 	// The renderer generates the image
@@ -135,6 +125,12 @@ private:
 	//Holds warp & warp update state for the canonical scene
 	vtkSmartPointer<vtkFloatArray> allWarpBuffer;
 	vtkSmartPointer<vtkFloatArray> interestWarpBuffer;
+	//frame that we're loading scene & warps for
+	int frameIx;
+
+	//Holds highlights in the scene
+	ITM3DNestedMap<ITMHighlightIterationInfo> highlights;
+	const std::vector<ITMHighlightIterationInfo>* currentHighlight;
 
 	//================ MEMBER FUNCTIONS =====================
 	void InitializeRendering();
@@ -149,6 +145,9 @@ private:
 	bool NextInterestWarps();
 	bool PreviousInterestWarps();
 
+	void MoveFocusToNextHighlight();
+	void MoveFocusToPreviousHighlight();
+
 	//** visibility / opacity **
 	void ToggleCanonicalHashBlockVisibility();
 	void ToggleLiveHashBlockVisibility();
@@ -161,4 +160,6 @@ private:
 
 
 	void UpdateIterationIndicator(unsigned int newValue);
+
+	void MoveFocusToHighlightAt(int hash, int localId);
 };

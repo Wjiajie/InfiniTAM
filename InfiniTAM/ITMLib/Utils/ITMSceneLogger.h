@@ -101,7 +101,6 @@ public:
 		unsigned int iterationCursor = 0;
 		int voxelCount;
 
-
 	};
 
 // === CONSTRUCTORS / DESTRUCTORS ===
@@ -146,9 +145,9 @@ public:
 	int GetTotalInterestVoxelCount();
 
 	//** global warp-state saving/loading
-	bool StartSavingWarpState();
+	bool StartSavingWarpState(int frameIx);
 	void StopSavingWarpState();
-	bool StartLoadingWarpState();
+	bool StartLoadingWarpState(int& frameIx);
 	void StopLoadingWarpState();
 
 	bool SaveCurrentWarpState();

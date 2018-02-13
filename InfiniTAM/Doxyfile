@@ -2073,7 +2073,7 @@ SKIP_FUNCTION_MACROS   = YES
 # of tag files.
 # Note: Each tag file must have a unique name (where the name does NOT include
 # the path). If a tag file is not located in the directory in which doxygen is
-# run, you must also specify the path to the tagfile here.
+# Run, you must also specify the path to the tagfile here.
 
 TAGFILES               =
 

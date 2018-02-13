@@ -18,22 +18,26 @@
 #include "SDFSceneVizPipe.h"
 #include "../../ITMLib/ITMLibDefines.h"
 
-class CanonicalVizPipe : public SDFSceneVizPipe<ITMVoxelCanonical,ITMVoxelIndex> {
+class CanonicalVizPipe : public SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex> {
 public:
 	CanonicalVizPipe(const std::array<double, 4>& negativeNonInterestVoxelColor,
 	                 const std::array<double, 4>& positiveNonInterestVoxelColor,
 	                 const std::array<double, 4>& negativeInterestVoxelColor,
 	                 const std::array<double, 4>& positiveInterestVoxelColor,
 	                 const std::array<double, 4>& highlightVoxelColor,
-	                 const std::array<double, 3>& hashBlockEdgeColor);
+	                 const std::array<double, 3>& hashBlockEdgeColor,
+	                 int frameIx);
 
 	void UpdatePointPositionsFromBuffer(void* buffer);
 	void UpdateInterestRegionsFromBuffers(void* buffer);
-	void SetInterestRegionInfo(std::vector<int> interestRegionHashes, ITM3DNestedMap<ITMHighlightIterationInfo> highlights);
+	void
+	SetInterestRegionInfo(std::vector<int> interestRegionHashes, ITM3DNestedMap<ITMHighlightIterationInfo> highlights);
+	Vector3d GetHighlightPosition(int hash, int locId);
 
 	vtkSmartPointer<vtkActor>& GetInterestVoxelActor();
 
 	void PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeometry);
+	void SetFrameIndex(int frameIx);
 
 protected:
 	void PreparePointsForRendering() override;
@@ -41,6 +45,9 @@ protected:
 	vtkSmartPointer<vtkPoints> initialInterestPoints;
 
 private:
+	//frame of the warp
+	int frameIx;
+
 	// ** colors **
 	std::array<double, 4> negativeInterestVoxelColor;
 	std::array<double, 4> positiveInterestVoxelColor;
@@ -51,8 +58,9 @@ private:
 	std::vector<int> interestRegionHashes;
 	std::set<int> interestRegionHashSet;
 	int totalVoxelCount = 0;//includes both interest regions and the rest
-	std::vector<std::tuple<int,int>> interestRegionRanges;
+	std::vector<std::tuple<int, int>> interestRegionRanges;
 	ITM3DNestedMap<ITMHighlightIterationInfo> highlights;
+	ITM3DNestedMap<int> highlightIndexes;
 
 
 	// ** individual voxels **

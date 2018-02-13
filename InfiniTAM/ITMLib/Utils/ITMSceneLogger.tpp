@@ -133,14 +133,14 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenesCompact() {
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarpState() {
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarpState(int frameIx) {
 	if (!fs::is_directory(path)) {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
 	}
 	warpOFStream = std::ofstream(warpUpdatesPath.c_str(), std::ofstream::binary | std::ofstream::out);
 	if (!warpOFStream) throw std::runtime_error("Could not open " + warpUpdatesPath.string() + " for writing");
-
+	warpOFStream.write(reinterpret_cast<const char*>(&frameIx),sizeof(int));
 	iterationCursor = 0;
 	return true;
 }
@@ -184,7 +184,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveCurrentWarpState()
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartLoadingWarpState() {
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartLoadingWarpState(int& frameIx) {
 	if (this->voxelCount == -1) {
 		std::cout << "Hashed voxel count has not been obtained. Have the scenes been loaded successfully?" << std::endl;
 		return false;
@@ -196,6 +196,9 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartLoadingWarpState(
 
 	warpIFStream = std::ifstream(warpUpdatesPath.c_str(), std::ios::binary | std::ios::in);
 	if (!warpIFStream) throw std::runtime_error("Could not open " + warpUpdatesPath.string() + " for reading");
+
+	warpIFStream.read(reinterpret_cast<char*>(&frameIx), sizeof(int));
+
 	iterationCursor = 0;
 	return true;
 }
@@ -878,6 +881,3 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 size_t ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::GetIterationWarpBytesize() const {
 	return this->voxelCount * 2 * sizeof(Vector3f);
 }
-
-
-
