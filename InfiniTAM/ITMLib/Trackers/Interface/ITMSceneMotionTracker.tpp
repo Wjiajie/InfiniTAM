@@ -35,7 +35,7 @@ using namespace ITMLib;
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params) :
 		maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize),
-		sceneLogger("/media/algomorph/Data/Reconstruction/debug_output/scene")
+		sceneLogger(SCENE_PATH)
 {}
 
 
@@ -84,7 +84,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 	cv::Mat blank = cv::Mat::zeros(liveImg.rows, liveImg.cols, CV_8UC1);
 #endif
 #ifdef WRITE_ENERGY_STATS_TO_FILE
-	const std::string energy_stat_file_path = "/media/algomorph/Data/Reconstruction/debug_output/energy_stats2.txt";
+	const std::string energy_stat_file_path = ENERGY_STATS_FILE_PATH;
 	energy_stat_file = std::ofstream(energy_stat_file_path.c_str(),std::ios_base::out);
 	energy_stat_file << "data" << "," << "level_set" << "," << "smoothness" << ","
 	                 << "killing" << "," << "total" << std::endl;

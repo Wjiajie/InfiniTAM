@@ -29,7 +29,7 @@ public:
 
 	void UpdatePointPositionsFromBuffer(void* buffer);
 	void UpdateInterestRegionsFromBuffers(void* buffer);
-	void SetInterestRegionInfo(std::vector<int> interestRegionHashes, ITMIntArrayMap3D highlights);
+	void SetInterestRegionInfo(std::vector<int> interestRegionHashes, ITM3DNestedMap<ITMHighlightIterationInfo> highlights);
 
 	vtkSmartPointer<vtkActor>& GetInterestVoxelActor();
 
@@ -52,7 +52,7 @@ private:
 	std::set<int> interestRegionHashSet;
 	int totalVoxelCount = 0;//includes both interest regions and the rest
 	std::vector<std::tuple<int,int>> interestRegionRanges;
-	ITMIntArrayMap3D highlights;
+	ITM3DNestedMap<ITMHighlightIterationInfo> highlights;
 
 
 	// ** individual voxels **

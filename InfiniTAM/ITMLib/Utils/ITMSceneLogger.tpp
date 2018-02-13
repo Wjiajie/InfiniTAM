@@ -31,7 +31,10 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::binaryFileExtension = ".dat";
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::textFileExtension = ".txt";
-
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::highlightFilterInfoFilename = "highlight_filter_info.txt";
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::minRecurrenceHighlightFilterName = "min_reccurence_count_filter:";
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 		std::string path,
@@ -460,18 +463,30 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveHighlights() {
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadHighlights() {
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadHighlights(bool applyFilters) {
 	if (!fs::is_directory(this->path)) {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
 	}
 	if (!this->highlights.LoadFromFile(highlightsBinaryPath.c_str())) {
 		std::cout << "Could not load highlights from " << highlightsBinaryPath << std::endl;
-		return false;
 	} else {
 		std::cout << "Loaded highlights from " << highlightsBinaryPath << std::endl;
-		return true;
 	}
+	if(applyFilters){
+		fs::path wouldBeFilterInfoPath = path / fs::path(highlightFilterInfoFilename);
+		if(fs::is_regular_file(wouldBeFilterInfoPath)){
+			std::ifstream highlightFilterInfoNote(wouldBeFilterInfoPath.c_str(),std::ios_base::in);
+			std::string filterName;
+			highlightFilterInfoNote >> filterName;
+			if(filterName == minRecurrenceHighlightFilterName){
+				highlightFilterInfoNote >> minHighlightRecurrenceCount;
+			}
+			highlightFilterInfoNote.close();
+		}
+		FilterHighlights(minHighlightRecurrenceCount);
+	}
+	return true;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -608,7 +623,11 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::FilterHighlights(int anomalyFrameCountMinimum) {
+	minHighlightRecurrenceCount = std::max(minHighlightRecurrenceCount,anomalyFrameCountMinimum);
 	highlights = highlights.FilterBasedOnLevel0Lengths(anomalyFrameCountMinimum);
+	std::ofstream highlightFilterInfoNote((path / fs::path(highlightFilterInfoFilename)).c_str(), std::ios_base::out);
+	highlightFilterInfoNote << "min_reccurence_count_filter:" << " " << anomalyFrameCountMinimum << std::endl;
+	highlightFilterInfoNote.close();
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

@@ -135,7 +135,7 @@ public:
 	void LogHighlight(int hashId, int voxelLocalIndex, int frameNumber, ITMHighlightIterationInfo info);
 	bool SaveHighlights();
 	void PrintHighlights();
-	bool LoadHighlights();
+	bool LoadHighlights(bool applyFilters = true);
 	void FilterHighlights(int anomalyFrameCountMinimum);
 	void SetUpInterestRegionsForSaving();
 	void SaveAllInterestRegionWarps();
@@ -168,6 +168,9 @@ public:
 
 
 private:
+
+	static const std::string highlightFilterInfoFilename;
+	static const std::string minRecurrenceHighlightFilterName;
 //========= MEMBER VARIABLES ==================
 
 // *** root folder
@@ -197,6 +200,9 @@ private:
 	// It would be ideal to extend the scene class and log that number there, since it reflects the state of the scene.
 	unsigned int iterationCursor = 0;
 	Vector3f* warpBuffer = NULL;
+
+// *** data manipulation information ***
+	int minHighlightRecurrenceCount = 0;
 
 //======== MEMBER FUNCTIONS =====================
 	bool CheckDirectory();

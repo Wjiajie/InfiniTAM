@@ -28,6 +28,7 @@
 #define OSCILLATION_DETECTION
 
 #include "Utils/ITMSceneLogger.h"
+#define SCENE_PATH "/media/algomorph/Data/Reconstruction/debug_output/scene_snoopy_frame_2"
 #define FRAME_OF_INTEREST 2
 //#define SAVE_FRAME
 
@@ -94,6 +95,9 @@
 
 #ifdef PRINT_ENERGY_STATS
 #define WRITE_ENERGY_STATS_TO_FILE
+#ifdef WRITE_ENERGY_STATS_TO_FILE
+#define ENERGY_STATS_FILE_PATH "/media/algomorph/Data/Reconstruction/debug_output/energy_stats.txt"
+#endif
 #endif
 
 #endif //ifdef _DEBUG

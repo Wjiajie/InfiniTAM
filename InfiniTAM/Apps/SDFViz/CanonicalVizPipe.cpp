@@ -218,7 +218,7 @@ void CanonicalVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
 	voxelPolydata->Modified();
 }
 
-void CanonicalVizPipe::SetInterestRegionInfo(std::vector<int> interestRegionHashes, ITMIntArrayMap3D highlights) {
+void CanonicalVizPipe::SetInterestRegionInfo(std::vector<int> interestRegionHashes, ITM3DNestedMap<ITMHighlightIterationInfo> highlights) {
 	this->highlights = highlights;
 	this->interestRegionHashes = std::move(interestRegionHashes);
 	for (int hash : this->interestRegionHashes) {

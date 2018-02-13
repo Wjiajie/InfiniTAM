@@ -82,14 +82,10 @@ SDFViz::SDFViz(std::string pathToScene) :
 		liveScenePipe(liveNegativeSDFVoxelColor,
 		              livePositiveSDFVoxelColor,
 		              liveHashBlockEdgeColor),
-		iterationIndicator(vtkSmartPointer<vtkTextActor>::New()){
-	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
-#ifdef USE_TEST_SCENE//_DEBUG
-			"/media/algomorph/Data/Reconstruction/debug_output/test_scene",
-#else
-			pathToScene,
-#endif
-			canonicalScenePipe.GetScene(), liveScenePipe.GetScene());
+		iterationIndicator(vtkSmartPointer<vtkTextActor>::New()) {
+	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(pathToScene,
+	                                                                                 canonicalScenePipe.GetScene(),
+	                                                                                 liveScenePipe.GetScene());
 	InitializeRendering();
 	DrawLegend();
 	DrawIterationCounter();
@@ -115,7 +111,7 @@ int SDFViz::run() {
 	cube->SetBounds(0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE);
 
 	// set up viz pipelines
-	canonicalScenePipe.SetInterestRegionInfo(sceneLogger->GetInterestRegionHashes(),sceneLogger->GetHighlights());
+	canonicalScenePipe.SetInterestRegionInfo(sceneLogger->GetInterestRegionHashes(), sceneLogger->GetHighlights());
 	canonicalScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
 	canonicalScenePipe.PrepareInterestRegions(sphere->GetOutputPort());
 	liveScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
@@ -127,21 +123,18 @@ int SDFViz::run() {
 	renderer->AddActor(liveScenePipe.GetVoxelActor());
 	renderer->AddActor(liveScenePipe.GetHashBlockActor());
 
+	renderer->ResetCamera();
 
-#ifdef USE_TEST_SCENE
-		renderer->ResetCamera();
-#else
-		// bucket scene camera params (focus interest region)
-		renderer->GetActiveCamera()->SetPosition(134.377, 30.856, 595.223);
-		renderer->GetActiveCamera()->SetFocalPoint(135.753000, 31.817580, 595.062400);
-		renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
+	// bucket scene camera params (focus interest region)
+//	renderer->GetActiveCamera()->SetPosition(134.377, 30.856, 595.223);
+//	renderer->GetActiveCamera()->SetFocalPoint(135.753000, 31.817580, 595.062400);
+//	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
 
-		// bucket scene camera params (focus bucket)
+	// bucket scene camera params (focus bucket)
 //	renderer->GetActiveCamera()->SetPosition(7.0, 22.0, -72.66);
 //	renderer->GetActiveCamera()->SetFocalPoint(0.5, -40.5, 230.0);
 //	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
-		//renderer->ResetCamera();//used when need to choose new better initial camera pose manually
-#endif
+	//renderer->ResetCamera();//used when need to choose new better initial camera pose manually
 
 	renderWindow->Render();
 	renderWindowInteractor->Start();
@@ -205,8 +198,8 @@ bool SDFViz::NextInterestWarps() {
 }
 
 bool SDFViz::PreviousInterestWarps() {
-	if(sceneLogger->BufferPreviousInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0))){
-		UpdateIterationIndicator(sceneLogger->GetIterationCursor() == 0 ? 0 : sceneLogger->GetIterationCursor()-1);
+	if (sceneLogger->BufferPreviousInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0))) {
+		UpdateIterationIndicator(sceneLogger->GetIterationCursor() == 0 ? 0 : sceneLogger->GetIterationCursor() - 1);
 	}
 	canonicalScenePipe.UpdateInterestRegionsFromBuffers(this->interestWarpBuffer->GetVoidPointer(0));
 	renderWindow->Render();
@@ -252,16 +245,16 @@ void SDFViz::DrawIterationCounter() {
 
 	iterationIndicator->SetInput("0");
 	iterationIndicator->GetPositionCoordinate()->SetCoordinateSystemToView();
-	iterationIndicator->GetPositionCoordinate()->SetValue(-0.95,0.9);
+	iterationIndicator->GetPositionCoordinate()->SetValue(-0.95, 0.9);
 	iterationIndicator->GetPosition2Coordinate()->SetCoordinateSystemToView();
-	iterationIndicator->GetPosition2Coordinate()->SetValue(-0.9,1.0);
+	iterationIndicator->GetPosition2Coordinate()->SetValue(-0.9, 1.0);
 	iterationIndicator->GetTextProperty()->SetFontSize(24);
 	iterationIndicator->GetTextProperty()->SetColor(0.1, 0.8, 0.5);
 
 	renderer->AddActor2D(iterationIndicator);
 }
 
-void SDFViz::UpdateIterationIndicator(unsigned int newValue){
+void SDFViz::UpdateIterationIndicator(unsigned int newValue) {
 	iterationIndicator->SetInput(std::to_string(newValue).c_str());
 }
 
