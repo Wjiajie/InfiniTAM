@@ -21,7 +21,6 @@
 
 //local
 #include "../Objects/Scene/ITMScene.h"
-#include "ITMIntArrayMap3D.h"
 #include "ITM3DNestedMap.h"
 #include "ITMNeighborVoxelIterationInfo.h"
 
@@ -79,7 +78,7 @@ public:
 
 
 		void SaveCurrentWarpState();
-		void Rewrite();
+
 		bool BufferCurrentWarpState(void* externalBuffer);
 		bool SeekPrevious();
 		unsigned int GetIterationCursor() const;
@@ -91,6 +90,7 @@ public:
 		virtual ~InterestRegionInfo();
 
 	private:
+		void Rewrite();
 		// ** member variables **
 		bool isLoading = false;
 		bool isSaving = false;

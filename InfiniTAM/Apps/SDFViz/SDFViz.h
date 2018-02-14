@@ -162,4 +162,5 @@ private:
 	void UpdateIterationIndicator(unsigned int newValue);
 
 	void MoveFocusToHighlightAt(int hash, int localId);
+	void RefocusACurrentHighlight();
 };

@@ -489,10 +489,9 @@ SET(ITMLIB_UTILS_SOURCES
 Utils/ITMLibSettings.cpp
 Utils/ITMSceneSliceRasterizer.tpp
 Utils/ITMSceneLogger.tpp
-Utils/ITMIntArrayMap3D.cpp
 Utils/ITM3DNestedMap.tpp
 Utils/ITMSceneStatisticsCalculator.tpp
-    Utils/ITMNeighborVoxelIterationInfo.cpp
+Utils/ITMNeighborVoxelIterationInfo.cpp
 )
 
 SET(ITMLIB_UTILS_HEADERS
@@ -509,10 +508,9 @@ Utils/ITMSceneParams.h
 Utils/ITMSceneSliceRasterizer.h
 Utils/ITMSurfelSceneParams.h
 Utils/ITMSceneLogger.h
-Utils/ITMIntArrayMap3D.h
 Utils/ITM3DNestedMap.h
 Utils/ITMSceneStatisticsCalculator.h
-    Utils/ITMNeighborVoxelIterationInfo.h
+Utils/ITMNeighborVoxelIterationInfo.h
 )
 
 #################################################################

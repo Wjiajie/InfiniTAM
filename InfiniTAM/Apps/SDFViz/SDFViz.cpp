@@ -121,8 +121,7 @@ int SDFViz::Run() {
 
 	// set up initial camera position & orientation
 	currentHighlight = highlights.GetFirstLevel1Value();
-	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[0];
-	MoveFocusToHighlightAt(highlightNew.hash,highlightNew.localId);
+    RefocusACurrentHighlight();
 
 	renderWindow->Render();
 	renderWindowInteractor->Start();
@@ -178,8 +177,9 @@ bool SDFViz::PreviousNonInterestWarps() {
 }
 
 bool SDFViz::NextInterestWarps() {
-	UpdateIterationIndicator(sceneLogger->GetIterationCursor());
-	sceneLogger->BufferCurrentInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0));
+	if(sceneLogger->BufferCurrentInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0))){
+		UpdateIterationIndicator(sceneLogger->GetIterationCursor());
+	};
 	canonicalScenePipe.UpdateInterestRegionsFromBuffers(this->interestWarpBuffer->GetVoidPointer(0));
 	renderWindow->Render();
 }
@@ -310,6 +310,11 @@ void SDFViz::MoveFocusToHighlightAt(int hash, int localId){
 	renderWindow->Render();
 }
 
+void SDFViz::RefocusACurrentHighlight(){
+	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[0];
+	MoveFocusToHighlightAt(highlightNew.hash,highlightNew.localId);
+}
+
 void SDFViz::MoveFocusToNextHighlight() {
 	const ITMHighlightIterationInfo& highlightOld = (*currentHighlight)[0];
 	currentHighlight = highlights.GetLevel1ValueAfter(highlightOld.hash, highlightOld.localId, highlightOld.frame);
@@ -388,7 +393,7 @@ void KeyPressInteractorStyle::OnKeyPress() {
 			std::cout << "Loading next interest voxel warps." << std::endl;
 		} else if (key == "bracketleft") {
 			parent->PreviousInterestWarps();
-			std::cout << "Loading previous]] interest voxel warps." << std::endl;
+			std::cout << "Loading previous interest voxel warps." << std::endl;
 		} else if (key == "Prior") {
 			parent->MoveFocusToPreviousHighlight();
 		} else if (key == "Next") {
@@ -396,6 +401,8 @@ void KeyPressInteractorStyle::OnKeyPress() {
 		} else if (key == "Escape") {
 			rwi->TerminateApp();
 			std::cout << "Exiting application..." << std::endl;
+		} else if (key == "Home"){
+			parent->RefocusACurrentHighlight();
 		}
 
 

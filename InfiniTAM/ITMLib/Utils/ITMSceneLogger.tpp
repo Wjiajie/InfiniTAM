@@ -832,6 +832,9 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SeekPrevious() {
 	if (isSaving) { throw std::runtime_error("Attempting to load while saving (not allowed)."); }
 	if (iterationCursor == 0) { return false; }
+	if(ifStream.eof()){
+		ifStream.clear();
+	}
 	ifStream.seekg(-1 * (voxelCount * 2 * sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
 	this->iterationCursor--;
 	return true;
