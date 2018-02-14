@@ -560,6 +560,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 				overlappingRegion->hashBlockIds.push_back(hash);
 				overlappingRegion->voxelCount += SDF_BLOCK_SIZE3;
 			}
+			overlappingRegion->Rewrite();
 		} else {
 			std::shared_ptr<InterestRegionInfo> info(new InterestRegionInfo(regionHashIds, centerHashId, *this));
 			//instert the same region into map by the hash blocks it contains
@@ -767,17 +768,10 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::Interes
 		hashBlockIds(hashBlockIds),
 		path(parent.path / fs::path(prefix + std::to_string(centerHashBlockId) + binaryFileExtension)),
 		ifStream(),
-		ofStream(std::ofstream(path.c_str(), std::ios::binary | std::ios::out)),
+		ofStream(),
 		parent(parent),
 		voxelCount(static_cast<int>(hashBlockIds.size()) * SDF_BLOCK_SIZE3) {
-	if (!ofStream) throw std::runtime_error("Could not open " + path.string() + " for writing");
-	//write region header
-	ofStream.write(reinterpret_cast<const char* >(&centerHashBlockId), sizeof(unsigned int));
-	size_t hashBlockCount = hashBlockIds.size();
-	ofStream.write(reinterpret_cast<const char* >(&hashBlockCount), sizeof(size_t));
-	for (int hashBlockId : hashBlockIds) {
-		ofStream.write(reinterpret_cast<const char* >(&hashBlockId), sizeof(int));
-	}
+	this->Rewrite();
 	isSaving = true;
 	isLoading = false;
 }
@@ -880,4 +874,18 @@ unsigned int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegion
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 size_t ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::GetIterationWarpBytesize() const {
 	return this->voxelCount * 2 * sizeof(Vector3f);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::Rewrite() {
+	ofStream.close();
+	ofStream = std::ofstream(path.c_str(), std::ios::binary | std::ios::out);
+	if (!ofStream) throw std::runtime_error("Could not open " + path.string() + " for writing");
+	//write region header
+	ofStream.write(reinterpret_cast<const char* >(&centerHashBlockId), sizeof(unsigned int));
+	size_t hashBlockCount = hashBlockIds.size();
+	ofStream.write(reinterpret_cast<const char* >(&hashBlockCount), sizeof(size_t));
+	for (int hashBlockId : hashBlockIds) {
+		ofStream.write(reinterpret_cast<const char* >(&hashBlockId), sizeof(int));
+	}
 }

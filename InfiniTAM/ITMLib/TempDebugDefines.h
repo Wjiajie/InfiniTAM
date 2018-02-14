@@ -55,7 +55,7 @@
 #endif //WARP_COMPUTE_MODE
 
 
-#define SAVE_FRAME
+//#define SAVE_FRAME
 
 #ifdef SAVE_FRAME
 #define SAVE_WARP
@@ -65,12 +65,13 @@
 #else
 #define LOG_INTEREST_REGIONS //loads the scene at the frame and saves warps for interest regions
 #ifdef LOG_INTEREST_REGIONS
-#define FILTER_HIGHLIGHTS
+//#define FILTER_HIGHLIGHTS
 #ifdef FILTER_HIGHLIGHTS
 #define HIGHLIGHT_MIN_RECURRENCES 10
 #endif
-#endif //LOG INTEREST REGIONS
+#else
 //#define LOAD_FRAME //simply loads the scene at the frame before optimization
+#endif //LOG INTEREST REGIONS
 #endif //SAVE FRAME
 
 

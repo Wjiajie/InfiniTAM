@@ -77,7 +77,9 @@ public:
 		                   ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>& parent);
 		InterestRegionInfo(fs::path path, ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>& parent);
 
+
 		void SaveCurrentWarpState();
+		void Rewrite();
 		bool BufferCurrentWarpState(void* externalBuffer);
 		bool SeekPrevious();
 		unsigned int GetIterationCursor() const;
