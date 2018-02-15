@@ -159,8 +159,12 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 					int voxelColor;
 					if (highlights.Contains(hash, locId, frameIx)) {
 						voxelColor = 2;
-						const std::vector<ITMHighlightIterationInfo> info = *(highlights.GetLevel1ValueAt(hash,locId, frameIx));
+						const std::vector<ITMHighlightIterationInfo> info = *(highlights.GetArrayAt(hash, locId,
+						                                                                            frameIx));
 						highlightIndexes.InsertOrdered(hash,locId,frameIx,currentInterestPointIndex);
+					} else if (highlightByNeighbor.Contains(hash, locId, frameIx)){
+						const std::tuple<int,int> highlightCoords = *highlightByNeighbor.GetValueAt(hash,locId, frameIx);
+						highlightNeighborIndexes.InsertOrdered(std::get<0>(highlightCoords),std::get<1>(highlightCoords), frameIx, currentInterestPointIndex);
 					} else {
 						voxelColor = voxel.sdf < 0.0f ? 0 : 1;
 					}
@@ -232,11 +236,18 @@ void CanonicalVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
 }
 
 void CanonicalVizPipe::SetInterestRegionInfo(std::vector<int> interestRegionHashes,
-                                             ITM3DNestedMap<ITMHighlightIterationInfo> highlights) {
+                                             ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights) {
 	this->highlights = highlights;
 	this->interestRegionHashes = std::move(interestRegionHashes);
 	for (int hash : this->interestRegionHashes) {
 		interestRegionHashSet.insert(hash);
+	}
+	auto highlightArrays = highlights.GetArrays();
+	for (auto highlightArray : highlightArrays){
+		ITMHighlightIterationInfo& info = highlightArray[0];
+		for(auto neighbor : info.neighbors){
+			this->highlightByNeighbor.InsertOrdered(neighbor.hash,neighbor.localId,frameIx,std::make_tuple(info.hash, info.localId));
+		}
 	}
 	interestRegionHashesAreSet = true;
 }
@@ -293,8 +304,19 @@ void CanonicalVizPipe::SetUpHighlightSDFColorLookupTable(vtkSmartPointer<vtkLook
 
 Vector3d CanonicalVizPipe::GetHighlightPosition(int hash, int locId) {
 	Vector3d pos;
-	this->interestVoxelPolydata->GetPoints()->GetPoint((*this->highlightIndexes.GetLevel1ValueAt(hash,locId,frameIx))[0], pos.values);
+	this->interestVoxelPolydata->GetPoints()->GetPoint((*this->highlightIndexes.GetValueAt(hash, locId, frameIx)), pos.values);
 	return pos;
+}
+std::vector<Vector3d> CanonicalVizPipe::GetHighlightNeighborPositions(int hash, int locId){
+	std::vector<Vector3d> positions;
+	vtkPoints* points = this->interestVoxelPolydata->GetPoints();
+	const std::vector<int> indexes = *this->highlightNeighborIndexes.GetArrayAt(hash,locId,frameIx);
+	for (int iNeighbor = 0; iNeighbor < indexes.size(); iNeighbor++){
+		Vector3d pos;
+		points->GetPoint(indexes[iNeighbor],pos.values);
+		positions.push_back(pos);
+	}
+	return positions;
 }
 
 void CanonicalVizPipe::SetFrameIndex(int frameIx) {

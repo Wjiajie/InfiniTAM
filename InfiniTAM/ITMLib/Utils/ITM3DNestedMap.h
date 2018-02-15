@@ -25,45 +25,47 @@ namespace ITMLib{
 template<typename T>
 class ITM3DNestedMap {
 public:
+
+	//*** Constructors and destructors ***
 	ITM3DNestedMap();
-	ITM3DNestedMap(const char* prefixLevel3, const char* prefixLevel2, const char* prefixLevel1,
-	                 const char* prefixLevel0);
+	ITM3DNestedMap(const char* prefixLevel2, const char* prefixLevel1, const char* prefixLevel0);
 	ITM3DNestedMap(const ITM3DNestedMap& nestedMap3D);
+	~ITM3DNestedMap();
+
+	//*** Operator overloads ***
 	ITM3DNestedMap& operator=(ITM3DNestedMap& other);
 	ITM3DNestedMap& operator=(ITM3DNestedMap&& other) noexcept;
 	bool operator==(const ITM3DNestedMap &other) const;
 
-	~ITM3DNestedMap();
-
-	bool InsertOrdered(int keyLevel3, int keyLevel2, int keyLevel1, T valueLevel0);
+	//*** I/O ****
 	bool SaveToFile(const char* path);
 	bool SaveToTextFile(const char* path);
 	bool LoadFromFile(const char* path);
-	ITM3DNestedMap FilterBasedOnLevel0Lengths(int minThreshold);
-
-
-	const std::vector<T>* GetFirstLevel1Value() const;
-	const std::vector<T>* GetLastLevel1Value() const;
-	const std::vector<T>* GetLevel1ValueAfter(int keyLevel3, int keyLevel2, int keyLevel1) const;
-	const std::vector<T>* GetLevel1ValueBefore(int keyLevel3, int keyLevel2, int keyLevel1) const;
-	const std::vector<T>* GetLevel1ValueAt(int keyLevel3, int keyLevel2, int keyLevel1) const;
-
-
-	std::vector<int> GetLevel3Keys();
-	std::vector<int> GetOuterLevelKeys(){
-		return GetLevel3Keys();
-	};
-	bool Contains(int keyLevel3, int keyLevel2, int keyLevel1, T valueLevel0);
-	bool Contains(int keyLevel3, int keyLevel2, int keyLevel1);
-	bool Contains(int keyLevel3, int keyLevel2);
-
-
 	template<typename FT>
 	friend std::ostream& operator<<(std::ostream& stream, const ITM3DNestedMap<FT>& nestedMap3D);
 
+	//*** Insertions and transformations ***
+	bool InsertOrdered(int keyLevel2, int keyLevel1, int keyLevel0, T valueLevel0);
+
+	//*** Traversal, checks, and getters ***
+	const T* GetFirstValue() const;
+	const T* GetLastValue() const;
+	const T* GetValueAfter(int keyLevel2, int keyLevel1, int keyLevel0) const;
+	const T* GetValueBefore(int keyLevel2, int keyLevel1, int keyLevel0) const;
+	const T* GetValueAt(int keyLevel2, int keyLevel1, int keyLevel0) const;
+	std::vector<int> GetLevel2Keys();
+	std::vector<int> GetOuterLevelKeys(){
+		return GetLevel2Keys();
+	};
+	std::vector<T> GetValues() const;
+
+	bool Contains(int keyLevel2, int keyLevel1, int keyLevel0, T valueLevel0);
+	bool Contains(int keyLevel2, int keyLevel1, int keyLevel0);
+	bool Contains(int keyLevel2, int keyLevel1);
+
+
 private:
-	std::map<int, std::map<int, std::map<int, std::vector<T>>>> internalMap;
-	const char* prefixLevel3;
+	std::map<int, std::map<int, std::map<int, T>>> internalMap;
 	const char* prefixLevel2;
 	const char* prefixLevel1;
 	const char* prefixLevel0;

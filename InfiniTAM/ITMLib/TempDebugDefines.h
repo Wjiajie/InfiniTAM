@@ -55,10 +55,10 @@
 #endif //WARP_COMPUTE_MODE
 
 
-//#define SAVE_FRAME
+#define SAVE_FRAME
 
 #ifdef SAVE_FRAME
-#define SAVE_WARP
+//#define SAVE_WARP
 #ifdef OSCILLATION_DETECTION
 #define LOG_HIGHLIGHTS
 #endif

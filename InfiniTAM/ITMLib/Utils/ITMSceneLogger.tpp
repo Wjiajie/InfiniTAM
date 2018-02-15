@@ -659,8 +659,8 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestRegionsByHash() 
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITM3DNestedMap<ITMHighlightIterationInfo> ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetHighlights() const {
-	return ITM3DNestedMap<ITMHighlightIterationInfo>(highlights);
+ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetHighlights() const {
+	return ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>(highlights);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

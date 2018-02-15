@@ -28,6 +28,7 @@
 #include "Utils/ITMSceneSliceRasterizer.tpp"
 #include "Utils/ITMSceneStatisticsCalculator.tpp"
 #include "Utils/ITMSceneLogger.tpp"
+#include "Utils/ITM3DNestedMapOfArrays.tpp"
 #include "Utils/ITM3DNestedMap.tpp"
 #include "Utils/ITMNeighborVoxelIterationInfo.h"
 
@@ -50,7 +51,10 @@ template class ITMSceneSliceRasterizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxel
 template class ITMSceneStatisticsCalculator<ITMVoxelCanonical,ITMVoxelIndex>;
 template class ITMSceneStatisticsCalculator<ITMVoxelLive,ITMVoxelIndex>;
 template class ITM3DNestedMap<int>;
-template class ITM3DNestedMap<ITMHighlightIterationInfo>;//TODO: Implement missing methods -Greg (GitHub: Algomorph)
+template class ITM3DNestedMap<std::tuple<int,int>>;
+template class ITM3DNestedMapOfArrays<int>;
+template class ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>;
+
 
 //scene manipulation functions
 template void CopySceneWithOffset_CPU<ITMVoxelCanonical,ITMVoxelIndex>(

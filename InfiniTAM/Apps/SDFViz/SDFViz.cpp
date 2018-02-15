@@ -44,6 +44,7 @@
 #include <vtkUniformGrid.h>
 #include <vtkTextActor.h>
 #include <vtkTextProperty.h>
+#include <vtk-8.1/vtkVertexGlyphFilter.h>
 
 //local
 #include "SDFSceneVizPipe.h"
@@ -67,7 +68,6 @@ const std::array<double, 3>  SDFViz::liveHashBlockEdgeColor = {0.537, 0.819, 0.6
 //** private **
 
 SDFViz::SDFViz(std::string pathToScene) :
-
 		canonicalScenePipe(canonicalNegativeSDFVoxelColor, canonicalPositiveSDFVoxelColor,
 		                   canonicalNegativeInterestSDFVoxelColor, canonicalPositiveInterestSDFVoxelColor,
 		                   canonicalHighlightSDFVoxelColor, canonicalHashBlockEdgeColor,
@@ -75,7 +75,9 @@ SDFViz::SDFViz(std::string pathToScene) :
 		liveScenePipe(liveNegativeSDFVoxelColor,
 		              livePositiveSDFVoxelColor,
 		              liveHashBlockEdgeColor),
-		iterationIndicator(vtkSmartPointer<vtkTextActor>::New()) {
+		highlightVisualizer(),
+		iterationIndicator(vtkSmartPointer<vtkTextActor>::New()),
+		iterationIndex(0){
 	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(pathToScene,
 	                                                                                 canonicalScenePipe.GetScene(),
 	                                                                                 liveScenePipe.GetScene());
@@ -89,8 +91,8 @@ int SDFViz::Run() {
 	sceneLogger->LoadScenesCompact();
 	sceneLogger->LoadHighlights();
 	sceneLogger->SetUpInterestRegionsForLoading();
-	sceneLogger->StartLoadingWarpState(frameIx);
-	canonicalScenePipe.SetFrameIndex(frameIx);
+	sceneLogger->StartLoadingWarpState(frameIndex);
+	canonicalScenePipe.SetFrameIndex(frameIndex);
 	InitializeWarpBuffers();
 
 	//Individual voxel shape
@@ -113,15 +115,17 @@ int SDFViz::Run() {
 	liveScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
 
 	// add actors
-	renderer->AddActor(canonicalScenePipe.GetVoxelActor());
-	renderer->AddActor(canonicalScenePipe.GetInterestVoxelActor());
-	renderer->AddActor(canonicalScenePipe.GetHashBlockActor());
-	renderer->AddActor(liveScenePipe.GetVoxelActor());
-	renderer->AddActor(liveScenePipe.GetHashBlockActor());
+	sdfRenderer->AddActor(canonicalScenePipe.GetVoxelActor());
+	sdfRenderer->AddActor(canonicalScenePipe.GetInterestVoxelActor());
+	sdfRenderer->AddActor(canonicalScenePipe.GetHashBlockActor());
+	sdfRenderer->AddActor(liveScenePipe.GetVoxelActor());
+	sdfRenderer->AddActor(liveScenePipe.GetHashBlockActor());
+	topRenderer->AddActor(highlightVisualizer.GetHighlightActor());
+	DrawDummyMarkers();
 
 	// set up initial camera position & orientation
-	currentHighlight = highlights.GetFirstLevel1Value();
-    RefocusACurrentHighlight();
+	currentHighlight = highlights.GetFirstArray();
+	RefocusAtCurrentHighlight();
 
 	renderWindow->Render();
 	renderWindowInteractor->Start();
@@ -138,17 +142,28 @@ SDFViz::~SDFViz() {
 
 void SDFViz::InitializeRendering() {
 
-	renderer = vtkSmartPointer<vtkRenderer>::New();
+	sdfRenderer = vtkSmartPointer<vtkRenderer>::New();
+	topRenderer = vtkSmartPointer<vtkRenderer>::New();
 
-	renderer->SetBackground(0.0, 0.0, 0.0);
+	sdfRenderer->SetBackground(0.0, 0.0, 0.0);
 
 	renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
 	renderWindow->SetSize(renderWindow->GetScreenSize());
 
+
 	renderWindow->SetWindowName("SDF Viz (pre-alpha)");//TODO insert git hash here --Greg (GitHub:Algomorph)
-	renderWindow->AddRenderer(renderer);
+	renderWindow->SetNumberOfLayers(2);
+	renderWindow->AddRenderer(sdfRenderer);
+	sdfRenderer->SetLayer(0);
+	sdfRenderer->InteractiveOn();
+	renderWindow->AddRenderer(topRenderer);
+	topRenderer->SetLayer(1);
+	topRenderer->InteractiveOn();
+	topRenderer->SetActiveCamera(sdfRenderer->GetActiveCamera());
+
 
 	renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
+
 	vtkSmartPointer<KeyPressInteractorStyle> interactorStyle = vtkSmartPointer<KeyPressInteractorStyle>::New();
 	interactorStyle->parent = this;
 	interactorStyle->SetMouseWheelMotionFactor(0.05);
@@ -178,7 +193,7 @@ bool SDFViz::PreviousNonInterestWarps() {
 
 bool SDFViz::NextInterestWarps() {
 	if(sceneLogger->BufferCurrentInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0))){
-		UpdateIterationIndicator(sceneLogger->GetIterationCursor());
+		UpdateIteration(sceneLogger->GetIterationCursor());
 	};
 	canonicalScenePipe.UpdateInterestRegionsFromBuffers(this->interestWarpBuffer->GetVoidPointer(0));
 	renderWindow->Render();
@@ -186,7 +201,7 @@ bool SDFViz::NextInterestWarps() {
 
 bool SDFViz::PreviousInterestWarps() {
 	if (sceneLogger->BufferPreviousInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0))) {
-		UpdateIterationIndicator(sceneLogger->GetIterationCursor() == 0 ? 0 : sceneLogger->GetIterationCursor() - 1);
+		UpdateIteration(sceneLogger->GetIterationCursor() == 0 ? 0 : sceneLogger->GetIterationCursor() - 1);
 	}
 	canonicalScenePipe.UpdateInterestRegionsFromBuffers(this->interestWarpBuffer->GetVoidPointer(0));
 	renderWindow->Render();
@@ -225,7 +240,7 @@ void SDFViz::DrawLegend() {
 	colors->GetColor("black", background);
 	legend->SetBackgroundColor(background);
 
-	renderer->AddActor(legend);
+	sdfRenderer->AddActor(legend);
 }
 
 void SDFViz::DrawIterationCounter() {
@@ -238,10 +253,10 @@ void SDFViz::DrawIterationCounter() {
 	iterationIndicator->GetTextProperty()->SetFontSize(24);
 	iterationIndicator->GetTextProperty()->SetColor(0.1, 0.8, 0.5);
 
-	renderer->AddActor2D(iterationIndicator);
+	sdfRenderer->AddActor2D(iterationIndicator);
 }
 
-void SDFViz::UpdateIterationIndicator(unsigned int newValue) {
+void SDFViz::UpdateIteration(unsigned int newValue) {
 	iterationIndicator->SetInput(("Iteration: " + std::to_string(newValue)).c_str());
 }
 
@@ -298,35 +313,71 @@ void SDFViz::IncreaseCanonicalVoxelOpacity() {
 
 void SDFViz::MoveFocusToHighlightAt(int hash, int localId){
 	Vector3d position = canonicalScenePipe.GetHighlightPosition(hash, localId);
+	std::vector<Vector3d> neighborPositions = canonicalScenePipe.GetHighlightNeighborPositions(hash,localId);
+	const ITMHighlightIterationInfo info = (*highlights.GetArrayAt(hash,localId,frameIndex))[0];//TODO: deal with iterations somehow -Greg(Github:Algomorph)
+	highlightVisualizer.SetData(position,info,neighborPositions);
+
+
 	std::cout << "Now viewing highlight at hash " << hash << ", voxel "
 	          << localId << " in the canonical frame." << std::endl;
-	renderer->GetActiveCamera()->SetFocalPoint(position.values);
-	renderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
+	std::cout << "Neighbor positions: "<<std::endl;
+	for(auto pos : neighborPositions){
+		std::cout << "   " << pos << std::endl;
+	}
+
+
+	sdfRenderer->GetActiveCamera()->SetFocalPoint(position.values);
+	sdfRenderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
 	position.x -= 0.9;
 	position.y -= 0.5;
 	position.z -= 1.0;
 
-	renderer->GetActiveCamera()->SetPosition(position.values);
+	sdfRenderer->GetActiveCamera()->SetPosition(position.values);
 	renderWindow->Render();
 }
 
-void SDFViz::RefocusACurrentHighlight(){
+void SDFViz::RefocusAtCurrentHighlight(){
 	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[0];
 	MoveFocusToHighlightAt(highlightNew.hash,highlightNew.localId);
 }
 
 void SDFViz::MoveFocusToNextHighlight() {
 	const ITMHighlightIterationInfo& highlightOld = (*currentHighlight)[0];
-	currentHighlight = highlights.GetLevel1ValueAfter(highlightOld.hash, highlightOld.localId, highlightOld.frame);
+	currentHighlight = highlights.GetArrayAfter(highlightOld.hash, highlightOld.localId, highlightOld.frame);
 	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[0];
 	MoveFocusToHighlightAt(highlightNew.hash,highlightNew.localId);
 }
 
 void SDFViz::MoveFocusToPreviousHighlight() {
 	const ITMHighlightIterationInfo& highlightOld = (*currentHighlight)[0];
-	currentHighlight = highlights.GetLevel1ValueBefore(highlightOld.hash, highlightOld.localId, highlightOld.frame);
+	currentHighlight = highlights.GetArrayBefore(highlightOld.hash, highlightOld.localId, highlightOld.frame);
 	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[0];
 	MoveFocusToHighlightAt(highlightNew.hash,highlightNew.localId);
+}
+
+void SDFViz::DrawDummyMarkers() {
+	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+	points->InsertNextPoint(-500.0, -500.0,-500.0);
+	points->InsertNextPoint(500.0,500.0,500.0);
+	vtkSmartPointer<vtkPolyData> dummyPolyData = vtkSmartPointer<vtkPolyData>::New();
+	dummyPolyData->SetPoints(points);
+	vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter =
+			vtkSmartPointer<vtkVertexGlyphFilter>::New();
+	vertexFilter->SetInputData(dummyPolyData);
+	vertexFilter->Update();
+	vtkSmartPointer<vtkPolyData> polydata =
+			vtkSmartPointer<vtkPolyData>::New();
+	polydata->ShallowCopy(vertexFilter->GetOutput());
+	// Visualization
+	vtkSmartPointer<vtkPolyDataMapper> mapper =
+			vtkSmartPointer<vtkPolyDataMapper>::New();
+	mapper->SetInputData(polydata);
+	vtkSmartPointer<vtkActor> actor =
+			vtkSmartPointer<vtkActor>::New();
+	actor->SetMapper(mapper);
+	actor->GetProperty()->SetPointSize(1);
+	actor->GetProperty()->SetColor(0.0,0.0,0.0);
+	topRenderer->AddActor(actor);
 }
 
 
@@ -345,15 +396,18 @@ void KeyPressInteractorStyle::OnKeyPress() {
 			double x, y, z;
 			double xFocalPoint, yFocalPoint, zFocalPoint;
 			double xUpVector, yUpVector, zUpVector;
-			parent->renderer->GetActiveCamera()->GetPosition(x, y, z);
-			parent->renderer->GetActiveCamera()->GetFocalPoint(xFocalPoint, yFocalPoint, zFocalPoint);
-			parent->renderer->GetActiveCamera()->GetViewUp(xUpVector, yUpVector, zUpVector);
+			double dNear, dFar;
+			parent->sdfRenderer->GetActiveCamera()->GetPosition(x, y, z);
+			parent->sdfRenderer->GetActiveCamera()->GetFocalPoint(xFocalPoint, yFocalPoint, zFocalPoint);
+			parent->sdfRenderer->GetActiveCamera()->GetViewUp(xUpVector, yUpVector, zUpVector);
+			parent->sdfRenderer->GetActiveCamera()->GetClippingRange(dNear,dFar);
 			std::cout << "Camera:" << std::endl;
 			std::cout << "  Current position: " << x << ", " << y << ", " << z << std::endl;
 			std::cout << "  Current focal point: " << xFocalPoint << ", " << yFocalPoint << ", " << zFocalPoint
 			          << std::endl;
 			std::cout << "  Current up-vector: " << xUpVector << ", " << yUpVector << ", " << zUpVector
 			          << std::endl;
+			std::cout << "  Current clipping range: " << dNear << ", " << dFar << std::endl;
 			std::cout.flush();
 		} else if (key == "v") {
 			//toggle voxel blocks visibility
@@ -402,7 +456,7 @@ void KeyPressInteractorStyle::OnKeyPress() {
 			rwi->TerminateApp();
 			std::cout << "Exiting application..." << std::endl;
 		} else if (key == "Home"){
-			parent->RefocusACurrentHighlight();
+			parent->RefocusAtCurrentHighlight();
 		}
 
 

@@ -17,6 +17,7 @@
 
 #include "SDFSceneVizPipe.h"
 #include "../../ITMLib/ITMLibDefines.h"
+#include "../../ITMLib/Utils/ITM3DNestedMap.h"
 
 class CanonicalVizPipe : public SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex> {
 public:
@@ -31,8 +32,9 @@ public:
 	void UpdatePointPositionsFromBuffer(void* buffer);
 	void UpdateInterestRegionsFromBuffers(void* buffer);
 	void
-	SetInterestRegionInfo(std::vector<int> interestRegionHashes, ITM3DNestedMap<ITMHighlightIterationInfo> highlights);
+	SetInterestRegionInfo(std::vector<int> interestRegionHashes, ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights);
 	Vector3d GetHighlightPosition(int hash, int locId);
+	std::vector<Vector3d> GetHighlightNeighborPositions(int hash, int locId);
 
 	vtkSmartPointer<vtkActor>& GetInterestVoxelActor();
 
@@ -59,8 +61,11 @@ private:
 	std::set<int> interestRegionHashSet;
 	int totalVoxelCount = 0;//includes both interest regions and the rest
 	std::vector<std::tuple<int, int>> interestRegionRanges;
-	ITM3DNestedMap<ITMHighlightIterationInfo> highlights;
+	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
 	ITM3DNestedMap<int> highlightIndexes;
+	ITM3DNestedMap<std::tuple<int,int>> highlightByNeighbor;
+	ITM3DNestedMapOfArrays<int> highlightNeighborIndexes;
+
 
 
 	// ** individual voxels **
@@ -71,4 +76,5 @@ private:
 
 	void SetUpHighlightSDFColorLookupTable(vtkSmartPointer<vtkLookupTable>& table, const double* rgbaFirstColor,
 	                                       const double* rgbaSecondColor, const double* rgbaHighlightColor);
+
 };

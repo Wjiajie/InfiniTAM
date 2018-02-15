@@ -34,12 +34,14 @@ set(sources
     SDFSceneVizPipe.tpp
     ExplicitInstantiations.cpp
     CanonicalVizPipe.cpp
+    HighlightVisualization.cpp
     )
 
 set(headers
     SDFViz.h
     SDFSceneVizPipe.h
     CanonicalVizPipe.h
+    HighlightVisualization.h
     )
 
 #############################

@@ -31,6 +31,7 @@
 #include "../../ITMLib/ITMLibDefines.h"
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
 #include "CanonicalVizPipe.h"
+#include "HighlightVisualization.h"
 
 
 using namespace ITMLib;
@@ -105,10 +106,8 @@ private:
 	ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
 
 	//visualization setup
-	// The renderer generates the image
-	// which is then displayed on the render window.
-	// It can be thought of as a scene to which the actor is added
-	vtkSmartPointer<vtkRenderer> renderer;
+	vtkSmartPointer<vtkRenderer> sdfRenderer;
+	vtkSmartPointer<vtkRenderer> topRenderer;
 	// The render window is the actual GUI window
 	// that appears on the computer screen
 	vtkSmartPointer<vtkRenderWindow> renderWindow;
@@ -121,15 +120,18 @@ private:
 	// Structures for rendering scene geometry with VTK
 	CanonicalVizPipe canonicalScenePipe;
 	SDFSceneVizPipe<ITMVoxelLive, ITMVoxelIndex> liveScenePipe;
+	HighlightVisualization highlightVisualizer;
 
 	//Holds warp & warp update state for the canonical scene
 	vtkSmartPointer<vtkFloatArray> allWarpBuffer;
 	vtkSmartPointer<vtkFloatArray> interestWarpBuffer;
 	//frame that we're loading scene & warps for
-	int frameIx;
+	int frameIndex;
+	//to keep track of iteration number in the optimization
+	int iterationIndex;
 
 	//Holds highlights in the scene
-	ITM3DNestedMap<ITMHighlightIterationInfo> highlights;
+	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
 	const std::vector<ITMHighlightIterationInfo>* currentHighlight;
 
 	//================ MEMBER FUNCTIONS =====================
@@ -139,6 +141,7 @@ private:
 
 	void DrawLegend();
 	void DrawIterationCounter();
+	void DrawDummyMarkers();
 
 	bool NextNonInterestWarps();
 	bool PreviousNonInterestWarps();
@@ -158,9 +161,8 @@ private:
 	void DecreaseCanonicalVoxelOpacity();
 	void IncreaseCanonicalVoxelOpacity();
 
-
-	void UpdateIterationIndicator(unsigned int newValue);
+	void UpdateIteration(unsigned int newValue);
 
 	void MoveFocusToHighlightAt(int hash, int localId);
-	void RefocusACurrentHighlight();
+	void RefocusAtCurrentHighlight();
 };
