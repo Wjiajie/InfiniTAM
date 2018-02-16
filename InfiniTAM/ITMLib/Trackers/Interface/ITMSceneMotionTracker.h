@@ -55,6 +55,9 @@ protected:
 #ifdef _LOGGER
 	int currentFrameIx = 0;
 	ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex> sceneLogger;
+#ifdef RECORD_CONTINOUS_HIGHLIGHTS
+	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> previouslyRecordedAnomalies;
+#endif
 #endif
 #ifdef WRITE_ENERGY_STATS_TO_FILE
 	std::ofstream energy_stat_file;

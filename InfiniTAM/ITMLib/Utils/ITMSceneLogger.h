@@ -134,9 +134,10 @@ public:
 
 	//*** saving of meta-information & interest regions
 	void LogHighlight(int hashId, int voxelLocalIndex, int frameNumber, ITMHighlightIterationInfo info);
-	bool SaveHighlights();
+	bool SaveHighlights(std::string filePostfix = "");
+	void ClearHighlights();
 	void PrintHighlights();
-	bool LoadHighlights(bool applyFilters = true);
+	bool LoadHighlights(bool applyFilters = true, std::string filePostfix = "");
 	void FilterHighlights(int anomalyFrameCountMinimum);
 	void SetUpInterestRegionsForSaving();
 	void SaveAllInterestRegionWarps();

@@ -386,6 +386,11 @@ std::vector<std::vector<T>> ITM3DNestedMapOfArrays<T>::GetArrays() const {
 	return out;
 }
 
+template<typename T>
+void ITM3DNestedMapOfArrays<T>::Clear() {
+	internalMap.clear();
+}
+
 
 
 

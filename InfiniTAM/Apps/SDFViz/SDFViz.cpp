@@ -89,7 +89,7 @@ SDFViz::SDFViz(std::string pathToScene) :
 int SDFViz::Run() {
 	//read scenes from disk
 	sceneLogger->LoadScenesCompact();
-	sceneLogger->LoadHighlights();
+	sceneLogger->LoadHighlights(false,"continuous");
 	sceneLogger->SetUpInterestRegionsForLoading();
 	sceneLogger->StartLoadingWarpState(frameIndex);
 	canonicalScenePipe.SetFrameIndex(frameIndex);
@@ -126,6 +126,7 @@ int SDFViz::Run() {
 	// set up initial camera position & orientation
 	currentHighlight = highlights.GetFirstArray();
 	RefocusAtCurrentHighlight();
+	RefocusAtCurrentHighlight();//double call as work-around for bug
 
 	renderWindow->Render();
 	renderWindowInteractor->Start();
@@ -196,6 +197,14 @@ bool SDFViz::NextInterestWarps() {
 		UpdateIteration(sceneLogger->GetIterationCursor());
 	};
 	canonicalScenePipe.UpdateInterestRegionsFromBuffers(this->interestWarpBuffer->GetVoidPointer(0));
+
+	//update highlight viz
+	const ITMHighlightIterationInfo info = (*currentHighlight)[iterationIndex];
+	Vector3d cameraRight = SDFViz::ComputeCameraRightVector(sdfRenderer->GetActiveCamera());
+	Vector3d position = canonicalScenePipe.GetHighlightPosition(info.hash, info.localId);
+	std::vector<Vector3d> neighborPositions = canonicalScenePipe.GetHighlightNeighborPositions(info.hash,info.localId);
+	highlightVisualizer.SetData(position,info,neighborPositions,cameraRight);
+
 	renderWindow->Render();
 }
 
@@ -204,6 +213,13 @@ bool SDFViz::PreviousInterestWarps() {
 		UpdateIteration(sceneLogger->GetIterationCursor() == 0 ? 0 : sceneLogger->GetIterationCursor() - 1);
 	}
 	canonicalScenePipe.UpdateInterestRegionsFromBuffers(this->interestWarpBuffer->GetVoidPointer(0));
+
+	const ITMHighlightIterationInfo info = (*currentHighlight)[iterationIndex];
+	Vector3d cameraRight = SDFViz::ComputeCameraRightVector(sdfRenderer->GetActiveCamera());
+	Vector3d position = canonicalScenePipe.GetHighlightPosition(info.hash, info.localId);
+	std::vector<Vector3d> neighborPositions = canonicalScenePipe.GetHighlightNeighborPositions(info.hash,info.localId);
+	highlightVisualizer.SetData(position,info,neighborPositions,cameraRight);
+
 	renderWindow->Render();
 }
 
@@ -257,6 +273,7 @@ void SDFViz::DrawIterationCounter() {
 }
 
 void SDFViz::UpdateIteration(unsigned int newValue) {
+	iterationIndex = newValue;
 	iterationIndicator->SetInput(("Iteration: " + std::to_string(newValue)).c_str());
 }
 
@@ -314,9 +331,7 @@ void SDFViz::IncreaseCanonicalVoxelOpacity() {
 void SDFViz::MoveFocusToHighlightAt(int hash, int localId){
 	Vector3d position = canonicalScenePipe.GetHighlightPosition(hash, localId);
 	std::vector<Vector3d> neighborPositions = canonicalScenePipe.GetHighlightNeighborPositions(hash,localId);
-	const ITMHighlightIterationInfo info = (*highlights.GetArrayAt(hash,localId,frameIndex))[0];//TODO: deal with iterations somehow -Greg(Github:Algomorph)
-	highlightVisualizer.SetData(position,info,neighborPositions);
-
+	const ITMHighlightIterationInfo info = (*highlights.GetArrayAt(hash,localId,frameIndex))[iterationIndex];
 
 	std::cout << "Now viewing highlight at hash " << hash << ", voxel "
 	          << localId << " in the canonical frame." << std::endl;
@@ -325,6 +340,9 @@ void SDFViz::MoveFocusToHighlightAt(int hash, int localId){
 		std::cout << "   " << pos << std::endl;
 	}
 
+	//TODO: bug -- theoretically, needs to be done after camera repositioning, but that doesn't work for some obscure reason -Greg
+	Vector3d cameraRight = SDFViz::ComputeCameraRightVector(sdfRenderer->GetActiveCamera());
+	highlightVisualizer.SetData(position,info,neighborPositions,cameraRight);
 
 	sdfRenderer->GetActiveCamera()->SetFocalPoint(position.values);
 	sdfRenderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
@@ -333,25 +351,26 @@ void SDFViz::MoveFocusToHighlightAt(int hash, int localId){
 	position.z -= 1.0;
 
 	sdfRenderer->GetActiveCamera()->SetPosition(position.values);
+
 	renderWindow->Render();
 }
 
 void SDFViz::RefocusAtCurrentHighlight(){
-	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[0];
+	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[iterationIndex];
 	MoveFocusToHighlightAt(highlightNew.hash,highlightNew.localId);
 }
 
 void SDFViz::MoveFocusToNextHighlight() {
-	const ITMHighlightIterationInfo& highlightOld = (*currentHighlight)[0];
+	const ITMHighlightIterationInfo& highlightOld = (*currentHighlight)[iterationIndex];
 	currentHighlight = highlights.GetArrayAfter(highlightOld.hash, highlightOld.localId, highlightOld.frame);
-	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[0];
+	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[iterationIndex];
 	MoveFocusToHighlightAt(highlightNew.hash,highlightNew.localId);
 }
 
 void SDFViz::MoveFocusToPreviousHighlight() {
-	const ITMHighlightIterationInfo& highlightOld = (*currentHighlight)[0];
+	const ITMHighlightIterationInfo& highlightOld = (*currentHighlight)[iterationIndex];
 	currentHighlight = highlights.GetArrayBefore(highlightOld.hash, highlightOld.localId, highlightOld.frame);
-	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[0];
+	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[iterationIndex];
 	MoveFocusToHighlightAt(highlightNew.hash,highlightNew.localId);
 }
 
@@ -378,6 +397,16 @@ void SDFViz::DrawDummyMarkers() {
 	actor->GetProperty()->SetPointSize(1);
 	actor->GetProperty()->SetColor(0.0,0.0,0.0);
 	topRenderer->AddActor(actor);
+}
+
+Vector3d SDFViz::ComputeCameraRightVector(vtkCamera* camera) {
+	Vector3d viewPlaneNormal;
+	Vector3d viewUp;
+	Vector3d viewRight;
+	camera->GetViewPlaneNormal(viewPlaneNormal.values);
+	camera->GetViewUp(viewUp.values);
+	vtkMath::Cross(viewUp.values, viewPlaneNormal.values,viewRight.values);
+	return viewRight;
 }
 
 

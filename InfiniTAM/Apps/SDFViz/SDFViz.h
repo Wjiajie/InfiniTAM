@@ -135,6 +135,7 @@ private:
 	const std::vector<ITMHighlightIterationInfo>* currentHighlight;
 
 	//================ MEMBER FUNCTIONS =====================
+	static Vector3d ComputeCameraRightVector(vtkCamera* camera);
 	void InitializeRendering();
 	//scene voxel size should be known
 	void InitializeWarpBuffers();

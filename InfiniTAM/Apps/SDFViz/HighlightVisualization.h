@@ -18,21 +18,23 @@
 
 #include <vtk-8.1/vtkPolyData.h>
 #include <vtk-8.1/vtkActor.h>
+#include <vtk-8.1/vtkCamera.h>
 #include "../../ITMLib/Utils/ITMMath.h"
 #include "../../ITMLib/Utils/ITMNeighborVoxelIterationInfo.h"
 
 class HighlightVisualization {
 public:
 	HighlightVisualization();
-	void SetData(const Vector3d& highlightPosition,const ITMLib::ITMHighlightIterationInfo& highlightInfo,
-	             const std::vector<Vector3d>& neighborPositions);
+	void SetData(const Vector3d& highlightPosition, const ITMLib::ITMHighlightIterationInfo& highlightInfo,
+	             const std::vector<Vector3d>& neighborPositions, const Vector3d& cameraRight);
 
 	vtkSmartPointer<vtkActor> GetHighlightActor();
 
 
 private:
 	void SetUpHighlightPolyData(const Vector3d& highlightPosition,
-	                            const ITMLib::ITMHighlightIterationInfo& highlightInfo);
+	                            const ITMLib::ITMHighlightIterationInfo& highlightInfo,
+	                            const Vector3d& cameraRight);
 	vtkSmartPointer<vtkPolyData> neighborsData;
 	vtkSmartPointer<vtkPolyData> highlightPolyData;
 	vtkSmartPointer<vtkActor> highlightActor;

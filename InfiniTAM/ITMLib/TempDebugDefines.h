@@ -29,6 +29,7 @@
 #define WARP_COMPUTE_MODE_DATA_ONLY 3
 
 #define WARP_COMPUTE_MODE WARP_COMPUTE_MODE_NO_LEVEL_SET
+//#define WARP_COMPUTE_MODE WARP_COMPUTE_MODE_FULL
 
 
 //*** LOGGING FOR 3D VISUAL DEBUGGING***
@@ -55,7 +56,7 @@
 #endif //WARP_COMPUTE_MODE
 
 
-#define SAVE_FRAME
+//#define SAVE_FRAME
 
 #ifdef SAVE_FRAME
 //#define SAVE_WARP
@@ -69,6 +70,7 @@
 #ifdef FILTER_HIGHLIGHTS
 #define HIGHLIGHT_MIN_RECURRENCES 2
 #endif
+#define RECORD_CONTINOUS_HIGHLIGHTS
 #else
 //#define LOAD_FRAME //simply loads the scene at the frame before optimization
 #endif //LOG INTEREST REGIONS
@@ -110,6 +112,7 @@
 #define TIC(var)
 #define TOC(var)
 #endif
+
 
 #ifdef OSCILLATION_DETECTION
 //#define OSCILLATION_TREATMENT

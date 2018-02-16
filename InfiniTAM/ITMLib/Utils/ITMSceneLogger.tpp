@@ -444,11 +444,12 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LogHighlight(
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveHighlights() {
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveHighlights(std::string filePostfix) {
 	if (!fs::is_directory(this->path)) {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
 	}
+	highlightsBinaryPath = this->path/ ("highlights" + filePostfix + binaryFileExtension);
 	if (!this->highlights.SaveToFile(highlightsBinaryPath.c_str())) {
 		std::cerr << "Could not save highlights to " << highlightsBinaryPath << std::endl;
 		return false;
@@ -466,11 +467,12 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveHighlights() {
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadHighlights(bool applyFilters) {
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadHighlights(bool applyFilters, std::string filePostfix) {
 	if (!fs::is_directory(this->path)) {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
 	}
+	highlightsBinaryPath = this->path / ("highlights" + filePostfix + binaryFileExtension);
 	if (!this->highlights.LoadFromFile(highlightsBinaryPath.c_str())) {
 		std::cout << "Could not load highlights from " << highlightsBinaryPath << std::endl;
 	} else {
@@ -731,6 +733,11 @@ std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetPath() const
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 unsigned int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetIterationCursor() const {
 	return this->iterationCursor;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ClearHighlights() {
+	this->highlights.Clear();
 }
 
 

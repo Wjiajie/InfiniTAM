@@ -48,6 +48,7 @@ public:
 	//*** Insertions and transformations ***
 	bool InsertOrdered(int keyLevel3, int keyLevel2, int keyLevel1, T valueLevel0);
 	ITM3DNestedMapOfArrays FilterBasedOnLevel0Lengths(int minThreshold);
+	void Clear();
 
 	//*** Traversal, checks, and getters ***
 	const std::vector<T>* GetFirstArray() const;
@@ -55,6 +56,8 @@ public:
 	const std::vector<T>* GetArrayAfter(int keyLevel3, int keyLevel2, int keyLevel1) const;
 	const std::vector<T>* GetArrayBefore(int keyLevel3, int keyLevel2, int keyLevel1) const;
 	const std::vector<T>* GetArrayAt(int keyLevel3, int keyLevel2, int keyLevel1) const;
+
+
 	std::vector<int> GetLevel3Keys();
 	std::vector<int> GetOuterLevelKeys(){
 		return GetLevel3Keys();

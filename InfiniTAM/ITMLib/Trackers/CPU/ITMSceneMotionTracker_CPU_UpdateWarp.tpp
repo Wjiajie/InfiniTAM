@@ -347,7 +347,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					float warpUpdateLength = length(warpUpdate);//meters
 					//BEGIN _DEBUG
 					float warpLength = ORUtils::length(canonicalVoxel.warp_t - warpUpdate);
-#if defined(PRINT_ENERGY_STATS) || defined(LOG_HIGHLIGHTS)
+#if defined(PRINT_ENERGY_STATS) || defined(LOG_HIGHLIGHTS) || defined(RECORD_CONTINOUS_HIGHLIGHTS)
 					double dataEnergy = 0.5 * (diffSdf * diffSdf);
 					double levelSetEnergy =
 							weightLevelSet * 0.5 * (sdfJacobianNormMinusUnity * sdfJacobianNormMinusUnity);
@@ -368,8 +368,10 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					//TODO: this is a bad way to do convergence. Use something like Adam instead, maybe? --Greg
 					//TODO: figure out the exact conditions causing these oscillations, maybe nothing fancy is necessary here --Greg(GitHub: Algomorph)
 					const float maxVectorUpdateThresholdVoxels = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::maxVectorUpdateThresholdVoxels;
+					bool anomalyDetected = false;
 					if (distanceFromTwoIterationsAgo < maxVectorUpdateThresholdVoxels &&
 					    distanceTraveledInTwoIterations >= maxVectorUpdateThresholdVoxels * 2) {
+						anomalyDetected = true;
 						//We think that an oscillation has been detected
 #ifdef PRINT_ADDITIONAL_STATS
 						voxelOscillationCount++;
@@ -377,30 +379,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						voxelOscillations.push_back(std::tuple<int, int>(hash, locId));
 #endif
 #endif
-#ifdef LOG_HIGHLIGHTS
-						const int& currentFrame = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
 
-						Vector3f canonicalWarp = canonicalVoxel.warp_t;
-						Vector3f warpUpdateData = learningRate * deltaEData;
-						Vector3f warpUpdateLevelSet = learningRate * weightLevelSet * deltaELevelSet;
-						Vector3f warpUpdateKilling = learningRate * weightKilling * deltaEKilling;
-						std::array<ITMNeighborVoxelIterationInfo, 9> neighbors;
-						FindHighlightNeighborInfo(neighbors,originalPosition,hash,canonicalVoxels,
-						                          canonicalHashTable, liveVoxels,liveHashTable,liveCache);
-
-						ITMHighlightIterationInfo info = {hash, locId, currentFrame, iteration, originalPosition,
-						                                  canonicalWarp, canonicalSdf, liveSdf,
-						                                  warpUpdate, warpUpdateData, warpUpdateLevelSet,
-						                                  warpUpdateKilling, totalVoxelEnergy, dataEnergy,
-						                                  levelSetEnergy, smoothnessEnergy, killingEnergy,
-						                                  liveSdfJacobian, warpedSdfJacobian, warpedSdfHessian,
-						                                  warpJacobian, warpHessian[0], warpHessian[1], warpHessian[2],
-						                                  neighbors};
-						if (currentFrame == FRAME_OF_INTEREST) {
-							ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::sceneLogger
-									.LogHighlight(hash, locId, currentFrame, info);
-						}
-#endif
 #ifdef OSCILLATION_TREATMENT
 #ifdef OLD_UGLY_WAY
 						warpUpdate *= 0.5;//magic! -UNDO THE MAGIC FOR DEBUGGING OSCILLATIONS FURTHER
@@ -419,6 +398,39 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #endif
 #endif //OSCILLATION_TREATMENT
 					}
+#endif
+#if defined(LOG_HIGHLIGHTS) || defined(RECORD_CONTINOUS_HIGHLIGHTS)
+
+#ifdef LOG_HIGHLIGHTS
+					if(anomalyDetected){
+#elif defined(RECORD_CONTINOUS_HIGHLIGHTS)
+					if(ITMSceneMotionTracker<TVoxelCanonical,TVoxelLive,TIndex>::previouslyRecordedAnomalies.Contains(hash,locId)){
+#endif
+					const int& currentFrame = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
+
+					Vector3f canonicalWarp = canonicalVoxel.warp_t;
+					Vector3f warpUpdateData = learningRate * deltaEData;
+					Vector3f warpUpdateLevelSet = learningRate * weightLevelSet * deltaELevelSet;
+					Vector3f warpUpdateKilling = learningRate * weightKilling * deltaEKilling;
+					std::array<ITMNeighborVoxelIterationInfo, 9> neighbors;
+					FindHighlightNeighborInfo(neighbors, originalPosition, hash, canonicalVoxels,
+					                          canonicalHashTable, liveVoxels, liveHashTable, liveCache);
+
+					ITMHighlightIterationInfo info = {hash, locId, currentFrame, iteration, originalPosition,
+					                                  canonicalWarp, canonicalSdf, liveSdf,
+					                                  warpUpdate, warpUpdateData, warpUpdateLevelSet,
+					                                  warpUpdateKilling, totalVoxelEnergy, dataEnergy,
+					                                  levelSetEnergy, smoothnessEnergy, killingEnergy,
+					                                  liveSdfJacobian, warpedSdfJacobian, warpedSdfHessian,
+					                                  warpJacobian, warpHessian[0], warpHessian[1], warpHessian[2],
+					                                  neighbors, anomalyDetected};
+					if (currentFrame == FRAME_OF_INTEREST) {
+						ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::sceneLogger
+								.LogHighlight(hash, locId, currentFrame, info);
+					}
+
+					}//anomaly detected || previouslyRecordedAnomalies.Contains(hash,locId)
+
 #endif
 					//END _DEBUG
 

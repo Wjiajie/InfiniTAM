@@ -121,6 +121,10 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 		sceneLogger.FilterHighlights(HIGHLIGHT_MIN_RECURRENCES);//only keep oscillations that occur for the same voxels more than N times
 		std::cout << "Highlights after filtering: " << std::endl;
 #endif
+#ifdef RECORD_CONTINOUS_HIGHLIGHTS
+		previouslyRecordedAnomalies = sceneLogger.GetHighlights();
+		sceneLogger.ClearHighlights();
+#endif
 		sceneLogger.PrintHighlights();
 		sceneLogger.SetUpInterestRegionsForSaving();
 	}
@@ -182,9 +186,13 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 #ifdef SAVE_WARP
 		sceneLogger.StopSavingWarpState();
 #endif
-#ifdef LOG_HIGHLIGHTS
+#if defined(LOG_HIGHLIGHTS) || defined(RECORD_CONTINOUS_HIGHLIGHTS)
 		sceneLogger.PrintHighlights();
+#ifdef LOG_HIGHLIGHTS
 		sceneLogger.SaveHighlights();
+#elif defined(RECORD_CONTINOUS_HIGHLIGHTS)
+		sceneLogger.SaveHighlights("continuous");
+#endif
 #endif
 	}
 	currentFrameIx++;
