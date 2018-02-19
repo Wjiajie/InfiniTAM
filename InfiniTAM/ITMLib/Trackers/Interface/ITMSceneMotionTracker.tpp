@@ -96,7 +96,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 	sceneLogger.SetScenes(canonicalScene,liveScene);
 #endif
 
-#ifdef SAVE_FRAME
+#ifdef SAVE_VOXELS_AND_INDEX
 	if(currentFrameIx == FRAME_OF_INTEREST){
 		sceneLogger.SaveScenesCompact();
 #ifdef SAVE_WARP

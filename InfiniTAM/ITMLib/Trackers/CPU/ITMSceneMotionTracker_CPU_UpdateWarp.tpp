@@ -120,14 +120,15 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-					Vector3i originalPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
+					//position of the voxel in the canonical frame
+					Vector3i canonicalVoxelPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxelCanonical& canonicalVoxel = localVoxelBlock[locId];
 
 					//=================================== TRUNCATION REGION CHECKS =====================================
 					float liveSdf;
 					bool foundInLive;
-					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
+					Vector3f projectedPosition = canonicalVoxelPosition.toFloat() + canonicalVoxel.warp_t;
 					liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache,
 					                                 foundInLive);
 
@@ -167,15 +168,18 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 
 					//================================ RETRIEVE NEIGHBOR'S WARPS =======================================
 					const int neighborhoodSize = 9;
-					Vector3f warp_tNeighbors[neighborhoodSize];
+					Vector3f neighborWarps[neighborhoodSize];
 					bool neighborFound[neighborhoodSize];
 					//    0        1        2          3         4         5           6         7         8
 					//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
-					findPoint2ndDerivativeNeighborhoodWarp(warp_tNeighbors/*x9*/, neighborFound, originalPosition,
+					// Records unallocated as "not found", everything else as "found",
+					// which means we have some truncated voxels with incorrect values potentially here
+					// TODO: do we need this just to compute the Killing term? no, right? then this needs to be inside the check for whether Data & Level Set terms are needed -Greg
+					findPoint2ndDerivativeNeighborhoodWarp(neighborWarps/*x9*/, neighborFound, canonicalVoxelPosition,
 					                                       canonicalVoxels, canonicalHashTable, canonicalCache);
 					for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
 						if (!neighborFound[iNeighbor]) {
-							warp_tNeighbors[iNeighbor] = canonicalVoxel.warp_t;
+							neighborWarps[iNeighbor] = canonicalVoxel.warp_t;
 							boundary = true;
 						}
 					}
@@ -204,8 +208,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 																  liveSdfJacobian, warpedSdfHessian, printResult);
 #else
 							ComputePerPointWarpedLiveJacobian
-									(originalPosition,
-									 canonicalVoxel.warp_t,
+									(canonicalVoxelPosition,
+									 canonicalVoxel.warp_t,//TODO store as local value, use consistent name -Greg
 
 									 liveVoxels,
 									 liveHashTable,
@@ -232,7 +236,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 																  warpedSdfHessian);
 #else
 							ComputePerPointWarpedLiveJacobian
-									(originalPosition, canonicalVoxel.warp_t,
+									(canonicalVoxelPosition, canonicalVoxel.warp_t,
 									 liveVoxels, liveHashTable, liveCache,
 									 liveSdf, liveColor, liveSdfJacobian,
 									 liveSdf_Center_WarpForward, liveColorJacobian);
@@ -256,7 +260,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 								sdfJacobianNormMinusUnity * (warpedSdfHessian * liveSdfJacobian) /
 								(sdfJacobianNorm + epsilon);
 #else
-						ComputeWarpedJacobianAndHessian(warp_tNeighbors, originalPosition,
+						ComputeWarpedJacobianAndHessian(neighborWarps, canonicalVoxelPosition,
 						                                liveSdf_Center_WarpForward, liveSdf, liveVoxels,
 						                                liveHashTable, liveCache, warpedSdfJacobian, warpedSdfHessian,
 						                                printResult);
@@ -276,7 +280,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					Matrix3f warpHessian[3];
 
 					ComputePerPointWarpJacobianAndHessian<TVoxelCanonical, TIndex, typename TIndex::IndexCache>(
-							canonicalVoxel.warp_t, originalPosition, warp_tNeighbors, neighborFound,
+							canonicalVoxel.warp_t, canonicalVoxelPosition, neighborWarps, neighborFound,
 							warpJacobian, warpHessian, printResult);
 
 #ifdef PRINT_TIME_STATS
@@ -413,10 +417,10 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					Vector3f warpUpdateLevelSet = learningRate * weightLevelSet * deltaELevelSet;
 					Vector3f warpUpdateKilling = learningRate * weightKilling * deltaEKilling;
 					std::array<ITMNeighborVoxelIterationInfo, 9> neighbors;
-					FindHighlightNeighborInfo(neighbors, originalPosition, hash, canonicalVoxels,
+					FindHighlightNeighborInfo(neighbors, canonicalVoxelPosition, hash, canonicalVoxels,
 					                          canonicalHashTable, liveVoxels, liveHashTable, liveCache);
 
-					ITMHighlightIterationInfo info = {hash, locId, currentFrame, iteration, originalPosition,
+					ITMHighlightIterationInfo info = {hash, locId, currentFrame, iteration, canonicalVoxelPosition,
 					                                  canonicalWarp, canonicalSdf, liveSdf,
 					                                  warpUpdate, warpUpdateData, warpUpdateLevelSet,
 					                                  warpUpdateKilling, totalVoxelEnergy, dataEnergy,

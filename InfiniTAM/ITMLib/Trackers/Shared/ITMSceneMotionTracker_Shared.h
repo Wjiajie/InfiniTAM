@@ -168,7 +168,7 @@ inline void ComputePerPointWarpedLiveJacobian(const CONSTPTR(Vector3i)& original
 	Vector3f liveSdf_Center_WarpCenter(liveSdf);
 
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
-	// === forward by 1 in each direction
+	// === increment the warp by 1 in each direction and use them to check what interpolated values from live frame map there
 	liveSdf_Center_WarpForward =
 			Vector3f(interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(1.f, 0.f, 0.f),
 			                                liveCache),
@@ -573,13 +573,16 @@ inline void ComputePerPointWarpedLiveJacobianAndHessian_Old(const CONSTPTR(Vecto
 };
 
 /**
- * \brief Finds neighbor voxel's relevant values in the order specified below.
+ * \brief Finds neighbor voxel's warps in the order specified below.
  *     0        1        2          3         4         5           6         7         8
  *	(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
  * \tparam TVoxel
  * \tparam TCache
  * \param[out] warp_tData
- * \param[out] found
+ * \param[out] found - current behavior is:
+ * 1) record unallocated voxels as non-found
+ * 2) truncated voxels marked unknown or known as found
+ * 3) everything else (non-truncated), of course, as found
  * \param[in] voxelPosition exact position of voxel in the scene.
  * \param[in] voxelData
  * \param[in] hashTable
