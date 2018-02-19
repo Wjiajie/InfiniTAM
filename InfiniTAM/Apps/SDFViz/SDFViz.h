@@ -93,7 +93,10 @@ public:
 
 
 	//================= CONSTRUCTORS/DESTRUCTORS =
-	SDFViz(std::string pathToScene);
+	SDFViz(std::string pathToScene,
+	       bool showNonInterestCanonicalVoxels = false,
+	       bool showLiveVoxels = false,
+	       bool hideInterestCanonicalRegions = false);
 	virtual ~SDFViz();
 	//================= MEMBER FUNCTIONS ==================
 	int Run();
@@ -166,4 +169,5 @@ private:
 
 	void MoveFocusToHighlightAt(int hash, int localId);
 	void RefocusAtCurrentHighlight();
+	void ToggleInterestVoxelVisibility();
 };

@@ -67,7 +67,10 @@ const std::array<double, 4>  SDFViz::livePositiveSDFVoxelColor = {0.717, 0.882, 
 const std::array<double, 3>  SDFViz::liveHashBlockEdgeColor = {0.537, 0.819, 0.631};
 //** private **
 
-SDFViz::SDFViz(std::string pathToScene) :
+SDFViz::SDFViz(std::string pathToScene,
+               bool showNonInterestCanonicalVoxels,
+               bool showLiveVoxels,
+               bool hideInterestCanonicalRegions) :
 		canonicalScenePipe(canonicalNegativeSDFVoxelColor, canonicalPositiveSDFVoxelColor,
 		                   canonicalNegativeInterestSDFVoxelColor, canonicalPositiveInterestSDFVoxelColor,
 		                   canonicalHighlightSDFVoxelColor, canonicalHashBlockEdgeColor,
@@ -84,9 +87,6 @@ SDFViz::SDFViz(std::string pathToScene) :
 	InitializeRendering();
 	DrawLegend();
 	DrawIterationCounter();
-}
-
-int SDFViz::Run() {
 	//read scenes from disk
 	sceneLogger->LoadScenesCompact();
 	sceneLogger->LoadHighlights(false,"continuous");
@@ -123,10 +123,19 @@ int SDFViz::Run() {
 	topRenderer->AddActor(highlightVisualizer.GetHighlightActor());
 	DrawDummyMarkers();
 
+	// set up visibility
+	canonicalScenePipe.GetVoxelActor()->SetVisibility(showNonInterestCanonicalVoxels);
+	liveScenePipe.GetVoxelActor()->SetVisibility(showLiveVoxels);
+	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(!hideInterestCanonicalRegions);
+
 	// set up initial camera position & orientation
 	currentHighlight = highlights.GetFirstArray();
 	RefocusAtCurrentHighlight();
 	RefocusAtCurrentHighlight();//double call as work-around for bug
+}
+
+int SDFViz::Run() {
+
 
 	renderWindow->Render();
 	renderWindowInteractor->Start();
@@ -290,6 +299,7 @@ void SDFViz::ToggleLiveHashBlockVisibility() {
 }
 
 void SDFViz::ToggleCanonicalVoxelVisibility() {
+	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(!canonicalScenePipe.GetVoxelActor()->GetVisibility());
 	canonicalScenePipe.GetVoxelActor()->SetVisibility(!canonicalScenePipe.GetVoxelActor()->GetVisibility());
 	renderWindow->Render();
 }
@@ -299,6 +309,10 @@ void SDFViz::ToggleLiveVoxelVisibility() {
 	renderWindow->Render();
 }
 
+void SDFViz::ToggleInterestVoxelVisibility() {
+	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(!canonicalScenePipe.GetInterestVoxelActor()->GetVisibility());
+	renderWindow->Render();
+}
 
 void SDFViz::InitializeWarpBuffers() {
 	if (!sceneLogger->GetScenesLoaded()) {
@@ -335,10 +349,11 @@ void SDFViz::MoveFocusToHighlightAt(int hash, int localId){
 
 	std::cout << "Now viewing highlight at hash " << hash << ", voxel "
 	          << localId << " in the canonical frame." << std::endl;
-	std::cout << "Neighbor positions: "<<std::endl;
-	for(auto pos : neighborPositions){
-		std::cout << "   " << pos << std::endl;
-	}
+	//_DEBUG
+//	std::cout << "Neighbor positions: "<<std::endl;
+//	for(auto pos : neighborPositions){
+//		std::cout << "   " << pos << std::endl;
+//	}
 
 	//TODO: bug -- theoretically, needs to be done after camera repositioning, but that doesn't work for some obscure reason -Greg
 	Vector3d cameraRight = SDFViz::ComputeCameraRightVector(sdfRenderer->GetActiveCamera());
@@ -452,6 +467,9 @@ void KeyPressInteractorStyle::OnKeyPress() {
 			} else {
 				parent->ToggleLiveHashBlockVisibility();
 			}
+		} else if (key == "i"){
+			//toggle interest region visibility
+			parent->ToggleInterestVoxelVisibility();
 		} else if (key == "period") {
 			std::cout << "Loading next iteration warp & updates." << std::endl;
 			if (parent->NextNonInterestWarps()) {
@@ -491,6 +509,7 @@ void KeyPressInteractorStyle::OnKeyPress() {
 
 	}
 	std::cout << "Key symbol: " << key << std::endl;
+	std::cout << "Key code: " << static_cast<int>(rwi->GetKeyCode()) << std::endl;
 
 	// Forward events
 	vtkInteractorStyleTrackballCamera::OnKeyPress();

@@ -57,10 +57,10 @@
 #define SCENE_PATH "/media/algomorph/Data/Reconstruction/debug_output/" SCENE_NAME "/frame_" TOSTRING(FRAME_OF_INTEREST) SCENE_POSTFIX
 
 
-//#define SAVE_SCENE_DATA
+#define SAVE_SCENE_DATA
 #ifdef SAVE_SCENE_DATA
 // =========================== Step 1 for sdf viz prep =================================================================
-#define SAVE_VOXELS_AND_INDEX
+//#define SAVE_VOXELS_AND_INDEX
 #ifdef SAVE_VOXELS_AND_INDEX
 #define SAVE_WARP
 #ifdef OSCILLATION_DETECTION

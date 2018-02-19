@@ -322,3 +322,8 @@ std::vector<Vector3d> CanonicalVizPipe::GetHighlightNeighborPositions(int hash, 
 void CanonicalVizPipe::SetFrameIndex(int frameIx) {
 	this->frameIx = frameIx;
 }
+
+void CanonicalVizPipe::PrintHighlightIndexes() {
+	std::cout << this->highlightIndexes << std::endl;
+
+}

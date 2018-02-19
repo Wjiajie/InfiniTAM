@@ -20,11 +20,19 @@ namespace bpo = boost::program_options;
 
 int main(int argc, const char* argv[]) {
 	try{
+		//visibility boolean flags
+		bool showNonInterestCanonicalVoxels = false;
+		bool showLiveVoxels = false;
+		bool hideInterestCanonicalRegions = false;
 		bpo::options_description description{"Options"};
 		description.add_options()
 				("help,h", "Help screen")
 				("directory,d",bpo::value<std::string>()->default_value("/media/algomorph/Data/Reconstruction/debug_output/scene"),
-				 "Directory where to load the SDF scene from.");
+				 "Directory where to load the SDF scene from.")
+				("show_non_interest, sni", bpo::bool_switch(&showNonInterestCanonicalVoxels), "Show non-interest canonical voxels on startup.")
+				("show_live, sl", bpo::bool_switch(&showLiveVoxels), "Show live voxels on startup.")
+				("hide_interest, hcr", bpo::bool_switch(&hideInterestCanonicalRegions), "Hide interest canonical voxels on startup.")
+				;
 
 		bpo::variables_map vm;
 		bpo::store(bpo::parse_command_line(argc, argv, description), vm);
@@ -33,7 +41,10 @@ int main(int argc, const char* argv[]) {
 		if (vm.count("help")){
 			std::cout << description << std::endl;
 		}else{
-			SDFViz application(vm["directory"].as<std::string>());
+			SDFViz application(vm["directory"].as<std::string>(),
+			                   showNonInterestCanonicalVoxels,
+			                   showLiveVoxels,
+			                   hideInterestCanonicalRegions);
 			application.Run();
 		}
 	}catch(const bpo::error &ex){

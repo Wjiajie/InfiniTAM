@@ -508,6 +508,11 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::PrintHighlights() {
 }
 
 
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving() {
+	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving(this->highlights);
+}
+
 /**
  * \brief Set up the interest regions whose warps to save into individual files based on
  * (a) highlights (which have to be loaded / defined)
@@ -518,7 +523,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::PrintHighlights() {
  * \tparam TIndex type of voxel index structure
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving() {
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving(const ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>& highlights) {
 	if (this->voxelCount == -1) {
 		DIEWITHEXCEPTION("Attempted to set up interest regions before loading the scenes. Aborting.");
 	}
@@ -739,6 +744,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ClearHighlights() {
 	this->highlights.Clear();
 }
+
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

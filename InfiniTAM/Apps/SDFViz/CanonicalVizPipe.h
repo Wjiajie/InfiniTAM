@@ -34,6 +34,7 @@ public:
 	void
 	SetInterestRegionInfo(std::vector<int> interestRegionHashes, ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights);
 	Vector3d GetHighlightPosition(int hash, int locId);
+	void PrintHighlightIndexes();
 	std::vector<Vector3d> GetHighlightNeighborPositions(int hash, int locId);
 
 	vtkSmartPointer<vtkActor>& GetInterestVoxelActor();

@@ -140,6 +140,7 @@ public:
 	bool LoadHighlights(bool applyFilters = true, std::string filePostfix = "");
 	void FilterHighlights(int anomalyFrameCountMinimum);
 	void SetUpInterestRegionsForSaving();
+	void SetUpInterestRegionsForSaving(const ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>& highlights);
 	void SaveAllInterestRegionWarps();
 	void SetUpInterestRegionsForLoading();
 	bool BufferCurrentInterestWarpState(void* externalBuffer);

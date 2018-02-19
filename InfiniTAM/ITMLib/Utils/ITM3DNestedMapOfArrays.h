@@ -58,8 +58,8 @@ public:
 	const std::vector<T>* GetArrayAt(int keyLevel3, int keyLevel2, int keyLevel1) const;
 
 
-	std::vector<int> GetLevel3Keys();
-	std::vector<int> GetOuterLevelKeys(){
+	std::vector<int> GetLevel3Keys() const;
+	std::vector<int> GetOuterLevelKeys() const{
 		return GetLevel3Keys();
 	};
 	std::vector<std::vector<T>> GetArrays() const;

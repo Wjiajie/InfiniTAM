@@ -179,7 +179,7 @@ bool ITM3DNestedMapOfArrays<T>::operator==(const ITM3DNestedMapOfArrays<T>& othe
 }
 
 template<typename T>
-std::vector<int> ITM3DNestedMapOfArrays<T>::GetLevel3Keys() {
+std::vector<int> ITM3DNestedMapOfArrays<T>::GetLevel3Keys() const {
 	std::vector<int> keys;
 	for (auto& iter : internalMap) {
 		keys.push_back(iter.first);
