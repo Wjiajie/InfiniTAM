@@ -80,7 +80,7 @@ class SDFViz {
 	friend class KeyPressInteractorStyle;
 
 public:
-	//================= CONSTANTS ================
+	//================= STATIC CONSTANTS ============================
 	static const std::array<double, 4> canonicalNegativeSDFVoxelColor;
 	static const std::array<double, 4> canonicalPositiveSDFVoxelColor;
 	static const std::array<double, 4> canonicalNegativeInterestSDFVoxelColor;
@@ -91,20 +91,18 @@ public:
 	static const std::array<double, 4> livePositiveSDFVoxelColor;
 	static const std::array<double, 3> liveHashBlockEdgeColor;
 
-
-	//================= CONSTRUCTORS/DESTRUCTORS =
-	SDFViz(std::string pathToScene,
-	       bool showNonInterestCanonicalVoxels = false,
-	       bool showLiveVoxels = false,
-	       bool hideInterestCanonicalRegions = false);
+	//================= CONSTRUCTORS/DESTRUCTORS ===================
+	SDFViz(std::string pathToScene, bool showNonInterestCanonicalVoxels, bool showLiveVoxels,
+	       bool hideInterestCanonicalRegions, bool useInitialCoords,
+	       Vector3i initialCoords);
 	virtual ~SDFViz();
-	//================= MEMBER FUNCTIONS ==================
+	//================= INSTANCE MEMBER FUNCTIONS ==================
 	int Run();
 
 private:
-	//================= CONSTANTS ================
+	//================= CONSTANTS ==================================
 
-	//================= MEMBER VARIABLES ===================
+	//================= MEMBER VARIABLES ===========================
 	//data loader
 	ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
 
@@ -168,6 +166,7 @@ private:
 	void UpdateIteration(unsigned int newValue);
 
 	void MoveFocusToHighlightAt(int hash, int localId);
+	void MoveFocusToVoxelAt(Vector3d absoluteCoordinates);
 	void RefocusAtCurrentHighlight();
 	void ToggleInterestVoxelVisibility();
 };

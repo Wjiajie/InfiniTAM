@@ -250,6 +250,10 @@ namespace ORUtils {
 			return Vector3<float>((float)this->x, (float)this->y, (float)this->z);
 		}
 
+		_CPU_AND_GPU_CODE_ inline Vector3<double> toDouble() const {
+			return Vector3<double >((double)this->x, (double)this->y, (double)this->z);
+		}
+
 		_CPU_AND_GPU_CODE_ inline Vector3<float> normalised() const {
 			float norm = 1.0f / sqrt((float)(this->x * this->x + this->y * this->y + this->z * this->z));
 			return Vector3<float>((float)this->x * norm, (float)this->y * norm, (float)this->z * norm);

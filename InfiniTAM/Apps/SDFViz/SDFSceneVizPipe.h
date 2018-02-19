@@ -38,7 +38,6 @@ template <typename TVoxel, typename TIndex>
 class SDFSceneVizPipe {
 public:
 	//================= CONSTANTS ================
-	static const double maxVoxelDrawSize;
 	static const char* colorPointAttributeName;
 	static const char* scalePointAttributeName;
 

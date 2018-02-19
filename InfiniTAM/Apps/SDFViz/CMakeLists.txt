@@ -29,19 +29,23 @@ include(${PROJECT_SOURCE_DIR}/cmake/UseUVC.cmake)
 #############################
 
 set(sources
+    #===core files===
     main.cpp
     SDFViz.cpp
     SDFSceneVizPipe.tpp
     ExplicitInstantiations.cpp
     CanonicalVizPipe.cpp
     HighlightVisualization.cpp
+    #===helpers===
     )
 
 set(headers
+    #===core files===
     SDFViz.h
     SDFSceneVizPipe.h
     CanonicalVizPipe.h
     HighlightVisualization.h
+    #===helpers===
     )
 
 #############################

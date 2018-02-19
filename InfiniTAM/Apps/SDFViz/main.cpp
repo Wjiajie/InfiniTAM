@@ -19,35 +19,49 @@
 namespace bpo = boost::program_options;
 
 int main(int argc, const char* argv[]) {
-	try{
+	try {
 		//visibility boolean flags
 		bool showNonInterestCanonicalVoxels = false;
 		bool showLiveVoxels = false;
 		bool hideInterestCanonicalRegions = false;
+
 		bpo::options_description description{"Options"};
 		description.add_options()
 				("help,h", "Help screen")
-				("directory,d",bpo::value<std::string>()->default_value("/media/algomorph/Data/Reconstruction/debug_output/scene"),
+				("directory,d",
+				 bpo::value<std::string>()->default_value("/media/algomorph/Data/Reconstruction/debug_output/scene"),
 				 "Directory where to load the SDF scene from.")
-				("show_non_interest, sni", bpo::bool_switch(&showNonInterestCanonicalVoxels), "Show non-interest canonical voxels on startup.")
-				("show_live, sl", bpo::bool_switch(&showLiveVoxels), "Show live voxels on startup.")
-				("hide_interest, hcr", bpo::bool_switch(&hideInterestCanonicalRegions), "Hide interest canonical voxels on startup.")
+				("show_non_interest, sni", bpo::bool_switch(&showNonInterestCanonicalVoxels),
+				 "Show non-interest canonical voxels on startup.")
+				("show_live, sl", bpo::bool_switch(&showLiveVoxels),
+				 "Show live voxels on startup.")
+				("hide_interest, hcr", bpo::bool_switch(&hideInterestCanonicalRegions),
+				 "Hide interest canonical voxels on startup.")
+				("initial_focus_coord, ifc", bpo::value<std::vector<int>>()->multitoken(),
+				 "Coordinate of voxel where to focus on startup. Must follow format:\n x y z\n, all integers.")
 				;
 
 		bpo::variables_map vm;
 		bpo::store(bpo::parse_command_line(argc, argv, description), vm);
 		bpo::notify(vm);
 
-		if (vm.count("help")){
+		if (vm.count("help") ||
+		    //validate we have the right number of arguments to initial_focus_coord
+		    (!vm["initial_focus_coord"].empty() && (vm["initial_focus_coord"].as<std::vector<int> >()).size() == 2)) {
 			std::cout << description << std::endl;
-		}else{
-			SDFViz application(vm["directory"].as<std::string>(),
-			                   showNonInterestCanonicalVoxels,
-			                   showLiveVoxels,
-			                   hideInterestCanonicalRegions);
+		} else {
+			bool haveUserInitialCoordinate = !vm["initial_focus_coord"].empty();
+			Vector3i initialCoords(0);
+			if (haveUserInitialCoordinate) {
+				std::vector<int> initialCoordsVec = vm["initial_focus_coord"].as<std::vector<int> >();
+				initialCoordsVec.data();
+				memcpy(initialCoords.values, initialCoordsVec.data(), sizeof(int) * 3);
+			}
+			SDFViz application(vm["directory"].as<std::string>(), showNonInterestCanonicalVoxels, showLiveVoxels,
+			                   hideInterestCanonicalRegions, haveUserInitialCoordinate,initialCoords);
 			application.Run();
 		}
-	}catch(const bpo::error &ex){
+	} catch (const bpo::error& ex) {
 		std::cerr << ex.what() << std::endl;
 	}
 }

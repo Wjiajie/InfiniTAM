@@ -128,9 +128,9 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 					ITMVoxelCanonical& voxel = localVoxelBlock[locId];
 					float voxelScale = COMPUTE_VOXEL_SCALE(voxel);
 					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
-					nonInterestVoxelPoints->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
-					                                        maxVoxelDrawSize * originalPositionVoxels.y,
-					                                        maxVoxelDrawSize * originalPositionVoxels.z);
+					nonInterestVoxelPoints->InsertNextPoint(originalPositionVoxels.x,
+					                                        originalPositionVoxels.y,
+					                                        originalPositionVoxels.z);
 					nonInterestScaleAttribute->InsertNextValue(voxelScale);
 					nonInterestColorAttribute->InsertNextValue(voxelColor);
 
@@ -159,8 +159,7 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 					int voxelColor;
 					if (highlights.Contains(hash, locId, frameIx)) {
 						voxelColor = 2;
-						const std::vector<ITMHighlightIterationInfo> info = *(highlights.GetArrayAt(hash, locId,
-						                                                                            frameIx));
+						const std::vector<ITMHighlightIterationInfo> info = *(highlights.GetArrayAt(hash, locId,frameIx));
 						highlightIndexes.InsertOrdered(hash,locId,frameIx,currentInterestPointIndex);
 					} else if (highlightByNeighbor.Contains(hash, locId, frameIx)){
 						const std::tuple<int,int> highlightCoords = *highlightByNeighbor.GetValueAt(hash,locId, frameIx);
@@ -169,9 +168,9 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 						voxelColor = voxel.sdf < 0.0f ? 0 : 1;
 					}
 
-					interestVoxelPoints->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
-					                                     maxVoxelDrawSize * originalPositionVoxels.y,
-					                                     maxVoxelDrawSize * originalPositionVoxels.z);
+					interestVoxelPoints->InsertNextPoint(originalPositionVoxels.x,
+					                                     originalPositionVoxels.y,
+					                                     originalPositionVoxels.z);
 
 					interestScaleAttribute->InsertNextValue(voxelScale);
 					interestColorAttribute->InsertNextValue(voxelColor);

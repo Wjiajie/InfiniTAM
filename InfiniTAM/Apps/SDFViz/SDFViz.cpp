@@ -67,10 +67,9 @@ const std::array<double, 4>  SDFViz::livePositiveSDFVoxelColor = {0.717, 0.882, 
 const std::array<double, 3>  SDFViz::liveHashBlockEdgeColor = {0.537, 0.819, 0.631};
 //** private **
 
-SDFViz::SDFViz(std::string pathToScene,
-               bool showNonInterestCanonicalVoxels,
-               bool showLiveVoxels,
-               bool hideInterestCanonicalRegions) :
+SDFViz::SDFViz(std::string pathToScene, bool showNonInterestCanonicalVoxels, bool showLiveVoxels,
+               bool hideInterestCanonicalRegions, bool useInitialCoords,
+               Vector3i initialCoords) :
 		canonicalScenePipe(canonicalNegativeSDFVoxelColor, canonicalPositiveSDFVoxelColor,
 		                   canonicalNegativeInterestSDFVoxelColor, canonicalPositiveInterestSDFVoxelColor,
 		                   canonicalHighlightSDFVoxelColor, canonicalHashBlockEdgeColor,
@@ -99,7 +98,7 @@ SDFViz::SDFViz(std::string pathToScene,
 	vtkSmartPointer<vtkSphereSource> sphere = vtkSmartPointer<vtkSphereSource>::New();
 	sphere->SetThetaResolution(6);
 	sphere->SetPhiResolution(6);
-	sphere->SetRadius(canonicalScenePipe.maxVoxelDrawSize / 2);
+	sphere->SetRadius(0.5);//size of half a voxel
 	sphere->Update();
 
 	//Voxel hash block shape
@@ -129,17 +128,19 @@ SDFViz::SDFViz(std::string pathToScene,
 	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(!hideInterestCanonicalRegions);
 
 	// set up initial camera position & orientation
-	currentHighlight = highlights.GetFirstArray();
-	RefocusAtCurrentHighlight();
-	RefocusAtCurrentHighlight();//double call as work-around for bug
+	if(useInitialCoords){
+		MoveFocusToVoxelAt(initialCoords.toDouble());
+	}else{
+		currentHighlight = highlights.GetFirstArray();
+		RefocusAtCurrentHighlight();
+		RefocusAtCurrentHighlight();//double call as work-around for bug
+	}
+
 }
 
 int SDFViz::Run() {
-
-
 	renderWindow->Render();
 	renderWindowInteractor->Start();
-
 	return EXIT_SUCCESS;
 }
 
@@ -358,16 +359,17 @@ void SDFViz::MoveFocusToHighlightAt(int hash, int localId){
 	//TODO: bug -- theoretically, needs to be done after camera repositioning, but that doesn't work for some obscure reason -Greg
 	Vector3d cameraRight = SDFViz::ComputeCameraRightVector(sdfRenderer->GetActiveCamera());
 	highlightVisualizer.SetData(position,info,neighborPositions,cameraRight);
-
-	sdfRenderer->GetActiveCamera()->SetFocalPoint(position.values);
-	sdfRenderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
-	position.x -= 0.9;
-	position.y -= 0.5;
-	position.z -= 1.0;
-
-	sdfRenderer->GetActiveCamera()->SetPosition(position.values);
-
+	MoveFocusToVoxelAt(position);
 	renderWindow->Render();
+}
+void SDFViz::MoveFocusToVoxelAt(Vector3d absoluteCoordinates) {
+	sdfRenderer->GetActiveCamera()->SetFocalPoint(absoluteCoordinates.values);
+	sdfRenderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
+	absoluteCoordinates.x -= 0.9;
+	absoluteCoordinates.y -= 0.5;
+	absoluteCoordinates.z -= 1.0;
+
+	sdfRenderer->GetActiveCamera()->SetPosition(absoluteCoordinates.values);
 }
 
 void SDFViz::RefocusAtCurrentHighlight(){
@@ -423,6 +425,8 @@ Vector3d SDFViz::ComputeCameraRightVector(vtkCamera* camera) {
 	vtkMath::Cross(viewUp.values, viewPlaneNormal.values,viewRight.values);
 	return viewRight;
 }
+
+
 
 
 vtkStandardNewMacro(KeyPressInteractorStyle);

@@ -33,8 +33,6 @@
 
 
 template<typename TVoxel, typename TIndex>
-const double SDFSceneVizPipe<TVoxel, TIndex>::maxVoxelDrawSize = 1.0;
-template<typename TVoxel, typename TIndex>
 const char* SDFSceneVizPipe<TVoxel, TIndex>::colorPointAttributeName = "color";
 template<typename TVoxel, typename TIndex>
 const char* SDFSceneVizPipe<TVoxel, TIndex>::scalePointAttributeName = "scale";
@@ -121,9 +119,9 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 					float voxelScale = COMPUTE_VOXEL_SCALE(voxel);
 					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
 
-					points->InsertNextPoint(maxVoxelDrawSize * originalPositionVoxels.x,
-					                        maxVoxelDrawSize * originalPositionVoxels.y,
-					                        maxVoxelDrawSize * originalPositionVoxels.z);
+					points->InsertNextPoint(originalPositionVoxels.x,
+					                        originalPositionVoxels.y,
+					                        originalPositionVoxels.z);
 
 					scaleAttribute->InsertNextValue(voxelScale);
 					colorAttribute->InsertNextValue(voxelColor);
