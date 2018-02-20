@@ -16,9 +16,8 @@
 #pragma once
 
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
-#include "../../Objects/Scene/ITMTrilinearInterpolation.h"
 #include "../../Utils/ITMHashBlockProperties.h"
-#include "../../Utils/ITMNeighborVoxelIterationInfo.h"
+#include "../../Objects/Scene/ITMTrilinearInterpolation.h"
 
 
 _CPU_AND_GPU_CODE_
@@ -87,6 +86,29 @@ inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* neighbor
 // =====================================================================================================================
 // this set of functions simply computes the jacobian of the live scene at an interpolated warped position, without
 // computing the hessian. The jacobian vector defines the direction of data term's contribution to the warp updates.
+template<typename TVoxelLive, typename TCache>
+_CPU_AND_GPU_CODE_
+inline void ComputeLiveSdf_Center_WarpForward(
+		const CONSTPTR(Vector3i)& voxelPosition,
+		const CONSTPTR(Vector3f)& voxelWarp,
+		const CONSTPTR(TVoxelLive)* liveVoxels,       //| ===============  |
+		const CONSTPTR(ITMHashEntry)* liveHashTable,  //| live scene data  |
+		THREADPTR(TCache)& liveCache,                 //| ===============  |
+		THREADPTR(Vector3f)& liveSdf_Center_WarpForward
+) {
+	//position projected with the current warp
+	Vector3f centerPos = voxelPosition.toFloat();
+	Vector3f projectedPosition = centerPos + voxelWarp;
+	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
+	// === increment the warp by 1 in each direction and use them to check what interpolated values from live frame map there
+	liveSdf_Center_WarpForward =
+			Vector3f(interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(1.f, 0.f, 0.f),
+			                                liveCache),
+			         interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(0.f, 1.f, 0.f),
+			                                liveCache),
+			         interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(0.f, 0.f, 1.f),
+			                                liveCache));
+};
 
 //without color
 template<typename TVoxelLive, typename TCache>
@@ -100,20 +122,9 @@ inline void ComputePerPointWarpedLiveJacobian(const CONSTPTR(Vector3i)& voxelPos
                                               THREADPTR(Vector3f)& liveSdfJacobian,           //out
                                               THREADPTR(Vector3f)& liveSdf_Center_WarpForward//out
 ) {
-	//position projected with the current warp
-	Vector3f centerPos = voxelPosition.toFloat();
-	Vector3f projectedPosition = centerPos + voxelWarp;
 	Vector3f liveSdf_Center_WarpCenter(liveSdf);
-
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
-	// === increment the warp by 1 in each direction and use them to check what interpolated values from live frame map there
-	liveSdf_Center_WarpForward =
-			Vector3f(interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(1.f, 0.f, 0.f),
-			                                liveCache),
-			         interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(0.f, 1.f, 0.f),
-			                                liveCache),
-			         interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(0.f, 0.f, 1.f),
-			                                liveCache));
+	ComputeLiveSdf_Center_WarpForward(voxelPosition,voxelWarp,liveVoxels,liveHashTable,liveCache,liveSdf_Center_WarpForward);
 	//=========== COMPUTE JACOBIAN =====================================================================================
 	liveSdfJacobian = liveSdf_Center_WarpForward - liveSdf_Center_WarpCenter;
 }
@@ -166,6 +177,7 @@ inline void ComputePerPointWarpedLiveJacobian(const CONSTPTR(Vector3i)& voxelPos
 // =====================================================================================================================
 // ========================================== WARPED JACOBIAN AND HESSIAN (LEVEL SET TERM) =============================
 // =====================================================================================================================
+
 // This function samples the live scene using warps of canonical voxels in a neighborhood around a particular voxel.
 // From the computed values, the gradient (jacobian) is computed, as well as its derivative ("hessian") with respect
 // to changing the warp at the current voxel.
@@ -186,7 +198,6 @@ inline void ComputeWarpedJacobianAndHessian(const CONSTPTR(Vector3f*) warp_tNeig
 	Vector3f warpedSdf_Center_WarpCenter(liveSdf);
 	Vector3f centerPos = voxelPosition.toFloat();
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
-
 	// === check lookups for voxels forward by 1 in x, y, z of the canonical frame, use their own warps
 	Vector3f lookupPos_xForward_WarpCenter = centerPos + Vector3f(1.f, 0.f, 0.f) + warp_tNeighbors[3];
 	Vector3f lookupPos_yForward_WarpCenter = centerPos + Vector3f(0.f, 1.f, 0.f) + warp_tNeighbors[4];
@@ -393,87 +404,7 @@ inline bool MarkIfNeedsAllocation(DEVICEPTR(uchar)* entriesAllocType,
 
 };
 
-//======================================================================================================================
-//=========================================== DEBUG ROUTINES FOR SAVING INFORMATION DURING OPTIMIZATION ================
-//======================================================================================================================
-//DEBUG
-template<class TVoxel>
-_CPU_AND_GPU_CODE_ inline TVoxel
-ReadVoxelAndLinearIndex(const CONSTPTR(TVoxel)* voxelData,
-                        const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex,
-                        const THREADPTR(Vector3i)& point, THREADPTR(int)& vmIndex,
-                        THREADPTR(ITMLib::ITMVoxelBlockHash::IndexCache)& cache, THREADPTR(int)& linearIdx) {
-	Vector3i blockPos;
-	linearIdx = pointToVoxelBlockPos(point, blockPos);
 
-	if IS_EQUAL3(blockPos, cache.blockPos) {
-		return voxelData[cache.blockPtr + linearIdx];
-	}
-
-	int hashIdx = hashIndex(blockPos);
-
-	while (true) {
-		ITMHashEntry hashEntry = voxelIndex[hashIdx];
-
-		if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= 0) {
-			cache.blockPos = blockPos;
-			cache.blockPtr = hashEntry.ptr * SDF_BLOCK_SIZE3;
-			vmIndex = hashIdx + 1; // add 1 to support legacy true / false operations for isFound
-			return voxelData[cache.blockPtr + linearIdx];
-		}
-
-		if (hashEntry.offset < 1) break;
-		hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
-	}
-
-	vmIndex = false;
-	linearIdx = 0;
-	return TVoxel();
-}
-
-//_DEBUG
-_CPU_AND_GPU_CODE_
-template<typename TVoxelCanonical, typename TVoxelLive, typename TLiveCache>
-inline void FindHighlightNeighborInfo(std::array<ITMLib::ITMNeighborVoxelIterationInfo, 9>& neighbors,
-                                      const CONSTPTR(Vector3i)& highlightPosition,
-                                      const CONSTPTR(int)& highlightHash,
-                                      const CONSTPTR(TVoxelCanonical)* canonicalVoxelData,
-                                      const CONSTPTR(ITMHashEntry)* canonicalHashTable,
-                                      const CONSTPTR(TVoxelLive)* liveVoxelData,
-                                      const CONSTPTR(ITMHashEntry)* liveHashTable,
-                                      THREADPTR(TLiveCache)& liveCache) {
-	//    0        1        2          3         4         5           6         7         8
-	//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
-	Vector3i locations[9] = {Vector3i(-1, 0, 0), Vector3i(0, -1, 0), Vector3i(0, 0, -1),
-	                         Vector3i(1, 0, 0), Vector3i(0, 1, 0), Vector3i(0, 0, 1),
-	                         Vector3i(1, 1, 0), Vector3i(0, 1, 1), Vector3i(1, 0, 1)};
-	int vmIndex, localId = 0;
-	vmIndex = highlightHash + 1;
-	ITMLib::ITMVoxelBlockHash::IndexCache cache;
-	int iNeighbor = 0;
-	for (auto location : locations) {
-		ITMLib::ITMNeighborVoxelIterationInfo& info = neighbors[iNeighbor];
-		Vector3i neighborPosition = highlightPosition + (location);
-		TVoxelCanonical voxel = ReadVoxelAndLinearIndex(canonicalVoxelData, canonicalHashTable, neighborPosition,
-		                                                vmIndex, cache,
-		                                                localId);
-		if (vmIndex != 0) {
-			info.unknown = voxel.flags == ITMLib::VOXEL_TRUNCATED;
-			info.hash = vmIndex - 1;
-		} else {
-			info.notAllocated = true;
-			info.hash = 0;
-			vmIndex = highlightHash + 1;//reset
-		}
-		info.localId = localId;
-		info.warp = voxel.warp_t;
-		info.warpUpdate = voxel.warp_t_update;
-		info.sdf = voxel.sdf;
-		info.liveSdf = interpolateTrilinearly(liveVoxelData, liveHashTable, TO_FLOAT3(neighborPosition) + voxel.warp_t,
-		                                      liveCache, info.liveFound);
-		iNeighbor++;
-	}
-}
 
 
 

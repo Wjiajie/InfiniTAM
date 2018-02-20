@@ -25,6 +25,8 @@
 #include "ITMSceneMotionTracker_CPU.h"
 #include "../Shared/ITMSceneMotionTracker_Shared.h"
 #include "../../Utils/ITMVoxelFlags.h"
+//_DEBUG
+#include "../Shared/ITMSceneMotionTracker_Debug.h"
 
 #ifdef OLD_LEVEL_SET_TERM
 #include "../Shared/ITMSceneMotionTracker_Deprecated.h"

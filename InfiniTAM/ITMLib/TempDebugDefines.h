@@ -23,10 +23,7 @@
 //#define OLD_UGLY_WAY //simply cuts down warp updates by half
 
 //#define USE_COLOR
-
-
-
-//*** FLANGS FOR MODES OF COMPUTING THE WARP ***
+//*** FLAGS FOR MODES OF COMPUTING THE WARP ***
 #define WARP_COMPUTE_MODE_FULL 0
 #define WARP_COMPUTE_MODE_NO_KILLING 1
 #define WARP_COMPUTE_MODE_NO_LEVEL_SET 2
