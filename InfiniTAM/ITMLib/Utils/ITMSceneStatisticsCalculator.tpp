@@ -96,7 +96,7 @@ struct InlineComputeKnownVoxelCount<true, TVoxel, TIndex>{
 	}
 	int count = 0;
 	void operator()(TVoxel& voxel){
-		count += voxel.flags != ITMLib::VOXEL_UNKNOWN;
+		count += voxel.flags != ITMLib::VOXEL_TRUNCATED;
 	}
 };
 

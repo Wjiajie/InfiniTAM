@@ -264,8 +264,8 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					float oldSdf;
 					oldSdf = canonicalVoxel.sdf;
 					Vector3f oldColor = TO_FLOAT3(canonicalVoxel.clr) / 255.0f;
-					oldWDepth = canonicalVoxel.w_depth; //0 for VOXEL_UNKNOWN voxels
-					oldWColor = canonicalVoxel.w_color; //0 for VOXEL_UNKNOWN voxels
+					oldWDepth = canonicalVoxel.w_depth; //0 for VOXEL_TRUNCATED voxels
+					oldWColor = canonicalVoxel.w_color; //0 for VOXEL_TRUNCATED voxels
 
 					//projected position of the sdf point to the most recent frame
 					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
@@ -304,8 +304,8 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					canonicalVoxel.w_color = (uchar) newWColor;
 					canonicalVoxel.confidence += liveConfidence;
 					totalConf += liveConfidence;
-					if (canonicalVoxel.flags == ITMLib::VOXEL_UNKNOWN) {
-						canonicalVoxel.flags |= ITMLib::VOXEL_KNOWN;
+					if (canonicalVoxel.flags == ITMLib::VOXEL_TRUNCATED) {
+						canonicalVoxel.flags |= ITMLib::VOXEL_NONTRUNCATED;
 						entriesAllocType[hash] = ITMLib::NO_CHANGE;
 					}
 				}

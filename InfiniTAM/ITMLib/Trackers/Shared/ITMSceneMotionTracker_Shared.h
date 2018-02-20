@@ -579,7 +579,7 @@ inline void ComputePerPointWarpedLiveJacobianAndHessian_Old(const CONSTPTR(Vecto
  * \tparam TVoxel
  * \tparam TCache
  * \param[out] neighborWarps
- * \param[out] found - current behavior is:
+ * \param[out] neighborAllocated - current behavior is:
  * 1) record unallocated voxels as non-found
  * 2) truncated voxels marked unknown or known as found
  * 3) everything else (non-truncated), of course, as found
@@ -591,7 +591,8 @@ inline void ComputePerPointWarpedLiveJacobianAndHessian_Old(const CONSTPTR(Vecto
 template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* neighborWarps, //x9, out
-                                                   THREADPTR(bool)* found, //x9, out
+                                                   THREADPTR(bool)* neighborAllocated, //x9, out
+                                                   THREADPTR(bool)* neighborTruncated, //x9, out
                                                    const CONSTPTR(Vector3i)& voxelPosition,
                                                    const CONSTPTR(TVoxel)* voxelData,
                                                    const CONSTPTR(ITMHashEntry)* hashTable,
@@ -602,8 +603,8 @@ inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* neighbor
 #define PROCESS_VOXEL(location, index)\
     voxel = readVoxel(voxelData, hashTable, voxelPosition + (location), vmIndex, cache);\
     neighborWarps[index] = voxel.warp_t;\
-    found[index] = vmIndex != 0;// && voxel.flags != ITMLib::VOXEL_UNKNOWN;
-
+    neighborAllocated[index] = vmIndex != 0;/* && voxel.flags != ITMLib::VOXEL_UNKNOWN;*/\
+	neighborTruncated[index] = voxel.flags != ITMLib::VOXEL_NONTRUNCATED;
 
 	//necessary for 2nd derivatives in same direction, e.g. xx and zz
 	PROCESS_VOXEL(Vector3i(-1, 0, 0), 0);
@@ -836,7 +837,7 @@ inline void FindHighlightNeighborInfo(std::array<ITMLib::ITMNeighborVoxelIterati
 		TVoxelCanonical voxel = readVoxel(canonicalVoxelData, canonicalHashTable, neighborPosition, vmIndex, cache,
 		                                  localId);
 		if (vmIndex != 0) {
-			info.unknown = voxel.flags == ITMLib::VOXEL_UNKNOWN;
+			info.unknown = voxel.flags == ITMLib::VOXEL_TRUNCATED;
 			info.hash = vmIndex - 1;
 		} else {
 			info.notAllocated = true;

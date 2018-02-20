@@ -49,7 +49,7 @@ inline float interpolateTrilinearly_Corrected2(const CONSTPTR(TVoxel)* voxelData
 		sdfs[iNeighbor] = TVoxel::valueToFloat(v.sdf);
 		confs[iNeighbor] = v.confidence;
 		colors[iNeighbor] = TO_FLOAT3(v.clr);
-		bool foundCur = vmIndex != 0 && v.flags != ITMLib::VOXEL_UNKNOWN;
+		bool foundCur = vmIndex != 0 && v.flags != ITMLib::VOXEL_TRUNCATED;
 		struckNarrowBand |= foundCur;
 		found[iNeighbor] = foundCur;
 		sumFound += foundCur * v.sdf;
@@ -383,7 +383,7 @@ inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
     {\
         const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (coord), vmIndex, cache);\
         sdfV##suffix = v.sdf;\
-        found |= (vmIndex != 0 && v.flags != ITMLib::VoxelFlags::VOXEL_UNKNOWN);\
+        found |= (vmIndex != 0 && v.flags != ITMLib::VoxelFlags::VOXEL_TRUNCATED);\
     }
 	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
 	PROCESS_VOXEL(2, Vector3i(1, 0, 0))

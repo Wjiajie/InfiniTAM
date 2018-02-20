@@ -132,8 +132,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache,
 					                                 foundInLive);
 
-					//almost no restriction -- Mira's case with addition of VOXEL_UNKNOWN flag checking
-					bool emptyInCanonical = canonicalVoxel.flags == ITMLib::VOXEL_UNKNOWN;
+					//almost no restriction -- Mira's case with addition of VOXEL_TRUNCATED flag checking
+					bool emptyInCanonical = canonicalVoxel.flags == ITMLib::VOXEL_TRUNCATED;
 					// the latter condition needs to be included since sometimes, even if some live voxels in the lookup
 					// neighborhood are non-truncated, they ally may be a whole voxel away from the warped position,
 					// which would then result in a live SDF lookup equivalent to that in a truncated region.
@@ -146,7 +146,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #endif
 
 					if ((emptyInCanonical && emptyInLive) ||
-					    ignoreVoxelDueToOscillation)
+						ignoreVoxelDueToOscillation)
 						continue;
 #else
 					if (emptyInCanonical && emptyInLive) continue;
@@ -173,15 +173,17 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					//================================ RETRIEVE NEIGHBOR'S WARPS =======================================
 					const int neighborhoodSize = 9;
 					Vector3f neighborWarps[neighborhoodSize];
-					bool neighborFound[neighborhoodSize];
+					bool neighborAllocated[neighborhoodSize];
+					bool neighborTruncated[neighborhoodSize];
 					//    0        1        2          3         4         5           6         7         8
 					//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
 					// (TODO)Records unallocated as "not found", everything else as "found",
 					// which means we have some truncated voxels with incorrect values potentially here -Greg
-					findPoint2ndDerivativeNeighborhoodWarp(neighborWarps/*x9*/, neighborFound, canonicalVoxelPosition,
-					                                       canonicalVoxels, canonicalHashTable, canonicalCache);
+					findPoint2ndDerivativeNeighborhoodWarp(neighborWarps/*x9*/, neighborAllocated, neighborTruncated,
+					                                       canonicalVoxelPosition, canonicalVoxels, canonicalHashTable,
+					                                       canonicalCache);
 					for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
-						if (!neighborFound[iNeighbor]) {
+						if (!neighborAllocated[iNeighbor]) {
 							neighborWarps[iNeighbor] = voxelWarp;
 							boundary = true;
 						}
@@ -198,7 +200,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					//there is no sufficient information to compute those terms. There we rely solely on the killing regularizer
 					//if (!emptyInCanonical) {//_DEBUG
 					if (!emptyInCanonical && !emptyInLive) {
-						Matrix3f warpedSdfHessian; bool useColor = false;
+						Matrix3f warpedSdfHessian;
+						bool useColor = false;
 						Vector3f liveColor, liveSdfJacobian, liveColorJacobian, liveSdf_Center_WarpForward, warpedSdfJacobian;
 						//=================================== DATA TERM ================================================
 #ifdef USE_COLOR
@@ -299,7 +302,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					ComputePerVoxelWarpJacobianAndHessian(canonicalVoxel.warp_t, canonicalVoxelPosition, neighborWarps,
 					                                      warpJacobian, warpHessian);
 					if (printResult) {
-						PrintPerVoxelWarpJacobianAndHessian(neighborWarps, neighborFound, warpJacobian, warpHessian);
+						PrintPerVoxelWarpJacobianAndHessian(neighborWarps, neighborAllocated, warpJacobian,
+						                                    warpHessian);
 					}
 
 #ifdef PRINT_TIME_STATS

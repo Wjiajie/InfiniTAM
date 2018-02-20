@@ -233,7 +233,7 @@ struct ComputeUpdatedVoxelInfo<true, true, false, TVoxel> {
 // no color, no confidence, with semantic info
 #define FLAG_UPDATE_CHECK \
 	if(eta < -mu) return; /*assumes narrow band half-thickness mu is smaller than 1 meter*/\
-	if(voxel.flags == ITMLib::VoxelFlags::VOXEL_UNKNOWN){ voxel.flags = ITMLib::VoxelFlags::VOXEL_KNOWN; }
+	if(voxel.flags == ITMLib::VoxelFlags::VOXEL_TRUNCATED){ voxel.flags = ITMLib::VoxelFlags::VOXEL_NONTRUNCATED; }
 template<class TVoxel>
 struct ComputeUpdatedVoxelInfo<false, false, true, TVoxel> {
 	_CPU_AND_GPU_CODE_ static void compute(COMPUTE_VOXEL_UPDATE_PARAMETERS)
