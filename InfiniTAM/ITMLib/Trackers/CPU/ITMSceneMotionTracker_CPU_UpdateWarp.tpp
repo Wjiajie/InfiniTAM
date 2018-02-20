@@ -279,9 +279,11 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					Matrix3f warpJacobian;
 					Matrix3f warpHessian[3];
 
-					ComputePerPointWarpJacobianAndHessian<TVoxelCanonical, TIndex, typename TIndex::IndexCache>(
-							canonicalVoxel.warp_t, canonicalVoxelPosition, neighborWarps, neighborFound,
-							warpJacobian, warpHessian, printResult);
+					ComputePerVoxelWarpJacobianAndHessian(canonicalVoxel.warp_t, canonicalVoxelPosition, neighborWarps,
+					                                      warpJacobian, warpHessian);
+					if (printResult) {
+						PrintPerVoxelWarpJacobianAndHessian(neighborWarps, neighborFound, warpJacobian, warpHessian);
+					}
 
 #ifdef PRINT_TIME_STATS
 					TOC(timeWarpJandHCompute);
@@ -418,16 +420,16 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					Vector3f warpUpdateKilling = learningRate * weightKilling * deltaEKilling;
 					std::array<ITMNeighborVoxelIterationInfo, 9> neighbors;
 					FindHighlightNeighborInfo(neighbors, canonicalVoxelPosition, hash, canonicalVoxels,
-					                          canonicalHashTable, liveVoxels, liveHashTable, liveCache);
+											  canonicalHashTable, liveVoxels, liveHashTable, liveCache);
 
 					ITMHighlightIterationInfo info = {hash, locId, currentFrame, iteration, canonicalVoxelPosition,
-					                                  canonicalWarp, canonicalSdf, liveSdf,
-					                                  warpUpdate, warpUpdateData, warpUpdateLevelSet,
-					                                  warpUpdateKilling, totalVoxelEnergy, dataEnergy,
-					                                  levelSetEnergy, smoothnessEnergy, killingEnergy,
-					                                  liveSdfJacobian, warpedSdfJacobian, warpedSdfHessian,
-					                                  warpJacobian, warpHessian[0], warpHessian[1], warpHessian[2],
-					                                  neighbors, anomalyDetected};
+													  canonicalWarp, canonicalSdf, liveSdf,
+													  warpUpdate, warpUpdateData, warpUpdateLevelSet,
+													  warpUpdateKilling, totalVoxelEnergy, dataEnergy,
+													  levelSetEnergy, smoothnessEnergy, killingEnergy,
+													  liveSdfJacobian, warpedSdfJacobian, warpedSdfHessian,
+													  warpJacobian, warpHessian[0], warpHessian[1], warpHessian[2],
+													  neighbors, anomalyDetected};
 					if (currentFrame == FRAME_OF_INTEREST) {
 						ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::sceneLogger
 								.LogHighlight(hash, locId, currentFrame, info);

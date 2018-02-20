@@ -578,7 +578,7 @@ inline void ComputePerPointWarpedLiveJacobianAndHessian_Old(const CONSTPTR(Vecto
  *	(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
  * \tparam TVoxel
  * \tparam TCache
- * \param[out] warp_tData
+ * \param[out] neighborWarps
  * \param[out] found - current behavior is:
  * 1) record unallocated voxels as non-found
  * 2) truncated voxels marked unknown or known as found
@@ -590,7 +590,7 @@ inline void ComputePerPointWarpedLiveJacobianAndHessian_Old(const CONSTPTR(Vecto
  */
 template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
-inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* warp_tData, //x9, out
+inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* neighborWarps, //x9, out
                                                    THREADPTR(bool)* found, //x9, out
                                                    const CONSTPTR(Vector3i)& voxelPosition,
                                                    const CONSTPTR(TVoxel)* voxelData,
@@ -601,8 +601,8 @@ inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* warp_tDa
 	TVoxel voxel;
 #define PROCESS_VOXEL(location, index)\
     voxel = readVoxel(voxelData, hashTable, voxelPosition + (location), vmIndex, cache);\
-    warp_tData[index] = voxel.warp_t;\
-    found[index] = vmIndex != 0;
+    neighborWarps[index] = voxel.warp_t;\
+    found[index] = vmIndex != 0;// && voxel.flags != ITMLib::VOXEL_UNKNOWN;
 
 
 	//necessary for 2nd derivatives in same direction, e.g. xx and zz
@@ -622,15 +622,13 @@ inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* warp_tDa
 #undef PROCESS_VOXEL
 }
 
-template<typename TVoxel, typename TIndex, typename TCache>
 _CPU_AND_GPU_CODE_
-inline void ComputePerPointWarpJacobianAndHessian(const CONSTPTR(Vector3f)& originalWarp_t,
-                                                  const CONSTPTR(Vector3i)& originalPosition,
-                                                  const CONSTPTR(Vector3f*) warp_tNeighbors,
-                                                  const CONSTPTR(bool*) neighborFound,
-                                                  THREADPTR(Matrix3f)& jacobian,
-                                                  THREADPTR(Matrix3f)* hessian, //x3
-                                                  bool verbose = false) {
+inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxelWarp,
+                                                  const CONSTPTR(Vector3i)& voxelPosition,
+                                                  const CONSTPTR(Vector3f*) neighborWarps,
+                                                  THREADPTR(Matrix3f)& jacobian, //out
+                                                  THREADPTR(Matrix3f)* hessian //out, x3
+) {
 	//    0        1        2          3         4         5           6         7         8
 	//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
 
@@ -638,17 +636,17 @@ inline void ComputePerPointWarpJacobianAndHessian(const CONSTPTR(Vector3f)& orig
 	// |v_x, v_y, v_z|       |m01, m11, m21|
 	// |w_x, w_y, w_z|       |m02, m12, m22|
 	Vector3f zeroVector(0.0f);
-	jacobian.setColumn(0, warp_tNeighbors[3] - originalWarp_t);//1st derivative in x
-	jacobian.setColumn(1, warp_tNeighbors[4] - originalWarp_t);//1st derivative in y
-	jacobian.setColumn(2, warp_tNeighbors[5] - originalWarp_t);//1st derivative in z
+	jacobian.setColumn(0, neighborWarps[3] - voxelWarp);//1st derivative in x
+	jacobian.setColumn(1, neighborWarps[4] - voxelWarp);//1st derivative in y
+	jacobian.setColumn(2, neighborWarps[5] - voxelWarp);//1st derivative in z
 
 	Matrix3f backwardDifferences;
 	// |u_x, u_y, u_z|
 	// |v_x, v_y, v_z|
 	// |w_x, w_y, w_z|
-	backwardDifferences.setColumn(0, originalWarp_t - warp_tNeighbors[0]);//1st derivative in x
-	backwardDifferences.setColumn(1, originalWarp_t - warp_tNeighbors[1]);//1st derivative in y
-	backwardDifferences.setColumn(2, originalWarp_t - warp_tNeighbors[2]);//1st derivative in z
+	backwardDifferences.setColumn(0, voxelWarp - neighborWarps[0]);//1st derivative in x
+	backwardDifferences.setColumn(1, voxelWarp - neighborWarps[1]);//1st derivative in y
+	backwardDifferences.setColumn(2, voxelWarp - neighborWarps[2]);//1st derivative in z
 
 	//second derivatives in same direction
 	// |u_xx, u_yy, u_zz|       |m00, m10, m20|
@@ -657,9 +655,9 @@ inline void ComputePerPointWarpJacobianAndHessian(const CONSTPTR(Vector3f)& orig
 	Matrix3f dd_XX_YY_ZZ = jacobian - backwardDifferences;
 
 	Matrix3f neighborDifferences;
-	neighborDifferences.setColumn(0, warp_tNeighbors[6] - warp_tNeighbors[4]);//(0,1,0)->(1,1,0)
-	neighborDifferences.setColumn(1, warp_tNeighbors[7] - warp_tNeighbors[5]);//(0,0,1)->(0,1,1)
-	neighborDifferences.setColumn(2, warp_tNeighbors[8] - warp_tNeighbors[3]);//(1,0,0)->(1,0,1)
+	neighborDifferences.setColumn(0, neighborWarps[6] - neighborWarps[4]);//(0,1,0)->(1,1,0)
+	neighborDifferences.setColumn(1, neighborWarps[7] - neighborWarps[5]);//(0,0,1)->(0,1,1)
+	neighborDifferences.setColumn(2, neighborWarps[8] - neighborWarps[3]);//(1,0,0)->(1,0,1)
 
 
 	//second derivatives in different directions
@@ -692,33 +690,43 @@ inline void ComputePerPointWarpJacobianAndHessian(const CONSTPTR(Vector3f)& orig
 	                  dd_XY_YZ_ZX.m02, dd_XX_YY_ZZ.m12, dd_XY_YZ_ZX.m12,
 	                  dd_XY_YZ_ZX.m22, dd_XY_YZ_ZX.m12, dd_XX_YY_ZZ.m22};
 	hessian[2].setValues(valsW);
-	if (verbose) {
-		const int neighborhoodSize = 9;
-		const std::string yellow("\033[0;33m");
-		const std::string cyan("\033[0;36m");
-		const std::string green("\033[0;32m");
-		const std::string reset("\033[0m");
-		//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
-		Vector3i neighborPositions[] = {Vector3i(-1, 0, 0), Vector3i(0, -1, 0), Vector3i(0, 0, -1), Vector3i(1, 0, 0),
-		                                Vector3i(0, 1, 0), Vector3i(0, 0, 1), Vector3i(1, 1, 0), Vector3i(0, 1, 1),
-		                                Vector3i(1, 0, 1),};
-		std::cout << "Boundary neighbors: ";
-		for (int iNeightbor = 0; iNeightbor < neighborhoodSize; iNeightbor++) {
-			if (!neighborFound[iNeightbor]) {
-				std::cout << iNeightbor << ", ";
-			}
-		}
-		std::cout << std::endl << green;
-		std::cout << "Neighbors' warps: " << std::endl;
-		for (int iNeightbor = 0; iNeightbor < neighborhoodSize; iNeightbor++) {
-			std::cout << neighborPositions[iNeightbor] << ": " << warp_tNeighbors[iNeightbor] << ", " << std::endl;
-		}
 
-		std::cout << std::endl << yellow;
-		std::cout << "Jacobian: " << std::endl << jacobian << std::endl << cyan;
-		std::cout << "Hessian: " << std::endl << hessian[0] << hessian[1] << hessian[2] << reset << std::endl;
-	}
 };
+
+_CPU_AND_GPU_CODE_
+inline void PrintPerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f*) neighborWarps,
+                                                const CONSTPTR(bool*) neighborFound,
+                                                THREADPTR(Matrix3f)& jacobian, //in
+                                                THREADPTR(Matrix3f)* hessian //in, x3
+) {
+
+	const int neighborhoodSize = 9;
+	const std::string yellow("\033[0;33m");
+	const std::string cyan("\033[0;36m");
+	const std::string green("\033[0;32m");
+	const std::string reset("\033[0m");
+	//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
+	Vector3i neighborPositions[] = {Vector3i(-1, 0, 0), Vector3i(0, -1, 0), Vector3i(0, 0, -1), Vector3i(1, 0, 0),
+	                                Vector3i(0, 1, 0), Vector3i(0, 0, 1), Vector3i(1, 1, 0), Vector3i(0, 1, 1),
+	                                Vector3i(1, 0, 1),};
+	std::cout << "Boundary neighbors: ";
+	for (int iNeightbor = 0; iNeightbor < neighborhoodSize; iNeightbor++) {
+		if (!neighborFound[iNeightbor]) {
+			std::cout << iNeightbor << ", ";
+		}
+	}
+	std::cout << std::endl << green;
+	std::cout << "Neighbors' warps: " << std::endl;
+	for (int iNeightbor = 0; iNeightbor < neighborhoodSize; iNeightbor++) {
+		std::cout << neighborPositions[iNeightbor] << ": " << neighborWarps[iNeightbor] << ", " << std::endl;
+	}
+
+	std::cout << std::endl << yellow;
+	std::cout << "Jacobian: " << std::endl << jacobian << std::endl << cyan;
+	std::cout << "Hessian: " << std::endl << hessian[0] << hessian[1] << hessian[2] << reset << std::endl;
+};
+
+
 
 
 //TODO: refactor so this just simply returns the resulting allocation type (and updates hashIdx) -Greg (GitHub: Algomorph)
@@ -819,26 +827,27 @@ inline void FindHighlightNeighborInfo(std::array<ITMLib::ITMNeighborVoxelIterati
 	                         Vector3i(1, 0, 0), Vector3i(0, 1, 0), Vector3i(0, 0, 1),
 	                         Vector3i(1, 1, 0), Vector3i(0, 1, 1), Vector3i(1, 0, 1)};
 	int vmIndex, localId = 0;
-	vmIndex = highlightHash+1;
+	vmIndex = highlightHash + 1;
 	ITMLib::ITMVoxelBlockHash::IndexCache cache;
 	int iNeighbor = 0;
 	for (auto location : locations) {
 		ITMLib::ITMNeighborVoxelIterationInfo& info = neighbors[iNeighbor];
 		Vector3i neighborPosition = highlightPosition + (location);
-		TVoxelCanonical voxel = readVoxel(canonicalVoxelData, canonicalHashTable, neighborPosition , vmIndex, cache, localId);
+		TVoxelCanonical voxel = readVoxel(canonicalVoxelData, canonicalHashTable, neighborPosition, vmIndex, cache,
+		                                  localId);
 		if (vmIndex != 0) {
 			info.unknown = voxel.flags == ITMLib::VOXEL_UNKNOWN;
-		    info.hash = vmIndex-1;
+			info.hash = vmIndex - 1;
 		} else {
 			info.notAllocated = true;
 			info.hash = 0;
-			vmIndex = highlightHash+1;//reset
+			vmIndex = highlightHash + 1;//reset
 		}
 		info.localId = localId;
 		info.warp = voxel.warp_t;
 		info.warpUpdate = voxel.warp_t_update;
 		info.sdf = voxel.sdf;
-		info.liveSdf = interpolateTrilinearly(liveVoxelData,liveHashTable,TO_FLOAT3(neighborPosition) + voxel.warp_t,
+		info.liveSdf = interpolateTrilinearly(liveVoxelData, liveHashTable, TO_FLOAT3(neighborPosition) + voxel.warp_t,
 		                                      liveCache, info.liveFound);
 		iNeighbor++;
 	}
