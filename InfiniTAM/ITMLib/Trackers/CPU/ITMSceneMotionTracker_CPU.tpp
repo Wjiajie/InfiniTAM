@@ -276,9 +276,10 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					int liveWColor = 1;
 					bool struckNarrowBand;
 
-					float liveSdf = interpolateTrilinearly_Corrected2(liveVoxels, liveHashTable, projectedPosition,
-					                                                 liveCache, liveColor, liveConfidence,
-					                                                 struckNarrowBand);
+					float liveSdf = interpolateTrilinearly_TruncatedSignCopy(liveVoxels, liveHashTable,
+					                                                         projectedPosition,
+					                                                         liveCache, liveColor, liveConfidence,
+					                                                         struckNarrowBand);
 					if (!struckNarrowBand || 1.0 - std::abs(liveSdf)  < FLT_EPSILON ) {
 						if(!struckNarrowBand){
 							missedNarrowBandCount++;//_DEBUG

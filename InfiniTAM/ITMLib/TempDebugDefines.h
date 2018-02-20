@@ -32,6 +32,8 @@
 #define WARP_COMPUTE_MODE_NO_LEVEL_SET 2
 #define WARP_COMPUTE_MODE_DATA_ONLY 3
 
+//#define OLD_LEVEL_SET_TERM //Old and seemingly incorrect way to compute the Level Set term
+
 #define WARP_COMPUTE_MODE WARP_COMPUTE_MODE_NO_LEVEL_SET
 //#define WARP_COMPUTE_MODE WARP_COMPUTE_MODE_FULL
 

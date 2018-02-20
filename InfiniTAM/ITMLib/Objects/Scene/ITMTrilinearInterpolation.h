@@ -15,17 +15,17 @@
 //  ================================================================
 #pragma once
 
-//_DEBUG -- special treatment of truncated values, with semantic information only!
+//_DEBUG -- special treatment of truncated values, use voxels with semantic information only!
 //sdf, color, pick maximum weights, get confidence
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
-inline float interpolateTrilinearly_Corrected2(const CONSTPTR(TVoxel)* voxelData,
-                                               const CONSTPTR(ITMHashEntry)* voxelHash,
-                                               const THREADPTR(Vector3f)& point,
-                                               THREADPTR(TCache)& cache,
-                                               THREADPTR(Vector3f)& color,
-                                               THREADPTR(float)& confidence,
-                                               THREADPTR(bool)& struckNarrowBand) {
+inline float interpolateTrilinearly_TruncatedSignCopy(const CONSTPTR(TVoxel)* voxelData,
+                                                      const CONSTPTR(ITMHashEntry)* voxelHash,
+                                                      const THREADPTR(Vector3f)& point,
+                                                      THREADPTR(TCache)& cache,
+                                                      THREADPTR(Vector3f)& color,
+                                                      THREADPTR(float)& confidence,
+                                                      THREADPTR(bool)& struckNarrowBand) {
 	float sdfRes1, sdfRes2;
 	float confRes1, confRes2;
 	Vector3f clrRes1, clrRes2;
@@ -49,81 +49,7 @@ inline float interpolateTrilinearly_Corrected2(const CONSTPTR(TVoxel)* voxelData
 		sdfs[iNeighbor] = TVoxel::valueToFloat(v.sdf);
 		confs[iNeighbor] = v.confidence;
 		colors[iNeighbor] = TO_FLOAT3(v.clr);
-		bool foundCur = vmIndex != 0 && v.flags != ITMLib::VOXEL_TRUNCATED;
-		struckNarrowBand |= foundCur;
-		found[iNeighbor] = foundCur;
-		sumFound += foundCur * v.sdf;
-	}
-	if (!struckNarrowBand) {
-		return 0.0f;
-	}
-
-	float truncated = std::copysign(1.0f, sumFound);
-	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
-		if (!found[iNeighbor]) {
-			sdfs[iNeighbor] = truncated;
-		}
-	}
-
-
-	float oneMinusCoeffX = 1.0f - coeff.x;
-	float oneMinusCoeffY = 1.0f - coeff.y;
-
-	sdfRes1 = oneMinusCoeffY * (oneMinusCoeffX * sdfs[0] + coeff.x * sdfs[1])
-	          + coeff.y * (oneMinusCoeffX * sdfs[2] + coeff.x * sdfs[3]);
-	sdfRes2 = oneMinusCoeffY * (oneMinusCoeffX * sdfs[4] + coeff.x * sdfs[5])
-	          + coeff.y * (oneMinusCoeffX * sdfs[6] + coeff.x * sdfs[7]);
-	confRes1 = oneMinusCoeffY * (oneMinusCoeffX * confs[0] + coeff.x * confs[1])
-	           + coeff.y * (oneMinusCoeffX * confs[2] + coeff.x * confs[3]);
-	confRes2 = oneMinusCoeffY * (oneMinusCoeffX * confs[4] + coeff.x * confs[5])
-	           + coeff.y * (oneMinusCoeffX * confs[6] + coeff.x * confs[7]);
-	clrRes1 = oneMinusCoeffY * (oneMinusCoeffX * colors[0] + coeff.x * colors[1])
-	          + coeff.y * (oneMinusCoeffX * colors[2] + coeff.x * colors[3]);
-	clrRes2 = oneMinusCoeffY * (oneMinusCoeffX * colors[4] + coeff.x * colors[5])
-	          + coeff.y * (oneMinusCoeffX * colors[6] + coeff.x * colors[7]);
-
-	float sdf = (1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2;
-	confidence = (1.0f - coeff.z) * confRes1 + coeff.z * confRes2;
-	color = (1.0f - coeff.z) * clrRes1 + coeff.z * clrRes2;
-	return sdf;
-}
-
-
-//_DEBUG -- special treatment of truncated values
-//sdf, color, pick maximum weights, get confidence
-template<class TVoxel, typename TCache>
-_CPU_AND_GPU_CODE_
-inline float interpolateTrilinearly_Corrected(const CONSTPTR(TVoxel)* voxelData,
-                                              const CONSTPTR(ITMHashEntry)* voxelHash,
-                                              const THREADPTR(Vector3f)& point,
-                                              THREADPTR(TCache)& cache,
-                                              THREADPTR(Vector3f)& color,
-                                              THREADPTR(float)& confidence,
-                                              THREADPTR(bool)& struckNarrowBand) {
-	float sdfRes1, sdfRes2;
-	float confRes1, confRes2;
-	Vector3f clrRes1, clrRes2;
-	int vmIndex = false;
-	Vector3f coeff;
-	Vector3i pos;
-
-	TO_INT_FLOOR3(pos, coeff, point);
-	const int neighborCount = 8;
-	float sdfs[neighborCount];
-	Vector3f colors[neighborCount];
-	float confs[neighborCount];
-	bool found[neighborCount] = {0};
-	const Vector3i positions[neighborCount] = {Vector3i(0, 0, 0), Vector3i(1, 0, 0),
-	                                           Vector3i(0, 1, 0), Vector3i(1, 1, 0),
-	                                           Vector3i(0, 0, 1), Vector3i(1, 0, 1),
-	                                           Vector3i(0, 1, 1), Vector3i(1, 1, 1)};
-	float sumFound = 0.0f;
-	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
-		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (positions[iNeighbor]), vmIndex, cache);
-		sdfs[iNeighbor] = TVoxel::valueToFloat(v.sdf);
-		confs[iNeighbor] = v.confidence;
-		colors[iNeighbor] = TO_FLOAT3(v.clr);
-		bool foundCur = vmIndex != 0;
+		bool foundCur = v.flags != ITMLib::VOXEL_TRUNCATED;
 		struckNarrowBand |= foundCur;
 		found[iNeighbor] = foundCur;
 		sumFound += foundCur * v.sdf;

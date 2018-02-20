@@ -19,11 +19,16 @@
 
 //stdlib
 #include <chrono>
+#include <iomanip>
 
 //local
 #include "ITMSceneMotionTracker_CPU.h"
 #include "../Shared/ITMSceneMotionTracker_Shared.h"
 #include "../../Utils/ITMVoxelFlags.h"
+
+#ifdef OLD_LEVEL_SET_TERM
+#include "../Shared/ITMSceneMotionTracker_Deprecated.h"
+#endif
 
 
 using namespace ITMLib;
@@ -156,10 +161,9 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					Vector3f& voxelWarp = canonicalVoxel.warp_t;
 
 					//_DEBUG
-					bool boundary = false, printResult = false;
+					bool boundary = false;
 #ifdef PRINT_SINGLE_VOXEL_RESULT
 					if (originalPosition == (ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos1)) {
-						printResult = true;
 						std::cout << std::endl << "Priniting voxel at " << originalPosition << ". ";
 						std::cout <<  "Source SDF vs. target SDF: " << canonicalSdf
 								  << "-->" << liveSdf << std::endl << "Warp: " << canonicalVoxel.warp_t;
@@ -212,24 +216,17 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						{
 
 #endif
-
 #ifdef OLD_LEVEL_SET_TERM
 							//This is jacobian of the live frame at the lookup (warped) position
-							ComputePerPointLiveJacobianAndHessian(originalPosition,
-																  canonicalVoxel.warp_t, liveVoxels,
+							ComputePerPointLiveJacobianAndHessian(canonicalVoxelPosition,
+																  voxelWarp, liveVoxels,
 																  liveHashTable, liveCache, liveSdf,
-																  liveSdfJacobian, warpedSdfHessian, printResult);
+																  liveSdfJacobian, warpedSdfHessian);
 #else
 							ComputePerPointWarpedLiveJacobian
-									(canonicalVoxelPosition,
-									 voxelWarp,//TODO store as local value, use consistent name -Greg
-
-									 liveVoxels,
-									 liveHashTable,
-									 liveCache,
-
-									 liveSdf, liveSdfJacobian,
-									 liveSdf_Center_WarpForward, printResult);
+									(canonicalVoxelPosition, voxelWarp,
+									 liveVoxels,liveHashTable,liveCache,
+									 liveSdf, liveSdfJacobian,liveSdf_Center_WarpForward);
 #endif
 						}
 #ifdef USE_COLOR
@@ -237,25 +234,22 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 							useColor = true;
 #ifdef OLD_LEVEL_SET_TERM
 							//This is jacobian of the live frame at the lookup (warped) position
-							ComputePerPointLiveJacobianAndHessian(originalPosition,
-																  canonicalVoxel.warp_t,
-																  liveVoxels,
-																  liveHashTable,
-
-																  liveCache,
-																  liveSdf,
-
-																  liveColor,
-																  liveSdfJacobian,
-																  liveColorJacobian,
-																  warpedSdfHessian);
+							ComputePerPointLiveJacobianAndHessian(canonicalVoxelPosition,voxelWarp,
+																  liveVoxels, liveHashTable, liveCache,
+																  liveSdf,liveColor,
+																  liveSdfJacobian, liveColorJacobian, warpedSdfHessian);
 #else
 							ComputePerPointWarpedLiveJacobian
 									(canonicalVoxelPosition, canonicalVoxel.warp_t,
 									 liveVoxels, liveHashTable, liveCache,
 									 liveSdf, liveColor, liveSdfJacobian,
 									 liveSdf_Center_WarpForward, liveColorJacobian);
+#ifdef PRINT_SINGLE_VOXEL_RESULT
+							PrintPerPointWarpedLiveJacobian(liveSdfJacobian, liveSdf_Center_WarpForward);
+							std::cout << "Back-projected SDF Jacobian: " << warpedSdfJacobian << std::endl << std::endl;
 #endif
+#endif //OLD_LEVEL_SET_TERM
+
 						}
 #endif//USE_COLOR
 						//Compute data term error / energy
@@ -265,7 +259,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						if (useColor) {
 							float diffColor =
 									ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightColorDataTerm *
-									squareDistance(liveColor, TO_FLOAT3(canonicalVoxel.clr) / 255.f);
+											squareDistance(liveColor, TO_FLOAT3(canonicalVoxel.clr) / 255.f);
 							deltaEData += liveColorJacobian * diffColor;
 						}
 #endif//USE_COLOR
@@ -279,8 +273,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #else
 						ComputeWarpedJacobianAndHessian(neighborWarps, canonicalVoxelPosition,
 						                                liveSdf_Center_WarpForward, liveSdf, liveVoxels,
-						                                liveHashTable, liveCache, warpedSdfJacobian, warpedSdfHessian,
-						                                printResult);
+						                                liveHashTable, liveCache, warpedSdfJacobian, warpedSdfHessian);
 						float sdfJacobianNorm = length(warpedSdfJacobian);
 						sdfJacobianNormMinusUnity = sdfJacobianNorm - unity;
 						deltaELevelSet =
@@ -301,10 +294,11 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 
 					ComputePerVoxelWarpJacobianAndHessian(canonicalVoxel.warp_t, canonicalVoxelPosition, neighborWarps,
 					                                      warpJacobian, warpHessian);
-					if (printResult) {
+#ifdef PRINT_SINGLE_VOXEL_RESULT
 						PrintPerVoxelWarpJacobianAndHessian(neighborWarps, neighborAllocated, warpJacobian,
 						                                    warpHessian);
 					}
+#endif
 
 #ifdef PRINT_TIME_STATS
 					TOC(timeWarpJandHCompute);
