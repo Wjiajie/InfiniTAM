@@ -15,10 +15,14 @@
 //  ================================================================
 #pragma once
 
+//========================= TEMPORARY FLAGS FOR DEBUGGING KILLING FUSION FEATURE =======================================
+
 #define _DEBUG
 #ifdef _DEBUG
 //*** FLAGS FOR HOW TO HANDLE OSCILLATIONS ***
 //#define OLD_UGLY_WAY //simply cuts down warp updates by half
+
+//#define USE_COLOR
 
 
 

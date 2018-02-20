@@ -147,7 +147,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						continue;
 
 					float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
-					bool useColor;
+					bool useColor = false;
 					Vector3f liveColor, liveSdfJacobian, liveColorJacobian, liveSdf_Center_WarpForward, warpedSdfJacobian;
 					Matrix3f warpedSdfHessian;
 					//_DEBUG
@@ -196,9 +196,13 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					//if (!emptyInCanonical) {//_DEBUG
 					if (!emptyInCanonical && !emptyInLive) {
 						//=================================== DATA TERM ================================================
+#ifdef USE_COLOR
 						if (std::abs(canonicalSdf) >
-						    ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::colorSdfThreshold) {
+							ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::colorSdfThreshold) {
 							useColor = false;
+#else
+						{
+#endif
 
 #ifdef OLD_LEVEL_SET_TERM
 							//This is jacobian of the live frame at the lookup (warped) position
@@ -218,7 +222,9 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 									 liveSdf, liveSdfJacobian,
 									 liveSdf_Center_WarpForward, printResult);
 #endif
-						} else {
+						}
+#ifdef USE_COLOR
+						else {
 							useColor = true;
 #ifdef OLD_LEVEL_SET_TERM
 							//This is jacobian of the live frame at the lookup (warped) position
@@ -242,16 +248,18 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 									 liveSdf_Center_WarpForward, liveColorJacobian);
 #endif
 						}
+#endif//USE_COLOR
 						//Compute data term error / energy
 						diffSdf = liveSdf - canonicalSdf;
-
 						deltaEData = liveSdfJacobian * diffSdf;
+#ifdef USE_COLOR
 						if (useColor) {
 							float diffColor =
 									ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightColorDataTerm *
 									squareDistance(liveColor, TO_FLOAT3(canonicalVoxel.clr) / 255.f);
 							deltaEData += liveColorJacobian * diffColor;
 						}
+#endif//USE_COLOR
 						//=================================== LEVEL SET TERM ===============================================
 #ifdef OLD_LEVEL_SET_TERM
 						float sdfJacobianNorm = length(liveSdfJacobian);
@@ -269,8 +277,11 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						deltaELevelSet =
 								sdfJacobianNormMinusUnity * (warpedSdfHessian * warpedSdfJacobian) /
 								(sdfJacobianNorm + epsilon);
-#endif
+#endif //OLD_LEVEL_SET_TERM
+
 					}
+
+
 					//=================================== KILLING TERM =================================================
 #ifdef PRINT_TIME_STATS
 					TOC(timeDataJandHCompute);
