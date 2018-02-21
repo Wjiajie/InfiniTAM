@@ -112,7 +112,7 @@ template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void _DEBUG_ComputeWarpedJacobianAndHessian(const CONSTPTR(Vector3f*) neighborWarps,
                                                    const CONSTPTR(Vector3i)& canonicalVoxelPosition,
-                                                   const CONSTPTR(float)& canonicalVoxelSdf,
+                                                   const CONSTPTR(float)& canonicalSdf,
                                                    const CONSTPTR(Vector3f)& liveSdf_Center_WarpForward,
                                                    const CONSTPTR(float)& liveSdf,//lookup value at center warp_t
                                                    const CONSTPTR(TVoxel)* liveVoxels,
@@ -131,17 +131,14 @@ inline void _DEBUG_ComputeWarpedJacobianAndHessian(const CONSTPTR(Vector3f*) nei
 	Vector3f warpedPositionOfNeighbor_at_x_plus_one = centerPosition + Vector3f(1.f, 0.f, 0.f) + neighborWarps[3];
 	Vector3f warpedPositionOfNeighbor_at_y_plus_one = centerPosition + Vector3f(0.f, 1.f, 0.f) + neighborWarps[4];
 	Vector3f warpedPositionOfNeighbor_at_z_plus_one = centerPosition + Vector3f(0.f, 0.f, 1.f) + neighborWarps[5];
-	bool struckNarrowBand;
+
 	Vector3f liveSdf_at_warped_neighbors(
-			interpolateTrilinearly_TruncatedSignCopy_Hint(liveVoxels, liveHashTable, canonicalVoxelSdf,
-			                                              warpedPositionOfNeighbor_at_x_plus_one, liveCache,
-			                                              struckNarrowBand),
-			interpolateTrilinearly_TruncatedSignCopy_Hint(liveVoxels, liveHashTable, canonicalVoxelSdf,
-			                                              warpedPositionOfNeighbor_at_y_plus_one, liveCache,
-			                                              struckNarrowBand),
-			interpolateTrilinearly_TruncatedSignCopy_Hint(liveVoxels, liveHashTable, canonicalVoxelSdf,
-			                                              warpedPositionOfNeighbor_at_z_plus_one, liveCache,
-			                                              struckNarrowBand)
+			interpolateTrilinearly_SetTruncatedToVal(liveVoxels, liveHashTable, liveSdf,
+			                                              warpedPositionOfNeighbor_at_x_plus_one, liveCache),
+			interpolateTrilinearly_SetTruncatedToVal(liveVoxels, liveHashTable, liveSdf,
+			                                              warpedPositionOfNeighbor_at_y_plus_one, liveCache),
+			interpolateTrilinearly_SetTruncatedToVal(liveVoxels, liveHashTable, liveSdf,
+			                                              warpedPositionOfNeighbor_at_z_plus_one, liveCache)
 	);
 	//=========== WARPED SDF JACOBIAN ==================================================================================
 	// derivatives of the type [d phi (warp) / dx]

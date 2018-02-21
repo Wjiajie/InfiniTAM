@@ -142,7 +142,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					bool hitLiveNarrowBand;
 					Vector3f projectedPosition = canonicalVoxelPosition.toFloat() + canonicalVoxel.warp_t;
 
-#ifndef LEVEL_SET_DEBUG
+#ifndef TRUNCATION_TREATMENT_DEBUG
 					liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache,
 					                                 hitLiveNarrowBand);
 #else
@@ -240,7 +240,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 																  liveHashTable, liveCache, liveSdf,
 																  liveSdfJacobian, warpedSdfHessian);
 #else
-#ifdef LEVEL_SET_DEBUG
+#ifdef TRUNCATION_TREATMENT_DEBUG
 							_DEBUG_ComputePerPointWarpedLiveJacobian(canonicalVoxelPosition, voxelWarp, canonicalSdf,
 							                                         liveVoxels, liveHashTable, liveCache,
 							                                         liveSdf, liveSdfJacobian,
@@ -298,7 +298,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 								(sdfJacobianNorm + epsilon);
 #else
 
-#ifdef LEVEL_SET_DEBUG
+#ifdef TRUNCATION_TREATMENT_DEBUG
 						Vector3f jacobianNormsAtWarpPlusOne;
 						_DEBUG_ComputeWarpedJacobianAndHessian(neighborWarps, canonicalVoxelPosition, canonicalSdf,
 						                                       liveSdf_Center_WarpForward, liveSdf, liveVoxels,
@@ -316,7 +316,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						deltaELevelSet =
 								sdfJacobianNormMinusUnity * (warpedSdfHessian * warpedSdfJacobian) /
 								(sdfJacobianNorm + epsilon);
-#ifdef LEVEL_SET_DEBUG
+#ifdef TRUNCATION_TREATMENT_DEBUG
 						Vector3f ratios = deltaELevelSet / jacobianNormsAtWarpPlusOneMinusUnity;
 						Vector3f differences = deltaELevelSet - jacobianNormsAtWarpPlusOneMinusUnity;
 #endif
