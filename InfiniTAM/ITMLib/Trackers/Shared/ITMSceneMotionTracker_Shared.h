@@ -123,16 +123,10 @@ inline void ComputePerPointWarpedLiveJacobian(const CONSTPTR(Vector3i)& voxelPos
 ) {
 	Vector3f liveSdf_Center_WarpCenter(liveSdf);
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
-	ComputeLiveSdf_Center_WarpForward(voxelPosition,voxelWarp,liveVoxels,liveHashTable,liveCache,liveSdf_Center_WarpForward);
+	ComputeLiveSdf_Center_WarpForward(voxelPosition, voxelWarp, liveVoxels, liveHashTable, liveCache,
+	                                  liveSdf_Center_WarpForward);
 	//=========== COMPUTE JACOBIAN =====================================================================================
 	liveSdfJacobian = liveSdf_Center_WarpForward - liveSdf_Center_WarpCenter;
-}
-//_DEBUG printing routine
-_CPU_AND_GPU_CODE_
-inline void PrintPerPointWarpedLiveJacobian(const CONSTPTR(Vector3f)& liveSdfJacobian,
-                                            const CONSTPTR(Vector3f)& liveSdf_Center_WarpForward) {
-	std::cout << "Live SDF Forward at warp: " << liveSdf_Center_WarpForward << std::endl;
-	std::cout << "Live SDF Jacobian at warp: " << liveSdfJacobian << std::endl;
 }
 
 // with color
@@ -320,39 +314,6 @@ inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxe
 
 };
 
-//_DEBUG printing routine
-_CPU_AND_GPU_CODE_
-inline void PrintPerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f*) neighborWarps,
-                                                const CONSTPTR(bool*) neighborFound,
-                                                THREADPTR(Matrix3f)& jacobian, //in
-                                                THREADPTR(Matrix3f)* hessian //in, x3
-) {
-
-	const int neighborhoodSize = 9;
-	const std::string yellow("\033[0;33m");
-	const std::string cyan("\033[0;36m");
-	const std::string green("\033[0;32m");
-	const std::string reset("\033[0m");
-	//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
-	Vector3i neighborPositions[] = {Vector3i(-1, 0, 0), Vector3i(0, -1, 0), Vector3i(0, 0, -1), Vector3i(1, 0, 0),
-	                                Vector3i(0, 1, 0), Vector3i(0, 0, 1), Vector3i(1, 1, 0), Vector3i(0, 1, 1),
-	                                Vector3i(1, 0, 1),};
-	std::cout << "Boundary neighbors: ";
-	for (int iNeightbor = 0; iNeightbor < neighborhoodSize; iNeightbor++) {
-		if (!neighborFound[iNeightbor]) {
-			std::cout << iNeightbor << ", ";
-		}
-	}
-	std::cout << std::endl << green;
-	std::cout << "Neighbors' warps: " << std::endl;
-	for (int iNeightbor = 0; iNeightbor < neighborhoodSize; iNeightbor++) {
-		std::cout << neighborPositions[iNeightbor] << ": " << neighborWarps[iNeightbor] << ", " << std::endl;
-	}
-
-	std::cout << std::endl << yellow;
-	std::cout << "Jacobian: " << std::endl << jacobian << std::endl << cyan;
-	std::cout << "Hessian: " << std::endl << hessian[0] << hessian[1] << hessian[2] << reset << std::endl;
-};
 //======================================================================================================================
 //=========================================== HELPER ROUTINES FOR SCENE OPTIMIZATION PREP ==============================
 //======================================================================================================================

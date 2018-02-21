@@ -43,6 +43,7 @@ inline float interpolateTrilinearly_TruncatedSignCopy(const CONSTPTR(TVoxel)* vo
 	                                           Vector3i(0, 1, 0), Vector3i(1, 1, 0),
 	                                           Vector3i(0, 0, 1), Vector3i(1, 0, 1),
 	                                           Vector3i(0, 1, 1), Vector3i(1, 1, 1)};
+	struckNarrowBand = false;
 	float sumFound = 0.0f;
 	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
 		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (positions[iNeighbor]), vmIndex, cache);
@@ -55,7 +56,7 @@ inline float interpolateTrilinearly_TruncatedSignCopy(const CONSTPTR(TVoxel)* vo
 		sumFound += foundCur * v.sdf;
 	}
 	if (!struckNarrowBand) {
-		return 0.0f;
+		return TVoxel::SDF_initialValue();//cannot really say anything about the sdf here
 	}
 
 	float truncated = std::copysign(1.0f, sumFound);
@@ -84,6 +85,153 @@ inline float interpolateTrilinearly_TruncatedSignCopy(const CONSTPTR(TVoxel)* vo
 	float sdf = (1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2;
 	confidence = (1.0f - coeff.z) * confRes1 + coeff.z * confRes2;
 	color = (1.0f - coeff.z) * clrRes1 + coeff.z * clrRes2;
+	return sdf;
+}
+
+//sdf only
+template<class TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline float interpolateTrilinearly_TruncatedSignCopy(const CONSTPTR(TVoxel)* voxelData,
+                                                      const CONSTPTR(ITMHashEntry)* voxelHash,
+                                                      const THREADPTR(Vector3f)& point,
+                                                      THREADPTR(TCache)& cache,
+                                                      THREADPTR(bool)& struckNarrowBand) {
+	float sdfRes1, sdfRes2;
+	int vmIndex = false;
+	Vector3f coeff;
+	Vector3i pos;
+	struckNarrowBand = false;
+
+	TO_INT_FLOOR3(pos, coeff, point);
+	const int neighborCount = 8;
+	float sdfs[neighborCount];
+	bool found[neighborCount] = {0};
+	const Vector3i positions[neighborCount] = {Vector3i(0, 0, 0), Vector3i(1, 0, 0),
+	                                           Vector3i(0, 1, 0), Vector3i(1, 1, 0),
+	                                           Vector3i(0, 0, 1), Vector3i(1, 0, 1),
+	                                           Vector3i(0, 1, 1), Vector3i(1, 1, 1)};
+	float sumFound = 0.0f;
+	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
+		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (positions[iNeighbor]), vmIndex, cache);
+		sdfs[iNeighbor] = TVoxel::valueToFloat(v.sdf);
+		bool foundCur = v.flags != ITMLib::VOXEL_TRUNCATED;
+		struckNarrowBand |= foundCur;
+		found[iNeighbor] = foundCur;
+		sumFound += foundCur * v.sdf;
+	}
+	if (!struckNarrowBand) {
+		return TVoxel::SDF_initialValue();//cannot really say anything about the sdf here
+	}
+
+	float truncatedValue = std::copysign(1.0f, sumFound);
+	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
+		if (!found[iNeighbor]) {
+			sdfs[iNeighbor] = truncatedValue;
+		}
+	}
+
+	float oneMinusCoeffX = 1.0f - coeff.x;
+	float oneMinusCoeffY = 1.0f - coeff.y;
+
+	sdfRes1 = oneMinusCoeffY * (oneMinusCoeffX * sdfs[0] + coeff.x * sdfs[1])
+	          + coeff.y * (oneMinusCoeffX * sdfs[2] + coeff.x * sdfs[3]);
+	sdfRes2 = oneMinusCoeffY * (oneMinusCoeffX * sdfs[4] + coeff.x * sdfs[5])
+	          + coeff.y * (oneMinusCoeffX * sdfs[6] + coeff.x * sdfs[7]);
+
+	float sdf = (1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2;
+	return sdf;
+}
+
+//sdf only, version with copying sign from hint if narrow band is not hit at all
+template<class TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline float interpolateTrilinearly_TruncatedSignCopy_Hint(const CONSTPTR(TVoxel)* voxelData,
+                                                           const CONSTPTR(ITMHashEntry)* voxelHash,
+                                                           const CONSTPTR(float)& hintSignSource,
+                                                           const THREADPTR(Vector3f)& point,
+                                                           THREADPTR(TCache)& cache,
+                                                           THREADPTR(bool)& struckNarrowBand) {
+	float sdfRes1, sdfRes2;
+	int vmIndex = false;
+	Vector3f coeff;
+	Vector3i pos;
+	struckNarrowBand = false;
+
+	TO_INT_FLOOR3(pos, coeff, point);
+	const int neighborCount = 8;
+	float sdfs[neighborCount];
+	bool found[neighborCount] = {0};
+	const Vector3i positions[neighborCount] = {Vector3i(0, 0, 0), Vector3i(1, 0, 0),
+	                                           Vector3i(0, 1, 0), Vector3i(1, 1, 0),
+	                                           Vector3i(0, 0, 1), Vector3i(1, 0, 1),
+	                                           Vector3i(0, 1, 1), Vector3i(1, 1, 1)};
+	float sumFound = 0.0f;
+	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
+		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (positions[iNeighbor]), vmIndex, cache);
+		sdfs[iNeighbor] = TVoxel::valueToFloat(v.sdf);
+		bool foundCur = v.flags != ITMLib::VOXEL_TRUNCATED;
+		struckNarrowBand |= foundCur;
+		found[iNeighbor] = foundCur;
+		sumFound += foundCur * v.sdf;
+	}
+	if (!struckNarrowBand) {
+		return std::copysign(1.0f, hintSignSource);//use the hint
+	}
+
+	float truncatedValue = std::copysign(1.0f, sumFound);
+	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
+		if (!found[iNeighbor]) {
+			sdfs[iNeighbor] = truncatedValue;
+		}
+	}
+
+	float oneMinusCoeffX = 1.0f - coeff.x;
+	float oneMinusCoeffY = 1.0f - coeff.y;
+
+	sdfRes1 = oneMinusCoeffY * (oneMinusCoeffX * sdfs[0] + coeff.x * sdfs[1])
+	          + coeff.y * (oneMinusCoeffX * sdfs[2] + coeff.x * sdfs[3]);
+	sdfRes2 = oneMinusCoeffY * (oneMinusCoeffX * sdfs[4] + coeff.x * sdfs[5])
+	          + coeff.y * (oneMinusCoeffX * sdfs[6] + coeff.x * sdfs[7]);
+
+	float sdf = (1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2;
+	return sdf;
+}
+
+
+//sdf only, version with replacing all truncated voxels with given value
+template<class TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline float interpolateTrilinearly_SetTruncatedToVal(const CONSTPTR(TVoxel)* voxelData,
+                                                      const CONSTPTR(ITMHashEntry)* voxelHash,
+                                                      const CONSTPTR(float)& truncationReplacement,
+                                                      const THREADPTR(Vector3f)& point,
+                                                      THREADPTR(TCache)& cache,
+                                                      THREADPTR(bool)& struckNarrowBand) {
+	float sdfRes1, sdfRes2, sdfV1, sdfV2;
+	int vmIndex = false;
+	Vector3f coeff;
+	Vector3i pos;
+	TO_INT_FLOOR3(pos, coeff, point);
+#define PROCESS_VOXEL(suffix, coord)\
+    {\
+        const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (coord), vmIndex, cache);\
+        sdfV##suffix = v.sdf;\
+    }
+	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
+	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
+	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
+	PROCESS_VOXEL(1, Vector3i(0, 1, 0))
+	PROCESS_VOXEL(2, Vector3i(1, 1, 0))
+	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
+	PROCESS_VOXEL(1, Vector3i(0, 0, 1))
+	PROCESS_VOXEL(2, Vector3i(1, 0, 1))
+	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
+	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
+	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
+	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
+#undef PROCESS_VOXEL
+	float sdf = TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
+
 	return sdf;
 }
 

@@ -87,6 +87,10 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 	const std::string reset("\033[0m");
 #endif
 
+#ifdef PRINT_SINGLE_VOXEL_RESULT
+	const Vector3i interestVoxelPosition(0, 25, 201);
+#endif
+
 	const float epsilon = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::epsilon;
 	const int iteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
 	// fraction of narrow band (non-truncated region) half-width that a voxel spans
@@ -134,17 +138,17 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 
 					//=================================== TRUNCATION REGION CHECKS =====================================
 					float liveSdf;
-					bool foundInLive;
+					bool hitLiveNarrowBand;
 					Vector3f projectedPosition = canonicalVoxelPosition.toFloat() + canonicalVoxel.warp_t;
 					liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache,
-					                                 foundInLive);
+					                                 hitLiveNarrowBand);
 
 					//almost no restriction -- Mira's case with addition of VOXEL_TRUNCATED flag checking
 					bool emptyInCanonical = canonicalVoxel.flags == ITMLib::VOXEL_TRUNCATED;
 					// the latter condition needs to be included since sometimes, even if some live voxels in the lookup
 					// neighborhood are non-truncated, they ally may be a whole voxel away from the warped position,
 					// which would then result in a live SDF lookup equivalent to that in a truncated region.
-					bool emptyInLive = !foundInLive || (1.0 - std::abs(liveSdf) < FLT_EPSILON);
+					bool emptyInLive = !hitLiveNarrowBand || (1.0 - std::abs(liveSdf) < FLT_EPSILON);
 #ifdef OSCILLATION_TREATMENT
 					bool ignoreVoxelDueToOscillation = canonicalVoxel.flags & ITMLib::VOXEL_OSCILLATION_DETECTED_TWICE;
 
@@ -165,12 +169,16 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					//_DEBUG
 					bool boundary = false;
 #ifdef PRINT_SINGLE_VOXEL_RESULT
-					if (originalPosition == (ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos1)) {
-						std::cout << std::endl << "Priniting voxel at " << originalPosition << ". ";
+					bool printResult = false;
+					if (canonicalVoxelPosition == interestVoxelPosition) {
+						std::cout << std::endl << "Priniting voxel at " << canonicalVoxelPosition << ". ";
 						std::cout <<  "Source SDF vs. target SDF: " << canonicalSdf
 								  << "-->" << liveSdf << std::endl << "Warp: " << canonicalVoxel.warp_t;
-						std::cout << " Live SDF found: " << liveSdfFound;
+
+						std::cout << " Struck live narrow band: " << (hitLiveNarrowBand ? green : red)
+						          << (hitLiveNarrowBand ? "true" : "false") << reset;
 						std::cout << std::endl;
+						printResult = true;
 					}
 #endif
 #ifdef PRINT_TIME_STATS
@@ -225,10 +233,17 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 																  liveHashTable, liveCache, liveSdf,
 																  liveSdfJacobian, warpedSdfHessian);
 #else
+#ifdef LEVEL_SET_DEBUG
+							_DEBUG_ComputePerPointWarpedLiveJacobian(canonicalVoxelPosition, voxelWarp, canonicalSdf,
+							                                         liveVoxels, liveHashTable, liveCache,
+							                                         liveSdf, liveSdfJacobian,
+							                                         liveSdf_Center_WarpForward);
+#else
 							ComputePerPointWarpedLiveJacobian
 									(canonicalVoxelPosition, voxelWarp,
-									 liveVoxels,liveHashTable,liveCache,
-									 liveSdf, liveSdfJacobian,liveSdf_Center_WarpForward);
+									 liveVoxels, liveHashTable, liveCache,
+									 liveSdf, liveSdfJacobian, liveSdf_Center_WarpForward);
+#endif
 #endif
 						}
 #ifdef USE_COLOR
@@ -247,8 +262,10 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 									 liveSdf, liveColor, liveSdfJacobian,
 									 liveSdf_Center_WarpForward, liveColorJacobian);
 #ifdef PRINT_SINGLE_VOXEL_RESULT
-							PrintPerPointWarpedLiveJacobian(liveSdfJacobian, liveSdf_Center_WarpForward);
-							std::cout << "Back-projected SDF Jacobian: " << warpedSdfJacobian << std::endl << std::endl;
+							if(printResult){
+								PrintPerPointWarpedLiveJacobian(liveSdfJacobian, liveSdf_Center_WarpForward);
+								std::cout << "Back-projected SDF Jacobian: " << warpedSdfJacobian << std::endl << std::endl;
+							}
 #endif
 #endif //OLD_LEVEL_SET_TERM
 
@@ -276,26 +293,31 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 
 #ifdef LEVEL_SET_DEBUG
 						Vector3f jacobianNormsAtWarpPlusOne;
-						_DEBUG_ComputeWarpedJacobianAndHessian(neighborWarps, canonicalVoxelPosition,
-						liveSdf_Center_WarpForward, liveSdf, liveVoxels,
-								liveHashTable, liveCache, warpedSdfJacobian, jacobianNormsAtWarpPlusOne, warpedSdfHessian);
+						_DEBUG_ComputeWarpedJacobianAndHessian(neighborWarps, canonicalVoxelPosition, canonicalSdf,
+						                                       liveSdf_Center_WarpForward, liveSdf, liveVoxels,
+						                                       liveHashTable, liveCache, warpedSdfJacobian,
+						                                       jacobianNormsAtWarpPlusOne, warpedSdfHessian);
 						Vector3f jacobianNormsAtWarpPlusOneMinusUnity = jacobianNormsAtWarpPlusOne - Vector3f(unity);
 
 #else
 						ComputeWarpedJacobianAndHessian(neighborWarps, canonicalVoxelPosition,
-						                                liveSdf_Center_WarpForward, liveSdf, liveVoxels,
-						                                liveHashTable, liveCache, warpedSdfJacobian, warpedSdfHessian);
+														liveSdf_Center_WarpForward, liveSdf, liveVoxels,
+														liveHashTable, liveCache, warpedSdfJacobian, warpedSdfHessian);
 #endif
 						float sdfJacobianNorm = length(warpedSdfJacobian);
 						sdfJacobianNormMinusUnity = sdfJacobianNorm - unity;
 						deltaELevelSet =
 								sdfJacobianNormMinusUnity * (warpedSdfHessian * warpedSdfJacobian) /
 								(sdfJacobianNorm + epsilon);
-						Vector3f ratios = deltaELevelSet/jacobianNormsAtWarpPlusOneMinusUnity;
+#ifdef LEVEL_SET_DEBUG
+						Vector3f ratios = deltaELevelSet / jacobianNormsAtWarpPlusOneMinusUnity;
 						Vector3f differences = deltaELevelSet - jacobianNormsAtWarpPlusOneMinusUnity;
-
-						//
-						//_DEBUG_ComputeDiscreteLSEnergy(neighborWarps);
+#endif
+#ifdef PRINT_SINGLE_VOXEL_RESULT
+						if(printResult)
+						_DEBUG_PrintDataAndLevelSetTermStuff(liveSdfJacobian, liveSdf_Center_WarpForward, warpedSdfJacobian,
+						                                     warpedSdfHessian);
+#endif
 #endif //OLD_LEVEL_SET_TERM
 
 					}
@@ -312,8 +334,9 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					ComputePerVoxelWarpJacobianAndHessian(canonicalVoxel.warp_t, canonicalVoxelPosition, neighborWarps,
 					                                      warpJacobian, warpHessian);
 #ifdef PRINT_SINGLE_VOXEL_RESULT
-						PrintPerVoxelWarpJacobianAndHessian(neighborWarps, neighborAllocated, warpJacobian,
-						                                    warpHessian);
+					if(printResult){
+						_DEBUG_PrintKillingTermStuff(neighborWarps, neighborAllocated, neighborTruncated,
+						                             warpJacobian, warpHessian);
 					}
 #endif
 
@@ -488,11 +511,11 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					canonicalVoxel.warp_t_update = warpUpdate;
 #ifdef PRINT_SINGLE_VOXEL_RESULT
 					if (printResult) {
-						std::cout << "Data update: " << deltaEData;
-						std::cout << " Level set update: " << deltaELevelSet;
-						std::cout << " Killing update: " << deltaEKilling;
+						std::cout << "Data update: " <<  deltaEData * -1.f;
+						std::cout << red << " Level set update: " << deltaELevelSet * -1.f;
+						std::cout << yellow <<" Killing update: " << deltaEKilling * -1.f;
 						std::cout << std::endl;
-						std::cout << "Warp update: " << warpUpdate;
+						std::cout << green << "Warp update: " << warpUpdate * -1.f << reset;
 						std::cout << " Warp update length: " << warpUpdateLength << std::endl << std::endl;
 					}
 #endif
@@ -585,7 +608,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #ifdef PRINT_ENERGY_STATS
 	totalEnergy = totalDataEnergy + totalLevelSetEnergy + totalKillingEnergy;
 
-	std::cout << " [ENERGY] Data term: " << totalDataEnergy
+	std::cout << " [ENERGY] Data term: " << totalDataEnergy << red
 	          << " Level set term: " << totalLevelSetEnergy << cyan
 	          << " Smoothness term: " << totalSmoothnessEnergy << yellow
 	          << " Killing term: " << totalKillingEnergy << green

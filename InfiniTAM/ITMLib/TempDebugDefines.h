@@ -32,8 +32,10 @@
 //#define OLD_LEVEL_SET_TERM //Old and seemingly incorrect way to compute the Level Set term
 #define LEVEL_SET_DEBUG
 
+
+//#define WARP_COMPUTE_MODE WARP_COMPUTE_MODE_FULL
 //#define WARP_COMPUTE_MODE WARP_COMPUTE_MODE_NO_LEVEL_SET
-#define WARP_COMPUTE_MODE WARP_COMPUTE_MODE_FULL
+#define WARP_COMPUTE_MODE WARP_COMPUTE_MODE_DATA_ONLY
 
 
 //*** LOGGING FOR 3D VISUAL DEBUGGING***
@@ -102,7 +104,7 @@
 //*** DEBUG OUTPUT MESSAGES FOR UPDATE WARP ON CPU ***
 
 //#define PRINT_TIME_STATS //-- needs rearranging of TICs and TOCs
-//#define PRINT_SINGLE_VOXEL_RESULT //Caution: very verbose!
+#define PRINT_SINGLE_VOXEL_RESULT //Caution: very verbose!
 #define PRINT_MAX_WARP_AND_UPDATE
 #define PRINT_ENERGY_STATS
 #define PRINT_ADDITIONAL_STATS
