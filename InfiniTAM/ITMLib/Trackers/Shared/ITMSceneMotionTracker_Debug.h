@@ -224,13 +224,12 @@ inline void _DEBUG_ComputeLiveSdf_Center_WarpForward(
 	Vector3f warpedPosition = voxelPosition.toFloat() + voxelWarp;
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
 	// === increment the warp by 1 in each direction and use them to check what interpolated values from live frame map there
-	bool struckNarrowBand = true;
-	float live_at_u_plus_one = interpolateTrilinearly_TruncatedSignCopy_Hint(
-			liveVoxels, liveHashTable, voxelSdf, warpedPosition + Vector3f(1.f, 0.f, 0.f), liveCache, struckNarrowBand);
-	float live_at_v_plus_one = interpolateTrilinearly_TruncatedSignCopy_Hint(
-			liveVoxels, liveHashTable, voxelSdf, warpedPosition + Vector3f(0.f, 1.f, 0.f), liveCache, struckNarrowBand);
-	float live_at_w_plus_one = interpolateTrilinearly_TruncatedSignCopy_Hint(
-			liveVoxels, liveHashTable, voxelSdf, warpedPosition + Vector3f(0.f, 0.f, 1.f), liveCache, struckNarrowBand);
+	float live_at_u_plus_one = interpolateTrilinearly_SetTruncatedToVal(
+			liveVoxels, liveHashTable, voxelSdf, warpedPosition + Vector3f(1.f, 0.f, 0.f), liveCache);
+	float live_at_v_plus_one = interpolateTrilinearly_SetTruncatedToVal(
+			liveVoxels, liveHashTable, voxelSdf, warpedPosition + Vector3f(0.f, 1.f, 0.f), liveCache);
+	float live_at_w_plus_one = interpolateTrilinearly_SetTruncatedToVal(
+			liveVoxels, liveHashTable, voxelSdf, warpedPosition + Vector3f(0.f, 0.f, 1.f), liveCache);
 
 	liveSdf_Center_WarpForward =
 			Vector3f(live_at_u_plus_one, live_at_v_plus_one, live_at_w_plus_one);
@@ -254,7 +253,7 @@ inline void _DEBUG_ComputePerPointWarpedLiveJacobian(const CONSTPTR(Vector3i)& v
 ) {
 	Vector3f liveSdf_Center_WarpCenter(liveSdf);
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
-	_DEBUG_ComputeLiveSdf_Center_WarpForward(voxelPosition, voxelWarp, voxelSdf, liveVoxels, liveHashTable, liveCache,
+	_DEBUG_ComputeLiveSdf_Center_WarpForward(voxelPosition, voxelWarp, liveSdf, liveVoxels, liveHashTable, liveCache,
 	                                         liveSdf_Center_WarpForward);
 	//=========== COMPUTE JACOBIAN =====================================================================================
 	liveSdfJacobian = liveSdf_Center_WarpForward - liveSdf_Center_WarpCenter;

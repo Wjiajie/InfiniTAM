@@ -205,8 +205,7 @@ inline float interpolateTrilinearly_SetTruncatedToVal(const CONSTPTR(TVoxel)* vo
                                                       const CONSTPTR(ITMHashEntry)* voxelHash,
                                                       const CONSTPTR(float)& truncationReplacement,
                                                       const THREADPTR(Vector3f)& point,
-                                                      THREADPTR(TCache)& cache,
-                                                      THREADPTR(bool)& struckNarrowBand) {
+                                                      THREADPTR(TCache)& cache) {
 	float sdfRes1, sdfRes2, sdfV1, sdfV2;
 	int vmIndex = false;
 	Vector3f coeff;
@@ -215,7 +214,7 @@ inline float interpolateTrilinearly_SetTruncatedToVal(const CONSTPTR(TVoxel)* vo
 #define PROCESS_VOXEL(suffix, coord)\
     {\
         const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (coord), vmIndex, cache);\
-        sdfV##suffix = v.sdf;\
+        sdfV##suffix = v.flags != ITMLib::VOXEL_TRUNCATED ? v.sdf : truncationReplacement;\
     }
 	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
 	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
