@@ -135,13 +135,20 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					Vector3i canonicalVoxelPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxelCanonical& canonicalVoxel = localVoxelBlock[locId];
+					float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
 
 					//=================================== TRUNCATION REGION CHECKS =====================================
 					float liveSdf;
 					bool hitLiveNarrowBand;
 					Vector3f projectedPosition = canonicalVoxelPosition.toFloat() + canonicalVoxel.warp_t;
+
+#ifndef LEVEL_SET_DEBUG
 					liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache,
 					                                 hitLiveNarrowBand);
+#else
+					liveSdf = interpolateTrilinearly_SetTruncatedToVal_NarrowBandHit(
+							liveVoxels, liveHashTable, canonicalSdf, projectedPosition, liveCache, hitLiveNarrowBand);
+#endif
 
 					//almost no restriction -- Mira's case with addition of VOXEL_TRUNCATED flag checking
 					bool emptyInCanonical = canonicalVoxel.flags == ITMLib::VOXEL_TRUNCATED;
@@ -163,7 +170,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					if (emptyInCanonical && emptyInLive) continue;
 #endif //OSCILLATION_TREATMENT
 
-					float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
+
 					Vector3f& voxelWarp = canonicalVoxel.warp_t;
 
 					//_DEBUG
