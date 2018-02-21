@@ -273,14 +273,29 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 								sdfJacobianNormMinusUnity * (warpedSdfHessian * liveSdfJacobian) /
 								(sdfJacobianNorm + epsilon);
 #else
+
+#ifdef LEVEL_SET_DEBUG
+						Vector3f jacobianNormsAtWarpPlusOne;
+						_DEBUG_ComputeWarpedJacobianAndHessian(neighborWarps, canonicalVoxelPosition,
+						liveSdf_Center_WarpForward, liveSdf, liveVoxels,
+								liveHashTable, liveCache, warpedSdfJacobian, jacobianNormsAtWarpPlusOne, warpedSdfHessian);
+						Vector3f jacobianNormsAtWarpPlusOneMinusUnity = jacobianNormsAtWarpPlusOne - Vector3f(unity);
+
+#else
 						ComputeWarpedJacobianAndHessian(neighborWarps, canonicalVoxelPosition,
 						                                liveSdf_Center_WarpForward, liveSdf, liveVoxels,
 						                                liveHashTable, liveCache, warpedSdfJacobian, warpedSdfHessian);
+#endif
 						float sdfJacobianNorm = length(warpedSdfJacobian);
 						sdfJacobianNormMinusUnity = sdfJacobianNorm - unity;
 						deltaELevelSet =
 								sdfJacobianNormMinusUnity * (warpedSdfHessian * warpedSdfJacobian) /
 								(sdfJacobianNorm + epsilon);
+						Vector3f ratios = deltaELevelSet/jacobianNormsAtWarpPlusOneMinusUnity;
+						Vector3f differences = deltaELevelSet - jacobianNormsAtWarpPlusOneMinusUnity;
+
+						//
+						//_DEBUG_ComputeDiscreteLSEnergy(neighborWarps);
 #endif //OLD_LEVEL_SET_TERM
 
 					}

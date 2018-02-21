@@ -61,8 +61,8 @@ inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* neighbor
 #define PROCESS_VOXEL(location, index)\
     voxel = readVoxel(voxelData, hashTable, voxelPosition + (location), vmIndex, cache);\
     neighborWarps[index] = voxel.warp_t;\
-    neighborAllocated[index] = vmIndex != 0;/* && voxel.flags != ITMLib::VOXEL_UNKNOWN;*/\
-    neighborTruncated[index] = voxel.flags != ITMLib::VOXEL_NONTRUNCATED;
+    neighborAllocated[index] = vmIndex != 0;\
+    neighborTruncated[index] = voxel.flags == ITMLib::VOXEL_TRUNCATED;
 
 	//necessary for 2nd derivatives in same direction, e.g. xx and zz
 	PROCESS_VOXEL(Vector3i(-1, 0, 0), 0);
@@ -97,16 +97,15 @@ inline void ComputeLiveSdf_Center_WarpForward(
 		THREADPTR(Vector3f)& liveSdf_Center_WarpForward
 ) {
 	//position projected with the current warp
-	Vector3f centerPos = voxelPosition.toFloat();
-	Vector3f projectedPosition = centerPos + voxelWarp;
+	Vector3f warpedPosition = voxelPosition.toFloat() + voxelWarp;
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
 	// === increment the warp by 1 in each direction and use them to check what interpolated values from live frame map there
 	liveSdf_Center_WarpForward =
-			Vector3f(interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(1.f, 0.f, 0.f),
+			Vector3f(interpolateTrilinearly(liveVoxels, liveHashTable, warpedPosition + Vector3f(1.f, 0.f, 0.f),
 			                                liveCache),
-			         interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(0.f, 1.f, 0.f),
+			         interpolateTrilinearly(liveVoxels, liveHashTable, warpedPosition + Vector3f(0.f, 1.f, 0.f),
 			                                liveCache),
-			         interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(0.f, 0.f, 1.f),
+			         interpolateTrilinearly(liveVoxels, liveHashTable, warpedPosition + Vector3f(0.f, 0.f, 1.f),
 			                                liveCache));
 };
 
@@ -183,7 +182,7 @@ inline void ComputePerPointWarpedLiveJacobian(const CONSTPTR(Vector3i)& voxelPos
 // to changing the warp at the current voxel.
 template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
-inline void ComputeWarpedJacobianAndHessian(const CONSTPTR(Vector3f*) warp_tNeighbors,
+inline void ComputeWarpedJacobianAndHessian(const CONSTPTR(Vector3f*) neighborWarps,
                                             const CONSTPTR(Vector3i)& voxelPosition,
                                             const CONSTPTR(Vector3f)& liveSdf_Center_WarpForward,
                                             const CONSTPTR(float)& liveSdf,//lookup value at center warp_t
@@ -199,9 +198,9 @@ inline void ComputeWarpedJacobianAndHessian(const CONSTPTR(Vector3f*) warp_tNeig
 	Vector3f centerPos = voxelPosition.toFloat();
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
 	// === check lookups for voxels forward by 1 in x, y, z of the canonical frame, use their own warps
-	Vector3f lookupPos_xForward_WarpCenter = centerPos + Vector3f(1.f, 0.f, 0.f) + warp_tNeighbors[3];
-	Vector3f lookupPos_yForward_WarpCenter = centerPos + Vector3f(0.f, 1.f, 0.f) + warp_tNeighbors[4];
-	Vector3f lookupPos_zForward_WarpCenter = centerPos + Vector3f(0.f, 0.f, 1.f) + warp_tNeighbors[5];
+	Vector3f lookupPos_xForward_WarpCenter = centerPos + Vector3f(1.f, 0.f, 0.f) + neighborWarps[3];
+	Vector3f lookupPos_yForward_WarpCenter = centerPos + Vector3f(0.f, 1.f, 0.f) + neighborWarps[4];
+	Vector3f lookupPos_zForward_WarpCenter = centerPos + Vector3f(0.f, 0.f, 1.f) + neighborWarps[5];
 	Vector3f warpedSdf_Forward_WarpCenter(
 			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_xForward_WarpCenter, liveCache),
 			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_yForward_WarpCenter, liveCache),
