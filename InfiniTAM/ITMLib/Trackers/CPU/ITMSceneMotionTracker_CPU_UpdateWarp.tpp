@@ -582,11 +582,11 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 	int updateBins[histBinCount] = {0};
 #endif
 	TIC(timeWarpUpdateApply);
-#ifdef WITH_OPENMP
-#pragma omp parallel for
-#endif
 #if defined(PRINT_MAX_WARP_AND_UPDATE) || defined(PRINT_DEBUG_HISTOGRAM) || defined(PRINT_ADDITIONAL_STATS)
 	std::cout << bright_cyan << "*** General Iteration Statistics ***" << reset << std::endl;
+#endif
+#ifdef WITH_OPENMP
+#pragma omp parallel for
 #endif
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 		const ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[entryId];
