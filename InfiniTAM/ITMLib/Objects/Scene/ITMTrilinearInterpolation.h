@@ -15,6 +15,8 @@
 //  ================================================================
 #pragma once
 
+//TODO: Clean out unused versions
+
 //_DEBUG -- special treatment of truncated values, use voxels with semantic information only!
 //sdf, color, pick maximum weights, get confidence
 template<class TVoxel, typename TCache>

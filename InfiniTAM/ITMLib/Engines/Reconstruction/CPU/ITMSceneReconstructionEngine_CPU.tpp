@@ -107,7 +107,9 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 			pt_model.y = (float)(globalPos.y + y) * voxelSize;
 			pt_model.z = (float)(globalPos.z + z) * voxelSize;
 			pt_model.w = 1.0f;
-
+			if(globalPos.x + x == 22 && globalPos.y + y == -49 && globalPos.z + z == 190){
+				int i = 42;
+			}
 			ComputeUpdatedVoxelInfo<
 					TVoxel::hasColorInformation,
 					TVoxel::hasConfidenceInformation,

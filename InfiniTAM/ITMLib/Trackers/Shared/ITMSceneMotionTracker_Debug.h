@@ -266,11 +266,17 @@ inline void _DEBUG_PrintDataAndLevelSetTermStuff(const CONSTPTR(Vector3f)& liveS
                                                  const CONSTPTR(Vector3f)& liveSdf_Center_WarpForward,
                                                  const CONSTPTR(Vector3f)& warpedSdfJacobian,
                                                  const CONSTPTR(Matrix3f)& warpedSdfHessian) {
-	std::cout << "Live SDF at warp plus one for each direction: " << liveSdf_Center_WarpForward << std::endl;
-	std::cout << "Resulting jacobian of live SDF at current warp: " << liveSdfJacobian << std::endl;
-	std::cout << "[Difference from neighbor's lookup values from live SDF]: " << warpedSdfJacobian << std::endl;
+	const std::string yellow("\033[0;33m");
+	const std::string red("\033[0;31m");
+	const std::string cyan("\033[0;36m");
+	const std::string green("\033[0;32m");
+	const std::string reset("\033[0m");
+	std::cout << std::endl;
+	std::cout << "Live SDF at warp plus one for each direction: " << yellow << liveSdf_Center_WarpForward << reset << std::endl;
+	std::cout << "Resulting jacobian of live SDF at current warp: " << cyan << liveSdfJacobian <<  reset << std::endl;
+	std::cout << "[Difference from neighbor's lookup values from live SDF]: " << green << warpedSdfJacobian << reset << std::endl;
 	std::cout << "Change in [difference from neighbor's lookup values] when warp changes (by one): " << std::endl
-	          << warpedSdfHessian << std::endl;
+			 << green << warpedSdfHessian << reset << std::endl;
 }
 
 
