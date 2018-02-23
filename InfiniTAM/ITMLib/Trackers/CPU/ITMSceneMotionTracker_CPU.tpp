@@ -33,6 +33,7 @@
 #include "ITMSceneMotionTracker_CPU_UpdateWarp.tpp"
 #include "../Shared/ITMSceneMotionTracker_Shared.h"
 #include "../../Utils/ITMSceneStatisticsCalculator.h"
+#include "../../Objects/Scene/ITMTrilinearDistribution.h"
 
 
 using namespace ITMLib;
@@ -41,20 +42,20 @@ using namespace ITMLib;
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params)
 		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params),
-		  entriesAllocFill(new ORUtils::MemoryBlock<bool>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
-		  canonicalEntriesAllocType(
+		  warpedEntryAllocationType(new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
+		  canonicalEntryAllocationTypes(
 				  new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
-		  blockCoords(new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)) {
-	uchar* entriesAllocType = this->canonicalEntriesAllocType->GetData(MEMORYDEVICE_CPU);
+		  canonicalBlockCoords(new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)) {
+	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
 	memset(entriesAllocType, ITMLib::NO_CHANGE, static_cast<size_t>(TIndex::noTotalEntries));
 
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneMotionTracker_CPU() {
-	delete entriesAllocFill;
-	delete canonicalEntriesAllocType;
-	delete blockCoords;
+	delete warpedEntryAllocationType;
+	delete canonicalEntryAllocationTypes;
+	delete canonicalBlockCoords;
 }
 
 //========================================= END CONSTRUCTORS AND DESTRUCTORS============================================
@@ -75,11 +76,9 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNewCanonicalHashBlocks(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
-	uchar* entriesAllocType = this->canonicalEntriesAllocType->GetData(MEMORYDEVICE_CPU);
+	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
+	Vector3s* allocationBlockCoords = this->canonicalBlockCoords->GetData(MEMORYDEVICE_CPU);
 	int entryCount = TIndex::noTotalEntries;
-	Vector3s* blockCoords = this->blockCoords->GetData(MEMORYDEVICE_CPU);
-	bool* entriesAllocFill = this->entriesAllocFill->GetData(MEMORYDEVICE_CPU);
-	memset(entriesAllocFill, false, static_cast<size_t>(entryCount));
 
 	const short neighborhoodSize = 3;//must be an odd positive integer greater than 1.
 	const short neighborhoodRangeStart = -neighborhoodSize / 2;
@@ -89,23 +88,9 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 	ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
 	typename TIndex::IndexCache canonicalCache;
 
-	TVoxelLive* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* liveHashTable = liveScene->index.GetEntries();
 	typename TIndex::IndexCache liveCache;
 
-	//adjust as necessary for alternative neighborhoodSize
-	//_DEBUG(older alternative solution)
-	Vector3i testVoxelLocations[27] = {Vector3i(0, 0, 0), Vector3i(3, 0, 0), Vector3i(7, 0, 0),
-	                                   Vector3i(0, 3, 0), Vector3i(3, 3, 0), Vector3i(7, 3, 0),
-	                                   Vector3i(0, 7, 0), Vector3i(3, 7, 0), Vector3i(7, 7, 0),
-
-	                                   Vector3i(0, 0, 3), Vector3i(3, 0, 3), Vector3i(7, 0, 3),
-	                                   Vector3i(0, 3, 3), Vector3i(3, 3, 3), Vector3i(7, 3, 3),
-	                                   Vector3i(0, 7, 3), Vector3i(4, 7, 3), Vector3i(7, 7, 3),
-
-	                                   Vector3i(0, 0, 7), Vector3i(3, 0, 7), Vector3i(7, 0, 7),
-	                                   Vector3i(0, 3, 7), Vector3i(3, 3, 7), Vector3i(7, 3, 7),
-	                                   Vector3i(0, 7, 7), Vector3i(4, 7, 7), Vector3i(7, 7, 7)};
 	//_DEBUG
 	int countVoxelHashBlocksToAllocate = 0;
 
@@ -122,7 +107,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 
 		//try to find a corresponding canonical block, and mark it for allocation if not found
 		int canonicalBlockIndex = hashIndex(liveHashBlockCoords);
-		if (MarkIfNeedsAllocation(entriesAllocType, blockCoords, canonicalBlockIndex, liveHashBlockCoords,
+		if (MarkIfNeedsAllocation(entriesAllocType, allocationBlockCoords, canonicalBlockIndex, liveHashBlockCoords,
 		                          canonicalHashTable)) {
 			//_DEBUG
 			countVoxelHashBlocksToAllocate++;
@@ -155,8 +140,8 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 					unsigned char entryAllocType = entriesAllocType[hashIdx];
 
 					if (entryAllocType == ITMLib::NO_CHANGE &&
-							MarkIfNeedsAllocation(entriesAllocType, blockCoords, hashIdx, currentBlockLocation,
-							                      canonicalHashTable)) {
+					    MarkIfNeedsAllocation(entriesAllocType, allocationBlockCoords, hashIdx, currentBlockLocation,
+					                          canonicalHashTable)) {
 						countVoxelHashBlocksToAllocate++;
 					}
 					iNeighbor++;
@@ -179,7 +164,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 				if (lastFreeVoxelBlockId >= 0) //there is room in the voxel block array
 				{
 					ITMHashEntry hashEntry;
-					hashEntry.pos = blockCoords[iTargetHashBlock];
+					hashEntry.pos = allocationBlockCoords[iTargetHashBlock];
 					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
 					hashEntry.offset = 0;
 					canonicalHashTable[iTargetHashBlock] = hashEntry;
@@ -194,7 +179,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 				    lastFreeExcessListId >= 0) //there is room in the voxel block array and excess list
 				{
 					ITMHashEntry hashEntry;
-					hashEntry.pos = blockCoords[iTargetHashBlock];
+					hashEntry.pos = allocationBlockCoords[iTargetHashBlock];
 					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
 					hashEntry.offset = 0;
 					int exlOffset = excessAllocationList[lastFreeExcessListId];
@@ -229,7 +214,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 	int maximumWeight = canonicalScene->sceneParams->maxW;
 
 	int noTotalEntries = canonicalScene->index.noTotalEntries;
-	uchar* entriesAllocType = this->canonicalEntriesAllocType->GetData(MEMORYDEVICE_CPU);
+	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
 
 	//_DEBUG
 	int missedNarrowBandCount = 0;
@@ -280,11 +265,11 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					                                                         projectedPosition,
 					                                                         liveCache, liveColor, liveConfidence,
 					                                                         struckNarrowBand);
-					if (!struckNarrowBand || 1.0 - std::abs(liveSdf)  < FLT_EPSILON ) {
-						if(!struckNarrowBand){
+					if (!struckNarrowBand || 1.0 - std::abs(liveSdf) < FLT_EPSILON) {
+						if (!struckNarrowBand) {
 							missedNarrowBandCount++;//_DEBUG
 						}
-						if(1.0 - std::abs(liveSdf) < FLT_EPSILON){
+						if (1.0 - std::abs(liveSdf) < FLT_EPSILON) {
 							sdfTruncatedCount++;//_DEBUG
 						}
 						continue;
@@ -322,4 +307,165 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 	std::cout << "Total confidence added from live frame: "
 	          << totalConf << std::endl;
 
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+struct WarpSdfDistributionFunctor {
+	WarpSdfDistributionFunctor(ITMScene<TVoxelLive, TIndex>* liveScene) {
+		this->liveScene = liveScene;
+		this->liveVoxels = liveScene->localVBA.GetVoxelBlocks();
+		this->liveHashEntries = liveScene->index.GetEntries();
+
+	}
+
+	void operator()(TVoxelCanonical& voxel, Vector3i voxelPosition) {
+		Vector3f warpedPosition = voxelPosition.toFloat() + voxel.warp_t;
+		float sdfValue = TVoxelCanonical::valueToFloat(voxel.sdf);
+		DistributeTrilinearly(liveVoxels, liveHashEntries, liveCache, warpedPosition, sdfValue);
+	}
+
+private:
+	ITMScene<TVoxelLive, TIndex>* liveScene;
+	TVoxelLive* liveVoxels;
+	ITMHashEntry* liveHashEntries;
+	typename TIndex::IndexCache liveCache;
+};
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+struct WarpHashMarkerFunctor {
+	WarpHashMarkerFunctor(ITMScene<TVoxelLive, TIndex>* liveScene, Vector3s* allocationBlockCoords,
+	                      uchar* warpedEntryAllocationTypes) :
+			liveScene(liveScene),
+			liveVoxels(liveScene->localVBA.GetVoxelBlocks()),
+			liveHashEntries(liveScene->index.GetEntries()),
+			allocationBlockCoords(allocationBlockCoords),
+			warpedEntryAllocationTypes(warpedEntryAllocationTypes) {}
+
+	void operator()(TVoxelCanonical& voxel, Vector3i voxelPosition) {
+		Vector3f warpedPosition = voxelPosition.toFloat() + voxel.warp_t;
+		Vector3i warpedPositionTruncated = warpedPosition.toInt();
+
+		short blockX = static_cast<short>(warpedPositionTruncated.x / SDF_BLOCK_SIZE);
+		short blockY = static_cast<short>(warpedPositionTruncated.y / SDF_BLOCK_SIZE);
+		short blockZ = static_cast<short>(warpedPositionTruncated.z / SDF_BLOCK_SIZE);
+
+		// assess corner-cases for trilinear distribution to work properly at hash block boundaries
+		bool needToAllocateExtraX = warpedPositionTruncated.x % SDF_BLOCK_SIZE == 7;
+		bool needToAllocateExtraY = warpedPositionTruncated.y % SDF_BLOCK_SIZE == 7;
+		bool needToAllocateExtraZ = warpedPositionTruncated.z % SDF_BLOCK_SIZE == 7;
+		bool needToAllocateCornerXY = needToAllocateExtraX && needToAllocateExtraY;
+		bool needToAllocateCornerYZ = needToAllocateExtraY && needToAllocateExtraZ;
+		bool needToAllocateCornerXZ = needToAllocateExtraX && needToAllocateExtraZ;
+		bool needToAllocateCornerXYZ = needToAllocateCornerXY && needToAllocateExtraZ;
+
+		Vector3s originalNeededBlockCoordinate = Vector3s(blockX, blockY, blockZ);
+		Vector3s neededBlockCoordinate = originalNeededBlockCoordinate;
+
+#define MARK_ENTRY_FOR_ALLOCATION \
+		int liveBlockIndex = hashIndex(neededBlockCoordinate);\
+		MarkIfNeedsAllocation(warpedEntryAllocationTypes, allocationBlockCoords, liveBlockIndex,\
+		                      neededBlockCoordinate, liveHashEntries);
+		MARK_ENTRY_FOR_ALLOCATION
+		if(needToAllocateExtraX){
+			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(1,0,0);
+			MARK_ENTRY_FOR_ALLOCATION
+		}
+		if(needToAllocateExtraY){
+			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(0,1,0);
+			MARK_ENTRY_FOR_ALLOCATION
+		}
+		if(needToAllocateExtraZ){
+			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(0,0,1);
+			MARK_ENTRY_FOR_ALLOCATION
+		}
+		if(needToAllocateCornerXY){
+			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(1,1,0);
+			MARK_ENTRY_FOR_ALLOCATION
+		}
+		if(needToAllocateCornerYZ){
+			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(0,1,1);
+			MARK_ENTRY_FOR_ALLOCATION
+		}
+		if(needToAllocateCornerXZ){
+			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(1,0,1);
+			MARK_ENTRY_FOR_ALLOCATION
+		}
+		if(needToAllocateCornerXYZ){
+			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(1,1,1);
+			MARK_ENTRY_FOR_ALLOCATION
+		}
+#undef MARK_ENTRY_FOR_ALLOCATION
+	}
+
+private:
+	ITMScene<TVoxelLive, TIndex>* liveScene;
+	TVoxelLive* liveVoxels;
+	ITMHashEntry* liveHashEntries;
+	typename TIndex::IndexCache liveCache;
+	Vector3s* allocationBlockCoords;
+	uchar* warpedEntryAllocationTypes;
+};
+
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarp(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
+	int entryCount = TIndex::noTotalEntries;
+	Vector3s* allocationBlockCoords = this->canonicalBlockCoords->GetData(MEMORYDEVICE_CPU);
+	uchar* warpedEntryAllocationTypes = this->warpedEntryAllocationType->GetData(MEMORYDEVICE_CPU);
+	memset(warpedEntryAllocationTypes, (unsigned char) 0, static_cast<size_t>(entryCount));
+
+	WarpHashMarkerFunctor<TVoxelCanonical, TVoxelLive, TIndex> hashMarkerFunctor(liveScene, allocationBlockCoords,
+	                                                                             warpedEntryAllocationTypes);
+	VoxelPositionTraversal_CPU(*canonicalScene, hashMarkerFunctor);
+
+	// Allocate the marked hash entries
+
+	int lastFreeVoxelBlockId = liveScene->localVBA.lastFreeBlockId;
+	int lastFreeExcessListId = liveScene->index.GetLastFreeExcessListId();
+	int* voxelAllocationList = liveScene->localVBA.GetAllocationList();
+	int* excessAllocationList = liveScene->index.GetExcessAllocationList();
+	ITMHashEntry* liveHashEntries = liveScene->index.GetEntries();
+
+	for (int iTargetHashBlock = 0; iTargetHashBlock < entryCount; iTargetHashBlock++) {
+		unsigned char entryAllocType = warpedEntryAllocationTypes[iTargetHashBlock];
+		switch (entryAllocType) {
+			case ITMLib::NEEDS_ALLOC_IN_ORDERED_LIST:
+
+				if (lastFreeVoxelBlockId >= 0) //there is room in the voxel block array
+				{
+					ITMHashEntry hashEntry;
+					hashEntry.pos = allocationBlockCoords[iTargetHashBlock];
+					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
+					hashEntry.offset = 0;
+					liveHashEntries[iTargetHashBlock] = hashEntry;
+					warpedEntryAllocationTypes[iTargetHashBlock] = ITMLib::BOUNDARY_STATE;
+					lastFreeVoxelBlockId--;
+				}
+
+				break;
+			case NEEDS_ALLOC_IN_EXCESS_LIST:
+
+				if (lastFreeVoxelBlockId >= 0 &&
+				    lastFreeExcessListId >= 0) //there is room in the voxel block array and excess list
+				{
+					ITMHashEntry hashEntry;
+					hashEntry.pos = allocationBlockCoords[iTargetHashBlock];
+					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
+					hashEntry.offset = 0;
+					int exlOffset = excessAllocationList[lastFreeExcessListId];
+					liveHashEntries[iTargetHashBlock].offset = exlOffset + 1; //connect to child
+					liveHashEntries[SDF_BUCKET_NUM + exlOffset] = hashEntry; //add child to the excess list
+					warpedEntryAllocationTypes[iTargetHashBlock] = ITMLib::BOUNDARY_STATE;
+					lastFreeVoxelBlockId--;
+					lastFreeExcessListId--;
+				}
+				break;
+		}
+	}
+	canonicalScene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
+	canonicalScene->index.SetLastFreeExcessListId(lastFreeExcessListId);
+
+	WarpSdfDistributionFunctor<TVoxelCanonical, TVoxelLive, TIndex> distributionFunctor(liveScene);
+	VoxelPositionTraversal_CPU(*canonicalScene, distributionFunctor);
 }

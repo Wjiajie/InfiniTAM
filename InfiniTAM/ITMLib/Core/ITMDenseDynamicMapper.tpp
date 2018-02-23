@@ -68,18 +68,26 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(co
 
 	// clear out the live-frame SDF
 	liveSceneRecoEngine->ResetScene(liveScene);
-
 	//** construct the new live-frame SDF
 	// allocation
 	liveSceneRecoEngine->AllocateSceneFromDepth(liveScene, view, trackingState, renderState);
 	// integration
 	liveSceneRecoEngine->IntegrateIntoScene(liveScene, view, trackingState, renderState);
-	ITMSceneStatisticsCalculator<TVoxelLive,TIndex> calculator;
-	std::cout << "Known voxels in live scene before fusion: "  << calculator.ComputeKnownVoxelCount(liveScene) << std::endl;
-	ITMSceneStatisticsCalculator<TVoxelCanonical,TIndex> calculator2;
-	std::cout << "Total voxels in canonical scene before fusion: "  << calculator2.ComputeHashedVoxelCount(canonicalScene) << std::endl;
-	sceneMotionTracker->ProcessFrame(canonicalScene, liveScene);
-	std::cout << "Known voxels in canonical scene after fusion: "  << calculator2.ComputeKnownVoxelCount(canonicalScene) << std::endl;
+//BEGIN _DEBUG
+//	ITMSceneStatisticsCalculator<TVoxelLive,TIndex> calculator;
+//	std::cout << "Known voxels in live scene before fusion: "  << calculator.ComputeKnownVoxelCount(liveScene) << std::endl;
+//	ITMSceneStatisticsCalculator<TVoxelCanonical,TIndex> calculator2;
+//	std::cout << "Total voxels in canonical scene before fusion: "  << calculator2.ComputeHashedVoxelCount(canonicalScene) << std::endl;
+//END _DEBUG
+	sceneMotionTracker->TrackMotion(canonicalScene, liveScene);
+	sceneMotionTracker->FuseFrame(canonicalScene, liveScene);
+	// clear out the live-frame SDF, to prepare it for warped canonical
+	liveSceneRecoEngine->ResetScene(liveScene);
+	sceneMotionTracker->ApplyWarp(canonicalScene,liveScene);
+
+
+// _DEBUG
+//	std::cout << "Known voxels in canonical scene after fusion: "  << calculator2.ComputeKnownVoxelCount(canonicalScene) << std::endl;
 
 
 	if (swappingEngine != NULL) {

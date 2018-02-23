@@ -1,6 +1,6 @@
 // Copyright 2014-2017 Oxford University Innovation Limited and the authors of InfiniTAM
 
-#include "ITMKillingEngine.h"
+#include "ITMDynamicEngine.h"
 
 #include "../Engines/LowLevel/ITMLowLevelEngineFactory.h"
 #include "../Engines/Meshing/ITMMeshingEngineFactory.h"
@@ -19,7 +19,7 @@
 using namespace ITMLib;
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMKillingEngine(const ITMLibSettings* settings,
+ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(const ITMLibSettings* settings,
                                                                         const ITMRGBDCalib& calib, Vector2i imgSize_rgb,
                                                                         Vector2i imgSize_d) {
 	this->settings = settings;
@@ -80,7 +80,7 @@ ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMKillingEngine(const IT
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::~ITMKillingEngine() {
+ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::~ITMDynamicEngine() {
 	delete renderState_live;
 	if (renderState_freeview != NULL) delete renderState_freeview;
 
@@ -108,7 +108,7 @@ ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::~ITMKillingEngine() {
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveSceneToMesh(const char* objFileName) {
+void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveSceneToMesh(const char* objFileName) {
 	if (meshingEngine == NULL) return;
 
 	ITMMesh* mesh = new ITMMesh(settings->GetMemoryType());
@@ -120,7 +120,7 @@ void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveSceneToMesh(cons
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveToFile() {
+void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveToFile() {
 	// throws error if any of the saves fail
 
 	std::string saveOutputDirectory = "State/";
@@ -137,7 +137,7 @@ void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveToFile() {
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::LoadFromFile() {
+void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::LoadFromFile() {
 	std::string saveInputDirectory = "State/";
 	std::string relocaliserInputDirectory = saveInputDirectory + "Relocaliser/", sceneInputDirectory =
 			saveInputDirectory + "Scene/";
@@ -175,7 +175,7 @@ void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::LoadFromFile() {
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::resetAll() {
+void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::resetAll() {
 	denseMapper->ResetScene(canonicalScene);
 	denseMapper->ResetLiveScene(liveScene);
 	trackingState->Reset();
@@ -258,7 +258,7 @@ static void QuaternionFromRotationMatrix(const double *matrix, double *q) {
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMTrackingState::TrackingResult
-ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Image* rgbImage,
+ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Image* rgbImage,
                                                                     ITMShortImage* rawDepthImage,
                                                                     ITMIMUMeasurement* imuMeasurement) {
 	// prepare image and turn it into a depth image
@@ -359,12 +359,12 @@ ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-Vector2i ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImageSize(void) const {
+Vector2i ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImageSize(void) const {
 	return renderState_live->raycastImage->noDims;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Image* out, GetImageType getImageType,
+void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Image* out, GetImageType getImageType,
                                                                      ORUtils::SE3Pose* pose,
                                                                      ITMIntrinsics* intrinsics) {
 	if (view == NULL) return;
@@ -372,22 +372,22 @@ void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Im
 	out->Clear();
 
 	switch (getImageType) {
-		case ITMKillingEngine::InfiniTAM_IMAGE_ORIGINAL_RGB:
+		case ITMDynamicEngine::InfiniTAM_IMAGE_ORIGINAL_RGB:
 			out->ChangeDims(view->rgb->noDims);
 			if (settings->deviceType == ITMLibSettings::DEVICE_CUDA)
 				out->SetFrom(view->rgb, ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CPU);
 			else out->SetFrom(view->rgb, ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU);
 			break;
-		case ITMKillingEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH:
+		case ITMDynamicEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH:
 			out->ChangeDims(view->depth->noDims);
 			if (settings->deviceType == ITMLibSettings::DEVICE_CUDA) view->depth->UpdateHostFromDevice();
 			ITMVisualisationEngine<TVoxelCanonical, TIndex>::DepthToUchar4(out, view->depth);
 
 			break;
-		case ITMKillingEngine::InfiniTAM_IMAGE_SCENERAYCAST:
-		case ITMKillingEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME:
-		case ITMKillingEngine::InfiniTAM_IMAGE_COLOUR_FROM_NORMAL:
-		case ITMKillingEngine::InfiniTAM_IMAGE_COLOUR_FROM_CONFIDENCE: {
+		case ITMDynamicEngine::InfiniTAM_IMAGE_SCENERAYCAST:
+		case ITMDynamicEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME:
+		case ITMDynamicEngine::InfiniTAM_IMAGE_COLOUR_FROM_NORMAL:
+		case ITMDynamicEngine::InfiniTAM_IMAGE_COLOUR_FROM_CONFIDENCE: {
 			// use current raycast or forward projection?
 			IITMVisualisationEngine::RenderRaycastSelection raycastType;
 			if (trackingState->age_pointCloud <= 0) raycastType = IITMVisualisationEngine::RENDER_FROM_OLD_RAYCAST;
@@ -396,13 +396,13 @@ void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Im
 			// what sort of image is it?
 			IITMVisualisationEngine::RenderImageType imageType;
 			switch (getImageType) {
-				case ITMKillingEngine::InfiniTAM_IMAGE_COLOUR_FROM_CONFIDENCE:
+				case ITMDynamicEngine::InfiniTAM_IMAGE_COLOUR_FROM_CONFIDENCE:
 					imageType = IITMVisualisationEngine::RENDER_COLOUR_FROM_CONFIDENCE;
 					break;
-				case ITMKillingEngine::InfiniTAM_IMAGE_COLOUR_FROM_NORMAL:
+				case ITMDynamicEngine::InfiniTAM_IMAGE_COLOUR_FROM_NORMAL:
 					imageType = IITMVisualisationEngine::RENDER_COLOUR_FROM_NORMAL;
 					break;
-				case ITMKillingEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME:
+				case ITMDynamicEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME:
 					imageType = IITMVisualisationEngine::RENDER_COLOUR_FROM_VOLUME;
 					break;
 				default:
@@ -423,16 +423,16 @@ void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Im
 
 			break;
 		}
-		case ITMKillingEngine::InfiniTAM_IMAGE_FREECAMERA_SHADED:
-		case ITMKillingEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_VOLUME:
-		case ITMKillingEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_NORMAL:
-		case ITMKillingEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_CONFIDENCE: {
+		case ITMDynamicEngine::InfiniTAM_IMAGE_FREECAMERA_SHADED:
+		case ITMDynamicEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_VOLUME:
+		case ITMDynamicEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_NORMAL:
+		case ITMDynamicEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_CONFIDENCE: {
 			IITMVisualisationEngine::RenderImageType type = IITMVisualisationEngine::RENDER_SHADED_GREYSCALE;
-			if (getImageType == ITMKillingEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_VOLUME)
+			if (getImageType == ITMDynamicEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_VOLUME)
 				type = IITMVisualisationEngine::RENDER_COLOUR_FROM_VOLUME;
-			else if (getImageType == ITMKillingEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_NORMAL)
+			else if (getImageType == ITMDynamicEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_NORMAL)
 				type = IITMVisualisationEngine::RENDER_COLOUR_FROM_NORMAL;
-			else if (getImageType == ITMKillingEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_CONFIDENCE)
+			else if (getImageType == ITMDynamicEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_CONFIDENCE)
 				type = IITMVisualisationEngine::RENDER_COLOUR_FROM_CONFIDENCE;
 
 			if (renderState_freeview == NULL) {
@@ -457,19 +457,19 @@ void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Im
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOnTracking() { trackingActive = true; }
+void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOnTracking() { trackingActive = true; }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOffTracking() { trackingActive = false; }
+void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOffTracking() { trackingActive = false; }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOnIntegration() { fusionActive = true; }
+void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOnIntegration() { fusionActive = true; }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOffIntegration() { fusionActive = false; }
+void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOffIntegration() { fusionActive = false; }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOnMainProcessing() { mainProcessingActive = true; }
+void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOnMainProcessing() { mainProcessingActive = true; }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMKillingEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOffMainProcessing() { mainProcessingActive = false; }
+void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOffMainProcessing() { mainProcessingActive = false; }

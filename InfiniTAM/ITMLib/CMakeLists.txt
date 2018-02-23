@@ -48,7 +48,7 @@ Core/ITMDenseMapper.tpp
 Core/ITMDenseSurfelMapper.tpp
 Core/ITMDenseDynamicMapper.tpp
 Core/ITMMultiEngine.tpp
-Core/ITMKillingEngine.tpp
+    Core/ITMDynamicEngine.tpp
 )
 
 SET(ITMLIB_CORE_HEADERS
@@ -60,7 +60,7 @@ Core/ITMDenseDynamicMapper.h
 Core/ITMMainEngine.h
 Core/ITMMultiEngine.h
 Core/ITMTrackingController.h
-Core/ITMKillingEngine.h
+    Core/ITMDynamicEngine.h
 )
 
 ##
@@ -376,6 +376,7 @@ Objects/Scene/ITMMultiSceneAccess.h
 Objects/Scene/ITMPlainVoxelArray.h
 Objects/Scene/ITMRepresentationAccess.h
 Objects/Scene/ITMTrilinearInterpolation.h
+    Objects/Scene/ITMTrilinearDistribution.h
 Objects/Scene/ITMScene.h
 Objects/Scene/ITMSurfelScene.h
 Objects/Scene/ITMSurfelTypes.h

@@ -91,3 +91,9 @@ void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNe
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 	DIEWITHEXCEPTION("Scene boundary voxel allocation not yet implemented");
 }
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarp(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
+	DIEWITHEXCEPTION("Warp application not yet implemented");
+}

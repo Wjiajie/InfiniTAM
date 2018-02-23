@@ -17,7 +17,7 @@
 
 //Note: ".tpp" files have to be included for all explicit instantiations in order to link properly
 #include "Objects/Scene/ITMSceneManipulation.tpp"
-#include "Core/ITMKillingEngine.tpp"
+#include "Core/ITMDynamicEngine.tpp"
 #include "Core/ITMDenseDynamicMapper.tpp"
 #include "Trackers/Interface/ITMSceneMotionTracker.tpp"
 #include "Trackers/CPU/ITMSceneMotionTracker_CPU.tpp"
@@ -34,7 +34,7 @@
 
 //dynamic fusion
 template class ITMSwappingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
-template class ITMKillingEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+template class ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 template class ITMDenseDynamicMapper<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 template class ITMSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMSceneReconstructionEngine_CPU<ITMVoxelLive, ITMVoxelIndex>;

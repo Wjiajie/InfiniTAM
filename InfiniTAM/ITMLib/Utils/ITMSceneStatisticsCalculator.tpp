@@ -91,7 +91,7 @@ template<class TVoxel, typename TIndex>
 struct InlineComputeKnownVoxelCount<true, TVoxel, TIndex>{
 	static int compute(ITMScene<TVoxel, TIndex>* scene){
 		InlineComputeKnownVoxelCount instance;
-		VoxelTraversal(*scene,instance);
+		VoxelTraversal_CPU(*scene, instance);
 		return instance.count;
 	}
 	int count = 0;

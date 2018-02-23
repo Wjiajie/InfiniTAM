@@ -32,10 +32,6 @@ protected:
 	virtual void AllocateNewCanonicalHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                                            ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
 
-	//TODO -- FuseFrame should probably be moved to a new type of ReconstructionEngine specifically for dynamic fusion -Greg (GitHub:Algomorph)
-	virtual void
-	FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
-
 	//TODO -- make all of these parameters
 	const int maxIterationCount = 200;
 	const float maxVectorUpdateThresholdMeters = 0.0001f;//m
@@ -66,8 +62,20 @@ protected:
 public:
 	explicit ITMSceneMotionTracker(const ITMSceneParams& params);
 
-	void ProcessFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-	                  ITMScene <TVoxelLive, TIndex>* liveScene);
+	/**
+	 * \brief Fuses the live scene into the canonical scene based on the motion warp of the canonical scene
+	 * \details Typically called after TrackMotion is called
+	 * \param canonicalScene the canonical voxel grid, representing the state at the beginning of the sequence
+	 * \param liveScene the live voxel grid, a TSDF generated from a single recent depth image
+	 */
+	virtual void
+	FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
+
+	virtual void
+	ApplyWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
+
+	void TrackMotion(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                 ITMScene<TVoxelLive, TIndex>* liveScene);
 };
 
 

@@ -38,9 +38,18 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracke
 		sceneLogger(SCENE_PATH)
 {}
 
-
+/**
+ * \brief Tracks motion of voxels from canonical frame to live frame.
+ * \details The warp field representing motion of voxels in the canonical frame is updated such that the live frame maps
+ * as closely as possible back to the canonical using the warp.
+ * \tparam TVoxelCanonical type of canonical voxels
+ * \tparam TVoxelLive type of live voxels
+ * \tparam TIndex type of voxel index used
+ * \param canonicalScene the canonical voxel grid
+ * \param liveScene the live voxel grid (typcially obtained by integrating a single depth image into an empty TSDF grid)
+ */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
+void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 		ITMScene<TVoxelLive, TIndex>* liveScene) {
 
@@ -205,5 +214,4 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 #endif
 	//END _DEBUG
 //#define OLD_LEVEL_SET_TERM
-	this->FuseFrame(canonicalScene, liveScene);
 }

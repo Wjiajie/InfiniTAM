@@ -15,7 +15,7 @@
 //  ================================================================
 #pragma once
 
-//TODO: Clean out unused versions
+//TODO: Clean out unused versions -Greg (GitHub: Algomorph)
 
 //_DEBUG -- special treatment of truncated values, use voxels with semantic information only!
 //sdf, color, pick maximum weights, get confidence
@@ -23,7 +23,7 @@ template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float interpolateTrilinearly_TruncatedSignCopy(const CONSTPTR(TVoxel)* voxelData,
                                                       const CONSTPTR(ITMHashEntry)* voxelHash,
-                                                      const THREADPTR(Vector3f)& point,
+                                                      const CONSTPTR(Vector3f)& point,
                                                       THREADPTR(TCache)& cache,
                                                       THREADPTR(Vector3f)& color,
                                                       THREADPTR(float)& confidence,
@@ -95,7 +95,7 @@ template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float interpolateTrilinearly_TruncatedSignCopy(const CONSTPTR(TVoxel)* voxelData,
                                                       const CONSTPTR(ITMHashEntry)* voxelHash,
-                                                      const THREADPTR(Vector3f)& point,
+                                                      const CONSTPTR(Vector3f)& point,
                                                       THREADPTR(TCache)& cache,
                                                       THREADPTR(bool)& struckNarrowBand) {
 	float sdfRes1, sdfRes2;
@@ -150,7 +150,7 @@ _CPU_AND_GPU_CODE_
 inline float interpolateTrilinearly_TruncatedSignCopy_Hint(const CONSTPTR(TVoxel)* voxelData,
                                                            const CONSTPTR(ITMHashEntry)* voxelHash,
                                                            const CONSTPTR(float)& hintSignSource,
-                                                           const THREADPTR(Vector3f)& point,
+                                                           const CONSTPTR(Vector3f)& point,
                                                            THREADPTR(TCache)& cache,
                                                            THREADPTR(bool)& struckNarrowBand) {
 	float sdfRes1, sdfRes2;
@@ -206,7 +206,7 @@ _CPU_AND_GPU_CODE_
 inline float interpolateTrilinearly_SetTruncatedToVal(const CONSTPTR(TVoxel)* voxelData,
                                                       const CONSTPTR(ITMHashEntry)* voxelHash,
                                                       const CONSTPTR(float)& truncationReplacement,
-                                                      const THREADPTR(Vector3f)& point,
+                                                      const CONSTPTR(Vector3f)& point,
                                                       THREADPTR(TCache)& cache) {
 	float sdfRes1, sdfRes2, sdfV1, sdfV2;
 	int vmIndex = false;
@@ -285,7 +285,7 @@ template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
                                     const CONSTPTR(ITMHashEntry)* hashIndex,
-                                    const THREADPTR(Vector3f)& point,
+                                    const CONSTPTR(Vector3f)& point,
                                     THREADPTR(TCache)& cache,
                                     THREADPTR(Vector3f)& color,
                                     THREADPTR(int)& wDepth,
@@ -339,7 +339,7 @@ template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
                                     const CONSTPTR(ITMHashEntry)* hashIndex,
-                                    const THREADPTR(Vector3f)& point,
+                                    const CONSTPTR(Vector3f)& point,
                                     THREADPTR(TCache)& cache,
                                     THREADPTR(Vector3f)& color,
                                     THREADPTR(float)& wDepth,
@@ -398,7 +398,7 @@ template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
                                     const CONSTPTR(ITMHashEntry)* hashIndex,
-                                    const THREADPTR(Vector3f)& point,
+                                    const CONSTPTR(Vector3f)& point,
                                     THREADPTR(TCache)& cache,
                                     THREADPTR(Vector3f)& color) {
 	float sdfRes1, sdfRes2, sdfV1, sdfV2;
@@ -441,7 +441,7 @@ template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float interpolateTrilinearly_Corrected(const CONSTPTR(TVoxel)* voxelData,
                                               const CONSTPTR(ITMHashEntry)* voxelHash,
-                                              const THREADPTR(Vector3f)& point,
+                                              const CONSTPTR(Vector3f)& point,
                                               THREADPTR(TCache)& cache) {
 	float sdfRes1, sdfRes2;
 	int vmIndex = false;
@@ -489,7 +489,7 @@ template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
                                     const CONSTPTR(ITMHashEntry)* voxelHash,
-                                    const THREADPTR(Vector3f)& point,
+                                    const CONSTPTR(Vector3f)& point,
                                     THREADPTR(TCache)& cache,
                                     THREADPTR(bool)& found) {
 	float sdfRes1, sdfRes2, sdfV1, sdfV2;
@@ -527,7 +527,7 @@ template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float interpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
                                     const CONSTPTR(ITMHashEntry)* voxelHash,
-                                    const THREADPTR(Vector3f)& point,
+                                    const CONSTPTR(Vector3f)& point,
                                     THREADPTR(TCache)& cache) {
 	float sdfRes1, sdfRes2, sdfV1, sdfV2;
 	int vmIndex = false;
@@ -594,7 +594,7 @@ template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float interpolateTrilinearlyAlt(const CONSTPTR(TVoxel)* voxelData,
                                        const CONSTPTR(ITMHashEntry)* voxelHash,
-                                       const THREADPTR(Vector3f)& point,
+                                       const CONSTPTR(Vector3f)& point,
                                        THREADPTR(TCache)& cache) {
 	const int neighborCount = 8;
 	Vector3f points[neighborCount];

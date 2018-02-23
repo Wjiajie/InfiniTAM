@@ -17,7 +17,7 @@
 namespace ITMLib
 {
 	template <typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-	class ITMKillingEngine : public ITMMainEngine
+	class ITMDynamicEngine : public ITMMainEngine
 	{
 	private:
 		const ITMLibSettings *settings;
@@ -91,7 +91,7 @@ namespace ITMLib
 			Omitting a separate image size for the depth images
 			will assume same resolution as for the RGB images.
 		*/
-		ITMKillingEngine(const ITMLibSettings *settings, const ITMRGBDCalib& calib, Vector2i imgSize_rgb, Vector2i imgSize_d = Vector2i(-1, -1));
-		~ITMKillingEngine();
+		ITMDynamicEngine(const ITMLibSettings *settings, const ITMRGBDCalib& calib, Vector2i imgSize_rgb, Vector2i imgSize_d = Vector2i(-1, -1));
+		~ITMDynamicEngine();
 	};
 }

@@ -24,7 +24,8 @@ namespace ITMLib {
 
 
 template <typename TFunctor, typename TVoxel, typename TIndex>
-void VoxelTraversal(ITMScene<TVoxel, TIndex>& scene, TFunctor& functor){
+inline
+void VoxelTraversal_CPU(ITMScene<TVoxel, TIndex>& scene, TFunctor& functor){
 	TVoxel* voxels = scene.localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = scene.index.GetEntries();
 	int noTotalEntries = scene.index.noTotalEntries;
@@ -35,7 +36,6 @@ void VoxelTraversal(ITMScene<TVoxel, TIndex>& scene, TFunctor& functor){
 		const ITMHashEntry& currentHashEntry = hashTable[entryId];
 		if (currentHashEntry.ptr < 0) continue;
 		TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-		//position of the current entry in 3D space (in voxel units)
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
@@ -48,8 +48,9 @@ void VoxelTraversal(ITMScene<TVoxel, TIndex>& scene, TFunctor& functor){
 	}
 };
 
-template <typename TStaticFunctor, typename TVoxel, typename TIndex>
-void StaticVoxelTraversal(ITMScene<TVoxel, TIndex>& scene){
+template <typename TFunctor, typename TVoxel, typename TIndex>
+inline
+void VoxelPositionTraversal_CPU(ITMScene<TVoxel, TIndex>& scene, TFunctor& functor){
 	TVoxel* voxels = scene.localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = scene.index.GetEntries();
 	int noTotalEntries = scene.index.noTotalEntries;
@@ -61,6 +62,33 @@ void StaticVoxelTraversal(ITMScene<TVoxel, TIndex>& scene){
 		if (currentHashEntry.ptr < 0) continue;
 		TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 		//position of the current entry in 3D space (in voxel units)
+		Vector3i hashEntryPosition = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+					Vector3i voxelPosition = hashEntryPosition + Vector3i(x, y, z);
+					TVoxel& voxel = localVoxelBlock[locId];
+					functor(voxel,voxelPosition);
+				}
+			}
+		}
+	}
+};
+
+template <typename TStaticFunctor, typename TVoxel, typename TIndex>
+inline
+void StaticVoxelTraversal_CPU(ITMScene<TVoxel, TIndex>& scene){
+	TVoxel* voxels = scene.localVBA.GetVoxelBlocks();
+	const ITMHashEntry* hashTable = scene.index.GetEntries();
+	int noTotalEntries = scene.index.noTotalEntries;
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+		const ITMHashEntry& currentHashEntry = hashTable[entryId];
+		if (currentHashEntry.ptr < 0) continue;
+		TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
@@ -74,7 +102,8 @@ void StaticVoxelTraversal(ITMScene<TVoxel, TIndex>& scene){
 };
 
 template <typename TStaticFunctor, typename TVoxel, typename TIndex>
-void StaticVoxelPositionTraversal(ITMScene<TVoxel, TIndex>& scene){
+inline
+void StaticVoxelPositionTraversal_CPU(ITMScene<TVoxel, TIndex>& scene){
 	TVoxel* voxels = scene.localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = scene.index.GetEntries();
 	int noTotalEntries = scene.index.noTotalEntries;
