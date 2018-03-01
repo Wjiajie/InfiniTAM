@@ -95,7 +95,7 @@ inline void FindHighlightNeighborInfo(std::array<ITMLib::ITMNeighborVoxelIterati
 		info.warp = voxel.warp_t;
 		info.warpUpdate = voxel.warp_t_update;
 		info.sdf = voxel.sdf;
-		info.liveSdf = interpolateTrilinearly(liveVoxelData, liveHashTable, TO_FLOAT3(neighborPosition) + voxel.warp_t,
+		info.liveSdf = InterpolateTrilinearly(liveVoxelData, liveHashTable, TO_FLOAT3(neighborPosition) + voxel.warp_t,
 		                                      liveCache, info.liveFound);
 		iNeighbor++;
 	}
@@ -133,12 +133,12 @@ inline void _DEBUG_ComputeWarpedJacobianAndHessian(const CONSTPTR(Vector3f*) nei
 	Vector3f warpedPositionOfNeighbor_at_z_plus_one = centerPosition + Vector3f(0.f, 0.f, 1.f) + neighborWarps[5];
 
 	Vector3f liveSdf_at_warped_neighbors(
-			interpolateTrilinearly_SetTruncatedToVal(liveVoxels, liveHashTable, liveSdf,
-			                                              warpedPositionOfNeighbor_at_x_plus_one, liveCache),
-			interpolateTrilinearly_SetTruncatedToVal(liveVoxels, liveHashTable, liveSdf,
-			                                              warpedPositionOfNeighbor_at_y_plus_one, liveCache),
-			interpolateTrilinearly_SetTruncatedToVal(liveVoxels, liveHashTable, liveSdf,
-			                                              warpedPositionOfNeighbor_at_z_plus_one, liveCache)
+			InterpolateTrilinearly_SetTruncatedToVal(liveVoxels, liveHashTable, liveSdf,
+			                                         warpedPositionOfNeighbor_at_x_plus_one, liveCache),
+			InterpolateTrilinearly_SetTruncatedToVal(liveVoxels, liveHashTable, liveSdf,
+			                                         warpedPositionOfNeighbor_at_y_plus_one, liveCache),
+			InterpolateTrilinearly_SetTruncatedToVal(liveVoxels, liveHashTable, liveSdf,
+			                                         warpedPositionOfNeighbor_at_z_plus_one, liveCache)
 	);
 	//=========== WARPED SDF JACOBIAN ==================================================================================
 	// derivatives of the type [d phi (warp) / dx]
@@ -221,11 +221,11 @@ inline void _DEBUG_ComputeLiveSdf_Center_WarpForward(
 	Vector3f warpedPosition = voxelPosition.toFloat() + voxelWarp;
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
 	// === increment the warp by 1 in each direction and use them to check what interpolated values from live frame map there
-	float live_at_u_plus_one = interpolateTrilinearly_SetTruncatedToVal(
+	float live_at_u_plus_one = InterpolateTrilinearly_SetTruncatedToVal(
 			liveVoxels, liveHashTable, voxelSdf, warpedPosition + Vector3f(1.f, 0.f, 0.f), liveCache);
-	float live_at_v_plus_one = interpolateTrilinearly_SetTruncatedToVal(
+	float live_at_v_plus_one = InterpolateTrilinearly_SetTruncatedToVal(
 			liveVoxels, liveHashTable, voxelSdf, warpedPosition + Vector3f(0.f, 1.f, 0.f), liveCache);
-	float live_at_w_plus_one = interpolateTrilinearly_SetTruncatedToVal(
+	float live_at_w_plus_one = InterpolateTrilinearly_SetTruncatedToVal(
 			liveVoxels, liveHashTable, voxelSdf, warpedPosition + Vector3f(0.f, 0.f, 1.f), liveCache);
 
 	liveSdf_Center_WarpForward =

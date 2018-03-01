@@ -59,6 +59,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 	double aveLiveSdf = 0.0;
 	double aveSdfDiff = 0.0;
 	int consideredVoxelCount = 0;
+	int dataAndLevelSetVoxelCount = 0;
 	double aveWarpDist = 0.0;
 	double aveWarpDistBoundary = 0.0;
 	int boundaryVoxelCount = 0;
@@ -110,10 +111,10 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #ifndef OPENMP_WARP_UPDATE_COMPUTE_DISABLE
 
 #if defined(PRINT_ADDITIONAL_STATS) && defined(PRINT_ENERGY_STATS)
-#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, consideredVoxelCount, aveLiveSdf, aveWarpDist, aveSdfDiff, boundaryVoxelCount, aveWarpDistBoundary, totalDataEnergy, totalLevelSetEnergy, totalSmoothnessEnergy, totalKillingEnergy, voxelOscillationCount, ignoredVoxelOscillationCount)
+#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, consideredVoxelCount, dataAndLevelSetVoxelCount, aveLiveSdf, aveWarpDist, aveSdfDiff, boundaryVoxelCount, aveWarpDistBoundary, totalDataEnergy, totalLevelSetEnergy, totalSmoothnessEnergy, totalKillingEnergy, voxelOscillationCount, ignoredVoxelOscillationCount)
 #else
 #if defined(PRINT_ADDITIONAL_STATS)
-#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, consideredVoxelCount, aveLiveSdf, aveWarpDist, aveSdfDiff, boundaryVoxelCount, aveWarpDistBoundary, voxelOscillationCount, ignoredVoxelOscillationCount)
+#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, consideredVoxelCount, dataAndLevelSetVoxelCount, aveLiveSdf, aveWarpDist, aveSdfDiff, boundaryVoxelCount, aveWarpDistBoundary, voxelOscillationCount, ignoredVoxelOscillationCount)
 #elif defined(PRINT_ENERGY_STATS)
 #pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:totalDataEnergy, totalLevelSetEnergy, totalSmoothnessEnergy, totalKillingEnergy)
 #else
@@ -152,7 +153,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache,
 													 hitLiveNarrowBand);
 #else
-					liveSdf = interpolateTrilinearly_SetTruncatedToVal_NarrowBandHit(
+					liveSdf = InterpolateTrilinearly_SetTruncatedToVal_StruckNarrowBand(
 							liveVoxels, liveHashTable, canonicalSdf, projectedPosition, liveCache, hitLiveNarrowBand);
 #endif
 
@@ -195,7 +196,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						std::cout << " Struck live narrow band: " << (hitLiveNarrowBand ? green : red)
 						          << (hitLiveNarrowBand ? "true" : "false") << reset;
 						std::cout << std::endl;
-//						float liveSdf2 = interpolateTrilinearly_SetTruncatedToVal_NarrowBandHit(
+//						float liveSdf2 = InterpolateTrilinearly_SetTruncatedToVal_StruckNarrowBand(
 //								liveVoxels, liveHashTable, canonicalSdf, projectedPosition, liveCache, hitLiveNarrowBand);
 						printResult = true;
 					}
@@ -339,10 +340,11 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 							                                     warpedSdfHessian);
 #endif
 #endif //OLD_LEVEL_SET_TERM
-
-					}
+#ifdef PRINT_ADDITIONAL_STATS
+						dataAndLevelSetVoxelCount++;
+#endif
+					} else {
 #ifdef PRINT_SINGLE_VOXEL_RESULT
-					else {
 						if(printResult){
 							//need to print a few blank lines to make sure the printing stays consistent height
 							std::cout << std::endl << "Data & level set terms not computed." << std::endl
@@ -350,8 +352,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 							          << "Considered truncated in live: " << (emptyInLive ? "true" : "false") << std::endl
 							          << std::endl << std::endl << std::endl << std::endl << std::endl;
 						}
-					}
 #endif
+					}
 
 
 					//=================================== KILLING TERM =================================================
@@ -670,6 +672,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 			//<< " Ave live SDF: " << aveLiveSdf
 			//<< " Ave SDF diff: " << aveSdfDiff
 			<< " Used voxel count: " << consideredVoxelCount
+	        << " Used for data & LS term: " << dataAndLevelSetVoxelCount
 			//<< " Ave warp distance: " << aveWarpDist
 			<< " Oscillation ct: " << voxelOscillationCount
 			<< " I-oscillation ct: " << ignoredVoxelOscillationCount;

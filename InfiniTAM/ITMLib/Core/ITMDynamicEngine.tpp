@@ -37,7 +37,8 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(const IT
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
-	visualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxelLive, TIndex>(deviceType);
+	liveVisualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxelLive, TIndex>(deviceType);
+	canonicalVisualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxelCanonical, TIndex>(deviceType);
 
 	meshingEngine = NULL;
 	if (settings->createMeshingEngine)
@@ -99,7 +100,8 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::~ITMDynamicEngine() {
 	delete trackingState;
 	if (view != NULL) delete view;
 
-	delete visualisationEngine;
+	delete liveVisualisationEngine;
+	delete canonicalVisualisationEngine;
 
 	if (relocaliser != NULL) delete relocaliser;
 	delete kfRaycast;
@@ -309,9 +311,8 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
 			const FernRelocLib::PoseDatabase::PoseInScene& keyframe = relocaliser->RetrievePose(NN);
 			trackingState->pose_d->SetFrom(&keyframe.pose);
 
-			//denseMapper->UpdateVisibleList(view, trackingState, liveScene, renderState_live, true);
 			denseMapper->UpdateVisibleList(view, trackingState, liveScene, renderState_live, true);
-			trackingController->Prepare(trackingState, liveScene, view, visualisationEngine, renderState_live);
+			trackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine, renderState_live);
 			trackingController->Track(trackingState, view);
 
 			trackerResult = trackingState->trackerResult;
@@ -332,7 +333,7 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
 		if (!didFusion) denseMapper->UpdateVisibleList(view, trackingState, liveScene, renderState_live);
 
 		// raycast to renderState_live for tracking and free visualisation
-		trackingController->Prepare(trackingState, liveScene, view, visualisationEngine, renderState_live);
+		trackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine, renderState_live);
 
 		if (addKeyframeIdx >= 0) {
 			ORUtils::MemoryBlock<Vector4u>::MemoryCopyDirection memoryCopyDirection =
@@ -409,8 +410,9 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Im
 					imageType = IITMVisualisationEngine::RENDER_SHADED_GREYSCALE_IMAGENORMALS;
 			}
 
-			visualisationEngine->RenderImage(liveScene, trackingState->pose_d, &view->calib.intrinsics_d,
+			liveVisualisationEngine->RenderImage(liveScene, trackingState->pose_d, &view->calib.intrinsics_d,
 			                                 renderState_live, renderState_live->raycastImage, imageType, raycastType);
+
 
 			ORUtils::Image<Vector4u>* srcImage = NULL;
 			if (relocalisationCount != 0) srcImage = kfRaycast;
@@ -437,14 +439,33 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Im
 
 			if (renderState_freeview == NULL) {
 				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
+				                                                                        liveScene->sceneParams,
+				                                                                        settings->GetMemoryType());
+			}
+
+			liveVisualisationEngine->FindVisibleBlocks(liveScene, pose, intrinsics, renderState_freeview);
+			liveVisualisationEngine->CreateExpectedDepths(liveScene, pose, intrinsics, renderState_freeview);
+			liveVisualisationEngine->RenderImage(liveScene, pose, intrinsics, renderState_freeview,
+			                                 renderState_freeview->raycastImage, type);
+
+			if (settings->deviceType == ITMLibSettings::DEVICE_CUDA)
+				out->SetFrom(renderState_freeview->raycastImage, ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CPU);
+			else out->SetFrom(renderState_freeview->raycastImage, ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU);
+			break;
+		}
+		case ITMMainEngine::InfiniTAM_IMAGE_FREECAMERA_CANONICAL: {
+			IITMVisualisationEngine::RenderImageType type = IITMVisualisationEngine::RENDER_SHADED_GREYSCALE;
+
+			if (renderState_freeview == NULL) {
+				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
 				                                                                        canonicalScene->sceneParams,
 				                                                                        settings->GetMemoryType());
 			}
 
-			visualisationEngine->FindVisibleBlocks(liveScene, pose, intrinsics, renderState_freeview);
-			visualisationEngine->CreateExpectedDepths(liveScene, pose, intrinsics, renderState_freeview);
-			visualisationEngine->RenderImage(liveScene, pose, intrinsics, renderState_freeview,
-			                                 renderState_freeview->raycastImage, type);
+			canonicalVisualisationEngine->FindVisibleBlocks(canonicalScene, pose, intrinsics, renderState_freeview);
+			canonicalVisualisationEngine->CreateExpectedDepths(canonicalScene, pose, intrinsics, renderState_freeview);
+			canonicalVisualisationEngine->RenderImage(canonicalScene, pose, intrinsics, renderState_freeview,
+			                                     renderState_freeview->raycastImage, type);
 
 			if (settings->deviceType == ITMLibSettings::DEVICE_CUDA)
 				out->SetFrom(renderState_freeview->raycastImage, ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CPU);

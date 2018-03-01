@@ -51,29 +51,29 @@ inline void ComputePerPointLiveJacobianAndHessian(const CONSTPTR(Vector3i)& orig
 	Vector3f currentProjectedPosition = originalPosition.toFloat() + originalWarp_t;
 
 //=== shifted warped sdf locations, shift vector, alternative projected position
-//warpedSdf = interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition, liveCache, warpedColor);
+//warpedSdf = InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition, liveCache, warpedColor);
 	Vector3f warpedColorForward[3];
 
 //=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
 // === forward by 1 in each direction
 	Vector3f warpedSdfForward(
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 0), liveCache,
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 0), liveCache,
 			                       warpedColorForward[0]),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 0), liveCache,
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 0), liveCache,
 			                       warpedColorForward[1]),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, 1), liveCache,
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, 1), liveCache,
 			                       warpedColorForward[2]));
 // === back by 1 in each direction
 	Vector3f warpedSdfBackward(
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(-1, 0, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, -1, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, -1),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(-1, 0, 0), liveCache),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, -1, 0), liveCache),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, -1),
 			                       liveCache));
 // === x-y, y-z, and x-z plane forward corners for 2nd derivatives
 	Vector3f warpedSdfCorners(
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 1, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 1), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 1), liveCache));
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 1, 0), liveCache),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 1), liveCache),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 1), liveCache));
 //=========== COMPUTE JACOBIAN =====================================================================================
 	sdfJacobian = warpedSdfForward - Vector3f(liveSdf);
 	colorJacobian = Vector3f(
@@ -121,23 +121,23 @@ inline void ComputePerPointLiveJacobianAndHessian(const CONSTPTR(Vector3i)& voxe
 //=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
 // === forward by 1 in each direction
 	Vector3f warpedSdfForward(
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1.f, 0.f, 0.f),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1.f, 0.f, 0.f),
 			                       liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0.f, 1.f, 0.f),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0.f, 1.f, 0.f),
 			                       liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0.f, 0.f, 1.f),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0.f, 0.f, 1.f),
 			                       liveCache));
 // === back by 1 in each direction
 	Vector3f warpedSdfBackward(
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(-1, 0, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, -1, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, -1), liveCache)
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(-1, 0, 0), liveCache),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, -1, 0), liveCache),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, -1), liveCache)
 	);
 // === x-y, y-z, and x-z plane forward corners for 2nd derivatives
 	Vector3f warpedSdfCorners(
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 1, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 1), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 1), liveCache));
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 1, 0), liveCache),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 1), liveCache),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 1), liveCache));
 
 
 //=========== COMPUTE JACOBIAN =====================================================================================
@@ -202,7 +202,7 @@ inline void ComputePerPointWarpedLiveJacobianAndHessian_TruncationFix(const CONS
 	for (int iNeighborVec = 0; iNeighborVec < neighborVecCount; iNeighborVec++) {
 		for (int iVecElement = 0; iVecElement < 3; iVecElement++, iNeighbor++) {
 			float value =
-					interpolateTrilinearly(liveVoxels, liveHashTable, projPos + positions[iNeighbor], liveCache, found);
+					InterpolateTrilinearly(liveVoxels, liveHashTable, projPos + positions[iNeighbor], liveCache, found);
 			neighborValues[iNeighborVec][iVecElement] = value;
 			neighborsFound[iNeighbor] = found;
 			if (found) {
@@ -286,32 +286,38 @@ inline void ComputePerPointWarpedLiveJacobianAndHessian_Corrected2(const CONSTPT
 //=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
 // === forward by 1 in each direction
 	Vector3f warpedSdfForward(
-			interpolateTrilinearly_Corrected(liveVoxels, liveHashTable,
-			                                 currentProjectedPosition + Vector3f(1.f, 0.f, 0.f),
-			                                 liveCache),
-			interpolateTrilinearly_Corrected(liveVoxels, liveHashTable,
-			                                 currentProjectedPosition + Vector3f(0.f, 1.f, 0.f),
-			                                 liveCache),
-			interpolateTrilinearly_Corrected(liveVoxels, liveHashTable,
-			                                 currentProjectedPosition + Vector3f(0.f, 0.f, 1.f),
-			                                 liveCache));
+			InterpolateTrilinearly_TruncatedCopySign(liveVoxels, liveHashTable,
+			                                         currentProjectedPosition + Vector3f(1.f, 0.f, 0.f),
+			                                         liveCache),
+			InterpolateTrilinearly_TruncatedCopySign(liveVoxels, liveHashTable,
+			                                         currentProjectedPosition + Vector3f(0.f, 1.f, 0.f),
+			                                         liveCache),
+			InterpolateTrilinearly_TruncatedCopySign(liveVoxels, liveHashTable,
+			                                         currentProjectedPosition + Vector3f(0.f, 0.f, 1.f),
+			                                         liveCache));
 // === back by 1 in each direction
 	Vector3f warpedSdfBackward(
-			interpolateTrilinearly_Corrected(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(-1, 0, 0),
-			                                 liveCache),
-			interpolateTrilinearly_Corrected(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, -1, 0),
-			                                 liveCache),
-			interpolateTrilinearly_Corrected(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, -1),
-			                                 liveCache)
+			InterpolateTrilinearly_TruncatedCopySign(liveVoxels, liveHashTable,
+			                                         currentProjectedPosition + Vector3f(-1, 0, 0),
+			                                         liveCache),
+			InterpolateTrilinearly_TruncatedCopySign(liveVoxels, liveHashTable,
+			                                         currentProjectedPosition + Vector3f(0, -1, 0),
+			                                         liveCache),
+			InterpolateTrilinearly_TruncatedCopySign(liveVoxels, liveHashTable,
+			                                         currentProjectedPosition + Vector3f(0, 0, -1),
+			                                         liveCache)
 	);
 // === x-y, y-z, and x-z plane forward corners for 2nd derivatives
 	Vector3f warpedSdfCorners(
-			interpolateTrilinearly_Corrected(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 1, 0),
-			                                 liveCache),
-			interpolateTrilinearly_Corrected(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 1),
-			                                 liveCache),
-			interpolateTrilinearly_Corrected(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 1),
-			                                 liveCache));
+			InterpolateTrilinearly_TruncatedCopySign(liveVoxels, liveHashTable,
+			                                         currentProjectedPosition + Vector3f(1, 1, 0),
+			                                         liveCache),
+			InterpolateTrilinearly_TruncatedCopySign(liveVoxels, liveHashTable,
+			                                         currentProjectedPosition + Vector3f(0, 1, 1),
+			                                         liveCache),
+			InterpolateTrilinearly_TruncatedCopySign(liveVoxels, liveHashTable,
+			                                         currentProjectedPosition + Vector3f(1, 0, 1),
+			                                         liveCache));
 
 
 //=========== COMPUTE JACOBIAN =====================================================================================
@@ -364,25 +370,25 @@ inline void ComputePerPointWarpedLiveJacobianAndHessian_Old(const CONSTPTR(Vecto
 	Vector3f currentProjectedPosition = originalPosition.toFloat() + originalWarp_t;
 
 //=== shifted warped sdf locations, shift vector, alternative projected position
-//liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition, liveCache);
+//liveSdf = InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition, liveCache);
 
 //=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
 // === back by 1 in each direction
 	Vector3f warpedSdfBackward(
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(-1, 0, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, -1, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, -1), liveCache)
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(-1, 0, 0), liveCache),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, -1, 0), liveCache),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, -1), liveCache)
 	);
 // === forward by 1 in each direction
 	Vector3f warpedSdfForward(
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, 1), liveCache));
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 0), liveCache),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 0), liveCache),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 0, 1), liveCache));
 // === x-y, y-z, and x-z plane forward corners for 2nd derivatives
 	Vector3f warpedSdfCorners(
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 1, 0), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 1), liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 1), liveCache));
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 1, 0), liveCache),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(0, 1, 1), liveCache),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, currentProjectedPosition + Vector3f(1, 0, 1), liveCache));
 //=========== COMPUTE JACOBIAN =====================================================================================
 	sdfJacobian = warpedSdfForward - Vector3f(liveSdf);
 

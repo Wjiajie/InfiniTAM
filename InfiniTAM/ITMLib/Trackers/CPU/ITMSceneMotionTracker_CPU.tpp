@@ -196,7 +196,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 	canonicalScene->index.SetLastFreeExcessListId(lastFreeExcessListId);
 }
 
-// ========================================== END CANONCICAL HASH BLOCK ALLOCATION =====================================
+// ========================================== END CANONICAL HASH BLOCK ALLOCATION ======================================
 
 // ========================================== FUSION ===================================================================
 
@@ -217,12 +217,12 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
 
 	//_DEBUG
-	int missedNarrowBandCount = 0;
+	int missedKnownVoxels = 0;
 	int sdfTruncatedCount = 0;
 	float totalConf = 0.0f;
 
 #ifdef WITH_OPENMP
-	//#pragma omp parallel for reduction(+:missedNarrowBandCount, sdfTruncatedCount, totalConf)
+	//#pragma omp parallel for reduction(+:missedKnownVoxels, sdfTruncatedCount, totalConf)
 #endif
 	for (int hash = 0; hash < noTotalEntries; hash++) {
 		Vector3i canonicalHashEntryPosition;
@@ -256,22 +256,31 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
 
 					Vector3f liveColor;
-					float liveConfidence;
 					int liveWDepth = 1;
 					int liveWColor = 1;
-					bool struckNarrowBand;
+					bool struckKnownVoxels;
 
-					float liveSdf = interpolateTrilinearly_TruncatedSignCopy(liveVoxels, liveHashTable,
-					                                                         projectedPosition,
-					                                                         liveCache, liveColor, liveConfidence,
-					                                                         struckNarrowBand);
-					if (!struckNarrowBand || 1.0 - std::abs(liveSdf) < FLT_EPSILON) {
-						if (!struckNarrowBand) {
-							missedNarrowBandCount++;//_DEBUG
-						}
-						if (1.0 - std::abs(liveSdf) < FLT_EPSILON) {
-							sdfTruncatedCount++;//_DEBUG
-						}
+					//TODO: confidence?
+					//_DEBUG
+					float liveSdf = InterpolateTrilinearly_StruckKnownVoxels(
+							liveVoxels, liveHashTable,
+							projectedPosition,
+							liveCache, liveColor,
+							struckKnownVoxels);
+//					float liveSdf = InterpolateTrilinearly_NegativeTruncatedSignCopy_PositiveTruncatedNoChange(
+//							liveVoxels, liveHashTable,
+//							projectedPosition,
+//							liveCache, liveColor,
+//							struckKnownVoxels);
+					//int vmIndex = 0;
+					//TVoxelLive voxelLiveDirect = readVoxel(liveVoxels, liveHashTable, originalPosition, vmIndex, liveCache);
+//
+//					float liveSdf = InterpolateTrilinearly_StruckNarrowBand(liveVoxels, liveHashTable,
+//					                                                        projectedPosition,
+//					                                                        liveCache, liveColor,
+//					                                                        struckKnownVoxels);
+					if (!struckKnownVoxels) {
+						missedKnownVoxels++;//_DEBUG
 						continue;
 					}
 					float newSdf = oldWDepth * oldSdf + liveWDepth * liveSdf;
@@ -288,9 +297,10 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					canonicalVoxel.w_depth = (uchar) newWDepth;
 					canonicalVoxel.clr = TO_UCHAR3(newColor * 255.0f);
 					canonicalVoxel.w_color = (uchar) newWColor;
-					canonicalVoxel.confidence += liveConfidence;
-					totalConf += liveConfidence;
-					if (canonicalVoxel.flags == ITMLib::VOXEL_TRUNCATED) {
+					if (1.0 - std::abs(liveSdf) < FLT_EPSILON) {
+						sdfTruncatedCount++;//_DEBUG
+					}
+					if (canonicalVoxel.flags == ITMLib::VOXEL_TRUNCATED && 1.0 - std::abs(liveSdf) > FLT_EPSILON) {
 						canonicalVoxel.flags |= ITMLib::VOXEL_NONTRUNCATED;
 						entriesAllocType[hash] = ITMLib::NO_CHANGE;
 					}
@@ -300,12 +310,12 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 	}
 
 	//_DEBUG
-	std::cout << "Number of lookups that missed the narrow band in live (target) frame during fusion: "
-	          << missedNarrowBandCount << std::endl;
+	std::cout << "Number of lookups that yielded initial (unknown) value in live (target) frame during fusion: "
+	          << missedKnownVoxels << std::endl;
 	std::cout << "Number of lookups that resulted in truncated value in live (target) frame during fusion: "
 	          << sdfTruncatedCount << std::endl;
-	std::cout << "Total confidence added from live frame: "
-	          << totalConf << std::endl;
+//	std::cout << "Total confidence added from live frame: "
+//	          << totalConf << std::endl;
 
 }
 
@@ -319,6 +329,7 @@ struct WarpSdfDistributionFunctor {
 	}
 
 	void operator()(TVoxelCanonical& voxel, Vector3i voxelPosition) {
+		if (voxel.flags == ITMLib::VOXEL_TRUNCATED) return; // skip truncated voxels
 		Vector3f warpedPosition = voxelPosition.toFloat() + voxel.warp_t;
 		float sdfValue = TVoxelCanonical::valueToFloat(voxel.sdf);
 		DistributeTrilinearly(liveVoxels, liveHashEntries, liveCache, warpedPosition, sdfValue);
@@ -342,6 +353,7 @@ struct WarpHashMarkerFunctor {
 			warpedEntryAllocationTypes(warpedEntryAllocationTypes) {}
 
 	void operator()(TVoxelCanonical& voxel, Vector3i voxelPosition) {
+		if (voxel.flags == ITMLib::VOXEL_TRUNCATED) return; // skip truncated voxels
 		Vector3f warpedPosition = voxelPosition.toFloat() + voxel.warp_t;
 		Vector3i warpedPositionTruncated = warpedPosition.toInt();
 
@@ -362,36 +374,36 @@ struct WarpHashMarkerFunctor {
 		Vector3s neededBlockCoordinate = originalNeededBlockCoordinate;
 
 #define MARK_ENTRY_FOR_ALLOCATION \
-		int liveBlockIndex = hashIndex(neededBlockCoordinate);\
-		MarkIfNeedsAllocation(warpedEntryAllocationTypes, allocationBlockCoords, liveBlockIndex,\
-		                      neededBlockCoordinate, liveHashEntries);
+        int liveBlockIndex = hashIndex(neededBlockCoordinate);\
+        MarkIfNeedsAllocation(warpedEntryAllocationTypes, allocationBlockCoords, liveBlockIndex,\
+                              neededBlockCoordinate, liveHashEntries);
 		MARK_ENTRY_FOR_ALLOCATION
-		if(needToAllocateExtraX){
-			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(1,0,0);
+		if (needToAllocateExtraX) {
+			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(1, 0, 0);
 			MARK_ENTRY_FOR_ALLOCATION
 		}
-		if(needToAllocateExtraY){
-			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(0,1,0);
+		if (needToAllocateExtraY) {
+			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(0, 1, 0);
 			MARK_ENTRY_FOR_ALLOCATION
 		}
-		if(needToAllocateExtraZ){
-			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(0,0,1);
+		if (needToAllocateExtraZ) {
+			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(0, 0, 1);
 			MARK_ENTRY_FOR_ALLOCATION
 		}
-		if(needToAllocateCornerXY){
-			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(1,1,0);
+		if (needToAllocateCornerXY) {
+			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(1, 1, 0);
 			MARK_ENTRY_FOR_ALLOCATION
 		}
-		if(needToAllocateCornerYZ){
-			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(0,1,1);
+		if (needToAllocateCornerYZ) {
+			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(0, 1, 1);
 			MARK_ENTRY_FOR_ALLOCATION
 		}
-		if(needToAllocateCornerXZ){
-			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(1,0,1);
+		if (needToAllocateCornerXZ) {
+			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(1, 0, 1);
 			MARK_ENTRY_FOR_ALLOCATION
 		}
-		if(needToAllocateCornerXYZ){
-			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(1,1,1);
+		if (needToAllocateCornerXYZ) {
+			neededBlockCoordinate = originalNeededBlockCoordinate + Vector3s(1, 1, 1);
 			MARK_ENTRY_FOR_ALLOCATION
 		}
 #undef MARK_ENTRY_FOR_ALLOCATION

@@ -64,7 +64,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes() {
 	liveScene->SaveToDirectory(livePath.string());
 	canonicalScene->SaveToDirectory(canonicalPath.string());
 	ITMSceneStatisticsCalculator<TVoxelCanonical, TIndex> statisticsCalculator;
-	this->voxelCount = statisticsCalculator.ComputeHashedVoxelCount(canonicalScene);
+	this->voxelCount = statisticsCalculator.ComputeAllocatedVoxelCount(canonicalScene);
 	std::cout << "Scenes saved." << std::endl;
 	return true;
 }
@@ -80,7 +80,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenes() {
 	liveScene->LoadFromDirectory(livePath.c_str());
 	canonicalScene->LoadFromDirectory(canonicalPath.c_str());
 	ITMSceneStatisticsCalculator<TVoxelCanonical, TIndex> statisticsCalculator;
-	this->voxelCount = statisticsCalculator.ComputeHashedVoxelCount(canonicalScene);
+	this->voxelCount = statisticsCalculator.ComputeAllocatedVoxelCount(canonicalScene);
 	std::cout << "Scenes loaded." << std::endl;
 	return true;
 }
@@ -100,7 +100,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenesCompact() {
 	liveScene->SaveToDirectoryCompact_CPU(livePath.string());
 	canonicalScene->SaveToDirectoryCompact_CPU(canonicalPath.string());
 	ITMSceneStatisticsCalculator<TVoxelCanonical, TIndex> statisticsCalculator;
-	this->voxelCount = statisticsCalculator.ComputeHashedVoxelCount(canonicalScene);
+	this->voxelCount = statisticsCalculator.ComputeAllocatedVoxelCount(canonicalScene);
 	std::cout << "Scenes saved." << std::endl;
 	return true;
 };
@@ -125,7 +125,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenesCompact() {
 	liveScene->LoadFromDirectoryCompact_CPU(livePath.c_str());
 	canonicalScene->LoadFromDirectoryCompact_CPU(canonicalPath.c_str());
 	ITMSceneStatisticsCalculator<TVoxelCanonical, TIndex> statisticsCalculator;
-	this->voxelCount = statisticsCalculator.ComputeHashedVoxelCount(canonicalScene);
+	this->voxelCount = statisticsCalculator.ComputeAllocatedVoxelCount(canonicalScene);
 	std::cout << "Scenes loaded." << std::endl;
 	delete reconstructionEngineCanonical;
 	delete reconstructionEngineLive;

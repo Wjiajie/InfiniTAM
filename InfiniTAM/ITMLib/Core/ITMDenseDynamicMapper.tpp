@@ -35,8 +35,10 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMappe
 	liveSceneRecoEngine = ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelLive, TIndex>(
 			settings->deviceType);
 	swappingEngine = settings->swappingMode != ITMLibSettings::SWAPPINGMODE_DISABLED
-	                 ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxelCanonical, TIndex>(settings->deviceType) : NULL;
-	sceneMotionTracker = ITMTrackerFactory::MakeSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(settings->deviceType, settings->sceneParams);
+	                 ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxelCanonical, TIndex>(settings->deviceType)
+	                 : NULL;
+	sceneMotionTracker = ITMTrackerFactory::MakeSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(
+			settings->deviceType, settings->sceneParams);
 	swappingMode = settings->swappingMode;
 }
 
@@ -47,23 +49,38 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::~ITMDenseDynamicMapp
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetScene(ITMScene<TVoxelCanonical, TIndex>* scene) const {
+void
+ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetScene(ITMScene<TVoxelCanonical, TIndex>* scene) const {
 	sceneRecoEngine->ResetScene(scene);
 }
+
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetLiveScene(ITMScene<TVoxelLive, TIndex>* live_scene) const {
+void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetLiveScene(
+		ITMScene<TVoxelLive, TIndex>* live_scene) const {
 	liveSceneRecoEngine->ResetScene(live_scene);
 }
 
-
-
+//BEGIN _DEBUG
+template<typename TVoxel, typename TIndex>
+static void PrintSceneStats(ITMScene<TVoxel, TIndex>* scene, const char* sceneName){
+	ITMSceneStatisticsCalculator<TVoxel, TIndex> calculatorLive;
+	std::cout << "=== Stats for scene '" << sceneName << "' ===" << std::endl;
+	std::cout << "    Total voxel count: " << calculatorLive.ComputeAllocatedVoxelCount(scene) << std::endl;
+	std::cout << "    Non-truncated voxel count: " << calculatorLive.ComputeNonTruncatedVoxelCount(scene) << std::endl;
+	std::cout << "    +1.0 voxel count: " << calculatorLive.ComputeVoxelWithValueCount(scene,1.0f)  << std::endl;
+	std::vector<int> allocatedHashes = calculatorLive.GetFilledHashBlockIds(scene);
+	std::cout << "    Allocated hash count: " << allocatedHashes.size() << std::endl;
+	std::cout << "    Non-truncated SDF sum: " << calculatorLive.ComputeNonTruncatedVoxelSdfSum(scene) << std::endl;
+	std::cout << "    Truncated SDF sum: " << calculatorLive.ComputeTruncatedVoxelSdfSum(scene) << std::endl;
+};
+//END _DEBUG
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(const ITMView* view,
-                                                         const ITMTrackingState* trackingState,
-                                                         ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-                                                         ITMScene<TVoxelLive, TIndex>* liveScene,
-                                                         ITMRenderState* renderState) {
+                                                                              const ITMTrackingState* trackingState,
+                                                                              ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+                                                                              ITMScene<TVoxelLive, TIndex>* liveScene,
+                                                                              ITMRenderState* renderState) {
 
 
 	// clear out the live-frame SDF
@@ -73,17 +90,17 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(co
 	liveSceneRecoEngine->AllocateSceneFromDepth(liveScene, view, trackingState, renderState);
 	// integration
 	liveSceneRecoEngine->IntegrateIntoScene(liveScene, view, trackingState, renderState);
-//BEGIN _DEBUG
-//	ITMSceneStatisticsCalculator<TVoxelLive,TIndex> calculator;
-//	std::cout << "Known voxels in live scene before fusion: "  << calculator.ComputeKnownVoxelCount(liveScene) << std::endl;
-//	ITMSceneStatisticsCalculator<TVoxelCanonical,TIndex> calculator2;
-//	std::cout << "Total voxels in canonical scene before fusion: "  << calculator2.ComputeHashedVoxelCount(canonicalScene) << std::endl;
-//END _DEBUG
+
 	sceneMotionTracker->TrackMotion(canonicalScene, liveScene);
 	sceneMotionTracker->FuseFrame(canonicalScene, liveScene);
+
+	//_DEBUG
+	PrintSceneStats(liveScene, "Live before fusion");
+	PrintSceneStats(canonicalScene, "Canonical after fusion");
+
 	// clear out the live-frame SDF, to prepare it for warped canonical
-	liveSceneRecoEngine->ResetScene(liveScene);
-	sceneMotionTracker->ApplyWarp(canonicalScene,liveScene);
+	//liveSceneRecoEngine->ResetScene(liveScene);
+	//sceneMotionTracker->ApplyWarp(canonicalScene,liveScene);
 
 
 // _DEBUG
@@ -114,7 +131,7 @@ void
 ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::UpdateVisibleList(
 		const ITMView* view,
 		const ITMTrackingState* trackingState,
-        ITMScene<TVoxelLive, TIndex>* scene, ITMRenderState* renderState,
+		ITMScene<TVoxelLive, TIndex>* scene, ITMRenderState* renderState,
 		bool resetVisibleList) {
 	liveSceneRecoEngine->AllocateSceneFromDepth(scene, view, trackingState, renderState, true, resetVisibleList);
 }

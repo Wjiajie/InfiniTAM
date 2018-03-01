@@ -101,11 +101,11 @@ inline void ComputeLiveSdf_Center_WarpForward(
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
 	// === increment the warp by 1 in each direction and use them to check what interpolated values from live frame map there
 	liveSdf_Center_WarpForward =
-			Vector3f(interpolateTrilinearly(liveVoxels, liveHashTable, warpedPosition + Vector3f(1.f, 0.f, 0.f),
+			Vector3f(InterpolateTrilinearly(liveVoxels, liveHashTable, warpedPosition + Vector3f(1.f, 0.f, 0.f),
 			                                liveCache),
-			         interpolateTrilinearly(liveVoxels, liveHashTable, warpedPosition + Vector3f(0.f, 1.f, 0.f),
+			         InterpolateTrilinearly(liveVoxels, liveHashTable, warpedPosition + Vector3f(0.f, 1.f, 0.f),
 			                                liveCache),
-			         interpolateTrilinearly(liveVoxels, liveHashTable, warpedPosition + Vector3f(0.f, 0.f, 1.f),
+			         InterpolateTrilinearly(liveVoxels, liveHashTable, warpedPosition + Vector3f(0.f, 0.f, 1.f),
 			                                liveCache));
 };
 
@@ -153,11 +153,11 @@ inline void ComputePerPointWarpedLiveJacobian(const CONSTPTR(Vector3i)& voxelPos
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
 	// === forward by 1 in each direction
 	liveSdf_Center_WarpForward = Vector3f(
-			interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(1, 0, 0), liveCache,
+			InterpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(1, 0, 0), liveCache,
 			                       warpedColor_Center_WarpForward[0]),
-			interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(0, 1, 0), liveCache,
+			InterpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(0, 1, 0), liveCache,
 			                       warpedColor_Center_WarpForward[1]),
-			interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(0, 0, 1), liveCache,
+			InterpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition + Vector3f(0, 0, 1), liveCache,
 			                       warpedColor_Center_WarpForward[2]));
 	//=========== COMPUTE JACOBIAN =====================================================================================
 	liveSdfJacobian = liveSdf_Center_WarpForward - warpedSdf_Center_WarpCenter;
@@ -196,9 +196,9 @@ inline void ComputeWarpedJacobianAndHessian(const CONSTPTR(Vector3f*) neighborWa
 	Vector3f lookupPos_yForward_WarpCenter = centerPos + Vector3f(0.f, 1.f, 0.f) + neighborWarps[4];
 	Vector3f lookupPos_zForward_WarpCenter = centerPos + Vector3f(0.f, 0.f, 1.f) + neighborWarps[5];
 	Vector3f warpedSdf_Forward_WarpCenter(
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_xForward_WarpCenter, liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_yForward_WarpCenter, liveCache),
-			interpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_zForward_WarpCenter, liveCache)
+			InterpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_xForward_WarpCenter, liveCache),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_yForward_WarpCenter, liveCache),
+			InterpolateTrilinearly(liveVoxels, liveHashTable, lookupPos_zForward_WarpCenter, liveCache)
 	);
 	//=========== WARPED SDF JACOBIAN ==================================================================================
 	// derivatives of the type [d phi (warp) / dx]

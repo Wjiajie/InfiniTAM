@@ -26,7 +26,8 @@ namespace ITMLib
 		int framesProcessed, relocalisationCount;
 
 		ITMLowLevelEngine* lowLevelEngine;
-		ITMVisualisationEngine<TVoxelLive, TIndex>* visualisationEngine;
+		ITMVisualisationEngine<TVoxelLive, TIndex>* liveVisualisationEngine;
+		ITMVisualisationEngine<TVoxelCanonical, TIndex>* canonicalVisualisationEngine;
 
 		ITMMeshingEngine<TVoxelCanonical, TIndex>* meshingEngine;
 
