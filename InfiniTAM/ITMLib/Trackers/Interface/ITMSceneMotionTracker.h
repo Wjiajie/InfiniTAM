@@ -34,7 +34,8 @@ protected:
 
 	//TODO -- make all of these parameters
 	const int maxIterationCount = 200;
-	const float maxVectorUpdateThresholdMeters = 0.0001f;//m
+	const float maxVectorUpdateThresholdMeters = 0.0001f;//m //original
+	//const float maxVectorUpdateThresholdMeters = 0.00005f;//m //_DEBUG
 	const float gradientDescentLearningRate = 0.1f;
 	const float rigidityEnforcementFactor = 0.1f;
 	const float weightKillingTerm = 0.5f;

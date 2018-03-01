@@ -59,7 +59,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 	double aveLiveSdf = 0.0;
 	double aveSdfDiff = 0.0;
 	int consideredVoxelCount = 0;
-	int dataAndLevelSetVoxelCount = 0;
+	int dataVoxelCount = 0;
+	int levelSetVoxelCount = 0;
 	double aveWarpDist = 0.0;
 	double aveWarpDistBoundary = 0.0;
 	int boundaryVoxelCount = 0;
@@ -111,10 +112,10 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #ifndef OPENMP_WARP_UPDATE_COMPUTE_DISABLE
 
 #if defined(PRINT_ADDITIONAL_STATS) && defined(PRINT_ENERGY_STATS)
-#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, consideredVoxelCount, dataAndLevelSetVoxelCount, aveLiveSdf, aveWarpDist, aveSdfDiff, boundaryVoxelCount, aveWarpDistBoundary, totalDataEnergy, totalLevelSetEnergy, totalSmoothnessEnergy, totalKillingEnergy, voxelOscillationCount, ignoredVoxelOscillationCount)
+#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, consideredVoxelCount, dataVoxelCount, levelSetVoxelCount, aveLiveSdf, aveWarpDist, aveSdfDiff, boundaryVoxelCount, aveWarpDistBoundary, totalDataEnergy, totalLevelSetEnergy, totalSmoothnessEnergy, totalKillingEnergy, voxelOscillationCount, ignoredVoxelOscillationCount)
 #else
 #if defined(PRINT_ADDITIONAL_STATS)
-#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, consideredVoxelCount, dataAndLevelSetVoxelCount, aveLiveSdf, aveWarpDist, aveSdfDiff, boundaryVoxelCount, aveWarpDistBoundary, voxelOscillationCount, ignoredVoxelOscillationCount)
+#pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:aveCanonicaSdf, consideredVoxelCount, dataVoxelCount, levelSetVoxelCount, aveLiveSdf, aveWarpDist, aveSdfDiff, boundaryVoxelCount, aveWarpDistBoundary, voxelOscillationCount, ignoredVoxelOscillationCount)
 #elif defined(PRINT_ENERGY_STATS)
 #pragma omp parallel for firstprivate(canonicalCache, liveCache) reduction(+:totalDataEnergy, totalLevelSetEnergy, totalSmoothnessEnergy, totalKillingEnergy)
 #else
@@ -147,22 +148,31 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					//=================================== TRUNCATION REGION CHECKS =====================================
 					float liveSdf;
 					bool hitLiveNarrowBand;
+					bool hitLiveKnownVoxels;
 					Vector3f projectedPosition = canonicalVoxelPosition.toFloat() + canonicalVoxel.warp_t;
 
 #ifndef TRUNCATION_TREATMENT_DEBUG
 					liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache,
 													 hitLiveNarrowBand);
 #else
-					liveSdf = InterpolateTrilinearly_SetTruncatedToVal_StruckNarrowBand(
-							liveVoxels, liveHashTable, canonicalSdf, projectedPosition, liveCache, hitLiveNarrowBand);
+					//version 1
+//					liveSdf = InterpolateTrilinearly_SetTruncatedToVal_StruckNarrowBand(
+//							liveVoxels, liveHashTable, canonicalSdf, projectedPosition, liveCache, hitLiveNarrowBand);
+					//version 2
+					liveSdf = InterpolateTrilinearly_SetDefaultToVal_StruckChecks(
+							liveVoxels, liveHashTable, canonicalSdf, projectedPosition, liveCache,
+							hitLiveNarrowBand, hitLiveKnownVoxels);
 #endif
 
 					//almost no restriction -- Mira's case with addition of VOXEL_TRUNCATED flag checking
-					bool emptyInCanonical = canonicalVoxel.flags == ITMLib::VOXEL_TRUNCATED;
+					bool truncatedInCanonical = canonicalVoxel.flags == ITMLib::VOXEL_TRUNCATED;
+					bool knownInCanonical = canonicalSdf != TVoxelCanonical::SDF_initialValue();
 					// the latter condition needs to be included since sometimes, even if some live voxels in the lookup
 					// neighborhood are non-truncated, they ally may be a whole voxel away from the warped position,
 					// which would then result in a live SDF lookup equivalent to that in a truncated region.
-					bool emptyInLive = !hitLiveNarrowBand || (1.0 - std::abs(liveSdf) < FLT_EPSILON);
+					bool truncatedInLive = !hitLiveNarrowBand || (1.0 - std::abs(liveSdf) < FLT_EPSILON);
+					bool computeDataTerm = knownInCanonical && hitLiveKnownVoxels;
+					bool computeLevelSetTerm = !truncatedInCanonical && !truncatedInLive;
 #ifdef OSCILLATION_TREATMENT
 					bool ignoreVoxelDueToOscillation = canonicalVoxel.flags & ITMLib::VOXEL_OSCILLATION_DETECTED_TWICE;
 
@@ -170,11 +180,11 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					if (ignoreVoxelDueToOscillation) ignoredVoxelOscillationCount++;
 #endif
 
-					if ((emptyInCanonical && emptyInLive) ||
+					if ((truncatedInCanonical && truncatedInLive) ||
 						ignoreVoxelDueToOscillation)
 						continue;
 #else
-					if (emptyInCanonical && emptyInLive) continue;
+					if (truncatedInCanonical && truncatedInLive) continue;
 #endif //OSCILLATION_TREATMENT
 
 
@@ -186,15 +196,15 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					bool printResult = false;
 					if (printVoxelCoordsAtInterestHashAndLocId && hash == interestHash && locId == interestLocId) {
 						std::cout << std::endl << "Hash " << hash << ", locId " << locId << " corresponds to voxel at "
-						          << canonicalVoxelPosition << ". " << std::endl;
+								  << canonicalVoxelPosition << ". " << std::endl;
 					}
 					if (canonicalVoxelPosition == interestVoxelPosition) {
 						std::cout << std::endl << bright_cyan << "*** Printing voxel at " << canonicalVoxelPosition
-						          << " *** " << reset << std::endl;
+								  << " *** " << reset << std::endl;
 						std::cout << "Source SDF vs. target SDF: " << canonicalSdf << "-->" << liveSdf << std::endl
-						          << "Warp: " << green << canonicalVoxel.warp_t << reset;
+								  << "Warp: " << green << canonicalVoxel.warp_t << reset;
 						std::cout << " Struck live narrow band: " << (hitLiveNarrowBand ? green : red)
-						          << (hitLiveNarrowBand ? "true" : "false") << reset;
+								  << (hitLiveNarrowBand ? "true" : "false") << reset;
 						std::cout << std::endl;
 //						float liveSdf2 = InterpolateTrilinearly_SetTruncatedToVal_StruckNarrowBand(
 //								liveVoxels, liveHashTable, canonicalSdf, projectedPosition, liveCache, hitLiveNarrowBand);
@@ -230,13 +240,11 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					Vector3f deltaELevelSet = Vector3f(0.0f);
 					float diffSdf = 0.0f, sdfJacobianNormMinusUnity = 0.0f;
 
-					//if we are in the truncated region of canonical or live, we completely disregard the data and level set terms:
-					//there is no sufficient information to compute those terms. There we rely solely on the killing regularizer
-					//if (!emptyInCanonical) {//_DEBUG
-					if (!emptyInCanonical && !emptyInLive) {
-						Matrix3f warpedSdfHessian;
-						bool useColor = false;
-						Vector3f liveColor, liveSdfJacobian, liveColorJacobian, liveSdf_Center_WarpForward, warpedSdfJacobian;
+					bool useColor = false;
+					Matrix3f warpedSdfHessian;
+					Vector3f liveColor, liveSdfJacobian, liveColorJacobian, liveSdf_Center_WarpForward, warpedSdfJacobian;
+
+					if (computeDataTerm) {
 						//=================================== DATA TERM ================================================
 #ifdef USE_COLOR
 						if (std::abs(canonicalSdf) >
@@ -302,6 +310,12 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 							deltaEData += liveColorJacobian * diffColor;
 						}
 #endif//USE_COLOR
+#ifdef PRINT_ADDITIONAL_STATS
+						dataVoxelCount++;
+						aveSdfDiff += std::abs(diffSdf);
+#endif
+					}// computeDataTerm
+					if(computeLevelSetTerm){
 						//=================================== LEVEL SET TERM ===============================================
 #ifdef OLD_LEVEL_SET_TERM
 						float sdfJacobianNorm = length(liveSdfJacobian);
@@ -336,21 +350,21 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #ifdef PRINT_SINGLE_VOXEL_RESULT
 						if (printResult)
 							_DEBUG_PrintDataAndLevelSetTermStuff(liveSdfJacobian, liveSdf_Center_WarpForward,
-							                                     warpedSdfJacobian,
-							                                     warpedSdfHessian);
+																 warpedSdfJacobian,
+																 warpedSdfHessian);
 #endif
 #endif //OLD_LEVEL_SET_TERM
 #ifdef PRINT_ADDITIONAL_STATS
-						dataAndLevelSetVoxelCount++;
+						levelSetVoxelCount++;
 #endif
 					} else {
 #ifdef PRINT_SINGLE_VOXEL_RESULT
 						if(printResult){
 							//need to print a few blank lines to make sure the printing stays consistent height
 							std::cout << std::endl << "Data & level set terms not computed." << std::endl
-							          << "Truncated in canonical: " << (emptyInCanonical ? "true" : "false") << std::endl
-							          << "Considered truncated in live: " << (emptyInLive ? "true" : "false") << std::endl
-							          << std::endl << std::endl << std::endl << std::endl << std::endl;
+									  << "Truncated in canonical: " << (truncatedInCanonical ? "true" : "false") << std::endl
+									  << "Considered truncated in live: " << (truncatedInLive ? "true" : "false") << std::endl
+									  << std::endl << std::endl << std::endl << std::endl << std::endl;
 						}
 #endif
 					}
@@ -369,7 +383,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #ifdef PRINT_SINGLE_VOXEL_RESULT
 					if (printResult) {
 						_DEBUG_PrintKillingTermStuff(neighborWarps, neighborAllocated, neighborTruncated,
-						                             warpJacobian, warpHessian);
+													 warpJacobian, warpHessian);
 					}
 #endif
 
@@ -464,7 +478,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					const float maxVectorUpdateThresholdVoxels = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::maxVectorUpdateThresholdVoxels;
 					bool anomalyDetected = false;
 					if (distanceFromTwoIterationsAgo < maxVectorUpdateThresholdVoxels &&
-					    distanceTraveledInTwoIterations >= maxVectorUpdateThresholdVoxels * 2) {
+						distanceTraveledInTwoIterations >= maxVectorUpdateThresholdVoxels * 2) {
 						anomalyDetected = true;
 						//We think that an oscillation has been detected
 #ifdef PRINT_ADDITIONAL_STATS
@@ -557,7 +571,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #ifdef PRINT_ADDITIONAL_STATS
 					aveCanonicaSdf += canonicalSdf;
 					aveLiveSdf += liveSdf;
-					aveSdfDiff += diffSdf;
+
 					aveWarpDist += ORUtils::length(canonicalVoxel.warp_t);
 					if (boundary) {
 						aveWarpDistBoundary += ORUtils::length(canonicalVoxel.warp_t);
@@ -664,15 +678,16 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 	aveCanonicaSdf /= consideredVoxelCount;
 	aveLiveSdf /= consideredVoxelCount;
 	aveWarpDist /= consideredVoxelCount;
-	aveSdfDiff /= consideredVoxelCount;
+	aveSdfDiff /= dataVoxelCount;
 	if (boundaryVoxelCount > 0) {
 		aveWarpDistBoundary /= boundaryVoxelCount;
 	}
 	std::cout //<< " Ave canonical SDF: " << aveCanonicaSdf
 			//<< " Ave live SDF: " << aveLiveSdf
-			//<< " Ave SDF diff: " << aveSdfDiff
+			<< " Ave SDF diff: " << aveSdfDiff
 			<< " Used voxel count: " << consideredVoxelCount
-	        << " Used for data & LS term: " << dataAndLevelSetVoxelCount
+			<< " Used for data term: " << dataVoxelCount
+			<< " Used for LS term: " << levelSetVoxelCount
 			//<< " Ave warp distance: " << aveWarpDist
 			<< " Oscillation ct: " << voxelOscillationCount
 			<< " I-oscillation ct: " << ignoredVoxelOscillationCount;
