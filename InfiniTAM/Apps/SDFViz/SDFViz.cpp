@@ -56,7 +56,6 @@
 #include "SDFVizGlobalDefines.h"
 
 //** public **
-
 const std::array<double, 4>  SDFViz::canonicalNegativeSDFVoxelColor = {0.141, 0.215, 0.396, 1.0};
 const std::array<double, 4>  SDFViz::canonicalPositiveSDFVoxelColor = {0.717, 0.788, 0.960, 1.0};
 const std::array<double, 4>  SDFViz::canonicalNegativeInterestSDFVoxelColor = {0.690, 0.878, 0.902, 1.0};
@@ -67,6 +66,11 @@ const std::array<double, 4>  SDFViz::liveNegativeSDFVoxelColor = {0.101, 0.219, 
 const std::array<double, 4>  SDFViz::livePositiveSDFVoxelColor = {0.717, 0.882, 0.749, 0.6};
 const std::array<double, 3>  SDFViz::liveHashBlockEdgeColor = {0.537, 0.819, 0.631};
 //** private **
+
+const std::array<std::array<double, 4>, 4> SDFViz::backgroundColors = {{{0.96, 0.96, 0.98, 1.00},  // beige
+		                                                        {0.09, 0.07, 0.05, 1.00},  // black raspberry
+		                                                        {0.59, 0.44, 0.09, 1.00},  // bristle brown
+		                                                        {0.57, 0.64, 0.69, 1.0}}}; // cadet grey
 
 SDFViz::SDFViz(std::string pathToScene, bool showNonInterestCanonicalVoxels, bool showLiveVoxels,
                bool hideInterestCanonicalRegions, bool useInitialCoords,
@@ -80,7 +84,8 @@ SDFViz::SDFViz(std::string pathToScene, bool showNonInterestCanonicalVoxels, boo
 		              liveHashBlockEdgeColor),
 		highlightVisualizer(),
 		iterationIndicator(vtkSmartPointer<vtkTextActor>::New()),
-		iterationIndex(0) {
+		iterationIndex(0),
+		legend(vtkSmartPointer<vtkLegendBoxActor>::New()){
 	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(pathToScene,
 	                                                                                 canonicalScenePipe.GetScene(),
 	                                                                                 liveScenePipe.GetScene());
@@ -126,6 +131,7 @@ SDFViz::SDFViz(std::string pathToScene, bool showNonInterestCanonicalVoxels, boo
 	sdfRenderer->AddActor(liveScenePipe.GetVoxelActor());
 	sdfRenderer->AddActor(liveScenePipe.GetHashBlockActor());
 	topRenderer->AddActor(highlightVisualizer.GetHighlightActor());
+	// to prevent VTK from doing excessive near-cliping with multi-layered renderers
 	DrawDummyMarkers();
 
 	// set up visibility
@@ -167,14 +173,9 @@ void SDFViz::InitializeRendering() {
 	sdfRenderer = vtkSmartPointer<vtkRenderer>::New();
 	topRenderer = vtkSmartPointer<vtkRenderer>::New();
 
-//set up legend background
-	vtkSmartPointer<vtkNamedColors> colors =
-			vtkSmartPointer<vtkNamedColors>::New();
-
-	double background[4];
-	//colors->GetColor("black", background);
-	colors->GetColor("light_grey", background);;
-	sdfRenderer->SetBackground(background);
+	double backgroundColor[4];
+	memcpy(backgroundColor,backgroundColors[currentBackgrounColorIx].data(), 4*sizeof(double));
+	sdfRenderer->SetBackground(backgroundColor);
 
 	renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
 	renderWindow->SetSize(renderWindow->GetScreenSize());
@@ -253,7 +254,6 @@ bool SDFViz::PreviousInterestWarps() {
 }
 
 void SDFViz::DrawLegend() {
-	vtkSmartPointer<vtkLegendBoxActor> legend = vtkSmartPointer<vtkLegendBoxActor>::New();
 	legend->SetNumberOfEntries(7);
 	vtkSmartPointer<vtkSphereSource> legendSphere = vtkSmartPointer<vtkSphereSource>::New();
 	legendSphere->Update();
@@ -280,13 +280,9 @@ void SDFViz::DrawLegend() {
 	legend->UseBackgroundOn();
 
 	//set up legend background
-	vtkSmartPointer<vtkNamedColors> colors =
-			vtkSmartPointer<vtkNamedColors>::New();
-
-	double background[4];
-	//colors->GetColor("black", background);
-	colors->GetColor("light_grey", background);
-	legend->SetBackgroundColor(background);
+	double backgroundColor[4];
+	memcpy(backgroundColor,backgroundColors[1].data(), 4*sizeof(double));//use only black for legend background color
+	legend->SetBackgroundColor(backgroundColor);
 
 	sdfRenderer->AddActor(legend);
 }
@@ -463,6 +459,23 @@ Vector3d SDFViz::ComputeCameraRightVector(vtkCamera* camera) {
 	return viewRight;
 }
 
+void SDFViz::NextBackgroundColor() {
+	currentBackgrounColorIx = (currentBackgrounColorIx + 1) % static_cast<int>(backgroundColors.size());
+	double backgroundColor[4];
+	memcpy(backgroundColor,backgroundColors[currentBackgrounColorIx].data(), 4*sizeof(double));
+	sdfRenderer->SetBackground(backgroundColor);
+	renderWindow->Render();
+}
+
+void SDFViz::PreviousBackgroundColor() {
+	int reversedIndex = static_cast<int>(backgroundColors.size()) - 1 - currentBackgrounColorIx ;
+	reversedIndex = (reversedIndex + 1) % static_cast<int>(backgroundColors.size());
+	currentBackgrounColorIx = static_cast<int>(backgroundColors.size()) - 1 - reversedIndex;
+	double backgroundColor[4];
+	memcpy(backgroundColor,backgroundColors[currentBackgrounColorIx].data(), 4*sizeof(double));
+	sdfRenderer->SetBackground(backgroundColor);
+	renderWindow->Render();
+}
 
 vtkStandardNewMacro(KeyPressInteractorStyle);
 
@@ -519,7 +532,7 @@ void KeyPressInteractorStyle::OnKeyPress() {
 				}
 			}
 		} else if (key == "comma") {
-			if  (parent->hasWarpIterationInfo){
+			if (parent->hasWarpIterationInfo) {
 				std::cout << "Loading previous iteration warp & updates." << std::endl;
 				if (parent->PreviousNonInterestWarps()) {
 					std::cout << "Previous warps loaded and display updated." << std::endl;
@@ -530,13 +543,13 @@ void KeyPressInteractorStyle::OnKeyPress() {
 		} else if (key == "minus" || key == "KP_Subtract") {
 			if (rwi->GetAltKey()) {
 				parent->DecreaseCanonicalVoxelOpacity();
-			}else{
+			} else {
 				parent->DecreaseLiveVoxelOpacity();
 			}
 		} else if (key == "equal" || key == "KP_Add") {
-			if(rwi->GetAltKey()){
+			if (rwi->GetAltKey()) {
 				parent->IncreaseCanonicalVoxelOpacity();
-			}else{
+			} else {
 				parent->IncreaseLiveVoxelOpacity();
 			}
 		} else if (key == "bracketright") {
@@ -573,9 +586,13 @@ void KeyPressInteractorStyle::OnKeyPress() {
 				parent->sdfRenderer->ResetCamera();
 				parent->renderWindow->Render();
 			}
+		} else if (key == "b"){
+			if(rwi->GetAltKey()){
+				parent->PreviousBackgroundColor();
+			}else{
+				parent->NextBackgroundColor();
+			}
 		}
-
-
 	}
 	std::cout << "Key symbol: " << key << std::endl;
 	std::cout << "Key code: " << static_cast<int>(rwi->GetKeyCode()) << std::endl;

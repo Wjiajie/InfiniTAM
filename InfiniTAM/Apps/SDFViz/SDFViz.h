@@ -23,6 +23,7 @@
 #include <vtkRenderWindowInteractor.h>
 #include <vtkObjectFactory.h>
 #include <vtkExtractPolyDataGeometry.h>
+#include <vtk-8.1/vtkLegendBoxActor.h>
 
 //local
 #include "SDFSceneVizPipe.tpp"
@@ -101,12 +102,14 @@ public:
 
 private:
 	//================= CONSTANTS ==================================
+	// Array holding various background colors to cycle through
+	static const std::array<std::array<double,4>,4> backgroundColors;
 
 	//================= MEMBER VARIABLES ===========================
-	//data loader
+	// Data loader
 	ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
 
-	//visualization setup
+	// Visualization setup
 	vtkSmartPointer<vtkRenderer> sdfRenderer;
 	vtkSmartPointer<vtkRenderer> topRenderer;
 	// The render window is the actual GUI window
@@ -116,7 +119,12 @@ private:
 	// and will perform appropriate camera or actor manipulation
 	// depending on the nature of the events.
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
+	// indicator at top left corner showing for which (if any) iteration the data is being shown
 	vtkSmartPointer<vtkTextActor> iterationIndicator;
+	// for switching the background color
+	int currentBackgrounColorIx = 0;
+	// legend
+	vtkSmartPointer<vtkLegendBoxActor> legend;
 
 	// Structures for rendering scene geometry with VTK
 	CanonicalVizPipe canonicalScenePipe;
@@ -155,6 +163,8 @@ private:
 	void MoveFocusToNextHighlight();
 	void MoveFocusToPreviousHighlight();
 
+	void NextBackgroundColor();
+
 	//** visibility / opacity **
 	void ToggleCanonicalHashBlockVisibility();
 	void ToggleLiveHashBlockVisibility();
@@ -173,4 +183,5 @@ private:
 	void ToggleInterestVoxelVisibility();
 	void DecreaseLiveVoxelOpacity();
 	void IncreaseLiveVoxelOpacity();
+	void PreviousBackgroundColor();
 };
