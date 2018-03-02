@@ -36,6 +36,8 @@ template<typename TVoxel, typename TIndex>
 const char* SDFSceneVizPipe<TVoxel, TIndex>::colorPointAttributeName = "color";
 template<typename TVoxel, typename TIndex>
 const char* SDFSceneVizPipe<TVoxel, TIndex>::scalePointAttributeName = "scale";
+template<typename TVoxel, typename TIndex>
+const char* SDFSceneVizPipe<TVoxel, TIndex>::alternativeScalePointAttributeName = "alternative_scale";
 
 template<typename TVoxel, typename TIndex>
 SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(std::array<double, 4> negativeSDFVoxelColor,
@@ -86,6 +88,10 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 	vtkSmartPointer<vtkFloatArray> scaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
 	scaleAttribute->SetName(scalePointAttributeName);
 
+	//holds alternative scale of each voxel (showing -1 value voxels)
+	vtkSmartPointer<vtkFloatArray> alternativeScaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
+	alternativeScaleAttribute->SetName(alternativeScalePointAttributeName);
+
 	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
@@ -111,18 +117,22 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-					Vector3i originalPositionVoxels = currentBlockPositionVoxels + Vector3i(x, y, z);
+					Vector3i voxelPosition = currentBlockPositionVoxels + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxel& voxel = localVoxelBlock[locId];
-					float voxelScale = COMPUTE_VOXEL_SCALE(voxel);
+					float sdf = TVoxel::valueToFloat(voxel.sdf);
+					float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf);
+					float alternativeVoxelScale = COMPUTE_VOXEL_SCALE(sdf);
 					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
 
-					points->InsertNextPoint(originalPositionVoxels.x,
-					                        -originalPositionVoxels.y,
-					                        -originalPositionVoxels.z);
+					// need to filp the y & z axes (unlike InfiniTAM, VTK uses proper right-hand rule system))
+					points->InsertNextPoint(voxelPosition.x,
+					                        -voxelPosition.y,
+					                        -voxelPosition.z);
 
 					scaleAttribute->InsertNextValue(voxelScale);
 					colorAttribute->InsertNextValue(voxelColor);
+					alternativeScaleAttribute->InsertNextValue(alternativeVoxelScale);
 				}
 			}
 		}
@@ -137,6 +147,7 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 
 	voxelPolydata->GetPointData()->AddArray(colorAttribute);
 	voxelPolydata->GetPointData()->AddArray(scaleAttribute);
+	voxelPolydata->GetPointData()->AddArray(alternativeScaleAttribute);
 	voxelPolydata->GetPointData()->SetActiveScalars(colorPointAttributeName);
 
 	hashBlockGrid->SetPoints(hashBlockPoints);

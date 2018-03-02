@@ -23,7 +23,8 @@
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
 #include "../../ITMLib/Utils/ITMSceneLogger.h"
 
-#define COMPUTE_VOXEL_SCALE(voxel) (1.0f - 0.9f * std::abs(voxel.sdf))
+#define COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf) (sdf == -1.0f ? 0.0f : 1.0f - 0.9f * std::abs(sdf))
+#define COMPUTE_VOXEL_SCALE(sdf) (1.0f - 0.9f * std::abs(sdf))
 
 class vtkPoints;
 class vtkPolyData;
@@ -40,6 +41,7 @@ public:
 	//================= CONSTANTS ================
 	static const char* colorPointAttributeName;
 	static const char* scalePointAttributeName;
+	static const char* alternativeScalePointAttributeName;
 
 	SDFSceneVizPipe(std::array<double,4> negativeSDFVoxelColor,
 	                std::array<double,4> positiveSDFVoxelColor,

@@ -46,6 +46,7 @@ set(headers
     CanonicalVizPipe.h
     HighlightVisualization.h
     SDFVizGlobalDefines.h
+    VizPipeShared.h
     #===helpers===
     )
 

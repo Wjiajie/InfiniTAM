@@ -128,7 +128,8 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 					Vector3i originalPositionVoxels = currentBlockPositionVoxels + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					ITMVoxelCanonical& voxel = localVoxelBlock[locId];
-					float voxelScale = COMPUTE_VOXEL_SCALE(voxel);
+					float sdf = ITMVoxelCanonical::valueToFloat(voxel.sdf);
+					float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf);
 					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
 					nonInterestVoxelPoints->InsertNextPoint(originalPositionVoxels.x,
 					                                        -(originalPositionVoxels.y),
@@ -154,7 +155,8 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 
 					ITMVoxelCanonical& voxel = localVoxelBlock[locId];
-					float voxelScale = COMPUTE_VOXEL_SCALE(voxel);
+					float sdf = ITMVoxelCanonical::valueToFloat(voxel.sdf);
+					float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf);
 					//[0.0,1.0) == negative
 					//[1.0-2.0) == positive
 					//3.0 == highlight
