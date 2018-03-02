@@ -1,6 +1,6 @@
 //  ================================================================
-//  Created by Gregory Kramida on 12/20/17.
-//  Copyright (c) 2017-2025 Gregory Kramida
+//  Created by Gregory Kramida on 3/2/18.
+//  Copyright (c) 2018-2025 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
 //  You may obtain a copy of the License at
@@ -15,12 +15,22 @@
 //  ================================================================
 #pragma once
 
-namespace ITMLib {
-enum VoxelFlags : unsigned char{
-	VOXEL_UNKNOWN = 0,
-	VOXEL_TRUNCATED = 1,
-	VOXEL_NONTRUNCATED = 2,
-	VOXEL_OSCILLATION_DETECTED_ONCE = 2,
-	VOXEL_OSCILLATION_DETECTED_TWICE = 4
+#include <vtkInteractorStyleTrackballCamera.h>
+
+class SDFViz;
+
+/**
+ * \brief A standard VTK trackball interactor style with added functionality for
+ * some keyboard keys
+ */
+class SDFVizKeyPressInteractorStyle : public vtkInteractorStyleTrackballCamera {
+
+public:
+	static SDFVizKeyPressInteractorStyle* New();
+
+	vtkTypeMacro(SDFVizKeyPressInteractorStyle, vtkInteractorStyleTrackballCamera);
+	SDFViz* parent;
+
+	virtual void OnKeyPress();
+
 };
-}//namespace ITMLib

@@ -32,6 +32,7 @@ set(sources
     #===core files===
     main.cpp
     SDFViz.cpp
+    SDFVizKeyPressInteractorStyle.cpp
     SDFSceneVizPipe.tpp
     ExplicitInstantiations.cpp
     CanonicalVizPipe.cpp
@@ -42,6 +43,7 @@ set(sources
 set(headers
     #===core files===
     SDFViz.h
+    SDFVizKeyPressInteractorStyle.h
     SDFSceneVizPipe.h
     CanonicalVizPipe.h
     HighlightVisualization.h

@@ -23,7 +23,7 @@
 #include <vtkRenderWindowInteractor.h>
 #include <vtkObjectFactory.h>
 #include <vtkExtractPolyDataGeometry.h>
-#include <vtk-8.1/vtkLegendBoxActor.h>
+#include <vtkLegendBoxActor.h>
 
 //local
 #include "SDFSceneVizPipe.tpp"
@@ -34,32 +34,11 @@
 #include "CanonicalVizPipe.h"
 #include "HighlightVisualization.h"
 
-
 using namespace ITMLib;
 namespace ITMLib {
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMSceneLogger;
 }
-
-
-class SDFViz;
-
-/**
- * \brief A standard VTK trackball interator style with added functionality for
- * some keyboard keys
- */
-class KeyPressInteractorStyle : public vtkInteractorStyleTrackballCamera {
-
-
-public:
-	static KeyPressInteractorStyle* New();
-
-vtkTypeMacro(KeyPressInteractorStyle, vtkInteractorStyleTrackballCamera);
-	SDFViz* parent;
-
-	virtual void OnKeyPress();
-
-};
 
 class vtkRenderer;
 class vtkRenderWindow;
@@ -78,7 +57,7 @@ class vtkTextActor;
  * \brief SDF Visualization application main class.
  */
 class SDFViz {
-	friend class KeyPressInteractorStyle;
+	friend class SDFVizKeyPressInteractorStyle;
 
 public:
 	//================= STATIC CONSTANTS ============================
