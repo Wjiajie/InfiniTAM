@@ -22,9 +22,7 @@
 //ITMLib
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
 #include "../../ITMLib/Utils/ITMSceneLogger.h"
-
-#define COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf) (sdf == -1.0f ? 0.0f : 1.0f - 0.9f * std::abs(sdf))
-#define COMPUTE_VOXEL_SCALE(sdf) (1.0f - 0.9f * std::abs(sdf))
+#include "VizPipeShared.h"
 
 class vtkPoints;
 class vtkPolyData;
@@ -43,25 +41,23 @@ public:
 	static const char* scalePointAttributeName;
 	static const char* alternativeScalePointAttributeName;
 
+	// ====================== CONSTRUCTORS / DESTRUCTORS ==================
 	SDFSceneVizPipe(std::array<double,4> negativeSDFVoxelColor,
 	                std::array<double,4> positiveSDFVoxelColor,
 	                std::array<double,3> hashBlockEdgeColor);
 	~SDFSceneVizPipe();
 
+	// ====================== MEMBER FUNCTIONS ===========================
 	virtual void PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry, vtkAlgorithmOutput* hashBlockSourceGeometry);
 
 	ITMScene<TVoxel, TIndex>* GetScene();
 	vtkSmartPointer<vtkActor>& GetVoxelActor();
 	vtkSmartPointer<vtkActor>& GetHashBlockActor();
 
-protected:
-	ITMScene<TVoxel, TIndex>* scene;
-	virtual void PreparePointsForRendering();
-	// ** individual voxels **
-	vtkSmartPointer<vtkPolyData> voxelPolydata;
-	// ** hash-block grid **
-	vtkSmartPointer<vtkPolyData> hashBlockGrid;
+	virtual void ToggleScaleMode();
 
+protected:
+	// ===================== STATIC FUNCTIONS ============================
 
 	static void SetUpSceneHashBlockMapper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
 	                                      vtkSmartPointer<vtkPolyData>& pointsPolydata);
@@ -77,9 +73,22 @@ protected:
 	static void SetUpSceneVoxelMapper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
 	                                  vtkSmartPointer<vtkLookupTable>& table, vtkSmartPointer<vtkPolyData>& pointsPolydata);
 
-private:
+	// ===================== MEMBER FUNCTIONS ===========================
+	virtual void PreparePointsForRendering();
+
+	// ===================== MEMBER VARIABLES ===========================
+	ITMScene<TVoxel, TIndex>* scene;
 
 	// ** individual voxels **
+	vtkSmartPointer<vtkPolyData> voxelPolydata;
+	// ** hash-block grid **
+	vtkSmartPointer<vtkPolyData> hashBlockGrid;
+	VoxelScaleMode scaleMode;
+private:
+	// ===================== MEMBER FUNCTIONS ===========================
+
+	// ===================== MEMBER VARIABLES ===========================
+	// ** voxels **
 	vtkSmartPointer<vtkLookupTable> voxelColorLookupTable;
 	vtkSmartPointer<vtkGlyph3DMapper> voxelMapper;
 	vtkSmartPointer<vtkActor> voxelActor;
@@ -92,8 +101,10 @@ private:
 	std::array<double, 4> negativeVoxelColor;
 	std::array<double, 4> positiveVoxelColor;
 	std::array<double, 3> hashBlockEdgeColor;
+
 	// ** scene limits/boundaries **
 	Vector3i minPoint, maxPoint;
+
 
 
 };

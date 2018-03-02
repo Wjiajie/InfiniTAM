@@ -25,6 +25,7 @@
 
 //Local
 #include "SDFSceneVizPipe.h"
+#include "VizPipeShared.h"
 
 //ITMLib
 #include "../../ITMLib/Utils/ITMLibSettings.h"
@@ -55,7 +56,8 @@ SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(std::array<double, 4> negativeS
 
 		negativeVoxelColor(negativeSDFVoxelColor),
 		positiveVoxelColor(positiveSDFVoxelColor),
-		hashBlockEdgeColor(hashBlockEdgeColor) {
+		hashBlockEdgeColor(hashBlockEdgeColor),
+        scaleMode(VOXEL_SCALE_DEFAULT){
 	auto* settings = new ITMLibSettings();
 	scene = new ITMScene<TVoxel, TIndex>(
 			&settings->sceneParams, settings->swappingMode ==
@@ -117,22 +119,8 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-					Vector3i voxelPosition = currentBlockPositionVoxels + Vector3i(x, y, z);
-					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-					TVoxel& voxel = localVoxelBlock[locId];
-					float sdf = TVoxel::valueToFloat(voxel.sdf);
-					float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf);
-					float alternativeVoxelScale = COMPUTE_VOXEL_SCALE(sdf);
-					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
-
-					// need to filp the y & z axes (unlike InfiniTAM, VTK uses proper right-hand rule system))
-					points->InsertNextPoint(voxelPosition.x,
-					                        -voxelPosition.y,
-					                        -voxelPosition.z);
-
-					scaleAttribute->InsertNextValue(voxelScale);
-					colorAttribute->InsertNextValue(voxelColor);
-					alternativeScaleAttribute->InsertNextValue(alternativeVoxelScale);
+					ComputeVoxelAttributes(currentBlockPositionVoxels, x, y, z, localVoxelBlock, points, scaleAttribute,
+					                       alternativeScaleAttribute, colorAttribute);
 				}
 			}
 		}
@@ -168,6 +156,7 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePipeline(vtkAlgorithmOutput* voxelS
 
 	// set up voxel mapper
 	SetUpSceneVoxelMapper(voxelSourceGeometry, voxelMapper, voxelColorLookupTable, voxelPolydata);
+	scaleMode = VOXEL_SCALE_DEFAULT;// reset scale mode
 
 	// set up voxel actor
 	voxelActor->SetMapper(voxelMapper);
@@ -272,6 +261,17 @@ vtkSmartPointer<vtkActor>& SDFSceneVizPipe<TVoxel, TIndex>::GetVoxelActor() {
 template<typename TVoxel, typename TIndex>
 vtkSmartPointer<vtkActor>& SDFSceneVizPipe<TVoxel, TIndex>::GetHashBlockActor() {
 	return hashBlockActor;
+}
+
+template<typename TVoxel, typename TIndex>
+void SDFSceneVizPipe<TVoxel, TIndex>::ToggleScaleMode() {
+	if(scaleMode == VoxelScaleMode::VOXEL_SCALE_DEFAULT){
+		scaleMode = VoxelScaleMode::VOXEL_SCALE_ALTERNATIVE;
+		voxelMapper->SetScaleArray(alternativeScalePointAttributeName);
+	}else{
+		scaleMode = VoxelScaleMode::VOXEL_SCALE_DEFAULT;
+		voxelMapper->SetScaleArray(scalePointAttributeName);
+	}
 }
 
 

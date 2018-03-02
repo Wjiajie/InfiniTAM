@@ -18,24 +18,37 @@
 #include "../../ITMLib/Utils/ITMMath.h"
 #include "../../ITMLib/ITMLibDefines.h"
 
-//template <typename TVoxel>
-//inline
-//void ComputeVoxelAttributes(const Vector3i& currentBlockPositionVoxels, int x, int y, int z,
-//                            const TVoxel* localVoxelBlock){
-//	Vector3i voxelPosition = currentBlockPositionVoxels + Vector3i(x, y, z);
-//	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-//	const TVoxel& voxel = localVoxelBlock[locId];
-//	float sdf = TVoxel::valueToFloat(voxel.sdf);
-//	float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf);
-//	float alternativeVoxelScale = COMPUTE_VOXEL_SCALE(sdf);
-//	float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
-//
-//	// need to filp the y & z axes (unlike InfiniTAM, VTK uses proper right-hand rule system))
-//	points->InsertNextPoint(voxelPosition.x,
-//	                        -voxelPosition.y,
-//	                        -voxelPosition.z);
-//
-//	scaleAttribute->InsertNextValue(voxelScale);
-//	colorAttribute->InsertNextValue(voxelColor);
-//	alternativeScaleAttribute->InsertNextValue(alternativeVoxelScale);
-//}
+#define COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf) (sdf == -1.0f ? 0.0f : 1.0f - 0.9f * std::abs(sdf))
+#define COMPUTE_VOXEL_SCALE(sdf) (1.0f - 0.9f * std::abs(sdf))
+
+
+enum VoxelScaleMode{
+	VOXEL_SCALE_DEFAULT = 0,
+	VOXEL_SCALE_ALTERNATIVE = 2
+};
+
+
+template <typename TVoxel>
+inline
+void ComputeVoxelAttributes(const Vector3i& currentBlockPositionVoxels, int x, int y, int z,
+                            const TVoxel* localVoxelBlock, vtkPoints* points,
+                            vtkFloatArray* scaleAttribute,
+                            vtkFloatArray* alternativeScaleAttribute,
+                            vtkFloatArray* colorAttribute){
+	Vector3i voxelPosition = currentBlockPositionVoxels + Vector3i(x, y, z);
+	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	const TVoxel& voxel = localVoxelBlock[locId];
+	float sdf = TVoxel::valueToFloat(voxel.sdf);
+	float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf);
+	float alternativeVoxelScale = COMPUTE_VOXEL_SCALE(sdf);
+	float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
+
+	// need to filp the y & z axes (unlike InfiniTAM, VTK uses proper right-hand rule system))
+	points->InsertNextPoint(voxelPosition.x,
+	                        -voxelPosition.y,
+	                        -voxelPosition.z);
+
+	scaleAttribute->InsertNextValue(voxelScale);
+	alternativeScaleAttribute->InsertNextValue(alternativeVoxelScale);
+	colorAttribute->InsertNextValue(voxelColor);
+}

@@ -62,8 +62,8 @@ const std::array<double, 4>  SDFViz::canonicalNegativeInterestSDFVoxelColor = {0
 const std::array<double, 4>  SDFViz::canonicalPositiveInterestSDFVoxelColor = {0.000, 1.000, 1.000, 1.0};
 const std::array<double, 4>  SDFViz::canonicalHighlightSDFVoxelColor = {1.000, 0.647, 0.000, 1.0};
 const std::array<double, 3>  SDFViz::canonicalHashBlockEdgeColor = {0.286, 0.623, 0.854};
-const std::array<double, 4>  SDFViz::liveNegativeSDFVoxelColor = {0.101, 0.219, 0.125, 0.6};
-const std::array<double, 4>  SDFViz::livePositiveSDFVoxelColor = {0.717, 0.882, 0.749, 0.6};
+const std::array<double, 4>  SDFViz::liveNegativeSDFVoxelColor = {0.101, 0.219, 0.125, 1.0};
+const std::array<double, 4>  SDFViz::livePositiveSDFVoxelColor = {0.717, 0.882, 0.749, 1.0};
 const std::array<double, 3>  SDFViz::liveHashBlockEdgeColor = {0.537, 0.819, 0.631};
 //** private **
 
@@ -591,6 +591,14 @@ void KeyPressInteractorStyle::OnKeyPress() {
 				parent->PreviousBackgroundColor();
 			}else{
 				parent->NextBackgroundColor();
+			}
+		} else if (key == "t"){
+			if(rwi->GetAltKey()){
+				parent->canonicalScenePipe.ToggleScaleMode();
+				parent->renderWindow->Render();
+			}else{
+				parent->liveScenePipe.ToggleScaleMode();
+				parent->renderWindow->Render();
 			}
 		}
 	}

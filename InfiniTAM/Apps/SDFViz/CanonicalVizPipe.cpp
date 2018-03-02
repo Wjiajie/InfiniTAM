@@ -28,6 +28,7 @@
 //local
 #include "CanonicalVizPipe.h"
 #include "SDFVizGlobalDefines.h"
+#include "VizPipeShared.h"
 
 //DEBUG
 template<typename T>
@@ -77,12 +78,20 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 	//holds scale of each voxel
 	vtkSmartPointer<vtkFloatArray> nonInterestScaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
 	nonInterestScaleAttribute->SetName(scalePointAttributeName);
+
+	vtkSmartPointer<vtkFloatArray> nonInterestAlternativeScaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
+	nonInterestAlternativeScaleAttribute->SetName(alternativeScalePointAttributeName);
+
+
 	//holds color for each voxel
 	vtkSmartPointer<vtkIntArray> interestColorAttribute = vtkSmartPointer<vtkIntArray>::New();
 	interestColorAttribute->SetName(colorPointAttributeName);
 	//holds scale of each voxel
 	vtkSmartPointer<vtkFloatArray> interestScaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
 	interestScaleAttribute->SetName(scalePointAttributeName);
+	// alternative voxel scaling stragegy, where -1.0 value voxels are preserved
+	vtkSmartPointer<vtkFloatArray> interestAlternativeScaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
+	interestAlternativeScaleAttribute->SetName(alternativeScalePointAttributeName);
 
 	ITMVoxelCanonical* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
@@ -125,18 +134,10 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-					Vector3i originalPositionVoxels = currentBlockPositionVoxels + Vector3i(x, y, z);
-					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-					ITMVoxelCanonical& voxel = localVoxelBlock[locId];
-					float sdf = ITMVoxelCanonical::valueToFloat(voxel.sdf);
-					float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf);
-					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
-					nonInterestVoxelPoints->InsertNextPoint(originalPositionVoxels.x,
-					                                        -(originalPositionVoxels.y),
-					                                        -(originalPositionVoxels.z));
-					nonInterestScaleAttribute->InsertNextValue(voxelScale);
-					nonInterestColorAttribute->InsertNextValue(voxelColor);
-
+					ComputeVoxelAttributes(currentBlockPositionVoxels, x, y, z, localVoxelBlock, nonInterestVoxelPoints,
+					                       nonInterestScaleAttribute,
+					                       nonInterestAlternativeScaleAttribute,
+					                       nonInterestColorAttribute);
 				}
 			}
 		}
@@ -157,6 +158,7 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 					ITMVoxelCanonical& voxel = localVoxelBlock[locId];
 					float sdf = ITMVoxelCanonical::valueToFloat(voxel.sdf);
 					float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf);
+					float alternativeVoxelScale = COMPUTE_VOXEL_SCALE(sdf);
 					//[0.0,1.0) == negative
 					//[1.0-2.0) == positive
 					//3.0 == highlight
@@ -181,6 +183,7 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 					                                     -originalPositionVoxels.z);
 
 					interestScaleAttribute->InsertNextValue(voxelScale);
+					interestAlternativeScaleAttribute->InsertNextValue(alternativeVoxelScale);
 					interestColorAttribute->InsertNextValue(voxelColor);
 					currentInterestPointIndex++;
 				}
@@ -188,19 +191,23 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 		}
 	}
 
-	//Points pipeline
+	//Points pipeline X2
 	voxelPolydata->SetPoints(nonInterestVoxelPoints);
-	interestVoxelPolydata->SetPoints(interestVoxelPoints);
-
 	voxelPolydata->GetPointData()->AddArray(nonInterestScaleAttribute);
+	voxelPolydata->GetPointData()->AddArray(nonInterestAlternativeScaleAttribute);
 	voxelPolydata->GetPointData()->AddArray(nonInterestColorAttribute);
 	voxelPolydata->GetPointData()->SetActiveScalars(colorPointAttributeName);
 
+	interestVoxelPolydata->SetPoints(interestVoxelPoints);
 	interestVoxelPolydata->GetPointData()->AddArray(interestScaleAttribute);
+	interestVoxelPolydata->GetPointData()->AddArray(interestAlternativeScaleAttribute);
 	interestVoxelPolydata->GetPointData()->AddArray(interestColorAttribute);
 	interestVoxelPolydata->GetPointData()->SetActiveScalars(colorPointAttributeName);
 
+	// pash block setup
 	hashBlockGrid->SetPoints(hashBlockPoints);
+
+	// warp prep
 	initialNonInterestPoints->DeepCopy(voxelPolydata->GetPoints());
 	initialInterestPoints->DeepCopy(interestVoxelPolydata->GetPoints());
 	preparePipelineWasCalled = true;
@@ -262,7 +269,7 @@ void CanonicalVizPipe::SetInterestRegionInfo(std::vector<int> interestRegionHash
 
 void CanonicalVizPipe::PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeometry) {
 	if (!preparePipelineWasCalled) {
-		DIEWITHEXCEPTION("PreparePipeline needs to be called first.");
+		DIEWITHEXCEPTION("PreparePipeline needs to be called first. [" __FILE__ ":" + std::to_string(__LINE__) + "]");
 	}
 
 	// set up voxel mapper
@@ -336,4 +343,13 @@ void CanonicalVizPipe::SetFrameIndex(int frameIx) {
 void CanonicalVizPipe::PrintHighlightIndexes() {
 	std::cout << this->highlightIndexes << std::endl;
 
+}
+
+void CanonicalVizPipe::ToggleScaleMode() {
+	SDFSceneVizPipe::ToggleScaleMode();
+	if(scaleMode == VoxelScaleMode::VOXEL_SCALE_DEFAULT){
+		interestVoxelMapper->SetScaleArray(scalePointAttributeName);
+	}else{
+		interestVoxelMapper->SetScaleArray(alternativeScalePointAttributeName);
+	}
 }
