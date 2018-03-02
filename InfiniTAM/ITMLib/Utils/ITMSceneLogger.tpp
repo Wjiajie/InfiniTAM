@@ -35,6 +35,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::highlightFilterInfoFilename = "highlight_filter_info.txt";
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::minRecurrenceHighlightFilterName = "min_reccurence_count_filter:";
+
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 		std::string path,
@@ -50,7 +51,9 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 		highlightsBinaryPath(this->path / ("highlights" + binaryFileExtension)),
 		highlightsTextPath(this->path / ("highlights" + textFileExtension)) {
 	if (!fs::create_directories(this->path) && !fs::is_directory(this->path)) {
-		DIEWITHEXCEPTION(std::string("Could not create the directory '") + path + "'. Exiting.");
+		DIEWITHEXCEPTION(std::string("Could not create the directory '") + path + "'. Exiting.["
+				                 __FILE__
+				                 ": " + std::to_string(__LINE__) + "]");
 	}
 }
 
@@ -139,8 +142,10 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarpState(i
 		return false;
 	}
 	warpOFStream = std::ofstream(warpUpdatesPath.c_str(), std::ofstream::binary | std::ofstream::out);
-	if (!warpOFStream) throw std::runtime_error("Could not open " + warpUpdatesPath.string() + " for writing");
-	warpOFStream.write(reinterpret_cast<const char*>(&frameIx),sizeof(int));
+	if (!warpOFStream)
+		throw std::runtime_error("Could not open " + warpUpdatesPath.string() + " for writing ["  __FILE__  ": " +
+		                         std::to_string(__LINE__) + "]");
+	warpOFStream.write(reinterpret_cast<const char*>(&frameIx), sizeof(int));
 	iterationCursor = 0;
 	return true;
 }
@@ -186,16 +191,20 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveCurrentWarpState()
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartLoadingWarpState(int& frameIx) {
 	if (this->voxelCount == -1) {
-		std::cout << "Hashed voxel count has not been obtained. Have the scenes been loaded successfully?" << std::endl;
+		std::cerr << "Hashed voxel count has not been obtained. Have the scenes been loaded successfully?" << std::endl;
 		return false;
 	}
 	if (!fs::is_directory(this->path)) {
-		std::cout << "The directory '" << path << "' was not found.";
+		std::cerr << "The directory '" << path << "' was not found.";
 		return false;
 	}
 
 	warpIFStream = std::ifstream(warpUpdatesPath.c_str(), std::ios::binary | std::ios::in);
-	if (!warpIFStream) throw std::runtime_error("Could not open " + warpUpdatesPath.string() + " for reading");
+	if (!warpIFStream) {
+		std::cerr << "Could not open " + warpUpdatesPath.string() + " for reading. ["  __FILE__  ": " +
+		             std::to_string(__LINE__) + "]";
+		return false;
+	}
 
 	warpIFStream.read(reinterpret_cast<char*>(&frameIx), sizeof(int));
 
@@ -449,7 +458,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveHighlights(std::st
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
 	}
-	highlightsBinaryPath = this->path/ ("highlights" + filePostfix + binaryFileExtension);
+	highlightsBinaryPath = this->path / ("highlights" + filePostfix + binaryFileExtension);
 	if (!this->highlights.SaveToFile(highlightsBinaryPath.c_str())) {
 		std::cerr << "Could not save highlights to " << highlightsBinaryPath << std::endl;
 		return false;
@@ -475,16 +484,17 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadHighlights(bool ap
 	highlightsBinaryPath = this->path / ("highlights" + filePostfix + binaryFileExtension);
 	if (!this->highlights.LoadFromFile(highlightsBinaryPath.c_str())) {
 		std::cout << "Could not load highlights from " << highlightsBinaryPath << std::endl;
+		return false;
 	} else {
 		std::cout << "Loaded highlights from " << highlightsBinaryPath << std::endl;
 	}
-	if(applyFilters){
+	if (applyFilters) {
 		fs::path wouldBeFilterInfoPath = path / fs::path(highlightFilterInfoFilename);
-		if(fs::is_regular_file(wouldBeFilterInfoPath)){
-			std::ifstream highlightFilterInfoNote(wouldBeFilterInfoPath.c_str(),std::ios_base::in);
+		if (fs::is_regular_file(wouldBeFilterInfoPath)) {
+			std::ifstream highlightFilterInfoNote(wouldBeFilterInfoPath.c_str(), std::ios_base::in);
 			std::string filterName;
 			highlightFilterInfoNote >> filterName;
-			if(filterName == minRecurrenceHighlightFilterName){
+			if (filterName == minRecurrenceHighlightFilterName) {
 				highlightFilterInfoNote >> minHighlightRecurrenceCount;
 			}
 			highlightFilterInfoNote.close();
@@ -523,9 +533,12 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
  * \tparam TIndex type of voxel index structure
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving(const ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>& highlights) {
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving(
+		const ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>& highlights) {
 	if (this->voxelCount == -1) {
-		DIEWITHEXCEPTION("Attempted to set up interest regions before loading the scenes. Aborting.");
+		DIEWITHEXCEPTION("Attempted to set up interest regions before loading the scenes. Aborting. ["
+				                 __FILE__
+				                 ": " + std::to_string(__LINE__) + "]");
 	}
 	interestRegionInfos.clear();
 	interestRegionInfoByHashId.clear();
@@ -537,8 +550,9 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 	for (int centerHashId : highlights.GetOuterLevelKeys()) {
 		const ITMHashEntry& currentHashBlock = hashBlocks[centerHashId];
 		if (currentHashBlock.ptr < 0) {
-			throw std::runtime_error("Got hash Id " + std::to_string(centerHashId)
-			                         + " in the highlights that doesn't correspond to a populated block in the scene");
+			throw std::runtime_error("Got hash Id " + std::to_string(centerHashId) +
+			                         " in the highlights that doesn't correspond to a populated block in the scene. ["
+					                         __FILE__  ": " + std::to_string(__LINE__) + "]");
 		}
 		std::vector<int> regionHashIds;
 		Vector3s centerBlockPos = currentHashBlock.pos;
@@ -634,7 +648,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::FilterHighlights(int anomalyFrameCountMinimum) {
-	minHighlightRecurrenceCount = std::max(minHighlightRecurrenceCount,anomalyFrameCountMinimum);
+	minHighlightRecurrenceCount = std::max(minHighlightRecurrenceCount, anomalyFrameCountMinimum);
 	highlights = highlights.FilterBasedOnLevel0Lengths(anomalyFrameCountMinimum);
 	std::ofstream highlightFilterInfoNote((path / fs::path(highlightFilterInfoFilename)).c_str(), std::ios_base::out);
 	highlightFilterInfoNote << "min_reccurence_count_filter:" << " " << anomalyFrameCountMinimum << std::endl;
@@ -666,7 +680,8 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestRegionsByHash() 
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetHighlights() const {
+ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetHighlights() const {
 	return ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>(highlights);
 }
 
@@ -685,7 +700,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferCurrentInterestWarpState(void* externalBuffer) {
 	char* cursor = reinterpret_cast<char*>(externalBuffer);
 	for (std::shared_ptr<InterestRegionInfo> info: interestRegionInfos) {
-		if(!info->BufferCurrentWarpState(cursor)){
+		if (!info->BufferCurrentWarpState(cursor)) {
 			return false;
 		}
 		cursor += info->GetIterationWarpBytesize();
@@ -700,13 +715,13 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferPreviousInterest
 	if (iterationCursor == 0) { return false; } //at beginning of stream
 	if (iterationCursor == 1) {
 		for (std::shared_ptr<InterestRegionInfo> info: interestRegionInfos) {
-			if(!info->SeekPrevious()){ return false;}
+			if (!info->SeekPrevious()) { return false; }
 			cursor += info->GetIterationWarpBytesize();
 			iterationCursor = info->GetIterationCursor();
 		}
-	}else{
+	} else {
 		for (std::shared_ptr<InterestRegionInfo> info: interestRegionInfos) {
-			if(!info->SeekPrevious() || !info->SeekPrevious() || !info->BufferCurrentWarpState(cursor)){
+			if (!info->SeekPrevious() || !info->SeekPrevious() || !info->BufferCurrentWarpState(cursor)) {
 				return false;
 			}
 			cursor += info->GetIterationWarpBytesize();
@@ -744,7 +759,6 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ClearHighlights() {
 	this->highlights.Clear();
 }
-
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -800,7 +814,8 @@ void
 ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SaveCurrentWarpState() {
 	if (isLoading) {
 		throw std::runtime_error(
-				"Attempting to save region made for loading (not allowed). Use alternative constructor.");
+				"Attempting to save region made for loading (not allowed). Use alternative constructor.["  __FILE__  ": " +
+				std::to_string(__LINE__) + "]");
 	}
 
 	ofStream.write(reinterpret_cast<const char* >(&iterationCursor), sizeof(unsigned int));
@@ -828,7 +843,10 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SaveCur
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool
 ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::BufferCurrentWarpState(void* externalBuffer) {
-	if (isSaving) { throw std::runtime_error("Attempting to load while saving (not allowed)."); }
+	if (isSaving) {
+		throw std::runtime_error(
+				"Attempting to load while saving (not allowed).["  __FILE__  ": " + std::to_string(__LINE__) + "]");
+	}
 	if (ifStream.peek() == EOF) {
 		std::cout << "At end of warp file." << std::endl;
 		return false;
@@ -843,9 +861,12 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::BufferC
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SeekPrevious() {
-	if (isSaving) { throw std::runtime_error("Attempting to load while saving (not allowed)."); }
+	if (isSaving) {
+		throw std::runtime_error(
+				"Attempting to load while saving (not allowed).["  __FILE__  ": " + std::to_string(__LINE__) + "]");
+	}
 	if (iterationCursor == 0) { return false; }
-	if(ifStream.eof()){
+	if (ifStream.eof()) {
 		ifStream.clear();
 	}
 	ifStream.seekg(-1 * (voxelCount * 2 * sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
@@ -861,7 +882,9 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::Interes
 		parent(parent) {
 
 	voxelCount = 0;
-	if (!ifStream) throw std::runtime_error("Could not open " + path.string() + " for reading.");
+	if (!ifStream)
+		throw std::runtime_error(
+				"Could not open " + path.string() + " for reading. ["  __FILE__  ": " + std::to_string(__LINE__) + "]");
 	hashBlockIds.clear();
 	//read region header
 	ifStream.read(reinterpret_cast<char*>(&centerHashBlockId), sizeof(unsigned int));
@@ -896,7 +919,9 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::Rewrite() {
 	ofStream.close();
 	ofStream = std::ofstream(path.c_str(), std::ios::binary | std::ios::out);
-	if (!ofStream) throw std::runtime_error("Could not open " + path.string() + " for writing");
+	if (!ofStream)
+		throw std::runtime_error(
+				"Could not open " + path.string() + " for writing. ["  __FILE__  ": " + std::to_string(__LINE__) + "]");
 	//write region header
 	ofStream.write(reinterpret_cast<const char* >(&centerHashBlockId), sizeof(unsigned int));
 	size_t hashBlockCount = hashBlockIds.size();

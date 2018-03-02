@@ -31,13 +31,13 @@ int main(int argc, const char* argv[]) {
 				("directory,d",
 				 bpo::value<std::string>()->default_value("/media/algomorph/Data/Reconstruction/debug_output/scene"),
 				 "Directory where to load the SDF scene from.")
-				("show_non_interest, sni", bpo::bool_switch(&showNonInterestCanonicalVoxels),
+				("show_non_interest,sni", bpo::bool_switch(&showNonInterestCanonicalVoxels),
 				 "Show non-interest canonical voxels on startup.")
-				("show_live, sl", bpo::bool_switch(&showLiveVoxels),
+				("show_live,sl", bpo::bool_switch(&showLiveVoxels),
 				 "Show live voxels on startup.")
-				("hide_interest, hcr", bpo::bool_switch(&hideInterestCanonicalRegions),
+				("hide_interest,hcr", bpo::bool_switch(&hideInterestCanonicalRegions),
 				 "Hide interest canonical voxels on startup.")
-				("initial_focus_coord, ifc", bpo::value<std::vector<int>>()->multitoken(),
+				("initial_focus_coord,ifc", bpo::value<std::vector<int>>()->multitoken(),
 				 "Coordinate of voxel where to focus on startup. Must follow format:\n x y z\n, all integers.")
 				;
 

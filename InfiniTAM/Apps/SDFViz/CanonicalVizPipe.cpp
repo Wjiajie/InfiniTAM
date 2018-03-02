@@ -27,6 +27,7 @@
 
 //local
 #include "CanonicalVizPipe.h"
+#include "SDFVizGlobalDefines.h"
 
 //DEBUG
 template<typename T>
@@ -41,7 +42,8 @@ CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& negativeNonInter
                                    const std::array<double, 4>& positiveNonInterestVoxelColor,
                                    const std::array<double, 4>& negativeInterestVoxelColor,
                                    const std::array<double, 4>& positiveInterestVoxelColor,
-                                   const std::array<double, 4>& highlightVoxelColor, const std::array<double, 3>& hashBlockEdgeColor,
+                                   const std::array<double, 4>& highlightVoxelColor,
+                                   const std::array<double, 3>& hashBlockEdgeColor,
                                    int frameIx) :
 		SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex>(
 				negativeNonInterestVoxelColor, positiveNonInterestVoxelColor, hashBlockEdgeColor),
@@ -112,9 +114,9 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 		const double halfBlock = 0.0;
 
 		//draw hash block
-		hashBlockPoints->InsertNextPoint(currentBlockPositionVoxels.x + halfBlock,
-		                                 currentBlockPositionVoxels.y + halfBlock,
-		                                 currentBlockPositionVoxels.z + halfBlock);
+		hashBlockPoints->InsertNextPoint((currentBlockPositionVoxels.x + halfBlock),
+		                                 -(currentBlockPositionVoxels.y + halfBlock),
+		                                 -(currentBlockPositionVoxels.z + halfBlock));
 		totalVoxelCount += SDF_BLOCK_SIZE3;
 		if (inInterestRegion) continue;
 
@@ -129,8 +131,8 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 					float voxelScale = COMPUTE_VOXEL_SCALE(voxel);
 					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
 					nonInterestVoxelPoints->InsertNextPoint(originalPositionVoxels.x,
-					                                        originalPositionVoxels.y,
-					                                        originalPositionVoxels.z);
+					                                        -(originalPositionVoxels.y),
+					                                        -(originalPositionVoxels.z));
 					nonInterestScaleAttribute->InsertNextValue(voxelScale);
 					nonInterestColorAttribute->InsertNextValue(voxelColor);
 
@@ -159,18 +161,22 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 					int voxelColor;
 					if (highlights.Contains(hash, locId, frameIx)) {
 						voxelColor = 2;
-						const std::vector<ITMHighlightIterationInfo> info = *(highlights.GetArrayAt(hash, locId,frameIx));
-						highlightIndexes.InsertOrdered(hash,locId,frameIx,currentInterestPointIndex);
-					} else if (highlightByNeighbor.Contains(hash, locId, frameIx)){
-						const std::tuple<int,int> highlightCoords = *highlightByNeighbor.GetValueAt(hash,locId, frameIx);
-						highlightNeighborIndexes.InsertOrdered(std::get<0>(highlightCoords),std::get<1>(highlightCoords), frameIx, currentInterestPointIndex);
+						const std::vector<ITMHighlightIterationInfo> info = *(highlights.GetArrayAt(hash, locId,
+						                                                                            frameIx));
+						highlightIndexes.InsertOrdered(hash, locId, frameIx, currentInterestPointIndex);
+					} else if (highlightByNeighbor.Contains(hash, locId, frameIx)) {
+						const std::tuple<int, int> highlightCoords = *highlightByNeighbor.GetValueAt(hash, locId,
+						                                                                             frameIx);
+						highlightNeighborIndexes.InsertOrdered(std::get<0>(highlightCoords),
+						                                       std::get<1>(highlightCoords), frameIx,
+						                                       currentInterestPointIndex);
 					} else {
 						voxelColor = voxel.sdf < 0.0f ? 0 : 1;
 					}
 
 					interestVoxelPoints->InsertNextPoint(originalPositionVoxels.x,
-					                                     originalPositionVoxels.y,
-					                                     originalPositionVoxels.z);
+					                                     -originalPositionVoxels.y,
+					                                     -originalPositionVoxels.z);
 
 					interestScaleAttribute->InsertNextValue(voxelScale);
 					interestColorAttribute->InsertNextValue(voxelColor);
@@ -228,8 +234,8 @@ void CanonicalVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
 		}
 		//use 1st 3-float field out of 2 for the warp buffer entry
 		pointRawData[iVoxel * 3 + 0] = initialPointRawData[iVoxel * 3 + 0] + warpRawData[iVoxel * 6 + 0];
-		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] + warpRawData[iVoxel * 6 + 1];
-		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] + warpRawData[iVoxel * 6 + 2];
+		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] - warpRawData[iVoxel * 6 + 1];
+		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] - warpRawData[iVoxel * 6 + 2];
 	}
 	voxelPolydata->Modified();
 }
@@ -242,10 +248,11 @@ void CanonicalVizPipe::SetInterestRegionInfo(std::vector<int> interestRegionHash
 		interestRegionHashSet.insert(hash);
 	}
 	auto highlightArrays = highlights.GetArrays();
-	for (auto highlightArray : highlightArrays){
+	for (auto highlightArray : highlightArrays) {
 		ITMHighlightIterationInfo& info = highlightArray[0];
-		for(auto neighbor : info.neighbors){
-			this->highlightByNeighbor.InsertOrdered(neighbor.hash,neighbor.localId,frameIx,std::make_tuple(info.hash, info.localId));
+		for (auto neighbor : info.neighbors) {
+			this->highlightByNeighbor.InsertOrdered(neighbor.hash, neighbor.localId, frameIx,
+			                                        std::make_tuple(info.hash, info.localId));
 		}
 	}
 	interestRegionHashesAreSet = true;
@@ -282,8 +289,8 @@ void CanonicalVizPipe::UpdateInterestRegionsFromBuffers(void* buffer) {
 	for (int iVoxel = 0; iVoxel < voxels->GetNumberOfPoints(); iVoxel++) {
 		//use 1st 3-float field out of 2 for the warp buffer entry
 		pointRawData[iVoxel * 3 + 0] = initialPointRawData[iVoxel * 3 + 0] + warpRawData[iVoxel * 6 + 0];
-		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] + warpRawData[iVoxel * 6 + 1];
-		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] + warpRawData[iVoxel * 6 + 2];
+		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] - warpRawData[iVoxel * 6 + 1];
+		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] - warpRawData[iVoxel * 6 + 2];
 	}
 	interestVoxelPolydata->Modified();
 }
@@ -303,16 +310,18 @@ void CanonicalVizPipe::SetUpHighlightSDFColorLookupTable(vtkSmartPointer<vtkLook
 
 Vector3d CanonicalVizPipe::GetHighlightPosition(int hash, int locId) {
 	Vector3d pos;
-	this->interestVoxelPolydata->GetPoints()->GetPoint((*this->highlightIndexes.GetValueAt(hash, locId, frameIx)), pos.values);
+	this->interestVoxelPolydata->GetPoints()->GetPoint((*this->highlightIndexes.GetValueAt(hash, locId, frameIx)),
+	                                                   pos.values);
 	return pos;
 }
-std::vector<Vector3d> CanonicalVizPipe::GetHighlightNeighborPositions(int hash, int locId){
+
+std::vector<Vector3d> CanonicalVizPipe::GetHighlightNeighborPositions(int hash, int locId) {
 	std::vector<Vector3d> positions;
 	vtkPoints* points = this->interestVoxelPolydata->GetPoints();
-	const std::vector<int> indexes = *this->highlightNeighborIndexes.GetArrayAt(hash,locId,frameIx);
-	for (int iNeighbor = 0; iNeighbor < indexes.size(); iNeighbor++){
+	const std::vector<int> indexes = *this->highlightNeighborIndexes.GetArrayAt(hash, locId, frameIx);
+	for (int iNeighbor = 0; iNeighbor < indexes.size(); iNeighbor++) {
 		Vector3d pos;
-		points->GetPoint(indexes[iNeighbor],pos.values);
+		points->GetPoint(indexes[iNeighbor], pos.values);
 		positions.push_back(pos);
 	}
 	return positions;

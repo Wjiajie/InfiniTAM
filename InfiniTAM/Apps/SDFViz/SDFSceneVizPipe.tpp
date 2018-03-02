@@ -29,7 +29,7 @@
 //ITMLib
 #include "../../ITMLib/Utils/ITMLibSettings.h"
 #include "../../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
-
+#include "SDFVizGlobalDefines.h"
 
 
 template<typename TVoxel, typename TIndex>
@@ -59,7 +59,7 @@ SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(std::array<double, 4> negativeS
 			&settings->sceneParams, settings->swappingMode ==
 			                        ITMLibSettings::SWAPPINGMODE_ENABLED, settings->GetMemoryType());
 	// Create the color maps
-	SetUpSDFColorLookupTable(voxelColorLookupTable,negativeSDFVoxelColor.data(),positiveSDFVoxelColor.data());
+	SetUpSDFColorLookupTable(voxelColorLookupTable, negativeSDFVoxelColor.data(), positiveSDFVoxelColor.data());
 	delete settings;
 }
 
@@ -99,14 +99,12 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 		//position of the current entry in 3D space
 		Vector3i currentBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 
-		//_DEBUG
-		//const double halfBlock = SDF_BLOCK_SIZE * maxVoxelDrawSize / 2;
-		const double halfBlock = 0.0;
+		const double centerOffset = -0.5;
 
 		//draw hash block
-		hashBlockPoints->InsertNextPoint(currentBlockPositionVoxels.x + halfBlock,
-		                                 currentBlockPositionVoxels.y + halfBlock,
-		                                 currentBlockPositionVoxels.z + halfBlock);
+		hashBlockPoints->InsertNextPoint((currentBlockPositionVoxels.x + centerOffset),
+		                                 -(currentBlockPositionVoxels.y + centerOffset),
+		                                 -(currentBlockPositionVoxels.z + centerOffset));
 
 		TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
@@ -120,8 +118,8 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 					float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
 
 					points->InsertNextPoint(originalPositionVoxels.x,
-					                        originalPositionVoxels.y,
-					                        originalPositionVoxels.z);
+					                        -originalPositionVoxels.y,
+					                        -originalPositionVoxels.z);
 
 					scaleAttribute->InsertNextValue(voxelScale);
 					colorAttribute->InsertNextValue(voxelColor);
@@ -145,7 +143,8 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 }
 
 template<typename TVoxel, typename TIndex>
-void SDFSceneVizPipe<TVoxel, TIndex>::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry, vtkAlgorithmOutput* hashBlockSourceGeometry) {
+void SDFSceneVizPipe<TVoxel, TIndex>::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
+                                                      vtkAlgorithmOutput* hashBlockSourceGeometry) {
 	PreparePointsForRendering();
 
 	// scene statistics

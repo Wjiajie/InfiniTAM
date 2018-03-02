@@ -126,6 +126,8 @@ private:
 	//Holds warp & warp update state for the canonical scene
 	vtkSmartPointer<vtkFloatArray> allWarpBuffer;
 	vtkSmartPointer<vtkFloatArray> interestWarpBuffer;
+	bool hasWarpIterationInfo = true;
+	bool hasHighlightInfo = false;
 	//frame that we're loading scene & warps for
 	int frameIndex;
 	//to keep track of iteration number in the optimization
@@ -169,4 +171,6 @@ private:
 	void MoveFocusToVoxelAt(Vector3d absoluteCoordinates);
 	void RefocusAtCurrentHighlight();
 	void ToggleInterestVoxelVisibility();
+	void DecreaseLiveVoxelOpacity();
+	void IncreaseLiveVoxelOpacity();
 };

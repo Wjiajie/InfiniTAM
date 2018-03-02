@@ -53,6 +53,7 @@
 #include "../../ITMLib/Utils/ITMSceneLogger.h"
 #include "../../ITMLib/Utils/ITMLibSettings.h"
 #include "../../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
+#include "SDFVizGlobalDefines.h"
 
 //** public **
 
@@ -79,7 +80,7 @@ SDFViz::SDFViz(std::string pathToScene, bool showNonInterestCanonicalVoxels, boo
 		              liveHashBlockEdgeColor),
 		highlightVisualizer(),
 		iterationIndicator(vtkSmartPointer<vtkTextActor>::New()),
-		iterationIndex(0){
+		iterationIndex(0) {
 	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(pathToScene,
 	                                                                                 canonicalScenePipe.GetScene(),
 	                                                                                 liveScenePipe.GetScene());
@@ -88,11 +89,16 @@ SDFViz::SDFViz(std::string pathToScene, bool showNonInterestCanonicalVoxels, boo
 	DrawIterationCounter();
 	//read scenes from disk
 	sceneLogger->LoadScenesCompact();
-	sceneLogger->LoadHighlights(false,"continuous");
-	sceneLogger->SetUpInterestRegionsForLoading();
-	sceneLogger->StartLoadingWarpState(frameIndex);
-	canonicalScenePipe.SetFrameIndex(frameIndex);
-	InitializeWarpBuffers();
+	hasHighlightInfo = sceneLogger->LoadHighlights(false, "continuous");
+	if (hasHighlightInfo) {
+		sceneLogger->SetUpInterestRegionsForLoading();
+	}
+	hasWarpIterationInfo = sceneLogger->StartLoadingWarpState(frameIndex);
+	if (hasWarpIterationInfo) {
+		canonicalScenePipe.SetFrameIndex(frameIndex);
+		InitializeWarpBuffers();
+	}
+
 
 	//Individual voxel shape
 	vtkSmartPointer<vtkSphereSource> sphere = vtkSmartPointer<vtkSphereSource>::New();
@@ -128,12 +134,17 @@ SDFViz::SDFViz(std::string pathToScene, bool showNonInterestCanonicalVoxels, boo
 	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(!hideInterestCanonicalRegions);
 
 	// set up initial camera position & orientation
-	if(useInitialCoords){
+
+	if (useInitialCoords) {
 		MoveFocusToVoxelAt(initialCoords.toDouble());
-	}else{
-		currentHighlight = highlights.GetFirstArray();
-		RefocusAtCurrentHighlight();
-		RefocusAtCurrentHighlight();//double call as work-around for bug
+	} else {
+		if (hasHighlightInfo) {
+			currentHighlight = highlights.GetFirstArray();
+			RefocusAtCurrentHighlight();
+			RefocusAtCurrentHighlight();//double call as work-around for bug
+		} else {
+			sdfRenderer->ResetCamera();
+		}
 	}
 
 }
@@ -156,7 +167,14 @@ void SDFViz::InitializeRendering() {
 	sdfRenderer = vtkSmartPointer<vtkRenderer>::New();
 	topRenderer = vtkSmartPointer<vtkRenderer>::New();
 
-	sdfRenderer->SetBackground(0.0, 0.0, 0.0);
+//set up legend background
+	vtkSmartPointer<vtkNamedColors> colors =
+			vtkSmartPointer<vtkNamedColors>::New();
+
+	double background[4];
+	//colors->GetColor("black", background);
+	colors->GetColor("light_grey", background);;
+	sdfRenderer->SetBackground(background);
 
 	renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
 	renderWindow->SetSize(renderWindow->GetScreenSize());
@@ -182,6 +200,7 @@ void SDFViz::InitializeRendering() {
 	renderWindowInteractor->SetInteractorStyle(interactorStyle);
 	renderWindowInteractor->SetRenderWindow(renderWindow);
 
+
 }
 
 bool SDFViz::NextNonInterestWarps() {
@@ -203,7 +222,7 @@ bool SDFViz::PreviousNonInterestWarps() {
 }
 
 bool SDFViz::NextInterestWarps() {
-	if(sceneLogger->BufferCurrentInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0))){
+	if (sceneLogger->BufferCurrentInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0))) {
 		UpdateIteration(sceneLogger->GetIterationCursor());
 	};
 	canonicalScenePipe.UpdateInterestRegionsFromBuffers(this->interestWarpBuffer->GetVoidPointer(0));
@@ -212,8 +231,8 @@ bool SDFViz::NextInterestWarps() {
 	const ITMHighlightIterationInfo info = (*currentHighlight)[iterationIndex];
 	Vector3d cameraRight = SDFViz::ComputeCameraRightVector(sdfRenderer->GetActiveCamera());
 	Vector3d position = canonicalScenePipe.GetHighlightPosition(info.hash, info.localId);
-	std::vector<Vector3d> neighborPositions = canonicalScenePipe.GetHighlightNeighborPositions(info.hash,info.localId);
-	highlightVisualizer.SetData(position,info,neighborPositions,cameraRight);
+	std::vector<Vector3d> neighborPositions = canonicalScenePipe.GetHighlightNeighborPositions(info.hash, info.localId);
+	highlightVisualizer.SetData(position, info, neighborPositions, cameraRight);
 
 	renderWindow->Render();
 }
@@ -227,8 +246,8 @@ bool SDFViz::PreviousInterestWarps() {
 	const ITMHighlightIterationInfo info = (*currentHighlight)[iterationIndex];
 	Vector3d cameraRight = SDFViz::ComputeCameraRightVector(sdfRenderer->GetActiveCamera());
 	Vector3d position = canonicalScenePipe.GetHighlightPosition(info.hash, info.localId);
-	std::vector<Vector3d> neighborPositions = canonicalScenePipe.GetHighlightNeighborPositions(info.hash,info.localId);
-	highlightVisualizer.SetData(position,info,neighborPositions,cameraRight);
+	std::vector<Vector3d> neighborPositions = canonicalScenePipe.GetHighlightNeighborPositions(info.hash, info.localId);
+	highlightVisualizer.SetData(position, info, neighborPositions, cameraRight);
 
 	renderWindow->Render();
 }
@@ -258,12 +277,15 @@ void SDFViz::DrawLegend() {
 	legend->GetPosition2Coordinate()->SetCoordinateSystemToView();
 	legend->GetPosition2Coordinate()->SetValue(1.0, -0.5);
 
+	legend->UseBackgroundOn();
+
 	//set up legend background
 	vtkSmartPointer<vtkNamedColors> colors =
 			vtkSmartPointer<vtkNamedColors>::New();
-	legend->UseBackgroundOn();
+
 	double background[4];
-	colors->GetColor("black", background);
+	//colors->GetColor("black", background);
+	colors->GetColor("light_grey", background);
 	legend->SetBackgroundColor(background);
 
 	sdfRenderer->AddActor(legend);
@@ -311,7 +333,8 @@ void SDFViz::ToggleLiveVoxelVisibility() {
 }
 
 void SDFViz::ToggleInterestVoxelVisibility() {
-	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(!canonicalScenePipe.GetInterestVoxelActor()->GetVisibility());
+	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(
+			!canonicalScenePipe.GetInterestVoxelActor()->GetVisibility());
 	renderWindow->Render();
 }
 
@@ -343,10 +366,23 @@ void SDFViz::IncreaseCanonicalVoxelOpacity() {
 	renderWindow->Render();
 }
 
-void SDFViz::MoveFocusToHighlightAt(int hash, int localId){
+
+void SDFViz::DecreaseLiveVoxelOpacity() {
+	liveScenePipe.GetVoxelActor()->GetProperty()->SetOpacity(
+			std::max(0.0, liveScenePipe.GetVoxelActor()->GetProperty()->GetOpacity() - 0.05));
+	renderWindow->Render();
+}
+
+void SDFViz::IncreaseLiveVoxelOpacity() {
+	liveScenePipe.GetVoxelActor()->GetProperty()->SetOpacity(
+			std::max(0.0, liveScenePipe.GetVoxelActor()->GetProperty()->GetOpacity() + 0.05));
+	renderWindow->Render();
+}
+
+void SDFViz::MoveFocusToHighlightAt(int hash, int localId) {
 	Vector3d position = canonicalScenePipe.GetHighlightPosition(hash, localId);
-	std::vector<Vector3d> neighborPositions = canonicalScenePipe.GetHighlightNeighborPositions(hash,localId);
-	const ITMHighlightIterationInfo info = (*highlights.GetArrayAt(hash,localId,frameIndex))[iterationIndex];
+	std::vector<Vector3d> neighborPositions = canonicalScenePipe.GetHighlightNeighborPositions(hash, localId);
+	const ITMHighlightIterationInfo info = (*highlights.GetArrayAt(hash, localId, frameIndex))[iterationIndex];
 
 	std::cout << "Now viewing highlight at hash " << hash << ", voxel "
 	          << localId << " in the canonical frame." << std::endl;
@@ -358,43 +394,44 @@ void SDFViz::MoveFocusToHighlightAt(int hash, int localId){
 
 	//TODO: bug -- theoretically, needs to be done after camera repositioning, but that doesn't work for some obscure reason -Greg
 	Vector3d cameraRight = SDFViz::ComputeCameraRightVector(sdfRenderer->GetActiveCamera());
-	highlightVisualizer.SetData(position,info,neighborPositions,cameraRight);
+	highlightVisualizer.SetData(position, info, neighborPositions, cameraRight);
 	MoveFocusToVoxelAt(position);
 	renderWindow->Render();
 }
+
 void SDFViz::MoveFocusToVoxelAt(Vector3d absoluteCoordinates) {
 	sdfRenderer->GetActiveCamera()->SetFocalPoint(absoluteCoordinates.values);
-	sdfRenderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
-	absoluteCoordinates.x -= 0.9;
-	absoluteCoordinates.y -= 0.5;
-	absoluteCoordinates.z -= 1.0;
+	sdfRenderer->GetActiveCamera()->SetViewUp(0.0, 1.0, 0.0);
+	absoluteCoordinates.x += 0.9;
+	absoluteCoordinates.y += 0.5;
+	absoluteCoordinates.z += 1.0;
 
 	sdfRenderer->GetActiveCamera()->SetPosition(absoluteCoordinates.values);
 }
 
-void SDFViz::RefocusAtCurrentHighlight(){
+void SDFViz::RefocusAtCurrentHighlight() {
 	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[iterationIndex];
-	MoveFocusToHighlightAt(highlightNew.hash,highlightNew.localId);
+	MoveFocusToHighlightAt(highlightNew.hash, highlightNew.localId);
 }
 
 void SDFViz::MoveFocusToNextHighlight() {
 	const ITMHighlightIterationInfo& highlightOld = (*currentHighlight)[iterationIndex];
 	currentHighlight = highlights.GetArrayAfter(highlightOld.hash, highlightOld.localId, highlightOld.frame);
 	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[iterationIndex];
-	MoveFocusToHighlightAt(highlightNew.hash,highlightNew.localId);
+	MoveFocusToHighlightAt(highlightNew.hash, highlightNew.localId);
 }
 
 void SDFViz::MoveFocusToPreviousHighlight() {
 	const ITMHighlightIterationInfo& highlightOld = (*currentHighlight)[iterationIndex];
 	currentHighlight = highlights.GetArrayBefore(highlightOld.hash, highlightOld.localId, highlightOld.frame);
 	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[iterationIndex];
-	MoveFocusToHighlightAt(highlightNew.hash,highlightNew.localId);
+	MoveFocusToHighlightAt(highlightNew.hash, highlightNew.localId);
 }
 
 void SDFViz::DrawDummyMarkers() {
 	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-	points->InsertNextPoint(-500.0, -500.0,-500.0);
-	points->InsertNextPoint(500.0,500.0,500.0);
+	points->InsertNextPoint(-500.0, -500.0, -500.0);
+	points->InsertNextPoint(500.0, 500.0, 500.0);
 	vtkSmartPointer<vtkPolyData> dummyPolyData = vtkSmartPointer<vtkPolyData>::New();
 	dummyPolyData->SetPoints(points);
 	vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter =
@@ -412,7 +449,7 @@ void SDFViz::DrawDummyMarkers() {
 			vtkSmartPointer<vtkActor>::New();
 	actor->SetMapper(mapper);
 	actor->GetProperty()->SetPointSize(1);
-	actor->GetProperty()->SetColor(0.0,0.0,0.0);
+	actor->GetProperty()->SetColor(0.0, 0.0, 0.0);
 	topRenderer->AddActor(actor);
 }
 
@@ -422,11 +459,9 @@ Vector3d SDFViz::ComputeCameraRightVector(vtkCamera* camera) {
 	Vector3d viewRight;
 	camera->GetViewPlaneNormal(viewPlaneNormal.values);
 	camera->GetViewUp(viewUp.values);
-	vtkMath::Cross(viewUp.values, viewPlaneNormal.values,viewRight.values);
+	vtkMath::Cross(viewUp.values, viewPlaneNormal.values, viewRight.values);
 	return viewRight;
 }
-
-
 
 
 vtkStandardNewMacro(KeyPressInteractorStyle);
@@ -448,7 +483,7 @@ void KeyPressInteractorStyle::OnKeyPress() {
 			parent->sdfRenderer->GetActiveCamera()->GetPosition(x, y, z);
 			parent->sdfRenderer->GetActiveCamera()->GetFocalPoint(xFocalPoint, yFocalPoint, zFocalPoint);
 			parent->sdfRenderer->GetActiveCamera()->GetViewUp(xUpVector, yUpVector, zUpVector);
-			parent->sdfRenderer->GetActiveCamera()->GetClippingRange(dNear,dFar);
+			parent->sdfRenderer->GetActiveCamera()->GetClippingRange(dNear, dFar);
 			std::cout << "Camera:" << std::endl;
 			std::cout << "  Current position: " << x << ", " << y << ", " << z << std::endl;
 			std::cout << "  Current focal point: " << xFocalPoint << ", " << yFocalPoint << ", " << zFocalPoint
@@ -471,43 +506,73 @@ void KeyPressInteractorStyle::OnKeyPress() {
 			} else {
 				parent->ToggleLiveHashBlockVisibility();
 			}
-		} else if (key == "i"){
+		} else if (key == "i") {
 			//toggle interest region visibility
 			parent->ToggleInterestVoxelVisibility();
 		} else if (key == "period") {
-			std::cout << "Loading next iteration warp & updates." << std::endl;
-			if (parent->NextNonInterestWarps()) {
-				std::cout << "Next warps loaded and display updated." << std::endl;
-			} else {
-				std::cout << "Could not load next iteration warp & updates." << std::endl;
+			if (parent->hasWarpIterationInfo) {
+				std::cout << "Loading next iteration warp & updates." << std::endl;
+				if (parent->NextNonInterestWarps()) {
+					std::cout << "Next warps loaded and display updated." << std::endl;
+				} else {
+					std::cout << "Could not load next iteration warp & updates." << std::endl;
+				}
 			}
-
 		} else if (key == "comma") {
-			std::cout << "Loading previous iteration warp & updates." << std::endl;
-			if (parent->PreviousNonInterestWarps()) {
-				std::cout << "Previous warps loaded and display updated." << std::endl;
-			} else {
-				std::cout << "Could not load previous iteration warp & updates." << std::endl;
+			if  (parent->hasWarpIterationInfo){
+				std::cout << "Loading previous iteration warp & updates." << std::endl;
+				if (parent->PreviousNonInterestWarps()) {
+					std::cout << "Previous warps loaded and display updated." << std::endl;
+				} else {
+					std::cout << "Could not load previous iteration warp & updates." << std::endl;
+				}
 			}
 		} else if (key == "minus" || key == "KP_Subtract") {
-			parent->DecreaseCanonicalVoxelOpacity();
+			if (rwi->GetAltKey()) {
+				parent->DecreaseCanonicalVoxelOpacity();
+			}else{
+				parent->DecreaseLiveVoxelOpacity();
+			}
 		} else if (key == "equal" || key == "KP_Add") {
-			parent->IncreaseCanonicalVoxelOpacity();
+			if(rwi->GetAltKey()){
+				parent->IncreaseCanonicalVoxelOpacity();
+			}else{
+				parent->IncreaseLiveVoxelOpacity();
+			}
 		} else if (key == "bracketright") {
-			parent->NextInterestWarps();
-			std::cout << "Loading next interest voxel warps." << std::endl;
+			if (parent->hasHighlightInfo) {
+				parent->NextInterestWarps();
+				std::cout << "Loading next interest voxel warps." << std::endl;
+			}
 		} else if (key == "bracketleft") {
-			parent->PreviousInterestWarps();
-			std::cout << "Loading previous interest voxel warps." << std::endl;
+			if (parent->hasHighlightInfo) {
+				parent->PreviousInterestWarps();
+				std::cout << "Loading previous interest voxel warps." << std::endl;
+			}
 		} else if (key == "Prior") {
-			parent->MoveFocusToPreviousHighlight();
+			if (parent->hasHighlightInfo) {
+				parent->MoveFocusToPreviousHighlight();
+			} else {
+				parent->sdfRenderer->GetActiveCamera()->SetViewUp(0.0, 1.0, 0.0);
+				parent->renderWindow->Render();
+			}
 		} else if (key == "Next") {
-			parent->MoveFocusToNextHighlight();
+			if (parent->hasHighlightInfo) {
+				parent->MoveFocusToNextHighlight();
+			} else {
+				parent->sdfRenderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
+				parent->renderWindow->Render();
+			}
 		} else if (key == "Escape") {
 			rwi->TerminateApp();
 			std::cout << "Exiting application..." << std::endl;
-		} else if (key == "Home"){
-			parent->RefocusAtCurrentHighlight();
+		} else if (key == "Home") {
+			if (parent->hasHighlightInfo) {
+				parent->RefocusAtCurrentHighlight();
+			} else {
+				parent->sdfRenderer->ResetCamera();
+				parent->renderWindow->Render();
+			}
 		}
 
 
