@@ -37,7 +37,7 @@ namespace ITMLib
 			LIBMODE_BASIC,
 			LIBMODE_BASIC_SURFELS,
 			LIBMODE_LOOPCLOSURE,
-			LIBMODE_KILLING //for basic KillingFusion mode, refer to DOI 10.1109/CVPR.2017.581
+			LIBMODE_DYNAMIC //for basic KillingFusion mode, refer to DOI 10.1109/CVPR.2017.581
 		}LibMode;
 
 		/// Select the type of device to use
@@ -58,16 +58,18 @@ namespace ITMLib
 
 		const char *trackerConfig;
 
-		/// Further, scene specific parameters such as voxel size
+		/// Further, scene-specific parameters such as voxel size
 		ITMSceneParams sceneParams;
 		ITMSurfelSceneParams surfelSceneParams;
 
-		ITMLibSettings(void);
-		virtual ~ITMLibSettings(void) {}
+		const char *outputPath;
+
+		ITMLibSettings();
+		virtual ~ITMLibSettings(void) = default;
 
 		// Suppress the default copy constructor and assignment operator
-		ITMLibSettings(const ITMLibSettings&);
-		ITMLibSettings& operator=(const ITMLibSettings&);
+		ITMLibSettings(const ITMLibSettings&) = delete;
+		ITMLibSettings& operator=(const ITMLibSettings&) = delete;
 
 		MemoryDeviceType GetMemoryType() const;
 	};

@@ -6,9 +6,7 @@ using namespace ITMLib;
 #include <climits>
 #include <cmath>
 
-ITMLibSettings::ITMLibSettings(void)
-
-
+ITMLibSettings::ITMLibSettings()
 : sceneParams(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG
     //mu(m), maxW, voxel size(m), clipping min, clipping max, stopIntegratingAtMaxW
 	//sceneParams(0.02f, 100, 0.005f, 0.2f, 3.0f, false),//standard InfiniTAM values
@@ -50,7 +48,7 @@ ITMLibSettings::ITMLibSettings(void)
 	//libMode = LIBMODE_BASIC;
 	//libMode = LIBMODE_LOOPCLOSURE;
 	//libMode = LIBMODE_BASIC_SURFELS;
-	libMode = LIBMODE_KILLING;//_DEBUG
+	libMode = LIBMODE_DYNAMIC;//_DEBUG
 
 	//// Default ICP tracking
 	//trackerConfig = "type=icp,levels=rrrbb,minstep=1e-3,"
@@ -62,7 +60,8 @@ ITMLibSettings::ITMLibSettings(void)
 					  "outlierSpaceC=0.1,outlierSpaceF=0.004,"
 					  "numiterC=20,numiterF=50,tukeyCutOff=8,"
 					  "framesToSkip=20,framesToWeight=50,failureDec=20.0";
-
+	//By default, write to a State folder within the current directory
+	outputPath = "./State/";
 	//// For hybrid intensity+depth tracking:
 	//trackerConfig = "type=extended,levels=bbb,useDepth=1,useColour=1,"
 	//				  "colourWeight=0.3,minstep=1e-4,"
@@ -83,7 +82,7 @@ ITMLibSettings::ITMLibSettings(void)
 		trackerConfig = "extended,levels=rrbb,minstep=1e-4,outlierSpaceC=0.1,outlierSpaceF=0.004,numiterC=20,numiterF=20,tukeyCutOff=8,framesToSkip=0,framesToWeight=1,failureDec=20.0";
 	}
 	// Killing-constraint tracking
-	if(libMode == LIBMODE_KILLING)
+	if(libMode == LIBMODE_DYNAMIC)
 	{
 //		trackerConfig = "type=killing,levels=rrbb,useDepth=1,minstep=1e-4,"
 //				"outlierSpaceC=0.1,outlierSpaceF=0.004,"

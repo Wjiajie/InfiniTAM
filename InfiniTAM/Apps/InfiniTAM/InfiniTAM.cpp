@@ -224,7 +224,7 @@ try
 	case ITMLibSettings::LIBMODE_LOOPCLOSURE:
 		mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelIndex>(internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize());
 		break;
-	case ITMLibSettings::LIBMODE_KILLING:
+	case ITMLibSettings::LIBMODE_DYNAMIC:
 		mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize());
 		break;
 	default: 

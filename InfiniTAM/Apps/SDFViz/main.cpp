@@ -16,7 +16,8 @@
 #include "SDFViz.h"
 #include <boost/program_options.hpp>
 
-namespace bpo = boost::program_options;
+
+namespace po = boost::program_options;
 
 int main(int argc, const char* argv[]) {
 	try {
@@ -25,25 +26,25 @@ int main(int argc, const char* argv[]) {
 		bool showLiveVoxels = false;
 		bool hideInterestCanonicalRegions = false;
 
-		bpo::options_description description{"Options"};
+		po::options_description description{"Options"};
 		description.add_options()
 				("help,h", "Help screen")
 				("directory,d",
-				 bpo::value<std::string>()->default_value("/media/algomorph/Data/Reconstruction/debug_output/scene"),
+				 po::value<std::string>()->default_value("/media/algomorph/Data/Reconstruction/debug_output/scene"),
 				 "Directory where to load the SDF scene from.")
-				("show_non_interest,sni", bpo::bool_switch(&showNonInterestCanonicalVoxels),
+				("show_non_interest,sni", po::bool_switch(&showNonInterestCanonicalVoxels),
 				 "Show non-interest canonical voxels on startup.")
-				("show_live,sl", bpo::bool_switch(&showLiveVoxels),
+				("show_live,sl", po::bool_switch(&showLiveVoxels),
 				 "Show live voxels on startup.")
-				("hide_interest,hcr", bpo::bool_switch(&hideInterestCanonicalRegions),
+				("hide_interest,hcr", po::bool_switch(&hideInterestCanonicalRegions),
 				 "Hide interest canonical voxels on startup.")
-				("initial_focus_coord,ifc", bpo::value<std::vector<int>>()->multitoken(),
+				("initial_focus_coord,ifc", po::value<std::vector<int>>()->multitoken(),
 				 "Coordinate of voxel where to focus on startup. Must follow format:\n x y z\n, all integers.")
 				;
 
-		bpo::variables_map vm;
-		bpo::store(bpo::parse_command_line(argc, argv, description), vm);
-		bpo::notify(vm);
+		po::variables_map vm;
+		po::store(po::parse_command_line(argc, argv, description), vm);
+		po::notify(vm);
 
 		if (vm.count("help") ||
 		    //validate we have the right number of arguments to initial_focus_coord
@@ -61,7 +62,7 @@ int main(int argc, const char* argv[]) {
 			                   hideInterestCanonicalRegions, haveUserInitialCoordinate,initialCoords);
 			application.Run();
 		}
-	} catch (const bpo::error& ex) {
+	} catch (const po::error& ex) {
 		std::cerr << ex.what() << std::endl;
 	}
 }
