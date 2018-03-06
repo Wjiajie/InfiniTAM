@@ -29,11 +29,11 @@ INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseUVC.cmake)
 
 SET(sources
     InfiniTAM_bpo.cpp
-    UIEngine.cpp
+    UIEngine_BPO.cpp
 )
 
 SET(headers
-    UIEngine.h
+    UIEngine_BPO.h
     #utility/aux/3rd party
     prettyprint.hpp
 )

@@ -24,14 +24,40 @@
 namespace ITMLib {
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMSceneMotionTracker {
+public:
+//============================= CONSTRUCTORS / DESTRUCTORS =============================================================
+
+	explicit ITMSceneMotionTracker(const ITMSceneParams& params, std::string scenePath);
+
+//============================= MEMBER FUNCTIONS =======================================================================
+	/**
+	 * \brief Fuses the live scene into the canonical scene based on the motion warp of the canonical scene
+	 * \details Typically called after TrackMotion is called
+	 * \param canonicalScene the canonical voxel grid, representing the state at the beginning of the sequence
+	 * \param liveScene the live voxel grid, a TSDF generated from a single recent depth image
+	 */
+	virtual void
+	FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
+	virtual void
+	ApplyWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
+
+	void TrackMotion(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene,
+	                 bool recordWarpUpdates = false);
+
+
+	std::string GenerateCurrentFrameOutputPath() const;
+	int GetFrameIndex() const { return currentFrameIx; }
 protected:
 
+//============================= MEMBER FUNCTIONS =======================================================================
 	virtual float UpdateWarpField(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                              ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
 
 	virtual void AllocateNewCanonicalHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                                            ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
 
+
+//============================= MEMBER VARIABLES =======================================================================
 	//TODO -- make all of these parameters
 	const int maxIterationCount = 200;
 	const float maxVectorUpdateThresholdMeters = 0.0001f;//m //original
@@ -48,13 +74,11 @@ protected:
 
 	float maxVectorUpdateThresholdVoxels;
 
-	std::string baseOutputDirectory;
-	int iteration;
+	int iteration = 0;
 	int currentFrameIx = 0;
 
-
-
 	ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex> sceneLogger;
+	std::string baseOutputDirectory;
 
 #ifdef RECORD_CONTINOUS_HIGHLIGHTS
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> previouslyRecordedAnomalies;
@@ -64,28 +88,7 @@ protected:
 	std::ofstream energy_stat_file;
 #endif
 
-public:
-	explicit ITMSceneMotionTracker(const ITMSceneParams& params);
-
-	/**
-	 * \brief Fuses the live scene into the canonical scene based on the motion warp of the canonical scene
-	 * \details Typically called after TrackMotion is called
-	 * \param canonicalScene the canonical voxel grid, representing the state at the beginning of the sequence
-	 * \param liveScene the live voxel grid, a TSDF generated from a single recent depth image
-	 */
-	virtual void
-	FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
-
-	virtual void
-	ApplyWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
-
-	void TrackMotion(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene,
-		                 bool recordWarpUpdates = false);
-
-	int GetFrameIndex() const { return currentFrameIx; }
 private:
-	std::string GenerateCurrentFrameOutputPath() const;
-
 };
 
 

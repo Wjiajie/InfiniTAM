@@ -149,18 +149,9 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					bool hitLiveKnownVoxels;
 					Vector3f projectedPosition = canonicalVoxelPosition.toFloat() + canonicalVoxel.warp_t;
 
-#ifndef TRUNCATION_TREATMENT_DEBUG
-					liveSdf = interpolateTrilinearly(liveVoxels, liveHashTable, projectedPosition, liveCache,
-													 hitLiveNarrowBand);
-#else
-					//version 1
-//					liveSdf = InterpolateTrilinearly_SetTruncatedToVal_StruckNarrowBand(
-//							liveVoxels, liveHashTable, canonicalSdf, projectedPosition, liveCache, hitLiveNarrowBand);
-					//version 2
 					liveSdf = InterpolateTrilinearly_SetDefaultToVal_StruckChecks(
 							liveVoxels, liveHashTable, canonicalSdf, projectedPosition, liveCache,
 							hitLiveNarrowBand, hitLiveKnownVoxels);
-#endif
 
 					//almost no restriction -- Mira's case with addition of VOXEL_TRUNCATED flag checking
 					bool truncatedInCanonical = canonicalVoxel.flags == ITMLib::VOXEL_TRUNCATED;
@@ -242,25 +233,13 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						{
 
 #endif
-#ifdef OLD_LEVEL_SET_TERM
-							//This is jacobian of the live frame at the lookup (warped) position
-							ComputePerPointLiveJacobianAndHessian(canonicalVoxelPosition,
-																  warp, liveVoxels,
-																  liveHashTable, liveCache, liveSdf,
-																  liveSdfJacobian, warpedSdfHessian);
-#else
-#ifdef TRUNCATION_TREATMENT_DEBUG
+
 							_DEBUG_ComputePerPointLiveJacobian(canonicalVoxelPosition, warp, canonicalSdf,
 							                                   liveVoxels, liveHashTable, liveCache,
 							                                   liveSdf, liveSdfJacobian,
 							                                   liveSdf_Center_WarpForward);
-#else
-							ComputePerPointWarpedLiveJacobian
-									(canonicalVoxelPosition, warp,
-									 liveVoxels, liveHashTable, liveCache,
-									 liveSdf, liveSdfJacobian, liveSdf_Center_WarpForward);
-#endif
-#endif
+
+
 						}
 #ifdef USE_COLOR
 						else {
@@ -314,26 +293,13 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #endif
 					if (computeLevelSetTerm) {
 						//=================================== LEVEL SET TERM ===============================================
-#ifdef OLD_LEVEL_SET_TERM
-						float sdfJacobianNorm = length(liveSdfJacobian);
-						sdfJacobianNormMinusUnity = sdfJacobianNorm - unity;
-						deltaELevelSet =
-								sdfJacobianNormMinusUnity * (warpedSdfHessian * liveSdfJacobian) /
-								(sdfJacobianNorm + epsilon);
-#else
 
-#ifdef TRUNCATION_TREATMENT_DEBUG
 						Vector3f jacobianNormsAtWarpPlusOne;
 						_DEBUG_ComputeWarpedJacobianAndHessian(neighborWarps, canonicalVoxelPosition, canonicalSdf,
 						                                       liveSdf_Center_WarpForward, liveSdf, liveVoxels,
 						                                       liveHashTable, liveCache, warpedSdfJacobian,
 						                                       warpedSdfHessian);
 
-#else
-						ComputeWarpedJacobianAndHessian(neighborWarps, canonicalVoxelPosition,
-														liveSdf_Center_WarpForward, liveSdf, liveVoxels,
-														liveHashTable, liveCache, warpedSdfJacobian, warpedSdfHessian);
-#endif
 						float sdfJacobianNorm = length(warpedSdfJacobian);
 						sdfJacobianNormMinusUnity = sdfJacobianNorm - unity;
 
@@ -353,7 +319,6 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 							                              warpedSdfJacobian,
 							                              warpedSdfHessian);
 #endif
-#endif //OLD_LEVEL_SET_TERM
 #ifdef PRINT_ADDITIONAL_STATS
 						levelSetVoxelCount++;
 #endif
@@ -369,7 +334,6 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						}
 #endif
 					}
-
 
 					//=================================== KILLING TERM =================================================
 #ifdef PRINT_TIME_STATS
@@ -418,7 +382,6 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #ifdef PRINT_TIME_STATS
 					TOC(timeUpdateTermCompute);
 #endif
-					//_DEBUG
 #ifdef PRINT_ENERGY_STATS
 					//=================================== ENERGY =======================================================
 					// KillingTerm Energy
@@ -439,7 +402,6 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					const float weightKilling = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightKillingTerm;
 					const float weightLevelSet = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightLevelSetTerm;
 					const float learningRate = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::gradientDescentLearningRate;
-					//_DEBUG
 #if !defined(WARP_COMPUTE_MODE) || WARP_COMPUTE_MODE == WARP_COMPUTE_MODE_FULL
 					Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet + weightKilling * deltaEKilling;
 #elif WARP_COMPUTE_MODE == WARP_COMPUTE_MODE_NO_LEVEL_SET

@@ -6,7 +6,7 @@
 #include <string>
 
 //ITMLib
-#include "UIEngine.h"
+#include "UIEngine_BPO.h"
 
 #include "../../InputSource/OpenNIEngine.h"
 #include "../../InputSource/Kinect2Engine.h"
@@ -178,7 +178,7 @@ int main(int argc, char** argv) {
 						"Currently, either (4) or (5) can only be combined with (3), but NOT both at the same time."
 						" No other usage scenario takes them into account."
 				)
-				("output,o", po::value<std::string>()->default_value("./State/"), "Output directory, e.g.: ./State/");
+				("output,o", po::value<std::string>()->default_value("./Output"), "Output directory, e.g.: ./Output");
 		positional_arguments.add("calib_file", 1);
 		positional_arguments.add("input_file", 3);
 
@@ -204,8 +204,8 @@ int main(int argc, char** argv) {
 		//all initialized to empty string by default
 		std::string openniFilePath, rgbVideoFilePath, depthVideoFilePath, rgbImageFileMask, depthImageFileMask,
 				maskImageFileMask, imuInputPath;
-		int inputFileCount = static_cast<int>(vm.count("input_file"));
 		std::vector<std::string> inputFiles = vm["input_file"].as<std::vector<std::string>>();
+		auto inputFileCount = inputFiles.size();
 		switch (inputFileCount) {
 			case 0:
 				//no input files
@@ -215,10 +215,10 @@ int main(int argc, char** argv) {
 				openniFilePath = inputFiles[0];
 				break;
 			case 3:
+			default:
 				if (isPathMask(inputFiles[2])) { maskImageFileMask = inputFiles[2]; }
 				else { imuInputPath = inputFiles[2]; }
 			case 2:
-			default:
 				if (isPathMask(inputFiles[1]) && isPathMask(inputFiles[2])) {
 					rgbImageFileMask = inputFiles[0];
 					depthImageFileMask = inputFiles[1];
@@ -275,10 +275,10 @@ int main(int argc, char** argv) {
 				break;
 		}
 
-		UIEngine::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine, "./Files/Out",
+		UIEngine_BPO::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine, internalSettings->outputPath,
 		                                 internalSettings->deviceType);
-		UIEngine::Instance()->Run();
-		UIEngine::Instance()->Shutdown();
+		UIEngine_BPO::Instance()->Run();
+		UIEngine_BPO::Instance()->Shutdown();
 
 		delete mainEngine;
 		delete internalSettings;

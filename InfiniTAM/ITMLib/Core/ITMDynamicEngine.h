@@ -33,7 +33,7 @@ namespace ITMLib
 
 		ITMViewBuilder* viewBuilder;
 		ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>* denseMapper;
-		ITMTrackingController* trackingController;
+		ITMTrackingController* cameraTrackingController;
 
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
 		ITMScene<TVoxelLive, TIndex>* liveScene;

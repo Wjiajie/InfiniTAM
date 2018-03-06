@@ -15,12 +15,10 @@
 //  ================================================================
 #pragma once
 
-//========================= TEMPORARY FLAGS FOR DEBUGGING KILLING FUSION FEATURE =======================================
-
+//========================= TEMPORARY FLAGS FOR DEBUGGING DYNAMIC FUSION FEATURE =======================================
 #define _DEBUG
+
 #ifdef _DEBUG
-
-
 
 //#define USE_COLOR
 //*** FLAGS FOR MODES OF COMPUTING THE WARP ***
@@ -29,68 +27,15 @@
 #define WARP_COMPUTE_MODE_NO_KILLING 2
 #define WARP_COMPUTE_MODE_DATA_ONLY 3
 
-//#define OLD_LEVEL_SET_TERM //Old and seemingly incorrect way to compute the Level Set term
 #define TRUNCATION_TREATMENT_DEBUG
-
 
 #define WARP_COMPUTE_MODE WARP_COMPUTE_MODE_FULL
 //#define WARP_COMPUTE_MODE WARP_COMPUTE_MODE_NO_LEVEL_SET
 //#define WARP_COMPUTE_MODE WARP_COMPUTE_MODE_NO_KILLING
 //#define WARP_COMPUTE_MODE WARP_COMPUTE_MODE_DATA_ONLY
 
-
-
-//*** LOGGING FOR 3D VISUAL DEBUGGING***
-#define _LOGGER
-#ifdef _LOGGER
-
-//#define OSCILLATION_DETECTION
-
 #include "Utils/ITMSceneLogger.h"
-#define FRAME_OF_INTEREST 1
-#ifndef STRINGIFY
-#define STRINGIFY(x) #x
-#endif
-#define TOSTRING(x) STRINGIFY(x)
-#define SCENE_NAME "snoopy"
-#if WARP_COMPUTE_MODE == WARP_COMPUTE_MODE_FULL
-#define SCENE_POSTFIX "_all_terms"
-#elif WARP_COMPUTE_MODE == WARP_COMPUTE_MODE_NO_LEVEL_SET
-#define SCENE_POSTFIX "_no_level_set"
-#elif WARP_COMPUTE_MODE == WARP_COMPUTE_MODE_NO_KILLING
-#define SCENE_POSTFIX "_no_killing"
-#elif WARP_COMPUTE_MODE == WARP_COMPUTE_MODE_DATA_ONLY
-#define SCENE_POSTFIX "_data_only"
-#endif //WARP_COMPUTE_MODE
-#define SCENE_PATH "/media/algomorph/Data/Reconstruction/debug_output/" SCENE_NAME "/frame_" TOSTRING(FRAME_OF_INTEREST) SCENE_POSTFIX
 
-
-//#define SAVE_SCENE_DATA
-#ifdef SAVE_SCENE_DATA
-// =========================== Step 1 for sdf viz prep =================================================================
-//#define SAVE_VOXELS_AND_INDEX
-#ifdef SAVE_VOXELS_AND_INDEX
-#define SAVE_WARP
-#ifdef OSCILLATION_DETECTION
-#define LOG_HIGHLIGHTS
-#endif
-#else
-// =========================== Step 2 for sdf viz prep =================================================================
-// loads the scene at the frame and saves warps for interest regions
-#define LOG_INTEREST_REGIONS
-
-#ifdef LOG_INTEREST_REGIONS
-#define FILTER_HIGHLIGHTS
-#ifdef FILTER_HIGHLIGHTS
-#define HIGHLIGHT_MIN_RECURRENCES 2
-#endif
-#define RECORD_CONTINOUS_HIGHLIGHTS
-#endif //LOG INTEREST REGIONS
-#endif //SAVE_VOXELS_AND_INDEX
-#endif //SAVE SCENE DATA
-
-
-#endif //ifdef _LOGGER
 
 #include <opencv2/core/mat.hpp>
 

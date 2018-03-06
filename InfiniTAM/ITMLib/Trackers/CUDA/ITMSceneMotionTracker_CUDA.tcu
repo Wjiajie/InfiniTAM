@@ -74,15 +74,17 @@ float ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWar
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
-ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-                                                                           ITMScene<TVoxelLive, TIndex>* liveScene) {
+ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+		ITMScene<TVoxelLive, TIndex>* liveScene) {
 	DIEWITHEXCEPTION("Scene tracking iteration not yet implemented");
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CUDA(
-		const ITMSceneParams& params) :
-		ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params) {
+		const ITMSceneParams& params, std::string scenePath)
+		:
+		ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params, scenePath) {
 
 }
 

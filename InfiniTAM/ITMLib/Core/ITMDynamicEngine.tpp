@@ -51,9 +51,9 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(const IT
 	imuCalibrator = new ITMIMUCalibrator_iPad();
 	tracker = ITMTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, settings, lowLevelEngine, imuCalibrator,
 	                                             liveScene->sceneParams);
-	trackingController = new ITMTrackingController(tracker, settings);
+	cameraTrackingController = new ITMTrackingController(tracker, settings);
 
-	Vector2i trackedImageSize = trackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
+	Vector2i trackedImageSize = cameraTrackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
 
 	renderState_live = ITMRenderStateFactory<TIndex>::CreateRenderState(trackedImageSize, canonicalScene->sceneParams,
 	                                                                    memoryType);
@@ -89,7 +89,7 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::~ITMDynamicEngine() {
 	delete liveScene;
 
 	delete denseMapper;
-	delete trackingController;
+	delete cameraTrackingController;
 
 	delete tracker;
 	delete imuCalibrator;
@@ -278,7 +278,7 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
 
 	// tracking
 	ORUtils::SE3Pose oldPose(*(trackingState->pose_d));
-	if (trackingActive) trackingController->Track(trackingState, view);
+	if (trackingActive) cameraTrackingController->Track(trackingState, view);
 
 	ITMTrackingState::TrackingResult trackerResult = ITMTrackingState::TRACKING_GOOD;
 	switch (settings->behaviourOnFailure) {
@@ -319,8 +319,8 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
 			trackingState->pose_d->SetFrom(&keyframe.pose);
 
 			denseMapper->UpdateVisibleList(view, trackingState, liveScene, renderState_live, true);
-			trackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine, renderState_live);
-			trackingController->Track(trackingState, view);
+			cameraTrackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine, renderState_live);
+			cameraTrackingController->Track(trackingState, view);
 
 			trackerResult = trackingState->trackerResult;
 		}
@@ -340,7 +340,7 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
 		if (!didFusion) denseMapper->UpdateVisibleList(view, trackingState, liveScene, renderState_live);
 
 		// raycast to renderState_live for tracking and free visualisation
-		trackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine, renderState_live);
+		cameraTrackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine, renderState_live);
 
 		if (addKeyframeIdx >= 0) {
 			ORUtils::MemoryBlock<Vector4u>::MemoryCopyDirection memoryCopyDirection =

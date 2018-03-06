@@ -34,9 +34,11 @@ using namespace ITMLib;
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params) :
+ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params, std::string scenePath)
+		:
 		maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize),
-		sceneLogger(SCENE_PATH) {}
+		sceneLogger(""),
+		baseOutputDirectory(scenePath){}
 
 /**
  * \brief Tracks motion of voxels from canonical frame to live frame.
@@ -92,58 +94,21 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 				liveImgOut);
 	cv::Mat blank = cv::Mat::zeros(liveImg.rows, liveImg.cols, CV_8UC1);
 #endif
-#ifdef WRITE_ENERGY_STATS_TO_FILE
-	const std::string energy_stat_file_path = ENERGY_STATS_FILE_PATH;
-	energy_stat_file = std::ofstream(energy_stat_file_path.c_str(), std::ios_base::out);
+	//END _DEBUG
+	std::string currentFrameOutputPath = GenerateCurrentFrameOutputPath();
+	sceneLogger.SetPath(currentFrameOutputPath);//makes the folder as well if it doesn't exist
+	sceneLogger.SetScenes(canonicalScene, liveScene);
+
+	const std::string energyStatFilePath = currentFrameOutputPath + "/energy.txt";
+	energy_stat_file = std::ofstream(energyStatFilePath.c_str(), std::ios_base::out);
 	energy_stat_file << "data" << "," << "level_set" << "," << "smoothness" << ","
 	                 << "killing" << "," << "total" << std::endl;
-#endif
-	//END _DEBUG
 
 	if(recordWarpUpdates){
-
-		sceneLogger.SetScenes(canonicalScene, liveScene);
-	}
-
-#ifdef SAVE_VOXELS_AND_INDEX
-	if(currentFrameIx == FRAME_OF_INTEREST){
 		sceneLogger.SaveScenesCompact();
-#ifdef SAVE_WARP
-		sceneLogger.StartSavingWarpState(FRAME_OF_INTEREST);
-		sceneLogger.SaveCurrentWarpState();
-#endif
+		sceneLogger.StartSavingWarpState(currentFrameIx);
 	}
-#endif
-#ifdef LOAD_FRAME
-	if(currentFrameIx == frameOfInterest){
-		sceneLogger.LoadScenesCompact();
-		sceneLogger.StartLoadingWarpState();
-		while(sceneLogger.LoadNextWarpState()){};
-		sceneLogger.StopLoadingWarpState();
-	}
-#endif
-#ifdef LOG_INTEREST_REGIONS
-	if(currentFrameIx == FRAME_OF_INTEREST) {
-		sceneLogger.LoadScenesCompact();
-		sceneLogger.LoadHighlights();
-#ifdef FILTER_HIGHLIGHTS
-		sceneLogger.FilterHighlights(HIGHLIGHT_MIN_RECURRENCES);//only keep oscillations that occur for the same voxels more than N times
-		std::cout << "Highlights after filtering: " << std::endl;
-#endif
-		sceneLogger.PrintHighlights();
-#ifdef RECORD_CONTINOUS_HIGHLIGHTS
-		previouslyRecordedAnomalies = sceneLogger.GetHighlights();
-		sceneLogger.ClearHighlights();
-		sceneLogger.SetUpInterestRegionsForSaving(previouslyRecordedAnomalies);
-#else
-		sceneLogger.SetUpInterestRegionsForSaving();
-#endif
 
-
-	}
-#endif //LOG_INTEREST_REGIONS
-	//END DEBUG
-	//_DEBUG >>change iteration back from member variable to local variable
 	for (iteration = 0; maxVectorUpdate > maxVectorUpdateThresholdVoxels && iteration < maxIterationCount;
 	     iteration++) {
 		const std::string red("\033[0;31m");
@@ -178,46 +143,27 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		cv::imwrite(image_name, warpImgOut);
 #endif
 		//END _DEBUG
-
 		std::cout << red << "Iteration: " << iteration << reset;// << std::endl;
 		maxVectorUpdate = UpdateWarpField(canonicalScene, liveScene);
 		//START _DEBUG
-#ifdef SAVE_WARP
-		if(currentFrameIx == FRAME_OF_INTEREST){
+
+		if(recordWarpUpdates){
 			sceneLogger.SaveCurrentWarpState();
 		}
-#endif
-#ifdef LOG_INTEREST_REGIONS
-		if(currentFrameIx == FRAME_OF_INTEREST){
-			sceneLogger.SaveAllInterestRegionWarps();
-		}
-#endif
+
 		//END _DEBUG
 	}
-	//START _DEBUG
-	if (currentFrameIx == FRAME_OF_INTEREST) {
-#ifdef SAVE_WARP
+
+	if(recordWarpUpdates) {
 		sceneLogger.StopSavingWarpState();
-#endif
-#if defined(LOG_HIGHLIGHTS) || defined(RECORD_CONTINOUS_HIGHLIGHTS)
-		sceneLogger.PrintHighlights();
-#ifdef LOG_HIGHLIGHTS
-		sceneLogger.SaveHighlights();
-#elif defined(RECORD_CONTINOUS_HIGHLIGHTS)
-		sceneLogger.SaveHighlights("continuous");
-#endif
-#endif
 	}
 	currentFrameIx++;
-#ifdef WRITE_ENERGY_STATS_TO_FILE
 	energy_stat_file.close();
-#endif
-	//END _DEBUG
-//#define OLD_LEVEL_SET_TERM
+
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 std::string ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::GenerateCurrentFrameOutputPath() const {
-	return baseOutputDirectory + "/State/Frame_" + std::to_string(currentFrameIx);
+	return baseOutputDirectory + "/Frame_" + std::to_string(currentFrameIx);
 }
 

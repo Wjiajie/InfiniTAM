@@ -40,7 +40,7 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMappe
 	                 ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxelCanonical, TIndex>(settings->deviceType)
 	                 : NULL;
 	sceneMotionTracker = ITMTrackerFactory::MakeSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(
-			settings->deviceType, settings->sceneParams);
+			settings->deviceType, settings->sceneParams, settings->outputPath);
 	swappingMode = settings->swappingMode;
 }
 

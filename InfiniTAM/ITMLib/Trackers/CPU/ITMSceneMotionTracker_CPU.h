@@ -25,7 +25,7 @@ class ITMSceneMotionTracker_CPU :
 		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex> {
 public:
 
-	explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params);
+	explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath);
 	virtual ~ITMSceneMotionTracker_CPU();
 	void FuseFrame(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;
 	void ApplyWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;

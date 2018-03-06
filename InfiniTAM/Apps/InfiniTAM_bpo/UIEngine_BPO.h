@@ -16,9 +16,9 @@ namespace InfiniTAM
 {
 	namespace Engine
 	{
-		class UIEngine
+		class UIEngine_BPO
 		{
-			static UIEngine* instance;
+			static UIEngine_BPO* instance;
 
 			enum MainLoopAction
 			{
@@ -68,8 +68,8 @@ namespace InfiniTAM
 			InputSource::FFMPEGWriter *rgbVideoWriter;
 			InputSource::FFMPEGWriter *depthVideoWriter;
 		public:
-			static UIEngine* Instance(void) {
-				if (instance == NULL) instance = new UIEngine();
+			static UIEngine_BPO* Instance(void) {
+				if (instance == NULL) instance = new UIEngine_BPO();
 				return instance;
 			}
 

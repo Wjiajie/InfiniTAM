@@ -40,8 +40,8 @@ using namespace ITMLib;
 
 //========================================== CONSTRUCTORS AND DESTRUCTORS ================================================
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params)
-		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params),
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath)
+		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params, scenePath),
 		  warpedEntryAllocationType(new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
 		  canonicalEntryAllocationTypes(
 				  new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
