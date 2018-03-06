@@ -267,6 +267,9 @@ ITMTrackingState::TrackingResult
 ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Image* rgbImage,
                                                                     ITMShortImage* rawDepthImage,
                                                                     ITMIMUMeasurement* imuMeasurement) {
+	// debug behavior / recording
+	denseMapper->recordNextFrameWarps = this->recordNextFrameWarps;
+
 	// prepare image and turn it into a depth image
 	if (imuMeasurement == NULL) viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useBilateralFilter);
 	else viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useBilateralFilter, imuMeasurement);

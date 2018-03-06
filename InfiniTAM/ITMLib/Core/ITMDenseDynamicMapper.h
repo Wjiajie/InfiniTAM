@@ -32,6 +32,15 @@ class ITMDenseDynamicMapper {
 		ITMLibSettings::SwappingMode swappingMode;
 
 	public:
+	// ============================================ CONSTRUCTORS / DESTRUCTORS =========================================
+	/** \brief Constructor
+		Ommitting a separate image size for the depth images
+		will assume same resolution as for the RGB images.
+	*/
+	explicit ITMDenseDynamicMapper(const ITMLibSettings *settings);
+	~ITMDenseDynamicMapper();
+
+	// ========================================== MEMBER FUNCTIONS =====================================================
 		void ResetScene(ITMScene<TVoxelCanonical,TIndex> *scene) const;
 		void ResetLiveScene(ITMScene<TVoxelLive,TIndex> *live_scene) const;
 
@@ -59,12 +68,9 @@ class ITMDenseDynamicMapper {
 		/// Update the visible list (this can be called to update the visible list when fusion is turned off)
 		void UpdateVisibleList(const ITMView *view, const ITMTrackingState *trackingState, ITMScene<TVoxelLive, TIndex> *scene, ITMRenderState *renderState, bool resetVisibleList = false);
 
-		/** \brief Constructor
-		    Ommitting a separate image size for the depth images
-		    will assume same resolution as for the RGB images.
-		*/
-		explicit ITMDenseDynamicMapper(const ITMLibSettings *settings);
-		~ITMDenseDynamicMapper();
+	// =========================================== MEMBER VARIABLES ====================================================
+	// on next call to ProcessFrame, record the scenes before warp updatee, and then record the warp update
+	bool recordNextFrameWarps;
 
 };
 }//namespace ITMLib

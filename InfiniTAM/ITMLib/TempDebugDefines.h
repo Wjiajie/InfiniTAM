@@ -19,8 +19,8 @@
 
 #define _DEBUG
 #ifdef _DEBUG
-//*** FLAGS FOR HOW TO HANDLE OSCILLATIONS ***
-//#define OLD_UGLY_WAY //simply cuts down warp updates by half
+
+
 
 //#define USE_COLOR
 //*** FLAGS FOR MODES OF COMPUTING THE WARP ***
@@ -106,7 +106,7 @@
 //*** DEBUG OUTPUT MESSAGES FOR UPDATE WARP ON CPU ***
 
 //#define PRINT_TIME_STATS //-- needs rearranging of TICs and TOCs
-//#define PRINT_SINGLE_VOXEL_RESULT //Caution: very verbose!
+#define PRINT_SINGLE_VOXEL_RESULT //Caution: very verbose!
 #define PRINT_MAX_WARP_AND_UPDATE
 #define PRINT_ENERGY_STATS
 #define PRINT_ADDITIONAL_STATS
@@ -125,14 +125,6 @@
 #define TIC(var)
 #define TOC(var)
 #endif
-
-
-#ifdef OSCILLATION_DETECTION
-//#define OSCILLATION_TREATMENT
-#ifdef OSCILLATION_TREATMENT
-#define OLD_UGLY_WAY
-#endif
-#endif //OSCILLATION_DETECTION
 
 
 #ifdef PRINT_ENERGY_STATS

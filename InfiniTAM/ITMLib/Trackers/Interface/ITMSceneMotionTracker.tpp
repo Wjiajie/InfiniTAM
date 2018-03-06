@@ -21,6 +21,7 @@
 //_DEBUG (opencv)
 #include <opencv2/imgcodecs.hpp>
 #include <opencv/cv.hpp>
+
 #endif
 
 //local
@@ -35,8 +36,7 @@ using namespace ITMLib;
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params) :
 		maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize),
-		sceneLogger(SCENE_PATH)
-{}
+		sceneLogger(SCENE_PATH) {}
 
 /**
  * \brief Tracks motion of voxels from canonical frame to live frame.
@@ -50,8 +50,8 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracke
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-		ITMScene<TVoxelLive, TIndex>* liveScene) {
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
+		bool recordWarpUpdates) {
 
 	float maxVectorUpdate = std::numeric_limits<float>::infinity();
 	AllocateNewCanonicalHashBlocks(canonicalScene, liveScene);
@@ -81,7 +81,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	canonicalImg.convertTo(canonicalImgOut, CV_8UC1);
 	cv::cvtColor(canonicalImgOut, canonicalImgOut, cv::COLOR_GRAY2BGR);
 	cv::imwrite(ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolder + "canonical.png",
-	            canonicalImgOut);
+				canonicalImgOut);
 	cv::Mat liveImg =
 			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawLiveSceneImageAroundPoint(liveScene) *
 			255.0f;
@@ -89,21 +89,21 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	liveImg.convertTo(liveImgTemplate, CV_8UC1);
 	cv::cvtColor(liveImgTemplate, liveImgOut, cv::COLOR_GRAY2BGR);
 	cv::imwrite(ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolder + "live.png",
-	            liveImgOut);
+				liveImgOut);
 	cv::Mat blank = cv::Mat::zeros(liveImg.rows, liveImg.cols, CV_8UC1);
 #endif
 #ifdef WRITE_ENERGY_STATS_TO_FILE
 	const std::string energy_stat_file_path = ENERGY_STATS_FILE_PATH;
-	energy_stat_file = std::ofstream(energy_stat_file_path.c_str(),std::ios_base::out);
+	energy_stat_file = std::ofstream(energy_stat_file_path.c_str(), std::ios_base::out);
 	energy_stat_file << "data" << "," << "level_set" << "," << "smoothness" << ","
 	                 << "killing" << "," << "total" << std::endl;
 #endif
 	//END _DEBUG
 
-	//START _DEBUG
-#ifdef _LOGGER
-	sceneLogger.SetScenes(canonicalScene,liveScene);
-#endif
+	if(recordWarpUpdates){
+
+		sceneLogger.SetScenes(canonicalScene, liveScene);
+	}
 
 #ifdef SAVE_VOXELS_AND_INDEX
 	if(currentFrameIx == FRAME_OF_INTEREST){
@@ -195,7 +195,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		//END _DEBUG
 	}
 	//START _DEBUG
-	if(currentFrameIx == FRAME_OF_INTEREST){
+	if (currentFrameIx == FRAME_OF_INTEREST) {
 #ifdef SAVE_WARP
 		sceneLogger.StopSavingWarpState();
 #endif
@@ -215,3 +215,9 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	//END _DEBUG
 //#define OLD_LEVEL_SET_TERM
 }
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+std::string ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::GenerateCurrentFrameOutputPath() const {
+	return baseOutputDirectory + "/State/Frame_" + std::to_string(currentFrameIx);
+}
+

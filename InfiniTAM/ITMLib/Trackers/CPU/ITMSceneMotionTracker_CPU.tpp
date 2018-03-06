@@ -241,9 +241,6 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					Vector3i originalPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxelCanonical& canonicalVoxel = localVoxelBlock[locId];
-					//reset optimization-specific flags
-					canonicalVoxel.flags &= ~ITMLib::VOXEL_OSCILLATION_DETECTED_TWICE;
-					canonicalVoxel.flags &= ~ITMLib::VOXEL_OSCILLATION_DETECTED_ONCE;
 
 					int oldWDepth, oldWColor;
 					float oldSdf;

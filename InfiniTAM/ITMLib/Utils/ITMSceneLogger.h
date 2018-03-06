@@ -106,7 +106,7 @@ public:
 	};
 
 // === CONSTRUCTORS / DESTRUCTORS ===
-	ITMSceneLogger(std::string path, ITMScene<TVoxelCanonical, TIndex>* canonicalScene = NULL,
+	ITMSceneLogger(std::string path = "", ITMScene<TVoxelCanonical, TIndex>* canonicalScene = NULL,
 	               ITMScene<TVoxelLive, TIndex>* liveScene = NULL);
 
 	ITMSceneLogger() = delete;//disable default constructor generation
@@ -115,6 +115,7 @@ public:
 // === MEMBER FUNCTIONS ===
 	//*** setters / preparation
 	void SetScenes(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
+	void SetPath(std::string path);
 
 	//*** scene loading/saving
 	bool SaveScenes();
@@ -178,9 +179,12 @@ private:
 
 // *** root folder
 	fs::path path;
-// *** canonical/live scene saving/loading
+// *** subpaths
 	fs::path canonicalPath;
 	fs::path livePath;
+	fs::path highlightsBinaryPath;
+	fs::path highlightsTextPath;
+
 	ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
 	ITMScene<TVoxelLive, TIndex>* liveScene;
 
@@ -188,8 +192,7 @@ private:
 	int voxelCount = -1;
 	// map of hash blocks to voxels, voxels to frame numbers, frame numbers to iteration numbers
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
-	fs::path highlightsBinaryPath;
-	fs::path highlightsTextPath;
+
 	std::map<int, std::shared_ptr<InterestRegionInfo>> interestRegionInfoByHashId;
 	std::vector<std::shared_ptr<InterestRegionInfo>> interestRegionInfos;
 	bool interestRegionsHaveBeenSetUp = false;

@@ -36,24 +36,25 @@ const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::highlight
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::minRecurrenceHighlightFilterName = "min_reccurence_count_filter:";
 
+/**
+ * \brief Constructor: build a logger with the given path and scenes.
+ * \tparam TVoxelCanonical
+ * \tparam TVoxelLive
+ * \tparam TIndex
+ * \param path
+ * \param canonicalScene
+ * \param liveScene
+ */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 		std::string path,
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 		ITMScene<TVoxelLive, TIndex>* liveScene) :
-		path(path),
-		canonicalPath(this->path / "canonical"),
-		livePath(this->path / "live"),
 		canonicalScene(canonicalScene),
 		liveScene(liveScene),
-		warpUpdatesPath(this->path / ("warp_updates" + binaryFileExtension)),
-		highlights("Hash ID", "Local voxel ix", "Frame", ""),
-		highlightsBinaryPath(this->path / ("highlights" + binaryFileExtension)),
-		highlightsTextPath(this->path / ("highlights" + textFileExtension)) {
-	if (!fs::create_directories(this->path) && !fs::is_directory(this->path)) {
-		DIEWITHEXCEPTION(std::string("Could not create the directory '") + path + "'. Exiting.["
-				                 __FILE__
-				                 ": " + std::to_string(__LINE__) + "]");
+		highlights("Hash ID", "Local voxel ix", "Frame", "") {
+	if (path != "") {
+		SetPath(path);
 	}
 }
 
@@ -758,6 +759,27 @@ unsigned int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetIterationCu
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ClearHighlights() {
 	this->highlights.Clear();
+}
+
+/**
+ * \brief Set the path to save everything to or load everything from. If a directory doesn't exist at that path, one
+ * will be created.
+ * \param path the new path.
+ */
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetPath(std::string path) {
+	this->path = path;
+	if (!fs::create_directories(this->path) && !fs::is_directory(this->path)) {
+		DIEWITHEXCEPTION(std::string("Could not create the directory '") + path + "'. Exiting.["
+				                 __FILE__
+				                 ": " + std::to_string(__LINE__) + "]");
+	}
+	this->canonicalPath = this->path / "canonical";
+	this->livePath = this->path / "live";
+	this->warpUpdatesPath = this->path / ("warp_updates" + binaryFileExtension);
+
+	this->highlightsBinaryPath = this->path / ("highlights" + binaryFileExtension);
+	this->highlightsTextPath = this->path / ("highlights" + textFileExtension);
 }
 
 

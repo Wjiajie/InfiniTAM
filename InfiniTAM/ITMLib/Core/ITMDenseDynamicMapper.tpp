@@ -29,7 +29,9 @@
 using namespace ITMLib;
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMapper(const ITMLibSettings* settings) {
+ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMapper(const ITMLibSettings* settings) :
+	recordNextFrameWarps(false)
+	{
 	sceneRecoEngine = ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelCanonical, TIndex>(
 			settings->deviceType);
 	liveSceneRecoEngine = ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelLive, TIndex>(
@@ -91,7 +93,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(co
 	// integration
 	liveSceneRecoEngine->IntegrateIntoScene(liveScene, view, trackingState, renderState);
 
-	sceneMotionTracker->TrackMotion(canonicalScene, liveScene);
+	sceneMotionTracker->TrackMotion(canonicalScene, liveScene, this->recordNextFrameWarps);
 	sceneMotionTracker->FuseFrame(canonicalScene, liveScene);
 
 	//_DEBUG

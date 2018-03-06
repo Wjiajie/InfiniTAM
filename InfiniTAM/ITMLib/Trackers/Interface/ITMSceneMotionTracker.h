@@ -48,14 +48,18 @@ protected:
 
 	float maxVectorUpdateThresholdVoxels;
 
-	int iteration;//_DEBUG?
-#ifdef _LOGGER
+	std::string baseOutputDirectory;
+	int iteration;
 	int currentFrameIx = 0;
+
+
+
 	ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex> sceneLogger;
+
 #ifdef RECORD_CONTINOUS_HIGHLIGHTS
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> previouslyRecordedAnomalies;
 #endif
-#endif
+
 #ifdef WRITE_ENERGY_STATS_TO_FILE
 	std::ofstream energy_stat_file;
 #endif
@@ -75,8 +79,13 @@ public:
 	virtual void
 	ApplyWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 
-	void TrackMotion(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                 ITMScene<TVoxelLive, TIndex>* liveScene);
+	void TrackMotion(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene,
+		                 bool recordWarpUpdates = false);
+
+	int GetFrameIndex() const { return currentFrameIx; }
+private:
+	std::string GenerateCurrentFrameOutputPath() const;
+
 };
 
 

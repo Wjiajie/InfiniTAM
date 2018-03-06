@@ -85,5 +85,7 @@ namespace ITMLib
 		virtual void LoadFromFile() { };
 
 		virtual ~ITMMainEngine() {}
+
+		bool recordNextFrameWarps = false;
 	};
 }

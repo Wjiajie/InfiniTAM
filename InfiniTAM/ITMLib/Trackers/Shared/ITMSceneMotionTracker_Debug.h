@@ -119,7 +119,6 @@ inline void _DEBUG_ComputeWarpedJacobianAndHessian(const CONSTPTR(Vector3f*) nei
                                                    const CONSTPTR(ITMHashEntry)* liveHashTable,
                                                    THREADPTR(TCache)& liveCache,
                                                    THREADPTR(Vector3f)& warpedSdfJacobian, //out
-                                                   THREADPTR(Vector3f)& jacobianNormsAtWarpPlusOne,
                                                    THREADPTR(Matrix3f)& warpedSdfHessian //out
 ) {
 	//    0        1        2          3         4         5           6         7         8
@@ -147,29 +146,12 @@ inline void _DEBUG_ComputeWarpedJacobianAndHessian(const CONSTPTR(Vector3f*) nei
 	// d pheta_n(warp) / d z
 	warpedSdfJacobian = liveSdf_at_warped_neighbors - liveSdf_at_current_voxel;
 
-	//=========== DEBUG ================================================================================================
-	//difference between lookup values of neighbor & lookup value of warp changed by one in each of the three directions
-	Vector3f jacobianAt_u_plus_one = Vector3f(liveSdf_at_warped_neighbors.x - liveSdf_Center_WarpForward.u,
-	                                          liveSdf_at_warped_neighbors.y - liveSdf_Center_WarpForward.u,
-	                                          liveSdf_at_warped_neighbors.z - liveSdf_Center_WarpForward.u);
-	Vector3f jacobianAt_v_plus_one = Vector3f(liveSdf_at_warped_neighbors.x - liveSdf_Center_WarpForward.v,
-	                                          liveSdf_at_warped_neighbors.y - liveSdf_Center_WarpForward.v,
-	                                          liveSdf_at_warped_neighbors.z - liveSdf_Center_WarpForward.v);
-	Vector3f jacobianAt_w_plus_one = Vector3f(liveSdf_at_warped_neighbors.x - liveSdf_Center_WarpForward.w,
-	                                          liveSdf_at_warped_neighbors.y - liveSdf_Center_WarpForward.w,
-	                                          liveSdf_at_warped_neighbors.z - liveSdf_Center_WarpForward.w);
-	jacobianNormsAtWarpPlusOne = Vector3f(ORUtils::length(jacobianAt_u_plus_one),
-	                                      ORUtils::length(jacobianAt_v_plus_one),
-	                                      ORUtils::length(jacobianAt_w_plus_one));
-
-
-	//pass unity in?
-
 	//=========== COMPUTE 2ND PARTIAL DERIVATIVES IN SAME DIRECTION ====================================================
+	Vector3f deltaWarpChanged = liveSdf_at_warped_neighbors - liveSdf_Center_WarpForward;
 	//we keep the neighbors warps fixed, but we see how the gradient (jacobian above) changes if we change current
 	//voxel's warp
 	Vector3f sdfDerivatives_ux_vy_wz =
-			(liveSdf_at_warped_neighbors - liveSdf_Center_WarpForward) - warpedSdfJacobian;
+			deltaWarpChanged - warpedSdfJacobian;
 
 	//=== corner-voxel auxiliary first partial first derivatives for later 2nd derivative approximations
 	// vx - v //how does a change of warp in v affect the change [in calonical neighborhood] in x
@@ -235,23 +217,22 @@ inline void _DEBUG_ComputeLiveSdf_Center_WarpForward(
 //without color
 template<typename TVoxelLive, typename TCache>
 _CPU_AND_GPU_CODE_
-inline void _DEBUG_ComputePerPointWarpedLiveJacobian(const CONSTPTR(Vector3i)& voxelPosition,
-                                                     const CONSTPTR(Vector3f)& voxelWarp,
-                                                     const CONSTPTR(float)& voxelSdf,
-                                                     const CONSTPTR(
-		                                                     TVoxelLive)* liveVoxels,       //| ===============  |
-                                                     const CONSTPTR(
-		                                                     ITMHashEntry)* liveHashTable,  //| live scene data  |
-                                                     THREADPTR(
-		                                                     TCache)& liveCache,                 //| ===============  |
-                                                     const CONSTPTR(float) liveSdf,
-                                                     THREADPTR(Vector3f)& liveSdfJacobian,           //out
-                                                     THREADPTR(Vector3f)& liveSdf_Center_WarpForward//out
+inline void _DEBUG_ComputePerPointLiveJacobian(const CONSTPTR(Vector3i)& voxelPosition,
+                                               const CONSTPTR(Vector3f)& voxelWarp,
+                                               const CONSTPTR(float)& voxelSdf,
+                                               const CONSTPTR(
+		                                               TVoxelLive)* liveVoxels,       //| ===============  |
+                                               const CONSTPTR(
+		                                               ITMHashEntry)* liveHashTable,  //| live scene data  |
+                                               THREADPTR(
+		                                               TCache)& liveCache,                 //| ===============  |
+                                               const CONSTPTR(float) liveSdf,
+                                               THREADPTR(Vector3f)& liveSdfJacobian,           //out
+                                               THREADPTR(Vector3f)& liveSdf_Center_WarpForward//out
 ) {
 	Vector3f liveSdf_Center_WarpCenter(liveSdf);
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
-	_DEBUG_ComputeLiveSdf_Center_WarpForward(voxelPosition, voxelWarp, liveSdf, liveVoxels, liveHashTable, liveCache,
-	                                         liveSdf_Center_WarpForward);
+
 	//=========== COMPUTE JACOBIAN =====================================================================================
 	liveSdfJacobian = liveSdf_Center_WarpForward - liveSdf_Center_WarpCenter;
 }
@@ -262,18 +243,25 @@ inline void _DEBUG_ComputePerPointWarpedLiveJacobian(const CONSTPTR(Vector3i)& v
 
 //_DEBUG printing routine
 _CPU_AND_GPU_CODE_
-inline void _DEBUG_PrintDataAndLevelSetTermStuff(const CONSTPTR(Vector3f)& liveSdfJacobian,
-                                                 const CONSTPTR(Vector3f)& liveSdf_Center_WarpForward,
-                                                 const CONSTPTR(Vector3f)& warpedSdfJacobian,
-                                                 const CONSTPTR(Matrix3f)& warpedSdfHessian) {
+inline void _DEBUG_PrintDataTermStuff(const CONSTPTR(Vector3f)& liveSdfJacobian) {
+	const std::string cyan("\033[0;36m");
+	const std::string reset("\033[0m");
+	std::cout << std::endl;
+	std::cout << "Jacobian of live SDF at current warp: " << cyan << liveSdfJacobian <<  reset << std::endl;
+}
+
+//_DEBUG printing routine
+_CPU_AND_GPU_CODE_
+inline void _DEBUG_PrintLevelSetTermStuff(const CONSTPTR(Vector3f)& liveSdfJacobian,
+                                          const CONSTPTR(Vector3f)& liveSdf_Center_WarpForward,
+                                          const CONSTPTR(Vector3f)& warpedSdfJacobian,
+                                          const CONSTPTR(Matrix3f)& warpedSdfHessian) {
 	const std::string yellow("\033[0;33m");
 	const std::string red("\033[0;31m");
 	const std::string cyan("\033[0;36m");
 	const std::string green("\033[0;32m");
 	const std::string reset("\033[0m");
 	std::cout << std::endl;
-	std::cout << "Live SDF at warp plus one for each direction: " << yellow << liveSdf_Center_WarpForward << reset << std::endl;
-	std::cout << "Resulting jacobian of live SDF at current warp: " << cyan << liveSdfJacobian <<  reset << std::endl;
 	std::cout << "[Difference from neighbor's lookup values from live SDF]: " << green << warpedSdfJacobian << reset << std::endl;
 	std::cout << "Change in [difference from neighbor's lookup values] when warp changes (by one): " << std::endl
 			 << green << warpedSdfHessian << reset << std::endl;

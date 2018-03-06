@@ -122,6 +122,13 @@ void UIEngine::glutIdleFunction()
 	switch (uiEngine->mainLoopAction)
 	{
 	case PROCESS_FRAME:
+		uiEngine->recordWarpUpdatesForNextFrame = false;
+		uiEngine->ProcessFrame(); uiEngine->processedFrameNo++;
+		uiEngine->mainLoopAction = PROCESS_PAUSED;
+		uiEngine->needsRefresh = true;
+		break;
+	case PROCESS_FRAME_RECORD:
+		uiEngine->recordWarpUpdatesForNextFrame = true;
 		uiEngine->ProcessFrame(); uiEngine->processedFrameNo++;
 		uiEngine->mainLoopAction = PROCESS_PAUSED;
 		uiEngine->needsRefresh = true;
@@ -166,12 +173,23 @@ void UIEngine::glutIdleFunction()
 void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
 {
 	UIEngine *uiEngine = UIEngine::Instance();
+	int modifiers = glutGetModifiers();
 
 	switch (key)
 	{
+	case 'q':
+		uiEngine->mainLoopAction = UIEngine::EXIT;
+		break;
 	case 'n':
-		printf("processing one frame ...\n");
-		uiEngine->mainLoopAction = UIEngine::PROCESS_FRAME;
+		if(modifiers & GLUT_ACTIVE_ALT){
+			printf("saving scenes before tracking and warp updates, processing one frame, and recording the warp updates ...\n");
+			uiEngine->mainLoopAction = UIEngine::PROCESS_FRAME_RECORD;
+		}
+		else
+		{
+			printf("processing one frame ...\n");
+			uiEngine->mainLoopAction = UIEngine::PROCESS_FRAME;
+		}
 		break;
 	case 'b':
 		printf("processing input source ...\n");
@@ -643,7 +661,9 @@ void UIEngine::ProcessFrame()
 	sdkResetTimer(&timer_instant);
 	sdkStartTimer(&timer_instant); sdkStartTimer(&timer_average);
 
+
 	ITMTrackingState::TrackingResult trackerResult;
+	mainEngine->recordNextFrameWarps = this->recordWarpUpdatesForNextFrame;
 	//actual processing on the mailEngine
 	if (imuSource != NULL) trackerResult = mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage, inputIMUMeasurement);
 	else trackerResult = mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage);
