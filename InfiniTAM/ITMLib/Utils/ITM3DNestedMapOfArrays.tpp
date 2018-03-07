@@ -41,8 +41,9 @@ bool ITM3DNestedMapOfArrays<T>::InsertOrdered(int keyLevel3, int keyLevel2, int 
 }
 
 template<typename T>
-ITM3DNestedMapOfArrays<T>::ITM3DNestedMapOfArrays(const char* prefixLevel3, const char* prefixLevel2, const char* prefixLevel1,
-                                   const char* prefixLevel0) :
+ITM3DNestedMapOfArrays<T>::ITM3DNestedMapOfArrays(const char* prefixLevel3, const char* prefixLevel2,
+                                                  const char* prefixLevel1,
+                                                  const char* prefixLevel0) :
 		internalMap(),
 		prefixLevel3(prefixLevel3),
 		prefixLevel2(prefixLevel2),
@@ -53,7 +54,7 @@ template<typename T>
 bool ITM3DNestedMapOfArrays<T>::SaveToFile(const char* path) {
 	std::ofstream file = std::ofstream(path, std::ios::binary | std::ios::out);
 	if (!file) {
-		std::cerr << ("Could not open " + std::string(path) + " for writing") << std::endl;
+		std::cerr << ("Could not open " + std::string(path) + " for writing. "  __FILE__ ": " + std::to_string(__LINE__)) << std::endl;
 		return false;
 	}
 
@@ -86,7 +87,8 @@ bool ITM3DNestedMapOfArrays<T>::LoadFromFile(const char* path) {
 	internalMap.clear();
 	std::ifstream file = std::ifstream(path, std::ios::binary | std::ios::in);
 	if (!file) {
-		std::cerr << ("Could not open " + std::string(path) + " for writing") << std::endl;
+		std::cerr << ("Could not open " + std::string(path) + " for reading. " __FILE__ ": " + std::to_string(__LINE__))
+		          << std::endl;
 		return false;
 	}
 	size_t level3ElementCount, level2ElementCount, level1ElementCount, level0ElementCount;
@@ -139,41 +141,48 @@ std::ostream& operator<<(std::ostream& stream, const ITM3DNestedMapOfArrays<T>& 
 
 template<typename T>
 bool ITM3DNestedMapOfArrays<T>::operator==(const ITM3DNestedMapOfArrays<T>& other) const {
-	if(internalMap.size() != other.internalMap.size()){
+	if (internalMap.size() != other.internalMap.size()) {
 		return false;
 	}
 	auto itThisLevel3 = internalMap.begin();
 	auto itOtherLevel3 = other.internalMap.begin();
 
-	while(itThisLevel3 != internalMap.end()){
-		if(itThisLevel3->first != itOtherLevel3->first || itThisLevel3->second.size() != itOtherLevel3->second.size()){
+	while (itThisLevel3 != internalMap.end()) {
+		if (itThisLevel3->first != itOtherLevel3->first ||
+		    itThisLevel3->second.size() != itOtherLevel3->second.size()) {
 			return false;
 		}
 		auto itThisLevel2 = itThisLevel3->second.begin();
 		auto itOtherLevel2 = itOtherLevel3->second.begin();
-		while(itThisLevel2 != itThisLevel3->second.end()){
-			if(itThisLevel2->first != itOtherLevel2->first || itThisLevel2->second.size() != itOtherLevel2->second.size()){
+		while (itThisLevel2 != itThisLevel3->second.end()) {
+			if (itThisLevel2->first != itOtherLevel2->first ||
+			    itThisLevel2->second.size() != itOtherLevel2->second.size()) {
 				return false;
 			}
 			auto itThisLevel1 = itThisLevel2->second.begin();
 			auto itOtherLevel1 = itOtherLevel2->second.begin();
-			while(itThisLevel1 != itThisLevel2->second.end()){
-				if(itThisLevel1->first != itOtherLevel1->first || itThisLevel1->second.size() != itOtherLevel1->second.size()){
+			while (itThisLevel1 != itThisLevel2->second.end()) {
+				if (itThisLevel1->first != itOtherLevel1->first ||
+				    itThisLevel1->second.size() != itOtherLevel1->second.size()) {
 					return false;
 				}
 				auto itThisLevel0 = itThisLevel1->second.begin();
 				auto itOtherLevel0 = itOtherLevel1->second.begin();
-				while (itThisLevel0 != itThisLevel1->second.end()){
-					if(*itThisLevel0 != *itOtherLevel0){
+				while (itThisLevel0 != itThisLevel1->second.end()) {
+					if (*itThisLevel0 != *itOtherLevel0) {
 						return false;
 					}
-					itThisLevel0++; itOtherLevel0++;
+					itThisLevel0++;
+					itOtherLevel0++;
 				}
-				itThisLevel1++; itOtherLevel1++;
+				itThisLevel1++;
+				itOtherLevel1++;
 			}
-			itThisLevel2++; itOtherLevel2++;
+			itThisLevel2++;
+			itOtherLevel2++;
 		}
-		itThisLevel3++; itOtherLevel3++;
+		itThisLevel3++;
+		itOtherLevel3++;
 	}
 	return true;
 }
@@ -189,13 +198,13 @@ std::vector<int> ITM3DNestedMapOfArrays<T>::GetLevel3Keys() const {
 
 template<typename T>
 ITM3DNestedMapOfArrays<T> ITM3DNestedMapOfArrays<T>::FilterBasedOnLevel0Lengths(int minThreshold) {
-	ITM3DNestedMapOfArrays filtered(prefixLevel3,prefixLevel2,prefixLevel1,prefixLevel0);
+	ITM3DNestedMapOfArrays filtered(prefixLevel3, prefixLevel2, prefixLevel1, prefixLevel0);
 	for (auto elementLevel3 : internalMap) {
 		for (auto elementLevel2 : elementLevel3.second) {
 			for (auto elementLevel1 : elementLevel2.second) {
-				if(elementLevel1.second.size() >= minThreshold){
-					for (auto value : elementLevel1.second){
-						filtered.InsertOrdered(elementLevel3.first,elementLevel2.first,elementLevel1.first,value);
+				if (elementLevel1.second.size() >= minThreshold) {
+					for (auto value : elementLevel1.second) {
+						filtered.InsertOrdered(elementLevel3.first, elementLevel2.first, elementLevel1.first, value);
 					}
 				}
 			}
@@ -208,7 +217,7 @@ template<typename T>
 bool ITM3DNestedMapOfArrays<T>::SaveToTextFile(const char* path) {
 	std::ofstream file = std::ofstream(path, std::ios::out);
 	if (!file) {
-		std::cerr << ("Could not open " + std::string(path) + " for writing") << std::endl;
+		std::cerr << ("Could not open " + std::string(path) + " for writing. "  __FILE__ ": " + std::to_string(__LINE__)) << std::endl;
 		return false;
 	}
 	file << *this << std::endl;
@@ -221,8 +230,8 @@ ITM3DNestedMapOfArrays<T>::ITM3DNestedMapOfArrays(const ITM3DNestedMapOfArrays<T
 	for (auto elementLevel3 : nestedMap3D.internalMap) {
 		for (auto elementLevel2 : elementLevel3.second) {
 			for (auto elementLevel1 : elementLevel2.second) {
-				for (T value : elementLevel1.second){
-					this->InsertOrdered(elementLevel3.first,elementLevel2.first,elementLevel1.first,value);
+				for (T value : elementLevel1.second) {
+					this->InsertOrdered(elementLevel3.first, elementLevel2.first, elementLevel1.first, value);
 				}
 			}
 		}
@@ -235,7 +244,7 @@ ITM3DNestedMapOfArrays<T>::~ITM3DNestedMapOfArrays() {
 
 template<typename T>
 ITM3DNestedMapOfArrays<T>& ITM3DNestedMapOfArrays<T>::operator=(ITM3DNestedMapOfArrays&& other) noexcept {
-	if(this == &other){
+	if (this == &other) {
 		return *this;
 	}
 	this->internalMap = other.internalMap;
@@ -247,10 +256,10 @@ ITM3DNestedMapOfArrays<T>& ITM3DNestedMapOfArrays<T>::operator=(ITM3DNestedMapOf
 
 template<typename T>
 ITM3DNestedMapOfArrays<T>::ITM3DNestedMapOfArrays() :internalMap(),
-                                      prefixLevel3("level3"),
-                                      prefixLevel2("level2"),
-                                      prefixLevel1("level1"),
-                                      prefixLevel0("level0") {}
+                                                     prefixLevel3("level3"),
+                                                     prefixLevel2("level2"),
+                                                     prefixLevel1("level1"),
+                                                     prefixLevel0("level0") {}
 
 template<typename T>
 ITM3DNestedMapOfArrays<T>& ITM3DNestedMapOfArrays<T>::operator=(ITM3DNestedMapOfArrays& other) {
@@ -262,19 +271,19 @@ ITM3DNestedMapOfArrays<T>& ITM3DNestedMapOfArrays<T>::operator=(ITM3DNestedMapOf
 
 template<typename T>
 bool ITM3DNestedMapOfArrays<T>::Contains(int keyLevel3, int keyLevel2, int keyLevel1) {
-	if (this->internalMap.find(keyLevel3) == (this->internalMap).end()) { return false;}
+	if (this->internalMap.find(keyLevel3) == (this->internalMap).end()) { return false; }
 	auto& valueLevel3 = internalMap[keyLevel3];
-	if (valueLevel3.find(keyLevel2) == valueLevel3.end()) { return false;}
+	if (valueLevel3.find(keyLevel2) == valueLevel3.end()) { return false; }
 	auto& valueLevel2 = valueLevel3[keyLevel2];
 	return valueLevel2.find(keyLevel1) != valueLevel2.end();
 }
 
 template<typename T>
 bool ITM3DNestedMapOfArrays<T>::Contains(int keyLevel3, int keyLevel2, int keyLevel1, T valueLevel0) {
-	if (this->internalMap.find(keyLevel3) == (this->internalMap).end()) { return false;}
+	if (this->internalMap.find(keyLevel3) == (this->internalMap).end()) { return false; }
 	auto& valueLevel3 = internalMap[keyLevel3];
 	auto iteratorLevel3 = valueLevel3.find(keyLevel2);
-	if (iteratorLevel3 == valueLevel3.end()) { return false;}
+	if (iteratorLevel3 == valueLevel3.end()) { return false; }
 	auto& valueLevel2 = (*iteratorLevel3).second;
 	auto iteratorLevel2 = valueLevel2.find(keyLevel1);
 	if (iteratorLevel2 == valueLevel2.end()) { return false; }
@@ -284,20 +293,20 @@ bool ITM3DNestedMapOfArrays<T>::Contains(int keyLevel3, int keyLevel2, int keyLe
 
 template<typename T>
 bool ITM3DNestedMapOfArrays<T>::Contains(int keyLevel3, int keyLevel2) {
-	if (this->internalMap.find(keyLevel3) == (this->internalMap).end()) { return false;}
+	if (this->internalMap.find(keyLevel3) == (this->internalMap).end()) { return false; }
 	auto& valueLevel3 = internalMap[keyLevel3];
 	return !(valueLevel3.find(keyLevel2) == valueLevel3.end());
 }
 
 template<typename T>
-const std::vector<T>* ITM3DNestedMapOfArrays<T>::GetFirstArray() const{
-	if(internalMap.empty()) return nullptr;
+const std::vector<T>* ITM3DNestedMapOfArrays<T>::GetFirstArray() const {
+	if (internalMap.empty()) return nullptr;
 	return &(*(*(*this->internalMap.begin()).second.begin()).second.begin()).second;
 }
 
 template<typename T>
 const std::vector<T>* ITM3DNestedMapOfArrays<T>::GetLastArray() const {
-	if(internalMap.empty()) return nullptr;
+	if (internalMap.empty()) return nullptr;
 	return &(*(--(*(--(*(--this->internalMap.end())).second.end())).second.end())).second;
 }
 
@@ -351,7 +360,8 @@ const std::vector<T>* ITM3DNestedMapOfArrays<T>::GetArrayBefore(int keyLevel3, i
 	//if there are more elements in the current level 2 map, return the last element in the last one
 	if (iteratorLevel2 != valueLevel3.begin()) { return &(*(--(*(--iteratorLevel2)).second.end())).second; }
 	// otherwise, we have to check the next level 2 map in the level 3 Map
-	if (iteratorLevel3 != internalMap.begin()) { return &(*(--(*(--(*(--iteratorLevel3)).second.end())).second.end())).second; }
+	if (iteratorLevel3 !=
+	    internalMap.begin()) { return &(*(--(*(--(*(--iteratorLevel3)).second.end())).second.end())).second; }
 	// the provided keys had to point to the very first element of the map. Fast-forward to the last element to loop around.
 	return GetLastArray();
 }

@@ -68,24 +68,6 @@ void SDFVizKeyPressInteractorStyle::OnKeyPress() {
 		} else if (key == "i") {
 			//toggle interest region visibility
 			parent->ToggleInterestVoxelVisibility();
-		} else if (key == "period") {
-			if (parent->hasWarpIterationInfo) {
-				std::cout << "Loading next iteration warp & updates." << std::endl;
-				if (parent->NextNonInterestWarps()) {
-					std::cout << "Next warps loaded and display updated." << std::endl;
-				} else {
-					std::cout << "Could not load next iteration warp & updates." << std::endl;
-				}
-			}
-		} else if (key == "comma") {
-			if (parent->hasWarpIterationInfo) {
-				std::cout << "Loading previous iteration warp & updates." << std::endl;
-				if (parent->PreviousNonInterestWarps()) {
-					std::cout << "Previous warps loaded and display updated." << std::endl;
-				} else {
-					std::cout << "Could not load previous iteration warp & updates." << std::endl;
-				}
-			}
 		} else if (key == "minus" || key == "KP_Subtract") {
 			if (rwi->GetAltKey()) {
 				parent->DecreaseCanonicalVoxelOpacity();
@@ -99,24 +81,18 @@ void SDFVizKeyPressInteractorStyle::OnKeyPress() {
 				parent->IncreaseLiveVoxelOpacity();
 			}
 		} else if (key == "bracketright") {
-			if (parent->hasHighlightInfo) {
-				parent->NextInterestWarps();
-				std::cout << "Loading next interest voxel warps." << std::endl;
-			}
+			parent->RetreatIteration();
 		} else if (key == "bracketleft") {
-			if (parent->hasHighlightInfo) {
-				parent->PreviousInterestWarps();
-				std::cout << "Loading previous interest voxel warps." << std::endl;
-			}
+			parent->AdvanceIteration();
 		} else if (key == "Prior") {
-			if (parent->hasHighlightInfo) {
+			if (parent->hasHighlightInfo && !rwi->GetAltKey()) {
 				parent->MoveFocusToPreviousHighlight();
 			} else {
 				parent->sdfRenderer->GetActiveCamera()->SetViewUp(0.0, 1.0, 0.0);
 				parent->renderWindow->Render();
 			}
 		} else if (key == "Next") {
-			if (parent->hasHighlightInfo) {
+			if (parent->hasHighlightInfo && !rwi->GetAltKey()) {
 				parent->MoveFocusToNextHighlight();
 			} else {
 				parent->sdfRenderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);

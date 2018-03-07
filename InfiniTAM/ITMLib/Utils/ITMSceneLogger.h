@@ -81,6 +81,7 @@ public:
 
 		bool BufferCurrentWarpState(void* externalBuffer);
 		bool SeekPrevious();
+		bool SeekAt(unsigned int cursor);
 		unsigned int GetIterationCursor() const;
 		size_t GetIterationWarpBytesize() const;
 
@@ -90,7 +91,7 @@ public:
 		virtual ~InterestRegionInfo();
 
 	private:
-		void Rewrite();
+		void RewriteHeader();
 		// ** member variables **
 		bool isLoading = false;
 		bool isSaving = false;
@@ -128,7 +129,8 @@ public:
 	int GetVoxelCount() const;
 	bool GetScenesLoaded() const;
 	bool GetInterestRegionsSetUp() const;
-	unsigned int GetIterationCursor() const;
+	unsigned int GetGeneralIterationCursor() const;
+	unsigned int GetInterestIterationCursor() const;
 	const std::map<int, std::shared_ptr<InterestRegionInfo>>& GetInterestRegionsByHash();
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> GetHighlights() const;
 	std::vector<int> GetInterestRegionHashes() const;
@@ -144,6 +146,7 @@ public:
 	void SetUpInterestRegionsForSaving(const ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>& highlights);
 	void SaveAllInterestRegionWarps();
 	void SetUpInterestRegionsForLoading();
+	bool BufferInterestWarpStateAtIteration(void* externalBuffer, unsigned int iterationIndex);
 	bool BufferCurrentInterestWarpState(void* externalBuffer);
 	bool BufferPreviousInterestWarpState(void* externalBuffer);
 	bool IsHashInInterestRegion(int hashId);
@@ -152,6 +155,7 @@ public:
 	//** global warp-state saving/loading
 	bool StartSavingWarpState(int frameIx);
 	void StopSavingWarpState();
+	bool StartLoadingWarpState();
 	bool StartLoadingWarpState(int& frameIx);
 	void StopLoadingWarpState();
 
@@ -161,6 +165,7 @@ public:
 	bool BufferPreviousWarpState();
 	bool BufferCurrentWarpState(void* externalBuffer);
 	bool BufferPreviousWarpState(void* externalBuffer);
+	bool BufferWarpStateAt(void* externalBuffer, unsigned int iterationIndex);
 	bool LoadPreviousWarpState();
 
 	bool IsLoadingWarpState();
@@ -204,7 +209,8 @@ private:
 	//TODO: the way these update numbers are tracked are less than ideal (see comment below) -Greg (GitHub: Algomorph)
 	// There is no way to ensure proper iteration number, since it is not kept track of in the scene.
 	// It would be ideal to extend the scene class and log that number there, since it reflects the state of the scene.
-	unsigned int iterationCursor = 0;
+	unsigned int generalIterationCursor = 0;
+	unsigned int interestIterationCursor = 0;
 	Vector3f* warpBuffer = NULL;
 
 // *** data manipulation information ***

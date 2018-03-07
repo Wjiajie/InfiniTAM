@@ -46,6 +46,8 @@
 #include <vtkTextProperty.h>
 #include <vtkVertexGlyphFilter.h>
 
+#include <utility>
+
 //local
 #include "SDFSceneVizPipe.h"
 #include "SDFVizKeyPressInteractorStyle.h"
@@ -69,13 +71,14 @@ const std::array<double, 3>  SDFViz::liveHashBlockEdgeColor = {0.537, 0.819, 0.6
 //** private **
 
 const std::array<std::array<double, 4>, 4> SDFViz::backgroundColors = {{{0.96, 0.96, 0.98, 1.00},  // beige
-		                                                        {0.09, 0.07, 0.05, 1.00},  // black raspberry
-		                                                        {0.59, 0.44, 0.09, 1.00},  // bristle brown
-		                                                        {0.57, 0.64, 0.69, 1.0}}}; // cadet grey
+		                                                                       {0.09, 0.07, 0.05, 1.00},  // black raspberry
+		                                                                       {0.59, 0.44, 0.09, 1.00},  // bristle brown
+		                                                                       {0.57, 0.64, 0.69, 1.0}}}; // cadet grey
 
 SDFViz::SDFViz(std::string pathToScene, bool showNonInterestCanonicalVoxels, bool showLiveVoxels,
                bool hideInterestCanonicalRegions, bool useInitialCoords,
                Vector3i initialCoords) :
+		rootPath(std::move(pathToScene)),
 		canonicalScenePipe(canonicalNegativeSDFVoxelColor, canonicalPositiveSDFVoxelColor,
 		                   canonicalNegativeInterestSDFVoxelColor, canonicalPositiveInterestSDFVoxelColor,
 		                   canonicalHighlightSDFVoxelColor, canonicalHashBlockEdgeColor,
@@ -84,46 +87,24 @@ SDFViz::SDFViz(std::string pathToScene, bool showNonInterestCanonicalVoxels, boo
 		              livePositiveSDFVoxelColor,
 		              liveHashBlockEdgeColor),
 		highlightVisualizer(),
+		sphere(vtkSmartPointer<vtkSphereSource>::New()),
+		cube(vtkSmartPointer<vtkCubeSource>::New()),
 		iterationIndicator(vtkSmartPointer<vtkTextActor>::New()),
+		frameIndex(0),
 		iterationIndex(0),
-		legend(vtkSmartPointer<vtkLegendBoxActor>::New()){
-	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(pathToScene,
+		legend(vtkSmartPointer<vtkLegendBoxActor>::New()) {
+
+	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(GenerateExpectedFramePath(),
 	                                                                                 canonicalScenePipe.GetScene(),
 	                                                                                 liveScenePipe.GetScene());
 	InitializeRendering();
 	DrawLegend();
 	DrawIterationCounter();
+
 	//read scenes from disk
-	sceneLogger->LoadScenesCompact();
-	hasHighlightInfo = sceneLogger->LoadHighlights(false, "continuous");
-	if (hasHighlightInfo) {
-		sceneLogger->SetUpInterestRegionsForLoading();
-	}
-	hasWarpIterationInfo = sceneLogger->StartLoadingWarpState(frameIndex);
-	if (hasWarpIterationInfo) {
-		canonicalScenePipe.SetFrameIndex(frameIndex);
-		InitializeWarpBuffers();
-	}
-
-
-	//Individual voxel shape
-	vtkSmartPointer<vtkSphereSource> sphere = vtkSmartPointer<vtkSphereSource>::New();
-	sphere->SetThetaResolution(6);
-	sphere->SetPhiResolution(6);
-	sphere->SetRadius(0.5);//size of half a voxel
-	sphere->Update();
-
-	//Voxel hash block shape
-	vtkSmartPointer<vtkCubeSource> cube = vtkSmartPointer<vtkCubeSource>::New();
-	cube->SetBounds(0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE);
-
-	// set up viz pipelines
-	highlights = sceneLogger->GetHighlights();
-
-	canonicalScenePipe.SetInterestRegionInfo(sceneLogger->GetInterestRegionHashes(), highlights);
-	canonicalScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
-	canonicalScenePipe.PrepareInterestRegions(sphere->GetOutputPort());
-	liveScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
+	SetUpGeometrySources();
+	LoadFrameData();
+	ReinitializePipelines();
 
 	// add actors
 	sdfRenderer->AddActor(canonicalScenePipe.GetVoxelActor());
@@ -132,6 +113,7 @@ SDFViz::SDFViz(std::string pathToScene, bool showNonInterestCanonicalVoxels, boo
 	sdfRenderer->AddActor(liveScenePipe.GetVoxelActor());
 	sdfRenderer->AddActor(liveScenePipe.GetHashBlockActor());
 	topRenderer->AddActor(highlightVisualizer.GetHighlightActor());
+
 	// to prevent VTK from doing excessive near-cliping with multi-layered renderers
 	DrawDummyMarkers();
 
@@ -164,7 +146,6 @@ int SDFViz::Run() {
 
 
 SDFViz::~SDFViz() {
-	sceneLogger->StopLoadingWarpState();
 	delete sceneLogger;
 }
 
@@ -175,7 +156,7 @@ void SDFViz::InitializeRendering() {
 	topRenderer = vtkSmartPointer<vtkRenderer>::New();
 
 	double backgroundColor[4];
-	memcpy(backgroundColor,backgroundColors[currentBackgrounColorIx].data(), 4*sizeof(double));
+	memcpy(backgroundColor, backgroundColors[currentBackgrounColorIx].data(), 4 * sizeof(double));
 	sdfRenderer->SetBackground(backgroundColor);
 
 	renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
@@ -210,7 +191,14 @@ bool SDFViz::NextNonInterestWarps() {
 		return false;
 	}
 	canonicalScenePipe.UpdatePointPositionsFromBuffer(allWarpBuffer->GetVoidPointer(0));
-	renderWindow->Render();
+	return true;
+}
+
+bool SDFViz::NonInterestWarpsAt(unsigned int iteration) {
+	if (!sceneLogger->BufferWarpStateAt(this->allWarpBuffer->GetVoidPointer(0),iteration)) {
+		return false;
+	}
+	canonicalScenePipe.UpdatePointPositionsFromBuffer(allWarpBuffer->GetVoidPointer(0));
 	return true;
 }
 
@@ -219,39 +207,37 @@ bool SDFViz::PreviousNonInterestWarps() {
 		return false;
 	}
 	canonicalScenePipe.UpdatePointPositionsFromBuffer(allWarpBuffer->GetVoidPointer(0));
-	renderWindow->Render();
 	return true;
 }
 
-bool SDFViz::NextInterestWarps() {
-	if (sceneLogger->BufferCurrentInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0))) {
-		UpdateIteration(sceneLogger->GetIterationCursor());
-	};
-	canonicalScenePipe.UpdateInterestRegionsFromBuffers(this->interestWarpBuffer->GetVoidPointer(0));
 
+void SDFViz::InterestWarpBufferHelper() {
+	canonicalScenePipe.UpdateInterestRegionsFromBuffers(this->interestWarpBuffer->GetVoidPointer(0));
 	//update highlight viz
 	const ITMHighlightIterationInfo info = (*currentHighlight)[iterationIndex];
 	Vector3d cameraRight = SDFViz::ComputeCameraRightVector(sdfRenderer->GetActiveCamera());
 	Vector3d position = canonicalScenePipe.GetHighlightPosition(info.hash, info.localId);
 	std::vector<Vector3d> neighborPositions = canonicalScenePipe.GetHighlightNeighborPositions(info.hash, info.localId);
 	highlightVisualizer.SetData(position, info, neighborPositions, cameraRight);
+}
 
-	renderWindow->Render();
+bool SDFViz::NextInterestWarps() {
+	bool success = sceneLogger->BufferCurrentInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0));
+	if(success){ InterestWarpBufferHelper();}
+	return success;
 }
 
 bool SDFViz::PreviousInterestWarps() {
-	if (sceneLogger->BufferPreviousInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0))) {
-		UpdateIteration(sceneLogger->GetIterationCursor() == 0 ? 0 : sceneLogger->GetIterationCursor() - 1);
-	}
-	canonicalScenePipe.UpdateInterestRegionsFromBuffers(this->interestWarpBuffer->GetVoidPointer(0));
+	bool success = sceneLogger->BufferPreviousInterestWarpState(this->interestWarpBuffer->GetVoidPointer(0));
+	if(success){ InterestWarpBufferHelper();}
+	return success;
+}
 
-	const ITMHighlightIterationInfo info = (*currentHighlight)[iterationIndex];
-	Vector3d cameraRight = SDFViz::ComputeCameraRightVector(sdfRenderer->GetActiveCamera());
-	Vector3d position = canonicalScenePipe.GetHighlightPosition(info.hash, info.localId);
-	std::vector<Vector3d> neighborPositions = canonicalScenePipe.GetHighlightNeighborPositions(info.hash, info.localId);
-	highlightVisualizer.SetData(position, info, neighborPositions, cameraRight);
 
-	renderWindow->Render();
+bool SDFViz::InterestWarpsAt(unsigned int iteration) {
+	bool success = sceneLogger->BufferInterestWarpStateAtIteration(this->interestWarpBuffer->GetVoidPointer(0),iteration);
+	if(success){ InterestWarpBufferHelper();}
+	return success;
 }
 
 void SDFViz::DrawLegend() {
@@ -282,7 +268,7 @@ void SDFViz::DrawLegend() {
 
 	//set up legend background
 	double backgroundColor[4];
-	memcpy(backgroundColor,backgroundColors[1].data(), 4*sizeof(double));//use only black for legend background color
+	memcpy(backgroundColor, backgroundColors[1].data(), 4 * sizeof(double));//use only black for legend background color
 	legend->SetBackgroundColor(backgroundColor);
 
 	sdfRenderer->AddActor(legend);
@@ -301,9 +287,8 @@ void SDFViz::DrawIterationCounter() {
 	sdfRenderer->AddActor2D(iterationIndicator);
 }
 
-void SDFViz::UpdateIteration(unsigned int newValue) {
-	iterationIndex = newValue;
-	iterationIndicator->SetInput(("Iteration: " + std::to_string(newValue)).c_str());
+void SDFViz::UpdateIterationDisplay() {
+	iterationIndicator->SetInput(("Iteration: " + std::to_string(iterationIndex)).c_str());
 }
 
 void SDFViz::ToggleCanonicalHashBlockVisibility() {
@@ -319,8 +304,16 @@ void SDFViz::ToggleLiveHashBlockVisibility() {
 }
 
 void SDFViz::ToggleCanonicalVoxelVisibility() {
-	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(!canonicalScenePipe.GetVoxelActor()->GetVisibility());
-	canonicalScenePipe.GetVoxelActor()->SetVisibility(!canonicalScenePipe.GetVoxelActor()->GetVisibility());
+	auto nonInterestAreVisible = static_cast<bool>(canonicalScenePipe.GetVoxelActor()->GetVisibility());
+	auto interestAreVisible = static_cast<bool>(canonicalScenePipe.GetInterestVoxelActor()->GetVisibility());
+	if(!nonInterestAreVisible && (sceneLogger->GetGeneralIterationCursor() != iterationIndex)){
+		NonInterestWarpsAt(iterationIndex); //when showing, advance cursor as necessary
+	}
+	if(!interestAreVisible && (sceneLogger->GetInterestIterationCursor() != iterationIndex)){
+		InterestWarpsAt(iterationIndex); //when showing, advance cursor as necessary
+	}
+	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(!nonInterestAreVisible);
+	canonicalScenePipe.GetVoxelActor()->SetVisibility(!nonInterestAreVisible);
 	renderWindow->Render();
 }
 
@@ -335,20 +328,23 @@ void SDFViz::ToggleInterestVoxelVisibility() {
 	renderWindow->Render();
 }
 
+/**
+ * \brief if the scenes are loaded, this will allocate the buffers for voxel warps. If the interest regions are set up,
+ * it allocates the appropriate buffers for interest regions as well.
+ * scene voxel size should be known before this is called,
+ */
 void SDFViz::InitializeWarpBuffers() {
 	if (!sceneLogger->GetScenesLoaded()) {
 		DIEWITHEXCEPTION("Scenes not yet loaded, cannot initialize WarpBuffers");
 	}
-	if (!sceneLogger->GetInterestRegionsSetUp()) {
-		DIEWITHEXCEPTION("Interest regions haven't been set up, cannot initialize WarpBuffers");
-	}
 	this->allWarpBuffer = vtkSmartPointer<vtkFloatArray>::New();
 	allWarpBuffer->SetNumberOfComponents(3);
 	allWarpBuffer->SetNumberOfTuples(sceneLogger->GetVoxelCount() * 2);
-	this->interestWarpBuffer = vtkSmartPointer<vtkFloatArray>::New();
-	interestWarpBuffer->SetNumberOfComponents(3);
-	interestWarpBuffer->SetNumberOfTuples(sceneLogger->GetTotalInterestVoxelCount() * 2);
-
+	if (sceneLogger->GetInterestRegionsSetUp()) {
+		this->interestWarpBuffer = vtkSmartPointer<vtkFloatArray>::New();
+		interestWarpBuffer->SetNumberOfComponents(3);
+		interestWarpBuffer->SetNumberOfTuples(sceneLogger->GetTotalInterestVoxelCount() * 2);
+	}
 }
 
 void SDFViz::DecreaseCanonicalVoxelOpacity() {
@@ -463,18 +459,172 @@ Vector3d SDFViz::ComputeCameraRightVector(vtkCamera* camera) {
 void SDFViz::NextBackgroundColor() {
 	currentBackgrounColorIx = (currentBackgrounColorIx + 1) % static_cast<int>(backgroundColors.size());
 	double backgroundColor[4];
-	memcpy(backgroundColor,backgroundColors[currentBackgrounColorIx].data(), 4*sizeof(double));
+	memcpy(backgroundColor, backgroundColors[currentBackgrounColorIx].data(), 4 * sizeof(double));
 	sdfRenderer->SetBackground(backgroundColor);
 	renderWindow->Render();
 }
 
 void SDFViz::PreviousBackgroundColor() {
-	int reversedIndex = static_cast<int>(backgroundColors.size()) - 1 - currentBackgrounColorIx ;
+	int reversedIndex = static_cast<int>(backgroundColors.size()) - 1 - currentBackgrounColorIx;
 	reversedIndex = (reversedIndex + 1) % static_cast<int>(backgroundColors.size());
 	currentBackgrounColorIx = static_cast<int>(backgroundColors.size()) - 1 - reversedIndex;
 	double backgroundColor[4];
-	memcpy(backgroundColor,backgroundColors[currentBackgrounColorIx].data(), 4*sizeof(double));
+	memcpy(backgroundColor, backgroundColors[currentBackgrounColorIx].data(), 4 * sizeof(double));
 	sdfRenderer->SetBackground(backgroundColor);
 	renderWindow->Render();
 }
+
+std::string SDFViz::GenerateExpectedFramePath() {
+	return this->rootPath + "/Frame_" + std::to_string(this->frameIndex);
+}
+
+/**
+ * \brief Go to / load / view next frame data
+ * \return true on success, false on failure (if we're at last frame or there is any problem with the loading)
+ */
+bool SDFViz::NextFrame() {
+	ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* nextLogger;
+	frameIndex++;
+	try {
+		nextLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(GenerateExpectedFramePath(),
+		                                                                                canonicalScenePipe.GetScene(),
+		                                                                                liveScenePipe.GetScene());
+		delete this->sceneLogger;
+		this->sceneLogger = nextLogger;
+		LoadFrameData();
+		ReinitializePipelines();
+		renderWindow->Render();
+		return true;
+	} catch (std::exception& e) {
+		frameIndex--;
+		std::cerr << "Could not advance to next frame." << std::endl;
+		return false;
+	}
+}
+
+/**
+ * \brief Go to / load / view previous frame data
+ * \return true on success, false on failure (if we're at frame 0)
+ */
+bool SDFViz::PreviousFrame() {
+	if(frameIndex > 0){
+		ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* nextLogger;
+		frameIndex--;
+		nextLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(GenerateExpectedFramePath(),
+		                                                                                canonicalScenePipe.GetScene(),
+		                                                                                liveScenePipe.GetScene());
+		delete this->sceneLogger;
+		this->sceneLogger = nextLogger;
+		LoadFrameData();
+		ReinitializePipelines();
+		renderWindow->Render();
+		return true;
+	} else {
+		std::cerr << "Could not retreat to previous frame." << std::endl;
+		return false;
+	}
+}
+
+/**
+ * \brief Loads the data for the current frame into the scenes, highlights (if any), and begins the warp loading
+ */
+void SDFViz::LoadFrameData() {
+	// set up viz pipelines
+	sceneLogger->LoadScenesCompact();
+	hasHighlightInfo = sceneLogger->LoadHighlights(false, "continuous");
+	if (hasHighlightInfo) {
+		sceneLogger->SetUpInterestRegionsForLoading();
+	}
+	hasWarpIterationInfo = sceneLogger->StartLoadingWarpState(frameIndex);
+	if (hasWarpIterationInfo) {
+		canonicalScenePipe.SetFrameIndex(frameIndex);
+		InitializeWarpBuffers();
+	}
+	highlights = sceneLogger->GetHighlights();
+}
+
+/**
+ * \brief Sets up the geometry to use for voxel & hash block display
+ */
+void SDFViz::SetUpGeometrySources() {
+	//Individual voxel shape
+	sphere->SetThetaResolution(6);
+	sphere->SetPhiResolution(6);
+	sphere->SetRadius(0.5);//size of half a voxel
+	sphere->Update();
+
+	//Voxel hash block shape
+	cube->SetBounds(0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE);
+}
+
+void SDFViz::ReinitializePipelines() {
+	canonicalScenePipe.SetInterestRegionInfo(sceneLogger->GetInterestRegionHashes(), highlights);
+	canonicalScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
+	canonicalScenePipe.PrepareInterestRegions(sphere->GetOutputPort());
+	liveScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
+}
+
+bool SDFViz::AdvanceIteration() {
+	bool success = true;
+	iterationIndex++;
+	if(hasHighlightInfo && canonicalScenePipe.GetInterestVoxelActor()->GetVisibility()){
+		success = NextInterestWarps();
+		if (success){
+			std::cout << "Loaded next iteration interest warps." << std::endl;
+		}else{
+			std::cout << "Cound not load next iteration interest warps." << std::endl;
+		}
+	}
+	if (hasWarpIterationInfo && canonicalScenePipe.GetVoxelActor()->GetVisibility()) {
+		std::cout << "Loading next iteration warp & updates." << std::endl;
+		success = NextNonInterestWarps();
+		if (success) {
+			std::cout << "Next iteration warps loaded." << std::endl;
+		} else {
+			std::cout << "Could not load next iteration warp." << std::endl;
+		}
+	}
+	if(success){
+		renderWindow->Render();
+		UpdateIterationDisplay();
+	}else{
+		iterationIndex--;
+	}
+	return success;
+}
+
+bool SDFViz::RetreatIteration() {
+	if(iterationIndex == 0){
+		return false;
+	}
+	bool success = true;
+	iterationIndex --;
+	if (hasHighlightInfo && canonicalScenePipe.GetInterestVoxelActor()->GetVisibility()) {
+		success = PreviousInterestWarps();
+		if (success){
+			std::cout << "Loaded previous iteration interest warps." << std::endl;
+		}else{
+			std::cout << "Could not load previous iteration interest warps." << std::endl;
+		}
+	}
+	if (hasWarpIterationInfo && canonicalScenePipe.GetVoxelActor()->GetVisibility()) {
+		std::cout << "Loading previous iteration warp & updates." << std::endl;
+		success = PreviousNonInterestWarps();
+		if (success) {
+			std::cout << "Previous iteration warps loaded." << std::endl;
+		} else {
+			std::cout << "Could not load previous iteration warp & updates." << std::endl;
+		}
+	}
+	if(success){
+		UpdateIterationDisplay();
+		renderWindow->Render();
+	}else{
+		iterationIndex++;
+	}
+	return success;
+}
+
+
+
 

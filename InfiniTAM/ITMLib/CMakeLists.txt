@@ -376,7 +376,7 @@ Objects/Scene/ITMMultiSceneAccess.h
 Objects/Scene/ITMPlainVoxelArray.h
 Objects/Scene/ITMRepresentationAccess.h
 Objects/Scene/ITMTrilinearInterpolation.h
-    Objects/Scene/ITMTrilinearDistribution.h
+Objects/Scene/ITMTrilinearDistribution.h
 Objects/Scene/ITMScene.h
 Objects/Scene/ITMSurfelScene.h
 Objects/Scene/ITMSurfelTypes.h
@@ -492,6 +492,7 @@ SET(ITMLIB_UTILS_SOURCES
 Utils/ITMLibSettings.cpp
 Utils/ITMSceneSliceRasterizer.tpp
 Utils/ITMSceneLogger.tpp
+Utils/ITMSceneLogger_InterestRegionInfo.tpp
 Utils/ITM3DNestedMapOfArrays.tpp
 Utils/ITM3DNestedMap.tpp
 Utils/ITMSceneStatisticsCalculator.tpp

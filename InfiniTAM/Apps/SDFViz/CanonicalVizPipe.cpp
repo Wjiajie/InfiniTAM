@@ -253,6 +253,7 @@ void CanonicalVizPipe::SetInterestRegionInfo(std::vector<int> interestRegionHash
                                              ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights) {
 	this->highlights = highlights;
 	this->interestRegionHashes = std::move(interestRegionHashes);
+	interestRegionHashSet.clear();
 	for (int hash : this->interestRegionHashes) {
 		interestRegionHashSet.insert(hash);
 	}

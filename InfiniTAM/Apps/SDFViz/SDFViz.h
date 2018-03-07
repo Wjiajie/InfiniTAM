@@ -24,6 +24,8 @@
 #include <vtkObjectFactory.h>
 #include <vtkExtractPolyDataGeometry.h>
 #include <vtkLegendBoxActor.h>
+#include <vtk-8.1/vtkSphereSource.h>
+#include <vtk-8.1/vtkCubeSource.h>
 
 //local
 #include "SDFSceneVizPipe.tpp"
@@ -73,8 +75,7 @@ public:
 
 	//================= CONSTRUCTORS/DESTRUCTORS ===================
 	SDFViz(std::string pathToScene, bool showNonInterestCanonicalVoxels, bool showLiveVoxels,
-	       bool hideInterestCanonicalRegions, bool useInitialCoords,
-	       Vector3i initialCoords);
+	       bool hideInterestCanonicalRegions, bool useInitialCoords, Vector3i initialCoords);
 	virtual ~SDFViz();
 	//================= INSTANCE MEMBER FUNCTIONS ==================
 	int Run();
@@ -84,9 +85,15 @@ private:
 	// Array holding various background colors to cycle through
 	static const std::array<std::array<double,4>,4> backgroundColors;
 
+	//================= STATIC FUNCTIONS ===========================
+	static Vector3d ComputeCameraRightVector(vtkCamera* camera);
+
 	//================= MEMBER VARIABLES ===========================
 	// Data loader
 	ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
+	// path to root directory (i.e. without the Frame_XXXX prefixes)
+	std::string rootPath;
+
 
 	// Visualization setup
 	vtkSmartPointer<vtkRenderer> sdfRenderer;
@@ -109,6 +116,8 @@ private:
 	CanonicalVizPipe canonicalScenePipe;
 	SDFSceneVizPipe<ITMVoxelLive, ITMVoxelIndex> liveScenePipe;
 	HighlightVisualization highlightVisualizer;
+	vtkSmartPointer<vtkSphereSource> sphere;
+	vtkSmartPointer<vtkCubeSource> cube;
 
 	//Holds warp & warp update state for the canonical scene
 	vtkSmartPointer<vtkFloatArray> allWarpBuffer;
@@ -116,35 +125,44 @@ private:
 	bool hasWarpIterationInfo = true;
 	bool hasHighlightInfo = false;
 	//frame that we're loading scene & warps for
-	int frameIndex;
+	unsigned int frameIndex;
 	//to keep track of iteration number in the optimization
-	int iterationIndex;
+	unsigned int iterationIndex;
 
 	//Holds highlights in the scene
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
 	const std::vector<ITMHighlightIterationInfo>* currentHighlight;
 
 	//================ MEMBER FUNCTIONS =====================
-	static Vector3d ComputeCameraRightVector(vtkCamera* camera);
-	void InitializeRendering();
-	//scene voxel size should be known
-	void InitializeWarpBuffers();
 
+	//*** initialization / drawing GUI elements ***
+	void InitializeRendering();
+	void InitializeWarpBuffers();
 	void DrawLegend();
 	void DrawIterationCounter();
 	void DrawDummyMarkers();
+	void SetUpGeometrySources();
+	void ReinitializePipelines();
 
+	//*** advance/retreat warp / otimization interation ***
+	bool AdvanceIteration();
+	bool RetreatIteration();
 	bool NextNonInterestWarps();
+	bool NonInterestWarpsAt(unsigned int iteration);
 	bool PreviousNonInterestWarps();
+	void InterestWarpBufferHelper();
 	bool NextInterestWarps();
 	bool PreviousInterestWarps();
+	bool InterestWarpsAt(unsigned int iteration);
 
-	void MoveFocusToNextHighlight();
-	void MoveFocusToPreviousHighlight();
+	//*** control/advance/retreat frame ***
+	std::string GenerateExpectedFramePath();
+	//read scenes from disk
+	void LoadFrameData();
+	bool NextFrame();
+	bool PreviousFrame();
 
-	void NextBackgroundColor();
-
-	//** visibility / opacity **
+	//*** visibility / opacity ***
 	void ToggleCanonicalHashBlockVisibility();
 	void ToggleLiveHashBlockVisibility();
 
@@ -154,13 +172,20 @@ private:
 	void DecreaseCanonicalVoxelOpacity();
 	void IncreaseCanonicalVoxelOpacity();
 
-	void UpdateIteration(unsigned int newValue);
+	void ToggleInterestVoxelVisibility();
 
+	void DecreaseLiveVoxelOpacity();
+	void IncreaseLiveVoxelOpacity();
+
+	//*** update /change GUI ***
+	void UpdateIterationDisplay();
+	void PreviousBackgroundColor();
+	void NextBackgroundColor();
+
+	//*** viewport navigation ***
 	void MoveFocusToHighlightAt(int hash, int localId);
 	void MoveFocusToVoxelAt(Vector3d absoluteCoordinates);
 	void RefocusAtCurrentHighlight();
-	void ToggleInterestVoxelVisibility();
-	void DecreaseLiveVoxelOpacity();
-	void IncreaseLiveVoxelOpacity();
-	void PreviousBackgroundColor();
+	void MoveFocusToNextHighlight();
+	void MoveFocusToPreviousHighlight();
 };
