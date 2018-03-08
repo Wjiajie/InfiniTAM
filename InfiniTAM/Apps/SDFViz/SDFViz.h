@@ -74,7 +74,7 @@ public:
 	static const std::array<double, 3> liveHashBlockEdgeColor;
 
 	//================= CONSTRUCTORS/DESTRUCTORS ===================
-	SDFViz(std::string pathToScene, bool showNonInterestCanonicalVoxels, bool showLiveVoxels,
+	SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, bool hideLiveVoxels,
 	       bool hideInterestCanonicalRegions, bool useInitialCoords, Vector3i initialCoords);
 	virtual ~SDFViz();
 	//================= INSTANCE MEMBER FUNCTIONS ==================
@@ -107,6 +107,7 @@ private:
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
 	// indicator at top left corner showing for which (if any) iteration the data is being shown
 	vtkSmartPointer<vtkTextActor> iterationIndicator;
+	vtkSmartPointer<vtkTextActor> frameIndicator;
 	// for switching the background color
 	int currentBackgrounColorIx = 0;
 	// legend
@@ -159,8 +160,8 @@ private:
 	std::string GenerateExpectedFramePath();
 	//read scenes from disk
 	void LoadFrameData();
-	bool NextFrame();
-	bool PreviousFrame();
+	bool AdvanceFrame();
+	bool RetreatFrame();
 
 	//*** visibility / opacity ***
 	void ToggleCanonicalHashBlockVisibility();
@@ -188,4 +189,6 @@ private:
 	void RefocusAtCurrentHighlight();
 	void MoveFocusToNextHighlight();
 	void MoveFocusToPreviousHighlight();
+	void DrawFrameCounter();
+	void UpdateFrameDisplay();
 };

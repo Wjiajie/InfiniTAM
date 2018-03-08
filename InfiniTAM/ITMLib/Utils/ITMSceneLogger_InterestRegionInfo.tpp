@@ -186,8 +186,8 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::Re
 	ofStream.close();
 	ofStream = std::ofstream(path.c_str(), std::ios::binary | std::ios::out);
 	if (!ofStream)
-		throw std::runtime_error(
-				"Could not open " + path.string() + " for writing. ["  __FILE__  ": " + std::to_string(__LINE__) + "]");
+		throw std::runtime_error("Could not open " + path.string()
+		                         + " for writing. ["  __FILE__  ": " + std::to_string(__LINE__) + "]");
 	//write region header
 	ofStream.write(reinterpret_cast<const char* >(&centerHashBlockId), sizeof(unsigned int));
 	size_t hashBlockCount = hashBlockIds.size();
@@ -236,6 +236,9 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SaveCur
 // *********************************************************************************************************************
 // ============================================ SAVING SETUP & SAVING WARPS ============================================
 
+/**
+ * \brief Set
+ */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving() {
 	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving(this->highlights);
@@ -324,7 +327,6 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveAllInterestRegionW
 }
 
 // ============================================= LOADING SETUP =========================================================
-
 /**
  * \brief Set up all interest regions for loading based on the files in current active directory for the loader.
  * \details The files should follow the interest region naming convention
@@ -442,5 +444,3 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferPreviousInterest
 	}
 	return true;
 }
-
-

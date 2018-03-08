@@ -81,9 +81,13 @@ void SDFVizKeyPressInteractorStyle::OnKeyPress() {
 				parent->IncreaseLiveVoxelOpacity();
 			}
 		} else if (key == "bracketright") {
-			parent->RetreatIteration();
-		} else if (key == "bracketleft") {
 			parent->AdvanceIteration();
+		} else if (key == "bracketleft") {
+			parent->RetreatIteration();
+		} else if (key == "period") {
+			parent->AdvanceFrame();
+		} else if (key == "comma") {
+			parent->RetreatFrame();
 		} else if (key == "Prior") {
 			if (parent->hasHighlightInfo && !rwi->GetAltKey()) {
 				parent->MoveFocusToPreviousHighlight();
@@ -108,17 +112,17 @@ void SDFVizKeyPressInteractorStyle::OnKeyPress() {
 				parent->sdfRenderer->ResetCamera();
 				parent->renderWindow->Render();
 			}
-		} else if (key == "b"){
-			if(rwi->GetAltKey()){
+		} else if (key == "b") {
+			if (rwi->GetAltKey()) {
 				parent->PreviousBackgroundColor();
-			}else{
+			} else {
 				parent->NextBackgroundColor();
 			}
-		} else if (key == "t"){
-			if(rwi->GetAltKey()){
+		} else if (key == "t") {
+			if (rwi->GetAltKey()) {
 				parent->canonicalScenePipe.ToggleScaleMode();
 				parent->renderWindow->Render();
-			}else{
+			} else {
 				parent->liveScenePipe.ToggleScaleMode();
 				parent->renderWindow->Render();
 			}

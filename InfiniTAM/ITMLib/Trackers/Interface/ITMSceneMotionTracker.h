@@ -74,8 +74,8 @@ protected:
 
 	float maxVectorUpdateThresholdVoxels;
 
-	int iteration = 0;
-	int currentFrameIx = 0;
+	unsigned int iteration = 0;
+	unsigned int currentFrameIx = 0;
 
 	ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex> sceneLogger;
 	std::string baseOutputDirectory;

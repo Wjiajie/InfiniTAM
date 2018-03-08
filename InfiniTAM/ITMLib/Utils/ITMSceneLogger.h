@@ -153,10 +153,10 @@ public:
 	int GetTotalInterestVoxelCount();
 
 	//** global warp-state saving/loading
-	bool StartSavingWarpState(int frameIx);
+	bool StartSavingWarpState(unsigned int frameIx);
 	void StopSavingWarpState();
 	bool StartLoadingWarpState();
-	bool StartLoadingWarpState(int& frameIx);
+	bool StartLoadingWarpState(unsigned int& frameIx);
 	void StopLoadingWarpState();
 
 	bool SaveCurrentWarpState();
@@ -174,7 +174,6 @@ public:
 	bool CopyWarpAt(int index, float voxelWarpDestination[3], float voxelUpdateDestination[3]) const;
 	const float* WarpAt(int index) const;
 	const float* UpdateAt(int index) const;
-
 
 private:
 

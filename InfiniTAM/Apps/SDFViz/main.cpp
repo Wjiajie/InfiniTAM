@@ -22,8 +22,8 @@ namespace po = boost::program_options;
 int main(int argc, const char* argv[]) {
 	try {
 		//visibility boolean flags
-		bool showNonInterestCanonicalVoxels = false;
-		bool showLiveVoxels = false;
+		bool hideNonInterestCanonicalVoxels = false;
+		bool hideLiveVoxels = false;
 		bool hideInterestCanonicalRegions = false;
 
 		po::options_description description{"Options"};
@@ -32,18 +32,18 @@ int main(int argc, const char* argv[]) {
 				("directory,d",
 				 po::value<std::string>()->default_value("/media/algomorph/Data/Reconstruction/debug_output/scene"),
 				 "Directory where to load the SDF scene from.")
-				("show_non_interest,sni", po::bool_switch(&showNonInterestCanonicalVoxels),
-				 "Show non-interest canonical voxels on startup.")
-				("show_live,sl", po::bool_switch(&showLiveVoxels),
-				 "Show live voxels on startup.")
-				("hide_interest,hcr", po::bool_switch(&hideInterestCanonicalRegions),
+				("hide_non_interest,hni", po::bool_switch(&hideNonInterestCanonicalVoxels),
+				 "Hide non-interest canonical voxels on startup.")
+				("hide_live,hl", po::bool_switch(&hideLiveVoxels),
+				 "Hide live voxels on startup.")
+				("hide_interest,hi", po::bool_switch(&hideInterestCanonicalRegions),
 				 "Hide interest canonical voxels on startup.")
 				("initial_focus_coord,ifc", po::value<std::vector<int>>()->multitoken(),
 				 "Coordinate of voxel where to focus on startup. Must follow format:\n x y z\n, all integers.")
 				;
 
 		po::variables_map vm;
-		po::store(po::parse_command_line(argc, argv, description), vm);
+		po::store(po::command_line_parser(argc, argv).options(description).run(), vm);
 		po::notify(vm);
 
 		if (vm.count("help") ||
@@ -58,7 +58,7 @@ int main(int argc, const char* argv[]) {
 				initialCoordsVec.data();
 				memcpy(initialCoords.values, initialCoordsVec.data(), sizeof(int) * 3);
 			}
-			SDFViz application(vm["directory"].as<std::string>(), showNonInterestCanonicalVoxels, showLiveVoxels,
+			SDFViz application(vm["directory"].as<std::string>(), hideNonInterestCanonicalVoxels, hideLiveVoxels,
 			                   hideInterestCanonicalRegions, haveUserInitialCoordinate,initialCoords);
 			application.Run();
 		}
