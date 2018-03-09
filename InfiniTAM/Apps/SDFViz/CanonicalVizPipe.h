@@ -48,6 +48,7 @@ public:
 
 	// *** modify state ***
 	void ToggleScaleMode() override;
+	void SetPointHighlight(vtkIdType pointId, bool highlightOn);
 
 protected:
 	// *** setup ***
@@ -74,14 +75,14 @@ private:
 	ITM3DNestedMap<std::tuple<int, int>> highlightByNeighbor;
 	ITM3DNestedMapOfArrays<int> highlightNeighborIndexes;
 
-
 	// ** individual voxels **
 	vtkSmartPointer<vtkPolyData> interestVoxelPolydata;
 	vtkSmartPointer<vtkLookupTable> interestVoxelColorLookupTable;
 	vtkSmartPointer<vtkGlyph3DMapper> interestVoxelMapper;
 	vtkSmartPointer<vtkActor> interestVoxelActor;
+	vtkSmartPointer<vtkActor> selectedVoxelActor;
 
-	void SetUpHighlightSDFColorLookupTable(vtkSmartPointer<vtkLookupTable>& table, const double* rgbaFirstColor,
-	                                       const double* rgbaSecondColor, const double* rgbaHighlightColor);
+	// ** interaction **
+	int selectedVertexDefaultColorIndex;
 
 };

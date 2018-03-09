@@ -42,9 +42,8 @@ public:
 	static const char* alternativeScalePointAttributeName;
 
 	// ====================== CONSTRUCTORS / DESTRUCTORS ==================
-	SDFSceneVizPipe(std::array<double,4> negativeSDFVoxelColor,
-	                std::array<double,4> positiveSDFVoxelColor,
-	                std::array<double,3> hashBlockEdgeColor);
+	SDFSceneVizPipe(std::array<double, 4> negativeVoxelColor, std::array<double, 4> positiveVoxelColor,
+	                std::array<double, 4> highlightVoxelColor, std::array<double, 3> hashBlockEdgeColor);
 	~SDFSceneVizPipe();
 
 	// ====================== MEMBER FUNCTIONS ===========================
@@ -61,12 +60,10 @@ protected:
 
 	static void SetUpSceneHashBlockMapper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
 	                                      vtkSmartPointer<vtkPolyData>& pointsPolydata);
-	static void SetUpSDFColorLookupTable(vtkSmartPointer<vtkLookupTable>& table, const double* rgbaFirstColor,
-	                                     const double* rgbaSecondColor);
-	static void SetUpGlyph(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkPolyData>& polydata,
-	                       vtkSmartPointer<vtkGlyph3D>& glyph);
-	static void SetUpSceneVoxelMapper(vtkSmartPointer<vtkPolyDataMapper>& mapper, vtkSmartPointer<vtkLookupTable>& table,
-	                                  vtkSmartPointer<vtkGlyph3D>& glyph);
+	static void SetUpSDFColorLookupTable(vtkSmartPointer<vtkLookupTable>& table,
+		                                    const double* rgbaFirstColor,
+		                                    const double* rgbaSecondColor,
+		                                    const double* rgbaHighlightColor);
 	static void SetUpSceneVoxelMapper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
 	                                  vtkSmartPointer<vtkLookupTable>& table,
 	                                  vtkSmartPointer<vtkExtractPolyDataGeometry> extractor);
@@ -100,6 +97,7 @@ private:
 	// ** colors **
 	std::array<double, 4> negativeVoxelColor;
 	std::array<double, 4> positiveVoxelColor;
+	std::array<double, 4> highlightVoxelColor;
 	std::array<double, 3> hashBlockEdgeColor;
 
 	// ** scene limits/boundaries **

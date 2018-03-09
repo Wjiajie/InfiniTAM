@@ -41,9 +41,8 @@ template<typename TVoxel, typename TIndex>
 const char* SDFSceneVizPipe<TVoxel, TIndex>::alternativeScalePointAttributeName = "alternative_scale";
 
 template<typename TVoxel, typename TIndex>
-SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(std::array<double, 4> negativeSDFVoxelColor,
-                                                 std::array<double, 4> positiveSDFVoxelColor,
-                                                 std::array<double, 3> hashBlockEdgeColor)
+SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(std::array<double, 4> negativeVoxelColor, std::array<double, 4> positiveVoxelColor,
+                                                 std::array<double, 4> highlightVoxelColor, std::array<double, 3> hashBlockEdgeColor)
 		:
 		voxelPolydata(vtkSmartPointer<vtkPolyData>::New()),
 		voxelColorLookupTable(vtkSmartPointer<vtkLookupTable>::New()),
@@ -54,8 +53,9 @@ SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(std::array<double, 4> negativeS
 		hashBlockActor(vtkSmartPointer<vtkActor>::New()),
 		hashBlockMapper(vtkSmartPointer<vtkGlyph3DMapper>::New()),
 
-		negativeVoxelColor(negativeSDFVoxelColor),
-		positiveVoxelColor(positiveSDFVoxelColor),
+		negativeVoxelColor(negativeVoxelColor),
+		positiveVoxelColor(positiveVoxelColor),
+		highlightVoxelColor(highlightVoxelColor),
 		hashBlockEdgeColor(hashBlockEdgeColor),
         scaleMode(VOXEL_SCALE_DEFAULT){
 	auto* settings = new ITMLibSettings();
@@ -63,7 +63,7 @@ SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(std::array<double, 4> negativeS
 			&settings->sceneParams, settings->swappingMode ==
 			                        ITMLibSettings::SWAPPINGMODE_ENABLED, settings->GetMemoryType());
 	// Create the color maps
-	SetUpSDFColorLookupTable(voxelColorLookupTable, negativeSDFVoxelColor.data(), positiveSDFVoxelColor.data());
+	SetUpSDFColorLookupTable(voxelColorLookupTable, negativeVoxelColor.data(), positiveVoxelColor.data(), highlightVoxelColor.data());
 	delete settings;
 }
 
@@ -83,7 +83,7 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 	vtkSmartPointer<vtkPoints> hashBlockPoints = vtkSmartPointer<vtkPoints>::New();
 
 	//holds color for each voxel
-	vtkSmartPointer<vtkFloatArray> colorAttribute = vtkSmartPointer<vtkFloatArray>::New();
+	vtkSmartPointer<vtkIntArray> colorAttribute = vtkSmartPointer<vtkIntArray>::New();
 	colorAttribute->SetName(colorPointAttributeName);
 
 	//holds scale of each voxel
@@ -182,38 +182,16 @@ void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneHashBlockMapper(vtkAlgorithmOutp
 
 template<typename TVoxel, typename TIndex>
 void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSDFColorLookupTable(vtkSmartPointer<vtkLookupTable>& table,
-                                                               const double* rgbaFirstColor,
-                                                               const double* rgbaSecondColor) {
-	table->SetTableRange(0.0, 1.0);
-	table->SetNumberOfTableValues(2);
-	table->SetNumberOfColors(2);
-	table->SetTableValue(0, rgbaFirstColor);
-	table->SetTableValue(1, rgbaSecondColor);
-}
-
-template<typename TVoxel, typename TIndex>
-void
-SDFSceneVizPipe<TVoxel, TIndex>::SetUpGlyph(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkPolyData>& polydata,
-                                            vtkSmartPointer<vtkGlyph3D>& glyph) {
-	glyph->SetInputData(polydata);
-	glyph->SetSourceConnection(sourceOutput);
-	glyph->ScalingOn();
-	glyph->ClampingOff();
-	glyph->SetScaleModeToScaleByScalar();
-	glyph->SetScaleFactor(1.0);
-	glyph->SetColorModeToColorByScalar();
-}
-
-//CPU glyph version
-template<typename TVoxel, typename TIndex>
-void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneVoxelMapper(vtkSmartPointer<vtkPolyDataMapper>& mapper,
-                                                            vtkSmartPointer<vtkLookupTable>& table,
-                                                            vtkSmartPointer<vtkGlyph3D>& glyph) {
-	mapper->SetInputConnection(glyph->GetOutputPort());
-	mapper->ScalarVisibilityOn();
-	mapper->SetColorModeToMapScalars();
-	mapper->SetLookupTable(table);
-	mapper->ColorByArrayComponent("data", 1);
+                                                              const double* rgbaFirstColor,
+                                                              const double* rgbaSecondColor,
+                                                              const double* rgbaHighlightColor) {
+	table->SetTableRange(0.0, 3.0);
+	table->SetNumberOfTableValues(3);
+	table->SetNumberOfColors(3);
+	table->SetTableValue(NEGATIVE_SDF_COLOR_INDEX, rgbaFirstColor);
+	table->SetTableValue(POSITIVE_SDF_COLOR_INDEX, rgbaSecondColor);
+	table->SetTableValue(HIGHLIGHT_SDF_COLOR_INDEX, rgbaHighlightColor);
+	table->SetNanColor(0.4, 0.7, 0.1, 1.0);
 }
 
 //GPU glyph version with filtering
@@ -231,6 +209,8 @@ void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneVoxelMapper(vtkAlgorithmOutput* 
 	mapper->ScalarVisibilityOn();
 	mapper->SetScalarModeToUsePointData();
 	mapper->SetColorModeToMapScalars();
+	mapper->SetScalarRange(0.0, 3.0);
+	mapper->InterpolateScalarsBeforeMappingOff();
 	mapper->Update();
 }
 
@@ -250,7 +230,9 @@ void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneVoxelMapper(
 	mapper->ScalarVisibilityOn();
 	mapper->SetScalarModeToUsePointData();
 	mapper->SetColorModeToMapScalars();
-
+	mapper->SetScalarRange(0.0, 3.0);
+	mapper->InterpolateScalarsBeforeMappingOff();
+	mapper->Update();
 }
 
 template<typename TVoxel, typename TIndex>

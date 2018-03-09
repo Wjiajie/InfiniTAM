@@ -18,14 +18,15 @@
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
+#include <vtkRendererCollection.h>
 
 //local
-#include "SDFVizKeyPressInteractorStyle.h"
+#include "SDFVizInteractorStyle.h"
 #include "SDFViz.h"
 
-vtkStandardNewMacro(SDFVizKeyPressInteractorStyle);
+vtkStandardNewMacro(SDFVizInteractorStyle);
 
-void SDFVizKeyPressInteractorStyle::OnKeyPress() {
+void SDFVizInteractorStyle::OnKeyPress() {
 
 	// Get the keypress
 	vtkRenderWindowInteractor* rwi = this->Interactor;
@@ -126,7 +127,11 @@ void SDFVizKeyPressInteractorStyle::OnKeyPress() {
 				parent->liveScenePipe.ToggleScaleMode();
 				parent->renderWindow->Render();
 			}
+		} else if (key == "s"){
+			this->selectionMode = !this->selectionMode;
+			std::cout << "Selection mode " << (this->selectionMode ? "ON" : "OFF") << std::endl;
 		}
+
 	}
 	std::cout << "Key symbol: " << key << std::endl;
 	std::cout << "Key code: " << static_cast<int>(rwi->GetKeyCode()) << std::endl;
@@ -135,3 +140,31 @@ void SDFVizKeyPressInteractorStyle::OnKeyPress() {
 	vtkInteractorStyleTrackballCamera::OnKeyPress();
 
 }
+
+void SDFVizInteractorStyle::OnLeftButtonUp() {
+	if(selectionMode){
+		this->pointPicker->Pick(this->Interactor->GetEventPosition()[0],
+		                          this->Interactor->GetEventPosition()[1],
+		                          0,
+		                          this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
+		vtkIdType newSelectedPointId = this->pointPicker->GetPointId();
+		vtkActor* selectedActor =this->pointPicker->GetActor();
+		if(selectedActor == parent->canonicalScenePipe.GetVoxelActor() && newSelectedPointId >= 0) {
+			if(selectedPointId >= -1){
+				parent->canonicalScenePipe.SetPointHighlight(selectedPointId, false);
+			}
+			selectedPointId = newSelectedPointId;
+			parent->canonicalScenePipe.SetPointHighlight(selectedPointId, true);
+			parent->renderWindow->Render();
+		}
+	}
+	vtkInteractorStyleTrackballCamera::OnLeftButtonUp();
+}
+
+SDFVizInteractorStyle::SDFVizInteractorStyle() :
+		selectionMode(false),
+		pointPicker(vtkSmartPointer<vtkPointPicker>::New()),
+		selectedPointId(-1){
+
+}
+

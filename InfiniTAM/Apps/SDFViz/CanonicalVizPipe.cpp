@@ -24,6 +24,7 @@
 #include <vtkActor.h>
 #include <vtkGlyph3DMapper.h>
 #include <vtkLookupTable.h>
+#include <vtk-8.1/vtkSphereSource.h>
 
 //local
 #include "CanonicalVizPipe.h"
@@ -46,8 +47,8 @@ CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& negativeNonInter
                                    const std::array<double, 4>& highlightVoxelColor,
                                    const std::array<double, 3>& hashBlockEdgeColor,
                                    int frameIx) :
-		SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex>(
-				negativeNonInterestVoxelColor, positiveNonInterestVoxelColor, hashBlockEdgeColor),
+		SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex>(negativeNonInterestVoxelColor, positiveNonInterestVoxelColor,
+		                                                  std::array<double, 4>(), hashBlockEdgeColor),
 		frameIx(frameIx),
 		initialNonInterestPoints(vtkSmartPointer<vtkPoints>::New()),
 		initialInterestPoints(vtkSmartPointer<vtkPoints>::New()),
@@ -57,9 +58,12 @@ CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& negativeNonInter
 		interestVoxelPolydata(vtkSmartPointer<vtkPolyData>::New()),
 		interestVoxelColorLookupTable(vtkSmartPointer<vtkLookupTable>::New()),
 		interestVoxelMapper(vtkSmartPointer<vtkGlyph3DMapper>::New()),
-		interestVoxelActor(vtkSmartPointer<vtkActor>::New()) {
-	SetUpHighlightSDFColorLookupTable(interestVoxelColorLookupTable, negativeInterestVoxelColor.data(),
-	                                  positiveInterestVoxelColor.data(), highlightVoxelColor.data());
+		interestVoxelActor(vtkSmartPointer<vtkActor>::New()),
+		selectedVoxelActor(vtkSmartPointer<vtkActor>::New()){
+	SetUpSDFColorLookupTable(interestVoxelColorLookupTable,
+	                         negativeInterestVoxelColor.data(),
+	                         positiveInterestVoxelColor.data(),
+	                         highlightVoxelColor.data());
 }
 
 void CanonicalVizPipe::PreparePointsForRendering() {
@@ -73,7 +77,7 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 	vtkSmartPointer<vtkPoints> hashBlockPoints = vtkSmartPointer<vtkPoints>::New();
 
 	//holds color for each voxel
-	vtkSmartPointer<vtkFloatArray> nonInterestColorAttribute = vtkSmartPointer<vtkFloatArray>::New();
+	vtkSmartPointer<vtkIntArray> nonInterestColorAttribute = vtkSmartPointer<vtkIntArray>::New();
 	nonInterestColorAttribute->SetName(colorPointAttributeName);
 	//holds scale of each voxel
 	vtkSmartPointer<vtkFloatArray> nonInterestScaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
@@ -276,8 +280,6 @@ void CanonicalVizPipe::PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeo
 	// set up voxel mapper
 	SetUpSceneVoxelMapper(voxelSourceGeometry, interestVoxelMapper, interestVoxelColorLookupTable,
 	                      interestVoxelPolydata);
-	interestVoxelMapper->SetScalarRange(0.0, 3.0);
-	interestVoxelMapper->InterpolateScalarsBeforeMappingOff();
 
 	// set up voxel actor
 	interestVoxelActor->SetMapper(interestVoxelMapper);
@@ -303,19 +305,6 @@ void CanonicalVizPipe::UpdateInterestRegionsFromBuffers(void* buffer) {
 		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] - warpRawData[iVoxel * 6 + 2];
 	}
 	interestVoxelPolydata->Modified();
-}
-
-void CanonicalVizPipe::SetUpHighlightSDFColorLookupTable(vtkSmartPointer<vtkLookupTable>& table,
-                                                         const double* rgbaFirstColor,
-                                                         const double* rgbaSecondColor,
-                                                         const double* rgbaHighlightColor) {
-	table->SetTableRange(0.0, 3.0);
-	table->SetNumberOfTableValues(3);
-	table->SetNumberOfColors(3);
-	table->SetTableValue(0, rgbaFirstColor);
-	table->SetTableValue(1, rgbaSecondColor);
-	table->SetTableValue(2, rgbaHighlightColor);
-	table->SetNanColor(0.4, 0.7, 0.1, 1.0);
 }
 
 Vector3d CanonicalVizPipe::GetHighlightPosition(int hash, int locId) {
@@ -353,4 +342,18 @@ void CanonicalVizPipe::ToggleScaleMode() {
 	}else{
 		interestVoxelMapper->SetScaleArray(alternativeScalePointAttributeName);
 	}
+}
+
+void CanonicalVizPipe::SetPointHighlight(vtkIdType pointId, bool highlightOn) {
+	auto colorArray =
+			dynamic_cast<vtkIntArray*>(voxelPolydata->GetPointData()->GetArray(colorPointAttributeName));
+	if(highlightOn){
+		selectedVertexDefaultColorIndex = colorArray->GetValue(pointId);
+		colorArray->SetValue(pointId,HIGHLIGHT_SDF_COLOR_INDEX);
+	}else{
+		colorArray->SetValue(pointId,selectedVertexDefaultColorIndex);
+	}
+	colorArray->Modified();
+	voxelPolydata->Modified();
+
 }

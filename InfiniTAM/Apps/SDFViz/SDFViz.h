@@ -24,8 +24,9 @@
 #include <vtkObjectFactory.h>
 #include <vtkExtractPolyDataGeometry.h>
 #include <vtkLegendBoxActor.h>
-#include <vtk-8.1/vtkSphereSource.h>
-#include <vtk-8.1/vtkCubeSource.h>
+#include <vtkSphereSource.h>
+#include <vtkCubeSource.h>
+#include <vtkPointPicker.h>
 
 //local
 #include "SDFSceneVizPipe.tpp"
@@ -59,18 +60,18 @@ class vtkTextActor;
  * \brief SDF Visualization application main class.
  */
 class SDFViz {
-	friend class SDFVizKeyPressInteractorStyle;
+	friend class SDFVizInteractorStyle;
 
 public:
 	//================= STATIC CONSTANTS ============================
-	static const std::array<double, 4> canonicalNegativeSDFVoxelColor;
-	static const std::array<double, 4> canonicalPositiveSDFVoxelColor;
-	static const std::array<double, 4> canonicalNegativeInterestSDFVoxelColor;
-	static const std::array<double, 4> canonicalPositiveInterestSDFVoxelColor;
-	static const std::array<double, 4> canonicalHighlightSDFVoxelColor;
+	static const std::array<double, 4> canonicalNegativeVoxelColor;
+	static const std::array<double, 4> canonicalPositiveVoxelColor;
+	static const std::array<double, 4> canonicalNegativeInterestVoxelColor;
+	static const std::array<double, 4> canonicalPositiveInterestVoxelColor;
+	static const std::array<double, 4> highlightVoxelColor;
 	static const std::array<double, 3> canonicalHashBlockEdgeColor;
-	static const std::array<double, 4> liveNegativeSDFVoxelColor;
-	static const std::array<double, 4> livePositiveSDFVoxelColor;
+	static const std::array<double, 4> liveNegativeVoxelColor;
+	static const std::array<double, 4> livePositiveVoxelColor;
 	static const std::array<double, 3> liveHashBlockEdgeColor;
 
 	//================= CONSTRUCTORS/DESTRUCTORS ===================
@@ -119,6 +120,8 @@ private:
 	HighlightVisualization highlightVisualizer;
 	vtkSmartPointer<vtkSphereSource> sphere;
 	vtkSmartPointer<vtkCubeSource> cube;
+	// interaction
+
 
 	//Holds warp & warp update state for the canonical scene
 	vtkSmartPointer<vtkFloatArray> allWarpBuffer;

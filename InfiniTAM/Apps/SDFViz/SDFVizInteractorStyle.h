@@ -16,21 +16,34 @@
 #pragma once
 
 #include <vtkInteractorStyleTrackballCamera.h>
+#include <vtkPointPicker.h>
+#include <vtkSmartPointer.h>
 
 class SDFViz;
 
 /**
  * \brief A standard VTK trackball interactor style with added functionality for
- * some keyboard keys
+ * some keyboard keys & selecting points
  */
-class SDFVizKeyPressInteractorStyle : public vtkInteractorStyleTrackballCamera {
+class SDFVizInteractorStyle : public vtkInteractorStyleTrackballCamera {
 
 public:
-	static SDFVizKeyPressInteractorStyle* New();
+	static SDFVizInteractorStyle* New();
 
-	vtkTypeMacro(SDFVizKeyPressInteractorStyle, vtkInteractorStyleTrackballCamera);
+	vtkTypeMacro(SDFVizInteractorStyle, vtkInteractorStyleTrackballCamera);
+	SDFVizInteractorStyle();
+
 	SDFViz* parent;
 
 	virtual void OnKeyPress();
+	virtual void OnLeftButtonUp();
+
+private:
+	//============================= MEMBER VARIABLES ===================================================================
+	bool selectionMode = false;
+	vtkSmartPointer<vtkPointPicker> pointPicker;
+	vtkIdType selectedPointId = -1;
+	//============================= MEMBER FUNCTIONS ===================================================================
+
 
 };

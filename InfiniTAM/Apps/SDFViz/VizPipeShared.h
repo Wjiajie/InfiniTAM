@@ -22,6 +22,12 @@
 #define COMPUTE_VOXEL_SCALE(sdf) (1.0f - 0.9f * std::abs(sdf))
 
 
+enum VoxelColorIndex : int{
+	NEGATIVE_SDF_COLOR_INDEX = 0,
+	POSITIVE_SDF_COLOR_INDEX = 1,
+	HIGHLIGHT_SDF_COLOR_INDEX = 2
+};
+
 enum VoxelScaleMode{
 	VOXEL_SCALE_DEFAULT = 0,
 	VOXEL_SCALE_ALTERNATIVE = 2
@@ -34,14 +40,14 @@ void ComputeVoxelAttributes(const Vector3i& currentBlockPositionVoxels, int x, i
                             const TVoxel* localVoxelBlock, vtkPoints* points,
                             vtkFloatArray* scaleAttribute,
                             vtkFloatArray* alternativeScaleAttribute,
-                            vtkFloatArray* colorAttribute){
+                            vtkIntArray* colorAttribute){
 	Vector3i voxelPosition = currentBlockPositionVoxels + Vector3i(x, y, z);
 	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 	const TVoxel& voxel = localVoxelBlock[locId];
 	float sdf = TVoxel::valueToFloat(voxel.sdf);
 	float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf);
 	float alternativeVoxelScale = COMPUTE_VOXEL_SCALE(sdf);
-	float voxelColor = (voxel.sdf + 1.0f) * 0.5f;
+	float voxelColor = voxel.sdf < 0 ? NEGATIVE_SDF_COLOR_INDEX : POSITIVE_SDF_COLOR_INDEX;
 
 	// need to filp the y & z axes (unlike InfiniTAM, VTK uses proper right-hand rule system))
 	points->InsertNextPoint(voxelPosition.x,
