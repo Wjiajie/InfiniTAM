@@ -76,8 +76,8 @@ const std::array<std::array<double, 4>, 4> SDFViz::backgroundColors = {{{0.96, 0
 		                                                                       {0.57, 0.64, 0.69, 1.0}}}; // cadet grey
 
 SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, bool hideLiveVoxels,
-               bool hideInterestCanonicalRegions, bool useInitialCoords,
-               Vector3i initialCoords) :
+               bool hideInterestCanonicalRegions, bool useInitialCoords, Vector3i initialCoords, unsigned int initialFrame)
+		:
 		rootPath(std::move(pathToScene)),
 		canonicalScenePipe(canonicalNegativeVoxelColor, canonicalPositiveVoxelColor,
 		                   canonicalNegativeInterestVoxelColor, canonicalPositiveInterestVoxelColor,
@@ -92,7 +92,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 		cube(vtkSmartPointer<vtkCubeSource>::New()),
 		iterationIndicator(vtkSmartPointer<vtkTextActor>::New()),
 		frameIndicator(vtkSmartPointer<vtkTextActor>::New()),
-		frameIndex(0),
+		frameIndex(initialFrame),
 		iterationIndex(0),
 		legend(vtkSmartPointer<vtkLegendBoxActor>::New()) {
 
@@ -103,6 +103,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 	DrawLegend();
 	DrawIterationCounter();
 	DrawFrameCounter();
+	UpdateFrameDisplay();
 
 	//read scenes from disk
 	SetUpGeometrySources();

@@ -72,6 +72,9 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 		DIEWITHEXCEPTION("Interest regions need to be set first");
 	}
 
+	voxelPolydata->GetPointData()->Reset();
+
+
 	vtkSmartPointer<vtkPoints> nonInterestVoxelPoints = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkPoints> interestVoxelPoints = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkPoints> hashBlockPoints = vtkSmartPointer<vtkPoints>::New();
@@ -347,9 +350,16 @@ void CanonicalVizPipe::ToggleScaleMode() {
 void CanonicalVizPipe::SetPointHighlight(vtkIdType pointId, bool highlightOn) {
 	auto colorArray =
 			dynamic_cast<vtkIntArray*>(voxelPolydata->GetPointData()->GetArray(colorPointAttributeName));
+	auto points = voxelPolydata->GetPoints();
 	if(highlightOn){
 		selectedVertexDefaultColorIndex = colorArray->GetValue(pointId);
 		colorArray->SetValue(pointId,HIGHLIGHT_SDF_COLOR_INDEX);
+		double point[3];
+		points->GetPoint(pointId,point);
+		double x = point[0];
+		double y = -point[1];
+		double z = -point[2];
+		std::cout << "Selected point at " << x << ", " << y << ", " << z << "." << std::endl;
 	}else{
 		colorArray->SetValue(pointId,selectedVertexDefaultColorIndex);
 	}

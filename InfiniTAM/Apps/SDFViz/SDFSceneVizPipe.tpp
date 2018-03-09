@@ -131,8 +131,6 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 
 	//Points pipeline
 	voxelPolydata->SetPoints(points);
-	//TODO: pointAttributeData is candidate for removal (by GitHub:Algomorph)
-
 	voxelPolydata->GetPointData()->AddArray(colorAttribute);
 	voxelPolydata->GetPointData()->AddArray(scaleAttribute);
 	voxelPolydata->GetPointData()->AddArray(alternativeScaleAttribute);

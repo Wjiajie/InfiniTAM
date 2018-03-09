@@ -40,6 +40,8 @@ int main(int argc, const char* argv[]) {
 				 "Hide interest canonical voxels on startup.")
 				("initial_focus_coord,ifc", po::value<std::vector<int>>()->multitoken(),
 				 "Coordinate of voxel where to focus on startup. Must follow format:\n x y z\n, all integers.")
+				("frame_index,f", po::value<unsigned int>()->default_value(0),
+				 "Which frame to load first by default.")
 				;
 
 		po::variables_map vm;
@@ -59,7 +61,8 @@ int main(int argc, const char* argv[]) {
 				memcpy(initialCoords.values, initialCoordsVec.data(), sizeof(int) * 3);
 			}
 			SDFViz application(vm["directory"].as<std::string>(), hideNonInterestCanonicalVoxels, hideLiveVoxels,
-			                   hideInterestCanonicalRegions, haveUserInitialCoordinate,initialCoords);
+			                   hideInterestCanonicalRegions, haveUserInitialCoordinate, initialCoords,
+			                   vm["frame_index"].as<unsigned int>());
 			application.Run();
 		}
 	} catch (const po::error& ex) {

@@ -76,7 +76,8 @@ public:
 
 	//================= CONSTRUCTORS/DESTRUCTORS ===================
 	SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, bool hideLiveVoxels,
-	       bool hideInterestCanonicalRegions, bool useInitialCoords, Vector3i initialCoords);
+	       bool hideInterestCanonicalRegions, bool useInitialCoords, Vector3i initialCoords,
+	       unsigned int initialFrame = 0);
 	virtual ~SDFViz();
 	//================= INSTANCE MEMBER FUNCTIONS ==================
 	int Run();
