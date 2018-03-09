@@ -48,7 +48,7 @@ CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& negativeNonInter
                                    const std::array<double, 3>& hashBlockEdgeColor,
                                    int frameIx) :
 		SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex>(negativeNonInterestVoxelColor, positiveNonInterestVoxelColor,
-		                                                  std::array<double, 4>(), hashBlockEdgeColor),
+		                                                  highlightVoxelColor, hashBlockEdgeColor),
 		frameIx(frameIx),
 		initialNonInterestPoints(vtkSmartPointer<vtkPoints>::New()),
 		initialInterestPoints(vtkSmartPointer<vtkPoints>::New()),
