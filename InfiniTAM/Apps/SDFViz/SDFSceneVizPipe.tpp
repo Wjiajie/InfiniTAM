@@ -158,6 +158,7 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePipeline(vtkAlgorithmOutput* voxelS
 
 	// set up voxel actor
 	voxelActor->SetMapper(voxelMapper);
+	voxelActor->GetProperty()->SetPointSize(20.0f);
 	voxelActor->VisibilityOn();
 
 	// set up hash block actor

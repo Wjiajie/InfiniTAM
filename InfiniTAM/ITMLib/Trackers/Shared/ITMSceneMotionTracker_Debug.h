@@ -262,8 +262,8 @@ inline void _DEBUG_PrintLevelSetTermStuff(const CONSTPTR(Vector3f)& liveSdfJacob
 	const std::string green("\033[0;32m");
 	const std::string reset("\033[0m");
 	std::cout << std::endl;
-	std::cout << "[Difference from neighbor's lookup values from live SDF]: " << green << warpedSdfJacobian << reset << std::endl;
-	std::cout << "Change in [difference from neighbor's lookup values] when warp changes (by one): " << std::endl
+	std::cout << "Warped SDF Jacobian [Difference from neighbor's lookup values from live SDF]: " << green << warpedSdfJacobian << reset << std::endl;
+	std::cout << "Change in warped SDF Jacobian when warp changes (by one): " << std::endl
 			 << green << warpedSdfHessian << reset << std::endl;
 }
 

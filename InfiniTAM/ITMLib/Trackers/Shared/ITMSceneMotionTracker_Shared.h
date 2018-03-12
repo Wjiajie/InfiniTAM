@@ -19,6 +19,10 @@
 #include "../../Utils/ITMHashBlockProperties.h"
 #include "../../Objects/Scene/ITMTrilinearInterpolation.h"
 
+#include <cfloat>
+
+#define FLT_EPSILON2 FLT_EPSILON //_DEBUG (convert define uses to FLT_EPSILON?)
+//#define FLT_EPSILON2 10e-5 //_DEBUG
 
 _CPU_AND_GPU_CODE_
 inline float squareDistance(const CONSTPTR(Vector3f)& vec1,
@@ -331,11 +335,11 @@ inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxe
  * \return true if the block needs allocation, false otherwise
  */
 _CPU_AND_GPU_CODE_
-inline bool MarkIfNeedsAllocation(DEVICEPTR(uchar)* entryAllocationTypes,
-                                  DEVICEPTR(Vector3s)* hashBlockCoordinates,
-                                  THREADPTR(int)& hashIdx,
-                                  const CONSTPTR(Vector3s)& desiredHashBlockPosition,
-                                  const CONSTPTR(ITMHashEntry)* hashTable) {
+inline bool MarkAsNeedingAllocationIfNotFound(DEVICEPTR(uchar)* entryAllocationTypes,
+                                              DEVICEPTR(Vector3s)* hashBlockCoordinates,
+                                              THREADPTR(int)& hashIdx,
+                                              const CONSTPTR(Vector3s)& desiredHashBlockPosition,
+                                              const CONSTPTR(ITMHashEntry)* hashTable) {
 
 	ITMHashEntry hashEntry = hashTable[hashIdx];
 	//check if hash table contains entry

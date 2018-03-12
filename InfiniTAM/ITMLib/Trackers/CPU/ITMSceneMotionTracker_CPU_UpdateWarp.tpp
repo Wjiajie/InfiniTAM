@@ -159,7 +159,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					// the latter condition needs to be included since sometimes, even if some live voxels in the lookup
 					// neighborhood are non-truncated, they ally may be a whole voxel away from the warped position,
 					// which would then result in a live SDF lookup equivalent to that in a truncated region.
-					bool truncatedInLive = !hitLiveNarrowBand || (1.0 - std::abs(liveSdf) < FLT_EPSILON);
+					bool truncatedInLive = !hitLiveNarrowBand || (1.0 - std::abs(liveSdf) < FLT_EPSILON2);
 					bool computeDataTerm = knownInCanonical && hitLiveKnownVoxels;
 					//_DEBUG
 					//bool computeLevelSetTerm = !truncatedInCanonical && !truncatedInLive;
