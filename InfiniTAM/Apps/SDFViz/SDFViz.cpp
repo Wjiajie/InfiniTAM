@@ -335,10 +335,10 @@ void SDFViz::ToggleLiveHashBlockVisibility() {
 void SDFViz::ToggleCanonicalVoxelVisibility() {
 	auto nonInterestAreVisible = static_cast<bool>(canonicalScenePipe.GetVoxelActor()->GetVisibility());
 	auto interestAreVisible = static_cast<bool>(canonicalScenePipe.GetInterestVoxelActor()->GetVisibility());
-	if (!nonInterestAreVisible && (sceneLogger->GetGeneralIterationCursor() != iterationIndex)) {
+	if (!nonInterestAreVisible && hasWarpIterationInfo && (sceneLogger->GetGeneralIterationCursor() != iterationIndex)) {
 		NonInterestWarpsAt(iterationIndex); //when showing, advance cursor as necessary
 	}
-	if (!interestAreVisible && (sceneLogger->GetInterestIterationCursor() != iterationIndex)) {
+	if (!interestAreVisible && hasHighlightInfo && (sceneLogger->GetInterestIterationCursor() != iterationIndex)) {
 		InterestWarpsAt(iterationIndex); //when showing, advance cursor as necessary
 	}
 	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(!nonInterestAreVisible);
