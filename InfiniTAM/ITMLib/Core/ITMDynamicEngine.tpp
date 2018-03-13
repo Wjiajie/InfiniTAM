@@ -19,26 +19,26 @@
 using namespace ITMLib;
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(const ITMLibSettings* settings,
-                                                                        const ITMRGBDCalib& calib, Vector2i imgSize_rgb,
-                                                                        Vector2i imgSize_d) {
+ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(
+		const ITMLibSettings* settings, const ITMRGBDCalib& calib, Vector2i imgSize_rgb, Vector2i imgSize_d) {
 	this->settings = settings;
 
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 
 	MemoryDeviceType memoryType = settings->GetMemoryType();
 	this->canonicalScene = new ITMScene<TVoxelCanonical, TIndex>(&settings->sceneParams, settings->swappingMode ==
-	                                                                                      ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                              memoryType);
+	                                                                                     ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                             memoryType);
 	this->liveScene = new ITMScene<ITMVoxelLive, TIndex>(&settings->sceneParams, settings->swappingMode ==
-	                                                                              ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                      memoryType);
+	                                                                             ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                     memoryType);
 	const ITMLibSettings::DeviceType deviceType = settings->deviceType;
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
 	liveVisualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxelLive, TIndex>(deviceType);
-	canonicalVisualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxelCanonical, TIndex>(deviceType);
+	canonicalVisualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxelCanonical, TIndex>(
+			deviceType);
 
 	meshingEngine = NULL;
 	if (settings->createMeshingEngine)
@@ -261,7 +261,6 @@ static void QuaternionFromRotationMatrix(const double *matrix, double *q) {
 #endif
 
 
-
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMTrackingState::TrackingResult
 ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Image* rgbImage,
@@ -319,7 +318,8 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
 			trackingState->pose_d->SetFrom(&keyframe.pose);
 
 			denseMapper->UpdateVisibleList(view, trackingState, liveScene, renderState_live, true);
-			cameraTrackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine, renderState_live);
+			cameraTrackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine,
+			                                  renderState_live);
 			cameraTrackingController->Track(trackingState, view);
 
 			trackerResult = trackingState->trackerResult;
@@ -332,7 +332,6 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
 		denseMapper->ProcessFrame(view, trackingState, canonicalScene, liveScene, renderState_live);
 		didFusion = true;
 		if (framesProcessed > 50) trackingInitialised = true;
-
 		framesProcessed++;
 	}
 
@@ -418,7 +417,8 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Im
 			}
 
 			liveVisualisationEngine->RenderImage(liveScene, trackingState->pose_d, &view->calib.intrinsics_d,
-			                                 renderState_live, renderState_live->raycastImage, imageType, raycastType);
+			                                     renderState_live, renderState_live->raycastImage, imageType,
+			                                     raycastType);
 
 
 			ORUtils::Image<Vector4u>* srcImage = NULL;
@@ -453,7 +453,7 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Im
 			liveVisualisationEngine->FindVisibleBlocks(liveScene, pose, intrinsics, renderState_freeview);
 			liveVisualisationEngine->CreateExpectedDepths(liveScene, pose, intrinsics, renderState_freeview);
 			liveVisualisationEngine->RenderImage(liveScene, pose, intrinsics, renderState_freeview,
-			                                 renderState_freeview->raycastImage, type);
+			                                     renderState_freeview->raycastImage, type);
 
 			if (settings->deviceType == ITMLibSettings::DEVICE_CUDA)
 				out->SetFrom(renderState_freeview->raycastImage, ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CPU);
@@ -472,7 +472,7 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Im
 			canonicalVisualisationEngine->FindVisibleBlocks(canonicalScene, pose, intrinsics, renderState_freeview);
 			canonicalVisualisationEngine->CreateExpectedDepths(canonicalScene, pose, intrinsics, renderState_freeview);
 			canonicalVisualisationEngine->RenderImage(canonicalScene, pose, intrinsics, renderState_freeview,
-			                                     renderState_freeview->raycastImage, type);
+			                                          renderState_freeview->raycastImage, type);
 
 			if (settings->deviceType == ITMLibSettings::DEVICE_CUDA)
 				out->SetFrom(renderState_freeview->raycastImage, ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CPU);

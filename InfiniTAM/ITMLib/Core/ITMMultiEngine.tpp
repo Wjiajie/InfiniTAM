@@ -424,3 +424,33 @@ void ITMMultiEngine<TVoxel, TIndex>::GetImage(ITMUChar4Image *out, GetImageType 
 		break;
 	};
 }
+
+template<typename TVoxel, typename TIndex>
+void ITMMultiEngine<TVoxel, TIndex>::turnOnTracking() {
+	std::cerr << "Tracking on/off switch not available in " __FILE__ "." << std::endl;
+}
+
+template<typename TVoxel, typename TIndex>
+void ITMMultiEngine<TVoxel, TIndex>::turnOffTracking() {
+	std::cerr << "Tracking on/off switch not available in " __FILE__ "." << std::endl;
+}
+
+template<typename TVoxel, typename TIndex>
+void ITMMultiEngine<TVoxel, TIndex>::turnOnIntegration() {
+	std::cerr << "Fusion on/off switch not available in " __FILE__ "." << std::endl;
+}
+
+template<typename TVoxel, typename TIndex>
+void ITMMultiEngine<TVoxel, TIndex>::turnOffIntegration() {
+	std::cerr << "Fusion on/off switch not available in " __FILE__ "." << std::endl;
+}
+
+template<typename TVoxel, typename TIndex>
+void ITMMultiEngine<TVoxel, TIndex>::turnOnMainProcessing() {
+	std::cerr << "Main processing on/off switch not available in " __FILE__ "." << std::endl;
+}
+
+template<typename TVoxel, typename TIndex>
+void ITMMultiEngine<TVoxel, TIndex>::turnOffMainProcessing() {
+	std::cerr << "Main processing on/off switch not available in " __FILE__ "." << std::endl;
+}

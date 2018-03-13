@@ -86,8 +86,17 @@ namespace ITMLib
 		void SaveToFile();
 		void LoadFromFile();
 
-		//void writeFullTrajectory(void) const;
-		//void SaveSceneToMesh(const char *objFileName);
+		/// switch for turning tracking on/off
+		void turnOnTracking() override;
+		void turnOffTracking() override;
+
+		/// switch for turning integration on/off
+		void turnOnIntegration() override;
+		void turnOffIntegration() override;
+
+		/// switch for turning main processing on/off
+		void turnOnMainProcessing() override;
+		void turnOffMainProcessing() override;
 
 		/** \brief Constructor
 			Ommitting a separate image size for the depth images

@@ -67,16 +67,16 @@ namespace ITMLib
 		void GetImage(ITMUChar4Image *out, GetImageType getImageType, ORUtils::SE3Pose *pose = NULL, ITMIntrinsics *intrinsics = NULL);
 
 		/// switch for turning tracking on/off
-		void turnOnTracking();
-		void turnOffTracking();
+		void turnOnTracking() override;
+		void turnOffTracking() override;
 
 		/// switch for turning integration on/off
-		void turnOnIntegration();
-		void turnOffIntegration();
+		void turnOnIntegration() override;
+		void turnOffIntegration() override;
 
 		/// switch for turning main processing on/off
-		void turnOnMainProcessing();
-		void turnOffMainProcessing();
+		void turnOnMainProcessing() override;
+		void turnOffMainProcessing() override;
 
 		/// resets the scene and the tracker
 		void resetAll();

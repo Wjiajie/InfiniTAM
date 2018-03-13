@@ -84,6 +84,18 @@ namespace ITMLib
 		virtual void SaveToFile() { };
 		virtual void LoadFromFile() { };
 
+		/// switch for turning tracking on/off
+		virtual void turnOnTracking() = 0;
+		virtual void turnOffTracking() = 0;
+
+		/// switch for turning integration on/off
+		virtual void turnOnIntegration() = 0;
+		virtual void turnOffIntegration() = 0;
+
+		/// switch for turning main processing on/off
+		virtual void turnOnMainProcessing() = 0;
+		virtual void turnOffMainProcessing() = 0;
+
 		virtual ~ITMMainEngine() {}
 
 		bool recordNextFrameWarps = false;

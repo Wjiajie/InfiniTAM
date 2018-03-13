@@ -160,6 +160,7 @@ int main(int argc, char** argv) {
 	try {
 		po::options_description arguments{"Arguments"};
 		po::positional_options_description positional_arguments;
+		bool fixCamera = false;
 		arguments.add_options()
 				("help,h", "Print help screen")
 				("calib_file,c", po::value<std::string>(), "Calibration file, e.g.: ./Files/Teddy/calib.txt")
@@ -178,7 +179,8 @@ int main(int argc, char** argv) {
 						"Currently, either (4) or (5) can only be combined with (3), but NOT both at the same time."
 						" No other usage scenario takes them into account."
 				)
-				("output,o", po::value<std::string>()->default_value("./Output"), "Output directory, e.g.: ./Output");
+				("output,o", po::value<std::string>()->default_value("./Output"), "Output directory, e.g.: ./Output")
+				("fix_camera", po::bool_switch(&fixCamera)->default_value(false));
 		positional_arguments.add("calib_file", 1);
 		positional_arguments.add("input_file", 3);
 
@@ -196,6 +198,8 @@ int main(int argc, char** argv) {
 					       "  %s ./Files/Teddy/calib.txt\n\n", argv[0], argv[0]);
 			return EXIT_SUCCESS;
 		}
+
+
 
 		std::string calibFilePath;
 		if (vm.count("calib_file")) {
@@ -219,10 +223,10 @@ int main(int argc, char** argv) {
 				if (isPathMask(inputFiles[2])) { maskImageFileMask = inputFiles[2]; }
 				else { imuInputPath = inputFiles[2]; }
 			case 2:
-				if (isPathMask(inputFiles[1]) && isPathMask(inputFiles[2])) {
+				if (isPathMask(inputFiles[0]) && isPathMask(inputFiles[1])) {
 					rgbImageFileMask = inputFiles[0];
 					depthImageFileMask = inputFiles[1];
-				} else if (!isPathMask(inputFiles[1]) && !isPathMask(inputFiles[2])) {
+				} else if (!isPathMask(inputFiles[0]) && !isPathMask(inputFiles[1])) {
 					rgbVideoFilePath = inputFiles[0];
 					depthVideoFilePath = inputFiles[1];
 				} else {
@@ -246,6 +250,8 @@ int main(int argc, char** argv) {
 
 		auto* internalSettings = new ITMLibSettings();
 		internalSettings->outputPath = vm["output"].as<std::string>().c_str();
+
+
 
 		ITMMainEngine* mainEngine = nullptr;
 		switch (internalSettings->libMode) {
@@ -273,6 +279,11 @@ int main(int argc, char** argv) {
 			default:
 				throw std::runtime_error("Unsupported library mode!");
 				break;
+		}
+		if(fixCamera) {
+			std::cout << "fix_camera flag passed, automatically locking camera if possible "
+					"(attempting to disable tracking)." << std::endl;
+			mainEngine->turnOffTracking();
 		}
 
 		UIEngine_BPO::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine, internalSettings->outputPath,

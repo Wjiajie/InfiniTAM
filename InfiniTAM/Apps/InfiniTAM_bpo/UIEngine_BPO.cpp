@@ -515,12 +515,12 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, ImageSourceEngine* imageSo
 	this->colourModes_freeview.emplace_back("shaded greyscale", ITMMainEngine::InfiniTAM_IMAGE_FREECAMERA_SHADED);
 
 	//_DEBUG (re-enable 3 modes below)
-	this->colourModes_freeview.emplace_back("integrated colours",
-	                                        ITMMainEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_VOLUME);
-	this->colourModes_freeview.emplace_back("surface normals",
-	                                        ITMMainEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_NORMAL);
-	this->colourModes_freeview.emplace_back("confidence",
-	                                        ITMMainEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_CONFIDENCE);
+//	this->colourModes_freeview.emplace_back("integrated colours",
+//	                                        ITMMainEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_VOLUME);
+//	this->colourModes_freeview.emplace_back("surface normals",
+//	                                        ITMMainEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_NORMAL);
+//	this->colourModes_freeview.emplace_back("confidence",
+//	                                        ITMMainEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_CONFIDENCE);
 
 	this->imageSource = imageSource;
 	this->imuSource = imuSource;
