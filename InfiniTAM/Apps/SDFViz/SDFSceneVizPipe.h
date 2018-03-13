@@ -52,6 +52,7 @@ public:
 	ITMScene<TVoxel, TIndex>* GetScene();
 	vtkSmartPointer<vtkActor>& GetVoxelActor();
 	vtkSmartPointer<vtkActor>& GetHashBlockActor();
+	VoxelScaleMode GetCurrentScaleMode();
 
 	virtual void ToggleScaleMode();
 

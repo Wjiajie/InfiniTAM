@@ -57,7 +57,7 @@ SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(std::array<double, 4> negativeV
 		positiveVoxelColor(positiveVoxelColor),
 		highlightVoxelColor(highlightVoxelColor),
 		hashBlockEdgeColor(hashBlockEdgeColor),
-        scaleMode(VOXEL_SCALE_DEFAULT){
+        scaleMode(VOXEL_SCALE_HIDE_UNKNOWNS){
 	auto* settings = new ITMLibSettings();
 	scene = new ITMScene<TVoxel, TIndex>(
 			&settings->sceneParams, settings->swappingMode ==
@@ -154,7 +154,7 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePipeline(vtkAlgorithmOutput* voxelS
 
 	// set up voxel mapper
 	SetUpSceneVoxelMapper(voxelSourceGeometry, voxelMapper, voxelColorLookupTable, voxelPolydata);
-	scaleMode = VOXEL_SCALE_DEFAULT;// reset scale mode
+	scaleMode = VOXEL_SCALE_HIDE_UNKNOWNS;// reset scale mode
 
 	// set up voxel actor
 	voxelActor->SetMapper(voxelMapper);
@@ -246,13 +246,18 @@ vtkSmartPointer<vtkActor>& SDFSceneVizPipe<TVoxel, TIndex>::GetHashBlockActor() 
 
 template<typename TVoxel, typename TIndex>
 void SDFSceneVizPipe<TVoxel, TIndex>::ToggleScaleMode() {
-	if(scaleMode == VoxelScaleMode::VOXEL_SCALE_DEFAULT){
-		scaleMode = VoxelScaleMode::VOXEL_SCALE_ALTERNATIVE;
+	if(scaleMode == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS){
+		scaleMode = VoxelScaleMode::VOXEL_SCALE_SHOW_UNKNOWNS;
 		voxelMapper->SetScaleArray(alternativeScalePointAttributeName);
 	}else{
-		scaleMode = VoxelScaleMode::VOXEL_SCALE_DEFAULT;
+		scaleMode = VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS;
 		voxelMapper->SetScaleArray(scalePointAttributeName);
 	}
+}
+
+template<typename TVoxel, typename TIndex>
+VoxelScaleMode SDFSceneVizPipe<TVoxel, TIndex>::GetCurrentScaleMode() {
+	return this->scaleMode;
 }
 
 

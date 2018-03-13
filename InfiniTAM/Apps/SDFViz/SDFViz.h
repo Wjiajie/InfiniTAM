@@ -134,6 +134,15 @@ private:
 	//to keep track of iteration number in the optimization
 	unsigned int iterationIndex;
 
+	//Visibility / vis. mode states
+	bool canonicalVoxelsVisible = true;
+	bool canonicalInterestVoxelsVisible = true;
+	bool canonicalNegativeOneVoxelsVisible = true;
+	bool canonicalHashBlocksVisible = false;
+	bool liveVoxelsVisible = true;
+	bool liveNegativeOneVoxelsVisible = false;
+	bool liveHashBlocksVisible = false;
+
 	//Holds highlights in the scene
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
 	const std::vector<ITMHighlightIterationInfo>* currentHighlight;
@@ -148,6 +157,7 @@ private:
 	void DrawDummyMarkers();
 	void SetUpGeometrySources();
 	void ReinitializePipelines();
+	void UpdatePipelineVisibilitiesUsingLocalState();
 
 	//*** advance/retreat warp / otimization interation ***
 	bool AdvanceIteration();
@@ -173,6 +183,9 @@ private:
 
 	void ToggleCanonicalVoxelVisibility();
 	void ToggleLiveVoxelVisibility();
+
+	void ToggleCanonicalUnknownVoxelVisibility();
+	void ToggleLiveUnknownVoxelVisibility();
 
 	void DecreaseCanonicalVoxelOpacity();
 	void IncreaseCanonicalVoxelOpacity();

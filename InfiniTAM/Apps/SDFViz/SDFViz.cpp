@@ -94,7 +94,14 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 		frameIndicator(vtkSmartPointer<vtkTextActor>::New()),
 		frameIndex(initialFrame),
 		iterationIndex(0),
-		legend(vtkSmartPointer<vtkLegendBoxActor>::New()) {
+		legend(vtkSmartPointer<vtkLegendBoxActor>::New()),
+		canonicalVoxelsVisible(!hideNonInterestCanonicalVoxels),
+		canonicalInterestVoxelsVisible(!hideInterestCanonicalRegions),
+		canonicalNegativeOneVoxelsVisible(true),
+		canonicalHashBlocksVisible(false),
+		liveVoxelsVisible(!hideLiveVoxels),
+		liveNegativeOneVoxelsVisible(false),
+		liveHashBlocksVisible(false){
 
 	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(GenerateExpectedFramePath(),
 	                                                                                 canonicalScenePipe.GetScene(),
@@ -122,9 +129,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 	DrawDummyMarkers();
 
 	// set up visibility
-	canonicalScenePipe.GetVoxelActor()->SetVisibility(!hideNonInterestCanonicalVoxels);
-	liveScenePipe.GetVoxelActor()->SetVisibility(!hideLiveVoxels);
-	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(!hideInterestCanonicalRegions);
+	UpdatePipelineVisibilitiesUsingLocalState();
 
 	if (hasWarpIterationInfo && !hideNonInterestCanonicalVoxels) {
 		NextNonInterestWarps();
@@ -146,8 +151,6 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 			sdfRenderer->ResetCamera();
 		}
 	}
-
-	canonicalScenePipe.ToggleScaleMode();//start with -1.0 voxels shown by default
 
 }
 
@@ -323,39 +326,55 @@ void SDFViz::UpdateFrameDisplay() {
 }
 
 void SDFViz::ToggleCanonicalHashBlockVisibility() {
-	canonicalScenePipe.GetHashBlockActor()->SetVisibility(!canonicalScenePipe.GetHashBlockActor()->GetVisibility());
+	canonicalHashBlocksVisible = !canonicalHashBlocksVisible;
+	canonicalScenePipe.GetHashBlockActor()->SetVisibility(canonicalHashBlocksVisible);
 	renderWindow->Render();
 }
 
 void SDFViz::ToggleLiveHashBlockVisibility() {
-	liveScenePipe.GetHashBlockActor()->SetVisibility(!liveScenePipe.GetHashBlockActor()->GetVisibility());
+	liveHashBlocksVisible = !liveHashBlocksVisible;
+	liveScenePipe.GetHashBlockActor()->SetVisibility(liveHashBlocksVisible);
 	renderWindow->Render();
 }
 
 void SDFViz::ToggleCanonicalVoxelVisibility() {
-	auto nonInterestAreVisible = static_cast<bool>(canonicalScenePipe.GetVoxelActor()->GetVisibility());
-	auto interestAreVisible = static_cast<bool>(canonicalScenePipe.GetInterestVoxelActor()->GetVisibility());
-	if (!nonInterestAreVisible && hasWarpIterationInfo && (sceneLogger->GetGeneralIterationCursor() != iterationIndex)) {
+	canonicalVoxelsVisible = !canonicalVoxelsVisible;
+	if (canonicalVoxelsVisible && hasWarpIterationInfo && (sceneLogger->GetGeneralIterationCursor() != iterationIndex)) {
 		NonInterestWarpsAt(iterationIndex); //when showing, advance cursor as necessary
 	}
-	if (!interestAreVisible && hasHighlightInfo && (sceneLogger->GetInterestIterationCursor() != iterationIndex)) {
+	canonicalScenePipe.GetVoxelActor()->SetVisibility(canonicalVoxelsVisible);
+	renderWindow->Render();
+}
+
+void SDFViz::ToggleCanonicalUnknownVoxelVisibility() {
+	canonicalNegativeOneVoxelsVisible = !canonicalNegativeOneVoxelsVisible;
+	canonicalScenePipe.ToggleScaleMode();
+	renderWindow->Render();
+}
+
+
+void SDFViz::ToggleInterestVoxelVisibility() {
+	canonicalInterestVoxelsVisible = !canonicalInterestVoxelsVisible;
+	if (canonicalInterestVoxelsVisible && hasHighlightInfo && (sceneLogger->GetInterestIterationCursor() != iterationIndex)) {
 		InterestWarpsAt(iterationIndex); //when showing, advance cursor as necessary
 	}
-	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(!nonInterestAreVisible);
-	canonicalScenePipe.GetVoxelActor()->SetVisibility(!nonInterestAreVisible);
+	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(canonicalInterestVoxelsVisible);
 	renderWindow->Render();
 }
 
 void SDFViz::ToggleLiveVoxelVisibility() {
-	liveScenePipe.GetVoxelActor()->SetVisibility(!liveScenePipe.GetVoxelActor()->GetVisibility());
+	liveVoxelsVisible = !liveVoxelsVisible;
+	liveScenePipe.GetVoxelActor()->SetVisibility(liveVoxelsVisible);
 	renderWindow->Render();
 }
 
-void SDFViz::ToggleInterestVoxelVisibility() {
-	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(
-			!canonicalScenePipe.GetInterestVoxelActor()->GetVisibility());
+
+void SDFViz::ToggleLiveUnknownVoxelVisibility() {
+	liveNegativeOneVoxelsVisible = !liveNegativeOneVoxelsVisible;
+	liveScenePipe.ToggleScaleMode();
 	renderWindow->Render();
 }
+
 
 /**
  * \brief if the scenes are loaded, this will allocate the buffers for voxel warps. If the interest regions are set up,
@@ -517,6 +536,7 @@ bool SDFViz::AdvanceFrame() {
 		this->sceneLogger = nextLogger;
 		LoadFrameData();
 		ReinitializePipelines();
+		UpdatePipelineVisibilitiesUsingLocalState();
 		if (hasWarpIterationInfo) { //immediately load data for 0'th iteration
 			NextNonInterestWarps();
 		}
@@ -550,6 +570,7 @@ bool SDFViz::RetreatFrame() {
 		this->sceneLogger = nextLogger;
 		LoadFrameData();
 		ReinitializePipelines();
+		UpdatePipelineVisibilitiesUsingLocalState();
 		if (hasWarpIterationInfo) { //immediately load data for 0'th iteration
 			NextNonInterestWarps();
 		}
@@ -583,7 +604,6 @@ void SDFViz::LoadFrameData() {
 		InitializeWarpBuffers();
 	}
 	highlights = sceneLogger->GetHighlights();
-
 }
 
 /**
@@ -667,6 +687,24 @@ bool SDFViz::RetreatIteration() {
 	}
 	return success;
 }
+
+void SDFViz::UpdatePipelineVisibilitiesUsingLocalState() {
+	canonicalScenePipe.GetVoxelActor()->SetVisibility(canonicalVoxelsVisible);
+	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(canonicalInterestVoxelsVisible);
+	if(canonicalScenePipe.GetCurrentScaleMode() == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS && canonicalNegativeOneVoxelsVisible ||
+			canonicalScenePipe.GetCurrentScaleMode() == VoxelScaleMode::VOXEL_SCALE_SHOW_UNKNOWNS && !canonicalNegativeOneVoxelsVisible){
+		canonicalScenePipe.ToggleScaleMode();
+	}
+	canonicalScenePipe.GetHashBlockActor()->SetVisibility(canonicalHashBlocksVisible);
+	liveScenePipe.GetVoxelActor()->SetVisibility(liveVoxelsVisible);
+	if(liveScenePipe.GetCurrentScaleMode() == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS && liveNegativeOneVoxelsVisible ||
+	   liveScenePipe.GetCurrentScaleMode() == VoxelScaleMode::VOXEL_SCALE_SHOW_UNKNOWNS && !liveNegativeOneVoxelsVisible){
+		liveScenePipe.ToggleScaleMode();
+	}
+	liveScenePipe.GetHashBlockActor()->SetVisibility(liveHashBlocksVisible);
+}
+
+
 
 
 

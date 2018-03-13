@@ -580,12 +580,12 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 			  << " Update term time: " << timeUpdateTermCompute;
 #endif
 #ifdef PRINT_DEBUG_HISTOGRAM
-	std::cout << "Warp length histogram: ";
+	std::cout << "  Warp length histogram: ";
 	for (int iBin = 0; iBin < histBinCount; iBin++) {
 		std::cout << std::setfill(' ') << std::setw(7) << warpBins[iBin] << "  ";
 	}
 	std::cout << std::endl;
-	std::cout << "Warp length histogram: ";
+	std::cout << "Update length histogram: ";
 	for (int iBin = 0; iBin < histBinCount; iBin++) {
 		std::cout << std::setfill(' ') << std::setw(7) << updateBins[iBin] << "  ";
 	}

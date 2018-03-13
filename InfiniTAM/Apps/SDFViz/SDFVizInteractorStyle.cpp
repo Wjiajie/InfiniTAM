@@ -121,11 +121,9 @@ void SDFVizInteractorStyle::OnKeyPress() {
 			}
 		} else if (key == "t") {
 			if (rwi->GetAltKey()) {
-				parent->canonicalScenePipe.ToggleScaleMode();
-				parent->renderWindow->Render();
+				parent->ToggleCanonicalUnknownVoxelVisibility();
 			} else {
-				parent->liveScenePipe.ToggleScaleMode();
-				parent->renderWindow->Render();
+				parent->ToggleLiveUnknownVoxelVisibility();
 			}
 		} else if (key == "s"){
 			this->selectionMode = !this->selectionMode;

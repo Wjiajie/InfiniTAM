@@ -340,7 +340,7 @@ void CanonicalVizPipe::PrintHighlightIndexes() {
 
 void CanonicalVizPipe::ToggleScaleMode() {
 	SDFSceneVizPipe::ToggleScaleMode();
-	if(scaleMode == VoxelScaleMode::VOXEL_SCALE_DEFAULT){
+	if(scaleMode == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS){
 		interestVoxelMapper->SetScaleArray(scalePointAttributeName);
 	}else{
 		interestVoxelMapper->SetScaleArray(alternativeScalePointAttributeName);

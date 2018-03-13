@@ -29,8 +29,8 @@ enum VoxelColorIndex : int{
 };
 
 enum VoxelScaleMode{
-	VOXEL_SCALE_DEFAULT = 0,
-	VOXEL_SCALE_ALTERNATIVE = 2
+	VOXEL_SCALE_HIDE_UNKNOWNS = 0,
+	VOXEL_SCALE_SHOW_UNKNOWNS = 2
 };
 
 
