@@ -18,6 +18,7 @@
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../Utils/ITMHashBlockProperties.h"
 #include "../../Utils/ITMNeighborVoxelIterationInfo.h"
+#include "../../Utils/ITMPrintHelpers.h"
 
 //======================================================================================================================
 //=========================================== DEBUG ROUTINES FOR SAVING INFORMATION DURING OPTIMIZATION ================
@@ -256,11 +257,6 @@ inline void _DEBUG_PrintLevelSetTermStuff(const CONSTPTR(Vector3f)& liveSdfJacob
                                           const CONSTPTR(Vector3f)& liveSdf_Center_WarpForward,
                                           const CONSTPTR(Vector3f)& warpedSdfJacobian,
                                           const CONSTPTR(Matrix3f)& warpedSdfHessian) {
-	const std::string yellow("\033[0;33m");
-	const std::string red("\033[0;31m");
-	const std::string cyan("\033[0;36m");
-	const std::string green("\033[0;32m");
-	const std::string reset("\033[0m");
 	std::cout << std::endl;
 	std::cout << "Warped SDF Jacobian [Difference from neighbor's lookup values from live SDF]: " << green << warpedSdfJacobian << reset << std::endl;
 	std::cout << "Change in warped SDF Jacobian when warp changes (by one): " << std::endl
@@ -278,11 +274,6 @@ inline void _DEBUG_PrintKillingTermStuff(const CONSTPTR(Vector3f*) neighborWarps
 ) {
 
 	const int neighborhoodSize = 9;
-	const std::string yellow("\033[0;33m");
-	const std::string red("\033[0;31m");
-	const std::string cyan("\033[0;36m");
-	const std::string green("\033[0;32m");
-	const std::string reset("\033[0m");
 	//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
 	Vector3i neighborPositions[] = {Vector3i(-1, 0, 0), Vector3i(0, -1, 0), Vector3i(0, 0, -1), Vector3i(1, 0, 0),
 	                                Vector3i(0, 1, 0), Vector3i(0, 0, 1), Vector3i(1, 1, 0), Vector3i(0, 1, 1),

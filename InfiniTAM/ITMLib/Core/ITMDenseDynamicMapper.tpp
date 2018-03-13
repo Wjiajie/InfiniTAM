@@ -25,6 +25,7 @@
 #include "../Trackers/ITMTrackerFactory.h"
 #include "../Objects/Scene/ITMSceneManipulation.h"
 #include "../Utils/ITMSceneStatisticsCalculator.h"
+#include "../Utils/ITMPrintHelpers.h"
 
 using namespace ITMLib;
 
@@ -83,7 +84,13 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(co
                                                                               ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
                                                                               ITMScene<TVoxelLive, TIndex>* liveScene,
                                                                               ITMRenderState* renderState) {
-
+	//BEGIN __DEBUG
+	if(this->recordNextFrameWarps){
+		std::cout << bright_cyan << "MAPPING FRAME " << sceneMotionTracker->GetFrameIndex() <<  " (WITH RECORDING ON)" << reset << std::endl;
+	}else{
+		std::cout << bright_cyan << "MAPPING FRAME " << sceneMotionTracker->GetFrameIndex() << reset << std::endl;
+	}
+	//END __DEBUG
 
 	// clear out the live-frame SDF
 	liveSceneRecoEngine->ResetScene(liveScene);

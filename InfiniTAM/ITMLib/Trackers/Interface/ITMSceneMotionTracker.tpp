@@ -28,6 +28,7 @@
 #include "ITMSceneMotionTracker.h"
 #include "../../Objects/Scene/ITMSceneManipulation.h"
 #include "../../Utils/ITMSceneLogger.h"
+#include "../../Utils/ITMPrintHelpers.h"
 
 
 using namespace ITMLib;
@@ -94,7 +95,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 				liveImgOut);
 	cv::Mat blank = cv::Mat::zeros(liveImg.rows, liveImg.cols, CV_8UC1);
 #endif
-	//END _DEBUG
+
 	std::string currentFrameOutputPath = GenerateCurrentFrameOutputPath();
 	sceneLogger.SetPath(currentFrameOutputPath);//makes the folder as well if it doesn't exist
 	sceneLogger.SetScenes(canonicalScene, liveScene);
@@ -104,6 +105,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	energy_stat_file << "data" << "," << "level_set" << "," << "smoothness" << ","
 	                 << "killing" << "," << "total" << std::endl;
 
+
 	if(recordWarpUpdates){
 		sceneLogger.SaveScenesCompact();
 		sceneLogger.StartSavingWarpState(currentFrameIx);
@@ -111,8 +113,6 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 
 	for (iteration = 0; maxVectorUpdate > maxVectorUpdateThresholdVoxels && iteration < maxIterationCount;
 	     iteration++) {
-		const std::string red("\033[0;31m");
-		const std::string reset("\033[0m");
 		//START _DEBUG
 #ifdef DRAW_IMAGE
 		cv::Mat warpImg = ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpedSceneImageAroundPoint(
