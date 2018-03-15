@@ -83,11 +83,11 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #endif
 
 #ifdef PRINT_SINGLE_VOXEL_RESULT
-	const Vector3i interestVoxelPosition(-35, 56, 200);
+	const Vector3i interestVoxelPosition(292, -256, 695);
 	// use this flag to identify a voxel's coordinates given it's hash & local id within the hash block
 	bool printVoxelCoordsAtInterestHashAndLocId = false;
-	const int interestHash = 338614;
-	const int interestLocId = 446;
+	const int interestHash = 338614; //hash for above
+	const int interestLocId = 446; //local id for above
 #endif
 
 	const float epsilon = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::epsilon;
@@ -149,11 +149,16 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					//almost no restriction -- Mira's case with addition of VOXEL_TRUNCATED flag checking
 					bool truncatedInCanonical = canonicalVoxel.flags == ITMLib::VOXEL_TRUNCATED;
 					bool knownInCanonical = canonicalSdf != TVoxelCanonical::SDF_initialValue();
+
 					// the latter condition needs to be included since sometimes, even if some live voxels in the lookup
 					// neighborhood are non-truncated, they ally may be a whole voxel away from the warped position,
 					// which would then result in a live SDF lookup equivalent to that in a truncated region.
 					bool truncatedInLive = !hitLiveNarrowBand || (1.0 - std::abs(liveSdf) < FLT_EPSILON2);
+
+					// The data term is only relevant if we know the actual sdf values in both the canonical and the
+					// live frame, since it's based on the comparison between them
 					bool computeDataTerm = knownInCanonical && hitLiveKnownVoxels;
+
 					//_DEBUG
 					//bool computeLevelSetTerm = !truncatedInCanonical && !truncatedInLive;
 					//bool computeLevelSetTerm = (!knownInCanonical || !truncatedInCanonical) && !truncatedInLive;

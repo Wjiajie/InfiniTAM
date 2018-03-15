@@ -17,6 +17,61 @@
 
 //TODO: Clean out unused versions -Greg (GitHub: Algomorph)
 
+
+
+
+//sdf and color + knownVoxelHit + smart weights
+template<class TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline float InterpolateTrilinearly_StruckKnownVoxels_SmartWeights(const CONSTPTR(TVoxel)* voxelData,
+                                                                   const CONSTPTR(ITMHashEntry)* voxelHash,
+                                                                   const THREADPTR(Vector3f)& point,
+                                                                   THREADPTR(TCache)& cache,
+                                                                   THREADPTR(Vector3f)& color,
+                                                                   THREADPTR(bool)& struckKnownVoxels,
+                                                                   THREADPTR(float)& cumulativeWeight) {
+	Vector3f ratios;
+	Vector3f inverseRatios(1.0f);
+	Vector3i pos;
+	int vmIndex;
+	TO_INT_FLOOR3(pos, ratios, point);
+	inverseRatios -= ratios;
+	const int neighborCount = 8;
+	const Vector3i positions[neighborCount] = {Vector3i(0, 0, 0), Vector3i(1, 0, 0),
+	                                           Vector3i(0, 1, 0), Vector3i(1, 1, 0),
+	                                           Vector3i(0, 0, 1), Vector3i(1, 0, 1),
+	                                           Vector3i(0, 1, 1), Vector3i(1, 1, 1)};
+	float sdf = 0.0f;
+	color = Vector3f(0.0f);
+	float coefficients[neighborCount];
+
+	struckKnownVoxels = false;
+	cumulativeWeight = 0.0f;
+
+	inverseRatios -= ratios;
+	coefficients[0] = inverseRatios.x * inverseRatios.y * inverseRatios.z; //000
+	coefficients[1] = ratios.x        * inverseRatios.y * inverseRatios.z; //100
+	coefficients[2] = inverseRatios.x * ratios.y        * inverseRatios.z; //010
+	coefficients[3] = ratios.x        * ratios.y        * inverseRatios.z; //110
+	coefficients[4] = inverseRatios.x * inverseRatios.y * ratios.z;        //001
+	coefficients[5] = ratios.x        * inverseRatios.y * ratios.z;        //101
+	coefficients[6] = inverseRatios.x * ratios.y        * ratios.z;        //011
+	coefficients[7] = ratios.x        * ratios.y        * ratios.z;        //111
+
+	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
+		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (positions[iNeighbor]), vmIndex, cache);
+		bool curKnown = v.flags != ITMLib::VOXEL_UNKNOWN;
+		struckKnownVoxels |= curKnown;
+		float weight = coefficients[iNeighbor] * curKnown;
+		sdf += weight * TVoxel::valueToFloat(v.sdf);
+		color += weight * v.color;
+		cumulativeWeight += weight;
+	}
+
+	return sdf;
+}
+
+
 //_DEBUG -- special treatment of truncated values, use voxels with semantic information only!
 //sdf, color, pick maximum weights, get confidence
 template<class TVoxel, typename TCache>
@@ -454,6 +509,7 @@ inline float InterpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
 	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
 }
 
+
 //sdf and color + knownVoxelHit
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
@@ -475,7 +531,7 @@ inline float InterpolateTrilinearly_StruckKnownVoxels(const CONSTPTR(TVoxel)* vo
         const TVoxel& v = readVoxel(voxelData, hashIndex, pos + (coord), vmIndex, cache);\
         sdfV##suffix = TVoxel::valueToFloat(v.sdf);\
         colorV##suffix = TO_FLOAT3(v.clr);\
-        struckKnownVoxels |= (sdfV##suffix != TVoxel::SDF_initialValue());\
+        struckKnownVoxels |= v.flags != ITMLib::VOXEL_UNKNOWN;\
     }
 	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
 	PROCESS_VOXEL(2, Vector3i(1, 0, 0))

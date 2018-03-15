@@ -241,6 +241,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 		//pointer to the voxels in the block
 		TVoxelCanonical* localVoxelBlock = &(canonicalVoxels[currentCanonicalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
+		//TODO: integrate color info --Greg(GitHub: Algomorph)
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
@@ -268,6 +269,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					bool struckKnownVoxels;
 
 					//TODO: confidence?
+					//color & sdf
 					float liveSdf = InterpolateTrilinearly_StruckKnownVoxels(
 							liveVoxels, liveHashTable,
 							projectedPosition,

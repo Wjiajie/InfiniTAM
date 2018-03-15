@@ -234,7 +234,7 @@ struct ITMVoxel_f_rgb_conf_flags
 
 	_CPU_AND_GPU_CODE_ ITMVoxel_f_rgb_conf_flags()
 	{
-		flags = ITMLib::VOXEL_TRUNCATED;
+		flags = ITMLib::VOXEL_UNKNOWN;
 		sdf = SDF_initialValue();
 		w_depth = 0;
 		confidence = 0.0f;
@@ -274,7 +274,7 @@ struct ITMVoxel_f_dynamic
 
 	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic()
 	{
-		flags = ITMLib::VOXEL_TRUNCATED;
+		flags = ITMLib::VOXEL_UNKNOWN;
 		sdf = SDF_initialValue();
 		w_depth = 0;
 		confidence = 0.0f;
