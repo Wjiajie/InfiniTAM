@@ -83,7 +83,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #endif
 
 #ifdef PRINT_SINGLE_VOXEL_RESULT
-	const Vector3i interestVoxelPosition(292, -256, 695);
+	const Vector3i interestVoxelPosition(-35, -16, 186);
 	// use this flag to identify a voxel's coordinates given it's hash & local id within the hash block
 	bool printVoxelCoordsAtInterestHashAndLocId = false;
 	const int interestHash = 338614; //hash for above

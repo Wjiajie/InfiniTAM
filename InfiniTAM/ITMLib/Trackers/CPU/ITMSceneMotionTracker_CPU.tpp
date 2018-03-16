@@ -264,17 +264,24 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					}
 
 					Vector3f liveColor;
-					int liveWDepth = 1;
-					int liveWColor = 1;
+					float liveWeight;
 					bool struckKnownVoxels;
+					bool struckNonTruncatedVoxels;
 
 					//TODO: confidence?
 					//color & sdf
-					float liveSdf = InterpolateTrilinearly_StruckKnownVoxels(
+					float liveSdf = InterpolateTrilinearly_SdfColor_StruckNonTruncatedAndKnown_SmartWeights(
 							liveVoxels, liveHashTable,
 							projectedPosition,
 							liveCache, liveColor,
-							struckKnownVoxels);
+							struckKnownVoxels, struckNonTruncatedVoxels, liveWeight);
+					//_DEBUG
+//					float liveSdf = InterpolateTrilinearly_StruckKnownVoxels(
+//							liveVoxels, liveHashTable,
+//							projectedPosition,
+//							liveCache, liveColor,
+//							struckKnownVoxels);
+					//END _DEBUG
 
 					bool liveValueTruncated = 1.0 - std::abs(liveSdf) < FLT_EPSILON2;
 					/* Conditions to avoid fusion:
@@ -286,19 +293,20 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 						missedKnownVoxels++;//_DEBUG
 						continue;
 					}
-					float newSdf = oldWDepth * oldSdf + liveWDepth * liveSdf;
-					float newWDepth = oldWDepth + liveWDepth;
+					float newSdf = oldWDepth * oldSdf + liveWeight * liveSdf;
+					float newWDepth = oldWDepth + liveWeight;
 					newSdf /= newWDepth;
 					newWDepth = MIN(newWDepth, maximumWeight);
 
-					Vector3f newColor = oldWColor * oldColor + liveWColor * liveColor;
-					float newWColor = oldWColor + liveWColor;
+					//TODO: this color-weighting probably is incorrect, since not all live voxels will have viable color -Greg (GitHub:Algomorph)
+					Vector3f newColor = oldWColor * oldColor + liveWeight * liveColor;
+					float newWColor = oldWColor + liveWeight;
 					newColor /= newWColor;
 					newWColor = MIN(newWDepth, maximumWeight);
 
 					canonicalVoxel.sdf = TVoxelCanonical::floatToValue(newSdf);
 					canonicalVoxel.w_depth = (uchar) newWDepth;
-					canonicalVoxel.clr = TO_UCHAR3(newColor * 255.0f);
+					canonicalVoxel.clr = TO_UCHAR3(newColor);
 					canonicalVoxel.w_color = (uchar) newWColor;
 					if (liveValueTruncated) {
 						sdfTruncatedCount++;//_DEBUG

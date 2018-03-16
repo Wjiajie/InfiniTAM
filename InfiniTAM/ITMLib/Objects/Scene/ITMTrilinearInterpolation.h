@@ -23,13 +23,15 @@
 //sdf and color + knownVoxelHit + smart weights
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
-inline float InterpolateTrilinearly_StruckKnownVoxels_SmartWeights(const CONSTPTR(TVoxel)* voxelData,
-                                                                   const CONSTPTR(ITMHashEntry)* voxelHash,
-                                                                   const THREADPTR(Vector3f)& point,
-                                                                   THREADPTR(TCache)& cache,
-                                                                   THREADPTR(Vector3f)& color,
-                                                                   THREADPTR(bool)& struckKnownVoxels,
-                                                                   THREADPTR(float)& cumulativeWeight) {
+inline float InterpolateTrilinearly_SdfColor_StruckNonTruncatedAndKnown_SmartWeights(
+		const CONSTPTR(TVoxel)* voxelData,
+		const CONSTPTR(ITMHashEntry)* voxelHash,
+		const THREADPTR(Vector3f)& point,
+		THREADPTR(TCache)& cache,
+		THREADPTR(Vector3f)& color,
+		THREADPTR(bool)& struckKnownVoxels,
+		THREADPTR(bool)& struckNonTruncated,
+		THREADPTR(float)& cumulativeWeight) {
 	Vector3f ratios;
 	Vector3f inverseRatios(1.0f);
 	Vector3i pos;
@@ -46,25 +48,85 @@ inline float InterpolateTrilinearly_StruckKnownVoxels_SmartWeights(const CONSTPT
 	float coefficients[neighborCount];
 
 	struckKnownVoxels = false;
+	struckNonTruncated = false;
 	cumulativeWeight = 0.0f;
 
 	inverseRatios -= ratios;
+
+	//@formatter:off
 	coefficients[0] = inverseRatios.x * inverseRatios.y * inverseRatios.z; //000
-	coefficients[1] = ratios.x        * inverseRatios.y * inverseRatios.z; //100
-	coefficients[2] = inverseRatios.x * ratios.y        * inverseRatios.z; //010
-	coefficients[3] = ratios.x        * ratios.y        * inverseRatios.z; //110
+	coefficients[1] = ratios.x *        inverseRatios.y * inverseRatios.z; //100
+	coefficients[2] = inverseRatios.x * ratios.y *        inverseRatios.z; //010
+	coefficients[3] = ratios.x *        ratios.y *        inverseRatios.z; //110
 	coefficients[4] = inverseRatios.x * inverseRatios.y * ratios.z;        //001
-	coefficients[5] = ratios.x        * inverseRatios.y * ratios.z;        //101
-	coefficients[6] = inverseRatios.x * ratios.y        * ratios.z;        //011
-	coefficients[7] = ratios.x        * ratios.y        * ratios.z;        //111
+	coefficients[5] = ratios.x *        inverseRatios.y * ratios.z;        //101
+	coefficients[6] = inverseRatios.x * ratios.y *        ratios.z;        //011
+	coefficients[7] = ratios.x *        ratios.y *        ratios.z;        //111
+	//@formatter:on
 
 	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
 		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (positions[iNeighbor]), vmIndex, cache);
+		struckNonTruncated |= v.flags == ITMLib::VOXEL_NONTRUNCATED;
 		bool curKnown = v.flags != ITMLib::VOXEL_UNKNOWN;
 		struckKnownVoxels |= curKnown;
 		float weight = coefficients[iNeighbor] * curKnown;
 		sdf += weight * TVoxel::valueToFloat(v.sdf);
-		color += weight * v.color;
+		color += weight * TO_FLOAT3(v.clr);
+		cumulativeWeight += weight;
+	}
+
+	return sdf;
+}
+
+//sdf + knownVoxelHit + smart weights
+template<class TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline float InterpolateTrilinearly_Sdf_StruckNonTruncatedAndKnown_SmartWeights(
+		const CONSTPTR(TVoxel)* voxelData,
+		const CONSTPTR(ITMHashEntry)* voxelHash,
+		const THREADPTR(Vector3f)& point,
+		THREADPTR(TCache)& cache,
+		THREADPTR(bool)& struckKnownVoxels,
+		THREADPTR(bool)& struckNonTruncated,
+		THREADPTR(float)& cumulativeWeight) {
+	Vector3f ratios;
+	Vector3f inverseRatios(1.0f);
+	Vector3i pos;
+	int vmIndex;
+	TO_INT_FLOOR3(pos, ratios, point);
+	inverseRatios -= ratios;
+	const int neighborCount = 8;
+	const Vector3i positions[neighborCount] = {Vector3i(0, 0, 0), Vector3i(1, 0, 0),
+	                                           Vector3i(0, 1, 0), Vector3i(1, 1, 0),
+	                                           Vector3i(0, 0, 1), Vector3i(1, 0, 1),
+	                                           Vector3i(0, 1, 1), Vector3i(1, 1, 1)};
+	float sdf = 0.0f;
+	float coefficients[neighborCount];
+
+	struckKnownVoxels = false;
+	struckNonTruncated = false;
+	cumulativeWeight = 0.0f;
+
+	inverseRatios -= ratios;
+
+	//@formatter:off
+	coefficients[0] = inverseRatios.x * inverseRatios.y * inverseRatios.z; //000
+	coefficients[1] = ratios.x *        inverseRatios.y * inverseRatios.z; //100
+	coefficients[2] = inverseRatios.x * ratios.y *        inverseRatios.z; //010
+	coefficients[3] = ratios.x *        ratios.y *        inverseRatios.z; //110
+	coefficients[4] = inverseRatios.x * inverseRatios.y * ratios.z;        //001
+	coefficients[5] = ratios.x *        inverseRatios.y * ratios.z;        //101
+	coefficients[6] = inverseRatios.x * ratios.y *        ratios.z;        //011
+	coefficients[7] = ratios.x *        ratios.y *        ratios.z;        //111
+	//@formatter:on
+
+	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
+		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (positions[iNeighbor]), vmIndex, cache);
+		struckNonTruncated |= v.flags == ITMLib::VOXEL_NONTRUNCATED;
+		bool curKnown = v.flags != ITMLib::VOXEL_UNKNOWN;
+		struckKnownVoxels |= curKnown;
+		float weight = coefficients[iNeighbor] * curKnown;
+		sdf += weight * TVoxel::valueToFloat(v.sdf);
 		cumulativeWeight += weight;
 	}
 
@@ -368,14 +430,14 @@ inline float InterpolateTrilinearly_SetDefaultToVal_StruckChecks(const CONSTPTR(
 #define PROCESS_VOXEL(suffix, coord)\
     {\
         const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (coord), vmIndex, cache);\
-		float currentSdf = TVoxel::valueToFloat(v.sdf);\
-		if(currentSdf == TVoxel::SDF_initialValue()){\
-			sdfV##suffix = defaultReplacement;\
-		}else{\
-			sdfV##suffix = currentSdf;\
-			struckNarrowBand |= v.flags != ITMLib::VOXEL_TRUNCATED;\
-			struckKnownValues = true;\
-		}\
+        float currentSdf = TVoxel::valueToFloat(v.sdf);\
+        if(v.flags == ITMLib::VOXEL_UNKNOWN){\
+            sdfV##suffix = defaultReplacement;\
+        }else{\
+            sdfV##suffix = currentSdf;\
+            struckNarrowBand |= v.flags == ITMLib::VOXEL_NONTRUNCATED;\
+            struckKnownValues = true;\
+        }\
     }
 	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
 	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
