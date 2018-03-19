@@ -18,6 +18,7 @@
 #include <vtkInteractorStyleTrackballCamera.h>
 #include <vtkPointPicker.h>
 #include <vtkSmartPointer.h>
+#include <vtk-8.1/vtkCellPicker.h>
 
 class SDFViz;
 
@@ -42,6 +43,7 @@ private:
 	//============================= MEMBER VARIABLES ===================================================================
 	bool selectionMode = false;
 	vtkSmartPointer<vtkPointPicker> pointPicker;
+	vtkSmartPointer<vtkCellPicker> cellPicker;
 	vtkIdType selectedPointId = -1;
 	//============================= MEMBER FUNCTIONS ===================================================================
 
