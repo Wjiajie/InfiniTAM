@@ -40,15 +40,22 @@ std::ostream& operator<<(std::ostream& os, std::vector<T> vec) {
 	return os;
 }
 
-CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& negativeNonInterestVoxelColor,
-                                   const std::array<double, 4>& positiveNonInterestVoxelColor,
-                                   const std::array<double, 4>& negativeInterestVoxelColor,
+CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& positiveTruncatedNonInterestVoxelColor,
+                                   const std::array<double, 4>& positiveNonTruncatedNonInterestVoxelColor,
+                                   const std::array<double, 4>& negativeNonTruncatedNonInterestVoxelColor,
+                                   const std::array<double, 4>& negativeTruncatedNonInterestVoxelColor,
+                                   const std::array<double, 4>& unknownNonInterestVoxelColor,
                                    const std::array<double, 4>& positiveInterestVoxelColor,
+                                   const std::array<double, 4>& negativeInterestVoxelColor,
                                    const std::array<double, 4>& highlightVoxelColor,
-                                   const std::array<double, 3>& hashBlockEdgeColor,
-                                   int frameIx) :
-		SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex>(negativeNonInterestVoxelColor, positiveNonInterestVoxelColor,
-		                                                  highlightVoxelColor, hashBlockEdgeColor),
+                                   const std::array<double, 3>& hashBlockEdgeColor, int frameIx) :
+		SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex>(positiveTruncatedNonInterestVoxelColor,
+		                                                  positiveNonTruncatedNonInterestVoxelColor,
+		                                                  negativeNonTruncatedNonInterestVoxelColor,
+		                                                  negativeTruncatedNonInterestVoxelColor,
+		                                                  unknownNonInterestVoxelColor,
+		                                                  highlightVoxelColor,
+		                                                  hashBlockEdgeColor),
 		frameIx(frameIx),
 		initialNonInterestPoints(vtkSmartPointer<vtkPoints>::New()),
 		initialInterestPoints(vtkSmartPointer<vtkPoints>::New()),
@@ -59,11 +66,12 @@ CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& negativeNonInter
 		interestVoxelColorLookupTable(vtkSmartPointer<vtkLookupTable>::New()),
 		interestVoxelMapper(vtkSmartPointer<vtkGlyph3DMapper>::New()),
 		interestVoxelActor(vtkSmartPointer<vtkActor>::New()),
-		selectedVoxelActor(vtkSmartPointer<vtkActor>::New()){
-	SetUpSDFColorLookupTable(interestVoxelColorLookupTable,
-	                         negativeInterestVoxelColor.data(),
+		selectedVoxelActor(vtkSmartPointer<vtkActor>::New()) {
+	//TODO: set up separate colors for turncated/nontruncated & interest unknown -Greg (GitHub: Algomorph)
+	SetUpSDFColorLookupTable(interestVoxelColorLookupTable, highlightVoxelColor.data(),
 	                         positiveInterestVoxelColor.data(),
-	                         highlightVoxelColor.data());
+	                         positiveInterestVoxelColor.data(), negativeInterestVoxelColor.data(),
+	                         negativeInterestVoxelColor.data(), unknownNonInterestVoxelColor.data());
 }
 
 void CanonicalVizPipe::PreparePointsForRendering() {
@@ -277,7 +285,9 @@ void CanonicalVizPipe::SetInterestRegionInfo(std::vector<int> interestRegionHash
 
 void CanonicalVizPipe::PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeometry) {
 	if (!preparePipelineWasCalled) {
-		DIEWITHEXCEPTION("PreparePipeline needs to be called first. [" __FILE__ ":" + std::to_string(__LINE__) + "]");
+		DIEWITHEXCEPTION("PreparePipeline needs to be called first. ["
+				                 __FILE__
+				                 ":" + std::to_string(__LINE__) + "]");
 	}
 
 	// set up voxel mapper
@@ -340,9 +350,9 @@ void CanonicalVizPipe::PrintHighlightIndexes() {
 
 void CanonicalVizPipe::ToggleScaleMode() {
 	SDFSceneVizPipe::ToggleScaleMode();
-	if(scaleMode == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS){
+	if (scaleMode == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS) {
 		interestVoxelMapper->SetScaleArray(scalePointAttributeName);
-	}else{
+	} else {
 		interestVoxelMapper->SetScaleArray(alternativeScalePointAttributeName);
 	}
 }
@@ -351,17 +361,17 @@ void CanonicalVizPipe::SetPointHighlight(vtkIdType pointId, bool highlightOn) {
 	auto colorArray =
 			dynamic_cast<vtkIntArray*>(voxelPolydata->GetPointData()->GetArray(colorPointAttributeName));
 	auto points = voxelPolydata->GetPoints();
-	if(highlightOn){
+	if (highlightOn) {
 		selectedVertexDefaultColorIndex = colorArray->GetValue(pointId);
-		colorArray->SetValue(pointId,HIGHLIGHT_SDF_COLOR_INDEX);
+		colorArray->SetValue(pointId, HIGHLIGHT_SDF_COLOR_INDEX);
 		double point[3];
-		points->GetPoint(pointId,point);
+		points->GetPoint(pointId, point);
 		double x = point[0];
 		double y = -point[1];
 		double z = -point[2];
 		std::cout << "Selected point at " << x << ", " << y << ", " << z << "." << std::endl;
-	}else{
-		colorArray->SetValue(pointId,selectedVertexDefaultColorIndex);
+	} else {
+		colorArray->SetValue(pointId, selectedVertexDefaultColorIndex);
 	}
 	colorArray->Modified();
 	voxelPolydata->Modified();

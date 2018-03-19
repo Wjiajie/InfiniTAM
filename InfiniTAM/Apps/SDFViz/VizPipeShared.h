@@ -22,32 +22,40 @@
 #define COMPUTE_VOXEL_SCALE(sdf) (1.0f - 0.9f * std::abs(sdf))
 
 
-enum VoxelColorIndex : int{
-	NEGATIVE_SDF_COLOR_INDEX = 0,
-	POSITIVE_SDF_COLOR_INDEX = 1,
-	HIGHLIGHT_SDF_COLOR_INDEX = 2
+enum VoxelColorIndex : int {
+	POSITIVE_TRUNCATED_SDF_COLOR_INDEX = 0,
+	POSITIVE_NON_TRUNCATED_SDF_COLOR_INDEX = 1,
+	NEGATIVE_NON_TRUNCATED_SDF_COLOR_INDEX = 2,
+	NEGATIVE_TRUNCATED_SDF_COLOR_INDEX = 3,
+	UNKNOWN_SDF_COLOR_INDEX = 4,
+	HIGHLIGHT_SDF_COLOR_INDEX = 5,
+	COLOR_INDEX_COUNT = 6
 };
 
-enum VoxelScaleMode{
+enum VoxelScaleMode {
 	VOXEL_SCALE_HIDE_UNKNOWNS = 0,
-	VOXEL_SCALE_SHOW_UNKNOWNS = 2
+	VOXEL_SCALE_SHOW_UNKNOWNS = 1
 };
 
 
-template <typename TVoxel>
+template<typename TVoxel>
 inline
 void ComputeVoxelAttributes(const Vector3i& currentBlockPositionVoxels, int x, int y, int z,
                             const TVoxel* localVoxelBlock, vtkPoints* points,
                             vtkFloatArray* scaleAttribute,
                             vtkFloatArray* alternativeScaleAttribute,
-                            vtkIntArray* colorAttribute){
+                            vtkIntArray* colorAttribute) {
 	Vector3i voxelPosition = currentBlockPositionVoxels + Vector3i(x, y, z);
 	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 	const TVoxel& voxel = localVoxelBlock[locId];
 	float sdf = TVoxel::valueToFloat(voxel.sdf);
 	float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf);
 	float alternativeVoxelScale = COMPUTE_VOXEL_SCALE(sdf);
-	float voxelColor = voxel.sdf < 0 ? NEGATIVE_SDF_COLOR_INDEX : POSITIVE_SDF_COLOR_INDEX;
+	bool truncated = std::abs(sdf) >= 1.0;
+	float voxelColor = voxel.flags == ITMLib::VOXEL_UNKNOWN ? UNKNOWN_SDF_COLOR_INDEX :
+	                   sdf > 0 ?
+	                   (truncated ? POSITIVE_TRUNCATED_SDF_COLOR_INDEX : POSITIVE_NON_TRUNCATED_SDF_COLOR_INDEX) :
+	                   (truncated ? NEGATIVE_TRUNCATED_SDF_COLOR_INDEX : NEGATIVE_NON_TRUNCATED_SDF_COLOR_INDEX);
 
 	// need to filp the y & z axes (unlike InfiniTAM, VTK uses proper right-hand rule system))
 	points->InsertNextPoint(voxelPosition.x,

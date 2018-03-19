@@ -22,13 +22,15 @@
 class CanonicalVizPipe : public SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex> {
 public:
 	// ==================== CONSTRUCTORS / DESTRUCTORS =================================
-	CanonicalVizPipe(const std::array<double, 4>& negativeNonInterestVoxelColor,
-	                 const std::array<double, 4>& positiveNonInterestVoxelColor,
-	                 const std::array<double, 4>& negativeInterestVoxelColor,
+	CanonicalVizPipe(const std::array<double, 4>& positiveTruncatedNonInterestVoxelColor,
+	                 const std::array<double, 4>& positiveNonTruncatedNonInterestVoxelColor,
+	                 const std::array<double, 4>& negativeNonTruncatedNonInterestVoxelColor,
+	                 const std::array<double, 4>& negativeTruncatedNonInterestVoxelColor,
+	                 const std::array<double, 4>& unknownNonInterestVoxelColor,
 	                 const std::array<double, 4>& positiveInterestVoxelColor,
+	                 const std::array<double, 4>& negativeInterestVoxelColor,
 	                 const std::array<double, 4>& highlightVoxelColor,
-	                 const std::array<double, 3>& hashBlockEdgeColor,
-	                 int frameIx);
+	                 const std::array<double, 3>& hashBlockEdgeColor, int frameIx);
 
 	// ==================== MEMBER FUNCTIONS ===========================================
 	void UpdatePointPositionsFromBuffer(void* buffer);

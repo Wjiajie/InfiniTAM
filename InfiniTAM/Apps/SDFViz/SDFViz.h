@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 1/3/18.
+//  7Created by Gregory Kramida on 1/3/18.
 //  Copyright (c) 2018-2025 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -64,14 +64,23 @@ class SDFViz {
 
 public:
 	//================= STATIC CONSTANTS ============================
-	static const std::array<double, 4> canonicalNegativeVoxelColor;
-	static const std::array<double, 4> canonicalPositiveVoxelColor;
+	static const std::array<double, 4> canonicalTrunctedPositiveVoxelColor;
+	static const std::array<double, 4> canonicalNonTruncatedPositiveVoxelColor;
+	static const std::array<double, 4> canonicalNonTruncatedNegativeVoxelColor;
+	static const std::array<double, 4> canonicalTrunctedNegativeVoxelColor;
+	static const std::array<double, 4> canonicalUnknownVoxelColor;
+
 	static const std::array<double, 4> canonicalNegativeInterestVoxelColor;
 	static const std::array<double, 4> canonicalPositiveInterestVoxelColor;
 	static const std::array<double, 4> highlightVoxelColor;
 	static const std::array<double, 3> canonicalHashBlockEdgeColor;
-	static const std::array<double, 4> liveNegativeVoxelColor;
-	static const std::array<double, 4> livePositiveVoxelColor;
+
+	static const std::array<double, 4> liveTruncatedPositiveVoxelColor;
+	static const std::array<double, 4> liveNonTruncatedPositiveVoxelColor;
+	static const std::array<double, 4> liveNonTruncatedNegativeVoxelColor;
+	static const std::array<double, 4> liveTruncatedNegativeVoxelColor;
+	static const std::array<double, 4> liveUnknownVoxelColor;
+
 	static const std::array<double, 3> liveHashBlockEdgeColor;
 
 	//================= CONSTRUCTORS/DESTRUCTORS ===================
@@ -122,7 +131,6 @@ private:
 	vtkSmartPointer<vtkSphereSource> sphere;
 	vtkSmartPointer<vtkCubeSource> cube;
 	// interaction
-
 
 	//Holds warp & warp update state for the canonical scene
 	vtkSmartPointer<vtkFloatArray> allWarpBuffer;
@@ -208,4 +216,5 @@ private:
 	void MoveFocusToPreviousHighlight();
 	void DrawFrameCounter();
 	void UpdateFrameDisplay();
+
 };

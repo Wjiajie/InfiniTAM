@@ -42,8 +42,12 @@ public:
 	static const char* alternativeScalePointAttributeName;
 
 	// ====================== CONSTRUCTORS / DESTRUCTORS ==================
-	SDFSceneVizPipe(std::array<double, 4> negativeVoxelColor, std::array<double, 4> positiveVoxelColor,
-	                std::array<double, 4> highlightVoxelColor, std::array<double, 3> hashBlockEdgeColor);
+	SDFSceneVizPipe(const std::array<double, 4>& positiveTruncatedVoxelColor,
+	                const std::array<double, 4>& positiveNonTruncatedVoxelColor,
+	                const std::array<double, 4>& negativeNonTruncatedVoxelColor,
+	                const std::array<double, 4>& negativeTruncatedVoxelColor,
+	                const std::array<double, 4>& unknownVoxelColor,
+	                const std::array<double, 4>& highlightVoxelColor, const std::array<double, 3>& hashBlockEdgeColor);
 	~SDFSceneVizPipe();
 
 	// ====================== MEMBER FUNCTIONS ===========================
@@ -62,9 +66,12 @@ protected:
 	static void SetUpSceneHashBlockMapper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
 	                                      vtkSmartPointer<vtkPolyData>& pointsPolydata);
 	static void SetUpSDFColorLookupTable(vtkSmartPointer<vtkLookupTable>& table,
-		                                    const double* rgbaFirstColor,
-		                                    const double* rgbaSecondColor,
-		                                    const double* rgbaHighlightColor);
+	                                     const double* highlightColor,
+	                                     const double* positiveTruncatedColor,
+	                                     const double* positiveNonTruncatedColor,
+	                                     const double* negativeNonTruncatedColor,
+	                                     const double* negativeTruncatedColor,
+	                                     const double* unknownColor);
 	static void SetUpSceneVoxelMapper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
 	                                  vtkSmartPointer<vtkLookupTable>& table,
 	                                  vtkSmartPointer<vtkExtractPolyDataGeometry> extractor);
@@ -96,8 +103,11 @@ private:
 	vtkSmartPointer<vtkGlyph3DMapper> hashBlockMapper;
 
 	// ** colors **
-	std::array<double, 4> negativeVoxelColor;
-	std::array<double, 4> positiveVoxelColor;
+	std::array<double, 4> positiveTruncatedVoxelColor;
+	std::array<double, 4> positiveNonTruncatedVoxelColor;
+	std::array<double, 4> negativeNonTruncatedVoxelColor;
+	std::array<double, 4> negativeTruncatedVoxelColor;
+	std::array<double, 4> unknownVoxelColor;
 	std::array<double, 4> highlightVoxelColor;
 	std::array<double, 3> hashBlockEdgeColor;
 

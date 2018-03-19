@@ -41,8 +41,13 @@ template<typename TVoxel, typename TIndex>
 const char* SDFSceneVizPipe<TVoxel, TIndex>::alternativeScalePointAttributeName = "alternative_scale";
 
 template<typename TVoxel, typename TIndex>
-SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(std::array<double, 4> negativeVoxelColor, std::array<double, 4> positiveVoxelColor,
-                                                 std::array<double, 4> highlightVoxelColor, std::array<double, 3> hashBlockEdgeColor)
+SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(const std::array<double, 4>& positiveTruncatedVoxelColor,
+                                                 const std::array<double, 4>& positiveNonTruncatedVoxelColor,
+                                                 const std::array<double, 4>& negativeNonTruncatedVoxelColor,
+                                                 const std::array<double, 4>& negativeTruncatedVoxelColor,
+                                                 const std::array<double, 4>& unknownVoxelColor,
+                                                 const std::array<double, 4>& highlightVoxelColor,
+                                                 const std::array<double, 3>& hashBlockEdgeColor)
 		:
 		voxelPolydata(vtkSmartPointer<vtkPolyData>::New()),
 		voxelColorLookupTable(vtkSmartPointer<vtkLookupTable>::New()),
@@ -53,17 +58,23 @@ SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(std::array<double, 4> negativeV
 		hashBlockActor(vtkSmartPointer<vtkActor>::New()),
 		hashBlockMapper(vtkSmartPointer<vtkGlyph3DMapper>::New()),
 
-		negativeVoxelColor(negativeVoxelColor),
-		positiveVoxelColor(positiveVoxelColor),
+		positiveTruncatedVoxelColor(positiveTruncatedVoxelColor),
+		positiveNonTruncatedVoxelColor(positiveNonTruncatedVoxelColor),
+		negativeNonTruncatedVoxelColor(negativeNonTruncatedVoxelColor),
+		negativeTruncatedVoxelColor(negativeTruncatedVoxelColor),
+		unknownVoxelColor(unknownVoxelColor),
+
 		highlightVoxelColor(highlightVoxelColor),
 		hashBlockEdgeColor(hashBlockEdgeColor),
-        scaleMode(VOXEL_SCALE_HIDE_UNKNOWNS){
+		scaleMode(VOXEL_SCALE_HIDE_UNKNOWNS) {
 	auto* settings = new ITMLibSettings();
 	scene = new ITMScene<TVoxel, TIndex>(
 			&settings->sceneParams, settings->swappingMode ==
 			                        ITMLibSettings::SWAPPINGMODE_ENABLED, settings->GetMemoryType());
 	// Create the color maps
-	SetUpSDFColorLookupTable(voxelColorLookupTable, negativeVoxelColor.data(), positiveVoxelColor.data(), highlightVoxelColor.data());
+	SetUpSDFColorLookupTable(voxelColorLookupTable, highlightVoxelColor.data(), positiveTruncatedVoxelColor.data(),
+	                         positiveNonTruncatedVoxelColor.data(), negativeNonTruncatedVoxelColor.data(),
+	                         negativeTruncatedVoxelColor.data(), unknownVoxelColor.data());
 	delete settings;
 }
 
@@ -181,15 +192,21 @@ void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneHashBlockMapper(vtkAlgorithmOutp
 
 template<typename TVoxel, typename TIndex>
 void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSDFColorLookupTable(vtkSmartPointer<vtkLookupTable>& table,
-                                                              const double* rgbaFirstColor,
-                                                              const double* rgbaSecondColor,
-                                                              const double* rgbaHighlightColor) {
-	table->SetTableRange(0.0, 3.0);
-	table->SetNumberOfTableValues(3);
-	table->SetNumberOfColors(3);
-	table->SetTableValue(NEGATIVE_SDF_COLOR_INDEX, rgbaFirstColor);
-	table->SetTableValue(POSITIVE_SDF_COLOR_INDEX, rgbaSecondColor);
-	table->SetTableValue(HIGHLIGHT_SDF_COLOR_INDEX, rgbaHighlightColor);
+                                                               const double* highlightColor,
+                                                               const double* positiveTruncatedColor,
+                                                               const double* positiveNonTruncatedColor,
+                                                               const double* negativeNonTruncatedColor,
+                                                               const double* negativeTruncatedColor,
+                                                               const double* unknownColor) {
+	table->SetTableRange(0.0, 6.0);
+	table->SetNumberOfTableValues(6);
+	table->SetNumberOfColors(6);
+	table->SetTableValue(POSITIVE_TRUNCATED_SDF_COLOR_INDEX, positiveTruncatedColor);
+	table->SetTableValue(POSITIVE_NON_TRUNCATED_SDF_COLOR_INDEX, positiveNonTruncatedColor);
+	table->SetTableValue(NEGATIVE_NON_TRUNCATED_SDF_COLOR_INDEX, negativeNonTruncatedColor);
+	table->SetTableValue(NEGATIVE_TRUNCATED_SDF_COLOR_INDEX, negativeTruncatedColor);
+	table->SetTableValue(UNKNOWN_SDF_COLOR_INDEX, unknownColor);
+	table->SetTableValue(HIGHLIGHT_SDF_COLOR_INDEX, highlightColor);
 	table->SetNanColor(0.4, 0.7, 0.1, 1.0);
 }
 
@@ -208,7 +225,7 @@ void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneVoxelMapper(vtkAlgorithmOutput* 
 	mapper->ScalarVisibilityOn();
 	mapper->SetScalarModeToUsePointData();
 	mapper->SetColorModeToMapScalars();
-	mapper->SetScalarRange(0.0, 3.0);
+	mapper->SetScalarRange(0.0, static_cast<double>(COLOR_INDEX_COUNT));
 	mapper->InterpolateScalarsBeforeMappingOff();
 	mapper->Update();
 }
@@ -229,7 +246,7 @@ void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneVoxelMapper(
 	mapper->ScalarVisibilityOn();
 	mapper->SetScalarModeToUsePointData();
 	mapper->SetColorModeToMapScalars();
-	mapper->SetScalarRange(0.0, 3.0);
+	mapper->SetScalarRange(0.0, static_cast<double>(COLOR_INDEX_COUNT));
 	mapper->InterpolateScalarsBeforeMappingOff();
 	mapper->Update();
 }
@@ -246,10 +263,10 @@ vtkSmartPointer<vtkActor>& SDFSceneVizPipe<TVoxel, TIndex>::GetHashBlockActor() 
 
 template<typename TVoxel, typename TIndex>
 void SDFSceneVizPipe<TVoxel, TIndex>::ToggleScaleMode() {
-	if(scaleMode == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS){
+	if (scaleMode == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS) {
 		scaleMode = VoxelScaleMode::VOXEL_SCALE_SHOW_UNKNOWNS;
 		voxelMapper->SetScaleArray(alternativeScalePointAttributeName);
-	}else{
+	} else {
 		scaleMode = VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS;
 		voxelMapper->SetScaleArray(scalePointAttributeName);
 	}

@@ -59,14 +59,35 @@
 #include "SDFVizGlobalDefines.h"
 
 //** public **
-const std::array<double, 4>  SDFViz::canonicalNegativeVoxelColor = {0.141, 0.215, 0.396, 1.0};
-const std::array<double, 4>  SDFViz::canonicalPositiveVoxelColor = {0.717, 0.788, 0.960, 1.0};
+const std::array<double, 4> SDFViz::canonicalTrunctedPositiveVoxelColor =
+		{0.8352941176, 0.8980392157, 0.9607843137, 1.0};
+const std::array<double, 4>  SDFViz::canonicalNonTruncatedPositiveVoxelColor =
+		{0.5058823529, 0.6980392157, 1.0862745098, 1.0};
+const std::array<double, 4>  SDFViz::canonicalNonTruncatedNegativeVoxelColor =
+		{0.1764705882, 0.4980392157, 0.8196078431, 1.0};
+const std::array<double, 4> SDFViz::canonicalTrunctedNegativeVoxelColor =
+		{0.1058823529, 0.2980392157, 0.4901960784, 1.0};
+const std::array<double, 4> SDFViz::canonicalUnknownVoxelColor =
+		{0.0352941176, 0.0980392157, 0.1607843137, 1.0};
+
 const std::array<double, 4>  SDFViz::canonicalNegativeInterestVoxelColor = {0.690, 0.878, 0.902, 1.0};
 const std::array<double, 4>  SDFViz::canonicalPositiveInterestVoxelColor = {0.000, 1.000, 1.000, 1.0};
+
 const std::array<double, 4>  SDFViz::highlightVoxelColor = {1.000, 0.647, 0.000, 1.0};
 const std::array<double, 3>  SDFViz::canonicalHashBlockEdgeColor = {0.286, 0.623, 0.854};
-const std::array<double, 4>  SDFViz::liveNegativeVoxelColor = {0.101, 0.219, 0.125, 1.0};
-const std::array<double, 4>  SDFViz::livePositiveVoxelColor = {0.717, 0.882, 0.749, 1.0};
+
+
+const std::array<double, 4>  SDFViz::liveTruncatedPositiveVoxelColor =
+		{0.8352941176, 0.9607843137, 0.8666666667, 1.0};
+const std::array<double, 4>  SDFViz::liveNonTruncatedPositiveVoxelColor =
+		{0.5137254902, 1, 0.6078431373, 1.0};
+const std::array<double, 4>  SDFViz::liveNonTruncatedNegativeVoxelColor =
+		{0.1921568627, 0.8039215686, 0.3450980392, 1.0};
+const std::array<double, 4>  SDFViz::liveTruncatedNegativeVoxelColor =
+		{0.1137254902, 0.4823529412, 0.2078431373, 1.0};
+const std::array<double, 4>  SDFViz::liveUnknownVoxelColor =
+		{0.0352941176, 0.1607843137, 0.0666666667, 1.0};
+
 const std::array<double, 3>  SDFViz::liveHashBlockEdgeColor = {0.537, 0.819, 0.631};
 //** private **
 
@@ -76,15 +97,19 @@ const std::array<std::array<double, 4>, 4> SDFViz::backgroundColors = {{{0.96, 0
 		                                                                       {0.57, 0.64, 0.69, 1.0}}}; // cadet grey
 
 SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, bool hideLiveVoxels,
-               bool hideInterestCanonicalRegions, bool useInitialCoords, Vector3i initialCoords, unsigned int initialFrame)
+               bool hideInterestCanonicalRegions, bool useInitialCoords, Vector3i initialCoords,
+               unsigned int initialFrame)
 		:
 		rootPath(std::move(pathToScene)),
-		canonicalScenePipe(canonicalNegativeVoxelColor, canonicalPositiveVoxelColor,
-		                   canonicalNegativeInterestVoxelColor, canonicalPositiveInterestVoxelColor,
-		                   highlightVoxelColor, canonicalHashBlockEdgeColor,
-		                   0),
-		liveScenePipe(liveNegativeVoxelColor,
-		              livePositiveVoxelColor,
+		canonicalScenePipe(canonicalTrunctedPositiveVoxelColor, canonicalNonTruncatedPositiveVoxelColor,
+		                   canonicalNonTruncatedNegativeVoxelColor, canonicalTrunctedNegativeVoxelColor,
+		                   canonicalUnknownVoxelColor, canonicalPositiveInterestVoxelColor,
+		                   canonicalNegativeInterestVoxelColor, highlightVoxelColor, canonicalHashBlockEdgeColor, 0),
+		liveScenePipe(liveTruncatedPositiveVoxelColor,
+		              liveNonTruncatedPositiveVoxelColor,
+		              liveNonTruncatedNegativeVoxelColor,
+		              liveTruncatedNegativeVoxelColor,
+		              liveUnknownVoxelColor,
 		              highlightVoxelColor,
 		              liveHashBlockEdgeColor),
 		highlightVisualizer(),
@@ -101,7 +126,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 		canonicalHashBlocksVisible(false),
 		liveVoxelsVisible(!hideLiveVoxels),
 		liveNegativeOneVoxelsVisible(false),
-		liveHashBlocksVisible(false){
+		liveHashBlocksVisible(false) {
 
 	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(GenerateExpectedFramePath(),
 	                                                                                 canonicalScenePipe.GetScene(),
@@ -270,11 +295,13 @@ void SDFViz::DrawLegend() {
 	legend->SetEntry(2, legendSphere->GetOutput(), "Highlight",
 	                 (double*) highlightVoxelColor.data());
 	legend->SetEntry(3, legendSphere->GetOutput(), "Positive Canonical",
-	                 (double*) canonicalPositiveVoxelColor.data());
+	                 (double*) canonicalNonTruncatedPositiveVoxelColor.data());
 	legend->SetEntry(4, legendSphere->GetOutput(), "Negative Canonical",
-	                 (double*) canonicalNegativeVoxelColor.data());
-	legend->SetEntry(5, legendSphere->GetOutput(), "Positive Live", (double*) livePositiveVoxelColor.data());
-	legend->SetEntry(6, legendSphere->GetOutput(), "Negative Live", (double*) liveNegativeVoxelColor.data());
+	                 (double*) canonicalNonTruncatedNegativeVoxelColor.data());
+	legend->SetEntry(5, legendSphere->GetOutput(), "Positive Live",
+	                 (double*) liveNonTruncatedPositiveVoxelColor.data());
+	legend->SetEntry(6, legendSphere->GetOutput(), "Negative Live",
+	                 (double*) liveNonTruncatedNegativeVoxelColor.data());
 
 	legend->GetPositionCoordinate()->SetCoordinateSystemToView();
 	legend->GetPositionCoordinate()->SetValue(0.8, -1.0);
@@ -339,7 +366,8 @@ void SDFViz::ToggleLiveHashBlockVisibility() {
 
 void SDFViz::ToggleCanonicalVoxelVisibility() {
 	canonicalVoxelsVisible = !canonicalVoxelsVisible;
-	if (canonicalVoxelsVisible && hasWarpIterationInfo && (sceneLogger->GetGeneralIterationCursor() != iterationIndex)) {
+	if (canonicalVoxelsVisible && hasWarpIterationInfo &&
+	    (sceneLogger->GetGeneralIterationCursor() != iterationIndex)) {
 		NonInterestWarpsAt(iterationIndex); //when showing, advance cursor as necessary
 	}
 	canonicalScenePipe.GetVoxelActor()->SetVisibility(canonicalVoxelsVisible);
@@ -355,7 +383,8 @@ void SDFViz::ToggleCanonicalUnknownVoxelVisibility() {
 
 void SDFViz::ToggleInterestVoxelVisibility() {
 	canonicalInterestVoxelsVisible = !canonicalInterestVoxelsVisible;
-	if (canonicalInterestVoxelsVisible && hasHighlightInfo && (sceneLogger->GetInterestIterationCursor() != iterationIndex)) {
+	if (canonicalInterestVoxelsVisible && hasHighlightInfo &&
+	    (sceneLogger->GetInterestIterationCursor() != iterationIndex)) {
 		InterestWarpsAt(iterationIndex); //when showing, advance cursor as necessary
 	}
 	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(canonicalInterestVoxelsVisible);
@@ -691,14 +720,18 @@ bool SDFViz::RetreatIteration() {
 void SDFViz::UpdatePipelineVisibilitiesUsingLocalState() {
 	canonicalScenePipe.GetVoxelActor()->SetVisibility(canonicalVoxelsVisible);
 	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(canonicalInterestVoxelsVisible);
-	if(canonicalScenePipe.GetCurrentScaleMode() == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS && canonicalNegativeOneVoxelsVisible ||
-			canonicalScenePipe.GetCurrentScaleMode() == VoxelScaleMode::VOXEL_SCALE_SHOW_UNKNOWNS && !canonicalNegativeOneVoxelsVisible){
+	if (canonicalScenePipe.GetCurrentScaleMode() == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS &&
+	    canonicalNegativeOneVoxelsVisible ||
+	    canonicalScenePipe.GetCurrentScaleMode() == VoxelScaleMode::VOXEL_SCALE_SHOW_UNKNOWNS &&
+	    !canonicalNegativeOneVoxelsVisible) {
 		canonicalScenePipe.ToggleScaleMode();
 	}
 	canonicalScenePipe.GetHashBlockActor()->SetVisibility(canonicalHashBlocksVisible);
 	liveScenePipe.GetVoxelActor()->SetVisibility(liveVoxelsVisible);
-	if(liveScenePipe.GetCurrentScaleMode() == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS && liveNegativeOneVoxelsVisible ||
-	   liveScenePipe.GetCurrentScaleMode() == VoxelScaleMode::VOXEL_SCALE_SHOW_UNKNOWNS && !liveNegativeOneVoxelsVisible){
+	if (liveScenePipe.GetCurrentScaleMode() == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS &&
+	    liveNegativeOneVoxelsVisible ||
+	    liveScenePipe.GetCurrentScaleMode() == VoxelScaleMode::VOXEL_SCALE_SHOW_UNKNOWNS &&
+	    !liveNegativeOneVoxelsVisible) {
 		liveScenePipe.ToggleScaleMode();
 	}
 	liveScenePipe.GetHashBlockActor()->SetVisibility(liveHashBlocksVisible);
