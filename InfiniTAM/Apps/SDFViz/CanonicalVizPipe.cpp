@@ -15,6 +15,10 @@
 //  ================================================================
 
 
+//VTK
+#include <vtkPolyDataMapper.h>
+#include <vtkProperty.h>
+
 //stdlib
 #include <utility>
 
@@ -89,24 +93,24 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 
 	//holds color for each voxel
 	vtkSmartPointer<vtkIntArray> nonInterestColorAttribute = vtkSmartPointer<vtkIntArray>::New();
-	nonInterestColorAttribute->SetName(colorPointAttributeName);
+	nonInterestColorAttribute->SetName(colorAttributeName);
 	//holds scale of each voxel
 	vtkSmartPointer<vtkFloatArray> nonInterestScaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
-	nonInterestScaleAttribute->SetName(scalePointAttributeName);
+	nonInterestScaleAttribute->SetName(scaleUnknownsHiddenAttributeName);
 
 	vtkSmartPointer<vtkFloatArray> nonInterestAlternativeScaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
-	nonInterestAlternativeScaleAttribute->SetName(alternativeScalePointAttributeName);
+	nonInterestAlternativeScaleAttribute->SetName(scaleUnknownsVisibleAttributeName);
 
 
 	//holds color for each voxel
 	vtkSmartPointer<vtkIntArray> interestColorAttribute = vtkSmartPointer<vtkIntArray>::New();
-	interestColorAttribute->SetName(colorPointAttributeName);
+	interestColorAttribute->SetName(colorAttributeName);
 	//holds scale of each voxel
 	vtkSmartPointer<vtkFloatArray> interestScaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
-	interestScaleAttribute->SetName(scalePointAttributeName);
+	interestScaleAttribute->SetName(scaleUnknownsHiddenAttributeName);
 	// alternative voxel scaling stragegy, where -1.0 value voxels are preserved
 	vtkSmartPointer<vtkFloatArray> interestAlternativeScaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
-	interestAlternativeScaleAttribute->SetName(alternativeScalePointAttributeName);
+	interestAlternativeScaleAttribute->SetName(scaleUnknownsVisibleAttributeName);
 
 	ITMVoxelCanonical* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
@@ -211,13 +215,13 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 	voxelPolydata->GetPointData()->AddArray(nonInterestScaleAttribute);
 	voxelPolydata->GetPointData()->AddArray(nonInterestAlternativeScaleAttribute);
 	voxelPolydata->GetPointData()->AddArray(nonInterestColorAttribute);
-	voxelPolydata->GetPointData()->SetActiveScalars(colorPointAttributeName);
+	voxelPolydata->GetPointData()->SetActiveScalars(colorAttributeName);
 
 	interestVoxelPolydata->SetPoints(interestVoxelPoints);
 	interestVoxelPolydata->GetPointData()->AddArray(interestScaleAttribute);
 	interestVoxelPolydata->GetPointData()->AddArray(interestAlternativeScaleAttribute);
 	interestVoxelPolydata->GetPointData()->AddArray(interestColorAttribute);
-	interestVoxelPolydata->GetPointData()->SetActiveScalars(colorPointAttributeName);
+	interestVoxelPolydata->GetPointData()->SetActiveScalars(colorAttributeName);
 
 	// pash block setup
 	hashBlockGrid->SetPoints(hashBlockPoints);
@@ -351,29 +355,48 @@ void CanonicalVizPipe::PrintHighlightIndexes() {
 void CanonicalVizPipe::ToggleScaleMode() {
 	SDFSceneVizPipe::ToggleScaleMode();
 	if (scaleMode == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS) {
-		interestVoxelMapper->SetScaleArray(scalePointAttributeName);
+		interestVoxelMapper->SetScaleArray(scaleUnknownsHiddenAttributeName);
 	} else {
-		interestVoxelMapper->SetScaleArray(alternativeScalePointAttributeName);
+		interestVoxelMapper->SetScaleArray(scaleUnknownsVisibleAttributeName);
 	}
 }
 
 void CanonicalVizPipe::SetPointHighlight(vtkIdType pointId, bool highlightOn) {
-	auto colorArray =
-			dynamic_cast<vtkIntArray*>(voxelPolydata->GetPointData()->GetArray(colorPointAttributeName));
+	auto scaleArray = dynamic_cast<vtkFloatArray*>(voxelPolydata->GetPointData()->GetArray(
+			scaleMode == VOXEL_SCALE_HIDE_UNKNOWNS ? scaleUnknownsHiddenAttributeName : scaleUnknownsVisibleAttributeName));
+
 	auto points = voxelPolydata->GetPoints();
 	if (highlightOn) {
-		selectedVertexDefaultColorIndex = colorArray->GetValue(pointId);
-		colorArray->SetValue(pointId, HIGHLIGHT_SDF_COLOR_INDEX);
+		selectedVoxelActor->VisibilityOn();
+		float selectedVertexScale = scaleArray->GetValue(pointId);
+
+
 		double point[3];
 		points->GetPoint(pointId, point);
+		selectedVoxelActor->SetScale(selectedVertexScale + 0.01);
+		selectedVoxelActor->SetPosition(point);
 		double x = point[0];
 		double y = -point[1];
 		double z = -point[2];
 		std::cout << "Selected point at " << x << ", " << y << ", " << z << "." << std::endl;
 	} else {
-		colorArray->SetValue(pointId, selectedVertexDefaultColorIndex);
+		selectedVoxelActor->VisibilityOff();
 	}
-	colorArray->Modified();
 	voxelPolydata->Modified();
 
+}
+
+void CanonicalVizPipe::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
+                                       vtkAlgorithmOutput* hashBlockSourceGeometry) {
+	SDFSceneVizPipe::PreparePipeline(voxelSourceGeometry, hashBlockSourceGeometry);
+	auto selectionMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	selectionMapper->SetInputConnection(voxelSourceGeometry);
+	this->selectedVoxelActor->SetMapper(selectionMapper);
+	selectedVoxelActor->VisibilityOff();
+	selectedVoxelActor->SetScale(1.0);
+	selectedVoxelActor->GetProperty()->SetColor(highlightVoxelColor[0],highlightVoxelColor[1],highlightVoxelColor[2]);
+}
+
+vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetSelectionVoxelActor() {
+	return this->selectedVoxelActor;
 }

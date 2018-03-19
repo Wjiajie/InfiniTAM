@@ -43,10 +43,13 @@ public:
 	                           ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights);
 	void SetFrameIndex(int frameIx);
 	vtkSmartPointer<vtkActor>& GetInterestVoxelActor();
+	vtkSmartPointer<vtkActor>& GetSelectionVoxelActor();
 	void PrintHighlightIndexes();
 
 	// *** setup ***
 	void PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeometry);
+	void PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
+	                     vtkAlgorithmOutput* hashBlockSourceGeometry) override;
 
 	// *** modify state ***
 	void ToggleScaleMode() override;
@@ -66,8 +69,11 @@ private:
 	std::array<double, 4> positiveInterestVoxelColor;
 	std::array<double, 4> highlightVoxelColor;
 
+	// ** state **
 	bool interestRegionHashesAreSet = false;
 	bool preparePipelineWasCalled = false;
+
+	// ** interest region info **
 	std::vector<int> interestRegionHashes;
 	std::set<int> interestRegionHashSet;
 	int totalVoxelCount = 0;//includes both interest regions and the rest
@@ -82,9 +88,9 @@ private:
 	vtkSmartPointer<vtkLookupTable> interestVoxelColorLookupTable;
 	vtkSmartPointer<vtkGlyph3DMapper> interestVoxelMapper;
 	vtkSmartPointer<vtkActor> interestVoxelActor;
-	vtkSmartPointer<vtkActor> selectedVoxelActor;
 
 	// ** interaction **
 	int selectedVertexDefaultColorIndex;
+	vtkSmartPointer<vtkActor> selectedVoxelActor;
 
 };

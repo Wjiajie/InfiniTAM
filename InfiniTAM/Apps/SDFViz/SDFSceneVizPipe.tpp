@@ -34,11 +34,11 @@
 
 
 template<typename TVoxel, typename TIndex>
-const char* SDFSceneVizPipe<TVoxel, TIndex>::colorPointAttributeName = "color";
+const char* SDFSceneVizPipe<TVoxel, TIndex>::colorAttributeName = "color";
 template<typename TVoxel, typename TIndex>
-const char* SDFSceneVizPipe<TVoxel, TIndex>::scalePointAttributeName = "scale";
+const char* SDFSceneVizPipe<TVoxel, TIndex>::scaleUnknownsHiddenAttributeName = "scale";
 template<typename TVoxel, typename TIndex>
-const char* SDFSceneVizPipe<TVoxel, TIndex>::alternativeScalePointAttributeName = "alternative_scale";
+const char* SDFSceneVizPipe<TVoxel, TIndex>::scaleUnknownsVisibleAttributeName = "alternative_scale";
 
 template<typename TVoxel, typename TIndex>
 SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(const std::array<double, 4>& positiveTruncatedVoxelColor,
@@ -95,15 +95,15 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 
 	//holds color for each voxel
 	vtkSmartPointer<vtkIntArray> colorAttribute = vtkSmartPointer<vtkIntArray>::New();
-	colorAttribute->SetName(colorPointAttributeName);
+	colorAttribute->SetName(colorAttributeName);
 
 	//holds scale of each voxel
 	vtkSmartPointer<vtkFloatArray> scaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
-	scaleAttribute->SetName(scalePointAttributeName);
+	scaleAttribute->SetName(scaleUnknownsHiddenAttributeName);
 
 	//holds alternative scale of each voxel (showing -1 value voxels)
 	vtkSmartPointer<vtkFloatArray> alternativeScaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
-	alternativeScaleAttribute->SetName(alternativeScalePointAttributeName);
+	alternativeScaleAttribute->SetName(scaleUnknownsVisibleAttributeName);
 
 	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
@@ -145,7 +145,7 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 	voxelPolydata->GetPointData()->AddArray(colorAttribute);
 	voxelPolydata->GetPointData()->AddArray(scaleAttribute);
 	voxelPolydata->GetPointData()->AddArray(alternativeScaleAttribute);
-	voxelPolydata->GetPointData()->SetActiveScalars(colorPointAttributeName);
+	voxelPolydata->GetPointData()->SetActiveScalars(colorAttributeName);
 
 	hashBlockGrid->SetPoints(hashBlockPoints);
 }
@@ -221,7 +221,7 @@ void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneVoxelMapper(vtkAlgorithmOutput* 
 	mapper->SetLookupTable(table);
 	mapper->ScalingOn();
 	mapper->SetScaleModeToScaleByMagnitude();
-	mapper->SetScaleArray(scalePointAttributeName);
+	mapper->SetScaleArray(scaleUnknownsHiddenAttributeName);
 	mapper->ScalarVisibilityOn();
 	mapper->SetScalarModeToUsePointData();
 	mapper->SetColorModeToMapScalars();
@@ -241,7 +241,7 @@ void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneVoxelMapper(
 	mapper->SetSourceConnection(sourceOutput);
 	mapper->SetLookupTable(table);
 	mapper->ScalingOn();
-	mapper->SetScaleArray(scalePointAttributeName);
+	mapper->SetScaleArray(scaleUnknownsHiddenAttributeName);
 	mapper->SetScaleModeToScaleByMagnitude();
 	mapper->ScalarVisibilityOn();
 	mapper->SetScalarModeToUsePointData();
@@ -265,10 +265,10 @@ template<typename TVoxel, typename TIndex>
 void SDFSceneVizPipe<TVoxel, TIndex>::ToggleScaleMode() {
 	if (scaleMode == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS) {
 		scaleMode = VoxelScaleMode::VOXEL_SCALE_SHOW_UNKNOWNS;
-		voxelMapper->SetScaleArray(alternativeScalePointAttributeName);
+		voxelMapper->SetScaleArray(scaleUnknownsVisibleAttributeName);
 	} else {
 		scaleMode = VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS;
-		voxelMapper->SetScaleArray(scalePointAttributeName);
+		voxelMapper->SetScaleArray(scaleUnknownsHiddenAttributeName);
 	}
 }
 

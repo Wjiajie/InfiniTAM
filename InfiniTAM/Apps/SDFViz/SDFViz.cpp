@@ -148,6 +148,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 	sdfRenderer->AddActor(canonicalScenePipe.GetVoxelActor());
 	sdfRenderer->AddActor(canonicalScenePipe.GetInterestVoxelActor());
 	sdfRenderer->AddActor(canonicalScenePipe.GetHashBlockActor());
+	sdfRenderer->AddActor(canonicalScenePipe.GetSelectionVoxelActor());
 	sdfRenderer->AddActor(liveScenePipe.GetVoxelActor());
 	sdfRenderer->AddActor(liveScenePipe.GetHashBlockActor());
 	topRenderer->AddActor(highlightVisualizer.GetHighlightActor());

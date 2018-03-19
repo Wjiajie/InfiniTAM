@@ -142,14 +142,14 @@ void SDFVizInteractorStyle::OnKeyPress() {
 void SDFVizInteractorStyle::OnLeftButtonUp() {
 	if(selectionMode){
 		int* pos = this->Interactor->GetEventPosition();
-		this->cellPicker->Pick(pos[0],pos[1],0,
+		this->pointPicker->Pick(pos[0],pos[1],0,
 		                       this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
 
-		vtkIdType newSelectedPointId = this->cellPicker->GetPointId();
-		vtkActor* selectedActor =this->cellPicker->GetActor();
+		vtkIdType newSelectedPointId = this->pointPicker->GetPointId();
+		vtkActor* selectedActor =this->pointPicker->GetActor();
 		if(selectedActor == parent->canonicalScenePipe.GetVoxelActor() && newSelectedPointId >= 0) {
 			if(selectedPointId >= -1){
-				parent->canonicalScenePipe.SetPointHighlight(selectedPointId, false);
+				//parent->canonicalScenePipe.SetPointHighlight(selectedPointId, false);
 			}
 			selectedPointId = newSelectedPointId;
 			parent->canonicalScenePipe.SetPointHighlight(selectedPointId, true);
@@ -162,8 +162,7 @@ void SDFVizInteractorStyle::OnLeftButtonUp() {
 SDFVizInteractorStyle::SDFVizInteractorStyle() :
 		selectionMode(false),
 		pointPicker(vtkSmartPointer<vtkPointPicker>::New()),
-		cellPicker(vtkSmartPointer<vtkCellPicker>::New()),
 		selectedPointId(-1){
-	cellPicker->SetTolerance(0.0005);
+	//pointPicker->SetTolerance(0.0005);
 }
 

@@ -37,9 +37,9 @@ template <typename TVoxel, typename TIndex>
 class SDFSceneVizPipe {
 public:
 	//================= CONSTANTS ================
-	static const char* colorPointAttributeName;
-	static const char* scalePointAttributeName;
-	static const char* alternativeScalePointAttributeName;
+	static const char* colorAttributeName;
+	static const char* scaleUnknownsHiddenAttributeName;
+	static const char* scaleUnknownsVisibleAttributeName;
 
 	// ====================== CONSTRUCTORS / DESTRUCTORS ==================
 	SDFSceneVizPipe(const std::array<double, 4>& positiveTruncatedVoxelColor,
