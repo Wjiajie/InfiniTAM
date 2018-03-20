@@ -16,9 +16,31 @@
 #pragma once
 
 namespace ITMLib {
+/**
+ * \brief basic semantic information about the voxel. Currently, cannot be used as a binary flag, i.e. flag values are mutually-exclusive
+ * \details Due to lack of reflection in the current C++ standard, printing these has to be supported by magic strings. Please, change
+ * these strings in @refitem VoxelFlagsAsCString when changing the category names.
+ */
+//TODO: rename to VoxelCategory --Greg(GitHub: Algomorph)
 enum VoxelFlags : unsigned char{
 	VOXEL_UNKNOWN = 0,
 	VOXEL_TRUNCATED = 1,
 	VOXEL_NONTRUNCATED = 2
 };
+
+inline
+const char* VoxelFlagsAsCString(VoxelFlags flags){
+	switch (flags){
+		case VOXEL_UNKNOWN:
+			return "VOXEL_UNKNOWN";
+		case VOXEL_TRUNCATED:
+			return "VOXEL_TRUNCATED";
+		case VOXEL_NONTRUNCATED:
+			return "VOXEL_NONTRUNCATED";
+		default:
+		std::cerr<< "Unknown voxel category: " << flags << "." << std::endl;
+			return ("UNRECOGNIZED VOXEL FLAG " + std::to_string(flags)).c_str();
+	}
+}
+
 }//namespace ITMLib

@@ -21,7 +21,12 @@
 #define COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf) (sdf == -1.0f ? 0.0f : 1.0f - 0.9f * std::abs(sdf))
 #define COMPUTE_VOXEL_SCALE(sdf) (1.0f - 0.9f * std::abs(sdf))
 
-
+/**
+ * \brief indexes to be used for coloring different categories of voxels (based on the semantic flags of each voxel)
+ * \details Note: @refitem VoxelColorIndexAsCString has magic strings associated with it (static reflection didn't make
+ * it yet into the C++17 standard, stay put for C++20), so you'll have to change that if you're going to change any of
+ * these enum names here.
+ */
 enum VoxelColorIndex : int {
 	POSITIVE_TRUNCATED_SDF_COLOR_INDEX = 0,
 	POSITIVE_NON_TRUNCATED_SDF_COLOR_INDEX = 1,
@@ -37,6 +42,27 @@ enum VoxelScaleMode {
 	VOXEL_SCALE_SHOW_UNKNOWNS = 1
 };
 
+inline
+const char* VoxelColorIndexAsCString(const VoxelColorIndex& index){
+	switch(index){
+		case POSITIVE_TRUNCATED_SDF_COLOR_INDEX:
+			return "POSITIVE_TRUNCATED_SDF_COLOR_INDEX";
+		case POSITIVE_NON_TRUNCATED_SDF_COLOR_INDEX:
+			return "POSITIVE_NON_TRUNCATED_SDF_COLOR_INDEX";
+		case NEGATIVE_NON_TRUNCATED_SDF_COLOR_INDEX:
+			return "NEGATIVE_NON_TRUNCATED_SDF_COLOR_INDEX";
+		case NEGATIVE_TRUNCATED_SDF_COLOR_INDEX:
+			return "NEGATIVE_TRUNCATED_SDF_COLOR_INDEX";
+		case UNKNOWN_SDF_COLOR_INDEX:
+			return "UNKNOWN_SDF_COLOR_INDEX";
+		case HIGHLIGHT_SDF_COLOR_INDEX:
+			return "HIGHLIGHT_SDF_COLOR_INDEX";
+		default:
+			std::cerr << "Unrecognized color index: " << index << std::endl;
+			return "[UNRECOGNIZED COLOR INDEX]";
+	}
+}
+
 
 template<typename TVoxel>
 inline
@@ -51,7 +77,7 @@ void ComputeVoxelAttributes(const Vector3i& currentBlockPositionVoxels, int x, i
 	float sdf = TVoxel::valueToFloat(voxel.sdf);
 	float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf);
 	float alternativeVoxelScale = COMPUTE_VOXEL_SCALE(sdf);
-	bool truncated = std::abs(sdf) >= 1.0;
+	bool truncated = voxel.flags == ITMLib::VOXEL_TRUNCATED;
 	float voxelColor = voxel.flags == ITMLib::VOXEL_UNKNOWN ? UNKNOWN_SDF_COLOR_INDEX :
 	                   sdf > 0 ?
 	                   (truncated ? POSITIVE_TRUNCATED_SDF_COLOR_INDEX : POSITIVE_NON_TRUNCATED_SDF_COLOR_INDEX) :

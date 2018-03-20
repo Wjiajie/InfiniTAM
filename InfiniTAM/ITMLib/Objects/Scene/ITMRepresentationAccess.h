@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ITMVoxelBlockHash.h"
+#include "ITMVoxelTypes.h"
 
 template<typename T> _CPU_AND_GPU_CODE_ inline int hashIndex(const THREADPTR(T) & blockPos) {
 	return (((uint)blockPos.x * 73856093u) ^ ((uint)blockPos.y * 19349669u) ^ ((uint)blockPos.z * 83492791u)) & (uint)SDF_HASH_MASK;
@@ -57,7 +58,8 @@ _CPU_AND_GPU_CODE_ inline int findVoxel(const CONSTPTR(ITMLib::ITMVoxelBlockHash
 	return findVoxel(voxelIndex, point, vmIndex, cache);
 }
 
-_CPU_AND_GPU_CODE_ inline int findVoxel(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData) *voxelIndex, Vector3i point, THREADPTR(bool) &foundPoint)
+_CPU_AND_GPU_CODE_ inline int
+findVoxel(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData) *voxelIndex, Vector3i point, THREADPTR(bool) &foundPoint)
 {
 	int vmIndex;
 	ITMLib::ITMVoxelBlockHash::IndexCache cache;

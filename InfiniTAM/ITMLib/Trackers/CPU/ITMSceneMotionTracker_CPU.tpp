@@ -275,21 +275,12 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 							projectedPosition,
 							liveCache, liveColor,
 							struckKnownVoxels, struckNonTruncatedVoxels, liveWeight);
-					//_DEBUG
-//					float liveSdf = InterpolateTrilinearly_StruckKnownVoxels(
-//							liveVoxels, liveHashTable,
-//							projectedPosition,
-//							liveCache, liveColor,
-//							struckKnownVoxels);
-					//END _DEBUG
 
-					bool liveValueTruncated = 1.0 - std::abs(liveSdf) < FLT_EPSILON2;
-					/* Conditions to avoid fusion:
-					 * 1) No known voxels were struck in the live frame SDF by the query.
-					 * 2) There were some voxels struck by the query, but the weights for them were all 0,
-					 * resulting in the default value for live SDF.
-					 */
-					if (!struckKnownVoxels || liveSdf == TVoxelLive::SDF_initialValue()) {
+					/* *
+					 * Conditions to avoid fusion:
+					 * No known voxels with non-zero interpolation weights were struck in the live frame SDF by the query.
+					 * */
+					if (!struckKnownVoxels) {
 						missedKnownVoxels++;//_DEBUG
 						continue;
 					}
@@ -308,17 +299,19 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					canonicalVoxel.w_depth = (uchar) newWDepth;
 					canonicalVoxel.clr = TO_UCHAR3(newColor);
 					canonicalVoxel.w_color = (uchar) newWColor;
-					if (liveValueTruncated) {
+					if (!struckNonTruncatedVoxels) {
 						sdfTruncatedCount++;//_DEBUG
 					}
-					if (canonicalVoxel.flags == ITMLib::VOXEL_TRUNCATED) {
-						if (!liveValueTruncated) {
+					if (canonicalVoxel.flags == ITMLib::VOXEL_UNKNOWN) {
+						if (struckNonTruncatedVoxels) {
 							//voxel is no longer perceived as truncated
-							canonicalVoxel.flags |= ITMLib::VOXEL_NONTRUNCATED;
+							canonicalVoxel.flags = ITMLib::VOXEL_NONTRUNCATED;
 							if (entriesAllocType[hash] != ITMLib::STABLE) {
 								hashBlockStabilizationCount++;
 							}
 							entriesAllocType[hash] = ITMLib::STABLE;
+						} else {
+							canonicalVoxel.flags = ITMLib::VOXEL_TRUNCATED;
 						}
 					}
 				}

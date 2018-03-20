@@ -62,13 +62,15 @@
 const std::array<double, 4> SDFViz::canonicalTrunctedPositiveVoxelColor =
 		{0.8352941176, 0.8980392157, 0.9607843137, 1.0};
 const std::array<double, 4>  SDFViz::canonicalNonTruncatedPositiveVoxelColor =
-		{0.5058823529, 0.6980392157, 1.0862745098, 1.0};
+		{0.6588235294, 0.7411764706, 0.9176470588, 1.0};
 const std::array<double, 4>  SDFViz::canonicalNonTruncatedNegativeVoxelColor =
 		{0.1764705882, 0.4980392157, 0.8196078431, 1.0};
 const std::array<double, 4> SDFViz::canonicalTrunctedNegativeVoxelColor =
 		{0.1058823529, 0.2980392157, 0.4901960784, 1.0};
+//const std::array<double, 4> SDFViz::canonicalUnknownVoxelColor =
+//		{0.0352941176, 0.0980392157, 0.1607843137, 1.0};
 const std::array<double, 4> SDFViz::canonicalUnknownVoxelColor =
-		{0.0352941176, 0.0980392157, 0.1607843137, 1.0};
+		{0.00, 0.0, 0.0, 1.0};
 
 const std::array<double, 4>  SDFViz::canonicalNegativeInterestVoxelColor = {0.690, 0.878, 0.902, 1.0};
 const std::array<double, 4>  SDFViz::canonicalPositiveInterestVoxelColor = {0.000, 1.000, 1.000, 1.0};
@@ -148,7 +150,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 	sdfRenderer->AddActor(canonicalScenePipe.GetVoxelActor());
 	sdfRenderer->AddActor(canonicalScenePipe.GetInterestVoxelActor());
 	sdfRenderer->AddActor(canonicalScenePipe.GetHashBlockActor());
-	sdfRenderer->AddActor(canonicalScenePipe.GetSelectionVoxelActor());
+	topRenderer->AddActor(canonicalScenePipe.GetSelectionVoxelActor());
 	sdfRenderer->AddActor(liveScenePipe.GetVoxelActor());
 	sdfRenderer->AddActor(liveScenePipe.GetHashBlockActor());
 	topRenderer->AddActor(highlightVisualizer.GetHighlightActor());

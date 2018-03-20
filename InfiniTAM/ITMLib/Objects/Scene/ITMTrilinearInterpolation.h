@@ -21,6 +21,22 @@
 
 
 //sdf and color + knownVoxelHit + smart weights
+/**
+ * \brief Trilinearly interpolates the SDF value and color in the given voxel grid at the provided 3D coordinate
+ * @details Computes cumulative interpolation weight for voxels that are not marked as VOXEL_UNKNOWN,
+ * only takes the "known" voxels into account
+ * \tparam TVoxel
+ * \tparam TCache
+ * \param voxelData [in] Array of voxels in memory
+ * \param voxelHash [in] Indexing structure, containing voxel hash block entries
+ * \param point 3D [in] location at which to interpolate
+ * \param cache [in,out] Cache to speed up hash indexing
+ * \param color [out] interpolated color value, as float vector
+ * \param struckKnownVoxels [out] whether or not known voxels with non-zero interpolation weights were sampled during the procedure
+ * \param struckNonTruncated [out] whether or not narrow band voxels with non-zero weights were sampled during the procedure
+ * \param cumulativeWeight [out] cumulative interpolation weight for all sampled voxels excluding those marked VOXEL_UNKNOWN
+ * \return interpolated sdf value
+ */
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float InterpolateTrilinearly_SdfColor_StruckNonTruncatedAndKnown_SmartWeights(
@@ -66,12 +82,13 @@ inline float InterpolateTrilinearly_SdfColor_StruckNonTruncatedAndKnown_SmartWei
 
 	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
 		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (positions[iNeighbor]), vmIndex, cache);
-		struckNonTruncated |= v.flags == ITMLib::VOXEL_NONTRUNCATED;
 		bool curKnown = v.flags != ITMLib::VOXEL_UNKNOWN;
-		struckKnownVoxels |= curKnown;
+		bool curNonTruncated = v.flags == ITMLib::VOXEL_NONTRUNCATED;
 		float weight = coefficients[iNeighbor] * curKnown;
 		sdf += weight * TVoxel::valueToFloat(v.sdf);
 		color += weight * TO_FLOAT3(v.clr);
+		struckKnownVoxels |= (bool) (weight * curKnown);
+		struckNonTruncated |= (bool) (weight * curNonTruncated);
 		cumulativeWeight += weight;
 	}
 
@@ -122,11 +139,12 @@ inline float InterpolateTrilinearly_Sdf_StruckNonTruncatedAndKnown_SmartWeights(
 
 	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
 		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (positions[iNeighbor]), vmIndex, cache);
-		struckNonTruncated |= v.flags == ITMLib::VOXEL_NONTRUNCATED;
 		bool curKnown = v.flags != ITMLib::VOXEL_UNKNOWN;
-		struckKnownVoxels |= curKnown;
+		bool curNonTruncated = v.flags == ITMLib::VOXEL_NONTRUNCATED;
 		float weight = coefficients[iNeighbor] * curKnown;
 		sdf += weight * TVoxel::valueToFloat(v.sdf);
+		struckKnownVoxels |= (bool) (weight * curKnown);
+		struckNonTruncated |= (bool) (weight * curNonTruncated);
 		cumulativeWeight += weight;
 	}
 

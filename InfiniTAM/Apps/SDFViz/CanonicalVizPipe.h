@@ -61,6 +61,10 @@ protected:
 	vtkSmartPointer<vtkPoints> initialNonInterestPoints;
 	vtkSmartPointer<vtkPoints> initialInterestPoints;
 private:
+	// =============== MEMBER FUNCTIONS ================================================================================
+	void PrintVoxelInfromation(vtkIdType pointId);
+
+	// =============== MEMBER VARIABLES ================================================================================
 	//frame of the warp
 	int frameIx;
 

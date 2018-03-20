@@ -198,9 +198,9 @@ void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSDFColorLookupTable(vtkSmartPointer<v
                                                                const double* negativeNonTruncatedColor,
                                                                const double* negativeTruncatedColor,
                                                                const double* unknownColor) {
-	table->SetTableRange(0.0, 6.0);
-	table->SetNumberOfTableValues(6);
-	table->SetNumberOfColors(6);
+	table->SetTableRange(0.0, static_cast<double>(COLOR_INDEX_COUNT));
+	table->SetNumberOfTableValues(COLOR_INDEX_COUNT);
+	table->SetNumberOfColors(COLOR_INDEX_COUNT);
 	table->SetTableValue(POSITIVE_TRUNCATED_SDF_COLOR_INDEX, positiveTruncatedColor);
 	table->SetTableValue(POSITIVE_NON_TRUNCATED_SDF_COLOR_INDEX, positiveNonTruncatedColor);
 	table->SetTableValue(NEGATIVE_NON_TRUNCATED_SDF_COLOR_INDEX, negativeNonTruncatedColor);

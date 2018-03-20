@@ -15,20 +15,23 @@
 //  ================================================================
 
 
-//VTK
-#include <vtkPolyDataMapper.h>
-#include <vtkProperty.h>
-
 //stdlib
 #include <utility>
 
+//VTK
+#include <vtkPolyDataMapper.h>
+#include <vtkProperty.h>
 #include <vtkFloatArray.h>
 #include <vtkPolyData.h>
 #include <vtkPointData.h>
 #include <vtkActor.h>
 #include <vtkGlyph3DMapper.h>
 #include <vtkLookupTable.h>
-#include <vtk-8.1/vtkSphereSource.h>
+#include <vtkSphereSource.h>
+
+//ITMLib
+#include "../../../InfiniTAM/ITMLib/Objects/Scene/ITMRepresentationAccess.h"
+#include "../../../InfiniTAM/ITMLib/Utils/ITMPrintHelpers.h"
 
 //local
 #include "CanonicalVizPipe.h"
@@ -363,26 +366,23 @@ void CanonicalVizPipe::ToggleScaleMode() {
 
 void CanonicalVizPipe::SetPointHighlight(vtkIdType pointId, bool highlightOn) {
 	auto scaleArray = dynamic_cast<vtkFloatArray*>(voxelPolydata->GetPointData()->GetArray(
-			scaleMode == VOXEL_SCALE_HIDE_UNKNOWNS ? scaleUnknownsHiddenAttributeName : scaleUnknownsVisibleAttributeName));
+			scaleMode == VOXEL_SCALE_HIDE_UNKNOWNS ? scaleUnknownsHiddenAttributeName
+			                                       : scaleUnknownsVisibleAttributeName));
 
 	auto points = voxelPolydata->GetPoints();
 	if (highlightOn) {
 		selectedVoxelActor->VisibilityOn();
-		float selectedVertexScale = scaleArray->GetValue(pointId);
+		float selectedVoxelScale = scaleArray->GetValue(pointId);
 
 
 		double point[3];
 		points->GetPoint(pointId, point);
-		selectedVoxelActor->SetScale(selectedVertexScale + 0.01);
+		selectedVoxelActor->SetScale(selectedVoxelScale + 0.01);
 		selectedVoxelActor->SetPosition(point);
-		double x = point[0];
-		double y = -point[1];
-		double z = -point[2];
-		std::cout << "Selected point at " << x << ", " << y << ", " << z << "." << std::endl;
+		PrintVoxelInfromation(pointId);
 	} else {
 		selectedVoxelActor->VisibilityOff();
 	}
-	voxelPolydata->Modified();
 
 }
 
@@ -394,9 +394,61 @@ void CanonicalVizPipe::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
 	this->selectedVoxelActor->SetMapper(selectionMapper);
 	selectedVoxelActor->VisibilityOff();
 	selectedVoxelActor->SetScale(1.0);
-	selectedVoxelActor->GetProperty()->SetColor(highlightVoxelColor[0],highlightVoxelColor[1],highlightVoxelColor[2]);
+	selectedVoxelActor->GetProperty()->SetColor(highlightVoxelColor[0], highlightVoxelColor[1], highlightVoxelColor[2]);
+	selectedVoxelActor->GetProperty()->SetOpacity(0.84);
 }
 
 vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetSelectionVoxelActor() {
 	return this->selectedVoxelActor;
+}
+
+/**
+ * \brief Prints information about the voxel with given point id in voxelPolydata. Currently, doesn't work for interest voxels.
+ * \param pointId id of the point in question.
+ */
+void CanonicalVizPipe::PrintVoxelInfromation(vtkIdType pointId) {
+
+	auto scaleArray = dynamic_cast<vtkFloatArray*>(voxelPolydata->GetPointData()->GetArray(
+			scaleMode == VOXEL_SCALE_HIDE_UNKNOWNS ? scaleUnknownsHiddenAttributeName
+			                                       : scaleUnknownsVisibleAttributeName));
+	auto colorIndexArray = dynamic_cast<vtkIntArray*>(voxelPolydata->GetPointData()->GetArray(colorAttributeName));
+
+	//retrieve current coordiante
+	auto currentPoints = voxelPolydata->GetPoints();
+	double currentPoint[3];
+	currentPoints->GetPoint(pointId, currentPoint);
+	double current_x = currentPoint[0];
+	double current_y = -currentPoint[1];
+	double current_z = -currentPoint[2];
+
+	//retrieve original coordinate before warp
+	auto& initialPoints = this->initialNonInterestPoints;
+	double initialPoint[3];
+	initialPoints->GetPoint(pointId, initialPoint);
+	auto initial_x = static_cast<int>(initialPoint[0]);
+	auto initial_y = static_cast<int>(-initialPoint[1]);
+	auto initial_z = static_cast<int>(-initialPoint[2]);
+
+	std::cout << yellow << "Selected voxel at " << current_x << ", " << current_y << ", " << current_z
+	          << ". Voxel information:" << reset << std::endl;
+	float selectedVoxelScale = scaleArray->GetValue(pointId);
+	auto selectedVoxelColorIndex = static_cast<VoxelColorIndex>(colorIndexArray->GetValue(pointId));
+
+	ITMVoxelCanonical* voxelBlocks = scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
+	bool foundPoint;
+	ITMVoxelCanonical voxel = readVoxel(voxelBlocks, canonicalHashTable, Vector3i(initial_x, initial_y, initial_z), foundPoint);
+	if (!foundPoint) {
+		std::cerr << "   Could not find the selected voxel in scene data! " __FILE__ ":" + std::to_string(__LINE__);
+		return;
+	}
+	float sdfValue = ITMVoxelCanonical::valueToFloat(voxel.sdf);
+	auto category = static_cast<VoxelFlags>(voxel.flags);
+	std::cout << "   Initial voxel position (before warp): " << initial_x << ", " << initial_y << ", " << initial_z
+	          << "." << std::endl;
+	std::cout << "   Voxel display scale: " << selectedVoxelScale << ", representing the SDF value of " << sdfValue
+	          << "." << std::endl;
+	std::cout << "   Voxel color index: " << VoxelColorIndexAsCString(selectedVoxelColorIndex)
+	          << ", representing the voxel category " << VoxelFlagsAsCString(category) << "." << std::endl;
+
 }
