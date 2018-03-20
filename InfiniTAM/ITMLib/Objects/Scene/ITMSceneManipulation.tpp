@@ -115,9 +115,19 @@ TVoxel ReadVoxel(ITMScene<TVoxel, TIndex>& scene, Vector3i at) {
 	return readVoxel(voxels, hashTable, at, vmIndex);
 }
 
-
+/**
+ * \brief Copies the slice (box-like window) specified by points extremum1 and extremum2 from the source scene into a
+ * destination scene. Clears the destination scene before copying.
+ * \tparam TVoxel type of voxel
+ * \tparam TIndex type of voxel index
+ * \param destination destination voxel grid (can be uninitialized)
+ * \param source source voxel grid
+ * \param extremum1
+ * \param extremum2
+ * \return true on success (destination scene contains the slice), false on failure (there are no allocated hash blocks
+ */
 template<class TVoxel, class TIndex>
-void CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, TIndex>* source,
+bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, TIndex>* source,
                         Vector3i extremum1, Vector3i extremum2) {
 
 	// prep destination scene
@@ -140,16 +150,28 @@ void CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, 
 
 	//temporary stuff that won't fit on the stack (possibly)
 	ORUtils::MemoryBlock<unsigned char>* entryAllocationTypes
-			= new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries,MEMORYDEVICE_CPU);
-	ORUtils::MemoryBlock<Vector3s>* blockCoords = new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries, MEMORYDEVICE_CPU);
+			= new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU);
+	ORUtils::MemoryBlock<Vector3s>* blockCoords = new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries,
+	                                                                                 MEMORYDEVICE_CPU);
 	uchar* entriesAllocType = entryAllocationTypes->GetData(MEMORYDEVICE_CPU);
 	Vector3s* allocationBlockCoords = blockCoords->GetData(MEMORYDEVICE_CPU);
 
-	auto isHashBlockInRange = [&](Vector3i hashBlockPositionVoxels) {
+	//@formatter:off
+	auto isHashBlockFullyInRange = [&](Vector3i hashBlockPositionVoxels) {
 		return hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 <= maxPoint.x && hashBlockPositionVoxels.x >= minPoint.x &&
 		       hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 <= maxPoint.y && hashBlockPositionVoxels.y >= minPoint.y &&
 		       hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 <= maxPoint.z && hashBlockPositionVoxels.z >= minPoint.z;
 	};
+
+	auto isHashBlockPartiallyInRange = [&](Vector3i hashBlockPositionVoxels) {
+		return ((hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 >= maxPoint.x && hashBlockPositionVoxels.x <= maxPoint.x)
+		       || (hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 >= minPoint.x && hashBlockPositionVoxels.x <= minPoint.x)) &&
+			   ((hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 >= maxPoint.y && hashBlockPositionVoxels.y <= maxPoint.y)
+			   || (hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 >= minPoint.y && hashBlockPositionVoxels.y <= minPoint.y)) &&
+			   ((hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 >= maxPoint.z && hashBlockPositionVoxels.z <= maxPoint.z)
+		       || (hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 >= minPoint.z && hashBlockPositionVoxels.z <= minPoint.z));
+	};
+	//@formatter:on
 
 	TVoxel* sourceVoxels = source->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* sourceHashTable = source->index.GetEntries();
@@ -157,16 +179,19 @@ void CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, 
 	ITMHashEntry* destinationHashTable = destination->index.GetEntries();
 	TVoxel* destinationVoxels = destination->localVBA.GetVoxelBlocks();
 
+
 	for (int hash = 0; hash < noTotalEntries; hash++) {
 		const ITMHashEntry& currentOriginalHashEntry = sourceHashTable[hash];
 		if (currentOriginalHashEntry.ptr < 0) continue;
 		Vector3i originalHashBlockPosition = currentOriginalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-		if (!isHashBlockInRange(originalHashBlockPosition)) continue;
-		MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, hash,
-		                                  currentOriginalHashEntry.pos,destinationHashTable);
+		if (isHashBlockFullyInRange(originalHashBlockPosition) ||
+		    isHashBlockPartiallyInRange(originalHashBlockPosition)) {
+			MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, hash,
+			                                  currentOriginalHashEntry.pos, destinationHashTable);
+		}
 	}
 
-	AllocateHashEntriesUsingLists_CPU(destination, entriesAllocType, allocationBlockCoords,ITMLib::STABLE);
+	AllocateHashEntriesUsingLists_CPU(destination, entriesAllocType, allocationBlockCoords, ITMLib::STABLE);
 
 	delete blockCoords;
 	delete entryAllocationTypes;
@@ -177,14 +202,28 @@ void CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, 
 
 		//position of the current entry in 3D space (in voxel units)
 		Vector3i originalHashBlockPosition = currentOriginalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-		if (!isHashBlockInRange(originalHashBlockPosition)) continue;
-
 		TVoxel* localSourceVoxelBlock = &(sourceVoxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 		TVoxel* localDestinationVoxelBlock = &(sourceVoxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-		memcpy(localDestinationVoxelBlock,localSourceVoxelBlock,sizeof(TVoxel)*SDF_BLOCK_SIZE3);
+		if (isHashBlockFullyInRange(originalHashBlockPosition)){
+			memcpy(localDestinationVoxelBlock, localSourceVoxelBlock, sizeof(TVoxel) * SDF_BLOCK_SIZE3);
+		}else if(isHashBlockPartiallyInRange(originalHashBlockPosition)){
+			int zRangeStart = std::max(0, minPoint.z - originalHashBlockPosition.z);
+			int zRangeEnd = std::min(SDF_BLOCK_SIZE, maxPoint.z - originalHashBlockPosition.z);
+			int yRangeStart = std::max(0, minPoint.y - originalHashBlockPosition.y);
+			int yRangeEnd = std::min(SDF_BLOCK_SIZE, maxPoint.y - originalHashBlockPosition.y);
+			int xRangeStart = std::max(0, minPoint.x - originalHashBlockPosition.x);
+			int xRangeEnd = std::min(SDF_BLOCK_SIZE, maxPoint.x - originalHashBlockPosition.x);
+			for (int z = zRangeStart; z < zRangeEnd; z++) {
+				for (int y = yRangeStart; y < yRangeEnd; y++) {
+					for (int x = xRangeStart; x < xRangeEnd; x++) {
+						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						memcpy(&localDestinationVoxelBlock[locId], &localSourceVoxelBlock[locId], sizeof(TVoxel));
+					}
+				}
+			}
+		}
 
 	}
-
 };
 
 }
