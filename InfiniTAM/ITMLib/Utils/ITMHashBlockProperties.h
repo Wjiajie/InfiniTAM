@@ -25,7 +25,7 @@ enum HashBlockState : unsigned char {
 	STABLE = 0,
 	NEEDS_ALLOC_IN_ORDERED_LIST = 1,
 	NEEDS_ALLOC_IN_EXCESS_LIST = 2,
-	BOUNDARY_STATE = 3,
+	BOUNDARY = 3,
 };
 enum HashBlockPtrFlag : int {
 	ENTRY_REMOVED = -1,

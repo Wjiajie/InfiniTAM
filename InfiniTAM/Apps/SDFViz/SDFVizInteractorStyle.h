@@ -42,6 +42,7 @@ public:
 private:
 	//============================= MEMBER VARIABLES ===================================================================
 	bool selectionMode = false;
+	bool keySymbolPrinting = false;
 	vtkSmartPointer<vtkPointPicker> pointPicker;
 	vtkIdType selectedPointId = -1;
 	//============================= MEMBER FUNCTIONS ===================================================================

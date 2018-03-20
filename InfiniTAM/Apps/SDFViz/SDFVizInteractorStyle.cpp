@@ -128,11 +128,16 @@ void SDFVizInteractorStyle::OnKeyPress() {
 		} else if (key == "s"){
 			this->selectionMode = !this->selectionMode;
 			std::cout << "Selection mode " << (this->selectionMode ? "ON" : "OFF") << std::endl;
+		} else if (key == "grave"){
+			this->keySymbolPrinting = !this->keySymbolPrinting;
+			std::cout << "Key symbol & code printing: " << (keySymbolPrinting ? "ON" : "OFF");
 		}
-
 	}
-	std::cout << "Key symbol: " << key << std::endl;
-	std::cout << "Key code: " << static_cast<int>(rwi->GetKeyCode()) << std::endl;
+	if(keySymbolPrinting){
+		std::cout << "Key symbol: " << key << std::endl;
+		std::cout << "Key code: " << static_cast<int>(rwi->GetKeyCode()) << std::endl;
+	}
+
 
 	// Forward events
 	vtkInteractorStyleTrackballCamera::OnKeyPress();
@@ -146,11 +151,8 @@ void SDFVizInteractorStyle::OnLeftButtonUp() {
 		                       this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
 
 		vtkIdType newSelectedPointId = this->pointPicker->GetPointId();
-		vtkActor* selectedActor =this->pointPicker->GetActor();
+		vtkActor* selectedActor = this->pointPicker->GetActor();
 		if(selectedActor == parent->canonicalScenePipe.GetVoxelActor() && newSelectedPointId >= 0) {
-			if(selectedPointId >= -1){
-				//parent->canonicalScenePipe.SetPointHighlight(selectedPointId, false);
-			}
 			selectedPointId = newSelectedPointId;
 			parent->canonicalScenePipe.SetPointHighlight(selectedPointId, true);
 			parent->renderWindow->Render();
@@ -163,6 +165,5 @@ SDFVizInteractorStyle::SDFVizInteractorStyle() :
 		selectionMode(false),
 		pointPicker(vtkSmartPointer<vtkPointPicker>::New()),
 		selectedPointId(-1){
-	//pointPicker->SetTolerance(0.0005);
 }
 

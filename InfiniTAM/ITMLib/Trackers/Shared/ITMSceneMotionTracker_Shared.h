@@ -318,55 +318,6 @@ inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxe
 
 };
 
-//======================================================================================================================
-//=========================================== HELPER ROUTINES FOR SCENE OPTIMIZATION PREP ==============================
-//======================================================================================================================
-//TODO: refactor so this just simply returns the resulting allocation type (and updates hashIdx) -Greg (GitHub: Algomorph)
-/**
- * \brief Determines whether the hash block at the specified block position needs it's voxels to be allocated, as well
- * as whether they should be allocated in the excess list or the ordered list of the hash table.
- * If any of these are true, marks the corresponding entry in \param entryAllocationTypes
- * \param[in,out] entryAllocationTypes  array where to set the allocation type at final hashIdx index
- * \param[in,out] hashBlockCoordinates  array block coordinates for the new hash blocks at final hashIdx index
- * \param[in,out] hashIdx  takes in original index assuming coords, i.e. \refitem hashIndex(\param desiredHashBlockPosition),
- * returns final index of the hash block to be allocated (may be updated based on hash closed chaining)
- * \param[in] desiredHashBlockPosition  position of the hash block to check / allocate
- * \param[in] hashTable  hash table with existing blocks
- * \return true if the block needs allocation, false otherwise
- */
-_CPU_AND_GPU_CODE_
-inline bool MarkAsNeedingAllocationIfNotFound(DEVICEPTR(uchar)* entryAllocationTypes,
-                                              DEVICEPTR(Vector3s)* hashBlockCoordinates,
-                                              THREADPTR(int)& hashIdx,
-                                              const CONSTPTR(Vector3s)& desiredHashBlockPosition,
-                                              const CONSTPTR(ITMHashEntry)* hashTable) {
-
-	ITMHashEntry hashEntry = hashTable[hashIdx];
-	//check if hash table contains entry
-
-	if (!(IS_EQUAL3(hashEntry.pos, desiredHashBlockPosition) && hashEntry.ptr >= -1)) {
-		if (hashEntry.ptr >= -1) {
-			//search excess list only if there is no room in ordered part
-			while (hashEntry.offset >= 1) {
-				hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
-				hashEntry = hashTable[hashIdx];
-
-				if (IS_EQUAL3(hashEntry.pos, desiredHashBlockPosition) && hashEntry.ptr >= -1) {
-					return false;
-				}
-			}
-			entryAllocationTypes[hashIdx] = ITMLib::NEEDS_ALLOC_IN_EXCESS_LIST;
-			hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
-			return true;
-		}
-		entryAllocationTypes[hashIdx] = ITMLib::NEEDS_ALLOC_IN_ORDERED_LIST;
-		hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
-		return true;
-	}
-	// already have hash block, no allocation needed
-	return false;
-
-};
 
 
 

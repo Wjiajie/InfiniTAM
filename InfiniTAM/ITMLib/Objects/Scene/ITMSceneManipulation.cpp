@@ -188,6 +188,6 @@ FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, 
 		hash = SDF_BUCKET_NUM + hashEntry.offset - 1;
 	}
 	return -1;
-};
+}
 
 }//namespace ITMLib

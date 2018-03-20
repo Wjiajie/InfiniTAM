@@ -156,49 +156,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 	}
 	std::cout << "Total number of canonical hash blocks to be allocated before optimization: "
 	          << countVoxelHashBlocksToAllocate << " out of " << entryCount << std::endl;
-
-	int lastFreeVoxelBlockId = canonicalScene->localVBA.lastFreeBlockId;
-	int lastFreeExcessListId = canonicalScene->index.GetLastFreeExcessListId();
-	int* voxelAllocationList = canonicalScene->localVBA.GetAllocationList();
-	int* excessAllocationList = canonicalScene->index.GetExcessAllocationList();
-	for (int iTargetHashBlock = 0; iTargetHashBlock < entryCount; iTargetHashBlock++) {
-		unsigned char entryAllocType = entriesAllocType[iTargetHashBlock];
-		switch (entryAllocType) {
-			case ITMLib::NEEDS_ALLOC_IN_ORDERED_LIST:
-
-				if (lastFreeVoxelBlockId >= 0) //there is room in the voxel block array
-				{
-					ITMHashEntry hashEntry;
-					hashEntry.pos = allocationBlockCoords[iTargetHashBlock];
-					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
-					hashEntry.offset = 0;
-					canonicalHashTable[iTargetHashBlock] = hashEntry;
-					entriesAllocType[iTargetHashBlock] = ITMLib::BOUNDARY_STATE;
-					lastFreeVoxelBlockId--;
-				}
-
-				break;
-			case NEEDS_ALLOC_IN_EXCESS_LIST:
-
-				if (lastFreeVoxelBlockId >= 0 &&
-				    lastFreeExcessListId >= 0) //there is room in the voxel block array and excess list
-				{
-					ITMHashEntry hashEntry;
-					hashEntry.pos = allocationBlockCoords[iTargetHashBlock];
-					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
-					hashEntry.offset = 0;
-					int exlOffset = excessAllocationList[lastFreeExcessListId];
-					canonicalHashTable[iTargetHashBlock].offset = exlOffset + 1; //connect to child
-					canonicalHashTable[SDF_BUCKET_NUM + exlOffset] = hashEntry; //add child to the excess list
-					entriesAllocType[iTargetHashBlock] = ITMLib::BOUNDARY_STATE;
-					lastFreeVoxelBlockId--;
-					lastFreeExcessListId--;
-				}
-				break;
-		}
-	}
-	canonicalScene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
-	canonicalScene->index.SetLastFreeExcessListId(lastFreeExcessListId);
+	AllocateHashEntriesUsingLists_CPU(canonicalScene, entriesAllocType, allocationBlockCoords,ITMLib::BOUNDARY);
 }
 
 // ========================================== END CANONICAL HASH BLOCK ALLOCATION ======================================
@@ -442,53 +400,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarp(
 	WarpHashMarkerFunctor<TVoxelCanonical, TVoxelLive, TIndex> hashMarkerFunctor(liveScene, allocationBlockCoords,
 	                                                                             warpedEntryAllocationTypes);
 	VoxelPositionTraversal_CPU(*canonicalScene, hashMarkerFunctor);
-
-	// Allocate the marked hash entries
-
-	int lastFreeVoxelBlockId = liveScene->localVBA.lastFreeBlockId;
-	int lastFreeExcessListId = liveScene->index.GetLastFreeExcessListId();
-	int* voxelAllocationList = liveScene->localVBA.GetAllocationList();
-	int* excessAllocationList = liveScene->index.GetExcessAllocationList();
-	ITMHashEntry* liveHashEntries = liveScene->index.GetEntries();
-
-	for (int iTargetHashBlock = 0; iTargetHashBlock < entryCount; iTargetHashBlock++) {
-		unsigned char entryAllocType = warpedEntryAllocationTypes[iTargetHashBlock];
-		switch (entryAllocType) {
-			case ITMLib::NEEDS_ALLOC_IN_ORDERED_LIST:
-
-				if (lastFreeVoxelBlockId >= 0) //there is room in the voxel block array
-				{
-					ITMHashEntry hashEntry;
-					hashEntry.pos = allocationBlockCoords[iTargetHashBlock];
-					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
-					hashEntry.offset = 0;
-					liveHashEntries[iTargetHashBlock] = hashEntry;
-					warpedEntryAllocationTypes[iTargetHashBlock] = ITMLib::BOUNDARY_STATE;
-					lastFreeVoxelBlockId--;
-				}
-
-				break;
-			case NEEDS_ALLOC_IN_EXCESS_LIST:
-
-				if (lastFreeVoxelBlockId >= 0 &&
-				    lastFreeExcessListId >= 0) //there is room in the voxel block array and excess list
-				{
-					ITMHashEntry hashEntry;
-					hashEntry.pos = allocationBlockCoords[iTargetHashBlock];
-					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
-					hashEntry.offset = 0;
-					int exlOffset = excessAllocationList[lastFreeExcessListId];
-					liveHashEntries[iTargetHashBlock].offset = exlOffset + 1; //connect to child
-					liveHashEntries[SDF_BUCKET_NUM + exlOffset] = hashEntry; //add child to the excess list
-					warpedEntryAllocationTypes[iTargetHashBlock] = ITMLib::BOUNDARY_STATE;
-					lastFreeVoxelBlockId--;
-					lastFreeExcessListId--;
-				}
-				break;
-		}
-	}
-	canonicalScene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
-	canonicalScene->index.SetLastFreeExcessListId(lastFreeExcessListId);
+	AllocateHashEntriesUsingLists_CPU(liveScene, warpedEntryAllocationTypes, allocationBlockCoords,ITMLib::STABLE);
 
 	WarpSdfDistributionFunctor<TVoxelCanonical, TVoxelLive, TIndex> distributionFunctor(liveScene);
 	VoxelPositionTraversal_CPU(*canonicalScene, distributionFunctor);

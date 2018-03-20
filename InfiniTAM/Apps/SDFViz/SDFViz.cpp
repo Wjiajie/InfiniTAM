@@ -67,10 +67,8 @@ const std::array<double, 4>  SDFViz::canonicalNonTruncatedNegativeVoxelColor =
 		{0.1764705882, 0.4980392157, 0.8196078431, 1.0};
 const std::array<double, 4> SDFViz::canonicalTrunctedNegativeVoxelColor =
 		{0.1058823529, 0.2980392157, 0.4901960784, 1.0};
-//const std::array<double, 4> SDFViz::canonicalUnknownVoxelColor =
-//		{0.0352941176, 0.0980392157, 0.1607843137, 1.0};
 const std::array<double, 4> SDFViz::canonicalUnknownVoxelColor =
-		{0.00, 0.0, 0.0, 1.0};
+		{0.0352941176, 0.0980392157, 0.1607843137, 1.0};
 
 const std::array<double, 4>  SDFViz::canonicalNegativeInterestVoxelColor = {0.690, 0.878, 0.902, 1.0};
 const std::array<double, 4>  SDFViz::canonicalPositiveInterestVoxelColor = {0.000, 1.000, 1.000, 1.0};
@@ -87,10 +85,8 @@ const std::array<double, 4>  SDFViz::liveNonTruncatedNegativeVoxelColor =
 		{0.1921568627, 0.8039215686, 0.3450980392, 1.0};
 const std::array<double, 4>  SDFViz::liveTruncatedNegativeVoxelColor =
 		{0.1137254902, 0.4823529412, 0.2078431373, 1.0};
-//const std::array<double, 4>  SDFViz::liveUnknownVoxelColor =
-//		{0.0352941176, 0.1607843137, 0.0666666667, 1.0};
 const std::array<double, 4>  SDFViz::liveUnknownVoxelColor =
-		{0., 0., 0., 1.0}; //_DEBUG
+		{0.0352941176, 0.1607843137, 0.0666666667, 1.0};
 
 const std::array<double, 3>  SDFViz::liveHashBlockEdgeColor = {0.537, 0.819, 0.631};
 //** private **
