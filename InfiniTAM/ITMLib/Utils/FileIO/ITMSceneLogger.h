@@ -20,9 +20,9 @@
 
 
 //local
-#include "../Objects/Scene/ITMScene.h"
-#include "ITM3DNestedMapOfArrays.h"
-#include "ITMNeighborVoxelIterationInfo.h"
+#include "../../Objects/Scene/ITMScene.h"
+#include "../ITM3DNestedMapOfArrays.h"
+#include "../ITMNeighborVoxelIterationInfo.h"
 
 //TODO: eventually replace boost::filesystem with stdlib filesystem when that is no longer experimental -Greg (GitHub: Algomorph)
 //TODO: add HAVE_BOOST guards / CMake optional boost support -Greg (GitHub: Algomorph)
@@ -59,6 +59,7 @@ class ITMSceneLogger {
 
 public:
 // === STATIC CONSTANTS ===
+	static const std::string warpUpdatesFilename;
 	static const std::string binaryFileExtension;
 	static const std::string textFileExtension;
 
@@ -123,6 +124,10 @@ public:
 	bool LoadScenes();
 	bool SaveScenesCompact();
 	bool LoadScenesCompact();
+	bool SaveCanonicalSceneSlice(const Vector3i& extremum1,
+		                             const Vector3i& extremum2,
+		                             unsigned int frameIndex);
+
 
 	//*** information getters
 	std::string GetPath() const;
@@ -177,8 +182,17 @@ public:
 
 private:
 
+//========= CONSTANTS =========================
 	static const std::string highlightFilterInfoFilename;
 	static const std::string minRecurrenceHighlightFilterName;
+//========= MEMBER FUNCTIONS ==================
+	bool CheckDirectory();
+	void SaveWarpSlice(const Vector3i& minPoint, const Vector3i& maxPoint,
+		                   unsigned int frameIndex);
+	std::string GenerateSliceStringIdentifier(const Vector3i& minPoint, const Vector3i& maxPoint);
+	std::string GenerateSliceSceneFilename_UpToPostfix(const Vector3i& minPoint, const Vector3i& maxPoint);
+	std::string GenerateSliceSceneFilename_Full(const Vector3i& minPoint, const Vector3i& maxPoint);
+	std::string GenerateSliceWarpFilename(const Vector3i& minPoint, const Vector3i& maxPoint);
 //========= MEMBER VARIABLES ==================
 
 // *** root folder
@@ -214,10 +228,6 @@ private:
 
 // *** data manipulation information ***
 	int minHighlightRecurrenceCount = 0;
-
-//======== MEMBER FUNCTIONS =====================
-	bool CheckDirectory();
-
 };
 
 

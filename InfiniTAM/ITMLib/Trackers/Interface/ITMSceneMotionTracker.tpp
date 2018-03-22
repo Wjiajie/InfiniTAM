@@ -27,7 +27,7 @@
 //local
 #include "ITMSceneMotionTracker.h"
 #include "../../Objects/Scene/ITMSceneManipulation.h"
-#include "../../Utils/ITMSceneLogger.h"
+#include "../../Utils/FileIO/ITMSceneLogger.h"
 #include "../../Utils/ITMPrintHelpers.h"
 
 

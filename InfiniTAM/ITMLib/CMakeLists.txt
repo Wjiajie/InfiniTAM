@@ -489,10 +489,11 @@ Trackers/Shared/ITMSceneMotionTracker_Debug.h
 
 ##
 SET(ITMLIB_UTILS_SOURCES
+Utils/FileIO/ITMSceneLogger.tpp
+Utils/FileIO/ITMSceneLogger_InterestRegionInfo.tpp
+Utils/FileIO/ITMSceneLogger_SceneSlice.tpp
 Utils/ITMLibSettings.cpp
 Utils/ITMSceneSliceRasterizer.tpp
-Utils/ITMSceneLogger.tpp
-Utils/ITMSceneLogger_InterestRegionInfo.tpp
 Utils/ITM3DNestedMapOfArrays.tpp
 Utils/ITM3DNestedMap.tpp
 Utils/ITMSceneStatisticsCalculator.tpp
@@ -500,6 +501,7 @@ Utils/ITMNeighborVoxelIterationInfo.cpp
 )
 
 SET(ITMLIB_UTILS_HEADERS
+Utils/FileIO/ITMSceneLogger.h
 Utils/ITMCUDAUtils.h
 Utils/ITMImageTypes.h
 Utils/ITMHashBlockProperties.h
@@ -512,7 +514,6 @@ Utils/ITMProjectionUtils.h
 Utils/ITMSceneParams.h
 Utils/ITMSceneSliceRasterizer.h
 Utils/ITMSurfelSceneParams.h
-Utils/ITMSceneLogger.h
 Utils/ITM3DNestedMapOfArrays.h
 Utils/ITM3DNestedMap.h
 Utils/ITMSceneStatisticsCalculator.h

@@ -181,8 +181,8 @@ inline bool MarkAsNeedingAllocationIfNotFound(DEVICEPTR(uchar)* entryAllocationT
 
 template<typename TVoxel, typename TIndex>
 inline
-void AllocateHashEntriesUsingLists_CPU( ITMScene<TVoxel,TIndex>* scene, uchar* entryAllocationTypes,
-                                        Vector3s* allocationBlockCoordinates, const HashBlockState& newEntryState) {
+void AllocateHashEntriesUsingLists_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* entryAllocationTypes,
+                                       Vector3s* allocationBlockCoordinates, const HashBlockState& newEntryState) {
 	int entryCount = TIndex::noTotalEntries;
 	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
 	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
@@ -232,6 +232,54 @@ void AllocateHashEntriesUsingLists_CPU( ITMScene<TVoxel,TIndex>* scene, uchar* e
 	scene->index.SetLastFreeExcessListId(lastFreeExcessListId);
 }
 
+//================================================ HELPER RANGE COMPUTATION / CHECK ROUTINES ===========================
+inline
+void MinMaxFromExtrema(Vector3i& minPoint, Vector3i& maxPoint, const Vector3i& extremum1, const Vector3i& extremum2) {
+	// ** set min/max **
+	for (int iValue = 0; iValue < 3; iValue++) {
+		if (extremum1.values[iValue] > extremum2.values[iValue]) {
+			minPoint.values[iValue] = extremum2.values[iValue];
+			maxPoint.values[iValue] = extremum1.values[iValue];
+		} else {
+			minPoint.values[iValue] = extremum1.values[iValue];
+			maxPoint.values[iValue] = extremum2.values[iValue];
+		}
+	}
+}
+
+inline
+bool
+IsHashBlockFullyInRange(const Vector3i& hashBlockPositionVoxels, const Vector3i& minPoint, const Vector3i& maxPoint) {
+	return hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 <= maxPoint.x && hashBlockPositionVoxels.x >= minPoint.x &&
+	       hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 <= maxPoint.y && hashBlockPositionVoxels.y >= minPoint.y &&
+	       hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 <= maxPoint.z && hashBlockPositionVoxels.z >= minPoint.z;
+}
+
+inline
+bool IsHashBlockPartiallyInRange(const Vector3i& hashBlockPositionVoxels, const Vector3i& minPoint,
+                                 const Vector3i& maxPoint) {
+	//@formatter:off
+	return ((hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 >= maxPoint.x && hashBlockPositionVoxels.x <= maxPoint.x)
+	     || (hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 >= minPoint.x && hashBlockPositionVoxels.x <= minPoint.x)) &&
+	       ((hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 >= maxPoint.y && hashBlockPositionVoxels.y <= maxPoint.y)
+	     || (hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 >= minPoint.y && hashBlockPositionVoxels.y <= minPoint.y)) &&
+	       ((hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 >= maxPoint.z && hashBlockPositionVoxels.z <= maxPoint.z)
+	     || (hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 >= minPoint.z && hashBlockPositionVoxels.z <= minPoint.z));
+	//@formatter:on
+}
+
+inline
+bool
+ComputeCopyRanges(int& xRangeStart, int& xRangeEnd, int& yRangeStart, int& yRangeEnd, int& zRangeStart, int& zRangeEnd,
+                  const Vector3i& hashBlockPositionVoxels, const Vector3i& minPoint, const Vector3i& maxPoint) {
+	zRangeStart = std::max(0, minPoint.z - hashBlockPositionVoxels.z);
+	zRangeEnd = std::min(SDF_BLOCK_SIZE, maxPoint.z - hashBlockPositionVoxels.z + 1);
+	yRangeStart = std::max(0, minPoint.y - hashBlockPositionVoxels.y);
+	yRangeEnd = std::min(SDF_BLOCK_SIZE, maxPoint.y - hashBlockPositionVoxels.y + 1);
+	xRangeStart = std::max(0, minPoint.x - hashBlockPositionVoxels.x);
+	xRangeEnd = std::min(SDF_BLOCK_SIZE, maxPoint.x - hashBlockPositionVoxels.x + 1);
+}
+
 //======================================================================================================================
 bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition,
                            ITMHashEntry* hashTable,
@@ -257,8 +305,8 @@ void CopySceneWithOffset_CPU(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& destina
                              Vector3i offset);
 
 template<class TVoxel, class TIndex>
-void CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>& destination,
-                        ITMScene<TVoxel, TIndex>& source, Vector3i extremum1, Vector3i extremum2);
+bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, TIndex>* source,
+                        Vector3i minPoint, Vector3i maxPoint);
 
 
 template<class TVoxel, class TIndex>

@@ -2,6 +2,9 @@
 
 #include <ostream>
 #include <tuple>
+#include <iomanip>
+#include <sstream>
+
 namespace ITMLib {
 template<typename Type, unsigned N, unsigned Last>
 struct tuple_printer {
@@ -27,6 +30,12 @@ std::ostream& operator<<(std::ostream& out, const std::tuple<Types...>& value) {
 	tuple_printer<std::tuple<Types...>, 0, sizeof...(Types) - 1>::print(out, value);
 	out << ")";
 	return out;
+}
+
+std::string padded_to_string(int i, int fill_width){
+	std::stringstream stringstream;
+	stringstream << std::setfill('0') << std::setw(fill_width) << i;
+	return stringstream.str();
 }
 
 const std::string red("\033[0;31m");

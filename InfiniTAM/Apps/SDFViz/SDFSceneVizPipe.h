@@ -21,7 +21,7 @@
 
 //ITMLib
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
-#include "../../ITMLib/Utils/ITMSceneLogger.h"
+#include "../../ITMLib/Utils/FileIO/ITMSceneLogger.h"
 #include "VizPipeShared.h"
 
 class vtkPoints;

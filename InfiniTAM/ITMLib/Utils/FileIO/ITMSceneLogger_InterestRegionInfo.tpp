@@ -444,3 +444,5 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferPreviousInterest
 	}
 	return true;
 }
+
+

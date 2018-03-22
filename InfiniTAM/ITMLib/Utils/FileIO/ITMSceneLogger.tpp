@@ -21,13 +21,17 @@
 #include <boost/filesystem.hpp>
 
 //local
-#include "../Objects/Scene/ITMRepresentationAccess.h"
+#include "../../Objects/Scene/ITMRepresentationAccess.h"
 #include "ITMSceneLogger_InterestRegionInfo.tpp"
+#include "ITMSceneLogger_SceneSlice.tpp"
 
 namespace fs = boost::filesystem;
 
 using namespace ITMLib;
 
+//========================================== CONSTANT DEFINITIONS ======================================================
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::warpUpdatesFilename = "warp_updates";
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::binaryFileExtension = ".dat";
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -36,6 +40,8 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::highlightFilterInfoFilename = "highlight_filter_info.txt";
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::minRecurrenceHighlightFilterName = "min_reccurence_count_filter:";
+
+//========================================== CONSTRUCTORS & DESTRUCTORS ================================================
 
 /**
  * \brief Constructor: build a logger with the given path and scenes.
@@ -58,6 +64,15 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 		SetPath(path);
 	}
 }
+
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneLogger() {
+	this->StopLoadingWarpState();
+	delete[] warpBuffer;
+}
+
+//============================================= SCENE SAVING / LOADING =================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes() {
@@ -137,6 +152,8 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenesCompact() {
 	return true;
 }
 
+
+//====================================== WARP STATE ONLINE SAVING / LOADING / BUFFERING ================================
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarpState(unsigned int frameIx) {
 	if (!fs::is_directory(path)) {
@@ -242,7 +259,14 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StopLoadingWarpState()
 
 }
 
-
+/**
+ * \brief Transfers the warp state from the warp file to the scene, imitating the .warp_t and .warp_t_update fields after
+ * the current iteration.
+ * \tparam TVoxelCanonical
+ * \tparam TVoxelLive
+ * \tparam TIndex
+ * \return
+ */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadCurrentWarpState() {
 	if (!warpIFStream) {
@@ -371,11 +395,6 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferPreviousWarpStat
 	return true;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneLogger() {
-	this->StopLoadingWarpState();
-	delete[] warpBuffer;
-}
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::CopyWarpBuffer(float* warpDestination,
@@ -629,11 +648,9 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetPath(std::string pa
 	}
 	this->canonicalPath = this->path / "canonical";
 	this->livePath = this->path / "live";
-	this->warpUpdatesPath = this->path / ("warp_updates" + binaryFileExtension);
+	this->warpUpdatesPath = this->path / (warpUpdatesFilename + binaryFileExtension);
 
 	this->highlightsBinaryPath = this->path / ("highlights" + binaryFileExtension);
 	this->highlightsTextPath = this->path / ("highlights" + textFileExtension);
 }
-
-
 

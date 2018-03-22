@@ -122,31 +122,19 @@ TVoxel ReadVoxel(ITMScene<TVoxel, TIndex>& scene, Vector3i at) {
  * \tparam TIndex type of voxel index
  * \param destination destination voxel grid (can be uninitialized)
  * \param source source voxel grid
- * \param extremum1
- * \param extremum2
+ * \param minPoint minimum point in the desired slice (inclusive), i.e. minimum x, y, and z coordinates
+ * \param maxPoint maximum point in the desired slice (inclusive), i.e. maximum x, y, and z coordinates
  * \return true on success (destination scene contains the slice), false on failure (there are no allocated hash blocks
  */
 template<class TVoxel, class TIndex>
 bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, TIndex>* source,
-                        Vector3i extremum1, Vector3i extremum2) {
+                        Vector3i minPoint, Vector3i maxPoint) {
 
 	// prep destination scene
 	ITMSceneReconstructionEngine<TVoxel, TIndex>* reconstructionEngine =
 			ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel, TIndex>(
 					ITMLibSettings::DEVICE_CPU);
 	reconstructionEngine->ResetScene(destination);
-
-	// ** set min/max **
-	Vector3i minPoint, maxPoint;
-	for (int iValue = 0; iValue < 3; iValue++) {
-		if (extremum1.values[iValue] > extremum2.values[iValue]) {
-			minPoint.values[iValue] = extremum2.values[iValue];
-			maxPoint.values[iValue] = extremum1.values[iValue];
-		} else {
-			minPoint.values[iValue] = extremum1.values[iValue];
-			maxPoint.values[iValue] = extremum2.values[iValue];
-		}
-	}
 
 	//temporary stuff that won't fit on the stack (possibly)
 	ORUtils::MemoryBlock<unsigned char>* entryAllocationTypes
@@ -156,36 +144,19 @@ bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, 
 	uchar* entriesAllocType = entryAllocationTypes->GetData(MEMORYDEVICE_CPU);
 	Vector3s* allocationBlockCoords = blockCoords->GetData(MEMORYDEVICE_CPU);
 
-	//@formatter:off
-	auto isHashBlockFullyInRange = [&](Vector3i hashBlockPositionVoxels) {
-		return hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 <= maxPoint.x && hashBlockPositionVoxels.x >= minPoint.x &&
-		       hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 <= maxPoint.y && hashBlockPositionVoxels.y >= minPoint.y &&
-		       hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 <= maxPoint.z && hashBlockPositionVoxels.z >= minPoint.z;
-	};
-
-	auto isHashBlockPartiallyInRange = [&](Vector3i hashBlockPositionVoxels) {
-		return ((hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 >= maxPoint.x && hashBlockPositionVoxels.x <= maxPoint.x)
-		       || (hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 >= minPoint.x && hashBlockPositionVoxels.x <= minPoint.x)) &&
-			   ((hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 >= maxPoint.y && hashBlockPositionVoxels.y <= maxPoint.y)
-			   || (hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 >= minPoint.y && hashBlockPositionVoxels.y <= minPoint.y)) &&
-			   ((hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 >= maxPoint.z && hashBlockPositionVoxels.z <= maxPoint.z)
-		       || (hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 >= minPoint.z && hashBlockPositionVoxels.z <= minPoint.z));
-	};
-	//@formatter:on
-
 	TVoxel* sourceVoxels = source->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* sourceHashTable = source->index.GetEntries();
-	int noTotalEntries = source->index.noTotalEntries;
+	int totalHashEntryCount = source->index.noTotalEntries;
 	ITMHashEntry* destinationHashTable = destination->index.GetEntries();
 	TVoxel* destinationVoxels = destination->localVBA.GetVoxelBlocks();
 
 
-	for (int hash = 0; hash < noTotalEntries; hash++) {
+	for (int hash = 0; hash < totalHashEntryCount; hash++) {
 		const ITMHashEntry& currentOriginalHashEntry = sourceHashTable[hash];
 		if (currentOriginalHashEntry.ptr < 0) continue;
 		Vector3i originalHashBlockPosition = currentOriginalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-		if (isHashBlockFullyInRange(originalHashBlockPosition) ||
-		    isHashBlockPartiallyInRange(originalHashBlockPosition)) {
+		if (IsHashBlockFullyInRange(originalHashBlockPosition, minPoint, maxPoint) ||
+		    IsHashBlockPartiallyInRange(originalHashBlockPosition, minPoint, maxPoint)) {
 			MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, hash,
 			                                  currentOriginalHashEntry.pos, destinationHashTable);
 		}
@@ -196,23 +167,24 @@ bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, 
 	delete blockCoords;
 	delete entryAllocationTypes;
 
-	for (int hash = 0; hash < noTotalEntries; hash++) {
+	bool newSceneContainsVoxels = false;
+
+	for (int hash = 0; hash < totalHashEntryCount; hash++) {
 		const ITMHashEntry& currentOriginalHashEntry = sourceHashTable[hash];
 		if (currentOriginalHashEntry.ptr < 0) continue;
 
 		//position of the current entry in 3D space (in voxel units)
-		Vector3i originalHashBlockPosition = currentOriginalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		Vector3i sourceHashBlockPositionVoxels = currentOriginalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 		TVoxel* localSourceVoxelBlock = &(sourceVoxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 		TVoxel* localDestinationVoxelBlock = &(sourceVoxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-		if (isHashBlockFullyInRange(originalHashBlockPosition)){
+		if (IsHashBlockFullyInRange(sourceHashBlockPositionVoxels, minPoint, maxPoint)) {
+			//we can safely copy the whole block
 			memcpy(localDestinationVoxelBlock, localSourceVoxelBlock, sizeof(TVoxel) * SDF_BLOCK_SIZE3);
-		}else if(isHashBlockPartiallyInRange(originalHashBlockPosition)){
-			int zRangeStart = std::max(0, minPoint.z - originalHashBlockPosition.z);
-			int zRangeEnd = std::min(SDF_BLOCK_SIZE, maxPoint.z - originalHashBlockPosition.z);
-			int yRangeStart = std::max(0, minPoint.y - originalHashBlockPosition.y);
-			int yRangeEnd = std::min(SDF_BLOCK_SIZE, maxPoint.y - originalHashBlockPosition.y);
-			int xRangeStart = std::max(0, minPoint.x - originalHashBlockPosition.x);
-			int xRangeEnd = std::min(SDF_BLOCK_SIZE, maxPoint.x - originalHashBlockPosition.x);
+			newSceneContainsVoxels = true;
+		} else if (IsHashBlockPartiallyInRange(sourceHashBlockPositionVoxels, minPoint, maxPoint)) {
+			int zRangeStart, zRangeEnd, yRangeStart, yRangeEnd, xRangeStart, xRangeEnd;
+			ComputeCopyRanges(xRangeStart, xRangeEnd, yRangeStart, yRangeEnd, zRangeStart, zRangeEnd,
+			                  sourceHashBlockPositionVoxels, minPoint, maxPoint);
 			for (int z = zRangeStart; z < zRangeEnd; z++) {
 				for (int y = yRangeStart; y < yRangeEnd; y++) {
 					for (int x = xRangeStart; x < xRangeEnd; x++) {
@@ -221,9 +193,11 @@ bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, 
 					}
 				}
 			}
+			newSceneContainsVoxels = true;
 		}
 
 	}
+	return newSceneContainsVoxels;
 };
 
 }

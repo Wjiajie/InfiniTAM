@@ -18,7 +18,7 @@
 
 #include "../ITMLib/Utils/ITMLibSettings.h"
 #include "../ITMLib/Objects/Scene/ITMSceneManipulation.h"
-#include "../ITMLib/Utils/ITMSceneLogger.h"
+#include "../ITMLib/Utils/FileIO/ITMSceneLogger.h"
 #include "../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
 
 using namespace ITMLib;

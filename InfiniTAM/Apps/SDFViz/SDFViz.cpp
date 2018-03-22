@@ -53,7 +53,7 @@
 #include "SDFVizInteractorStyle.h"
 
 //ITMLib
-#include "../../ITMLib/Utils/ITMSceneLogger.h"
+#include "../../ITMLib/Utils/FileIO/ITMSceneLogger.h"
 #include "../../ITMLib/Utils/ITMLibSettings.h"
 #include "../../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
 #include "SDFVizGlobalDefines.h"

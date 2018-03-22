@@ -16,6 +16,8 @@ namespace ITMLib
 	class ITMScene
 	{
 	public:
+		static const std::string compactFilePostfixAndExtension;
+
 		/** Scene parameters like voxel size etc. */
 		const ITMSceneParams *sceneParams;
 
@@ -44,7 +46,7 @@ namespace ITMLib
 		void SaveToDirectoryCompact_CPU(const std::string &outputDirectory)
 		{
 
-			std::string path = outputDirectory + "compact.dat";
+			std::string path = outputDirectory + compactFilePostfixAndExtension;
 			std::ofstream ofStream = std::ofstream(path.c_str(),std::ios_base::binary | std::ios_base::out);
 			if (!ofStream) throw std::runtime_error("Could not open '" + path + "' for writing.");
 
@@ -125,4 +127,8 @@ namespace ITMLib
 		ITMScene(const ITMScene&);
 		ITMScene& operator=(const ITMScene&);
 	};
-}
+
+
+	template<class TVoxel, class TIndex>
+	const std::string ITMLib::ITMScene<TVoxel,TIndex>::compactFilePostfixAndExtension = "compact.dat";
+}//end namespace ITMLib

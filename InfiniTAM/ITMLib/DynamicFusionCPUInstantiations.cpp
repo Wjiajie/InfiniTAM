@@ -27,7 +27,7 @@
 #include "Engines/Meshing/CPU/ITMMeshingEngine_CPU.tpp"
 #include "Utils/ITMSceneSliceRasterizer.tpp"
 #include "Utils/ITMSceneStatisticsCalculator.tpp"
-#include "Utils/ITMSceneLogger.tpp"
+#include "Utils/FileIO/ITMSceneLogger.tpp"
 #include "Utils/ITM3DNestedMapOfArrays.tpp"
 #include "Utils/ITM3DNestedMap.tpp"
 #include "Utils/ITMNeighborVoxelIterationInfo.h"
