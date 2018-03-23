@@ -21,6 +21,9 @@
 
 class CanonicalVizPipe : public SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex> {
 public:
+	// ==================== CONSTANTS ==================================================
+	static const std::array<double,3> sliceExtremaMarkerColor;
+
 	// ==================== CONSTRUCTORS / DESTRUCTORS =================================
 	CanonicalVizPipe(const std::array<double, 4>& positiveTruncatedNonInterestVoxelColor,
 	                 const std::array<double, 4>& positiveNonTruncatedNonInterestVoxelColor,
@@ -44,6 +47,7 @@ public:
 	void SetFrameIndex(int frameIx);
 	vtkSmartPointer<vtkActor>& GetInterestVoxelActor();
 	vtkSmartPointer<vtkActor>& GetSelectionVoxelActor();
+	vtkSmartPointer<vtkActor>& GetSliceSelectionActor(int index);
 	void PrintHighlightIndexes();
 
 	// *** setup ***
@@ -53,8 +57,9 @@ public:
 
 	// *** modify state ***
 	void ToggleScaleMode() override;
-	void SetPointHighlight(vtkIdType pointId, bool highlightOn);
-
+	void SelectOrDeselectVoxel(vtkIdType pointId, bool highlightOn);
+	void SetSliceSelection(vtkIdType pointId, bool& continueSliceSelection);
+	
 protected:
 	// *** setup ***
 	void PreparePointsForRendering() override;
@@ -63,6 +68,7 @@ protected:
 private:
 	// =============== MEMBER FUNCTIONS ================================================================================
 	void PrintVoxelInfromation(vtkIdType pointId);
+	void RetrieveInitialCoordinates(vtkIdType pointId, int initialCoordinates[3], double vizCoordinates[3]) const;
 
 	// =============== MEMBER VARIABLES ================================================================================
 	//frame of the warp
@@ -76,6 +82,7 @@ private:
 	// ** state **
 	bool interestRegionHashesAreSet = false;
 	bool preparePipelineWasCalled = false;
+	bool firstSiliceBoundSelected = false;
 
 	// ** interest region info **
 	std::vector<int> interestRegionHashes;
@@ -96,5 +103,6 @@ private:
 	// ** interaction **
 	int selectedVertexDefaultColorIndex;
 	vtkSmartPointer<vtkActor> selectedVoxelActor;
+	vtkSmartPointer<vtkActor> selectedSliceExterema[2];
 
 };

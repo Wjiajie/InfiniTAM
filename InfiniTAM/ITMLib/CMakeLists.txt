@@ -498,6 +498,7 @@ Utils/ITM3DNestedMapOfArrays.tpp
 Utils/ITM3DNestedMap.tpp
 Utils/ITMSceneStatisticsCalculator.tpp
 Utils/ITMNeighborVoxelIterationInfo.cpp
+Utils/ITMPrintHelpers.cpp
 )
 
 SET(ITMLIB_UTILS_HEADERS

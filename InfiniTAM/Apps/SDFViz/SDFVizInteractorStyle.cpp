@@ -26,6 +26,13 @@
 
 vtkStandardNewMacro(SDFVizInteractorStyle);
 
+
+SDFVizInteractorStyle::SDFVizInteractorStyle() :
+		mode(VIEW),
+		pointPicker(vtkSmartPointer<vtkPointPicker>::New()),
+		selectedPointId(-1) {
+}
+
 void SDFVizInteractorStyle::OnKeyPress() {
 
 	// Get the keypress
@@ -125,15 +132,29 @@ void SDFVizInteractorStyle::OnKeyPress() {
 			} else {
 				parent->ToggleLiveUnknownVoxelVisibility();
 			}
-		} else if (key == "s"){
-			this->selectionMode = !this->selectionMode;
-			std::cout << "Selection mode " << (this->selectionMode ? "ON" : "OFF") << std::endl;
-		} else if (key == "grave"){
+		} else if (key == "s") {
+			if (rwi->GetAltKey()) {
+				// slice selection mode
+				if (mode == SLICE_SELECT) {
+					mode = previousMode; //reset to previous mode
+					previousMode = SLICE_SELECT;
+				} else {
+					previousMode = mode;
+					mode = SLICE_SELECT;
+				}
+				std::cout << "Slice selection mode " << (this->mode == SLICE_SELECT ? "ON" : "OFF") << std::endl;
+			} else if (mode == VIEW || mode == VOXEL_SELECT) {
+				// toggle between view & voxel selection mode
+				previousMode = mode;
+				this->mode = this->mode == VOXEL_SELECT ? VIEW : VOXEL_SELECT;
+				std::cout << "Selection mode " << (this->mode == VOXEL_SELECT ? "ON" : "OFF") << std::endl;
+			}
+		} else if (key == "grave") {
 			this->keySymbolPrinting = !this->keySymbolPrinting;
 			std::cout << "Key symbol & code printing: " << (keySymbolPrinting ? "ON" : "OFF");
 		}
 	}
-	if(keySymbolPrinting){
+	if (keySymbolPrinting) {
 		std::cout << "Key symbol: " << key << std::endl;
 		std::cout << "Key code: " << static_cast<int>(rwi->GetKeyCode()) << std::endl;
 	}
@@ -145,25 +166,48 @@ void SDFVizInteractorStyle::OnKeyPress() {
 }
 
 void SDFVizInteractorStyle::OnLeftButtonUp() {
-	if(selectionMode){
-		int* pos = this->Interactor->GetEventPosition();
-		this->pointPicker->Pick(pos[0],pos[1],0,
-		                       this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
+	switch (mode) {
+		case VIEW:
+			vtkInteractorStyleTrackballCamera::OnLeftButtonUp();
+			break;
+		case VOXEL_SELECT: {
+			int* pos = this->Interactor->GetEventPosition();
+			this->pointPicker->Pick(pos[0], pos[1], 0,
+			                        this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
 
-		vtkIdType newSelectedPointId = this->pointPicker->GetPointId();
-		vtkActor* selectedActor = this->pointPicker->GetActor();
-		if(selectedActor == parent->canonicalScenePipe.GetVoxelActor() && newSelectedPointId >= 0) {
-			selectedPointId = newSelectedPointId;
-			parent->canonicalScenePipe.SetPointHighlight(selectedPointId, true);
-			parent->renderWindow->Render();
+			vtkIdType newSelectedPointId = this->pointPicker->GetPointId();
+			vtkActor* selectedActor = this->pointPicker->GetActor();
+			if (selectedActor == parent->canonicalScenePipe.GetVoxelActor() && newSelectedPointId >= 0) {
+				selectedPointId = newSelectedPointId;
+				parent->canonicalScenePipe.SelectOrDeselectVoxel(selectedPointId, true);
+				parent->renderWindow->Render();
+			}
 		}
+			break;
+		case SLICE_SELECT: {
+			int* pos = this->Interactor->GetEventPosition();
+			this->pointPicker->Pick(pos[0], pos[1], 0,
+			                        this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
+			vtkIdType newSelectedPointId = this->pointPicker->GetPointId();
+			vtkActor* selectedActor = this->pointPicker->GetActor();
+			if (selectedActor == parent->canonicalScenePipe.GetVoxelActor() && newSelectedPointId >= 0) {
+				bool continueSliceSelection = true;
+				parent->canonicalScenePipe.SetSliceSelection(newSelectedPointId, continueSliceSelection);
+				if(!continueSliceSelection){
+					mode = previousMode;
+					previousMode = SLICE_SELECT;
+				}
+				parent->renderWindow->Render();
+			}
+		}
+			break;
 	}
-	vtkInteractorStyleTrackballCamera::OnLeftButtonUp();
 }
 
-SDFVizInteractorStyle::SDFVizInteractorStyle() :
-		selectionMode(false),
-		pointPicker(vtkSmartPointer<vtkPointPicker>::New()),
-		selectedPointId(-1){
+
+void SDFVizInteractorStyle::OnLeftButtonDown() {
+	if (mode == VIEW) {
+		vtkInteractorStyleTrackballCamera::OnLeftButtonDown();
+	}
 }
 

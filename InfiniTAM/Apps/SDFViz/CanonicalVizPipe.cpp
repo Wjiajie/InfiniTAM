@@ -46,6 +46,11 @@ std::ostream& operator<<(std::ostream& os, std::vector<T> vec) {
 	os << "}";
 	return os;
 }
+//==================================== SELECTION EXTREMA ===============================================================
+
+const std::array<double, 3> CanonicalVizPipe::sliceExtremaMarkerColor = {0.882, 0.239, 0.341};
+
+//==================================== CONSTRUCTORS & DESTRUCTORS ======================================================
 
 CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& positiveTruncatedNonInterestVoxelColor,
                                    const std::array<double, 4>& positiveNonTruncatedNonInterestVoxelColor,
@@ -73,7 +78,8 @@ CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& positiveTruncate
 		interestVoxelColorLookupTable(vtkSmartPointer<vtkLookupTable>::New()),
 		interestVoxelMapper(vtkSmartPointer<vtkGlyph3DMapper>::New()),
 		interestVoxelActor(vtkSmartPointer<vtkActor>::New()),
-		selectedVoxelActor(vtkSmartPointer<vtkActor>::New()) {
+		selectedVoxelActor(vtkSmartPointer<vtkActor>::New()),
+		selectedSliceExterema({vtkSmartPointer<vtkActor>::New(), vtkSmartPointer<vtkActor>::New()}) {
 	//TODO: set up separate colors for turncated/nontruncated & interest unknown -Greg (GitHub: Algomorph)
 	SetUpSDFColorLookupTable(interestVoxelColorLookupTable, highlightVoxelColor.data(),
 	                         positiveInterestVoxelColor.data(),
@@ -329,8 +335,8 @@ void CanonicalVizPipe::UpdateInterestRegionsFromBuffers(void* buffer) {
 
 Vector3d CanonicalVizPipe::GetHighlightPosition(int hash, int locId) {
 	Vector3d pos;
-	this->interestVoxelPolydata->GetPoints()->GetPoint((*this->highlightIndexes.GetValueAt(hash, locId, frameIx)),
-	                                                   pos.values);
+	this->interestVoxelPolydata->GetPoints()->GetPoint(
+			(*this->highlightIndexes.GetValueAt(hash, locId, frameIx)), pos.values);
 	return pos;
 }
 
@@ -352,7 +358,6 @@ void CanonicalVizPipe::SetFrameIndex(int frameIx) {
 
 void CanonicalVizPipe::PrintHighlightIndexes() {
 	std::cout << this->highlightIndexes << std::endl;
-
 }
 
 void CanonicalVizPipe::ToggleScaleMode() {
@@ -364,7 +369,38 @@ void CanonicalVizPipe::ToggleScaleMode() {
 	}
 }
 
-void CanonicalVizPipe::SetPointHighlight(vtkIdType pointId, bool highlightOn) {
+void CanonicalVizPipe::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
+                                       vtkAlgorithmOutput* hashBlockSourceGeometry) {
+	SDFSceneVizPipe::PreparePipeline(voxelSourceGeometry, hashBlockSourceGeometry);
+	auto selectionMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	selectionMapper->SetInputConnection(voxelSourceGeometry);
+
+	// selection voxel and slice extrema markers
+	this->selectedVoxelActor->SetMapper(selectionMapper);
+
+	selectedVoxelActor->VisibilityOff();
+	selectedVoxelActor->SetScale(1.0);
+	selectedVoxelActor->GetProperty()->SetColor(highlightVoxelColor[0], highlightVoxelColor[1], highlightVoxelColor[2]);
+	selectedVoxelActor->GetProperty()->SetOpacity(0.84);
+
+
+	for (int iExteremum = 0; iExteremum < 2; iExteremum++) {
+		this->selectedSliceExterema[iExteremum]->SetMapper(selectionMapper);
+		this->selectedSliceExterema[iExteremum]->SetScale(.23);
+		this->selectedSliceExterema[iExteremum]->GetProperty()->SetColor(sliceExtremaMarkerColor[0],
+		                                                                 sliceExtremaMarkerColor[1],
+		                                                                 sliceExtremaMarkerColor[2]);
+		this->selectedSliceExterema[iExteremum]->GetProperty()->SetOpacity(0.84);
+		this->selectedSliceExterema[iExteremum]->VisibilityOff();
+	}
+}
+
+/**
+ * \brief Moves the highlight marker to the specified point if highlightOn argument is set to true, hides it otherwise
+ * \param pointId point where to move the highlight marker
+ * \param highlightOn whether to move & display the highlight marker or to hide it
+ */
+void CanonicalVizPipe::SelectOrDeselectVoxel(vtkIdType pointId, bool highlightOn) {
 	auto scaleArray = dynamic_cast<vtkFloatArray*>(voxelPolydata->GetPointData()->GetArray(
 			scaleMode == VOXEL_SCALE_HIDE_UNKNOWNS ? scaleUnknownsHiddenAttributeName
 			                                       : scaleUnknownsVisibleAttributeName));
@@ -373,8 +409,6 @@ void CanonicalVizPipe::SetPointHighlight(vtkIdType pointId, bool highlightOn) {
 	if (highlightOn) {
 		selectedVoxelActor->VisibilityOn();
 		float selectedVoxelScale = scaleArray->GetValue(pointId);
-
-
 		double point[3];
 		points->GetPoint(pointId, point);
 		selectedVoxelActor->SetScale(selectedVoxelScale + 0.01);
@@ -383,19 +417,51 @@ void CanonicalVizPipe::SetPointHighlight(vtkIdType pointId, bool highlightOn) {
 	} else {
 		selectedVoxelActor->VisibilityOff();
 	}
-
 }
 
-void CanonicalVizPipe::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
-                                       vtkAlgorithmOutput* hashBlockSourceGeometry) {
-	SDFSceneVizPipe::PreparePipeline(voxelSourceGeometry, hashBlockSourceGeometry);
-	auto selectionMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	selectionMapper->SetInputConnection(voxelSourceGeometry);
-	this->selectedVoxelActor->SetMapper(selectionMapper);
-	selectedVoxelActor->VisibilityOff();
-	selectedVoxelActor->SetScale(1.0);
-	selectedVoxelActor->GetProperty()->SetColor(highlightVoxelColor[0], highlightVoxelColor[1], highlightVoxelColor[2]);
-	selectedVoxelActor->GetProperty()->SetOpacity(0.84);
+/**
+ * \brief Retrieve initial (pre-warp) coordinates of the voxel corresponding to the specified point index.
+ * \param pointId [in] point id (a.k.a. index) of the point corresponding to the voxel.
+ * \param initialCoordinates [out] the pre-warp coordinates of the corresponding voxel.
+ */
+inline void
+CanonicalVizPipe::RetrieveInitialCoordinates(vtkIdType pointId, int initialCoordinates[3], double vizCoordinates[3]) const{
+	//retrieve original coordinate before warp
+	auto& initialPoints = this->initialNonInterestPoints;
+	initialPoints->GetPoint(pointId, vizCoordinates);
+	initialCoordinates[0] = static_cast<int>(vizCoordinates[0]);
+	initialCoordinates[1] = static_cast<int>(-vizCoordinates[1]);
+	initialCoordinates[2] = static_cast<int>(-vizCoordinates[2]);
+}
+
+/**
+ * \brief Sets the first (or second) extremum for a box-like slice in the canonical sdf.
+ * (depending on whether the first one has already been selected)
+ * \details Note: the coordinate used for the slice will be the initial coordinate of the voxel in global/canonical space,
+ * before application of the warp, so it might not exactly correspond visually to the clicked voxel. Both will be shown
+ * in the viewport.
+ * \param pointId[in] current (after-warp) coordinate of the canonical voxel whose initial coordinate (before-warp) should serve as the slice extremum.
+ * \param continueSliceSelection[out] if this call sets the second extremum of the slice, sets this to false, sets to true otherwise.
+ */
+void CanonicalVizPipe::SetSliceSelection(vtkIdType pointId, bool& continueSliceSelection) {
+	vtkSmartPointer<vtkActor> extremum;
+	if (this->firstSiliceBoundSelected) {
+		extremum = selectedSliceExterema[1];
+		continueSliceSelection = false;
+		this->firstSiliceBoundSelected = false;
+		std::cout << bright_cyan << "Selecting second slice extremum..." << reset << std::endl;
+	} else {
+		extremum = selectedSliceExterema[0];
+		this->firstSiliceBoundSelected = true;
+		continueSliceSelection = true;
+		std::cout << bright_cyan << "Selecting first slice extremum..." << reset << std::endl;
+	}
+	SelectOrDeselectVoxel(pointId, true);
+	Vector3i initialCoordinates;
+	Vector3d initialCoordinatesViz;
+	extremum->VisibilityOn();
+	RetrieveInitialCoordinates(pointId, initialCoordinates.values, initialCoordinatesViz.values);
+	extremum->SetPosition(initialCoordinatesViz.x, initialCoordinatesViz.y, initialCoordinatesViz.z);
 }
 
 vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetSelectionVoxelActor() {
@@ -422,12 +488,9 @@ void CanonicalVizPipe::PrintVoxelInfromation(vtkIdType pointId) {
 	double current_z = -currentPoint[2];
 
 	//retrieve original coordinate before warp
-	auto& initialPoints = this->initialNonInterestPoints;
-	double initialPoint[3];
-	initialPoints->GetPoint(pointId, initialPoint);
-	auto initial_x = static_cast<int>(initialPoint[0]);
-	auto initial_y = static_cast<int>(-initialPoint[1]);
-	auto initial_z = static_cast<int>(-initialPoint[2]);
+	Vector3i initialCoords;
+	double vizInitialCoords[3];
+	RetrieveInitialCoordinates(pointId, initialCoords.values, vizInitialCoords);
 
 	std::cout << yellow << "Selected voxel at " << current_x << ", " << current_y << ", " << current_z
 	          << ". Voxel information:" << reset << std::endl;
@@ -437,18 +500,26 @@ void CanonicalVizPipe::PrintVoxelInfromation(vtkIdType pointId) {
 	ITMVoxelCanonical* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
 	bool foundPoint;
-	ITMVoxelCanonical voxel = readVoxel(voxelBlocks, canonicalHashTable, Vector3i(initial_x, initial_y, initial_z), foundPoint);
+	ITMVoxelCanonical voxel = readVoxel(voxelBlocks, canonicalHashTable, initialCoords, foundPoint);
 	if (!foundPoint) {
 		std::cerr << "   Could not find the selected voxel in scene data! " __FILE__ ":" + std::to_string(__LINE__);
 		return;
 	}
 	float sdfValue = ITMVoxelCanonical::valueToFloat(voxel.sdf);
 	auto category = static_cast<VoxelFlags>(voxel.flags);
-	std::cout << "   Initial voxel position (before warp): " << initial_x << ", " << initial_y << ", " << initial_z
-	          << "." << std::endl;
+	std::cout << "   Initial voxel position (before warp): " << initialCoords << "." << std::endl;
 	std::cout << "   Voxel display scale: " << selectedVoxelScale << ", representing the SDF value of " << sdfValue
 	          << "." << std::endl;
 	std::cout << "   Voxel color index: " << VoxelColorIndexAsCString(selectedVoxelColorIndex)
 	          << ", representing the voxel category " << VoxelFlagsAsCString(category) << "." << std::endl;
 
 }
+
+vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetSliceSelectionActor(int index) {
+	if (index < 0 && index > 1)
+		DIEWITHEXCEPTION("Index needs to be 0 or 1."
+				                 __FILE__
+				                 ":" + std::to_string(__LINE__));
+	return this->selectedSliceExterema[index];
+}
+

@@ -39,7 +39,7 @@ const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::textFileE
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::highlightFilterInfoFilename = "highlight_filter_info.txt";
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::minRecurrenceHighlightFilterName = "min_reccurence_count_filter:";
+const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::minRecurrenceHighlightFilterName = "min_recurrence_count_filter:";
 
 //========================================== CONSTRUCTORS & DESTRUCTORS ================================================
 

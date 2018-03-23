@@ -142,13 +142,17 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 	LoadFrameData();
 	ReinitializePipelines();
 
-	// add actors
+	// add voxel & grid actors
 	sdfRenderer->AddActor(canonicalScenePipe.GetVoxelActor());
 	sdfRenderer->AddActor(canonicalScenePipe.GetInterestVoxelActor());
 	sdfRenderer->AddActor(canonicalScenePipe.GetHashBlockActor());
-	topRenderer->AddActor(canonicalScenePipe.GetSelectionVoxelActor());
 	sdfRenderer->AddActor(liveScenePipe.GetVoxelActor());
 	sdfRenderer->AddActor(liveScenePipe.GetHashBlockActor());
+
+	// add marker/highlight actors
+	topRenderer->AddActor(canonicalScenePipe.GetSelectionVoxelActor());
+	topRenderer->AddActor(canonicalScenePipe.GetSliceSelectionActor(0));
+	topRenderer->AddActor(canonicalScenePipe.GetSliceSelectionActor(1));
 	topRenderer->AddActor(highlightVisualizer.GetHighlightActor());
 
 	// to prevent VTK from doing excessive near-cliping with multi-layered renderers

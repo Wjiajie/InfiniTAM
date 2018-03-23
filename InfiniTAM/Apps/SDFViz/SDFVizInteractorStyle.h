@@ -22,6 +22,7 @@
 
 class SDFViz;
 
+
 /**
  * \brief A standard VTK trackball interactor style with added functionality for
  * some keyboard keys & selecting points
@@ -31,17 +32,25 @@ class SDFVizInteractorStyle : public vtkInteractorStyleTrackballCamera {
 public:
 	static SDFVizInteractorStyle* New();
 
+	enum Mode{
+		VIEW, // default/standard
+		VOXEL_SELECT,
+		SLICE_SELECT
+	};
+
 	vtkTypeMacro(SDFVizInteractorStyle, vtkInteractorStyleTrackballCamera);
 	SDFVizInteractorStyle();
 
 	SDFViz* parent;
 
-	virtual void OnKeyPress();
-	virtual void OnLeftButtonUp();
+	void OnKeyPress() override;
+	void OnLeftButtonDown() override;
+	void OnLeftButtonUp() override;
 
 private:
 	//============================= MEMBER VARIABLES ===================================================================
-	bool selectionMode = false;
+	Mode mode = VIEW;
+	Mode previousMode = VIEW;
 	bool keySymbolPrinting = false;
 	vtkSmartPointer<vtkPointPicker> pointPicker;
 	vtkIdType selectedPointId = -1;

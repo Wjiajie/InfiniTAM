@@ -32,20 +32,16 @@ std::ostream& operator<<(std::ostream& out, const std::tuple<Types...>& value) {
 	return out;
 }
 
-std::string padded_to_string(int i, int fill_width){
-	std::stringstream stringstream;
-	stringstream << std::setfill('0') << std::setw(fill_width) << i;
-	return stringstream.str();
-}
+std::string padded_to_string(int i, int fill_width);
 
-const std::string red("\033[0;31m");
-const std::string green("\033[0;32m");
-const std::string blue("\033[0;34m");
-const std::string yellow("\033[0;33m");
-const std::string cyan("\033[0;36m");
+extern const std::string red;
+extern const std::string green;
+extern const std::string blue;
+extern const std::string yellow;
+extern const std::string cyan;
 
-const std::string bright_cyan("\033[0;96m");
-const std::string reset("\033[0m");
+extern const std::string bright_cyan;
+extern const std::string reset;
 
 }
 
