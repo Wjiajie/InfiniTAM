@@ -217,7 +217,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					//projected position of the sdf point to the most recent frame
 					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
 
-					if (originalPosition == Vector3i(-18, 11, 161)) {
+					if (originalPosition == Vector3i(-1, -24, 192)) {
 						oldSdf = canonicalVoxel.sdf;
 					}
 
@@ -228,7 +228,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 
 					//TODO: confidence?
 					//color & sdf
-					float liveSdf = InterpolateTrilinearly_SdfColor_StruckNonTruncatedAndKnown_SmartWeights(
+					float weightedLiveSdf = InterpolateTrilinearly_SdfColor_StruckNonTruncatedAndKnown_SmartWeights(
 							liveVoxels, liveHashTable,
 							projectedPosition,
 							liveCache, liveColor,
@@ -242,13 +242,14 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 						missedKnownVoxels++;//_DEBUG
 						continue;
 					}
-					float newSdf = oldWDepth * oldSdf + liveWeight * liveSdf;
+
+					float newSdf = oldWDepth * oldSdf + weightedLiveSdf;
 					float newWDepth = oldWDepth + liveWeight;
 					newSdf /= newWDepth;
 					newWDepth = MIN(newWDepth, maximumWeight);
 
 					//TODO: this color-weighting probably is incorrect, since not all live voxels will have viable color -Greg (GitHub:Algomorph)
-					Vector3f newColor = oldWColor * oldColor + liveWeight * liveColor;
+					Vector3f newColor = oldWColor * oldColor + liveColor;
 					float newWColor = oldWColor + liveWeight;
 					newColor /= newWColor;
 					newWColor = MIN(newWDepth, maximumWeight);

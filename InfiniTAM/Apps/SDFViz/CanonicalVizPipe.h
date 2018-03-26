@@ -110,7 +110,6 @@ private:
 	vtkSmartPointer<vtkGlyph3DMapper> warplessVoxelMapper;
 	vtkSmartPointer<vtkActor> warplessVoxelActor;
 
-
 	// ** interaction **
 	int selectedVertexDefaultColorIndex;
 	vtkSmartPointer<vtkActor> selectedVoxelActor;
