@@ -50,6 +50,7 @@ public:
 	vtkSmartPointer<vtkActor>& GetWarplessVoxelActor();
 	vtkSmartPointer<vtkActor>& GetSelectionVoxelActor();
 	vtkSmartPointer<vtkActor>& GetSliceSelectionActor(int index);
+	vtkSmartPointer<vtkActor>& GetSlicePreviewActor();
 	bool GetWarpEnabled() const;
 	void PrintHighlightIndexes();
 
@@ -113,5 +114,7 @@ private:
 	// ** interaction **
 	int selectedVertexDefaultColorIndex;
 	vtkSmartPointer<vtkActor> selectedVoxelActor;
-	vtkSmartPointer<vtkActor> selectedSliceExterema[2];
+	vtkSmartPointer<vtkActor> selectedSliceExtrema[2];
+	vtkSmartPointer<vtkActor> selectedSlicePreview;
+	Vector3i selectedSliceExtremaCoordinates[2];
 };

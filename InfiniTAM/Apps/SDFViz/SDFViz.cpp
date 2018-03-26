@@ -742,6 +742,7 @@ void SDFViz::AddActors() {
 	topRenderer->AddActor(canonicalScenePipe.GetSelectionVoxelActor());
 	topRenderer->AddActor(canonicalScenePipe.GetSliceSelectionActor(0));
 	topRenderer->AddActor(canonicalScenePipe.GetSliceSelectionActor(1));
+	topRenderer->AddActor(canonicalScenePipe.GetSlicePreviewActor());
 	topRenderer->AddActor(highlightVisualizer.GetHighlightActor());
 }
 

@@ -28,6 +28,7 @@
 #include <vtkGlyph3DMapper.h>
 #include <vtkLookupTable.h>
 #include <vtkSphereSource.h>
+#include <vtk-8.1/vtkCubeSource.h>
 
 //ITMLib
 #include "../../../InfiniTAM/ITMLib/Objects/Scene/ITMRepresentationAccess.h"
@@ -82,7 +83,8 @@ CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& positiveTruncate
 		warplessVoxelMapper(vtkSmartPointer<vtkGlyph3DMapper>::New()),
 		warplessVoxelActor(vtkSmartPointer<vtkActor>::New()),
 		selectedVoxelActor(vtkSmartPointer<vtkActor>::New()),
-		selectedSliceExterema({vtkSmartPointer<vtkActor>::New(), vtkSmartPointer<vtkActor>::New()}) {
+		selectedSliceExtrema({vtkSmartPointer<vtkActor>::New(), vtkSmartPointer<vtkActor>::New()}),
+		selectedSlicePreview(vtkSmartPointer<vtkActor>::New()) {
 	//TODO: set up separate colors for turncated/nontruncated & interest unknown -Greg (GitHub: Algomorph)
 	SetUpSDFColorLookupTable(interestVoxelColorLookupTable, highlightVoxelColor.data(),
 	                         positiveInterestVoxelColor.data(),
@@ -241,16 +243,15 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 	// warp prep
 	initialNonInterestPoints->DeepCopy(voxelPolydata->GetPoints());
 	initialInterestPoints->DeepCopy(interestVoxelPolydata->GetPoints());
-	
+
 	warplessVoxelPolydata->SetPoints(initialNonInterestPoints);
 	warplessVoxelPolydata->GetPointData()->AddArray(nonInterestScaleAttribute);
 	warplessVoxelPolydata->GetPointData()->AddArray(nonInterestAlternativeScaleAttribute);
 	warplessVoxelPolydata->GetPointData()->AddArray(nonInterestColorAttribute);
 	warplessVoxelPolydata->GetPointData()->SetActiveScalars(colorAttributeName);
-	
+
 	preparePipelineWasCalled = true;
 }
-
 
 
 void CanonicalVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
@@ -397,12 +398,13 @@ void CanonicalVizPipe::ToggleScaleMode() {
 void CanonicalVizPipe::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
                                        vtkAlgorithmOutput* hashBlockSourceGeometry) {
 	SDFSceneVizPipe::PreparePipeline(voxelSourceGeometry, hashBlockSourceGeometry);
+
+	//*** set up different selection markers ***
+
 	auto selectionMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 	selectionMapper->SetInputConnection(voxelSourceGeometry);
-
 	// selection voxel and slice extrema markers
-	this->selectedVoxelActor->SetMapper(selectionMapper);
-
+	selectedVoxelActor->SetMapper(selectionMapper);
 	selectedVoxelActor->VisibilityOff();
 	selectedVoxelActor->SetScale(1.0);
 	selectedVoxelActor->GetProperty()->SetColor(highlightVoxelColor[0], highlightVoxelColor[1], highlightVoxelColor[2]);
@@ -410,14 +412,26 @@ void CanonicalVizPipe::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
 
 
 	for (int iExteremum = 0; iExteremum < 2; iExteremum++) {
-		this->selectedSliceExterema[iExteremum]->SetMapper(selectionMapper);
-		this->selectedSliceExterema[iExteremum]->SetScale(.23);
-		this->selectedSliceExterema[iExteremum]->GetProperty()->SetColor(sliceExtremaMarkerColor[0],
-		                                                                 sliceExtremaMarkerColor[1],
-		                                                                 sliceExtremaMarkerColor[2]);
-		this->selectedSliceExterema[iExteremum]->GetProperty()->SetOpacity(0.84);
-		this->selectedSliceExterema[iExteremum]->VisibilityOff();
+		this->selectedSliceExtrema[iExteremum]->SetMapper(selectionMapper);
+		this->selectedSliceExtrema[iExteremum]->SetScale(.23);
+		this->selectedSliceExtrema[iExteremum]->GetProperty()->SetColor(sliceExtremaMarkerColor[0],
+		                                                                sliceExtremaMarkerColor[1],
+		                                                                sliceExtremaMarkerColor[2]);
+		this->selectedSliceExtrema[iExteremum]->GetProperty()->SetOpacity(0.84);
+		this->selectedSliceExtrema[iExteremum]->VisibilityOff();
 	}
+
+	vtkSmartPointer<vtkCubeSource> cubeSource = vtkSmartPointer<vtkCubeSource>::New();
+	auto slicePreviewMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	slicePreviewMapper->SetInputConnection(cubeSource->GetOutputPort());
+	selectedSlicePreview->SetMapper(slicePreviewMapper);
+	selectedSlicePreview->VisibilityOff();
+	selectedSlicePreview->SetScale(1.0, 1.0, 1.0);
+	selectedSlicePreview->GetProperty()->SetColor(sliceExtremaMarkerColor[0],
+	                                              sliceExtremaMarkerColor[1],
+	                                              sliceExtremaMarkerColor[2]);
+	selectedSlicePreview->GetProperty()->SetOpacity(0.35);
+	//***
 }
 
 /**
@@ -448,9 +462,11 @@ void CanonicalVizPipe::SelectOrDeselectVoxel(vtkIdType pointId, bool highlightOn
  * \brief Retrieve initial (pre-warp) coordinates of the voxel corresponding to the specified point index.
  * \param pointId [in] point id (a.k.a. index) of the point corresponding to the voxel.
  * \param initialCoordinates [out] the pre-warp coordinates of the corresponding voxel.
+ * \param vizCoordinates [out] the pre-warp coordinates in visualization space (different axis directions)
  */
 inline void
-CanonicalVizPipe::RetrieveInitialCoordinates(vtkIdType pointId, int initialCoordinates[3], double vizCoordinates[3]) const{
+CanonicalVizPipe::RetrieveInitialCoordinates(vtkIdType pointId, int initialCoordinates[3],
+                                             double vizCoordinates[3]) const {
 	//retrieve original coordinate before warp
 	auto& initialPoints = this->initialNonInterestPoints;
 	initialPoints->GetPoint(pointId, vizCoordinates);
@@ -470,27 +486,54 @@ CanonicalVizPipe::RetrieveInitialCoordinates(vtkIdType pointId, int initialCoord
  */
 void CanonicalVizPipe::SetSliceSelection(vtkIdType pointId, bool& continueSliceSelection) {
 	vtkSmartPointer<vtkActor> extremum;
+	bool updateSlicePreview = false;
+	int selectedSliceExtremaIndex = 0;
 	if (this->firstSliceBoundSelected) {
-		extremum = selectedSliceExterema[1];
+		extremum = selectedSliceExtrema[1];
 		continueSliceSelection = false;
 		this->firstSliceBoundSelected = false;
 		std::cout << bright_cyan << "Selecting second slice extremum..." << reset << std::endl;
+		this->selectedSlicePreview->VisibilityOn();
+		updateSlicePreview = true;
+		selectedSliceExtremaIndex = 1;
 	} else {
-		extremum = selectedSliceExterema[0];
+		extremum = selectedSliceExtrema[0];
 		this->firstSliceBoundSelected = true;
 		continueSliceSelection = true;
 		std::cout << bright_cyan << "Selecting first slice extremum..." << reset << std::endl;
+		selectedSliceExtremaIndex = 0;
 	}
 	SelectOrDeselectVoxel(pointId, true);
 	Vector3i initialCoordinates;
 	Vector3d initialCoordinatesViz;
 	extremum->VisibilityOn();
 	RetrieveInitialCoordinates(pointId, initialCoordinates.values, initialCoordinatesViz.values);
-	extremum->SetPosition(initialCoordinatesViz.x, initialCoordinatesViz.y, initialCoordinatesViz.z);
+	extremum->SetPosition(initialCoordinatesViz.values);
+	selectedSliceExtremaCoordinates[selectedSliceExtremaIndex] = initialCoordinates;
+	if (updateSlicePreview) {
+		//@formatter:off
+		Vector3d center(
+				static_cast<double>(selectedSliceExtremaCoordinates[1].x + selectedSliceExtremaCoordinates[0].x) / 2.0,
+				static_cast<double>(selectedSliceExtremaCoordinates[1].y + selectedSliceExtremaCoordinates[0].y) / 2.0,
+				static_cast<double>(selectedSliceExtremaCoordinates[1].z + selectedSliceExtremaCoordinates[0].z) / 2.0);
+		Vector3d centerViz(center.x, -center.y, -center.z);
+		Vector3d dimensions(
+				static_cast<double>(std::abs(selectedSliceExtremaCoordinates[1].x - selectedSliceExtremaCoordinates[0].x) + 1.0),
+				static_cast<double>(std::abs(selectedSliceExtremaCoordinates[1].y - selectedSliceExtremaCoordinates[0].y) + 1.0),
+				static_cast<double>(std::abs(selectedSliceExtremaCoordinates[1].z - selectedSliceExtremaCoordinates[0].z) + 1.0));
+		//@formatter:on
+		selectedSlicePreview->SetPosition(centerViz.values);
+		selectedSlicePreview->SetScale(dimensions.values);
+		selectedSlicePreview->VisibilityOn();
+	}
 }
 
 vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetSelectionVoxelActor() {
 	return this->selectedVoxelActor;
+}
+
+vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetSlicePreviewActor() {
+	return this->selectedSlicePreview;
 }
 
 /**
@@ -545,15 +588,15 @@ vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetSliceSelectionActor(int index) {
 		DIEWITHEXCEPTION("Index needs to be 0 or 1."
 				                 __FILE__
 				                 ":" + std::to_string(__LINE__));
-	return this->selectedSliceExterema[index];
+	return this->selectedSliceExtrema[index];
 }
 
 void CanonicalVizPipe::ToggleWarpEnabled() {
-	if(warpEnabled){
+	if (warpEnabled) {
 		GetVoxelActor()->VisibilityOff();
 		warpEnabled = false;
 		GetVoxelActor()->VisibilityOn();
-	}else{
+	} else {
 		GetVoxelActor()->VisibilityOff();
 		warpEnabled = true;
 		GetVoxelActor()->VisibilityOn();
@@ -565,9 +608,9 @@ bool CanonicalVizPipe::GetWarpEnabled() const {
 }
 
 vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetVoxelActor() {
-	if(this->warpEnabled){
+	if (this->warpEnabled) {
 		return SDFSceneVizPipe::GetVoxelActor();
-	}else{
+	} else {
 		return this->warplessVoxelActor;
 	}
 }
