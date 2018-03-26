@@ -141,11 +141,10 @@ void SDFVizInteractorStyle::OnKeyPress() {
 			if (rwi->GetAltKey()) {
 				// slice selection mode
 				if (mode == SLICE_SELECT) {
-					TurnOnSliceSelectionMode();
-				} else {
 					TurnOffSliceSelectionMode();
+				} else {
+					TurnOnSliceSelectionMode();
 				}
-				std::cout << "Slice selection mode " << (this->mode == SLICE_SELECT ? "ON" : "OFF") << std::endl;
 			} else if (mode == VIEW || mode == VOXEL_SELECT) {
 				// toggle between view & voxel selection mode
 				previousMode = mode;

@@ -162,6 +162,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 			RefocusAtCurrentHighlight();//double call as work-around for bug
 		} else {
 			sdfRenderer->ResetCamera();
+			sdfRenderer->GetActiveCamera()->Zoom(1.6);
 		}
 	}
 
