@@ -40,8 +40,8 @@ public:
 	void UpdateInterestRegionsFromBuffers(void* buffer);
 
 	// *** getter/setter/printer ***
-	Vector3d GetHighlightPosition(int hash, int locId);
-	std::vector<Vector3d> GetHighlightNeighborPositions(int hash, int locId);
+	Vector3d GetHighlightPosition(int hash, int locId) const;
+	std::vector<Vector3d> GetHighlightNeighborPositions(int hash, int locId) const;
 	void SetInterestRegionInfo(std::vector<int> interestRegionHashes,
 	                           ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights);
 	void SetFrameIndex(int frameIx);

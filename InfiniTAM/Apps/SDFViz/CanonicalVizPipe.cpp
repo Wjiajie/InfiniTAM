@@ -39,19 +39,12 @@
 #include "SDFVizGlobalDefines.h"
 #include "VizPipeShared.h"
 
-//DEBUG
-template<typename T>
-std::ostream& operator<<(std::ostream& os, std::vector<T> vec) {
-	os << "{ ";
-	std::copy(vec.begin(), vec.end(), std::ostream_iterator<T>(os, " "));
-	os << "}";
-	return os;
-}
-//==================================== SELECTION EXTREMA ===============================================================
+//region ============================= CONSTANTS =======================================================================
 
 const std::array<double, 3> CanonicalVizPipe::sliceExtremaMarkerColor = {0.882, 0.239, 0.341};
 
-//==================================== CONSTRUCTORS & DESTRUCTORS ======================================================
+//endregion
+//region ======================== CONSTRUCTORS & DESTRUCTORS ===========================================================
 
 CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& positiveTruncatedNonInterestVoxelColor,
                                    const std::array<double, 4>& positiveNonTruncatedNonInterestVoxelColor,
@@ -91,6 +84,120 @@ CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& positiveTruncate
 	                         positiveInterestVoxelColor.data(), negativeInterestVoxelColor.data(),
 	                         negativeInterestVoxelColor.data(), unknownNonInterestVoxelColor.data());
 }
+//endregion===========
+//region ========================================== ACTOR GETTERS ======================================================
+
+vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetVoxelActor() {
+	if (this->warpEnabled) {
+		return SDFSceneVizPipe::GetVoxelActor();
+	} else {
+		return this->warplessVoxelActor;
+	}
+}
+
+vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetInterestVoxelActor() {
+	return interestVoxelActor;
+}
+
+vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetWarplessVoxelActor() {
+	return warplessVoxelActor;
+}
+
+vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetSelectionVoxelActor() {
+	return this->selectedVoxelActor;
+}
+
+vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetSliceSelectionActor(int index) {
+	if (index < 0 && index > 1)
+		DIEWITHEXCEPTION("Index needs to be 0 or 1."
+				                 __FILE__
+				                 ":" + std::to_string(__LINE__));
+	return this->selectedSliceExtrema[index];
+}
+
+vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetSlicePreviewActor() {
+	return this->selectedSlicePreview;
+}
+//endregion
+//region =========================================== OTHER GETTERS =====================================================
+
+Vector3d CanonicalVizPipe::GetHighlightPosition(int hash, int locId) const{
+	Vector3d pos;
+	this->interestVoxelPolydata->GetPoints()->GetPoint(
+			(*this->highlightIndexes.GetValueAt(hash, locId, frameIx)), pos.values);
+	return pos;
+}
+
+std::vector<Vector3d> CanonicalVizPipe::GetHighlightNeighborPositions(int hash, int locId) const{
+	std::vector<Vector3d> positions;
+	vtkPoints* points = this->interestVoxelPolydata->GetPoints();
+	const std::vector<int> indexes = *this->highlightNeighborIndexes.GetArrayAt(hash, locId, frameIx);
+	for (int iNeighbor = 0; iNeighbor < indexes.size(); iNeighbor++) {
+		Vector3d pos;
+		points->GetPoint(indexes[iNeighbor], pos.values);
+		positions.push_back(pos);
+	}
+	return positions;
+}
+
+bool CanonicalVizPipe::GetWarpEnabled() const {
+	return this->warpEnabled;
+}
+//endregion
+//region =========================================== PRINTERS ==========================================================
+
+void CanonicalVizPipe::PrintHighlightIndexes() {
+	std::cout << this->highlightIndexes << std::endl;
+}
+
+/**
+ * \brief Prints information about the voxel with given point id in voxelPolydata. Currently, doesn't work for interest voxels.
+ * \param pointId id of the point in question.
+ */
+void CanonicalVizPipe::PrintVoxelInfromation(vtkIdType pointId) {
+
+	auto scaleArray = dynamic_cast<vtkFloatArray*>(voxelPolydata->GetPointData()->GetArray(
+			scaleMode == VOXEL_SCALE_HIDE_UNKNOWNS ? scaleUnknownsHiddenAttributeName
+			                                       : scaleUnknownsVisibleAttributeName));
+	auto colorIndexArray = dynamic_cast<vtkIntArray*>(voxelPolydata->GetPointData()->GetArray(colorAttributeName));
+
+	//retrieve current coordiante
+	auto currentPoints = voxelPolydata->GetPoints();
+	double currentPoint[3];
+	currentPoints->GetPoint(pointId, currentPoint);
+	double current_x = currentPoint[0];
+	double current_y = -currentPoint[1];
+	double current_z = -currentPoint[2];
+
+	//retrieve original coordinate before warp
+	Vector3i initialCoords;
+	double vizInitialCoords[3];
+	RetrieveInitialCoordinates(pointId, initialCoords.values, vizInitialCoords);
+
+	std::cout << yellow << "Selected voxel at " << current_x << ", " << current_y << ", " << current_z
+	          << ". Voxel information:" << reset << std::endl;
+	float selectedVoxelScale = scaleArray->GetValue(pointId);
+	auto selectedVoxelColorIndex = static_cast<VoxelColorIndex>(colorIndexArray->GetValue(pointId));
+
+	ITMVoxelCanonical* voxelBlocks = scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
+	bool foundPoint;
+	ITMVoxelCanonical voxel = readVoxel(voxelBlocks, canonicalHashTable, initialCoords, foundPoint);
+	if (!foundPoint) {
+		std::cerr << "   Could not find the selected voxel in scene data! " __FILE__ ":" + std::to_string(__LINE__);
+		return;
+	}
+	float sdfValue = ITMVoxelCanonical::valueToFloat(voxel.sdf);
+	auto category = static_cast<VoxelFlags>(voxel.flags);
+	std::cout << "   Initial voxel position (before warp): " << initialCoords << "." << std::endl;
+	std::cout << "   Voxel display scale: " << selectedVoxelScale << ", representing the SDF value of " << sdfValue
+	          << "." << std::endl;
+	std::cout << "   Voxel color index: " << VoxelColorIndexAsCString(selectedVoxelColorIndex)
+	          << ", representing the voxel category " << VoxelFlagsAsCString(category) << "." << std::endl;
+
+}
+//endregion
+//region =========================================== POINTS, HIGHLIGHTS, & PIPELINE SETUP ==============================
 
 void CanonicalVizPipe::PreparePointsForRendering() {
 
@@ -253,148 +360,6 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 	preparePipelineWasCalled = true;
 }
 
-
-void CanonicalVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
-	vtkSmartPointer<vtkPoints> voxels = this->voxelPolydata->GetPoints();
-	auto* initialPointRawData = reinterpret_cast<float*>(initialNonInterestPoints->GetVoidPointer(0));
-	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
-	auto* warpRawData = reinterpret_cast<float*>(buffer);
-
-	std::tuple<int, int> nextInterestRegionRange;
-	bool hasMoreInterestRegions = false;
-	int interestRegionIx = 0;
-	if (!interestRegionRanges.empty()) {
-		nextInterestRegionRange = interestRegionRanges[interestRegionIx];
-		hasMoreInterestRegions = true;
-	}
-	//TODO: parallelize (the way interest regions are handled right now is a problem) -Greg (GitHub: Algomorph)
-	for (int iVoxel = 0; iVoxel < totalVoxelCount; iVoxel++) {
-		//skip over the intererest region voxels
-		if (hasMoreInterestRegions && iVoxel > std::get<0>(nextInterestRegionRange)) {
-			if (iVoxel < std::get<1>(nextInterestRegionRange)) {
-				continue;
-			} else {
-				interestRegionIx++;
-				if (interestRegionIx == interestRegionRanges.size()) {
-					hasMoreInterestRegions = false;
-				} else {
-					nextInterestRegionRange = interestRegionRanges[interestRegionIx];
-				}
-			}
-		}
-		//use 1st 3-float field out of 2 for the warp buffer entry
-		pointRawData[iVoxel * 3 + 0] = initialPointRawData[iVoxel * 3 + 0] + warpRawData[iVoxel * 6 + 0];
-		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] - warpRawData[iVoxel * 6 + 1];
-		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] - warpRawData[iVoxel * 6 + 2];
-	}
-	voxelPolydata->Modified();
-}
-
-void CanonicalVizPipe::SetInterestRegionInfo(std::vector<int> interestRegionHashes,
-                                             ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights) {
-	this->highlights = highlights;
-	this->interestRegionHashes = std::move(interestRegionHashes);
-	interestRegionHashSet.clear();
-	for (int hash : this->interestRegionHashes) {
-		interestRegionHashSet.insert(hash);
-	}
-	auto highlightArrays = highlights.GetArrays();
-	for (auto highlightArray : highlightArrays) {
-		ITMHighlightIterationInfo& info = highlightArray[0];
-		for (auto neighbor : info.neighbors) {
-			this->highlightByNeighbor.InsertOrdered(neighbor.hash, neighbor.localId, frameIx,
-			                                        std::make_tuple(info.hash, info.localId));
-		}
-	}
-	interestRegionHashesAreSet = true;
-}
-
-void CanonicalVizPipe::PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeometry) {
-	if (!preparePipelineWasCalled) {
-		DIEWITHEXCEPTION("PreparePipeline needs to be called first. ["
-				                 __FILE__
-				                 ":" + std::to_string(__LINE__) + "]");
-	}
-	SetUpSceneVoxelMapper(voxelSourceGeometry, interestVoxelMapper, interestVoxelColorLookupTable,
-	                      interestVoxelPolydata);
-	interestVoxelActor->SetMapper(interestVoxelMapper);
-}
-
-
-void CanonicalVizPipe::PrepareWarplessVoxels(vtkAlgorithmOutput* voxelSourceGeometry) {
-	if (!preparePipelineWasCalled) {
-		DIEWITHEXCEPTION("PreparePipeline needs to be called first. ["
-				                 __FILE__
-				                 ":" + std::to_string(__LINE__) + "]");
-	}
-	SetUpSceneVoxelMapper(voxelSourceGeometry, warplessVoxelMapper, voxelColorLookupTable, warplessVoxelPolydata);
-	warplessVoxelActor->SetMapper(warplessVoxelMapper);
-}
-
-vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetInterestVoxelActor() {
-	return interestVoxelActor;
-}
-
-vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetWarplessVoxelActor() {
-	return warplessVoxelActor;
-}
-
-
-// assumes (1) buffers are ordered by interest region central hash (2) there is no overlap between interest regions
-void CanonicalVizPipe::UpdateInterestRegionsFromBuffers(void* buffer) {
-	vtkSmartPointer<vtkPoints> voxels = interestVoxelPolydata->GetPoints();
-	auto* initialPointRawData = reinterpret_cast<float*>(initialInterestPoints->GetVoidPointer(0));
-	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
-	auto* warpRawData = reinterpret_cast<float*>(buffer);
-
-	//TODO: parallelize with OpenMP  -Greg (GitHub: Algomorph)
-	for (int iVoxel = 0; iVoxel < voxels->GetNumberOfPoints(); iVoxel++) {
-		//use 1st 3-float field out of 2 for the warp buffer entry
-		pointRawData[iVoxel * 3 + 0] = initialPointRawData[iVoxel * 3 + 0] + warpRawData[iVoxel * 6 + 0];
-		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] - warpRawData[iVoxel * 6 + 1];
-		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] - warpRawData[iVoxel * 6 + 2];
-	}
-	interestVoxelPolydata->Modified();
-}
-
-Vector3d CanonicalVizPipe::GetHighlightPosition(int hash, int locId) {
-	Vector3d pos;
-	this->interestVoxelPolydata->GetPoints()->GetPoint(
-			(*this->highlightIndexes.GetValueAt(hash, locId, frameIx)), pos.values);
-	return pos;
-}
-
-std::vector<Vector3d> CanonicalVizPipe::GetHighlightNeighborPositions(int hash, int locId) {
-	std::vector<Vector3d> positions;
-	vtkPoints* points = this->interestVoxelPolydata->GetPoints();
-	const std::vector<int> indexes = *this->highlightNeighborIndexes.GetArrayAt(hash, locId, frameIx);
-	for (int iNeighbor = 0; iNeighbor < indexes.size(); iNeighbor++) {
-		Vector3d pos;
-		points->GetPoint(indexes[iNeighbor], pos.values);
-		positions.push_back(pos);
-	}
-	return positions;
-}
-
-void CanonicalVizPipe::SetFrameIndex(int frameIx) {
-	this->frameIx = frameIx;
-}
-
-void CanonicalVizPipe::PrintHighlightIndexes() {
-	std::cout << this->highlightIndexes << std::endl;
-}
-
-void CanonicalVizPipe::ToggleScaleMode() {
-	SDFSceneVizPipe::ToggleScaleMode();
-	if (scaleMode == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS) {
-		interestVoxelMapper->SetScaleArray(scaleUnknownsHiddenAttributeName);
-		warplessVoxelMapper->SetScaleArray(scaleUnknownsHiddenAttributeName);
-	} else {
-		interestVoxelMapper->SetScaleArray(scaleUnknownsVisibleAttributeName);
-		warplessVoxelMapper->SetScaleArray(scaleUnknownsVisibleAttributeName);
-	}
-}
-
 void CanonicalVizPipe::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
                                        vtkAlgorithmOutput* hashBlockSourceGeometry) {
 	SDFSceneVizPipe::PreparePipeline(voxelSourceGeometry, hashBlockSourceGeometry);
@@ -432,6 +397,116 @@ void CanonicalVizPipe::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
 	                                              sliceExtremaMarkerColor[2]);
 	selectedSlicePreview->GetProperty()->SetOpacity(0.35);
 	//***
+}
+
+void CanonicalVizPipe::SetInterestRegionInfo(std::vector<int> interestRegionHashes,
+                                             ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights) {
+	this->highlights = highlights;
+	this->interestRegionHashes = std::move(interestRegionHashes);
+	interestRegionHashSet.clear();
+	for (int hash : this->interestRegionHashes) {
+		interestRegionHashSet.insert(hash);
+	}
+	auto highlightArrays = highlights.GetArrays();
+	for (auto highlightArray : highlightArrays) {
+		ITMHighlightIterationInfo& info = highlightArray[0];
+		for (auto neighbor : info.neighbors) {
+			this->highlightByNeighbor.InsertOrdered(neighbor.hash, neighbor.localId, frameIx,
+			                                        std::make_tuple(info.hash, info.localId));
+		}
+	}
+	interestRegionHashesAreSet = true;
+}
+
+void CanonicalVizPipe::PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeometry) {
+	if (!preparePipelineWasCalled) {
+		DIEWITHEXCEPTION("PreparePipeline needs to be called first. ["
+				                 __FILE__
+				                 ":" + std::to_string(__LINE__) + "]");
+	}
+	SetUpSceneVoxelMapper(voxelSourceGeometry, interestVoxelMapper, interestVoxelColorLookupTable,
+	                      interestVoxelPolydata);
+	interestVoxelActor->SetMapper(interestVoxelMapper);
+}
+
+void CanonicalVizPipe::PrepareWarplessVoxels(vtkAlgorithmOutput* voxelSourceGeometry) {
+	if (!preparePipelineWasCalled) {
+		DIEWITHEXCEPTION("PreparePipeline needs to be called first. ["
+				                 __FILE__
+				                 ":" + std::to_string(__LINE__) + "]");
+	}
+	SetUpSceneVoxelMapper(voxelSourceGeometry, warplessVoxelMapper, voxelColorLookupTable, warplessVoxelPolydata);
+	warplessVoxelActor->SetMapper(warplessVoxelMapper);
+}
+
+void CanonicalVizPipe::SetFrameIndex(int frameIx) {
+	this->frameIx = frameIx;
+}
+//endregion
+//region ========================================== WARP UPDATES =======================================================
+
+void CanonicalVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
+	vtkSmartPointer<vtkPoints> voxels = this->voxelPolydata->GetPoints();
+	auto* initialPointRawData = reinterpret_cast<float*>(initialNonInterestPoints->GetVoidPointer(0));
+	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
+	auto* warpRawData = reinterpret_cast<float*>(buffer);
+
+	std::tuple<int, int> nextInterestRegionRange;
+	bool hasMoreInterestRegions = false;
+	int interestRegionIx = 0;
+	if (!interestRegionRanges.empty()) {
+		nextInterestRegionRange = interestRegionRanges[interestRegionIx];
+		hasMoreInterestRegions = true;
+	}
+	//TODO: parallelize (the way interest regions are handled right now is a problem) -Greg (GitHub: Algomorph)
+	for (int iVoxel = 0; iVoxel < totalVoxelCount; iVoxel++) {
+		//skip over the intererest region voxels
+		if (hasMoreInterestRegions && iVoxel > std::get<0>(nextInterestRegionRange)) {
+			if (iVoxel < std::get<1>(nextInterestRegionRange)) {
+				continue;
+			} else {
+				interestRegionIx++;
+				if (interestRegionIx == interestRegionRanges.size()) {
+					hasMoreInterestRegions = false;
+				} else {
+					nextInterestRegionRange = interestRegionRanges[interestRegionIx];
+				}
+			}
+		}
+		//use 1st 3-float field out of 2 for the warp buffer entry
+		pointRawData[iVoxel * 3 + 0] = initialPointRawData[iVoxel * 3 + 0] + warpRawData[iVoxel * 6 + 0];
+		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] - warpRawData[iVoxel * 6 + 1];
+		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] - warpRawData[iVoxel * 6 + 2];
+	}
+	voxelPolydata->Modified();
+}
+// assumes (1) buffers are ordered by interest region central hash (2) there is no overlap between interest regions
+void CanonicalVizPipe::UpdateInterestRegionsFromBuffers(void* buffer) {
+	vtkSmartPointer<vtkPoints> voxels = interestVoxelPolydata->GetPoints();
+	auto* initialPointRawData = reinterpret_cast<float*>(initialInterestPoints->GetVoidPointer(0));
+	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
+	auto* warpRawData = reinterpret_cast<float*>(buffer);
+
+	//TODO: parallelize with OpenMP  -Greg (GitHub: Algomorph)
+	for (int iVoxel = 0; iVoxel < voxels->GetNumberOfPoints(); iVoxel++) {
+		//use 1st 3-float field out of 2 for the warp buffer entry
+		pointRawData[iVoxel * 3 + 0] = initialPointRawData[iVoxel * 3 + 0] + warpRawData[iVoxel * 6 + 0];
+		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] - warpRawData[iVoxel * 6 + 1];
+		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] - warpRawData[iVoxel * 6 + 2];
+	}
+	interestVoxelPolydata->Modified();
+}
+//endregion
+//region =========================================== INTERACTIONS / MODES ===============================================
+void CanonicalVizPipe::ToggleScaleMode() {
+	SDFSceneVizPipe::ToggleScaleMode();
+	if (scaleMode == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS) {
+		interestVoxelMapper->SetScaleArray(scaleUnknownsHiddenAttributeName);
+		warplessVoxelMapper->SetScaleArray(scaleUnknownsHiddenAttributeName);
+	} else {
+		interestVoxelMapper->SetScaleArray(scaleUnknownsVisibleAttributeName);
+		warplessVoxelMapper->SetScaleArray(scaleUnknownsVisibleAttributeName);
+	}
 }
 
 /**
@@ -518,77 +593,14 @@ void CanonicalVizPipe::SetSliceSelection(vtkIdType pointId, bool& continueSliceS
 				static_cast<double>(selectedSliceExtremaCoordinates[1].z + selectedSliceExtremaCoordinates[0].z) / 2.0);
 		Vector3d centerViz(center.x, -center.y, -center.z);
 		Vector3d dimensions(
-				static_cast<double>(std::abs(selectedSliceExtremaCoordinates[1].x - selectedSliceExtremaCoordinates[0].x) + 1.0),
-				static_cast<double>(std::abs(selectedSliceExtremaCoordinates[1].y - selectedSliceExtremaCoordinates[0].y) + 1.0),
-				static_cast<double>(std::abs(selectedSliceExtremaCoordinates[1].z - selectedSliceExtremaCoordinates[0].z) + 1.0));
+				std::abs(selectedSliceExtremaCoordinates[1].x - selectedSliceExtremaCoordinates[0].x) + 1.0,
+				std::abs(selectedSliceExtremaCoordinates[1].y - selectedSliceExtremaCoordinates[0].y) + 1.0,
+				std::abs(selectedSliceExtremaCoordinates[1].z - selectedSliceExtremaCoordinates[0].z) + 1.0);
 		//@formatter:on
 		selectedSlicePreview->SetPosition(centerViz.values);
 		selectedSlicePreview->SetScale(dimensions.values);
 		selectedSlicePreview->VisibilityOn();
 	}
-}
-
-vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetSelectionVoxelActor() {
-	return this->selectedVoxelActor;
-}
-
-vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetSlicePreviewActor() {
-	return this->selectedSlicePreview;
-}
-
-/**
- * \brief Prints information about the voxel with given point id in voxelPolydata. Currently, doesn't work for interest voxels.
- * \param pointId id of the point in question.
- */
-void CanonicalVizPipe::PrintVoxelInfromation(vtkIdType pointId) {
-
-	auto scaleArray = dynamic_cast<vtkFloatArray*>(voxelPolydata->GetPointData()->GetArray(
-			scaleMode == VOXEL_SCALE_HIDE_UNKNOWNS ? scaleUnknownsHiddenAttributeName
-			                                       : scaleUnknownsVisibleAttributeName));
-	auto colorIndexArray = dynamic_cast<vtkIntArray*>(voxelPolydata->GetPointData()->GetArray(colorAttributeName));
-
-	//retrieve current coordiante
-	auto currentPoints = voxelPolydata->GetPoints();
-	double currentPoint[3];
-	currentPoints->GetPoint(pointId, currentPoint);
-	double current_x = currentPoint[0];
-	double current_y = -currentPoint[1];
-	double current_z = -currentPoint[2];
-
-	//retrieve original coordinate before warp
-	Vector3i initialCoords;
-	double vizInitialCoords[3];
-	RetrieveInitialCoordinates(pointId, initialCoords.values, vizInitialCoords);
-
-	std::cout << yellow << "Selected voxel at " << current_x << ", " << current_y << ", " << current_z
-	          << ". Voxel information:" << reset << std::endl;
-	float selectedVoxelScale = scaleArray->GetValue(pointId);
-	auto selectedVoxelColorIndex = static_cast<VoxelColorIndex>(colorIndexArray->GetValue(pointId));
-
-	ITMVoxelCanonical* voxelBlocks = scene->localVBA.GetVoxelBlocks();
-	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
-	bool foundPoint;
-	ITMVoxelCanonical voxel = readVoxel(voxelBlocks, canonicalHashTable, initialCoords, foundPoint);
-	if (!foundPoint) {
-		std::cerr << "   Could not find the selected voxel in scene data! " __FILE__ ":" + std::to_string(__LINE__);
-		return;
-	}
-	float sdfValue = ITMVoxelCanonical::valueToFloat(voxel.sdf);
-	auto category = static_cast<VoxelFlags>(voxel.flags);
-	std::cout << "   Initial voxel position (before warp): " << initialCoords << "." << std::endl;
-	std::cout << "   Voxel display scale: " << selectedVoxelScale << ", representing the SDF value of " << sdfValue
-	          << "." << std::endl;
-	std::cout << "   Voxel color index: " << VoxelColorIndexAsCString(selectedVoxelColorIndex)
-	          << ", representing the voxel category " << VoxelFlagsAsCString(category) << "." << std::endl;
-
-}
-
-vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetSliceSelectionActor(int index) {
-	if (index < 0 && index > 1)
-		DIEWITHEXCEPTION("Index needs to be 0 or 1."
-				                 __FILE__
-				                 ":" + std::to_string(__LINE__));
-	return this->selectedSliceExtrema[index];
 }
 
 void CanonicalVizPipe::ToggleWarpEnabled() {
@@ -603,17 +615,6 @@ void CanonicalVizPipe::ToggleWarpEnabled() {
 	}
 }
 
-bool CanonicalVizPipe::GetWarpEnabled() const {
-	return this->warpEnabled;
-}
-
-vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetVoxelActor() {
-	if (this->warpEnabled) {
-		return SDFSceneVizPipe::GetVoxelActor();
-	} else {
-		return this->warplessVoxelActor;
-	}
-}
-
+//endregion
 
 
