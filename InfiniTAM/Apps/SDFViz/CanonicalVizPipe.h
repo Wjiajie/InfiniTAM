@@ -45,18 +45,23 @@ public:
 	void SetInterestRegionInfo(std::vector<int> interestRegionHashes,
 	                           ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights);
 	void SetFrameIndex(int frameIx);
+	vtkSmartPointer<vtkActor>& GetVoxelActor() override;
 	vtkSmartPointer<vtkActor>& GetInterestVoxelActor();
+	vtkSmartPointer<vtkActor>& GetWarplessVoxelActor();
 	vtkSmartPointer<vtkActor>& GetSelectionVoxelActor();
 	vtkSmartPointer<vtkActor>& GetSliceSelectionActor(int index);
+	bool GetWarpEnabled() const;
 	void PrintHighlightIndexes();
 
 	// *** setup ***
 	void PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeometry);
+	void PrepareWarplessVoxels(vtkAlgorithmOutput* voxelSourceGeometry);
 	void PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
 	                     vtkAlgorithmOutput* hashBlockSourceGeometry) override;
 
 	// *** modify state ***
 	void ToggleScaleMode() override;
+	void ToggleWarpEnabled();
 	void SelectOrDeselectVoxel(vtkIdType pointId, bool highlightOn);
 	void SetSliceSelection(vtkIdType pointId, bool& continueSliceSelection);
 	
@@ -82,7 +87,8 @@ private:
 	// ** state **
 	bool interestRegionHashesAreSet = false;
 	bool preparePipelineWasCalled = false;
-	bool firstSiliceBoundSelected = false;
+	bool firstSliceBoundSelected = false;
+	bool warpEnabled = true;
 
 	// ** interest region info **
 	std::vector<int> interestRegionHashes;
@@ -99,10 +105,13 @@ private:
 	vtkSmartPointer<vtkLookupTable> interestVoxelColorLookupTable;
 	vtkSmartPointer<vtkGlyph3DMapper> interestVoxelMapper;
 	vtkSmartPointer<vtkActor> interestVoxelActor;
+	vtkSmartPointer<vtkPolyData> warplessVoxelPolydata;
+	vtkSmartPointer<vtkGlyph3DMapper> warplessVoxelMapper;
+	vtkSmartPointer<vtkActor> warplessVoxelActor;
+
 
 	// ** interaction **
 	int selectedVertexDefaultColorIndex;
 	vtkSmartPointer<vtkActor> selectedVoxelActor;
 	vtkSmartPointer<vtkActor> selectedSliceExterema[2];
-
 };

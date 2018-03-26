@@ -141,32 +141,15 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 	SetUpGeometrySources();
 	LoadFrameData();
 	ReinitializePipelines();
+	AddActors();
 
-	// add voxel & grid actors
-	sdfRenderer->AddActor(canonicalScenePipe.GetVoxelActor());
-	sdfRenderer->AddActor(canonicalScenePipe.GetInterestVoxelActor());
-	sdfRenderer->AddActor(canonicalScenePipe.GetHashBlockActor());
-	sdfRenderer->AddActor(liveScenePipe.GetVoxelActor());
-	sdfRenderer->AddActor(liveScenePipe.GetHashBlockActor());
-
-	// add marker/highlight actors
-	topRenderer->AddActor(canonicalScenePipe.GetSelectionVoxelActor());
-	topRenderer->AddActor(canonicalScenePipe.GetSliceSelectionActor(0));
-	topRenderer->AddActor(canonicalScenePipe.GetSliceSelectionActor(1));
-	topRenderer->AddActor(highlightVisualizer.GetHighlightActor());
-
-	// to prevent VTK from doing excessive near-cliping with multi-layered renderers
+	// to prevent VTK from doing excessive near-clipping with multi-layered renderers
 	DrawDummyMarkers();
 
-	// set up visibility
+	// set up visibilities
 	UpdatePipelineVisibilitiesUsingLocalState();
-
-	if (hasWarpIterationInfo && !hideNonInterestCanonicalVoxels) {
-		NextNonInterestWarps();
-	}
-	if (hasHighlightInfo && !hideInterestCanonicalRegions) {
-		NextInterestWarps();
-	}
+	// load initial warps
+	InitializeWarps();
 
 	// set up initial camera position & orientation
 
@@ -197,7 +180,6 @@ SDFViz::~SDFViz() {
 
 
 void SDFViz::InitializeRendering() {
-
 	sdfRenderer = vtkSmartPointer<vtkRenderer>::New();
 	topRenderer = vtkSmartPointer<vtkRenderer>::New();
 
@@ -207,7 +189,6 @@ void SDFViz::InitializeRendering() {
 
 	renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
 	renderWindow->SetSize(renderWindow->GetScreenSize());
-
 
 	renderWindow->SetWindowName("SDF Viz (pre-alpha)");//TODO insert git hash here --Greg (GitHub:Algomorph)
 	renderWindow->SetNumberOfLayers(2);
@@ -219,7 +200,6 @@ void SDFViz::InitializeRendering() {
 	topRenderer->InteractiveOn();
 	topRenderer->SetActiveCamera(sdfRenderer->GetActiveCamera());
 
-
 	renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
 
 	vtkSmartPointer<SDFVizInteractorStyle> interactorStyle = vtkSmartPointer<SDFVizInteractorStyle>::New();
@@ -228,8 +208,6 @@ void SDFViz::InitializeRendering() {
 
 	renderWindowInteractor->SetInteractorStyle(interactorStyle);
 	renderWindowInteractor->SetRenderWindow(renderWindow);
-
-
 }
 
 bool SDFViz::NextNonInterestWarps() {
@@ -571,12 +549,7 @@ bool SDFViz::AdvanceFrame() {
 		LoadFrameData();
 		ReinitializePipelines();
 		UpdatePipelineVisibilitiesUsingLocalState();
-		if (hasWarpIterationInfo) { //immediately load data for 0'th iteration
-			NextNonInterestWarps();
-		}
-		if (hasHighlightInfo) {
-			NextInterestWarps();
-		}
+		InitializeWarps();
 		iterationIndex = 0;
 		UpdateIterationDisplay();
 		UpdateFrameDisplay();
@@ -605,12 +578,7 @@ bool SDFViz::RetreatFrame() {
 		LoadFrameData();
 		ReinitializePipelines();
 		UpdatePipelineVisibilitiesUsingLocalState();
-		if (hasWarpIterationInfo) { //immediately load data for 0'th iteration
-			NextNonInterestWarps();
-		}
-		if (hasHighlightInfo) {
-			NextInterestWarps();
-		}
+		InitializeWarps();
 		iterationIndex = 0;
 		UpdateIterationDisplay();
 		UpdateFrameDisplay();
@@ -658,10 +626,14 @@ void SDFViz::ReinitializePipelines() {
 	canonicalScenePipe.SetInterestRegionInfo(sceneLogger->GetInterestRegionHashes(), highlights);
 	canonicalScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
 	canonicalScenePipe.PrepareInterestRegions(sphere->GetOutputPort());
+	canonicalScenePipe.PrepareWarplessVoxels(sphere->GetOutputPort());
 	liveScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
 }
 
 bool SDFViz::AdvanceIteration() {
+	if(!canonicalScenePipe.GetWarpEnabled()){
+		std::cout << "Caution: advancing warp while warp result display is disabled." << std::endl;
+	}
 	bool success = true;
 	iterationIndex++;
 	if (hasHighlightInfo && canonicalScenePipe.GetInterestVoxelActor()->GetVisibility()) {
@@ -691,6 +663,9 @@ bool SDFViz::AdvanceIteration() {
 }
 
 bool SDFViz::RetreatIteration() {
+	if(!canonicalScenePipe.GetWarpEnabled()){
+		std::cout << "Caution: retreating warp while warp result display is disabled." << std::endl;
+	}
 	if (iterationIndex == 0) {
 		return false;
 	}
@@ -724,6 +699,7 @@ bool SDFViz::RetreatIteration() {
 
 void SDFViz::UpdatePipelineVisibilitiesUsingLocalState() {
 	canonicalScenePipe.GetVoxelActor()->SetVisibility(canonicalVoxelsVisible);
+	if(!canonicalScenePipe.GetWarpEnabled()) canonicalScenePipe.GetWarplessVoxelActor()->VisibilityOff();
 	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(canonicalInterestVoxelsVisible);
 	if (canonicalScenePipe.GetCurrentScaleMode() == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS &&
 	    canonicalNegativeOneVoxelsVisible ||
@@ -740,6 +716,32 @@ void SDFViz::UpdatePipelineVisibilitiesUsingLocalState() {
 		liveScenePipe.ToggleScaleMode();
 	}
 	liveScenePipe.GetHashBlockActor()->SetVisibility(liveHashBlocksVisible);
+}
+
+void SDFViz::InitializeWarps() {
+	// load initial warps
+	if (hasWarpIterationInfo && canonicalVoxelsVisible) {
+		NextNonInterestWarps();
+	}
+	if (hasHighlightInfo && canonicalInterestVoxelsVisible) {
+		NextInterestWarps();
+	}
+}
+
+void SDFViz::AddActors() {
+	// add voxel & grid actors
+	sdfRenderer->AddActor(canonicalScenePipe.GetVoxelActor());
+	sdfRenderer->AddActor(canonicalScenePipe.GetInterestVoxelActor());
+	sdfRenderer->AddActor(canonicalScenePipe.GetWarplessVoxelActor());
+	sdfRenderer->AddActor(canonicalScenePipe.GetHashBlockActor());
+	sdfRenderer->AddActor(liveScenePipe.GetVoxelActor());
+	sdfRenderer->AddActor(liveScenePipe.GetHashBlockActor());
+
+	// add marker/highlight actors
+	topRenderer->AddActor(canonicalScenePipe.GetSelectionVoxelActor());
+	topRenderer->AddActor(canonicalScenePipe.GetSliceSelectionActor(0));
+	topRenderer->AddActor(canonicalScenePipe.GetSliceSelectionActor(1));
+	topRenderer->AddActor(highlightVisualizer.GetHighlightActor());
 }
 
 

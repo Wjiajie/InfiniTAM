@@ -78,6 +78,9 @@ CanonicalVizPipe::CanonicalVizPipe(const std::array<double, 4>& positiveTruncate
 		interestVoxelColorLookupTable(vtkSmartPointer<vtkLookupTable>::New()),
 		interestVoxelMapper(vtkSmartPointer<vtkGlyph3DMapper>::New()),
 		interestVoxelActor(vtkSmartPointer<vtkActor>::New()),
+		warplessVoxelPolydata(vtkSmartPointer<vtkPolyData>::New()),
+		warplessVoxelMapper(vtkSmartPointer<vtkGlyph3DMapper>::New()),
+		warplessVoxelActor(vtkSmartPointer<vtkActor>::New()),
 		selectedVoxelActor(vtkSmartPointer<vtkActor>::New()),
 		selectedSliceExterema({vtkSmartPointer<vtkActor>::New(), vtkSmartPointer<vtkActor>::New()}) {
 	//TODO: set up separate colors for turncated/nontruncated & interest unknown -Greg (GitHub: Algomorph)
@@ -238,11 +241,20 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 	// warp prep
 	initialNonInterestPoints->DeepCopy(voxelPolydata->GetPoints());
 	initialInterestPoints->DeepCopy(interestVoxelPolydata->GetPoints());
+	
+	warplessVoxelPolydata->SetPoints(initialNonInterestPoints);
+	warplessVoxelPolydata->GetPointData()->AddArray(nonInterestScaleAttribute);
+	warplessVoxelPolydata->GetPointData()->AddArray(nonInterestAlternativeScaleAttribute);
+	warplessVoxelPolydata->GetPointData()->AddArray(nonInterestColorAttribute);
+	warplessVoxelPolydata->GetPointData()->SetActiveScalars(colorAttributeName);
+	
 	preparePipelineWasCalled = true;
 }
 
+
+
 void CanonicalVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
-	vtkPoints* voxels = voxelPolydata->GetPoints();
+	vtkSmartPointer<vtkPoints> voxels = this->voxelPolydata->GetPoints();
 	auto* initialPointRawData = reinterpret_cast<float*>(initialNonInterestPoints->GetVoidPointer(0));
 	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
 	auto* warpRawData = reinterpret_cast<float*>(buffer);
@@ -302,23 +314,34 @@ void CanonicalVizPipe::PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeo
 				                 __FILE__
 				                 ":" + std::to_string(__LINE__) + "]");
 	}
-
-	// set up voxel mapper
 	SetUpSceneVoxelMapper(voxelSourceGeometry, interestVoxelMapper, interestVoxelColorLookupTable,
 	                      interestVoxelPolydata);
-
-	// set up voxel actor
 	interestVoxelActor->SetMapper(interestVoxelMapper);
+}
+
+
+void CanonicalVizPipe::PrepareWarplessVoxels(vtkAlgorithmOutput* voxelSourceGeometry) {
+	if (!preparePipelineWasCalled) {
+		DIEWITHEXCEPTION("PreparePipeline needs to be called first. ["
+				                 __FILE__
+				                 ":" + std::to_string(__LINE__) + "]");
+	}
+	SetUpSceneVoxelMapper(voxelSourceGeometry, warplessVoxelMapper, voxelColorLookupTable, warplessVoxelPolydata);
+	warplessVoxelActor->SetMapper(warplessVoxelMapper);
 }
 
 vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetInterestVoxelActor() {
 	return interestVoxelActor;
 }
 
+vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetWarplessVoxelActor() {
+	return warplessVoxelActor;
+}
+
+
 // assumes (1) buffers are ordered by interest region central hash (2) there is no overlap between interest regions
 void CanonicalVizPipe::UpdateInterestRegionsFromBuffers(void* buffer) {
-	vtkPoints* voxels = interestVoxelPolydata->GetPoints();
-
+	vtkSmartPointer<vtkPoints> voxels = interestVoxelPolydata->GetPoints();
 	auto* initialPointRawData = reinterpret_cast<float*>(initialInterestPoints->GetVoidPointer(0));
 	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
 	auto* warpRawData = reinterpret_cast<float*>(buffer);
@@ -364,8 +387,10 @@ void CanonicalVizPipe::ToggleScaleMode() {
 	SDFSceneVizPipe::ToggleScaleMode();
 	if (scaleMode == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS) {
 		interestVoxelMapper->SetScaleArray(scaleUnknownsHiddenAttributeName);
+		warplessVoxelMapper->SetScaleArray(scaleUnknownsHiddenAttributeName);
 	} else {
 		interestVoxelMapper->SetScaleArray(scaleUnknownsVisibleAttributeName);
+		warplessVoxelMapper->SetScaleArray(scaleUnknownsVisibleAttributeName);
 	}
 }
 
@@ -445,14 +470,14 @@ CanonicalVizPipe::RetrieveInitialCoordinates(vtkIdType pointId, int initialCoord
  */
 void CanonicalVizPipe::SetSliceSelection(vtkIdType pointId, bool& continueSliceSelection) {
 	vtkSmartPointer<vtkActor> extremum;
-	if (this->firstSiliceBoundSelected) {
+	if (this->firstSliceBoundSelected) {
 		extremum = selectedSliceExterema[1];
 		continueSliceSelection = false;
-		this->firstSiliceBoundSelected = false;
+		this->firstSliceBoundSelected = false;
 		std::cout << bright_cyan << "Selecting second slice extremum..." << reset << std::endl;
 	} else {
 		extremum = selectedSliceExterema[0];
-		this->firstSiliceBoundSelected = true;
+		this->firstSliceBoundSelected = true;
 		continueSliceSelection = true;
 		std::cout << bright_cyan << "Selecting first slice extremum..." << reset << std::endl;
 	}
@@ -522,4 +547,30 @@ vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetSliceSelectionActor(int index) {
 				                 ":" + std::to_string(__LINE__));
 	return this->selectedSliceExterema[index];
 }
+
+void CanonicalVizPipe::ToggleWarpEnabled() {
+	if(warpEnabled){
+		GetVoxelActor()->VisibilityOff();
+		warpEnabled = false;
+		GetVoxelActor()->VisibilityOn();
+	}else{
+		GetVoxelActor()->VisibilityOff();
+		warpEnabled = true;
+		GetVoxelActor()->VisibilityOn();
+	}
+}
+
+bool CanonicalVizPipe::GetWarpEnabled() const {
+	return this->warpEnabled;
+}
+
+vtkSmartPointer<vtkActor>& CanonicalVizPipe::GetVoxelActor() {
+	if(this->warpEnabled){
+		return SDFSceneVizPipe::GetVoxelActor();
+	}else{
+		return this->warplessVoxelActor;
+	}
+}
+
+
 

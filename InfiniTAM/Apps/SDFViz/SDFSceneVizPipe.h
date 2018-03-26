@@ -54,7 +54,7 @@ public:
 	virtual void PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry, vtkAlgorithmOutput* hashBlockSourceGeometry);
 
 	ITMScene<TVoxel, TIndex>* GetScene();
-	vtkSmartPointer<vtkActor>& GetVoxelActor();
+	virtual vtkSmartPointer<vtkActor>& GetVoxelActor();
 	vtkSmartPointer<vtkActor>& GetHashBlockActor();
 	VoxelScaleMode GetCurrentScaleMode();
 
@@ -86,6 +86,8 @@ protected:
 
 	// ** individual voxels **
 	vtkSmartPointer<vtkPolyData> voxelPolydata;
+	vtkSmartPointer<vtkLookupTable> voxelColorLookupTable;
+
 	// ** hash-block grid **
 	vtkSmartPointer<vtkPolyData> hashBlockGrid;
 	VoxelScaleMode scaleMode;
@@ -94,7 +96,7 @@ private:
 
 	// ===================== MEMBER VARIABLES ===========================
 	// ** voxels **
-	vtkSmartPointer<vtkLookupTable> voxelColorLookupTable;
+
 	vtkSmartPointer<vtkGlyph3DMapper> voxelMapper;
 	vtkSmartPointer<vtkActor> voxelActor;
 

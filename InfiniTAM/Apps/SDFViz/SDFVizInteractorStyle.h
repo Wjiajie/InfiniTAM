@@ -48,13 +48,18 @@ public:
 	void OnLeftButtonUp() override;
 
 private:
+	//============================= MEMBER FUNCTIONS ===================================================================
+	void TurnOnSliceSelectionMode();
+	void TurnOffSliceSelectionMode();
+
 	//============================= MEMBER VARIABLES ===================================================================
 	Mode mode = VIEW;
 	Mode previousMode = VIEW;
 	bool keySymbolPrinting = false;
+	bool previouslyWarpWasEnabled = false;
 	vtkSmartPointer<vtkPointPicker> pointPicker;
 	vtkIdType selectedPointId = -1;
-	//============================= MEMBER FUNCTIONS ===================================================================
+
 
 
 };

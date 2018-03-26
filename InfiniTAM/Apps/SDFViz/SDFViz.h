@@ -160,6 +160,8 @@ private:
 	//*** initialization / drawing GUI elements ***
 	void InitializeRendering();
 	void InitializeWarpBuffers();
+	void InitializeWarps();
+	void AddActors();
 	void DrawLegend();
 	void DrawIterationCounter();
 	void DrawDummyMarkers();

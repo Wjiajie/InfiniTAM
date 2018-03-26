@@ -136,11 +136,9 @@ void SDFVizInteractorStyle::OnKeyPress() {
 			if (rwi->GetAltKey()) {
 				// slice selection mode
 				if (mode == SLICE_SELECT) {
-					mode = previousMode; //reset to previous mode
-					previousMode = SLICE_SELECT;
+					TurnOnSliceSelectionMode();
 				} else {
-					previousMode = mode;
-					mode = SLICE_SELECT;
+					TurnOffSliceSelectionMode();
 				}
 				std::cout << "Slice selection mode " << (this->mode == SLICE_SELECT ? "ON" : "OFF") << std::endl;
 			} else if (mode == VIEW || mode == VOXEL_SELECT) {
@@ -151,7 +149,10 @@ void SDFVizInteractorStyle::OnKeyPress() {
 			}
 		} else if (key == "grave") {
 			this->keySymbolPrinting = !this->keySymbolPrinting;
-			std::cout << "Key symbol & code printing: " << (keySymbolPrinting ? "ON" : "OFF");
+			std::cout << "Key symbol & code printing: " << (keySymbolPrinting ? "ON" : "OFF") << std::endl;
+		} else if (key == "KP_Multiply" && mode == VIEW){
+			parent->canonicalScenePipe.ToggleWarpEnabled();
+			parent->renderWindow->Render();
 		}
 	}
 	if (keySymbolPrinting) {
@@ -194,10 +195,10 @@ void SDFVizInteractorStyle::OnLeftButtonUp() {
 				bool continueSliceSelection = true;
 				parent->canonicalScenePipe.SetSliceSelection(newSelectedPointId, continueSliceSelection);
 				if(!continueSliceSelection){
-					mode = previousMode;
-					previousMode = SLICE_SELECT;
+					TurnOffSliceSelectionMode();
+				}else{
+					parent->renderWindow->Render();
 				}
-				parent->renderWindow->Render();
 			}
 		}
 			break;
@@ -209,5 +210,28 @@ void SDFVizInteractorStyle::OnLeftButtonDown() {
 	if (mode == VIEW) {
 		vtkInteractorStyleTrackballCamera::OnLeftButtonDown();
 	}
+}
+
+void SDFVizInteractorStyle::TurnOnSliceSelectionMode() {
+	previousMode = mode;
+	mode = SLICE_SELECT;
+	previouslyWarpWasEnabled = parent->canonicalScenePipe.GetWarpEnabled();
+	if(previouslyWarpWasEnabled){
+		//disable warp during slice selection
+		parent->canonicalScenePipe.ToggleWarpEnabled();
+	}
+	parent->renderWindow->Render();
+	std::cout << "Slice selection mode: ON" << std::endl;
+}
+
+void SDFVizInteractorStyle::TurnOffSliceSelectionMode() {
+	mode = previousMode; //reset to previous mode
+	previousMode = SLICE_SELECT;
+	if(previouslyWarpWasEnabled){
+		//reset to using warp again
+		parent->canonicalScenePipe.ToggleWarpEnabled();
+	}
+	parent->renderWindow->Render();
+	std::cout << "Slice selection mode: OFF" << std::endl;
 }
 
