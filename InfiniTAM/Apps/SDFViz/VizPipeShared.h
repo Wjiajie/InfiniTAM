@@ -18,7 +18,7 @@
 #include "../../ITMLib/Utils/ITMMath.h"
 #include "../../ITMLib/ITMLibDefines.h"
 
-#define COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf) (sdf == -1.0f ? 0.0f : 1.0f - 0.9f * std::abs(sdf))
+#define COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf, flags) (flags == ITMLib::VOXEL_UNKNOWN ? 0.0f : 1.0f - 0.9f * std::abs(sdf))
 #define COMPUTE_VOXEL_SCALE(sdf) (1.0f - 0.9f * std::abs(sdf))
 
 /**
@@ -75,7 +75,7 @@ void ComputeVoxelAttributes(const Vector3i& currentBlockPositionVoxels, int x, i
 	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 	const TVoxel& voxel = localVoxelBlock[locId];
 	float sdf = TVoxel::valueToFloat(voxel.sdf);
-	float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf);
+	float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf, voxel.flags);
 	float alternativeVoxelScale = COMPUTE_VOXEL_SCALE(sdf);
 	bool truncated = voxel.flags == ITMLib::VOXEL_TRUNCATED;
 	float voxelColor = voxel.flags == ITMLib::VOXEL_UNKNOWN ? UNKNOWN_SDF_COLOR_INDEX :

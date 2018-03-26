@@ -129,9 +129,14 @@ void SDFVizInteractorStyle::OnKeyPress() {
 		} else if (key == "t") {
 			if (rwi->GetAltKey()) {
 				parent->ToggleCanonicalUnknownVoxelVisibility();
+				std::cout << "Canonical voxel unknown visibility: "
+				          << (this->parent->canonicalUnknownVoxelsVisible ? "ON" : "OFF") << std::endl;
 			} else {
 				parent->ToggleLiveUnknownVoxelVisibility();
+				std::cout << "Canonical voxel unknown visibility: "
+				          << (this->parent->liveUnknownVoxelsVisible ? "ON" : "OFF") << std::endl;
 			}
+
 		} else if (key == "s") {
 			if (rwi->GetAltKey()) {
 				// slice selection mode

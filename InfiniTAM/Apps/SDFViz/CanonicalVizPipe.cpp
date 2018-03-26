@@ -188,7 +188,7 @@ void CanonicalVizPipe::PreparePointsForRendering() {
 
 					ITMVoxelCanonical& voxel = localVoxelBlock[locId];
 					float sdf = ITMVoxelCanonical::valueToFloat(voxel.sdf);
-					float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf);
+					float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf, voxel.flags);
 					float alternativeVoxelScale = COMPUTE_VOXEL_SCALE(sdf);
 					//[0.0,1.0) == negative
 					//[1.0-2.0) == positive

@@ -25,6 +25,7 @@ int main(int argc, const char* argv[]) {
 		bool hideNonInterestCanonicalVoxels = false;
 		bool hideLiveVoxels = false;
 		bool hideInterestCanonicalRegions = false;
+		bool hideUnknownVoxels = false;
 
 		po::options_description description{"Options"};
 		description.add_options()
@@ -38,11 +39,12 @@ int main(int argc, const char* argv[]) {
 				 "Hide live voxels on startup.")
 				("hide_interest,hi", po::bool_switch(&hideInterestCanonicalRegions),
 				 "Hide interest canonical voxels on startup.")
+				("hide_unknown,hu", po::bool_switch(&hideUnknownVoxels),
+				 "Hide canonical voxels marked as 'unknown' on startup.")
 				("initial_focus_coord,ifc", po::value<std::vector<int>>()->multitoken(),
 				 "Coordinate of voxel where to focus on startup. Must follow format:\n x y z\n, all integers.")
 				("frame_index,f", po::value<unsigned int>()->default_value(0),
-				 "Which frame to load first by default.")
-				;
+				 "Which frame to load first by default.");
 
 		po::variables_map vm;
 		po::store(po::command_line_parser(argc, argv).options(description).run(), vm);
@@ -63,8 +65,8 @@ int main(int argc, const char* argv[]) {
 				initialCoords.z *= -1;
 			}
 			SDFViz application(vm["directory"].as<std::string>(), hideNonInterestCanonicalVoxels, hideLiveVoxels,
-			                   hideInterestCanonicalRegions, haveUserInitialCoordinate, initialCoords,
-			                   vm["frame_index"].as<unsigned int>());
+			                   hideInterestCanonicalRegions, hideUnknownVoxels, haveUserInitialCoordinate,
+			                   initialCoords, vm["frame_index"].as<unsigned int>());
 			application.Run();
 		}
 	} catch (const po::error& ex) {

@@ -85,8 +85,8 @@ public:
 
 	//================= CONSTRUCTORS/DESTRUCTORS ===================
 	SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, bool hideLiveVoxels,
-	       bool hideInterestCanonicalRegions, bool useInitialCoords, Vector3i initialCoords,
-	       unsigned int initialFrame = 0);
+	       bool hideInterestCanonicalRegions, bool hideUnknownCanonicalVoxels, bool useInitialCoords,
+	       Vector3i initialCoords, unsigned int initialFrame);
 	virtual ~SDFViz();
 	//================= INSTANCE MEMBER FUNCTIONS ==================
 	int Run();
@@ -145,10 +145,10 @@ private:
 	//Visibility / vis. mode states
 	bool canonicalVoxelsVisible = true;
 	bool canonicalInterestVoxelsVisible = true;
-	bool canonicalNegativeOneVoxelsVisible = true;
+	bool canonicalUnknownVoxelsVisible = true;
 	bool canonicalHashBlocksVisible = false;
 	bool liveVoxelsVisible = true;
-	bool liveNegativeOneVoxelsVisible = false;
+	bool liveUnknownVoxelsVisible = false;
 	bool liveHashBlocksVisible = false;
 
 	//Holds highlights in the scene
