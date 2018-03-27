@@ -62,7 +62,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 		std::string path,
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 		ITMScene<TVoxelLive, TIndex>* liveScene) :
-		canonicalScene(canonicalScene),
+		canonicalScene(false,canonicalScene),
 		liveScene(liveScene),
 		highlights("Hash ID", "Local voxel ix", "Frame", "") {
 	if (path != "") {
