@@ -67,8 +67,6 @@ inline float InterpolateTrilinearly_SdfColor_StruckNonTruncatedAndKnown_SmartWei
 	struckNonTruncated = false;
 	cumulativeWeight = 0.0f;
 
-	inverseRatios -= ratios;
-
 	//@formatter:off
 	coefficients[0] = inverseRatios.x * inverseRatios.y * inverseRatios.z; //000
 	coefficients[1] = ratios.x *        inverseRatios.y * inverseRatios.z; //100
@@ -123,8 +121,6 @@ inline float InterpolateTrilinearly_Sdf_StruckNonTruncatedAndKnown_SmartWeights(
 	struckKnownVoxels = false;
 	struckNonTruncated = false;
 	cumulativeWeight = 0.0f;
-
-	inverseRatios -= ratios;
 
 	//@formatter:off
 	coefficients[0] = inverseRatios.x * inverseRatios.y * inverseRatios.z; //000
@@ -431,7 +427,7 @@ inline float InterpolateTrilinearly_SetTruncatedToVal_StruckNarrowBand(const CON
 //sdf only, version with replacing all truncated voxels with given value; determines whether narrow band was hit
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
-inline float InterpolateTrilinearly_SetDefaultToVal_StruckChecks(const CONSTPTR(TVoxel)* voxelData,
+inline float InterpolateTrilinearly_SetUnknownToVal_StruckChecks(const CONSTPTR(TVoxel)* voxelData,
                                                                  const CONSTPTR(ITMHashEntry)* voxelHash,
                                                                  const CONSTPTR(float)& defaultReplacement,
                                                                  const CONSTPTR(Vector3f)& point,

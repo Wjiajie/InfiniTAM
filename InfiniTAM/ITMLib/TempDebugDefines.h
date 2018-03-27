@@ -34,7 +34,7 @@
 //#define WARP_COMPUTE_MODE WARP_COMPUTE_MODE_NO_KILLING
 //#define WARP_COMPUTE_MODE WARP_COMPUTE_MODE_DATA_ONLY
 
-#include "Utils/FileIO/ITMSceneLogger.h"
+#include "Utils/FileIO/ITMCombinedSceneLogger.h"
 
 
 #include <opencv2/core/mat.hpp>

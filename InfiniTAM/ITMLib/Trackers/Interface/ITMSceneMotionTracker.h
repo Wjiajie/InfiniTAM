@@ -77,7 +77,7 @@ protected:
 	unsigned int iteration = 0;
 	unsigned int currentFrameIx = 0;
 
-	ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex> sceneLogger;
+	ITMCombinedSceneLogger<TVoxelCanonical,TVoxelLive,TIndex> sceneLogger;
 	std::string baseOutputDirectory;
 
 #ifdef RECORD_CONTINOUS_HIGHLIGHTS

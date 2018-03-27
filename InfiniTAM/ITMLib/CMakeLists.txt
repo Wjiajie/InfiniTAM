@@ -489,9 +489,10 @@ Trackers/Shared/ITMSceneMotionTracker_Debug.h
 
 ##
 SET(ITMLIB_UTILS_SOURCES
+Utils/FileIO/ITMCombinedSceneLogger.tpp
+Utils/FileIO/ITMCombinedSceneLogger_InterestRegionInfo.tpp
+Utils/FileIO/ITMCombinedSceneLogger_SceneSlice.tpp
 Utils/FileIO/ITMSceneLogger.tpp
-Utils/FileIO/ITMSceneLogger_InterestRegionInfo.tpp
-Utils/FileIO/ITMSceneLogger_SceneSlice.tpp
 Utils/ITMLibSettings.cpp
 Utils/ITMSceneSliceRasterizer.tpp
 Utils/ITM3DNestedMapOfArrays.tpp
@@ -502,6 +503,7 @@ Utils/ITMPrintHelpers.cpp
 )
 
 SET(ITMLIB_UTILS_HEADERS
+Utils/FileIO/ITMCombinedSceneLogger.h
 Utils/FileIO/ITMSceneLogger.h
 Utils/ITMCUDAUtils.h
 Utils/ITMImageTypes.h

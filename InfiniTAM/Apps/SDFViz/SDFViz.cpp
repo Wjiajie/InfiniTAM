@@ -53,7 +53,7 @@
 #include "SDFVizInteractorStyle.h"
 
 //ITMLib
-#include "../../ITMLib/Utils/FileIO/ITMSceneLogger.h"
+#include "../../ITMLib/Utils/FileIO/ITMCombinedSceneLogger.h"
 #include "../../ITMLib/Utils/ITMLibSettings.h"
 #include "../../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
 #include "SDFVizGlobalDefines.h"
@@ -128,7 +128,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 		liveUnknownVoxelsVisible(false),
 		liveHashBlocksVisible(false) {
 
-	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(GenerateExpectedFramePath(),
+	sceneLogger = new ITMCombinedSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(GenerateExpectedFramePath(),
 	                                                                                 canonicalScenePipe.GetScene(),
 	                                                                                 liveScenePipe.GetScene());
 	InitializeRendering();
@@ -539,10 +539,10 @@ std::string SDFViz::GenerateExpectedFramePath() {
  * \return true on success, false on failure (if we're at last frame or there is any problem with the loading)
  */
 bool SDFViz::AdvanceFrame() {
-	ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* nextLogger;
+	ITMCombinedSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* nextLogger;
 	frameIndex++;
 	try {
-		nextLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(GenerateExpectedFramePath(),
+		nextLogger = new ITMCombinedSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(GenerateExpectedFramePath(),
 		                                                                                canonicalScenePipe.GetScene(),
 		                                                                                liveScenePipe.GetScene());
 		delete this->sceneLogger;
@@ -569,9 +569,9 @@ bool SDFViz::AdvanceFrame() {
  */
 bool SDFViz::RetreatFrame() {
 	if (frameIndex > 0) {
-		ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* nextLogger;
+		ITMCombinedSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* nextLogger;
 		frameIndex--;
-		nextLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(GenerateExpectedFramePath(),
+		nextLogger = new ITMCombinedSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(GenerateExpectedFramePath(),
 		                                                                                canonicalScenePipe.GetScene(),
 		                                                                                liveScenePipe.GetScene());
 		delete this->sceneLogger;

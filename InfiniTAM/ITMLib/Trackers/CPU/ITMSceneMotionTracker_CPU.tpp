@@ -217,7 +217,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					//projected position of the sdf point to the most recent frame
 					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
 
-					if (originalPosition == Vector3i(-1, -24, 192)) {
+					if (originalPosition == Vector3i(7, -3, 199)) {
 						oldSdf = canonicalVoxel.sdf;
 					}
 

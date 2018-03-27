@@ -18,7 +18,7 @@
 
 #include "../ITMLib/Utils/ITMLibSettings.h"
 #include "../ITMLib/Objects/Scene/ITMSceneManipulation.h"
-#include "../ITMLib/Utils/FileIO/ITMSceneLogger.h"
+#include "../ITMLib/Utils/FileIO/ITMCombinedSceneLogger.h"
 #include "../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
 
 using namespace ITMLib;
@@ -38,7 +38,7 @@ void GenerateAndLogKillingScene01() {
 	CopySceneWithOffset_CPU(*liveScene, *canonicalScene,offset);
 
 
-	ITMSceneLogger<ITMVoxelCanonical,ITMVoxelLive,ITMVoxelIndex> logger(testScenePath,canonicalScene,liveScene);
+	ITMCombinedSceneLogger<ITMVoxelCanonical,ITMVoxelLive,ITMVoxelIndex> logger(testScenePath,canonicalScene,liveScene);
 	logger.SaveScenesCompact();
 
 	//TODO: fix with new highlight system --Greg (GitHub:Algomorph)

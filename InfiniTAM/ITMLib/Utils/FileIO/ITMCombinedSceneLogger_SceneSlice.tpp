@@ -16,14 +16,16 @@
 #pragma once
 
 //ITMLib
-#include "ITMSceneLogger.h"
+#include "ITMCombinedSceneLogger.h"
 #include "../ITMLibSettings.h"
 #include "../../Objects/Scene/ITMSceneManipulation.h"
 
 using namespace ITMLib;
 
+// region ======================================== FILE PATH GENERATION ================================================
+
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GenerateSliceStringIdentifier(
+std::string ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GenerateSliceStringIdentifier(
 		const Vector3i& minPoint, const Vector3i& maxPoint) {
 	return padded_to_string(minPoint.x, 3)
 	       + "_" + padded_to_string(minPoint.y, 3)
@@ -34,7 +36,7 @@ std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GenerateSliceSt
 };
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GenerateSliceWarpFilename(
+std::string ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GenerateSliceWarpFilename(
 		const Vector3i& minPoint,
 		const Vector3i& maxPoint) {
 	return (this->path / (warpUpdatesFilename + "_" + GenerateSliceStringIdentifier(minPoint, maxPoint) +
@@ -42,7 +44,7 @@ std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GenerateSliceWa
 };
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GenerateSliceSceneFilename_UpToPostfix(
+std::string ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GenerateSliceSceneFilename_UpToPostfix(
 		const Vector3i& minPoint,
 		const Vector3i& maxPoint) {
 
@@ -51,17 +53,19 @@ std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GenerateSliceSc
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GenerateSliceSceneFilename_Full(
+std::string ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GenerateSliceSceneFilename_Full(
 		const Vector3i& minPoint,
 		const Vector3i& maxPoint) {
 	return GenerateSliceSceneFilename_UpToPostfix(minPoint, maxPoint)
 	       + ITMScene<TVoxelCanonical,TVoxelLive>::compactFilePostfixAndExtension;
 }
 
+//endregion
+// region ======================================== SAVING SLICE AND SLICE WARP =========================================
 
 //Assumes we have a scene loaded, as well as a warp file available.
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveCanonicalSceneSlice(const Vector3i& extremum1,
+bool ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveCanonicalSceneSlice(const Vector3i& extremum1,
                                                                                   const Vector3i& extremum2,
                                                                                   unsigned int frameIndex) {
 
@@ -86,7 +90,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveCanonicalSceneSlic
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarpSlice(const Vector3i& minPoint, const Vector3i& maxPoint,
+ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarpSlice(const Vector3i& minPoint, const Vector3i& maxPoint,
                                                                    unsigned int frameIndex) {
 
 	int totalHashEntryCount = canonicalScene->index.noTotalEntries;
@@ -161,3 +165,4 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarpSlice(const Vector3
 		this->generalIterationCursor = currentGeneralWarpCursor;
 	}
 }
+//endregion

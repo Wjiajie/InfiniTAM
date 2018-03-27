@@ -142,7 +142,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					bool hitLiveKnownVoxels;
 					Vector3f projectedPosition = canonicalVoxelPosition.toFloat() + canonicalVoxel.warp_t;
 
-					liveSdf = InterpolateTrilinearly_SetDefaultToVal_StruckChecks(
+					liveSdf = InterpolateTrilinearly_SetUnknownToVal_StruckChecks(
 							liveVoxels, liveHashTable, canonicalSdf, projectedPosition, liveCache,
 							hitLiveNarrowBand, hitLiveKnownVoxels);
 

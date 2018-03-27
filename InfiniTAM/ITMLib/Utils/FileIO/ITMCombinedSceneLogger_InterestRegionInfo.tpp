@@ -13,18 +13,19 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "ITMSceneLogger.h"
+#include "ITMCombinedSceneLogger.h"
 
 
 // *********************************************************************************************************************
 // ********************************* MEMBERS OF THE INNER InterestRegionInfo CLASS *************************************
 // *********************************************************************************************************************
-// =============================================== CONSTANTS ===========================================================
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::prefix = "region_";
+// region ======================================== CONSTANTS ===========================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const Vector3s ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::blockTraversalOrder[] =
+const std::string ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::prefix = "region_";
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const Vector3s ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::blockTraversalOrder[] =
 		{Vector3s(-1, -1, -1), Vector3s(-1, -1, 0), Vector3s(-1, -1, 1),
 		 Vector3s(-1, 0, -1), Vector3s(-1, 0, 0), Vector3s(-1, 0, 1),
 		 Vector3s(-1, 1, -1), Vector3s(-1, 1, 0), Vector3s(-1, 1, 1),
@@ -36,14 +37,14 @@ const Vector3s ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegi
 		 Vector3s(1, -1, -1), Vector3s(1, -1, 0), Vector3s(1, -1, 1),
 		 Vector3s(1, 0, -1), Vector3s(1, 0, 0), Vector3s(1, 0, 1),
 		 Vector3s(1, 1, -1), Vector3s(1, 1, 0), Vector3s(1, 1, 1)};
-
-// ============================================= CONSTRUCTORS & DESTRUCTORS ============================================
+//endregion
+// region ======================================== CONSTRUCTORS & DESTRUCTORS ==========================================
 
 /**
  * \brief General-purpose destructor
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::~InterestRegionInfo() {
+ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::~InterestRegionInfo() {
 	ofStream.close();
 	ifStream.close();
 }
@@ -58,9 +59,9 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::~Intere
  * \param parent parent logger
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::InterestRegionInfo(
+ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::InterestRegionInfo(
 		std::vector<int>& hashBlockIds, int centerHashBlockId,
-		ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>& parent):
+		ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>& parent):
 		centerHashBlockId(centerHashBlockId),
 		hashBlockIds(hashBlockIds),
 		path(parent.path / fs::path(prefix + std::to_string(centerHashBlockId) + binaryFileExtension)),
@@ -79,8 +80,8 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::Interes
  * \param parent - parent loader
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::InterestRegionInfo(
-		fs::path path, ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>& parent):
+ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::InterestRegionInfo(
+		fs::path path, ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>& parent):
 		path(path),
 		ifStream(std::ifstream(path.c_str(), std::ios::binary | std::ios::in)),
 		parent(parent) {
@@ -103,30 +104,30 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::Interes
 	isLoading = true;
 	isSaving = false;
 }
-
-// =========================================== GENERAL INFORMATION GETTERS =============================================
+//endregion
+// region ======================================== GENERAL INFORMATION GETTERS =========================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::vector<int>& ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::GetHashes() const {
+const std::vector<int>& ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::GetHashes() const {
 	return this->hashBlockIds;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-unsigned int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::GetIterationCursor() const {
+unsigned int ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::GetIterationCursor() const {
 	return this->iterationCursor;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-size_t ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::GetIterationWarpBytesize() const {
+size_t ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::GetIterationWarpBytesize() const {
 	return this->voxelCount * 2 * sizeof(Vector3f);
 }
 
-
-// ================================ READING WARP STATE IN THE INTEREST REGION ==========================================
+//endregion
+// region ======================================== READING WARP STATE IN THE INTEREST REGION ===========================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::BufferCurrentWarpState(void* externalBuffer) {
+ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::BufferCurrentWarpState(void* externalBuffer) {
 	if (isSaving) {
 		throw std::runtime_error(
 				"Attempting to load while saving (not allowed).["  __FILE__  ": " + std::to_string(__LINE__) + "]");
@@ -144,7 +145,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::BufferC
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SeekPrevious() {
+bool ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SeekPrevious() {
 	if (isSaving) {
 		throw std::runtime_error(
 				"Attempting to load while saving (not allowed).["  __FILE__  ": " + std::to_string(__LINE__) + "]");
@@ -160,7 +161,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::Se
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SeekAt(unsigned int cursor) {
+bool ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SeekAt(unsigned int cursor) {
 	if (isSaving) {
 		throw std::runtime_error(
 				"Attempting to load while saving (not allowed).["  __FILE__  ": " + std::to_string(__LINE__) + "]");
@@ -173,16 +174,14 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::Se
 	this->iterationCursor = cursor;
 	return !(ifStream.fail() || ifStream.bad());
 }
+//endregion
+// region ======================================== WRITING OF THE INTEREST REGION TO DISK ==============================
 
-
-
-
-// ============================================ WRITING OF THE INTEREST REGION TO DISK =================================
 /**
  * \brief (Re)writes the interest region header (only!) to disk. Will erase any warp data in the file, if it is there.
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::RewriteHeader() {
+void ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::RewriteHeader() {
 	ofStream.close();
 	ofStream = std::ofstream(path.c_str(), std::ios::binary | std::ios::out);
 	if (!ofStream)
@@ -202,7 +201,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::Re
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SaveCurrentWarpState() {
+ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SaveCurrentWarpState() {
 	if (isLoading) {
 		throw std::runtime_error(
 				"Attempting to save region made for loading (not allowed). Use alternative constructor.["  __FILE__  ": " +
@@ -230,18 +229,18 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SaveCur
 	}
 	iterationCursor++;
 }
-
+//endregion
 // *********************************************************************************************************************
 // ********** MEMBERS OF THE SCENE LOGGER CLASS DIRECTLY PERTAINING TO INTEREST REGION MANAGEMENT **********************
 // *********************************************************************************************************************
-// ============================================ SAVING SETUP & SAVING WARPS ============================================
+// region ======================================== SAVING SETUP & SAVING WARPS =========================================
 
 /**
  * \brief Set
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving() {
-	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving(this->highlights);
+void ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving() {
+	ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving(this->highlights);
 }
 
 /**
@@ -254,7 +253,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
  * \tparam TIndex type of voxel index structure
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving(
+void ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving(
 		const ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>& highlights) {
 	if (this->voxelCount == -1) {
 		DIEWITHEXCEPTION("Attempted to set up interest regions before loading the scenes. Aborting. ["
@@ -316,7 +315,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveAllInterestRegionWarps() {
+void ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveAllInterestRegionWarps() {
 	for (std::shared_ptr<InterestRegionInfo> info: interestRegionInfos) {
 		info->SaveCurrentWarpState();
 	}
@@ -325,8 +324,8 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveAllInterestRegionW
 	}
 	std::cout << "Saved all interest region warps." << std::endl;
 }
-
-// ============================================= LOADING SETUP =========================================================
+//endregion
+// region ======================================== LOADING SETUP =======================================================
 /**
  * \brief Set up all interest regions for loading based on the files in current active directory for the loader.
  * \details The files should follow the interest region naming convention
@@ -335,7 +334,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveAllInterestRegionW
  * \tparam TIndex
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForLoading() {
+void ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForLoading() {
 	if (this->voxelCount == -1) {
 		DIEWITHEXCEPTION("Attempted to set up interest regions before loading the scenes. Aborting.");
 	}
@@ -358,11 +357,11 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 
 	interestRegionsHaveBeenSetUp = true;
 }
-
-//======================================= INFORMATION GETTERS / SETTERS ================================================
+//endregion
+//region ======================================== INFORMATION GETTERS / SETTERS =======================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetTotalInterestVoxelCount() {
+int ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetTotalInterestVoxelCount() {
 	int total = 0;
 	for (std::shared_ptr<InterestRegionInfo> info: interestRegionInfos) {
 		total += info->voxelCount;
@@ -371,18 +370,18 @@ int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetTotalInterestVoxelCo
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestRegionsSetUp() const {
+bool ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestRegionsSetUp() const {
 	return this->interestRegionsHaveBeenSetUp;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::map<int, std::shared_ptr<typename ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo>>&
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestRegionsByHash() {
+const std::map<int, std::shared_ptr<typename ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo>>&
+ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestRegionsByHash() {
 	return this->interestRegionInfoByHashId;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-std::vector<int> ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestRegionHashes() const {
+std::vector<int> ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestRegionHashes() const {
 	std::vector<int> hashes;
 	for (std::shared_ptr<InterestRegionInfo> info: interestRegionInfos) {
 		for (int hash : info->GetHashes()) {
@@ -393,13 +392,14 @@ std::vector<int> ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInteres
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsHashInInterestRegion(int hashId) {
+bool ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsHashInInterestRegion(int hashId) {
 	return (this->interestRegionInfoByHashId.find(hashId) == this->interestRegionInfoByHashId.end());
 }
+//endregion
+// region ======================================== INTEREST REGION WARP TRAVERSAL ======================================
 
-//=============================== INTEREST REGION WARP TRAVERSAL =======================================================
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferInterestWarpStateAtIteration(void* externalBuffer,
+bool ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferInterestWarpStateAtIteration(void* externalBuffer,
                                                                                              unsigned int iterationIndex) {
 	for(std::shared_ptr<InterestRegionInfo> info: interestRegionInfos){
 		if(!info->SeekAt(iterationIndex)){
@@ -411,7 +411,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferInterestWarpStat
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferCurrentInterestWarpState(void* externalBuffer) {
+bool ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferCurrentInterestWarpState(void* externalBuffer) {
 	char* cursor = reinterpret_cast<char*>(externalBuffer);
 	for (std::shared_ptr<InterestRegionInfo> info: interestRegionInfos) {
 		if (!info->BufferCurrentWarpState(cursor)) {
@@ -424,7 +424,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferCurrentInterestW
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferPreviousInterestWarpState(void* externalBuffer) {
+bool ITMCombinedSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferPreviousInterestWarpState(void* externalBuffer) {
 	char* cursor = reinterpret_cast<char*>(externalBuffer);
 	if (interestIterationCursor == 0) { return false; } //at beginning of stream
 	if (interestIterationCursor == 1) {
@@ -444,5 +444,6 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferPreviousInterest
 	}
 	return true;
 }
+//endregion
 
 
