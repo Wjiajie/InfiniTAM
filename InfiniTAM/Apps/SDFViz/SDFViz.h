@@ -40,7 +40,7 @@
 using namespace ITMLib;
 namespace ITMLib {
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-class ITMCombinedSceneLogger;
+class ITMSceneLogger;
 }
 
 class vtkRenderer;
@@ -101,7 +101,7 @@ private:
 
 	//================= MEMBER VARIABLES ===========================
 	// Data loader
-	ITMCombinedSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
+	ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
 	// path to root directory (i.e. without the Frame_XXXX prefixes)
 	std::string rootPath;
 
