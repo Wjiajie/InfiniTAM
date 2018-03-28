@@ -30,10 +30,12 @@ using namespace ITMLib;
 
 template<typename TVoxel, typename TIndex>
 ITMWarpSceneLogger<TVoxel, TIndex>::ITMWarpSceneLogger(bool isSlice, ITMScene<TVoxel, TIndex>* scene, std::string scenePath, std::string warpPath):
-		isSlice(isSlice),
 		scene(scene),
 		scenePath(scenePath),
-		warpPath(warpPath) {}
+		warpPath(warpPath),
+		isSlice(isSlice),
+		minimum(0),
+		maximum(0){}
 
 template<typename TVoxel, typename TIndex>
 ITMWarpSceneLogger<TVoxel, TIndex>::~ITMWarpSceneLogger() {

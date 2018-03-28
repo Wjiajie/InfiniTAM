@@ -102,7 +102,10 @@ ITMWarpSceneLogger<TVoxelCanonical, TIndex>*
 	destinationSlice->SaveToDirectoryCompact_CPU(sceneOutputPath);
 	std::string sliceWarpPath = GenerateSliceWarpFilename(minPoint, maxPoint);
 	SaveSliceWarp(minPoint, maxPoint, frameIndex, sliceWarpPath);
-	return new ITMWarpSceneLogger<TVoxelCanonical,TIndex>(true, destinationSlice, sceneOutputPath, sliceWarpPath);
+	ITMWarpSceneLogger<TVoxelCanonical,TIndex>* logger = new ITMWarpSceneLogger<TVoxelCanonical,TIndex>(true, destinationSlice, sceneOutputPath, sliceWarpPath);
+	logger->minimum = minPoint;
+	logger->maximum = maxPoint;
+	return logger;
 }
 
 
