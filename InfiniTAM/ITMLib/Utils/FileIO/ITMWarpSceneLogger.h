@@ -32,7 +32,7 @@ class ITMWarpSceneLogger{
 	template<typename TVoxelCanonical, typename TVoxelLive, typename TIndexLogger>
 	friend class ITMSceneLogger;
 public:
-	explicit ITMWarpSceneLogger(bool isSlice, ITMScene<TVoxel, TIndex>* scene = nullptr, fs::path path = "");
+
 	~ITMWarpSceneLogger();
 
 	//*** getters ***
@@ -69,8 +69,12 @@ public:
 	bool IsLoadingWarpState();
 
 private:
-	fs::path path;
-	fs::path warpUpdatesPath;
+	explicit ITMWarpSceneLogger(bool isSlice,
+	                            ITMScene <TVoxel, TIndex>* scene = nullptr,
+	                            std::string scenePath = "", std::string warpPath = "");
+
+	std::string scenePath;
+	std::string warpPath;
 	ITMScene<TVoxel, TIndex>* scene;
 
 	unsigned int generalIterationCursor = 0;

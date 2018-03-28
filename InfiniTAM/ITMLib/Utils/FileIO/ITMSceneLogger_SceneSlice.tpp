@@ -75,25 +75,23 @@ std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GenerateSliceSc
 //Assumes we have a scene loaded, as well as a warp file available.
 /**
  * \brief Save a slice of the canonical scene with the specified extrema (overwrites if files exist already on disk)
+ * \param destinationSlice [out] the scene where to write the changes - presumed blank, will be overwritten (not managed)
  * \param extremum1 the first of the two points defining the slice bounds
  * \param extremum2 the second of the two points defining the slice bounds
  * \param frameIndex index of the frame to write to the saved warp file
- * \return true on success, false on failure
+ * \return the resultant sliceLogger on the heap (not managed) on success, nullptr on failure
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSlice(const Vector3i& extremum1,
-                                                                                      const Vector3i& extremum2,
-                                                                                      unsigned int frameIndex) {
+ITMWarpSceneLogger<TVoxelCanonical, TIndex>*
+	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::Slice(ITMScene<TVoxelCanonical, TIndex>* destinationSlice,
+                                                                const Vector3i& extremum1, const Vector3i& extremum2,
+                                                                unsigned int frameIndex) {
 
 	Vector3i minPoint, maxPoint;
 	MinMaxFromExtrema(minPoint, maxPoint, extremum1, extremum2);
-	ITMLibSettings* settings = new ITMLibSettings();
-	ITMScene<TVoxelCanonical, TIndex>* slice = new ITMScene<TVoxelCanonical, TIndex>(canonicalScene.scene->sceneParams,
-	                                                                                 settings->swappingMode ==
-	                                                                                 ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                                                 settings->GetMemoryType());
-	if (!CopySceneSlice_CPU(slice, canonicalScene.scene, minPoint, maxPoint)) {
-		return false;
+
+	if (!CopySceneSlice_CPU(destinationSlice, canonicalScene.scene, minPoint, maxPoint)) {
+		return nullptr;
 	}
 	fs::path outputPath = GenerateSliceFolderPath(minPoint, maxPoint);
 	if (fs::exists(outputPath)) {
@@ -101,19 +99,19 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSlice(const Vector
 	}
 	fs::create_directories(outputPath);
 	std::string sceneOutputPath = GenerateSliceSceneFilename_UpToPostfix(minPoint, maxPoint);
-	slice->SaveToDirectoryCompact_CPU(sceneOutputPath);
-
-	SaveWarpSlice(minPoint, maxPoint, frameIndex);
-	delete settings;
-	return true;
+	destinationSlice->SaveToDirectoryCompact_CPU(sceneOutputPath);
+	std::string sliceWarpPath = GenerateSliceWarpFilename(minPoint, maxPoint);
+	SaveSliceWarp(minPoint, maxPoint, frameIndex, sliceWarpPath);
+	return new ITMWarpSceneLogger<TVoxelCanonical,TIndex>(true, destinationSlice, sceneOutputPath, sliceWarpPath);
 }
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarpSlice(const Vector3i& minPoint,
-                                                                           const Vector3i& maxPoint,
-                                                                           unsigned int frameIndex) {
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3i& minPoint,
+                                                                   const Vector3i& maxPoint,
+                                                                   unsigned int frameIndex,
+                                                                   std::string path) {
 
 	int totalHashEntryCount = canonicalScene.scene->index.noTotalEntries;
 	TVoxelCanonical* voxels = canonicalScene.scene->localVBA.GetVoxelBlocks();
@@ -127,12 +125,10 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarpSlice(const Vector3
 
 	StartLoadingWarpState();
 
-	std::string sliceWarpOfstreamPath = GenerateSliceWarpFilename(minPoint, maxPoint);
-
-	std::ofstream sliceWarpOfstream(sliceWarpOfstreamPath.c_str(), std::ofstream::binary | std::ofstream::out);
+	std::ofstream sliceWarpOfstream(path.c_str(), std::ofstream::binary | std::ofstream::out);
 	unsigned int sliceIterationCursor = 0;
 	if (!sliceWarpOfstream)
-		throw std::runtime_error("Could not open " + sliceWarpOfstreamPath + " for writing. ["  __FILE__  ": " +
+		throw std::runtime_error("Could not open '" + path + "' for writing. ["  __FILE__  ": " +
 		                         std::to_string(__LINE__) + "]");
 	canonicalScene.warpOFStream.write(reinterpret_cast<const char*>(&frameIndex), sizeof(int));
 

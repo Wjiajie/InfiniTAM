@@ -50,7 +50,6 @@ namespace fs = boost::filesystem;
 namespace ITMLib {
 
 
-
 /**
  * \brief Wraps the functionality of saving canonical/live scenes or scene slices for dynamic fusion along
  * with warp changes during optimization between frames.
@@ -139,7 +138,6 @@ public:
 	bool LoadScenesCompact();
 
 
-
 	//*** information getters
 	std::string GetPath() const;
 	int GetVoxelCount() const;
@@ -197,9 +195,9 @@ public:
 	std::string GenerateSliceSceneFilename_UpToPostfix(const Vector3i& minPoint, const Vector3i& maxPoint);
 	std::string GenerateSliceSceneFilename_Full(const Vector3i& minPoint, const Vector3i& maxPoint);
 	std::string GenerateSliceWarpFilename(const Vector3i& minPoint, const Vector3i& maxPoint);
-	bool SaveSlice(const Vector3i& extremum1,
-	               const Vector3i& extremum2,
-	               unsigned int frameIndex);
+	ITMWarpSceneLogger<TVoxelCanonical, TIndex>* Slice(ITMScene<TVoxelCanonical, TIndex>* destinationSlice,
+	                                                   const Vector3i& extremum1, const Vector3i& extremum2,
+	                                                   unsigned int frameIndex);
 	bool CanonicalSceneSliceExists(const Vector3i& extremum1,
 	                               const Vector3i& extremum2);
 
@@ -211,7 +209,8 @@ private:
 	static const std::string minRecurrenceHighlightFilterName;
 // endregion
 // region === MEMBER FUNCTIONS ===
-	void SaveWarpSlice(const Vector3i& minPoint, const Vector3i& maxPoint, unsigned int frameIndex);
+	void SaveSliceWarp(const Vector3i& minPoint, const Vector3i& maxPoint,
+	                   unsigned int frameIndex, std::string path);
 	bool CheckPath();
 
 // endregion
@@ -245,7 +244,6 @@ private:
 	int minHighlightRecurrenceCount = 0;
 // endregion
 };
-
 
 
 }//namespace ITMLib

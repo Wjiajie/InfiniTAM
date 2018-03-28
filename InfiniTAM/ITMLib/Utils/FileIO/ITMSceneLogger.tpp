@@ -392,8 +392,8 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetPath(std::string pa
 				                 __FILE__
 				                 ": " + std::to_string(__LINE__) + "]");
 	}
-	this->canonicalScene.path = this->path / canonicalName;
-	this->canonicalScene.warpUpdatesPath = this->path / (warpUpdatesFilename + binaryFileExtension);
+	this->canonicalScene.scenePath = (this->path / canonicalName).string();
+	this->canonicalScene.warpPath = (this->path / (warpUpdatesFilename + binaryFileExtension)).string();
 	this->livePath = this->path / liveName;
 	this->highlightsBinaryPath = this->path / ("highlights" + binaryFileExtension);
 	this->highlightsTextPath = this->path / ("highlights" + textFileExtension);

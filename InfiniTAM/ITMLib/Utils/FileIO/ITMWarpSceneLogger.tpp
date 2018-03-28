@@ -29,12 +29,11 @@ using namespace ITMLib;
 // region ======================================== CONSTRUCTORS & DESTRUCTORS ==========================================
 
 template<typename TVoxel, typename TIndex>
-ITMWarpSceneLogger<TVoxel, TIndex>::ITMWarpSceneLogger(bool isSlice,
-                                                                                ITMScene<TVoxel, TIndex>* scene,
-                                                                                fs::path path) :
+ITMWarpSceneLogger<TVoxel, TIndex>::ITMWarpSceneLogger(bool isSlice, ITMScene<TVoxel, TIndex>* scene, std::string scenePath, std::string warpPath):
 		isSlice(isSlice),
 		scene(scene),
-		path(path) {}
+		scenePath(scenePath),
+		warpPath(warpPath) {}
 
 template<typename TVoxel, typename TIndex>
 ITMWarpSceneLogger<TVoxel, TIndex>::~ITMWarpSceneLogger() {
@@ -63,34 +62,34 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::Loaded() const {
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpSceneLogger<TVoxel, TIndex>::Load() {
-	scene->LoadFromDirectory(path.c_str());
-	ITMSceneStatisticsCalculator <TVoxel, TIndex> statisticsCalculator;
+	scene->LoadFromDirectory(scenePath.c_str());
+	ITMSceneStatisticsCalculator<TVoxel, TIndex> statisticsCalculator;
 	voxelCount = statisticsCalculator.ComputeAllocatedVoxelCount(scene);
 }
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpSceneLogger<TVoxel, TIndex>::Save() {
-	scene->SaveToDirectory(path.string());
-	ITMSceneStatisticsCalculator <TVoxel, TIndex> statisticsCalculator;
+	scene->SaveToDirectory(scenePath.c_str());
+	ITMSceneStatisticsCalculator<TVoxel, TIndex> statisticsCalculator;
 	this->voxelCount = statisticsCalculator.ComputeAllocatedVoxelCount(scene);
 }
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpSceneLogger<TVoxel, TIndex>::SaveCompact() {
-	scene->SaveToDirectoryCompact_CPU(path.string());
-	ITMSceneStatisticsCalculator <TVoxel, TIndex> statisticsCalculator;
+	scene->SaveToDirectoryCompact_CPU(scenePath.c_str());
+	ITMSceneStatisticsCalculator<TVoxel, TIndex> statisticsCalculator;
 	this->voxelCount = statisticsCalculator.ComputeAllocatedVoxelCount(scene);
 }
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpSceneLogger<TVoxel, TIndex>::LoadCompact() {
-	ITMSceneReconstructionEngine <TVoxel, TIndex>* reconstructionEngine =
+	ITMSceneReconstructionEngine<TVoxel, TIndex>* reconstructionEngine =
 			ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel, TIndex>(
 					ITMLibSettings::DEVICE_CPU);
 	reconstructionEngine->ResetScene(scene);
 	delete reconstructionEngine;
-	scene->LoadFromDirectoryCompact_CPU(path.c_str());
-	ITMSceneStatisticsCalculator <TVoxel, TIndex> statisticsCalculator;
+	scene->LoadFromDirectoryCompact_CPU(scenePath.c_str());
+	ITMSceneStatisticsCalculator<TVoxel, TIndex> statisticsCalculator;
 	this->voxelCount = statisticsCalculator.ComputeAllocatedVoxelCount(scene);
 
 }
@@ -100,13 +99,13 @@ void ITMWarpSceneLogger<TVoxel, TIndex>::LoadCompact() {
 template<typename TVoxel, typename TIndex>
 bool
 ITMWarpSceneLogger<TVoxel, TIndex>::StartSavingWarpState(unsigned int frameIx) {
-	if (!fs::is_directory(path)) {
-		std::cout << "The directory '" << path << "' was not found.";
+	if (!fs::is_directory(scenePath)) {
+		std::cout << "The directory '" << scenePath << "' was not found.";
 		return false;
 	}
-	warpOFStream = std::ofstream(warpUpdatesPath.c_str(), std::ofstream::binary | std::ofstream::out);
+	warpOFStream = std::ofstream(warpPath.c_str(), std::ofstream::binary | std::ofstream::out);
 	if (!warpOFStream)
-		throw std::runtime_error("Could not open " + warpUpdatesPath.string() + " for writing ["  __FILE__  ": " +
+		throw std::runtime_error("Could not open " + warpPath + " for writing ["  __FILE__  ": " +
 		                         std::to_string(__LINE__) + "]");
 	warpOFStream.write(reinterpret_cast<const char*>(&frameIx), sizeof(int));
 	generalIterationCursor = 0;
@@ -156,14 +155,14 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::StartLoadingWarpState() {
 		std::cerr << "Hashed voxel count has not been obtained. Have the scenes been loaded successfully?" << std::endl;
 		return false;
 	}
-	if (!fs::is_directory(this->path)) {
-		std::cerr << "The directory '" << path << "' was not found.";
+	if (!fs::is_directory(this->scenePath)) {
+		std::cerr << "The directory '" << scenePath << "' was not found.";
 		return false;
 	}
 
-	warpIFStream = std::ifstream(warpUpdatesPath.c_str(), std::ios::binary | std::ios::in);
+	warpIFStream = std::ifstream(warpPath.c_str(), std::ios::binary | std::ios::in);
 	if (!warpIFStream) {
-		std::cerr << "Could not open " + warpUpdatesPath.string() + " for reading. ["  __FILE__  ": " +
+		std::cerr << "Could not open " + warpPath + " for reading. ["  __FILE__  ": " +
 		             std::to_string(__LINE__) + "]";
 		return false;
 	}
@@ -179,14 +178,14 @@ ITMWarpSceneLogger<TVoxel, TIndex>::StartLoadingWarpState(unsigned int& frameIx)
 		std::cerr << "Hashed voxel count has not been obtained. Have the scenes been loaded successfully?" << std::endl;
 		return false;
 	}
-	if (!fs::is_directory(this->path)) {
-		std::cerr << "The directory '" << path << "' was not found.";
+	if (!fs::is_directory(this->scenePath)) {
+		std::cerr << "The directory '" << scenePath << "' was not found.";
 		return false;
 	}
 
-	warpIFStream = std::ifstream(warpUpdatesPath.c_str(), std::ios::binary | std::ios::in);
+	warpIFStream = std::ifstream(warpPath.c_str(), std::ios::binary | std::ios::in);
 	if (!warpIFStream) {
-		std::cerr << "Could not open " + warpUpdatesPath.string() + " for reading. ["  __FILE__  ": " +
+		std::cerr << "Could not open " + warpPath + " for reading. ["  __FILE__  ": " +
 		             std::to_string(__LINE__) + "]";
 		return false;
 	}
@@ -343,8 +342,8 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::BufferPreviousWarpState() {
 
 template<typename TVoxel, typename TIndex>
 bool ITMWarpSceneLogger<TVoxel, TIndex>::CopyWarpBuffer(float* warpDestination,
-                                                                                             float* warpUpdateDestination,
-                                                                                             int& iUpdate) {
+                                                        float* warpUpdateDestination,
+                                                        int& iUpdate) {
 	if (!warpBuffer) return false;
 	memcpy(reinterpret_cast<void*>(warpDestination), reinterpret_cast<void*>(warpBuffer),
 	       sizeof(Vector3f) * voxelCount);
@@ -355,15 +354,15 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::CopyWarpBuffer(float* warpDestination,
 
 template<typename TVoxel, typename TIndex>
 bool ITMWarpSceneLogger<TVoxel, TIndex>::CopyWarpAt(int index,
-                                                                                         float voxelWarpDestination[3]) const {
+                                                    float voxelWarpDestination[3]) const {
 	memcpy(reinterpret_cast<void*>(voxelWarpDestination), reinterpret_cast<void*>(warpBuffer + index * 2),
 	       sizeof(Vector3f));
 }
 
 template<typename TVoxel, typename TIndex>
 bool ITMWarpSceneLogger<TVoxel, TIndex>::CopyWarpAt(int index,
-                                                                                         float* voxelWarpDestination,
-                                                                                         float* voxelUpdateDestination) const {
+                                                    float* voxelWarpDestination,
+                                                    float* voxelUpdateDestination) const {
 	memcpy(reinterpret_cast<void*>(voxelWarpDestination), reinterpret_cast<void*>(warpBuffer + index * 2),
 	       sizeof(Vector3f));
 	memcpy(reinterpret_cast<void*>(voxelUpdateDestination), reinterpret_cast<void*>(warpBuffer + index * 2 + 1),
@@ -439,7 +438,7 @@ ITMWarpSceneLogger<TVoxel, TIndex>::BufferPreviousWarpState(void* externalBuffer
 
 template<typename TVoxel, typename TIndex>
 bool ITMWarpSceneLogger<TVoxel, TIndex>::BufferWarpStateAt(void* externalBuffer,
-                                                                                                unsigned int iterationIndex) {
+                                                           unsigned int iterationIndex) {
 	size_t headerSize = sizeof(int);
 	warpIFStream.seekg(headerSize + iterationIndex * (voxelCount * 2 * sizeof(Vector3f) + sizeof(unsigned int)),
 	                   std::ios::beg);
