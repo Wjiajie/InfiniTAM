@@ -182,7 +182,7 @@ SDFViz::~SDFViz() {
 
 void SDFViz::InitializeRendering() {
 	sdfRenderer = vtkSmartPointer<vtkRenderer>::New();
-	topRenderer = vtkSmartPointer<vtkRenderer>::New();
+	markerRenderer = vtkSmartPointer<vtkRenderer>::New();
 
 	double backgroundColor[4];
 	memcpy(backgroundColor, backgroundColors[currentBackgrounColorIx].data(), 4 * sizeof(double));
@@ -196,10 +196,10 @@ void SDFViz::InitializeRendering() {
 	renderWindow->AddRenderer(sdfRenderer);
 	sdfRenderer->SetLayer(0);
 	sdfRenderer->InteractiveOn();
-	renderWindow->AddRenderer(topRenderer);
-	topRenderer->SetLayer(1);
-	topRenderer->InteractiveOn();
-	topRenderer->SetActiveCamera(sdfRenderer->GetActiveCamera());
+	renderWindow->AddRenderer(markerRenderer);
+	markerRenderer->SetLayer(1);
+	markerRenderer->InteractiveOn();
+	markerRenderer->SetActiveCamera(sdfRenderer->GetActiveCamera());
 
 	renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
 
@@ -499,7 +499,7 @@ void SDFViz::DrawDummyMarkers() {
 	actor->SetMapper(mapper);
 	actor->GetProperty()->SetPointSize(1);
 	actor->GetProperty()->SetColor(0.0, 0.0, 0.0);
-	topRenderer->AddActor(actor);
+	markerRenderer->AddActor(actor);
 }
 
 Vector3d SDFViz::ComputeCameraRightVector(vtkCamera* camera) {
@@ -739,11 +739,11 @@ void SDFViz::AddActors() {
 	sdfRenderer->AddActor(liveScenePipe.GetHashBlockActor());
 
 	// add marker/highlight actors
-	topRenderer->AddActor(canonicalScenePipe.GetSelectionVoxelActor());
-	topRenderer->AddActor(canonicalScenePipe.GetSliceSelectionActor(0));
-	topRenderer->AddActor(canonicalScenePipe.GetSliceSelectionActor(1));
-	topRenderer->AddActor(canonicalScenePipe.GetSlicePreviewActor());
-	topRenderer->AddActor(highlightVisualizer.GetHighlightActor());
+	markerRenderer->AddActor(canonicalScenePipe.GetSelectionVoxelActor());
+	markerRenderer->AddActor(canonicalScenePipe.GetSliceSelectionActor(0));
+	markerRenderer->AddActor(canonicalScenePipe.GetSliceSelectionActor(1));
+	markerRenderer->AddActor(canonicalScenePipe.GetSlicePreviewActor());
+	markerRenderer->AddActor(highlightVisualizer.GetHighlightActor());
 }
 
 

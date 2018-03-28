@@ -19,23 +19,27 @@
 #include "../../ITMLib/ITMLibDefines.h"
 #include "../../ITMLib/Utils/ITM3DNestedMap.h"
 
-class CanonicalVizPipe : public SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex> {
+class WarpedSceneVizPipe : public SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex> {
 public:
-	// ==================== CONSTANTS ==================================================
-	static const std::array<double,3> sliceExtremaMarkerColor;
+	// region ==================== CONSTANTS ==================================================
 
-	// ==================== CONSTRUCTORS / DESTRUCTORS =================================
-	CanonicalVizPipe(const std::array<double, 4>& positiveTruncatedNonInterestVoxelColor,
-	                 const std::array<double, 4>& positiveNonTruncatedNonInterestVoxelColor,
-	                 const std::array<double, 4>& negativeNonTruncatedNonInterestVoxelColor,
-	                 const std::array<double, 4>& negativeTruncatedNonInterestVoxelColor,
-	                 const std::array<double, 4>& unknownNonInterestVoxelColor,
-	                 const std::array<double, 4>& positiveInterestVoxelColor,
-	                 const std::array<double, 4>& negativeInterestVoxelColor,
-	                 const std::array<double, 4>& highlightVoxelColor,
-	                 const std::array<double, 3>& hashBlockEdgeColor, int frameIx);
+	static const std::array<double, 3> sliceExtremaMarkerColor;
+	// endregion
+	// region ==================== CONSTRUCTORS / DESTRUCTORS =================================
 
-	// ==================== MEMBER FUNCTIONS ===========================================
+	WarpedSceneVizPipe(const std::array<double, 4>& positiveTruncatedNonInterestVoxelColor,
+	                   const std::array<double, 4>& positiveNonTruncatedNonInterestVoxelColor,
+	                   const std::array<double, 4>& negativeNonTruncatedNonInterestVoxelColor,
+	                   const std::array<double, 4>& negativeTruncatedNonInterestVoxelColor,
+	                   const std::array<double, 4>& unknownNonInterestVoxelColor,
+	                   const std::array<double, 4>& positiveInterestVoxelColor,
+	                   const std::array<double, 4>& negativeInterestVoxelColor,
+	                   const std::array<double, 4>& highlightVoxelColor,
+	                   const std::array<double, 3>& hashBlockEdgeColor, int frameIx);
+
+	// endregion
+	// region ==================== MEMBER FUNCTIONS ===========================================
+
 	void UpdatePointPositionsFromBuffer(void* buffer);
 	void UpdateInterestRegionsFromBuffers(void* buffer);
 
@@ -65,18 +69,20 @@ public:
 	void ToggleWarpEnabled();
 	void SelectOrDeselectVoxel(vtkIdType pointId, bool highlightOn);
 	void SetSliceSelection(vtkIdType pointId, bool& continueSliceSelection);
-	
+	// endregion
 protected:
 	// *** setup ***
 	void PreparePointsForRendering() override;
 	vtkSmartPointer<vtkPoints> initialNonInterestPoints;
 	vtkSmartPointer<vtkPoints> initialInterestPoints;
 private:
-	// =============== MEMBER FUNCTIONS ================================================================================
+	// region =============== MEMBER FUNCTIONS =========================================================================
+
 	void PrintVoxelInfromation(vtkIdType pointId);
 	void RetrieveInitialCoordinates(vtkIdType pointId, int initialCoordinates[3], double vizCoordinates[3]) const;
+	// endregion
+	// region =============== MEMBER VARIABLES =========================================================================
 
-	// =============== MEMBER VARIABLES ================================================================================
 	//frame of the warp
 	int frameIx;
 
@@ -116,4 +122,5 @@ private:
 	vtkSmartPointer<vtkActor> selectedSliceExtrema[2];
 	vtkSmartPointer<vtkActor> selectedSlicePreview;
 	Vector3i selectedSliceExtremaCoordinates[2];
+	//endregion
 };

@@ -25,23 +25,6 @@
 #include "../ITMNeighborVoxelIterationInfo.h"
 #include "ITMWarpSceneLogger.h"
 
-//TODO: eventually replace boost::filesystem with stdlib filesystem when that is no longer experimental -Greg (GitHub: Algomorph)
-//TODO: add HAVE_BOOST guards / CMake optional boost support -Greg (GitHub: Algomorph)
-//TODO: warpByteSize should be a constant and used throughout the .tpp where it is appropriate (instead of 2*sizeof(Vector3f)) -Greg (GitHub: Algomorph)
-
-//TODO: need only 3 public buffering/reading methods & 2 seek methods (described below) -Greg (GitHub: Algomorph)
-/*
- * This would keep iIteration consistent for both interest regions & general warps
- * Buffering:
- * 1) Buffer interest warps & advance file cursor for general warps
- * 2) Buffer general warps & advance file cursors for all interest warps
- * 3) Buffer both interest & general warps
- *
- * Seeking:
- * 1) Move all file cursors to previous (if possible)
- * 2) Move all file cursors to arbitrary iIteration (if possible) -- should peek one-by-one if iteration count is unknown,
- * but move directly to proper position when iteration count becomes known (end of file is reached)
- */
 //boost
 #include <boost/filesystem.hpp>
 
@@ -70,6 +53,13 @@ public:
 	static const std::string liveName;
 	static const std::string canonicalName;
 // endregion
+// region === PUBLIC ENUMS ===
+
+enum Mode {
+	FULL_SCENE,
+	SLICE
+};
+//endregion
 // region === PUBLIC INNER CLASSES ===
 
 	/**
@@ -131,25 +121,25 @@ public:
 	void SetScenes(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
 	void SetPath(std::string path);
 
-	//*** scene loading/saving
-	bool SaveScenes();
-	bool LoadScenes();
-	bool SaveScenesCompact();
-	bool LoadScenesCompact();
-
-
-	//*** information getters
+	//*** getters
 	std::string GetPath() const;
 	int GetVoxelCount() const;
 	bool GetScenesLoaded() const;
 	bool GetInterestRegionsSetUp() const;
+	Mode GetMode() const;
 	unsigned int GetGeneralIterationCursor() const;
 	unsigned int GetInterestIterationCursor() const;
 	const std::map<int, std::shared_ptr<InterestRegionInfo>>& GetInterestRegionsByHash();
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> GetHighlights() const;
 	std::vector<int> GetInterestRegionHashes() const;
 
-	//*** saving of meta-information & interest regions
+	//*** scene loading/saving
+	bool SaveScenes();
+	bool LoadScenes();
+	bool SaveScenesCompact();
+	bool LoadScenesCompact();
+
+	//*** saving of highlight meta-information & interest regions
 	void LogHighlight(int hashId, int voxelLocalIndex, int frameNumber, ITMHighlightIterationInfo info);
 	bool SaveHighlights(std::string filePostfix = "");
 	void ClearHighlights();
@@ -175,22 +165,14 @@ public:
 
 	bool SaveCurrentWarpState();
 	bool LoadCurrentWarpState();
-	bool BufferNextWarpState();
-	bool BufferPreviousWarpState();
 	bool BufferCurrentWarpState(void* externalBuffer);
 	bool BufferPreviousWarpState(void* externalBuffer);
 	bool BufferWarpStateAt(void* externalBuffer, unsigned int iterationIndex);
 	bool LoadPreviousWarpState();
 
 	bool IsLoadingWarpState();
-	bool CopyWarpBuffer(float* warpDestination, float* warpUpdateDestination, int& iUpdate);
-	bool CopyWarpAt(int index, float voxelWarpDestination[3]) const;
-	bool CopyWarpAt(int index, float voxelWarpDestination[3], float voxelUpdateDestination[3]) const;
-	const float* WarpAt(int index) const;
-	const float* UpdateAt(int index) const;
 
 	//*** slice generation ***
-	std::string GenerateSliceStringIdentifier(const Vector3i& minPoint, const Vector3i& maxPoint);
 	fs::path GenerateSliceFolderPath(const Vector3i& minPoint, const Vector3i& maxPoint);
 	std::string GenerateSliceSceneFilename_UpToPostfix(const Vector3i& minPoint, const Vector3i& maxPoint);
 	std::string GenerateSliceSceneFilename_Full(const Vector3i& minPoint, const Vector3i& maxPoint);
@@ -218,13 +200,15 @@ private:
 
 // *** root folder
 	fs::path path;
+
 // *** subpaths
 	fs::path livePath;
 	fs::path highlightsBinaryPath;
 	fs::path highlightsTextPath;
 
 // *** scene structures ***
-	ITMWarpSceneLogger<TVoxelCanonical, TIndex> canonicalScene;
+	ITMWarpSceneLogger<TVoxelCanonical, TIndex> fullCanonicalSceneLogger;
+	ITMWarpSceneLogger<TVoxelCanonical, TIndex>& activeWarpLogger;
 	ITMScene<TVoxelLive, TIndex>* liveScene;
 
 // *** scene meta-information + reading/writing
@@ -233,6 +217,11 @@ private:
 	std::map<int, std::shared_ptr<InterestRegionInfo>> interestRegionInfoByHashId;
 	std::vector<std::shared_ptr<InterestRegionInfo>> interestRegionInfos;
 
+// *** data manipulation information ***
+	int minHighlightRecurrenceCount = 0;
+
+// *** state ***
+	Mode mode;
 	bool interestRegionsHaveBeenSetUp = false;
 
 	//TODO: the way these update numbers are tracked are less than ideal (see comment below) -Greg (GitHub: Algomorph)
@@ -240,8 +229,7 @@ private:
 	// It would be ideal to extend the scene class and log that number there, since it reflects the state of the scene.
 	unsigned int interestIterationCursor = 0;
 
-// *** data manipulation information ***
-	int minHighlightRecurrenceCount = 0;
+
 // endregion
 };
 

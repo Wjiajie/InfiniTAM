@@ -35,7 +35,7 @@ set(sources
     SDFVizInteractorStyle.cpp
     SDFSceneVizPipe.tpp
     ExplicitInstantiations.cpp
-    CanonicalVizPipe.cpp
+    WarpedSceneVizPipe.cpp
     HighlightVisualization.cpp
     #===helpers===
     )
@@ -45,7 +45,7 @@ set(headers
     SDFViz.h
     SDFVizInteractorStyle.h
     SDFSceneVizPipe.h
-    CanonicalVizPipe.h
+    WarpedSceneVizPipe.h
     HighlightVisualization.h
     SDFVizGlobalDefines.h
     VizPipeShared.h

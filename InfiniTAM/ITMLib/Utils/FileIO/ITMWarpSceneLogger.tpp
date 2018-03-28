@@ -21,11 +21,37 @@
 
 using namespace ITMLib;
 
-
-
 // =====================================================================================================================
 // =============================================== WARP SCENE WRAPPER INNER CLASS (CANONICAL SCENE & ITS SLICES)========
 // =====================================================================================================================
+
+// region ======================================== STATIC CONSTANTS ====================================================
+
+template<typename TVoxel, typename TIndex>
+const size_t ITMWarpSceneLogger<TVoxel, TIndex>::warpByteSize = sizeof(TVoxel::warp_t);
+
+template<typename TVoxel, typename TIndex>
+const size_t ITMWarpSceneLogger<TVoxel, TIndex>::updateByteSize = sizeof(TVoxel::warp_t_update);
+
+template<typename TVoxel, typename TIndex>
+const size_t ITMWarpSceneLogger<TVoxel, TIndex>::warpAndUpdateByteSize =
+		ITMWarpSceneLogger<TVoxel, TIndex>::warpByteSize + ITMWarpSceneLogger<TVoxel, TIndex>::updateByteSize;
+
+// endregion
+// region ======================================== STATIC METHODS ======================================================
+
+template<typename TVoxel, typename TIndex>
+std::string ITMWarpSceneLogger<TVoxel, TIndex>::GenerateSliceStringIdentifier(
+		const Vector3i& minPoint, const Vector3i& maxPoint) {
+	return padded_to_string(minPoint.x, 3)
+	       + "_" + padded_to_string(minPoint.y, 3)
+	       + "_" + padded_to_string(minPoint.z, 3)
+	       + "_" + padded_to_string(maxPoint.x, 3)
+	       + "_" + padded_to_string(maxPoint.y, 3)
+	       + "_" + padded_to_string(maxPoint.z, 3);
+};
+
+// endregion
 // region ======================================== CONSTRUCTORS & DESTRUCTORS ==========================================
 
 template<typename TVoxel, typename TIndex>
@@ -39,7 +65,6 @@ ITMWarpSceneLogger<TVoxel, TIndex>::ITMWarpSceneLogger(bool isSlice, ITMScene<TV
 
 template<typename TVoxel, typename TIndex>
 ITMWarpSceneLogger<TVoxel, TIndex>::~ITMWarpSceneLogger() {
-	delete[] warpBuffer;
 }
 
 // endregion
@@ -47,7 +72,7 @@ ITMWarpSceneLogger<TVoxel, TIndex>::~ITMWarpSceneLogger() {
 
 template<typename TVoxel, typename TIndex>
 unsigned int ITMWarpSceneLogger<TVoxel, TIndex>::GetIterationCursor() const {
-	return generalIterationCursor;
+	return iterationCursor;
 }
 
 template<typename TVoxel, typename TIndex>
@@ -58,6 +83,13 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::Empty() const {
 template<typename TVoxel, typename TIndex>
 bool ITMWarpSceneLogger<TVoxel, TIndex>::Loaded() const {
 	return voxelCount != -1;
+}
+template<typename TVoxel, typename TIndex>
+std::string ITMWarpSceneLogger<TVoxel, TIndex>::GetSliceIdentifier() const {
+	if(!isSlice){
+		return "full_scene";
+	}
+	return ITMWarpSceneLogger<TVoxel, TIndex>::GenerateSliceStringIdentifier(this->minimum,this->maximum);
 }
 // endregion
 // region ======================================== LOAD / SAVE SCENE ===================================================
@@ -109,8 +141,8 @@ ITMWarpSceneLogger<TVoxel, TIndex>::StartSavingWarpState(unsigned int frameIx) {
 	if (!warpOFStream)
 		throw std::runtime_error("Could not open " + warpPath + " for writing ["  __FILE__  ": " +
 		                         std::to_string(__LINE__) + "]");
-	warpOFStream.write(reinterpret_cast<const char*>(&frameIx), sizeof(int));
-	generalIterationCursor = 0;
+	warpOFStream.write(reinterpret_cast<const char*>(&frameIx), sizeof(frameIx));
+	iterationCursor = 0;
 	return true;
 }
 
@@ -126,7 +158,7 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::SaveCurrentWarpState() {
 		std::cout << "Current warp-update OFStream cannot be saved to for whatever reason." << std::endl;
 		return false;
 	}
-	warpOFStream.write(reinterpret_cast<const char* >(&this->generalIterationCursor), sizeof(unsigned int));
+	warpOFStream.write(reinterpret_cast<const char* >(&this->iterationCursor), sizeof(iterationCursor));
 	const TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashBlocks = scene->index.GetEntries();
 	int hashBlockCount = scene->index.noTotalEntries;
@@ -140,14 +172,14 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::SaveCurrentWarpState() {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					const TVoxel& voxel = localVoxelBlock[ixVoxelInHashBlock];
-					warpOFStream.write(reinterpret_cast<const char* >(&voxel.warp_t), sizeof(Vector3f));
-					warpOFStream.write(reinterpret_cast<const char* >(&voxel.warp_t_update), sizeof(Vector3f));
+					warpOFStream.write(reinterpret_cast<const char* >(&voxel.warp_t), warpByteSize);
+					warpOFStream.write(reinterpret_cast<const char* >(&voxel.warp_t_update), updateByteSize);
 				}
 			}
 		}
 	}
-	std::cout << "Written warp updates for iteration " << generalIterationCursor << " to disk." << std::endl;
-	generalIterationCursor++;
+	std::cout << "Written warp updates for iteration " << iterationCursor << " to disk." << std::endl;
+	iterationCursor++;
 	return true;
 }
 
@@ -169,7 +201,7 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::StartLoadingWarpState() {
 		return false;
 	}
 	int frameIx;
-	warpIFStream.read(reinterpret_cast<char*>(&frameIx), sizeof(int));
+	warpIFStream.read(reinterpret_cast<char*>(&frameIx), sizeof(frameIx));
 	return true;
 }
 
@@ -192,9 +224,9 @@ ITMWarpSceneLogger<TVoxel, TIndex>::StartLoadingWarpState(unsigned int& frameIx)
 		return false;
 	}
 
-	warpIFStream.read(reinterpret_cast<char*>(&frameIx), sizeof(unsigned int));
+	warpIFStream.read(reinterpret_cast<char*>(&frameIx), sizeof(frameIx));
 
-	generalIterationCursor = 0;
+	iterationCursor = 0;
 	return true;
 }
 
@@ -216,7 +248,7 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::LoadCurrentWarpState() {
 				" Was 'StartLoadingWarpState()' called?" << std::endl;
 		return false;
 	}
-	if (!warpIFStream.read(reinterpret_cast<char*>(&generalIterationCursor), sizeof(unsigned int))) {
+	if (!warpIFStream.read(reinterpret_cast<char*>(&iterationCursor), sizeof(iterationCursor))) {
 		std::cout << "Read warp state attempt failed." << std::endl;
 		return false;
 	}
@@ -236,8 +268,8 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::LoadCurrentWarpState() {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxel& voxel = localVoxelBlock[ixVoxelInHashBlock];
-					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t), sizeof(Vector3f));
-					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t_update), sizeof(Vector3f));
+					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t), warpByteSize);
+					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t_update), updateByteSize);
 					float warpUpdateLength = ORUtils::length(voxel.warp_t_update);
 					if (warpUpdateLength > maxWarpUpdateLength) {
 						maxWarpUpdateLength = warpUpdateLength;
@@ -247,20 +279,20 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::LoadCurrentWarpState() {
 			}
 		}
 	}
-	std::cout << "Iteration " << generalIterationCursor << ". Max warp update: " << maxWarpUpdateLength << std::endl;
+	std::cout << "Iteration " << iterationCursor << ". Max warp update: " << maxWarpUpdateLength << std::endl;
 	this->voxelCount = voxelCount;
 	return true;
 }
 
 template<typename TVoxel, typename TIndex>
 bool ITMWarpSceneLogger<TVoxel, TIndex>::LoadPreviousWarpState() {
-	if (generalIterationCursor < 1) {
+	if (iterationCursor < 1) {
 		return false;
 	}
 
-	warpIFStream.seekg(-2 * (voxelCount * 2 * sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
+	warpIFStream.seekg(-2 * (voxelCount * warpAndUpdateByteSize + sizeof(iterationCursor)), std::ios::cur);
 
-	if (!warpIFStream.read(reinterpret_cast<char*>(&generalIterationCursor), sizeof(unsigned int))) {
+	if (!warpIFStream.read(reinterpret_cast<char*>(&iterationCursor), sizeof(iterationCursor))) {
 		std::cout << "Read warp state attempt failed." << std::endl;
 		return false;
 	}
@@ -278,8 +310,8 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::LoadPreviousWarpState() {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxel& voxel = localVoxelBlock[ixVoxelInHashBlock];
-					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t), sizeof(Vector3f));
-					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t_update), sizeof(Vector3f));
+					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t), warpByteSize);
+					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t_update), updateByteSize);
 				}
 			}
 		}
@@ -294,91 +326,6 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::LoadPreviousWarpState() {
 template<typename TVoxel, typename TIndex>
 bool ITMWarpSceneLogger<TVoxel, TIndex>::IsLoadingWarpState() {
 	return this->warpIFStream.is_open();
-}
-
-template<typename TVoxel, typename TIndex>
-bool ITMWarpSceneLogger<TVoxel, TIndex>::BufferNextWarpState() {
-	if (!warpIFStream) {
-		std::cout << "Attempted to read warp state with IFStream being in a bad state."
-				" Was 'StartLoadingWarpState()' called?" << std::endl;
-		return false;
-	}
-	if (voxelCount == -1) {
-		std::cout << "Attempted to read warp state without knowing voxel count apriori."
-				" Were scenes loaded successfully?" << std::endl;
-		return false;
-	}
-	//read in the number of the current update.
-	if (!warpIFStream.read(reinterpret_cast<char*>(&generalIterationCursor), sizeof(unsigned int))) {
-		std::cout << "Read warp state attempt failed." << std::endl;
-		return false;
-	}
-
-	if (warpBuffer == NULL) {
-		//allocate warp buffer
-		warpBuffer = new Vector3f[voxelCount * 2];
-	}
-	warpIFStream.read(reinterpret_cast<char*>(warpBuffer), sizeof(Vector3f) * voxelCount * 2);
-
-	return true;
-}
-
-template<typename TVoxel, typename TIndex>
-bool ITMWarpSceneLogger<TVoxel, TIndex>::BufferPreviousWarpState() {
-	if (generalIterationCursor < 1) {
-		return false;
-	}
-
-	warpIFStream.seekg(-2 * (voxelCount * 2 * sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
-	//read in the number of the current update.
-	if (!warpIFStream.read(reinterpret_cast<char*>(&generalIterationCursor), sizeof(unsigned int))) {
-		std::cout << "Read warp state attempt failed." << std::endl;
-		return false;
-	}
-
-	warpIFStream.read(reinterpret_cast<char*>(warpBuffer), sizeof(Vector3f) * voxelCount * 2);
-
-	return true;
-}
-
-
-template<typename TVoxel, typename TIndex>
-bool ITMWarpSceneLogger<TVoxel, TIndex>::CopyWarpBuffer(float* warpDestination,
-                                                        float* warpUpdateDestination,
-                                                        int& iUpdate) {
-	if (!warpBuffer) return false;
-	memcpy(reinterpret_cast<void*>(warpDestination), reinterpret_cast<void*>(warpBuffer),
-	       sizeof(Vector3f) * voxelCount);
-	memcpy(reinterpret_cast<void*>(warpDestination), reinterpret_cast<void*>(warpBuffer + voxelCount),
-	       sizeof(Vector3f) * voxelCount);
-	iUpdate = this->generalIterationCursor;
-}
-
-template<typename TVoxel, typename TIndex>
-bool ITMWarpSceneLogger<TVoxel, TIndex>::CopyWarpAt(int index,
-                                                    float voxelWarpDestination[3]) const {
-	memcpy(reinterpret_cast<void*>(voxelWarpDestination), reinterpret_cast<void*>(warpBuffer + index * 2),
-	       sizeof(Vector3f));
-}
-
-template<typename TVoxel, typename TIndex>
-bool ITMWarpSceneLogger<TVoxel, TIndex>::CopyWarpAt(int index,
-                                                    float* voxelWarpDestination,
-                                                    float* voxelUpdateDestination) const {
-	memcpy(reinterpret_cast<void*>(voxelWarpDestination), reinterpret_cast<void*>(warpBuffer + index * 2),
-	       sizeof(Vector3f));
-	memcpy(reinterpret_cast<void*>(voxelUpdateDestination), reinterpret_cast<void*>(warpBuffer + index * 2 + 1),
-	       sizeof(Vector3f));
-}
-
-template<typename TVoxel, typename TIndex>
-const float* ITMWarpSceneLogger<TVoxel, TIndex>::WarpAt(int index) const {
-	return reinterpret_cast<const float*>(warpBuffer + index * 2);
-}
-
-template<typename TVoxel, typename TIndex>
-const float* ITMWarpSceneLogger<TVoxel, TIndex>::UpdateAt(int index) const {
-	return reinterpret_cast<const float*>(warpBuffer + index * 2 + 1);
 }
 
 template<typename TVoxel, typename TIndex>
@@ -406,57 +353,57 @@ ITMWarpSceneLogger<TVoxel, TIndex>::BufferCurrentWarpState(void* externalBuffer)
 		return false;
 	}
 
-	if (!warpIFStream.read(reinterpret_cast<char*>(&generalIterationCursor), sizeof(unsigned int))) {
+	if (!warpIFStream.read(reinterpret_cast<char*>(&iterationCursor), sizeof(iterationCursor))) {
 		std::cout << "Read warp state attempt failed." << std::endl;
 		return false;
 	}
-	warpIFStream.read(reinterpret_cast<char*>(externalBuffer), sizeof(Vector3f) * voxelCount * 2);
-	std::cout << "Read warp state for iteration " << generalIterationCursor << std::endl;
+	warpIFStream.read(reinterpret_cast<char*>(externalBuffer), warpAndUpdateByteSize * voxelCount );
+	std::cout << "Read warp state for iteration " << iterationCursor << std::endl;
 	return true;
 }
 
 template<typename TVoxel, typename TIndex>
 bool
 ITMWarpSceneLogger<TVoxel, TIndex>::BufferPreviousWarpState(void* externalBuffer) {
-	if (generalIterationCursor < 1) {
+	if (iterationCursor < 1) {
 		return false;
 	}
 	if (warpIFStream.eof()) {
 		warpIFStream.clear();
 	}
-	warpIFStream.seekg(-2 * (voxelCount * 2 * sizeof(Vector3f) + sizeof(unsigned int)), std::ios::cur);
+	warpIFStream.seekg(-2 * (voxelCount * warpAndUpdateByteSize + sizeof(iterationCursor)), std::ios::cur);
 	//read in the number of the current update.
-	if (!warpIFStream.read(reinterpret_cast<char*>(&generalIterationCursor), sizeof(unsigned int))) {
+	if (!warpIFStream.read(reinterpret_cast<char*>(&iterationCursor), sizeof(iterationCursor))) {
 		std::cout << "Read warp state attempt failed." << std::endl;
 		return false;
 	}
 
-	warpIFStream.read(reinterpret_cast<char*>(externalBuffer), sizeof(Vector3f) * voxelCount * 2);
-	std::cout << "Read warp state for iteration " << generalIterationCursor << std::endl;
+	warpIFStream.read(reinterpret_cast<char*>(externalBuffer), voxelCount * warpAndUpdateByteSize);
+	std::cout << "Read warp state for iteration " << iterationCursor << std::endl;
 
 	return !(warpIFStream.bad() || warpIFStream.fail());
 }
-
 
 template<typename TVoxel, typename TIndex>
 bool ITMWarpSceneLogger<TVoxel, TIndex>::BufferWarpStateAt(void* externalBuffer,
                                                            unsigned int iterationIndex) {
 	size_t headerSize = sizeof(int);
-	warpIFStream.seekg(headerSize + iterationIndex * (voxelCount * 2 * sizeof(Vector3f) + sizeof(unsigned int)),
+	warpIFStream.seekg(headerSize + iterationIndex * (voxelCount * warpAndUpdateByteSize + sizeof(iterationCursor)),
 	                   std::ios::beg);
 	if (warpIFStream.eof()) {
 		warpIFStream.clear();
 	}
 	//read in the number of the current update.
-	if (!warpIFStream.read(reinterpret_cast<char*>(&generalIterationCursor), sizeof(unsigned int))) {
+	if (!warpIFStream.read(reinterpret_cast<char*>(&iterationCursor), sizeof(iterationCursor))) {
 		std::cout << "Read warp state attempt failed." << std::endl;
 		return false;
 	}
 
-	generalIterationCursor = iterationIndex;
-	warpIFStream.read(reinterpret_cast<char*>(externalBuffer), sizeof(Vector3f) * voxelCount * 2);
-	std::cout << "Read warp state for iteration " << generalIterationCursor << std::endl;
+	iterationCursor = iterationIndex;
+	warpIFStream.read(reinterpret_cast<char*>(externalBuffer), voxelCount * warpAndUpdateByteSize);
+	std::cout << "Read warp state for iteration " << iterationCursor << std::endl;
 
 	return !(warpIFStream.bad() || warpIFStream.fail());
 }
-//endregion
+
+// endregion

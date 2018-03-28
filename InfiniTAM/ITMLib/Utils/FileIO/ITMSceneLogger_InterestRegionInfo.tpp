@@ -209,8 +209,8 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SaveCur
 	}
 
 	ofStream.write(reinterpret_cast<const char* >(&iterationCursor), sizeof(unsigned int));
-	const TVoxelCanonical* voxels = parent.canonicalScene.scene->localVBA.GetVoxelBlocks();
-	const ITMHashEntry* hashBlocks = parent.canonicalScene.scene->index.GetEntries();
+	const TVoxelCanonical* voxels = parent.activeWarpLogger.scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* hashBlocks = parent.activeWarpLogger.scene->index.GetEntries();
 	for (int iHashBlock : hashBlockIds) {
 		const ITMHashEntry& currentHashBlock = hashBlocks[iHashBlock];
 		if (currentHashBlock.ptr < 0) continue;
@@ -255,7 +255,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving(
 		const ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>& highlights) {
-	if (this->canonicalScene.Empty()) {
+	if (this->activeWarpLogger.Empty()) {
 		DIEWITHEXCEPTION("Attempted to set up interest regions before loading the scenes. Aborting. ["
 				                 __FILE__
 				                 ": " + std::to_string(__LINE__) + "]");
@@ -263,8 +263,8 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsFo
 	interestRegionInfos.clear();
 	interestRegionInfoByHashId.clear();
 
-	const ITMHashEntry* hashBlocks = canonicalScene.scene->index.GetEntries();
-	int hashBlockCount = canonicalScene.scene->index.noTotalEntries;
+	const ITMHashEntry* hashBlocks = activeWarpLogger.scene->index.GetEntries();
+	int hashBlockCount = activeWarpLogger.scene->index.noTotalEntries;
 
 	//traverse hash blocks where anomalies/errors/oscillations occur
 	for (int centerHashId : highlights.GetOuterLevelKeys()) {
@@ -335,7 +335,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveAllInterestRegionW
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForLoading() {
-	if (canonicalScene.Empty()) {
+	if (activeWarpLogger.Empty()) {
 		DIEWITHEXCEPTION("Attempted to set up interest regions before loading the scenes. Aborting.");
 	}
 	interestRegionInfos.clear();
@@ -372,6 +372,12 @@ int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetTotalInterestVoxelCo
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestRegionsSetUp() const {
 	return this->interestRegionsHaveBeenSetUp;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+typename ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::Mode
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetMode() const {
+	return mode;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

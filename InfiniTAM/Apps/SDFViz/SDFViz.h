@@ -34,7 +34,7 @@
 //ITMLib
 #include "../../ITMLib/ITMLibDefines.h"
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
-#include "CanonicalVizPipe.h"
+#include "WarpedSceneVizPipe.h"
 #include "HighlightVisualization.h"
 
 using namespace ITMLib;
@@ -105,16 +105,12 @@ private:
 	// path to root directory (i.e. without the Frame_XXXX prefixes)
 	std::string rootPath;
 
-
 	// Visualization setup
+	// for actual voxels
 	vtkSmartPointer<vtkRenderer> sdfRenderer;
-	vtkSmartPointer<vtkRenderer> topRenderer;
-	// The render window is the actual GUI window
-	// that appears on the computer screen
+	// for highlights, slices, & other markers / gizmos
+	vtkSmartPointer<vtkRenderer> markerRenderer;
 	vtkSmartPointer<vtkRenderWindow> renderWindow;
-	// The render window interactor captures mouse events
-	// and will perform appropriate camera or actor manipulation
-	// depending on the nature of the events.
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
 	// indicator at top left corner showing for which (if any) iteration the data is being shown
 	vtkSmartPointer<vtkTextActor> iterationIndicator;
@@ -125,7 +121,7 @@ private:
 	vtkSmartPointer<vtkLegendBoxActor> legend;
 
 	// Structures for rendering scene geometry with VTK
-	CanonicalVizPipe canonicalScenePipe;
+	WarpedSceneVizPipe canonicalScenePipe;
 	SDFSceneVizPipe<ITMVoxelLive, ITMVoxelIndex> liveScenePipe;
 	HighlightVisualization highlightVisualizer;
 	vtkSmartPointer<vtkSphereSource> sphere;

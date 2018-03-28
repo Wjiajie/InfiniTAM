@@ -21,7 +21,6 @@
 #include <boost/filesystem.hpp>
 namespace fs = boost::filesystem;
 
-
 namespace ITMLib{
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -32,15 +31,28 @@ class ITMWarpSceneLogger{
 	template<typename TVoxelCanonical, typename TVoxelLive, typename TIndexLogger>
 	friend class ITMSceneLogger;
 public:
+	// region ================================ STATIC CONSTANTS ========================================================
 
+	static const size_t warpByteSize;
+	static const size_t updateByteSize;
+	static const size_t warpAndUpdateByteSize;
+
+	// region ================================ STATIC FUNCTIONS ========================================================
+
+	static std::string GenerateSliceStringIdentifier(const Vector3i& minPoint, const Vector3i& maxPoint);
+
+	// endregion
+
+	//*** constructors & destructors ***
 	~ITMWarpSceneLogger();
 
-	//*** getters ***
+	//*** getters / setters ***
 	unsigned int GetIterationCursor() const;
 	int GetVoxelCount() const;
 	bool Empty() const;
 	bool Loaded() const;
 	void Load();
+	std::string GetSliceIdentifier() const;
 
 	//*** scene saving / loading ***
 	void Save();
@@ -55,13 +67,6 @@ public:
 	bool BufferWarpStateAt(void* externalBuffer, unsigned int iterationIndex);
 	bool BufferPreviousWarpState(void* externalBuffer);
 	bool BufferCurrentWarpState(void* externalBuffer);
-	const float* UpdateAt(int index) const;
-	const float* WarpAt(int index) const;
-	bool CopyWarpAt(int index, float* voxelWarpDestination, float* voxelUpdateDestination) const;
-	bool CopyWarpAt(int index, float* voxelWarpDestination) const;
-	bool CopyWarpBuffer(float* warpDestination, float* warpUpdateDestination, int& iUpdate);
-	bool BufferPreviousWarpState();
-	bool BufferNextWarpState();
 	bool LoadCurrentWarpState();
 	bool StartLoadingWarpState(unsigned int& frameIx);
 	bool StartLoadingWarpState();
@@ -77,9 +82,8 @@ private:
 	std::string warpPath;
 	ITMScene<TVoxel, TIndex>* scene;
 
-	unsigned int generalIterationCursor = 0;
+	unsigned int iterationCursor = 0;
 	int voxelCount = -1;
-	Vector3f* warpBuffer = nullptr;
 
 	// *** optimization warp-updates reading/writing
 
