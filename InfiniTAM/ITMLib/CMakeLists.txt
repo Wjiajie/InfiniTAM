@@ -492,6 +492,7 @@ SET(ITMLIB_UTILS_SOURCES
 Utils/FileIO/ITMSceneLogger.tpp
 Utils/FileIO/ITMSceneLogger_InterestRegionInfo.tpp
 Utils/FileIO/ITMSceneLogger_SceneSlice.tpp
+Utils/FileIO/ITMWarpSceneLogger.tpp
 Utils/ITMLibSettings.cpp
 Utils/ITMSceneSliceRasterizer.tpp
 Utils/ITM3DNestedMapOfArrays.tpp
@@ -503,6 +504,7 @@ Utils/ITMPrintHelpers.cpp
 
 SET(ITMLIB_UTILS_HEADERS
 Utils/FileIO/ITMSceneLogger.h
+Utils/FileIO/ITMWarpSceneLogger.h
 Utils/ITMCUDAUtils.h
 Utils/ITMImageTypes.h
 Utils/ITMHashBlockProperties.h

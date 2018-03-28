@@ -25,6 +25,7 @@
 #include "ITMSceneLogger_InterestRegionInfo.tpp"
 #include "ITMSceneLogger_SceneSlice.tpp"
 
+
 namespace fs = boost::filesystem;
 
 using namespace ITMLib;

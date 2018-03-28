@@ -23,6 +23,7 @@
 #include "../../Objects/Scene/ITMScene.h"
 #include "../ITM3DNestedMapOfArrays.h"
 #include "../ITMNeighborVoxelIterationInfo.h"
+#include "ITMWarpSceneLogger.h"
 
 //TODO: eventually replace boost::filesystem with stdlib filesystem when that is no longer experimental -Greg (GitHub: Algomorph)
 //TODO: add HAVE_BOOST guards / CMake optional boost support -Greg (GitHub: Algomorph)
@@ -48,6 +49,8 @@ namespace fs = boost::filesystem;
 
 namespace ITMLib {
 
+
+
 /**
  * \brief Wraps the functionality of saving canonical/live scenes or scene slices for dynamic fusion along
  * with warp changes during optimization between frames.
@@ -60,8 +63,6 @@ class ITMSceneLogger {
 
 
 public:
-	class WarpSceneWrapper;
-	friend class WarpSceneWrapper;
 // region === STATIC CONSTANTS ===
 
 	static const std::string warpUpdatesFilename;
@@ -77,7 +78,6 @@ public:
 	 */
 	class InterestRegionInfo {
 		friend class ITMSceneLogger;
-		friend class WarpSceneWrapper;
 	public:
 		static const Vector3s blockTraversalOrder[];
 		static const std::string prefix;
@@ -115,65 +115,7 @@ public:
 		int voxelCount;
 
 	};
-	class WarpSceneWrapper{
-		friend class ITMSceneLogger;
-	public:
-		explicit WarpSceneWrapper(bool isSlice, ITMScene<TVoxelCanonical, TIndex>* scene = nullptr, fs::path path = "");
-		~WarpSceneWrapper();
 
-		//*** getters ***
-		unsigned int GetIterationCursor() const;
-		int GetVoxelCount() const;
-		bool Empty() const;
-		bool Loaded() const;
-		void Load();
-
-		//*** scene saving / loading ***
-		void Save();
-		void SaveCompact();
-		void LoadCompact();
-
-		//*** warp loading / saving / buffering ***
-		bool StartSavingWarpState(unsigned int frameIx);
-		void StopSavingWarpState();
-		bool SaveCurrentWarpState();
-		bool LoadPreviousWarpState();
-		bool BufferWarpStateAt(void* externalBuffer, unsigned int iterationIndex);
-		bool BufferPreviousWarpState(void* externalBuffer);
-		bool BufferCurrentWarpState(void* externalBuffer);
-		const float* UpdateAt(int index) const;
-		const float* WarpAt(int index) const;
-		bool CopyWarpAt(int index, float* voxelWarpDestination, float* voxelUpdateDestination) const;
-		bool CopyWarpAt(int index, float* voxelWarpDestination) const;
-		bool CopyWarpBuffer(float* warpDestination, float* warpUpdateDestination, int& iUpdate);
-		bool BufferPreviousWarpState();
-		bool BufferNextWarpState();
-		bool LoadCurrentWarpState();
-		bool StartLoadingWarpState(unsigned int& frameIx);
-		bool StartLoadingWarpState();
-		void StopLoadingWarpState();
-		bool IsLoadingWarpState();
-
-	private:
-		fs::path path;
-		fs::path warpUpdatesPath;
-		ITMScene<TVoxelCanonical, TIndex>* scene;
-
-		unsigned int generalIterationCursor = 0;
-		int voxelCount = -1;
-		Vector3f* warpBuffer = nullptr;
-
-		// *** optimization warp-updates reading/writing
-
-		std::ofstream warpOFStream;
-		std::ifstream warpIFStream;
-
-		// *** slice parameters (optional)
-		bool isSlice = false;
-		Vector3i minimum;
-		Vector3i maximum;
-
-	};
 //endregion
 // region === CONSTRUCTORS / DESTRUCTORS ===
 
@@ -283,7 +225,7 @@ private:
 	fs::path highlightsTextPath;
 
 // *** scene structures ***
-	WarpSceneWrapper canonicalScene;
+	ITMWarpSceneLogger<TVoxelCanonical, TIndex> canonicalScene;
 	ITMScene<TVoxelLive, TIndex>* liveScene;
 
 // *** scene meta-information + reading/writing

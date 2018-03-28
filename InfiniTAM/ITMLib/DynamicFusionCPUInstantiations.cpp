@@ -27,6 +27,7 @@
 #include "Engines/Meshing/CPU/ITMMeshingEngine_CPU.tpp"
 #include "Utils/ITMSceneSliceRasterizer.tpp"
 #include "Utils/ITMSceneStatisticsCalculator.tpp"
+#include "Utils/FileIO/ITMWarpSceneLogger.tpp"
 #include "Utils/FileIO/ITMSceneLogger.tpp"
 #include "Utils/ITM3DNestedMapOfArrays.tpp"
 #include "Utils/ITM3DNestedMap.tpp"
@@ -43,6 +44,7 @@ template class ITMSceneMotionTracker_CPU<ITMVoxelCanonical, ITMVoxelLive, ITMVox
 template class ITMVisualisationEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMVisualisationEngine_CPU<ITMVoxelLive, ITMVoxelIndex>;
 template class ITMMeshingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
+template class ITMWarpSceneLogger<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 
 //TODO: Cleanup -Greg (GitHub: Algomorph)
