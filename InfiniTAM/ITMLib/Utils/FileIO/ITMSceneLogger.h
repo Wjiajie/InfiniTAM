@@ -52,13 +52,15 @@ public:
 	static const std::string textFileExtension;
 	static const std::string liveName;
 	static const std::string canonicalName;
+	static const std::string sliceFolderPrefix;
+	static const std::string sliceScenePrefix;
 // endregion
 // region === PUBLIC ENUMS ===
 
-enum Mode {
-	FULL_SCENE,
-	SLICE
-};
+	enum Mode {
+		FULL_SCENE,
+		SLICE
+	};
 //endregion
 // region === PUBLIC INNER CLASSES ===
 
@@ -172,16 +174,26 @@ enum Mode {
 
 	bool IsLoadingWarpState();
 
-	//*** slice generation ***
-	fs::path GenerateSliceFolderPath(const Vector3i& minPoint, const Vector3i& maxPoint);
-	std::string GenerateSliceSceneFilename_UpToPostfix(const Vector3i& minPoint, const Vector3i& maxPoint);
-	std::string GenerateSliceSceneFilename_Full(const Vector3i& minPoint, const Vector3i& maxPoint);
-	std::string GenerateSliceWarpFilename(const Vector3i& minPoint, const Vector3i& maxPoint);
-	ITMWarpSceneLogger<TVoxelCanonical, TIndex>* Slice(ITMScene<TVoxelCanonical, TIndex>* destinationSlice,
-	                                                   const Vector3i& extremum1, const Vector3i& extremum2,
-	                                                   unsigned int frameIndex);
-	bool CanonicalSceneSliceExists(const Vector3i& extremum1,
-	                               const Vector3i& extremum2);
+	//*** slice generation & usage***
+	fs::path GenerateSliceFolderPath(const Vector3i& minPoint, const Vector3i& maxPoint) const;
+	fs::path GenerateSliceFolderPath(const std::string& sliceIdentifier) const;
+	std::string GenerateSliceSceneFilename_UpToPostfix(const Vector3i& minPoint, const Vector3i& maxPoint) const;
+	std::string GenerateSliceSceneFilename_Full(const Vector3i& minPoint, const Vector3i& maxPoint) const;
+	std::string GenerateSliceSceneFilename_Full(const std::string& sliceIdentifier) const;
+	std::string GenerateSliceWarpFilename(const Vector3i& minPoint, const Vector3i& maxPoint) const;
+	std::string GenerateSliceWarpFilename(const std::string& sliceIdentifier) const;
+	bool MakeSlice(ITMScene<TVoxelCanonical, TIndex>* destinationScene,
+	               const Vector3i& extremum1, const Vector3i& extremum2,
+	               unsigned int frameIndex);
+	bool SliceExistsInMemory(const std::string& sliceIdentifier) const;
+	bool SliceExistsOnDisk(const Vector3i& extremum1,
+	                       const Vector3i& extremum2) const;
+
+	bool SliceExistsOnDisk(const std::string& sliceIdentifier) const;
+	bool LoadSlice(const std::string& sliceIdentifier,
+		               ITMScene <TVoxelCanonical, TIndex>* destinationScene);
+	bool SwitchActiveScene(
+			std::string sliceIdentifier = ITMWarpSceneLogger<TVoxelCanonical, TIndex>::fullSceneSliceIdentifier);
 
 //endregion
 private:
@@ -216,6 +228,7 @@ private:
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
 	std::map<int, std::shared_ptr<InterestRegionInfo>> interestRegionInfoByHashId;
 	std::vector<std::shared_ptr<InterestRegionInfo>> interestRegionInfos;
+	std::map<std::string, std::shared_ptr<ITMWarpSceneLogger<TVoxelCanonical, TIndex> > > slices;
 
 // *** data manipulation information ***
 	int minHighlightRecurrenceCount = 0;

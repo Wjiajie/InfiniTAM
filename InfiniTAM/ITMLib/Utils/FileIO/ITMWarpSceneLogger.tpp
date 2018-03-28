@@ -37,6 +37,9 @@ template<typename TVoxel, typename TIndex>
 const size_t ITMWarpSceneLogger<TVoxel, TIndex>::warpAndUpdateByteSize =
 		ITMWarpSceneLogger<TVoxel, TIndex>::warpByteSize + ITMWarpSceneLogger<TVoxel, TIndex>::updateByteSize;
 
+template<typename TVoxel, typename TIndex>
+const std::string ITMWarpSceneLogger<TVoxel, TIndex>::fullSceneSliceIdentifier = "full_scene";
+
 // endregion
 // region ======================================== STATIC METHODS ======================================================
 
@@ -87,7 +90,7 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::Loaded() const {
 template<typename TVoxel, typename TIndex>
 std::string ITMWarpSceneLogger<TVoxel, TIndex>::GetSliceIdentifier() const {
 	if(!isSlice){
-		return "full_scene";
+		return fullSceneSliceIdentifier;
 	}
 	return ITMWarpSceneLogger<TVoxel, TIndex>::GenerateSliceStringIdentifier(this->minimum,this->maximum);
 }

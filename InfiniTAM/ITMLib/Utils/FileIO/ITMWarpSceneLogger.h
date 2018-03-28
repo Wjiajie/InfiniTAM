@@ -36,6 +36,7 @@ public:
 	static const size_t warpByteSize;
 	static const size_t updateByteSize;
 	static const size_t warpAndUpdateByteSize;
+	static const std::string fullSceneSliceIdentifier;
 
 	// region ================================ STATIC FUNCTIONS ========================================================
 
