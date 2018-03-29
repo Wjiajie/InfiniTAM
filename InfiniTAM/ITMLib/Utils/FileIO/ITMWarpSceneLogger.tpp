@@ -78,6 +78,19 @@ unsigned int ITMWarpSceneLogger<TVoxel, TIndex>::GetIterationCursor() const {
 	return iterationCursor;
 }
 
+
+template<typename TVoxel, typename TIndex>
+bool ITMWarpSceneLogger<TVoxel, TIndex>::SetIterationCursor(unsigned int iterationIndex) {
+	size_t headerSize = sizeof(int);
+	warpIFStream.seekg(headerSize + iterationIndex * (voxelCount * warpAndUpdateByteSize + sizeof(iterationCursor)),
+	                   std::ios::beg);
+	if (warpIFStream.eof()) {
+		warpIFStream.clear();
+	}
+	//assume that index matches the file
+	iterationCursor = iterationIndex;
+}
+
 template<typename TVoxel, typename TIndex>
 bool ITMWarpSceneLogger<TVoxel, TIndex>::Empty() const {
 	return scene == nullptr;
@@ -390,23 +403,20 @@ ITMWarpSceneLogger<TVoxel, TIndex>::BufferPreviousWarpState(void* externalBuffer
 template<typename TVoxel, typename TIndex>
 bool ITMWarpSceneLogger<TVoxel, TIndex>::BufferWarpStateAt(void* externalBuffer,
                                                            unsigned int iterationIndex) {
-	size_t headerSize = sizeof(int);
-	warpIFStream.seekg(headerSize + iterationIndex * (voxelCount * warpAndUpdateByteSize + sizeof(iterationCursor)),
-	                   std::ios::beg);
-	if (warpIFStream.eof()) {
-		warpIFStream.clear();
-	}
-	//read in the number of the current update.
-	if (!warpIFStream.read(reinterpret_cast<char*>(&iterationCursor), sizeof(iterationCursor))) {
-		std::cout << "Read warp state attempt failed." << std::endl;
+	if(!SetIterationCursor(iterationIndex)){
 		return false;
 	}
-
-	iterationCursor = iterationIndex;
+	unsigned int fileIterationCursor;
+	if (!warpIFStream.read(reinterpret_cast<char*>(&fileIterationCursor), sizeof(fileIterationCursor))
+			|| fileIterationCursor != iterationIndex) {
+		std::cerr << "Read warp state attempt failed." << std::endl;
+		return false;
+	}
 	warpIFStream.read(reinterpret_cast<char*>(externalBuffer), voxelCount * warpAndUpdateByteSize);
 	std::cout << "Read warp state for iteration " << iterationCursor << std::endl;
 
 	return !(warpIFStream.bad() || warpIFStream.fail());
 }
+
 
 // endregion

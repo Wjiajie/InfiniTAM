@@ -285,13 +285,26 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadSlice(const std::s
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SwitchActiveScene(std::string sliceIdentifier) {
+	bool isLoadingWarps = activeWarpLogger.IsLoadingWarpState();
+	unsigned int iterationCursor = activeWarpLogger.GetIterationCursor();
+
 	if(sliceIdentifier == ITMWarpSceneLogger<TVoxelCanonical,TIndex>::fullSceneSliceIdentifier){
 		mode = FULL_SCENE;
+		activeWarpLogger.StopLoadingWarpState();
 		activeWarpLogger = fullCanonicalSceneLogger;
 	}else{
 		if(SliceExistsInMemory(sliceIdentifier)){
 			mode = SLICE;
+			activeWarpLogger.StopLoadingWarpState();
 			activeWarpLogger = *slices[sliceIdentifier];
+		}else{
+			return false;
 		}
 	}
+	if(isLoadingWarps){
+		activeWarpLogger.StartLoadingWarpState();
+		//set cursor to the *previous* iteration
+		activeWarpLogger.SetIterationCursor(std::max(--iterationCursor,0));
+	}
+	return true;
 }

@@ -49,6 +49,7 @@ public:
 
 	//*** getters / setters ***
 	unsigned int GetIterationCursor() const;
+	bool SetIterationCursor(unsigned int iterationIndex);
 	int GetVoxelCount() const;
 	bool Empty() const;
 	bool Loaded() const;
@@ -65,6 +66,7 @@ public:
 	void StopSavingWarpState();
 	bool SaveCurrentWarpState();
 	bool LoadPreviousWarpState();
+
 	bool BufferWarpStateAt(void* externalBuffer, unsigned int iterationIndex);
 	bool BufferPreviousWarpState(void* externalBuffer);
 	bool BufferCurrentWarpState(void* externalBuffer);
