@@ -58,6 +58,8 @@
 #include "../../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
 #include "SDFVizGlobalDefines.h"
 
+//TODO: organize regions -Greg (GitHub: Algomorph)
+
 //** public **
 const std::array<double, 4> SDFViz::canonicalTrunctedPositiveVoxelColor =
 		{0.8352941176, 0.8980392157, 0.9607843137, 1.0};
@@ -113,6 +115,9 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 		              highlightVoxelColor,
 		              liveHashBlockEdgeColor),
 		highlightVisualizer(),
+		sdfRenderer(vtkSmartPointer<vtkRenderer>::New()),
+		markerRenderer(vtkSmartPointer<vtkRenderer>::New()),
+		guiOverlayRenderer(vtkSmartPointer<vtkRenderer>::New()),
 		sphere(vtkSmartPointer<vtkSphereSource>::New()),
 		cube(vtkSmartPointer<vtkCubeSource>::New()),
 		iterationIndicator(vtkSmartPointer<vtkTextActor>::New()),
@@ -120,6 +125,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 		frameIndex(initialFrame),
 		iterationIndex(0),
 		legend(vtkSmartPointer<vtkLegendBoxActor>::New()),
+		messageBar(vtkSmartPointer<vtkLegendBoxActor>::New()),
 		canonicalVoxelsVisible(!hideNonInterestCanonicalVoxels),
 		canonicalInterestVoxelsVisible(!hideInterestCanonicalRegions),
 		canonicalUnknownVoxelsVisible(!hideUnknownCanonicalVoxels),
@@ -128,11 +134,21 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 		liveUnknownVoxelsVisible(false),
 		liveHashBlocksVisible(false) {
 
-	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(GenerateExpectedFramePath(),
-	                                                                                 canonicalScenePipe.GetScene(),
-	                                                                                 liveScenePipe.GetScene());
+	auto* settings = new ITMLibSettings();
+	std::shared_ptr<ITMScene<ITMVoxelCanonical, ITMVoxelIndex> > canonicalScene =
+			std::make_shared<ITMScene<ITMVoxelCanonical, ITMVoxelIndex> >(
+					&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+					settings->GetMemoryType());
+	std::shared_ptr<ITMScene<ITMVoxelLive, ITMVoxelIndex> > liveScene =
+			std::make_shared<ITMScene<ITMVoxelLive, ITMVoxelIndex> >(
+					&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+					settings->GetMemoryType());
+	delete settings;
+	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(canonicalScene, liveScene, GenerateExpectedFramePath());
+
 	InitializeRendering();
 	DrawLegend();
+	DrawMessageBar();
 	DrawIterationCounter();
 	DrawFrameCounter();
 	UpdateFrameDisplay();
@@ -181,9 +197,6 @@ SDFViz::~SDFViz() {
 
 
 void SDFViz::InitializeRendering() {
-	sdfRenderer = vtkSmartPointer<vtkRenderer>::New();
-	markerRenderer = vtkSmartPointer<vtkRenderer>::New();
-
 	double backgroundColor[4];
 	memcpy(backgroundColor, backgroundColors[currentBackgrounColorIx].data(), 4 * sizeof(double));
 	sdfRenderer->SetBackground(backgroundColor);
@@ -192,7 +205,7 @@ void SDFViz::InitializeRendering() {
 	renderWindow->SetSize(renderWindow->GetScreenSize());
 
 	renderWindow->SetWindowName("SDF Viz (pre-alpha)");//TODO insert git hash here --Greg (GitHub:Algomorph)
-	renderWindow->SetNumberOfLayers(2);
+	renderWindow->SetNumberOfLayers(3);
 	renderWindow->AddRenderer(sdfRenderer);
 	sdfRenderer->SetLayer(0);
 	sdfRenderer->InteractiveOn();
@@ -200,6 +213,9 @@ void SDFViz::InitializeRendering() {
 	markerRenderer->SetLayer(1);
 	markerRenderer->InteractiveOn();
 	markerRenderer->SetActiveCamera(sdfRenderer->GetActiveCamera());
+	renderWindow->AddRenderer(guiOverlayRenderer);
+	guiOverlayRenderer->SetLayer(2);
+	guiOverlayRenderer->InteractiveOff();
 
 	renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
 
@@ -292,14 +308,37 @@ void SDFViz::DrawLegend() {
 	legend->GetPosition2Coordinate()->SetCoordinateSystemToView();
 	legend->GetPosition2Coordinate()->SetValue(1.0, -0.5);
 
-	legend->UseBackgroundOn();
-
 	//set up legend background
+	legend->UseBackgroundOn();
 	double backgroundColor[4];
 	memcpy(backgroundColor, backgroundColors[1].data(), 4 * sizeof(double));//use only black for legend background color
 	legend->SetBackgroundColor(backgroundColor);
 
-	sdfRenderer->AddActor(legend);
+	guiOverlayRenderer->AddActor(legend);
+}
+
+void SDFViz::DrawMessageBar() {
+	messageBar->SetNumberOfEntries(1);
+	messageBar->GetPositionCoordinate()->SetCoordinateSystemToView();
+	messageBar->GetPositionCoordinate()->SetValue(-1.0, -1.0);
+	messageBar->GetPosition2Coordinate()->SetCoordinateSystemToView();
+	messageBar->GetPosition2Coordinate()->SetValue(8.65, -0.96);
+	vtkSmartPointer<vtkNamedColors> colors = vtkSmartPointer<vtkNamedColors>::New();
+	double color[4];
+	vtkSmartPointer<vtkCubeSource> consoleBullet = vtkSmartPointer<vtkCubeSource>::New();
+	consoleBullet->SetBounds(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+	consoleBullet->Update();
+	colors->GetColor("white", color);
+	messageBar->SetEntry(0, consoleBullet->GetOutput(), "", color);
+	messageBar->GetEntryTextProperty()->SetFontSize(14);
+
+	//set up console background
+	messageBar->UseBackgroundOn();
+	double backgroundColor[4];
+	memcpy(backgroundColor, backgroundColors[1].data(),
+	       4 * sizeof(double));//use only black for console background color
+	messageBar->SetBackgroundColor(backgroundColor);
+	guiOverlayRenderer->AddActor(messageBar);
 }
 
 void SDFViz::DrawIterationCounter() {
@@ -330,10 +369,22 @@ void SDFViz::DrawFrameCounter() {
 
 void SDFViz::UpdateIterationDisplay() {
 	iterationIndicator->SetInput(("Iteration: " + std::to_string(iterationIndex)).c_str());
+	renderWindow->Render();
 }
 
 void SDFViz::UpdateFrameDisplay() {
 	frameIndicator->SetInput(("Frame: " + std::to_string(frameIndex)).c_str());
+	renderWindow->Render();
+}
+
+void SDFViz::UpdateMessageBar(std::string text) {
+	messageBar->SetEntryString(0, text.c_str());
+	renderWindow->Render();
+}
+
+void SDFViz::ClearMessageBar() {
+	messageBar->SetEntryString(0, "");
+	renderWindow->Render();
 }
 
 void SDFViz::ToggleCanonicalHashBlockVisibility() {
@@ -542,11 +593,7 @@ bool SDFViz::AdvanceFrame() {
 	ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* nextLogger;
 	frameIndex++;
 	try {
-		nextLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(GenerateExpectedFramePath(),
-		                                                                                canonicalScenePipe.GetScene(),
-		                                                                                liveScenePipe.GetScene());
-		delete this->sceneLogger;
-		this->sceneLogger = nextLogger;
+		this->sceneLogger->SetPath(GenerateExpectedFramePath());
 		LoadFrameData();
 		ReinitializePipelines();
 		UpdatePipelineVisibilitiesUsingLocalState();
@@ -571,11 +618,7 @@ bool SDFViz::RetreatFrame() {
 	if (frameIndex > 0) {
 		ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* nextLogger;
 		frameIndex--;
-		nextLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(GenerateExpectedFramePath(),
-		                                                                                canonicalScenePipe.GetScene(),
-		                                                                                liveScenePipe.GetScene());
-		delete this->sceneLogger;
-		this->sceneLogger = nextLogger;
+		this->sceneLogger->SetPath(GenerateExpectedFramePath());
 		LoadFrameData();
 		ReinitializePipelines();
 		UpdatePipelineVisibilitiesUsingLocalState();
@@ -625,14 +668,14 @@ void SDFViz::SetUpGeometrySources() {
 
 void SDFViz::ReinitializePipelines() {
 	canonicalScenePipe.SetInterestRegionInfo(sceneLogger->GetInterestRegionHashes(), highlights);
-	canonicalScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
+	canonicalScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort(), sceneLogger->GetActiveScene());
 	canonicalScenePipe.PrepareInterestRegions(sphere->GetOutputPort());
 	canonicalScenePipe.PrepareWarplessVoxels(sphere->GetOutputPort());
-	liveScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort());
+	liveScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort(), sceneLogger->GetLiveScene());
 }
 
 bool SDFViz::AdvanceIteration() {
-	if(!canonicalScenePipe.GetWarpEnabled()){
+	if (!canonicalScenePipe.GetWarpEnabled()) {
 		std::cout << "Caution: advancing warp while warp result display is disabled." << std::endl;
 	}
 	bool success = true;
@@ -664,7 +707,7 @@ bool SDFViz::AdvanceIteration() {
 }
 
 bool SDFViz::RetreatIteration() {
-	if(!canonicalScenePipe.GetWarpEnabled()){
+	if (!canonicalScenePipe.GetWarpEnabled()) {
 		std::cout << "Caution: retreating warp while warp result display is disabled." << std::endl;
 	}
 	if (iterationIndex == 0) {
@@ -700,7 +743,7 @@ bool SDFViz::RetreatIteration() {
 
 void SDFViz::UpdatePipelineVisibilitiesUsingLocalState() {
 	canonicalScenePipe.GetVoxelActor()->SetVisibility(canonicalVoxelsVisible);
-	if(!canonicalScenePipe.GetWarpEnabled()) canonicalScenePipe.GetWarplessVoxelActor()->VisibilityOff();
+	if (!canonicalScenePipe.GetWarpEnabled()) canonicalScenePipe.GetWarplessVoxelActor()->VisibilityOff();
 	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(canonicalInterestVoxelsVisible);
 	if (canonicalScenePipe.GetCurrentScaleMode() == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS &&
 	    canonicalUnknownVoxelsVisible ||
@@ -745,6 +788,20 @@ void SDFViz::AddActors() {
 	markerRenderer->AddActor(canonicalScenePipe.GetSlicePreviewActor());
 	markerRenderer->AddActor(highlightVisualizer.GetHighlightActor());
 }
+
+// region ============================================= SCENE MANIPULATION =============================================
+
+bool SDFViz::MakeSlice() {
+	if (canonicalScenePipe.GetSliceCoordinatesAreSet()) {
+		Vector3i coord0, coord1;
+		canonicalScenePipe.GetSliceCoordinates(coord0, coord1);
+
+		sceneLogger->MakeSlice(nullptr, coord0, coord1, this->frameIndex);
+		return true;
+	}
+	return false;
+}
+// endregion
 
 
 

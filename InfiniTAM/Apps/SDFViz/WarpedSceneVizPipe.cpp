@@ -143,6 +143,16 @@ std::vector<Vector3d> WarpedSceneVizPipe::GetHighlightNeighborPositions(int hash
 bool WarpedSceneVizPipe::GetWarpEnabled() const {
 	return this->warpEnabled;
 }
+
+bool WarpedSceneVizPipe::GetSliceCoordinatesAreSet() const {
+	return haveSliceCoordinates;
+}
+
+void WarpedSceneVizPipe::GetSliceCoordinates(Vector3i& coord0, Vector3i coord1) const {
+	coord0 = Vector3i(this->selectedSliceExtremaCoordinates[0]);
+	coord1 = Vector3i(this->selectedSliceExtremaCoordinates[1]);
+}
+
 //endregion
 //region =========================================== PRINTERS ==========================================================
 
@@ -154,7 +164,8 @@ void WarpedSceneVizPipe::PrintHighlightIndexes() {
  * \brief Prints information about the voxel with given point id in voxelPolydata. Currently, doesn't work for interest voxels.
  * \param pointId id of the point in question.
  */
-void WarpedSceneVizPipe::PrintVoxelInfromation(vtkIdType pointId) {
+void
+WarpedSceneVizPipe::PrintVoxelInfromation(vtkIdType pointId, const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) {
 
 	auto scaleArray = dynamic_cast<vtkFloatArray*>(voxelPolydata->GetPointData()->GetArray(
 			scaleMode == VOXEL_SCALE_HIDE_UNKNOWNS ? scaleUnknownsHiddenAttributeName
@@ -199,7 +210,7 @@ void WarpedSceneVizPipe::PrintVoxelInfromation(vtkIdType pointId) {
 //endregion
 //region =========================================== POINTS, HIGHLIGHTS, & PIPELINE SETUP ==============================
 
-void WarpedSceneVizPipe::PreparePointsForRendering() {
+void WarpedSceneVizPipe::PreparePointsForRendering(const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) {
 
 	if (!interestRegionHashesAreSet) {
 		DIEWITHEXCEPTION("Interest regions need to be set first");
@@ -361,8 +372,9 @@ void WarpedSceneVizPipe::PreparePointsForRendering() {
 }
 
 void WarpedSceneVizPipe::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
-                                       vtkAlgorithmOutput* hashBlockSourceGeometry) {
-	SDFSceneVizPipe::PreparePipeline(voxelSourceGeometry, hashBlockSourceGeometry);
+                                         vtkAlgorithmOutput* hashBlockSourceGeometry,
+                                         const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) {
+	SDFSceneVizPipe::PreparePipeline(voxelSourceGeometry, hashBlockSourceGeometry, scene);
 
 	//*** set up different selection markers ***
 
@@ -498,6 +510,7 @@ void WarpedSceneVizPipe::UpdateInterestRegionsFromBuffers(void* buffer) {
 }
 //endregion
 //region =========================================== INTERACTIONS / MODES ===============================================
+
 void WarpedSceneVizPipe::ToggleScaleMode() {
 	SDFSceneVizPipe::ToggleScaleMode();
 	if (scaleMode == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS) {
@@ -514,7 +527,8 @@ void WarpedSceneVizPipe::ToggleScaleMode() {
  * \param pointId point where to move the highlight marker
  * \param highlightOn whether to move & display the highlight marker or to hide it
  */
-void WarpedSceneVizPipe::SelectOrDeselectVoxel(vtkIdType pointId, bool highlightOn) {
+void WarpedSceneVizPipe::SelectOrDeselectVoxel(vtkIdType pointId, bool highlightOn,
+                                               const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) {
 	auto scaleArray = dynamic_cast<vtkFloatArray*>(voxelPolydata->GetPointData()->GetArray(
 			scaleMode == VOXEL_SCALE_HIDE_UNKNOWNS ? scaleUnknownsHiddenAttributeName
 			                                       : scaleUnknownsVisibleAttributeName));
@@ -527,7 +541,7 @@ void WarpedSceneVizPipe::SelectOrDeselectVoxel(vtkIdType pointId, bool highlight
 		points->GetPoint(pointId, point);
 		selectedVoxelActor->SetScale(selectedVoxelScale + 0.01);
 		selectedVoxelActor->SetPosition(point);
-		PrintVoxelInfromation(pointId);
+		PrintVoxelInfromation(pointId, scene);
 	} else {
 		selectedVoxelActor->VisibilityOff();
 	}
@@ -578,7 +592,7 @@ void WarpedSceneVizPipe::SetSliceSelection(vtkIdType pointId, bool& continueSlic
 		std::cout << bright_cyan << "Selecting first slice extremum..." << reset << std::endl;
 		selectedSliceExtremaIndex = 0;
 	}
-	SelectOrDeselectVoxel(pointId, true);
+	SelectOrDeselectVoxel(pointId, true, nullptr);
 	Vector3i initialCoordinates;
 	Vector3d initialCoordinatesViz;
 	extremum->VisibilityOn();
@@ -600,6 +614,7 @@ void WarpedSceneVizPipe::SetSliceSelection(vtkIdType pointId, bool& continueSlic
 		selectedSlicePreview->SetPosition(centerViz.values);
 		selectedSlicePreview->SetScale(dimensions.values);
 		selectedSlicePreview->VisibilityOn();
+		haveSliceCoordinates = true;
 	}
 }
 
@@ -615,6 +630,31 @@ void WarpedSceneVizPipe::ToggleWarpEnabled() {
 	}
 }
 
-//endregion
+/**
+ * \brief Clear current slice selection
+ */
+void WarpedSceneVizPipe::ClearSliceSelection() {
+	selectedSlicePreview->VisibilityOff();
+	selectedSliceExtrema[0]->VisibilityOff();
+	selectedSliceExtrema[1]->VisibilityOff();
+	haveSliceCoordinates = false;
+}
+// endregion
+// region ============================================ SCENE MANIPULATION ==============================================
+
+void WarpedSceneVizPipe::MakeSliceFromSelection() {
+	if(haveSliceCoordinates){
+
+	}
+}
+
+void WarpedSceneVizPipe::TestFunction() {
+
+}
+
+
+// endregion
+
+
 
 

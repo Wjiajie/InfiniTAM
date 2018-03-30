@@ -28,6 +28,7 @@ public:
 //============================= CONSTRUCTORS / DESTRUCTORS =============================================================
 
 	explicit ITMSceneMotionTracker(const ITMSceneParams& params, std::string scenePath);
+	virtual ~ITMSceneMotionTracker();
 
 //============================= MEMBER FUNCTIONS =======================================================================
 	/**
@@ -77,7 +78,7 @@ protected:
 	unsigned int iteration = 0;
 	unsigned int currentFrameIx = 0;
 
-	ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex> sceneLogger;
+	ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex>* sceneLogger;
 	std::string baseOutputDirectory;
 
 #ifdef RECORD_CONTINOUS_HIGHLIGHTS

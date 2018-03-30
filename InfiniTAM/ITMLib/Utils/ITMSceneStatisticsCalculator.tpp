@@ -20,13 +20,21 @@
 
 using namespace ITMLib;
 
+/**
+ * \brief Computes minimum and maximum point in the current scene.
+ * \tparam TVoxel
+ * \tparam TIndex
+ * \param scene
+ * \param minVoxelPoint
+ * \param maxVoxelPoint
+ */
 template<typename TVoxel, typename TIndex>
-void ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeVoxelBounds(ITMScene<TVoxel, TIndex>* scene,
+void ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeVoxelBounds(const ITMScene<TVoxel, TIndex>* scene,
                                                                       Vector3i& minVoxelPoint,
                                                                       Vector3i& maxVoxelPoint) {
 
 	minVoxelPoint = maxVoxelPoint = Vector3i(0);
-	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
+	const TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
 

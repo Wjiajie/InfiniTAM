@@ -109,9 +109,9 @@ public:
 
 //endregion
 // region === CONSTRUCTORS / DESTRUCTORS ===
-
-	ITMSceneLogger(std::string path = "", ITMScene<TVoxelCanonical, TIndex>* canonicalScene = NULL,
-	               ITMScene<TVoxelLive, TIndex>* liveScene = NULL);
+	ITMSceneLogger(std::shared_ptr<ITMScene<TVoxelCanonical, TIndex>> canonicalScene,
+	               std::shared_ptr<ITMScene<TVoxelLive, TIndex>> liveScene,
+	               std::string path = "");
 
 	ITMSceneLogger() = delete;//disable default constructor generation
 	virtual ~ITMSceneLogger();
@@ -134,6 +134,8 @@ public:
 	const std::map<int, std::shared_ptr<InterestRegionInfo>>& GetInterestRegionsByHash();
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> GetHighlights() const;
 	std::vector<int> GetInterestRegionHashes() const;
+	const ITMScene<TVoxelCanonical,TIndex>* GetActiveScene() const;
+	const ITMScene<TVoxelLive,TIndex>* GetLiveScene() const;
 
 	//*** scene loading/saving
 	bool SaveScenes();
@@ -191,7 +193,7 @@ public:
 
 	bool SliceExistsOnDisk(const std::string& sliceIdentifier) const;
 	bool LoadSlice(const std::string& sliceIdentifier,
-		               ITMScene <TVoxelCanonical, TIndex>* destinationScene);
+	               ITMScene<TVoxelCanonical, TIndex>* destinationScene);
 	bool SwitchActiveScene(
 			std::string sliceIdentifier = ITMWarpSceneLogger<TVoxelCanonical, TIndex>::fullSceneSliceIdentifier);
 
@@ -219,9 +221,9 @@ private:
 	fs::path highlightsTextPath;
 
 // *** scene structures ***
-	ITMWarpSceneLogger<TVoxelCanonical, TIndex> fullCanonicalSceneLogger;
-	ITMWarpSceneLogger<TVoxelCanonical, TIndex>& activeWarpLogger;
-	ITMScene<TVoxelLive, TIndex>* liveScene;
+	std::shared_ptr<ITMWarpSceneLogger<TVoxelCanonical, TIndex>> fullCanonicalSceneLogger;
+	std::shared_ptr<ITMWarpSceneLogger<TVoxelCanonical, TIndex>> activeWarpLogger;
+	std::shared_ptr<ITMScene<TVoxelLive, TIndex>> liveScene;
 
 // *** scene meta-information + reading/writing
 	// map of hash blocks to voxels, voxels to frame numbers, frame numbers to iteration numbers

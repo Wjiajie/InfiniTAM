@@ -111,8 +111,12 @@ void SDFVizInteractorStyle::OnKeyPress() {
 				parent->renderWindow->Render();
 			}
 		} else if (key == "Escape") {
-			rwi->TerminateApp();
-			std::cout << "Exiting application..." << std::endl;
+			if (sliceSelected) {
+				ClearSliceSelection();
+			} else {
+				rwi->TerminateApp();
+				std::cout << "Exiting application..." << std::endl;
+			}
 		} else if (key == "Home") {
 			if (parent->hasHighlightInfo) {
 				parent->RefocusAtCurrentHighlight();
@@ -136,13 +140,13 @@ void SDFVizInteractorStyle::OnKeyPress() {
 				std::cout << "Canonical voxel unknown visibility: "
 				          << (this->parent->liveUnknownVoxelsVisible ? "ON" : "OFF") << std::endl;
 			}
-
 		} else if (key == "s") {
 			if (rwi->GetAltKey()) {
 				// slice selection mode
 				if (mode == SLICE_SELECT) {
-					TurnOffSliceSelectionMode();
+					this->TurnOffSliceSelectionMode();
 				} else {
+					ClearSliceSelection();
 					TurnOnSliceSelectionMode();
 				}
 			} else if (mode == VIEW || mode == VOXEL_SELECT) {
@@ -154,9 +158,13 @@ void SDFVizInteractorStyle::OnKeyPress() {
 		} else if (key == "grave") {
 			this->keySymbolPrinting = !this->keySymbolPrinting;
 			std::cout << "Key symbol & code printing: " << (keySymbolPrinting ? "ON" : "OFF") << std::endl;
-		} else if (key == "KP_Multiply" && mode == VIEW){
+		} else if (key == "KP_Multiply" && mode == VIEW) {
 			parent->canonicalScenePipe.ToggleWarpEnabled();
 			parent->renderWindow->Render();
+		} else if (key == "Enter") {
+			if (sliceSelected) {
+				MakeSlice();
+			}
 		}
 	}
 	if (keySymbolPrinting) {
@@ -184,7 +192,8 @@ void SDFVizInteractorStyle::OnLeftButtonUp() {
 			vtkActor* selectedActor = this->pointPicker->GetActor();
 			if (selectedActor == parent->canonicalScenePipe.GetVoxelActor() && newSelectedPointId >= 0) {
 				selectedPointId = newSelectedPointId;
-				parent->canonicalScenePipe.SelectOrDeselectVoxel(selectedPointId, true);
+				parent->canonicalScenePipe.SelectOrDeselectVoxel(selectedPointId, true,
+				                                                 parent->sceneLogger->GetActiveScene());
 				parent->renderWindow->Render();
 			}
 		}
@@ -198,9 +207,11 @@ void SDFVizInteractorStyle::OnLeftButtonUp() {
 			if (selectedActor == parent->canonicalScenePipe.GetVoxelActor() && newSelectedPointId >= 0) {
 				bool continueSliceSelection = true;
 				parent->canonicalScenePipe.SetSliceSelection(newSelectedPointId, continueSliceSelection);
-				if(!continueSliceSelection){
+				if (!continueSliceSelection) {
 					TurnOffSliceSelectionMode();
-				}else{
+					sliceSelected = true;
+					parent->UpdateMessageBar("Enter: make slice (overwrite), Esc: cancel and clear slice selection.");
+				} else {
 					parent->renderWindow->Render();
 				}
 			}
@@ -220,7 +231,7 @@ void SDFVizInteractorStyle::TurnOnSliceSelectionMode() {
 	previousMode = mode;
 	mode = SLICE_SELECT;
 	previouslyWarpWasEnabled = parent->canonicalScenePipe.GetWarpEnabled();
-	if(previouslyWarpWasEnabled){
+	if (previouslyWarpWasEnabled) {
 		//disable warp during slice selection
 		parent->canonicalScenePipe.ToggleWarpEnabled();
 	}
@@ -231,11 +242,24 @@ void SDFVizInteractorStyle::TurnOnSliceSelectionMode() {
 void SDFVizInteractorStyle::TurnOffSliceSelectionMode() {
 	mode = previousMode; //reset to previous mode
 	previousMode = SLICE_SELECT;
-	if(previouslyWarpWasEnabled){
+	if (previouslyWarpWasEnabled) {
 		//reset to using warp again
 		parent->canonicalScenePipe.ToggleWarpEnabled();
 	}
 	parent->renderWindow->Render();
 	std::cout << "Slice selection mode: OFF" << std::endl;
+}
+
+void SDFVizInteractorStyle::ClearSliceSelection(){
+	parent->canonicalScenePipe.ClearSliceSelection();
+	parent->ClearMessageBar();//rerenders
+	sliceSelected = false;
+}
+
+void SDFVizInteractorStyle::MakeSlice() {
+	parent->UpdateMessageBar("Making slice...");
+
+
+	ClearSliceSelection();
 }
 

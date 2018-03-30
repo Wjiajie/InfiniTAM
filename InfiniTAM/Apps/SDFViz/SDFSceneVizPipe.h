@@ -51,9 +51,11 @@ public:
 	~SDFSceneVizPipe();
 
 	// ====================== MEMBER FUNCTIONS ===========================
-	virtual void PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry, vtkAlgorithmOutput* hashBlockSourceGeometry);
+	virtual void PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
+		                             vtkAlgorithmOutput* hashBlockSourceGeometry,
+		                             const ITMScene<TVoxel, TIndex>* scene);
 
-	ITMScene<TVoxel, TIndex>* GetScene();
+	ITMScene<TVoxel, TIndex>* GetActiveScene();
 	virtual vtkSmartPointer<vtkActor>& GetVoxelActor();
 	vtkSmartPointer<vtkActor>& GetHashBlockActor();
 	VoxelScaleMode GetCurrentScaleMode();
@@ -79,11 +81,9 @@ protected:
 	                                  vtkSmartPointer<vtkLookupTable>& table, vtkSmartPointer<vtkPolyData>& pointsPolydata);
 
 	// ===================== MEMBER FUNCTIONS ===========================
-	virtual void PreparePointsForRendering();
+	virtual void PreparePointsForRendering(const ITMScene<TVoxel, TIndex>* scene);
 
 	// ===================== MEMBER VARIABLES ===========================
-	ITMScene<TVoxel, TIndex>* scene;
-
 	// ** individual voxels **
 	vtkSmartPointer<vtkPolyData> voxelPolydata;
 	vtkSmartPointer<vtkLookupTable> voxelColorLookupTable;

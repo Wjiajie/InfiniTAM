@@ -107,6 +107,11 @@ std::string ITMWarpSceneLogger<TVoxel, TIndex>::GetSliceIdentifier() const {
 	}
 	return ITMWarpSceneLogger<TVoxel, TIndex>::GenerateSliceStringIdentifier(this->minimum,this->maximum);
 }
+
+template<typename TVoxel, typename TIndex>
+const ITMScene<TVoxel, TIndex>* ITMWarpSceneLogger<TVoxel, TIndex>::GetScene() const {
+	return this->scene;
+}
 // endregion
 // region ======================================== LOAD / SAVE SCENE ===================================================
 
@@ -417,6 +422,4 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::BufferWarpStateAt(void* externalBuffer,
 
 	return !(warpIFStream.bad() || warpIFStream.fail());
 }
-
-
 // endregion

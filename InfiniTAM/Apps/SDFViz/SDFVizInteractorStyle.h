@@ -35,7 +35,7 @@ public:
 	enum Mode{
 		VIEW, // default/standard
 		VOXEL_SELECT,
-		SLICE_SELECT
+		SLICE_SELECT,
 	};
 
 	vtkTypeMacro(SDFVizInteractorStyle, vtkInteractorStyleTrackballCamera);
@@ -57,9 +57,11 @@ private:
 	Mode previousMode = VIEW;
 	bool keySymbolPrinting = false;
 	bool previouslyWarpWasEnabled = false;
+	bool sliceSelected = true;
 	vtkSmartPointer<vtkPointPicker> pointPicker;
 	vtkIdType selectedPointId = -1;
 
 
-
+	void MakeSlice();
+	void ClearSliceSelection();
 };

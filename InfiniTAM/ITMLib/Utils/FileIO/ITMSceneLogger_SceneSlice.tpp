@@ -15,6 +15,9 @@
 //  ================================================================
 #pragma once
 
+//stdlib
+#include <algorithm>
+
 //ITMLib
 #include "ITMSceneLogger.h"
 #include "../ITMLibSettings.h"
@@ -110,7 +113,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(ITMScene<TVo
 	if (slices.find(sliceIdentifier) != slices.end()) {
 		return false;
 	}
-	if (!CopySceneSlice_CPU(destinationScene, fullCanonicalSceneLogger.scene, minPoint, maxPoint)) {
+	if (!CopySceneSlice_CPU(destinationScene, fullCanonicalSceneLogger->scene, minPoint, maxPoint)) {
 		return false;
 	}
 	fs::path outputPath = GenerateSliceFolderPath(minPoint, maxPoint);
@@ -121,8 +124,8 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(ITMScene<TVo
 	std::string sliceScenePath = GenerateSliceSceneFilename_UpToPostfix(minPoint, maxPoint);
 	std::string sliceWarpPath = GenerateSliceWarpFilename(minPoint, maxPoint);
 	SaveSliceWarp(minPoint, maxPoint, frameIndex, sliceWarpPath);
-	std::shared_ptr<ITMWarpSceneLogger<TVoxelCanonical, TIndex>> logger = new ITMWarpSceneLogger<TVoxelCanonical, TIndex>(
-			true, destinationScene, sliceScenePath, sliceWarpPath);
+	auto logger = std::make_shared<ITMWarpSceneLogger<TVoxelCanonical, TIndex> >(true, destinationScene, sliceScenePath,
+	                                                                             sliceWarpPath);
 	logger->minimum = minPoint;
 	logger->maximum = maxPoint;
 	logger->SaveCompact();
@@ -138,14 +141,14 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
                                                                    unsigned int frameIndex,
                                                                    std::string path) {
 
-	int totalHashEntryCount = fullCanonicalSceneLogger.scene->index.noTotalEntries;
-	TVoxelCanonical* voxels = fullCanonicalSceneLogger.scene->localVBA.GetVoxelBlocks();
-	const ITMHashEntry* hashTable = fullCanonicalSceneLogger.scene->index.GetEntries();
+	int totalHashEntryCount = fullCanonicalSceneLogger->scene->index.noTotalEntries;
+	TVoxelCanonical* voxels = fullCanonicalSceneLogger->scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* hashTable = fullCanonicalSceneLogger->scene->index.GetEntries();
 
 	// to restore to same file position later
-	unsigned int currentGeneralWarpCursor = fullCanonicalSceneLogger.iterationCursor;
+	unsigned int currentGeneralWarpCursor = fullCanonicalSceneLogger->iterationCursor;
 
-	bool wasLoadingWarpState = fullCanonicalSceneLogger.warpIFStream.is_open();
+	bool wasLoadingWarpState = fullCanonicalSceneLogger->warpIFStream.is_open();
 	StopLoadingWarpState();
 
 	StartLoadingWarpState();
@@ -155,11 +158,11 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
 	if (!sliceWarpOfstream)
 		throw std::runtime_error("Could not open '" + path + "' for writing. ["  __FILE__  ": " +
 		                         std::to_string(__LINE__) + "]");
-	fullCanonicalSceneLogger.warpOFStream.write(reinterpret_cast<const char*>(&frameIndex), sizeof(int));
+	fullCanonicalSceneLogger->warpOFStream.write(reinterpret_cast<const char*>(&frameIndex), sizeof(int));
 
 	while (LoadCurrentWarpState()) {
-		fullCanonicalSceneLogger.warpOFStream.write(reinterpret_cast<const char* >(&sliceIterationCursor),
-		                                            sizeof(unsigned int));
+		fullCanonicalSceneLogger->warpOFStream.write(reinterpret_cast<const char* >(&sliceIterationCursor),
+		                                             sizeof(unsigned int));
 		for (int hash = 0; hash < totalHashEntryCount; hash++) {
 			const ITMHashEntry& hashEntry = hashTable[hash];
 			if (hashEntry.ptr < 0) continue;
@@ -186,9 +189,9 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
 					for (int x = xRangeStart; x < xRangeEnd; x++) {
 						int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 						const TVoxelCanonical& voxel = localVoxelBlock[ixVoxelInHashBlock];
-						fullCanonicalSceneLogger.warpOFStream.write(reinterpret_cast<const char* >(&voxel.warp_t),
-						                                            sizeof(Vector3f));
-						fullCanonicalSceneLogger.warpOFStream.write(
+						fullCanonicalSceneLogger->warpOFStream.write(reinterpret_cast<const char* >(&voxel.warp_t),
+						                                             sizeof(Vector3f));
+						fullCanonicalSceneLogger->warpOFStream.write(
 								reinterpret_cast<const char* >(&voxel.warp_t_update), sizeof(Vector3f));
 					}
 				}
@@ -202,14 +205,14 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
 		// ** restore previous warp-loading state **
 		StartLoadingWarpState();
 		size_t headerSize = sizeof(int);
-		fullCanonicalSceneLogger.warpIFStream.seekg(
-				headerSize + currentGeneralWarpCursor * (fullCanonicalSceneLogger.voxelCount * 2
+		fullCanonicalSceneLogger->warpIFStream.seekg(
+				headerSize + currentGeneralWarpCursor * (fullCanonicalSceneLogger->voxelCount * 2
 				                                         * sizeof(Vector3f) + sizeof(unsigned int)),
 				std::ios::beg);
-		if (fullCanonicalSceneLogger.warpIFStream.eof()) {
-			fullCanonicalSceneLogger.warpIFStream.clear();
+		if (fullCanonicalSceneLogger->warpIFStream.eof()) {
+			fullCanonicalSceneLogger->warpIFStream.clear();
 		}
-		fullCanonicalSceneLogger.iterationCursor = currentGeneralWarpCursor;
+		fullCanonicalSceneLogger->iterationCursor = currentGeneralWarpCursor;
 	}
 }
 //endregion
@@ -266,15 +269,17 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SliceExistsInMemory(const s
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadSlice(const std::string& sliceIdentifier,
                                                                     ITMScene<TVoxelCanonical, TIndex>* destinationScene) {
-	if(!SliceExistsOnDisk(sliceIdentifier)){
+	if (!SliceExistsOnDisk(sliceIdentifier)) {
 		return false;
 	}
 	fs::path sliceFolderPath = GenerateSliceFolderPath(sliceIdentifier);
 	std::string sliceScenePath = GenerateSliceSceneFilename_Full(sliceIdentifier);
 	std::string sliceWarpPath = GenerateSliceWarpFilename(sliceIdentifier);
-	std::shared_ptr<ITMWarpSceneLogger<TVoxelCanonical, TIndex>> logger = new ITMWarpSceneLogger<TVoxelCanonical, TIndex>(
-			true, destinationScene, sliceScenePath, sliceWarpPath);
+	std::shared_ptr<ITMWarpSceneLogger<TVoxelCanonical, TIndex>> logger;
+	logger.reset(
+			new ITMWarpSceneLogger<TVoxelCanonical, TIndex>(true, destinationScene, sliceScenePath, sliceWarpPath));
 	logger->LoadCompact();
+	slices[sliceIdentifier] = logger;
 	return true;
 }
 
@@ -285,26 +290,26 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadSlice(const std::s
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SwitchActiveScene(std::string sliceIdentifier) {
-	bool isLoadingWarps = activeWarpLogger.IsLoadingWarpState();
-	unsigned int iterationCursor = activeWarpLogger.GetIterationCursor();
+	bool isLoadingWarps = activeWarpLogger->IsLoadingWarpState();
+	int iterationCursor = static_cast<int>(activeWarpLogger->GetIterationCursor());
 
-	if(sliceIdentifier == ITMWarpSceneLogger<TVoxelCanonical,TIndex>::fullSceneSliceIdentifier){
+	if (sliceIdentifier == ITMWarpSceneLogger<TVoxelCanonical, TIndex>::fullSceneSliceIdentifier) {
 		mode = FULL_SCENE;
-		activeWarpLogger.StopLoadingWarpState();
+		activeWarpLogger->StopLoadingWarpState();
 		activeWarpLogger = fullCanonicalSceneLogger;
-	}else{
-		if(SliceExistsInMemory(sliceIdentifier)){
+	} else {
+		if (SliceExistsInMemory(sliceIdentifier)) {
 			mode = SLICE;
-			activeWarpLogger.StopLoadingWarpState();
-			activeWarpLogger = *slices[sliceIdentifier];
-		}else{
+			activeWarpLogger->StopLoadingWarpState();
+			activeWarpLogger = slices[sliceIdentifier];
+		} else {
 			return false;
 		}
 	}
-	if(isLoadingWarps){
-		activeWarpLogger.StartLoadingWarpState();
+	if (isLoadingWarps) {
+		activeWarpLogger->StartLoadingWarpState();
 		//set cursor to the *previous* iteration
-		activeWarpLogger.SetIterationCursor(std::max(--iterationCursor,0));
+		activeWarpLogger->SetIterationCursor(static_cast<unsigned int>(std::max(--iterationCursor, 0)));
 	}
 	return true;
 }

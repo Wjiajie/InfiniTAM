@@ -16,6 +16,7 @@
 //stdlib
 #include <limits>
 #include <iomanip>
+#include <memory>
 
 #ifdef _DEBUG
 //_DEBUG (opencv)
@@ -38,8 +39,14 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params, std::string scenePath)
 		:
 		maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize),
-		sceneLogger(""),
+		sceneLogger(nullptr),
 		baseOutputDirectory(scenePath){}
+
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneMotionTracker() {
+	delete sceneLogger;
+}
 
 /**
  * \brief Tracks motion of voxels from canonical frame to live frame.
@@ -97,18 +104,17 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 #endif
 
 	std::string currentFrameOutputPath = GenerateCurrentFrameOutputPath();
-	sceneLogger.SetPath(currentFrameOutputPath);//makes the folder as well if it doesn't exist
-	sceneLogger.SetScenes(canonicalScene, liveScene);
-
 	const std::string energyStatFilePath = currentFrameOutputPath + "/energy.txt";
 	energy_stat_file = std::ofstream(energyStatFilePath.c_str(), std::ios_base::out);
 	energy_stat_file << "data" << "," << "level_set" << "," << "smoothness" << ","
 	                 << "killing" << "," << "total" << std::endl;
 
-
 	if(recordWarpUpdates){
-		sceneLogger.SaveScenesCompact();
-		sceneLogger.StartSavingWarpState(currentFrameIx);
+		//sceneLogger = new ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex>(canonicalScene,liveScene,currentFrameOutputPath);
+		sceneLogger = new ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex>(std::move(canonicalScene),
+		                                                                    std::move(liveScene),currentFrameOutputPath);
+		sceneLogger->SaveScenesCompact();
+		sceneLogger->StartSavingWarpState(currentFrameIx);
 	}
 
 	for (iteration = 0; maxVectorUpdate > maxVectorUpdateThresholdVoxels && iteration < maxIterationCount;
@@ -148,18 +154,18 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		//START _DEBUG
 
 		if(recordWarpUpdates){
-			sceneLogger.SaveCurrentWarpState();
+			sceneLogger->SaveCurrentWarpState();
 		}
 
 		//END _DEBUG
 	}
 
 	if(recordWarpUpdates) {
-		sceneLogger.StopSavingWarpState();
+		sceneLogger->StopSavingWarpState();
+		delete sceneLogger;
 	}
 	currentFrameIx++;
 	energy_stat_file.close();
-
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

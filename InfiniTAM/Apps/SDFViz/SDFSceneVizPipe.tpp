@@ -67,29 +67,25 @@ SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(const std::array<double, 4>& po
 		highlightVoxelColor(highlightVoxelColor),
 		hashBlockEdgeColor(hashBlockEdgeColor),
 		scaleMode(VOXEL_SCALE_HIDE_UNKNOWNS) {
-	auto* settings = new ITMLibSettings();
-	scene = new ITMScene<TVoxel, TIndex>(
-			&settings->sceneParams, settings->swappingMode ==
-			                        ITMLibSettings::SWAPPINGMODE_ENABLED, settings->GetMemoryType());
+
 	// Create the color maps
 	SetUpSDFColorLookupTable(voxelColorLookupTable, highlightVoxelColor.data(), positiveTruncatedVoxelColor.data(),
 	                         positiveNonTruncatedVoxelColor.data(), negativeNonTruncatedVoxelColor.data(),
 	                         negativeTruncatedVoxelColor.data(), unknownVoxelColor.data());
-	delete settings;
+
 }
 
 template<typename TVoxel, typename TIndex>
 SDFSceneVizPipe<TVoxel, TIndex>::~SDFSceneVizPipe() {
-	delete scene;
 }
 
 template<typename TVoxel, typename TIndex>
-ITMScene<TVoxel, TIndex>* SDFSceneVizPipe<TVoxel, TIndex>::GetScene() {
-	return scene;
+ITMScene<TVoxel, TIndex>* SDFSceneVizPipe<TVoxel, TIndex>::GetActiveScene() {
+	return scene.get();
 }
 
 template<typename TVoxel, typename TIndex>
-void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
+void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering(const ITMScene<TVoxel, TIndex>* scene) {
 	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkPoints> hashBlockPoints = vtkSmartPointer<vtkPoints>::New();
 
@@ -105,7 +101,7 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 	vtkSmartPointer<vtkFloatArray> alternativeScaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
 	alternativeScaleAttribute->SetName(scaleUnknownsVisibleAttributeName);
 
-	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
+	const TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
 
@@ -125,7 +121,7 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 		                                 -(currentBlockPositionVoxels.y + centerOffset),
 		                                 -(currentBlockPositionVoxels.z + centerOffset));
 
-		TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		const TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
@@ -152,8 +148,9 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering() {
 
 template<typename TVoxel, typename TIndex>
 void SDFSceneVizPipe<TVoxel, TIndex>::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
-                                                      vtkAlgorithmOutput* hashBlockSourceGeometry) {
-	PreparePointsForRendering();
+                                                      vtkAlgorithmOutput* hashBlockSourceGeometry,
+                                                      const ITMScene<TVoxel, TIndex>* scene) {
+	PreparePointsForRendering(scene);
 
 	// scene statistics
 	ITMSceneStatisticsCalculator<TVoxel, TIndex> statCalculator;

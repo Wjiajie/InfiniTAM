@@ -57,28 +57,37 @@ public:
 	vtkSmartPointer<vtkActor>& GetSlicePreviewActor();
 	bool GetWarpEnabled() const;
 	void PrintHighlightIndexes();
+	bool GetSliceCoordinatesAreSet() const;
+	void GetSliceCoordinates(Vector3i& coord0, Vector3i coord1) const;
 
 	// *** setup ***
 	void PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeometry);
 	void PrepareWarplessVoxels(vtkAlgorithmOutput* voxelSourceGeometry);
 	void PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
-	                     vtkAlgorithmOutput* hashBlockSourceGeometry) override;
+	                     vtkAlgorithmOutput* hashBlockSourceGeometry,
+	                     const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) override;
 
 	// *** modify state ***
 	void ToggleScaleMode() override;
 	void ToggleWarpEnabled();
-	void SelectOrDeselectVoxel(vtkIdType pointId, bool highlightOn);
+	void SelectOrDeselectVoxel(vtkIdType pointId, bool highlightOn,
+		                           const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene);
 	void SetSliceSelection(vtkIdType pointId, bool& continueSliceSelection);
+	void ClearSliceSelection();
+	void TestFunction();
+
+	// *** modify scene ***
+	void MakeSliceFromSelection();//TODO: don't need?
 	// endregion
 protected:
 	// *** setup ***
-	void PreparePointsForRendering() override;
+	void PreparePointsForRendering(const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) override;
 	vtkSmartPointer<vtkPoints> initialNonInterestPoints;
 	vtkSmartPointer<vtkPoints> initialInterestPoints;
 private:
 	// region =============== MEMBER FUNCTIONS =========================================================================
 
-	void PrintVoxelInfromation(vtkIdType pointId);
+	void PrintVoxelInfromation(vtkIdType pointId, const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene);
 	void RetrieveInitialCoordinates(vtkIdType pointId, int initialCoordinates[3], double vizCoordinates[3]) const;
 	// endregion
 	// region =============== MEMBER VARIABLES =========================================================================
@@ -122,5 +131,6 @@ private:
 	vtkSmartPointer<vtkActor> selectedSliceExtrema[2];
 	vtkSmartPointer<vtkActor> selectedSlicePreview;
 	Vector3i selectedSliceExtremaCoordinates[2];
+	bool haveSliceCoordinates = false;
 	//endregion
 };

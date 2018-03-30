@@ -37,15 +37,21 @@ public:
 	static const size_t updateByteSize;
 	static const size_t warpAndUpdateByteSize;
 	static const std::string fullSceneSliceIdentifier;
-
+	//endregion
 	// region ================================ STATIC FUNCTIONS ========================================================
 
 	static std::string GenerateSliceStringIdentifier(const Vector3i& minPoint, const Vector3i& maxPoint);
 
 	// endregion
+	// region ================================ CONSTRUCTORS & DESTRUCTORS ==============================================
 
-	//*** constructors & destructors ***
+	explicit ITMWarpSceneLogger(bool isSlice,
+	                            ITMScene <TVoxel, TIndex>* scene = nullptr,
+	                            std::string scenePath = "", std::string warpPath = "");
 	~ITMWarpSceneLogger();
+
+	// endregion
+	// region ================================ MEMBER FUNCTIONS ========================================================
 
 	//*** getters / setters ***
 	unsigned int GetIterationCursor() const;
@@ -55,6 +61,7 @@ public:
 	bool Loaded() const;
 	void Load();
 	std::string GetSliceIdentifier() const;
+	const ITMScene<TVoxel,TIndex>* GetScene() const;
 
 	//*** scene saving / loading ***
 	void Save();
@@ -75,11 +82,9 @@ public:
 	bool StartLoadingWarpState();
 	void StopLoadingWarpState();
 	bool IsLoadingWarpState();
-
+	// endregion
 private:
-	explicit ITMWarpSceneLogger(bool isSlice,
-	                            ITMScene <TVoxel, TIndex>* scene = nullptr,
-	                            std::string scenePath = "", std::string warpPath = "");
+	// region ================================ MEMBER VARIABLES ========================================================
 
 	std::string scenePath;
 	std::string warpPath;
@@ -97,7 +102,7 @@ private:
 	bool isSlice = false;
 	Vector3i minimum;
 	Vector3i maximum;
-
+	//endregion
 };
 }//namespace ITMLib
 

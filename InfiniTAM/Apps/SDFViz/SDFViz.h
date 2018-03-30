@@ -108,17 +108,20 @@ private:
 	// Visualization setup
 	// for actual voxels
 	vtkSmartPointer<vtkRenderer> sdfRenderer;
-	// for highlights, slices, & other markers / gizmos
+	// for highlights, slices, floating legends, & other markers / gizmos
 	vtkSmartPointer<vtkRenderer> markerRenderer;
+	// for overlaying GUI elements
+	vtkSmartPointer<vtkRenderer> guiOverlayRenderer;
 	vtkSmartPointer<vtkRenderWindow> renderWindow;
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
-	// indicator at top left corner showing for which (if any) iteration the data is being shown
+
+	// GUI elements
 	vtkSmartPointer<vtkTextActor> iterationIndicator;
 	vtkSmartPointer<vtkTextActor> frameIndicator;
+	vtkSmartPointer<vtkLegendBoxActor> legend;
+	vtkSmartPointer<vtkLegendBoxActor> messageBar;
 	// for switching the background color
 	int currentBackgrounColorIx = 0;
-	// legend
-	vtkSmartPointer<vtkLegendBoxActor> legend;
 
 	// Structures for rendering scene geometry with VTK
 	WarpedSceneVizPipe canonicalScenePipe;
@@ -159,13 +162,15 @@ private:
 	void InitializeWarps();
 	void AddActors();
 	void DrawLegend();
+	void DrawMessageBar();
 	void DrawIterationCounter();
+	void DrawFrameCounter();
 	void DrawDummyMarkers();
 	void SetUpGeometrySources();
 	void ReinitializePipelines();
 	void UpdatePipelineVisibilitiesUsingLocalState();
 
-	//*** advance/retreat warp / otimization interation ***
+	//*** advance/retreat warp / optimization iteration ***
 	bool AdvanceIteration();
 	bool RetreatIteration();
 	bool NextNonInterestWarps();
@@ -205,6 +210,9 @@ private:
 	void UpdateIterationDisplay();
 	void PreviousBackgroundColor();
 	void NextBackgroundColor();
+	void UpdateFrameDisplay();
+	void UpdateMessageBar(std::string text);
+	void ClearMessageBar();
 
 	//*** viewport navigation ***
 	void MoveFocusToHighlightAt(int hash, int localId);
@@ -212,7 +220,7 @@ private:
 	void RefocusAtCurrentHighlight();
 	void MoveFocusToNextHighlight();
 	void MoveFocusToPreviousHighlight();
-	void DrawFrameCounter();
-	void UpdateFrameDisplay();
 
+	//*** scene manipulation ***
+	bool MakeSlice();
 };
