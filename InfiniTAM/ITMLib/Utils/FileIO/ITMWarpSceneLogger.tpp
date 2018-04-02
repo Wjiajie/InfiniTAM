@@ -164,8 +164,9 @@ void ITMWarpSceneLogger<TVoxel, TIndex>::LoadCompact() {
 template<typename TVoxel, typename TIndex>
 bool
 ITMWarpSceneLogger<TVoxel, TIndex>::StartSavingWarpState(unsigned int frameIx) {
-	if (!fs::is_directory(scenePath)) {
-		std::cout << "The directory '" << scenePath << "' was not found.";
+	std::string rootPath = fs::path(warpPath).parent_path().string();
+	if (!fs::is_directory(rootPath)) {
+		std::cout << "The directory '" << rootPath << "' was not found.";
 		return false;
 	}
 	warpOFStream = std::ofstream(warpPath.c_str(), std::ofstream::binary | std::ofstream::out);
@@ -220,8 +221,8 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::StartLoadingWarpState() {
 		std::cerr << "Hashed voxel count has not been obtained. Have the scenes been loaded successfully?" << std::endl;
 		return false;
 	}
-	if (!fs::is_directory(this->scenePath)) {
-		std::cerr << "The directory '" << scenePath << "' was not found.";
+	if (!fs::is_regular_file(this->warpPath)) {
+		std::cerr << "The directory '" << warpPath << "' was not found.";
 		return false;
 	}
 
@@ -243,8 +244,8 @@ ITMWarpSceneLogger<TVoxel, TIndex>::StartLoadingWarpState(unsigned int& frameIx)
 		std::cerr << "Hashed voxel count has not been obtained. Have the scenes been loaded successfully?" << std::endl;
 		return false;
 	}
-	if (!fs::is_directory(this->scenePath)) {
-		std::cerr << "The directory '" << scenePath << "' was not found.";
+	if (!fs::is_regular_file(warpPath)) {
+		std::cerr << "The file '" << warpPath << "' was not found.";
 		return false;
 	}
 

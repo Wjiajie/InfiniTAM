@@ -161,7 +161,7 @@ void SDFVizInteractorStyle::OnKeyPress() {
 		} else if (key == "KP_Multiply" && mode == VIEW) {
 			parent->canonicalScenePipe.ToggleWarpEnabled();
 			parent->renderWindow->Render();
-		} else if (key == "Enter") {
+		} else if (key == "Return" || key == "KP_Enter") {
 			if (sliceSelected) {
 				MakeSlice();
 			}
@@ -260,12 +260,15 @@ void SDFVizInteractorStyle::ClearSliceSelection(){
 void SDFVizInteractorStyle::MakeSlice() {
 	parent->UpdateMessageBar("Making slice...");
 	if(parent->MakeSlice()){
-		parent->UpdateMessageBar("Slice completed.");
+		ClearSliceSelection();
+		parent->UpdateMessageBar("Slice completed. Switching to slice...");
 		parent->SwitchToSlice(static_cast<unsigned int>(parent->sliceIdentifiers.size() - 1));
+		parent->UpdateMessageBar("Now in Slice mode.");
 	}else{
+		ClearSliceSelection();
 		std::cerr << "Slicing procedure failed, potentially because a duplicate slice was attempted.";
 		parent->UpdateMessageBar("Slice failed.");
 	}
-	ClearSliceSelection();
+
 }
 
