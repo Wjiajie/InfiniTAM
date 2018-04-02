@@ -63,7 +63,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 		ITMScene<TVoxelLive, TIndex>* liveScene,
 		std::string path) :
-		fullCanonicalSceneLogger(),
+		fullCanonicalSceneLogger(new ITMWarpSceneLogger<TVoxelCanonical,TIndex>(canonicalScene)),
 		activeWarpLogger(fullCanonicalSceneLogger),
 		liveScene(liveScene),
 		highlights("Hash ID", "Local voxel ix", "Frame", ""),
@@ -72,7 +72,6 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 		throw std::runtime_error("Argument 'canonicalScene' cannot be set to nullptr here." __FILE__
 		                         + std::to_string(__LINE__));
 	}
-	fullCanonicalSceneLogger = new ITMWarpSceneLogger<TVoxelCanonical,TIndex>(canonicalScene);
 	if (path != "") {
 		SetPath(path);
 	}
@@ -84,7 +83,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneLogger() {
 	for(auto idAndSliceIterator = this->slices.begin(); idAndSliceIterator != this->slices.end(); ++idAndSliceIterator){
 		delete idAndSliceIterator->second;
 	}
-	this->StopLoadingWarpState();
+	fullCanonicalSceneLogger->StopLoadingWarpState();
 }
 //endregion
 // region ================================= GETTERS, SETTERS, PRINTERS =================================================
@@ -152,7 +151,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::CheckPath() {
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetPath(std::string path) {
-	if(path != ""){
+	if(this->path != ""){
 		//clean up
 		this->StopLoadingWarpState();
 		slices.clear();
@@ -171,7 +170,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetPath(std::string pa
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const ITMScene<TVoxelCanonical, TIndex>* ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetActiveScene() const{
+const ITMScene<TVoxelCanonical, TIndex>* ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetActiveWarpScene() const{
 	return this->activeWarpLogger->scene;
 }
 

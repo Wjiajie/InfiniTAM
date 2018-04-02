@@ -80,11 +80,6 @@ SDFSceneVizPipe<TVoxel, TIndex>::~SDFSceneVizPipe() {
 }
 
 template<typename TVoxel, typename TIndex>
-ITMScene<TVoxel, TIndex>* SDFSceneVizPipe<TVoxel, TIndex>::GetActiveScene() {
-	return scene.get();
-}
-
-template<typename TVoxel, typename TIndex>
 void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering(const ITMScene<TVoxel, TIndex>* scene) {
 	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkPoints> hashBlockPoints = vtkSmartPointer<vtkPoints>::New();

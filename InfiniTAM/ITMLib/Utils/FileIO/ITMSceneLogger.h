@@ -134,7 +134,7 @@ public:
 	const std::map<int, std::shared_ptr<InterestRegionInfo>>& GetInterestRegionsByHash();
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> GetHighlights() const;
 	std::vector<int> GetInterestRegionHashes() const;
-	const ITMScene<TVoxelCanonical,TIndex>* GetActiveScene() const;
+	const ITMScene<TVoxelCanonical,TIndex>* GetActiveWarpScene() const;
 	const ITMScene<TVoxelLive,TIndex>* GetLiveScene() const;
 
 	//*** scene loading/saving
@@ -185,7 +185,7 @@ public:
 	std::string GenerateSliceWarpFilename(const Vector3i& minPoint, const Vector3i& maxPoint) const;
 	std::string GenerateSliceWarpFilename(const std::string& sliceIdentifier) const;
 	bool MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2,
-		               unsigned int frameIndex);
+		               unsigned int frameIndex, std::string& identifier);
 	bool SliceExistsInMemory(const std::string& sliceIdentifier) const;
 	bool SliceExistsOnDisk(const Vector3i& extremum1,
 	                       const Vector3i& extremum2) const;

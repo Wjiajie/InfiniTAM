@@ -135,12 +135,12 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 		liveHashBlocksVisible(false) {
 
 	auto* settings = new ITMLibSettings();
-	std::shared_ptr<ITMScene<ITMVoxelCanonical, ITMVoxelIndex> > canonicalScene =
-			std::make_shared<ITMScene<ITMVoxelCanonical, ITMVoxelIndex> >(
+	canonicalScene =
+			new ITMScene<ITMVoxelCanonical, ITMVoxelIndex>(
 					&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 					settings->GetMemoryType());
-	std::shared_ptr<ITMScene<ITMVoxelLive, ITMVoxelIndex> > liveScene =
-			std::make_shared<ITMScene<ITMVoxelLive, ITMVoxelIndex> >(
+	liveScene =
+			new ITMScene<ITMVoxelLive, ITMVoxelIndex>(
 					&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 					settings->GetMemoryType());
 	delete settings;
@@ -193,6 +193,8 @@ int SDFViz::Run() {
 
 SDFViz::~SDFViz() {
 	delete sceneLogger;
+	delete canonicalScene;
+	delete liveScene;
 }
 
 
@@ -668,7 +670,7 @@ void SDFViz::SetUpGeometrySources() {
 
 void SDFViz::ReinitializePipelines() {
 	canonicalScenePipe.SetInterestRegionInfo(sceneLogger->GetInterestRegionHashes(), highlights);
-	canonicalScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort(), sceneLogger->GetActiveScene());
+	canonicalScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort(), sceneLogger->GetActiveWarpScene());
 	canonicalScenePipe.PrepareInterestRegions(sphere->GetOutputPort());
 	canonicalScenePipe.PrepareWarplessVoxels(sphere->GetOutputPort());
 	liveScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort(), sceneLogger->GetLiveScene());
@@ -789,22 +791,28 @@ void SDFViz::AddActors() {
 	markerRenderer->AddActor(highlightVisualizer.GetHighlightActor());
 }
 
-// region ============================================= SCENE MANIPULATION =============================================
+// region ============================================= SCENE SLICING ==================================================
 
 bool SDFViz::MakeSlice() {
 	if (canonicalScenePipe.GetSliceCoordinatesAreSet()) {
 		Vector3i coord0, coord1;
 		canonicalScenePipe.GetSliceCoordinates(coord0, coord1);
-
-		sceneLogger->MakeSlice(coord0, coord1, this->frameIndex);
+		std::string sliceIdentifier;
+		sceneLogger->MakeSlice(coord0, coord1, this->frameIndex, sliceIdentifier);
+		sliceIdentifiers.push_back(sliceIdentifier);
 		return true;
 	}
 	return false;
 }
+
+bool SDFViz::SwitchToSlice(unsigned int sliceIndex) {
+	if(!sceneLogger->SwitchActiveScene(sliceIdentifiers[sliceIndex])){
+		return false;
+	}
+	LoadFrameData();
+	ReinitializePipelines();
+	UpdatePipelineVisibilitiesUsingLocalState();
+	InitializeWarps();
+	return true;
+}
 // endregion
-
-
-
-
-
-

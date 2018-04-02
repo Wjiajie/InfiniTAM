@@ -72,7 +72,8 @@ public:
 	void ToggleWarpEnabled();
 	void SelectOrDeselectVoxel(vtkIdType pointId, bool highlightOn,
 		                           const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene);
-	void SetSliceSelection(vtkIdType pointId, bool& continueSliceSelection);
+	void SetSliceSelection(vtkIdType pointId, bool& continueSliceSelection,
+	                       const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene);
 	void ClearSliceSelection();
 	void TestFunction();
 

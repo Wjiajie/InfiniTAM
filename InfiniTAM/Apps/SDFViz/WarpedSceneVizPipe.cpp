@@ -190,7 +190,7 @@ WarpedSceneVizPipe::PrintVoxelInfromation(vtkIdType pointId, const ITMScene<ITMV
 	float selectedVoxelScale = scaleArray->GetValue(pointId);
 	auto selectedVoxelColorIndex = static_cast<VoxelColorIndex>(colorIndexArray->GetValue(pointId));
 
-	ITMVoxelCanonical* voxelBlocks = scene->localVBA.GetVoxelBlocks();
+	const ITMVoxelCanonical* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
 	bool foundPoint;
 	ITMVoxelCanonical voxel = readVoxel(voxelBlocks, canonicalHashTable, initialCoords, foundPoint);
@@ -244,7 +244,7 @@ void WarpedSceneVizPipe::PreparePointsForRendering(const ITMScene<ITMVoxelCanoni
 	vtkSmartPointer<vtkFloatArray> interestAlternativeScaleAttribute = vtkSmartPointer<vtkFloatArray>::New();
 	interestAlternativeScaleAttribute->SetName(scaleUnknownsVisibleAttributeName);
 
-	ITMVoxelCanonical* voxelBlocks = scene->localVBA.GetVoxelBlocks();
+	const ITMVoxelCanonical* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
 	int hashBlockCount = scene->index.noTotalEntries;
 
@@ -280,7 +280,7 @@ void WarpedSceneVizPipe::PreparePointsForRendering(const ITMScene<ITMVoxelCanoni
 		totalVoxelCount += SDF_BLOCK_SIZE3;
 		if (inInterestRegion) continue;
 
-		ITMVoxelCanonical* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		const ITMVoxelCanonical* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
@@ -298,7 +298,7 @@ void WarpedSceneVizPipe::PreparePointsForRendering(const ITMScene<ITMVoxelCanoni
 		const ITMHashEntry& currentHashEntry = canonicalHashTable[hash];
 		//skip unfilled hash
 		if (currentHashEntry.ptr < 0) continue;
-		ITMVoxelCanonical* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		const ITMVoxelCanonical* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 		Vector3i currentBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
@@ -306,7 +306,7 @@ void WarpedSceneVizPipe::PreparePointsForRendering(const ITMScene<ITMVoxelCanoni
 					Vector3i originalPositionVoxels = currentBlockPositionVoxels + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 
-					ITMVoxelCanonical& voxel = localVoxelBlock[locId];
+					const ITMVoxelCanonical& voxel = localVoxelBlock[locId];
 					float sdf = ITMVoxelCanonical::valueToFloat(voxel.sdf);
 					float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf, voxel.flags);
 					float alternativeVoxelScale = COMPUTE_VOXEL_SCALE(sdf);
@@ -573,7 +573,8 @@ WarpedSceneVizPipe::RetrieveInitialCoordinates(vtkIdType pointId, int initialCoo
  * \param pointId[in] current (after-warp) coordinate of the canonical voxel whose initial coordinate (before-warp) should serve as the slice extremum.
  * \param continueSliceSelection[out] if this call sets the second extremum of the slice, sets this to false, sets to true otherwise.
  */
-void WarpedSceneVizPipe::SetSliceSelection(vtkIdType pointId, bool& continueSliceSelection) {
+void WarpedSceneVizPipe::SetSliceSelection(vtkIdType pointId, bool& continueSliceSelection,
+                                           const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) {
 	vtkSmartPointer<vtkActor> extremum;
 	bool updateSlicePreview = false;
 	int selectedSliceExtremaIndex = 0;
@@ -592,7 +593,7 @@ void WarpedSceneVizPipe::SetSliceSelection(vtkIdType pointId, bool& continueSlic
 		std::cout << bright_cyan << "Selecting first slice extremum..." << reset << std::endl;
 		selectedSliceExtremaIndex = 0;
 	}
-	SelectOrDeselectVoxel(pointId, true, nullptr);
+	SelectOrDeselectVoxel(pointId, true, scene);
 	Vector3i initialCoordinates;
 	Vector3d initialCoordinatesViz;
 	extremum->VisibilityOn();

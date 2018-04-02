@@ -55,7 +55,6 @@ public:
 		                             vtkAlgorithmOutput* hashBlockSourceGeometry,
 		                             const ITMScene<TVoxel, TIndex>* scene);
 
-	ITMScene<TVoxel, TIndex>* GetActiveScene();
 	virtual vtkSmartPointer<vtkActor>& GetVoxelActor();
 	vtkSmartPointer<vtkActor>& GetHashBlockActor();
 	VoxelScaleMode GetCurrentScaleMode();

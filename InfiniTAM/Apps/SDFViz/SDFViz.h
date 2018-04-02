@@ -92,20 +92,27 @@ public:
 	int Run();
 
 private:
-	//================= CONSTANTS ==================================
+	// region ================= CONSTANTS ==================================
+
 	// Array holding various background colors to cycle through
 	static const std::array<std::array<double,4>,4> backgroundColors;
+	// endregion
+	// region ================= STATIC FUNCTIONS ===========================
 
-	//================= STATIC FUNCTIONS ===========================
 	static Vector3d ComputeCameraRightVector(vtkCamera* camera);
+	// endregion
+	// region ================= MEMBER VARIABLES ===========================
 
-	//================= MEMBER VARIABLES ===========================
-	// Data loader
+
+	// *** Scene Data
 	ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* sceneLogger;
-	// path to root directory (i.e. without the Frame_XXXX prefixes)
+	ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene;
+	ITMScene<ITMVoxelLive, ITMVoxelIndex>* liveScene;
+	// path to root directory containing all scene data (i.e. root of all the Frame_XXXX subdirectories)
 	std::string rootPath;
+	std::vector<std::string> sliceIdentifiers;
 
-	// Visualization setup
+	// *** Rendering setup
 	// for actual voxels
 	vtkSmartPointer<vtkRenderer> sdfRenderer;
 	// for highlights, slices, floating legends, & other markers / gizmos
@@ -115,7 +122,7 @@ private:
 	vtkSmartPointer<vtkRenderWindow> renderWindow;
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
 
-	// GUI elements
+	// *** GUI elements
 	vtkSmartPointer<vtkTextActor> iterationIndicator;
 	vtkSmartPointer<vtkTextActor> frameIndicator;
 	vtkSmartPointer<vtkLegendBoxActor> legend;
@@ -123,19 +130,20 @@ private:
 	// for switching the background color
 	int currentBackgrounColorIx = 0;
 
-	// Structures for rendering scene geometry with VTK
+	// *** Voxel viz
 	WarpedSceneVizPipe canonicalScenePipe;
 	SDFSceneVizPipe<ITMVoxelLive, ITMVoxelIndex> liveScenePipe;
 	HighlightVisualization highlightVisualizer;
 	vtkSmartPointer<vtkSphereSource> sphere;
 	vtkSmartPointer<vtkCubeSource> cube;
-	// interaction
 
+	// interaction
 	//Holds warp & warp update state for the canonical scene
 	vtkSmartPointer<vtkFloatArray> allWarpBuffer;
 	vtkSmartPointer<vtkFloatArray> interestWarpBuffer;
 	bool hasWarpIterationInfo = true;
 	bool hasHighlightInfo = false;
+
 	//frame that we're loading scene & warps for
 	unsigned int frameIndex;
 	//to keep track of iteration number in the optimization
@@ -154,7 +162,7 @@ private:
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
 	const std::vector<ITMHighlightIterationInfo>* currentHighlight;
 
-	//================ MEMBER FUNCTIONS =====================
+	// region ================ MEMBER FUNCTIONS =====================
 
 	//*** initialization / drawing GUI elements ***
 	void InitializeRendering();
@@ -221,6 +229,8 @@ private:
 	void MoveFocusToNextHighlight();
 	void MoveFocusToPreviousHighlight();
 
-	//*** scene manipulation ***
+	//*** scene slicing ***
 	bool MakeSlice();
+	bool SwitchToSlice(unsigned int sliceIndex);
+	// endregion
 };

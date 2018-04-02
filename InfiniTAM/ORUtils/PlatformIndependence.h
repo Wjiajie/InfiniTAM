@@ -37,8 +37,13 @@
 #define CONSTPTR(x) x
 #endif
 
+#define TOSTRING(s) TOSTRING_INTERNAL(s)
+#define TOSTRING_INTERNAL(s) #s
+
 #ifdef ANDROID
 #define DIEWITHEXCEPTION(x) { fprintf(stderr, "%s\n", x); exit(-1); }
+#define DIEWITHEXCEPTION_REPORTLOCATION(x) { fprintf(stderr, "%s\n", x x __FILE__ TOSTRING(__LINE__)); exit(-1); }
 #else
 #define DIEWITHEXCEPTION(x) throw std::runtime_error(x)
+#define DIEWITHEXCEPTION_REPORTLOCATION(x) throw std::runtime_error( x __FILE__ TOSTRING(__LINE__) )
 #endif

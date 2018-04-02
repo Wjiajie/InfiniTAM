@@ -193,7 +193,7 @@ void SDFVizInteractorStyle::OnLeftButtonUp() {
 			if (selectedActor == parent->canonicalScenePipe.GetVoxelActor() && newSelectedPointId >= 0) {
 				selectedPointId = newSelectedPointId;
 				parent->canonicalScenePipe.SelectOrDeselectVoxel(selectedPointId, true,
-				                                                 parent->sceneLogger->GetActiveScene());
+				                                                 parent->sceneLogger->GetActiveWarpScene());
 				parent->renderWindow->Render();
 			}
 		}
@@ -206,7 +206,8 @@ void SDFVizInteractorStyle::OnLeftButtonUp() {
 			vtkActor* selectedActor = this->pointPicker->GetActor();
 			if (selectedActor == parent->canonicalScenePipe.GetVoxelActor() && newSelectedPointId >= 0) {
 				bool continueSliceSelection = true;
-				parent->canonicalScenePipe.SetSliceSelection(newSelectedPointId, continueSliceSelection);
+				parent->canonicalScenePipe.SetSliceSelection(newSelectedPointId, continueSliceSelection,
+				                                             parent->sceneLogger->GetActiveWarpScene());
 				if (!continueSliceSelection) {
 					TurnOffSliceSelectionMode();
 					sliceSelected = true;
@@ -258,8 +259,13 @@ void SDFVizInteractorStyle::ClearSliceSelection(){
 
 void SDFVizInteractorStyle::MakeSlice() {
 	parent->UpdateMessageBar("Making slice...");
-
-
+	if(parent->MakeSlice()){
+		parent->UpdateMessageBar("Slice completed.");
+		parent->SwitchToSlice(static_cast<unsigned int>(parent->sliceIdentifiers.size() - 1));
+	}else{
+		std::cerr << "Slicing procedure failed, potentially because a duplicate slice was attempted.";
+		parent->UpdateMessageBar("Slice failed.");
+	}
 	ClearSliceSelection();
 }
 

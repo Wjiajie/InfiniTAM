@@ -94,21 +94,21 @@ std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GenerateSliceWa
 /**
  * \brief Make slice of the canonical scene with the specified extrema, store it locally,
  * and save it to disk, (overwrites if files exist already on disk)
- * \param destinationScene [out] the scene where to write the slice content - presumed blank, will be overwritten (not managed)
  * \param extremum1 [in] the first of the two points defining the slice bounds
  * \param extremum2 [in] the second of the two points defining the slice bounds
  * \param frameIndex [in] index of the frame to write to the saved warp file
+ * \param identifier [out] string slice identifier to later retrive / switch to the slice
  * \return true on success, false on failure
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2,
-                                                                    unsigned int frameIndex) {
+                                                                    unsigned int frameIndex, std::string& identifier) {
 
 	Vector3i minPoint, maxPoint;
 	MinMaxFromExtrema(minPoint, maxPoint, extremum1, extremum2);
-	std::string sliceIdentifier =
-			ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceStringIdentifier(minPoint,maxPoint);
-	if (slices.find(sliceIdentifier) != slices.end()) {
+	identifier = ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceStringIdentifier(minPoint,maxPoint);
+
+	if (slices.find(identifier) != slices.end()) {
 		return false;
 	}
 	std::string sliceScenePath = GenerateSliceSceneFilename_UpToPostfix(minPoint, maxPoint);
@@ -128,7 +128,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(const Vector
 	logger->minimum = minPoint;
 	logger->maximum = maxPoint;
 	logger->SaveCompact();
-	slices[sliceIdentifier] = logger;
+	slices[identifier] = logger;
 	return true;
 }
 
