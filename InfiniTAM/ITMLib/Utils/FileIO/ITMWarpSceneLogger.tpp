@@ -58,16 +58,26 @@ std::string ITMWarpSceneLogger<TVoxel, TIndex>::GenerateSliceStringIdentifier(
 // region ======================================== CONSTRUCTORS & DESTRUCTORS ==========================================
 
 template<typename TVoxel, typename TIndex>
-ITMWarpSceneLogger<TVoxel, TIndex>::ITMWarpSceneLogger(bool isSlice, ITMScene<TVoxel, TIndex>* scene, std::string scenePath, std::string warpPath):
+ITMWarpSceneLogger<TVoxel, TIndex>::ITMWarpSceneLogger(ITMScene<TVoxel, TIndex>* scene, std::string scenePath, std::string warpPath):
 		scene(scene),
 		scenePath(scenePath),
 		warpPath(warpPath),
-		isSlice(isSlice),
+		isSlice(scene == nullptr),
 		minimum(0),
-		maximum(0){}
+		maximum(0){
+	if(scene == nullptr){
+		ITMLibSettings* settings = new ITMLibSettings;
+		MemoryDeviceType memoryType = settings->deviceType == ITMLibSettings::DEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
+		this->scene = new ITMScene<TVoxel,TIndex>(&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
+		delete settings;
+	}
+}
 
 template<typename TVoxel, typename TIndex>
 ITMWarpSceneLogger<TVoxel, TIndex>::~ITMWarpSceneLogger() {
+	if(isSlice){
+		delete scene;
+	}
 }
 
 // endregion

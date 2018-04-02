@@ -109,8 +109,8 @@ public:
 
 //endregion
 // region === CONSTRUCTORS / DESTRUCTORS ===
-	ITMSceneLogger(std::shared_ptr<ITMScene<TVoxelCanonical, TIndex>> canonicalScene,
-	               std::shared_ptr<ITMScene<TVoxelLive, TIndex>> liveScene,
+	ITMSceneLogger(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	               ITMScene<TVoxelLive, TIndex>* liveScene,
 	               std::string path = "");
 
 	ITMSceneLogger() = delete;//disable default constructor generation
@@ -184,9 +184,8 @@ public:
 	std::string GenerateSliceSceneFilename_Full(const std::string& sliceIdentifier) const;
 	std::string GenerateSliceWarpFilename(const Vector3i& minPoint, const Vector3i& maxPoint) const;
 	std::string GenerateSliceWarpFilename(const std::string& sliceIdentifier) const;
-	bool MakeSlice(ITMScene<TVoxelCanonical, TIndex>* destinationScene,
-	               const Vector3i& extremum1, const Vector3i& extremum2,
-	               unsigned int frameIndex);
+	bool MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2,
+		               unsigned int frameIndex);
 	bool SliceExistsInMemory(const std::string& sliceIdentifier) const;
 	bool SliceExistsOnDisk(const Vector3i& extremum1,
 	                       const Vector3i& extremum2) const;
@@ -221,16 +220,16 @@ private:
 	fs::path highlightsTextPath;
 
 // *** scene structures ***
-	std::shared_ptr<ITMWarpSceneLogger<TVoxelCanonical, TIndex>> fullCanonicalSceneLogger;
-	std::shared_ptr<ITMWarpSceneLogger<TVoxelCanonical, TIndex>> activeWarpLogger;
-	std::shared_ptr<ITMScene<TVoxelLive, TIndex>> liveScene;
+	ITMWarpSceneLogger<TVoxelCanonical, TIndex>* fullCanonicalSceneLogger;
+	ITMWarpSceneLogger<TVoxelCanonical, TIndex>* activeWarpLogger;
+	ITMScene<TVoxelLive, TIndex>* liveScene;
 
 // *** scene meta-information + reading/writing
 	// map of hash blocks to voxels, voxels to frame numbers, frame numbers to iteration numbers
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
 	std::map<int, std::shared_ptr<InterestRegionInfo>> interestRegionInfoByHashId;
 	std::vector<std::shared_ptr<InterestRegionInfo>> interestRegionInfos;
-	std::map<std::string, std::shared_ptr<ITMWarpSceneLogger<TVoxelCanonical, TIndex> > > slices;
+	std::map<std::string, ITMWarpSceneLogger<TVoxelCanonical, TIndex>*> slices;
 
 // *** data manipulation information ***
 	int minHighlightRecurrenceCount = 0;

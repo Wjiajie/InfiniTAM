@@ -45,8 +45,7 @@ public:
 	// endregion
 	// region ================================ CONSTRUCTORS & DESTRUCTORS ==============================================
 
-	explicit ITMWarpSceneLogger(bool isSlice,
-	                            ITMScene <TVoxel, TIndex>* scene = nullptr,
+	explicit ITMWarpSceneLogger(ITMScene <TVoxel, TIndex>* scene = nullptr,
 	                            std::string scenePath = "", std::string warpPath = "");
 	~ITMWarpSceneLogger();
 

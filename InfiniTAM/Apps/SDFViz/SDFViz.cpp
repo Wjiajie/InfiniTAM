@@ -796,7 +796,7 @@ bool SDFViz::MakeSlice() {
 		Vector3i coord0, coord1;
 		canonicalScenePipe.GetSliceCoordinates(coord0, coord1);
 
-		sceneLogger->MakeSlice(nullptr, coord0, coord1, this->frameIndex);
+		sceneLogger->MakeSlice(coord0, coord1, this->frameIndex);
 		return true;
 	}
 	return false;

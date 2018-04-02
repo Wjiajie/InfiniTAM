@@ -110,9 +110,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	                 << "killing" << "," << "total" << std::endl;
 
 	if(recordWarpUpdates){
-		//sceneLogger = new ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex>(canonicalScene,liveScene,currentFrameOutputPath);
-		sceneLogger = new ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex>(std::move(canonicalScene),
-		                                                                    std::move(liveScene),currentFrameOutputPath);
+		sceneLogger = new ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex>(canonicalScene, liveScene, currentFrameOutputPath);
 		sceneLogger->SaveScenesCompact();
 		sceneLogger->StartSavingWarpState(currentFrameIx);
 	}
