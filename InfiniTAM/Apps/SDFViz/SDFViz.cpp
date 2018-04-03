@@ -819,6 +819,7 @@ bool SDFViz::SwitchToSlice(unsigned int sliceIndex) {
 	ReinitializePipelines();
 	UpdatePipelineVisibilitiesUsingLocalState();
 	InitializeWarps();
+	renderWindow->Render();
 	return true;
 }
 
@@ -837,6 +838,11 @@ bool SDFViz::SwitchToFullScene() {
 	if(!sceneLogger->SwitchActiveScene()){
 		return false;
 	}
+	LoadFrameData();
+	ReinitializePipelines();
+	UpdatePipelineVisibilitiesUsingLocalState();
+	InitializeWarps();
+	renderWindow->Render();
 }
 
 void SDFViz::LoadAllSlices() {
