@@ -181,6 +181,7 @@ public:
 	fs::path GenerateSliceFolderPath(const Vector3i& minPoint, const Vector3i& maxPoint) const;
 	fs::path GenerateSliceFolderPath(const std::string& sliceIdentifier) const;
 	std::string GenerateSliceSceneFilename_UpToPostfix(const Vector3i& minPoint, const Vector3i& maxPoint) const;
+	std::string GenerateSliceSceneFilename_UpToPostfix(const std::string& sliceIdentifier) const;
 	std::string GenerateSliceSceneFilename_Full(const Vector3i& minPoint, const Vector3i& maxPoint) const;
 	std::string GenerateSliceSceneFilename_Full(const std::string& sliceIdentifier) const;
 	std::string GenerateSliceWarpFilename(const Vector3i& minPoint, const Vector3i& maxPoint) const;
@@ -192,13 +193,13 @@ public:
 	                       const Vector3i& extremum2) const;
 
 	bool SliceExistsOnDisk(const std::string& sliceIdentifier) const;
-	bool LoadSlice(const std::string& sliceIdentifier,
-	               ITMScene<TVoxelCanonical, TIndex>* destinationScene);
+	bool LoadSlice(const std::string& sliceIdentifier);
 	bool SwitchActiveScene(
 			std::string sliceIdentifier = ITMWarpSceneLogger<TVoxelCanonical, TIndex>::fullSceneSliceIdentifier);
 
 
 //endregion
+	std::vector<std::string> LoadAllSlices();
 private:
 // region === CONSTANTS ===
 

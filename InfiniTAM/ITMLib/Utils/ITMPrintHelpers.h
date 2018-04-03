@@ -32,7 +32,7 @@ std::ostream& operator<<(std::ostream& out, const std::tuple<Types...>& value) {
 	return out;
 }
 
-std::string padded_to_string(int i, int fill_width);
+std::string int_to_padded_string(int i, int fill_width);
 
 extern const std::string red;
 extern const std::string green;

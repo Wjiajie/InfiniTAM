@@ -75,7 +75,6 @@ public:
 	void SetSliceSelection(vtkIdType pointId, bool& continueSliceSelection,
 	                       const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene);
 	void ClearSliceSelection();
-	void TestFunction();
 
 	// *** modify scene ***
 	void MakeSliceFromSelection();//TODO: don't need?

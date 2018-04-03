@@ -18,9 +18,13 @@
 
 namespace ITMLib{
 
-std::string padded_to_string(int i, int fill_width){
+std::string int_to_padded_string(int i, int fill_width){
 	std::stringstream stringstream;
-	stringstream << std::setfill('0') << std::setw(fill_width) << i;
+	if(i > 0){
+		stringstream << std::setfill('0') << std::setw(fill_width) << i;
+	}else{
+		stringstream << '-' << std::setfill('0') << std::setw(fill_width-1) << -i;
+	}
 	return stringstream.str();
 }
 
@@ -32,4 +36,4 @@ const std::string cyan("\033[0;36m");
 
 const std::string bright_cyan("\033[0;96m");
 const std::string reset("\033[0m");
-}
+}// namespace ITMLib

@@ -244,7 +244,9 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenesCompact() {
 					ITMLibSettings::DEVICE_CPU);
 	reconstructionEngineLive->ResetScene(liveScene);
 	liveScene->LoadFromDirectoryCompact_CPU(livePath.c_str());
-	activeWarpLogger->LoadCompact();
+	if(!activeWarpLogger->isSlice || !activeWarpLogger->sliceLoaded){
+		activeWarpLogger->LoadCompact();
+	}
 	std::cout << "Scenes loaded." << std::endl;
 	delete reconstructionEngineLive;
 	return true;

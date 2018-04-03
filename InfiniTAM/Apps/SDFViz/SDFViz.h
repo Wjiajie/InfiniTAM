@@ -86,7 +86,7 @@ public:
 	//================= CONSTRUCTORS/DESTRUCTORS ===================
 	SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, bool hideLiveVoxels,
 	       bool hideInterestCanonicalRegions, bool hideUnknownCanonicalVoxels, bool useInitialCoords,
-	       Vector3i initialCoords, unsigned int initialFrame);
+	       Vector3i initialCoords, unsigned int initialFrame, bool loadSlices);
 	virtual ~SDFViz();
 	//================= INSTANCE MEMBER FUNCTIONS ==================
 	int Run();
@@ -235,6 +235,6 @@ private:
 	bool SwitchToFullScene();
 	bool SwitchToSlice(unsigned int sliceIndex);
 	bool ToggleSliceMode(unsigned int sliceIndex);
-	bool SliceTestRoutine();
 	// endregion
+	void LoadAllSlices();
 };

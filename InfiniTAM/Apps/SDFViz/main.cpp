@@ -26,6 +26,7 @@ int main(int argc, const char* argv[]) {
 		bool hideLiveVoxels = false;
 		bool hideInterestCanonicalRegions = false;
 		bool hideUnknownVoxels = false;
+		bool loadSlices = false;
 
 		po::options_description description{"Options"};
 		description.add_options()
@@ -44,7 +45,9 @@ int main(int argc, const char* argv[]) {
 				("initial_focus_coord,ifc", po::value<std::vector<int>>()->multitoken(),
 				 "Coordinate of voxel where to focus on startup. Must follow format:\n x y z\n, all integers.")
 				("frame_index,f", po::value<unsigned int>()->default_value(0),
-				 "Which frame to load first by default.");
+				 "Which frame to load first by default.")
+				("load_slices,ls", po::bool_switch(&loadSlices),
+				 "Load all existing slices for the initial frame.");
 
 		po::variables_map vm;
 		po::store(po::command_line_parser(argc, argv).options(description).run(), vm);
@@ -66,7 +69,7 @@ int main(int argc, const char* argv[]) {
 			}
 			SDFViz application(vm["directory"].as<std::string>(), hideNonInterestCanonicalVoxels, hideLiveVoxels,
 			                   hideInterestCanonicalRegions, hideUnknownVoxels, haveUserInitialCoordinate,
-			                   initialCoords, vm["frame_index"].as<unsigned int>());
+			                   initialCoords, vm["frame_index"].as<unsigned int>(), loadSlices);
 			application.Run();
 		}
 	} catch (const po::error& ex) {

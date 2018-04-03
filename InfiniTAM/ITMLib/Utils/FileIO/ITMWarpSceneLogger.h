@@ -99,6 +99,7 @@ private:
 
 	// *** slice parameters (optional)
 	bool isSlice = false;
+	bool sliceLoaded = false;
 	Vector3i minimum;
 	Vector3i maximum;
 	//endregion

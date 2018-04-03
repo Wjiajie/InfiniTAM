@@ -109,8 +109,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 		//try to find a corresponding canonical block, and mark it for allocation if not found
 		int canonicalBlockIndex = hashIndex(liveHashBlockCoords);
 		if (MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, canonicalBlockIndex,
-		                                      liveHashBlockCoords,
-		                                      canonicalHashTable)) {
+		                                      liveHashBlockCoords,canonicalHashTable)) {
 			countVoxelHashBlocksToAllocate++;
 		}
 	}
@@ -144,8 +143,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 						//compute index in hash table
 						hashIdx = hashIndex(currentBlockLocation);
 						if (MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, hashIdx,
-						                                      currentBlockLocation,
-						                                      canonicalHashTable)) {
+						                                      currentBlockLocation,canonicalHashTable)) {
 							countVoxelHashBlocksToAllocate++;
 						}
 						iNeighbor++;

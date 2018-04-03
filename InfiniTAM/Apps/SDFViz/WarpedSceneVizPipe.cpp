@@ -654,9 +654,6 @@ void WarpedSceneVizPipe::MakeSliceFromSelection() {
 	}
 }
 
-void WarpedSceneVizPipe::TestFunction() {
-
-}
 
 
 // endregion

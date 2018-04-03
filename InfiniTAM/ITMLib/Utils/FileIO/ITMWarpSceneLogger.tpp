@@ -46,12 +46,12 @@ const std::string ITMWarpSceneLogger<TVoxel, TIndex>::fullSceneSliceIdentifier =
 template<typename TVoxel, typename TIndex>
 std::string ITMWarpSceneLogger<TVoxel, TIndex>::GenerateSliceStringIdentifier(
 		const Vector3i& minPoint, const Vector3i& maxPoint) {
-	return padded_to_string(minPoint.x, 3)
-	       + "_" + padded_to_string(minPoint.y, 3)
-	       + "_" + padded_to_string(minPoint.z, 3)
-	       + "_" + padded_to_string(maxPoint.x, 3)
-	       + "_" + padded_to_string(maxPoint.y, 3)
-	       + "_" + padded_to_string(maxPoint.z, 3);
+	return int_to_padded_string(minPoint.x, 3)
+	       + "_" + int_to_padded_string(minPoint.y, 3)
+	       + "_" + int_to_padded_string(minPoint.z, 3)
+	       + "_" + int_to_padded_string(maxPoint.x, 3)
+	       + "_" + int_to_padded_string(maxPoint.y, 3)
+	       + "_" + int_to_padded_string(maxPoint.z, 3);
 };
 
 // endregion

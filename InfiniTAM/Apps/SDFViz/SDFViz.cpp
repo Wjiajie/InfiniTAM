@@ -100,7 +100,7 @@ const std::array<std::array<double, 4>, 4> SDFViz::backgroundColors = {{{0.96, 0
 
 SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, bool hideLiveVoxels,
                bool hideInterestCanonicalRegions, bool hideUnknownCanonicalVoxels, bool useInitialCoords,
-               Vector3i initialCoords, unsigned int initialFrame)
+               Vector3i initialCoords, unsigned int initialFrame, bool loadSlices)
 		:
 		rootPath(std::move(pathToScene)),
 		canonicalScenePipe(canonicalTrunctedPositiveVoxelColor, canonicalNonTruncatedPositiveVoxelColor,
@@ -182,10 +182,13 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 		}
 	}
 
+	if (loadSlices){
+		LoadAllSlices();
+	}
+
 }
 
 int SDFViz::Run() {
-	SliceTestRoutine();
 	renderWindow->Render();
 	renderWindowInteractor->Start();
 	return EXIT_SUCCESS;
@@ -793,7 +796,6 @@ void SDFViz::AddActors() {
 }
 
 // region ============================================= SCENE SLICING ==================================================
-
 bool SDFViz::MakeSlice() {
 	if (canonicalScenePipe.GetSliceCoordinatesAreSet()) {
 		Vector3i coord0, coord1;
@@ -837,12 +839,10 @@ bool SDFViz::SwitchToFullScene() {
 	}
 }
 
-bool SDFViz::SliceTestRoutine() {
-	bool continueSliceSelection;
-	//canonicalScenePipe.SelectOrDeselectVoxel(364440,true,sceneLogger->GetActiveWarpScene());
-	canonicalScenePipe.SetSliceSelection(364440,continueSliceSelection,sceneLogger->GetActiveWarpScene());
-	canonicalScenePipe.SetSliceSelection(416251,continueSliceSelection,sceneLogger->GetActiveWarpScene());
-	MakeSlice();
-	SwitchToSlice(0);
+void SDFViz::LoadAllSlices() {
+	auto loadedIdentifiers = sceneLogger->LoadAllSlices();
+	this->sliceIdentifiers.insert(std::end(sliceIdentifiers),
+	                              std::make_move_iterator(std::begin(loadedIdentifiers)),
+	                              std::make_move_iterator(std::end(loadedIdentifiers)));
 }
 // endregion
