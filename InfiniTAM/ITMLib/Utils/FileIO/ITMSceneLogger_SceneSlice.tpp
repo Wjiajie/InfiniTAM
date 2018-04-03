@@ -119,7 +119,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(const Vector
 	}
 	fs::path outputPath = GenerateSliceFolderPath(minPoint, maxPoint);
 	if (fs::exists(outputPath)) {
-		fs::remove(outputPath);//overwrite
+		fs::remove_all(outputPath);//overwrite
 	}
 	fs::create_directories(outputPath);
 
@@ -144,24 +144,21 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
 	TVoxelCanonical* voxels = fullCanonicalSceneLogger->scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = fullCanonicalSceneLogger->scene->index.GetEntries();
 
-	// to restore to same file position later
-	unsigned int currentGeneralWarpCursor = fullCanonicalSceneLogger->iterationCursor;
-
-	bool wasLoadingWarpState = fullCanonicalSceneLogger->warpIFStream.is_open();
-	StopLoadingWarpState();
-
-	StartLoadingWarpState();
-
 	std::ofstream sliceWarpOfstream(path.c_str(), std::ofstream::binary | std::ofstream::out);
-	unsigned int sliceIterationCursor = 0;
 	if (!sliceWarpOfstream)
 		throw std::runtime_error("Could not open '" + path + "' for writing. ["  __FILE__  ": " +
 		                         std::to_string(__LINE__) + "]");
-	fullCanonicalSceneLogger->warpOFStream.write(reinterpret_cast<const char*>(&frameIndex), sizeof(int));
+	sliceWarpOfstream.write(reinterpret_cast<const char*>(&frameIndex), sizeof(int));
 
-	while (LoadCurrentWarpState()) {
-		fullCanonicalSceneLogger->warpOFStream.write(reinterpret_cast<const char* >(&sliceIterationCursor),
-		                                             sizeof(unsigned int));
+
+	bool wasCanonicalLoadingWarp = fullCanonicalSceneLogger->IsLoadingWarpState();
+	fullCanonicalSceneLogger->StartLoadingWarpState();
+
+	unsigned int originalfullSceneIterationCursor = fullCanonicalSceneLogger->GetIterationCursor();
+
+	while (fullCanonicalSceneLogger->LoadCurrentWarpState()) {
+		unsigned int sliceIterationCursor = fullCanonicalSceneLogger->GetIterationCursor();
+		sliceWarpOfstream.write(reinterpret_cast<const char* >(&sliceIterationCursor), sizeof(unsigned int));
 		for (int hash = 0; hash < totalHashEntryCount; hash++) {
 			const ITMHashEntry& hashEntry = hashTable[hash];
 			if (hashEntry.ptr < 0) continue;
@@ -188,30 +185,19 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
 					for (int x = xRangeStart; x < xRangeEnd; x++) {
 						int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 						const TVoxelCanonical& voxel = localVoxelBlock[ixVoxelInHashBlock];
-						fullCanonicalSceneLogger->warpOFStream.write(reinterpret_cast<const char* >(&voxel.warp_t),
+						sliceWarpOfstream.write(reinterpret_cast<const char* >(&voxel.warp_t),
 						                                             sizeof(Vector3f));
-						fullCanonicalSceneLogger->warpOFStream.write(
+						sliceWarpOfstream.write(
 								reinterpret_cast<const char* >(&voxel.warp_t_update), sizeof(Vector3f));
 					}
 				}
 			}
 		}
-		sliceIterationCursor++;
 	}
 	sliceWarpOfstream.close();
-	StopLoadingWarpState();
-	if (wasLoadingWarpState) {
-		// ** restore previous warp-loading state **
-		StartLoadingWarpState();
-		size_t headerSize = sizeof(int);
-		fullCanonicalSceneLogger->warpIFStream.seekg(
-				headerSize + currentGeneralWarpCursor * (fullCanonicalSceneLogger->voxelCount * 2
-				                                         * sizeof(Vector3f) + sizeof(unsigned int)),
-				std::ios::beg);
-		if (fullCanonicalSceneLogger->warpIFStream.eof()) {
-			fullCanonicalSceneLogger->warpIFStream.clear();
-		}
-		fullCanonicalSceneLogger->iterationCursor = currentGeneralWarpCursor;
+	fullCanonicalSceneLogger->StopLoadingWarpState();
+	if(wasCanonicalLoadingWarp){
+		fullCanonicalSceneLogger->SetIterationCursor(originalfullSceneIterationCursor);
 	}
 }
 //endregion

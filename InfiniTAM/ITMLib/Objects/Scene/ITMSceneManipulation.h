@@ -18,6 +18,7 @@
 #include "ITMScene.h"
 #include "../../ITMLibDefines.h"
 #include "../../Utils/ITMHashBlockProperties.h"
+#include "ITMRepresentationAccess.h"
 
 //TODO: Make GPU versions -Greg (GitHub: Algomorph)
 
@@ -179,6 +180,36 @@ inline bool MarkAsNeedingAllocationIfNotFound(DEVICEPTR(uchar)* entryAllocationT
 
 };
 
+/**
+ * \brief Look for the hash index of the hash entry with the specified position
+ * \param hashIdx [out] the index of the hash entry corresponding to the specified position
+ * \param hashBlockPosition [in] spacial position of the sough-after hash entry (in hash blocks)
+ * \param hashTable [in] the hash table to search
+ * \return true if hash block is allocated, false otherwise
+ */
+inline bool FindHashEntryAtPosition(THREADPTR(int)& hashIdx,
+									const CONSTPTR(Vector3s)& hashBlockPosition,
+                                    const CONSTPTR(ITMHashEntry)* hashTable){
+	hashIdx = hashIndex(hashBlockPosition);
+	ITMHashEntry hashEntry = hashTable[hashIdx];
+	if (!(IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1)) {
+		if (hashEntry.ptr >= -1) {
+			//search excess list only if there is no room in ordered part
+			while (hashEntry.offset >= 1) {
+				hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
+				hashEntry = hashTable[hashIdx];
+
+				if (IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1) {
+					return true;
+				}
+			}
+			return false;
+		}
+		return false;
+	}
+	return true;
+}
+
 template<typename TVoxel, typename TIndex>
 inline
 void AllocateHashEntriesUsingLists_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* entryAllocationTypes,
@@ -188,21 +219,21 @@ void AllocateHashEntriesUsingLists_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* e
 	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
 	int* voxelAllocationList = scene->localVBA.GetAllocationList();
 	int* excessAllocationList = scene->index.GetExcessAllocationList();
-	ITMHashEntry* liveHashEntries = scene->index.GetEntries();
+	ITMHashEntry* hashTable = scene->index.GetEntries();
 
-	for (int iTargetHashBlock = 0; iTargetHashBlock < entryCount; iTargetHashBlock++) {
-		unsigned char entryAllocType = entryAllocationTypes[iTargetHashBlock];
+	for (int hash = 0; hash < entryCount; hash++) {
+		unsigned char entryAllocType = entryAllocationTypes[hash];
 		switch (entryAllocType) {
 			case ITMLib::NEEDS_ALLOC_IN_ORDERED_LIST:
 
 				if (lastFreeVoxelBlockId >= 0) //there is room in the voxel block array
 				{
 					ITMHashEntry hashEntry;
-					hashEntry.pos = allocationBlockCoordinates[iTargetHashBlock];
+					hashEntry.pos = allocationBlockCoordinates[hash];
 					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
 					hashEntry.offset = 0;
-					liveHashEntries[iTargetHashBlock] = hashEntry;
-					entryAllocationTypes[iTargetHashBlock] = newEntryState;
+					hashTable[hash] = hashEntry;
+					entryAllocationTypes[hash] = newEntryState;
 					lastFreeVoxelBlockId--;
 				}
 
@@ -213,13 +244,13 @@ void AllocateHashEntriesUsingLists_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* e
 				    lastFreeExcessListId >= 0) //there is room in the voxel block array and excess list
 				{
 					ITMHashEntry hashEntry;
-					hashEntry.pos = allocationBlockCoordinates[iTargetHashBlock];
+					hashEntry.pos = allocationBlockCoordinates[hash];
 					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
 					hashEntry.offset = 0;
 					int exlOffset = excessAllocationList[lastFreeExcessListId];
-					liveHashEntries[iTargetHashBlock].offset = exlOffset + 1; //connect to child
-					liveHashEntries[SDF_BUCKET_NUM + exlOffset] = hashEntry; //add child to the excess list
-					entryAllocationTypes[iTargetHashBlock] = newEntryState;
+					hashTable[hash].offset = exlOffset + 1; //connect to child
+					hashTable[SDF_BUCKET_NUM + exlOffset] = hashEntry; //add child to the excess list
+					entryAllocationTypes[hash] = newEntryState;
 					lastFreeVoxelBlockId--;
 					lastFreeExcessListId--;
 				}

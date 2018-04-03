@@ -185,6 +185,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 }
 
 int SDFViz::Run() {
+	SliceTestRoutine();
 	renderWindow->Render();
 	renderWindowInteractor->Start();
 	return EXIT_SUCCESS;
@@ -806,6 +807,9 @@ bool SDFViz::MakeSlice() {
 }
 
 bool SDFViz::SwitchToSlice(unsigned int sliceIndex) {
+	if(sliceIndex > sliceIdentifiers.size() - 1){
+		return false;
+	}
 	if(!sceneLogger->SwitchActiveScene(sliceIdentifiers[sliceIndex])){
 		return false;
 	}
@@ -814,5 +818,31 @@ bool SDFViz::SwitchToSlice(unsigned int sliceIndex) {
 	UpdatePipelineVisibilitiesUsingLocalState();
 	InitializeWarps();
 	return true;
+}
+
+bool SDFViz::SliceModeEnabled() const {
+	return this->sceneLogger->GetIsActiveSceneASlice();
+}
+
+bool SDFViz::ToggleSliceMode(unsigned int sliceIndex) {
+	if(SliceModeEnabled()){
+		return SwitchToFullScene();
+	}
+	return SwitchToSlice(sliceIndex);
+}
+
+bool SDFViz::SwitchToFullScene() {
+	if(!sceneLogger->SwitchActiveScene()){
+		return false;
+	}
+}
+
+bool SDFViz::SliceTestRoutine() {
+	bool continueSliceSelection;
+	//canonicalScenePipe.SelectOrDeselectVoxel(364440,true,sceneLogger->GetActiveWarpScene());
+	canonicalScenePipe.SetSliceSelection(364440,continueSliceSelection,sceneLogger->GetActiveWarpScene());
+	canonicalScenePipe.SetSliceSelection(416251,continueSliceSelection,sceneLogger->GetActiveWarpScene());
+	MakeSlice();
+	SwitchToSlice(0);
 }
 // endregion

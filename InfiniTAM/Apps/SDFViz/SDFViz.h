@@ -231,6 +231,10 @@ private:
 
 	//*** scene slicing ***
 	bool MakeSlice();
+	bool SliceModeEnabled() const;
+	bool SwitchToFullScene();
 	bool SwitchToSlice(unsigned int sliceIndex);
+	bool ToggleSliceMode(unsigned int sliceIndex);
+	bool SliceTestRoutine();
 	// endregion
 };

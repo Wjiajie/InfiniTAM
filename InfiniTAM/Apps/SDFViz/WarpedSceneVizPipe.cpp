@@ -148,7 +148,12 @@ bool WarpedSceneVizPipe::GetSliceCoordinatesAreSet() const {
 	return haveSliceCoordinates;
 }
 
-void WarpedSceneVizPipe::GetSliceCoordinates(Vector3i& coord0, Vector3i coord1) const {
+/**
+ * \brief Retrieves the slice coordinates that were previously set (if any)
+ * \param coord0 [out] the first slice coordinate
+ * \param coord1 [out] the second slice coordinate
+ */
+void WarpedSceneVizPipe::GetSliceCoordinates(Vector3i& coord0, Vector3i& coord1) const {
 	coord0 = Vector3i(this->selectedSliceExtremaCoordinates[0]);
 	coord1 = Vector3i(this->selectedSliceExtremaCoordinates[1]);
 }
@@ -186,7 +191,7 @@ WarpedSceneVizPipe::PrintVoxelInfromation(vtkIdType pointId, const ITMScene<ITMV
 	RetrieveInitialCoordinates(pointId, initialCoords.values, vizInitialCoords);
 
 	std::cout << yellow << "Selected voxel at " << current_x << ", " << current_y << ", " << current_z
-	          << ". Voxel information:" << reset << std::endl;
+	          << ". PointId: " << pointId << ". Voxel information:" << reset << std::endl;
 	float selectedVoxelScale = scaleArray->GetValue(pointId);
 	auto selectedVoxelColorIndex = static_cast<VoxelColorIndex>(colorIndexArray->GetValue(pointId));
 

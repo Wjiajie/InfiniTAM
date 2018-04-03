@@ -151,13 +151,14 @@ bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, 
 	TVoxel* destinationVoxels = destination->localVBA.GetVoxelBlocks();
 
 
-	for (int hash = 0; hash < totalHashEntryCount; hash++) {
-		const ITMHashEntry& currentOriginalHashEntry = sourceHashTable[hash];
+	for (int sourceHash = 0; sourceHash < totalHashEntryCount; sourceHash++) {
+		const ITMHashEntry& currentOriginalHashEntry = sourceHashTable[sourceHash];
 		if (currentOriginalHashEntry.ptr < 0) continue;
 		Vector3i originalHashBlockPosition = currentOriginalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 		if (IsHashBlockFullyInRange(originalHashBlockPosition, minPoint, maxPoint) ||
 		    IsHashBlockPartiallyInRange(originalHashBlockPosition, minPoint, maxPoint)) {
-			MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, hash,
+			int destinationHash = hashIndex(currentOriginalHashEntry.pos);
+			MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, destinationHash,
 			                                  currentOriginalHashEntry.pos, destinationHashTable);
 		}
 	}
@@ -169,14 +170,18 @@ bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, 
 
 	bool newSceneContainsVoxels = false;
 
-	for (int hash = 0; hash < totalHashEntryCount; hash++) {
-		const ITMHashEntry& currentOriginalHashEntry = sourceHashTable[hash];
-		if (currentOriginalHashEntry.ptr < 0) continue;
+	for (int sourceHash = 0; sourceHash < totalHashEntryCount; sourceHash++) {
+		const ITMHashEntry& sourceHashEntry = sourceHashTable[sourceHash];
+
+		if (sourceHashEntry.ptr < 0) continue;
+		int destinationHash;
+		FindHashEntryAtPosition(destinationHash,sourceHashEntry.pos,destinationHashTable);
+		const ITMHashEntry& destinationHashEntry = destinationHashTable[destinationHash];
 
 		//position of the current entry in 3D space (in voxel units)
-		Vector3i sourceHashBlockPositionVoxels = currentOriginalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-		TVoxel* localSourceVoxelBlock = &(sourceVoxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-		TVoxel* localDestinationVoxelBlock = &(sourceVoxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		Vector3i sourceHashBlockPositionVoxels = sourceHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		TVoxel* localSourceVoxelBlock = &(sourceVoxels[sourceHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		TVoxel* localDestinationVoxelBlock = &(destinationVoxels[destinationHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 		if (IsHashBlockFullyInRange(sourceHashBlockPositionVoxels, minPoint, maxPoint)) {
 			//we can safely copy the whole block
 			memcpy(localDestinationVoxelBlock, localSourceVoxelBlock, sizeof(TVoxel) * SDF_BLOCK_SIZE3);

@@ -50,8 +50,8 @@ namespace ITMLib
 			std::ofstream ofStream = std::ofstream(path.c_str(),std::ios_base::binary | std::ios_base::out);
 			if (!ofStream) throw std::runtime_error("Could not open '" + path + "' for writing.");
 
-			const TVoxel* voxelBlocks = localVBA.GetVoxelBlocks();
-			const ITMHashEntry* canonicalHashTable = index.GetEntries();
+			const TVoxel* voxels = localVBA.GetVoxelBlocks();
+			const ITMHashEntry* hashTable = index.GetEntries();
 			int noTotalEntries = index.noTotalEntries;
 
 			int lastExcessListId = index.GetLastFreeExcessListId();
@@ -65,7 +65,7 @@ namespace ITMLib
 #endif
 
 			for (int entryId = 0; entryId < noTotalEntries; entryId++) {
-				const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
+				const ITMHashEntry& currentHashEntry = hashTable[entryId];
 				//skip unfilled hash
 				if (currentHashEntry.ptr < 0) continue;
 				allocatedHashBlockCount++;
@@ -73,12 +73,12 @@ namespace ITMLib
 
 			ofStream.write(reinterpret_cast<const char* >(&allocatedHashBlockCount), sizeof(int));
 			for (int entryId = 0; entryId < noTotalEntries; entryId++) {
-				const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
+				const ITMHashEntry& currentHashEntry = hashTable[entryId];
 				//skip unfilled hash
 				if (currentHashEntry.ptr < 0) continue;
 				ofStream.write(reinterpret_cast<const char* >(&entryId), sizeof(int));
 				ofStream.write(reinterpret_cast<const char* >(&currentHashEntry), sizeof(ITMHashEntry));
-				const TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+				const TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 				ofStream.write(reinterpret_cast<const char* >(localVoxelBlock), sizeof(TVoxel)*SDF_BLOCK_SIZE3);
 			}
 

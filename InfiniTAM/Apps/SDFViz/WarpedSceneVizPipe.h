@@ -58,7 +58,7 @@ public:
 	bool GetWarpEnabled() const;
 	void PrintHighlightIndexes();
 	bool GetSliceCoordinatesAreSet() const;
-	void GetSliceCoordinates(Vector3i& coord0, Vector3i coord1) const;
+	void GetSliceCoordinates(Vector3i& coord0, Vector3i& coord1) const;
 
 	// *** setup ***
 	void PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeometry);

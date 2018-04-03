@@ -178,6 +178,12 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const ITMScene<TVoxelLive, TIndex>* ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetLiveScene() const{
 	return this->liveScene;
 }
+
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetIsActiveSceneASlice() const {
+	return this->activeWarpLogger->isSlice;
+}
 //endregion
 // region ================================= SCENE SAVING / LOADING =====================================================
 
@@ -385,4 +391,5 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ClearHighlights() {
 	this->highlights.Clear();
 }
+
 //endregion

@@ -136,6 +136,7 @@ public:
 	std::vector<int> GetInterestRegionHashes() const;
 	const ITMScene<TVoxelCanonical,TIndex>* GetActiveWarpScene() const;
 	const ITMScene<TVoxelLive,TIndex>* GetLiveScene() const;
+	bool GetIsActiveSceneASlice() const;
 
 	//*** scene loading/saving
 	bool SaveScenes();
@@ -195,6 +196,7 @@ public:
 	               ITMScene<TVoxelCanonical, TIndex>* destinationScene);
 	bool SwitchActiveScene(
 			std::string sliceIdentifier = ITMWarpSceneLogger<TVoxelCanonical, TIndex>::fullSceneSliceIdentifier);
+
 
 //endregion
 private:

@@ -13,6 +13,9 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+//stdlib
+#include <regex>
+
 //VTK
 #include <vtkObjectFactory.h>
 #include <vtkRenderWindowInteractor.h>
@@ -38,6 +41,7 @@ void SDFVizInteractorStyle::OnKeyPress() {
 	// Get the keypress
 	vtkRenderWindowInteractor* rwi = this->Interactor;
 	std::string key = rwi->GetKeySym();
+	std::regex digit("\\d");
 
 
 	if (parent != nullptr) {
@@ -164,6 +168,13 @@ void SDFVizInteractorStyle::OnKeyPress() {
 		} else if (key == "Return" || key == "KP_Enter") {
 			if (sliceSelected) {
 				MakeSlice();
+			}
+		} else if (std::regex_match(key, digit)){
+			int numberOfTheKey = std::stoi(key);
+			if(numberOfTheKey < 10 && numberOfTheKey > 0){
+				parent->ToggleSliceMode(static_cast<unsigned int>(numberOfTheKey - 1));
+			}else if(numberOfTheKey == 0){
+				parent->SwitchToFullScene();
 			}
 		}
 	}
