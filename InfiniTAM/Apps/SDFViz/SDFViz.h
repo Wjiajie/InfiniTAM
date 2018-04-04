@@ -86,7 +86,7 @@ public:
 	//================= CONSTRUCTORS/DESTRUCTORS ===================
 	SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, bool hideLiveVoxels,
 	       bool hideInterestCanonicalRegions, bool hideUnknownCanonicalVoxels, bool useInitialCoords,
-	       Vector3i initialCoords, unsigned int initialFrame, bool loadSlices);
+	       Vector3i initialCoords, unsigned int initialFrame, bool loadSlices, bool slicesOnly);
 	virtual ~SDFViz();
 	//================= INSTANCE MEMBER FUNCTIONS ==================
 	int Run();

@@ -100,7 +100,7 @@ const std::array<std::array<double, 4>, 4> SDFViz::backgroundColors = {{{0.96, 0
 
 SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, bool hideLiveVoxels,
                bool hideInterestCanonicalRegions, bool hideUnknownCanonicalVoxels, bool useInitialCoords,
-               Vector3i initialCoords, unsigned int initialFrame, bool loadSlices)
+               Vector3i initialCoords, unsigned int initialFrame, bool loadSlices, bool slicesOnly)
 		:
 		rootPath(std::move(pathToScene)),
 		canonicalScenePipe(canonicalTrunctedPositiveVoxelColor, canonicalNonTruncatedPositiveVoxelColor,
@@ -135,16 +135,23 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 		liveHashBlocksVisible(false) {
 
 	auto* settings = new ITMLibSettings();
-	canonicalScene =
-			new ITMScene<ITMVoxelCanonical, ITMVoxelIndex>(
-					&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-					settings->GetMemoryType());
-	liveScene =
-			new ITMScene<ITMVoxelLive, ITMVoxelIndex>(
-					&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-					settings->GetMemoryType());
+	liveScene = new ITMScene<ITMVoxelLive, ITMVoxelIndex>(
+			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+			settings->GetMemoryType());
+	if (slicesOnly) {
+		canonicalScene = new ITMScene<ITMVoxelCanonical, ITMVoxelIndex>(
+				&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+				settings->GetMemoryType());
+
+
+		sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(canonicalScene, liveScene,
+		                                                                                 GenerateExpectedFramePath());
+	} else {
+		sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(liveScene,
+		                                                                                 GenerateExpectedFramePath());
+		sliceIdentifiers = sceneLogger->GetSliceIds();
+	}
 	delete settings;
-	sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(canonicalScene, liveScene, GenerateExpectedFramePath());
 
 	InitializeRendering();
 	DrawLegend();
@@ -182,7 +189,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 		}
 	}
 
-	if (loadSlices){
+	if (loadSlices) {
 		LoadAllSlices();
 	}
 
@@ -674,7 +681,8 @@ void SDFViz::SetUpGeometrySources() {
 
 void SDFViz::ReinitializePipelines() {
 	canonicalScenePipe.SetInterestRegionInfo(sceneLogger->GetInterestRegionHashes(), highlights);
-	canonicalScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort(), sceneLogger->GetActiveWarpScene());
+	canonicalScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort(),
+	                                   sceneLogger->GetActiveWarpScene());
 	canonicalScenePipe.PrepareInterestRegions(sphere->GetOutputPort());
 	canonicalScenePipe.PrepareWarplessVoxels(sphere->GetOutputPort());
 	liveScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort(), sceneLogger->GetLiveScene());
@@ -809,10 +817,10 @@ bool SDFViz::MakeSlice() {
 }
 
 bool SDFViz::SwitchToSlice(unsigned int sliceIndex) {
-	if(sliceIndex > sliceIdentifiers.size() - 1){
+	if (sliceIndex >= sliceIdentifiers.size()) {
 		return false;
 	}
-	if(!sceneLogger->SwitchActiveScene(sliceIdentifiers[sliceIndex])){
+	if (!sceneLogger->SwitchActiveScene(sliceIdentifiers[sliceIndex])) {
 		return false;
 	}
 	LoadFrameData();
@@ -828,14 +836,14 @@ bool SDFViz::SliceModeEnabled() const {
 }
 
 bool SDFViz::ToggleSliceMode(unsigned int sliceIndex) {
-	if(SliceModeEnabled()){
+	if (SliceModeEnabled()) {
 		return SwitchToFullScene();
 	}
 	return SwitchToSlice(sliceIndex);
 }
 
 bool SDFViz::SwitchToFullScene() {
-	if(!sceneLogger->SwitchActiveScene()){
+	if (!sceneLogger->SwitchActiveScene()) {
 		return false;
 	}
 	LoadFrameData();

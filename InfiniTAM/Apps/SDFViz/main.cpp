@@ -27,6 +27,7 @@ int main(int argc, const char* argv[]) {
 		bool hideInterestCanonicalRegions = false;
 		bool hideUnknownVoxels = false;
 		bool loadSlices = false;
+		bool slicesOnly = false;
 
 		po::options_description description{"Options"};
 		description.add_options()
@@ -47,7 +48,9 @@ int main(int argc, const char* argv[]) {
 				("frame_index,f", po::value<unsigned int>()->default_value(0),
 				 "Which frame to load first by default.")
 				("load_slices,ls", po::bool_switch(&loadSlices),
-				 "Load all existing slices for the initial frame.");
+				 "Load all existing slices for the initial frame.")
+				("slices_only,so", po::bool_switch(&slicesOnly),
+				 "Load only existing slices for the initial frame, don't load the full scene.");
 
 		po::variables_map vm;
 		po::store(po::command_line_parser(argc, argv).options(description).run(), vm);
@@ -69,7 +72,7 @@ int main(int argc, const char* argv[]) {
 			}
 			SDFViz application(vm["directory"].as<std::string>(), hideNonInterestCanonicalVoxels, hideLiveVoxels,
 			                   hideInterestCanonicalRegions, hideUnknownVoxels, haveUserInitialCoordinate,
-			                   initialCoords, vm["frame_index"].as<unsigned int>(), loadSlices);
+			                   initialCoords, vm["frame_index"].as<unsigned int>(), loadSlices, false);
 			application.Run();
 		}
 	} catch (const po::error& ex) {

@@ -77,13 +77,31 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 	}
 }
 
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(ITMScene<TVoxelLive, TIndex>* liveScene,
+                                                                    std::string path):
+	fullCanonicalSceneLogger(nullptr),
+	activeWarpLogger(nullptr),
+	liveScene(liveScene),
+	highlights("Hash ID", "Local voxel ix", "Frame", ""),
+	mode(SLICE)
+	{
+	SetPath(path);
+	std::vector<std::string> ids = LoadAllSlices();
+	if(slices.empty()){
+		DIEWITHEXCEPTION_REPORTLOCATION("Could not find or load any slices in the provided directory.");
+	}
+	activeWarpLogger = slices[ids[0]];
+}
+
+
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneLogger() {
 	for(auto idAndSliceIterator = this->slices.begin(); idAndSliceIterator != this->slices.end(); ++idAndSliceIterator){
 		delete idAndSliceIterator->second;
 	}
-	fullCanonicalSceneLogger->StopLoadingWarpState();
+	delete fullCanonicalSceneLogger;
 }
 //endregion
 // region ================================= GETTERS, SETTERS, PRINTERS =================================================
@@ -133,10 +151,6 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::PrintHighlights() {
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::CheckPath() {
-	if (!liveScene || activeWarpLogger->Empty()) {
-		std::cerr << "At least one of the two scenes, canonical/live, was not set to an actual scene. "
-		          << __FILE__ << ":" << __LINE__ << std::endl;
-	}
 	if (!fs::is_directory(this->path)) {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
@@ -162,8 +176,10 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetPath(std::string pa
 				                 __FILE__
 				                 ": " + std::to_string(__LINE__) + "]");
 	}
-	this->activeWarpLogger->scenePath = (this->path / canonicalName).string();
-	this->activeWarpLogger->warpPath = (this->path / (warpUpdatesFilename + binaryFileExtension)).string();
+	if(activeWarpLogger){
+		this->activeWarpLogger->scenePath = (this->path / canonicalName).string();
+		this->activeWarpLogger->warpPath = (this->path / (warpUpdatesFilename + binaryFileExtension)).string();
+	}
 	this->livePath = this->path / liveName;
 	this->highlightsBinaryPath = this->path / ("highlights" + binaryFileExtension);
 	this->highlightsTextPath = this->path / ("highlights" + textFileExtension);
@@ -179,10 +195,18 @@ const ITMScene<TVoxelLive, TIndex>* ITMSceneLogger<TVoxelCanonical, TVoxelLive, 
 	return this->liveScene;
 }
 
-
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetIsActiveSceneASlice() const {
 	return this->activeWarpLogger->isSlice;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+std::vector<std::string> ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetSliceIds() const {
+	std::vector<std::string> ids;
+	for(auto iterator = slices.begin(); iterator != slices.end(); iterator++){
+		ids.push_back(iterator->first);
+	}
+	return ids;
 }
 //endregion
 // region ================================= SCENE SAVING / LOADING =====================================================
@@ -393,5 +417,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ClearHighlights() {
 	this->highlights.Clear();
 }
+
+
 
 //endregion

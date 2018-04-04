@@ -163,9 +163,11 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
 
 
 	bool wasCanonicalLoadingWarp = fullCanonicalSceneLogger->IsLoadingWarpState();
+	unsigned int originalfullSceneIterationCursor = fullCanonicalSceneLogger->GetIterationCursor();
+	fullCanonicalSceneLogger->StopLoadingWarpState();
 	fullCanonicalSceneLogger->StartLoadingWarpState();
 
-	unsigned int originalfullSceneIterationCursor = fullCanonicalSceneLogger->GetIterationCursor();
+
 
 	while (fullCanonicalSceneLogger->LoadCurrentWarpState()) {
 		unsigned int sliceIterationCursor = fullCanonicalSceneLogger->GetIterationCursor();
@@ -280,7 +282,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadSlice(const std::s
 }
 
 /**
- * \brief Switch to a different scene slice or to the full scene
+ * \brief Switch to a different scene slice or to the full scene (if the requested slice or the full scene is available)
  * \param sliceIdentifier either identifier of the slice (string form of min & max points with the six coordinates separated by '_'), or the full scene identifier, \sa ITMWarpSceneLogger::fullSceneSliceIdentifier
  * \return true on success, false on failure
  */
@@ -290,9 +292,13 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SwitchActiveScene(std:
 	int iterationCursor = static_cast<int>(activeWarpLogger->GetIterationCursor());
 
 	if (sliceIdentifier == ITMWarpSceneLogger<TVoxelCanonical, TIndex>::fullSceneSliceIdentifier) {
-		mode = FULL_SCENE;
-		activeWarpLogger->StopLoadingWarpState();
-		activeWarpLogger = fullCanonicalSceneLogger;
+		if(fullCanonicalSceneLogger != nullptr){
+			mode = FULL_SCENE;
+			activeWarpLogger->StopLoadingWarpState();
+			activeWarpLogger = fullCanonicalSceneLogger;
+		}else{
+			return false;
+		}
 	} else {
 		if (SliceExistsInMemory(sliceIdentifier)) {
 			mode = SLICE;

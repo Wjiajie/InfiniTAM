@@ -112,6 +112,8 @@ public:
 	ITMSceneLogger(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	               ITMScene<TVoxelLive, TIndex>* liveScene,
 	               std::string path = "");
+	ITMSceneLogger(ITMScene<TVoxelLive, TIndex>* liveScene,
+	               std::string path);
 
 	ITMSceneLogger() = delete;//disable default constructor generation
 	virtual ~ITMSceneLogger();
@@ -137,6 +139,7 @@ public:
 	const ITMScene<TVoxelCanonical,TIndex>* GetActiveWarpScene() const;
 	const ITMScene<TVoxelLive,TIndex>* GetLiveScene() const;
 	bool GetIsActiveSceneASlice() const;
+	std::vector<std::string> GetSliceIds() const;
 
 	//*** scene loading/saving
 	bool SaveScenes();
