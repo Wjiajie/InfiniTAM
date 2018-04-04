@@ -72,7 +72,12 @@ int main(int argc, const char* argv[]) {
 			}
 			SDFViz application(vm["directory"].as<std::string>(), hideNonInterestCanonicalVoxels, hideLiveVoxels,
 			                   hideInterestCanonicalRegions, hideUnknownVoxels, haveUserInitialCoordinate,
-			                   initialCoords, vm["frame_index"].as<unsigned int>(), loadSlices, false);
+			                   initialCoords, vm["frame_index"].as<unsigned int>(), loadSlices, slicesOnly);
+			//_DEBUG
+			if(!slicesOnly){
+				application.SliceTestRoutine();
+			}
+			//END _DEBUG
 			application.Run();
 		}
 	} catch (const po::error& ex) {

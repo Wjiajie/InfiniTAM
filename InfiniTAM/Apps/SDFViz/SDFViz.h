@@ -90,6 +90,7 @@ public:
 	virtual ~SDFViz();
 	//================= INSTANCE MEMBER FUNCTIONS ==================
 	int Run();
+	bool SliceTestRoutine();
 
 private:
 	// region ================= CONSTANTS ==================================
@@ -237,4 +238,5 @@ private:
 	bool ToggleSliceMode(unsigned int sliceIndex);
 	// endregion
 	void LoadAllSlices();
+
 };

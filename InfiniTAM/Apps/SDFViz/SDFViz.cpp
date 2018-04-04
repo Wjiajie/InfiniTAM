@@ -139,17 +139,16 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 			settings->GetMemoryType());
 	if (slicesOnly) {
-		canonicalScene = new ITMScene<ITMVoxelCanonical, ITMVoxelIndex>(
-				&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-				settings->GetMemoryType());
-
-
-		sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(canonicalScene, liveScene,
-		                                                                                 GenerateExpectedFramePath());
-	} else {
+		canonicalScene = nullptr;
 		sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(liveScene,
 		                                                                                 GenerateExpectedFramePath());
 		sliceIdentifiers = sceneLogger->GetSliceIds();
+	} else {
+		canonicalScene = new ITMScene<ITMVoxelCanonical, ITMVoxelIndex>(
+				&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+				settings->GetMemoryType());
+		sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(canonicalScene, liveScene,
+		                                                                                 GenerateExpectedFramePath());
 	}
 	delete settings;
 
@@ -859,4 +858,14 @@ void SDFViz::LoadAllSlices() {
 	                              std::make_move_iterator(std::begin(loadedIdentifiers)),
 	                              std::make_move_iterator(std::end(loadedIdentifiers)));
 }
+//_DEBUG
+bool SDFViz::SliceTestRoutine() {
+	bool continueSliceSelection;
+	//canonicalScenePipe.SelectOrDeselectVoxel(364440,true,sceneLogger->GetActiveWarpScene());
+	canonicalScenePipe.SetSliceSelection(364440,continueSliceSelection,sceneLogger->GetActiveWarpScene());
+	canonicalScenePipe.SetSliceSelection(416251,continueSliceSelection,sceneLogger->GetActiveWarpScene());
+	MakeSlice();
+	SwitchToSlice(0);
+}
+//END _DEBUG
 // endregion

@@ -159,7 +159,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
 	if (!sliceWarpOfstream)
 		throw std::runtime_error("Could not open '" + path + "' for writing. ["  __FILE__  ": " +
 		                         std::to_string(__LINE__) + "]");
-	sliceWarpOfstream.write(reinterpret_cast<const char*>(&frameIndex), sizeof(int));
+	sliceWarpOfstream.write(reinterpret_cast<const char*>(&frameIndex), sizeof(frameIndex));
 
 
 	bool wasCanonicalLoadingWarp = fullCanonicalSceneLogger->IsLoadingWarpState();
@@ -167,18 +167,16 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
 	fullCanonicalSceneLogger->StopLoadingWarpState();
 	fullCanonicalSceneLogger->StartLoadingWarpState();
 
-
-
 	while (fullCanonicalSceneLogger->LoadCurrentWarpState()) {
 		unsigned int sliceIterationCursor = fullCanonicalSceneLogger->GetIterationCursor();
-		sliceWarpOfstream.write(reinterpret_cast<const char* >(&sliceIterationCursor), sizeof(unsigned int));
+		sliceWarpOfstream.write(reinterpret_cast<const char* >(&sliceIterationCursor), sizeof(sliceIterationCursor));
 		for (int hash = 0; hash < totalHashEntryCount; hash++) {
 			const ITMHashEntry& hashEntry = hashTable[hash];
 			if (hashEntry.ptr < 0) continue;
 
 			//position of the current entry in 3D space (in voxel units)
 			Vector3i hashBlockPositionVoxels = hashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-			TVoxelCanonical* localVoxelBlock = &(voxels[hashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			const TVoxelCanonical* localVoxelBlock = &(voxels[hashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
 			int zRangeStart, zRangeEnd, yRangeStart, yRangeEnd, xRangeStart, xRangeEnd;
 			if (IsHashBlockFullyInRange(hashBlockPositionVoxels, minPoint, maxPoint)) {
