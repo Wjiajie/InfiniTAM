@@ -76,8 +76,7 @@ public:
 	                       const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene);
 	void ClearSliceSelection();
 
-	// *** modify scene ***
-	void MakeSliceFromSelection();//TODO: don't need?
+	//TODO: don't need?
 	// endregion
 protected:
 	// *** setup ***

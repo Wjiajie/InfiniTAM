@@ -756,7 +756,7 @@ bool SDFViz::RetreatIteration() {
 
 void SDFViz::UpdatePipelineVisibilitiesUsingLocalState() {
 	canonicalScenePipe.GetVoxelActor()->SetVisibility(canonicalVoxelsVisible);
-	if (!canonicalScenePipe.GetWarpEnabled()) canonicalScenePipe.GetWarplessVoxelActor()->VisibilityOff();
+	if (canonicalScenePipe.GetWarpEnabled()) canonicalScenePipe.GetWarplessVoxelActor()->VisibilityOff();
 	canonicalScenePipe.GetInterestVoxelActor()->SetVisibility(canonicalInterestVoxelsVisible);
 	if (canonicalScenePipe.GetCurrentScaleMode() == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS &&
 	    canonicalUnknownVoxelsVisible ||

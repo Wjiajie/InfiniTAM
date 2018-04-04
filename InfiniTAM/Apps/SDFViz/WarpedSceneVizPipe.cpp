@@ -646,17 +646,6 @@ void WarpedSceneVizPipe::ClearSliceSelection() {
 	haveSliceCoordinates = false;
 }
 // endregion
-// region ============================================ SCENE MANIPULATION ==============================================
-
-void WarpedSceneVizPipe::MakeSliceFromSelection() {
-	if(haveSliceCoordinates){
-
-	}
-}
-
-
-
-// endregion
 
 
 
