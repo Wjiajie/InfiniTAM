@@ -483,7 +483,6 @@ Trackers/Shared/ITMColorTracker_Shared.h
 Trackers/Shared/ITMDepthTracker_Shared.h
 Trackers/Shared/ITMExtendedTracker_Shared.h
 Trackers/Shared/ITMSceneMotionTracker_Shared.h
-Trackers/Shared/ITMSceneMotionTracker_OldLevelSet.h
 Trackers/Shared/ITMSceneMotionTracker_Debug.h
 )
 

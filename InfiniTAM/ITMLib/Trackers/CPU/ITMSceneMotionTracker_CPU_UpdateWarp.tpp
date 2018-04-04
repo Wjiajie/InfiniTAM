@@ -212,8 +212,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					Vector3f liveColor, liveSdfJacobian, liveColorJacobian, liveSdf_Center_WarpForward, warpedSdfJacobian;
 
 					if (computeDataTerm || computeLevelSetTerm) {
-						_DEBUG_ComputeLiveSdf_Center_WarpForward(canonicalVoxelPosition, warp, liveSdf, liveVoxels,
-						                                         liveHashTable, liveCache, liveSdf_Center_WarpForward);
+						ComputeLiveSdf_Center_WarpForward(canonicalVoxelPosition, warp, liveSdf, liveVoxels,
+						                                  liveHashTable, liveCache, liveSdf_Center_WarpForward);
 #ifdef PRINT_SINGLE_VOXEL_RESULT
 						if (printResult) {
 							std::cout << std::endl << "Live SDF at warp plus one for each direction: " << yellow
@@ -232,10 +232,10 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 
 #endif
 
-							_DEBUG_ComputePerPointLiveJacobian(canonicalVoxelPosition, warp, canonicalSdf,
-							                                   liveVoxels, liveHashTable, liveCache,
-							                                   liveSdf, liveSdfJacobian,
-							                                   liveSdf_Center_WarpForward);
+							ComputePerPointLiveJacobian(canonicalVoxelPosition, warp, canonicalSdf,
+							                            liveVoxels, liveHashTable, liveCache,
+							                            liveSdf, liveSdfJacobian,
+							                            liveSdf_Center_WarpForward);
 
 
 						}
@@ -293,10 +293,10 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						//=================================== LEVEL SET TERM ===============================================
 
 						Vector3f jacobianNormsAtWarpPlusOne;
-						_DEBUG_ComputeWarpedJacobianAndHessian(neighborWarps, canonicalVoxelPosition, canonicalSdf,
-						                                       liveSdf_Center_WarpForward, liveSdf, liveVoxels,
-						                                       liveHashTable, liveCache, warpedSdfJacobian,
-						                                       warpedSdfHessian);
+						ComputeWarpedJacobianAndHessian(neighborWarps, canonicalVoxelPosition, canonicalSdf,
+						                                liveSdf_Center_WarpForward, liveSdf, liveVoxels,
+						                                liveHashTable, liveCache, warpedSdfJacobian,
+						                                warpedSdfHessian);
 
 						float sdfJacobianNorm = length(warpedSdfJacobian);
 						sdfJacobianNormMinusUnity = sdfJacobianNorm - unity;
