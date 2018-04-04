@@ -166,6 +166,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
 	unsigned int originalfullSceneIterationCursor = fullCanonicalSceneLogger->GetIterationCursor();
 	fullCanonicalSceneLogger->StopLoadingWarpState();
 	fullCanonicalSceneLogger->StartLoadingWarpState();
+	int zRangeStart, zRangeEnd, yRangeStart, yRangeEnd, xRangeStart, xRangeEnd;
 
 	while (fullCanonicalSceneLogger->LoadCurrentWarpState()) {
 		unsigned int sliceIterationCursor = fullCanonicalSceneLogger->GetIterationCursor();
@@ -178,28 +179,19 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
 			Vector3i hashBlockPositionVoxels = hashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 			const TVoxelCanonical* localVoxelBlock = &(voxels[hashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
-			int zRangeStart, zRangeEnd, yRangeStart, yRangeEnd, xRangeStart, xRangeEnd;
-			if (IsHashBlockFullyInRange(hashBlockPositionVoxels, minPoint, maxPoint)) {
-				//we can safely copy the whole block
-				xRangeStart = yRangeStart = zRangeStart = 0;
-				xRangeEnd = yRangeEnd = zRangeEnd = SDF_BLOCK_SIZE;
-			} else if (IsHashBlockPartiallyInRange(hashBlockPositionVoxels, minPoint, maxPoint)) {
-				//only a portion of the block spans the slice range, figure out what it is
-				ComputeCopyRanges(xRangeStart, xRangeEnd, yRangeStart, yRangeEnd, zRangeStart, zRangeEnd,
-				                  hashBlockPositionVoxels, minPoint, maxPoint);
-			} else {
-				//no voxels in the block are within range, skip
-				continue;
-			}
-			for (int z = zRangeStart; z < zRangeEnd; z++) {
-				for (int y = yRangeStart; y < yRangeEnd; y++) {
-					for (int x = xRangeStart; x < xRangeEnd; x++) {
-						int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-						const TVoxelCanonical& voxel = localVoxelBlock[ixVoxelInHashBlock];
-						sliceWarpOfstream.write(reinterpret_cast<const char* >(&voxel.warp_t),
-						                                             sizeof(Vector3f));
-						sliceWarpOfstream.write(
-								reinterpret_cast<const char* >(&voxel.warp_t_update), sizeof(Vector3f));
+			//if no voxels in the block are within range, skip
+			if (IsHashBlockFullyInRange(hashBlockPositionVoxels, minPoint, maxPoint) ||
+			    IsHashBlockPartiallyInRange(hashBlockPositionVoxels, minPoint, maxPoint)) {
+				for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+					for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+						for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+							int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+							const TVoxelCanonical& voxel = localVoxelBlock[ixVoxelInHashBlock];
+							sliceWarpOfstream.write(reinterpret_cast<const char* >(&voxel.warp_t),
+							                        sizeof(Vector3f));
+							sliceWarpOfstream.write(
+									reinterpret_cast<const char* >(&voxel.warp_t_update), sizeof(Vector3f));
+						}
 					}
 				}
 			}
