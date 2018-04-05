@@ -97,9 +97,25 @@ ITMLibSettings::ITMLibSettings()
 						  "framesToSkip=20,framesToWeight=50,failureDec=20.0";
 	}
 
+	// Debugging/logging
+	focusCoordinatesSpecified = false;
+
+}
+
+bool ITMLibSettings::AreFocusCoordinatesSpecified() const {
+	return focusCoordinatesSpecified;
 }
 
 MemoryDeviceType ITMLibSettings::GetMemoryType() const
 {
 	return deviceType == ITMLibSettings::DEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
+}
+
+Vector3i ITMLibSettings::GetFocusCoordinates() const {
+	return focusCoordinates;
+}
+
+void ITMLibSettings::SetFocusCoordinates(const Vector3i& coordiantes) {
+	focusCoordinatesSpecified = true;
+	focusCoordinates = coordiantes;
 }

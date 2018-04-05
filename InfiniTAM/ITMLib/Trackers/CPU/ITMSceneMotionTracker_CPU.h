@@ -26,6 +26,7 @@ class ITMSceneMotionTracker_CPU :
 public:
 
 	explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath);
+	explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates);
 	virtual ~ITMSceneMotionTracker_CPU();
 	void FuseFrame(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;
 	void ApplyWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;
@@ -52,8 +53,7 @@ protected:
 private:
 	ORUtils::MemoryBlock<unsigned char>* warpedEntryAllocationType;
 	ORUtils::MemoryBlock<unsigned char>* canonicalEntryAllocationTypes;
-	ORUtils::MemoryBlock<Vector3s>* canonicalBlockCoords;
-
+	ORUtils::MemoryBlock<Vector3s>* canonicalBlockCoordinates;
 };
 
 

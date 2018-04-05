@@ -5,6 +5,7 @@
 #include "ITMSceneParams.h"
 #include "ITMSurfelSceneParams.h"
 #include "../../ORUtils/MemoryDeviceType.h"
+#include "ITMMath.h"
 
 namespace ITMLib
 {
@@ -72,5 +73,13 @@ namespace ITMLib
 		ITMLibSettings& operator=(const ITMLibSettings&) = delete;
 
 		MemoryDeviceType GetMemoryType() const;
+
+		bool AreFocusCoordinatesSpecified() const;
+		Vector3i GetFocusCoordinates() const;
+		void SetFocusCoordinates(const Vector3i& coordiantes);
+	private:
+		/// Parameters for logging/debugging
+		bool focusCoordinatesSpecified = false;
+		Vector3i focusCoordinates;
 	};
 }

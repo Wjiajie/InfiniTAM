@@ -34,13 +34,25 @@
 
 using namespace ITMLib;
 
+//region =========================================== CONSTRUCTORS / DESTRUCTORS ========================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params, std::string scenePath)
+ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params,
+                                                                                  std::string scenePath)
 		:
 		maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize),
 		sceneLogger(nullptr),
-		baseOutputDirectory(scenePath){}
+		baseOutputDirectory(scenePath) {}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params,
+                                                                                  std::string scenePath,
+                                                                                  Vector3i focusCoordinates)
+		:
+		maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize),
+		sceneLogger(nullptr),
+		baseOutputDirectory(scenePath),
+		hasFocusCoordinates(true), focusCoordinates(focusCoordinates){}
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -48,6 +60,9 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneMotionTrack
 	delete sceneLogger;
 }
 
+//endregion
+
+// region =========================================== PUBLIC METHODS ===================================================
 /**
  * \brief Tracks motion of voxels from canonical frame to live frame.
  * \details The warp field representing motion of voxels in the canonical frame is updated such that the live frame maps
@@ -109,8 +124,9 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	energy_stat_file << "data" << "," << "level_set" << "," << "smoothness" << ","
 	                 << "killing" << "," << "total" << std::endl;
 
-	if(recordWarpUpdates){
-		sceneLogger = new ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex>(canonicalScene, liveScene, currentFrameOutputPath);
+	if (recordWarpUpdates) {
+		sceneLogger = new ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>(canonicalScene, liveScene,
+		                                                                      currentFrameOutputPath);
 		sceneLogger->SaveScenesCompact();
 		sceneLogger->StartSavingWarpState(currentFrameIx);
 	}
@@ -151,14 +167,14 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		maxVectorUpdate = UpdateWarpField(canonicalScene, liveScene);
 		//START _DEBUG
 
-		if(recordWarpUpdates){
+		if (recordWarpUpdates) {
 			sceneLogger->SaveCurrentWarpState();
 		}
 
 		//END _DEBUG
 	}
 
-	if(recordWarpUpdates) {
+	if (recordWarpUpdates) {
 		sceneLogger->StopSavingWarpState();
 		delete sceneLogger;
 	}

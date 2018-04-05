@@ -36,12 +36,7 @@ using namespace ITMLib;
 
 namespace po = boost::program_options;
 
-/** Create a default source of depth images from a list of command line
-    arguments. Typically, @para arg1 would identify the calibration file to
-    use, @para arg2 the colour images, @para arg3 the depth images and
-    @para arg4 the IMU images. If images are omitted, some live sources will
-    be tried.
-*/
+
 static void CreateDefaultImageSource(ImageSourceEngine*& imageSource, IMUSourceEngine*& imuSource,
                                      const std::string& calibFilePath = "",
                                      const std::string& openniFilePath = "",
@@ -152,8 +147,8 @@ static void CreateDefaultImageSource(ImageSourceEngine*& imageSource, IMUSourceE
 	}
 }
 
-bool isPathMask(std::string arg) {
-	return arg.find("%") != std::string::npos;
+bool isPathMask(const std::string& arg) {
+	return arg.find('%') != std::string::npos;
 }
 
 int main(int argc, char** argv) {
@@ -161,50 +156,65 @@ int main(int argc, char** argv) {
 		po::options_description arguments{"Arguments"};
 		po::positional_options_description positional_arguments;
 		bool fixCamera = false;
+		//@formatter:off
 		arguments.add_options()
 				("help,h", "Print help screen")
 				("calib_file,c", po::value<std::string>(), "Calibration file, e.g.: ./Files/Teddy/calib.txt")
 				("input_file,i", po::value<std::vector<std::string>>(), "Input file. 0-3 total arguments. "
 						"Usage scenarios:\n"
-						" (0) No arguments: tries to get frames from attached device (OpenNI, RealSense, etc.). \n"
-						" (1) One argument: tries to load OpenNI video at that location. \n"
-						" (2) Two arguments (files): tries to load rgb & depth from two separate video files "
-						"file path masks NOT containing '%'.\n"
-						" (3) Two arguments (masks): tries to load rgb & depth frames as single images using the "
-						"provided two arguments as file path masks containing '%', "
-						"e.g.: ./Files/Teddy/Frames/%%04i.ppm ./Files/Teddy/Frames/%%04i.pgm\n"
-						" (4) An extra mask argument (beyond 2) containing '%' will signify a file mask to mask images. \n"
-						" (5) An extra path argument (beyond 2) NOT containing the '%' character will signify a "
-						" path to the IMU file source.\n "
-						"Currently, either (4) or (5) can only be combined with (3), but NOT both at the same time."
-						" No other usage scenario takes them into account."
+						"    (0) No arguments: tries to get frames from attached device (OpenNI, RealSense, etc.). \n"
+						"    (1) One argument: tries to load OpenNI video at that location. \n"
+						"    (2) Two arguments (files): tries to load rgb & depth from two separate video files "
+						"    file path masks NOT containing '%'.\n"
+						"    (3) Two arguments (masks): tries to load rgb & depth frames as single images using the "
+						"        provided two arguments as file path masks containing '%', "
+						"        e.g.: ./Files/Teddy/Frames/%%04i.ppm ./Files/Teddy/Frames/%%04i.pgm\n"
+						"    (4) An extra mask argument (beyond 2) containing '%' will signify a file mask to mask images. \n"
+						"    (5) An extra path argument (beyond 2) NOT containing the '%' character will signify a "
+						"        path to the IMU file source.\n "
+						"    Currently, either (4) or (5) can only be combined with (3), but NOT both at the same time."
+						"    No other usage scenario takes them into account."
+				)
+				("focus_coordinates,f", po::value<std::vector<int>>()->multitoken(), "The coordinates of the voxel"
+						" which to focus on for logging/debugging, as 3 integers separated by spaces, \"x y z\"."
+	                    " When specified:\n"
+						"    (1) Voxel-specific debug information will be printed about this voxel.\n"
+	                    "    (2) The record-scene feature will work differently from standard behavior:"
+					    "        it will, instead of recording the whole scene, record a small slice of voxels "
+		                "        around this voxel."
 				)
 				("output,o", po::value<std::string>()->default_value("./Output"), "Output directory, e.g.: ./Output")
 				("fix_camera", po::bool_switch(&fixCamera)->default_value(false));
+		//@formatter:on
 		positional_arguments.add("calib_file", 1);
 		positional_arguments.add("input_file", 3);
 
 		po::variables_map vm;
-		po::store(po::command_line_parser(argc, argv).options(arguments).positional(positional_arguments).run(), vm);
+		po::store(po::command_line_parser(argc, argv).options(arguments).positional(positional_arguments).style(po::command_line_style::unix_style ^ po::command_line_style::allow_short).run(), vm);
 		po::notify(vm);
 
-		if (vm.count("help")) {
+		auto printHelp = [&arguments, &positional_arguments, &argv]() {
 			std::cout << arguments << std::endl;
 			std::cout << "Positional arguments: " << std::endl;
 			std::cout << "   --" << positional_arguments.name_for_position(0) << std::endl;
 			std::cout << "   --" << positional_arguments.name_for_position(1) << std::endl;
 			printf("examples:\n"
-					       "  %s ./Files/Teddy/calib.txt ./Files/Teddy/Frames/%%04i.ppm ./Files/Teddy/Frames/%%04i.pgm\n"
-					       "  %s ./Files/Teddy/calib.txt\n\n", argv[0], argv[0]);
+			       "  %s ./Files/Teddy/calib.txt ./Files/Teddy/Frames/%%04i.ppm ./Files/Teddy/Frames/%%04i.pgm\n"
+			       "  %s ./Files/Teddy/calib.txt\n\n", argv[0], argv[0]);
+		};
+
+		if (vm.count("help")) {
+			printHelp();
 			return EXIT_SUCCESS;
 		}
-
 
 
 		std::string calibFilePath;
 		if (vm.count("calib_file")) {
 			calibFilePath = vm["calib_file"].as<std::string>();
 		}
+
+
 		//all initialized to empty string by default
 		std::string openniFilePath, rgbVideoFilePath, depthVideoFilePath, rgbImageFileMask, depthImageFileMask,
 				maskImageFileMask, imuInputPath;
@@ -230,8 +240,11 @@ int main(int argc, char** argv) {
 					rgbVideoFilePath = inputFiles[0];
 					depthVideoFilePath = inputFiles[1];
 				} else {
-					DIEWITHEXCEPTION(
-							"The first & second input_file arguments need to either both be masks or both be paths to video files.");
+					std::cerr << "The first & second input_file arguments need to either both be masks or both be"
+					             " paths to video files." << std::endl;
+					printHelp();
+					return EXIT_FAILURE;
+
 				}
 				break;
 		}
@@ -244,55 +257,66 @@ int main(int argc, char** argv) {
 		                         depthVideoFilePath, rgbImageFileMask, depthImageFileMask, maskImageFileMask,
 		                         imuInputPath);
 		if (imageSource == nullptr) {
-			std::cout << "failed to open any image stream" << std::endl;
+			std::cerr << "Failed to open any image stream." << std::endl;
+			printHelp();
 			return EXIT_FAILURE;
 		}
 
-		auto* internalSettings = new ITMLibSettings();
-		internalSettings->outputPath = vm["output"].as<std::string>().c_str();
-
-
+		auto* settings = new ITMLibSettings();
+		settings->outputPath = vm["output"].as<std::string>().c_str();
+		bool haveFocusCoordinate = !vm["focus_coordinates"].empty();
+		Vector3i focusCoordiantes(0);
+		if (haveFocusCoordinate) {
+			std::vector<int> focusCoordsVec = vm["focus_coordinates"].as<std::vector<int> >();
+			if (focusCoordsVec.size() != 3) {
+				std::cerr << "Could not parse focus coordiantes vector as exactly 3 integers, \"x y z\"" << std::endl;
+				printHelp();
+				return EXIT_FAILURE;
+			}
+			memcpy(focusCoordiantes.values, focusCoordsVec.data(), sizeof(int) * 3);
+		}
+		settings->SetFocusCoordinates(focusCoordiantes);
 
 		ITMMainEngine* mainEngine = nullptr;
-		switch (internalSettings->libMode) {
+		switch (settings->libMode) {
 			case ITMLibSettings::LIBMODE_BASIC:
-				mainEngine = new ITMBasicEngine<ITMVoxel, ITMVoxelIndex>(internalSettings, imageSource->getCalib(),
+				mainEngine = new ITMBasicEngine<ITMVoxel, ITMVoxelIndex>(settings, imageSource->getCalib(),
 				                                                         imageSource->getRGBImageSize(),
 				                                                         imageSource->getDepthImageSize());
 				break;
 			case ITMLibSettings::LIBMODE_BASIC_SURFELS:
-				mainEngine = new ITMBasicSurfelEngine<ITMSurfelT>(internalSettings, imageSource->getCalib(),
+				mainEngine = new ITMBasicSurfelEngine<ITMSurfelT>(settings, imageSource->getCalib(),
 				                                                  imageSource->getRGBImageSize(),
 				                                                  imageSource->getDepthImageSize());
 				break;
 			case ITMLibSettings::LIBMODE_LOOPCLOSURE:
-				mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelIndex>(internalSettings, imageSource->getCalib(),
+				mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelIndex>(settings, imageSource->getCalib(),
 				                                                         imageSource->getRGBImageSize(),
 				                                                         imageSource->getDepthImageSize());
 				break;
 			case ITMLibSettings::LIBMODE_DYNAMIC:
-				mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(internalSettings,
-				                                                                                  imageSource->getCalib(),
-				                                                                                  imageSource->getRGBImageSize(),
-				                                                                                  imageSource->getDepthImageSize());
+				mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
+						settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
+						imageSource->getDepthImageSize());
 				break;
 			default:
 				throw std::runtime_error("Unsupported library mode!");
 				break;
 		}
-		if(fixCamera) {
+		if (fixCamera) {
 			std::cout << "fix_camera flag passed, automatically locking camera if possible "
-					"(attempting to disable tracking)." << std::endl;
+			             "(attempting to disable tracking)." << std::endl;
 			mainEngine->turnOffTracking();
 		}
 
-		UIEngine_BPO::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine, internalSettings->outputPath,
-		                                 internalSettings->deviceType);
+		UIEngine_BPO::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine,
+		                                     settings->outputPath,
+		                                     settings->deviceType);
 		UIEngine_BPO::Instance()->Run();
 		UIEngine_BPO::Instance()->Shutdown();
 
 		delete mainEngine;
-		delete internalSettings;
+		delete settings;
 		delete imageSource;
 		delete imuSource;
 		return EXIT_SUCCESS;

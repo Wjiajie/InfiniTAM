@@ -550,7 +550,7 @@ public:
 	}
 
 	/**
-	* \brief Makes a scene motion tracking
+	* \brief Makes a scene motion tracker.
 	*
 	* \param deviceType  The device on which the scene motion tracking should operate.
 	*/
@@ -564,6 +564,39 @@ public:
 			case ITMLibSettings::DEVICE_CPU:
 				sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>(
 						sceneParams, scenePath);
+				break;
+			case ITMLibSettings::DEVICE_CUDA:
+#ifndef COMPILE_WITHOUT_CUDA
+				sceneRecoEngine = new ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>(
+						sceneParams, scenePath);
+#endif
+				break;
+			case ITMLibSettings::DEVICE_METAL:
+#ifdef COMPILE_WITH_METAL
+				//TODO
+				DIEWITHEXCEPTION("Motion Scene Tracking not yet implemented on Metal")
+#endif
+				break;
+		}
+
+		return sceneRecoEngine;
+	}
+
+	/**
+	* \brief Makes a scene motion tracker.
+	*
+	* \param deviceType  The device on which the scene motion tracking should operate.
+	*/
+	template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+	static ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>*
+	MakeSceneMotionTracker(const ITMLibSettings::DeviceType& deviceType, const ITMSceneParams& sceneParams,
+	                       std::string scenePath, Vector3i focusCoordinates) {
+		ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>* sceneRecoEngine = NULL;
+
+		switch (deviceType) {
+			case ITMLibSettings::DEVICE_CPU:
+				sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>(
+						sceneParams, scenePath, focusCoordinates);
 				break;
 			case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA

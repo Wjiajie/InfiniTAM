@@ -65,7 +65,6 @@ int main(int argc, const char* argv[]) {
 			Vector3i initialCoords(0);
 			if (haveUserInitialCoordinate) {
 				std::vector<int> initialCoordsVec = vm["initial_focus_coord"].as<std::vector<int> >();
-				initialCoordsVec.data();
 				memcpy(initialCoords.values, initialCoordsVec.data(), sizeof(int) * 3);
 				initialCoords.y *= -1;
 				initialCoords.z *= -1;

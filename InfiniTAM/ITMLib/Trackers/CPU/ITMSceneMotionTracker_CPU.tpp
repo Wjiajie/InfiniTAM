@@ -46,7 +46,22 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTr
 		  warpedEntryAllocationType(new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
 		  canonicalEntryAllocationTypes(
 				  new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
-		  canonicalBlockCoords(new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)) {
+		  canonicalBlockCoordinates(new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)) {
+	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
+	memset(entriesAllocType, ITMLib::STABLE, static_cast<size_t>(TIndex::noTotalEntries));
+
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params,
+                                                                                          std::string scenePath,
+                                                                                          Vector3i focusCoordinates)
+		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params, scenePath, focusCoordinates),
+		  warpedEntryAllocationType(new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
+		  canonicalEntryAllocationTypes(
+				  new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
+		  canonicalBlockCoordinates(new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries, MEMORYDEVICE_CPU))
+		   {
 	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
 	memset(entriesAllocType, ITMLib::STABLE, static_cast<size_t>(TIndex::noTotalEntries));
 
@@ -56,7 +71,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneMotionTracker_CPU() {
 	delete warpedEntryAllocationType;
 	delete canonicalEntryAllocationTypes;
-	delete canonicalBlockCoords;
+	delete canonicalBlockCoordinates;
 }
 
 //========================================= END CONSTRUCTORS AND DESTRUCTORS============================================
@@ -78,7 +93,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
-	Vector3s* allocationBlockCoords = this->canonicalBlockCoords->GetData(MEMORYDEVICE_CPU);
+	Vector3s* allocationBlockCoords = this->canonicalBlockCoordinates->GetData(MEMORYDEVICE_CPU);
 	int entryCount = TIndex::noTotalEntries;
 
 	const short neighborhoodSize = 3;//must be an odd positive integer greater than 1.
@@ -109,7 +124,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 		//try to find a corresponding canonical block, and mark it for allocation if not found
 		int canonicalBlockIndex = hashIndex(liveHashBlockCoords);
 		if (MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, canonicalBlockIndex,
-		                                      liveHashBlockCoords,canonicalHashTable)) {
+		                                      liveHashBlockCoords, canonicalHashTable)) {
 			countVoxelHashBlocksToAllocate++;
 		}
 	}
@@ -143,7 +158,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 						//compute index in hash table
 						hashIdx = hashIndex(currentBlockLocation);
 						if (MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, hashIdx,
-						                                      currentBlockLocation,canonicalHashTable)) {
+						                                      currentBlockLocation, canonicalHashTable)) {
 							countVoxelHashBlocksToAllocate++;
 						}
 						iNeighbor++;
@@ -154,7 +169,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 	}
 	std::cout << "Total number of canonical hash blocks to be allocated before optimization: "
 	          << countVoxelHashBlocksToAllocate << " out of " << entryCount << std::endl;
-	AllocateHashEntriesUsingLists_CPU(canonicalScene, entriesAllocType, allocationBlockCoords,ITMLib::BOUNDARY);
+	AllocateHashEntriesUsingLists_CPU(canonicalScene, entriesAllocType, allocationBlockCoords, ITMLib::BOUNDARY);
 }
 
 // ========================================== END CANONICAL HASH BLOCK ALLOCATION ======================================
@@ -214,10 +229,6 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 
 					//projected position of the sdf point to the most recent frame
 					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
-
-					if (originalPosition == Vector3i(7, -3, 199)) {
-						oldSdf = canonicalVoxel.sdf;
-					}
 
 					Vector3f liveColor;
 					float liveWeight;
@@ -392,14 +403,14 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarp(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 	int entryCount = TIndex::noTotalEntries;
-	Vector3s* allocationBlockCoords = this->canonicalBlockCoords->GetData(MEMORYDEVICE_CPU);
+	Vector3s* allocationBlockCoords = this->canonicalBlockCoordinates->GetData(MEMORYDEVICE_CPU);
 	uchar* warpedEntryAllocationTypes = this->warpedEntryAllocationType->GetData(MEMORYDEVICE_CPU);
 	memset(warpedEntryAllocationTypes, (unsigned char) 0, static_cast<size_t>(entryCount));
 
 	WarpHashMarkerFunctor<TVoxelCanonical, TVoxelLive, TIndex> hashMarkerFunctor(liveScene, allocationBlockCoords,
 	                                                                             warpedEntryAllocationTypes);
 	VoxelPositionTraversal_CPU(*canonicalScene, hashMarkerFunctor);
-	AllocateHashEntriesUsingLists_CPU(liveScene, warpedEntryAllocationTypes, allocationBlockCoords,ITMLib::STABLE);
+	AllocateHashEntriesUsingLists_CPU(liveScene, warpedEntryAllocationTypes, allocationBlockCoords, ITMLib::STABLE);
 
 	WarpSdfDistributionFunctor<TVoxelCanonical, TVoxelLive, TIndex> distributionFunctor(liveScene);
 	VoxelPositionTraversal_CPU(*canonicalScene, distributionFunctor);

@@ -28,6 +28,7 @@ public:
 //============================= CONSTRUCTORS / DESTRUCTORS =============================================================
 
 	explicit ITMSceneMotionTracker(const ITMSceneParams& params, std::string scenePath);
+	explicit ITMSceneMotionTracker(const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates);
 	virtual ~ITMSceneMotionTracker();
 
 //============================= MEMBER FUNCTIONS =======================================================================
@@ -80,14 +81,11 @@ protected:
 
 	ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex>* sceneLogger;
 	std::string baseOutputDirectory;
-
-#ifdef RECORD_CONTINOUS_HIGHLIGHTS
-	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> previouslyRecordedAnomalies;
-#endif
-
-#ifdef WRITE_ENERGY_STATS_TO_FILE
 	std::ofstream energy_stat_file;
-#endif
+
+	//for extra logging/debugging
+	bool hasFocusCoordinates = false;
+	Vector3i focusCoordinates;
 
 private:
 };

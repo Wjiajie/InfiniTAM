@@ -51,7 +51,6 @@ namespace ITMLib
 
 		/// Pointer to the current camera pose and additional tracking information
 		ITMTrackingState* trackingState;
-
 	public:
 		ITMView* GetView(void) { return view; }
 		ITMTrackingState* GetTrackingState(void) { return trackingState; }
