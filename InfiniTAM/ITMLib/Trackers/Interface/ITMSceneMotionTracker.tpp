@@ -129,6 +129,10 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		                                                                      currentFrameOutputPath);
 		sceneLogger->SaveScenesCompact();
 		sceneLogger->StartSavingWarpState(currentFrameIx);
+		if(hasFocusCoordinates){
+			sceneLogger->ClearHighlights();
+			//TODO: setup highlight saving w/o interest region saving
+		}
 	}
 
 	for (iteration = 0; maxVectorUpdate > maxVectorUpdateThresholdVoxels && iteration < maxIterationCount;
@@ -183,9 +187,10 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 			Vector3i sliceMaxPoint(focusCoordinates[0] + FOCUS_SLICE_RADIUS,
 			                       focusCoordinates[1] + FOCUS_SLICE_RADIUS,
 			                       focusCoordinates[2] + FOCUS_SLICE_RADIUS);
-			std::cout << "Making slice around voxel " << green << focusCoordinates << reset << "...";
+			std::cout << "Making slice around voxel " << green << focusCoordinates << reset << " with l_0 radius of " << FOCUS_SLICE_RADIUS << "...";
 			sceneLogger->MakeSlice(sliceMinPoint,sliceMaxPoint,currentFrameIx);
-			std::cout << "Slice finished.";
+			std::cout << "Slice finished." << std::endl;
+			sceneLogger->SaveHighlights("continuous");
 		}
 		delete sceneLogger;
 	}

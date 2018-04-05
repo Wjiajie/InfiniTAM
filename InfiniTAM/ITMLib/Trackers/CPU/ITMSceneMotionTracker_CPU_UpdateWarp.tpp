@@ -161,7 +161,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					bool computeLevelSetTerm = !truncatedInLive;
 					Vector3f& warp = canonicalVoxel.warp_t;
 
-					bool printResult = false;
+					bool printVoxelResult = false;
+					bool recordVoxelResult = false;
 					if (hasFocusCoordinates && canonicalVoxelPosition == focusCoordinates) {
 						std::cout << std::endl << bright_cyan << "*** Printing voxel at " << canonicalVoxelPosition
 						          << " *** " << reset << std::endl;
@@ -171,7 +172,10 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						std::cout << " Struck live narrow band: " << (hitLiveNarrowBand ? green : red)
 						          << (hitLiveNarrowBand ? "true" : "false") << reset;
 						std::cout << std::endl;
-						printResult = true;
+						printVoxelResult = true;
+						if(ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::sceneLogger != nullptr){
+							recordVoxelResult = true;
+						}
 					}
 #ifdef PRINT_TIME_STATS
 					TIC(timeDataJandHCompute);
@@ -204,7 +208,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						ComputeLiveSdf_Center_WarpForward(canonicalVoxelPosition, warp, liveSdf, liveVoxels,
 						                                  liveHashTable, liveCache, liveSdf_Center_WarpForward);
 
-						if (printResult) {
+						if (printVoxelResult) {
 							std::cout << std::endl << "Live SDF at warp plus one for each direction: " << yellow
 							          << liveSdf_Center_WarpForward << reset << std::endl;
 						}
@@ -230,26 +234,15 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 #ifdef USE_COLOR
 						else {
 							useColor = true;
-#ifdef OLD_LEVEL_SET_TERM
-							//This is jacobian of the live frame at the lookup (warped) position
-							ComputePerPointLiveJacobianAndHessian(canonicalVoxelPosition,warp,
-																  liveVoxels, liveHashTable, liveCache,
-																  liveSdf,liveColor,
-																  liveSdfJacobian, liveColorJacobian, warpedSdfHessian);
-#else
 							ComputePerPointWarpedLiveJacobian
 									(canonicalVoxelPosition, canonicalVoxel.warp_t,
 									 liveVoxels, liveHashTable, liveCache,
 									 liveSdf, liveColor, liveSdfJacobian,
 									 liveSdf_Center_WarpForward, liveColorJacobian);
-#ifdef PRINT_SINGLE_VOXEL_RESULT
-							if(printResult){
+							if(printVoxelResult){
 								PrintPerPointWarpedLiveJacobian(liveSdfJacobian, liveSdf_Center_WarpForward);
 								std::cout << "Back-projected SDF Jacobian: " << warpedSdfJacobian << std::endl << std::endl;
 							}
-#endif
-#endif //OLD_LEVEL_SET_TERM
-
 						}
 #endif//USE_COLOR
 						//Compute data term error / energy
@@ -268,7 +261,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						aveSdfDiff += std::abs(diffSdf);
 #endif
 					}// computeDataTerm
-					else if (printResult) {
+					else if (printVoxelResult) {
 						//need to print a few blank lines to make sure the printing stays consistent height
 						std::cout << std::endl << "Data term not computed." << std::endl
 						          << "Known in canonical: " << (knownInCanonical ? "true" : "false") << std::endl
@@ -296,7 +289,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						deltaELevelSet =
 								sdfJacobianNormMinusUnity * (warpedSdfHessian * warpedSdfJacobian) /
 								(sdfJacobianNorm + epsilon);
-						if (printResult)
+						if (printVoxelResult)
 							_DEBUG_PrintLevelSetTermStuff(liveSdfJacobian,
 							                              liveSdf_Center_WarpForward,
 							                              warpedSdfJacobian,
@@ -305,7 +298,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						levelSetVoxelCount++;
 #endif
 					} else {
-						if (printResult) {
+						if (printVoxelResult) {
 							//need to print a few blank lines to make sure the printing stays consistent height
 							std::cout << std::endl << "Level set term not computed." << std::endl
 							          << "Truncated in canonical: " << (truncatedInCanonical ? "true" : "false")
@@ -325,7 +318,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 
 					ComputePerVoxelWarpJacobianAndHessian(canonicalVoxel.warp_t, canonicalVoxelPosition, neighborWarps,
 					                                      warpJacobian, warpHessian);
-					if (printResult) {
+					if (printVoxelResult) {
 						_DEBUG_PrintKillingTermStuff(neighborWarps, neighborAllocated, neighborTruncated,
 						                             warpJacobian, warpHessian);
 					}
@@ -396,21 +389,18 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					float warpUpdateLength = length(warpUpdate);//meters
 					//BEGIN _DEBUG
 					float warpLength = ORUtils::length(canonicalVoxel.warp_t - warpUpdate);
-#if defined(PRINT_ENERGY_STATS) || defined(LOG_HIGHLIGHTS) || defined(RECORD_CONTINOUS_HIGHLIGHTS)
+
 					double dataEnergy = 0.5 * (diffSdf * diffSdf);
 					double levelSetEnergy =
 							weightLevelSet * 0.5 * (sdfJacobianNormMinusUnity * sdfJacobianNormMinusUnity);
 					double killingEnergy = weightKilling * localKillingEnergy;
 					double smoothnessEnergy = weightKilling * localSmoothnessEnergy;
 					double totalVoxelEnergy = dataEnergy + levelSetEnergy + killingEnergy * smoothnessEnergy;
-#ifdef PRINT_ENERGY_STATS
+
 					totalDataEnergy += dataEnergy;
 					totalLevelSetEnergy += levelSetEnergy;
 					totalKillingEnergy += killingEnergy;
 					totalSmoothnessEnergy += smoothnessEnergy;
-
-#endif //defined(PRINT_ENERGY_STATS)
-#endif//defined(PRINT_ENERGY_STATS) || defined(LOG_HIGHLIGHTS)
 					//need thread lock here to ensure atomic updates to maxWarpUpdateLength
 #ifdef WITH_OPENMP
 #pragma omp critical(maxVectorUpdate)
@@ -425,13 +415,37 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					};
 
 					canonicalVoxel.warp_t_update = warpUpdate;
-					if (printResult) {
+					if (printVoxelResult) {
 						std::cout << "Data update: " << deltaEData * -1.f;
 						std::cout << red << " Level set update: " << deltaELevelSet * -1.f;
 						std::cout << yellow << " Killing update: " << deltaEKilling * -1.f;
 						std::cout << std::endl;
 						std::cout << green << "Warp update: " << warpUpdate * -1.f << reset;
 						std::cout << " Warp update length: " << warpUpdateLength << std::endl << std::endl;
+
+						if(recordVoxelResult) {
+							const int& currentFrame = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
+
+							Vector3f canonicalWarp = canonicalVoxel.warp_t;
+							Vector3f warpUpdateData = learningRate * deltaEData;
+							Vector3f warpUpdateLevelSet = learningRate * weightLevelSet * deltaELevelSet;
+							Vector3f warpUpdateKilling = learningRate * weightKilling * deltaEKilling;
+							std::array<ITMNeighborVoxelIterationInfo, 9> neighbors;
+							FindHighlightNeighborInfo(neighbors, canonicalVoxelPosition, hash, canonicalVoxels,
+							                          canonicalHashTable, liveVoxels, liveHashTable, liveCache);
+							ITMHighlightIterationInfo info = {hash, locId, currentFrame, iteration,
+							                                  canonicalVoxelPosition,
+							                                  canonicalWarp, canonicalSdf, liveSdf,
+							                                  warpUpdate, warpUpdateData, warpUpdateLevelSet,
+							                                  warpUpdateKilling, totalVoxelEnergy, dataEnergy,
+							                                  levelSetEnergy, smoothnessEnergy, killingEnergy,
+							                                  liveSdfJacobian, warpedSdfJacobian, warpedSdfHessian,
+							                                  warpJacobian, warpHessian[0], warpHessian[1],
+							                                  warpHessian[2],
+							                                  neighbors, true};
+							ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::sceneLogger->
+									LogHighlight(hash, locId, currentFrame, info);
+						}
 					}
 
 					//debug stats

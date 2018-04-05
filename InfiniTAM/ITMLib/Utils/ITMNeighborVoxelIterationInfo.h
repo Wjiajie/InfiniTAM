@@ -33,7 +33,8 @@ public:
 	Vector3f warpUpdate;
 	float sdf;
 	float liveSdf;//looked up using the warp
-	bool liveFound;
+	bool struckKnownVoxels;
+	bool struckNarrowBand;
 
 	bool unknown = false;
 	bool notAllocated = false;
