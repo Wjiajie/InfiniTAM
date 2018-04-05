@@ -71,16 +71,11 @@
 #define TOC(var)
 #endif
 
+//different logging parameters
+#define FOCUS_SLICE_RADIUS 2
 
 #ifdef PRINT_ENERGY_STATS
 #define WRITE_ENERGY_STATS_TO_FILE
-#ifdef WRITE_ENERGY_STATS_TO_FILE
-#if defined(SAVE_VOXELS_AND_INDEX) || defined(LOG_INTEREST_REGIONS)
-#define ENERGY_STATS_FILE_PATH SCENE_PATH "/energy_stats.txt"
-#else
-#define ENERGY_STATS_FILE_PATH "/media/algomorph/Data/Reconstruction/debug_output/energy_stats/" SCENE_NAME "_frame_" TOSTRING(FRAME_OF_INTEREST) SCENE_POSTFIX "_energy_stats.txt"
-#endif
-#endif
 #endif
 
 #endif //ifdef _DEBUG

@@ -143,6 +143,13 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(const Vector
 	return true;
 }
 
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2,
+                                                                    unsigned int frameIndex){
+	std::string identifier;
+	return MakeSlice(extremum1,extremum2,frameIndex,identifier);
+};
+
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void

@@ -52,7 +52,7 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracke
 		maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize),
 		sceneLogger(nullptr),
 		baseOutputDirectory(scenePath),
-		hasFocusCoordinates(true), focusCoordinates(focusCoordinates){}
+		hasFocusCoordinates(true), focusCoordinates(focusCoordinates) {}
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -176,6 +176,17 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 
 	if (recordWarpUpdates) {
 		sceneLogger->StopSavingWarpState();
+		if (hasFocusCoordinates) {
+			Vector3i sliceMinPoint(focusCoordinates[0] - FOCUS_SLICE_RADIUS,
+			                       focusCoordinates[1] - FOCUS_SLICE_RADIUS,
+			                       focusCoordinates[2] - FOCUS_SLICE_RADIUS);
+			Vector3i sliceMaxPoint(focusCoordinates[0] + FOCUS_SLICE_RADIUS,
+			                       focusCoordinates[1] + FOCUS_SLICE_RADIUS,
+			                       focusCoordinates[2] + FOCUS_SLICE_RADIUS);
+			std::cout << "Making slice around voxel " << green << focusCoordinates << reset << "...";
+			sceneLogger->MakeSlice(sliceMinPoint,sliceMaxPoint,currentFrameIx);
+			std::cout << "Slice finished.";
+		}
 		delete sceneLogger;
 	}
 	currentFrameIx++;

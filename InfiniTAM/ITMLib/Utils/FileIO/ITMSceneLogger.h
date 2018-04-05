@@ -191,6 +191,8 @@ public:
 	std::string GenerateSliceWarpFilename(const std::string& sliceIdentifier) const;
 	bool MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2,
 		               unsigned int frameIndex, std::string& identifier);
+	bool MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2,
+	               unsigned int frameIndex);
 	bool SliceExistsInMemory(const std::string& sliceIdentifier) const;
 	bool SliceExistsOnDisk(const Vector3i& extremum1,
 	                       const Vector3i& extremum2) const;
