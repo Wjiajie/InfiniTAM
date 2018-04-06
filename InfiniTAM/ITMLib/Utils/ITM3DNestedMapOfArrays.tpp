@@ -54,7 +54,9 @@ template<typename T>
 bool ITM3DNestedMapOfArrays<T>::SaveToFile(const char* path) {
 	std::ofstream file = std::ofstream(path, std::ios::binary | std::ios::out);
 	if (!file) {
-		std::cerr << ("Could not open " + std::string(path) + " for writing. "  __FILE__ ": " + std::to_string(__LINE__)) << std::endl;
+		std::cerr
+				<< ("Could not open " + std::string(path) + " for writing. "  __FILE__ ": " + std::to_string(__LINE__))
+				<< std::endl;
 		return false;
 	}
 
@@ -217,7 +219,9 @@ template<typename T>
 bool ITM3DNestedMapOfArrays<T>::SaveToTextFile(const char* path) {
 	std::ofstream file = std::ofstream(path, std::ios::out);
 	if (!file) {
-		std::cerr << ("Could not open " + std::string(path) + " for writing. "  __FILE__ ": " + std::to_string(__LINE__)) << std::endl;
+		std::cerr
+				<< ("Could not open " + std::string(path) + " for writing. "  __FILE__ ": " + std::to_string(__LINE__))
+				<< std::endl;
 		return false;
 	}
 	file << *this << std::endl;
@@ -270,31 +274,31 @@ ITM3DNestedMapOfArrays<T>& ITM3DNestedMapOfArrays<T>::operator=(ITM3DNestedMapOf
 
 
 template<typename T>
-bool ITM3DNestedMapOfArrays<T>::Contains(int keyLevel3, int keyLevel2, int keyLevel1) {
+bool ITM3DNestedMapOfArrays<T>::Contains(int keyLevel3, int keyLevel2, int keyLevel1) const {
 	if (this->internalMap.find(keyLevel3) == (this->internalMap).end()) { return false; }
-	auto& valueLevel3 = internalMap[keyLevel3];
+	auto& valueLevel3 = internalMap.at(keyLevel3);
 	if (valueLevel3.find(keyLevel2) == valueLevel3.end()) { return false; }
-	auto& valueLevel2 = valueLevel3[keyLevel2];
+	auto& valueLevel2 = valueLevel3.at(keyLevel2);
 	return valueLevel2.find(keyLevel1) != valueLevel2.end();
 }
 
 template<typename T>
-bool ITM3DNestedMapOfArrays<T>::Contains(int keyLevel3, int keyLevel2, int keyLevel1, T valueLevel0) {
+bool ITM3DNestedMapOfArrays<T>::Contains(int keyLevel3, int keyLevel2, int keyLevel1, T valueLevel0) const {
 	if (this->internalMap.find(keyLevel3) == (this->internalMap).end()) { return false; }
-	auto& valueLevel3 = internalMap[keyLevel3];
+	auto& valueLevel3 = internalMap.at(keyLevel3);
 	auto iteratorLevel3 = valueLevel3.find(keyLevel2);
 	if (iteratorLevel3 == valueLevel3.end()) { return false; }
 	auto& valueLevel2 = (*iteratorLevel3).second;
 	auto iteratorLevel2 = valueLevel2.find(keyLevel1);
 	if (iteratorLevel2 == valueLevel2.end()) { return false; }
-	std::vector<T>& valueLevel1 = (*iteratorLevel2).second;
+	const std::vector<T>& valueLevel1 = (*iteratorLevel2).second;
 	return !(std::find(valueLevel1.begin(), valueLevel1.end(), valueLevel0) == valueLevel1.end());
 }
 
 template<typename T>
-bool ITM3DNestedMapOfArrays<T>::Contains(int keyLevel3, int keyLevel2) {
+bool ITM3DNestedMapOfArrays<T>::Contains(const int& keyLevel3, const int& keyLevel2) const {
 	if (this->internalMap.find(keyLevel3) == (this->internalMap).end()) { return false; }
-	auto& valueLevel3 = internalMap[keyLevel3];
+	auto& valueLevel3 = internalMap.at(keyLevel3);
 	return !(valueLevel3.find(keyLevel2) == valueLevel3.end());
 }
 

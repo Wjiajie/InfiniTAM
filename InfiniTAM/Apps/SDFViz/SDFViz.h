@@ -144,6 +144,7 @@ private:
 	vtkSmartPointer<vtkFloatArray> interestWarpBuffer;
 	bool hasWarpIterationInfo = true;
 	bool hasHighlightInfo = false;
+	bool hasInterestRegions = false;
 
 	//frame that we're loading scene & warps for
 	unsigned int frameIndex;

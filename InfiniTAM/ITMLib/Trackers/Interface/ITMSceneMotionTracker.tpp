@@ -188,8 +188,10 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 			                       focusCoordinates[1] + FOCUS_SLICE_RADIUS,
 			                       focusCoordinates[2] + FOCUS_SLICE_RADIUS);
 			std::cout << "Making slice around voxel " << green << focusCoordinates << reset << " with l_0 radius of " << FOCUS_SLICE_RADIUS << "...";
-			sceneLogger->MakeSlice(sliceMinPoint,sliceMaxPoint,currentFrameIx);
+			std::string sliceId;
+			sceneLogger->MakeSlice(sliceMinPoint,sliceMaxPoint,currentFrameIx, sliceId);
 			std::cout << "Slice finished." << std::endl;
+			sceneLogger->SwitchActiveScene(sliceId);
 			sceneLogger->SaveHighlights("continuous");
 		}
 		delete sceneLogger;

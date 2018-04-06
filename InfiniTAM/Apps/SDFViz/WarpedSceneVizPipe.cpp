@@ -291,9 +291,8 @@ void WarpedSceneVizPipe::PreparePointsForRendering(const ITMScene<ITMVoxelCanoni
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					ComputeVoxelAttributes(currentBlockPositionVoxels, x, y, z, localVoxelBlock, nonInterestVoxelPoints,
-					                       nonInterestScaleAttribute,
-					                       nonInterestAlternativeScaleAttribute,
-					                       nonInterestColorAttribute);
+					                       nonInterestScaleAttribute, nonInterestAlternativeScaleAttribute,
+					                       nonInterestColorAttribute, highlights, hash);
 				}
 			}
 		}

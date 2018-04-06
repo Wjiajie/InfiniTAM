@@ -90,12 +90,14 @@ protected:
 	// ** hash-block grid **
 	vtkSmartPointer<vtkPolyData> hashBlockGrid;
 	VoxelScaleMode scaleMode;
+
+	//** highlights **
+	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
 private:
 	// ===================== MEMBER FUNCTIONS ===========================
 
 	// ===================== MEMBER VARIABLES ===========================
 	// ** voxels **
-
 	vtkSmartPointer<vtkGlyph3DMapper> voxelMapper;
 	vtkSmartPointer<vtkActor> voxelActor;
 

@@ -100,8 +100,8 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering(const ITMScene<T
 	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
 
-	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
-		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
+	for (int hash = 0; hash < noTotalEntries; hash++) {
+		const ITMHashEntry& currentHashEntry = canonicalHashTable[hash];
 
 		//skip unfilled hash
 		if (currentHashEntry.ptr < 0) continue;
@@ -122,7 +122,8 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering(const ITMScene<T
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					ComputeVoxelAttributes(currentBlockPositionVoxels, x, y, z, localVoxelBlock, points, scaleAttribute,
-					                       alternativeScaleAttribute, colorAttribute);
+					                       alternativeScaleAttribute, colorAttribute, highlights,
+					                       hash);
 				}
 			}
 		}

@@ -13,6 +13,10 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+//stdlib
+#include <string>
+
+//local
 #include "ITMSceneLogger.h"
 
 
@@ -240,7 +244,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SaveCur
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving() {
-	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving(this->highlights);
+	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving(this->activeWarpLogger->highlights);
 }
 
 /**
@@ -256,9 +260,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving(
 		const ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>& highlights) {
 	if (this->activeWarpLogger->Empty()) {
-		DIEWITHEXCEPTION("Attempted to set up interest regions before loading the scenes. Aborting. ["
-				                 __FILE__
-				                 ": " + std::to_string(__LINE__) + "]");
+		DIEWITHEXCEPTION_REPORTLOCATION("Attempted to set up interest regions before loading the scenes. Aborting.");
 	}
 	interestRegionInfos.clear();
 	interestRegionInfoByHashId.clear();
@@ -336,7 +338,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveAllInterestRegionW
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForLoading() {
 	if (activeWarpLogger->Empty()) {
-		DIEWITHEXCEPTION("Attempted to set up interest regions before loading the scenes. Aborting.");
+		DIEWITHEXCEPTION_REPORTLOCATION("Attempted to set up interest regions before loading the scenes. Aborting.");
 	}
 	interestRegionInfos.clear();
 	interestRegionInfoByHashId.clear();

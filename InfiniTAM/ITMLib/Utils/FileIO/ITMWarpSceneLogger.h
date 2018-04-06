@@ -26,27 +26,63 @@ namespace ITMLib{
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMSceneLogger;
 
+/**
+ * \brief An internal wrapper logger for a scene consistent of dynamic voxels with warps.
+ * \details This data structure is necessary to be able to switch
+ * between full-scene and different slice representations of the same scene, abstracting this away from the data
+ * consumer.
+ * \tparam TVoxel Type of voxel. Needs to have warp information.
+ * \tparam TIndex Type of voxel index.
+ */
 template<typename TVoxel, typename TIndex>
 class ITMWarpSceneLogger{
 	template<typename TVoxelCanonical, typename TVoxelLive, typename TIndexLogger>
 	friend class ITMSceneLogger;
 public:
 	// region ================================ STATIC CONSTANTS ========================================================
-
 	static const size_t warpByteSize;
 	static const size_t updateByteSize;
 	static const size_t warpAndUpdateByteSize;
+
 	static const std::string fullSceneSliceIdentifier;
+	static const std::string binaryFileExtension;
+	static const std::string textFileExtension;
+	static const std::string canonicalName;
+	static const std::string warpUpdatesFilename;
+
+	static const std::string sliceFolderPrefix;
+	static const std::string sliceScenePrefix;
 	//endregion
 	// region ================================ STATIC FUNCTIONS ========================================================
 
+	static void ExtractMinMaxFromSliceStringIdentifier(const std::string& stringContainingIdentifier,
+	                                                   Vector3i& minPoint,
+	                                                   Vector3i& maxPoint);
 	static std::string GenerateSliceStringIdentifier(const Vector3i& minPoint, const Vector3i& maxPoint);
+	static fs::path GenerateSliceFolderPath(const fs::path& fullScenePath, const Vector3i& minPoint,
+	                                        const Vector3i& maxPoint);
+	static boost::filesystem::path GenerateSliceFolderPath(const fs::path& fullScenePath,
+		                                                       const std::string& sliceIdentifier);
+	static std::string GenerateSliceSceneFilename_UpToPostfix(const fs::path& fullScenePath,
+		                                                          const Vector3i& minPoint,
+		                                                          const Vector3i& maxPoint);
+	static std::string GenerateSliceSceneFilename_UpToPostfix(const fs::path& fullScenePath,
+		                                                          const std::string& sliceIdentifier);
+	static std::string GenerateSliceSceneFilename_Full(const fs::path& fullScenePath,
+		                                                   const Vector3i& minPoint,
+		                                                   const Vector3i& maxPoint);
+	static std::string GenerateSliceSceneFilename_Full(const fs::path& fullScenePath,
+		                                                   const std::string& sliceIdentifier);
+	static std::string GenerateSliceWarpFilename(const fs::path& rootScenePath, const Vector3i& minPoint,
+		                                             const Vector3i& maxPoint);
+	static std::string GenerateSliceWarpFilename(const fs::path& rootScenePath,
+		                                             const std::string& sliceIdentifier);
 
 	// endregion
 	// region ================================ CONSTRUCTORS & DESTRUCTORS ==============================================
 
-	explicit ITMWarpSceneLogger(ITMScene <TVoxel, TIndex>* scene = nullptr,
-	                            std::string scenePath = "", std::string warpPath = "");
+	explicit ITMWarpSceneLogger(ITMScene <TVoxel, TIndex>* scene, boost::filesystem::path path);
+	explicit ITMWarpSceneLogger(const Vector3i& minPoint, const Vector3i& maxPoint, boost::filesystem::path fullScenePath);
 	~ITMWarpSceneLogger();
 
 	// endregion
@@ -67,6 +103,11 @@ public:
 	void SaveCompact();
 	void LoadCompact();
 
+	//** highlights saving / loading **
+	bool SaveHighlights(std::string filePostfix = "");
+	bool LoadHighlights(bool applyFilters = true, std::string filePostfix = "");
+	void FilterHighlights(int anomalyFrameCountMinimum);
+
 	//*** warp loading / saving / buffering ***
 	bool StartSavingWarpState(unsigned int frameIx);
 	void StopSavingWarpState();
@@ -83,17 +124,33 @@ public:
 	bool IsLoadingWarpState();
 	// endregion
 private:
+	// region ================================ STATIC CONSTANTS ========================================================
+	static const std::string highlightFilterInfoFilename;
+	static const std::string minRecurrenceHighlightFilterName;
+	// endregion
+	// region ================================ MEMBER FUNCTIONS ========================================================
+
+	void SetPath(boost::filesystem::path fullScenePath);
+
+	// endregion
 	// region ================================ MEMBER VARIABLES ========================================================
 
-	std::string scenePath;
-	std::string warpPath;
+	// paths
+	fs::path path;
+	fs::path scenePath;
+	fs::path warpPath;
+	fs::path highlightsBinaryPath;
+	fs::path highlightsTextPath;
+
+	// data structures
 	ITMScene<TVoxel, TIndex>* scene;
+	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
+	int minHighlightRecurrenceCount = 0;
 
 	unsigned int iterationCursor = 0;
 	int voxelCount = -1;
 
 	// *** optimization warp-updates reading/writing
-
 	std::ofstream warpOFStream;
 	std::ifstream warpIFStream;
 
@@ -102,6 +159,7 @@ private:
 	bool sliceLoaded = false;
 	Vector3i minimum;
 	Vector3i maximum;
+	const std::string sliceIdentifier;
 	//endregion
 };
 }//namespace ITMLib

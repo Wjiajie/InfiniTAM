@@ -45,5 +45,5 @@
 #define DIEWITHEXCEPTION_REPORTLOCATION(x) { fprintf(stderr, "%s\n", x x __FILE__ TOSTRING(__LINE__)); exit(-1); }
 #else
 #define DIEWITHEXCEPTION(x) throw std::runtime_error(x)
-#define DIEWITHEXCEPTION_REPORTLOCATION(x) throw std::runtime_error( x __FILE__ TOSTRING(__LINE__) )
+#define DIEWITHEXCEPTION_REPORTLOCATION(x) throw std::runtime_error( x "\n[" __FILE__ ":" TOSTRING(__LINE__) "]")
 #endif

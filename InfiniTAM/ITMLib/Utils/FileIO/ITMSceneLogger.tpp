@@ -21,6 +21,7 @@
 #include <boost/filesystem.hpp>
 
 //local
+#include "../../Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
 #include "ITMSceneLogger_InterestRegionInfo.tpp"
 #include "ITMSceneLogger_SceneSlice.tpp"
@@ -33,19 +34,12 @@ using namespace ITMLib;
 // region ================================= CONSTANT DEFINITIONS =======================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::warpUpdatesFilename = "warp_updates";
+const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::warpUpdatesFilename = ITMWarpSceneLogger<TVoxelCanonical, TIndex>::warpUpdatesFilename;
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::binaryFileExtension = ".dat";
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::textFileExtension = ".txt";
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::canonicalName = "canonical";
+const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::binaryFileExtension =
+		ITMWarpSceneLogger<TVoxelCanonical, TIndex>::binaryFileExtension;
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::liveName = "live";
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::highlightFilterInfoFilename = "highlight_filter_info.txt";
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::minRecurrenceHighlightFilterName = "min_recurrence_count_filter:";
 //endregion
 // region ================================= CONSTRUCTORS & DESTRUCTORS =================================================
 
@@ -63,15 +57,11 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 		ITMScene<TVoxelLive, TIndex>* liveScene,
 		std::string path) :
-		fullCanonicalSceneLogger(new ITMWarpSceneLogger<TVoxelCanonical,TIndex>(canonicalScene)),
+		fullCanonicalSceneLogger(new ITMWarpSceneLogger<TVoxelCanonical, TIndex>(canonicalScene, path)),
 		activeWarpLogger(fullCanonicalSceneLogger),
 		liveScene(liveScene),
-		highlights("Hash ID", "Local voxel ix", "Frame", ""),
+
 		mode(FULL_SCENE){
-	if(canonicalScene == nullptr){
-		throw std::runtime_error("Argument 'canonicalScene' cannot be set to nullptr here." __FILE__
-		                         + std::to_string(__LINE__));
-	}
 	if (path != "") {
 		SetPath(path);
 	}
@@ -83,7 +73,6 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(ITMScene<TVo
 	fullCanonicalSceneLogger(nullptr),
 	activeWarpLogger(nullptr),
 	liveScene(liveScene),
-	highlights("Hash ID", "Local voxel ix", "Frame", ""),
 	mode(SLICE)
 	{
 	SetPath(path);
@@ -140,13 +129,13 @@ unsigned int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestIte
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>
 ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetHighlights() const {
-	return ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>(highlights);
+	return ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>(activeWarpLogger->highlights);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::PrintHighlights() {
 	std::cout << "*** Highlights ***" << std::endl;
-	std::cout << this->highlights << std::endl;
+	std::cout << this->activeWarpLogger->highlights << std::endl;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -167,22 +156,17 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetPath(std::string path) {
 	if(this->path != ""){
 		//clean up
-		this->StopLoadingWarpState();
 		slices.clear();
 	}
 	this->path = path;
 	if (!fs::create_directories(this->path) && !fs::is_directory(this->path)) {
-		DIEWITHEXCEPTION(std::string("Could not create the directory '") + path + "'. Exiting.["
-				                 __FILE__
-				                 ": " + std::to_string(__LINE__) + "]");
+		DIEWITHEXCEPTION_REPORTLOCATION(std::string("Could not create the directory '") + path + "'. Exiting.");
 	}
 	if(activeWarpLogger){
-		this->activeWarpLogger->scenePath = (this->path / canonicalName).string();
-		this->activeWarpLogger->warpPath = (this->path / (warpUpdatesFilename + binaryFileExtension)).string();
+		this->activeWarpLogger->SetPath(path);
 	}
 	this->livePath = this->path / liveName;
-	this->highlightsBinaryPath = this->path / ("highlights" + binaryFileExtension);
-	this->highlightsTextPath = this->path / ("highlights" + textFileExtension);
+
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -350,72 +334,27 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferWarpStateAt(void
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LogHighlight(
 		int hashId, int voxelLocalIndex, int frameNumber, ITMHighlightIterationInfo info) {
-	highlights.InsertOrdered(hashId, voxelLocalIndex, frameNumber, info);
+	activeWarpLogger->highlights.InsertOrdered(hashId, voxelLocalIndex, frameNumber, info);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveHighlights(std::string filePostfix) {
-	if (!fs::is_directory(this->path)) {
-		std::cout << "The directory '" << path << "' was not found.";
-		return false;
-	}
-	highlightsBinaryPath = this->path / ("highlights" + filePostfix + binaryFileExtension);
-	if (!this->highlights.SaveToFile(highlightsBinaryPath.c_str())) {
-		std::cerr << "Could not save highlights to " << highlightsBinaryPath << std::endl;
-		return false;
-	} else {
-		std::cout << "Saved highlights to" << highlightsBinaryPath << std::endl;
-	}
-	if (!this->highlights.SaveToTextFile(highlightsTextPath.c_str())) {
-		std::cerr << "Could not save highlights to " << highlightsTextPath << std::endl;
-		return false;
-	} else {
-		std::cout << "Saved highlights to" << highlightsTextPath << std::endl;
-	}
-	return true;
+	return activeWarpLogger->SaveHighlights(filePostfix);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadHighlights(bool applyFilters, std::string filePostfix) {
-	if (!fs::is_directory(this->path)) {
-		std::cout << "The directory '" << path << "' was not found.";
-		return false;
-	}
-	highlightsBinaryPath = this->path / ("highlights" + filePostfix + binaryFileExtension);
-	if (!this->highlights.LoadFromFile(highlightsBinaryPath.c_str())) {
-		std::cout << "Could not load highlights from " << highlightsBinaryPath << std::endl;
-		return false;
-	} else {
-		std::cout << "Loaded highlights from " << highlightsBinaryPath << std::endl;
-	}
-	if (applyFilters) {
-		fs::path wouldBeFilterInfoPath = path / fs::path(highlightFilterInfoFilename);
-		if (fs::is_regular_file(wouldBeFilterInfoPath)) {
-			std::ifstream highlightFilterInfoNote(wouldBeFilterInfoPath.c_str(), std::ios_base::in);
-			std::string filterName;
-			highlightFilterInfoNote >> filterName;
-			if (filterName == minRecurrenceHighlightFilterName) {
-				highlightFilterInfoNote >> minHighlightRecurrenceCount;
-			}
-			highlightFilterInfoNote.close();
-		}
-		FilterHighlights(minHighlightRecurrenceCount);
-	}
-	return true;
+	return activeWarpLogger->LoadHighlights(applyFilters, filePostfix);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::FilterHighlights(int anomalyFrameCountMinimum) {
-	minHighlightRecurrenceCount = std::max(minHighlightRecurrenceCount, anomalyFrameCountMinimum);
-	highlights = highlights.FilterBasedOnLevel0Lengths(anomalyFrameCountMinimum);
-	std::ofstream highlightFilterInfoNote((path / fs::path(highlightFilterInfoFilename)).c_str(), std::ios_base::out);
-	highlightFilterInfoNote << "min_reccurence_count_filter:" << " " << anomalyFrameCountMinimum << std::endl;
-	highlightFilterInfoNote.close();
+	this->activeWarpLogger->FilterHighlights(anomalyFrameCountMinimum);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ClearHighlights() {
-	this->highlights.Clear();
+	this->activeWarpLogger->highlights.Clear();
 }
 
 

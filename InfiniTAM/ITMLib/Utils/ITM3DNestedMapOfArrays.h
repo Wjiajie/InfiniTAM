@@ -64,9 +64,9 @@ public:
 	};
 	std::vector<std::vector<T>> GetArrays() const;
 
-	bool Contains(int keyLevel3, int keyLevel2, int keyLevel1, T valueLevel0);
-	bool Contains(int keyLevel3, int keyLevel2, int keyLevel1);
-	bool Contains(int keyLevel3, int keyLevel2);
+	bool Contains(int keyLevel3, int keyLevel2, int keyLevel1, T valueLevel0) const;
+	bool Contains(int keyLevel3, int keyLevel2, int keyLevel1) const;
+	bool Contains(const int& keyLevel3, const int& keyLevel2) const;
 
 
 private:

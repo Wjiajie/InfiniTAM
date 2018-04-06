@@ -66,11 +66,11 @@ const char* VoxelColorIndexAsCString(const VoxelColorIndex& index){
 
 template<typename TVoxel>
 inline
-void ComputeVoxelAttributes(const Vector3i& currentBlockPositionVoxels, int x, int y, int z,
-                            const TVoxel* localVoxelBlock, vtkPoints* points,
-                            vtkFloatArray* scaleAttribute,
-                            vtkFloatArray* alternativeScaleAttribute,
-                            vtkIntArray* colorAttribute) {
+void ComputeVoxelAttributes(const Vector3i& currentBlockPositionVoxels, int x, int y, int z, const TVoxel* localVoxelBlock,
+                            vtkPoints* points, vtkFloatArray* scaleAttribute, vtkFloatArray* alternativeScaleAttribute,
+                            vtkIntArray* colorAttribute,
+                            const ITMLib::ITM3DNestedMapOfArrays<ITMLib::ITMHighlightIterationInfo>& highlights,
+                            const int& hash) {
 	Vector3i voxelPosition = currentBlockPositionVoxels + Vector3i(x, y, z);
 	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 	const TVoxel& voxel = localVoxelBlock[locId];
@@ -78,11 +78,16 @@ void ComputeVoxelAttributes(const Vector3i& currentBlockPositionVoxels, int x, i
 	float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf, voxel.flags);
 	float alternativeVoxelScale = COMPUTE_VOXEL_SCALE(sdf);
 	bool truncated = voxel.flags == ITMLib::VOXEL_TRUNCATED;
-	float voxelColor = voxel.flags == ITMLib::VOXEL_UNKNOWN ? UNKNOWN_SDF_COLOR_INDEX :
+	float voxelColor;
+	if(highlights.Contains(hash, locId)){
+		voxelColor = HIGHLIGHT_SDF_COLOR_INDEX;
+		std::cout << "yoohooo" << std::endl;
+	}else{
+		voxelColor = voxel.flags == ITMLib::VOXEL_UNKNOWN ? UNKNOWN_SDF_COLOR_INDEX :
 	                   sdf > 0 ?
 	                   (truncated ? POSITIVE_TRUNCATED_SDF_COLOR_INDEX : POSITIVE_NON_TRUNCATED_SDF_COLOR_INDEX) :
 	                   (truncated ? NEGATIVE_TRUNCATED_SDF_COLOR_INDEX : NEGATIVE_NON_TRUNCATED_SDF_COLOR_INDEX);
-
+	}
 	// need to filp the y & z axes (unlike InfiniTAM, VTK uses proper right-hand rule system))
 	points->InsertNextPoint(voxelPosition.x,
 	                        -voxelPosition.y,

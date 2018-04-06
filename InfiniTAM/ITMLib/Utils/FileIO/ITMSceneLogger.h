@@ -46,14 +46,10 @@ class ITMSceneLogger {
 
 public:
 // region === STATIC CONSTANTS ===
-
 	static const std::string warpUpdatesFilename;
 	static const std::string binaryFileExtension;
-	static const std::string textFileExtension;
 	static const std::string liveName;
-	static const std::string canonicalName;
-	static const std::string sliceFolderPrefix;
-	static const std::string sliceScenePrefix;
+
 // endregion
 // region === PUBLIC ENUMS ===
 
@@ -147,13 +143,15 @@ public:
 	bool SaveScenesCompact();
 	bool LoadScenesCompact();
 
-	//*** saving of highlight meta-information & interest regions
+	//*** saving / loading of highlight information
 	void LogHighlight(int hashId, int voxelLocalIndex, int frameNumber, ITMHighlightIterationInfo info);
 	bool SaveHighlights(std::string filePostfix = "");
 	void ClearHighlights();
 	void PrintHighlights();
 	bool LoadHighlights(bool applyFilters = true, std::string filePostfix = "");
 	void FilterHighlights(int anomalyFrameCountMinimum);
+
+	//*** saving multi-hash interest regions
 	void SetUpInterestRegionsForSaving();
 	void SetUpInterestRegionsForSaving(const ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>& highlights);
 	void SaveAllInterestRegionWarps();
@@ -181,14 +179,7 @@ public:
 	bool IsLoadingWarpState();
 
 	//*** slice generation & usage***
-	fs::path GenerateSliceFolderPath(const Vector3i& minPoint, const Vector3i& maxPoint) const;
-	fs::path GenerateSliceFolderPath(const std::string& sliceIdentifier) const;
-	std::string GenerateSliceSceneFilename_UpToPostfix(const Vector3i& minPoint, const Vector3i& maxPoint) const;
-	std::string GenerateSliceSceneFilename_UpToPostfix(const std::string& sliceIdentifier) const;
-	std::string GenerateSliceSceneFilename_Full(const Vector3i& minPoint, const Vector3i& maxPoint) const;
-	std::string GenerateSliceSceneFilename_Full(const std::string& sliceIdentifier) const;
-	std::string GenerateSliceWarpFilename(const Vector3i& minPoint, const Vector3i& maxPoint) const;
-	std::string GenerateSliceWarpFilename(const std::string& sliceIdentifier) const;
+
 	bool MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2,
 		               unsigned int frameIndex, std::string& identifier);
 	bool MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2,
@@ -206,14 +197,9 @@ public:
 //endregion
 	std::vector<std::string> LoadAllSlices();
 private:
-// region === CONSTANTS ===
-
-	static const std::string highlightFilterInfoFilename;
-	static const std::string minRecurrenceHighlightFilterName;
-// endregion
 // region === MEMBER FUNCTIONS ===
 	void SaveSliceWarp(const Vector3i& minPoint, const Vector3i& maxPoint,
-	                   unsigned int frameIndex, std::string path);
+	                   unsigned int frameIndex, const boost::filesystem::path& path);
 	bool CheckPath();
 
 // endregion
@@ -224,8 +210,6 @@ private:
 
 // *** subpaths
 	fs::path livePath;
-	fs::path highlightsBinaryPath;
-	fs::path highlightsTextPath;
 
 // *** scene structures ***
 	ITMWarpSceneLogger<TVoxelCanonical, TIndex>* fullCanonicalSceneLogger;
@@ -234,13 +218,10 @@ private:
 
 // *** scene meta-information + reading/writing
 	// map of hash blocks to voxels, voxels to frame numbers, frame numbers to iteration numbers
-	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
+
 	std::map<int, std::shared_ptr<InterestRegionInfo>> interestRegionInfoByHashId;
 	std::vector<std::shared_ptr<InterestRegionInfo>> interestRegionInfos;
 	std::map<std::string, ITMWarpSceneLogger<TVoxelCanonical, TIndex>*> slices;
-
-// *** data manipulation information ***
-	int minHighlightRecurrenceCount = 0;
 
 // *** state ***
 	Mode mode;

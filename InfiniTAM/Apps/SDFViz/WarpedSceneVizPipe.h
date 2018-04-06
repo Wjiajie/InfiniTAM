@@ -110,7 +110,7 @@ private:
 	std::set<int> interestRegionHashSet;
 	int totalVoxelCount = 0;//includes both interest regions and the rest
 	std::vector<std::tuple<int, int>> interestRegionRanges;
-	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
+
 	ITM3DNestedMap<int> highlightIndexes;
 	ITM3DNestedMap<std::tuple<int, int>> highlightByNeighbor;
 	ITM3DNestedMapOfArrays<int> highlightNeighborIndexes;
@@ -125,7 +125,6 @@ private:
 	vtkSmartPointer<vtkActor> warplessVoxelActor;
 
 	// ** interaction **
-	int selectedVertexDefaultColorIndex;
 	vtkSmartPointer<vtkActor> selectedVoxelActor;
 	vtkSmartPointer<vtkActor> selectedSliceExtrema[2];
 	vtkSmartPointer<vtkActor> selectedSlicePreview;
