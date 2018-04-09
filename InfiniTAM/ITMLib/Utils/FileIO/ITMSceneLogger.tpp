@@ -267,7 +267,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenesCompact() {
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarpState(unsigned int frameIx) {
-	return activeWarpLogger->StartLoadingWarpState(frameIx);
+	return activeWarpLogger->StartSavingWarpState(frameIx);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -292,7 +292,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartLoadingWarpState(
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StopLoadingWarpState() {
-	activeWarpLogger->StopSavingWarpState();
+	activeWarpLogger->StopLoadingWarpState();
 }
 
 /**

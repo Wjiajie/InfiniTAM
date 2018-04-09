@@ -393,7 +393,7 @@ template<typename TVoxel, typename TIndex>
 bool ITMWarpSceneLogger<TVoxel, TIndex>::SaveCurrentWarpState() {
 
 	if (!warpOFStream) {
-		std::cout << "Current warp-update OFStream cannot be saved to for whatever reason." << std::endl;
+		std::cerr << "Current warp-update OFStream cannot be saved to for whatever reason." << std::endl;
 		return false;
 	}
 	warpOFStream.write(reinterpret_cast<const char* >(&this->iterationCursor), sizeof(iterationCursor));
