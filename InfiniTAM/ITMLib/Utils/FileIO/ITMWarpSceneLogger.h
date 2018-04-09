@@ -52,6 +52,7 @@ public:
 
 	static const std::string sliceFolderPrefix;
 	static const std::string sliceScenePrefix;
+	static const std::string continuousHighlightsPostfix ;
 	//endregion
 	// region ================================ STATIC FUNCTIONS ========================================================
 

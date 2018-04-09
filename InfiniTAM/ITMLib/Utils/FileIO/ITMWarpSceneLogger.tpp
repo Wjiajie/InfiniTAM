@@ -68,6 +68,9 @@ const std::string ITMWarpSceneLogger<TVoxel, TIndex>::sliceFolderPrefix = "slice
 template<typename TVoxel, typename TIndex>
 const std::string ITMWarpSceneLogger<TVoxel, TIndex>::sliceScenePrefix = "scene_";
 
+template<typename TVoxel, typename TIndex>
+const std::string ITMWarpSceneLogger<TVoxel, TIndex>::continuousHighlightsPostfix = "continuous";
+
 // endregion
 // region ======================================== STATIC METHODS : PATH GENERATION ====================================
 

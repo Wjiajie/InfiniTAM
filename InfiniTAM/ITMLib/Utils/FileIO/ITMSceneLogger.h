@@ -49,6 +49,7 @@ public:
 	static const std::string warpUpdatesFilename;
 	static const std::string binaryFileExtension;
 	static const std::string liveName;
+	static const std::string continuousHighlightsPostfix;
 
 // endregion
 // region === PUBLIC ENUMS ===
@@ -132,8 +133,8 @@ public:
 	const std::map<int, std::shared_ptr<InterestRegionInfo>>& GetInterestRegionsByHash();
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> GetHighlights() const;
 	std::vector<int> GetInterestRegionHashes() const;
-	const ITMScene<TVoxelCanonical,TIndex>* GetActiveWarpScene() const;
-	const ITMScene<TVoxelLive,TIndex>* GetLiveScene() const;
+	const ITMScene<TVoxelCanonical, TIndex>* GetActiveWarpScene() const;
+	const ITMScene<TVoxelLive, TIndex>* GetLiveScene() const;
 	bool GetIsActiveSceneASlice() const;
 	std::vector<std::string> GetSliceIds() const;
 
@@ -181,7 +182,7 @@ public:
 	//*** slice generation & usage***
 
 	bool MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2,
-		               unsigned int frameIndex, std::string& identifier);
+	               unsigned int frameIndex, std::string& identifier);
 	bool MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2,
 	               unsigned int frameIndex);
 	bool SliceExistsInMemory(const std::string& sliceIdentifier) const;
@@ -200,6 +201,8 @@ private:
 // region === MEMBER FUNCTIONS ===
 	void SaveSliceWarp(const Vector3i& minPoint, const Vector3i& maxPoint,
 	                   unsigned int frameIndex, const boost::filesystem::path& path);
+	ITM3DNestedMapOfArrays <ITMHighlightIterationInfo>
+	MakeSliceHighlights(const Vector3i& minPoint, const Vector3i& maxPoint);
 	bool CheckPath();
 
 // endregion
@@ -234,6 +237,7 @@ private:
 
 
 // endregion
+
 };
 
 

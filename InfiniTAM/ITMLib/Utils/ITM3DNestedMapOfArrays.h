@@ -45,7 +45,7 @@ public:
 	template<typename FT>
 	friend std::ostream& operator<<(std::ostream& stream, const ITM3DNestedMapOfArrays<FT>& nestedMap3D);
 
-	//*** Insertions and transformations ***
+	//*** Insertions and filtering ***
 	bool InsertOrdered(int keyLevel3, int keyLevel2, int keyLevel1, T valueLevel0);
 	ITM3DNestedMapOfArrays FilterBasedOnLevel0Lengths(int minThreshold);
 	void Clear();

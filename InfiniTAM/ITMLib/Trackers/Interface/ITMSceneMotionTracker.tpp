@@ -192,7 +192,6 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 			sceneLogger->MakeSlice(sliceMinPoint,sliceMaxPoint,currentFrameIx, sliceId);
 			std::cout << "Slice finished." << std::endl;
 			sceneLogger->SwitchActiveScene(sliceId);
-			sceneLogger->SaveHighlights("continuous");
 		}
 		delete sceneLogger;
 	}

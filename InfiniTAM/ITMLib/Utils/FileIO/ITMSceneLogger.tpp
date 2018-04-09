@@ -40,6 +40,9 @@ const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::binaryFil
 		ITMWarpSceneLogger<TVoxelCanonical, TIndex>::binaryFileExtension;
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::liveName = "live";
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::continuousHighlightsPostfix =
+		ITMWarpSceneLogger<TVoxelCanonical, TIndex>::continuousHighlightsPostfix;
 //endregion
 // region ================================= CONSTRUCTORS & DESTRUCTORS =================================================
 
