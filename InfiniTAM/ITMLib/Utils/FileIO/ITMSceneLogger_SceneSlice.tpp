@@ -105,9 +105,10 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
 	const ITMHashEntry* hashTable = fullCanonicalSceneLogger->scene->index.GetEntries();
 
 	std::ofstream sliceWarpOfstream(path.c_str(), std::ofstream::binary | std::ofstream::out);
-	if (!sliceWarpOfstream)
+	if (!sliceWarpOfstream){
 		throw std::runtime_error("Could not open '" + path.string() + "' for writing. ["  __FILE__  ": " +
 		                         std::to_string(__LINE__) + "]");
+	}
 	sliceWarpOfstream.write(reinterpret_cast<const char*>(&frameIndex), sizeof(frameIndex));
 
 

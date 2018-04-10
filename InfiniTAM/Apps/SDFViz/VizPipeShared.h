@@ -81,7 +81,6 @@ void ComputeVoxelAttributes(const Vector3i& currentBlockPositionVoxels, int x, i
 	float voxelColor;
 	if(highlights.Contains(hash, locId)){
 		voxelColor = HIGHLIGHT_SDF_COLOR_INDEX;
-		std::cout << "yoohooo" << std::endl;
 	}else{
 		voxelColor = voxel.flags == ITMLib::VOXEL_UNKNOWN ? UNKNOWN_SDF_COLOR_INDEX :
 	                   sdf > 0 ?

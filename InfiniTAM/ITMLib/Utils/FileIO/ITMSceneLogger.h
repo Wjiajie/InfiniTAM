@@ -137,6 +137,7 @@ public:
 	const ITMScene<TVoxelLive, TIndex>* GetLiveScene() const;
 	bool GetIsActiveSceneASlice() const;
 	std::vector<std::string> GetSliceIds() const;
+	void GetActiveSceneBounds(Vector3i& minPoint, Vector3i& maxPoint) const;
 
 	//*** scene loading/saving
 	bool SaveScenes();

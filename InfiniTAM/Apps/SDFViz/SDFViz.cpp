@@ -113,7 +113,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 		              liveTruncatedNegativeVoxelColor,
 		              liveUnknownVoxelColor,
 		              highlightVoxelColor,
-		              liveHashBlockEdgeColor),
+		              liveHashBlockEdgeColor, true),
 		highlightVisualizer(),
 		sdfRenderer(vtkSmartPointer<vtkRenderer>::New()),
 		markerRenderer(vtkSmartPointer<vtkRenderer>::New()),
@@ -163,6 +163,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 	SetUpGeometrySources();
 	LoadFrameData();
 	ReinitializePipelines();
+	UpdateLiveSceneBounds();
 	AddActors();
 
 	// to prevent VTK from doing excessive near-clipping with multi-layered renderers
@@ -815,6 +816,19 @@ bool SDFViz::MakeSlice() {
 	return false;
 }
 
+void SDFViz::UpdateLiveSceneBounds(){
+	if(sceneLogger->GetIsActiveSceneASlice()) {
+		Vector3i minPoint, maxPoint;
+		sceneLogger->GetActiveSceneBounds(minPoint, maxPoint);
+		//TODO: get rid of magic number here -Greg (GitHub: Algomorph)
+		minPoint -= Vector3i(2);
+		maxPoint += Vector3i(2);
+		liveScenePipe.SetExtractionBounds(minPoint, maxPoint);
+	}else{
+		liveScenePipe.ResetExtractionBounds();
+	}
+}
+
 bool SDFViz::SwitchToSlice(unsigned int sliceIndex) {
 	if (sliceIndex >= sliceIdentifiers.size()) {
 		return false;
@@ -826,6 +840,7 @@ bool SDFViz::SwitchToSlice(unsigned int sliceIndex) {
 	ReinitializePipelines();
 	UpdatePipelineVisibilitiesUsingLocalState();
 	InitializeWarps();
+	UpdateLiveSceneBounds();
 	renderWindow->Render();
 	return true;
 }
@@ -849,6 +864,7 @@ bool SDFViz::SwitchToFullScene() {
 	ReinitializePipelines();
 	UpdatePipelineVisibilitiesUsingLocalState();
 	InitializeWarps();
+	UpdateLiveSceneBounds();
 	renderWindow->Render();
 }
 

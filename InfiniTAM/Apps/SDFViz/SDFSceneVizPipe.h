@@ -47,7 +47,9 @@ public:
 	                const std::array<double, 4>& negativeNonTruncatedVoxelColor,
 	                const std::array<double, 4>& negativeTruncatedVoxelColor,
 	                const std::array<double, 4>& unknownVoxelColor,
-	                const std::array<double, 4>& highlightVoxelColor, const std::array<double, 3>& hashBlockEdgeColor);
+	                const std::array<double, 4>& highlightVoxelColor,
+	                const std::array<double, 3>& hashBlockEdgeColor,
+	                bool applyExtractionFilter);
 	~SDFSceneVizPipe();
 
 	// ====================== MEMBER FUNCTIONS ===========================
@@ -58,11 +60,13 @@ public:
 	virtual vtkSmartPointer<vtkActor>& GetVoxelActor();
 	vtkSmartPointer<vtkActor>& GetHashBlockActor();
 	VoxelScaleMode GetCurrentScaleMode();
+	void ResetExtractionBounds();
+	void SetExtractionBounds(const Vector3i& minPoint, const Vector3i& maxPoint);
 
 	virtual void ToggleScaleMode();
 
 protected:
-	// ===================== STATIC FUNCTIONS ============================
+	// region =============== STATIC FUNCTIONS ============================
 
 	static void SetUpSceneHashBlockMapper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
 	                                      vtkSmartPointer<vtkPolyData>& pointsPolydata);
@@ -78,14 +82,18 @@ protected:
 	                                  vtkSmartPointer<vtkExtractPolyDataGeometry> extractor);
 	static void SetUpSceneVoxelMapper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
 	                                  vtkSmartPointer<vtkLookupTable>& table, vtkSmartPointer<vtkPolyData>& pointsPolydata);
+	static void SetUpSceneVoxelMapperHelper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+	                                  vtkSmartPointer<vtkLookupTable>& table);
+	// endregion
+	// region ============= MEMBER FUNCTIONS =============================
 
-	// ===================== MEMBER FUNCTIONS ===========================
 	virtual void PreparePointsForRendering(const ITMScene<TVoxel, TIndex>* scene);
 
-	// ===================== MEMBER VARIABLES ===========================
+	// ===================== MEMBER VARIABLES ============================
 	// ** individual voxels **
 	vtkSmartPointer<vtkPolyData> voxelPolydata;
 	vtkSmartPointer<vtkLookupTable> voxelColorLookupTable;
+	vtkSmartPointer<vtkExtractPolyDataGeometry> extractionFilter;
 
 	// ** hash-block grid **
 	vtkSmartPointer<vtkPolyData> hashBlockGrid;
@@ -93,10 +101,16 @@ protected:
 
 	//** highlights **
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
-private:
-	// ===================== MEMBER FUNCTIONS ===========================
 
-	// ===================== MEMBER VARIABLES ===========================
+	//** pipeline properties **
+	const bool applyExtractionFilter;
+	//endregion
+private:
+	// region ============== MEMBER FUNCTIONS ===========================
+
+	// endregion
+	// region ============== MEMBER VARIABLES ===========================
+
 	// ** voxels **
 	vtkSmartPointer<vtkGlyph3DMapper> voxelMapper;
 	vtkSmartPointer<vtkActor> voxelActor;
@@ -116,9 +130,7 @@ private:
 
 	// ** scene limits/boundaries **
 	Vector3i minPoint, maxPoint;
-
-
-
+	//endregion
 };
 
 

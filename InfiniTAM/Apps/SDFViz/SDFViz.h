@@ -240,4 +240,5 @@ private:
 	// endregion
 	void LoadAllSlices();
 
+	void UpdateLiveSceneBounds();
 };

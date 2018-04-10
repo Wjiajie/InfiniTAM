@@ -22,6 +22,8 @@
 #include <vtkProperty.h>
 #include <vtkLookupTable.h>
 #include <vtkPolyDataMapper.h>
+#include <vtkCubeSource.h>
+#include <vtkBox.h>
 
 //Local
 #include "SDFSceneVizPipe.h"
@@ -45,11 +47,11 @@ SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(const std::array<double, 4>& po
                                                  const std::array<double, 4>& positiveNonTruncatedVoxelColor,
                                                  const std::array<double, 4>& negativeNonTruncatedVoxelColor,
                                                  const std::array<double, 4>& negativeTruncatedVoxelColor,
-                                                 const std::array<double, 4>& unknownVoxelColor,
-                                                 const std::array<double, 4>& highlightVoxelColor,
-                                                 const std::array<double, 3>& hashBlockEdgeColor)
+                                                 const std::array<double, 4>& unknownVoxelColor, const std::array<double, 4>& highlightVoxelColor,
+                                                 const std::array<double, 3>& hashBlockEdgeColor, bool applyExtractionFilter)
 		:
 		voxelPolydata(vtkSmartPointer<vtkPolyData>::New()),
+		extractionFilter(vtkSmartPointer<vtkExtractPolyDataGeometry>::New()),
 		voxelColorLookupTable(vtkSmartPointer<vtkLookupTable>::New()),
 		voxelMapper(vtkSmartPointer<vtkGlyph3DMapper>::New()),
 		voxelActor(vtkSmartPointer<vtkActor>::New()),
@@ -66,13 +68,13 @@ SDFSceneVizPipe<TVoxel, TIndex>::SDFSceneVizPipe(const std::array<double, 4>& po
 
 		highlightVoxelColor(highlightVoxelColor),
 		hashBlockEdgeColor(hashBlockEdgeColor),
-		scaleMode(VOXEL_SCALE_HIDE_UNKNOWNS) {
+		scaleMode(VOXEL_SCALE_HIDE_UNKNOWNS),
+		applyExtractionFilter(applyExtractionFilter){
 
 	// Create the color maps
 	SetUpSDFColorLookupTable(voxelColorLookupTable, highlightVoxelColor.data(), positiveTruncatedVoxelColor.data(),
 	                         positiveNonTruncatedVoxelColor.data(), negativeNonTruncatedVoxelColor.data(),
 	                         negativeTruncatedVoxelColor.data(), unknownVoxelColor.data());
-
 }
 
 template<typename TVoxel, typename TIndex>
@@ -122,8 +124,7 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering(const ITMScene<T
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					ComputeVoxelAttributes(currentBlockPositionVoxels, x, y, z, localVoxelBlock, points, scaleAttribute,
-					                       alternativeScaleAttribute, colorAttribute, highlights,
-					                       hash);
+					                       alternativeScaleAttribute, colorAttribute, highlights, hash);
 				}
 			}
 		}
@@ -142,6 +143,32 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering(const ITMScene<T
 	hashBlockGrid->SetPoints(hashBlockPoints);
 }
 
+
+template<typename TVoxel, typename TIndex>
+void SDFSceneVizPipe<TVoxel, TIndex>::ResetExtractionBounds() {
+	SetExtractionBounds(minPoint,maxPoint);
+}
+
+
+template<typename TVoxel, typename TIndex>
+void SDFSceneVizPipe<TVoxel, TIndex>::SetExtractionBounds(const Vector3i& minPoint, const Vector3i& maxPoint) {
+	vtkSmartPointer<vtkBox> extractionBounds = vtkSmartPointer<vtkBox>::New();
+	Vector3d min = minPoint.toDouble();
+	Vector3d max = maxPoint.toDouble();
+	//flip as per coordinate axes change, +x, -y, -z
+	extractionBounds->SetBounds(minPoint.x, maxPoint.x, -maxPoint.y, -minPoint.y, -maxPoint.z, -minPoint.z);
+	//extractionBounds->SetBounds(-37.0,-29.0,-31.0,-39.0,-179.0,-187.0);
+	//extractionBounds->SetBounds(-72.0,16.0,-24.0,72.0,0,304);
+	std::cout << minPoint << std::endl;
+	std::cout << maxPoint << std::endl;
+
+	extractionFilter->SetImplicitFunction(extractionBounds);
+	extractionFilter->Update();
+	extractionFilter->Modified();
+	voxelMapper->SetInputConnection(extractionFilter->GetOutputPort());
+	voxelMapper->Update();
+}
+
 template<typename TVoxel, typename TIndex>
 void SDFSceneVizPipe<TVoxel, TIndex>::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
                                                       vtkAlgorithmOutput* hashBlockSourceGeometry,
@@ -156,8 +183,25 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePipeline(vtkAlgorithmOutput* voxelS
 	// set up hash block mapper
 	SetUpSceneHashBlockMapper(hashBlockSourceGeometry, hashBlockMapper, hashBlockGrid);
 
-	// set up voxel mapper
-	SetUpSceneVoxelMapper(voxelSourceGeometry, voxelMapper, voxelColorLookupTable, voxelPolydata);
+	if(applyExtractionFilter) {
+		extractionFilter->ExtractBoundaryCellsOn();
+		extractionFilter->ExtractInsideOn();
+		extractionFilter->SetInputData(voxelPolydata);
+		ResetExtractionBounds();
+//		vtkSmartPointer<vtkBox> extractionBounds = vtkSmartPointer<vtkBox>::New();
+//		extractionBounds->SetBounds(-37.0,-29.0,-31.0,-39.0,-179.0,-187.0);
+//		extractionFilter = vtkSmartPointer<vtkExtractPolyDataGeometry>::New();
+//		extractionFilter->SetImplicitFunction(extractionBounds);
+//		extractionFilter->SetInputData(voxelPolydata);
+//		//extractionFilter->ExtractBoundaryCellsOn();
+//		extractionFilter->ExtractInsideOn();
+//		extractionFilter->Update();
+		// set up voxel mapper
+		SetUpSceneVoxelMapper(voxelSourceGeometry, voxelMapper, voxelColorLookupTable, extractionFilter);
+	}else{
+		// set up voxel mapper
+		SetUpSceneVoxelMapper(voxelSourceGeometry, voxelMapper, voxelColorLookupTable, voxelPolydata);
+	}
 	scaleMode = VOXEL_SCALE_HIDE_UNKNOWNS;// reset scale mode
 
 	// set up voxel actor
@@ -210,17 +254,7 @@ void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneVoxelMapper(vtkAlgorithmOutput* 
                                                             vtkSmartPointer<vtkLookupTable>& table,
                                                             vtkSmartPointer<vtkExtractPolyDataGeometry> extractor) {
 	mapper->SetInputConnection(extractor->GetOutputPort());
-	mapper->SetSourceConnection(sourceOutput);
-	mapper->SetLookupTable(table);
-	mapper->ScalingOn();
-	mapper->SetScaleModeToScaleByMagnitude();
-	mapper->SetScaleArray(scaleUnknownsHiddenAttributeName);
-	mapper->ScalarVisibilityOn();
-	mapper->SetScalarModeToUsePointData();
-	mapper->SetColorModeToMapScalars();
-	mapper->SetScalarRange(0.0, static_cast<double>(COLOR_INDEX_COUNT));
-	mapper->InterpolateScalarsBeforeMappingOff();
-	mapper->Update();
+	SetUpSceneVoxelMapperHelper(sourceOutput,mapper,table);
 }
 
 //GPU glyph version w/o filtering
@@ -231,6 +265,13 @@ void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneVoxelMapper(
 		vtkSmartPointer<vtkLookupTable>& table,
 		vtkSmartPointer<vtkPolyData>& pointsPolydata) {
 	mapper->SetInputData(pointsPolydata);
+	SetUpSceneVoxelMapperHelper(sourceOutput,mapper,table);
+}
+
+template<typename TVoxel, typename TIndex>
+void SDFSceneVizPipe<TVoxel, TIndex>::SetUpSceneVoxelMapperHelper(vtkAlgorithmOutput* sourceOutput,
+                                                                  vtkSmartPointer<vtkGlyph3DMapper>& mapper,
+                                                                  vtkSmartPointer<vtkLookupTable>& table) {
 	mapper->SetSourceConnection(sourceOutput);
 	mapper->SetLookupTable(table);
 	mapper->ScalingOn();
@@ -269,5 +310,11 @@ template<typename TVoxel, typename TIndex>
 VoxelScaleMode SDFSceneVizPipe<TVoxel, TIndex>::GetCurrentScaleMode() {
 	return this->scaleMode;
 }
+
+
+
+
+
+
 
 

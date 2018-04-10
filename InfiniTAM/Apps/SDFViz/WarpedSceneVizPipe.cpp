@@ -59,9 +59,8 @@ WarpedSceneVizPipe::WarpedSceneVizPipe(const std::array<double, 4>& positiveTrun
 		                                                  positiveNonTruncatedNonInterestVoxelColor,
 		                                                  negativeNonTruncatedNonInterestVoxelColor,
 		                                                  negativeTruncatedNonInterestVoxelColor,
-		                                                  unknownNonInterestVoxelColor,
-		                                                  highlightVoxelColor,
-		                                                  hashBlockEdgeColor),
+		                                                  unknownNonInterestVoxelColor, highlightVoxelColor,
+		                                                  hashBlockEdgeColor, false),
 		frameIx(frameIx),
 		initialNonInterestPoints(vtkSmartPointer<vtkPoints>::New()),
 		initialInterestPoints(vtkSmartPointer<vtkPoints>::New()),
@@ -109,9 +108,7 @@ vtkSmartPointer<vtkActor>& WarpedSceneVizPipe::GetSelectionVoxelActor() {
 
 vtkSmartPointer<vtkActor>& WarpedSceneVizPipe::GetSliceSelectionActor(int index) {
 	if (index < 0 && index > 1)
-		DIEWITHEXCEPTION("Index needs to be 0 or 1."
-				                 __FILE__
-				                 ":" + std::to_string(__LINE__));
+		DIEWITHEXCEPTION_REPORTLOCATION("Index needs to be 0 or 1.");
 	return this->selectedSliceExtrema[index];
 }
 
@@ -436,9 +433,7 @@ void WarpedSceneVizPipe::SetInterestRegionInfo(std::vector<int> interestRegionHa
 
 void WarpedSceneVizPipe::PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeometry) {
 	if (!preparePipelineWasCalled) {
-		DIEWITHEXCEPTION("PreparePipeline needs to be called first. ["
-				                 __FILE__
-				                 ":" + std::to_string(__LINE__) + "]");
+		DIEWITHEXCEPTION_REPORTLOCATION("PreparePipeline needs to be called first.");
 	}
 	SetUpSceneVoxelMapper(voxelSourceGeometry, interestVoxelMapper, interestVoxelColorLookupTable,
 	                      interestVoxelPolydata);
@@ -447,9 +442,7 @@ void WarpedSceneVizPipe::PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceG
 
 void WarpedSceneVizPipe::PrepareWarplessVoxels(vtkAlgorithmOutput* voxelSourceGeometry) {
 	if (!preparePipelineWasCalled) {
-		DIEWITHEXCEPTION("PreparePipeline needs to be called first. ["
-				                 __FILE__
-				                 ":" + std::to_string(__LINE__) + "]");
+		DIEWITHEXCEPTION_REPORTLOCATION("PreparePipeline needs to be called first.");
 	}
 	SetUpSceneVoxelMapper(voxelSourceGeometry, warplessVoxelMapper, voxelColorLookupTable, warplessVoxelPolydata);
 	warplessVoxelActor->SetMapper(warplessVoxelMapper);

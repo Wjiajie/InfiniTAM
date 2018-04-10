@@ -103,6 +103,24 @@ int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelCount() const {
 	return activeWarpLogger->GetVoxelCount();
 }
 
+/**
+ * \brief Retreive minimum and maximum of currently active scene
+ * \param minPoint [out] minimum point
+ * \param maxPoint [out] maximum point
+ */
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetActiveSceneBounds(Vector3i& minPoint, Vector3i& maxPoint) const {
+	if(this->activeWarpLogger){
+		if(this->activeWarpLogger->isSlice){
+			minPoint = activeWarpLogger->minimum;
+			maxPoint = activeWarpLogger->maximum;
+		}else{
+			ITMSceneStatisticsCalculator<TVoxelCanonical, TIndex> statisticsCalculator;
+			statisticsCalculator.ComputeVoxelBounds(this->activeWarpLogger->scene, minPoint,maxPoint);
+		}
+	}
+}
+
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetScenesLoaded() const {
 	return activeWarpLogger->Loaded();
@@ -359,6 +377,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ClearHighlights() {
 	this->activeWarpLogger->highlights.Clear();
 }
+
 
 
 

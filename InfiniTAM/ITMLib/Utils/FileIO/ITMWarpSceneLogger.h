@@ -123,6 +123,7 @@ public:
 	bool StartLoadingWarpState();
 	void StopLoadingWarpState();
 	bool IsLoadingWarpState();
+
 	// endregion
 private:
 	// region ================================ STATIC CONSTANTS ========================================================
@@ -148,6 +149,7 @@ private:
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
 	int minHighlightRecurrenceCount = 0;
 
+	// iterators & stats
 	unsigned int iterationCursor = 0;
 	int voxelCount = -1;
 
