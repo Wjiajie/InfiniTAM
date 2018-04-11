@@ -25,23 +25,23 @@ class ITMSceneMotionTracker_CPU :
 		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex> {
 public:
 
-	explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath);
-	explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates);
+	explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath,
+	                                   bool enableDataTerm = true,
+	                                   bool enableLevelSetTerm = true,
+	                                   bool enableKillingTerm = true);
+	explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates,
+		                               bool enableDataTerm = true,
+		                               bool enableLevelSetTerm = true,
+		                               bool enableKillingTerm = true);
 	virtual ~ITMSceneMotionTracker_CPU();
 	void FuseFrame(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;
 	void ApplyWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;
 
 protected:
-	//START _DEBUG
 
-	//timers
-	double timeWarpUpdateCompute = 0.0;
-	double timeDataJandHCompute = 0.0;
-	double timeWarpJandHCompute = 0.0;
-	double timeUpdateTermCompute = 0.0;
-	double timeWarpUpdateApply = 0.0;
-
-	//END _DEBUG
+	const bool enableDataTerm;
+	const bool enableLevelSetTerm;
+	const bool enableKillingTerm;
 
 	float UpdateWarpField(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                      ITMScene<TVoxelLive, TIndex>* liveScene) override;
@@ -51,6 +51,7 @@ protected:
 
 
 private:
+	void initializeHelper();
 	ORUtils::MemoryBlock<unsigned char>* warpedEntryAllocationType;
 	ORUtils::MemoryBlock<unsigned char>* canonicalEntryAllocationTypes;
 	ORUtils::MemoryBlock<Vector3s>* canonicalBlockCoordinates;

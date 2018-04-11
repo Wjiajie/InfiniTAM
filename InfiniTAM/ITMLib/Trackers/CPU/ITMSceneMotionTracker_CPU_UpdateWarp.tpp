@@ -52,8 +52,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 	int noTotalEntries = canonicalScene->index.noTotalEntries;
 	float maxWarpUpdateLength = 0.0f;
 
-	const bool hasFocusCoordinates = ITMSceneMotionTracker<TVoxelCanonical,TVoxelLive,TIndex>::hasFocusCoordinates;
-	Vector3i focusCoordinates = ITMSceneMotionTracker<TVoxelCanonical,TVoxelLive,TIndex>::focusCoordinates;
+	const bool hasFocusCoordinates = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::hasFocusCoordinates;
+	Vector3i focusCoordinates = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::focusCoordinates;
 
 	//_DEBUG
 #ifdef _DEBUG
@@ -152,13 +152,14 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 
 					// The data term is only relevant if we know the actual sdf values in both the canonical and the
 					// live frame, since it's based on the comparison between them
-					bool computeDataTerm = knownInCanonical && hitLiveKnownVoxels;
+					bool computeDataTerm = knownInCanonical && hitLiveKnownVoxels && enableDataTerm;
 
 					//_DEBUG
 					//bool computeLevelSetTerm = !truncatedInCanonical && !truncatedInLive;
 					//bool computeLevelSetTerm = (!knownInCanonical || !truncatedInCanonical) && !truncatedInLive;
 					// level set term can be computed if we'bbre in non-truncated live space
-					bool computeLevelSetTerm = !truncatedInLive;
+					bool computeLevelSetTerm = !truncatedInLive && enableLevelSetTerm;
+					bool computeKillingTerm = enableKillingTerm;
 					Vector3f& warp = canonicalVoxel.warp_t;
 
 					bool printVoxelResult = false;
@@ -168,18 +169,15 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						          << " *** " << reset << std::endl;
 						std::cout << "Source SDF vs. target SDF: " << canonicalSdf << "-->" << liveSdf << std::endl
 						          << "Warp: " << green << canonicalVoxel.warp_t << reset
-								  << " length: " << green << ORUtils::length(canonicalVoxel.warp_t) << reset;
+						          << " length: " << green << ORUtils::length(canonicalVoxel.warp_t) << reset;
 						std::cout << " Struck live narrow band: " << (hitLiveNarrowBand ? green : red)
 						          << (hitLiveNarrowBand ? "true" : "false") << reset;
 						std::cout << std::endl;
 						printVoxelResult = true;
-						if(ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::sceneLogger != nullptr){
+						if (ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::sceneLogger != nullptr) {
 							recordVoxelResult = true;
 						}
 					}
-#ifdef PRINT_TIME_STATS
-					TIC(timeDataJandHCompute);
-#endif
 					//================================ RETRIEVE NEIGHBOR'S WARPS =======================================
 					const int neighborhoodSize = 9;
 					Vector3f neighborWarps[neighborhoodSize];
@@ -195,9 +193,13 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 							neighborWarps[iNeighbor] = warp;
 						}
 					}
-					// =============================== DATA & LEVEL SET TERMS ==========================================
-					Vector3f deltaEData = Vector3f(0.0f);
-					Vector3f deltaELevelSet = Vector3f(0.0f);
+					// =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ===========================
+					Vector3f deltaEKilling(0.0f);
+					Vector3f deltaEData(0.0f);
+					Vector3f deltaELevelSet(0.0f);
+					float localKillingEnergy = 0.0f;
+					float localSmoothnessEnergy = 0.0f;
+
 					float diffSdf = 0.0f, sdfJacobianNormMinusUnity = 0.0f;
 
 					bool useColor = false;
@@ -307,83 +309,68 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 							          << std::endl << std::endl;
 						}
 					}
-
-					//=================================== KILLING TERM =================================================
-#ifdef PRINT_TIME_STATS
-					TOC(timeDataJandHCompute);
-					TIC(timeWarpJandHCompute);
-#endif
-					Matrix3f warpJacobian;
-					Matrix3f warpHessian[3];
-
-					ComputePerVoxelWarpJacobianAndHessian(canonicalVoxel.warp_t, canonicalVoxelPosition, neighborWarps,
-					                                      warpJacobian, warpHessian);
-					if (printVoxelResult) {
-						_DEBUG_PrintKillingTermStuff(neighborWarps, neighborAllocated, neighborTruncated,
-						                             warpJacobian, warpHessian);
-					}
-
-#ifdef PRINT_TIME_STATS
-					TOC(timeWarpJandHCompute);
-					TIC(timeUpdateTermCompute);
-#endif
-
-					const float gamma = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::rigidityEnforcementFactor;
-					float onePlusGamma = 1.0f + gamma;
-					// |0, 3, 6|     |m00, m10, m20|      |u_xx, u_xy, u_xz|
-					// |1, 4, 7|     |m01, m11, m21|      |u_xy, u_yy, u_yz|
-					// |2, 5, 8|     |m02, m12, m22|      |u_xz, u_yz, u_zz|
-					Matrix3f& H_u = warpHessian[0];
-					Matrix3f& H_v = warpHessian[1];
-					Matrix3f& H_w = warpHessian[2];
-					float KillingDeltaEu, KillingDeltaEv, KillingDeltaEw;
+					Matrix3f warpJacobian(0.0f);
+					Matrix3f warpHessian[3] = {Matrix3f(0.0f),Matrix3f(0.0f),Matrix3f(0.0f)};
+					if (computeKillingTerm) {
+						//=================================== KILLING TERM =================================================
 
 
-					KillingDeltaEu =
-							-2.0f * ((onePlusGamma) * H_u.xx + (H_u.yy) + (H_u.zz) + gamma * H_v.xy + gamma * H_w.xz);
-					KillingDeltaEv =
-							-2.0f * ((onePlusGamma) * H_v.yy + (H_v.zz) + (H_v.xx) + gamma * H_u.xy + gamma * H_w.yz);
-					KillingDeltaEw =
-							-2.0f * ((onePlusGamma) * H_w.zz + (H_w.xx) + (H_w.yy) + gamma * H_v.yz + gamma * H_u.xz);
+						ComputePerVoxelWarpJacobianAndHessian(canonicalVoxel.warp_t, canonicalVoxelPosition,
+						                                      neighborWarps,
+						                                      warpJacobian, warpHessian);
+						if (printVoxelResult) {
+							_DEBUG_PrintKillingTermStuff(neighborWarps, neighborAllocated, neighborTruncated,
+							                             warpJacobian, warpHessian);
+						}
+
+						const float gamma = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::rigidityEnforcementFactor;
+						float onePlusGamma = 1.0f + gamma;
+						// |0, 3, 6|     |m00, m10, m20|      |u_xx, u_xy, u_xz|
+						// |1, 4, 7|     |m01, m11, m21|      |u_xy, u_yy, u_yz|
+						// |2, 5, 8|     |m02, m12, m22|      |u_xz, u_yz, u_zz|
+						Matrix3f& H_u = warpHessian[0];
+						Matrix3f& H_v = warpHessian[1];
+						Matrix3f& H_w = warpHessian[2];
+						float KillingDeltaEu, KillingDeltaEv, KillingDeltaEw;
 
 
-					Vector3f deltaEKilling = Vector3f(KillingDeltaEu,
-					                                  KillingDeltaEv,
-					                                  KillingDeltaEw);
-#ifdef PRINT_TIME_STATS
-					TOC(timeUpdateTermCompute);
-#endif
+						KillingDeltaEu =
+								-2.0f *
+								((onePlusGamma) * H_u.xx + (H_u.yy) + (H_u.zz) + gamma * H_v.xy + gamma * H_w.xz);
+						KillingDeltaEv =
+								-2.0f *
+								((onePlusGamma) * H_v.yy + (H_v.zz) + (H_v.xx) + gamma * H_u.xy + gamma * H_w.yz);
+						KillingDeltaEw =
+								-2.0f *
+								((onePlusGamma) * H_w.zz + (H_w.xx) + (H_w.yy) + gamma * H_v.yz + gamma * H_u.xz);
+
+
+						deltaEKilling = Vector3f(KillingDeltaEu,
+						                         KillingDeltaEv,
+						                         KillingDeltaEw);
 #ifdef PRINT_ENERGY_STATS
-					//=================================== ENERGY =======================================================
-					// KillingTerm Energy
-					Matrix3f warpJacobianTranspose = warpJacobian.t();
+						//=================================== KILLING ENERGY =======================================================
+						// KillingTerm Energy
+						Matrix3f warpJacobianTranspose = warpJacobian.t();
 
-					float localSmoothnessEnergy = dot(warpJacobian.getColumn(0), warpJacobian.getColumn(0)) +
-					                              dot(warpJacobian.getColumn(1), warpJacobian.getColumn(1)) +
-					                              dot(warpJacobian.getColumn(2), warpJacobian.getColumn(2));
+						localSmoothnessEnergy = dot(warpJacobian.getColumn(0), warpJacobian.getColumn(0)) +
+						                        dot(warpJacobian.getColumn(1), warpJacobian.getColumn(1)) +
+						                        dot(warpJacobian.getColumn(2), warpJacobian.getColumn(2));
 
-					float localKillingEnergy = localSmoothnessEnergy +
-					                           gamma *
-					                           (dot(warpJacobianTranspose.getColumn(0), warpJacobian.getColumn(0)) +
-					                            dot(warpJacobianTranspose.getColumn(1), warpJacobian.getColumn(1)) +
-					                            dot(warpJacobianTranspose.getColumn(2), warpJacobian.getColumn(2)));
+						localKillingEnergy = localSmoothnessEnergy +
+						                     gamma *
+						                     (dot(warpJacobianTranspose.getColumn(0), warpJacobian.getColumn(0)) +
+						                      dot(warpJacobianTranspose.getColumn(1), warpJacobian.getColumn(1)) +
+						                      dot(warpJacobianTranspose.getColumn(2), warpJacobian.getColumn(2)));
 #endif
+					}
 
 					//=================================== FINAL UPDATE =================================================
 					const float weightKilling = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightKillingTerm;
 					const float weightLevelSet = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightLevelSetTerm;
 					const float learningRate = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::gradientDescentLearningRate;
-#if !defined(WARP_COMPUTE_MODE) || WARP_COMPUTE_MODE == WARP_COMPUTE_MODE_FULL
+
 					Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet + weightKilling * deltaEKilling;
-#elif WARP_COMPUTE_MODE == WARP_COMPUTE_MODE_NO_LEVEL_SET
-					Vector3f deltaE = deltaEData + weightKilling * deltaEKilling;
-#elif WARP_COMPUTE_MODE == WARP_COMPUTE_MODE_NO_KILLING
-					Vector3f deltaE = deltaEData + weightLevelSet * deltaELevelSet;
-#elif WARP_COMPUTE_MODE == WARP_COMPUTE_MODE_DATA_ONLY
-					Vector3f deltaE = deltaEData;
-#else
-					DIEWITHEXCEPTION("WARP_COMPUTE_MODE not defined!");
-#endif
 
 					Vector3f warpUpdate = learningRate * deltaE;
 					float warpUpdateLength = length(warpUpdate);//meters
@@ -423,7 +410,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						std::cout << green << "Warp update: " << warpUpdate * -1.f << reset;
 						std::cout << " Warp update length: " << warpUpdateLength << std::endl << std::endl;
 
-						if(recordVoxelResult) {
+						if (recordVoxelResult) {
 							const int& currentFrame = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
 
 							Vector3f canonicalWarp = canonicalVoxel.warp_t;

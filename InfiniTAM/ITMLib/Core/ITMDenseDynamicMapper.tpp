@@ -40,13 +40,8 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMappe
 	swappingEngine = settings->swappingMode != ITMLibSettings::SWAPPINGMODE_DISABLED
 	                 ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxelCanonical, TIndex>(settings->deviceType)
 	                 : NULL;
-	if(settings->AreFocusCoordinatesSpecified()){
-		sceneMotionTracker = ITMTrackerFactory::MakeSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(
-				settings->deviceType, settings->sceneParams, settings->outputPath, settings->GetFocusCoordinates());
-	}else{
-		sceneMotionTracker = ITMTrackerFactory::MakeSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(
-				settings->deviceType, settings->sceneParams, settings->outputPath);
-	}
+
+	sceneMotionTracker = ITMTrackerFactory::MakeSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(settings);
 	swappingMode = settings->swappingMode;
 }
 

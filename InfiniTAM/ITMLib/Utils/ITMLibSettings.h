@@ -77,9 +77,17 @@ namespace ITMLib
 		bool AreFocusCoordinatesSpecified() const;
 		Vector3i GetFocusCoordinates() const;
 		void SetFocusCoordinates(const Vector3i& coordiantes);
+
+		// Parameters for logging/debugging DynamicFusion
+		bool enableDataTerm = true;
+		bool enableLevelSetTerm = true;
+		bool enableKillingTerm = true;
+
 	private:
-		/// Parameters for logging/debugging
+		/// Parameters for logging/debugging DynamicFusion
 		bool focusCoordinatesSpecified = false;
 		Vector3i focusCoordinates;
+
+
 	};
 }

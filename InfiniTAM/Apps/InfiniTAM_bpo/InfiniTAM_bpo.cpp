@@ -156,6 +156,9 @@ int main(int argc, char** argv) {
 		po::options_description arguments{"Arguments"};
 		po::positional_options_description positional_arguments;
 		bool fixCamera = false;
+		bool disableDataTerm = false;
+		bool disableLevelSetTerm = false;
+		bool disableKillingTerm = false;
 		//@formatter:off
 		arguments.add_options()
 				("help,h", "Print help screen")
@@ -184,7 +187,14 @@ int main(int argc, char** argv) {
 		                "        around this voxel."
 				)
 				("output,o", po::value<std::string>()->default_value("./Output"), "Output directory, e.g.: ./Output")
-				("fix_camera", po::bool_switch(&fixCamera)->default_value(false));
+				("fix_camera", po::bool_switch(&fixCamera)->default_value(false), "Whether or not to turn of the camera"
+																	  "tracking (fix the virtual camera position)")
+				("disable_data_term", po::bool_switch(&disableDataTerm)->default_value(false),
+				 "Whether or not to disable the data term if using the DynamicFusion algorithm")
+				("disable_level_set_term", po::bool_switch(&disableLevelSetTerm)->default_value(false),
+				 "Whether or not to disable the data term if using the DynamicFusion algorithm")
+				("disable_killing_term", po::bool_switch(&disableKillingTerm)->default_value(false),
+				 "Whether or not to disable the data term if using the DynamicFusion algorithm");
 		//@formatter:on
 		positional_arguments.add("calib_file", 1);
 		positional_arguments.add("input_file", 3);
@@ -276,6 +286,9 @@ int main(int argc, char** argv) {
 			memcpy(focusCoordiantes.values, focusCoordsVec.data(), sizeof(int) * 3);
 		}
 		settings->SetFocusCoordinates(focusCoordiantes);
+		settings->enableDataTerm = !disableDataTerm;
+		settings->enableLevelSetTerm = !disableLevelSetTerm;
+		settings->enableKillingTerm = !disableKillingTerm;
 
 		ITMMainEngine* mainEngine = nullptr;
 		switch (settings->libMode) {

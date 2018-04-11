@@ -41,30 +41,38 @@ using namespace ITMLib;
 //========================================== CONSTRUCTORS AND DESTRUCTORS ================================================
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params,
-                                                                                          std::string scenePath)
+                                                                                          std::string scenePath,
+                                                                                          bool enableDataTerm,
+                                                                                          bool enableLevelSetTerm,
+                                                                                          bool enableKillingTerm)
 		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params, scenePath),
 		  warpedEntryAllocationType(new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
 		  canonicalEntryAllocationTypes(
 				  new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
-		  canonicalBlockCoordinates(new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)) {
-	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
-	memset(entriesAllocType, ITMLib::STABLE, static_cast<size_t>(TIndex::noTotalEntries));
+		  canonicalBlockCoordinates(new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
+		  enableDataTerm(enableDataTerm),
+		  enableLevelSetTerm(enableLevelSetTerm),
+		  enableKillingTerm(enableKillingTerm) {
+	initializeHelper();
 
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params,
                                                                                           std::string scenePath,
-                                                                                          Vector3i focusCoordinates)
+                                                                                          Vector3i focusCoordinates,
+                                                                                          bool enableDataTerm,
+                                                                                          bool enableLevelSetTerm,
+                                                                                          bool enableKillingTerm)
 		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params, scenePath, focusCoordinates),
 		  warpedEntryAllocationType(new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
 		  canonicalEntryAllocationTypes(
 				  new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
-		  canonicalBlockCoordinates(new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries, MEMORYDEVICE_CPU))
-		   {
-	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
-	memset(entriesAllocType, ITMLib::STABLE, static_cast<size_t>(TIndex::noTotalEntries));
-
+		  canonicalBlockCoordinates(new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
+		  enableDataTerm(enableDataTerm),
+		  enableLevelSetTerm(enableLevelSetTerm),
+		  enableKillingTerm(enableKillingTerm){
+	initializeHelper();
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -414,4 +422,10 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarp(
 
 	WarpSdfDistributionFunctor<TVoxelCanonical, TVoxelLive, TIndex> distributionFunctor(liveScene);
 	VoxelPositionTraversal_CPU(*canonicalScene, distributionFunctor);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::initializeHelper() {
+	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
+	memset(entriesAllocType, ITMLib::STABLE, static_cast<size_t>(TIndex::noTotalEntries));
 }

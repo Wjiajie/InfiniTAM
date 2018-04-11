@@ -99,7 +99,9 @@ ITMLibSettings::ITMLibSettings()
 
 	// Debugging/logging
 	focusCoordinatesSpecified = false;
-
+	enableDataTerm = true;
+	enableLevelSetTerm = true;
+	enableKillingTerm = true;
 }
 
 bool ITMLibSettings::AreFocusCoordinatesSpecified() const {
