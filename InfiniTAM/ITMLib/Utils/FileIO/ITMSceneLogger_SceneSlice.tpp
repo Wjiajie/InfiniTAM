@@ -297,18 +297,32 @@ std::vector<std::string> ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::Lo
 	}
 	const int coordCount = 6;
 	std::regex sliceDirectoryRegex("slice(?:_(?:[-]|\\d)\\d{2}){" + std::to_string(coordCount) + "}");
+	std::vector<std::pair<std::string,std::time_t>> sliceDirectoryNamesAndWriteTimes;
 
 	for (auto& entry : boost::make_iterator_range(fs::directory_iterator(this->path))) {
 		std::string directoryName = entry.path().filename().string();
+		std::time_t lastModifiedTime = fs::last_write_time(entry.path());
 		if (fs::is_directory(entry.path()) && std::regex_match(directoryName, sliceDirectoryRegex)) {
-			Vector3i minPoint, maxPoint;
-			ITMWarpSceneLogger<TVoxelCanonical, TIndex>::ExtractMinMaxFromSliceStringIdentifier(directoryName, minPoint,
-			                                                                                    maxPoint);
-			std::string sliceIdentifier =
-					ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceStringIdentifier(minPoint, maxPoint);
-			if (LoadSlice(sliceIdentifier)) {
-				identifiers.push_back(sliceIdentifier);
-			}
+			sliceDirectoryNamesAndWriteTimes.push_back(std::make_pair(directoryName,lastModifiedTime));
+		}
+	}
+
+	auto SortBySecondDescending = [&](const std::pair<std::string,std::time_t> &a,
+	                        const std::pair<std::string,std::time_t> & b){
+		return (a.second > b.second);
+	};
+
+	//Sort by modification time in decreasing order
+	std::sort(sliceDirectoryNamesAndWriteTimes.begin(), sliceDirectoryNamesAndWriteTimes.end(), SortBySecondDescending);
+
+	for (auto& directoryNameAndWriteTime : sliceDirectoryNamesAndWriteTimes){
+		Vector3i minPoint, maxPoint;
+		ITMWarpSceneLogger<TVoxelCanonical, TIndex>::ExtractMinMaxFromSliceStringIdentifier(
+				std::get<0>(directoryNameAndWriteTime), minPoint, maxPoint);
+		std::string sliceIdentifier =
+				ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceStringIdentifier(minPoint, maxPoint);
+		if (LoadSlice(sliceIdentifier)) {
+			identifiers.push_back(sliceIdentifier);
 		}
 	}
 
