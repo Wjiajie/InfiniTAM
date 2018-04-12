@@ -27,6 +27,7 @@
 #include <vtkSphereSource.h>
 #include <vtkCubeSource.h>
 #include <vtkPointPicker.h>
+#include <vtk-8.1/vtkOrientationMarkerWidget.h>
 
 //local
 #include "SDFSceneVizPipe.tpp"
@@ -90,7 +91,6 @@ public:
 	virtual ~SDFViz();
 	//================= INSTANCE MEMBER FUNCTIONS ==================
 	int Run();
-	bool SliceTestRoutine();
 
 private:
 	// region ================= CONSTANTS ==================================
@@ -122,6 +122,7 @@ private:
 	vtkSmartPointer<vtkRenderer> guiOverlayRenderer;
 	vtkSmartPointer<vtkRenderWindow> renderWindow;
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
+	vtkSmartPointer<vtkOrientationMarkerWidget> orientationWidget;
 
 	// *** GUI elements
 	vtkSmartPointer<vtkTextActor> iterationIndicator;
@@ -170,6 +171,7 @@ private:
 	void InitializeRendering();
 	void InitializeWarpBuffers();
 	void InitializeWarps();
+	void InitializeAxes();
 	void AddActors();
 	void DrawLegend();
 	void DrawMessageBar();
@@ -227,6 +229,7 @@ private:
 	//*** viewport navigation ***
 	void MoveFocusToHighlightAt(int hash, int localId);
 	void MoveFocusToVoxelAt(Vector3d absoluteCoordinates);
+	void MoveFocusToSelectedVoxel();
 	void RefocusAtCurrentHighlight();
 	void MoveFocusToNextHighlight();
 	void MoveFocusToPreviousHighlight();

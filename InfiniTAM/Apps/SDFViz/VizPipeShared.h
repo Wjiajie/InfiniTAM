@@ -89,8 +89,8 @@ void ComputeVoxelAttributes(const Vector3i& currentBlockPositionVoxels, int x, i
 	}
 	// need to filp the y & z axes (unlike InfiniTAM, VTK uses proper right-hand rule system))
 	points->InsertNextPoint(voxelPosition.x,
-	                        -voxelPosition.y,
-	                        -voxelPosition.z);
+	                        voxelPosition.y,
+	                        voxelPosition.z);
 
 	scaleAttribute->InsertNextValue(voxelScale);
 	alternativeScaleAttribute->InsertNextValue(alternativeVoxelScale);

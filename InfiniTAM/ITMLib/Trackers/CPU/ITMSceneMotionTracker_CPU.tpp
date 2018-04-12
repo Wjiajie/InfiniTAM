@@ -34,6 +34,7 @@
 #include "../Shared/ITMSceneMotionTracker_Shared.h"
 #include "../../Utils/ITMSceneStatisticsCalculator.h"
 #include "../../Objects/Scene/ITMTrilinearDistribution.h"
+#include "../../Objects/Scene/ITMSceneManipulation.h"
 
 
 using namespace ITMLib;

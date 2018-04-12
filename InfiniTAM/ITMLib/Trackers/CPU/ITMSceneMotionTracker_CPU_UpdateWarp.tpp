@@ -90,9 +90,11 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 	// fraction of narrow band (non-truncated region) half-width that a voxel spans
 	const float unity = liveScene->sceneParams->voxelSize / liveScene->sceneParams->mu;
 
-	TIC(timeWarpUpdateCompute);
+	//_DEBUG
+	std::vector<Vector3i> _DEBUG_positions = {Vector3i(3, 36, 207 ), Vector3i(4, 36, 207 ), Vector3i(2, 37, 212 ), Vector3i(3, 37, 212 ), Vector3i(2, 37, 213 ), Vector3i(3, 37, 213 ), Vector3i(4, 37, 213 ), Vector3i(5, 37, 213 ), Vector3i(7, 0, 192 ), Vector3i(7, 0, 193 ), Vector3i(7, 0, 194 ), Vector3i(7, 0, 195)};
 
-	//compute the update, don't apply yet (computation depends on previous warp for neighbors,
+
+			//compute the update, don't apply yet (computation depends on previous warp for neighbors,
 	//no practical way to keep those buffered with the hash & multithreading in mind)
 #ifdef WITH_OPENMP
 #ifndef OPENMP_WARP_UPDATE_COMPUTE_DISABLE
@@ -129,30 +131,49 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					Vector3i canonicalVoxelPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxelCanonical& canonicalVoxel = localVoxelBlock[locId];
+					//_DEBUG
+//					if(canonicalVoxel.flags == VOXEL_SKIP_OPT){
+//						continue;
+//					}
 					float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
 
 					//=================================== TRUNCATION REGION CHECKS =====================================
 					float liveSdf;
-					bool hitLiveNarrowBand;
+					bool hitLiveNonTruncated;
 					bool hitLiveKnownVoxels;
 					Vector3f projectedPosition = canonicalVoxelPosition.toFloat() + canonicalVoxel.warp_t;
 
-					liveSdf = InterpolateTrilinearly_SetUnknownToVal_StruckChecks(
+					liveSdf = _DEBUG_InterpolateTrilinearly_SetUnknownToVal_StruckChecks(
 							liveVoxels, liveHashTable, canonicalSdf, projectedPosition, liveCache,
-							hitLiveNarrowBand, hitLiveKnownVoxels);
+							hitLiveNonTruncated, hitLiveKnownVoxels);
 
 					//almost no restriction -- Mira's case with addition of VOXEL_TRUNCATED flag checking
 					bool truncatedInCanonical = canonicalVoxel.flags == ITMLib::VOXEL_TRUNCATED;
+					//_DEBUG
+//					if(truncatedInCanonical && !hitLiveNonTruncated && liveSdf != canonicalSdf){
+//						canonicalVoxel.flags = VOXEL_SKIP_OPT;
+//						continue;
+//					}
+//					if (iteration > 164 && ORUtils::length(canonicalVoxel.warp_t) > 3.0f){
+//						std::cout << "Position: " << canonicalVoxelPosition << " C-to-L: " << canonicalSdf << " : " << liveSdf << std::endl;
+//					}
+
+//					if ((iteration == 0 || iteration == 165) &&
+//							std::find(_DEBUG_positions.begin(),_DEBUG_positions.end(), canonicalVoxelPosition) != _DEBUG_positions.end()){
+//						std::cout << "Position: " << canonicalVoxelPosition << " C-to-L: " << canonicalSdf << " : " << liveSdf << std::endl;
+//					}
 					bool knownInCanonical = canonicalSdf != TVoxelCanonical::SDF_initialValue();
 
 					// the latter condition needs to be included since sometimes, even if some live voxels in the lookup
 					// neighborhood are non-truncated, they ally may be a whole voxel away from the warped position,
 					// which would then result in a live SDF lookup equivalent to that in a truncated region.
-					bool truncatedInLive = !hitLiveNarrowBand || (1.0 - std::abs(liveSdf) < FLT_EPSILON2);
+					bool truncatedInLive = !hitLiveNonTruncated || (1.0 - std::abs(liveSdf) < FLT_EPSILON2);
 
 					// The data term is only relevant if we know the actual sdf values in both the canonical and the
 					// live frame, since it's based on the comparison between them
-					bool computeDataTerm = knownInCanonical && hitLiveKnownVoxels && enableDataTerm;
+					//_DEBUG
+					//bool computeDataTerm = knownInCanonical && hitLiveKnownVoxels && enableDataTerm;
+					bool computeDataTerm = knownInCanonical && !truncatedInCanonical && hitLiveNonTruncated && enableDataTerm;
 
 					//_DEBUG
 					//bool computeLevelSetTerm = !truncatedInCanonical && !truncatedInLive;
@@ -165,13 +186,16 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					bool printVoxelResult = false;
 					bool recordVoxelResult = false;
 					if (hasFocusCoordinates && canonicalVoxelPosition == focusCoordinates) {
+						liveSdf = _DEBUG_InterpolateTrilinearly_SetUnknownToVal_StruckChecks(
+								liveVoxels, liveHashTable, canonicalSdf, projectedPosition, liveCache,
+								hitLiveNonTruncated, hitLiveKnownVoxels);
 						std::cout << std::endl << bright_cyan << "*** Printing voxel at " << canonicalVoxelPosition
 						          << " *** " << reset << std::endl;
 						std::cout << "Source SDF vs. target SDF: " << canonicalSdf << "-->" << liveSdf << std::endl
 						          << "Warp: " << green << canonicalVoxel.warp_t << reset
 						          << " length: " << green << ORUtils::length(canonicalVoxel.warp_t) << reset;
-						std::cout << " Struck live narrow band: " << (hitLiveNarrowBand ? green : red)
-						          << (hitLiveNarrowBand ? "true" : "false") << reset;
+						std::cout << " Struck live narrow band: " << (hitLiveNonTruncated ? green : red)
+						          << (hitLiveNonTruncated ? "true" : "false") << reset;
 						std::cout << std::endl;
 						printVoxelResult = true;
 						if (ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::sceneLogger != nullptr) {
@@ -207,8 +231,18 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					Vector3f liveColor, liveSdfJacobian, liveColorJacobian, liveSdf_Center_WarpForward, warpedSdfJacobian;
 
 					if (computeDataTerm || computeLevelSetTerm) {
-						ComputeLiveSdf_Center_WarpForward(canonicalVoxelPosition, warp, liveSdf, liveVoxels,
-						                                  liveHashTable, liveCache, liveSdf_Center_WarpForward);
+//						ComputeLiveSdf_Center_WarpForward_SetUnknown(canonicalVoxelPosition, warp, 1.0f, liveVoxels,
+//						                                  liveHashTable, liveCache, liveSdf_Center_WarpForward);
+
+//						ComputeLiveSdf_Center_WarpForward_SetTruncated(canonicalVoxelPosition, warp, liveSdf,
+//						                                               liveVoxels,
+//						                                               liveHashTable, liveCache,
+//						                                               liveSdf_Center_WarpForward);
+
+						ComputeLiveSdf_Center_WarpForward_SetUnknown(canonicalVoxelPosition, warp, liveSdf,
+						                                               liveVoxels,
+						                                               liveHashTable, liveCache,
+						                                               liveSdf_Center_WarpForward);
 
 						if (printVoxelResult) {
 							std::cout << std::endl << "Live SDF at warp plus one for each direction: " << yellow

@@ -118,6 +118,16 @@ vtkSmartPointer<vtkActor>& WarpedSceneVizPipe::GetSlicePreviewActor() {
 //endregion
 //region =========================================== OTHER GETTERS =====================================================
 
+Vector3i WarpedSceneVizPipe::GetSelectedVoxelCoordinates() const {
+	if(selectedPointId > -1){
+		Vector3i initialCoords;
+		double vizInitialCoords[3];
+		RetrieveInitialCoordinates(selectedPointId, initialCoords.values, vizInitialCoords);
+		return initialCoords;
+	}
+	return Vector3i(0);
+}
+
 Vector3d WarpedSceneVizPipe::GetHighlightPosition(int hash, int locId) const{
 	Vector3d pos;
 	this->interestVoxelPolydata->GetPoints()->GetPoint(
@@ -179,8 +189,8 @@ WarpedSceneVizPipe::PrintVoxelInfromation(vtkIdType pointId, const ITMScene<ITMV
 	double currentPoint[3];
 	currentPoints->GetPoint(pointId, currentPoint);
 	double current_x = currentPoint[0];
-	double current_y = -currentPoint[1];
-	double current_z = -currentPoint[2];
+	double current_y = currentPoint[1];
+	double current_z = currentPoint[2];
 
 	//retrieve original coordinate before warp
 	Vector3i initialCoords;
@@ -277,8 +287,8 @@ void WarpedSceneVizPipe::PreparePointsForRendering(const ITMScene<ITMVoxelCanoni
 
 		//draw hash block
 		hashBlockPoints->InsertNextPoint((currentBlockPositionVoxels.x + halfBlock),
-		                                 -(currentBlockPositionVoxels.y + halfBlock),
-		                                 -(currentBlockPositionVoxels.z + halfBlock));
+		                                 (currentBlockPositionVoxels.y + halfBlock),
+		                                 (currentBlockPositionVoxels.z + halfBlock));
 		totalVoxelCount += SDF_BLOCK_SIZE3;
 		if (inInterestRegion) continue;
 
@@ -331,8 +341,8 @@ void WarpedSceneVizPipe::PreparePointsForRendering(const ITMScene<ITMVoxelCanoni
 					}
 
 					interestVoxelPoints->InsertNextPoint(originalPositionVoxels.x,
-					                                     -originalPositionVoxels.y,
-					                                     -originalPositionVoxels.z);
+					                                     originalPositionVoxels.y,
+					                                     originalPositionVoxels.z);
 
 					interestScaleAttribute->InsertNextValue(voxelScale);
 					interestAlternativeScaleAttribute->InsertNextValue(alternativeVoxelScale);
@@ -484,8 +494,8 @@ void WarpedSceneVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
 		}
 		//use 1st 3-float field out of 2 for the warp buffer entry
 		pointRawData[iVoxel * 3 + 0] = initialPointRawData[iVoxel * 3 + 0] + warpRawData[iVoxel * 6 + 0];
-		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] - warpRawData[iVoxel * 6 + 1];
-		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] - warpRawData[iVoxel * 6 + 2];
+		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] + warpRawData[iVoxel * 6 + 1];
+		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] + warpRawData[iVoxel * 6 + 2];
 	}
 	voxelPolydata->Modified();
 }
@@ -500,8 +510,8 @@ void WarpedSceneVizPipe::UpdateInterestRegionsFromBuffers(void* buffer) {
 	for (int iVoxel = 0; iVoxel < voxels->GetNumberOfPoints(); iVoxel++) {
 		//use 1st 3-float field out of 2 for the warp buffer entry
 		pointRawData[iVoxel * 3 + 0] = initialPointRawData[iVoxel * 3 + 0] + warpRawData[iVoxel * 6 + 0];
-		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] - warpRawData[iVoxel * 6 + 1];
-		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] - warpRawData[iVoxel * 6 + 2];
+		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] + warpRawData[iVoxel * 6 + 1];
+		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] + warpRawData[iVoxel * 6 + 2];
 	}
 	interestVoxelPolydata->Modified();
 }
@@ -539,6 +549,7 @@ void WarpedSceneVizPipe::SelectOrDeselectVoxel(vtkIdType pointId, bool highlight
 		selectedVoxelActor->SetScale(selectedVoxelScale + 0.01);
 		selectedVoxelActor->SetPosition(point);
 		PrintVoxelInfromation(pointId, scene);
+		this->selectedPointId = pointId;
 	} else {
 		selectedVoxelActor->VisibilityOff();
 	}
@@ -557,8 +568,8 @@ WarpedSceneVizPipe::RetrieveInitialCoordinates(vtkIdType pointId, int initialCoo
 	auto& initialPoints = this->initialNonInterestPoints;
 	initialPoints->GetPoint(pointId, vizCoordinates);
 	initialCoordinates[0] = static_cast<int>(vizCoordinates[0]);
-	initialCoordinates[1] = static_cast<int>(-vizCoordinates[1]);
-	initialCoordinates[2] = static_cast<int>(-vizCoordinates[2]);
+	initialCoordinates[1] = static_cast<int>(vizCoordinates[1]);
+	initialCoordinates[2] = static_cast<int>(vizCoordinates[2]);
 }
 
 /**
@@ -637,6 +648,8 @@ void WarpedSceneVizPipe::ClearSliceSelection() {
 	selectedSliceExtrema[1]->VisibilityOff();
 	haveSliceCoordinates = false;
 }
+
+
 // endregion
 
 

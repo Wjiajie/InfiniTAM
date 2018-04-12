@@ -31,6 +31,10 @@
 #include "../../Utils/FileIO/ITMSceneLogger.h"
 #include "../../Utils/ITMPrintHelpers.h"
 
+//boost
+#include <boost/filesystem.hpp>
+
+namespace fs = boost::filesystem;
 
 using namespace ITMLib;
 
@@ -42,7 +46,8 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracke
 		:
 		maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize),
 		sceneLogger(nullptr),
-		baseOutputDirectory(scenePath) {}
+		baseOutputDirectory(scenePath),
+		hasFocusCoordinates(false) {}
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params,
@@ -201,6 +206,10 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 std::string ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::GenerateCurrentFrameOutputPath() const {
-	return baseOutputDirectory + "/Frame_" + std::to_string(currentFrameIx);
+	fs::path path(baseOutputDirectory + "/Frame_" + std::to_string(currentFrameIx));
+	if(!fs::exists(path)){
+		fs::create_directories(path);
+	}
+	return path.string();
 }
 

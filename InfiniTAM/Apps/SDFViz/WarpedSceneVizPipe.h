@@ -59,6 +59,7 @@ public:
 	void PrintHighlightIndexes();
 	bool GetSliceCoordinatesAreSet() const;
 	void GetSliceCoordinates(Vector3i& coord0, Vector3i& coord1) const;
+	Vector3i GetSelectedVoxelCoordinates() const;
 
 	// *** setup ***
 	void PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeometry);
@@ -104,6 +105,7 @@ private:
 	bool preparePipelineWasCalled = false;
 	bool firstSliceBoundSelected = false;
 	bool warpEnabled = true;
+	vtkIdType selectedPointId = -1;
 
 	// ** interest region info **
 	std::vector<int> interestRegionHashes;

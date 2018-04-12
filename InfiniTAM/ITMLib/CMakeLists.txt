@@ -29,6 +29,7 @@ find_package(Boost REQUIRED filesystem)
 SET(ITMLIB_TOPLEVEL_CPU_SOURCES
 CPUInstantiations.cpp
 DynamicFusionCPUInstantiations.cpp
+TempDFCriticalInstanciations.cpp
 )
 
 SET(ITMLIB_TOPLEVEL_CUDA_SOURCES

@@ -424,6 +424,58 @@ inline float InterpolateTrilinearly_SetTruncatedToVal_StruckNarrowBand(const CON
 	return sdf;
 }
 
+template<class TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline float _DEBUG_InterpolateTrilinearly_SetUnknownToVal_StruckChecks(const CONSTPTR(TVoxel)* voxelData,
+                                                                 const CONSTPTR(ITMHashEntry)* voxelHash,
+                                                                 const CONSTPTR(float)& defaultReplacement,
+                                                                 const CONSTPTR(Vector3f)& point,
+                                                                 THREADPTR(TCache)& cache,
+                                                                 THREADPTR(bool)& struckNonTruncated,
+                                                                 THREADPTR(bool)& struckKnownVoxels) {
+	Vector3f ratios;
+	Vector3f inverseRatios(1.0f);
+	Vector3i pos;
+	int vmIndex;
+	TO_INT_FLOOR3(pos, ratios, point);
+	inverseRatios -= ratios;
+	const int neighborCount = 8;
+	const Vector3i positions[neighborCount] = {Vector3i(0, 0, 0), Vector3i(1, 0, 0),
+	                                           Vector3i(0, 1, 0), Vector3i(1, 1, 0),
+	                                           Vector3i(0, 0, 1), Vector3i(1, 0, 1),
+	                                           Vector3i(0, 1, 1), Vector3i(1, 1, 1)};
+	float sdf = 0.0f;
+	float coefficients[neighborCount];
+
+	struckKnownVoxels = false;
+	struckNonTruncated = false;
+	float cumulativeWeight = 0.0f;
+
+	//@formatter:off
+	coefficients[0] = inverseRatios.x * inverseRatios.y * inverseRatios.z; //000
+	coefficients[1] = ratios.x *        inverseRatios.y * inverseRatios.z; //100
+	coefficients[2] = inverseRatios.x * ratios.y *        inverseRatios.z; //010
+	coefficients[3] = ratios.x *        ratios.y *        inverseRatios.z; //110
+	coefficients[4] = inverseRatios.x * inverseRatios.y * ratios.z;        //001
+	coefficients[5] = ratios.x *        inverseRatios.y * ratios.z;        //101
+	coefficients[6] = inverseRatios.x * ratios.y *        ratios.z;        //011
+	coefficients[7] = ratios.x *        ratios.y *        ratios.z;        //111
+
+	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
+		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (positions[iNeighbor]), vmIndex, cache);
+		bool curKnown = v.flags != ITMLib::VOXEL_UNKNOWN;
+		bool curNonTruncated = v.flags == ITMLib::VOXEL_NONTRUNCATED;
+		float weight = coefficients[iNeighbor] * curKnown;
+		sdf += weight * (curKnown ? TVoxel::valueToFloat(v.sdf) : defaultReplacement);
+		struckKnownVoxels |= (bool) (weight * curKnown);
+		struckNonTruncated |= (bool) (weight * curNonTruncated);
+		cumulativeWeight += weight;
+
+	}
+	return sdf;
+}
+
+
 //sdf only, version with replacing all truncated voxels with given value; determines whether narrow band was hit
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
@@ -432,15 +484,15 @@ inline float InterpolateTrilinearly_SetUnknownToVal_StruckChecks(const CONSTPTR(
                                                                  const CONSTPTR(float)& defaultReplacement,
                                                                  const CONSTPTR(Vector3f)& point,
                                                                  THREADPTR(TCache)& cache,
-                                                                 THREADPTR(bool)& struckNarrowBand,
-                                                                 THREADPTR(bool)& struckKnownValues) {
+                                                                 THREADPTR(bool)& struckNonTruncated,
+                                                                 THREADPTR(bool)& struckKnownVoxels) {
 	float sdfRes1, sdfRes2, sdfV1, sdfV2;
 	int vmIndex = false;
 	Vector3f coeff;
 	Vector3i pos;
 	TO_INT_FLOOR3(pos, coeff, point);
-	struckNarrowBand = false;
-	struckKnownValues = false;
+	struckNonTruncated = false;
+	struckKnownVoxels = false;
 #define PROCESS_VOXEL(suffix, coord)\
     {\
         const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (coord), vmIndex, cache);\
@@ -449,8 +501,8 @@ inline float InterpolateTrilinearly_SetUnknownToVal_StruckChecks(const CONSTPTR(
             sdfV##suffix = defaultReplacement;\
         }else{\
             sdfV##suffix = currentSdf;\
-            struckNarrowBand |= v.flags == ITMLib::VOXEL_NONTRUNCATED;\
-            struckKnownValues = true;\
+            struckNonTruncated |= v.flags == ITMLib::VOXEL_NONTRUNCATED;\
+            struckKnownVoxels = true;\
         }\
     }
 	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
@@ -470,6 +522,46 @@ inline float InterpolateTrilinearly_SetUnknownToVal_StruckChecks(const CONSTPTR(
 
 	return sdf;
 }
+
+
+
+//sdf only, version with replacing all truncated voxels with given value; determines whether narrow band was hit
+template<class TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline float InterpolateTrilinearly_SetUnknownToVal(const CONSTPTR(TVoxel)* voxelData,
+                                                    const CONSTPTR(ITMHashEntry)* voxelHash,
+                                                    const CONSTPTR(float)& defaultReplacement,
+                                                    const CONSTPTR(Vector3f)& point,
+                                                    THREADPTR(TCache)& cache) {
+	float sdfRes1, sdfRes2, sdfV1, sdfV2;
+	int vmIndex = false;
+	Vector3f coeff;
+	Vector3i pos;
+	TO_INT_FLOOR3(pos, coeff, point);
+#define PROCESS_VOXEL(suffix, coord)\
+    {\
+        const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (coord), vmIndex, cache);\
+        float currentSdf = TVoxel::valueToFloat(v.sdf);\
+        sdfV##suffix = v.flags == ITMLib::VOXEL_UNKNOWN ? defaultReplacement : currentSdf;\
+    }
+	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
+	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
+	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
+	PROCESS_VOXEL(1, Vector3i(0, 1, 0))
+	PROCESS_VOXEL(2, Vector3i(1, 1, 0))
+	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
+	PROCESS_VOXEL(1, Vector3i(0, 0, 1))
+	PROCESS_VOXEL(2, Vector3i(1, 0, 1))
+	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
+	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
+	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
+	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
+#undef PROCESS_VOXEL
+	float sdf = TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
+
+	return sdf;
+}
+
 
 
 //pick maximum weights, get confidence

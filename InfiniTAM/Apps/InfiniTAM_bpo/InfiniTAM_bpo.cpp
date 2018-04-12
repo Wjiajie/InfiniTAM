@@ -284,8 +284,9 @@ int main(int argc, char** argv) {
 				return EXIT_FAILURE;
 			}
 			memcpy(focusCoordiantes.values, focusCoordsVec.data(), sizeof(int) * 3);
+			settings->SetFocusCoordinates(focusCoordiantes);
 		}
-		settings->SetFocusCoordinates(focusCoordiantes);
+
 		settings->enableDataTerm = !disableDataTerm;
 		settings->enableLevelSetTerm = !disableLevelSetTerm;
 		settings->enableKillingTerm = !disableKillingTerm;

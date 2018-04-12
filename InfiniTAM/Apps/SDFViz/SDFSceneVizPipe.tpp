@@ -115,8 +115,8 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering(const ITMScene<T
 
 		//draw hash block
 		hashBlockPoints->InsertNextPoint((currentBlockPositionVoxels.x + centerOffset),
-		                                 -(currentBlockPositionVoxels.y + centerOffset),
-		                                 -(currentBlockPositionVoxels.z + centerOffset));
+		                                 (currentBlockPositionVoxels.y + centerOffset),
+		                                 (currentBlockPositionVoxels.z + centerOffset));
 
 		const TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
@@ -153,15 +153,7 @@ void SDFSceneVizPipe<TVoxel, TIndex>::ResetExtractionBounds() {
 template<typename TVoxel, typename TIndex>
 void SDFSceneVizPipe<TVoxel, TIndex>::SetExtractionBounds(const Vector3i& minPoint, const Vector3i& maxPoint) {
 	vtkSmartPointer<vtkBox> extractionBounds = vtkSmartPointer<vtkBox>::New();
-	Vector3d min = minPoint.toDouble();
-	Vector3d max = maxPoint.toDouble();
-	//flip as per coordinate axes change, +x, -y, -z
-	extractionBounds->SetBounds(minPoint.x, maxPoint.x, -maxPoint.y, -minPoint.y, -maxPoint.z, -minPoint.z);
-	//extractionBounds->SetBounds(-37.0,-29.0,-31.0,-39.0,-179.0,-187.0);
-	//extractionBounds->SetBounds(-72.0,16.0,-24.0,72.0,0,304);
-	std::cout << minPoint << std::endl;
-	std::cout << maxPoint << std::endl;
-
+	extractionBounds->SetBounds(minPoint.x, maxPoint.x, minPoint.y, maxPoint.y, minPoint.z, maxPoint.z);
 	extractionFilter->SetImplicitFunction(extractionBounds);
 	extractionFilter->Update();
 	extractionFilter->Modified();
@@ -188,14 +180,6 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePipeline(vtkAlgorithmOutput* voxelS
 		extractionFilter->ExtractInsideOn();
 		extractionFilter->SetInputData(voxelPolydata);
 		ResetExtractionBounds();
-//		vtkSmartPointer<vtkBox> extractionBounds = vtkSmartPointer<vtkBox>::New();
-//		extractionBounds->SetBounds(-37.0,-29.0,-31.0,-39.0,-179.0,-187.0);
-//		extractionFilter = vtkSmartPointer<vtkExtractPolyDataGeometry>::New();
-//		extractionFilter->SetImplicitFunction(extractionBounds);
-//		extractionFilter->SetInputData(voxelPolydata);
-//		//extractionFilter->ExtractBoundaryCellsOn();
-//		extractionFilter->ExtractInsideOn();
-//		extractionFilter->Update();
 		// set up voxel mapper
 		SetUpSceneVoxelMapper(voxelSourceGeometry, voxelMapper, voxelColorLookupTable, extractionFilter);
 	}else{

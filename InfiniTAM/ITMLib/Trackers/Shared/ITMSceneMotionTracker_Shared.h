@@ -92,7 +92,7 @@ inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* neighbor
 // computing the hessian. The jacobian vector defines the direction of data term's contribution to the warp updates.
 template<typename TVoxelLive, typename TCache>
 _CPU_AND_GPU_CODE_
-inline void ComputeLiveSdf_Center_WarpForward(
+inline void ComputeLiveSdf_Center_WarpForward_SetTruncated(
 		const CONSTPTR(Vector3i)& voxelPosition,
 		const CONSTPTR(Vector3f)& voxelWarp,
 		const CONSTPTR(float)& voxelSdf,
@@ -105,6 +105,7 @@ inline void ComputeLiveSdf_Center_WarpForward(
 	Vector3f warpedPosition = voxelPosition.toFloat() + voxelWarp;
 	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
 	// === increment the warp by 1 in each direction and use them to check what interpolated values from live frame map there
+
 	float live_at_u_plus_one = InterpolateTrilinearly_SetTruncatedToVal(
 			liveVoxels, liveHashTable, voxelSdf, warpedPosition + Vector3f(1.f, 0.f, 0.f), liveCache);
 	float live_at_v_plus_one = InterpolateTrilinearly_SetTruncatedToVal(
@@ -115,6 +116,35 @@ inline void ComputeLiveSdf_Center_WarpForward(
 	liveSdf_Center_WarpForward =
 			Vector3f(live_at_u_plus_one, live_at_v_plus_one, live_at_w_plus_one);
 };
+
+template<typename TVoxelLive, typename TCache>
+inline void ComputeLiveSdf_Center_WarpForward_SetUnknown(
+		const CONSTPTR(Vector3i)& voxelPosition,
+		const CONSTPTR(Vector3f)& voxelWarp,
+		const CONSTPTR(float)& voxelSdf,
+		const CONSTPTR(TVoxelLive)* liveVoxels,       //| ===============  |
+		const CONSTPTR(ITMHashEntry)* liveHashTable,  //| live scene data  |
+		THREADPTR(TCache)& liveCache,                 //| ===============  |
+		THREADPTR(Vector3f)& liveSdf_Center_WarpForward
+) {
+	//position projected with the current warp
+	Vector3f warpedPosition = voxelPosition.toFloat() + voxelWarp;
+	//=========== LOOKUP WITH ALTERNATIVE WARPS ========================================================================
+	// === increment the warp by 1 in each direction and use them to check what interpolated values from live frame map there
+
+	float live_at_u_plus_one = InterpolateTrilinearly_SetUnknownToVal(
+			liveVoxels, liveHashTable, voxelSdf, warpedPosition + Vector3f(1.f, 0.f, 0.f), liveCache);
+	float live_at_v_plus_one = InterpolateTrilinearly_SetUnknownToVal(
+			liveVoxels, liveHashTable, voxelSdf, warpedPosition + Vector3f(0.f, 1.f, 0.f), liveCache);
+	float live_at_w_plus_one = InterpolateTrilinearly_SetUnknownToVal(
+			liveVoxels, liveHashTable, voxelSdf, warpedPosition + Vector3f(0.f, 0.f, 1.f), liveCache);
+
+	liveSdf_Center_WarpForward =
+			Vector3f(live_at_u_plus_one, live_at_v_plus_one, live_at_w_plus_one);
+};
+
+
+
 
 //without color
 template<typename TVoxelLive, typename TCache>

@@ -15,6 +15,9 @@
 //  ================================================================
 #include "SDFViz.h"
 
+//stdlib
+#include <utility>
+
 //vtk
 #include <vtkCylinderSource.h>
 #include <vtkPolyDataMapper.h>
@@ -45,8 +48,9 @@
 #include <vtkTextActor.h>
 #include <vtkTextProperty.h>
 #include <vtkVertexGlyphFilter.h>
-
-#include <utility>
+#include <vtk-8.1/vtkAxesActor.h>
+#include <vtkTransform.h>
+#include <vtk-8.1/vtkOrientationMarkerWidget.h>
 
 //local
 #include "SDFSceneVizPipe.h"
@@ -118,6 +122,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 		sdfRenderer(vtkSmartPointer<vtkRenderer>::New()),
 		markerRenderer(vtkSmartPointer<vtkRenderer>::New()),
 		guiOverlayRenderer(vtkSmartPointer<vtkRenderer>::New()),
+		renderWindowInteractor(vtkSmartPointer<vtkRenderWindowInteractor>::New()),
 		sphere(vtkSmartPointer<vtkSphereSource>::New()),
 		cube(vtkSmartPointer<vtkCubeSource>::New()),
 		iterationIndicator(vtkSmartPointer<vtkTextActor>::New()),
@@ -153,11 +158,13 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 	delete settings;
 
 	InitializeRendering();
+
 	DrawLegend();
 	DrawMessageBar();
 	DrawIterationCounter();
 	DrawFrameCounter();
 	UpdateFrameDisplay();
+
 
 	//read scenes from disk
 	SetUpGeometrySources();
@@ -230,14 +237,13 @@ void SDFViz::InitializeRendering() {
 	guiOverlayRenderer->SetLayer(2);
 	guiOverlayRenderer->InteractiveOff();
 
-	renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-
 	vtkSmartPointer<SDFVizInteractorStyle> interactorStyle = vtkSmartPointer<SDFVizInteractorStyle>::New();
 	interactorStyle->parent = this;
 	interactorStyle->SetMouseWheelMotionFactor(0.05);
-
 	renderWindowInteractor->SetInteractorStyle(interactorStyle);
 	renderWindowInteractor->SetRenderWindow(renderWindow);
+
+	InitializeAxes();
 }
 
 bool SDFViz::NextNonInterestWarps() {
@@ -515,9 +521,10 @@ void SDFViz::MoveFocusToHighlightAt(int hash, int localId) {
 void SDFViz::MoveFocusToVoxelAt(Vector3d absoluteCoordinates) {
 	sdfRenderer->GetActiveCamera()->SetFocalPoint(absoluteCoordinates.values);
 	sdfRenderer->GetActiveCamera()->SetViewUp(0.0, 1.0, 0.0);
-	absoluteCoordinates.x += 0.9;
-	absoluteCoordinates.y += 0.5;
-	absoluteCoordinates.z += 1.0;
+	double factor = 3.0;
+	absoluteCoordinates.x += factor * 0.9;
+	absoluteCoordinates.y += factor * 0.5;
+	absoluteCoordinates.z += factor * 1.0;
 
 	sdfRenderer->GetActiveCamera()->SetPosition(absoluteCoordinates.values);
 }
@@ -874,14 +881,27 @@ void SDFViz::LoadAllSlices() {
 	                              std::make_move_iterator(std::begin(loadedIdentifiers)),
 	                              std::make_move_iterator(std::end(loadedIdentifiers)));
 }
-//_DEBUG
-bool SDFViz::SliceTestRoutine() {
-	bool continueSliceSelection;
-	//canonicalScenePipe.SelectOrDeselectVoxel(364440,true,sceneLogger->GetActiveWarpScene());
-	canonicalScenePipe.SetSliceSelection(364440,continueSliceSelection,sceneLogger->GetActiveWarpScene());
-	canonicalScenePipe.SetSliceSelection(416251,continueSliceSelection,sceneLogger->GetActiveWarpScene());
-	MakeSlice();
-	SwitchToSlice(0);
+
+void SDFViz::InitializeAxes() {
+	vtkSmartPointer<vtkNamedColors> colors =
+			vtkSmartPointer<vtkNamedColors>::New();
+
+	vtkSmartPointer<vtkAxesActor> axes =
+			vtkSmartPointer<vtkAxesActor>::New();
+
+	orientationWidget =
+			vtkSmartPointer<vtkOrientationMarkerWidget>::New();
+	double rgba[4]{0.0, 0.0, 0.0, 0.0};
+	colors->GetColor("Carrot",rgba);
+	orientationWidget->SetOutlineColor(rgba[0], rgba[1], rgba[2]);
+	orientationWidget->SetOrientationMarker( axes );
+	orientationWidget->SetInteractor( renderWindowInteractor );
+	orientationWidget->SetViewport( 0.0, 0.0, 0.4, 0.4 );
+	orientationWidget->SetEnabled( 1 );
+	orientationWidget->InteractiveOn();
 }
-//END _DEBUG
+
+void SDFViz::MoveFocusToSelectedVoxel() {
+	MoveFocusToVoxelAt(canonicalScenePipe.GetSelectedVoxelCoordinates().toDouble());
+}
 // endregion

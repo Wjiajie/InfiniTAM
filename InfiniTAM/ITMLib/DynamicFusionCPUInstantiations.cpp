@@ -20,7 +20,7 @@
 #include "Core/ITMDynamicEngine.tpp"
 #include "Core/ITMDenseDynamicMapper.tpp"
 #include "Trackers/Interface/ITMSceneMotionTracker.tpp"
-#include "Trackers/CPU/ITMSceneMotionTracker_CPU.tpp"
+
 #include "Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.tpp"
 #include "Engines/Swapping/CPU/ITMSwappingEngine_CPU.tpp"
 #include "Engines/Visualisation/CPU/ITMVisualisationEngine_CPU.tpp"
@@ -40,7 +40,7 @@ template class ITMDenseDynamicMapper<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIn
 template class ITMSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMSceneReconstructionEngine_CPU<ITMVoxelLive, ITMVoxelIndex>;
 template class ITMSceneMotionTracker<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
-template class ITMSceneMotionTracker_CPU<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+
 template class ITMVisualisationEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMVisualisationEngine_CPU<ITMVoxelLive, ITMVoxelIndex>;
 template class ITMMeshingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;

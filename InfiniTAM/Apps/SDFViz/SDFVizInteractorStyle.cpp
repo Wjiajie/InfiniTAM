@@ -125,8 +125,12 @@ void SDFVizInteractorStyle::OnKeyPress() {
 			if (parent->hasHighlightInfo) {
 				parent->RefocusAtCurrentHighlight();
 			} else {
-				parent->sdfRenderer->ResetCamera();
-				parent->renderWindow->Render();
+				if(rwi->GetAltKey()){
+					parent->sdfRenderer->ResetCamera();
+					parent->renderWindow->Render();
+				}else{
+					parent->MoveFocusToSelectedVoxel();
+				}
 			}
 		} else if (key == "b") {
 			if (rwi->GetAltKey()) {

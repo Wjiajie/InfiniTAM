@@ -25,7 +25,8 @@ namespace ITMLib {
 enum VoxelFlags : unsigned char{
 	VOXEL_UNKNOWN = 0,
 	VOXEL_TRUNCATED = 1,
-	VOXEL_NONTRUNCATED = 2
+	VOXEL_NONTRUNCATED = 2,
+	VOXEL_SKIP_OPT = 3
 };
 
 inline
