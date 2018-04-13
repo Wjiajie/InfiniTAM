@@ -232,7 +232,10 @@ struct ComputeUpdatedVoxelInfo<true, true, false, TVoxel> {
 //================= VOXEL UPDATES FOR VOXELS WITH SEMANTIC INFORMATION =================================================
 // no color, no confidence, with semantic info
 #define FLAG_UPDATE_CHECK \
-	if(std::abs(eta) > mu){/*assumes narrow band half-thickness mu is smaller than 1 meter*/\
+	if (eta == -1.0f){\
+		voxel.flags = ITMLib::VoxelFlags::VOXEL_UNKNOWN;\
+        return; \
+	} else if(std::abs(eta) > mu){/*assumes narrow band half-thickness mu is smaller than 1 meter*/\
         voxel.flags = ITMLib::VoxelFlags::VOXEL_TRUNCATED;\
         return; \
     } else {\

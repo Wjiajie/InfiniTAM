@@ -307,7 +307,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 					if (computeLevelSetTerm) {
 						//=================================== LEVEL SET TERM ===============================================
 
-						Vector3f jacobianNormsAtWarpPlusOne;
+//						Vector3f jacobianNormsAtWarpPlusOne;
 						ComputeWarpedJacobianAndHessian(neighborWarps, canonicalVoxelPosition, canonicalSdf,
 						                                liveSdf_Center_WarpForward, liveSdf, liveVoxels,
 						                                liveHashTable, liveCache, warpedSdfJacobian,
@@ -317,9 +317,9 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
 						sdfJacobianNormMinusUnity = sdfJacobianNorm - unity;
 
 						//BEGIN _DEBUG
-						liveSdfJacobian = liveSdf_Center_WarpForward - Vector3f(liveSdf);
-						float liveSdfJacobianNorm = length(liveSdfJacobian);
-						float liveJacobianNormMinusUnity = liveSdfJacobianNorm - unity;
+//						liveSdfJacobian = liveSdf_Center_WarpForward - Vector3f(liveSdf);
+//						float liveSdfJacobianNorm = length(liveSdfJacobian);
+//						float liveJacobianNormMinusUnity = liveSdfJacobianNorm - unity;
 						//END _DEBUG
 
 						deltaELevelSet =

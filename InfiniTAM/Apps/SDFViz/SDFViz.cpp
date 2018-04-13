@@ -520,7 +520,7 @@ void SDFViz::MoveFocusToHighlightAt(int hash, int localId) {
 
 void SDFViz::MoveFocusToVoxelAt(Vector3d absoluteCoordinates) {
 	sdfRenderer->GetActiveCamera()->SetFocalPoint(absoluteCoordinates.values);
-	sdfRenderer->GetActiveCamera()->SetViewUp(0.0, 1.0, 0.0);
+	sdfRenderer->GetActiveCamera()->SetViewUp(0.0, -1.0, 0.0);
 	double factor = 3.0;
 	absoluteCoordinates.x += factor * 0.9;
 	absoluteCoordinates.y += factor * 0.5;
