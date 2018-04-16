@@ -77,6 +77,19 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 	bool stopIntegratingAtMaxW = scene->sceneParams->stopIntegratingAtMaxW;
 	//bool approximateIntegration = !trackingState->requiresFullRendering;
 
+	//_DEBUG
+//	std::vector<Vector3i> _DEBUG_positions = {
+//			Vector3i(1, 59, 217 ),
+//			Vector3i(1, 59, 218 ),
+//			Vector3i(1, 58, 213 ),
+//			Vector3i(1, 58, 214 ),
+//			Vector3i(1, 60, 220 ),
+//			Vector3i(1, 60, 221 ),
+//			Vector3i(1, 61, 224 ),
+//			Vector3i(1, 61, 225 ),
+//			Vector3i(-23, 62, 214 ),
+//			Vector3i(-23, 62, 215 )};
+
 #ifdef WITH_OPENMP
 	#pragma omp parallel for
 #endif
@@ -108,8 +121,16 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 			pt_model.z = (float)(globalPos.z + z) * voxelSize;
 			pt_model.w = 1.0f;
 			//_DEBUG
-//			if(globalPos.x + x == -25 && globalPos.y + y == -24 && globalPos.z + z == 176){
-//				int i = 42;
+//			Vector3i voxelPos = globalPos + Vector3i(x,y,z);
+//			if(std::find(_DEBUG_positions.begin(),_DEBUG_positions.end(), voxelPos) != _DEBUG_positions.end()){
+//				Vector4f pt_camera; Vector2f pt_image;
+//				float depth_measure;
+//				pt_camera = M_d * pt_model;
+//				pt_image.x = projParams_d.x * pt_camera.x / pt_camera.z + projParams_d.z;
+//				pt_image.y = projParams_d.y * pt_camera.y / pt_camera.z + projParams_d.w;
+//				Vector2i pt_image_int = Vector2i((int)(pt_image.x + 0.5f), (int)(pt_image.y + 0.5f));
+//				depth_measure = depth[(int)(pt_image.x + 0.5f) + (int)(pt_image.y + 0.5f) * depthImgSize.x];
+//				std::cout << "Processed voxel at " << voxelPos  << ". Image sampled at: " << pt_image_int << ". Depth (m): " << depth_measure << ". Image float coord: " << pt_image << std::endl;
 //			}
 			ComputeUpdatedVoxelInfo<
 					TVoxel::hasColorInformation,

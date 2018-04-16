@@ -123,13 +123,6 @@ void SDFSceneVizPipe<TVoxel, TIndex>::PreparePointsForRendering(const ITMScene<T
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-					//_DEBUG
-					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-					const TVoxel& voxel = localVoxelBlock[locId];
-					Vector3i voxelPosition = currentBlockPositionVoxels + Vector3i(x, y, z);
-					if(voxel.flags == ITMLib::VOXEL_UNKNOWN){
-						std::cout << "Live unknown voxel at: " << voxelPosition << std::endl;
-					}
 					ComputeVoxelAttributes(currentBlockPositionVoxels, x, y, z, localVoxelBlock, points, scaleAttribute,
 					                       alternativeScaleAttribute, colorAttribute, highlights, hash);
 				}

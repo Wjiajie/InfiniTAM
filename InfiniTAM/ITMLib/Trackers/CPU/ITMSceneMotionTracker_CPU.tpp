@@ -72,7 +72,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTr
 		  canonicalBlockCoordinates(new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
 		  enableDataTerm(enableDataTerm),
 		  enableLevelSetTerm(enableLevelSetTerm),
-		  enableKillingTerm(enableKillingTerm){
+		  enableKillingTerm(enableKillingTerm) {
 	initializeHelper();
 }
 
@@ -197,6 +197,8 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 	typename TIndex::IndexCache liveCache;
 
 	int maximumWeight = canonicalScene->sceneParams->maxW;
+	//_DEBUG
+	const int currentFrameIx = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
 
 	int noTotalEntries = canonicalScene->index.noTotalEntries;
 	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
@@ -235,6 +237,10 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					Vector3f oldColor = TO_FLOAT3(canonicalVoxel.clr) / 255.0f;
 					oldWDepth = canonicalVoxel.w_depth; //0 for VOXEL_TRUNCATED voxels
 					oldWColor = canonicalVoxel.w_color; //0 for VOXEL_TRUNCATED voxels
+
+					if (currentFrameIx == 4 && originalPosition == Vector3i(-12, 19, 192)) {
+						int i = 42;
+					}
 
 					//projected position of the sdf point to the most recent frame
 					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp_t;
@@ -279,18 +285,49 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					if (!struckNonTruncatedVoxels) {
 						sdfTruncatedCount++;//_DEBUG
 					}
-					if (canonicalVoxel.flags == ITMLib::VOXEL_UNKNOWN) {
-						if (struckNonTruncatedVoxels) {
-							//voxel is no longer perceived as truncated
-							canonicalVoxel.flags = ITMLib::VOXEL_NONTRUNCATED;
-							if (entriesAllocType[hash] != ITMLib::STABLE) {
-								hashBlockStabilizationCount++;
+					switch (canonicalVoxel.flags) {
+						case ITMLib::VOXEL_UNKNOWN:
+							if (struckNonTruncatedVoxels) {
+								//voxel is no longer perceived as truncated
+								canonicalVoxel.flags = ITMLib::VOXEL_NONTRUNCATED;
+								if (entriesAllocType[hash] != ITMLib::STABLE) {
+									hashBlockStabilizationCount++;
+								}
+								entriesAllocType[hash] = ITMLib::STABLE;
+							} else {
+								canonicalVoxel.flags = ITMLib::VOXEL_TRUNCATED;
 							}
-							entriesAllocType[hash] = ITMLib::STABLE;
-						} else {
-							canonicalVoxel.flags = ITMLib::VOXEL_TRUNCATED;
-						}
+							break;
+						case ITMLib::VOXEL_TRUNCATED:
+							if (struckNonTruncatedVoxels) {
+								//voxel is no longer perceived as truncated
+								canonicalVoxel.flags = ITMLib::VOXEL_NONTRUNCATED;
+								if (entriesAllocType[hash] != ITMLib::STABLE) {
+									hashBlockStabilizationCount++;
+								}
+								entriesAllocType[hash] = ITMLib::STABLE;
+							} else if(std::signbit(oldSdf) != std::signbit(weightedLiveSdf)) {
+								//both voxels are truncated but differ in sign
+								//TODO: if it is faster, optimize this to short-circuit the computation before instead -Greg (GitHub: Algomorph)
+								if (liveWeight > 0.25f && weightedLiveSdf > 0.0f) {
+									//set truncated to the sign of the live truncated, i.e. now belongs to different surface
+									canonicalVoxel.sdf = 1.0;
+									canonicalVoxel.w_depth = liveWeight;
+								}else{
+									canonicalVoxel.sdf = oldSdf;
+									canonicalVoxel.w_depth -= liveWeight;
+								}
+							}
+							break;
+						default:
+							break;
 					}
+					//_DEBUG
+//					if (canonicalVoxel.sdf > -1.0 && canonicalVoxel.sdf < 1.0 && canonicalVoxel.flags == ITMLib::VOXEL_TRUNCATED) {
+//						std::cerr << red << "Error: Voxel at " << originalPosition << ", label: "
+//						          << VoxelFlagsAsCString((ITMLib::VoxelFlags) canonicalVoxel.flags) << ". Sdf value: "
+//						          << canonicalVoxel.sdf << "." << reset << std::endl;
+//					}
 				}
 			}
 		}
@@ -305,7 +342,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 	          << hashBlockStabilizationCount << std::endl;
 //	std::cout << "Total confidence added from live frame: "
 //	          << totalConf << std::endl;
-
+	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx++;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

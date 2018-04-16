@@ -200,7 +200,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		}
 		delete sceneLogger;
 	}
-	currentFrameIx++;
+
 	energy_stat_file.close();
 }
 

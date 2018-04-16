@@ -145,7 +145,7 @@ void SDFVizInteractorStyle::OnKeyPress() {
 				          << (this->parent->canonicalUnknownVoxelsVisible ? "ON" : "OFF") << std::endl;
 			} else {
 				parent->ToggleLiveUnknownVoxelVisibility();
-				std::cout << "Canonical voxel unknown visibility: "
+				std::cout << "Live voxel unknown visibility: "
 				          << (this->parent->liveUnknownVoxelsVisible ? "ON" : "OFF") << std::endl;
 			}
 		} else if (key == "s") {
