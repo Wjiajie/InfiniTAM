@@ -424,7 +424,7 @@ Trackers/CPU/ITMDepthTracker_CPU.cpp
 Trackers/CPU/ITMExtendedTracker_CPU.cpp
 Trackers/CPU/ITMKillingTracker_CPU.cpp
 Trackers/CPU/ITMSceneMotionTracker_CPU_UpdateWarp.tpp
-Trackers/CPU/ITMSceneMotionTracker_CPU.tpp
+    Trackers/CPU/ITMSceneMotionTracker_CPU.tpp
 
 )
 
@@ -433,7 +433,7 @@ Trackers/CPU/ITMColorTracker_CPU.h
 Trackers/CPU/ITMDepthTracker_CPU.h
 Trackers/CPU/ITMExtendedTracker_CPU.h
 Trackers/CPU/ITMKillingTracker_CPU.h
-Trackers/CPU/ITMSceneMotionTracker_CPU.h
+    Trackers/CPU/ITMSceneMotionTracker_CPU.h
 )
 
 ##
