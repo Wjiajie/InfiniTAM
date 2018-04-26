@@ -20,58 +20,63 @@
 #include "../Engines/Swapping/Interface/ITMSwappingEngine.h"
 #include "../Trackers/Interface/ITMSceneMotionTracker.h"
 
-namespace ITMLib{
+namespace ITMLib {
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMDenseDynamicMapper {
 
-	private:
-		ITMSceneReconstructionEngine<TVoxelCanonical,TIndex> *sceneRecoEngine;
-		ITMSceneReconstructionEngine<TVoxelLive,TIndex> *liveSceneRecoEngine;
-		ITMSwappingEngine<TVoxelCanonical,TIndex> *swappingEngine;
-		ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex> *sceneMotionTracker;
-		ITMLibSettings::SwappingMode swappingMode;
+public:
+	// region ============================================ CONSTRUCTORS / DESTRUCTORS ==================================
 
-	public:
-	// ============================================ CONSTRUCTORS / DESTRUCTORS =========================================
 	/** \brief Constructor
 		Ommitting a separate image size for the depth images
 		will assume same resolution as for the RGB images.
 	*/
-	explicit ITMDenseDynamicMapper(const ITMLibSettings *settings);
+	explicit ITMDenseDynamicMapper(const ITMLibSettings* settings);
 	~ITMDenseDynamicMapper();
+	// endregion
+	// region ========================================== MEMBER FUNCTIONS ==============================================
 
-	// ========================================== MEMBER FUNCTIONS =====================================================
-		void ResetScene(ITMScene<TVoxelCanonical,TIndex> *scene) const;
-		void ResetLiveScene(ITMScene<TVoxelLive,TIndex> *live_scene) const;
+	void ResetCanonicalScene(ITMScene<TVoxelCanonical, TIndex>* scene) const;
+	void ResetLiveScene(ITMScene<TVoxelLive, TIndex>* live_scene) const;
 
-		/**
-		* \brief Tracks motions of all points between frames and fuses the new data into the canonical frame
-		* 1) Generates new SDF from current view data/point cloud
-		* 2) Maps the new SDF to the previous SDF to generate the warp field delta
-		* 3) Updates the warp field with the warp field delta
-		* 4) Fuses the new data using the updated warp field into the canonical frame
-		* 5) Re-projects the (updated) canonical data into the live frame using the updated warp field
-		* \tparam TVoxel type of voxel in the voxel grid / implicit function
-		* \tparam TIndex type of index used by the voxel grid
-		* \param view view with the new (incoming) depth/color data
-		* \param trackingState best estimate of the camera tracking from previous to new frame so far
-		* \param canonicalScene - canonical/reference 3D scene where all data is fused/aggregated
-		* \param liveScene - live/target 3D scene generated from the incoming single frame of the video
-		* \param renderState
-		*/
-		void ProcessFrame(const ITMView* view,
-		                  const ITMTrackingState* trackingState,
-		                  ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-		                  ITMScene <TVoxelLive, TIndex>* liveScene,
-		                  ITMRenderState* renderState_live);
+	/**
+	* \brief Tracks motions of all points between frames and fuses the new data into the canonical frame
+	* 1) Generates new SDF from current view data/point cloud
+	* 2) Maps the new SDF to the previous SDF to generate the warp field delta
+	* 3) Updates the warp field with the warp field delta
+	* 4) Fuses the new data using the updated warp field into the canonical frame
+	* 5) Re-projects the (updated) canonical data into the live frame using the updated warp field
+	* \tparam TVoxel type of voxel in the voxel grid / implicit function
+	* \tparam TIndex type of index used by the voxel grid
+	* \param view view with the new (incoming) depth/color data
+	* \param trackingState best estimate of the camera tracking from previous to new frame so far
+	* \param canonicalScene - canonical/reference 3D scene where all data is fused/aggregated
+	* \param liveScene - live/target 3D scene generated from the incoming single frame of the video
+	* \param renderState
+	*/
+	void ProcessFrame(const ITMView* view,
+	                  const ITMTrackingState* trackingState,
+	                  ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                  ITMScene<TVoxelLive, TIndex>*& liveScene,
+	                  ITMRenderState* renderState_live);
 
-		/// Update the visible list (this can be called to update the visible list when fusion is turned off)
-		void UpdateVisibleList(const ITMView *view, const ITMTrackingState *trackingState, ITMScene<TVoxelLive, TIndex> *scene, ITMRenderState *renderState, bool resetVisibleList = false);
+	/// Update the visible list (this can be called to update the visible list when fusion is turned off)
+	void
+	UpdateVisibleList(const ITMView* view, const ITMTrackingState* trackingState, ITMScene<TVoxelLive, TIndex>* scene,
+	                  ITMRenderState* renderState, bool resetVisibleList = false);
+	// endregion
 
-	// =========================================== MEMBER VARIABLES ====================================================
-	// on next call to ProcessFrame, record the scenes before warp updatee, and then record the warp update
+	// on next call to ProcessFrame, record the scenes before warp update, and then record the warp update itself
 	bool recordNextFrameWarps;
+private:
+	// region =========================================== MEMBER VARIABLES =============================================
 
+	ITMSceneReconstructionEngine<TVoxelCanonical, TIndex>* canonicalSceneReconstructor;
+	ITMSceneReconstructionEngine<TVoxelLive, TIndex>* liveSceneReconstructor;
+	ITMSwappingEngine<TVoxelCanonical, TIndex>* swappingEngine;
+	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>* sceneMotionTracker;
+	ITMLibSettings::SwappingMode swappingMode;
+	// endregion
 };
 }//namespace ITMLib
 

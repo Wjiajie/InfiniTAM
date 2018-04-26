@@ -63,6 +63,7 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracke
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneMotionTracker() {
 	delete sceneLogger;
+	delete targetLiveScene;
 }
 
 //endregion
@@ -76,15 +77,17 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneMotionTrack
  * \tparam TVoxelLive type of live voxels
  * \tparam TIndex type of voxel index used
  * \param canonicalScene the canonical voxel grid
- * \param liveScene the live voxel grid (typcially obtained by integrating a single depth image into an empty TSDF grid)
+ * \param sourceLiveScene the live voxel grid (typcially obtained by integrating a single depth image into an empty TSDF grid)
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
-		bool recordWarpUpdates) {
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene,
+		bool recordWarpUpdates, ITMSceneReconstructionEngine<TVoxelLive, TIndex>* liveSceneReconstructor) {
 
 	float maxVectorUpdate = std::numeric_limits<float>::infinity();
-	AllocateNewCanonicalHashBlocks(canonicalScene, liveScene);
+	AllocateNewCanonicalHashBlocks(canonicalScene, sourceLiveScene);
+
+	//TODO: replace preprocessor conditions with parameters
 	//START _DEBUG
 #ifdef RASTERIZE_CANONICAL_SCENE
 	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderCanonicalSceneSlices(
@@ -130,7 +133,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	                 << "killing" << "," << "total" << std::endl;
 
 	if (recordWarpUpdates) {
-		sceneLogger = new ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>(canonicalScene, liveScene,
+		sceneLogger = new ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>(canonicalScene, sourceLiveScene,
 		                                                                      currentFrameOutputPath);
 		sceneLogger->SaveScenesCompact();
 		sceneLogger->StartSavingWarpState(currentFrameIx);
@@ -140,8 +143,13 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		}
 	}
 
+	liveSceneReconstructor->ResetScene(targetLiveScene);
+	ApplyWarpFieldToLive(canonicalScene,sourceLiveScene,targetLiveScene);
+	SwapSourceAndTargetLiveScenes(sourceLiveScene);
+
 	for (iteration = 0; maxVectorUpdate > maxVectorUpdateThresholdVoxels && iteration < maxIterationCount;
 	     iteration++) {
+		//TODO: move draw image routines into separpate memeber function, replace preprocessor conditions with parameters
 		//START _DEBUG
 #ifdef DRAW_IMAGE
 		cv::Mat warpImg = ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpedSceneImageAroundPoint(
@@ -173,13 +181,16 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 #endif
 		//END _DEBUG
 		std::cout << red << "Iteration: " << iteration << reset;// << std::endl;
-		maxVectorUpdate = UpdateWarpField(canonicalScene, liveScene);
-		//START _DEBUG
+		maxVectorUpdate = CalculateWarpUpdate(canonicalScene, sourceLiveScene);
+		ApplyWarpUpdateToWarp(canonicalScene);
+		liveSceneReconstructor->ResetScene(targetLiveScene);
+		ApplyWarpUpdateToLive(canonicalScene, sourceLiveScene, targetLiveScene);
+		SwapSourceAndTargetLiveScenes(sourceLiveScene);
 
+		//START _DEBUG
 		if (recordWarpUpdates) {
 			sceneLogger->SaveCurrentWarpState();
 		}
-
 		//END _DEBUG
 	}
 
@@ -211,5 +222,13 @@ std::string ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::Generate
 		fs::create_directories(path);
 	}
 	return path.string();
+}
+
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::SwapSourceAndTargetLiveScenes(ITMScene<TVoxelLive,TIndex>*& sourceLiveScene) {
+	ITMScene<TVoxelLive,TIndex>* tmp = sourceLiveScene;
+	sourceLiveScene = targetLiveScene;
+	targetLiveScene = tmp;
 }
 

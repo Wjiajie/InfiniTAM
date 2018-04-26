@@ -49,7 +49,7 @@ Core/ITMDenseMapper.tpp
 Core/ITMDenseSurfelMapper.tpp
 Core/ITMDenseDynamicMapper.tpp
 Core/ITMMultiEngine.tpp
-    Core/ITMDynamicEngine.tpp
+Core/ITMDynamicEngine.tpp
 )
 
 SET(ITMLIB_CORE_HEADERS
@@ -61,7 +61,7 @@ Core/ITMDenseDynamicMapper.h
 Core/ITMMainEngine.h
 Core/ITMMultiEngine.h
 Core/ITMTrackingController.h
-    Core/ITMDynamicEngine.h
+Core/ITMDynamicEngine.h
 )
 
 ##
@@ -433,7 +433,7 @@ Trackers/CPU/ITMColorTracker_CPU.h
 Trackers/CPU/ITMDepthTracker_CPU.h
 Trackers/CPU/ITMExtendedTracker_CPU.h
 Trackers/CPU/ITMKillingTracker_CPU.h
-    Trackers/CPU/ITMSceneMotionTracker_CPU.h
+Trackers/CPU/ITMSceneMotionTracker_CPU.h
 )
 
 ##
@@ -483,6 +483,7 @@ SET(ITMLIB_TRACKERS_SHARED_HEADERS
 Trackers/Shared/ITMColorTracker_Shared.h
 Trackers/Shared/ITMDepthTracker_Shared.h
 Trackers/Shared/ITMExtendedTracker_Shared.h
+Trackers/Shared/ITMSceneMotionTracker_Shared_Old.h
 Trackers/Shared/ITMSceneMotionTracker_Shared.h
 Trackers/Shared/ITMSceneMotionTracker_Debug.h
 )

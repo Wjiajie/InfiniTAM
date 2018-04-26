@@ -19,11 +19,17 @@
 
 //local
 #include "../../Objects/Scene/ITMScene.h"
-
+#include "../../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.h"
 
 namespace ITMLib {
+
+template<typename TVoxelCanonical1, typename TVoxelLive1, typename TIndex1>
+class ITMDenseDynamicMapper;
+
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMSceneMotionTracker {
+	template<typename TVoxelCanonical1, typename TVoxelLive1, typename TIndex1>
+	friend class ITMDenseDynamicMapper;
 public:
 //============================= CONSTRUCTORS / DESTRUCTORS =============================================================
 
@@ -40,20 +46,39 @@ public:
 	 */
 	virtual void
 	FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
-	virtual void
-	ApplyWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 
-	void TrackMotion(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene,
-	                 bool recordWarpUpdates = false);
+	/**
+	 * \brief Warp canonical back to live
+	 * \param canonicalScene
+	 * \param liveScene
+	 */
+	virtual void
+	WarpCanonicalToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
+
+	void TrackMotion(
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene,
+			bool recordWarpUpdates,
+			ITMSceneReconstructionEngine <TVoxelLive, TIndex>* liveSceneReconstructor);
 
 
 	std::string GenerateCurrentFrameOutputPath() const;
 	int GetFrameIndex() const { return currentFrameIx; }
+
 protected:
 
 //============================= MEMBER FUNCTIONS =======================================================================
-	virtual float UpdateWarpField(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-	                              ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
+
+	void SwapSourceAndTargetLiveScenes(ITMScene<TVoxelLive, TIndex>*& sourceScene);
+	virtual float CalculateWarpUpdate(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                                  ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
+	virtual void ApplyWarpFieldToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+	                          ITMScene <TVoxelLive, TIndex>* sourceLiveScene,
+	                          ITMScene <TVoxelLive, TIndex>* targetLiveScene)= 0;
+	virtual void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                                   ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
+	                                   ITMScene<TVoxelLive, TIndex>* targetLiveScene) = 0;
+	virtual float ApplyWarpUpdateToWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
+
 
 	virtual void AllocateNewCanonicalHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                                            ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
@@ -73,6 +98,8 @@ protected:
 	const float colorSdfThreshold = -1.00f;
 	//const float colorSdfThreshold = 0.25f;
 	const float epsilon = FLT_EPSILON;
+
+	ITMScene<TVoxelLive, TIndex>* targetLiveScene;
 
 	float maxVectorUpdateThresholdVoxels;
 

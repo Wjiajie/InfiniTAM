@@ -41,7 +41,7 @@ __global__ void computeWarpUpdate_device(TVoxelCanonical* canonicalVoxelArray,
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-float ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::UpdateWarpField(
+float ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpUpdate(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 		ITMScene<TVoxelLive, TIndex>* liveScene) {
 	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
@@ -95,7 +95,27 @@ void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNe
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarp(
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::WarpCanonicalToLive(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 	DIEWITHEXCEPTION("Warp application not yet implemented");
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUpdateToLive(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
+		ITMScene<TVoxelLive, TIndex>* targetLiveScene) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not yet implemented");
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpFieldToLive(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
+		ITMScene<TVoxelLive, TIndex>* targetLiveScene) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not yet implemented");
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+float ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUpdateToWarp(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not yet implemented");
 }

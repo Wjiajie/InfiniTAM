@@ -26,12 +26,10 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 
 	MemoryDeviceType memoryType = settings->GetMemoryType();
-	this->canonicalScene = new ITMScene<TVoxelCanonical, TIndex>(&settings->sceneParams, settings->swappingMode ==
-	                                                                                     ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                             memoryType);
-	this->liveScene = new ITMScene<ITMVoxelLive, TIndex>(&settings->sceneParams, settings->swappingMode ==
-	                                                                             ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                     memoryType);
+	this->canonicalScene = new ITMScene<TVoxelCanonical, TIndex>(
+			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
+	this->liveScene = new ITMScene<ITMVoxelLive, TIndex>(
+			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 	const ITMLibSettings::DeviceType deviceType = settings->deviceType;
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
@@ -45,7 +43,7 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(
 		meshingEngine = ITMMeshingEngineFactory::MakeMeshingEngine<TVoxelCanonical, TIndex>(deviceType);
 
 	denseMapper = new ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>(settings);
-	denseMapper->ResetScene(canonicalScene);
+	denseMapper->ResetCanonicalScene(canonicalScene);
 	denseMapper->ResetLiveScene(liveScene);
 
 	imuCalibrator = new ITMIMUCalibrator_iPad();
@@ -175,14 +173,14 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::LoadFromFile() {
 		canonicalScene->LoadFromDirectory(sceneInputDirectory);
 	}
 	catch (std::runtime_error& e) {
-		denseMapper->ResetScene(canonicalScene);
+		denseMapper->ResetCanonicalScene(canonicalScene);
 		throw std::runtime_error("Could not load scene:" + std::string(e.what()));
 	}
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::resetAll() {
-	denseMapper->ResetScene(canonicalScene);
+	denseMapper->ResetCanonicalScene(canonicalScene);
 	denseMapper->ResetLiveScene(liveScene);
 	trackingState->Reset();
 }

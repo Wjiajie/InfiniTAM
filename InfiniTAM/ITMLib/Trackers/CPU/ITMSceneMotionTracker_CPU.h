@@ -30,31 +30,61 @@ public:
 	                                   bool enableLevelSetTerm = true,
 	                                   bool enableKillingTerm = true);
 	explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates,
-		                               bool enableDataTerm = true,
-		                               bool enableLevelSetTerm = true,
-		                               bool enableKillingTerm = true);
+	                                   bool enableDataTerm = true,
+	                                   bool enableLevelSetTerm = true,
+	                                   bool enableKillingTerm = true);
 	virtual ~ITMSceneMotionTracker_CPU();
 	void FuseFrame(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;
-	void ApplyWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;
+	void WarpCanonicalToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                         ITMScene<TVoxelLive, TIndex>* liveScene) override;
 
 protected:
 
 	const bool enableDataTerm;
 	const bool enableLevelSetTerm;
-	const bool enableKillingTerm;
+	const bool enableSmoothingTerm;
 
-	float UpdateWarpField(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                      ITMScene<TVoxelLive, TIndex>* liveScene) override;
+
+	template<typename TWarpedPositionFunctor>
+	void ApplyWarpVectorToLiveHelper(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                                 ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
+	                                 ITMScene<TVoxelLive, TIndex>* targetLiveScene);
+	void ApplyWarpFieldToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                          ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
+	                          ITMScene<TVoxelLive, TIndex>* targetLiveScene) override;
+
+
+
+
+	float CalculateWarpUpdate(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                          ITMScene<TVoxelLive, TIndex>* liveScene) override;
+
+	void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                           ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
+	                           ITMScene<TVoxelLive, TIndex>* targetLiveScene) override;
+	float ApplyWarpUpdateToWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) override;
 
 	void AllocateNewCanonicalHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                    ITMScene<TVoxelLive, TIndex>* liveScene) override;
 
 
 private:
-	void initializeHelper();
-	ORUtils::MemoryBlock<unsigned char>* warpedEntryAllocationType;
+
+
+	float CalculateWarpUpdate_SingleThreadedVerbose(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                                                ITMScene<TVoxelLive, TIndex>* liveScene);
+	float CalculateWarpUpdate_Multithreaded(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                                        ITMScene<TVoxelLive, TIndex>* liveScene);
+
+	void InitializeHelper(const ITMLib::ITMSceneParams& sceneParams);
+	ORUtils::MemoryBlock<unsigned char>* hashEntryAllocationTypes;
 	ORUtils::MemoryBlock<unsigned char>* canonicalEntryAllocationTypes;
-	ORUtils::MemoryBlock<Vector3s>* canonicalBlockCoordinates;
+	ORUtils::MemoryBlock<Vector3s>* allocationBlockCoordinates;
+
+	//BEGIN _DEBUG
+	float maxWarpUpdateLength = 0.0f;
+	float maxWarpLength = 0.0;
+
 };
 
 

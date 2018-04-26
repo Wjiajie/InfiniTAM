@@ -33,9 +33,9 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMapper(const ITMLibSettings* settings) :
 	recordNextFrameWarps(false)
 	{
-	sceneRecoEngine = ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelCanonical, TIndex>(
+	canonicalSceneReconstructor = ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelCanonical, TIndex>(
 			settings->deviceType);
-	liveSceneRecoEngine = ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelLive, TIndex>(
+	liveSceneReconstructor = ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelLive, TIndex>(
 			settings->deviceType);
 	swappingEngine = settings->swappingMode != ITMLibSettings::SWAPPINGMODE_DISABLED
 	                 ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxelCanonical, TIndex>(settings->deviceType)
@@ -47,20 +47,21 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMappe
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::~ITMDenseDynamicMapper() {
-	delete sceneRecoEngine;
+	delete canonicalSceneReconstructor;
 	delete swappingEngine;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
-ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetScene(ITMScene<TVoxelCanonical, TIndex>* scene) const {
-	sceneRecoEngine->ResetScene(scene);
+ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetCanonicalScene(
+		ITMScene<TVoxelCanonical, TIndex>* scene) const {
+	canonicalSceneReconstructor->ResetScene(scene);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetLiveScene(
 		ITMScene<TVoxelLive, TIndex>* live_scene) const {
-	liveSceneRecoEngine->ResetScene(live_scene);
+	liveSceneReconstructor->ResetScene(live_scene);
 }
 
 //BEGIN _DEBUG
@@ -82,8 +83,20 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(const ITMView* view,
                                                                               const ITMTrackingState* trackingState,
                                                                               ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-                                                                              ITMScene<TVoxelLive, TIndex>* liveScene,
+                                                                              ITMScene<TVoxelLive, TIndex>*& liveScene,
                                                                               ITMRenderState* renderState) {
+  //_DEBUG
+//	if(sceneMotionTracker->currentFrameIx == 0){
+//		// clear out the live-frame SDF and the target-live-frame SDF
+//		canonicalSceneReconstructor->ResetScene(canonicalScene);
+//		//** construct the new live-frame SDF
+//		// allocation
+//		canonicalSceneReconstructor->AllocateSceneFromDepth(canonicalScene, view, trackingState, renderState);
+//		// integration
+//		canonicalSceneReconstructor->IntegrateIntoScene(canonicalScene, view, trackingState, renderState);
+//		sceneMotionTracker->currentFrameIx++;
+//		return;
+//	}
 	//BEGIN __DEBUG
 	if(this->recordNextFrameWarps){
 		std::cout << bright_cyan << "MAPPING FRAME " << sceneMotionTracker->GetFrameIndex() <<  " (WITH RECORDING ON)" << reset << std::endl;
@@ -93,14 +106,16 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(co
 	//END __DEBUG
 
 	// clear out the live-frame SDF
-	liveSceneRecoEngine->ResetScene(liveScene);
+	liveSceneReconstructor->ResetScene(liveScene);
 	//** construct the new live-frame SDF
 	// allocation
-	liveSceneRecoEngine->AllocateSceneFromDepth(liveScene, view, trackingState, renderState);
+	liveSceneReconstructor->AllocateSceneFromDepth(liveScene, view, trackingState, renderState);
 	// integration
-	liveSceneRecoEngine->IntegrateIntoScene(liveScene, view, trackingState, renderState);
+	liveSceneReconstructor->IntegrateIntoScene(liveScene, view, trackingState, renderState);
 
-	sceneMotionTracker->TrackMotion(canonicalScene, liveScene, this->recordNextFrameWarps);
+
+
+	sceneMotionTracker->TrackMotion(canonicalScene, liveScene, this->recordNextFrameWarps, liveSceneReconstructor);
 	sceneMotionTracker->FuseFrame(canonicalScene, liveScene);
 
 	//_DEBUG
@@ -109,7 +124,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(co
 
 	// clear out the live-frame SDF, to prepare it for warped canonical
 	//liveSceneRecoEngine->ResetScene(liveScene);
-	//sceneMotionTracker->ApplyWarp(canonicalScene,liveScene);
+	//sceneMotionTracker->WarpCanonicalToLive(canonicalScene,liveScene);
 
 
 // _DEBUG
@@ -142,6 +157,6 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::UpdateVisibleList(
 		const ITMTrackingState* trackingState,
 		ITMScene<TVoxelLive, TIndex>* scene, ITMRenderState* renderState,
 		bool resetVisibleList) {
-	liveSceneRecoEngine->AllocateSceneFromDepth(scene, view, trackingState, renderState, true, resetVisibleList);
+	liveSceneReconstructor->AllocateSceneFromDepth(scene, view, trackingState, renderState, true, resetVisibleList);
 }
 

@@ -24,14 +24,24 @@ class ITMSceneMotionTracker_CUDA :
 public:
 
 	explicit ITMSceneMotionTracker_CUDA(const ITMSceneParams& params, std::string scenePath);
-	void FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
-	void ApplyWarp(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
+	void
+	FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
+	void WarpCanonicalToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+	                         ITMScene <TVoxelLive, TIndex>* liveScene) override;
 
 protected:
-	float UpdateWarpField(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-	                      ITMScene <TVoxelLive, TIndex>* liveScene) override;
+
+	void ApplyWarpFieldToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+	                          ITMScene <TVoxelLive, TIndex>* sourceLiveScene,
+	                          ITMScene <TVoxelLive, TIndex>* targetLiveScene) override;
+	float CalculateWarpUpdate(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+	                          ITMScene <TVoxelLive, TIndex>* liveScene) override;
+	void ApplyWarpUpdateToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+	                           ITMScene <TVoxelLive, TIndex>* sourceLiveScene,
+	                           ITMScene <TVoxelLive, TIndex>* targetLiveScene) override;
 	void AllocateNewCanonicalHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                                    ITMScene <TVoxelLive, TIndex>* liveScene) override;
+	float ApplyWarpUpdateToWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) override;
 };
 
 

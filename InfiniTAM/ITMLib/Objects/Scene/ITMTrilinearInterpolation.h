@@ -356,7 +356,6 @@ inline float InterpolateTrilinearly_SetTruncatedToVal(const CONSTPTR(TVoxel)* vo
 	int vmIndex = false;
 	Vector3f coeff;
 	Vector3i pos;
-
 	TO_INT_FLOOR3(pos, coeff, point);
 #define PROCESS_VOXEL(suffix, coord)\
     {\
@@ -798,7 +797,7 @@ inline float InterpolateTrilinearly_StruckNarrowBand(const CONSTPTR(TVoxel)* vox
         const TVoxel& v = readVoxel(voxelData, hashIndex, pos + (coord), vmIndex, cache);\
         sdfV##suffix = v.sdf;\
         colorV##suffix = TO_FLOAT3(v.clr);\
-        struckNarrowBand |= (v.flags != ITMLib::VOXEL_TRUNCATED);\
+        struckNarrowBand |= (v.flags == ITMLib::VOXEL_NONTRUNCATED);\
     }
 	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
 	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
@@ -913,7 +912,46 @@ inline float InterpolateTrilinearly_TruncatedCopySign(const CONSTPTR(TVoxel)* vo
 	return sdf;
 }
 
-//sdf without color, found/not
+
+//sdf without color, struck non-truncated check, struck known check,
+template<class TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline float InterpolateTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* voxelData,
+	                                             const CONSTPTR(ITMHashEntry)* voxelHash,
+	                                             const CONSTPTR(Vector3f)& point,
+	                                             THREADPTR(TCache)& cache,
+	                                             THREADPTR(bool)& struckKnown) {
+	float sdfRes1, sdfRes2, sdfV1, sdfV2;
+	int vmIndex = false;
+	Vector3f coeff;
+	Vector3i pos;
+	struckKnown = false;
+	TO_INT_FLOOR3(pos, coeff, point);
+#define PROCESS_VOXEL(suffix, coord)\
+    {\
+        const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (coord), vmIndex, cache);\
+        sdfV##suffix = TVoxel::valueToFloat(v.sdf);\
+        struckKnown |= (v.flags != ITMLib::VoxelFlags::VOXEL_UNKNOWN);\
+    }
+	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
+	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
+	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
+	PROCESS_VOXEL(1, Vector3i(0, 1, 0))
+	PROCESS_VOXEL(2, Vector3i(1, 1, 0))
+	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
+	PROCESS_VOXEL(1, Vector3i(0, 0, 1))
+	PROCESS_VOXEL(2, Vector3i(1, 0, 1))
+	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
+	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
+	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
+	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
+#undef PROCESS_VOXEL
+	float sdf = (1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2;
+
+	return sdf;
+}
+
+//sdf without color, struck non-truncated check
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float InterpolateTrilinearly_StruckNarrowBand(const CONSTPTR(TVoxel)* voxelData,
@@ -931,7 +969,7 @@ inline float InterpolateTrilinearly_StruckNarrowBand(const CONSTPTR(TVoxel)* vox
     {\
         const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (coord), vmIndex, cache);\
         sdfV##suffix = v.sdf;\
-        struckNarrowBand |= (v.flags != ITMLib::VoxelFlags::VOXEL_TRUNCATED);\
+        struckNarrowBand |= (v.flags == ITMLib::VoxelFlags::VOXEL_NONTRUNCATED);\
     }
 	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
 	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
