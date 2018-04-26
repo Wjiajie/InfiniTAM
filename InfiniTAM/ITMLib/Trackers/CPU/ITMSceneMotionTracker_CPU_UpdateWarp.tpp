@@ -36,12 +36,14 @@ using namespace ITMLib;
 inline static
 void PrintEnergyStatistics(const bool& enableDataTerm,
                            const bool& enableLevelSetTerm,
-                           const bool& enableKillingTerm,
+                           const bool& enableSmoothnessTerm,
+                           const bool& useIsometryEnforcementFactorInSmoothingTerm,
                            const float& gamma,
                            const double& totalDataEnergy,
                            const double& totalLevelSetEnergy,
-                           const double& totalSmoothnessEnergy,
+                           const double& totalTikhonovEnergy,
                            const double& totalKillingEnergy,
+                           const double& totalSmoothnessEnergy,
                            const double& totalEnergy) {
 	std::cout << " [ENERGY]";
 	if (enableDataTerm) {
@@ -50,11 +52,12 @@ void PrintEnergyStatistics(const bool& enableDataTerm,
 	if (enableLevelSetTerm) {
 		std::cout << red << " Level set term: " << totalLevelSetEnergy;
 	}
-	if (enableKillingTerm) {
+	if (enableSmoothnessTerm){
+		if(useIsometryEnforcementFactorInSmoothingTerm){
+			std::cout << yellow << " Tikhonov term: " << totalTikhonovEnergy;
+			std::cout << yellow << " Killing term: " << totalKillingEnergy;
+		}
 		std::cout << cyan << " Smoothness term: " << totalSmoothnessEnergy;
-	}
-	if (gamma > 0.0f && enableKillingTerm) {
-		std::cout << yellow << " Killing term: " << totalKillingEnergy;
 	}
 	std::cout << green << " Total: " << totalEnergy << reset << std::endl;
 }
@@ -110,8 +113,9 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 
 	double totalDataEnergy = 0.0;
 	double totalLevelSetEnergy = 0.0;
-	double totalSmoothnessEnergy = 0.0;
+	double totalTikhonovEnergy = 0.0;
 	double totalKillingEnergy = 0.0;
+	double totalSmoothnessEnergy = 0.0;
 	double totalEnergy = 0.0;
 
 	// *** for less verbose parameter & debug variable access
@@ -122,7 +126,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 	// params
 	const float epsilon = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::epsilon;
 	const int iteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
-	const float weightKillingTerm = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightKillingTerm;
+	const float weightSmoothnessTerm = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightKillingTerm;
 	const float weightLevelSetTerm = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightLevelSetTerm;
 	const float learningRate = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::gradientDescentLearningRate;
 	const float gamma = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::rigidityEnforcementFactor;
@@ -217,11 +221,11 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 					}
 					//endregion
 					// region ========================= DECLARATIONS & DEFAULTS FOR ALL TERMS ==========================
-					Vector3f deltaEKilling(0.0f); Vector3f deltaEData(0.0f); Vector3f deltaELevelSet(0.0f);
-					float localKillingEnergy = 0.0f, localSmoothnessEnergy = 0.0f;
+					Vector3f deltaESmoothness(0.0f); Vector3f deltaEData(0.0f); Vector3f deltaELevelSet(0.0f);
+					float localSmoothnessEnergy = 0.0f, localTikhonovEnergy = 0.0f, localKillingEnergy = 0.0f;
 					float sdfDifferenceBetweenLiveAndCanonical = 0.0f, sdfJacobianNormMinusUnity = 0.0f;
 					Matrix3f liveSdfHessian;
-					Vector3f liveSdfJacobian;
+					Vector3f liveSdfJacobian, warpLaplacian;
 					Matrix3f warpJacobian(0.0f);
 					Matrix3f warpHessian[3] = {Matrix3f(0.0f), Matrix3f(0.0f), Matrix3f(0.0f)};
 					// endregion
@@ -254,61 +258,68 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 
 						levelSetVoxelCount++;
 					}
+					//=================================== SMOOTHING TERM ===============================================
 					if (enableSmoothingTerm) {
-						//=================================== KILLING TERM =================================================
-						ComputePerVoxelWarpJacobianAndHessian(canonicalVoxel.warp_t, voxelPosition,
-						                                      neighborWarps,
-						                                      warpJacobian, warpHessian);
-						if (printVoxelResult) {
-							_DEBUG_PrintKillingTermStuff(neighborWarps, neighborKnown, neighborTruncated,
-							                             warpJacobian, warpHessian);
+						if(useIsometryEnforcementFactorInSmoothingTerm){
+							ComputePerVoxelWarpJacobianAndHessian(canonicalVoxel.warp_t, neighborWarps,
+							                                      warpJacobian, warpHessian);
+							if (printVoxelResult) {
+								_DEBUG_PrintKillingTermStuff(neighborWarps, neighborKnown, neighborTruncated,
+								                             warpJacobian, warpHessian);
+							}
+
+
+							float onePlusGamma = 1.0f + gamma;
+							// |0, 3, 6|     |m00, m10, m20|      |u_xx, u_xy, u_xz|
+							// |1, 4, 7|     |m01, m11, m21|      |u_xy, u_yy, u_yz|
+							// |2, 5, 8|     |m02, m12, m22|      |u_xz, u_yz, u_zz|
+							Matrix3f& H_u = warpHessian[0];
+							Matrix3f& H_v = warpHessian[1];
+							Matrix3f& H_w = warpHessian[2];
+							float KillingDeltaEu, KillingDeltaEv, KillingDeltaEw;
+
+
+							KillingDeltaEu =
+									-2.0f *
+									((onePlusGamma) * H_u.xx + (H_u.yy) + (H_u.zz) + gamma * H_v.xy + gamma * H_w.xz);
+							KillingDeltaEv =
+									-2.0f *
+									((onePlusGamma) * H_v.yy + (H_v.zz) + (H_v.xx) + gamma * H_u.xy + gamma * H_w.yz);
+							KillingDeltaEw =
+									-2.0f *
+									((onePlusGamma) * H_w.zz + (H_w.xx) + (H_w.yy) + gamma * H_v.yz + gamma * H_u.xz);
+
+
+							deltaESmoothness = Vector3f(KillingDeltaEu,
+							                         KillingDeltaEv,
+							                         KillingDeltaEw);
+							//=================================== ENERGY ===============================================
+							// KillingTerm Energy
+							Matrix3f warpJacobianTranspose = warpJacobian.t();
+
+							localTikhonovEnergy = dot(warpJacobian.getColumn(0), warpJacobian.getColumn(0)) +
+							                        dot(warpJacobian.getColumn(1), warpJacobian.getColumn(1)) +
+							                        dot(warpJacobian.getColumn(2), warpJacobian.getColumn(2));
+
+							localKillingEnergy = gamma *
+							                     (dot(warpJacobianTranspose.getColumn(0), warpJacobian.getColumn(0)) +
+							                      dot(warpJacobianTranspose.getColumn(1), warpJacobian.getColumn(1)) +
+							                      dot(warpJacobianTranspose.getColumn(2), warpJacobian.getColumn(2)));
+
+							localSmoothnessEnergy = localTikhonovEnergy + localKillingEnergy;
+						}else{
+							ComputeWarpLaplacianAndJacobian(warpLaplacian, warpJacobian, warp, neighborWarps);
+							//∇E_{reg}(Ψ) = −[∆U ∆V ∆W]' ,
+							deltaESmoothness = - warpLaplacian;
+							localTikhonovEnergy = dot(warpJacobian.getColumn(0), warpJacobian.getColumn(0)) +
+							                      dot(warpJacobian.getColumn(1), warpJacobian.getColumn(1)) +
+							                      dot(warpJacobian.getColumn(2), warpJacobian.getColumn(2));
 						}
-
-
-						float onePlusGamma = 1.0f + gamma;
-						// |0, 3, 6|     |m00, m10, m20|      |u_xx, u_xy, u_xz|
-						// |1, 4, 7|     |m01, m11, m21|      |u_xy, u_yy, u_yz|
-						// |2, 5, 8|     |m02, m12, m22|      |u_xz, u_yz, u_zz|
-						Matrix3f& H_u = warpHessian[0];
-						Matrix3f& H_v = warpHessian[1];
-						Matrix3f& H_w = warpHessian[2];
-						float KillingDeltaEu, KillingDeltaEv, KillingDeltaEw;
-
-
-						KillingDeltaEu =
-								-2.0f *
-								((onePlusGamma) * H_u.xx + (H_u.yy) + (H_u.zz) + gamma * H_v.xy + gamma * H_w.xz);
-						KillingDeltaEv =
-								-2.0f *
-								((onePlusGamma) * H_v.yy + (H_v.zz) + (H_v.xx) + gamma * H_u.xy + gamma * H_w.yz);
-						KillingDeltaEw =
-								-2.0f *
-								((onePlusGamma) * H_w.zz + (H_w.xx) + (H_w.yy) + gamma * H_v.yz + gamma * H_u.xz);
-
-
-						deltaEKilling = Vector3f(KillingDeltaEu,
-						                         KillingDeltaEv,
-						                         KillingDeltaEw);
-						//=================================== KILLING ENERGY =======================================================
-						// KillingTerm Energy
-						Matrix3f warpJacobianTranspose = warpJacobian.t();
-
-						localSmoothnessEnergy = dot(warpJacobian.getColumn(0), warpJacobian.getColumn(0)) +
-						                        dot(warpJacobian.getColumn(1), warpJacobian.getColumn(1)) +
-						                        dot(warpJacobian.getColumn(2), warpJacobian.getColumn(2));
-
-						localKillingEnergy = localSmoothnessEnergy +
-						                     gamma *
-						                     (dot(warpJacobianTranspose.getColumn(0), warpJacobian.getColumn(0)) +
-						                      dot(warpJacobianTranspose.getColumn(1), warpJacobian.getColumn(1)) +
-						                      dot(warpJacobianTranspose.getColumn(2), warpJacobian.getColumn(2)));
 					}
 
 					//=================================== FINAL UPDATE =================================================
-
-
 					Vector3f deltaE =
-							deltaEData + weightLevelSetTerm * deltaELevelSet + weightKillingTerm * deltaEKilling;
+							deltaEData + weightLevelSetTerm * deltaELevelSet + weightSmoothnessTerm * deltaESmoothness;
 
 					Vector3f warpUpdate = learningRate * deltaE;
 					float warpUpdateLength = length(warpUpdate);//meters
@@ -318,13 +329,15 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 					double dataEnergy = 0.5 * (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
 					double levelSetEnergy =
 							weightLevelSetTerm * 0.5 * (sdfJacobianNormMinusUnity * sdfJacobianNormMinusUnity);
-					double killingEnergy = weightKillingTerm * localKillingEnergy;
-					double smoothnessEnergy = weightKillingTerm * localSmoothnessEnergy;
-					double totalVoxelEnergy = dataEnergy + levelSetEnergy + killingEnergy * smoothnessEnergy;
+					double smoothnessEnergy = weightSmoothnessTerm * localSmoothnessEnergy;
+					double killingSmoothnessEnergy = weightSmoothnessTerm * localKillingEnergy;
+					double tikhonovSmoothnessEnergy = weightSmoothnessTerm * localTikhonovEnergy;
+					double totalVoxelEnergy = dataEnergy + levelSetEnergy + smoothnessEnergy;
 
 					totalDataEnergy += dataEnergy;
 					totalLevelSetEnergy += levelSetEnergy;
-					totalKillingEnergy += killingEnergy;
+					totalTikhonovEnergy += tikhonovSmoothnessEnergy;
+					totalKillingEnergy += killingSmoothnessEnergy;
 					totalSmoothnessEnergy += smoothnessEnergy;
 					//need thread lock here to ensure atomic updates to maxWarpUpdateLength
 					{
@@ -340,7 +353,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 					if (printVoxelResult) {
 						std::cout << "Data update: " << deltaEData * -1.f;
 						std::cout << red << " Level set update: " << deltaELevelSet * -1.f;
-						std::cout << yellow << " Killing update: " << deltaEKilling * -1.f;
+						std::cout << yellow << " Killing update: " << deltaESmoothness * -1.f;
 						std::cout << std::endl;
 						std::cout << green << "Warp update: " << warpUpdate * -1.f << reset;
 						std::cout << " Warp update length: " << warpUpdateLength << std::endl << std::endl;
@@ -351,7 +364,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 							Vector3f canonicalWarp = canonicalVoxel.warp_t;
 							Vector3f warpUpdateData = learningRate * deltaEData;
 							Vector3f warpUpdateLevelSet = learningRate * weightLevelSetTerm * deltaELevelSet;
-							Vector3f warpUpdateKilling = learningRate * weightKillingTerm * deltaEKilling;
+							Vector3f warpUpdateKilling = learningRate * weightSmoothnessTerm * deltaESmoothness;
 							std::array<ITMNeighborVoxelIterationInfo, 9> neighbors;
 							FindHighlightNeighborInfo(neighbors, voxelPosition, hash, canonicalVoxels,
 							                          canonicalHashTable, liveVoxels, liveHashTable, liveCache);
@@ -360,7 +373,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 							                                  canonicalWarp, canonicalSdf, liveSdf,
 							                                  warpUpdate, warpUpdateData, warpUpdateLevelSet,
 							                                  warpUpdateKilling, totalVoxelEnergy, dataEnergy,
-							                                  levelSetEnergy, smoothnessEnergy, killingEnergy,
+							                                  levelSetEnergy, killingSmoothnessEnergy, smoothnessEnergy,
 							                                  liveSdfJacobian, liveSdfJacobian, liveSdfHessian,
 							                                  warpJacobian, warpHessian[0], warpHessian[1],
 							                                  warpHessian[2],
@@ -384,16 +397,17 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 	}
 
 
-	totalEnergy = totalDataEnergy + totalLevelSetEnergy + totalKillingEnergy;
+	totalEnergy = totalDataEnergy + totalLevelSetEnergy + totalSmoothnessEnergy;
 
 	std::cout << bright_cyan << "*** General Iteration Statistics ***" << reset << std::endl;
-	PrintEnergyStatistics(enableDataTerm, enableLevelSetTerm, enableSmoothingTerm, gamma, totalDataEnergy,
-	                      totalLevelSetEnergy,
-	                      totalSmoothnessEnergy, totalKillingEnergy, totalEnergy);
+	PrintEnergyStatistics(enableDataTerm, enableLevelSetTerm, enableSmoothingTerm,
+	                      useIsometryEnforcementFactorInSmoothingTerm, gamma, totalDataEnergy,
+	                      totalLevelSetEnergy, totalTikhonovEnergy,
+	                      totalKillingEnergy,  totalSmoothnessEnergy, totalEnergy);
 
 	//save all energies to file
-	energy_stat_file << totalDataEnergy << ", " << totalLevelSetEnergy << ", " << totalSmoothnessEnergy << ", "
-	                 << totalKillingEnergy << ", " << totalEnergy << std::endl;
+	energy_stat_file << totalDataEnergy << ", " << totalLevelSetEnergy << ", " << totalKillingEnergy << ", "
+	                 << totalSmoothnessEnergy << ", " << totalEnergy << std::endl;
 
 	CalculateAndPrintAdditionalStatistics(enableDataTerm, enableLevelSetTerm, cumulativeCanonicalSdf, cumulativeLiveSdf,
 	                                      cumulativeWarpDist, cumulativeSdfDiff, consideredVoxelCount, dataVoxelCount,
@@ -407,17 +421,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 	return 0;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-float
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpUpdate(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-		ITMScene<TVoxelLive, TIndex>* liveScene) {
-#if (defined(VERBOSE_DEBUG) || defined(_DEBUG)) && !defined(WITH_OPENMP)
-	return CalculateWarpUpdate_SingleThreadedVerbose(canonicalScene, liveScene);
-#else
-	return CalculateWarpUpdate_Multithreaded(canonicalScene,liveScene);
-#endif
-}
+
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUpdateToWarp(
@@ -507,4 +511,16 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 #endif
 	//end _DEBUG
 	return maxWarpUpdateLength;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+float
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpUpdate(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+		ITMScene<TVoxelLive, TIndex>* liveScene) {
+#if (defined(VERBOSE_DEBUG) || defined(_DEBUG)) && !defined(WITH_OPENMP)
+	return CalculateWarpUpdate_SingleThreadedVerbose(canonicalScene, liveScene);
+#else
+	return CalculateWarpUpdate_Multithreaded(canonicalScene,liveScene);
+#endif
 }

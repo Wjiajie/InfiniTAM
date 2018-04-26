@@ -104,10 +104,10 @@ void ComputeLiveJacobianForwardDifferences(Vector3f& jacobian,
 template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 void ComputeLiveJacobian_ForwardDifferences(Vector3f& jacobian,
-                                           const Vector3i& position,
-                                           const TVoxel* voxels,
-                                           const ITMHashEntry* hashEntries,
-                                           TCache cache) {
+                                            const Vector3i& position,
+                                            const TVoxel* voxels,
+                                            const ITMHashEntry* hashEntries,
+                                            TCache cache) {
 	int vmIndex;
 #define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, hashEntries, position + (offset), vmIndex, cache).sdf))
 	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
@@ -125,10 +125,10 @@ void ComputeLiveJacobian_ForwardDifferences(Vector3f& jacobian,
 template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 void ComputeLiveJacobian_CentralDifferences(Vector3f& jacobian,
-                                           const Vector3i& voxelPosition,
-                                           const TVoxel* voxels,
-                                           const ITMHashEntry* hashEntries,
-                                           TCache cache) {
+                                            const Vector3i& voxelPosition,
+                                            const TVoxel* voxels,
+                                            const ITMHashEntry* hashEntries,
+                                            TCache cache) {
 	int vmIndex;
 #define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, hashEntries, voxelPosition + (offset), vmIndex, cache).sdf))
 
@@ -149,21 +149,55 @@ void ComputeLiveJacobian_CentralDifferences(Vector3f& jacobian,
 
 template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
-void ComputeSdfHessian(Matrix3f& hessian,
-                       const Vector3i& position,
-                       const TVoxel* voxels,
-                       const ITMHashEntry* hashEntries,
-                       TCache cache){
+inline void ComputeSdfHessian(Matrix3f& hessian,
+                              const Vector3i& position,
+                              const TVoxel* voxels,
+                              const ITMHashEntry* hashEntries,
+                              TCache cache) {
 
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented.");
 };
 //endregion
+
+// region ================================ WARP LAPLACIAN (SMOOTHING/TIKHONOV TERM) ====================================
+inline void ComputeWarpLaplacian(THREADPTR(Vector3f)& laplacian,
+                                 const CONSTPTR(Vector3f)& voxelWarp,
+                                 const CONSTPTR(Vector3f*) neighborWarps) {//in, x6-9
+	//    0        1        2          3         4         5
+	//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)
+	laplacian = Vector3f(0.0f);
+	//3D discrete Laplacian filter based on https://en.wikipedia.org/wiki/Discrete_Laplace_operator
+	for (int iSixConnectedNeighbor = 0; iSixConnectedNeighbor < 6; iSixConnectedNeighbor++) {
+		laplacian += neighborWarps[iSixConnectedNeighbor];
+	}
+	laplacian -= 6 * voxelWarp;
+}
+
+inline void ComputeWarpLaplacianAndJacobian(THREADPTR(Vector3f)& laplacian,
+                                            THREADPTR(Matrix3f)& jacobian,
+                                            const CONSTPTR(Vector3f)& voxelWarp,
+                                            const CONSTPTR(Vector3f*) neighborWarps) {//in, x6-9
+	//    0        1        2          3         4         5
+	//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)
+	laplacian = Vector3f(0.0f);
+	//3D discrete Laplacian filter based on https://en.wikipedia.org/wiki/Discrete_Laplace_operator
+	for (int iSixConnectedNeighbor = 0; iSixConnectedNeighbor < 6; iSixConnectedNeighbor++) {
+		laplacian += neighborWarps[iSixConnectedNeighbor];
+	}
+	laplacian -= 6 * voxelWarp;
+	//use first-order differences for jacobian
+	jacobian.setColumn(0, 0.5 * (neighborWarps[3] - neighborWarps[0]));//1st derivative in x
+	jacobian.setColumn(1, 0.5 * (neighborWarps[4] - neighborWarps[0]));//1st derivative in y
+	jacobian.setColumn(2, 0.5 * (neighborWarps[5] - neighborWarps[0]));//1st derivative in z
+}
+
+// endregion
+
 // region =================================== WARP JACOBIAN AND HESSIAN (SMOOTHING/KILLING TERM) =======================
 //Computes the jacobian and hessian approximation for the warp vectors themselves in a given neighborhood
 _CPU_AND_GPU_CODE_
 inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxelWarp,
-                                                  const CONSTPTR(Vector3i)& voxelPosition,
-                                                  const CONSTPTR(Vector3f*) neighborWarps,
+                                                  const CONSTPTR(Vector3f*) neighborWarps, //in, x9
                                                   THREADPTR(Matrix3f)& jacobian, //out
                                                   THREADPTR(Matrix3f)* hessian //out, x3
 ) {
@@ -173,7 +207,6 @@ inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxe
 	// |u_x, u_y, u_z|       |m00, m10, m20|
 	// |v_x, v_y, v_z|       |m01, m11, m21|
 	// |w_x, w_y, w_z|       |m02, m12, m22|
-	Vector3f zeroVector(0.0f);
 	jacobian.setColumn(0, neighborWarps[3] - voxelWarp);//1st derivative in x
 	jacobian.setColumn(1, neighborWarps[4] - voxelWarp);//1st derivative in y
 	jacobian.setColumn(2, neighborWarps[5] - voxelWarp);//1st derivative in z

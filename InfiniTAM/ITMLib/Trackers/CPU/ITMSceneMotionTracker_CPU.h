@@ -43,6 +43,7 @@ protected:
 	const bool enableDataTerm;
 	const bool enableLevelSetTerm;
 	const bool enableSmoothingTerm;
+	const bool useIsometryEnforcementFactorInSmoothingTerm = false;
 
 
 	template<typename TWarpedPositionFunctor>
@@ -52,9 +53,6 @@ protected:
 	void ApplyWarpFieldToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                          ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
 	                          ITMScene<TVoxelLive, TIndex>* targetLiveScene) override;
-
-
-
 
 	float CalculateWarpUpdate(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                          ITMScene<TVoxelLive, TIndex>* liveScene) override;
