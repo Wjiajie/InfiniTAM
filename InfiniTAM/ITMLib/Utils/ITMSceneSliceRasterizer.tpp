@@ -178,7 +178,7 @@ cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarped
 					Vector3i originalPosition = currentBlockPositionVoxels + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxel& voxel = localVoxelBlock[locId];
-					Vector3f projectedPosition = originalPosition.toFloat() + voxel.warp_t;
+					Vector3f projectedPosition = originalPosition.toFloat() + voxel.warp;
 					Vector3i projectedPositionFloored = projectedPosition.toIntFloor();
 					if (!IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y,
 					                       originalPosition.z))
@@ -236,7 +236,7 @@ void ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSce
 	bool vmIndex;
 	TVoxelCanonical voxel = readVoxel(scene->localVBA.GetVoxelBlocks(), scene->index.GetEntries(),
 	                                  positionOfVoxelToMark, vmIndex);
-	Vector3f projectedPosition = positionOfVoxelToMark.toFloat() + voxel.warp_t;
+	Vector3f projectedPosition = positionOfVoxelToMark.toFloat() + voxel.warp;
 	Vector3i projectedPositionFloored = projectedPosition.toIntFloor();
 	if (!IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, positionOfVoxelToMark.z - 1) &&
 	    !IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, positionOfVoxelToMark.z) &&

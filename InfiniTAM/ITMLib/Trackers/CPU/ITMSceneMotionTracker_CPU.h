@@ -46,21 +46,23 @@ protected:
 	const bool useIsometryEnforcementFactorInSmoothingTerm = false;
 
 
-	template<typename TWarpedPositionFunctor>
-	void ApplyWarpVectorToLiveHelper(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                 ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
-	                                 ITMScene<TVoxelLive, TIndex>* targetLiveScene);
+	void AllocateHashBlocksAtWarpedLocations(ITMScene<TVoxelCanonical, TIndex>* warpSourceScene,
+	                                         ITMScene<TVoxelLive, TIndex>* sdfSourceScene,
+	                                         ITMScene<TVoxelLive, TIndex>* sdfTargetScene);
+	void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                           ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
+	                           ITMScene<TVoxelLive, TIndex>* targetLiveScene) override;
 	void ApplyWarpFieldToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                          ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
-	                          ITMScene<TVoxelLive, TIndex>* targetLiveScene) override;
+	                          ITMScene<TVoxelLive, TIndex>* rawLiveScene,
+	                          ITMScene<TVoxelLive, TIndex>* initializedLiveScene) override;
+	void ApplySmoothingToGradient(ITMScene<TVoxelLive, TIndex>* liveScene) override;
 
 	float CalculateWarpUpdate(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                          ITMScene<TVoxelLive, TIndex>* liveScene) override;
 
-	void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                           ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
-	                           ITMScene<TVoxelLive, TIndex>* targetLiveScene) override;
-	float ApplyWarpUpdateToWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) override;
+
+	float ApplyWarpUpdateToWarp(
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
 
 	void AllocateNewCanonicalHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                    ITMScene<TVoxelLive, TIndex>* liveScene) override;
@@ -71,8 +73,16 @@ private:
 
 	float CalculateWarpUpdate_SingleThreadedVerbose(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                                ITMScene<TVoxelLive, TIndex>* liveScene);
-	float CalculateWarpUpdate_Multithreaded(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	float CalculateWarpUpdate_MultiThreaded(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                        ITMScene<TVoxelLive, TIndex>* liveScene);
+
+	float ApplyWarpUpdateToWarp_SingleThreadedVerbose(
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene);
+
+	float ApplyWarpUpdateToWarp_MultiThreaded(
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene);
+
+
 
 	void InitializeHelper(const ITMLib::ITMSceneParams& sceneParams);
 	ORUtils::MemoryBlock<unsigned char>* hashEntryAllocationTypes;

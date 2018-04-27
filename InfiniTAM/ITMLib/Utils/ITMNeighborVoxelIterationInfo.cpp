@@ -22,7 +22,7 @@ bool ITMLib::ITMNeighborVoxelIterationInfo::operator==(const ITMLib::ITMNeighbor
 	       (this->notAllocated == rhs.notAllocated && this->unknown == rhs.unknown && this->hash == rhs.hash &&
 	        this->localId == rhs.localId && this->sdf == rhs.sdf && this->struckKnownVoxels == rhs.struckKnownVoxels
 	        && this->struckNarrowBand == rhs.struckNarrowBand && this->liveSdf == rhs.liveSdf && this->warp == rhs.warp
-	        && this->warpUpdate == rhs.warpUpdate);
+	        && this->warpGradient == rhs.warpGradient);
 }
 
 bool ITMLib::ITMNeighborVoxelIterationInfo::operator!=(const ITMLib::ITMNeighborVoxelIterationInfo& rhs) const {

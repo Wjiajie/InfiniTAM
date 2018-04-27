@@ -83,11 +83,11 @@ inline void FindHighlightNeighborInfo(std::array<ITMLib::ITMNeighborVoxelIterati
 	for (auto location : locations) {
 		ITMLib::ITMNeighborVoxelIterationInfo& info = neighbors[iNeighbor];
 		Vector3i neighborPosition = highlightPosition + (location);
-		TVoxelCanonical voxel = ReadVoxelAndLinearIndex(canonicalVoxelData, canonicalHashTable, neighborPosition,
-		                                                vmIndex, cache,
-		                                                localId);
+		TVoxelCanonical voxelCanonical = ReadVoxelAndLinearIndex(canonicalVoxelData, canonicalHashTable, neighborPosition,
+		                                                vmIndex, cache, localId);
+		const TVoxelLive& voxelLive = readVoxel(liveVoxelData, liveHashTable, neighborPosition, vmIndex, liveCache);
 		if (vmIndex != 0) {
-			info.unknown = voxel.flags == ITMLib::VOXEL_TRUNCATED;
+			info.unknown = voxelCanonical.flags == ITMLib::VOXEL_TRUNCATED;
 			info.hash = vmIndex - 1;
 		} else {
 			info.notAllocated = true;
@@ -95,13 +95,10 @@ inline void FindHighlightNeighborInfo(std::array<ITMLib::ITMNeighborVoxelIterati
 			vmIndex = highlightHash + 1;//reset
 		}
 		info.localId = localId;
-		info.warp = voxel.warp_t;
-		info.warpUpdate = voxel.warp_t_update;
-		info.sdf = voxel.sdf;
-		info.liveSdf = InterpolateTrilinearly_SetUnknownToVal_StruckChecks(liveVoxelData, liveHashTable, info.sdf,
-		                                                                   TO_FLOAT3(neighborPosition) + voxel.warp_t,
-		                                                                   liveCache, info.struckNarrowBand,
-		                                                                   info.struckKnownVoxels);
+		info.warp = voxelCanonical.warp;
+		info.warpGradient = voxelLive.gradient0;
+		info.sdf =  TVoxelCanonical::valueToFloat(voxelCanonical.sdf);
+		info.liveSdf = TVoxelLive::valueToFloat(voxelLive.sdf);
 		iNeighbor++;
 	}
 }

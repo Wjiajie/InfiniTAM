@@ -424,8 +424,7 @@ Trackers/CPU/ITMDepthTracker_CPU.cpp
 Trackers/CPU/ITMExtendedTracker_CPU.cpp
 Trackers/CPU/ITMKillingTracker_CPU.cpp
 Trackers/CPU/ITMSceneMotionTracker_CPU_UpdateWarp.tpp
-    Trackers/CPU/ITMSceneMotionTracker_CPU.tpp
-
+Trackers/CPU/ITMSceneMotionTracker_CPU.tpp
 )
 
 SET(ITMLIB_TRACKERS_CPU_HEADERS

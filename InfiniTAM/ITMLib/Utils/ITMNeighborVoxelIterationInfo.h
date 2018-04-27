@@ -30,7 +30,7 @@ public:
 	int hash;
 	int localId;
 	Vector3f warp;
-	Vector3f warpUpdate;
+	Vector3f warpGradient;
 	float sdf;
 	float liveSdf;//looked up using the warp
 	bool struckKnownVoxels;
@@ -63,11 +63,14 @@ struct ITMHighlightIterationInfo{
 	Vector3f warpUpdateData;
 	Vector3f warpUpdateLevelSet;
 	Vector3f warpUpdateKilling;
+
 	double voxelEnergy;
 	double voxelEnergyData;
 	double voxelEnergyLevelSet;
 	double voxelEnergySmoothness;
+	double voxelEnergyTikhonov;
 	double voxelEnergyKilling;
+
 
 	Vector3f liveJacobian;
 	Vector3f warpedJacobian;

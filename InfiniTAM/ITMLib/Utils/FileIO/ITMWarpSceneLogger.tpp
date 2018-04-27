@@ -33,10 +33,10 @@ using namespace ITMLib;
 // region ======================================== STATIC CONSTANTS ====================================================
 
 template<typename TVoxel, typename TIndex>
-const size_t ITMWarpSceneLogger<TVoxel, TIndex>::warpByteSize = sizeof(TVoxel::warp_t);
-
+const size_t ITMWarpSceneLogger<TVoxel, TIndex>::warpByteSize = sizeof(TVoxel::warp);
+//TODO: bytesize for gradient of live frame
 template<typename TVoxel, typename TIndex>
-const size_t ITMWarpSceneLogger<TVoxel, TIndex>::updateByteSize = sizeof(TVoxel::warp_t_update);
+const size_t ITMWarpSceneLogger<TVoxel, TIndex>::updateByteSize = 0;
 
 template<typename TVoxel, typename TIndex>
 const size_t ITMWarpSceneLogger<TVoxel, TIndex>::warpAndUpdateByteSize =
@@ -410,8 +410,8 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::SaveCurrentWarpState() {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					const TVoxel& voxel = localVoxelBlock[ixVoxelInHashBlock];
-					warpOFStream.write(reinterpret_cast<const char* >(&voxel.warp_t), warpByteSize);
-					warpOFStream.write(reinterpret_cast<const char* >(&voxel.warp_t_update), updateByteSize);
+					warpOFStream.write(reinterpret_cast<const char* >(&voxel.warp), warpByteSize);
+					//warpOFStream.write(reinterpret_cast<const char* >(&voxel.warp_t_update), updateByteSize);
 				}
 			}
 		}
@@ -475,7 +475,7 @@ void ITMWarpSceneLogger<TVoxel, TIndex>::StopLoadingWarpState() {
 }
 
 /**
- * \brief Transfers the warp state from the warp file to the scene, imitating the .warp_t and .warp_t_update fields after
+ * \brief Transfers the warp state from the warp file to the scene, imitating the .warp and .gradient fields after
  * the current iteration.
  * \return True on success, false on failure
  */
@@ -506,12 +506,12 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::LoadCurrentWarpState() {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxel& voxel = localVoxelBlock[ixVoxelInHashBlock];
-					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t), warpByteSize);
-					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t_update), updateByteSize);
-					float warpUpdateLength = ORUtils::length(voxel.warp_t_update);
-					if (warpUpdateLength > maxWarpUpdateLength) {
-						maxWarpUpdateLength = warpUpdateLength;
-					}
+					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp), warpByteSize);
+					//warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t_update), updateByteSize);
+//					float warpUpdateLength = ORUtils::length(voxel.warp_t_update);
+//					if (warpUpdateLength > maxWarpUpdateLength) {
+//						maxWarpUpdateLength = warpUpdateLength;
+//					}
 					voxelCount++;
 				}
 			}
@@ -548,8 +548,8 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::LoadPreviousWarpState() {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxel& voxel = localVoxelBlock[ixVoxelInHashBlock];
-					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t), warpByteSize);
-					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t_update), updateByteSize);
+					warpIFStream.read(reinterpret_cast<char*>(&voxel.warp), warpByteSize);
+					//warpIFStream.read(reinterpret_cast<char*>(&voxel.warp_t_update), updateByteSize);
 				}
 			}
 		}

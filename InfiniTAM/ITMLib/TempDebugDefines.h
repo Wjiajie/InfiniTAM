@@ -20,11 +20,7 @@
 
 #ifdef _DEBUG
 
-//#define USE_COLOR
-
 #include "Utils/FileIO/ITMSceneLogger.h"
-
-
 #include <opencv2/core/mat.hpp>
 
 //*** 2D RASTERIZATION FOR VISUAL DEBUGGING ***
@@ -36,16 +32,6 @@
 #include "../../Utils/ITMSceneSliceRasterizer.h"
 #endif
 
-//*** DEBUG OUTPUT MESSAGES FOR UPDATE WARP ON CPU ***
-
-//#define PRINT_TIME_STATS //-- needs rearranging of TICs and TOCs
-#define PRINT_SINGLE_VOXEL_RESULT //Caution: very verbose!
-#define PRINT_MAX_WARP_AND_UPDATE
-#define PRINT_ENERGY_STATS
-#define PRINT_ADDITIONAL_STATS
-#define PRINT_DEBUG_HISTOGRAM
-//#define OPENMP_WARP_UPDATE_COMPUTE_DISABLE
-//***
 
 #ifdef PRINT_TIME_STATS
 #define TIC(var)\
@@ -62,8 +48,5 @@
 //different logging parameters
 #define FOCUS_SLICE_RADIUS 2
 
-#ifdef PRINT_ENERGY_STATS
-#define WRITE_ENERGY_STATS_TO_FILE
-#endif
 
 #endif //ifdef _DEBUG

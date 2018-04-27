@@ -99,8 +99,8 @@ void OffsetWarps(ITMScene<TVoxel, TIndex>& scene, Vector3f offset) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-					localVoxelBlock[locId].warp_t_update = offset;
-					localVoxelBlock[locId].warp_t += offset;
+					//localVoxelBlock[locId].gradient = offset;
+					localVoxelBlock[locId].warp += offset;
 				}
 			}
 		}

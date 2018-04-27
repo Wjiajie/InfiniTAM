@@ -56,7 +56,7 @@ inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* neighbor
 	//TODO: define inline function instead of macro
 #define PROCESS_VOXEL(location, index)\
     voxel = readVoxel(voxels, hashEntries, voxelPosition + (location), vmIndex, cache);\
-    neighborWarps[index] = voxel.warp_t;\
+    neighborWarps[index] = voxel.warp;\
     neighborAllocated[index] = vmIndex != 0;\
     neighborKnown[index] = voxel.flags != ITMLib::VOXEL_UNKNOWN;\
     neighborTruncated[index] = voxel.flags == ITMLib::VOXEL_TRUNCATED;
@@ -79,6 +79,7 @@ inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* neighbor
 }
 
 //endregion
+
 //region ================================= SDF JACOBIAN ================================================================
 
 template<typename TVoxel, typename TCache>
@@ -145,6 +146,7 @@ void ComputeLiveJacobian_CentralDifferences(Vector3f& jacobian,
 	jacobian[2] = 0.5f * (sdfAtZplusOne - sdfAtZminusOne);
 };
 // endregion
+
 // region ================================= SDF HESSIAN ================================================================
 
 template<typename TVoxel, typename TCache>
@@ -160,6 +162,7 @@ inline void ComputeSdfHessian(Matrix3f& hessian,
 //endregion
 
 // region ================================ WARP LAPLACIAN (SMOOTHING/TIKHONOV TERM) ====================================
+
 inline void ComputeWarpLaplacian(THREADPTR(Vector3f)& laplacian,
                                  const CONSTPTR(Vector3f)& voxelWarp,
                                  const CONSTPTR(Vector3f*) neighborWarps) {//in, x6-9
@@ -229,7 +232,6 @@ inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxe
 	neighborDifferences.setColumn(0, neighborWarps[6] - neighborWarps[4]);//(0,1,0)->(1,1,0)
 	neighborDifferences.setColumn(1, neighborWarps[7] - neighborWarps[5]);//(0,0,1)->(0,1,1)
 	neighborDifferences.setColumn(2, neighborWarps[8] - neighborWarps[3]);//(1,0,0)->(1,0,1)
-
 
 	//second derivatives in different directions
 	// |u_xy, u_yz, u_zx|      |m00, m10, m20|

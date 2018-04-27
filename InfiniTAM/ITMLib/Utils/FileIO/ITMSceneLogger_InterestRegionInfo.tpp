@@ -225,8 +225,8 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SaveCur
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					const TVoxelCanonical& voxel = localVoxelBlock[ixVoxelInHashBlock];
-					ofStream.write(reinterpret_cast<const char* >(&voxel.warp_t), sizeof(Vector3f));
-					ofStream.write(reinterpret_cast<const char* >(&voxel.warp_t_update), sizeof(Vector3f));
+					ofStream.write(reinterpret_cast<const char* >(&voxel.warp), sizeof(Vector3f));
+					//ofStream.write(reinterpret_cast<const char* >(&voxel.gradient), sizeof(Vector3f));
 				}
 			}
 		}

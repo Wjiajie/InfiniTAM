@@ -137,10 +137,10 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
 						for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 							int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 							const TVoxelCanonical& voxel = localVoxelBlock[ixVoxelInHashBlock];
-							sliceWarpOfstream.write(reinterpret_cast<const char* >(&voxel.warp_t),
+							sliceWarpOfstream.write(reinterpret_cast<const char* >(&voxel.warp),
 							                        sizeof(Vector3f));
-							sliceWarpOfstream.write(
-									reinterpret_cast<const char* >(&voxel.warp_t_update), sizeof(Vector3f));
+//							sliceWarpOfstream.write(
+//									reinterpret_cast<const char* >(&voxel.gradient), sizeof(Vector3f));
 						}
 					}
 				}

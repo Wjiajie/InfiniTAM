@@ -71,13 +71,17 @@ protected:
 	void SwapSourceAndTargetLiveScenes(ITMScene<TVoxelLive, TIndex>*& sourceScene);
 	virtual float CalculateWarpUpdate(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                  ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
+
+	virtual void ApplySmoothingToGradient(ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
+
 	virtual void ApplyWarpFieldToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                          ITMScene <TVoxelLive, TIndex>* sourceLiveScene,
 	                          ITMScene <TVoxelLive, TIndex>* targetLiveScene)= 0;
 	virtual void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                   ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
 	                                   ITMScene<TVoxelLive, TIndex>* targetLiveScene) = 0;
-	virtual float ApplyWarpUpdateToWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
+	virtual float ApplyWarpUpdateToWarp(
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
 
 
 	virtual void AllocateNewCanonicalHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
@@ -98,6 +102,10 @@ protected:
 	const float colorSdfThreshold = -1.00f;
 	//const float colorSdfThreshold = 0.25f;
 	const float epsilon = FLT_EPSILON;
+
+	bool rasterizeLive = false;
+	bool rasterizeCanonical = false;
+	bool rasterizeUpdates = false;
 
 	ITMScene<TVoxelLive, TIndex>* targetLiveScene;
 

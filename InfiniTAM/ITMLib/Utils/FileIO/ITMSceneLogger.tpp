@@ -314,7 +314,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StopLoadingWarpState()
 }
 
 /**
- * \brief Transfers the warp state from the warp file to the scene, imitating the .warp_t and .warp_t_update fields after
+ * \brief Transfers the warp state from the warp file to the scene, imitating the .warp and .gradient fields after
  * the current iteration.
  * \return True on success, false otherwise
  */

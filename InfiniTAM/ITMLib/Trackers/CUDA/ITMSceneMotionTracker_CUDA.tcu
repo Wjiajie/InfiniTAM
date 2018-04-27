@@ -116,6 +116,12 @@ void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpF
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 float ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUpdateToWarp(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not yet implemented");
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ApplySmoothingToGradient(
+		ITMScene<TVoxelLive, TIndex>* liveScene) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not yet implemented");
 }
