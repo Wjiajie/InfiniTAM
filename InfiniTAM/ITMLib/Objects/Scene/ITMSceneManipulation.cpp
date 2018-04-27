@@ -117,8 +117,8 @@ void CopySceneWithOffset_CPU(ITMScene<ITMVoxelLive, ITMVoxelIndex>& destination,
 					ITMVoxelCanonical& voxelSource = localVoxelBlock[locId];
 					ITMVoxelLive voxelDest;
 					voxelDest.sdf = voxelSource.sdf;
-					voxelDest.clr = voxelSource.clr;
-					voxelDest.w_color = voxelSource.w_color;
+//					voxelDest.clr = voxelSource.clr;
+//					voxelDest.w_color = voxelSource.w_color;
 					voxelDest.w_depth = voxelSource.w_depth;
 					//voxelDest.confidence = voxelSource.confidence;
 					SetVoxel_CPU<ITMVoxelLive, ITMVoxelIndex>(destination, offsetPosition, voxelDest);
@@ -160,8 +160,8 @@ void CopySceneWithOffset_CPU(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& destina
 					ITMVoxelLive& voxelSource = localVoxelBlock[locId];
 					ITMVoxelCanonical voxelDest;
 					voxelDest.sdf = voxelSource.sdf;
-					voxelDest.clr = voxelSource.clr;
-					voxelDest.w_color = voxelSource.w_color;
+//					voxelDest.clr = voxelSource.clr;
+//					voxelDest.w_color = voxelSource.w_color;
 					voxelDest.w_depth = voxelSource.w_depth;
 					//voxelDest.confidence = voxelSource.confidence;
 					SetVoxel_CPU<ITMVoxelCanonical, ITMVoxelIndex>(destination, offsetPosition, voxelDest);

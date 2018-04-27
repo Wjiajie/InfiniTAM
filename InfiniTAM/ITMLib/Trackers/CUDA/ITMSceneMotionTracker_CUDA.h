@@ -37,7 +37,7 @@ protected:
 	                          ITMScene <TVoxelLive, TIndex>* targetLiveScene) override;
 	float CalculateWarpUpdate(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                          ITMScene <TVoxelLive, TIndex>* liveScene) override;
-	void ApplySmoothingToGradient(ITMScene<TVoxelLive, TIndex>* liveScene) override;
+	void ApplySmoothingToGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) override;
 	void ApplyWarpUpdateToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                           ITMScene <TVoxelLive, TIndex>* sourceLiveScene,
 	                           ITMScene <TVoxelLive, TIndex>* targetLiveScene) override;

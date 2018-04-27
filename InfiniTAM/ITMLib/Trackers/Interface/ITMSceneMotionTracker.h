@@ -72,7 +72,7 @@ protected:
 	virtual float CalculateWarpUpdate(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                  ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 
-	virtual void ApplySmoothingToGradient(ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
+	virtual void ApplySmoothingToGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
 
 	virtual void ApplyWarpFieldToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                          ITMScene <TVoxelLive, TIndex>* sourceLiveScene,

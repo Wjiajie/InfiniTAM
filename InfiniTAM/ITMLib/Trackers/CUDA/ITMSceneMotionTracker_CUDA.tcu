@@ -122,6 +122,6 @@ float ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarp
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ApplySmoothingToGradient(
-		ITMScene<TVoxelLive, TIndex>* liveScene) {
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not yet implemented");
 }

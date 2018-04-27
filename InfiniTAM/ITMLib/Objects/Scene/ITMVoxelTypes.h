@@ -249,8 +249,8 @@ struct ITMVoxel_f_dynamic_warp
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
 	_CPU_AND_GPU_CODE_ static float floatToValue(float x) { return x; }
 
-	static const CONSTPTR(bool) hasColorInformation = true;
-	static const CONSTPTR(bool) hasConfidenceInformation = true;
+	static const CONSTPTR(bool) hasColorInformation = false;
+	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = true;
 
 	/** Value of the truncated signed distance transformation. */
@@ -260,34 +260,39 @@ struct ITMVoxel_f_dynamic_warp
 	/** refer to ITMVoxelFlags for flag bit array values */
 	unsigned char flags;
 	/** RGB colour information stored for this voxel. */
-	Vector3u clr;
+	//Vector3u clr;
 	/** Trilinear weight information stored for this voxel.
 	/** Number of observations that made up @p clr. */
-	uchar w_color;
-	float confidence;
+	//uchar w_color;
+	//float confidence;
 	/** vector translating the current point to a different location **/
 	Vector3f warp;
+	/** vectors translating the current point to a different location **/
+	Vector3f gradient0;
+	Vector3f gradient1;
 
 	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic_warp()
 	{
 		flags = ITMLib::VOXEL_UNKNOWN;
 		sdf = SDF_initialValue();
 		w_depth = 0;
-		confidence = 0.0f;
-		clr = Vector3u((uchar)0);
-		w_color = 0;
+		//confidence = 0.0f;
+		//clr = Vector3u((uchar)0);
+		//w_color = 0;
 		warp = Vector3f(0.f);
+		gradient0 = Vector3f(0.0f);
+		gradient1 = Vector3f(0.0f);
 	}
 };
 
-struct ITMVoxel_f_dynamic_gradient
+struct ITMVoxel_f_dynamic
 {
 	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return -1.0f; }
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
 	_CPU_AND_GPU_CODE_ static float floatToValue(float x) { return x; }
 
-	static const CONSTPTR(bool) hasColorInformation = true;
-	static const CONSTPTR(bool) hasConfidenceInformation = true;
+	static const CONSTPTR(bool) hasColorInformation = false;
+	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = true;
 
 	/** Value of the truncated signed distance transformation. */
@@ -296,25 +301,22 @@ struct ITMVoxel_f_dynamic_gradient
 	uchar w_depth;
 	/** refer to ITMVoxelFlags for flag bit array values */
 	unsigned char flags;
-	/** RGB colour information stored for this voxel. */
-	Vector3u clr;
-	/** Trilinear weight information stored for this voxel.
-	/** Number of observations that made up @p clr. */
-	uchar w_color;
-	float confidence;
-	/** vectors translating the current point to a different location **/
-	Vector3f gradient0;
-	Vector3f gradient1;
+//	/** RGB colour information stored for this voxel. */
+//	Vector3u clr;
+//	/** Trilinear weight information stored for this voxel.
+//	/** Number of observations that made up @p clr. */
+//	uchar w_color;
+//	float confidence;
 
-	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic_gradient()
+
+	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic()
 	{
 		flags = ITMLib::VOXEL_UNKNOWN;
 		sdf = SDF_initialValue();
 		w_depth = 0;
-		confidence = 0.0f;
-		clr = Vector3u((uchar)0);
-		w_color = 0;
-		gradient0 = Vector3f(0.0f);
-		gradient1 = Vector3f(0.0f);
+//		confidence = 0.0f;
+//		clr = Vector3u((uchar)0);
+//		w_color = 0;
+
 	}
 };

@@ -188,7 +188,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		// endregion
 		std::cout << red << "Iteration: " << iteration << reset;// << std::endl;
 		CalculateWarpUpdate(canonicalScene, sourceLiveScene);
-		ApplySmoothingToGradient(sourceLiveScene);
+		ApplySmoothingToGradient(canonicalScene);
 		maxVectorUpdate = ApplyWarpUpdateToWarp(canonicalScene, sourceLiveScene);
 		liveSceneReconstructor->ResetScene(targetLiveScene);
 		ApplyWarpUpdateToLive(canonicalScene, sourceLiveScene, targetLiveScene);

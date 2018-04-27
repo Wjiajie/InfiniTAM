@@ -242,13 +242,13 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					Vector3i originalPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxelCanonical& canonicalVoxel = localVoxelBlock[locId];
-
-					int oldWDepth, oldWColor;
+//TODO: confidence, color?
+					int oldWDepth;//, oldWColor;
 					float oldSdf;
 					oldSdf = canonicalVoxel.sdf;
-					Vector3f oldColor = TO_FLOAT3(canonicalVoxel.clr) / 255.0f;
+					//Vector3f oldColor = TO_FLOAT3(canonicalVoxel.clr) / 255.0f;
 					oldWDepth = canonicalVoxel.w_depth; //0 for VOXEL_TRUNCATED voxels
-					oldWColor = canonicalVoxel.w_color; //0 for VOXEL_TRUNCATED voxels
+					//oldWColor = canonicalVoxel.w_color; //0 for VOXEL_TRUNCATED voxels
 
 					if (currentFrameIx == 4 && originalPosition == Vector3i(-12, 19, 192)) {
 						int i = 42;
@@ -262,12 +262,17 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					bool struckKnownVoxels;
 					bool struckNonTruncatedVoxels;
 
-					//TODO: confidence?
+
 					//color & sdf
-					float weightedLiveSdf = InterpolateTrilinearly_SdfColor_StruckNonTruncatedAndKnown_SmartWeights(
+//					float weightedLiveSdf = InterpolateTrilinearly_SdfColor_StruckNonTruncatedAndKnown_SmartWeights(
+//							liveVoxels, liveHashTable,
+//							projectedPosition,
+//							liveCache, liveColor,
+//							struckKnownVoxels, struckNonTruncatedVoxels, liveWeight);
+					float weightedLiveSdf = InterpolateTrilinearly_Sdf_StruckNonTruncatedAndKnown_SmartWeights(
 							liveVoxels, liveHashTable,
 							projectedPosition,
-							liveCache, liveColor,
+							liveCache,
 							struckKnownVoxels, struckNonTruncatedVoxels, liveWeight);
 
 					/* *
@@ -285,15 +290,15 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					newWDepth = MIN(newWDepth, maximumWeight);
 
 					//TODO: this color-weighting probably is incorrect, since not all live voxels will have viable color -Greg (GitHub:Algomorph)
-					Vector3f newColor = oldWColor * oldColor + liveColor;
-					float newWColor = oldWColor + liveWeight;
-					newColor /= newWColor;
-					newWColor = MIN(newWDepth, maximumWeight);
+//					Vector3f newColor = oldWColor * oldColor + liveColor;
+//					float newWColor = oldWColor + liveWeight;
+//					newColor /= newWColor;
+//					newWColor = MIN(newWDepth, maximumWeight);
 
 					canonicalVoxel.sdf = TVoxelCanonical::floatToValue(newSdf);
 					canonicalVoxel.w_depth = (uchar) newWDepth;
-					canonicalVoxel.clr = TO_UCHAR3(newColor);
-					canonicalVoxel.w_color = (uchar) newWColor;
+//					canonicalVoxel.clr = TO_UCHAR3(newColor);
+//					canonicalVoxel.w_color = (uchar) newWColor;
 					if (!struckNonTruncatedVoxels) {
 						sdfTruncatedCount++;//_DEBUG
 					}
@@ -521,10 +526,10 @@ struct CompleteWarpWarpedPositionFunctor {
 };
 
 template<typename TVoxel>
-struct WarpGradient1WarpedPositionFunctor {
+struct WarpGradient0WarpedPositionFunctor {
 	inline static
 	Vector3f ComputeWarpedPosition(TVoxel voxel, Vector3i voxelPosition) {
-		return voxelPosition.toFloat() + voxel.gradient1;
+		return voxelPosition.toFloat() + voxel.gradient0;
 	}
 };
 
@@ -606,10 +611,8 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUp
 	AllocateHashBlocksAtWarpedLocations(canonicalScene,sourceLiveScene,targetLiveScene);
 
 	//Do trilinear interpolation to compute voxel values
-	//Note: the live sdf contains both the values and gradients,
-	//so the source SDF scene is the same as the source warp scene
-	TrilinearInterpolationFunctor<TVoxelLive, TVoxelLive, TIndex, WarpGradient1WarpedPositionFunctor<TVoxelLive>>
-			trilinearInterpolationFunctor(sourceLiveScene, sourceLiveScene);
+	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, TIndex, WarpGradient0WarpedPositionFunctor<TVoxelCanonical>>
+			trilinearInterpolationFunctor(sourceLiveScene, canonicalScene);
 	VoxelPositionTraversal_CPU(*targetLiveScene, trilinearInterpolationFunctor);
 }
 
