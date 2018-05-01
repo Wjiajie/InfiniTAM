@@ -93,10 +93,15 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 #ifdef WITH_OPENMP
 	#pragma omp parallel for
 #endif
-	for (int entryId = 0; entryId < noVisibleEntries; entryId++)
+	for (int visibleHash = 0; visibleHash < noVisibleEntries; visibleHash++)
 	{
 		Vector3i globalPos;
-		const ITMHashEntry &currentHashEntry = hashTable[visibleEntryIds[entryId]];
+		int hash = visibleEntryIds[visibleHash];
+		//_DEBUG
+//		if(hash == 260246){
+//			int i = 42;
+//		}
+		const ITMHashEntry &currentHashEntry = hashTable[hash];
 
 		if (currentHashEntry.ptr < 0) continue;
 

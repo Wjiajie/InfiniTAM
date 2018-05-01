@@ -68,7 +68,7 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneMotionTrack
 
 //endregion
 
-// region =========================================== PUBLIC METHODS ===================================================
+// region =========================================== FUNCTIONS ========================================================
 /**
  * \brief Tracks motion of voxels from canonical frame to live frame.
  * \details The warp field representing motion of voxels in the canonical frame is updated such that the live frame maps
@@ -84,11 +84,27 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene,
 		bool recordWarpUpdates, ITMSceneReconstructionEngine<TVoxelLive, TIndex>* liveSceneReconstructor) {
 
-	float maxVectorUpdate = std::numeric_limits<float>::infinity();
+
+	//_DEBUG
+	ITMSceneStatisticsCalculator<TVoxelCanonical,TIndex> canonicalCalculator;
+	//_DEBUG
+	ITMSceneStatisticsCalculator<TVoxelLive,TIndex> liveCalculator;
+
+	auto PrintLiveSceneStats = [&liveCalculator] (ITMScene<TVoxelLive,TIndex>* scene, const char* desc){
+		std::cout << std::setprecision(10) << "Count of allocated blocks in " << desc << ": " << liveCalculator.ComputeAllocatedHashBlockCount(scene) << std::endl;
+		std::cout << "Sum of non-truncated SDF magnitudes in " << desc << ": " << liveCalculator.ComputeNonTruncatedVoxelAbsSdfSum(scene) << std::endl;
+		std::cout << "Count of non-Truncated voxels in " << desc << ": " << liveCalculator.ComputeNonTruncatedVoxelCount(scene) << std::endl;
+	};
+	PrintLiveSceneStats(sourceLiveScene,"raw live scene");
+
 	AllocateNewCanonicalHashBlocks(canonicalScene, sourceLiveScene);
+	std::cout << "Number of allocated blocks in canonical scene after allocation: " << canonicalCalculator.ComputeAllocatedHashBlockCount(canonicalScene) << std::endl;
 
 	liveSceneReconstructor->ResetScene(targetLiveScene);
 	ApplyWarpFieldToLive(canonicalScene, sourceLiveScene, targetLiveScene);
+
+	PrintLiveSceneStats(targetLiveScene,"working/target live scene after frame-initialization");
+
 	SwapSourceAndTargetLiveScenes(sourceLiveScene);
 	// region ================================== DEBUG 2D VISUALIZATION ================================================
 
@@ -151,7 +167,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	}
 	// endregion
 
-
+	float maxVectorUpdate = std::numeric_limits<float>::infinity();
 	for (iteration = 0; maxVectorUpdate > maxVectorUpdateThresholdVoxels && iteration < maxIterationCount;
 	     iteration++) {
 		// region ================================== DEBUG 2D VISUALIZATION FOR UPDATES ================================
@@ -241,3 +257,4 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::SwapSourceAndTa
 	targetLiveScene = tmp;
 }
 
+// endregion

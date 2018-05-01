@@ -149,7 +149,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 	const float weightSmoothnessTerm = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightKillingTerm;
 	const float weightLevelSetTerm = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightLevelSetTerm;
 	const float gamma = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::rigidityEnforcementFactor;
-	// fraction of narrow band (non-truncated region) half-width that a voxel spans
+	// fraction of narrow band (non-Truncated region) half-width that a voxel spans
 	const float unity = liveScene->sceneParams->voxelSize / liveScene->sceneParams->mu;
 
 	// *** traversal vars
@@ -177,7 +177,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 		// we have a hash bucket miss, find the canonical voxel with the matching coordinates
 		if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
 			int canonicalHash = hash;
-			if (!FindHashEntryAtPosition(canonicalHash, currentLiveHashEntry.pos, canonicalHashTable)) {
+			if (!FindHashAtPosition(canonicalHash, currentLiveHashEntry.pos, canonicalHashTable)) {
 				DIEWITHEXCEPTION_REPORTLOCATION("Could not find corresponding canonical block at postion!");
 			}
 			currentCanonicalHashEntry = canonicalHashTable[canonicalHash];
@@ -582,7 +582,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 		// we have a hash bucket miss, find the canonical voxel with the matching coordinates
 		if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
 			int canonicalHash = hash;
-			if (!FindHashEntryAtPosition(canonicalHash, currentLiveHashEntry.pos, canonicalHashTable)) {
+			if (!FindHashAtPosition(canonicalHash, currentLiveHashEntry.pos, canonicalHashTable)) {
 				DIEWITHEXCEPTION_REPORTLOCATION("Could not find corresponding canonical block at postion!");
 			}
 			currentCanonicalHashEntry = canonicalHashTable[canonicalHash];

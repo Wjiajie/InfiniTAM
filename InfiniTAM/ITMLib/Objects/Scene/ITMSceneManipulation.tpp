@@ -175,7 +175,7 @@ bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, 
 
 		if (sourceHashEntry.ptr < 0) continue;
 		int destinationHash;
-		FindHashEntryAtPosition(destinationHash,sourceHashEntry.pos,destinationHashTable);
+		FindHashAtPosition(destinationHash, sourceHashEntry.pos, destinationHashTable);
 		const ITMHashEntry& destinationHashEntry = destinationHashTable[destinationHash];
 
 		//position of the current entry in 3D space (in voxel units)

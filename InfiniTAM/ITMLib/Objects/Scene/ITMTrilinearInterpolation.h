@@ -148,7 +148,7 @@ inline float InterpolateTrilinearly_Sdf_StruckNonTruncatedAndKnown_SmartWeights(
 }
 
 
-//_DEBUG -- special treatment of truncated values, use voxels with semantic information only!
+//_DEBUG -- special treatment of countTruncated values, use voxels with semantic information only!
 //sdf, color, pick maximum weights, get confidence
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
@@ -221,7 +221,7 @@ inline float InterpolateTrilinearly_TruncatedSignCopy_StruckNarrowBand(const CON
 	return sdf;
 }
 
-//_DEBUG -- special treatment of truncated values, use voxels with semantic information only!
+//_DEBUG -- special treatment of countTruncated values, use voxels with semantic information only!
 //sdf, color, pick maximum weights, get confidence
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
@@ -344,7 +344,7 @@ inline float InterpolateTrilinearly_NegativeTruncatedSignCopy_PositiveTruncatedN
 }
 
 
-//sdf only, version with replacing all truncated voxels with given value
+//sdf only, version with replacing all countTruncated voxels with given value
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float InterpolateTrilinearly_SetTruncatedToVal(const CONSTPTR(TVoxel)* voxelData,
@@ -380,7 +380,7 @@ inline float InterpolateTrilinearly_SetTruncatedToVal(const CONSTPTR(TVoxel)* vo
 	return sdf;
 }
 
-//sdf only, version with replacing all truncated voxels with given value; determines whether narrow band was hit
+//sdf only, version with replacing all countTruncated voxels with given value; determines whether narrow band was hit
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float InterpolateTrilinearly_SetTruncatedToVal_StruckNarrowBand(const CONSTPTR(TVoxel)* voxelData,
@@ -528,7 +528,7 @@ inline float _DEBUG_InterpolateTrilinearly_SetTruncatedToVal_StruckChecks(const 
 
 
 
-//sdf only, version with replacing all truncated voxels with given value; determines whether narrow band was hit
+//sdf only, version with replacing all countTruncated voxels with given value; determines whether narrow band was hit
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float InterpolateTrilinearly_SetUnknownToVal_StruckChecks(const CONSTPTR(TVoxel)* voxelData,
@@ -577,7 +577,7 @@ inline float InterpolateTrilinearly_SetUnknownToVal_StruckChecks(const CONSTPTR(
 
 
 
-//sdf only, version with replacing all truncated voxels with given value; determines whether narrow band was hit
+//sdf only, version with replacing all countTruncated voxels with given value; determines whether narrow band was hit
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float InterpolateTrilinearly_SetUnknownToVal(const CONSTPTR(TVoxel)* voxelData,
@@ -863,7 +863,7 @@ inline float InterpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
 	return TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
 }
 
-//_DEBUG -- special treatment of truncated values
+//_DEBUG -- special treatment of countTruncated values
 //sdf without color, found/not
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
@@ -913,7 +913,7 @@ inline float InterpolateTrilinearly_TruncatedCopySign(const CONSTPTR(TVoxel)* vo
 }
 
 
-//sdf without color, struck non-truncated check, struck known check,
+//sdf without color, struck non-Truncated check, struck known check,
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float InterpolateTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* voxelData,
@@ -951,7 +951,7 @@ inline float InterpolateTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* voxelDat
 	return sdf;
 }
 
-//sdf without color, struck non-truncated check
+//sdf without color, struck non-Truncated check
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float InterpolateTrilinearly_StruckNarrowBand(const CONSTPTR(TVoxel)* voxelData,

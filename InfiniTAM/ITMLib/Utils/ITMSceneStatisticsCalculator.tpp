@@ -105,7 +105,7 @@ struct ComputeNonTruncatedVoxelCountFunctor<true, TVoxel, TIndex>{
 	}
 	int count = 0;
 	void operator()(TVoxel& voxel){
-		count += voxel.flags != ITMLib::VOXEL_TRUNCATED;
+		count += voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
 	}
 };
 
@@ -138,41 +138,40 @@ int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeVoxelWithValueCount(ITM
 };
 //================================================== SUM OF TOTAL SDF ==================================================
 
-template<bool hasSemanticInformation, typename TVoxel, typename TIndex> struct SumTotalSDFFunctor;
+template<bool hasSemanticInformation, typename TVoxel, typename TIndex> struct SumSDFFunctor;
 
 template<class TVoxel, typename TIndex>
-struct SumTotalSDFFunctor<false, TVoxel, TIndex>{
+struct SumSDFFunctor<false, TVoxel, TIndex>{
 	static double compute(ITMScene<TVoxel, TIndex>* scene){
 		DIEWITHEXCEPTION("Voxels need to have semantic information to be marked as truncated or non-truncated.");
 	}
 };
 template<class TVoxel, typename TIndex>
-struct SumTotalSDFFunctor<true, TVoxel, TIndex>{
-	static double compute(ITMScene<TVoxel, TIndex>* scene, bool truncated){
-		SumTotalSDFFunctor instance;
-		instance.truncated = truncated;
+struct SumSDFFunctor<true, TVoxel, TIndex>{
+	static double compute(ITMScene<TVoxel, TIndex>* scene, ITMLib::VoxelFlags voxelType){
+		SumSDFFunctor instance;
+		instance.voxelType = voxelType;
 		VoxelTraversal_CPU(*scene, instance);
 		return instance.sum;
 	}
 	double sum;
-	bool truncated;
+	ITMLib::VoxelFlags voxelType;
 	void operator()(TVoxel& voxel){
-		if((!truncated && voxel.flags != ITMLib::VOXEL_TRUNCATED) ||
-				(truncated && voxel.flags == ITMLib::VOXEL_TRUNCATED)){
-			sum += static_cast<double>(TVoxel::valueToFloat(voxel.sdf));
+		if(voxelType == (ITMLib::VoxelFlags) voxel.flags){
+			sum += std::abs(static_cast<double>(TVoxel::valueToFloat(voxel.sdf)));
 		}
 	}
 };
 
 
 template<typename TVoxel, typename TIndex>
-double ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeNonTruncatedVoxelSdfSum(ITMScene<TVoxel, TIndex>* scene){
-	return SumTotalSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene, false);
+double ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeNonTruncatedVoxelAbsSdfSum(ITMScene<TVoxel, TIndex>* scene){
+	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene, VoxelFlags::VOXEL_NONTRUNCATED);
 
 };
 template<typename TVoxel, typename TIndex>
-double ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeTruncatedVoxelSdfSum(ITMScene<TVoxel, TIndex>* scene){
-	return SumTotalSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene, true);
+double ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeTruncatedVoxelAbsSdfSum(ITMScene<TVoxel, TIndex>* scene){
+	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene, VoxelFlags::VOXEL_TRUNCATED);
 };
 
 //======================================================================================================================
@@ -188,6 +187,18 @@ std::vector<int> ITMSceneStatisticsCalculator<TVoxel, TIndex>::GetFilledHashBloc
 		ids.push_back(entryId);
 	}
 	return ids;
+}
+
+template<typename TVoxel, typename TIndex>
+int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeAllocatedHashBlockCount(ITMScene<TVoxel, TIndex>* scene) {
+	int count;
+	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
+	int noTotalEntries = scene->index.noTotalEntries;
+	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
+		if (currentHashEntry.ptr >= 0) count++;
+	}
+	return count;
 }
 
 

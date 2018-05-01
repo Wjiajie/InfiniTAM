@@ -25,11 +25,14 @@ public:
 	void ComputeVoxelBounds(const ITMScene<TVoxel, TIndex>* scene, Vector3i& minVoxelPoint, Vector3i& maxVoxelPoint);
 	int ComputeAllocatedVoxelCount(ITMScene<TVoxel, TIndex>* scene);
 	std::vector<int> GetFilledHashBlockIds(ITMScene<TVoxel, TIndex>* scene);
+	int ComputeAllocatedHashBlockCount(ITMScene<TVoxel, TIndex>* scene);
+
 
 	int ComputeNonTruncatedVoxelCount(ITMScene<TVoxel, TIndex>* scene);
-	double ComputeNonTruncatedVoxelSdfSum(ITMScene<TVoxel, TIndex>* scene);
-	double ComputeTruncatedVoxelSdfSum(ITMScene<TVoxel, TIndex>* scene);
 	int ComputeVoxelWithValueCount(ITMScene<TVoxel, TIndex>* scene, float value);
+	double ComputeNonTruncatedVoxelAbsSdfSum(ITMScene<TVoxel, TIndex>* scene);
+	double ComputeTruncatedVoxelAbsSdfSum(ITMScene<TVoxel, TIndex>* scene);
+
 };
 
 }//end namespace ITMLib

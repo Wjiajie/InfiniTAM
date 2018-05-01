@@ -28,7 +28,7 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(
 	MemoryDeviceType memoryType = settings->GetMemoryType();
 	this->canonicalScene = new ITMScene<TVoxelCanonical, TIndex>(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
-	this->liveScene = new ITMScene<ITMVoxelLive, TIndex>(
+	this->liveScene = new ITMScene<TVoxelLive, TIndex>(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 	const ITMLibSettings::DeviceType deviceType = settings->deviceType;
 

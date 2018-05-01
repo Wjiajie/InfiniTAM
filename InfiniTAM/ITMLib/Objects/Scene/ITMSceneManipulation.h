@@ -215,9 +215,9 @@ inline bool MarkAsNeedingAllocationIfNotFound(DEVICEPTR(uchar)* entryAllocationT
  * \param hashTable [in] the hash table to search
  * \return true if hash block is allocated, false otherwise
  */
-inline bool FindHashEntryAtPosition(THREADPTR(int)& hashIdx,
-									const CONSTPTR(Vector3s)& hashBlockPosition,
-                                    const CONSTPTR(ITMHashEntry)* hashTable){
+inline bool FindHashAtPosition(THREADPTR(int)& hashIdx,
+                               const CONSTPTR(Vector3s)& hashBlockPosition,
+                               const CONSTPTR(ITMHashEntry)* hashTable){
 	hashIdx = hashIndex(hashBlockPosition);
 	ITMHashEntry hashEntry = hashTable[hashIdx];
 	if (!(IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1)) {
@@ -291,7 +291,8 @@ void AllocateHashEntriesUsingLists_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* e
 	scene->index.SetLastFreeExcessListId(lastFreeExcessListId);
 }
 
-//================================================ HELPER RANGE COMPUTATION / CHECK ROUTINES ===========================
+// region ======================================== HELPER RANGE COMPUTATION / CHECK ROUTINES ===========================
+
 inline
 void MinMaxFromExtrema(Vector3i& minPoint, Vector3i& maxPoint, const Vector3i& extremum1, const Vector3i& extremum2) {
 	// ** set min/max **
@@ -339,7 +340,7 @@ ComputeCopyRanges(int& xRangeStart, int& xRangeEnd, int& yRangeStart, int& yRang
 	xRangeEnd = std::min(SDF_BLOCK_SIZE, maxPoint.x - hashBlockPositionVoxels.x + 1);
 }
 
-//======================================================================================================================
+// endregion ===========================================================================================================
 bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition,
                            ITMHashEntry* hashTable,
                            ITMHashEntry*& resultEntry,
