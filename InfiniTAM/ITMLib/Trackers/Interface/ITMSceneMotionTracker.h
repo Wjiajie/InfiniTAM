@@ -72,7 +72,8 @@ protected:
 	virtual float CalculateWarpUpdate(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                  ITMScene<TVoxelLive, TIndex>* liveScene) = 0;//TODO: refactor to "CalculateWarpGradient"
 
-	virtual void ApplySmoothingToGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
+	virtual void ApplySmoothingToGradient(
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
 	virtual float ApplyWarpUpdateToWarp(
 			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
 

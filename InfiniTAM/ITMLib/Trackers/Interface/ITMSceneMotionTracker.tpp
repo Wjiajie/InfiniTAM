@@ -223,7 +223,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		PrintOperationStatus("Calculating warp energy gradient...");
 		CalculateWarpUpdate(canonicalScene, sourceLiveScene);
 		PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");
-		//ApplySmoothingToGradient(canonicalScene);//_DEBUG
+		ApplySmoothingToGradient(canonicalScene, sourceLiveScene);
 		PrintOperationStatus("Applying warp update (based on energy gradient) to the cumulative warp...");
 		maxVectorUpdate = ApplyWarpUpdateToWarp(canonicalScene, sourceLiveScene);
 		PrintOperationStatus(

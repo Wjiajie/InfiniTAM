@@ -45,7 +45,8 @@ using namespace ITMLib;
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath, bool enableDataTerm,
-                                                                                          bool enableLevelSetTerm, bool enableSmoothingTerm, bool enableKillingTerm)
+                                                                                          bool enableLevelSetTerm, bool enableSmoothingTerm, bool enableKillingTerm,
+                                                                                          bool enableGradientSmoothing)
 		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params, scenePath),
 		  hashEntryAllocationTypes(new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
 		  canonicalEntryAllocationTypes(
@@ -54,7 +55,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTr
 		  enableDataTerm(enableDataTerm),
 		  enableLevelSetTerm(enableLevelSetTerm),
 		  enableSmoothingTerm(enableSmoothingTerm),
-		  enableKillingTerm(enableKillingTerm) {
+		  enableKillingTerm(enableKillingTerm),
+          enableGradientSmoothing(enableGradientSmoothing){
 	InitializeHelper(params);
 
 }
@@ -62,7 +64,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTr
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates,
                                                                                           bool enableDataTerm, bool enableLevelSetTerm, bool enableSmoothingTerm,
-                                                                                          bool enableKillingTerm)
+                                                                                          bool enableKillingTerm, bool enableGradientSmoothing)
 		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params, scenePath, focusCoordinates),
 		  hashEntryAllocationTypes(new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
 		  canonicalEntryAllocationTypes(
@@ -71,7 +73,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTr
 		  enableDataTerm(enableDataTerm),
 		  enableLevelSetTerm(enableLevelSetTerm),
 		  enableSmoothingTerm(enableSmoothingTerm),
-		  enableKillingTerm(enableKillingTerm) {
+		  enableKillingTerm(enableKillingTerm),
+		  enableGradientSmoothing(enableGradientSmoothing){
 	InitializeHelper(params);
 }
 
@@ -466,8 +469,23 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::InitializeH
 		const ITMLib::ITMSceneParams& sceneParams) {
 	this->targetLiveScene = new ITMScene<ITMVoxelLive, TIndex>(
 			&sceneParams, false, MEMORYDEVICE_CPU);
+
+	PrintSettings();
 	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
 	memset(entriesAllocType, ITMLib::STABLE, static_cast<size_t>(TIndex::noTotalEntries));
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::PrintSettings() {
+	std::cout << bright_cyan << "*** ITMSceneMotionTracker_CPU Settings: ***" << reset << std::endl;
+#define print_bool(something) (something ? green : red) << (something ? "true" : "false") << reset
+	std::cout << "Data term enabled: " << print_bool(enableDataTerm) << std::endl;
+	std::cout << "Smoothing term enabled: " << print_bool(enableSmoothingTerm) << std::endl;
+	std::cout << "Level Set term enabled: " << print_bool(enableLevelSetTerm) << std::endl;
+	std::cout << "Killing term enabled: " << print_bool(enableKillingTerm) << std::endl;
+	std::cout << "Gradient smoothing enabled: " << print_bool(enableGradientSmoothing) << std::endl;
+#undef print_bool
+	std::cout << bright_cyan << "*** *********************************** ***" << reset << std::endl;
 }
 
 
@@ -684,6 +702,8 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateHas
 	AllocateHashEntriesUsingLists_CPU(sdfTargetScene, warpedEntryAllocationTypes, allocationBlockCoords,
 	                                  ITMLib::STABLE);
 }
+
+
 
 
 

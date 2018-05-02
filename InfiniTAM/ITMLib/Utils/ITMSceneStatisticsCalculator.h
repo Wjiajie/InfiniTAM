@@ -33,6 +33,9 @@ public:
 	double ComputeNonTruncatedVoxelAbsSdfSum(ITMScene<TVoxel, TIndex>* scene);
 	double ComputeTruncatedVoxelAbsSdfSum(ITMScene<TVoxel, TIndex>* scene);
 
+	float FindMaxGradient1LengthAndPosition(ITMScene<TVoxel, TIndex>* scene, Vector3i& positionOut);
+	float FindMaxGradient0LengthAndPosition(ITMScene<TVoxel, TIndex>* scene, Vector3i& positionOut);
+
 };
 
 }//end namespace ITMLib

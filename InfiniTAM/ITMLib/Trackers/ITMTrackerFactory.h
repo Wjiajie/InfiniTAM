@@ -565,11 +565,12 @@ public:
 					sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>(
 							settings->sceneParams, settings->outputPath, settings->GetFocusCoordinates(),
 							settings->enableDataTerm, settings->enableLevelSetTerm, settings->enableSmoothingTerm,
-							settings->enableSmoothingTerm);
+							settings->enableSmoothingTerm, settings->enableGradientSmoothing);
 				} else {
 					sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>(
 							settings->sceneParams, settings->outputPath, settings->enableDataTerm,
-							settings->enableLevelSetTerm, settings->enableSmoothingTerm, settings->enableKillingTerm);
+							settings->enableLevelSetTerm, settings->enableSmoothingTerm, settings->enableKillingTerm,
+							settings->enableGradientSmoothing);
 				}
 				break;
 			case ITMLibSettings::DEVICE_CUDA:

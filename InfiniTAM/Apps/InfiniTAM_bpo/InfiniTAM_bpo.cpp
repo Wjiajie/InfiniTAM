@@ -157,9 +157,11 @@ int main(int argc, char** argv) {
 		po::positional_options_description positional_arguments;
 		bool fixCamera = false;
 		bool disableDataTerm = false;
-		bool disableLevelSetTerm = false;
+		bool enableLevelSetTerm = false;
 		bool disableSmoothingTerm = false;
 		bool enableKillingTerm = false;
+		bool disableGradientSmoothing = false;
+
 		//@formatter:off
 		arguments.add_options()
 				("help,h", "Print help screen")
@@ -192,12 +194,15 @@ int main(int argc, char** argv) {
 																	  "tracking (fix the virtual camera position)")
 				("disable_data_term", po::bool_switch(&disableDataTerm)->default_value(false),
 				 "Whether or not to disable the data term if using the DynamicFusion algorithm")
-				("disable_level_set_term", po::bool_switch(&disableLevelSetTerm)->default_value(false),
+				("enable_level_set_term", po::bool_switch(&enableLevelSetTerm)->default_value(false),
 				 "Whether or not to disable the level set term if using the DynamicFusion algorithm")
 				("disable_smoothing_term", po::bool_switch(&disableSmoothingTerm)->default_value(false),
-				 "Whether or not to disable the smoothness term if using the DynamicFusion algorithm");
+				 "Whether or not to disable the smoothness term if using the DynamicFusion algorithm")
 				("enable_killing_term", po::bool_switch(&enableKillingTerm)->default_value(false),
-				 "Whether or not to enable the Killing term (isometric motion enforcement regularizer) if using the DynamicFusion algorithm");
+				 "Whether or not to enable the Killing term (isometric motion enforcement regularizer) if using the "
+	             "DynamicFusion algorithm")
+				("disable_gradient_smoothing", po::bool_switch(&disableGradientSmoothing)->default_value(false),
+				 "Whether or not to disable the Sobolev gradient smoothing if using the DynamicFusion algorithm");
 		//@formatter:on
 		positional_arguments.add("calib_file", 1);
 		positional_arguments.add("input_file", 3);
@@ -292,9 +297,11 @@ int main(int argc, char** argv) {
 		}
 
 		settings->enableDataTerm = !disableDataTerm;
-		settings->enableLevelSetTerm = !disableLevelSetTerm;
+		settings->enableLevelSetTerm = enableLevelSetTerm;
 		settings->enableSmoothingTerm = !disableSmoothingTerm;
 		settings->enableKillingTerm = enableKillingTerm;
+		settings->enableGradientSmoothing = !disableGradientSmoothing;
+
 
 		ITMMainEngine* mainEngine = nullptr;
 		switch (settings->libMode) {

@@ -84,6 +84,7 @@ namespace ITMLib
 		bool enableLevelSetTerm = true;
 		bool enableSmoothingTerm = true;
 		bool enableKillingTerm = false;
+		bool enableGradientSmoothing = true;
 
 	private:
 		/// Parameters for logging/debugging DynamicFusion

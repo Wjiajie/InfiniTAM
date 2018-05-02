@@ -108,6 +108,8 @@ ITMLibSettings::ITMLibSettings()
 	enableLevelSetTerm = true;
 	enableSmoothingTerm = true;
 	enableKillingTerm = false;
+	enableGradientSmoothing = true;
+
 }
 
 bool ITMLibSettings::AreFocusCoordinatesSpecified() const {

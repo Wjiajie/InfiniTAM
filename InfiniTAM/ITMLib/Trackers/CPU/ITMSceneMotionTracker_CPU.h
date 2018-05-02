@@ -26,10 +26,11 @@ class ITMSceneMotionTracker_CPU :
 public:
 
 	explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath, bool enableDataTerm,
-		                                   bool enableLevelSetTerm, bool enableSmoothingTerm, bool enableKillingTerm);
+		                                   bool enableLevelSetTerm, bool enableSmoothingTerm, bool enableKillingTerm,
+		                                   bool enableGradientSmoothing);
 	explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates,
 		                                   bool enableDataTerm, bool enableLevelSetTerm, bool enableSmoothingTerm,
-		                                   bool enableKillingTerm);
+		                                   bool enableKillingTerm, bool enableGradientSmoothing);
 	virtual ~ITMSceneMotionTracker_CPU();
 	void FuseFrame(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;
 	void WarpCanonicalToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
@@ -41,6 +42,7 @@ protected:
 	const bool enableLevelSetTerm;
 	const bool enableSmoothingTerm;
 	const bool enableKillingTerm;
+	const bool enableGradientSmoothing;
 
 
 	void AllocateHashBlocksAtWarpedLocations(ITMScene<TVoxelCanonical, TIndex>* warpSourceScene,
@@ -49,7 +51,8 @@ protected:
 	void ApplyWarpFieldToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                          ITMScene<TVoxelLive, TIndex>* rawLiveScene,
 	                          ITMScene<TVoxelLive, TIndex>* initializedLiveScene) override;
-	void ApplySmoothingToGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) override;
+	void ApplySmoothingToGradient(
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
 	float ApplyWarpUpdateToWarp(
 			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
 	void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
@@ -85,6 +88,7 @@ private:
 
 
 	void InitializeHelper(const ITMLib::ITMSceneParams& sceneParams);
+	void PrintSettings();
 	ORUtils::MemoryBlock<unsigned char>* hashEntryAllocationTypes;
 	ORUtils::MemoryBlock<unsigned char>* canonicalEntryAllocationTypes;
 	ORUtils::MemoryBlock<Vector3s>* allocationBlockCoordinates;

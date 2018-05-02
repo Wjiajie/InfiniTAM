@@ -88,76 +88,86 @@ int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeAllocatedVoxelCount(ITM
 	return count;
 }
 
-template<bool hasSemanticInformation, typename TVoxel, typename TIndex> struct ComputeNonTruncatedVoxelCountFunctor;
+template<bool hasSemanticInformation, typename TVoxel, typename TIndex>
+struct ComputeNonTruncatedVoxelCountFunctor;
 
 template<class TVoxel, typename TIndex>
-struct ComputeNonTruncatedVoxelCountFunctor<false, TVoxel, TIndex>{
-	static int compute(ITMScene<TVoxel, TIndex>* scene){
+struct ComputeNonTruncatedVoxelCountFunctor<false, TVoxel, TIndex> {
+	static int compute(ITMScene<TVoxel, TIndex>* scene) {
 		DIEWITHEXCEPTION("Voxels need to have semantic information to be marked as truncated or non-truncated.");
 	}
 };
 template<class TVoxel, typename TIndex>
-struct ComputeNonTruncatedVoxelCountFunctor<true, TVoxel, TIndex>{
-	static int compute(ITMScene<TVoxel, TIndex>* scene){
+struct ComputeNonTruncatedVoxelCountFunctor<true, TVoxel, TIndex> {
+	static int compute(ITMScene<TVoxel, TIndex>* scene) {
 		ComputeNonTruncatedVoxelCountFunctor instance;
 		VoxelTraversal_CPU(*scene, instance);
 		return instance.count;
 	}
+
 	int count = 0;
-	void operator()(TVoxel& voxel){
+
+	void operator()(TVoxel& voxel) {
 		count += voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
 	}
 };
 
 
 template<typename TVoxel, typename TIndex>
-int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeNonTruncatedVoxelCount(ITMScene<TVoxel, TIndex>* scene){
+int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeNonTruncatedVoxelCount(ITMScene<TVoxel, TIndex>* scene) {
 	return ComputeNonTruncatedVoxelCountFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene);
 };
 //================================================== COUNT VOXELS WITH SPECIFIC VALUE ==================================
 
 template<class TVoxel, typename TIndex>
-struct ComputeVoxelWithValueCountFunctor{
-	static int compute(ITMScene<TVoxel, TIndex>* scene, float value){
+struct ComputeVoxelWithValueCountFunctor {
+	static int compute(ITMScene<TVoxel, TIndex>* scene, float value) {
 		ComputeVoxelWithValueCountFunctor instance;
 		instance.value = value;
 		VoxelTraversal_CPU(*scene, instance);
 		return instance.count;
 	}
+
 	int count = 0;
 	float value = 0.0f;
-	void operator()(TVoxel& voxel){
+
+	void operator()(TVoxel& voxel) {
 		count += (voxel.sdf == value);
 	}
 };
 
 
 template<typename TVoxel, typename TIndex>
-int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeVoxelWithValueCount(ITMScene<TVoxel, TIndex>* scene, float value){
-	return ComputeVoxelWithValueCountFunctor<TVoxel, TIndex>::compute(scene,value);
+int
+ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeVoxelWithValueCount(ITMScene<TVoxel, TIndex>* scene, float value) {
+	return ComputeVoxelWithValueCountFunctor<TVoxel, TIndex>::compute(scene, value);
 };
 //================================================== SUM OF TOTAL SDF ==================================================
 
-template<bool hasSemanticInformation, typename TVoxel, typename TIndex> struct SumSDFFunctor;
+template<bool hasSemanticInformation, typename TVoxel, typename TIndex>
+struct SumSDFFunctor;
 
 template<class TVoxel, typename TIndex>
-struct SumSDFFunctor<false, TVoxel, TIndex>{
-	static double compute(ITMScene<TVoxel, TIndex>* scene){
-		DIEWITHEXCEPTION("Voxels need to have semantic information to be marked as truncated or non-truncated.");
+struct SumSDFFunctor<false, TVoxel, TIndex> {
+	static double compute(ITMScene<TVoxel, TIndex>* scene) {
+		DIEWITHEXCEPTION_REPORTLOCATION(
+				"Voxels need to have semantic information to be marked as truncated or non-truncated.");
 	}
 };
 template<class TVoxel, typename TIndex>
-struct SumSDFFunctor<true, TVoxel, TIndex>{
-	static double compute(ITMScene<TVoxel, TIndex>* scene, ITMLib::VoxelFlags voxelType){
+struct SumSDFFunctor<true, TVoxel, TIndex> {
+	static double compute(ITMScene<TVoxel, TIndex>* scene, ITMLib::VoxelFlags voxelType) {
 		SumSDFFunctor instance;
 		instance.voxelType = voxelType;
 		VoxelTraversal_CPU(*scene, instance);
 		return instance.sum;
 	}
+
 	double sum;
 	ITMLib::VoxelFlags voxelType;
-	void operator()(TVoxel& voxel){
-		if(voxelType == (ITMLib::VoxelFlags) voxel.flags){
+
+	void operator()(TVoxel& voxel) {
+		if (voxelType == (ITMLib::VoxelFlags) voxel.flags) {
 			sum += std::abs(static_cast<double>(TVoxel::valueToFloat(voxel.sdf)));
 		}
 	}
@@ -165,12 +175,15 @@ struct SumSDFFunctor<true, TVoxel, TIndex>{
 
 
 template<typename TVoxel, typename TIndex>
-double ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeNonTruncatedVoxelAbsSdfSum(ITMScene<TVoxel, TIndex>* scene){
-	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene, VoxelFlags::VOXEL_NONTRUNCATED);
+double
+ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeNonTruncatedVoxelAbsSdfSum(ITMScene<TVoxel, TIndex>* scene) {
+	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene,
+	                                                                              VoxelFlags::VOXEL_NONTRUNCATED);
 
 };
+
 template<typename TVoxel, typename TIndex>
-double ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeTruncatedVoxelAbsSdfSum(ITMScene<TVoxel, TIndex>* scene){
+double ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeTruncatedVoxelAbsSdfSum(ITMScene<TVoxel, TIndex>* scene) {
 	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene, VoxelFlags::VOXEL_TRUNCATED);
 };
 
@@ -200,6 +213,62 @@ int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeAllocatedHashBlockCount
 	}
 	return count;
 }
+// region ================================ VOXEL GRADIENTS =============================================================
 
+template<typename TVoxel, typename TIndex>
+struct MaxGradientFunctor;
 
+template<typename TIndex>
+struct MaxGradientFunctor<ITMVoxel, TIndex> {
+	static float find(ITMScene<ITMVoxel, TIndex>* scene, bool secondGradientField, Vector3i& maxPosition) {
+		DIEWITHEXCEPTION_REPORTLOCATION("Not implemented for voxels without gradients.");
+	}
+};
+
+template<typename TIndex>
+struct MaxGradientFunctor<ITMVoxelLive, TIndex> {
+	static float find(ITMScene<ITMVoxelLive, TIndex>* scene, bool secondGradientField, Vector3i& maxPosition) {
+		DIEWITHEXCEPTION_REPORTLOCATION("Not implemented for voxels without gradients.");
+	}
+};
+
+template<typename TIndex>
+struct MaxGradientFunctor<ITMVoxelCanonical, TIndex> {
+	static float find(ITMScene<ITMVoxelCanonical, TIndex>* scene, bool secondGradientField, Vector3i& maxPosition) {
+		MaxGradientFunctor instance;
+		instance.secondGradientField = secondGradientField;
+		VoxelPositionTraversal_CPU(*scene, instance);
+		maxPosition = instance.maxPosition;
+		return instance.maxLength;
+	}
+
+	float maxLength = 0.0f;
+	bool secondGradientField;
+	Vector3i maxPosition = Vector3i(0);
+
+	void operator()(ITMVoxelCanonical& voxel, Vector3i position) {
+		float gradientLength;
+		if (secondGradientField) {
+			gradientLength = ORUtils::length(voxel.gradient1);
+		}else{
+			gradientLength = ORUtils::length(voxel.gradient0);
+		}
+		if(gradientLength > maxLength){
+			maxLength = gradientLength;
+			maxPosition = position;
+		}
+	}
+};
+
+template<typename TVoxel, typename TIndex>
+float ITMSceneStatisticsCalculator<TVoxel, TIndex>::FindMaxGradient1LengthAndPosition(ITMScene<TVoxel, TIndex>* scene, Vector3i& positionOut) {
+	return MaxGradientFunctor<TVoxel, TIndex>::find(scene, true, positionOut);
+}
+
+template<typename TVoxel, typename TIndex>
+float ITMSceneStatisticsCalculator<TVoxel, TIndex>::FindMaxGradient0LengthAndPosition(ITMScene<TVoxel, TIndex>* scene,
+                                                                                      Vector3i& positionOut) {
+	return MaxGradientFunctor<TVoxel, TIndex>::find(scene, false, positionOut);
+}
+// endregion ===========================================================================================================
 
