@@ -22,6 +22,7 @@ ITMViewBuilder_CUDA::~ITMViewBuilder_CUDA(void) { }
 __global__ void convertDisparityToDepth_device(float *depth_out, const short *depth_in, Vector2f disparityCalibParams, float fx_depth, Vector2i imgSize);
 __global__ void convertDepthAffineToFloat_device(float *d_out, const short *d_in, Vector2i imgSize, Vector2f depthCalibParams);
 __global__ void filterDepth_device(float *imageData_out, const float *imageData_in, Vector2i imgDims);
+__global__ void thresholdDepth_device(float *imageData_out, const float *imageData_in, Vector2i imgDims);
 __global__ void ComputeNormalAndWeight_device(const float* depth_in, Vector4f* normal_out, float *sigmaL_out, Vector2i imgDims, Vector4f intrinsic);
 
 //---------------------------------------------------------------------------
@@ -30,7 +31,8 @@ __global__ void ComputeNormalAndWeight_device(const float* depth_in, Vector4f* n
 //
 //---------------------------------------------------------------------------
 
-void ITMViewBuilder_CUDA::UpdateView(ITMView **view_ptr, ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, bool useBilateralFilter, bool modelSensorNoise, bool storePreviousImage)
+void ITMViewBuilder_CUDA::UpdateView(ITMView** view_ptr, ITMUChar4Image* rgbImage, ITMShortImage* rawDepthImage, bool useThresholdFilter,
+                                     bool useBilateralFilter, bool modelSensorNoise, bool storePreviousImage)
 {
 	if (*view_ptr == NULL)
 	{
@@ -87,7 +89,9 @@ void ITMViewBuilder_CUDA::UpdateView(ITMView **view_ptr, ITMUChar4Image *rgbImag
 	}
 }
 
-void ITMViewBuilder_CUDA::UpdateView(ITMView **view_ptr, ITMUChar4Image *rgbImage, ITMShortImage *depthImage, bool useBilateralFilter, ITMIMUMeasurement *imuMeasurement, bool modelSensorNoise, bool storePreviousImage)
+void ITMViewBuilder_CUDA::UpdateView(ITMView** view_ptr, ITMUChar4Image* rgbImage, ITMShortImage* depthImage, bool useThresholdFilter,
+                                     bool useBilateralFilter, ITMIMUMeasurement* imuMeasurement, bool modelSensorNoise,
+                                     bool storePreviousImage)
 {
 	if (*view_ptr == NULL) 
 	{
@@ -107,7 +111,7 @@ void ITMViewBuilder_CUDA::UpdateView(ITMView **view_ptr, ITMUChar4Image *rgbImag
 	ITMViewIMU* imuView = (ITMViewIMU*)(*view_ptr);
 	imuView->imu->SetFrom(imuMeasurement);
 
-	this->UpdateView(view_ptr, rgbImage, depthImage, useBilateralFilter, modelSensorNoise, storePreviousImage);
+	this->UpdateView(view_ptr, rgbImage, depthImage, false, useBilateralFilter, modelSensorNoise, storePreviousImage);
 }
 
 void ITMViewBuilder_CUDA::ConvertDisparityToDepth(ITMFloatImage *depth_out, const ITMShortImage *depth_in, const ITMIntrinsics *depthIntrinsics,
@@ -171,6 +175,19 @@ void ITMViewBuilder_CUDA::ComputeNormalAndWeights(ITMFloat4Image *normal_out, IT
 	ORcudaKernelCheck;
 }
 
+void ITMViewBuilder_CUDA::ThresholdFiltering(ITMFloatImage* image_out, const ITMFloatImage* image_in) {
+	Vector2i imgDims = image_in->noDims;
+
+	const float *imageData_in = image_in->GetData(MEMORYDEVICE_CUDA);
+	float *imageData_out = image_out->GetData(MEMORYDEVICE_CUDA);
+
+	dim3 blockSize(16, 16);
+	dim3 gridSize((int)ceil((float)imgDims.x / (float)blockSize.x), (int)ceil((float)imgDims.y / (float)blockSize.y));
+
+	thresholdDepth_device << <gridSize, blockSize >> >(imageData_out, imageData_in, imgDims);
+	ORcudaKernelCheck;
+}
+
 //---------------------------------------------------------------------------
 //
 // kernel function implementation
@@ -204,6 +221,15 @@ __global__ void filterDepth_device(float *imageData_out, const float *imageData_
 	if (x < 2 || x > imgDims.x - 2 || y < 2 || y > imgDims.y - 2) return;
 
 	filterDepth(imageData_out, imageData_in, x, y, imgDims);
+}
+
+__global__ void thresholdDepth_device(float *imageData_out, const float *imageData_in, Vector2i imgDims)
+{
+	int x = threadIdx.x + blockIdx.x * blockDim.x, y = threadIdx.y + blockIdx.y * blockDim.y;
+
+	if (x < 2 || x > imgDims.x - 2 || y < 2 || y > imgDims.y - 2) return;
+
+	thresholdDepth(imageData_out, imageData_in, x, y, imgDims);
 }
 
 __global__ void ComputeNormalAndWeight_device(const float* depth_in, Vector4f* normal_out, float *sigmaZ_out, Vector2i imgDims, Vector4f intrinsic)

@@ -87,7 +87,7 @@ void ComputeVoxelAttributes(const Vector3i& currentBlockPositionVoxels, int x, i
 	                   (truncated ? POSITIVE_TRUNCATED_SDF_COLOR_INDEX : POSITIVE_NON_TRUNCATED_SDF_COLOR_INDEX) :
 	                   (truncated ? NEGATIVE_TRUNCATED_SDF_COLOR_INDEX : NEGATIVE_NON_TRUNCATED_SDF_COLOR_INDEX);
 	}
-	// need to filp the y & z axes (unlike InfiniTAM, VTK uses proper right-hand rule system))
+
 	points->InsertNextPoint(voxelPosition.x,
 	                        voxelPosition.y,
 	                        voxelPosition.z);

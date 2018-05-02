@@ -25,14 +25,11 @@ class ITMSceneMotionTracker_CPU :
 		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex> {
 public:
 
-	explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath,
-	                                   bool enableDataTerm = true,
-	                                   bool enableLevelSetTerm = true,
-	                                   bool enableKillingTerm = true);
+	explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath, bool enableDataTerm,
+		                                   bool enableLevelSetTerm, bool enableSmoothingTerm, bool enableKillingTerm);
 	explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates,
-	                                   bool enableDataTerm = true,
-	                                   bool enableLevelSetTerm = true,
-	                                   bool enableKillingTerm = true);
+		                                   bool enableDataTerm, bool enableLevelSetTerm, bool enableSmoothingTerm,
+		                                   bool enableKillingTerm);
 	virtual ~ITMSceneMotionTracker_CPU();
 	void FuseFrame(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;
 	void WarpCanonicalToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
@@ -43,26 +40,29 @@ protected:
 	const bool enableDataTerm;
 	const bool enableLevelSetTerm;
 	const bool enableSmoothingTerm;
-	const bool useIsometryEnforcementFactorInSmoothingTerm = false;
+	const bool enableKillingTerm;
 
 
 	void AllocateHashBlocksAtWarpedLocations(ITMScene<TVoxelCanonical, TIndex>* warpSourceScene,
 	                                         ITMScene<TVoxelLive, TIndex>* sdfSourceScene,
 	                                         ITMScene<TVoxelLive, TIndex>* sdfTargetScene);
-	void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                           ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
-	                           ITMScene<TVoxelLive, TIndex>* targetLiveScene) override;
 	void ApplyWarpFieldToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                          ITMScene<TVoxelLive, TIndex>* rawLiveScene,
 	                          ITMScene<TVoxelLive, TIndex>* initializedLiveScene) override;
 	void ApplySmoothingToGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) override;
+	float ApplyWarpUpdateToWarp(
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
+	void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                           ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
+	                           ITMScene<TVoxelLive, TIndex>* targetLiveScene) override;
+
+
 
 	float CalculateWarpUpdate(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                          ITMScene<TVoxelLive, TIndex>* liveScene) override;
 
 
-	float ApplyWarpUpdateToWarp(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
+
 
 	void AllocateNewCanonicalHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                    ITMScene<TVoxelLive, TIndex>* liveScene) override;
@@ -88,10 +88,6 @@ private:
 	ORUtils::MemoryBlock<unsigned char>* hashEntryAllocationTypes;
 	ORUtils::MemoryBlock<unsigned char>* canonicalEntryAllocationTypes;
 	ORUtils::MemoryBlock<Vector3s>* allocationBlockCoordinates;
-
-	//BEGIN _DEBUG
-	float maxWarpUpdateLength = 0.0f;
-	float maxWarpLength = 0.0;
 
 };
 

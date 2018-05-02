@@ -41,17 +41,38 @@ _CPU_AND_GPU_CODE_ inline void filterDepth(DEVICEPTR(float) *imageData_out, cons
 	float sigma_z = 1.0f / (0.0012f + 0.0019f*(z - 0.4f)*(z - 0.4f) + 0.0001f / sqrt(z) * 0.25f);
 
 	for (int i = -2, count = 0; i <= 2; i++) for (int j = -2; j <= 2; j++, count++)
-	{
-		tmpz = imageData_in[(x + j) + (y + i) * imgDims.x];
-		if (tmpz < 0.0f) continue;
-		dz = (tmpz - z); dz *= dz;
-		w = exp(-0.5f * ((abs(i) + abs(j))*MEAN_SIGMA_L*MEAN_SIGMA_L + dz * sigma_z * sigma_z));
-		w_sum += w;
-		final_depth += w*tmpz;
-	}
+		{
+			tmpz = imageData_in[(x + j) + (y + i) * imgDims.x];
+			if (tmpz < 0.0f) continue;
+			dz = (tmpz - z); dz *= dz;
+			w = exp(-0.5f * ((abs(i) + abs(j))*MEAN_SIGMA_L*MEAN_SIGMA_L + dz * sigma_z * sigma_z));
+			w_sum += w;
+			final_depth += w*tmpz;
+		}
 
 	final_depth /= w_sum;
 	imageData_out[x + y*imgDims.x] = final_depth;
+}
+
+#define DIFFERENCE_THRESHOLD 0.2f //20%
+_CPU_AND_GPU_CODE_ inline void thresholdDepth(DEVICEPTR(float) *imageData_out, const CONSTPTR(float) *imageData_in, int x, int y, Vector2i imgDims)
+{
+	float z, tmpz, sum = 0.0f;
+
+	z = imageData_in[x + y * imgDims.x];
+	if (z < 0.0f) { imageData_out[x + y * imgDims.x] = -1.0f; return; }
+
+	int count = 0;
+	for (int i = -2; i <= 2; i++){
+		for (int j = -2; j <= 2; j++){
+			tmpz = imageData_in[(x + j) + (y + i) * imgDims.x];
+			if (tmpz < 0.0f) continue;
+			count++;
+			sum += tmpz;
+		}
+	}
+
+	imageData_out[x + y*imgDims.x] = ABS(sum / count - z) < DIFFERENCE_THRESHOLD ? z : -1.0f;
 }
 
 

@@ -13,11 +13,15 @@ namespace ITMLib
 			Vector2f disparityCalibParams);
 		void ConvertDepthAffineToFloat(ITMFloatImage *depth_out, const ITMShortImage *depth_in, Vector2f depthCalibParams);
 
+		void ThresholdFiltering(ITMFloatImage *image_out, const ITMFloatImage *image_in) override;
 		void DepthFiltering(ITMFloatImage *image_out, const ITMFloatImage *image_in);
 		void ComputeNormalAndWeights(ITMFloat4Image *normal_out, ITMFloatImage *sigmaZ_out, const ITMFloatImage *depth_in, Vector4f intrinsic);
 
-		void UpdateView(ITMView **view, ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, bool useBilateralFilter, bool modelSensorNoise = false, bool storePreviousImage = true);
-		void UpdateView(ITMView **view, ITMUChar4Image *rgbImage, ITMShortImage *depthImage, bool useBilateralFilter, ITMIMUMeasurement *imuMeasurement, bool modelSensorNoise = false, bool storePreviousImage = true);
+		void UpdateView(ITMView** view, ITMUChar4Image* rgbImage, ITMShortImage* rawDepthImage, bool useThresholdFilter,
+				                bool useBilateralFilter, bool modelSensorNoise, bool storePreviousImage);
+		void UpdateView(ITMView** view, ITMUChar4Image* rgbImage, ITMShortImage* depthImage, bool useThresholdFilter,
+				                bool useBilateralFilter, ITMIMUMeasurement* imuMeasurement, bool modelSensorNoise,
+				                bool storePreviousImage);
 
 		ITMViewBuilder_CUDA(const ITMRGBDCalib& calib);
 		~ITMViewBuilder_CUDA(void);

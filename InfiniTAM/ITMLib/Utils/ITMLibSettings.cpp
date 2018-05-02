@@ -38,6 +38,9 @@ ITMLibSettings::ITMLibSettings()
 	/// enables or disables approximate raycast
 	useApproximateRaycast = false;
 
+	/// enable or disable threshold depth filtering
+	useThresholdFilter = false;
+
 	/// enable or disable bilateral depth filtering
 	useBilateralFilter = false;
 
@@ -99,9 +102,12 @@ ITMLibSettings::ITMLibSettings()
 
 	// Debugging/logging
 	focusCoordinatesSpecified = false;
+
+	// Dynamic fusion terms
 	enableDataTerm = true;
 	enableLevelSetTerm = true;
-	enableKillingTerm = true;
+	enableSmoothingTerm = true;
+	enableKillingTerm = false;
 }
 
 bool ITMLibSettings::AreFocusCoordinatesSpecified() const {

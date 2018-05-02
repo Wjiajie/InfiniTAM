@@ -44,11 +44,8 @@ using namespace ITMLib;
 // region ================================ CONSTRUCTORS AND DESTRUCTORS ================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params,
-                                                                                          std::string scenePath,
-                                                                                          bool enableDataTerm,
-                                                                                          bool enableLevelSetTerm,
-                                                                                          bool enableKillingTerm)
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath, bool enableDataTerm,
+                                                                                          bool enableLevelSetTerm, bool enableSmoothingTerm, bool enableKillingTerm)
 		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params, scenePath),
 		  hashEntryAllocationTypes(new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
 		  canonicalEntryAllocationTypes(
@@ -56,17 +53,15 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTr
 		  allocationBlockCoordinates(new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
 		  enableDataTerm(enableDataTerm),
 		  enableLevelSetTerm(enableLevelSetTerm),
-		  enableSmoothingTerm(enableKillingTerm) {
+		  enableSmoothingTerm(enableSmoothingTerm),
+		  enableKillingTerm(enableKillingTerm) {
 	InitializeHelper(params);
 
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params,
-                                                                                          std::string scenePath,
-                                                                                          Vector3i focusCoordinates,
-                                                                                          bool enableDataTerm,
-                                                                                          bool enableLevelSetTerm,
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates,
+                                                                                          bool enableDataTerm, bool enableLevelSetTerm, bool enableSmoothingTerm,
                                                                                           bool enableKillingTerm)
 		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params, scenePath, focusCoordinates),
 		  hashEntryAllocationTypes(new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
@@ -75,7 +70,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTr
 		  allocationBlockCoordinates(new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
 		  enableDataTerm(enableDataTerm),
 		  enableLevelSetTerm(enableLevelSetTerm),
-		  enableSmoothingTerm(enableKillingTerm) {
+		  enableSmoothingTerm(enableSmoothingTerm),
+		  enableKillingTerm(enableKillingTerm) {
 	InitializeHelper(params);
 }
 
@@ -311,7 +307,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					switch (canonicalVoxel.flags) {
 						case ITMLib::VOXEL_UNKNOWN:
 							if (struckNonTruncatedVoxels) {
-								//voxel is no longer perceived as countTruncated
+								//voxel is no longer perceived as truncated
 								canonicalVoxel.flags = ITMLib::VOXEL_NONTRUNCATED;
 								if (entriesAllocType[hash] != ITMLib::STABLE) {
 									hashBlockStabilizationCount++;
@@ -323,17 +319,17 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 							break;
 						case ITMLib::VOXEL_TRUNCATED:
 							if (struckNonTruncatedVoxels) {
-								//voxel is no longer perceived as countTruncated
+								//voxel is no longer perceived as truncated
 								canonicalVoxel.flags = ITMLib::VOXEL_NONTRUNCATED;
 								if (entriesAllocType[hash] != ITMLib::STABLE) {
 									hashBlockStabilizationCount++;
 								}
 								entriesAllocType[hash] = ITMLib::STABLE;
 							} else if (std::signbit(oldSdf) != std::signbit(weightedLiveSdf)) {
-								//both voxels are countTruncated but differ in sign
+								//both voxels are truncated but differ in sign
 								//TODO: if it is faster, optimize this to short-circuit the computation before instead -Greg (GitHub: Algomorph)
 								if (liveWeight > 0.25f && weightedLiveSdf > 0.0f) {
-									//set countTruncated to the sign of the live countTruncated, i.e. now belongs to different surface
+									//set truncated to the sign of the live truncated, i.e. now belongs to different surface
 									canonicalVoxel.sdf = 1.0;
 									canonicalVoxel.w_depth = liveWeight;
 								} else {
@@ -359,7 +355,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 	//_DEBUG
 	std::cout << "Number of lookups that yielded initial (unknown) value in live (target) frame during fusion: "
 	          << missedKnownVoxels << std::endl;
-	std::cout << "Number of lookups that resulted in countTruncated value in live (target) frame during fusion: "
+	std::cout << "Number of lookups that resulted in truncated value in live (target) frame during fusion: "
 	          << sdfTruncatedCount << std::endl;
 	std::cout << "Number of hash blocks that were stabilized (converted from boundary status) during fusion: "
 	          << hashBlockStabilizationCount << std::endl;
@@ -377,7 +373,7 @@ struct WarpSdfDistributionFunctor {
 	}
 
 	void operator()(TVoxelCanonical& voxel, Vector3i voxelPosition) {
-		if (voxel.flags == ITMLib::VOXEL_TRUNCATED) return; // skip countTruncated voxels
+		if (voxel.flags == ITMLib::VOXEL_TRUNCATED) return; // skip truncated voxels
 		Vector3f warpedPosition = voxelPosition.toFloat() + voxel.warp;
 		float sdfValue = TVoxelCanonical::valueToFloat(voxel.sdf);
 		DistributeTrilinearly(liveVoxels, liveHashEntries, liveCache, warpedPosition, sdfValue);
@@ -409,7 +405,7 @@ struct WarpHashAllocationMarkerFunctor {
 	}
 
 	void operator()(TVoxelCanonical& voxel, Vector3i voxelPosition) {
-		if (voxel.flags != ITMLib::VOXEL_NONTRUNCATED) return; // skip countTruncated voxels
+		if (voxel.flags != ITMLib::VOXEL_NONTRUNCATED) return; // skip truncated voxels
 		Vector3f warpedPosition = voxelPosition.toFloat() + voxel.warp;
 		Vector3i warpedPositionTruncated = warpedPosition.toInt();
 
@@ -501,34 +497,13 @@ struct WarpBasedAllocationMarkerFunctor {
 		const TVoxelSdfSource& sourceVoxelAtWarp = readVoxel(sourceVoxels, sourceHashEntries, warpedPositionTruncated,
 		                                                vmIndex, sourceCache);
 		//_DEBUG
-		if (sourceVoxelAtWarp.flags != ITMLib::VOXEL_NONTRUNCATED) return; // skip countTruncated voxels in raw live
+		if (sourceVoxelAtWarp.flags != ITMLib::VOXEL_NONTRUNCATED) return; // skip truncated voxels in raw live
 
 		int liveBlockHash = hashIndex(hashBlockPosition);
 		MarkAsNeedingAllocationIfNotFound(warpedEntryAllocationTypes, allocationBlockCoords, liveBlockHash,
 		                                  hashBlockPosition, targetHashEntries);
 
-		if (sourceVoxelAtWarp.flags != ITMLib::VOXEL_NONTRUNCATED){
-			switch ((ITMLib::VoxelFlags)sourceVoxelAtWarp.flags){
-				case ITMLib::VOXEL_TRUNCATED:
-					trucatedCounts[liveBlockHash]++;
-					break;
-				case ITMLib::VOXEL_UNKNOWN:
-					unknownCounts[liveBlockHash]++;
-					break;
-				default:
-					break;
-			}
-
-			if(trucatedCounts[liveBlockHash] + unknownCounts[liveBlockHash] == SDF_BLOCK_SIZE3){
-				int hashSource = hashIndex(hashBlockPosition);
-				FindHashAtPosition(hashSource, hashBlockPosition, sourceHashEntries);
-				std::cerr << "Error hash (target): " << liveBlockHash << "; error hash (source): " << hashSource << " Pos: " << hashBlockPosition << " Truncated: " << trucatedCounts[liveBlockHash] << " Unknown: " << unknownCounts[liveBlockHash] << std::endl;
-			 }
-		}
 	}
-
-	std::unordered_map<int,int> trucatedCounts;
-	std::unordered_map<int,int> unknownCounts;
 
 private:
 	ITMScene<TVoxelSdfSource, TIndex>* sourceScene;
@@ -619,6 +594,40 @@ private:
 };
 
 /**
+ * \brief Uses trilinear interpolation of the raw live frame at canonical voxel positions augmented with their warps to
+ *  generate a new SDF grid in the target scene. Intended to be used for initialization of new live frame before
+ *  optimization.
+ * \details Assumes target frame is empty / has been reset.
+ * Does 3 things:
+ * <ol>
+ *  <li> Traverses allocated canonical hash blocks and voxels, checks raw frame at their warped positions (truncated),
+ *       if there is a non-truncated voxel in the raw frame, marks the block in target sdf at the current canonical hash
+ *       block position for allocation
+ *  <li> Traverses target hash blocks, if one is marked for allocation, allocates it
+ *  <li> Traverses allocated target hash blocks and voxels, retrieves canonical voxel at same location, if it is marked
+ *       as "truncated", skips it, otherwise uses trilinear interpolation at [current voxel position + warp vector] to
+ *       retrieve SDF value from raw live frame, then stores it into the current target voxel, and marks latter voxel as
+ *       truncated, non-truncated, or unknown based on the lookup flags & resultant SDF value.
+ * </ol>
+ * \param canonicalScene canonical scene with warp vectors at each voxel.
+ * \param rawLiveScene source raw live scene
+ * \param initializedLiveScene target live scene
+ */
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpFieldToLive(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+		ITMScene<TVoxelLive, TIndex>* rawLiveScene,
+		ITMScene<TVoxelLive, TIndex>* initializedLiveScene) {
+
+	AllocateHashBlocksAtWarpedLocations(canonicalScene, rawLiveScene, initializedLiveScene);
+	//Do trilinear interpolation to compute voxel values
+	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, TIndex, CompleteWarpWarpedPositionFunctor<TVoxelCanonical>>
+			trilinearInterpolationFunctor(rawLiveScene, canonicalScene);
+
+	VoxelPositionTraversal_CPU(*initializedLiveScene, trilinearInterpolationFunctor);
+}
+
+/**
  * \brief Uses trilinear interpolation of the live frame at [canonical voxel positions + scaled engergy gradient]
  *  (not complete warps) to generate a new live SDF grid in the target scene. Intended to be used at every iteration.
  * \details Assumes target frame is empty / has been reset.
@@ -652,39 +661,6 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUp
 	VoxelPositionTraversal_CPU(*targetLiveScene, trilinearInterpolationFunctor);
 }
 
-/**
- * \brief Uses trilinear interpolation of the raw live frame at canonical voxel positions augmented with their warps to
- *  generate a new SDF grid in the target scene. Intended to be used for initialization of new live frame before
- *  optimization.
- * \details Assumes target frame is empty / has been reset.
- * Does 3 things:
- * <ol>
- *  <li> Traverses allocated canonical hash blocks and voxels, checks raw frame at their warped positions (truncated),
- *       if there is a non-truncated voxel in the raw frame, marks the block in target sdf at the current canonical hash
- *       block position for allocation
- *  <li> Traverses target hash blocks, if one is marked for allocation, allocates it
- *  <li> Traverses allocated target hash blocks and voxels, retrieves canonical voxel at same location, if it is marked
- *       as "truncated", skips it, otherwise uses trilinear interpolation at [current voxel position + warp vector] to
- *       retrieve SDF value from raw live frame, then stores it into the current target voxel, and marks latter voxel as
- *       truncated, non-truncated, or unknown based on the lookup flags & resultant SDF value.
- * </ol>
- * \param canonicalScene canonical scene with warp vectors at each voxel.
- * \param rawLiveScene source raw live scene
- * \param initializedLiveScene target live scene
- */
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpFieldToLive(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-		ITMScene<TVoxelLive, TIndex>* rawLiveScene,
-		ITMScene<TVoxelLive, TIndex>* initializedLiveScene) {
-
-	AllocateHashBlocksAtWarpedLocations(canonicalScene, rawLiveScene, initializedLiveScene);
-	//Do trilinear interpolation to compute voxel values
-	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, TIndex, CompleteWarpWarpedPositionFunctor<TVoxelCanonical>>
-			trilinearInterpolationFunctor(rawLiveScene, canonicalScene);
-
-	VoxelPositionTraversal_CPU(*initializedLiveScene, trilinearInterpolationFunctor);
-}
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateHashBlocksAtWarpedLocations(

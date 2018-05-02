@@ -70,9 +70,11 @@ protected:
 
 	void SwapSourceAndTargetLiveScenes(ITMScene<TVoxelLive, TIndex>*& sourceScene);
 	virtual float CalculateWarpUpdate(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                  ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
+	                                  ITMScene<TVoxelLive, TIndex>* liveScene) = 0;//TODO: refactor to "CalculateWarpGradient"
 
 	virtual void ApplySmoothingToGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
+	virtual float ApplyWarpUpdateToWarp(
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
 
 	virtual void ApplyWarpFieldToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                          ITMScene <TVoxelLive, TIndex>* sourceLiveScene,
@@ -80,8 +82,7 @@ protected:
 	virtual void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                   ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
 	                                   ITMScene<TVoxelLive, TIndex>* targetLiveScene) = 0;
-	virtual float ApplyWarpUpdateToWarp(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
+
 
 
 	virtual void AllocateNewCanonicalHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,

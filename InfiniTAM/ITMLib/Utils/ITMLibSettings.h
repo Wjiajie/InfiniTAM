@@ -46,6 +46,7 @@ namespace ITMLib
 
 		bool useApproximateRaycast;
 
+		bool useThresholdFilter;
 		bool useBilateralFilter;
 
 		/// For ITMColorTracker: skip every other point in energy function evaluation.
@@ -81,7 +82,8 @@ namespace ITMLib
 		// Parameters for logging/debugging DynamicFusion
 		bool enableDataTerm = true;
 		bool enableLevelSetTerm = true;
-		bool enableKillingTerm = true;
+		bool enableSmoothingTerm = true;
+		bool enableKillingTerm = false;
 
 	private:
 		/// Parameters for logging/debugging DynamicFusion

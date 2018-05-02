@@ -300,6 +300,7 @@ void WarpedSceneVizPipe::PreparePointsForRendering(const ITMScene<ITMVoxelCanoni
 					ComputeVoxelAttributes(currentBlockPositionVoxels, x, y, z, localVoxelBlock, nonInterestVoxelPoints,
 					                       nonInterestScaleAttribute, nonInterestAlternativeScaleAttribute,
 					                       nonInterestColorAttribute, highlights, hash);
+
 				}
 			}
 		}
@@ -469,6 +470,9 @@ void WarpedSceneVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
 	auto* initialPointRawData = reinterpret_cast<float*>(initialNonInterestPoints->GetVoidPointer(0));
 	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
 	auto* warpRawData = reinterpret_cast<float*>(buffer);
+	const size_t warpAndUpdateFloatSize = ITMWarpSceneLogger<ITMVoxelCanonical, ITMVoxelIndex>::warpAndUpdateFloatSize;
+	const size_t pointFloatSize = 3;
+
 
 	std::tuple<int, int> nextInterestRegionRange;
 	bool hasMoreInterestRegions = false;
@@ -493,9 +497,12 @@ void WarpedSceneVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
 			}
 		}
 		//use 1st 3-float field out of 2 for the warp buffer entry
-		pointRawData[iVoxel * 3 + 0] = initialPointRawData[iVoxel * 3 + 0] + warpRawData[iVoxel * 6 + 0];
-		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] + warpRawData[iVoxel * 6 + 1];
-		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] + warpRawData[iVoxel * 6 + 2];
+		pointRawData[iVoxel * pointFloatSize + 0] =
+				initialPointRawData[iVoxel * pointFloatSize + 0] + warpRawData[iVoxel * warpAndUpdateFloatSize + 0];
+		pointRawData[iVoxel * pointFloatSize + 1] =
+				initialPointRawData[iVoxel * pointFloatSize + 1] + warpRawData[iVoxel * warpAndUpdateFloatSize + 1];
+		pointRawData[iVoxel * pointFloatSize + 2] =
+				initialPointRawData[iVoxel * pointFloatSize + 2] + warpRawData[iVoxel * warpAndUpdateFloatSize + 2];
 	}
 	voxelPolydata->Modified();
 }
@@ -505,13 +512,18 @@ void WarpedSceneVizPipe::UpdateInterestRegionsFromBuffers(void* buffer) {
 	auto* initialPointRawData = reinterpret_cast<float*>(initialInterestPoints->GetVoidPointer(0));
 	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
 	auto* warpRawData = reinterpret_cast<float*>(buffer);
+	const size_t warpAndUpdateFloatSize = ITMWarpSceneLogger<ITMVoxelCanonical, ITMVoxelIndex>::warpAndUpdateFloatSize;
+	const size_t pointFloatSize = 3;
 
 	//TODO: parallelize with OpenMP  -Greg (GitHub: Algomorph)
 	for (int iVoxel = 0; iVoxel < voxels->GetNumberOfPoints(); iVoxel++) {
 		//use 1st 3-float field out of 2 for the warp buffer entry
-		pointRawData[iVoxel * 3 + 0] = initialPointRawData[iVoxel * 3 + 0] + warpRawData[iVoxel * 6 + 0];
-		pointRawData[iVoxel * 3 + 1] = initialPointRawData[iVoxel * 3 + 1] + warpRawData[iVoxel * 6 + 1];
-		pointRawData[iVoxel * 3 + 2] = initialPointRawData[iVoxel * 3 + 2] + warpRawData[iVoxel * 6 + 2];
+		pointRawData[iVoxel * pointFloatSize + 0]
+				= initialPointRawData[iVoxel * pointFloatSize + 0] + warpRawData[iVoxel * warpAndUpdateFloatSize + 0];
+		pointRawData[iVoxel * pointFloatSize + 1]
+				= initialPointRawData[iVoxel * pointFloatSize + 1] + warpRawData[iVoxel * warpAndUpdateFloatSize + 1];
+		pointRawData[iVoxel * pointFloatSize + 2]
+				= initialPointRawData[iVoxel * pointFloatSize + 2] + warpRawData[iVoxel * warpAndUpdateFloatSize + 2];
 	}
 	interestVoxelPolydata->Modified();
 }

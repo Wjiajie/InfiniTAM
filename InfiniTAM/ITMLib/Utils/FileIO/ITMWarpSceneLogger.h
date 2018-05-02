@@ -41,8 +41,11 @@ class ITMWarpSceneLogger{
 public:
 	// region ================================ STATIC CONSTANTS ========================================================
 	static const size_t warpByteSize;
+	static const size_t warpFloatSize;
 	static const size_t updateByteSize;
+	static const size_t updateFloatSize;
 	static const size_t warpAndUpdateByteSize;
+	static const size_t warpAndUpdateFloatSize;
 
 	static const std::string fullSceneSliceIdentifier;
 	static const std::string binaryFileExtension;

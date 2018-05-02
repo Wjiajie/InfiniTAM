@@ -146,6 +146,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 	// params
 	const float epsilon = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::epsilon;
 	const int iteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
+	const int currentFrameIx = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
 	const float weightSmoothnessTerm = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightKillingTerm;
 	const float weightLevelSetTerm = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightLevelSetTerm;
 	const float gamma = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::rigidityEnforcementFactor;
@@ -194,7 +195,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 
 					TVoxelLive& liveVoxel = localLiveVoxelBlock[locId];
-					if (liveVoxel.flags != ITMLib::VOXEL_NONTRUNCATED) {
+					if (liveVoxel.flags != ITMLib::VOXEL_NONTRUNCATED || currentFrameIx == 0) {
 						continue;
 					}
 					// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
@@ -225,7 +226,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 						          << " *** " << reset << std::endl;
 						std::cout << "Source SDF vs. target SDF: " << canonicalSdf << "-->" << liveSdf << std::endl
 						          << "Warp: " << green << canonicalVoxel.warp << reset
-						          << "length: " << green << ORUtils::length(canonicalVoxel.warp) << reset;
+						          << " Warp length: " << green << ORUtils::length(canonicalVoxel.warp) << reset;
 						std::cout << std::endl;
 						printVoxelResult = true;
 						if (ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::sceneLogger != nullptr) {
@@ -264,7 +265,6 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 					// region =============================== DATA TERM ================================================
 
 					if (enableDataTerm) {
-
 						// Compute data term error / energy
 						sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
 						// (φ_n(Ψ)−φ_{global}) ∇φ_n(Ψ)
@@ -276,6 +276,13 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 						cumulativeSdfDiff += std::abs(sdfDifferenceBetweenLiveAndCanonical);
 						localDataEnergy =
 								0.5f * (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
+					}
+					if(printVoxelResult){
+						if(enableDataTerm){
+							_DEBUG_PrintDataTermStuff(liveSdfJacobian);
+						}else{
+							std::cout << std::endl;
+						}
 					}
 					// endregion
 
@@ -301,7 +308,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 					// region =============================== SMOOTHING TERM (TIKHONOV & KILLING) ======================
 
 					if (enableSmoothingTerm) {
-						if (useIsometryEnforcementFactorInSmoothingTerm) {
+						if (enableKillingTerm) {
 							ComputePerVoxelWarpJacobianAndHessian(canonicalVoxel.warp, neighborWarps,
 							                                      warpJacobian, warpHessian);
 							if (printVoxelResult) {
@@ -355,6 +362,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 							localTikhonovEnergy = dot(warpJacobian.getColumn(0), warpJacobian.getColumn(0)) +
 							                      dot(warpJacobian.getColumn(1), warpJacobian.getColumn(1)) +
 							                      dot(warpJacobian.getColumn(2), warpJacobian.getColumn(2));
+							localSmoothnessEnergy = localTikhonovEnergy;
 						}
 					}
 					// endregion
@@ -387,20 +395,13 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 					cumulativeLiveSdf += liveSdf;
 					cumulativeWarpDist += ORUtils::length(canonicalVoxel.warp);
 					consideredVoxelCount += 1;
-
-					if (maxWarpUpdateLength < energyGradeintLength) {
-						maxWarpUpdateLength = energyGradeintLength;
-					}
-					if (maxWarpLength < warpLength) {
-						maxWarpLength = warpLength;
-					}
 					// endregion
 
 					//TODO: move to separate function?
 					if (printVoxelResult) {
-						std::cout << "Data gradient: " << localDataEnergyGradient * -1.f;
+						std::cout << blue << "Data gradient: " << localDataEnergyGradient * -1.f;
 						std::cout << red << " Level set gradient: " << localLevelSetEnergyGradient * -1.f;
-						std::cout << yellow << " Killing gradient: " << localSmoothnessEnergyGradient * -1.f;
+						std::cout << yellow << " Smoothness gradient: " << localSmoothnessEnergyGradient * -1.f;
 						std::cout << std::endl;
 						std::cout << green << "Energy gradient: " << localEnergyGradient << reset;
 						std::cout << " Energy gradient length: " << energyGradeintLength << std::endl << std::endl;
@@ -433,7 +434,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 
 	std::cout << bright_cyan << "*** General Iteration Statistics ***" << reset << std::endl;
 	PrintEnergyStatistics(enableDataTerm, enableLevelSetTerm, enableSmoothingTerm,
-	                      useIsometryEnforcementFactorInSmoothingTerm, gamma, totalDataEnergy,
+	                      enableKillingTerm, gamma, totalDataEnergy,
 	                      totalLevelSetEnergy, totalTikhonovEnergy,
 	                      totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
 
@@ -444,7 +445,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 	CalculateAndPrintAdditionalStatistics(enableDataTerm, enableLevelSetTerm, cumulativeCanonicalSdf, cumulativeLiveSdf,
 	                                      cumulativeWarpDist, cumulativeSdfDiff, consideredVoxelCount, dataVoxelCount,
 	                                      levelSetVoxelCount);
-	return maxWarpUpdateLength;
+	return 0.0;//TODO: change signature to void
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -475,9 +476,9 @@ struct GradientSmoothingPassFunctor {
 
 		Vector3i receptiveVoxelPosition = position;
 		receptiveVoxelPosition[directionIndex] -= (sobolevFilterSize / 2);
-		Vector3f smoothedGradient;
+		Vector3f smoothedGradient(0.0f);
 		int vmIndex;
-		for (int iVoxel = 0; iVoxel < sobolevFilterSize; receptiveVoxelPosition[directionIndex]++) {
+		for (int iVoxel = 0; iVoxel < sobolevFilterSize; iVoxel++, receptiveVoxelPosition[directionIndex]++) {
 			const TVoxelCanonical& receptiveVoxel = readVoxel(voxels, hashEntries, receptiveVoxelPosition, vmIndex);
 			smoothedGradient += sobolevFilter1D[iVoxel] * GetGradient(receptiveVoxel);
 		}
@@ -485,8 +486,8 @@ struct GradientSmoothingPassFunctor {
 	}
 
 private:
-	Vector3f GetGradient(const TVoxelCanonical& voxel) const{
-		switch (TDirection){
+	Vector3f GetGradient(const TVoxelCanonical& voxel) const {
+		switch (TDirection) {
 			case X:
 				return voxel.gradient0;
 			case Y:
@@ -495,8 +496,9 @@ private:
 				return voxel.gradient0;
 		}
 	}
-	void SetGradient(TVoxelCanonical& voxel, const Vector3f gradient) const{
-		switch (TDirection){
+
+	void SetGradient(TVoxelCanonical& voxel, const Vector3f gradient) const {
+		switch (TDirection) {
 			case X:
 				voxel.gradient1 = gradient;
 				return;
@@ -531,18 +533,18 @@ const float GradientSmoothingPassFunctor<TVoxelLive, TIndex, TDirection>::sobole
 		2.995861099045313996e-04f};
 
 
-
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplySmoothingToGradient(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
 	GradientSmoothingPassFunctor<TVoxelCanonical, TIndex, X> passFunctorX(canonicalScene);
 	GradientSmoothingPassFunctor<TVoxelCanonical, TIndex, Y> passFunctorY(canonicalScene);
 	GradientSmoothingPassFunctor<TVoxelCanonical, TIndex, Z> passFunctorZ(canonicalScene);
+
+
 	VoxelPositionTraversal_CPU(*canonicalScene, passFunctorX);
 	VoxelPositionTraversal_CPU(*canonicalScene, passFunctorY);
 	VoxelPositionTraversal_CPU(*canonicalScene, passFunctorZ);
 }
-
 
 // region ======================================== APPLY WARP UPDATE TO THE WARP ITSELF ================================
 
@@ -571,6 +573,12 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 	ITMHashEntry* liveHashTable = liveScene->index.GetEntries();
 	int noTotalEntries = liveScene->index.noTotalEntries;
 	typename TIndex::IndexCache liveCache;
+
+	// *** stats
+	float maxWarpLength = 0.0f;
+	float maxWarpUpdateLength = 0.0f;
+	Vector3i maxWarpPosition(0.f);
+	Vector3i maxWarpUpdatePosition(0.f);
 
 	//Apply the update
 	for (int hash = 0; hash < noTotalEntries; hash++) {
@@ -601,51 +609,55 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 						continue;
 					}
 					TVoxelCanonical& canonicalVoxel = localCanonicalVoxelBlock[locId];
-					canonicalVoxel.gradient0 = -learningRate * canonicalVoxel.gradient1;
+					canonicalVoxel.gradient0 = -learningRate * canonicalVoxel.gradient0;//_DEBUG
+					//canonicalVoxel.gradient0 = -learningRate * canonicalVoxel.gradient1;
 					canonicalVoxel.warp += canonicalVoxel.gradient0;
 					float warpLength = ORUtils::length(canonicalVoxel.warp);
 					float warpUpdateLength = ORUtils::length(canonicalVoxel.gradient0);
-
-					if (maxWarpLength > 0.0f && warpLength == maxWarpLength) {
-						std::cout << " Max warp pos: " << red
-						          << currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE + Vector3i(x, y, z)
-						          << reset;
+					if (warpLength > maxWarpLength) {
+						maxWarpLength = warpLength;
+						maxWarpPosition = currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE + Vector3i(x, y, z);
 					}
-
-					if (maxWarpUpdateLength > 0.0f && warpUpdateLength == maxWarpUpdateLength) {
-						std::cout << " Max update pos: " << green
-						          << (currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE + Vector3i(x, y, z))
-						          << reset;
+					if (warpUpdateLength > maxWarpUpdateLength) {
+						maxWarpUpdateLength = warpUpdateLength;
+						maxWarpUpdatePosition =
+								currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE + Vector3i(x, y, z);
 					}
-
-					int binIdx = 0;
-					if (maxWarpLength > 0) {
-						binIdx = std::min(histBinCount - 1, (int) (warpLength * histBinCount / maxWarpLength));
-					}
-					warpBins[binIdx]++;
-					if (maxWarpUpdateLength > 0) {
-						binIdx = std::min(histBinCount - 1,
-						                  (int) (warpUpdateLength * histBinCount / maxWarpUpdateLength));
-					}
-					updateBins[binIdx]++;
 				}
 			}
 		}
 	}
 
-	//start _DEBUG
-	std::cout << "  Warp length histogram: ";
-	for (int iBin = 0; iBin < histBinCount; iBin++) {
-		std::cout << std::setfill(' ') << std::setw(7) << warpBins[iBin] << "  ";
-	}
-	std::cout << std::endl;
-	std::cout << "Update length histogram: ";
-	for (int iBin = 0; iBin < histBinCount; iBin++) {
-		std::cout << std::setfill(' ') << std::setw(7) << updateBins[iBin] << "  ";
-	}
-	std::cout << std::endl;
+//	{
+//
 
-	std::cout << "Max warp: " << maxWarpLength << " Max update: " << maxWarpUpdateLength << std::endl;
+//
+//		int binIdx = 0;
+//		if (maxWarpLength > 0) {
+//			binIdx = std::min(histBinCount - 1, (int) (warpLength * histBinCount / maxWarpLength));
+//		}
+//		warpBins[binIdx]++;
+//		if (maxWarpUpdateLength > 0) {
+//			binIdx = std::min(histBinCount - 1,
+//			                  (int) (warpUpdateLength * histBinCount / maxWarpUpdateLength));
+//		}
+//		updateBins[binIdx]++;
+//	}
+
+	//start _DEBUG
+//	std::cout << "  Warp length histogram: ";
+//	for (int iBin = 0; iBin < histBinCount; iBin++) {
+//		std::cout << std::setfill(' ') << std::setw(7) << warpBins[iBin] << "  ";
+//	}
+//	std::cout << std::endl;
+//	std::cout << "Update length histogram: ";
+//	for (int iBin = 0; iBin < histBinCount; iBin++) {
+//		std::cout << std::setfill(' ') << std::setw(7) << updateBins[iBin] << "  ";
+//	}
+//	std::cout << std::endl;
+
+	std::cout << green << "Max warp: [" << maxWarpLength << " at " << maxWarpPosition << "] Max update: ["
+	          << maxWarpUpdateLength << " at " << maxWarpUpdatePosition << "]." << reset << std::endl;
 	//end _DEBUG
 	return maxWarpUpdateLength;
 }

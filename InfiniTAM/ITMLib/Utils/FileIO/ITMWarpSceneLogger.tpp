@@ -34,13 +34,26 @@ using namespace ITMLib;
 
 template<typename TVoxel, typename TIndex>
 const size_t ITMWarpSceneLogger<TVoxel, TIndex>::warpByteSize = sizeof(TVoxel::warp);
+
+template<typename TVoxel, typename TIndex>
+const size_t ITMWarpSceneLogger<TVoxel, TIndex>::warpFloatSize =
+		ITMWarpSceneLogger<TVoxel, TIndex>::warpByteSize / sizeof(float);
+
 //TODO: bytesize for gradient of live frame
 template<typename TVoxel, typename TIndex>
 const size_t ITMWarpSceneLogger<TVoxel, TIndex>::updateByteSize = 0;
 
 template<typename TVoxel, typename TIndex>
+const size_t ITMWarpSceneLogger<TVoxel, TIndex>::updateFloatSize =
+		ITMWarpSceneLogger<TVoxel, TIndex>::updateByteSize / sizeof(float);
+
+template<typename TVoxel, typename TIndex>
 const size_t ITMWarpSceneLogger<TVoxel, TIndex>::warpAndUpdateByteSize =
 		ITMWarpSceneLogger<TVoxel, TIndex>::warpByteSize + ITMWarpSceneLogger<TVoxel, TIndex>::updateByteSize;
+
+template<typename TVoxel, typename TIndex>
+const size_t ITMWarpSceneLogger<TVoxel, TIndex>::warpAndUpdateFloatSize =
+		ITMWarpSceneLogger<TVoxel, TIndex>::warpAndUpdateByteSize / sizeof(float);;
 
 template<typename TVoxel, typename TIndex>
 const std::string ITMWarpSceneLogger<TVoxel, TIndex>::fullSceneSliceIdentifier = "full_scene";

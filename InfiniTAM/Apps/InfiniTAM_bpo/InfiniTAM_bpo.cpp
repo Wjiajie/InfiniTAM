@@ -158,7 +158,8 @@ int main(int argc, char** argv) {
 		bool fixCamera = false;
 		bool disableDataTerm = false;
 		bool disableLevelSetTerm = false;
-		bool disableKillingTerm = false;
+		bool disableSmoothingTerm = false;
+		bool enableKillingTerm = false;
 		//@formatter:off
 		arguments.add_options()
 				("help,h", "Print help screen")
@@ -192,15 +193,18 @@ int main(int argc, char** argv) {
 				("disable_data_term", po::bool_switch(&disableDataTerm)->default_value(false),
 				 "Whether or not to disable the data term if using the DynamicFusion algorithm")
 				("disable_level_set_term", po::bool_switch(&disableLevelSetTerm)->default_value(false),
-				 "Whether or not to disable the data term if using the DynamicFusion algorithm")
-				("disable_killing_term", po::bool_switch(&disableKillingTerm)->default_value(false),
-				 "Whether or not to disable the data term if using the DynamicFusion algorithm");
+				 "Whether or not to disable the level set term if using the DynamicFusion algorithm")
+				("disable_smoothing_term", po::bool_switch(&disableSmoothingTerm)->default_value(false),
+				 "Whether or not to disable the smoothness term if using the DynamicFusion algorithm");
+				("enable_killing_term", po::bool_switch(&enableKillingTerm)->default_value(false),
+				 "Whether or not to enable the Killing term (isometric motion enforcement regularizer) if using the DynamicFusion algorithm");
 		//@formatter:on
 		positional_arguments.add("calib_file", 1);
 		positional_arguments.add("input_file", 3);
 
 		po::variables_map vm;
-		po::store(po::command_line_parser(argc, argv).options(arguments).positional(positional_arguments).style(po::command_line_style::unix_style ^ po::command_line_style::allow_short).run(), vm);
+		po::store(po::command_line_parser(argc, argv).options(arguments).positional(positional_arguments).style(
+				po::command_line_style::unix_style ^ po::command_line_style::allow_short).run(), vm);
 		po::notify(vm);
 
 		auto printHelp = [&arguments, &positional_arguments, &argv]() {
@@ -289,7 +293,8 @@ int main(int argc, char** argv) {
 
 		settings->enableDataTerm = !disableDataTerm;
 		settings->enableLevelSetTerm = !disableLevelSetTerm;
-		settings->enableKillingTerm = !disableKillingTerm;
+		settings->enableSmoothingTerm = !disableSmoothingTerm;
+		settings->enableKillingTerm = enableKillingTerm;
 
 		ITMMainEngine* mainEngine = nullptr;
 		switch (settings->libMode) {

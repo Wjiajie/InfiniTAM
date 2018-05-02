@@ -245,8 +245,12 @@ template <typename TVoxel, typename TIndex>
 ITMTrackingState::TrackingResult ITMBasicEngine<TVoxel,TIndex>::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement)
 {
 	// prepare image and turn it into a depth image
-	if (imuMeasurement == NULL) viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useBilateralFilter);
-	else viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useBilateralFilter, imuMeasurement);
+	if (imuMeasurement == NULL)
+		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useThresholdFilter,
+		                        settings->useBilateralFilter, false, false);
+	else
+		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useThresholdFilter,
+		                        settings->useBilateralFilter, imuMeasurement, false, false);
 
 	if (!mainProcessingActive) return ITMTrackingState::TRACKING_FAILED;
 

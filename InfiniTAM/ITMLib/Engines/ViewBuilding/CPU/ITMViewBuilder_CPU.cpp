@@ -11,7 +11,8 @@ using namespace ORUtils;
 ITMViewBuilder_CPU::ITMViewBuilder_CPU(const ITMRGBDCalib& calib):ITMViewBuilder(calib) { }
 ITMViewBuilder_CPU::~ITMViewBuilder_CPU(void) { }
 
-void ITMViewBuilder_CPU::UpdateView(ITMView **view_ptr, ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, bool useBilateralFilter, bool modelSensorNoise, bool storePreviousImage)
+void ITMViewBuilder_CPU::UpdateView(ITMView** view_ptr, ITMUChar4Image* rgbImage, ITMShortImage* rawDepthImage, bool useThresholdFilter,
+                                    bool useBilateralFilter, bool modelSensorNoise, bool storePreviousImage)
 { 
 	if (*view_ptr == NULL)
 	{
@@ -50,6 +51,11 @@ void ITMViewBuilder_CPU::UpdateView(ITMView **view_ptr, ITMUChar4Image *rgbImage
 		break;
 	}
 
+	if (useThresholdFilter){
+		this->ThresholdFiltering(this->floatImage, view->depth);
+		view->depth->SetFrom(this->floatImage, MemoryBlock<float>::CPU_TO_CPU);
+	}
+
 	if (useBilateralFilter)
 	{
 		//5 steps of bilateral filtering
@@ -67,7 +73,9 @@ void ITMViewBuilder_CPU::UpdateView(ITMView **view_ptr, ITMUChar4Image *rgbImage
 	}
 }
 
-void ITMViewBuilder_CPU::UpdateView(ITMView **view_ptr, ITMUChar4Image *rgbImage, ITMShortImage *depthImage, bool useBilateralFilter, ITMIMUMeasurement *imuMeasurement, bool modelSensorNoise, bool storePreviousImage)
+void ITMViewBuilder_CPU::UpdateView(ITMView** view_ptr, ITMUChar4Image* rgbImage, ITMShortImage* depthImage, bool useThresholdFilter,
+                                    bool useBilateralFilter, ITMIMUMeasurement* imuMeasurement, bool modelSensorNoise,
+                                    bool storePreviousImage)
 {
 	if (*view_ptr == NULL)
 	{
@@ -87,7 +95,7 @@ void ITMViewBuilder_CPU::UpdateView(ITMView **view_ptr, ITMUChar4Image *rgbImage
 	ITMViewIMU* imuView = (ITMViewIMU*)(*view_ptr);
 	imuView->imu->SetFrom(imuMeasurement);
 
-	this->UpdateView(view_ptr, rgbImage, depthImage, useBilateralFilter, modelSensorNoise, storePreviousImage);
+	this->UpdateView(view_ptr, rgbImage, depthImage, false, useBilateralFilter, modelSensorNoise, storePreviousImage);
 }
 
 void ITMViewBuilder_CPU::ConvertDisparityToDepth(ITMFloatImage *depth_out, const ITMShortImage *depth_in, const ITMIntrinsics *depthIntrinsics,
@@ -139,5 +147,18 @@ void ITMViewBuilder_CPU::ComputeNormalAndWeights(ITMFloat4Image *normal_out, ITM
 
 	for (int y = 2; y < imgDims.y - 2; y++) for (int x = 2; x < imgDims.x - 2; x++)
 		computeNormalAndWeight(depthData_in, normalData_out, sigmaZData_out, x, y, imgDims, intrinsic);
+}
+
+void ITMViewBuilder_CPU::ThresholdFiltering(ITMFloatImage* image_out, const ITMFloatImage* image_in) {
+	Vector2i imgSize = image_in->noDims;
+
+	image_out->Clear();
+
+	float *imout = image_out->GetData(MEMORYDEVICE_CPU);
+	const float *imin = image_in->GetData(MEMORYDEVICE_CPU);
+
+	for (int y = 2; y < imgSize.y - 2; y++) for (int x = 2; x < imgSize.x - 2; x++)
+			thresholdDepth(imout, imin, x, y, imgSize);
+
 }
 

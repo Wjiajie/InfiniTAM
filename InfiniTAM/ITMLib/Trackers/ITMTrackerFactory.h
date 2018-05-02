@@ -564,11 +564,12 @@ public:
 				if (settings->AreFocusCoordinatesSpecified()) {
 					sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>(
 							settings->sceneParams, settings->outputPath, settings->GetFocusCoordinates(),
-							settings->enableDataTerm, settings->enableLevelSetTerm, settings->enableKillingTerm);
+							settings->enableDataTerm, settings->enableLevelSetTerm, settings->enableSmoothingTerm,
+							settings->enableSmoothingTerm);
 				} else {
 					sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>(
-							settings->sceneParams, settings->outputPath,
-							settings->enableDataTerm, settings->enableLevelSetTerm, settings->enableKillingTerm );
+							settings->sceneParams, settings->outputPath, settings->enableDataTerm,
+							settings->enableLevelSetTerm, settings->enableSmoothingTerm, settings->enableKillingTerm);
 				}
 				break;
 			case ITMLibSettings::DEVICE_CUDA:

@@ -70,11 +70,11 @@ static void PrintSceneStats(ITMScene<TVoxel, TIndex>* scene, const char* sceneNa
 	ITMSceneStatisticsCalculator<TVoxel, TIndex> calculatorLive;
 	std::cout << "=== Stats for scene '" << sceneName << "' ===" << std::endl;
 	std::cout << "    Total voxel count: " << calculatorLive.ComputeAllocatedVoxelCount(scene) << std::endl;
-	std::cout << "    Non-countTruncated voxel count: " << calculatorLive.ComputeNonTruncatedVoxelCount(scene) << std::endl;
+	std::cout << "    NonTruncated voxel count: " << calculatorLive.ComputeNonTruncatedVoxelCount(scene) << std::endl;
 	std::cout << "    +1.0 voxel count: " << calculatorLive.ComputeVoxelWithValueCount(scene,1.0f)  << std::endl;
 	std::vector<int> allocatedHashes = calculatorLive.GetFilledHashBlockIds(scene);
 	std::cout << "    Allocated hash count: " << allocatedHashes.size() << std::endl;
-	std::cout << "    Non-countTruncated SDF sum: " << calculatorLive.ComputeNonTruncatedVoxelAbsSdfSum(scene) << std::endl;
+	std::cout << "    NonTruncated SDF sum: " << calculatorLive.ComputeNonTruncatedVoxelAbsSdfSum(scene) << std::endl;
 	std::cout << "    Truncated SDF sum: " << calculatorLive.ComputeTruncatedVoxelAbsSdfSum(scene) << std::endl;
 };
 //END _DEBUG

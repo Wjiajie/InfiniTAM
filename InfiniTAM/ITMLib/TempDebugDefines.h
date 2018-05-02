@@ -23,15 +23,6 @@
 #include "Utils/FileIO/ITMSceneLogger.h"
 #include <opencv2/core/mat.hpp>
 
-//*** 2D RASTERIZATION FOR VISUAL DEBUGGING ***
-
-//#define RASTERIZE_CANONICAL_SCENE
-//#define RASTERIZE_LIVE_SCENE
-//#define DRAW_IMAGE
-#if defined(DRAW_IMAGE) || defined(RASTERIZE_CANONICAL_SCENE) || defined(RASTERIZE_LIVE_SCENE)
-#include "../../Utils/ITMSceneSliceRasterizer.h"
-#endif
-
 
 #ifdef PRINT_TIME_STATS
 #define TIC(var)\
@@ -46,7 +37,7 @@
 #endif
 
 //different logging parameters
-#define FOCUS_SLICE_RADIUS 2
+#define FOCUS_SLICE_RADIUS 3
 
 
 #endif //ifdef _DEBUG

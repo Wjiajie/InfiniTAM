@@ -14,9 +14,9 @@
 
 using namespace ITMLib;
 
-template <typename TSurfel>
-ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMLibSettings *settings, const ITMRGBDCalib& calib, Vector2i imgSize_rgb, Vector2i imgSize_d)
-{
+template<typename TSurfel>
+ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMLibSettings* settings, const ITMRGBDCalib& calib,
+                                                    Vector2i imgSize_rgb, Vector2i imgSize_d) {
 	this->settings = settings;
 
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
@@ -28,27 +28,32 @@ ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMLibSettings *settin
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
-	surfelVisualisationEngine = ITMSurfelVisualisationEngineFactory<TSurfel>::make_surfel_visualisation_engine(deviceType);
+	surfelVisualisationEngine = ITMSurfelVisualisationEngineFactory<TSurfel>::make_surfel_visualisation_engine(
+			deviceType);
 
 	denseSurfelMapper = new ITMDenseSurfelMapper<TSurfel>(imgSize_d, deviceType);
 	this->surfelScene->Reset();
 
 	imuCalibrator = new ITMIMUCalibrator_iPad();
-	tracker = ITMTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, settings, lowLevelEngine, imuCalibrator, &settings->sceneParams);
+	tracker = ITMTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, settings, lowLevelEngine, imuCalibrator,
+	                                             &settings->sceneParams);
 	trackingController = new ITMTrackingController(tracker, settings);
 
 	Vector2i trackedImageSize = trackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
 
-	surfelRenderState_live = new ITMSurfelRenderState(trackedImageSize, settings->surfelSceneParams.supersamplingFactor);
+	surfelRenderState_live = new ITMSurfelRenderState(trackedImageSize,
+	                                                  settings->surfelSceneParams.supersamplingFactor);
 	surfelRenderState_freeview = NULL; //will be created if needed
 
 	trackingState = new ITMTrackingState(trackedImageSize, memoryType);
 	tracker->UpdateInitialPose(trackingState);
 
 	view = NULL; // will be allocated by the view builder
-	
+
 	if (settings->behaviourOnFailure == settings->FAILUREMODE_RELOCALISE)
-		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings->sceneParams.viewFrustum_min, settings->sceneParams.viewFrustum_max), 0.2f, 500, 4);
+		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings->sceneParams.viewFrustum_min,
+		                                                                       settings->sceneParams.viewFrustum_max),
+		                                                   0.2f, 500, 4);
 	else relocaliser = NULL;
 
 	kfRaycast = new ITMUChar4Image(imgSize_d, memoryType);
@@ -61,9 +66,8 @@ ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMLibSettings *settin
 	framesProcessed = 0;
 }
 
-template <typename TSurfel>
-ITMBasicSurfelEngine<TSurfel>::~ITMBasicSurfelEngine()
-{
+template<typename TSurfel>
+ITMBasicSurfelEngine<TSurfel>::~ITMBasicSurfelEngine() {
 	delete surfelRenderState_live;
 	delete surfelRenderState_freeview;
 
@@ -87,27 +91,23 @@ ITMBasicSurfelEngine<TSurfel>::~ITMBasicSurfelEngine()
 	delete kfRaycast;
 }
 
-template <typename TSurfel>
-void ITMBasicSurfelEngine<TSurfel>::SaveSceneToMesh(const char *objFileName)
-{
+template<typename TSurfel>
+void ITMBasicSurfelEngine<TSurfel>::SaveSceneToMesh(const char* objFileName) {
 	// Not yet implemented for surfel scenes
 }
 
-template <typename TSurfel>
-void ITMBasicSurfelEngine<TSurfel>::SaveToFile()
-{
+template<typename TSurfel>
+void ITMBasicSurfelEngine<TSurfel>::SaveToFile() {
 	// Not yet implemented for surfel scenes
 }
 
-template <typename TSurfel>
-void ITMBasicSurfelEngine<TSurfel>::LoadFromFile()
-{
+template<typename TSurfel>
+void ITMBasicSurfelEngine<TSurfel>::LoadFromFile() {
 	// Not yet implemented for surfel scenes
 }
 
-template <typename TSurfel>
-void ITMBasicSurfelEngine<TSurfel>::resetAll()
-{
+template<typename TSurfel>
+void ITMBasicSurfelEngine<TSurfel>::resetAll() {
 	surfelScene->Reset();
 	trackingState->Reset();
 }
@@ -185,12 +185,17 @@ static void QuaternionFromRotationMatrix(const double *matrix, double *q) {
 }
 #endif
 
-template <typename TSurfel>
-ITMTrackingState::TrackingResult ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement)
-{
+template<typename TSurfel>
+ITMTrackingState::TrackingResult
+ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITMUChar4Image* rgbImage, ITMShortImage* rawDepthImage,
+                                            ITMIMUMeasurement* imuMeasurement) {
 	// prepare image and turn it into a depth image
-	if (imuMeasurement == NULL) viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useBilateralFilter);
-	else viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useBilateralFilter, imuMeasurement);
+	if (imuMeasurement == NULL)
+		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useThresholdFilter,
+		                        settings->useBilateralFilter, false, false);
+	else
+		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useThresholdFilter,
+		                        settings->useBilateralFilter, imuMeasurement, false, false);
 
 	if (!mainProcessingActive) return ITMTrackingState::TRACKING_FAILED;
 
@@ -200,16 +205,16 @@ ITMTrackingState::TrackingResult ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITM
 
 	ITMTrackingState::TrackingResult trackerResult = ITMTrackingState::TRACKING_GOOD;
 	switch (settings->behaviourOnFailure) {
-	case ITMLibSettings::FAILUREMODE_RELOCALISE:
-		trackerResult = trackingState->trackerResult;
-		break;
-	case ITMLibSettings::FAILUREMODE_STOP_INTEGRATION:
-		if (trackingState->trackerResult != ITMTrackingState::TRACKING_FAILED)
+		case ITMLibSettings::FAILUREMODE_RELOCALISE:
 			trackerResult = trackingState->trackerResult;
-		else trackerResult = ITMTrackingState::TRACKING_POOR;
-		break;
-	default:
-		break;
+			break;
+		case ITMLibSettings::FAILUREMODE_STOP_INTEGRATION:
+			if (trackingState->trackerResult != ITMTrackingState::TRACKING_FAILED)
+				trackerResult = trackingState->trackerResult;
+			else trackerResult = ITMTrackingState::TRACKING_POOR;
+			break;
+		default:
+			break;
 	}
 
 	//relocalisation
@@ -217,29 +222,32 @@ ITMTrackingState::TrackingResult ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITM
 #if 0 //TODO: explain not compiled block in comment (see below)? --Greg(GitHub:Algomorph)
 	int addKeyframeIdx = -1;
 #endif
-	if (settings->behaviourOnFailure == ITMLibSettings::FAILUREMODE_RELOCALISE)
-	{
+	if (settings->behaviourOnFailure == ITMLibSettings::FAILUREMODE_RELOCALISE) {
 		if (trackerResult == ITMTrackingState::TRACKING_GOOD && relocalisationCount > 0) relocalisationCount--;
 
-		int NN; float distances;
+		int NN;
+		float distances;
 		view->depth->UpdateHostFromDevice();
 
 		//find and add keyframe, if necessary
-		bool hasAddedKeyframe = relocaliser->ProcessFrame(view->depth, trackingState->pose_d, 0, 1, &NN, &distances, trackerResult == ITMTrackingState::TRACKING_GOOD && relocalisationCount == 0);
+		bool hasAddedKeyframe = relocaliser->ProcessFrame(view->depth, trackingState->pose_d, 0, 1, &NN, &distances,
+		                                                  trackerResult == ITMTrackingState::TRACKING_GOOD &&
+		                                                  relocalisationCount == 0);
 
 		//frame not added and tracking failed -> we need to relocalise
-		if (!hasAddedKeyframe && trackerResult == ITMTrackingState::TRACKING_FAILED)
-		{
+		if (!hasAddedKeyframe && trackerResult == ITMTrackingState::TRACKING_FAILED) {
 			relocalisationCount = 10;
 
 			// Reset previous rgb frame since the rgb image is likely different than the one acquired when setting the keyframe
 			view->rgb_prev->Clear();
 
-			const FernRelocLib::PoseDatabase::PoseInScene & keyframe = relocaliser->RetrievePose(NN);
+			const FernRelocLib::PoseDatabase::PoseInScene& keyframe = relocaliser->RetrievePose(NN);
 			trackingState->pose_d->SetFrom(&keyframe.pose);
 
-			trackingController->Prepare(trackingState, surfelScene, view, surfelVisualisationEngine, surfelRenderState_live);
-			surfelVisualisationEngine->FindSurfaceSuper(surfelScene, trackingState->pose_d, &view->calib.intrinsics_d, USR_RENDER, surfelRenderState_live);
+			trackingController->Prepare(trackingState, surfelScene, view, surfelVisualisationEngine,
+			                            surfelRenderState_live);
+			surfelVisualisationEngine->FindSurfaceSuper(surfelScene, trackingState->pose_d, &view->calib.intrinsics_d,
+			                                            USR_RENDER, surfelRenderState_live);
 			trackingController->Track(trackingState, view);
 
 			trackerResult = trackingState->trackerResult;
@@ -247,7 +255,8 @@ ITMTrackingState::TrackingResult ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITM
 	}
 
 	//bool didFusion = false; //TODO: set but not used. Remove? --Greg(github:Algomorph)
-	if ((trackerResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) && (relocalisationCount == 0)) {
+	if ((trackerResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) &&
+	    (relocalisationCount == 0)) {
 		// fusion
 		denseSurfelMapper->ProcessFrame(view, trackingState, surfelScene, surfelRenderState_live);
 		//didFusion = true; //TODO: set but not used. Remove? --Greg(github:Algomorph)
@@ -256,11 +265,12 @@ ITMTrackingState::TrackingResult ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITM
 		framesProcessed++;
 	}
 
-	if (trackerResult == ITMTrackingState::TRACKING_GOOD || trackerResult == ITMTrackingState::TRACKING_POOR)
-	{
+	if (trackerResult == ITMTrackingState::TRACKING_GOOD || trackerResult == ITMTrackingState::TRACKING_POOR) {
 		// raycast to renderState_live for tracking and free visualisation
-		trackingController->Prepare(trackingState, surfelScene, view, surfelVisualisationEngine, surfelRenderState_live);
-		surfelVisualisationEngine->FindSurfaceSuper(surfelScene, trackingState->pose_d, &view->calib.intrinsics_d, USR_RENDER, surfelRenderState_live);
+		trackingController->Prepare(trackingState, surfelScene, view, surfelVisualisationEngine,
+		                            surfelRenderState_live);
+		surfelVisualisationEngine->FindSurfaceSuper(surfelScene, trackingState->pose_d, &view->calib.intrinsics_d,
+		                                            USR_RENDER, surfelRenderState_live);
 
 #if 0 //TODO: explain not compiled block in comment? --Greg(GitHub:Algomorph)
 		if (addKeyframeIdx >= 0)
@@ -271,8 +281,7 @@ ITMTrackingState::TrackingResult ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITM
 			kfRaycast->SetFrom(renderState_live->raycastImage, memoryCopyDirection);
 		}
 #endif
-	}
-	else *trackingState->pose_d = oldPose;
+	} else *trackingState->pose_d = oldPose;
 
 #ifdef OUTPUT_TRAJECTORY_QUATERNIONS
 	const ORUtils::SE3Pose *p = trackingState->pose_d;
@@ -286,21 +295,18 @@ ITMTrackingState::TrackingResult ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITM
 	fprintf(stderr, "%f %f %f %f %f %f %f\n", t[0], t[1], t[2], q[1], q[2], q[3], q[0]);
 #endif
 
-		return trackerResult;
+	return trackerResult;
 }
 
-template <typename TSurfel>
-Vector2i ITMBasicSurfelEngine<TSurfel>::GetImageSize(void) const
-{
+template<typename TSurfel>
+Vector2i ITMBasicSurfelEngine<TSurfel>::GetImageSize(void) const {
 	return surfelRenderState_live->GetIndexImage()->noDims;
 }
 
-template <typename TSurfel>
+template<typename TSurfel>
 typename ITMSurfelVisualisationEngine<TSurfel>::RenderImageType
-ITMBasicSurfelEngine<TSurfel>::ToSurfelImageType(GetImageType getImageType)
-{
-	switch (getImageType)
-	{
+ITMBasicSurfelEngine<TSurfel>::ToSurfelImageType(GetImageType getImageType) {
+	switch (getImageType) {
 		case InfiniTAM_IMAGE_COLOUR_FROM_VOLUME:
 		case InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_VOLUME:
 			return ITMSurfelVisualisationEngine<TSurfel>::RENDER_COLOUR;
@@ -315,68 +321,71 @@ ITMBasicSurfelEngine<TSurfel>::ToSurfelImageType(GetImageType getImageType)
 	}
 }
 
-template <typename TSurfel>
-void ITMBasicSurfelEngine<TSurfel>::GetImage(ITMUChar4Image *out, GetImageType getImageType, ORUtils::SE3Pose *pose, ITMIntrinsics *intrinsics)
-{
+template<typename TSurfel>
+void ITMBasicSurfelEngine<TSurfel>::GetImage(ITMUChar4Image* out, GetImageType getImageType, ORUtils::SE3Pose* pose,
+                                             ITMIntrinsics* intrinsics) {
 	if (view == NULL) return;
 
 	out->Clear();
 
-	switch (getImageType)
-	{
-	case ITMBasicSurfelEngine::InfiniTAM_IMAGE_ORIGINAL_RGB:
-		out->ChangeDims(view->rgb->noDims);
-		if (settings->deviceType == ITMLibSettings::DEVICE_CUDA) 
-			out->SetFrom(view->rgb, ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CPU);
-		else out->SetFrom(view->rgb, ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU);
-		break;
-	case ITMBasicSurfelEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH:
-		out->ChangeDims(view->depth->noDims);
-		if (settings->deviceType == ITMLibSettings::DEVICE_CUDA) view->depth->UpdateHostFromDevice();
-		IITMVisualisationEngine::DepthToUchar4(out, view->depth);
-		break;
-	case ITMBasicSurfelEngine::InfiniTAM_IMAGE_SCENERAYCAST:
-	case ITMBasicSurfelEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME:
-	case ITMBasicSurfelEngine::InfiniTAM_IMAGE_COLOUR_FROM_NORMAL:
-	case ITMBasicSurfelEngine::InfiniTAM_IMAGE_COLOUR_FROM_CONFIDENCE:
-		{
+	switch (getImageType) {
+		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_ORIGINAL_RGB:
+			out->ChangeDims(view->rgb->noDims);
+			if (settings->deviceType == ITMLibSettings::DEVICE_CUDA)
+				out->SetFrom(view->rgb, ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CPU);
+			else out->SetFrom(view->rgb, ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU);
+			break;
+		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH:
+			out->ChangeDims(view->depth->noDims);
+			if (settings->deviceType == ITMLibSettings::DEVICE_CUDA) view->depth->UpdateHostFromDevice();
+			IITMVisualisationEngine::DepthToUchar4(out, view->depth);
+			break;
+		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_SCENERAYCAST:
+		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME:
+		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_COLOUR_FROM_NORMAL:
+		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_COLOUR_FROM_CONFIDENCE: {
 			const bool useRadii = true;
-			surfelVisualisationEngine->FindSurface(surfelScene, trackingState->pose_d, &view->calib.intrinsics_d, useRadii, USR_DONOTRENDER, surfelRenderState_live);
-			surfelVisualisationEngine->RenderImage(surfelScene, trackingState->pose_d, surfelRenderState_live, out, ToSurfelImageType(getImageType));
+			surfelVisualisationEngine->FindSurface(surfelScene, trackingState->pose_d, &view->calib.intrinsics_d,
+			                                       useRadii, USR_DONOTRENDER, surfelRenderState_live);
+			surfelVisualisationEngine->RenderImage(surfelScene, trackingState->pose_d, surfelRenderState_live, out,
+			                                       ToSurfelImageType(getImageType));
 			out->UpdateHostFromDevice();
 			break;
 		}
-	case ITMBasicSurfelEngine::InfiniTAM_IMAGE_FREECAMERA_SHADED:
-	case ITMBasicSurfelEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_VOLUME:
-	case ITMBasicSurfelEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_NORMAL:
-	case ITMBasicSurfelEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_CONFIDENCE:
-	{
-		if (!surfelRenderState_freeview) surfelRenderState_freeview = new ITMSurfelRenderState(view->depth->noDims, surfelScene->GetParams().supersamplingFactor);
-		const bool useRadii = true;
-		surfelVisualisationEngine->FindSurface(surfelScene, pose, intrinsics, useRadii, USR_DONOTRENDER, surfelRenderState_freeview);
-		surfelVisualisationEngine->RenderImage(surfelScene, pose, surfelRenderState_freeview, out, ToSurfelImageType(getImageType));
-		out->UpdateHostFromDevice();
-		break;
-	}
-	case ITMMainEngine::InfiniTAM_IMAGE_UNKNOWN:
-		break;
+		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_FREECAMERA_SHADED:
+		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_VOLUME:
+		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_NORMAL:
+		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_CONFIDENCE: {
+			if (!surfelRenderState_freeview)
+				surfelRenderState_freeview = new ITMSurfelRenderState(view->depth->noDims,
+				                                                      surfelScene->GetParams().supersamplingFactor);
+			const bool useRadii = true;
+			surfelVisualisationEngine->FindSurface(surfelScene, pose, intrinsics, useRadii, USR_DONOTRENDER,
+			                                       surfelRenderState_freeview);
+			surfelVisualisationEngine->RenderImage(surfelScene, pose, surfelRenderState_freeview, out,
+			                                       ToSurfelImageType(getImageType));
+			out->UpdateHostFromDevice();
+			break;
+		}
+		case ITMMainEngine::InfiniTAM_IMAGE_UNKNOWN:
+			break;
 	}
 }
 
-template <typename TSurfel>
+template<typename TSurfel>
 void ITMBasicSurfelEngine<TSurfel>::turnOnTracking() { trackingActive = true; }
 
-template <typename TSurfel>
+template<typename TSurfel>
 void ITMBasicSurfelEngine<TSurfel>::turnOffTracking() { trackingActive = false; }
 
-template <typename TSurfel>
+template<typename TSurfel>
 void ITMBasicSurfelEngine<TSurfel>::turnOnIntegration() { fusionActive = true; }
 
-template <typename TSurfel>
+template<typename TSurfel>
 void ITMBasicSurfelEngine<TSurfel>::turnOffIntegration() { fusionActive = false; }
 
-template <typename TSurfel>
+template<typename TSurfel>
 void ITMBasicSurfelEngine<TSurfel>::turnOnMainProcessing() { mainProcessingActive = true; }
 
-template <typename TSurfel>
+template<typename TSurfel>
 void ITMBasicSurfelEngine<TSurfel>::turnOffMainProcessing() { mainProcessingActive = false; }
