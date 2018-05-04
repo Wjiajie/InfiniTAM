@@ -29,10 +29,13 @@
 
 #include "../../ORUtils/FileUtils.h"
 #include "../../InputSource/FFMPEGWriter.h"
+#include "../../ITMLib/Utils/ITMBenchmarkUtils.h"
 
 using namespace InfiniTAM::Engine;
 using namespace InputSource;
 using namespace ITMLib;
+
+namespace bench = ITMLib::Bench;
 
 UIEngine_BPO* UIEngine_BPO::instance;
 
@@ -43,7 +46,7 @@ static void safe_glutBitmapString(void* font, const char* str) {
 	}
 }
 
-void UIEngine_BPO::glutDisplayFunction() {
+void UIEngine_BPO::GlutDisplayFunction() {
 	UIEngine_BPO* uiEngine = UIEngine_BPO::Instance();
 
 	// get updated images from processing thread
@@ -135,14 +138,14 @@ void UIEngine_BPO::glutDisplayFunction() {
 	        uiEngine->integrationActive ? "off" : "on");
 	safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
 	glRasterPos2f(-0.98f, -0.95f);
-	sprintf(str, "Alt+n: one frame (record)");
+	sprintf(str, "Alt+n: one frame (record) \t i: %d frames", uiEngine->autoIntervalFrameCount);
 	safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
 
 	glutSwapBuffers();
 	uiEngine->needsRefresh = false;
 }
 
-void UIEngine_BPO::glutIdleFunction() {
+void UIEngine_BPO::GlutIdleFunction() {
 	UIEngine_BPO* uiEngine = UIEngine_BPO::Instance();
 
 	switch (uiEngine->mainLoopAction) {
@@ -165,6 +168,7 @@ void UIEngine_BPO::glutIdleFunction() {
 			uiEngine->processedFrameNo++;
 			uiEngine->needsRefresh = true;
 			break;
+			//TODO: either remove dead code or {uncomment, test, fix} -Greg (GitHub: Algomorph)
 			//case SAVE_TO_DISK:
 			//	if (!uiEngine->actionDone)
 			//	{
@@ -181,6 +185,15 @@ void UIEngine_BPO::glutIdleFunction() {
 			//		uiEngine->actionDone = true;
 			//	}
 			//	break;
+		case PROCESS_N_FRAMES:
+			uiEngine->ProcessFrame();
+			uiEngine->processedFrameNo++;
+			uiEngine->needsRefresh = true;
+			if((uiEngine->processedFrameNo - uiEngine->autoIntervalFrameStart) >= uiEngine->autoIntervalFrameCount){
+				uiEngine->mainLoopAction = PROCESS_PAUSED;
+				bench::PrintAllCumulativeTimes();
+			}
+			break;
 		case EXIT:
 #ifdef FREEGLUT
 			glutLeaveMainLoop();
@@ -198,7 +211,7 @@ void UIEngine_BPO::glutIdleFunction() {
 	}
 }
 
-void UIEngine_BPO::glutKeyUpFunction(unsigned char key, int x, int y) {
+void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 	UIEngine_BPO* uiEngine = UIEngine_BPO::Instance();
 	int modifiers = glutGetModifiers();
 
@@ -214,6 +227,11 @@ void UIEngine_BPO::glutKeyUpFunction(unsigned char key, int x, int y) {
 				printf("processing one frame ...\n");
 				uiEngine->mainLoopAction = UIEngine_BPO::PROCESS_FRAME;
 			}
+			break;
+		case 'i':
+			printf("processing %d frames ...\n", uiEngine->autoIntervalFrameCount);
+			uiEngine->autoIntervalFrameStart = uiEngine->processedFrameNo;
+			uiEngine->mainLoopAction = UIEngine_BPO::PROCESS_N_FRAMES;
 			break;
 		case 'b':
 			printf("processing input source ...\n");
@@ -358,7 +376,7 @@ void UIEngine_BPO::glutKeyUpFunction(unsigned char key, int x, int y) {
 	else uiEngine->outImageType[0] = uiEngine->colourModes_main[uiEngine->currentColourMode].type;
 }
 
-void UIEngine_BPO::glutMouseButtonFunction(int button, int state, int x, int y) {
+void UIEngine_BPO::GlutMouseButtonFunction(int button, int state, int x, int y) {
 	UIEngine_BPO* uiEngine = UIEngine_BPO::Instance();
 
 	if (state == GLUT_DOWN) {
@@ -410,7 +428,7 @@ static inline Matrix3f createRotation(const Vector3f& _axis, float angle) {
 	return ret;
 }
 
-void UIEngine_BPO::glutMouseMoveFunction(int x, int y) {
+void UIEngine_BPO::GlutMouseMoveFunction(int x, int y) {
 	UIEngine_BPO* uiEngine = UIEngine_BPO::Instance();
 
 	if (uiEngine->mouseWarped) {
@@ -491,7 +509,7 @@ void UIEngine_BPO::glutMouseMoveFunction(int x, int y) {
 	}
 }
 
-void UIEngine_BPO::glutMouseWheelFunction(int button, int dir, int x, int y) {
+void UIEngine_BPO::GlutMouseWheelFunction(int button, int dir, int x, int y) {
 	UIEngine_BPO* uiEngine = UIEngine_BPO::Instance();
 
 	static const float scale_translation = 0.05f;
@@ -501,12 +519,25 @@ void UIEngine_BPO::glutMouseWheelFunction(int button, int dir, int x, int y) {
 	uiEngine->needsRefresh = true;
 }
 
+/**
+ * \brief Initialize the UIEngine using the specified settings
+ * \param argc arguments to the main function
+ * \param argv number of arguments to the main function
+ * \param imageSource source for images
+ * \param imuSource source for IMU data
+ * \param mainEngine main engine to process the frames
+ * \param outFolder output folder for saving results
+ * \param deviceType type of device to use for some tasks
+ * \param frameIntervalLength automatically process this number of frames after launching the UIEngine,
+ * set interval to this number of frames
+ */
 void UIEngine_BPO::Initialise(int& argc, char** argv, ImageSourceEngine* imageSource, IMUSourceEngine* imuSource,
                               ITMMainEngine* mainEngine,
-                              const char* outFolder, ITMLibSettings::DeviceType deviceType) {
+                              const char* outFolder, ITMLibSettings::DeviceType deviceType,int frameIntervalLength) {
 	this->freeviewActive = true;//_DEBUG (change back to false)
 	this->integrationActive = true;
 	this->currentColourMode = 0;
+	this->autoIntervalFrameCount = frameIntervalLength;
 	this->colourModes_main.emplace_back("shaded greyscale", ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST);
 	this->colourModes_main.emplace_back("integrated colours", ITMMainEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME);
 	this->colourModes_main.emplace_back("surface normals", ITMMainEngine::InfiniTAM_IMAGE_COLOUR_FROM_NORMAL);
@@ -514,7 +545,7 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, ImageSourceEngine* imageSo
 	this->colourModes_freeview.emplace_back("canonical", ITMMainEngine::InfiniTAM_IMAGE_FREECAMERA_CANONICAL);
 	this->colourModes_freeview.emplace_back("shaded greyscale", ITMMainEngine::InfiniTAM_IMAGE_FREECAMERA_SHADED);
 
-	//_DEBUG (re-enable 3 modes below)
+	//_DEBUG (re-enable 3 modes below) -Greg (GitHub:Algomorph)
 //	this->colourModes_freeview.emplace_back("integrated colours",
 //	                                        ITMMainEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_VOLUME);
 //	this->colourModes_freeview.emplace_back("surface normals",
@@ -551,14 +582,14 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, ImageSourceEngine* imageSo
 	glutCreateWindow("InfiniTAM");
 	glGenTextures(NUM_WIN, textureId);
 
-	glutDisplayFunc(UIEngine_BPO::glutDisplayFunction);
-	glutKeyboardUpFunc(UIEngine_BPO::glutKeyUpFunction);
-	glutMouseFunc(UIEngine_BPO::glutMouseButtonFunction);
-	glutMotionFunc(UIEngine_BPO::glutMouseMoveFunction);
-	glutIdleFunc(UIEngine_BPO::glutIdleFunction);
+	glutDisplayFunc(UIEngine_BPO::GlutDisplayFunction);
+	glutKeyboardUpFunc(UIEngine_BPO::GlutKeyUpFunction);
+	glutMouseFunc(UIEngine_BPO::GlutMouseButtonFunction);
+	glutMotionFunc(UIEngine_BPO::GlutMouseMoveFunction);
+	glutIdleFunc(UIEngine_BPO::GlutIdleFunction);
 
 #ifdef FREEGLUT
-	glutMouseWheelFunc(UIEngine_BPO::glutMouseWheelFunction);
+	glutMouseWheelFunc(UIEngine_BPO::GlutMouseWheelFunction);
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, 1);
 #endif
 
@@ -579,7 +610,8 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, ImageSourceEngine* imageSo
 	outImageType[2] = ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_RGB;
 	if (inputRGBImage->noDims == Vector2i(0, 0)) outImageType[2] = ITMMainEngine::InfiniTAM_IMAGE_UNKNOWN;
 
-	mainLoopAction = PROCESS_PAUSED;
+	mainLoopAction = autoIntervalFrameCount ? PROCESS_N_FRAMES : PROCESS_PAUSED;
+	autoIntervalFrameStart = 0;
 	mouseState = 0;
 	mouseWarped = false;
 	needsRefresh = false;
@@ -599,7 +631,7 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, ImageSourceEngine* imageSo
 }
 
 void UIEngine_BPO::SaveScreenshot(const char* filename) const {
-	ITMUChar4Image screenshot(getWindowSize(), true, false);
+	ITMUChar4Image screenshot(GetWindowSize(), true, false);
 	GetScreenshot(&screenshot);
 	SaveImageToFile(&screenshot, filename, true);
 }

@@ -24,6 +24,7 @@
 
 namespace ITMLib {
 
+//TODO: move traversal functions to a separate file set -Greg (GitHub: Algomorph)
 
 template<typename TFunctor, typename TVoxel, typename TIndex>
 inline
@@ -341,13 +342,9 @@ ComputeCopyRanges(int& xRangeStart, int& xRangeEnd, int& yRangeStart, int& yRang
 }
 
 // endregion ===========================================================================================================
-bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition,
-                           ITMHashEntry* hashTable,
-                           ITMHashEntry*& resultEntry,
-                           int& lastFreeVoxelBlockId,
-                           int& lastFreeExcessListId,
-                           const int* voxelAllocationList,
-                           const int* excessAllocationList);
+bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition, ITMHashEntry* hashTable, ITMHashEntry*& resultEntry,
+                           int& lastFreeVoxelBlockId, int& lastFreeExcessListId, const int* voxelAllocationList,
+                           const int* excessAllocationList, int& hash);
 
 
 template<class TVoxel, class TIndex>

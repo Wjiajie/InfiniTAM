@@ -202,7 +202,11 @@ int main(int argc, char** argv) {
 				 "Whether or not to enable the Killing term (isometric motion enforcement regularizer) if using the "
 	             "DynamicFusion algorithm")
 				("disable_gradient_smoothing", po::bool_switch(&disableGradientSmoothing)->default_value(false),
-				 "Whether or not to disable the Sobolev gradient smoothing if using the DynamicFusion algorithm");
+				 "Whether or not to disable the Sobolev gradient smoothing if using the DynamicFusion algorithm")
+				("process_N_frames, N", po::value<int>(), "Launch immediately and process the specified number of "
+				 "frames (potentially, with recording, if corresponding commands are issued), and then stop.")
+				;
+
 		//@formatter:on
 		positional_arguments.add("calib_file", 1);
 		positional_arguments.add("input_file", 3);
@@ -227,16 +231,15 @@ int main(int argc, char** argv) {
 			return EXIT_SUCCESS;
 		}
 
-
 		std::string calibFilePath;
 		if (vm.count("calib_file")) {
 			calibFilePath = vm["calib_file"].as<std::string>();
 		}
 
-
 		//all initialized to empty string by default
 		std::string openniFilePath, rgbVideoFilePath, depthVideoFilePath, rgbImageFileMask, depthImageFileMask,
 				maskImageFileMask, imuInputPath;
+
 		std::vector<std::string> inputFiles = vm["input_file"].as<std::vector<std::string>>();
 		auto inputFileCount = inputFiles.size();
 		switch (inputFileCount) {
@@ -280,6 +283,7 @@ int main(int argc, char** argv) {
 			printHelp();
 			return EXIT_FAILURE;
 		}
+// region ================================ SET MAIN ENGINE SETTINGS WITH CLI ARGUMENTS =================================
 
 		auto* settings = new ITMLibSettings();
 		settings->outputPath = vm["output"].as<std::string>().c_str();
@@ -334,12 +338,21 @@ int main(int argc, char** argv) {
 			             "(attempting to disable tracking)." << std::endl;
 			mainEngine->turnOffTracking();
 		}
+// endregion ===========================================================================================================
+// region =========================== SET UI ENGINE SETTINGS WITH CLI ARGUMENTS ========================================
+		if(!vm["process_N_frames"].empty()){
+			settings->SetNFramesToProcessOnLaunch(vm["process_N_frames"].as<int>());
+		}
 
 		UIEngine_BPO::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine,
 		                                     settings->outputPath,
-		                                     settings->deviceType);
+		                                     settings->deviceType,
+		                                     settings->ProcessingOfNFramesOnLaunchIsEnabled() ?
+		                                     settings->GetNFramesToProcessOnLaunch() : 0);
 		UIEngine_BPO::Instance()->Run();
 		UIEngine_BPO::Instance()->Shutdown();
+// endregion ===========================================================================================================
+
 
 		delete mainEngine;
 		delete settings;

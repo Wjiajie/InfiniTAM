@@ -69,9 +69,9 @@ bool SetVoxel_CPU(ITMScene<TVoxel, TIndex>& scene, Vector3i at, TVoxel voxel) {
 	int* excessAllocationList = scene.index.GetExcessAllocationList();
 	Vector3i blockPos;
 	int linearIdx = pointToVoxelBlockPos(at, blockPos);
-	if (AllocateHashEntry_CPU(TO_SHORT_FLOOR3(blockPos), hashTable, entry,
-	                          lastFreeVoxelBlockId, lastFreeExcessListId, voxelAllocationList,
-	                          excessAllocationList)) {
+	int hash;
+	if (AllocateHashEntry_CPU(TO_SHORT_FLOOR3(blockPos), hashTable, entry, lastFreeVoxelBlockId, lastFreeExcessListId,
+	                          voxelAllocationList, excessAllocationList, hash)) {
 		TVoxel* localVoxelBlock = &(voxels[entry->ptr * (SDF_BLOCK_SIZE3)]);
 		localVoxelBlock[linearIdx] = voxel;
 	} else {

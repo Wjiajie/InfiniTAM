@@ -25,24 +25,20 @@
 
 namespace ITMLib {
 
-bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition,
-                           ITMHashEntry* hashTable,
-                           ITMHashEntry*& resultEntry,
-                           int& lastFreeVoxelBlockId,
-                           int& lastFreeExcessListId,
-                           const int* voxelAllocationList,
-                           const int* excessAllocationList) {
-	int resultEntryIndex = hashIndex(hashEntryPosition);
-	ITMHashEntry hashEntry = hashTable[resultEntryIndex];
+bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition, ITMHashEntry* hashTable, ITMHashEntry*& resultEntry,
+                           int& lastFreeVoxelBlockId, int& lastFreeExcessListId, const int* voxelAllocationList,
+                           const int* excessAllocationList, int& hash) {
+	hash = hashIndex(hashEntryPosition);
+	ITMHashEntry hashEntry = hashTable[hash];
 	if (!IS_EQUAL3(hashEntry.pos, hashEntryPosition) || hashEntry.ptr < -1) {
 		bool isExcess = false;
-		//seach excess list only if there is no room in ordered part
+		//search excess list only if there is no room in ordered part
 		if (hashEntry.ptr >= -1) {
 			while (hashEntry.offset >= 1) {
-				resultEntryIndex = SDF_BUCKET_NUM + hashEntry.offset - 1;
-				hashEntry = hashTable[resultEntryIndex];
+				hash = SDF_BUCKET_NUM + hashEntry.offset - 1;
+				hashEntry = hashTable[hash];
 				if (IS_EQUAL3(hashEntry.pos, hashEntryPosition) && hashEntry.ptr >= -1) {
-					resultEntry = &hashTable[resultEntryIndex];
+					resultEntry = &hashTable[hash];
 					return true;
 				}
 			}
@@ -57,7 +53,7 @@ bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition,
 			newHashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
 			newHashEntry.offset = 0;
 			int exlOffset = excessAllocationList[lastFreeExcessListId];
-			hashTable[resultEntryIndex].offset = exlOffset + 1; //connect to child
+			hashTable[hash].offset = exlOffset + 1; //connect to child
 			hashTable[SDF_BUCKET_NUM +
 			          exlOffset] = newHashEntry; //add child to the excess list
 			resultEntry = &hashTable[SDF_BUCKET_NUM +
@@ -71,8 +67,8 @@ bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition,
 			newHashEntry.pos = hashEntryPosition;
 			newHashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
 			newHashEntry.offset = 0;
-			hashTable[resultEntryIndex] = newHashEntry;
-			resultEntry = &hashTable[resultEntryIndex];
+			hashTable[hash] = newHashEntry;
+			resultEntry = &hashTable[hash];
 			lastFreeVoxelBlockId--;
 			return true;
 		} else {
@@ -80,7 +76,7 @@ bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition,
 		}
 	} else {
 		//HashEntry already exists, return the pointer to it
-		resultEntry = &hashTable[resultEntryIndex];
+		resultEntry = &hashTable[hash];
 		return true;
 	}
 }

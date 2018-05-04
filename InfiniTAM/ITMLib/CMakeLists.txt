@@ -500,6 +500,7 @@ Utils/ITM3DNestedMap.tpp
 Utils/ITMSceneStatisticsCalculator.tpp
 Utils/ITMNeighborVoxelIterationInfo.cpp
 Utils/ITMPrintHelpers.cpp
+    Utils/ITMBenchmarkUtils.cpp
 )
 
 SET(ITMLIB_UTILS_HEADERS
@@ -522,6 +523,7 @@ Utils/ITM3DNestedMap.h
 Utils/ITMSceneStatisticsCalculator.h
 Utils/ITMNeighborVoxelIterationInfo.h
 Utils/ITMPrintHelpers.h
+    Utils/ITMBenchmarkUtils.h
 )
 
 #################################################################

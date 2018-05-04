@@ -75,11 +75,15 @@ namespace ITMLib
 
 		MemoryDeviceType GetMemoryType() const;
 
-		bool AreFocusCoordinatesSpecified() const;
+		/// Parameters for logging/debugging dynamic fusion
+		bool FocusCoordinatesAreSpecified() const;
 		Vector3i GetFocusCoordinates() const;
 		void SetFocusCoordinates(const Vector3i& coordiantes);
 
-		// Parameters for logging/debugging DynamicFusion
+		bool ProcessingOfNFramesOnLaunchIsEnabled() const;
+		int GetNFramesToProcessOnLaunch() const;
+		void SetNFramesToProcessOnLaunch(int nFrames);
+
 		bool enableDataTerm = true;
 		bool enableLevelSetTerm = true;
 		bool enableSmoothingTerm = true;
@@ -87,9 +91,12 @@ namespace ITMLib
 		bool enableGradientSmoothing = true;
 
 	private:
-		/// Parameters for logging/debugging DynamicFusion
+		/// Parameters for logging/debugging dynamic fusion
 		bool focusCoordinatesSpecified = false;
 		Vector3i focusCoordinates;
+
+		int autoProcessFrameCount = 0;
+		bool enableProcessingOfNFramesOnLaunch = false;
 
 
 	};

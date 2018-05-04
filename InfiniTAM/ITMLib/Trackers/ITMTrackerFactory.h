@@ -561,7 +561,7 @@ public:
 
 		switch (settings->deviceType) {
 			case ITMLibSettings::DEVICE_CPU:
-				if (settings->AreFocusCoordinatesSpecified()) {
+				if (settings->FocusCoordinatesAreSpecified()) {
 					sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>(
 							settings->sceneParams, settings->outputPath, settings->GetFocusCoordinates(),
 							settings->enableDataTerm, settings->enableLevelSetTerm, settings->enableSmoothingTerm,

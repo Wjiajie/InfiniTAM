@@ -5,6 +5,7 @@ using namespace ITMLib;
 
 #include <climits>
 #include <cmath>
+#include <iostream>
 
 ITMLibSettings::ITMLibSettings()
 : sceneParams(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG
@@ -112,7 +113,7 @@ ITMLibSettings::ITMLibSettings()
 
 }
 
-bool ITMLibSettings::AreFocusCoordinatesSpecified() const {
+bool ITMLibSettings::FocusCoordinatesAreSpecified() const {
 	return focusCoordinatesSpecified;
 }
 
@@ -128,4 +129,17 @@ Vector3i ITMLibSettings::GetFocusCoordinates() const {
 void ITMLibSettings::SetFocusCoordinates(const Vector3i& coordiantes) {
 	focusCoordinatesSpecified = true;
 	focusCoordinates = coordiantes;
+}
+
+bool ITMLibSettings::ProcessingOfNFramesOnLaunchIsEnabled() const {
+	return this->enableProcessingOfNFramesOnLaunch;
+}
+
+int ITMLibSettings::GetNFramesToProcessOnLaunch() const {
+	return this->autoProcessFrameCount;
+}
+
+void ITMLibSettings::SetNFramesToProcessOnLaunch(int nFrames) {
+	this->autoProcessFrameCount = nFrames;
+	this->enableProcessingOfNFramesOnLaunch = true;
 }

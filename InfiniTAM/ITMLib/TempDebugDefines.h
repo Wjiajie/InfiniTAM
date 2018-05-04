@@ -23,19 +23,6 @@
 #include "Utils/FileIO/ITMSceneLogger.h"
 #include <opencv2/core/mat.hpp>
 
-
-#ifdef PRINT_TIME_STATS
-#define TIC(var)\
-
-#define TOC(var)\
-    auto end_##var = std::chrono::steady_clock::now();\
-    auto diff_##var = end_##var - start_##var;\
-    var += std::chrono::duration <double, std::milli> (diff_##var).count();
-#else
-#define TIC(var)
-#define TOC(var)
-#endif
-
 //different logging parameters
 #define FOCUS_SLICE_RADIUS 3
 

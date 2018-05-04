@@ -22,7 +22,7 @@ namespace InfiniTAM
 
 			enum MainLoopAction
 			{
-				PROCESS_PAUSED, PROCESS_FRAME, PROCESS_FRAME_RECORD, PROCESS_VIDEO, EXIT, SAVE_TO_DISK
+				PROCESS_PAUSED, PROCESS_FRAME, PROCESS_FRAME_RECORD, PROCESS_VIDEO, EXIT, SAVE_TO_DISK, PROCESS_N_FRAMES
 			}mainLoopAction;
 
 			struct UIColourMode {
@@ -34,6 +34,9 @@ namespace InfiniTAM
 			};
 			std::vector<UIColourMode> colourModes_main, colourModes_freeview;
 			int currentColourMode;
+
+			int autoIntervalFrameStart;
+			int autoIntervalFrameCount;
 
 			InputSource::ImageSourceEngine *imageSource;
 			InputSource::IMUSourceEngine *imuSource;
@@ -73,14 +76,14 @@ namespace InfiniTAM
 				return instance;
 			}
 
-			static void glutDisplayFunction();
-			static void glutIdleFunction();
-			static void glutKeyUpFunction(unsigned char key, int x, int y);
-			static void glutMouseButtonFunction(int button, int state, int x, int y);
-			static void glutMouseMoveFunction(int x, int y);
-			static void glutMouseWheelFunction(int button, int dir, int x, int y);
+			static void GlutDisplayFunction();
+			static void GlutIdleFunction();
+			static void GlutKeyUpFunction(unsigned char key, int x, int y);
+			static void GlutMouseButtonFunction(int button, int state, int x, int y);
+			static void GlutMouseMoveFunction(int x, int y);
+			static void GlutMouseWheelFunction(int button, int dir, int x, int y);
 
-			const Vector2i & getWindowSize(void) const
+			const Vector2i & GetWindowSize(void) const
 			{ return winSize; }
 
 			float processedTime;
@@ -91,7 +94,7 @@ namespace InfiniTAM
 			ITMUChar4Image *saveImage;
 
 			void Initialise(int & argc, char** argv, InputSource::ImageSourceEngine *imageSource, InputSource::IMUSourceEngine *imuSource,
-				ITMLib::ITMMainEngine *mainEngine, const char *outFolder, ITMLib::ITMLibSettings::DeviceType deviceType);
+				ITMLib::ITMMainEngine *mainEngine, const char *outFolder, ITMLib::ITMLibSettings::DeviceType deviceType, int frameIntervalLength = 0);
 			void Shutdown();
 
 			void Run();

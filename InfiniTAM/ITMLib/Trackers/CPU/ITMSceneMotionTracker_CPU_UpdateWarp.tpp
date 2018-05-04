@@ -104,8 +104,8 @@ void CalculateAndPrintAdditionalStatistics(const bool& enableDataTerm,
 // region ========================== CALCULATE WARP GRADIENT & UPDATE ==================================================
 
 template<typename TVoxelCanonical>
-struct ClearOutGradientStaticFunctor{
-	static void run(TVoxelCanonical& voxel){
+struct ClearOutGradientStaticFunctor {
+	static void run(TVoxelCanonical& voxel) {
 		voxel.gradient0 = Vector3f(0.0f);
 		voxel.gradient1 = Vector3f(0.0f);
 	}
@@ -188,11 +188,48 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 		// the rare case where we have different positions for live & canonical voxel block with the same index:
 		// we have a hash bucket miss, find the canonical voxel with the matching coordinates
 		if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
-			int canonicalHash = hash;
+			int canonicalHash;
 			if (!FindHashAtPosition(canonicalHash, currentLiveHashEntry.pos, canonicalHashTable)) {
-				DIEWITHEXCEPTION_REPORTLOCATION("Could not find corresponding canonical block at postion!");
+				int lastFreeVoxelBlockId = canonicalScene->localVBA.lastFreeBlockId;
+				int lastFreeExcessListId = canonicalScene->index.GetLastFreeExcessListId();
+				int* voxelAllocationList = canonicalScene->localVBA.GetAllocationList();
+				int* excessAllocationList = canonicalScene->index.GetExcessAllocationList();
+				ITMHashEntry* newEntry;
+				if(AllocateHashEntry_CPU(currentLiveHashEntry.pos, canonicalHashTable, newEntry, lastFreeExcessListId,
+				                         lastFreeExcessListId, voxelAllocationList, excessAllocationList,
+				                         canonicalHash)){
+					currentCanonicalHashEntry = *newEntry;
+					uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
+					entriesAllocType[canonicalHash] = ITMLib::BOUNDARY;
+					std::cout << bright_red << "Allocating hash entry in canonical during gradient update at: " << currentLiveHashEntry.pos << reset << std::endl;
+				}else{
+					DIEWITHEXCEPTION_REPORTLOCATION("Could not allocate hash entry...");
+				}
+				canonicalScene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
+				canonicalScene->index.SetLastFreeExcessListId(lastFreeExcessListId);
+//				//BEGIN _DEBUG
+//				uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
+//				std::cout << red << "Error: no hash block for live hash block in canonical!" << reset << std::endl;
+//				std::cout << "Position: " << currentLiveHashEntry.pos << std::endl;
+//				std::cout << "Nearby entries present?" << std::endl;
+//				std::vector<Vector3i> offsets = { Vector3i(1, 0, 0), Vector3i(0, 1, 0), Vector3i(0, 0, 1),
+//									  Vector3i(-1, 0, 0),Vector3i(0, 1, 0),Vector3i(0, 0, -1)};
+//				for (auto& offset : offsets){
+//					Vector3i pos = currentLiveHashEntry.pos.toInt() + offset;
+//					bool found = FindHashAtPosition(canonicalHash, pos.toShortFloor(), canonicalHashTable);
+//					currentCanonicalHashEntry = canonicalHashTable[hash];
+//					std::cout << "Position: " << pos << ". Found: " << (found ? "true" : "false") <<
+//					          ". State: " << (int)entriesAllocType[canonicalHash] << std::endl;
+//				}
+//				//END _DEBUG
+//
+//				std::stringstream stream;
+//				stream << "Could not find corresponding canonical block at postion " << currentLiveHashEntry.pos
+//				       << ", live hash " << hash << ", at frame " << currentFrameIx << ". " << __FILE__ << ": " << __LINE__;
+//				DIEWITHEXCEPTION(stream.str());
+			}else{
+				currentCanonicalHashEntry = canonicalHashTable[canonicalHash];
 			}
-			currentCanonicalHashEntry = canonicalHashTable[canonicalHash];
 		}
 		// position of the current entry in 3D space in voxel units
 		Vector3i hashBlockPosition = currentLiveHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
@@ -288,10 +325,10 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 						localDataEnergy =
 								0.5f * (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
 					}
-					if(printVoxelResult){
-						if(enableDataTerm){
+					if (printVoxelResult) {
+						if (enableDataTerm) {
 							_DEBUG_PrintDataTermStuff(liveSdfJacobian);
-						}else{
+						} else {
 							std::cout << std::endl;
 						}
 					}
@@ -472,10 +509,10 @@ enum TraversalDirection : int {
 };
 
 
-
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex, TraversalDirection TDirection>
 struct GradientSmoothingPassFunctor {
-	GradientSmoothingPassFunctor(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) :
+	GradientSmoothingPassFunctor(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                             ITMScene<TVoxelLive, TIndex>* liveScene) :
 			canonicalScene(canonicalScene),
 			canonicalVoxels(canonicalScene->localVBA.GetVoxelBlocks()),
 			canoincalHashEntries(canonicalScene->index.GetEntries()),
@@ -488,7 +525,7 @@ struct GradientSmoothingPassFunctor {
 	void operator()(TVoxelCanonical& voxel, Vector3i position) {
 		int vmIndex;
 		const TVoxelLive& liveVoxel = readVoxel(liveVoxels, liveHashEntries, position, vmIndex, liveCache);
-		if(liveVoxel.flags != ITMLib::VOXEL_NONTRUNCATED) return;
+		if (liveVoxel.flags != ITMLib::VOXEL_NONTRUNCATED) return;
 
 		const int directionIndex = (int) TDirection;
 
@@ -497,24 +534,12 @@ struct GradientSmoothingPassFunctor {
 		Vector3f smoothedGradient(0.0f);
 
 		for (int iVoxel = 0; iVoxel < sobolevFilterSize; iVoxel++, receptiveVoxelPosition[directionIndex]++) {
-			const TVoxelCanonical& receptiveVoxel = readVoxel(canonicalVoxels, canoincalHashEntries, receptiveVoxelPosition, vmIndex, canonicalCache);
+			const TVoxelCanonical& receptiveVoxel = readVoxel(canonicalVoxels, canoincalHashEntries,
+			                                                  receptiveVoxelPosition, vmIndex, canonicalCache);
 			smoothedGradient += sobolevFilter1D[iVoxel] * GetGradient(receptiveVoxel);
 		}
-		//_DEBUG
-		//SetGradient(voxel, GetGradient(voxel));
-		//float gradientLength = ORUtils::length(GetGradient(voxel));
 		SetGradient(voxel, smoothedGradient);
-		float gradientLength = ORUtils::length(smoothedGradient);
-
-		if(gradientLength > maxGradLength){
-			maxGradLength = gradientLength;
-			maxGradLengthPos = position;
-		}
 	}
-
-	float maxGradLength = 0.0f;
-	Vector3i maxGradLengthPos;
-	int iterationIndex;
 
 private:
 	Vector3f GetGradient(const TVoxelCanonical& voxel) const {
@@ -558,65 +583,39 @@ private:
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex, TraversalDirection TDirection>
 const int GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, TDirection>::sobolevFilterSize = 7;
-//template<typename TVoxelLive, typename TIndex, TraversalDirection TDirection>
-//const float GradientSmoothingPassFunctor<TVoxelLive, TIndex, TDirection>::sobolevFilter1D[] = {
-//		2.995861099047703036e-04f,
-//		4.410932423926419363e-03f,
-//		6.571314272194948847e-02f,
-//		9.956527876693953560e-01f,
-//		6.571314272194946071e-02f,
-//		4.410932423926422832e-03f,
-//		2.995861099045313996e-04f};
-
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex, TraversalDirection TDirection>
 const float GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, TDirection>::sobolevFilter1D[] = {
-		2.636041325812907461e-04f,
-		3.881154276361719040e-03f,
-		5.782062280706985746e-02f,
-		8.760692375679742794e-01f,
-		5.782062280706985746e-02f,
-		3.881154276361719040e-03f,
-		2.636041325812907461e-04f};
+		2.995861099047703036e-04f,
+		4.410932423926419363e-03f,
+		6.571314272194948847e-02f,
+		9.956527876693953560e-01f,
+		6.571314272194946071e-02f,
+		4.410932423926422832e-03f,
+		2.995861099045313996e-04f};
+
+//template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex, TraversalDirection TDirection>
+//const float GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, TDirection>::sobolevFilter1D[] = {
+//		2.636041325812907461e-04f,
+//		3.881154276361719040e-03f,
+//		5.782062280706985746e-02f,
+//		8.760692375679742794e-01f,
+//		5.782062280706985746e-02f,
+//		3.881154276361719040e-03f,
+//		2.636041325812907461e-04f};
 
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplySmoothingToGradient(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
-	if(enableGradientSmoothing){
-		const int iteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
-
+	if (enableGradientSmoothing) {
 		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, X> passFunctorX(canonicalScene, liveScene);
 		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, Y> passFunctorY(canonicalScene, liveScene);
 		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, Z> passFunctorZ(canonicalScene, liveScene);
 
-		passFunctorX.iterationIndex = iteration;
-		passFunctorY.iterationIndex = iteration;
-		passFunctorZ.iterationIndex = iteration;
-
-		ITMSceneStatisticsCalculator<TVoxelCanonical, TIndex> canonicalCalculator;
-		// ========== NO SMOOTHING
-		Vector3i maxGradLengthPosition;
-		float maxGradLength = canonicalCalculator.FindMaxGradient0LengthAndPosition(canonicalScene, maxGradLengthPosition);
-		std::cout << red << "Max length: " << maxGradLength << " at " << maxGradLengthPosition << reset << std::endl;
 		VoxelPositionTraversal_CPU(*canonicalScene, passFunctorX);
-
-		// ========== X
-		//maxGradLength = canonicalCalculator.FindMaxGradient1LengthAndPosition(canonicalScene, maxGradLengthPosition);
-		std::cout << red << "Max length: " << maxGradLength << " at " << maxGradLengthPosition << reset << std::endl;
-		std::cout << red << "Max length: " << passFunctorX.maxGradLength << " at " << passFunctorX.maxGradLengthPos << reset << std::endl;
-
-		// ========== Y
 		VoxelPositionTraversal_CPU(*canonicalScene, passFunctorY);
-		maxGradLength = canonicalCalculator.FindMaxGradient0LengthAndPosition(canonicalScene, maxGradLengthPosition);
-		std::cout << red << "Max length: " << maxGradLength << " at " << maxGradLengthPosition << reset << std::endl;
-		//std::cout << red << "Max length: " << passFunctorY.maxGradLength << " at " << passFunctorY.maxGradLengthPos << reset << std::endl;
-
-		// ========== Z
 		VoxelPositionTraversal_CPU(*canonicalScene, passFunctorZ);
-		//std::cout << red << "Max length: " << passFunctorZ.maxGradLength << " at " << passFunctorZ.maxGradLengthPos << reset << std::endl;
-		maxGradLength = canonicalCalculator.FindMaxGradient1LengthAndPosition(canonicalScene, maxGradLengthPosition);
-		std::cout << red << "Max length: " << maxGradLength << " at " << maxGradLengthPosition << reset << std::endl;
 	}
 }
 
@@ -628,14 +627,13 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	const float learningRate = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::gradientDescentLearningRate;
-
+	const int currentFrameIx = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
 
 	//Warp Update Length Histogram
 	// <20%, 40%, 60%, 80%, 100%
 	const int histBinCount = 10;
 	int warpBins[histBinCount] = {0};
 	int updateBins[histBinCount] = {0};
-
 
 	// *** traversal vars
 	// ** canonical frame
@@ -665,7 +663,10 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 		if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
 			int canonicalHash = hash;
 			if (!FindHashAtPosition(canonicalHash, currentLiveHashEntry.pos, canonicalHashTable)) {
-				DIEWITHEXCEPTION_REPORTLOCATION("Could not find corresponding canonical block at postion!");
+				std::stringstream stream;
+				stream << "Could not find corresponding canonical block at postion " << currentLiveHashEntry.pos
+				       << " at frame " << currentFrameIx << ". " << __FILE__ << ": " << __LINE__;
+				DIEWITHEXCEPTION(stream.str());
 			}
 			currentCanonicalHashEntry = canonicalHashTable[canonicalHash];
 		}
@@ -683,7 +684,8 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 						continue;
 					}
 					TVoxelCanonical& canonicalVoxel = localCanonicalVoxelBlock[locId];
-					Vector3f warpUpdate = -learningRate * (enableGradientSmoothing ? canonicalVoxel.gradient1 : canonicalVoxel.gradient0);
+					Vector3f warpUpdate = -learningRate * (enableGradientSmoothing ? canonicalVoxel.gradient1
+					                                                               : canonicalVoxel.gradient0);
 					canonicalVoxel.gradient0 = warpUpdate;
 					canonicalVoxel.warp += warpUpdate;
 					float warpLength = ORUtils::length(canonicalVoxel.warp);

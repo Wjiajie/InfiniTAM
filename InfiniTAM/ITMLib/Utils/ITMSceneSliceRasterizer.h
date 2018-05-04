@@ -24,7 +24,7 @@ namespace ITMLib {
 template <typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMSceneSliceRasterizer {
 
-	//TODO: positions of voxels to highlight / draw around should be defined extenally in the user code, not as class static members. -Greg (GitHub: Algomorph)
+	//TODO: positions of voxels to highlight / draw around should be defined extenally in the user code, not as class static members. Static functions should be probably changed to become member functions, with focus coordinates (testPos1, testPos2...) being set in user code during construction. -Greg (GitHub: Algomorph)
 public:
 
 	enum Axis{
@@ -32,27 +32,26 @@ public:
 		AXIS_Y = 1,
 		AXIS_Z = 3
 	};
-
+	static void RenderLiveSceneSlices_AllDirections(ITMScene<TVoxelLive, TIndex>* scene);
+	static void RenderCanonicalSceneSlices_AllDirections(ITMScene<TVoxelCanonical, TIndex>* scene);
 	static void
-	RenderCanonicalSceneSlices(ITMScene<TVoxelCanonical, TIndex>* scene, Axis axis, const std::string pathPostfix);
-	static void RenderLiveSceneSlices(ITMScene<TVoxelLive, TIndex>* scene,
-		                                  Axis axis,
-		                                  const std::string pathPostfix);
+	RenderCanonicalSceneSlices(ITMScene<TVoxelCanonical, TIndex>* scene, Axis axis, std::string pathPostfix);
+	static void RenderLiveSceneSlices(ITMScene<TVoxelLive, TIndex>* scene, Axis axis,std::string pathPostfix);
 	static cv::Mat DrawCanonicalSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene);
 	static cv::Mat DrawLiveSceneImageAroundPoint(ITMScene<TVoxelLive, TIndex>* scene);
 	static cv::Mat DrawWarpedSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene);
 	static void MarkWarpedSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn,
 	                                            Vector3i positionOfVoxelToMark);
 
-	// voxels to highlight and use as drawing canvas center
-	static const Vector3i testPos1;
-	static const Vector3i testPos2;
-	static const Vector3i testPos3;
-	static const Vector3i testPos4;
 // where to save the images
 	static const std::string iterationFramesFolder;
 	static const std::string canonicalSceneRasterizedFolder;
 	static const std::string liveSceneRasterizedFolder;
+
+	static const Vector3i testPos1;
+	static const Vector3i testPos2;
+	static const Vector3i testPos3;
+	static const Vector3i testPos4;
 
 protected:
 	template<typename TVoxel>
@@ -88,6 +87,7 @@ protected:
 
 	static const int imgPixelRangeX;
 	static const int imgPixelRangeY;
+
 };
 
 

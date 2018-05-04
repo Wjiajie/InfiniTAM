@@ -306,9 +306,6 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlices(
 
 	Vector3i minPoint, maxPoint;
 
-	float timer;
-	TIC(timer);
-
 	ITMSceneStatisticsCalculator<TVoxel,TIndex> calculator;
 	calculator.ComputeVoxelBounds(scene, minPoint, maxPoint);
 	std::cout << "Voxel ranges ( min x,y,z; max x,y,z): " << minPoint << "; " << maxPoint << std::endl;
@@ -416,16 +413,30 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlices(
 			std::cout << "Writing " << ss.str() << std::endl;
 		}
 	}
-
-	TOC(timer);
-#ifdef PRINT_TIME_STATS
-	if (verbose) {
-		std::cout << "Total time for rasterization procedure: " << timer << " ms." << std::endl;
-	}
-#endif
-
 }
 
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderLiveSceneSlices_AllDirections(
+		ITMScene<TVoxelLive, TIndex>* scene) {
+	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderLiveSceneSlices(
+			scene, ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::AXIS_X, "_X");
+	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderLiveSceneSlices(
+			scene, ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::AXIS_Y, "_Y");
+	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderLiveSceneSlices(
+			scene, ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::AXIS_Z, "_Z");
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderCanonicalSceneSlices_AllDirections(
+		ITMScene<TVoxelCanonical, TIndex>* scene) {
+	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderCanonicalSceneSlices(
+			scene, ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::AXIS_X, "_X");
+	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderCanonicalSceneSlices(
+			scene, ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::AXIS_Y, "_Y");
+	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderCanonicalSceneSlices(
+			scene, ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::AXIS_Z, "_Z");
+}
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderCanonicalSceneSlices(

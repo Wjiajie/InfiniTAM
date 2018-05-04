@@ -26,8 +26,11 @@
 #include "../Objects/Scene/ITMSceneManipulation.h"
 #include "../Utils/ITMSceneStatisticsCalculator.h"
 #include "../Utils/ITMPrintHelpers.h"
+#include "../Utils/ITMBenchmarkUtils.h"
 
 using namespace ITMLib;
+
+namespace bench = ITMLib::Bench;
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMapper(const ITMLibSettings* settings) :
@@ -105,6 +108,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(co
 	}
 	//END __DEBUG
 
+	bench::StartTimer("ReconstructLive");
 	// clear out the live-frame SDF
 	liveSceneReconstructor->ResetScene(liveScene);
 	//** construct the new live-frame SDF
@@ -112,15 +116,19 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(co
 	liveSceneReconstructor->AllocateSceneFromDepth(liveScene, view, trackingState, renderState);
 	// integration
 	liveSceneReconstructor->IntegrateIntoScene(liveScene, view, trackingState, renderState);
+	bench::StopTimer("ReconstructLive");
 
 
-
+	bench::StartTimer("TrackMotion");
 	sceneMotionTracker->TrackMotion(canonicalScene, liveScene, this->recordNextFrameWarps, liveSceneReconstructor);
+	bench::StopTimer("TrackMotion");
+	bench::StartTimer("FuseFrame");
 	sceneMotionTracker->FuseFrame(canonicalScene, liveScene);
+	bench::StopTimer("FuseFrame");
 
 	//_DEBUG
-	PrintSceneStats(liveScene, "Live before fusion");
-	PrintSceneStats(canonicalScene, "Canonical after fusion");
+	//PrintSceneStats(liveScene, "Live before fusion");
+	//PrintSceneStats(canonicalScene, "Canonical after fusion");
 
 	// clear out the live-frame SDF, to prepare it for warped canonical
 	//liveSceneRecoEngine->ResetScene(liveScene);

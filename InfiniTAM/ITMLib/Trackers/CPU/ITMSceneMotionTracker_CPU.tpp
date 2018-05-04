@@ -356,12 +356,12 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 	}
 
 	//_DEBUG
-	std::cout << "Number of lookups that yielded initial (unknown) value in live (target) frame during fusion: "
-	          << missedKnownVoxels << std::endl;
-	std::cout << "Number of lookups that resulted in truncated value in live (target) frame during fusion: "
-	          << sdfTruncatedCount << std::endl;
-	std::cout << "Number of hash blocks that were stabilized (converted from boundary status) during fusion: "
-	          << hashBlockStabilizationCount << std::endl;
+//	std::cout << "Number of lookups that yielded initial (unknown) value in live (target) frame during fusion: "
+//	          << missedKnownVoxels << std::endl;
+//	std::cout << "Number of lookups that resulted in truncated value in live (target) frame during fusion: "
+//	          << sdfTruncatedCount << std::endl;
+//	std::cout << "Number of hash blocks that were stabilized (converted from boundary status) during fusion: "
+//	          << hashBlockStabilizationCount << std::endl;
 	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx++;
 }
 // endregion ===========================================================================================================

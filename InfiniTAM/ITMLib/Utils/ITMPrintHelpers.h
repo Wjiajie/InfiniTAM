@@ -40,6 +40,7 @@ extern const std::string blue;
 extern const std::string yellow;
 extern const std::string cyan;
 
+extern const std::string bright_red;
 extern const std::string bright_cyan;
 extern const std::string reset;
 
