@@ -145,20 +145,43 @@ _CPU_AND_GPU_CODE_ inline float readFromSDF_float_interpolated(const CONSTPTR(TV
 	float res1, res2, v1, v2;
 	Vector3f coeff; Vector3i pos; TO_INT_FLOOR3(pos, coeff, point);
 
-	v1 = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 0, 0), vmIndex, cache).sdf;
-	v2 = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 0, 0), vmIndex, cache).sdf;
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 0, 0), vmIndex, cache);
+		v1 = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 0, 0), vmIndex, cache);
+		v2 = voxel.sdf;
+	}
 	res1 = (1.0f - coeff.x) * v1 + coeff.x * v2;
 
-	v1 = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 1, 0), vmIndex, cache).sdf;
-	v2 = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 1, 0), vmIndex, cache).sdf;
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 1, 0), vmIndex, cache);
+		v1 = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 1, 0), vmIndex, cache);
+		v2 = voxel.sdf;
+	}
 	res1 = (1.0f - coeff.y) * res1 + coeff.y * ((1.0f - coeff.x) * v1 + coeff.x * v2);
-
-	v1 = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 0, 1), vmIndex, cache).sdf;
-	v2 = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 0, 1), vmIndex, cache).sdf;
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 0, 1), vmIndex, cache);
+		v1 = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 0, 1), vmIndex, cache);
+		v2 = voxel.sdf;
+	}
 	res2 = (1.0f - coeff.x) * v1 + coeff.x * v2;
 
-	v1 = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 1, 1), vmIndex, cache).sdf;
-	v2 = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 1, 1), vmIndex, cache).sdf;
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 1, 1), vmIndex, cache);
+		v1 = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 1, 1), vmIndex, cache);
+		v2 = voxel.sdf;
+	}
 	res2 = (1.0f - coeff.y) * res2 + coeff.y * ((1.0f - coeff.x) * v1 + coeff.x * v2);
 
 	vmIndex = true;
@@ -354,14 +377,38 @@ _CPU_AND_GPU_CODE_ inline Vector3f computeSingleNormalFromSDF(const CONSTPTR(TVo
 
 	// all 8 values are going to be reused several times
 	Vector4f front, back;
-	front.x = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 0, 0), vmIndex).sdf;
-	front.y = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 0, 0), vmIndex).sdf;
-	front.z = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 1, 0), vmIndex).sdf;
-	front.w = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 1, 0), vmIndex).sdf;
-	back.x = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 0, 1), vmIndex).sdf;
-	back.y = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 0, 1), vmIndex).sdf;
-	back.z = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 1, 1), vmIndex).sdf;
-	back.w = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 1, 1), vmIndex).sdf;
+	{
+	const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 0, 0), vmIndex);
+	front.x = voxel.sdf;
+	}
+	{
+	const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 0, 0), vmIndex);
+	front.y = voxel.sdf;
+	}
+	{
+	const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 1, 0), vmIndex);
+	front.z = voxel.sdf;
+	}
+	{
+	const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 1, 0), vmIndex);
+	front.w = voxel.sdf;
+	}
+	{
+	const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 0, 1), vmIndex);
+	back.x = voxel.sdf;
+	}
+	{
+	const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 0, 1), vmIndex);
+	back.y = voxel.sdf;
+	}
+	{
+	const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 1, 1), vmIndex);
+	back.z = voxel.sdf;
+	}
+	{
+	const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 1, 1), vmIndex);
+	back.w = voxel.sdf;
+	}
 
 	Vector4f tmp;
 	float p1, p2, v1;
@@ -370,10 +417,22 @@ _CPU_AND_GPU_CODE_ inline Vector3f computeSingleNormalFromSDF(const CONSTPTR(TVo
 		front.z *  coeff.y * ncoeff.z +
 		back.x  * ncoeff.y *  coeff.z +
 		back.z  *  coeff.y *  coeff.z;
-	tmp.x = readVoxel(voxelData, voxelIndex, pos + Vector3i(-1, 0, 0), vmIndex).sdf;
-	tmp.y = readVoxel(voxelData, voxelIndex, pos + Vector3i(-1, 1, 0), vmIndex).sdf;
-	tmp.z = readVoxel(voxelData, voxelIndex, pos + Vector3i(-1, 0, 1), vmIndex).sdf;
-	tmp.w = readVoxel(voxelData, voxelIndex, pos + Vector3i(-1, 1, 1), vmIndex).sdf;
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(-1, 0, 0), vmIndex);
+		tmp.x = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(-1, 1, 0), vmIndex);
+		tmp.y = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(-1, 0, 1), vmIndex);
+		tmp.z = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(-1, 1, 1), vmIndex);
+		tmp.w = voxel.sdf;
+	}
 	p2 = tmp.x * ncoeff.y * ncoeff.z +
 		tmp.y *  coeff.y * ncoeff.z +
 		tmp.z * ncoeff.y *  coeff.z +
@@ -384,10 +443,22 @@ _CPU_AND_GPU_CODE_ inline Vector3f computeSingleNormalFromSDF(const CONSTPTR(TVo
 		front.w *  coeff.y * ncoeff.z +
 		back.y  * ncoeff.y *  coeff.z +
 		back.w  *  coeff.y *  coeff.z;
-	tmp.x = readVoxel(voxelData, voxelIndex, pos + Vector3i(2, 0, 0), vmIndex).sdf;
-	tmp.y = readVoxel(voxelData, voxelIndex, pos + Vector3i(2, 1, 0), vmIndex).sdf;
-	tmp.z = readVoxel(voxelData, voxelIndex, pos + Vector3i(2, 0, 1), vmIndex).sdf;
-	tmp.w = readVoxel(voxelData, voxelIndex, pos + Vector3i(2, 1, 1), vmIndex).sdf;
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(2, 0, 0), vmIndex);
+		tmp.x = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(2, 1, 0), vmIndex);
+		tmp.y = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(2, 0, 1), vmIndex);
+		tmp.z = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(2, 1, 1), vmIndex);
+		tmp.w = voxel.sdf;
+	}
 	p2 = tmp.x * ncoeff.y * ncoeff.z +
 		tmp.y *  coeff.y * ncoeff.z +
 		tmp.z * ncoeff.y *  coeff.z +
@@ -400,10 +471,22 @@ _CPU_AND_GPU_CODE_ inline Vector3f computeSingleNormalFromSDF(const CONSTPTR(TVo
 		front.y *  coeff.x * ncoeff.z +
 		back.x  * ncoeff.x *  coeff.z +
 		back.y  *  coeff.x *  coeff.z;
-	tmp.x = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, -1, 0), vmIndex).sdf;
-	tmp.y = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, -1, 0), vmIndex).sdf;
-	tmp.z = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, -1, 1), vmIndex).sdf;
-	tmp.w = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, -1, 1), vmIndex).sdf;
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, -1, 0), vmIndex);
+		tmp.x = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, -1, 0), vmIndex);
+		tmp.y = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, -1, 1), vmIndex);
+		tmp.z = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, -1, 1), vmIndex);
+		tmp.w = voxel.sdf;
+	}
 	p2 = tmp.x * ncoeff.x * ncoeff.z +
 		tmp.y *  coeff.x * ncoeff.z +
 		tmp.z * ncoeff.x *  coeff.z +
@@ -414,10 +497,22 @@ _CPU_AND_GPU_CODE_ inline Vector3f computeSingleNormalFromSDF(const CONSTPTR(TVo
 		front.w *  coeff.x * ncoeff.z +
 		back.z  * ncoeff.x *  coeff.z +
 		back.w  *  coeff.x *  coeff.z;
-	tmp.x = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 2, 0), vmIndex).sdf;
-	tmp.y = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 2, 0), vmIndex).sdf;
-	tmp.z = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 2, 1), vmIndex).sdf;
-	tmp.w = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 2, 1), vmIndex).sdf;
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 2, 0), vmIndex);
+		tmp.x = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 2, 0), vmIndex);
+		tmp.y = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 2, 1), vmIndex);
+		tmp.z = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 2, 1), vmIndex);
+		tmp.w = voxel.sdf;
+	}
 	p2 = tmp.x * ncoeff.x * ncoeff.z +
 		tmp.y *  coeff.x * ncoeff.z +
 		tmp.z * ncoeff.x *  coeff.z +
@@ -430,10 +525,22 @@ _CPU_AND_GPU_CODE_ inline Vector3f computeSingleNormalFromSDF(const CONSTPTR(TVo
 		front.y *  coeff.x * ncoeff.y +
 		front.z * ncoeff.x *  coeff.y +
 		front.w *  coeff.x *  coeff.y;
-	tmp.x = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 0, -1), vmIndex).sdf;
-	tmp.y = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 0, -1), vmIndex).sdf;
-	tmp.z = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 1, -1), vmIndex).sdf;
-	tmp.w = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 1, -1), vmIndex).sdf;
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 0, -1), vmIndex);
+		tmp.x = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 0, -1), vmIndex);
+		tmp.y = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 1, -1), vmIndex);
+		tmp.z = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 1, -1), vmIndex);
+		tmp.w = voxel.sdf;
+	}
 	p2 = tmp.x * ncoeff.x * ncoeff.y +
 		tmp.y *  coeff.x * ncoeff.y +
 		tmp.z * ncoeff.x *  coeff.y +
@@ -444,10 +551,22 @@ _CPU_AND_GPU_CODE_ inline Vector3f computeSingleNormalFromSDF(const CONSTPTR(TVo
 		back.y *  coeff.x * ncoeff.y +
 		back.z * ncoeff.x *  coeff.y +
 		back.w *  coeff.x *  coeff.y;
-	tmp.x = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 0, 2), vmIndex).sdf;
-	tmp.y = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 0, 2), vmIndex).sdf;
-	tmp.z = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 1, 2), vmIndex).sdf;
-	tmp.w = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 1, 2), vmIndex).sdf;
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 0, 2), vmIndex);
+		tmp.x = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 0, 2), vmIndex);
+		tmp.y = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 1, 2), vmIndex);
+		tmp.z = voxel.sdf;
+	}
+	{
+		const TVoxel& voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 1, 2), vmIndex);
+		tmp.w = voxel.sdf;
+	}
 	p2 = tmp.x * ncoeff.x * ncoeff.y +
 		tmp.y *  coeff.x * ncoeff.y +
 		tmp.z * ncoeff.x *  coeff.y +

@@ -296,18 +296,24 @@ struct ITMVoxel_f_dynamic
 	static const CONSTPTR(bool) hasSemanticInformation = true;
 
 	/** Value of the truncated signed distance transformation. */
-	float sdf;
+	union {
+		struct {
+			float sdf;
+			float sdf1;
+		};
+		float sdf_values[2];
+	};
 	/** Number of fused observations that make up @p sdf. */
-	uchar w_depth;
+	uchar w_depth;//TODO: this field is not needed, but have to tweak reco engine to remove it -Greg (GitHub: Algomorph)
 	/** refer to ITMVoxelFlags for flag bit array values */
 	unsigned char flags;
+	//TODO: handle color --Greg (GitHub: Algomorph)
 //	/** RGB colour information stored for this voxel. */
 //	Vector3u clr;
 //	/** Trilinear weight information stored for this voxel.
 //	/** Number of observations that made up @p clr. */
 //	uchar w_color;
 //	float confidence;
-
 
 	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic()
 	{

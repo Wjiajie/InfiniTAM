@@ -28,7 +28,6 @@ namespace ITMLib
 		*/
 		virtual void ResetScene(ITMScene<TVoxel, TIndex> *scene) = 0;
 
-
 		/**
 		 * \brief Given a view with a new depth image, compute the
 		    visible blocks, allocate them and update the hash
