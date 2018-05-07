@@ -101,16 +101,12 @@ void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::WarpCanoni
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUpdateToLive(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
-		ITMScene<TVoxelLive, TIndex>* targetLiveScene) {
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* sourceLiveScene) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not yet implemented");
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpFieldToLive(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
-		ITMScene<TVoxelLive, TIndex>* targetLiveScene) {
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpFieldToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* sourceLiveScene) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not yet implemented");
 }
 

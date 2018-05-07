@@ -45,19 +45,15 @@ protected:
 	const bool enableGradientSmoothing;
 
 
-	void AllocateHashBlocksAtWarpedLocations(ITMScene<TVoxelCanonical, TIndex>* warpSourceScene,
-	                                         ITMScene<TVoxelLive, TIndex>* sdfSourceScene,
-	                                         ITMScene<TVoxelLive, TIndex>* sdfTargetScene);
-	void ApplyWarpFieldToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                          ITMScene<TVoxelLive, TIndex>* rawLiveScene,
-	                          ITMScene<TVoxelLive, TIndex>* initializedLiveScene) override;
+	void AllocateHashBlocksAtWarpedLocations(ITMScene <TVoxelCanonical, TIndex>* warpSourceScene,
+		                                         ITMScene <TVoxelLive, TIndex>* sdfScene);
+	void ApplyWarpFieldToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
 	void ApplySmoothingToGradient(
 			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
 	float ApplyWarpUpdateToWarp(
 			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
-	void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                           ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
-	                           ITMScene<TVoxelLive, TIndex>* targetLiveScene) override;
+	void ApplyWarpUpdateToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+		                           ITMScene <TVoxelLive, TIndex>* liveScene) override;
 
 
 
@@ -72,8 +68,6 @@ protected:
 
 
 private:
-
-
 	float CalculateWarpUpdate_SingleThreadedVerbose(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                                ITMScene<TVoxelLive, TIndex>* liveScene);
 	float CalculateWarpUpdate_MultiThreaded(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,

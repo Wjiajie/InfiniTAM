@@ -96,6 +96,61 @@ inline float InterpolateTrilinearly_SdfColor_StruckNonTruncatedAndKnown_SmartWei
 //sdf + knownVoxelHit + smart weights
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
+inline float InterpolateTrilinearly_MultiSdf_StruckNonTruncatedAndKnown_SmartWeights(
+		const CONSTPTR(TVoxel)* voxelData,
+		const CONSTPTR(ITMHashEntry)* voxelHash,
+		const CONSTPTR(int)& sourceSdfIndex,
+		const THREADPTR(Vector3f)& point,
+		THREADPTR(TCache)& cache,
+		THREADPTR(bool)& struckKnownVoxels,
+		THREADPTR(bool)& struckNonTruncated,
+		THREADPTR(float)& cumulativeWeight) {
+	Vector3f ratios;
+	Vector3f inverseRatios(1.0f);
+	Vector3i pos;
+	int vmIndex;
+	TO_INT_FLOOR3(pos, ratios, point);
+	inverseRatios -= ratios;
+	const int neighborCount = 8;
+	const Vector3i positions[neighborCount] = {Vector3i(0, 0, 0), Vector3i(1, 0, 0),
+	                                           Vector3i(0, 1, 0), Vector3i(1, 1, 0),
+	                                           Vector3i(0, 0, 1), Vector3i(1, 0, 1),
+	                                           Vector3i(0, 1, 1), Vector3i(1, 1, 1)};
+	float sdf = 0.0f;
+	float coefficients[neighborCount];
+
+	struckKnownVoxels = false;
+	struckNonTruncated = false;
+	cumulativeWeight = 0.0f;
+
+	//@formatter:off
+	coefficients[0] = inverseRatios.x * inverseRatios.y * inverseRatios.z; //000
+	coefficients[1] = ratios.x *        inverseRatios.y * inverseRatios.z; //100
+	coefficients[2] = inverseRatios.x * ratios.y *        inverseRatios.z; //010
+	coefficients[3] = ratios.x *        ratios.y *        inverseRatios.z; //110
+	coefficients[4] = inverseRatios.x * inverseRatios.y * ratios.z;        //001
+	coefficients[5] = ratios.x *        inverseRatios.y * ratios.z;        //101
+	coefficients[6] = inverseRatios.x * ratios.y *        ratios.z;        //011
+	coefficients[7] = ratios.x *        ratios.y *        ratios.z;        //111
+	//@formatter:on
+
+	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
+		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (positions[iNeighbor]), vmIndex, cache);
+		bool curKnown = v.flags != ITMLib::VOXEL_UNKNOWN;
+		bool curNonTruncated = v.flags == ITMLib::VOXEL_NONTRUNCATED;
+		float weight = coefficients[iNeighbor] * curKnown;
+		sdf += weight * TVoxel::valueToFloat(v.sdf_values[sourceSdfIndex]);
+		struckKnownVoxels |= (bool) (weight * curKnown);
+		struckNonTruncated |= (bool) (weight * curNonTruncated);
+		cumulativeWeight += weight;
+	}
+
+	return sdf;
+}
+
+//sdf + knownVoxelHit + smart weights
+template<class TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
 inline float InterpolateTrilinearly_Sdf_StruckNonTruncatedAndKnown_SmartWeights(
 		const CONSTPTR(TVoxel)* voxelData,
 		const CONSTPTR(ITMHashEntry)* voxelHash,
@@ -909,6 +964,46 @@ inline float InterpolateTrilinearly_TruncatedCopySign(const CONSTPTR(TVoxel)* vo
 	          + coeff.y * ((oneMinusCoeffX) * sdfs[6] + coeff.x * sdfs[7]);
 
 	float sdf = TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
+	return sdf;
+}
+
+
+//sdf without color, struck non-Truncated check, struck known check,
+template<typename TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline float InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* voxelData,
+                                                const CONSTPTR(ITMHashEntry)* voxelHash,
+                                                const CONSTPTR(Vector3f)& point,
+                                                const CONSTPTR(int)& sdfIndex,
+                                                THREADPTR(TCache)& cache,
+                                                THREADPTR(bool)& struckKnown) {
+	float sdfRes1, sdfRes2, sdfV1, sdfV2;
+	int vmIndex = false;
+	Vector3f coeff;
+	Vector3i pos;
+	struckKnown = false;
+	TO_INT_FLOOR3(pos, coeff, point);
+#define PROCESS_VOXEL(suffix, coord)\
+    {\
+        const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (coord), vmIndex, cache);\
+        sdfV##suffix = TVoxel::valueToFloat(v.sdf_values[sdfIndex]);\
+        struckKnown |= (v.flags != ITMLib::VoxelFlags::VOXEL_UNKNOWN);\
+    }
+	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
+	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
+	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
+	PROCESS_VOXEL(1, Vector3i(0, 1, 0))
+	PROCESS_VOXEL(2, Vector3i(1, 1, 0))
+	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
+	PROCESS_VOXEL(1, Vector3i(0, 0, 1))
+	PROCESS_VOXEL(2, Vector3i(1, 0, 1))
+	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
+	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
+	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
+	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
+#undef PROCESS_VOXEL
+	float sdf = (1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2;
+
 	return sdf;
 }
 

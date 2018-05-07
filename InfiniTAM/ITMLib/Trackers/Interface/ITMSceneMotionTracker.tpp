@@ -64,7 +64,6 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracke
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneMotionTracker() {
 	delete sceneLogger;
-	delete targetLiveScene;
 }
 
 //endregion
@@ -117,16 +116,11 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	//** initialize live frame
 	PrintOperationStatus(
 			"Initializing live frame by mapping the raw live scene to a blank scene using canonical voxel warp field...");
-	bench::StartTimer("TrackMotion_10_ResettingTargetScene");
-	liveSceneReconstructor->ResetScene(targetLiveScene);
-	bench::StopTimer("TrackMotion_10_ResettingTargetScene");
 
 	bench::StartTimer("TrackMotion_11_ApplyWarpFieldToLive");
-	ApplyWarpFieldToLive(canonicalScene, sourceLiveScene, targetLiveScene);
+	ApplyWarpFieldToLive(canonicalScene, sourceLiveScene);
 	bench::StopTimer("TrackMotion_11_ApplyWarpFieldToLive");
 
-	//PrintLiveSceneStats(targetLiveScene, "working/target live scene after frame-initialization");//_DEBUG
-	SwapSourceAndTargetLiveScenes(sourceLiveScene);
 	// region ================================== DEBUG 2D VISUALIZATION ================================================
 
 	if (rasterizeCanonical) {
@@ -194,15 +188,9 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 
 		PrintOperationStatus(
 				"Updating live frame SDF by mapping from old live SDF to new live SDF based on latest warp update...");
-		bench::StartTimer("TrackMotion_34_ResetTargetScene");
-		liveSceneReconstructor->ResetScene(targetLiveScene);
-		bench::StopTimer("TrackMotion_34_ResetTargetScene");
 		bench::StartTimer("TrackMotion_35_ApplyWarpUpdateToLive");
-		ApplyWarpUpdateToLive(canonicalScene, sourceLiveScene, targetLiveScene);
+		ApplyWarpUpdateToLive(canonicalScene, sourceLiveScene);
 		bench::StopTimer("TrackMotion_35_ApplyWarpUpdateToLive");
-
-		//PrintLiveSceneStats(targetLiveScene, "new live scene after iteration-end interpolation");
-		SwapSourceAndTargetLiveScenes(sourceLiveScene);
 
 		if (recordWarpUpdates) {
 			sceneLogger->SaveCurrentWarpState();
@@ -245,14 +233,6 @@ std::string ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::Generate
 	return path.string();
 }
 
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::SwapSourceAndTargetLiveScenes(
-		ITMScene<TVoxelLive, TIndex>*& sourceLiveScene) {
-	ITMScene<TVoxelLive, TIndex>* tmp = sourceLiveScene;
-	sourceLiveScene = targetLiveScene;
-	targetLiveScene = tmp;
-}
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void

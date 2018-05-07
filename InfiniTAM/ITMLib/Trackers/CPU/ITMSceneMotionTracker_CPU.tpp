@@ -217,6 +217,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 	//_DEBUG
 	const int currentFrameIx = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
 
+	const int iteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
 	int noTotalEntries = canonicalScene->index.noTotalEntries;
 	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
 
@@ -268,14 +269,20 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					bool struckNonTruncatedVoxels;
 
 
+					//_DEBUG
 					//color & sdf
 //					float weightedLiveSdf = InterpolateTrilinearly_SdfColor_StruckNonTruncatedAndKnown_SmartWeights(
 //							liveVoxels, liveHashTable,
 //							projectedPosition,
 //							liveCache, liveColor,
 //							struckKnownVoxels, struckNonTruncatedVoxels, liveWeight);
-					float weightedLiveSdf = InterpolateTrilinearly_Sdf_StruckNonTruncatedAndKnown_SmartWeights(
-							liveVoxels, liveHashTable,
+//					float weightedLiveSdf = InterpolateTrilinearly_Sdf_StruckNonTruncatedAndKnown_SmartWeights(
+//							liveVoxels, liveHashTable,
+//							projectedPosition,
+//							liveCache,
+//							struckKnownVoxels, struckNonTruncatedVoxels, liveWeight);
+					float weightedLiveSdf = InterpolateTrilinearly_MultiSdf_StruckNonTruncatedAndKnown_SmartWeights(
+							liveVoxels, liveHashTable, iteration % 2,
 							projectedPosition,
 							liveCache,
 							struckKnownVoxels, struckNonTruncatedVoxels, liveWeight);
@@ -467,8 +474,6 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::WarpCanonic
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::InitializeHelper(
 		const ITMLib::ITMSceneParams& sceneParams) {
-	this->targetLiveScene = new ITMScene<ITMVoxelLive, TIndex>(
-			&sceneParams, false, MEMORYDEVICE_CPU);
 
 	PrintSettings();
 	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
@@ -492,45 +497,40 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::PrintSettin
 template<typename TVoxelWarpSource, typename TVoxelSdfSource, typename TIndex>
 struct WarpBasedAllocationMarkerFunctor {
 	WarpBasedAllocationMarkerFunctor(
-			ITMScene<TVoxelSdfSource, TIndex>* sourceScene,
-			ITMScene<TVoxelSdfSource, TIndex>* targetScene,
+			ITMScene<TVoxelSdfSource, TIndex>* sceneToAllocate,
 			Vector3s* allocationBlockCoords,
 			uchar* warpedEntryAllocationTypes) :
 
-			sourceScene(sourceScene),
-			sourceVoxels(sourceScene->localVBA.GetVoxelBlocks()),
-			sourceHashEntries(sourceScene->index.GetEntries()),
-			sourceCache(),
+			sdfScene(sceneToAllocate),
+			sdfVoxels(sceneToAllocate->localVBA.GetVoxelBlocks()),
+			sdfHashEntries(sceneToAllocate->index.GetEntries()),
+			sdfCache(),
 
-			targetScene(targetScene),
-			targetHashEntries(targetScene->index.GetEntries()),
 			allocationBlockCoords(allocationBlockCoords),
-			warpedEntryAllocationTypes(warpedEntryAllocationTypes) {}
+			warpedEntryAllocationTypes(warpedEntryAllocationTypes){}
 
 	void operator()(TVoxelWarpSource& voxel, Vector3i voxelPosition, Vector3s hashBlockPosition) {
 		Vector3f warpedPosition = voxelPosition.toFloat() + voxel.warp;
 		Vector3i warpedPositionTruncated = warpedPosition.toInt();
 		// perform lookup
 		int vmIndex;
-		const TVoxelSdfSource& sourceVoxelAtWarp = readVoxel(sourceVoxels, sourceHashEntries, warpedPositionTruncated,
-		                                                vmIndex, sourceCache);
+		const TVoxelSdfSource& sdfVoxelAtWarp = readVoxel(sdfVoxels, sdfHashEntries, warpedPositionTruncated,
+		                                                vmIndex, sdfCache);
 		//_DEBUG
-		if (sourceVoxelAtWarp.flags != ITMLib::VOXEL_NONTRUNCATED) return; // skip truncated voxels in raw live
+		if (sdfVoxelAtWarp.flags != ITMLib::VOXEL_NONTRUNCATED) return; // skip truncated voxels in raw live
 
 		int liveBlockHash = hashIndex(hashBlockPosition);
 		MarkAsNeedingAllocationIfNotFound(warpedEntryAllocationTypes, allocationBlockCoords, liveBlockHash,
-		                                  hashBlockPosition, targetHashEntries);
+		                                  hashBlockPosition, sdfHashEntries);
 
 	}
 
 private:
-	ITMScene<TVoxelSdfSource, TIndex>* sourceScene;
-	TVoxelSdfSource* sourceVoxels;
-	ITMHashEntry* sourceHashEntries;
-	typename TIndex::IndexCache sourceCache;
+	ITMScene<TVoxelSdfSource, TIndex>* sdfScene;
+	TVoxelSdfSource* sdfVoxels;
+	ITMHashEntry* sdfHashEntries;
+	typename TIndex::IndexCache sdfCache;
 
-	ITMScene<TVoxelSdfSource, TIndex>* targetScene;
-	ITMHashEntry* targetHashEntries;
 
 	Vector3s* allocationBlockCoords;
 	uchar* warpedEntryAllocationTypes;
@@ -565,7 +565,8 @@ struct TrilinearInterpolationFunctor {
 	 */
 	TrilinearInterpolationFunctor(
 			ITMScene<TVoxelSdf, TIndex>* sdfSourceScene,
-			ITMScene<TVoxelWarpSource, TIndex>* warpSourceScene) :
+			ITMScene<TVoxelWarpSource, TIndex>* warpSourceScene,
+			int sourceSdfIndex, int targetSdfIndex) :
 
 			sdfSourceScene(sdfSourceScene),
 			sdfSourceVoxels(sdfSourceScene->localVBA.GetVoxelBlocks()),
@@ -575,7 +576,10 @@ struct TrilinearInterpolationFunctor {
 			warpSourceScene(warpSourceScene),
 			warpSourceVoxels(warpSourceScene->localVBA.GetVoxelBlocks()),
 			warpSourceHashEntries(warpSourceScene->index.GetEntries()),
-			warpSourceCache() {}
+			warpSourceCache(),
+			sourceSdfIndex(sourceSdfIndex),
+			targetSdfIndex(targetSdfIndex){}
+
 
 	void operator()(TVoxelSdf& destinationVoxel, Vector3i warpAndDestionVoxelPosition) {
 		int vmIndex;
@@ -586,9 +590,10 @@ struct TrilinearInterpolationFunctor {
 		Vector3f warpedPosition = WarpedPositionFunctor::ComputeWarpedPosition(warpSourceVoxel,
 		                                                                       warpAndDestionVoxelPosition);
 		bool struckKnown;
-		float sdf = InterpolateTrilinearly_StruckKnown(sdfSourceVoxels, sdfSourceHashEntries, warpedPosition,
-		                                               sdfSourceCache, struckKnown);
-		destinationVoxel.sdf = TVoxelSdf::floatToValue(sdf);
+		float sdf = InterpolateMultiSdfTrilinearly_StruckKnown(
+				sdfSourceVoxels, sdfSourceHashEntries, warpedPosition, sourceSdfIndex, sdfSourceCache, struckKnown);
+
+		destinationVoxel.sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sdf);
 
 		if (struckKnown) {
 			if (1.0f - std::abs(sdf) < FLT_EPSILON) {
@@ -609,6 +614,9 @@ private:
 	TVoxelWarpSource* warpSourceVoxels;
 	ITMHashEntry* warpSourceHashEntries;
 	typename TIndex::IndexCache warpSourceCache;
+
+	const int sourceSdfIndex;
+	const int targetSdfIndex;
 };
 
 /**
@@ -628,21 +636,20 @@ private:
  *       truncated, non-truncated, or unknown based on the lookup flags & resultant SDF value.
  * </ol>
  * \param canonicalScene canonical scene with warp vectors at each voxel.
- * \param rawLiveScene source raw live scene
+ * \param liveScene source raw live scene
  * \param initializedLiveScene target live scene
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpFieldToLive(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-		ITMScene<TVoxelLive, TIndex>* rawLiveScene,
-		ITMScene<TVoxelLive, TIndex>* initializedLiveScene) {
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpFieldToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
-	AllocateHashBlocksAtWarpedLocations(canonicalScene, rawLiveScene, initializedLiveScene);
+	AllocateHashBlocksAtWarpedLocations(canonicalScene, liveScene);
+
 	//Do trilinear interpolation to compute voxel values
+	//The "iteration" argument is 1 to use 0 as the source index and 1 as the target
 	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, TIndex, CompleteWarpWarpedPositionFunctor<TVoxelCanonical>>
-			trilinearInterpolationFunctor(rawLiveScene, canonicalScene);
+			trilinearInterpolationFunctor(liveScene, canonicalScene, 0, 1);
 
-	VoxelPositionTraversal_CPU(*initializedLiveScene, trilinearInterpolationFunctor);
+	VoxelPositionTraversal_CPU(*liveScene, trilinearInterpolationFunctor);
 }
 
 /**
@@ -661,30 +668,27 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpFi
  *       truncated, non-truncated, or unknown based on the lookup flags & resultant SDF value.
  * </ol>
  * \param canonicalScene canonical scene with warp vectors at each voxel.
- * \param sourceLiveScene source (current iteration) live scene
+ * \param liveScene source (current iteration) live scene
  * \param targetLiveScene target (next iteration) live scene
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUpdateToLive(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-		ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
-		ITMScene<TVoxelLive, TIndex>* targetLiveScene) {
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
-	AllocateHashBlocksAtWarpedLocations(canonicalScene, sourceLiveScene, targetLiveScene);
-
+	AllocateHashBlocksAtWarpedLocations(canonicalScene, liveScene);
+	const int iteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
+	const int sourceSdfIndex = (iteration+1) % 2;
+	const int targetSdfIndex = iteration % 2;
 	//Do trilinear interpolation to compute voxel values
-	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, TIndex, WarpGradient0WarpedPositionFunctor<TVoxelCanonical>>
-			trilinearInterpolationFunctor(sourceLiveScene, canonicalScene);
-
-	VoxelPositionTraversal_CPU(*targetLiveScene, trilinearInterpolationFunctor);
+	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, TIndex,
+			WarpGradient0WarpedPositionFunctor<TVoxelCanonical>>
+			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
+	VoxelPositionTraversal_CPU(*liveScene, trilinearInterpolationFunctor);
 }
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateHashBlocksAtWarpedLocations(
-		ITMScene<TVoxelCanonical, TIndex>* warpSourceScene,
-		ITMScene<TVoxelLive, TIndex>* sdfSourceScene,
-		ITMScene<TVoxelLive, TIndex>* sdfTargetScene) {
+		ITMScene<TVoxelCanonical, TIndex>* warpSourceScene, ITMScene<TVoxelLive, TIndex>* sdfScene) {
 
 	int entryCount = TIndex::noTotalEntries;
 	Vector3s* allocationBlockCoords = this->allocationBlockCoordinates->GetData(MEMORYDEVICE_CPU);
@@ -695,11 +699,11 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateHas
 
 	//Mark up hash entries in the target scene that will need allocation
 	WarpBasedAllocationMarkerFunctor<TVoxelCanonical, TVoxelLive, TIndex>
-			hashMarkerFunctor(sdfSourceScene, sdfTargetScene, allocationBlockCoords, warpedEntryAllocationTypes);
+			hashMarkerFunctor(sdfScene, allocationBlockCoords, warpedEntryAllocationTypes);
 	VoxelAndHashBlockPositionTraversal_CPU(*warpSourceScene, hashMarkerFunctor);
 
 	//Allocate the hash entries that will potentially have any data
-	AllocateHashEntriesUsingLists_CPU(sdfTargetScene, warpedEntryAllocationTypes, allocationBlockCoords,
+	AllocateHashEntriesUsingLists_CPU(sdfScene, warpedEntryAllocationTypes, allocationBlockCoords,
 	                                  ITMLib::STABLE);
 }
 

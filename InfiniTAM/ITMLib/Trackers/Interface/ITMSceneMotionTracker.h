@@ -66,8 +66,6 @@ public:
 
 protected:
 
-//============================= MEMBER FUNCTIONS =======================================================================
-	void SwapSourceAndTargetLiveScenes(ITMScene<TVoxelLive, TIndex>*& sourceScene);
 	virtual float CalculateWarpUpdate(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                  ITMScene<TVoxelLive, TIndex>* liveScene) = 0;//TODO: refactor to "CalculateWarpGradient"
 
@@ -77,11 +75,9 @@ protected:
 			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
 
 	virtual void ApplyWarpFieldToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-	                          ITMScene <TVoxelLive, TIndex>* sourceLiveScene,
-	                          ITMScene <TVoxelLive, TIndex>* targetLiveScene)= 0;
-	virtual void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                   ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
-	                                   ITMScene<TVoxelLive, TIndex>* targetLiveScene) = 0;
+		                                  ITMScene <TVoxelLive, TIndex>* sourceLiveScene)= 0;
+	virtual void ApplyWarpUpdateToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+		                                   ITMScene <TVoxelLive, TIndex>* sourceLiveScene) = 0;
 
 
 
@@ -103,9 +99,6 @@ protected:
 	//const float colorSdfThreshold = 0.25f;
 	const float epsilon = FLT_EPSILON;
 
-
-
-	ITMScene<TVoxelLive, TIndex>* targetLiveScene;
 
 	float maxVectorUpdateThresholdVoxels;
 
