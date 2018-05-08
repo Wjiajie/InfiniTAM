@@ -77,8 +77,8 @@ static void CreateDefaultImageSource(ImageSourceEngine*& imageSource, IMUSourceE
 			                                depthImageFileMask.c_str(), Vector2i(320, 240), 0.5f);
 			imuSource = new IMUSourceEngine(imuInputPath.c_str());
 		}
-
-		if (imageSource->getDepthImageSize().x == 0) {
+		int depthWidth = imageSource->getDepthImageSize().x;
+		if (depthWidth == 0) {
 			delete imageSource;
 			if (imuSource != nullptr) delete imuSource;
 			imuSource = nullptr;

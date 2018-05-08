@@ -97,7 +97,7 @@ void UIEngine::glutDisplayFunction()
 	glRasterPos2f(0.85f, -0.962f);
 
 	char str[200]; sprintf(str, "%04.2lf", uiEngine->processedTime);
-	safe_glutBitmapString(GLUT_BITMAP_HELVETICA_18, (const char*)str);
+	Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_18, (const char*) str);
 
 
 	glColor3f(1.0f, 0.0f, 0.0f); glRasterPos2f(-0.98f, -0.95f);
@@ -109,7 +109,7 @@ void UIEngine::glutDisplayFunction()
 	{
 		sprintf(str, "n: one frame \t b: continous \t e/esc: exit \t r: reset \t k: save \t l: load \t f: free viewpoint \t c: colours (currently %s) \t t: turn fusion %s", uiEngine->colourModes_main[uiEngine->currentColourMode].name, uiEngine->integrationActive ? "off" : "on");
 	}
-	safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*)str);
+	Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
 
 	glutSwapBuffers();
 	uiEngine->needsRefresh = false;

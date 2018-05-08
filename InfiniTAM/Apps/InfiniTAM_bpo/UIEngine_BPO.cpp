@@ -39,7 +39,7 @@ namespace bench = ITMLib::Bench;
 
 UIEngine_BPO* UIEngine_BPO::instance;
 
-static void safe_glutBitmapString(void* font, const char* str) {
+static void Safe_GlutBitmapString(void* font, const char* str) {
 	size_t len = strlen(str);
 	for (size_t x = 0; x < len; ++x) {
 		glutBitmapCharacter(font, str[x]);
@@ -118,7 +118,7 @@ void UIEngine_BPO::GlutDisplayFunction() {
 
 	char str[200];
 	sprintf(str, "%04.2lf", uiEngine->processedTime);
-	safe_glutBitmapString(GLUT_BITMAP_HELVETICA_18, (const char*) str);
+	Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_18, (const char*) str);
 
 
 	glColor3f(1.0f, 0.0f, 0.0f);
@@ -136,10 +136,10 @@ void UIEngine_BPO::GlutDisplayFunction() {
 	sprintf(str, "n: one frame \t b: continous \t e/esc: exit \t r: reset \t k: save \t l: load \t"
 			        " f: %s \t c: colours (currently %s) \t t: turn fusion %s", followOrFreeview, modeName,
 	        uiEngine->integrationActive ? "off" : "on");
-	safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
+	Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
 	glRasterPos2f(-0.98f, -0.95f);
 	sprintf(str, "Alt+n: one frame (record) \t i: %d frames", uiEngine->autoIntervalFrameCount);
-	safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
+	Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
 
 	glutSwapBuffers();
 	uiEngine->needsRefresh = false;
@@ -267,6 +267,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 			break;
 		case 'f':
 			uiEngine->currentColourMode = 0;
+			//TODO: replace this whole if/else block with a separate function, use this function during initialization as well -Greg (Github: Algomorph)
 			if (uiEngine->freeviewActive) {
 				uiEngine->outImageType[0] = ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST;
 				uiEngine->outImageType[1] = ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH;
@@ -538,10 +539,12 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, ImageSourceEngine* imageSo
 	this->integrationActive = true;
 	this->currentColourMode = 0;
 	this->autoIntervalFrameCount = frameIntervalLength;
+
 	this->colourModes_main.emplace_back("shaded greyscale", ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST);
 	this->colourModes_main.emplace_back("integrated colours", ITMMainEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME);
 	this->colourModes_main.emplace_back("surface normals", ITMMainEngine::InfiniTAM_IMAGE_COLOUR_FROM_NORMAL);
 	this->colourModes_main.emplace_back("confidence", ITMMainEngine::InfiniTAM_IMAGE_COLOUR_FROM_CONFIDENCE);
+
 	this->colourModes_freeview.emplace_back("canonical", ITMMainEngine::InfiniTAM_IMAGE_FREECAMERA_CANONICAL);
 	this->colourModes_freeview.emplace_back("shaded greyscale", ITMMainEngine::InfiniTAM_IMAGE_FREECAMERA_SHADED);
 
@@ -605,7 +608,7 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, ImageSourceEngine* imageSo
 
 	saveImage = new ITMUChar4Image(imageSource->getDepthImageSize(), true, false);
 
-	outImageType[0] = ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST;
+	outImageType[0] = this->freeviewActive ? this->colourModes_freeview[this->currentColourMode].type : this->colourModes_main[this->currentColourMode].type;
 	outImageType[1] = ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH;
 	outImageType[2] = ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_RGB;
 	if (inputRGBImage->noDims == Vector2i(0, 0)) outImageType[2] = ITMMainEngine::InfiniTAM_IMAGE_UNKNOWN;

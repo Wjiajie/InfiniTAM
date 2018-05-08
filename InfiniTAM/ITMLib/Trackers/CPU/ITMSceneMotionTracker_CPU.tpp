@@ -124,7 +124,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 		// region === INITIALIZATION =======================================================================================
 		// at frame zero, allocate all the same blocks as in live frame
 #ifdef WITH_OPENMP
-#pragma omp parallel for reduction(+:countVoxelHashBlocksToAllocate)//_DEBUG
+#pragma omp parallel for
 #endif
 		for (int liveHashBlockIndex = 0; liveHashBlockIndex < entryCount; liveHashBlockIndex++) {
 			const ITMHashEntry& currentLiveHashBlock = liveHashTable[liveHashBlockIndex];
@@ -158,7 +158,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 		const short neighborhoodRangeEnd = neighborhoodSize / 2 + 1;
 
 #ifdef WITH_OPENMP
-#pragma omp parallel for reduction(+:countVoxelHashBlocksToAllocate)//_DEBUG
+#pragma omp parallel for
 #endif
 		for (int canonicalHashBlockIndex = 0; canonicalHashBlockIndex < entryCount; canonicalHashBlockIndex++) {
 			const ITMHashEntry& currentCanonicalHashBlock = canonicalHashTable[canonicalHashBlockIndex];
@@ -206,169 +206,105 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(ITMScene<TVoxelCanonical,
 		TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
-	const ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
+	ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
 	typename TIndex::IndexCache canonicalCache;
 
 	const TVoxelLive* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* liveHashTable = liveScene->index.GetEntries();
 	typename TIndex::IndexCache liveCache;
-
 	int maximumWeight = canonicalScene->sceneParams->maxW;
-	//_DEBUG
-	const int currentFrameIx = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
-
-	const int iteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
 	int noTotalEntries = canonicalScene->index.noTotalEntries;
 	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
-
-	//_DEBUG
-	int missedKnownVoxels = 0;
-	int sdfTruncatedCount = 0;
-	int hashBlockStabilizationCount = 0;
-	float totalConf = 0.0f;
 
 #ifdef WITH_OPENMP
 	//#pragma omp parallel for reduction(+:missedKnownVoxels, sdfTruncatedCount, totalConf)
 #endif
 	for (int hash = 0; hash < noTotalEntries; hash++) {
-		Vector3i canonicalHashEntryPosition;
-		const ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[hash];
+		const ITMHashEntry& currentLiveHashEntry = liveHashTable[hash];
+		if (currentLiveHashEntry.ptr < 0) continue;
+		ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[hash];
 
-		if (currentCanonicalHashEntry.ptr < 0) continue;
+		// the rare case where we have different positions for live & canonical voxel block with the same index:
+		// we have a hash bucket miss, find the canonical voxel with the matching coordinates
+		if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
+			int canonicalHash = hash;
+			if (!FindHashAtPosition(canonicalHash, currentLiveHashEntry.pos, canonicalHashTable)) {
+				std::stringstream stream;
+				const int currentFrameIx = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
+				stream << "Could not find corresponding canonical block at postion " << currentLiveHashEntry.pos
+				       << " at frame " << currentFrameIx << ". " << __FILE__ << ": " << __LINE__;
+				DIEWITHEXCEPTION(stream.str());
+			}
+			currentCanonicalHashEntry = canonicalHashTable[canonicalHash];
+		}
 
-		//position of the current hash block entry in 3D space (in voxel units)
-		canonicalHashEntryPosition = currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-		//pointer to the voxels in the block
-		TVoxelCanonical* localVoxelBlock = &(canonicalVoxels[currentCanonicalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		const TVoxelLive* localLiveVoxelBlock = &(liveVoxels[currentLiveHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		TVoxelCanonical* localCanonicalVoxelBlock = &(canonicalVoxels[currentCanonicalHashEntry.ptr *
+		                                                              (SDF_BLOCK_SIZE3)]);
 
 		//TODO: integrate color info --Greg(GitHub: Algomorph)
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-					Vector3i originalPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-					TVoxelCanonical& canonicalVoxel = localVoxelBlock[locId];
-//TODO: confidence, color?
-					int oldWDepth;//, oldWColor;
-					float oldSdf;
-					oldSdf = canonicalVoxel.sdf;
-					//Vector3f oldColor = TO_FLOAT3(canonicalVoxel.clr) / 255.0f;
-					oldWDepth = canonicalVoxel.w_depth; //0 for VOXEL_TRUNCATED voxels
-					//oldWColor = canonicalVoxel.w_color; //0 for VOXEL_TRUNCATED voxels
 
-					if (currentFrameIx == 4 && originalPosition == Vector3i(-12, 19, 192)) {
-						int i = 42;
-					}
+					const TVoxelLive& liveVoxel = localLiveVoxelBlock[locId];
+					if (liveVoxel.flags != ITMLib::VOXEL_NONTRUNCATED) continue;
+					TVoxelCanonical& canonicalVoxel = localCanonicalVoxelBlock[locId];
+					int oldWDepth = canonicalVoxel.w_depth;
+					float oldSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
 
-					//projected position of the sdf point to the most recent frame
-					Vector3f projectedPosition = originalPosition.toFloat() + canonicalVoxel.warp;
-
-					Vector3f liveColor;
-					float liveWeight;
-					bool struckKnownVoxels;
-					bool struckNonTruncatedVoxels;
+					//float liveWeight = 1.0f;
+					float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf);
 
 
-					//_DEBUG
-					//color & sdf
-//					float weightedLiveSdf = InterpolateTrilinearly_SdfColor_StruckNonTruncatedAndKnown_SmartWeights(
-//							liveVoxels, liveHashTable,
-//							projectedPosition,
-//							liveCache, liveColor,
-//							struckKnownVoxels, struckNonTruncatedVoxels, liveWeight);
-//					float weightedLiveSdf = InterpolateTrilinearly_Sdf_StruckNonTruncatedAndKnown_SmartWeights(
-//							liveVoxels, liveHashTable,
-//							projectedPosition,
-//							liveCache,
-//							struckKnownVoxels, struckNonTruncatedVoxels, liveWeight);
-					float weightedLiveSdf = InterpolateTrilinearly_MultiSdf_StruckNonTruncatedAndKnown_SmartWeights(
-							liveVoxels, liveHashTable, iteration % 2,
-							projectedPosition,
-							liveCache,
-							struckKnownVoxels, struckNonTruncatedVoxels, liveWeight);
-
-					/* *
-					 * Conditions to avoid fusion:
-					 * No known voxels with non-zero interpolation weights were struck in the live frame SDF by the query.
-					 * */
-					if (!struckKnownVoxels) {
-						missedKnownVoxels++;//_DEBUG
-						continue;
-					}
-
-					float newSdf = oldWDepth * oldSdf + weightedLiveSdf;
-					float newWDepth = oldWDepth + liveWeight;
+					float newSdf = oldWDepth * oldSdf + liveSdf;
+					float newWDepth = oldWDepth + 1.0f;
 					newSdf /= newWDepth;
 					newWDepth = MIN(newWDepth, maximumWeight);
 
-					//TODO: this color-weighting probably is incorrect, since not all live voxels will have viable color -Greg (GitHub:Algomorph)
-//					Vector3f newColor = oldWColor * oldColor + liveColor;
-//					float newWColor = oldWColor + liveWeight;
-//					newColor /= newWColor;
-//					newWColor = MIN(newWDepth, maximumWeight);
-
 					canonicalVoxel.sdf = TVoxelCanonical::floatToValue(newSdf);
 					canonicalVoxel.w_depth = (uchar) newWDepth;
-//					canonicalVoxel.clr = TO_UCHAR3(newColor);
-//					canonicalVoxel.w_color = (uchar) newWColor;
-					if (!struckNonTruncatedVoxels) {
-						sdfTruncatedCount++;//_DEBUG
-					}
+
 					switch (canonicalVoxel.flags) {
 						case ITMLib::VOXEL_UNKNOWN:
-							if (struckNonTruncatedVoxels) {
+							if (liveVoxel.flags == ITMLib::VOXEL_NONTRUNCATED) {
 								//voxel is no longer perceived as truncated
 								canonicalVoxel.flags = ITMLib::VOXEL_NONTRUNCATED;
-								if (entriesAllocType[hash] != ITMLib::STABLE) {
-									hashBlockStabilizationCount++;
-								}
 								entriesAllocType[hash] = ITMLib::STABLE;
 							} else {
+								//TODO: remove this if the system works -Greg (GitHub:Algomorph)
 								canonicalVoxel.flags = ITMLib::VOXEL_TRUNCATED;
 							}
 							break;
 						case ITMLib::VOXEL_TRUNCATED:
-							if (struckNonTruncatedVoxels) {
+							if (liveVoxel.flags == ITMLib::VOXEL_NONTRUNCATED) {
 								//voxel is no longer perceived as truncated
 								canonicalVoxel.flags = ITMLib::VOXEL_NONTRUNCATED;
-								if (entriesAllocType[hash] != ITMLib::STABLE) {
-									hashBlockStabilizationCount++;
-								}
 								entriesAllocType[hash] = ITMLib::STABLE;
-							} else if (std::signbit(oldSdf) != std::signbit(weightedLiveSdf)) {
+							} else if (std::signbit(oldSdf) != std::signbit(liveSdf)) {
 								//both voxels are truncated but differ in sign
+								//TODO: remove this if the system works -Greg (GitHub:Algomorph)
 								//TODO: if it is faster, optimize this to short-circuit the computation before instead -Greg (GitHub: Algomorph)
-								if (liveWeight > 0.25f && weightedLiveSdf > 0.0f) {
-									//set truncated to the sign of the live truncated, i.e. now belongs to different surface
-									canonicalVoxel.sdf = 1.0;
-									canonicalVoxel.w_depth = liveWeight;
-								} else {
-									canonicalVoxel.sdf = oldSdf;
-									canonicalVoxel.w_depth -= liveWeight;
-								}
+								canonicalVoxel.sdf = 1.0;
+								canonicalVoxel.w_depth = 1.0;
+//								if (liveWeight > 0.25f && liveSdf > 0.0f) {
+//									//set truncated to the sign of the live truncated, i.e. now belongs to different surface
+//									canonicalVoxel.sdf = 1.0;
+//									canonicalVoxel.w_depth = liveWeight;
+//								} else {
+//									canonicalVoxel.sdf = oldSdf;
+//									canonicalVoxel.w_depth -= liveWeight;
+//								}
 							}
 							break;
 						default:
 							break;
 					}
-					//_DEBUG
-//					if (canonicalVoxel.sdf > -1.0 && canonicalVoxel.sdf < 1.0 && canonicalVoxel.flags == ITMLib::VOXEL_TRUNCATED) {
-//						std::cerr << red << "Error: Voxel at " << originalPosition << ", label: "
-//						          << VoxelFlagsAsCString((ITMLib::VoxelFlags) canonicalVoxel.flags) << ". Sdf value: "
-//						          << canonicalVoxel.sdf << "." << reset << std::endl;
-//					}
 				}
 			}
 		}
 	}
-
-	//_DEBUG
-//	std::cout << "Number of lookups that yielded initial (unknown) value in live (target) frame during fusion: "
-//	          << missedKnownVoxels << std::endl;
-//	std::cout << "Number of lookups that resulted in truncated value in live (target) frame during fusion: "
-//	          << sdfTruncatedCount << std::endl;
-//	std::cout << "Number of hash blocks that were stabilized (converted from boundary status) during fusion: "
-//	          << hashBlockStabilizationCount << std::endl;
 	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx++;
 }
 // endregion ===========================================================================================================

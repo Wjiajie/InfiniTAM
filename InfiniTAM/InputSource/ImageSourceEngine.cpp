@@ -122,6 +122,7 @@ ImageFileReader<PathGenerator>::~ImageFileReader()
 {
 	delete cached_rgb;
 	delete cached_depth;
+	delete cached_mask;
 }
 
 template <typename PathGenerator>

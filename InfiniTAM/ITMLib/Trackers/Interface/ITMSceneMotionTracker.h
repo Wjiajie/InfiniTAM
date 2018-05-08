@@ -91,7 +91,7 @@ protected:
 	const float maxVectorUpdateThresholdMeters = 0.0001f;//m //original
 	const float gradientDescentLearningRate = 0.1f;
 	const float rigidityEnforcementFactor = 0.1f;
-	const float weightKillingTerm = 0.5f;
+	const float weightSmoothnessTerm = 0.2f;
 	const float weightLevelSetTerm = 0.2f;
 	const float weightColorDataTerm = 0.0f;
 	//_DEBUG
