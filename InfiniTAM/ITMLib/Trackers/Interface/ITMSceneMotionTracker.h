@@ -56,9 +56,13 @@ public:
 	WarpCanonicalToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 
 	void TrackMotion(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene,
-			bool recordWarpUpdates,
-			ITMSceneReconstructionEngine <TVoxelLive, TIndex>* liveSceneReconstructor);
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>*& sourceLiveScene,
+			bool recordWarpUpdates);
+
+	void SetUpStepByStepTracking(
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>*& sourceLiveScene);
+	bool UpdateTrackingSingleStep(
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>*& sourceLiveScene);
 
 
 	std::string GenerateCurrentFrameOutputPath() const;
@@ -122,9 +126,10 @@ private:
 	void InitializeUpdate2DImageLogging(
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
 			cv::Mat& blank, cv::Mat& liveImgTemplate);
-	void LogWarpUpdateAs2DImage(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-	                            ITMScene <TVoxelLive, TIndex>* sourceLiveScene, const cv::Mat& blank,
-	                            const cv::Mat& liveImgTemplate);
+	void LogWarpUpdateAs2DImage(
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, const cv::Mat& blank, const cv::Mat& liveImgTemplate);
+	float maxVectorUpdate;
+	bool inStepByStepProcessingMode = false;
 };
 
 

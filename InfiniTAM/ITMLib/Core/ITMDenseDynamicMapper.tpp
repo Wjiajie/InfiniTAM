@@ -88,18 +88,6 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(co
                                                                               ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
                                                                               ITMScene<TVoxelLive, TIndex>*& liveScene,
                                                                               ITMRenderState* renderState) {
-  //_DEBUG
-//	if(sceneMotionTracker->currentFrameIx == 0){
-//		// clear out the live-frame SDF and the target-live-frame SDF
-//		canonicalSceneReconstructor->ResetScene(canonicalScene);
-//		//** construct the new live-frame SDF
-//		// allocation
-//		canonicalSceneReconstructor->AllocateSceneFromDepth(canonicalScene, view, trackingState, renderState);
-//		// integration
-//		canonicalSceneReconstructor->IntegrateIntoScene(canonicalScene, view, trackingState, renderState);
-//		sceneMotionTracker->currentFrameIx++;
-//		return;
-//	}
 	//BEGIN __DEBUG
 	if(this->recordNextFrameWarps){
 		std::cout << bright_cyan << "MAPPING FRAME " << sceneMotionTracker->GetFrameIndex() <<  " (WITH RECORDING ON)" << reset << std::endl;
@@ -120,7 +108,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(co
 
 
 	bench::StartTimer("TrackMotion");
-	sceneMotionTracker->TrackMotion(canonicalScene, liveScene, this->recordNextFrameWarps, liveSceneReconstructor);
+	sceneMotionTracker->TrackMotion(canonicalScene, liveScene, this->recordNextFrameWarps);
 	bench::StopTimer("TrackMotion");
 	bench::StartTimer("FuseFrame");
 	sceneMotionTracker->FuseFrame(canonicalScene, liveScene);
@@ -166,5 +154,50 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::UpdateVisibleList(
 		ITMScene<TVoxelLive, TIndex>* scene, ITMRenderState* renderState,
 		bool resetVisibleList) {
 	liveSceneReconstructor->AllocateSceneFromDepth(scene, view, trackingState, renderState, true, resetVisibleList);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrame(const ITMView* view,
+                                                                                      const ITMTrackingState* trackingState,
+                                                                                      ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+                                                                                      ITMScene<TVoxelLive, TIndex>*& liveScene,
+                                                                                      ITMRenderState* renderState) {
+// clear out the live-frame SDF
+	liveSceneReconstructor->ResetScene(liveScene);
+	//** construct the new live-frame SDF
+	// allocation
+	liveSceneReconstructor->AllocateSceneFromDepth(liveScene, view, trackingState, renderState);
+	// integration
+	liveSceneReconstructor->IntegrateIntoScene(liveScene, view, trackingState, renderState);
+	sceneMotionTracker->SetUpStepByStepTracking(canonicalScene, liveScene);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::UpdateCurrentFrame(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+                                                                                    ITMScene<TVoxelLive, TIndex>*& liveScene, ITMRenderState* renderState) {
+	bool trackingNotFinished = sceneMotionTracker->UpdateTrackingSingleStep(canonicalScene, liveScene);
+	if(!trackingNotFinished){
+		bench::StartTimer("FuseFrame");
+		sceneMotionTracker->FuseFrame(canonicalScene, liveScene);
+		bench::StopTimer("FuseFrame");
+		if (swappingEngine != NULL) {
+			// swapping: CPU -> GPU
+			if (swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED)
+				swappingEngine->IntegrateGlobalIntoLocal(canonicalScene, renderState);
+
+			// swapping: GPU -> CPU
+			switch (swappingMode) {
+				case ITMLibSettings::SWAPPINGMODE_ENABLED:
+					swappingEngine->SaveToGlobalMemory(canonicalScene, renderState);
+					break;
+				case ITMLibSettings::SWAPPINGMODE_DELETE:
+					swappingEngine->CleanLocalMemory(canonicalScene, renderState);
+					break;
+				case ITMLibSettings::SWAPPINGMODE_DISABLED:
+					break;
+			}
+		}
+	}
+	return trackingNotFinished;
 }
 

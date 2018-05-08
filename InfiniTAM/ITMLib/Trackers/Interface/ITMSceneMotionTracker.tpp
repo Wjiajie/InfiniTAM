@@ -87,9 +87,11 @@ inline static void PrintOperationStatus(const char* status) {
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene,
-		bool recordWarpUpdates, ITMSceneReconstructionEngine<TVoxelLive, TIndex>* liveSceneReconstructor) {
+		bool recordWarpUpdates) {
 
-
+	if(inStepByStepProcessingMode){
+		DIEWITHEXCEPTION_REPORTLOCATION("Cannot track motion for full frame when in step-by-step mode");
+	}
 	//_DEBUG
 //	ITMSceneStatisticsCalculator<TVoxelCanonical, TIndex> canonicalCalculator;
 	//_DEBUG
@@ -120,6 +122,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	bench::StartTimer("TrackMotion_11_ApplyWarpFieldToLive");
 	ApplyWarpFieldToLive(canonicalScene, sourceLiveScene);
 	bench::StopTimer("TrackMotion_11_ApplyWarpFieldToLive");
+	// endregion
 
 	// region ================================== DEBUG 2D VISUALIZATION ================================================
 
@@ -144,7 +147,6 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	energy_stat_file << "data" << "," << "level_set" << "," << "smoothness" << ","
 	                 << "killing" << "," << "total" << std::endl;
 	bench::StopTimer("TrackMotion_2_RecordingEnergy");
-	// region ================================== WARP UPDATE RECORDING (BEFORE OPTIMIZATION) ===========================
 
 	if (recordWarpUpdates) {
 		sceneLogger = new ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>(canonicalScene, sourceLiveScene,
@@ -155,7 +157,8 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 			sceneLogger->ClearHighlights();
 		}
 	}
-	// endregion
+
+	// region ================================== WARP UPDATE RECORDING (BEFORE OPTIMIZATION) ===========================
 
 	PrintOperationStatus("*** Optimizing warp based on difference between canonical and live SDF. ***");
 	float maxVectorUpdate = std::numeric_limits<float>::infinity();
@@ -165,7 +168,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		// region ================================== DEBUG 2D VISUALIZATION FOR UPDATES ================================
 
 		if (rasterizeUpdates) {
-			LogWarpUpdateAs2DImage(canonicalScene, sourceLiveScene, blank, liveImgTemplate);
+			LogWarpUpdateAs2DImage(canonicalScene, blank, liveImgTemplate);
 		}
 		// endregion
 		std::cout << red << "Iteration: " << iteration << reset << std::endl;
@@ -224,6 +227,8 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 
 }
 
+
+
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 std::string ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::GenerateCurrentFrameOutputPath() const {
 	fs::path path(baseOutputDirectory + "/Frame_" + std::to_string(currentFrameIx));
@@ -262,8 +267,7 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::InitializeUpdate2DIm
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
 ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::LogWarpUpdateAs2DImage(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
-		const cv::Mat& blank, const cv::Mat& liveImgTemplate) {
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, const cv::Mat& blank, const cv::Mat& liveImgTemplate) {
 	cv::Mat warpImg =
 			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpedSceneImageAroundPoint(
 					canonicalScene) * 255.0f;
@@ -295,7 +299,72 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::LogWarpUpdateAs2DIma
 			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolder + "warp" +
 			numStringStream.str() + ".png";
 	cv::imwrite(image_name, warpImgOut);
-};
+}
+// endregion
+
+// region ======================================= STEP-BY-STEP MODE ====================================================
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::SetUpStepByStepTracking(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene) {
+
+	PrintOperationStatus("Allocating canonical blocks based on live frame...");
+	bench::StartTimer("TrackMotion_0_AllocateNewCanonicalHashBlocks");
+	AllocateNewCanonicalHashBlocks(canonicalScene, sourceLiveScene);
+	bench::StopTimer("TrackMotion_0_AllocateNewCanonicalHashBlocks");
+
+	PrintOperationStatus(
+			"Initializing live frame by mapping the raw live scene to a blank scene using canonical voxel warp field...");
+
+	bench::StartTimer("TrackMotion_11_ApplyWarpFieldToLive");
+	ApplyWarpFieldToLive(canonicalScene, sourceLiveScene);
+	bench::StopTimer("TrackMotion_11_ApplyWarpFieldToLive");
+
+	inStepByStepProcessingMode = true;
+	maxVectorUpdate = std::numeric_limits<float>::infinity();
+	iteration = 0;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::UpdateTrackingSingleStep(
+		ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>*& sourceLiveScene) {
+	if(iteration > maxIterationCount || maxVectorUpdate < maxVectorUpdateThresholdVoxels){
+		inStepByStepProcessingMode = false;
+		return false;
+	}
+	if(!inStepByStepProcessingMode){
+		DIEWITHEXCEPTION_REPORTLOCATION("Attempted to make single optimization step while not in step-by-step mode!");
+	}
+
+	std::cout << red << "Iteration: " << iteration << reset << std::endl;
+
+	//** warp update gradient computation
+	PrintOperationStatus("Calculating warp energy gradient...");
+	bench::StartTimer("TrackMotion_31_CalculateWarpUpdate");
+	CalculateWarpUpdate(canonicalScene, sourceLiveScene);
+	bench::StopTimer("TrackMotion_31_CalculateWarpUpdate");
+
+	PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");
+	bench::StartTimer("TrackMotion_32_ApplySmoothingToGradient");
+	ApplySmoothingToGradient(canonicalScene, sourceLiveScene);
+	bench::StopTimer("TrackMotion_32_ApplySmoothingToGradient");
+
+	PrintOperationStatus("Applying warp update (based on energy gradient) to the cumulative warp...");
+	bench::StartTimer("TrackMotion_33_ApplyWarpUpdateToWarp");
+	maxVectorUpdate = ApplyWarpUpdateToWarp(canonicalScene, sourceLiveScene);
+	bench::StopTimer("TrackMotion_33_ApplyWarpUpdateToWarp");
+
+	PrintOperationStatus(
+			"Updating live frame SDF by mapping from old live SDF to new live SDF based on latest warp update...");
+	bench::StartTimer("TrackMotion_35_ApplyWarpUpdateToLive");
+	ApplyWarpUpdateToLive(canonicalScene, sourceLiveScene);
+	bench::StopTimer("TrackMotion_35_ApplyWarpUpdateToLive");
+
+	iteration++;
+	return true;
+}
 
 
 // endregion
+
+

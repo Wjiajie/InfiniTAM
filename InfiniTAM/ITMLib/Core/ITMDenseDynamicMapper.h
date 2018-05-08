@@ -58,7 +58,17 @@ public:
 	                  const ITMTrackingState* trackingState,
 	                  ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                  ITMScene<TVoxelLive, TIndex>*& liveScene,
-	                  ITMRenderState* renderState_live);
+	                  ITMRenderState* renderState);
+
+	//_DEBUG
+	void BeginProcessingFrame(const ITMView* view,
+	                          const ITMTrackingState* trackingState,
+	                          ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                          ITMScene<TVoxelLive, TIndex>*& liveScene,
+	                          ITMRenderState* renderState_live);
+
+	bool UpdateCurrentFrame(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                        ITMScene<TVoxelLive, TIndex>*& liveScene, ITMRenderState* renderState);
 
 	/// Update the visible list (this can be called to update the visible list when fusion is turned off)
 	void
@@ -77,6 +87,7 @@ private:
 	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>* sceneMotionTracker;
 	ITMLibSettings::SwappingMode swappingMode;
 	// endregion
+
 };
 }//namespace ITMLib
 

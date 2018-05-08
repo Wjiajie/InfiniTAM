@@ -22,8 +22,9 @@ namespace InfiniTAM
 
 			enum MainLoopAction
 			{
-				PROCESS_PAUSED, PROCESS_FRAME, PROCESS_FRAME_RECORD, PROCESS_VIDEO, EXIT, SAVE_TO_DISK, PROCESS_N_FRAMES
-			}mainLoopAction;
+				PROCESS_PAUSED, PROCESS_FRAME, PROCESS_FRAME_RECORD, PROCESS_VIDEO, EXIT, SAVE_TO_DISK,
+				PROCESS_N_FRAMES, PROCESS_SINGLE_STEP
+			} mainLoopAction;
 
 			struct UIColourMode {
 				const char *name;
@@ -91,6 +92,7 @@ namespace InfiniTAM
 			int trackingResult;
 			char *outFolder;
 			bool needsRefresh;
+			bool inStepByStepMode;
 			ITMUChar4Image *saveImage;
 
 			void Initialise(int & argc, char** argv, InputSource::ImageSourceEngine *imageSource, InputSource::IMUSourceEngine *imuSource,
@@ -99,6 +101,9 @@ namespace InfiniTAM
 
 			void Run();
 			void ProcessFrame();
+			//For scene-tracking updates
+			bool BeginProcessingFrame();
+			bool UpdateProcessFrame();
 			
 			void GetScreenshot(ITMUChar4Image *dest) const;
 			void SaveScreenshot(const char *filename) const;

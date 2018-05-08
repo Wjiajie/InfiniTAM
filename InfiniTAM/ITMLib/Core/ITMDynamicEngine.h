@@ -51,6 +51,10 @@ namespace ITMLib
 
 		/// Pointer to the current camera pose and additional tracking information
 		ITMTrackingState* trackingState;
+		ITMTrackingState::TrackingResult stepByStepTrackerResult;
+		bool stepByStepDidFusion;
+		bool canFuseInStepByStepMode;
+		ORUtils::SE3Pose stepByStepOldPose;
 	public:
 		ITMView* GetView(void) { return view; }
 		ITMTrackingState* GetTrackingState(void) { return trackingState; }
@@ -59,6 +63,12 @@ namespace ITMLib
 		ITMScene<TVoxelCanonical, TIndex>* GetScene(void) { return canonicalScene; }
 
 		ITMTrackingState::TrackingResult ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement = NULL);
+
+		//for visual debugging
+		void BeginProcessingFrameInStepByStepMode(ITMUChar4Image* rgbImage, ITMShortImage* rawDepthImage,
+		                                          ITMIMUMeasurement* imuMeasurement = NULL);
+		bool UpdateCurrentFrameSingleStep();
+		ITMTrackingState::TrackingResult GetStepByStepTrackingResult();
 
 		/// Extracts a mesh from the current scene and saves it to the model file specified by the file name
 		void SaveSceneToMesh(const char *fileName);
