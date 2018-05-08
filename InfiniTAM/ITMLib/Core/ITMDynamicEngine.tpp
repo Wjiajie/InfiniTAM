@@ -462,6 +462,33 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Im
 			else out->SetFrom(renderState_freeview->raycastImage, ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU);
 			break;
 		}
+		case ITMMainEngine::InfiniTAM_IMAGE_STEP_BY_STEP:{
+
+			if (renderState_freeview == NULL) {
+				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
+				                                                                        liveScene->sceneParams,
+				                                                                        settings->GetMemoryType());
+			}
+
+			liveVisualisationEngine->FindVisibleBlocks(liveScene, pose, intrinsics, renderState_freeview);
+			liveVisualisationEngine->CreateExpectedDepths(liveScene, pose, intrinsics, renderState_freeview);
+			liveVisualisationEngine->RenderImage(liveScene, pose, intrinsics, renderState_freeview,
+			                                     renderState_freeview->raycastImage, IITMVisualisationEngine::RENDER_SHADED_GREEN);
+			canonicalVisualisationEngine->FindVisibleBlocks(canonicalScene, pose, intrinsics, renderState_freeview);
+			canonicalVisualisationEngine->CreateExpectedDepths(canonicalScene, pose, intrinsics, renderState_freeview);
+			canonicalVisualisationEngine->RenderImage(canonicalScene, pose, intrinsics, renderState_freeview,
+			                                          renderState_freeview->raycastImage, IITMVisualisationEngine::RENDER_SHADED_OVERLAY);
+
+
+
+			if (settings->deviceType == ITMLibSettings::DEVICE_CUDA)
+				out->SetFrom(renderState_freeview->raycastImage, ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CPU);
+			else out->SetFrom(renderState_freeview->raycastImage, ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU);
+
+
+
+			break;
+		}
 		case ITMMainEngine::InfiniTAM_IMAGE_FREECAMERA_CANONICAL: {
 			IITMVisualisationEngine::RenderImageType type = IITMVisualisationEngine::RENDER_SHADED_GREYSCALE;
 
@@ -481,6 +508,7 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Im
 			else out->SetFrom(renderState_freeview->raycastImage, ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU);
 			break;
 		}
+
 		case ITMMainEngine::InfiniTAM_IMAGE_UNKNOWN:
 			break;
 	};

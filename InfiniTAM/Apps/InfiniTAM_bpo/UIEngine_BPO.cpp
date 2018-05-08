@@ -230,6 +230,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 	int modifiers = glutGetModifiers();
 	if (uiEngine->inStepByStepMode) {
 		switch (key) {
+			case 'q':
 			case 'e':
 			case 27: // esc key
 				printf("exiting ...\n");
@@ -243,9 +244,6 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 		}
 	} else {
 		switch (key) {
-			case 'q':
-				uiEngine->mainLoopAction = UIEngine_BPO::EXIT;
-				break;
 			case 'n':
 				if (modifiers & GLUT_ACTIVE_ALT) {
 					printf("saving scenes before tracking and warp updates, processing one frame, and recording the warp updates ...\n");
@@ -287,6 +285,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 					uiEngine->depthVideoWriter = new FFMPEGWriter();
 				}
 				break;
+			case 'q':
 			case 'e':
 			case 27: // esc key
 				printf("exiting ...\n");
@@ -398,6 +397,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 				break;
 			case 'd':
 				if (uiEngine->BeginProcessingFrame()) {
+					uiEngine->freeviewActive = true;
 					uiEngine->inStepByStepMode = true;
 					uiEngine->mainLoopAction = PROCESS_SINGLE_STEP;
 					uiEngine->needsRefresh = true;
@@ -409,8 +409,12 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 		}
 	}
 
-	if (uiEngine->freeviewActive) uiEngine->outImageType[0] = uiEngine->colourModes_freeview[uiEngine->currentColourMode].type;
-	else uiEngine->outImageType[0] = uiEngine->colourModes_main[uiEngine->currentColourMode].type;
+	if(uiEngine->inStepByStepMode) {
+		uiEngine->outImageType[0] = uiEngine->colourMode_stepByStep.type;
+	}else{
+		if (uiEngine->freeviewActive) uiEngine->outImageType[0] = uiEngine->colourModes_freeview[uiEngine->currentColourMode].type;
+		else uiEngine->outImageType[0] = uiEngine->colourModes_main[uiEngine->currentColourMode].type;
+	}
 }
 
 void UIEngine_BPO::GlutMouseButtonFunction(int button, int state, int x, int y) {

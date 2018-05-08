@@ -306,6 +306,30 @@ static void RenderImage_common(const ITMScene<TVoxel,TIndex> *scene, const ORUti
 			}
 		}
 		break;
+		case IITMVisualisationEngine::RENDER_SHADED_GREEN:{
+#ifdef WITH_OPENMP
+			#pragma omp parallel for
+#endif
+			for (int locId = 0; locId < imgSize.x * imgSize.y; locId++)
+			{
+				Vector4f ptRay = pointsRay[locId];
+				processPixelGreen<TVoxel, TIndex>(outRendering[locId], ptRay.toVector3(), ptRay.w > 0, voxelData,
+				                                  voxelIndex, lightSource);
+			}
+			break;
+		}
+		case IITMVisualisationEngine::RENDER_SHADED_OVERLAY:{
+#ifdef WITH_OPENMP
+			#pragma omp parallel for
+#endif
+			for (int locId = 0; locId < imgSize.x * imgSize.y; locId++)
+			{
+				Vector4f ptRay = pointsRay[locId];
+				processPixelOverlay<TVoxel, TIndex>(outRendering[locId], ptRay.toVector3(), ptRay.w > 0, voxelData,
+				                                  voxelIndex, lightSource);
+			}
+			break;
+		}
 	case IITMVisualisationEngine::RENDER_SHADED_GREYSCALE:
 	default:
 #ifdef WITH_OPENMP

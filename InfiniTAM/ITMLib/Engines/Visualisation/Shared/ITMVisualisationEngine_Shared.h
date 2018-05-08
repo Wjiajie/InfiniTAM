@@ -277,6 +277,30 @@ _CPU_AND_GPU_CODE_ inline void drawPixelGrey(DEVICEPTR(Vector4u) & dest, const T
 	dest = Vector4u((uchar)outRes);
 }
 
+_CPU_AND_GPU_CODE_ inline void drawPixelGreen(DEVICEPTR(Vector4u)& dest, const THREADPTR(float)& angle)
+{
+	float outRes = (0.8f * angle + 0.2f) * 255.0f;
+	const float factorRed = 0.5;
+	const float factorGreen = 1.0;
+	const float factorBlue = 0.7;
+	dest = Vector4u((uchar)(outRes * factorRed),(uchar)(outRes * factorGreen), (uchar)(outRes * factorBlue),255);
+}
+
+_CPU_AND_GPU_CODE_ inline void drawPixelOverlay(DEVICEPTR(Vector4u)& dest, const THREADPTR(float)& angle)
+{
+	float outRes = (0.8f * angle + 0.2f) * 255.0f;
+	const float factorRed = 0.5f;
+	const float factorGreen = 0.5f;
+	const float factorBlue = 1.0f;
+	const float opacityFactor = 0.5f;
+	const float transparencyFactor = 1.0f - opacityFactor;
+	dest = Vector4u(
+			(uchar)((float)dest.r * transparencyFactor + (outRes * factorRed) * opacityFactor),
+			(uchar)((float)dest.g * transparencyFactor + (outRes * factorGreen) * opacityFactor),
+			(uchar)((float)dest.b * transparencyFactor + (outRes * factorBlue) * opacityFactor),
+			255);
+}
+
 _CPU_AND_GPU_CODE_ inline float interpolateCol(float val, float y0, float x0, float y1, float x1) {
 	return (val - x0)*(y1 - y0) / (x1 - x0) + y0;
 }
@@ -451,6 +475,36 @@ _CPU_AND_GPU_CODE_ inline void processPixelGrey(DEVICEPTR(Vector4u) &outRenderin
 	computeNormalAndAngle<TVoxel, TIndex>(foundPoint, point, voxelData, voxelIndex, lightSource, outNormal, angle);
 
 	if (foundPoint) drawPixelGrey(outRendering, angle);
+	else outRendering = Vector4u((uchar)0);
+}
+
+template<class TVoxel, class TIndex>
+_CPU_AND_GPU_CODE_ inline void processPixelGreen(DEVICEPTR(Vector4u)& outRendering, const CONSTPTR(Vector3f)& point,
+                                                 bool foundPoint, const CONSTPTR(TVoxel)* voxelData,
+                                                 const CONSTPTR(typename TIndex::IndexData)* voxelIndex,
+                                                 Vector3f lightSource)
+{
+	Vector3f outNormal;
+	float angle;
+
+	computeNormalAndAngle<TVoxel, TIndex>(foundPoint, point, voxelData, voxelIndex, lightSource, outNormal, angle);
+
+	if (foundPoint) drawPixelGreen(outRendering, angle);
+	else outRendering = Vector4u((uchar)0);
+}
+
+template<class TVoxel, class TIndex>
+_CPU_AND_GPU_CODE_ inline void processPixelOverlay(DEVICEPTR(Vector4u)& outRendering, const CONSTPTR(Vector3f)& point,
+                                                 bool foundPoint, const CONSTPTR(TVoxel)* voxelData,
+                                                 const CONSTPTR(typename TIndex::IndexData)* voxelIndex,
+                                                 Vector3f lightSource)
+{
+	Vector3f outNormal;
+	float angle;
+
+	computeNormalAndAngle<TVoxel, TIndex>(foundPoint, point, voxelData, voxelIndex, lightSource, outNormal, angle);
+
+	if (foundPoint) drawPixelOverlay(outRendering, angle);
 	else outRendering = Vector4u((uchar)0);
 }
 
