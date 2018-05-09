@@ -161,26 +161,42 @@ int main(int argc, char** argv) {
 		bool disableSmoothingTerm = false;
 		bool enableKillingTerm = false;
 		bool disableGradientSmoothing = false;
+		bool killingModeEnabled = false;
 
 		//@formatter:off
 		arguments.add_options()
 				("help,h", "Print help screen")
 				("calib_file,c", po::value<std::string>(), "Calibration file, e.g.: ./Files/Teddy/calib.txt")
+
 				("input_file,i", po::value<std::vector<std::string>>(), "Input file. 0-3 total arguments. "
 						"Usage scenarios:\n"
-						"    (0) No arguments: tries to get frames from attached device (OpenNI, RealSense, etc.). \n"
-						"    (1) One argument: tries to load OpenNI video at that location. \n"
-						"    (2) Two arguments (files): tries to load rgb & depth from two separate video files "
-						"    file path masks NOT containing '%'.\n"
-						"    (3) Two arguments (masks): tries to load rgb & depth frames as single images using the "
-						"        provided two arguments as file path masks containing '%', "
-						"        e.g.: ./Files/Teddy/Frames/%%04i.ppm ./Files/Teddy/Frames/%%04i.pgm\n"
-						"    (4) An extra mask argument (beyond 2) containing '%' will signify a file mask to mask images. \n"
-						"    (5) An extra path argument (beyond 2) NOT containing the '%' character will signify a "
-						"        path to the IMU file source.\n "
-						"    Currently, either (4) or (5) can only be combined with (3), but NOT both at the same time."
-						"    No other usage scenario takes them into account."
+						"    (0) No arguments: tries to get frames\n"
+	                    "        from attached device (OpenNI,\n"
+					    "        RealSense, etc.). \n"
+						"    (1) One argument: tries to load OpenNI\n"
+	                    "        video at that location. \n"
+						"    (2) Two arguments (files): tries to\n"
+	                    "        load rgb & depth from two separate\n"
+					    "        files when paths do NOT \n"
+		                "        contain '%'.\n"
+						"    (3) Two arguments (masks): tries to \n"
+	                    "        load rgb & depth frames as single\n"
+					    "        images using the provided two\n"
+		                "        arguments as file path masks\n "
+				        "        containing '%',\n"
+						"e.g.: ./Files/Teddy/Frames/%%04i.ppm ./Files/Teddy/Frames/%%04i.pgm\n"
+						"    (4) An extra mask argument (beyond 2)\n"
+	                    "        containing '%' will signify a file\n"
+					    "        mask to mask images. \n"
+						"    (5) An extra path argument (beyond 2)\n"
+	                    "        NOT containing the '%' character\n"
+					    "        will signify a path to the IMU\n"
+		                "        file source.\n\n"
+						"Currently, either (4) or (5) can only be combined with (3), but NOT both at the same time."
+						"No other usage scenario takes them into account.\n"
 				)
+				("output,o", po::value<std::string>()->default_value("./Output"), "Output directory, e.g.: ./Output")
+
 				("focus_coordinates,f", po::value<std::vector<int>>()->multitoken(), "The coordinates of the voxel"
 						" which to focus on for logging/debugging, as 3 integers separated by spaces, \"x y z\"."
 	                    " When specified:\n"
@@ -189,9 +205,11 @@ int main(int argc, char** argv) {
 					    "        it will, instead of recording the whole scene, record a small slice of voxels "
 		                "        around this voxel."
 				)
-				("output,o", po::value<std::string>()->default_value("./Output"), "Output directory, e.g.: ./Output")
-				("fix_camera", po::bool_switch(&fixCamera)->default_value(false), "Whether or not to turn of the camera"
-																	  "tracking (fix the virtual camera position)")
+
+				("fix_camera", po::bool_switch(&fixCamera)->default_value(false),
+				 "Whether or not to turn of the camera tracking (fix the virtual camera position)")
+
+			    /* Enable / disable dynamic fusion optimization terms / procedures */
 				("disable_data_term", po::bool_switch(&disableDataTerm)->default_value(false),
 				 "Whether or not to disable the data term if using the DynamicFusion algorithm")
 				("enable_level_set_term", po::bool_switch(&enableLevelSetTerm)->default_value(false),
@@ -202,9 +220,33 @@ int main(int argc, char** argv) {
 				 "Whether or not to enable the Killing term (isometric motion enforcement regularizer) if using the "
 	             "DynamicFusion algorithm")
 				("disable_gradient_smoothing", po::bool_switch(&disableGradientSmoothing)->default_value(false),
-				 "Whether or not to disable the Sobolev gradient smoothing if using the DynamicFusion algorithm")
+				 "Whether or not to disable the Sobolev gradient smoothing if using the DynamicFusion algorithm\n")
+
+				/* Ranges for frame skipping or automated processing on launch */
 				("process_N_frames, N", po::value<int>(), "Launch immediately and process the specified number of "
 				 "frames (potentially, with recording, if corresponding commands are issued), and then stop.")
+			    ("start_from_frame_ix, S", po::value<int>(), "Skip the first S frames / start at frame index S.\n")
+
+				/* Parameters for scene tracking optimization (KillingFusion/SobolevFusion)*/
+				("max_iterations", po::value<unsigned int>(),
+				        "Maximum number of iterations in each frame of scene tracking optimization.")
+				("vector_update_threshold", po::value<float>(),
+					        "Unit: meters. Used in scene tracking optimization. Termination condition: optimization "
+			     "stops when warp vector update lengths don't exceed this distance threshold.")
+			    ("learning_rate", po::value<float>(),
+					        "Used in scene tracking optimization. Gradient descent step magnitude / learning rate.")
+				("rigidity_enforcement_factor", po::value<float>(),
+				 "Used in scene tracking optimization when the Killing regularization term is enabled."
+		         " Greater values penalize non-isometric scene deformations.")
+				("weight_smoothness_term", po::value<float>(),
+				 "Used in scene tracking optimization when the smoothness regularization term is enabled."
+			         " Greater values penalize non-smooth scene deformations.")
+				("weight_level_set_term", po::value<float>(),
+					 "Used in scene tracking optimization when the level set regularization term is enabled."
+				         " Greater values penalize deformations resulting in non-SDF-like voxel grid.")
+				("KillingFusion", po::bool_switch(&killingModeEnabled)->default_value(false),
+						 "Uses parameters from KillingFusion (2017) article. Individual parameters can still be overridden. Equivalent to: "
+	   "--disable_gradient_smoothing --enable_level_set_term --enable_killing_term --rigidity_enforcement_factor 0.1 --weight_smoothness_term 0.5 --weight_level_set 0.2")
 				;
 
 		//@formatter:on
@@ -300,11 +342,40 @@ int main(int argc, char** argv) {
 			settings->SetFocusCoordinates(focusCoordiantes);
 		}
 
+		if (killingModeEnabled) {
+			settings->enableLevelSetTerm = true;
+			settings->enableKillingTerm = true;
+			settings->enableGradientSmoothing = false;
+
+			settings->sceneTrackingRigidityEnforcementFactor = 0.1;
+			settings->sceneTrackingWeightSmoothnessTerm = 0.5;
+			settings->sceneTrackingWeightLevelSetTerm = 0.2;
+		}
+
 		settings->enableDataTerm = !disableDataTerm;
 		settings->enableLevelSetTerm = enableLevelSetTerm;
 		settings->enableSmoothingTerm = !disableSmoothingTerm;
 		settings->enableKillingTerm = enableKillingTerm;
 		settings->enableGradientSmoothing = !disableGradientSmoothing;
+
+		if (!vm["max_iterations"].empty()) {
+			settings->sceneTrackingMaxOptimizationIterationCount = vm["max_iterations"].as<unsigned int>();
+		}
+		if (!vm["vector_update_threshold"].empty()) {
+			settings->sceneTrackingOptimizationVectorUpdateThresholdMeters = vm["vector_update_threshold"].as<float>();
+		}
+		if (!vm["learning_rate"].empty()) {
+			settings->sceneTrackingGradientDescentLearningRate = vm["learning_rate"].as<float>();
+		}
+		if (!vm["rigidity_enforcement_factor"].empty()) {
+			settings->sceneTrackingRigidityEnforcementFactor = vm["rigidity_enforcement_factor"].as<float>();
+		}
+		if (!vm["weight_smoothness_term"].empty()) {
+			settings->sceneTrackingWeightSmoothnessTerm = vm["weight_smoothness_term"].as<float>();
+		}
+		if (!vm["weight_level_set_term"].empty()) {
+			settings->sceneTrackingWeightLevelSetTerm = vm["weight_level_set_term"].as<float>();
+		}
 
 
 		ITMMainEngine* mainEngine = nullptr;
@@ -340,15 +411,17 @@ int main(int argc, char** argv) {
 		}
 // endregion ===========================================================================================================
 // region =========================== SET UI ENGINE SETTINGS WITH CLI ARGUMENTS ========================================
-		if(!vm["process_N_frames"].empty()){
-			settings->SetNFramesToProcessOnLaunch(vm["process_N_frames"].as<int>());
+		int processNFramesOnLaunch = 0;
+		if (!vm["process_N_frames"].empty()) {
+			processNFramesOnLaunch = vm["process_N_frames"].as<int>();
 		}
 
-		UIEngine_BPO::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine,
-		                                     settings->outputPath,
-		                                     settings->deviceType,
-		                                     settings->ProcessingOfNFramesOnLaunchIsEnabled() ?
-		                                     settings->GetNFramesToProcessOnLaunch() : 0);
+		int skipFirstNFrames = 0;
+		if (!vm["start_from_frame_ix"].empty()) {
+			skipFirstNFrames = vm["start_from_frame_ix"].as<int>();
+		}
+		UIEngine_BPO::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine, settings->outputPath,
+		                                     settings->deviceType, processNFramesOnLaunch, skipFirstNFrames);
 		UIEngine_BPO::Instance()->Run();
 		UIEngine_BPO::Instance()->Shutdown();
 // endregion ===========================================================================================================

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <cfloat>
 #include "ITMSceneParams.h"
 #include "ITMSurfelSceneParams.h"
 #include "../../ORUtils/MemoryDeviceType.h"
@@ -80,24 +81,24 @@ namespace ITMLib
 		Vector3i GetFocusCoordinates() const;
 		void SetFocusCoordinates(const Vector3i& coordiantes);
 
-		bool ProcessingOfNFramesOnLaunchIsEnabled() const;
-		int GetNFramesToProcessOnLaunch() const;
-		void SetNFramesToProcessOnLaunch(int nFrames);
-
 		bool enableDataTerm = true;
 		bool enableLevelSetTerm = true;
 		bool enableSmoothingTerm = true;
 		bool enableKillingTerm = false;
 		bool enableGradientSmoothing = true;
 
+		unsigned int sceneTrackingMaxOptimizationIterationCount = 200;
+		float sceneTrackingOptimizationVectorUpdateThresholdMeters = 0.0001f;//m //original for KillingFusion
+		float sceneTrackingGradientDescentLearningRate = 0.1f;
+		float sceneTrackingRigidityEnforcementFactor = 0.1f;
+		float sceneTrackingWeightSmoothnessTerm = 0.2f; //original for SobolevFusion
+		float sceneTrackingWeightLevelSetTerm = 0.2f;
+		float sceneTrackingLevelSetTermEpsilon = FLT_EPSILON;
+
 	private:
 		/// Parameters for logging/debugging dynamic fusion
 		bool focusCoordinatesSpecified = false;
 		Vector3i focusCoordinates;
-
-		int autoProcessFrameCount = 0;
-		bool enableProcessingOfNFramesOnLaunch = false;
-
 
 	};
 }

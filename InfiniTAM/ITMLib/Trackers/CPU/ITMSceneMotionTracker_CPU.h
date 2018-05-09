@@ -25,12 +25,40 @@ class ITMSceneMotionTracker_CPU :
 		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex> {
 public:
 
-	explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath, bool enableDataTerm,
-		                                   bool enableLevelSetTerm, bool enableSmoothingTerm, bool enableKillingTerm,
-		                                   bool enableGradientSmoothing);
-	explicit ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates,
-		                                   bool enableDataTerm, bool enableLevelSetTerm, bool enableSmoothingTerm,
-		                                   bool enableKillingTerm, bool enableGradientSmoothing);
+	ITMSceneMotionTracker_CPU(const ITMSceneParams& params,
+	                          std::string scenePath,
+
+	                          bool enableDataTerm,
+	                          bool enableLevelSetTerm,
+	                          bool enableSmoothingTerm,
+	                          bool enableKillingTerm,
+	                          bool enableGradientSmoothing,
+
+	                          unsigned int maxIterationCount = 200,
+	                          float maxVectorUpdateThresholdMeters = 0.0001f,
+	                          float gradientDescentLearningRate = 0.0f,
+	                          float rigidityEnforcementFactor = 0.1f,
+	                          float weightSmoothnessTerm = 0.2f,
+	                          float weightLevelSetTerm = 0.2f,
+	                          float epsilon = FLT_EPSILON);
+
+	ITMSceneMotionTracker_CPU(const ITMSceneParams& params,
+	                          std::string scenePath,
+	                          Vector3i focusCoordinates,
+
+	                          bool enableDataTerm,
+	                          bool enableLevelSetTerm,
+	                          bool enableSmoothingTerm,
+	                          bool enableKillingTerm,
+	                          bool enableGradientSmoothing,
+
+	                          unsigned int maxIterationCount = 200,
+	                          float maxVectorUpdateThresholdMeters = 0.0001f,
+	                          float gradientDescentLearningRate = 0.0f,
+	                          float rigidityEnforcementFactor = 0.1f,
+	                          float weightSmoothnessTerm = 0.2f,
+	                          float weightLevelSetTerm = 0.2f,
+	                          float epsilon = FLT_EPSILON);
 	virtual ~ITMSceneMotionTracker_CPU();
 	void FuseFrame(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;
 	void WarpCanonicalToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
@@ -45,22 +73,20 @@ protected:
 	const bool enableGradientSmoothing;
 
 
-	void AllocateHashBlocksAtWarpedLocations(ITMScene <TVoxelCanonical, TIndex>* warpSourceScene,
-		                                         ITMScene <TVoxelLive, TIndex>* sdfScene);
-	void ApplyWarpFieldToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
+	void AllocateHashBlocksAtWarpedLocations(ITMScene<TVoxelCanonical, TIndex>* warpSourceScene,
+	                                         ITMScene<TVoxelLive, TIndex>* sdfScene);
+	void ApplyWarpFieldToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                          ITMScene<TVoxelLive, TIndex>* liveScene) override;
 	void ApplySmoothingToGradient(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;
 	float ApplyWarpUpdateToWarp(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
-	void ApplyWarpUpdateToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-		                           ITMScene <TVoxelLive, TIndex>* liveScene) override;
-
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;
+	void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                           ITMScene<TVoxelLive, TIndex>* liveScene) override;
 
 
 	float CalculateWarpUpdate(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                          ITMScene<TVoxelLive, TIndex>* liveScene) override;
-
-
 
 
 	void AllocateNewCanonicalHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
@@ -74,11 +100,10 @@ private:
 	                                        ITMScene<TVoxelLive, TIndex>* liveScene);
 
 	float ApplyWarpUpdateToWarp_SingleThreadedVerbose(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene);
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
 
 	float ApplyWarpUpdateToWarp_MultiThreaded(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene);
-
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
 
 
 	void InitializeHelper(const ITMLib::ITMSceneParams& sceneParams);

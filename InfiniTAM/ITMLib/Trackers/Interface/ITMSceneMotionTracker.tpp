@@ -42,23 +42,54 @@ using namespace ITMLib;
 //region =========================================== CONSTRUCTORS / DESTRUCTORS ========================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params,
-                                                                                  std::string scenePath)
+ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(
+		const ITMSceneParams& params, std::string scenePath,
+		unsigned int maxIterationCount,
+		float maxVectorUpdateThresholdMeters,
+		float gradientDescentLearningRate,
+		float rigidityEnforcementFactor,
+		float weightSmoothnessTerm,
+		float weightLevelSetTerm,
+		float epsilon)
 		:
 		maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize),
 		sceneLogger(nullptr),
 		baseOutputDirectory(scenePath),
-		hasFocusCoordinates(false) {}
+		hasFocusCoordinates(false),
+
+		maxIterationCount(maxIterationCount),
+		maxVectorUpdateThresholdMeters(maxVectorUpdateThresholdMeters),
+		gradientDescentLearningRate(gradientDescentLearningRate),
+		rigidityEnforcementFactor(rigidityEnforcementFactor),
+		weightSmoothnessTerm(weightSmoothnessTerm),
+		weightLevelSetTerm(weightLevelSetTerm),
+		epsilon(epsilon)
+{}
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMSceneParams& params,
-                                                                                  std::string scenePath,
-                                                                                  Vector3i focusCoordinates)
+ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(
+		const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates,
+		unsigned int maxIterationCount,
+		float maxVectorUpdateThresholdMeters,
+		float gradientDescentLearningRate,
+		float rigidityEnforcementFactor,
+		float weightSmoothnessTerm,
+		float weightLevelSetTerm,
+		float epsilon)
 		:
 		maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize),
 		sceneLogger(nullptr),
 		baseOutputDirectory(scenePath),
-		hasFocusCoordinates(true), focusCoordinates(focusCoordinates) {}
+		hasFocusCoordinates(true),
+		focusCoordinates(focusCoordinates),
+		maxIterationCount(maxIterationCount),
+		maxVectorUpdateThresholdMeters(maxVectorUpdateThresholdMeters),
+		gradientDescentLearningRate(gradientDescentLearningRate),
+		rigidityEnforcementFactor(rigidityEnforcementFactor),
+		weightSmoothnessTerm(weightSmoothnessTerm),
+		weightLevelSetTerm(weightLevelSetTerm),
+		epsilon(epsilon)
+{}
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -89,7 +120,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene,
 		bool recordWarpUpdates) {
 
-	if(inStepByStepProcessingMode){
+	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Cannot track motion for full frame when in step-by-step mode");
 	}
 	//_DEBUG
@@ -228,7 +259,6 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 }
 
 
-
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 std::string ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::GenerateCurrentFrameOutputPath() const {
 	fs::path path(baseOutputDirectory + "/Frame_" + std::to_string(currentFrameIx));
@@ -327,12 +357,12 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::SetUpStepByStep
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::UpdateTrackingSingleStep(
-		ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>*& sourceLiveScene) {
-	if(iteration > maxIterationCount || maxVectorUpdate < maxVectorUpdateThresholdVoxels){
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene) {
+	if (iteration > maxIterationCount || maxVectorUpdate < maxVectorUpdateThresholdVoxels) {
 		inStepByStepProcessingMode = false;
 		return false;
 	}
-	if(!inStepByStepProcessingMode){
+	if (!inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Attempted to make single optimization step while not in step-by-step mode!");
 	}
 

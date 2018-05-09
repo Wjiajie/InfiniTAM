@@ -44,10 +44,31 @@ using namespace ITMLib;
 // region ================================ CONSTRUCTORS AND DESTRUCTORS ================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath, bool enableDataTerm,
-                                                                                          bool enableLevelSetTerm, bool enableSmoothingTerm, bool enableKillingTerm,
-                                                                                          bool enableGradientSmoothing)
-		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params, scenePath),
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(
+		const ITMSceneParams& params, std::string scenePath,
+
+		bool enableDataTerm,
+		bool enableLevelSetTerm,
+		bool enableSmoothingTerm,
+		bool enableKillingTerm,
+		bool enableGradientSmoothing,
+
+		unsigned int maxIterationCount,
+		float maxVectorUpdateThresholdMeters,
+		float gradientDescentLearningRate,
+		float rigidityEnforcementFactor,
+		float weightSmoothnessTerm,
+		float weightLevelSetTerm,
+		float epsilon
+)
+		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params, scenePath,
+		                                                             maxIterationCount,
+		                                                             maxVectorUpdateThresholdMeters,
+		                                                             gradientDescentLearningRate,
+		                                                             rigidityEnforcementFactor,
+		                                                             weightSmoothnessTerm,
+		                                                             weightLevelSetTerm,
+		                                                             epsilon),
 		  hashEntryAllocationTypes(new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
 		  canonicalEntryAllocationTypes(
 				  new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
@@ -56,16 +77,39 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTr
 		  enableLevelSetTerm(enableLevelSetTerm),
 		  enableSmoothingTerm(enableSmoothingTerm),
 		  enableKillingTerm(enableKillingTerm),
-          enableGradientSmoothing(enableGradientSmoothing){
+		  enableGradientSmoothing(enableGradientSmoothing) {
 	InitializeHelper(params);
 
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates,
-                                                                                          bool enableDataTerm, bool enableLevelSetTerm, bool enableSmoothingTerm,
-                                                                                          bool enableKillingTerm, bool enableGradientSmoothing)
-		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params, scenePath, focusCoordinates),
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(
+		const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates,
+
+		bool enableDataTerm,
+		bool enableLevelSetTerm,
+		bool enableSmoothingTerm,
+		bool enableKillingTerm,
+		bool enableGradientSmoothing,
+
+		unsigned int maxIterationCount,
+		float maxVectorUpdateThresholdMeters,
+		float gradientDescentLearningRate,
+		float rigidityEnforcementFactor,
+		float weightSmoothnessTerm,
+		float weightLevelSetTerm,
+		float epsilon
+)
+
+		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params, scenePath, focusCoordinates,
+		                                                             maxIterationCount,
+		                                                             maxVectorUpdateThresholdMeters,
+		                                                             gradientDescentLearningRate,
+		                                                             rigidityEnforcementFactor,
+		                                                             weightSmoothnessTerm,
+		                                                             weightLevelSetTerm,
+		                                                             epsilon),
+
 		  hashEntryAllocationTypes(new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
 		  canonicalEntryAllocationTypes(
 				  new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
@@ -74,7 +118,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTr
 		  enableLevelSetTerm(enableLevelSetTerm),
 		  enableSmoothingTerm(enableSmoothingTerm),
 		  enableKillingTerm(enableKillingTerm),
-		  enableGradientSmoothing(enableGradientSmoothing){
+		  enableGradientSmoothing(enableGradientSmoothing) {
 	InitializeHelper(params);
 }
 
@@ -420,12 +464,22 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::PrintSettings() {
 	std::cout << bright_cyan << "*** ITMSceneMotionTracker_CPU Settings: ***" << reset << std::endl;
 #define print_bool(something) (something ? green : red) << (something ? "true" : "false") << reset
+#define retrieve(something) (ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>:: something)
 	std::cout << "Data term enabled: " << print_bool(enableDataTerm) << std::endl;
 	std::cout << "Smoothing term enabled: " << print_bool(enableSmoothingTerm) << std::endl;
 	std::cout << "Level Set term enabled: " << print_bool(enableLevelSetTerm) << std::endl;
 	std::cout << "Killing term enabled: " << print_bool(enableKillingTerm) << std::endl;
-	std::cout << "Gradient smoothing enabled: " << print_bool(enableGradientSmoothing) << std::endl;
+	std::cout << "Gradient smoothing enabled: " << print_bool(enableGradientSmoothing) << std::endl << std::endl;
+
+	std::cout << "Max iteration count: " << retrieve(maxIterationCount) << std::endl;
+	std::cout << "Warp vector update threshold: " << retrieve(maxVectorUpdateThresholdMeters) << " m " << std::endl;
+	std::cout << "Gradient descent learning rate: " << retrieve(gradientDescentLearningRate)  << std::endl;
+	std::cout << "Rigidity enforcement factor: " << retrieve(rigidityEnforcementFactor)  << std::endl;
+	std::cout << "Weight of the smoothness term: " << retrieve(rigidityEnforcementFactor)  << std::endl;
+	std::cout << "Weight of the level set term: " << retrieve(rigidityEnforcementFactor)  << std::endl;
+	std::cout << "Epsilon for the level set term: " << retrieve(epsilon)  << std::endl;
 #undef print_bool
+#undef retrieve
 	std::cout << bright_cyan << "*** *********************************** ***" << reset << std::endl;
 }
 
@@ -443,7 +497,7 @@ struct WarpBasedAllocationMarkerFunctor {
 			sdfCache(),
 
 			allocationBlockCoords(allocationBlockCoords),
-			warpedEntryAllocationTypes(warpedEntryAllocationTypes){}
+			warpedEntryAllocationTypes(warpedEntryAllocationTypes) {}
 
 	void operator()(TVoxelWarpSource& voxel, Vector3i voxelPosition, Vector3s hashBlockPosition) {
 		Vector3f warpedPosition = voxelPosition.toFloat() + voxel.warp;
@@ -451,7 +505,7 @@ struct WarpBasedAllocationMarkerFunctor {
 		// perform lookup
 		int vmIndex;
 		const TVoxelSdfSource& sdfVoxelAtWarp = readVoxel(sdfVoxels, sdfHashEntries, warpedPositionTruncated,
-		                                                vmIndex, sdfCache);
+		                                                  vmIndex, sdfCache);
 		//_DEBUG
 		if (sdfVoxelAtWarp.flags != ITMLib::VOXEL_NONTRUNCATED) return; // skip truncated voxels in raw live
 
@@ -514,7 +568,7 @@ struct TrilinearInterpolationFunctor {
 			warpSourceHashEntries(warpSourceScene->index.GetEntries()),
 			warpSourceCache(),
 			sourceSdfIndex(sourceSdfIndex),
-			targetSdfIndex(targetSdfIndex){}
+			targetSdfIndex(targetSdfIndex) {}
 
 
 	void operator()(TVoxelSdf& destinationVoxel, Vector3i warpAndDestionVoxelPosition) {
@@ -576,7 +630,8 @@ private:
  * \param initializedLiveScene target live scene
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpFieldToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpFieldToLive(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	AllocateHashBlocksAtWarpedLocations(canonicalScene, liveScene);
 
@@ -608,11 +663,12 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpFi
  * \param targetLiveScene target (next iteration) live scene
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUpdateToLive(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	AllocateHashBlocksAtWarpedLocations(canonicalScene, liveScene);
 	const int iteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
-	const int sourceSdfIndex = (iteration+1) % 2;
+	const int sourceSdfIndex = (iteration + 1) % 2;
 	const int targetSdfIndex = iteration % 2;
 	//Do trilinear interpolation to compute voxel values
 	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, TIndex,

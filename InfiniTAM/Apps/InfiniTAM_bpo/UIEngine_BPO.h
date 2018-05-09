@@ -70,6 +70,7 @@ namespace InfiniTAM
 
 			int currentFrameNo; bool isRecording;
 			bool recordWarpUpdatesForNextFrame; // record warp updates during processing of the next frame
+			InputSource::FFMPEGWriter *reconstructionVideoWriter;
 			InputSource::FFMPEGWriter *rgbVideoWriter;
 			InputSource::FFMPEGWriter *depthVideoWriter;
 		public:
@@ -96,8 +97,10 @@ namespace InfiniTAM
 			bool inStepByStepMode;
 			ITMUChar4Image *saveImage;
 
-			void Initialise(int & argc, char** argv, InputSource::ImageSourceEngine *imageSource, InputSource::IMUSourceEngine *imuSource,
-				ITMLib::ITMMainEngine *mainEngine, const char *outFolder, ITMLib::ITMLibSettings::DeviceType deviceType, int frameIntervalLength = 0);
+			void Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
+						                InputSource::IMUSourceEngine* imuSource, ITMLib::ITMMainEngine* mainEngine,
+						                const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
+						                int frameIntervalLength, int skipFirstNFrames);
 			void Shutdown();
 
 			void Run();
@@ -108,6 +111,7 @@ namespace InfiniTAM
 			
 			void GetScreenshot(ITMUChar4Image *dest) const;
 			void SaveScreenshot(const char *filename) const;
+			void SkipFirstNFrames(int numberOfFramesToSkip);
 		};
 	}
 }

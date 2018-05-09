@@ -285,13 +285,13 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 					//endregion
 
 					if (enableLevelSetTerm || enableDataTerm) {
+						//TODO: in case both level set term and data term need to be computed, optimize by retreiving the sdf vals for live jacobian in a separate function. The live hessian needs to reuse them. -Greg (GitHub: Algomorph)
 						// compute the gradient of the live frame, ∇φ_n(Ψ)
 						ComputeLiveJacobian_CentralDifferences(liveSdfJacobian, voxelPosition, liveVoxels,
 						                                       liveHashTable, liveCache);
 					}
 
 					// region =============================== DATA TERM ================================================
-
 					if (enableDataTerm) {
 						// Compute data term error / energy
 						sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
@@ -318,7 +318,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 
 					if (enableLevelSetTerm) {
 
-						ComputeSdfHessian(liveSdfHessian, voxelPosition, liveVoxels, liveHashTable, liveCache);
+						ComputeSdfHessian(liveSdfHessian, voxelPosition, liveSdf, liveVoxels, liveHashTable, liveCache);
 
 						float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
 						sdfJacobianNormMinusUnity = sdfJacobianNorm - unity;
@@ -618,7 +618,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 
 					if (enableLevelSetTerm) {
 
-						ComputeSdfHessian(liveSdfHessian, voxelPosition, liveVoxels, liveHashTable, liveCache);
+						ComputeSdfHessian(liveSdfHessian, voxelPosition, liveSdf, liveVoxels, liveHashTable, liveCache);
 
 						float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
 						sdfJacobianNormMinusUnity = sdfJacobianNorm - unity;

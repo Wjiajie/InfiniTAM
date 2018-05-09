@@ -563,14 +563,43 @@ public:
 			case ITMLibSettings::DEVICE_CPU:
 				if (settings->FocusCoordinatesAreSpecified()) {
 					sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>(
-							settings->sceneParams, settings->outputPath, settings->GetFocusCoordinates(),
-							settings->enableDataTerm, settings->enableLevelSetTerm, settings->enableSmoothingTerm,
-							settings->enableSmoothingTerm, settings->enableGradientSmoothing);
+							settings->sceneParams,
+							settings->outputPath,
+							settings->GetFocusCoordinates(),
+
+							settings->enableDataTerm,
+							settings->enableLevelSetTerm,
+							settings->enableSmoothingTerm,
+							settings->enableSmoothingTerm,
+							settings->enableGradientSmoothing,
+
+							settings->sceneTrackingMaxOptimizationIterationCount,
+							settings->sceneTrackingOptimizationVectorUpdateThresholdMeters,
+							settings->sceneTrackingGradientDescentLearningRate,
+							settings->sceneTrackingRigidityEnforcementFactor,
+							settings->sceneTrackingWeightSmoothnessTerm,
+							settings->sceneTrackingWeightLevelSetTerm,
+							settings->sceneTrackingLevelSetTermEpsilon
+					);
 				} else {
 					sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>(
-							settings->sceneParams, settings->outputPath, settings->enableDataTerm,
-							settings->enableLevelSetTerm, settings->enableSmoothingTerm, settings->enableKillingTerm,
-							settings->enableGradientSmoothing);
+							settings->sceneParams,
+							settings->outputPath,
+
+							settings->enableDataTerm,
+							settings->enableLevelSetTerm,
+							settings->enableSmoothingTerm,
+							settings->enableKillingTerm,
+							settings->enableGradientSmoothing,
+
+							settings->sceneTrackingMaxOptimizationIterationCount,
+							settings->sceneTrackingOptimizationVectorUpdateThresholdMeters,
+							settings->sceneTrackingGradientDescentLearningRate,
+							settings->sceneTrackingRigidityEnforcementFactor,
+							settings->sceneTrackingWeightSmoothnessTerm,
+							settings->sceneTrackingWeightLevelSetTerm,
+							settings->sceneTrackingLevelSetTermEpsilon
+					);
 				}
 				break;
 			case ITMLibSettings::DEVICE_CUDA:

@@ -54,6 +54,8 @@ void UIEngine_BPO::GlutDisplayFunction() {
 	uiEngine->mainEngine->GetImage(uiEngine->outImage[0], uiEngine->outImageType[0], &uiEngine->freeviewPose,
 	                               &uiEngine->freeviewIntrinsics);
 
+
+
 	if (!uiEngine->inStepByStepMode) {
 		for (int w = 1; w < NUM_WIN; w++)
 			uiEngine->mainEngine->GetImage(uiEngine->outImage[w], uiEngine->outImageType[w]);
@@ -273,16 +275,20 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 				}
 				break;
 			case 'v':
-				if ((uiEngine->rgbVideoWriter != NULL) || (uiEngine->depthVideoWriter != NULL)) {
-					printf("stop recoding video\n");
-					delete uiEngine->rgbVideoWriter;
-					delete uiEngine->depthVideoWriter;
-					uiEngine->rgbVideoWriter = NULL;
-					uiEngine->depthVideoWriter = NULL;
-				} else {
-					printf("start recoding video\n");
-					uiEngine->rgbVideoWriter = new FFMPEGWriter();
-					uiEngine->depthVideoWriter = new FFMPEGWriter();
+				if (modifiers & GLUT_ACTIVE_ALT) {
+					uiEngine->reconstructionVideoWriter = new FFMPEGWriter();
+				}else{
+					if ((uiEngine->rgbVideoWriter != NULL) || (uiEngine->depthVideoWriter != NULL)) {
+						printf("stop recoding video\n");
+						delete uiEngine->rgbVideoWriter;
+						delete uiEngine->depthVideoWriter;
+						uiEngine->rgbVideoWriter = NULL;
+						uiEngine->depthVideoWriter = NULL;
+					} else {
+						printf("start recoding video\n");
+						uiEngine->rgbVideoWriter = new FFMPEGWriter();
+						uiEngine->depthVideoWriter = new FFMPEGWriter();
+					}
 				}
 				break;
 			case 'q':
@@ -573,8 +579,8 @@ void UIEngine_BPO::GlutMouseWheelFunction(int button, int dir, int x, int y) {
  * set interval to this number of frames
  */
 void UIEngine_BPO::Initialise(int& argc, char** argv, ImageSourceEngine* imageSource, IMUSourceEngine* imuSource,
-                              ITMMainEngine* mainEngine,
-                              const char* outFolder, ITMLibSettings::DeviceType deviceType, int frameIntervalLength) {
+                              ITMMainEngine* mainEngine, const char* outFolder, ITMLibSettings::DeviceType deviceType,
+                              int frameIntervalLength, int skipFirstNFrames) {
 	this->inStepByStepMode = false;
 	this->freeviewActive = true;
 	this->integrationActive = true;
@@ -671,7 +677,10 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, ImageSourceEngine* imageSo
 	sdkCreateTimer(&timer_average);
 
 	sdkResetTimer(&timer_average);
-
+	if(skipFirstNFrames > 0){
+		printf("Skipping the first %d frames.\n", skipFirstNFrames);
+		SkipFirstNFrames(skipFirstNFrames);
+	}
 	printf("initialised.\n");
 }
 
@@ -684,6 +693,13 @@ void UIEngine_BPO::SaveScreenshot(const char* filename) const {
 void UIEngine_BPO::GetScreenshot(ITMUChar4Image* dest) const {
 	glReadPixels(0, 0, dest->noDims.x, dest->noDims.y, GL_RGBA, GL_UNSIGNED_BYTE, dest->GetData(MEMORYDEVICE_CPU));
 }
+
+void UIEngine_BPO::SkipFirstNFrames(int numberOfFramesToSkip) {
+	for(int iFrame = 0; iFrame < numberOfFramesToSkip && imageSource->hasMoreImages(); iFrame++){
+		imageSource->getImages(inputRGBImage, inputRawDepthImage);
+	}
+}
+
 
 void UIEngine_BPO::ProcessFrame() {
 	if (!imageSource->hasMoreImages()) return;
@@ -736,8 +752,18 @@ void UIEngine_BPO::ProcessFrame() {
 	sdkStopTimer(&timer_instant);
 	sdkStopTimer(&timer_average);
 
-	//processedTime = sdkGetTimerValue(&timer_instant);
+		//processedTime = sdkGetTimerValue(&timer_instant);
 	processedTime = sdkGetAverageTimerValue(&timer_average);
+
+	if ((reconstructionVideoWriter != NULL)) {
+		mainEngine->GetImage(outImage[0], outImageType[0], &this->freeviewPose, &freeviewIntrinsics);
+		if( outImage[0]->noDims.x != 0){
+			if (!reconstructionVideoWriter->isOpen())
+				reconstructionVideoWriter->open("out_reconstruction.avi", outImage[0]->noDims.x, outImage[0]->noDims.y, false, 30);
+			reconstructionVideoWriter->writeFrame(outImage[0]);
+		}
+	}
+
 
 	currentFrameNo++;
 }
@@ -750,6 +776,7 @@ void UIEngine_BPO::Shutdown() {
 
 	if (rgbVideoWriter != NULL) delete rgbVideoWriter;
 	if (depthVideoWriter != NULL) delete depthVideoWriter;
+	if (reconstructionVideoWriter != NULL) delete reconstructionVideoWriter;
 
 	for (int w = 0; w < NUM_WIN; w++)
 		delete outImage[w];

@@ -26,15 +26,33 @@ namespace ITMLib {
 template<typename TVoxelCanonical1, typename TVoxelLive1, typename TIndex1>
 class ITMDenseDynamicMapper;
 
+//TODO: write documentation block -Greg (Github: Algomorph)
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMSceneMotionTracker {
 	template<typename TVoxelCanonical1, typename TVoxelLive1, typename TIndex1>
-	friend class ITMDenseDynamicMapper;
+	friend
+	class ITMDenseDynamicMapper;
 public:
 //============================= CONSTRUCTORS / DESTRUCTORS =============================================================
+//TODO: write documentation block -Greg (Github: Algomorph)
+//TODO: simplify constructor to just accept the ITMLibSettings object and set the parameters from it
 
-	explicit ITMSceneMotionTracker(const ITMSceneParams& params, std::string scenePath);
-	explicit ITMSceneMotionTracker(const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates);
+	ITMSceneMotionTracker(const ITMSceneParams& params, std::string scenePath,
+	                      unsigned int maxIterationCount = 200,
+	                      float maxVectorUpdateThresholdMeters = 0.0001f,
+	                      float gradientDescentLearningRate = 0.0f,
+	                      float rigidityEnforcementFactor = 0.1f,
+	                      float weightSmoothnessTerm = 0.2f,
+	                      float weightLevelSetTerm = 0.2f,
+	                      float epsilon = FLT_EPSILON);
+	ITMSceneMotionTracker(const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates,
+	                      unsigned int maxIterationCount = 200,
+	                      float maxVectorUpdateThresholdMeters = 0.0001f,
+	                      float gradientDescentLearningRate = 0.0f,
+	                      float rigidityEnforcementFactor = 0.1f,
+	                      float weightSmoothnessTerm = 0.2f,
+	                      float weightLevelSetTerm = 0.2f,
+	                      float epsilon = FLT_EPSILON);
 	virtual ~ITMSceneMotionTracker();
 
 //============================= MEMBER FUNCTIONS =======================================================================
@@ -45,7 +63,7 @@ public:
 	 * \param liveScene the live voxel grid, a TSDF generated from a single recent depth image
 	 */
 	virtual void
-	FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
+	FuseFrame(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 
 	/**
 	 * \brief Warp canonical back to live
@@ -56,16 +74,17 @@ public:
 	WarpCanonicalToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 
 	void TrackMotion(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>*& sourceLiveScene,
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene,
 			bool recordWarpUpdates);
 
 	void SetUpStepByStepTracking(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>*& sourceLiveScene);
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene);
 	bool UpdateTrackingSingleStep(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>*& sourceLiveScene);
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene);
 
 
 	std::string GenerateCurrentFrameOutputPath() const;
+
 	int GetFrameIndex() const { return currentFrameIx; }
 
 protected:
@@ -74,42 +93,36 @@ protected:
 	                                  ITMScene<TVoxelLive, TIndex>* liveScene) = 0;//TODO: refactor to "CalculateWarpGradient"
 
 	virtual void ApplySmoothingToGradient(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 	virtual float ApplyWarpUpdateToWarp(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 
-	virtual void ApplyWarpFieldToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-		                                  ITMScene <TVoxelLive, TIndex>* sourceLiveScene)= 0;
-	virtual void ApplyWarpUpdateToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-		                                   ITMScene <TVoxelLive, TIndex>* sourceLiveScene) = 0;
+	virtual void ApplyWarpFieldToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                                  ITMScene<TVoxelLive, TIndex>* sourceLiveScene)= 0;
+	virtual void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                                   ITMScene<TVoxelLive, TIndex>* sourceLiveScene) = 0;
 
 
-
-	virtual void AllocateNewCanonicalHashBlocks(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-	                                            ITMScene <TVoxelLive, TIndex>* liveScene) = 0;
+	virtual void AllocateNewCanonicalHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                                            ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 
 
 //============================= MEMBER VARIABLES =======================================================================
 	//TODO -- make all of these parameters
-	const int maxIterationCount = 200;
-	const float maxVectorUpdateThresholdMeters = 0.0001f;//m //original
+	const unsigned int maxIterationCount = 200;
+	const float maxVectorUpdateThresholdMeters = 0.0001f;//m //original for KillingFusion
 	const float gradientDescentLearningRate = 0.1f;
 	const float rigidityEnforcementFactor = 0.1f;
-	const float weightSmoothnessTerm = 0.2f;
+	const float weightSmoothnessTerm = 0.2f; //original for SobolevFusion
 	const float weightLevelSetTerm = 0.2f;
-	const float weightColorDataTerm = 0.0f;
-	//_DEBUG
-	const float colorSdfThreshold = -1.00f;
-	//const float colorSdfThreshold = 0.25f;
 	const float epsilon = FLT_EPSILON;
-
 
 	float maxVectorUpdateThresholdVoxels;
 
 	unsigned int iteration = 0;
 	unsigned int currentFrameIx = 0;
 
-	ITMSceneLogger<TVoxelCanonical,TVoxelLive,TIndex>* sceneLogger;
+	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>* sceneLogger;
 	std::string baseOutputDirectory;
 	std::ofstream energy_stat_file;
 
@@ -127,7 +140,7 @@ private:
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
 			cv::Mat& blank, cv::Mat& liveImgTemplate);
 	void LogWarpUpdateAs2DImage(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, const cv::Mat& blank, const cv::Mat& liveImgTemplate);
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, const cv::Mat& blank, const cv::Mat& liveImgTemplate);
 	float maxVectorUpdate;
 	bool inStepByStepProcessingMode = false;
 };

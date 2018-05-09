@@ -104,13 +104,20 @@ ITMLibSettings::ITMLibSettings()
 	// Debugging/logging
 	focusCoordinatesSpecified = false;
 
-	// Dynamic fusion terms
+	// Dynamic fusion terms & parameters
 	enableDataTerm = true;
 	enableLevelSetTerm = true;
 	enableSmoothingTerm = true;
 	enableKillingTerm = false;
 	enableGradientSmoothing = true;
 
+	sceneTrackingMaxOptimizationIterationCount = 200;
+	sceneTrackingOptimizationVectorUpdateThresholdMeters = 0.0001f;//m //original for KillingFusion
+	sceneTrackingGradientDescentLearningRate = 0.1f;
+	sceneTrackingRigidityEnforcementFactor = 0.1f;
+	sceneTrackingWeightSmoothnessTerm = 0.2f; //original for SobolevFusion
+	sceneTrackingWeightLevelSetTerm = 0.2f;
+	sceneTrackingLevelSetTermEpsilon = 0.00001;//FLT_EPSILON;
 }
 
 bool ITMLibSettings::FocusCoordinatesAreSpecified() const {
@@ -131,15 +138,3 @@ void ITMLibSettings::SetFocusCoordinates(const Vector3i& coordiantes) {
 	focusCoordinates = coordiantes;
 }
 
-bool ITMLibSettings::ProcessingOfNFramesOnLaunchIsEnabled() const {
-	return this->enableProcessingOfNFramesOnLaunch;
-}
-
-int ITMLibSettings::GetNFramesToProcessOnLaunch() const {
-	return this->autoProcessFrameCount;
-}
-
-void ITMLibSettings::SetNFramesToProcessOnLaunch(int nFrames) {
-	this->autoProcessFrameCount = nFrames;
-	this->enableProcessingOfNFramesOnLaunch = true;
-}

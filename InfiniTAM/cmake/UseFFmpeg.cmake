@@ -8,6 +8,7 @@ IF(WITH_FFMPEG)
   FIND_PACKAGE(FFmpeg QUIET)
   IF(${FFMPEG_FOUND})
     INCLUDE_DIRECTORIES(${FFMPEG_INCLUDE_DIR})
+      #TODO: replace add_definitions with an ITMLibConfig.h.in --> ITMLibConfig.h configurable header, containing the cmake-dependent preprocessor defines -Greg (GitHub: Algomorph)
     ADD_DEFINITIONS(-DCOMPILE_WITH_FFMPEG)
 
     IF(MSVC_IDE)
