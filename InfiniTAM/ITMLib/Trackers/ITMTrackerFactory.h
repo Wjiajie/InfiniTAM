@@ -577,7 +577,7 @@ public:
 							settings->sceneTrackingOptimizationVectorUpdateThresholdMeters,
 							settings->sceneTrackingGradientDescentLearningRate,
 							settings->sceneTrackingRigidityEnforcementFactor,
-							settings->sceneTrackingWeightSmoothnessTerm,
+							settings->sceneTrackingWeightSmoothingTerm,
 							settings->sceneTrackingWeightLevelSetTerm,
 							settings->sceneTrackingLevelSetTermEpsilon
 					);
@@ -596,7 +596,7 @@ public:
 							settings->sceneTrackingOptimizationVectorUpdateThresholdMeters,
 							settings->sceneTrackingGradientDescentLearningRate,
 							settings->sceneTrackingRigidityEnforcementFactor,
-							settings->sceneTrackingWeightSmoothnessTerm,
+							settings->sceneTrackingWeightSmoothingTerm,
 							settings->sceneTrackingWeightLevelSetTerm,
 							settings->sceneTrackingLevelSetTermEpsilon
 					);

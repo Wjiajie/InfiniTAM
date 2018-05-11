@@ -21,21 +21,17 @@
 using namespace ITMLib;
 
 //====================================== DEFINE CONSTANTS ==============================================================
-// voxels to highlight and use as drawing canvas center
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos1 = Vector3i(-208, -27, 383);//
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos2 = Vector3i(-146, -34, 622);//0.154574
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos3 = Vector3i(-208, -27, 383);//0.0931224
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const Vector3i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos4 = Vector3i(258, 8, 539);
 
 //TODO: generalize to handle different paths -Greg (GitHub:Algomorph)
 // where to save the images
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolder =
-		"/media/algomorph/Data/Reconstruction/debug_output/iteration_frames/";
+		"/media/algomorph/Data/Reconstruction/debug_output/bucket_interest_region_2D_iteration_slices/";
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const std::string ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::liveIterationFramesFolder =
+		"/media/algomorph/Data/Reconstruction/debug_output/bucket_interest_region_live_slices/";
+
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::canonicalSceneRasterizedFolder =
 		"/media/algomorph/Data/Reconstruction/debug_output/canonical_rasterized";
@@ -45,39 +41,31 @@ const std::string ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const bool ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::absFillingStrategy = false;
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imageSizeVoxels = 100;
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imageHalfSizeVoxels = imageSizeVoxels / 2;
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgRangeStartX =
-		testPos1.x - imageHalfSizeVoxels;
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgRangeEndX = testPos1.x + imageHalfSizeVoxels;
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgRangeStartY =
-		testPos1.y - imageHalfSizeVoxels;
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgRangeEndY = testPos1.y + imageHalfSizeVoxels;
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgZSlice = testPos1.z;
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgVoxelRangeX = imgRangeEndX - imgRangeStartX;
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgVoxelRangeY = imgRangeEndY - imgRangeStartY;
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const float ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgToVoxelScale = 16.0;
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgPixelRangeX = static_cast<int>(
-		imgToVoxelScale * imgVoxelRangeX);
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const int ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::imgPixelRangeY = static_cast<int>(
-		imgToVoxelScale * imgVoxelRangeY);
 
 // ============================================ END CONSTANT DEFINITIONS ===============================================
+
+// region ===================================== CONSTRUCTORS / DESTRUCTORS =============================================
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneSliceRasterizer(
+		Vector3i testPos, unsigned int imageSizeVoxels, float pixelsPerVoxel)
+		:
+		focusCoordinate(testPos),
+		imageSizeVoxels(imageSizeVoxels),
+		imageHalfSizeVoxels(imageSizeVoxels / 2),
+		imgRangeStartX(testPos.x - imageHalfSizeVoxels),
+		imgRangeEndX(testPos.x + imageHalfSizeVoxels),
+		imgRangeStartY(testPos.y - imageHalfSizeVoxels),
+		imgRangeEndY(testPos.y + imageHalfSizeVoxels),
+		imgZSlice(testPos.z),
+		imgVoxelRangeX(imgRangeEndX - imgRangeStartX),
+		imgVoxelRangeY(imgRangeEndY - imgRangeStartY),
+		pixelsPerVoxel(pixelsPerVoxel),
+		imgPixelRangeX(static_cast<int>(pixelsPerVoxel * imgVoxelRangeX)),
+		imgPixelRangeY(static_cast<int>(pixelsPerVoxel * imgVoxelRangeY)) {}
+
+// endregion ===========================================================================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 template<typename TVoxel>
@@ -124,7 +112,7 @@ cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawSceneI
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxel& voxel = localVoxelBlock[locId];
 					Vector2i imgCoords = GetVoxelImgCoords(originalPosition.x, originalPosition.y);
-					const int voxelOnImageSize = static_cast<int>(imgToVoxelScale);
+					const int voxelOnImageSize = static_cast<int>(pixelsPerVoxel);
 					for (int row = imgCoords.y; row < imgCoords.y + voxelOnImageSize; row++) {
 						for (int col = imgCoords.x; col < imgCoords.x + voxelOnImageSize; col++) {
 							float sdfRepr = absFillingStrategy ? std::abs(voxel.sdf) : (voxel.sdf + 1.0) / 2.0;
@@ -185,7 +173,7 @@ cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarped
 						continue;
 
 					Vector2i imgCoords = GetVoxelImgCoords(projectedPosition.x, projectedPosition.y);
-					const int voxelOnImageSize = static_cast<int>(imgToVoxelScale);
+					const int voxelOnImageSize = static_cast<int>(pixelsPerVoxel);
 					float sdfRepr;
 					sdfRepr = absFillingStrategy ? std::abs(voxel.sdf) : (voxel.sdf + 1.0) / 2.0;
 					//fill a pixel block with the source scene value
@@ -244,7 +232,7 @@ void ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSce
 		return;
 
 	Vector2i imgCoords = GetVoxelImgCoords(projectedPosition.x, projectedPosition.y);
-	const int voxelOnImageSize = static_cast<int>(imgToVoxelScale);
+	const int voxelOnImageSize = static_cast<int>(pixelsPerVoxel);
 	float sdfRepr;
 	//sdfRepr = std::abs(voxel.sdf);
 	sdfRepr = 1.0f;// - sdfRepr*.6f;
@@ -266,14 +254,14 @@ bool ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::IsVoxelInImgR
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 Vector2i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelImgCoords(int x, int y) {
-	return Vector2i(static_cast<int>(imgToVoxelScale * (x - imgRangeStartX)),
-	                imgPixelRangeY - static_cast<int>(imgToVoxelScale * (y - imgRangeStartY)));
+	return Vector2i(static_cast<int>(pixelsPerVoxel * (x - imgRangeStartX)),
+	                imgPixelRangeY - static_cast<int>(pixelsPerVoxel * (y - imgRangeStartY)));
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 Vector2i ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelImgCoords(float x, float y) {
-	return Vector2i(static_cast<int>(imgToVoxelScale * (x - imgRangeStartX)),
-	                imgPixelRangeY - static_cast<int>(imgToVoxelScale * (y - imgRangeStartY)));
+	return Vector2i(static_cast<int>(pixelsPerVoxel * (x - imgRangeStartX)),
+	                imgPixelRangeY - static_cast<int>(pixelsPerVoxel * (y - imgRangeStartY)));
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -306,7 +294,7 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlices(
 
 	Vector3i minPoint, maxPoint;
 
-	ITMSceneStatisticsCalculator<TVoxel,TIndex> calculator;
+	ITMSceneStatisticsCalculator<TVoxel, TIndex> calculator;
 	calculator.ComputeVoxelBounds(scene, minPoint, maxPoint);
 	std::cout << "Voxel ranges ( min x,y,z; max x,y,z): " << minPoint << "; " << maxPoint << std::endl;
 
@@ -392,9 +380,9 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlices(
 							break;
 					}
 					float sdfRepr = absFillingStrategy ? std::abs(voxel.sdf) : (voxel.sdf + 1.0) / 2.0;
-					uchar colorChar = static_cast<uchar>(sdfRepr *255.0);
+					uchar colorChar = static_cast<uchar>(sdfRepr * 255.0);
 					cv::Vec3b color = cv::Vec3b::all(colorChar);
-					if(voxelPosition == testPos1){
+					if (voxelPosition == focusCoordinate) {
 						color.val[0] = 0;
 						color.val[1] = 0;
 						color.val[2] = static_cast<uchar>(255.0);
@@ -407,7 +395,7 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlices(
 	}
 	for (int iImage = 0; iImage < imageCount; iImage++) {
 		std::stringstream ss;
-		ss << outputFolder << "/slice" << std::setfill('0') << std::setw(5) << iImage+indexOffset << ".png";
+		ss << outputFolder << "/slice" << std::setfill('0') << std::setw(5) << iImage + indexOffset << ".png";
 		cv::imwrite(ss.str(), images[iImage]);
 		if (verbose) {
 			std::cout << "Writing " << ss.str() << std::endl;
@@ -451,5 +439,14 @@ ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderLiveSceneSli
                                                                                     const std::string pathPostfix) {
 	RenderSceneSlices<TVoxelLive>(scene, axis, liveSceneRasterizedFolder + pathPostfix, false);
 }
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSceneImageAroundFocusPoint(
+		ITMScene<TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn) {
+	MarkWarpedSceneImageAroundPoint(scene, imageToMarkOn, focusCoordinate);
+
+}
+
+
 
 

@@ -18,6 +18,7 @@
 #include "../../Utils/ITMVoxelFlags.h"
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../../ORUtils/PlatformIndependence.h"
+#include "../../Utils/ITMPrintHelpers.h"
 
 
 // region =================================EXPLORATION OF NEIGHBORHOOD AROUND CANONICAL VOXEL===========================
@@ -80,6 +81,9 @@ inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* neighbor
 
 //endregion
 
+
+
+
 //region ================================= SDF JACOBIAN ================================================================
 
 template<typename TVoxel, typename TCache>
@@ -123,47 +127,6 @@ void ComputeLiveJacobian_ForwardDifferences(Vector3f& jacobian,
 	jacobian[2] = sdfAtZplusOne - sdfAtPosition;
 };
 
-template<typename TVoxel, typename TCache>
-_CPU_AND_GPU_CODE_
-void _DEBUG_ComputeLiveJacobian_CentralDifferences(Vector3f& jacobian,
-                                                   const Vector3i& voxelPosition,
-                                                   const TVoxel* voxels,
-                                                   const ITMHashEntry* hashEntries,
-                                                   TCache cache) {
-	int vmIndex;
-	TVoxel voxel;
-	bool xValid = true, yValid = true, zValid = true;
-#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, hashEntries, voxelPosition + (offset), vmIndex, cache).sdf))
-
-	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(1, 0, 0), vmIndex, cache);
-	//xValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
-	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
-
-	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 1, 0), vmIndex, cache);
-	//yValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
-	float sdfAtYplusOne = sdf_at(Vector3i(0, 1, 0));
-
-	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 0, 1), vmIndex, cache);
-	//zValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
-	float sdfAtZplusOne = sdf_at(Vector3i(0, 0, 1));
-
-	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(-1, 0, 0), vmIndex, cache);
-	//xValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
-	float sdfAtXminusOne = sdf_at(Vector3i(-1, 0, 0));
-
-	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, -1, 0), vmIndex, cache);
-	//yValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
-	float sdfAtYminusOne = sdf_at(Vector3i(0, -1, 0));
-
-	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 0, -1), vmIndex, cache);
-	//zValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
-	float sdfAtZminusOne = sdf_at(Vector3i(0, 0, -1));
-
-#undef sdf_at
-	jacobian[0] = xValid ? 0.5f * (sdfAtXplusOne - sdfAtXminusOne) : 0.0f;
-	jacobian[1] = yValid ? 0.5f * (sdfAtYplusOne - sdfAtYminusOne) : 0.0f;
-	jacobian[2] = zValid ? 0.5f * (sdfAtZplusOne - sdfAtZminusOne) : 0.0f;
-};
 
 template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_

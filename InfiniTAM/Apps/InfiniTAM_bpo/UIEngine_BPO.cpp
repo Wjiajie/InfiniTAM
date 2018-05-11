@@ -120,11 +120,20 @@ void UIEngine_BPO::GlutDisplayFunction() {
 			break; // relocalising
 	}
 
-	glRasterPos2f(0.85f, -0.962f);
-
 	char str[200];
+	//print previous frame index
+	int lastFrameIx = uiEngine->startedProcessingFromFrameIx + uiEngine->processedFrameNo - 1;
+	if(lastFrameIx >= 0){
+		glRasterPos2f(0.775f, -0.900f);
+		sprintf(str, "Frame %5d", lastFrameIx);
+		Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_18, (const char*) str);
+	}
+
+	//print frame rate
+	glRasterPos2f(0.85f, -0.962f);
 	sprintf(str, "%04.2lf", uiEngine->processedTime);
 	Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_18, (const char*) str);
+
 	glColor3f(1.0f, 0.0f, 0.0f);
 	if (uiEngine->inStepByStepMode) {
 		glRasterPos2f(-0.98f, -0.95f);
@@ -679,7 +688,7 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, ImageSourceEngine* imageSo
 	sdkResetTimer(&timer_average);
 	if(skipFirstNFrames > 0){
 		printf("Skipping the first %d frames.\n", skipFirstNFrames);
-		SkipFirstNFrames(skipFirstNFrames);
+		SkipFrames(skipFirstNFrames);
 	}
 	printf("initialised.\n");
 }
@@ -694,10 +703,11 @@ void UIEngine_BPO::GetScreenshot(ITMUChar4Image* dest) const {
 	glReadPixels(0, 0, dest->noDims.x, dest->noDims.y, GL_RGBA, GL_UNSIGNED_BYTE, dest->GetData(MEMORYDEVICE_CPU));
 }
 
-void UIEngine_BPO::SkipFirstNFrames(int numberOfFramesToSkip) {
+void UIEngine_BPO::SkipFrames(int numberOfFramesToSkip) {
 	for(int iFrame = 0; iFrame < numberOfFramesToSkip && imageSource->hasMoreImages(); iFrame++){
 		imageSource->getImages(inputRGBImage, inputRawDepthImage);
 	}
+	this->startedProcessingFromFrameIx += numberOfFramesToSkip;
 }
 
 

@@ -238,7 +238,7 @@ int main(int argc, char** argv) {
 				("rigidity_enforcement_factor", po::value<float>(),
 				 "Used in scene tracking optimization when the Killing regularization term is enabled."
 		         " Greater values penalize non-isometric scene deformations.")
-				("weight_smoothness_term", po::value<float>(),
+				("weight_smoothing_term", po::value<float>(),
 				 "Used in scene tracking optimization when the smoothness regularization term is enabled."
 			         " Greater values penalize non-smooth scene deformations.")
 				("weight_level_set_term", po::value<float>(),
@@ -348,7 +348,7 @@ int main(int argc, char** argv) {
 			settings->enableGradientSmoothing = false;
 
 			settings->sceneTrackingRigidityEnforcementFactor = 0.1;
-			settings->sceneTrackingWeightSmoothnessTerm = 0.5;
+			settings->sceneTrackingWeightSmoothingTerm = 0.5;
 			settings->sceneTrackingWeightLevelSetTerm = 0.2;
 		}
 
@@ -370,8 +370,8 @@ int main(int argc, char** argv) {
 		if (!vm["rigidity_enforcement_factor"].empty()) {
 			settings->sceneTrackingRigidityEnforcementFactor = vm["rigidity_enforcement_factor"].as<float>();
 		}
-		if (!vm["weight_smoothness_term"].empty()) {
-			settings->sceneTrackingWeightSmoothnessTerm = vm["weight_smoothness_term"].as<float>();
+		if (!vm["weight_smoothing_term"].empty()) {
+			settings->sceneTrackingWeightSmoothingTerm = vm["weight_smoothing_term"].as<float>();
 		}
 		if (!vm["weight_level_set_term"].empty()) {
 			settings->sceneTrackingWeightLevelSetTerm = vm["weight_level_set_term"].as<float>();

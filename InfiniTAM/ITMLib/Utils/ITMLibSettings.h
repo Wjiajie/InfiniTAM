@@ -91,7 +91,7 @@ namespace ITMLib
 		float sceneTrackingOptimizationVectorUpdateThresholdMeters = 0.0001f;//m //original for KillingFusion
 		float sceneTrackingGradientDescentLearningRate = 0.1f;
 		float sceneTrackingRigidityEnforcementFactor = 0.1f;
-		float sceneTrackingWeightSmoothnessTerm = 0.2f; //original for SobolevFusion
+		float sceneTrackingWeightSmoothingTerm = 0.2f; //original for SobolevFusion
 		float sceneTrackingWeightLevelSetTerm = 0.2f;
 		float sceneTrackingLevelSetTermEpsilon = FLT_EPSILON;
 

@@ -39,6 +39,7 @@ namespace InfiniTAM
 
 			int autoIntervalFrameStart;
 			int autoIntervalFrameCount;
+			int startedProcessingFromFrameIx = 0;
 
 			InputSource::ImageSourceEngine *imageSource;
 			InputSource::IMUSourceEngine *imuSource;
@@ -111,7 +112,7 @@ namespace InfiniTAM
 			
 			void GetScreenshot(ITMUChar4Image *dest) const;
 			void SaveScreenshot(const char *filename) const;
-			void SkipFirstNFrames(int numberOfFramesToSkip);
+			void SkipFrames(int numberOfFramesToSkip);
 		};
 	}
 }

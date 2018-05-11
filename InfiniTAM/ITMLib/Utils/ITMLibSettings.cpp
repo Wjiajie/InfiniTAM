@@ -8,8 +8,8 @@ using namespace ITMLib;
 #include <iostream>
 
 ITMLibSettings::ITMLibSettings()
-: sceneParams(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG
-    //mu(m), maxW, voxel size(m), clipping min, clipping max, stopIntegratingAtMaxW
+:   //mu(m), maxW, voxel size(m), clipping min, clipping max, stopIntegratingAtMaxW
+	sceneParams(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG
 	//sceneParams(0.02f, 100, 0.005f, 0.2f, 3.0f, false),//standard InfiniTAM values
 	surfelSceneParams(0.5f, 0.6f, static_cast<float>(20 * M_PI / 180), 0.01f, 0.004f, 3.5f, 25.0f, 4, 1.0f, 5.0f, 20, 10000000, true, true)
 {
@@ -115,7 +115,7 @@ ITMLibSettings::ITMLibSettings()
 	sceneTrackingOptimizationVectorUpdateThresholdMeters = 0.0001f;//m //original for KillingFusion
 	sceneTrackingGradientDescentLearningRate = 0.1f;
 	sceneTrackingRigidityEnforcementFactor = 0.1f;
-	sceneTrackingWeightSmoothnessTerm = 0.2f; //original for SobolevFusion
+	sceneTrackingWeightSmoothingTerm = 0.2f; //original for SobolevFusion
 	sceneTrackingWeightLevelSetTerm = 0.2f;
 	sceneTrackingLevelSetTermEpsilon = 0.00001;//FLT_EPSILON;
 }

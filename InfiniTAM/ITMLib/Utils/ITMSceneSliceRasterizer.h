@@ -26,67 +26,72 @@ class ITMSceneSliceRasterizer {
 
 	//TODO: positions of voxels to highlight / draw around should be defined extenally in the user code, not as class static members. Static functions should be probably changed to become member functions, with focus coordinates (testPos1, testPos2...) being set in user code during construction. -Greg (GitHub: Algomorph)
 public:
-
 	enum Axis{
 		AXIS_X = 0,
 		AXIS_Y = 1,
 		AXIS_Z = 3
 	};
-	static void RenderLiveSceneSlices_AllDirections(ITMScene<TVoxelLive, TIndex>* scene);
-	static void RenderCanonicalSceneSlices_AllDirections(ITMScene<TVoxelCanonical, TIndex>* scene);
-	static void
+
+	explicit ITMSceneSliceRasterizer(Vector3i testPos, unsigned int imageSizeVoxels = 100, float pixelsPerVoxel = 16.0);
+	virtual ~ITMSceneSliceRasterizer(){}
+
+
+	void RenderLiveSceneSlices_AllDirections(ITMScene<TVoxelLive, TIndex>* scene);
+	void RenderCanonicalSceneSlices_AllDirections(ITMScene<TVoxelCanonical, TIndex>* scene);
+	void
 	RenderCanonicalSceneSlices(ITMScene<TVoxelCanonical, TIndex>* scene, Axis axis, std::string pathPostfix);
-	static void RenderLiveSceneSlices(ITMScene<TVoxelLive, TIndex>* scene, Axis axis,std::string pathPostfix);
-	static cv::Mat DrawCanonicalSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene);
-	static cv::Mat DrawLiveSceneImageAroundPoint(ITMScene<TVoxelLive, TIndex>* scene);
-	static cv::Mat DrawWarpedSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene);
-	static void MarkWarpedSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn,
+	void RenderLiveSceneSlices(ITMScene<TVoxelLive, TIndex>* scene, Axis axis,std::string pathPostfix);
+
+	cv::Mat DrawCanonicalSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene);
+	cv::Mat DrawLiveSceneImageAroundPoint(ITMScene<TVoxelLive, TIndex>* scene);
+	cv::Mat DrawWarpedSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene);
+	void MarkWarpedSceneImageAroundFocusPoint(ITMScene<TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn);
+	void MarkWarpedSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn,
 	                                            Vector3i positionOfVoxelToMark);
 
 // where to save the images
 	static const std::string iterationFramesFolder;
+	static const std::string liveIterationFramesFolder;
 	static const std::string canonicalSceneRasterizedFolder;
 	static const std::string liveSceneRasterizedFolder;
 
-	static const Vector3i testPos1;
-	static const Vector3i testPos2;
-	static const Vector3i testPos3;
-	static const Vector3i testPos4;
+	const Vector3i focusCoordinate;
 
 protected:
 	template<typename TVoxel>
-	static void RenderSceneSlices(ITMScene<TVoxel, TIndex>* scene,
+	void RenderSceneSlices(ITMScene<TVoxel, TIndex>* scene,
 		                              Axis axis,
 		                              const std::string& outputFolder,
 		                              bool verbose = false);
 	template<typename TVoxel>
-	static cv::Mat DrawSceneImageAroundPoint(ITMScene<TVoxel, TIndex>* scene);
+	cv::Mat DrawSceneImageAroundPoint(ITMScene<TVoxel, TIndex>* scene);
 	template<typename TVoxel>
-	static cv::Mat DrawWarpedSceneImageTemplated(ITMScene <TVoxel, TIndex>* scene);
+	cv::Mat DrawWarpedSceneImageTemplated(ITMScene <TVoxel, TIndex>* scene);
 
 
-	static Vector2i GetVoxelImgCoords(int x, int y);
-	static Vector2i GetVoxelImgCoords(float x, float y);
-	static bool IsVoxelInImgRange(int x, int y, int z);
-	static bool IsVoxelBlockInImgRange(Vector3i blockVoxelCoords);
-	static bool IsVoxelBlockInImgRangeTolerance(Vector3i blockVoxelCoords, int tolerance);
+	Vector2i GetVoxelImgCoords(int x, int y);
+	Vector2i GetVoxelImgCoords(float x, float y);
+	bool IsVoxelInImgRange(int x, int y, int z);
+	bool IsVoxelBlockInImgRange(Vector3i blockVoxelCoords);
+	bool IsVoxelBlockInImgRangeTolerance(Vector3i blockVoxelCoords, int tolerance);
 
 	static const bool absFillingStrategy;
-	static const int imageSizeVoxels;
-	static const int imageHalfSizeVoxels;
-	static const int imgRangeStartX;
-	static const int imgRangeEndX;
-	static const int imgRangeStartY;
-	static const int imgRangeEndY;
-	static const int imgZSlice;
 
-	static const int imgVoxelRangeX;
-	static const int imgVoxelRangeY;
+	const int imageSizeVoxels;
+	const int imageHalfSizeVoxels;
 
-	static const float imgToVoxelScale;
+	const int imgRangeStartX;
+	const int imgRangeEndX;
+	const int imgRangeStartY;
+	const int imgRangeEndY;
+	const int imgZSlice;
+	const int imgVoxelRangeX;
+	const int imgVoxelRangeY;
 
-	static const int imgPixelRangeX;
-	static const int imgPixelRangeY;
+	const float pixelsPerVoxel;
+
+	const int imgPixelRangeX;
+	const int imgPixelRangeY;
 
 };
 

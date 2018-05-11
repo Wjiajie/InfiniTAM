@@ -20,6 +20,7 @@
 //local
 #include "../../Objects/Scene/ITMScene.h"
 #include "../../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.h"
+#include "../../Utils/ITMSceneSliceRasterizer.h"
 
 namespace ITMLib {
 
@@ -74,7 +75,7 @@ public:
 	WarpCanonicalToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 
 	void TrackMotion(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene,
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
 			bool recordWarpUpdates);
 
 	void SetUpStepByStepTracking(
@@ -130,17 +131,21 @@ protected:
 	bool hasFocusCoordinates = false;
 	Vector3i focusCoordinates;
 
+	//TODO: these should be CLI parameters -Greg (GitHub:Algomorph)
 	bool rasterizeLive = false;
 	bool rasterizeCanonical = false;
 	bool rasterizeUpdates = false;
+	unsigned int rasterizationFrame = 1;
 
 private:
 
 	void InitializeUpdate2DImageLogging(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
-			cv::Mat& blank, cv::Mat& liveImgTemplate);
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene, cv::Mat& blank,
+			cv::Mat& liveImgTemplate, ITMLib::ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>& rasterizer);
 	void LogWarpUpdateAs2DImage(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, const cv::Mat& blank, const cv::Mat& liveImgTemplate);
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene,
+			const cv::Mat& blank, const cv::Mat& liveImgTemplate,
+			ITMSceneSliceRasterizer <TVoxelCanonical, TVoxelLive, TIndex>& rasterizer);
 	float maxVectorUpdate;
 	bool inStepByStepProcessingMode = false;
 };

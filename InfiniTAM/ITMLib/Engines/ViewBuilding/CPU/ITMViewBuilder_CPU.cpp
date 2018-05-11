@@ -13,7 +13,7 @@ ITMViewBuilder_CPU::~ITMViewBuilder_CPU(void) { }
 
 void ITMViewBuilder_CPU::UpdateView(ITMView** view_ptr, ITMUChar4Image* rgbImage, ITMShortImage* rawDepthImage, bool useThresholdFilter,
                                     bool useBilateralFilter, bool modelSensorNoise, bool storePreviousImage)
-{ 
+{
 	if (*view_ptr == NULL)
 	{
 		*view_ptr = new ITMView(calib, rgbImage->noDims, rawDepthImage->noDims, false);
@@ -119,8 +119,11 @@ void ITMViewBuilder_CPU::ConvertDepthAffineToFloat(ITMFloatImage *depth_out, con
 	const short *d_in = depth_in->GetData(MEMORYDEVICE_CPU);
 	float *d_out = depth_out->GetData(MEMORYDEVICE_CPU);
 
-	for (int y = 0; y < imgSize.y; y++) for (int x = 0; x < imgSize.x; x++)
-		convertDepthAffineToFloat(d_out, x, y, d_in, imgSize, depthCalibParams);
+	for (int y = 0; y < imgSize.y; y++){
+		for (int x = 0; x < imgSize.x; x++){
+			convertDepthAffineToFloat(d_out, x, y, d_in, imgSize, depthCalibParams);
+		}
+	}
 }
 
 void ITMViewBuilder_CPU::DepthFiltering(ITMFloatImage *image_out, const ITMFloatImage *image_in)

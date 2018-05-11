@@ -106,19 +106,21 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(co
 	liveSceneReconstructor->IntegrateIntoScene(liveScene, view, trackingState, renderState);
 	bench::StopTimer("ReconstructLive");
 
+//	PrintSceneStats(liveScene, "Live before fusion"); //_DEBUG
 
 	bench::StartTimer("TrackMotion");
 	sceneMotionTracker->TrackMotion(canonicalScene, liveScene, this->recordNextFrameWarps);
 	bench::StopTimer("TrackMotion");
+
+//	PrintSceneStats(liveScene, "Live after tracking");  //_DEBUG
+
 	bench::StartTimer("FuseFrame");
 	sceneMotionTracker->FuseFrame(canonicalScene, liveScene);
 	bench::StopTimer("FuseFrame");
 
-	//_DEBUG
-	//PrintSceneStats(liveScene, "Live before fusion");
-	//PrintSceneStats(canonicalScene, "Canonical after fusion");
+//	PrintSceneStats(canonicalScene, "Canonical after fusion");//_DEBUG
 
-	// clear out the live-frame SDF, to prepare it for warped canonical
+	// clear out the live-frame SDF, to prepare it for warped canonical // _TEST
 	//liveSceneRecoEngine->ResetScene(liveScene);
 	//sceneMotionTracker->WarpCanonicalToLive(canonicalScene,liveScene);
 

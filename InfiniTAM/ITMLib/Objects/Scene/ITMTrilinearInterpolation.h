@@ -99,8 +99,9 @@ _CPU_AND_GPU_CODE_
 inline float InterpolateTrilinearly_MultiSdf_StruckNonTruncatedAndKnown_SmartWeights(
 		const CONSTPTR(TVoxel)* voxelData,
 		const CONSTPTR(ITMHashEntry)* voxelHash,
-		const CONSTPTR(int)& sourceSdfIndex,
 		const THREADPTR(Vector3f)& point,
+		const CONSTPTR(int)& sourceSdfIndex,
+
 		THREADPTR(TCache)& cache,
 		THREADPTR(bool)& struckKnownVoxels,
 		THREADPTR(bool)& struckNonTruncated,
@@ -987,7 +988,7 @@ inline float InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* 
     {\
         const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (coord), vmIndex, cache);\
         sdfV##suffix = TVoxel::valueToFloat(v.sdf_values[sdfIndex]);\
-        struckKnown |= (v.flags != ITMLib::VoxelFlags::VOXEL_UNKNOWN);\
+        struckKnown |= (v.flag_values[sdfIndex] != ITMLib::VoxelFlags::VOXEL_UNKNOWN);\
     }
 	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
 	PROCESS_VOXEL(2, Vector3i(1, 0, 0))

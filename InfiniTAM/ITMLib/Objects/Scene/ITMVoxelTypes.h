@@ -243,7 +243,7 @@ struct ITMVoxel_f_rgb_conf_flags
 	}
 };
 
-struct ITMVoxel_f_dynamic_warp
+struct ITMVoxel_f_dynamic_canonical
 {
 	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return 1.0f; }
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
@@ -271,7 +271,7 @@ struct ITMVoxel_f_dynamic_warp
 	Vector3f gradient0;
 	Vector3f gradient1;
 
-	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic_warp()
+	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic_canonical()
 	{
 		flags = ITMLib::VOXEL_UNKNOWN;
 		sdf = SDF_initialValue();
@@ -285,7 +285,7 @@ struct ITMVoxel_f_dynamic_warp
 	}
 };
 
-struct ITMVoxel_f_dynamic
+struct ITMVoxel_f_dynamic_live
 {
 	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return 1.0f; }
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
@@ -304,25 +304,20 @@ struct ITMVoxel_f_dynamic
 		float sdf_values[2];
 	};
 	/** Number of fused observations that make up @p sdf. */
-	uchar w_depth;//TODO: this field is not needed, but have to tweak reco engine to remove it -Greg (GitHub: Algomorph)
+	uchar w_depth;//TODO: this field is not needed, but have to tweak reconstruction engine to remove it -Greg (GitHub: Algomorph)
 	/** refer to ITMVoxelFlags for flag bit array values */
-	unsigned char flags;
-	//TODO: handle color --Greg (GitHub: Algomorph)
-//	/** RGB colour information stored for this voxel. */
-//	Vector3u clr;
-//	/** Trilinear weight information stored for this voxel.
-//	/** Number of observations that made up @p clr. */
-//	uchar w_color;
-//	float confidence;
+	union {
+		struct{
+			unsigned char flags;
+			unsigned char flags1;
+		};
+		unsigned char flag_values[2];
+	};
 
-	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic()
-	{
-		flags = ITMLib::VOXEL_UNKNOWN;
-		sdf = SDF_initialValue();
-		w_depth = 0;
-//		confidence = 0.0f;
-//		clr = Vector3u((uchar)0);
-//		w_color = 0;
-
-	}
+	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic_live() :
+		flags(ITMLib::VOXEL_UNKNOWN),
+		flags1(ITMLib::VOXEL_UNKNOWN),
+		sdf(SDF_initialValue()),
+		sdf1(SDF_initialValue()),
+		w_depth(0) {}
 };

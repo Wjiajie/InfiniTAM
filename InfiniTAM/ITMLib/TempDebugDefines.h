@@ -26,5 +26,7 @@
 //different logging parameters
 #define FOCUS_SLICE_RADIUS 3
 
+#define debug_print(something) std::cout << yellow << something << reset << std::endl
+
 
 #endif //ifdef _DEBUG

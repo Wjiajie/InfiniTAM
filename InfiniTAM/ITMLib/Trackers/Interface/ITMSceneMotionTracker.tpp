@@ -113,12 +113,13 @@ inline static void PrintOperationStatus(const char* status) {
  * \tparam TVoxelLive type of live voxels
  * \tparam TIndex type of voxel index used
  * \param canonicalScene the canonical voxel grid
- * \param sourceLiveScene the live voxel grid (typcially obtained by integrating a single depth image into an empty TSDF grid)
+ * \param liveScene the live voxel grid (typcially obtained by integrating a single depth image into an empty TSDF grid)
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene,
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
 		bool recordWarpUpdates) {
+
 
 	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Cannot track motion for full frame when in step-by-step mode");
@@ -141,34 +142,37 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	//** prepare canonical for new frame
 	PrintOperationStatus("Allocating canonical blocks based on live frame...");
 	bench::StartTimer("TrackMotion_0_AllocateNewCanonicalHashBlocks");
-	AllocateNewCanonicalHashBlocks(canonicalScene, sourceLiveScene);
+	AllocateNewCanonicalHashBlocks(canonicalScene, liveScene);
 	bench::StopTimer("TrackMotion_0_AllocateNewCanonicalHashBlocks");
 //	std::cout << "   Number of allocated blocks in canonical scene after allocation: "
 //	          << canonicalCalculator.ComputeAllocatedHashBlockCount(canonicalScene) << std::endl;//_DEBUG
 
+	if (currentFrameIx == 0) return; //don't need to actually do tracking at first frame.
 	//** initialize live frame
 	PrintOperationStatus(
 			"Initializing live frame by mapping the raw live scene to a blank scene using canonical voxel warp field...");
 
 	bench::StartTimer("TrackMotion_11_ApplyWarpFieldToLive");
-	ApplyWarpFieldToLive(canonicalScene, sourceLiveScene);
+	ApplyWarpFieldToLive(canonicalScene, liveScene);
 	bench::StopTimer("TrackMotion_11_ApplyWarpFieldToLive");
 	// endregion
 
 	// region ================================== DEBUG 2D VISUALIZATION ================================================
-
-	if (rasterizeCanonical) {
-		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::
-		RenderCanonicalSceneSlices_AllDirections(canonicalScene);
-	}
-	if (rasterizeLive) {
-		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::
-		RenderLiveSceneSlices_AllDirections(sourceLiveScene);
-	}
+	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex> rasterizer(focusCoordinates);
 	cv::Mat blank;
 	cv::Mat liveImgTemplate;
-	if (rasterizeUpdates) {
-		InitializeUpdate2DImageLogging(canonicalScene, sourceLiveScene, blank, liveImgTemplate);
+	if(hasFocusCoordinates){
+		if (rasterizeCanonical) {
+			rasterizer.RenderCanonicalSceneSlices_AllDirections(canonicalScene);
+		}
+		if (rasterizeLive) {
+			rasterizer. RenderLiveSceneSlices_AllDirections(liveScene);
+		}
+
+		if (rasterizeUpdates && rasterizationFrame == currentFrameIx) {
+			std::cout << "STARTING UPDATE RASTERIZATION" << std::endl;
+			InitializeUpdate2DImageLogging(canonicalScene, liveScene, blank, liveImgTemplate, rasterizer);
+		}
 	}
 	// endregion
 	bench::StartTimer("TrackMotion_2_RecordingEnergy");
@@ -180,7 +184,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	bench::StopTimer("TrackMotion_2_RecordingEnergy");
 
 	if (recordWarpUpdates) {
-		sceneLogger = new ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>(canonicalScene, sourceLiveScene,
+		sceneLogger = new ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>(canonicalScene, liveScene,
 		                                                                      currentFrameOutputPath);
 		sceneLogger->SaveScenesCompact();
 		sceneLogger->StartSavingWarpState(currentFrameIx);
@@ -190,7 +194,6 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	}
 
 	// region ================================== WARP UPDATE RECORDING (BEFORE OPTIMIZATION) ===========================
-
 	PrintOperationStatus("*** Optimizing warp based on difference between canonical and live SDF. ***");
 	float maxVectorUpdate = std::numeric_limits<float>::infinity();
 	bench::StartTimer("TrackMotion_3_Optimization");
@@ -198,8 +201,8 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	     iteration++) {
 		// region ================================== DEBUG 2D VISUALIZATION FOR UPDATES ================================
 
-		if (rasterizeUpdates) {
-			LogWarpUpdateAs2DImage(canonicalScene, blank, liveImgTemplate);
+		if (rasterizeUpdates && rasterizationFrame == currentFrameIx) {
+			LogWarpUpdateAs2DImage(canonicalScene, liveScene, blank, liveImgTemplate, rasterizer);
 		}
 		// endregion
 		std::cout << red << "Iteration: " << iteration << reset << std::endl;
@@ -207,23 +210,23 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		//** warp update gradient computation
 		PrintOperationStatus("Calculating warp energy gradient...");
 		bench::StartTimer("TrackMotion_31_CalculateWarpUpdate");
-		CalculateWarpUpdate(canonicalScene, sourceLiveScene);
+		CalculateWarpUpdate(canonicalScene, liveScene);
 		bench::StopTimer("TrackMotion_31_CalculateWarpUpdate");
 
 		PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");
 		bench::StartTimer("TrackMotion_32_ApplySmoothingToGradient");
-		ApplySmoothingToGradient(canonicalScene, sourceLiveScene);
+		ApplySmoothingToGradient(canonicalScene, liveScene);
 		bench::StopTimer("TrackMotion_32_ApplySmoothingToGradient");
 
 		PrintOperationStatus("Applying warp update (based on energy gradient) to the cumulative warp...");
 		bench::StartTimer("TrackMotion_33_ApplyWarpUpdateToWarp");
-		maxVectorUpdate = ApplyWarpUpdateToWarp(canonicalScene, sourceLiveScene);
+		maxVectorUpdate = ApplyWarpUpdateToWarp(canonicalScene, liveScene);
 		bench::StopTimer("TrackMotion_33_ApplyWarpUpdateToWarp");
 
 		PrintOperationStatus(
 				"Updating live frame SDF by mapping from old live SDF to new live SDF based on latest warp update...");
 		bench::StartTimer("TrackMotion_35_ApplyWarpUpdateToLive");
-		ApplyWarpUpdateToLive(canonicalScene, sourceLiveScene);
+		ApplyWarpUpdateToLive(canonicalScene, liveScene);
 		bench::StopTimer("TrackMotion_35_ApplyWarpUpdateToLive");
 
 		if (recordWarpUpdates) {
@@ -273,19 +276,16 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
 ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::InitializeUpdate2DImageLogging(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* sourceLiveScene,
-		cv::Mat& blank, cv::Mat& liveImgTemplate) {
+		cv::Mat& blank, cv::Mat& liveImgTemplate,
+		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>& rasterizer) {
 	std::cout << "Desired warp update (voxels) below " << maxVectorUpdateThresholdVoxels << std::endl;
-	cv::Mat canonicalImg =
-			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawCanonicalSceneImageAroundPoint(
-					canonicalScene) * 255.0f;
+	cv::Mat canonicalImg =rasterizer.DrawCanonicalSceneImageAroundPoint(canonicalScene) * 255.0f;
 	cv::Mat canonicalImgOut;
 	canonicalImg.convertTo(canonicalImgOut, CV_8UC1);
 	cv::cvtColor(canonicalImgOut, canonicalImgOut, cv::COLOR_GRAY2BGR);
 	cv::imwrite(ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolder
 	            + "canonical.png", canonicalImgOut);
-	cv::Mat liveImg =
-			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawLiveSceneImageAroundPoint(
-					sourceLiveScene) * 255.0f;
+	cv::Mat liveImg =rasterizer.DrawLiveSceneImageAroundPoint(sourceLiveScene) * 255.0f;
 	cv::Mat liveImgOut;
 	liveImg.convertTo(liveImgTemplate, CV_8UC1);
 	cv::cvtColor(liveImgTemplate, liveImgOut, cv::COLOR_GRAY2BGR);
@@ -297,24 +297,13 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::InitializeUpdate2DIm
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
 ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::LogWarpUpdateAs2DImage(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, const cv::Mat& blank, const cv::Mat& liveImgTemplate) {
-	cv::Mat warpImg =
-			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpedSceneImageAroundPoint(
-					canonicalScene) * 255.0f;
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
+		const cv::Mat& blank, const cv::Mat& liveImgTemplate,
+		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>& rasterizer) {
+	cv::Mat warpImg = rasterizer.DrawWarpedSceneImageAroundPoint( canonicalScene) * 255.0f;
 	cv::Mat warpImgChannel, warpImgOut, mask, liveImgChannel, markChannel;
 	blank.copyTo(markChannel);
-	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSceneImageAroundPoint(
-			canonicalScene, markChannel,
-			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos1);
-	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSceneImageAroundPoint(
-			canonicalScene, markChannel,
-			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos2);
-	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSceneImageAroundPoint(
-			canonicalScene, markChannel,
-			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos3);
-	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSceneImageAroundPoint(
-			canonicalScene, markChannel,
-			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::testPos4);
+	rasterizer.MarkWarpedSceneImageAroundFocusPoint(canonicalScene, markChannel);
 	liveImgChannel = cv::Mat::zeros(warpImg.rows, warpImg.cols, CV_8UC1);
 	warpImg.convertTo(warpImgChannel, CV_8UC1);
 	cv::threshold(warpImgChannel, mask, 1.0, 1.0, cv::THRESH_BINARY_INV);
@@ -329,6 +318,12 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::LogWarpUpdateAs2DIma
 			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolder + "warp" +
 			numStringStream.str() + ".png";
 	cv::imwrite(image_name, warpImgOut);
+	cv::Mat liveImg =rasterizer.DrawLiveSceneImageAroundPoint(liveScene) * 255.0f;
+	cv::Mat liveImgOut;
+	liveImg.convertTo(liveImgOut, CV_8UC1);
+	cv::cvtColor(liveImgOut, liveImgOut, cv::COLOR_GRAY2BGR);
+	cv::imwrite(ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::liveIterationFramesFolder + "live " +
+	            numStringStream.str() + ".png", liveImgOut);
 }
 // endregion
 
