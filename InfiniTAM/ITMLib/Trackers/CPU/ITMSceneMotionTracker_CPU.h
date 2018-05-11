@@ -91,6 +91,9 @@ protected:
 	void AllocateNewCanonicalHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                    ITMScene<TVoxelLive, TIndex>* liveScene) override;
 
+	void ClearOutFrameWarps(ITMScene <TVoxelCanonical, TIndex>* canonicalScene) override;
+	void ApplyFrameWarpsToWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) override;
+
 
 private:
 	void AllocateHashBlocksAtWarpedLocations(
@@ -113,6 +116,7 @@ private:
 	ORUtils::MemoryBlock<unsigned char>* hashEntryAllocationTypes;
 	ORUtils::MemoryBlock<unsigned char>* canonicalEntryAllocationTypes;
 	ORUtils::MemoryBlock<Vector3s>* allocationBlockCoordinates;
+
 
 };
 

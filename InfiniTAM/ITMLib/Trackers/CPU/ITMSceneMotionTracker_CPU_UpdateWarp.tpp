@@ -130,7 +130,9 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpUpdate_SingleThreadedVerbose(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
-	// TODO: better function separation by regions where applicable. Chances are, private void functions will be inlined anyway at compile time.
+	// TODO: better function separation by regions where applicable. Chances are, private void functions will be inlined anyway at compile time. -Greg (GitHub: Algomorph)
+	// TODO: take care of DRY violations with the MultiThreaded version of this. -Greg (GitHub: Algomorph)
+
 
 	// region DECLARATIONS / INITIALIZATIONS
 
@@ -167,7 +169,6 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 	const float unity = liveScene->sceneParams->voxelSize / liveScene->sceneParams->mu;
 
 	// *** traversal vars
-	//TODO: make canonical ones const
 	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
 	typename TIndex::IndexCache canonicalCache;
@@ -828,8 +829,6 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplySmooth
 }
 
 // region ======================================== APPLY WARP UPDATE TO THE WARP ITSELF ================================
-
-
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUpdateToWarp_SingleThreadedVerbose(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
@@ -890,8 +889,10 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 					TVoxelCanonical& canonicalVoxel = localCanonicalVoxelBlock[locId];
 					Vector3f warpUpdate = -learningRate * (enableGradientSmoothing ? canonicalVoxel.gradient1
 					                                                               : canonicalVoxel.gradient0);
+
 					canonicalVoxel.gradient0 = warpUpdate;
 					canonicalVoxel.warp += warpUpdate;
+					canonicalVoxel.frame_warp += warpUpdate;
 					float warpLength = ORUtils::length(canonicalVoxel.warp);
 					float warpUpdateLength = ORUtils::length(warpUpdate);
 					if (warpLength > maxWarpLength) {

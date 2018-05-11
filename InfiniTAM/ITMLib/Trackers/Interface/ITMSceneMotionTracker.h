@@ -107,6 +107,10 @@ protected:
 	virtual void AllocateNewCanonicalHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                            ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 
+	virtual void ClearOutFrameWarps(
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene) = 0;
+	virtual void ApplyFrameWarpsToWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
+
 
 //============================= MEMBER VARIABLES =======================================================================
 	//TODO -- make all of these parameters

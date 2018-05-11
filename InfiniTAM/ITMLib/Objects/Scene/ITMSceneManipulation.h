@@ -19,12 +19,51 @@
 #include "../../ITMLibDefines.h"
 #include "../../Utils/ITMHashBlockProperties.h"
 #include "ITMRepresentationAccess.h"
+#include "../../Utils/ITMPrintHelpers.h"
 
 //TODO: Make GPU versions -Greg (GitHub: Algomorph)
 
 namespace ITMLib {
 
 //TODO: move traversal functions to a separate file set -Greg (GitHub: Algomorph)
+
+// region ==================================== GENERAL HASH MANAGEMENT =================================================
+/**
+ * \brief Look for the hash index of the hash entry with the specified position
+ * \param hashIdx [out] the index of the hash entry corresponding to the specified position
+ * \param hashBlockPosition [in] spacial position of the sough-after hash entry (in hash blocks)
+ * \param hashTable [in] the hash table to search
+ * \return true if hash block is allocated, false otherwise
+ */
+inline bool FindHashAtPosition(THREADPTR(int)& hashIdx,
+                               const CONSTPTR(Vector3s)& hashBlockPosition,
+                               const CONSTPTR(ITMHashEntry)* hashTable) {
+	hashIdx = hashIndex(hashBlockPosition);
+	ITMHashEntry hashEntry = hashTable[hashIdx];
+	if (!(IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1)) {
+		if (hashEntry.ptr >= -1) {
+			//search excess list only if there is no room in ordered part
+			while (hashEntry.offset >= 1) {
+				hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
+				hashEntry = hashTable[hashIdx];
+
+				if (IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1) {
+					return true;
+				}
+			}
+			return false;
+		}
+		return false;
+	}
+	return true;
+}
+
+
+bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition, ITMHashEntry* hashTable, ITMHashEntry*& resultEntry,
+                           int& lastFreeVoxelBlockId, int& lastFreeExcessListId, const int* voxelAllocationList,
+                           const int* excessAllocationList, int& hash);
+// endregion ===========================================================================================================
+// region ==================================== VOXEL TRAVERSAL FUNCTIONS ===============================================
 
 template<typename TFunctor, typename TVoxel, typename TIndex>
 inline
@@ -51,6 +90,7 @@ void VoxelTraversal_CPU(ITMScene<TVoxel, TIndex>& scene, TFunctor& functor) {
 	}
 };
 
+
 template<typename TFunctor, typename TVoxel, typename TIndex>
 inline
 void VoxelPositionTraversal_CPU(ITMScene<TVoxel, TIndex>& scene, TFunctor& functor) {
@@ -73,6 +113,146 @@ void VoxelPositionTraversal_CPU(ITMScene<TVoxel, TIndex>& scene, TFunctor& funct
 					Vector3i voxelPosition = hashEntryPosition + Vector3i(x, y, z);
 					TVoxel& voxel = localVoxelBlock[locId];
 					functor(voxel, voxelPosition);
+				}
+			}
+		}
+	}
+};
+
+
+template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
+inline
+void DualVoxelPositionTraversal_AllocateSecondaryOnMiss_CPU(ITMScene<TVoxelPrimary, TIndex>* primaryScene,
+                                                            ITMScene<TVoxelSecondary, TIndex>* secondaryScene,
+                                                            ORUtils::MemoryBlock<unsigned char>* entryAllocationTypes,
+                                                            TFunctor& functor, bool reportAllocations = true) {
+
+	uchar* entriesAllocType = entryAllocationTypes->GetData(MEMORYDEVICE_CPU);
+
+// *** traversal vars
+	TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+	ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
+	typename TIndex::IndexCache secondaryCache;
+
+
+	TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+	ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
+	int noTotalEntries = primaryScene->index.noTotalEntries;
+	typename TIndex::IndexCache primaryCache;
+//endregion
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+	for (int hash = 0; hash < noTotalEntries; hash++) {
+		ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
+		if (currentLiveHashEntry.ptr < 0) continue;
+		ITMHashEntry& currentCanonicalHashEntry = secondaryHashTable[hash];
+
+		// the rare case where we have different positions for primary & secondary voxel block with the same index:
+		// we have a hash bucket miss, find the secondary voxel with the matching coordinates
+		if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
+			int secondaryHash;
+			if (!FindHashAtPosition(secondaryHash, currentLiveHashEntry.pos, secondaryHashTable)) {
+				int lastFreeVoxelBlockId = secondaryScene->localVBA.lastFreeBlockId;
+				int lastFreeExcessListId = secondaryScene->index.GetLastFreeExcessListId();
+				int* voxelAllocationList = secondaryScene->localVBA.GetAllocationList();
+				int* excessAllocationList = secondaryScene->index.GetExcessAllocationList();
+				ITMHashEntry* newEntry;
+				if (AllocateHashEntry_CPU(currentLiveHashEntry.pos, secondaryHashTable, newEntry, lastFreeExcessListId,
+				                          lastFreeExcessListId, voxelAllocationList, excessAllocationList,
+				                          secondaryHash)) {
+					currentCanonicalHashEntry = *newEntry;
+
+					entriesAllocType[secondaryHash] = ITMLib::BOUNDARY;
+					if (reportAllocations) {
+						std::cout << bright_red << "Allocating hash entry in secondary scene during dual traversal at: "
+						          <<
+						          currentLiveHashEntry.pos << reset << std::endl;
+					}
+				} else {
+					DIEWITHEXCEPTION_REPORTLOCATION("Could not allocate hash entry...");
+				}
+				secondaryScene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
+				secondaryScene->index.SetLastFreeExcessListId(lastFreeExcessListId);
+			} else {
+				currentCanonicalHashEntry = secondaryHashTable[secondaryHash];
+			}
+		}
+		// position of the current entry in 3D space in voxel units
+		Vector3i hashBlockPosition = currentLiveHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+
+		TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		TVoxelSecondary* localCanonicalVoxelBlock = &(secondaryVoxels[currentCanonicalHashEntry.ptr *
+		                                                              (SDF_BLOCK_SIZE3)]);
+		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+					Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
+					TVoxelPrimary& primaryVoxel = localLiveVoxelBlock[locId];
+					TVoxelSecondary& secondaryVoxel = localCanonicalVoxelBlock[locId];
+					functor(primaryVoxel,secondaryVoxel,voxelPosition);
+				}
+			}
+		}
+	}
+};
+
+template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
+inline
+void DualVoxelPositionTraversal_DieOnMiss_CPU(ITMScene<TVoxelPrimary, TIndex>* primaryScene,
+                                                            ITMScene<TVoxelSecondary, TIndex>* secondaryScene,
+                                                            ORUtils::MemoryBlock<unsigned char>* entryAllocationTypes,
+                                                            TFunctor& functor) {
+
+	uchar* entriesAllocType = entryAllocationTypes->GetData(MEMORYDEVICE_CPU);
+
+// *** traversal vars
+	TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+	ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
+	typename TIndex::IndexCache secondaryCache;
+
+
+	TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+	ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
+	int noTotalEntries = primaryScene->index.noTotalEntries;
+	typename TIndex::IndexCache primaryCache;
+//endregion
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+	for (int hash = 0; hash < noTotalEntries; hash++) {
+		ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
+		if (currentLiveHashEntry.ptr < 0) continue;
+		ITMHashEntry& currentCanonicalHashEntry = secondaryHashTable[hash];
+
+		// the rare case where we have different positions for primary & secondary voxel block with the same index:
+		// we have a hash bucket miss, find the secondary voxel with the matching coordinates
+		if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
+			int secondaryHash;
+			if (!FindHashAtPosition(secondaryHash, currentLiveHashEntry.pos, secondaryHashTable)) {
+				std::stringstream stream;
+				stream << "Could not find corresponding secondary scene block at postion " << currentLiveHashEntry.pos
+				       << ". " << __FILE__ << ": " << __LINE__;
+				DIEWITHEXCEPTION(stream.str());
+			} else {
+				currentCanonicalHashEntry = secondaryHashTable[secondaryHash];
+			}
+		}
+		// position of the current entry in 3D space in voxel units
+		Vector3i hashBlockPosition = currentLiveHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+
+		TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		TVoxelSecondary* localCanonicalVoxelBlock = &(secondaryVoxels[currentCanonicalHashEntry.ptr *
+		                                                              (SDF_BLOCK_SIZE3)]);
+		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+					Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
+					TVoxelPrimary& primaryVoxel = localLiveVoxelBlock[locId];
+					TVoxelSecondary& secondaryVoxel = localCanonicalVoxelBlock[locId];
+					functor(primaryVoxel,secondaryVoxel,voxelPosition);
 				}
 			}
 		}
@@ -159,9 +339,8 @@ void StaticVoxelPositionTraversal_CPU(ITMScene<TVoxel, TIndex>& scene) {
 		}
 	}
 };
-
-//======================================================================================================================
-//=========================================== HELPER ROUTINES FOR SCENE OPTIMIZATION PREP ==============================
+// endregion ===========================================================================================================
+// region =================================== HELPER ROUTINES FOR SCENE OPTIMIZATION PREP ==============================
 //======================================================================================================================
 /**
  * \brief Determines whether the hash block at the specified block position needs it's voxels to be allocated, as well
@@ -209,35 +388,6 @@ inline bool MarkAsNeedingAllocationIfNotFound(DEVICEPTR(uchar)* entryAllocationT
 
 };
 
-/**
- * \brief Look for the hash index of the hash entry with the specified position
- * \param hashIdx [out] the index of the hash entry corresponding to the specified position
- * \param hashBlockPosition [in] spacial position of the sough-after hash entry (in hash blocks)
- * \param hashTable [in] the hash table to search
- * \return true if hash block is allocated, false otherwise
- */
-inline bool FindHashAtPosition(THREADPTR(int)& hashIdx,
-                               const CONSTPTR(Vector3s)& hashBlockPosition,
-                               const CONSTPTR(ITMHashEntry)* hashTable){
-	hashIdx = hashIndex(hashBlockPosition);
-	ITMHashEntry hashEntry = hashTable[hashIdx];
-	if (!(IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1)) {
-		if (hashEntry.ptr >= -1) {
-			//search excess list only if there is no room in ordered part
-			while (hashEntry.offset >= 1) {
-				hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
-				hashEntry = hashTable[hashIdx];
-
-				if (IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1) {
-					return true;
-				}
-			}
-			return false;
-		}
-		return false;
-	}
-	return true;
-}
 
 template<typename TVoxel, typename TIndex>
 inline
@@ -292,8 +442,9 @@ void AllocateHashEntriesUsingLists_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* e
 	scene->index.SetLastFreeExcessListId(lastFreeExcessListId);
 }
 
+// endregion ===========================================================================================================
 // region ======================================== HELPER RANGE COMPUTATION / CHECK ROUTINES ===========================
-
+// =====================================================================================================================
 inline
 void MinMaxFromExtrema(Vector3i& minPoint, Vector3i& maxPoint, const Vector3i& extremum1, const Vector3i& extremum2) {
 	// ** set min/max **
@@ -342,9 +493,7 @@ ComputeCopyRanges(int& xRangeStart, int& xRangeEnd, int& yRangeStart, int& yRang
 }
 
 // endregion ===========================================================================================================
-bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition, ITMHashEntry* hashTable, ITMHashEntry*& resultEntry,
-                           int& lastFreeVoxelBlockId, int& lastFreeExcessListId, const int* voxelAllocationList,
-                           const int* excessAllocationList, int& hash);
+
 
 
 template<class TVoxel, class TIndex>

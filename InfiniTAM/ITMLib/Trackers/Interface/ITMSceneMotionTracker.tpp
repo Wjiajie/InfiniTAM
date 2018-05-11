@@ -148,6 +148,10 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 //	          << canonicalCalculator.ComputeAllocatedHashBlockCount(canonicalScene) << std::endl;//_DEBUG
 
 	if (currentFrameIx == 0) return; //don't need to actually do tracking at first frame.
+
+	ApplyFrameWarpsToWarps(canonicalScene);
+	ClearOutFrameWarps(canonicalScene);
+
 	//** initialize live frame
 	PrintOperationStatus(
 			"Initializing live frame by mapping the raw live scene to a blank scene using canonical voxel warp field...");
