@@ -21,6 +21,7 @@
 #include "../../Objects/Scene/ITMScene.h"
 #include "../../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.h"
 #include "../../Utils/ITMSceneSliceRasterizer.h"
+#include "../../Utils/ITMLibSettings.h"
 
 namespace ITMLib {
 
@@ -38,22 +39,8 @@ public:
 //TODO: write documentation block -Greg (Github: Algomorph)
 //TODO: simplify constructor to just accept the ITMLibSettings object and set the parameters from it
 
-	ITMSceneMotionTracker(const ITMSceneParams& params, std::string scenePath,
-	                      unsigned int maxIterationCount = 200,
-	                      float maxVectorUpdateThresholdMeters = 0.0001f,
-	                      float gradientDescentLearningRate = 0.0f,
-	                      float rigidityEnforcementFactor = 0.1f,
-	                      float weightSmoothnessTerm = 0.2f,
-	                      float weightLevelSetTerm = 0.2f,
-	                      float epsilon = FLT_EPSILON);
-	ITMSceneMotionTracker(const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates,
-	                      unsigned int maxIterationCount = 200,
-	                      float maxVectorUpdateThresholdMeters = 0.0001f,
-	                      float gradientDescentLearningRate = 0.0f,
-	                      float rigidityEnforcementFactor = 0.1f,
-	                      float weightSmoothnessTerm = 0.2f,
-	                      float weightLevelSetTerm = 0.2f,
-	                      float epsilon = FLT_EPSILON);
+	explicit ITMSceneMotionTracker(const ITMLibSettings* settings);
+
 	virtual ~ITMSceneMotionTracker();
 
 //============================= MEMBER FUNCTIONS =======================================================================
@@ -88,10 +75,21 @@ public:
 
 	int GetFrameIndex() const { return currentFrameIx; }
 
+	struct Parameters {
+		const unsigned int maxIterationCount;// = 200;
+		const float maxVectorUpdateThresholdMeters;// = 0.0001f;//m //original for KillingFusion
+		const float gradientDescentLearningRate;// = 0.1f;
+		const float rigidityEnforcementFactor;// = 0.1f;
+		const float weightSmoothnessTerm;// = 0.2f; //0.2 is default for SobolevFusion, 0.5 is default for KillingFusion
+		const float weightLevelSetTerm;// = 0.2f;
+		const float epsilon;// = 1e-5f;
+		const float unity; // voxelSize / mu, i.e. voxelSize / [narrow-band half-width]
+	};
+
 protected:
 
-	virtual float CalculateWarpUpdate(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                  ITMScene<TVoxelLive, TIndex>* liveScene) = 0;//TODO: refactor to "CalculateWarpGradient"
+	virtual void CalculateWarpGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                                   ITMScene<TVoxelLive, TIndex>* liveScene) = 0;//TODO: refactor to "CalculateWarpGradient"
 
 	virtual void ApplySmoothingToGradient(
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
@@ -108,19 +106,12 @@ protected:
 	                                            ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 
 	virtual void ClearOutFrameWarps(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene) = 0;
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
 	virtual void ApplyFrameWarpsToWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
 
 
 //============================= MEMBER VARIABLES =======================================================================
-	//TODO -- make all of these parameters
-	const unsigned int maxIterationCount = 200;
-	const float maxVectorUpdateThresholdMeters = 0.0001f;//m //original for KillingFusion
-	const float gradientDescentLearningRate = 0.1f;
-	const float rigidityEnforcementFactor = 0.1f;
-	const float weightSmoothnessTerm = 0.2f; //original for SobolevFusion
-	const float weightLevelSetTerm = 0.2f;
-	const float epsilon = FLT_EPSILON;
+	Parameters parameters;
 
 	float maxVectorUpdateThresholdVoxels;
 
@@ -144,12 +135,12 @@ protected:
 private:
 
 	void InitializeUpdate2DImageLogging(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene, cv::Mat& blank,
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene, cv::Mat& blank,
 			cv::Mat& liveImgTemplate, ITMLib::ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>& rasterizer);
 	void LogWarpUpdateAs2DImage(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene,
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
 			const cv::Mat& blank, const cv::Mat& liveImgTemplate,
-			ITMSceneSliceRasterizer <TVoxelCanonical, TVoxelLive, TIndex>& rasterizer);
+			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>& rasterizer);
 	float maxVectorUpdate;
 	bool inStepByStepProcessingMode = false;
 };

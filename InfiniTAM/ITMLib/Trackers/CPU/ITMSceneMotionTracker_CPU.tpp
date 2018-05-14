@@ -28,6 +28,7 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include <unordered_map>
+#include <opencv/cv.hpp>
 
 //local
 #include "ITMSceneMotionTracker_CPU.h"
@@ -45,81 +46,24 @@ using namespace ITMLib;
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(
-		const ITMSceneParams& params, std::string scenePath,
+		const ITMLibSettings* settings)
 
-		bool enableDataTerm,
-		bool enableLevelSetTerm,
-		bool enableSmoothingTerm,
-		bool enableKillingTerm,
-		bool enableGradientSmoothing,
-
-		unsigned int maxIterationCount,
-		float maxVectorUpdateThresholdMeters,
-		float gradientDescentLearningRate,
-		float rigidityEnforcementFactor,
-		float weightSmoothnessTerm,
-		float weightLevelSetTerm,
-		float epsilon
-)
-		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params, scenePath,
-		                                                             maxIterationCount,
-		                                                             maxVectorUpdateThresholdMeters,
-		                                                             gradientDescentLearningRate,
-		                                                             rigidityEnforcementFactor,
-		                                                             weightSmoothnessTerm,
-		                                                             weightLevelSetTerm,
-		                                                             epsilon),
-		  hashEntryAllocationTypes(new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
-		  canonicalEntryAllocationTypes(
-				  new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
-		  allocationBlockCoordinates(new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
-		  enableDataTerm(enableDataTerm),
-		  enableLevelSetTerm(enableLevelSetTerm),
-		  enableSmoothingTerm(enableSmoothingTerm),
-		  enableKillingTerm(enableKillingTerm),
-		  enableGradientSmoothing(enableGradientSmoothing) {
-	InitializeHelper(params);
-
-}
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CPU(
-		const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates,
-
-		bool enableDataTerm,
-		bool enableLevelSetTerm,
-		bool enableSmoothingTerm,
-		bool enableKillingTerm,
-		bool enableGradientSmoothing,
-
-		unsigned int maxIterationCount,
-		float maxVectorUpdateThresholdMeters,
-		float gradientDescentLearningRate,
-		float rigidityEnforcementFactor,
-		float weightSmoothnessTerm,
-		float weightLevelSetTerm,
-		float epsilon
-)
-
-		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params, scenePath, focusCoordinates,
-		                                                             maxIterationCount,
-		                                                             maxVectorUpdateThresholdMeters,
-		                                                             gradientDescentLearningRate,
-		                                                             rigidityEnforcementFactor,
-		                                                             weightSmoothnessTerm,
-		                                                             weightLevelSetTerm,
-		                                                             epsilon),
+		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(settings),
 
 		  hashEntryAllocationTypes(new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
 		  canonicalEntryAllocationTypes(
 				  new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
 		  allocationBlockCoordinates(new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
-		  enableDataTerm(enableDataTerm),
-		  enableLevelSetTerm(enableLevelSetTerm),
-		  enableSmoothingTerm(enableSmoothingTerm),
-		  enableKillingTerm(enableKillingTerm),
-		  enableGradientSmoothing(enableGradientSmoothing) {
-	InitializeHelper(params);
+			
+		  switches{
+			settings->enableDataTerm,
+			settings->enableLevelSetTerm,
+			settings->enableSmoothingTerm,
+			settings->enableKillingTerm,
+			settings->enableGradientSmoothing
+		  }{
+	InitializeHelper(settings->sceneParams);
+
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -462,19 +406,26 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::PrintSettin
 	std::cout << bright_cyan << "*** ITMSceneMotionTracker_CPU Settings: ***" << reset << std::endl;
 #define print_bool(something) (something ? green : red) << (something ? "true" : "false") << reset
 #define retrieve(something) (ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>:: something)
-	std::cout << "Data term enabled: " << print_bool(enableDataTerm) << std::endl;
-	std::cout << "Smoothing term enabled: " << print_bool(enableSmoothingTerm) << std::endl;
-	std::cout << "Level Set term enabled: " << print_bool(enableLevelSetTerm) << std::endl;
-	std::cout << "Killing term enabled: " << print_bool(enableKillingTerm) << std::endl;
-	std::cout << "Gradient smoothing enabled: " << print_bool(enableGradientSmoothing) << std::endl << std::endl;
+	std::cout << "Data term enabled: " << print_bool(this->switches.enableDataTerm) << std::endl;
+	std::cout << "Smoothing term enabled: " << print_bool(this->switches.enableSmoothingTerm) << std::endl;
+	std::cout << "Level Set term enabled: " << print_bool(this->switches.enableLevelSetTerm) << std::endl;
+	std::cout << "Killing term enabled: " << print_bool(this->switches.enableKillingTerm) << std::endl;
+	std::cout << "Gradient smoothing enabled: " << print_bool(this->switches.enableGradientSmoothing) << std::endl << std::endl;
 
-	std::cout << "Max iteration count: " << retrieve(maxIterationCount) << std::endl;
-	std::cout << "Warp vector update threshold: " << retrieve(maxVectorUpdateThresholdMeters) << " m " << std::endl;
-	std::cout << "Gradient descent learning rate: " << retrieve(gradientDescentLearningRate)  << std::endl;
-	std::cout << "Rigidity enforcement factor: " << retrieve(rigidityEnforcementFactor)  << std::endl;
-	std::cout << "Weight of the smoothness term: " << retrieve(rigidityEnforcementFactor)  << std::endl;
-	std::cout << "Weight of the level set term: " << retrieve(rigidityEnforcementFactor)  << std::endl;
-	std::cout << "Epsilon for the level set term: " << retrieve(epsilon)  << std::endl;
+	std::cout << "Max iteration count: " << this->parameters.maxIterationCount << std::endl;
+	std::cout << "Warp vector update threshold: " << this->parameters.maxVectorUpdateThresholdMeters << " m " << std::endl;
+	std::cout << "Gradient descent learning rate: " << this->parameters.gradientDescentLearningRate  << std::endl;
+	std::cout << "Rigidity enforcement factor: " << this->parameters.rigidityEnforcementFactor << std::endl;
+	std::cout << "Weight of the smoothness term: " << this->parameters.rigidityEnforcementFactor << std::endl;
+	std::cout << "Weight of the level set term: " << this->parameters.rigidityEnforcementFactor << std::endl;
+	std::cout << "Epsilon for the level set term: " << this->parameters.epsilon << std::endl;
+//	std::cout << "Max iteration count: " << retrieve(maxIterationCount) << std::endl;
+//	std::cout << "Warp vector update threshold: " << retrieve(maxVectorUpdateThresholdMeters) << " m " << std::endl;
+//	std::cout << "Gradient descent learning rate: " << retrieve(gradientDescentLearningRate)  << std::endl;
+//	std::cout << "Rigidity enforcement factor: " << retrieve(rigidityEnforcementFactor)  << std::endl;
+//	std::cout << "Weight of the smoothness term: " << retrieve(rigidityEnforcementFactor)  << std::endl;
+//	std::cout << "Weight of the level set term: " << retrieve(rigidityEnforcementFactor)  << std::endl;
+//	std::cout << "Epsilon for the level set term: " << retrieve(epsilon)  << std::endl;
 #undef print_bool
 #undef retrieve
 	std::cout << bright_cyan << "*** *********************************** ***" << reset << std::endl;

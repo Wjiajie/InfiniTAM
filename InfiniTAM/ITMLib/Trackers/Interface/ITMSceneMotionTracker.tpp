@@ -42,54 +42,23 @@ using namespace ITMLib;
 //region =========================================== CONSTRUCTORS / DESTRUCTORS ========================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(
-		const ITMSceneParams& params, std::string scenePath,
-		unsigned int maxIterationCount,
-		float maxVectorUpdateThresholdMeters,
-		float gradientDescentLearningRate,
-		float rigidityEnforcementFactor,
-		float weightSmoothnessTerm,
-		float weightLevelSetTerm,
-		float epsilon)
+ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMLibSettings* settings)
 		:
-		maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize),
+		maxVectorUpdateThresholdVoxels(
+				settings->sceneTrackingOptimizationVectorUpdateThresholdMeters / settings->sceneParams.voxelSize),
 		sceneLogger(nullptr),
-		baseOutputDirectory(scenePath),
-		hasFocusCoordinates(false),
-
-		maxIterationCount(maxIterationCount),
-		maxVectorUpdateThresholdMeters(maxVectorUpdateThresholdMeters),
-		gradientDescentLearningRate(gradientDescentLearningRate),
-		rigidityEnforcementFactor(rigidityEnforcementFactor),
-		weightSmoothnessTerm(weightSmoothnessTerm),
-		weightLevelSetTerm(weightLevelSetTerm),
-		epsilon(epsilon)
-{}
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(
-		const ITMSceneParams& params, std::string scenePath, Vector3i focusCoordinates,
-		unsigned int maxIterationCount,
-		float maxVectorUpdateThresholdMeters,
-		float gradientDescentLearningRate,
-		float rigidityEnforcementFactor,
-		float weightSmoothnessTerm,
-		float weightLevelSetTerm,
-		float epsilon)
-		:
-		maxVectorUpdateThresholdVoxels(maxVectorUpdateThresholdMeters / params.voxelSize),
-		sceneLogger(nullptr),
-		baseOutputDirectory(scenePath),
-		hasFocusCoordinates(true),
-		focusCoordinates(focusCoordinates),
-		maxIterationCount(maxIterationCount),
-		maxVectorUpdateThresholdMeters(maxVectorUpdateThresholdMeters),
-		gradientDescentLearningRate(gradientDescentLearningRate),
-		rigidityEnforcementFactor(rigidityEnforcementFactor),
-		weightSmoothnessTerm(weightSmoothnessTerm),
-		weightLevelSetTerm(weightLevelSetTerm),
-		epsilon(epsilon)
-{}
+		baseOutputDirectory(settings->outputPath),
+		hasFocusCoordinates(settings->FocusCoordinatesAreSpecified()),
+		focusCoordinates(settings->GetFocusCoordinates()),
+		parameters{settings->sceneTrackingMaxOptimizationIterationCount,
+		            settings->sceneTrackingOptimizationVectorUpdateThresholdMeters,
+		            settings->sceneTrackingGradientDescentLearningRate,
+		            settings->sceneTrackingRigidityEnforcementFactor,
+		            settings->sceneTrackingWeightSmoothingTerm,
+		            settings->sceneTrackingWeightLevelSetTerm,
+		            settings->sceneTrackingLevelSetTermEpsilon,
+		            settings->sceneParams.voxelSize / settings->sceneParams.mu
+					} {}
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -165,12 +134,12 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex> rasterizer(focusCoordinates);
 	cv::Mat blank;
 	cv::Mat liveImgTemplate;
-	if(hasFocusCoordinates){
+	if (hasFocusCoordinates) {
 		if (rasterizeCanonical) {
 			rasterizer.RenderCanonicalSceneSlices_AllDirections(canonicalScene);
 		}
 		if (rasterizeLive) {
-			rasterizer. RenderLiveSceneSlices_AllDirections(liveScene);
+			rasterizer.RenderLiveSceneSlices_AllDirections(liveScene);
 		}
 
 		if (rasterizeUpdates && rasterizationFrame == currentFrameIx) {
@@ -201,7 +170,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 	PrintOperationStatus("*** Optimizing warp based on difference between canonical and live SDF. ***");
 	float maxVectorUpdate = std::numeric_limits<float>::infinity();
 	bench::StartTimer("TrackMotion_3_Optimization");
-	for (iteration = 0; maxVectorUpdate > maxVectorUpdateThresholdVoxels && iteration < maxIterationCount;
+	for (iteration = 0; maxVectorUpdate > maxVectorUpdateThresholdVoxels && iteration < parameters.maxIterationCount;
 	     iteration++) {
 		// region ================================== DEBUG 2D VISUALIZATION FOR UPDATES ================================
 
@@ -214,7 +183,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		//** warp update gradient computation
 		PrintOperationStatus("Calculating warp energy gradient...");
 		bench::StartTimer("TrackMotion_31_CalculateWarpUpdate");
-		CalculateWarpUpdate(canonicalScene, liveScene);
+		CalculateWarpGradient(canonicalScene, liveScene);
 		bench::StopTimer("TrackMotion_31_CalculateWarpUpdate");
 
 		PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");
@@ -283,13 +252,13 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::InitializeUpdate2DIm
 		cv::Mat& blank, cv::Mat& liveImgTemplate,
 		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>& rasterizer) {
 	std::cout << "Desired warp update (voxels) below " << maxVectorUpdateThresholdVoxels << std::endl;
-	cv::Mat canonicalImg =rasterizer.DrawCanonicalSceneImageAroundPoint(canonicalScene) * 255.0f;
+	cv::Mat canonicalImg = rasterizer.DrawCanonicalSceneImageAroundPoint(canonicalScene) * 255.0f;
 	cv::Mat canonicalImgOut;
 	canonicalImg.convertTo(canonicalImgOut, CV_8UC1);
 	cv::cvtColor(canonicalImgOut, canonicalImgOut, cv::COLOR_GRAY2BGR);
 	cv::imwrite(ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolder
 	            + "canonical.png", canonicalImgOut);
-	cv::Mat liveImg =rasterizer.DrawLiveSceneImageAroundPoint(sourceLiveScene) * 255.0f;
+	cv::Mat liveImg = rasterizer.DrawLiveSceneImageAroundPoint(sourceLiveScene) * 255.0f;
 	cv::Mat liveImgOut;
 	liveImg.convertTo(liveImgTemplate, CV_8UC1);
 	cv::cvtColor(liveImgTemplate, liveImgOut, cv::COLOR_GRAY2BGR);
@@ -304,7 +273,7 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::LogWarpUpdateAs2DIma
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
 		const cv::Mat& blank, const cv::Mat& liveImgTemplate,
 		ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>& rasterizer) {
-	cv::Mat warpImg = rasterizer.DrawWarpedSceneImageAroundPoint( canonicalScene) * 255.0f;
+	cv::Mat warpImg = rasterizer.DrawWarpedSceneImageAroundPoint(canonicalScene) * 255.0f;
 	cv::Mat warpImgChannel, warpImgOut, mask, liveImgChannel, markChannel;
 	blank.copyTo(markChannel);
 	rasterizer.MarkWarpedSceneImageAroundFocusPoint(canonicalScene, markChannel);
@@ -322,7 +291,7 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::LogWarpUpdateAs2DIma
 			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolder + "warp" +
 			numStringStream.str() + ".png";
 	cv::imwrite(image_name, warpImgOut);
-	cv::Mat liveImg =rasterizer.DrawLiveSceneImageAroundPoint(liveScene) * 255.0f;
+	cv::Mat liveImg = rasterizer.DrawLiveSceneImageAroundPoint(liveScene) * 255.0f;
 	cv::Mat liveImgOut;
 	liveImg.convertTo(liveImgOut, CV_8UC1);
 	cv::cvtColor(liveImgOut, liveImgOut, cv::COLOR_GRAY2BGR);
@@ -357,7 +326,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::SetUpStepByStep
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::UpdateTrackingSingleStep(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene) {
-	if (iteration > maxIterationCount || maxVectorUpdate < maxVectorUpdateThresholdVoxels) {
+	if (iteration > parameters.maxIterationCount || maxVectorUpdate < maxVectorUpdateThresholdVoxels) {
 		inStepByStepProcessingMode = false;
 		return false;
 	}
@@ -370,7 +339,7 @@ bool ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::UpdateTrackingS
 	//** warp update gradient computation
 	PrintOperationStatus("Calculating warp energy gradient...");
 	bench::StartTimer("TrackMotion_31_CalculateWarpUpdate");
-	CalculateWarpUpdate(canonicalScene, sourceLiveScene);
+	CalculateWarpGradient(canonicalScene, sourceLiveScene);
 	bench::StopTimer("TrackMotion_31_CalculateWarpUpdate");
 
 	PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");

@@ -112,22 +112,350 @@ struct ClearOutGradientStaticFunctor {
 };
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-float
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpUpdate(
+void
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpGradient(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 		ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	StaticVoxelTraversal_CPU<ClearOutGradientStaticFunctor<TVoxelCanonical>>(*canonicalScene);
 
 #if defined(_DEBUG) && !defined(WITH_OPENMP)
-	return CalculateWarpUpdate_SingleThreadedVerbose(canonicalScene, liveScene);
+	CalculateWarpGradient_SingleThreadedVerbose(canonicalScene, liveScene);
 #else
-	return CalculateWarpUpdate_MultiThreaded(canonicalScene,liveScene);
+	CalculateWarpGradient_MultiThreaded(canonicalScene, liveScene);
 #endif
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpUpdate_SingleThreadedVerbose(
+struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
+
+	CalculateWarpGradient_SingleThreadedVerboseFunctor(
+			ITMScene<TVoxelLive, TIndex>* liveScene,
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::Parameters parameters,
+			typename ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::Switches switches,
+			unsigned int iteration, unsigned int currentFrameIx,
+			bool hasFocusCoordinates, Vector3i focusCoordinates) :
+
+			hasFocusCoordinates(hasFocusCoordinates),
+			focusCoordinates(focusCoordinates),
+			iteration(iteration),
+			sourceSdfIndex((iteration + 1) % 2),
+			currentFrameIx(currentFrameIx),
+			parameters(parameters),
+			switches(switches),
+
+			liveScene(liveScene),
+			liveVoxels(liveScene->localVBA.GetVoxelBlocks()),
+			liveHashEntries(liveScene->index.GetEntries()),
+			liveCache(),
+
+			canonicalScene(canonicalScene),
+			canonicalVoxels(canonicalScene->localVBA.GetVoxelBlocks()),
+			canonicalHashEntries(canonicalScene->index.GetEntries()),
+			canonicalCache() {}
+
+	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i voxelPosition) {
+		if (liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_NONTRUNCATED) {
+			return;
+		}
+
+		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
+		float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
+		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[sourceSdfIndex]);
+		Vector3f& warp = canonicalVoxel.warp;
+		Vector3f localSmoothnessEnergyGradient(0.0f), localDataEnergyGradient(0.0f), localLevelSetEnergyGradient(0.0f);
+		float localDataEnergy = 0.0f, localLevelSetEnergy = 0.0f, localSmoothnessEnergy = 0.0f,
+				localTikhonovEnergy = 0.0f, localKillingEnergy = 0.0f;
+		float sdfDifferenceBetweenLiveAndCanonical = 0.0f, sdfJacobianNormMinusUnity = 0.0f;
+		Matrix3f liveSdfHessian, warpJacobian(0.0f);
+		Vector3f liveSdfJacobian, warpLaplacian;
+		Matrix3f warpHessian[3] = {Matrix3f(0.0f), Matrix3f(0.0f), Matrix3f(0.0f)};
+		// endregion
+
+		// region =============================== DEBUG PRINTING / RECORDING ===============================
+
+		bool printVoxelResult = false;
+		bool recordVoxelResult = false;
+		//TODO: function to retrieve voxel hash location for debugging -Greg (GitHub: Algomorph)
+		int x = 0, y = 0, z = 0, hash = 0, locId = 0;
+		if (hasFocusCoordinates && voxelPosition == focusCoordinates) {
+			std::cout << std::endl << bright_cyan << "*** Printing voxel at " << voxelPosition
+			          << " *** " << reset << std::endl;
+			std::cout << "Position within block (x,y,z): " << x << ", " << y << ", " << z << std::endl;
+			std::cout << "Source SDF vs. target SDF: " << canonicalSdf << "-->" << liveSdf << std::endl
+			          << "Warp: " << green << canonicalVoxel.warp << reset
+			          << " Warp length: " << green << ORUtils::length(canonicalVoxel.warp) << reset;
+			std::cout << std::endl;
+			printVoxelResult = true;
+			if (sceneLogger != nullptr) {
+				recordVoxelResult = true;
+			}
+		}
+		// endregion
+
+		// region ============================== RETRIEVE NEIGHBOR'S WARPS =================================
+
+		const int neighborhoodSize = 9;
+		Vector3f neighborWarps[neighborhoodSize];
+		bool neighborKnown[neighborhoodSize];
+		bool neighborTruncated[neighborhoodSize];
+		bool neighborAllocated[neighborhoodSize];
+		//    0        1        2          3         4         5           6         7         8
+		//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
+		findPoint2ndDerivativeNeighborhoodWarp(neighborWarps/*x9*/, neighborKnown, neighborTruncated,
+		                                       neighborAllocated, voxelPosition, canonicalVoxels,
+		                                       canonicalHashEntries, canonicalCache);
+		//TODO: revise this to reflect new realities
+		for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
+			if (!neighborAllocated[iNeighbor]) {
+				//assign current warp to neighbor warp if the neighbor is not allocated
+				neighborWarps[iNeighbor] = warp;
+			}
+		}
+		if (printVoxelResult) {
+			std::cout << blue << "Live 6-connected neighbor information:" << reset << std::endl;
+			print6ConnectedNeighborInfo(voxelPosition, liveVoxels, liveHashEntries, liveCache);
+		}
+
+		//endregion
+
+		if (switches.enableLevelSetTerm || switches.enableDataTerm) {
+			//TODO: in case both level set term and data term need to be computed, optimize by retreiving the sdf vals for live jacobian in a separate function. The live hessian needs to reuse them. -Greg (GitHub: Algomorph)
+			// compute the gradient of the live frame, ∇φ_n(Ψ) a.k.a ∇φ_{proj}(Ψ)
+			ComputeLiveJacobian_CentralDifferences(liveSdfJacobian, voxelPosition, liveVoxels, liveHashEntries,
+			                                       liveCache);
+		}
+
+		// region =============================== DATA TERM ================================================
+		if (switches.enableDataTerm) {
+			// Compute data term error / energy
+			sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
+			// (φ_n(Ψ)−φ_{global}) ∇φ_n(Ψ) - also denoted as - (φ_{proj}(Ψ)−φ_{model}) ∇φ_{proj}(Ψ)
+			// φ_n(Ψ) = φ_n(x+u, y+v, z+w), where u = u(x,y,z), v = v(x,y,z), w = w(x,y,z)
+			// φ_{global} = φ_{global}(x, y, z)
+			localDataEnergyGradient = sdfDifferenceBetweenLiveAndCanonical * liveSdfJacobian;
+
+			dataVoxelCount++;
+			cumulativeSdfDiff += std::abs(sdfDifferenceBetweenLiveAndCanonical);
+			localDataEnergy =
+					0.5f * (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
+		}
+		if (printVoxelResult) {
+			if (switches.enableDataTerm) {
+				_DEBUG_PrintDataTermStuff(liveSdfJacobian);
+			} else {
+				std::cout << std::endl;
+			}
+		}
+		// endregion
+
+		// region =============================== LEVEL SET TERM ===========================================
+
+		if (switches.enableLevelSetTerm) {
+			ComputeSdfHessian(liveSdfHessian, voxelPosition, liveSdf, liveVoxels, liveHashEntries, liveCache);
+			float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
+			sdfJacobianNormMinusUnity = sdfJacobianNorm - parameters.unity;
+			localLevelSetEnergyGradient = sdfJacobianNormMinusUnity * (liveSdfHessian * liveSdfJacobian) /
+			                              (sdfJacobianNorm + parameters.epsilon);
+			levelSetVoxelCount++;
+			localLevelSetEnergy =
+					parameters.weightLevelSetTerm * 0.5f * (sdfJacobianNormMinusUnity * sdfJacobianNormMinusUnity);
+		}
+		// endregion =======================================================================================
+
+		// region =============================== SMOOTHING TERM (TIKHONOV & KILLING) ======================
+
+		if (switches.enableSmoothingTerm) {
+			if (switches.enableKillingTerm) {
+				ComputePerVoxelWarpJacobianAndHessian(canonicalVoxel.warp, neighborWarps,
+				                                      warpJacobian, warpHessian);
+				if (printVoxelResult) {
+					_DEBUG_PrintKillingTermStuff(neighborWarps, neighborKnown, neighborTruncated,
+					                             warpJacobian, warpHessian);
+				}
+
+				float gamma = parameters.rigidityEnforcementFactor;
+				float onePlusGamma = 1.0f + gamma;
+				// |0, 3, 6|     |m00, m10, m20|      |u_xx, u_xy, u_xz|
+				// |1, 4, 7|     |m01, m11, m21|      |u_xy, u_yy, u_yz|
+				// |2, 5, 8|     |m02, m12, m22|      |u_xz, u_yz, u_zz|
+				Matrix3f& H_u = warpHessian[0];
+				Matrix3f& H_v = warpHessian[1];
+				Matrix3f& H_w = warpHessian[2];
+				float KillingDeltaEu, KillingDeltaEv, KillingDeltaEw;
+
+
+				KillingDeltaEu = -2.0f *
+				                 ((onePlusGamma) * H_u.xx + (H_u.yy) + (H_u.zz) + gamma * H_v.xy + gamma * H_w.xz);
+				KillingDeltaEv = -2.0f *
+				                 ((onePlusGamma) * H_v.yy + (H_v.zz) + (H_v.xx) + gamma * H_u.xy + gamma * H_w.yz);
+				KillingDeltaEw = -2.0f *
+				                 ((onePlusGamma) * H_w.zz + (H_w.xx) + (H_w.yy) + gamma * H_v.yz + gamma * H_u.xz);
+
+
+				localSmoothnessEnergyGradient = Vector3f(KillingDeltaEu, KillingDeltaEv, KillingDeltaEw);
+				//=================================== ENERGY ===============================================
+				// KillingTerm Energy
+				Matrix3f warpJacobianTranspose = warpJacobian.t();
+
+				localTikhonovEnergy = dot(warpJacobian.getColumn(0), warpJacobian.getColumn(0)) +
+				                      dot(warpJacobian.getColumn(1), warpJacobian.getColumn(1)) +
+				                      dot(warpJacobian.getColumn(2), warpJacobian.getColumn(2));
+
+				localKillingEnergy = gamma *
+				                     (dot(warpJacobianTranspose.getColumn(0), warpJacobian.getColumn(0)) +
+				                      dot(warpJacobianTranspose.getColumn(1), warpJacobian.getColumn(1)) +
+				                      dot(warpJacobianTranspose.getColumn(2), warpJacobian.getColumn(2)));
+
+				localSmoothnessEnergy = localTikhonovEnergy + localKillingEnergy;
+			} else {
+				ComputeWarpLaplacianAndJacobian(warpLaplacian, warpJacobian, warp, neighborWarps);
+				//∇E_{reg}(Ψ) = −[∆U ∆V ∆W]' ,
+				localSmoothnessEnergyGradient = -warpLaplacian;
+				localTikhonovEnergy = dot(warpJacobian.getColumn(0), warpJacobian.getColumn(0)) +
+				                      dot(warpJacobian.getColumn(1), warpJacobian.getColumn(1)) +
+				                      dot(warpJacobian.getColumn(2), warpJacobian.getColumn(2));
+				localSmoothnessEnergy = localTikhonovEnergy;
+			}
+		}
+		// endregion
+
+		// region =============================== COMPUTE ENERGY GRADIENT ==================================
+
+		Vector3f localEnergyGradient =
+				localDataEnergyGradient +
+				parameters.weightLevelSetTerm * localLevelSetEnergyGradient +
+				parameters.weightSmoothnessTerm * localSmoothnessEnergyGradient;
+
+		//_DEBUG
+		//localEnergyGradient.z = 0.0f;
+
+		canonicalVoxel.gradient0 = localEnergyGradient;
+
+		// endregion
+
+		// region =============================== AGGREGATE VOXEL STATISTICS ===============================
+		float energyGradeintLength = ORUtils::length(localEnergyGradient);//meters
+		float warpLength = ORUtils::length(canonicalVoxel.warp);
+		double localEnergy = localDataEnergy + parameters.weightLevelSetTerm * localLevelSetEnergy
+		                     + parameters.weightSmoothnessTerm * localSmoothnessEnergy;
+
+
+		totalDataEnergy += localDataEnergy;
+		totalLevelSetEnergy += parameters.weightLevelSetTerm * localLevelSetEnergy;
+		totalTikhonovEnergy += parameters.weightSmoothnessTerm * localTikhonovEnergy;
+		totalKillingEnergy += parameters.weightSmoothnessTerm * localKillingEnergy;
+		totalSmoothnessEnergy += parameters.weightSmoothnessTerm * localSmoothnessEnergy;
+
+		cumulativeCanonicalSdf += canonicalSdf;
+		cumulativeLiveSdf += liveSdf;
+		cumulativeWarpDist += ORUtils::length(canonicalVoxel.warp);
+		consideredVoxelCount += 1;
+		// endregion
+
+		//TODO: move to separate function?
+		if (printVoxelResult) {
+			std::cout << blue << "Data gradient: " << localDataEnergyGradient * -1.f;
+			std::cout << red << " Level set gradient: " << localLevelSetEnergyGradient * -1.f;
+			std::cout << yellow << " Smoothness gradient: " << localSmoothnessEnergyGradient * -1.f;
+			std::cout << std::endl;
+			std::cout << green << "Energy gradient: " << localEnergyGradient << reset;
+			std::cout << " Energy gradient length: " << energyGradeintLength << std::endl << std::endl;
+
+			if (recordVoxelResult) {
+				std::array<ITMNeighborVoxelIterationInfo, 9> neighbors;
+				FindHighlightNeighborInfo(neighbors, voxelPosition, hash, canonicalVoxels,
+				                          canonicalHashEntries, liveVoxels, liveHashEntries, liveCache);
+				ITMHighlightIterationInfo info =
+						{hash, locId, currentFrameIx, iteration, voxelPosition, warp, canonicalSdf, liveSdf,
+						 localEnergyGradient, localDataEnergyGradient, localLevelSetEnergyGradient,
+						 localSmoothnessEnergyGradient,
+						 localEnergy, localDataEnergy, localLevelSetEnergy, localSmoothnessEnergy,
+						 localKillingEnergy, localTikhonovEnergy,
+						 liveSdfJacobian, liveSdfJacobian, liveSdfHessian, warpJacobian,
+						 warpHessian[0], warpHessian[1], warpHessian[2], neighbors, true};
+				sceneLogger->LogHighlight(hash, locId, currentFrameIx, info);
+			}
+		}
+	}
+
+	void FinalizePrintAndRecordStatistics(std::ofstream& energy_stat_file){
+		double totalEnergy = totalDataEnergy + totalLevelSetEnergy + totalSmoothnessEnergy;
+
+		std::cout << bright_cyan << "*** General Iteration Statistics ***" << reset << std::endl;
+		PrintEnergyStatistics(this->switches.enableDataTerm, this->switches.enableLevelSetTerm,
+		                      this->switches.enableSmoothingTerm, this->switches.enableKillingTerm,
+		                      this->parameters.rigidityEnforcementFactor,
+		                      totalDataEnergy, totalLevelSetEnergy, totalTikhonovEnergy,
+		                      totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
+
+		//save all energies to file
+		energy_stat_file << totalDataEnergy << ", " << totalLevelSetEnergy << ", " << totalKillingEnergy << ", "
+		                 << totalSmoothnessEnergy << ", " << totalEnergy << std::endl;
+
+		CalculateAndPrintAdditionalStatistics(
+				this->switches.enableDataTerm, this->switches.enableLevelSetTerm, cumulativeCanonicalSdf, cumulativeLiveSdf,
+				cumulativeWarpDist, cumulativeSdfDiff, consideredVoxelCount, dataVoxelCount, levelSetVoxelCount);
+	}
+
+private:
+
+	ITMScene<TVoxelLive, TIndex>* liveScene;
+	TVoxelLive* liveVoxels;
+	ITMHashEntry* liveHashEntries;
+	typename TIndex::IndexCache liveCache;
+
+	ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
+	TVoxelCanonical* canonicalVoxels;
+	ITMHashEntry* canonicalHashEntries;
+	typename TIndex::IndexCache canonicalCache;
+
+	// *** statistical aggregates
+	double cumulativeCanonicalSdf = 0.0;
+	double cumulativeLiveSdf = 0.0;
+	double cumulativeSdfDiff = 0.0;
+	double cumulativeWarpDist = 0.0;
+	unsigned int consideredVoxelCount = 0;
+	unsigned int dataVoxelCount = 0;
+	unsigned int levelSetVoxelCount = 0;
+
+	double totalDataEnergy = 0.0;
+	double totalLevelSetEnergy = 0.0;
+	double totalTikhonovEnergy = 0.0;
+	double totalKillingEnergy = 0.0;
+	double totalSmoothnessEnergy = 0.0;
+	double totalEnergy = 0.0;
+
+	// *** for less verbose parameter & debug variable access
+	// debug variables
+	const bool hasFocusCoordinates;
+	const Vector3i focusCoordinates;
+	// status variables
+	const int iteration;
+	const int sourceSdfIndex;
+	const int currentFrameIx;
+
+	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::Parameters parameters;
+	const typename ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::Switches switches;
+
+	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>* sceneLogger;
+};
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex> void
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpGradient_SingleThreadedVerbose(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene){
+
+	CalculateWarpGradient_SingleThreadedVerboseFunctor<TVoxelCanonical, TVoxelLive, TIndex> calculateGradientFunctor(
+			liveScene, canonicalScene, this->parameters, this->switches,this->iteration, this->currentFrameIx,
+			this->hasFocusCoordinates, this->focusCoordinates);
+
+	DualVoxelPositionTraversal_AllocateSecondaryOnMiss_CPU(
+			liveScene,canonicalScene,this->canonicalEntryAllocationTypes,calculateGradientFunctor, true);
+};
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex> void
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpGradient_SingleThreadedVerbose_Deprecated(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	// TODO: better function separation by regions where applicable. Chances are, private void functions will be inlined anyway at compile time. -Greg (GitHub: Algomorph)
@@ -154,21 +482,22 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 
 	// *** for less verbose parameter & debug variable access
 	// debug variables
-	const bool hasFocusCoordinates = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::hasFocusCoordinates;
-	Vector3i focusCoordinates = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::focusCoordinates;
-	std::ofstream& energy_stat_file = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::energy_stat_file;
-	// params
-	const float epsilon = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::epsilon;
+	const bool hasFocusCoordinates = this->hasFocusCoordinates;
+	Vector3i focusCoordinates = this->focusCoordinates;
+	std::ofstream& energy_stat_file = this->energy_stat_file;
+	// status variables
 	const int iteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
 	const int sourceSdfIndex = (iteration + 1) % 2;
 	const int currentFrameIx = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
-	const float weightSmoothnessTerm = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightSmoothnessTerm;
-	const float weightLevelSetTerm = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightLevelSetTerm;
-	const float gamma = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::rigidityEnforcementFactor;
+	// parameters
+	const float epsilon = this->parameters.epsilon;
+	const float weightSmoothnessTerm = this->parameters.weightSmoothnessTerm;
+	const float weightLevelSetTerm = this->parameters.weightLevelSetTerm;
+	const float gamma = this->parameters.rigidityEnforcementFactor;
 	// fraction of narrow band (non-Truncated region) half-width that a voxel spans
-	const float unity = liveScene->sceneParams->voxelSize / liveScene->sceneParams->mu;
+	const float unity = this->parameters.unity;
 
-	// *** traversal vars
+	// *** traversal variables
 	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
 	typename TIndex::IndexCache canonicalCache;
@@ -198,19 +527,20 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 				int* voxelAllocationList = canonicalScene->localVBA.GetAllocationList();
 				int* excessAllocationList = canonicalScene->index.GetExcessAllocationList();
 				ITMHashEntry* newEntry;
-				if(AllocateHashEntry_CPU(currentLiveHashEntry.pos, canonicalHashTable, newEntry, lastFreeExcessListId,
-				                         lastFreeExcessListId, voxelAllocationList, excessAllocationList,
-				                         canonicalHash)){
+				if (AllocateHashEntry_CPU(currentLiveHashEntry.pos, canonicalHashTable, newEntry, lastFreeExcessListId,
+				                          lastFreeExcessListId, voxelAllocationList, excessAllocationList,
+				                          canonicalHash)) {
 					currentCanonicalHashEntry = *newEntry;
 					uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
 					entriesAllocType[canonicalHash] = ITMLib::BOUNDARY;
-					std::cout << bright_red << "Allocating hash entry in canonical during gradient update at: " << currentLiveHashEntry.pos << reset << std::endl;
-				}else{
+					std::cout << bright_red << "Allocating hash entry in canonical during gradient update at: "
+					          << currentLiveHashEntry.pos << reset << std::endl;
+				} else {
 					DIEWITHEXCEPTION_REPORTLOCATION("Could not allocate hash entry...");
 				}
 				canonicalScene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
 				canonicalScene->index.SetLastFreeExcessListId(lastFreeExcessListId);
-			}else{
+			} else {
 				currentCanonicalHashEntry = canonicalHashTable[canonicalHash];
 			}
 		}
@@ -261,7 +591,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 						          << " Warp length: " << green << ORUtils::length(canonicalVoxel.warp) << reset;
 						std::cout << std::endl;
 						printVoxelResult = true;
-						if (ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::sceneLogger != nullptr) {
+						if (this->sceneLogger != nullptr) {
 							recordVoxelResult = true;
 						}
 					}
@@ -286,18 +616,18 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 							neighborWarps[iNeighbor] = warp;
 						}
 					}
-					if(printVoxelResult){
+					if (printVoxelResult) {
 						std::cout << blue << "Live 6-connected neighbor information:" << reset << std::endl;
-						print6ConnectedNeighborInfo(voxelPosition,liveVoxels,liveHashTable,liveCache);
+						print6ConnectedNeighborInfo(voxelPosition, liveVoxels, liveHashTable, liveCache);
 					}
 
 					//endregion
 
-					if (enableLevelSetTerm || enableDataTerm) {
+					if (this->switches.enableLevelSetTerm || this->switches.enableDataTerm) {
 						//TODO: in case both level set term and data term need to be computed, optimize by retreiving the sdf vals for live jacobian in a separate function. The live hessian needs to reuse them. -Greg (GitHub: Algomorph)
 						// compute the gradient of the live frame, ∇φ_n(Ψ) a.k.a ∇φ_{proj}(Ψ)
 						ComputeLiveJacobian_CentralDifferences(liveSdfJacobian, voxelPosition, liveVoxels,
-						                                              liveHashTable, liveCache);
+						                                       liveHashTable, liveCache);
 //						_DEBUG_ComputeLiveJacobian_CentralDifferences2(liveSdfJacobian, voxelPosition, liveVoxels,
 //						                                       liveHashTable, liveCache);
 //						ComputeLiveJacobian_ForwardDifferences(liveSdfJacobian, voxelPosition, liveVoxels,
@@ -305,7 +635,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 					}
 
 					// region =============================== DATA TERM ================================================
-					if (enableDataTerm) {
+					if (this->switches.enableDataTerm) {
 						// Compute data term error / energy
 						sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
 						// (φ_n(Ψ)−φ_{global}) ∇φ_n(Ψ) - also denoted as - (φ_{proj}(Ψ)−φ_{model}) ∇φ_{proj}(Ψ)
@@ -319,7 +649,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 								0.5f * (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
 					}
 					if (printVoxelResult) {
-						if (enableDataTerm) {
+						if (this->switches.enableDataTerm) {
 							_DEBUG_PrintDataTermStuff(liveSdfJacobian);
 						} else {
 							std::cout << std::endl;
@@ -329,7 +659,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 
 					// region =============================== LEVEL SET TERM ===========================================
 
-					if (enableLevelSetTerm) {
+					if (this->switches.enableLevelSetTerm) {
 
 						ComputeSdfHessian(liveSdfHessian, voxelPosition, liveSdf, liveVoxels, liveHashTable, liveCache);
 
@@ -348,8 +678,8 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 
 					// region =============================== SMOOTHING TERM (TIKHONOV & KILLING) ======================
 
-					if (enableSmoothingTerm) {
-						if (enableKillingTerm) {
+					if (this->switches.enableSmoothingTerm) {
+						if (this->switches.enableKillingTerm) {
 							ComputePerVoxelWarpJacobianAndHessian(canonicalVoxel.warp, neighborWarps,
 							                                      warpJacobian, warpHessian);
 							if (printVoxelResult) {
@@ -477,8 +807,8 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 	totalEnergy = totalDataEnergy + totalLevelSetEnergy + totalSmoothnessEnergy;
 
 	std::cout << bright_cyan << "*** General Iteration Statistics ***" << reset << std::endl;
-	PrintEnergyStatistics(enableDataTerm, enableLevelSetTerm, enableSmoothingTerm,
-	                      enableKillingTerm, gamma, totalDataEnergy,
+	PrintEnergyStatistics(this->switches.enableDataTerm, this->switches.enableLevelSetTerm,
+	                      this->switches.enableSmoothingTerm, this->switches.enableKillingTerm, gamma, totalDataEnergy,
 	                      totalLevelSetEnergy, totalTikhonovEnergy,
 	                      totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
 
@@ -486,28 +816,26 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 	energy_stat_file << totalDataEnergy << ", " << totalLevelSetEnergy << ", " << totalKillingEnergy << ", "
 	                 << totalSmoothnessEnergy << ", " << totalEnergy << std::endl;
 
-	CalculateAndPrintAdditionalStatistics(enableDataTerm, enableLevelSetTerm, cumulativeCanonicalSdf, cumulativeLiveSdf,
-	                                      cumulativeWarpDist, cumulativeSdfDiff, consideredVoxelCount, dataVoxelCount,
-	                                      levelSetVoxelCount);
-
-	return 0.0;//TODO: change signature to void
+	CalculateAndPrintAdditionalStatistics(
+			this->switches.enableDataTerm, this->switches.enableLevelSetTerm, cumulativeCanonicalSdf, cumulativeLiveSdf,
+			cumulativeWarpDist, cumulativeSdfDiff, consideredVoxelCount, dataVoxelCount, levelSetVoxelCount);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpUpdate_MultiThreaded(
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpGradient_MultiThreaded(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	// region DECLARATIONS / INITIALIZATIONS
 
 	// params
-	const float epsilon = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::epsilon;
+	const float epsilon = this->parameters.epsilon;
 	const int currentFrameIx = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
 	const int iteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
 	const int sourceSdfIndex = (iteration + 1) % 2;
 
-	const float weightSmoothnessTerm = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightSmoothnessTerm;
-	const float weightLevelSetTerm = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::weightLevelSetTerm;
-	const float gamma = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::rigidityEnforcementFactor;
+	const float weightSmoothnessTerm = this->parameters.weightSmoothnessTerm;
+	const float weightLevelSetTerm = this->parameters.weightLevelSetTerm;
+	const float gamma = this->parameters.rigidityEnforcementFactor;
 	// fraction of narrow band (non-Truncated region) half-width that a voxel spans
 	const float unity = liveScene->sceneParams->voxelSize / liveScene->sceneParams->mu;
 
@@ -544,13 +872,14 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 				int* voxelAllocationList = canonicalScene->localVBA.GetAllocationList();
 				int* excessAllocationList = canonicalScene->index.GetExcessAllocationList();
 				ITMHashEntry* newEntry;
-				if(AllocateHashEntry_CPU(currentLiveHashEntry.pos, canonicalHashTable, newEntry, lastFreeExcessListId,
-				                         lastFreeExcessListId, voxelAllocationList, excessAllocationList,
-				                         canonicalHash)){
+				if (AllocateHashEntry_CPU(currentLiveHashEntry.pos, canonicalHashTable, newEntry, lastFreeExcessListId,
+				                          lastFreeExcessListId, voxelAllocationList, excessAllocationList,
+				                          canonicalHash)) {
 					currentCanonicalHashEntry = *newEntry;
 					uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
 					entriesAllocType[canonicalHash] = ITMLib::BOUNDARY;
-					std::cout << bright_red << "Allocating hash entry in canonical during gradient update at: " << currentLiveHashEntry.pos << reset << std::endl;
+					std::cout << bright_red << "Allocating hash entry in canonical during gradient update at: "
+					          << currentLiveHashEntry.pos << reset << std::endl;
 				} else {
 					DIEWITHEXCEPTION_REPORTLOCATION("Could not allocate hash entry...");
 				}
@@ -614,7 +943,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 					}
 					//endregion
 
-					if (enableLevelSetTerm || enableDataTerm) {
+					if (this->switches.enableLevelSetTerm || this->switches.enableDataTerm) {
 						// compute the gradient of the live frame, ∇φ_n(Ψ)
 						ComputeLiveJacobian_CentralDifferences(liveSdfJacobian, voxelPosition, liveVoxels,
 						                                       liveHashTable, liveCache);
@@ -622,7 +951,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 
 					// region =============================== DATA TERM ================================================
 
-					if (enableDataTerm) {
+					if (this->switches.enableDataTerm) {
 						// Compute data term error / energy
 						sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
 						// (φ_n(Ψ)−φ_{global}) ∇φ_n(Ψ)
@@ -635,7 +964,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 
 					// region =============================== LEVEL SET TERM ===========================================
 
-					if (enableLevelSetTerm) {
+					if (this->switches.enableLevelSetTerm) {
 
 						ComputeSdfHessian(liveSdfHessian, voxelPosition, liveSdf, liveVoxels, liveHashTable, liveCache);
 
@@ -650,8 +979,8 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 					// endregion =======================================================================================
 
 					// region =============================== SMOOTHING TERM (TIKHONOV & KILLING) ======================
-					if (enableSmoothingTerm) {
-						if (enableKillingTerm) {
+					if (this->switches.enableSmoothingTerm) {
+						if (this->switches.enableKillingTerm) {
 							ComputePerVoxelWarpJacobianAndHessian(canonicalVoxel.warp, neighborWarps,
 							                                      warpJacobian, warpHessian);
 
@@ -708,7 +1037,6 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateW
 			}
 		}
 	}
-	return 0.0;//TODO: change signature to void
 }
 
 // endregion ===========================================================================================================
@@ -802,6 +1130,7 @@ const float GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, TD
 		4.410932423926422832e-03f,
 		2.995861099045313996e-04f};
 
+//_DEBUG -- normalized version
 //template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex, TraversalDirection TDirection>
 //const float GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, TDirection>::sobolevFilter1D[] = {
 //		2.636041325812907461e-04f,
@@ -817,7 +1146,7 @@ const float GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, TD
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplySmoothingToGradient(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
-	if (enableGradientSmoothing) {
+	if (this->switches.enableGradientSmoothing) {
 		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, X> passFunctorX(canonicalScene, liveScene);
 		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, Y> passFunctorY(canonicalScene, liveScene);
 		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, Z> passFunctorZ(canonicalScene, liveScene);
@@ -833,7 +1162,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUpdateToWarp_SingleThreadedVerbose(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
-	const float learningRate = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::gradientDescentLearningRate;
+	const float learningRate = this->parameters.gradientDescentLearningRate;
 	const int currentFrameIx = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
 	const int iteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
 	const int sourceSdfIndex = (iteration + 1) % 2;
@@ -852,8 +1181,8 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 	// *** stats
 	float maxWarpLength = 0.0f;
 	float maxWarpUpdateLength = 0.0f;
-	Vector3i maxWarpPosition(0.f);
-	Vector3i maxWarpUpdatePosition(0.f);
+	Vector3i maxWarpPosition(0);
+	Vector3i maxWarpUpdatePosition(0);
 
 	//Apply the update
 	for (int hash = 0; hash < noTotalEntries; hash++) {
@@ -887,8 +1216,8 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 						continue;
 					}
 					TVoxelCanonical& canonicalVoxel = localCanonicalVoxelBlock[locId];
-					Vector3f warpUpdate = -learningRate * (enableGradientSmoothing ? canonicalVoxel.gradient1
-					                                                               : canonicalVoxel.gradient0);
+					Vector3f warpUpdate = -learningRate * (this->switches.enableGradientSmoothing ?
+					                                       canonicalVoxel.gradient1 : canonicalVoxel.gradient0);
 
 					canonicalVoxel.gradient0 = warpUpdate;
 					canonicalVoxel.warp += warpUpdate;
@@ -985,7 +1314,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUpdateToWarp_MultiThreaded(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
-	const float learningRate = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::gradientDescentLearningRate;
+	const float learningRate = this->parameters.gradientDescentLearningRate;
 	const int currentFrameIx = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
 	const int iteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
 	const int sourceSdfIndex = (iteration + 1) % 2;
@@ -1040,8 +1369,8 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 						continue;
 					}
 					TVoxelCanonical& canonicalVoxel = localCanonicalVoxelBlock[locId];
-					Vector3f warpUpdate = -learningRate * (enableGradientSmoothing ? canonicalVoxel.gradient1
-					                                                               : canonicalVoxel.gradient0);
+					Vector3f warpUpdate = -learningRate * (this->switches.enableGradientSmoothing ?
+					                                       canonicalVoxel.gradient1 : canonicalVoxel.gradient0);
 					canonicalVoxel.gradient0 = warpUpdate;
 					canonicalVoxel.warp += warpUpdate;
 					float warpLength = ORUtils::length(canonicalVoxel.warp);
@@ -1067,7 +1396,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 #if defined(_DEBUG) && !defined(WITH_OPENMP)
 	return ApplyWarpUpdateToWarp_SingleThreadedVerbose(canonicalScene, liveScene);
 #else
-	return ApplyWarpUpdateToWarp_MultiThreaded(canonicalScene,liveScene);
+	return ApplyWarpUpdateToWarp_MultiThreaded(canonicalScene, liveScene);
 #endif
 };
 

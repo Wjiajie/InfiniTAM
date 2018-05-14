@@ -13,10 +13,12 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+
 #include "ITMSceneMotionTracker_CUDA.h"
 #include "../../Utils/ITMCUDAUtils.h"
 #include "../../../ORUtils/CUDADefines.h"
 #include "../../Objects/Views/ITMView.h"
+#include "../../Utils/ITMLibSettings.h"
 
 using namespace ITMLib;
 
@@ -41,7 +43,7 @@ __global__ void computeWarpUpdate_device(TVoxelCanonical* canonicalVoxelArray,
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-float ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpUpdate(
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpGradient(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 		ITMScene<TVoxelLive, TIndex>* liveScene) {
 	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
@@ -82,9 +84,9 @@ ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker_CUDA(
-		const ITMSceneParams& params, std::string scenePath)
+		const ITMLibSettings* settings)
 		:
-		ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(params, scenePath) {
+		ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(settings) {
 
 }
 

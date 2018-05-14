@@ -121,7 +121,6 @@ void ComputeLiveJacobian_ForwardDifferences(Vector3f& jacobian,
 
 	float sdfAtPosition = sdf_at(Vector3i(0, 0, 0));
 #undef sdf_at
-
 	jacobian[0] = sdfAtXplusOne - sdfAtPosition;
 	jacobian[1] = sdfAtYplusOne - sdfAtPosition;
 	jacobian[2] = sdfAtZplusOne - sdfAtPosition;

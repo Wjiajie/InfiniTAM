@@ -17,13 +17,14 @@
 
 #include "../Interface/ITMSceneMotionTracker.h"
 
+
 namespace ITMLib {
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMSceneMotionTracker_CUDA :
 		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex> {
 public:
 
-	explicit ITMSceneMotionTracker_CUDA(const ITMSceneParams& params, std::string scenePath);
+	explicit ITMSceneMotionTracker_CUDA(const ITMLibSettings* settings);
 	void
 	FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene) override;
 	void WarpCanonicalToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
@@ -34,8 +35,8 @@ protected:
 	                                    ITMScene <TVoxelLive, TIndex>* liveScene) override;
 	void ApplyWarpFieldToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 		                          ITMScene <TVoxelLive, TIndex>* sourceLiveScene) override;
-	float CalculateWarpUpdate(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-	                          ITMScene <TVoxelLive, TIndex>* liveScene) override;
+	void CalculateWarpGradient(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+	                           ITMScene <TVoxelLive, TIndex>* liveScene) override;
 	void ApplySmoothingToGradient(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                              ITMScene <TVoxelLive, TIndex>* liveScene) override;
 	void ApplyWarpUpdateToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,

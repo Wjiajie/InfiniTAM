@@ -561,51 +561,11 @@ public:
 
 		switch (settings->deviceType) {
 			case ITMLibSettings::DEVICE_CPU:
-				if (settings->FocusCoordinatesAreSpecified()) {
-					sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>(
-							settings->sceneParams,
-							settings->outputPath,
-							settings->GetFocusCoordinates(),
-
-							settings->enableDataTerm,
-							settings->enableLevelSetTerm,
-							settings->enableSmoothingTerm,
-							settings->enableSmoothingTerm,
-							settings->enableGradientSmoothing,
-
-							settings->sceneTrackingMaxOptimizationIterationCount,
-							settings->sceneTrackingOptimizationVectorUpdateThresholdMeters,
-							settings->sceneTrackingGradientDescentLearningRate,
-							settings->sceneTrackingRigidityEnforcementFactor,
-							settings->sceneTrackingWeightSmoothingTerm,
-							settings->sceneTrackingWeightLevelSetTerm,
-							settings->sceneTrackingLevelSetTermEpsilon
-					);
-				} else {
-					sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>(
-							settings->sceneParams,
-							settings->outputPath,
-
-							settings->enableDataTerm,
-							settings->enableLevelSetTerm,
-							settings->enableSmoothingTerm,
-							settings->enableKillingTerm,
-							settings->enableGradientSmoothing,
-
-							settings->sceneTrackingMaxOptimizationIterationCount,
-							settings->sceneTrackingOptimizationVectorUpdateThresholdMeters,
-							settings->sceneTrackingGradientDescentLearningRate,
-							settings->sceneTrackingRigidityEnforcementFactor,
-							settings->sceneTrackingWeightSmoothingTerm,
-							settings->sceneTrackingWeightLevelSetTerm,
-							settings->sceneTrackingLevelSetTermEpsilon
-					);
-				}
+				sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>(settings);
 				break;
 			case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-				sceneRecoEngine = new ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>(
-						settings->sceneParams, settings->outputPath);
+				sceneRecoEngine = new ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>(settings);
 #endif
 				break;
 			case ITMLibSettings::DEVICE_METAL:
