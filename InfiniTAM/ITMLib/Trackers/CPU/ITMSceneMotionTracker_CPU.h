@@ -68,8 +68,6 @@ private:
 	void AllocateHashBlocksAtWarpedLocations(
 			ITMScene <TVoxelCanonical, TIndex>* warpSourceScene, ITMScene <TVoxelLive, TIndex>* sdfScene, int flagIndex);
 
-	void CalculateWarpGradient_SingleThreadedVerbose_Deprecated(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                                            ITMScene<TVoxelLive, TIndex>* liveScene);
 	void CalculateWarpGradient_MultiThreaded(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                         ITMScene<TVoxelLive, TIndex>* liveScene);
 
