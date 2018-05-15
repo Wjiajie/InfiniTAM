@@ -1,6 +1,9 @@
 .idea/
 doxygen-html/
 cmake-build-*/
+Doxyfile.bak
+cmake_install.cmake
+Makefile
 
 *.kdev4
 *.opensdf
