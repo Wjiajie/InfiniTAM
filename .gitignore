@@ -1,4 +1,6 @@
 .idea/
+doxygen-html/
+cmake-build-*/
 
 *.kdev4
 *.opensdf
