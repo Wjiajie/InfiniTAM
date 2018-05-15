@@ -44,7 +44,7 @@ protected:
 
 	float ApplyWarpUpdateToWarp(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                            ITMScene <TVoxelLive, TIndex>* liveScene) override;
-
+	void ClearOutWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) override;
 	void ClearOutFrameWarps(ITMScene <TVoxelCanonical, TIndex>* canonicalScene) override;
 	void ApplyFrameWarpsToWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) override;
 };

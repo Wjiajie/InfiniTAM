@@ -134,3 +134,9 @@ void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ApplyFrame
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not yet implemented");
 }
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>::ClearOutWarps(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not yet implemented");
+}

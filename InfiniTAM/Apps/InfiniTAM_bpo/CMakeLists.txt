@@ -30,6 +30,7 @@ INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseUVC.cmake)
 SET(sources
     InfiniTAM_bpo.cpp
     UIEngine_BPO.cpp
+    UIEngine_BPO_GlutFunctions.cpp
 )
 
 SET(headers

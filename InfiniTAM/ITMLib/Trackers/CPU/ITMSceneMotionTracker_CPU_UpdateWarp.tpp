@@ -122,12 +122,14 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpGra
 #if defined(_DEBUG) && !defined(WITH_OPENMP)
 	CalculateWarpGradient_SingleThreadedVerbose(canonicalScene, liveScene);
 #else
-	CalculateWarpGradient_MultiThreaded(canonicalScene, liveScene);
+	DIEWITHEXCEPTION_REPORTLOCATION("NOT IMPLEMENTED");
 #endif
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
+
+	// region ========================================= CONSTRUCTOR ====================================================
 
 	CalculateWarpGradient_SingleThreadedVerboseFunctor(
 			ITMScene<TVoxelLive, TIndex>* liveScene,
@@ -154,6 +156,7 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 			canonicalVoxels(canonicalScene->localVBA.GetVoxelBlocks()),
 			canonicalHashEntries(canonicalScene->index.GetEntries()),
 			canonicalCache() {}
+	// endregion =======================================================================================================
 
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i voxelPosition) {
 		if (liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_NONTRUNCATED) {
@@ -305,9 +308,6 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 				parameters.weightLevelSetTerm * localLevelSetEnergyGradient +
 				parameters.weightSmoothnessTerm * localSmoothnessEnergyGradient;
 
-		//_DEBUG
-		//localEnergyGradient.z = 0.0f;
-
 		canonicalVoxel.gradient0 = localEnergyGradient;
 
 		// endregion
@@ -331,6 +331,7 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 		consideredVoxelCount += 1;
 		// endregion
 
+		// region ======================== FINALIZE RESULT PRINTING / RECORDING ========================================
 		//TODO: move to separate function?
 		if (printVoxelResult) {
 			std::cout << blue << "Data gradient: " << localDataEnergyGradient * -1.f;
@@ -357,6 +358,7 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 				sceneLogger->LogHighlight(hash, locId, currentFrameIx, info);
 			}
 		}
+		// endregion ===================================================================================================
 	}
 
 	void FinalizePrintAndRecordStatistics(std::ofstream& energy_stat_file) {
@@ -406,7 +408,6 @@ private:
 	double totalTikhonovEnergy = 0.0;
 	double totalKillingEnergy = 0.0;
 	double totalSmoothnessEnergy = 0.0;
-	double totalEnergy = 0.0;
 
 	// *** for less verbose parameter & debug variable access
 	// debug variables

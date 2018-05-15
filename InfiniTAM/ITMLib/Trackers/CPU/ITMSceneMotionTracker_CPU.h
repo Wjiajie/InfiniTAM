@@ -63,7 +63,7 @@ protected:
 
 	void AllocateNewCanonicalHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                    ITMScene<TVoxelLive, TIndex>* liveScene) override;
-
+	void ClearOutWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) override;
 	void ClearOutFrameWarps(ITMScene <TVoxelCanonical, TIndex>* canonicalScene) override;
 	void ApplyFrameWarpsToWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) override;
 
@@ -72,15 +72,8 @@ private:
 	void AllocateHashBlocksAtWarpedLocations(
 			ITMScene <TVoxelCanonical, TIndex>* warpSourceScene, ITMScene <TVoxelLive, TIndex>* sdfScene, int flagIndex);
 
-	void CalculateWarpGradient_MultiThreaded(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                         ITMScene<TVoxelLive, TIndex>* liveScene);
-
 	float ApplyWarpUpdateToWarp_SingleThreadedVerbose(
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
-
-	float ApplyWarpUpdateToWarp_MultiThreaded(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
-
 
 	void InitializeHelper(const ITMLib::ITMSceneParams& sceneParams);
 	void PrintSettings();

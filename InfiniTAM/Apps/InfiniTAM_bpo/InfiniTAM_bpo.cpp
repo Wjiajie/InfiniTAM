@@ -162,6 +162,7 @@ int main(int argc, char** argv) {
 		bool enableKillingTerm = false;
 		bool disableGradientSmoothing = false;
 		bool killingModeEnabled = false;
+		bool recordReconstructionToVideo = false;
 
 		//@formatter:off
 		arguments.add_options()
@@ -196,6 +197,9 @@ int main(int argc, char** argv) {
 						"No other usage scenario takes them into account.\n"
 				)
 				("output,o", po::value<std::string>()->default_value("./Output"), "Output directory, e.g.: ./Output")
+
+				("record_reconstruction_video", po::bool_switch(&recordReconstructionToVideo)->default_value(false),
+				 "Whether to record the reconstruction rendering to video after each frame is processed.")
 
 				("focus_coordinates,f", po::value<std::vector<int>>()->multitoken(), "The coordinates of the voxel"
 						" which to focus on for logging/debugging, as 3 integers separated by spaces, \"x y z\"."
@@ -377,7 +381,6 @@ int main(int argc, char** argv) {
 			settings->sceneTrackingWeightLevelSetTerm = vm["weight_level_set_term"].as<float>();
 		}
 
-
 		ITMMainEngine* mainEngine = nullptr;
 		switch (settings->libMode) {
 			case ITMLibSettings::LIBMODE_BASIC:
@@ -421,7 +424,7 @@ int main(int argc, char** argv) {
 			skipFirstNFrames = vm["start_from_frame_ix"].as<int>();
 		}
 		UIEngine_BPO::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine, settings->outputPath,
-		                                     settings->deviceType, processNFramesOnLaunch, skipFirstNFrames);
+		                                     settings->deviceType, processNFramesOnLaunch, skipFirstNFrames, recordReconstructionToVideo);
 		UIEngine_BPO::Instance()->Run();
 		UIEngine_BPO::Instance()->Shutdown();
 // endregion ===========================================================================================================

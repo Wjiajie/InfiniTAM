@@ -105,8 +105,8 @@ protected:
 	virtual void AllocateNewCanonicalHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                            ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 
-	virtual void ClearOutFrameWarps(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
+	virtual void ClearOutFrameWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
+	virtual void ClearOutWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
 	virtual void ApplyFrameWarpsToWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
 
 
@@ -126,13 +126,27 @@ protected:
 	bool hasFocusCoordinates = false;
 	Vector3i focusCoordinates;
 
+	//*** 2D visual debugging
 	//TODO: these should be CLI parameters -Greg (GitHub:Algomorph)
+	//TODO: recording & recording frame index should be CLI parameters -Greg (GitHub:Algomorph)
 	bool rasterizeLive = false;
 	bool rasterizeCanonical = false;
 	bool rasterizeUpdates = false;
 	unsigned int rasterizationFrame = 1;
+	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex> rasterizer;
+	cv::Mat blank;
+	cv::Mat liveImgTemplate;
 
 private:
+
+	void InitializeTracking(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
+	                        bool recordWarpUpdates);
+
+	void PerformSingleOptimizationStep(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                                   ITMScene<TVoxelLive, TIndex>*& liveScene,
+	                                   bool recordWarpUpdates);
+	void FinalizeTracking(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
+	                      bool recordWarpUpdates);
 
 	void InitializeUpdate2DImageLogging(
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene, cv::Mat& blank,
@@ -143,6 +157,7 @@ private:
 			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>& rasterizer);
 	float maxVectorUpdate;
 	bool inStepByStepProcessingMode = false;
+	void PrintLiveSceneStatistics(ITMScene<TVoxelLive, TIndex>* scene, const char* desc);
 };
 
 

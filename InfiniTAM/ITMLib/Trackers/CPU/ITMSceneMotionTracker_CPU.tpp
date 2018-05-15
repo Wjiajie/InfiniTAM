@@ -437,10 +437,11 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::PrintSettin
 
 
 template<typename TVoxelMulti>
-struct MultiFlagClearFunctor{
-	MultiFlagClearFunctor(int flagFieldIndex) : flagFieldIndex(flagFieldIndex){}
+struct IndexedFieldClearFunctor{
+	IndexedFieldClearFunctor(int flagFieldIndex) : flagFieldIndex(flagFieldIndex){}
 	void operator()(TVoxelMulti& voxel) {
 		voxel.flag_values[flagFieldIndex] = ITMLib::VOXEL_UNKNOWN;
+		voxel.sdf_values[flagFieldIndex] = TVoxelMulti::SDF_initialValue();
 	}
 private:
 	const int flagFieldIndex;
@@ -450,6 +451,13 @@ template<typename TVoxel>
 struct FrameWarpClearFunctor{
 	static void run(TVoxel& voxel) {
 		voxel.frame_warp = Vector3f(0.0f);
+	}
+};
+
+template<typename TVoxel>
+struct WarpClearFunctor{
+	static void run(TVoxel& voxel) {
+		voxel.warp = Vector3f(0.0f);
 	}
 };
 
@@ -465,6 +473,12 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ClearOutFra
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
 	StaticVoxelTraversal_CPU<FrameWarpClearFunctor<TVoxelCanonical>>(*canonicalScene);
 };
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ClearOutWarps(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
+	StaticVoxelTraversal_CPU<WarpClearFunctor<TVoxelCanonical>>(*canonicalScene);
+}
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyFrameWarpsToWarps(
@@ -627,7 +641,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpFi
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	// Clear out the flags at index 1
-	MultiFlagClearFunctor<TVoxelLive> flagClearFunctor(1);
+	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(1);
 	VoxelTraversal_CPU(*liveScene,flagClearFunctor);
 
 	// Allocate new hash blocks due to warps where necessary, use flags from raw frame
@@ -669,7 +683,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUp
 	const int targetSdfIndex = ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::GetTargetLiveSdfIndex(iteration);
 
 	// Clear out the flags at target index
-	MultiFlagClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
+	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
 	VoxelTraversal_CPU(*liveScene,flagClearFunctor);
 
 	// Allocate new blocks where necessary, filter based on flags from source
@@ -715,12 +729,16 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateHas
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 int ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::GetSourceLiveSdfIndex(int iteration) {
-	return (iteration + 1) % 2;
+	//return (iteration + 1) % 2;
+	return iteration% 2;//_DEBUG
 }
+
+
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 int ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::GetTargetLiveSdfIndex(int iteration) {
-	return iteration % 2;
+	//return iteration % 2;
+	return (iteration + 1) % 2;//_DEBUG
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
