@@ -149,6 +149,32 @@ void ComputeLiveJacobian_CentralDifferences(Vector3f& jacobian,
 	jacobian[1] = 0.5f * (sdfAtYplusOne - sdfAtYminusOne);
 	jacobian[2] = 0.5f * (sdfAtZplusOne - sdfAtZminusOne);
 };
+
+
+template<typename TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+void ComputeLiveJacobian_CentralDifferences_IndexedFields(
+		Vector3f& jacobian,
+		const Vector3i& voxelPosition,
+		const TVoxel* voxels,
+		const ITMHashEntry* hashEntries,
+		THREADPTR(TCache) cache,
+		int fieldIndex) {
+	int vmIndex;
+#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, hashEntries, voxelPosition + (offset), vmIndex, cache).sdf_values[fieldIndex]))
+
+	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
+	float sdfAtYplusOne = sdf_at(Vector3i(0, 1, 0));
+	float sdfAtZplusOne = sdf_at(Vector3i(0, 0, 1));
+	float sdfAtXminusOne = sdf_at(Vector3i(-1, 0, 0));
+	float sdfAtYminusOne = sdf_at(Vector3i(0, -1, 0));
+	float sdfAtZminusOne = sdf_at(Vector3i(0, 0, -1));
+
+#undef sdf_at
+	jacobian[0] = 0.5f * (sdfAtXplusOne - sdfAtXminusOne);
+	jacobian[1] = 0.5f * (sdfAtYplusOne - sdfAtYminusOne);
+	jacobian[2] = 0.5f * (sdfAtZplusOne - sdfAtZminusOne);
+};
 // endregion
 
 // region ================================= SDF HESSIAN ================================================================
@@ -202,6 +228,60 @@ inline void ComputeSdfHessian(THREADPTR(Matrix3f)& hessian,
 
 	hessian.setValues(vals);
 };
+
+
+template<typename TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline void ComputeSdfHessian_IndexedFields(THREADPTR(Matrix3f)& hessian,
+                              const CONSTPTR(Vector3i &) position,
+                              const CONSTPTR(float)& sdfAtPosition,
+		//const CONSTPTR(Vector3f&) jacobianAtPosition,
+		                      const CONSTPTR(TVoxel)* voxels,
+		                      const CONSTPTR(ITMHashEntry)* hashEntries,
+		                      THREADPTR(TCache) cache,
+		                                    int fieldIndex) {
+	int vmIndex;
+#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, hashEntries, position + (offset), vmIndex, cache).sdf_values[fieldIndex]))
+	//for xx, yy, zz
+	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
+	float sdfAtYplusOne = sdf_at(Vector3i(0, 1, 0));
+	float sdfAtZplusOne = sdf_at(Vector3i(0, 0, 1));
+	float sdfAtXminusOne = sdf_at(Vector3i(-1, 0, 0));
+	float sdfAtYminusOne = sdf_at(Vector3i(0, -1, 0));
+	float sdfAtZminusOne = sdf_at(Vector3i(0, 0, -1));
+
+	//for xy, xz, yz
+	float sdfAtXplusOneYplusOne = sdf_at(Vector3i(1, 1, 0));
+	float sdfAtXminusOneYminusOne = sdf_at(Vector3i(-1, -1, 0));
+	float sdfAtYplusOneZplusOne = sdf_at(Vector3i(0, 1, 1));
+	float sdfAtYminusOneZminusOne = sdf_at(Vector3i(0, -1, -1));
+	float sdfAtXplusOneZplusOne = sdf_at(Vector3i(1, 0, 1));
+	float sdfAtXminusOneZminusOne = sdf_at(Vector3i(-1, 0, -1));
+#undef sdf_at
+	float delta_xx = sdfAtXplusOne - 2 * sdfAtPosition + sdfAtXminusOne;
+	float delta_yy = sdfAtYplusOne - 2 * sdfAtPosition + sdfAtYminusOne;
+	float delta_zz = sdfAtZplusOne - 2 * sdfAtPosition + sdfAtZminusOne;
+
+	float delta_xy = 0.5f * (sdfAtXplusOneYplusOne - sdfAtXplusOne - sdfAtYplusOne
+	                         + 2 * sdfAtPosition
+	                         - sdfAtXminusOne - sdfAtYminusOne + sdfAtXminusOneYminusOne);
+
+	float delta_yz = 0.5f * (sdfAtYplusOneZplusOne - sdfAtYplusOne - sdfAtZplusOne
+	                         + 2 * sdfAtPosition
+	                         - sdfAtYminusOne - sdfAtZminusOne + sdfAtYminusOneZminusOne);
+
+	float delta_xz = 0.5f * (sdfAtXplusOneZplusOne - sdfAtXplusOne - sdfAtZplusOne
+	                         + 2 * sdfAtPosition
+	                         - sdfAtXminusOne - sdfAtZminusOne + sdfAtXminusOneZminusOne);
+
+	float vals[9] = {delta_xx, delta_xy, delta_xz,
+	                 delta_xy, delta_yy, delta_yz,
+	                 delta_yz, delta_yz, delta_zz};
+
+	hessian.setValues(vals);
+};
+
+
 //endregion
 
 // region ================================ WARP LAPLACIAN (SMOOTHING/TIKHONOV TERM) ====================================

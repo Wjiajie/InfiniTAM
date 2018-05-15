@@ -205,6 +205,39 @@ inline void find6ConnectedNeighborInfo(
 #undef PROCESS_VOXEL
 }
 
+template<typename TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline void find6ConnectedNeighborInfoIndexedFields(
+		THREADPTR(bool)* neighborKnown, //x6, out
+		THREADPTR(bool)* neighborTruncated, //x6, out
+		THREADPTR(bool)* neighborAllocated, //x6, out
+		THREADPTR(float)* neighborSdf, //x6, out
+		const CONSTPTR(Vector3i)& voxelPosition,
+		const CONSTPTR(TVoxel)* voxels,
+		const CONSTPTR(ITMHashEntry)* hashEntries,
+		THREADPTR(TCache)& cache,
+		int fieldIndex) {
+	int vmIndex;
+
+	TVoxel voxel;
+	//TODO: define inline function instead of macro
+#define PROCESS_VOXEL(location, index)\
+    voxel = readVoxel(voxels, hashEntries, voxelPosition + (location), vmIndex, cache);\
+    neighborAllocated[index] = vmIndex != 0;\
+    neighborKnown[index] = voxel.flag_values[fieldIndex] != ITMLib::VOXEL_UNKNOWN;\
+    neighborTruncated[index] = voxel.flag_values[fieldIndex] == ITMLib::VOXEL_TRUNCATED;\
+	neighborSdf[index] = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+
+	PROCESS_VOXEL(Vector3i(-1, 0, 0), 0);
+	PROCESS_VOXEL(Vector3i(0, -1, 0), 1);
+	PROCESS_VOXEL(Vector3i(0, 0, -1), 2);
+
+	PROCESS_VOXEL(Vector3i(1, 0, 0), 3);
+	PROCESS_VOXEL(Vector3i(0, 1, 0), 4);
+	PROCESS_VOXEL(Vector3i(0, 0, 1), 5);
+#undef PROCESS_VOXEL
+}
+
 _CPU_AND_GPU_CODE_
 inline std::string print_bool(bool value) {
 	std::ostringstream os;
@@ -241,41 +274,112 @@ inline void print6ConnectedNeighborInfo(
 
 template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
-void _DEBUG_ComputeLiveJacobian_CentralDifferences(Vector3f& jacobian,
-                                                   const Vector3i& voxelPosition,
-                                                   const TVoxel* voxels,
-                                                   const ITMHashEntry* hashEntries,
-                                                   TCache cache) {
+inline void print6ConnectedNeighborInfoIndexedFields(
+		const CONSTPTR(Vector3i)& voxelPosition,
+		const CONSTPTR(TVoxel)* voxels,
+		const CONSTPTR(ITMHashEntry)* hashEntries,
+		THREADPTR(TCache)& cache,
+		int fieldIndex) {
+	const int neighborhoodSize = 6;
+	bool neighborKnown[neighborhoodSize];
+	bool neighborTruncated[neighborhoodSize];
+	bool neighborAllocated[neighborhoodSize];
+	float neighborSdf[neighborhoodSize];
+
+	find6ConnectedNeighborInfoIndexedFields(neighborKnown, neighborTruncated, neighborAllocated, neighborSdf,
+	                                        voxelPosition, voxels, hashEntries, cache, fieldIndex);
+	const Vector3i positions[6] = {Vector3i(-1, 0, 0), Vector3i(0, -1, 0), Vector3i(0, 0, -1),
+	                               Vector3i(1, 0, 0), Vector3i(0, 1, 0), Vector3i(0, 0, 1)};
+
+	for (int iNeighbor = 0; iNeighbor < 6; iNeighbor++) {
+		std::cout << ITMLib::yellow <<"[" << positions[iNeighbor] << "]" << ITMLib::reset
+		          <<" allocated: " << print_bool(neighborAllocated[iNeighbor])
+		          << " truncated: " << print_bool(neighborTruncated[iNeighbor]) << " known: "
+		          << print_bool(neighborKnown[iNeighbor]) << " sdf: " << neighborSdf[iNeighbor] << std::endl;
+	}
+}
+
+
+template<typename TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+void ComputeLiveJacobian_CentralDifferences_NontruncatedOnly(Vector3f& jacobian,
+                                                             const Vector3i& voxelPosition,
+                                                             const TVoxel* voxels,
+                                                             const ITMHashEntry* hashEntries,
+                                                             TCache cache) {
 	int vmIndex;
 	TVoxel voxel;
 	bool xValid = true, yValid = true, zValid = true;
-#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, hashEntries, voxelPosition + (offset), vmIndex, cache).sdf))
 
 	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(1, 0, 0), vmIndex, cache);
 	xValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
-	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
+	float sdfAtXplusOne = TVoxel::valueToFloat(voxel.sdf);
 
 	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 1, 0), vmIndex, cache);
 	yValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
-	float sdfAtYplusOne = sdf_at(Vector3i(0, 1, 0));
+	float sdfAtYplusOne = TVoxel::valueToFloat(voxel.sdf);
 
 	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 0, 1), vmIndex, cache);
 	zValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
-	float sdfAtZplusOne = sdf_at(Vector3i(0, 0, 1));
+	float sdfAtZplusOne = TVoxel::valueToFloat(voxel.sdf);
 
 	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(-1, 0, 0), vmIndex, cache);
 	xValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
-	float sdfAtXminusOne = sdf_at(Vector3i(-1, 0, 0));
+	float sdfAtXminusOne = TVoxel::valueToFloat(voxel.sdf);
 
 	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, -1, 0), vmIndex, cache);
 	yValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
-	float sdfAtYminusOne = sdf_at(Vector3i(0, -1, 0));
+	float sdfAtYminusOne = TVoxel::valueToFloat(voxel.sdf);
 
 	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 0, -1), vmIndex, cache);
 	zValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
-	float sdfAtZminusOne = sdf_at(Vector3i(0, 0, -1));
+	float sdfAtZminusOne = TVoxel::valueToFloat(voxel.sdf);
 
-#undef sdf_at
+
+	jacobian[0] = xValid ? 0.5f * (sdfAtXplusOne - sdfAtXminusOne) : 0.0f;
+	jacobian[1] = yValid ? 0.5f * (sdfAtYplusOne - sdfAtYminusOne) : 0.0f;
+	jacobian[2] = zValid ? 0.5f * (sdfAtZplusOne - sdfAtZminusOne) : 0.0f;
+};
+
+
+
+template<typename TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+void ComputeLiveJacobian_CentralDifferences_NontruncatedOnly_IndexedFields(Vector3f& jacobian,
+                                                             const Vector3i& voxelPosition,
+                                                             const TVoxel* voxels,
+                                                             const ITMHashEntry* hashEntries,
+                                                             int fieldIndex,
+                                                             TCache cache) {
+	int vmIndex;
+	TVoxel voxel;
+	bool xValid = true, yValid = true, zValid = true;
+
+	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(1, 0, 0), vmIndex, cache);
+	xValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+	float sdfAtXplusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+
+	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 1, 0), vmIndex, cache);
+	yValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+	float sdfAtYplusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+
+	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 0, 1), vmIndex, cache);
+	zValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+	float sdfAtZplusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+
+	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(-1, 0, 0), vmIndex, cache);
+	xValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+	float sdfAtXminusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+
+	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, -1, 0), vmIndex, cache);
+	yValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+	float sdfAtYminusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+
+	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 0, -1), vmIndex, cache);
+	zValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+	float sdfAtZminusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+
+
 	jacobian[0] = xValid ? 0.5f * (sdfAtXplusOne - sdfAtXminusOne) : 0.0f;
 	jacobian[1] = yValid ? 0.5f * (sdfAtYplusOne - sdfAtYminusOne) : 0.0f;
 	jacobian[2] = zValid ? 0.5f * (sdfAtZplusOne - sdfAtZminusOne) : 0.0f;
@@ -284,11 +388,11 @@ void _DEBUG_ComputeLiveJacobian_CentralDifferences(Vector3f& jacobian,
 
 template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
-void _DEBUG_ComputeLiveJacobian_CentralDifferences2(Vector3f& jacobian,
-                                                   const Vector3i& voxelPosition,
-                                                   const TVoxel* voxels,
-                                                   const ITMHashEntry* hashEntries,
-                                                   TCache cache) {
+void ComputeLiveJacobian_CentralDifferences_AllocatedOnly(Vector3f& jacobian,
+                                                          const Vector3i& voxelPosition,
+                                                          const TVoxel* voxels,
+                                                          const ITMHashEntry* hashEntries,
+                                                          TCache cache) {
 	int vmIndex;
 	TVoxel voxel;
 	bool xValid = true, yValid = true, zValid = true;

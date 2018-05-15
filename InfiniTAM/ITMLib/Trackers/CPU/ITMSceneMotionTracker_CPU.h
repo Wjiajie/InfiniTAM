@@ -24,6 +24,10 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMSceneMotionTracker_CPU :
 		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex> {
 public:
+	static int GetSourceLiveSdfIndex(int iteration);
+	static int GetTargetLiveSdfIndex(int iteration);
+	static const int rawLiveFrameSdfIndex;
+	static const int initializedLiveFrameSdfIndex;
 
 	explicit ITMSceneMotionTracker_CPU(const ITMLibSettings* settings);
 	virtual ~ITMSceneMotionTracker_CPU();

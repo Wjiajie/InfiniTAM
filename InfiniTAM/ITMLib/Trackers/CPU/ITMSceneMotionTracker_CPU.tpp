@@ -631,12 +631,12 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpFi
 	VoxelTraversal_CPU(*liveScene,flagClearFunctor);
 
 	// Allocate new hash blocks due to warps where necessary, use flags from raw frame
-	AllocateHashBlocksAtWarpedLocations(canonicalScene, liveScene, 0);
+	AllocateHashBlocksAtWarpedLocations(canonicalScene, liveScene, rawLiveFrameSdfIndex);
 
 	// Always use 0 as the source index and 1 as the target, since raw frame SDF φ^{i}_{proj} is initialized in
 	// the 0-set of fields
 	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, TIndex, CompleteWarpWarpedPositionFunctor<TVoxelCanonical>>
-			trilinearInterpolationFunctor(liveScene, canonicalScene, 0, 1);
+			trilinearInterpolationFunctor(liveScene, canonicalScene, rawLiveFrameSdfIndex, initializedLiveFrameSdfIndex);
 	// Do trilinear interpolation to compute voxel values
 	VoxelPositionTraversal_CPU(*liveScene, trilinearInterpolationFunctor);
 }
@@ -665,8 +665,8 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUp
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	const int iteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
-	const int sourceSdfIndex = (iteration + 1) % 2;
-	const int targetSdfIndex = iteration % 2;
+	const int sourceSdfIndex = ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::GetSourceLiveSdfIndex(iteration);
+	const int targetSdfIndex = ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::GetTargetLiveSdfIndex(iteration);
 
 	// Clear out the flags at target index
 	MultiFlagClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
@@ -713,7 +713,20 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateHas
 	                                  ITMLib::STABLE);
 }
 
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+int ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::GetSourceLiveSdfIndex(int iteration) {
+	return (iteration + 1) % 2;
+}
 
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+int ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::GetTargetLiveSdfIndex(int iteration) {
+	return iteration % 2;
+}
 
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const int ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::rawLiveFrameSdfIndex = 0;
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+const int ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::initializedLiveFrameSdfIndex = 1;
 
 // endregion ===========================================================================================================
