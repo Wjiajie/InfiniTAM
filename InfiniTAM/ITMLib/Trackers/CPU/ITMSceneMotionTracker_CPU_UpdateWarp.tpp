@@ -117,7 +117,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpGra
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 		ITMScene<TVoxelLive, TIndex>* liveScene) {
 
-	StaticVoxelTraversal_CPU<ClearOutGradientStaticFunctor<TVoxelCanonical>>(*canonicalScene);
+	StaticVoxelTraversal_CPU<ClearOutGradientStaticFunctor<TVoxelCanonical>>(canonicalScene);
 
 #if defined(_DEBUG) && !defined(WITH_OPENMP)
 	CalculateWarpGradient_SingleThreadedVerbose(canonicalScene, liveScene);
@@ -159,7 +159,8 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 	// endregion =======================================================================================================
 
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i voxelPosition) {
-		if (liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_NONTRUNCATED) {
+		if (liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_NONTRUNCATED &&
+				liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_BOUNDARY) {
 			return;
 		}
 
@@ -304,7 +305,7 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 		// region =============================== COMPUTE ENERGY GRADIENT ==================================
 
 		Vector3f localEnergyGradient =
-				localDataEnergyGradient +
+				parameters.weightDataTerm * localDataEnergyGradient +
 				parameters.weightLevelSetTerm * localLevelSetEnergyGradient +
 				parameters.weightSmoothnessTerm * localSmoothnessEnergyGradient;
 
@@ -449,7 +450,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpGra
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	CalculateWarpGradient_SingleThreadedVerboseFunctor<TVoxelCanonical, TVoxelLive, TIndex> calculateGradientFunctor(
-			liveScene, canonicalScene, this->parameters, this->switches, this->iteration, this->currentFrameIx,
+			liveScene, canonicalScene, this->parameters, this->switches, this->iteration, this->trackedFrameCount,
 			this->hasFocusCoordinates, this->focusCoordinates);
 
 	DualVoxelPositionTraversal_AllocateSecondaryOnMiss_CPU(
@@ -569,9 +570,9 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplySmooth
 		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, Y> passFunctorY(canonicalScene, liveScene);
 		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, Z> passFunctorZ(canonicalScene, liveScene);
 
-		VoxelPositionTraversal_CPU(*canonicalScene, passFunctorX);
-		VoxelPositionTraversal_CPU(*canonicalScene, passFunctorY);
-		VoxelPositionTraversal_CPU(*canonicalScene, passFunctorZ);
+		VoxelPositionTraversal_CPU(canonicalScene, passFunctorX);
+		VoxelPositionTraversal_CPU(canonicalScene, passFunctorY);
+		VoxelPositionTraversal_CPU(canonicalScene, passFunctorZ);
 	}
 }
 
@@ -581,7 +582,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	const float learningRate = this->parameters.gradientDescentLearningRate;
-	const int currentFrameIx = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
+	const int currentFrameIx = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::trackedFrameCount;
 	const int iteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
 	const int sourceSdfIndex = ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::GetSourceLiveSdfIndex(iteration);
 
@@ -630,7 +631,8 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxelLive& liveVoxel = localLiveVoxelBlock[locId];
-					if (liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_NONTRUNCATED) {
+					if (liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_NONTRUNCATED
+					    && liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_BOUNDARY) {
 						continue;
 					}
 					TVoxelCanonical& canonicalVoxel = localCanonicalVoxelBlock[locId];
@@ -639,7 +641,6 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 
 					canonicalVoxel.gradient0 = warpUpdate;
 					canonicalVoxel.warp += warpUpdate;
-					canonicalVoxel.frame_warp += warpUpdate;
 					float warpLength = ORUtils::length(canonicalVoxel.warp);
 					float warpUpdateLength = ORUtils::length(warpUpdate);
 					if (warpLength > maxWarpLength) {

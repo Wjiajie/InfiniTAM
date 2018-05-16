@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE( testSetVoxelAndCopyScene )
 	                                        settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                        settings->GetMemoryType());
 	sceneRecoEngine->ResetScene(&scene2);
-	CopySceneWithOffset_CPU(scene2,scene,offset);
+	CopySceneSDFandFlagsWithOffset_CPU(scene2, scene, offset);
 	out = ReadVoxel(scene2, voxelPos+offset);
 	BOOST_ASSERT(out.sdf == voxelZero.sdf);
 	out = ReadVoxel(scene2, Vector3i(0,0,0)+offset);
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE( testSetVoxelAndCopyScene )
 	                                         settings->GetMemoryType());
 	sceneRecoEngineAux->ResetScene(&scene3);
 	//TODO: trans-voxel-type-copying re-implement -Greg (GitHub: Algomorph)
-	CopySceneWithOffset_CPU(scene3,scene,offset);
+	CopySceneSDFandFlagsWithOffset_CPU(scene3, scene, offset);
 	out = ReadVoxel(scene2, voxelPos+offset);
 	BOOST_ASSERT(out.sdf == voxelZero.sdf);
 	out = ReadVoxel(scene2, Vector3i(0,0,0)+offset);

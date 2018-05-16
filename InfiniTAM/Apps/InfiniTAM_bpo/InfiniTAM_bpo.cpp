@@ -163,6 +163,7 @@ int main(int argc, char** argv) {
 		bool disableGradientSmoothing = false;
 		bool killingModeEnabled = false;
 		bool recordReconstructionToVideo = false;
+		bool startInStepByStep = false;
 
 		//@formatter:off
 		arguments.add_options()
@@ -200,6 +201,8 @@ int main(int argc, char** argv) {
 
 				("record_reconstruction_video", po::bool_switch(&recordReconstructionToVideo)->default_value(false),
 				 "Whether to record the reconstruction rendering to video after each frame is processed.")
+				("start_in_step_by_step_mode", po::bool_switch(&startInStepByStep)->default_value(false),
+				 "Whether to start in step-by-step mode (dynamic fusion only).")
 
 				("focus_coordinates,f", po::value<std::vector<int>>()->multitoken(), "The coordinates of the voxel"
 						" which to focus on for logging/debugging, as 3 integers separated by spaces, \"x y z\"."
@@ -242,12 +245,17 @@ int main(int argc, char** argv) {
 				("rigidity_enforcement_factor", po::value<float>(),
 				 "Used in scene tracking optimization when the Killing regularization term is enabled."
 		         " Greater values penalize non-isometric scene deformations.")
+
+				("weight_data_term", po::value<float>(),
+					 "Used in scene tracking optimization when the data term is enabled."
+				         " Greater values make the difference between canonical and live SDF grids induce greater warp updates.")
 				("weight_smoothing_term", po::value<float>(),
 				 "Used in scene tracking optimization when the smoothness regularization term is enabled."
 			         " Greater values penalize non-smooth scene deformations.")
 				("weight_level_set_term", po::value<float>(),
 					 "Used in scene tracking optimization when the level set regularization term is enabled."
 				         " Greater values penalize deformations resulting in non-SDF-like voxel grid.")
+
 				("KillingFusion", po::bool_switch(&killingModeEnabled)->default_value(false),
 						 "Uses parameters from KillingFusion (2017) article. Individual parameters can still be overridden. Equivalent to: "
 	   "--disable_gradient_smoothing --enable_level_set_term --enable_killing_term --rigidity_enforcement_factor 0.1 --weight_smoothness_term 0.5 --weight_level_set 0.2")
@@ -374,6 +382,9 @@ int main(int argc, char** argv) {
 		if (!vm["rigidity_enforcement_factor"].empty()) {
 			settings->sceneTrackingRigidityEnforcementFactor = vm["rigidity_enforcement_factor"].as<float>();
 		}
+		if (!vm["weight_data_term"].empty()) {
+			settings->sceneTrackingWeightDataTerm = vm["weight_data_term"].as<float>();
+		}
 		if (!vm["weight_smoothing_term"].empty()) {
 			settings->sceneTrackingWeightSmoothingTerm = vm["weight_smoothing_term"].as<float>();
 		}
@@ -405,7 +416,6 @@ int main(int argc, char** argv) {
 				break;
 			default:
 				throw std::runtime_error("Unsupported library mode!");
-				break;
 		}
 		if (fixCamera) {
 			std::cout << "fix_camera flag passed, automatically locking camera if possible "
@@ -423,8 +433,11 @@ int main(int argc, char** argv) {
 		if (!vm["start_from_frame_ix"].empty()) {
 			skipFirstNFrames = vm["start_from_frame_ix"].as<int>();
 		}
+
+
 		UIEngine_BPO::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine, settings->outputPath,
-		                                     settings->deviceType, processNFramesOnLaunch, skipFirstNFrames, recordReconstructionToVideo);
+		                                     settings->deviceType, processNFramesOnLaunch, skipFirstNFrames,
+		                                     recordReconstructionToVideo, startInStepByStep);
 		UIEngine_BPO::Instance()->Run();
 		UIEngine_BPO::Instance()->Shutdown();
 // endregion ===========================================================================================================

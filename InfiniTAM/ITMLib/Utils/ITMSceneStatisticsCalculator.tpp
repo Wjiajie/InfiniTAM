@@ -237,7 +237,7 @@ struct MaxGradientFunctor<ITMVoxelCanonical, TIndex> {
 	static float find(ITMScene<ITMVoxelCanonical, TIndex>* scene, bool secondGradientField, Vector3i& maxPosition) {
 		MaxGradientFunctor instance;
 		instance.secondGradientField = secondGradientField;
-		VoxelPositionTraversal_CPU(*scene, instance);
+		VoxelPositionTraversal_CPU(scene, instance);
 		maxPosition = instance.maxPosition;
 		return instance.maxLength;
 	}

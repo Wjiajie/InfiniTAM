@@ -59,13 +59,14 @@ template class ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>;
 
 
 //scene manipulation functions
-template void CopySceneWithOffset_CPU<ITMVoxelCanonical,ITMVoxelIndex>(
-		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& destination,
-		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& source, Vector3i offset);
+template void CopySceneSDFandFlagsWithOffset_CPU<ITMVoxelCanonical,ITMVoxelLive,ITMVoxelIndex>(
+		ITMScene<ITMVoxelLive, ITMVoxelIndex>* destination,
+		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* source,
+		Vector3i offset);
 template bool SetVoxel_CPU<ITMVoxelCanonical,ITMVoxelIndex>(ITMScene<ITMVoxelCanonical,
-		ITMVoxelIndex>& scene, Vector3i at, ITMVoxelCanonical voxel);
+		ITMVoxelIndex>* scene, Vector3i at, ITMVoxelCanonical voxel);
 template bool SetVoxel_CPU<ITMVoxelLive,ITMVoxelIndex>(
-		ITMScene<ITMVoxelLive, ITMVoxelIndex>& scene,Vector3i at, ITMVoxelLive voxel);
+		ITMScene<ITMVoxelLive, ITMVoxelIndex>* scene,Vector3i at, ITMVoxelLive voxel);
 template ITMVoxelCanonical ReadVoxel<ITMVoxelCanonical,ITMVoxelIndex>(
 		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& scene, Vector3i at);
 template void OffsetWarps<ITMVoxelCanonical,ITMVoxelIndex>(

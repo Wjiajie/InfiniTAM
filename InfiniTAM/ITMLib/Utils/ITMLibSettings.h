@@ -87,13 +87,14 @@ namespace ITMLib
 		bool enableKillingTerm = false;
 		bool enableGradientSmoothing = true;
 
-		unsigned int sceneTrackingMaxOptimizationIterationCount = 200;
-		float sceneTrackingOptimizationVectorUpdateThresholdMeters = 0.0001f;//m //original for KillingFusion
-		float sceneTrackingGradientDescentLearningRate = 0.1f;
-		float sceneTrackingRigidityEnforcementFactor = 0.1f;
-		float sceneTrackingWeightSmoothingTerm = 0.2f; //original for SobolevFusion
-		float sceneTrackingWeightLevelSetTerm = 0.2f;
-		float sceneTrackingLevelSetTermEpsilon = FLT_EPSILON;
+		unsigned int sceneTrackingMaxOptimizationIterationCount;
+		float sceneTrackingOptimizationVectorUpdateThresholdMeters;
+		float sceneTrackingGradientDescentLearningRate;
+		float sceneTrackingRigidityEnforcementFactor;
+		float sceneTrackingWeightDataTerm;
+		float sceneTrackingWeightSmoothingTerm;
+		float sceneTrackingWeightLevelSetTerm;
+		float sceneTrackingLevelSetTermEpsilon;
 
 	private:
 		/// Parameters for logging/debugging dynamic fusion

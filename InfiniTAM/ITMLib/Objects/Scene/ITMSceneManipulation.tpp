@@ -24,17 +24,18 @@
 namespace ITMLib {
 
 
-template<class TVoxel, class TIndex>
-void CopySceneWithOffset_CPU(ITMScene<TVoxel, TIndex>& destination, ITMScene<TVoxel, TIndex>& source, Vector3i offset) {
-	ITMSceneReconstructionEngine<TVoxel, TIndex>* reconstructionEngine =
-			ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel, TIndex>(
+template<typename TVoxelSource, typename TVoxelDestination, typename TIndex >
+void CopySceneSDFandFlagsWithOffset_CPU(ITMScene<TVoxelDestination, TIndex>* destination,
+                                        ITMScene<TVoxelSource, TIndex>* source, Vector3i offset) {
+	ITMSceneReconstructionEngine<TVoxelDestination, TIndex>* reconstructionEngine =
+			ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelDestination, TIndex>(
 					ITMLibSettings::DEVICE_CPU);
 
-	reconstructionEngine->ResetScene(&destination);
+	reconstructionEngine->ResetScene(destination);
 
-	TVoxel* originalVoxels = source.localVBA.GetVoxelBlocks();
-	const ITMHashEntry* originalHashTable = source.index.GetEntries();
-	int noTotalEntries = source.index.noTotalEntries;
+	TVoxelSource* originalVoxels = source->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* originalHashTable = source->index.GetEntries();
+	int noTotalEntries = source->index.noTotalEntries;
 
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 		const ITMHashEntry& currentOriginalHashEntry = originalHashTable[entryId];
@@ -43,14 +44,18 @@ void CopySceneWithOffset_CPU(ITMScene<TVoxel, TIndex>& destination, ITMScene<TVo
 		//position of the current entry in 3D space (in voxel units)
 		Vector3i canonicalHashEntryPosition = currentOriginalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 
-		TVoxel* localVoxelBlock = &(originalVoxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		TVoxelSource* localVoxelBlock = &(originalVoxels[currentOriginalHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					Vector3i originalPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
 					Vector3i offsetPosition = originalPosition + offset;
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-					SetVoxel_CPU(destination, offsetPosition, localVoxelBlock[locId]);
+					TVoxelSource& voxelSource = localVoxelBlock[locId];
+					TVoxelDestination voxelDestination;
+					voxelDestination.sdf = voxelSource.sdf;
+					voxelDestination.flags = voxelSource.flags;
+					SetVoxel_CPU(destination, offsetPosition, voxelDestination);
 				}
 			}
 		}
@@ -59,14 +64,14 @@ void CopySceneWithOffset_CPU(ITMScene<TVoxel, TIndex>& destination, ITMScene<TVo
 }
 
 template<class TVoxel, class TIndex>
-bool SetVoxel_CPU(ITMScene<TVoxel, TIndex>& scene, Vector3i at, TVoxel voxel) {
-	int lastFreeVoxelBlockId = scene.localVBA.lastFreeBlockId;
-	int lastFreeExcessListId = scene.index.GetLastFreeExcessListId();
-	ITMHashEntry* hashTable = scene.index.GetEntries();
+bool SetVoxel_CPU(ITMScene <TVoxel, TIndex>* scene, Vector3i at, TVoxel voxel) {
+	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
+	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
+	ITMHashEntry* hashTable = scene->index.GetEntries();
 	ITMHashEntry* entry = NULL;
-	TVoxel* voxels = scene.localVBA.GetVoxelBlocks();
-	int* voxelAllocationList = scene.localVBA.GetAllocationList();
-	int* excessAllocationList = scene.index.GetExcessAllocationList();
+	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
+	int* voxelAllocationList = scene->localVBA.GetAllocationList();
+	int* excessAllocationList = scene->index.GetExcessAllocationList();
 	Vector3i blockPos;
 	int linearIdx = pointToVoxelBlockPos(at, blockPos);
 	int hash;
@@ -77,8 +82,8 @@ bool SetVoxel_CPU(ITMScene<TVoxel, TIndex>& scene, Vector3i at, TVoxel voxel) {
 	} else {
 		return false;
 	}
-	scene.localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
-	scene.index.SetLastFreeExcessListId(lastFreeExcessListId);
+	scene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
+	scene->index.SetLastFreeExcessListId(lastFreeExcessListId);
 	return true;
 };
 
@@ -114,6 +119,9 @@ TVoxel ReadVoxel(ITMScene<TVoxel, TIndex>& scene, Vector3i at) {
 	int vmIndex;
 	return readVoxel(voxels, hashTable, at, vmIndex);
 }
+
+
+
 
 /**
  * \brief Copies the slice (box-like window) specified by points extremum1 and extremum2 from the source scene into a

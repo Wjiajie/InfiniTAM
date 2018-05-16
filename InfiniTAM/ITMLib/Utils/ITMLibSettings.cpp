@@ -112,12 +112,13 @@ ITMLibSettings::ITMLibSettings()
 	enableGradientSmoothing = true;
 
 	sceneTrackingMaxOptimizationIterationCount = 200;
-	sceneTrackingOptimizationVectorUpdateThresholdMeters = 0.0001f;//m //original for KillingFusion
-	sceneTrackingGradientDescentLearningRate = 0.1f;
-	sceneTrackingRigidityEnforcementFactor = 0.1f;
-	sceneTrackingWeightSmoothingTerm = 0.2f; //original for SobolevFusion
-	sceneTrackingWeightLevelSetTerm = 0.2f;
-	sceneTrackingLevelSetTermEpsilon = 0.00001;//FLT_EPSILON;
+	sceneTrackingOptimizationVectorUpdateThresholdMeters = 0.0001f;// in meters, default from KillingFusion
+	sceneTrackingGradientDescentLearningRate = 0.1f; // default from KillingFusion & SobolevFusion
+	sceneTrackingRigidityEnforcementFactor = 0.1f; // default from KillingFusion
+	sceneTrackingWeightDataTerm = 1.0f; // not used in Killing/Sobolev Fusion (implicitly adjusted using other weights & thresholds)
+	sceneTrackingWeightSmoothingTerm = 0.2f; // default from SobolevFusion, 0.5f used in KillingFusion
+	sceneTrackingWeightLevelSetTerm = 0.2f; // default from KillingFusion
+	sceneTrackingLevelSetTermEpsilon = 0.00001; // default from KillingFusion
 }
 
 bool ITMLibSettings::FocusCoordinatesAreSpecified() const {

@@ -54,14 +54,14 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTr
 		  canonicalEntryAllocationTypes(
 				  new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
 		  allocationBlockCoordinates(new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries, MEMORYDEVICE_CPU)),
-			
+
 		  switches{
-			settings->enableDataTerm,
-			settings->enableLevelSetTerm,
-			settings->enableSmoothingTerm,
-			settings->enableKillingTerm,
-			settings->enableGradientSmoothing
-		  }{
+				  settings->enableDataTerm,
+				  settings->enableLevelSetTerm,
+				  settings->enableSmoothingTerm,
+				  settings->enableKillingTerm,
+				  settings->enableGradientSmoothing
+		  } {
 	InitializeHelper(settings->sceneParams);
 
 }
@@ -106,7 +106,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateNew
 
 
 	// TODO: make a separate function
-	const int& currentFrameIx = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
+	const int& currentFrameIx = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::trackedFrameCount;
 	if (currentFrameIx == 0) {
 		// region === INITIALIZATION =======================================================================================
 		// at frame zero, allocate all the same blocks as in live frame
@@ -221,7 +221,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 			int canonicalHash = hash;
 			if (!FindHashAtPosition(canonicalHash, currentLiveHashEntry.pos, canonicalHashTable)) {
 				std::stringstream stream;
-				const int currentFrameIx = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx;
+				const int currentFrameIx = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::trackedFrameCount;
 				stream << "Could not find corresponding canonical block at postion " << currentLiveHashEntry.pos
 				       << " at frame " << currentFrameIx << ". " << __FILE__ << ": " << __LINE__;
 				DIEWITHEXCEPTION(stream.str());
@@ -240,7 +240,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 
 					const TVoxelLive& liveVoxel = localLiveVoxelBlock[locId];
-					if (liveVoxel.flag_values[targetSdfIndex] != ITMLib::VOXEL_NONTRUNCATED){
+					if (liveVoxel.flag_values[targetSdfIndex] != ITMLib::VOXEL_NONTRUNCATED) {
 						continue;
 					}
 					TVoxelCanonical& canonicalVoxel = localCanonicalVoxelBlock[locId];
@@ -288,7 +288,6 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 			}
 		}
 	}
-	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::currentFrameIx++;
 }
 // endregion ===========================================================================================================
 
@@ -385,11 +384,11 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::WarpCanonic
 	WarpHashAllocationMarkerFunctor<TVoxelCanonical, TVoxelLive, TIndex> hashMarkerFunctor(liveScene,
 	                                                                                       allocationBlockCoords,
 	                                                                                       warpedEntryAllocationTypes);
-	VoxelPositionTraversal_CPU(*canonicalScene, hashMarkerFunctor);
+	VoxelPositionTraversal_CPU(canonicalScene, hashMarkerFunctor);
 	AllocateHashEntriesUsingLists_CPU(liveScene, warpedEntryAllocationTypes, allocationBlockCoords, ITMLib::STABLE);
 
 	WarpSdfDistributionFunctor<TVoxelCanonical, TVoxelLive, TIndex> distributionFunctor(liveScene);
-	VoxelPositionTraversal_CPU(*canonicalScene, distributionFunctor);
+	VoxelPositionTraversal_CPU(canonicalScene, distributionFunctor);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -405,29 +404,23 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::PrintSettings() {
 	std::cout << bright_cyan << "*** ITMSceneMotionTracker_CPU Settings: ***" << reset << std::endl;
 #define print_bool(something) (something ? green : red) << (something ? "true" : "false") << reset
-#define retrieve(something) (ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>:: something)
 	std::cout << "Data term enabled: " << print_bool(this->switches.enableDataTerm) << std::endl;
 	std::cout << "Smoothing term enabled: " << print_bool(this->switches.enableSmoothingTerm) << std::endl;
 	std::cout << "Level Set term enabled: " << print_bool(this->switches.enableLevelSetTerm) << std::endl;
 	std::cout << "Killing term enabled: " << print_bool(this->switches.enableKillingTerm) << std::endl;
-	std::cout << "Gradient smoothing enabled: " << print_bool(this->switches.enableGradientSmoothing) << std::endl << std::endl;
+	std::cout << "Gradient smoothing enabled: " << print_bool(this->switches.enableGradientSmoothing) << std::endl
+	          << std::endl;
 
 	std::cout << "Max iteration count: " << this->parameters.maxIterationCount << std::endl;
-	std::cout << "Warp vector update threshold: " << this->parameters.maxVectorUpdateThresholdMeters << " m " << std::endl;
-	std::cout << "Gradient descent learning rate: " << this->parameters.gradientDescentLearningRate  << std::endl;
+	std::cout << "Warp vector update threshold: " << this->parameters.maxVectorUpdateThresholdMeters << " m"
+																									 << std::endl;
+	std::cout << "Gradient descent learning rate: " << this->parameters.gradientDescentLearningRate << std::endl;
 	std::cout << "Rigidity enforcement factor: " << this->parameters.rigidityEnforcementFactor << std::endl;
-	std::cout << "Weight of the smoothness term: " << this->parameters.rigidityEnforcementFactor << std::endl;
-	std::cout << "Weight of the level set term: " << this->parameters.rigidityEnforcementFactor << std::endl;
+	std::cout << "Weight of the data term: " << this->parameters.weightDataTerm << std::endl;
+	std::cout << "Weight of the smoothness term: " << this->parameters.weightSmoothnessTerm << std::endl;
+	std::cout << "Weight of the level set term: " << this->parameters.weightLevelSetTerm << std::endl;
 	std::cout << "Epsilon for the level set term: " << this->parameters.epsilon << std::endl;
-//	std::cout << "Max iteration count: " << retrieve(maxIterationCount) << std::endl;
-//	std::cout << "Warp vector update threshold: " << retrieve(maxVectorUpdateThresholdMeters) << " m " << std::endl;
-//	std::cout << "Gradient descent learning rate: " << retrieve(gradientDescentLearningRate)  << std::endl;
-//	std::cout << "Rigidity enforcement factor: " << retrieve(rigidityEnforcementFactor)  << std::endl;
-//	std::cout << "Weight of the smoothness term: " << retrieve(rigidityEnforcementFactor)  << std::endl;
-//	std::cout << "Weight of the level set term: " << retrieve(rigidityEnforcementFactor)  << std::endl;
-//	std::cout << "Epsilon for the level set term: " << retrieve(epsilon)  << std::endl;
 #undef print_bool
-#undef retrieve
 	std::cout << bright_cyan << "*** *********************************** ***" << reset << std::endl;
 }
 
@@ -437,53 +430,29 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::PrintSettin
 
 
 template<typename TVoxelMulti>
-struct IndexedFieldClearFunctor{
-	IndexedFieldClearFunctor(int flagFieldIndex) : flagFieldIndex(flagFieldIndex){}
+struct IndexedFieldClearFunctor {
+	IndexedFieldClearFunctor(int flagFieldIndex) : flagFieldIndex(flagFieldIndex) {}
+
 	void operator()(TVoxelMulti& voxel) {
 		voxel.flag_values[flagFieldIndex] = ITMLib::VOXEL_UNKNOWN;
 		voxel.sdf_values[flagFieldIndex] = TVoxelMulti::SDF_initialValue();
 	}
+
 private:
 	const int flagFieldIndex;
 };
 
 template<typename TVoxel>
-struct FrameWarpClearFunctor{
-	static void run(TVoxel& voxel) {
-		voxel.frame_warp = Vector3f(0.0f);
-	}
-};
-
-template<typename TVoxel>
-struct WarpClearFunctor{
+struct WarpClearFunctor {
 	static void run(TVoxel& voxel) {
 		voxel.warp = Vector3f(0.0f);
 	}
 };
 
-template<typename TVoxel>
-struct FrameWarpApplicationFunctor{
-	static void run(TVoxel& voxel) {
-		voxel.warp += voxel.frame_warp;
-	}
-};
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ClearOutFrameWarps(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
-	StaticVoxelTraversal_CPU<FrameWarpClearFunctor<TVoxelCanonical>>(*canonicalScene);
-};
-
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ClearOutWarps(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
-	StaticVoxelTraversal_CPU<WarpClearFunctor<TVoxelCanonical>>(*canonicalScene);
-}
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyFrameWarpsToWarps(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
-	StaticVoxelTraversal_CPU<FrameWarpApplicationFunctor<TVoxelCanonical>>(*canonicalScene);
+	StaticVoxelTraversal_CPU<WarpClearFunctor<TVoxelCanonical>>(canonicalScene);
 };
 
 
@@ -503,7 +472,7 @@ struct WarpBasedAllocationMarkerFunctor {
 			allocationBlockCoords(allocationBlockCoords),
 			warpedEntryAllocationTypes(warpedEntryAllocationTypes),
 
-			flagIndex(flagIndex){}
+			flagIndex(flagIndex) {}
 
 	void operator()(TVoxelWarpSource& voxel, Vector3i voxelPosition, Vector3s hashBlockPosition) {
 		Vector3f warpedPosition = voxelPosition.toFloat() + voxel.warp;
@@ -513,7 +482,8 @@ struct WarpBasedAllocationMarkerFunctor {
 		const TVoxelSdfSource& sdfVoxelAtWarp = readVoxel(sdfVoxels, sdfHashEntries, warpedPositionTruncated,
 		                                                  vmIndex, sdfCache);
 		// skip truncated voxels in raw/old live
-		if (sdfVoxelAtWarp.flag_values[flagIndex] != ITMLib::VOXEL_NONTRUNCATED) return;
+		if (sdfVoxelAtWarp.flag_values[flagIndex] != ITMLib::VOXEL_NONTRUNCATED &&
+		    sdfVoxelAtWarp.flag_values[flagIndex] != ITMLib::VOXEL_BOUNDARY) return;
 
 		int liveBlockHash = hashIndex(hashBlockPosition);
 		MarkAsNeedingAllocationIfNotFound(warpedEntryAllocationTypes, allocationBlockCoords, liveBlockHash,
@@ -530,7 +500,7 @@ private:
 
 	Vector3s* allocationBlockCoords;
 	uchar* warpedEntryAllocationTypes;
-    const int flagIndex;
+	const int flagIndex;
 };
 
 template<typename TVoxel>
@@ -583,7 +553,8 @@ struct TrilinearInterpolationFunctor {
 
 		Vector3f warpedPosition = WarpedPositionFunctor::ComputeWarpedPosition(warpSourceVoxel,
 		                                                                       warpAndDestionVoxelPosition);
-		bool struckKnown, struckNonTruncated; float cumulativeWeight;
+		bool struckKnown, struckNonTruncated;
+		float cumulativeWeight;
 		float sdf = InterpolateMultiSdfTrilinearly_StruckKnown(
 				sdfSourceVoxels, sdfSourceHashEntries, warpedPosition, sourceSdfIndex, sdfSourceCache, struckKnown);
 
@@ -642,7 +613,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpFi
 
 	// Clear out the flags at index 1
 	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(1);
-	VoxelTraversal_CPU(*liveScene,flagClearFunctor);
+	VoxelTraversal_CPU(*liveScene, flagClearFunctor);
 
 	// Allocate new hash blocks due to warps where necessary, use flags from raw frame
 	AllocateHashBlocksAtWarpedLocations(canonicalScene, liveScene, rawLiveFrameSdfIndex);
@@ -650,9 +621,10 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpFi
 	// Always use 0 as the source index and 1 as the target, since raw frame SDF φ^{i}_{proj} is initialized in
 	// the 0-set of fields
 	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, TIndex, CompleteWarpWarpedPositionFunctor<TVoxelCanonical>>
-			trilinearInterpolationFunctor(liveScene, canonicalScene, rawLiveFrameSdfIndex, initializedLiveFrameSdfIndex);
+			trilinearInterpolationFunctor(liveScene, canonicalScene, rawLiveFrameSdfIndex,
+			                              initializedLiveFrameSdfIndex);
 	// Do trilinear interpolation to compute voxel values
-	VoxelPositionTraversal_CPU(*liveScene, trilinearInterpolationFunctor);
+	VoxelPositionTraversal_CPU(liveScene, trilinearInterpolationFunctor);
 }
 
 /**
@@ -679,12 +651,14 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUp
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	const int iteration = ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::iteration;
-	const int sourceSdfIndex = ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::GetSourceLiveSdfIndex(iteration);
-	const int targetSdfIndex = ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::GetTargetLiveSdfIndex(iteration);
+	const int sourceSdfIndex = ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::GetSourceLiveSdfIndex(
+			iteration);
+	const int targetSdfIndex = ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::GetTargetLiveSdfIndex(
+			iteration);
 
 	// Clear out the flags at target index
 	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
-	VoxelTraversal_CPU(*liveScene,flagClearFunctor);
+	VoxelTraversal_CPU(*liveScene, flagClearFunctor);
 
 	// Allocate new blocks where necessary, filter based on flags from source
 	AllocateHashBlocksAtWarpedLocations(canonicalScene, liveScene, sourceSdfIndex);
@@ -694,7 +668,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUp
 			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
 
 	// Interpolate to obtain the new live frame values (at target index)
-	VoxelPositionTraversal_CPU(*liveScene, trilinearInterpolationFunctor);
+	VoxelPositionTraversal_CPU(liveScene, trilinearInterpolationFunctor);
 }
 
 /**
@@ -705,10 +679,11 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUp
  * allocates it.
  * \param warpSourceScene voxel grid where each voxel has a .warp_t Vector3f field defined
  * \param sdfScene sdf grid whose hash blocks to allocate if needed
+ * \param fieldIndex index of the sdf / flag field to use in the sdfScene
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateHashBlocksAtWarpedLocations(
-		ITMScene<TVoxelCanonical, TIndex>* warpSourceScene, ITMScene<TVoxelLive, TIndex>* sdfScene, int flagIndex) {
+		ITMScene<TVoxelCanonical, TIndex>* warpSourceScene, ITMScene<TVoxelLive, TIndex>* sdfScene, int fieldIndex) {
 
 	int entryCount = TIndex::noTotalEntries;
 	Vector3s* allocationBlockCoords = this->allocationBlockCoordinates->GetData(MEMORYDEVICE_CPU);
@@ -719,7 +694,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateHas
 
 	//Mark up hash entries in the target scene that will need allocation
 	WarpBasedAllocationMarkerFunctor<TVoxelCanonical, TVoxelLive, TIndex>
-			hashMarkerFunctor(sdfScene, allocationBlockCoords, warpedEntryAllocationTypes, flagIndex);
+			hashMarkerFunctor(sdfScene, allocationBlockCoords, warpedEntryAllocationTypes, fieldIndex);
 	VoxelAndHashBlockPositionTraversal_CPU(*warpSourceScene, hashMarkerFunctor);
 
 	//Allocate the hash entries that will potentially have any data
@@ -729,16 +704,13 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::AllocateHas
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 int ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::GetSourceLiveSdfIndex(int iteration) {
-	//return (iteration + 1) % 2;
-	return iteration% 2;//_DEBUG
+	return iteration % 2;
 }
-
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 int ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::GetTargetLiveSdfIndex(int iteration) {
-	//return iteration % 2;
-	return (iteration + 1) % 2;//_DEBUG
+	return (iteration + 1) % 2;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -746,5 +718,39 @@ const int ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::rawLiv
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const int ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::initializedLiveFrameSdfIndex = 1;
+
+
+template<typename TVoxelLive, typename TIndex>
+struct MarkBoundaryVoxelFunctor {
+
+	MarkBoundaryVoxelFunctor(ITMScene<TVoxelLive, TIndex>* sdfSourceScene, int sourceFieldIndex) :
+			sdfSourceScene(sdfSourceScene),
+			sdfSourceVoxels(sdfSourceScene->localVBA.GetVoxelBlocks()),
+			sdfSourceHashEntries(sdfSourceScene->index.GetEntries()),
+			sdfSourceCache(),
+
+			sourceFieldIndex(sourceFieldIndex) {}
+
+	void operator()(TVoxelLive& voxel, Vector3i position) {
+		if (voxel.flag_values[sourceFieldIndex] == ITMLib::VOXEL_NONTRUNCATED) {
+			markNonTruncatedNeighborsAsBoundary(position, sdfSourceVoxels, sdfSourceHashEntries, sdfSourceCache,
+			                                    sourceFieldIndex);
+		}
+	}
+private:
+	ITMScene<TVoxelLive, TIndex>* sdfSourceScene;
+	TVoxelLive* sdfSourceVoxels;
+	ITMHashEntry* sdfSourceHashEntries;
+	typename TIndex::IndexCache sdfSourceCache;
+
+	const int sourceFieldIndex;
+};
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::MarkBoundaryVoxels(
+		ITMScene<TVoxelLive, TIndex>* liveScene) {
+	MarkBoundaryVoxelFunctor<TVoxelLive,TIndex> markBoundaryVoxelFunctor(liveScene,GetSourceLiveSdfIndex(this->iteration));
+	VoxelPositionTraversal_CPU(liveScene,markBoundaryVoxelFunctor);
+}
 
 // endregion ===========================================================================================================

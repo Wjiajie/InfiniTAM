@@ -389,3 +389,65 @@ inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxe
 
 };
 // endregion
+template<class TVoxel>
+_CPU_AND_GPU_CODE_ inline void GetVoxel(THREADPTR(TVoxel)*& voxel, THREADPTR(TVoxel) *voxelData,
+const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData) *voxelIndex, const THREADPTR(Vector3i) & point, THREADPTR(ITMLib::ITMVoxelBlockHash::IndexCache) & cache){
+	Vector3i blockPos;
+	int linearIdx = pointToVoxelBlockPos(point, blockPos);
+	if IS_EQUAL3(blockPos, cache.blockPos)
+	{
+		voxel = &voxelData[cache.blockPtr + linearIdx];
+		return;
+	}
+
+	int hashIdx = hashIndex(blockPos);
+
+	while (true)
+	{
+		ITMHashEntry hashEntry = voxelIndex[hashIdx];
+
+		if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= 0)
+		{
+			cache.blockPos = blockPos; cache.blockPtr = hashEntry.ptr * SDF_BLOCK_SIZE3;
+
+			voxel = &voxelData[cache.blockPtr + linearIdx];
+			return;
+		}
+
+		if (hashEntry.offset < 1) break;
+		hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
+	}
+	voxel = nullptr;
+}
+
+template<typename TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline void markNonTruncatedNeighborsAsBoundary(
+		const CONSTPTR(Vector3i)& voxelPosition,
+		THREADPTR(TVoxel)* voxels,
+		const CONSTPTR(ITMHashEntry)* hashEntries,
+		THREADPTR(TCache)& cache,
+		int fieldIndex) {
+	const int neighborCount = 28;
+	const Vector3i offsets[] = {
+			Vector3i( 1, 1, 1),   Vector3i( 1, 1, 0),   Vector3i( 1, 1,-1),
+			Vector3i( 0, 1, 1),   Vector3i( 0, 1, 0),   Vector3i( 0, 1,-1),
+			Vector3i(-1, 1, 1),   Vector3i(-1, 1, 0),   Vector3i(-1, 1,-1),
+
+			Vector3i( 1, 0, 1),   Vector3i( 1, 0, 0),   Vector3i( 1, 0,-1),
+			Vector3i( 0, 0, 1), /*Vector3i( 0, 0, 0),*/ Vector3i( 0, 0,-1),
+			Vector3i(-1, 0, 1),   Vector3i(-1, 0, 0),   Vector3i(-1, 0,-1),
+
+			Vector3i( 1,-1, 1),   Vector3i( 1,-1, 0),   Vector3i( 1,-1,-1),
+			Vector3i( 0,-1, 1),   Vector3i( 0,-1, 0),   Vector3i( 0,-1,-1),
+			Vector3i(-1,-1, 1),   Vector3i(-1,-1, 0),   Vector3i(-1,-1,-1)
+	};
+
+	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++){
+		TVoxel* voxel;
+		GetVoxel(voxel,voxels, hashEntries,voxelPosition + offsets[iNeighbor],cache);
+		if (voxel != nullptr && voxel->flag_values[fieldIndex] != ITMLib::VOXEL_NONTRUNCATED){
+			voxel->flag_values[fieldIndex] = ITMLib::VOXEL_BOUNDARY;
+		}
+	}
+}

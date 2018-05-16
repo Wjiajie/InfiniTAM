@@ -94,13 +94,14 @@ public:
 	char* outFolder;
 	bool needsRefresh;
 	bool inStepByStepMode;
+	bool continuousStepByStep;
 	ITMUChar4Image* saveImage;
 
 	void Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
-	                InputSource::IMUSourceEngine* imuSource,
-	                ITMLib::ITMMainEngine* mainEngine, const char* outFolder,
-	                ITMLib::ITMLibSettings::DeviceType deviceType, int frameIntervalLength, int skipFirstNFrames,
-	                bool recordReconstructionResult);
+		                InputSource::IMUSourceEngine* imuSource, ITMLib::ITMMainEngine* mainEngine,
+		                const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
+		                int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
+		                bool startInStepByStep);
 	void Shutdown();
 
 	void Run();

@@ -30,6 +30,7 @@
 #include "../../Utils/ITMPrintHelpers.h"
 #include "../../Utils/ITMSceneSliceRasterizer.h"
 #include "../../Utils/ITMBenchmarkUtils.h"
+#include "../../Utils/ITMSceneStatisticsCalculator.h"
 
 //boost
 #include <boost/filesystem.hpp>
@@ -54,6 +55,7 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracke
 		            settings->sceneTrackingOptimizationVectorUpdateThresholdMeters,
 		            settings->sceneTrackingGradientDescentLearningRate,
 		            settings->sceneTrackingRigidityEnforcementFactor,
+		            settings->sceneTrackingWeightDataTerm,
 		            settings->sceneTrackingWeightSmoothingTerm,
 		            settings->sceneTrackingWeightLevelSetTerm,
 		            settings->sceneTrackingLevelSetTermEpsilon,
@@ -87,19 +89,13 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::InitializeTrack
 	AllocateNewCanonicalHashBlocks(canonicalScene, liveScene);
 	bench::StopTimer("TrackMotion_0_AllocateNewCanonicalHashBlocks");
 
-	if (currentFrameIx == 0) return; //don't need to actually do tracking at first frame.
+	if (trackedFrameCount == 0) return; //don't need to actually do tracking at first frame.
 	ClearOutWarps(canonicalScene);
-//	ApplyFrameWarpsToWarps(canonicalScene);
-//	ClearOutFrameWarps(canonicalScene);
 
 	//** initialize live frame
 	PrintOperationStatus(
 			"Initializing live frame by mapping the raw live scene to a blank scene using canonical voxel warp field...");
 
-	//_DEBUG applying updates directly starting from live frame (source & target indexes also changed for iterations)
-//	bench::StartTimer("TrackMotion_11_ApplyWarpFieldToLive");
-//  ApplyWarpFieldToLive(canonicalScene, liveScene);
-//	bench::StopTimer("TrackMotion_11_ApplyWarpFieldToLive");
 	// endregion
 
 	// region ================================== DEBUG 2D VISUALIZATION ================================================
@@ -113,7 +109,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::InitializeTrack
 			rasterizer.RenderLiveSceneSlices_AllDirections(liveScene);
 		}
 
-		if (rasterizeUpdates && rasterizationFrame == currentFrameIx) {
+		if (rasterizeUpdates && rasterizationFrame == trackedFrameCount) {
 			std::cout << "STARTING UPDATE RASTERIZATION" << std::endl;
 			InitializeUpdate2DImageLogging(canonicalScene, liveScene, blank, liveImgTemplate, rasterizer);
 		}
@@ -133,7 +129,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::InitializeTrack
 		sceneLogger = new ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>(canonicalScene, liveScene,
 		                                                                      currentFrameOutputPath);
 		sceneLogger->SaveScenesCompact();
-		sceneLogger->StartSavingWarpState(currentFrameIx);
+		sceneLogger->StartSavingWarpState(trackedFrameCount);
 		if (hasFocusCoordinates) {
 			sceneLogger->ClearHighlights();
 		}
@@ -147,11 +143,15 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
 		bool recordWarpUpdates) {
 // region ================================== DEBUG 2D VISUALIZATION FOR UPDATES ================================
-	if (rasterizeUpdates && rasterizationFrame == currentFrameIx) {
+	if (rasterizeUpdates && rasterizationFrame == trackedFrameCount) {
 		LogWarpUpdateAs2DImage(canonicalScene, liveScene, blank, liveImgTemplate, rasterizer);
 	}
 	// endregion
 	std::cout << red << "Iteration: " << iteration << reset << std::endl;
+	PrintOperationStatus("Marking boundary voxels...");
+	bench::StartTimer("TrackMotion_30_MarkBoundaryVoxels");
+	MarkBoundaryVoxels(liveScene);
+	bench::StopTimer("TrackMotion_30_MarkBoundaryVoxels");
 
 	//** warp update gradient computation
 	PrintOperationStatus("Calculating warp energy gradient...");
@@ -198,7 +198,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeTrackin
 			std::cout << "Making slice around voxel " << green << focusCoordinates << reset << " with l_0 radius of "
 			          << FOCUS_SLICE_RADIUS << "...";
 			std::string sliceId;
-			sceneLogger->MakeSlice(sliceMinPoint, sliceMaxPoint, currentFrameIx, sliceId);
+			sceneLogger->MakeSlice(sliceMinPoint, sliceMaxPoint, trackedFrameCount, sliceId);
 			std::cout << "Slice finished." << std::endl;
 			sceneLogger->SwitchActiveScene(sliceId);
 		}
@@ -206,6 +206,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeTrackin
 	}
 	// endregion =======================================================================================================
 	energy_stat_file.close();
+	trackedFrameCount++;
 }
 
 /**
@@ -249,22 +250,20 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::PrintLiveSceneStatistics(
 		ITMScene<TVoxelLive, TIndex>* scene,
 		const char* desc){
-	_DEBUG
 	ITMSceneStatisticsCalculator<TVoxelLive, TIndex> liveCalculator;
-
-		std::cout << std::setprecision(10) << "   Count of allocated blocks in " << desc << ": "
-		          << liveCalculator.ComputeAllocatedHashBlockCount(scene) << std::endl;
-		std::cout << "   Sum of non-truncated SDF magnitudes in " << desc << ": "
-		          << liveCalculator.ComputeNonTruncatedVoxelAbsSdfSum(scene) << std::endl;
-		std::cout << "   Count of non-truncated voxels in " << desc << ": "
-		          << liveCalculator.ComputeNonTruncatedVoxelCount(scene) << std::endl;
+	std::cout << std::setprecision(10) << "   Count of allocated blocks in " << desc << ": "
+	          << liveCalculator.ComputeAllocatedHashBlockCount(scene) << std::endl;
+	std::cout << "   Sum of non-truncated SDF magnitudes in " << desc << ": "
+	          << liveCalculator.ComputeNonTruncatedVoxelAbsSdfSum(scene) << std::endl;
+	std::cout << "   Count of non-truncated voxels in " << desc << ": "
+	          << liveCalculator.ComputeNonTruncatedVoxelCount(scene) << std::endl;
 
 };
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 std::string ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::GenerateCurrentFrameOutputPath() const {
-	fs::path path(baseOutputDirectory + "/Frame_" + std::to_string(currentFrameIx));
+	fs::path path(baseOutputDirectory + "/Frame_" + std::to_string(trackedFrameCount));
 	if (!fs::exists(path)) {
 		fs::create_directories(path);
 	}
@@ -286,7 +285,7 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::InitializeUpdate2DIm
 	cv::cvtColor(canonicalImgOut, canonicalImgOut, cv::COLOR_GRAY2BGR);
 	cv::imwrite(ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolder
 	            + "canonical.png", canonicalImgOut);
-	cv::Mat liveImg = rasterizer.DrawLiveSceneImageAroundPoint(sourceLiveScene) * 255.0f;
+	cv::Mat liveImg = rasterizer.DrawLiveSceneImageAroundPoint(sourceLiveScene, 0) * 255.0f;
 	cv::Mat liveImgOut;
 	liveImg.convertTo(liveImgTemplate, CV_8UC1);
 	cv::cvtColor(liveImgTemplate, liveImgOut, cv::COLOR_GRAY2BGR);
@@ -320,7 +319,7 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::LogWarpUpdateAs2DIma
 			ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolder + "warp" +
 			numStringStream.str() + ".png";
 	cv::imwrite(image_name, warpImgOut);
-	cv::Mat liveImg = rasterizer.DrawLiveSceneImageAroundPoint(liveScene) * 255.0f;
+	cv::Mat liveImg = rasterizer.DrawLiveSceneImageAroundPoint(liveScene, iteration % 2) * 255.0f;
 	cv::Mat liveImgOut;
 	liveImg.convertTo(liveImgOut, CV_8UC1);
 	cv::cvtColor(liveImgOut, liveImgOut, cv::COLOR_GRAY2BGR);
@@ -339,6 +338,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::SetUpStepByStep
 	}
 	inStepByStepProcessingMode = true;
 	InitializeTracking(canonicalScene,sourceLiveScene,false);
+	PrintOperationStatus("*** Optimizing warp based on difference between canonical and live SDF. ***");
 	iteration = 0;
 }
 
@@ -346,6 +346,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::UpdateTrackingSingleStep(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene) {
 	if (iteration > parameters.maxIterationCount || maxVectorUpdate < maxVectorUpdateThresholdVoxels) {
+		PrintOperationStatus("*** Warp optimization finished for current frame. ***");
 		FinalizeTracking(canonicalScene,sourceLiveScene,false);
 		inStepByStepProcessingMode = false;
 		return false;

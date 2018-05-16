@@ -73,13 +73,14 @@ public:
 
 	std::string GenerateCurrentFrameOutputPath() const;
 
-	int GetFrameIndex() const { return currentFrameIx; }
+	int GetTrackedFrameCount() const { return trackedFrameCount; }
 
 	struct Parameters {
 		const unsigned int maxIterationCount;// = 200;
 		const float maxVectorUpdateThresholdMeters;// = 0.0001f;//m //original for KillingFusion
 		const float gradientDescentLearningRate;// = 0.1f;
 		const float rigidityEnforcementFactor;// = 0.1f;
+		const float weightDataTerm;
 		const float weightSmoothnessTerm;// = 0.2f; //0.2 is default for SobolevFusion, 0.5 is default for KillingFusion
 		const float weightLevelSetTerm;// = 0.2f;
 		const float epsilon;// = 1e-5f;
@@ -97,17 +98,17 @@ protected:
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 
 	virtual void ApplyWarpFieldToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                  ITMScene<TVoxelLive, TIndex>* sourceLiveScene)= 0;
+	                                  ITMScene<TVoxelLive, TIndex>* liveScene)= 0;
 	virtual void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                   ITMScene<TVoxelLive, TIndex>* sourceLiveScene) = 0;
+	                                   ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
+
+	virtual void MarkBoundaryVoxels(ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 
 
 	virtual void AllocateNewCanonicalHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                            ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 
-	virtual void ClearOutFrameWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
 	virtual void ClearOutWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
-	virtual void ApplyFrameWarpsToWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
 
 
 //============================= MEMBER VARIABLES =======================================================================
@@ -116,7 +117,7 @@ protected:
 	float maxVectorUpdateThresholdVoxels;
 
 	unsigned int iteration = 0;
-	unsigned int currentFrameIx = 0;
+	unsigned int trackedFrameCount = 0;
 
 	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>* sceneLogger;
 	std::string baseOutputDirectory;
@@ -158,6 +159,7 @@ private:
 	float maxVectorUpdate;
 	bool inStepByStepProcessingMode = false;
 	void PrintLiveSceneStatistics(ITMScene<TVoxelLive, TIndex>* scene, const char* desc);
+
 };
 
 

@@ -59,18 +59,17 @@ protected:
 
 	void CalculateWarpGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                          ITMScene<TVoxelLive, TIndex>* liveScene) override;
+	void MarkBoundaryVoxels(ITMScene<TVoxelLive, TIndex>* liveScene) override;
 
 
 	void AllocateNewCanonicalHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                    ITMScene<TVoxelLive, TIndex>* liveScene) override;
 	void ClearOutWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) override;
-	void ClearOutFrameWarps(ITMScene <TVoxelCanonical, TIndex>* canonicalScene) override;
-	void ApplyFrameWarpsToWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) override;
 
 
 private:
 	void AllocateHashBlocksAtWarpedLocations(
-			ITMScene <TVoxelCanonical, TIndex>* warpSourceScene, ITMScene <TVoxelLive, TIndex>* sdfScene, int flagIndex);
+			ITMScene <TVoxelCanonical, TIndex>* warpSourceScene, ITMScene <TVoxelLive, TIndex>* sdfScene, int fieldIndex);
 
 	float ApplyWarpUpdateToWarp_SingleThreadedVerbose(
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);

@@ -32,6 +32,14 @@ public:
 		AXIS_Z = 3
 	};
 
+	// where to save the images
+	static const std::string iterationFramesFolder;
+	static const std::string liveIterationFramesFolder;
+	static const std::string canonicalSceneRasterizedFolder;
+	static const std::string liveSceneRasterizedFolder;
+
+	static float SdfToValue(float sdf);
+
 	explicit ITMSceneSliceRasterizer(Vector3i testPos, unsigned int imageSizeVoxels = 100, float pixelsPerVoxel = 16.0);
 	virtual ~ITMSceneSliceRasterizer(){}
 
@@ -43,17 +51,14 @@ public:
 	void RenderLiveSceneSlices(ITMScene<TVoxelLive, TIndex>* scene, Axis axis,std::string pathPostfix);
 
 	cv::Mat DrawCanonicalSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene);
-	cv::Mat DrawLiveSceneImageAroundPoint(ITMScene<TVoxelLive, TIndex>* scene);
+	cv::Mat DrawLiveSceneImageAroundPoint(
+			ITMScene <TVoxelLive, TIndex>* scene, int fieldIndex);
 	cv::Mat DrawWarpedSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene);
 	void MarkWarpedSceneImageAroundFocusPoint(ITMScene<TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn);
 	void MarkWarpedSceneImageAroundPoint(ITMScene<TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn,
 	                                            Vector3i positionOfVoxelToMark);
 
-// where to save the images
-	static const std::string iterationFramesFolder;
-	static const std::string liveIterationFramesFolder;
-	static const std::string canonicalSceneRasterizedFolder;
-	static const std::string liveSceneRasterizedFolder;
+
 
 	const Vector3i focusCoordinate;
 
@@ -92,6 +97,9 @@ protected:
 
 	const int imgPixelRangeX;
 	const int imgPixelRangeY;
+
+	template<typename TVoxel>
+	cv::Mat DrawSceneImageAroundPointIndexedFields(ITMScene <TVoxel, TIndex>* scene, int fieldIndex);
 
 };
 

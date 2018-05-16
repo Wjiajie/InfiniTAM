@@ -93,10 +93,10 @@ void VoxelTraversal_CPU(ITMScene<TVoxel, TIndex>& scene, TFunctor& functor) {
 
 template<typename TFunctor, typename TVoxel, typename TIndex>
 inline
-void VoxelPositionTraversal_CPU(ITMScene<TVoxel, TIndex>& scene, TFunctor& functor) {
-	TVoxel* voxels = scene.localVBA.GetVoxelBlocks();
-	const ITMHashEntry* hashTable = scene.index.GetEntries();
-	int noTotalEntries = scene.index.noTotalEntries;
+void VoxelPositionTraversal_CPU(ITMScene<TVoxel, TIndex>* scene, TFunctor& functor) {
+	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* hashTable = scene->index.GetEntries();
+	int noTotalEntries = scene->index.noTotalEntries;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -269,11 +269,10 @@ void VoxelAndHashBlockPositionTraversal_CPU(ITMScene<TVoxel, TIndex>& scene, TFu
 };
 
 template<typename TStaticFunctor, typename TVoxel, typename TIndex>
-inline
-void StaticVoxelTraversal_CPU(ITMScene<TVoxel, TIndex>& scene) {
-	TVoxel* voxels = scene.localVBA.GetVoxelBlocks();
-	const ITMHashEntry* hashTable = scene.index.GetEntries();
-	int noTotalEntries = scene.index.noTotalEntries;
+inline void StaticVoxelTraversal_CPU(ITMScene<TVoxel, TIndex>* scene) {
+	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* hashTable = scene->index.GetEntries();
+	int noTotalEntries = scene->index.noTotalEntries;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -294,11 +293,10 @@ void StaticVoxelTraversal_CPU(ITMScene<TVoxel, TIndex>& scene) {
 };
 
 template<typename TStaticFunctor, typename TVoxel, typename TIndex>
-inline
-void StaticVoxelPositionTraversal_CPU(ITMScene<TVoxel, TIndex>& scene) {
-	TVoxel* voxels = scene.localVBA.GetVoxelBlocks();
-	const ITMHashEntry* hashTable = scene.index.GetEntries();
-	int noTotalEntries = scene.index.noTotalEntries;
+inline void StaticVoxelPositionTraversal_CPU(ITMScene<TVoxel, TIndex>* scene) {
+	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* hashTable = scene->index.GetEntries();
+	int noTotalEntries = scene->index.noTotalEntries;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -477,19 +475,10 @@ ComputeCopyRanges(int& xRangeStart, int& xRangeEnd, int& yRangeStart, int& yRang
 
 
 
-template<class TVoxel, class TIndex>
-void CopySceneWithOffset_CPU(ITMScene<TVoxel, TIndex>& destination,
-                             ITMScene<TVoxel, TIndex>& source,
-                             Vector3i offset);
-
-//TODO -make this suitable for source/dest scenes with different voxel types somehow -Greg (Github: Algomorph)
-void CopySceneWithOffset_CPU(ITMScene<ITMVoxelLive, ITMVoxelIndex>& destination,
-                             ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& source,
-                             Vector3i offset);
-
-void CopySceneWithOffset_CPU(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& destination,
-                             ITMScene<ITMVoxelLive, ITMVoxelIndex>& source,
-                             Vector3i offset);
+template<typename TVoxelSource, typename TVoxelDesitnation, typename TIndex >
+void CopySceneSDFandFlagsWithOffset_CPU(ITMScene<TVoxelDesitnation, TIndex>* destination,
+                                        ITMScene<TVoxelSource, TIndex>* source,
+                                        Vector3i offset);
 
 template<class TVoxel, class TIndex>
 bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, TIndex>* source,
@@ -503,17 +492,8 @@ int FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelInd
 
 
 template<class TVoxel, class TIndex>
-bool SetVoxel_CPU(ITMScene<TVoxel, TIndex>& scene, Vector3i at, TVoxel voxel);
+bool SetVoxel_CPU(ITMScene <TVoxel, TIndex>* scene, Vector3i at, TVoxel voxel);
 
-
-template<class TVoxel, class TIndex>
-void
-CopySceneWithOffset_CPU(ITMScene<TVoxel, TIndex>& destination, ITMScene<TVoxel, TIndex>& source, Vector3i offset);
-
-void CopySceneWithOffset_CPU(ITMScene<ITMVoxelLive, ITMVoxelIndex>& destination,
-                             ITMScene<ITMVoxel, ITMVoxelIndex>& source, Vector3i offset);
-void CopySceneWithOffset_CPU(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& destination,
-                             ITMScene<ITMVoxelLive, ITMVoxelIndex>& source, Vector3i offset);
 
 template<class TVoxel, class TIndex>
 void OffsetWarps(ITMScene<TVoxel, TIndex>& scene, Vector3f offset);
@@ -523,5 +503,5 @@ TVoxel ReadVoxel(ITMScene<TVoxel, TIndex>& scene, Vector3i at);
 
 
 template<class TVoxel, class TIndex>
-bool SetVoxel_CPU(ITMScene<TVoxel, TIndex>& scene, Vector3i at, TVoxel voxel);
+bool SetVoxel_CPU(ITMScene <TVoxel, TIndex>* scene, Vector3i at, TVoxel voxel);
 }//namespace ITMLib

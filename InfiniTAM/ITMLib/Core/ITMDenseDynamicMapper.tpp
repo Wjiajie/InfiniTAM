@@ -27,6 +27,7 @@
 #include "../Utils/ITMSceneStatisticsCalculator.h"
 #include "../Utils/ITMPrintHelpers.h"
 #include "../Utils/ITMBenchmarkUtils.h"
+#include "../../Tests/TestUtils.h"
 
 using namespace ITMLib;
 
@@ -87,24 +88,30 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(co
                                                                               const ITMTrackingState* trackingState,
                                                                               ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
                                                                               ITMScene<TVoxelLive, TIndex>*& liveScene,
-                                                                              ITMRenderState* renderState) {
-	//BEGIN __DEBUG
+                                                                              ITMRenderState* renderState){
+
 	if(this->recordNextFrameWarps){
-		std::cout << bright_cyan << "MAPPING FRAME " << sceneMotionTracker->GetFrameIndex() <<  " (WITH RECORDING ON)" << reset << std::endl;
+		std::cout << bright_cyan << "MAPPING FRAME " << sceneMotionTracker->GetTrackedFrameCount() <<  " (WITH RECORDING ON)" << reset << std::endl;
 	}else{
-		std::cout << bright_cyan << "MAPPING FRAME " << sceneMotionTracker->GetFrameIndex() << reset << std::endl;
+		std::cout << bright_cyan << "MAPPING FRAME " << sceneMotionTracker->GetTrackedFrameCount() << reset << std::endl;
 	}
-	//END __DEBUG
 
 	bench::StartTimer("ReconstructLive");
 	// clear out the live-frame SDF
 	liveSceneReconstructor->ResetScene(liveScene);
 	//** construct the new live-frame SDF
-	// allocation
-	liveSceneReconstructor->AllocateSceneFromDepth(liveScene, view, trackingState, renderState);
-	// integration
-	liveSceneReconstructor->IntegrateIntoScene(liveScene, view, trackingState, renderState);
+//	if(sceneMotionTracker->GetTrackedFrameCount() == 1){ //_DEBUG
+//		GenerateTestScene01(canonicalScene);
+//		CopySceneSDFandFlagsWithOffset_CPU(liveScene, canonicalScene, Vector3i(5, 0, 0));
+//	} else {
+		// allocation
+		liveSceneReconstructor->AllocateSceneFromDepth(liveScene, view, trackingState, renderState);
+		// integration
+		liveSceneReconstructor->IntegrateIntoScene(liveScene, view, trackingState, renderState);
+//	}
 	bench::StopTimer("ReconstructLive");
+
+
 
 //	PrintSceneStats(liveScene, "Live before fusion"); //_DEBUG
 
@@ -164,6 +171,11 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessing
                                                                                       ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
                                                                                       ITMScene<TVoxelLive, TIndex>*& liveScene,
                                                                                       ITMRenderState* renderState) {
+	if(this->recordNextFrameWarps){
+		std::cout << bright_cyan << "MAPPING FRAME " << sceneMotionTracker->GetTrackedFrameCount() <<  " (WITH RECORDING ON)" << reset << std::endl;
+	}else{
+		std::cout << bright_cyan << "MAPPING FRAME " << sceneMotionTracker->GetTrackedFrameCount() << reset << std::endl;
+	}
 // clear out the live-frame SDF
 	liveSceneReconstructor->ResetScene(liveScene);
 	//** construct the new live-frame SDF

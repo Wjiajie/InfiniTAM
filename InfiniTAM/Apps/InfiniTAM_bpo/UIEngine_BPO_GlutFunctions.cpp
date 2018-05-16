@@ -162,7 +162,7 @@ void UIEngine_BPO::GlutDisplayFunction() {
 		        uiEngine->integrationActive ? "off" : "on");
 		Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
 		glRasterPos2f(-0.98f, -0.95f);
-		sprintf(str, "Alt+n: one frame (record) \t i: %d frames \t d: one step", uiEngine->autoIntervalFrameCount);
+		sprintf(str, "Alt+n: one frame (record) \t i: %d frames \t d: one step \t p: pause \t v: record input video (on/off)", uiEngine->autoIntervalFrameCount);
 		Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
 	}
 	glutSwapBuffers();
@@ -185,11 +185,14 @@ void UIEngine_BPO::GlutIdleFunction() {
 			uiEngine->mainLoopAction = PROCESS_PAUSED;
 		case PROCESS_STEPS_CONTINOUS:
 			if (!uiEngine->ContinueStepByStepModeForFrame()) {
-				uiEngine->inStepByStepMode = false;
-				uiEngine->mainLoopAction = PROCESS_PAUSED;
+				if ((uiEngine->processedFrameNo - uiEngine->autoIntervalFrameStart) >= uiEngine->autoIntervalFrameCount) {
+					uiEngine->inStepByStepMode = false;
+					uiEngine->mainLoopAction = PROCESS_PAUSED;
+				}else{
+					uiEngine->BeginStepByStepModeForFrame();
+				}
 			}
 			uiEngine->needsRefresh = true;
-
 			break;
 		case PROCESS_FRAME_RECORD:
 			uiEngine->recordWarpUpdatesForNextFrame = true;
@@ -361,6 +364,18 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 					uiEngine->currentColourMode = 0;
 				uiEngine->needsRefresh = true;
 				break;
+			case 'd':
+				if (uiEngine->BeginStepByStepModeForFrame()) {
+					uiEngine->freeviewActive = true;
+					uiEngine->inStepByStepMode = true;
+					uiEngine->needsRefresh = true;
+					if (modifiers & GLUT_ACTIVE_ALT) {
+						uiEngine->mainLoopAction = PROCESS_STEPS_CONTINOUS;
+					} else {
+						uiEngine->mainLoopAction = PROCESS_SINGLE_STEP;
+					}
+				}
+				break;
 			case 't': {
 				uiEngine->integrationActive = !uiEngine->integrationActive;
 
@@ -415,6 +430,9 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 				}
 			}
 				break;
+			case 'p':
+				uiEngine->mainLoopAction = PROCESS_PAUSED;
+				break;
 			case '[':
 			case ']': {
 				ITMMultiEngine<ITMVoxel, ITMVoxelIndex>* multiEngine = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMVoxelIndex>*>(uiEngine->mainEngine);
@@ -426,18 +444,6 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 					uiEngine->needsRefresh = true;
 				}
 			}
-				break;
-			case 'd':
-				if (uiEngine->BeginStepByStepModeForFrame()) {
-					uiEngine->freeviewActive = true;
-					uiEngine->inStepByStepMode = true;
-					uiEngine->needsRefresh = true;
-					if (modifiers & GLUT_ACTIVE_ALT) {
-						uiEngine->mainLoopAction = PROCESS_STEPS_CONTINOUS;
-					} else {
-						uiEngine->mainLoopAction = PROCESS_SINGLE_STEP;
-					}
-				}
 				break;
 
 			default:

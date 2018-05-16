@@ -384,7 +384,11 @@ Objects/Scene/ITMSurfelTypes.h
 Objects/Scene/ITMVoxelBlockHash.h
 Objects/Scene/ITMVoxelTypes.h
 Objects/Scene/ITMSceneManipulation.h
-
+#_DEBUG
+    ../Tests/TestUtils.h
+    ../Tests/TestUtils.cpp
+    ../Tests/TestUtils.tpp
+    ../Tests/Instantiations.cpp
 )
 
 ##

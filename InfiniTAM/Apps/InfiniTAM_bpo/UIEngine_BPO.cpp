@@ -57,11 +57,12 @@ UIEngine_BPO* UIEngine_BPO::instance;
  * set interval to this number of frames
  */
 void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
-                              InputSource::IMUSourceEngine* imuSource,
-                              ITMLib::ITMMainEngine* mainEngine, const char* outFolder,
-                              ITMLib::ITMLibSettings::DeviceType deviceType,
-                              int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult) {
-	this->inStepByStepMode = false;
+                              InputSource::IMUSourceEngine* imuSource, ITMLib::ITMMainEngine* mainEngine,
+                              const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
+                              int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
+                              bool startInStepByStep) {
+	this->inStepByStepMode = startInStepByStep;
+
 	this->freeviewActive = true;
 	this->integrationActive = true;
 	this->currentColourMode = 0;
@@ -133,13 +134,21 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 
 	saveImage = new ITMUChar4Image(imageSource->getDepthImageSize(), true, false);
 
-	outImageType[0] = this->freeviewActive ? this->colourModes_freeview[this->currentColourMode].type
-	                                       : this->colourModes_main[this->currentColourMode].type;
+
 	outImageType[1] = ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH;
 	outImageType[2] = ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_RGB;
 	if (inputRGBImage->noDims == Vector2i(0, 0)) outImageType[2] = ITMMainEngine::InfiniTAM_IMAGE_UNKNOWN;
 
-	mainLoopAction = autoIntervalFrameCount ? PROCESS_N_FRAMES : PROCESS_PAUSED;
+	if(startInStepByStep){
+		BeginStepByStepModeForFrame();
+		mainLoopAction = autoIntervalFrameCount ? PROCESS_STEPS_CONTINOUS : PROCESS_SINGLE_STEP;
+		outImageType[0] = this->colourMode_stepByStep.type;
+	}else{
+		mainLoopAction = autoIntervalFrameCount ? PROCESS_N_FRAMES : PROCESS_PAUSED;
+		outImageType[0] = this->freeviewActive ? this->colourModes_freeview[this->currentColourMode].type
+		                                       : this->colourModes_main[this->currentColourMode].type;
+	}
+
 	autoIntervalFrameStart = 0;
 	mouseState = 0;
 	mouseWarped = false;
@@ -187,7 +196,7 @@ void UIEngine_BPO::ProcessFrame() {
 	if (!imageSource->hasMoreImages()) return;
 	imageSource->getImages(inputRGBImage, inputRawDepthImage);
 
-	if (imuSource != NULL) {
+	if (imuSource != nullptr) {
 		if (!imuSource->hasMoreMeasurements()) return;
 		else imuSource->getMeasurement(inputIMUMeasurement);
 	}

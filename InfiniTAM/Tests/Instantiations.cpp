@@ -17,5 +17,5 @@
 #include "TestUtils.h"
 #include "TestUtils.tpp"
 
-template void GenerateTestScene01<ITMVoxelCanonical,ITMVoxelIndex>(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& destination);
+template void GenerateTestScene01<ITMVoxelCanonical,ITMVoxelIndex>(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* destination);
 
