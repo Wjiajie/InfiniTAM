@@ -118,6 +118,7 @@ protected:
 
 	unsigned int iteration = 0;
 	unsigned int trackedFrameCount = 0;
+	const int startTrackingAfterFrame = 0;
 
 	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>* sceneLogger;
 	std::string baseOutputDirectory;

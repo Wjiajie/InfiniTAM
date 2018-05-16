@@ -34,13 +34,14 @@ void GenerateTestScene01(ITMScene<TVoxel, TIndex>* scene) {
 	int surfaceSizeVoxelsY = 64;
 
 	for (int iVoxelAcrossBand = 0; iVoxelAcrossBand < narrowBandThicknessVoxels + 1; iVoxelAcrossBand++) {
-
-		float sdfValue = 0.0F + iVoxelAcrossBand * (1.0F / narrowBandThicknessVoxels);
+		float sdfMagnitude = 0.0F + iVoxelAcrossBand * (1.0F / narrowBandThicknessVoxels);
 		int xPos = xOffset + iVoxelAcrossBand;
 		int xNeg = xOffset - iVoxelAcrossBand;
 		TVoxel voxelPos, voxelNeg;
-		voxelPos.sdf = sdfValue;
-		voxelNeg.sdf = -sdfValue;
+		voxelPos.sdf = sdfMagnitude;
+		voxelNeg.sdf = -sdfMagnitude;
+		bool isTruncated = (1.0f - sdfMagnitude) < FLT_EPSILON;
+		voxelPos.flags = isTruncated ? ITMLib::VOXEL_TRUNCATED : ITMLib::VOXEL_NONTRUNCATED;
 		for (int z = 0; z < surfaceSizeVoxelsZ; z++) {
 			for (int y = 0; y < surfaceSizeVoxelsY; y++) {
 				SetVoxel_CPU(scene, Vector3i(xPos, y, z), voxelPos);

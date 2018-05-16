@@ -139,15 +139,7 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 	outImageType[2] = ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_RGB;
 	if (inputRGBImage->noDims == Vector2i(0, 0)) outImageType[2] = ITMMainEngine::InfiniTAM_IMAGE_UNKNOWN;
 
-	if(startInStepByStep){
-		BeginStepByStepModeForFrame();
-		mainLoopAction = autoIntervalFrameCount ? PROCESS_STEPS_CONTINOUS : PROCESS_SINGLE_STEP;
-		outImageType[0] = this->colourMode_stepByStep.type;
-	}else{
-		mainLoopAction = autoIntervalFrameCount ? PROCESS_N_FRAMES : PROCESS_PAUSED;
-		outImageType[0] = this->freeviewActive ? this->colourModes_freeview[this->currentColourMode].type
-		                                       : this->colourModes_main[this->currentColourMode].type;
-	}
+
 
 	autoIntervalFrameStart = 0;
 	mouseState = 0;
@@ -168,6 +160,17 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 		printf("Skipping the first %d frames.\n", skipFirstNFrames);
 		SkipFrames(skipFirstNFrames);
 	}
+
+	if(startInStepByStep){
+		BeginStepByStepModeForFrame();
+		mainLoopAction = autoIntervalFrameCount ? PROCESS_STEPS_CONTINOUS : PROCESS_SINGLE_STEP;
+		outImageType[0] = this->colourMode_stepByStep.type;
+	}else{
+		mainLoopAction = autoIntervalFrameCount ? PROCESS_N_FRAMES : PROCESS_PAUSED;
+		outImageType[0] = this->freeviewActive ? this->colourModes_freeview[this->currentColourMode].type
+		                                       : this->colourModes_main[this->currentColourMode].type;
+	}
+
 	if(recordReconstructionResult){
 		this->reconstructionVideoWriter = new FFMPEGWriter();
 	}

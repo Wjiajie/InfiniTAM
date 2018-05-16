@@ -100,15 +100,15 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(co
 	// clear out the live-frame SDF
 	liveSceneReconstructor->ResetScene(liveScene);
 	//** construct the new live-frame SDF
-//	if(sceneMotionTracker->GetTrackedFrameCount() == 1){ //_DEBUG
-//		GenerateTestScene01(canonicalScene);
-//		CopySceneSDFandFlagsWithOffset_CPU(liveScene, canonicalScene, Vector3i(5, 0, 0));
-//	} else {
+	if(sceneMotionTracker->GetTrackedFrameCount() == 0){ //_DEBUG
+		GenerateTestScene01(canonicalScene);
+		CopySceneSDFandFlagsWithOffset_CPU(liveScene, canonicalScene, Vector3i(5, 0, 0));
+	} else {
 		// allocation
 		liveSceneReconstructor->AllocateSceneFromDepth(liveScene, view, trackingState, renderState);
 		// integration
 		liveSceneReconstructor->IntegrateIntoScene(liveScene, view, trackingState, renderState);
-//	}
+	}
 	bench::StopTimer("ReconstructLive");
 
 

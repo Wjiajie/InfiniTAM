@@ -137,7 +137,8 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::Parameters parameters,
 			typename ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::Switches switches,
 			unsigned int iteration, unsigned int currentFrameIx,
-			bool hasFocusCoordinates, Vector3i focusCoordinates) :
+			bool hasFocusCoordinates, Vector3i focusCoordinates,
+			ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>* sceneLogger) :
 
 			hasFocusCoordinates(hasFocusCoordinates),
 			focusCoordinates(focusCoordinates),
@@ -155,7 +156,8 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 			canonicalScene(canonicalScene),
 			canonicalVoxels(canonicalScene->localVBA.GetVoxelBlocks()),
 			canonicalHashEntries(canonicalScene->index.GetEntries()),
-			canonicalCache() {}
+			canonicalCache(),
+			sceneLogger(sceneLogger){}
 	// endregion =======================================================================================================
 
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i voxelPosition) {
@@ -448,10 +450,10 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
 ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpGradient_SingleThreadedVerbose(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
-
+	//TODO: initialize this struct in the constructor of ITMSceneMotionTracker_CPU  and adjust to recompute sourceSdfIndex based on the iteration on the fly (via separate member function) -Greg (GitHub: Algomorph)
 	CalculateWarpGradient_SingleThreadedVerboseFunctor<TVoxelCanonical, TVoxelLive, TIndex> calculateGradientFunctor(
 			liveScene, canonicalScene, this->parameters, this->switches, this->iteration, this->trackedFrameCount,
-			this->hasFocusCoordinates, this->focusCoordinates);
+			this->hasFocusCoordinates, this->focusCoordinates, this->sceneLogger);
 
 	DualVoxelPositionTraversal_AllocateSecondaryOnMiss_CPU(
 			liveScene, canonicalScene, this->canonicalEntryAllocationTypes, calculateGradientFunctor, true);

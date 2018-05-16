@@ -89,7 +89,8 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::InitializeTrack
 	AllocateNewCanonicalHashBlocks(canonicalScene, liveScene);
 	bench::StopTimer("TrackMotion_0_AllocateNewCanonicalHashBlocks");
 
-	if (trackedFrameCount == 0) return; //don't need to actually do tracking at first frame.
+	//if (trackedFrameCount <= startTrackingAfterFrame) return; //don't need to actually do tracking at first frame.
+
 	ClearOutWarps(canonicalScene);
 
 	//** initialize live frame
@@ -142,6 +143,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOptimizationStep(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
 		bool recordWarpUpdates) {
+
 // region ================================== DEBUG 2D VISUALIZATION FOR UPDATES ================================
 	if (rasterizeUpdates && rasterizationFrame == trackedFrameCount) {
 		LogWarpUpdateAs2DImage(canonicalScene, liveScene, blank, liveImgTemplate, rasterizer);
@@ -228,6 +230,8 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		DIEWITHEXCEPTION_REPORTLOCATION("Cannot track motion for full frame when in step-by-step mode");
 	}
 	InitializeTracking(canonicalScene, liveScene, recordWarpUpdates);
+//	if(trackedFrameCount <= startTrackingAfterFrame) // no tracking nescessary for first frame
+//		return;
 
 	// region ================================== WARP UPDATE RECORDING (BEFORE OPTIMIZATION) ===========================
 	PrintOperationStatus("*** Optimizing warp based on difference between canonical and live SDF. ***");
@@ -338,6 +342,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::SetUpStepByStep
 	}
 	inStepByStepProcessingMode = true;
 	InitializeTracking(canonicalScene,sourceLiveScene,false);
+
 	PrintOperationStatus("*** Optimizing warp based on difference between canonical and live SDF. ***");
 	iteration = 0;
 }
@@ -345,9 +350,11 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::SetUpStepByStep
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::UpdateTrackingSingleStep(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene) {
-	if (iteration > parameters.maxIterationCount || maxVectorUpdate < maxVectorUpdateThresholdVoxels) {
+	if (trackedFrameCount <= startTrackingAfterFrame || iteration > parameters.maxIterationCount || maxVectorUpdate < maxVectorUpdateThresholdVoxels) {
 		PrintOperationStatus("*** Warp optimization finished for current frame. ***");
-		FinalizeTracking(canonicalScene,sourceLiveScene,false);
+		if(trackedFrameCount > startTrackingAfterFrame){
+			FinalizeTracking(canonicalScene,sourceLiveScene,false);
+		}
 		inStepByStepProcessingMode = false;
 		return false;
 	}
