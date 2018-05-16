@@ -128,13 +128,14 @@ protected:
 	bool hasFocusCoordinates = false;
 	Vector3i focusCoordinates;
 
+	bool restrictZtrackingForDebugging = true;
 	//*** 2D visual debugging
 	//TODO: these should be CLI parameters -Greg (GitHub:Algomorph)
 	//TODO: recording & recording frame index should be CLI parameters -Greg (GitHub:Algomorph)
 	bool rasterizeLive = false;
 	bool rasterizeCanonical = false;
-	bool rasterizeUpdates = false;
-	unsigned int rasterizationFrame = 1;
+	bool rasterizeUpdates = true;
+	unsigned int rasterizationFrame = 0;
 	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex> rasterizer;
 	cv::Mat blank;
 	cv::Mat liveImgTemplate;

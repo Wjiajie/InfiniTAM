@@ -311,6 +311,8 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 				parameters.weightLevelSetTerm * localLevelSetEnergyGradient +
 				parameters.weightSmoothnessTerm * localSmoothnessEnergyGradient;
 
+		if(restrictZtrackingForDebugging) localDataEnergyGradient.z = 0.0f;
+
 		canonicalVoxel.gradient0 = localEnergyGradient;
 
 		// endregion
@@ -383,6 +385,8 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 				cumulativeLiveSdf,
 				cumulativeWarpDist, cumulativeSdfDiff, consideredVoxelCount, dataVoxelCount, levelSetVoxelCount);
 	}
+	//_DEBUG
+	bool restrictZtrackingForDebugging = false;
 
 private:
 
@@ -454,6 +458,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CalculateWarpGra
 	CalculateWarpGradient_SingleThreadedVerboseFunctor<TVoxelCanonical, TVoxelLive, TIndex> calculateGradientFunctor(
 			liveScene, canonicalScene, this->parameters, this->switches, this->iteration, this->trackedFrameCount,
 			this->hasFocusCoordinates, this->focusCoordinates, this->sceneLogger);
+	calculateGradientFunctor.restrictZtrackingForDebugging = this->restrictZtrackingForDebugging;
 
 	DualVoxelPositionTraversal_AllocateSecondaryOnMiss_CPU(
 			liveScene, canonicalScene, this->canonicalEntryAllocationTypes, calculateGradientFunctor, true);

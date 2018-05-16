@@ -83,6 +83,11 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::InitializeTrack
 		bool recordWarpUpdates) {
 //PrintLiveSceneStatistics(sourceLiveScene, "raw live scene");//_DEBUG
 
+	if(restrictZtrackingForDebugging){
+		std::cout << red << "WARNING: UPDATES IN Z DIRECTION HAVE BEEN DISABLED FOR DEBUGGING"
+					  " PURPOSES. DO NOT EXPECT PROPER RESULTS!" << reset << std::endl;
+	}
+
 	//** prepare canonical for new frame
 	PrintOperationStatus("Allocating canonical blocks based on live frame...");
 	bench::StartTimer("TrackMotion_0_AllocateNewCanonicalHashBlocks");
