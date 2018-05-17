@@ -168,6 +168,7 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 
 		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
 		float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
+
 		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[sourceSdfIndex]);
 		Vector3f& warp = canonicalVoxel.warp;
 		Vector3f localSmoothnessEnergyGradient(0.0f), localDataEnergyGradient(0.0f), localLevelSetEnergyGradient(0.0f);
@@ -311,7 +312,7 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 				parameters.weightLevelSetTerm * localLevelSetEnergyGradient +
 				parameters.weightSmoothnessTerm * localSmoothnessEnergyGradient;
 
-		if(restrictZtrackingForDebugging) localDataEnergyGradient.z = 0.0f;
+		if(restrictZtrackingForDebugging) localEnergyGradient.z = 0.0f;
 
 		canonicalVoxel.gradient0 = localEnergyGradient;
 
@@ -438,9 +439,10 @@ private:
 			std::cout << std::endl << bright_cyan << "*** Printing voxel at " << voxelPosition
 			          << " *** " << reset << std::endl;
 			std::cout << "Position within block (x,y,z): " << x << ", " << y << ", " << z << std::endl;
-			std::cout << "Source SDF vs. target SDF: " << canonicalSdf << "-->" << liveSdf << std::endl
+			std::cout << "Canonical SDF vs. live SDF: " << canonicalSdf << "-->" << liveSdf << std::endl
 			          << "Warp: " << green << voxelWarp << reset
 			          << " Warp length: " << green << ORUtils::length(voxelWarp) << reset;
+
 			std::cout << std::endl;
 			printVoxelResult = true;
 			if (sceneLogger != nullptr) {

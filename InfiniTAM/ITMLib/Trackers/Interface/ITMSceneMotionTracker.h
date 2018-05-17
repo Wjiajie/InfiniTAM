@@ -74,6 +74,7 @@ public:
 	std::string GenerateCurrentFrameOutputPath() const;
 
 	int GetTrackedFrameCount() const { return trackedFrameCount; }
+	bool GetInSimpleSceneExperimentMode() const { return simpleSceneExperimentModeEnabled;}
 
 	struct Parameters {
 		const unsigned int maxIterationCount;// = 200;
@@ -128,7 +129,9 @@ protected:
 	bool hasFocusCoordinates = false;
 	Vector3i focusCoordinates;
 
+	//_DEBUG
 	bool restrictZtrackingForDebugging = true;
+	bool simpleSceneExperimentModeEnabled = true;
 	//*** 2D visual debugging
 	//TODO: these should be CLI parameters -Greg (GitHub:Algomorph)
 	//TODO: recording & recording frame index should be CLI parameters -Greg (GitHub:Algomorph)
@@ -161,6 +164,7 @@ private:
 	float maxVectorUpdate;
 	bool inStepByStepProcessingMode = false;
 	void PrintLiveSceneStatistics(ITMScene<TVoxelLive, TIndex>* scene, const char* desc);
+
 
 };
 

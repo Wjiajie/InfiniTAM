@@ -50,6 +50,9 @@ void CopySceneSDFandFlagsWithOffset_CPU(ITMScene<TVoxelDestination, TIndex>* des
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					Vector3i originalPosition = canonicalHashEntryPosition + Vector3i(x, y, z);
 					Vector3i offsetPosition = originalPosition + offset;
+					if(offsetPosition == Vector3i(5,20,0)){
+						int i = 42;
+					}
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxelSource& voxelSource = localVoxelBlock[locId];
 					TVoxelDestination voxelDestination;

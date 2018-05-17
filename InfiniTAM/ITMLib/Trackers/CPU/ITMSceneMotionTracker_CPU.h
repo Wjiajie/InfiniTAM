@@ -55,6 +55,10 @@ protected:
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;
 	void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                           ITMScene<TVoxelLive, TIndex>* liveScene) override;
+	void ApplyForwardWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                                  ITMScene<TVoxelLive, TIndex>* liveScene);
+	void ApplyInverseWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                           ITMScene<TVoxelLive, TIndex>* liveScene);
 
 
 	void CalculateWarpGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
@@ -82,6 +86,8 @@ private:
 
 	void CalculateWarpGradient_SingleThreadedVerbose(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                                                 ITMScene <TVoxelLive, TIndex>* liveScene);
+	void AllocateHashBlocksAtInverseWarpedLocations(ITMScene <TVoxelCanonical, TIndex>* warpSourceScene,
+	                                                ITMScene <TVoxelLive, TIndex>* sdfScene, int fieldIndex);
 };
 
 

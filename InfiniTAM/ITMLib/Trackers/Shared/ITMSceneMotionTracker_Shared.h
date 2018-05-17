@@ -427,6 +427,7 @@ inline void markNonTruncatedNeighborsAsBoundary(
 		THREADPTR(TVoxel)* voxels,
 		const CONSTPTR(ITMHashEntry)* hashEntries,
 		THREADPTR(TCache)& cache,
+		bool sourcePositive,
 		int fieldIndex) {
 	const int neighborCount = 28;
 	const Vector3i offsets[] = {
@@ -448,6 +449,7 @@ inline void markNonTruncatedNeighborsAsBoundary(
 		GetVoxel(voxel,voxels, hashEntries,voxelPosition + offsets[iNeighbor],cache);
 		if (voxel != nullptr && voxel->flag_values[fieldIndex] != ITMLib::VOXEL_NONTRUNCATED){
 			voxel->flag_values[fieldIndex] = ITMLib::VOXEL_BOUNDARY;
+			voxel->sdf_values[fieldIndex] = TVoxel::floatToValue(-1.0f + sourcePositive * 2.0f);
 		}
 	}
 }

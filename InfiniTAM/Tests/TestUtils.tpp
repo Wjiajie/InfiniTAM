@@ -41,7 +41,14 @@ void GenerateTestScene01(ITMScene<TVoxel, TIndex>* scene) {
 		voxelPos.sdf = sdfMagnitude;
 		voxelNeg.sdf = -sdfMagnitude;
 		bool isTruncated = (1.0f - sdfMagnitude) < FLT_EPSILON;
-		voxelPos.flags = isTruncated ? ITMLib::VOXEL_TRUNCATED : ITMLib::VOXEL_NONTRUNCATED;
+		if(isTruncated){
+			voxelPos.flags = ITMLib::VOXEL_TRUNCATED;
+			voxelNeg.flags =ITMLib::VOXEL_TRUNCATED;
+		}else{
+			voxelPos.flags = ITMLib::VOXEL_NONTRUNCATED;
+			voxelNeg.flags = ITMLib::VOXEL_NONTRUNCATED;
+		}
+
 		for (int z = 0; z < surfaceSizeVoxelsZ; z++) {
 			for (int y = 0; y < surfaceSizeVoxelsY; y++) {
 				SetVoxel_CPU(scene, Vector3i(xPos, y, z), voxelPos);

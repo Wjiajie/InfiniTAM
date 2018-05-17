@@ -94,7 +94,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::InitializeTrack
 	AllocateNewCanonicalHashBlocks(canonicalScene, liveScene);
 	bench::StopTimer("TrackMotion_0_AllocateNewCanonicalHashBlocks");
 
-	//if (trackedFrameCount <= startTrackingAfterFrame) return; //don't need to actually do tracking at first frame.
+	if (trackedFrameCount <= startTrackingAfterFrame && !simpleSceneExperimentModeEnabled) return; //don't need to actually do tracking at first frame.
 
 	ClearOutWarps(canonicalScene);
 
@@ -157,7 +157,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 	std::cout << red << "Iteration: " << iteration << reset << std::endl;
 	PrintOperationStatus("Marking boundary voxels...");
 	bench::StartTimer("TrackMotion_30_MarkBoundaryVoxels");
-	MarkBoundaryVoxels(liveScene);
+	MarkBoundaryVoxels(liveScene);//_DEBUG
 	bench::StopTimer("TrackMotion_30_MarkBoundaryVoxels");
 
 	//** warp update gradient computation
@@ -235,8 +235,12 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::TrackMotion(
 		DIEWITHEXCEPTION_REPORTLOCATION("Cannot track motion for full frame when in step-by-step mode");
 	}
 	InitializeTracking(canonicalScene, liveScene, recordWarpUpdates);
-//	if(trackedFrameCount <= startTrackingAfterFrame) // no tracking nescessary for first frame
-//		return;
+	if(trackedFrameCount <= startTrackingAfterFrame && !simpleSceneExperimentModeEnabled){
+		// no tracking nescessary for first frame
+		trackedFrameCount++;
+		return;
+	}
+
 
 	// region ================================== WARP UPDATE RECORDING (BEFORE OPTIMIZATION) ===========================
 	PrintOperationStatus("*** Optimizing warp based on difference between canonical and live SDF. ***");
@@ -355,9 +359,10 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::SetUpStepByStep
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::UpdateTrackingSingleStep(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& sourceLiveScene) {
-	if (trackedFrameCount <= startTrackingAfterFrame || iteration > parameters.maxIterationCount || maxVectorUpdate < maxVectorUpdateThresholdVoxels) {
+	if ((trackedFrameCount <= startTrackingAfterFrame && !simpleSceneExperimentModeEnabled)
+	    || iteration > parameters.maxIterationCount || maxVectorUpdate < maxVectorUpdateThresholdVoxels) {
 		PrintOperationStatus("*** Warp optimization finished for current frame. ***");
-		if(trackedFrameCount > startTrackingAfterFrame){
+		if(trackedFrameCount > startTrackingAfterFrame || simpleSceneExperimentModeEnabled){
 			FinalizeTracking(canonicalScene,sourceLiveScene,false);
 		}
 		inStepByStepProcessingMode = false;
