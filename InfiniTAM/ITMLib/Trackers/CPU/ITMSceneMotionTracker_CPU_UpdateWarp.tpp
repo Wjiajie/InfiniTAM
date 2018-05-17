@@ -161,15 +161,18 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 	// endregion =======================================================================================================
 
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i voxelPosition) {
-		if (liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_NONTRUNCATED &&
-				liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_BOUNDARY) {
+		bool isBoundary = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_BOUNDARY;
+		if (liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_NONTRUNCATED && !isBoundary) {
 			return;
 		}
 
 		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
-		float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
-
 		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[sourceSdfIndex]);
+		float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
+		if(canonicalVoxel.flags != ITMLib::VOXEL_NONTRUNCATED){
+			canonicalSdf = std::copysign(1.0f,liveSdf);
+		}
+
 		Vector3f& warp = canonicalVoxel.warp;
 		Vector3f localSmoothnessEnergyGradient(0.0f), localDataEnergyGradient(0.0f), localLevelSetEnergyGradient(0.0f);
 		float localDataEnergy = 0.0f, localLevelSetEnergy = 0.0f, localSmoothnessEnergy = 0.0f,
@@ -208,8 +211,15 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 		if (switches.enableLevelSetTerm || switches.enableDataTerm) {
 			//TODO: in case both level set term and data term need to be computed, optimize by retreiving the sdf vals for live jacobian in a separate function. The live hessian needs to reuse them. -Greg (GitHub: Algomorph)
 			// compute the gradient of the live frame, ∇φ_n(Ψ) a.k.a ∇φ_{proj}(Ψ)
-			ComputeLiveJacobian_CentralDifferences_IndexedFields(liveSdfJacobian, voxelPosition, liveVoxels,
-			                                                     liveHashEntries, liveCache, sourceSdfIndex);
+			if(isBoundary){
+				ComputeLiveJacobian_CentralDifferences_IndexedFields_TruncationSignInference(
+						liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, liveSdf, sourceSdfIndex);
+			} else{
+				ComputeLiveJacobian_CentralDifferences_IgnoreUnknown_IndexedFields(
+						liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
+			}
+//			ComputeLiveJacobian_CentralDifferences_IndexedFields(liveSdfJacobian, voxelPosition, liveVoxels,
+//			                                                     liveHashEntries, liveCache, sourceSdfIndex);
 		}
 
 		// region =============================== DATA TERM ================================================

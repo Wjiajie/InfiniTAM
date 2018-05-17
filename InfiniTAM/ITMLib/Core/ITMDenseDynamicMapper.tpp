@@ -102,7 +102,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(co
 	//** construct the new live-frame SDF
 	if(sceneMotionTracker->GetTrackedFrameCount() == 0 && sceneMotionTracker->GetInSimpleSceneExperimentMode()){ //_DEBUG
 		GenerateTestScene01(canonicalScene);
-		CopySceneSDFandFlagsWithOffset_CPU(liveScene, canonicalScene, Vector3i(5, 0, 0));
+		CopySceneSDFandFlagsWithOffset_CPU(liveScene, canonicalScene, Vector3i(-5, 0, 0));
 	} else {
 		// allocation
 		liveSceneReconstructor->AllocateSceneFromDepth(liveScene, view, trackingState, renderState);

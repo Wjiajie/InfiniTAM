@@ -421,6 +421,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::PrintSettin
 	std::cout << "Weight of the smoothness term: " << this->parameters.weightSmoothnessTerm << std::endl;
 	std::cout << "Weight of the level set term: " << this->parameters.weightLevelSetTerm << std::endl;
 	std::cout << "Epsilon for the level set term: " << this->parameters.epsilon << std::endl;
+	std::cout << "Unity scaling factor: " << this->parameters.unity << std::endl;
 #undef print_bool
 	std::cout << bright_cyan << "*** *********************************** ***" << reset << std::endl;
 }
