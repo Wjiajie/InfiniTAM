@@ -216,7 +216,7 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 						liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, liveSdf, sourceSdfIndex);
 			} else{
 				ComputeLiveJacobian_CentralDifferences_IgnoreUnknown_IndexedFields(
-						liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
+						liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, liveSdf, sourceSdfIndex);
 			}
 //			ComputeLiveJacobian_CentralDifferences_IndexedFields(liveSdfJacobian, voxelPosition, liveVoxels,
 //			                                                     liveHashEntries, liveCache, sourceSdfIndex);

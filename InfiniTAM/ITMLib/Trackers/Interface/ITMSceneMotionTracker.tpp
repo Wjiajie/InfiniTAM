@@ -94,7 +94,12 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::InitializeTrack
 	AllocateNewCanonicalHashBlocks(canonicalScene, liveScene);
 	bench::StopTimer("TrackMotion_0_AllocateNewCanonicalHashBlocks");
 
-	if (trackedFrameCount <= startTrackingAfterFrame && !simpleSceneExperimentModeEnabled) return; //don't need to actually do tracking at first frame.
+	if (trackedFrameCount <= startTrackingAfterFrame && !simpleSceneExperimentModeEnabled) {
+		bench::StartTimer("TrackMotion_30_MarkBoundaryVoxels");
+		MarkBoundaryVoxels(liveScene);//_DEBUG
+		bench::StopTimer("TrackMotion_30_MarkBoundaryVoxels");
+		return; //don't need to actually do tracking at first frame.
+	}
 
 	ClearOutWarps(canonicalScene);
 
@@ -149,7 +154,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
 		bool recordWarpUpdates) {
 
-// region ================================== DEBUG 2D VISUALIZATION FOR UPDATES ================================
+    // region ================================== DEBUG 2D VISUALIZATION FOR UPDATES ================================
 	if (rasterizeUpdates && rasterizationFrame == trackedFrameCount) {
 		LogWarpUpdateAs2DImage(canonicalScene, liveScene, blank, liveImgTemplate, rasterizer);
 	}
