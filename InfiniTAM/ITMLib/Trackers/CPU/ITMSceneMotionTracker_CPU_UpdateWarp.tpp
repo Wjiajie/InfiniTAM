@@ -162,8 +162,8 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i voxelPosition) {
 		Vector3f& warp = canonicalVoxel.warp;
-		bool completedRegistration = this->iteration > 0 && ORUtils::length(canonicalVoxel.warp) < this->parameters.maxVectorUpdateThresholdMeters;
-		//if(completedRegistration) return;
+//		bool completedRegistration = this->iteration > 0 && ORUtils::length(canonicalVoxel.gradient0) < this->parameters.maxVectorUpdateThresholdMeters;
+//		if(completedRegistration) return;
 		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
 				&& canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
 		//if(!haveFullData) return;
@@ -660,7 +660,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 					                                       canonicalVoxel.gradient1 : canonicalVoxel.gradient0);
 
 					canonicalVoxel.gradient0 = warpUpdate;
-					canonicalVoxel.warp = warpUpdate;
+					canonicalVoxel.warp += warpUpdate;
 					float warpLength = ORUtils::length(canonicalVoxel.warp);
 					float warpUpdateLength = ORUtils::length(warpUpdate);
 					if (warpLength > maxWarpLength) {
@@ -747,7 +747,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 	std::cout << green << "Max warp: [" << maxWarpLength << " at " << maxWarpPosition << "] Max update: ["
 	          << maxWarpUpdateLength << " at " << maxWarpUpdatePosition << "]." << reset << std::endl;
 
-	return maxWarpLength;
+	return maxWarpUpdateLength;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

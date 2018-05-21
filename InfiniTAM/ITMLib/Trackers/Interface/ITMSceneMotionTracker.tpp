@@ -179,7 +179,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 	PrintOperationStatus(
 			"Updating live frame SDF by mapping from old live SDF to new live SDF based on latest warp update...");
 	bench::StartTimer("TrackMotion_35_ApplyWarpUpdateToLive");
-	ApplyWarpFieldToLive(canonicalScene, liveScene);
+	ApplyWarpUpdateToLive(canonicalScene, liveScene);
 	bench::StopTimer("TrackMotion_35_ApplyWarpUpdateToLive");
 
 	if (recordWarpUpdates) {
