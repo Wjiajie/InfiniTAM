@@ -452,56 +452,7 @@ struct WarpBasedAllocationMarkerFunctor {
 			flagIndex(flagIndex) {}
 
 	void operator()(TVoxelWarpSource& voxel, Vector3i voxelPosition, Vector3s hashBlockPosition) {
-		Vector3f warpedPosition = voxelPosition.toFloat() + voxel.warp;
-		Vector3i warpedPositionTruncated = warpedPosition.toInt();
-		// perform lookup
-		int vmIndex;
-		const TVoxelSdfSource& sdfVoxelAtWarp = readVoxel(sdfVoxels, sdfHashEntries, warpedPositionTruncated,
-		                                                  vmIndex, sdfCache);
-		// skip truncated voxels in raw/old live
-		if (sdfVoxelAtWarp.flag_values[flagIndex] != ITMLib::VOXEL_NONTRUNCATED) return;
-
-		int liveBlockHash = hashIndex(hashBlockPosition);
-		MarkAsNeedingAllocationIfNotFound(warpedEntryAllocationTypes, allocationBlockCoords, liveBlockHash,
-		                                  hashBlockPosition, sdfHashEntries);
-
-	}
-
-private:
-	ITMScene<TVoxelSdfSource, TIndex>* sdfScene;
-	TVoxelSdfSource* sdfVoxels;
-	ITMHashEntry* sdfHashEntries;
-	typename TIndex::IndexCache sdfCache;
-
-
-	Vector3s* allocationBlockCoords;
-	uchar* warpedEntryAllocationTypes;
-	const int flagIndex;
-};
-
-
-
-
-template<typename TVoxelWarpSource, typename TVoxelSdfSource, typename TIndex>
-struct InverseWarpBasedAllocationMarkerFunctor {
-	InverseWarpBasedAllocationMarkerFunctor(
-			ITMScene<TVoxelSdfSource, TIndex>* sceneToAllocate,
-			Vector3s* allocationBlockCoords,
-			uchar* warpedEntryAllocationTypes,
-			int flagIndex) :
-
-			sdfScene(sceneToAllocate),
-			sdfVoxels(sceneToAllocate->localVBA.GetVoxelBlocks()),
-			sdfHashEntries(sceneToAllocate->index.GetEntries()),
-			sdfCache(),
-
-			allocationBlockCoords(allocationBlockCoords),
-			warpedEntryAllocationTypes(warpedEntryAllocationTypes),
-
-			flagIndex(flagIndex) {}
-
-	void operator()(TVoxelWarpSource& voxel, Vector3i voxelPosition, Vector3s hashBlockPosition) {
-		Vector3f warpedPosition = voxelPosition.toFloat() - voxel.warp;
+		Vector3f warpedPosition = voxelPosition.toFloat() + voxel.gradient0;
 		Vector3i warpedPositionTruncated = warpedPosition.toInt();
 		// perform lookup
 		int vmIndex;
@@ -599,79 +550,6 @@ struct TrilinearInterpolationFunctor {
 				destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_TRUNCATED;
 			} else {
 				destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_NONTRUNCATED;
-			}
-		}
-	}
-
-
-private:
-
-	ITMScene<TVoxelSdf, TIndex>* sdfSourceScene;
-	TVoxelSdf* sdfSourceVoxels;
-	ITMHashEntry* sdfSourceHashEntries;
-	typename TIndex::IndexCache sdfSourceCache;
-
-	ITMScene<TVoxelWarpSource, TIndex>* warpSourceScene;
-	TVoxelWarpSource* warpSourceVoxels;
-	ITMHashEntry* warpSourceHashEntries;
-	typename TIndex::IndexCache warpSourceCache;
-
-	const int sourceSdfIndex;
-	const int targetSdfIndex;
-};
-
-
-template<typename TVoxelWarpSource, typename TVoxelSdf, typename TIndex>
-struct InverseTrilinearInterpolationFunctor {
-	/**
-	 * \brief Initialize to transfer data from source sdf scene to a target sdf scene using the warps in the warp source scene
-	 * \details traverses
-	 * \param sdfSourceScene
-	 * \param warpSourceScene
-	 */
-	InverseTrilinearInterpolationFunctor(
-			ITMScene<TVoxelSdf, TIndex>* sdfSourceScene,
-			ITMScene<TVoxelWarpSource, TIndex>* warpSourceScene,
-			int sourceSdfIndex, int targetSdfIndex) :
-
-			sdfSourceScene(sdfSourceScene),
-			sdfSourceVoxels(sdfSourceScene->localVBA.GetVoxelBlocks()),
-			sdfSourceHashEntries(sdfSourceScene->index.GetEntries()),
-			sdfSourceCache(),
-
-			warpSourceScene(warpSourceScene),
-			warpSourceVoxels(warpSourceScene->localVBA.GetVoxelBlocks()),
-			warpSourceHashEntries(warpSourceScene->index.GetEntries()),
-			warpSourceCache(),
-			sourceSdfIndex(sourceSdfIndex),
-			targetSdfIndex(targetSdfIndex) {}
-
-
-	void operator()(TVoxelSdf& sdfSourceVoxel, Vector3i warpAndSdfVoxelPosition) {
-		int vmIndex;
-		// perform lookup at current position in canonical
-		const TVoxelWarpSource& warpSourceVoxel = readVoxel(warpSourceVoxels, warpSourceHashEntries,
-		                                                    warpAndSdfVoxelPosition, vmIndex, warpSourceCache);
-
-		Vector3f inverseWarpedPosition = warpAndSdfVoxelPosition.toFloat() - warpSourceVoxel.warp;
-		Vector3i truncatedInverseWarpedPosition = inverseWarpedPosition.toIntFloor();
-		TVoxelSdf* destinationSdfVoxel;
-		GetVoxel(destinationSdfVoxel,sdfSourceVoxels, sdfSourceHashEntries,truncatedInverseWarpedPosition,sdfSourceCache);
-		Vector3f forwardWarpedPosition = truncatedInverseWarpedPosition.toFloat() + warpSourceVoxel.warp;
-
-		bool struckKnown, struckNonTruncated;
-		float cumulativeWeight;
-		float sdf = InterpolateMultiSdfTrilinearly_StruckKnown(
-				sdfSourceVoxels, sdfSourceHashEntries, forwardWarpedPosition, sourceSdfIndex, sdfSourceCache, struckKnown);
-
-		destinationSdfVoxel->sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sdf);
-
-		// Update flags
-		if (struckKnown) {
-			if (1.0f - std::abs(sdf) < FLT_EPSILON) {
-				destinationSdfVoxel->flag_values[targetSdfIndex] = ITMLib::VOXEL_TRUNCATED;
-			} else {
-				destinationSdfVoxel->flag_values[targetSdfIndex] = ITMLib::VOXEL_NONTRUNCATED;
 			}
 		}
 	}
