@@ -100,7 +100,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::InitializeTrack
 		return; //don't need to actually do tracking at first frame.
 	}
 
-	//ClearOutWarps(canonicalScene);//_DEBUG --should be unnecessary
+	ClearOutWarps(canonicalScene);//_DEBUG --should be unnecessary
 
 	//** initialize live frame
 	PrintOperationStatus(
@@ -180,6 +180,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 			"Updating live frame SDF by mapping from old live SDF to new live SDF based on latest warp update...");
 	bench::StartTimer("TrackMotion_35_ApplyWarpUpdateToLive");
 	ApplyWarpUpdateToLive(canonicalScene, liveScene);
+	//ApplyWarpFieldToLive(canonicalScene, liveScene);
 	bench::StopTimer("TrackMotion_35_ApplyWarpUpdateToLive");
 
 	if (recordWarpUpdates) {

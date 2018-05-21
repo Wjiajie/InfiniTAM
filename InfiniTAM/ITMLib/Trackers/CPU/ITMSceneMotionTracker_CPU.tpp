@@ -257,33 +257,8 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 					canonicalVoxel.sdf = TVoxelCanonical::floatToValue(newSdf);
 					canonicalVoxel.w_depth = (uchar) newWDepth;
 
-					switch (canonicalVoxel.flags) {
-						case ITMLib::VOXEL_UNKNOWN:
-							if (liveVoxel.flag_values[targetSdfIndex] == ITMLib::VOXEL_NONTRUNCATED) {
-								//voxel is no longer perceived as truncated
-								canonicalVoxel.flags = ITMLib::VOXEL_NONTRUNCATED;
-								entriesAllocType[hash] = ITMLib::STABLE;
-							} else {
-								//TODO: remove this if the system works (condition becomes unreachable) -Greg (GitHub:Algomorph)
-								canonicalVoxel.flags = ITMLib::VOXEL_TRUNCATED;
-							}
-							break;
-						case ITMLib::VOXEL_TRUNCATED:
-							if (liveVoxel.flag_values[targetSdfIndex] == ITMLib::VOXEL_NONTRUNCATED) {
-								//voxel is no longer perceived as truncated
-								canonicalVoxel.flags = ITMLib::VOXEL_NONTRUNCATED;
-								entriesAllocType[hash] = ITMLib::STABLE;
-							} else if (std::signbit(oldSdf) != std::signbit(liveSdf)) {
-								//both voxels are truncated but differ in sign
-								//TODO: remove this if the system works (condition becomes unreachable) -Greg (GitHub:Algomorph)
-								//TODO: if it is faster, optimize this to short-circuit the computation before instead -Greg (GitHub: Algomorph)
-								canonicalVoxel.sdf = TVoxelCanonical::floatToValue(1.0f);
-								canonicalVoxel.w_depth = 1;
-							}
-							break;
-						default:
-							break;
-					}
+					canonicalVoxel.flags = ITMLib::VOXEL_NONTRUNCATED;
+					entriesAllocType[hash] = ITMLib::STABLE;
 				}
 			}
 		}

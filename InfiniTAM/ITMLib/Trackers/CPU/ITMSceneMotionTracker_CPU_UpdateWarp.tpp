@@ -162,8 +162,6 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i voxelPosition) {
 		Vector3f& warp = canonicalVoxel.warp;
-//		bool completedRegistration = this->iteration > 0 && ORUtils::length(canonicalVoxel.gradient0) < this->parameters.maxVectorUpdateThresholdMeters;
-//		if(completedRegistration) return;
 		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
 				&& canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
 		//if(!haveFullData) return;
@@ -218,8 +216,10 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 			//TODO: in case both level set term and data term need to be computed, optimize by retreiving the sdf vals for live jacobian in a separate function. The live hessian needs to reuse them. -Greg (GitHub: Algomorph)
 //			ComputeLiveJacobian_CentralDifferences_IndexedFields(
 //					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
-			ComputeLiveJacobian_CentralDifferences_NontruncatedOnly_IndexedFields(
+			ComputeLiveJacobian_CentralDifferences_IgnoreUnknown_IndexedFields(
 					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
+//			ComputeLiveJacobian_CentralDifferences_NontruncatedOnly_IndexedFields(
+//					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
 //			ComputeLiveJacobian_ForwardDifferences_NontruncatedOnly_IndexedFields(
 //					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
 		}
