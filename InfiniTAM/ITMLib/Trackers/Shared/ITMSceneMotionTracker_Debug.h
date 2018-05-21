@@ -173,6 +173,28 @@ inline void _DEBUG_PrintKillingTermStuff(const CONSTPTR(Vector3f*) neighborWarps
 };
 
 
+
+//_DEBUG printing routine
+_CPU_AND_GPU_CODE_
+inline void _DEBUG_PrintTikhonovTermStuff(const CONSTPTR(Vector3f*) neighborWarps,
+                                         const CONSTPTR(Vector3f)& laplacian) {
+
+	const int neighborhoodSize = 6;
+	//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
+	Vector3i neighborPositions[] = {Vector3i(-1, 0, 0), Vector3i(0, -1, 0), Vector3i(0, 0, -1), Vector3i(1, 0, 0),
+	                                Vector3i(0, 1, 0), Vector3i(0, 0, 1)};
+
+	std::cout << green;
+	std::cout << "Neighbors' warps: " << std::endl;
+	for (int iNeightbor = 0; iNeightbor < neighborhoodSize; iNeightbor++) {
+		std::cout << reset << neighborPositions[iNeightbor] << " (Neighbor " << iNeightbor << ")" << ": " << green
+		          << neighborWarps[iNeightbor] << ", " << std::endl;
+	}
+	std::cout << std::endl << yellow;
+	std::cout << "Laplacian: " << std::endl << laplacian << reset << std::endl ;
+};
+
+
 template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void find6ConnectedNeighborInfo(

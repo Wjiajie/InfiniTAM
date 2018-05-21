@@ -307,6 +307,9 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 				localSmoothnessEnergy = localTikhonovEnergy + localKillingEnergy;
 			} else {
 				ComputeWarpLaplacianAndJacobian(warpLaplacian, warpJacobian, warp, neighborWarps);
+				if (printVoxelResult) {
+					_DEBUG_PrintTikhonovTermStuff(neighborWarps, warpLaplacian);
+				}
 				//∇E_{reg}(Ψ) = −[∆U ∆V ∆W]' ,
 				localSmoothnessEnergyGradient = -warpLaplacian;
 				localTikhonovEnergy = dot(warpJacobian.getColumn(0), warpJacobian.getColumn(0)) +
@@ -502,7 +505,6 @@ struct GradientSmoothingPassFunctor {
 	void operator()(TVoxelCanonical& voxel, Vector3i position) {
 		int vmIndex;
 		const TVoxelLive& liveVoxel = readVoxel(liveVoxels, liveHashEntries, position, vmIndex, liveCache);
-		if (liveVoxel.flags != ITMLib::VOXEL_NONTRUNCATED) return;
 
 		const int directionIndex = (int) TDirection;
 
@@ -652,9 +654,6 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxelLive& liveVoxel = localLiveVoxelBlock[locId];
-					if (liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_NONTRUNCATED) {
-						continue;
-					}
 					TVoxelCanonical& canonicalVoxel = localCanonicalVoxelBlock[locId];
 					Vector3f warpUpdate = -learningRate * (this->switches.enableGradientSmoothing ?
 					                                       canonicalVoxel.gradient1 : canonicalVoxel.gradient0);

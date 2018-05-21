@@ -488,14 +488,6 @@ struct CompleteWarpWarpedPositionFunctor {
 };
 
 template<typename TVoxel>
-struct InverseWarpWarpedPositionFunctor {
-	inline static
-	Vector3f ComputeWarpedPosition(TVoxel voxel, Vector3i voxelPosition) {
-		return voxelPosition.toFloat() - voxel.warp;
-	}
-};
-
-template<typename TVoxel>
 struct WarpGradient0WarpedPositionFunctor {
 	inline static
 	Vector3f ComputeWarpedPosition(TVoxel voxel, Vector3i voxelPosition) {
@@ -664,7 +656,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpUp
  * \details scans each (allocated) voxel in the SDF voxel grid, checks the warp vector at the corresponding location,
  * finds the voxel where the warp vector is pointing to, and, if the hash block for that voxel is not yet allocated,
  * allocates it.
- * \param warpSourceScene voxel grid where each voxel has a .warp_t Vector3f field defined
+ * \param warpSourceScene voxel grid where each voxel has a .warp Vector3f field defined
  * \param sdfScene sdf grid whose hash blocks to allocate if needed
  * \param fieldIndex index of the sdf / flag field to use in the sdfScene
  */
