@@ -26,7 +26,7 @@ enum VoxelFlags : unsigned char{
 	VOXEL_UNKNOWN = 0,
 	VOXEL_TRUNCATED = 1,
 	VOXEL_NONTRUNCATED = 2,
-	VOXEL_BOUNDARY = 3
+	VOXEL_REGISTERED = 3
 };
 
 inline

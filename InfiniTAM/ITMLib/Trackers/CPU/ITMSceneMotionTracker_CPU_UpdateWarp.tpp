@@ -101,7 +101,7 @@ void CalculateAndPrintAdditionalStatistics(const bool& enableDataTerm,
 
 // endregion ===========================================================================================================
 
-// region ========================== CALCULATE WARP GRADIENT & UPDATE ==================================================
+// region ========================== CALCULATE WARP GRADIENT ===========================================================
 
 template<typename TVoxelCanonical>
 struct ClearOutGradientStaticFunctor {
@@ -161,19 +161,25 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 	// endregion =======================================================================================================
 
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i voxelPosition) {
-		bool isBoundary = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_BOUNDARY;
-		if (liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_NONTRUNCATED && !isBoundary) {
-			return;
-		}
+		Vector3f& warp = canonicalVoxel.warp;
+		bool completedRegistration = this->iteration > 0 && ORUtils::length(canonicalVoxel.warp) < this->parameters.maxVectorUpdateThresholdMeters;
+		//if(completedRegistration) return;
+		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
+				&& canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+		//if(!haveFullData) return;
+//		if (liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_NONTRUNCATED
+//		    || canonicalVoxel.flags != ITMLib::VOXEL_NONTRUNCATED) {
+//			return;
+//		}
 
 		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
 		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[sourceSdfIndex]);
 		float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
-		if(canonicalVoxel.flags != ITMLib::VOXEL_NONTRUNCATED){
-			canonicalSdf = std::copysign(1.0f,liveSdf);
-		}
+//		if(canonicalVoxel.flags != ITMLib::VOXEL_NONTRUNCATED){ //_DEBUG
+//			canonicalSdf = std::copysign(1.0f,liveSdf);
+//		}
 
-		Vector3f& warp = canonicalVoxel.warp;
+
 		Vector3f localSmoothnessEnergyGradient(0.0f), localDataEnergyGradient(0.0f), localLevelSetEnergyGradient(0.0f);
 		float localDataEnergy = 0.0f, localLevelSetEnergy = 0.0f, localSmoothnessEnergy = 0.0f,
 				localTikhonovEnergy = 0.0f, localKillingEnergy = 0.0f; // used for energy calculations in verbose output
@@ -208,22 +214,18 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 
 		//endregion
 
-		if (switches.enableLevelSetTerm || switches.enableDataTerm) {
+		if (haveFullData && (switches.enableLevelSetTerm || switches.enableDataTerm)) {
 			//TODO: in case both level set term and data term need to be computed, optimize by retreiving the sdf vals for live jacobian in a separate function. The live hessian needs to reuse them. -Greg (GitHub: Algomorph)
-			// compute the gradient of the live frame, ∇φ_n(Ψ) a.k.a ∇φ_{proj}(Ψ)
-			if(isBoundary){
-				ComputeLiveJacobian_CentralDifferences_IndexedFields_TruncationSignInference(
-						liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, liveSdf, sourceSdfIndex);
-			} else{
-				ComputeLiveJacobian_CentralDifferences_IgnoreUnknown_IndexedFields(
-						liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, liveSdf, sourceSdfIndex);
-			}
-//			ComputeLiveJacobian_CentralDifferences_IndexedFields(liveSdfJacobian, voxelPosition, liveVoxels,
-//			                                                     liveHashEntries, liveCache, sourceSdfIndex);
+//			ComputeLiveJacobian_CentralDifferences_IndexedFields(
+//					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
+			ComputeLiveJacobian_CentralDifferences_NontruncatedOnly_IndexedFields(
+					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
+//			ComputeLiveJacobian_ForwardDifferences_NontruncatedOnly_IndexedFields(
+//					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
 		}
 
 		// region =============================== DATA TERM ================================================
-		if (switches.enableDataTerm) {
+		if (switches.enableDataTerm && haveFullData) {
 			// Compute data term error / energy
 			sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
 			// (φ_n(Ψ)−φ_{global}) ∇φ_n(Ψ) - also denoted as - (φ_{proj}(Ψ)−φ_{model}) ∇φ_{proj}(Ψ)
@@ -247,7 +249,7 @@ struct CalculateWarpGradient_SingleThreadedVerboseFunctor {
 
 		// region =============================== LEVEL SET TERM ===========================================
 
-		if (switches.enableLevelSetTerm) {
+		if (switches.enableLevelSetTerm && haveFullData) {
 			ComputeSdfHessian_IndexedFields(liveSdfHessian, voxelPosition, liveSdf, liveVoxels,
 			                                liveHashEntries, liveCache, sourceSdfIndex);
 			float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
@@ -650,8 +652,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxelLive& liveVoxel = localLiveVoxelBlock[locId];
-					if (liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_NONTRUNCATED
-					    && liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_BOUNDARY) {
+					if (liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_NONTRUNCATED) {
 						continue;
 					}
 					TVoxelCanonical& canonicalVoxel = localCanonicalVoxelBlock[locId];
@@ -659,7 +660,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 					                                       canonicalVoxel.gradient1 : canonicalVoxel.gradient0);
 
 					canonicalVoxel.gradient0 = warpUpdate;
-					canonicalVoxel.warp += warpUpdate;
+					canonicalVoxel.warp = warpUpdate;
 					float warpLength = ORUtils::length(canonicalVoxel.warp);
 					float warpUpdateLength = ORUtils::length(warpUpdate);
 					if (warpLength > maxWarpLength) {
@@ -746,7 +747,7 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::ApplyWarpU
 	std::cout << green << "Max warp: [" << maxWarpLength << " at " << maxWarpPosition << "] Max update: ["
 	          << maxWarpUpdateLength << " at " << maxWarpUpdatePosition << "]." << reset << std::endl;
 
-	return maxWarpUpdateLength;
+	return maxWarpLength;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

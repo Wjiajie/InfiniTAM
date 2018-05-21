@@ -210,7 +210,6 @@ _CPU_AND_GPU_CODE_
 inline void find6ConnectedNeighborInfoIndexedFields(
 		THREADPTR(bool)* neighborKnown, //x6, out
 		THREADPTR(bool)* neighborTruncated, //x6, out
-		THREADPTR(bool)* neighborBoundary, //x6, out
 		THREADPTR(bool)* neighborAllocated, //x6, out
 		THREADPTR(float)* neighborSdf, //x6, out
 		const CONSTPTR(Vector3i)& voxelPosition,
@@ -227,7 +226,6 @@ inline void find6ConnectedNeighborInfoIndexedFields(
     neighborAllocated[index] = vmIndex != 0;\
     neighborKnown[index] = voxel.flag_values[fieldIndex] != ITMLib::VOXEL_UNKNOWN;\
     neighborTruncated[index] = voxel.flag_values[fieldIndex] != ITMLib::VOXEL_NONTRUNCATED;\
-	neighborBoundary[index] = voxel.flag_values[fieldIndex] == ITMLib::VOXEL_BOUNDARY;\
     neighborSdf[index] = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
 
 	PROCESS_VOXEL(Vector3i(-1, 0, 0), 0);
@@ -286,10 +284,9 @@ inline void print6ConnectedNeighborInfoIndexedFields(
 	bool neighborKnown[neighborhoodSize];
 	bool neighborTruncated[neighborhoodSize];
 	bool neighborAllocated[neighborhoodSize];
-	bool neighborBoundary[neighborhoodSize];
 	float neighborSdf[neighborhoodSize];
 
-	find6ConnectedNeighborInfoIndexedFields(neighborKnown, neighborTruncated, neighborBoundary, neighborAllocated, neighborSdf,
+	find6ConnectedNeighborInfoIndexedFields(neighborKnown, neighborTruncated, neighborAllocated, neighborSdf,
 	                                        voxelPosition, voxels, hashEntries, cache, fieldIndex);
 	const Vector3i positions[6] = {Vector3i(-1, 0, 0), Vector3i(0, -1, 0), Vector3i(0, 0, -1),
 	                               Vector3i(1, 0, 0), Vector3i(0, 1, 0), Vector3i(0, 0, 1)};
@@ -298,7 +295,6 @@ inline void print6ConnectedNeighborInfoIndexedFields(
 		std::cout << ITMLib::yellow << "[" << positions[iNeighbor] << "]" << ITMLib::reset
 		          << " allocated: " << print_bool(neighborAllocated[iNeighbor])
 		          << " truncated: " << print_bool(neighborTruncated[iNeighbor])
-				  << " boundary: " << print_bool(neighborBoundary[iNeighbor])
 		          << " known: " << print_bool(neighborKnown[iNeighbor])
 		          << " sdf: " << neighborSdf[iNeighbor] << std::endl;
 	}
@@ -344,6 +340,39 @@ void ComputeLiveJacobian_CentralDifferences_NontruncatedOnly(Vector3f& jacobian,
 	jacobian[0] = xValid ? 0.5f * (sdfAtXplusOne - sdfAtXminusOne) : 0.0f;
 	jacobian[1] = yValid ? 0.5f * (sdfAtYplusOne - sdfAtYminusOne) : 0.0f;
 	jacobian[2] = zValid ? 0.5f * (sdfAtZplusOne - sdfAtZminusOne) : 0.0f;
+};
+
+
+template<typename TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+void ComputeLiveJacobian_ForwardDifferences_NontruncatedOnly_IndexedFields(Vector3f& jacobian,
+                                                                           const Vector3i& voxelPosition,
+                                                                           const TVoxel* voxels,
+                                                                           const ITMHashEntry* hashEntries,
+                                                                           THREADPTR(TCache) cache,
+                                                                           int fieldIndex) {
+	int vmIndex;
+	bool xValid = true, yValid = true, zValid = true;
+	TVoxel voxel;
+	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(1, 0, 0), vmIndex, cache);
+	xValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+	float sdfAtXplusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+
+	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 1, 0), vmIndex, cache);
+	yValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+	float sdfAtYplusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+
+	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 0, 1), vmIndex, cache);
+	zValid &= voxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+	float sdfAtZplusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+
+	voxel = readVoxel(voxels, hashEntries, voxelPosition, vmIndex, cache);
+	float sdfAtPosition = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+
+
+	jacobian[0] = xValid ? (sdfAtXplusOne - sdfAtPosition) : 0.0f;
+	jacobian[1] = yValid ? (sdfAtYplusOne - sdfAtPosition) : 0.0f;
+	jacobian[2] = zValid ? (sdfAtZplusOne - sdfAtPosition) : 0.0f;
 };
 
 
@@ -397,7 +426,6 @@ void ComputeLiveJacobian_CentralDifferences_IgnoreUnknown_IndexedFields(Vector3f
                                                                         const TVoxel* voxels,
                                                                         const ITMHashEntry* hashEntries,
                                                                         THREADPTR(TCache) cache,
-                                                                        float liveSdf,
                                                                         int fieldIndex) {
 	int vmIndex;
 	TVoxel voxel;

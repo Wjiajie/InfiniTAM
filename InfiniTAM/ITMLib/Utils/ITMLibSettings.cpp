@@ -101,8 +101,12 @@ ITMLibSettings::ITMLibSettings()
 						  "framesToSkip=20,framesToWeight=50,failureDec=20.0";
 	}
 
-	// Debugging/logging
+	// Dynamic fusion debugging/logging
 	focusCoordinatesSpecified = false;
+	restrictZtrackingForDebugging = false;
+	simpleSceneExperimentModeEnabled = false;
+	rasterizeWarps = false;
+
 
 	// Dynamic fusion terms & parameters
 	enableDataTerm = true;

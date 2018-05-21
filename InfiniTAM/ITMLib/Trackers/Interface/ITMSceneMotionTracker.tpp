@@ -59,9 +59,11 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracke
 		            settings->sceneTrackingWeightSmoothingTerm,
 		            settings->sceneTrackingWeightLevelSetTerm,
 		            settings->sceneTrackingLevelSetTermEpsilon,
-		            settings->sceneParams.voxelSize / settings->sceneParams.mu
-					},
-		rasterizer(focusCoordinates){}
+		            settings->sceneParams.voxelSize / settings->sceneParams.mu},
+		rasterizer(focusCoordinates),
+		restrictZtrackingForDebugging(settings->restrictZtrackingForDebugging),
+		simpleSceneExperimentModeEnabled(settings->simpleSceneExperimentModeEnabled),
+		rasterizeWarps(settings->rasterizeWarps){}
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -95,13 +97,10 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::InitializeTrack
 	bench::StopTimer("TrackMotion_0_AllocateNewCanonicalHashBlocks");
 
 	if (trackedFrameCount <= startTrackingAfterFrame && !simpleSceneExperimentModeEnabled) {
-		bench::StartTimer("TrackMotion_30_MarkBoundaryVoxels");
-		MarkBoundaryVoxels(liveScene);//_DEBUG
-		bench::StopTimer("TrackMotion_30_MarkBoundaryVoxels");
 		return; //don't need to actually do tracking at first frame.
 	}
 
-	ClearOutWarps(canonicalScene);
+	//ClearOutWarps(canonicalScene);//_DEBUG --should be unnecessary
 
 	//** initialize live frame
 	PrintOperationStatus(
@@ -120,7 +119,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::InitializeTrack
 			rasterizer.RenderLiveSceneSlices_AllDirections(liveScene);
 		}
 
-		if (rasterizeUpdates && rasterizationFrame == trackedFrameCount) {
+		if (rasterizeWarps && rasterizationFrame == trackedFrameCount) {
 			std::cout << "STARTING UPDATE RASTERIZATION" << std::endl;
 			InitializeUpdate2DImageLogging(canonicalScene, liveScene, blank, liveImgTemplate, rasterizer);
 		}
@@ -155,15 +154,11 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 		bool recordWarpUpdates) {
 
     // region ================================== DEBUG 2D VISUALIZATION FOR UPDATES ================================
-	if (rasterizeUpdates && rasterizationFrame == trackedFrameCount) {
+	if (rasterizeWarps && rasterizationFrame == trackedFrameCount) {
 		LogWarpUpdateAs2DImage(canonicalScene, liveScene, blank, liveImgTemplate, rasterizer);
 	}
 	// endregion
 	std::cout << red << "Iteration: " << iteration << reset << std::endl;
-	PrintOperationStatus("Marking boundary voxels...");
-	bench::StartTimer("TrackMotion_30_MarkBoundaryVoxels");
-	MarkBoundaryVoxels(liveScene);//_DEBUG
-	bench::StopTimer("TrackMotion_30_MarkBoundaryVoxels");
 
 	//** warp update gradient computation
 	PrintOperationStatus("Calculating warp energy gradient...");
@@ -184,7 +179,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 	PrintOperationStatus(
 			"Updating live frame SDF by mapping from old live SDF to new live SDF based on latest warp update...");
 	bench::StartTimer("TrackMotion_35_ApplyWarpUpdateToLive");
-	ApplyWarpUpdateToLive(canonicalScene, liveScene);
+	ApplyWarpFieldToLive(canonicalScene, liveScene);
 	bench::StopTimer("TrackMotion_35_ApplyWarpUpdateToLive");
 
 	if (recordWarpUpdates) {

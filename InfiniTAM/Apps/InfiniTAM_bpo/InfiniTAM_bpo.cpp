@@ -165,6 +165,10 @@ int main(int argc, char** argv) {
 		bool recordReconstructionToVideo = false;
 		bool startInStepByStep = false;
 
+		bool restrictZmotion = false;
+		bool simpleScene = false;
+		bool rasterizeWarps = false;
+
 		//@formatter:off
 		arguments.add_options()
 				("help,h", "Print help screen")
@@ -246,6 +250,15 @@ int main(int argc, char** argv) {
 				 "Used in scene tracking optimization when the Killing regularization term is enabled."
 		         " Greater values penalize non-isometric scene deformations.")
 
+				("restrict_z",po::bool_switch(&restrictZmotion)->default_value(false),
+				 "Used in dynamic fusion. Restrict scene motion updates in z direction (for debugging).")
+				("simple_scene",po::bool_switch(&simpleScene)->default_value(false),
+				 "Used in dynamic fusion. Simple scene experiment mode (for debugging).")
+				("rasterize_warps",po::bool_switch(&rasterizeWarps)->default_value(false),
+				 "Used in dynamic fusion. Render warps from each frame onto an image of the original live frame"
+	             " (around the provided focus coordinate, if provided), as well as warped live frame"
+			     " progression (for debugging).")
+
 				("weight_data_term", po::value<float>(),
 					 "Used in scene tracking optimization when the data term is enabled."
 				         " Greater values make the difference between canonical and live SDF grids induce greater warp updates.")
@@ -259,6 +272,8 @@ int main(int argc, char** argv) {
 				("KillingFusion", po::bool_switch(&killingModeEnabled)->default_value(false),
 						 "Uses parameters from KillingFusion (2017) article. Individual parameters can still be overridden. Equivalent to: "
 	   "--disable_gradient_smoothing --enable_level_set_term --enable_killing_term --rigidity_enforcement_factor 0.1 --weight_smoothness_term 0.5 --weight_level_set 0.2")
+
+
 				;
 
 		//@formatter:on
@@ -363,6 +378,11 @@ int main(int argc, char** argv) {
 			settings->sceneTrackingWeightSmoothingTerm = 0.5;
 			settings->sceneTrackingWeightLevelSetTerm = 0.2;
 		}
+
+		//_DEBUG
+		settings->restrictZtrackingForDebugging = restrictZmotion;
+		settings->simpleSceneExperimentModeEnabled = simpleScene;
+		settings->rasterizeWarps = rasterizeWarps;
 
 		settings->enableDataTerm = !disableDataTerm;
 		settings->enableLevelSetTerm = enableLevelSetTerm;

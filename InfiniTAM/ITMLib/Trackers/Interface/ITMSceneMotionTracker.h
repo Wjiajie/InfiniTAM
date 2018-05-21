@@ -103,8 +103,6 @@ protected:
 	virtual void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                   ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
 
-	virtual void MarkBoundaryVoxels(ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
-
 
 	virtual void AllocateNewCanonicalHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                            ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
@@ -127,17 +125,17 @@ protected:
 
 	// variables for extra logging/analysis
 	bool hasFocusCoordinates = false;
-	Vector3i focusCoordinates;
+	Vector3i focusCoordinates = Vector3i(0);
 
 	//_DEBUG
-	bool restrictZtrackingForDebugging = true;
+	bool restrictZtrackingForDebugging = false;
 	bool simpleSceneExperimentModeEnabled = false;
 	//*** 2D visual debugging
 	//TODO: these should be CLI parameters -Greg (GitHub:Algomorph)
 	//TODO: recording & recording frame index should be CLI parameters -Greg (GitHub:Algomorph)
 	bool rasterizeLive = false;
 	bool rasterizeCanonical = false;
-	bool rasterizeUpdates = true;
+	bool rasterizeWarps = false;
 	unsigned int rasterizationFrame = 1;
 	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex> rasterizer;
 	cv::Mat blank;

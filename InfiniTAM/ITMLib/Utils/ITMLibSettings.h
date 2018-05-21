@@ -80,12 +80,15 @@ namespace ITMLib
 		bool FocusCoordinatesAreSpecified() const;
 		Vector3i GetFocusCoordinates() const;
 		void SetFocusCoordinates(const Vector3i& coordiantes);
+		bool restrictZtrackingForDebugging;
+		bool simpleSceneExperimentModeEnabled;
+		bool rasterizeWarps;
 
-		bool enableDataTerm = true;
-		bool enableLevelSetTerm = true;
-		bool enableSmoothingTerm = true;
-		bool enableKillingTerm = false;
-		bool enableGradientSmoothing = true;
+		bool enableDataTerm;
+		bool enableLevelSetTerm;
+		bool enableSmoothingTerm;
+		bool enableKillingTerm;
+		bool enableGradientSmoothing;
 
 		unsigned int sceneTrackingMaxOptimizationIterationCount;
 		float sceneTrackingOptimizationVectorUpdateThresholdMeters;

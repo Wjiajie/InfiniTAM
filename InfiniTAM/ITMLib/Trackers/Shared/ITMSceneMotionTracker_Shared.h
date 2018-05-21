@@ -420,36 +420,3 @@ const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData) *voxelIndex, const THREADPT
 	voxel = nullptr;
 }
 
-template<typename TVoxel, typename TCache>
-_CPU_AND_GPU_CODE_
-inline void markNonTruncatedNeighborsAsBoundary(
-		const CONSTPTR(Vector3i)& voxelPosition,
-		THREADPTR(TVoxel)* voxels,
-		const CONSTPTR(ITMHashEntry)* hashEntries,
-		THREADPTR(TCache)& cache,
-		bool sourcePositive,
-		int fieldIndex) {
-	const int neighborCount = 28;
-	const Vector3i offsets[] = {
-			Vector3i( 1, 1, 1),   Vector3i( 1, 1, 0),   Vector3i( 1, 1,-1),
-			Vector3i( 0, 1, 1),   Vector3i( 0, 1, 0),   Vector3i( 0, 1,-1),
-			Vector3i(-1, 1, 1),   Vector3i(-1, 1, 0),   Vector3i(-1, 1,-1),
-
-			Vector3i( 1, 0, 1),   Vector3i( 1, 0, 0),   Vector3i( 1, 0,-1),
-			Vector3i( 0, 0, 1), /*Vector3i( 0, 0, 0),*/ Vector3i( 0, 0,-1),
-			Vector3i(-1, 0, 1),   Vector3i(-1, 0, 0),   Vector3i(-1, 0,-1),
-
-			Vector3i( 1,-1, 1),   Vector3i( 1,-1, 0),   Vector3i( 1,-1,-1),
-			Vector3i( 0,-1, 1),   Vector3i( 0,-1, 0),   Vector3i( 0,-1,-1),
-			Vector3i(-1,-1, 1),   Vector3i(-1,-1, 0),   Vector3i(-1,-1,-1)
-	};
-
-	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++){
-		TVoxel* voxel;
-		GetVoxel(voxel,voxels, hashEntries,voxelPosition + offsets[iNeighbor],cache);
-		if (voxel != nullptr && voxel->flag_values[fieldIndex] != ITMLib::VOXEL_NONTRUNCATED){
-			voxel->flag_values[fieldIndex] = ITMLib::VOXEL_BOUNDARY;
-			voxel->sdf_values[fieldIndex] = TVoxel::floatToValue(-1.0f + sourcePositive * 2.0f);
-		}
-	}
-}

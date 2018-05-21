@@ -41,7 +41,6 @@ protected:
 	                              ITMScene <TVoxelLive, TIndex>* liveScene) override;
 	void ApplyWarpUpdateToLive(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 		                           ITMScene <TVoxelLive, TIndex>* sourceLiveScene) override;
-	void MarkBoundaryVoxels(ITMScene<TVoxelLive, TIndex>* liveScene) override;
 
 	float ApplyWarpUpdateToWarp(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                            ITMScene <TVoxelLive, TIndex>* liveScene) override;

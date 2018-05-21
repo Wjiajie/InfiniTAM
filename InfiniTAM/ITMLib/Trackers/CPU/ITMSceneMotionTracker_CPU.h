@@ -27,7 +27,7 @@ public:
 	static int GetSourceLiveSdfIndex(int iteration);
 	static int GetTargetLiveSdfIndex(int iteration);
 	static const int rawLiveFrameSdfIndex;
-	static const int initializedLiveFrameSdfIndex;
+	static const int firstInitializedLiveFrameSdfIndex;
 
 	explicit ITMSceneMotionTracker_CPU(const ITMLibSettings* settings);
 	virtual ~ITMSceneMotionTracker_CPU();
@@ -55,15 +55,10 @@ protected:
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;
 	void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                           ITMScene<TVoxelLive, TIndex>* liveScene) override;
-	void ApplyForwardWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                  ITMScene<TVoxelLive, TIndex>* liveScene);
-	void ApplyInverseWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                           ITMScene<TVoxelLive, TIndex>* liveScene);
 
 
 	void CalculateWarpGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                          ITMScene<TVoxelLive, TIndex>* liveScene) override;
-	void MarkBoundaryVoxels(ITMScene<TVoxelLive, TIndex>* liveScene) override;
 
 
 	void AllocateNewCanonicalHashBlocks(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
@@ -86,8 +81,6 @@ private:
 
 	void CalculateWarpGradient_SingleThreadedVerbose(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                                                 ITMScene <TVoxelLive, TIndex>* liveScene);
-	void AllocateHashBlocksAtInverseWarpedLocations(ITMScene <TVoxelCanonical, TIndex>* warpSourceScene,
-	                                                ITMScene <TVoxelLive, TIndex>* sdfScene, int fieldIndex);
 };
 
 
