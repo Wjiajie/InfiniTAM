@@ -236,6 +236,17 @@ TVoxel ReadVoxel(ITMScene<TVoxel, TIndex>& scene, Vector3i at);
 
 int FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, const THREADPTR(Vector3s)& at);
 
+template<class TVoxel>
+void GetVoxelHashLocals(THREADPTR(int)& vmIndex,
+						THREADPTR(int)& locId,
+						THREADPTR(int)& xInBlock,
+						THREADPTR(int)& yInBlock,
+						THREADPTR(int)& zInBlock,
+						const CONSTPTR(TVoxel*) voxels,
+                        const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* hashEntries,
+                        THREADPTR(ITMLib::ITMVoxelBlockHash::IndexCache) & cache,
+                        const CONSTPTR(Vector3i)& at);
+
 
 template<class TVoxel, class TIndex>
 bool SetVoxel_CPU(ITMScene <TVoxel, TIndex>* scene, Vector3i at, TVoxel voxel);

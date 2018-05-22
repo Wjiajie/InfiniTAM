@@ -661,3 +661,78 @@ void ComputeLiveJacobian_CentralDifferences_AllocatedOnly(Vector3f& jacobian,
 	jacobian[1] = yValid ? 0.5f * (sdfAtYplusOne - sdfAtYminusOne) : 0.0f;
 	jacobian[2] = zValid ? 0.5f * (sdfAtZplusOne - sdfAtZminusOne) : 0.0f;
 };
+
+
+template<typename TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+void ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_LiveSdf(Vector3f& jacobian,
+                                                                      const Vector3i& voxelPosition,
+                                                                      const TVoxel* voxels,
+                                                                      const ITMHashEntry* hashEntries,
+                                                                      THREADPTR(TCache) cache,
+                                                                      int fieldIndex) {
+
+
+
+	const Vector3i offsets[] = { Vector3i(1,0,0),Vector3i(-1,0,0),
+							     Vector3i(0,1,0),Vector3i(0,-1,0),
+							     Vector3i(0,0,1),Vector3i(0,0,-1)};
+
+	int vmIndex;
+	TVoxel voxel;
+	voxel = readVoxel(voxels, hashEntries, voxelPosition, vmIndex, cache);
+	float sdfAtPosition = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+
+	float sdfs[6];
+	bool valid[3] = {true};
+
+	for (int iNeighbor = 0; iNeighbor < sizeof(offsets)/sizeof(Vector3i); iNeighbor++){
+		voxel = readVoxel(voxels, hashEntries, voxelPosition + offsets[iNeighbor], vmIndex, cache);
+		switch ((VoxelFlags)voxel.flags){
+			case VOXEL_UNKNOWN: valid[iNeighbor/2] = false; break;
+			case VOXEL_TRUNCATED: sdfs[iNeighbor] = std::copysign(1.0f, sdfAtPosition); break;
+			default: sdfs[iNeighbor] = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]); break;
+		}
+	}
+
+	jacobian[0] = valid[0] ? 0.5f * (sdfs[0] - sdfs[1]) : 0.0f;
+	jacobian[1] = valid[1] ? 0.5f * (sdfs[2] - sdfs[3]) : 0.0f;
+	jacobian[2] = valid[2] ? 0.5f * (sdfs[4] - sdfs[5]) : 0.0f;
+};
+
+
+template<typename TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+void ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_CanonicalSdf(Vector3f& jacobian,
+                                                                      const Vector3i& voxelPosition,
+                                                                      const TVoxel* voxels,
+                                                                      const ITMHashEntry* hashEntries,
+                                                                      THREADPTR(TCache) cache,
+                                                                      int fieldIndex,
+                                                                       const float canonicalSdf) {
+
+
+
+	const Vector3i offsets[] = { Vector3i(1,0,0),Vector3i(-1,0,0),
+	                             Vector3i(0,1,0),Vector3i(0,-1,0),
+	                             Vector3i(0,0,1),Vector3i(0,0,-1)};
+
+	int vmIndex;
+	TVoxel voxel;
+
+	float sdfs[6];
+	bool valid[3] = {true};
+
+	for (int iNeighbor = 0; iNeighbor < sizeof(offsets)/sizeof(Vector3i); iNeighbor++){
+		voxel = readVoxel(voxels, hashEntries, voxelPosition + offsets[iNeighbor], vmIndex, cache);
+		switch ((VoxelFlags)voxel.flags){
+			case VOXEL_UNKNOWN: valid[iNeighbor/2] = false; break;
+			case VOXEL_TRUNCATED: sdfs[iNeighbor] = std::copysign(1.0f, canonicalSdf); break;
+			default: sdfs[iNeighbor] = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]); break;
+		}
+	}
+
+	jacobian[0] = valid[0] ? 0.5f * (sdfs[0] - sdfs[1]) : 0.0f;
+	jacobian[1] = valid[1] ? 0.5f * (sdfs[2] - sdfs[3]) : 0.0f;
+	jacobian[2] = valid[2] ? 0.5f * (sdfs[4] - sdfs[5]) : 0.0f;
+};

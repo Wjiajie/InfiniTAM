@@ -34,6 +34,17 @@ template bool SetVoxel_CPU<ITMVoxelLive,ITMVoxelIndex>(
 		ITMScene<ITMVoxelLive, ITMVoxelIndex>* scene,Vector3i at, ITMVoxelLive voxel);
 template ITMVoxelCanonical ReadVoxel<ITMVoxelCanonical,ITMVoxelIndex>(
 		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& scene, Vector3i at);
+
+template void GetVoxelHashLocals<ITMVoxelLive>(THREADPTR(int)& vmIndex,
+                                               THREADPTR(int)& locId,
+                                               THREADPTR(int)& xInBlock,
+                                               THREADPTR(int)& yInBlock,
+                                               THREADPTR(int)& zInBlock,
+                                               const CONSTPTR(ITMVoxelLive*) voxels,
+                                               const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* hashEntries,
+                                               THREADPTR(ITMLib::ITMVoxelBlockHash::IndexCache) & cache,
+                                               const CONSTPTR(Vector3i)& at);
+
 template void OffsetWarps<ITMVoxelCanonical,ITMVoxelIndex>(
 		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& destination, Vector3f offset);
 

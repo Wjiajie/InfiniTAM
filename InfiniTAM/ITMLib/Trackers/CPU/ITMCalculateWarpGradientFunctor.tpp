@@ -158,7 +158,7 @@ struct CalculateWarpGradientFunctor {
 		// endregion
 
 		bool printVoxelResult = false, recordVoxelResult = false;
-		SetUpFocusVoxelPrinting(printVoxelResult, recordVoxelResult, voxelPosition, warp, canonicalSdf, liveSdf);
+		this->SetUpFocusVoxelPrinting(printVoxelResult, recordVoxelResult, voxelPosition, warp, canonicalSdf, liveSdf);
 		// region ============================== RETRIEVE NEIGHBOR'S WARPS =================================
 
 		const int neighborhoodSize = 9; Vector3f neighborWarps[neighborhoodSize];
@@ -184,10 +184,14 @@ struct CalculateWarpGradientFunctor {
 
 		if (haveFullData && (switches.enableLevelSetTerm || switches.enableDataTerm)) {
 			//TODO: in case both level set term and data term need to be computed, optimize by retreiving the sdf vals for live jacobian in a separate function. The live hessian needs to reuse them. -Greg (GitHub: Algomorph)
-//			ComputeLiveJacobian_CentralDifferences_IndexedFields(
-//					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
-			ComputeLiveJacobian_CentralDifferences_IgnoreUnknown_IndexedFields(
+			ComputeLiveJacobian_CentralDifferences_IndexedFields(
 					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
+//			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_CanonicalSdf(
+//					liveSdfJacobian, voxelPosition, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex, canonicalSdf);
+//			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_LiveSdf(
+//					liveSdfJacobian, voxelPosition, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex);
+//			ComputeLiveJacobian_CentralDifferences_IgnoreUnknown_IndexedFields(
+//					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
 //			ComputeLiveJacobian_CentralDifferences_NontruncatedOnly_IndexedFields(
 //					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
 //			ComputeLiveJacobian_ForwardDifferences_NontruncatedOnly_IndexedFields(
@@ -325,12 +329,13 @@ struct CalculateWarpGradientFunctor {
 		// region ======================== FINALIZE RESULT PRINTING / RECORDING ========================================
 		//TODO: move to separate function?
 		if (printVoxelResult) {
-			std::cout << blue << "Data gradient: " << localDataEnergyGradient * -1.f;
-			std::cout << red << " Level set gradient: " << localLevelSetEnergyGradient * -1.f;
-			std::cout << yellow << " Smoothness gradient: " << localSmoothnessEnergyGradient * -1.f;
+			std::cout << blue << "Data gradient: " << localDataEnergyGradient * -1;
+			std::cout << cyan << " Level set gradient: " << localLevelSetEnergyGradient * -1;
+			std::cout << yellow << " Smoothness gradient: " << localSmoothnessEnergyGradient * -1;
 			std::cout << std::endl;
-			std::cout << green << "Energy gradient: " << localEnergyGradient << reset;
-			std::cout << " Energy gradient length: " << energyGradeintLength << std::endl << std::endl;
+			std::cout << green << "Energy gradient: " << localEnergyGradient * -1<< reset;
+			std::cout << " Energy gradient length: " << energyGradeintLength << red
+			          <<" Gradients shown are negative." << reset << std::endl << std::endl;
 
 			if (recordVoxelResult) {
 				//TODO: function to retrieve voxel hash location for debugging -Greg (GitHub: Algomorph)
@@ -419,8 +424,9 @@ private:
 	void SetUpFocusVoxelPrinting(bool& printVoxelResult, bool& recordVoxelResult, const Vector3i& voxelPosition,
 	                             const Vector3f& voxelWarp, const float& canonicalSdf, const float& liveSdf) {
 		//TODO: function to retrieve voxel hash location for debugging -Greg (GitHub: Algomorph)
-		int x = 0, y = 0, z = 0, hash = 0, locId = 0;
 		if (hasFocusCoordinates && voxelPosition == focusCoordinates) {
+			int x = 0, y = 0, z = 0, vmIndex = 0, locId = 0;
+			GetVoxelHashLocals(vmIndex,locId, x,y,z,liveVoxels,liveHashEntries,liveCache,voxelPosition);
 			std::cout << std::endl << bright_cyan << "*** Printing voxel at " << voxelPosition
 			          << " *** " << reset << std::endl;
 			std::cout << "Position within block (x,y,z): " << x << ", " << y << ", " << z << std::endl;

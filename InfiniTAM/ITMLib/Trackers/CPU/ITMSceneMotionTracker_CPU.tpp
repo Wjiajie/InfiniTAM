@@ -268,6 +268,8 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::FuseFrame(I
 
 // endregion ===========================================================================================================
 
+//TODO: move the following section to a separate file (proposed deprecation) -Greg (GitHub: Algomorph)
+
 // region ======================= OLD FUNCTIONS FOR WARPING CANONICAL TO LIVE VIA DISTRIBUTION =========================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -704,7 +706,7 @@ const int ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::firstI
 // endregion ===========================================================================================================
 
 // region ===================================== CALCULATE GRADIENT SMOOTHING ===========================================
-		
+
 template<typename TVoxelCanonical>
 struct ClearOutGradientStaticFunctor {
 	static void run(TVoxelCanonical& voxel) {
