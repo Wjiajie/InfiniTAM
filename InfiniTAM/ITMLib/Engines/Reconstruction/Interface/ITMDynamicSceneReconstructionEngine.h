@@ -45,7 +45,7 @@ public:
 		one.
 	*/
 	virtual void ResetCanonicalScene(ITMScene<TVoxelCanonical, TIndex> *scene) = 0;
-	virtual void ResetLiveScene(ITMScene<TVoxelCanonical, TIndex> *scene) = 0;
+	virtual void ResetLiveScene(ITMScene<TVoxelLive, TIndex> *scene) = 0;
 
 
 	/**
@@ -68,7 +68,7 @@ public:
 	virtual void IntegrateIntoScene(ITMScene<TVoxelLive,TIndex> *scene, const ITMView *view, const ITMTrackingState *trackingState,
 	                                const ITMRenderState *renderState) = 0;
 
-	ITMDynamicSceneReconstructionEngine(void) { }
-	virtual ~ITMDynamicSceneReconstructionEngine(void) { }
+	ITMDynamicSceneReconstructionEngine(void) = default;
+	virtual ~ITMDynamicSceneReconstructionEngine(void) = default;
 };
 }

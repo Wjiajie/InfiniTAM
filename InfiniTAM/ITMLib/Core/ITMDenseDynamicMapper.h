@@ -15,7 +15,7 @@
 //  ================================================================
 #pragma once
 
-#include "../Engines/Reconstruction/Interface/ITMSceneReconstructionEngine.h"
+#include "../Engines/Reconstruction/Interface/ITMDynamicSceneReconstructionEngine.h"
 #include "../Utils/ITMLibSettings.h"
 #include "../Engines/Swapping/Interface/ITMSwappingEngine.h"
 #include "../Trackers/Interface/ITMSceneMotionTracker.h"
@@ -81,8 +81,7 @@ public:
 private:
 	// region =========================================== MEMBER VARIABLES =============================================
 
-	ITMSceneReconstructionEngine<TVoxelCanonical, TIndex>* canonicalSceneReconstructor;
-	ITMSceneReconstructionEngine<TVoxelLive, TIndex>* liveSceneReconstructor;
+	ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex>* sceneReconstructor;
 	ITMSwappingEngine<TVoxelCanonical, TIndex>* swappingEngine;
 	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>* sceneMotionTracker;
 	ITMLibSettings::SwappingMode swappingMode;

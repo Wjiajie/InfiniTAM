@@ -20,7 +20,7 @@
 
 //local
 #include "ITMDenseDynamicMapper.h"
-#include "../Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
+#include "../Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../Engines/Swapping/ITMSwappingEngineFactory.h"
 #include "../Trackers/ITMTrackerFactory.h"
 #include "../Objects/Scene/ITMSceneManipulation.h"
@@ -37,21 +37,18 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMapper(const ITMLibSettings* settings) :
 	recordNextFrameWarps(false)
 	{
-	canonicalSceneReconstructor = ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelCanonical, TIndex>(
-			settings->deviceType);
-	liveSceneReconstructor = ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelLive, TIndex>(
-			settings->deviceType);
+	sceneReconstructor = ITMDynamicSceneReconstructionEngineFactory::
+			MakeSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex>(settings->deviceType);
 	swappingEngine = settings->swappingMode != ITMLibSettings::SWAPPINGMODE_DISABLED
 	                 ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxelCanonical, TIndex>(settings->deviceType)
 	                 : NULL;
-
 	sceneMotionTracker = ITMTrackerFactory::MakeSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(settings);
 	swappingMode = settings->swappingMode;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::~ITMDenseDynamicMapper() {
-	delete canonicalSceneReconstructor;
+	delete sceneReconstructor;
 	delete swappingEngine;
 }
 
@@ -59,13 +56,13 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
 ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetCanonicalScene(
 		ITMScene<TVoxelCanonical, TIndex>* scene) const {
-	canonicalSceneReconstructor->ResetScene(scene);
+	sceneReconstructor->ResetCanonicalScene(scene);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetLiveScene(
 		ITMScene<TVoxelLive, TIndex>* live_scene) const {
-	liveSceneReconstructor->ResetScene(live_scene);
+	sceneReconstructor->ResetLiveScene(live_scene);
 }
 
 //BEGIN _DEBUG
@@ -98,16 +95,16 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(co
 
 	bench::StartTimer("ReconstructLive");
 	// clear out the live-frame SDF
-	liveSceneReconstructor->ResetScene(liveScene);
+	sceneReconstructor->ResetLiveScene(liveScene);
 	//** construct the new live-frame SDF
 	if(sceneMotionTracker->GetTrackedFrameCount() == 0 && sceneMotionTracker->GetInSimpleSceneExperimentMode()){ //_DEBUG
 		GenerateTestScene01(canonicalScene);
 		CopySceneSDFandFlagsWithOffset_CPU(liveScene, canonicalScene, Vector3i(-5, 0, 0));
 	} else {
 		// allocation
-		liveSceneReconstructor->AllocateSceneFromDepth(liveScene, view, trackingState, renderState);
+		sceneReconstructor->AllocateSceneFromDepth(liveScene, view, trackingState, renderState);
 		// integration
-		liveSceneReconstructor->IntegrateIntoScene(liveScene, view, trackingState, renderState);
+		sceneReconstructor->IntegrateIntoScene(liveScene, view, trackingState, renderState);
 	}
 	bench::StopTimer("ReconstructLive");
 
@@ -162,7 +159,7 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::UpdateVisibleList(
 		const ITMTrackingState* trackingState,
 		ITMScene<TVoxelLive, TIndex>* scene, ITMRenderState* renderState,
 		bool resetVisibleList) {
-	liveSceneReconstructor->AllocateSceneFromDepth(scene, view, trackingState, renderState, true, resetVisibleList);
+	sceneReconstructor->AllocateSceneFromDepth(scene, view, trackingState, renderState, true, resetVisibleList);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -177,12 +174,12 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessing
 		std::cout << bright_cyan << "MAPPING FRAME " << sceneMotionTracker->GetTrackedFrameCount() << reset << std::endl;
 	}
 // clear out the live-frame SDF
-	liveSceneReconstructor->ResetScene(liveScene);
+	sceneReconstructor->ResetLiveScene(liveScene);
 	//** construct the new live-frame SDF
 	// allocation
-	liveSceneReconstructor->AllocateSceneFromDepth(liveScene, view, trackingState, renderState);
+	sceneReconstructor->AllocateSceneFromDepth(liveScene, view, trackingState, renderState);
 	// integration
-	liveSceneReconstructor->IntegrateIntoScene(liveScene, view, trackingState, renderState);
+	sceneReconstructor->IntegrateIntoScene(liveScene, view, trackingState, renderState);
 	sceneMotionTracker->SetUpStepByStepTracking(canonicalScene, liveScene);
 }
 

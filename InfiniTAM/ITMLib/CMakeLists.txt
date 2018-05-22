@@ -165,16 +165,19 @@ Engines/Reconstruction/ITMSurfelSceneReconstructionEngineFactory.tpp
 SET(ITMLIB_ENGINES_RECONSTRUCTION_HEADERS
 Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h
 Engines/Reconstruction/ITMSurfelSceneReconstructionEngineFactory.h
+Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h
 )
 
 ##
 SET(ITMLIB_ENGINES_RECONSTRUCTION_CPU_SOURCES
 Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.tpp
+    Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU.tpp
 Engines/Reconstruction/CPU/ITMSurfelSceneReconstructionEngine_CPU.tpp
 )
 
 SET(ITMLIB_ENGINES_RECONSTRUCTION_CPU_HEADERS
 Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.h
+Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU.h
 Engines/Reconstruction/CPU/ITMSurfelSceneReconstructionEngine_CPU.h
 )
 
@@ -197,6 +200,7 @@ Engines/Reconstruction/Interface/ITMSurfelSceneReconstructionEngine.tpp
 SET(ITMLIB_ENGINES_RECONSTRUCTION_INTERFACE_HEADERS
 Engines/Reconstruction/Interface/ITMSceneReconstructionEngine.h
 Engines/Reconstruction/Interface/ITMSurfelSceneReconstructionEngine.h
+Engines/Reconstruction/Interface/ITMDynamicSceneReconstructionEngine.h
 )
 
 ##

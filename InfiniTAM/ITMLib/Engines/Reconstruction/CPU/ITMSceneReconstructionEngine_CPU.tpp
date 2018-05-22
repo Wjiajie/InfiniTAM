@@ -97,10 +97,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 	{
 		Vector3i globalPos;
 		int hash = visibleEntryIds[visibleHash];
-		//_DEBUG
-//		if(hash == 260246){
-//			int i = 42;
-//		}
+
 		const ITMHashEntry &currentHashEntry = hashTable[hash];
 
 		if (currentHashEntry.ptr < 0) continue;
@@ -119,24 +116,12 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 			locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 
 			if (stopIntegratingAtMaxW) if (localVoxelBlock[locId].w_depth == maxW) continue;
-			//if (approximateIntegration) if (localVoxelBlock[locId].w_depth != 0) continue;
 
 			pt_model.x = (float)(globalPos.x + x) * voxelSize;
 			pt_model.y = (float)(globalPos.y + y) * voxelSize;
 			pt_model.z = (float)(globalPos.z + z) * voxelSize;
 			pt_model.w = 1.0f;
-			//_DEBUG
-//			Vector3i voxelPos = globalPos + Vector3i(x,y,z);
-//			if(std::find(_DEBUG_positions.begin(),_DEBUG_positions.end(), voxelPos) != _DEBUG_positions.end()){
-//				Vector4f pt_camera; Vector2f pt_image;
-//				float depth_measure;
-//				pt_camera = M_d * pt_model;
-//				pt_image.x = projParams_d.x * pt_camera.x / pt_camera.z + projParams_d.z;
-//				pt_image.y = projParams_d.y * pt_camera.y / pt_camera.z + projParams_d.w;
-//				Vector2i pt_image_int = Vector2i((int)(pt_image.x + 0.5f), (int)(pt_image.y + 0.5f));
-//				depth_measure = depth[(int)(pt_image.x + 0.5f) + (int)(pt_image.y + 0.5f) * depthImgSize.x];
-//				std::cout << "Processed voxel at " << voxelPos  << ". Image sampled at: " << pt_image_int << ". Depth (m): " << depth_measure << ". Image float coord: " << pt_image << std::endl;
-//			}
+
 			ComputeUpdatedVoxelInfo<
 					TVoxel::hasColorInformation,
 					TVoxel::hasConfidenceInformation,
@@ -202,7 +187,6 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 	{
 		int y = locId / depthImgSize.x;
 		int x = locId - y * depthImgSize.x;
-		//_DEBUG
 		buildHashAllocAndVisibleTypePP(entriesAllocType, entriesVisibleType, x, y, blockCoords, depth, invM_d,
 			invProjParams_d, mu, depthImgSize, oneOverHashEntrySize, hashTable, scene->sceneParams->viewFrustum_min,
 			scene->sceneParams->viewFrustum_max);
