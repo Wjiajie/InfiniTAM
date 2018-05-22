@@ -27,19 +27,22 @@ find_package(Boost REQUIRED filesystem)
 
 ##
 SET(ITMLIB_TOPLEVEL_CPU_SOURCES
-CPUInstantiations.cpp
-DynamicFusionCPUInstantiations.cpp
-TempDFCriticalInstanciations.cpp
+    Instantiations/SceneManipulationCPUInstantiations.cpp
+    Instantiations/CPUInstantiations.cpp
+    Instantiations/DynamicFusionCPUInstantiations.cpp
+    Instantiations/SceneMotionTrackerCPUInstantiation.cpp
+    Instantiations/SceneMotionTrackerInterfaceInstantiation.cpp
 )
 
 SET(ITMLIB_TOPLEVEL_CUDA_SOURCES
-CUDAInstantiations.cu
+    Instantiations/CUDAInstantiations.cu
+    Instantiations/DynamicFusionCUDAInstantiations.cu
+    Instantiations/SceneMotionTrackerCUDAInstantiation.cu
 )
 
 SET(ITMLIB_TOPLEVEL_HEADERS
 ITMLibDefines.h
-TempDebugDefines.h
-)
+    )
 
 ##
 SET(ITMLIB_CORE_SOURCES
@@ -383,7 +386,8 @@ Objects/Scene/ITMSurfelScene.h
 Objects/Scene/ITMSurfelTypes.h
 Objects/Scene/ITMVoxelBlockHash.h
 Objects/Scene/ITMVoxelTypes.h
-Objects/Scene/ITMSceneManipulation.h
+    Objects/Scene/ITMSceneManipulation.h
+Objects/Scene/ITMSceneTraversal.h
 #_DEBUG
     ../Tests/TestUtils.h
     ../Tests/TestUtils.cpp
@@ -394,8 +398,8 @@ Objects/Scene/ITMSceneManipulation.h
 ##
 SET(ITMLIB_OBJECTS_SCENE_SOURCES
 Objects/Scene/ITMSceneManipulation.cpp
-Objects/Scene/ITMSceneManipulation.tpp
-)
+    Objects/Scene/ITMSceneManipulation.tpp
+    )
 
 ##
 SET(ITMLIB_OBJECTS_TRACKING_HEADERS
@@ -427,7 +431,7 @@ Trackers/CPU/ITMColorTracker_CPU.cpp
 Trackers/CPU/ITMDepthTracker_CPU.cpp
 Trackers/CPU/ITMExtendedTracker_CPU.cpp
 Trackers/CPU/ITMKillingTracker_CPU.cpp
-Trackers/CPU/ITMSceneMotionTracker_CPU_UpdateWarp.tpp
+Trackers/CPU/ITMCalculateWarpGradientFunctor.tpp
 Trackers/CPU/ITMSceneMotionTracker_CPU.tpp
 )
 
@@ -437,7 +441,7 @@ Trackers/CPU/ITMDepthTracker_CPU.h
 Trackers/CPU/ITMExtendedTracker_CPU.h
 Trackers/CPU/ITMKillingTracker_CPU.h
 Trackers/CPU/ITMSceneMotionTracker_CPU.h
-)
+    )
 
 ##
 SET(ITMLIB_TRACKERS_CUDA_SOURCES

@@ -13,7 +13,13 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+//stdlib
 #include <unordered_set>
+
+//opencv
+#include <opencv2/imgcodecs.hpp>
+
+//local
 #include "ITMSceneSliceRasterizer.h"
 #include "../Objects/Scene/ITMRepresentationAccess.h"
 #include "ITMSceneStatisticsCalculator.h"
@@ -129,7 +135,8 @@ cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawSceneI
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 template<typename TVoxel>
-cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawSceneImageAroundPointIndexedFields(ITMScene<TVoxel, TIndex>* scene, int fieldIndex) {
+cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawSceneImageAroundPointIndexedFields(
+		ITMScene<TVoxel, TIndex>* scene, int fieldIndex) {
 #ifdef IMAGE_BLACK_BACKGROUND
 	//use if default voxel SDF value is -1.0
 	cv::Mat img = cv::Mat::zeros(imgPixelRangeX, imgPixelRangeY, CV_32F);
@@ -233,7 +240,7 @@ cv::Mat ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarped
 
 					Vector2i imgCoords = GetVoxelImgCoords(projectedPosition.x, projectedPosition.y);
 					const int voxelOnImageSize = static_cast<int>(pixelsPerVoxel);
-					float value = SdfToValue(TVoxel::valueToFloat(voxel.sdf));
+					float value = 0.0;//SdfToValue(TVoxel::valueToFloat(voxel.sdf));
 					//fill a pixel block with the source scene value
 					for (int row = imgCoords.y; row < imgCoords.y + voxelOnImageSize / 2; row++) {
 						for (int col = imgCoords.x; col < imgCoords.x + voxelOnImageSize / 2; col++) {

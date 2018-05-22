@@ -15,13 +15,12 @@
 //  ================================================================
 #pragma once
 
-#include "../../TempDebugDefines.h"
-
 //local
 #include "../../Objects/Scene/ITMScene.h"
 #include "../../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.h"
 #include "../../Utils/ITMSceneSliceRasterizer.h"
 #include "../../Utils/ITMLibSettings.h"
+#include "../../Utils/FileIO/ITMSceneLogger.h"
 
 namespace ITMLib {
 
@@ -119,6 +118,7 @@ protected:
 	unsigned int trackedFrameCount = 0;
 	const int startTrackingAfterFrame = 0;
 
+
 	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>* sceneLogger;
 	std::string baseOutputDirectory;
 	std::ofstream energy_stat_file;
@@ -137,6 +137,8 @@ protected:
 	bool rasterizeCanonical = false;
 	bool rasterizeWarps = false;
 	unsigned int rasterizationFrame = 1;
+	const int focus_slice_radius = 3;
+
 	ITMSceneSliceRasterizer<TVoxelCanonical, TVoxelLive, TIndex> rasterizer;
 	cv::Mat blank;
 	cv::Mat liveImgTemplate;

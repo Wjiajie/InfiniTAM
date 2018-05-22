@@ -79,8 +79,6 @@ private:
 	ORUtils::MemoryBlock<unsigned char>* canonicalEntryAllocationTypes;
 	ORUtils::MemoryBlock<Vector3s>* allocationBlockCoordinates;
 
-	void CalculateWarpGradient_SingleThreadedVerbose(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-	                                                 ITMScene <TVoxelLive, TIndex>* liveScene);
 };
 
 

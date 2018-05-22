@@ -144,7 +144,7 @@ bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, 
 					ITMLibSettings::DEVICE_CPU);
 	reconstructionEngine->ResetScene(destination);
 
-	//temporary stuff that won't fit on the stack (possibly)
+	//temporary stuff
 	ORUtils::MemoryBlock<unsigned char>* entryAllocationTypes
 			= new ORUtils::MemoryBlock<unsigned char>(TIndex::noTotalEntries, MEMORYDEVICE_CPU);
 	ORUtils::MemoryBlock<Vector3s>* blockCoords = new ORUtils::MemoryBlock<Vector3s>(TIndex::noTotalEntries,

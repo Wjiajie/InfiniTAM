@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 4/12/18.
+//  Created by Gregory Kramida on 5/22/18.
 //  Copyright (c) 2018-2025 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -14,7 +14,12 @@
 //  limitations under the License.
 //  ================================================================
 
-#include "Trackers/CPU/ITMSceneMotionTracker_CPU.tpp"
-#include "ITMLibDefines.h"
+#include "../ITMLibDefines.h"
+#include "../Trackers/CUDA/ITMSceneMotionTracker_CUDA.tcu"
 
-template class ITMSceneMotionTracker_CPU<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+namespace ITMLib{
+
+template
+class ITMSceneMotionTracker_CUDA<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+
+}

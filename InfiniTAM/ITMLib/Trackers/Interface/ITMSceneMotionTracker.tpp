@@ -18,10 +18,10 @@
 #include <iomanip>
 #include <memory>
 
-
 //opencv
 #include <opencv2/imgcodecs.hpp>
-#include <opencv/cv.hpp>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/imgproc.hpp>
 
 //local
 #include "ITMSceneMotionTracker.h"
@@ -197,14 +197,14 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeTrackin
 	if (recordWarpUpdates) {
 		sceneLogger->StopSavingWarpState();
 		if (hasFocusCoordinates) {
-			Vector3i sliceMinPoint(focusCoordinates[0] - FOCUS_SLICE_RADIUS,
-			                       focusCoordinates[1] - FOCUS_SLICE_RADIUS,
-			                       focusCoordinates[2] - FOCUS_SLICE_RADIUS);
-			Vector3i sliceMaxPoint(focusCoordinates[0] + FOCUS_SLICE_RADIUS,
-			                       focusCoordinates[1] + FOCUS_SLICE_RADIUS,
-			                       focusCoordinates[2] + FOCUS_SLICE_RADIUS);
+			Vector3i sliceMinPoint(focusCoordinates[0] - this->focus_slice_radius,
+			                       focusCoordinates[1] - this->focus_slice_radius,
+			                       focusCoordinates[2] - this->focus_slice_radius);
+			Vector3i sliceMaxPoint(focusCoordinates[0] + this->focus_slice_radius,
+			                       focusCoordinates[1] + this->focus_slice_radius,
+			                       focusCoordinates[2] + this->focus_slice_radius);
 			std::cout << "Making slice around voxel " << green << focusCoordinates << reset << " with l_0 radius of "
-			          << FOCUS_SLICE_RADIUS << "...";
+			          << this->focus_slice_radius << "...";
 			std::string sliceId;
 			sceneLogger->MakeSlice(sliceMinPoint, sliceMaxPoint, trackedFrameCount, sliceId);
 			std::cout << "Slice finished." << std::endl;

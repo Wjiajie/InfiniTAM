@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 1/22/18.
+//  Created by Gregory Kramida on 4/12/18.
 //  Copyright (c) 2018-2025 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -13,20 +13,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#pragma once
 
-//========================= TEMPORARY FLAGS FOR DEBUGGING DYNAMIC FUSION FEATURE =======================================
-#define _DEBUG
+#include "../Trackers/CPU/ITMSceneMotionTracker_CPU.tpp"
+#include "../ITMLibDefines.h"
 
-#ifdef _DEBUG
-
-#include "Utils/FileIO/ITMSceneLogger.h"
-#include <opencv2/core/mat.hpp>
-
-//different logging parameters
-#define FOCUS_SLICE_RADIUS 3
-
-#define debug_print(something) std::cout << yellow << something << reset << std::endl
-
-
-#endif //ifdef _DEBUG
+template class ITMSceneMotionTracker_CPU<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;

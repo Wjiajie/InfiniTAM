@@ -5,6 +5,8 @@
 #include <iomanip>
 #include <sstream>
 
+#define debug_print(something) std::cout << yellow << something << reset << std::endl
+
 namespace ITMLib {
 template<typename Type, unsigned N, unsigned Last>
 struct tuple_printer {

@@ -17,6 +17,7 @@
 #include "ITMMath.h"
 #include "../Objects/Scene/ITMScene.h"
 #include "../Objects/Scene/ITMVoxelBlockHash.h"
+#include "../Objects/Scene/ITMSceneTraversal.h"
 
 using namespace ITMLib;
 
