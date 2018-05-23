@@ -268,10 +268,10 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenesCompact() {
 	}
 	std::cout << "Loading scenes for current frame (this might take awhile)..." << std::endl;
 	std::cout.flush();
-	ITMSceneReconstructionEngine<TVoxelLive, TIndex>* reconstructionEngineLive =
-			ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelLive, TIndex>(
-					ITMLibSettings::DEVICE_CPU);
-	reconstructionEngineLive->ResetScene(liveScene);
+	ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex>* reconstructionEngineLive =
+			ITMDynamicSceneReconstructionEngineFactory::
+			MakeSceneReconstructionEngine<TVoxelCanonical,TVoxelLive, TIndex>(ITMLibSettings::DEVICE_CPU);
+	reconstructionEngineLive->ResetLiveScene(liveScene);
 	liveScene->LoadFromDirectoryCompact_CPU(livePath.c_str());
 	if(!activeWarpLogger->isSlice || !activeWarpLogger->sliceLoaded){
 		activeWarpLogger->LoadCompact();

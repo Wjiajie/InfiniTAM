@@ -2,7 +2,7 @@
 
 #include "ITMDynamicSceneReconstructionEngine_CPU.h"
 
-#include "../Shared/ITMSceneReconstructionEngine_Shared.h"
+#include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 
 using namespace ITMLib;
@@ -139,8 +139,6 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 
 					locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 
-					if (stopIntegratingAtMaxW) if (localVoxelBlock[locId].w_depth == maxW) continue;
-
 					pt_model.x = (float) (globalPos.x + x) * voxelSize;
 					pt_model.y = (float) (globalPos.y + y) * voxelSize;
 					pt_model.z = (float) (globalPos.z + z) * voxelSize;
@@ -157,7 +155,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 //				depth_measure = depth[(int)(pt_image.x + 0.5f) + (int)(pt_image.y + 0.5f) * depthImgSize.x];
 //				std::cout << "Processed voxel at " << voxelPos  << ". Image sampled at: " << pt_image_int << ". Depth (m): " << depth_measure << ". Image float coord: " << pt_image << std::endl;
 //			}
-					ComputeUpdatedVoxelInfo<
+					ComputeUpdatedLiveVoxelInfo<
 							TVoxelLive::hasColorInformation,
 							TVoxelLive::hasConfidenceInformation,
 							TVoxelLive::hasSemanticInformation,
@@ -196,14 +194,14 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 	int* voxelAllocationList = scene->localVBA.GetAllocationList();
 	int* excessAllocationList = scene->index.GetExcessAllocationList();
 	ITMHashEntry* hashTable = scene->index.GetEntries();
-	ITMHashSwapState* swapStates = scene->globalCache != NULL ? scene->globalCache->GetSwapStates(false) : 0;
+	ITMHashSwapState* swapStates = scene->globalCache != nullptr ? scene->globalCache->GetSwapStates(false) : 0;
 	int* visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
 	uchar* entriesVisibleType = renderState_vh->GetEntriesVisibleType();
 	uchar* entriesAllocType = this->entriesAllocType->GetData(MEMORYDEVICE_CPU);
 	Vector4s* blockCoords = this->blockCoords->GetData(MEMORYDEVICE_CPU);
 	int noTotalEntries = scene->index.noTotalEntries;
 
-	bool useSwapping = scene->globalCache != NULL;
+	bool useSwapping = scene->globalCache != nullptr;
 
 	float oneOverHashEntrySize = 1.0f / (voxelSize * SDF_BLOCK_SIZE);//m
 
@@ -224,7 +222,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 	for (int locId = 0; locId < depthImgSize.x * depthImgSize.y; locId++) {
 		int y = locId / depthImgSize.x;
 		int x = locId - y * depthImgSize.x;
-		buildHashAllocAndVisibleTypePP(entriesAllocType, entriesVisibleType, x, y, blockCoords, depth, invM_d,
+		buildLiveHashAllocAndVisibleTypePP(entriesAllocType, entriesVisibleType, x, y, blockCoords, depth, invM_d,
 		                               invProjParams_d, mu, depthImgSize, oneOverHashEntrySize, hashTable,
 		                               scene->sceneParams->viewFrustum_min,
 		                               scene->sceneParams->viewFrustum_max);
@@ -242,8 +240,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 					vbaIdx = lastFreeVoxelBlockId;
 					lastFreeVoxelBlockId--;
 
-					if (vbaIdx >= 0) //there is room in the voxel block array
-					{
+					if (vbaIdx >= 0) { //there is room in the voxel block array
 						Vector4s pt_block_all = blockCoords[targetIdx];
 
 						ITMHashEntry hashEntry;
@@ -269,8 +266,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 					exlIdx = lastFreeExcessListId;
 					lastFreeExcessListId--;
 
-					if (vbaIdx >= 0 && exlIdx >= 0) //there is room in the voxel block array and excess list
-					{
+					if (vbaIdx >= 0 && exlIdx >= 0) { //there is room in the voxel block array and excess list
 						Vector4s pt_block_all = blockCoords[targetIdx];
 
 						ITMHashEntry hashEntry;
@@ -308,11 +304,11 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 			bool isVisibleEnlarged, isVisible;
 
 			if (useSwapping) {
-				checkBlockVisibility<true>(isVisible, isVisibleEnlarged, hashEntry.pos, M_d, projParams_d, voxelSize,
+				checkLiveBlockVisibility<true>(isVisible, isVisibleEnlarged, hashEntry.pos, M_d, projParams_d, voxelSize,
 				                           depthImgSize);
 				if (!isVisibleEnlarged) hashVisibleType = 0;
 			} else {
-				checkBlockVisibility<false>(isVisible, isVisibleEnlarged, hashEntry.pos, M_d, projParams_d, voxelSize,
+				checkLiveBlockVisibility<false>(isVisible, isVisibleEnlarged, hashEntry.pos, M_d, projParams_d, voxelSize,
 				                            depthImgSize);
 				if (!isVisible) { hashVisibleType = 0; }
 			}
@@ -442,7 +438,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPla
 		pt_model.z = (float) (z + arrayInfo->offset.z) * voxelSize;
 		pt_model.w = 1.0f;
 
-		ComputeUpdatedVoxelInfo<
+		ComputeUpdatedLiveVoxelInfo<
 				TVoxelLive::hasColorInformation,
 				TVoxelLive::hasConfidenceInformation,
 				TVoxelLive::hasSemanticInformation,

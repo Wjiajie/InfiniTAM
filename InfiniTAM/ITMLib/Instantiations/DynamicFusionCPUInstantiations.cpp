@@ -20,8 +20,8 @@
 #include "../Core/ITMDenseDynamicMapper.tpp"
 
 
-#include "../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.tpp"
 #include "../Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU.tpp"
+#include "../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.tpp"
 #include "../Engines/Swapping/CPU/ITMSwappingEngine_CPU.tpp"
 #include "../Engines/Visualisation/CPU/ITMVisualisationEngine_CPU.tpp"
 #include "../Engines/Meshing/CPU/ITMMeshingEngine_CPU.tpp"
@@ -37,10 +37,8 @@
 template class ITMSwappingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 template class ITMDenseDynamicMapper<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
-template class ITMSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
-template class ITMSceneReconstructionEngine_CPU<ITMVoxelLive, ITMVoxelIndex>;
 template class ITMDynamicSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
-
+template class ITMSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMVisualisationEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMVisualisationEngine_CPU<ITMVoxelLive, ITMVoxelIndex>;
 template class ITMMeshingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;

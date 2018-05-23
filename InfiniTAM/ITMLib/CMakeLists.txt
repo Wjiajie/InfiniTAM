@@ -171,7 +171,7 @@ Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h
 ##
 SET(ITMLIB_ENGINES_RECONSTRUCTION_CPU_SOURCES
 Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.tpp
-    Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU.tpp
+Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU.tpp
 Engines/Reconstruction/CPU/ITMSurfelSceneReconstructionEngine_CPU.tpp
 )
 
@@ -206,6 +206,7 @@ Engines/Reconstruction/Interface/ITMDynamicSceneReconstructionEngine.h
 ##
 SET(ITMLIB_ENGINES_RECONSTRUCTION_SHARED_HEADERS
 Engines/Reconstruction/Shared/ITMSceneReconstructionEngine_Shared.h
+Engines/Reconstruction/Shared/ITMDynamicSceneReconstructionEngine_Shared.h
 Engines/Reconstruction/Shared/ITMSurfelSceneReconstructionEngine_Shared.h
 )
 

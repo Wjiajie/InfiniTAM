@@ -30,6 +30,9 @@ template void CopySceneSDFandFlagsWithOffset_CPU<ITMVoxelCanonical,ITMVoxelLive,
 template bool SetVoxel_CPU<ITMVoxelCanonical,ITMVoxelIndex>(ITMScene<ITMVoxelCanonical,
                                                             ITMVoxelIndex>* scene, Vector3i at, ITMVoxelCanonical voxel);
 
+template class ITMSceneManipulationEngine_CPU<ITMVoxelCanonical,ITMVoxelIndex>;
+template class ITMSceneManipulationEngine_CPU<ITMVoxelLive,ITMVoxelIndex>;
+
 template bool SetVoxel_CPU<ITMVoxelLive,ITMVoxelIndex>(
 		ITMScene<ITMVoxelLive, ITMVoxelIndex>* scene,Vector3i at, ITMVoxelLive voxel);
 template ITMVoxelCanonical ReadVoxel<ITMVoxelCanonical,ITMVoxelIndex>(

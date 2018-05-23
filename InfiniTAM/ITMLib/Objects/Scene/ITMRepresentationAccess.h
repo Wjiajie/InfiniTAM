@@ -225,6 +225,52 @@ _CPU_AND_GPU_CODE_ inline float readWithConfidenceFromSDF_float_interpolated(THR
 	return TVoxel::valueToFloat((1.0f - coeff.z) * res1 + coeff.z * res2);
 }
 
+
+template<class TVoxel, class TIndex, class TCache>
+_CPU_AND_GPU_CODE_ inline float readWithConfidenceFromSDF_float_interpolated_semantic(THREADPTR(float) &confidence, const CONSTPTR(TVoxel) *voxelData,
+                 const CONSTPTR(TIndex) *voxelIndex, Vector3f point, THREADPTR(int) &vmIndex, THREADPTR(TCache) & cache)
+{
+	float res1, res2, v1, v2;
+	float res1_c, res2_c, v1_c, v2_c;
+	TVoxel voxel;
+
+	Vector3f coeff; Vector3i pos; TO_INT_FLOOR3(pos, coeff, point);
+
+	voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 0, 0), vmIndex, cache); v1 = voxel.sdf;
+	v1_c = (voxel.flags == ITMLib::VOXEL_NONTRUNCATED || (voxel.flags == ITMLib::VOXEL_TRUNCATED && v1 > 0));
+	voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 0, 0), vmIndex, cache); v2 = voxel.sdf;
+	v2_c = (voxel.flags == ITMLib::VOXEL_NONTRUNCATED || (voxel.flags == ITMLib::VOXEL_TRUNCATED && v2 > 0));
+	res1 = (1.0f - coeff.x) * v1 + coeff.x * v2;
+	res1_c = (1.0f - coeff.x) * v1_c + coeff.x * v2_c;
+
+	voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 1, 0), vmIndex, cache); v1 = voxel.sdf;
+	v1_c = (voxel.flags == ITMLib::VOXEL_NONTRUNCATED || (voxel.flags == ITMLib::VOXEL_TRUNCATED && v1 > 0));
+	voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 1, 0), vmIndex, cache); v2 = voxel.sdf;
+	v2_c = (voxel.flags == ITMLib::VOXEL_NONTRUNCATED || (voxel.flags == ITMLib::VOXEL_TRUNCATED && v2 > 0));
+	res1 = (1.0f - coeff.y) * res1 + coeff.y * ((1.0f - coeff.x) * v1 + coeff.x * v2);
+	res1_c = (1.0f - coeff.y) * res1_c + coeff.y * ((1.0f - coeff.x) * v1_c + coeff.x * v2_c);
+
+	voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 0, 1), vmIndex, cache); v1 = voxel.sdf;
+	v1_c = (voxel.flags == ITMLib::VOXEL_NONTRUNCATED || (voxel.flags == ITMLib::VOXEL_TRUNCATED && v1 > 0));
+	voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 0, 1), vmIndex, cache); v2 = voxel.sdf;
+	v2_c = (voxel.flags == ITMLib::VOXEL_NONTRUNCATED || (voxel.flags == ITMLib::VOXEL_TRUNCATED && v2 > 0));
+	res2 = (1.0f - coeff.x) * v1 + coeff.x * v2;
+	res2_c = (1.0f - coeff.x) * v1_c + coeff.x * v2_c;
+
+	voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(0, 1, 1), vmIndex, cache); v1 = voxel.sdf;
+	v1_c = (voxel.flags == ITMLib::VOXEL_NONTRUNCATED || (voxel.flags == ITMLib::VOXEL_TRUNCATED && v1 > 0));
+	voxel = readVoxel(voxelData, voxelIndex, pos + Vector3i(1, 1, 1), vmIndex, cache); v2 = voxel.sdf;
+	v2_c = (voxel.flags == ITMLib::VOXEL_NONTRUNCATED || (voxel.flags == ITMLib::VOXEL_TRUNCATED && v2 > 0));
+	res2 = (1.0f - coeff.y) * res2 + coeff.y * ((1.0f - coeff.x) * v1 + coeff.x * v2);
+	res2_c = (1.0f - coeff.y) * res2_c + coeff.y * ((1.0f - coeff.x) * v1_c + coeff.x * v2_c);
+
+	vmIndex = true;
+
+	confidence = (1.0f - coeff.z) * res1_c + coeff.z * res2_c;
+
+	return TVoxel::valueToFloat((1.0f - coeff.z) * res1 + coeff.z * res2);
+}
+
 template<class TVoxel, class TIndex, class TCache>
 _CPU_AND_GPU_CODE_ inline float readFromSDF_float_interpolated(const CONSTPTR(TVoxel) *voxelData,
 	const CONSTPTR(TIndex) *voxelIndex, Vector3f point, THREADPTR(int) &vmIndex, THREADPTR(TCache) & cache, int & maxW)

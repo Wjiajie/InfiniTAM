@@ -17,6 +17,7 @@ struct ITMVoxel_f_rgb
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasWeightInformation = true;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -48,6 +49,7 @@ struct ITMVoxel_s_rgb
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasWeightInformation = true;
 
 	/** Value of the truncated signed distance transformation. */
 	short sdf;
@@ -78,6 +80,7 @@ struct ITMVoxel_s
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasWeightInformation = true;
 
 	/** Value of the truncated signed distance transformation. */
 	short sdf;
@@ -102,6 +105,7 @@ struct ITMVoxel_f
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasWeightInformation = true;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -126,6 +130,7 @@ struct ITMVoxel_f_conf
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasWeightInformation = true;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -153,6 +158,7 @@ struct ITMVoxel_s_rgb_conf
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasWeightInformation = true;
 
 	/** Value of the truncated signed distance transformation. */
 	short sdf;
@@ -185,6 +191,7 @@ struct ITMVoxel_f_rgb_conf
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasWeightInformation = true;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -218,6 +225,7 @@ struct ITMVoxel_f_dynamic_canonical
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = true;
+	static const CONSTPTR(bool) hasWeightInformation = true;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -261,6 +269,7 @@ struct ITMVoxel_f_dynamic_live
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = true;
+	static const CONSTPTR(bool) hasWeightInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	union {
@@ -270,8 +279,7 @@ struct ITMVoxel_f_dynamic_live
 		};
 		float sdf_values[2];
 	};
-	/** Number of fused observations that make up @p sdf. */
-	uchar w_depth;//TODO: this field is not needed, but have to tweak reconstruction engine to remove it -Greg (GitHub: Algomorph)
+
 	/** refer to ITMVoxelFlags for flag bit array values */
 	union {
 		struct{
@@ -285,6 +293,6 @@ struct ITMVoxel_f_dynamic_live
 		flags(ITMLib::VOXEL_UNKNOWN),
 		flags1(ITMLib::VOXEL_UNKNOWN),
 		sdf(SDF_initialValue()),
-		sdf1(SDF_initialValue()),
-		w_depth(0) {}
+		sdf1(SDF_initialValue())
+	{}
 };

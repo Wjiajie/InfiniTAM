@@ -96,7 +96,34 @@ _CPU_AND_GPU_CODE_ inline void CreateRenderingBlocks(DEVICEPTR(RenderingBlock) *
 	}
 }
 
-#endif
+#endif //!(defined __METALC__)
+
+template <bool hasWeightInformation, bool hasSemanticInformation, typename TVoxel, typename TIndex, typename TCache>
+struct ReadWithConfidenceFromSdfFloatInterpolated;
+
+
+template <typename TVoxel, typename TIndex, typename TCache>
+struct ReadWithConfidenceFromSdfFloatInterpolated<true,false, TVoxel,TIndex,TCache>{
+	_CPU_AND_GPU_CODE_ static float compute(THREADPTR(float) &confidence, const CONSTPTR(TVoxel) *voxelData,
+	                     const CONSTPTR(TIndex) *voxelIndex, Vector3f point, THREADPTR(int) &vmIndex, THREADPTR(TCache) & cache){
+		return readWithConfidenceFromSDF_float_interpolated(confidence,voxelData, voxelIndex, point, vmIndex, cache);
+	}
+};
+template <typename TVoxel, typename TIndex, typename TCache>
+struct ReadWithConfidenceFromSdfFloatInterpolated<true,true, TVoxel,TIndex,TCache>{
+	_CPU_AND_GPU_CODE_ static float compute(THREADPTR(float) &confidence, const CONSTPTR(TVoxel) *voxelData,
+	                     const CONSTPTR(TIndex) *voxelIndex, Vector3f point, THREADPTR(int) &vmIndex, THREADPTR(TCache) & cache){
+		return readWithConfidenceFromSDF_float_interpolated(confidence, voxelData, voxelIndex, point, vmIndex, cache);
+	}
+};
+template <typename TVoxel, typename TIndex, typename TCache>
+struct ReadWithConfidenceFromSdfFloatInterpolated<false,true, TVoxel,TIndex,TCache>{
+	_CPU_AND_GPU_CODE_ static float compute(THREADPTR(float) &confidence, const CONSTPTR(TVoxel) *voxelData,
+	                     const CONSTPTR(TIndex) *voxelIndex, Vector3f point, THREADPTR(int) &vmIndex, THREADPTR(TCache) & cache){
+		return readWithConfidenceFromSDF_float_interpolated_semantic(confidence, voxelData, voxelIndex, point, vmIndex, cache);
+	}
+};
+
 
 template<class TVoxel, class TIndex, bool modifyVisibleEntries>
 _CPU_AND_GPU_CODE_ inline bool castRay(DEVICEPTR(Vector4f) &pt_out, DEVICEPTR(uchar) *entriesVisibleType, 
@@ -159,7 +186,11 @@ _CPU_AND_GPU_CODE_ inline bool castRay(DEVICEPTR(Vector4f) &pt_out, DEVICEPTR(uc
 		stepLength = sdfValue * stepScale;
 		pt_result += stepLength * rayDirection;
 
-		sdfValue = readWithConfidenceFromSDF_float_interpolated(confidence, voxelData, voxelIndex, pt_result, vmIndex, cache);
+		sdfValue = ReadWithConfidenceFromSdfFloatInterpolated
+				<TVoxel::hasWeightInformation,
+				TVoxel::hasSemanticInformation,
+				TVoxel, typename TIndex::IndexData, typename TIndex::IndexCache>
+		::compute(confidence, voxelData, voxelIndex, pt_result, vmIndex, cache);
 
 		stepLength = sdfValue * stepScale;
 		pt_result += stepLength * rayDirection;
@@ -172,6 +203,8 @@ _CPU_AND_GPU_CODE_ inline bool castRay(DEVICEPTR(Vector4f) &pt_out, DEVICEPTR(uc
 
 	return pt_found;
 }
+
+
 
 _CPU_AND_GPU_CODE_ inline int forwardProjectPixel(Vector4f pixel, const CONSTPTR(Matrix4f) &M, const CONSTPTR(Vector4f) &projParams,
 	const THREADPTR(Vector2i) &imgSize)

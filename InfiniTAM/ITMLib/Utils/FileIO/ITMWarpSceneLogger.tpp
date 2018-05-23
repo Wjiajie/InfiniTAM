@@ -21,7 +21,6 @@
 #include "ITMWarpSceneLogger.h"
 #include "../ITMSceneStatisticsCalculator.h"
 #include "../ITMLibSettings.h"
-#include "../../Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
 
 
 using namespace ITMLib;
@@ -308,15 +307,14 @@ void ITMWarpSceneLogger<TVoxel, TIndex>::SaveCompact() {
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpSceneLogger<TVoxel, TIndex>::LoadCompact() {
-	ITMSceneReconstructionEngine<TVoxel, TIndex>* reconstructionEngine =
-			ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel, TIndex>(
+	ITMDynamicSceneReconstructionEngine<TVoxel, TVoxel, TIndex>* reconstructionEngine =
+			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel,TVoxel,TIndex>(
 					ITMLibSettings::DEVICE_CPU);
-	reconstructionEngine->ResetScene(scene);
+	reconstructionEngine->ResetLiveScene(scene);
 	delete reconstructionEngine;
 	scene->LoadFromDirectoryCompact_CPU(scenePath.c_str());
 	ITMSceneStatisticsCalculator<TVoxel, TIndex> statisticsCalculator;
 	this->voxelCount = statisticsCalculator.ComputeAllocatedVoxelCount(scene);
-
 }
 //endregion
 // region ======================================== LOAD / SAVE HIGHLIGHTS ==============================================

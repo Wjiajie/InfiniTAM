@@ -15,18 +15,12 @@
 //  ================================================================
 #include "../ITMLibDefines.h"
 
-#include "../Engines/Reconstruction/CUDA/ITMSceneReconstructionEngine_CUDA.tcu"
 #include "../Engines/Swapping/CUDA/ITMSwappingEngine_CUDA.tcu"
 #include "../Engines/Visualisation/CUDA/ITMVisualisationEngine_CUDA.tcu"
 #include "../Engines/Meshing/CUDA/ITMMeshingEngine_CUDA.tcu"
 
 namespace ITMLib {
 
-//KillingFusion stuff
-template
-class ITMSceneReconstructionEngine_CUDA<ITMVoxelCanonical, ITMVoxelIndex>;
-template
-class ITMSceneReconstructionEngine_CUDA<ITMVoxelLive, ITMVoxelIndex>;
 template
 class ITMSwappingEngine_CUDA<ITMVoxelCanonical, ITMVoxelIndex>;
 

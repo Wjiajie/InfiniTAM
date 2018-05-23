@@ -34,6 +34,9 @@ namespace ITMLib {
 		TVoxel* voxels[MAX_NUM_LOCALMAPS];
 
 		static const CONSTPTR(bool) hasColorInformation = TVoxel::hasColorInformation;
+		static const CONSTPTR(bool) hasConfidenceInformation = TVoxel::hasConfidenceInformation;
+		static const CONSTPTR(bool) hasSemanticInformation = TVoxel::hasSemanticInformation;
+		static const CONSTPTR(bool) hasWeightInformation = TVoxel::hasWeightInformation;
 	};
 }
 

@@ -363,9 +363,6 @@ __global__ void integrateIntoScene_device(TVoxel *localVBA, const ITMHashEntry *
 
 	locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 
-	if (stopMaxW) if (localVoxelBlock[locId].w_depth == maxW) return;
-	//if (approximateIntegration) if (localVoxelBlock[locId].w_depth != 0) return;
-
 	pt_model.x = (float)(globalPos.x + x) * _voxelSize;
 	pt_model.y = (float)(globalPos.y + y) * _voxelSize;
 	pt_model.z = (float)(globalPos.z + z) * _voxelSize;

@@ -17,7 +17,11 @@
 #include "ITMSceneManipulation.h"
 #include "ITMScene.h"
 #include "ITMRepresentationAccess.h"
+#include "ITMVoxelBlockHash.h"
+#include "ITMPlainVoxelArray.h"
 #include "../../Utils/ITMLibSettings.h"
+#include "../../Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
+#include "../../Engines/Reconstruction/Interface/ITMSceneReconstructionEngine.h"
 #include "../../Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
 
 
@@ -27,11 +31,7 @@ namespace ITMLib {
 template<typename TVoxelSource, typename TVoxelDestination, typename TIndex >
 void CopySceneSDFandFlagsWithOffset_CPU(ITMScene<TVoxelDestination, TIndex>* destination,
                                         ITMScene<TVoxelSource, TIndex>* source, Vector3i offset) {
-	ITMSceneReconstructionEngine<TVoxelDestination, TIndex>* reconstructionEngine =
-			ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelDestination, TIndex>(
-					ITMLibSettings::DEVICE_CPU);
-
-	reconstructionEngine->ResetScene(destination);
+	ITMSceneManipulationEngine_CPU<TVoxelDestination, TIndex>::ResetScene(destination);
 
 	TVoxelSource* originalVoxels = source->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* originalHashTable = source->index.GetEntries();
@@ -139,10 +139,7 @@ bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, 
                         Vector3i minPoint, Vector3i maxPoint) {
 
 	// prep destination scene
-	ITMSceneReconstructionEngine<TVoxel, TIndex>* reconstructionEngine =
-			ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel, TIndex>(
-					ITMLibSettings::DEVICE_CPU);
-	reconstructionEngine->ResetScene(destination);
+	ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ResetScene(destination);
 
 	//temporary stuff
 	ORUtils::MemoryBlock<unsigned char>* entryAllocationTypes
@@ -266,4 +263,44 @@ void GetVoxelHashLocals(THREADPTR(int)& vmIndex,
 	vmIndex = false;
 };
 
+
+template<typename TVoxel>
+void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash>* scene)
+{
+	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
+	int blockSize = scene->index.getVoxelBlockSize();
+
+	TVoxel *voxelBlocks_ptr = scene->localVBA.GetVoxelBlocks();
+	for (int i = 0; i < numBlocks * blockSize; ++i) voxelBlocks_ptr[i] = TVoxel();
+	int *vbaAllocationList_ptr = scene->localVBA.GetAllocationList();
+	for (int i = 0; i < numBlocks; ++i) vbaAllocationList_ptr[i] = i;
+	scene->localVBA.lastFreeBlockId = numBlocks - 1;
+
+	ITMHashEntry tmpEntry;
+	memset(&tmpEntry, 0, sizeof(ITMHashEntry));
+	tmpEntry.ptr = -2;
+	ITMHashEntry *hashEntry_ptr = scene->index.GetEntries();
+	for (int i = 0; i < scene->index.noTotalEntries; ++i) hashEntry_ptr[i] = tmpEntry;
+	int *excessList_ptr = scene->index.GetExcessAllocationList();
+	for (int i = 0; i < SDF_EXCESS_LIST_SIZE; ++i) excessList_ptr[i] = i;
+
+	scene->index.SetLastFreeExcessListId(SDF_EXCESS_LIST_SIZE - 1);
 }
+
+
+template<typename TVoxel>
+void ITMSceneManipulationEngine_CPU<TVoxel,ITMPlainVoxelArray>::ResetScene(ITMScene<TVoxel, ITMPlainVoxelArray>* scene)
+{
+	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
+	int blockSize = scene->index.getVoxelBlockSize();
+
+	TVoxel *voxelBlocks_ptr = scene->localVBA.GetVoxelBlocks();
+	for (int i = 0; i < numBlocks * blockSize; ++i) voxelBlocks_ptr[i] = TVoxel();
+	int *vbaAllocationList_ptr = scene->localVBA.GetAllocationList();
+	for (int i = 0; i < numBlocks; ++i) vbaAllocationList_ptr[i] = i;
+	scene->localVBA.lastFreeBlockId = numBlocks - 1;
+}
+
+
+
+}//namespace ITMLib
