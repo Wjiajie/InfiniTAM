@@ -265,7 +265,8 @@ void GetVoxelHashLocals(THREADPTR(int)& vmIndex,
 
 
 template<typename TVoxel>
-void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash>* scene)
+void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(
+		ITMLib::ITMScene<TVoxel, ITMLib::ITMVoxelBlockHash>* scene)
 {
 	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
 	int blockSize = scene->index.getVoxelBlockSize();
@@ -289,7 +290,8 @@ void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(ITMSc
 
 
 template<typename TVoxel>
-void ITMSceneManipulationEngine_CPU<TVoxel,ITMPlainVoxelArray>::ResetScene(ITMScene<TVoxel, ITMPlainVoxelArray>* scene)
+void ITMSceneManipulationEngine_CPU<TVoxel,ITMPlainVoxelArray>::ResetScene(
+		ITMLib::ITMScene<TVoxel, ITMLib::ITMPlainVoxelArray>* scene)
 {
 	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
 	int blockSize = scene->index.getVoxelBlockSize();

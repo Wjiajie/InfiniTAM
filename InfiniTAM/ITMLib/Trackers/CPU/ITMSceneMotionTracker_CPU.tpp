@@ -392,8 +392,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::PrintSettin
 	          << std::endl;
 
 	std::cout << "Max iteration count: " << this->parameters.maxIterationCount << std::endl;
-	std::cout << "Warp vector update threshold: " << this->parameters.maxVectorUpdateThresholdMeters << " m"
-																									 << std::endl;
+	std::cout << "Warp vector update threshold: " << this->parameters.maxVectorUpdateThresholdMeters << " m, " << this->maxVectorUpdateThresholdVoxels << " voxels" << std::endl;
 	std::cout << "Gradient descent learning rate: " << this->parameters.gradientDescentLearningRate << std::endl;
 	std::cout << "Rigidity enforcement factor: " << this->parameters.rigidityEnforcementFactor << std::endl;
 	std::cout << "Weight of the data term: " << this->parameters.weightDataTerm << std::endl;

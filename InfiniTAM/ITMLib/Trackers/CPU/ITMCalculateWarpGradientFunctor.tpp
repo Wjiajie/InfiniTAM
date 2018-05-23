@@ -194,8 +194,6 @@ struct CalculateWarpGradientFunctor {
 //					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
 //			ComputeLiveJacobian_CentralDifferences_NontruncatedOnly_IndexedFields(
 //					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
-//			ComputeLiveJacobian_ForwardDifferences_NontruncatedOnly_IndexedFields(
-//					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
 		}
 
 		// region =============================== DATA TERM ================================================

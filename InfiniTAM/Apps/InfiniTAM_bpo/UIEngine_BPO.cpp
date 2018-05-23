@@ -32,6 +32,9 @@
 #include "../../ITMLib/Utils/ITMBenchmarkUtils.h"
 #include "../../ITMLib/Core/ITMDynamicEngine.h"
 
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
+
 using namespace InfiniTAM::Engine;
 using namespace InputSource;
 using namespace ITMLib;
@@ -122,7 +125,7 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, 1);
 #endif
 
-	bool allocateGPU = false;
+	allocateGPU = false;
 	if (deviceType == ITMLibSettings::DEVICE_CUDA) allocateGPU = true;
 
 	for (int w = 0; w < NUM_WIN; w++)
@@ -309,7 +312,17 @@ void UIEngine_BPO::RecordReconstructionToVideo() {
 				reconstructionVideoWriter->open((std::string(this->outFolder) + "/out_reconstruction.avi").c_str(),
 				                                outImage[0]->noDims.x, outImage[0]->noDims.y,
 				                                false, 30);
-			reconstructionVideoWriter->writeFrame(outImage[0]);
+			//TODO This image saving/reading/saving is a production hack -Greg (GitHub:Algomorph)
+			std::string fileName = (std::string(this->outFolder) + "/out_reconstruction.png");
+			SaveImageToFile(outImage[0], fileName.c_str());
+			cv::Mat img = cv::imread(fileName, cv::IMREAD_UNCHANGED);
+			int frameIndex = this->startedProcessingFromFrameIx + this->processedFrameNo;
+			cv::putText(img, std::to_string(frameIndex), cv::Size(10,50), cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(128,255,128),1,cv::LINE_AA);
+			cv::imwrite(fileName,img);
+			ITMUChar4Image* imageWithText = new ITMUChar4Image(imageSource->getDepthImageSize(), true, allocateGPU);
+			ReadImageFromFile(imageWithText,fileName.c_str());
+			reconstructionVideoWriter->writeFrame(imageWithText);
+			delete imageWithText;
 		}
 	}
 }

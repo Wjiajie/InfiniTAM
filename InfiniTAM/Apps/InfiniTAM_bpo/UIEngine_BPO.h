@@ -94,7 +94,7 @@ public:
 	char* outFolder;
 	bool needsRefresh;
 	bool inStepByStepMode;
-	bool continuousStepByStep;
+	bool allocateGPU;
 	ITMUChar4Image* saveImage;
 
 	void Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
