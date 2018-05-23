@@ -61,6 +61,10 @@ public:
 	                  ITMRenderState* renderState);
 
 	//_DEBUG
+	void SaveScenes(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                ITMScene<TVoxelLive, TIndex>* liveScene);
+
+	//_DEBUG
 	void BeginProcessingFrame(const ITMView* view,
 	                          const ITMTrackingState* trackingState,
 	                          ITMScene<TVoxelCanonical, TIndex>* canonicalScene,

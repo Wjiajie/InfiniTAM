@@ -118,6 +118,9 @@ protected:
 	unsigned int trackedFrameCount = 0;
 	const int startTrackingAfterFrame = 0;
 
+	void SaveCurrentCanonical(ITMScene<TVoxelCanonical, TIndex>* canonicalScene);
+	void SaveCurrentLive(ITMScene <TVoxelLive, TIndex>* liveScene);
+
 
 	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>* sceneLogger;
 	std::string baseOutputDirectory;
@@ -164,6 +167,7 @@ private:
 	float maxVectorUpdate;
 	bool inStepByStepProcessingMode = false;
 	void PrintLiveSceneStatistics(ITMScene<TVoxelLive, TIndex>* scene, const char* desc);
+
 
 
 };

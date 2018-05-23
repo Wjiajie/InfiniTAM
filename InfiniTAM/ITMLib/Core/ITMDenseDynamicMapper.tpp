@@ -212,3 +212,10 @@ bool ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::UpdateCurrentFr
 	return trackingNotFinished;
 }
 
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes(
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
+	this->sceneMotionTracker->SaveCurrentCanonical(canonicalScene);
+	this->sceneMotionTracker->SaveCurrentLive(liveScene);
+}
+

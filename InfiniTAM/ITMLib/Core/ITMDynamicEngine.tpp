@@ -130,14 +130,11 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveToFile() {
 	MakeDir(saveOutputDirectory.c_str());
 	MakeDir(relocaliserOutputDirectory.c_str());
 	MakeDir(sceneOutputDirectory.c_str());
-	std::string canonicalScenePath = sceneOutputDirectory + "canonical";
-	std::string liveScenePath = sceneOutputDirectory + "live";
 
 	if (relocaliser) relocaliser->SaveToDirectory(relocaliserOutputDirectory);
 
 	//_DEBUG
-	canonicalScene->SaveToDirectoryCompact_CPU(canonicalScenePath);
-	liveScene->SaveToDirectoryCompact_CPU(liveScenePath);
+	denseMapper->SaveScenes(canonicalScene,liveScene);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

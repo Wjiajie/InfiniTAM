@@ -79,6 +79,21 @@ ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneMotionTrack
 inline static void PrintOperationStatus(const char* status) {
 	std::cout << bright_cyan << status << reset << std::endl;
 }
+
+//_DEBUG
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::SaveCurrentCanonical(ITMScene<TVoxelCanonical, TIndex>* canonicalScene){
+	std::string currentFrameOutputPath = GenerateCurrentFrameOutputPath();
+	canonicalScene->SaveToDirectoryCompact_CPU(currentFrameOutputPath + "/scene_");
+};
+
+//_DEBUG
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::SaveCurrentLive(ITMScene<TVoxelLive, TIndex>* liveScene){
+	std::string currentFrameOutputPath = GenerateCurrentFrameOutputPath();
+	liveScene->SaveToDirectoryCompact_CPU(currentFrameOutputPath + "/live_");
+};
+
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::InitializeTracking(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
@@ -153,7 +168,7 @@ void ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
 		bool recordWarpUpdates) {
 
-    // region ================================== DEBUG 2D VISUALIZATION FOR UPDATES ================================
+    // region ================================== DEBUG 2D VISUALIZATION FOR UPDATES ====================================
 	if (rasterizeWarps && rasterizationFrame == trackedFrameCount) {
 		LogWarpUpdateAs2DImage(canonicalScene, liveScene, blank, liveImgTemplate, rasterizer);
 	}
