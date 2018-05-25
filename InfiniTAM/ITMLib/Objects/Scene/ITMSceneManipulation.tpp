@@ -224,34 +224,25 @@ bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, 
  * \param point
  */
 template<class TVoxel>
-void GetVoxelHashLocals(THREADPTR(int)& vmIndex,
-                        THREADPTR(int)& locId,
-                        THREADPTR(int)& xInBlock,
-                        THREADPTR(int)& yInBlock,
-                        THREADPTR(int)& zInBlock,
-                        const CONSTPTR(TVoxel*) voxels,
+void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, int& zInBlock,
                         const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* hashEntries,
-                        THREADPTR(ITMLib::ITMVoxelBlockHash::IndexCache) & cache,
-                        const CONSTPTR(Vector3i)& point) {
+                        ITMLib::ITMVoxelBlockHash::IndexCache& cache, const CONSTPTR(Vector3i)& point) {
 	Vector3i blockPos;
 	int linearIdx = pointToVoxelBlockPos(point, blockPos);
 	zInBlock = linearIdx / (SDF_BLOCK_SIZE * SDF_BLOCK_SIZE);
 	yInBlock = (linearIdx % (SDF_BLOCK_SIZE * SDF_BLOCK_SIZE)) / SDF_BLOCK_SIZE;
 	xInBlock = linearIdx - zInBlock * (SDF_BLOCK_SIZE*SDF_BLOCK_SIZE) - yInBlock * SDF_BLOCK_SIZE;
 
-	if IS_EQUAL3(blockPos, cache.blockPos)
-	{
+	if IS_EQUAL3(blockPos, cache.blockPos){
 		vmIndex = true;
 	}
 
 	int hashIdx = hashIndex(blockPos);
 
-	while (true)
-	{
+	while (true){
 		ITMHashEntry hashEntry = hashEntries[hashIdx];
 
-		if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= 0)
-		{
+		if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= 0){
 			cache.blockPos = blockPos; cache.blockPtr = hashEntry.ptr * SDF_BLOCK_SIZE3;
 			vmIndex = hashIdx + 1; // add 1 to support legacy true / false operations for isFound
 		}

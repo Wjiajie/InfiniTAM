@@ -23,8 +23,8 @@ enum HashBlockVisibility : unsigned char {
 };
 enum HashBlockState : unsigned char {
 	STABLE = 0,
-	NEEDS_ALLOC_IN_ORDERED_LIST = 1,
-	NEEDS_ALLOC_IN_EXCESS_LIST = 2,
+	NEEDS_ALLOCATION_IN_ORDERED_LIST = 1,
+	NEEDS_ALLOCATION_IN_EXCESS_LIST = 2,
 	BOUNDARY = 3,
 };
 enum HashBlockPtrFlag : int {

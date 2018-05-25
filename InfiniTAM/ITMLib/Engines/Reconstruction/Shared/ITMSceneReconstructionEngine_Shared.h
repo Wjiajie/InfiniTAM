@@ -286,7 +286,7 @@ struct ComputeUpdatedVoxelInfo<true, true, true, TVoxel> {
 #undef COMPUTE_VOXEL_UPDATE_PARAMETERS
 //======================================================================================================================
 _CPU_AND_GPU_CODE_ inline void buildHashAllocAndVisibleTypePP(DEVICEPTR(uchar) *entriesAllocType, DEVICEPTR(uchar) *entriesVisibleType, int x, int y,
-	DEVICEPTR(Vector4s) *blockCoords, const CONSTPTR(float) *depth, Matrix4f invM_d, Vector4f projParams_d, float mu, Vector2i imgSize,
+	DEVICEPTR(Vector3s) *blockCoords, const CONSTPTR(float) *depth, Matrix4f invM_d, Vector4f projParams_d, float mu, Vector2i imgSize,
 	float oneOverVoxelSize, const CONSTPTR(ITMHashEntry) *hashTable, float viewFrustum_min, float viewFrustum_max)
 {
 	float depth_measure; unsigned int hashIdx; int noSteps;

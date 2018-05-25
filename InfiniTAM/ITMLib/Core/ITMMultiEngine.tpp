@@ -6,7 +6,7 @@
 #include "../Engines/ViewBuilding/ITMViewBuilderFactory.h"
 #include "../Engines/Visualisation/ITMVisualisationEngineFactory.h"
 #include "../Engines/Visualisation/ITMMultiVisualisationEngineFactory.h"
-#include "../Trackers/ITMTrackerFactory.h"
+#include "../CameraTrackers/ITMCameraTrackerFactory.h"
 
 #include "../../MiniSlamGraphLib/QuaternionHelpers.h"
 
@@ -44,7 +44,7 @@ ITMMultiEngine<TVoxel, TIndex>::ITMMultiEngine(const ITMLibSettings *settings, c
 	denseMapper = new ITMDenseMapper<TVoxel, TIndex>(settings);
 
 	imuCalibrator = new ITMIMUCalibrator_iPad();
-	tracker = ITMTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, settings, lowLevelEngine, imuCalibrator, &settings->sceneParams);
+	tracker = ITMCameraTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, settings, lowLevelEngine, imuCalibrator, &settings->sceneParams);
 	trackingController = new ITMTrackingController(tracker, settings);
 	trackedImageSize = trackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
 

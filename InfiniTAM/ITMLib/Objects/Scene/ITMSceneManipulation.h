@@ -99,11 +99,11 @@ inline bool MarkAsNeedingAllocationIfNotFound(DEVICEPTR(uchar)* entryAllocationT
 					return false;
 				}
 			}
-			entryAllocationTypes[hashIdx] = ITMLib::NEEDS_ALLOC_IN_EXCESS_LIST;
+			entryAllocationTypes[hashIdx] = ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST;
 			hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
 			return true;
 		}
-		entryAllocationTypes[hashIdx] = ITMLib::NEEDS_ALLOC_IN_ORDERED_LIST;
+		entryAllocationTypes[hashIdx] = ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST;
 		hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
 		return true;
 	}
@@ -127,7 +127,7 @@ void AllocateHashEntriesUsingLists_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* e
 	for (int hash = 0; hash < entryCount; hash++) {
 		unsigned char entryAllocType = entryAllocationTypes[hash];
 		switch (entryAllocType) {
-			case ITMLib::NEEDS_ALLOC_IN_ORDERED_LIST:
+			case ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST:
 
 				if (lastFreeVoxelBlockId >= 0) //there is room in the voxel block array
 				{
@@ -141,7 +141,7 @@ void AllocateHashEntriesUsingLists_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* e
 				}
 
 				break;
-			case NEEDS_ALLOC_IN_EXCESS_LIST:
+			case NEEDS_ALLOCATION_IN_EXCESS_LIST:
 
 				if (lastFreeVoxelBlockId >= 0 &&
 				    lastFreeExcessListId >= 0) //there is room in the voxel block array and excess list
@@ -251,15 +251,9 @@ TVoxel ReadVoxel(ITMScene<TVoxel, TIndex>& scene, Vector3i at);
 int FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, const THREADPTR(Vector3s)& at);
 
 template<class TVoxel>
-void GetVoxelHashLocals(THREADPTR(int)& vmIndex,
-						THREADPTR(int)& locId,
-						THREADPTR(int)& xInBlock,
-						THREADPTR(int)& yInBlock,
-						THREADPTR(int)& zInBlock,
-						const CONSTPTR(TVoxel*) voxels,
+void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, int& zInBlock,
                         const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* hashEntries,
-                        THREADPTR(ITMLib::ITMVoxelBlockHash::IndexCache) & cache,
-                        const CONSTPTR(Vector3i)& at);
+                        ITMLib::ITMVoxelBlockHash::IndexCache& cache, const CONSTPTR(Vector3i)& at);
 
 
 template<class TVoxel, class TIndex>

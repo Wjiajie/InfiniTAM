@@ -15,7 +15,7 @@
 //  ================================================================
 #include "UIEngine_BPO.h"
 #include "../../ITMLib/ITMLibDefines.h"
-#include "../../ITMLib/Utils/ITMBenchmarkUtils.h"
+#include "../../ITMLib/Utils/Analytics/ITMBenchmarkUtils.h"
 #include "../../ITMLib/Core/ITMMultiEngine.h"
 #include "../../ITMLib/Core/ITMBasicEngine.h"
 #include "../../ITMLib/Core/ITMBasicSurfelEngine.h"
@@ -112,16 +112,17 @@ void UIEngine_BPO::GlutDisplayFunction() {
 	glPopMatrix();
 
 	switch (uiEngine->trackingResult) {
-		case 0:
+		case ITMLib::ITMTrackingState::TrackingResult::TRACKING_FAILED:
 			glColor3f(1.0f, 0.0f, 0.0f);
 			break; // failure
-		case 1:
+		case ITMLib::ITMTrackingState::TrackingResult::TRACKING_POOR:
 			glColor3f(1.0f, 1.0f, 0.0f);
 			break; // poor
-		case 2:
+		case ITMLib::ITMTrackingState::TrackingResult::TRACKING_GOOD:
 			glColor3f(0.0f, 1.0f, 0.0f);
 			break; // good
 		default:
+			//TODO: why isn't this a separate value in the TrackingResult enum?
 			glColor3f(1.0f, 1.0f, 1.0f);
 			break; // relocalising
 	}
@@ -157,12 +158,17 @@ void UIEngine_BPO::GlutDisplayFunction() {
 			followOrFreeview = "free viewpoint";
 		}
 
-		sprintf(str, "n: one frame \t b: continous \t e/esc: exit \t r: reset \t k: save \t l: load \t"
+		sprintf(str, "n: one frame \t b: continuous \t e/esc: exit \t r: reset \t s: save scene \t l: load scene\t"
 		             " f: %s \t c: colours (currently %s) \t t: turn fusion %s", followOrFreeview, modeName,
 		        uiEngine->integrationActive ? "off" : "on");
 		Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
 		glRasterPos2f(-0.98f, -0.95f);
-		sprintf(str, "Alt+n: one frame (record) \t i: %d frames \t d: one step \t p: pause \t v: record input video (on/off)", uiEngine->autoIntervalFrameCount);
+		sprintf(str,
+		        "i: %d frames \t d: one step \t p: pause \t v: write video %s \t w: write warps %s \t Alt+w: log 2D warps %s",
+		        uiEngine->autoIntervalFrameCount,
+		        uiEngine->depthVideoWriter != nullptr ? "off" : "on",
+		        uiEngine->recordWarpsForNextFrame ? "off" : "on",
+		        uiEngine->recordWarp2DSliceForNextFrame ? "off" : "on");
 		Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
 	}
 	glutSwapBuffers();
@@ -175,7 +181,6 @@ void UIEngine_BPO::GlutIdleFunction() {
 
 	switch (uiEngine->mainLoopAction) {
 		case PROCESS_FRAME:
-			uiEngine->recordWarpUpdatesForNextFrame = false;
 			uiEngine->ProcessFrame();
 			uiEngine->processedFrameNo++;
 			uiEngine->mainLoopAction = PROCESS_PAUSED;
@@ -183,22 +188,16 @@ void UIEngine_BPO::GlutIdleFunction() {
 			break;
 		case PROCESS_SINGLE_STEP:
 			uiEngine->mainLoopAction = PROCESS_PAUSED;
-		case PROCESS_STEPS_CONTINOUS:
+		case PROCESS_STEPS_CONTINUOUS:
 			if (!uiEngine->ContinueStepByStepModeForFrame()) {
-				if ((uiEngine->processedFrameNo - uiEngine->autoIntervalFrameStart) >= uiEngine->autoIntervalFrameCount) {
+				if ((uiEngine->processedFrameNo - uiEngine->autoIntervalFrameStart) >=
+				    uiEngine->autoIntervalFrameCount) {
 					uiEngine->inStepByStepMode = false;
 					uiEngine->mainLoopAction = PROCESS_PAUSED;
-				}else{
+				} else {
 					uiEngine->BeginStepByStepModeForFrame();
 				}
 			}
-			uiEngine->needsRefresh = true;
-			break;
-		case PROCESS_FRAME_RECORD:
-			uiEngine->recordWarpUpdatesForNextFrame = true;
-			uiEngine->ProcessFrame();
-			uiEngine->processedFrameNo++;
-			uiEngine->mainLoopAction = PROCESS_PAUSED;
 			uiEngine->needsRefresh = true;
 			break;
 		case PROCESS_VIDEO:
@@ -206,23 +205,6 @@ void UIEngine_BPO::GlutIdleFunction() {
 			uiEngine->processedFrameNo++;
 			uiEngine->needsRefresh = true;
 			break;
-			//TODO: either remove dead code or {uncomment, test, fix} -Greg (GitHub: Algomorph)
-			//case SAVE_TO_DISK:
-			//	if (!uiEngine->actionDone)
-			//	{
-			//		char outFile[255];
-
-			//		ITMUChar4Image *saveImage = uiEngine->saveImage;
-
-			//		glReadBuffer(GL_BACK);
-			//		glReadPixels(0, 0, saveImage->noDims.x, saveImage->noDims.x, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char*)saveImage->GetData(false));
-			//		sprintf(outFile, "%s/out_%05d.ppm", uiEngine->outFolder, uiEngine->processedFrameNo);
-
-			//		SaveImageToFile(saveImage, outFile, true);
-
-			//		uiEngine->actionDone = true;
-			//	}
-			//	break;
 		case PROCESS_N_FRAMES:
 			uiEngine->ProcessFrame();
 			uiEngine->processedFrameNo++;
@@ -268,15 +250,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 		}
 	} else {
 		switch (key) {
-			case 'n':
-				if (modifiers & GLUT_ACTIVE_ALT) {
-					printf("saving scenes before tracking and warp updates, processing one frame, and recording the warp updates ...\n");
-					uiEngine->mainLoopAction = UIEngine_BPO::PROCESS_FRAME_RECORD;
-				} else {
-					printf("processing one frame ...\n");
-					uiEngine->mainLoopAction = UIEngine_BPO::PROCESS_FRAME;
-				}
-				break;
+			//TODO: rearrange in asciibeditc order (except fall-through cases) to make maintenance easier
 			case 'i':
 				printf("processing %d frames ...\n", uiEngine->autoIntervalFrameCount);
 				uiEngine->autoIntervalFrameStart = uiEngine->processedFrameNo;
@@ -286,12 +260,16 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 				printf("processing input source ...\n");
 				uiEngine->mainLoopAction = UIEngine_BPO::PROCESS_VIDEO;
 				break;
-			case 's':
+			case 'n':
+				uiEngine->PrintProcessedFrame();
+				uiEngine->mainLoopAction = UIEngine_BPO::PROCESS_FRAME;
+				break;
+			case 'k':
 				if (uiEngine->isRecordingImages) {
-					printf("stopped recoding disk ...\n");
+					printf("stopped recoding to disk ...\n");
 					uiEngine->isRecordingImages = false;
 				} else {
-					printf("started recoding disk ...\n");
+					printf("started recoding to disk ...\n");
 					uiEngine->currentFrameNo = 0;
 					uiEngine->isRecordingImages = true;
 				}
@@ -370,7 +348,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 					uiEngine->inStepByStepMode = true;
 					uiEngine->needsRefresh = true;
 					if (modifiers & GLUT_ACTIVE_ALT) {
-						uiEngine->mainLoopAction = PROCESS_STEPS_CONTINOUS;
+						uiEngine->mainLoopAction = PROCESS_STEPS_CONTINUOUS;
 					} else {
 						uiEngine->mainLoopAction = PROCESS_SINGLE_STEP;
 					}
@@ -393,9 +371,11 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 			}
 				break;
 			case 'w': {
-				printf("saving scene to model ... ");
-				uiEngine->mainEngine->SaveSceneToMesh("mesh.stl");
-				printf("done\n");
+				if (modifiers && GLUT_ACTIVE_ALT) {
+					uiEngine->recordWarpsForNextFrame = true;
+				}else{
+					uiEngine->recordWarp2DSliceForNextFrame = true;
+				}
 			}
 				break;
 			case 'r': {
@@ -406,15 +386,20 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 				if (basicSurfelEngine != NULL) basicSurfelEngine->resetAll();
 			}
 				break;
-			case 'k': {
-				printf("saving scene to disk ... ");
-
-				try {
-					uiEngine->mainEngine->SaveToFile();
+			case 's': {
+				if (modifiers && GLUT_ACTIVE_ALT) {
+					printf("saving scene to model ... ");
+					uiEngine->mainEngine->SaveSceneToMesh("mesh.stl");
 					printf("done\n");
-				}
-				catch (const std::runtime_error& e) {
-					printf("failed: %s\n", e.what());
+				} else {
+					printf("saving scene to disk ... ");
+					try {
+						uiEngine->mainEngine->SaveToFile();
+						printf("done\n");
+					}
+					catch (const std::runtime_error& e) {
+						printf("failed: %s\n", e.what());
+					}
 				}
 			}
 				break;

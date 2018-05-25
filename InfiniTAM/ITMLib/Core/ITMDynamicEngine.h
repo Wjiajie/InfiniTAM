@@ -12,6 +12,7 @@
 #include "../Objects/Misc/ITMIMUCalibrator.h"
 
 #include "../../FernRelocLib/Relocaliser.h"
+#include "../CameraTrackers/Interface/ITMCameraTracker.h"
 
 
 namespace ITMLib
@@ -40,7 +41,7 @@ namespace ITMLib
 		ITMRenderState* renderState_live;
 		ITMRenderState* renderState_freeview;
 
-		ITMTracker* tracker;
+		ITMCameraTracker* tracker;
 		ITMIMUCalibrator* imuCalibrator;
 
 		FernRelocLib::Relocaliser<float>* relocaliser;
@@ -56,13 +57,10 @@ namespace ITMLib
 		bool canFuseInStepByStepMode;
 		ORUtils::SE3Pose stepByStepOldPose;
 	public:
-		ITMView* GetView(void) { return view; }
-		ITMTrackingState* GetTrackingState(void) { return trackingState; }
+		ITMView* GetView() override { return view; }
+		ITMTrackingState* GetTrackingState() override { return trackingState; }
 
-		/// Gives access to the internal world representation
-		ITMScene<TVoxelCanonical, TIndex>* GetScene(void) { return canonicalScene; }
-
-		ITMTrackingState::TrackingResult ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement = NULL);
+		ITMTrackingState::TrackingResult ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement = nullptr) override;
 
 		//for visual debugging
 		void BeginProcessingFrameInStepByStepMode(ITMUChar4Image* rgbImage, ITMShortImage* rawDepthImage,
@@ -71,19 +69,20 @@ namespace ITMLib
 		ITMTrackingState::TrackingResult GetStepByStepTrackingResult();
 
 		/// Extracts a mesh from the current scene and saves it to the model file specified by the file name
-		void SaveSceneToMesh(const char *fileName);
+		void SaveSceneToMesh(const char *fileName) override ;
 
 		/// save and load the full scene and relocaliser (if any) to/from file
-		void SaveToFile();
-		void LoadFromFile();
+		void SaveToFile() override;
+		void LoadFromFile() override;
 
 		/// Get a result image as output
-		Vector2i GetImageSize(void) const;
+		Vector2i GetImageSize(void) const override;
 
-		void GetImage(ITMUChar4Image *out, GetImageType getImageType, ORUtils::SE3Pose *pose = NULL, ITMIntrinsics *intrinsics = NULL);
+		void GetImage(ITMUChar4Image *out, GetImageType getImageType,
+		              ORUtils::SE3Pose *pose = NULL, ITMIntrinsics *intrinsics = NULL) override;
 
 		/// resets the scene and the tracker
-		void resetAll();
+		void resetAll() override;
 
 		/// switch for turning tracking on/off
 		void turnOnTracking() override;
@@ -97,12 +96,17 @@ namespace ITMLib
 		void turnOnMainProcessing() override;
 		void turnOffMainProcessing() override;
 
+
 		/** \brief Constructor
 			Omitting a separate image size for the depth images
 			will assume same resolution as for the RGB images.
 		*/
 		ITMDynamicEngine(const ITMLibSettings* settings, const ITMRGBDCalib& calib, Vector2i imgSize_rgb,
 		                 Vector2i imgSize_d);
-		~ITMDynamicEngine();
+		~ITMDynamicEngine() override;
+
+		bool recordWarpsForNextFrame = false;
+		bool recordWarp2DSliceForNextFrame = false;
+		std::string nextFrameOutputPath = "";
 	};
 }

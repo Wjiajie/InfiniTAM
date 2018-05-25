@@ -2,15 +2,22 @@
 
 #pragma once
 
+//local
 #include "../../InputSource/ImageSourceEngine.h"
 #include "../../InputSource/IMUSourceEngine.h"
 #include "../../InputSource/FFMPEGWriter.h"
 #include "../../ITMLib/Core/ITMMainEngine.h"
+#include "../../ITMLib/Objects/Tracking/ITMTrackingState.h"
 #include "../../ITMLib/Utils/ITMLibSettings.h"
 #include "../../ORUtils/FileUtils.h"
 #include "../../ORUtils/NVTimer.h"
 
+//stdlib
 #include <vector>
+
+//boost
+#include <boost/filesystem.hpp>
+
 
 namespace InfiniTAM {
 namespace Engine {
@@ -18,8 +25,8 @@ class UIEngine_BPO {
 	static UIEngine_BPO* instance;
 
 	enum MainLoopAction {
-		PROCESS_PAUSED, PROCESS_FRAME, PROCESS_FRAME_RECORD, PROCESS_VIDEO, EXIT, SAVE_TO_DISK,
-		PROCESS_N_FRAMES, PROCESS_SINGLE_STEP, PROCESS_STEPS_CONTINOUS
+		PROCESS_PAUSED, PROCESS_FRAME, PROCESS_VIDEO, EXIT,
+		PROCESS_N_FRAMES, PROCESS_SINGLE_STEP, PROCESS_STEPS_CONTINUOUS
 	} mainLoopAction;
 
 	struct UIColourMode {
@@ -69,13 +76,19 @@ private: // For UI layout
 
 	int currentFrameNo;
 	bool isRecordingImages;
-	bool recordWarpUpdatesForNextFrame; // record warp updates during processing of the next frame
-	InputSource::FFMPEGWriter* reconstructionVideoWriter;
-	InputSource::FFMPEGWriter* rgbVideoWriter;
-	InputSource::FFMPEGWriter* depthVideoWriter;
+
+
+	// TODO: revise & improve architecture/design here; different logging parameters should be passed somehow to all engines
+	// Dynamic Fusion only
+	bool recordWarpsForNextFrame = false; // record warp updates during processing of the next frame
+	bool recordWarp2DSliceForNextFrame = false;
+
+	InputSource::FFMPEGWriter* reconstructionVideoWriter = nullptr;
+	InputSource::FFMPEGWriter* rgbVideoWriter = nullptr;
+	InputSource::FFMPEGWriter* depthVideoWriter = nullptr;
 public:
 	static UIEngine_BPO* Instance(void) {
-		if (instance == NULL) instance = new UIEngine_BPO();
+		if (instance == nullptr) instance = new UIEngine_BPO();
 		return instance;
 	}
 
@@ -90,7 +103,7 @@ public:
 
 	float processedTime;
 	int processedFrameNo;
-	int trackingResult;
+	ITMLib::ITMTrackingState::TrackingResult trackingResult;
 	char* outFolder;
 	bool needsRefresh;
 	bool inStepByStepMode;
@@ -105,6 +118,7 @@ public:
 	void Shutdown();
 
 	void Run();
+	void PrintProcessedFrame() const;
 	void ProcessFrame();
 	//For scene-tracking updates
 	bool BeginStepByStepModeForFrame();
@@ -112,10 +126,14 @@ public:
 
 	void GetScreenshot(ITMUChar4Image* dest) const;
 	void SaveScreenshot(const char* filename) const;
+
 	void SkipFrames(int numberOfFramesToSkip);
 	void RecordReconstructionToVideo();
 	void RecordDepthAndRGBInputToVideo();
 	void RecordDepthAndRGBInputToImages();
+	int GetLastProcessedFrameIndex() const;
+	std::string GenerateNextFrameOutputPath() const;
+	std::string GeneratePreviousFrameOutputPath() const;
 };
 }
 }

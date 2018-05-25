@@ -36,10 +36,10 @@
 
 //local
 #include "TestUtils.h"
-#include "../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
+#include "../ITMLib/Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "../ORUtils/FileUtils.h"
 #include "../InputSource/ImageSourceEngine.h"
-#include "../ITMLib/Utils/ITM3DNestedMapOfArrays.h"
+#include "../ITMLib/Utils/Collections/ITM3DNestedMapOfArrays.h"
 
 using namespace ITMLib;
 

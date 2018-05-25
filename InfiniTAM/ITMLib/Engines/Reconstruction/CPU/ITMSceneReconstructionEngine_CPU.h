@@ -16,7 +16,7 @@ namespace ITMLib
 	{
 	protected:
 		ORUtils::MemoryBlock<unsigned char> *entriesAllocType;
-		ORUtils::MemoryBlock<Vector4s> *blockCoords;
+		ORUtils::MemoryBlock<Vector3s> *blockCoords;
 
 	public:
 		void ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash> *scene);

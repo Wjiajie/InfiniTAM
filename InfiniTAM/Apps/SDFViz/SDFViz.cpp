@@ -59,7 +59,7 @@
 //ITMLib
 #include "../../ITMLib/Utils/FileIO/ITMSceneLogger.h"
 #include "../../ITMLib/Utils/ITMLibSettings.h"
-#include "../../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
+#include "../../ITMLib/Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "SDFVizGlobalDefines.h"
 
 //TODO: organize regions -Greg (GitHub: Algomorph)
@@ -816,7 +816,7 @@ bool SDFViz::MakeSlice() {
 		Vector3i coord0, coord1;
 		canonicalScenePipe.GetSliceCoordinates(coord0, coord1);
 		std::string sliceIdentifier;
-		sceneLogger->MakeSlice(coord0, coord1, this->frameIndex, sliceIdentifier);
+		sceneLogger->MakeSlice(coord0, coord1, sliceIdentifier);
 		sliceIdentifiers.push_back(sliceIdentifier);
 		return true;
 	}

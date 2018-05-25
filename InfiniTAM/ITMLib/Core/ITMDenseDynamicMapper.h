@@ -19,6 +19,7 @@
 #include "../Utils/ITMLibSettings.h"
 #include "../Engines/Swapping/Interface/ITMSwappingEngine.h"
 #include "../Trackers/Interface/ITMSceneMotionTracker.h"
+#include "../Utils/FileIO/ITMDynamicFusionLogger.h"
 
 namespace ITMLib {
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -34,6 +35,20 @@ public:
 	explicit ITMDenseDynamicMapper(const ITMLibSettings* settings);
 	~ITMDenseDynamicMapper();
 	// endregion
+	// region ========================================= INTERNAL DATASTRUCTURES ========================================
+
+	struct Parameters {
+		const unsigned int maxIterationCount;// = 200;
+		const float maxVectorUpdateThresholdMeters;// = 0.0001f;//m //original for KillingFusion
+		const float maxVectorUpdateThresholdVoxels;
+	};
+	struct AnalysisFlags{
+		bool restrictZtrackingForDebugging;
+		bool simpleSceneExperimentModeEnabled;
+		bool hasFocusCoordinates;
+	};
+
+	// endregion =======================================================================================================
 	// region ========================================== MEMBER FUNCTIONS ==============================================
 
 	void ResetCanonicalScene(ITMScene<TVoxelCanonical, TIndex>* scene) const;
@@ -54,43 +69,73 @@ public:
 	* \param liveScene - live/target 3D scene generated from the incoming single frame of the video
 	* \param renderState
 	*/
-	void ProcessFrame(const ITMView* view,
-	                  const ITMTrackingState* trackingState,
-	                  ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                  ITMScene<TVoxelLive, TIndex>*& liveScene,
-	                  ITMRenderState* renderState);
+	void ProcessFrame(const ITMView* view, const ITMTrackingState* trackingState,
+	                  ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene,
+	                  ITMRenderState* renderState,
+	                  bool recordWarps, bool recordWarp2DSlice,
+	                  std::string outputPath);
 
-	//_DEBUG
-	void SaveScenes(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                ITMScene<TVoxelLive, TIndex>* liveScene);
+	void ProcessInitialFrame(const ITMView* view, const ITMTrackingState* trackingState,
+	                         ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
+	                         ITMRenderState* renderState);
 
-	//_DEBUG
-	void BeginProcessingFrame(const ITMView* view,
-	                          const ITMTrackingState* trackingState,
-	                          ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                          ITMScene<TVoxelLive, TIndex>*& liveScene,
-	                          ITMRenderState* renderState_live);
 
-	bool UpdateCurrentFrame(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                        ITMScene<TVoxelLive, TIndex>*& liveScene, ITMRenderState* renderState);
+	void BeginProcessingFrameInStepByStepMode(const ITMView* view,
+	                                          const ITMTrackingState* trackingState,
+	                                          ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                                          ITMScene <TVoxelLive, TIndex>* liveScene,
+	                                          ITMRenderState* renderState_live,
+	                                          bool recordWarps, bool recordWarp2DSlice,
+	                                          std::string outputPath);
 
+	bool TakeNextStepInStepByStepMode(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                                  ITMScene<TVoxelLive, TIndex>*& liveScene, ITMRenderState* renderState);
+	
 	/// Update the visible list (this can be called to update the visible list when fusion is turned off)
-	void
-	UpdateVisibleList(const ITMView* view, const ITMTrackingState* trackingState, ITMScene<TVoxelLive, TIndex>* scene,
-	                  ITMRenderState* renderState, bool resetVisibleList = false);
+	void UpdateVisibleList(const ITMView* view, const ITMTrackingState* trackingState, 
+	                  ITMScene<TVoxelLive, TIndex>* scene, ITMRenderState* renderState, bool resetVisibleList = false);
 	// endregion
-
-	// on next call to ProcessFrame, record the scenes before warp update, and then record the warp update itself
-	bool recordNextFrameWarps;
 private:
+	// region ========================================== FUNCTIONS =====================================================
+
+	void GenerateRawLiveFrame(
+			ITMScene <TVoxelLive, TIndex>* liveScene, ITMRenderState* renderState, const ITMTrackingState* trackingState,
+			const ITMView* view);
+
+	void ProcessSwapping(
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMRenderState* renderState);
+
+	void TrackFrameMotion(
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
+			bool rasterizeWarpUpdates);
+
+	bool SceneMotionOptimizationConditionNotReached();
+	void InitializeProcessing(const ITMView* view, const ITMTrackingState* trackingState,
+	                          ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene,
+	                          ITMRenderState* renderState, bool recordWarps, bool recordWarp2DSlice,
+	                          std::string outputDirectory);
+	void FinalizeProcessing(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+	                        ITMScene <TVoxelLive, TIndex>* liveScene,ITMRenderState* renderState);
+	template<typename TIndex, typename TVoxelCanonical, typename TIndex, typename TVoxelLive>
+	void PerformSingleOptimizationStep(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+	                                   ITMScene <TVoxelLive, TIndex>*& liveScene, bool recordWarpUpdates);
+	// endregion =======================================================================================================
 	// region =========================================== MEMBER VARIABLES =============================================
 
 	ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex>* sceneReconstructor;
 	ITMSwappingEngine<TVoxelCanonical, TIndex>* swappingEngine;
 	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>* sceneMotionTracker;
 	ITMLibSettings::SwappingMode swappingMode;
-	// endregion
 
+	unsigned int iteration = 0;
+	float maxVectorUpdate;
+	bool inStepByStepProcessingMode = false;
+
+	const Parameters parameters;
+	const AnalysisFlags analysisFlags;
+	const Vector3i focusCoordinates;
+	ITMDynamicFusionLogger<TVoxelLive,TVoxelCanonical,TIndex> logger;
+	// endregion =======================================================================================================
 };
 }//namespace ITMLib
 

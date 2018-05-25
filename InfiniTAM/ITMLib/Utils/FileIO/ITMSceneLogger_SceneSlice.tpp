@@ -53,7 +53,7 @@ using namespace ITMLib;
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool
 ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2,
-                                                               unsigned int frameIndex, std::string& identifier) {
+                                                               std::string& identifier) {
 
 	Vector3i minPoint, maxPoint;
 	MinMaxFromExtrema(minPoint, maxPoint, extremum1, extremum2);
@@ -72,7 +72,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(const Vector3i& e
 	}
 	fs::create_directories(outputPath);
 
-	SaveSliceWarp(minPoint, maxPoint, frameIndex, logger->warpPath);
+	SaveSliceWarp(minPoint, maxPoint, logger->warpPath);
 
 	logger->minimum = minPoint;
 	logger->maximum = maxPoint;
@@ -86,10 +86,9 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(const Vector3i& e
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2,
-                                                               unsigned int frameIndex) {
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2) {
 	std::string identifier;
-	return MakeSlice(extremum1, extremum2, frameIndex, identifier);
+	return MakeSlice(extremum1, extremum2, identifier);
 };
 
 
@@ -97,7 +96,6 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
 ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3i& minPoint,
                                                                    const Vector3i& maxPoint,
-                                                                   unsigned int frameIndex,
                                                                    const boost::filesystem::path& path) {
 
 	int totalHashEntryCount = fullCanonicalSceneLogger->scene->index.noTotalEntries;
@@ -109,6 +107,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
 		throw std::runtime_error("Could not open '" + path.string() + "' for writing. ["  __FILE__  ": " +
 		                         std::to_string(__LINE__) + "]");
 	}
+	int frameIndex = 0; //TODO: deprecate
 	sliceWarpOfstream.write(reinterpret_cast<const char*>(&frameIndex), sizeof(frameIndex));
 
 

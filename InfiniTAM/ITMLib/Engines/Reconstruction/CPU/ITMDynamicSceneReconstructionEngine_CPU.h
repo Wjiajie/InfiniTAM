@@ -4,53 +4,54 @@
 
 #include "../Interface/ITMDynamicSceneReconstructionEngine.h"
 #include "../../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "ITMDynamicHashManagementEngine_CPU.h"
+#include "../../../Objects/Scene/ITMSceneManipulation.h"
 
-namespace ITMLib
-{
-	template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-	class ITMDynamicSceneReconstructionEngine_CPU : public ITMDynamicSceneReconstructionEngine < TVoxelCanonical, TVoxelLive, TIndex >
-	{};
+namespace ITMLib {
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+class ITMDynamicSceneReconstructionEngine_CPU
+		: public ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex> {
+};
 
-	template<typename TVoxelCanonical, typename TVoxelLive>
-	class ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash> : public ITMDynamicSceneReconstructionEngine < TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash >
-	{
-	protected:
-		ORUtils::MemoryBlock<unsigned char> *entriesAllocType;
-		ORUtils::MemoryBlock<Vector4s> *blockCoords;
-		template<typename TVoxel>
-		void ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash> *scene);
+template<typename TVoxelCanonical, typename TVoxelLive>
+class ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>
+		: public ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash> {
+public:
+	ITMDynamicSceneReconstructionEngine_CPU() = default;
+	~ITMDynamicSceneReconstructionEngine_CPU() = default;
+	void GenerateRawLiveSceneFromView(ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view,
+	                                  const ITMTrackingState* trackingState,
+	                                  const ITMRenderState* renderState) override;
+	void FuseFrame(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+	               ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
+	               int liveSourceFieldIndex) override;
+protected:
+	void IntegrateIntoScene(ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view,
+	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);
 
-	public:
-		void ResetCanonicalScene(ITMScene<TVoxelCanonical, ITMVoxelBlockHash> *scene) override;
-		void ResetLiveScene(ITMScene<TVoxelLive, ITMVoxelBlockHash> *scene) override;
+private:
+	ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive> hashManager;
+	ITMSceneManipulationEngine_CPU<TVoxelLive, ITMVoxelBlockHash> liveSceneManager;
 
-		void AllocateSceneFromDepth(ITMScene<TVoxelLive, ITMVoxelBlockHash> *scene, const ITMView *view, const ITMTrackingState *trackingState,
-			const ITMRenderState *renderState, bool onlyUpdateVisibleList = false, bool resetVisibleList = false) override;
+};
 
-		void IntegrateIntoScene(ITMScene<TVoxelLive, ITMVoxelBlockHash> *scene, const ITMView *view, const ITMTrackingState *trackingState,
-			const ITMRenderState *renderState);
+template<typename TVoxelCanonical, typename TVoxelLive>
+class ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>
+		: public ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray> {
+public:
+	void GenerateRawLiveSceneFromView(ITMScene<TVoxelLive, ITMPlainVoxelArray>* scene, const ITMView* view,
+	                                  const ITMTrackingState* trackingState,
+	                                  const ITMRenderState* renderState) override;
+	void FuseFrame(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
+	               ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene,
+	               int liveSourceFieldIndex) override;
 
-		ITMDynamicSceneReconstructionEngine_CPU(void);
-		~ITMDynamicSceneReconstructionEngine_CPU(void);
-	};
-
-	template<typename TVoxelCanonical, typename TVoxelLive>
-	class ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray> : public ITMDynamicSceneReconstructionEngine < TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray >
-	{
-	protected:
-		template <typename TVoxel>
-		void ResetScene(ITMScene<TVoxel, ITMPlainVoxelArray> *scene);
-	public:
-		void ResetCanonicalScene(ITMScene<TVoxelCanonical, ITMPlainVoxelArray> *scene) override;
-		void ResetLiveScene(ITMScene<TVoxelLive, ITMPlainVoxelArray> *scene) override;
-
-		void AllocateSceneFromDepth(ITMScene<TVoxelLive, ITMPlainVoxelArray> *scene, const ITMView *view, const ITMTrackingState *trackingState,
-			const ITMRenderState *renderState, bool onlyUpdateVisibleList = false, bool resetVisibleList = false);
-
-		void IntegrateIntoScene(ITMScene<TVoxelLive, ITMPlainVoxelArray> *scene, const ITMView *view, const ITMTrackingState *trackingState,
-			const ITMRenderState *renderState);
-
-		ITMDynamicSceneReconstructionEngine_CPU(void);
-		~ITMDynamicSceneReconstructionEngine_CPU(void);
-	};
+	ITMDynamicSceneReconstructionEngine_CPU() = default;
+	~ITMDynamicSceneReconstructionEngine_CPU() = default;
+protected:
+	void IntegrateIntoScene(ITMScene<TVoxelLive, ITMPlainVoxelArray>* scene, const ITMView* view,
+	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);
+private:
+	ITMSceneManipulationEngine_CPU<TVoxelLive, ITMPlainVoxelArray> liveSceneManager;
+};
 }

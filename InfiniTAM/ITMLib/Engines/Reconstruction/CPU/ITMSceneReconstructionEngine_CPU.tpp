@@ -11,7 +11,7 @@ ITMSceneReconstructionEngine_CPU<TVoxel,ITMVoxelBlockHash>::ITMSceneReconstructi
 {
 	size_t noTotalEntries = ITMVoxelBlockHash::noTotalEntries;
 	entriesAllocType = new ORUtils::MemoryBlock<unsigned char>(noTotalEntries, MEMORYDEVICE_CPU);
-	blockCoords = new ORUtils::MemoryBlock<Vector4s>(noTotalEntries, MEMORYDEVICE_CPU);
+	blockCoords = new ORUtils::MemoryBlock<Vector3s>(noTotalEntries, MEMORYDEVICE_CPU);
 }
 
 template<class TVoxel>
@@ -75,20 +75,6 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 	int noVisibleEntries = renderState_vh->noVisibleEntries;
 
 	bool stopIntegratingAtMaxW = scene->sceneParams->stopIntegratingAtMaxW;
-	//bool approximateIntegration = !trackingState->requiresFullRendering;
-
-	//_DEBUG
-//	std::vector<Vector3i> _DEBUG_positions = {
-//			Vector3i(1, 59, 217 ),
-//			Vector3i(1, 59, 218 ),
-//			Vector3i(1, 58, 213 ),
-//			Vector3i(1, 58, 214 ),
-//			Vector3i(1, 60, 220 ),
-//			Vector3i(1, 60, 221 ),
-//			Vector3i(1, 61, 224 ),
-//			Vector3i(1, 61, 225 ),
-//			Vector3i(-23, 62, 214 ),
-//			Vector3i(-23, 62, 215 )};
 
 #ifdef WITH_OPENMP
 	#pragma omp parallel for
@@ -162,7 +148,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 	int *visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
 	uchar *entriesVisibleType = renderState_vh->GetEntriesVisibleType();
 	uchar *entriesAllocType = this->entriesAllocType->GetData(MEMORYDEVICE_CPU);
-	Vector4s *blockCoords = this->blockCoords->GetData(MEMORYDEVICE_CPU);
+	Vector3s *blockCoords = this->blockCoords->GetData(MEMORYDEVICE_CPU);
 	int noTotalEntries = scene->index.noTotalEntries;
 
 	bool useSwapping = scene->globalCache != NULL;
@@ -208,10 +194,8 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 
 				if (vbaIdx >= 0) //there is room in the voxel block array
 				{
-					Vector4s pt_block_all = blockCoords[targetIdx];
-
 					ITMHashEntry hashEntry;
-					hashEntry.pos.x = pt_block_all.x; hashEntry.pos.y = pt_block_all.y; hashEntry.pos.z = pt_block_all.z;
+					hashEntry.pos = blockCoords[targetIdx];
 					hashEntry.ptr = voxelAllocationList[vbaIdx];
 					hashEntry.offset = 0;
 
@@ -233,10 +217,8 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 
 				if (vbaIdx >= 0 && exlIdx >= 0) //there is room in the voxel block array and excess list
 				{
-					Vector4s pt_block_all = blockCoords[targetIdx];
-
 					ITMHashEntry hashEntry;
-					hashEntry.pos.x = pt_block_all.x; hashEntry.pos.y = pt_block_all.y; hashEntry.pos.z = pt_block_all.z;
+					hashEntry.pos = blockCoords[targetIdx];
 					hashEntry.ptr = voxelAllocationList[vbaIdx];
 					hashEntry.offset = 0;
 

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "../Objects/Misc/ITMIMUMeasurement.h"
-#include "../Trackers/Interface/ITMTracker.h"
+#include "../CameraTrackers/Interface/ITMCameraTracker.h"
 #include "../Utils/ITMLibSettings.h"
 
 /** \mainpage
@@ -85,6 +85,9 @@ namespace ITMLib
 		virtual void SaveToFile() { };
 		virtual void LoadFromFile() { };
 
+		/// resets the scene and the tracker
+		virtual void resetAll() = 0;
+
 		/// switch for turning tracking on/off
 		virtual void turnOnTracking() = 0;
 		virtual void turnOffTracking() = 0;
@@ -97,8 +100,8 @@ namespace ITMLib
 		virtual void turnOnMainProcessing() = 0;
 		virtual void turnOffMainProcessing() = 0;
 
-		virtual ~ITMMainEngine() {}
 
-		bool recordNextFrameWarps = false;
+
+		virtual ~ITMMainEngine() {}
 	};
 }

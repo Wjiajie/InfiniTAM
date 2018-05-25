@@ -22,7 +22,7 @@
 #include "../Engines/Visualisation/CPU/ITMVisualisationEngine_CPU.tpp"
 #include "../Engines/Visualisation/Interface/ITMSurfelVisualisationEngine.tpp"
 #include "../Engines/Visualisation/Interface/ITMVisualisationEngine.h"
-#include "../Trackers/ITMTrackerFactory.h"
+#include "../CameraTrackers/ITMCameraTrackerFactory.h"
 
 
 namespace ITMLib

@@ -1,5 +1,18 @@
-// Copyright 2014-2017 Oxford University Innovation Limited and the authors of InfiniTAM
+//  ================================================================
+//  Created by Gregory Kramida on 5/25/18.
+//  Copyright (c) 2018-2025 Gregory Kramida
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
 
+//  http://www.apache.org/licenses/LICENSE-2.0
+
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//  ================================================================
 #pragma once
 
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
@@ -258,191 +271,5 @@ struct ComputeUpdatedLiveVoxelInfo<true, true, true, TVoxel> {
 	}
 };
 
-
 #undef COMPUTE_VOXEL_UPDATE_PARAMETERS
 //======================================================================================================================
-_CPU_AND_GPU_CODE_ inline void
-buildLiveHashAllocAndVisibleTypePP(DEVICEPTR(uchar)* entriesAllocType, DEVICEPTR(uchar)* entriesVisibleType, int x,
-                                   int y,
-                                   DEVICEPTR(Vector4s)* blockCoords, const CONSTPTR(float)* depth, Matrix4f invM_d,
-                                   Vector4f projParams_d, float mu, Vector2i imgSize,
-                                   float oneOverVoxelSize, const CONSTPTR(ITMHashEntry)* hashTable,
-                                   float viewFrustum_min, float viewFrustum_max) {
-	float depth_measure;
-	int hashIdx;
-	int noSteps;
-	Vector4f voxelInCameraCoordinates_f;
-	Vector3f bandEndHashEntryPosition, bandStartHashEntryPosition, direction;
-	Vector3s hashEntryPosition;
-
-	depth_measure = depth[x + y * imgSize.x];
-	if (depth_measure <= 0 || (depth_measure - mu) < 0 || (depth_measure - mu) < viewFrustum_min ||
-	    (depth_measure + mu) > viewFrustum_max)
-		return;
-
-	voxelInCameraCoordinates_f.z = depth_measure;
-	voxelInCameraCoordinates_f.x = voxelInCameraCoordinates_f.z * ((float(x) - projParams_d.z) * projParams_d.x);
-	voxelInCameraCoordinates_f.y = voxelInCameraCoordinates_f.z * ((float(y) - projParams_d.w) * projParams_d.y);
-
-	float norm = sqrtf(voxelInCameraCoordinates_f.x * voxelInCameraCoordinates_f.x +
-	                  voxelInCameraCoordinates_f.y * voxelInCameraCoordinates_f.y +
-	                  voxelInCameraCoordinates_f.z * voxelInCameraCoordinates_f.z);
-
-	Vector4f pt_buff;
-
-	pt_buff = voxelInCameraCoordinates_f * (1.0f - mu / norm);
-	pt_buff.w = 1.0f;
-	bandStartHashEntryPosition = TO_VECTOR3(invM_d * pt_buff) * oneOverVoxelSize;
-
-	pt_buff = voxelInCameraCoordinates_f * (1.0f + mu / norm);
-	pt_buff.w = 1.0f;
-	bandEndHashEntryPosition = TO_VECTOR3(invM_d * pt_buff) * oneOverVoxelSize;
-
-	// segment from start of the (truncated SDF) band, through the observed point, and to the opposite (occluded)
-	// end of the (truncated SDF) band, along the ray cast from the camera through the point, in camera space
-	direction = bandEndHashEntryPosition - bandStartHashEntryPosition;
-
-	norm = sqrtf(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
-	// number of steps to take along the truncated SDF band
-	noSteps = (int) ceilf(2.0f * norm);
-
-	// a single stride along the sdf band segment from one step to the next
-	direction /= (float) (noSteps - 1);
-
-	//add neighbouring blocks
-	for (int i = 0; i < noSteps; i++) {
-		//find block position at current step
-		hashEntryPosition = TO_SHORT_FLOOR3(bandStartHashEntryPosition);
-		//compute index in hash table
-		hashIdx = hashIndex(hashEntryPosition);
-		//check if hash table contains entry
-		bool isFound = false;
-		ITMHashEntry hashEntry = hashTable[hashIdx];
-		if (IS_EQUAL3(hashEntry.pos, hashEntryPosition) && hashEntry.ptr >= -1) {
-			//entry has been streamed out but is visible or in memory and visible
-			entriesVisibleType[hashIdx] = (hashEntry.ptr == -1) ? (uchar)2 : (uchar)1;
-			isFound = true;
-		}
-		if (!isFound) {
-			bool isExcess = false;
-			if (hashEntry.ptr >= -1){ //search excess list only if there is no room in ordered part
-				while (hashEntry.offset >= 1) {
-					hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
-					hashEntry = hashTable[hashIdx];
-					if (IS_EQUAL3(hashEntry.pos, hashEntryPosition) && hashEntry.ptr >= -1) {
-						//entry has been streamed out but is visible or in memory and visible
-						entriesVisibleType[hashIdx] = (hashEntry.ptr == -1) ? (uchar)2 : (uchar)1;
-						isFound = true;
-						break;
-					}
-				}
-				isExcess = true;
-			}
-			if (!isFound){ //still not found
-				entriesAllocType[hashIdx] = isExcess ? (uchar)2 : (uchar)1; //needs allocation
-				if (!isExcess) entriesVisibleType[hashIdx] = 1; //new entry is visible
-				blockCoords[hashIdx] = Vector4s(hashEntryPosition.x, hashEntryPosition.y, hashEntryPosition.z, 1);
-			}
-		}
-		bandStartHashEntryPosition += direction;
-	}
-}
-
-template<bool useSwapping>
-_CPU_AND_GPU_CODE_ inline void checkLivePointVisibility(THREADPTR(bool)& isVisible, THREADPTR(bool)& isVisibleEnlarged,
-                                                        const THREADPTR(Vector4f)& voxelPointProjectedToImage,
-                                                        const CONSTPTR(Matrix4f)& M_d,
-                                                        const CONSTPTR(Vector4f)& projParams_d,
-                                                        const CONSTPTR(Vector2i)& imgSize) {
-	Vector4f pt_buff;
-
-	pt_buff = M_d * voxelPointProjectedToImage;
-
-	if (pt_buff.z < 1e-10f) return;
-
-	pt_buff.x = projParams_d.x * pt_buff.x / pt_buff.z + projParams_d.z;
-	pt_buff.y = projParams_d.y * pt_buff.y / pt_buff.z + projParams_d.w;
-
-	if (pt_buff.x >= 0 && pt_buff.x < imgSize.x && pt_buff.y >= 0 && pt_buff.y < imgSize.y) {
-		isVisible = true;
-		isVisibleEnlarged = true;
-	}
-	else if (useSwapping) {
-		Vector4i lims;
-		lims.x = -imgSize.x / 8;
-		lims.y = imgSize.x + imgSize.x / 8;
-		lims.z = -imgSize.y / 8;
-		lims.w = imgSize.y + imgSize.y / 8;
-
-		if (pt_buff.x >= lims.x && pt_buff.x < lims.y && pt_buff.y >= lims.z && pt_buff.y < lims.w)
-			isVisibleEnlarged = true;
-	}
-}
-
-template<bool useSwapping>
-_CPU_AND_GPU_CODE_ inline void checkLiveBlockVisibility(THREADPTR(bool)& isVisible, THREADPTR(bool)& isVisibleEnlarged,
-                                                        const THREADPTR(Vector3s)& hashPos,
-                                                        const CONSTPTR(Matrix4f)& M_d,
-                                                        const CONSTPTR(Vector4f)& projParams_d,
-                                                        const CONSTPTR(float)& voxelSize,
-                                                        const CONSTPTR(Vector2i)& imgSize) {
-	Vector4f voxelPointProjectedToImage;
-	float factor = (float) SDF_BLOCK_SIZE * voxelSize;
-
-	isVisible = false;
-	isVisibleEnlarged = false;
-
-	// 0 0 0
-	voxelPointProjectedToImage.x = (float) hashPos.x * factor;
-	voxelPointProjectedToImage.y = (float) hashPos.y * factor;
-	voxelPointProjectedToImage.z = (float) hashPos.z * factor;
-	voxelPointProjectedToImage.w = 1.0f;
-	checkLivePointVisibility<useSwapping>(isVisible, isVisibleEnlarged, voxelPointProjectedToImage, M_d, projParams_d,
-	                                      imgSize);
-	if (isVisible) return;
-
-	// 0 0 1
-	voxelPointProjectedToImage.z += factor;
-	checkLivePointVisibility<useSwapping>(isVisible, isVisibleEnlarged, voxelPointProjectedToImage, M_d, projParams_d,
-	                                      imgSize);
-	if (isVisible) return;
-
-	// 0 1 1
-	voxelPointProjectedToImage.y += factor;
-	checkLivePointVisibility<useSwapping>(isVisible, isVisibleEnlarged, voxelPointProjectedToImage, M_d, projParams_d,
-	                                      imgSize);
-	if (isVisible) return;
-
-	// 1 1 1
-	voxelPointProjectedToImage.x += factor;
-	checkLivePointVisibility<useSwapping>(isVisible, isVisibleEnlarged, voxelPointProjectedToImage, M_d, projParams_d,
-	                                      imgSize);
-	if (isVisible) return;
-
-	// 1 1 0 
-	voxelPointProjectedToImage.z -= factor;
-	checkLivePointVisibility<useSwapping>(isVisible, isVisibleEnlarged, voxelPointProjectedToImage, M_d, projParams_d,
-	                                      imgSize);
-	if (isVisible) return;
-
-	// 1 0 0 
-	voxelPointProjectedToImage.y -= factor;
-	checkLivePointVisibility<useSwapping>(isVisible, isVisibleEnlarged, voxelPointProjectedToImage, M_d, projParams_d,
-	                                      imgSize);
-	if (isVisible) return;
-
-	// 0 1 0
-	voxelPointProjectedToImage.x -= factor;
-	voxelPointProjectedToImage.y += factor;
-	checkLivePointVisibility<useSwapping>(isVisible, isVisibleEnlarged, voxelPointProjectedToImage, M_d, projParams_d,
-	                                      imgSize);
-	if (isVisible) return;
-
-	// 1 0 1
-	voxelPointProjectedToImage.x += factor;
-	voxelPointProjectedToImage.y -= factor;
-	voxelPointProjectedToImage.z += factor;
-	checkLivePointVisibility<useSwapping>(isVisible, isVisibleEnlarged, voxelPointProjectedToImage, M_d, projParams_d,
-	                                      imgSize);
-	if (isVisible) return;
-}

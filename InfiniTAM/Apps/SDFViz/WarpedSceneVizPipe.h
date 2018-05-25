@@ -17,7 +17,7 @@
 
 #include "SDFSceneVizPipe.h"
 #include "../../ITMLib/ITMLibDefines.h"
-#include "../../ITMLib/Utils/ITM3DNestedMap.h"
+#include "../../ITMLib/Utils/Collections/ITM3DNestedMap.h"
 
 class WarpedSceneVizPipe : public SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex> {
 public:

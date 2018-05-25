@@ -6,8 +6,9 @@
 
 #include "../Engines/Visualisation/Interface/ITMSurfelVisualisationEngine.h"
 #include "../Engines/Visualisation/Interface/ITMVisualisationEngine.h"
-#include "../Trackers/Interface/ITMTracker.h"
+#include "../CameraTrackers/Interface/ITMCameraTracker.h"
 #include "../Utils/ITMLibSettings.h"
+#include "../CameraTrackers/Interface/ITMCameraTracker.h"
 
 namespace ITMLib
 {
@@ -17,7 +18,7 @@ namespace ITMLib
 	{
 	private:
 		const ITMLibSettings *settings;
-		ITMTracker *tracker;
+		ITMCameraTracker *tracker;
 
 	public:
 		void Track(ITMTrackingState *trackingState, const ITMView *view)
@@ -109,7 +110,7 @@ namespace ITMLib
 			}
 		}
 
-		ITMTrackingController(ITMTracker *tracker, const ITMLibSettings *settings)
+		ITMTrackingController(ITMCameraTracker *tracker, const ITMLibSettings *settings)
 		{
 			this->tracker = tracker;
 			this->settings = settings;

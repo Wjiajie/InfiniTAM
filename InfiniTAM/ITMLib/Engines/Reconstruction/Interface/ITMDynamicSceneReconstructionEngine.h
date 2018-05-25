@@ -39,36 +39,39 @@ namespace ITMLib
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMDynamicSceneReconstructionEngine
 {
+
 public:
-	//TODO: move Fusion here (?) -Greg (GitHub: Algomorph)
-	/** Clear and reset a scene to set up a new empty
-		one.
-	*/
-	virtual void ResetCanonicalScene(ITMScene<TVoxelCanonical, TIndex> *scene) = 0;
-	virtual void ResetLiveScene(ITMScene<TVoxelLive, TIndex> *scene) = 0;
-
-
-	/**
-	 * \brief Given a view with a new depth image, compute the
-		visible blocks, allocate them and update the hash
-		table so that the new image data can be integrated.
-	 * \param scene [out] the scene whose hash needs additional allocations
-	 * \param view [in] a view with a new depth image
-	 * \param trackingState [in] tracking state from previous frame to new frame that corresponds to the given view
-	 * \param renderState [in] the current renderState with information about which hash entries are visible
-	 * \param onlyUpdateVisibleList [in] whether we want to allocate only the hash entry blocks currently visible
-	 * \param resetVisibleList  [in] reset visibility list upon completion
-	 */
-	virtual void AllocateSceneFromDepth(ITMScene<TVoxelLive,TIndex> *scene, const ITMView *view, const ITMTrackingState *trackingState,
-	                                    const ITMRenderState *renderState, bool onlyUpdateVisibleList = false, bool resetVisibleList = false) = 0;
-
-	/** Update the voxel blocks by integrating depth and
-		possibly colour information from the given view.
-	*/
-	virtual void IntegrateIntoScene(ITMScene<TVoxelLive,TIndex> *scene, const ITMView *view, const ITMTrackingState *trackingState,
-	                                const ITMRenderState *renderState) = 0;
 
 	ITMDynamicSceneReconstructionEngine(void) = default;
 	virtual ~ITMDynamicSceneReconstructionEngine(void) = default;
+
+	/**
+	 * \brief Clears given scene, then uses the depth image from provided live view to generate an SDF
+	 * voxel representation
+	 * \param scene output scene
+	 * \param view input view
+	 * \param trackingState state of tracking
+	 * \param renderState state of rendering the stuff
+	 */
+	virtual void GenerateRawLiveSceneFromView(ITMScene<TVoxelLive,TIndex> *scene, const ITMView *view,
+	                                          const ITMTrackingState *trackingState, const ITMRenderState *renderState) = 0;
+
+	/**
+	 * \brief Fuses the live scene into the canonical scene based on the motion warp of the canonical scene
+	 * \details Typically called after TrackMotion is called
+	 * \param canonicalScene the canonical voxel grid, representing the state at the beginning of the sequence
+	 * \param liveScene the live voxel grid, a TSDF generated from a single recent depth image
+	 */
+	virtual void FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene,
+	                       int liveSourceFieldIndex) = 0;
+protected:
+
+
+	/** Update the voxel blocks by integrating depth and
+	possibly colour information from the given view.
+*/
+	virtual void IntegrateIntoScene(ITMScene<TVoxelLive,TIndex> *scene, const ITMView *view,
+	                                const ITMTrackingState *trackingState, const ITMRenderState *renderState) = 0;
+
 };
-}
+}//namespace ITMLib

@@ -29,8 +29,9 @@
 
 #include "../../ORUtils/FileUtils.h"
 #include "../../InputSource/FFMPEGWriter.h"
-#include "../../ITMLib/Utils/ITMBenchmarkUtils.h"
+#include "../../ITMLib/Utils/Analytics/ITMBenchmarkUtils.h"
 #include "../../ITMLib/Core/ITMDynamicEngine.h"
+#include "../../ITMLib/Utils/ITMPrintHelpers.h"
 
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
@@ -166,7 +167,7 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 
 	if(startInStepByStep){
 		BeginStepByStepModeForFrame();
-		mainLoopAction = autoIntervalFrameCount ? PROCESS_STEPS_CONTINOUS : PROCESS_SINGLE_STEP;
+		mainLoopAction = autoIntervalFrameCount ? PROCESS_STEPS_CONTINUOUS : PROCESS_SINGLE_STEP;
 		outImageType[0] = this->colourMode_stepByStep.type;
 	}else{
 		mainLoopAction = autoIntervalFrameCount ? PROCESS_N_FRAMES : PROCESS_PAUSED;
@@ -214,14 +215,17 @@ void UIEngine_BPO::ProcessFrame() {
 	sdkStartTimer(&timer_instant);
 	sdkStartTimer(&timer_average);
 
-	ITMTrackingState::TrackingResult trackerResult;
-	mainEngine->recordNextFrameWarps = this->recordWarpUpdatesForNextFrame;
+	auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>*>(mainEngine);
+	if (dynamicEngine != nullptr){
+		dynamicEngine->recordWarpsForNextFrame = this->recordWarpsForNextFrame;
+		dynamicEngine->recordWarp2DSliceForNextFrame = this->recordWarp2DSliceForNextFrame;
+		dynamicEngine->nextFrameOutputPath = this->GenerateNextFrameOutputPath();
+	}
+
 	//actual processing on the mailEngine
 	if (imuSource != nullptr)
-		trackerResult = mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage, inputIMUMeasurement);
-	else trackerResult = mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage);
-
-	trackingResult = (int) trackerResult;
+		this->trackingResult = mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage, inputIMUMeasurement);
+	else trackingResult = mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage);
 
 #ifndef COMPILE_WITHOUT_CUDA
 	ORcudaSafeCall(cudaThreadSynchronize());
@@ -237,15 +241,19 @@ void UIEngine_BPO::ProcessFrame() {
 	currentFrameNo++;
 }
 
+int UIEngine_BPO::GetLastProcessedFrameIndex() const{
+	return startedProcessingFromFrameIx + currentFrameNo;
+}
+
 void UIEngine_BPO::Run() { glutMainLoop(); }
 
 void UIEngine_BPO::Shutdown() {
 	sdkDeleteTimer(&timer_instant);
 	sdkDeleteTimer(&timer_average);
 
-	if (rgbVideoWriter != NULL) delete rgbVideoWriter;
-	if (depthVideoWriter != NULL) delete depthVideoWriter;
-	if (reconstructionVideoWriter != NULL) delete reconstructionVideoWriter;
+	delete rgbVideoWriter;
+	delete depthVideoWriter;
+	delete reconstructionVideoWriter;
 
 	for (int w = 0; w < NUM_WIN; w++)
 		delete outImage[w];
@@ -257,20 +265,19 @@ void UIEngine_BPO::Shutdown() {
 	delete[] outFolder;
 	delete saveImage;
 	delete instance;
-	instance = NULL;
+	instance = nullptr;
 }
 
 bool UIEngine_BPO::BeginStepByStepModeForFrame() {
 	if (!imageSource->hasMoreImages()) return false;
 
 	auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>*>(mainEngine);
-
 	if (dynamicEngine == nullptr) return false;
 
 
 	imageSource->getImages(inputRGBImage, inputRawDepthImage);
 
-	if (imuSource != NULL) {
+	if (imuSource != nullptr) {
 		if (!imuSource->hasMoreMeasurements()) return false;
 		else imuSource->getMeasurement(inputIMUMeasurement);
 	}
@@ -278,14 +285,28 @@ bool UIEngine_BPO::BeginStepByStepModeForFrame() {
 	RecordDepthAndRGBInputToImages();
 	RecordDepthAndRGBInputToVideo();
 
-	//ITMTrackingState::TrackingResult trackerResult;
-	mainEngine->recordNextFrameWarps = this->recordWarpUpdatesForNextFrame;
 	//actual processing on the mailEngine
 	if (imuSource != NULL)
 		dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage, inputIMUMeasurement);
 	else dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage);
 
 	return true;
+}
+
+std::string UIEngine_BPO::GenerateNextFrameOutputPath() const {
+	fs::path path(std::string(this->outFolder) + "/Frame_" + std::to_string(GetLastProcessedFrameIndex()+1));
+	if (!fs::exists(path)) {
+		fs::create_directories(path);
+	}
+	return path.string();
+}
+
+std::string UIEngine_BPO::GeneratePreviousFrameOutputPath() const {
+	fs::path path(std::string(this->outFolder) + "/Frame_" + std::to_string(GetLastProcessedFrameIndex()));
+	if (!fs::exists(path)) {
+		fs::create_directories(path);
+	}
+	return path.string();
 }
 
 bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
@@ -304,6 +325,7 @@ bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 	return keepProcessingFrame;
 }
 
+//TODO: Group all recording & make it toggleable with a single keystroke / command flag
 void UIEngine_BPO::RecordReconstructionToVideo() {
 	if ((reconstructionVideoWriter != nullptr)) {
 		mainEngine->GetImage(outImage[0], outImageType[0], &this->freeviewPose, &freeviewIntrinsics);
@@ -313,11 +335,11 @@ void UIEngine_BPO::RecordReconstructionToVideo() {
 				                                outImage[0]->noDims.x, outImage[0]->noDims.y,
 				                                false, 30);
 			//TODO This image saving/reading/saving is a production hack -Greg (GitHub:Algomorph)
+			//TODO move to a separate function and apply to all recorded video
 			std::string fileName = (std::string(this->outFolder) + "/out_reconstruction.png");
 			SaveImageToFile(outImage[0], fileName.c_str());
 			cv::Mat img = cv::imread(fileName, cv::IMREAD_UNCHANGED);
-			int frameIndex = this->startedProcessingFromFrameIx + this->processedFrameNo;
-			cv::putText(img, std::to_string(frameIndex), cv::Size(10,50), cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(128,255,128),1,cv::LINE_AA);
+			cv::putText(img, std::to_string(GetLastProcessedFrameIndex()), cv::Size(10,50), cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(128,255,128),1,cv::LINE_AA);
 			cv::imwrite(fileName,img);
 			ITMUChar4Image* imageWithText = new ITMUChar4Image(imageSource->getDepthImageSize(), true, allocateGPU);
 			ReadImageFromFile(imageWithText,fileName.c_str());
@@ -354,5 +376,16 @@ void UIEngine_BPO::RecordDepthAndRGBInputToImages() {
 			SaveImageToFile(inputRGBImage, str);
 		}
 	}
+}
+
+void UIEngine_BPO::PrintProcessedFrame() const {
+	std::cout << bright_cyan << "PROCESSING FRAME " << GetLastProcessedFrameIndex() + 1;
+	if(recordWarpsForNextFrame){
+		 std::cout << " [WARP UPDATE RECORDING: ON]";
+	}
+	if(recordWarp2DSliceForNextFrame){
+		std::cout << " [WARP UPDATE RASTERIZATION: ON]";
+	}
+	std::cout << reset << std::endl;
 }
 

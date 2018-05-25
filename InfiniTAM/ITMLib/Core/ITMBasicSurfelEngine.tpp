@@ -5,7 +5,7 @@
 #include "../Engines/LowLevel/ITMLowLevelEngineFactory.h"
 #include "../Engines/ViewBuilding/ITMViewBuilderFactory.h"
 #include "../Engines/Visualisation/ITMSurfelVisualisationEngineFactory.h"
-#include "../Trackers/ITMTrackerFactory.h"
+#include "../CameraTrackers/ITMCameraTrackerFactory.h"
 
 #include "../../ORUtils/NVTimer.h"
 #include "../../ORUtils/FileUtils.h"
@@ -35,7 +35,7 @@ ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMLibSettings* settin
 	this->surfelScene->Reset();
 
 	imuCalibrator = new ITMIMUCalibrator_iPad();
-	tracker = ITMTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, settings, lowLevelEngine, imuCalibrator,
+	tracker = ITMCameraTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, settings, lowLevelEngine, imuCalibrator,
 	                                             &settings->sceneParams);
 	trackingController = new ITMTrackingController(tracker, settings);
 

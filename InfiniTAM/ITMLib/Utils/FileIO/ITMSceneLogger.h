@@ -21,8 +21,8 @@
 
 //local
 #include "../../Objects/Scene/ITMScene.h"
-#include "../ITM3DNestedMapOfArrays.h"
-#include "../ITMNeighborVoxelIterationInfo.h"
+#include "../Collections/ITM3DNestedMapOfArrays.h"
+#include "../Analytics/ITMNeighborVoxelIterationInfo.h"
 #include "ITMWarpSceneLogger.h"
 
 //boost
@@ -165,7 +165,7 @@ public:
 	int GetTotalInterestVoxelCount();
 
 	//** canonical warp-state saving/loading
-	bool StartSavingWarpState(unsigned int frameIx);
+	bool StartSavingWarpState();
 	void StopSavingWarpState();
 	bool StartLoadingWarpState();
 	bool StartLoadingWarpState(unsigned int& frameIx);
@@ -183,9 +183,8 @@ public:
 	//*** slice generation & usage***
 
 	bool MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2,
-	               unsigned int frameIndex, std::string& identifier);
-	bool MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2,
-	               unsigned int frameIndex);
+		               std::string& identifier);
+	bool MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2);
 	bool SliceExistsInMemory(const std::string& sliceIdentifier) const;
 	bool SliceExistsOnDisk(const Vector3i& extremum1,
 	                       const Vector3i& extremum2) const;
@@ -201,7 +200,7 @@ public:
 private:
 // region === MEMBER FUNCTIONS ===
 	void SaveSliceWarp(const Vector3i& minPoint, const Vector3i& maxPoint,
-	                   unsigned int frameIndex, const boost::filesystem::path& path);
+		                   const boost::filesystem::path& path);
 	ITM3DNestedMapOfArrays <ITMHighlightIterationInfo>
 	MakeSliceHighlights(const Vector3i& minPoint, const Vector3i& maxPoint);
 	bool CheckPath();

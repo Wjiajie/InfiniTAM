@@ -102,11 +102,15 @@ ITMLibSettings::ITMLibSettings()
 	}
 
 	// Dynamic fusion debugging/logging
-	focusCoordinatesSpecified = false;
+
+
+	rasterizeLiveSceneSlices = false;
+	rasterizeCanonicalSceneSlices = false;
+	rasterizeWarpsDuringOptimization = false;
+	bool rasterizeWarpsDuringOptimization;// = false; // CLI flag made in InfiniTAM_bpo
 	restrictZtrackingForDebugging = false;
 	simpleSceneExperimentModeEnabled = false;
-	rasterizeWarps = false;
-
+	focusCoordinatesSpecified = false;
 
 	// Dynamic fusion terms & parameters
 	enableDataTerm = true;

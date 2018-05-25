@@ -76,28 +76,39 @@ namespace ITMLib
 
 		MemoryDeviceType GetMemoryType() const;
 
-		/// Parameters for logging/debugging dynamic fusion
-		bool FocusCoordinatesAreSpecified() const;
+		/// Dynamic Fusion parameters
+		//*** Analysis/debugging Switches
+		bool rasterizeLiveSceneSlices;// = false;
+		bool rasterizeCanonicalSceneSlices;// = false;
+		bool rasterizeWarpsDuringOptimization;// = false; // CLI flag made in InfiniTAM_bpo
+
+		bool restrictZtrackingForDebugging;// = false;
+		bool simpleSceneExperimentModeEnabled;// = false;
+		bool FocusCoordinatesAreSpecified() const;// = false; // CLI flag made in InfiniTAM_bpo
+
 		Vector3i GetFocusCoordinates() const;
 		void SetFocusCoordinates(const Vector3i& coordiantes);
-		bool restrictZtrackingForDebugging;
-		bool simpleSceneExperimentModeEnabled;
-		bool rasterizeWarps;
 
+
+		//*** Scene Tracking Switches ***
 		bool enableDataTerm;
 		bool enableLevelSetTerm;
 		bool enableSmoothingTerm;
 		bool enableKillingTerm;
 		bool enableGradientSmoothing;
 
+		//*** Scene Tracking Parameters ***
+		//** optimization loop
 		unsigned int sceneTrackingMaxOptimizationIterationCount;
 		float sceneTrackingOptimizationVectorUpdateThresholdMeters;
+		//** gradient calculation
 		float sceneTrackingGradientDescentLearningRate;
 		float sceneTrackingRigidityEnforcementFactor;
 		float sceneTrackingWeightDataTerm;
 		float sceneTrackingWeightSmoothingTerm;
 		float sceneTrackingWeightLevelSetTerm;
 		float sceneTrackingLevelSetTermEpsilon;
+
 
 	private:
 		/// Parameters for logging/debugging dynamic fusion

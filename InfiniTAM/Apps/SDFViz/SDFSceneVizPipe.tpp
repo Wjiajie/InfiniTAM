@@ -31,7 +31,7 @@
 
 //ITMLib
 #include "../../ITMLib/Utils/ITMLibSettings.h"
-#include "../../ITMLib/Utils/ITMSceneStatisticsCalculator.h"
+#include "../../ITMLib/Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "SDFVizGlobalDefines.h"
 
 

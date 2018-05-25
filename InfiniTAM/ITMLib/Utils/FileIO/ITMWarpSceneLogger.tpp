@@ -19,8 +19,9 @@
 
 //local
 #include "ITMWarpSceneLogger.h"
-#include "../ITMSceneStatisticsCalculator.h"
+#include "../Analytics/ITMSceneStatisticsCalculator.h"
 #include "../ITMLibSettings.h"
+#include "../../Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 
 
 using namespace ITMLib;
@@ -380,7 +381,9 @@ void ITMWarpSceneLogger<TVoxel, TIndex>::FilterHighlights(int anomalyFrameCountM
 
 template<typename TVoxel, typename TIndex>
 bool
-ITMWarpSceneLogger<TVoxel, TIndex>::StartSavingWarpState(unsigned int frameIx) {
+ITMWarpSceneLogger<TVoxel, TIndex>::StartSavingWarpState() {
+
+	//TODO remove frameIdx recording and its dependencies
 	std::string rootPath = fs::path(warpPath).parent_path().string();
 	if (!fs::is_directory(rootPath)) {
 		std::cout << "The directory '" << rootPath << "' was not found.";
@@ -390,6 +393,7 @@ ITMWarpSceneLogger<TVoxel, TIndex>::StartSavingWarpState(unsigned int frameIx) {
 	if (!warpOFStream)
 		throw std::runtime_error("Could not open " + warpPath.string() + " for writing ["  __FILE__  ": " +
 		                         std::to_string(__LINE__) + "]");
+	int frameIx = 0;
 	warpOFStream.write(reinterpret_cast<const char*>(&frameIx), sizeof(frameIx));
 	iterationCursor = 0;
 	return true;

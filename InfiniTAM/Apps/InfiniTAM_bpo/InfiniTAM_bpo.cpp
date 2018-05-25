@@ -382,7 +382,7 @@ int main(int argc, char** argv) {
 		//_DEBUG
 		settings->restrictZtrackingForDebugging = restrictZmotion;
 		settings->simpleSceneExperimentModeEnabled = simpleScene;
-		settings->rasterizeWarps = rasterizeWarps;
+		settings->rasterizeWarpsDuringOptimization = rasterizeWarps;
 
 		settings->enableDataTerm = !disableDataTerm;
 		settings->enableLevelSetTerm = enableLevelSetTerm;

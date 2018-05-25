@@ -43,6 +43,7 @@ namespace ITMLib
 		}
 
 		//TODO: provide GPU versions of these functions and make the public functions agnostic (i.e. choose appropriate version based on GPU/CPU setting -Greg (GitHub: Algomorph)
+		//TODO: these are only valid when the index is a voxel hash: make appropriate Scene specialization w/ save & load instead of these methods
 		void SaveToDirectoryCompact_CPU(const std::string &outputDirectory)
 		{
 

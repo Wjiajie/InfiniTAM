@@ -113,7 +113,7 @@ public:
 	void FilterHighlights(int anomalyFrameCountMinimum);
 
 	//*** warp loading / saving / buffering ***
-	bool StartSavingWarpState(unsigned int frameIx);
+	bool StartSavingWarpState();
 	void StopSavingWarpState();
 	bool SaveCurrentWarpState();
 	bool LoadPreviousWarpState();

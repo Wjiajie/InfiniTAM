@@ -17,7 +17,6 @@
 //Note: ".tpp" files have to be included for all explicit instantiations in order to link properly
 
 #include "../Core/ITMDynamicEngine.tpp"
-#include "../Core/ITMDenseDynamicMapper.tpp"
 
 
 #include "../Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU.tpp"
@@ -25,18 +24,20 @@
 #include "../Engines/Swapping/CPU/ITMSwappingEngine_CPU.tpp"
 #include "../Engines/Visualisation/CPU/ITMVisualisationEngine_CPU.tpp"
 #include "../Engines/Meshing/CPU/ITMMeshingEngine_CPU.tpp"
-#include "../Utils/ITMSceneSliceRasterizer.tpp"
-#include "../Utils/ITMSceneStatisticsCalculator.tpp"
+#include "../Utils/Analytics/ITMSceneStatisticsCalculator.tpp"
+#include "../Utils/Analytics/ITMNeighborVoxelIterationInfo.h"
+#include "../Utils/FileIO/ITMScene2DSliceLogger.tpp"
 #include "../Utils/FileIO/ITMWarpSceneLogger.tpp"
 #include "../Utils/FileIO/ITMSceneLogger.tpp"
-#include "../Utils/ITM3DNestedMapOfArrays.tpp"
-#include "../Utils/ITM3DNestedMap.tpp"
-#include "../Utils/ITMNeighborVoxelIterationInfo.h"
+#include "../Utils/FileIO/ITMDynamicFusionLogger.tpp"
+#include "../Utils/Collections/ITM3DNestedMapOfArrays.tpp"
+#include "../Utils/Collections/ITM3DNestedMap.tpp"
+
 
 //dynamic fusion
 template class ITMSwappingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
-template class ITMDenseDynamicMapper<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+
 template class ITMDynamicSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 template class ITMSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMVisualisationEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
@@ -44,6 +45,7 @@ template class ITMVisualisationEngine_CPU<ITMVoxelLive, ITMVoxelIndex>;
 template class ITMMeshingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMWarpSceneLogger<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+template class ITMDynamicFusionLogger<ITMVoxelCanonical,ITMVoxelLive, ITMVoxelIndex>;
 
 //TODO: Cleanup -Greg (GitHub: Algomorph)
 //dynamic fusion utility classes

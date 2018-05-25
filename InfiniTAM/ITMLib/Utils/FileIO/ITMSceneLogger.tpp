@@ -25,6 +25,7 @@
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
 #include "ITMSceneLogger_InterestRegionInfo.tpp"
 #include "ITMSceneLogger_SceneSlice.tpp"
+#include "../../Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 
 
 namespace fs = boost::filesystem;
@@ -284,8 +285,8 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenesCompact() {
 // region ================================= WARP STATE ONLINE SAVING / LOADING / BUFFERING =============================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarpState(unsigned int frameIx) {
-	return activeWarpLogger->StartSavingWarpState(frameIx);
+bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarpState() {
+	return activeWarpLogger->StartSavingWarpState();
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
