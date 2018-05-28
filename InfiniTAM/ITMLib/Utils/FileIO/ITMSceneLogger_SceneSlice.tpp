@@ -167,7 +167,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSliceHighlights(const V
 	for (auto& array : highlightArrays) {
 		for (auto& highlight : array) {
 			if (VoxelInRange(highlight.position)){
-				sliceHighlights.InsertOrdered(highlight.hash,highlight.localId,highlight.frame,highlight);
+				sliceHighlights.InsertOrdered(highlight.hash,highlight.localId,0,highlight);
 			}
 		}
 	}

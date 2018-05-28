@@ -61,7 +61,7 @@ ReadVoxelAndLinearIndex(const CONSTPTR(TVoxel)* voxelData,
 	return TVoxel();
 }
 
-_CPU_AND_GPU_CODE_
+
 template<typename TVoxelCanonical, typename TVoxelLive, typename TLiveCache>
 inline void FindHighlightNeighborInfo(std::array<ITMLib::ITMNeighborVoxelIterationInfo, 9>& neighbors,
                                       const CONSTPTR(Vector3i)& highlightPosition,
@@ -109,7 +109,6 @@ inline void FindHighlightNeighborInfo(std::array<ITMLib::ITMNeighborVoxelIterati
 //======================================================================================================================
 
 //_DEBUG printing routine
-_CPU_AND_GPU_CODE_
 inline void _DEBUG_PrintDataTermStuff(const CONSTPTR(Vector3f)& liveSdfJacobian) {
 	const std::string cyan("\033[0;36m");
 	const std::string reset("\033[0m");
@@ -118,7 +117,6 @@ inline void _DEBUG_PrintDataTermStuff(const CONSTPTR(Vector3f)& liveSdfJacobian)
 }
 
 //_DEBUG printing routine
-_CPU_AND_GPU_CODE_
 inline void _DEBUG_PrintLevelSetTermStuff(const CONSTPTR(Vector3f)& liveSdfJacobian,
                                           const CONSTPTR(Vector3f)& liveSdf_Center_WarpForward,
                                           const CONSTPTR(Vector3f)& warpedSdfJacobian,
@@ -132,7 +130,6 @@ inline void _DEBUG_PrintLevelSetTermStuff(const CONSTPTR(Vector3f)& liveSdfJacob
 
 
 //_DEBUG printing routine
-_CPU_AND_GPU_CODE_
 inline void _DEBUG_PrintKillingTermStuff(const CONSTPTR(Vector3f*) neighborWarps,
                                          const CONSTPTR(bool*) neighborAllocated,
                                          const CONSTPTR(bool*) neighborTruncated,
@@ -175,7 +172,6 @@ inline void _DEBUG_PrintKillingTermStuff(const CONSTPTR(Vector3f*) neighborWarps
 
 
 //_DEBUG printing routine
-_CPU_AND_GPU_CODE_
 inline void _DEBUG_PrintTikhonovTermStuff(const CONSTPTR(Vector3f*) neighborWarps,
                                          const CONSTPTR(Vector3f)& laplacian) {
 

@@ -26,8 +26,8 @@ using namespace ITMLib;
 
 // region ================================== CONSTRUCTORS / DESTRUCTORS ================================================
 
-template<typename TVoxelLive, typename TVoxelCanonical>
-ITMDynamicHashManagementEngine_CPU<TVoxelLive, TVoxelCanonical>::ITMDynamicHashManagementEngine_CPU() :
+template<typename TVoxelCanonical, typename TVoxelLive>
+ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::ITMDynamicHashManagementEngine_CPU() :
 		canonicalEntryAllocationTypes(
 				new ORUtils::MemoryBlock<unsigned char>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU)),
 		liveEntryAllocationTypes(
@@ -36,8 +36,8 @@ ITMDynamicHashManagementEngine_CPU<TVoxelLive, TVoxelCanonical>::ITMDynamicHashM
 				new ORUtils::MemoryBlock<Vector3s>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU)) {}
 
 
-template<typename TVoxelLive, typename TVoxelCanonical>
-ITMDynamicHashManagementEngine_CPU<TVoxelLive, TVoxelCanonical>::~ITMDynamicHashManagementEngine_CPU() {
+template<typename TVoxelCanonical, typename TVoxelLive>
+ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::~ITMDynamicHashManagementEngine_CPU() {
 	delete canonicalEntryAllocationTypes;
 	delete liveEntryAllocationTypes;
 	delete allocationBlockCoordinates;
@@ -45,8 +45,8 @@ ITMDynamicHashManagementEngine_CPU<TVoxelLive, TVoxelCanonical>::~ITMDynamicHash
 
 // endregion ===========================================================================================================
 
-template<typename TVoxelLive, typename TVoxelCanonical>
-void ITMDynamicHashManagementEngine_CPU<TVoxelLive, TVoxelCanonical>::AllocateLiveSceneFromDepth(
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::AllocateLiveSceneFromDepth(
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState, bool onlyUpdateVisibleList, bool resetVisibleList){
 	Vector2i depthImgSize = view->depth->noDims;
@@ -173,10 +173,10 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelLive, TVoxelCanonical>::AllocateLi
  * \param canonicalScene the canonical (reference) scene
  * \param liveScene the live (target) scene
  */
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxelCanonical, typename TVoxelLive>
 void
 ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>
-::ExpandAllocatedCanonicalStableRegion(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) {
+::ExpandAllocatedCanonicalStableRegion(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
 
 	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
 	Vector3s* allocationBlockCoords = this->allocationBlockCoordinates->GetData(MEMORYDEVICE_CPU);
@@ -252,8 +252,8 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateCa
 	                                  ITMLib::STABLE);
 }
 
-template<typename TVoxelLive, typename TVoxelCanonical>
-void ITMDynamicHashManagementEngine_CPU<TVoxelLive, TVoxelCanonical>::ChangeCanonicalHashEntryState(
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::ChangeCanonicalHashEntryState(
 		int hash, ITMLib::HashBlockState state) {
 	this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU)[hash] = state;
 }
@@ -315,8 +315,8 @@ private:
  * \param sdfScene sdf grid whose hash blocks to allocate if needed
  * \param fieldIndex index of the sdf / flag field to use in the sdfScene
  */
-template<typename TVoxelLive, typename TVoxelCanonical>
-void ITMDynamicHashManagementEngine_CPU<TVoxelLive, TVoxelCanonical>::AllocateWarpedLive(
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::AllocateWarpedLive(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int fieldIndex) {
 	int entryCount = ITMVoxelBlockHash::noTotalEntries;

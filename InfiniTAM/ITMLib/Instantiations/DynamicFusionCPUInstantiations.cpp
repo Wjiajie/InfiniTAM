@@ -20,7 +20,8 @@
 
 
 #include "../Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU_VoxelBlockHash.tpp"
-#include "../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.tpp"
+#include "../Engines/Reconstruction/CPU/ITMDynamicHashManagementEngine_CPU.tpp"
+//#include "../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.tpp"
 #include "../Engines/Swapping/CPU/ITMSwappingEngine_CPU.tpp"
 #include "../Engines/Visualisation/CPU/ITMVisualisationEngine_CPU.tpp"
 #include "../Engines/Meshing/CPU/ITMMeshingEngine_CPU.tpp"
@@ -38,8 +39,10 @@
 template class ITMSwappingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 
+template class ITMDynamicHashManagementEngine_CPU<ITMVoxelCanonical,ITMVoxelLive>;
 template class ITMDynamicSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
-template class ITMSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
+
+//template class ITMSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMVisualisationEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMVisualisationEngine_CPU<ITMVoxelLive, ITMVoxelIndex>;
 template class ITMMeshingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
@@ -49,7 +52,7 @@ template class ITMDynamicFusionLogger<ITMVoxelCanonical,ITMVoxelLive, ITMVoxelIn
 
 //TODO: Cleanup -Greg (GitHub: Algomorph)
 //dynamic fusion utility classes
-template class ITMSceneSliceRasterizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+template class ITMScene2DSliceLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 template class ITMSceneStatisticsCalculator<ITMVoxelCanonical,ITMVoxelIndex>;
 template class ITMSceneStatisticsCalculator<ITMVoxelLive,ITMVoxelIndex>;
 template class ITM3DNestedMap<int>;

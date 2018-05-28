@@ -34,7 +34,7 @@ bool ITMLib::ITMHighlightIterationInfo::operator==(const ITMLib::ITMHighlightIte
 		return true;
 	}
 
-	if (this->hash != rhs.hash || this->localId != rhs.localId || this->iteration != rhs.iteration ||
+	if (this->hash != rhs.hash || this->localId != rhs.localId ||
 	    this->sdf != rhs.sdf || this->liveSdf != rhs.liveSdf || this->warp != rhs.warp ||
 	    this->warpUpdate != rhs.warpUpdate || this->warpUpdateData != rhs.warpUpdateData ||
 	    this->warpUpdateLevelSet != rhs.warpUpdateLevelSet || this->warpUpdateKilling != rhs.warpUpdateKilling ||
@@ -58,7 +58,7 @@ bool ITMLib::ITMHighlightIterationInfo::operator!=(const ITMLib::ITMHighlightIte
 
 namespace ITMLib {
 std::ostream& operator<<(std::ostream& stream, const ITMHighlightIterationInfo& highlight) {
-	stream << "[highlight| iteration:" << highlight.iteration << ",sdf:" << highlight.sdf << ",liveSdf:"
+	stream << "[highlight| sdf:" << highlight.sdf << ",liveSdf:"
 	       << highlight.liveSdf << ",warp:" << highlight.warp << ",warpUpdate:" << highlight.warpUpdate
 	       << ",warpUpdateData:" << highlight.warpUpdateData << ",warpUpdateLevelSet:" << highlight.warpUpdateLevelSet
 	       << ",warpUpdateKilling: " << highlight.warpUpdateKilling << "]";

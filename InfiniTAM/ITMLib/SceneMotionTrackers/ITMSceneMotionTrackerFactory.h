@@ -17,8 +17,6 @@
 
 #include "Interface/ITMSceneMotionTracker.h"
 #include "CPU/ITMSceneMotionTracker_CPU.h"
-#include "CUDA/ITMSceneMotionTracker_CUDA.h"
-
 
 namespace ITMLib{
 class ITMSceneMotionTrackerFactory {
@@ -30,16 +28,17 @@ public:
 */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 static ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>*
-MakeSceneMotionTracker(const ITMLibSettings* settings) {
+MakeSceneMotionTracker(const ITMLibSettings* settings,
+                       ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>& logger) {
 	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>* sceneRecoEngine = nullptr;
 
 	switch (settings->deviceType) {
 		case ITMLibSettings::DEVICE_CPU:
-			sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>(settings);
+			sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>(settings, logger);
 			break;
 		case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-			sceneRecoEngine = new ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>(settings);
+			DIEWITHEXCEPTION_REPORTLOCATION("NOT IMPLEMENTED");
 #endif
 			break;
 		case ITMLibSettings::DEVICE_METAL:

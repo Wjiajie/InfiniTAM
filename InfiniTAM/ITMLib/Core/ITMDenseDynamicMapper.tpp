@@ -72,7 +72,8 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMappe
 		sceneReconstructor(
 				ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex>
 						(settings->deviceType)),
-		sceneMotionTracker(ITMSceneMotionTrackerFactory::MakeSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(settings)),
+		sceneMotionTracker(
+				ITMSceneMotionTrackerFactory::MakeSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(settings, logger)),
 		swappingEngine(settings->swappingMode != ITMLibSettings::SWAPPINGMODE_DISABLED
 		               ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxelCanonical, TIndex>(settings->deviceType)
 		               : nullptr),
@@ -98,13 +99,13 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
 ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetCanonicalScene(
 		ITMScene<TVoxelCanonical, TIndex>* scene) const {
-	ITMSceneManipulationEngine_CPU<TVoxelCanonical,TIndex>::ResetScene(scene);
+	ITMSceneManipulationEngine_CPU<TVoxelCanonical, TIndex>::ResetScene(scene);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetLiveScene(
 		ITMScene<TVoxelLive, TIndex>* scene) const {
-	ITMSceneManipulationEngine_CPU<TVoxelLive,TIndex>::ResetScene(scene);
+	ITMSceneManipulationEngine_CPU<TVoxelLive, TIndex>::ResetScene(scene);
 }
 
 //BEGIN _DEBUG
@@ -124,31 +125,16 @@ static void PrintSceneStats(ITMScene<TVoxel, TIndex>* scene, const char* sceneNa
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::GenerateRawLiveFrame(
-		ITMScene<TVoxelLive, TIndex>* liveScene, ITMRenderState* renderState,
-		const ITMTrackingState* trackingState,
-		const ITMView* view) {
-	PrintOperationStatus("Generating raw live frame...");
-	bench::StartTimer("GenerateRawLiveFrame");
-	// clear out the live-frame SDF
-	sceneReconstructor->ResetLiveScene(liveScene);
-	sceneReconstructor->AllocateLiveSceneFromDepth(liveScene, view, trackingState, renderState);
-	// generate SDF from view images
-	sceneReconstructor->IntegrateIntoScene(liveScene, view, trackingState, renderState);
-	bench::StopTimer("GenerateRawLiveFrame");
-}
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessInitialFrame(
 		const ITMView* view, const ITMTrackingState* trackingState,
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
 		ITMRenderState* renderState) {
-	GenerateRawLiveFrame(liveScene, renderState, trackingState, view);
+	PrintOperationStatus("Generating raw live frame from view...");
+	bench::StartTimer("GenerateRawLiveFrame");
+	sceneReconstructor->GenerateRawLiveSceneFromView(liveScene, view, trackingState, renderState);
+	bench::StopTimer("GenerateRawLiveFrame");
 	//** prepare canonical for new frame
-	PrintOperationStatus("Allocating canonical blocks based on live frame...");
-	bench::StartTimer("AllocateCanonicalFromLive");
-	sceneReconstructor->AllocateCanonicalFromLive(canonicalScene, liveScene);
-	bench::StopTimer("AllocateCanonicalFromLive");
+	PrintOperationStatus("Fusing data from live frame into canonical frame...");
 	//** fuse the live into canonical directly
 	bench::StartTimer("FuseFrame");
 	sceneReconstructor->FuseFrame(canonicalScene, liveScene, 0);
@@ -166,7 +152,10 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProce
 		GenerateTestScene01(canonicalScene);
 		CopySceneSDFandFlagsWithOffset_CPU(liveScene, canonicalScene, Vector3i(-5, 0, 0));
 	} else {
-		GenerateRawLiveFrame(liveScene, renderState, trackingState, view);
+		PrintOperationStatus("Generating raw live frame from view...");
+		bench::StartTimer("GenerateRawLiveFrame");
+		sceneReconstructor->GenerateRawLiveSceneFromView(liveScene, view, trackingState, renderState);
+		bench::StopTimer("GenerateRawLiveFrame");
 	}
 
 	sceneMotionTracker->ClearOutWarps(canonicalScene);
@@ -181,9 +170,6 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeProcess
 		ITMRenderState* renderState) {
 
 	logger.FinalizeRecording(canonicalScene, liveScene);
-	bench::StartTimer("AllocateCanonicalFromLive");
-	sceneReconstructor->AllocateCanonicalFromLive(canonicalScene, liveScene);
-	bench::StopTimer("AllocateCanonicalFromLive");
 	//fuse warped live into canonical
 	bench::StartTimer("FuseFrame");
 	sceneReconstructor->FuseFrame(canonicalScene, liveScene, iteration % 2);
@@ -258,9 +244,8 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 	PrintOperationStatus("Calculating warp energy gradient...");
 	bench::StartTimer("TrackMotion_31_CalculateWarpUpdate");
 	sceneMotionTracker->CalculateWarpGradient(canonicalScene, liveScene, analysisFlags.hasFocusCoordinates,
-	                                          focusCoordinates, <#initializer#>, sourceSdfIndex,
-	                                          analysisFlags.restrictZtrackingForDebugging,
-	                                          <#initializer#>);
+	                                          focusCoordinates, sourceSdfIndex,
+	                                          analysisFlags.restrictZtrackingForDebugging);
 	bench::StopTimer("TrackMotion_31_CalculateWarpUpdate");
 
 	PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");

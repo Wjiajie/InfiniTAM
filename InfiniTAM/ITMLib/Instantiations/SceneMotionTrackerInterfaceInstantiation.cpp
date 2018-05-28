@@ -15,6 +15,6 @@
 //  ================================================================
 
 #include "../ITMLibDefines.h"
-#include "../Trackers/Interface/ITMSceneMotionTracker.tpp"
+#include "../SceneMotionTrackers/Interface/ITMSceneMotionTracker.tpp"
 
 template class ITMSceneMotionTracker<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;

@@ -22,12 +22,7 @@ using namespace ITMLib;
 
 template<class TVoxel, class TIndex>
 void GenerateTestScene01(ITMScene<TVoxel, TIndex>* scene) {
-
-	ITMSceneReconstructionEngine<TVoxel, TIndex>* reconstructionEngine =
-			ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel, TIndex>(
-					ITMLibSettings::DEVICE_CPU);
-
-	reconstructionEngine->ResetScene(scene);
+	ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ResetScene(scene);
 	const int narrowBandThicknessVoxels = 10;
 	int xOffset = 8;
 	int surfaceSizeVoxelsZ = 16;

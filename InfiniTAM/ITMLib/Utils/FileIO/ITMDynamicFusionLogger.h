@@ -20,7 +20,8 @@
 #include "ITMScene2DSliceLogger.h"
 
 namespace ITMLib{
-template<typename TVoxelLive, typename TVoxelCanonical, typename TIndex>
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMDynamicFusionLogger {
 public:
 	ITMDynamicFusionLogger();

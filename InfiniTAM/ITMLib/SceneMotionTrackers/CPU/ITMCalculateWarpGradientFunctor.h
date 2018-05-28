@@ -127,12 +127,13 @@ private:
 			}
 		}
 	}
+
 public:
 	// region ========================================= CONSTRUCTOR ====================================================
 	ITMCalculateWarpGradientFunctor(
 			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Parameters parameters,
 			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Switches switches,
-			ITMDynamicFusionLogger<TVoxelLive,TVoxelCanonical,ITMVoxelBlockHash>& logger) :
+			ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>& logger) :
 			liveCache(),
 			canonicalCache(),
 			parameters(parameters),
@@ -140,10 +141,9 @@ public:
 			logger(logger) {}
 
 	void PrepareForOptimization(ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
-	                            ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-	                            int sourceSdfIndex, bool hasFocusCoordinates, Vector3i focusCoordinates,
-	                            bool restrictZtrackingForDebugging,
-	                            ITMSceneLogger<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>* sceneLogger) {
+	                            ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, int sourceSdfIndex,
+	                            bool hasFocusCoordinates, Vector3i focusCoordinates,
+	                            bool restrictZtrackingForDebugging) {
 		this->liveScene = liveScene;
 		this->liveVoxels = liveScene->localVBA.GetVoxelBlocks(),
 		this->liveHashEntries = liveScene->index.GetEntries(),
@@ -370,7 +370,7 @@ public:
 				                          canonicalHashEntries, liveVoxels, liveHashEntries, liveCache);
 				//TODO: get rid of iteration + frame fields in HighlightIterationInfo
 				ITMHighlightIterationInfo info =
-						{hash, locId, 0, 0, voxelPosition, warp, canonicalSdf, liveSdf,
+						{hash, locId, voxelPosition, warp, canonicalSdf, liveSdf,
 						 localEnergyGradient, localDataEnergyGradient, localLevelSetEnergyGradient,
 						 localSmoothnessEnergyGradient,
 						 localEnergy, localDataEnergy, localLevelSetEnergy, localSmoothnessEnergy,
@@ -394,7 +394,8 @@ public:
 		                      totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
 
 		//save all energies to file
-		logger.RecordStatistics(totalDataEnergy, totalLevelSetEnergy, totalKillingEnergy,totalSmoothnessEnergy,totalEnergy);
+		logger.RecordStatistics(totalDataEnergy, totalLevelSetEnergy, totalKillingEnergy, totalSmoothnessEnergy,
+		                        totalEnergy);
 
 
 		CalculateAndPrintAdditionalStatistics(
@@ -443,6 +444,6 @@ private:
 	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Parameters parameters;
 	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Switches switches;
 
-	ITMDynamicFusionLogger<TVoxelLive,TVoxelCanonical,ITMVoxelBlockHash>& logger;
+	ITMDynamicFusionLogger<TVoxelCanonical,TVoxelLive, ITMVoxelBlockHash>& logger;
 
 };

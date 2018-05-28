@@ -20,8 +20,8 @@
 using namespace ITMLib;
 namespace bench = ITMLib::Bench;
 
-template<typename TVoxelLive, typename TVoxelCanonical, typename TVoxelIndex>
-ITMDynamicFusionLogger<TVoxelLive, TVoxelCanonical, TVoxelIndex>::ITMDynamicFusionLogger() : focusSliceRadius(3) {}
+template<typename TVoxelCanonical, typename TVoxelLive, typename TVoxelIndex>
+ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TVoxelIndex>::ITMDynamicFusionLogger() : focusSliceRadius(3) {}
 
 // region ===================================== RECORDING ==============================================================
 
@@ -44,8 +44,9 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeReco
 
 	// region ================================== 2D SLICES RECORDING ===================================================
 	if (hasFocusCoordinates) {
-		if(recordWarp2DSlices || saveCanonicalScene2DSlicesAsImages || saveLiveScene2DSlicesAsImages){
-			rasterizer = new ITMScene2DSliceLogger(focusCoordinates,100,16.0,outputDirectory);
+		if (recordWarp2DSlices || saveCanonicalScene2DSlicesAsImages || saveLiveScene2DSlicesAsImages) {
+			rasterizer = new ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>(focusCoordinates,
+			                                                                            outputDirectory, 100, 16.0);
 		}
 		if (saveCanonicalScene2DSlicesAsImages) {
 			rasterizer->SaveLiveSceneSlicesAs2DImages_AllDirections(canonicalScene);
@@ -67,7 +68,7 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeReco
 	const std::string energyStatFilePath = outputDirectory + "/energy.txt";
 	energyStatisticsFile = std::ofstream(energyStatFilePath.c_str(), std::ios_base::out);
 	energyStatisticsFile << "data" << "," << "level_set" << "," << "smoothness" << ","
-	                               << "killing" << "," << "total" << std::endl;
+	                     << "killing" << "," << "total" << std::endl;
 	bench::StopTimer("TrackMotion_2_RecordingEnergy");
 
 	if (recordWarps) {
@@ -107,7 +108,7 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeWarp
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
 ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarp2DSlice(int iteration) {
-	if(hasFocusCoordinates && recordWarps){
+	if (hasFocusCoordinates && recordWarps) {
 		cv::Mat warpImg = rasterizer->DrawWarpedSceneImageAroundPoint(canonicalScene) * 255.0f;
 		cv::Mat warpImgChannel, warpImgOut, mask, liveImgChannel, markChannel;
 		blank.copyTo(markChannel);
@@ -131,8 +132,9 @@ ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarp2DSlice(int
 		cv::Mat liveImgOut;
 		liveImg.convertTo(liveImgOut, CV_8UC1);
 		cv::cvtColor(liveImgOut, liveImgOut, cv::COLOR_GRAY2BGR);
-		cv::imwrite(ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::liveIterationFramesFolderName + "live " +
-		            numStringStream.str() + ".png", liveImgOut);
+		cv::imwrite(
+				ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::liveIterationFramesFolderName + "live " +
+				numStringStream.str() + ".png", liveImgOut);
 	}
 }
 
@@ -142,7 +144,7 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeRecord
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene) {
 
 	if (recordWarps) {
-		auto* sceneLogger = sceneLogger;
+
 		sceneLogger->StopSavingWarpState();
 		Vector3i focusCoordinates = focusCoordinates;
 		int focusSliceRadius = focusSliceRadius;
@@ -170,15 +172,15 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeRecord
 	energyStatisticsFile.close();
 }
 
-template<typename TVoxelLive, typename TVoxelCanonical, typename TIndex>
-void ITMDynamicFusionLogger<TVoxelLive, TVoxelCanonical, TIndex>::SaveWarps() {
-	if(recordWarps){
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarps() {
+	if (recordWarps) {
 		this->sceneLogger->SaveCurrentWarpState();
 	}
 }
 
-template<typename TVoxelLive, typename TVoxelCanonical, typename TIndex>
-void ITMDynamicFusionLogger<TVoxelLive, TVoxelCanonical, TIndex>::RecordStatistics(double totalDataEnergy,
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::RecordStatistics(double totalDataEnergy,
                                                                                    double totalLevelSetEnergy,
                                                                                    double totalKillingEnergy,
                                                                                    double totalSmoothnessEnergy,
@@ -188,18 +190,19 @@ void ITMDynamicFusionLogger<TVoxelLive, TVoxelCanonical, TIndex>::RecordStatisti
 
 }
 
-template<typename TVoxelLive, typename TVoxelCanonical, typename TIndex>
-bool ITMDynamicFusionLogger<TVoxelLive, TVoxelCanonical, TIndex>::IsRecordingWarp2DSlices() {
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsRecordingWarp2DSlices() {
 	return this->recordWarp2DSlices;
 }
 
-template<typename TVoxelLive, typename TVoxelCanonical, typename TIndex>
-bool ITMDynamicFusionLogger<TVoxelLive, TVoxelCanonical, TIndex>::IsRecordingWarps() {
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsRecordingWarps() {
 	return this->recordWarps;
 }
-template<typename TVoxelLive, typename TVoxelCanonical, typename TIndex>
-void ITMDynamicFusionLogger<TVoxelLive,TVoxelCanonical,TIndex>::LogHighlight(int hash, int locId,
-                                                                             ITMHighlightIterationInfo info){
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::LogHighlight(int hash, int locId,
+                                                                               ITMHighlightIterationInfo info) {
 	sceneLogger->LogHighlight(hash, locId, 0, info);
 };
 

@@ -48,13 +48,27 @@ using namespace ITMLib;
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ITMSceneMotionTracker_CPU(
-		const ITMLibSettings* settings, ITMDynamicFusionLogger<TVoxelLive, TVoxelCanonical, ITMVoxelBlockHash>& logger)
-		:ITMSceneMotionTracker(settings, logger),
-		 calculateGradientFunctor(this->parameters, this->switches, logger){
+		const ITMLibSettings* settings, ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>& logger)
+		:ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>(settings, logger),
+		 calculateGradientFunctor(this->parameters, this->switches, logger) {
 
 };
 // endregion ============================== END CONSTRUCTORS AND DESTRUCTORS============================================
 
+// region ===================================== HOUSEKEEPING ===========================================================
+
+template<typename TVoxel>
+struct WarpClearFunctor {
+	static void run(TVoxel& voxel) {
+		voxel.warp = Vector3f(0.0f);
+	}
+};
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ClearOutWarps(
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
+	StaticVoxelTraversal_CPU<WarpClearFunctor<TVoxelCanonical>>(canonicalScene);
+};
 
 // endregion ===========================================================================================================
 
@@ -69,19 +83,18 @@ struct ClearOutGradientStaticFunctor {
 	}
 };
 
-template<typename TVoxelCanonical, typename TVoxelLive> void
+template<typename TVoxelCanonical, typename TVoxelLive>
+void
 ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::CalculateWarpGradient(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
-		bool hasFocusCoordinates, const Vector3i& focusCoordinates,
-		ITMSceneLogger<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>* sceneLogger, int sourceFieldIndex,
-		bool restrictZTrackingForDebugging, std::ofstream& energy_stat_file) {
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, bool hasFocusCoordinates,
+		const Vector3i& focusCoordinates, int sourceFieldIndex, bool restrictZTrackingForDebugging) {
 
 	StaticVoxelTraversal_CPU<ClearOutGradientStaticFunctor<TVoxelCanonical>>(canonicalScene);
-	hashManager.AllocateCanonicalFromLive(canonicalScene,liveScene);
+	hashManager.AllocateCanonicalFromLive(canonicalScene, liveScene);
 
-	calculateGradientFunctor.PrepareForOptimization( liveScene, canonicalScene, sourceFieldIndex,
-	                                                 hasFocusCoordinates, focusCoordinates,
-	                                                 restrictZTrackingForDebugging, sceneLogger);
+	calculateGradientFunctor.PrepareForOptimization(liveScene, canonicalScene, sourceFieldIndex, hasFocusCoordinates,
+	                                                focusCoordinates, restrictZTrackingForDebugging);
 
 	DualVoxelPositionTraversal_CPU(liveScene, canonicalScene, calculateGradientFunctor);
 
@@ -187,16 +200,17 @@ const float GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TDirection
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::SmoothWarpGradient(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
 		int sourceSdfIndex) {
 
 	if (this->switches.enableGradientSmoothing) {
 		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, X> passFunctorX(canonicalScene, liveScene,
-		                                                                                  sourceSdfIndex);
+		                                                                          sourceSdfIndex);
 		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, Y> passFunctorY(canonicalScene, liveScene,
-		                                                                                  sourceSdfIndex);
+		                                                                          sourceSdfIndex);
 		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, Z> passFunctorZ(canonicalScene, liveScene,
-		                                                                                  sourceSdfIndex);
+		                                                                          sourceSdfIndex);
 
 		VoxelPositionTraversal_CPU(canonicalScene, passFunctorX);
 		VoxelPositionTraversal_CPU(canonicalScene, passFunctorY);
@@ -208,8 +222,10 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::
 
 // region ======================================== APPLY WARP UPDATE TO THE WARP ITSELF ================================
 template<typename TVoxelCanonical, typename TVoxelLive>
-float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ApplyWarpUpdateToWarp_SingleThreadedVerbose(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
+float
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ApplyWarpUpdateToWarp_SingleThreadedVerbose(
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
 		int sourceSdfIndex) {
 
 	const float learningRate = this->parameters.gradientDescentLearningRate;
@@ -356,7 +372,8 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>:
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ApplyWarpUpdateToWarp(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene) {
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene) {
 
 	return ApplyWarpUpdateToWarp_SingleThreadedVerbose(canonicalScene, liveScene, 0);
 

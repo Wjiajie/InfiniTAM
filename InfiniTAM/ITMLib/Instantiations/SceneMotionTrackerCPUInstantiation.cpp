@@ -14,7 +14,8 @@
 //  limitations under the License.
 //  ================================================================
 
-#include "../Trackers/CPU/ITMSceneMotionTracker_CPU.tpp"
+#include "../SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.tpp"
+#include "../SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.tpp"
 #include "../ITMLibDefines.h"
 
 template class ITMSceneMotionTracker_CPU<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;

@@ -54,8 +54,8 @@ const bool ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::absFillin
 // region ===================================== CONSTRUCTORS / DESTRUCTORS =============================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMScene2DSliceLogger(
-		Vector3i focusCoordinate, unsigned int imageSizeVoxels, float pixelsPerVoxel, std::string outputDirectory)
+ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMScene2DSliceLogger(Vector3i focusCoordinate, std::string outputDirectory, unsigned int imageSizeVoxels,
+                                                                                  float pixelsPerVoxel)
 		:
 		focusCoordinate(focusCoordinate),
 		imageSizeVoxels(imageSizeVoxels),

@@ -97,11 +97,6 @@ public:
 	// endregion
 private:
 	// region ========================================== FUNCTIONS =====================================================
-
-	void GenerateRawLiveFrame(
-			ITMScene <TVoxelLive, TIndex>* liveScene, ITMRenderState* renderState, const ITMTrackingState* trackingState,
-			const ITMView* view);
-
 	void ProcessSwapping(
 			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMRenderState* renderState);
 
@@ -116,7 +111,6 @@ private:
 	                          std::string outputDirectory);
 	void FinalizeProcessing(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                        ITMScene <TVoxelLive, TIndex>* liveScene,ITMRenderState* renderState);
-	template<typename TIndex, typename TVoxelCanonical, typename TIndex, typename TVoxelLive>
 	void PerformSingleOptimizationStep(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                                   ITMScene <TVoxelLive, TIndex>*& liveScene, bool recordWarpUpdates);
 	void PrintSettings();
@@ -126,7 +120,7 @@ private:
 	ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex>* sceneReconstructor;
 	ITMSwappingEngine<TVoxelCanonical, TIndex>* swappingEngine;
 	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>* sceneMotionTracker;
-	ITMDynamicFusionLogger<TVoxelLive,TVoxelCanonical,TIndex> logger;
+	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive,TIndex> logger;
 
 	ITMLibSettings::SwappingMode swappingMode;
 

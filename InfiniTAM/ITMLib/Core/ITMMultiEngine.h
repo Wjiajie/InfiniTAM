@@ -81,11 +81,14 @@ namespace ITMLib
 		}
 
 		/// Extracts a mesh from the current scene and saves it to the model file specified by the file name
-		void SaveSceneToMesh(const char *fileName);
+		void SaveSceneToMesh(const char *fileName) override;
 
 		/// save and load the full scene and relocaliser (if any) to/from file
-		void SaveToFile();
-		void LoadFromFile();
+		void SaveToFile() override;
+		void LoadFromFile() override;
+
+		/// resets the scene and the tracker
+		void resetAll() override;
 
 		/// switch for turning tracking on/off
 		void turnOnTracking() override;

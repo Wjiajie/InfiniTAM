@@ -16,6 +16,7 @@
 #pragma once
 
 //local
+#include "../../Utils/FileIO/ITMDynamicFusionLogger.h"
 #include "../../Objects/Scene/ITMScene.h"
 #include "../../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.h"
 #include "../../Utils/FileIO/ITMScene2DSliceLogger.h"
@@ -53,7 +54,7 @@ public:
 //============================= CONSTRUCTORS / DESTRUCTORS =============================================================
 //TODO: write documentation block -Greg (Github: Algomorph)
 
-	explicit ITMSceneMotionTracker(const ITMLibSettings* settings, ITMDynamicFusionLogger<TVoxelLive,TVoxelCanonical,TIndex>& logger) :
+	explicit ITMSceneMotionTracker(const ITMLibSettings* settings, ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive,TIndex>& logger) :
 			parameters{
 					settings->sceneTrackingGradientDescentLearningRate,
 					settings->sceneTrackingRigidityEnforcementFactor,
@@ -75,16 +76,15 @@ public:
 
 	virtual ~ITMSceneMotionTracker() = default;
 //============================= MEMBER FUNCTIONS =======================================================================
-	virtual void CalculateWarpGradient(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene,
-			bool hasFocusCoordinates, const Vector3i& focusCoordinates,
-			ITMSceneLogger <TVoxelCanonical, TVoxelLive, TIndex>* sceneLogger, int sourceFieldIndex,
-			bool restrictZTrackingForDebugging, std::ofstream& energy_stat_file) = 0;
+	virtual void CalculateWarpGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
+	                                   bool hasFocusCoordinates, const Vector3i& focusCoordinates, int sourceFieldIndex,
+	                                   bool restrictZTrackingForDebugging) = 0;
 	virtual void SmoothWarpGradient(
 			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene,
 			int sourceSdfIndex) = 0;
 	virtual float ApplyWarpUpdateToWarp(
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
+	virtual void ClearOutWarps(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) = 0;
 //============================= MEMBER VARIABLES =======================================================================
 
 	const Parameters parameters;

@@ -29,35 +29,22 @@ using namespace ITMLib;
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ITMSceneMotionTracker_CPU(
-		const ITMLibSettings* settings, ITMDynamicFusionLogger<TVoxelLive,TVoxelCanonical,ITMPlainVoxelArray>& logger)
-		: ITMSceneMotionTracker(settings, logger){
+		const ITMLibSettings* settings, ITMDynamicFusionLogger<TVoxelCanonical,TVoxelLive,ITMPlainVoxelArray>& logger)
+		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive,ITMPlainVoxelArray>(settings, logger){
 }
 // endregion ============================== END CONSTRUCTORS AND DESTRUCTORS============================================
 // region ===================================== CALCULATE GRADIENT SMOOTHING ===========================================
 
-template<typename TVoxelCanonical>
-struct ClearOutGradientStaticFunctor {
-	static void run(TVoxelCanonical& voxel) {
-		voxel.gradient0 = Vector3f(0.0f);
-		voxel.gradient1 = Vector3f(0.0f);
-	}
-};
-
-template<typename TVoxelCanonical, typename TVoxelLive> void
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::CalculateWarpGradient(
-		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene, ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene,
-		bool hasFocusCoordinates, const Vector3i& focusCoordinates,
-		ITMSceneLogger<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>* sceneLogger, int sourceFieldIndex,
-		bool restrictZTrackingForDebugging, std::ofstream& energy_stat_file) {
+template<typename TVoxelCanonical, typename TVoxelLive>
+void
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::CalculateWarpGradient(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
+                                                                                                  ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, bool hasFocusCoordinates,
+                                                                                                  const Vector3i& focusCoordinates, int sourceFieldIndex, bool restrictZTrackingForDebugging) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
 // endregion ===========================================================================================================
 // region ========================================== SOBOLEV GRADIENT SMOOTHING ========================================
-
-enum TraversalDirection : int {
-	X = 0, Y = 1, Z = 2
-};
 
 
 template<typename TVoxelCanonical, typename TVoxelLive>
@@ -81,6 +68,12 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>
 
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMLib::ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ClearOutWarps(
+		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 };
 
 //endregion ============================================================================================================

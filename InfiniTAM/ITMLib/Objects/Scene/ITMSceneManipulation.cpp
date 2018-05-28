@@ -99,4 +99,48 @@ FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, 
 	return -1;
 }
 
+
+/**
+ * \brief Return the exact local positioning indices for a voxel with the given coordinates within a hash data structure
+ * \tparam TVoxel type of voxel
+ * \param vmIndex 0 if not found, 1 if in cache, positive integer representing hash + 1
+ * \param locId
+ * \param xInBlock
+ * \param yInBlock
+ * \param zInBlock
+ * \param voxels
+ * \param hashEntries
+ * \param cache
+ * \param point
+ */
+void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, int& zInBlock,
+                        const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* hashEntries,
+                        ITMLib::ITMVoxelBlockHash::IndexCache& cache, const CONSTPTR(Vector3i)& point) {
+	Vector3i blockPos;
+	int linearIdx = pointToVoxelBlockPos(point, blockPos);
+	zInBlock = linearIdx / (SDF_BLOCK_SIZE * SDF_BLOCK_SIZE);
+	yInBlock = (linearIdx % (SDF_BLOCK_SIZE * SDF_BLOCK_SIZE)) / SDF_BLOCK_SIZE;
+	xInBlock = linearIdx - zInBlock * (SDF_BLOCK_SIZE*SDF_BLOCK_SIZE) - yInBlock * SDF_BLOCK_SIZE;
+
+	if IS_EQUAL3(blockPos, cache.blockPos){
+		vmIndex = true;
+	}
+
+	int hashIdx = hashIndex(blockPos);
+
+	while (true){
+		ITMHashEntry hashEntry = hashEntries[hashIdx];
+
+		if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= 0){
+			cache.blockPos = blockPos; cache.blockPtr = hashEntry.ptr * SDF_BLOCK_SIZE3;
+			vmIndex = hashIdx + 1; // add 1 to support legacy true / false operations for isFound
+		}
+
+		if (hashEntry.offset < 1) break;
+		hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
+	}
+
+	vmIndex = false;
+};
+
 }//namespace ITMLib

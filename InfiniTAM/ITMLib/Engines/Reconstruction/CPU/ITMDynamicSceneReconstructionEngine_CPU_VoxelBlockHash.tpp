@@ -124,6 +124,8 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int liveSourceFieldIndex) {
 
+	hashManager.AllocateCanonicalFromLive(canonicalScene,liveScene);
+
 	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
 
@@ -216,18 +218,6 @@ private:
 	const int flagFieldIndex;
 };
 
-template<typename TVoxel>
-struct WarpClearFunctor {
-	static void run(TVoxel& voxel) {
-		voxel.warp = Vector3f(0.0f);
-	}
-};
-
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ClearOutWarps(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
-	StaticVoxelTraversal_CPU<WarpClearFunctor<TVoxelCanonical>>(canonicalScene);
-};
 
 
 template<typename TVoxelWarpSource, typename TVoxelSdf>
@@ -329,7 +319,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 	// Allocate new blocks where necessary, filter based on flags from source
 	hashManager.AllocateWarpedLive(canonicalScene, liveScene, sourceSdfIndex);
 
-	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive,
+	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive>
 			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
 
 	// Interpolate to obtain the new live frame values (at target index)

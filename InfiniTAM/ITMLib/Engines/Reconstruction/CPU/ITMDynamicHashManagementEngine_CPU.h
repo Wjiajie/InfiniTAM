@@ -24,7 +24,7 @@
 
 namespace ITMLib{
 
-template<typename TVoxelLive, typename TVoxelCanonical>
+template<typename TVoxelCanonical, typename TVoxelLive>
 class ITMDynamicHashManagementEngine_CPU {
 public:
 	ITMDynamicHashManagementEngine_CPU();
@@ -40,9 +40,10 @@ public:
 	 * \param onlyUpdateVisibleList [in] whether we want to allocate only the hash entry blocks currently visible
 	 * \param resetVisibleList  [in] reset visibility list upon completion
 	 */
-	void AllocateLiveSceneFromDepth(ITMScene <TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view,
-	                                const ITMTrackingState* trackingState, const ITMRenderState* renderState,
-	                                bool onlyUpdateVisibleList = false, bool resetVisibleList = false);
+	void AllocateLiveSceneFromDepth(
+			ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view,
+			const ITMTrackingState* trackingState,const ITMRenderState* renderState,
+			bool onlyUpdateVisibleList = false, bool resetVisibleList = false);
 	void ExpandAllocatedCanonicalStableRegion(ITMScene <TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene);
 	void AllocateCanonicalFromLive(ITMScene <TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 	                               ITMScene <TVoxelLive, ITMVoxelBlockHash>* liveScene);

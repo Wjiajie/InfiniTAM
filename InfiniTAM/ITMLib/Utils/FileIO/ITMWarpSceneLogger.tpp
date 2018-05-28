@@ -308,11 +308,7 @@ void ITMWarpSceneLogger<TVoxel, TIndex>::SaveCompact() {
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpSceneLogger<TVoxel, TIndex>::LoadCompact() {
-	ITMDynamicSceneReconstructionEngine<TVoxel, TVoxel, TIndex>* reconstructionEngine =
-			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel,TVoxel,TIndex>(
-					ITMLibSettings::DEVICE_CPU);
-	reconstructionEngine->ResetLiveScene(scene);
-	delete reconstructionEngine;
+	ITMSceneManipulationEngine_CPU<TVoxel,TIndex>::ResetScene(scene);
 	scene->LoadFromDirectoryCompact_CPU(scenePath.c_str());
 	ITMSceneStatisticsCalculator<TVoxel, TIndex> statisticsCalculator;
 	this->voxelCount = statisticsCalculator.ComputeAllocatedVoxelCount(scene);

@@ -40,9 +40,9 @@ public:
 
 	static float SdfToValue(float sdf);
 
-	explicit ITMScene2DSliceLogger(Vector3i focusCoordinate,
+	explicit ITMScene2DSliceLogger(Vector3i focusCoordinate, std::string outputDirectory,
 	                               unsigned int imageSizeVoxels = 100,
-	                               float pixelsPerVoxel = 16.0, std::string outputDirectory);
+	                               float pixelsPerVoxel = 16.0);
 
 	virtual ~ITMScene2DSliceLogger() {}
 
@@ -64,7 +64,7 @@ public:
 
 
 	const Vector3i focusCoordinate;
-	static const std::string outputDirectory;
+	const std::string outputDirectory;
 
 protected:
 	template<typename TVoxel>

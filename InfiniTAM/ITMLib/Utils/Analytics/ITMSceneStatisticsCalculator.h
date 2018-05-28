@@ -15,8 +15,8 @@
 //  ================================================================
 #pragma once
 
-#include "ITMMath.h"
-#include "../Objects/Scene/ITMScene.h"
+#include "../ITMMath.h"
+#include "../../Objects/Scene/ITMScene.h"
 
 namespace ITMLib {
 template<typename TVoxel, typename TIndex>
