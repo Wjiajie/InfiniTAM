@@ -15,11 +15,10 @@
 //  ================================================================
 
 #include "../ITMLibDefines.h"
-#include "../Trackers/CUDA/ITMSceneMotionTracker_CUDA.tcu"
+#include "../SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA.tcu"
 
 namespace ITMLib{
 
-template
-class ITMSceneMotionTracker_CUDA<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+template class ITMSceneMotionTracker_CUDA<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 
 }

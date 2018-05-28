@@ -36,6 +36,14 @@ public:
 	void SaveWarp2DSlice(int iteration);
 	void SaveWarps();
 	void FinalizeRecording(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene);
+	void RecordStatistics(double totalDataEnergy,
+	                      double totalLevelSetEnergy,
+	                      double totalKillingEnergy,
+	                      double totalSmoothnessEnergy,
+	                      double totalEnergy);
+	bool IsRecordingWarp2DSlices();
+	bool IsRecordingWarps();
+	void LogHighlight(int hash, int locId, ITMHighlightIterationInfo info);
 private:
 	// internal file intput/output
 	ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>* rasterizer;
@@ -43,7 +51,7 @@ private:
 	ITMScene <TVoxelCanonical, TIndex>* canonicalScene;
 	ITMScene <TVoxelLive, TIndex>* liveScene;
 
-	std::ofstream energy_stat_file;
+	std::ofstream energyStatisticsFile;
 
 	// templates //TODO outsource to ITMScene2DSliceLogger
 	cv::Mat blank;
@@ -61,5 +69,3 @@ private:
 };
 
 } //namespace InfiniTAM
-
-

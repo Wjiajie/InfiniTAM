@@ -172,7 +172,8 @@ set(ITMLIB_ENGINES_RECONSTRUCTION_HEADERS
 ##
 set(ITMLIB_ENGINES_RECONSTRUCTION_CPU_SOURCES
     Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.tpp
-    Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU.tpp
+    Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU_VoxelBlockHash.tpp
+    Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU_PlainVoxelArray.tpp
     Engines/Reconstruction/CPU/ITMSurfelSceneReconstructionEngine_CPU.tpp
     Engines/Reconstruction/CPU/ITMDynamicHashManagement_CPU.tpp
     )
@@ -498,8 +499,9 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_HEADERS
     )
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_SOURCES
-    SceneMotionTrackers/CPU/ITMCalculateWarpGradientFunctor.tpp
-    SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU.tpp
+    SceneMotionTrackers/CPU/ITMCalculateWarpGradientFunctor.h
+    SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.tpp
+    SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.tpp
     )
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_HEADERS

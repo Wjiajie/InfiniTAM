@@ -70,7 +70,6 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelLive, TVoxelCanonical>::AllocateLi
 
 	float* depth = view->depth->GetData(MEMORYDEVICE_CPU);
 	int* voxelAllocationList = scene->localVBA.GetAllocationList();
-	int* excessAllocationList = scene->index.GetExcessAllocationList();
 	ITMHashEntry* hashTable = scene->index.GetEntries();
 	ITMHashSwapState* swapStates = scene->globalCache != nullptr ? scene->globalCache->GetSwapStates(false) : 0;
 	int* visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
@@ -110,8 +109,7 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelLive, TVoxelCanonical>::AllocateLi
 	if (onlyUpdateVisibleList) useSwapping = false;
 	//TODO: replace with call to AllocateHashEntriesUsingLists_CPU in SceneManipulation
 	if (!onlyUpdateVisibleList) {
-		AllocateHashEntriesUsingLists_CPU(scene, liveEntryAllocationTypes, allocationBlockCoordinates,
-		                                  ITMLib::STABLE);
+		AllocateHashEntriesUsingLists_CPU(scene, liveEntryAllocationTypes, allocationBlockCoordinates,ITMLib::STABLE);
 	}
 
 	//build visible list
@@ -142,7 +140,6 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelLive, TVoxelCanonical>::AllocateLi
 			visibleEntryIDs[noVisibleEntries] = targetIdx;
 			noVisibleEntries++;
 		}
-
 	}
 
 	//reallocate deleted ones from previous swap operation

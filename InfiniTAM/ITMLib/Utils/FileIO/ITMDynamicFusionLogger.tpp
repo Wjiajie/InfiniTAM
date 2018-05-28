@@ -65,8 +65,8 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeReco
 	bench::StartTimer("TrackMotion_2_RecordingEnergy");
 
 	const std::string energyStatFilePath = outputDirectory + "/energy.txt";
-	energy_stat_file = std::ofstream(energyStatFilePath.c_str(), std::ios_base::out);
-	energy_stat_file << "data" << "," << "level_set" << "," << "smoothness" << ","
+	energyStatisticsFile = std::ofstream(energyStatFilePath.c_str(), std::ios_base::out);
+	energyStatisticsFile << "data" << "," << "level_set" << "," << "smoothness" << ","
 	                               << "killing" << "," << "total" << std::endl;
 	bench::StopTimer("TrackMotion_2_RecordingEnergy");
 
@@ -167,7 +167,7 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeRecord
 
 	delete rasterizer;
 	rasterizer = nullptr;
-	energy_stat_file.close();
+	energyStatisticsFile.close();
 }
 
 template<typename TVoxelLive, typename TVoxelCanonical, typename TIndex>
@@ -176,5 +176,32 @@ void ITMDynamicFusionLogger<TVoxelLive, TVoxelCanonical, TIndex>::SaveWarps() {
 		this->sceneLogger->SaveCurrentWarpState();
 	}
 }
+
+template<typename TVoxelLive, typename TVoxelCanonical, typename TIndex>
+void ITMDynamicFusionLogger<TVoxelLive, TVoxelCanonical, TIndex>::RecordStatistics(double totalDataEnergy,
+                                                                                   double totalLevelSetEnergy,
+                                                                                   double totalKillingEnergy,
+                                                                                   double totalSmoothnessEnergy,
+                                                                                   double totalEnergy) {
+	energyStatisticsFile << totalDataEnergy << ", " << totalLevelSetEnergy << ", " << totalKillingEnergy << ", "
+	                     << totalSmoothnessEnergy << ", " << totalEnergy << std::endl;
+
+}
+
+template<typename TVoxelLive, typename TVoxelCanonical, typename TIndex>
+bool ITMDynamicFusionLogger<TVoxelLive, TVoxelCanonical, TIndex>::IsRecordingWarp2DSlices() {
+	return this->recordWarp2DSlices;
+}
+
+template<typename TVoxelLive, typename TVoxelCanonical, typename TIndex>
+bool ITMDynamicFusionLogger<TVoxelLive, TVoxelCanonical, TIndex>::IsRecordingWarps() {
+	return this->recordWarps;
+}
+template<typename TVoxelLive, typename TVoxelCanonical, typename TIndex>
+void ITMDynamicFusionLogger<TVoxelLive,TVoxelCanonical,TIndex>::LogHighlight(int hash, int locId,
+                                                                             ITMHighlightIterationInfo info){
+	sceneLogger->LogHighlight(hash, locId, 0, info);
+};
+
 
 // endregion ===========================================================================================================

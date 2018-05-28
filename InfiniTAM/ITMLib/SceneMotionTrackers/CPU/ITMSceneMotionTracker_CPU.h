@@ -18,49 +18,68 @@
 #include <opencv2/core/mat.hpp>
 #include "../Interface/ITMSceneMotionTracker.h"
 #include "../../Utils/ITMHashBlockProperties.h"
+#include "ITMCalculateWarpGradientFunctor.h"
+
 
 namespace ITMLib {
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-class ITMSceneMotionTracker_CPU :
-		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex> {
+
+
+//region ======================================== VOXEL BLOCK HASH =====================================================
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+class ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash> :
+		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash> {
 public:
-	static int GetSourceLiveSdfIndex(int iteration);
-	static int GetTargetLiveSdfIndex(int iteration);
+	explicit ITMSceneMotionTracker_CPU(const ITMLibSettings* settings, ITMDynamicFusionLogger<TVoxelLive,TVoxelCanonical,ITMVoxelBlockHash>& logger);
+	virtual ~ITMSceneMotionTracker_CPU() = default;
 
-
-	explicit ITMSceneMotionTracker_CPU(const ITMLibSettings* settings);
-	virtual ~ITMSceneMotionTracker_CPU();
-
-	void WarpCanonicalToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                         ITMScene<TVoxelLive, TIndex>* liveScene) override;
-
-
-protected:
-	void ApplyWarpFieldToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                          ITMScene<TVoxelLive, TIndex>* liveScene) override;
-	void CalculateWarpGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                           ITMScene<TVoxelLive, TIndex>* liveScene) override;
+	void CalculateWarpGradient(
+			ITMScene <TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, ITMScene <TVoxelLive, ITMVoxelBlockHash>* liveScene,
+			bool hasFocusCoordinates, const Vector3i& focusCoordinates,
+			ITMSceneLogger <TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>* sceneLogger, int sourceFieldIndex,
+			bool restrictZTrackingForDebugging, std::ofstream& energy_stat_file) override;
 	void SmoothWarpGradient(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;
+			ITMScene <TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, ITMScene <TVoxelLive, ITMVoxelBlockHash>* liveScene,
+			int sourceSdfIndex) override;
 	float ApplyWarpUpdateToWarp(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) override;
-	void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                           ITMScene<TVoxelLive, TIndex>* liveScene) override;
-
-	void ClearOutWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) override;
+			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene) override;
 
 
 private:
 	float ApplyWarpUpdateToWarp_SingleThreadedVerbose(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
+			ITMScene <TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, ITMScene <TVoxelLive, ITMVoxelBlockHash>* liveScene,
+			int sourceSdfIndex);
 
-	void InitializeHelper(const ITMLib::ITMSceneParams& sceneParams);
-	void PrintSettings();
-	ORUtils::MemoryBlock<unsigned char>* hashEntryAllocationTypes;
-
+	ITMDynamicHashManagementEngine_CPU<TVoxelCanonical,TVoxelLive> hashManager;
+	ITMCalculateWarpGradientFunctor<TVoxelCanonical, TVoxelLive> calculateGradientFunctor;
 
 };
 
+// endregion ===========================================================================================================
+//region ======================================== PLAIN VOXEL ARRAY ====================================================
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+class ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>:
+		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray> {
+public:
+	explicit ITMSceneMotionTracker_CPU(
+			const ITMLibSettings* settings, ITMDynamicFusionLogger<TVoxelLive,TVoxelCanonical,ITMPlainVoxelArray>& logger);
+	virtual ~ITMSceneMotionTracker_CPU() = default;
+
+	void CalculateWarpGradient(
+			ITMScene <TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene, ITMScene <TVoxelLive, ITMPlainVoxelArray>* liveScene,
+			bool hasFocusCoordinates, const Vector3i& focusCoordinates,
+			ITMSceneLogger <TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>* sceneLogger, int sourceFieldIndex,
+			bool restrictZTrackingForDebugging, std::ofstream& energy_stat_file) override;
+	void SmoothWarpGradient(
+			ITMScene <TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene, ITMScene <TVoxelLive, ITMPlainVoxelArray>* liveScene,
+			int sourceSdfIndex) override;
+	float ApplyWarpUpdateToWarp(
+			ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene, ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene) override;
+
+};
+
+// endregion ===========================================================================================================
 
 }//namespace ITMLib
 

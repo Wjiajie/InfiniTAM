@@ -21,6 +21,8 @@
 #include "../../Utils/FileIO/ITMScene2DSliceLogger.h"
 #include "../../Utils/ITMLibSettings.h"
 #include "../../Utils/FileIO/ITMSceneLogger.h"
+#include "../../Utils/ITMPrintHelpers.h"
+#include "../Shared/ITMSceneMotionTracker_Debug.h"
 
 namespace ITMLib {
 
@@ -48,12 +50,10 @@ public:
 		const bool enableKillingTerm;
 		const bool enableGradientSmoothing;
 	};
-
 //============================= CONSTRUCTORS / DESTRUCTORS =============================================================
 //TODO: write documentation block -Greg (Github: Algomorph)
-//TODO: simplify constructor to just accept the ITMLibSettings object and set the parameters from it
 
-	explicit ITMSceneMotionTracker(const ITMLibSettings* settings) :
+	explicit ITMSceneMotionTracker(const ITMLibSettings* settings, ITMDynamicFusionLogger<TVoxelLive,TVoxelCanonical,TIndex>& logger) :
 			parameters{
 					settings->sceneTrackingGradientDescentLearningRate,
 					settings->sceneTrackingRigidityEnforcementFactor,
@@ -69,35 +69,46 @@ public:
 					settings->enableSmoothingTerm,
 					settings->enableKillingTerm,
 					settings->enableGradientSmoothing
-			} {}
+			} {
+		PrintSettings();
+	}
 
 	virtual ~ITMSceneMotionTracker() = default;
-
 //============================= MEMBER FUNCTIONS =======================================================================
-
-
-	/**
-	 * \brief Warp canonical back to live
-	 * \param canonicalScene
-	 * \param liveScene
-	 */
-	virtual void
-	WarpCanonicalToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
-	virtual void CalculateWarpGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                   ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
+	virtual void CalculateWarpGradient(
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene,
+			bool hasFocusCoordinates, const Vector3i& focusCoordinates,
+			ITMSceneLogger <TVoxelCanonical, TVoxelLive, TIndex>* sceneLogger, int sourceFieldIndex,
+			bool restrictZTrackingForDebugging, std::ofstream& energy_stat_file) = 0;
 	virtual void SmoothWarpGradient(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene,
+			int sourceSdfIndex) = 0;
 	virtual float ApplyWarpUpdateToWarp(
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
-	virtual void ApplyWarpUpdateToLive(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                   ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
-
-	virtual void ClearOutWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
-
 //============================= MEMBER VARIABLES =======================================================================
 
 	const Parameters parameters;
 	const Switches switches;
+protected:
+	void PrintSettings() {
+		std::cout << bright_cyan << "*** ITMSceneMotionTracker_CPU Settings: ***" << reset << std::endl;
+		std::cout << "Data term enabled: " << printBool(this->switches.enableDataTerm) << std::endl;
+		std::cout << "Smoothing term enabled: " << printBool(this->switches.enableSmoothingTerm) << std::endl;
+		std::cout << "Level Set term enabled: " << printBool(this->switches.enableLevelSetTerm) << std::endl;
+		std::cout << "Killing term enabled: " << printBool(this->switches.enableKillingTerm) << std::endl;
+		std::cout << "Gradient smoothing enabled: " << printBool(this->switches.enableGradientSmoothing) << std::endl
+		          << std::endl;
+
+		std::cout << "Gradient descent learning rate: " << this->parameters.gradientDescentLearningRate << std::endl;
+		std::cout << "Rigidity enforcement factor: " << this->parameters.rigidityEnforcementFactor << std::endl;
+		std::cout << "Weight of the data term: " << this->parameters.weightDataTerm << std::endl;
+		std::cout << "Weight of the smoothness term: " << this->parameters.weightSmoothnessTerm << std::endl;
+		std::cout << "Weight of the level set term: " << this->parameters.weightLevelSetTerm << std::endl;
+		std::cout << "Epsilon for the level set term: " << this->parameters.epsilon << std::endl;
+		std::cout << "Unity scaling factor: " << this->parameters.unity << std::endl;
+		std::cout << bright_cyan << "*** *********************************** ***" << reset << std::endl;
+	}
+
 };
 
 

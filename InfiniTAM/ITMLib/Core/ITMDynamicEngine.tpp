@@ -47,7 +47,7 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(
 	denseMapper->ResetLiveScene(liveScene);
 
 	imuCalibrator = new ITMIMUCalibrator_iPad();
-	tracker = ITMTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, settings, lowLevelEngine, imuCalibrator,
+	tracker = ITMCameraTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, settings, lowLevelEngine, imuCalibrator,
 	                                             liveScene->sceneParams);
 	cameraTrackingController = new ITMTrackingController(tracker, settings);
 
@@ -267,81 +267,79 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
 	ORUtils::SE3Pose oldPose(*(trackingState->pose_d));
 	if (trackingActive) cameraTrackingController->Track(trackingState, view);
 
-	ITMTrackingState::TrackingResult trackerResult = ITMTrackingState::TRACKING_GOOD;
+	ITMTrackingState::TrackingResult adjustedTrackingResult = ITMTrackingState::TRACKING_GOOD;
+
 	switch (settings->behaviourOnFailure) {
 		case ITMLibSettings::FAILUREMODE_RELOCALISE:
-			trackerResult = trackingState->trackerResult;
+			//relocalisation
+			adjustedTrackingResult = trackingState->trackerResult;
+			if (adjustedTrackingResult == ITMTrackingState::TRACKING_GOOD && relocalisationCount > 0)
+				relocalisationCount--;
+
+			view->depth->UpdateHostFromDevice();
+
+			{
+				int NN;
+				float distances;
+				//find and add keyframe, if necessary
+				bool hasAddedKeyframe = relocaliser->ProcessFrame(view->depth, trackingState->pose_d, 0, 1, &NN,
+				                                                  &distances,
+				                                                  adjustedTrackingResult ==
+				                                                  ITMTrackingState::TRACKING_GOOD &&
+				                                                  relocalisationCount == 0);
+
+				//frame not added and tracking failed -> we need to relocalise
+				if (!hasAddedKeyframe && adjustedTrackingResult == ITMTrackingState::TRACKING_FAILED) {
+					relocalisationCount = 10;
+
+					// Reset previous rgb frame since the rgb image is likely different than the one acquired when setting the keyframe
+					view->rgb_prev->Clear();
+
+					const FernRelocLib::PoseDatabase::PoseInScene& keyframe = relocaliser->RetrievePose(NN);
+					trackingState->pose_d->SetFrom(&keyframe.pose);
+
+					denseMapper->UpdateVisibleList(view, trackingState, liveScene, renderState_live, true);
+
+					cameraTrackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine,
+					                                  renderState_live);
+					cameraTrackingController->Track(trackingState, view);
+
+					adjustedTrackingResult = trackingState->trackerResult;
+				}
+			}
 			break;
 		case ITMLibSettings::FAILUREMODE_STOP_INTEGRATION:
 			if (trackingState->trackerResult != ITMTrackingState::TRACKING_FAILED)
-				trackerResult = trackingState->trackerResult;
-			else trackerResult = ITMTrackingState::TRACKING_POOR;
+				adjustedTrackingResult = trackingState->trackerResult;
+			else adjustedTrackingResult = ITMTrackingState::TRACKING_POOR;
 			break;
 		default:
 			break;
 	}
 
-	//relocalisation
-	int addKeyframeIdx = -1;
-	if (settings->behaviourOnFailure == ITMLibSettings::FAILUREMODE_RELOCALISE) {
-		if (trackerResult == ITMTrackingState::TRACKING_GOOD && relocalisationCount > 0) relocalisationCount--;
 
-		int NN;
-		float distances;
-		view->depth->UpdateHostFromDevice();
 
-		//find and add keyframe, if necessary
-		bool hasAddedKeyframe = relocaliser->ProcessFrame(view->depth, trackingState->pose_d, 0, 1, &NN, &distances,
-		                                                  trackerResult == ITMTrackingState::TRACKING_GOOD &&
-		                                                  relocalisationCount == 0);
-
-		//frame not added and tracking failed -> we need to relocalise
-		if (!hasAddedKeyframe && trackerResult == ITMTrackingState::TRACKING_FAILED) {
-			relocalisationCount = 10;
-
-			// Reset previous rgb frame since the rgb image is likely different than the one acquired when setting the keyframe
-			view->rgb_prev->Clear();
-
-			const FernRelocLib::PoseDatabase::PoseInScene& keyframe = relocaliser->RetrievePose(NN);
-			trackingState->pose_d->SetFrom(&keyframe.pose);
-
-			denseMapper->UpdateVisibleList(view, trackingState, liveScene, renderState_live, true);
-
-			cameraTrackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine,
-			                                  renderState_live);
-			cameraTrackingController->Track(trackingState, view);
-
-			trackerResult = trackingState->trackerResult;
-		}
-	}
 
 	bool didFusion = false;
-	if ((trackerResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) &&
+	if ((adjustedTrackingResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) &&
 	    (relocalisationCount == 0)) {
 		if (framesProcessed > 0) {
 			denseMapper->ProcessFrame(view, trackingState, canonicalScene, liveScene, renderState_live,
 			                          recordWarpsForNextFrame, recordWarp2DSliceForNextFrame, nextFrameOutputPath);
 		} else {
-			denseMapper->ProcessInitialFrame(view,trackingState,canonicalScene,liveScene,renderState_live);
+			denseMapper->ProcessInitialFrame(view, trackingState, canonicalScene, liveScene, renderState_live);
 		}
 		didFusion = true;
 		if (framesProcessed > 50) trackingInitialised = true;
 		framesProcessed++;
 	}
 
-	if (trackerResult == ITMTrackingState::TRACKING_GOOD || trackerResult == ITMTrackingState::TRACKING_POOR) {
+	if (adjustedTrackingResult == ITMTrackingState::TRACKING_GOOD ||
+	    adjustedTrackingResult == ITMTrackingState::TRACKING_POOR) {
 		if (!didFusion) denseMapper->UpdateVisibleList(view, trackingState, liveScene, renderState_live);
 
 		// raycast to renderState_live for tracking and free visualisation
 		cameraTrackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine, renderState_live);
-
-		if (addKeyframeIdx >= 0) {
-			ORUtils::MemoryBlock<Vector4u>::MemoryCopyDirection memoryCopyDirection =
-					settings->deviceType == ITMLibSettings::DEVICE_CUDA ? ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CUDA
-					                                                    : ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU;
-
-			kfRaycast->SetFrom(renderState_live->raycastImage, memoryCopyDirection);
-		}
 	} else *trackingState->pose_d = oldPose;
 
 #ifdef OUTPUT_TRAJECTORY_QUATERNIONS
@@ -356,7 +354,7 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
 	fprintf(stderr, "%f %f %f %f %f %f %f\n", t[0], t[1], t[2], q[1], q[2], q[3], q[0]);
 #endif
 
-	return trackerResult;
+	return adjustedTrackingResult;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

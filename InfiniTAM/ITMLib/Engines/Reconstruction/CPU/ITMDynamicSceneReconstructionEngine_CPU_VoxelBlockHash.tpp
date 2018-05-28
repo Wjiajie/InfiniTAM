@@ -1,10 +1,13 @@
 // Copyright 2014-2017 Oxford University Innovation Limited and the authors of InfiniTAM
 
+#include <cfloat>
 #include "ITMDynamicSceneReconstructionEngine_CPU.h"
 
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../../Objects/Scene/ITMSceneManipulation.h"
+#include "../../../Objects/Scene/ITMSceneTraversal.h"
+#include "../../../Objects/Scene/ITMTrilinearInterpolation.h"
 
 using namespace ITMLib;
 
@@ -114,8 +117,8 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 	}
 }
 // endregion ===========================================================================================================
-
 // region =================================== FUSION ===================================================================
+
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::FuseFrame(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
@@ -197,81 +200,146 @@ ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlo
 	this->IntegrateIntoScene(scene,view,trackingState,renderState);
 }
 
-
 // endregion ===========================================================================================================
+// region ===================================== APPLY WARP/UPDATE TO LIVE ==============================================
 
-// endregion ===========================================================================================================
-// region ========================================= PLAIN VOXEL ARRAY ==================================================
+template<typename TVoxelMulti>
+struct IndexedFieldClearFunctor {
+	IndexedFieldClearFunctor(int flagFieldIndex) : flagFieldIndex(flagFieldIndex) {}
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::IntegrateIntoScene(
-		ITMScene<TVoxelLive, ITMPlainVoxelArray>* scene, const ITMView* view,
-		const ITMTrackingState* trackingState, const ITMRenderState* renderState) {
-	Vector2i rgbImgSize = view->rgb->noDims;
-	Vector2i depthImgSize = view->depth->noDims;
-	float voxelSize = scene->sceneParams->voxelSize;
-
-	Matrix4f M_d, M_rgb;
-	Vector4f projParams_d, projParams_rgb;
-
-	M_d = trackingState->pose_d->GetM();
-	if (TVoxelLive::hasColorInformation) M_rgb = view->calib.trafo_rgb_to_depth.calib_inv * M_d;
-
-	projParams_d = view->calib.intrinsics_d.projectionParamsSimple.all;
-	projParams_rgb = view->calib.intrinsics_rgb.projectionParamsSimple.all;
-
-	float mu = scene->sceneParams->mu;
-	int maxW = scene->sceneParams->maxW;
-
-	float* depth = view->depth->GetData(MEMORYDEVICE_CPU);
-	Vector4u* rgb = view->rgb->GetData(MEMORYDEVICE_CPU);
-	TVoxelLive* voxelArray = scene->localVBA.GetVoxelBlocks();
-
-	const ITMPlainVoxelArray::IndexData* arrayInfo = scene->index.getIndexData();
-
-	bool stopIntegratingAtMaxW = scene->sceneParams->stopIntegratingAtMaxW;
-
-#ifdef WITH_OPENMP
-#pragma omp parallel for
-#endif
-	for (int locId = 0; locId < scene->index.getVolumeSize().x * scene->index.getVolumeSize().y *
-	                            scene->index.getVolumeSize().z; ++locId) {
-		int z = locId / (scene->index.getVolumeSize().x * scene->index.getVolumeSize().y);
-		int tmp = locId - z * scene->index.getVolumeSize().x * scene->index.getVolumeSize().y;
-		int y = tmp / scene->index.getVolumeSize().x;
-		int x = tmp - y * scene->index.getVolumeSize().x;
-
-		Vector4f pt_model;
-
-		if (stopIntegratingAtMaxW) if (voxelArray[locId].w_depth == maxW) continue;
-
-		pt_model.x = (float) (x + arrayInfo->offset.x) * voxelSize;
-		pt_model.y = (float) (y + arrayInfo->offset.y) * voxelSize;
-		pt_model.z = (float) (z + arrayInfo->offset.z) * voxelSize;
-		pt_model.w = 1.0f;
-
-		ComputeUpdatedLiveVoxelInfo<
-				TVoxelLive::hasColorInformation,
-				TVoxelLive::hasConfidenceInformation,
-				TVoxelLive::hasSemanticInformation,
-				TVoxelLive>::compute(voxelArray[locId], pt_model, M_d, projParams_d, M_rgb, projParams_rgb, mu, maxW,
-		                             depth, depthImgSize, rgb, rgbImgSize);
+	void operator()(TVoxelMulti& voxel) {
+		voxel.flag_values[flagFieldIndex] = ITMLib::VOXEL_UNKNOWN;
+		voxel.sdf_values[flagFieldIndex] = TVoxelMulti::SDF_initialValue();
 	}
+
+private:
+	const int flagFieldIndex;
+};
+
+template<typename TVoxel>
+struct WarpClearFunctor {
+	static void run(TVoxel& voxel) {
+		voxel.warp = Vector3f(0.0f);
+	}
+};
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ClearOutWarps(
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
+	StaticVoxelTraversal_CPU<WarpClearFunctor<TVoxelCanonical>>(canonicalScene);
+};
+
+
+template<typename TVoxelWarpSource, typename TVoxelSdf>
+struct TrilinearInterpolationFunctor {
+	/**
+	 * \brief Initialize to transfer data from source sdf scene to a target sdf scene using the warps in the warp source scene
+	 * \details traverses
+	 * \param sdfSourceScene
+	 * \param warpSourceScene
+	 */
+	TrilinearInterpolationFunctor(
+			ITMScene<TVoxelSdf, ITMVoxelBlockHash>* sdfSourceScene,
+			ITMScene<TVoxelWarpSource, ITMVoxelBlockHash>* warpSourceScene,
+			int sourceSdfIndex, int targetSdfIndex) :
+
+			sdfSourceScene(sdfSourceScene),
+			sdfSourceVoxels(sdfSourceScene->localVBA.GetVoxelBlocks()),
+			sdfSourceHashEntries(sdfSourceScene->index.GetEntries()),
+			sdfSourceCache(),
+
+			warpSourceScene(warpSourceScene),
+			warpSourceVoxels(warpSourceScene->localVBA.GetVoxelBlocks()),
+			warpSourceHashEntries(warpSourceScene->index.GetEntries()),
+			warpSourceCache(),
+			sourceSdfIndex(sourceSdfIndex),
+			targetSdfIndex(targetSdfIndex) {}
+
+
+	void operator()(TVoxelSdf& destinationVoxel, Vector3i warpAndDestionVoxelPosition) {
+		int vmIndex;
+		// perform lookup at current position in canonical
+		//TODO: perform dual traversal instead to get second voxel without lookup
+		const TVoxelWarpSource& warpSourceVoxel = readVoxel(warpSourceVoxels, warpSourceHashEntries,
+		                                                    warpAndDestionVoxelPosition, vmIndex, warpSourceCache);
+		Vector3f warpedPosition = warpAndDestionVoxelPosition.toFloat() + warpSourceVoxel.gradient0;
+
+		bool struckKnown, struckNonTruncated;
+		float cumulativeWeight;
+		float sdf = InterpolateMultiSdfTrilinearly_StruckKnown(
+				sdfSourceVoxels, sdfSourceHashEntries, warpedPosition, sourceSdfIndex, sdfSourceCache, struckKnown);
+
+		destinationVoxel.sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sdf);
+
+		// Update flags
+		if (struckKnown) {
+			if (1.0f - std::abs(sdf) < FLT_EPSILON) {
+				destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_TRUNCATED;
+			} else {
+				destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_NONTRUNCATED;
+			}
+		}
+	}
+
+
+private:
+
+	ITMScene<TVoxelSdf, ITMVoxelBlockHash>* sdfSourceScene;
+	TVoxelSdf* sdfSourceVoxels;
+	ITMHashEntry* sdfSourceHashEntries;
+	ITMVoxelBlockHash::IndexCache sdfSourceCache;
+
+	ITMScene<TVoxelWarpSource, ITMVoxelBlockHash>* warpSourceScene;
+	TVoxelWarpSource* warpSourceVoxels;
+	ITMHashEntry* warpSourceHashEntries;
+	ITMVoxelBlockHash::IndexCache warpSourceCache;
+
+	const int sourceSdfIndex;
+	const int targetSdfIndex;
+};
+
+/**
+ * \brief Uses trilinear interpolation of the live frame at [canonical voxel positions + scaled engergy gradient]
+ *  (not complete warps) to generate a new live SDF grid in the target scene. Intended to be used at every iteration.
+ * \details Assumes target frame is empty / has been reset.
+ * Does 3 things:
+ * <ol>
+ *  <li> Traverses allocated canonical hash blocks and voxels, checks raw frame at [],
+ *       if there is a non-truncated voxel in the live frame, marks the block in target sdf at the current canonical
+ *       hash block position for allocation
+ *  <li> Traverses target hash blocks, if one is marked for allocation, allocates it
+ *  <li> Traverses allocated target hash blocks and voxels, retrieves canonical voxel at same location, if it is marked
+ *       as "truncated", skips it, otherwise uses trilinear interpolation at [current voxel position + warp vector] to
+ *       retrieve SDF value from live frame, then stores it into the current target voxel, and marks latter voxel as
+ *       truncated, non-truncated, or unknown based on the lookup flags & resultant SDF value.
+ * </ol>
+ * \param canonicalScene canonical scene with warp vectors at each voxel.
+ * \param liveScene source (current iteration) live scene
+ * \param targetLiveScene target (next iteration) live scene
+ */
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ApplyWarpUpdateToLiveScene(
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+
+	// Clear out the flags at target index
+	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
+	VoxelTraversal_CPU(*liveScene, flagClearFunctor);
+
+	// Allocate new blocks where necessary, filter based on flags from source
+	hashManager.AllocateWarpedLive(canonicalScene, liveScene, sourceSdfIndex);
+
+	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive,
+			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
+
+	// Interpolate to obtain the new live frame values (at target index)
+	VoxelPositionTraversal_CPU(liveScene, trilinearInterpolationFunctor);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::FuseFrame(
-		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int liveSourceFieldIndex) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");//TODO
-}
-
-template<typename TVoxelCanonical, typename TVoxelLive>
-void
-ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::GenerateRawLiveSceneFromView(
-		ITMScene<TVoxelLive, ITMPlainVoxelArray>* scene, const ITMView* view, const ITMTrackingState* trackingState,
-		const ITMRenderState* renderState) {
-	liveSceneManager.ResetScene(scene);
-	this->IntegrateIntoScene(scene,view,trackingState,renderState);
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::UpdateVisibleList(
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
+		const ITMRenderState* renderState, bool resetVisibleList) {
+	hashManager.AllocateLiveSceneFromDepth(scene, view, trackingState, renderState, true, resetVisibleList);
 }
 // endregion ===========================================================================================================

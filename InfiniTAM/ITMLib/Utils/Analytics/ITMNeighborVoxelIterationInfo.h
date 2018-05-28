@@ -52,8 +52,6 @@ public:
 struct ITMHighlightIterationInfo{
 	int hash;
 	int localId;
-	int frame;
-	int iteration;
 	Vector3i position;
 	Vector3f warp;
 	float sdf;

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <tgmath.h>
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../../Utils/ITMPixelUtils.h"
 #include "../../../Utils/ITMVoxelFlags.h"
@@ -207,7 +208,6 @@ struct ComputeUpdatedVoxelInfo<true, false, false, TVoxel> {
 	_CPU_AND_GPU_CODE_ static void compute(COMPUTE_VOXEL_UPDATE_PARAMETERS)
 	{
 		float eta = computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, imgSize_d);
-		COMPUTE_COLOR_CHECK
 		computeUpdatedVoxelColorInfo(voxel, pt_model, M_rgb, projParams_rgb, mu, maxW, eta, rgb, imgSize_rgb);
 	}
 };
@@ -225,28 +225,16 @@ struct ComputeUpdatedVoxelInfo<true, true, false, TVoxel> {
 	_CPU_AND_GPU_CODE_ static void compute(COMPUTE_VOXEL_UPDATE_PARAMETERS)
 	{
 		float eta = computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, confidence, imgSize_d);
-		COMPUTE_COLOR_CHECK
 		computeUpdatedVoxelColorInfo(voxel, pt_model, M_rgb, projParams_rgb, mu, maxW, eta, rgb, imgSize_rgb);
 	}
 };
 //================= VOXEL UPDATES FOR VOXELS WITH SEMANTIC INFORMATION =================================================
 // no color, no confidence, with semantic info
-#define FLAG_UPDATE_CHECK \
-	if (eta == -1.0f){\
-		voxel.flags = ITMLib::VoxelFlags::VOXEL_UNKNOWN;\
-        return; \
-	} else if(std::abs(eta) > mu){/*assumes narrow band half-thickness mu is smaller than 1 meter*/\
-        voxel.flags = ITMLib::VoxelFlags::VOXEL_TRUNCATED;\
-        return; \
-    } else {\
-		voxel.flags = ITMLib::VoxelFlags::VOXEL_NONTRUNCATED;\
-	}
 template<class TVoxel>
 struct ComputeUpdatedVoxelInfo<false, false, true, TVoxel> {
 	_CPU_AND_GPU_CODE_ static void compute(COMPUTE_VOXEL_UPDATE_PARAMETERS)
 	{
 		float eta = computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, imgSize_d);
-		FLAG_UPDATE_CHECK
 	}
 };
 // with color, no confidence, with semantic info
@@ -255,8 +243,6 @@ struct ComputeUpdatedVoxelInfo<true, false, true, TVoxel> {
 	_CPU_AND_GPU_CODE_ static void compute(COMPUTE_VOXEL_UPDATE_PARAMETERS)
 	{
 		float eta = computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, imgSize_d);
-		FLAG_UPDATE_CHECK
-		COMPUTE_COLOR_CHECK
 		computeUpdatedVoxelColorInfo(voxel, pt_model, M_rgb, projParams_rgb, mu, maxW, eta, rgb, imgSize_rgb);
 	}
 };
@@ -266,7 +252,6 @@ struct ComputeUpdatedVoxelInfo<false, true, true, TVoxel> {
 	_CPU_AND_GPU_CODE_ static void compute(COMPUTE_VOXEL_UPDATE_PARAMETERS)
 	{
 		float eta = computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, confidence, imgSize_d);
-		FLAG_UPDATE_CHECK
 	}
 };
 // with color, with confidence, with semantic info
@@ -275,8 +260,6 @@ struct ComputeUpdatedVoxelInfo<true, true, true, TVoxel> {
 	_CPU_AND_GPU_CODE_ static void compute(COMPUTE_VOXEL_UPDATE_PARAMETERS)
 	{
 		float eta = computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, confidence, imgSize_d);
-		FLAG_UPDATE_CHECK
-		COMPUTE_COLOR_CHECK
 		computeUpdatedVoxelColorInfo(voxel, pt_model, M_rgb, projParams_rgb, mu, maxW, eta, rgb, imgSize_rgb);
 	}
 };
@@ -299,7 +282,7 @@ _CPU_AND_GPU_CODE_ inline void buildHashAllocAndVisibleTypePP(DEVICEPTR(uchar) *
 	pt_camera_f.x = pt_camera_f.z * ((float(x) - projParams_d.z) * projParams_d.x);
 	pt_camera_f.y = pt_camera_f.z * ((float(y) - projParams_d.w) * projParams_d.y);
 
-	float norm = sqrt(pt_camera_f.x * pt_camera_f.x + pt_camera_f.y * pt_camera_f.y + pt_camera_f.z * pt_camera_f.z);
+	float norm = sqrtf(pt_camera_f.x * pt_camera_f.x + pt_camera_f.y * pt_camera_f.y + pt_camera_f.z * pt_camera_f.z);
 
 	Vector4f pt_buff;
 	
@@ -313,9 +296,9 @@ _CPU_AND_GPU_CODE_ inline void buildHashAllocAndVisibleTypePP(DEVICEPTR(uchar) *
 	// end of the (truncated SDF) band, along the ray cast from the camera through the point, in camera space
 	direction = bandEndHashEntryPosition - bandStartHashEntryPosition;
 
-	norm = sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
+	norm = sqrtf(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
 	// number of steps to take along the truncated SDF band
-	noSteps = (int)ceil(2.0f*norm);
+	noSteps = (int)std::ceil(2.0f*norm);
 
 	// a single stride along the sdf band segment from one step to the next
 	direction /= (float)(noSteps - 1);
@@ -327,7 +310,7 @@ _CPU_AND_GPU_CODE_ inline void buildHashAllocAndVisibleTypePP(DEVICEPTR(uchar) *
 		hashEntryPosition = TO_SHORT_FLOOR3(bandStartHashEntryPosition);
 
 		//compute index in hash table
-		hashIdx = hashIndex(hashEntryPosition);
+		hashIdx = static_cast<unsigned int>(hashIndex(hashEntryPosition));
 
 		//check if hash table contains entry
 		bool isFound = false;
@@ -337,7 +320,7 @@ _CPU_AND_GPU_CODE_ inline void buildHashAllocAndVisibleTypePP(DEVICEPTR(uchar) *
 		if (IS_EQUAL3(hashEntry.pos, hashEntryPosition) && hashEntry.ptr >= -1)
 		{
 			//entry has been streamed out but is visible or in memory and visible
-			entriesVisibleType[hashIdx] = (hashEntry.ptr == -1) ? 2 : 1;
+			entriesVisibleType[hashIdx] = (hashEntry.ptr == -1) ? (uchar)2 : (uchar)1;
 
 			isFound = true;
 		}
@@ -349,13 +332,13 @@ _CPU_AND_GPU_CODE_ inline void buildHashAllocAndVisibleTypePP(DEVICEPTR(uchar) *
 			{
 				while (hashEntry.offset >= 1)
 				{
-					hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
+					hashIdx = static_cast<unsigned int>(SDF_BUCKET_NUM + hashEntry.offset - 1);
 					hashEntry = hashTable[hashIdx];
 
 					if (IS_EQUAL3(hashEntry.pos, hashEntryPosition) && hashEntry.ptr >= -1)
 					{
 						//entry has been streamed out but is visible or in memory and visible
-						entriesVisibleType[hashIdx] = (hashEntry.ptr == -1) ? 2 : 1;
+						entriesVisibleType[hashIdx] = (hashEntry.ptr == -1) ? (uchar)2 : (uchar)1;
 
 						isFound = true;
 						break;
@@ -367,9 +350,9 @@ _CPU_AND_GPU_CODE_ inline void buildHashAllocAndVisibleTypePP(DEVICEPTR(uchar) *
 
 			if (!isFound) //still not found
 			{
-				entriesAllocType[hashIdx] = isExcess ? 2 : 1; //needs allocation 
+				entriesAllocType[hashIdx] = isExcess ? (uchar)2 : (uchar)1; //needs allocation
 				if (!isExcess) entriesVisibleType[hashIdx] = 1; //new entry is visible
-				blockCoords[hashIdx] = Vector4s(hashEntryPosition.x, hashEntryPosition.y, hashEntryPosition.z, 1);
+				blockCoords[hashIdx] = hashEntryPosition;
 			}
 		}
 

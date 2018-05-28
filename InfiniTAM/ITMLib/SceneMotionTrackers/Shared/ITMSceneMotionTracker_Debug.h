@@ -261,7 +261,7 @@ inline void find6ConnectedNeighborInfoIndexedFields(
 }
 
 _CPU_AND_GPU_CODE_
-inline std::string print_bool(bool value) {
+inline std::string printBool(bool value) {
 	std::ostringstream os;
 	os << (value ? ITMLib::green : ITMLib::red) << (value ? "true" : "false") << ITMLib::reset;
 	return os.str();
@@ -287,9 +287,9 @@ inline void print6ConnectedNeighborInfo(
 
 	for (int iNeighbor = 0; iNeighbor < 6; iNeighbor++) {
 		std::cout << ITMLib::yellow << "[" << positions[iNeighbor] << "]" << ITMLib::reset
-		          << " allocated: " << print_bool(neighborAllocated[iNeighbor])
-		          << " truncated: " << print_bool(neighborTruncated[iNeighbor]) << " known: "
-		          << print_bool(neighborKnown[iNeighbor]) << " sdf: " << neighborSdf[iNeighbor] << std::endl;
+		          << " allocated: " << printBool(neighborAllocated[iNeighbor])
+		          << " truncated: " << printBool(neighborTruncated[iNeighbor]) << " known: "
+		          << printBool(neighborKnown[iNeighbor]) << " sdf: " << neighborSdf[iNeighbor] << std::endl;
 	}
 }
 
@@ -315,9 +315,9 @@ inline void print6ConnectedNeighborInfoIndexedFields(
 
 	for (int iNeighbor = 0; iNeighbor < 6; iNeighbor++) {
 		std::cout << ITMLib::yellow << "[" << positions[iNeighbor] << "]" << ITMLib::reset
-		          << " allocated: " << print_bool(neighborAllocated[iNeighbor])
-		          << " truncated: " << print_bool(neighborTruncated[iNeighbor])
-		          << " known: " << print_bool(neighborKnown[iNeighbor])
+		          << " allocated: " << printBool(neighborAllocated[iNeighbor])
+		          << " truncated: " << printBool(neighborTruncated[iNeighbor])
+		          << " known: " << printBool(neighborKnown[iNeighbor])
 		          << " sdf: " << neighborSdf[iNeighbor] << std::endl;
 	}
 }

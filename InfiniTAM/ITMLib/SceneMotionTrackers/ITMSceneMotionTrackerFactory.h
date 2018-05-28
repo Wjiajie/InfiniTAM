@@ -21,6 +21,8 @@
 
 
 namespace ITMLib{
+class ITMSceneMotionTrackerFactory {
+public:
 /**
 * \brief Makes a scene motion tracker.
 *
@@ -29,7 +31,7 @@ namespace ITMLib{
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 static ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>*
 MakeSceneMotionTracker(const ITMLibSettings* settings) {
-	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>* sceneRecoEngine = NULL;
+	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>* sceneRecoEngine = nullptr;
 
 	switch (settings->deviceType) {
 		case ITMLibSettings::DEVICE_CPU:
@@ -50,5 +52,5 @@ MakeSceneMotionTracker(const ITMLibSettings* settings) {
 
 	return sceneRecoEngine;
 }
-
+};
 }//namespace ITMLib

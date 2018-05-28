@@ -19,7 +19,7 @@
 #include "../Core/ITMDynamicEngine.tpp"
 
 
-#include "../Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU.tpp"
+#include "../Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU_VoxelBlockHash.tpp"
 #include "../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.tpp"
 #include "../Engines/Swapping/CPU/ITMSwappingEngine_CPU.tpp"
 #include "../Engines/Visualisation/CPU/ITMVisualisationEngine_CPU.tpp"

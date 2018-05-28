@@ -18,8 +18,8 @@
 #include "../Engines/Reconstruction/Interface/ITMDynamicSceneReconstructionEngine.h"
 #include "../Utils/ITMLibSettings.h"
 #include "../Engines/Swapping/Interface/ITMSwappingEngine.h"
-#include "../Trackers/Interface/ITMSceneMotionTracker.h"
 #include "../Utils/FileIO/ITMDynamicFusionLogger.h"
+#include "../SceneMotionTrackers/Interface/ITMSceneMotionTracker.h"
 
 namespace ITMLib {
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -90,9 +90,9 @@ public:
 
 	bool TakeNextStepInStepByStepMode(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                  ITMScene<TVoxelLive, TIndex>*& liveScene, ITMRenderState* renderState);
-	
+
 	/// Update the visible list (this can be called to update the visible list when fusion is turned off)
-	void UpdateVisibleList(const ITMView* view, const ITMTrackingState* trackingState, 
+	void UpdateVisibleList(const ITMView* view, const ITMTrackingState* trackingState,
 	                  ITMScene<TVoxelLive, TIndex>* scene, ITMRenderState* renderState, bool resetVisibleList = false);
 	// endregion
 private:
@@ -119,23 +119,29 @@ private:
 	template<typename TIndex, typename TVoxelCanonical, typename TIndex, typename TVoxelLive>
 	void PerformSingleOptimizationStep(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                                   ITMScene <TVoxelLive, TIndex>*& liveScene, bool recordWarpUpdates);
+	void PrintSettings();
 	// endregion =======================================================================================================
 	// region =========================================== MEMBER VARIABLES =============================================
 
 	ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex>* sceneReconstructor;
 	ITMSwappingEngine<TVoxelCanonical, TIndex>* swappingEngine;
 	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>* sceneMotionTracker;
+	ITMDynamicFusionLogger<TVoxelLive,TVoxelCanonical,TIndex> logger;
+
 	ITMLibSettings::SwappingMode swappingMode;
 
 	unsigned int iteration = 0;
 	float maxVectorUpdate;
 	bool inStepByStepProcessingMode = false;
+	int sourceSdfIndex = 0;
+	int targetSdfIndex = 1;
 
 	const Parameters parameters;
 	const AnalysisFlags analysisFlags;
 	const Vector3i focusCoordinates;
-	ITMDynamicFusionLogger<TVoxelLive,TVoxelCanonical,TIndex> logger;
+
 	// endregion =======================================================================================================
+
 };
 }//namespace ITMLib
 

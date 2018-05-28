@@ -28,6 +28,7 @@
 #include "../../Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "../Interface/ITMSceneMotionTracker.h"
 #include "ITMSceneMotionTracker_CPU.h"
+#include "../../Utils/FileIO/ITMDynamicFusionLogger.h"
 
 
 using namespace ITMLib;
@@ -103,49 +104,69 @@ void CalculateAndPrintAdditionalStatistics(const bool& enableDataTerm,
 
 
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-struct CalculateWarpGradientFunctor {
+template<typename TVoxelCanonical, typename TVoxelLive>
+struct ITMCalculateWarpGradientFunctor {
+private:
 
+	void SetUpFocusVoxelPrinting(bool& printVoxelResult, bool& recordVoxelResult, const Vector3i& voxelPosition,
+	                             const Vector3f& voxelWarp, const float& canonicalSdf, const float& liveSdf) {
+		if (hasFocusCoordinates && voxelPosition == focusCoordinates) {
+			int x = 0, y = 0, z = 0, vmIndex = 0, locId = 0;
+			GetVoxelHashLocals(vmIndex, locId, x, y, z, liveHashEntries, liveCache, voxelPosition);
+			std::cout << std::endl << bright_cyan << "*** Printing voxel at " << voxelPosition
+			          << " *** " << reset << std::endl;
+			std::cout << "Position within block (x,y,z): " << x << ", " << y << ", " << z << std::endl;
+			std::cout << "Canonical SDF vs. live SDF: " << canonicalSdf << "-->" << liveSdf << std::endl
+			          << "Warp: " << green << voxelWarp << reset
+			          << " Warp length: " << green << ORUtils::length(voxelWarp) << reset;
+
+			std::cout << std::endl;
+			printVoxelResult = true;
+			if (logger.IsRecordingWarps()) {
+				recordVoxelResult = true;
+			}
+		}
+	}
+public:
 	// region ========================================= CONSTRUCTOR ====================================================
-
-	CalculateWarpGradientFunctor(
-			ITMScene<TVoxelLive, TIndex>* liveScene,
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::Parameters parameters,
-			typename ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::Switches switches,
-			unsigned int iteration, unsigned int currentFrameIx,
-			bool hasFocusCoordinates, Vector3i focusCoordinates,
-			ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>* sceneLogger) :
-
-			hasFocusCoordinates(hasFocusCoordinates),
-			focusCoordinates(focusCoordinates),
-			iteration(iteration),
-			sourceSdfIndex(ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::GetSourceLiveSdfIndex(iteration)),
-			currentFrameIx(currentFrameIx),
+	ITMCalculateWarpGradientFunctor(
+			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Parameters parameters,
+			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Switches switches,
+			ITMDynamicFusionLogger<TVoxelLive,TVoxelCanonical,ITMVoxelBlockHash>& logger) :
+			liveCache(),
+			canonicalCache(),
 			parameters(parameters),
 			switches(switches),
+			logger(logger) {}
 
-			liveScene(liveScene),
-			liveVoxels(liveScene->localVBA.GetVoxelBlocks()),
-			liveHashEntries(liveScene->index.GetEntries()),
-			liveCache(),
+	void PrepareForOptimization(ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
+	                            ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+	                            int sourceSdfIndex, bool hasFocusCoordinates, Vector3i focusCoordinates,
+	                            bool restrictZtrackingForDebugging,
+	                            ITMSceneLogger<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>* sceneLogger) {
+		this->liveScene = liveScene;
+		this->liveVoxels = liveScene->localVBA.GetVoxelBlocks(),
+		this->liveHashEntries = liveScene->index.GetEntries(),
+		this->canonicalScene = canonicalScene;
+		this->canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
+		this->canonicalHashEntries = canonicalScene->index.GetEntries();
+		this->hasFocusCoordinates = hasFocusCoordinates;
+		this->focusCoordinates = focusCoordinates;
+		this->restrictZtrackingForDebugging = restrictZtrackingForDebugging;
+		this->sourceSdfIndex = sourceSdfIndex;
+	}
 
-			canonicalScene(canonicalScene),
-			canonicalVoxels(canonicalScene->localVBA.GetVoxelBlocks()),
-			canonicalHashEntries(canonicalScene->index.GetEntries()),
-			canonicalCache(),
-			sceneLogger(sceneLogger){}
+
 	// endregion =======================================================================================================
 
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i voxelPosition) {
 		Vector3f& warp = canonicalVoxel.warp;
 		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
-				&& canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+		                    && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
 
 		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
 		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[sourceSdfIndex]);
 		float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
-
 
 
 		float localDataEnergy = 0.0f, localLevelSetEnergy = 0.0f, localSmoothnessEnergy = 0.0f,
@@ -161,7 +182,8 @@ struct CalculateWarpGradientFunctor {
 		this->SetUpFocusVoxelPrinting(printVoxelResult, recordVoxelResult, voxelPosition, warp, canonicalSdf, liveSdf);
 		// region ============================== RETRIEVE NEIGHBOR'S WARPS =================================
 
-		const int neighborhoodSize = 9; Vector3f neighborWarps[neighborhoodSize];
+		const int neighborhoodSize = 9;
+		Vector3f neighborWarps[neighborhoodSize];
 		bool neighborKnown[neighborhoodSize], neighborTruncated[neighborhoodSize], neighborAllocated[neighborhoodSize];
 		//    0        1        2          3         4         5           6         7         8
 		//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
@@ -177,15 +199,16 @@ struct CalculateWarpGradientFunctor {
 		}
 		if (printVoxelResult) {
 			std::cout << blue << "Live 6-connected neighbor information:" << reset << std::endl;
-			print6ConnectedNeighborInfoIndexedFields(voxelPosition, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex);
+			print6ConnectedNeighborInfoIndexedFields(voxelPosition, liveVoxels, liveHashEntries, liveCache,
+			                                         sourceSdfIndex);
 		}
 
 		//endregion
 
 		if (haveFullData && (switches.enableLevelSetTerm || switches.enableDataTerm)) {
-			//TODO: in case both level set term and data term need to be computed, optimize by retreiving the sdf vals for live jacobian in a separate function. The live hessian needs to reuse them. -Greg (GitHub: Algomorph)
+			//TODO: in case both level set term and data term need to be computed, optimize by retrieving the sdf values for live jacobian in a separate function. The live hessian needs to reuse them. -Greg (GitHub: Algomorph)
 			ComputeLiveJacobian_CentralDifferences_IndexedFields(
-					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
+					liveSdfJacobian, voxelPosition, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex);
 //			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_CanonicalSdf(
 //					liveSdfJacobian, voxelPosition, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex, canonicalSdf);
 //			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_LiveSdf(
@@ -256,11 +279,14 @@ struct CalculateWarpGradientFunctor {
 
 
 				float KillingDeltaEu = -2.0f *
-				                 ((onePlusGamma) * H_u.xx + (H_u.yy) + (H_u.zz) + gamma * H_v.xy + gamma * H_w.xz);
+				                       ((onePlusGamma) * H_u.xx + (H_u.yy) + (H_u.zz) + gamma * H_v.xy +
+				                        gamma * H_w.xz);
 				float KillingDeltaEv = -2.0f *
-				                 ((onePlusGamma) * H_v.yy + (H_v.zz) + (H_v.xx) + gamma * H_u.xy + gamma * H_w.yz);
+				                       ((onePlusGamma) * H_v.yy + (H_v.zz) + (H_v.xx) + gamma * H_u.xy +
+				                        gamma * H_w.yz);
 				float KillingDeltaEw = -2.0f *
-				                 ((onePlusGamma) * H_w.zz + (H_w.xx) + (H_w.yy) + gamma * H_v.yz + gamma * H_u.xz);
+				                       ((onePlusGamma) * H_w.zz + (H_w.xx) + (H_w.yy) + gamma * H_v.yz +
+				                        gamma * H_u.xz);
 
 				localSmoothnessEnergyGradient = ORUtils::Vector3<float>(KillingDeltaEu, KillingDeltaEv, KillingDeltaEw);
 				//=================================== ENERGY ===============================================
@@ -299,7 +325,7 @@ struct CalculateWarpGradientFunctor {
 				parameters.weightLevelSetTerm * localLevelSetEnergyGradient +
 				parameters.weightSmoothnessTerm * localSmoothnessEnergyGradient;
 
-		if(restrictZtrackingForDebugging) localEnergyGradient.z = 0.0f;
+		if (restrictZtrackingForDebugging) localEnergyGradient.z = 0.0f;
 
 		canonicalVoxel.gradient0 = localEnergyGradient;
 
@@ -331,31 +357,33 @@ struct CalculateWarpGradientFunctor {
 			std::cout << cyan << " Level set gradient: " << localLevelSetEnergyGradient * -1;
 			std::cout << yellow << " Smoothness gradient: " << localSmoothnessEnergyGradient * -1;
 			std::cout << std::endl;
-			std::cout << green << "Energy gradient: " << localEnergyGradient * -1<< reset;
+			std::cout << green << "Energy gradient: " << localEnergyGradient * -1 << reset;
 			std::cout << " Energy gradient length: " << energyGradeintLength << red
-			          <<" Gradients shown are negative." << reset << std::endl << std::endl;
+			          << " Gradients shown are negative." << reset << std::endl << std::endl;
 
 			if (recordVoxelResult) {
-				//TODO: function to retrieve voxel hash location for debugging -Greg (GitHub: Algomorph)
 				int x = 0, y = 0, z = 0, hash = 0, locId = 0;
+				GetVoxelHashLocals(hash, x, y, y, z, liveHashEntries, liveCache, voxelPosition);
+				hash -= 1;
 				std::array<ITMNeighborVoxelIterationInfo, 9> neighbors;
 				FindHighlightNeighborInfo(neighbors, voxelPosition, hash, canonicalVoxels,
 				                          canonicalHashEntries, liveVoxels, liveHashEntries, liveCache);
+				//TODO: get rid of iteration + frame fields in HighlightIterationInfo
 				ITMHighlightIterationInfo info =
-						{hash, locId, currentFrameIx, iteration, voxelPosition, warp, canonicalSdf, liveSdf,
+						{hash, locId, 0, 0, voxelPosition, warp, canonicalSdf, liveSdf,
 						 localEnergyGradient, localDataEnergyGradient, localLevelSetEnergyGradient,
 						 localSmoothnessEnergyGradient,
 						 localEnergy, localDataEnergy, localLevelSetEnergy, localSmoothnessEnergy,
 						 localKillingEnergy, localTikhonovEnergy,
 						 liveSdfJacobian, liveSdfJacobian, liveSdfHessian, warpJacobian,
 						 warpHessian[0], warpHessian[1], warpHessian[2], neighbors, true};
-				sceneLogger->LogHighlight(hash, locId, currentFrameIx, info);
+				logger.LogHighlight(hash, locId, info);
 			}
 		}
 		// endregion ===================================================================================================
 	}
 
-	void FinalizePrintAndRecordStatistics(std::ofstream& energy_stat_file) {
+	void FinalizePrintAndRecordStatistics() {
 		double totalEnergy = totalDataEnergy + totalLevelSetEnergy + totalSmoothnessEnergy;
 
 		std::cout << bright_cyan << "*** General Iteration Statistics ***" << reset << std::endl;
@@ -366,29 +394,31 @@ struct CalculateWarpGradientFunctor {
 		                      totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
 
 		//save all energies to file
-		energy_stat_file << totalDataEnergy << ", " << totalLevelSetEnergy << ", " << totalKillingEnergy << ", "
-		                 << totalSmoothnessEnergy << ", " << totalEnergy << std::endl;
+		logger.RecordStatistics(totalDataEnergy, totalLevelSetEnergy, totalKillingEnergy,totalSmoothnessEnergy,totalEnergy);
+
 
 		CalculateAndPrintAdditionalStatistics(
 				this->switches.enableDataTerm, this->switches.enableLevelSetTerm, cumulativeCanonicalSdf,
 				cumulativeLiveSdf,
 				cumulativeWarpDist, cumulativeSdfDiff, consideredVoxelCount, dataVoxelCount, levelSetVoxelCount);
 	}
+
 	//_DEBUG
-	bool restrictZtrackingForDebugging = false;
+
 
 private:
 
 	// *** data structure accessors
-	ITMScene<TVoxelLive, TIndex>* liveScene;
+	ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene;
+	int sourceSdfIndex{};
 	TVoxelLive* liveVoxels;
-	ITMHashEntry* liveHashEntries;
-	typename TIndex::IndexCache liveCache;
+	ITMHashEntry* liveHashEntries{};
+	ITMVoxelBlockHash::IndexCache liveCache;
 
-	ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
+	ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene;
 	TVoxelCanonical* canonicalVoxels;
-	ITMHashEntry* canonicalHashEntries;
-	typename TIndex::IndexCache canonicalCache;
+	ITMHashEntry* canonicalHashEntries{};
+	ITMVoxelBlockHash::IndexCache canonicalCache;
 
 	// *** statistical aggregates
 	double cumulativeCanonicalSdf = 0.0;
@@ -405,38 +435,14 @@ private:
 	double totalKillingEnergy = 0.0;
 	double totalSmoothnessEnergy = 0.0;
 
-	// *** for less verbose parameter & debug variable access
-	// debug variables
-	const bool hasFocusCoordinates;
-	const Vector3i focusCoordinates;
-	// status variables
-	const int iteration;
-	const int sourceSdfIndex;
-	const int currentFrameIx;
+	// *** debuging / analysis variables
+	bool hasFocusCoordinates{};
+	Vector3i focusCoordinates;
+	bool restrictZtrackingForDebugging = false;
 
-	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::Parameters parameters;
-	const typename ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>::Switches switches;
+	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Parameters parameters;
+	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Switches switches;
 
-	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>* sceneLogger;
+	ITMDynamicFusionLogger<TVoxelLive,TVoxelCanonical,ITMVoxelBlockHash>& logger;
 
-	void SetUpFocusVoxelPrinting(bool& printVoxelResult, bool& recordVoxelResult, const Vector3i& voxelPosition,
-	                             const Vector3f& voxelWarp, const float& canonicalSdf, const float& liveSdf) {
-		//TODO: function to retrieve voxel hash location for debugging -Greg (GitHub: Algomorph)
-		if (hasFocusCoordinates && voxelPosition == focusCoordinates) {
-			int x = 0, y = 0, z = 0, vmIndex = 0, locId = 0;
-			GetVoxelHashLocals(vmIndex, locId, x, y, z, liveHashEntries, liveCache, voxelPosition);
-			std::cout << std::endl << bright_cyan << "*** Printing voxel at " << voxelPosition
-			          << " *** " << reset << std::endl;
-			std::cout << "Position within block (x,y,z): " << x << ", " << y << ", " << z << std::endl;
-			std::cout << "Canonical SDF vs. live SDF: " << canonicalSdf << "-->" << liveSdf << std::endl
-			          << "Warp: " << green << voxelWarp << reset
-			          << " Warp length: " << green << ORUtils::length(voxelWarp) << reset;
-
-			std::cout << std::endl;
-			printVoxelResult = true;
-			if (sceneLogger != nullptr) {
-				recordVoxelResult = true;
-			}
-		}
-	}
 };

@@ -98,13 +98,13 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
 ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetCanonicalScene(
 		ITMScene<TVoxelCanonical, TIndex>* scene) const {
-	sceneReconstructor->ResetCanonicalScene(scene);
+	ITMSceneManipulationEngine_CPU<TVoxelCanonical,TIndex>::ResetScene(scene);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetLiveScene(
-		ITMScene<TVoxelLive, TIndex>* live_scene) const {
-	sceneReconstructor->ResetLiveScene(live_scene);
+		ITMScene<TVoxelLive, TIndex>* scene) const {
+	ITMSceneManipulationEngine_CPU<TVoxelLive,TIndex>::ResetScene(scene);
 }
 
 //BEGIN _DEBUG
@@ -214,7 +214,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::UpdateVisibleLi
 		const ITMTrackingState* trackingState,
 		ITMScene<TVoxelLive, TIndex>* scene, ITMRenderState* renderState,
 		bool resetVisibleList) {
-	sceneReconstructor->AllocateLiveSceneFromDepth(scene, view, trackingState, renderState, true, resetVisibleList);
+	sceneReconstructor->UpdateVisibleList(scene, view, trackingState, renderState, resetVisibleList);
 }
 
 // region =========================================== MOTION TRACKING ==================================================
@@ -248,21 +248,24 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
 		bool recordWarpUpdates) {
 
+	//ping-pong between the SDF field indices in the live frame (preserves memory locality during traversal)
+	sourceSdfIndex = iteration % 2;
+	targetSdfIndex = (iteration + 1) % 2;
 
 	logger.SaveWarp2DSlice(iteration);
 	std::cout << red << "Iteration: " << iteration << reset << std::endl;
-	bench::StartTimer("AllocateCanonicalFromLive");
-	sceneReconstructor->AllocateCanonicalFromLive(canonicalScene, liveScene);
-	bench::StopTimer("AllocateCanonicalFromLive");
 	//** warp update gradient computation
 	PrintOperationStatus("Calculating warp energy gradient...");
 	bench::StartTimer("TrackMotion_31_CalculateWarpUpdate");
-	sceneMotionTracker->CalculateWarpGradient(canonicalScene, liveScene);
+	sceneMotionTracker->CalculateWarpGradient(canonicalScene, liveScene, analysisFlags.hasFocusCoordinates,
+	                                          focusCoordinates, <#initializer#>, sourceSdfIndex,
+	                                          analysisFlags.restrictZtrackingForDebugging,
+	                                          <#initializer#>);
 	bench::StopTimer("TrackMotion_31_CalculateWarpUpdate");
 
 	PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");
 	bench::StartTimer("TrackMotion_32_ApplySmoothingToGradient");
-	sceneMotionTracker->SmoothWarpGradient(canonicalScene, liveScene);
+	sceneMotionTracker->SmoothWarpGradient(canonicalScene, liveScene, 0);
 	bench::StopTimer("TrackMotion_32_ApplySmoothingToGradient");
 
 	PrintOperationStatus("Applying warp update (based on energy gradient) to the cumulative warp...");
@@ -273,7 +276,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 	PrintOperationStatus(
 			"Updating live frame SDF by mapping from old live SDF to new live SDF based on latest warp update...");
 	bench::StartTimer("TrackMotion_35_ApplyWarpUpdateToLive");
-	sceneMotionTracker->ApplyWarpUpdateToLive(canonicalScene, liveScene);
+	sceneReconstructor->ApplyWarpUpdateToLiveScene(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
 	//ApplyWarpFieldToLive(canonicalScene, liveScene);
 	bench::StopTimer("TrackMotion_35_ApplyWarpUpdateToLive");
 	logger.SaveWarps();
@@ -341,3 +344,12 @@ bool ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::TakeNextStepInS
 }
 
 // endregion
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PrintSettings() {
+	std::cout << bright_cyan << "*** ITMDenseDynamicMapper Settings: ***" << reset << std::endl;
+	std::cout << "Max iteration count: " << this->parameters.maxIterationCount << std::endl;
+	std::cout << "Warp vector update threshold: " << this->parameters.maxVectorUpdateThresholdMeters << " m, ";
+	std::cout << this->parameters.maxVectorUpdateThresholdVoxels << " voxels" << std::endl;
+	std::cout << bright_cyan << "*** *********************************** ***" << reset << std::endl;
+}

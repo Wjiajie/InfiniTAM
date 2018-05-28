@@ -15,11 +15,7 @@
 //  ================================================================
 #pragma once
 
-//TODO: add to CMake & complete implementations or remove -Greg Github(Algomorph)
-
-#pragma once
-
-#include <math.h>
+#include <cmath>
 
 #include "../../../Objects/RenderStates/ITMRenderState.h"
 #include "../../../Objects/Scene/ITMScene.h"
@@ -45,6 +41,8 @@ public:
 	ITMDynamicSceneReconstructionEngine(void) = default;
 	virtual ~ITMDynamicSceneReconstructionEngine(void) = default;
 
+
+	virtual void UpdateVisibleList(ITMScene<TVoxelLive, TIndex>* scene, const ITMView* view, const ITMTrackingState* trackingState,const ITMRenderState* renderState, bool resetVisibleList) = 0;
 	/**
 	 * \brief Clears given scene, then uses the depth image from provided live view to generate an SDF
 	 * voxel representation
@@ -61,9 +59,23 @@ public:
 	 * \details Typically called after TrackMotion is called
 	 * \param canonicalScene the canonical voxel grid, representing the state at the beginning of the sequence
 	 * \param liveScene the live voxel grid, a TSDF generated from a single recent depth image
+	 * \param liveSourceFieldIndex index of the sdf field to use at live scene voxels
 	 */
 	virtual void FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene,
 	                       int liveSourceFieldIndex) = 0;
+
+
+	/**
+	 * \brief apply warp update vectors to live scene: compute the the target SDF fields in live scene using trilinear lookup
+	 * at corresponding warp updates from the source SDF fields in live scene
+	 * \param canonicalScene canonical scene, where the warp update vectors are specified
+	 * \param liveScene live scene (voxel grid)
+	 * \param sourceSdfIndex index of the source SDF field in each live voxel
+	 * \param targetSdfIndex index of the target SDF field in each live voxel
+	 */
+	virtual void ApplyWarpUpdateToLiveScene(
+			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+			ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) = 0;
 protected:
 
 

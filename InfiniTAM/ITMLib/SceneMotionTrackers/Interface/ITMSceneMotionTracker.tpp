@@ -24,26 +24,3 @@
 #include "ITMSceneMotionTracker.h"
 
 using namespace ITMLib;
-
-//region =========================================== CONSTRUCTORS / DESTRUCTORS ========================================
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneMotionTracker(const ITMLibSettings* settings)
-		:
-		maxVectorUpdateThresholdVoxels(
-				),
-		sceneLogger(nullptr),
-
-		hasFocusCoordinates(settings->FocusCoordinatesAreSpecified()),
-		focusCoordinates(settings->GetFocusCoordinates()),
-
-		rasterizer(focusCoordinates),
-		restrictZtrackingForDebugging(settings->restrictZtrackingForDebugging),
-		simpleSceneExperimentModeEnabled(settings->simpleSceneExperimentModeEnabled),
-		rasterizeWarps(settings->rasterizeWarpsDuringOptimization){}
-
-
-
-//endregion
-
-

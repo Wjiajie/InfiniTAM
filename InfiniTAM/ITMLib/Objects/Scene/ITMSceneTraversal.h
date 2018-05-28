@@ -162,55 +162,11 @@ inline void StaticVoxelPositionTraversal_CPU(ITMScene<TVoxel, TIndex>* scene) {
 };
 // endregion
 // region ================================ DYNAMIC TWO-SCENE TRAVERSAL =================================================
-
-template<typename TVoxelSecondary, typename TIndex>
-struct AllocateHashOnMissFunctor {
-	static void run(ITMScene<TVoxelSecondary, TIndex>* secondaryScene, uchar* entriesAllocType,
-	                ITMHashEntry& currentCanonicalHashEntry, const Vector3s& blockPosition, int& secondaryHash,
-	                const bool& report) {
-		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
-		int lastFreeVoxelBlockId = secondaryScene->localVBA.lastFreeBlockId;
-		int lastFreeExcessListId = secondaryScene->index.GetLastFreeExcessListId();
-		int* voxelAllocationList = secondaryScene->localVBA.GetAllocationList();
-		int* excessAllocationList = secondaryScene->index.GetExcessAllocationList();
-		ITMHashEntry* newEntry;
-		if (AllocateHashEntry_CPU(blockPosition, secondaryHashTable, newEntry, lastFreeExcessListId,
-		                          lastFreeExcessListId, voxelAllocationList, excessAllocationList,
-		                          secondaryHash)) {
-			currentCanonicalHashEntry = *newEntry;
-
-			entriesAllocType[secondaryHash] = ITMLib::BOUNDARY;
-			if (report) {
-				std::cout << bright_red << "Allocating hash entry in secondary scene during dual traversal at: "
-				          << blockPosition << reset << std::endl;
-			}
-		} else {
-			DIEWITHEXCEPTION_REPORTLOCATION("Could not allocate hash entry...");
-		}
-		secondaryScene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
-		secondaryScene->index.SetLastFreeExcessListId(lastFreeExcessListId);
-	}
-};
-
-template<typename TVoxelSecondary, typename TIndex>
-struct DieOnMissFunctor {
-	static void run(ITMScene<TVoxelSecondary, TIndex>* secondaryScene, uchar* entriesAllocType,
-	                ITMHashEntry& currentCanonicalHashEntry, const Vector3s& blockPosition, int& secondaryHash,
-	                const bool& report) {
-		std::stringstream stream;
-		stream << "Could not find corresponding secondary scene block at postion " << blockPosition
-		       << ". " << __FILE__ << ": " << __LINE__;
-		DIEWITHEXCEPTION(stream.str());
-	}
-};
-
-
-template<typename TFunctor, typename TBehaviorOnMissFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
+template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
 inline void DualVoxelPositionTraversal_CPU(
 		ITMScene<TVoxelPrimary, TIndex>* primaryScene,
 		ITMScene<TVoxelSecondary, TIndex>* secondaryScene,
-		unsigned char* entriesAllocType,
-		TFunctor& functor, bool reportMisses = true) {
+		TFunctor& functor) {
 
 // *** traversal vars
 	TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
@@ -236,8 +192,10 @@ inline void DualVoxelPositionTraversal_CPU(
 		if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
 			int secondaryHash;
 			if (!FindHashAtPosition(secondaryHash, currentLiveHashEntry.pos, secondaryHashTable)) {
-				TBehaviorOnMissFunctor::run(secondaryScene, entriesAllocType, currentCanonicalHashEntry,
-				                            currentLiveHashEntry.pos, secondaryHash, reportMisses);
+				std::stringstream stream;
+				stream << "Could not find corresponding secondary scene block at postion " << currentLiveHashEntry.pos
+				       << ". " << __FILE__ << ": " << __LINE__;
+				DIEWITHEXCEPTION(stream.str());
 			} else {
 				currentCanonicalHashEntry = secondaryHashTable[secondaryHash];
 			}
@@ -262,12 +220,11 @@ inline void DualVoxelPositionTraversal_CPU(
 	}
 };
 
-template<typename TFunctor, typename TBehaviorOnMissFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
+template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
 inline void DualVoxelPositionTraversal_CPU_SingleThreaded(
 		ITMScene<TVoxelPrimary, TIndex>* primaryScene,
 		ITMScene<TVoxelSecondary, TIndex>* secondaryScene,
-		unsigned char* entriesAllocType,
-		TFunctor& functor, bool reportMisses = true) {
+		TFunctor& functor) {
 
 // *** traversal vars
 	TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
@@ -289,9 +246,10 @@ inline void DualVoxelPositionTraversal_CPU_SingleThreaded(
 		// we have a hash bucket miss, find the secondary voxel with the matching coordinates
 		if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
 			int secondaryHash;
-			if (!FindHashAtPosition(secondaryHash, currentLiveHashEntry.pos, secondaryHashTable)) {
-				TBehaviorOnMissFunctor::run(secondaryScene, entriesAllocType, currentCanonicalHashEntry,
-				                            currentLiveHashEntry.pos, secondaryHash, reportMisses);
+			if (!FindHashAtPosition(secondaryHash, currentLiveHashEntry.pos, secondaryHashTable)) {std::stringstream stream;
+				stream << "Could not find corresponding secondary scene block at postion " << currentLiveHashEntry.pos
+				       << ". " << __FILE__ << ": " << __LINE__;
+				DIEWITHEXCEPTION(stream.str());
 			} else {
 				currentCanonicalHashEntry = secondaryHashTable[secondaryHash];
 			}
@@ -314,41 +272,6 @@ inline void DualVoxelPositionTraversal_CPU_SingleThreaded(
 			}
 		}
 	}
-};
-
-template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
-inline void DualVoxelPositionTraversal_DieOnMiss_CPU(ITMScene<TVoxelPrimary, TIndex>* primaryScene,
-                                                     ITMScene<TVoxelSecondary, TIndex>* secondaryScene,
-                                                     TFunctor& functor) {
-
-	DualVoxelPositionTraversal_CPU<TFunctor,
-			DieOnMissFunctor<TVoxelSecondary, TIndex>, TVoxelPrimary, TVoxelSecondary, TIndex>(
-			primaryScene, secondaryScene, nullptr, functor, false);
-};
-
-
-template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
-inline
-void DualVoxelPositionTraversal_AllocateSecondaryOnMiss_CPU(ITMScene<TVoxelPrimary, TIndex>* primaryScene,
-                                                            ITMScene<TVoxelSecondary, TIndex>* secondaryScene,
-                                                            ORUtils::MemoryBlock<unsigned char>* entryAllocationTypes,
-                                                            TFunctor& functor, bool reportAllocations = true) {
-	uchar* entriesAllocType = entryAllocationTypes->GetData(MEMORYDEVICE_CPU);
-	DualVoxelPositionTraversal_CPU<TFunctor,
-			AllocateHashOnMissFunctor<TVoxelSecondary, TIndex>, TVoxelPrimary, TVoxelSecondary, TIndex>(
-			primaryScene, secondaryScene, entriesAllocType, functor, reportAllocations);
-};
-
-template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
-inline
-void DualVoxelPositionTraversal_AllocateSecondaryOnMiss_CPU_SingleThreaded(ITMScene<TVoxelPrimary, TIndex>* primaryScene,
-                                                            ITMScene<TVoxelSecondary, TIndex>* secondaryScene,
-                                                            ORUtils::MemoryBlock<unsigned char>* entryAllocationTypes,
-                                                            TFunctor& functor, bool reportAllocations = true) {
-	uchar* entriesAllocType = entryAllocationTypes->GetData(MEMORYDEVICE_CPU);
-	DualVoxelPositionTraversal_CPU_SingleThreaded<TFunctor,
-			AllocateHashOnMissFunctor<TVoxelSecondary, TIndex>, TVoxelPrimary, TVoxelSecondary, TIndex>(
-			primaryScene, secondaryScene, entriesAllocType, functor, reportAllocations);
 };
 
 // endregion ===========================================================================================================
