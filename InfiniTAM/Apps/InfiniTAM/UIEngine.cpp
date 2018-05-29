@@ -31,7 +31,7 @@ using namespace ITMLib;
 
 UIEngine* UIEngine::instance;
 
-static void safe_glutBitmapString(void *font, const char *str)
+static void Safe_GlutBitmapString(void *font, const char *str)
 {
 	size_t len = strlen(str);
 	for (size_t x = 0; x < len; ++x) {
