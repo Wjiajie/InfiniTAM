@@ -84,7 +84,7 @@ public:
 			int sourceSdfIndex) = 0;
 	virtual float ApplyWarpUpdateToWarp(
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
-	virtual void ClearOutWarps(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) = 0;
+	virtual void ResetWarps(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) = 0;
 //============================= MEMBER VARIABLES =======================================================================
 
 	const Parameters parameters;

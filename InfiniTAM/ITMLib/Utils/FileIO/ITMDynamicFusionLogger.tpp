@@ -166,9 +166,10 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeRecord
 		delete sceneLogger;
 		sceneLogger = nullptr;
 	}
-
-	delete rasterizer;
-	rasterizer = nullptr;
+	if(recordWarp2DSlices){
+		delete rasterizer;
+		rasterizer = nullptr;
+	}
 	energyStatisticsFile.close();
 }
 

@@ -49,14 +49,13 @@ public:
 	float ApplyWarpUpdateToWarp(
 			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 			ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene) override;
-	void ClearOutWarps(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) override;
+	void ResetWarps(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) override;
 
 
 private:
 	float ApplyWarpUpdateToWarp_SingleThreadedVerbose(
 			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-			ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
-			int sourceSdfIndex);
+			ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene);
 
 	ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive> hashManager;
 	ITMCalculateWarpGradientFunctor<TVoxelCanonical, TVoxelLive> calculateGradientFunctor;

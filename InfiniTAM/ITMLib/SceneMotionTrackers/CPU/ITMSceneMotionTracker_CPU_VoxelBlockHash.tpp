@@ -65,13 +65,29 @@ struct WarpClearFunctor {
 };
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ClearOutWarps(
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ResetWarps(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
 	StaticVoxelTraversal_CPU<WarpClearFunctor<TVoxelCanonical>>(canonicalScene);
 };
 
 // endregion ===========================================================================================================
 
+//_DEBUG
+template<typename TVoxel, typename TIndex>
+inline static void PrintSceneStatistics(
+		ITMScene<TVoxel, TIndex>* scene,
+		std::string description) {
+	ITMSceneStatisticsCalculator<TVoxel, TIndex> calculator;
+	std::cout << green << "=== Stats for scene '" << description << "' ===" << reset << std::endl;
+	std::cout << "    Total voxel count: " << calculator.ComputeAllocatedVoxelCount(scene) << std::endl;
+	std::cout << "    NonTruncated voxel count: " << calculator.ComputeNonTruncatedVoxelCount(scene) << std::endl;
+	std::cout << "    +1.0 voxel count: " << calculator.ComputeVoxelWithValueCount(scene,1.0f)  << std::endl;
+	std::vector<int> allocatedHashes = calculator.GetFilledHashBlockIds(scene);
+	std::cout << "    Allocated hash count: " << allocatedHashes.size() << std::endl;
+	std::cout << "    NonTruncated SDF sum: " << calculator.ComputeNonTruncatedVoxelAbsSdfSum(scene) << std::endl;
+	std::cout << "    Truncated SDF sum: " << calculator.ComputeTruncatedVoxelAbsSdfSum(scene) << std::endl;
+
+};
 
 // region ===================================== CALCULATE GRADIENT SMOOTHING ===========================================
 
@@ -92,7 +108,6 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Calcu
 
 	StaticVoxelTraversal_CPU<ClearOutGradientStaticFunctor<TVoxelCanonical>>(canonicalScene);
 	hashManager.AllocateCanonicalFromLive(canonicalScene, liveScene);
-
 	calculateGradientFunctor.PrepareForOptimization(liveScene, canonicalScene, sourceFieldIndex, hasFocusCoordinates,
 	                                                focusCoordinates, restrictZTrackingForDebugging);
 
@@ -225,8 +240,7 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 float
 ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ApplyWarpUpdateToWarp_SingleThreadedVerbose(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
-		int sourceSdfIndex) {
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene) {
 
 	const float learningRate = this->parameters.gradientDescentLearningRate;
 
@@ -234,12 +248,10 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Apply
 	// ** canonical frame
 	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
-	typename ITMVoxelBlockHash::IndexCache canonicalCache;
 	// ** live frame
 	TVoxelLive* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* liveHashTable = liveScene->index.GetEntries();
 	int noTotalEntries = liveScene->index.noTotalEntries;
-	typename ITMVoxelBlockHash::IndexCache liveCache;
 
 	// *** stats
 	float maxWarpLength = 0.0f;
@@ -374,9 +386,7 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ApplyWarpUpdateToWarp(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene) {
-
-	return ApplyWarpUpdateToWarp_SingleThreadedVerbose(canonicalScene, liveScene, 0);
-
+	return ApplyWarpUpdateToWarp_SingleThreadedVerbose(canonicalScene, liveScene);
 }
 
 

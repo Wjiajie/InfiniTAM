@@ -129,6 +129,7 @@ private:
 	}
 
 public:
+	
 	// region ========================================= CONSTRUCTOR ====================================================
 	ITMCalculateWarpGradientFunctor(
 			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Parameters parameters,
@@ -144,6 +145,7 @@ public:
 	                            ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, int sourceSdfIndex,
 	                            bool hasFocusCoordinates, Vector3i focusCoordinates,
 	                            bool restrictZtrackingForDebugging) {
+		ResetStatistics();
 		this->liveScene = liveScene;
 		this->liveVoxels = liveScene->localVBA.GetVoxelBlocks(),
 		this->liveHashEntries = liveScene->index.GetEntries(),
@@ -158,6 +160,8 @@ public:
 
 
 	// endregion =======================================================================================================
+	
+	
 
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i voxelPosition) {
 		Vector3f& warp = canonicalVoxel.warp;
@@ -404,10 +408,23 @@ public:
 				cumulativeWarpDist, cumulativeSdfDiff, consideredVoxelCount, dataVoxelCount, levelSetVoxelCount);
 	}
 
-	//_DEBUG
-
 
 private:
+	void ResetStatistics(){
+	 cumulativeCanonicalSdf = 0.0;
+	 cumulativeLiveSdf = 0.0;
+	 cumulativeSdfDiff = 0.0;
+	 cumulativeWarpDist = 0.0;
+	 consideredVoxelCount = 0;
+	 dataVoxelCount = 0;
+	 levelSetVoxelCount = 0;
+
+	 totalDataEnergy = 0.0;
+	 totalLevelSetEnergy = 0.0;
+	 totalTikhonovEnergy = 0.0;
+	 totalKillingEnergy = 0.0;
+	 totalSmoothnessEnergy = 0.0;
+	}
 
 	// *** data structure accessors
 	ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene;

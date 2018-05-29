@@ -32,7 +32,6 @@ set(ITMLIB_TOPLEVEL_CPU_SOURCES
     Instantiations/DynamicFusionCPUInstantiations.cpp
     Instantiations/DenseDynamicMapperInstantiation.cpp
     Instantiations/SceneMotionTrackerCPUInstantiation.cpp
-    Instantiations/SceneMotionTrackerInterfaceInstantiation.cpp
     )
 
 set(ITMLIB_TOPLEVEL_CUDA_SOURCES
@@ -518,7 +517,7 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_HEADERS
 ##
 
 set (ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_SOURCES
-     SceneMotionTrackers/Interface/ITMSceneMotionTracker.tpp
+
      )
 set (ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_HEADERS
      SceneMotionTrackers/Interface/ITMSceneMotionTracker.h

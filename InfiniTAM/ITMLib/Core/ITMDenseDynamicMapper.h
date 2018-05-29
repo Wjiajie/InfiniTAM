@@ -101,8 +101,7 @@ private:
 			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMRenderState* renderState);
 
 	void TrackFrameMotion(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
-			bool rasterizeWarpUpdates);
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene);
 
 	bool SceneMotionOptimizationConditionNotReached();
 	void InitializeProcessing(const ITMView* view, const ITMTrackingState* trackingState,
@@ -111,8 +110,8 @@ private:
 	                          std::string outputDirectory);
 	void FinalizeProcessing(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                        ITMScene <TVoxelLive, TIndex>* liveScene,ITMRenderState* renderState);
-	void PerformSingleOptimizationStep(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-	                                   ITMScene <TVoxelLive, TIndex>*& liveScene, bool recordWarpUpdates);
+	void PerformSingleOptimizationStep(
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene);
 	void PrintSettings();
 	// endregion =======================================================================================================
 	// region =========================================== MEMBER VARIABLES =============================================

@@ -46,17 +46,20 @@ namespace fs = boost::filesystem;
 namespace bench = ITMLib::Bench;
 
 // region ========================================= DEBUG PRINTING =====================================================
+		//_DEBUG
 template<typename TVoxel, typename TIndex>
 inline static void PrintSceneStatistics(
 		ITMScene<TVoxel, TIndex>* scene,
 		std::string description) {
 	ITMSceneStatisticsCalculator<TVoxel, TIndex> calculator;
-	std::cout << std::setprecision(10) << "   Count of allocated blocks in " << description << ": "
-	          << calculator.ComputeAllocatedHashBlockCount(scene) << std::endl;
-	std::cout << "   Sum of non-truncated SDF magnitudes in " << description << ": "
-	          << calculator.ComputeNonTruncatedVoxelAbsSdfSum(scene) << std::endl;
-	std::cout << "   Count of non-truncated voxels in " << description << ": "
-	          << calculator.ComputeNonTruncatedVoxelCount(scene) << std::endl;
+	std::cout << green << "=== Stats for scene '" << description << "' ===" << reset << std::endl;
+	std::cout << "    Total voxel count: " << calculator.ComputeAllocatedVoxelCount(scene) << std::endl;
+	std::cout << "    NonTruncated voxel count: " << calculator.ComputeNonTruncatedVoxelCount(scene) << std::endl;
+	std::cout << "    +1.0 voxel count: " << calculator.ComputeVoxelWithValueCount(scene,1.0f)  << std::endl;
+	std::vector<int> allocatedHashes = calculator.GetFilledHashBlockIds(scene);
+	std::cout << "    Allocated hash count: " << allocatedHashes.size() << std::endl;
+	std::cout << "    NonTruncated SDF sum: " << calculator.ComputeNonTruncatedVoxelAbsSdfSum(scene) << std::endl;
+	std::cout << "    Truncated SDF sum: " << calculator.ComputeTruncatedVoxelAbsSdfSum(scene) << std::endl;
 
 };
 
@@ -158,7 +161,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProce
 		bench::StopTimer("GenerateRawLiveFrame");
 	}
 
-	sceneMotionTracker->ClearOutWarps(canonicalScene);
+	sceneMotionTracker->ResetWarps(canonicalScene);
 	logger.InitializeRecording(canonicalScene, liveScene, false, false, recordWarp2DSlice,
 	                           analysisFlags.hasFocusCoordinates, focusCoordinates, recordWarps, outputDirectory);
 	maxVectorUpdate = std::numeric_limits<float>::infinity();
@@ -189,7 +192,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
 	InitializeProcessing(view, trackingState, canonicalScene, liveScene, renderState, recordWarps, recordWarp2DSlice,
 	                     outputPath);
 	bench::StartTimer("TrackMotion");
-	TrackFrameMotion(canonicalScene, liveScene, recordWarp2DSlice);
+	TrackFrameMotion(canonicalScene, liveScene);
 	bench::StopTimer("TrackMotion");
 	FinalizeProcessing(canonicalScene, liveScene, renderState);
 }
@@ -213,8 +216,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::UpdateVisibleLi
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::TrackFrameMotion(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
-		bool rasterizeWarpUpdates) {
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene) {
 	if (analysisFlags.restrictZtrackingForDebugging) {
 		std::cout << red << "WARNING: UPDATES IN Z DIRECTION HAVE BEEN DISABLED FOR DEBUGGING"
 		                    " PURPOSES. DO NOT EXPECT PROPER RESULTS!" << reset << std::endl;
@@ -222,7 +224,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::TrackFrameMotio
 	PrintOperationStatus("*** Optimizing warp based on difference between canonical and live SDF. ***");
 	bench::StartTimer("TrackMotion_3_Optimization");
 	for (iteration = 0; SceneMotionOptimizationConditionNotReached(); iteration++) {
-		PerformSingleOptimizationStep(canonicalScene, liveScene, rasterizeWarpUpdates);
+		PerformSingleOptimizationStep(canonicalScene, liveScene);
 	}
 	bench::StopTimer("TrackMotion_3_Optimization");
 	PrintOperationStatus("*** Warp optimization finished for current frame. ***");
@@ -231,8 +233,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::TrackFrameMotio
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOptimizationStep(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
-		bool recordWarpUpdates) {
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene) {
 
 	//ping-pong between the SDF field indices in the live frame (preserves memory locality during traversal)
 	sourceSdfIndex = iteration % 2;
@@ -250,7 +251,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 
 	PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");
 	bench::StartTimer("TrackMotion_32_ApplySmoothingToGradient");
-	sceneMotionTracker->SmoothWarpGradient(canonicalScene, liveScene, 0);
+	sceneMotionTracker->SmoothWarpGradient(canonicalScene, liveScene, sourceSdfIndex);
 	bench::StopTimer("TrackMotion_32_ApplySmoothingToGradient");
 
 	PrintOperationStatus("Applying warp update (based on energy gradient) to the cumulative warp...");
@@ -262,7 +263,6 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 			"Updating live frame SDF by mapping from old live SDF to new live SDF based on latest warp update...");
 	bench::StartTimer("TrackMotion_35_ApplyWarpUpdateToLive");
 	sceneReconstructor->ApplyWarpUpdateToLiveScene(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
-	//ApplyWarpFieldToLive(canonicalScene, liveScene);
 	bench::StopTimer("TrackMotion_35_ApplyWarpUpdateToLive");
 	logger.SaveWarps();
 }
@@ -319,7 +319,7 @@ bool ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::TakeNextStepInS
 		DIEWITHEXCEPTION_REPORTLOCATION("Step-by-step mode not initialized.");
 	}
 	if (SceneMotionOptimizationConditionNotReached()) {
-		PerformSingleOptimizationStep(canonicalScene, liveScene, false);
+		PerformSingleOptimizationStep(canonicalScene, liveScene);
 		iteration++;
 		return true;
 	} else {
