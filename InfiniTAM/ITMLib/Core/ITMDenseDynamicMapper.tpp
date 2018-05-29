@@ -238,7 +238,6 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 	//ping-pong between the SDF field indices in the live frame (preserves memory locality during traversal)
 	sourceSdfIndex = iteration % 2;
 	targetSdfIndex = (iteration + 1) % 2;
-	TVoxelLive* voxels = liveScene->localVBA.GetVoxelBlocks();
 
 	logger.SaveWarp2DSlice(iteration);
 	std::cout << red << "Iteration: " << iteration << reset << std::endl;
