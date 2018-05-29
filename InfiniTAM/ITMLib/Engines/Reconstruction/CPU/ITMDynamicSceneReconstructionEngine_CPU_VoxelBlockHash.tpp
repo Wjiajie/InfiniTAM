@@ -67,10 +67,6 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 	for (int visibleHash = 0; visibleHash < noVisibleEntries; visibleHash++) {
 		Vector3i globalPos;
 		int hash = visibleEntryIds[visibleHash];
-		//_DEBUG
-//		if(hash == 260246){
-//			int i = 42;
-//		}
 		const ITMHashEntry& currentHashEntry = hashTable[hash];
 
 		if (currentHashEntry.ptr < 0) continue;
@@ -248,10 +244,6 @@ struct TrilinearInterpolationFunctor {
 
 	void operator()(TVoxelSdf& destinationVoxel, Vector3i warpAndDestionVoxelPosition) {
 		int vmIndex;
-
-		if(warpAndDestionVoxelPosition == Vector3i(-37, 21, 209)){
-			int i = 42;
-		}
 
 		// perform lookup at current position in canonical
 		//TODO: perform dual traversal instead to get second voxel without lookup
