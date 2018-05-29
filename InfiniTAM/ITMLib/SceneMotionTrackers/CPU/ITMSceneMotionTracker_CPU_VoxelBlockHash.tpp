@@ -126,23 +126,14 @@ enum TraversalDirection : int {
 
 template<typename TVoxelCanonical, typename TVoxelLive, TraversalDirection TDirection>
 struct GradientSmoothingPassFunctor {
-	GradientSmoothingPassFunctor(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-	                             ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
-	                             int sourceIndex) :
+	GradientSmoothingPassFunctor(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) :
 			canonicalScene(canonicalScene),
 			canonicalVoxels(canonicalScene->localVBA.GetVoxelBlocks()),
 			canoincalHashEntries(canonicalScene->index.GetEntries()),
-			canonicalCache(),
-
-			liveScene(liveScene),
-			liveVoxels(liveScene->localVBA.GetVoxelBlocks()),
-			liveHashEntries(liveScene->index.GetEntries()),
-			liveCache(),
-			sourceIndex(sourceIndex) {}
+			canonicalCache(){}
 
 	void operator()(TVoxelCanonical& voxel, Vector3i position) {
 		int vmIndex;
-		const TVoxelLive& liveVoxel = readVoxel(liveVoxels, liveHashEntries, position, vmIndex, liveCache);
 
 		const int directionIndex = (int) TDirection;
 
@@ -189,13 +180,6 @@ private:
 	ITMHashEntry* canoincalHashEntries;
 	typename ITMVoxelBlockHash::IndexCache canonicalCache;
 
-	ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene;
-	TVoxelLive* liveVoxels;
-	ITMHashEntry* liveHashEntries;
-	typename ITMVoxelBlockHash::IndexCache liveCache;
-
-	const int sourceIndex;
-
 	static const int sobolevFilterSize;
 	static const float sobolevFilter1D[];
 };
@@ -215,17 +199,12 @@ const float GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TDirection
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::SmoothWarpGradient(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
-		int sourceSdfIndex) {
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
 
 	if (this->switches.enableGradientSmoothing) {
-		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, X> passFunctorX(canonicalScene, liveScene,
-		                                                                          sourceSdfIndex);
-		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, Y> passFunctorY(canonicalScene, liveScene,
-		                                                                          sourceSdfIndex);
-		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, Z> passFunctorZ(canonicalScene, liveScene,
-		                                                                          sourceSdfIndex);
+		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, X> passFunctorX(canonicalScene);
+		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, Y> passFunctorY(canonicalScene);
+		GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, Z> passFunctorZ(canonicalScene);
 
 		VoxelPositionTraversal_CPU(canonicalScene, passFunctorX);
 		VoxelPositionTraversal_CPU(canonicalScene, passFunctorY);

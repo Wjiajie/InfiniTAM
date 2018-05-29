@@ -111,7 +111,7 @@ private:
 	void FinalizeProcessing(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                        ITMScene <TVoxelLive, TIndex>* liveScene,ITMRenderState* renderState);
 	void PerformSingleOptimizationStep(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene);
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
 	void PrintSettings();
 	// endregion =======================================================================================================
 	// region =========================================== MEMBER VARIABLES =============================================

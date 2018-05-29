@@ -175,7 +175,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeProcess
 	logger.FinalizeRecording(canonicalScene, liveScene);
 	//fuse warped live into canonical
 	bench::StartTimer("FuseFrame");
-	sceneReconstructor->FuseFrame(canonicalScene, liveScene, iteration % 2);
+	sceneReconstructor->FuseFrame(canonicalScene, liveScene, (iteration+1) % 2);
 	bench::StopTimer("FuseFrame");
 
 	ProcessSwapping(canonicalScene, renderState);
@@ -233,11 +233,12 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::TrackFrameMotio
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOptimizationStep(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene) {
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	//ping-pong between the SDF field indices in the live frame (preserves memory locality during traversal)
 	sourceSdfIndex = iteration % 2;
 	targetSdfIndex = (iteration + 1) % 2;
+	TVoxelLive* voxels = liveScene->localVBA.GetVoxelBlocks();
 
 	logger.SaveWarp2DSlice(iteration);
 	std::cout << red << "Iteration: " << iteration << reset << std::endl;
@@ -251,7 +252,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 
 	PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");
 	bench::StartTimer("TrackMotion_32_ApplySmoothingToGradient");
-	sceneMotionTracker->SmoothWarpGradient(canonicalScene, liveScene, sourceSdfIndex);
+	sceneMotionTracker->SmoothWarpGradient(canonicalScene);
 	bench::StopTimer("TrackMotion_32_ApplySmoothingToGradient");
 
 	PrintOperationStatus("Applying warp update (based on energy gradient) to the cumulative warp...");

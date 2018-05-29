@@ -82,10 +82,8 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::AllocateL
 
 	float oneOverHashEntrySize = 1.0f / (voxelSize * SDF_BLOCK_SIZE);//m
 
-	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
-	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
 
-	int noVisibleEntries = 0;
+
 
 	memset(liveEntryAllocationTypes, 0, static_cast<size_t>(noTotalEntries));
 
@@ -112,6 +110,7 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::AllocateL
 		AllocateHashEntriesUsingLists_CPU(scene, liveEntryAllocationTypes, allocationBlockCoordinates,ITMLib::STABLE);
 	}
 
+	int noVisibleEntries = 0;
 	//build visible list
 	for (int targetIdx = 0; targetIdx < noTotalEntries; targetIdx++) {
 		unsigned char hashVisibleType = entriesVisibleType[targetIdx];
@@ -142,6 +141,7 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::AllocateL
 		}
 	}
 
+	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
 	//reallocate deleted ones from previous swap operation
 	if (useSwapping) {
 		for (int targetIdx = 0; targetIdx < noTotalEntries; targetIdx++) {
@@ -156,10 +156,8 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::AllocateL
 			}
 		}
 	}
-
 	renderState_vh->noVisibleEntries = noVisibleEntries;
 	scene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
-	scene->index.SetLastFreeExcessListId(lastFreeExcessListId);
 }
 
 

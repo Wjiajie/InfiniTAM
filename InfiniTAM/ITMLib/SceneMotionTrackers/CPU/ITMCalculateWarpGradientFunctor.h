@@ -163,8 +163,11 @@ public:
 	
 	
 
-	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i voxelPosition) {
+	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i position) {
 		Vector3f& warp = canonicalVoxel.warp;
+		if(position == Vector3i(-37, 21, 209)){
+			int i = 42;
+		}
 		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
 		                    && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
 
@@ -183,7 +186,7 @@ public:
 		// endregion
 
 		bool printVoxelResult = false, recordVoxelResult = false;
-		this->SetUpFocusVoxelPrinting(printVoxelResult, recordVoxelResult, voxelPosition, warp, canonicalSdf, liveSdf);
+		this->SetUpFocusVoxelPrinting(printVoxelResult, recordVoxelResult, position, warp, canonicalSdf, liveSdf);
 		// region ============================== RETRIEVE NEIGHBOR'S WARPS =================================
 
 		const int neighborhoodSize = 9;
@@ -192,7 +195,7 @@ public:
 		//    0        1        2          3         4         5           6         7         8
 		//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
 		findPoint2ndDerivativeNeighborhoodWarp(neighborWarps/*x9*/, neighborKnown, neighborTruncated,
-		                                       neighborAllocated, voxelPosition, canonicalVoxels,
+		                                       neighborAllocated, position, canonicalVoxels,
 		                                       canonicalHashEntries, canonicalCache);
 		//TODO: revise this to reflect new realities
 		for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
@@ -203,7 +206,7 @@ public:
 		}
 		if (printVoxelResult) {
 			std::cout << blue << "Live 6-connected neighbor information:" << reset << std::endl;
-			print6ConnectedNeighborInfoIndexedFields(voxelPosition, liveVoxels, liveHashEntries, liveCache,
+			print6ConnectedNeighborInfoIndexedFields(position, liveVoxels, liveHashEntries, liveCache,
 			                                         sourceSdfIndex);
 		}
 
@@ -212,15 +215,15 @@ public:
 		if (haveFullData && (switches.enableLevelSetTerm || switches.enableDataTerm)) {
 			//TODO: in case both level set term and data term need to be computed, optimize by retrieving the sdf values for live jacobian in a separate function. The live hessian needs to reuse them. -Greg (GitHub: Algomorph)
 			ComputeLiveJacobian_CentralDifferences_IndexedFields(
-					liveSdfJacobian, voxelPosition, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex);
+					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex);
 //			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_CanonicalSdf(
-//					liveSdfJacobian, voxelPosition, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex, canonicalSdf);
+//					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex, canonicalSdf);
 //			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_LiveSdf(
-//					liveSdfJacobian, voxelPosition, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex);
+//					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex);
 //			ComputeLiveJacobian_CentralDifferences_IgnoreUnknown_IndexedFields(
-//					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
+//					liveSdfJacobian, position, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
 //			ComputeLiveJacobian_CentralDifferences_NontruncatedOnly_IndexedFields(
-//					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
+//					liveSdfJacobian, position, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
 		}
 
 		// region =============================== DATA TERM ================================================
@@ -249,7 +252,7 @@ public:
 		// region =============================== LEVEL SET TERM ===========================================
 
 		if (switches.enableLevelSetTerm && haveFullData) {
-			ComputeSdfHessian_IndexedFields(liveSdfHessian, voxelPosition, liveSdf, liveVoxels,
+			ComputeSdfHessian_IndexedFields(liveSdfHessian, position, liveSdf, liveVoxels,
 			                                liveHashEntries, liveCache, sourceSdfIndex);
 			float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
 			float sdfJacobianNormMinusUnity = sdfJacobianNorm - parameters.unity;
@@ -367,14 +370,14 @@ public:
 
 			if (recordVoxelResult) {
 				int x = 0, y = 0, z = 0, hash = 0, locId = 0;
-				GetVoxelHashLocals(hash, x, y, y, z, liveHashEntries, liveCache, voxelPosition);
+				GetVoxelHashLocals(hash, x, y, y, z, liveHashEntries, liveCache, position);
 				hash -= 1;
 				std::array<ITMNeighborVoxelIterationInfo, 9> neighbors;
-				FindHighlightNeighborInfo(neighbors, voxelPosition, hash, canonicalVoxels,
+				FindHighlightNeighborInfo(neighbors, position, hash, canonicalVoxels,
 				                          canonicalHashEntries, liveVoxels, liveHashEntries, liveCache);
 				//TODO: get rid of iteration + frame fields in HighlightIterationInfo
 				ITMHighlightIterationInfo info =
-						{hash, locId, voxelPosition, warp, canonicalSdf, liveSdf,
+						{hash, locId, position, warp, canonicalSdf, liveSdf,
 						 localEnergyGradient, localDataEnergyGradient, localLevelSetEnergyGradient,
 						 localSmoothnessEnergyGradient,
 						 localEnergy, localDataEnergy, localLevelSetEnergy, localSmoothnessEnergy,

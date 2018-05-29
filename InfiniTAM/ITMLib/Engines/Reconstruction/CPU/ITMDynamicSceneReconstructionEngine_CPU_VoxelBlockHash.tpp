@@ -248,6 +248,11 @@ struct TrilinearInterpolationFunctor {
 
 	void operator()(TVoxelSdf& destinationVoxel, Vector3i warpAndDestionVoxelPosition) {
 		int vmIndex;
+
+		if(warpAndDestionVoxelPosition == Vector3i(-37, 21, 209)){
+			int i = 42;
+		}
+
 		// perform lookup at current position in canonical
 		//TODO: perform dual traversal instead to get second voxel without lookup
 		const TVoxelWarpSource& warpSourceVoxel = readVoxel(warpSourceVoxels, warpSourceHashEntries,
