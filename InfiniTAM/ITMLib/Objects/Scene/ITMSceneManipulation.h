@@ -25,7 +25,20 @@
 
 namespace ITMLib {
 
-//TODO: move traversal functions to a separate file set -Greg (GitHub: Algomorph)
+template<typename TVoxel, typename TIndex>
+class ITMSceneManipulationEngine_CPU{};
+
+template<typename TVoxel>
+class ITMSceneManipulationEngine_CPU<TVoxel,ITMVoxelBlockHash>{
+public:
+	static void ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash> *scene);
+};
+
+template<typename TVoxel>
+class ITMSceneManipulationEngine_CPU<TVoxel,ITMPlainVoxelArray>{
+public:
+	static void ResetScene(ITMScene<TVoxel, ITMPlainVoxelArray> *scene);
+};
 
 // region ==================================== GENERAL HASH MANAGEMENT =================================================
 /**
@@ -219,20 +232,7 @@ ComputeCopyRanges(int& xRangeStart, int& xRangeEnd, int& yRangeStart, int& yRang
 // endregion ===========================================================================================================
 
 
-template<typename TVoxel, typename TIndex>
-class ITMSceneManipulationEngine_CPU{};
 
-template<typename TVoxel>
-class ITMSceneManipulationEngine_CPU<TVoxel,ITMVoxelBlockHash>{
-public:
-	static void ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash> *scene);
-};
-
-template<typename TVoxel>
-class ITMSceneManipulationEngine_CPU<TVoxel,ITMPlainVoxelArray>{
-public:
-	static void ResetScene(ITMScene<TVoxel, ITMPlainVoxelArray> *scene);
-};
 
 template<typename TVoxelSource, typename TVoxelDesitnation, typename TIndex >
 void CopySceneSDFandFlagsWithOffset_CPU(ITMScene<TVoxelDesitnation, TIndex>* destination,

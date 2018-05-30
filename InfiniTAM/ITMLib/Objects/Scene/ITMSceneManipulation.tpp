@@ -213,7 +213,7 @@ bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, 
 
 
 template<typename TVoxel>
-void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(
+void ITMLib::ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(
 		ITMLib::ITMScene<TVoxel, ITMLib::ITMVoxelBlockHash>* scene)
 {
 	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
@@ -238,7 +238,7 @@ void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(
 
 
 template<typename TVoxel>
-void ITMSceneManipulationEngine_CPU<TVoxel,ITMPlainVoxelArray>::ResetScene(
+void ITMLib::ITMSceneManipulationEngine_CPU<TVoxel,ITMPlainVoxelArray>::ResetScene(
 		ITMLib::ITMScene<TVoxel, ITMLib::ITMPlainVoxelArray>* scene)
 {
 	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();

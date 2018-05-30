@@ -31,7 +31,7 @@
 #include "../../Utils/FileIO/ITMDynamicFusionLogger.h"
 
 
-using namespace ITMLib;
+namespace ITMLib{
 
 // region ==================================== STATIC PRINTING / STATISTICS FUNCTIONS ==================================
 
@@ -464,3 +464,4 @@ private:
 	ITMDynamicFusionLogger<TVoxelCanonical,TVoxelLive, ITMVoxelBlockHash>& logger;
 
 };
+}// namespace ITMLib
