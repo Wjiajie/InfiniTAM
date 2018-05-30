@@ -249,7 +249,7 @@ struct TrilinearInterpolationFunctor {
 		//TODO: perform dual traversal instead to get second voxel without lookup
 		const TVoxelWarpSource& warpSourceVoxel = readVoxel(warpSourceVoxels, warpSourceHashEntries,
 		                                                    warpAndDestionVoxelPosition, vmIndex, warpSourceCache);
-		Vector3f warpedPosition = warpAndDestionVoxelPosition.toFloat() + warpSourceVoxel.gradient0;
+		Vector3f warpedPosition = warpAndDestionVoxelPosition.toFloat() + warpSourceVoxel.warp;
 
 		bool struckKnown, struckNonTruncated;
 		float cumulativeWeight;
@@ -305,9 +305,10 @@ private:
  * \param targetLiveScene target (next iteration) live scene
  */
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ApplyWarpUpdateToLiveScene(
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::WarpLiveScene(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
+		int sourceSdfIndex, int targetSdfIndex) {
 
 	// Clear out the flags at target index
 	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);

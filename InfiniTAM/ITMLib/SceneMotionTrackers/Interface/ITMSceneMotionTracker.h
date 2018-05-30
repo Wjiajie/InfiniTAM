@@ -80,10 +80,10 @@ public:
 	                                   bool hasFocusCoordinates, const Vector3i& focusCoordinates, int sourceFieldIndex,
 	                                   bool restrictZTrackingForDebugging) = 0;
 	virtual void SmoothWarpGradient(
-			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) = 0;
-	virtual float ApplyWarpUpdateToWarp(
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
+	virtual float UpdateWarps(
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
-	virtual void ResetWarps(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) = 0;
+	virtual void ResetWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
 //============================= MEMBER VARIABLES =======================================================================
 
 	const Parameters parameters;

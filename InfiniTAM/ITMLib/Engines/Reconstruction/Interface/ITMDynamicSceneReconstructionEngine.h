@@ -73,9 +73,9 @@ public:
 	 * \param sourceSdfIndex index of the source SDF field in each live voxel
 	 * \param targetSdfIndex index of the target SDF field in each live voxel
 	 */
-	virtual void ApplyWarpUpdateToLiveScene(
-			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-			ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) = 0;
+	virtual void WarpLiveScene(
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+			ITMScene <TVoxelLive, TIndex>* liveScene, int sourceSdfIndex, int targetSdfIndex) = 0;
 protected:
 
 

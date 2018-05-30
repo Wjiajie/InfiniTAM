@@ -362,7 +362,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Apply
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ApplyWarpUpdateToWarp(
+float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::UpdateWarps(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene) {
 	return ApplyWarpUpdateToWarp_SingleThreadedVerbose(canonicalScene, liveScene);
