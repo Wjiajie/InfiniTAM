@@ -256,7 +256,8 @@ private:
 template<typename TVoxelLive, typename TVoxelCanonical>
 struct WarpHistogramFunctor{
 	WarpHistogramFunctor(float maxWarpLength, float maxWarpUpdateLength):
-			maxWarpLength(maxWarpLength),maxWarpUpdateLength(maxWarpUpdateLength){}
+			maxWarpLength(maxWarpLength),maxWarpUpdateLength(maxWarpUpdateLength){
+	}
 	static const int histBinCount = 10;
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel){
 		float warpLength = ORUtils::length(canonicalVoxel.warp);
@@ -274,8 +275,8 @@ struct WarpHistogramFunctor{
 		updateBins[binIdx]++;
 	}
 
-	int warpBins[histBinCount];
-	int updateBins[histBinCount];
+	int warpBins[histBinCount] = {0};
+	int updateBins[histBinCount] = {0};
 
 	void PrintHistogram(){
 		std::cout << "  Warp length histogram: ";
