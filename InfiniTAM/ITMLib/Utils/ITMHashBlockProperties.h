@@ -22,10 +22,8 @@ enum HashBlockVisibility : unsigned char {
 	INVISIBLE = 0
 };
 enum HashBlockState : unsigned char {
-	STABLE = 0,
 	NEEDS_ALLOCATION_IN_ORDERED_LIST = 1,
 	NEEDS_ALLOCATION_IN_EXCESS_LIST = 2,
-	BOUNDARY = 3,
 };
 enum HashBlockPtrFlag : int {
 	ENTRY_REMOVED = -1,

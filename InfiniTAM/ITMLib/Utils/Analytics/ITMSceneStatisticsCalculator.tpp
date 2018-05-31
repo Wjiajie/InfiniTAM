@@ -102,7 +102,7 @@ template<class TVoxel, typename TIndex>
 struct ComputeNonTruncatedVoxelCountFunctor<true, TVoxel, TIndex> {
 	static int compute(ITMScene<TVoxel, TIndex>* scene) {
 		ComputeNonTruncatedVoxelCountFunctor instance;
-		VoxelTraversal_CPU(*scene, instance);
+		VoxelTraversal_CPU(scene, instance);
 		return instance.count;
 	}
 
@@ -125,7 +125,7 @@ struct ComputeVoxelWithValueCountFunctor {
 	static int compute(ITMScene<TVoxel, TIndex>* scene, float value) {
 		ComputeVoxelWithValueCountFunctor instance;
 		instance.value = value;
-		VoxelTraversal_CPU(*scene, instance);
+		VoxelTraversal_CPU(scene, instance);
 		return instance.count;
 	}
 
@@ -160,7 +160,7 @@ struct SumSDFFunctor<true, TVoxel, TIndex> {
 	static double compute(ITMScene<TVoxel, TIndex>* scene, ITMLib::VoxelFlags voxelType) {
 		SumSDFFunctor instance;
 		instance.voxelType = voxelType;
-		VoxelTraversal_CPU(*scene, instance);
+		VoxelTraversal_CPU(scene, instance);
 		return instance.sum;
 	}
 

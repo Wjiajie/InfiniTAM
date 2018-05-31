@@ -27,7 +27,7 @@ using namespace ITMLib;
 // region ================================== CONSTRUCTORS / DESTRUCTORS ================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::ITMDynamicHashManagementEngine_CPU() :
+ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::ITMDynamicHashManagementEngine_CPU() :
 		canonicalEntryAllocationTypes(
 				new ORUtils::MemoryBlock<unsigned char>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU)),
 		liveEntryAllocationTypes(
@@ -37,18 +37,17 @@ ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::ITMDynamicHash
 
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::~ITMDynamicHashManagementEngine_CPU() {
+ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::~ITMDynamicHashManagementEngine_CPU() {
 	delete canonicalEntryAllocationTypes;
 	delete liveEntryAllocationTypes;
 	delete allocationBlockCoordinates;
 }
 
 // endregion ===========================================================================================================
-
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::AllocateLiveSceneFromDepth(
+void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLiveSceneFromDepth(
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
-		const ITMRenderState* renderState, bool onlyUpdateVisibleList, bool resetVisibleList){
+		const ITMRenderState* renderState, bool onlyUpdateVisibleList, bool resetVisibleList) {
 	Vector2i depthImgSize = view->depth->noDims;
 	float voxelSize = scene->sceneParams->voxelSize;
 
@@ -73,47 +72,44 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::AllocateL
 	ITMHashEntry* hashTable = scene->index.GetEntries();
 	ITMHashSwapState* swapStates = scene->globalCache != nullptr ? scene->globalCache->GetSwapStates(false) : 0;
 	int* visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
-	uchar* entriesVisibleType = renderState_vh->GetEntriesVisibleType();
+	uchar* hashBlockVisibilityTypes = renderState_vh->GetEntriesVisibleType();
 	uchar* liveEntryAllocationTypes = this->liveEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
 	Vector3s* allocationBlockCoordinates = this->allocationBlockCoordinates->GetData(MEMORYDEVICE_CPU);
 	int noTotalEntries = scene->index.noTotalEntries;
 
-	bool useSwapping = scene->globalCache != nullptr;
-
 	float oneOverHashEntrySize = 1.0f / (voxelSize * SDF_BLOCK_SIZE);//m
-
-
-
 
 	memset(liveEntryAllocationTypes, 0, static_cast<size_t>(noTotalEntries));
 
 	for (int i = 0; i < renderState_vh->noVisibleEntries; i++)
-		entriesVisibleType[visibleEntryIDs[i]] = 3; // visible at previous frame and unstreamed
+		hashBlockVisibilityTypes[visibleEntryIDs[i]] = 3; // visible at previous frame and unstreamed
 
-	//build hashVisibility
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
 	for (int locId = 0; locId < depthImgSize.x * depthImgSize.y; locId++) {
 		int y = locId / depthImgSize.x;
 		int x = locId - y * depthImgSize.x;
-		buildHashAllocAndVisibleTypePP(liveEntryAllocationTypes, entriesVisibleType, x, y, allocationBlockCoordinates,
-		                                   depth, invM_d,
-		                                   invProjParams_d, mu, depthImgSize, oneOverHashEntrySize, hashTable,
-		                                   scene->sceneParams->viewFrustum_min,
-		                                   scene->sceneParams->viewFrustum_max);
+		buildHashAllocAndVisibleTypePP(liveEntryAllocationTypes, hashBlockVisibilityTypes, x, y,
+		                               allocationBlockCoordinates,
+		                               depth, invM_d,
+		                               invProjParams_d, mu, depthImgSize, oneOverHashEntrySize, hashTable,
+		                               scene->sceneParams->viewFrustum_min,
+		                               scene->sceneParams->viewFrustum_max);
 	}
 
-	if (onlyUpdateVisibleList) useSwapping = false;
-	//TODO: replace with call to AllocateHashEntriesUsingLists_CPU in SceneManipulation
-	if (!onlyUpdateVisibleList) {
-		AllocateHashEntriesUsingLists_CPU(scene, liveEntryAllocationTypes, allocationBlockCoordinates,ITMLib::STABLE);
+	bool useSwapping = scene->globalCache != nullptr;
+	if (onlyUpdateVisibleList) {
+		useSwapping = false;
+	}else{
+		AllocateHashEntriesUsingLists_SetVisibility_CPU(scene, liveEntryAllocationTypes,
+		                                                allocationBlockCoordinates, hashBlockVisibilityTypes);
 	}
 
 	int noVisibleEntries = 0;
 	//build visible list
 	for (int targetIdx = 0; targetIdx < noTotalEntries; targetIdx++) {
-		unsigned char hashVisibleType = entriesVisibleType[targetIdx];
+		unsigned char hashVisibleType = hashBlockVisibilityTypes[targetIdx];
 		const ITMHashEntry& hashEntry = hashTable[targetIdx];
 
 		if (hashVisibleType == 3) {
@@ -121,14 +117,14 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::AllocateL
 
 			if (useSwapping) {
 				checkBlockVisibility<true>(isVisible, isVisibleEnlarged, hashEntry.pos, M_d, projParams_d,
-				                               voxelSize,depthImgSize);
+				                           voxelSize, depthImgSize);
 				if (!isVisibleEnlarged) hashVisibleType = 0;
 			} else {
 				checkBlockVisibility<false>(isVisible, isVisibleEnlarged, hashEntry.pos, M_d, projParams_d,
-				                                voxelSize,depthImgSize);
+				                            voxelSize, depthImgSize);
 				if (!isVisible) { hashVisibleType = 0; }
 			}
-			entriesVisibleType[targetIdx] = hashVisibleType;
+			hashBlockVisibilityTypes[targetIdx] = hashVisibleType;
 		}
 
 		if (useSwapping) {
@@ -142,17 +138,15 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::AllocateL
 	}
 
 	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
-	//reallocate deleted ones from previous swap operation
+
+	//reallocate deleted hash blocks from previous swap operation
 	if (useSwapping) {
 		for (int targetIdx = 0; targetIdx < noTotalEntries; targetIdx++) {
-			int vbaIdx;
-			ITMHashEntry hashEntry = hashTable[targetIdx];
-
-			if (entriesVisibleType[targetIdx] > 0 && hashEntry.ptr == -1) {
-				vbaIdx = lastFreeVoxelBlockId;
-				lastFreeVoxelBlockId--;
-				if (vbaIdx >= 0) hashTable[targetIdx].ptr = voxelAllocationList[vbaIdx];
-				else lastFreeVoxelBlockId++; // Avoid leaks
+			if (hashBlockVisibilityTypes[targetIdx] > 0 && hashTable[targetIdx].ptr == -1) {
+				if (lastFreeVoxelBlockId >= 0){
+					hashTable[lastFreeVoxelBlockId].ptr = voxelAllocationList[lastFreeVoxelBlockId];
+					lastFreeVoxelBlockId--;
+				}
 			}
 		}
 	}
@@ -162,62 +156,6 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::AllocateL
 
 
 // region =========================== CANONICAL HASH BLOCK ALLOCATION ==================================================
-/**
- * \brief Allocates new hash blocks in the canonical (reference) frame at each frame to accommodate potential new
- * data arising from sensor motion and discovery of previously unseen surfaces
- * \tparam TVoxelCanonical type of voxels in the canonical scene
- * \tparam TVoxelLive type of voxels in the live scene
- * \tparam TIndex index used in scenes
- * \param canonicalScene the canonical (reference) scene
- * \param liveScene the live (target) scene
- */
-template<typename TVoxelCanonical, typename TVoxelLive>
-void
-ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>
-::ExpandAllocatedCanonicalStableRegion(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
-
-	uchar* entriesAllocType = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
-	Vector3s* allocationBlockCoords = this->allocationBlockCoordinates->GetData(MEMORYDEVICE_CPU);
-	ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
-
-	// traverse canonical allocated blocks, if a block is stable, mark it's neighbors for allocation as boundaries
-	const short neighborhoodSize = 3;//must be an odd positive integer greater than 1.
-	const short neighborhoodRangeStart = -neighborhoodSize / 2;
-	const short neighborhoodRangeEnd = neighborhoodSize / 2 + 1;
-
-#ifdef WITH_OPENMP
-#pragma omp parallel for
-#endif
-	for (int canonicalHashBlockIndex = 0; canonicalHashBlockIndex < ITMVoxelBlockHash::noTotalEntries;
-	     canonicalHashBlockIndex++) {
-		const ITMHashEntry& currentCanonicalHashBlock = canonicalHashTable[canonicalHashBlockIndex];
-		if (currentCanonicalHashBlock.ptr < 0) continue; //hash block not allocated in live, continue
-		Vector3s hashBlockCoords = currentCanonicalHashBlock.pos;
-		Vector3s currentBlockLocation = hashBlockCoords;
-		int hashIdx = hashIndex(currentBlockLocation);
-		int iNeighbor = 0;
-		unsigned char entryAllocType = entriesAllocType[hashIdx];
-
-		if (entryAllocType == ITMLib::STABLE) {
-			//for all stable voxels, check the neighborhood
-			for (short x = neighborhoodRangeStart; x < neighborhoodRangeEnd; x++) {
-				for (short y = neighborhoodRangeStart; y < neighborhoodRangeEnd; y++) {
-					for (short z = neighborhoodRangeStart; z < neighborhoodRangeEnd; z++) {
-						//compute neighbor hash block position
-						if (x == 0 && y == 0 && z == 0) continue;
-						currentBlockLocation = hashBlockCoords + Vector3s(x, y, z);
-						//compute index in hash table
-						hashIdx = hashIndex(currentBlockLocation);
-						MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, hashIdx,
-						                                  currentBlockLocation, canonicalHashTable);
-						iNeighbor++;
-					}
-				}
-			}
-		}
-	}
-	AllocateHashEntriesUsingLists_CPU(canonicalScene, entriesAllocType, allocationBlockCoords, ITMLib::BOUNDARY);
-}
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateCanonicalFromLive(
@@ -246,16 +184,14 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateCa
 		                                  canonicalBlockIndex,
 		                                  liveHashBlockCoords, canonicalHashEntries);
 	}
-	AllocateHashEntriesUsingLists_CPU(canonicalScene, canonicalEntryAllocationTypes, allocationBlockCoordinates,
-	                                  ITMLib::STABLE);
+	AllocateHashEntriesUsingLists_CPU(canonicalScene, canonicalEntryAllocationTypes, allocationBlockCoordinates);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::ChangeCanonicalHashEntryState(
+void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::ChangeCanonicalHashEntryState(
 		int hash, ITMLib::HashBlockState state) {
 	this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU)[hash] = state;
 }
-
 
 
 template<typename TVoxelWarpSource, typename TVoxelSdfSource>
@@ -283,7 +219,7 @@ struct WarpBasedAllocationMarkerFunctor {
 		int vmIndex;
 		const TVoxelSdfSource& sdfVoxelAtWarp = readVoxel(sdfVoxels, sdfHashEntries, warpedPositionTruncated,
 		                                                  vmIndex, sdfCache);
-		// skip truncated voxels in raw/old live
+		// skip truncated voxels in raw/old live scene
 		if (sdfVoxelAtWarp.flag_values[flagIndex] != ITMLib::VOXEL_NONTRUNCATED) return;
 
 		int liveBlockHash = hashIndex(hashBlockPosition);
@@ -303,6 +239,7 @@ private:
 	uchar* warpedEntryAllocationTypes;
 	const int flagIndex;
 };
+
 /**
  * \brief Helper method which looks at voxel grid with warps and an SDF voxel grid and allocates all hash blocks in the
  * SDF grid where warp vectors are pointing to (if not already allocated).
@@ -314,7 +251,7 @@ private:
  * \param fieldIndex index of the sdf / flag field to use in the sdfScene
  */
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::AllocateWarpedLive(
+void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateWarpedLive(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int fieldIndex) {
 	int entryCount = ITMVoxelBlockHash::noTotalEntries;
@@ -326,11 +263,10 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive >::AllocateW
 	//Mark up hash entries in the target scene that will need allocation
 	WarpBasedAllocationMarkerFunctor<TVoxelCanonical, TVoxelLive>
 			hashMarkerFunctor(sdfScene, allocationBlockCoords, liveEntryAllocationTypes, fieldIndex);
-	VoxelAndHashBlockPositionTraversal_CPU(*warpSourceScene, hashMarkerFunctor);
+	VoxelAndHashBlockPositionTraversal_CPU(warpSourceScene, hashMarkerFunctor);
 
 	//Allocate the hash entries that will potentially have any data
-	AllocateHashEntriesUsingLists_CPU(sdfScene, liveEntryAllocationTypes, allocationBlockCoords,
-	                                  ITMLib::STABLE);
+	AllocateHashEntriesUsingLists_CPU(sdfScene, liveEntryAllocationTypes, allocationBlockCoords);
 }
 
 // endregion ==================================== END CANONICAL HASH BLOCK ALLOCATION ==================================

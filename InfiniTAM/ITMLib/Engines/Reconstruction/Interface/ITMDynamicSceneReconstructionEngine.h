@@ -61,8 +61,9 @@ public:
 	 * \param liveScene the live voxel grid, a TSDF generated from a single recent depth image
 	 * \param liveSourceFieldIndex index of the sdf field to use at live scene voxels
 	 */
-	virtual void FuseFrame(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>* liveScene,
-	                       int liveSourceFieldIndex) = 0;
+	virtual void FuseLiveIntoCanonicalSdf(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                                      ITMScene<TVoxelLive, TIndex>* liveScene,
+	                                      int liveSourceFieldIndex) = 0;
 
 
 	/**

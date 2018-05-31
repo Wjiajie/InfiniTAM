@@ -214,158 +214,108 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::
 
 // endregion ===========================================================================================================
 
-// region ======================================== APPLY WARP UPDATE TO THE WARP ITSELF ================================
-template<typename TVoxelCanonical, typename TVoxelLive>
-float
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ApplyWarpUpdateToWarp_SingleThreadedVerbose(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene) {
+template<typename TVoxelLive, typename TVoxelCanonical>
+struct WarpUpdateFunctor{
+	WarpUpdateFunctor(float learningRate, bool gradientSmoothingEnabled):
+			learningRate(learningRate),gradientSmoothingEnabled(gradientSmoothingEnabled),
+			maxWarpLength(0.0f),maxWarpUpdateLength(0.0f), maxWarpPosition(0),maxWarpUpdatePosition(0){}
 
-	const float learningRate = this->parameters.gradientDescentLearningRate;
+	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, const Vector3i& position){
+		Vector3f warpUpdate = -learningRate * (gradientSmoothingEnabled ?
+		                                       canonicalVoxel.gradient1 : canonicalVoxel.gradient0);
 
-	// *** traversal vars
-	// ** canonical frame
-	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
-	ITMHashEntry* canonicalHashTable = canonicalScene->index.GetEntries();
-	// ** live frame
-	TVoxelLive* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
-	ITMHashEntry* liveHashTable = liveScene->index.GetEntries();
-	int noTotalEntries = liveScene->index.noTotalEntries;
+		canonicalVoxel.gradient0 = warpUpdate;
+		canonicalVoxel.warp += warpUpdate;
 
-	// *** stats
-	float maxWarpLength = 0.0f;
-	float maxWarpUpdateLength = 0.0f;
-	Vector3i maxWarpPosition(0);
-	Vector3i maxWarpUpdatePosition(0);
-
-	//Apply the update
-	for (int hash = 0; hash < noTotalEntries; hash++) {
-		const ITMHashEntry& currentLiveHashEntry = liveHashTable[hash];
-		if (currentLiveHashEntry.ptr < 0) continue;
-		ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[hash];
-
-		// the rare case where we have different positions for live & canonical voxel block with the same index:
-		// we have a hash bucket miss, find the canonical voxel with the matching coordinates
-		if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
-			int canonicalHash = hash;
-			if (!FindHashAtPosition(canonicalHash, currentLiveHashEntry.pos, canonicalHashTable)) {
-				std::stringstream stream;
-				stream << "Could not find corresponding canonical block at postion " << currentLiveHashEntry.pos
-				       << ". " << __FILE__ << ": " << __LINE__;
-				DIEWITHEXCEPTION(stream.str());
-			}
-			currentCanonicalHashEntry = canonicalHashTable[canonicalHash];
+		// update stats
+		float warpLength = ORUtils::length(canonicalVoxel.warp);
+		float warpUpdateLength = ORUtils::length(warpUpdate);
+		if (warpLength > maxWarpLength) {
+			maxWarpLength = warpLength;
+			maxWarpPosition = position;
 		}
-
-		TVoxelLive* localLiveVoxelBlock = &(liveVoxels[currentLiveHashEntry.ptr * SDF_BLOCK_SIZE3]);
-		TVoxelCanonical* localCanonicalVoxelBlock =
-				&(canonicalVoxels[currentCanonicalHashEntry.ptr * SDF_BLOCK_SIZE3]);
-
-		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-					TVoxelLive& liveVoxel = localLiveVoxelBlock[locId];
-					TVoxelCanonical& canonicalVoxel = localCanonicalVoxelBlock[locId];
-					Vector3f warpUpdate = -learningRate * (this->switches.enableGradientSmoothing ?
-					                                       canonicalVoxel.gradient1 : canonicalVoxel.gradient0);
-
-					canonicalVoxel.gradient0 = warpUpdate;
-					canonicalVoxel.warp += warpUpdate;
-					float warpLength = ORUtils::length(canonicalVoxel.warp);
-					float warpUpdateLength = ORUtils::length(warpUpdate);
-					if (warpLength > maxWarpLength) {
-						maxWarpLength = warpLength;
-						maxWarpPosition = currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE + Vector3i(x, y, z);
-					}
-					if (warpUpdateLength > maxWarpUpdateLength) {
-						maxWarpUpdateLength = warpUpdateLength;
-						maxWarpUpdatePosition =
-								currentCanonicalHashEntry.pos.toInt() * SDF_BLOCK_SIZE + Vector3i(x, y, z);
-					}
-				}
-			}
+		if (warpUpdateLength > maxWarpUpdateLength) {
+			maxWarpUpdateLength = warpUpdateLength;
+			maxWarpUpdatePosition = position;
 		}
 	}
+	float maxWarpLength;
+	float maxWarpUpdateLength;
+	Vector3i maxWarpPosition;
+	Vector3i maxWarpUpdatePosition;
 
-	//Warp Update Length Histogram
+	void PrintWarp(){
+		std::cout << green << "Max warp: [" << maxWarpLength << " at " << maxWarpPosition << "] Max update: ["
+		          << maxWarpUpdateLength << " at " << maxWarpUpdatePosition << "]." << reset << std::endl;
+	}
+private:
+	const float learningRate;
+	const bool gradientSmoothingEnabled;
+};
+
+template<typename TVoxelLive, typename TVoxelCanonical>
+struct WarpHistogramFunctor{
+	WarpHistogramFunctor(float maxWarpLength, float maxWarpUpdateLength):
+			maxWarpLength(maxWarpLength),maxWarpUpdateLength(maxWarpUpdateLength){}
+	static const int histBinCount = 10;
+	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel){
+		float warpLength = ORUtils::length(canonicalVoxel.warp);
+		float warpUpdateLength = ORUtils::length(canonicalVoxel.gradient0);
+		const int histBinCount = WarpHistogramFunctor<TVoxelLive,TVoxelCanonical>::histBinCount;
+		int binIdx = 0;
+		if (maxWarpLength > 0) {
+			binIdx = std::min(histBinCount - 1, (int) (warpLength * histBinCount / maxWarpLength));
+		}
+		warpBins[binIdx]++;
+		if (maxWarpUpdateLength > 0) {
+			binIdx = std::min(histBinCount - 1,
+			                  (int) (warpUpdateLength * histBinCount / maxWarpUpdateLength));
+		}
+		updateBins[binIdx]++;
+	}
+
+	int warpBins[histBinCount];
+	int updateBins[histBinCount];
+
+	void PrintHistogram(){
+		std::cout << "  Warp length histogram: ";
+		for (int iBin = 0; iBin < histBinCount; iBin++) {
+			std::cout << std::setfill(' ') << std::setw(7) << warpBins[iBin] << "  ";
+		}
+		std::cout << std::endl;
+		std::cout << "Update length histogram: ";
+		for (int iBin = 0; iBin < histBinCount; iBin++) {
+			std::cout << std::setfill(' ') << std::setw(7) << updateBins[iBin] << "  ";
+		}
+		std::cout << std::endl;
+	}
+private:
+	const float maxWarpLength;
+	const float maxWarpUpdateLength;
+
 	// <20%, 40%, 60%, 80%, 100%
-	const int histBinCount = 10;
-	int warpBins[histBinCount] = {0};
-	int updateBins[histBinCount] = {0};
+};
 
-	for (int hash = 0; hash < noTotalEntries; hash++) {
-		const ITMHashEntry& currentLiveHashEntry = liveHashTable[hash];
-		if (currentLiveHashEntry.ptr < 0) continue;
-		if (currentLiveHashEntry.ptr < 0) continue;
-		ITMHashEntry& currentCanonicalHashEntry = canonicalHashTable[hash];
 
-		// the rare case where we have different positions for live & canonical voxel block with the same index:
-		// we have a hash bucket miss, find the canonical voxel with the matching coordinates
-		if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
-			int canonicalHash = hash;
-			if (!FindHashAtPosition(canonicalHash, currentLiveHashEntry.pos, canonicalHashTable)) {
-				std::stringstream stream;
-				stream << "Could not find corresponding canonical block at postion " << currentLiveHashEntry.pos
-				       << ". " << __FILE__ << ": " << __LINE__;
-				DIEWITHEXCEPTION(stream.str());
-			}
-			currentCanonicalHashEntry = canonicalHashTable[canonicalHash];
-		}
-
-		TVoxelLive* localLiveVoxelBlock = &(liveVoxels[currentLiveHashEntry.ptr * SDF_BLOCK_SIZE3]);
-		TVoxelCanonical* localCanonicalVoxelBlock =
-				&(canonicalVoxels[currentCanonicalHashEntry.ptr * SDF_BLOCK_SIZE3]);
-
-		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-					TVoxelLive& liveVoxel = localLiveVoxelBlock[locId];
-					if (liveVoxel.flags != ITMLib::VOXEL_NONTRUNCATED) {
-						continue;
-					}
-					TVoxelCanonical& canonicalVoxel = localCanonicalVoxelBlock[locId];
-
-					float warpLength = ORUtils::length(canonicalVoxel.warp);
-					float warpUpdateLength = ORUtils::length(canonicalVoxel.gradient0);
-					int binIdx = 0;
-					if (maxWarpLength > 0) {
-						binIdx = std::min(histBinCount - 1, (int) (warpLength * histBinCount / maxWarpLength));
-					}
-					warpBins[binIdx]++;
-					if (maxWarpUpdateLength > 0) {
-						binIdx = std::min(histBinCount - 1,
-						                  (int) (warpUpdateLength * histBinCount / maxWarpUpdateLength));
-					}
-					updateBins[binIdx]++;
-				}
-			}
-		}
-	}
-
-	std::cout << "  Warp length histogram: ";
-	for (int iBin = 0; iBin < histBinCount; iBin++) {
-		std::cout << std::setfill(' ') << std::setw(7) << warpBins[iBin] << "  ";
-	}
-	std::cout << std::endl;
-	std::cout << "Update length histogram: ";
-	for (int iBin = 0; iBin < histBinCount; iBin++) {
-		std::cout << std::setfill(' ') << std::setw(7) << updateBins[iBin] << "  ";
-	}
-	std::cout << std::endl;
-
-	std::cout << green << "Max warp: [" << maxWarpLength << " at " << maxWarpPosition << "] Max update: ["
-	          << maxWarpUpdateLength << " at " << maxWarpUpdatePosition << "]." << reset << std::endl;
-
-	return maxWarpUpdateLength;
-}
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::UpdateWarps(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene) {
-	return ApplyWarpUpdateToWarp_SingleThreadedVerbose(canonicalScene, liveScene);
+
+	WarpUpdateFunctor<TVoxelLive, TVoxelCanonical>
+			warpUpdateFunctor(this->parameters.gradientDescentLearningRate,this->switches.enableGradientSmoothing);
+
+	DualVoxelPositionTraversal_CPU(liveScene,canonicalScene,warpUpdateFunctor);
+
+	WarpHistogramFunctor<TVoxelLive, TVoxelCanonical>
+	        warpHistogramFunctor(warpUpdateFunctor.maxWarpLength,warpUpdateFunctor.maxWarpUpdateLength);
+	DualVoxelTraversal_CPU(liveScene,canonicalScene,warpHistogramFunctor);
+
+	warpHistogramFunctor.PrintHistogram();
+	warpUpdateFunctor.PrintWarp();
+
+	return warpUpdateFunctor.maxWarpUpdateLength;
 }
 
 

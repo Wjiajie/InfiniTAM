@@ -168,7 +168,7 @@ bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, 
 		}
 	}
 
-	AllocateHashEntriesUsingLists_CPU(destination, entriesAllocType, allocationBlockCoords, ITMLib::STABLE);
+	AllocateHashEntriesUsingLists_CPU(destination, entriesAllocType, allocationBlockCoords);
 
 	delete blockCoords;
 	delete entryAllocationTypes;

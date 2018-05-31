@@ -51,9 +51,6 @@ public:
 
 
 private:
-	float ApplyWarpUpdateToWarp_SingleThreadedVerbose(
-			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-			ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene);
 
 	ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive> hashManager;
 	ITMCalculateWarpGradientFunctor<TVoxelCanonical, TVoxelLive> calculateGradientFunctor;

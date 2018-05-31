@@ -165,6 +165,7 @@ public:
 
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i position) {
 		Vector3f& warp = canonicalVoxel.warp;
+
 		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
 		                    && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
 

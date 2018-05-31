@@ -139,9 +139,9 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessInitialF
 	//** prepare canonical for new frame
 	PrintOperationStatus("Fusing data from live frame into canonical frame...");
 	//** fuse the live into canonical directly
-	bench::StartTimer("FuseFrame");
-	sceneReconstructor->FuseFrame(canonicalScene, liveScene, 0);
-	bench::StopTimer("FuseFrame");
+	bench::StartTimer("FuseLiveIntoCanonicalSdf");
+	sceneReconstructor->FuseLiveIntoCanonicalSdf(canonicalScene, liveScene, 0);
+	bench::StopTimer("FuseLiveIntoCanonicalSdf");
 	ProcessSwapping(canonicalScene, renderState);
 }
 
@@ -160,10 +160,11 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProce
 		sceneReconstructor->GenerateRawLiveSceneFromView(liveScene, view, trackingState, renderState);
 		bench::StopTimer("GenerateRawLiveFrame");
 	}
+
 	PrintOperationStatus(
 			"Initializing live frame SDF by mapping from raw live SDF to warped SDF based on previous-frame warp...");
 	bench::StartTimer("TrackMotion_35_WarpLiveScene");
-	sceneReconstructor->WarpLiveScene(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
+	sceneReconstructor->WarpLiveScene(canonicalScene, liveScene, 0, 1);
 	bench::StopTimer("TrackMotion_35_WarpLiveScene");
 
 	logger.InitializeRecording(canonicalScene, liveScene, false, false, recordWarp2DSlice,
@@ -178,9 +179,9 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeProcess
 
 	logger.FinalizeRecording(canonicalScene, liveScene);
 	//fuse warped live into canonical
-	bench::StartTimer("FuseFrame");
-	sceneReconstructor->FuseFrame(canonicalScene, liveScene, 1); //target sdf always warped frame, i.e. index 1
-	bench::StopTimer("FuseFrame");
+	bench::StartTimer("FuseLiveIntoCanonicalSdf");
+	sceneReconstructor->FuseLiveIntoCanonicalSdf(canonicalScene, liveScene, 1); //target sdf always warped frame, i.e. index 1
+	bench::StopTimer("FuseLiveIntoCanonicalSdf");
 
 	ProcessSwapping(canonicalScene, renderState);
 };

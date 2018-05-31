@@ -25,9 +25,9 @@ public:
 	void GenerateRawLiveSceneFromView(ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view,
 	                                  const ITMTrackingState* trackingState,
 	                                  const ITMRenderState* renderState) override;
-	void FuseFrame(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-	               ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
-	               int liveSourceFieldIndex) override;
+	void FuseLiveIntoCanonicalSdf(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+	                              ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
+	                              int liveSourceFieldIndex) override;
 	void WarpLiveScene(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 	                   ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
 	                   int sourceSdfIndex, int targetSdfIndex) override;
@@ -52,9 +52,9 @@ public:
 	void GenerateRawLiveSceneFromView(ITMScene<TVoxelLive, ITMPlainVoxelArray>* scene, const ITMView* view,
 	                                  const ITMTrackingState* trackingState,
 	                                  const ITMRenderState* renderState) override;
-	void FuseFrame(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-	               ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene,
-	               int liveSourceFieldIndex) override;
+	void FuseLiveIntoCanonicalSdf(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
+	                              ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene,
+	                              int liveSourceFieldIndex) override;
 	void WarpLiveScene(
 			ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 			ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) override;

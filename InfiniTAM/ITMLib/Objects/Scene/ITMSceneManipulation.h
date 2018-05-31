@@ -129,7 +129,7 @@ inline bool MarkAsNeedingAllocationIfNotFound(DEVICEPTR(uchar)* entryAllocationT
 template<typename TVoxel, typename TIndex>
 inline
 void AllocateHashEntriesUsingLists_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* entryAllocationTypes,
-                                       Vector3s* allocationBlockCoordinates, const HashBlockState& newEntryState) {
+                                       Vector3s* allocationBlockCoordinates) {
 	int entryCount = TIndex::noTotalEntries;
 	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
 	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
@@ -149,7 +149,6 @@ void AllocateHashEntriesUsingLists_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* e
 					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
 					hashEntry.offset = 0;
 					hashTable[hash] = hashEntry;
-					entryAllocationTypes[hash] = newEntryState;
 					lastFreeVoxelBlockId--;
 				}
 
@@ -166,7 +165,64 @@ void AllocateHashEntriesUsingLists_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* e
 					int exlOffset = excessAllocationList[lastFreeExcessListId];
 					hashTable[hash].offset = exlOffset + 1; //connect to child
 					hashTable[SDF_BUCKET_NUM + exlOffset] = hashEntry; //add child to the excess list
-					entryAllocationTypes[hash] = newEntryState;
+					lastFreeVoxelBlockId--;
+					lastFreeExcessListId--;
+				}
+				break;
+			default:
+				break;
+		}
+	}
+	scene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
+	scene->index.SetLastFreeExcessListId(lastFreeExcessListId);
+}
+
+
+template<typename TVoxel, typename TIndex>
+inline
+void AllocateHashEntriesUsingLists_SetVisibility_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* entryAllocationTypes,
+                                       Vector3s* allocationBlockCoordinates, uchar* entriesVisibleType) {
+	int entryCount = TIndex::noTotalEntries;
+	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
+	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
+	int* voxelAllocationList = scene->localVBA.GetAllocationList();
+	int* excessAllocationList = scene->index.GetExcessAllocationList();
+	ITMHashEntry* hashTable = scene->index.GetEntries();
+
+	for (int hash = 0; hash < entryCount; hash++) {
+		if(hash == 0 || hash == 1924){
+			int i = 42;
+		}
+		unsigned char entryAllocType = entryAllocationTypes[hash];
+		switch (entryAllocType) {
+			case ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST:
+
+				if (lastFreeVoxelBlockId >= 0) //there is room in the voxel block array
+				{
+					ITMHashEntry hashEntry;
+					hashEntry.pos = allocationBlockCoordinates[hash];
+					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
+					hashEntry.offset = 0;
+					hashTable[hash] = hashEntry;
+					lastFreeVoxelBlockId--;
+				}else{
+					entriesVisibleType[hash] = 0;
+				}
+
+				break;
+			case NEEDS_ALLOCATION_IN_EXCESS_LIST:
+
+				if (lastFreeVoxelBlockId >= 0 &&
+				    lastFreeExcessListId >= 0) //there is room in the voxel block array and excess list
+				{
+					ITMHashEntry hashEntry;
+					hashEntry.pos = allocationBlockCoordinates[hash];
+					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
+					hashEntry.offset = 0;
+					int exlOffset = excessAllocationList[lastFreeExcessListId];
+					hashTable[hash].offset = exlOffset + 1; //connect to child
+					hashTable[SDF_BUCKET_NUM + exlOffset] = hashEntry; //add child to the excess list
+					entriesVisibleType[SDF_BUCKET_NUM + exlOffset] = 1; //make child visible and in memory
 					lastFreeVoxelBlockId--;
 					lastFreeExcessListId--;
 				}

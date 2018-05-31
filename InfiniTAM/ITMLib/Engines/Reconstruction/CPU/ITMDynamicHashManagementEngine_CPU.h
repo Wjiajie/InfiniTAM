@@ -44,7 +44,7 @@ public:
 			ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view,
 			const ITMTrackingState* trackingState,const ITMRenderState* renderState,
 			bool onlyUpdateVisibleList = false, bool resetVisibleList = false);
-	void ExpandAllocatedCanonicalStableRegion(ITMScene <TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene);
+
 	void AllocateCanonicalFromLive(ITMScene <TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 	                               ITMScene <TVoxelLive, ITMVoxelBlockHash>* liveScene);
 	void AllocateWarpedLive(
@@ -56,6 +56,7 @@ private:
 	ORUtils::MemoryBlock<unsigned char>* liveEntryAllocationTypes;
 	ORUtils::MemoryBlock<unsigned char>* canonicalEntryAllocationTypes;
 	ORUtils::MemoryBlock<Vector3s>* allocationBlockCoordinates;
+
 };
 
 

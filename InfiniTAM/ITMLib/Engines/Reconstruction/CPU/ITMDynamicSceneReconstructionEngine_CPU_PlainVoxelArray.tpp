@@ -77,7 +77,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPla
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::FuseFrame(
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::FuseLiveIntoCanonicalSdf(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int liveSourceFieldIndex) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
