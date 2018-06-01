@@ -16,6 +16,7 @@
 #include "ITMDynamicFusionLogger.h"
 #include "../Analytics/ITMBenchmarkUtils.h"
 #include <opencv2/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 using namespace ITMLib;
 namespace bench = ITMLib::Bench;
@@ -93,14 +94,13 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeWarp
 	cv::Mat canonicalImgOut;
 	canonicalImg.convertTo(canonicalImgOut, CV_8UC1);
 	cv::cvtColor(canonicalImgOut, canonicalImgOut, cv::COLOR_GRAY2BGR);
-	cv::imwrite(ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolderName
-	            + "canonical.png", canonicalImgOut);
+	rasterizer->MakeOrClearOutputDirectories();
+	cv::imwrite(rasterizer->GetOutputDirectoryForWarps() + "/canonical.png", canonicalImgOut);
 	cv::Mat liveImg = rasterizer->DrawLiveSceneImageAroundPoint(sourceLiveScene, 0) * 255.0f;
 	cv::Mat liveImgOut;
 	liveImg.convertTo(liveImgTemplate, CV_8UC1);
 	cv::cvtColor(liveImgTemplate, liveImgOut, cv::COLOR_GRAY2BGR);
-	cv::imwrite(ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolderName + "live.png",
-	            liveImgOut);
+	cv::imwrite(rasterizer->GetOutputDirectoryForWarps() + "/live.png", liveImgOut);
 	//TODO: this is kinda backwards. Just build this in the constructor using constants from rasterizer for size. -Greg (GitHub: Algomorph)
 	blank = cv::Mat::zeros(liveImg.rows, liveImg.cols, CV_8UC1);
 }
@@ -108,7 +108,7 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeWarp
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
 ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarp2DSlice(int iteration) {
-	if (hasFocusCoordinates && recordWarps) {
+	if (hasFocusCoordinates && recordWarp2DSlices) {
 		cv::Mat warpImg = rasterizer->DrawWarpedSceneImageAroundPoint(canonicalScene) * 255.0f;
 		cv::Mat warpImgChannel, warpImgOut, mask, liveImgChannel, markChannel;
 		blank.copyTo(markChannel);
@@ -124,17 +124,14 @@ ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarp2DSlice(int
 		cv::merge(channels, 3, warpImgOut);
 		std::stringstream numStringStream;
 		numStringStream << std::setw(3) << std::setfill('0') << iteration;
-		std::string image_name =
-				ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolderName + "warp" +
-				numStringStream.str() + ".png";
+		std::string image_name = rasterizer->GetOutputDirectoryForWarps() + "/warp" + numStringStream.str() + ".png";
 		cv::imwrite(image_name, warpImgOut);
-		cv::Mat liveImg = rasterizer->DrawLiveSceneImageAroundPoint(liveScene, iteration % 2) * 255.0f;
+		cv::Mat liveImg = rasterizer->DrawLiveSceneImageAroundPoint(liveScene, 1) * 255.0f;
 		cv::Mat liveImgOut;
 		liveImg.convertTo(liveImgOut, CV_8UC1);
 		cv::cvtColor(liveImgOut, liveImgOut, cv::COLOR_GRAY2BGR);
-		cv::imwrite(
-				ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::liveIterationFramesFolderName + "live " +
-				numStringStream.str() + ".png", liveImgOut);
+		cv::imwrite(rasterizer->GetOutputDirectoryForWarpedLiveScenes() + "/live " + numStringStream.str() + ".png",
+		            liveImgOut);
 	}
 }
 
@@ -166,7 +163,7 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeRecord
 		delete sceneLogger;
 		sceneLogger = nullptr;
 	}
-	if(recordWarp2DSlices){
+	if (recordWarp2DSlices) {
 		delete rasterizer;
 		rasterizer = nullptr;
 	}

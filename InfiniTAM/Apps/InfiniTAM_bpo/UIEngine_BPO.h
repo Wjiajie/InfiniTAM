@@ -110,11 +110,10 @@ public:
 	bool allocateGPU;
 	ITMUChar4Image* saveImage;
 
-	void Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
-		                InputSource::IMUSourceEngine* imuSource, ITMLib::ITMMainEngine* mainEngine,
-		                const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
-		                int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
-		                bool startInStepByStep);
+	void Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource, InputSource::IMUSourceEngine* imuSource,
+		                ITMLib::ITMMainEngine* mainEngine, const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
+		                int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult, bool startInStepByStep,
+		                bool startRecordingWarp2DSlices, bool startRecordingWarps);
 	void Shutdown();
 
 	void Run();
@@ -131,9 +130,9 @@ public:
 	void RecordReconstructionToVideo();
 	void RecordDepthAndRGBInputToVideo();
 	void RecordDepthAndRGBInputToImages();
-	int GetLastProcessedFrameIndex() const;
+	int GetCurrentFrameIndex() const;
 	std::string GenerateNextFrameOutputPath() const;
-	std::string GeneratePreviousFrameOutputPath() const;
+	std::string GenerateCurrentFrameOutputPath() const;
 };
 }
 }

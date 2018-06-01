@@ -46,7 +46,9 @@ public:
 
 	virtual ~ITMScene2DSliceLogger() {}
 
-
+	void MakeOrClearOutputDirectories() const;
+	std::string GetOutputDirectoryForWarps() const;
+	std::string GetOutputDirectoryForWarpedLiveScenes() const;
 	void SaveLiveSceneSlicesAs2DImages_AllDirections(ITMScene <TVoxelLive, TIndex>* scene);
 	void SaveLiveSceneSlicesAs2DImages_AllDirections(ITMScene <TVoxelCanonical, TIndex>* scene);
 	void SaveCanonicalSceneSlicesAs2DImages(ITMScene <TVoxelCanonical, TIndex>* scene,

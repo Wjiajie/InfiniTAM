@@ -61,16 +61,21 @@ UIEngine_BPO* UIEngine_BPO::instance;
  * set interval to this number of frames
  */
 void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
-                              InputSource::IMUSourceEngine* imuSource, ITMLib::ITMMainEngine* mainEngine,
-                              const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
+                              InputSource::IMUSourceEngine* imuSource,
+                              ITMLib::ITMMainEngine* mainEngine, const char* outFolder,
+                              ITMLib::ITMLibSettings::DeviceType deviceType,
                               int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
-                              bool startInStepByStep) {
+                              bool startInStepByStep,
+                              bool startRecordingWarp2DSlices, bool startRecordingWarps) {
 	this->inStepByStepMode = startInStepByStep;
 
 	this->freeviewActive = true;
 	this->integrationActive = true;
 	this->currentColourMode = 0;
 	this->autoIntervalFrameCount = frameIntervalLength;
+
+	this->recordWarpsForNextFrame = startRecordingWarps;
+	this->recordWarp2DSliceForNextFrame = startRecordingWarp2DSlices;
 
 	this->colourModes_main.emplace_back("shaded greyscale", ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST);
 	this->colourModes_main.emplace_back("integrated colours", ITMMainEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME);
@@ -144,7 +149,6 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 	if (inputRGBImage->noDims == Vector2i(0, 0)) outImageType[2] = ITMMainEngine::InfiniTAM_IMAGE_UNKNOWN;
 
 
-
 	autoIntervalFrameStart = 0;
 	mouseState = 0;
 	mouseWarped = false;
@@ -165,17 +169,17 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 		SkipFrames(skipFirstNFrames);
 	}
 
-	if(startInStepByStep){
+	if (startInStepByStep) {
 		BeginStepByStepModeForFrame();
 		mainLoopAction = autoIntervalFrameCount ? PROCESS_STEPS_CONTINUOUS : PROCESS_SINGLE_STEP;
 		outImageType[0] = this->colourMode_stepByStep.type;
-	}else{
+	} else {
 		mainLoopAction = autoIntervalFrameCount ? PROCESS_N_FRAMES : PROCESS_PAUSED;
 		outImageType[0] = this->freeviewActive ? this->colourModes_freeview[this->currentColourMode].type
 		                                       : this->colourModes_main[this->currentColourMode].type;
 	}
 
-	if(recordReconstructionResult){
+	if (recordReconstructionResult) {
 		this->reconstructionVideoWriter = new FFMPEGWriter();
 	}
 	printf("initialised.\n");
@@ -216,10 +220,10 @@ void UIEngine_BPO::ProcessFrame() {
 	sdkStartTimer(&timer_average);
 
 	auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>*>(mainEngine);
-	if (dynamicEngine != nullptr){
+	if (dynamicEngine != nullptr) {
 		dynamicEngine->recordWarpsForNextFrame = this->recordWarpsForNextFrame;
 		dynamicEngine->recordWarp2DSliceForNextFrame = this->recordWarp2DSliceForNextFrame;
-		dynamicEngine->nextFrameOutputPath = this->GenerateNextFrameOutputPath();
+		dynamicEngine->nextFrameOutputPath = this->GenerateCurrentFrameOutputPath();
 	}
 
 	//actual processing on the mailEngine
@@ -241,7 +245,7 @@ void UIEngine_BPO::ProcessFrame() {
 	currentFrameNo++;
 }
 
-int UIEngine_BPO::GetLastProcessedFrameIndex() const{
+int UIEngine_BPO::GetCurrentFrameIndex() const {
 	return startedProcessingFromFrameIx + currentFrameNo;
 }
 
@@ -294,15 +298,15 @@ bool UIEngine_BPO::BeginStepByStepModeForFrame() {
 }
 
 std::string UIEngine_BPO::GenerateNextFrameOutputPath() const {
-	fs::path path(std::string(this->outFolder) + "/Frame_" + std::to_string(GetLastProcessedFrameIndex()+1));
+	fs::path path(std::string(this->outFolder) + "/Frame_" + std::to_string(GetCurrentFrameIndex() + 1));
 	if (!fs::exists(path)) {
 		fs::create_directories(path);
 	}
 	return path.string();
 }
 
-std::string UIEngine_BPO::GeneratePreviousFrameOutputPath() const {
-	fs::path path(std::string(this->outFolder) + "/Frame_" + std::to_string(GetLastProcessedFrameIndex()));
+std::string UIEngine_BPO::GenerateCurrentFrameOutputPath() const {
+	fs::path path(std::string(this->outFolder) + "/Frame_" + std::to_string(GetCurrentFrameIndex()));
 	if (!fs::exists(path)) {
 		fs::create_directories(path);
 	}
@@ -339,10 +343,11 @@ void UIEngine_BPO::RecordReconstructionToVideo() {
 			std::string fileName = (std::string(this->outFolder) + "/out_reconstruction.png");
 			SaveImageToFile(outImage[0], fileName.c_str());
 			cv::Mat img = cv::imread(fileName, cv::IMREAD_UNCHANGED);
-			cv::putText(img, std::to_string(GetLastProcessedFrameIndex()), cv::Size(10,50), cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(128,255,128),1,cv::LINE_AA);
-			cv::imwrite(fileName,img);
+			cv::putText(img, std::to_string(GetCurrentFrameIndex()), cv::Size(10, 50), cv::FONT_HERSHEY_SIMPLEX,
+			            1, cv::Scalar(128, 255, 128), 1, cv::LINE_AA);
+			cv::imwrite(fileName, img);
 			ITMUChar4Image* imageWithText = new ITMUChar4Image(imageSource->getDepthImageSize(), true, allocateGPU);
-			ReadImageFromFile(imageWithText,fileName.c_str());
+			ReadImageFromFile(imageWithText, fileName.c_str());
 			reconstructionVideoWriter->writeFrame(imageWithText);
 			delete imageWithText;
 		}
@@ -379,11 +384,11 @@ void UIEngine_BPO::RecordDepthAndRGBInputToImages() {
 }
 
 void UIEngine_BPO::PrintProcessedFrame() const {
-	std::cout << bright_cyan << "PROCESSING FRAME " << GetLastProcessedFrameIndex() + 1;
-	if(recordWarpsForNextFrame){
-		 std::cout << " [WARP UPDATE RECORDING: ON]";
+	std::cout << bright_cyan << "PROCESSING FRAME " << GetCurrentFrameIndex() + 1;
+	if (recordWarpsForNextFrame) {
+		std::cout << " [WARP UPDATE RECORDING: ON]";
 	}
-	if(recordWarp2DSliceForNextFrame){
+	if (recordWarp2DSliceForNextFrame) {
 		std::cout << " [WARP UPDATE RASTERIZATION: ON]";
 	}
 	std::cout << reset << std::endl;

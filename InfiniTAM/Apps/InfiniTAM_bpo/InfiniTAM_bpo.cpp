@@ -167,7 +167,7 @@ int main(int argc, char** argv) {
 
 		bool restrictZmotion = false;
 		bool simpleScene = false;
-		bool rasterizeWarps = false;
+		bool recordWarp2DSlices = false;
 
 		//@formatter:off
 		arguments.add_options()
@@ -254,7 +254,7 @@ int main(int argc, char** argv) {
 				 "Used in dynamic fusion. Restrict scene motion updates in z direction (for debugging).")
 				("simple_scene",po::bool_switch(&simpleScene)->default_value(false),
 				 "Used in dynamic fusion. Simple scene experiment mode (for debugging).")
-				("rasterize_warps",po::bool_switch(&rasterizeWarps)->default_value(false),
+				("record_warp_2d_slices",po::bool_switch(&recordWarp2DSlices)->default_value(false),
 				 "Used in dynamic fusion. Render warps from each frame onto an image of the original live frame"
 	             " (around the provided focus coordinate, if provided), as well as warped live frame"
 			     " progression (for debugging).")
@@ -382,7 +382,6 @@ int main(int argc, char** argv) {
 		//_DEBUG
 		settings->restrictZtrackingForDebugging = restrictZmotion;
 		settings->simpleSceneExperimentModeEnabled = simpleScene;
-		settings->rasterizeWarpsDuringOptimization = rasterizeWarps;
 
 		settings->enableDataTerm = !disableDataTerm;
 		settings->enableLevelSetTerm = enableLevelSetTerm;
@@ -457,7 +456,7 @@ int main(int argc, char** argv) {
 
 		UIEngine_BPO::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine, settings->outputPath,
 		                                     settings->deviceType, processNFramesOnLaunch, skipFirstNFrames,
-		                                     recordReconstructionToVideo, startInStepByStep);
+		                                     recordReconstructionToVideo, startInStepByStep, recordWarp2DSlices, false);
 		UIEngine_BPO::Instance()->Run();
 		UIEngine_BPO::Instance()->Shutdown();
 // endregion ===========================================================================================================

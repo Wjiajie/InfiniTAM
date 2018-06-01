@@ -80,7 +80,7 @@ namespace ITMLib
 		//*** Analysis/debugging Switches
 		bool rasterizeLiveSceneSlices;// = false;
 		bool rasterizeCanonicalSceneSlices;// = false;
-		bool rasterizeWarpsDuringOptimization;// = false; // CLI flag made in InfiniTAM_bpo
+		// = false; // CLI flag made in InfiniTAM_bpo
 
 		bool restrictZtrackingForDebugging;// = false;
 		bool simpleSceneExperimentModeEnabled;// = false;
