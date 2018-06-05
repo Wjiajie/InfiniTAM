@@ -164,7 +164,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProce
 	PrintOperationStatus(
 			"Initializing live frame SDF by mapping from raw live SDF to warped SDF based on previous-frame warp...");
 	bench::StartTimer("TrackMotion_35_WarpLiveScene");
-	sceneReconstructor->WarpLiveScene(canonicalScene, liveScene, 0, 1);
+	sceneReconstructor->WarpLiveScene(canonicalScene, liveScene, 0, 1, false, Vector3i());
 	bench::StopTimer("TrackMotion_35_WarpLiveScene");
 
 	logger.InitializeRecording(canonicalScene, liveScene, false, false, recordWarp2DSlice,
@@ -267,7 +267,8 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 	PrintOperationStatus(
 			"Updating live frame SDF by mapping from raw live SDF to new warped SDF based on latest warp...");
 	bench::StartTimer("TrackMotion_35_WarpLiveScene");
-	sceneReconstructor->WarpLiveScene(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
+	sceneReconstructor->WarpLiveScene(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex,
+	                                  analysisFlags.hasFocusCoordinates, focusCoordinates);
 	bench::StopTimer("TrackMotion_35_WarpLiveScene");
 	logger.SaveWarps();
 }

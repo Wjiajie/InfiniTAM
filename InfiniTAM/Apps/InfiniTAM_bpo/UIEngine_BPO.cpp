@@ -204,6 +204,15 @@ void UIEngine_BPO::SkipFrames(int numberOfFramesToSkip) {
 
 
 void UIEngine_BPO::ProcessFrame() {
+
+	if (this->recordWarpsForNextFrame) {
+		std::cout << yellow << "***" << bright_cyan << "PROCESSING FRAME " << GetCurrentFrameIndex()
+		          << " (WITH RECORDING ON)" << yellow << "***" << reset << std::endl;
+	} else {
+		std::cout << yellow << "***" << bright_cyan << "PROCESSING FRAME " << GetCurrentFrameIndex() << yellow << "***"
+		          << reset << std::endl;
+	}
+
 	if (!imageSource->hasMoreImages()) return;
 	imageSource->getImages(inputRGBImage, inputRawDepthImage);
 

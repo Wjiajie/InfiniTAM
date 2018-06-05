@@ -13,10 +13,19 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "ITMDynamicFusionLogger.h"
-#include "../Analytics/ITMBenchmarkUtils.h"
+
+//stdlib
+#include "iomanip"
+
+//OpenCV
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgcodecs.hpp>
+
+//local
+#include "ITMDynamicFusionLogger.h"
+#include "../Analytics/ITMBenchmarkUtils.h"
+#include "../ITMPrintHelpers.h"
+
 
 using namespace ITMLib;
 namespace bench = ITMLib::Bench;
@@ -46,8 +55,9 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeReco
 	// region ================================== 2D SLICES RECORDING ===================================================
 	if (hasFocusCoordinates) {
 		if (recordWarp2DSlices || saveCanonicalScene2DSlicesAsImages || saveLiveScene2DSlicesAsImages) {
-			rasterizer = new ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>(focusCoordinates,
-			                                                                            outputDirectory, 100, 16.0);
+			rasterizer = new ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>(
+					focusCoordinates, outputDirectory, 100, 16.0,
+					ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::PLANE_XY);
 		}
 		if (saveCanonicalScene2DSlicesAsImages) {
 			rasterizer->SaveLiveSceneSlicesAs2DImages_AllDirections(canonicalScene);

@@ -77,6 +77,12 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 					pt_model.z = (float) (globalPos.z + z) * voxelSize;
 					pt_model.w = 1.0f;
 
+					//_DEBUG
+					Vector3i pos = Vector3i(globalPos.x + x, globalPos.y + y, globalPos.z + z);
+					if(pos == Vector3i(-29, 40, 185)){
+						int i = 42;
+					}
+
 					ComputeUpdatedLiveVoxelInfo<
 							TVoxelLive::hasColorInformation,
 							TVoxelLive::hasConfidenceInformation,
@@ -167,7 +173,7 @@ struct TrilinearInterpolationFunctor {
 	TrilinearInterpolationFunctor(
 			ITMScene<TVoxelSdf, ITMVoxelBlockHash>* sdfSourceScene,
 			ITMScene<TVoxelWarpSource, ITMVoxelBlockHash>* warpSourceScene,
-			int sourceSdfIndex, int targetSdfIndex) :
+			int sourceSdfIndex, int targetSdfIndex, bool hasFocusCoordinates, Vector3i focusCoordinates) :
 
 			sdfSourceScene(sdfSourceScene),
 			sdfSourceVoxels(sdfSourceScene->localVBA.GetVoxelBlocks()),
@@ -179,7 +185,10 @@ struct TrilinearInterpolationFunctor {
 			warpSourceHashEntries(warpSourceScene->index.GetEntries()),
 			warpSourceCache(),
 			sourceSdfIndex(sourceSdfIndex),
-			targetSdfIndex(targetSdfIndex) {}
+			targetSdfIndex(targetSdfIndex),
+			hasFocusCoordinates(hasFocusCoordinates),
+			focusCoordinates(focusCoordinates)
+			{}
 
 
 	void operator()(TVoxelSdf& destinationVoxel,TVoxelWarpSource& warpSourceVoxel,
@@ -188,10 +197,12 @@ struct TrilinearInterpolationFunctor {
 
 		Vector3f warpedPosition = warpAndDestinationVoxelPosition.toFloat() + warpSourceVoxel.warp;
 
+
 		bool struckKnown, struckNonTruncated;
 		float cumulativeWeight;
-		float sdf = InterpolateMultiSdfTrilinearly_StruckKnown(
-				sdfSourceVoxels, sdfSourceHashEntries, warpedPosition, sourceSdfIndex, sdfSourceCache, struckKnown);
+		float sdf = _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(
+				sdfSourceVoxels, sdfSourceHashEntries, warpedPosition, sourceSdfIndex, sdfSourceCache, struckKnown,
+				hasFocusCoordinates && warpAndDestinationVoxelPosition == focusCoordinates);
 
 		destinationVoxel.sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sdf);
 
@@ -217,6 +228,11 @@ private:
 	TVoxelWarpSource* warpSourceVoxels;
 	ITMHashEntry* warpSourceHashEntries;
 	ITMVoxelBlockHash::IndexCache warpSourceCache;
+
+	//_DEBUG
+	bool hasFocusCoordinates;
+	Vector3i focusCoordinates;
+
 
 	const int sourceSdfIndex;
 	const int targetSdfIndex;
@@ -244,8 +260,8 @@ private:
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::WarpLiveScene(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
-		int sourceSdfIndex, int targetSdfIndex) {
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex,
+		bool hasFocusCoordinates, Vector3i focusCoordinates) {
 
 	// Clear out the flags at target index
 	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
@@ -255,7 +271,8 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 	hashManager.AllocateWarpedLive(canonicalScene, liveScene, sourceSdfIndex);
 
 	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive>
-			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
+			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex,
+			                              hasFocusCoordinates, focusCoordinates);
 
 	// Interpolate to obtain the new live frame values (at target index)
 	DualVoxelPositionTraversal_DefaultForMissingSecondary_CPU(liveScene,canonicalScene,trilinearInterpolationFunctor);

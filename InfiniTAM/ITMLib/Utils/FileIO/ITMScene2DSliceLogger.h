@@ -32,6 +32,14 @@ public:
 		AXIS_Z = 3
 	};
 
+	enum Plane{
+		PLANE_XY = 0,
+		PLANE_YZ = 1,
+		PLANE_XZ = 2
+	};
+
+	static std::string PlaneToString(Plane plane);
+
 	// where to save the images within the output directory
 	static const std::string iterationFramesFolderName;
 	static const std::string liveIterationFramesFolderName;
@@ -42,9 +50,9 @@ public:
 
 	explicit ITMScene2DSliceLogger(Vector3i focusCoordinate, std::string outputDirectory,
 	                               unsigned int imageSizeVoxels = 100,
-	                               float pixelsPerVoxel = 16.0);
+	                               float pixelsPerVoxel = 16.0, Plane plane = PLANE_XY);
 
-	virtual ~ITMScene2DSliceLogger() {}
+	virtual ~ITMScene2DSliceLogger() = default;
 
 	void MakeOrClearOutputDirectories() const;
 	std::string GetOutputDirectoryForWarps() const;
@@ -60,13 +68,16 @@ public:
 	cv::Mat DrawLiveSceneImageAroundPoint(
 			ITMScene <TVoxelLive, TIndex>* scene, int fieldIndex);
 	cv::Mat DrawWarpedSceneImageAroundPoint(ITMScene <TVoxelCanonical, TIndex>* scene);
+
 	void MarkWarpedSceneImageAroundFocusPoint(ITMScene <TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn);
-	void MarkWarpedSceneImageAroundPoint(ITMScene <TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn,
-	                                     Vector3i positionOfVoxelToMark);
+	void MarkWarpedSceneImageAroundPoint(ITMScene <TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn, Vector3i positionOfVoxelToMark);
+
+
 
 
 	const Vector3i focusCoordinate;
 	const std::string outputDirectory;
+	const float pixelsPerVoxel;
 
 protected:
 	template<typename TVoxel>
@@ -80,11 +91,14 @@ protected:
 	cv::Mat DrawWarpedSceneImageTemplated(ITMScene <TVoxel, TIndex>* scene);
 
 
-	Vector2i GetVoxelImgCoords(int x, int y);
-	Vector2i GetVoxelImgCoords(float x, float y);
-	bool IsVoxelInImgRange(int x, int y, int z);
-	bool IsVoxelBlockInImgRange(Vector3i blockVoxelCoords);
-	bool IsVoxelBlockInImgRangeTolerance(Vector3i blockVoxelCoords, int tolerance);
+	Vector2i GetVoxelImageCoordinates(Vector3i coordinates, Plane plane);
+	Vector2i GetVoxelImageCoordinates(Vector3f coordinates, Plane plane);
+
+	bool IsVoxelInImageRange(int x, int y, int z, Plane plane) const;
+	bool IsVoxelBlockInImageRange(Vector3i blockVoxelCoords, Plane plane) const;
+	bool IsVoxelBlockInImageRangeTolerance(Vector3i blockVoxelCoords, int tolerance, Plane plane) const;
+
+	void SetPlane(Plane plane);
 
 	static const bool absFillingStrategy;
 
@@ -95,17 +109,26 @@ protected:
 	const int imgRangeEndX;
 	const int imgRangeStartY;
 	const int imgRangeEndY;
+	const int imgRangeStartZ;
+	const int imgRangeEndZ;
+
+	const int imgXSlice;
+	const int imgYSlice;
 	const int imgZSlice;
+
 	const int imgVoxelRangeX;
 	const int imgVoxelRangeY;
-
-	const float pixelsPerVoxel;
+	const int imgVoxelRangeZ;
 
 	const int imgPixelRangeX;
 	const int imgPixelRangeY;
+	const int imgPixelRangeZ;
+
+	Plane plane;
 
 	template<typename TVoxel>
 	cv::Mat DrawSceneImageAroundPointIndexedFields(ITMScene <TVoxel, TIndex>* scene, int fieldIndex);
+
 
 };
 

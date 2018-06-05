@@ -17,7 +17,7 @@
 
 //TODO: Clean out unused versions -Greg (GitHub: Algomorph)
 
-
+#include "../../Utils/ITMPrintHelpers.h"
 
 
 //sdf and color + knownVoxelHit + smart weights
@@ -965,6 +965,63 @@ inline float InterpolateTrilinearly_TruncatedCopySign(const CONSTPTR(TVoxel)* vo
 	          + coeff.y * ((oneMinusCoeffX) * sdfs[6] + coeff.x * sdfs[7]);
 
 	float sdf = TVoxel::valueToFloat((1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2);
+	return sdf;
+}
+
+
+//sdf without color, struck non-Truncated check, struck known check,
+template<typename TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline float _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* voxelData,
+                                                        const CONSTPTR(ITMHashEntry)* voxelHash,
+                                                        const CONSTPTR(Vector3f)& point,
+                                                        const CONSTPTR(int)& sdfIndex,
+                                                        THREADPTR(TCache)& cache,
+                                                        THREADPTR(bool)& struckKnownVoxels,
+														bool printData) {
+	Vector3f ratios;
+	Vector3f inverseRatios(1.0f);
+	Vector3i pos;
+	int vmIndex;
+	TO_INT_FLOOR3(pos, ratios, point);
+	inverseRatios -= ratios;
+	const int neighborCount = 8;
+	const Vector3i positions[neighborCount] = {Vector3i(0, 0, 0), Vector3i(1, 0, 0),
+	                                           Vector3i(0, 1, 0), Vector3i(1, 1, 0),
+	                                           Vector3i(0, 0, 1), Vector3i(1, 0, 1),
+	                                           Vector3i(0, 1, 1), Vector3i(1, 1, 1)};
+	float sdf = 0.0f;
+	float coefficients[neighborCount];
+
+	struckKnownVoxels = false;
+
+	//@formatter:off
+	coefficients[0] = inverseRatios.x * inverseRatios.y * inverseRatios.z; //000
+	coefficients[1] = ratios.x *        inverseRatios.y * inverseRatios.z; //100
+	coefficients[2] = inverseRatios.x * ratios.y *        inverseRatios.z; //010
+	coefficients[3] = ratios.x *        ratios.y *        inverseRatios.z; //110
+	coefficients[4] = inverseRatios.x * inverseRatios.y * ratios.z;        //001
+	coefficients[5] = ratios.x *        inverseRatios.y * ratios.z;        //101
+	coefficients[6] = inverseRatios.x * ratios.y *        ratios.z;        //011
+	coefficients[7] = ratios.x *        ratios.y *        ratios.z;        //111
+
+	if(printData){
+		std::cout << ITMLib::bright_cyan << "*** Printing interpolation data for point "
+									  << point << " ***" << ITMLib::reset << std::endl;
+		std::cout << "Truncated position: " << pos << std::endl;
+	}
+
+	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
+		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (positions[iNeighbor]), vmIndex, cache);
+		bool curKnown = v.flags != ITMLib::VOXEL_UNKNOWN;
+		float weight = coefficients[iNeighbor];
+		sdf += weight * TVoxel::valueToFloat(v.sdf);
+		struckKnownVoxels |= curKnown;
+		if(printData){
+			std::cout << "Neighbor position: " << positions[iNeighbor] << " Sdf: "
+																 << sdf << " Weight: " << weight << std::endl;
+		}
+	}
 	return sdf;
 }
 

@@ -28,9 +28,10 @@ public:
 	void FuseLiveIntoCanonicalSdf(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 	                              ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
 	                              int liveSourceFieldIndex) override;
-	void WarpLiveScene(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-	                   ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
-	                   int sourceSdfIndex, int targetSdfIndex) override;
+	void WarpLiveScene(
+			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+			ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex,
+			bool hasFocusCoordinates, Vector3i focusCoordinates) override;
 protected:
 	void IntegrateIntoScene(ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view,
 	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);

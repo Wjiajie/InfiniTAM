@@ -15,6 +15,7 @@
 //  ================================================================
 //stdlib
 #include <unordered_set>
+#include <iomanip>
 
 //opencv
 #include <opencv2/imgcodecs.hpp>
@@ -61,22 +62,36 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMScene2DSliceLogger(Vector3i focusCoordinate,
                                                                                   std::string outputDirectory,
                                                                                   unsigned int imageSizeVoxels,
-                                                                                  float pixelsPerVoxel)
+                                                                                  float pixelsPerVoxel,
+                                                                                  Plane plane)
 		:
 		focusCoordinate(focusCoordinate),
 		imageSizeVoxels(imageSizeVoxels),
 		imageHalfSizeVoxels(imageSizeVoxels / 2),
+
 		imgRangeStartX(focusCoordinate.x - imageHalfSizeVoxels),
 		imgRangeEndX(focusCoordinate.x + imageHalfSizeVoxels),
 		imgRangeStartY(focusCoordinate.y - imageHalfSizeVoxels),
 		imgRangeEndY(focusCoordinate.y + imageHalfSizeVoxels),
+		imgRangeStartZ(focusCoordinate.z - imageHalfSizeVoxels),
+		imgRangeEndZ(focusCoordinate.z + imageHalfSizeVoxels),
+
+		imgXSlice(focusCoordinate.x),
+		imgYSlice(focusCoordinate.y),
 		imgZSlice(focusCoordinate.z),
+
 		imgVoxelRangeX(imgRangeEndX - imgRangeStartX),
 		imgVoxelRangeY(imgRangeEndY - imgRangeStartY),
+		imgVoxelRangeZ(imgRangeEndZ - imgRangeStartZ),
+
 		pixelsPerVoxel(pixelsPerVoxel),
+
 		imgPixelRangeX(static_cast<int>(pixelsPerVoxel * imgVoxelRangeX)),
 		imgPixelRangeY(static_cast<int>(pixelsPerVoxel * imgVoxelRangeY)),
-		outputDirectory(outputDirectory) {}
+		imgPixelRangeZ(static_cast<int>(pixelsPerVoxel * imgVoxelRangeZ)),
+
+		outputDirectory(outputDirectory),
+		plane(plane) {}
 
 // endregion ===========================================================================================================
 
@@ -98,7 +113,6 @@ cv::Mat ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::DrawSceneIma
 
 	std::unordered_set<float> valueSet = {};
 
-	int numPixelsFilled = 0;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for reduction(+:numPixelsFilled)
@@ -112,7 +126,7 @@ cv::Mat ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::DrawSceneIma
 		//position of the current entry in 3D space
 		currentBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 
-		if (!IsVoxelBlockInImgRange(currentBlockPositionVoxels)) continue;
+		if (!IsVoxelBlockInImageRange(currentBlockPositionVoxels, plane)) continue;
 
 		TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
@@ -120,11 +134,13 @@ cv::Mat ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::DrawSceneIma
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					Vector3i originalPosition = currentBlockPositionVoxels + Vector3i(x, y, z);
-					if (!IsVoxelInImgRange(originalPosition.x, originalPosition.y, originalPosition.z)) continue;
+					if (!IsVoxelInImageRange(originalPosition.x, originalPosition.y, originalPosition.z,
+					                         plane))
+						continue;
 
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxel& voxel = localVoxelBlock[locId];
-					Vector2i imgCoords = GetVoxelImgCoords(originalPosition.x, originalPosition.y);
+					Vector2i imgCoords = GetVoxelImageCoordinates(originalPosition, plane);
 					const int voxelOnImageSize = static_cast<int>(pixelsPerVoxel);
 					for (int row = imgCoords.y; row < imgCoords.y + voxelOnImageSize; row++) {
 						for (int col = imgCoords.x; col < imgCoords.x + voxelOnImageSize; col++) {
@@ -172,7 +188,7 @@ cv::Mat ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::DrawSceneIma
 		//position of the current entry in 3D space
 		currentBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 
-		if (!IsVoxelBlockInImgRange(currentBlockPositionVoxels)) continue;
+		if (!IsVoxelBlockInImageRange(currentBlockPositionVoxels, plane)) continue;
 
 		TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
@@ -180,11 +196,13 @@ cv::Mat ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::DrawSceneIma
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 					Vector3i originalPosition = currentBlockPositionVoxels + Vector3i(x, y, z);
-					if (!IsVoxelInImgRange(originalPosition.x, originalPosition.y, originalPosition.z)) continue;
+					if (!IsVoxelInImageRange(originalPosition.x, originalPosition.y, originalPosition.z,
+					                         plane))
+						continue;
 
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxel& voxel = localVoxelBlock[locId];
-					Vector2i imgCoords = GetVoxelImgCoords(originalPosition.x, originalPosition.y);
+					Vector2i imgCoords = GetVoxelImageCoordinates(originalPosition, plane);
 					const int voxelOnImageSize = static_cast<int>(pixelsPerVoxel);
 					float value = SdfToValue(TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]));
 					for (int row = imgCoords.y; row < imgCoords.y + voxelOnImageSize; row++) {
@@ -229,7 +247,7 @@ cv::Mat ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpedSc
 		//position of the current entry in 3D space
 		currentBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 
-		if (!IsVoxelBlockInImgRangeTolerance(currentBlockPositionVoxels, 5)) continue;
+		if (!IsVoxelBlockInImageRangeTolerance(currentBlockPositionVoxels, 5, plane)) continue;
 
 		TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
@@ -241,11 +259,22 @@ cv::Mat ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpedSc
 					TVoxel& voxel = localVoxelBlock[locId];
 					Vector3f projectedPosition = originalPosition.toFloat() + voxel.warp;
 					Vector3i projectedPositionFloored = projectedPosition.toIntFloor();
-					if (!IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y,
-					                       originalPosition.z))
+					switch (plane){
+						case PLANE_XY:
+							projectedPositionFloored.z = originalPosition.z;
+							break;
+						case PLANE_YZ:
+							projectedPositionFloored.x = originalPosition.x;
+							break;
+						case PLANE_XZ:
+							projectedPosition.y = originalPosition.y;
+							break;
+					}
+					if (!IsVoxelInImageRange(projectedPositionFloored.x, projectedPositionFloored.y,
+					                         projectedPositionFloored.z, plane))
 						continue;
 
-					Vector2i imgCoords = GetVoxelImgCoords(projectedPosition.x, projectedPosition.y);
+					Vector2i imgCoords = GetVoxelImageCoordinates(projectedPosition, plane);
 					const int voxelOnImageSize = static_cast<int>(pixelsPerVoxel);
 					float value = 0.0;//SdfToValue(TVoxel::valueToFloat(voxel.sdf));
 					//fill a pixel block with the source scene value
@@ -276,7 +305,7 @@ cv::Mat ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::DrawLiveScen
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 cv::Mat ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpedSceneImageAroundPoint(
 		ITMScene<TVoxelCanonical, TIndex>* scene) {
-	return DrawWarpedSceneImageTemplated(scene);
+	return DrawWarpedSceneImageTemplated<TVoxelCanonical>(scene);
 }
 
 /**
@@ -298,17 +327,26 @@ void ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedScene
 	                                  positionOfVoxelToMark, vmIndex);
 	Vector3f projectedPosition = positionOfVoxelToMark.toFloat() + voxel.warp;
 	Vector3i projectedPositionFloored = projectedPosition.toIntFloor();
-	if (!IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, positionOfVoxelToMark.z - 1) &&
-	    !IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, positionOfVoxelToMark.z) &&
-	    !IsVoxelInImgRange(projectedPositionFloored.x, projectedPositionFloored.y, positionOfVoxelToMark.z + 1))
+	switch (plane){
+		case PLANE_XY:
+			projectedPositionFloored.z = positionOfVoxelToMark.z;
+			break;
+		case PLANE_YZ:
+			projectedPositionFloored.x = positionOfVoxelToMark.x;
+			break;
+		case PLANE_XZ:
+			projectedPosition.y = positionOfVoxelToMark.y;
+			break;
+	}
+	if (!IsVoxelInImageRange(projectedPositionFloored.x, projectedPositionFloored.y, positionOfVoxelToMark.z, plane))
 		return;
 
-	Vector2i imgCoords = GetVoxelImgCoords(projectedPosition.x, projectedPosition.y);
+	Vector2i imageCoords = GetVoxelImageCoordinates(projectedPosition, this->plane);
 	const int voxelOnImageSize = static_cast<int>(pixelsPerVoxel);
 
 	//fill a pixel block with the source scene value
-	for (int row = imgCoords.y; row < imgCoords.y + voxelOnImageSize / 2; row++) {
-		for (int col = imgCoords.x; col < imgCoords.x + voxelOnImageSize / 2; col++) {
+	for (int row = imageCoords.y; row < imageCoords.y + voxelOnImageSize / 2; row++) {
+		for (int col = imageCoords.x; col < imageCoords.x + voxelOnImageSize / 2; col++) {
 			imageToMarkOn.at<uchar>(row, col) = static_cast<uchar>(255.0f);
 		}
 	}
@@ -316,41 +354,104 @@ void ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedScene
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsVoxelInImgRange(int x, int y, int z) {
-	return (z == imgZSlice && x >= imgRangeStartX && x < imgRangeEndX && y > imgRangeStartY && y < imgRangeEndY);
+bool ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsVoxelInImageRange(
+		int x, int y, int z,
+		typename ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::Plane TPlane) const {
+	switch (TPlane) {
+		case PLANE_XY:
+			return (z == imgZSlice && x >= imgRangeStartX && x < imgRangeEndX && y >= imgRangeStartY &&
+			        y < imgRangeEndY);
+		case PLANE_YZ:
+			return (z >= imgRangeStartZ && z < imgRangeEndZ && x == imgXSlice && y >= imgRangeStartY &&
+			        y < imgRangeEndY);
+		case PLANE_XZ:
+			return (z >= imgRangeStartZ && z < imgRangeEndZ && x >= imgRangeStartX && x < imgRangeEndX &&
+			        y == imgYSlice);
+	}
 }
 
 
+
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-Vector2i ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelImgCoords(int x, int y) {
-	return Vector2i(static_cast<int>(pixelsPerVoxel * (x - imgRangeStartX)),
-	                imgPixelRangeY - static_cast<int>(pixelsPerVoxel * (y - imgRangeStartY)));
+Vector2i
+ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelImageCoordinates(
+		Vector3i coordinates,
+		typename ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::Plane plane) {
+	switch (plane) {
+		case PLANE_XY:
+			return Vector2i(static_cast<int>(pixelsPerVoxel * (coordinates.x - imgRangeStartX)),
+			                imgPixelRangeY - static_cast<int>(pixelsPerVoxel * (coordinates.y - imgRangeStartY)));
+		case PLANE_YZ:
+			return Vector2i(static_cast<int>(pixelsPerVoxel * (coordinates.y - imgRangeStartY)),
+			                imgPixelRangeZ - static_cast<int>(pixelsPerVoxel * (coordinates.z - imgRangeStartZ)));
+		case PLANE_XZ:
+			return Vector2i(static_cast<int>(pixelsPerVoxel * (coordinates.x - imgRangeStartX)),
+			                imgPixelRangeZ - static_cast<int>(pixelsPerVoxel * (coordinates.z - imgRangeStartZ)));
+	}
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-Vector2i ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelImgCoords(float x, float y) {
-	return Vector2i(static_cast<int>(pixelsPerVoxel * (x - imgRangeStartX)),
-	                imgPixelRangeY - static_cast<int>(pixelsPerVoxel * (y - imgRangeStartY)));
+Vector2i
+ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelImageCoordinates(
+		Vector3f coordinates,
+		typename ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::Plane plane) {
+	switch (plane) {
+		case PLANE_XY:
+			return Vector2i(static_cast<int>(pixelsPerVoxel * (coordinates.x - imgRangeStartX)),
+			                imgPixelRangeY - static_cast<int>(pixelsPerVoxel * (coordinates.y - imgRangeStartY)));
+		case PLANE_YZ:
+			return Vector2i(static_cast<int>(pixelsPerVoxel * (coordinates.y - imgRangeStartY)),
+			                imgPixelRangeZ - static_cast<int>(pixelsPerVoxel * (coordinates.z - imgRangeStartZ)));
+		case PLANE_XZ:
+			return Vector2i(static_cast<int>(pixelsPerVoxel * (coordinates.x - imgRangeStartX)),
+			                imgPixelRangeZ - static_cast<int>(pixelsPerVoxel * (coordinates.z - imgRangeStartZ)));
+	}
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsVoxelBlockInImgRange(Vector3i blockVoxelCoords) {
+bool ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsVoxelBlockInImageRange(
+		Vector3i blockVoxelCoords,
+		typename ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::Plane TPlane) const {
 	Vector3i& bvc0 = blockVoxelCoords;
 	Vector3i bvc1 = blockVoxelCoords + Vector3i(SDF_BLOCK_SIZE);
-	return !(imgZSlice >= bvc1.z || imgZSlice < bvc0.z) &&
-	       !(imgRangeStartX >= bvc1.x || imgRangeEndX < bvc0.x) &&
-	       !(imgRangeStartY >= bvc1.y || imgRangeEndY < bvc0.y);
+	switch (TPlane) {
+		case PLANE_XY:
+			return !(imgZSlice >= bvc1.z || imgZSlice < bvc0.z) &&
+			       !(imgRangeStartX >= bvc1.x || imgRangeEndX < bvc0.x) &&
+			       !(imgRangeStartY >= bvc1.y || imgRangeEndY < bvc0.y);
+		case PLANE_YZ:
+			return !(imgXSlice >= bvc1.x || imgXSlice < bvc0.x) &&
+			       !(imgRangeStartZ >= bvc1.z || imgRangeEndZ < bvc0.z) &&
+			       !(imgRangeStartY >= bvc1.y || imgRangeEndY < bvc0.y);
+		case PLANE_XZ:
+			return !(imgYSlice >= bvc1.y || imgYSlice < bvc0.y) &&
+			       !(imgRangeStartX >= bvc1.x || imgRangeEndX < bvc0.x) &&
+			       !(imgRangeStartZ >= bvc1.z || imgRangeEndZ < bvc0.z);
+	}
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool
-ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsVoxelBlockInImgRangeTolerance(Vector3i blockVoxelCoords,
-                                                                                            int tolerance) {
+ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsVoxelBlockInImageRangeTolerance(
+		Vector3i blockVoxelCoords, int tolerance,
+		typename ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::Plane plane) const {
 	Vector3i& bvc0 = blockVoxelCoords;
 	Vector3i bvc1 = blockVoxelCoords + Vector3i(SDF_BLOCK_SIZE);
-	return !(imgZSlice >= bvc1.z || imgZSlice < bvc0.z) &&
-	       !(imgRangeStartX - tolerance >= bvc1.x || imgRangeEndX + tolerance < bvc0.x) &&
-	       !(imgRangeStartY - tolerance >= bvc1.y || imgRangeEndY + tolerance < bvc0.y);
+	switch (plane) {
+		case PLANE_XY:
+			return !(imgZSlice >= bvc1.z || imgZSlice < bvc0.z) &&
+			       !(imgRangeStartX - tolerance >= bvc1.x || imgRangeEndX + tolerance < bvc0.x) &&
+			       !(imgRangeStartY - tolerance >= bvc1.y || imgRangeEndY + tolerance < bvc0.y);
+		case PLANE_YZ:
+			return !(imgXSlice >= bvc1.x || imgXSlice < bvc0.x) &&
+			       !(imgRangeStartZ - tolerance >= bvc1.z || imgRangeEndZ + tolerance < bvc0.z) &&
+			       !(imgRangeStartY - tolerance >= bvc1.y || imgRangeEndY + tolerance < bvc0.y);
+		case PLANE_XZ:
+			return !(imgYSlice >= bvc1.y || imgYSlice < bvc0.y) &&
+			       !(imgRangeStartX - tolerance >= bvc1.x || imgRangeEndX + tolerance < bvc0.x) &&
+			       !(imgRangeStartZ - tolerance >= bvc1.z || imgRangeEndZ + tolerance < bvc0.z);
+	}
+
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -522,39 +623,56 @@ float ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::SdfToValue(flo
 	return absFillingStrategy ? std::abs(sdf) : (sdf + 1.0f) / 2.0f;
 }
 
-static void ClearDirectory(fs::path path){
-	for (fs::directory_iterator end_dir_it, it(path); it!=end_dir_it; ++it) {
+static void ClearDirectory(fs::path path) {
+	for (fs::directory_iterator end_dir_it, it(path); it != end_dir_it; ++it) {
 		fs::remove_all(it->path());
 	}
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 std::string ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetOutputDirectoryForWarps() const {
-	fs::path path(fs::path(this->outputDirectory) / iterationFramesFolderName);
-	return  path.string();
+	fs::path path(fs::path(this->outputDirectory) / (iterationFramesFolderName + "_" + PlaneToString(this->plane)));
+	return path.string();
 }
-
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 std::string ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetOutputDirectoryForWarpedLiveScenes() const {
-	fs::path path(fs::path(this->outputDirectory) / liveIterationFramesFolderName);
-	return  path.string();
+	fs::path path(fs::path(this->outputDirectory) / (liveIterationFramesFolderName + "_" + PlaneToString(this->plane)));
+	return path.string();
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeOrClearOutputDirectories() const {
-	fs::path path(fs::path(this->outputDirectory) / liveIterationFramesFolderName);
-	if(!fs::exists(path)){
+	fs::path path(fs::path(this->outputDirectory) / (liveIterationFramesFolderName + "_" + PlaneToString(this->plane)));
+	if (!fs::exists(path)) {
 		fs::create_directories(path);
-	}else{
+	} else {
 		ClearDirectory(path);
 	}
-	path = (fs::path(this->outputDirectory) / iterationFramesFolderName);
-	if(!fs::exists(path)){
+	path = (fs::path(this->outputDirectory) / (iterationFramesFolderName + "_" + PlaneToString(this->plane)));
+	if (!fs::exists(path)) {
 		fs::create_directories(path);
-	}else{
+	} else {
 		ClearDirectory(path);
+	}
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetPlane(ITMScene2DSliceLogger::Plane plane) {
+	this->plane = plane;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+std::string
+ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::PlaneToString(ITMScene2DSliceLogger::Plane plane) {
+	switch (plane) {
+		case PLANE_XY:
+			return "XY";
+		case PLANE_YZ:
+			return "YZ";
+		case PLANE_XZ:
+			return "XZ";
 	}
 }
 

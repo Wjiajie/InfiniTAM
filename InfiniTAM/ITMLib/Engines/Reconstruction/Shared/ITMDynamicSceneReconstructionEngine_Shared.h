@@ -29,7 +29,7 @@ _CPU_AND_GPU_CODE_ inline void updateSdfAndFlagsBasedOnDistanceSurfaceToVoxel(
 		voxel.flags = ITMLib::VOXEL_TRUNCATED;
 	} else if (signedDistanceSurfaceToVoxelAlongCameraRay > narrowBandHalfWidth) {
 		//the voxel is in front of the narrow band, between the surface and the camera. Set SDF to 1.0
-		voxel.sdf = TVoxel::floatToValue(-1.0);
+		voxel.sdf = TVoxel::floatToValue(1.0);
 		voxel.flags = ITMLib::VOXEL_TRUNCATED;
 	} else {
 		// The voxel lies within the narrow band, between truncation boundaries.
