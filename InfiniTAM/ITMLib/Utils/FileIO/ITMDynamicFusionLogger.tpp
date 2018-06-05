@@ -55,9 +55,9 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeReco
 	// region ================================== 2D SLICES RECORDING ===================================================
 	if (hasFocusCoordinates) {
 		if (recordWarp2DSlices || saveCanonicalScene2DSlicesAsImages || saveLiveScene2DSlicesAsImages) {
-			rasterizer = new ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>(
+			rasterizer = new ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>(
 					focusCoordinates, outputDirectory, 100, 16.0,
-					ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>::PLANE_XY);
+					ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::PLANE_XY);
 		}
 		if (saveCanonicalScene2DSlicesAsImages) {
 			rasterizer->SaveLiveSceneSlicesAs2DImages_AllDirections(canonicalScene);

@@ -19,7 +19,7 @@
 #include "../../Utils/FileIO/ITMDynamicFusionLogger.h"
 #include "../../Objects/Scene/ITMScene.h"
 #include "../../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.h"
-#include "../../Utils/FileIO/ITMScene2DSliceLogger.h"
+#include "../../Utils/Visualization/ITMScene2DSliceVisualizer.h"
 #include "../../Utils/ITMLibSettings.h"
 #include "../../Utils/FileIO/ITMSceneLogger.h"
 #include "../../Utils/ITMPrintHelpers.h"

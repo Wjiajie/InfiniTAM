@@ -17,7 +17,7 @@
 
 #include "../../Objects/Scene/ITMScene.h"
 #include "ITMSceneLogger.h"
-#include "ITMScene2DSliceLogger.h"
+#include "../Visualization/ITMScene2DSliceVisualizer.h"
 
 namespace ITMLib{
 
@@ -47,7 +47,7 @@ public:
 	void LogHighlight(int hash, int locId, ITMHighlightIterationInfo info);
 private:
 	// internal file intput/output
-	ITMScene2DSliceLogger<TVoxelCanonical, TVoxelLive, TIndex>* rasterizer;
+	ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>* rasterizer;
 	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>* sceneLogger;
 	ITMScene <TVoxelCanonical, TIndex>* canonicalScene;
 	ITMScene <TVoxelLive, TIndex>* liveScene;

@@ -538,7 +538,7 @@ set(ITMLIB_UTILS_SOURCES
     Utils/FileIO/ITMSceneLogger_SceneSlice.tpp
     Utils/FileIO/ITMWarpSceneLogger.tpp
     Utils/ITMLibSettings.cpp
-    Utils/FileIO/ITMScene2DSliceLogger.tpp
+    Utils/Visualization/ITMScene2DSliceVisualizer.tpp
     Utils/Collections/ITM3DNestedMapOfArrays.tpp
     Utils/Collections/ITM3DNestedMap.tpp
     Utils/Analytics/ITMSceneStatisticsCalculator.tpp
@@ -561,7 +561,7 @@ set(ITMLIB_UTILS_HEADERS
     Utils/ITMPixelUtils.h
     Utils/ITMProjectionUtils.h
     Utils/ITMSceneParams.h
-    Utils/FileIO/ITMScene2DSliceLogger.h
+    Utils/Visualization/ITMScene2DSliceVisualizer.h
     Utils/ITMSurfelSceneParams.h
     Utils/Collections/ITM3DNestedMapOfArrays.h
     Utils/Collections/ITM3DNestedMap.h

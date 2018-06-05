@@ -27,7 +27,7 @@
 #include "../Engines/Meshing/CPU/ITMMeshingEngine_CPU.tpp"
 #include "../Utils/Analytics/ITMSceneStatisticsCalculator.tpp"
 #include "../Utils/Analytics/ITMNeighborVoxelIterationInfo.h"
-#include "../Utils/FileIO/ITMScene2DSliceLogger.tpp"
+#include "../Utils/Visualization/ITMScene2DSliceVisualizer.tpp"
 #include "../Utils/FileIO/ITMWarpSceneLogger.tpp"
 #include "../Utils/FileIO/ITMSceneLogger.tpp"
 #include "../Utils/FileIO/ITMDynamicFusionLogger.tpp"
@@ -52,7 +52,7 @@ template class ITMDynamicFusionLogger<ITMVoxelCanonical,ITMVoxelLive, ITMVoxelIn
 
 //TODO: Cleanup -Greg (GitHub: Algomorph)
 //dynamic fusion utility classes
-template class ITMScene2DSliceLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+template class ITMScene2DSliceVisualizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 template class ITMSceneStatisticsCalculator<ITMVoxelCanonical,ITMVoxelIndex>;
 template class ITMSceneStatisticsCalculator<ITMVoxelLive,ITMVoxelIndex>;
 template class ITM3DNestedMap<int>;

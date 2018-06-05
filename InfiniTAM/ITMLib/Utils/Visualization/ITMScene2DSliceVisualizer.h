@@ -22,7 +22,7 @@
 namespace ITMLib {
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-class ITMScene2DSliceLogger {
+class ITMScene2DSliceVisualizer {
 
 	//TODO: positions of voxels to highlight / draw around should be defined extenally in the user code, not as class static members. Static functions should be probably changed to become member functions, with focus coordinates (testPos1, testPos2...) being set in user code during construction. -Greg (GitHub: Algomorph)
 public:
@@ -48,11 +48,11 @@ public:
 
 	static float SdfToValue(float sdf);
 
-	explicit ITMScene2DSliceLogger(Vector3i focusCoordinate, std::string outputDirectory,
+	explicit ITMScene2DSliceVisualizer(Vector3i focusCoordinate, std::string outputDirectory,
 	                               unsigned int imageSizeVoxels = 100,
 	                               float pixelsPerVoxel = 16.0, Plane plane = PLANE_XY);
 
-	virtual ~ITMScene2DSliceLogger() = default;
+	virtual ~ITMScene2DSliceVisualizer() = default;
 
 	void MakeOrClearOutputDirectories() const;
 	std::string GetOutputDirectoryForWarps() const;
@@ -128,8 +128,6 @@ protected:
 
 	template<typename TVoxel>
 	cv::Mat DrawSceneImageAroundPointIndexedFields(ITMScene <TVoxel, TIndex>* scene, int fieldIndex);
-
-
 };
 
 
