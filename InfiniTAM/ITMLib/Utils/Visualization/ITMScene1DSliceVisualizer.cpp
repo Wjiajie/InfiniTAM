@@ -31,6 +31,7 @@
 #include "ITMScene1DSliceVisualizer.h"
 #include "../../Objects/Scene/ITMScene.h"
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
+#include "../ITMPrintHelpers.h"
 
 
 using namespace ITMLib;
@@ -46,8 +47,8 @@ ITMScene1DSliceVisualizer::ITMScene1DSliceVisualizer(Vector3i focusCoordinate, A
 		rangeEndVoxelIndex(focusCoordinate[axis] + (voxelRange / 2)),
 		imageOutputDirectory(std::move(imageOutputDirectory)),
 		view(view), chart(vtkSmartPointer<vtkChartXY>::New()) {
-	// set up chart
-	view->GetRenderer()->SetBackground(1.0, 1.0, 1.0);
+
 	view->GetScene()->AddItem(chart);
+
 }
 

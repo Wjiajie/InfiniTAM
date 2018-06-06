@@ -162,27 +162,26 @@ bool isPathMask(const std::string& arg) {
 }
 
 namespace VTKApplication {
-vtkSmartPointer<vtkRenderWindowInteractor> interactor;
-vtkSmartPointer<vtkContextView> view;
+vtkSmartPointer<vtkRenderWindowInteractor> interactor = nullptr;
+vtkSmartPointer<vtkContextView> view = nullptr;
 
-void RunVTKView() {
-	std::cout << "Buliding VTK Window..." << std::endl;
+void BuildVTKView(){
 	view = vtkSmartPointer<vtkContextView>::New();
 	view->GetRenderWindow()->SetSize(1024,768);
 	view->GetRenderer()->SetBackground(1.0, 1.0, 1.0);
 	interactor = view->GetInteractor();
 	interactor->Initialize();
-	std::cout << "Buliding VTK Window successful..." << std::endl;
-	view->GetInteractor()->Start();
+}
 
+void RunVTKView() {
+	view->GetInteractor()->Start();
 }
 }//namespace VTKApplication
 
 int main(int argc, char** argv) {
 	try {
-		std::thread vtkViewThread(VTKApplication::RunVTKView);
 
-
+		VTKApplication::BuildVTKView();
 
 		po::options_description arguments{"Arguments"};
 		po::positional_options_description positional_arguments;
@@ -502,9 +501,11 @@ int main(int argc, char** argv) {
 		                                     false);
 // endregion ===========================================================================================================
 
-
+		std::thread vtkViewThread(VTKApplication::RunVTKView);
 		UIEngine_BPO::Instance()->Run();
 		UIEngine_BPO::Instance()->Shutdown();
+
+// region ========================================= CLEANUP ============================================================
 
 		delete mainEngine;
 		delete settings;
@@ -515,7 +516,7 @@ int main(int argc, char** argv) {
 			VTKApplication::interactor->TerminateApp();
 		}
 		vtkViewThread.join();
-
+// endregion ===========================================================================================================
 		return EXIT_SUCCESS;
 	} catch (std::exception& e) {
 		std::cerr << e.what() << '\n';
