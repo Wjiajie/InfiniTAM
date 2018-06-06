@@ -536,14 +536,14 @@ void SDFViz::RefocusAtCurrentHighlight() {
 
 void SDFViz::MoveFocusToNextHighlight() {
 	const ITMHighlightIterationInfo& highlightOld = (*currentHighlight)[iterationIndex];
-	currentHighlight = highlights.GetArrayAfter(highlightOld.hash, highlightOld.localId, highlightOld.frame);
+	currentHighlight = highlights.GetArrayAfter(highlightOld.hash, highlightOld.localId, 0);
 	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[iterationIndex];
 	MoveFocusToHighlightAt(highlightNew.hash, highlightNew.localId);
 }
 
 void SDFViz::MoveFocusToPreviousHighlight() {
 	const ITMHighlightIterationInfo& highlightOld = (*currentHighlight)[iterationIndex];
-	currentHighlight = highlights.GetArrayBefore(highlightOld.hash, highlightOld.localId, highlightOld.frame);
+	currentHighlight = highlights.GetArrayBefore(highlightOld.hash, highlightOld.localId, 0);
 	const ITMHighlightIterationInfo& highlightNew = (*currentHighlight)[iterationIndex];
 	MoveFocusToHighlightAt(highlightNew.hash, highlightNew.localId);
 }

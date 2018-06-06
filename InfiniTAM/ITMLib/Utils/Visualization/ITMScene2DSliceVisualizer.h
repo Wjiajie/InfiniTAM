@@ -15,9 +15,13 @@
 //  ================================================================
 #pragma once
 
+// OpenCV
 #include <opencv2/core/core.hpp>
+
+// local
 #include "../ITMMath.h"
 #include "../../Objects/Scene/ITMScene.h"
+#include "ITMVisualizationCommon.h"
 
 namespace ITMLib {
 
@@ -26,19 +30,7 @@ class ITMScene2DSliceVisualizer {
 
 	//TODO: positions of voxels to highlight / draw around should be defined extenally in the user code, not as class static members. Static functions should be probably changed to become member functions, with focus coordinates (testPos1, testPos2...) being set in user code during construction. -Greg (GitHub: Algomorph)
 public:
-	enum Axis {
-		AXIS_X = 0,
-		AXIS_Y = 1,
-		AXIS_Z = 3
-	};
 
-	enum Plane{
-		PLANE_XY = 0,
-		PLANE_YZ = 1,
-		PLANE_XZ = 2
-	};
-
-	static std::string PlaneToString(Plane plane);
 
 	// where to save the images within the output directory
 	static const std::string iterationFramesFolderName;
@@ -46,7 +38,7 @@ public:
 	static const std::string canonicalSceneRasterizedFolderName;
 	static const std::string liveSceneRasterizedFolderName;
 
-	static float SdfToValue(float sdf);
+	static float SdfToShadeValue(float sdf);
 
 	explicit ITMScene2DSliceVisualizer(Vector3i focusCoordinate, std::string outputDirectory,
 	                               unsigned int imageSizeVoxels = 100,

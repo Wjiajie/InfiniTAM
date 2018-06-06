@@ -144,7 +144,7 @@ cv::Mat ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawScen
 					const int voxelOnImageSize = static_cast<int>(pixelsPerVoxel);
 					for (int row = imgCoords.y; row < imgCoords.y + voxelOnImageSize; row++) {
 						for (int col = imgCoords.x; col < imgCoords.x + voxelOnImageSize; col++) {
-							float value = SdfToValue(TVoxel::valueToFloat(voxel.sdf));
+							float value = SdfToShadeValue(TVoxel::valueToFloat(voxel.sdf));
 							img.at<float>(row, col) = value;
 						}
 					}
@@ -201,7 +201,7 @@ cv::Mat ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawScen
 					TVoxel& voxel = localVoxelBlock[locId];
 					Vector2i imgCoords = GetVoxelImageCoordinates(originalPosition, plane);
 					const int voxelOnImageSize = static_cast<int>(pixelsPerVoxel);
-					float value = SdfToValue(TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]));
+					float value = SdfToShadeValue(TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]));
 					for (int row = imgCoords.y; row < imgCoords.y + voxelOnImageSize; row++) {
 						for (int col = imgCoords.x; col < imgCoords.x + voxelOnImageSize; col++) {
 							img.at<float>(row, col) = value;
@@ -273,7 +273,7 @@ cv::Mat ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarp
 
 					Vector2i imgCoords = GetVoxelImageCoordinates(projectedPosition, plane);
 					const int voxelOnImageSize = static_cast<int>(pixelsPerVoxel);
-					float value = 0.0;//SdfToValue(TVoxel::valueToFloat(voxel.sdf));
+					float value = 0.0;//SdfToShadeValue(TVoxel::valueToFloat(voxel.sdf));
 					//fill a pixel block with the source scene value
 					for (int row = imgCoords.y; row < imgCoords.y + voxelOnImageSize / 2; row++) {
 						for (int col = imgCoords.x; col < imgCoords.x + voxelOnImageSize / 2; col++) {
@@ -353,7 +353,7 @@ void ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedS
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::IsVoxelInImageRange(
 		int x, int y, int z,
-		typename ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::Plane TPlane) const {
+		Plane TPlane) const {
 	switch (TPlane) {
 		case PLANE_XY:
 			return (z == imgZSlice && x >= imgRangeStartX && x < imgRangeEndX && y >= imgRangeStartY &&
@@ -373,7 +373,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 Vector2i
 ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelImageCoordinates(
 		Vector3i coordinates,
-		typename ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::Plane plane) {
+		Plane plane) {
 	switch (plane) {
 		case PLANE_XY:
 			return Vector2i(static_cast<int>(pixelsPerVoxel * (coordinates.x - imgRangeStartX)),
@@ -391,7 +391,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 Vector2i
 ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelImageCoordinates(
 		Vector3f coordinates,
-		typename ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::Plane plane) {
+		Plane plane) {
 	switch (plane) {
 		case PLANE_XY:
 			return Vector2i(static_cast<int>(pixelsPerVoxel * (coordinates.x - imgRangeStartX)),
@@ -408,7 +408,7 @@ ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelImageCoo
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::IsVoxelBlockInImageRange(
 		Vector3i blockVoxelCoords,
-		typename ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::Plane TPlane) const {
+		Plane TPlane) const {
 	Vector3i& bvc0 = blockVoxelCoords;
 	Vector3i bvc1 = blockVoxelCoords + Vector3i(SDF_BLOCK_SIZE);
 	switch (TPlane) {
@@ -431,7 +431,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool
 ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::IsVoxelBlockInImageRangeTolerance(
 		Vector3i blockVoxelCoords, int tolerance,
-		typename ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::Plane plane) const {
+		Plane plane) const {
 	Vector3i& bvc0 = blockVoxelCoords;
 	Vector3i bvc1 = blockVoxelCoords + Vector3i(SDF_BLOCK_SIZE);
 	switch (plane) {
@@ -546,7 +546,7 @@ ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlice
 							iImage = absoluteCoordinate.z;
 							break;
 					}
-					float value = SdfToValue(TVoxel::valueToFloat(voxel.sdf));
+					float value = SdfToShadeValue(TVoxel::valueToFloat(voxel.sdf));
 					uchar colorChar = static_cast<uchar>(value * 255.0);
 					cv::Vec3b color = cv::Vec3b::all(colorChar);
 					if (voxelPosition == focusCoordinate) {
@@ -575,22 +575,22 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveLiveSceneSlicesAs2DImages_AllDirections(
 		ITMScene<TVoxelLive, TIndex>* scene) {
 	ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveLiveSceneSlicesAs2DImages(
-			scene, ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::AXIS_X, "_X");
+			scene, AXIS_X, "_X");
 	ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveLiveSceneSlicesAs2DImages(
-			scene, ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::AXIS_Y, "_Y");
+			scene, AXIS_Y, "_Y");
 	ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveLiveSceneSlicesAs2DImages(
-			scene, ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::AXIS_Z, "_Z");
+			scene, AXIS_Z, "_Z");
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveLiveSceneSlicesAs2DImages_AllDirections(
 		ITMScene<TVoxelCanonical, TIndex>* scene) {
 	ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveCanonicalSceneSlicesAs2DImages(
-			scene, ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::AXIS_X, "_X");
+			scene, AXIS_X, "_X");
 	ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveCanonicalSceneSlicesAs2DImages(
-			scene, ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::AXIS_Y, "_Y");
+			scene, AXIS_Y, "_Y");
 	ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveCanonicalSceneSlicesAs2DImages(
-			scene, ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::AXIS_Z, "_Z");
+			scene, AXIS_Z, "_Z");
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -616,7 +616,7 @@ void ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedS
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-float ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SdfToValue(float sdf) {
+float ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SdfToShadeValue(float sdf) {
 	return absFillingStrategy ? std::abs(sdf) : (sdf + 1.0f) / 2.0f;
 }
 
@@ -656,22 +656,10 @@ void ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::MakeOrClear
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SetPlane(ITMScene2DSliceVisualizer::Plane plane) {
+void ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SetPlane(Plane plane) {
 	this->plane = plane;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-std::string
-ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::PlaneToString(ITMScene2DSliceVisualizer::Plane plane) {
-	switch (plane) {
-		case PLANE_XY:
-			return "XY";
-		case PLANE_YZ:
-			return "YZ";
-		case PLANE_XZ:
-			return "XZ";
-	}
-}
 
 
 

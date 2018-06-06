@@ -13,6 +13,9 @@ namespace ITMLib
 	class ITMLibSettings
 	{
 	public:
+		//TODO: settings that are not intended to be changed during runtime should be set to cost and initialized
+		// right away in the constructor. Settings that are intended to change should be protected by class access
+		// modifiers / getters / setters as to grant access only to the objects that should be able to change them.
 		/// The device used to run the DeviceAgnostic code
 		typedef enum {
 			DEVICE_CPU,
@@ -39,8 +42,10 @@ namespace ITMLib
 			LIBMODE_BASIC,
 			LIBMODE_BASIC_SURFELS,
 			LIBMODE_LOOPCLOSURE,
-			LIBMODE_DYNAMIC //for basic KillingFusion mode, refer to DOI 10.1109/CVPR.2017.581
+			LIBMODE_DYNAMIC
 		}LibMode;
+
+
 
 		/// Select the type of device to use
 		DeviceType deviceType;
@@ -65,10 +70,8 @@ namespace ITMLib
 		ITMSceneParams sceneParams;
 		ITMSurfelSceneParams surfelSceneParams;
 
-		const char *outputPath;
-
 		ITMLibSettings();
-		virtual ~ITMLibSettings(void) = default;
+		virtual ~ITMLibSettings() = default;
 
 		// Suppress the default copy constructor and assignment operator
 		ITMLibSettings(const ITMLibSettings&) = delete;
@@ -77,10 +80,17 @@ namespace ITMLib
 		MemoryDeviceType GetMemoryType() const;
 
 		/// Dynamic Fusion parameters
-		//*** Analysis/debugging Switches
-		bool rasterizeLiveSceneSlices;// = false;
-		bool rasterizeCanonicalSceneSlices;// = false;
-		// = false; // CLI flag made in InfiniTAM_bpo
+
+		struct AnalysisSettings{
+			bool recordCanonicalScene2DSlicesAsImages;// = false;
+			bool recordLiveScene2DSlicesAsImages;// = false;
+			bool record3DWarps;
+			bool recordScene1DSlicesWithUpdates;
+			bool recordScene2DSlicesWithUpdates;
+			std::string outputPath;
+			bool focusCoordinatesSpecified = false;
+			Vector3i focusCoordinates;
+		};
 
 		bool restrictZtrackingForDebugging;// = false;
 		bool simpleSceneExperimentModeEnabled;// = false;
@@ -89,6 +99,7 @@ namespace ITMLib
 		Vector3i GetFocusCoordinates() const;
 		void SetFocusCoordinates(const Vector3i& coordiantes);
 
+		AnalysisSettings analysisSettings;
 
 		//*** Scene Tracking Switches ***
 		bool enableDataTerm;
@@ -109,11 +120,6 @@ namespace ITMLib
 		float sceneTrackingWeightLevelSetTerm;
 		float sceneTrackingLevelSetTermEpsilon;
 
-
-	private:
-		/// Parameters for logging/debugging dynamic fusion
-		bool focusCoordinatesSpecified = false;
-		Vector3i focusCoordinates;
 
 	};
 }

@@ -39,41 +39,61 @@ ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TVoxelIndex>::ITMDynamicFusi
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeRecording(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
-		bool saveLiveScene2DSlicesAsImages, bool saveCanonicalScene2DSlicesAsImages, bool recordWarp2DSlices,
-		bool hasFocusCoordinates, Vector3i focusCoordinates, bool recordWarps, std::string outputDirectory) {
+		std::string outputDirectory, bool hasFocusCoordinates, Vector3i focusCoordinates,
+		bool saveLiveScene2DSlicesAsImages, bool saveCanonicalScene2DSlicesAsImages, bool recordWarps,
+		bool recordScene1DSlicesWithUpdates, bool recordScene2DSlicesWithUpdates,
+		vtkSmartPointer<vtkContextView> vtkView) {
+
+	//TODO: make all visualizer/logger classes re-usable, i.e. just change the path & build them in the constructor (don't use pointers) -Greg (GitHub:Algomorph)
 
 	this->canonicalScene = canonicalScene;
 	this->liveScene = liveScene;
 
-	//set flags
-	this->recordWarp2DSlices = recordWarp2DSlices;
 	this->hasFocusCoordinates = hasFocusCoordinates;
 	this->focusCoordinates = focusCoordinates;
-	this->recordWarps = recordWarps;
 	this->outputDirectory = outputDirectory;
 
 	// region ================================== 2D SLICES RECORDING ===================================================
 	if (hasFocusCoordinates) {
-		if (recordWarp2DSlices || saveCanonicalScene2DSlicesAsImages || saveLiveScene2DSlicesAsImages) {
-			rasterizer = new ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>(
-					focusCoordinates, outputDirectory, 100, 16.0,
-					ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::PLANE_XY);
+		if (recordScene2DSlicesWithUpdates || saveCanonicalScene2DSlicesAsImages || saveLiveScene2DSlicesAsImages) {
+			scene2DSliceVisualizer = new ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>(
+					focusCoordinates, outputDirectory, 100, 16.0, PLANE_XY);
 		}
 		if (saveCanonicalScene2DSlicesAsImages) {
-			rasterizer->SaveLiveSceneSlicesAs2DImages_AllDirections(canonicalScene);
+			scene2DSliceVisualizer->SaveLiveSceneSlicesAs2DImages_AllDirections(canonicalScene);
 		}
 		if (saveLiveScene2DSlicesAsImages) {
-			rasterizer->SaveLiveSceneSlicesAs2DImages_AllDirections(liveScene);
+			scene2DSliceVisualizer->SaveLiveSceneSlicesAs2DImages_AllDirections(liveScene);
+		}
+		if (recordScene1DSlicesWithUpdates) {
+			recordingScene1DSlicesWithUpdates = true;
+			debug_print("-1");
+			scene1DSliceVisualizer =
+					new ITMScene1DSliceVisualizer(focusCoordinates, AXIS_X, 16,
+					                              this->outputDirectory + "/scene_1D_slices", vtkView);
+			debug_print("0");
+			scene1DSliceVisualizer->Plot1DSceneSlice(canonicalScene, Vector4i(0,255,0,255));
+			debug_print("1");
+		} else {
+			recordingScene1DSlicesWithUpdates = false;
+		}
+		if (recordScene2DSlicesWithUpdates) {
+			recordingScene2DSlicesWithUpdates = true;
+			std::cout << yellow << "Recording 2D scene slices with warps & warped live scene progression as images in "
+			          << scene2DSliceVisualizer->GetOutputDirectoryForWarps() << " and "
+			          << scene2DSliceVisualizer->GetOutputDirectoryForWarpedLiveScenes() << " respectively..."
+			          << reset << std::endl;
+			InitializeWarp2DSliceRecording(canonicalScene, liveScene);
+		} else {
+			delete scene2DSliceVisualizer;
+			scene2DSliceVisualizer = nullptr;
+			recordingScene2DSlicesWithUpdates = false;
 		}
 
-		if (recordWarp2DSlices) {
-			std::cout << "STARTING UPDATE RASTERIZATION" << std::endl;
-			InitializeWarp2DSliceRecording(canonicalScene, liveScene);
-		}
 	}
 	// endregion
 
-	// region ========================= INTIALIZE WARP RECORDING =======================================================
+	// region ========================= INITIALIZE WARP RECORDING ======================================================
 	bench::StartTimer("TrackMotion_2_RecordingEnergy");
 
 	const std::string energyStatFilePath = outputDirectory + "/energy.txt";
@@ -82,13 +102,14 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeReco
 	                     << "killing" << "," << "total" << std::endl;
 	bench::StopTimer("TrackMotion_2_RecordingEnergy");
 
+	this->recordingWarps = recordWarps;
 	if (recordWarps) {
-		sceneLogger = new ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>(
+		scene3DLogger = new ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>(
 				canonicalScene, liveScene, outputDirectory);
-		sceneLogger->SaveScenesCompact();
-		sceneLogger->StartSavingWarpState();
+		scene3DLogger->SaveScenesCompact();
+		scene3DLogger->StartSavingWarpState();
 		if (hasFocusCoordinates) {
-			sceneLogger->ClearHighlights();
+			scene3DLogger->ClearHighlights();
 		}
 	}
 
@@ -100,29 +121,29 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeWarp2DSliceRecording(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* sourceLiveScene) {
 
-	cv::Mat canonicalImg = rasterizer->DrawCanonicalSceneImageAroundPoint(canonicalScene) * 255.0f;
+	cv::Mat canonicalImg = scene2DSliceVisualizer->DrawCanonicalSceneImageAroundPoint(canonicalScene) * 255.0f;
 	cv::Mat canonicalImgOut;
 	canonicalImg.convertTo(canonicalImgOut, CV_8UC1);
 	cv::cvtColor(canonicalImgOut, canonicalImgOut, cv::COLOR_GRAY2BGR);
-	rasterizer->MakeOrClearOutputDirectories();
-	cv::imwrite(rasterizer->GetOutputDirectoryForWarps() + "/canonical.png", canonicalImgOut);
-	cv::Mat liveImg = rasterizer->DrawLiveSceneImageAroundPoint(sourceLiveScene, 0) * 255.0f;
+	scene2DSliceVisualizer->MakeOrClearOutputDirectories();
+	cv::imwrite(scene2DSliceVisualizer->GetOutputDirectoryForWarps() + "/canonical.png", canonicalImgOut);
+	cv::Mat liveImg = scene2DSliceVisualizer->DrawLiveSceneImageAroundPoint(sourceLiveScene, 0) * 255.0f;
 	cv::Mat liveImgOut;
 	liveImg.convertTo(liveImgTemplate, CV_8UC1);
 	cv::cvtColor(liveImgTemplate, liveImgOut, cv::COLOR_GRAY2BGR);
-	cv::imwrite(rasterizer->GetOutputDirectoryForWarps() + "/live.png", liveImgOut);
+	cv::imwrite(scene2DSliceVisualizer->GetOutputDirectoryForWarps() + "/live.png", liveImgOut);
 	//TODO: this is kinda backwards. Just build this in the constructor using constants from rasterizer for size. -Greg (GitHub: Algomorph)
 	blank = cv::Mat::zeros(liveImg.rows, liveImg.cols, CV_8UC1);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
-ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarp2DSlice(int iteration) {
-	if (hasFocusCoordinates && recordWarp2DSlices) {
-		cv::Mat warpImg = rasterizer->DrawWarpedSceneImageAroundPoint(canonicalScene) * 255.0f;
+ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarpSlices(int iteration) {
+	if (hasFocusCoordinates && recordingScene2DSlicesWithUpdates) {
+		cv::Mat warpImg = scene2DSliceVisualizer->DrawWarpedSceneImageAroundPoint(canonicalScene) * 255.0f;
 		cv::Mat warpImgChannel, warpImgOut, mask, liveImgChannel, markChannel;
 		blank.copyTo(markChannel);
-		rasterizer->MarkWarpedSceneImageAroundFocusPoint(canonicalScene, markChannel);
+		scene2DSliceVisualizer->MarkWarpedSceneImageAroundFocusPoint(canonicalScene, markChannel);
 		liveImgChannel = cv::Mat::zeros(warpImg.rows, warpImg.cols, CV_8UC1);
 
 		warpImg.convertTo(warpImgChannel, CV_8UC1);
@@ -134,14 +155,20 @@ ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarp2DSlice(int
 		cv::merge(channels, 3, warpImgOut);
 		std::stringstream numStringStream;
 		numStringStream << std::setw(3) << std::setfill('0') << iteration;
-		std::string image_name = rasterizer->GetOutputDirectoryForWarps() + "/warp" + numStringStream.str() + ".png";
+		std::string image_name =
+				scene2DSliceVisualizer->GetOutputDirectoryForWarps() + "/warp" + numStringStream.str() + ".png";
 		cv::imwrite(image_name, warpImgOut);
-		cv::Mat liveImg = rasterizer->DrawLiveSceneImageAroundPoint(liveScene, 1) * 255.0f;
+		cv::Mat liveImg = scene2DSliceVisualizer->DrawLiveSceneImageAroundPoint(liveScene, 1) * 255.0f;
 		cv::Mat liveImgOut;
 		liveImg.convertTo(liveImgOut, CV_8UC1);
 		cv::cvtColor(liveImgOut, liveImgOut, cv::COLOR_GRAY2BGR);
-		cv::imwrite(rasterizer->GetOutputDirectoryForWarpedLiveScenes() + "/live " + numStringStream.str() + ".png",
-		            liveImgOut);
+		cv::imwrite(scene2DSliceVisualizer->GetOutputDirectoryForWarpedLiveScenes() + "/live " + numStringStream.str() +
+		            ".png", liveImgOut);
+	}
+	if(hasFocusCoordinates && recordingScene1DSlicesWithUpdates){
+		debug_print("2");
+		scene1DSliceVisualizer->Plot1DSceneSlice(canonicalScene,Vector4i(0,0,0,255));
+		debug_print("3");
 	}
 }
 
@@ -150,9 +177,9 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeRecording(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene) {
 
-	if (recordWarps) {
+	if (recordingWarps) {
 
-		sceneLogger->StopSavingWarpState();
+		scene3DLogger->StopSavingWarpState();
 		Vector3i focusCoordinates = focusCoordinates;
 		int focusSliceRadius = focusSliceRadius;
 		if (hasFocusCoordinates) {
@@ -166,24 +193,30 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeRecord
 			std::cout << "Making slice around voxel " << green << focusCoordinates << reset << " with l_0 radius of "
 			          << focusSliceRadius << "...";
 			std::string sliceId;
-			sceneLogger->MakeSlice(sliceMinPoint, sliceMaxPoint, sliceId);
+			scene3DLogger->MakeSlice(sliceMinPoint, sliceMaxPoint, sliceId);
 			std::cout << "Slice finished." << std::endl;
-			sceneLogger->SwitchActiveScene(sliceId);
+			scene3DLogger->SwitchActiveScene(sliceId);
 		}
-		delete sceneLogger;
-		sceneLogger = nullptr;
+		delete scene3DLogger;
+		scene3DLogger = nullptr;
 	}
-	if (recordWarp2DSlices) {
-		delete rasterizer;
-		rasterizer = nullptr;
+	if (recordingScene2DSlicesWithUpdates) {
+		delete scene2DSliceVisualizer;
+		scene2DSliceVisualizer = nullptr;
 	}
+
+	if (recordingScene2DSlicesWithUpdates) {
+		delete scene1DSliceVisualizer;
+		scene1DSliceVisualizer = nullptr;
+	}
+
 	energyStatisticsFile.close();
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarps() {
-	if (recordWarps) {
-		this->sceneLogger->SaveCurrentWarpState();
+	if (recordingWarps) {
+		this->scene3DLogger->SaveCurrentWarpState();
 	}
 }
 
@@ -200,18 +233,18 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::RecordStatisti
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsRecordingWarp2DSlices() {
-	return this->recordWarp2DSlices;
+	return this->recordingScene2DSlicesWithUpdates;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsRecordingWarps() {
-	return this->recordWarps;
+	return this->recordingWarps;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::LogHighlight(int hash, int locId,
                                                                                ITMHighlightIterationInfo info) {
-	sceneLogger->LogHighlight(hash, locId, 0, info);
+	scene3DLogger->LogHighlight(hash, locId, 0, info);
 };
 
 

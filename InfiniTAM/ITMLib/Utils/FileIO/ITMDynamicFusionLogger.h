@@ -18,8 +18,9 @@
 #include "../../Objects/Scene/ITMScene.h"
 #include "ITMSceneLogger.h"
 #include "../Visualization/ITMScene2DSliceVisualizer.h"
+#include "../Visualization/ITMScene1DSliceVisualizer.h"
 
-namespace ITMLib{
+namespace ITMLib {
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMDynamicFusionLogger {
@@ -27,14 +28,16 @@ public:
 	ITMDynamicFusionLogger();
 	~ITMDynamicFusionLogger() = default;//not intended to be extended, so not virtual
 
-	void InitializeRecording(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
-			bool saveLiveScene2DSlicesAsImages, bool saveCanonicalScene2DSlicesAsImages, bool recordWarp2DSlices,
-			bool hasFocusCoordinates, Vector3i focusCoordinates, bool recordWarps, std::string outputDirectory);
+	void
+	InitializeRecording(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>*& liveScene,
+		                    std::string outputDirectory, bool hasFocusCoordinates, Vector3i focusCoordinates,
+		                    bool saveLiveScene2DSlicesAsImages, bool saveCanonicalScene2DSlicesAsImages, bool recordWarps,
+		                    bool recordScene1DSlicesWithUpdates, bool recordScene2DSlicesWithUpdates,
+		                    vtkSmartPointer<vtkContextView> vtkView);
 
 	void InitializeWarp2DSliceRecording(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                    ITMScene<TVoxelLive, TIndex>* sourceLiveScene);
-	void SaveWarp2DSlice(int iteration);
+	void SaveWarpSlices(int iteration);
 	void SaveWarps();
 	void FinalizeRecording(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene);
 	void RecordStatistics(double totalDataEnergy,
@@ -47,10 +50,12 @@ public:
 	void LogHighlight(int hash, int locId, ITMHighlightIterationInfo info);
 private:
 	// internal file intput/output
-	ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>* rasterizer;
-	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>* sceneLogger;
-	ITMScene <TVoxelCanonical, TIndex>* canonicalScene;
-	ITMScene <TVoxelLive, TIndex>* liveScene;
+	ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>* scene2DSliceVisualizer;
+	ITMScene1DSliceVisualizer* scene1DSliceVisualizer;
+	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>* scene3DLogger;
+	ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
+	ITMScene<TVoxelLive, TIndex>* liveScene;
+
 
 	std::ofstream energyStatisticsFile;
 
@@ -59,8 +64,9 @@ private:
 	cv::Mat liveImgTemplate;
 
 	// flags
-	bool recordWarp2DSlices;// = false; // CLI flag made in InfiniTAM_bpo
-	bool recordWarps;
+	bool recordingScene2DSlicesWithUpdates;
+	bool recordingScene1DSlicesWithUpdates;
+	bool recordingWarps;
 	bool hasFocusCoordinates;
 
 	std::string outputDirectory;

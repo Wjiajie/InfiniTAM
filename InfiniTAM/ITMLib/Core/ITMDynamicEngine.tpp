@@ -19,8 +19,12 @@
 using namespace ITMLib;
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(
-		const ITMLibSettings* settings, const ITMRGBDCalib& calib, Vector2i imgSize_rgb, Vector2i imgSize_d) {
+ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(const ITMLibSettings* settings,
+                                                                        const ITMRGBDCalib& calib, Vector2i imgSize_rgb,
+                                                                        Vector2i imgSize_d,
+                                                                        vtkSmartPointer<vtkContextView> vtkView):
+		vtkView(vtkView) {
+
 	this->settings = settings;
 
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
@@ -38,7 +42,7 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(
 	canonicalVisualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxelCanonical, TIndex>(
 			deviceType);
 
-	meshingEngine = NULL;
+	meshingEngine = nullptr;
 	if (settings->createMeshingEngine)
 		meshingEngine = ITMMeshingEngineFactory::MakeMeshingEngine<TVoxelCanonical, TIndex>(deviceType);
 
@@ -48,25 +52,25 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(
 
 	imuCalibrator = new ITMIMUCalibrator_iPad();
 	tracker = ITMCameraTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, settings, lowLevelEngine, imuCalibrator,
-	                                             liveScene->sceneParams);
+	                                                   liveScene->sceneParams);
 	cameraTrackingController = new ITMTrackingController(tracker, settings);
 
 	Vector2i trackedImageSize = cameraTrackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
 
 	renderState_live = ITMRenderStateFactory<TIndex>::CreateRenderState(trackedImageSize, canonicalScene->sceneParams,
 	                                                                    memoryType);
-	renderState_freeview = NULL; //will be created if needed
+	renderState_freeview = nullptr; //will be created if needed
 
 	trackingState = new ITMTrackingState(trackedImageSize, memoryType);
 	tracker->UpdateInitialPose(trackingState);
 
-	view = NULL; // will be allocated by the view builder
+	view = nullptr; // will be allocated by the view builder
 
 	if (settings->behaviourOnFailure == settings->FAILUREMODE_RELOCALISE)
 		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings->sceneParams.viewFrustum_min,
 		                                                                       settings->sceneParams.viewFrustum_max),
 		                                                   0.2f, 500, 4);
-	else relocaliser = NULL;
+	else relocaliser = nullptr;
 
 	kfRaycast = new ITMUChar4Image(imgSize_d, memoryType);
 
@@ -81,7 +85,7 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::~ITMDynamicEngine() {
 	delete renderState_live;
-	if (renderState_freeview != NULL) delete renderState_freeview;
+	if (renderState_freeview != nullptr) delete renderState_freeview;
 
 	delete canonicalScene;
 	delete liveScene;
@@ -96,20 +100,20 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::~ITMDynamicEngine() {
 	delete viewBuilder;
 
 	delete trackingState;
-	if (view != NULL) delete view;
+	if (view != nullptr) delete view;
 
 	delete liveVisualisationEngine;
 	delete canonicalVisualisationEngine;
 
-	if (relocaliser != NULL) delete relocaliser;
+	if (relocaliser != nullptr) delete relocaliser;
 	delete kfRaycast;
 
-	if (meshingEngine != NULL) delete meshingEngine;
+	if (meshingEngine != nullptr) delete meshingEngine;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveSceneToMesh(const char* objFileName) {
-	if (meshingEngine == NULL) return;
+	if (meshingEngine == nullptr) return;
 
 	ITMMesh* mesh = new ITMMesh(settings->GetMemoryType());
 
@@ -254,7 +258,7 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
                                                                     ITMIMUMeasurement* imuMeasurement) {
 
 	// prepare image and turn it into a depth image
-	if (imuMeasurement == NULL)
+	if (imuMeasurement == nullptr)
 		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useThresholdFilter,
 		                        settings->useBilateralFilter, false, false);
 	else
@@ -318,14 +322,13 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
 	}
 
 
-
-
 	bool didFusion = false;
 	if ((adjustedTrackingResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) &&
 	    (relocalisationCount == 0)) {
 		if (framesProcessed > 0) {
 			denseMapper->ProcessFrame(view, trackingState, canonicalScene, liveScene, renderState_live,
-			                          recordWarpsForNextFrame, recordWarp2DSliceForNextFrame, nextFrameOutputPath);
+			                          recordWarpsForNextFrame, recordWarp1DSilcesForNextFrame,
+			                          recordWarp2DSlicesForNextFrame, nextFrameOutputPath, vtkView);
 		} else {
 			denseMapper->ProcessInitialFrame(view, trackingState, canonicalScene, liveScene, renderState_live);
 		}
@@ -366,7 +369,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Image* out, GetImageType getImageType,
                                                                      ORUtils::SE3Pose* pose,
                                                                      ITMIntrinsics* intrinsics) {
-	if (view == NULL) return;
+	if (view == nullptr) return;
 
 	out->Clear();
 
@@ -412,7 +415,7 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Im
 			                                     raycastType);
 
 
-			ORUtils::Image<Vector4u>* srcImage = NULL;
+			ORUtils::Image<Vector4u>* srcImage = nullptr;
 			if (relocalisationCount != 0) srcImage = kfRaycast;
 			else srcImage = renderState_live->raycastImage;
 
@@ -435,7 +438,7 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Im
 			else if (getImageType == ITMDynamicEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_CONFIDENCE)
 				type = IITMVisualisationEngine::RENDER_COLOUR_FROM_CONFIDENCE;
 
-			if (renderState_freeview == NULL) {
+			if (renderState_freeview == nullptr) {
 				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
 				                                                                        liveScene->sceneParams,
 				                                                                        settings->GetMemoryType());
@@ -453,7 +456,7 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Im
 		}
 		case ITMMainEngine::InfiniTAM_IMAGE_STEP_BY_STEP: {
 
-			if (renderState_freeview == NULL) {
+			if (renderState_freeview == nullptr) {
 				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
 				                                                                        liveScene->sceneParams,
 				                                                                        settings->GetMemoryType());
@@ -481,7 +484,7 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Im
 		case ITMMainEngine::InfiniTAM_IMAGE_FREECAMERA_CANONICAL: {
 			IITMVisualisationEngine::RenderImageType type = IITMVisualisationEngine::RENDER_SHADED_GREYSCALE;
 
-			if (renderState_freeview == NULL) {
+			if (renderState_freeview == nullptr) {
 				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
 				                                                                        canonicalScene->sceneParams,
 				                                                                        settings->GetMemoryType());
@@ -530,7 +533,6 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrame
 		ITMIMUMeasurement* imuMeasurement) {
 
 	//TODO: refactor to avoid DRY violations
-
 	// prepare image and turn it into a depth image
 	if (imuMeasurement == nullptr)
 		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useThresholdFilter,
@@ -598,8 +600,12 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrame
 	    (relocalisationCount == 0)) {
 		canFuseInStepByStepMode = true;
 		denseMapper->BeginProcessingFrameInStepByStepMode(view, trackingState, canonicalScene, liveScene,
-		                                                  renderState_live, recordWarp2DSliceForNextFrame,
-		                                                  recordWarpsForNextFrame, nextFrameOutputPath);
+		                                                  renderState_live,
+		                                                  this->recordWarp1DSilcesForNextFrame,
+		                                                  this->recordWarp2DSlicesForNextFrame,
+		                                                  recordWarpsForNextFrame,
+		                                                  nextFrameOutputPath,
+		                                                  this->vtkView);
 	}
 }
 

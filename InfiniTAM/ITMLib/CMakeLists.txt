@@ -532,25 +532,32 @@ set (ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS
 # ======================================================================================================================
 # =================================================== UTILITIES ========================================================
 set(ITMLIB_UTILS_SOURCES
-    Utils/FileIO/ITMSceneLogger.tpp
-    Utils/FileIO/ITMDynamicFusionLogger.tpp
-    Utils/FileIO/ITMSceneLogger_InterestRegionInfo.tpp
-    Utils/FileIO/ITMSceneLogger_SceneSlice.tpp
-    Utils/FileIO/ITMWarpSceneLogger.tpp
-    Utils/ITMLibSettings.cpp
     Utils/Visualization/ITMScene2DSliceVisualizer.tpp
+    Utils/Visualization/ITMScene1DSliceVisualizer.cpp
+    Utils/Visualization/ITMScene1DSliceVisualizer.tpp
+
     Utils/Collections/ITM3DNestedMapOfArrays.tpp
     Utils/Collections/ITM3DNestedMap.tpp
+
     Utils/Analytics/ITMSceneStatisticsCalculator.tpp
     Utils/Analytics/ITMNeighborVoxelIterationInfo.cpp
+
+    Utils/ITMLibSettings.cpp
     Utils/ITMPrintHelpers.cpp
     Utils/Analytics/ITMBenchmarkUtils.cpp
     )
 
 set(ITMLIB_UTILS_HEADERS
-    Utils/FileIO/ITMSceneLogger.h
-    Utils/FileIO/ITMDynamicFusionLogger.h
-    Utils/FileIO/ITMWarpSceneLogger.h
+    Utils/Visualization/ITMScene2DSliceVisualizer.h
+    Utils/Visualization/ITMScene1DSliceVisualizer.h
+    Utils/Visualization/ITMVisualizationCommon.h
+
+    Utils/Collections/ITM3DNestedMapOfArrays.h
+    Utils/Collections/ITM3DNestedMap.h
+
+    Utils/Analytics/ITMSceneStatisticsCalculator.h
+    Utils/Analytics/ITMNeighborVoxelIterationInfo.h
+
     Utils/ITMCUDAUtils.h
     Utils/ITMImageTypes.h
     Utils/ITMHashBlockProperties.h
@@ -561,15 +568,22 @@ set(ITMLIB_UTILS_HEADERS
     Utils/ITMPixelUtils.h
     Utils/ITMProjectionUtils.h
     Utils/ITMSceneParams.h
-    Utils/Visualization/ITMScene2DSliceVisualizer.h
     Utils/ITMSurfelSceneParams.h
-    Utils/Collections/ITM3DNestedMapOfArrays.h
-    Utils/Collections/ITM3DNestedMap.h
-    Utils/Analytics/ITMSceneStatisticsCalculator.h
-    Utils/Analytics/ITMNeighborVoxelIterationInfo.h
     Utils/ITMPrintHelpers.h
     Utils/Analytics/ITMBenchmarkUtils.h
     )
+
+set(ITMLIB_UTILS_FILEIO_SOURCES
+    Utils/FileIO/ITMSceneLogger.tpp
+    Utils/FileIO/ITMDynamicFusionLogger.tpp
+    Utils/FileIO/ITMSceneLogger_InterestRegionInfo.tpp
+    Utils/FileIO/ITMSceneLogger_SceneSlice.tpp
+    Utils/FileIO/ITMWarpSceneLogger.tpp)
+
+set (ITMLIB_UTILS_FILEIO_HEADERS
+     Utils/FileIO/ITMSceneLogger.h
+     Utils/FileIO/ITMDynamicFusionLogger.h
+     Utils/FileIO/ITMWarpSceneLogger.h)
 
 #################################################################
 # Collect the project files into sources, headers and templates #
@@ -610,6 +624,7 @@ set(sources
     ${ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_SOURCES}
     ${ITMLIB_SCENE_MOTION_TRACKERS_SHARED_SOURCES}
     ${ITMLIB_UTILS_SOURCES}
+    ${ITMLIB_UTILS_FILEIO_SOURCES}
     )
 
 set(headers
@@ -664,6 +679,7 @@ set(headers
     ${ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_HEADERS}
     ${ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS}
     ${ITMLIB_UTILS_HEADERS}
+    ${ITMLIB_UTILS_FILEIO_HEADERS}
     )
 
 #############################
@@ -724,5 +740,8 @@ source_group(Utils FILES ${ITMLIB_UTILS_SOURCES} ${ITMLIB_UTILS_HEADERS})
 include(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
 
 #_DEBUG
+find_package(VTK REQUIRED)
+include(${VTK_USE_FILE})
+
 target_include_directories(${targetname} PUBLIC ${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
-target_link_libraries(${targetname} ${OpenCV_LIBS} ${Boost_LIBRARIES})
+target_link_libraries(${targetname} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${VTK_LIBRARIES})

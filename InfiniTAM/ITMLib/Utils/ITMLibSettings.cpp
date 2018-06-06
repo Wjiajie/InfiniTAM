@@ -64,8 +64,7 @@ ITMLibSettings::ITMLibSettings()
 					  "outlierSpaceC=0.1,outlierSpaceF=0.004,"
 					  "numiterC=20,numiterF=50,tukeyCutOff=8,"
 					  "framesToSkip=20,framesToWeight=50,failureDec=20.0";
-	//By default, write to a State folder within the current directory
-	outputPath = "./State/";
+
 	//// For hybrid intensity+depth tracking:
 	//trackerConfig = "type=extended,levels=bbb,useDepth=1,useColour=1,"
 	//				  "colourWeight=0.3,minstep=1e-4,"
@@ -101,24 +100,35 @@ ITMLibSettings::ITMLibSettings()
 						  "framesToSkip=20,framesToWeight=50,failureDec=20.0";
 	}
 
+	//TODO: the following 3 groups should be kept in 4 separate structs in here, perpetually; these structs should be passed as pointers to the classes that use them (instead of being copied to structs in those classes)
+
 	// Dynamic fusion debugging/logging
+	analysisSettings.recordCanonicalScene2DSlicesAsImages = false;
+	analysisSettings.recordLiveScene2DSlicesAsImages = false;
+	analysisSettings.record3DWarps = false;
+	analysisSettings.recordScene1DSlicesWithUpdates = false;
+	analysisSettings.recordScene2DSlicesWithUpdates = false;
+	analysisSettings.focusCoordinatesSpecified = false;
 
+	//By default, write to a State folder within the current directory
+	analysisSettings.outputPath = "./State/";
 
-	rasterizeLiveSceneSlices = false;
-	rasterizeCanonicalSceneSlices = false;
 	restrictZtrackingForDebugging = false;
 	simpleSceneExperimentModeEnabled = false;
-	focusCoordinatesSpecified = false;
 
-	// Dynamic fusion terms & parameters
+
+	// Dynamic fusion switches
 	enableDataTerm = true;
 	enableLevelSetTerm = true;
 	enableSmoothingTerm = true;
 	enableKillingTerm = false;
 	enableGradientSmoothing = true;
 
+	// Dynamic fusion optimization termination parameters
 	sceneTrackingMaxOptimizationIterationCount = 200;
 	sceneTrackingOptimizationVectorUpdateThresholdMeters = 0.0001f;// in meters, default from KillingFusion
+
+	// Dynamic fusion weights / factors used during scene tracking
 	sceneTrackingGradientDescentLearningRate = 0.1f; // default from KillingFusion & SobolevFusion
 	sceneTrackingRigidityEnforcementFactor = 0.1f; // default from KillingFusion
 	sceneTrackingWeightDataTerm = 1.0f; // not used in Killing/Sobolev Fusion (implicitly adjusted using other weights & thresholds)
@@ -128,7 +138,7 @@ ITMLibSettings::ITMLibSettings()
 }
 
 bool ITMLibSettings::FocusCoordinatesAreSpecified() const {
-	return focusCoordinatesSpecified;
+	return analysisSettings.focusCoordinatesSpecified;
 }
 
 MemoryDeviceType ITMLibSettings::GetMemoryType() const
@@ -137,11 +147,11 @@ MemoryDeviceType ITMLibSettings::GetMemoryType() const
 }
 
 Vector3i ITMLibSettings::GetFocusCoordinates() const {
-	return focusCoordinates;
+	return analysisSettings.focusCoordinates;
 }
 
 void ITMLibSettings::SetFocusCoordinates(const Vector3i& coordiantes) {
-	focusCoordinatesSpecified = true;
-	focusCoordinates = coordiantes;
+	analysisSettings.focusCoordinatesSpecified = true;
+	analysisSettings.focusCoordinates = coordiantes;
 }
 

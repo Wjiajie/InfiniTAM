@@ -168,7 +168,7 @@ void UIEngine_BPO::GlutDisplayFunction() {
 		        uiEngine->autoIntervalFrameCount,
 		        uiEngine->depthVideoWriter != nullptr ? "off" : "on",
 		        uiEngine->recordWarpsForNextFrame ? "off" : "on",
-		        uiEngine->recordWarp2DSliceForNextFrame ? "off" : "on");
+		        uiEngine->recordWarp2DSlicesForNextFrame ? "off" : "on");
 		Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
 	}
 	glutSwapBuffers();
@@ -374,7 +374,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 				if (modifiers && GLUT_ACTIVE_ALT) {
 					uiEngine->recordWarpsForNextFrame = true;
 				}else{
-					uiEngine->recordWarp2DSliceForNextFrame = true;
+					uiEngine->recordWarp2DSlicesForNextFrame = true;
 				}
 			}
 				break;

@@ -18,16 +18,16 @@
 
 #include "../Core/ITMDynamicEngine.tpp"
 
-
+#include "../Objects/Scene/ITMScene.h"
 #include "../Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU_VoxelBlockHash.tpp"
 #include "../Engines/Reconstruction/CPU/ITMDynamicHashManagementEngine_CPU.tpp"
-//#include "../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.tpp"
 #include "../Engines/Swapping/CPU/ITMSwappingEngine_CPU.tpp"
 #include "../Engines/Visualisation/CPU/ITMVisualisationEngine_CPU.tpp"
 #include "../Engines/Meshing/CPU/ITMMeshingEngine_CPU.tpp"
 #include "../Utils/Analytics/ITMSceneStatisticsCalculator.tpp"
 #include "../Utils/Analytics/ITMNeighborVoxelIterationInfo.h"
 #include "../Utils/Visualization/ITMScene2DSliceVisualizer.tpp"
+#include "../Utils/Visualization/ITMScene1DSliceVisualizer.tpp"
 #include "../Utils/FileIO/ITMWarpSceneLogger.tpp"
 #include "../Utils/FileIO/ITMSceneLogger.tpp"
 #include "../Utils/FileIO/ITMDynamicFusionLogger.tpp"
@@ -53,9 +53,15 @@ template class ITMDynamicFusionLogger<ITMVoxelCanonical,ITMVoxelLive, ITMVoxelIn
 //TODO: Cleanup -Greg (GitHub: Algomorph)
 //dynamic fusion utility classes
 template class ITMScene2DSliceVisualizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+
+template void ITMScene1DSliceVisualizer::Plot1DSceneSlice<ITMVoxelCanonical, ITMVoxelIndex>(
+		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene, Vector4i color);
+
 template class ITMSceneStatisticsCalculator<ITMVoxelCanonical,ITMVoxelIndex>;
 template class ITMSceneStatisticsCalculator<ITMVoxelLive,ITMVoxelIndex>;
 template class ITM3DNestedMap<int>;
 template class ITM3DNestedMap<std::tuple<int,int>>;
 template class ITM3DNestedMapOfArrays<int>;
 template class ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>;
+
+

@@ -5,6 +5,19 @@
 #include <iostream>
 #include <string>
 
+//boost
+#include <boost/program_options.hpp>
+#include <thread>
+
+//VTK
+#include <vtkSmartPointer.h>
+#include <vtkContextView.h>
+#include <vtkRenderer.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <mutex>
+#include <condition_variable>
+
 //ITMLib
 #include "UIEngine_BPO.h"
 
@@ -21,9 +34,6 @@
 #include "../../ITMLib/Core/ITMBasicSurfelEngine.h"
 #include "../../ITMLib/Core/ITMMultiEngine.h"
 #include "../../ITMLib/Core/ITMDynamicEngine.h"
-
-//boost
-#include <boost/program_options.hpp>
 
 //local
 #include "prettyprint.hpp"
@@ -151,10 +161,34 @@ bool isPathMask(const std::string& arg) {
 	return arg.find('%') != std::string::npos;
 }
 
+namespace VTKApplication {
+vtkSmartPointer<vtkRenderWindowInteractor> interactor;
+vtkSmartPointer<vtkContextView> view;
+
+void RunVTKView() {
+	std::cout << "Buliding VTK Window..." << std::endl;
+	view = vtkSmartPointer<vtkContextView>::New();
+	view->GetRenderWindow()->SetSize(1024,768);
+	view->GetRenderer()->SetBackground(1.0, 1.0, 1.0);
+	interactor = view->GetInteractor();
+	interactor->Initialize();
+	std::cout << "Buliding VTK Window successful..." << std::endl;
+	view->GetInteractor()->Start();
+
+}
+}//namespace VTKApplication
+
 int main(int argc, char** argv) {
 	try {
+		std::thread vtkViewThread(VTKApplication::RunVTKView);
+
+
+
 		po::options_description arguments{"Arguments"};
 		po::positional_options_description positional_arguments;
+
+		// boolean flags
+		// TODO: these should all pe part of the settings object, categorized by internal structs
 		bool fixCamera = false;
 		bool disableDataTerm = false;
 		bool enableLevelSetTerm = false;
@@ -163,11 +197,13 @@ int main(int argc, char** argv) {
 		bool disableGradientSmoothing = false;
 		bool killingModeEnabled = false;
 		bool recordReconstructionToVideo = false;
-		bool startInStepByStep = false;
 
-		bool restrictZmotion = false;
+		bool startInStepByStep = false;
+		bool restrictZMotion = false;
 		bool simpleScene = false;
+		bool recordWarp1DSlices = false;
 		bool recordWarp2DSlices = false;
+
 
 		//@formatter:off
 		arguments.add_options()
@@ -250,14 +286,19 @@ int main(int argc, char** argv) {
 				 "Used in scene tracking optimization when the Killing regularization term is enabled."
 		         " Greater values penalize non-isometric scene deformations.")
 
-				("restrict_z",po::bool_switch(&restrictZmotion)->default_value(false),
+				("restrict_z",po::bool_switch(&restrictZMotion)->default_value(false),
 				 "Used in dynamic fusion. Restrict scene motion updates in z direction (for debugging).")
 				("simple_scene",po::bool_switch(&simpleScene)->default_value(false),
 				 "Used in dynamic fusion. Simple scene experiment mode (for debugging).")
+
+				("record_warp_1d_slices",po::bool_switch(&recordWarp1DSlices)->default_value(false),
+				 "Used in dynamic fusion. Plot graphs of canonical and live SDF (around the focus coordinate,"
+	             " if provided), plot the live frame progression and warp vectors (for visual debugging).")
 				("record_warp_2d_slices",po::bool_switch(&recordWarp2DSlices)->default_value(false),
 				 "Used in dynamic fusion. Render warps from each frame onto an image of the original live frame"
-	             " (around the provided focus coordinate, if provided), as well as warped live frame"
+	             " (around the focus coordinate, if provided), as well as warped live frame"
 			     " progression (for debugging).")
+
 
 				("weight_data_term", po::value<float>(),
 					 "Used in scene tracking optimization when the data term is enabled."
@@ -353,9 +394,8 @@ int main(int argc, char** argv) {
 			return EXIT_FAILURE;
 		}
 // region ================================ SET MAIN ENGINE SETTINGS WITH CLI ARGUMENTS =================================
-
 		auto* settings = new ITMLibSettings();
-		settings->outputPath = vm["output"].as<std::string>().c_str();
+		settings->analysisSettings.outputPath = vm["output"].as<std::string>().c_str();
 		bool haveFocusCoordinate = !vm["focus_coordinates"].empty();
 		Vector3i focusCoordiantes(0);
 		if (haveFocusCoordinate) {
@@ -380,7 +420,7 @@ int main(int argc, char** argv) {
 		}
 
 		//_DEBUG
-		settings->restrictZtrackingForDebugging = restrictZmotion;
+		settings->restrictZtrackingForDebugging = restrictZMotion;
 		settings->simpleSceneExperimentModeEnabled = simpleScene;
 
 		settings->enableDataTerm = !disableDataTerm;
@@ -431,7 +471,8 @@ int main(int argc, char** argv) {
 			case ITMLibSettings::LIBMODE_DYNAMIC:
 				mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
 						settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
-						imageSource->getDepthImageSize());
+						imageSource->getDepthImageSize(),
+						VTKApplication::view);
 				break;
 			default:
 				throw std::runtime_error("Unsupported library mode!");
@@ -454,18 +495,27 @@ int main(int argc, char** argv) {
 		}
 
 
-		UIEngine_BPO::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine, settings->outputPath,
-		                                     settings->deviceType, processNFramesOnLaunch, skipFirstNFrames,
-		                                     recordReconstructionToVideo, startInStepByStep, recordWarp2DSlices, false);
-		UIEngine_BPO::Instance()->Run();
-		UIEngine_BPO::Instance()->Shutdown();
+		UIEngine_BPO::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine,
+		                                     settings->analysisSettings.outputPath.c_str(), settings->deviceType,
+		                                     processNFramesOnLaunch, skipFirstNFrames, recordReconstructionToVideo,
+		                                     startInStepByStep, recordWarp1DSlices, recordWarp2DSlices,
+		                                     false);
 // endregion ===========================================================================================================
 
+
+		UIEngine_BPO::Instance()->Run();
+		UIEngine_BPO::Instance()->Shutdown();
 
 		delete mainEngine;
 		delete settings;
 		delete imageSource;
 		delete imuSource;
+
+		if (VTKApplication::interactor) {
+			VTKApplication::interactor->TerminateApp();
+		}
+		vtkViewThread.join();
+
 		return EXIT_SUCCESS;
 	} catch (std::exception& e) {
 		std::cerr << e.what() << '\n';

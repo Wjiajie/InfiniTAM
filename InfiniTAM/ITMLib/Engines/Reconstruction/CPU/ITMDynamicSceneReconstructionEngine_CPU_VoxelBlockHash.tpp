@@ -78,10 +78,10 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 					pt_model.w = 1.0f;
 
 					//_DEBUG
-					Vector3i pos = Vector3i(globalPos.x + x, globalPos.y + y, globalPos.z + z);
-					if(pos == Vector3i(-29, 40, 185)){
-						int i = 42;
-					}
+//					Vector3i pos = Vector3i(globalPos.x + x, globalPos.y + y, globalPos.z + z);
+//					if(pos == Vector3i(-29, 40, 185)){
+//						int i = 42;
+//					}
 
 					ComputeUpdatedLiveVoxelInfo<
 							TVoxelLive::hasColorInformation,

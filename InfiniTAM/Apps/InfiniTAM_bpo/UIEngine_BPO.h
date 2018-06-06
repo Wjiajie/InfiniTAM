@@ -81,7 +81,8 @@ private: // For UI layout
 	// TODO: revise & improve architecture/design here; different logging parameters should be passed somehow to all engines
 	// Dynamic Fusion only
 	bool recordWarpsForNextFrame = false; // record warp updates during processing of the next frame
-	bool recordWarp2DSliceForNextFrame = false;
+	bool recordWarp2DSlicesForNextFrame = false;
+	bool recordWarp1DSlicesForNextFrame = false;
 
 	InputSource::FFMPEGWriter* reconstructionVideoWriter = nullptr;
 	InputSource::FFMPEGWriter* rgbVideoWriter = nullptr;
@@ -110,10 +111,12 @@ public:
 	bool allocateGPU;
 	ITMUChar4Image* saveImage;
 
-	void Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource, InputSource::IMUSourceEngine* imuSource,
-		                ITMLib::ITMMainEngine* mainEngine, const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
-		                int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult, bool startInStepByStep,
-		                bool startRecordingWarp2DSlices, bool startRecordingWarps);
+	void Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
+	                InputSource::IMUSourceEngine* imuSource, ITMLib::ITMMainEngine* mainEngine,
+	                const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
+	                int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
+	                bool startInStepByStep, bool startRecordingWarp1DSlices, bool startRecordingWarp2DSlices,
+	                bool startRecordingWarps);
 	void Shutdown();
 
 	void Run();

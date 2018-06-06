@@ -61,12 +61,11 @@ UIEngine_BPO* UIEngine_BPO::instance;
  * set interval to this number of frames
  */
 void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
-                              InputSource::IMUSourceEngine* imuSource,
-                              ITMLib::ITMMainEngine* mainEngine, const char* outFolder,
-                              ITMLib::ITMLibSettings::DeviceType deviceType,
+                              InputSource::IMUSourceEngine* imuSource, ITMLib::ITMMainEngine* mainEngine,
+                              const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
                               int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
-                              bool startInStepByStep,
-                              bool startRecordingWarp2DSlices, bool startRecordingWarps) {
+                              bool startInStepByStep, bool startRecordingWarp1DSlices, bool startRecordingWarp2DSlices,
+                              bool startRecordingWarps) {
 	this->inStepByStepMode = startInStepByStep;
 
 	this->freeviewActive = true;
@@ -75,7 +74,8 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 	this->autoIntervalFrameCount = frameIntervalLength;
 
 	this->recordWarpsForNextFrame = startRecordingWarps;
-	this->recordWarp2DSliceForNextFrame = startRecordingWarp2DSlices;
+	this->recordWarp1DSlicesForNextFrame = startRecordingWarp1DSlices;
+	this->recordWarp2DSlicesForNextFrame = startRecordingWarp2DSlices;
 
 	this->colourModes_main.emplace_back("shaded greyscale", ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST);
 	this->colourModes_main.emplace_back("integrated colours", ITMMainEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME);
@@ -230,8 +230,10 @@ void UIEngine_BPO::ProcessFrame() {
 
 	auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>*>(mainEngine);
 	if (dynamicEngine != nullptr) {
+		//TODO: modify in settings directly instead via a local reference (i.e. avoid copying variables around) -Greg
 		dynamicEngine->recordWarpsForNextFrame = this->recordWarpsForNextFrame;
-		dynamicEngine->recordWarp2DSliceForNextFrame = this->recordWarp2DSliceForNextFrame;
+		dynamicEngine->recordWarp1DSilcesForNextFrame = this->recordWarp1DSlicesForNextFrame;
+		dynamicEngine->recordWarp2DSlicesForNextFrame = this->recordWarp2DSlicesForNextFrame;
 		dynamicEngine->nextFrameOutputPath = this->GenerateCurrentFrameOutputPath();
 	}
 
@@ -397,7 +399,7 @@ void UIEngine_BPO::PrintProcessedFrame() const {
 	if (recordWarpsForNextFrame) {
 		std::cout << " [WARP UPDATE RECORDING: ON]";
 	}
-	if (recordWarp2DSliceForNextFrame) {
+	if (recordWarp2DSlicesForNextFrame) {
 		std::cout << " [WARP UPDATE RASTERIZATION: ON]";
 	}
 	std::cout << reset << std::endl;

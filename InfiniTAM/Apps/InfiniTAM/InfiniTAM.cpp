@@ -225,9 +225,10 @@ try
 		mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelIndex>(internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize());
 		break;
 	case ITMLibSettings::LIBMODE_DYNAMIC:
-		mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
-				internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(),
-				imageSource->getDepthImageSize());
+		mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(internalSettings,
+		                                                                                  imageSource->getCalib(),
+		                                                                                  imageSource->getRGBImageSize(),
+		                                                                                  imageSource->getDepthImageSize());
 		break;
 	default: 
 		throw std::runtime_error("Unsupported library mode!");
