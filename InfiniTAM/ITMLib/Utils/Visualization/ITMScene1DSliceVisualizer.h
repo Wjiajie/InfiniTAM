@@ -35,11 +35,20 @@ public:
 		                          std::string imageOutputDirectory);
 	~ITMScene1DSliceVisualizer() = default;
 
+
 	template<typename TVoxel, typename TIndex>
-	void Plot1DSceneSlice(ITMScene <TVoxel, TIndex>* scene, Vector4i color);
+	void Plot1DSceneSlice(ITMScene <TVoxel, TIndex>* scene, Vector4i color, double width);
+	template<typename TVoxel, typename TIndex>
+	void Draw1DWarpUpdateVector(ITMScene <TVoxel, TIndex>* scene, Vector4i color);
+	template<typename TVoxel, typename TIndex>
+	void Plot1DIndexedSceneSlice(ITMScene<TVoxel, TIndex>* scene, Vector4i color, double width, int fieldIndex);
+
 
 
 private:
+	template<typename TVoxel, typename TIndex, typename TGetSDFFunctor>
+	void Plot1DSceneSliceHelper(ITMScene <TVoxel, TIndex>* scene, Vector4i color, double width);
+
 	const Vector3i focusCoordinate;
 	const Axis axis;
 	const int rangeStartVoxelIndex;

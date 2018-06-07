@@ -69,7 +69,8 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeReco
 			scene1DSliceVisualizer =
 					new ITMScene1DSliceVisualizer(focusCoordinates, AXIS_X, 16,
 					                              this->outputDirectory + "/scene_1D_slices");
-			scene1DSliceVisualizer->Plot1DSceneSlice(canonicalScene, Vector4i(0, 255, 0, 255));
+			scene1DSliceVisualizer->Plot1DSceneSlice(canonicalScene, Vector4i(97, 181, 193, 255), 3.0);
+			scene1DSliceVisualizer->Plot1DIndexedSceneSlice(liveScene, Vector4i(183, 115, 46, 255), 3.0,0);
 		} else {
 			recordingScene1DSlicesWithUpdates = false;
 		}
@@ -162,7 +163,8 @@ ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarpSlices(int 
 		            ".png", liveImgOut);
 	}
 	if (hasFocusCoordinates && recordingScene1DSlicesWithUpdates) {
-		scene1DSliceVisualizer->Plot1DSceneSlice(canonicalScene, Vector4i(0, 0, 0, 255));
+		scene1DSliceVisualizer->Plot1DIndexedSceneSlice(liveScene, Vector4i(0, 0, 0, 255), 1.0, 1);
+		scene1DSliceVisualizer->Draw1DWarpUpdateVector(canonicalScene,Vector4i(255,0,0,255));
 	}
 }
 

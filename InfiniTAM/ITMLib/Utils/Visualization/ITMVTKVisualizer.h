@@ -35,7 +35,7 @@ public:
 	bool Run();
 	bool ShutDown();
 
-	vtkSmartPointer<vtkChartXY>& GetChart();
+	vtkSmartPointer<vtkChartXY> GetChart();
 
 	ITMVTKVisualizer(ITMVTKVisualizer const&) = delete;
 	void operator=(ITMVTKVisualizer const&)  = delete;

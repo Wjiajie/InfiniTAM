@@ -498,7 +498,7 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_HEADERS
     )
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_SOURCES
-    SceneMotionTrackers/CPU/ITMCalculateWarpGradientFunctor.h
+    SceneMotionTrackers/CPU/ITMCalculateWarpGradientBasedOnWarpedLiveFunctor.h
     SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.tpp
     SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.tpp
     )

@@ -105,7 +105,7 @@ void CalculateAndPrintAdditionalStatistics(const bool& enableDataTerm,
 
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-struct ITMCalculateWarpGradientFunctor {
+struct ITMCalculateWarpGradientBasedOnWarpedLiveFunctor {
 private:
 
 	void SetUpFocusVoxelPrinting(bool& printVoxelResult, bool& recordVoxelResult, const Vector3i& voxelPosition,
@@ -131,7 +131,7 @@ private:
 public:
 	
 	// region ========================================= CONSTRUCTOR ====================================================
-	ITMCalculateWarpGradientFunctor(
+	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor(
 			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Parameters parameters,
 			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Switches switches,
 			ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>& logger) :

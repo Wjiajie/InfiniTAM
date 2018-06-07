@@ -17,33 +17,46 @@
 //stdlib
 #include <utility>
 
-//VTK
-#include <vtkContextView.h>
-#include <vtkSmartPointer.h>
-#include <vtkChartXY.h>
-#include <vtkTable.h>
-#include <vtkFloatArray.h>
-#include <vtkRenderer.h>
-#include <vtkContextScene.h>
-#include <vtkPlot.h>
-
 //local
 #include "ITMScene1DSliceVisualizer.h"
+#include "ITMScene1DSliceVisualizer.tpp"
 #include "../../Objects/Scene/ITMScene.h"
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../ITMPrintHelpers.h"
 
+#include "../../ITMLibDefines.h"
+
 
 using namespace ITMLib;
 
+// region ==================================== CONSTRUCTORS / DESTRUCTORS ==============================================
 
 ITMScene1DSliceVisualizer::ITMScene1DSliceVisualizer(Vector3i focusCoordinate, Axis axis, unsigned int voxelRange,
                                                      std::string imageOutputDirectory) :
 		focusCoordinate(focusCoordinate),
 		axis(axis),
 		voxelRange(voxelRange),
-		rangeStartVoxelIndex(focusCoordinate[axis] - ((voxelRange+1) / 2)),
+		rangeStartVoxelIndex(focusCoordinate[axis] - ((voxelRange + 1) / 2)),
 		rangeEndVoxelIndex(focusCoordinate[axis] + (voxelRange / 2)),
 		imageOutputDirectory(std::move(imageOutputDirectory)) {
 }
 
+// endregion
+// region ==================================== INSTANTIATIONS ==========================================================
+
+template void
+ITMScene1DSliceVisualizer::Plot1DSceneSlice<ITMVoxelCanonical, ITMVoxelIndex>(
+		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene, Vector4i color, double width);
+template void
+ITMScene1DSliceVisualizer::Plot1DSceneSlice<ITMVoxelLive, ITMVoxelIndex>(ITMScene<ITMVoxelLive, ITMVoxelIndex>* scene,
+                                                                         Vector4i color, double width);
+
+template void
+ITMScene1DSliceVisualizer::Plot1DIndexedSceneSlice<ITMVoxelLive, ITMVoxelIndex>(
+		ITMScene<ITMVoxelLive, ITMVoxelIndex>* scene, Vector4i color, double width, int fieldIndex);
+
+template void
+ITMScene1DSliceVisualizer::Draw1DWarpUpdateVector<ITMVoxelCanonical, ITMVoxelIndex>(
+		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene, Vector4i color);
+
+//======================================================================================================================

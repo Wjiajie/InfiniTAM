@@ -28,6 +28,8 @@
 #include <vtkContextScene.h>
 #include <vtkPlot.h>
 #include <vtkRenderWindow.h>
+#include <vtkAxis.h>
+#include <vtkPen.h>
 
 //local
 #include "ITMScene1DSliceVisualizer.h"
@@ -37,10 +39,23 @@
 
 using namespace ITMLib;
 
+template<typename TVoxel>
+struct TGetRegularSDFFunctor{
+	static inline float GetSdf(TVoxel& voxel){
+		return TVoxel::valueToFloat(voxel.sdf);
+	}
+};
+
+template<typename TVoxel, int TFieldIndex>
+struct TGetIndexedSDFFunctor{
+	static inline float GetSdf(TVoxel& voxel){
+		return TVoxel::valueToFloat(voxel.sdf_values[TFieldIndex]);
+	}
+};
 
 
-template<typename TVoxel, typename TIndex>
-void ITMScene1DSliceVisualizer::Plot1DSceneSlice(ITMScene<TVoxel, TIndex>* scene, Vector4i color) {
+template<typename TVoxel, typename TIndex, typename TGetSDFFunctor>
+void ITMScene1DSliceVisualizer::Plot1DSceneSliceHelper(ITMScene<TVoxel, TIndex>* scene, Vector4i color, double width) {
 
 	// set up table & columns
 	vtkSmartPointer<vtkFloatArray> horizontalAxisPoints = vtkSmartPointer<vtkFloatArray>::New();
@@ -63,22 +78,84 @@ void ITMScene1DSliceVisualizer::Plot1DSceneSlice(ITMScene<TVoxel, TIndex>* scene
 	for(int iValue = 0; iValue < voxelRange; iValue++,currentVoxelPosition[axis]++){
 		int vmIndex = 0;
 		TVoxel voxel = readVoxel(voxels, indexData, currentVoxelPosition, vmIndex, cache);
-		table->SetValue(iValue, 0, iValue);
-		table->SetValue(iValue, 1, TVoxel::valueToFloat(voxel.sdf));
+		table->SetValue(iValue, 0, currentVoxelPosition[axis]);
+		table->SetValue(iValue, 1, TGetSDFFunctor::GetSdf(voxel));
 	}
 
-	vtkPlot* line = ITMVTKVisualizer::Instance().GetChart()->AddPlot(vtkChart::LINE);
+	vtkSmartPointer<vtkChartXY> chart = ITMVTKVisualizer::Instance().GetChart();
+	chart->GetAxis(1)->SetTitle((AxisToString(this->axis) + " Axis").c_str());
+	chart->ForceAxesToBoundsOff();
+	chart->AutoAxesOff();
+	chart->DrawAxesAtOriginOn();
+
+	chart->GetAxis(0)->SetRange(-1.05,1.05);
+	chart->GetAxis(0)->SetBehavior(vtkAxis::FIXED);
+	chart->GetAxis(0)->SetTitle("SDF Value");
+
+
+	vtkPlot* line = chart->AddPlot(vtkChart::LINE);
 	line->SetInputData(table, 0, 1);
 	line->SetColor(color.r, color.g, color.b, color.a);
-	line->SetWidth(1.0);
+	line->SetWidth(width);
+	chart->Update();
 
-	ITMVTKVisualizer::Instance().GetChart()->Update();
 	ITMVTKVisualizer::Instance().Update();
+}
 
-	debug_print("MIAU");
-	//chart->Update();
-	//chart->Modified();
-	//view->Update();
-	//view->Render();
-	//view->GetRenderWindow()->Render();
+
+template<typename TVoxel, typename TIndex>
+void ITMScene1DSliceVisualizer::Plot1DSceneSlice(ITMScene<TVoxel, TIndex>* scene, Vector4i color, double width) {
+	Plot1DSceneSliceHelper<TVoxel,TIndex, TGetRegularSDFFunctor<TVoxel>>(scene, color, width);
+}
+
+
+template<typename TVoxel, typename TIndex>
+void ITMScene1DSliceVisualizer::Plot1DIndexedSceneSlice(ITMScene<TVoxel, TIndex>* scene, Vector4i color, double width, int fieldIndex) {
+	switch (fieldIndex){
+		default:
+		case 0:
+			Plot1DSceneSliceHelper<TVoxel,TIndex, TGetIndexedSDFFunctor<TVoxel,0>>(scene, color, width);
+			break;
+		case 1:
+			Plot1DSceneSliceHelper<TVoxel,TIndex, TGetIndexedSDFFunctor<TVoxel,1>>(scene, color, width);
+			break;
+	}
+}
+
+
+template<typename TVoxel, typename TIndex>
+void ITMScene1DSliceVisualizer::Draw1DWarpUpdateVector(ITMScene<TVoxel, TIndex>* scene, Vector4i color) {
+	// scene access variables
+	typename TIndex::IndexCache cache; int vmIndex;
+	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
+	typename TIndex::IndexData* indexData = scene->index.GetEntries();
+	TVoxel voxel = readVoxel(voxels, indexData, focusCoordinate, vmIndex, cache);
+	float warp1D = voxel.warp[axis];
+	float warpUpdate1D = voxel.gradient0[axis];
+	float startPoint = static_cast<float>(focusCoordinate[axis]) + warp1D - warpUpdate1D;
+	float endPoint = static_cast<float>(focusCoordinate[axis]) + warp1D;
+	float sdfValue = TVoxel::valueToFloat(voxel.sdf);
+
+	vtkSmartPointer<vtkFloatArray> horizontalAxisPoints = vtkSmartPointer<vtkFloatArray>::New();
+	horizontalAxisPoints->SetName("horVec");
+	vtkSmartPointer<vtkFloatArray> verticalAxisPoints = vtkSmartPointer<vtkFloatArray>::New();
+	verticalAxisPoints->SetName("verVec");
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+	table->AddColumn(horizontalAxisPoints);
+	table->AddColumn(verticalAxisPoints);
+	table->SetNumberOfRows(2);
+	table->SetValue(0,0,startPoint);
+	table->SetValue(1,0,endPoint);
+	table->SetValue(0,1,sdfValue);
+	table->SetValue(1,1,sdfValue);
+
+
+	vtkSmartPointer<vtkChartXY> chart = ITMVTKVisualizer::Instance().GetChart();
+	vtkPlot* line = chart->AddPlot(vtkChart::LINE);
+	line->SetInputData(table, 0, 1);
+	line->SetColor(color.r, color.g, color.b, color.a);
+	line->SetWidth(2.0);
+	chart->Update();
+
+	ITMVTKVisualizer::Instance().Update();
 }

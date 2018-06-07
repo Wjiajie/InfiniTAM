@@ -52,7 +52,7 @@ bool ITMVTKVisualizer::ShutDown() {
 	isRunning = false;
 }
 
-vtkSmartPointer<vtkChartXY>& ITMVTKVisualizer::GetChart() {
+vtkSmartPointer<vtkChartXY> ITMVTKVisualizer::GetChart() {
 	return chart;
 }
 

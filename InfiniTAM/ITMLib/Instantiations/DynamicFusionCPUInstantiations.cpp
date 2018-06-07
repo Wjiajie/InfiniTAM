@@ -54,8 +54,7 @@ template class ITMDynamicFusionLogger<ITMVoxelCanonical,ITMVoxelLive, ITMVoxelIn
 //dynamic fusion utility classes
 template class ITMScene2DSliceVisualizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 
-template void ITMScene1DSliceVisualizer::Plot1DSceneSlice<ITMVoxelCanonical, ITMVoxelIndex>(
-		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene, Vector4i color);
+
 
 template class ITMSceneStatisticsCalculator<ITMVoxelCanonical,ITMVoxelIndex>;
 template class ITMSceneStatisticsCalculator<ITMVoxelLive,ITMVoxelIndex>;
@@ -63,5 +62,4 @@ template class ITM3DNestedMap<int>;
 template class ITM3DNestedMap<std::tuple<int,int>>;
 template class ITM3DNestedMapOfArrays<int>;
 template class ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>;
-
 
