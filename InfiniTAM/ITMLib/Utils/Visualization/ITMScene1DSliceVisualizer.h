@@ -32,8 +32,7 @@ namespace ITMLib{
 class ITMScene1DSliceVisualizer {
 public:
 	ITMScene1DSliceVisualizer(Vector3i focusCoordinate, Axis axis, unsigned int voxelRange,
-	                          std::string imageOutputDirectory,
-	                          vtkSmartPointer<vtkContextView> view);
+		                          std::string imageOutputDirectory);
 	~ITMScene1DSliceVisualizer() = default;
 
 	template<typename TVoxel, typename TIndex>
@@ -41,8 +40,6 @@ public:
 
 
 private:
-	vtkSmartPointer<vtkChartXY> chart;
-	vtkSmartPointer<vtkContextView> view;
 	const Vector3i focusCoordinate;
 	const Axis axis;
 	const int rangeStartVoxelIndex;

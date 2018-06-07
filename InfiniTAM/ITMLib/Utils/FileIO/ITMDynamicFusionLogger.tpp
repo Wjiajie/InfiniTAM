@@ -41,8 +41,7 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeReco
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene,
 		std::string outputDirectory, bool hasFocusCoordinates, Vector3i focusCoordinates,
 		bool saveLiveScene2DSlicesAsImages, bool saveCanonicalScene2DSlicesAsImages, bool recordWarps,
-		bool recordScene1DSlicesWithUpdates, bool recordScene2DSlicesWithUpdates,
-		vtkSmartPointer<vtkContextView> vtkView) {
+		bool recordScene1DSlicesWithUpdates, bool recordScene2DSlicesWithUpdates) {
 
 	//TODO: make all visualizer/logger classes re-usable, i.e. just change the path & build them in the constructor (don't use pointers) -Greg (GitHub:Algomorph)
 
@@ -69,8 +68,8 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeReco
 			recordingScene1DSlicesWithUpdates = true;
 			scene1DSliceVisualizer =
 					new ITMScene1DSliceVisualizer(focusCoordinates, AXIS_X, 16,
-					                              this->outputDirectory + "/scene_1D_slices", vtkView);
-			scene1DSliceVisualizer->Plot1DSceneSlice(canonicalScene, Vector4i(0,255,0,255));
+					                              this->outputDirectory + "/scene_1D_slices");
+			scene1DSliceVisualizer->Plot1DSceneSlice(canonicalScene, Vector4i(0, 255, 0, 255));
 		} else {
 			recordingScene1DSlicesWithUpdates = false;
 		}
@@ -162,8 +161,8 @@ ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarpSlices(int 
 		cv::imwrite(scene2DSliceVisualizer->GetOutputDirectoryForWarpedLiveScenes() + "/live " + numStringStream.str() +
 		            ".png", liveImgOut);
 	}
-	if(hasFocusCoordinates && recordingScene1DSlicesWithUpdates){
-		scene1DSliceVisualizer->Plot1DSceneSlice(canonicalScene,Vector4i(0,0,0,255));
+	if (hasFocusCoordinates && recordingScene1DSlicesWithUpdates) {
+		scene1DSliceVisualizer->Plot1DSceneSlice(canonicalScene, Vector4i(0, 0, 0, 255));
 	}
 }
 

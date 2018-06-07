@@ -38,17 +38,12 @@ using namespace ITMLib;
 
 
 ITMScene1DSliceVisualizer::ITMScene1DSliceVisualizer(Vector3i focusCoordinate, Axis axis, unsigned int voxelRange,
-                                                     std::string imageOutputDirectory,
-                                                     vtkSmartPointer<vtkContextView> view) :
+                                                     std::string imageOutputDirectory) :
 		focusCoordinate(focusCoordinate),
 		axis(axis),
 		voxelRange(voxelRange),
 		rangeStartVoxelIndex(focusCoordinate[axis] - ((voxelRange+1) / 2)),
 		rangeEndVoxelIndex(focusCoordinate[axis] + (voxelRange / 2)),
-		imageOutputDirectory(std::move(imageOutputDirectory)),
-		view(view), chart(vtkSmartPointer<vtkChartXY>::New()) {
-
-	view->GetScene()->AddItem(chart);
-
+		imageOutputDirectory(std::move(imageOutputDirectory)) {
 }
 

@@ -21,9 +21,7 @@ using namespace ITMLib;
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(const ITMLibSettings* settings,
                                                                         const ITMRGBDCalib& calib, Vector2i imgSize_rgb,
-                                                                        Vector2i imgSize_d,
-                                                                        vtkSmartPointer<vtkContextView> vtkView):
-		vtkView(vtkView) {
+                                                                        Vector2i imgSize_d) {
 
 	this->settings = settings;
 
@@ -328,7 +326,7 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
 		if (framesProcessed > 0) {
 			denseMapper->ProcessFrame(view, trackingState, canonicalScene, liveScene, renderState_live,
 			                          recordWarpsForNextFrame, recordWarp1DSilcesForNextFrame,
-			                          recordWarp2DSlicesForNextFrame, nextFrameOutputPath, vtkView);
+			                          recordWarp2DSlicesForNextFrame, nextFrameOutputPath);
 		} else {
 			denseMapper->ProcessInitialFrame(view, trackingState, canonicalScene, liveScene, renderState_live);
 		}
@@ -600,12 +598,9 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrame
 	    (relocalisationCount == 0)) {
 		canFuseInStepByStepMode = true;
 		denseMapper->BeginProcessingFrameInStepByStepMode(view, trackingState, canonicalScene, liveScene,
-		                                                  renderState_live,
-		                                                  this->recordWarp1DSilcesForNextFrame,
-		                                                  this->recordWarp2DSlicesForNextFrame,
-		                                                  recordWarpsForNextFrame,
-		                                                  nextFrameOutputPath,
-		                                                  this->vtkView);
+		                                                  renderState_live, this->recordWarp1DSilcesForNextFrame,
+		                                                  this->recordWarp2DSlicesForNextFrame, recordWarpsForNextFrame,
+		                                                  nextFrameOutputPath);
 	}
 }
 

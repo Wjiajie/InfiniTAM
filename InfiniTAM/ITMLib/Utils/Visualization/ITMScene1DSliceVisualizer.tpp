@@ -27,11 +27,13 @@
 #include <vtkRenderer.h>
 #include <vtkContextScene.h>
 #include <vtkPlot.h>
+#include <vtkRenderWindow.h>
 
 //local
 #include "ITMScene1DSliceVisualizer.h"
 #include "../../Objects/Scene/ITMScene.h"
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
+#include "ITMVTKVisualizer.h"
 
 using namespace ITMLib;
 
@@ -65,8 +67,18 @@ void ITMScene1DSliceVisualizer::Plot1DSceneSlice(ITMScene<TVoxel, TIndex>* scene
 		table->SetValue(iValue, 1, TVoxel::valueToFloat(voxel.sdf));
 	}
 
-	vtkPlot* line = chart->AddPlot(vtkChart::LINE);
+	vtkPlot* line = ITMVTKVisualizer::Instance().GetChart()->AddPlot(vtkChart::LINE);
 	line->SetInputData(table, 0, 1);
 	line->SetColor(color.r, color.g, color.b, color.a);
 	line->SetWidth(1.0);
+
+	ITMVTKVisualizer::Instance().GetChart()->Update();
+	ITMVTKVisualizer::Instance().Update();
+
+	debug_print("MIAU");
+	//chart->Update();
+	//chart->Modified();
+	//view->Update();
+	//view->Render();
+	//view->GetRenderWindow()->Render();
 }

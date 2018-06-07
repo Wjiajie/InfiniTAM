@@ -532,10 +532,6 @@ set (ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS
 # ======================================================================================================================
 # =================================================== UTILITIES ========================================================
 set(ITMLIB_UTILS_SOURCES
-    Utils/Visualization/ITMScene2DSliceVisualizer.tpp
-    Utils/Visualization/ITMScene1DSliceVisualizer.cpp
-    Utils/Visualization/ITMScene1DSliceVisualizer.tpp
-
     Utils/Collections/ITM3DNestedMapOfArrays.tpp
     Utils/Collections/ITM3DNestedMap.tpp
 
@@ -548,10 +544,6 @@ set(ITMLIB_UTILS_SOURCES
     )
 
 set(ITMLIB_UTILS_HEADERS
-    Utils/Visualization/ITMScene2DSliceVisualizer.h
-    Utils/Visualization/ITMScene1DSliceVisualizer.h
-    Utils/Visualization/ITMVisualizationCommon.h
-
     Utils/Collections/ITM3DNestedMapOfArrays.h
     Utils/Collections/ITM3DNestedMap.h
 
@@ -573,6 +565,8 @@ set(ITMLIB_UTILS_HEADERS
     Utils/Analytics/ITMBenchmarkUtils.h
     )
 
+##
+
 set(ITMLIB_UTILS_FILEIO_SOURCES
     Utils/FileIO/ITMSceneLogger.tpp
     Utils/FileIO/ITMDynamicFusionLogger.tpp
@@ -584,7 +578,21 @@ set (ITMLIB_UTILS_FILEIO_HEADERS
      Utils/FileIO/ITMSceneLogger.h
      Utils/FileIO/ITMDynamicFusionLogger.h
      Utils/FileIO/ITMWarpSceneLogger.h)
+##
 
+set(ITMLIB_UTILS_VISUALIZATION_SOURCES
+    Utils/Visualization/ITMScene2DSliceVisualizer.tpp
+    Utils/Visualization/ITMScene1DSliceVisualizer.cpp
+    Utils/Visualization/ITMScene1DSliceVisualizer.tpp
+    Utils/Visualization/ITMVTKVisualizer.cpp
+    )
+
+set(ITMLIB_UTILS_VISUALIZATION_HEADERS
+    Utils/Visualization/ITMScene2DSliceVisualizer.h
+    Utils/Visualization/ITMScene1DSliceVisualizer.h
+    Utils/Visualization/ITMVisualizationCommon.h
+    Utils/Visualization/ITMVTKVisualizer.h
+    )
 #################################################################
 # Collect the project files into sources, headers and templates #
 #################################################################
@@ -625,6 +633,7 @@ set(sources
     ${ITMLIB_SCENE_MOTION_TRACKERS_SHARED_SOURCES}
     ${ITMLIB_UTILS_SOURCES}
     ${ITMLIB_UTILS_FILEIO_SOURCES}
+    ${ITMLIB_UTILS_VISUALIZATION_SOURCES}
     )
 
 set(headers
@@ -680,6 +689,7 @@ set(headers
     ${ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS}
     ${ITMLIB_UTILS_HEADERS}
     ${ITMLIB_UTILS_FILEIO_HEADERS}
+    ${ITMLIB_UTILS_VISUALIZATION_HEADERS}
     )
 
 #############################

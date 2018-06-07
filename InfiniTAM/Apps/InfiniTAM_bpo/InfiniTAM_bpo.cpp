@@ -15,8 +15,8 @@
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
-#include <mutex>
-#include <condition_variable>
+#include <vtkContextScene.h>
+#include <vtkChartXY.h>
 
 //ITMLib
 #include "UIEngine_BPO.h"
@@ -37,6 +37,7 @@
 
 //local
 #include "prettyprint.hpp"
+#include "../../ITMLib/Utils/Visualization/ITMVTKVisualizer.h"
 
 // *** namespaces ***
 
@@ -161,28 +162,8 @@ bool isPathMask(const std::string& arg) {
 	return arg.find('%') != std::string::npos;
 }
 
-namespace VTKApplication {
-vtkSmartPointer<vtkRenderWindowInteractor> interactor = nullptr;
-vtkSmartPointer<vtkContextView> view = nullptr;
-
-void BuildVTKView(){
-	view = vtkSmartPointer<vtkContextView>::New();
-	view->GetRenderWindow()->SetSize(1024,768);
-	view->GetRenderer()->SetBackground(1.0, 1.0, 1.0);
-	interactor = view->GetInteractor();
-	interactor->Initialize();
-}
-
-void RunVTKView() {
-	view->GetInteractor()->Start();
-}
-}//namespace VTKApplication
-
 int main(int argc, char** argv) {
 	try {
-
-		VTKApplication::BuildVTKView();
-
 		po::options_description arguments{"Arguments"};
 		po::positional_options_description positional_arguments;
 
@@ -468,10 +449,10 @@ int main(int argc, char** argv) {
 				                                                         imageSource->getDepthImageSize());
 				break;
 			case ITMLibSettings::LIBMODE_DYNAMIC:
-				mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(
-						settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
-						imageSource->getDepthImageSize(),
-						VTKApplication::view);
+				mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(settings,
+				                                                                                  imageSource->getCalib(),
+				                                                                                  imageSource->getRGBImageSize(),
+				                                                                                  imageSource->getDepthImageSize());
 				break;
 			default:
 				throw std::runtime_error("Unsupported library mode!");
@@ -501,7 +482,7 @@ int main(int argc, char** argv) {
 		                                     false);
 // endregion ===========================================================================================================
 
-		std::thread vtkViewThread(VTKApplication::RunVTKView);
+		//ITMVTKVisualizer::Instance().Run();
 		UIEngine_BPO::Instance()->Run();
 		UIEngine_BPO::Instance()->Shutdown();
 
@@ -512,10 +493,7 @@ int main(int argc, char** argv) {
 		delete imageSource;
 		delete imuSource;
 
-		if (VTKApplication::interactor) {
-			VTKApplication::interactor->TerminateApp();
-		}
-		vtkViewThread.join();
+		//ITMVTKVisualizer::Instance().ShutDown();
 // endregion ===========================================================================================================
 		return EXIT_SUCCESS;
 	} catch (std::exception& e) {

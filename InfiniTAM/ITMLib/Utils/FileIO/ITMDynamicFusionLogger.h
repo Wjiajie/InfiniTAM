@@ -32,8 +32,7 @@ public:
 	InitializeRecording(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>*& liveScene,
 		                    std::string outputDirectory, bool hasFocusCoordinates, Vector3i focusCoordinates,
 		                    bool saveLiveScene2DSlicesAsImages, bool saveCanonicalScene2DSlicesAsImages, bool recordWarps,
-		                    bool recordScene1DSlicesWithUpdates, bool recordScene2DSlicesWithUpdates,
-		                    vtkSmartPointer<vtkContextView> vtkView);
+		                    bool recordScene1DSlicesWithUpdates, bool recordScene2DSlicesWithUpdates);
 
 	void InitializeWarp2DSliceRecording(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                    ITMScene<TVoxelLive, TIndex>* sourceLiveScene);

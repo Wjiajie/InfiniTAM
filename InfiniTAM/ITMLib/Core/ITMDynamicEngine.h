@@ -26,7 +26,7 @@ namespace ITMLib
 			will assume same resolution as for the RGB images.
 		*/
 		ITMDynamicEngine(const ITMLibSettings* settings, const ITMRGBDCalib& calib, Vector2i imgSize_rgb,
-		                 Vector2i imgSize_d, vtkSmartPointer<vtkContextView> vtkView = nullptr);
+		                 Vector2i imgSize_d);
 		~ITMDynamicEngine() override;
 
 		ITMView* GetView() override { return view; }
@@ -108,7 +108,5 @@ namespace ITMLib
 		bool stepByStepDidFusion;
 		bool canFuseInStepByStepMode;
 		ORUtils::SE3Pose stepByStepOldPose;
-		vtkSmartPointer<vtkContextView> vtkView;
-
 	};
 }

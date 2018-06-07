@@ -69,32 +69,21 @@ public:
 	* \param liveScene - live/target 3D scene generated from the incoming single frame of the video
 	* \param renderState
 	*/
-	void ProcessFrame(const ITMView* view,
-		                  const ITMTrackingState* trackingState,
-		                  ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-		                  ITMScene<TVoxelLive, TIndex>* liveScene,
-		                  ITMRenderState* renderState,
-		                  bool recordWarps,
-		                  bool recordScene1DSlicesWithUpdates,
-		                  bool recordScene2DSlicesWithUpdates,
-		                  std::string outputPath,
-		                  vtkSmartPointer<vtkContextView> vtkView);
+	void ProcessFrame(const ITMView* view, const ITMTrackingState* trackingState,
+	                  ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
+	                  ITMRenderState* renderState, bool recordWarps, bool recordScene1DSlicesWithUpdates,
+	                  bool recordScene2DSlicesWithUpdates, std::string outputPath);
 
 	void ProcessInitialFrame(const ITMView* view, const ITMTrackingState* trackingState,
 	                         ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
 	                         ITMRenderState* renderState);
 
 
-	void BeginProcessingFrameInStepByStepMode(const ITMView* view,
-		                                          const ITMTrackingState* trackingState,
+	void BeginProcessingFrameInStepByStepMode(const ITMView* view, const ITMTrackingState* trackingState,
 		                                          ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-		                                          ITMScene<TVoxelLive, TIndex>* liveScene,
-		                                          ITMRenderState* renderState_live,
-		                                          bool recordWarps,
-		                                          bool recordWarp1DSlice,
-		                                          bool recordWarp2DSlice,
-		                                          std::string outputPath,
-		                                          vtkSmartPointer<vtkContextView> vtkView);
+		                                          ITMScene<TVoxelLive, TIndex>* liveScene, ITMRenderState* renderState_live,
+		                                          bool recordWarps, bool recordWarp1DSlice, bool recordWarp2DSlice,
+		                                          std::string outputPath);
 
 	bool TakeNextStepInStepByStepMode(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                  ITMScene<TVoxelLive, TIndex>*& liveScene, ITMRenderState* renderState);
@@ -115,8 +104,7 @@ private:
 	void InitializeProcessing(const ITMView* view, const ITMTrackingState* trackingState,
 		                          ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
 		                          ITMRenderState* renderState, bool recordWarps, bool recordScene1DSlicesWithUpdates,
-		                          bool recordScene2DSlicesWithUpdates, std::string outputDirectory,
-		                          vtkSmartPointer<vtkContextView> vtkView);
+		                          bool recordScene2DSlicesWithUpdates, std::string outputDirectory);
 	void FinalizeProcessing(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                        ITMScene <TVoxelLive, TIndex>* liveScene,ITMRenderState* renderState);
 	void PerformSingleOptimizationStep(
