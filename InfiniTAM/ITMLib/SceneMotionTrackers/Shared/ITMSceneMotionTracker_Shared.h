@@ -24,6 +24,60 @@
 // region =================================EXPLORATION OF NEIGHBORHOOD AROUND CANONICAL VOXEL===========================
 
 
+/**
+ * \brief Finds neighbor voxel's warps in the order specified below.
+ *     0        1        2          3         4         5           6         7         8
+ *	(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
+ * \tparam TVoxel
+ * \tparam TCache
+ * \param[out] neighborFramewiseWarps
+ * \param[out] neighborKnown - current behavior is:
+ * 1) record unallocated voxels as non-found
+ * 2) truncated voxels marked unknown or known as found
+ * 3) everything else (non-truncated), of course, as found
+ * \param[in] voxelPosition exact position of voxel in the scene.
+ * \param[in] voxels
+ * \param[in] hashEntries
+ * \param[in] cache
+ */
+template<typename TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline void findPoint2ndDerivativeNeighborhoodFramewiseWarp(THREADPTR(Vector3f)* neighborFramewiseWarps, //x9, out
+                                                   THREADPTR(bool)* neighborKnown, //x9, out
+                                                   THREADPTR(bool)* neighborTruncated, //x9, out
+                                                   THREADPTR(bool)* neighborAllocated, //x9, out
+                                                   const CONSTPTR(Vector3i)& voxelPosition,
+                                                   const CONSTPTR(TVoxel)* voxels,
+                                                   const CONSTPTR(ITMHashEntry)* hashEntries,
+                                                   THREADPTR(TCache)& cache) {
+	int vmIndex;
+
+	TVoxel voxel;
+	//TODO: define inline function instead of macro
+#define PROCESS_VOXEL(location, index)\
+    voxel = readVoxel(voxels, hashEntries, voxelPosition + (location), vmIndex, cache);\
+    neighborFramewiseWarps[index] = voxel.framewise_warp;\
+    neighborAllocated[index] = vmIndex != 0;\
+    neighborKnown[index] = voxel.flags != ITMLib::VOXEL_UNKNOWN;\
+    neighborTruncated[index] = voxel.flags == ITMLib::VOXEL_TRUNCATED;
+
+	//necessary for 2nd derivatives in same direction, e.g. xx and zz
+	PROCESS_VOXEL(Vector3i(-1, 0, 0), 0);
+	PROCESS_VOXEL(Vector3i(0, -1, 0), 1);
+	PROCESS_VOXEL(Vector3i(0, 0, -1), 2);
+
+	//necessary for 1st derivatives
+	PROCESS_VOXEL(Vector3i(1, 0, 0), 3);
+	PROCESS_VOXEL(Vector3i(0, 1, 0), 4);
+	PROCESS_VOXEL(Vector3i(0, 0, 1), 5);
+
+	//necessary for 2nd derivatives in mixed directions, e.g. xy and yz
+	PROCESS_VOXEL(Vector3i(1, 1, 0), 6);//xy corner
+	PROCESS_VOXEL(Vector3i(0, 1, 1), 7);//yz corner
+	PROCESS_VOXEL(Vector3i(1, 0, 1), 8);//xz corner
+#undef PROCESS_VOXEL
+}
+
 
 /**
  * \brief Finds neighbor voxel's warps in the order specified below.
@@ -345,8 +399,8 @@ inline void ComputeWarpLaplacianAndJacobian(THREADPTR(Vector3f)& laplacian,
 // region =================================== WARP JACOBIAN AND HESSIAN (SMOOTHING/KILLING TERM) =======================
 //Computes the jacobian and hessian approximation for the warp vectors themselves in a given neighborhood
 _CPU_AND_GPU_CODE_
-inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxelWarp,
-                                                  const CONSTPTR(Vector3f*) neighborWarps, //in, x9
+inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxelFramewiseWarp,
+                                                  const CONSTPTR(Vector3f*) neighborFramewiseWarps, //in, x9
                                                   THREADPTR(Matrix3f)& jacobian, //out
                                                   THREADPTR(Matrix3f)* hessian //out, x3
 ) {
@@ -356,17 +410,17 @@ inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxe
 	// |u_x, u_y, u_z|       |m00, m10, m20|
 	// |v_x, v_y, v_z|       |m01, m11, m21|
 	// |w_x, w_y, w_z|       |m02, m12, m22|
-	jacobian.setColumn(0, neighborWarps[3] - voxelWarp);//1st derivative in x
-	jacobian.setColumn(1, neighborWarps[4] - voxelWarp);//1st derivative in y
-	jacobian.setColumn(2, neighborWarps[5] - voxelWarp);//1st derivative in z
+	jacobian.setColumn(0, neighborFramewiseWarps[3] - voxelFramewiseWarp);//1st derivative in x
+	jacobian.setColumn(1, neighborFramewiseWarps[4] - voxelFramewiseWarp);//1st derivative in y
+	jacobian.setColumn(2, neighborFramewiseWarps[5] - voxelFramewiseWarp);//1st derivative in z
 
 	Matrix3f backwardDifferences;
 	// |u_x, u_y, u_z|
 	// |v_x, v_y, v_z|
 	// |w_x, w_y, w_z|
-	backwardDifferences.setColumn(0, voxelWarp - neighborWarps[0]);//1st derivative in x
-	backwardDifferences.setColumn(1, voxelWarp - neighborWarps[1]);//1st derivative in y
-	backwardDifferences.setColumn(2, voxelWarp - neighborWarps[2]);//1st derivative in z
+	backwardDifferences.setColumn(0, voxelFramewiseWarp - neighborFramewiseWarps[0]);//1st derivative in x
+	backwardDifferences.setColumn(1, voxelFramewiseWarp - neighborFramewiseWarps[1]);//1st derivative in y
+	backwardDifferences.setColumn(2, voxelFramewiseWarp - neighborFramewiseWarps[2]);//1st derivative in z
 
 	//second derivatives in same direction
 	// |u_xx, u_yy, u_zz|       |m00, m10, m20|
@@ -375,9 +429,9 @@ inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxe
 	Matrix3f dd_XX_YY_ZZ = jacobian - backwardDifferences;
 
 	Matrix3f neighborDifferences;
-	neighborDifferences.setColumn(0, neighborWarps[6] - neighborWarps[4]);//(0,1,0)->(1,1,0)
-	neighborDifferences.setColumn(1, neighborWarps[7] - neighborWarps[5]);//(0,0,1)->(0,1,1)
-	neighborDifferences.setColumn(2, neighborWarps[8] - neighborWarps[3]);//(1,0,0)->(1,0,1)
+	neighborDifferences.setColumn(0, neighborFramewiseWarps[6] - neighborFramewiseWarps[4]);//(0,1,0)->(1,1,0)
+	neighborDifferences.setColumn(1, neighborFramewiseWarps[7] - neighborFramewiseWarps[5]);//(0,0,1)->(0,1,1)
+	neighborDifferences.setColumn(2, neighborFramewiseWarps[8] - neighborFramewiseWarps[3]);//(1,0,0)->(1,0,1)
 
 	//second derivatives in different directions
 	// |u_xy, u_yz, u_zx|      |m00, m10, m20|

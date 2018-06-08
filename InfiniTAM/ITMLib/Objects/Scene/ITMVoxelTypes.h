@@ -250,17 +250,20 @@ struct ITMVoxel_f_dynamic_canonical
 	Vector3f gradient1;
 
 
-	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic_canonical()
+	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic_canonical() :
+			flags(ITMLib::VOXEL_UNKNOWN),
+			sdf(SDF_initialValue()),
+			w_depth(0),
+			warp(Vector3f(0.f)),
+			gradient0(Vector3f(0.0f)),
+			gradient1(Vector3f(0.0f)),
+			framewise_warp(Vector3f(0.0f))
 	{
-		flags = ITMLib::VOXEL_UNKNOWN;
-		sdf = SDF_initialValue();
-		w_depth = 0;
+
 		//confidence = 0.0f;
 		//clr = Vector3u((uchar)0);
 		//w_color = 0;
-		warp = Vector3f(0.f);
-		gradient0 = Vector3f(0.0f);
-		gradient1 = Vector3f(0.0f);
+
 	}
 };
 

@@ -32,7 +32,7 @@
 #include "ITMWarpGradientCommon.h"
 
 
-namespace ITMLib{
+namespace ITMLib {
 
 // region ========================== CALCULATE WARP GRADIENT ===========================================================
 
@@ -63,7 +63,7 @@ private:
 	}
 
 public:
-	
+
 	// region ========================================= CONSTRUCTOR ====================================================
 	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor(
 			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Parameters parameters,
@@ -96,7 +96,7 @@ public:
 	// endregion =======================================================================================================
 
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i position) {
-		Vector3f& warp = canonicalVoxel.warp;
+		Vector3f& framewiseWarp = canonicalVoxel.framewise_warp;
 
 		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
 		                    && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
@@ -110,28 +110,30 @@ public:
 				localTikhonovEnergy = 0.0f, localKillingEnergy = 0.0f; // used for energy calculations in verbose output
 
 		Vector3f localSmoothnessEnergyGradient(0.0f), localDataEnergyGradient(0.0f), localLevelSetEnergyGradient(0.0f);
-		Matrix3f liveSdfHessian, warpJacobian(0.0f);
-		Vector3f liveSdfJacobian, warpLaplacian;
-		Matrix3f warpHessian[3] = {Matrix3f(0.0f), Matrix3f(0.0f), Matrix3f(0.0f)};
+		Matrix3f liveSdfHessian, framewiseWarpJacobian(0.0f);
+		Vector3f liveSdfJacobian, framewiseWarpLaplacian;
+		Matrix3f framewiseWarpHessian[3] = {Matrix3f(0.0f), Matrix3f(0.0f), Matrix3f(0.0f)};
 		// endregion
 
 		bool printVoxelResult = false, recordVoxelResult = false;
-		this->SetUpFocusVoxelPrinting(printVoxelResult, recordVoxelResult, position, warp, canonicalSdf, liveSdf);
+		this->SetUpFocusVoxelPrinting(printVoxelResult, recordVoxelResult, position, framewiseWarp, canonicalSdf,
+		                              liveSdf);
 		// region ============================== RETRIEVE NEIGHBOR'S WARPS =================================
 
 		const int neighborhoodSize = 9;
-		Vector3f neighborWarps[neighborhoodSize];
+		Vector3f neighborFramewiseWarps[neighborhoodSize];
 		bool neighborKnown[neighborhoodSize], neighborTruncated[neighborhoodSize], neighborAllocated[neighborhoodSize];
 		//    0        1        2          3         4         5           6         7         8
 		//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
-		findPoint2ndDerivativeNeighborhoodWarp(neighborWarps/*x9*/, neighborKnown, neighborTruncated,
-		                                       neighborAllocated, position, canonicalVoxels,
-		                                       canonicalHashEntries, canonicalCache);
+		findPoint2ndDerivativeNeighborhoodFramewiseWarp(
+				neighborFramewiseWarps/*x9*/, neighborKnown, neighborTruncated,
+				neighborAllocated, position, canonicalVoxels,
+				canonicalHashEntries, canonicalCache);
 		//TODO: revise this to reflect new realities
 		for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
 			if (!neighborAllocated[iNeighbor]) {
 				//assign current warp to neighbor warp if the neighbor is not allocated
-				neighborWarps[iNeighbor] = warp;
+				neighborFramewiseWarps[iNeighbor] = framewiseWarp;
 			}
 		}
 		if (printVoxelResult) {
@@ -198,11 +200,11 @@ public:
 
 		if (switches.enableSmoothingTerm) {
 			if (switches.enableKillingTerm) {
-				ComputePerVoxelWarpJacobianAndHessian(canonicalVoxel.warp, neighborWarps,
-				                                      warpJacobian, warpHessian);
+				ComputePerVoxelWarpJacobianAndHessian(framewiseWarp, neighborFramewiseWarps, framewiseWarpJacobian,
+				                                      framewiseWarpHessian);
 				if (printVoxelResult) {
-					_DEBUG_PrintKillingTermStuff(neighborWarps, neighborKnown, neighborTruncated,
-					                             warpJacobian, warpHessian);
+					_DEBUG_PrintKillingTermStuff(neighborFramewiseWarps, neighborKnown, neighborTruncated,
+					                             framewiseWarpJacobian, framewiseWarpHessian);
 				}
 
 				float gamma = parameters.rigidityEnforcementFactor;
@@ -210,9 +212,9 @@ public:
 				// |0, 3, 6|     |m00, m10, m20|      |u_xx, u_xy, u_xz|
 				// |1, 4, 7|     |m01, m11, m21|      |u_xy, u_yy, u_yz|
 				// |2, 5, 8|     |m02, m12, m22|      |u_xz, u_yz, u_zz|
-				Matrix3f& H_u = warpHessian[0];
-				Matrix3f& H_v = warpHessian[1];
-				Matrix3f& H_w = warpHessian[2];
+				Matrix3f& H_u = framewiseWarpHessian[0];
+				Matrix3f& H_v = framewiseWarpHessian[1];
+				Matrix3f& H_w = framewiseWarpHessian[2];
 
 
 				float KillingDeltaEu = -2.0f *
@@ -228,28 +230,29 @@ public:
 				localSmoothnessEnergyGradient = ORUtils::Vector3<float>(KillingDeltaEu, KillingDeltaEv, KillingDeltaEw);
 				//=================================== ENERGY ===============================================
 				// KillingTerm Energy
-				Matrix3f warpJacobianTranspose = warpJacobian.t();
+				Matrix3f warpJacobianTranspose = framewiseWarpJacobian.t();
 
-				localTikhonovEnergy = dot(warpJacobian.getColumn(0), warpJacobian.getColumn(0)) +
-				                      dot(warpJacobian.getColumn(1), warpJacobian.getColumn(1)) +
-				                      dot(warpJacobian.getColumn(2), warpJacobian.getColumn(2));
+				localTikhonovEnergy = dot(framewiseWarpJacobian.getColumn(0), framewiseWarpJacobian.getColumn(0)) +
+				                      dot(framewiseWarpJacobian.getColumn(1), framewiseWarpJacobian.getColumn(1)) +
+				                      dot(framewiseWarpJacobian.getColumn(2), framewiseWarpJacobian.getColumn(2));
 
 				localKillingEnergy = gamma *
-				                     (dot(warpJacobianTranspose.getColumn(0), warpJacobian.getColumn(0)) +
-				                      dot(warpJacobianTranspose.getColumn(1), warpJacobian.getColumn(1)) +
-				                      dot(warpJacobianTranspose.getColumn(2), warpJacobian.getColumn(2)));
+				                     (dot(warpJacobianTranspose.getColumn(0), framewiseWarpJacobian.getColumn(0)) +
+				                      dot(warpJacobianTranspose.getColumn(1), framewiseWarpJacobian.getColumn(1)) +
+				                      dot(warpJacobianTranspose.getColumn(2), framewiseWarpJacobian.getColumn(2)));
 
 				localSmoothnessEnergy = localTikhonovEnergy + localKillingEnergy;
 			} else {
-				ComputeWarpLaplacianAndJacobian(warpLaplacian, warpJacobian, warp, neighborWarps);
+				ComputeWarpLaplacianAndJacobian(framewiseWarpLaplacian, framewiseWarpJacobian, framewiseWarp,
+				                                neighborFramewiseWarps);
 				if (printVoxelResult) {
-					_DEBUG_PrintTikhonovTermStuff(neighborWarps, warpLaplacian);
+					_DEBUG_PrintTikhonovTermStuff(neighborFramewiseWarps, framewiseWarpLaplacian);
 				}
 				//∇E_{reg}(Ψ) = −[∆U ∆V ∆W]' ,
-				localSmoothnessEnergyGradient = -warpLaplacian;
-				localTikhonovEnergy = dot(warpJacobian.getColumn(0), warpJacobian.getColumn(0)) +
-				                      dot(warpJacobian.getColumn(1), warpJacobian.getColumn(1)) +
-				                      dot(warpJacobian.getColumn(2), warpJacobian.getColumn(2));
+				localSmoothnessEnergyGradient = -framewiseWarpLaplacian;
+				localTikhonovEnergy = dot(framewiseWarpJacobian.getColumn(0), framewiseWarpJacobian.getColumn(0)) +
+				                      dot(framewiseWarpJacobian.getColumn(1), framewiseWarpJacobian.getColumn(1)) +
+				                      dot(framewiseWarpJacobian.getColumn(2), framewiseWarpJacobian.getColumn(2));
 				localSmoothnessEnergy = localTikhonovEnergy;
 			}
 		}
@@ -307,13 +310,13 @@ public:
 				                          canonicalHashEntries, liveVoxels, liveHashEntries, liveCache);
 				//TODO: get rid of iteration + frame fields in HighlightIterationInfo
 				ITMHighlightIterationInfo info =
-						{hash, locId, position, warp, canonicalSdf, liveSdf,
+						{hash, locId, position, framewiseWarp, canonicalSdf, liveSdf,
 						 localEnergyGradient, localDataEnergyGradient, localLevelSetEnergyGradient,
 						 localSmoothnessEnergyGradient,
 						 localEnergy, localDataEnergy, localLevelSetEnergy, localSmoothnessEnergy,
 						 localKillingEnergy, localTikhonovEnergy,
-						 liveSdfJacobian, liveSdfJacobian, liveSdfHessian, warpJacobian,
-						 warpHessian[0], warpHessian[1], warpHessian[2], neighbors, true};
+						 liveSdfJacobian, liveSdfJacobian, liveSdfHessian, framewiseWarpJacobian,
+						 framewiseWarpHessian[0], framewiseWarpHessian[1], framewiseWarpHessian[2], neighbors, true};
 				logger.LogHighlight(hash, locId, info);
 			}
 		}
@@ -343,20 +346,20 @@ public:
 
 
 private:
-	void ResetStatistics(){
-	 cumulativeCanonicalSdf = 0.0;
-	 cumulativeLiveSdf = 0.0;
-	 cumulativeSdfDiff = 0.0;
-	 cumulativeWarpDist = 0.0;
-	 consideredVoxelCount = 0;
-	 dataVoxelCount = 0;
-	 levelSetVoxelCount = 0;
+	void ResetStatistics() {
+		cumulativeCanonicalSdf = 0.0;
+		cumulativeLiveSdf = 0.0;
+		cumulativeSdfDiff = 0.0;
+		cumulativeWarpDist = 0.0;
+		consideredVoxelCount = 0;
+		dataVoxelCount = 0;
+		levelSetVoxelCount = 0;
 
-	 totalDataEnergy = 0.0;
-	 totalLevelSetEnergy = 0.0;
-	 totalTikhonovEnergy = 0.0;
-	 totalKillingEnergy = 0.0;
-	 totalSmoothnessEnergy = 0.0;
+		totalDataEnergy = 0.0;
+		totalLevelSetEnergy = 0.0;
+		totalTikhonovEnergy = 0.0;
+		totalKillingEnergy = 0.0;
+		totalSmoothnessEnergy = 0.0;
 	}
 
 	// *** data structure accessors
@@ -394,7 +397,7 @@ private:
 	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Parameters parameters;
 	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Switches switches;
 
-	ITMDynamicFusionLogger<TVoxelCanonical,TVoxelLive, ITMVoxelBlockHash>& logger;
+	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>& logger;
 
 };
 }// namespace ITMLib
