@@ -241,8 +241,12 @@ struct ITMVoxel_f_dynamic_canonical
 	//float confidence;
 	/** vector translating the current point to a different location **/
 	Vector3f warp;
+	Vector3f framewise_warp;
 	/** vectors translating the current point to a different location **/
+	union{
 	Vector3f gradient0;
+	Vector3f warp_update;
+	};
 	Vector3f gradient1;
 
 

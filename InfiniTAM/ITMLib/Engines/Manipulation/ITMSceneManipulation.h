@@ -15,10 +15,10 @@
 //  ================================================================
 #pragma once
 
-#include "ITMScene.h"
+#include "../../Objects/Scene/ITMScene.h"
 #include "../../ITMLibDefines.h"
 #include "../../Utils/ITMHashBlockProperties.h"
-#include "ITMRepresentationAccess.h"
+#include "../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../Utils/ITMPrintHelpers.h"
 
 //TODO: Make GPU versions -Greg (GitHub: Algomorph)
@@ -325,4 +325,5 @@ TVoxel ReadVoxel(ITMScene<TVoxel, TIndex>& scene, Vector3i at);
 
 template<class TVoxel, class TIndex>
 bool SetVoxel_CPU(ITMScene <TVoxel, TIndex>* scene, Vector3i at, TVoxel voxel);
+
 }//namespace ITMLib

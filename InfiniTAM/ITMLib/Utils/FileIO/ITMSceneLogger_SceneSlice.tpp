@@ -25,7 +25,7 @@
 //ITMLib
 #include "ITMSceneLogger.h"
 #include "../ITMLibSettings.h"
-#include "../../Objects/Scene/ITMSceneManipulation.h"
+#include "../../Engines/Manipulation/ITMSceneManipulation.h"
 
 using namespace ITMLib;
 

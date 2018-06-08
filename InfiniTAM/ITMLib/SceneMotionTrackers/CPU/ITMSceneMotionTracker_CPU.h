@@ -39,6 +39,9 @@ public:
 	                                   ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>& logger);
 	virtual ~ITMSceneMotionTracker_CPU() = default;
 
+	void ClearOutFramewiseWarp(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) override;
+	void AddFramewiseWarpToWarp(
+			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, bool clearFramewiseWarp) override;
 	void CalculateWarpGradient(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 		                           ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, bool hasFocusCoordinates,
 		                           const Vector3i& focusCoordinates, int sourceFieldIndex, bool restrictZTrackingForDebugging) override;
@@ -70,6 +73,9 @@ public:
 			ITMDynamicFusionLogger<TVoxelCanonical,TVoxelLive, ITMPlainVoxelArray>& logger);
 	virtual ~ITMSceneMotionTracker_CPU() = default;
 
+	void ClearOutFramewiseWarp(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) override;
+	void AddFramewiseWarpToWarp(
+			ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene, bool clearFramewiseWarp) override;
 	void CalculateWarpGradient(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 	                           ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, bool hasFocusCoordinates,
 	                           const Vector3i& focusCoordinates, int sourceFieldIndex,
@@ -78,6 +84,7 @@ public:
 	float UpdateWarps(
 			ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 			ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene) override;
+
 	void ResetWarps(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) override;
 
 };

@@ -67,6 +67,18 @@ public:
 
 
 	/**
+	 * \brief apply warp vectors to live scene: compute the the target SDF fields in live scene using trilinear lookup
+	 * at corresponding warps from the source SDF fields in live scene
+	 * \param canonicalScene canonical scene, where the warp update vectors are specified
+	 * \param liveScene live scene (voxel grid)
+	 * \param sourceSdfIndex index of the source SDF field in each live voxel
+	 * \param targetSdfIndex index of the target SDF field in each live voxel
+	 */
+	virtual void WarpScene(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+	ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex,
+	bool hasFocusCoordinates, Vector3i focusCoordinates) = 0;
+
+	/**
 	 * \brief apply warp update vectors to live scene: compute the the target SDF fields in live scene using trilinear lookup
 	 * at corresponding warp updates from the source SDF fields in live scene
 	 * \param canonicalScene canonical scene, where the warp update vectors are specified
@@ -74,7 +86,7 @@ public:
 	 * \param sourceSdfIndex index of the source SDF field in each live voxel
 	 * \param targetSdfIndex index of the target SDF field in each live voxel
 	 */
-	virtual void WarpLiveScene(
+	virtual void UpdateWarpedScene(
 			ITMScene <TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 			ITMScene <TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex,
 			bool hasFocusCoordinates, Vector3i focusCoordinates) = 0;

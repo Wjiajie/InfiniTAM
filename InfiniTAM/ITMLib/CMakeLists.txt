@@ -395,7 +395,7 @@ set(ITMLIB_OBJECTS_SCENE_HEADERS
     Objects/Scene/ITMSurfelTypes.h
     Objects/Scene/ITMVoxelBlockHash.h
     Objects/Scene/ITMVoxelTypes.h
-    Objects/Scene/ITMSceneManipulation.h
+    Engines/Manipulation/ITMSceneManipulation.h
     Objects/Scene/ITMSceneTraversal.h
     #_DEBUG
     ../Tests/TestUtils.h
@@ -406,8 +406,8 @@ set(ITMLIB_OBJECTS_SCENE_HEADERS
 
 ##
 set(ITMLIB_OBJECTS_SCENE_SOURCES
-    Objects/Scene/ITMSceneManipulation.cpp
-    Objects/Scene/ITMSceneManipulation.tpp
+    Engines/Manipulation/ITMSceneManipulation.cpp
+    Engines/Manipulation/ITMSceneManipulation.tpp
     )
 
 ##
@@ -498,6 +498,8 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_HEADERS
     )
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_SOURCES
+    SceneMotionTrackers/CPU/ITMWarpGradientCommon.h
+    SceneMotionTrackers/CPU/ITMCalculateWarpGradientBasedOnRawLiveFunctor.h
     SceneMotionTrackers/CPU/ITMCalculateWarpGradientBasedOnWarpedLiveFunctor.h
     SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.tpp
     SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.tpp

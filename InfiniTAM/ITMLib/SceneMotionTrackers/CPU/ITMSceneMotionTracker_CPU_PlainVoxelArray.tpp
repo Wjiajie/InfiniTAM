@@ -18,7 +18,7 @@
 #include "ITMSceneMotionTracker_CPU.h"
 #include "../../Utils/ITMVoxelFlags.h"
 #include "../../Utils/ITMPrintHelpers.h"
-#include "../../Objects/Scene/ITMSceneManipulation.h"
+#include "../../Engines/Manipulation/ITMSceneManipulation.h"
 #include "../../Objects/Scene/ITMSceneTraversal.h"
 #include "../Shared/ITMSceneMotionTracker_Debug.h"
 
@@ -70,11 +70,24 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>
 
 }
 
+
+//endregion ============================================================================================================
+
+
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMLib::ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ResetWarps(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ClearOutFramewiseWarp(
+		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::AddFramewiseWarpToWarp(
+		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene, bool clearFramewiseWarp) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 };
-
-//endregion ============================================================================================================
-

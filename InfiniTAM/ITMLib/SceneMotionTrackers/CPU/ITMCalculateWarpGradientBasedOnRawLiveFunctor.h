@@ -32,14 +32,14 @@
 #include "ITMWarpGradientCommon.h"
 
 
-namespace ITMLib{
+namespace ITMLib {
 
 // region ========================== CALCULATE WARP GRADIENT ===========================================================
 
 
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-struct ITMCalculateWarpGradientBasedOnWarpedLiveFunctor {
+struct ITMCalculateWarpGradientBasedOnRawLiveFunctor {
 private:
 
 	void SetUpFocusVoxelPrinting(bool& printVoxelResult, bool& recordVoxelResult, const Vector3i& voxelPosition,
@@ -63,9 +63,9 @@ private:
 	}
 
 public:
-	
+
 	// region ========================================= CONSTRUCTOR ====================================================
-	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor(
+	ITMCalculateWarpGradientBasedOnRawLiveFunctor(
 			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Parameters parameters,
 			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Switches switches,
 			ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>& logger) :
@@ -95,17 +95,17 @@ public:
 
 	// endregion =======================================================================================================
 
-	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i position) {
+	void operator()(TVoxelCanonical& canonicalVoxel, Vector3i position) {
 		Vector3f& warp = canonicalVoxel.warp;
-
-		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
-		                    && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
-
-		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
-		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[sourceSdfIndex]);
+		Vector3f warpedPosition = position.toFloat() + warp;
 		float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
+		bool struckNonTruncatedLiveVoxels;
+		bool struckKnownLiveVoxels;
+		float liveSdf = _DEBUG_InterpolateTrilinearly(liveVoxels, liveHashEntries, warpedPosition, liveCache,
+		                                              struckNonTruncatedLiveVoxels, struckKnownLiveVoxels);
 
-
+		bool haveFullData = struckNonTruncatedLiveVoxels && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
 		float localDataEnergy = 0.0f, localLevelSetEnergy = 0.0f, localSmoothnessEnergy = 0.0f,
 				localTikhonovEnergy = 0.0f, localKillingEnergy = 0.0f; // used for energy calculations in verbose output
 
@@ -144,16 +144,8 @@ public:
 
 		if (haveFullData && (switches.enableLevelSetTerm || switches.enableDataTerm)) {
 			//TODO: in case both level set term and data term need to be computed, optimize by retrieving the sdf values for live jacobian in a separate function. The live hessian needs to reuse them. -Greg (GitHub: Algomorph)
-//			ComputeLiveJacobian_CentralDifferences_IndexedFields(
-//					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex);
-			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_CanonicalSdf2(
-					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex, canonicalSdf);
-//			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_LiveSdf(
-//					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex);
-//			ComputeLiveJacobian_CentralDifferences_IgnoreUnknown_IndexedFields(
-//					liveSdfJacobian, position, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
-//			ComputeLiveJacobian_CentralDifferences_NontruncatedOnly_IndexedFields(
-//					liveSdfJacobian, position, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
+			ComputeLiveJacobian_CentralDifferences(
+					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache);
 		}
 
 		// region =============================== DATA TERM ================================================
@@ -343,20 +335,20 @@ public:
 
 
 private:
-	void ResetStatistics(){
-	 cumulativeCanonicalSdf = 0.0;
-	 cumulativeLiveSdf = 0.0;
-	 cumulativeSdfDiff = 0.0;
-	 cumulativeWarpDist = 0.0;
-	 consideredVoxelCount = 0;
-	 dataVoxelCount = 0;
-	 levelSetVoxelCount = 0;
+	void ResetStatistics() {
+		cumulativeCanonicalSdf = 0.0;
+		cumulativeLiveSdf = 0.0;
+		cumulativeSdfDiff = 0.0;
+		cumulativeWarpDist = 0.0;
+		consideredVoxelCount = 0;
+		dataVoxelCount = 0;
+		levelSetVoxelCount = 0;
 
-	 totalDataEnergy = 0.0;
-	 totalLevelSetEnergy = 0.0;
-	 totalTikhonovEnergy = 0.0;
-	 totalKillingEnergy = 0.0;
-	 totalSmoothnessEnergy = 0.0;
+		totalDataEnergy = 0.0;
+		totalLevelSetEnergy = 0.0;
+		totalTikhonovEnergy = 0.0;
+		totalKillingEnergy = 0.0;
+		totalSmoothnessEnergy = 0.0;
 	}
 
 	// *** data structure accessors
@@ -394,7 +386,7 @@ private:
 	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Parameters parameters;
 	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Switches switches;
 
-	ITMDynamicFusionLogger<TVoxelCanonical,TVoxelLive, ITMVoxelBlockHash>& logger;
+	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>& logger;
 
 };
 }// namespace ITMLib

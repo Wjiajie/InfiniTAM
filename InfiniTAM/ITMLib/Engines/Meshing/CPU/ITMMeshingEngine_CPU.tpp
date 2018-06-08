@@ -19,25 +19,31 @@ void ITMMeshingEngine_CPU<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMMesh *mesh, c
 
 	for (int entryId = 0; entryId < noTotalEntries; entryId++)
 	{
-		Vector3i globalPos;
+		Vector3i hashBlockCornerPosition;
 		const ITMHashEntry &currentHashEntry = hashTable[entryId];
 
 		if (currentHashEntry.ptr < 0) continue;
 
-		globalPos = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		//position of the voxel at the current hash block corner with minimum coordinates
+		hashBlockCornerPosition = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) for (int y = 0; y < SDF_BLOCK_SIZE; y++) for (int x = 0; x < SDF_BLOCK_SIZE; x++)
 		{
-			Vector3f vertList[12];
-			int cubeIndex = buildVertList(vertList, globalPos, Vector3i(x, y, z), localVBA, hashTable);
-			
+			Vector3f vertexList[12];
+			// build vertices by interpolating edges of cubes that intersect with the isosurface
+			// based on positive/negative SDF values
+			int cubeIndex = buildVertexList(vertexList, hashBlockCornerPosition, Vector3i(x, y, z), localVBA, hashTable);
+
+			// cube does not intersect with the isosurface
 			if (cubeIndex < 0) continue;
 
 			for (int i = 0; triangleTable[cubeIndex][i] != -1; i += 3)
 			{
-				triangles[noTriangles].p0 = vertList[triangleTable[cubeIndex][i]] * factor;
-				triangles[noTriangles].p1 = vertList[triangleTable[cubeIndex][i + 1]] * factor;
-				triangles[noTriangles].p2 = vertList[triangleTable[cubeIndex][i + 2]] * factor;
+				// cube index also tells us how the vertices are grouped into triangles,
+				// use it to look up the vertex indices composing each triangle from the vertex list
+				triangles[noTriangles].p0 = vertexList[triangleTable[cubeIndex][i]] * factor;
+				triangles[noTriangles].p1 = vertexList[triangleTable[cubeIndex][i + 1]] * factor;
+				triangles[noTriangles].p2 = vertexList[triangleTable[cubeIndex][i + 2]] * factor;
 
 				if (noTriangles < noMaxTriangles - 1) noTriangles++;
 			}

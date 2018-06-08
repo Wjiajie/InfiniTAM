@@ -70,18 +70,18 @@ _CPU_AND_GPU_CODE_ inline int buildVertListMulti(THREADPTR(Vector3f) *vertList, 
 
 	if (edgeTable[cubeIndex] == 0) return -1;
 
-	if (edgeTable[cubeIndex] & 1) vertList[0] = sdfInterp(points[0], points[1], sdfVals[0], sdfVals[1]);
-	if (edgeTable[cubeIndex] & 2) vertList[1] = sdfInterp(points[1], points[2], sdfVals[1], sdfVals[2]);
-	if (edgeTable[cubeIndex] & 4) vertList[2] = sdfInterp(points[2], points[3], sdfVals[2], sdfVals[3]);
-	if (edgeTable[cubeIndex] & 8) vertList[3] = sdfInterp(points[3], points[0], sdfVals[3], sdfVals[0]);
-	if (edgeTable[cubeIndex] & 16) vertList[4] = sdfInterp(points[4], points[5], sdfVals[4], sdfVals[5]);
-	if (edgeTable[cubeIndex] & 32) vertList[5] = sdfInterp(points[5], points[6], sdfVals[5], sdfVals[6]);
-	if (edgeTable[cubeIndex] & 64) vertList[6] = sdfInterp(points[6], points[7], sdfVals[6], sdfVals[7]);
-	if (edgeTable[cubeIndex] & 128) vertList[7] = sdfInterp(points[7], points[4], sdfVals[7], sdfVals[4]);
-	if (edgeTable[cubeIndex] & 256) vertList[8] = sdfInterp(points[0], points[4], sdfVals[0], sdfVals[4]);
-	if (edgeTable[cubeIndex] & 512) vertList[9] = sdfInterp(points[1], points[5], sdfVals[1], sdfVals[5]);
-	if (edgeTable[cubeIndex] & 1024) vertList[10] = sdfInterp(points[2], points[6], sdfVals[2], sdfVals[6]);
-	if (edgeTable[cubeIndex] & 2048) vertList[11] = sdfInterp(points[3], points[7], sdfVals[3], sdfVals[7]);
+	if (edgeTable[cubeIndex] & 1) vertList[0] = interpolateSdf(points[0], points[1], sdfVals[0], sdfVals[1]);
+	if (edgeTable[cubeIndex] & 2) vertList[1] = interpolateSdf(points[1], points[2], sdfVals[1], sdfVals[2]);
+	if (edgeTable[cubeIndex] & 4) vertList[2] = interpolateSdf(points[2], points[3], sdfVals[2], sdfVals[3]);
+	if (edgeTable[cubeIndex] & 8) vertList[3] = interpolateSdf(points[3], points[0], sdfVals[3], sdfVals[0]);
+	if (edgeTable[cubeIndex] & 16) vertList[4] = interpolateSdf(points[4], points[5], sdfVals[4], sdfVals[5]);
+	if (edgeTable[cubeIndex] & 32) vertList[5] = interpolateSdf(points[5], points[6], sdfVals[5], sdfVals[6]);
+	if (edgeTable[cubeIndex] & 64) vertList[6] = interpolateSdf(points[6], points[7], sdfVals[6], sdfVals[7]);
+	if (edgeTable[cubeIndex] & 128) vertList[7] = interpolateSdf(points[7], points[4], sdfVals[7], sdfVals[4]);
+	if (edgeTable[cubeIndex] & 256) vertList[8] = interpolateSdf(points[0], points[4], sdfVals[0], sdfVals[4]);
+	if (edgeTable[cubeIndex] & 512) vertList[9] = interpolateSdf(points[1], points[5], sdfVals[1], sdfVals[5]);
+	if (edgeTable[cubeIndex] & 1024) vertList[10] = interpolateSdf(points[2], points[6], sdfVals[2], sdfVals[6]);
+	if (edgeTable[cubeIndex] & 2048) vertList[11] = interpolateSdf(points[3], points[7], sdfVals[3], sdfVals[7]);
 
 	return cubeIndex;
 }

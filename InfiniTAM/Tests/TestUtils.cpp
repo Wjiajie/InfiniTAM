@@ -17,7 +17,7 @@
 
 
 #include "../ITMLib/Utils/ITMLibSettings.h"
-#include "../ITMLib/Objects/Scene/ITMSceneManipulation.h"
+#include "../ITMLib/Engines/Manipulation/ITMSceneManipulation.h"
 #include "../ITMLib/Utils/FileIO/ITMSceneLogger.h"
 #include "../ITMLib/Utils/Analytics/ITMSceneStatisticsCalculator.h"
 

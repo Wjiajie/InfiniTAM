@@ -83,6 +83,9 @@ public:
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
 	virtual float UpdateWarps(
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
+	virtual void ClearOutFramewiseWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
+	virtual void AddFramewiseWarpToWarp(
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, bool clearFramewiseWarp) = 0;
 	virtual void ResetWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
 //============================= MEMBER VARIABLES =======================================================================
 

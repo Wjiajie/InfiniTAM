@@ -47,7 +47,8 @@ public:
 
 	void AllocateCanonicalFromLive(ITMScene <TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 	                               ITMScene <TVoxelLive, ITMVoxelBlockHash>* liveScene);
-	void AllocateWarpedLive(
+	template<typename TLookupPositionFunctor>
+	void AllocateLive(
 			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
 			ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int fieldIndex);
 	void ChangeCanonicalHashEntryState(int hash, ITMLib::HashBlockState);
@@ -56,7 +57,6 @@ private:
 	ORUtils::MemoryBlock<unsigned char>* liveEntryAllocationTypes;
 	ORUtils::MemoryBlock<unsigned char>* canonicalEntryAllocationTypes;
 	ORUtils::MemoryBlock<Vector3s>* allocationBlockCoordinates;
-
 };
 
 

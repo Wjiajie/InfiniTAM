@@ -150,6 +150,29 @@ void ComputeLiveJacobian_CentralDifferences(Vector3f& jacobian,
 	jacobian[2] = 0.5f * (sdfAtZplusOne - sdfAtZminusOne);
 };
 
+template<typename TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+void ComputeLiveJacobian_CentralDifferences(Vector3f& jacobian,
+                                            const Vector3f& voxelPosition,
+                                            const TVoxel* voxels,
+                                            const ITMHashEntry* hashEntries,
+                                            TCache cache) {
+	int vmIndex;
+#define sdf_at(offset) (_DEBUG_InterpolateTrilinearly(voxels, hashEntries, voxelPosition + (offset),  cache))
+
+	float sdfAtXplusOne = sdf_at(Vector3f(1, 0, 0));
+	float sdfAtYplusOne = sdf_at(Vector3f(0, 1, 0));
+	float sdfAtZplusOne = sdf_at(Vector3f(0, 0, 1));
+	float sdfAtXminusOne = sdf_at(Vector3f(-1, 0, 0));
+	float sdfAtYminusOne = sdf_at(Vector3f(0, -1, 0));
+	float sdfAtZminusOne = sdf_at(Vector3f(0, 0, -1));
+
+#undef sdf_at
+	jacobian[0] = 0.5f * (sdfAtXplusOne - sdfAtXminusOne);
+	jacobian[1] = 0.5f * (sdfAtYplusOne - sdfAtYminusOne);
+	jacobian[2] = 0.5f * (sdfAtZplusOne - sdfAtZminusOne);
+};
+
 
 template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_

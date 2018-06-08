@@ -5,12 +5,13 @@
 #include "../Interface/ITMDynamicSceneReconstructionEngine.h"
 #include "../../../Objects/Scene/ITMPlainVoxelArray.h"
 #include "ITMDynamicHashManagementEngine_CPU.h"
-#include "../../../Objects/Scene/ITMSceneManipulation.h"
+#include "../../Manipulation/ITMSceneManipulation.h"
 
 namespace ITMLib {
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMDynamicSceneReconstructionEngine_CPU
 		: public ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex> {
+
 };
 
 template<typename TVoxelCanonical, typename TVoxelLive>
@@ -28,7 +29,10 @@ public:
 	void FuseLiveIntoCanonicalSdf(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 	                              ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
 	                              int liveSourceFieldIndex) override;
-	void WarpLiveScene(
+	void WarpScene(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+	               ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex,
+	               bool hasFocusCoordinates, Vector3i focusCoordinates) override;
+	void UpdateWarpedScene(
 			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 			ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex,
 			bool hasFocusCoordinates, Vector3i focusCoordinates) override;
@@ -56,7 +60,10 @@ public:
 	void FuseLiveIntoCanonicalSdf(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 	                              ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene,
 	                              int liveSourceFieldIndex) override;
-	void WarpLiveScene(
+	void WarpScene(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
+	               ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex,
+	               bool hasFocusCoordinates, Vector3i focusCoordinates) override;
+	void UpdateWarpedScene(
 			ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 			ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) override;
 

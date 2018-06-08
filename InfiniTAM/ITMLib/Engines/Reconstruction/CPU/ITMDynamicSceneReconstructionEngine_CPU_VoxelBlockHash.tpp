@@ -2,19 +2,36 @@
 
 #include <cfloat>
 #include "ITMDynamicSceneReconstructionEngine_CPU.h"
-
+#include "../../Manipulation/ITMSceneManipulation.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
-#include "../../../Objects/Scene/ITMSceneManipulation.h"
+#include "../../Manipulation/ITMSceneManipulation.h"
 #include "../../../Objects/Scene/ITMSceneTraversal.h"
 #include "../../../Objects/Scene/ITMTrilinearInterpolation.h"
 
 using namespace ITMLib;
 
 
+
+// region ===================================== VOXEL LOOKUPS ==========================================================
+
+template <typename TVoxel>
+struct LookupBasedOnWarpStaticFunctor{
+	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
+		return position.toFloat() + voxel.warp;
+	}
+};
+
+
+template <typename TVoxel>
+struct LookupBasedOnWarpUpdateStaticFunctor{
+	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
+		return position.toFloat() + voxel.gradient0;
+	}
+};
+// endregion ===========================================================================================================
+
 // region ======================================= MODIFY VOXELS BASED ON VIEW ==========================================
-
-
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::IntegrateIntoScene(
@@ -153,7 +170,7 @@ struct IndexedFieldClearFunctor {
 
 	void operator()(TVoxelMulti& voxel) {
 		voxel.flag_values[flagFieldIndex] = ITMLib::VOXEL_UNKNOWN;
-		voxel.sdf_values[flagFieldIndex] = TVoxelMulti::SDF_initialValue();
+		voxel.sdf_values[flagFieldIndex] = TVoxelMulti::SDF_initialValue();//for vis
 	}
 
 private:
@@ -162,7 +179,7 @@ private:
 
 
 
-template<typename TVoxelWarpSource, typename TVoxelSdf>
+template<typename TVoxelWarpSource, typename TVoxelSdf, typename TLookupPositionFunctor>
 struct TrilinearInterpolationFunctor {
 	/**
 	 * \brief Initialize to transfer data from source sdf scene to a target sdf scene using the warps in the warp source scene
@@ -195,8 +212,8 @@ struct TrilinearInterpolationFunctor {
 	                Vector3i warpAndDestinationVoxelPosition) {
 		int vmIndex;
 
-		Vector3f warpedPosition = warpAndDestinationVoxelPosition.toFloat() + warpSourceVoxel.warp;
-
+		Vector3f warpedPosition =
+				TLookupPositionFunctor::GetWarpedPosition(warpSourceVoxel, warpAndDestinationVoxelPosition);
 
 		bool struckKnown, struckNonTruncated;
 		float cumulativeWeight;
@@ -258,7 +275,7 @@ private:
  * \param targetLiveScene target (next iteration) live scene
  */
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::WarpLiveScene(
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::UpdateWarpedScene(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex,
 		bool hasFocusCoordinates, Vector3i focusCoordinates) {
@@ -268,9 +285,52 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 	VoxelTraversal_CPU(liveScene, flagClearFunctor);
 
 	// Allocate new blocks where necessary, filter based on flags from source
-	hashManager.AllocateWarpedLive(canonicalScene, liveScene, sourceSdfIndex);
+	hashManager.template AllocateLive<LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>(
+			canonicalScene, liveScene, sourceSdfIndex);
 
-	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive>
+	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>
+			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex,
+			                              hasFocusCoordinates, focusCoordinates);
+
+	// Interpolate to obtain the new live frame values (at target index)
+	DualVoxelPositionTraversal_DefaultForMissingSecondary_CPU(liveScene,canonicalScene,trilinearInterpolationFunctor);
+
+}
+
+
+/**
+ * \brief Uses trilinear interpolation of the live frame at [canonical voxel positions + scaled engergy gradient]
+ *  (not complete warps) to generate a new live SDF grid in the target scene. Intended to be used at every iteration.
+ * \details Assumes target frame is empty / has been reset.
+ * Does 3 things:
+ * <ol>
+ *  <li> Traverses allocated canonical hash blocks and voxels, checks raw frame at [current voxel position + warp vector],
+ *       if there is a non-truncated voxel in the live frame, marks the block in target SDF volume at the current hash
+ *       block position for allocation
+ *  <li> Traverses target hash blocks, if one is marked for allocation, allocates it
+ *  <li> Traverses allocated target hash blocks and voxels, retrieves canonical voxel at same location, if it is marked
+ *       as "truncated", skips it, otherwise uses trilinear interpolation at [current voxel position + warp vector] to
+ *       retrieve SDF value from live frame, then stores it into the current target voxel, and marks latter voxel as
+ *       truncated, non-truncated, or unknown based on the lookup flags & resultant SDF value.
+ * </ol>
+ * \param canonicalScene canonical scene with warp vectors at each voxel.
+ * \param liveScene source (current iteration) live scene
+ * \param targetLiveScene target (next iteration) live scene
+ */
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::WarpScene(
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex,
+		bool hasFocusCoordinates, Vector3i focusCoordinates) {
+
+	// Clear out the flags at target index
+	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
+	VoxelTraversal_CPU(liveScene, flagClearFunctor);
+
+	// Allocate new blocks where necessary, filter based on flags from source
+	hashManager.template AllocateLive< LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>(canonicalScene, liveScene, sourceSdfIndex);
+
+	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>
 			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex,
 			                              hasFocusCoordinates, focusCoordinates);
 

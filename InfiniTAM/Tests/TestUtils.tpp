@@ -15,7 +15,7 @@
 //  ================================================================
 #include "TestUtils.h"
 #include "../ITMLib/Utils/ITMLibSettings.h"
-#include "../ITMLib/Objects/Scene/ITMSceneManipulation.h"
+#include "../ITMLib/Engines/Manipulation/ITMSceneManipulation.h"
 #include "../ITMLib/Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
 
 using namespace ITMLib;

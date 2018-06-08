@@ -15,14 +15,14 @@
 //  ================================================================
 
 #include "ITMSceneManipulation.h"
-#include "ITMScene.h"
-#include "ITMRepresentationAccess.h"
-#include "ITMVoxelBlockHash.h"
-#include "ITMPlainVoxelArray.h"
+#include "../../Objects/Scene/ITMScene.h"
+#include "../../Objects/Scene/ITMRepresentationAccess.h"
+#include "../../Objects/Scene/ITMVoxelBlockHash.h"
+#include "../../Objects/Scene/ITMPlainVoxelArray.h"
 #include "../../Utils/ITMLibSettings.h"
-#include "../../Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
-#include "../../Engines/Reconstruction/Interface/ITMSceneReconstructionEngine.h"
-#include "../../Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
+#include "../Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
+#include "../Reconstruction/Interface/ITMSceneReconstructionEngine.h"
+#include "../Reconstruction/ITMSceneReconstructionEngineFactory.h"
 
 
 namespace ITMLib {
