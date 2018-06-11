@@ -82,8 +82,10 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeReco
 			          << reset << std::endl;
 			InitializeWarp2DSliceRecording(canonicalScene, liveScene);
 		} else {
-			delete scene2DSliceVisualizer;
-			scene2DSliceVisualizer = nullptr;
+			if(saveCanonicalScene2DSlicesAsImages || saveLiveScene2DSlicesAsImages){
+				delete scene2DSliceVisualizer;
+				scene2DSliceVisualizer = nullptr;
+			}
 			recordingScene2DSlicesWithUpdates = false;
 		}
 
@@ -201,7 +203,7 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeRecord
 		scene2DSliceVisualizer = nullptr;
 	}
 
-	if (recordingScene2DSlicesWithUpdates) {
+	if (recordingScene1DSlicesWithUpdates) {
 		delete scene1DSliceVisualizer;
 		scene1DSliceVisualizer = nullptr;
 	}
