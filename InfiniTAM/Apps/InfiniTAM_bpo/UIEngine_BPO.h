@@ -43,6 +43,7 @@ class UIEngine_BPO {
 
 	int autoIntervalFrameStart;
 	int autoIntervalFrameCount;
+	bool saveAfterAutoprocessing = false;
 	int startedProcessingFromFrameIx = 0;
 
 	InputSource::ImageSourceEngine* imageSource;
@@ -111,12 +112,11 @@ public:
 	bool allocateGPU;
 	ITMUChar4Image* saveImage;
 
-	void Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
-	                InputSource::IMUSourceEngine* imuSource, ITMLib::ITMMainEngine* mainEngine,
-	                const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
-	                int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
-	                bool startInStepByStep, bool startRecordingWarp1DSlices, bool startRecordingWarp2DSlices,
-	                bool startRecordingWarps);
+	void Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource, InputSource::IMUSourceEngine* imuSource,
+		                ITMLib::ITMMainEngine* mainEngine, const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
+		                int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult, bool startInStepByStep,
+		                bool startRecordingWarp1DSlices, bool startRecordingWarp2DSlices, bool startRecordingWarps,
+		                bool saveAfterFirstNFrames, bool loadBeforeProcessing);
 	void Shutdown();
 
 	void Run();

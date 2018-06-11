@@ -211,6 +211,9 @@ void UIEngine_BPO::GlutIdleFunction() {
 			uiEngine->needsRefresh = true;
 			if ((uiEngine->processedFrameNo - uiEngine->autoIntervalFrameStart) >= uiEngine->autoIntervalFrameCount) {
 				uiEngine->mainLoopAction = PROCESS_PAUSED;
+				if(uiEngine->saveAfterAutoprocessing){
+					uiEngine->mainEngine->SaveToFile();
+				}
 				bench::PrintAllCumulativeTimes();
 			}
 			break;

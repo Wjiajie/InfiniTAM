@@ -61,12 +61,16 @@ UIEngine_BPO* UIEngine_BPO::instance;
  * set interval to this number of frames
  */
 void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
-                              InputSource::IMUSourceEngine* imuSource, ITMLib::ITMMainEngine* mainEngine,
-                              const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
+                              InputSource::IMUSourceEngine* imuSource,
+                              ITMLib::ITMMainEngine* mainEngine, const char* outFolder,
+                              ITMLib::ITMLibSettings::DeviceType deviceType,
                               int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
-                              bool startInStepByStep, bool startRecordingWarp1DSlices, bool startRecordingWarp2DSlices,
-                              bool startRecordingWarps) {
+                              bool startInStepByStep,
+                              bool startRecordingWarp1DSlices, bool startRecordingWarp2DSlices,
+                              bool startRecordingWarps,
+                              bool saveAfterFirstNFrames, bool loadBeforeProcessing) {
 	this->inStepByStepMode = startInStepByStep;
+	this->saveAfterAutoprocessing = saveAfterFirstNFrames;
 
 	this->freeviewActive = true;
 	this->integrationActive = true;
@@ -181,6 +185,14 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 
 	if (recordReconstructionResult) {
 		this->reconstructionVideoWriter = new FFMPEGWriter();
+	}
+
+	if (loadBeforeProcessing) {
+		auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>*>(mainEngine);
+		if (dynamicEngine != nullptr) {
+			dynamicEngine->nextFrameOutputPath = this->GenerateCurrentFrameOutputPath();
+		}
+		mainEngine->LoadFromFile();
 	}
 	printf("initialised.\n");
 }

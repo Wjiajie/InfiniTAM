@@ -128,39 +128,46 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveToFile() {
 	//TODO: CUDA scene support
 	canonicalScene->SaveToDirectoryCompact_CPU(this->nextFrameOutputPath + "/canonical");
 	liveScene->SaveToDirectoryCompact_CPU(this->nextFrameOutputPath + "/live");
+	std::cout << "Saving scenes in a compact way to '" << this->nextFrameOutputPath << "'." << std::endl;
+
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::LoadFromFile() {
-	std::string saveInputDirectory = "State/";
-	std::string relocaliserInputDirectory = saveInputDirectory + "Relocaliser/", sceneInputDirectory =
-			saveInputDirectory + "Scene/";
+	std::string relocaliserInputDirectory = this->nextFrameOutputPath + "Relocaliser/";
 
 	////TODO: add factory for relocaliser and rebuild using config from relocaliserOutputDirectory + "config.txt"
 	////TODO: add proper management of case when scene load fails (keep old scene or also reset relocaliser)
 
 	this->resetAll();
 
-	try // load relocaliser
-	{
-		FernRelocLib::Relocaliser<float>* relocaliser_temp = new FernRelocLib::Relocaliser<float>(view->depth->noDims,
-		                                                                                          Vector2f(
-				                                                                                          settings->sceneParams.viewFrustum_min,
-				                                                                                          settings->sceneParams.viewFrustum_max),
-		                                                                                          0.2f, 500, 4);
+	if(view != nullptr){
+		try // load relocaliser
+		{
+			FernRelocLib::Relocaliser<float>* relocaliser_temp = new FernRelocLib::Relocaliser<float>(view->depth->noDims,
+			                                                                                          Vector2f(
+					                                                                                          settings->sceneParams.viewFrustum_min,
+					                                                                                          settings->sceneParams.viewFrustum_max),
+			                                                                                          0.2f, 500, 4);
 
-		relocaliser_temp->LoadFromDirectory(relocaliserInputDirectory);
+			relocaliser_temp->LoadFromDirectory(relocaliserInputDirectory);
 
-		delete relocaliser;
-		relocaliser = relocaliser_temp;
-	}
-	catch (std::runtime_error& e) {
-		throw std::runtime_error("Could not load relocaliser: " + std::string(e.what()));
+			delete relocaliser;
+			relocaliser = relocaliser_temp;
+		}
+		catch (std::runtime_error& e) {
+			throw std::runtime_error("Could not load relocaliser: " + std::string(e.what()));
+		}
 	}
 
 	try // load scene
 	{
-		canonicalScene->LoadFromDirectory(sceneInputDirectory);
+		std::cout << "Loading scenes from '" << this->nextFrameOutputPath << "'." << std::endl;
+		canonicalScene->LoadFromDirectoryCompact_CPU(this->nextFrameOutputPath + "/canonical");
+		liveScene->LoadFromDirectoryCompact_CPU(this->nextFrameOutputPath + "/live");
+		if(framesProcessed == 0){
+			framesProcessed = 1; //to skip initialization
+		}
 	}
 	catch (std::runtime_error& e) {
 		denseMapper->ResetCanonicalScene(canonicalScene);

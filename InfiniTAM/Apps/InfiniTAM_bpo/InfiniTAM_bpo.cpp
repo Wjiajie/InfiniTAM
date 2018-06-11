@@ -178,6 +178,9 @@ int main(int argc, char** argv) {
 		bool killingModeEnabled = false;
 		bool recordReconstructionToVideo = false;
 
+		bool saveAfterInitialProcessing = false;
+		bool loadBeforeProcessing = false;
+
 		bool startInStepByStep = false;
 		bool restrictZMotion = false;
 		bool simpleScene = false;
@@ -253,6 +256,10 @@ int main(int argc, char** argv) {
 				("process_N_frames, N", po::value<int>(), "Launch immediately and process the specified number of "
 				 "frames (potentially, with recording, if corresponding commands are issued), and then stop.")
 			    ("start_from_frame_ix, S", po::value<int>(), "Skip the first S frames / start at frame index S.\n")
+				("save_after_initial_processing", po::bool_switch(&saveAfterInitialProcessing)->default_value(false),
+				 "Save scene after the frames specified with process_N_frames were processed.")
+				("load_before_processing", po::bool_switch(&loadBeforeProcessing)->default_value(false),
+				 "Start by loading scene from disk before any processing takes place.")
 
 				/* Parameters for scene tracking optimization (KillingFusion/SobolevFusion)*/
 				("max_iterations", po::value<unsigned int>(),
@@ -479,7 +486,7 @@ int main(int argc, char** argv) {
 		                                     settings->analysisSettings.outputPath.c_str(), settings->deviceType,
 		                                     processNFramesOnLaunch, skipFirstNFrames, recordReconstructionToVideo,
 		                                     startInStepByStep, recordWarp1DSlices, recordWarp2DSlices,
-		                                     false);
+		                                     false, saveAfterInitialProcessing, loadBeforeProcessing);
 // endregion ===========================================================================================================
 
 		//ITMVTKVisualizer::Instance().Run();
