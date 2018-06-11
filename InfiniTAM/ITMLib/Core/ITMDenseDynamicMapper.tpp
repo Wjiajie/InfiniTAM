@@ -112,21 +112,6 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetLiveScene(
 	ITMSceneManipulationEngine_CPU<TVoxelLive, TIndex>::ResetScene(scene);
 }
 
-//BEGIN _DEBUG
-template<typename TVoxel, typename TIndex>
-static void PrintSceneStats(ITMScene<TVoxel, TIndex>* scene, const char* sceneName) {
-	ITMSceneStatisticsCalculator<TVoxel, TIndex> calculatorLive;
-	std::cout << "=== Stats for scene '" << sceneName << "' ===" << std::endl;
-	std::cout << "    Total voxel count: " << calculatorLive.ComputeAllocatedVoxelCount(scene) << std::endl;
-	std::cout << "    NonTruncated voxel count: " << calculatorLive.ComputeNonTruncatedVoxelCount(scene) << std::endl;
-	std::cout << "    +1.0 voxel count: " << calculatorLive.ComputeVoxelWithValueCount(scene, 1.0f) << std::endl;
-	std::vector<int> allocatedHashes = calculatorLive.GetFilledHashBlockIds(scene);
-	std::cout << "    Allocated hash count: " << allocatedHashes.size() << std::endl;
-	std::cout << "    NonTruncated SDF sum: " << calculatorLive.ComputeNonTruncatedVoxelAbsSdfSum(scene) << std::endl;
-	std::cout << "    Truncated SDF sum: " << calculatorLive.ComputeTruncatedVoxelAbsSdfSum(scene) << std::endl;
-};
-//END _DEBUG
-
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessInitialFrame(
@@ -168,6 +153,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProce
 	sceneReconstructor->WarpScene(canonicalScene, liveScene, 0, 1, true, focusCoordinates);
 	bench::StopTimer("TrackMotion_35_WarpLiveScene");
 
+
 	logger.InitializeRecording(canonicalScene, liveScene, outputDirectory, analysisFlags.hasFocusCoordinates,
 	                           focusCoordinates, false, false, recordWarps, recordScene1DSlicesWithUpdates,
 	                           recordScene2DSlicesWithUpdates);
@@ -180,6 +166,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeProcess
 		ITMRenderState* renderState) {
 
 	logger.FinalizeRecording(canonicalScene, liveScene);
+
 	//fuse warped live into canonical
 	bench::StartTimer("FuseLiveIntoCanonicalSdf");
 	sceneReconstructor->FuseLiveIntoCanonicalSdf(canonicalScene, liveScene, targetSdfIndex);
@@ -264,12 +251,12 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 
 	PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");
 	bench::StartTimer("TrackMotion_32_ApplySmoothingToGradient");
-	sceneMotionTracker->SmoothWarpGradient(canonicalScene);
+	sceneMotionTracker->SmoothWarpGradient(liveScene, canonicalScene, sourceSdfIndex);
 	bench::StopTimer("TrackMotion_32_ApplySmoothingToGradient");
 
 	PrintOperationStatus("Applying warp update (based on energy gradient) to the cumulative warp...");
 	bench::StartTimer("TrackMotion_33_UpdateWarps");
-	maxVectorUpdate = sceneMotionTracker->UpdateWarps(canonicalScene, liveScene);
+	maxVectorUpdate = sceneMotionTracker->UpdateWarps(canonicalScene, liveScene, sourceSdfIndex);
 	bench::StopTimer("TrackMotion_33_UpdateWarps");
 
 	PrintOperationStatus(

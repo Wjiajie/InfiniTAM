@@ -28,6 +28,12 @@
 namespace ITMLib {
 
 
+template<typename TVoxelCanonical, typename TVoxelLive>
+inline
+bool VoxelIsConsideredForTracking(TVoxelCanonical& voxelCanonical, TVoxelLive voxelLive, int sourceFieldIndex){
+	return voxelCanonical.flags == VOXEL_NONTRUNCATED || voxelLive.flag_values[sourceFieldIndex] == VOXEL_NONTRUNCATED;
+};
+
 //TODO: write documentation block -Greg (Github: Algomorph)
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMSceneMotionTracker {
@@ -80,9 +86,11 @@ public:
 	                                   bool hasFocusCoordinates, const Vector3i& focusCoordinates, int sourceFieldIndex,
 	                                   bool restrictZTrackingForDebugging) = 0;
 	virtual void SmoothWarpGradient(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
+			ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
+			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, int sourceFieldIndex) = 0;
 	virtual float UpdateWarps(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) = 0;
+			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+			ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex) = 0;
 	virtual void ClearOutFramewiseWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
 	virtual void AddFramewiseWarpToWarp(
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, bool clearFramewiseWarp) = 0;

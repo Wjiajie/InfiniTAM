@@ -17,7 +17,10 @@
 
 //TODO: Clean out unused versions -Greg (GitHub: Algomorph)
 
+#include <cfloat>
 #include "../../Utils/ITMPrintHelpers.h"
+#include "../../Utils/ITMVoxelFlags.h"
+#include "ITMRepresentationAccess.h"
 
 
 //sdf and color + knownVoxelHit + smart weights
@@ -1064,12 +1067,12 @@ inline float InterpolateTrilinearly_TruncatedCopySign(const CONSTPTR(TVoxel)* vo
 template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* voxelData,
-                                                        const CONSTPTR(ITMHashEntry)* voxelHash,
-                                                        const CONSTPTR(Vector3f)& point,
-                                                        const CONSTPTR(int)& sdfIndex,
-                                                        THREADPTR(TCache)& cache,
-                                                        THREADPTR(bool)& struckKnownVoxels,
-														bool printData) {
+                                                               const CONSTPTR(ITMHashEntry)* voxelHash,
+                                                               const CONSTPTR(Vector3f)& point,
+                                                               const CONSTPTR(int)& sdfIndex,
+                                                               THREADPTR(TCache)& cache,
+                                                               THREADPTR(bool)& struckKnownVoxels,
+                                                               bool printData) {
 	Vector3f ratios;
 	Vector3f inverseRatios(1.0f);
 	Vector3i pos;
@@ -1104,14 +1107,17 @@ inline float _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TV
 
 	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
 		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (positions[iNeighbor]), vmIndex, cache);
-		bool curKnown = v.flags != ITMLib::VOXEL_UNKNOWN;
-		float weight = coefficients[iNeighbor];
-		sdf += weight * TVoxel::valueToFloat(v.sdf);
+		bool curKnown = v.flag_values[sdfIndex] != ITMLib::VOXEL_UNKNOWN;
+		float weight = coefficients[iNeighbor] * curKnown;
+		sdf += weight * TVoxel::valueToFloat(v.sdf_values[sdfIndex]);
 		struckKnownVoxels |= curKnown;
 		if(printData){
 			std::cout << "Neighbor position: " << positions[iNeighbor] << " Sdf: "
 																 << sdf << " Weight: " << weight << std::endl;
 		}
+	}
+	if(printData){
+		std::cout << "New sdf: " << sdf << std::endl;
 	}
 	return sdf;
 }
@@ -1121,11 +1127,11 @@ inline float _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TV
 template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* voxelData,
-                                                const CONSTPTR(ITMHashEntry)* voxelHash,
-                                                const CONSTPTR(Vector3f)& point,
-                                                const CONSTPTR(int)& sdfIndex,
-                                                THREADPTR(TCache)& cache,
-                                                THREADPTR(bool)& struckKnown) {
+                                                        const CONSTPTR(ITMHashEntry)* voxelHash,
+                                                        const CONSTPTR(Vector3f)& point,
+                                                        const CONSTPTR(int)& sdfIndex,
+                                                        THREADPTR(TCache)& cache,
+                                                        THREADPTR(bool)& struckKnown) {
 	float sdfRes1, sdfRes2, sdfV1, sdfV2;
 	int vmIndex = false;
 	Vector3f coeff;

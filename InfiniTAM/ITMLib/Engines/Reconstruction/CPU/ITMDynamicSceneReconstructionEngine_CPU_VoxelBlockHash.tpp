@@ -26,7 +26,7 @@ struct LookupBasedOnWarpStaticFunctor{
 template <typename TVoxel>
 struct LookupBasedOnWarpUpdateStaticFunctor{
 	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
-		return position.toFloat() + voxel.gradient0;
+		return position.toFloat() + voxel.warp_update;
 	}
 };
 // endregion ===========================================================================================================
@@ -217,6 +217,7 @@ struct TrilinearInterpolationFunctor {
 
 		bool struckKnown, struckNonTruncated;
 		float cumulativeWeight;
+
 		float sdf = _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(
 				sdfSourceVoxels, sdfSourceHashEntries, warpedPosition, sourceSdfIndex, sdfSourceCache, struckKnown,
 				hasFocusCoordinates && warpAndDestinationVoxelPosition == focusCoordinates);
@@ -232,7 +233,6 @@ struct TrilinearInterpolationFunctor {
 			}
 		}
 	}
-
 
 private:
 
@@ -292,9 +292,9 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex,
 			                              hasFocusCoordinates, focusCoordinates);
 
+
 	// Interpolate to obtain the new live frame values (at target index)
 	DualVoxelPositionTraversal_DefaultForMissingSecondary_CPU(liveScene,canonicalScene,trilinearInterpolationFunctor);
-
 }
 
 
@@ -334,9 +334,9 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex,
 			                              hasFocusCoordinates, focusCoordinates);
 
+
 	// Interpolate to obtain the new live frame values (at target index)
 	DualVoxelPositionTraversal_DefaultForMissingSecondary_CPU(liveScene,canonicalScene,trilinearInterpolationFunctor);
-
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>

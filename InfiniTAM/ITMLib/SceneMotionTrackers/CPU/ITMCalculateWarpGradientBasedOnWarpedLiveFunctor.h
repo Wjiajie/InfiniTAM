@@ -96,6 +96,9 @@ public:
 	// endregion =======================================================================================================
 
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i position) {
+
+		if(!VoxelIsConsideredForTracking(canonicalVoxel,liveVoxel,sourceSdfIndex)) return;
+
 		Vector3f& framewiseWarp = canonicalVoxel.framewise_warp;
 
 		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
@@ -146,10 +149,10 @@ public:
 
 		if (haveFullData && (switches.enableLevelSetTerm || switches.enableDataTerm)) {
 			//TODO: in case both level set term and data term need to be computed, optimize by retrieving the sdf values for live jacobian in a separate function. The live hessian needs to reuse them. -Greg (GitHub: Algomorph)
-//			ComputeLiveJacobian_CentralDifferences_IndexedFields(
-//					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex);
-			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_CanonicalSdf2(
-					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex, canonicalSdf);
+			ComputeLiveJacobian_CentralDifferences_IndexedFields(
+					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex);
+//			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_CanonicalSdf2(
+//					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex, canonicalSdf);
 //			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_LiveSdf(
 //					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex);
 //			ComputeLiveJacobian_CentralDifferences_IgnoreUnknown_IndexedFields(

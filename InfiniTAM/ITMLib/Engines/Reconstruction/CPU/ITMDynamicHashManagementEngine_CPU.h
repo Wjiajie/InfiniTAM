@@ -50,7 +50,7 @@ public:
 	template<typename TLookupPositionFunctor>
 	void AllocateLive(
 			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
-			ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int fieldIndex);
+			ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex);
 	void ChangeCanonicalHashEntryState(int hash, ITMLib::HashBlockState);
 
 private:

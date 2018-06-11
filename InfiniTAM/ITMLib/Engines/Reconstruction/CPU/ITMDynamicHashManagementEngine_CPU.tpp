@@ -220,15 +220,25 @@ struct WarpBasedAllocationMarkerFunctor {
 		int vmIndex;
 		const TVoxelSdfSource& sdfVoxelAtWarp = readVoxel(sdfVoxels, sdfHashEntries, warpedPositionTruncated,
 		                                                  vmIndex, sdfCache);
+
+
+		voxelCount++;
 		// skip truncated voxels in raw/old live scene
 		if (sdfVoxelAtWarp.flag_values[sourceFieldIndex] != ITMLib::VOXEL_NONTRUNCATED) return;
+		nontruncatedCount++;
 
 		int liveBlockHash = hashIndex(hashBlockPosition);
-		MarkAsNeedingAllocationIfNotFound(warpedEntryAllocationTypes, allocationBlockCoords, liveBlockHash,
-		                                  hashBlockPosition, sdfHashEntries);
+		if(MarkAsNeedingAllocationIfNotFound(warpedEntryAllocationTypes, allocationBlockCoords, liveBlockHash,
+		                                  hashBlockPosition, sdfHashEntries)){
+			countToAllocate++;
+		}
 
 	}
 
+	//_DEBUG
+	int countToAllocate = 0;
+	int voxelCount = 0;
+	int nontruncatedCount = 0;
 private:
 	ITMScene<TVoxelSdfSource, ITMVoxelBlockHash>* sdfScene;
 	TVoxelSdfSource* sdfVoxels;
@@ -250,13 +260,13 @@ private:
  * allocates it.
  * \param warpSourceScene voxel grid where each voxel has a .warp Vector3f field defined
  * \param sdfScene sdf grid whose hash blocks to allocate if needed
- * \param fieldIndex index of the sdf / flag field to use in the sdfScene
+ * \param sourceSdfIndex index of the sdf / flag field to use in the sdfScene
  */
 template<typename TVoxelCanonical, typename TVoxelLive>
 template<typename TLookupPositionFunctor>
 void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLive(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int fieldIndex) {
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex) {
 	int entryCount = ITMVoxelBlockHash::noTotalEntries;
 	Vector3s* allocationBlockCoords = this->allocationBlockCoordinates->GetData(MEMORYDEVICE_CPU);
 	uchar* liveEntryAllocationTypes = this->liveEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
@@ -265,7 +275,7 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLi
 
 	//Mark up hash entries in the target scene that will need allocation
 	WarpBasedAllocationMarkerFunctor<TVoxelCanonical, TVoxelLive, TLookupPositionFunctor>
-			hashMarkerFunctor(sdfScene, allocationBlockCoords, liveEntryAllocationTypes, fieldIndex);
+			hashMarkerFunctor(sdfScene, allocationBlockCoords, liveEntryAllocationTypes, sourceSdfIndex);
 	VoxelAndHashBlockPositionTraversal_CPU(warpSourceScene, hashMarkerFunctor);
 
 	//Allocate the hash entries that will potentially have any data

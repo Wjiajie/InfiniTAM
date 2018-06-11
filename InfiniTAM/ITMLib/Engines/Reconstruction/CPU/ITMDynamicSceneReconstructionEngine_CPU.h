@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "../../../SceneMotionTrackers/Interface/ITMSceneMotionTracker.h"
 #include "../Interface/ITMDynamicSceneReconstructionEngine.h"
 #include "../../../Objects/Scene/ITMPlainVoxelArray.h"
 #include "ITMDynamicHashManagementEngine_CPU.h"
