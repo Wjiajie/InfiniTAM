@@ -63,10 +63,10 @@ private:
 	cv::Mat liveImgTemplate;
 
 	// flags
-	bool recordingScene2DSlicesWithUpdates;
-	bool recordingScene1DSlicesWithUpdates;
-	bool recordingWarps;
-	bool hasFocusCoordinates;
+	bool recordingScene2DSlicesWithUpdates = false;
+	bool recordingScene1DSlicesWithUpdates = false;
+	bool recordingWarps = false;
+	bool hasFocusCoordinates = false;
 
 	std::string outputDirectory;
 	Vector3i focusCoordinates;

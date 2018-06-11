@@ -94,12 +94,6 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 					pt_model.z = (float) (globalPos.z + z) * voxelSize;
 					pt_model.w = 1.0f;
 
-					//_DEBUG
-//					Vector3i pos = Vector3i(globalPos.x + x, globalPos.y + y, globalPos.z + z);
-//					if(pos == Vector3i(-29, 40, 185)){
-//						int i = 42;
-//					}
-
 					ComputeUpdatedLiveVoxelInfo<
 							TVoxelLive::hasColorInformation,
 							TVoxelLive::hasConfidenceInformation,
@@ -222,10 +216,9 @@ struct TrilinearInterpolationFunctor {
 				sdfSourceVoxels, sdfSourceHashEntries, warpedPosition, sourceSdfIndex, sdfSourceCache, struckKnown,
 				hasFocusCoordinates && warpAndDestinationVoxelPosition == focusCoordinates);
 
-		destinationVoxel.sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sdf);
-
 		// Update flags
 		if (struckKnown) {
+			destinationVoxel.sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sdf);
 			if (1.0f - std::abs(sdf) < FLT_EPSILON) {
 				destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_TRUNCATED;
 			} else {

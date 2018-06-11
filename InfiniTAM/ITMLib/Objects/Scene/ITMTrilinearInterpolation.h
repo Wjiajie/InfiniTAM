@@ -1104,7 +1104,7 @@ inline float _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TV
 									  << point << " ***" << ITMLib::reset << std::endl;
 		std::cout << "Truncated position: " << pos << std::endl;
 	}
-
+	float cumulativeWeight = 0.0f;
 	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
 		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (positions[iNeighbor]), vmIndex, cache);
 		bool curKnown = v.flag_values[sdfIndex] != ITMLib::VOXEL_UNKNOWN;
@@ -1115,6 +1115,12 @@ inline float _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TV
 			std::cout << "Neighbor position: " << positions[iNeighbor] << " Sdf: "
 																 << sdf << " Weight: " << weight << std::endl;
 		}
+		cumulativeWeight += weight;
+	}
+	if(cumulativeWeight > FLT_EPSILON){
+		sdf /= cumulativeWeight;
+	}else{
+		sdf = TVoxel::SDF_initialValue();
 	}
 	if(printData){
 		std::cout << "New sdf: " << sdf << std::endl;
