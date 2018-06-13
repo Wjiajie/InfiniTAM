@@ -78,18 +78,11 @@ private: // For UI layout
 	int currentFrameNo;
 	bool isRecordingImages;
 
-
-	// TODO: revise & improve architecture/design here; different logging parameters should be passed somehow to all engines
-	// Dynamic Fusion only
-	bool recordWarpsForNextFrame = false; // record warp updates during processing of the next frame
-	bool recordWarp2DSlicesForNextFrame = false;
-	bool recordWarp1DSlicesForNextFrame = false;
-
 	InputSource::FFMPEGWriter* reconstructionVideoWriter = nullptr;
 	InputSource::FFMPEGWriter* rgbVideoWriter = nullptr;
 	InputSource::FFMPEGWriter* depthVideoWriter = nullptr;
 public:
-	static UIEngine_BPO* Instance(void) {
+	static UIEngine_BPO* Instance() {
 		if (instance == nullptr) instance = new UIEngine_BPO();
 		return instance;
 	}
@@ -101,7 +94,7 @@ public:
 	static void GlutMouseMoveFunction(int x, int y);
 	static void GlutMouseWheelFunction(int button, int dir, int x, int y);
 
-	const Vector2i& GetWindowSize(void) const { return winSize; }
+	const Vector2i& GetWindowSize() const { return winSize; }
 
 	float processedTime;
 	int processedFrameNo;
@@ -115,12 +108,12 @@ public:
 	void Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource, InputSource::IMUSourceEngine* imuSource,
 		                ITMLib::ITMMainEngine* mainEngine, const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
 		                int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult, bool startInStepByStep,
-		                bool startRecordingWarp1DSlices, bool startRecordingWarp2DSlices, bool startRecordingWarps,
+		                bool startRecordingWarp1DSlices, bool startRecordingWarp2DSlices, bool startRecording3DSceneAndWarpProgression,
 		                bool saveAfterFirstNFrames, bool loadBeforeProcessing);
 	void Shutdown();
 
 	void Run();
-	void PrintProcessedFrame() const;
+	void PrintProcessingFrameHeader() const;
 	void ProcessFrame();
 	//For scene-tracking updates
 	bool BeginStepByStepModeForFrame();
@@ -135,7 +128,7 @@ public:
 	void RecordDepthAndRGBInputToImages();
 	int GetCurrentFrameIndex() const;
 	std::string GenerateNextFrameOutputPath() const;
-	std::string GenerateCurrentFrameOutputPath() const;
+	std::string GenerateCurrentFrameOutputDirectory() const;
 };
 }
 }

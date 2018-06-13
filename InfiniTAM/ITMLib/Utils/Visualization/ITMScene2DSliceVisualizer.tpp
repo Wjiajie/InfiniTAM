@@ -31,30 +31,13 @@
 using namespace ITMLib;
 namespace fs = boost::filesystem;
 
-//====================================== DEFINE CONSTANTS ==============================================================
 
-//TODO: generalize to handle different paths -Greg (GitHub:Algomorph)
-// where to save the images
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::iterationFramesFolderName =
-		"bucket_interest_region_2D_iteration_slices";
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::liveIterationFramesFolderName =
-		"bucket_interest_region_live_slices";
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::canonicalSceneRasterizedFolderName =
-		"canonical_rasterized";
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::liveSceneRasterizedFolderName =
-		"live_rasterized";
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const bool ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::absFillingStrategy = false;
 
 
-// ============================================ END CONSTANT DEFINITIONS ===============================================
+
 
 // region ===================================== CONSTRUCTORS / DESTRUCTORS =============================================
 
@@ -573,39 +556,37 @@ ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlice
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveLiveSceneSlicesAs2DImages_AllDirections(
-		ITMScene<TVoxelLive, TIndex>* scene) {
+		ITMScene<TVoxelLive, TIndex>* scene, std::string pathWithoutPostfix) {
 	ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveLiveSceneSlicesAs2DImages(
-			scene, AXIS_X, "_X");
+			scene, AXIS_X, pathWithoutPostfix + "_X");
 	ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveLiveSceneSlicesAs2DImages(
-			scene, AXIS_Y, "_Y");
+			scene, AXIS_Y, pathWithoutPostfix + "_Y");
 	ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveLiveSceneSlicesAs2DImages(
-			scene, AXIS_Z, "_Z");
+			scene, AXIS_Z, pathWithoutPostfix + "_Z");
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveLiveSceneSlicesAs2DImages_AllDirections(
-		ITMScene<TVoxelCanonical, TIndex>* scene) {
+void ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveCanonicalSceneSlicesAs2DImages_AllDirections(
+		ITMScene<TVoxelCanonical, TIndex>* scene, std::string pathWithoutPostfix) {
 	ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveCanonicalSceneSlicesAs2DImages(
-			scene, AXIS_X, "_X");
+			scene, AXIS_X, pathWithoutPostfix + "_X");
 	ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveCanonicalSceneSlicesAs2DImages(
-			scene, AXIS_Y, "_Y");
+			scene, AXIS_Y, pathWithoutPostfix + "_Y");
 	ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveCanonicalSceneSlicesAs2DImages(
-			scene, AXIS_Z, "_Z");
+			scene, AXIS_Z, pathWithoutPostfix + "_Z");
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveCanonicalSceneSlicesAs2DImages(
-		ITMScene<TVoxelCanonical, TIndex>* scene, Axis axis, std::string pathPostfix) {
-	RenderSceneSlices<TVoxelCanonical>(scene, axis, canonicalSceneRasterizedFolderName + pathPostfix, false);
+		ITMScene<TVoxelCanonical, TIndex>* scene, Axis axis, std::string path) {
+	RenderSceneSlices<TVoxelCanonical>(scene, axis, path, false);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
 ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveLiveSceneSlicesAs2DImages(
-		ITMScene<TVoxelLive, TIndex>* scene,
-		Axis axis,
-		std::string pathPostfix) {
-	RenderSceneSlices<TVoxelLive>(scene, axis, liveSceneRasterizedFolderName + pathPostfix, false);
+		ITMScene<TVoxelLive, TIndex>* scene, Axis axis, std::string path) {
+	RenderSceneSlices<TVoxelLive>(scene, axis, path, false);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -620,44 +601,9 @@ float ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SdfToShade
 	return absFillingStrategy ? std::abs(sdf) : (sdf + 1.0f) / 2.0f;
 }
 
-static void ClearDirectory(fs::path path) {
-	for (fs::directory_iterator end_dir_it, it(path); it != end_dir_it; ++it) {
-		fs::remove_all(it->path());
-	}
-}
-
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-std::string ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::GetOutputDirectoryForWarps() const {
-	fs::path path(fs::path(this->outputDirectory) / (iterationFramesFolderName + "_" + PlaneToString(this->plane)));
-	return path.string();
-}
-
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-std::string ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::GetOutputDirectoryForWarpedLiveScenes() const {
-	fs::path path(fs::path(this->outputDirectory) / (liveIterationFramesFolderName + "_" + PlaneToString(this->plane)));
-	return path.string();
-}
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::MakeOrClearOutputDirectories() const {
-	fs::path path(fs::path(this->outputDirectory) / (liveIterationFramesFolderName + "_" + PlaneToString(this->plane)));
-	if (!fs::exists(path)) {
-		fs::create_directories(path);
-	} else {
-		ClearDirectory(path);
-	}
-	path = (fs::path(this->outputDirectory) / (iterationFramesFolderName + "_" + PlaneToString(this->plane)));
-	if (!fs::exists(path)) {
-		fs::create_directories(path);
-	} else {
-		ClearDirectory(path);
-	}
-}
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SetPlane(Plane plane) {
-	this->plane = plane;
+Plane ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::GetPlane() const {
+	return this->plane;
 }
 
 

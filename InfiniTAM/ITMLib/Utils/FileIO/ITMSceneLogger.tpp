@@ -375,7 +375,9 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ClearHighlights() {
 	this->activeWarpLogger->highlights.Clear();
 }
 
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger() {
 
-
+}
 
 //endregion

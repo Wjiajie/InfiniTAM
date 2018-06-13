@@ -3,9 +3,6 @@
 #include "ITMLibSettings.h"
 using namespace ITMLib;
 
-#include <climits>
-#include <cmath>
-#include <iostream>
 
 ITMLibSettings::ITMLibSettings()
 :   //mu(m), maxW, voxel size(m), clipping min, clipping max, stopIntegratingAtMaxW
@@ -103,13 +100,7 @@ ITMLibSettings::ITMLibSettings()
 	//TODO: the following 3 groups should be kept in 4 separate structs in here, perpetually; these structs should be passed as pointers to the classes that use them (instead of being copied to structs in those classes)
 
 	// Dynamic fusion debugging/logging
-	analysisSettings.recordCanonicalScene2DSlicesAsImages = false;
-	analysisSettings.recordLiveScene2DSlicesAsImages = false;
-	analysisSettings.record3DWarps = false;
-	analysisSettings.recordScene1DSlicesWithUpdates = false;
-	analysisSettings.recordScene2DSlicesWithUpdates = false;
 	analysisSettings.focusCoordinatesSpecified = false;
-
 	//By default, write to a State folder within the current directory
 	analysisSettings.outputPath = "./State/";
 

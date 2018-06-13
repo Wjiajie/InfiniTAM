@@ -35,7 +35,7 @@
 #include "ITMScene1DSliceVisualizer.h"
 #include "../../Objects/Scene/ITMScene.h"
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
-#include "ITMVTKVisualizer.h"
+#include "ITMVisualizationWindowManager.h"
 
 using namespace ITMLib;
 
@@ -82,7 +82,7 @@ void ITMScene1DSliceVisualizer::Plot1DSceneSliceHelper(ITMScene<TVoxel, TIndex>*
 		table->SetValue(iValue, 1, TGetSDFFunctor::GetSdf(voxel));
 	}
 
-	vtkSmartPointer<vtkChartXY> chart = ITMVTKVisualizer::Instance().GetChart();
+	vtkSmartPointer<vtkChartXY> chart = this->window->GetChart();
 	chart->GetAxis(1)->SetTitle((AxisToString(this->axis) + " Axis").c_str());
 	chart->ForceAxesToBoundsOff();
 	chart->AutoAxesOff();
@@ -99,7 +99,7 @@ void ITMScene1DSliceVisualizer::Plot1DSceneSliceHelper(ITMScene<TVoxel, TIndex>*
 	line->SetWidth(width);
 	chart->Update();
 
-	ITMVTKVisualizer::Instance().Update();
+	this->window->Update();
 }
 
 
@@ -150,12 +150,12 @@ void ITMScene1DSliceVisualizer::Draw1DWarpUpdateVector(ITMScene<TVoxel, TIndex>*
 	table->SetValue(1,1,sdfValue);
 
 
-	vtkSmartPointer<vtkChartXY> chart = ITMVTKVisualizer::Instance().GetChart();
+	vtkSmartPointer<vtkChartXY> chart = window->GetChart();
 	vtkPlot* line = chart->AddPlot(vtkChart::LINE);
 	line->SetInputData(table, 0, 1);
 	line->SetColor(color.r, color.g, color.b, color.a);
 	line->SetWidth(2.0);
 	chart->Update();
 
-	ITMVTKVisualizer::Instance().Update();
+	window->Update();
 }

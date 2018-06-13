@@ -69,10 +69,11 @@ public:
 	* \param liveScene - live/target 3D scene generated from the incoming single frame of the video
 	* \param renderState
 	*/
-	void ProcessFrame(const ITMView* view, const ITMTrackingState* trackingState,
-	                  ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
-	                  ITMRenderState* renderState, bool recordWarps, bool recordScene1DSlicesWithUpdates,
-	                  bool recordScene2DSlicesWithUpdates, std::string outputPath);
+	void ProcessFrame(const ITMView* view,
+		                  const ITMTrackingState* trackingState,
+		                  ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+		                  ITMScene<TVoxelLive, TIndex>* liveScene,
+		                  ITMRenderState* renderState);
 
 	void ProcessInitialFrame(const ITMView* view, const ITMTrackingState* trackingState,
 	                         ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
@@ -81,9 +82,7 @@ public:
 
 	void BeginProcessingFrameInStepByStepMode(const ITMView* view, const ITMTrackingState* trackingState,
 		                                          ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-		                                          ITMScene<TVoxelLive, TIndex>* liveScene, ITMRenderState* renderState_live,
-		                                          bool recordWarps, bool recordWarp1DSlice, bool recordWarp2DSlice,
-		                                          std::string outputPath);
+		                                          ITMScene<TVoxelLive, TIndex>* liveScene, ITMRenderState* renderState_live);
 
 	bool TakeNextStepInStepByStepMode(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                                  ITMScene<TVoxelLive, TIndex>*& liveScene, ITMRenderState* renderState);
@@ -103,8 +102,7 @@ private:
 	bool SceneMotionOptimizationConditionNotReached();
 	void InitializeProcessing(const ITMView* view, const ITMTrackingState* trackingState,
 		                          ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
-		                          ITMRenderState* renderState, bool recordWarps, bool recordScene1DSlicesWithUpdates,
-		                          bool recordScene2DSlicesWithUpdates, std::string outputDirectory);
+		                          ITMRenderState* renderState);
 	void FinalizeProcessing(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
 	                        ITMScene <TVoxelLive, TIndex>* liveScene,ITMRenderState* renderState);
 	void PerformSingleOptimizationStep(
@@ -112,11 +110,9 @@ private:
 	void PrintSettings();
 	// endregion =======================================================================================================
 	// region =========================================== MEMBER VARIABLES =============================================
-
 	ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex>* sceneReconstructor;
 	ITMSwappingEngine<TVoxelCanonical, TIndex>* swappingEngine;
 	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>* sceneMotionTracker;
-	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive,TIndex> logger;
 
 	ITMLibSettings::SwappingMode swappingMode;
 

@@ -164,9 +164,12 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateCa
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene) {
 
 	uchar* canonicalEntryAllocationTypes = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
+	memset(canonicalEntryAllocationTypes, 0, static_cast<size_t>(ITMVoxelBlockHash::noTotalEntries));
 	Vector3s* allocationBlockCoordinates = this->allocationBlockCoordinates->GetData(MEMORYDEVICE_CPU);
 	ITMHashEntry* canonicalHashEntries = canonicalScene->index.GetEntries();
 	ITMHashEntry* liveHashEntries = liveScene->index.GetEntries();
+	int countToAllocate = 0;
+
 	// at frame zero, allocate all the same blocks as in live frame
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -181,11 +184,16 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateCa
 
 		//try to find a corresponding canonical block, and mark it for allocation if not found
 		int canonicalBlockIndex = hashIndex(liveHashBlockCoords);
+		if(
 		MarkAsNeedingAllocationIfNotFound(canonicalEntryAllocationTypes, allocationBlockCoordinates,
 		                                  canonicalBlockIndex,
-		                                  liveHashBlockCoords, canonicalHashEntries);
+		                                  liveHashBlockCoords, canonicalHashEntries)
+				){
+			countToAllocate++;
+		}
 	}
 	AllocateHashEntriesUsingLists_CPU(canonicalScene, canonicalEntryAllocationTypes, allocationBlockCoordinates);
+
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>

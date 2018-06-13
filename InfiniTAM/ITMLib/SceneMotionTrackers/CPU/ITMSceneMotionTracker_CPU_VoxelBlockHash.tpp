@@ -47,10 +47,9 @@ using namespace ITMLib;
 
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ITMSceneMotionTracker_CPU(
-		const ITMLibSettings* settings, ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>& logger)
-		:ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>(settings, logger),
-		 calculateGradientFunctor(this->parameters, this->switches, logger) {};
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ITMSceneMotionTracker_CPU(const ITMLibSettings* settings)
+		:ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>(settings),
+		 calculateGradientFunctor(this->parameters, this->switches) {};
 // endregion ============================== END CONSTRUCTORS AND DESTRUCTORS============================================
 
 // region ===================================== HOUSEKEEPING ===========================================================

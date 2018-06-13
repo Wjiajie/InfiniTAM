@@ -16,6 +16,8 @@
 
 //stdlib
 #include <utility>
+#include <vtkWindowToImageFilter.h>
+#include <vtkPNGWriter.h>
 
 //local
 #include "ITMScene1DSliceVisualizer.h"
@@ -25,28 +27,45 @@
 #include "../ITMPrintHelpers.h"
 
 #include "../../ITMLibDefines.h"
+#include "ITMVisualizationWindowManager.h"
 
 
 using namespace ITMLib;
 
 // region ==================================== CONSTRUCTORS / DESTRUCTORS ==============================================
 
-ITMScene1DSliceVisualizer::ITMScene1DSliceVisualizer(Vector3i focusCoordinate, Axis axis, unsigned int voxelRange,
-                                                     std::string imageOutputDirectory) :
+ITMScene1DSliceVisualizer::ITMScene1DSliceVisualizer(Vector3i focusCoordinate, Axis axis, unsigned int voxelRange) :
 		focusCoordinate(focusCoordinate),
 		axis(axis),
 		voxelRange(voxelRange),
 		rangeStartVoxelIndex(focusCoordinate[axis] - ((voxelRange + 1) / 2)),
 		rangeEndVoxelIndex(focusCoordinate[axis] + (voxelRange / 2)),
-		imageOutputDirectory(std::move(imageOutputDirectory)) {
+		window(ITMVisualizationWindowManager::Instance().MakeWindow(
+				"Scene1DSliceVisualizer_" + AxisToString(axis),
+				"Scene 1D Slice Visualizer for "  + AxisToString(axis) + " Axis")){}
+
+//TODO: DRY violation -- same code as EnergyPlotter -- group into single class hierarchy with shared methods
+void ITMScene1DSliceVisualizer::SaveScreenshot(std::string path) {
+	vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter = vtkSmartPointer<vtkWindowToImageFilter>::New();
+	vtkSmartPointer<vtkRenderWindow> renderWindow = window->GetRenderWindow();
+	windowToImageFilter->SetInput(renderWindow);
+	windowToImageFilter->SetScale(2);
+	windowToImageFilter->SetInputBufferTypeToRGBA();
+	windowToImageFilter->ReadFrontBufferOff();
+	windowToImageFilter->Update();
+	vtkSmartPointer<vtkPNGWriter> writer = vtkSmartPointer<vtkPNGWriter>::New();
+	writer->SetFileName(path.c_str());
+	writer->SetInputConnection(windowToImageFilter->GetOutputPort());
+	writer->Write();
 }
 
 // endregion
-// region ==================================== INSTANTIATIONS ==========================================================
+// region ==================================== EXPLICIT INSTANTIATIONS =================================================
 
 template void
 ITMScene1DSliceVisualizer::Plot1DSceneSlice<ITMVoxelCanonical, ITMVoxelIndex>(
 		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene, Vector4i color, double width);
+
 template void
 ITMScene1DSliceVisualizer::Plot1DSceneSlice<ITMVoxelLive, ITMVoxelIndex>(ITMScene<ITMVoxelLive, ITMVoxelIndex>* scene,
                                                                          Vector4i color, double width);

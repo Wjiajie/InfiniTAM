@@ -60,7 +60,7 @@ public:
 //============================= CONSTRUCTORS / DESTRUCTORS =============================================================
 //TODO: write documentation block -Greg (Github: Algomorph)
 
-	explicit ITMSceneMotionTracker(const ITMLibSettings* settings, ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive,TIndex>& logger) :
+	explicit ITMSceneMotionTracker(const ITMLibSettings* settings) :
 			parameters{
 					settings->sceneTrackingGradientDescentLearningRate,
 					settings->sceneTrackingRigidityEnforcementFactor,

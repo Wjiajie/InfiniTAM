@@ -323,8 +323,8 @@ public:
 		                      totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
 
 		//save all energies to file
-		logger.RecordStatistics(totalDataEnergy, totalLevelSetEnergy, totalKillingEnergy, totalSmoothnessEnergy,
-		                        totalEnergy);
+		logger.RecordStatisticsToFile(totalDataEnergy, totalLevelSetEnergy, totalKillingEnergy, totalSmoothnessEnergy,
+		                              totalEnergy);
 
 
 		CalculateAndPrintAdditionalStatistics(

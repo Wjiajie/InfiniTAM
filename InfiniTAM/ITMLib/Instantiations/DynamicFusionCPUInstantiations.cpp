@@ -30,7 +30,6 @@
 #include "../Utils/Visualization/ITMScene1DSliceVisualizer.tpp"
 #include "../Utils/FileIO/ITMWarpSceneLogger.tpp"
 #include "../Utils/FileIO/ITMSceneLogger.tpp"
-#include "../Utils/FileIO/ITMDynamicFusionLogger.tpp"
 #include "../Utils/Collections/ITM3DNestedMapOfArrays.tpp"
 #include "../Utils/Collections/ITM3DNestedMap.tpp"
 
@@ -48,7 +47,6 @@ template class ITMVisualisationEngine_CPU<ITMVoxelLive, ITMVoxelIndex>;
 template class ITMMeshingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMWarpSceneLogger<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
-template class ITMDynamicFusionLogger<ITMVoxelCanonical,ITMVoxelLive, ITMVoxelIndex>;
 
 //TODO: Cleanup -Greg (GitHub: Algomorph)
 //dynamic fusion utility classes

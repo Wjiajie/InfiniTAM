@@ -37,7 +37,7 @@
 
 //local
 #include "prettyprint.hpp"
-#include "../../ITMLib/Utils/Visualization/ITMVTKVisualizer.h"
+#include "../../ITMLib/Utils/Visualization/ITMVisualizationWindowManager.h"
 
 // *** namespaces ***
 
@@ -394,6 +394,7 @@ int main(int argc, char** argv) {
 			}
 			memcpy(focusCoordiantes.values, focusCoordsVec.data(), sizeof(int) * 3);
 			settings->SetFocusCoordinates(focusCoordiantes);
+			ITMDynamicFusionLogger::Instance().SetFocusCoordinates(focusCoordiantes);
 		}
 
 		if (killingModeEnabled) {
@@ -489,7 +490,7 @@ int main(int argc, char** argv) {
 		                                     false, saveAfterInitialProcessing, loadBeforeProcessing);
 // endregion ===========================================================================================================
 
-		//ITMVTKVisualizer::Instance().Run();
+		//ITMVisualizationWindowManager::Instance().Run();
 		UIEngine_BPO::Instance()->Run();
 		UIEngine_BPO::Instance()->Shutdown();
 
@@ -500,7 +501,7 @@ int main(int argc, char** argv) {
 		delete imageSource;
 		delete imuSource;
 
-		//ITMVTKVisualizer::Instance().ShutDown();
+		//ITMVisualizationWindowManager::Instance().ShutDown();
 // endregion ===========================================================================================================
 		return EXIT_SUCCESS;
 	} catch (std::exception& e) {

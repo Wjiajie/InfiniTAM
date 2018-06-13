@@ -15,13 +15,14 @@
 //#define OUTPUT_TRAJECTORY_QUATERNIONS
 
 #include "../../ORUtils/FileUtils.h"
+#include "../Engines/Manipulation/ITMSceneManipulation.h"
 
 using namespace ITMLib;
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(const ITMLibSettings* settings,
                                                                         const ITMRGBDCalib& calib, Vector2i imgSize_rgb,
-                                                                        Vector2i imgSize_d) {
+                                                                        Vector2i imgSize_d){
 
 	this->settings = settings;
 
@@ -30,9 +31,11 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(const IT
 	MemoryDeviceType memoryType = settings->GetMemoryType();
 	this->canonicalScene = new ITMScene<TVoxelCanonical, TIndex>(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
+
 	this->liveScene = new ITMScene<TVoxelLive, TIndex>(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 	const ITMLibSettings::DeviceType deviceType = settings->deviceType;
+	ITMDynamicFusionLogger::Instance().SetScenes(canonicalScene,liveScene);
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
@@ -112,29 +115,27 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::~ITMDynamicEngine() {
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveSceneToMesh(const char* objFileName) {
 	if (meshingEngine == nullptr) return;
-
 	ITMMesh* mesh = new ITMMesh(settings->GetMemoryType());
-
 	meshingEngine->MeshScene(mesh, canonicalScene);
 	mesh->WriteSTL(objFileName);
-
 	delete mesh;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveToFile() {
+	std::string nextFrameOutputPath = ITMDynamicFusionLogger::Instance().GetOutputDirectory();
 	// throws error if any of the saves fail
-	if (relocaliser) relocaliser->SaveToDirectory(this->nextFrameOutputPath + "/Relocaliser/");
+	if (relocaliser) relocaliser->SaveToDirectory(nextFrameOutputPath + "/Relocaliser/");
 	//TODO: CUDA scene support
-	canonicalScene->SaveToDirectoryCompact_CPU(this->nextFrameOutputPath + "/canonical");
-	liveScene->SaveToDirectoryCompact_CPU(this->nextFrameOutputPath + "/live");
-	std::cout << "Saving scenes in a compact way to '" << this->nextFrameOutputPath << "'." << std::endl;
-
+	canonicalScene->SaveToDirectoryCompact_CPU(nextFrameOutputPath + "/canonical");
+	liveScene->SaveToDirectoryCompact_CPU(nextFrameOutputPath + "/live");
+	std::cout << "Saving scenes in a compact way to '" << nextFrameOutputPath << "'." << std::endl;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::LoadFromFile() {
-	std::string relocaliserInputDirectory = this->nextFrameOutputPath + "Relocaliser/";
+	std::string nextFrameOutputPath = ITMDynamicFusionLogger::Instance().GetOutputDirectory();
+	std::string relocaliserInputDirectory = nextFrameOutputPath + "Relocaliser/";
 
 	////TODO: add factory for relocaliser and rebuild using config from relocaliserOutputDirectory + "config.txt"
 	////TODO: add proper management of case when scene load fails (keep old scene or also reset relocaliser)
@@ -162,9 +163,9 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::LoadFromFile() {
 
 	try // load scene
 	{
-		std::cout << "Loading scenes from '" << this->nextFrameOutputPath << "'." << std::endl;
-		canonicalScene->LoadFromDirectoryCompact_CPU(this->nextFrameOutputPath + "/canonical");
-		liveScene->LoadFromDirectoryCompact_CPU(this->nextFrameOutputPath + "/live");
+		std::cout << "Loading scenes from '" << nextFrameOutputPath << "'." << std::endl;
+		canonicalScene->LoadFromDirectoryCompact_CPU(nextFrameOutputPath + "/canonical");
+		liveScene->LoadFromDirectoryCompact_CPU(nextFrameOutputPath + "/live");
 		if(framesProcessed == 0){
 			framesProcessed = 1; //to skip initialization
 		}
@@ -262,93 +263,28 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
                                                                     ITMShortImage* rawDepthImage,
                                                                     ITMIMUMeasurement* imuMeasurement) {
 
-	// prepare image and turn it into a depth image
-	if (imuMeasurement == nullptr)
-		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useThresholdFilter,
-		                        settings->useBilateralFilter, false, false);
-	else
-		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useThresholdFilter,
-		                        settings->useBilateralFilter, imuMeasurement, false, false);
-
-	if (!mainProcessingActive) return ITMTrackingState::TRACKING_FAILED;
-
-	// tracking
-	ORUtils::SE3Pose oldPose(*(trackingState->pose_d));
-	if (trackingActive) cameraTrackingController->Track(trackingState, view);
-
-	ITMTrackingState::TrackingResult adjustedTrackingResult = ITMTrackingState::TRACKING_GOOD;
-
-	switch (settings->behaviourOnFailure) {
-		case ITMLibSettings::FAILUREMODE_RELOCALISE:
-			//relocalisation
-			adjustedTrackingResult = trackingState->trackerResult;
-			if (adjustedTrackingResult == ITMTrackingState::TRACKING_GOOD && relocalisationCount > 0)
-				relocalisationCount--;
-
-			view->depth->UpdateHostFromDevice();
-
-			{
-				int NN;
-				float distances;
-				//find and add keyframe, if necessary
-				bool hasAddedKeyframe = relocaliser->ProcessFrame(view->depth, trackingState->pose_d, 0, 1, &NN,
-				                                                  &distances,
-				                                                  adjustedTrackingResult ==
-				                                                  ITMTrackingState::TRACKING_GOOD &&
-				                                                  relocalisationCount == 0);
-
-				//frame not added and tracking failed -> we need to relocalise
-				if (!hasAddedKeyframe && adjustedTrackingResult == ITMTrackingState::TRACKING_FAILED) {
-					relocalisationCount = 10;
-
-					// Reset previous rgb frame since the rgb image is likely different than the one acquired when setting the keyframe
-					view->rgb_prev->Clear();
-
-					const FernRelocLib::PoseDatabase::PoseInScene& keyframe = relocaliser->RetrievePose(NN);
-					trackingState->pose_d->SetFrom(&keyframe.pose);
-
-					denseMapper->UpdateVisibleList(view, trackingState, liveScene, renderState_live, true);
-
-					cameraTrackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine,
-					                                  renderState_live);
-					cameraTrackingController->Track(trackingState, view);
-
-					adjustedTrackingResult = trackingState->trackerResult;
-				}
-			}
-			break;
-		case ITMLibSettings::FAILUREMODE_STOP_INTEGRATION:
-			if (trackingState->trackerResult != ITMTrackingState::TRACKING_FAILED)
-				adjustedTrackingResult = trackingState->trackerResult;
-			else adjustedTrackingResult = ITMTrackingState::TRACKING_POOR;
-			break;
-		default:
-			break;
-	}
-
-
-	bool didFusion = false;
-	if ((adjustedTrackingResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) &&
+	BeginProcessingFrame(rgbImage,rawDepthImage,imuMeasurement);
+	if(!mainProcessingActive) return ITMTrackingState::TRACKING_FAILED;
+	fusionSucceeded = false;
+	if ((lastTrackerResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) &&
 	    (relocalisationCount == 0)) {
 		if (framesProcessed > 0) {
-			denseMapper->ProcessFrame(view, trackingState, canonicalScene, liveScene, renderState_live,
-			                          recordWarpsForNextFrame, recordWarp1DSilcesForNextFrame,
-			                          recordWarp2DSlicesForNextFrame, nextFrameOutputPath);
+			denseMapper->ProcessFrame(view, trackingState, canonicalScene, liveScene, renderState_live);
 		} else {
 			denseMapper->ProcessInitialFrame(view, trackingState, canonicalScene, liveScene, renderState_live);
 		}
-		didFusion = true;
+		fusionSucceeded = true;
 		if (framesProcessed > 50) trackingInitialised = true;
 		framesProcessed++;
 	}
 
-	if (adjustedTrackingResult == ITMTrackingState::TRACKING_GOOD ||
-	    adjustedTrackingResult == ITMTrackingState::TRACKING_POOR) {
-		if (!didFusion) denseMapper->UpdateVisibleList(view, trackingState, liveScene, renderState_live);
+	if (lastTrackerResult == ITMTrackingState::TRACKING_GOOD ||
+			lastTrackerResult == ITMTrackingState::TRACKING_POOR) {
+		if (!fusionSucceeded) denseMapper->UpdateVisibleList(view, trackingState, liveScene, renderState_live);
 
 		// raycast to renderState_live for tracking and free visualisation
 		cameraTrackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine, renderState_live);
-	} else *trackingState->pose_d = oldPose;
+	} else *trackingState->pose_d = previousFramePose;
 
 #ifdef OUTPUT_TRAJECTORY_QUATERNIONS
 	const ORUtils::SE3Pose *p = trackingState->pose_d;
@@ -362,7 +298,7 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
 	fprintf(stderr, "%f %f %f %f %f %f %f\n", t[0], t[1], t[2], q[1], q[2], q[3], q[0]);
 #endif
 
-	return adjustedTrackingResult;
+	return lastTrackerResult;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -537,7 +473,54 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrame
 		ITMShortImage* rawDepthImage,
 		ITMIMUMeasurement* imuMeasurement) {
 
-	//TODO: refactor to avoid DRY violations
+	BeginProcessingFrame(rgbImage,rawDepthImage,imuMeasurement);
+	fusionSucceeded = false;
+	canFuse = false;
+	if ((lastTrackerResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) &&
+	    (relocalisationCount == 0)) {
+		canFuse = true;
+		denseMapper->BeginProcessingFrameInStepByStepMode(view, trackingState, canonicalScene, liveScene,
+		                                                  renderState_live);
+	}
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::UpdateCurrentFrameSingleStep() {
+
+	bool trackingNotFinished;
+	if (canFuse) {
+		trackingNotFinished = denseMapper->TakeNextStepInStepByStepMode(canonicalScene, liveScene, renderState_live);
+		if (trackingNotFinished) {
+			fusionSucceeded = true;
+			if (framesProcessed > 50) trackingInitialised = true;
+			framesProcessed++;
+		}
+	} else {
+		trackingNotFinished = false;
+	}
+	if (!trackingNotFinished) {
+		if (lastTrackerResult == ITMTrackingState::TRACKING_GOOD ||
+		    lastTrackerResult == ITMTrackingState::TRACKING_POOR) {
+			if (!fusionSucceeded) denseMapper->UpdateVisibleList(view, trackingState, liveScene, renderState_live);
+
+			// raycast to renderState_live for tracking and free visualisation
+			cameraTrackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine,
+			                                  renderState_live);
+		} else *trackingState->pose_d = previousFramePose;
+	}
+	return trackingNotFinished;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+ITMTrackingState::TrackingResult ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetStepByStepTrackingResult() {
+	return this->lastTrackerResult;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrame(ITMUChar4Image* rgbImage,
+                                                                                 ITMShortImage* rawDepthImage,
+                                                                                 ITMIMUMeasurement* imuMeasurement) {
+
 	// prepare image and turn it into a depth image
 	if (imuMeasurement == nullptr)
 		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useThresholdFilter,
@@ -546,101 +529,68 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrame
 		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useThresholdFilter,
 		                        settings->useBilateralFilter, imuMeasurement, false, false);
 
-	if (!mainProcessingActive) return;
+	if (!mainProcessingActive){
+		lastTrackerResult = ITMTrackingState::TRACKING_FAILED;
+		return;
+	}
 
 	// tracking
-	stepByStepOldPose = ORUtils::SE3Pose(*(trackingState->pose_d));
+	previousFramePose = (*(trackingState->pose_d));
 	if (trackingActive) cameraTrackingController->Track(trackingState, view);
 
-	stepByStepTrackerResult = ITMTrackingState::TRACKING_GOOD;
+	lastTrackerResult = ITMTrackingState::TRACKING_GOOD;
+
 	switch (settings->behaviourOnFailure) {
 		case ITMLibSettings::FAILUREMODE_RELOCALISE:
-			stepByStepTrackerResult = trackingState->trackerResult;
+			//relocalisation
+			lastTrackerResult = trackingState->trackerResult;
+			if (lastTrackerResult == ITMTrackingState::TRACKING_GOOD && relocalisationCount > 0)
+				relocalisationCount--;
+
+			view->depth->UpdateHostFromDevice();
+
+			{
+				int NN;
+				float distances;
+				//find and add keyframe, if necessary
+				bool hasAddedKeyframe = relocaliser->ProcessFrame(view->depth, trackingState->pose_d, 0, 1, &NN,
+				                                                  &distances,
+				                                                  lastTrackerResult ==
+				                                                  ITMTrackingState::TRACKING_GOOD &&
+				                                                  relocalisationCount == 0);
+
+				//frame not added and tracking failed -> we need to relocalise
+				if (!hasAddedKeyframe && lastTrackerResult == ITMTrackingState::TRACKING_FAILED) {
+					relocalisationCount = 10;
+
+					// Reset previous rgb frame since the rgb image is likely different than the one acquired when setting the keyframe
+					view->rgb_prev->Clear();
+
+					const FernRelocLib::PoseDatabase::PoseInScene& keyframe = relocaliser->RetrievePose(NN);
+					trackingState->pose_d->SetFrom(&keyframe.pose);
+
+					denseMapper->UpdateVisibleList(view, trackingState, liveScene, renderState_live, true);
+
+					cameraTrackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine,
+					                                  renderState_live);
+					cameraTrackingController->Track(trackingState, view);
+
+					lastTrackerResult = trackingState->trackerResult;
+				}
+			}
 			break;
 		case ITMLibSettings::FAILUREMODE_STOP_INTEGRATION:
 			if (trackingState->trackerResult != ITMTrackingState::TRACKING_FAILED)
-				stepByStepTrackerResult = trackingState->trackerResult;
-			else stepByStepTrackerResult = ITMTrackingState::TRACKING_POOR;
+				lastTrackerResult = trackingState->trackerResult;
+			else lastTrackerResult = ITMTrackingState::TRACKING_POOR;
 			break;
 		default:
 			break;
 	}
 
-	//relocalisation
-	if (settings->behaviourOnFailure == ITMLibSettings::FAILUREMODE_RELOCALISE) {
-		if (stepByStepTrackerResult == ITMTrackingState::TRACKING_GOOD && relocalisationCount > 0)
-			relocalisationCount--;
 
-		int NN;
-		float distances;
-		view->depth->UpdateHostFromDevice();
 
-		//find and add keyframe, if necessary
-		bool hasAddedKeyframe = relocaliser->ProcessFrame(view->depth, trackingState->pose_d, 0, 1, &NN, &distances,
-		                                                  stepByStepTrackerResult == ITMTrackingState::TRACKING_GOOD &&
-		                                                  relocalisationCount == 0);
 
-		//frame not added and tracking failed -> we need to relocalise
-		if (!hasAddedKeyframe && stepByStepTrackerResult == ITMTrackingState::TRACKING_FAILED) {
-			relocalisationCount = 10;
-
-			// Reset previous rgb frame since the rgb image is likely different than the one acquired when setting the keyframe
-			view->rgb_prev->Clear();
-
-			const FernRelocLib::PoseDatabase::PoseInScene& keyframe = relocaliser->RetrievePose(NN);
-			trackingState->pose_d->SetFrom(&keyframe.pose);
-
-			denseMapper->UpdateVisibleList(view, trackingState, liveScene, renderState_live, true);
-			cameraTrackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine,
-			                                  renderState_live);
-			cameraTrackingController->Track(trackingState, view);
-
-			stepByStepTrackerResult = trackingState->trackerResult;
-		}
-	}
-
-	stepByStepDidFusion = false;
-	canFuseInStepByStepMode = false;
-	if ((stepByStepTrackerResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) &&
-	    (relocalisationCount == 0)) {
-		canFuseInStepByStepMode = true;
-		denseMapper->BeginProcessingFrameInStepByStepMode(view, trackingState, canonicalScene, liveScene,
-		                                                  renderState_live, this->recordWarp1DSilcesForNextFrame,
-		                                                  this->recordWarp2DSlicesForNextFrame, recordWarpsForNextFrame,
-		                                                  nextFrameOutputPath);
-	}
-}
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::UpdateCurrentFrameSingleStep() {
-
-	bool trackingNotFinished;
-	if (canFuseInStepByStepMode) {
-		trackingNotFinished = denseMapper->TakeNextStepInStepByStepMode(canonicalScene, liveScene, renderState_live);
-		if (trackingNotFinished) {
-			stepByStepDidFusion = true;
-			if (framesProcessed > 50) trackingInitialised = true;
-			framesProcessed++;
-		}
-	} else {
-		trackingNotFinished = false;
-	}
-	if (!trackingNotFinished) {
-		if (stepByStepTrackerResult == ITMTrackingState::TRACKING_GOOD ||
-		    stepByStepTrackerResult == ITMTrackingState::TRACKING_POOR) {
-			if (!stepByStepDidFusion) denseMapper->UpdateVisibleList(view, trackingState, liveScene, renderState_live);
-
-			// raycast to renderState_live for tracking and free visualisation
-			cameraTrackingController->Prepare(trackingState, liveScene, view, liveVisualisationEngine,
-			                                  renderState_live);
-		} else *trackingState->pose_d = stepByStepOldPose;
-	}
-	return trackingNotFinished;
-}
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMTrackingState::TrackingResult ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetStepByStepTrackingResult() {
-	return this->stepByStepTrackerResult;
 }
 
 // endregion ===========================================================================================================

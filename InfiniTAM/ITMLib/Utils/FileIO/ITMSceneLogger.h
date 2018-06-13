@@ -112,7 +112,7 @@ public:
 	ITMSceneLogger(ITMScene<TVoxelLive, TIndex>* liveScene,
 	               std::string path);
 
-	ITMSceneLogger() = delete;//disable default constructor generation
+	ITMSceneLogger();
 	virtual ~ITMSceneLogger();
 
 // endregion

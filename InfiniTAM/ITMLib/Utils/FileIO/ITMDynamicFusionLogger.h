@@ -19,42 +19,101 @@
 #include "ITMSceneLogger.h"
 #include "../Visualization/ITMScene2DSliceVisualizer.h"
 #include "../Visualization/ITMScene1DSliceVisualizer.h"
+#include "../../ITMLibDefines.h"
 
 namespace ITMLib {
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+
 class ITMDynamicFusionLogger {
 public:
-	ITMDynamicFusionLogger();
-	~ITMDynamicFusionLogger() = default;//not intended to be extended, so not virtual
+// where to save the images within the output directory
+	static const std::string iterationFramesFolderName;
+	static const std::string liveIterationFramesFolderName;
+	static const std::string canonicalSceneRasterizedFolderName;
+	static const std::string liveSceneRasterizedFolderName;
 
-	void
-	InitializeRecording(ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMScene <TVoxelLive, TIndex>*& liveScene,
-		                    std::string outputDirectory, bool hasFocusCoordinates, Vector3i focusCoordinates,
-		                    bool saveLiveScene2DSlicesAsImages, bool saveCanonicalScene2DSlicesAsImages, bool recordWarps,
-		                    bool recordScene1DSlicesWithUpdates, bool recordScene2DSlicesWithUpdates);
+	static ITMDynamicFusionLogger& Instance(){
+		static ITMDynamicFusionLogger instance;
+		return instance;
+	}
 
-	void InitializeWarp2DSliceRecording(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                    ITMScene<TVoxelLive, TIndex>* sourceLiveScene);
+// region ============================= SETTERS ========================================================================
+
+	void SetScenes(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene,ITMScene<ITMVoxelLive, ITMVoxelIndex>* liveScene);
+	void SetOutputDirectory(std::string outputDirectory);
+	void SetFocusCoordinates(Vector3i focusCoordinates);
+
+	void TurnRecordingLiveSceneAs2DSlicesOn();
+	void TurnRecordingLiveSceneAs2DSlicesOff();
+	void ToggleRecordingLiveSceneAs2DSlices();
+	void TurnRecordingCanonicalSceneAs2DSlicesOn();
+	void TurnRecordingCanonicalSceneAs2DSlicesOff();
+	void TurnRecordingScene1DSlicesWithUpdatesOn();
+	void TurnRecordingScene1DSlicesWithUpdatesOff();
+	void TurnRecordingScene2DSlicesWithUpdatesOn();
+	void TurnRecordingScene2DSlicesWithUpdatesOff();
+	void ToggleRecordingScene2DSlicesWithUpdates();
+	void TurnRecording3DSceneAndWarpProgressionOn();
+	void TurnRecording3DSceneAndWarpProgressionOff();
+	void ToggleRecording3DSceneAndWarpProgression();
+	void TurnRecordingEnergiesToFilesOn();
+	void TurnRecordingEnergiesToFilesOff();
+	void TurnPlottingEnergiesOn();
+	void TurnPlottingEnergiesOff();
+
+// endregion ===========================================================================================================
+// region ============================= GETTERS ========================================================================
+
+	std::string GetOutputDirectory() const;
+
+	bool IsRecordingLiveSceneAs2DSlices() const;
+	bool IsRecordingCanonicalSceneAs2DSlices() const;
+	bool IsRecordingScene1DSlicesWithUpdates() const;
+	bool IsRecordingScene2DSlicesWithUpdates() const;
+	bool IsRecording3DSceneAndWarpProgression() const;
+	bool IsRecordingEnergiesToFile() const;
+	bool IsPlottingEnergies() const;
+
+// endregion ===========================================================================================================
+	void InitializeFrameRecording();
+
+
 	void SaveWarpSlices(int iteration);
 	void SaveWarps();
-	void FinalizeRecording(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene);
-	void RecordStatistics(double totalDataEnergy,
-	                      double totalLevelSetEnergy,
-	                      double totalKillingEnergy,
-	                      double totalSmoothnessEnergy,
-	                      double totalEnergy);
+	void FinalizeRecording(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene, ITMScene<ITMVoxelLive, ITMVoxelIndex>*& liveScene);
+	void RecordStatisticsToFile(double totalDataEnergy,
+	                            double totalLevelSetEnergy,
+	                            double totalKillingEnergy,
+	                            double totalSmoothnessEnergy,
+	                            double totalEnergy);
 	bool IsRecordingWarp2DSlices();
 	bool IsRecordingWarps();
 	void LogHighlight(int hash, int locId, ITMHighlightIterationInfo info);
-private:
-	// internal file intput/output
-	ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>* scene2DSliceVisualizer;
-	ITMScene1DSliceVisualizer* scene1DSliceVisualizer;
-	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>* scene3DLogger;
-	ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
-	ITMScene<TVoxelLive, TIndex>* liveScene;
 
+	ITMDynamicFusionLogger(ITMDynamicFusionLogger const&) = delete;
+	void operator=(ITMDynamicFusionLogger const&) = delete;
+
+
+private:
+	ITMDynamicFusionLogger();
+	~ITMDynamicFusionLogger();
+
+	void InitializeWarp2DSliceRecording(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene,
+	                                    ITMScene<ITMVoxelLive, ITMVoxelIndex>* sourceLiveScene);
+	std::string GetOutputDirectoryFor2DSceneSlicesWithWarps() const;
+	std::string GetOutputDirectoryFor2DLiveSceneSliceProgression() const;
+	std::string GetOutputDirectoryPrefixForLiveSceneAsSlices() const;
+	std::string GetOutputDirectoryPrefixForCanonicalSceneAsSlices() const;
+	void MakeOrClearOutputDirectoriesFor2DSceneSlices() const;
+
+	// various loggers & visualizers
+	ITMScene2DSliceVisualizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex> scene2DSliceVisualizer;
+	ITMScene1DSliceVisualizer scene1DSliceVisualizer;
+	ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* scene3DLogger = nullptr;
+
+	// internal references to the scenes
+	ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene = nullptr;
+	ITMScene<ITMVoxelLive, ITMVoxelIndex>* liveScene = nullptr;
 
 	std::ofstream energyStatisticsFile;
 
@@ -62,10 +121,14 @@ private:
 	cv::Mat blank;
 	cv::Mat liveImgTemplate;
 
-	// flags
+	// state flags
+	bool recordingLiveSceneAs2DSlices = false;
+	bool recordingCanonicalSceneAs2DSlices = false;
 	bool recordingScene2DSlicesWithUpdates = false;
 	bool recordingScene1DSlicesWithUpdates = false;
-	bool recordingWarps = false;
+	bool recording3DSceneAndWarpProgression = false;
+	bool recordingEnergiesToFile = true;
+	bool plottingEnergies = false;
 	bool hasFocusCoordinates = false;
 
 	std::string outputDirectory;

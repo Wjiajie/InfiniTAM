@@ -76,8 +76,7 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMappe
 				ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex>
 						(settings->deviceType)),
 		sceneMotionTracker(
-				ITMSceneMotionTrackerFactory::MakeSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(settings,
-				                                                                                          logger)),
+				ITMSceneMotionTrackerFactory::MakeSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(settings)),
 		swappingEngine(settings->swappingMode != ITMLibSettings::SWAPPINGMODE_DISABLED
 		               ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxelCanonical, TIndex>(settings->deviceType)
 		               : nullptr),
@@ -134,8 +133,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessInitialF
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProcessing(const ITMView* view, const ITMTrackingState* trackingState,
                                                                                       ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
-                                                                                      ITMRenderState* renderState, bool recordWarps, bool recordScene1DSlicesWithUpdates,
-                                                                                      bool recordScene2DSlicesWithUpdates, std::string outputDirectory) {
+                                                                                      ITMRenderState* renderState) {
 
 	if (analysisFlags.simpleSceneExperimentModeEnabled) {
 		GenerateTestScene01(canonicalScene);
@@ -153,10 +151,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProce
 	sceneReconstructor->WarpScene(canonicalScene, liveScene, 0, 1, true, focusCoordinates);
 	bench::StopTimer("TrackMotion_35_WarpLiveScene");
 
-
-	logger.InitializeRecording(canonicalScene, liveScene, outputDirectory, analysisFlags.hasFocusCoordinates,
-	                           focusCoordinates, false, false, recordWarps, recordScene1DSlicesWithUpdates,
-	                           recordScene2DSlicesWithUpdates);
+	ITMDynamicFusionLogger::Instance().InitializeFrameRecording();
 	maxVectorUpdate = std::numeric_limits<float>::infinity();
 };
 
@@ -165,7 +160,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeProcess
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
 		ITMRenderState* renderState) {
 
-	logger.FinalizeRecording(canonicalScene, liveScene);
+	ITMDynamicFusionLogger::Instance().FinalizeRecording(canonicalScene, liveScene);
 
 	//fuse warped live into canonical
 	bench::StartTimer("FuseLiveIntoCanonicalSdf");
@@ -173,24 +168,24 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeProcess
 	bench::StopTimer("FuseLiveIntoCanonicalSdf");
 
 	bench::StartTimer("AddFramewiseWarpToWarp");
-	sceneMotionTracker->AddFramewiseWarpToWarp(canonicalScene,true);
+	sceneMotionTracker->AddFramewiseWarpToWarp(canonicalScene, true);
 	bench::StopTimer("AddFramewiseWarpToWarp");
 
 	ProcessSwapping(canonicalScene, renderState);
 };
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(const ITMView* view, const ITMTrackingState* trackingState,
-                                                                              ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
-                                                                              ITMRenderState* renderState, bool recordWarps, bool recordScene1DSlicesWithUpdates,
-                                                                              bool recordScene2DSlicesWithUpdates, std::string outputPath) {
+void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(const ITMView* view,
+                                                                              const ITMTrackingState* trackingState,
+                                                                              ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+                                                                              ITMScene<TVoxelLive, TIndex>* liveScene,
+                                                                              ITMRenderState* renderState) {
 
 
 	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Cannot track motion for full frame when in step-by-step mode");
 	}
-	InitializeProcessing(view, trackingState, canonicalScene, liveScene, renderState, recordWarps,
-	                     recordScene1DSlicesWithUpdates, recordScene2DSlicesWithUpdates, outputPath);
+	InitializeProcessing(view, trackingState, canonicalScene, liveScene, renderState);
 	bench::StartTimer("TrackMotion");
 	TrackFrameMotion(canonicalScene, liveScene);
 	bench::StopTimer("TrackMotion");
@@ -236,10 +231,10 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
 
 	//ping-pong between the SDF field indices in the live frame (preserves memory locality during traversal)
-	sourceSdfIndex = (iteration+1) % 2;
+	sourceSdfIndex = (iteration + 1) % 2;
 	targetSdfIndex = iteration % 2;
 
-	logger.SaveWarpSlices(iteration);
+	ITMDynamicFusionLogger::Instance().SaveWarpSlices(iteration);
 	std::cout << red << "Iteration: " << iteration << reset << std::endl;
 	//** warp update gradient computation
 	PrintOperationStatus("Calculating warp energy gradient...");
@@ -263,9 +258,9 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 			"Updating live frame SDF by mapping from raw live SDF to new warped SDF based on latest warp...");
 	bench::StartTimer("TrackMotion_35_WarpLiveScene");
 	sceneReconstructor->UpdateWarpedScene(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex,
-	                                  analysisFlags.hasFocusCoordinates, focusCoordinates);
+	                                      analysisFlags.hasFocusCoordinates, focusCoordinates);
 	bench::StopTimer("TrackMotion_35_WarpLiveScene");
-	logger.SaveWarps();
+	ITMDynamicFusionLogger::Instance().SaveWarps();
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -299,17 +294,15 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessSwapping
 // region ======================================= STEP-BY-STEP MODE ====================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrameInStepByStepMode(const ITMView* view, const ITMTrackingState* trackingState,
-                                                                                                      ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-                                                                                                      ITMScene<TVoxelLive, TIndex>* liveScene, ITMRenderState* renderState,
-                                                                                                      bool recordWarps, bool recordWarp1DSlice, bool recordWarp2DSlice,
-                                                                                                      std::string outputPath) {
+void
+ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrameInStepByStepMode(const ITMView* view, const ITMTrackingState* trackingState,
+                                                                                                 ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+                                                                                                 ITMScene<TVoxelLive, TIndex>* liveScene, ITMRenderState* renderState) {
 	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Already in step-by-step tracking mode, cannot restart.");
 	}
 	inStepByStepProcessingMode = true;
-	InitializeProcessing(view, trackingState, canonicalScene, liveScene, renderState, recordWarps, recordWarp1DSlice,
-	                     recordWarp2DSlice, outputPath);
+	InitializeProcessing(view, trackingState, canonicalScene, liveScene, renderState);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

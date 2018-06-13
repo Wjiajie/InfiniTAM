@@ -56,8 +56,8 @@ private:
 
 			std::cout << std::endl;
 			printVoxelResult = true;
-			if (logger.IsRecordingWarps()) {
-				recordVoxelResult = true;
+			if (ITMDynamicFusionLogger::Instance().IsRecordingScene2DSlicesWithUpdates()) {
+				recordVoxelResult = true; //TODO: legacy, revise -Greg
 			}
 		}
 	}
@@ -67,13 +67,11 @@ public:
 	// region ========================================= CONSTRUCTOR ====================================================
 	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor(
 			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Parameters parameters,
-			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Switches switches,
-			ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>& logger) :
+			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Switches switches) :
 			liveCache(),
 			canonicalCache(),
 			parameters(parameters),
-			switches(switches),
-			logger(logger) {}
+			switches(switches){}
 
 	void PrepareForOptimization(ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
 	                            ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, int sourceSdfIndex,
@@ -305,13 +303,14 @@ public:
 			          << " Gradients shown are negative." << reset << std::endl << std::endl;
 
 			if (recordVoxelResult) {
+				//TODO: legacy, revise/remove -Greg
 				int x = 0, y = 0, z = 0, hash = 0, locId = 0;
 				GetVoxelHashLocals(hash, x, y, y, z, liveHashEntries, liveCache, position);
 				hash -= 1;
 				std::array<ITMNeighborVoxelIterationInfo, 9> neighbors;
 				FindHighlightNeighborInfo(neighbors, position, hash, canonicalVoxels,
 				                          canonicalHashEntries, liveVoxels, liveHashEntries, liveCache);
-				//TODO: get rid of iteration + frame fields in HighlightIterationInfo
+
 				ITMHighlightIterationInfo info =
 						{hash, locId, position, framewiseWarp, canonicalSdf, liveSdf,
 						 localEnergyGradient, localDataEnergyGradient, localLevelSetEnergyGradient,
@@ -320,7 +319,7 @@ public:
 						 localKillingEnergy, localTikhonovEnergy,
 						 liveSdfJacobian, liveSdfJacobian, liveSdfHessian, framewiseWarpJacobian,
 						 framewiseWarpHessian[0], framewiseWarpHessian[1], framewiseWarpHessian[2], neighbors, true};
-				logger.LogHighlight(hash, locId, info);
+				ITMDynamicFusionLogger::Instance().LogHighlight(hash, locId, info);
 			}
 		}
 		// endregion ===================================================================================================
@@ -337,8 +336,8 @@ public:
 		                      totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
 
 		//save all energies to file
-		logger.RecordStatistics(totalDataEnergy, totalLevelSetEnergy, totalKillingEnergy, totalSmoothnessEnergy,
-		                        totalEnergy);
+		ITMDynamicFusionLogger::Instance().RecordStatisticsToFile(
+				totalDataEnergy, totalLevelSetEnergy, totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
 
 
 		CalculateAndPrintAdditionalStatistics(
@@ -399,8 +398,6 @@ private:
 
 	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Parameters parameters;
 	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Switches switches;
-
-	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>& logger;
 
 };
 }// namespace ITMLib

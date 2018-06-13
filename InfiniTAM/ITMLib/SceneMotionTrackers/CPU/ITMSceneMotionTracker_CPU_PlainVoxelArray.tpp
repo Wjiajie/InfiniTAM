@@ -28,9 +28,8 @@ using namespace ITMLib;
 // region ================================ CONSTRUCTORS AND DESTRUCTORS ================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ITMSceneMotionTracker_CPU(
-		const ITMLibSettings* settings, ITMDynamicFusionLogger<TVoxelCanonical,TVoxelLive,ITMPlainVoxelArray>& logger)
-		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive,ITMPlainVoxelArray>(settings, logger){
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ITMSceneMotionTracker_CPU(const ITMLibSettings* settings)
+		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>(settings) {
 }
 // endregion ============================== END CONSTRUCTORS AND DESTRUCTORS============================================
 // region ===================================== CALCULATE GRADIENT SMOOTHING ===========================================

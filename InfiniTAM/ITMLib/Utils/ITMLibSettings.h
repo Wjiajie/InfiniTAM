@@ -82,11 +82,6 @@ namespace ITMLib
 		/// Dynamic Fusion parameters
 
 		struct AnalysisSettings{
-			bool recordCanonicalScene2DSlicesAsImages;// = false;
-			bool recordLiveScene2DSlicesAsImages;// = false;
-			bool record3DWarps;
-			bool recordScene1DSlicesWithUpdates;
-			bool recordScene2DSlicesWithUpdates;
 			std::string outputPath;
 			bool focusCoordinatesSpecified = false;
 			Vector3i focusCoordinates;

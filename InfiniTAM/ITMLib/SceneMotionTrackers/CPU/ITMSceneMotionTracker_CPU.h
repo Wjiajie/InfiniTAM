@@ -35,8 +35,7 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 class ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash> :
 		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash> {
 public:
-	explicit ITMSceneMotionTracker_CPU(const ITMLibSettings* settings,
-	                                   ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>& logger);
+	explicit ITMSceneMotionTracker_CPU(const ITMLibSettings* settings);
 	virtual ~ITMSceneMotionTracker_CPU() = default;
 
 	void ClearOutFramewiseWarp(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) override;
@@ -69,9 +68,7 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 class ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray> :
 		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray> {
 public:
-	explicit ITMSceneMotionTracker_CPU(
-			const ITMLibSettings* settings,
-			ITMDynamicFusionLogger<TVoxelCanonical,TVoxelLive, ITMPlainVoxelArray>& logger);
+	explicit ITMSceneMotionTracker_CPU(const ITMLibSettings* settings);
 	virtual ~ITMSceneMotionTracker_CPU() = default;
 
 	void ClearOutFramewiseWarp(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) override;

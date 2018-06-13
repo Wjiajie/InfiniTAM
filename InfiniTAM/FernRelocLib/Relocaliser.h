@@ -36,7 +36,7 @@ namespace FernRelocLib
 			processedImage2 = new ORUtils::Image<ElementType>(imgSize, MEMORYDEVICE_CPU);
 		}
 
-		~Relocaliser(void)
+		~Relocaliser()
 		{
 			delete encoding;
 			delete relocDatabase;

@@ -23,39 +23,48 @@
 #include <vtkRenderWindow.h>
 
 //local
-#include "ITMVTKVisualizer.h"
+#include "ITMVisualizationWindowManager.h"
 
 using namespace ITMLib;
 
-ITMVTKVisualizer::ITMVTKVisualizer() :
+ITMChartWindow::ITMChartWindow(const std::string& name, const std::string& title, int width, int height) :
 		view(vtkSmartPointer<vtkContextView>::New()),
-		chart(vtkSmartPointer<vtkChartXY>::New()) {
+		chart(vtkSmartPointer<vtkChartXY>::New()),
+		name(name){
 	renderWindow = view->GetRenderWindow();
-	renderWindow->SetSize(1024, 768);
+	renderWindow->SetWindowName(title.c_str());
+	renderWindow->SetSize(width, height);
 	view->GetRenderer()->SetBackground(1.0, 1.0, 1.0);
 	view->GetScene()->AddItem(chart);
 	interactor = view->GetInteractor();
 	interactor->Initialize();
 }
 
-bool ITMVTKVisualizer::Run() {
-	if (isRunning) return false;
-	isRunning = true;
-	thread = std::unique_ptr<std::thread>(new std::thread(&ITMVTKVisualizer::RunVTKView, this));
-	return true;
-}
 
-bool ITMVTKVisualizer::ShutDown() {
-	if (!isRunning) return false;
-	interactor->TerminateApp();
-	thread->join();
-	isRunning = false;
-}
-
-vtkSmartPointer<vtkChartXY> ITMVTKVisualizer::GetChart() {
+vtkSmartPointer<vtkChartXY> ITMChartWindow::GetChart() {
 	return chart;
 }
 
-void ITMVTKVisualizer::Update() {
+void ITMChartWindow::Update() {
 	renderWindow->Render();
+}
+
+ITMChartWindow::~ITMChartWindow() {
+	interactor->TerminateApp();
+}
+
+vtkSmartPointer<vtkRenderWindow> ITMChartWindow::GetRenderWindow() {
+	return this->renderWindow;
+}
+
+ITMChartWindow*
+ITMVisualizationWindowManager::MakeWindow(const std::string& name, const std::string& title, int width, int height) {
+	windows.emplace(name, ITMChartWindow(name, title, width, height));
+	auto it = windows.find(name);
+	return it == windows.end() ? nullptr : &(windows.find(name)->second);
+}
+
+ITMChartWindow* ITMVisualizationWindowManager::GetWindow(const std::string& name) {
+	auto it = windows.find(name);
+	return it == windows.end() ? nullptr : &(windows.find(name)->second);
 }

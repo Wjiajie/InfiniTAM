@@ -22,6 +22,7 @@
 #include "ITMVisualizationCommon.h"
 #include "../ITMMath.h"
 #include "../../Objects/Scene/ITMScene.h"
+#include "ITMVisualizationWindowManager.h"
 
 template<typename T>
 class vtkSmartPointer;
@@ -31,8 +32,7 @@ class vtkChartXY;
 namespace ITMLib{
 class ITMScene1DSliceVisualizer {
 public:
-	ITMScene1DSliceVisualizer(Vector3i focusCoordinate, Axis axis, unsigned int voxelRange,
-		                          std::string imageOutputDirectory);
+	ITMScene1DSliceVisualizer(Vector3i focusCoordinate, Axis axis, unsigned int voxelRange);
 	~ITMScene1DSliceVisualizer() = default;
 
 
@@ -42,19 +42,22 @@ public:
 	void Draw1DWarpUpdateVector(ITMScene <TVoxel, TIndex>* scene, Vector4i color);
 	template<typename TVoxel, typename TIndex>
 	void Plot1DIndexedSceneSlice(ITMScene<TVoxel, TIndex>* scene, Vector4i color, double width, int fieldIndex);
-
+	void SaveScreenshot(std::string path);
 
 
 private:
 	template<typename TVoxel, typename TIndex, typename TGetSDFFunctor>
 	void Plot1DSceneSliceHelper(ITMScene <TVoxel, TIndex>* scene, Vector4i color, double width);
 
+	ITMChartWindow* window;
+
 	const Vector3i focusCoordinate;
 	const Axis axis;
 	const int rangeStartVoxelIndex;
 	const int rangeEndVoxelIndex;
 	const unsigned int voxelRange;
-	const std::string imageOutputDirectory;
+
+
 };
 
 

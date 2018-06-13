@@ -32,11 +32,6 @@ class ITMScene2DSliceVisualizer {
 public:
 
 
-	// where to save the images within the output directory
-	static const std::string iterationFramesFolderName;
-	static const std::string liveIterationFramesFolderName;
-	static const std::string canonicalSceneRasterizedFolderName;
-	static const std::string liveSceneRasterizedFolderName;
 
 	static float SdfToShadeValue(float sdf);
 
@@ -46,26 +41,23 @@ public:
 
 	virtual ~ITMScene2DSliceVisualizer() = default;
 
-	void MakeOrClearOutputDirectories() const;
-	std::string GetOutputDirectoryForWarps() const;
-	std::string GetOutputDirectoryForWarpedLiveScenes() const;
-	void SaveLiveSceneSlicesAs2DImages_AllDirections(ITMScene <TVoxelLive, TIndex>* scene);
-	void SaveLiveSceneSlicesAs2DImages_AllDirections(ITMScene <TVoxelCanonical, TIndex>* scene);
+	Plane GetPlane() const;
+
+	void SaveLiveSceneSlicesAs2DImages_AllDirections(
+			ITMScene <TVoxelLive, TIndex>* scene, std::string pathWithoutPostfix);
+	void SaveCanonicalSceneSlicesAs2DImages_AllDirections(
+			ITMScene <TVoxelCanonical, TIndex>* scene, std::string pathWithoutPostfix);
 	void SaveCanonicalSceneSlicesAs2DImages(ITMScene <TVoxelCanonical, TIndex>* scene,
-	                                        Axis axis, std::string pathPostfix);
+	                                        Axis axis, std::string path);
 	void SaveLiveSceneSlicesAs2DImages(ITMScene <TVoxelLive, TIndex>* scene,
-	                                   Axis axis, std::string pathPostfix);
+	                                   Axis axis, std::string path);
 
 	cv::Mat DrawCanonicalSceneImageAroundPoint(ITMScene <TVoxelCanonical, TIndex>* scene);
-	cv::Mat DrawLiveSceneImageAroundPoint(
-			ITMScene <TVoxelLive, TIndex>* scene, int fieldIndex);
+	cv::Mat DrawLiveSceneImageAroundPoint(ITMScene <TVoxelLive, TIndex>* scene, int fieldIndex);
 	cv::Mat DrawWarpedSceneImageAroundPoint(ITMScene <TVoxelCanonical, TIndex>* scene);
 
 	void MarkWarpedSceneImageAroundFocusPoint(ITMScene <TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn);
 	void MarkWarpedSceneImageAroundPoint(ITMScene <TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn, Vector3i positionOfVoxelToMark);
-
-
-
 
 	const Vector3i focusCoordinate;
 	const std::string outputDirectory;
@@ -89,8 +81,6 @@ protected:
 	bool IsVoxelInImageRange(int x, int y, int z, Plane plane) const;
 	bool IsVoxelBlockInImageRange(Vector3i blockVoxelCoords, Plane plane) const;
 	bool IsVoxelBlockInImageRangeTolerance(Vector3i blockVoxelCoords, int tolerance, Plane plane) const;
-
-	void SetPlane(Plane plane);
 
 	static const bool absFillingStrategy;
 

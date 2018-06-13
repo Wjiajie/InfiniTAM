@@ -190,9 +190,6 @@ void AllocateHashEntriesUsingLists_SetVisibility_CPU(ITMScene<TVoxel, TIndex>* s
 	ITMHashEntry* hashTable = scene->index.GetEntries();
 
 	for (int hash = 0; hash < entryCount; hash++) {
-		if(hash == 0 || hash == 1924){
-			int i = 42;
-		}
 		unsigned char entryAllocType = entryAllocationTypes[hash];
 		switch (entryAllocType) {
 			case ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST:

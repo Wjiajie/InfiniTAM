@@ -67,7 +67,7 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
                               int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
                               bool startInStepByStep,
                               bool startRecordingWarp1DSlices, bool startRecordingWarp2DSlices,
-                              bool startRecordingWarps,
+                              bool startRecording3DSceneAndWarpProgression,
                               bool saveAfterFirstNFrames, bool loadBeforeProcessing) {
 	this->inStepByStepMode = startInStepByStep;
 	this->saveAfterAutoprocessing = saveAfterFirstNFrames;
@@ -77,9 +77,9 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 	this->currentColourMode = 0;
 	this->autoIntervalFrameCount = frameIntervalLength;
 
-	this->recordWarpsForNextFrame = startRecordingWarps;
-	this->recordWarp1DSlicesForNextFrame = startRecordingWarp1DSlices;
-	this->recordWarp2DSlicesForNextFrame = startRecordingWarp2DSlices;
+	if(startRecording3DSceneAndWarpProgression) ITMDynamicFusionLogger::Instance().TurnRecording3DSceneAndWarpProgressionOn();
+	if(startRecordingWarp1DSlices) ITMDynamicFusionLogger::Instance().TurnRecordingScene1DSlicesWithUpdatesOn();
+	if(startRecordingWarp2DSlices) ITMDynamicFusionLogger::Instance().TurnRecordingScene2DSlicesWithUpdatesOn();
 
 	this->colourModes_main.emplace_back("shaded greyscale", ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST);
 	this->colourModes_main.emplace_back("integrated colours", ITMMainEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME);
@@ -189,10 +189,9 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 
 	if (loadBeforeProcessing) {
 		auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>*>(mainEngine);
-		if (dynamicEngine != nullptr) {
-			dynamicEngine->nextFrameOutputPath = this->GenerateCurrentFrameOutputPath();
-		}
+		ITMDynamicFusionLogger::Instance().SetOutputDirectory(this->GenerateCurrentFrameOutputDirectory());
 		mainEngine->LoadFromFile();
+		SkipFrames(1);
 	}
 	printf("initialised.\n");
 }
@@ -216,10 +215,9 @@ void UIEngine_BPO::SkipFrames(int numberOfFramesToSkip) {
 
 
 void UIEngine_BPO::ProcessFrame() {
-
-	if (this->recordWarpsForNextFrame) {
+	if (ITMDynamicFusionLogger::Instance().IsRecording3DSceneAndWarpProgression()) {
 		std::cout << yellow << "***" << bright_cyan << "PROCESSING FRAME " << GetCurrentFrameIndex()
-		          << " (WITH RECORDING ON)" << yellow << "***" << reset << std::endl;
+		          << " (WITH RECORDING 3D SCENES ON)" << yellow << "***" << reset << std::endl;
 	} else {
 		std::cout << yellow << "***" << bright_cyan << "PROCESSING FRAME " << GetCurrentFrameIndex() << yellow << "***"
 		          << reset << std::endl;
@@ -233,21 +231,13 @@ void UIEngine_BPO::ProcessFrame() {
 		else imuSource->getMeasurement(inputIMUMeasurement);
 	}
 
+	ITMDynamicFusionLogger::Instance().SetOutputDirectory(this->GenerateCurrentFrameOutputDirectory());
 	RecordDepthAndRGBInputToImages();
 	RecordDepthAndRGBInputToVideo();
 
 	sdkResetTimer(&timer_instant);
 	sdkStartTimer(&timer_instant);
 	sdkStartTimer(&timer_average);
-
-	auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>*>(mainEngine);
-	if (dynamicEngine != nullptr) {
-		//TODO: modify in settings directly instead via a local reference (i.e. avoid copying variables around) -Greg
-		dynamicEngine->recordWarpsForNextFrame = this->recordWarpsForNextFrame;
-		dynamicEngine->recordWarp1DSilcesForNextFrame = this->recordWarp1DSlicesForNextFrame;
-		dynamicEngine->recordWarp2DSlicesForNextFrame = this->recordWarp2DSlicesForNextFrame;
-		dynamicEngine->nextFrameOutputPath = this->GenerateCurrentFrameOutputPath();
-	}
 
 	//actual processing on the mailEngine
 	if (imuSource != nullptr)
@@ -309,6 +299,7 @@ bool UIEngine_BPO::BeginStepByStepModeForFrame() {
 		else imuSource->getMeasurement(inputIMUMeasurement);
 	}
 
+	ITMDynamicFusionLogger::Instance().SetOutputDirectory(this->GenerateCurrentFrameOutputDirectory());
 	RecordDepthAndRGBInputToImages();
 	RecordDepthAndRGBInputToVideo();
 
@@ -328,7 +319,7 @@ std::string UIEngine_BPO::GenerateNextFrameOutputPath() const {
 	return path.string();
 }
 
-std::string UIEngine_BPO::GenerateCurrentFrameOutputPath() const {
+std::string UIEngine_BPO::GenerateCurrentFrameOutputDirectory() const {
 	fs::path path(std::string(this->outFolder) + "/Frame_" + std::to_string(GetCurrentFrameIndex()));
 	if (!fs::exists(path)) {
 		fs::create_directories(path);
@@ -406,13 +397,13 @@ void UIEngine_BPO::RecordDepthAndRGBInputToImages() {
 	}
 }
 
-void UIEngine_BPO::PrintProcessedFrame() const {
+void UIEngine_BPO::PrintProcessingFrameHeader() const {
 	std::cout << bright_cyan << "PROCESSING FRAME " << GetCurrentFrameIndex() + 1;
-	if (recordWarpsForNextFrame) {
-		std::cout << " [WARP UPDATE RECORDING: ON]";
+	if (ITMDynamicFusionLogger::Instance().IsRecording3DSceneAndWarpProgression()) {
+		std::cout << " [3D SCENE AND WARP UPDATE RECORDING: ON]";
 	}
-	if (recordWarp2DSlicesForNextFrame) {
-		std::cout << " [WARP UPDATE RASTERIZATION: ON]";
+	if (ITMDynamicFusionLogger::Instance().IsRecordingScene2DSlicesWithUpdates()) {
+		std::cout << " [2D SCENE SLICE & WARP UPDATE RECORDING: ON]";
 	}
 	std::cout << reset << std::endl;
 }

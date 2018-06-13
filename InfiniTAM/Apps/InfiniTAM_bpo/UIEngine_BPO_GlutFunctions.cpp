@@ -19,6 +19,7 @@
 #include "../../ITMLib/Core/ITMMultiEngine.h"
 #include "../../ITMLib/Core/ITMBasicEngine.h"
 #include "../../ITMLib/Core/ITMBasicSurfelEngine.h"
+#include "../../ITMLib/Utils/FileIO/ITMDynamicFusionLogger.h"
 
 
 #ifdef __APPLE__
@@ -164,11 +165,11 @@ void UIEngine_BPO::GlutDisplayFunction() {
 		Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
 		glRasterPos2f(-0.98f, -0.95f);
 		sprintf(str,
-		        "i: %d frames \t d: one step \t p: pause \t v: write video %s \t w: write warps %s \t Alt+w: log 2D warps %s",
+		        "i: %d frames \t d: one step \t p: pause \t v: write video %s \t w: log 3D warps %s \t Alt+w: log 2D warps %s",
 		        uiEngine->autoIntervalFrameCount,
 		        uiEngine->depthVideoWriter != nullptr ? "off" : "on",
-		        uiEngine->recordWarpsForNextFrame ? "off" : "on",
-		        uiEngine->recordWarp2DSlicesForNextFrame ? "off" : "on");
+		        ITMDynamicFusionLogger::Instance().IsRecording3DSceneAndWarpProgression()? "off" : "on",
+		        ITMDynamicFusionLogger::Instance().IsRecordingScene2DSlicesWithUpdates() ? "off" : "on");
 		Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
 	}
 	glutSwapBuffers();
@@ -264,7 +265,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 				uiEngine->mainLoopAction = UIEngine_BPO::PROCESS_VIDEO;
 				break;
 			case 'n':
-				uiEngine->PrintProcessedFrame();
+				uiEngine->PrintProcessingFrameHeader();
 				uiEngine->mainLoopAction = UIEngine_BPO::PROCESS_FRAME;
 				break;
 			case 'k':
@@ -320,13 +321,13 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 					uiEngine->outImageType[1] = ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST;
 
 					uiEngine->freeviewPose.SetFrom(uiEngine->mainEngine->GetTrackingState()->pose_d);
-					if (uiEngine->mainEngine->GetView() != NULL) {
+					if (uiEngine->mainEngine->GetView() != nullptr) {
 						uiEngine->freeviewIntrinsics = uiEngine->mainEngine->GetView()->calib.intrinsics_d;
 						uiEngine->outImage[0]->ChangeDims(uiEngine->mainEngine->GetView()->depth->noDims);
 					}
 
-					ITMMultiEngine<ITMVoxel, ITMVoxelIndex>* multiEngine = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMVoxelIndex>*>(uiEngine->mainEngine);
-					if (multiEngine != NULL) {
+					auto* multiEngine = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMVoxelIndex>*>(uiEngine->mainEngine);
+					if (multiEngine != nullptr) {
 						int idx = multiEngine->findPrimaryLocalMapIdx();
 						if (idx < 0) idx = 0;
 						multiEngine->setFreeviewLocalMapIdx(idx);
@@ -360,14 +361,14 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 			case 't': {
 				uiEngine->integrationActive = !uiEngine->integrationActive;
 
-				ITMBasicEngine<ITMVoxel, ITMVoxelIndex>* basicEngine = dynamic_cast<ITMBasicEngine<ITMVoxel, ITMVoxelIndex>*>(uiEngine->mainEngine);
-				if (basicEngine != NULL) {
+				auto* basicEngine = dynamic_cast<ITMBasicEngine<ITMVoxel, ITMVoxelIndex>*>(uiEngine->mainEngine);
+				if (basicEngine != nullptr) {
 					if (uiEngine->integrationActive) basicEngine->turnOnIntegration();
 					else basicEngine->turnOffIntegration();
 				}
 
-				ITMBasicSurfelEngine<ITMSurfelT>* basicSurfelEngine = dynamic_cast<ITMBasicSurfelEngine<ITMSurfelT>*>(uiEngine->mainEngine);
-				if (basicSurfelEngine != NULL) {
+				auto* basicSurfelEngine = dynamic_cast<ITMBasicSurfelEngine<ITMSurfelT>*>(uiEngine->mainEngine);
+				if (basicSurfelEngine != nullptr) {
 					if (uiEngine->integrationActive) basicSurfelEngine->turnOnIntegration();
 					else basicSurfelEngine->turnOffIntegration();
 				}
@@ -375,18 +376,18 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 				break;
 			case 'w': {
 				if (modifiers && GLUT_ACTIVE_ALT) {
-					uiEngine->recordWarpsForNextFrame = true;
+					ITMDynamicFusionLogger::Instance().ToggleRecording3DSceneAndWarpProgression();
 				}else{
-					uiEngine->recordWarp2DSlicesForNextFrame = true;
+					ITMDynamicFusionLogger::Instance().ToggleRecordingScene2DSlicesWithUpdates();
 				}
 			}
 				break;
 			case 'r': {
-				ITMBasicEngine<ITMVoxel, ITMVoxelIndex>* basicEngine = dynamic_cast<ITMBasicEngine<ITMVoxel, ITMVoxelIndex>*>(uiEngine->mainEngine);
-				if (basicEngine != NULL) basicEngine->resetAll();
+				auto* basicEngine = dynamic_cast<ITMBasicEngine<ITMVoxel, ITMVoxelIndex>*>(uiEngine->mainEngine);
+				if (basicEngine != nullptr) basicEngine->resetAll();
 
-				ITMBasicSurfelEngine<ITMSurfelT>* basicSurfelEngine = dynamic_cast<ITMBasicSurfelEngine<ITMSurfelT>*>(uiEngine->mainEngine);
-				if (basicSurfelEngine != NULL) basicSurfelEngine->resetAll();
+				auto* basicSurfelEngine = dynamic_cast<ITMBasicSurfelEngine<ITMSurfelT>*>(uiEngine->mainEngine);
+				if (basicSurfelEngine != nullptr) basicSurfelEngine->resetAll();
 			}
 				break;
 			case 's': {
@@ -423,8 +424,8 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 				break;
 			case '[':
 			case ']': {
-				ITMMultiEngine<ITMVoxel, ITMVoxelIndex>* multiEngine = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMVoxelIndex>*>(uiEngine->mainEngine);
-				if (multiEngine != NULL) {
+				auto* multiEngine = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMVoxelIndex>*>(uiEngine->mainEngine);
+				if (multiEngine != nullptr) {
 					int idx = multiEngine->getFreeviewLocalMapIdx();
 					if (key == '[') idx--;
 					else idx++;
@@ -554,7 +555,7 @@ void UIEngine_BPO::GlutMouseMoveFunction(int x, int y) {
 		case 1: {
 			// left button: rotation
 			Vector3f axis((float) -movement.y, (float) -movement.x, 0.0f);
-			float angle = scale_rotation * sqrt((float) (movement.x * movement.x + movement.y * movement.y));
+			float angle = scale_rotation * sqrtf((float) (movement.x * movement.x + movement.y * movement.y));
 			Matrix3f rot = createRotation(axis, angle);
 			uiEngine->freeviewPose.SetRT(rot * uiEngine->freeviewPose.GetR(), rot * uiEngine->freeviewPose.GetT());
 			uiEngine->freeviewPose.Coerce();

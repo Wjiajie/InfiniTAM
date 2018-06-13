@@ -571,7 +571,7 @@ set(ITMLIB_UTILS_HEADERS
 
 set(ITMLIB_UTILS_FILEIO_SOURCES
     Utils/FileIO/ITMSceneLogger.tpp
-    Utils/FileIO/ITMDynamicFusionLogger.tpp
+    Utils/FileIO/ITMDynamicFusionLogger.cpp
     Utils/FileIO/ITMSceneLogger_InterestRegionInfo.tpp
     Utils/FileIO/ITMSceneLogger_SceneSlice.tpp
     Utils/FileIO/ITMWarpSceneLogger.tpp)
@@ -584,16 +584,19 @@ set (ITMLIB_UTILS_FILEIO_HEADERS
 
 set(ITMLIB_UTILS_VISUALIZATION_SOURCES
     Utils/Visualization/ITMScene2DSliceVisualizer.tpp
+    Utils/Visualization/ITMScene2DSliceVisualizer.cpp
     Utils/Visualization/ITMScene1DSliceVisualizer.cpp
     Utils/Visualization/ITMScene1DSliceVisualizer.tpp
-    Utils/Visualization/ITMVTKVisualizer.cpp
+    Utils/Visualization/ITMVisualizationWindowManager.cpp
+    Utils/Visualization/ITMSceneTrackingEnergyPlotter.cpp
     )
 
 set(ITMLIB_UTILS_VISUALIZATION_HEADERS
     Utils/Visualization/ITMScene2DSliceVisualizer.h
     Utils/Visualization/ITMScene1DSliceVisualizer.h
     Utils/Visualization/ITMVisualizationCommon.h
-    Utils/Visualization/ITMVTKVisualizer.h
+    Utils/Visualization/ITMVisualizationWindowManager.h
+    Utils/Visualization/ITMSceneTrackingEnergyPlotter.h
     )
 #################################################################
 # Collect the project files into sources, headers and templates #

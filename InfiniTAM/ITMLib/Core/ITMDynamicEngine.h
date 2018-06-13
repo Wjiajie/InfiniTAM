@@ -21,6 +21,8 @@ namespace ITMLib
 	class ITMDynamicEngine : public ITMMainEngine
 	{
 	public:
+
+
 		/** \brief Constructor
 			Omitting a separate image size for the depth images
 			will assume same resolution as for the RGB images.
@@ -68,11 +70,11 @@ namespace ITMLib
 		void turnOnMainProcessing() override;
 		void turnOffMainProcessing() override;
 
-		bool recordWarpsForNextFrame = false;
-		bool recordWarp2DSlicesForNextFrame = false;
-		bool recordWarp1DSilcesForNextFrame = false;
-		std::string nextFrameOutputPath = "";
 	private:
+		void BeginProcessingFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement = nullptr);
+
+
+
 		const ITMLibSettings *settings;
 
 		bool trackingActive, fusionActive, mainProcessingActive, trackingInitialised;
@@ -104,9 +106,9 @@ namespace ITMLib
 
 		/// Pointer to the current camera pose and additional tracking information
 		ITMTrackingState* trackingState;
-		ITMTrackingState::TrackingResult stepByStepTrackerResult;
-		bool stepByStepDidFusion;
-		bool canFuseInStepByStepMode;
-		ORUtils::SE3Pose stepByStepOldPose;
+		ITMTrackingState::TrackingResult lastTrackerResult;
+		bool fusionSucceeded;
+		bool canFuse;
+		ORUtils::SE3Pose previousFramePose;
 	};
 }
