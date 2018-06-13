@@ -80,7 +80,7 @@ public:
 
 	void SaveWarpSlices(int iteration);
 	void SaveWarps();
-	void FinalizeRecording(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene, ITMScene<ITMVoxelLive, ITMVoxelIndex>*& liveScene);
+	void FinalizeFrameRecording();
 	void RecordStatisticsToFile(double totalDataEnergy,
 	                            double totalLevelSetEnergy,
 	                            double totalKillingEnergy,

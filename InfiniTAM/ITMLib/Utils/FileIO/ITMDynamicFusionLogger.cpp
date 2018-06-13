@@ -317,13 +317,9 @@ ITMDynamicFusionLogger::SaveWarpSlices(int iteration) {
 }
 
 
-void ITMDynamicFusionLogger::FinalizeRecording(
-		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene, ITMScene<ITMVoxelLive, ITMVoxelIndex>*& liveScene) {
-
+void ITMDynamicFusionLogger::FinalizeFrameRecording() {
 	if (recording3DSceneAndWarpProgression) {
-
 		scene3DLogger->StopSavingWarpState();
-
 		if (hasFocusCoordinates) {
 			Vector3i sliceMinPoint(focusCoordinates[0] - focusSliceRadius,
 			                       focusCoordinates[1] - focusSliceRadius,
@@ -339,8 +335,6 @@ void ITMDynamicFusionLogger::FinalizeRecording(
 			std::cout << "Slice finished." << std::endl;
 			scene3DLogger->SwitchActiveScene(sliceId);
 		}
-		delete scene3DLogger;
-		scene3DLogger = nullptr;
 	}
 	energyStatisticsFile.close();
 }
