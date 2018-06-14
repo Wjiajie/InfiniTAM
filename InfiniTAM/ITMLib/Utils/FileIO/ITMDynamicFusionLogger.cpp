@@ -30,6 +30,7 @@
 using namespace ITMLib;
 namespace bench = ITMLib::Bench;
 
+//TODO: create/destroy windowed visualziers (i.e. plotter) when their corresponding setting values are turned on/off -Greg (GitHub:Algomorph)
 
 // region ============================== DEFINE CONSTANTS ==============================================================
 const std::string ITMDynamicFusionLogger::iterationFramesFolderName =
@@ -37,7 +38,6 @@ const std::string ITMDynamicFusionLogger::iterationFramesFolderName =
 
 const std::string ITMDynamicFusionLogger::liveIterationFramesFolderName =
 		"bucket_interest_region_live_slices";
-
 
 const std::string ITMDynamicFusionLogger::canonicalSceneRasterizedFolderName =
 		"canonical_rasterized";
@@ -199,7 +199,7 @@ bool ITMDynamicFusionLogger::IsPlottingEnergies() const {
 
 ITMDynamicFusionLogger::ITMDynamicFusionLogger() :
 		focusSliceRadius(3),
-		scene1DSliceVisualizer(focusCoordinates, AXIS_X, 16),
+		scene1DSliceVisualizer(),
 		scene2DSliceVisualizer(focusCoordinates, outputDirectory, 100, 16.0, PLANE_XY) {}
 
 // region ===================================== RECORDING ==============================================================
@@ -216,7 +216,7 @@ void ITMDynamicFusionLogger::InitializeFrameRecording() {
 	this->focusCoordinates = focusCoordinates;
 	this->outputDirectory = outputDirectory;
 
-	// region ================================== 2D SLICES RECORDING ===================================================
+	// region ================================== 1D/2D SLICE RECORDING =================================================
 	if (hasFocusCoordinates) {
 		if (recordingCanonicalSceneAs2DSlices) {
 			scene2DSliceVisualizer.SaveCanonicalSceneSlicesAs2DImages_AllDirections(
@@ -227,8 +227,9 @@ void ITMDynamicFusionLogger::InitializeFrameRecording() {
 					liveScene, GetOutputDirectoryPrefixForLiveSceneAsSlices());
 		}
 		if (recordingScene1DSlicesWithUpdates) {
-			scene1DSliceVisualizer.Plot1DSceneSlice(canonicalScene, Vector4i(97, 181, 193, 255), 3.0);
-			scene1DSliceVisualizer.Plot1DIndexedSceneSlice(liveScene, Vector4i(183, 115, 46, 255), 3.0, 0);
+			this->scene1DSliceVisualizer.reset(new ITMScene1DSliceVisualizer(focusCoordinates, AXIS_X, 16));
+			scene1DSliceVisualizer->Plot1DSceneSlice(canonicalScene, Vector4i(97, 181, 193, 255), 3.0);
+			scene1DSliceVisualizer->Plot1DIndexedSceneSlice(liveScene, Vector4i(183, 115, 46, 255), 3.0, 0);
 		}
 		if (recordingScene2DSlicesWithUpdates) {
 			std::cout << yellow << "Recording 2D scene slices with warps & warped live scene progression as images in "
@@ -237,8 +238,12 @@ void ITMDynamicFusionLogger::InitializeFrameRecording() {
 			          << reset << std::endl;
 			InitializeWarp2DSliceRecording(canonicalScene, liveScene);
 		}
+
 	}
 	// endregion
+	if (plottingEnergies) {
+		this->energyPlotter.reset(new ITMSceneTrackingEnergyPlotter());
+	}
 
 	// region ========================= INITIALIZE WARP RECORDING ======================================================
 	bench::StartTimer("TrackMotion_2_RecordingEnergy");
@@ -311,8 +316,8 @@ ITMDynamicFusionLogger::SaveWarpSlices(int iteration) {
 		            ".png", liveImgOut);
 	}
 	if (hasFocusCoordinates && recordingScene1DSlicesWithUpdates) {
-		scene1DSliceVisualizer.Plot1DIndexedSceneSlice(liveScene, Vector4i(0, 0, 0, 255), 1.0, 1);
-		scene1DSliceVisualizer.Draw1DWarpUpdateVector(canonicalScene, Vector4i(255, 0, 0, 255));
+		scene1DSliceVisualizer->Plot1DIndexedSceneSlice(liveScene, Vector4i(0, 0, 0, 255), 1.0, 1);
+		scene1DSliceVisualizer->Draw1DWarpUpdateVector(canonicalScene, Vector4i(255, 0, 0, 255));
 	}
 }
 
@@ -336,6 +341,12 @@ void ITMDynamicFusionLogger::FinalizeFrameRecording() {
 			scene3DLogger->SwitchActiveScene(sliceId);
 		}
 	}
+	if (plottingEnergies){
+		energyPlotter->SaveScreenshot(this->outputDirectory + "/energy_plot.png");
+		energyPlotter.reset();
+	}
+	scene1DSliceVisualizer.reset();
+
 	energyStatisticsFile.close();
 }
 
@@ -347,14 +358,21 @@ void ITMDynamicFusionLogger::SaveWarps() {
 }
 
 
-void ITMDynamicFusionLogger::RecordStatisticsToFile(double totalDataEnergy,
-                                                    double totalLevelSetEnergy,
-                                                    double totalKillingEnergy,
-                                                    double totalSmoothnessEnergy,
-                                                    double totalEnergy) {
-	energyStatisticsFile << totalDataEnergy << ", " << totalLevelSetEnergy << ", " << totalKillingEnergy << ", "
-	                     << totalSmoothnessEnergy << ", " << totalEnergy << std::endl;
-
+void ITMDynamicFusionLogger::RecordAndPlotEnergies(double totalDataEnergy,
+                                                   double totalLevelSetEnergy,
+                                                   double totalKillingEnergy,
+                                                   double totalSmoothnessEnergy,
+                                                   double totalEnergy) {
+	if (this->recordingEnergiesToFile) {
+		energyStatisticsFile << totalDataEnergy << ", " << totalLevelSetEnergy << ", " << totalKillingEnergy << ", "
+		                     << totalSmoothnessEnergy << ", " << totalEnergy << std::endl;
+	}
+	if (this->plottingEnergies){
+		this->energyPlotter->AddDataPoints(static_cast<float>(totalDataEnergy),
+		                                   static_cast<float>(totalSmoothnessEnergy),
+		                                   static_cast<float>(totalLevelSetEnergy),
+		                                   static_cast<float>(totalKillingEnergy));
+	}
 }
 
 

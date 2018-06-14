@@ -15,6 +15,11 @@
 //  ================================================================
 #pragma once
 
+//VTK
+#include <vtkDoubleArray.h>
+#include <vtkTable.h>
+
+//local
 #include "ITMVisualizationWindowManager.h"
 #include "../ITMMath.h"
 
@@ -22,31 +27,26 @@ namespace ITMLib {
 
 class ITMSceneTrackingEnergyPlotter {
 public:
-	static ITMSceneTrackingEnergyPlotter& Instance() {
-		static ITMSceneTrackingEnergyPlotter instance;
-		return instance;
-	}
+	ITMSceneTrackingEnergyPlotter();
+	~ITMSceneTrackingEnergyPlotter() = default;
 
-	void AddDataPoints(float dataEnergy, float smoothingEnergy, float levelSetEnergy = 0.0f, float killingEnergy = 0.0f);
+	void AddDataPoints(double dataEnergy, double smoothingEnergy, double levelSetEnergy = 0.0f,
+	                   double killingEnergy = 0.0f);
 	void ClearChart();
 	void SaveScreenshot(std::string path);
 
-
-	ITMSceneTrackingEnergyPlotter(ITMSceneTrackingEnergyPlotter const&) = delete;
-	void operator=(ITMSceneTrackingEnergyPlotter const&) = delete;
 private:
 
 	void PreparePlot(Vector3i colorDataEnergy = Vector3i(0, 0, 0),
 	                 Vector3i colorSmoothingEnergy = Vector3i(0, 0, 0),
 	                 Vector3i colorLevelSetEnergy = Vector3i(0, 0, 0),
 	                 Vector3i colorKillingEnergy = Vector3i(0, 0, 0));
-	ITMSceneTrackingEnergyPlotter();
 
-	vtkSmartPointer<vtkFloatArray> dataEnergyValues;
-	vtkSmartPointer<vtkFloatArray> smoothingEnergyValues;
-	vtkSmartPointer<vtkFloatArray> levelSetEnergyValues;
-	vtkSmartPointer<vtkFloatArray> killingEnergyValues;
 	vtkSmartPointer<vtkTable> table;
+	
+	double maxEnergyValue = 0.0;
+	
+	
 
 	ITMChartWindow* window;
 

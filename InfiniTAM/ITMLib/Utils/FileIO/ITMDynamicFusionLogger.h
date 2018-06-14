@@ -20,6 +20,7 @@
 #include "../Visualization/ITMScene2DSliceVisualizer.h"
 #include "../Visualization/ITMScene1DSliceVisualizer.h"
 #include "../../ITMLibDefines.h"
+#include "../Visualization/ITMSceneTrackingEnergyPlotter.h"
 
 namespace ITMLib {
 
@@ -81,11 +82,11 @@ public:
 	void SaveWarpSlices(int iteration);
 	void SaveWarps();
 	void FinalizeFrameRecording();
-	void RecordStatisticsToFile(double totalDataEnergy,
-	                            double totalLevelSetEnergy,
-	                            double totalKillingEnergy,
-	                            double totalSmoothnessEnergy,
-	                            double totalEnergy);
+	void RecordAndPlotEnergies(double totalDataEnergy,
+	                           double totalLevelSetEnergy,
+	                           double totalKillingEnergy,
+	                           double totalSmoothnessEnergy,
+	                           double totalEnergy);
 	bool IsRecordingWarp2DSlices();
 	bool IsRecordingWarps();
 	void LogHighlight(int hash, int locId, ITMHighlightIterationInfo info);
@@ -108,7 +109,8 @@ private:
 
 	// various loggers & visualizers
 	ITMScene2DSliceVisualizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex> scene2DSliceVisualizer;
-	ITMScene1DSliceVisualizer scene1DSliceVisualizer;
+	std::unique_ptr<ITMScene1DSliceVisualizer> scene1DSliceVisualizer;
+	std::unique_ptr<ITMSceneTrackingEnergyPlotter> energyPlotter;
 	ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* scene3DLogger = nullptr;
 
 	// internal references to the scenes

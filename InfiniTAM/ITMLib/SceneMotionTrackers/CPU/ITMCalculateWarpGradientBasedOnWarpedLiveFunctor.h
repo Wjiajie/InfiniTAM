@@ -336,7 +336,7 @@ public:
 		                      totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
 
 		//save all energies to file
-		ITMDynamicFusionLogger::Instance().RecordStatisticsToFile(
+		ITMDynamicFusionLogger::Instance().RecordAndPlotEnergies(
 				totalDataEnergy, totalLevelSetEnergy, totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
 
 

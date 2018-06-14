@@ -186,6 +186,7 @@ int main(int argc, char** argv) {
 		bool simpleScene = false;
 		bool recordWarp1DSlices = false;
 		bool recordWarp2DSlices = false;
+		bool plotEnergies = false;
 
 
 		//@formatter:off
@@ -278,6 +279,9 @@ int main(int argc, char** argv) {
 				("simple_scene",po::bool_switch(&simpleScene)->default_value(false),
 				 "Used in dynamic fusion. Simple scene experiment mode (for debugging).")
 
+				("plot_energies",po::bool_switch(&plotEnergies)->default_value(false),
+				 "Used in dynamic fusion. Plot graphs of energy contributions from all terms used during scene "
+	             "tracking optimization.")
 				("record_warp_1d_slices",po::bool_switch(&recordWarp1DSlices)->default_value(false),
 				 "Used in dynamic fusion. Plot graphs of canonical and live SDF (around the focus coordinate,"
 	             " if provided), plot the live frame progression and warp vectors (for visual debugging).")
@@ -482,6 +486,7 @@ int main(int argc, char** argv) {
 			skipFirstNFrames = vm["start_from_frame_ix"].as<int>();
 		}
 
+		if(plotEnergies) ITMDynamicFusionLogger::Instance().TurnPlottingEnergiesOn();
 
 		UIEngine_BPO::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine,
 		                                     settings->analysisSettings.outputPath.c_str(), settings->deviceType,

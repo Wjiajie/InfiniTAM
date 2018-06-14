@@ -49,9 +49,9 @@ public:
 		return instance;
 	}
 
-	ITMChartWindow* MakeWindow(const std::string& name,
-	                          const std::string& title = "VTK Window",
-	                          int width = 1024, int height = 768);
+	ITMChartWindow* MakeOrGetWindow(const std::string& name,
+	                                const std::string& title = "VTK Window",
+	                                int width = 1024, int height = 768);
 	ITMChartWindow* GetWindow(const std::string& name);
 
 	ITMVisualizationWindowManager(ITMVisualizationWindowManager const&) = delete;

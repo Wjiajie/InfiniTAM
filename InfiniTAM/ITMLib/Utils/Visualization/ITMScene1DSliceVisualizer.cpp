@@ -40,9 +40,9 @@ ITMScene1DSliceVisualizer::ITMScene1DSliceVisualizer(Vector3i focusCoordinate, A
 		voxelRange(voxelRange),
 		rangeStartVoxelIndex(focusCoordinate[axis] - ((voxelRange + 1) / 2)),
 		rangeEndVoxelIndex(focusCoordinate[axis] + (voxelRange / 2)),
-		window(ITMVisualizationWindowManager::Instance().MakeWindow(
+		window(ITMVisualizationWindowManager::Instance().MakeOrGetWindow(
 				"Scene1DSliceVisualizer_" + AxisToString(axis),
-				"Scene 1D Slice Visualizer for "  + AxisToString(axis) + " Axis")){}
+				"Scene 1D Slice Visualizer for " + AxisToString(axis) + " Axis")){}
 
 //TODO: DRY violation -- same code as EnergyPlotter -- group into single class hierarchy with shared methods
 void ITMScene1DSliceVisualizer::SaveScreenshot(std::string path) {

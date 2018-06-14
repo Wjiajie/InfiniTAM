@@ -58,9 +58,12 @@ vtkSmartPointer<vtkRenderWindow> ITMChartWindow::GetRenderWindow() {
 }
 
 ITMChartWindow*
-ITMVisualizationWindowManager::MakeWindow(const std::string& name, const std::string& title, int width, int height) {
-	windows.emplace(name, ITMChartWindow(name, title, width, height));
+ITMVisualizationWindowManager::MakeOrGetWindow(const std::string& name, const std::string& title, int width, int height) {
 	auto it = windows.find(name);
+	if(it == windows.end()){
+		windows.emplace(name, ITMChartWindow(name, title, width, height));
+		it = windows.find(name);
+	}
 	return it == windows.end() ? nullptr : &(windows.find(name)->second);
 }
 

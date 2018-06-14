@@ -16,7 +16,7 @@
 
 //VTK
 #include <vtkWindowToImageFilter.h>
-#include <vtkFloatArray.h>
+#include <vtkDoubleArray.h>
 #include <vtkVariantArray.h>
 #include <vtkTable.h>
 #include <vtkAxis.h>
@@ -27,6 +27,9 @@
 #include <vtkWindowToImageFilter.h>
 #include <vtkRenderWindow.h>
 #include <vtkPNGWriter.h>
+#include <vtkIntArray.h>
+#include <vtkStringArray.h>
+#include <vtkDoubleArray.h>
 
 
 //Local
@@ -36,7 +39,7 @@
 using namespace ITMLib;
 
 ITMSceneTrackingEnergyPlotter::ITMSceneTrackingEnergyPlotter() :
-	window(ITMVisualizationWindowManager::Instance().MakeWindow("TrackingEnergyPlotter", "Scene Tracking Energy"))
+	window(ITMVisualizationWindowManager::Instance().MakeOrGetWindow("TrackingEnergyPlotter", "Scene Tracking Energy"))
 	{
 	PreparePlot();
 }
@@ -45,40 +48,39 @@ void ITMSceneTrackingEnergyPlotter::PreparePlot(Vector3i colorDataEnergy,
                                                Vector3i colorSmoothingEnergy, Vector3i colorLevelSetEnergy,
                                                Vector3i colorKillingEnergy) {
 	// set up table & columns
-	vtkSmartPointer<vtkFloatArray> horizontalAxisPoints = vtkSmartPointer<vtkFloatArray>::New();
-	horizontalAxisPoints->SetName("X");
 
-	dataEnergyValues = vtkSmartPointer<vtkFloatArray>::New();
+	const int _DEBUG_row_count = 10;
+
+	vtkSmartPointer<vtkDoubleArray> dataEnergyValues = vtkSmartPointer<vtkDoubleArray>::New();
 	dataEnergyValues->SetName("Data Energy");
-	smoothingEnergyValues = vtkSmartPointer<vtkFloatArray>::New();
+	dataEnergyValues->SetNumberOfValues(_DEBUG_row_count);
+
+	vtkSmartPointer<vtkDoubleArray> smoothingEnergyValues = vtkSmartPointer<vtkDoubleArray>::New();
 	smoothingEnergyValues->SetName("Smoothing Energy");
-	levelSetEnergyValues = vtkSmartPointer<vtkFloatArray>::New();
+	smoothingEnergyValues->SetNumberOfValues(_DEBUG_row_count);
+
+	vtkSmartPointer<vtkDoubleArray> levelSetEnergyValues = vtkSmartPointer<vtkDoubleArray>::New();
 	levelSetEnergyValues->SetName("Level Set Energy");
-	killingEnergyValues = vtkSmartPointer<vtkFloatArray>::New();
+	levelSetEnergyValues->SetNumberOfValues(_DEBUG_row_count);
+
+	vtkSmartPointer<vtkDoubleArray> killingEnergyValues = vtkSmartPointer<vtkDoubleArray>::New();
 	killingEnergyValues->SetName("Killing Energy");
+	killingEnergyValues->SetNumberOfValues(_DEBUG_row_count);
 
 	table = vtkSmartPointer<vtkTable>::New();
-	table->AddColumn(horizontalAxisPoints);
 	table->AddColumn(dataEnergyValues);
 	table->AddColumn(smoothingEnergyValues);
 	table->AddColumn(levelSetEnergyValues);
 	table->AddColumn(killingEnergyValues);
-
 	table->SetNumberOfRows(0);
 
 	vtkSmartPointer<vtkChartXY> chart = this->window->GetChart();
 	chart->GetAxis(1)->SetTitle("Iteration");
-	chart->ForceAxesToBoundsOff();
-	chart->AutoAxesOff();
-	chart->DrawAxesAtOriginOn();
-
-	chart->GetAxis(0)->SetRange(-1.05,1.05);
-	chart->GetAxis(0)->SetBehavior(vtkAxis::FIXED);
-	chart->GetAxis(0)->SetTitle("SDF Value");
-
+	chart->GetAxis(0)->SetTitle("Energy");
 
 	vtkPlotStacked* stack = vtkPlotStacked::SafeDownCast(chart->AddPlot(vtkChart::STACKED));
 	stack->SetInputData(table);
+	stack->SetUseIndexForXSeries(true);
 	stack->SetInputArray(1, "Data Energy");
 	stack->SetInputArray(2, "Smoothing Energy");
 	stack->SetInputArray(3, "Level Set Energy");
@@ -88,11 +90,11 @@ void ITMSceneTrackingEnergyPlotter::PreparePlot(Vector3i colorDataEnergy,
 			vtkSmartPointer<vtkColorSeries>::New();
 
 	colorSeries->SetColorScheme(vtkColorSeries::BREWER_QUALITATIVE_PASTEL2);
-	if(!(colorDataEnergy == Vector3i(0,0,0) && 
+	if(!(colorDataEnergy == Vector3i(0,0,0) &&
 	     colorDataEnergy == colorSmoothingEnergy &&
-	     colorDataEnergy == colorLevelSetEnergy && 
+	     colorDataEnergy == colorLevelSetEnergy &&
 	     colorDataEnergy == colorKillingEnergy)){
-		colorSeries->SetColor(0, vtkColor3ub(static_cast<unsigned char>(colorDataEnergy.r), 
+		colorSeries->SetColor(0, vtkColor3ub(static_cast<unsigned char>(colorDataEnergy.r),
 		                                     static_cast<unsigned char>(colorDataEnergy.g),
 		                                     static_cast<unsigned char>(colorDataEnergy.b)));
 		colorSeries->SetColor(1, vtkColor3ub(static_cast<unsigned char>(colorSmoothingEnergy.r),
@@ -110,17 +112,33 @@ void ITMSceneTrackingEnergyPlotter::PreparePlot(Vector3i colorDataEnergy,
 	this->window->Update();
 }
 
-void ITMSceneTrackingEnergyPlotter::AddDataPoints(float dataEnergy, float smoothingEnergy, float levelSetEnergy,
-                                                  float killingEnergy) {
+
+
+void ITMSceneTrackingEnergyPlotter::AddDataPoints(double dataEnergy, double smoothingEnergy, double levelSetEnergy,
+                                                  double killingEnergy) {
 
 	vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
 	row->InsertNextValue(dataEnergy);
 	row->InsertNextValue(smoothingEnergy);
 	row->InsertNextValue(levelSetEnergy);
 	row->InsertNextValue(killingEnergy);
+
+	double totalEnergy = dataEnergy + smoothingEnergy + levelSetEnergy +killingEnergy;
+
+
 	table->InsertNextRow(row);
 	table->Modified();
+	
+	vtkSmartPointer<vtkChartXY> chart = this->window->GetChart();
+	chart->GetAxis(1)->SetRange(0, table->GetNumberOfRows());
+	if(maxEnergyValue < totalEnergy){
+		maxEnergyValue = totalEnergy;
+		chart->GetAxis(0)->SetRange(0, maxEnergyValue);
+	}
+
+	window->GetChart()->Update();
 	window->Update();
+	
 }
 
 void ITMSceneTrackingEnergyPlotter::ClearChart() {
@@ -128,6 +146,8 @@ void ITMSceneTrackingEnergyPlotter::ClearChart() {
 		table->RemoveRow(0);
 	}
 	table->Modified();
+	window->GetChart()->GetPlot(0)->Update();
+	window->GetChart()->Update();
 	window->Update();
 }
 
@@ -135,8 +155,7 @@ void ITMSceneTrackingEnergyPlotter::SaveScreenshot(std::string path) {
 	vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter = vtkSmartPointer<vtkWindowToImageFilter>::New();
 	vtkSmartPointer<vtkRenderWindow> renderWindow = window->GetRenderWindow();
 	windowToImageFilter->SetInput(renderWindow);
-	windowToImageFilter->SetScale(2);
-	windowToImageFilter->SetInputBufferTypeToRGBA();
+	windowToImageFilter->SetInputBufferTypeToRGB();
 	windowToImageFilter->ReadFrontBufferOff();
 	windowToImageFilter->Update();
 	vtkSmartPointer<vtkPNGWriter> writer = vtkSmartPointer<vtkPNGWriter>::New();
