@@ -30,7 +30,7 @@
 using namespace ITMLib;
 namespace bench = ITMLib::Bench;
 
-//TODO: create/destroy windowed visualziers (i.e. plotter) when their corresponding setting values are turned on/off -Greg (GitHub:Algomorph)
+//TODO: create/destroy windowed visualizers (i.e. plotter) when their corresponding setting values are turned on/off, and make them close their corresponding windows -Greg (GitHub:Algomorph)
 
 // region ============================== DEFINE CONSTANTS ==============================================================
 const std::string ITMDynamicFusionLogger::iterationFramesFolderName =

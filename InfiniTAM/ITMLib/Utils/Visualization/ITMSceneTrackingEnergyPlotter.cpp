@@ -75,6 +75,7 @@ void ITMSceneTrackingEnergyPlotter::PreparePlot(Vector3i colorDataEnergy,
 	table->SetNumberOfRows(0);
 
 	vtkSmartPointer<vtkChartXY> chart = this->window->GetChart();
+	chart->ClearPlots();
 	chart->GetAxis(1)->SetTitle("Iteration");
 	chart->GetAxis(0)->SetTitle("Energy");
 
@@ -139,16 +140,6 @@ void ITMSceneTrackingEnergyPlotter::AddDataPoints(double dataEnergy, double smoo
 	window->GetChart()->Update();
 	window->Update();
 	
-}
-
-void ITMSceneTrackingEnergyPlotter::ClearChart() {
-	while(table->GetNumberOfRows() > 0){
-		table->RemoveRow(0);
-	}
-	table->Modified();
-	window->GetChart()->GetPlot(0)->Update();
-	window->GetChart()->Update();
-	window->Update();
 }
 
 void ITMSceneTrackingEnergyPlotter::SaveScreenshot(std::string path) {

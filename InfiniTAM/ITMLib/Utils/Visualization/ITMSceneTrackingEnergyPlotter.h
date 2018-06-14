@@ -32,7 +32,6 @@ public:
 
 	void AddDataPoints(double dataEnergy, double smoothingEnergy, double levelSetEnergy = 0.0f,
 	                   double killingEnergy = 0.0f);
-	void ClearChart();
 	void SaveScreenshot(std::string path);
 
 private:
