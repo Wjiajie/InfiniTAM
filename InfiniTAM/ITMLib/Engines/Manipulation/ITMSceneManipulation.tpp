@@ -163,8 +163,9 @@ bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, 
 		if (IsHashBlockFullyInRange(originalHashBlockPosition, minPoint, maxPoint) ||
 		    IsHashBlockPartiallyInRange(originalHashBlockPosition, minPoint, maxPoint)) {
 			int destinationHash = hashIndex(currentOriginalHashEntry.pos);
+			bool collisionDetected = false;
 			MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, destinationHash,
-			                                  currentOriginalHashEntry.pos, destinationHashTable);
+			                                  currentOriginalHashEntry.pos, destinationHashTable, collisionDetected);
 		}
 	}
 

@@ -195,6 +195,7 @@ static void GenericRaycast(const ITMScene<TVoxel, TIndex> *scene, const Vector2i
 	{
 		int y = locId/imgSize.x;
 		int x = locId - y*imgSize.x;
+
 		int locId2 = (int)floor((float)x / minmaximg_subsample) + (int)floor((float)y / minmaximg_subsample) * imgSize.x;
 
 		if (entriesVisibleType!=NULL) castRay<TVoxel, TIndex, true>(

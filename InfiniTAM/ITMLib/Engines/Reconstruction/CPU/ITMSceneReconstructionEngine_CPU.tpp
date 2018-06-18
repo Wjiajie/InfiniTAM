@@ -173,9 +173,11 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 	{
 		int y = locId / depthImgSize.x;
 		int x = locId - y * depthImgSize.x;
+		bool collisionDetected = false;
 		buildHashAllocAndVisibleTypePP(entriesAllocType, entriesVisibleType, x, y, blockCoords, depth, invM_d,
-			invProjParams_d, mu, depthImgSize, oneOverHashEntrySize, hashTable, scene->sceneParams->viewFrustum_min,
-			scene->sceneParams->viewFrustum_max);
+		                               invProjParams_d, mu, depthImgSize, oneOverHashEntrySize,
+		                               hashTable, scene->sceneParams->viewFrustum_min,
+		                               scene->sceneParams->viewFrustum_max, collisionDetected);
 	}
 
 	if (onlyUpdateVisibleList) useSwapping = false;

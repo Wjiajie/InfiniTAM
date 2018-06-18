@@ -6,6 +6,7 @@
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../../Utils/ITMPixelUtils.h"
 #include "../../../Utils/ITMVoxelFlags.h"
+#include "../../../Utils/ITMHashBlockProperties.h"
 
 /**
  * \brief Voxel update without confidence computation
@@ -268,15 +269,18 @@ struct ComputeUpdatedVoxelInfo<true, true, true, TVoxel> {
 #undef FLAG_UPDATE_CHECK
 #undef COMPUTE_VOXEL_UPDATE_PARAMETERS
 //======================================================================================================================
-_CPU_AND_GPU_CODE_ inline void buildHashAllocAndVisibleTypePP(DEVICEPTR(uchar) *entriesAllocType, DEVICEPTR(uchar) *entriesVisibleType, int x, int y,
-	DEVICEPTR(Vector3s) *blockCoords, const CONSTPTR(float) *depth, Matrix4f invM_d, Vector4f projParams_d, float mu, Vector2i imgSize,
-	float oneOverVoxelSize, const CONSTPTR(ITMHashEntry) *hashTable, float viewFrustum_min, float viewFrustum_max)
+_CPU_AND_GPU_CODE_ inline void
+buildHashAllocAndVisibleTypePP(uchar* entriesAllocType, uchar* entriesVisibleType, int x, int y, Vector3s* blockCoords,
+                               const CONSTPTR(float)* depth, Matrix4f invM_d, Vector4f projParams_d, float mu,
+                               Vector2i imgSize, float oneOverVoxelSize, const CONSTPTR(ITMHashEntry)* hashTable,
+                               float viewFrustum_min, float viewFrustum_max, bool& collisionDetected)
 {
 	float depth_measure; unsigned int hashIdx; int noSteps;
 	Vector4f pt_camera_f; Vector3f bandEndHashEntryPosition, bandStartHashEntryPosition, direction; Vector3s hashEntryPosition;
 
 	depth_measure = depth[x + y * imgSize.x];
 	if (depth_measure <= 0 || (depth_measure - mu) < 0 || (depth_measure - mu) < viewFrustum_min || (depth_measure + mu) > viewFrustum_max) return;
+
 
 	pt_camera_f.z = depth_measure;
 	pt_camera_f.x = pt_camera_f.z * ((float(x) - projParams_d.z) * projParams_d.x);
@@ -350,12 +354,17 @@ _CPU_AND_GPU_CODE_ inline void buildHashAllocAndVisibleTypePP(DEVICEPTR(uchar) *
 
 			if (!isFound) //still not found
 			{
-				entriesAllocType[hashIdx] = isExcess ? (uchar)2 : (uchar)1; //needs allocation
-				if (!isExcess) entriesVisibleType[hashIdx] = 1; //new entry is visible
-				blockCoords[hashIdx] = hashEntryPosition;
+				if(entriesAllocType[hashIdx] != ITMLib::NEEDS_NO_CHANGE){
+					collisionDetected = true;
+				}else{
+					//needs allocation
+					entriesAllocType[hashIdx] = isExcess ?
+							ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST : ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST;
+					if (!isExcess) entriesVisibleType[hashIdx] = 1; //new entry is visible
+					blockCoords[hashIdx] = hashEntryPosition;
+				}
 			}
 		}
-
 		bandStartHashEntryPosition += direction;
 	}
 }

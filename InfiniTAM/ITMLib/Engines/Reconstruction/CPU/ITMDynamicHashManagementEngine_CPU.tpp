@@ -80,32 +80,37 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLi
 
 	float oneOverHashEntrySize = 1.0f / (voxelSize * SDF_BLOCK_SIZE);//m
 
-	memset(liveEntryAllocationTypes, 0, static_cast<size_t>(noTotalEntries));
+	bool collisionDetected;
 
-	for (int i = 0; i < renderState_vh->noVisibleEntries; i++)
-		hashBlockVisibilityTypes[visibleEntryIDs[i]] = 3; // visible at previous frame and unstreamed
+	bool useSwapping = scene->globalCache != nullptr;
+	do {
+		memset(liveEntryAllocationTypes, (uint) NEEDS_NO_CHANGE, static_cast<size_t>(noTotalEntries));
+		collisionDetected = false;
+		for (int i = 0; i < renderState_vh->noVisibleEntries; i++)
+			hashBlockVisibilityTypes[visibleEntryIDs[i]] = 3; // visible at previous frame and unstreamed
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
-	for (int locId = 0; locId < depthImgSize.x * depthImgSize.y; locId++) {
-		int y = locId / depthImgSize.x;
-		int x = locId - y * depthImgSize.x;
-		buildHashAllocAndVisibleTypePP(liveEntryAllocationTypes, hashBlockVisibilityTypes, x, y,
-		                               allocationBlockCoordinates,
-		                               depth, invM_d,
-		                               invProjParams_d, mu, depthImgSize, oneOverHashEntrySize, hashTable,
-		                               scene->sceneParams->viewFrustum_min,
-		                               scene->sceneParams->viewFrustum_max);
-	}
+		for (int locId = 0; locId < depthImgSize.x * depthImgSize.y; locId++) {
+			int y = locId / depthImgSize.x;
+			int x = locId - y * depthImgSize.x;
 
-	bool useSwapping = scene->globalCache != nullptr;
-	if (onlyUpdateVisibleList) {
-		useSwapping = false;
-	}else{
-		AllocateHashEntriesUsingLists_SetVisibility_CPU(scene, liveEntryAllocationTypes,
-		                                                allocationBlockCoordinates, hashBlockVisibilityTypes);
-	}
+			buildHashAllocAndVisibleTypePP(liveEntryAllocationTypes, hashBlockVisibilityTypes, x, y,
+			                               allocationBlockCoordinates, depth, invM_d, invProjParams_d, mu, depthImgSize,
+			                               oneOverHashEntrySize,
+			                               hashTable, scene->sceneParams->viewFrustum_min,
+			                               scene->sceneParams->viewFrustum_max, collisionDetected);
+		}
+
+		if (onlyUpdateVisibleList) {
+			useSwapping = false;
+			collisionDetected = false;
+		} else {
+			AllocateHashEntriesUsingLists_SetVisibility_CPU(scene, liveEntryAllocationTypes,
+			                                                allocationBlockCoordinates, hashBlockVisibilityTypes);
+		}
+	} while (collisionDetected);
 
 	int noVisibleEntries = 0;
 	//build visible list
@@ -144,7 +149,7 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLi
 	if (useSwapping) {
 		for (int targetIdx = 0; targetIdx < noTotalEntries; targetIdx++) {
 			if (hashBlockVisibilityTypes[targetIdx] > 0 && hashTable[targetIdx].ptr == -1) {
-				if (lastFreeVoxelBlockId >= 0){
+				if (lastFreeVoxelBlockId >= 0) {
 					hashTable[lastFreeVoxelBlockId].ptr = voxelAllocationList[lastFreeVoxelBlockId];
 					lastFreeVoxelBlockId--;
 				}
@@ -164,35 +169,36 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateCa
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene) {
 
 	uchar* canonicalEntryAllocationTypes = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
-	memset(canonicalEntryAllocationTypes, 0, static_cast<size_t>(ITMVoxelBlockHash::noTotalEntries));
+
 	Vector3s* allocationBlockCoordinates = this->allocationBlockCoordinates->GetData(MEMORYDEVICE_CPU);
 	ITMHashEntry* canonicalHashEntries = canonicalScene->index.GetEntries();
 	ITMHashEntry* liveHashEntries = liveScene->index.GetEntries();
-	int countToAllocate = 0;
 
-	// at frame zero, allocate all the same blocks as in live frame
+	bool collisionDetected;
+
+	do {
+		collisionDetected = false;
+		memset(canonicalEntryAllocationTypes, ITMLib::NEEDS_NO_CHANGE, static_cast<size_t>(ITMVoxelBlockHash::noTotalEntries));
+		// at frame zero, allocate all the same blocks as in live frame
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
-	for (int liveHashBlockIndex = 0; liveHashBlockIndex < ITMVoxelBlockHash::noTotalEntries; liveHashBlockIndex++) {
-		const ITMHashEntry& currentLiveHashBlock = liveHashEntries[liveHashBlockIndex];
-		//skip unfilled live blocks
-		if (currentLiveHashBlock.ptr < 0) {
-			continue;
-		}
-		Vector3s liveHashBlockCoords = currentLiveHashBlock.pos;
+		for (int liveHash = 0; liveHash < ITMVoxelBlockHash::noTotalEntries; liveHash++) {
+			const ITMHashEntry& currentLiveHashBlock = liveHashEntries[liveHash];
+			//skip unfilled live blocks
+			if (currentLiveHashBlock.ptr < 0) {
+				continue;
+			}
+			Vector3s liveHashBlockCoords = currentLiveHashBlock.pos;
 
-		//try to find a corresponding canonical block, and mark it for allocation if not found
-		int canonicalBlockIndex = hashIndex(liveHashBlockCoords);
-		if(
-		MarkAsNeedingAllocationIfNotFound(canonicalEntryAllocationTypes, allocationBlockCoordinates,
-		                                  canonicalBlockIndex,
-		                                  liveHashBlockCoords, canonicalHashEntries)
-				){
-			countToAllocate++;
+			//try to find a corresponding canonical block, and mark it for allocation if not found
+			int canonicalHash = hashIndex(liveHashBlockCoords);
+			MarkAsNeedingAllocationIfNotFound(canonicalEntryAllocationTypes, allocationBlockCoordinates,
+					                                  canonicalHash, liveHashBlockCoords, canonicalHashEntries,
+					                                  collisionDetected);
 		}
-	}
-	AllocateHashEntriesUsingLists_CPU(canonicalScene, canonicalEntryAllocationTypes, allocationBlockCoordinates);
+		AllocateHashEntriesUsingLists_CPU(canonicalScene, canonicalEntryAllocationTypes, allocationBlockCoordinates);
+	} while (collisionDetected);
 
 }
 
@@ -222,7 +228,7 @@ struct WarpBasedAllocationMarkerFunctor {
 			sourceFieldIndex(flagIndex) {}
 
 	void operator()(TVoxelWarpSource& voxel, Vector3i voxelPosition, Vector3s hashBlockPosition) {
-		Vector3f warpedPosition = TLookupPositionFunctor::GetWarpedPosition(voxel,voxelPosition);
+		Vector3f warpedPosition = TLookupPositionFunctor::GetWarpedPosition(voxel, voxelPosition);
 		Vector3i warpedPositionTruncated = warpedPosition.toInt();
 		// perform lookup
 		int vmIndex;
@@ -236,8 +242,9 @@ struct WarpBasedAllocationMarkerFunctor {
 		nontruncatedCount++;
 
 		int liveBlockHash = hashIndex(hashBlockPosition);
-		if(MarkAsNeedingAllocationIfNotFound(warpedEntryAllocationTypes, allocationBlockCoords, liveBlockHash,
-		                                  hashBlockPosition, sdfHashEntries)){
+		bool collisionDetected = false;
+		if (MarkAsNeedingAllocationIfNotFound(warpedEntryAllocationTypes, allocationBlockCoords, liveBlockHash,
+		                                      hashBlockPosition, sdfHashEntries, collisionDetected)) {
 			countToAllocate++;
 		}
 

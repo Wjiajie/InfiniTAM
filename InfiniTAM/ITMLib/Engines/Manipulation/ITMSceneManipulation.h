@@ -92,11 +92,9 @@ bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition, ITMHashEntry* hash
  * \return true if the block needs allocation, false otherwise
  */
 _CPU_AND_GPU_CODE_
-inline bool MarkAsNeedingAllocationIfNotFound(DEVICEPTR(uchar)* entryAllocationTypes,
-                                              DEVICEPTR(Vector3s)* hashBlockCoordinates,
-                                              THREADPTR(int)& hashIdx,
+inline bool MarkAsNeedingAllocationIfNotFound(uchar* entryAllocationTypes, Vector3s* hashBlockCoordinates, int& hashIdx,
                                               const CONSTPTR(Vector3s)& desiredHashBlockPosition,
-                                              const CONSTPTR(ITMHashEntry)* hashTable) {
+                                              const CONSTPTR(ITMHashEntry)* hashTable, bool& collisionDetected) {
 
 	ITMHashEntry hashEntry = hashTable[hashIdx];
 	//check if hash table contains entry
@@ -112,13 +110,25 @@ inline bool MarkAsNeedingAllocationIfNotFound(DEVICEPTR(uchar)* entryAllocationT
 					return false;
 				}
 			}
-			entryAllocationTypes[hashIdx] = ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST;
+			if(entryAllocationTypes[hashIdx] != ITMLib::NEEDS_NO_CHANGE){
+				collisionDetected = true;
+				return false;
+			}else{
+				entryAllocationTypes[hashIdx] = ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST;
+				hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
+				return true;
+			}
+
+		}
+		if(entryAllocationTypes[hashIdx] != ITMLib::NEEDS_NO_CHANGE){
+			collisionDetected = true;
+			return false;
+		}else {
+			entryAllocationTypes[hashIdx] = ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST;
 			hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
 			return true;
 		}
-		entryAllocationTypes[hashIdx] = ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST;
-		hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
-		return true;
+
 	}
 	// already have hash block, no allocation needed
 	return false;

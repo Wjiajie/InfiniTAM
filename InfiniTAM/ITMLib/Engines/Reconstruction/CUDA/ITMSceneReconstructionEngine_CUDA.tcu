@@ -380,8 +380,10 @@ __global__ void buildHashAllocAndVisibleType_device(uchar *entriesAllocType, uch
 
 	if (x > _imgSize.x - 1 || y > _imgSize.y - 1) return;
 
-	buildHashAllocAndVisibleTypePP(entriesAllocType, entriesVisibleType, x, y, blockCoords, depth, invM_d,
-		projParams_d, mu, _imgSize, _voxelSize, hashTable, viewFrustum_min, viewFrustum_max);
+	bool collisionDetected = false;
+	buildHashAllocAndVisibleTypePP(entriesAllocType, entriesVisibleType, x, y, blockCoords, depth, invM_d, projParams_d,
+	                               mu, _imgSize, _voxelSize,
+	                               hashTable, viewFrustum_min, viewFrustum_max, collisionDetected);
 }
 
 __global__ void setToType3(uchar *entriesVisibleType, int *visibleEntryIDs, int noVisibleEntries)
