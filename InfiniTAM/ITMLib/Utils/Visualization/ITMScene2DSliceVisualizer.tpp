@@ -42,26 +42,23 @@ const bool ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::absFi
 // region ===================================== CONSTRUCTORS / DESTRUCTORS =============================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::ITMScene2DSliceVisualizer(Vector3i focusCoordinate,
-                                                                                  std::string outputDirectory,
-                                                                                  unsigned int imageSizeVoxels,
-                                                                                  float pixelsPerVoxel,
-                                                                                  Plane plane)
+ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::ITMScene2DSliceVisualizer(Vector3i focusCoordinates, unsigned int imageSizeVoxels, float pixelsPerVoxel,
+                                                                                          Plane plane)
 		:
-		focusCoordinate(focusCoordinate),
+		focusCoordinates(focusCoordinates),
 		imageSizeVoxels(imageSizeVoxels),
 		imageHalfSizeVoxels(imageSizeVoxels / 2),
 
-		imgRangeStartX(focusCoordinate.x - imageHalfSizeVoxels),
-		imgRangeEndX(focusCoordinate.x + imageHalfSizeVoxels),
-		imgRangeStartY(focusCoordinate.y - imageHalfSizeVoxels),
-		imgRangeEndY(focusCoordinate.y + imageHalfSizeVoxels),
-		imgRangeStartZ(focusCoordinate.z - imageHalfSizeVoxels),
-		imgRangeEndZ(focusCoordinate.z + imageHalfSizeVoxels),
+		imgRangeStartX(focusCoordinates.x - imageHalfSizeVoxels),
+		imgRangeEndX(focusCoordinates.x + imageHalfSizeVoxels),
+		imgRangeStartY(focusCoordinates.y - imageHalfSizeVoxels),
+		imgRangeEndY(focusCoordinates.y + imageHalfSizeVoxels),
+		imgRangeStartZ(focusCoordinates.z - imageHalfSizeVoxels),
+		imgRangeEndZ(focusCoordinates.z + imageHalfSizeVoxels),
 
-		imgXSlice(focusCoordinate.x),
-		imgYSlice(focusCoordinate.y),
-		imgZSlice(focusCoordinate.z),
+		imgXSlice(focusCoordinates.x),
+		imgYSlice(focusCoordinates.y),
+		imgZSlice(focusCoordinates.z),
 
 		imgVoxelRangeX(imgRangeEndX - imgRangeStartX),
 		imgVoxelRangeY(imgRangeEndY - imgRangeStartY),
@@ -73,8 +70,9 @@ ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::ITMScene2DSliceV
 		imgPixelRangeY(static_cast<int>(pixelsPerVoxel * imgVoxelRangeY)),
 		imgPixelRangeZ(static_cast<int>(pixelsPerVoxel * imgVoxelRangeZ)),
 
-		outputDirectory(outputDirectory),
-		plane(plane) {}
+		plane(plane) {
+
+}
 
 // endregion ===========================================================================================================
 
@@ -237,7 +235,7 @@ cv::Mat ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarp
 					Vector3i originalPosition = currentBlockPositionVoxels + Vector3i(x, y, z);
 					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					TVoxel& voxel = localVoxelBlock[locId];
-					Vector3f projectedPosition = originalPosition.toFloat() + voxel.warp;
+					Vector3f projectedPosition = originalPosition.toFloat() + voxel.framewise_warp;
 					Vector3i projectedPositionFloored = projectedPosition.toIntFloor();
 					switch (plane){
 						case PLANE_XY:
@@ -305,7 +303,7 @@ void ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedS
 	bool vmIndex;
 	TVoxelCanonical voxel = readVoxel(scene->localVBA.GetVoxelBlocks(), scene->index.GetEntries(),
 	                                  positionOfVoxelToMark, vmIndex);
-	Vector3f projectedPosition = positionOfVoxelToMark.toFloat() + voxel.warp;
+	Vector3f projectedPosition = positionOfVoxelToMark.toFloat() + voxel.framewise_warp;
 	Vector3i projectedPositionFloored = projectedPosition.toIntFloor();
 	switch (plane){
 		case PLANE_XY:
@@ -347,6 +345,8 @@ bool ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::IsVoxelInIm
 		case PLANE_XZ:
 			return (z >= imgRangeStartZ && z < imgRangeEndZ && x >= imgRangeStartX && x < imgRangeEndX &&
 			        y == imgYSlice);
+		default:
+			DIEWITHEXCEPTION_REPORTLOCATION("Plane value support not implemented");
 	}
 }
 
@@ -367,6 +367,8 @@ ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelImageCoo
 		case PLANE_XZ:
 			return Vector2i(static_cast<int>(pixelsPerVoxel * (coordinates.x - imgRangeStartX)),
 			                imgPixelRangeZ - static_cast<int>(pixelsPerVoxel * (coordinates.z - imgRangeStartZ)));
+		default:
+			DIEWITHEXCEPTION_REPORTLOCATION("Plane value support not implemented");
 	}
 }
 
@@ -385,6 +387,8 @@ ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelImageCoo
 		case PLANE_XZ:
 			return Vector2i(static_cast<int>(pixelsPerVoxel * (coordinates.x - imgRangeStartX)),
 			                imgPixelRangeZ - static_cast<int>(pixelsPerVoxel * (coordinates.z - imgRangeStartZ)));
+		default:
+			DIEWITHEXCEPTION_REPORTLOCATION("Plane value support not implemented");
 	}
 }
 
@@ -407,6 +411,8 @@ bool ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::IsVoxelBloc
 			return !(imgYSlice >= bvc1.y || imgYSlice < bvc0.y) &&
 			       !(imgRangeStartX >= bvc1.x || imgRangeEndX < bvc0.x) &&
 			       !(imgRangeStartZ >= bvc1.z || imgRangeEndZ < bvc0.z);
+		default:
+			DIEWITHEXCEPTION_REPORTLOCATION("Plane value support not implemented");
 	}
 }
 
@@ -532,7 +538,7 @@ ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlice
 					float value = SdfToShadeValue(TVoxel::valueToFloat(voxel.sdf));
 					uchar colorChar = static_cast<uchar>(value * 255.0);
 					cv::Vec3b color = cv::Vec3b::all(colorChar);
-					if (voxelPosition == focusCoordinate) {
+					if (voxelPosition == focusCoordinates) {
 						color.val[0] = 0;
 						color.val[1] = 0;
 						color.val[2] = static_cast<uchar>(255.0);
@@ -592,7 +598,7 @@ ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SaveLiveSceneSli
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene2DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::MarkWarpedSceneImageAroundFocusPoint(
 		ITMScene<TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn) {
-	MarkWarpedSceneImageAroundPoint(scene, imageToMarkOn, focusCoordinate);
+	MarkWarpedSceneImageAroundPoint(scene, imageToMarkOn, focusCoordinates);
 
 }
 

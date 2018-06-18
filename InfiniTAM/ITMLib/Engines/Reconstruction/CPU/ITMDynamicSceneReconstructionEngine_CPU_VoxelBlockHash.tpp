@@ -113,13 +113,14 @@ struct FusionFunctor{
 			maximumWeight(maximumWeight),
 			liveSourceFieldIndex(liveSourceFieldIndex){}
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel){
-		if (liveVoxel.flag_values[liveSourceFieldIndex] != ITMLib::VOXEL_NONTRUNCATED) {
-			return;
-		}
-		int oldWDepth = canonicalVoxel.w_depth;
-		float oldSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
+//		if (liveVoxel.flag_values[liveSourceFieldIndex] != ITMLib::VOXEL_NONTRUNCATED) {
+//			return;
+//		}
 
 		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[liveSourceFieldIndex]);
+
+		int oldWDepth = canonicalVoxel.w_depth;
+		float oldSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
 
 		float newSdf = oldWDepth * oldSdf + liveSdf;
 		float newWDepth = oldWDepth + 1.0f;
@@ -129,6 +130,7 @@ struct FusionFunctor{
 		canonicalVoxel.sdf = TVoxelCanonical::floatToValue(newSdf);
 		canonicalVoxel.w_depth = (uchar) newWDepth;
 		canonicalVoxel.flags = ITMLib::VOXEL_NONTRUNCATED;
+
 	}
 private:
 	const int maximumWeight;

@@ -43,6 +43,7 @@ public:
 	void SetScenes(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene,ITMScene<ITMVoxelLive, ITMVoxelIndex>* liveScene);
 	void SetOutputDirectory(std::string outputDirectory);
 	void SetFocusCoordinates(Vector3i focusCoordinates);
+	void SetPlaneFor2DSlices(Plane plane);
 
 	void TurnRecordingLiveSceneAs2DSlicesOn();
 	void TurnRecordingLiveSceneAs2DSlicesOff();
@@ -108,7 +109,7 @@ private:
 	void MakeOrClearOutputDirectoriesFor2DSceneSlices() const;
 
 	// various loggers & visualizers
-	ITMScene2DSliceVisualizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex> scene2DSliceVisualizer;
+	std::unique_ptr<ITMScene2DSliceVisualizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>> scene2DSliceVisualizer;
 	std::unique_ptr<ITMScene1DSliceVisualizer> scene1DSliceVisualizer;
 	std::unique_ptr<ITMSceneTrackingEnergyPlotter> energyPlotter;
 	ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* scene3DLogger = nullptr;
@@ -133,6 +134,8 @@ private:
 	bool plottingEnergies = false;
 	bool hasFocusCoordinates = false;
 
+	// configuration
+	Plane planeFor2DSlices = PLANE_XY;
 	std::string outputDirectory;
 	Vector3i focusCoordinates;
 	const int focusSliceRadius;//=3;

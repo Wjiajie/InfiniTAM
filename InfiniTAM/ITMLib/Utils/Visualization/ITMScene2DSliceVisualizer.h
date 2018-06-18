@@ -35,9 +35,8 @@ public:
 
 	static float SdfToShadeValue(float sdf);
 
-	explicit ITMScene2DSliceVisualizer(Vector3i focusCoordinate, std::string outputDirectory,
-	                               unsigned int imageSizeVoxels = 100,
-	                               float pixelsPerVoxel = 16.0, Plane plane = PLANE_XY);
+	explicit ITMScene2DSliceVisualizer(Vector3i focusCoordinates, unsigned int imageSizeVoxels, float pixelsPerVoxel,
+		                                   Plane plane);
 
 	virtual ~ITMScene2DSliceVisualizer() = default;
 
@@ -59,11 +58,13 @@ public:
 	void MarkWarpedSceneImageAroundFocusPoint(ITMScene <TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn);
 	void MarkWarpedSceneImageAroundPoint(ITMScene <TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn, Vector3i positionOfVoxelToMark);
 
-	const Vector3i focusCoordinate;
+
+
+
 	const std::string outputDirectory;
 	const float pixelsPerVoxel;
 
-protected:
+private:
 	template<typename TVoxel>
 	void RenderSceneSlices(ITMScene <TVoxel, TIndex>* scene,
 	                       Axis axis,
@@ -107,6 +108,7 @@ protected:
 	const int imgPixelRangeZ;
 
 	Plane plane;
+	const Vector3i focusCoordinates;
 
 	template<typename TVoxel>
 	cv::Mat DrawSceneImageAroundPointIndexedFields(ITMScene <TVoxel, TIndex>* scene, int fieldIndex);

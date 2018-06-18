@@ -75,6 +75,7 @@ void ITMSceneTrackingEnergyPlotter::PreparePlot(Vector3i colorDataEnergy,
 	table->SetNumberOfRows(0);
 
 	vtkSmartPointer<vtkChartXY> chart = this->window->GetChart();
+
 	chart->ClearPlots();
 	chart->GetAxis(1)->SetTitle("Iteration");
 	chart->GetAxis(0)->SetTitle("Energy");
@@ -86,6 +87,8 @@ void ITMSceneTrackingEnergyPlotter::PreparePlot(Vector3i colorDataEnergy,
 	stack->SetInputArray(2, "Smoothing Energy");
 	stack->SetInputArray(3, "Level Set Energy");
 	stack->SetInputArray(4, "Killing Energy");
+
+	chart->SetShowLegend(true);
 
 	vtkSmartPointer<vtkColorSeries> colorSeries =
 			vtkSmartPointer<vtkColorSeries>::New();

@@ -61,14 +61,10 @@ UIEngine_BPO* UIEngine_BPO::instance;
  * set interval to this number of frames
  */
 void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
-                              InputSource::IMUSourceEngine* imuSource,
-                              ITMLib::ITMMainEngine* mainEngine, const char* outFolder,
-                              ITMLib::ITMLibSettings::DeviceType deviceType,
+                              InputSource::IMUSourceEngine* imuSource, ITMLib::ITMMainEngine* mainEngine,
+                              const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
                               int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
-                              bool startInStepByStep,
-                              bool startRecordingWarp1DSlices, bool startRecordingWarp2DSlices,
-                              bool startRecording3DSceneAndWarpProgression,
-                              bool saveAfterFirstNFrames, bool loadBeforeProcessing) {
+                              bool startInStepByStep, bool saveAfterFirstNFrames, bool loadBeforeProcessing) {
 	this->inStepByStepMode = startInStepByStep;
 	this->saveAfterAutoprocessing = saveAfterFirstNFrames;
 
@@ -76,10 +72,6 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 	this->integrationActive = true;
 	this->currentColourMode = 0;
 	this->autoIntervalFrameCount = frameIntervalLength;
-
-	if(startRecording3DSceneAndWarpProgression) ITMDynamicFusionLogger::Instance().TurnRecording3DSceneAndWarpProgressionOn();
-	if(startRecordingWarp1DSlices) ITMDynamicFusionLogger::Instance().TurnRecordingScene1DSlicesWithUpdatesOn();
-	if(startRecordingWarp2DSlices) ITMDynamicFusionLogger::Instance().TurnRecordingScene2DSlicesWithUpdatesOn();
 
 	this->colourModes_main.emplace_back("shaded greyscale", ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST);
 	this->colourModes_main.emplace_back("integrated colours", ITMMainEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME);

@@ -18,7 +18,8 @@
 namespace ITMLib {
 enum Axis {
 	//NOTA BENE: due to absence of reflection in C++, when modifying this enum, please also modify AxisToString
-			AXIS_X = 0,
+
+	AXIS_X = 0,
 	AXIS_Y = 1,
 	AXIS_Z = 2
 };
@@ -37,8 +38,10 @@ inline std::string AxisToString(Axis axis) {
 
 enum Plane {
 	//0-2 ordered to correspond to Axes
-	//NOTA BENE: due to absence of reflection in C++, when modifying this enum, please also modify PlaneToString
-			PLANE_YZ = 0,
+	//NOTA BENE: due to absence of reflection in C++, when modifying this enum, please also modify PlaneToString and the
+	// >> overload below
+
+	PLANE_YZ = 0,
 	PLANE_XZ = 1,
 	PLANE_XY = 2,
 
@@ -64,6 +67,8 @@ inline std::string PlaneToString(Plane plane) {
 	}
 }
 
+std::istream& operator>>(std::istream& in, ITMLib::Plane& plane);
 
-}
+
+}//namespace ITMLib
 

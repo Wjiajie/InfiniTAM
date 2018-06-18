@@ -432,6 +432,45 @@ void ComputeLiveJacobian_CentralDifferences_NontruncatedOnly_IndexedFields(Vecto
 };
 
 
+
+
+template<typename TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+void ComputeLiveJacobian_CentralDifferences_SmallDifferences_IndexedFields(Vector3f& jacobian,
+                                                                           const Vector3i& voxelPosition,
+                                                                           const TVoxel* voxels,
+                                                                           const ITMHashEntry* hashEntries,
+                                                                           THREADPTR(TCache) cache,
+                                                                           int fieldIndex) {
+	int vmIndex;
+	TVoxel voxel;
+
+
+	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(1, 0, 0), vmIndex, cache);
+	float sdfAtXplusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 1, 0), vmIndex, cache);
+	float sdfAtYplusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 0, 1), vmIndex, cache);
+	float sdfAtZplusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+
+	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(-1, 0, 0), vmIndex, cache);
+	float sdfAtXminusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, -1, 0), vmIndex, cache);
+	float sdfAtYminusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 0, -1), vmIndex, cache);
+	float sdfAtZminusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+
+	float xDiff = sdfAtXplusOne - sdfAtXminusOne;
+	float yDiff = sdfAtYplusOne - sdfAtYminusOne;
+	float zDiff = sdfAtZplusOne - sdfAtZminusOne;
+	const float threshold = 1.0;
+
+	jacobian[0] = std::abs(xDiff) < threshold ? 0.5f * xDiff : 0.0f;
+	jacobian[1] = std::abs(yDiff) < threshold ? 0.5f * yDiff : 0.0f;
+	jacobian[2] = std::abs(zDiff) < threshold ? 0.5f * zDiff : 0.0f;
+};
+
+
 template<typename TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 void ComputeLiveJacobian_CentralDifferences_IgnoreUnknown_IndexedFields(Vector3f& jacobian,

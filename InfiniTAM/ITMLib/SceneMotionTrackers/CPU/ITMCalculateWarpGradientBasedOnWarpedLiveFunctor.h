@@ -71,7 +71,7 @@ public:
 			liveCache(),
 			canonicalCache(),
 			parameters(parameters),
-			switches(switches){}
+			switches(switches) {}
 
 	void PrepareForOptimization(ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
 	                            ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, int sourceSdfIndex,
@@ -95,16 +95,19 @@ public:
 
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i position) {
 
-		if(!VoxelIsConsideredForTracking(canonicalVoxel,liveVoxel,sourceSdfIndex)) return;
+		if (!VoxelIsConsideredForTracking(canonicalVoxel, liveVoxel, sourceSdfIndex)) return;
 
 		Vector3f& framewiseWarp = canonicalVoxel.framewise_warp;
-
-		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
-		                    && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
-
-		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
 		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[sourceSdfIndex]);
 		float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
+		bool haveFullData = true;
+//		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
+//		                    && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+//		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
+//		                    && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED && std::abs(canonicalSdf - liveSdf) < 1.0;
+
+		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
+
 
 
 		float localDataEnergy = 0.0f, localLevelSetEnergy = 0.0f, localSmoothnessEnergy = 0.0f,
@@ -156,6 +159,8 @@ public:
 //			ComputeLiveJacobian_CentralDifferences_IgnoreUnknown_IndexedFields(
 //					liveSdfJacobian, position, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
 //			ComputeLiveJacobian_CentralDifferences_NontruncatedOnly_IndexedFields(
+//					liveSdfJacobian, position, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
+//			ComputeLiveJacobian_CentralDifferences_SmallDifferences_IndexedFields(
 //					liveSdfJacobian, position, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
 		}
 

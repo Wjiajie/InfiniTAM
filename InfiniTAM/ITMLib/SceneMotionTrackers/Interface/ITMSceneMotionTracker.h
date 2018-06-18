@@ -33,6 +33,13 @@ inline
 bool VoxelIsConsideredForTracking(TVoxelCanonical& voxelCanonical, TVoxelLive voxelLive, int sourceFieldIndex){
 	return voxelCanonical.flags == VOXEL_NONTRUNCATED || voxelLive.flag_values[sourceFieldIndex] == VOXEL_NONTRUNCATED;
 };
+//
+//_DEBUG
+//template<typename TVoxelCanonical, typename TVoxelLive>
+//inline
+//bool VoxelIsConsideredForTracking(TVoxelCanonical& voxelCanonical, TVoxelLive voxelLive, int sourceFieldIndex){
+//	return voxelLive.flag_values[sourceFieldIndex] == VOXEL_NONTRUNCATED;
+//};
 
 //TODO: write documentation block -Greg (Github: Algomorph)
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

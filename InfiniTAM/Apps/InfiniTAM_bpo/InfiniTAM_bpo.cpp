@@ -4,10 +4,12 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <thread>
+
 
 //boost
 #include <boost/program_options.hpp>
-#include <thread>
+
 
 //VTK
 #include <vtkSmartPointer.h>
@@ -34,10 +36,13 @@
 #include "../../ITMLib/Core/ITMBasicSurfelEngine.h"
 #include "../../ITMLib/Core/ITMMultiEngine.h"
 #include "../../ITMLib/Core/ITMDynamicEngine.h"
+#include "../../ITMLib/Utils/Visualization/ITMVisualizationWindowManager.h"
+#include "../../ITMLib/Utils/Visualization/ITMVisualizationCommon.h"
+
 
 //local
 #include "prettyprint.hpp"
-#include "../../ITMLib/Utils/Visualization/ITMVisualizationWindowManager.h"
+
 
 // *** namespaces ***
 
@@ -46,7 +51,6 @@ using namespace InputSource;
 using namespace ITMLib;
 
 namespace po = boost::program_options;
-
 
 static void CreateDefaultImageSource(ImageSourceEngine*& imageSource, IMUSourceEngine*& imuSource,
                                      const std::string& calibFilePath = "",
@@ -184,9 +188,13 @@ int main(int argc, char** argv) {
 		bool startInStepByStep = false;
 		bool restrictZMotion = false;
 		bool simpleScene = false;
-		bool recordWarp1DSlices = false;
-		bool recordWarp2DSlices = false;
+
+		bool record1DSlices = false;
+		bool record2DSlices = false;
+		bool record3DSceneAndWarps = false;
 		bool plotEnergies = false;
+
+		Plane planeFor2DSlices = PLANE_XY;
 
 
 		//@formatter:off
@@ -282,13 +290,18 @@ int main(int argc, char** argv) {
 				("plot_energies",po::bool_switch(&plotEnergies)->default_value(false),
 				 "Used in dynamic fusion. Plot graphs of energy contributions from all terms used during scene "
 	             "tracking optimization.")
-				("record_warp_1d_slices",po::bool_switch(&recordWarp1DSlices)->default_value(false),
+				("record_1d_slices",po::bool_switch(&record1DSlices)->default_value(false),
 				 "Used in dynamic fusion. Plot graphs of canonical and live SDF (around the focus coordinate,"
 	             " if provided), plot the live frame progression and warp vectors (for visual debugging).")
-				("record_warp_2d_slices",po::bool_switch(&recordWarp2DSlices)->default_value(false),
+				("record_2d_slices",po::bool_switch(&record2DSlices)->default_value(false),
 				 "Used in dynamic fusion. Render warps from each frame onto an image of the original live frame"
 	             " (around the focus coordinate, if provided), as well as warped live frame"
 			     " progression (for debugging).")
+				("2d_slice_plane",po::value<ITMLib::Plane>(&planeFor2DSlices)->default_value(PLANE_XY),
+				 "(Dynamic fusion) plane to use for recording of 2d slices.")
+				("record_3d_scene_and_warps",po::bool_switch(&record3DSceneAndWarps)->default_value(false),
+				 "Used in dynamic fusion. Record 3D scenes at each frame and complete warp progression at every iteration.")
+
 
 
 				("weight_data_term", po::value<float>(),
@@ -475,6 +488,14 @@ int main(int argc, char** argv) {
 			mainEngine->turnOffTracking();
 		}
 // endregion ===========================================================================================================
+// region =========================== SET LOGGER / VISUALIZERS WITH CLI ARGUMENTS ======================================
+		//NB: Logger's focus coordinates set above together with main engine settings, if provided
+		if(plotEnergies) ITMDynamicFusionLogger::Instance().TurnPlottingEnergiesOn();
+		ITMDynamicFusionLogger::Instance().SetPlaneFor2DSlices(planeFor2DSlices);
+		if(record3DSceneAndWarps) ITMDynamicFusionLogger::Instance().TurnRecording3DSceneAndWarpProgressionOn();
+		if(record1DSlices) ITMDynamicFusionLogger::Instance().TurnRecordingScene1DSlicesWithUpdatesOn();
+		if(record2DSlices) ITMDynamicFusionLogger::Instance().TurnRecordingScene2DSlicesWithUpdatesOn();
+// endregion
 // region =========================== SET UI ENGINE SETTINGS WITH CLI ARGUMENTS ========================================
 		int processNFramesOnLaunch = 0;
 		if (!vm["process_N_frames"].empty()) {
@@ -486,13 +507,13 @@ int main(int argc, char** argv) {
 			skipFirstNFrames = vm["start_from_frame_ix"].as<int>();
 		}
 
-		if(plotEnergies) ITMDynamicFusionLogger::Instance().TurnPlottingEnergiesOn();
 
 		UIEngine_BPO::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine,
 		                                     settings->analysisSettings.outputPath.c_str(), settings->deviceType,
 		                                     processNFramesOnLaunch, skipFirstNFrames, recordReconstructionToVideo,
-		                                     startInStepByStep, recordWarp1DSlices, recordWarp2DSlices,
-		                                     false, saveAfterInitialProcessing, loadBeforeProcessing);
+		                                     startInStepByStep, saveAfterInitialProcessing, loadBeforeProcessing);
+
+
 // endregion ===========================================================================================================
 
 		//ITMVisualizationWindowManager::Instance().Run();

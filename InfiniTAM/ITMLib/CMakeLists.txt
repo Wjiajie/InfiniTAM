@@ -587,6 +587,7 @@ set(ITMLIB_UTILS_VISUALIZATION_SOURCES
     Utils/Visualization/ITMScene2DSliceVisualizer.cpp
     Utils/Visualization/ITMScene1DSliceVisualizer.cpp
     Utils/Visualization/ITMScene1DSliceVisualizer.tpp
+    Utils/Visualization/ITMVisualizationCommon.cpp
     Utils/Visualization/ITMVisualizationWindowManager.cpp
     Utils/Visualization/ITMSceneTrackingEnergyPlotter.cpp
     )
