@@ -239,6 +239,9 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 	//** warp update gradient computation
 	PrintOperationStatus("Calculating warp energy gradient...");
 	bench::StartTimer("TrackMotion_31_CalculateWarpUpdate");
+
+
+
 	sceneMotionTracker->CalculateWarpGradient(canonicalScene, liveScene, analysisFlags.hasFocusCoordinates,
 	                                          focusCoordinates, sourceSdfIndex,
 	                                          analysisFlags.restrictZtrackingForDebugging);

@@ -74,8 +74,8 @@ public:
 	 * \param sourceSdfIndex index of the source SDF field in each live voxel
 	 * \param targetSdfIndex index of the target SDF field in each live voxel
 	 */
-	virtual void WarpScene(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-	ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex,
+	virtual void WarpScene(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	ITMScene<TVoxelLive, TIndex>* liveScene, int sourceSdfIndex, int targetSdfIndex,
 	bool hasFocusCoordinates, Vector3i focusCoordinates) = 0;
 
 	/**
@@ -87,8 +87,8 @@ public:
 	 * \param targetSdfIndex index of the target SDF field in each live voxel
 	 */
 	virtual void UpdateWarpedScene(
-			ITMScene <TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-			ITMScene <TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex,
+			ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+			ITMScene <TVoxelLive, TIndex>* liveScene, int sourceSdfIndex, int targetSdfIndex,
 			bool hasFocusCoordinates, Vector3i focusCoordinates) = 0;
 protected:
 

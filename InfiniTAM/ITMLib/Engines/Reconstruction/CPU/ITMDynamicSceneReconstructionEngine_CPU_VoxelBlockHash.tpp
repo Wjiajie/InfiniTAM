@@ -13,23 +13,6 @@ using namespace ITMLib;
 
 
 
-// region ===================================== VOXEL LOOKUPS ==========================================================
-
-template <typename TVoxel>
-struct LookupBasedOnWarpStaticFunctor{
-	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
-		return position.toFloat() + voxel.warp;
-	}
-};
-
-
-template <typename TVoxel>
-struct LookupBasedOnWarpUpdateStaticFunctor{
-	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
-		return position.toFloat() + voxel.warp_update;
-	}
-};
-// endregion ===========================================================================================================
 
 // region ======================================= MODIFY VOXELS BASED ON VIEW ==========================================
 
@@ -113,9 +96,6 @@ struct FusionFunctor{
 			maximumWeight(maximumWeight),
 			liveSourceFieldIndex(liveSourceFieldIndex){}
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel){
-//		if (liveVoxel.flag_values[liveSourceFieldIndex] != ITMLib::VOXEL_NONTRUNCATED) {
-//			return;
-//		}
 
 		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[liveSourceFieldIndex]);
 
@@ -250,6 +230,25 @@ private:
 	const int targetSdfIndex;
 };
 
+
+// region ===================================== VOXEL LOOKUPS ==========================================================
+//TODO: take care of DRY violations (this matches equivalent region in ITMDynamicHashManagementEngine_CPU.tpp)
+template <typename TVoxel>
+struct LookupBasedOnWarpStaticFunctor{
+	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
+		return position.toFloat() + voxel.warp;
+	}
+};
+
+
+template <typename TVoxel>
+struct LookupBasedOnWarpUpdateStaticFunctor{
+	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
+		return position.toFloat() + voxel.warp_update;
+	}
+};
+// endregion ===========================================================================================================
+
 /**
  * \brief Uses trilinear interpolation of the live frame at [canonical voxel positions + scaled engergy gradient]
  *  (not complete warps) to generate a new live SDF grid in the target scene. Intended to be used at every iteration.
@@ -280,7 +279,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 	VoxelTraversal_CPU(liveScene, flagClearFunctor);
 
 	// Allocate new blocks where necessary, filter based on flags from source
-	hashManager.template AllocateLive<LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>(
+	hashManager.AllocateLiveUsingWarpUpdates(
 			canonicalScene, liveScene, sourceSdfIndex);
 
 	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>
@@ -323,12 +322,11 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 	VoxelTraversal_CPU(liveScene, flagClearFunctor);
 
 	// Allocate new blocks where necessary, filter based on flags from source
-	hashManager.template AllocateLive< LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>(canonicalScene, liveScene, sourceSdfIndex);
+	hashManager.AllocateLiveUsingWholeWarps(canonicalScene, liveScene, sourceSdfIndex);
 
 	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>
 			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex,
 			                              hasFocusCoordinates, focusCoordinates);
-
 
 	// Interpolate to obtain the new live frame values (at target index)
 	DualVoxelPositionTraversal_DefaultForMissingSecondary_CPU(liveScene,canonicalScene,trilinearInterpolationFunctor);

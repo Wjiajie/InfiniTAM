@@ -12,7 +12,6 @@ namespace ITMLib {
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMDynamicSceneReconstructionEngine_CPU
 		: public ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex> {
-
 };
 
 template<typename TVoxelCanonical, typename TVoxelLive>
@@ -65,8 +64,9 @@ public:
 	               ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex,
 	               bool hasFocusCoordinates, Vector3i focusCoordinates) override;
 	void UpdateWarpedScene(
-			ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-			ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) override;
+			ITMScene <TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
+			ITMScene <TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex,
+			bool hasFocusCoordinates, Vector3i focusCoordinates) override;
 
 	ITMDynamicSceneReconstructionEngine_CPU() = default;
 	~ITMDynamicSceneReconstructionEngine_CPU() = default;

@@ -19,8 +19,8 @@
 #include "../Core/ITMDynamicEngine.tpp"
 
 #include "../Objects/Scene/ITMScene.h"
-#include "../Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU_VoxelBlockHash.tpp"
-#include "../Engines/Reconstruction/CPU/ITMDynamicHashManagementEngine_CPU.tpp"
+
+
 #include "../Engines/Swapping/CPU/ITMSwappingEngine_CPU.tpp"
 #include "../Engines/Visualisation/CPU/ITMVisualisationEngine_CPU.tpp"
 #include "../Engines/Meshing/CPU/ITMMeshingEngine_CPU.tpp"
@@ -38,8 +38,6 @@
 template class ITMSwappingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 
-template class ITMDynamicHashManagementEngine_CPU<ITMVoxelCanonical,ITMVoxelLive>;
-template class ITMDynamicSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
 
 //template class ITMSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMVisualisationEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;

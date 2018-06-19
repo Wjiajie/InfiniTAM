@@ -183,9 +183,9 @@ inline void StaticDualVoxelTraversal_CPU(
 #pragma omp parallel for
 #endif
 	for (int hash = 0; hash < noTotalEntries; hash++) {
-		ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
+		const ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
 		if (currentLiveHashEntry.ptr < 0) continue;
-		ITMHashEntry& currentCanonicalHashEntry = secondaryHashTable[hash];
+		ITMHashEntry currentCanonicalHashEntry = secondaryHashTable[hash];
 
 		// the rare case where we have different positions for primary & secondary voxel block with the same index:
 		// we have a hash bucket miss, find the secondary voxel with the matching coordinates
@@ -240,9 +240,9 @@ inline void DualVoxelTraversal_CPU(
 #endif
 	for (int hash = 0; hash < noTotalEntries; hash++) {
 
-		ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
+		const ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
 		if (currentLiveHashEntry.ptr < 0) continue;
-		ITMHashEntry& currentCanonicalHashEntry = secondaryHashTable[hash];
+		ITMHashEntry currentCanonicalHashEntry = secondaryHashTable[hash];
 
 		// the rare case where we have different positions for primary & secondary voxel block with the same index:
 		// we have a hash bucket miss, find the secondary voxel with the matching coordinates
@@ -296,14 +296,15 @@ inline void DualVoxelPositionTraversal_CPU(
 #pragma omp parallel for
 #endif
 	for (int hash = 0; hash < noTotalEntries; hash++) {
-		ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
+		const ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
 		if (currentLiveHashEntry.ptr < 0) continue;
-		ITMHashEntry& currentCanonicalHashEntry = secondaryHashTable[hash];
+		ITMHashEntry currentCanonicalHashEntry = secondaryHashTable[hash];
 
 		// the rare case where we have different positions for primary & secondary voxel block with the same index:
 		// we have a hash bucket miss, find the secondary voxel with the matching coordinates
 		if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
 			int secondaryHash;
+
 			if (!FindHashAtPosition(secondaryHash, currentLiveHashEntry.pos, secondaryHashTable)) {
 				std::stringstream stream;
 				stream << "Could not find corresponding secondary scene block at postion " << currentLiveHashEntry.pos
@@ -355,9 +356,9 @@ inline void DualVoxelPositionTraversal_DefaultForMissingSecondary_CPU(
 #pragma omp parallel for
 #endif
 	for (int hash = 0; hash < noTotalEntries; hash++) {
-		ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
+		const ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
 		if (currentLiveHashEntry.ptr < 0) continue;
-		ITMHashEntry& currentCanonicalHashEntry = secondaryHashTable[hash];
+		ITMHashEntry currentCanonicalHashEntry = secondaryHashTable[hash];
 
 		// the rare case where we have different positions for primary & secondary voxel block with the same index:
 		// we have a hash bucket miss, find the secondary voxel with the matching coordinates
@@ -421,9 +422,9 @@ inline void DualVoxelPositionTraversal_CPU_SingleThreaded(
 	typename TIndex::IndexCache primaryCache;
 
 	for (int hash = 0; hash < noTotalEntries; hash++) {
-		ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
+		const ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
 		if (currentLiveHashEntry.ptr < 0) continue;
-		ITMHashEntry& currentCanonicalHashEntry = secondaryHashTable[hash];
+		ITMHashEntry currentCanonicalHashEntry = secondaryHashTable[hash];
 
 		// the rare case where we have different positions for primary & secondary voxel block with the same index:
 		// we have a hash bucket miss, find the secondary voxel with the matching coordinates

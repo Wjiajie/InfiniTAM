@@ -184,6 +184,7 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateCa
 #pragma omp parallel for
 #endif
 		for (int liveHash = 0; liveHash < ITMVoxelBlockHash::noTotalEntries; liveHash++) {
+
 			const ITMHashEntry& currentLiveHashBlock = liveHashEntries[liveHash];
 			//skip unfilled live blocks
 			if (currentLiveHashBlock.ptr < 0) {
@@ -193,6 +194,7 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateCa
 
 			//try to find a corresponding canonical block, and mark it for allocation if not found
 			int canonicalHash = hashIndex(liveHashBlockCoords);
+
 			MarkAsNeedingAllocationIfNotFound(canonicalEntryAllocationTypes, allocationBlockCoordinates,
 					                                  canonicalHash, liveHashBlockCoords, canonicalHashEntries,
 					                                  collisionDetected);
@@ -267,6 +269,7 @@ private:
 };
 
 
+
 /**
  * \brief Helper method which looks at voxel grid with warps and an SDF voxel grid and allocates all hash blocks in the
  * SDF grid where warp vectors are pointing to (if not already allocated).
@@ -295,6 +298,39 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLi
 
 	//Allocate the hash entries that will potentially have any data
 	AllocateHashEntriesUsingLists_CPU(sdfScene, liveEntryAllocationTypes, allocationBlockCoords);
+}
+
+
+// region ===================================== VOXEL LOOKUPS ==========================================================
+
+template <typename TVoxel>
+struct LookupBasedOnWarpStaticFunctor{
+	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
+		return position.toFloat() + voxel.warp;
+	}
+};
+
+
+template <typename TVoxel>
+struct LookupBasedOnWarpUpdateStaticFunctor{
+	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
+		return position.toFloat() + voxel.warp_update;
+	}
+};
+// endregion ===========================================================================================================
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLiveUsingWholeWarps(
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex) {
+	this->AllocateLive<LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>(warpSourceScene, sdfScene, sourceSdfIndex);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLiveUsingWarpUpdates(
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex) {
+	this->AllocateLive<LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>(warpSourceScene, sdfScene, sourceSdfIndex);
 }
 
 // endregion ==================================== END CANONICAL HASH BLOCK ALLOCATION ==================================

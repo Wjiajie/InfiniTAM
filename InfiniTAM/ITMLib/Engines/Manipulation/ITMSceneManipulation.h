@@ -53,6 +53,7 @@ inline bool FindHashAtPosition(THREADPTR(int)& hashIdx,
                                const CONSTPTR(ITMHashEntry)* hashTable) {
 	hashIdx = hashIndex(hashBlockPosition);
 	ITMHashEntry hashEntry = hashTable[hashIdx];
+
 	if (!(IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1)) {
 		if (hashEntry.ptr >= -1) {
 			//search excess list only if there is no room in ordered part

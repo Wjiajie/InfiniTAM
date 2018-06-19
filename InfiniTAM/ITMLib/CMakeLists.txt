@@ -27,11 +27,15 @@ find_package(Boost REQUIRED filesystem)
 
 ##
 set(ITMLIB_TOPLEVEL_CPU_SOURCES
+
     Instantiations/SceneManipulationCPUInstantiations.cpp
     Instantiations/CPUInstantiations.cpp
     Instantiations/DynamicFusionCPUInstantiations.cpp
+    Instantiations/DynamicSceneReconstructionEngineCPUInstantiations.cpp
+    Instantiations/DynamicHashManagementEngineCPUInstantiation.cpp
     Instantiations/DenseDynamicMapperInstantiation.cpp
     Instantiations/SceneMotionTrackerCPUInstantiation.cpp
+
     )
 
 set(ITMLIB_TOPLEVEL_CUDA_SOURCES
