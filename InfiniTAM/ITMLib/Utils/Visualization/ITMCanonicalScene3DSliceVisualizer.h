@@ -15,22 +15,42 @@
 //  ================================================================
 #pragma once
 
+//stdlib
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+
+
 #include "../../ITMLibDefines.h"
 #include "ITMScene3DSliceVisualizer.h"
 
 namespace ITMLib{
+
+template <typename TIndex>
+class ThreadInteropCommand;
+
 template <typename TIndex>
 class ITMCanonicalScene3DSliceVisualizer :  public ITMScene3DSliceVisualizer<ITMVoxelCanonical, TIndex> {
+	friend class ThreadInteropCommand<TIndex>;
 public:
 	ITMCanonicalScene3DSliceVisualizer(ITMScene<ITMVoxelCanonical, TIndex>* scene, const Vector3i& focusCoordinates,
 	                                   Plane plane = PLANE_XY, int radiusInPlane = 10, int radiusOutOfPlane = 0);
 	virtual ~ITMCanonicalScene3DSliceVisualizer() = default;
-	void DrawWarpUpdates();
+	void TriggerDrawWarpUpdates();
 private:
+	void DrawWarpUpdates();
+	void InitializeWarps();
+	void Run();
+	std::mutex mutex;
+	std::condition_variable conditionVariable;
+	bool initialized = false;
+	bool warpUpdatePerformed = false;
+	std::thread* thread = nullptr;
 	// ** warp updates
 	vtkSmartPointer<vtkPolyData> updatesData = vtkSmartPointer<vtkPolyData>::New();
 	vtkSmartPointer<vtkPolyDataMapper> updatesMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 	vtkSmartPointer<vtkActor> updatesActor = vtkSmartPointer<vtkActor>::New();
+	vtkSmartPointer<ThreadInteropCommand<TIndex>> threadCallback;
 
 
 };

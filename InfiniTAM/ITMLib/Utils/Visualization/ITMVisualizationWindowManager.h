@@ -17,6 +17,7 @@
 
 //stdlib
 #include <unordered_map>
+
 #include <vector>
 
 //vtk
@@ -47,6 +48,7 @@ private:
 	vtkSmartPointer<vtkContextView> view;
 	vtkSmartPointer<vtkRenderWindow> renderWindow;
 	vtkSmartPointer<vtkChartXY> chart;
+
 };
 
 class ITM3DWindow {
@@ -59,6 +61,8 @@ public:
 	void AddLayer(const Vector4d& backgroundColor);
 	void AddActorToLayer(vtkSmartPointer<vtkActor> actor, int layer);
 	void AddActorToFirstLayer(vtkSmartPointer<vtkActor> actor);
+	void AddLoopCallback(vtkSmartPointer<vtkCommand> callback);
+	void RunInteractor();
 private:
 	std::string name;
 	vtkSmartPointer<vtkRenderWindowInteractor> interactor;
@@ -82,14 +86,11 @@ public:
 	                               const std::string& title = "VTK Window",
 	                               int width = -1, int height = -1);
 
-	ITMChartWindow* GetChartWindow(const std::string& name);
-
 	ITMVisualizationWindowManager(ITMVisualizationWindowManager const&) = delete;
 	void operator=(ITMVisualizationWindowManager const&)  = delete;
 private:
 	std::unordered_map<std::string, ITMChartWindow> chartWindows;
 	std::unordered_map<std::string, ITM3DWindow> _3dWindows;
-	bool firstWindowCreated = false;
 
 	ITMVisualizationWindowManager() = default;
 	~ITMVisualizationWindowManager() = default;

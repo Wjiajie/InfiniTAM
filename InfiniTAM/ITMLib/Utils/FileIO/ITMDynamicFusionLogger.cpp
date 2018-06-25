@@ -357,7 +357,7 @@ ITMDynamicFusionLogger::SaveWarpSlices(int iteration) {
 			scene1DSliceVisualizer->Draw1DWarpUpdateVector(canonicalScene, Vector4i(255, 0, 0, 255));
 		}
 		if (recordingScene3DSlicesWithUpdates) {
-			scene3DSliceVisualizer->DrawWarpUpdates();
+			scene3DSliceVisualizer->TriggerDrawWarpUpdates();
 		}
 	}
 }

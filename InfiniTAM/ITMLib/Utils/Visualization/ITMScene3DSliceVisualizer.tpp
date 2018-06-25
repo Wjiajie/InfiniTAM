@@ -98,13 +98,11 @@ template<typename TVoxel, typename TIndex>
 ITMScene3DSliceVisualizer<TVoxel, TIndex>::ITMScene3DSliceVisualizer(ITMScene<TVoxel, TIndex>* scene,
                                                                      Vector3i focusCoordinates, Plane plane,
                                                                      int radiusInPlane, int radiusOutOfPlane):
-		window(ITMVisualizationWindowManager::Instance().MakeOrGet3DWindow(
-				"Scene3DSliceVisualizer" + to_string(this->bounds),
-				"Scene 3D Slice Visualizer for bounds (" + to_string(this->bounds) + "))")),
+
 		scene(scene),
 		bounds(ComputeBoundsAroundPoint(focusCoordinates, radiusInPlane, radiusOutOfPlane, plane)),
 		scaleMode(VOXEL_SCALE_HIDE_UNKNOWNS) {
-	Initialize();
+
 }
 
 
@@ -112,12 +110,9 @@ template<typename TVoxel, typename TIndex>
 ITMScene3DSliceVisualizer<TVoxel, TIndex>::ITMScene3DSliceVisualizer(ITMScene<TVoxel, TIndex>* scene, Vector6i bounds)
 		:
 
-		window(ITMVisualizationWindowManager::Instance().MakeOrGet3DWindow(
-				"Scene3DSliceVisualizer" + to_string(this->bounds),
-				"Scene 3D Slice Visualizer for bounds (" + to_string(this->bounds) + "))")),
 		scene(scene),
 		bounds(bounds) {
-	Initialize();
+
 }
 
 template<typename TVoxel, typename TIndex>
@@ -130,9 +125,6 @@ ITMScene3DSliceVisualizer<TVoxel, TIndex>::ITMScene3DSliceVisualizer(ITMScene<TV
                                                                      const std::array<double, 4>& highlightVoxelColor,
                                                                      const std::array<double, 3>& hashBlockEdgeColor)
 		:
-		window(ITMVisualizationWindowManager::Instance().MakeOrGet3DWindow(
-				"Scene3DSliceVisualizer" + to_string(this->bounds),
-				"Scene 3D Slice Visualizer for bounds (" + to_string(this->bounds) + "))")),
 		scene(scene),
 		bounds(bounds),
 
@@ -143,7 +135,7 @@ ITMScene3DSliceVisualizer<TVoxel, TIndex>::ITMScene3DSliceVisualizer(ITMScene<TV
 		unknownVoxelColor(unknownVoxelColor),
 		highlightVoxelColor(highlightVoxelColor),
 		hashBlockEdgeColor(hashBlockEdgeColor) {
-	Initialize();
+
 }
 
 template<typename TVoxel, typename TIndex>
@@ -361,6 +353,21 @@ VoxelScaleMode ITMScene3DSliceVisualizer<TVoxel, TIndex>::GetCurrentScaleMode() 
 
 template<typename TVoxel, typename TIndex>
 void ITMScene3DSliceVisualizer<TVoxel, TIndex>::Initialize() {
+	// ** voxels **
+	voxelVizData = vtkSmartPointer<vtkPolyData>::New();
+	voxelColorLookupTable = vtkSmartPointer<vtkLookupTable>::New();
+	voxelVizGeometrySource = vtkSmartPointer<vtkSphereSource>::New();
+	voxelActor = vtkSmartPointer<vtkActor>::New();
+	voxelMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	// ** hash-block grid **
+	hashBlockGridVizData = vtkSmartPointer<vtkPolyData>::New();
+	hashBlockVizGeometrySource = vtkSmartPointer<vtkCubeSource>::New();
+	hashBlockActor = vtkSmartPointer<vtkActor>::New();
+	hashBlockMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+
+	window = ITMVisualizationWindowManager::Instance().MakeOrGet3DWindow(
+			"Scene3DSliceVisualizer" + to_string(this->bounds),
+			"Scene 3D Slice Visualizer for bounds (" + to_string(this->bounds) + "))"),
 	// Create the color maps
 	SetUpSDFColorLookupTable(voxelColorLookupTable, highlightVoxelColor.data(), positiveTruncatedVoxelColor.data(),
 	                         positiveNonTruncatedVoxelColor.data(), negativeNonTruncatedVoxelColor.data(),

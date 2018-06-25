@@ -1,10 +1,14 @@
 // Copyright 2014-2017 Oxford University Innovation Limited and the authors of InfiniTAM
 
+//TODO: not supported on platforms besides Linux, adjust via CMake -Greg(GitHub: Algomorph)
+#include <X11/Xlib.h>
+
 //stdlib
 #include <cstdlib>
 #include <iostream>
 #include <string>
 #include <thread>
+
 
 
 //boost
@@ -518,6 +522,8 @@ int main(int argc, char** argv) {
 			skipFirstNFrames = vm["start_from_frame_ix"].as<int>();
 		}
 
+		//TODO (see top of file)
+		XInitThreads();
 
 		UIEngine_BPO::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine,
 		                                     settings->analysisSettings.outputPath.c_str(), settings->deviceType,

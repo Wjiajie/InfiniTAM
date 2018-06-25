@@ -90,19 +90,20 @@ protected:
 	// region ============= MEMBER FUNCTIONS =============================
 	virtual void BuildVoxelAndHashBlockPolydataFromScene();
 	virtual void PreparePipeline();
+	void Initialize();
 
 	// ===================== MEMBER VARIABLES ============================
 	// ** individual voxels **
-	vtkSmartPointer<vtkPolyData> voxelVizData = vtkSmartPointer<vtkPolyData>::New();
-	vtkSmartPointer<vtkLookupTable> voxelColorLookupTable = vtkSmartPointer<vtkLookupTable>::New();
-	vtkSmartPointer<vtkSphereSource> voxelVizGeometrySource = vtkSmartPointer<vtkSphereSource>::New();
-	vtkSmartPointer<vtkActor> voxelActor = vtkSmartPointer<vtkActor>::New();
+	vtkSmartPointer<vtkPolyData> voxelVizData;// = vtkSmartPointer<vtkPolyData>::New();
+	vtkSmartPointer<vtkLookupTable> voxelColorLookupTable;// = vtkSmartPointer<vtkLookupTable>::New();
+	vtkSmartPointer<vtkSphereSource> voxelVizGeometrySource;// = vtkSmartPointer<vtkSphereSource>::New();
+	vtkSmartPointer<vtkActor> voxelActor;// = vtkSmartPointer<vtkActor>::New();
 
 
 
 	// ** hash-block grid **
-	vtkSmartPointer<vtkPolyData> hashBlockGridVizData = vtkSmartPointer<vtkPolyData>::New();
-	vtkSmartPointer<vtkCubeSource> hashBlockVizGeometrySource = vtkSmartPointer<vtkCubeSource>::New();
+	vtkSmartPointer<vtkPolyData> hashBlockGridVizData;// = vtkSmartPointer<vtkPolyData>::New();
+	vtkSmartPointer<vtkCubeSource> hashBlockVizGeometrySource;// = vtkSmartPointer<vtkCubeSource>::New();
 	ITMScene<TVoxel, TIndex>* scene;
 
 	VoxelScaleMode scaleMode;
@@ -118,7 +119,7 @@ protected:
 	//endregion
 private:
 	// region ============== MEMBER FUNCTIONS ===========================
-	void Initialize();
+
 	void AddActorsToRenderers();
 
 	// endregion
@@ -126,13 +127,13 @@ private:
 
 
 	// ** voxels **
-	vtkSmartPointer<vtkGlyph3DMapper> voxelMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	vtkSmartPointer<vtkGlyph3DMapper> voxelMapper;// = vtkSmartPointer<vtkGlyph3DMapper>::New();
 
 
 
 	// ** hash block grid **
-	vtkSmartPointer<vtkActor> hashBlockActor = vtkSmartPointer<vtkActor>::New();
-	vtkSmartPointer<vtkGlyph3DMapper> hashBlockMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	vtkSmartPointer<vtkActor> hashBlockActor;// = vtkSmartPointer<vtkActor>::New();
+	vtkSmartPointer<vtkGlyph3DMapper> hashBlockMapper;// = vtkSmartPointer<vtkGlyph3DMapper>::New();
 
 	// ** colors **
 	std::array<double, 4> positiveTruncatedVoxelColor = ITMLib::Viz::liveTruncatedPositiveVoxelColor;

@@ -28,6 +28,7 @@
 #include <vtkNamedColors.h>
 #include <vtkOrientationMarkerWidget.h>
 #include <vtkAxesActor.h>
+#include <thread>
 
 
 //local
@@ -39,22 +40,7 @@
 using namespace ITMLib;
 
 
-//TODO for concurrent execution of VTK windows & glut wondow; see https://stackoverflow.com/questions/31075569/vtk-rotate-actor-programmatically-while-vtkrenderwindowinteractor-is-active
-class ThreadInteropCommand : public vtkCommand {
-public:
-vtkTypeMacro(ThreadInteropCommand, vtkCommand);
 
-	static ThreadInteropCommand* New() {
-		return new ThreadInteropCommand;
-	}
-
-	void Execute(vtkObject*vtkNotUsed(caller), unsigned long vtkNotUsed(eventId),
-	             void*vtkNotUsed(callData)) {
-		glutMainLoopEvent();
-
-	}
-
-};
 
 
 ITMChartWindow::ITMChartWindow(const std::string& name, const std::string& title, int width, int height) :
@@ -94,21 +80,8 @@ ITMVisualizationWindowManager::MakeOrGetChartWindow(const std::string& name, con
 	if (it == chartWindows.end()) {
 		ITMChartWindow window(name, title, width, height);
 		chartWindows.emplace(name, window);
-		//_DEBUG
-//		if (!firstWindowCreated) {
-//			vtkSmartPointer<GlutRefreshCommand> glutRefreshCommand = vtkSmartPointer<GlutRefreshCommand>::New();
-//			window.GetRenderWindow()->GetInteractor()->CreateRepeatingTimer(1);
-//			window.GetRenderWindow()->GetInteractor()->
-//					AddObserver(vtkCommand::TimerEvent, glutRefreshCommand);
-//			firstWindowCreated = true;
-//		}
 		it = chartWindows.find(name);
 	}
-	return it == chartWindows.end() ? nullptr : &(chartWindows.find(name)->second);
-}
-
-ITMChartWindow* ITMVisualizationWindowManager::GetChartWindow(const std::string& name) {
-	auto it = chartWindows.find(name);
 	return it == chartWindows.end() ? nullptr : &(chartWindows.find(name)->second);
 }
 
@@ -118,13 +91,6 @@ ITMVisualizationWindowManager::MakeOrGet3DWindow(const std::string& name, const 
 	auto it = _3dWindows.find(name);
 	if (it == _3dWindows.end()) {
 		ITM3DWindow window(name, title, width, height);
-		//_DEBUG
-//		if (!firstWindowCreated) {
-//			vtkSmartPointer<GlutRefreshCommand> glutRefreshCommand = vtkSmartPointer<GlutRefreshCommand>::New();
-//			window.GetRenderWindow()->GetInteractor()->CreateRepeatingTimer(1);
-//			window.GetRenderWindow()->GetInteractor()->AddObserver(vtkCommand::TimerEvent, glutRefreshCommand);
-//			firstWindowCreated = true;
-//		}
 		_3dWindows.emplace(name, window);
 		it = _3dWindows.find(name);
 	}
@@ -167,7 +133,6 @@ ITM3DWindow::ITM3DWindow(const std::string& name, const std::string& title, int 
 	orientationWidget->InteractiveOn();
 
 	interactor->Initialize();
-
 }
 
 ITM3DWindow::~ITM3DWindow() {
@@ -175,8 +140,11 @@ ITM3DWindow::~ITM3DWindow() {
 }
 
 void ITM3DWindow::Update() {
+	debug_print("BEFORE UPDATE");
 	renderWindow->Render();
+	debug_print("AFTER UPDATE");
 }
+
 
 void ITM3DWindow::AddLayer(const Vector4d& backgroundColor) {
 	vtkSmartPointer<vtkRenderer> newRenderer = vtkSmartPointer<vtkRenderer>::New();
@@ -208,5 +176,14 @@ vtkSmartPointer<vtkRenderWindow> ITM3DWindow::GetRenderWindow() {
 
 void ITM3DWindow::ResetCamera() {
 	renderWindow->GetRenderers()->GetFirstRenderer()->ResetCamera();
+}
+
+void ITM3DWindow::RunInteractor() {
+	interactor->Start();
+}
+
+void ITM3DWindow::AddLoopCallback(vtkSmartPointer<vtkCommand> callback) {
+	interactor->CreateRepeatingTimer(1);
+	interactor->AddObserver(vtkCommand::TimerEvent,callback);
 }
 
