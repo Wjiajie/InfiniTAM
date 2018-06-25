@@ -30,12 +30,12 @@
 #include <vtk-8.1/vtkOrientationMarkerWidget.h>
 
 //local
-#include "SDFSceneVizPipe.tpp"
+#include "../../ITMLib/Utils/Visualization/ITMScene3DSliceVisualizer.tpp"
 
 //ITMLib
 #include "../../ITMLib/ITMLibDefines.h"
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
-#include "WarpedSceneVizPipe.h"
+#include "../../ITMLib/Utils/Visualization/ITMCanonicalScene3DSliceVisualizer_Deprecated.h"
 #include "HighlightVisualization.h"
 
 using namespace ITMLib;
@@ -64,25 +64,7 @@ class SDFViz {
 	friend class SDFVizInteractorStyle;
 
 public:
-	//================= STATIC CONSTANTS ============================
-	static const std::array<double, 4> canonicalTrunctedPositiveVoxelColor;
-	static const std::array<double, 4> canonicalNonTruncatedPositiveVoxelColor;
-	static const std::array<double, 4> canonicalNonTruncatedNegativeVoxelColor;
-	static const std::array<double, 4> canonicalTrunctedNegativeVoxelColor;
-	static const std::array<double, 4> canonicalUnknownVoxelColor;
 
-	static const std::array<double, 4> canonicalNegativeInterestVoxelColor;
-	static const std::array<double, 4> canonicalPositiveInterestVoxelColor;
-	static const std::array<double, 4> highlightVoxelColor;
-	static const std::array<double, 3> canonicalHashBlockEdgeColor;
-
-	static const std::array<double, 4> liveTruncatedPositiveVoxelColor;
-	static const std::array<double, 4> liveNonTruncatedPositiveVoxelColor;
-	static const std::array<double, 4> liveNonTruncatedNegativeVoxelColor;
-	static const std::array<double, 4> liveTruncatedNegativeVoxelColor;
-	static const std::array<double, 4> liveUnknownVoxelColor;
-
-	static const std::array<double, 3> liveHashBlockEdgeColor;
 
 	//================= CONSTRUCTORS/DESTRUCTORS ===================
 	SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, bool hideLiveVoxels,
@@ -133,8 +115,8 @@ private:
 	int currentBackgrounColorIx = 0;
 
 	// *** Voxel viz
-	WarpedSceneVizPipe canonicalScenePipe;
-	SDFSceneVizPipe<ITMVoxelLive, ITMVoxelIndex> liveScenePipe;
+	ITMCanonicalScene3DSliceVisualizer_Deprecated canonicalScenePipe;
+	ITMScene3DSliceVisualizer<ITMVoxelLive, ITMVoxelIndex> liveScenePipe;
 	HighlightVisualization highlightVisualizer;
 	vtkSmartPointer<vtkSphereSource> sphere;
 	vtkSmartPointer<vtkCubeSource> cube;

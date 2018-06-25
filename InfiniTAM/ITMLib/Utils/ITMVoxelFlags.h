@@ -15,6 +15,8 @@
 //  ================================================================
 #pragma once
 
+#include <iostream>
+
 namespace ITMLib {
 /**
  * \brief basic semantic information about the voxel. Currently, cannot be used as a binary flag, i.e. flag values are mutually-exclusive

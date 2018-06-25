@@ -53,7 +53,7 @@
 #include <vtk-8.1/vtkOrientationMarkerWidget.h>
 
 //local
-#include "SDFSceneVizPipe.h"
+#include "../../ITMLib/Utils/Visualization/ITMScene3DSliceVisualizer.h"
 #include "SDFVizInteractorStyle.h"
 
 //ITMLib
@@ -61,46 +61,10 @@
 #include "../../ITMLib/Utils/ITMLibSettings.h"
 #include "../../ITMLib/Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "SDFVizGlobalDefines.h"
-
+#include "../../ITMLib/Utils/Visualization/ITMScene3DSliceVisualizerCommon.h"
 //TODO: organize regions -Greg (GitHub: Algomorph)
 
-//** public **
-const std::array<double, 4> SDFViz::canonicalTrunctedPositiveVoxelColor =
-		{0.8352941176, 0.8980392157, 0.9607843137, 1.0};
-const std::array<double, 4>  SDFViz::canonicalNonTruncatedPositiveVoxelColor =
-		{0.6588235294, 0.7411764706, 0.9176470588, 1.0};
-const std::array<double, 4>  SDFViz::canonicalNonTruncatedNegativeVoxelColor =
-		{0.1764705882, 0.4980392157, 0.8196078431, 1.0};
-const std::array<double, 4> SDFViz::canonicalTrunctedNegativeVoxelColor =
-		{0.1058823529, 0.2980392157, 0.4901960784, 1.0};
-const std::array<double, 4> SDFViz::canonicalUnknownVoxelColor =
-		{0.0352941176, 0.0980392157, 0.1607843137, 1.0};
-
-const std::array<double, 4>  SDFViz::canonicalNegativeInterestVoxelColor = {0.690, 0.878, 0.902, 1.0};
-const std::array<double, 4>  SDFViz::canonicalPositiveInterestVoxelColor = {0.000, 1.000, 1.000, 1.0};
-
-const std::array<double, 4>  SDFViz::highlightVoxelColor = {1.000, 0.647, 0.000, 1.0};
-const std::array<double, 3>  SDFViz::canonicalHashBlockEdgeColor = {0.286, 0.623, 0.854};
-
-
-const std::array<double, 4>  SDFViz::liveTruncatedPositiveVoxelColor =
-		{0.8352941176, 0.9607843137, 0.8666666667, 1.0};
-const std::array<double, 4>  SDFViz::liveNonTruncatedPositiveVoxelColor =
-		{0.5137254902, 1, 0.6078431373, 1.0};
-const std::array<double, 4>  SDFViz::liveNonTruncatedNegativeVoxelColor =
-		{0.1921568627, 0.8039215686, 0.3450980392, 1.0};
-const std::array<double, 4>  SDFViz::liveTruncatedNegativeVoxelColor =
-		{0.1137254902, 0.4823529412, 0.2078431373, 1.0};
-const std::array<double, 4>  SDFViz::liveUnknownVoxelColor =
-		{0.0352941176, 0.1607843137, 0.0666666667, 1.0};
-
-const std::array<double, 3>  SDFViz::liveHashBlockEdgeColor = {0.537, 0.819, 0.631};
-//** private **
-
-const std::array<std::array<double, 4>, 4> SDFViz::backgroundColors = {{{0.96, 0.96, 0.98, 1.00},  // beige
-		                                                                       {0.09, 0.07, 0.05, 1.00},  // black raspberry
-		                                                                       {0.59, 0.44, 0.09, 1.00},  // bristle brown
-		                                                                       {0.57, 0.64, 0.69, 1.0}}}; // cadet grey
+using namespace ITMLib::Viz;
 
 SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, bool hideLiveVoxels,
                bool hideInterestCanonicalRegions, bool hideUnknownCanonicalVoxels, bool useInitialCoords,
@@ -138,7 +102,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 		liveVoxelsVisible(!hideLiveVoxels),
 		liveUnknownVoxelsVisible(false),
 		liveHashBlocksVisible(false) {
-
+	
 	auto* settings = new ITMLibSettings();
 	liveScene = new ITMScene<ITMVoxelLive, ITMVoxelIndex>(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
@@ -672,27 +636,12 @@ void SDFViz::LoadFrameData() {
 	highlights = sceneLogger->GetHighlights();
 }
 
-/**
- * \brief Sets up the geometry to use for voxel & hash block display
- */
-void SDFViz::SetUpGeometrySources() {
-	//Individual voxel shape
-	sphere->SetThetaResolution(6);
-	sphere->SetPhiResolution(6);
-	sphere->SetRadius(0.5);//size of half a voxel
-	sphere->Update();
-
-	//Voxel hash block shape
-	cube->SetBounds(0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE);
-}
-
 void SDFViz::ReinitializePipelines() {
 	canonicalScenePipe.SetInterestRegionInfo(sceneLogger->GetInterestRegionHashes(), highlights);
-	canonicalScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort(),
-	                                   sceneLogger->GetActiveWarpScene());
+	canonicalScenePipe.PreparePipeline();
 	canonicalScenePipe.PrepareInterestRegions(sphere->GetOutputPort());
 	canonicalScenePipe.PrepareWarplessVoxels(sphere->GetOutputPort());
-	liveScenePipe.PreparePipeline(sphere->GetOutputPort(), cube->GetOutputPort(), sceneLogger->GetLiveScene());
+	liveScenePipe.PreparePipeline();
 }
 
 bool SDFViz::AdvanceIteration() {

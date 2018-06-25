@@ -39,7 +39,8 @@
 using namespace ITMLib;
 
 ITMSceneTrackingEnergyPlotter::ITMSceneTrackingEnergyPlotter() :
-	window(ITMVisualizationWindowManager::Instance().MakeOrGetWindow("TrackingEnergyPlotter", "Scene Tracking Energy"))
+	window(ITMVisualizationWindowManager::Instance().MakeOrGetChartWindow("TrackingEnergyPlotter",
+	                                                                      "Scene Tracking Energy"))
 	{
 	PreparePlot();
 }

@@ -22,6 +22,11 @@
 #endif
 #endif
 
+//VTK
+#include <vtkCommand.h>
+#include <vtkRenderWindowInteractor.h>
+
+//ITMLib
 #include "../../ITMLib/ITMLibDefines.h"
 #include "../../ITMLib/Core/ITMBasicEngine.h"
 #include "../../ITMLib/Core/ITMBasicSurfelEngine.h"
@@ -46,6 +51,8 @@ namespace bench = ITMLib::Bench;
 UIEngine_BPO* UIEngine_BPO::instance;
 
 
+
+
 /**
  * \brief Initialize the UIEngine using the specified settings
  * \param argc arguments to the main function
@@ -65,6 +72,8 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
                               const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
                               int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
                               bool startInStepByStep, bool saveAfterFirstNFrames, bool loadBeforeProcessing) {
+
+
 	this->inStepByStepMode = startInStepByStep;
 	this->saveAfterAutoprocessing = saveAfterFirstNFrames;
 
@@ -130,8 +139,9 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 	allocateGPU = false;
 	if (deviceType == ITMLibSettings::DEVICE_CUDA) allocateGPU = true;
 
-	for (int w = 0; w < NUM_WIN; w++)
+	for (int w = 0; w < NUM_WIN; w++) {
 		outImage[w] = new ITMUChar4Image(imageSource->getDepthImageSize(), true, allocateGPU);
+	}
 
 	inputRGBImage = new ITMUChar4Image(imageSource->getRGBImageSize(), true, allocateGPU);
 	inputRawDepthImage = new ITMShortImage(imageSource->getDepthImageSize(), true, allocateGPU);

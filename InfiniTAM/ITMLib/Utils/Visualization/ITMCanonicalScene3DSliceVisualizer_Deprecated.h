@@ -15,11 +15,12 @@
 //  ================================================================
 #pragma once
 
-#include "SDFSceneVizPipe.h"
-#include "../../ITMLib/ITMLibDefines.h"
-#include "../../ITMLib/Utils/Collections/ITM3DNestedMap.h"
+#include "ITMScene3DSliceVisualizer.h"
+#include "../../ITMLibDefines.h"
+#include "../Collections/ITM3DNestedMap.h"
 
-class WarpedSceneVizPipe : public SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex> {
+namespace ITMLib{
+class ITMCanonicalScene3DSliceVisualizer_Deprecated : public ITMScene3DSliceVisualizer<ITMVoxelCanonical, ITMVoxelIndex> {
 public:
 	// region ==================== CONSTANTS ==================================================
 
@@ -27,7 +28,7 @@ public:
 	// endregion
 	// region ==================== CONSTRUCTORS / DESTRUCTORS =================================
 
-	WarpedSceneVizPipe(const std::array<double, 4>& positiveTruncatedNonInterestVoxelColor,
+	ITMCanonicalScene3DSliceVisualizer_Deprecated(const std::array<double, 4>& positiveTruncatedNonInterestVoxelColor,
 	                   const std::array<double, 4>& positiveNonTruncatedNonInterestVoxelColor,
 	                   const std::array<double, 4>& negativeNonTruncatedNonInterestVoxelColor,
 	                   const std::array<double, 4>& negativeTruncatedNonInterestVoxelColor,
@@ -49,7 +50,6 @@ public:
 	void SetInterestRegionInfo(std::vector<int> interestRegionHashes,
 	                           ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights);
 	void SetFrameIndex(int frameIx);
-	vtkSmartPointer<vtkActor>& GetVoxelActor() override;
 	vtkSmartPointer<vtkActor>& GetInterestVoxelActor();
 	vtkSmartPointer<vtkActor>& GetWarplessVoxelActor();
 	vtkSmartPointer<vtkActor>& GetSelectionVoxelActor();
@@ -64,9 +64,7 @@ public:
 	// *** setup ***
 	void PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeometry);
 	void PrepareWarplessVoxels(vtkAlgorithmOutput* voxelSourceGeometry);
-	void PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
-	                     vtkAlgorithmOutput* hashBlockSourceGeometry,
-	                     const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) override;
+
 
 	// *** modify state ***
 	void ToggleScaleMode() override;
@@ -80,7 +78,8 @@ public:
 	// endregion
 protected:
 	// *** setup ***
-	void PreparePointsForRendering(const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) override;
+	void BuildVoxelAndHashBlockPolydataFromScene() override;
+	void PreparePipeline() override;
 	vtkSmartPointer<vtkPoints> initialNonInterestPoints;
 	vtkSmartPointer<vtkPoints> initialInterestPoints;
 private:
@@ -133,3 +132,4 @@ private:
 	bool haveSliceCoordinates = false;
 	//endregion
 };
+}//namespace ITMLib

@@ -35,7 +35,7 @@ set(ITMLIB_TOPLEVEL_CPU_SOURCES
     Instantiations/DynamicHashManagementEngineCPUInstantiation.cpp
     Instantiations/DenseDynamicMapperInstantiation.cpp
     Instantiations/SceneMotionTrackerCPUInstantiation.cpp
-
+    Instantiations/ITMScene3DSliceVisualizerInstantiations.cpp
     )
 
 set(ITMLIB_TOPLEVEL_CUDA_SOURCES
@@ -503,7 +503,7 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_HEADERS
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_SOURCES
     SceneMotionTrackers/CPU/ITMWarpGradientCommon.h
-    SceneMotionTrackers/CPU/ITMCalculateWarpGradientBasedOnRawLiveFunctor.h
+    SceneMotionTrackers/CPU/ITMCalculateWarpGradientBasedOnRawLiveFunctor_UNUSED.h
     SceneMotionTrackers/CPU/ITMCalculateWarpGradientBasedOnWarpedLiveFunctor.h
     SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.tpp
     SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.tpp
@@ -594,6 +594,10 @@ set(ITMLIB_UTILS_VISUALIZATION_SOURCES
     Utils/Visualization/ITMVisualizationCommon.cpp
     Utils/Visualization/ITMVisualizationWindowManager.cpp
     Utils/Visualization/ITMSceneTrackingEnergyPlotter.cpp
+    Utils/Visualization/ITMScene3DSliceVisualizer.tpp
+    Utils/Visualization/ITMCanonicalScene3DSliceVisualizer.tpp
+    Utils/Visualization/ITMCanonicalScene3DSliceVisualizer_Deprecated.cpp
+    Utils/Visualization/ITMScene3DSliceVisualizerCommon.cpp
     )
 
 set(ITMLIB_UTILS_VISUALIZATION_HEADERS
@@ -602,6 +606,10 @@ set(ITMLIB_UTILS_VISUALIZATION_HEADERS
     Utils/Visualization/ITMVisualizationCommon.h
     Utils/Visualization/ITMVisualizationWindowManager.h
     Utils/Visualization/ITMSceneTrackingEnergyPlotter.h
+    Utils/Visualization/ITMScene3DSliceVisualizer.h
+    Utils/Visualization/ITMCanonicalScene3DSliceVisualizer.h
+    Utils/Visualization/ITMCanonicalScene3DSliceVisualizer_Deprecated.h
+    Utils/Visualization/ITMScene3DSliceVisualizerCommon.h
     )
 #################################################################
 # Collect the project files into sources, headers and templates #

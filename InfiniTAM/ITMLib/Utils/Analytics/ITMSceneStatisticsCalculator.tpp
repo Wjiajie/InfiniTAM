@@ -271,5 +271,14 @@ float ITMSceneStatisticsCalculator<TVoxel, TIndex>::FindMaxGradient0LengthAndPos
                                                                                       Vector3i& positionOut) {
 	return MaxGradientFunctor<TVoxel, TIndex>::find(scene, false, positionOut);
 }
+
+template<typename TVoxel, typename TIndex>
+void ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeVoxelBounds(const ITMScene<TVoxel, TIndex>* scene,
+                                                                      Vector6i& bounds) {
+	Vector3i minPoint, maxPoint;
+	this->ComputeVoxelBounds(scene, minPoint,maxPoint);
+	bounds.min_x = minPoint.x;bounds.min_y = minPoint.y;bounds.min_z = minPoint.z;
+	bounds.max_x = maxPoint.x;bounds.max_y = maxPoint.y;bounds.max_z = maxPoint.z;
+}
 // endregion ===========================================================================================================
 

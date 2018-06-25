@@ -21,6 +21,8 @@
 
 namespace ITMLib {
 
+//TODO: these traversal functions should be specialized for ITMVoxeBlockHash, and (possibly) a separate set needs to be written for PlainVoxelArray -Greg(GitHub:Algomorph)
+
 // region ================================ DYNAMIC SINGLE-SCENE TRAVERSAL ==============================================
 
 template<typename TFunctor, typename TVoxel, typename TIndex>
@@ -47,7 +49,6 @@ void VoxelTraversal_CPU(ITMScene<TVoxel, TIndex>* scene, TFunctor& functor) {
 		}
 	}
 };
-
 
 
 template<typename TFunctor, typename TVoxel, typename TIndex>
@@ -101,6 +102,132 @@ void VoxelAndHashBlockPositionTraversal_CPU(ITMScene<TVoxel, TIndex>* scene, TFu
 					Vector3i voxelPosition = hashEntryPosition + Vector3i(x, y, z);
 					TVoxel& voxel = localVoxelBlock[locId];
 					functor(voxel, voxelPosition, currentHashEntry.pos);
+				}
+			}
+		}
+	}
+};
+
+inline bool HashBlockDoesNotIntersectBounds(const Vector3i& hashEntryMinPoint, const Vector3i& hashEntryMaxPoint,
+                                            const Vector6i& bounds){
+	return hashEntryMaxPoint.x < bounds.min_x ||
+	       hashEntryMaxPoint.y < bounds.min_y ||
+	       hashEntryMaxPoint.z < bounds.min_z ||
+	       hashEntryMinPoint.x >= bounds.max_x ||
+	       hashEntryMinPoint.y >= bounds.max_y ||
+	       hashEntryMinPoint.z >= bounds.max_z;
+}
+
+inline
+Vector6i computeLocalBounds(const Vector3i& hashEntryMinPoint, const Vector3i& hashEntryMaxPoint,
+                            const Vector6i& bounds){
+	return Vector6i(std::max(0, bounds.min_x - hashEntryMinPoint.x),
+	                     std::max(0, bounds.min_y - hashEntryMinPoint.y),
+	                     std::max(0, bounds.min_z - hashEntryMinPoint.z),
+	                     std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.x - bounds.max_x)),
+	                     std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.y - bounds.max_y)),
+	                     std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.z - bounds.max_z)));
+}
+
+template<typename TFunctor, typename TVoxel, typename TIndex>
+inline void VoxelTraversalWithinBounds_CPU(ITMScene<TVoxel, TIndex>* scene, TFunctor& functor, Vector6i bounds) {
+	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* hashTable = scene->index.GetEntries();
+	int noTotalEntries = scene->index.noTotalEntries;
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+		const ITMHashEntry& currentHashEntry = hashTable[entryId];
+		if (currentHashEntry.ptr < 0) continue;
+		Vector3i hashEntryMinPoint = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(SDF_BLOCK_SIZE);
+		if (HashBlockDoesNotIntersectBounds(hashEntryMinPoint,hashEntryMaxPoint,bounds)){
+			continue;
+		}
+		Vector6i localBounds = computeLocalBounds(hashEntryMinPoint,hashEntryMaxPoint,bounds);
+		TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		for (int z = localBounds.min_z; z < localBounds.max_z; z++) {
+			for (int y = localBounds.min_y; y < localBounds.max_y; y++) {
+				for (int x = localBounds.min_x; x < localBounds.max_x; x++) {
+					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+					TVoxel& voxel = localVoxelBlock[locId];
+					functor(voxel);
+				}
+			}
+		}
+	}
+};
+
+
+template<typename TFunctor, typename TVoxel, typename TIndex>
+inline void
+VoxelPositionTraversalWithinBounds_CPU(ITMScene<TVoxel, TIndex>* scene, TFunctor& functor, Vector6i bounds) {
+	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* hashTable = scene->index.GetEntries();
+	int noTotalEntries = scene->index.noTotalEntries;
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+		const ITMHashEntry& currentHashEntry = hashTable[entryId];
+		if (currentHashEntry.ptr < 0) continue;
+		Vector3i hashEntryMinPoint = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(SDF_BLOCK_SIZE);
+		if (HashBlockDoesNotIntersectBounds(hashEntryMinPoint,hashEntryMaxPoint,bounds)){
+			continue;
+		}
+		Vector6i localBounds = computeLocalBounds(hashEntryMinPoint,hashEntryMaxPoint,bounds);
+		TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		//position of the current entry in 3D space (in voxel units)
+		Vector3i hashEntryPosition = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+
+		for (int z = localBounds.min_z; z < localBounds.max_z; z++) {
+			for (int y = localBounds.min_y; y < localBounds.max_y; y++) {
+				for (int x = localBounds.min_x; x < localBounds.max_x; x++) {
+					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+					Vector3i voxelPosition = hashEntryPosition + Vector3i(x, y, z);
+					TVoxel& voxel = localVoxelBlock[locId];
+					functor(voxel, voxelPosition);
+				}
+			}
+		}
+	}
+};
+
+
+template<typename TFunctor, typename TVoxel, typename TIndex>
+inline void
+VoxelPositionAndHashEntryTraversalWithinBounds_CPU(ITMScene<TVoxel, TIndex>* scene, TFunctor& functor, Vector6i bounds) {
+	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* hashTable = scene->index.GetEntries();
+	int noTotalEntries = scene->index.noTotalEntries;
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+		const ITMHashEntry& currentHashEntry = hashTable[entryId];
+		if (currentHashEntry.ptr < 0) continue;
+		Vector3i hashEntryMinPoint = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(SDF_BLOCK_SIZE);
+		if (HashBlockDoesNotIntersectBounds(hashEntryMinPoint,hashEntryMaxPoint,bounds)){
+			continue;
+		}
+		Vector6i localBounds = computeLocalBounds(hashEntryMinPoint,hashEntryMaxPoint,bounds);
+
+		functor.processHashEntry(currentHashEntry);
+
+		TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		//position of the current entry in 3D space (in voxel units)
+		Vector3i hashEntryPosition = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+
+		for (int z = localBounds.min_z; z < localBounds.max_z; z++) {
+			for (int y = localBounds.min_y; y < localBounds.max_y; y++) {
+				for (int x = localBounds.min_x; x < localBounds.max_x; x++) {
+					int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+					Vector3i voxelPosition = hashEntryPosition + Vector3i(x, y, z);
+					TVoxel& voxel = localVoxelBlock[locId];
+					functor(voxel, voxelPosition);
 				}
 			}
 		}
@@ -161,6 +288,7 @@ inline void StaticVoxelPositionTraversal_CPU(ITMScene<TVoxel, TIndex>* scene) {
 		}
 	}
 };
+
 // endregion
 // region ================================ DYNAMIC TWO-SCENE TRAVERSAL =================================================
 template<typename TStaticFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
@@ -217,7 +345,6 @@ inline void StaticDualVoxelTraversal_CPU(
 };
 
 
-
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
 inline void DualVoxelTraversal_CPU(
 		ITMScene<TVoxelPrimary, TIndex>* primaryScene,
@@ -272,7 +399,6 @@ inline void DualVoxelTraversal_CPU(
 		}
 	}
 };
-
 
 
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
@@ -430,7 +556,8 @@ inline void DualVoxelPositionTraversal_CPU_SingleThreaded(
 		// we have a hash bucket miss, find the secondary voxel with the matching coordinates
 		if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
 			int secondaryHash;
-			if (!FindHashAtPosition(secondaryHash, currentLiveHashEntry.pos, secondaryHashTable)) {std::stringstream stream;
+			if (!FindHashAtPosition(secondaryHash, currentLiveHashEntry.pos, secondaryHashTable)) {
+				std::stringstream stream;
 				stream << "Could not find corresponding secondary scene block at postion " << currentLiveHashEntry.pos
 				       << ". " << __FILE__ << ": " << __LINE__;
 				DIEWITHEXCEPTION(stream.str());

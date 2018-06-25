@@ -17,6 +17,7 @@
 
 #include "../../Objects/Scene/ITMScene.h"
 #include "ITMSceneLogger.h"
+#include "../Visualization/ITMCanonicalScene3DSliceVisualizer.h"
 #include "../Visualization/ITMScene2DSliceVisualizer.h"
 #include "../Visualization/ITMScene1DSliceVisualizer.h"
 #include "../../ITMLibDefines.h"
@@ -43,7 +44,8 @@ public:
 	void SetScenes(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene,ITMScene<ITMVoxelLive, ITMVoxelIndex>* liveScene);
 	void SetOutputDirectory(std::string outputDirectory);
 	void SetFocusCoordinates(Vector3i focusCoordinates);
-	void SetPlaneFor2DSlices(Plane plane);
+	void SetPlaneFor2Dand3DSlices(Plane plane);
+	void Set3DSliceInPlaneRadius(unsigned int _3dSliceInPlaneRadius);
 
 	void TurnRecordingLiveSceneAs2DSlicesOn();
 	void TurnRecordingLiveSceneAs2DSlicesOff();
@@ -54,6 +56,8 @@ public:
 	void TurnRecordingScene1DSlicesWithUpdatesOff();
 	void TurnRecordingScene2DSlicesWithUpdatesOn();
 	void TurnRecordingScene2DSlicesWithUpdatesOff();
+	void TurnRecordingScene3DSlicesWithUpdatesOn();
+	void TurnRecordingScene3DSlicesWithUpdatesOff();
 	void ToggleRecordingScene2DSlicesWithUpdates();
 	void TurnRecording3DSceneAndWarpProgressionOn();
 	void TurnRecording3DSceneAndWarpProgressionOff();
@@ -72,6 +76,7 @@ public:
 	bool IsRecordingCanonicalSceneAs2DSlices() const;
 	bool IsRecordingScene1DSlicesWithUpdates() const;
 	bool IsRecordingScene2DSlicesWithUpdates() const;
+	bool IsRecordingScene3DSlicesWithUpdates() const;
 	bool IsRecording3DSceneAndWarpProgression() const;
 	bool IsRecordingEnergiesToFile() const;
 	bool IsPlottingEnergies() const;
@@ -111,6 +116,7 @@ private:
 	// various loggers & visualizers
 	std::unique_ptr<ITMScene2DSliceVisualizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>> scene2DSliceVisualizer;
 	std::unique_ptr<ITMScene1DSliceVisualizer> scene1DSliceVisualizer;
+	std::unique_ptr<ITMCanonicalScene3DSliceVisualizer<ITMVoxelIndex>> scene3DSliceVisualizer;
 	std::unique_ptr<ITMSceneTrackingEnergyPlotter> energyPlotter;
 	ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* scene3DLogger = nullptr;
 
@@ -127,18 +133,22 @@ private:
 	// state flags
 	bool recordingLiveSceneAs2DSlices = false;
 	bool recordingCanonicalSceneAs2DSlices = false;
-	bool recordingScene2DSlicesWithUpdates = false;
 	bool recordingScene1DSlicesWithUpdates = false;
+	bool recordingScene2DSlicesWithUpdates = false;
+	bool recordingScene3DSlicesWithUpdates = false;
 	bool recording3DSceneAndWarpProgression = false;
 	bool recordingEnergiesToFile = true;
 	bool plottingEnergies = false;
 	bool hasFocusCoordinates = false;
 
 	// configuration
-	Plane planeFor2DSlices = PLANE_XY;
+	Plane planeFor2Dand3DSlices = PLANE_XY;
 	std::string outputDirectory;
 	Vector3i focusCoordinates;
+	int _3dSliceinPlaneRadius;
 	const int focusSliceRadius;//=3;
+
+
 
 };
 

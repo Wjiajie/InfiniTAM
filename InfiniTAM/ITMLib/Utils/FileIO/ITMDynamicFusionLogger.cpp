@@ -68,8 +68,13 @@ void ITMDynamicFusionLogger::SetFocusCoordinates(Vector3i focusCoordinates) {
 }
 
 
-void ITMDynamicFusionLogger::SetPlaneFor2DSlices(Plane plane) {
-	this->planeFor2DSlices = plane;
+void ITMDynamicFusionLogger::SetPlaneFor2Dand3DSlices(Plane plane) {
+	this->planeFor2Dand3DSlices = plane;
+}
+
+
+void ITMDynamicFusionLogger::Set3DSliceInPlaneRadius(unsigned int _3dSliceInPlaneRadius) {
+	this->_3dSliceinPlaneRadius = _3dSliceInPlaneRadius;
 }
 
 
@@ -115,6 +120,16 @@ void ITMDynamicFusionLogger::TurnRecordingScene2DSlicesWithUpdatesOn() {
 
 void ITMDynamicFusionLogger::TurnRecordingScene2DSlicesWithUpdatesOff() {
 	this->recordingScene2DSlicesWithUpdates = false;
+}
+
+
+void ITMDynamicFusionLogger::TurnRecordingScene3DSlicesWithUpdatesOn() {
+	this->recordingScene3DSlicesWithUpdates = true;
+}
+
+
+void ITMDynamicFusionLogger::TurnRecordingScene3DSlicesWithUpdatesOff() {
+	this->recordingScene3DSlicesWithUpdates = false;
 }
 
 
@@ -184,6 +199,10 @@ bool ITMDynamicFusionLogger::IsRecordingScene2DSlicesWithUpdates() const {
 	return this->recordingScene2DSlicesWithUpdates;
 }
 
+bool ITMDynamicFusionLogger::IsRecordingScene3DSlicesWithUpdates() const {
+	return this->recordingScene3DSlicesWithUpdates;
+}
+
 
 bool ITMDynamicFusionLogger::IsRecording3DSceneAndWarpProgression() const {
 	return this->recording3DSceneAndWarpProgression;
@@ -223,7 +242,16 @@ void ITMDynamicFusionLogger::InitializeFrameRecording() {
 
 	// region ================================== 1D/2D SLICE RECORDING =================================================
 	if (hasFocusCoordinates) {
-		scene2DSliceVisualizer.reset(new ITMScene2DSliceVisualizer<ITMVoxelCanonical,ITMVoxelLive,ITMVoxelIndex>(focusCoordinates, 100, 16.0, planeFor2DSlices));
+
+		if (recordingScene1DSlicesWithUpdates) {
+			this->scene1DSliceVisualizer.reset(new ITMScene1DSliceVisualizer(focusCoordinates, AXIS_X, 16));
+			scene1DSliceVisualizer->Plot1DSceneSlice(canonicalScene, Vector4i(97, 181, 193, 255), 3.0);
+			scene1DSliceVisualizer->Plot1DIndexedSceneSlice(liveScene, Vector4i(183, 115, 46, 255), 3.0, 0);
+		}
+
+		scene2DSliceVisualizer.reset(
+				new ITMScene2DSliceVisualizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(focusCoordinates, 100,
+				                                                                              16.0, planeFor2Dand3DSlices));
 
 		if (recordingCanonicalSceneAs2DSlices) {
 			scene2DSliceVisualizer->SaveCanonicalSceneSlicesAs2DImages_AllDirections(
@@ -233,17 +261,18 @@ void ITMDynamicFusionLogger::InitializeFrameRecording() {
 			scene2DSliceVisualizer->SaveLiveSceneSlicesAs2DImages_AllDirections(
 					liveScene, GetOutputDirectoryPrefixForLiveSceneAsSlices());
 		}
-		if (recordingScene1DSlicesWithUpdates) {
-			this->scene1DSliceVisualizer.reset(new ITMScene1DSliceVisualizer(focusCoordinates, AXIS_X, 16));
-			scene1DSliceVisualizer->Plot1DSceneSlice(canonicalScene, Vector4i(97, 181, 193, 255), 3.0);
-			scene1DSliceVisualizer->Plot1DIndexedSceneSlice(liveScene, Vector4i(183, 115, 46, 255), 3.0, 0);
-		}
 		if (recordingScene2DSlicesWithUpdates) {
 			std::cout << yellow << "Recording 2D scene slices with warps & warped live scene progression as images in "
 			          << GetOutputDirectoryFor2DSceneSlicesWithWarps() << " and "
 			          << GetOutputDirectoryFor2DLiveSceneSliceProgression() << " respectively..."
 			          << reset << std::endl;
 			InitializeWarp2DSliceRecording(canonicalScene, liveScene);
+		}
+
+		if (recordingScene3DSlicesWithUpdates) {
+			scene3DSliceVisualizer.reset(new ITMCanonicalScene3DSliceVisualizer<ITMVoxelIndex>
+					                             (canonicalScene, focusCoordinates,
+					                              planeFor2Dand3DSlices, _3dSliceinPlaneRadius));
 		}
 
 	}
@@ -296,35 +325,40 @@ void ITMDynamicFusionLogger::InitializeWarp2DSliceRecording(
 
 void
 ITMDynamicFusionLogger::SaveWarpSlices(int iteration) {
-	if (hasFocusCoordinates && recordingScene2DSlicesWithUpdates) {
-		cv::Mat warpImg = scene2DSliceVisualizer->DrawWarpedSceneImageAroundPoint(canonicalScene) * 255.0f;
-		cv::Mat warpImgChannel, warpImgOut, mask, liveImgChannel, markChannel;
-		blank.copyTo(markChannel);
-		scene2DSliceVisualizer->MarkWarpedSceneImageAroundFocusPoint(canonicalScene, markChannel);
-		liveImgChannel = cv::Mat::zeros(warpImg.rows, warpImg.cols, CV_8UC1);
+	if (hasFocusCoordinates) {
+		if (recordingScene2DSlicesWithUpdates) {
+			cv::Mat warpImg = scene2DSliceVisualizer->DrawWarpedSceneImageAroundPoint(canonicalScene) * 255.0f;
+			cv::Mat warpImgChannel, warpImgOut, mask, liveImgChannel, markChannel;
+			blank.copyTo(markChannel);
+			scene2DSliceVisualizer->MarkWarpedSceneImageAroundFocusPoint(canonicalScene, markChannel);
+			liveImgChannel = cv::Mat::zeros(warpImg.rows, warpImg.cols, CV_8UC1);
 
-		warpImg.convertTo(warpImgChannel, CV_8UC1);
-		cv::threshold(warpImgChannel, mask, 1.0, 1.0, cv::THRESH_BINARY_INV);
-		liveImgTemplate.copyTo(liveImgChannel, mask);
+			warpImg.convertTo(warpImgChannel, CV_8UC1);
+			cv::threshold(warpImgChannel, mask, 1.0, 1.0, cv::THRESH_BINARY_INV);
+			liveImgTemplate.copyTo(liveImgChannel, mask);
 
-		cv::Mat channels[3] = {liveImgTemplate, warpImgChannel, markChannel};
+			cv::Mat channels[3] = {liveImgTemplate, warpImgChannel, markChannel};
 
-		cv::merge(channels, 3, warpImgOut);
-		std::stringstream numStringStream;
-		numStringStream << std::setw(3) << std::setfill('0') << iteration;
-		std::string image_name =
-				GetOutputDirectoryFor2DSceneSlicesWithWarps() + "/warp" + numStringStream.str() + ".png";
-		cv::imwrite(image_name, warpImgOut);
-		cv::Mat liveImg = scene2DSliceVisualizer->DrawLiveSceneImageAroundPoint(liveScene, 1) * 255.0f;
-		cv::Mat liveImgOut;
-		liveImg.convertTo(liveImgOut, CV_8UC1);
-		cv::cvtColor(liveImgOut, liveImgOut, cv::COLOR_GRAY2BGR);
-		cv::imwrite(GetOutputDirectoryFor2DLiveSceneSliceProgression() + "/live " + numStringStream.str() +
-		            ".png", liveImgOut);
-	}
-	if (hasFocusCoordinates && recordingScene1DSlicesWithUpdates) {
-		scene1DSliceVisualizer->Plot1DIndexedSceneSlice(liveScene, Vector4i(0, 0, 0, 255), 1.0, 1);
-		scene1DSliceVisualizer->Draw1DWarpUpdateVector(canonicalScene, Vector4i(255, 0, 0, 255));
+			cv::merge(channels, 3, warpImgOut);
+			std::stringstream numStringStream;
+			numStringStream << std::setw(3) << std::setfill('0') << iteration;
+			std::string image_name =
+					GetOutputDirectoryFor2DSceneSlicesWithWarps() + "/warp" + numStringStream.str() + ".png";
+			cv::imwrite(image_name, warpImgOut);
+			cv::Mat liveImg = scene2DSliceVisualizer->DrawLiveSceneImageAroundPoint(liveScene, 1) * 255.0f;
+			cv::Mat liveImgOut;
+			liveImg.convertTo(liveImgOut, CV_8UC1);
+			cv::cvtColor(liveImgOut, liveImgOut, cv::COLOR_GRAY2BGR);
+			cv::imwrite(GetOutputDirectoryFor2DLiveSceneSliceProgression() + "/live " + numStringStream.str() +
+			            ".png", liveImgOut);
+		}
+		if (recordingScene1DSlicesWithUpdates) {
+			scene1DSliceVisualizer->Plot1DIndexedSceneSlice(liveScene, Vector4i(0, 0, 0, 255), 1.0, 1);
+			scene1DSliceVisualizer->Draw1DWarpUpdateVector(canonicalScene, Vector4i(255, 0, 0, 255));
+		}
+		if (recordingScene3DSlicesWithUpdates) {
+			scene3DSliceVisualizer->DrawWarpUpdates();
+		}
 	}
 }
 
@@ -348,7 +382,7 @@ void ITMDynamicFusionLogger::FinalizeFrameRecording() {
 			scene3DLogger->SwitchActiveScene(sliceId);
 		}
 	}
-	if (plottingEnergies){
+	if (plottingEnergies) {
 		energyPlotter->SaveScreenshot(this->outputDirectory + "/energy_plot.png");
 		energyPlotter.reset();
 	}
@@ -374,7 +408,7 @@ void ITMDynamicFusionLogger::RecordAndPlotEnergies(double totalDataEnergy,
 		energyStatisticsFile << totalDataEnergy << ", " << totalLevelSetEnergy << ", " << totalKillingEnergy << ", "
 		                     << totalSmoothnessEnergy << ", " << totalEnergy << std::endl;
 	}
-	if (this->plottingEnergies){
+	if (this->plottingEnergies) {
 		this->energyPlotter->AddDataPoints(static_cast<float>(totalDataEnergy),
 		                                   static_cast<float>(totalSmoothnessEnergy),
 		                                   static_cast<float>(totalLevelSetEnergy),
@@ -464,6 +498,7 @@ void ITMDynamicFusionLogger::MakeOrClearOutputDirectoriesFor2DSceneSlices() cons
 		ClearIfExistsMakeIfDoesnt(GetOutputDirectoryFor2DSceneSlicesWithWarps());
 	}
 }
+
 
 
 

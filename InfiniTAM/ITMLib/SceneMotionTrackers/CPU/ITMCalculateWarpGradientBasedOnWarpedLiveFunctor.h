@@ -305,7 +305,7 @@ public:
 			std::cout << std::endl;
 			std::cout << green << "Energy gradient: " << localEnergyGradient * -1 << reset;
 			std::cout << " Energy gradient length: " << energyGradeintLength << red
-			          << " Gradients shown are negative." << reset << std::endl << std::endl;
+			          << " Gradients shown are negated." << reset << std::endl << std::endl;
 
 			if (recordVoxelResult) {
 				//TODO: legacy, revise/remove -Greg

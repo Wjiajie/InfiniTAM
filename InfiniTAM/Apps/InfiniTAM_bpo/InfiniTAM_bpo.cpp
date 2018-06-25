@@ -191,10 +191,12 @@ int main(int argc, char** argv) {
 
 		bool record1DSlices = false;
 		bool record2DSlices = false;
+		bool record3DSlices = false;
+		unsigned int _3DSliceRadius = 10;
 		bool record3DSceneAndWarps = false;
 		bool plotEnergies = false;
 
-		Plane planeFor2DSlices = PLANE_XY;
+		Plane planeFor2Dand3DSlices = PLANE_XY;
 
 
 		//@formatter:off
@@ -297,7 +299,13 @@ int main(int argc, char** argv) {
 				 "Used in dynamic fusion. Render warps from each frame onto an image of the original live frame"
 	             " (around the focus coordinate, if provided), as well as warped live frame"
 			     " progression (for debugging).")
-				("2d_slice_plane",po::value<ITMLib::Plane>(&planeFor2DSlices)->default_value(PLANE_XY),
+				("record_3d_slices",po::bool_switch(&record3DSlices)->default_value(false),
+				 "Used in dynamic fusion. Visualize & record a 3D slice of the canonical scene with warp vectors"
+	             " and the live scene as they evolve.")
+				("3d_slice_radius",po::value<unsigned int>(&_3DSliceRadius)->default_value(10),
+				 "(Dynamic fusion) half-width of the square of pixels (in plane) in the slice for 3d slice recording.")
+
+				("slice_plane",po::value<ITMLib::Plane>(&planeFor2Dand3DSlices)->default_value(PLANE_XY),
 				 "(Dynamic fusion) plane to use for recording of 2d slices.")
 				("record_3d_scene_and_warps",po::bool_switch(&record3DSceneAndWarps)->default_value(false),
 				 "Used in dynamic fusion. Record 3D scenes at each frame and complete warp progression at every iteration.")
@@ -491,10 +499,13 @@ int main(int argc, char** argv) {
 // region =========================== SET LOGGER / VISUALIZERS WITH CLI ARGUMENTS ======================================
 		//NB: Logger's focus coordinates set above together with main engine settings, if provided
 		if(plotEnergies) ITMDynamicFusionLogger::Instance().TurnPlottingEnergiesOn();
-		ITMDynamicFusionLogger::Instance().SetPlaneFor2DSlices(planeFor2DSlices);
+		ITMDynamicFusionLogger::Instance().SetPlaneFor2Dand3DSlices(planeFor2Dand3DSlices);
 		if(record3DSceneAndWarps) ITMDynamicFusionLogger::Instance().TurnRecording3DSceneAndWarpProgressionOn();
 		if(record1DSlices) ITMDynamicFusionLogger::Instance().TurnRecordingScene1DSlicesWithUpdatesOn();
 		if(record2DSlices) ITMDynamicFusionLogger::Instance().TurnRecordingScene2DSlicesWithUpdatesOn();
+		if(record3DSlices) ITMDynamicFusionLogger::Instance().TurnRecordingScene3DSlicesWithUpdatesOn();
+		ITMDynamicFusionLogger::Instance().Set3DSliceInPlaneRadius(_3DSliceRadius);
+
 // endregion
 // region =========================== SET UI ENGINE SETTINGS WITH CLI ARGUMENTS ========================================
 		int processNFramesOnLaunch = 0;

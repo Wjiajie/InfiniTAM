@@ -31,36 +31,40 @@
 #include <vtk-8.1/vtkCubeSource.h>
 
 //ITMLib
-#include "../../../InfiniTAM/ITMLib/Objects/Scene/ITMRepresentationAccess.h"
-#include "../../../InfiniTAM/ITMLib/Utils/ITMPrintHelpers.h"
+#include "../../Objects/Scene/ITMRepresentationAccess.h"
+#include "../ITMPrintHelpers.h"
 
 //local
-#include "WarpedSceneVizPipe.h"
-#include "SDFVizGlobalDefines.h"
-#include "VizPipeShared.h"
+#include "ITMCanonicalScene3DSliceVisualizer_Deprecated.h"
+#include "../../../Apps/SDFViz/SDFVizGlobalDefines.h"
+#include "ITMScene3DSliceVisualizerCommon.h"
+
+using namespace ITMLib;
 
 //region ============================= CONSTANTS =======================================================================
 
-const std::array<double, 3> WarpedSceneVizPipe::sliceExtremaMarkerColor = {0.882, 0.239, 0.341};
+const std::array<double, 3> ITMCanonicalScene3DSliceVisualizer_Deprecated::sliceExtremaMarkerColor = {0.882, 0.239, 0.341};
 
 //endregion
 //region ======================== CONSTRUCTORS & DESTRUCTORS ===========================================================
 
-WarpedSceneVizPipe::WarpedSceneVizPipe(const std::array<double, 4>& positiveTruncatedNonInterestVoxelColor,
-                                   const std::array<double, 4>& positiveNonTruncatedNonInterestVoxelColor,
-                                   const std::array<double, 4>& negativeNonTruncatedNonInterestVoxelColor,
-                                   const std::array<double, 4>& negativeTruncatedNonInterestVoxelColor,
-                                   const std::array<double, 4>& unknownNonInterestVoxelColor,
-                                   const std::array<double, 4>& positiveInterestVoxelColor,
-                                   const std::array<double, 4>& negativeInterestVoxelColor,
-                                   const std::array<double, 4>& highlightVoxelColor,
-                                   const std::array<double, 3>& hashBlockEdgeColor, int frameIx) :
-		SDFSceneVizPipe<ITMVoxelCanonical, ITMVoxelIndex>(positiveTruncatedNonInterestVoxelColor,
-		                                                  positiveNonTruncatedNonInterestVoxelColor,
-		                                                  negativeNonTruncatedNonInterestVoxelColor,
-		                                                  negativeTruncatedNonInterestVoxelColor,
-		                                                  unknownNonInterestVoxelColor, highlightVoxelColor,
-		                                                  hashBlockEdgeColor, false),
+ITMCanonicalScene3DSliceVisualizer_Deprecated::ITMCanonicalScene3DSliceVisualizer_Deprecated(
+		const std::array<double, 4>& positiveTruncatedNonInterestVoxelColor,
+		const std::array<double, 4>& positiveNonTruncatedNonInterestVoxelColor,
+		const std::array<double, 4>& negativeNonTruncatedNonInterestVoxelColor,
+		const std::array<double, 4>& negativeTruncatedNonInterestVoxelColor,
+		const std::array<double, 4>& unknownNonInterestVoxelColor,
+		const std::array<double, 4>& positiveInterestVoxelColor,
+		const std::array<double, 4>& negativeInterestVoxelColor,
+		const std::array<double, 4>& highlightVoxelColor,
+		const std::array<double, 3>& hashBlockEdgeColor, int frameIx) :
+		ITMScene3DSliceVisualizer<ITMVoxelCanonical, ITMVoxelIndex>(nullptr, Vector3i(),
+		                                                            positiveTruncatedNonInterestVoxelColor,
+		                                                            positiveNonTruncatedNonInterestVoxelColor,
+		                                                            negativeNonTruncatedNonInterestVoxelColor,
+		                                                            negativeTruncatedNonInterestVoxelColor,
+		                                                            unknownNonInterestVoxelColor, highlightVoxelColor,
+		                                                            hashBlockEdgeColor),
 		frameIx(frameIx),
 		initialNonInterestPoints(vtkSmartPointer<vtkPoints>::New()),
 		initialInterestPoints(vtkSmartPointer<vtkPoints>::New()),
@@ -86,40 +90,32 @@ WarpedSceneVizPipe::WarpedSceneVizPipe(const std::array<double, 4>& positiveTrun
 //endregion
 //region ========================================== ACTOR GETTERS ======================================================
 
-vtkSmartPointer<vtkActor>& WarpedSceneVizPipe::GetVoxelActor() {
-	if (this->warpEnabled) {
-		return SDFSceneVizPipe::GetVoxelActor();
-	} else {
-		return this->warplessVoxelActor;
-	}
-}
-
-vtkSmartPointer<vtkActor>& WarpedSceneVizPipe::GetInterestVoxelActor() {
+vtkSmartPointer<vtkActor>& ITMCanonicalScene3DSliceVisualizer_Deprecated::GetInterestVoxelActor() {
 	return interestVoxelActor;
 }
 
-vtkSmartPointer<vtkActor>& WarpedSceneVizPipe::GetWarplessVoxelActor() {
+vtkSmartPointer<vtkActor>& ITMCanonicalScene3DSliceVisualizer_Deprecated::GetWarplessVoxelActor() {
 	return warplessVoxelActor;
 }
 
-vtkSmartPointer<vtkActor>& WarpedSceneVizPipe::GetSelectionVoxelActor() {
+vtkSmartPointer<vtkActor>& ITMCanonicalScene3DSliceVisualizer_Deprecated::GetSelectionVoxelActor() {
 	return this->selectedVoxelActor;
 }
 
-vtkSmartPointer<vtkActor>& WarpedSceneVizPipe::GetSliceSelectionActor(int index) {
+vtkSmartPointer<vtkActor>& ITMCanonicalScene3DSliceVisualizer_Deprecated::GetSliceSelectionActor(int index) {
 	if (index < 0 && index > 1)
 		DIEWITHEXCEPTION_REPORTLOCATION("Index needs to be 0 or 1.");
 	return this->selectedSliceExtrema[index];
 }
 
-vtkSmartPointer<vtkActor>& WarpedSceneVizPipe::GetSlicePreviewActor() {
+vtkSmartPointer<vtkActor>& ITMCanonicalScene3DSliceVisualizer_Deprecated::GetSlicePreviewActor() {
 	return this->selectedSlicePreview;
 }
 //endregion
 //region =========================================== OTHER GETTERS =====================================================
 
-Vector3i WarpedSceneVizPipe::GetSelectedVoxelCoordinates() const {
-	if(selectedPointId > -1){
+Vector3i ITMCanonicalScene3DSliceVisualizer_Deprecated::GetSelectedVoxelCoordinates() const {
+	if (selectedPointId > -1) {
 		Vector3i initialCoords;
 		double vizInitialCoords[3];
 		RetrieveInitialCoordinates(selectedPointId, initialCoords.values, vizInitialCoords);
@@ -128,14 +124,14 @@ Vector3i WarpedSceneVizPipe::GetSelectedVoxelCoordinates() const {
 	return Vector3i(0);
 }
 
-Vector3d WarpedSceneVizPipe::GetHighlightPosition(int hash, int locId) const{
+Vector3d ITMCanonicalScene3DSliceVisualizer_Deprecated::GetHighlightPosition(int hash, int locId) const {
 	Vector3d pos;
 	this->interestVoxelPolydata->GetPoints()->GetPoint(
 			(*this->highlightIndexes.GetValueAt(hash, locId, frameIx)), pos.values);
 	return pos;
 }
 
-std::vector<Vector3d> WarpedSceneVizPipe::GetHighlightNeighborPositions(int hash, int locId) const{
+std::vector<Vector3d> ITMCanonicalScene3DSliceVisualizer_Deprecated::GetHighlightNeighborPositions(int hash, int locId) const {
 	std::vector<Vector3d> positions;
 	vtkPoints* points = this->interestVoxelPolydata->GetPoints();
 	const std::vector<int> indexes = *this->highlightNeighborIndexes.GetArrayAt(hash, locId, frameIx);
@@ -147,11 +143,11 @@ std::vector<Vector3d> WarpedSceneVizPipe::GetHighlightNeighborPositions(int hash
 	return positions;
 }
 
-bool WarpedSceneVizPipe::GetWarpEnabled() const {
+bool ITMCanonicalScene3DSliceVisualizer_Deprecated::GetWarpEnabled() const {
 	return this->warpEnabled;
 }
 
-bool WarpedSceneVizPipe::GetSliceCoordinatesAreSet() const {
+bool ITMCanonicalScene3DSliceVisualizer_Deprecated::GetSliceCoordinatesAreSet() const {
 	return haveSliceCoordinates;
 }
 
@@ -160,7 +156,7 @@ bool WarpedSceneVizPipe::GetSliceCoordinatesAreSet() const {
  * \param coord0 [out] the first slice coordinate
  * \param coord1 [out] the second slice coordinate
  */
-void WarpedSceneVizPipe::GetSliceCoordinates(Vector3i& coord0, Vector3i& coord1) const {
+void ITMCanonicalScene3DSliceVisualizer_Deprecated::GetSliceCoordinates(Vector3i& coord0, Vector3i& coord1) const {
 	coord0 = Vector3i(this->selectedSliceExtremaCoordinates[0]);
 	coord1 = Vector3i(this->selectedSliceExtremaCoordinates[1]);
 }
@@ -168,7 +164,7 @@ void WarpedSceneVizPipe::GetSliceCoordinates(Vector3i& coord0, Vector3i& coord1)
 //endregion
 //region =========================================== PRINTERS ==========================================================
 
-void WarpedSceneVizPipe::PrintHighlightIndexes() {
+void ITMCanonicalScene3DSliceVisualizer_Deprecated::PrintHighlightIndexes() {
 	std::cout << this->highlightIndexes << std::endl;
 }
 
@@ -177,15 +173,16 @@ void WarpedSceneVizPipe::PrintHighlightIndexes() {
  * \param pointId id of the point in question.
  */
 void
-WarpedSceneVizPipe::PrintVoxelInfromation(vtkIdType pointId, const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) {
+ITMCanonicalScene3DSliceVisualizer_Deprecated::PrintVoxelInfromation(vtkIdType pointId,
+                                                          const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) {
 
-	auto scaleArray = dynamic_cast<vtkFloatArray*>(voxelPolydata->GetPointData()->GetArray(
+	auto scaleArray = dynamic_cast<vtkFloatArray*>(voxelVizData->GetPointData()->GetArray(
 			scaleMode == VOXEL_SCALE_HIDE_UNKNOWNS ? scaleUnknownsHiddenAttributeName
 			                                       : scaleUnknownsVisibleAttributeName));
-	auto colorIndexArray = dynamic_cast<vtkIntArray*>(voxelPolydata->GetPointData()->GetArray(colorAttributeName));
+	auto colorIndexArray = dynamic_cast<vtkIntArray*>(voxelVizData->GetPointData()->GetArray(colorAttributeName));
 
 	//retrieve current coordiante
-	auto currentPoints = voxelPolydata->GetPoints();
+	auto currentPoints = voxelVizData->GetPoints();
 	double currentPoint[3];
 	currentPoints->GetPoint(pointId, currentPoint);
 	double current_x = currentPoint[0];
@@ -222,13 +219,14 @@ WarpedSceneVizPipe::PrintVoxelInfromation(vtkIdType pointId, const ITMScene<ITMV
 //endregion
 //region =========================================== POINTS, HIGHLIGHTS, & PIPELINE SETUP ==============================
 
-void WarpedSceneVizPipe::PreparePointsForRendering(const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) {
+void
+ITMCanonicalScene3DSliceVisualizer_Deprecated::BuildVoxelAndHashBlockPolydataFromScene() {
 
 	if (!interestRegionHashesAreSet) {
 		DIEWITHEXCEPTION("Interest regions need to be set first");
 	}
 
-	voxelPolydata->GetPointData()->Reset();
+	voxelVizData->GetPointData()->Reset();
 
 
 	vtkSmartPointer<vtkPoints> nonInterestVoxelPoints = vtkSmartPointer<vtkPoints>::New();
@@ -297,9 +295,9 @@ void WarpedSceneVizPipe::PreparePointsForRendering(const ITMScene<ITMVoxelCanoni
 		for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 			for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-					ComputeVoxelAttributes(currentBlockPositionVoxels, x, y, z, localVoxelBlock, nonInterestVoxelPoints,
-					                       nonInterestScaleAttribute, nonInterestAlternativeScaleAttribute,
-					                       nonInterestColorAttribute, highlights, hash);
+					AddVoxelPoint(currentBlockPositionVoxels, x, y, z, localVoxelBlock, nonInterestVoxelPoints,
+					              nonInterestScaleAttribute, nonInterestAlternativeScaleAttribute,
+					              nonInterestColorAttribute, hash, bounds);
 
 				}
 			}
@@ -355,11 +353,11 @@ void WarpedSceneVizPipe::PreparePointsForRendering(const ITMScene<ITMVoxelCanoni
 	}
 
 	//Points pipeline X2
-	voxelPolydata->SetPoints(nonInterestVoxelPoints);
-	voxelPolydata->GetPointData()->AddArray(nonInterestScaleAttribute);
-	voxelPolydata->GetPointData()->AddArray(nonInterestAlternativeScaleAttribute);
-	voxelPolydata->GetPointData()->AddArray(nonInterestColorAttribute);
-	voxelPolydata->GetPointData()->SetActiveScalars(colorAttributeName);
+	voxelVizData->SetPoints(nonInterestVoxelPoints);
+	voxelVizData->GetPointData()->AddArray(nonInterestScaleAttribute);
+	voxelVizData->GetPointData()->AddArray(nonInterestAlternativeScaleAttribute);
+	voxelVizData->GetPointData()->AddArray(nonInterestColorAttribute);
+	voxelVizData->GetPointData()->SetActiveScalars(colorAttributeName);
 
 	interestVoxelPolydata->SetPoints(interestVoxelPoints);
 	interestVoxelPolydata->GetPointData()->AddArray(interestScaleAttribute);
@@ -368,10 +366,10 @@ void WarpedSceneVizPipe::PreparePointsForRendering(const ITMScene<ITMVoxelCanoni
 	interestVoxelPolydata->GetPointData()->SetActiveScalars(colorAttributeName);
 
 	// pash block setup
-	hashBlockGrid->SetPoints(hashBlockPoints);
+	hashBlockGridVizData->SetPoints(hashBlockPoints);
 
 	// warp prep
-	initialNonInterestPoints->DeepCopy(voxelPolydata->GetPoints());
+	initialNonInterestPoints->DeepCopy(voxelVizData->GetPoints());
 	initialInterestPoints->DeepCopy(interestVoxelPolydata->GetPoints());
 
 	warplessVoxelPolydata->SetPoints(initialNonInterestPoints);
@@ -383,15 +381,13 @@ void WarpedSceneVizPipe::PreparePointsForRendering(const ITMScene<ITMVoxelCanoni
 	preparePipelineWasCalled = true;
 }
 
-void WarpedSceneVizPipe::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry,
-                                         vtkAlgorithmOutput* hashBlockSourceGeometry,
-                                         const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) {
-	SDFSceneVizPipe::PreparePipeline(voxelSourceGeometry, hashBlockSourceGeometry, scene);
+void ITMCanonicalScene3DSliceVisualizer_Deprecated::PreparePipeline() {
+	ITMScene3DSliceVisualizer::PreparePipeline();
 
 	//*** set up different selection markers ***
 
 	auto selectionMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	selectionMapper->SetInputConnection(voxelSourceGeometry);
+	selectionMapper->SetInputConnection(voxelVizGeometrySource->GetOutputPort());
 	// selection voxel and slice extrema markers
 	selectedVoxelActor->SetMapper(selectionMapper);
 	selectedVoxelActor->VisibilityOff();
@@ -423,8 +419,8 @@ void WarpedSceneVizPipe::PreparePipeline(vtkAlgorithmOutput* voxelSourceGeometry
 	//***
 }
 
-void WarpedSceneVizPipe::SetInterestRegionInfo(std::vector<int> interestRegionHashes,
-                                             ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights) {
+void ITMCanonicalScene3DSliceVisualizer_Deprecated::SetInterestRegionInfo(std::vector<int> interestRegionHashes,
+                                                               ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights) {
 	this->highlights = highlights;
 	this->interestRegionHashes = std::move(interestRegionHashes);
 	interestRegionHashSet.clear();
@@ -442,7 +438,7 @@ void WarpedSceneVizPipe::SetInterestRegionInfo(std::vector<int> interestRegionHa
 	interestRegionHashesAreSet = true;
 }
 
-void WarpedSceneVizPipe::PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeometry) {
+void ITMCanonicalScene3DSliceVisualizer_Deprecated::PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceGeometry) {
 	if (!preparePipelineWasCalled) {
 		DIEWITHEXCEPTION_REPORTLOCATION("PreparePipeline needs to be called first.");
 	}
@@ -451,7 +447,7 @@ void WarpedSceneVizPipe::PrepareInterestRegions(vtkAlgorithmOutput* voxelSourceG
 	interestVoxelActor->SetMapper(interestVoxelMapper);
 }
 
-void WarpedSceneVizPipe::PrepareWarplessVoxels(vtkAlgorithmOutput* voxelSourceGeometry) {
+void ITMCanonicalScene3DSliceVisualizer_Deprecated::PrepareWarplessVoxels(vtkAlgorithmOutput* voxelSourceGeometry) {
 	if (!preparePipelineWasCalled) {
 		DIEWITHEXCEPTION_REPORTLOCATION("PreparePipeline needs to be called first.");
 	}
@@ -459,14 +455,14 @@ void WarpedSceneVizPipe::PrepareWarplessVoxels(vtkAlgorithmOutput* voxelSourceGe
 	warplessVoxelActor->SetMapper(warplessVoxelMapper);
 }
 
-void WarpedSceneVizPipe::SetFrameIndex(int frameIx) {
+void ITMCanonicalScene3DSliceVisualizer_Deprecated::SetFrameIndex(int frameIx) {
 	this->frameIx = frameIx;
 }
 //endregion
 //region ========================================== WARP UPDATES =======================================================
 
-void WarpedSceneVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
-	vtkSmartPointer<vtkPoints> voxels = this->voxelPolydata->GetPoints();
+void ITMCanonicalScene3DSliceVisualizer_Deprecated::UpdatePointPositionsFromBuffer(void* buffer) {
+	vtkSmartPointer<vtkPoints> voxels = this->voxelVizData->GetPoints();
 	auto* initialPointRawData = reinterpret_cast<float*>(initialNonInterestPoints->GetVoidPointer(0));
 	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
 	auto* warpRawData = reinterpret_cast<float*>(buffer);
@@ -504,10 +500,11 @@ void WarpedSceneVizPipe::UpdatePointPositionsFromBuffer(void* buffer) {
 		pointRawData[iVoxel * pointFloatSize + 2] =
 				initialPointRawData[iVoxel * pointFloatSize + 2] + warpRawData[iVoxel * warpAndUpdateFloatSize + 2];
 	}
-	voxelPolydata->Modified();
+	voxelVizData->Modified();
 }
+
 // assumes (1) buffers are ordered by interest region central hash (2) there is no overlap between interest regions
-void WarpedSceneVizPipe::UpdateInterestRegionsFromBuffers(void* buffer) {
+void ITMCanonicalScene3DSliceVisualizer_Deprecated::UpdateInterestRegionsFromBuffers(void* buffer) {
 	vtkSmartPointer<vtkPoints> voxels = interestVoxelPolydata->GetPoints();
 	auto* initialPointRawData = reinterpret_cast<float*>(initialInterestPoints->GetVoidPointer(0));
 	auto* pointRawData = reinterpret_cast<float*>(voxels->GetVoidPointer(0));
@@ -530,8 +527,8 @@ void WarpedSceneVizPipe::UpdateInterestRegionsFromBuffers(void* buffer) {
 //endregion
 //region =========================================== INTERACTIONS / MODES ===============================================
 
-void WarpedSceneVizPipe::ToggleScaleMode() {
-	SDFSceneVizPipe::ToggleScaleMode();
+void ITMCanonicalScene3DSliceVisualizer_Deprecated::ToggleScaleMode() {
+	ITMScene3DSliceVisualizer::ToggleScaleMode();
 	if (scaleMode == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS) {
 		interestVoxelMapper->SetScaleArray(scaleUnknownsHiddenAttributeName);
 		warplessVoxelMapper->SetScaleArray(scaleUnknownsHiddenAttributeName);
@@ -546,13 +543,13 @@ void WarpedSceneVizPipe::ToggleScaleMode() {
  * \param pointId point where to move the highlight marker
  * \param highlightOn whether to move & display the highlight marker or to hide it
  */
-void WarpedSceneVizPipe::SelectOrDeselectVoxel(vtkIdType pointId, bool highlightOn,
-                                               const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) {
-	auto scaleArray = dynamic_cast<vtkFloatArray*>(voxelPolydata->GetPointData()->GetArray(
+void ITMCanonicalScene3DSliceVisualizer_Deprecated::SelectOrDeselectVoxel(vtkIdType pointId, bool highlightOn,
+                                                               const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) {
+	auto scaleArray = dynamic_cast<vtkFloatArray*>(voxelVizData->GetPointData()->GetArray(
 			scaleMode == VOXEL_SCALE_HIDE_UNKNOWNS ? scaleUnknownsHiddenAttributeName
 			                                       : scaleUnknownsVisibleAttributeName));
 
-	auto points = voxelPolydata->GetPoints();
+	auto points = voxelVizData->GetPoints();
 	if (highlightOn) {
 		selectedVoxelActor->VisibilityOn();
 		float selectedVoxelScale = scaleArray->GetValue(pointId);
@@ -574,8 +571,8 @@ void WarpedSceneVizPipe::SelectOrDeselectVoxel(vtkIdType pointId, bool highlight
  * \param vizCoordinates [out] the pre-warp coordinates in visualization space (different axis directions)
  */
 inline void
-WarpedSceneVizPipe::RetrieveInitialCoordinates(vtkIdType pointId, int initialCoordinates[3],
-                                             double vizCoordinates[3]) const {
+ITMCanonicalScene3DSliceVisualizer_Deprecated::RetrieveInitialCoordinates(vtkIdType pointId, int initialCoordinates[3],
+                                                               double vizCoordinates[3]) const {
 	//retrieve original coordinate before warp
 	auto& initialPoints = this->initialNonInterestPoints;
 	initialPoints->GetPoint(pointId, vizCoordinates);
@@ -593,8 +590,8 @@ WarpedSceneVizPipe::RetrieveInitialCoordinates(vtkIdType pointId, int initialCoo
  * \param pointId[in] current (after-warp) coordinate of the canonical voxel whose initial coordinate (before-warp) should serve as the slice extremum.
  * \param continueSliceSelection[out] if this call sets the second extremum of the slice, sets this to false, sets to true otherwise.
  */
-void WarpedSceneVizPipe::SetSliceSelection(vtkIdType pointId, bool& continueSliceSelection,
-                                           const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) {
+void ITMCanonicalScene3DSliceVisualizer_Deprecated::SetSliceSelection(vtkIdType pointId, bool& continueSliceSelection,
+                                                           const ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene) {
 	vtkSmartPointer<vtkActor> extremum;
 	bool updateSlicePreview = false;
 	int selectedSliceExtremaIndex = 0;
@@ -639,22 +636,22 @@ void WarpedSceneVizPipe::SetSliceSelection(vtkIdType pointId, bool& continueSlic
 	}
 }
 
-void WarpedSceneVizPipe::ToggleWarpEnabled() {
+void ITMCanonicalScene3DSliceVisualizer_Deprecated::ToggleWarpEnabled() {
 	if (warpEnabled) {
-		GetVoxelActor()->VisibilityOff();
+		voxelActor->VisibilityOff();
 		warpEnabled = false;
-		GetVoxelActor()->VisibilityOn();
+		voxelActor->VisibilityOn();
 	} else {
-		GetVoxelActor()->VisibilityOff();
+		voxelActor->VisibilityOff();
 		warpEnabled = true;
-		GetVoxelActor()->VisibilityOn();
+		voxelActor->VisibilityOn();
 	}
 }
 
 /**
  * \brief Clear current slice selection
  */
-void WarpedSceneVizPipe::ClearSliceSelection() {
+void ITMCanonicalScene3DSliceVisualizer_Deprecated::ClearSliceSelection() {
 	selectedSlicePreview->VisibilityOff();
 	selectedSliceExtrema[0]->VisibilityOff();
 	selectedSliceExtrema[1]->VisibilityOff();

@@ -39,7 +39,7 @@ namespace ITMLib {
 
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-struct ITMCalculateWarpGradientBasedOnRawLiveFunctor {
+struct ITMCalculateWarpGradientBasedOnRawLiveFunctor_UNUSED {
 private:
 
 	void SetUpFocusVoxelPrinting(bool& printVoxelResult, bool& recordVoxelResult, const Vector3i& voxelPosition,
@@ -65,7 +65,7 @@ private:
 public:
 
 	// region ========================================= CONSTRUCTOR ====================================================
-	ITMCalculateWarpGradientBasedOnRawLiveFunctor(
+	ITMCalculateWarpGradientBasedOnRawLiveFunctor_UNUSED(
 			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Parameters parameters,
 			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Switches switches,
 			ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>& logger) :
@@ -96,7 +96,7 @@ public:
 	// endregion =======================================================================================================
 
 	void operator()(TVoxelCanonical& canonicalVoxel, Vector3i position) {
-		Vector3f& warp = canonicalVoxel.warp;
+		Vector3f& warp = canonicalVoxel.framewise_warp;
 		Vector3f warpedPosition = position.toFloat() + warp;
 		float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
 		bool struckNonTruncatedLiveVoxels;

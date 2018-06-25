@@ -42,9 +42,10 @@ namespace ORUtils {
 	};
 
 	template <class T> struct Vector6_ {
-		//union {
-		T v[6];
-		//};
+		union {
+			struct { T min_x, min_y, min_z, max_x, max_y, max_z; };// standard names for components
+			T v[6];
+		};
 	};
 
 	template<class T, int s> struct VectorX_

@@ -17,11 +17,18 @@
 
 //stdlib
 #include <unordered_map>
+#include <vector>
 
 //vtk
 #include <vtkRenderWindowInteractor.h>
 #include <vtkContextView.h>
 #include <vtkChartXY.h>
+#include <vtkActor.h>
+#include <vtkOrientationMarkerWidget.h>
+
+//local
+#include "../ITMMath.h"
+
 
 
 namespace ITMLib {
@@ -42,6 +49,24 @@ private:
 	vtkSmartPointer<vtkChartXY> chart;
 };
 
+class ITM3DWindow {
+public:
+	ITM3DWindow(const std::string& name, const std::string& title, int width, int height);
+	~ITM3DWindow();
+	void Update();
+	vtkSmartPointer<vtkRenderWindow> GetRenderWindow();
+	void ResetCamera();
+	void AddLayer(const Vector4d& backgroundColor);
+	void AddActorToLayer(vtkSmartPointer<vtkActor> actor, int layer);
+	void AddActorToFirstLayer(vtkSmartPointer<vtkActor> actor);
+private:
+	std::string name;
+	vtkSmartPointer<vtkRenderWindowInteractor> interactor;
+	vtkSmartPointer<vtkRenderWindow> renderWindow;
+	std::vector<vtkSmartPointer<vtkRenderer>> layerRenderers;
+	vtkSmartPointer<vtkOrientationMarkerWidget> orientationWidget;
+};
+
 class ITMVisualizationWindowManager {
 public:
 	static ITMVisualizationWindowManager& Instance() {
@@ -49,16 +74,22 @@ public:
 		return instance;
 	}
 
-	ITMChartWindow* MakeOrGetWindow(const std::string& name,
-	                                const std::string& title = "VTK Window",
-	                                int width = 1024, int height = 768);
-	ITMChartWindow* GetWindow(const std::string& name);
+	ITMChartWindow* MakeOrGetChartWindow(const std::string& name,
+	                                     const std::string& title = "VTK Window",
+	                                     int width = 1024, int height = 768);
+
+	ITM3DWindow* MakeOrGet3DWindow(const std::string& name,
+	                               const std::string& title = "VTK Window",
+	                               int width = -1, int height = -1);
+
+	ITMChartWindow* GetChartWindow(const std::string& name);
 
 	ITMVisualizationWindowManager(ITMVisualizationWindowManager const&) = delete;
 	void operator=(ITMVisualizationWindowManager const&)  = delete;
 private:
-
-	std::unordered_map<std::string, ITMChartWindow> windows;
+	std::unordered_map<std::string, ITMChartWindow> chartWindows;
+	std::unordered_map<std::string, ITM3DWindow> _3dWindows;
+	bool firstWindowCreated = false;
 
 	ITMVisualizationWindowManager() = default;
 	~ITMVisualizationWindowManager() = default;

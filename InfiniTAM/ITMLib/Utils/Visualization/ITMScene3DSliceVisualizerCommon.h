@@ -15,8 +15,42 @@
 //  ================================================================
 #pragma once
 
-#include "../../ITMLib/Utils/ITMMath.h"
-#include "../../ITMLib/ITMLibDefines.h"
+//VTK
+#include <vtkPoints.h>
+#include <vtkFloatArray.h>
+#include <vtkIntArray.h>
+
+//local
+#include "../ITMMath.h"
+#include "../ITMVoxelFlags.h"
+#include "../../Objects/Scene/ITMVoxelBlockHash.h"
+
+namespace ITMLib {
+
+namespace Viz {
+//================= STATIC CONSTANTS ============================
+extern const std::array<double, 4> canonicalTrunctedPositiveVoxelColor;
+extern const std::array<double, 4> canonicalNonTruncatedPositiveVoxelColor;
+extern const std::array<double, 4> canonicalNonTruncatedNegativeVoxelColor;
+extern const std::array<double, 4> canonicalTrunctedNegativeVoxelColor;
+extern const std::array<double, 4> canonicalUnknownVoxelColor;
+
+extern const std::array<double, 4> canonicalNegativeInterestVoxelColor;
+extern const std::array<double, 4> canonicalPositiveInterestVoxelColor;
+extern const std::array<double, 4> highlightVoxelColor;
+extern const std::array<double, 3> canonicalHashBlockEdgeColor;
+
+extern const std::array<double, 4> liveTruncatedPositiveVoxelColor;
+extern const std::array<double, 4> liveNonTruncatedPositiveVoxelColor;
+extern const std::array<double, 4> liveNonTruncatedNegativeVoxelColor;
+extern const std::array<double, 4> liveTruncatedNegativeVoxelColor;
+extern const std::array<double, 4> liveUnknownVoxelColor;
+
+extern const std::array<double, 3> liveHashBlockEdgeColor;
+}//namespace Viz
+
+
+
 
 #define COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf, flags) (flags == ITMLib::VOXEL_UNKNOWN ? 0.0f : 1.0f - 0.9f * std::abs(sdf))
 #define COMPUTE_VOXEL_SCALE(sdf) (1.0f - 0.9f * std::abs(sdf))
@@ -43,8 +77,8 @@ enum VoxelScaleMode {
 };
 
 inline
-const char* VoxelColorIndexAsCString(const VoxelColorIndex& index){
-	switch(index){
+const char* VoxelColorIndexAsCString(const VoxelColorIndex& index) {
+	switch (index) {
 		case POSITIVE_TRUNCATED_SDF_COLOR_INDEX:
 			return "POSITIVE_TRUNCATED_SDF_COLOR_INDEX";
 		case POSITIVE_NON_TRUNCATED_SDF_COLOR_INDEX:
@@ -66,12 +100,17 @@ const char* VoxelColorIndexAsCString(const VoxelColorIndex& index){
 
 template<typename TVoxel>
 inline
-void ComputeVoxelAttributes(const Vector3i& currentBlockPositionVoxels, int x, int y, int z, const TVoxel* localVoxelBlock,
-                            vtkPoints* points, vtkFloatArray* scaleAttribute, vtkFloatArray* alternativeScaleAttribute,
-                            vtkIntArray* colorAttribute,
-                            const ITMLib::ITM3DNestedMapOfArrays<ITMLib::ITMHighlightIterationInfo>& highlights,
-                            const int& hash) {
+void
+AddVoxelPoint(const Vector3i& currentBlockPositionVoxels, int x, int y, int z, const TVoxel* localVoxelBlock,
+              vtkPoints* points, vtkFloatArray* scaleAttribute, vtkFloatArray* alternativeScaleAttribute,
+              vtkIntArray* colorAttribute, const int& hash, Vector6i bounds) {
+
 	Vector3i voxelPosition = currentBlockPositionVoxels + Vector3i(x, y, z);
+	if (voxelPosition.x < bounds.min_x || voxelPosition.x >= bounds.max_x ||
+	    voxelPosition.y < bounds.min_y || voxelPosition.y >= bounds.max_y ||
+	    voxelPosition.z < bounds.min_z || voxelPosition.z >= bounds.max_z) {
+		return;
+	}
 	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 	const TVoxel& voxel = localVoxelBlock[locId];
 	float sdf = TVoxel::valueToFloat(voxel.sdf);
@@ -79,14 +118,12 @@ void ComputeVoxelAttributes(const Vector3i& currentBlockPositionVoxels, int x, i
 	float alternativeVoxelScale = COMPUTE_VOXEL_SCALE(sdf);
 	bool truncated = voxel.flags == ITMLib::VOXEL_TRUNCATED;
 	float voxelColor;
-	if(highlights.Contains(hash, locId)){
-		voxelColor = HIGHLIGHT_SDF_COLOR_INDEX;
-	}else{
-		voxelColor = voxel.flags == ITMLib::VOXEL_UNKNOWN ? UNKNOWN_SDF_COLOR_INDEX :
-	                   sdf > 0 ?
-	                   (truncated ? POSITIVE_TRUNCATED_SDF_COLOR_INDEX : POSITIVE_NON_TRUNCATED_SDF_COLOR_INDEX) :
-	                   (truncated ? NEGATIVE_TRUNCATED_SDF_COLOR_INDEX : NEGATIVE_NON_TRUNCATED_SDF_COLOR_INDEX);
-	}
+
+	voxelColor = voxel.flags == ITMLib::VOXEL_UNKNOWN ? UNKNOWN_SDF_COLOR_INDEX :
+	             sdf > 0 ?
+	             (truncated ? POSITIVE_TRUNCATED_SDF_COLOR_INDEX : POSITIVE_NON_TRUNCATED_SDF_COLOR_INDEX) :
+	             (truncated ? NEGATIVE_TRUNCATED_SDF_COLOR_INDEX : NEGATIVE_NON_TRUNCATED_SDF_COLOR_INDEX);
+
 
 	points->InsertNextPoint(voxelPosition.x,
 	                        voxelPosition.y,
@@ -96,3 +133,4 @@ void ComputeVoxelAttributes(const Vector3i& currentBlockPositionVoxels, int x, i
 	alternativeScaleAttribute->InsertNextValue(alternativeVoxelScale);
 	colorAttribute->InsertNextValue(voxelColor);
 }
+}//namespace ITMLib

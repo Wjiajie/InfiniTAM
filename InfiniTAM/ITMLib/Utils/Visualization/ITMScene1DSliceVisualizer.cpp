@@ -40,7 +40,7 @@ ITMScene1DSliceVisualizer::ITMScene1DSliceVisualizer(Vector3i focusCoordinate, A
 		voxelRange(voxelRange),
 		rangeStartVoxelIndex(focusCoordinate[axis] - ((voxelRange + 1) / 2)),
 		rangeEndVoxelIndex(focusCoordinate[axis] + (voxelRange / 2)),
-		window(ITMVisualizationWindowManager::Instance().MakeOrGetWindow(
+		window(ITMVisualizationWindowManager::Instance().MakeOrGetChartWindow(
 				"Scene1DSliceVisualizer_" + AxisToString(axis),
 				"Scene 1D Slice Visualizer for " + AxisToString(axis) + " Axis")){}
 

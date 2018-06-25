@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 1/23/18.
+//  Created by Gregory Kramida on 6/20/18.
 //  Copyright (c) 2018-2025 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
 //  limitations under the License.
 //  ================================================================
 
-#include "../../ITMLib/Utils/Visualization/ITMScene3DSliceVisualizer.tpp"
-#include "../../ITMLib/ITMLibDefines.h"
+#include "../ITMLibDefines.h"
+#include "../Utils/Visualization/ITMScene3DSliceVisualizer.tpp"
+#include "../Utils/Visualization/ITMCanonicalScene3DSliceVisualizer.tpp"
 
-
-template class ITMScene3DSliceVisualizer<ITMVoxelCanonical,ITMVoxelIndex>;
-template class ITMScene3DSliceVisualizer<ITMVoxelLive,ITMVoxelIndex>;
+template class ITMCanonicalScene3DSliceVisualizer<ITMVoxelIndex>;
+template class ITMScene3DSliceVisualizer<ITMVoxelLive, ITMVoxelIndex>;

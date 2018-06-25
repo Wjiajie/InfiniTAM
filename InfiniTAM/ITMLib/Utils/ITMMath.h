@@ -41,8 +41,10 @@ typedef class ORUtils::Vector4<float> Vector4f;
 typedef class ORUtils::Vector4<int> Vector4i;
 typedef class ORUtils::Vector4<short> Vector4s;
 typedef class ORUtils::Vector4<uchar> Vector4u;
+typedef class ORUtils::Vector4<double> Vector4d;
 
 typedef class ORUtils::Vector6<float> Vector6f;
+typedef class ORUtils::Vector6<int> Vector6i;
 
 
 #ifndef TO_INT_ROUND3
