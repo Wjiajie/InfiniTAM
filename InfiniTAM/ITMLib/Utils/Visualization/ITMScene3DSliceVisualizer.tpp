@@ -39,6 +39,7 @@
 #include "../../../Apps/SDFViz/SDFVizGlobalDefines.h"
 #include "ITMVisualizationCommon.h"
 #include "../../Objects/Scene/ITMSceneTraversal.h"
+#include "ITMScene3DSliceVisualizerInteractorStyle.h"
 
 
 //TODO: alter OO design such that constructor isn't calling virual / override member functions -Greg (GitHub: Algomorph)
@@ -475,6 +476,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::InitializeV
 	window = ITMVisualizationWindowManager::Instance().MakeOrGet3DWindow(
 			"Scene3DSliceVisualizer" + to_string(this->bounds),
 			"Scene 3D Slice Visualizer for bounds (" + to_string(this->bounds) + "))");
+
 	// Create the color maps
 	SetUpSDFColorLookupTable(liveVoxelColorLookupTable, liveHighlightVoxelColor.data(),
 	                         livePositiveTruncatedVoxelColor.data(),
@@ -486,13 +488,12 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::InitializeV
 	                         canonicalPositiveNonTruncatedVoxelColor.data(),
 	                         canonicalNegativeNonTruncatedVoxelColor.data(),
 	                         canonicalNegativeTruncatedVoxelColor.data(), canonicalUnknownVoxelColor.data());
+
 	SetUpGeometrySources();
 	PreparePipeline();
 	AddActorsToRenderers();
-	InitializeWarps();
-	threadCallback = vtkSmartPointer<ThreadInteropCommand<TVoxelCanonical, TVoxelLive, TIndex>>::New();
-	threadCallback->parent = this;
-	this->window->AddLoopCallback(threadCallback);
+
+
 
 	window->ResetCamera();
 	window->Update();
@@ -564,7 +565,21 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpUpd
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::Run() {
 	std::unique_lock<std::mutex> lock(mutex);
+
 	this->InitializeVoxels();
+	this->InitializeWarps();
+
+	threadCallback = vtkSmartPointer<ThreadInteropCommand<TVoxelCanonical, TVoxelLive, TIndex>>::New();
+	threadCallback->parent = this;
+	this->window->AddLoopCallback(threadCallback);
+	vtkSmartPointer<ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical,TVoxelLive,TIndex>> style =
+			vtkSmartPointer<ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical,TVoxelLive,TIndex>>::New();
+	style->SetParent(this);
+
+	this->window->SetInteractorStyle(style);
+
+
+
 	initialized = true;
 	lock.unlock();
 	conditionVariable.notify_all();

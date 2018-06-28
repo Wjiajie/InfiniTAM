@@ -596,6 +596,7 @@ set(ITMLIB_UTILS_VISUALIZATION_SOURCES
     Utils/Visualization/ITMSceneTrackingEnergyPlotter.cpp
     Utils/Visualization/ITMScene3DSliceVisualizer.tpp
     Utils/Visualization/ITMCanonicalScene3DSliceVisualizer.tpp
+    Utils/Visualization/ITMScene3DSliceVisualizerInteractorStyle.tpp
     Utils/Visualization/ITMScene3DSliceVisualizerCommon.cpp
     )
 
@@ -607,6 +608,7 @@ set(ITMLIB_UTILS_VISUALIZATION_HEADERS
     Utils/Visualization/ITMSceneTrackingEnergyPlotter.h
     Utils/Visualization/ITMScene3DSliceVisualizer.h
     Utils/Visualization/ITMCanonicalScene3DSliceVisualizer.h
+    Utils/Visualization/ITMScene3DSliceVisualizerInteractorStyle.h
     Utils/Visualization/ITMScene3DSliceVisualizerCommon.h
     )
 #################################################################

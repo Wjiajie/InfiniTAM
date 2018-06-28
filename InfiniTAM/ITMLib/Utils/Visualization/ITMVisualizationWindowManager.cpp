@@ -22,6 +22,7 @@
 //VTK
 #include <vtkContextScene.h>
 #include <vtkRenderer.h>
+#include <vtkCamera.h>
 #include <vtkRenderWindow.h>
 #include <vtkRendererCollection.h>
 #include <vtkInteractorStyleTrackballCamera.h>
@@ -173,7 +174,17 @@ vtkSmartPointer<vtkRenderWindow> ITM3DWindow::GetRenderWindow() {
 }
 
 void ITM3DWindow::ResetCamera() {
-	renderWindow->GetRenderers()->GetFirstRenderer()->ResetCamera();
+	vtkRenderer* renderer = renderWindow->GetRenderers()->GetFirstRenderer();
+	renderer->ResetCamera();
+	vtkCamera* camera = renderer->GetActiveCamera();
+	camera->SetViewUp(0,-1,0);
+	Vector3d cameraPosition, focalPoint;
+	camera->GetPosition(cameraPosition.values);
+	camera->GetFocalPoint(focalPoint.values);
+	Vector3d focalToCamera = cameraPosition-focalPoint;
+	Vector3d newCameraPos = focalPoint;
+	newCameraPos.z-= focalToCamera.z;
+	camera->SetPosition(newCameraPos.values);
 }
 
 void ITM3DWindow::RunInteractor() {
@@ -183,5 +194,9 @@ void ITM3DWindow::RunInteractor() {
 void ITM3DWindow::AddLoopCallback(vtkSmartPointer<vtkCommand> callback) {
 	interactor->CreateRepeatingTimer(1);
 	interactor->AddObserver(vtkCommand::TimerEvent,callback);
+}
+
+void ITM3DWindow::SetInteractorStyle(vtkSmartPointer<vtkInteractorStyle> style) {
+	interactor->SetInteractorStyle(style);
 }
 

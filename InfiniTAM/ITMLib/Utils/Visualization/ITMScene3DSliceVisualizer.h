@@ -45,9 +45,13 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ThreadInteropCommand;
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+class ITMScene3DSliceVisualizerInteractorStyle;
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMScene3DSliceVisualizer {
 
 	friend class ThreadInteropCommand<TVoxelCanonical, TVoxelLive, TIndex>;
+	friend class ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>;
 
 public:
 	//================= CONSTANTS ================
@@ -151,8 +155,6 @@ private:
 	vtkSmartPointer<vtkGlyph3DMapper> liveHashBlockMapper;
 	vtkSmartPointer<vtkActor> canonicalHashBlockActor;
 	vtkSmartPointer<vtkActor> liveHashBlockActor;
-
-
 
 	// ** warp updates
 	vtkSmartPointer<vtkPolyData> updatesData = vtkSmartPointer<vtkPolyData>::New();

@@ -62,6 +62,7 @@ public:
 	void AddActorToLayer(vtkSmartPointer<vtkActor> actor, int layer);
 	void AddActorToFirstLayer(vtkSmartPointer<vtkActor> actor);
 	void AddLoopCallback(vtkSmartPointer<vtkCommand> callback);
+	void SetInteractorStyle(vtkSmartPointer<vtkInteractorStyle> style);
 	void RunInteractor();
 private:
 	std::string name;

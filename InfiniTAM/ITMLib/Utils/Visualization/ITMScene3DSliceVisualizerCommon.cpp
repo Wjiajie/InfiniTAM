@@ -61,4 +61,4 @@ const std::array<std::array<double, 4>, 4> backgroundColors = {{{0.96, 0.96, 0.9
 		                                                               {0.59, 0.44, 0.09, 1.00},  // bristle brown
 		                                                               {0.57, 0.64, 0.69, 1.0}}}; // cadet grey
 }
-}
+}//namespace ITMLib
