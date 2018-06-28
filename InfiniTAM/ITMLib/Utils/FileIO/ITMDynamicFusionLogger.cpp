@@ -274,9 +274,9 @@ void ITMDynamicFusionLogger::InitializeFrameRecording() {
 			InitializeWarp2DSliceRecording(canonicalScene, liveScene);
 		}
 
-		if (recordingScene3DSlicesWithUpdates) {
-			scene3DSliceVisualizer.reset(new ITMCanonicalScene3DSliceVisualizer<ITMVoxelIndex>
-					                             (canonicalScene, focusCoordinates,
+		if (recordingScene3DSlicesWithUpdates && !scene3DSliceVisualizer) {
+			scene3DSliceVisualizer.reset(new ITMScene3DSliceVisualizer<ITMVoxelCanonical,ITMVoxelLive, ITMVoxelIndex>
+					                             (canonicalScene, liveScene, focusCoordinates,
 					                              planeFor2Dand3DSlices, _3dSliceInPlaneRadius, _3dSliceOutOfPlaneRadius));
 		}
 
@@ -328,8 +328,7 @@ void ITMDynamicFusionLogger::InitializeWarp2DSliceRecording(
 }
 
 
-void
-ITMDynamicFusionLogger::SaveWarpSlices(int iteration) {
+void ITMDynamicFusionLogger::SaveWarpSlices(int iteration) {
 	if (hasFocusCoordinates) {
 		if (recordingScene2DSlicesWithUpdates) {
 			cv::Mat warpImg = scene2DSliceVisualizer->DrawWarpedSceneImageAroundPoint(canonicalScene) * 255.0f;

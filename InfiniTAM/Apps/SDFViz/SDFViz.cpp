@@ -71,14 +71,14 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
                Vector3i initialCoords, unsigned int initialFrame, bool loadSlices, bool slicesOnly)
 		:
 		rootPath(std::move(pathToScene)),
-		canonicalScenePipe(canonicalTrunctedPositiveVoxelColor, canonicalNonTruncatedPositiveVoxelColor,
-		                   canonicalNonTruncatedNegativeVoxelColor, canonicalTrunctedNegativeVoxelColor,
+		canonicalScenePipe(canonicalPositiveTruncatedVoxelColor, canonicalPositiveNonTruncatedVoxelColor,
+		                   canonicalNegativeNonTruncatedVoxelColor, canonicalNegativeTruncatedVoxelColor,
 		                   canonicalUnknownVoxelColor, canonicalPositiveInterestVoxelColor,
 		                   canonicalNegativeInterestVoxelColor, highlightVoxelColor, canonicalHashBlockEdgeColor, 0),
-		liveScenePipe(liveTruncatedPositiveVoxelColor,
-		              liveNonTruncatedPositiveVoxelColor,
-		              liveNonTruncatedNegativeVoxelColor,
-		              liveTruncatedNegativeVoxelColor,
+		liveScenePipe(livePositiveTruncatedVoxelColor,
+		              livePositiveNonTruncatedVoxelColor,
+		              liveNegativeNonTruncatedVoxelColor,
+		              liveNegativeTruncatedVoxelColor,
 		              liveUnknownVoxelColor,
 		              highlightVoxelColor,
 		              liveHashBlockEdgeColor, true),
@@ -278,13 +278,13 @@ void SDFViz::DrawLegend() {
 	legend->SetEntry(2, legendSphere->GetOutput(), "Highlight",
 	                 (double*) highlightVoxelColor.data());
 	legend->SetEntry(3, legendSphere->GetOutput(), "Positive Canonical",
-	                 (double*) canonicalNonTruncatedPositiveVoxelColor.data());
+	                 (double*) canonicalPositiveNonTruncatedVoxelColor.data());
 	legend->SetEntry(4, legendSphere->GetOutput(), "Negative Canonical",
-	                 (double*) canonicalNonTruncatedNegativeVoxelColor.data());
+	                 (double*) canonicalNegativeNonTruncatedVoxelColor.data());
 	legend->SetEntry(5, legendSphere->GetOutput(), "Positive Live",
-	                 (double*) liveNonTruncatedPositiveVoxelColor.data());
+	                 (double*) livePositiveNonTruncatedVoxelColor.data());
 	legend->SetEntry(6, legendSphere->GetOutput(), "Negative Live",
-	                 (double*) liveNonTruncatedNegativeVoxelColor.data());
+	                 (double*) liveNegativeNonTruncatedVoxelColor.data());
 
 	legend->GetPositionCoordinate()->SetCoordinateSystemToView();
 	legend->GetPositionCoordinate()->SetValue(0.8, -1.0);

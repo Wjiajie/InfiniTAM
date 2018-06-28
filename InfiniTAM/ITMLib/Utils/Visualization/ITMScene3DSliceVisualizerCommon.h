@@ -29,10 +29,10 @@ namespace ITMLib {
 
 namespace Viz {
 //================= STATIC CONSTANTS ============================
-extern const std::array<double, 4> canonicalTrunctedPositiveVoxelColor;
-extern const std::array<double, 4> canonicalNonTruncatedPositiveVoxelColor;
-extern const std::array<double, 4> canonicalNonTruncatedNegativeVoxelColor;
-extern const std::array<double, 4> canonicalTrunctedNegativeVoxelColor;
+extern const std::array<double, 4> canonicalPositiveTruncatedVoxelColor;
+extern const std::array<double, 4> canonicalPositiveNonTruncatedVoxelColor;
+extern const std::array<double, 4> canonicalNegativeNonTruncatedVoxelColor;
+extern const std::array<double, 4> canonicalNegativeTruncatedVoxelColor;
 extern const std::array<double, 4> canonicalUnknownVoxelColor;
 
 extern const std::array<double, 4> canonicalNegativeInterestVoxelColor;
@@ -40,10 +40,10 @@ extern const std::array<double, 4> canonicalPositiveInterestVoxelColor;
 extern const std::array<double, 4> highlightVoxelColor;
 extern const std::array<double, 3> canonicalHashBlockEdgeColor;
 
-extern const std::array<double, 4> liveTruncatedPositiveVoxelColor;
-extern const std::array<double, 4> liveNonTruncatedPositiveVoxelColor;
-extern const std::array<double, 4> liveNonTruncatedNegativeVoxelColor;
-extern const std::array<double, 4> liveTruncatedNegativeVoxelColor;
+extern const std::array<double, 4> livePositiveTruncatedVoxelColor;
+extern const std::array<double, 4> livePositiveNonTruncatedVoxelColor;
+extern const std::array<double, 4> liveNegativeNonTruncatedVoxelColor;
+extern const std::array<double, 4> liveNegativeTruncatedVoxelColor;
 extern const std::array<double, 4> liveUnknownVoxelColor;
 
 extern const std::array<double, 3> liveHashBlockEdgeColor;

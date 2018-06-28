@@ -17,9 +17,9 @@
 
 #include "../../Objects/Scene/ITMScene.h"
 #include "ITMSceneLogger.h"
-#include "../Visualization/ITMCanonicalScene3DSliceVisualizer.h"
-#include "../Visualization/ITMScene2DSliceVisualizer.h"
 #include "../Visualization/ITMScene1DSliceVisualizer.h"
+#include "../Visualization/ITMScene2DSliceVisualizer.h"
+#include "../Visualization/ITMScene3DSliceVisualizer.h"
 #include "../../ITMLibDefines.h"
 #include "../Visualization/ITMSceneTrackingEnergyPlotter.h"
 
@@ -115,9 +115,9 @@ private:
 	void MakeOrClearOutputDirectoriesFor2DSceneSlices() const;
 
 	// various loggers & visualizers
-	std::unique_ptr<ITMScene2DSliceVisualizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>> scene2DSliceVisualizer;
 	std::unique_ptr<ITMScene1DSliceVisualizer> scene1DSliceVisualizer;
-	std::unique_ptr<ITMCanonicalScene3DSliceVisualizer<ITMVoxelIndex>> scene3DSliceVisualizer;
+	std::unique_ptr<ITMScene2DSliceVisualizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>> scene2DSliceVisualizer;
+	std::unique_ptr<ITMScene3DSliceVisualizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>> scene3DSliceVisualizer;
 	std::unique_ptr<ITMSceneTrackingEnergyPlotter> energyPlotter;
 	ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* scene3DLogger = nullptr;
 

@@ -21,6 +21,8 @@
 #include <vtkSphereSource.h>
 #include <vtkCubeSource.h>
 #include <vtkPointSet.h>
+#include <thread>
+#include <condition_variable>
 
 //ITMLib
 #include "../../Objects/Scene/ITMScene.h"
@@ -39,8 +41,14 @@ class vtkPolyDataMapper;
 
 namespace ITMLib {
 
-template<typename TVoxel, typename TIndex>
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+class ThreadInteropCommand;
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMScene3DSliceVisualizer {
+
+	friend class ThreadInteropCommand<TVoxelCanonical, TVoxelLive, TIndex>;
+
 public:
 	//================= CONSTANTS ================
 	static const char* colorAttributeName;
@@ -48,25 +56,17 @@ public:
 	static const char* scaleUnknownsVisibleAttributeName;
 
 	// ====================== CONSTRUCTORS / DESTRUCTORS ==================
-	ITMScene3DSliceVisualizer(ITMScene<TVoxel, TIndex>* scene, Vector6i bounds);
-	ITMScene3DSliceVisualizer(ITMScene<TVoxel, TIndex>* scene, Vector3i focusCoordinates, Plane plane = PLANE_XY,
+	ITMScene3DSliceVisualizer(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                          ITMScene<TVoxelLive, TIndex>* liveScene,
+	                          Vector3i focusCoordinates, Plane plane = PLANE_XY,
 	                          int radiusInPlane = 10, int radiusOutOfPlane = 0);
-
-	ITMScene3DSliceVisualizer(ITMScene<TVoxel, TIndex>* scene, Vector3i bounds,
-	                          const std::array<double, 4>& positiveTruncatedVoxelColor,
-	                          const std::array<double, 4>& positiveNonTruncatedVoxelColor,
-	                          const std::array<double, 4>& negativeNonTruncatedVoxelColor,
-	                          const std::array<double, 4>& negativeTruncatedVoxelColor,
-	                          const std::array<double, 4>& unknownVoxelColor,
-	                          const std::array<double, 4>& highlightVoxelColor,
-	                          const std::array<double, 3>& hashBlockEdgeColor);
 	virtual ~ITMScene3DSliceVisualizer();
 
 	// ====================== MEMBER FUNCTIONS ===========================
 
 
 	VoxelScaleMode GetCurrentScaleMode();
-
+	void TriggerDrawWarpUpdates();
 	virtual void ToggleScaleMode();
 
 protected:
@@ -88,23 +88,9 @@ protected:
 	                                        vtkSmartPointer<vtkLookupTable>& table);
 	// endregion
 	// region ============= MEMBER FUNCTIONS =============================
-	virtual void BuildVoxelAndHashBlockPolydataFromScene();
-	virtual void PreparePipeline();
-	void Initialize();
 
-	// ===================== MEMBER VARIABLES ============================
-	// ** individual voxels **
-	vtkSmartPointer<vtkPolyData> voxelVizData;// = vtkSmartPointer<vtkPolyData>::New();
-	vtkSmartPointer<vtkLookupTable> voxelColorLookupTable;// = vtkSmartPointer<vtkLookupTable>::New();
-	vtkSmartPointer<vtkSphereSource> voxelVizGeometrySource;// = vtkSmartPointer<vtkSphereSource>::New();
-	vtkSmartPointer<vtkActor> voxelActor;// = vtkSmartPointer<vtkActor>::New();
+	//endregion
 
-
-
-	// ** hash-block grid **
-	vtkSmartPointer<vtkPolyData> hashBlockGridVizData;// = vtkSmartPointer<vtkPolyData>::New();
-	vtkSmartPointer<vtkCubeSource> hashBlockVizGeometrySource;// = vtkSmartPointer<vtkCubeSource>::New();
-	ITMScene<TVoxel, TIndex>* scene;
 
 	VoxelScaleMode scaleMode;
 
@@ -113,39 +99,94 @@ protected:
 
 	// scene limits/boundaries/extent
 	Vector6i bounds;
+	Vector3i focusCoordinates;
 
 	ITM3DWindow* window;
 
-	//endregion
+
 private:
 	// region ============== MEMBER FUNCTIONS ===========================
-
+	void InitializeVoxels();
+	template <typename TVoxel, typename TVoxelDataRetriever>
+	void BuildVoxelAndHashBlockPolyDataFromScene(
+			ITMScene <TVoxel, TIndex>* scene, vtkSmartPointer<vtkPolyData>& voxelVizData,
+			vtkSmartPointer<vtkPolyData>& hashBlockVizData);
+	void PreparePipeline();
+	void InitializeWarps();
 	void AddActorsToRenderers();
+	void SetUpGeometrySources();
+	void Run();
+	void DrawWarpUpdates();
+
 
 	// endregion
 	// region ============== MEMBER VARIABLES ===========================
 
+	// ===================== MEMBER VARIABLES ============================
+	ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
+	ITMScene<TVoxelLive, TIndex>* liveScene;
 
-	// ** voxels **
-	vtkSmartPointer<vtkGlyph3DMapper> voxelMapper;// = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	// ** individual voxels **
+	vtkSmartPointer<vtkSphereSource> voxelVizGeometrySource;
+
+	vtkSmartPointer<vtkPolyData> canonicalVoxelVizData;
+	vtkSmartPointer<vtkPolyData> liveVoxelVizData;
+	vtkSmartPointer<vtkGlyph3DMapper> canonicalVoxelMapper;
+	vtkSmartPointer<vtkGlyph3DMapper> liveVoxelMapper;
+
+
+	vtkSmartPointer<vtkActor> canonicalVoxelActor;
+	vtkSmartPointer<vtkActor> liveVoxelActor;
+
+	vtkSmartPointer<vtkLookupTable> canonicalVoxelColorLookupTable;
+	vtkSmartPointer<vtkLookupTable> liveVoxelColorLookupTable;
+
+
+	// ** hash-block grid **
+	vtkSmartPointer<vtkCubeSource> hashBlockVizGeometrySource;
+
+	vtkSmartPointer<vtkPolyData> canonicalHashBlockGridVizData;
+	vtkSmartPointer<vtkPolyData> liveHashBlockGridVizData;
+	vtkSmartPointer<vtkGlyph3DMapper> canonicalHashBlockMapper;
+	vtkSmartPointer<vtkGlyph3DMapper> liveHashBlockMapper;
+	vtkSmartPointer<vtkActor> canonicalHashBlockActor;
+	vtkSmartPointer<vtkActor> liveHashBlockActor;
 
 
 
-	// ** hash block grid **
-	vtkSmartPointer<vtkActor> hashBlockActor;// = vtkSmartPointer<vtkActor>::New();
-	vtkSmartPointer<vtkGlyph3DMapper> hashBlockMapper;// = vtkSmartPointer<vtkGlyph3DMapper>::New();
+	// ** warp updates
+	vtkSmartPointer<vtkPolyData> updatesData = vtkSmartPointer<vtkPolyData>::New();
+	vtkSmartPointer<vtkPolyDataMapper> updatesMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	vtkSmartPointer<vtkActor> updatesActor = vtkSmartPointer<vtkActor>::New();
 
 	// ** colors **
-	std::array<double, 4> positiveTruncatedVoxelColor = ITMLib::Viz::liveTruncatedPositiveVoxelColor;
-	std::array<double, 4> positiveNonTruncatedVoxelColor = ITMLib::Viz::liveNonTruncatedPositiveVoxelColor;
-	std::array<double, 4> negativeNonTruncatedVoxelColor = ITMLib::Viz::liveNonTruncatedNegativeVoxelColor;
-	std::array<double, 4> negativeTruncatedVoxelColor = ITMLib::Viz::liveTruncatedNegativeVoxelColor;
-	std::array<double, 4> unknownVoxelColor = ITMLib::Viz::liveUnknownVoxelColor;
-	std::array<double, 4> highlightVoxelColor = ITMLib::Viz::highlightVoxelColor;
-	std::array<double, 3> hashBlockEdgeColor = ITMLib::Viz::liveHashBlockEdgeColor;
+	// = live =
+	std::array<double, 4> livePositiveTruncatedVoxelColor = ITMLib::Viz::livePositiveTruncatedVoxelColor;
+	std::array<double, 4> livePositiveNonTruncatedVoxelColor = ITMLib::Viz::livePositiveNonTruncatedVoxelColor;
+	std::array<double, 4> liveNegativeNonTruncatedVoxelColor = ITMLib::Viz::liveNegativeNonTruncatedVoxelColor;
+	std::array<double, 4> liveNegativeTruncatedVoxelColor = ITMLib::Viz::liveNegativeTruncatedVoxelColor;
+	std::array<double, 4> liveUnknownVoxelColor = ITMLib::Viz::liveUnknownVoxelColor;
+	std::array<double, 4> liveHighlightVoxelColor = ITMLib::Viz::highlightVoxelColor;
+	std::array<double, 3> liveHashBlockEdgeColor = ITMLib::Viz::liveHashBlockEdgeColor;
+	// = canonical =
+	std::array<double, 4> canonicalPositiveTruncatedVoxelColor = ITMLib::Viz::canonicalPositiveTruncatedVoxelColor;
+	std::array<double, 4> canonicalPositiveNonTruncatedVoxelColor = ITMLib::Viz::canonicalPositiveNonTruncatedVoxelColor;
+	std::array<double, 4> canonicalNegativeNonTruncatedVoxelColor = ITMLib::Viz::canonicalNegativeNonTruncatedVoxelColor;
+	std::array<double, 4> canonicalNegativeTruncatedVoxelColor = ITMLib::Viz::canonicalNegativeTruncatedVoxelColor;
+	std::array<double, 4> canonicalUnknownVoxelColor = ITMLib::Viz::canonicalUnknownVoxelColor;
+	std::array<double, 4> canonicalHighlightVoxelColor = ITMLib::Viz::highlightVoxelColor;
+	std::array<double, 3> canonicalHashBlockEdgeColor = ITMLib::Viz::canonicalHashBlockEdgeColor;
+
+	// ** threading controls **
+	std::mutex mutex;
+	std::condition_variable conditionVariable;
+	bool initialized = false;
+	bool warpUpdatePerformed = false;
+	std::thread* thread = nullptr;
+	vtkSmartPointer<ThreadInteropCommand<TVoxelCanonical, TVoxelLive, TIndex>> threadCallback;
 
 	//endregion
-	void SetUpGeometrySources();
+
 };
 
 

@@ -24,13 +24,13 @@ namespace ITMLib {
 namespace Viz {
 
 //** public **
-const std::array<double, 4> canonicalTrunctedPositiveVoxelColor =
+const std::array<double, 4> canonicalPositiveTruncatedVoxelColor =
 		{0.8352941176, 0.8980392157, 0.9607843137, 1.0};
-const std::array<double, 4> canonicalNonTruncatedPositiveVoxelColor =
+const std::array<double, 4> canonicalPositiveNonTruncatedVoxelColor =
 		{0.6588235294, 0.7411764706, 0.9176470588, 1.0};
-const std::array<double, 4> canonicalNonTruncatedNegativeVoxelColor =
+const std::array<double, 4> canonicalNegativeNonTruncatedVoxelColor =
 		{0.1764705882, 0.4980392157, 0.8196078431, 1.0};
-const std::array<double, 4> canonicalTrunctedNegativeVoxelColor =
+const std::array<double, 4> canonicalNegativeTruncatedVoxelColor =
 		{0.1058823529, 0.2980392157, 0.4901960784, 1.0};
 const std::array<double, 4> canonicalUnknownVoxelColor =
 		{0.0352941176, 0.0980392157, 0.1607843137, 1.0};
@@ -42,13 +42,13 @@ const std::array<double, 4> highlightVoxelColor = {1.000, 0.647, 0.000, 1.0};
 const std::array<double, 3> canonicalHashBlockEdgeColor = {0.286, 0.623, 0.854};
 
 
-const std::array<double, 4> liveTruncatedPositiveVoxelColor =
+const std::array<double, 4> livePositiveTruncatedVoxelColor =
 		{0.8352941176, 0.9607843137, 0.8666666667, 1.0};
-const std::array<double, 4> liveNonTruncatedPositiveVoxelColor =
+const std::array<double, 4> livePositiveNonTruncatedVoxelColor =
 		{0.5137254902, 1, 0.6078431373, 1.0};
-const std::array<double, 4> liveNonTruncatedNegativeVoxelColor =
+const std::array<double, 4> liveNegativeNonTruncatedVoxelColor =
 		{0.1921568627, 0.8039215686, 0.3450980392, 1.0};
-const std::array<double, 4> liveTruncatedNegativeVoxelColor =
+const std::array<double, 4> liveNegativeTruncatedVoxelColor =
 		{0.1137254902, 0.4823529412, 0.2078431373, 1.0};
 const std::array<double, 4> liveUnknownVoxelColor =
 		{0.0352941176, 0.1607843137, 0.0666666667, 1.0};
