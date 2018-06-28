@@ -140,9 +140,7 @@ ITM3DWindow::~ITM3DWindow() {
 }
 
 void ITM3DWindow::Update() {
-	debug_print("BEFORE UPDATE");
 	renderWindow->Render();
-	debug_print("AFTER UPDATE");
 }
 
 

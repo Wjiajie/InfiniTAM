@@ -61,7 +61,8 @@ ITMCanonicalScene3DSliceVisualizer<TIndex>::ITMCanonicalScene3DSliceVisualizer(
 		ITMScene<ITMVoxelCanonical, TIndex>* scene, const Vector3i& focusCoordinates, Plane plane, int radiusInPlane,
 		int radiusOutOfPlane)
 		: ITMScene3DSliceVisualizer<ITMVoxelCanonical, TIndex>(scene, focusCoordinates, plane, radiusInPlane,
-		                                                       radiusOutOfPlane) {
+		                                                       radiusOutOfPlane),
+		mutex(), conditionVariable(){
 	this->thread = new std::thread(&ITMCanonicalScene3DSliceVisualizer<TIndex>::Run, this);
 	std::unique_lock<std::mutex> lock(mutex);
 	conditionVariable.wait(lock, [this]{return this->initialized;});
@@ -91,6 +92,7 @@ private:
 
 template<typename TIndex>
 void ITMCanonicalScene3DSliceVisualizer<TIndex>::DrawWarpUpdates() {
+
 	std::unique_lock<std::mutex> lock(mutex);
 
 	vtkPoints* updatePoints = this->updatesData->GetPoints();
@@ -109,6 +111,7 @@ void ITMCanonicalScene3DSliceVisualizer<TIndex>::DrawWarpUpdates() {
 
 template<typename TIndex>
 void ITMCanonicalScene3DSliceVisualizer<TIndex>::Run() {
+
 	std::unique_lock<std::mutex> lock(mutex);
 	this->Initialize();
 	this->InitializeWarps();
@@ -120,9 +123,6 @@ void ITMCanonicalScene3DSliceVisualizer<TIndex>::Run() {
 
 template<typename TIndex>
 void ITMCanonicalScene3DSliceVisualizer<TIndex>::InitializeWarps() {
-
-
-
 	vtkSmartPointer<vtkPoints> updatePoints = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkFloatArray> updateVectors = vtkSmartPointer<vtkFloatArray>::New();
 	updateVectors->SetName("Warp update vectors");
@@ -142,9 +142,8 @@ void ITMCanonicalScene3DSliceVisualizer<TIndex>::InitializeWarps() {
 	this->window->AddActorToLayer(updatesActor, 1);
 
 	threadCallback = vtkSmartPointer<ThreadInteropCommand<TIndex>>::New();
+	threadCallback->parent = this;
 	this->window->AddLoopCallback(threadCallback);
-
-
 }
 
 template<typename TIndex>

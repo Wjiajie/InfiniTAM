@@ -74,7 +74,12 @@ void ITMDynamicFusionLogger::SetPlaneFor2Dand3DSlices(Plane plane) {
 
 
 void ITMDynamicFusionLogger::Set3DSliceInPlaneRadius(unsigned int _3dSliceInPlaneRadius) {
-	this->_3dSliceinPlaneRadius = _3dSliceInPlaneRadius;
+	this->_3dSliceInPlaneRadius = _3dSliceInPlaneRadius;
+}
+
+
+void ITMDynamicFusionLogger::Set3DSliceOutOfPlaneRadius(unsigned int _3dSliceOutOfPlaneRadius) {
+	this->_3dSliceOutOfPlaneRadius = _3dSliceOutOfPlaneRadius;
 }
 
 
@@ -272,7 +277,7 @@ void ITMDynamicFusionLogger::InitializeFrameRecording() {
 		if (recordingScene3DSlicesWithUpdates) {
 			scene3DSliceVisualizer.reset(new ITMCanonicalScene3DSliceVisualizer<ITMVoxelIndex>
 					                             (canonicalScene, focusCoordinates,
-					                              planeFor2Dand3DSlices, _3dSliceinPlaneRadius));
+					                              planeFor2Dand3DSlices, _3dSliceInPlaneRadius, _3dSliceOutOfPlaneRadius));
 		}
 
 	}
@@ -498,8 +503,5 @@ void ITMDynamicFusionLogger::MakeOrClearOutputDirectoriesFor2DSceneSlices() cons
 		ClearIfExistsMakeIfDoesnt(GetOutputDirectoryFor2DSceneSlicesWithWarps());
 	}
 }
-
-
-
 
 // endregion ===========================================================================================================

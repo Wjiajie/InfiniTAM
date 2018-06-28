@@ -46,6 +46,7 @@ public:
 	void SetFocusCoordinates(Vector3i focusCoordinates);
 	void SetPlaneFor2Dand3DSlices(Plane plane);
 	void Set3DSliceInPlaneRadius(unsigned int _3dSliceInPlaneRadius);
+	void Set3DSliceOutOfPlaneRadius(unsigned int _3dSliceOutOfPlaneRadius);
 
 	void TurnRecordingLiveSceneAs2DSlicesOn();
 	void TurnRecordingLiveSceneAs2DSlicesOff();
@@ -145,8 +146,10 @@ private:
 	Plane planeFor2Dand3DSlices = PLANE_XY;
 	std::string outputDirectory;
 	Vector3i focusCoordinates;
-	int _3dSliceinPlaneRadius;
+	int _3dSliceInPlaneRadius;
+	unsigned int _3dSliceOutOfPlaneRadius;
 	const int focusSliceRadius;//=3;
+
 
 
 

@@ -197,6 +197,7 @@ int main(int argc, char** argv) {
 		bool record2DSlices = false;
 		bool record3DSlices = false;
 		unsigned int _3DSliceRadius = 10;
+		unsigned int _3DSliceExtraThicknessMargin = 0;
 		bool record3DSceneAndWarps = false;
 		bool plotEnergies = false;
 
@@ -308,6 +309,9 @@ int main(int argc, char** argv) {
 	             " and the live scene as they evolve.")
 				("3d_slice_radius",po::value<unsigned int>(&_3DSliceRadius)->default_value(10),
 				 "(Dynamic fusion) half-width of the square of pixels (in plane) in the slice for 3d slice recording.")
+				("3d_slice_thickness_margin",po::value<unsigned int>(&_3DSliceExtraThicknessMargin)->default_value(0),
+				 "(Dynamic fusion) extra margin to include, in voxels, from the 3D slice center along the axis "
+	             "perpendicular to the slice plane.")
 
 				("slice_plane",po::value<ITMLib::Plane>(&planeFor2Dand3DSlices)->default_value(PLANE_XY),
 				 "(Dynamic fusion) plane to use for recording of 2d slices.")
@@ -509,6 +513,7 @@ int main(int argc, char** argv) {
 		if(record2DSlices) ITMDynamicFusionLogger::Instance().TurnRecordingScene2DSlicesWithUpdatesOn();
 		if(record3DSlices) ITMDynamicFusionLogger::Instance().TurnRecordingScene3DSlicesWithUpdatesOn();
 		ITMDynamicFusionLogger::Instance().Set3DSliceInPlaneRadius(_3DSliceRadius);
+		ITMDynamicFusionLogger::Instance().Set3DSliceOutOfPlaneRadius(_3DSliceExtraThicknessMargin);
 
 // endregion
 // region =========================== SET UI ENGINE SETTINGS WITH CLI ARGUMENTS ========================================
