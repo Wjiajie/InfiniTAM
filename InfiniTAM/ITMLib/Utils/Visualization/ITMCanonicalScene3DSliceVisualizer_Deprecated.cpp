@@ -382,7 +382,7 @@ ITMCanonicalScene3DSliceVisualizer_Deprecated::BuildVoxelAndHashBlockPolydataFro
 }
 
 void ITMCanonicalScene3DSliceVisualizer_Deprecated::PreparePipeline() {
-	ITMScene3DSliceVisualizer::PreparePipeline();
+	ITMScene3DSliceVisualizer::BuildInitialSlices();
 
 	//*** set up different selection markers ***
 

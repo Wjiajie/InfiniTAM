@@ -405,6 +405,9 @@ void ITMDynamicFusionLogger::FinalizeFrameRecording() {
 		energyPlotter->SaveScreenshot(this->outputDirectory + "/energy_plot.png");
 		energyPlotter.reset();
 	}
+	if (recordingScene3DSlicesWithUpdates){
+		scene3DSliceVisualizer->TriggerBuildFusedCanonical();
+	}
 	scene1DSliceVisualizer.reset();
 	scene2DSliceVisualizer.reset();
 	energyStatisticsFile.close();

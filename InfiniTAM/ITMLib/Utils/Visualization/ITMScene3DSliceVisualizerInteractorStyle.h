@@ -47,6 +47,7 @@ private:
 	void SetVisibilityToCanonicalWithUpdates();
 	void SetVisibilityToLive();
 	void SetVisibilityToLiveAndCanonicalWithUpdates();
+	void SetVisibilityToFusedCanonical();
 
 
 	std::map<std::string, UserAction> createBindingMap();

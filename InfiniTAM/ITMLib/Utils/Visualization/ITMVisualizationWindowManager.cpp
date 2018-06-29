@@ -197,6 +197,7 @@ void ITM3DWindow::ResetCamera() {
 	Vector3d newCameraPos = focalPoint;
 	newCameraPos.z-= focalToCamera.z;
 	camera->SetPosition(newCameraPos.values);
+	camera->SetClippingRange(1.0,1500.0);
 }
 
 void ITM3DWindow::RunInteractor() {

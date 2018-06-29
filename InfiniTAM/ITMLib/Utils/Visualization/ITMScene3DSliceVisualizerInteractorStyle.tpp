@@ -126,6 +126,11 @@ ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::c
 			UserAction{"Set visibility to both live and canonical voxel grid slices, with update vectors",
 			           &ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>
 			           ::SetVisibilityToLiveAndCanonicalWithUpdates}));
+	map.insert(std::make_pair(
+			"f",
+			UserAction{"Set visibility to canonical voxel grid slice *after* fusion",
+			           &ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>
+			           ::SetVisibilityToFusedCanonical}));
 	return map;
 }
 
@@ -172,5 +177,10 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
 ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibilityToLiveAndCanonicalWithUpdates() {
 	this->parent->SetVisibilityMode(VISIBILITY_LIVE_AND_CANONICAL_WITH_UPDATES);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibilityToFusedCanonical() {
+	this->parent->SetVisibilityMode(VISIBILITY_FUSED_CANONICAL);
 }
 

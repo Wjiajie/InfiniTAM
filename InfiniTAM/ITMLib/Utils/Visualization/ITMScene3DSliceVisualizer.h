@@ -69,14 +69,14 @@ public:
 	// ====================== MEMBER FUNCTIONS ===========================
 	VoxelScaleMode GetCurrentScaleMode();
 	void TriggerDrawWarpUpdates();
+	void TriggerBuildFusedCanonical();
 	virtual void ToggleScaleMode();
 
 	void SetVisibilityMode(VisibilityMode mode);
+	void BuildFusedCanonicalFromCurrentScene();
 protected:
 	// region =============== STATIC FUNCTIONS ============================
 
-	static void SetUpSceneHashBlockMapper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
-	                                      vtkSmartPointer<vtkPolyData>& pointsPolydata);
 	static void SetUpSDFColorLookupTable(vtkSmartPointer<vtkLookupTable>& table,
 	                                     const double* highlightColor,
 	                                     const double* positiveTruncatedColor,
@@ -84,11 +84,6 @@ protected:
 	                                     const double* negativeNonTruncatedColor,
 	                                     const double* negativeTruncatedColor,
 	                                     const double* unknownColor);
-	static void SetUpSceneVoxelMapper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
-	                                  vtkSmartPointer<vtkLookupTable>& table,
-	                                  vtkSmartPointer<vtkPolyData>& pointsPolydata);
-	static void SetUpSceneVoxelMapperHelper(vtkAlgorithmOutput* sourceOutput, vtkSmartPointer<vtkGlyph3DMapper>& mapper,
-	                                        vtkSmartPointer<vtkLookupTable>& table);
 	// endregion
 	// region ============= MEMBER FUNCTIONS =============================
 
@@ -114,49 +109,55 @@ private:
 	void BuildVoxelAndHashBlockPolyDataFromScene(
 			ITMScene <TVoxel, TIndex>* scene, vtkSmartPointer<vtkPolyData>& voxelVizData,
 			vtkSmartPointer<vtkPolyData>& hashBlockVizData);
-	void PreparePipeline();
+	void BuildInitialSlices();
 	void InitializeWarps();
-	void AddActorsToRenderers();
+	void AddSliceActorsToRenderers();
 	void SetUpGeometrySources();
 	void Run();
 	void DrawWarpUpdates();
-
 
 	// endregion
 	// region ============== MEMBER VARIABLES ===========================
 
 	// ===================== MEMBER VARIABLES ============================
+	
+	struct SceneSlice{
+		void Initialize(){
+			voxelVizData = vtkSmartPointer<vtkPolyData>::New();
+			voxelMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+			voxelActor = vtkSmartPointer<vtkActor>::New();
+			voxelColorLookupTable = vtkSmartPointer<vtkLookupTable>::New();
+			hashBlockGridVizData = vtkSmartPointer<vtkPolyData>::New();
+			hashBlockActor = vtkSmartPointer<vtkActor>::New();
+			hashBlockMapper = vtkSmartPointer<vtkGlyph3DMapper>::New();
+		}
+		void SetUpMappersAndActors(
+				std::array<double, 3>& hashBlockEdgeColor, vtkAlgorithmOutput* hashBlockGeometrySourceOutput,
+				vtkAlgorithmOutput* voxelGeometrySourceOutput);
+		
+		vtkSmartPointer<vtkPolyData> voxelVizData;
+		vtkSmartPointer<vtkGlyph3DMapper> voxelMapper;
+		vtkSmartPointer<vtkActor> voxelActor;
+		vtkSmartPointer<vtkLookupTable> voxelColorLookupTable;
+		vtkSmartPointer<vtkPolyData> hashBlockGridVizData;
+		vtkSmartPointer<vtkGlyph3DMapper> hashBlockMapper;
+		vtkSmartPointer<vtkActor> hashBlockActor;
+	};
+
 	ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
 	ITMScene<TVoxelLive, TIndex>* liveScene;
 
 	// ** visualization modes / states **
 	VisibilityMode visibilityMode;
 
-	// ** individual voxels **
+	// ** visualization structures & auxiliaries **
 	vtkSmartPointer<vtkSphereSource> voxelVizGeometrySource;
-
-	vtkSmartPointer<vtkPolyData> canonicalVoxelVizData;
-	vtkSmartPointer<vtkPolyData> liveVoxelVizData;
-	vtkSmartPointer<vtkGlyph3DMapper> canonicalVoxelMapper;
-	vtkSmartPointer<vtkGlyph3DMapper> liveVoxelMapper;
-
-
-	vtkSmartPointer<vtkActor> canonicalVoxelActor;
-	vtkSmartPointer<vtkActor> liveVoxelActor;
-
-	vtkSmartPointer<vtkLookupTable> canonicalVoxelColorLookupTable;
-	vtkSmartPointer<vtkLookupTable> liveVoxelColorLookupTable;
-
-
-	// ** hash-block grid **
 	vtkSmartPointer<vtkCubeSource> hashBlockVizGeometrySource;
 
-	vtkSmartPointer<vtkPolyData> canonicalHashBlockGridVizData;
-	vtkSmartPointer<vtkPolyData> liveHashBlockGridVizData;
-	vtkSmartPointer<vtkGlyph3DMapper> canonicalHashBlockMapper;
-	vtkSmartPointer<vtkGlyph3DMapper> liveHashBlockMapper;
-	vtkSmartPointer<vtkActor> canonicalHashBlockActor;
-	vtkSmartPointer<vtkActor> liveHashBlockActor;
+
+	SceneSlice liveSlice;
+	SceneSlice canonicalSlice;
+	SceneSlice fusedCanonicalSlice;
 
 	// ** warp updates
 	vtkSmartPointer<vtkPolyData> updatesData = vtkSmartPointer<vtkPolyData>::New();
@@ -186,6 +187,7 @@ private:
 	std::condition_variable conditionVariable;
 	bool initialized = false;
 	bool warpUpdatePerformed = false;
+	bool fusedCanonicalBuilt = false;
 	std::thread* thread = nullptr;
 	vtkSmartPointer<ThreadInteropCommand<TVoxelCanonical, TVoxelLive, TIndex>> threadCallback;
 
