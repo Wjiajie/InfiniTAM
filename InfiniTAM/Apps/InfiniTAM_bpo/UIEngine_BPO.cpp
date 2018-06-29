@@ -195,6 +195,7 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 		mainEngine->LoadFromFile();
 		SkipFrames(1);
 	}
+	ITMDynamicFusionLogger::Instance().SetShutdownRequestedFlagLocation(&this->shutdownRequested);
 	printf("initialised.\n");
 }
 

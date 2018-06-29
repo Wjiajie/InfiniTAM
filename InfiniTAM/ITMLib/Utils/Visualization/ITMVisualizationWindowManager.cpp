@@ -98,6 +98,10 @@ ITMVisualizationWindowManager::MakeOrGet3DWindow(const std::string& name, const 
 	return it == _3dWindows.end() ? nullptr : &(_3dWindows.find(name)->second);
 }
 
+void ITMVisualizationWindowManager::CloseAndDelete3DWindow(const std::string& name) {
+	_3dWindows.erase(name);
+}
+
 
 ITM3DWindow::ITM3DWindow(const std::string& name, const std::string& title, int width, int height) :
 		renderWindow(vtkSmartPointer<vtkRenderWindow>::New()),
@@ -158,11 +162,19 @@ void ITM3DWindow::AddLayer(const Vector4d& backgroundColor) {
 	layerRenderers.push_back(newRenderer);
 }
 
+
 void ITM3DWindow::AddActorToLayer(vtkSmartPointer<vtkActor> actor, int layer) {
 	if (layer < 0 || layer >= renderWindow->GetNumberOfLayers()) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Layer " + std::to_string(layer) + " out of bounds.");
 	}
 	layerRenderers[layer]->AddActor(actor);
+}
+
+void ITM3DWindow::AddActor2DToLayer(vtkSmartPointer<vtkActor2D> actor, int layer) {
+	if (layer < 0 || layer >= renderWindow->GetNumberOfLayers()) {
+		DIEWITHEXCEPTION_REPORTLOCATION("Layer " + std::to_string(layer) + " out of bounds.");
+	}
+	layerRenderers[layer]->AddActor2D(actor);
 }
 
 void ITM3DWindow::AddActorToFirstLayer(vtkSmartPointer<vtkActor> actor) {
@@ -198,5 +210,24 @@ void ITM3DWindow::AddLoopCallback(vtkSmartPointer<vtkCommand> callback) {
 
 void ITM3DWindow::SetInteractorStyle(vtkSmartPointer<vtkInteractorStyle> style) {
 	interactor->SetInteractorStyle(style);
+}
+
+void ITM3DWindow::HideLayer(int layer) {
+	layerRenderers[layer]->Clear();
+	layerRenderers[layer]->DrawOff();
+	renderWindow->Render();
+}
+
+void ITM3DWindow::ShowLayer(int layer) {
+	layerRenderers[layer]->DrawOn();
+	renderWindow->Render();
+}
+
+int ITM3DWindow::GetLayerCount() const {
+	return static_cast<int>(this->layerRenderers.size());
+}
+
+std::string ITM3DWindow::GetName() const {
+	return this->name;
 }
 

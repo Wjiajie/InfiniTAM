@@ -39,7 +39,7 @@ public:
 		return instance;
 	}
 
-// region ============================= SETTERS ========================================================================
+// region ============================= SETTERS & SWITCHES =============================================================
 
 	void SetScenes(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene,ITMScene<ITMVoxelLive, ITMVoxelIndex>* liveScene);
 	void SetOutputDirectory(std::string outputDirectory);
@@ -47,6 +47,9 @@ public:
 	void SetPlaneFor2Dand3DSlices(Plane plane);
 	void Set3DSliceInPlaneRadius(unsigned int _3dSliceInPlaneRadius);
 	void Set3DSliceOutOfPlaneRadius(unsigned int _3dSliceOutOfPlaneRadius);
+	void SetShutdownRequestedFlagLocation(bool* flag);
+
+	void RequestAppShutdown();
 
 	void TurnRecordingLiveSceneAs2DSlicesOn();
 	void TurnRecordingLiveSceneAs2DSlicesOff();
@@ -141,6 +144,7 @@ private:
 	bool recordingEnergiesToFile = true;
 	bool plottingEnergies = false;
 	bool hasFocusCoordinates = false;
+	bool* shutdownRequestedFlag = nullptr;
 
 	// configuration
 	Plane planeFor2Dand3DSlices = PLANE_XY;

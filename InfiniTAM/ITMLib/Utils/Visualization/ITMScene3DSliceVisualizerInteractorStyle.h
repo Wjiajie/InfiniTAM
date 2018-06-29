@@ -29,13 +29,24 @@ public:
 
 	void OnKeyPress() override;
 private:
+
 	ITMScene3DSliceVisualizer<TVoxelCanonical,TVoxelLive,TIndex>* parent;
+	int keyBindingLayerIndex;
+	bool bindingLayerShowing = false;
 
 	typedef void (ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical,TVoxelLive,TIndex>::*MFP) (void);
+	struct UserAction{
+		std::string description;
+		MFP function;
+	};
 
-	void PrintA();
-	std::map<std::string, MFP> createBindingMap();
-	const std::map<std::string, MFP> bindingMap;
+	void PrintMIAU();
+	void ToggleKeyBindingOverlay();
+	void RequestShutdown();
+
+
+	std::map<std::string, UserAction> createBindingMap();
+	const std::map<std::string, UserAction> bindingMap;
 
 };
 }

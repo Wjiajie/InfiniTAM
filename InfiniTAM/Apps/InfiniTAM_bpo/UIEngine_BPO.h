@@ -103,6 +103,7 @@ public:
 	bool needsRefresh;
 	bool inStepByStepMode;
 	bool allocateGPU;
+	bool shutdownRequested = false;
 	ITMUChar4Image* saveImage;
 
 	void Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,

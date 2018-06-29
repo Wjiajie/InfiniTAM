@@ -159,7 +159,7 @@ void UIEngine_BPO::GlutDisplayFunction() {
 			followOrFreeview = "free viewpoint";
 		}
 
-		sprintf(str, "n: one frame \t b: continuous \t e/esc: exit \t r: reset \t s: save scene \t l: load scene\t"
+		sprintf(str, "n: one frame \t b: continuous \t q/e/esc: exit \t r: reset \t s: save scene \t l: load scene\t"
 		             " f: %s \t c: colours (currently %s) \t t: turn fusion %s", followOrFreeview, modeName,
 		        uiEngine->integrationActive ? "off" : "on");
 		Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
@@ -179,7 +179,9 @@ void UIEngine_BPO::GlutDisplayFunction() {
 
 void UIEngine_BPO::GlutIdleFunction() {
 	UIEngine_BPO* uiEngine = UIEngine_BPO::Instance();
-
+	if(uiEngine->shutdownRequested){
+		uiEngine->mainLoopAction = UIEngine_BPO::EXIT;
+	}
 	switch (uiEngine->mainLoopAction) {
 		case PROCESS_FRAME:
 			uiEngine->ProcessFrame();
@@ -238,6 +240,7 @@ void UIEngine_BPO::GlutIdleFunction() {
 void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 	UIEngine_BPO* uiEngine = UIEngine_BPO::Instance();
 	int modifiers = glutGetModifiers();
+
 	if (uiEngine->inStepByStepMode) {
 		switch (key) {
 			case 'q':

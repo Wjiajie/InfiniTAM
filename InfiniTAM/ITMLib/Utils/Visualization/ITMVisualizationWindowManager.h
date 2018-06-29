@@ -25,6 +25,7 @@
 #include <vtkContextView.h>
 #include <vtkChartXY.h>
 #include <vtkActor.h>
+#include <vtkActor2D.h>
 #include <vtkOrientationMarkerWidget.h>
 
 //local
@@ -58,18 +59,25 @@ public:
 	void Update();
 	vtkSmartPointer<vtkRenderWindow> GetRenderWindow();
 	void ResetCamera();
-	void AddLayer(const Vector4d& backgroundColor);
+	void AddLayer(const Vector4d& backgroundColor = Vector4d(1.0));
 	void AddActorToLayer(vtkSmartPointer<vtkActor> actor, int layer);
+	void AddActor2DToLayer(vtkSmartPointer<vtkActor2D> actor, int layer);
 	void AddActorToFirstLayer(vtkSmartPointer<vtkActor> actor);
 	void AddLoopCallback(vtkSmartPointer<vtkCommand> callback);
-	void SetInteractorStyle(vtkSmartPointer<vtkInteractorStyle> style);
+	void HideLayer(int layer);
+	void ShowLayer(int layer);
+	int GetLayerCount() const;
 	void RunInteractor();
+	void SetInteractorStyle(vtkSmartPointer<vtkInteractorStyle> style);
+	std::string GetName() const;
+
 private:
 	std::string name;
 	vtkSmartPointer<vtkRenderWindowInteractor> interactor;
 	vtkSmartPointer<vtkRenderWindow> renderWindow;
 	std::vector<vtkSmartPointer<vtkRenderer>> layerRenderers;
 	vtkSmartPointer<vtkOrientationMarkerWidget> orientationWidget;
+
 };
 
 class ITMVisualizationWindowManager {
@@ -86,6 +94,7 @@ public:
 	ITM3DWindow* MakeOrGet3DWindow(const std::string& name,
 	                               const std::string& title = "VTK Window",
 	                               int width = -1, int height = -1);
+	void CloseAndDelete3DWindow(const std::string& name);
 
 	ITMVisualizationWindowManager(ITMVisualizationWindowManager const&) = delete;
 	void operator=(ITMVisualizationWindowManager const&)  = delete;

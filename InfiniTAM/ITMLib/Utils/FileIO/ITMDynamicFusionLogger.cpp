@@ -83,6 +83,21 @@ void ITMDynamicFusionLogger::Set3DSliceOutOfPlaneRadius(unsigned int _3dSliceOut
 }
 
 
+void ITMDynamicFusionLogger::SetShutdownRequestedFlagLocation(bool* flag) {
+	this->shutdownRequestedFlag = flag;
+}
+
+// endregion ===========================================================================================================
+
+
+void ITMDynamicFusionLogger::RequestAppShutdown() {
+	if(shutdownRequestedFlag){
+		*shutdownRequestedFlag = true;
+	}
+}
+
+// region ============================================== SWITCHES ======================================================
+
 void ITMDynamicFusionLogger::TurnRecordingLiveSceneAs2DSlicesOn() {
 	this->recordingLiveSceneAs2DSlices = true;
 }
@@ -502,5 +517,7 @@ void ITMDynamicFusionLogger::MakeOrClearOutputDirectoriesFor2DSceneSlices() cons
 		ClearIfExistsMakeIfDoesnt(GetOutputDirectoryFor2DSceneSlicesWithWarps());
 	}
 }
+
+
 
 // endregion ===========================================================================================================
