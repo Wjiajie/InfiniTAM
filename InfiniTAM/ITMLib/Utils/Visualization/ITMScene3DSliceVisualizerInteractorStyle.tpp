@@ -100,6 +100,10 @@ ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::c
 			UserAction{"Test action, prints \"MIAU!\" to stdout",
 			           &ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::PrintMIAU}));
 	map.insert(std::make_pair(
+			"F8",
+			UserAction{"Test action, prints \"Haha\" to stdout",
+			           &ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::PrintHaha}));
+	map.insert(std::make_pair(
 			"grave",
 			UserAction{"Toggle key-binding overlay",
 			           &ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::ToggleKeyBindingOverlay}));
@@ -107,6 +111,21 @@ ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::c
 			"q",
 			UserAction{"Request shutdown of the whole application",
 			           &ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::RequestShutdown}));
+	map.insert(std::make_pair(
+			"a",
+			UserAction{"Set visibility to canonical voxel grid slice with updates",
+			           &ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>
+			                   ::SetVisibilityToCanonicalWithUpdates}));
+	map.insert(std::make_pair(
+			"s",
+			UserAction{"Set visibility to live voxel grid slice",
+			           &ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>
+			           ::SetVisibilityToLive}));
+	map.insert(std::make_pair(
+			"d",
+			UserAction{"Set visibility to both live and canonical voxel grid slices, with update vectors",
+			           &ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>
+			           ::SetVisibilityToLiveAndCanonicalWithUpdates}));
 	return map;
 }
 
@@ -114,6 +133,13 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::PrintMIAU() {
 	debug_print("MIAU!");
 }
+
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::PrintHaha() {
+	debug_print("Haha");
+}
+
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::ToggleKeyBindingOverlay() {
@@ -129,5 +155,22 @@ void ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TInde
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::RequestShutdown() {
 	ITMDynamicFusionLogger::Instance().RequestAppShutdown();
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void
+ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibilityToCanonicalWithUpdates() {
+	this->parent->SetVisibilityMode(VISIBILITY_CANONICAL_WITH_UPDATES);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibilityToLive() {
+	this->parent->SetVisibilityMode(VISIBILITY_LIVE);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void
+ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibilityToLiveAndCanonicalWithUpdates() {
+	this->parent->SetVisibilityMode(VISIBILITY_LIVE_AND_CANONICAL_WITH_UPDATES);
 }
 

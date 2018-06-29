@@ -323,7 +323,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::PreparePipe
 	
 	liveVoxelActor->SetMapper(liveVoxelMapper);
 	liveVoxelActor->GetProperty()->SetPointSize(20.0f);
-	liveVoxelActor->VisibilityOn();
+	liveVoxelActor->VisibilityOff();
 
 	// set up hash block actors
 	canonicalHashBlockActor->SetMapper(canonicalHashBlockMapper);
@@ -592,4 +592,27 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::TriggerDraw
 	std::unique_lock<std::mutex> lock(mutex);
 	conditionVariable.wait(lock, [this] { return this->warpUpdatePerformed; });
 	this->warpUpdatePerformed = false;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibilityMode(VisibilityMode mode) {
+	this->visibilityMode = mode;
+	switch (mode){
+		case VISIBILITY_CANONICAL_WITH_UPDATES:
+			this->canonicalVoxelActor->VisibilityOn();
+			this->updatesActor->VisibilityOn();
+			this->liveVoxelActor->VisibilityOff();
+			break;
+		case VISIBILITY_LIVE:
+			this->canonicalVoxelActor->VisibilityOff();
+			this->updatesActor->VisibilityOff();
+			this->liveVoxelActor->VisibilityOn();
+			break;
+		case VISIBILITY_LIVE_AND_CANONICAL_WITH_UPDATES:
+			this->canonicalVoxelActor->VisibilityOn();
+			this->updatesActor->VisibilityOn();
+			this->liveVoxelActor->VisibilityOn();
+			break;
+	}
+	this->window->Update();
 }

@@ -67,12 +67,11 @@ public:
 	virtual ~ITMScene3DSliceVisualizer();
 
 	// ====================== MEMBER FUNCTIONS ===========================
-
-
 	VoxelScaleMode GetCurrentScaleMode();
 	void TriggerDrawWarpUpdates();
 	virtual void ToggleScaleMode();
 
+	void SetVisibilityMode(VisibilityMode mode);
 protected:
 	// region =============== STATIC FUNCTIONS ============================
 
@@ -130,6 +129,9 @@ private:
 	ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
 	ITMScene<TVoxelLive, TIndex>* liveScene;
 
+	// ** visualization modes / states **
+	VisibilityMode visibilityMode;
+
 	// ** individual voxels **
 	vtkSmartPointer<vtkSphereSource> voxelVizGeometrySource;
 
@@ -186,6 +188,7 @@ private:
 	bool warpUpdatePerformed = false;
 	std::thread* thread = nullptr;
 	vtkSmartPointer<ThreadInteropCommand<TVoxelCanonical, TVoxelLive, TIndex>> threadCallback;
+
 
 	//endregion
 

@@ -34,15 +34,19 @@ private:
 	int keyBindingLayerIndex;
 	bool bindingLayerShowing = false;
 
-	typedef void (ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical,TVoxelLive,TIndex>::*MFP) (void);
+	typedef void (ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical,TVoxelLive,TIndex>::*MFP) ();
 	struct UserAction{
 		std::string description;
 		MFP function;
 	};
 
 	void PrintMIAU();
+	void PrintHaha();
 	void ToggleKeyBindingOverlay();
 	void RequestShutdown();
+	void SetVisibilityToCanonicalWithUpdates();
+	void SetVisibilityToLive();
+	void SetVisibilityToLiveAndCanonicalWithUpdates();
 
 
 	std::map<std::string, UserAction> createBindingMap();

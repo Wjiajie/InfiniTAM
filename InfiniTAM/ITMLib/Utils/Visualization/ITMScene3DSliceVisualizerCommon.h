@@ -97,10 +97,8 @@ const char* VoxelColorIndexAsCString(const VoxelColorIndex& index) {
 	}
 }
 
-
 template<typename TVoxel>
-inline
-void
+inline void
 AddVoxelPoint(const Vector3i& currentBlockPositionVoxels, int x, int y, int z, const TVoxel* localVoxelBlock,
               vtkPoints* points, vtkFloatArray* scaleAttribute, vtkFloatArray* alternativeScaleAttribute,
               vtkIntArray* colorAttribute, const int& hash, Vector6i bounds) {
@@ -133,4 +131,11 @@ AddVoxelPoint(const Vector3i& currentBlockPositionVoxels, int x, int y, int z, c
 	alternativeScaleAttribute->InsertNextValue(alternativeVoxelScale);
 	colorAttribute->InsertNextValue(voxelColor);
 }
+
+enum VisibilityMode{
+	VISIBILITY_CANONICAL_WITH_UPDATES,
+	VISIBILITY_LIVE,
+	VISIBILITY_LIVE_AND_CANONICAL_WITH_UPDATES
+};
+
 }//namespace ITMLib
