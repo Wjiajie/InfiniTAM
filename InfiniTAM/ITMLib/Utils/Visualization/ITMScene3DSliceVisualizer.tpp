@@ -58,7 +58,8 @@ const char* ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::scal
 enum RequestedOperation {
 	NONE,
 	DRAW_WARP_UPDATES,
-	BUILD_FUSED_CANONICAL
+	BUILD_FUSED_CANONICAL,
+	UPDATE_LIVE_STATE
 };
 
 // Used for multithreaded interop with VTK
@@ -83,6 +84,8 @@ vtkTypeMacro(ThreadInteropCommand, vtkCommand);
 				break;
 			case BUILD_FUSED_CANONICAL:
 				parent->BuildFusedCanonicalFromCurrentScene();
+			case UPDATE_LIVE_STATE:
+				parent->UpdateLiveState();
 			default:
 				break;
 		}
@@ -103,7 +106,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SceneSlice:
 	voxelMapper->SetSourceConnection(voxelGeometrySourceOutput);
 	voxelMapper->SetLookupTable(voxelColorLookupTable);
 	voxelMapper->ScalingOn();
-	voxelMapper->SetScaleArray(scaleUnknownsHiddenAttributeName);
+	voxelMapper->SetScaleArray(scaleUnknownsVisibleAttributeName);
 	voxelMapper->SetScaleModeToScaleByMagnitude();
 	voxelMapper->ScalarVisibilityOn();
 	voxelMapper->SetScalarModeToUsePointData();
@@ -284,7 +287,7 @@ public:
 		                                 (currentBlockPositionVoxels.y + centerOffset),
 		                                 (currentBlockPositionVoxels.z + centerOffset));
 	}
-
+	int voxelCount = 0;
 private:
 	Vector3i focusCoordinates;
 	vtkFloatArray* scaleAttribute;
@@ -292,17 +295,15 @@ private:
 	vtkIntArray* colorAttribute;
 	vtkPoints* voxelPoints;
 	vtkPoints* hashBlockPoints;
-	int voxelCount = 0;
+
 };
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 template<typename TVoxel, typename TVoxelDataRetriever>
 void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::BuildVoxelAndHashBlockPolyDataFromScene(
-		ITMScene<TVoxel, TIndex>* scene, vtkSmartPointer<vtkPolyData>& voxelVizData,
-		vtkSmartPointer<vtkPolyData>& hashBlockVizData) {
+		ITMScene<TVoxel, TIndex>* scene, SceneSlice& sceneSlice) {
 	vtkSmartPointer<vtkPoints> voxelPoints = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkPoints> hashBlockPoints = vtkSmartPointer<vtkPoints>::New();
-
 
 	//holds color for each voxel
 	vtkSmartPointer<vtkIntArray> colorAttribute = vtkSmartPointer<vtkIntArray>::New();
@@ -319,15 +320,16 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::BuildVoxelA
 	AddVoxelPointFunctor<TVoxel, TVoxelDataRetriever> addVoxelPointFunctor(
 			scaleAttribute, alternativeScaleAttribute, colorAttribute, voxelPoints, hashBlockPoints, focusCoordinates);
 	VoxelPositionAndHashEntryTraversalWithinBounds_CPU(scene, addVoxelPointFunctor, bounds);
+	sceneSlice.voxelCount = addVoxelPointFunctor.voxelCount;
 
-	//Points pipeline
+	vtkSmartPointer<vtkPolyData> voxelVizData = sceneSlice.voxelVizData;
 	voxelVizData->SetPoints(voxelPoints);
 	voxelVizData->GetPointData()->AddArray(colorAttribute);
 	voxelVizData->GetPointData()->AddArray(scaleAttribute);
 	voxelVizData->GetPointData()->AddArray(alternativeScaleAttribute);
 	voxelVizData->GetPointData()->SetActiveScalars(colorAttributeName);
 
-	hashBlockVizData->SetPoints(hashBlockPoints);
+	sceneSlice.hashBlockGridVizData->SetPoints(hashBlockPoints);
 }
 
 // endregion ===========================================================================================================
@@ -336,9 +338,12 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::BuildVoxelA
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::BuildInitialSlices() {
 	BuildVoxelAndHashBlockPolyDataFromScene<TVoxelCanonical, RetrieveVoxelDataBasicStaticFunctior<TVoxelCanonical>>(
-			canonicalScene, canonicalSlice.voxelVizData, canonicalSlice.hashBlockGridVizData);
-	BuildVoxelAndHashBlockPolyDataFromScene<TVoxelLive, RetrieveVoxelDataFieldIndex0StaticFunctior<TVoxelLive>>(
-			liveScene, liveSlice.voxelVizData, liveSlice.hashBlockGridVizData);
+			canonicalScene, canonicalSlice);
+	BuildVoxelAndHashBlockPolyDataFromScene<TVoxelLive, RetrieveVoxelDataFieldIndex1StaticFunctior<TVoxelLive>>(
+			liveScene, liveSlice);
+
+	this->liveSliceStates.push_back(liveSlice.voxelVizData);
+
 	canonicalSlice.SetUpMappersAndActors(canonicalHashBlockEdgeColor, hashBlockVizGeometrySource->GetOutputPort(),
 	                                     voxelVizGeometrySource->GetOutputPort());
 	liveSlice.SetUpMappersAndActors(liveHashBlockEdgeColor, hashBlockVizGeometrySource->GetOutputPort(),
@@ -421,7 +426,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::InitializeV
 	liveSlice.Initialize();
 	canonicalSlice.Initialize();
 	fusedCanonicalSlice.Initialize();
-	scaleMode = VOXEL_SCALE_HIDE_UNKNOWNS;
+	scaleMode = VOXEL_SCALE_SHOW_UNKNOWNS;
 
 	voxelVizGeometrySource = vtkSmartPointer<vtkSphereSource>::New();
 	hashBlockVizGeometrySource = vtkSmartPointer<vtkCubeSource>::New();
@@ -447,7 +452,6 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::InitializeV
 	SetUpGeometrySources();
 	BuildInitialSlices();
 	AddSliceActorsToRenderers();
-
 
 }
 
@@ -517,7 +521,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::BuildFusedCanonicalFromCurrentScene() {
 	std::unique_lock<std::mutex> lock(mutex);
 	BuildVoxelAndHashBlockPolyDataFromScene<TVoxelCanonical, RetrieveVoxelDataBasicStaticFunctior<TVoxelCanonical>>(
-			canonicalScene, fusedCanonicalSlice.voxelVizData, fusedCanonicalSlice.hashBlockGridVizData);
+			canonicalScene, fusedCanonicalSlice);
 
 	fusedCanonicalSlice.SetUpMappersAndActors(canonicalHashBlockEdgeColor, hashBlockVizGeometrySource->GetOutputPort(),
 	                                          voxelVizGeometrySource->GetOutputPort());
@@ -528,6 +532,36 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::BuildFusedC
 	lock.unlock();
 	conditionVariable.notify_all();
 }
+
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::UpdateLiveState() {
+	std::unique_lock<std::mutex> lock(mutex);
+	liveSlice.voxelVizData = vtkSmartPointer<vtkPolyData>::New();
+	switch (liveSamplingFieldIndex){
+		case 0:
+			BuildVoxelAndHashBlockPolyDataFromScene<TVoxelLive, RetrieveVoxelDataFieldIndex0StaticFunctior<TVoxelLive>>(
+					liveScene, liveSlice);
+			break;
+		case 1:
+			BuildVoxelAndHashBlockPolyDataFromScene<TVoxelLive, RetrieveVoxelDataFieldIndex1StaticFunctior<TVoxelLive>>(
+					liveScene, liveSlice);
+			break;
+		default:
+			break;
+	}
+	liveSlice.voxelMapper->SetInputData(liveSlice.voxelVizData);
+	liveSlice.voxelMapper->Modified();
+	this->liveSliceStates.push_back(liveSlice.voxelVizData);
+	this->window->Update();
+
+	liveSamplingFieldIndex = !liveSamplingFieldIndex;
+
+	this->liveStateUpdated = true;
+	lock.unlock();
+	conditionVariable.notify_all();
+}
+
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::Run() {
@@ -561,6 +595,15 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::TriggerDraw
 	std::unique_lock<std::mutex> lock(mutex);
 	conditionVariable.wait(lock, [this] { return this->warpUpdatePerformed; });
 	this->warpUpdatePerformed = false;
+}
+
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::TriggerUpdateLiveState() {
+	this->threadCallback->operation = UPDATE_LIVE_STATE;
+	std::unique_lock<std::mutex> lock(mutex);
+	conditionVariable.wait(lock, [this] { return this->liveStateUpdated; });
+	this->liveStateUpdated = false;
 }
 
 
@@ -603,5 +646,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibili
 	}
 	this->window->Update();
 }
+
+
 
 

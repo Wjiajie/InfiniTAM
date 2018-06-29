@@ -377,6 +377,7 @@ void ITMDynamicFusionLogger::SaveWarpSlices(int iteration) {
 		}
 		if (recordingScene3DSlicesWithUpdates) {
 			scene3DSliceVisualizer->TriggerDrawWarpUpdates();
+			scene3DSliceVisualizer->TriggerUpdateLiveState();
 		}
 	}
 }
