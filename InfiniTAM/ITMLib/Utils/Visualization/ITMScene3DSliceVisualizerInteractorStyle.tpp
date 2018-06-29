@@ -131,6 +131,16 @@ ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::c
 			UserAction{"Set visibility to canonical voxel grid slice *after* fusion",
 			           &ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>
 			           ::SetVisibilityToFusedCanonical}));
+	map.insert(std::make_pair(
+			"bracketright",
+			UserAction{"Advance the live slice visualization by a single optimization step.",
+			           &ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>
+			           ::AdvanceVisibleOptimizationStep}));
+	map.insert(std::make_pair(
+			"bracketleft",
+			UserAction{"Retreat the live slice visualization by a single optimization step.",
+			           &ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>
+			           ::RetreatVisibleOptimizationStep}));
 	return map;
 }
 
@@ -182,5 +192,15 @@ ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::S
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibilityToFusedCanonical() {
 	this->parent->SetVisibilityMode(VISIBILITY_FUSED_CANONICAL);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::AdvanceVisibleOptimizationStep() {
+	this->parent->AdvanceLiveStateVizualization();
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::RetreatVisibleOptimizationStep() {
+	this->parent->RetreatLiveStateVizualization();
 }
 

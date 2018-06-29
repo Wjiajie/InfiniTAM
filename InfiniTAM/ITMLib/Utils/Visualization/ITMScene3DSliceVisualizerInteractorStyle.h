@@ -48,6 +48,8 @@ private:
 	void SetVisibilityToLive();
 	void SetVisibilityToLiveAndCanonicalWithUpdates();
 	void SetVisibilityToFusedCanonical();
+	void AdvanceVisibleOptimizationStep();
+	void RetreatVisibleOptimizationStep();
 
 
 	std::map<std::string, UserAction> createBindingMap();

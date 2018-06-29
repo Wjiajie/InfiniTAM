@@ -555,6 +555,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::UpdateLiveS
 	this->liveSliceStates.push_back(liveSlice.voxelVizData);
 	this->window->Update();
 
+	visibleOptimizationStepIndex++;
 	liveSamplingFieldIndex = !liveSamplingFieldIndex;
 
 	this->liveStateUpdated = true;
@@ -645,6 +646,26 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibili
 			break;
 	}
 	this->window->Update();
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::AdvanceLiveStateVizualization() {
+	if(visibleOptimizationStepIndex < this->liveSliceStates.size()-1){
+		visibleOptimizationStepIndex++;
+		this->liveSlice.voxelMapper->SetInputData(liveSliceStates[visibleOptimizationStepIndex]);
+		liveSlice.voxelMapper->Modified();
+		window->Update();
+	}
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::RetreatLiveStateVizualization() {
+	if(visibleOptimizationStepIndex > 0){
+		visibleOptimizationStepIndex--;
+		this->liveSlice.voxelMapper->SetInputData(liveSliceStates[visibleOptimizationStepIndex]);
+		liveSlice.voxelMapper->Modified();
+		window->Update();
+	}
 }
 
 

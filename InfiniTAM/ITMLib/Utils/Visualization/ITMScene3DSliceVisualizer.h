@@ -140,6 +140,8 @@ private:
 	void SetUpGeometrySources();
 	void Run();
 	void DrawWarpUpdates();
+	void AdvanceLiveStateVizualization();
+	void RetreatLiveStateVizualization();
 
 	// endregion
 	// region ============== MEMBER VARIABLES ===========================
@@ -196,6 +198,7 @@ private:
 	bool fusedCanonicalBuilt = false;
 	bool liveStateUpdated = false;
 	int liveSamplingFieldIndex = 0;
+	int visibleOptimizationStepIndex = 0;
 	std::thread* thread = nullptr;
 	vtkSmartPointer<ThreadInteropCommand<TVoxelCanonical, TVoxelLive, TIndex>> threadCallback;
 
