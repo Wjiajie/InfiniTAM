@@ -442,6 +442,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::InitializeV
 	                         canonicalPositiveNonTruncatedVoxelColor.data(),
 	                         canonicalNegativeNonTruncatedVoxelColor.data(),
 	                         canonicalNegativeTruncatedVoxelColor.data(), canonicalUnknownVoxelColor.data());
+	fusedCanonicalSlice.voxelColorLookupTable = canonicalSlice.voxelColorLookupTable;
 
 	SetUpGeometrySources();
 	BuildInitialSlices();
