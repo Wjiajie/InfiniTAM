@@ -25,16 +25,6 @@
 #include <vtkChartXY.h>
 
 //ITMLib
-#include "UIEngine_BPO.h"
-
-#include "../../InputSource/OpenNIEngine.h"
-#include "../../InputSource/Kinect2Engine.h"
-#include "../../InputSource/LibUVCEngine.h"
-#include "../../InputSource/PicoFlexxEngine.h"
-#include "../../InputSource/RealSenseEngine.h"
-#include "../../InputSource/LibUVCEngine.h"
-#include "../../InputSource/RealSenseEngine.h"
-#include "../../InputSource/FFMPEGReader.h"
 #include "../../ITMLib/ITMLibDefines.h"
 #include "../../ITMLib/Core/ITMBasicEngine.h"
 #include "../../ITMLib/Core/ITMBasicSurfelEngine.h"
@@ -45,7 +35,9 @@
 
 
 //local
+#include "UIEngine_BPO.h"
 #include "prettyprint.hpp"
+#include "CreateDefaultImageSource.h"
 
 
 // *** namespaces ***
@@ -56,115 +48,6 @@ using namespace ITMLib;
 
 namespace po = boost::program_options;
 
-static void CreateDefaultImageSource(ImageSourceEngine*& imageSource, IMUSourceEngine*& imuSource,
-                                     const std::string& calibFilePath = "",
-                                     const std::string& openniFilePath = "",
-                                     const std::string& rgbVideoFilePath = "",
-                                     const std::string& depthVideoFilePath = "",
-                                     const std::string& rgbImageFileMask = "",
-                                     const std::string& depthImageFileMask = "",
-                                     const std::string& maskImageFileMask = "",
-                                     const std::string& imuInputPath = "") {
-
-
-	if (calibFilePath == "viewer") {
-		imageSource = new BlankImageGenerator("", Vector2i(640, 480));
-		printf("starting in viewer mode: make sure to press n first to initialize the views ... \n");
-		return;
-	}
-
-	const char* calibFile = calibFilePath.empty() ? nullptr : calibFilePath.c_str();
-
-	if (calibFile) {
-		printf("using calibration file: %s\n", calibFilePath.c_str());
-	} else {
-		printf("using default calibration file.\n");
-	}
-
-	if (imageSource == nullptr && !rgbImageFileMask.empty() && !depthImageFileMask.empty()) {
-		printf("using rgb images: %s\nusing depth images: %s\n", rgbImageFileMask.c_str(), depthImageFileMask.c_str());
-		if (!maskImageFileMask.empty() && imuInputPath.empty()) {
-			printf("using mask images: %s\n", maskImageFileMask.c_str());
-		}
-		if (imuInputPath.empty()) {
-			ImageMaskPathGenerator pathGenerator(rgbImageFileMask.c_str(), depthImageFileMask.c_str(),
-			                                     maskImageFileMask.empty() ? nullptr : maskImageFileMask.c_str());
-			imageSource = new ImageFileReader<ImageMaskPathGenerator>(calibFilePath.c_str(), pathGenerator);
-		} else {
-			printf("using imu data: %s\n", imuInputPath.c_str());
-			imageSource = new RawFileReader(calibFilePath.c_str(), rgbImageFileMask.c_str(),
-			                                depthImageFileMask.c_str(), Vector2i(320, 240), 0.5f);
-			imuSource = new IMUSourceEngine(imuInputPath.c_str());
-		}
-		int depthWidth = imageSource->getDepthImageSize().x;
-		if (depthWidth == 0) {
-			delete imageSource;
-			if (imuSource != nullptr) delete imuSource;
-			imuSource = nullptr;
-			imageSource = nullptr;
-		}
-	}
-	if ((imageSource == nullptr) && (!rgbVideoFilePath.empty() && !depthVideoFilePath.empty()) &&
-	    (imuInputPath.empty())) {
-		imageSource = new InputSource::FFMPEGReader(calibFilePath.c_str(), rgbVideoFilePath.c_str(),
-		                                            depthVideoFilePath.c_str());
-		if (imageSource->getDepthImageSize().x == 0) {
-			delete imageSource;
-			imageSource = nullptr;
-		}
-	}
-
-	if (imageSource == nullptr) {
-		// If no calibration file specified, use the factory default calibration
-		bool useInternalCalibration = !calibFile || strlen(calibFile) == 0;
-
-		printf("trying OpenNI device: %s - calibration: %s\n",
-		       openniFilePath.empty() ? "<OpenNI default device>" : openniFilePath.c_str(),
-		       useInternalCalibration ? "internal" : "from file");
-		imageSource = new OpenNIEngine(calibFile, openniFilePath.empty() ? nullptr : openniFilePath.c_str(),
-		                               useInternalCalibration);
-		if (imageSource->getDepthImageSize().x == 0) {
-			delete imageSource;
-			imageSource = nullptr;
-		}
-	}
-
-	if (imageSource == nullptr) {
-		printf("trying UVC device\n");
-		imageSource = new LibUVCEngine(calibFile);
-		if (imageSource->getDepthImageSize().x == 0) {
-			delete imageSource;
-			imageSource = nullptr;
-		}
-	}
-
-	if (imageSource == nullptr) {
-		printf("trying RealSense device\n");
-		imageSource = new RealSenseEngine(calibFile);
-		if (imageSource->getDepthImageSize().x == 0) {
-			delete imageSource;
-			imageSource = nullptr;
-		}
-	}
-
-	if (imageSource == nullptr) {
-		printf("trying MS Kinect 2 device\n");
-		imageSource = new Kinect2Engine(calibFile);
-		if (imageSource->getDepthImageSize().x == 0) {
-			delete imageSource;
-			imageSource = nullptr;
-		}
-	}
-
-	if (imageSource == nullptr) {
-		printf("trying PMD PicoFlexx device\n");
-		imageSource = new PicoFlexxEngine(calibFile);
-		if (imageSource->getDepthImageSize().x == 0) {
-			delete imageSource;
-			imageSource = nullptr;
-		}
-	}
-}
 
 bool isPathMask(const std::string& arg) {
 	return arg.find('%') != std::string::npos;
@@ -184,6 +67,8 @@ int main(int argc, char** argv) {
 		bool enableKillingTerm = false;
 		bool disableGradientSmoothing = false;
 		bool killingModeEnabled = false;
+		bool usePreviousUpdateVectorsForSmoothing = false;
+
 		bool recordReconstructionToVideo = false;
 
 		bool saveAfterInitialProcessing = false;
@@ -267,6 +152,8 @@ int main(int argc, char** argv) {
 	             "DynamicFusion algorithm")
 				("disable_gradient_smoothing", po::bool_switch(&disableGradientSmoothing)->default_value(false),
 				 "Whether or not to disable the Sobolev gradient smoothing if using the DynamicFusion algorithm\n")
+				("use_update_vectors_smoothing", po::bool_switch(&usePreviousUpdateVectorsForSmoothing)->default_value(false),
+				 "Whether to only use the previous update vectors, rather than the entire cumulative framewise warps, for smoothing\n")
 
 				/* Ranges for frame skipping or automated processing on launch */
 				("process_N_frames, N", po::value<int>(), "Launch immediately and process the specified number of "
@@ -435,6 +322,7 @@ int main(int argc, char** argv) {
 			settings->enableKillingTerm = true;
 			settings->enableGradientSmoothing = false;
 
+
 			settings->sceneTrackingRigidityEnforcementFactor = 0.1;
 			settings->sceneTrackingWeightSmoothingTerm = 0.5;
 			settings->sceneTrackingWeightLevelSetTerm = 0.2;
@@ -449,6 +337,7 @@ int main(int argc, char** argv) {
 		settings->enableSmoothingTerm = !disableSmoothingTerm;
 		settings->enableKillingTerm = enableKillingTerm;
 		settings->enableGradientSmoothing = !disableGradientSmoothing;
+		settings->usePreviousUpdateVectorsForSmoothing = usePreviousUpdateVectorsForSmoothing;
 
 		if (!vm["max_iterations"].empty()) {
 			settings->sceneTrackingMaxOptimizationIterationCount = vm["max_iterations"].as<unsigned int>();

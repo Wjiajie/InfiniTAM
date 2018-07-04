@@ -102,6 +102,7 @@ namespace ITMLib
 		bool enableSmoothingTerm;
 		bool enableKillingTerm;
 		bool enableGradientSmoothing;
+		bool usePreviousUpdateVectorsForSmoothing;
 
 		//*** Scene Tracking Parameters ***
 		//** optimization loop

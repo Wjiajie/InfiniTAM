@@ -30,10 +30,12 @@ INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseUVC.cmake)
 SET(sources
 InfiniTAM.cpp
 UIEngine.cpp
+CreateDefaultImageSource.cpp
 )
 
 SET(headers
 UIEngine.h
+    CreateDefaultImageSource.h
 )
 
 #############################

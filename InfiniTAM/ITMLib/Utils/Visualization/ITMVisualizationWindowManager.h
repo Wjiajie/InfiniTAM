@@ -59,11 +59,13 @@ public:
 	void Update();
 	vtkSmartPointer<vtkRenderWindow> GetRenderWindow();
 	void ResetCamera();
+	void AddLoopCallback(vtkSmartPointer<vtkCommand> callback);
 	void AddLayer(const Vector4d& backgroundColor = Vector4d(1.0));
+
 	void AddActorToLayer(vtkSmartPointer<vtkActor> actor, int layer);
 	void AddActor2DToLayer(vtkSmartPointer<vtkActor2D> actor, int layer);
 	void AddActorToFirstLayer(vtkSmartPointer<vtkActor> actor);
-	void AddLoopCallback(vtkSmartPointer<vtkCommand> callback);
+
 	void HideLayer(int layer);
 	void ShowLayer(int layer);
 	int GetLayerCount() const;

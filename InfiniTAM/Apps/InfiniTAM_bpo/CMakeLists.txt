@@ -31,12 +31,13 @@ SET(sources
     InfiniTAM_bpo.cpp
     UIEngine_BPO.cpp
     UIEngine_BPO_GlutFunctions.cpp
+    CreateDefaultImageSource.cpp
 )
 
 SET(headers
     UIEngine_BPO.h
-    #utility/aux/3rd party
     prettyprint.hpp
+    CreateDefaultImageSource.h
 )
 
 #############################

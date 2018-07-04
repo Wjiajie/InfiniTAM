@@ -663,7 +663,6 @@ void UIEngine::ProcessFrame()
 
 
 	ITMTrackingState::TrackingResult trackerResult;
-	mainEngine->recordNextFrameWarps = this->recordWarpUpdatesForNextFrame;
 	//actual processing on the mailEngine
 	if (imuSource != NULL) trackerResult = mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage, inputIMUMeasurement);
 	else trackerResult = mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage);

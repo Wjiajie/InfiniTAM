@@ -85,6 +85,61 @@ inline void findPoint2ndDerivativeNeighborhoodFramewiseWarp(THREADPTR(Vector3f)*
  *	(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
  * \tparam TVoxel
  * \tparam TCache
+ * \param[out] neighborUpdates
+ * \param[out] neighborKnown - current behavior is:
+ * 1) record unallocated voxels as non-found
+ * 2) truncated voxels marked unknown or known as found
+ * 3) everything else (non-truncated), of course, as found
+ * \param[in] voxelPosition exact position of voxel in the scene.
+ * \param[in] voxels
+ * \param[in] hashEntries
+ * \param[in] cache
+ */
+template<typename TVoxel, typename TCache>
+_CPU_AND_GPU_CODE_
+inline void findPoint2ndDerivativeNeighborhoodPreviousUpdate(THREADPTR(Vector3f)* neighborUpdates, //x9, out
+                                                            THREADPTR(bool)* neighborKnown, //x9, out
+                                                            THREADPTR(bool)* neighborTruncated, //x9, out
+                                                            THREADPTR(bool)* neighborAllocated, //x9, out
+                                                            const CONSTPTR(Vector3i)& voxelPosition,
+                                                            const CONSTPTR(TVoxel)* voxels,
+                                                            const CONSTPTR(ITMHashEntry)* hashEntries,
+                                                            THREADPTR(TCache)& cache) {
+	int vmIndex;
+
+	TVoxel voxel;
+	//TODO: define inline function instead of macro
+#define PROCESS_VOXEL(location, index)\
+    voxel = readVoxel(voxels, hashEntries, voxelPosition + (location), vmIndex, cache);\
+    neighborUpdates[index] = voxel.warp_update;\
+    neighborAllocated[index] = vmIndex != 0;\
+    neighborKnown[index] = voxel.flags != ITMLib::VOXEL_UNKNOWN;\
+    neighborTruncated[index] = voxel.flags == ITMLib::VOXEL_TRUNCATED;
+
+	//necessary for 2nd derivatives in same direction, e.g. xx and zz
+	PROCESS_VOXEL(Vector3i(-1, 0, 0), 0);
+	PROCESS_VOXEL(Vector3i(0, -1, 0), 1);
+	PROCESS_VOXEL(Vector3i(0, 0, -1), 2);
+
+	//necessary for 1st derivatives
+	PROCESS_VOXEL(Vector3i(1, 0, 0), 3);
+	PROCESS_VOXEL(Vector3i(0, 1, 0), 4);
+	PROCESS_VOXEL(Vector3i(0, 0, 1), 5);
+
+	//necessary for 2nd derivatives in mixed directions, e.g. xy and yz
+	PROCESS_VOXEL(Vector3i(1, 1, 0), 6);//xy corner
+	PROCESS_VOXEL(Vector3i(0, 1, 1), 7);//yz corner
+	PROCESS_VOXEL(Vector3i(1, 0, 1), 8);//xz corner
+#undef PROCESS_VOXEL
+}
+
+
+/**
+ * \brief Finds neighbor voxel's warps in the order specified below.
+ *     0        1        2          3         4         5           6         7         8
+ *	(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
+ * \tparam TVoxel
+ * \tparam TCache
  * \param[out] neighborWarps
  * \param[out] neighborKnown - current behavior is:
  * 1) record unallocated voxels as non-found

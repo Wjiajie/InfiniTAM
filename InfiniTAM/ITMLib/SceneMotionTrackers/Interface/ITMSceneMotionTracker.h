@@ -63,6 +63,7 @@ public:
 		const bool enableSmoothingTerm;
 		const bool enableKillingTerm;
 		const bool enableGradientSmoothing;
+		const bool usePreviousUpdateVectorsForSmoothing;
 	};
 //============================= CONSTRUCTORS / DESTRUCTORS =============================================================
 //TODO: write documentation block -Greg (Github: Algomorph)
@@ -82,7 +83,8 @@ public:
 					settings->enableLevelSetTerm,
 					settings->enableSmoothingTerm,
 					settings->enableKillingTerm,
-					settings->enableGradientSmoothing
+					settings->enableGradientSmoothing,
+					settings->usePreviousUpdateVectorsForSmoothing
 			} {
 		PrintSettings();
 	}

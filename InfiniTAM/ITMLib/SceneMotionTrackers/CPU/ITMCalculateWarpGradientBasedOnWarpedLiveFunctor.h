@@ -125,21 +125,38 @@ public:
 		// region ============================== RETRIEVE NEIGHBOR'S WARPS =================================
 
 		const int neighborhoodSize = 9;
-		Vector3f neighborFramewiseWarps[neighborhoodSize];
+		Vector3f neighborFramewiseWarps[neighborhoodSize], neighborWarpUpdates[neighborhoodSize];
 		bool neighborKnown[neighborhoodSize], neighborTruncated[neighborhoodSize], neighborAllocated[neighborhoodSize];
+
 		//    0        1        2          3         4         5           6         7         8
 		//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
-		findPoint2ndDerivativeNeighborhoodFramewiseWarp(
-				neighborFramewiseWarps/*x9*/, neighborKnown, neighborTruncated,
-				neighborAllocated, position, canonicalVoxels,
-				canonicalHashEntries, canonicalCache);
-		//TODO: revise this to reflect new realities
-		for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
-			if (!neighborAllocated[iNeighbor]) {
-				//assign current warp to neighbor warp if the neighbor is not allocated
-				neighborFramewiseWarps[iNeighbor] = framewiseWarp;
+
+		if (this->switches.usePreviousUpdateVectorsForSmoothing) {
+			findPoint2ndDerivativeNeighborhoodPreviousUpdate(
+					neighborWarpUpdates/*x9*/, neighborKnown, neighborTruncated,
+					neighborAllocated, position, canonicalVoxels,
+					canonicalHashEntries, canonicalCache);
+			for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
+				if (!neighborAllocated[iNeighbor]) {
+					//assign current warp to neighbor warp if the neighbor is not allocated
+					neighborWarpUpdates[iNeighbor] = canonicalVoxel.warp_update;
+				}
+			}
+		} else {
+			findPoint2ndDerivativeNeighborhoodFramewiseWarp(
+					neighborFramewiseWarps/*x9*/, neighborKnown, neighborTruncated,
+					neighborAllocated, position, canonicalVoxels,
+					canonicalHashEntries, canonicalCache);
+			//TODO: revise this to reflect new realities
+			for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
+				if (!neighborAllocated[iNeighbor]) {
+					//assign current warp to neighbor warp if the neighbor is not allocated
+					neighborFramewiseWarps[iNeighbor] = framewiseWarp;
+				}
 			}
 		}
+
+
 		if (printVoxelResult) {
 			std::cout << blue << "Live 6-connected neighbor information:" << reset << std::endl;
 			print6ConnectedNeighborInfoIndexedFields(position, liveVoxels, liveHashEntries, liveCache,
@@ -149,9 +166,9 @@ public:
 		//endregion
 
 		if (haveFullData && (switches.enableLevelSetTerm || switches.enableDataTerm)) {
-			//TODO: in case both level set term and data term need to be computed, optimize by retrieving the sdf values for live jacobian in a separate function. The live hessian needs to reuse them. -Greg (GitHub: Algomorph)
 			ComputeLiveJacobian_CentralDifferences_IndexedFields(
 					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex);
+			//_DEBUG
 //			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_CanonicalSdf2(
 //					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex, canonicalSdf);
 //			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_LiveSdf(
@@ -249,8 +266,13 @@ public:
 
 				localSmoothnessEnergy = localTikhonovEnergy + localKillingEnergy;
 			} else {
-				ComputeWarpLaplacianAndJacobian(framewiseWarpLaplacian, framewiseWarpJacobian, framewiseWarp,
-				                                neighborFramewiseWarps);
+				if(switches.usePreviousUpdateVectorsForSmoothing){
+					ComputeWarpLaplacianAndJacobian(framewiseWarpLaplacian, framewiseWarpJacobian,
+					                                canonicalVoxel.warp_update, neighborWarpUpdates);
+				}else{
+					ComputeWarpLaplacianAndJacobian(framewiseWarpLaplacian, framewiseWarpJacobian, framewiseWarp,
+				                                    neighborFramewiseWarps);
+				}
 				if (printVoxelResult) {
 					_DEBUG_PrintTikhonovTermStuff(neighborFramewiseWarps, framewiseWarpLaplacian);
 				}
