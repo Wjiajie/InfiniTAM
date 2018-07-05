@@ -100,7 +100,14 @@ public:
 		Vector3f& framewiseWarp = canonicalVoxel.framewise_warp;
 		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[sourceSdfIndex]);
 		float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
-		bool haveFullData = true;
+		//_DEBUG
+//		if(canonicalVoxel.flags == VOXEL_TRUNCATED){
+//			canonicalSdf = std::copysign(1.0f, liveSdf);
+//		}else if(liveVoxel.flags != VOXEL_NONTRUNCATED){
+//			liveSdf = std::copysign(1.0f, canonicalSdf);
+//		}
+		bool haveFullData = canonicalVoxel.flags != VOXEL_UNKNOWN;
+		//_DEBUG
 //		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
 //		                    && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
 //		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
@@ -169,6 +176,8 @@ public:
 			ComputeLiveJacobian_CentralDifferences_IndexedFields(
 					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex);
 			//_DEBUG
+//			ComputeLiveJacobian_CentralDifferences_ChangeTruncatedsSignToCanonicals(
+//					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex, canonicalSdf);
 //			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_CanonicalSdf2(
 //					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex, canonicalSdf);
 //			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_LiveSdf(

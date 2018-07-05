@@ -78,7 +78,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 					pt_model.w = 1.0f;
 
 					Vector3i pos(globalPos.x + x, globalPos.y + y, globalPos.z + z);
-					if(pos == Vector3i(-47,0,175)){
+					if(pos == Vector3i(-56,-11,201)){
 						int i = 42;
 					}
 
@@ -101,7 +101,9 @@ struct FusionFunctor{
 			maximumWeight(maximumWeight),
 			liveSourceFieldIndex(liveSourceFieldIndex){}
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel){
-
+		if (canonicalVoxel.flags != VOXEL_NONTRUNCATED &&
+		    liveVoxel.flag_values[liveSourceFieldIndex] != VOXEL_NONTRUNCATED)
+			return;
 		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[liveSourceFieldIndex]);
 
 		int oldWDepth = canonicalVoxel.w_depth;
@@ -114,7 +116,9 @@ struct FusionFunctor{
 
 		canonicalVoxel.sdf = TVoxelCanonical::floatToValue(newSdf);
 		canonicalVoxel.w_depth = (uchar) newWDepth;
-		canonicalVoxel.flags = ITMLib::VOXEL_NONTRUNCATED;
+		if(canonicalVoxel.flags != ITMLib::VOXEL_NONTRUNCATED){
+			canonicalVoxel.flags = liveVoxel.flag_values[liveSourceFieldIndex];
+		}
 
 	}
 private:
@@ -206,7 +210,7 @@ struct TrilinearInterpolationFunctor {
 		// Update flags
 		if (struckKnown) {
 			destinationVoxel.sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sdf);
-			if (1.0f - std::abs(sdf) < FLT_EPSILON) {
+			if (1.0f - std::abs(sdf) < 1e-5f) {
 				destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_TRUNCATED;
 			} else {
 				destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_NONTRUNCATED;

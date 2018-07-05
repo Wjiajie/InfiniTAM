@@ -207,13 +207,13 @@ int main(int argc, char** argv) {
 
 
 
-				("weight_data_term", po::value<float>(),
+				("weight_data_term", po::value<float>()->default_value(1.0f),
 					 "Used in scene tracking optimization when the data term is enabled."
 				         " Greater values make the difference between canonical and live SDF grids induce greater warp updates.")
-				("weight_smoothing_term", po::value<float>(),
+				("weight_smoothing_term", po::value<float>()->default_value(0.1f),
 				 "Used in scene tracking optimization when the smoothness regularization term is enabled."
 			         " Greater values penalize non-smooth scene deformations.")
-				("weight_level_set_term", po::value<float>(),
+				("weight_level_set_term", po::value<float>()->default_value(0.2f),
 					 "Used in scene tracking optimization when the level set regularization term is enabled."
 				         " Greater values penalize deformations resulting in non-SDF-like voxel grid.")
 

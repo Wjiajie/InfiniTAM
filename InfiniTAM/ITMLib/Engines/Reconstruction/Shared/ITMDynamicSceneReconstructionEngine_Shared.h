@@ -19,15 +19,35 @@
 #include "../../../Utils/ITMPixelUtils.h"
 #include "../../../Utils/ITMVoxelFlags.h"
 
+//
+//template<class TVoxel>
+//_CPU_AND_GPU_CODE_ inline void updateSdfAndFlagsBasedOnDistanceSurfaceToVoxel(
+//		DEVICEPTR(TVoxel)& voxel, float signedDistanceSurfaceToVoxelAlongCameraRay, float narrowBandHalfWidth){
+//	if (signedDistanceSurfaceToVoxelAlongCameraRay < -narrowBandHalfWidth) {
+//		//the voxel is beyond the narrow band, on the other side of the surface. Set SDF to -1.0
+//		voxel.sdf = TVoxel::floatToValue(-1.0);
+//		voxel.flags = ITMLib::VOXEL_TRUNCATED;
+//	} else if (signedDistanceSurfaceToVoxelAlongCameraRay > narrowBandHalfWidth) {
+//		//the voxel is in front of the narrow band, between the surface and the camera. Set SDF to 1.0
+//		voxel.sdf = TVoxel::floatToValue(1.0);
+//		voxel.flags = ITMLib::VOXEL_TRUNCATED;
+//	} else {
+//		// The voxel lies within the narrow band, between truncation boundaries.
+//		// Update SDF in proportion to the distance from surface.
+//		voxel.sdf = TVoxel::floatToValue(signedDistanceSurfaceToVoxelAlongCameraRay / narrowBandHalfWidth);
+//		voxel.flags = ITMLib::VOXEL_NONTRUNCATED;
+//	}
+//}
+
 
 template<class TVoxel>
 _CPU_AND_GPU_CODE_ inline void updateSdfAndFlagsBasedOnDistanceSurfaceToVoxel(
 		DEVICEPTR(TVoxel)& voxel, float signedDistanceSurfaceToVoxelAlongCameraRay, float narrowBandHalfWidth){
-	if (signedDistanceSurfaceToVoxelAlongCameraRay < -narrowBandHalfWidth) {
+	if (signedDistanceSurfaceToVoxelAlongCameraRay < -narrowBandHalfWidth + 4e-07) {
 		//the voxel is beyond the narrow band, on the other side of the surface. Set SDF to -1.0
 		voxel.sdf = TVoxel::floatToValue(-1.0);
 		voxel.flags = ITMLib::VOXEL_TRUNCATED;
-	} else if (signedDistanceSurfaceToVoxelAlongCameraRay > narrowBandHalfWidth) {
+	} else if (signedDistanceSurfaceToVoxelAlongCameraRay > narrowBandHalfWidth - 4e-07) {
 		//the voxel is in front of the narrow band, between the surface and the camera. Set SDF to 1.0
 		voxel.sdf = TVoxel::floatToValue(1.0);
 		voxel.flags = ITMLib::VOXEL_TRUNCATED;
