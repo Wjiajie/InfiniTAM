@@ -106,7 +106,8 @@ public:
 //		}else if(liveVoxel.flags != VOXEL_NONTRUNCATED){
 //			liveSdf = std::copysign(1.0f, canonicalSdf);
 //		}
-		bool haveFullData = canonicalVoxel.flags != VOXEL_UNKNOWN;
+		bool haveFullData = true;
+//		bool haveFullData = canonicalVoxel.flags != VOXEL_UNKNOWN;
 		//_DEBUG
 //		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
 //		                    && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
