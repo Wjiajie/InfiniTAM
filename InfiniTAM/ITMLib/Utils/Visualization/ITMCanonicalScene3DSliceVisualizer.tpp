@@ -16,6 +16,6 @@
 #include <vtkHedgeHog.h>
 #include <vtkStructuredGrid.h>
 #include "ITMCanonicalScene3DSliceVisualizer.h"
-#include "../../Objects/Scene/ITMSceneTraversal.h"
+#include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
 
 using namespace ITMLib;

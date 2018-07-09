@@ -400,7 +400,8 @@ set(ITMLIB_OBJECTS_SCENE_HEADERS
     Objects/Scene/ITMVoxelBlockHash.h
     Objects/Scene/ITMVoxelTypes.h
     Engines/Manipulation/ITMSceneManipulation.h
-    Objects/Scene/ITMSceneTraversal.h
+    Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h
+    Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h
     #_DEBUG
     ../Tests/TestUtils.h
     ../Tests/TestUtils.cpp

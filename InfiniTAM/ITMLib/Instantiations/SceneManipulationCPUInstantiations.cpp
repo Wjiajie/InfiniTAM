@@ -23,26 +23,7 @@
 using namespace ITMLib;
 
 //scene manipulation functions
-template void CopySceneSDFandFlagsWithOffset_CPU<ITMVoxelCanonical,ITMVoxelLive,ITMVoxelIndex>(
-		ITMScene<ITMVoxelLive, ITMVoxelIndex>* destination,
-		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* source,
-		Vector3i offset);
-template bool SetVoxel_CPU<ITMVoxelCanonical,ITMVoxelIndex>(ITMScene<ITMVoxelCanonical,
-                                                            ITMVoxelIndex>* scene, Vector3i at, ITMVoxelCanonical voxel);
 
 template class ITMSceneManipulationEngine_CPU<ITMVoxelCanonical,ITMVoxelIndex>;
 template class ITMSceneManipulationEngine_CPU<ITMVoxelLive,ITMVoxelIndex>;
-
-template bool SetVoxel_CPU<ITMVoxelLive,ITMVoxelIndex>(
-		ITMScene<ITMVoxelLive, ITMVoxelIndex>* scene,Vector3i at, ITMVoxelLive voxel);
-template ITMVoxelCanonical ReadVoxel<ITMVoxelCanonical,ITMVoxelIndex>(
-		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& scene, Vector3i at);
-
-
-template void OffsetWarps<ITMVoxelCanonical,ITMVoxelIndex>(
-		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>& destination, Vector3f offset);
-
-template bool CopySceneSlice_CPU<ITMVoxelCanonical,ITMVoxelIndex>(
-		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* destination,
-		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* source,
-		Vector3i minPoint, Vector3i maxPoint);
+template class ITMTwoSceneManipulationEngine_CPU<ITMVoxelLive,ITMVoxelCanonical,ITMVoxelIndex>;

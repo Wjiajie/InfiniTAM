@@ -137,7 +137,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProce
 
 	if (analysisFlags.simpleSceneExperimentModeEnabled) {
 		GenerateTestScene01(canonicalScene);
-		CopySceneSDFandFlagsWithOffset_CPU(liveScene, canonicalScene, Vector3i(-5, 0, 0));
+		ITMTwoSceneManipulationEngine_CPU<TVoxelCanonical,TVoxelLive,TIndex>::CopySceneSDFandFlagsWithOffset_CPU(liveScene, canonicalScene, Vector3i(-5, 0, 0));
 	} else {
 		PrintOperationStatus("Generating raw live frame from view...");
 		bench::StartTimer("GenerateRawLiveFrame");

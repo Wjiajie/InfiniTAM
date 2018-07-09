@@ -18,6 +18,7 @@ struct ITMVoxel_f_rgb
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
+	static const CONSTPTR(bool) hasWarpInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -50,6 +51,7 @@ struct ITMVoxel_s_rgb
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
+	static const CONSTPTR(bool) hasWarpInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	short sdf;
@@ -81,6 +83,7 @@ struct ITMVoxel_s
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
+	static const CONSTPTR(bool) hasWarpInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	short sdf;
@@ -106,6 +109,7 @@ struct ITMVoxel_f
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
+	static const CONSTPTR(bool) hasWarpInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -131,6 +135,7 @@ struct ITMVoxel_f_conf
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
+	static const CONSTPTR(bool) hasWarpInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -226,6 +231,7 @@ struct ITMVoxel_f_dynamic_canonical
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = true;
 	static const CONSTPTR(bool) hasWeightInformation = true;
+	static const CONSTPTR(bool) hasWarpInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -277,6 +283,7 @@ struct ITMVoxel_f_dynamic_live
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = true;
 	static const CONSTPTR(bool) hasWeightInformation = false;
+	static const CONSTPTR(bool) hasWarpInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	union {

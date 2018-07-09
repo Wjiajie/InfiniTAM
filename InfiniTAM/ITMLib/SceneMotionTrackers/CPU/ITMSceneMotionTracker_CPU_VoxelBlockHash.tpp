@@ -38,7 +38,7 @@
 #include "../../Objects/Scene/ITMTrilinearDistribution.h"
 #include "../../Engines/Manipulation/ITMSceneManipulation.h"
 #include "../../Utils/ITMLibSettings.h"
-#include "../../Objects/Scene/ITMSceneTraversal.h"
+#include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
 
 
 using namespace ITMLib;

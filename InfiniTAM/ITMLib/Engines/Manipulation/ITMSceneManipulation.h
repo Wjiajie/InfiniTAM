@@ -25,20 +25,70 @@
 
 namespace ITMLib {
 
+// region ==================== SCENE MANIPULATION ENGINE ===============================================================
+
 template<typename TVoxel, typename TIndex>
-class ITMSceneManipulationEngine_CPU{};
+class ITMSceneManipulationEngine_CPU {
+};
+
 
 template<typename TVoxel>
-class ITMSceneManipulationEngine_CPU<TVoxel,ITMVoxelBlockHash>{
+class ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash> {
 public:
-	static void ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash> *scene);
+	/**
+	 * \brief Clear out scene and reset the index
+	 * \param scene
+	 */
+	static void ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash>* scene);
+	static bool SetVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
+	TVoxel ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at);
+	/**
+	 * \brief offset warps by a fixed amount in each direction
+	 * \param scene the scene to modify
+	 * \param offset the offset vector to use
+	 */
+	static void OffsetWarps(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset);
+	/**
+	 * \brief Copies the slice (box-like window) specified by points extremum1 and extremum2 from the source scene into a
+	 * destination scene. Clears the destination scene before copying.
+	 * \tparam TVoxel type of voxel
+	 * \tparam TIndex type of voxel index
+	 * \param destination destination voxel grid (can be uninitialized)
+	 * \param source source voxel grid
+	 * \param minPoint minimum point in the desired slice (inclusive), i.e. minimum x, y, and z coordinates
+	 * \param maxPoint maximum point in the desired slice (inclusive), i.e. maximum x, y, and z coordinates
+	 * \return true on success (destination scene contains the slice), false on failure (there are no allocated hash blocks
+	 */
+	static bool CopySceneSlice(ITMScene<TVoxel, ITMVoxelBlockHash>* destination,
+	                                ITMScene<TVoxel, ITMVoxelBlockHash>* source,
+	                                Vector3i minPoint, Vector3i maxPoint);
+
 };
 
 template<typename TVoxel>
-class ITMSceneManipulationEngine_CPU<TVoxel,ITMPlainVoxelArray>{
+class ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray> {
 public:
-	static void ResetScene(ITMScene<TVoxel, ITMPlainVoxelArray> *scene);
+	static void ResetScene(ITMScene<TVoxel, ITMPlainVoxelArray>* scene);
+	static bool SetVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, TVoxel voxel);
+	TVoxel ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at);
+	static void OffsetWarps(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset);
+	/**
+	 * \brief Copies the slice (box-like window) specified by points extremum1 and extremum2 from the source scene into a
+	 * destination scene. Clears the destination scene before copying.
+	 * \tparam TVoxel type of voxel
+	 * \tparam TIndex type of voxel index
+	 * \param destination destination voxel grid (can be uninitialized)
+	 * \param source source voxel grid
+	 * \param minPoint minimum point in the desired slice (inclusive), i.e. minimum x, y, and z coordinates
+	 * \param maxPoint maximum point in the desired slice (inclusive), i.e. maximum x, y, and z coordinates
+	 * \return true on success (destination scene contains the slice), false on failure (there are no allocated hash blocks
+	 */
+	static bool CopySceneSlice(ITMScene<TVoxel, ITMPlainVoxelArray>* destination,
+	                                ITMScene<TVoxel, ITMPlainVoxelArray>* source,
+	                                Vector3i minPoint, Vector3i maxPoint);
 };
+
+// endregion ================= SCENE MANIPULATION ENGINE ===============================================================
 
 // region ==================================== GENERAL HASH MANAGEMENT =================================================
 /**
@@ -111,20 +161,20 @@ inline bool MarkAsNeedingAllocationIfNotFound(uchar* entryAllocationTypes, Vecto
 					return false;
 				}
 			}
-			if(entryAllocationTypes[hashIdx] != ITMLib::NEEDS_NO_CHANGE){
+			if (entryAllocationTypes[hashIdx] != ITMLib::NEEDS_NO_CHANGE) {
 				collisionDetected = true;
 				return false;
-			}else{
+			} else {
 				entryAllocationTypes[hashIdx] = ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST;
 				hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
 				return true;
 			}
 
 		}
-		if(entryAllocationTypes[hashIdx] != ITMLib::NEEDS_NO_CHANGE){
+		if (entryAllocationTypes[hashIdx] != ITMLib::NEEDS_NO_CHANGE) {
 			collisionDetected = true;
 			return false;
-		}else {
+		} else {
 			entryAllocationTypes[hashIdx] = ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST;
 			hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
 			return true;
@@ -192,7 +242,7 @@ void AllocateHashEntriesUsingLists_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* e
 template<typename TVoxel, typename TIndex>
 inline
 void AllocateHashEntriesUsingLists_SetVisibility_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* entryAllocationTypes,
-                                       Vector3s* allocationBlockCoordinates, uchar* entriesVisibleType) {
+                                                     Vector3s* allocationBlockCoordinates, uchar* entriesVisibleType) {
 	int entryCount = TIndex::noTotalEntries;
 	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
 	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
@@ -213,7 +263,7 @@ void AllocateHashEntriesUsingLists_SetVisibility_CPU(ITMScene<TVoxel, TIndex>* s
 					hashEntry.offset = 0;
 					hashTable[hash] = hashEntry;
 					lastFreeVoxelBlockId--;
-				}else{
+				} else {
 					entriesVisibleType[hash] = 0;
 				}
 
@@ -295,22 +345,35 @@ ComputeCopyRanges(int& xRangeStart, int& xRangeEnd, int& yRangeStart, int& yRang
 
 // endregion ===========================================================================================================
 
+template<typename TVoxelSource, typename TVoxelDestination, typename TIndex>
+class ITMTwoSceneManipulationEngine_CPU {
+};
+
+template<typename TVoxelSource, typename TVoxelDestination>
+class ITMTwoSceneManipulationEngine_CPU<TVoxelSource, TVoxelDestination, ITMVoxelBlockHash> {
+
+	/**
+	 * \brief Copies all the sdf & flag values from the source scene to the destination scene with the desired offset
+	 * \param destination destination scene
+	 * \param source source scene
+	 * \param offset offset to use when copying the values
+	 */
+	static void CopySceneSDFandFlagsWithOffset_CPU(ITMScene<TVoxelDestination, ITMVoxelBlockHash>* destination,
+	                                               ITMScene<TVoxelSource, ITMVoxelBlockHash>* source,
+	                                               Vector3i offset);
 
 
-
-template<typename TVoxelSource, typename TVoxelDesitnation, typename TIndex >
-void CopySceneSDFandFlagsWithOffset_CPU(ITMScene<TVoxelDesitnation, TIndex>* destination,
-                                        ITMScene<TVoxelSource, TIndex>* source,
-                                        Vector3i offset);
-
-template<class TVoxel, class TIndex >
-bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination,
-                        ITMScene<TVoxel, TIndex>* source,
-                        Vector3i minPoint, Vector3i maxPoint);
+};
 
 
-template<class TVoxel, class TIndex>
-TVoxel ReadVoxel(ITMScene<TVoxel, TIndex>& scene, Vector3i at);
+template<typename TVoxelSource, typename TVoxelDestination>
+class ITMTwoSceneManipulationEngine_CPU<TVoxelSource, TVoxelDestination, ITMPlainVoxelArray> {
+public:
+	static void CopySceneSDFandFlagsWithOffset_CPU(ITMScene<TVoxelDestination, ITMPlainVoxelArray>* destination,
+	                                               ITMScene<TVoxelSource, ITMPlainVoxelArray>* source,
+	                                               Vector3i offset);
+};
+
 
 int FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, const THREADPTR(Vector3s)& at);
 
@@ -319,19 +382,5 @@ void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, 
                         ITMLib::ITMVoxelBlockHash::IndexCache& cache,
                         const CONSTPTR(Vector3i)& at);
 
-
-template<class TVoxel, class TIndex>
-bool SetVoxel_CPU(ITMScene <TVoxel, TIndex>* scene, Vector3i at, TVoxel voxel);
-
-
-template<class TVoxel, class TIndex>
-void OffsetWarps(ITMScene<TVoxel, TIndex>& scene, Vector3f offset);
-
-template<class TVoxel, class TIndex>
-TVoxel ReadVoxel(ITMScene<TVoxel, TIndex>& scene, Vector3i at);
-
-
-template<class TVoxel, class TIndex>
-bool SetVoxel_CPU(ITMScene <TVoxel, TIndex>* scene, Vector3i at, TVoxel voxel);
 
 }//namespace ITMLib

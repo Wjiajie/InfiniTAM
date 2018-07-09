@@ -39,7 +39,7 @@
 #include "ITMScene3DSliceVisualizerCommon.h"
 #include "../../../Apps/SDFViz/SDFVizGlobalDefines.h"
 #include "ITMVisualizationCommon.h"
-#include "../../Objects/Scene/ITMSceneTraversal.h"
+#include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
 #include "ITMScene3DSliceVisualizerInteractorStyle.h"
 
 

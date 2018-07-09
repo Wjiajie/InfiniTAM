@@ -23,7 +23,7 @@
 #include "../Shared/ITMSceneMotionTracker_Shared.h"
 #include "../Shared/ITMSceneMotionTracker_Debug.h"
 #include "../../Engines/Manipulation/ITMSceneManipulation.h"
-#include "../../Objects/Scene/ITMSceneTraversal.h"
+#include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
 #include "../../Utils/ITMVoxelFlags.h"
 #include "../../Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "../Interface/ITMSceneMotionTracker.h"

@@ -6,7 +6,7 @@
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../Manipulation/ITMSceneManipulation.h"
-#include "../../../Objects/Scene/ITMSceneTraversal.h"
+#include "../../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
 #include "../../../Objects/Scene/ITMTrilinearInterpolation.h"
 
 using namespace ITMLib;

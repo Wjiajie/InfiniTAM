@@ -21,13 +21,15 @@
 
 namespace ITMLib {
 
-//TODO: these traversal functions should be specialized for ITMVoxeBlockHash, and (possibly) a separate set needs to be written for PlainVoxelArray -Greg(GitHub:Algomorph)
 
+//======================================================================================================================
+//                              TRAVERSAL METHODS FOR SCENES USING ITMVoxelBlockHash FOR INDEXING
+//======================================================================================================================
 // region ================================ DYNAMIC SINGLE-SCENE TRAVERSAL ==============================================
 
-template<typename TFunctor, typename TVoxel, typename TIndex>
+template<typename TFunctor, typename TVoxel>
 inline
-void VoxelTraversal_CPU(ITMScene<TVoxel, TIndex>* scene, TFunctor& functor) {
+void VoxelTraversal_CPU(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
@@ -51,9 +53,9 @@ void VoxelTraversal_CPU(ITMScene<TVoxel, TIndex>* scene, TFunctor& functor) {
 };
 
 
-template<typename TFunctor, typename TVoxel, typename TIndex>
+template<typename TFunctor, typename TVoxel>
 inline
-void VoxelPositionTraversal_CPU(ITMScene<TVoxel, TIndex>* scene, TFunctor& functor) {
+void VoxelPositionTraversal_CPU(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
@@ -80,9 +82,9 @@ void VoxelPositionTraversal_CPU(ITMScene<TVoxel, TIndex>* scene, TFunctor& funct
 };
 
 
-template<typename TFunctor, typename TVoxel, typename TIndex>
+template<typename TFunctor, typename TVoxel>
 inline
-void VoxelAndHashBlockPositionTraversal_CPU(ITMScene<TVoxel, TIndex>* scene, TFunctor& functor) {
+void VoxelAndHashBlockPositionTraversal_CPU(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
@@ -129,8 +131,8 @@ Vector6i computeLocalBounds(const Vector3i& hashEntryMinPoint, const Vector3i& h
 	                     std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.z - bounds.max_z)));
 }
 
-template<typename TFunctor, typename TVoxel, typename TIndex>
-inline void VoxelTraversalWithinBounds_CPU(ITMScene<TVoxel, TIndex>* scene, TFunctor& functor, Vector6i bounds) {
+template<typename TFunctor, typename TVoxel>
+inline void VoxelTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor, Vector6i bounds) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
@@ -160,9 +162,9 @@ inline void VoxelTraversalWithinBounds_CPU(ITMScene<TVoxel, TIndex>* scene, TFun
 };
 
 
-template<typename TFunctor, typename TVoxel, typename TIndex>
+template<typename TFunctor, typename TVoxel>
 inline void
-VoxelPositionTraversalWithinBounds_CPU(ITMScene<TVoxel, TIndex>* scene, TFunctor& functor, Vector6i bounds) {
+VoxelPositionTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor, Vector6i bounds) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
@@ -196,9 +198,9 @@ VoxelPositionTraversalWithinBounds_CPU(ITMScene<TVoxel, TIndex>* scene, TFunctor
 };
 
 
-template<typename TFunctor, typename TVoxel, typename TIndex>
+template<typename TFunctor, typename TVoxel>
 inline void
-VoxelPositionAndHashEntryTraversalWithinBounds_CPU(ITMScene<TVoxel, TIndex>* scene, TFunctor& functor, Vector6i bounds) {
+VoxelPositionAndHashEntryTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor, Vector6i bounds) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
@@ -238,8 +240,8 @@ VoxelPositionAndHashEntryTraversalWithinBounds_CPU(ITMScene<TVoxel, TIndex>* sce
 
 // region ================================ STATIC SINGLE-SCENE TRAVERSAL ===============================================
 
-template<typename TStaticFunctor, typename TVoxel, typename TIndex>
-inline void StaticVoxelTraversal_CPU(ITMScene<TVoxel, TIndex>* scene) {
+template<typename TStaticFunctor, typename TVoxel>
+inline void StaticVoxelTraversal_CPU(ITMScene<TVoxel, ITMVoxelBlockHash>* scene) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
@@ -262,8 +264,8 @@ inline void StaticVoxelTraversal_CPU(ITMScene<TVoxel, TIndex>* scene) {
 	}
 };
 
-template<typename TStaticFunctor, typename TVoxel, typename TIndex>
-inline void StaticVoxelPositionTraversal_CPU(ITMScene<TVoxel, TIndex>* scene) {
+template<typename TStaticFunctor, typename TVoxel>
+inline void StaticVoxelPositionTraversal_CPU(ITMScene<TVoxel, ITMVoxelBlockHash>* scene) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
@@ -291,21 +293,21 @@ inline void StaticVoxelPositionTraversal_CPU(ITMScene<TVoxel, TIndex>* scene) {
 
 // endregion
 // region ================================ DYNAMIC TWO-SCENE TRAVERSAL =================================================
-template<typename TStaticFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
+template<typename TStaticFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
 inline void StaticDualVoxelTraversal_CPU(
-		ITMScene<TVoxelPrimary, TIndex>* primaryScene,
-		ITMScene<TVoxelSecondary, TIndex>* secondaryScene) {
+		ITMScene<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
+		ITMScene<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene) {
 
 // *** traversal vars
 	TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
-	typename TIndex::IndexCache secondaryCache;
+	typename ITMVoxelBlockHash::IndexCache secondaryCache;
 
 
 	TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 	int noTotalEntries = primaryScene->index.noTotalEntries;
-	typename TIndex::IndexCache primaryCache;
+	typename ITMVoxelBlockHash::IndexCache primaryCache;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -345,22 +347,22 @@ inline void StaticDualVoxelTraversal_CPU(
 };
 
 
-template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
+template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
 inline void DualVoxelTraversal_CPU(
-		ITMScene<TVoxelPrimary, TIndex>* primaryScene,
-		ITMScene<TVoxelSecondary, TIndex>* secondaryScene,
+		ITMScene<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
+		ITMScene<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
 		TFunctor& functor) {
 
 // *** traversal vars
 	TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
-	typename TIndex::IndexCache secondaryCache;
+	typename ITMVoxelBlockHash::IndexCache secondaryCache;
 
 
 	TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 	int noTotalEntries = primaryScene->index.noTotalEntries;
-	typename TIndex::IndexCache primaryCache;
+	typename ITMVoxelBlockHash::IndexCache primaryCache;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -401,22 +403,22 @@ inline void DualVoxelTraversal_CPU(
 };
 
 
-template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
+template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
 inline void DualVoxelPositionTraversal_CPU(
-		ITMScene<TVoxelPrimary, TIndex>* primaryScene,
-		ITMScene<TVoxelSecondary, TIndex>* secondaryScene,
+		ITMScene<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
+		ITMScene<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
 		TFunctor& functor) {
 
 // *** traversal vars
 	TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
-	typename TIndex::IndexCache secondaryCache;
+	typename ITMVoxelBlockHash::IndexCache secondaryCache;
 
 
 	TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 	int noTotalEntries = primaryScene->index.noTotalEntries;
-	typename TIndex::IndexCache primaryCache;
+	typename ITMVoxelBlockHash::IndexCache primaryCache;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -461,22 +463,22 @@ inline void DualVoxelPositionTraversal_CPU(
 };
 
 
-template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
+template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
 inline void DualVoxelPositionTraversal_DefaultForMissingSecondary_CPU(
-		ITMScene<TVoxelPrimary, TIndex>* primaryScene,
-		ITMScene<TVoxelSecondary, TIndex>* secondaryScene,
+		ITMScene<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
+		ITMScene<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
 		TFunctor& functor) {
 
 // *** traversal vars
 	TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
-	typename TIndex::IndexCache secondaryCache;
+	typename ITMVoxelBlockHash::IndexCache secondaryCache;
 
 
 	TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 	int noTotalEntries = primaryScene->index.noTotalEntries;
-	typename TIndex::IndexCache primaryCache;
+	typename ITMVoxelBlockHash::IndexCache primaryCache;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -530,22 +532,22 @@ inline void DualVoxelPositionTraversal_DefaultForMissingSecondary_CPU(
 };
 
 
-template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex>
+template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
 inline void DualVoxelPositionTraversal_CPU_SingleThreaded(
-		ITMScene<TVoxelPrimary, TIndex>* primaryScene,
-		ITMScene<TVoxelSecondary, TIndex>* secondaryScene,
+		ITMScene<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
+		ITMScene<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
 		TFunctor& functor) {
 
 // *** traversal vars
 	TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
-	typename TIndex::IndexCache secondaryCache;
+	typename ITMVoxelBlockHash::IndexCache secondaryCache;
 
 
 	TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 	int noTotalEntries = primaryScene->index.noTotalEntries;
-	typename TIndex::IndexCache primaryCache;
+	typename ITMVoxelBlockHash::IndexCache primaryCache;
 
 	for (int hash = 0; hash < noTotalEntries; hash++) {
 		const ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];

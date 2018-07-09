@@ -33,7 +33,7 @@ inline
 bool VoxelIsConsideredForTracking(TVoxelCanonical& voxelCanonical, TVoxelLive voxelLive, int sourceFieldIndex){
 	return voxelCanonical.flags == VOXEL_NONTRUNCATED || voxelLive.flag_values[sourceFieldIndex] == VOXEL_NONTRUNCATED;
 };
-//
+
 //_DEBUG
 //template<typename TVoxelCanonical, typename TVoxelLive>
 //inline
