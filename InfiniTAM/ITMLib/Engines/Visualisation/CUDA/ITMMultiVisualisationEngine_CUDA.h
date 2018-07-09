@@ -12,8 +12,6 @@ namespace ITMLib {
 	class ITMMultiVisualisationEngine_CUDA : public ITMMultiVisualisationEngine<TVoxel, TIndex>
 	{
 	private:
-		RenderingBlock *renderingBlockList_device;
-		uint *noTotalBlocks_device;
 
 	public:
 		ITMMultiVisualisationEngine_CUDA(void);
@@ -22,6 +20,26 @@ namespace ITMLib {
 		ITMRenderState* CreateRenderState(const ITMScene<TVoxel, TIndex> *scene, const Vector2i & imgSize) const;
 
 		void PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, TIndex> & sceneManager, ITMRenderState *state);
+
+		void CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *renderState) const;
+
+		void RenderImage(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type) const;
+	};
+
+	template<class TVoxel>
+	class ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash> : public ITMMultiVisualisationEngine<TVoxel, ITMVoxelBlockHash>
+	{
+	private:
+		RenderingBlock *renderingBlockList_device;
+		uint *noTotalBlocks_device;
+
+	public:
+		ITMMultiVisualisationEngine_CUDA(void);
+		~ITMMultiVisualisationEngine_CUDA(void);
+
+		ITMRenderState* CreateRenderState(const ITMScene<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const;
+
+		void PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, ITMVoxelBlockHash> & sceneManager, ITMRenderState *state);
 
 		void CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *renderState) const;
 

@@ -241,10 +241,12 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 	bench::StartTimer("TrackMotion_31_CalculateWarpUpdate");
 
 
-
 	sceneMotionTracker->CalculateWarpGradient(canonicalScene, liveScene, analysisFlags.hasFocusCoordinates,
 	                                          focusCoordinates, sourceSdfIndex,
 	                                          analysisFlags.restrictZtrackingForDebugging);
+
+	ITMDynamicFusionLogger::Instance().UpdateSmoothingVectors();
+
 	bench::StopTimer("TrackMotion_31_CalculateWarpUpdate");
 
 	PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");

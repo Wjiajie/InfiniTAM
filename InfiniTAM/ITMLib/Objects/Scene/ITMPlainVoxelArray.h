@@ -69,6 +69,7 @@ namespace ITMLib
 		const Vector3i getVolumeSize(void) { return indexData->GetData(MEMORYDEVICE_CPU)->size; }
 
 		const IndexData* getIndexData(void) const { return indexData->GetData(memoryType); }
+		IndexData* getIndexData(void) { return indexData->GetData(memoryType); }
 
 		void SaveToDirectory(const std::string &outputDirectory) const
 		{

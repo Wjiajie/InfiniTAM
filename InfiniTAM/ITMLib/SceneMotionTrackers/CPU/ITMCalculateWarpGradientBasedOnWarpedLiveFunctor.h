@@ -306,6 +306,8 @@ public:
 		if (restrictZtrackingForDebugging) localEnergyGradient.z = 0.0f;
 
 		canonicalVoxel.gradient0 = localEnergyGradient;
+		//_DEBUG
+		canonicalVoxel.gradient1 = parameters.weightSmoothnessTerm * localSmoothnessEnergyGradient;
 
 		// endregion
 

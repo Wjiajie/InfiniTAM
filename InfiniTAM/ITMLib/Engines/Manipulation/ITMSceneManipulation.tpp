@@ -28,10 +28,11 @@
 namespace ITMLib {
 
 
-template<typename TVoxelSource, typename TVoxelDestination, typename TIndex >
-void CopySceneSDFandFlagsWithOffset_CPU(ITMScene<TVoxelDestination, TIndex>* destination,
-                                        ITMScene<TVoxelSource, TIndex>* source, Vector3i offset) {
-	ITMSceneManipulationEngine_CPU<TVoxelDestination, TIndex>::ResetScene(destination);
+template<typename TVoxelSource, typename TVoxelDestination>
+void CopySceneSDFandFlagsWithOffset_CPU<TVoxelSource, TVoxelDestination, ITMVoxelBlockHash>
+		(ITMScene<TVoxelDestination, ITMVoxelBlockHash>* destination,
+		 ITMScene<TVoxelSource, ITMVoxelBlockHash>* source, Vector3i offset) {
+	ITMSceneManipulationEngine_CPU<TVoxelDestination, ITMVoxelBlockHash>::ResetScene(destination);
 
 	TVoxelSource* originalVoxels = source->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* originalHashTable = source->index.GetEntries();
@@ -64,7 +65,7 @@ void CopySceneSDFandFlagsWithOffset_CPU(ITMScene<TVoxelDestination, TIndex>* des
 }
 
 template<class TVoxel, class TIndex>
-bool SetVoxel_CPU(ITMScene <TVoxel, TIndex>* scene, Vector3i at, TVoxel voxel) {
+bool SetVoxel_CPU(ITMScene<TVoxel, TIndex>* scene, Vector3i at, TVoxel voxel) {
 	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
 	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
 	ITMHashEntry* hashTable = scene->index.GetEntries();
@@ -119,8 +120,6 @@ TVoxel ReadVoxel(ITMScene<TVoxel, TIndex>& scene, Vector3i at) {
 	int vmIndex;
 	return readVoxel(voxels, hashTable, at, vmIndex);
 }
-
-
 
 
 /**
@@ -212,26 +211,24 @@ bool CopySceneSlice_CPU(ITMScene<TVoxel, TIndex>* destination, ITMScene<TVoxel, 
 }
 
 
-
 template<typename TVoxel>
 void ITMLib::ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(
-		ITMLib::ITMScene<TVoxel, ITMLib::ITMVoxelBlockHash>* scene)
-{
+		ITMLib::ITMScene<TVoxel, ITMLib::ITMVoxelBlockHash>* scene) {
 	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
 	int blockSize = scene->index.getVoxelBlockSize();
 
-	TVoxel *voxelBlocks_ptr = scene->localVBA.GetVoxelBlocks();
+	TVoxel* voxelBlocks_ptr = scene->localVBA.GetVoxelBlocks();
 	for (int i = 0; i < numBlocks * blockSize; ++i) voxelBlocks_ptr[i] = TVoxel();
-	int *vbaAllocationList_ptr = scene->localVBA.GetAllocationList();
+	int* vbaAllocationList_ptr = scene->localVBA.GetAllocationList();
 	for (int i = 0; i < numBlocks; ++i) vbaAllocationList_ptr[i] = i;
 	scene->localVBA.lastFreeBlockId = numBlocks - 1;
 
 	ITMHashEntry tmpEntry;
 	memset(&tmpEntry, 0, sizeof(ITMHashEntry));
 	tmpEntry.ptr = -2;
-	ITMHashEntry *hashEntry_ptr = scene->index.GetEntries();
+	ITMHashEntry* hashEntry_ptr = scene->index.GetEntries();
 	for (int i = 0; i < scene->index.noTotalEntries; ++i) hashEntry_ptr[i] = tmpEntry;
-	int *excessList_ptr = scene->index.GetExcessAllocationList();
+	int* excessList_ptr = scene->index.GetExcessAllocationList();
 	for (int i = 0; i < SDF_EXCESS_LIST_SIZE; ++i) excessList_ptr[i] = i;
 
 	scene->index.SetLastFreeExcessListId(SDF_EXCESS_LIST_SIZE - 1);
@@ -239,19 +236,17 @@ void ITMLib::ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetSce
 
 
 template<typename TVoxel>
-void ITMLib::ITMSceneManipulationEngine_CPU<TVoxel,ITMPlainVoxelArray>::ResetScene(
-		ITMLib::ITMScene<TVoxel, ITMLib::ITMPlainVoxelArray>* scene)
-{
+void ITMLib::ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ResetScene(
+		ITMLib::ITMScene<TVoxel, ITMLib::ITMPlainVoxelArray>* scene) {
 	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
 	int blockSize = scene->index.getVoxelBlockSize();
 
-	TVoxel *voxelBlocks_ptr = scene->localVBA.GetVoxelBlocks();
+	TVoxel* voxelBlocks_ptr = scene->localVBA.GetVoxelBlocks();
 	for (int i = 0; i < numBlocks * blockSize; ++i) voxelBlocks_ptr[i] = TVoxel();
-	int *vbaAllocationList_ptr = scene->localVBA.GetAllocationList();
+	int* vbaAllocationList_ptr = scene->localVBA.GetAllocationList();
 	for (int i = 0; i < numBlocks; ++i) vbaAllocationList_ptr[i] = i;
 	scene->localVBA.lastFreeBlockId = numBlocks - 1;
 }
-
 
 
 }//namespace ITMLib

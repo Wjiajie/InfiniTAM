@@ -382,6 +382,14 @@ void ITMDynamicFusionLogger::SaveWarpSlices(int iteration) {
 	}
 }
 
+void ITMDynamicFusionLogger::UpdateSmoothingVectors() {
+	if (hasFocusCoordinates) {
+		if (recordingScene3DSlicesWithUpdates) {
+			scene3DSliceVisualizer->TriggerDrawSmoothingVectors();
+		}
+	}
+}
+
 
 void ITMDynamicFusionLogger::FinalizeFrameRecording() {
 	if (recording3DSceneAndWarpProgression) {

@@ -12,7 +12,7 @@ namespace ITMLib
 	public:
 		void IntegrateGlobalIntoLocal(ITMScene<TVoxel, TIndex> *scene, ITMRenderState *renderState) {}
 		void SaveToGlobalMemory(ITMScene<TVoxel, TIndex> *scene, ITMRenderState *renderState) {}
-		void CleanLocalMemory(ITMScene<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState) {}
+		void CleanLocalMemory(ITMScene<TVoxel, TIndex> *scene, ITMRenderState *renderState) {}
 	};
 
 	template<class TVoxel>

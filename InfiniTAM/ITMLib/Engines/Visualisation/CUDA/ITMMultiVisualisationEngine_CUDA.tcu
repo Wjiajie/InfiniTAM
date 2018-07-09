@@ -6,18 +6,31 @@
 #include "../../../Objects/Scene/ITMMultiSceneAccess.h"
 
 #include "../Shared/ITMVisualisationEngine_Shared.h"
+#include "ITMVisualisationHelpers_CUDA.h"
 
 using namespace ITMLib;
 
 template<class TVoxel, class TIndex>
 ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::ITMMultiVisualisationEngine_CUDA(void)
 {
-	ORcudaSafeCall(cudaMalloc((void**)&renderingBlockList_device, sizeof(RenderingBlock) * MAX_RENDERING_BLOCKS));
-	ORcudaSafeCall(cudaMalloc((void**)&noTotalBlocks_device, sizeof(uint)));
+
 }
 
 template<class TVoxel, class TIndex>
 ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::~ITMMultiVisualisationEngine_CUDA(void)
+{
+
+}
+
+template<class TVoxel>
+ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ITMMultiVisualisationEngine_CUDA(void)
+{
+	ORcudaSafeCall(cudaMalloc((void**)&renderingBlockList_device, sizeof(RenderingBlock) * MAX_RENDERING_BLOCKS));
+	ORcudaSafeCall(cudaMalloc((void**)&noTotalBlocks_device, sizeof(uint)));
+}
+
+template<class TVoxel>
+ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::~ITMMultiVisualisationEngine_CUDA(void)
 {
 	ORcudaSafeCall(cudaFree(noTotalBlocks_device));
 	ORcudaSafeCall(cudaFree(renderingBlockList_device));
@@ -29,6 +42,12 @@ ITMRenderState* ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::CreateRenderSt
 	return new ITMRenderStateMultiScene<TVoxel, TIndex>(imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CUDA);
 }
 
+template<class TVoxel>
+ITMRenderState* ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CreateRenderState(const ITMScene<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const
+{
+	return new ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>(imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CUDA);
+}
+
 template<class TVoxel, class TIndex>
 void ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, TIndex> & mapManager, ITMRenderState *_state)
 {
@@ -37,10 +56,31 @@ void ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::PrepareRenderState(const 
 	state->PrepareLocalMaps(mapManager);
 }
 
+template<class TVoxel>
+void ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, ITMVoxelBlockHash> & mapManager, ITMRenderState *_state)
+{
+	ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash> *state = (ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>*)_state;
+
+	state->PrepareLocalMaps(mapManager);
+}
+
 template<class TVoxel, class TIndex>
 void ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
 {
 	ITMRenderStateMultiScene<TVoxel, TIndex> *renderState = (ITMRenderStateMultiScene<TVoxel, TIndex>*)_renderState;
+
+	// reset min max image
+	Vector2f *minmaxData = renderState->renderingRangeImage->GetData(MEMORYDEVICE_CUDA);
+
+	Vector2f init;
+	init.x = FAR_AWAY; init.y = VERY_CLOSE;
+	memsetKernel<Vector2f>(minmaxData, init, renderState->renderingRangeImage->dataSize);
+}
+
+template<class TVoxel>
+void ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
+{
+	ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash> *renderState = (ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>*)_renderState;
 
 	// reset min max image
 	Vector2i imgSize = renderState->renderingRangeImage->noDims;
@@ -62,13 +102,13 @@ void ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::CreateExpectedDepths(cons
 		//go through list of visible 8x8x8 blocks
 
 		float voxelSize = renderState->sceneParams.voxelSize;
-		const ITMHashEntry *hash_entries = renderState->indexData_host.index[localMapId];
+		const ITMHashEntry *indexData = renderState->indexData_host.index[localMapId];
 		Matrix4f localPose = pose->GetM() * renderState->indexData_host.posesInv[localMapId];
 		int noHashEntries = ITMVoxelBlockHash::noTotalEntries;
 		dim3 blockSize(256);
 		dim3 gridSize((int)ceil((float)noHashEntries / (float)blockSize.x));
 		ORcudaSafeCall(cudaMemset(noTotalBlocks_device, 0, sizeof(uint)));
-		checkProjectAndSplitBlocks_device << <gridSize, blockSize >> > (hash_entries, noHashEntries, localPose, intrinsics->projectionParamsSimple.all, imgSize, voxelSize, renderingBlockList_device, noTotalBlocks_device);
+		checkProjectAndSplitBlocks_device << <gridSize, blockSize >> > (indexData, noHashEntries, localPose, intrinsics->projectionParamsSimple.all, imgSize, voxelSize, renderingBlockList_device, noTotalBlocks_device);
 		ORcudaKernelCheck;
 
 		uint noTotalBlocks;
@@ -84,9 +124,8 @@ void ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::CreateExpectedDepths(cons
 	}
 }
 
-template<class TVoxel, class TIndex>
-void ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::RenderImage(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type) const
-{
+template <typename TVoxel, typename TIndex>
+static void RenderImage_common(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type){
 	ITMRenderStateMultiScene<TVoxel, TIndex> *renderState = (ITMRenderStateMultiScene<TVoxel, TIndex>*)_renderState;
 
 	Vector2i imgSize = outputImage->noDims;
@@ -104,17 +143,17 @@ void ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::RenderImage(const ORUtils
 		typedef ITMMultiVoxel<TVoxel> VD;
 		typedef ITMMultiIndex<TIndex> ID;
 		genericRaycast_device<VD, ID, false> << <gridSize, cudaBlockSize >> > (
-			renderState->raycastResult->GetData(MEMORYDEVICE_CUDA),
-			NULL,
-			renderState->voxelData_device,
-			renderState->indexData_device,
-			imgSize,
-			invM,
-			InvertProjectionParams(projParams),
-			oneOverVoxelSize,
-			renderState->renderingRangeImage->GetData(MEMORYDEVICE_CUDA),
-			mu
-			);
+				renderState->raycastResult->GetData(MEMORYDEVICE_CUDA),
+						NULL,
+						renderState->voxelData_device,
+						renderState->indexData_device,
+						imgSize,
+						invM,
+						InvertProjectionParams(projParams),
+						oneOverVoxelSize,
+						renderState->renderingRangeImage->GetData(MEMORYDEVICE_CUDA),
+						mu
+		);
 		ORcudaKernelCheck;
 	}
 
@@ -126,36 +165,47 @@ void ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::RenderImage(const ORUtils
 	dim3 gridSize((int)ceil((float)imgSize.x / (float)cudaBlockSize.x), (int)ceil((float)imgSize.y / (float)cudaBlockSize.y));
 
 	if ((type == IITMVisualisationEngine::RENDER_COLOUR_FROM_VOLUME) &&
-		(!TVoxel::hasColorInformation)) type = IITMVisualisationEngine::RENDER_SHADED_GREYSCALE;
+	    (!TVoxel::hasColorInformation)) type = IITMVisualisationEngine::RENDER_SHADED_GREYSCALE;
 
 	switch (type) {
-	case IITMVisualisationEngine::RENDER_COLOUR_FROM_VOLUME:
-		renderColour_device<ITMMultiVoxel<TVoxel>, ITMMultiIndex<TIndex> > << <gridSize, cudaBlockSize >> >(outRendering, pointsRay, renderState->voxelData_device,
-			renderState->indexData_device, imgSize);
-		ORcudaKernelCheck;
-		break;
-	case IITMVisualisationEngine::RENDER_COLOUR_FROM_NORMAL:
-		if (intrinsics->FocalLengthSignsDiffer())
-			renderNormals_ImageNormals_device<true> << <gridSize, cudaBlockSize >> >(outRendering, pointsRay, imgSize, renderState->sceneParams.voxelSize, lightSource);
-		else
-			renderNormals_ImageNormals_device<false> << <gridSize, cudaBlockSize >> >(outRendering, pointsRay, imgSize, renderState->sceneParams.voxelSize, lightSource);
-		ORcudaKernelCheck;
-		break;
-	case IITMVisualisationEngine::RENDER_COLOUR_FROM_CONFIDENCE:
-		if (intrinsics->FocalLengthSignsDiffer())
-			renderConfidence_ImageNormals_device<true> << <gridSize, cudaBlockSize >> >(outRendering, pointsRay, imgSize, renderState->sceneParams.voxelSize, lightSource);
-		else
-			renderConfidence_ImageNormals_device<false> << <gridSize, cudaBlockSize >> >(outRendering, pointsRay, imgSize, renderState->sceneParams.voxelSize, lightSource);
-		ORcudaKernelCheck;
-		break;
-	case IITMVisualisationEngine::RENDER_SHADED_GREYSCALE:
-	default:
-		if (intrinsics->FocalLengthSignsDiffer())
-			renderGrey_ImageNormals_device<true> << <gridSize, cudaBlockSize >> >(outRendering, pointsRay, renderState->sceneParams.voxelSize, imgSize, lightSource);
-		else
-			renderGrey_ImageNormals_device<false> << <gridSize, cudaBlockSize >> >(outRendering, pointsRay, renderState->sceneParams.voxelSize, imgSize, lightSource);
-		ORcudaKernelCheck;
-		break;
+		case IITMVisualisationEngine::RENDER_COLOUR_FROM_VOLUME:
+			renderColour_device<ITMMultiVoxel<TVoxel>, ITMMultiIndex<TIndex> > << <gridSize, cudaBlockSize >> >(outRendering, pointsRay, renderState->voxelData_device,
+					renderState->indexData_device, imgSize);
+			ORcudaKernelCheck;
+			break;
+		case IITMVisualisationEngine::RENDER_COLOUR_FROM_NORMAL:
+			if (intrinsics->FocalLengthSignsDiffer())
+				renderNormals_ImageNormals_device<true> << <gridSize, cudaBlockSize >> >(outRendering, pointsRay, imgSize, renderState->sceneParams.voxelSize, lightSource);
+			else
+				renderNormals_ImageNormals_device<false> << <gridSize, cudaBlockSize >> >(outRendering, pointsRay, imgSize, renderState->sceneParams.voxelSize, lightSource);
+			ORcudaKernelCheck;
+			break;
+		case IITMVisualisationEngine::RENDER_COLOUR_FROM_CONFIDENCE:
+			if (intrinsics->FocalLengthSignsDiffer())
+				renderConfidence_ImageNormals_device<true> << <gridSize, cudaBlockSize >> >(outRendering, pointsRay, imgSize, renderState->sceneParams.voxelSize, lightSource);
+			else
+				renderConfidence_ImageNormals_device<false> << <gridSize, cudaBlockSize >> >(outRendering, pointsRay, imgSize, renderState->sceneParams.voxelSize, lightSource);
+			ORcudaKernelCheck;
+			break;
+		case IITMVisualisationEngine::RENDER_SHADED_GREYSCALE:
+		default:
+			if (intrinsics->FocalLengthSignsDiffer())
+				renderGrey_ImageNormals_device<true> << <gridSize, cudaBlockSize >> >(outRendering, pointsRay, renderState->sceneParams.voxelSize, imgSize, lightSource);
+			else
+				renderGrey_ImageNormals_device<false> << <gridSize, cudaBlockSize >> >(outRendering, pointsRay, renderState->sceneParams.voxelSize, imgSize, lightSource);
+			ORcudaKernelCheck;
+			break;
 	}
+};
+
+template<class TVoxel, class TIndex>
+void ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::RenderImage(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type) const
+{
+	RenderImage_common<TVoxel,TIndex>(pose, intrinsics, _renderState, outputImage, type);
 }
 
+template<class TVoxel>
+void ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::RenderImage(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type) const
+{
+	RenderImage_common<TVoxel,ITMVoxelBlockHash>(pose, intrinsics, _renderState, outputImage, type);
+}

@@ -58,8 +58,10 @@ const char* ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::scal
 enum RequestedOperation {
 	NONE,
 	DRAW_WARP_UPDATES,
+	DRAW_SMOOTHING_VECTORS,
 	BUILD_FUSED_CANONICAL,
 	UPDATE_LIVE_STATE
+
 };
 
 // Used for multithreaded interop with VTK
@@ -82,6 +84,8 @@ vtkTypeMacro(ThreadInteropCommand, vtkCommand);
 			case DRAW_WARP_UPDATES:
 				parent->DrawWarpUpdates();
 				break;
+			case DRAW_SMOOTHING_VECTORS:
+				parent->DrawSmoothnessVectors();
 			case BUILD_FUSED_CANONICAL:
 				parent->BuildFusedCanonicalFromCurrentScene();
 			case UPDATE_LIVE_STATE:
@@ -287,6 +291,7 @@ public:
 		                                 (currentBlockPositionVoxels.y + centerOffset),
 		                                 (currentBlockPositionVoxels.z + centerOffset));
 	}
+
 	int voxelCount = 0;
 private:
 	Vector3i focusCoordinates;
@@ -475,6 +480,26 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::InitializeW
 
 	this->window->AddLayer(Vector4d(1.0, 1.0, 1.0, 0.0));
 	this->window->AddActorToLayer(updatesActor, 1);
+
+	//TODO: DRY violation below
+
+	vtkSmartPointer<vtkPoints> smoothingVectorPoints = vtkSmartPointer<vtkPoints>::New();
+	vtkSmartPointer<vtkFloatArray> smoothingVectorVectors = vtkSmartPointer<vtkFloatArray>::New();
+	smoothingVectorVectors->SetName("Warp smoothingVector vectors");
+	smoothingVectorVectors->SetNumberOfComponents(3);
+
+	this->smoothingVectorData->SetPoints(smoothingVectorPoints);
+	this->smoothingVectorData->GetPointData()->SetVectors(smoothingVectorVectors);
+
+	vtkSmartPointer<vtkHedgeHog> smoothingVectorHedgehog = vtkSmartPointer<vtkHedgeHog>::New();
+	smoothingVectorHedgehog->SetInputData(this->smoothingVectorData);
+	smoothingVectorMapper->SetInputConnection(smoothingVectorHedgehog->GetOutputPort());
+
+	smoothingVectorActor->SetMapper(smoothingVectorMapper);
+	smoothingVectorActor->GetProperty()->SetColor(0, .8, .2);
+
+	this->window->AddLayer(Vector4d(1.0, 1.0, 1.0, 0.0));
+	this->window->AddActorToLayer(smoothingVectorActor, 1);
 }
 
 //region ============================= VISUALIZE WARP UPDATES ==========================================================
@@ -497,6 +522,7 @@ private:
 	vtkFloatArray* vectors;
 };
 
+
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpUpdates() {
 	std::unique_lock<std::mutex> lock(mutex);
@@ -510,6 +536,60 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpUpd
 	this->updatesData->Modified();
 	this->window->Update();
 	this->warpUpdatePerformed = true;
+	lock.unlock();
+	conditionVariable.notify_all();
+}
+
+static inline
+std::string stringifyVoxelCoordinate(const Vector3i& position){
+	std::stringstream ss;
+	ss << position;
+	return ss.str();
+}
+
+template<typename TVoxel>
+struct TransferSmoothingVectorsToVtkStructuresFunctor {
+public:
+	TransferSmoothingVectorsToVtkStructuresFunctor(vtkPoints* points, vtkFloatArray* vectors,
+	                                               std::unordered_map<std::string, Vector3d>* smoothingHedgehogEndpoints) :
+			points(points), vectors(vectors), smoothingHedgehogEndpoints(smoothingHedgehogEndpoints) {}
+
+	void operator()(const TVoxel& voxel, const Vector3i& position) {
+		Vector3d updateStartPoint;
+		std::string positionAsString = stringifyVoxelCoordinate(position);
+		auto iterator = smoothingHedgehogEndpoints->find(positionAsString);
+		if(iterator == smoothingHedgehogEndpoints->end()){
+			updateStartPoint = position.toDouble();
+		}else{
+			updateStartPoint = iterator->second;
+		}
+		//TODO: remove magic value -- use -learningRate from the settings -Greg
+		Vector3f updateVector = -0.1 * voxel.gradient1;
+		points->InsertNextPoint(updateStartPoint.values);
+		vectors->InsertNextTuple(updateVector.values);
+		Vector3d endpoint = updateStartPoint + updateVector.toDouble();
+		(*smoothingHedgehogEndpoints)[positionAsString] = endpoint;
+	}
+
+private:
+	std::unordered_map<std::string, Vector3d>* smoothingHedgehogEndpoints;
+	vtkPoints* points;
+	vtkFloatArray* vectors;
+};
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawSmoothnessVectors() {
+	std::unique_lock<std::mutex> lock(mutex);
+	vtkPoints* updatePoints = this->smoothingVectorData->GetPoints();
+	vtkFloatArray* updateVectors = vtkFloatArray::SafeDownCast(this->smoothingVectorData->GetPointData()->GetVectors());
+	TransferSmoothingVectorsToVtkStructuresFunctor<ITMVoxelCanonical> TransferSmoothingVectorsToVtkStructuresFunctor(
+			updatePoints, updateVectors, &this->smoothingHedgehogEndpoints);
+	VoxelPositionTraversalWithinBounds_CPU(this->canonicalScene, TransferSmoothingVectorsToVtkStructuresFunctor,
+	                                       this->bounds);
+
+	this->smoothingVectorData->Modified();
+	this->window->Update();
+	this->smoothingVectorsDrawn = true;
 	lock.unlock();
 	conditionVariable.notify_all();
 }
@@ -538,7 +618,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::UpdateLiveState() {
 	std::unique_lock<std::mutex> lock(mutex);
 	liveSlice.voxelVizData = vtkSmartPointer<vtkPolyData>::New();
-	switch (liveSamplingFieldIndex){
+	switch (liveSamplingFieldIndex) {
 		case 0:
 			BuildVoxelAndHashBlockPolyDataFromScene<TVoxelLive, RetrieveVoxelDataFieldIndex0StaticFunctior<TVoxelLive>>(
 					liveScene, liveSlice);
@@ -598,6 +678,15 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::TriggerDraw
 	this->warpUpdatePerformed = false;
 }
 
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::TriggerDrawSmoothingVectors() {
+	this->threadCallback->operation = DRAW_SMOOTHING_VECTORS;
+	std::unique_lock<std::mutex> lock(mutex);
+	conditionVariable.wait(lock, [this] { return this->smoothingVectorsDrawn; });
+	this->smoothingVectorsDrawn = false;
+}
+
+
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::TriggerUpdateLiveState() {
@@ -650,7 +739,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibili
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::AdvanceLiveStateVizualization() {
-	if(visibleOptimizationStepIndex < this->liveSliceStates.size()-1){
+	if (visibleOptimizationStepIndex < this->liveSliceStates.size() - 1) {
 		visibleOptimizationStepIndex++;
 		this->liveSlice.voxelMapper->SetInputData(liveSliceStates[visibleOptimizationStepIndex]);
 		liveSlice.voxelMapper->Modified();
@@ -660,14 +749,10 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::AdvanceLive
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::RetreatLiveStateVizualization() {
-	if(visibleOptimizationStepIndex > 0){
+	if (visibleOptimizationStepIndex > 0) {
 		visibleOptimizationStepIndex--;
 		this->liveSlice.voxelMapper->SetInputData(liveSliceStates[visibleOptimizationStepIndex]);
 		liveSlice.voxelMapper->Modified();
 		window->Update();
 	}
 }
-
-
-
-

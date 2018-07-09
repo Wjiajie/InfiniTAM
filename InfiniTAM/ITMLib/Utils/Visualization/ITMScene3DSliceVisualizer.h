@@ -15,14 +15,18 @@
 //  ================================================================
 #pragma once
 
+//stdlib
+#include <thread>
+#include <condition_variable>
+#include <unordered_map>
+
 //VTK
 #include <vtkSmartPointer.h>
 #include <vtkExtractPolyDataGeometry.h>
 #include <vtkSphereSource.h>
 #include <vtkCubeSource.h>
 #include <vtkPointSet.h>
-#include <thread>
-#include <condition_variable>
+
 
 //ITMLib
 #include "../../Objects/Scene/ITMScene.h"
@@ -69,6 +73,7 @@ public:
 	// ====================== MEMBER FUNCTIONS ===========================
 	VoxelScaleMode GetCurrentScaleMode();
 	void TriggerDrawWarpUpdates();
+	void TriggerDrawSmoothingVectors();
 	void TriggerUpdateLiveState();
 	void TriggerBuildFusedCanonical();
 	virtual void ToggleScaleMode();
@@ -140,6 +145,7 @@ private:
 	void SetUpGeometrySources();
 	void Run();
 	void DrawWarpUpdates();
+	void DrawSmoothnessVectors();
 	void AdvanceLiveStateVizualization();
 	void RetreatLiveStateVizualization();
 
@@ -169,6 +175,12 @@ private:
 	vtkSmartPointer<vtkPolyDataMapper> updatesMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 	vtkSmartPointer<vtkActor> updatesActor = vtkSmartPointer<vtkActor>::New();
 
+	vtkSmartPointer<vtkPolyData> smoothingVectorData = vtkSmartPointer<vtkPolyData>::New();
+	vtkSmartPointer<vtkPolyDataMapper> smoothingVectorMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	vtkSmartPointer<vtkActor> smoothingVectorActor = vtkSmartPointer<vtkActor>::New();
+	std::unordered_map<std::string, Vector3d> smoothingHedgehogEndpoints;
+
+
 	// ** live updates **
 	std::vector<vtkSmartPointer<vtkPolyData>> liveSliceStates;
 
@@ -195,6 +207,7 @@ private:
 	std::condition_variable conditionVariable;
 	bool initialized = false;
 	bool warpUpdatePerformed = false;
+	bool smoothingVectorsDrawn = false;
 	bool fusedCanonicalBuilt = false;
 	bool liveStateUpdated = false;
 	int liveSamplingFieldIndex = 0;

@@ -194,7 +194,7 @@ static void GenericRaycast(const ITMScene<TVoxel, TIndex> *scene, const Vector2i
 
 	dim3 cudaBlockSize(16, 12);
 	dim3 gridSize((int)ceil((float)imgSize.x / (float)cudaBlockSize.x), (int)ceil((float)imgSize.y / (float)cudaBlockSize.y));
-	if (entriesVisibleType!=NULL) genericRaycast_device<TVoxel, ITMVoxelBlockHash, true> << <gridSize, cudaBlockSize >> >(
+	if (entriesVisibleType!=NULL) genericRaycast_device<TVoxel, TIndex, true> << <gridSize, cudaBlockSize >> >(
 			renderState->raycastResult->GetData(MEMORYDEVICE_CUDA),
 			entriesVisibleType,
 			scene->localVBA.GetVoxelBlocks(),
@@ -206,7 +206,7 @@ static void GenericRaycast(const ITMScene<TVoxel, TIndex> *scene, const Vector2i
 			renderState->renderingRangeImage->GetData(MEMORYDEVICE_CUDA),
 			scene->sceneParams->mu
 		);
-	else genericRaycast_device<TVoxel, ITMVoxelBlockHash, false> << <gridSize, cudaBlockSize >> >(
+	else genericRaycast_device<TVoxel, TIndex, false> << <gridSize, cudaBlockSize >> >(
 			renderState->raycastResult->GetData(MEMORYDEVICE_CUDA),
 			NULL,
 			scene->localVBA.GetVoxelBlocks(),

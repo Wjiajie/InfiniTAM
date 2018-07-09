@@ -181,7 +181,7 @@ static void GenericRaycast(const ITMScene<TVoxel, TIndex> *scene, const Vector2i
 	float oneOverVoxelSize = 1.0f / scene->sceneParams->voxelSize;
 	Vector4f *pointsRay = renderState->raycastResult->GetData(MEMORYDEVICE_CPU);
 	const TVoxel *voxelData = scene->localVBA.GetVoxelBlocks();
-	const typename ITMVoxelBlockHash::IndexData *voxelIndex = scene->index.getIndexData();
+	const typename TIndex::IndexData *voxelIndex = scene->index.getIndexData();
 	uchar *entriesVisibleType = NULL;
 	if (updateVisibleList&&(dynamic_cast<const ITMRenderState_VH*>(renderState)!=NULL))
 	{
