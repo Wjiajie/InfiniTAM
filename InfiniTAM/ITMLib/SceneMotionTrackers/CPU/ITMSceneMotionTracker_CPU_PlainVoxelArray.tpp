@@ -48,7 +48,9 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::Calc
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::SmoothWarpGradient(
-		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) {
+		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene,
+		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
+		int sourceFieldIndex) {
 
 	if (this->switches.enableGradientSmoothing) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
@@ -63,10 +65,8 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>:
 template<typename TVoxelCanonical, typename TVoxelLive>
 float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::UpdateWarps(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene) {
-
+		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
-
 }
 
 

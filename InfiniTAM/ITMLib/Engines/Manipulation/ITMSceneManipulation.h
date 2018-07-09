@@ -41,7 +41,9 @@ public:
 	 */
 	static void ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash>* scene);
 	static bool SetVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
-	TVoxel ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at);
+	static TVoxel ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at);
+	static TVoxel
+	ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, ITMVoxelBlockHash::IndexCache& cache);
 	/**
 	 * \brief offset warps by a fixed amount in each direction
 	 * \param scene the scene to modify
@@ -55,13 +57,12 @@ public:
 	 * \tparam TIndex type of voxel index
 	 * \param destination destination voxel grid (can be uninitialized)
 	 * \param source source voxel grid
-	 * \param minPoint minimum point in the desired slice (inclusive), i.e. minimum x, y, and z coordinates
+	 * \param bounds minimum point in the desired slice (inclusive), i.e. minimum x, y, and z coordinates
 	 * \param maxPoint maximum point in the desired slice (inclusive), i.e. maximum x, y, and z coordinates
 	 * \return true on success (destination scene contains the slice), false on failure (there are no allocated hash blocks
 	 */
-	static bool CopySceneSlice(ITMScene<TVoxel, ITMVoxelBlockHash>* destination,
-	                                ITMScene<TVoxel, ITMVoxelBlockHash>* source,
-	                                Vector3i minPoint, Vector3i maxPoint);
+	static bool CopySceneSlice(ITMScene <TVoxel, ITMVoxelBlockHash>* destination, ITMScene <TVoxel, ITMVoxelBlockHash>* source,
+		                           Vector6i bounds);
 
 };
 
@@ -70,7 +71,9 @@ class ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray> {
 public:
 	static void ResetScene(ITMScene<TVoxel, ITMPlainVoxelArray>* scene);
 	static bool SetVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, TVoxel voxel);
-	TVoxel ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at);
+	static TVoxel ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at);
+	static TVoxel
+	ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, ITMPlainVoxelArray::IndexCache& cache);
 	static void OffsetWarps(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset);
 	/**
 	 * \brief Copies the slice (box-like window) specified by points extremum1 and extremum2 from the source scene into a
@@ -79,13 +82,13 @@ public:
 	 * \tparam TIndex type of voxel index
 	 * \param destination destination voxel grid (can be uninitialized)
 	 * \param source source voxel grid
-	 * \param minPoint minimum point in the desired slice (inclusive), i.e. minimum x, y, and z coordinates
+	 * \param bounds minimum point in the desired slice (inclusive), i.e. minimum x, y, and z coordinates
 	 * \param maxPoint maximum point in the desired slice (inclusive), i.e. maximum x, y, and z coordinates
 	 * \return true on success (destination scene contains the slice), false on failure (there are no allocated hash blocks
 	 */
 	static bool CopySceneSlice(ITMScene<TVoxel, ITMPlainVoxelArray>* destination,
-	                                ITMScene<TVoxel, ITMPlainVoxelArray>* source,
-	                                Vector3i minPoint, Vector3i maxPoint);
+	                           ITMScene<TVoxel, ITMPlainVoxelArray>* source,
+	                           Vector6i bounds);
 };
 
 // endregion ================= SCENE MANIPULATION ENGINE ===============================================================
@@ -297,50 +300,61 @@ void AllocateHashEntriesUsingLists_SetVisibility_CPU(ITMScene<TVoxel, TIndex>* s
 // region ======================================== HELPER RANGE COMPUTATION / CHECK ROUTINES ===========================
 // =====================================================================================================================
 inline
-void MinMaxFromExtrema(Vector3i& minPoint, Vector3i& maxPoint, const Vector3i& extremum1, const Vector3i& extremum2) {
+void BoundsFromExtrema(Vector6i bounds, const Vector3i& extremum1, const Vector3i& extremum2) {
 	// ** set min/max **
-	for (int iValue = 0; iValue < 3; iValue++) {
-		if (extremum1.values[iValue] > extremum2.values[iValue]) {
-			minPoint.values[iValue] = extremum2.values[iValue];
-			maxPoint.values[iValue] = extremum1.values[iValue];
-		} else {
-			minPoint.values[iValue] = extremum1.values[iValue];
-			maxPoint.values[iValue] = extremum2.values[iValue];
-		}
+	if (extremum1.x > extremum2.x) {
+		bounds.min_x = extremum2.x;
+		bounds.max_x = extremum1.x;
+	} else {
+		bounds.min_x = extremum1.x;
+		bounds.max_x = extremum2.x;
+	}
+	if (extremum1.y > extremum2.y) {
+		bounds.min_y = extremum2.y;
+		bounds.max_y = extremum1.y;
+	} else {
+		bounds.min_y = extremum1.y;
+		bounds.max_y = extremum2.y;
+	}
+	if (extremum1.z > extremum2.z) {
+		bounds.min_z = extremum2.z;
+		bounds.max_z = extremum1.z;
+	} else {
+		bounds.min_z = extremum1.z;
+		bounds.max_z = extremum2.z;
 	}
 }
 
 inline
 bool
-IsHashBlockFullyInRange(const Vector3i& hashBlockPositionVoxels, const Vector3i& minPoint, const Vector3i& maxPoint) {
-	return hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 <= maxPoint.x && hashBlockPositionVoxels.x >= minPoint.x &&
-	       hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 <= maxPoint.y && hashBlockPositionVoxels.y >= minPoint.y &&
-	       hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 <= maxPoint.z && hashBlockPositionVoxels.z >= minPoint.z;
+IsHashBlockFullyInRange(const Vector3i& hashBlockPositionVoxels, const Vector6i& bounds) {
+	return hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 <= bounds.max_x && hashBlockPositionVoxels.x >= bounds.min_x &&
+	       hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 <= bounds.max_y && hashBlockPositionVoxels.y >= bounds.min_y &&
+	       hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 <= bounds.max_z && hashBlockPositionVoxels.z >= bounds.min_z;
 }
 
 inline
-bool IsHashBlockPartiallyInRange(const Vector3i& hashBlockPositionVoxels, const Vector3i& minPoint,
-                                 const Vector3i& maxPoint) {
+bool IsHashBlockPartiallyInRange(const Vector3i& hashBlockPositionVoxels, const Vector6i& bounds) {
 	//@formatter:off
-	return ((hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 >= maxPoint.x && hashBlockPositionVoxels.x <= maxPoint.x)
-	     || (hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 >= minPoint.x && hashBlockPositionVoxels.x <= minPoint.x)) &&
-	       ((hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 >= maxPoint.y && hashBlockPositionVoxels.y <= maxPoint.y)
-	     || (hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 >= minPoint.y && hashBlockPositionVoxels.y <= minPoint.y)) &&
-	       ((hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 >= maxPoint.z && hashBlockPositionVoxels.z <= maxPoint.z)
-	     || (hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 >= minPoint.z && hashBlockPositionVoxels.z <= minPoint.z));
+	return ((hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 >= bounds.max_x && hashBlockPositionVoxels.x <= bounds.max_x)
+	     || (hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 >= bounds.min_x && hashBlockPositionVoxels.x <= bounds.min_x)) &&
+	       ((hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 >= bounds.max_y && hashBlockPositionVoxels.y <= bounds.max_y)
+	     || (hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 >= bounds.min_y && hashBlockPositionVoxels.y <= bounds.min_y)) &&
+	       ((hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 >= bounds.max_z && hashBlockPositionVoxels.z <= bounds.max_z)
+	     || (hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 >= bounds.min_z && hashBlockPositionVoxels.z <= bounds.min_z));
 	//@formatter:on
 }
 
 inline
 bool
 ComputeCopyRanges(int& xRangeStart, int& xRangeEnd, int& yRangeStart, int& yRangeEnd, int& zRangeStart, int& zRangeEnd,
-                  const Vector3i& hashBlockPositionVoxels, const Vector3i& minPoint, const Vector3i& maxPoint) {
-	zRangeStart = std::max(0, minPoint.z - hashBlockPositionVoxels.z);
-	zRangeEnd = std::min(SDF_BLOCK_SIZE, maxPoint.z - hashBlockPositionVoxels.z + 1);
-	yRangeStart = std::max(0, minPoint.y - hashBlockPositionVoxels.y);
-	yRangeEnd = std::min(SDF_BLOCK_SIZE, maxPoint.y - hashBlockPositionVoxels.y + 1);
-	xRangeStart = std::max(0, minPoint.x - hashBlockPositionVoxels.x);
-	xRangeEnd = std::min(SDF_BLOCK_SIZE, maxPoint.x - hashBlockPositionVoxels.x + 1);
+                  const Vector3i& hashBlockPositionVoxels, const Vector6i& bounds) {
+	zRangeStart = std::max(0, bounds.min_z - hashBlockPositionVoxels.z);
+	zRangeEnd = std::min(SDF_BLOCK_SIZE, bounds.max_z - hashBlockPositionVoxels.z + 1);
+	yRangeStart = std::max(0, bounds.min_y - hashBlockPositionVoxels.y);
+	yRangeEnd = std::min(SDF_BLOCK_SIZE, bounds.max_y - hashBlockPositionVoxels.y + 1);
+	xRangeStart = std::max(0, bounds.min_x - hashBlockPositionVoxels.x);
+	xRangeEnd = std::min(SDF_BLOCK_SIZE, bounds.max_x - hashBlockPositionVoxels.x + 1);
 }
 
 // endregion ===========================================================================================================

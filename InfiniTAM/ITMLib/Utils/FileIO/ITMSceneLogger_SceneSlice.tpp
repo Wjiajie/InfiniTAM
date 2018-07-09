@@ -55,15 +55,17 @@ bool
 ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(const Vector3i& extremum1, const Vector3i& extremum2,
                                                                std::string& identifier) {
 
-	Vector3i minPoint, maxPoint;
-	MinMaxFromExtrema(minPoint, maxPoint, extremum1, extremum2);
-	identifier = ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceStringIdentifier(minPoint, maxPoint);
+	Vector6i bounds;
+	BoundsFromExtrema(bounds, extremum1, extremum2);
+	identifier = ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceStringIdentifier(bounds);
 
 	if (slices.find(identifier) != slices.end()) {
 		return false;
 	}
-	auto logger = new ITMWarpSceneLogger<TVoxelCanonical, TIndex>(minPoint, maxPoint, this->path);
-	if (!CopySceneSlice_CPU(logger->scene, fullCanonicalSceneLogger->scene, minPoint, maxPoint)) {
+	auto logger = new ITMWarpSceneLogger<TVoxelCanonical, TIndex>(bounds, this->path);
+	if (!ITMSceneManipulationEngine_CPU<TVoxelCanonical, TIndex>::CopySceneSlice(logger->scene,
+	                                                                             fullCanonicalSceneLogger->scene,
+	                                                                             bounds)) {
 		return false;
 	}
 	fs::path outputPath = logger->path;
@@ -72,13 +74,12 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(const Vector3i& e
 	}
 	fs::create_directories(outputPath);
 
-	SaveSliceWarp(minPoint, maxPoint, logger->warpPath);
+	SaveSliceWarp(bounds, logger->warpPath);
 
-	logger->minimum = minPoint;
-	logger->maximum = maxPoint;
+	logger->bounds = bounds;
 	logger->SaveCompact();
 	logger->sliceLoaded = true;
-	logger->highlights = MakeSliceHighlights(minPoint, maxPoint);
+	logger->highlights = MakeSliceHighlights(bounds);
 	logger->SaveHighlights(ITMWarpSceneLogger<TVoxelCanonical,TIndex>::continuousHighlightsPostfix);
 	slices[identifier] = logger;
 	return true;
@@ -92,10 +93,10 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(const Vector3i& e
 };
 
 
+
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3i& minPoint,
-                                                                   const Vector3i& maxPoint,
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector6i& voxelRange,
                                                                    const boost::filesystem::path& path) {
 
 	int totalHashEntryCount = fullCanonicalSceneLogger->scene->index.noTotalEntries;
@@ -117,6 +118,8 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
 	fullCanonicalSceneLogger->StartLoadingWarpState();
 	int zRangeStart, zRangeEnd, yRangeStart, yRangeEnd, xRangeStart, xRangeEnd;
 
+	WarpAndUpdateWriteFunctor warpAndUpdateWriteFunctor(&sliceWarpOfstream, sizeof(Vector3f),sizeof(Vector3f));
+
 	while (fullCanonicalSceneLogger->LoadCurrentWarpState()) {
 		unsigned int sliceIterationCursor = fullCanonicalSceneLogger->GetIterationCursor();
 		sliceWarpOfstream.write(reinterpret_cast<const char* >(&sliceIterationCursor), sizeof(sliceIterationCursor));
@@ -129,17 +132,15 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
 			const TVoxelCanonical* localVoxelBlock = &(voxels[hashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 
 			//if no voxels in the block are within range, skip
-			if (IsHashBlockFullyInRange(hashBlockPositionVoxels, minPoint, maxPoint) ||
-			    IsHashBlockPartiallyInRange(hashBlockPositionVoxels, minPoint, maxPoint)) {
+			if (IsHashBlockFullyInRange(hashBlockPositionVoxels, voxelRange) ||
+			    IsHashBlockPartiallyInRange(hashBlockPositionVoxels, voxelRange)) {
 				for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 					for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 						for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 							int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 							const TVoxelCanonical& voxel = localVoxelBlock[ixVoxelInHashBlock];
-							sliceWarpOfstream.write(reinterpret_cast<const char* >(&voxel.warp),
-							                        sizeof(Vector3f));
-//							sliceWarpOfstream.write(
-//									reinterpret_cast<const char* >(&voxel.gradient), sizeof(Vector3f));
+							sliceWarpOfstream.write(reinterpret_cast<const char* >(&voxel.warp),sizeof(Vector3f));
+							sliceWarpOfstream.write(reinterpret_cast<const char* >(&voxel.gradient), sizeof(Vector3f));
 						}
 					}
 				}
@@ -155,14 +156,14 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector3
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSliceHighlights(const Vector3i& minPoint, const Vector3i& maxPoint) {
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSliceHighlights(const Vector6i& bounds) {
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> sliceHighlights;
 	std::vector<std::vector<ITMHighlightIterationInfo>> highlightArrays = fullCanonicalSceneLogger->highlights.GetArrays();
-	auto VoxelInRange = [&minPoint, &maxPoint](Vector3i voxelPosition) {
+	auto VoxelInRange = [&bounds](Vector3i voxelPosition) {
 		Vector3i& vp = voxelPosition;
-		return (vp.x >= minPoint.x && vp.x <= maxPoint.x) &&
-		       (vp.y >= minPoint.y && vp.y <= maxPoint.y) &&
-		       (vp.z >= minPoint.z && vp.z <= maxPoint.z);
+		return (vp.x >= bounds.min_x && vp.x <= bounds.max_x) &&
+		       (vp.y >= bounds.min_y && vp.y <= bounds.max_y) &&
+		       (vp.z >= bounds.min_z && vp.z <= bounds.max_z);
 	};
 	for (auto& array : highlightArrays) {
 		for (auto& highlight : array) {
@@ -205,12 +206,14 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SliceExistsOnDisk(cons
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SliceExistsOnDisk(const Vector3i& extremum1,
                                                                             const Vector3i& extremum2) const {
+	Vector6i bounds;
+	BoundsFromExtrema(bounds, extremum1,extremum2);
 	fs::path sliceFolderPath =
-			ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceFolderPath(path, extremum1, extremum2);
+			ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceFolderPath(path, bounds);
 	fs::path sliceScenePath =
-			ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceSceneFilename_Full(path, extremum1, extremum2);
+			ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceSceneFilename_Full(path, bounds);
 	fs::path sliceWarpPath =
-			ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceWarpFilename(path, extremum1, extremum2);
+			ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceWarpFilename(path, bounds);
 	return fs::is_directory(sliceFolderPath) && fs::is_regular_file(sliceScenePath) &&
 	       fs::is_regular_file(sliceWarpPath);
 }
@@ -237,11 +240,10 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadSlice(const std::s
 	if (!SliceExistsOnDisk(sliceIdentifier)) {
 		return false;
 	}
-	Vector3i minPoint, maxPoint;
-	ITMWarpSceneLogger<TVoxelCanonical, TIndex>::ExtractMinMaxFromSliceStringIdentifier(sliceIdentifier, minPoint,
-	                                                                                    maxPoint);
+	Vector6i bounds;
+	ITMWarpSceneLogger<TVoxelCanonical, TIndex>::ExtractBoundsFromSliceStringIdentifier(sliceIdentifier, bounds);
 	ITMWarpSceneLogger<TVoxelCanonical, TIndex>* logger =
-			new ITMWarpSceneLogger<TVoxelCanonical, TIndex>(minPoint, maxPoint, path);
+			new ITMWarpSceneLogger<TVoxelCanonical, TIndex>(bounds, path);
 	logger->LoadCompact();
 	logger->sliceLoaded = true;
 	slices[sliceIdentifier] = logger;
@@ -315,11 +317,11 @@ std::vector<std::string> ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::Lo
 	std::sort(sliceDirectoryNamesAndWriteTimes.begin(), sliceDirectoryNamesAndWriteTimes.end(), SortBySecondDescending);
 
 	for (auto& directoryNameAndWriteTime : sliceDirectoryNamesAndWriteTimes){
-		Vector3i minPoint, maxPoint;
-		ITMWarpSceneLogger<TVoxelCanonical, TIndex>::ExtractMinMaxFromSliceStringIdentifier(
-				std::get<0>(directoryNameAndWriteTime), minPoint, maxPoint);
+		Vector6i bounds;
+		ITMWarpSceneLogger<TVoxelCanonical, TIndex>::ExtractBoundsFromSliceStringIdentifier(
+				std::get<0>(directoryNameAndWriteTime), bounds);
 		std::string sliceIdentifier =
-				ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceStringIdentifier(minPoint, maxPoint);
+				ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceStringIdentifier(bounds);
 		if (LoadSlice(sliceIdentifier)) {
 			identifiers.push_back(sliceIdentifier);
 		}

@@ -36,6 +36,7 @@
 #include "../../Objects/Scene/ITMScene.h"
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
 #include "ITMVisualizationWindowManager.h"
+#include "../../Engines/Manipulation/ITMSceneManipulation.h"
 
 using namespace ITMLib;
 
@@ -69,15 +70,14 @@ void ITMScene1DSliceVisualizer::Plot1DSceneSliceHelper(ITMScene<TVoxel, TIndex>*
 
 	// scene access variables
 	typename TIndex::IndexCache cache;
-	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
-	typename TIndex::IndexData* indexData = scene->index.GetEntries();
-	Vector3i currentVoxelPosition = focusCoordinate;
+
+	Vector3i currentVoxelPosition = focusCoordinates;
 	currentVoxelPosition[axis] = rangeStartVoxelIndex;
 
 	// fill table
 	for(int iValue = 0; iValue < voxelRange; iValue++,currentVoxelPosition[axis]++){
 		int vmIndex = 0;
-		TVoxel voxel = readVoxel(voxels, indexData, currentVoxelPosition, vmIndex, cache);
+		TVoxel voxel = ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ReadVoxel(scene, focusCoordinates,cache);
 		table->SetValue(iValue, 0, currentVoxelPosition[axis]);
 		table->SetValue(iValue, 1, TGetSDFFunctor::GetSdf(voxel));
 	}
@@ -126,14 +126,13 @@ void ITMScene1DSliceVisualizer::Plot1DIndexedSceneSlice(ITMScene<TVoxel, TIndex>
 template<typename TVoxel, typename TIndex>
 void ITMScene1DSliceVisualizer::Draw1DWarpUpdateVector(ITMScene<TVoxel, TIndex>* scene, Vector4i color) {
 	// scene access variables
-	typename TIndex::IndexCache cache; int vmIndex;
-	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
-	typename TIndex::IndexData* indexData = scene->index.GetEntries();
-	TVoxel voxel = readVoxel(voxels, indexData, focusCoordinate, vmIndex, cache);
+
+	TVoxel voxel = ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ReadVoxel(scene, focusCoordinates);
+
 	float warp1D = voxel.warp[axis];
 	float warpUpdate1D = voxel.gradient0[axis];
-	float startPoint = static_cast<float>(focusCoordinate[axis]) + warp1D - warpUpdate1D;
-	float endPoint = static_cast<float>(focusCoordinate[axis]) + warp1D;
+	float startPoint = static_cast<float>(focusCoordinates[axis]) + warp1D - warpUpdate1D;
+	float endPoint = static_cast<float>(focusCoordinates[axis]) + warp1D;
 	float sdfValue = TVoxel::valueToFloat(voxel.sdf);
 
 	vtkSmartPointer<vtkFloatArray> horizontalAxisPoints = vtkSmartPointer<vtkFloatArray>::New();

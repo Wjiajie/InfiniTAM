@@ -35,7 +35,7 @@ using namespace ITMLib;
 // region ==================================== CONSTRUCTORS / DESTRUCTORS ==============================================
 
 ITMScene1DSliceVisualizer::ITMScene1DSliceVisualizer(Vector3i focusCoordinate, Axis axis, unsigned int voxelRange) :
-		focusCoordinate(focusCoordinate),
+		focusCoordinates(focusCoordinate),
 		axis(axis),
 		voxelRange(voxelRange),
 		rangeStartVoxelIndex(focusCoordinate[axis] - ((voxelRange + 1) / 2)),

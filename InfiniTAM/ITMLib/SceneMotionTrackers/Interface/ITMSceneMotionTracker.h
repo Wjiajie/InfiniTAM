@@ -95,11 +95,11 @@ public:
 	                                   bool hasFocusCoordinates, const Vector3i& focusCoordinates, int sourceFieldIndex,
 	                                   bool restrictZTrackingForDebugging) = 0;
 	virtual void SmoothWarpGradient(
-			ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
-			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, int sourceFieldIndex) = 0;
+			ITMScene<TVoxelLive, TIndex>* liveScene,
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, int sourceFieldIndex) = 0;
 	virtual float UpdateWarps(
-			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-			ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex) = 0;
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+			ITMScene<TVoxelLive, TIndex>* liveScene, int sourceSdfIndex) = 0;
 	virtual void ClearOutFramewiseWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
 	virtual void AddFramewiseWarpToWarp(
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, bool clearFramewiseWarp) = 0;

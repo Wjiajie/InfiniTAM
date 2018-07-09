@@ -775,7 +775,7 @@ bool SDFViz::MakeSlice() {
 void SDFViz::UpdateLiveSceneBounds(){
 	if(sceneLogger->GetIsActiveSceneASlice()) {
 		Vector3i minPoint, maxPoint;
-		sceneLogger->GetActiveSceneBounds(minPoint, maxPoint);
+		sceneLogger->GetActiveSceneBounds(minPoint);
 		//TODO: get rid of magic number here -Greg (GitHub: Algomorph)
 		minPoint -= Vector3i(2);
 		maxPoint += Vector3i(2);

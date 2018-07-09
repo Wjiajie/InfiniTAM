@@ -37,10 +37,10 @@
 //Local
 #include "ITMScene3DSliceVisualizer.h"
 #include "ITMScene3DSliceVisualizerCommon.h"
-#include "../../../Apps/SDFViz/SDFVizGlobalDefines.h"
 #include "ITMVisualizationCommon.h"
-#include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
 #include "ITMScene3DSliceVisualizerInteractorStyle.h"
+#include "../../Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h"
+#include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
 
 
 //TODO: alter OO design such that constructor isn't calling virual / override member functions -Greg (GitHub: Algomorph)
@@ -302,6 +302,41 @@ private:
 	vtkPoints* hashBlockPoints;
 
 };
+//
+//template<typename TVoxel, typename TVoxelDataRetriever, typename TIndex>
+//struct VoxelVisualizationStructureBuildFunctor;
+//
+//template<typename TVoxel, typename TVoxelDataRetriever>
+//struct VoxelVisualizationStructureBuildFunctor<TVoxel, TVoxelDataRetriever, ITMVoxelBlockHash> {
+//	static void BuildVisualizationStructures(vtkSmartPointer<vtkFloatArray> scaleAttribute,
+//	                                         vtkSmartPointer<vtkFloatArray> alternativeScaleAttribute,
+//	                                         vtkSmartPointer<vtkIntArray> colorAttribute,
+//	                                         vtkSmartPointer<vtkPoints> voxelPoints,
+//	                                         vtkSmartPointer<vtkPoints> hashBlockPoints, Vector3i focusCoordinates,
+//	                                         ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector6i bounds) {
+//		AddVoxelPointFunctor<TVoxel, TVoxelDataRetriever> addVoxelPointFunctor(
+//				scaleAttribute, alternativeScaleAttribute, colorAttribute, voxelPoints, hashBlockPoints,
+//				focusCoordinates);
+//		VoxelPositionAndHashEntryTraversalWithinBounds_CPU(scene, addVoxelPointFunctor, bounds);
+//	}
+//};
+//
+//
+//template<typename TVoxel, typename TVoxelDataRetriever>
+//struct VoxelVisualizationStructureBuildFunctor<TVoxel, TVoxelDataRetriever, ITMPlainVoxelArray> {
+//	static void BuildVisualizationStructures(vtkSmartPointer<vtkFloatArray> scaleAttribute,
+//	                                         vtkSmartPointer<vtkFloatArray> alternativeScaleAttribute,
+//	                                         vtkSmartPointer<vtkIntArray> colorAttribute,
+//	                                         vtkSmartPointer<vtkPoints> voxelPoints,
+//	                                         vtkSmartPointer<vtkPoints> hashBlockPoints, Vector3i focusCoordinates,
+//	                                         ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector6i bounds) {
+//		AddVoxelPointFunctor<TVoxel, TVoxelDataRetriever> addVoxelPointFunctor(
+//				scaleAttribute, alternativeScaleAttribute, colorAttribute, voxelPoints, hashBlockPoints,
+//				focusCoordinates);
+//		VoxelPositionAndHashEntryTraversalWithinBounds_CPU(scene, addVoxelPointFunctor, bounds);
+//	}
+//};
+
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 template<typename TVoxel, typename TVoxelDataRetriever>
@@ -541,7 +576,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpUpd
 }
 
 static inline
-std::string stringifyVoxelCoordinate(const Vector3i& position){
+std::string stringifyVoxelCoordinate(const Vector3i& position) {
 	std::stringstream ss;
 	ss << position;
 	return ss.str();
@@ -551,16 +586,17 @@ template<typename TVoxel>
 struct TransferSmoothingVectorsToVtkStructuresFunctor {
 public:
 	TransferSmoothingVectorsToVtkStructuresFunctor(vtkPoints* points, vtkFloatArray* vectors,
-	                                               std::unordered_map<std::string, Vector3d>* smoothingHedgehogEndpoints) :
+	                                               std::unordered_map<std::string, Vector3d>* smoothingHedgehogEndpoints)
+			:
 			points(points), vectors(vectors), smoothingHedgehogEndpoints(smoothingHedgehogEndpoints) {}
 
 	void operator()(const TVoxel& voxel, const Vector3i& position) {
 		Vector3d updateStartPoint;
 		std::string positionAsString = stringifyVoxelCoordinate(position);
 		auto iterator = smoothingHedgehogEndpoints->find(positionAsString);
-		if(iterator == smoothingHedgehogEndpoints->end()){
+		if (iterator == smoothingHedgehogEndpoints->end()) {
 			updateStartPoint = position.toDouble();
-		}else{
+		} else {
 			updateStartPoint = iterator->second;
 		}
 		//TODO: remove magic value -- use -learningRate from the settings -Greg
@@ -685,7 +721,6 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::TriggerDraw
 	conditionVariable.wait(lock, [this] { return this->smoothingVectorsDrawn; });
 	this->smoothingVectorsDrawn = false;
 }
-
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

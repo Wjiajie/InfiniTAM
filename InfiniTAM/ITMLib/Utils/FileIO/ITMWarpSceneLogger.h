@@ -59,26 +59,21 @@ public:
 	//endregion
 	// region ================================ STATIC FUNCTIONS ========================================================
 
-	static void ExtractMinMaxFromSliceStringIdentifier(const std::string& stringContainingIdentifier,
-	                                                   Vector3i& minPoint,
-	                                                   Vector3i& maxPoint);
-	static std::string GenerateSliceStringIdentifier(const Vector3i& minPoint, const Vector3i& maxPoint);
-	static fs::path GenerateSliceFolderPath(const fs::path& fullScenePath, const Vector3i& minPoint,
-	                                        const Vector3i& maxPoint);
+	static void ExtractBoundsFromSliceStringIdentifier(
+			const std::string& stringContainingIdentifier, Vector6i& bounds);
+	static std::string GenerateSliceStringIdentifier(const Vector6i& bounds);
+	static boost::filesystem::path GenerateSliceFolderPath(const fs::path& fullScenePath, const Vector6i& bounds);
 	static boost::filesystem::path GenerateSliceFolderPath(const fs::path& fullScenePath,
 		                                                       const std::string& sliceIdentifier);
 	static std::string GenerateSliceSceneFilename_UpToPostfix(const fs::path& fullScenePath,
-		                                                          const Vector3i& minPoint,
-		                                                          const Vector3i& maxPoint);
+	                                                          const Vector6i& bounds);
 	static std::string GenerateSliceSceneFilename_UpToPostfix(const fs::path& fullScenePath,
 		                                                          const std::string& sliceIdentifier);
 	static std::string GenerateSliceSceneFilename_Full(const fs::path& fullScenePath,
-		                                                   const Vector3i& minPoint,
-		                                                   const Vector3i& maxPoint);
+	                                                   const Vector6i& bounds);
 	static std::string GenerateSliceSceneFilename_Full(const fs::path& fullScenePath,
 		                                                   const std::string& sliceIdentifier);
-	static std::string GenerateSliceWarpFilename(const fs::path& rootScenePath, const Vector3i& minPoint,
-		                                             const Vector3i& maxPoint);
+	static std::string GenerateSliceWarpFilename(const fs::path& rootScenePath, const Vector6i& bounds);
 	static std::string GenerateSliceWarpFilename(const fs::path& rootScenePath,
 		                                             const std::string& sliceIdentifier);
 
@@ -86,7 +81,7 @@ public:
 	// region ================================ CONSTRUCTORS & DESTRUCTORS ==============================================
 
 	explicit ITMWarpSceneLogger(ITMScene <TVoxel, TIndex>* scene, boost::filesystem::path path);
-	explicit ITMWarpSceneLogger(const Vector3i& minPoint, const Vector3i& maxPoint, boost::filesystem::path fullScenePath);
+	explicit ITMWarpSceneLogger(const Vector6i& bounds, boost::filesystem::path fullScenePath);
 	~ITMWarpSceneLogger();
 
 	// endregion
@@ -163,8 +158,7 @@ private:
 	// *** slice parameters (optional)
 	bool isSlice = false;
 	bool sliceLoaded = false;
-	Vector3i minimum;
-	Vector3i maximum;
+	Vector6i bounds;
 	const std::string sliceIdentifier;
 	//endregion
 };

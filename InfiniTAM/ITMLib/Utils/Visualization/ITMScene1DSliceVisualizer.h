@@ -51,7 +51,7 @@ private:
 
 	ITMChartWindow* window;
 
-	const Vector3i focusCoordinate;
+	const Vector3i focusCoordinates;
 	const Axis axis;
 	const int rangeStartVoxelIndex;
 	const int rangeEndVoxelIndex;

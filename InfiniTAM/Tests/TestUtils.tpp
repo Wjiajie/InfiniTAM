@@ -46,8 +46,8 @@ void GenerateTestScene01(ITMScene<TVoxel, TIndex>* scene) {
 
 		for (int z = 0; z < surfaceSizeVoxelsZ; z++) {
 			for (int y = 0; y < surfaceSizeVoxelsY; y++) {
-				SetVoxel_CPU(scene, Vector3i(xPos, y, z), voxelPos);
-				SetVoxel_CPU(scene, Vector3i(xNeg, y, z), voxelNeg);
+				ITMSceneManipulationEngine_CPU<TVoxel,TIndex>::SetVoxel(scene, Vector3i(xPos, y, z), voxelPos);
+				ITMSceneManipulationEngine_CPU<TVoxel,TIndex>::SetVoxel(scene, Vector3i(xNeg, y, z), voxelNeg);
 			}
 		}
 	}

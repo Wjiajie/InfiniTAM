@@ -226,7 +226,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SaveCur
 					int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 					const TVoxelCanonical& voxel = localVoxelBlock[ixVoxelInHashBlock];
 					ofStream.write(reinterpret_cast<const char* >(&voxel.warp), sizeof(Vector3f));
-					//ofStream.write(reinterpret_cast<const char* >(&voxel.gradient), sizeof(Vector3f));
+					ofStream.write(reinterpret_cast<const char* >(&voxel.warp_update), sizeof(Vector3f));
 				}
 			}
 		}
@@ -238,83 +238,6 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::InterestRegionInfo::SaveCur
 // ********** MEMBERS OF THE SCENE LOGGER CLASS DIRECTLY PERTAINING TO INTEREST REGION MANAGEMENT **********************
 // *********************************************************************************************************************
 // region ======================================== SAVING SETUP & SAVING WARPS =========================================
-
-/**
- * \brief Set
- */
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving() {
-	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving(this->activeWarpLogger->highlights);
-}
-
-/**
- * \brief Set up the interest regions whose warps to save into individual files based on
- * (a) highlights (which have to be loaded / defined)
- * (b) existing canonical scene (which have to be loaded)
- *
- * \tparam TVoxelCanonical type of voxel in canonical scene
- * \tparam TVoxelLive type of voxel in live scene
- * \tparam TIndex type of voxel index structure
- */
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetUpInterestRegionsForSaving(
-		const ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>& highlights) {
-	if (this->activeWarpLogger->Empty()) {
-		DIEWITHEXCEPTION_REPORTLOCATION("Attempted to set up interest regions before loading the scenes. Aborting.");
-	}
-	interestRegionInfos.clear();
-	interestRegionInfoByHashId.clear();
-
-	const ITMHashEntry* hashBlocks = activeWarpLogger->scene->index.GetEntries();
-	int hashBlockCount = activeWarpLogger->scene->index.noTotalEntries;
-
-	//traverse hash blocks where anomalies/errors/oscillations occur
-	for (int centerHashId : highlights.GetOuterLevelKeys()) {
-		const ITMHashEntry& currentHashBlock = hashBlocks[centerHashId];
-		if (currentHashBlock.ptr < 0) {
-			throw std::runtime_error("Got hash Id " + std::to_string(centerHashId) +
-			                         " in the highlights that doesn't correspond to a populated block in the scene. ["
-					                         __FILE__  ": " + std::to_string(__LINE__) + "]");
-		}
-		std::vector<int> regionHashIds;
-		Vector3s centerBlockPos = currentHashBlock.pos;
-
-		//traverse neighborhood of the interest hash block in a predefined order
-		std::shared_ptr<InterestRegionInfo> overlappingRegion;
-		std::set<int> nonOverlappingHashes;
-		overlappingRegion.reset();
-		for (Vector3s offset : InterestRegionInfo::blockTraversalOrder) {
-			int hash = FindHashBlock(hashBlocks, centerBlockPos + offset);
-			if (hash >= 0 && hash < hashBlockCount && hashBlocks[hash].ptr >= 0) {
-				regionHashIds.push_back(hash);
-				//hash is in another interest region, a merge is necessary to ensure there is no overlap between regions
-				if (interestRegionInfoByHashId.find(hash) != interestRegionInfoByHashId.end()) {
-					overlappingRegion = interestRegionInfoByHashId[hash];
-					overlappingRegion->hashBlockIds.push_back(hash);
-					overlappingRegion->voxelCount += SDF_BLOCK_SIZE3;
-				} else {
-					nonOverlappingHashes.insert(hash);
-				}
-			}
-		}
-		if (overlappingRegion) {
-			//overlapping with 'some other region(s)', insert the remaining hashes into one of them
-			for (int hash : nonOverlappingHashes) {
-				overlappingRegion->hashBlockIds.push_back(hash);
-				overlappingRegion->voxelCount += SDF_BLOCK_SIZE3;
-			}
-			overlappingRegion->RewriteHeader();
-		} else {
-			std::shared_ptr<InterestRegionInfo> info(new InterestRegionInfo(regionHashIds, centerHashId, *this));
-			//instert the same region into map by the hash blocks it contains
-			for (int regionHashBlockId : regionHashIds) {
-				interestRegionInfoByHashId[regionHashBlockId] = info;
-			}
-			interestRegionInfos.push_back(info);
-		}
-	}
-	interestRegionsHaveBeenSetUp = true;
-}
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveAllInterestRegionWarps() {

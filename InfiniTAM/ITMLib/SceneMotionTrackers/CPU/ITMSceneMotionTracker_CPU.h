@@ -78,10 +78,12 @@ public:
 	                           ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, bool hasFocusCoordinates,
 	                           const Vector3i& focusCoordinates, int sourceFieldIndex,
 	                           bool restrictZTrackingForDebugging) override;
-	void SmoothWarpGradient(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) override;
+	void SmoothWarpGradient(ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene,
+	                        ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
+	                        int sourceFieldIndex) override;
 	float UpdateWarps(
 			ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-			ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene) override;
+			ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex) override;
 
 	void ResetWarps(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) override;
 

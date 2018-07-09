@@ -137,7 +137,7 @@ public:
 	const ITMScene<TVoxelLive, TIndex>* GetLiveScene() const;
 	bool GetIsActiveSceneASlice() const;
 	std::vector<std::string> GetSliceIds() const;
-	void GetActiveSceneBounds(Vector3i& minPoint, Vector3i& maxPoint) const;
+	void GetActiveSceneBounds(Vector6i& bounds) const;
 
 	//*** scene loading/saving
 	bool SaveScenes();
@@ -153,9 +153,6 @@ public:
 	bool LoadHighlights(bool applyFilters = true, std::string filePostfix = "");
 	void FilterHighlights(int anomalyFrameCountMinimum);
 
-	//*** saving multi-hash interest regions
-	void SetUpInterestRegionsForSaving();
-	void SetUpInterestRegionsForSaving(const ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>& highlights);
 	void SaveAllInterestRegionWarps();
 	void SetUpInterestRegionsForLoading();
 	bool BufferInterestWarpStateAtIteration(void* externalBuffer, unsigned int iterationIndex);
@@ -199,10 +196,10 @@ public:
 	std::vector<std::string> LoadAllSlices();
 private:
 // region === MEMBER FUNCTIONS ===
-	void SaveSliceWarp(const Vector3i& minPoint, const Vector3i& maxPoint,
-		                   const boost::filesystem::path& path);
+	void SaveSliceWarp(const Vector6i& voxelRange,
+	                   const boost::filesystem::path& path);
 	ITM3DNestedMapOfArrays <ITMHighlightIterationInfo>
-	MakeSliceHighlights(const Vector3i& minPoint, const Vector3i& maxPoint);
+	MakeSliceHighlights(const Vector6i& bounds);
 	bool CheckPath();
 
 // endregion

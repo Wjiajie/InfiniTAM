@@ -177,6 +177,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::SetVoxel(ITMSce
 	scene->localVBA.GetVoxelBlocks()[arrayIndex] = voxel;
 }
 
+
 template<typename TVoxel>
 TVoxel ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
                                                                             Vector3i at) {
@@ -185,6 +186,34 @@ TVoxel ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMS
 	int vmIndex;
 	return readVoxel(voxels, hashTable, at, vmIndex);
 }
+
+template<typename TVoxel>
+TVoxel ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
+                                                                            Vector3i at,
+                                                                            ITMVoxelBlockHash::IndexCache& cache) {
+	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
+	ITMHashEntry* hashTable = scene->index.GetEntries();
+	int vmIndex;
+	return readVoxel(voxels, hashTable, at, vmIndex, cache);
+}
+
+template<typename TVoxel>
+TVoxel
+ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+                                                                      Vector3i at) {
+	int index = ComputeLinearIndexFromPosition_PlainVoxelArray(scene, at);
+	return scene->localVBA.GetVoxelBlocks()[index];
+}
+
+template<typename TVoxel>
+TVoxel
+ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+                                                                      Vector3i at,
+                                                                      ITMPlainVoxelArray::IndexCache& cache) {
+	int index = ComputeLinearIndexFromPosition_PlainVoxelArray(scene, at);
+	return scene->localVBA.GetVoxelBlocks()[index];
+}
+
 
 template<typename TVoxel, typename TIndex, bool hasWarpInformation>
 struct OffsetWarpsFunctor;
@@ -261,7 +290,7 @@ void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::OffsetWarps(ITMS
 template<typename TVoxel>
 bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 		ITMScene<TVoxel, ITMVoxelBlockHash>* destination, ITMScene<TVoxel, ITMVoxelBlockHash>* source,
-		Vector3i minPoint, Vector3i maxPoint) {
+		Vector6i bounds) {
 
 	// prep destination scene
 	ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(destination);
@@ -285,8 +314,8 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 		const ITMHashEntry& currentOriginalHashEntry = sourceHashTable[sourceHash];
 		if (currentOriginalHashEntry.ptr < 0) continue;
 		Vector3i originalHashBlockPosition = currentOriginalHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-		if (IsHashBlockFullyInRange(originalHashBlockPosition, minPoint, maxPoint) ||
-		    IsHashBlockPartiallyInRange(originalHashBlockPosition, minPoint, maxPoint)) {
+		if (IsHashBlockFullyInRange(originalHashBlockPosition, bounds) ||
+		    IsHashBlockPartiallyInRange(originalHashBlockPosition, bounds)) {
 			int destinationHash = hashIndex(currentOriginalHashEntry.pos);
 			bool collisionDetected = false;
 			MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, destinationHash,
@@ -313,14 +342,14 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 		Vector3i sourceHashBlockPositionVoxels = sourceHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 		TVoxel* localSourceVoxelBlock = &(sourceVoxels[sourceHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 		TVoxel* localDestinationVoxelBlock = &(destinationVoxels[destinationHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-		if (IsHashBlockFullyInRange(sourceHashBlockPositionVoxels, minPoint, maxPoint)) {
+		if (IsHashBlockFullyInRange(sourceHashBlockPositionVoxels, bounds)) {
 			//we can safely copy the whole block
 			memcpy(localDestinationVoxelBlock, localSourceVoxelBlock, sizeof(TVoxel) * SDF_BLOCK_SIZE3);
 			newSceneContainsVoxels = true;
-		} else if (IsHashBlockPartiallyInRange(sourceHashBlockPositionVoxels, minPoint, maxPoint)) {
+		} else if (IsHashBlockPartiallyInRange(sourceHashBlockPositionVoxels, bounds)) {
 			int zRangeStart, zRangeEnd, yRangeStart, yRangeEnd, xRangeStart, xRangeEnd;
 			ComputeCopyRanges(xRangeStart, xRangeEnd, yRangeStart, yRangeEnd, zRangeStart, zRangeEnd,
-			                  sourceHashBlockPositionVoxels, minPoint, maxPoint);
+			                  sourceHashBlockPositionVoxels, bounds);
 			for (int z = zRangeStart; z < zRangeEnd; z++) {
 				for (int y = yRangeStart; y < yRangeEnd; y++) {
 					for (int x = xRangeStart; x < xRangeEnd; x++) {
@@ -336,12 +365,13 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 	return newSceneContainsVoxels;
 }
 
+
 template<typename TVoxel>
 bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopySceneSlice(
 		ITMScene<TVoxel, ITMPlainVoxelArray>* destination, ITMScene<TVoxel, ITMPlainVoxelArray>* source,
-		Vector3i minPoint, Vector3i maxPoint) {
+		Vector6i bounds) {
 
-	if(source->index.getVolumeSize() != destination->index.getVolumeSize()){
+	if (source->index.getVolumeSize() != destination->index.getVolumeSize()) {
 		DIEWITHEXCEPTION_REPORTLOCATION("The two scenes must have equal size");
 	}
 
@@ -352,23 +382,15 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopySceneSlice(
 	TVoxel* sourceVoxels = source->localVBA.GetVoxelBlocks();
 	TVoxel* destinationVoxels = destination->localVBA.GetVoxelBlocks();
 
-	for (int z = minPoint.z; z < maxPoint.z; z++){
-		for(int y = minPoint.y; y < maxPoint.y; y++){
-			for(int x = minPoint.x; x < minPoint.x; x++){
+	for (int z = bounds.min_z; z < bounds.max_z; z++) {
+		for (int y = bounds.min_y; y < bounds.max_y; y++) {
+			for (int x = bounds.min_x; x < bounds.max_x; x++) {
 				int linearIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(source, x, y, z);
 				memcpy(&destinationVoxels[linearIndex], &sourceVoxels[linearIndex], sizeof(TVoxel));
 			}
 		}
 	}
 	return true;
-}
-
-template<typename TVoxel>
-TVoxel
-ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
-                                                                      Vector3i at) {
-	int index = ComputeLinearIndexFromPosition_PlainVoxelArray(scene, at);
-	return scene->localVBA.GetVoxelBlocks()[index];
 }
 
 
@@ -384,7 +406,6 @@ void ITMLib::ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ResetSc
 	for (int i = 0; i < numBlocks; ++i) vbaAllocationList_ptr[i] = i;
 	scene->localVBA.lastFreeBlockId = numBlocks - 1;
 }
-
 
 
 }//namespace ITMLib

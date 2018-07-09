@@ -148,6 +148,28 @@ VoxelPositionTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* sce
 	}
 };
 
+template<typename TFunctor, typename TVoxel>
+inline void
+VoxelPositionAndHashEntryTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor,
+                                       Vector6i bounds) {
+	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
+	int voxelCount = scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
+
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+	for (int z = bounds.min_z; z < bounds.max_z; z++) {
+		for (int y = bounds.min_y; y < bounds.max_y; y++) {
+			for (int x = bounds.min_x; x < bounds.max_x; x++) {
+				Vector3i position(x, y, z);
+				int linearIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(scene, x, y, z);
+				TVoxel& voxel = voxels[linearIndex];
+				functor(voxel, position);
+			}
+		}
+	}
+};
+
 // endregion ===========================================================================================================
 
 // region ================================ STATIC SINGLE-SCENE TRAVERSAL ===============================================
@@ -264,7 +286,7 @@ inline void DualVoxelPositionTraversal_CPU_SingleThreaded(
 		ITMScene<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
 		TFunctor& functor) {
 	assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
-// *** traversal vars
+	// *** traversal vars
 	TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 	TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 	//asserted to be the same
@@ -276,7 +298,6 @@ inline void DualVoxelPositionTraversal_CPU_SingleThreaded(
 		TVoxelPrimary& primaryVoxel = primaryScene[linearIndex];
 		TVoxelSecondary& secondaryVoxel = secondaryScene[linearIndex];
 		functor(primaryVoxel, secondaryVoxel, voxelPosition);
-
 	}
 }
 // endregion ===========================================================================================================
