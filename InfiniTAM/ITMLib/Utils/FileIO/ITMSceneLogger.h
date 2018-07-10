@@ -61,49 +61,6 @@ public:
 //endregion
 // region === PUBLIC INNER CLASSES ===
 
-	/**
-	 * \brief cube-shaped interest region with fixed edge length consistent of hash blocks within the scene
-	 */
-	class InterestRegionInfo {
-		friend class ITMSceneLogger;
-	public:
-		static const Vector3s blockTraversalOrder[];
-		static const std::string prefix;
-
-		InterestRegionInfo(std::vector<int>& hashBlockIds, int centerHashBlockId,
-		                   ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>& parent);
-		InterestRegionInfo(fs::path path, ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>& parent);
-
-
-		void SaveCurrentWarpState();
-
-		bool BufferCurrentWarpState(void* externalBuffer);
-		bool SeekPrevious();
-		bool SeekAt(unsigned int cursor);
-		unsigned int GetIterationCursor() const;
-		size_t GetIterationWarpBytesize() const;
-
-		const std::vector<int>& GetHashes() const;
-
-
-		virtual ~InterestRegionInfo();
-
-	private:
-		void RewriteHeader();
-		// ** member variables **
-		bool isLoading = false;
-		bool isSaving = false;
-		int centerHashBlockId;
-		std::vector<int> hashBlockIds;
-		fs::path path;
-		std::ofstream ofStream;
-		std::ifstream ifStream;
-		ITMSceneLogger& parent;
-		unsigned int iterationCursor = 0;
-		int voxelCount;
-
-	};
-
 //endregion
 // region === CONSTRUCTORS / DESTRUCTORS ===
 	ITMSceneLogger(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
@@ -129,8 +86,7 @@ public:
 	bool GetInterestRegionsSetUp() const;
 	Mode GetMode() const;
 	unsigned int GetGeneralIterationCursor() const;
-	unsigned int GetInterestIterationCursor() const;
-	const std::map<int, std::shared_ptr<InterestRegionInfo>>& GetInterestRegionsByHash();
+
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> GetHighlights() const;
 	std::vector<int> GetInterestRegionHashes() const;
 	const ITMScene<TVoxelCanonical, TIndex>* GetActiveWarpScene() const;
@@ -217,20 +173,11 @@ private:
 	ITMScene<TVoxelLive, TIndex>* liveScene;
 
 // *** scene meta-information + reading/writing
-	// map of hash blocks to voxels, voxels to frame numbers, frame numbers to iteration numbers
-
-	std::map<int, std::shared_ptr<InterestRegionInfo>> interestRegionInfoByHashId;
-	std::vector<std::shared_ptr<InterestRegionInfo>> interestRegionInfos;
 	std::map<std::string, ITMWarpSceneLogger<TVoxelCanonical, TIndex>*> slices;
 
 // *** state ***
 	Mode mode;
-	bool interestRegionsHaveBeenSetUp = false;
 
-	//TODO: the way these update numbers are tracked are less than ideal (see comment below) -Greg (GitHub: Algomorph)
-	// There is no way to ensure proper iteration number, since it is not kept track of in the scene.
-	// It would be ideal to extend the scene class and log that number there, since it reflects the state of the scene.
-	unsigned int interestIterationCursor = 0;
 
 
 // endregion

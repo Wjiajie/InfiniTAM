@@ -24,6 +24,7 @@
 #include "../../Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../../Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h"
 #include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
+#include "../../Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 
 
 using namespace ITMLib;
@@ -149,16 +150,14 @@ std::string ITMWarpSceneLogger<TVoxel, TIndex>::GenerateSliceSceneFilename_UpToP
 template<typename TVoxel, typename TIndex>
 std::string ITMWarpSceneLogger<TVoxel, TIndex>::GenerateSliceSceneFilename_Full(const fs::path& fullScenePath,
                                                                                 const Vector6i& bounds) {
-	return GenerateSliceSceneFilename_UpToPostfix(fullScenePath, bounds)
-	       + ITMScene<TVoxel, TIndex>::compactFilePostfixAndExtension;
+	return GenerateSliceSceneFilename_UpToPostfix(fullScenePath, bounds) + compactFilePostfixAndExtension;
 }
 
 template<typename TVoxel, typename TIndex>
 std::string
 ITMWarpSceneLogger<TVoxel, TIndex>::GenerateSliceSceneFilename_Full(const fs::path& fullScenePath,
                                                                     const std::string& sliceIdentifier) {
-	return GenerateSliceSceneFilename_UpToPostfix(fullScenePath, sliceIdentifier)
-	       + ITMScene<TVoxel, TIndex>::compactFilePostfixAndExtension;
+	return GenerateSliceSceneFilename_UpToPostfix(fullScenePath, sliceIdentifier) + compactFilePostfixAndExtension;
 }
 
 template<typename TVoxel, typename TIndex>
@@ -292,7 +291,7 @@ void ITMWarpSceneLogger<TVoxel, TIndex>::Save() {
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpSceneLogger<TVoxel, TIndex>::SaveCompact() {
-	scene->SaveToDirectoryCompact_CPU(scenePath.c_str());
+	ITMSceneFileIOEngine<TVoxel,TIndex>::SaveToDirectoryCompact(scene,scenePath.string());
 	ITMSceneStatisticsCalculator<TVoxel, TIndex> statisticsCalculator;
 	this->voxelCount = statisticsCalculator.ComputeAllocatedVoxelCount(scene);
 }
@@ -300,7 +299,7 @@ void ITMWarpSceneLogger<TVoxel, TIndex>::SaveCompact() {
 template<typename TVoxel, typename TIndex>
 void ITMWarpSceneLogger<TVoxel, TIndex>::LoadCompact() {
 	ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ResetScene(scene);
-	scene->LoadFromDirectoryCompact_CPU(scenePath.c_str());
+	ITMSceneFileIOEngine<TVoxel,TIndex>::LoadFromDirectoryCompact(scene,scenePath.string());
 	ITMSceneStatisticsCalculator<TVoxel, TIndex> statisticsCalculator;
 	this->voxelCount = statisticsCalculator.ComputeAllocatedVoxelCount(scene);
 }
@@ -409,6 +408,20 @@ private:
 	std::ofstream* warpOFStream;
 	const size_t warpByteSize;
 	const size_t updateByteSize;
+};
+
+//TODO: experimental replacement candidate -Greg
+template<typename TVoxel>
+struct WarpAndUpdateWriteFunctor_Experimental {
+	WarpAndUpdateWriteFunctor_Experimental(std::ofstream* warpOFStream) : warpOFStream(warpOFStream) {}
+
+	void operator()(TVoxel& voxel) {
+		warpOFStream->write(reinterpret_cast<const char* >(&voxel.warp), sizeof(voxel.warp));
+		warpOFStream->write(reinterpret_cast<const char* >(&voxel.warp_update), sizeof(voxel.warp_update));
+	}
+
+private:
+	std::ofstream* warpOFStream;
 };
 
 

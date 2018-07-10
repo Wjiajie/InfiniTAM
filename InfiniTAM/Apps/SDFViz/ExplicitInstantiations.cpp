@@ -14,7 +14,7 @@
 //  limitations under the License.
 //  ================================================================
 
-#include "../../ITMLib/Utils/Visualization/ITMScene3DSliceVisualizer.tpp"
+#include "../../ITMLib/Utils/Visualization/ITMSceneSliceVisualizer3D.tpp"
 #include "../../ITMLib/ITMLibDefines.h"
 
 

@@ -20,8 +20,8 @@
 #include <vtkPNGWriter.h>
 
 //local
-#include "ITMScene1DSliceVisualizer.h"
-#include "ITMScene1DSliceVisualizer.tpp"
+#include "ITMSceneSliceVisualizer1D.h"
+#include "ITMSceneSliceVisualizer1D.tpp"
 #include "../../Objects/Scene/ITMScene.h"
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../ITMPrintHelpers.h"
@@ -34,18 +34,18 @@ using namespace ITMLib;
 
 // region ==================================== CONSTRUCTORS / DESTRUCTORS ==============================================
 
-ITMScene1DSliceVisualizer::ITMScene1DSliceVisualizer(Vector3i focusCoordinate, Axis axis, unsigned int voxelRange) :
+ITMSceneSliceVisualizer1D::ITMSceneSliceVisualizer1D(Vector3i focusCoordinate, Axis axis, unsigned int voxelRange) :
 		focusCoordinates(focusCoordinate),
 		axis(axis),
 		voxelRange(voxelRange),
 		rangeStartVoxelIndex(focusCoordinate[axis] - ((voxelRange + 1) / 2)),
 		rangeEndVoxelIndex(focusCoordinate[axis] + (voxelRange / 2)),
 		window(ITMVisualizationWindowManager::Instance().MakeOrGetChartWindow(
-				"Scene1DSliceVisualizer_" + AxisToString(axis),
+				"SceneSliceVisualizer1D_" + AxisToString(axis),
 				"Scene 1D Slice Visualizer for " + AxisToString(axis) + " Axis")){}
 
 //TODO: DRY violation -- same code as EnergyPlotter -- group into single class hierarchy with shared methods
-void ITMScene1DSliceVisualizer::SaveScreenshot(std::string path) {
+void ITMSceneSliceVisualizer1D::SaveScreenshot(std::string path) {
 	vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter = vtkSmartPointer<vtkWindowToImageFilter>::New();
 	vtkSmartPointer<vtkRenderWindow> renderWindow = window->GetRenderWindow();
 	windowToImageFilter->SetInput(renderWindow);
@@ -63,19 +63,19 @@ void ITMScene1DSliceVisualizer::SaveScreenshot(std::string path) {
 // region ==================================== EXPLICIT INSTANTIATIONS =================================================
 
 template void
-ITMScene1DSliceVisualizer::Plot1DSceneSlice<ITMVoxelCanonical, ITMVoxelIndex>(
+ITMSceneSliceVisualizer1D::Plot1DSceneSlice<ITMVoxelCanonical, ITMVoxelIndex>(
 		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene, Vector4i color, double width);
 
 template void
-ITMScene1DSliceVisualizer::Plot1DSceneSlice<ITMVoxelLive, ITMVoxelIndex>(ITMScene<ITMVoxelLive, ITMVoxelIndex>* scene,
+ITMSceneSliceVisualizer1D::Plot1DSceneSlice<ITMVoxelLive, ITMVoxelIndex>(ITMScene<ITMVoxelLive, ITMVoxelIndex>* scene,
                                                                          Vector4i color, double width);
 
 template void
-ITMScene1DSliceVisualizer::Plot1DIndexedSceneSlice<ITMVoxelLive, ITMVoxelIndex>(
+ITMSceneSliceVisualizer1D::Plot1DIndexedSceneSlice<ITMVoxelLive, ITMVoxelIndex>(
 		ITMScene<ITMVoxelLive, ITMVoxelIndex>* scene, Vector4i color, double width, int fieldIndex);
 
 template void
-ITMScene1DSliceVisualizer::Draw1DWarpUpdateVector<ITMVoxelCanonical, ITMVoxelIndex>(
+ITMSceneSliceVisualizer1D::Draw1DWarpUpdateVector<ITMVoxelCanonical, ITMVoxelIndex>(
 		ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* scene, Vector4i color);
 
 //======================================================================================================================

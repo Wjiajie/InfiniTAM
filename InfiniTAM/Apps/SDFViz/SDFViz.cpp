@@ -53,7 +53,7 @@
 #include <vtk-8.1/vtkOrientationMarkerWidget.h>
 
 //local
-#include "../../ITMLib/Utils/Visualization/ITMScene3DSliceVisualizer.h"
+#include "../../ITMLib/Utils/Visualization/ITMSceneSliceVisualizer3D.h"
 #include "SDFVizInteractorStyle.h"
 
 //ITMLib
@@ -61,7 +61,7 @@
 #include "../../ITMLib/Utils/ITMLibSettings.h"
 #include "../../ITMLib/Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "SDFVizGlobalDefines.h"
-#include "../../ITMLib/Utils/Visualization/ITMScene3DSliceVisualizerCommon.h"
+#include "../../ITMLib/Utils/Visualization/ITMSceneSliceVisualizer3DCommon.h"
 //TODO: organize regions -Greg (GitHub: Algomorph)
 
 using namespace ITMLib::Viz;

@@ -30,7 +30,7 @@
 #include <vtk-8.1/vtkOrientationMarkerWidget.h>
 
 //local
-#include "../../ITMLib/Utils/Visualization/ITMScene3DSliceVisualizer.tpp"
+#include "../../ITMLib/Utils/Visualization/ITMSceneSliceVisualizer3D.tpp"
 
 //ITMLib
 #include "../../ITMLib/ITMLibDefines.h"
@@ -116,7 +116,7 @@ private:
 
 	// *** Voxel viz
 	ITMCanonicalScene3DSliceVisualizer_Deprecated canonicalScenePipe;
-	ITMScene3DSliceVisualizer<ITMVoxelLive, ITMVoxelIndex> liveScenePipe;
+	ITMSceneSliceVisualizer3D<ITMVoxelLive, ITMVoxelIndex> liveScenePipe;
 	HighlightVisualization highlightVisualizer;
 	vtkSmartPointer<vtkSphereSource> sphere;
 	vtkSmartPointer<vtkCubeSource> cube;

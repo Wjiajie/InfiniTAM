@@ -111,7 +111,7 @@ void VoxelAndHashBlockPositionTraversal_CPU(ITMScene<TVoxel, ITMVoxelBlockHash>*
 };
 
 inline bool HashBlockDoesNotIntersectBounds(const Vector3i& hashEntryMinPoint, const Vector3i& hashEntryMaxPoint,
-                                            const Vector6i& bounds){
+                                            const Vector6i& bounds) {
 	return hashEntryMaxPoint.x < bounds.min_x ||
 	       hashEntryMaxPoint.y < bounds.min_y ||
 	       hashEntryMaxPoint.z < bounds.min_z ||
@@ -122,17 +122,18 @@ inline bool HashBlockDoesNotIntersectBounds(const Vector3i& hashEntryMinPoint, c
 
 inline
 Vector6i computeLocalBounds(const Vector3i& hashEntryMinPoint, const Vector3i& hashEntryMaxPoint,
-                            const Vector6i& bounds){
+                            const Vector6i& bounds) {
 	return Vector6i(std::max(0, bounds.min_x - hashEntryMinPoint.x),
-	                     std::max(0, bounds.min_y - hashEntryMinPoint.y),
-	                     std::max(0, bounds.min_z - hashEntryMinPoint.z),
-	                     std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.x - bounds.max_x)),
-	                     std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.y - bounds.max_y)),
-	                     std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.z - bounds.max_z)));
+	                std::max(0, bounds.min_y - hashEntryMinPoint.y),
+	                std::max(0, bounds.min_z - hashEntryMinPoint.z),
+	                std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.x - bounds.max_x)),
+	                std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.y - bounds.max_y)),
+	                std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.z - bounds.max_z)));
 }
 
 template<typename TFunctor, typename TVoxel>
-inline void VoxelTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor, Vector6i bounds) {
+inline void
+VoxelTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor, Vector6i bounds) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
@@ -144,10 +145,10 @@ inline void VoxelTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMVoxelBlockHash>* 
 		if (currentHashEntry.ptr < 0) continue;
 		Vector3i hashEntryMinPoint = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 		Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(SDF_BLOCK_SIZE);
-		if (HashBlockDoesNotIntersectBounds(hashEntryMinPoint,hashEntryMaxPoint,bounds)){
+		if (HashBlockDoesNotIntersectBounds(hashEntryMinPoint, hashEntryMaxPoint, bounds)) {
 			continue;
 		}
-		Vector6i localBounds = computeLocalBounds(hashEntryMinPoint,hashEntryMaxPoint,bounds);
+		Vector6i localBounds = computeLocalBounds(hashEntryMinPoint, hashEntryMaxPoint, bounds);
 		TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 		for (int z = localBounds.min_z; z < localBounds.max_z; z++) {
 			for (int y = localBounds.min_y; y < localBounds.max_y; y++) {
@@ -176,10 +177,10 @@ VoxelPositionTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMVoxelBlockHash>* scen
 		if (currentHashEntry.ptr < 0) continue;
 		Vector3i hashEntryMinPoint = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 		Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(SDF_BLOCK_SIZE);
-		if (HashBlockDoesNotIntersectBounds(hashEntryMinPoint,hashEntryMaxPoint,bounds)){
+		if (HashBlockDoesNotIntersectBounds(hashEntryMinPoint, hashEntryMaxPoint, bounds)) {
 			continue;
 		}
-		Vector6i localBounds = computeLocalBounds(hashEntryMinPoint,hashEntryMaxPoint,bounds);
+		Vector6i localBounds = computeLocalBounds(hashEntryMinPoint, hashEntryMaxPoint, bounds);
 		TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 		//position of the current entry in 3D space (in voxel units)
 		Vector3i hashEntryPosition = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
@@ -200,7 +201,8 @@ VoxelPositionTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMVoxelBlockHash>* scen
 
 template<typename TFunctor, typename TVoxel>
 inline void
-VoxelPositionAndHashEntryTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor, Vector6i bounds) {
+VoxelPositionAndHashEntryTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor,
+                                                   Vector6i bounds) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
@@ -212,10 +214,10 @@ VoxelPositionAndHashEntryTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMVoxelBloc
 		if (currentHashEntry.ptr < 0) continue;
 		Vector3i hashEntryMinPoint = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 		Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(SDF_BLOCK_SIZE);
-		if (HashBlockDoesNotIntersectBounds(hashEntryMinPoint,hashEntryMaxPoint,bounds)){
+		if (HashBlockDoesNotIntersectBounds(hashEntryMinPoint, hashEntryMaxPoint, bounds)) {
 			continue;
 		}
-		Vector6i localBounds = computeLocalBounds(hashEntryMinPoint,hashEntryMaxPoint,bounds);
+		Vector6i localBounds = computeLocalBounds(hashEntryMinPoint, hashEntryMaxPoint, bounds);
 
 		functor.processHashEntry(currentHashEntry);
 

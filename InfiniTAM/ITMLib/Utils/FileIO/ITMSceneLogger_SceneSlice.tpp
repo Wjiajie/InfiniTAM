@@ -26,6 +26,8 @@
 #include "ITMSceneLogger.h"
 #include "../ITMLibSettings.h"
 #include "../../Engines/Manipulation/ITMSceneManipulation.h"
+#include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
+#include "../../Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h"
 
 using namespace ITMLib;
 
@@ -99,10 +101,6 @@ void
 ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector6i& voxelRange,
                                                                    const boost::filesystem::path& path) {
 
-	int totalHashEntryCount = fullCanonicalSceneLogger->scene->index.noTotalEntries;
-	TVoxelCanonical* voxels = fullCanonicalSceneLogger->scene->localVBA.GetVoxelBlocks();
-	const ITMHashEntry* hashTable = fullCanonicalSceneLogger->scene->index.GetEntries();
-
 	std::ofstream sliceWarpOfstream(path.c_str(), std::ofstream::binary | std::ofstream::out);
 	if (!sliceWarpOfstream){
 		throw std::runtime_error("Could not open '" + path.string() + "' for writing. ["  __FILE__  ": " +
@@ -118,34 +116,13 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector6
 	fullCanonicalSceneLogger->StartLoadingWarpState();
 	int zRangeStart, zRangeEnd, yRangeStart, yRangeEnd, xRangeStart, xRangeEnd;
 
-	WarpAndUpdateWriteFunctor warpAndUpdateWriteFunctor(&sliceWarpOfstream, sizeof(Vector3f),sizeof(Vector3f));
+	WarpAndUpdateWriteFunctor<TVoxelCanonical> warpAndUpdateWriteFunctor(&sliceWarpOfstream, sizeof(Vector3f),sizeof(Vector3f));
 
 	while (fullCanonicalSceneLogger->LoadCurrentWarpState()) {
 		unsigned int sliceIterationCursor = fullCanonicalSceneLogger->GetIterationCursor();
 		sliceWarpOfstream.write(reinterpret_cast<const char* >(&sliceIterationCursor), sizeof(sliceIterationCursor));
-		for (int hash = 0; hash < totalHashEntryCount; hash++) {
-			const ITMHashEntry& hashEntry = hashTable[hash];
-			if (hashEntry.ptr < 0) continue;
 
-			//position of the current entry in 3D space (in voxel units)
-			Vector3i hashBlockPositionVoxels = hashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-			const TVoxelCanonical* localVoxelBlock = &(voxels[hashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-
-			//if no voxels in the block are within range, skip
-			if (IsHashBlockFullyInRange(hashBlockPositionVoxels, voxelRange) ||
-			    IsHashBlockPartiallyInRange(hashBlockPositionVoxels, voxelRange)) {
-				for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-					for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-						for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-							int ixVoxelInHashBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-							const TVoxelCanonical& voxel = localVoxelBlock[ixVoxelInHashBlock];
-							sliceWarpOfstream.write(reinterpret_cast<const char* >(&voxel.warp),sizeof(Vector3f));
-							sliceWarpOfstream.write(reinterpret_cast<const char* >(&voxel.gradient), sizeof(Vector3f));
-						}
-					}
-				}
-			}
-		}
+		VoxelTraversalWithinBounds_CPU(fullCanonicalSceneLogger->scene, warpAndUpdateWriteFunctor, voxelRange);
 	}
 	sliceWarpOfstream.close();
 	fullCanonicalSceneLogger->StopLoadingWarpState();

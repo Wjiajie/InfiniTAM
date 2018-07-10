@@ -30,10 +30,10 @@ class vtkChartXY;
 
 
 namespace ITMLib{
-class ITMScene1DSliceVisualizer {
+class ITMSceneSliceVisualizer1D {
 public:
-	ITMScene1DSliceVisualizer(Vector3i focusCoordinate, Axis axis, unsigned int voxelRange);
-	~ITMScene1DSliceVisualizer() = default;
+	ITMSceneSliceVisualizer1D(Vector3i focusCoordinate, Axis axis, unsigned int voxelRange);
+	~ITMSceneSliceVisualizer1D() = default;
 
 
 	template<typename TVoxel, typename TIndex>

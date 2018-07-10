@@ -217,8 +217,14 @@ set(ITMLIB_ENGINES_RECONSTRUCTION_SHARED_HEADERS
     Engines/Reconstruction/Shared/ITMDynamicHashManagementEngine_Shared.h
     Engines/Reconstruction/Shared/ITMSurfelSceneReconstructionEngine_Shared.h
     )
-
-##
+## ======================================= SCENE FILE IO ENGINES =======================================================
+set(ITMLIB_ENGINES_SCENEFILEIO_HEADERS
+    Engines/SceneFileIO/ITMSceneFileIOEngine.h
+    )
+set(ITMLIB_ENGINES_SCENEFILEIO_SOURCES
+    Engines/SceneFileIO/ITMSceneFileIOEngine.tpp
+    )
+## ======================================= SWAPPING ENGINES ============================================================
 set(ITMLIB_ENGINES_SWAPPING_HEADERS
     Engines/Swapping/ITMSwappingEngineFactory.h
     )
@@ -251,7 +257,7 @@ set(ITMLIB_ENGINES_SWAPPING_SHARED_HEADERS
     Engines/Swapping/Shared/ITMSwappingEngine_Shared.h
     )
 
-##
+## ======================================== VIEW-BUILDNG ENGINES =======================================================
 set(ITMLIB_ENGINES_VIEWBUILDING_SOURCES
     Engines/ViewBuilding/ITMViewBuilderFactory.cpp
     )
@@ -346,7 +352,7 @@ set(ITMLIB_ENGINES_VISUALISATION_SHARED_HEADERS
     Engines/Visualisation/Shared/ITMVisualisationEngine_Shared.h
     )
 
-##
+## ================================================== OBJECTS ==========================================================
 set(ITMLIB_OBJECTS_CAMERA_SOURCES
     Objects/Camera/ITMCalibIO.cpp
     )
@@ -577,7 +583,6 @@ set(ITMLIB_UTILS_HEADERS
 set(ITMLIB_UTILS_FILEIO_SOURCES
     Utils/FileIO/ITMSceneLogger.tpp
     Utils/FileIO/ITMDynamicFusionLogger.cpp
-    Utils/FileIO/ITMSceneLogger_InterestRegionInfo.tpp
     Utils/FileIO/ITMSceneLogger_SceneSlice.tpp
     Utils/FileIO/ITMWarpSceneLogger.tpp)
 
@@ -588,29 +593,28 @@ set (ITMLIB_UTILS_FILEIO_HEADERS
 ##
 
 set(ITMLIB_UTILS_VISUALIZATION_SOURCES
-    Utils/Visualization/ITMScene2DSliceVisualizer.tpp
-    Utils/Visualization/ITMScene2DSliceVisualizer.cpp
-    Utils/Visualization/ITMScene1DSliceVisualizer.cpp
-    Utils/Visualization/ITMScene1DSliceVisualizer.tpp
+    Utils/Visualization/ITMSceneSliceVisualizer2D.tpp
+    Utils/Visualization/ITMSceneSliceVisualizer2D.cpp
+    Utils/Visualization/ITMSceneSliceVisualizer1D.cpp
+    Utils/Visualization/ITMSceneSliceVisualizer1D.tpp
     Utils/Visualization/ITMVisualizationCommon.cpp
     Utils/Visualization/ITMVisualizationWindowManager.cpp
     Utils/Visualization/ITMSceneTrackingEnergyPlotter.cpp
-    Utils/Visualization/ITMScene3DSliceVisualizer.tpp
-    Utils/Visualization/ITMCanonicalScene3DSliceVisualizer.tpp
-    Utils/Visualization/ITMScene3DSliceVisualizerInteractorStyle.tpp
-    Utils/Visualization/ITMScene3DSliceVisualizerCommon.cpp
+    Utils/Visualization/ITMSceneSliceVisualizer3D.tpp
+    Utils/Visualization/ITMSceneSliceVisualizer3DInteractorStyle.tpp
+    Utils/Visualization/ITMSceneSliceVisualizer3DCommon.cpp
     )
 
 set(ITMLIB_UTILS_VISUALIZATION_HEADERS
-    Utils/Visualization/ITMScene2DSliceVisualizer.h
-    Utils/Visualization/ITMScene1DSliceVisualizer.h
+    Utils/Visualization/ITMSceneSliceVisualizerCommon.h
+    Utils/Visualization/ITMSceneSliceVisualizer1D.h
+    Utils/Visualization/ITMSceneSliceVisualizer2D.h
+    Utils/Visualization/ITMSceneSliceVisualizer3D.h
+    Utils/Visualization/ITMSceneSliceVisualizer3DInteractorStyle.h
+    Utils/Visualization/ITMSceneSliceVisualizer3DCommon.h
     Utils/Visualization/ITMVisualizationCommon.h
     Utils/Visualization/ITMVisualizationWindowManager.h
     Utils/Visualization/ITMSceneTrackingEnergyPlotter.h
-    Utils/Visualization/ITMScene3DSliceVisualizer.h
-    Utils/Visualization/ITMCanonicalScene3DSliceVisualizer.h
-    Utils/Visualization/ITMScene3DSliceVisualizerInteractorStyle.h
-    Utils/Visualization/ITMScene3DSliceVisualizerCommon.h
     )
 #################################################################
 # Collect the project files into sources, headers and templates #
@@ -631,6 +635,7 @@ set(sources
     ${ITMLIB_ENGINES_RECONSTRUCTION_CPU_SOURCES}
     ${ITMLIB_ENGINES_RECONSTRUCTION_CUDA_SOURCES}
     ${ITMLIB_ENGINES_RECONSTRUCTION_INTERFACE_SOURCES}
+    ${ITMLIB_ENGINES_SCENEFILEIO_SOURCES}
     ${ITMLIB_ENGINES_SWAPPING_CPU_SOURCES}
     ${ITMLIB_ENGINES_SWAPPING_CUDA_SOURCES}
     ${ITMLIB_ENGINES_VIEWBUILDING_SOURCES}
@@ -674,6 +679,7 @@ set(headers
     ${ITMLIB_ENGINES_RECONSTRUCTION_CUDA_HEADERS}
     ${ITMLIB_ENGINES_RECONSTRUCTION_INTERFACE_HEADERS}
     ${ITMLIB_ENGINES_RECONSTRUCTION_SHARED_HEADERS}
+    ${ITMLIB_ENGINES_SCENEFILEIO_HEADERS}
     ${ITMLIB_ENGINES_SWAPPING_HEADERS}
     ${ITMLIB_ENGINES_SWAPPING_CPU_HEADERS}
     ${ITMLIB_ENGINES_SWAPPING_CUDA_HEADERS}

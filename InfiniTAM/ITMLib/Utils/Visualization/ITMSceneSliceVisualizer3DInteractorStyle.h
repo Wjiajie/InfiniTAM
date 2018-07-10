@@ -20,21 +20,21 @@
 
 namespace ITMLib{
 template<typename TVoxelCanonical,typename TVoxelLive,typename TIndex>
-class ITMScene3DSliceVisualizerInteractorStyle : public vtkInteractorStyleTrackballCamera {
+class ITMSceneSliceVisualizer3DInteractorStyle : public vtkInteractorStyleTrackballCamera {
 public:
-	static ITMScene3DSliceVisualizerInteractorStyle* New();
-	vtkTypeMacro(ITMScene3DSliceVisualizerInteractorStyle , vtkInteractorStyleTrackballCamera);
-	ITMScene3DSliceVisualizerInteractorStyle();
-	void SetParent(ITMScene3DSliceVisualizer<TVoxelCanonical,TVoxelLive,TIndex>* parent);
+	static ITMSceneSliceVisualizer3DInteractorStyle* New();
+	vtkTypeMacro(ITMSceneSliceVisualizer3DInteractorStyle , vtkInteractorStyleTrackballCamera);
+	ITMSceneSliceVisualizer3DInteractorStyle();
+	void SetParent(ITMSceneSliceVisualizer3D<TVoxelCanonical,TVoxelLive,TIndex>* parent);
 
 	void OnKeyPress() override;
 private:
 
-	ITMScene3DSliceVisualizer<TVoxelCanonical,TVoxelLive,TIndex>* parent;
+	ITMSceneSliceVisualizer3D<TVoxelCanonical,TVoxelLive,TIndex>* parent;
 	int keyBindingLayerIndex;
 	bool bindingLayerShowing = false;
 
-	typedef void (ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical,TVoxelLive,TIndex>::*MFP) ();
+	typedef void (ITMSceneSliceVisualizer3DInteractorStyle<TVoxelCanonical,TVoxelLive,TIndex>::*MFP) ();
 	struct UserAction{
 		std::string description;
 		MFP function;

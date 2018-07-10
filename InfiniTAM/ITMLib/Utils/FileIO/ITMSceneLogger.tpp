@@ -23,7 +23,6 @@
 //local
 #include "../../Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
-#include "ITMSceneLogger_InterestRegionInfo.tpp"
 #include "ITMSceneLogger_SceneSlice.tpp"
 #include "../../Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 
@@ -116,7 +115,7 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetActiveSceneBounds(V
 			bounds = activeWarpLogger->bounds;
 		}else{
 			ITMSceneStatisticsCalculator<TVoxelCanonical, TIndex> statisticsCalculator;
-			statisticsCalculator.ComputeVoxelBounds(this->activeWarpLogger->scene, bounds);
+			statisticsCalculator.ComputeVoxelBounds(this->activeWarpLogger->scene);
 		}
 	}
 }
@@ -140,11 +139,6 @@ std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetPath() const
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 unsigned int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetGeneralIterationCursor() const {
 	return this->activeWarpLogger->GetIterationCursor();
-}
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-unsigned int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetInterestIterationCursor() const {
-	return this->interestIterationCursor;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -255,7 +249,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenesCompact() {
 	}
 	std::cout << "Saving scenes for current frame (this might take awhile)..." << std::endl;
 	std::cout.flush();
-	liveScene->SaveToDirectoryCompact_CPU(livePath.string());
+	ITMSceneFileIOEngine<TVoxelLive,TIndex>::SaveToDirectoryCompact(liveScene,livePath.string());
 	activeWarpLogger->SaveCompact();
 	std::cout << "Scenes saved." << std::endl;
 	return true;
@@ -269,7 +263,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenesCompact() {
 	std::cout << "Loading scenes for current frame (this might take awhile)..." << std::endl;
 	std::cout.flush();
 	ITMSceneManipulationEngine_CPU<TVoxelLive,TIndex>::ResetScene(liveScene);
-	liveScene->LoadFromDirectoryCompact_CPU(livePath.c_str());
+	ITMSceneFileIOEngine<TVoxelLive,TIndex>::LoadFromDirectoryCompact(liveScene,livePath.string());
 	if(!activeWarpLogger->isSlice || !activeWarpLogger->sliceLoaded){
 		activeWarpLogger->LoadCompact();
 	}

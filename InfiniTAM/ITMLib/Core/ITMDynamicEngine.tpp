@@ -6,6 +6,7 @@
 #include "../Engines/Meshing/ITMMeshingEngineFactory.h"
 #include "../Engines/ViewBuilding/ITMViewBuilderFactory.h"
 #include "../Engines/Visualisation/ITMVisualisationEngineFactory.h"
+#include "../Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../Objects/RenderStates/ITMRenderStateFactory.h"
 #include "../CameraTrackers/ITMCameraTrackerFactory.h"
 
@@ -126,9 +127,8 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveToFile() {
 	std::string nextFrameOutputPath = ITMDynamicFusionLogger::Instance().GetOutputDirectory();
 	// throws error if any of the saves fail
 	if (relocaliser) relocaliser->SaveToDirectory(nextFrameOutputPath + "/Relocaliser/");
-	//TODO: CUDA scene support
-	canonicalScene->SaveToDirectoryCompact_CPU(nextFrameOutputPath + "/canonical");
-	liveScene->SaveToDirectoryCompact_CPU(nextFrameOutputPath + "/live");
+	ITMSceneFileIOEngine<TVoxelCanonical,TIndex>::SaveToDirectoryCompact(canonicalScene,nextFrameOutputPath + "/canonical");
+	ITMSceneFileIOEngine<TVoxelLive,TIndex>::SaveToDirectoryCompact(liveScene,nextFrameOutputPath + "/live");
 	std::cout << "Saving scenes in a compact way to '" << nextFrameOutputPath << "'." << std::endl;
 }
 
@@ -164,8 +164,8 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::LoadFromFile() {
 	try // load scene
 	{
 		std::cout << "Loading scenes from '" << nextFrameOutputPath << "'." << std::endl;
-		canonicalScene->LoadFromDirectoryCompact_CPU(nextFrameOutputPath + "/canonical");
-		liveScene->LoadFromDirectoryCompact_CPU(nextFrameOutputPath + "/live");
+		ITMSceneFileIOEngine<TVoxelCanonical,TIndex>::LoadFromDirectoryCompact(canonicalScene,nextFrameOutputPath + "/canonical");
+		ITMSceneFileIOEngine<TVoxelLive,TIndex>::LoadFromDirectoryCompact(liveScene,nextFrameOutputPath + "/live");
 		if(framesProcessed == 0){
 			framesProcessed = 1; //to skip initialization
 		}

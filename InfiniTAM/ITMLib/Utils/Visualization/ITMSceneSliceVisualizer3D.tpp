@@ -35,12 +35,14 @@
 
 
 //Local
-#include "ITMScene3DSliceVisualizer.h"
-#include "ITMScene3DSliceVisualizerCommon.h"
+#include "ITMSceneSliceVisualizer3D.h"
+#include "ITMSceneSliceVisualizer3DCommon.h"
+#include "ITMSceneSliceVisualizerCommon.h"
 #include "ITMVisualizationCommon.h"
-#include "ITMScene3DSliceVisualizerInteractorStyle.h"
+#include "ITMSceneSliceVisualizer3DInteractorStyle.h"
 #include "../../Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h"
 #include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
+
 
 
 //TODO: alter OO design such that constructor isn't calling virual / override member functions -Greg (GitHub: Algomorph)
@@ -48,11 +50,11 @@
 using namespace ITMLib;
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const char* ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::colorAttributeName = "color";
+const char* ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::colorAttributeName = "color";
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const char* ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::scaleUnknownsHiddenAttributeName = "scale";
+const char* ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::scaleUnknownsHiddenAttributeName = "scale";
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const char* ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::scaleUnknownsVisibleAttributeName = "alternative_scale";
+const char* ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::scaleUnknownsVisibleAttributeName = "alternative_scale";
 
 
 enum RequestedOperation {
@@ -96,13 +98,13 @@ vtkTypeMacro(ThreadInteropCommand, vtkCommand);
 		operation = NONE;
 	}
 
-	ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>* parent;
+	ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>* parent;
 };
 } //namespace ITMLib
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SceneSlice::SetUpMappersAndActors(
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::SceneSlice::SetUpMappersAndActors(
 		std::array<double, 3>& hashBlockEdgeColor, vtkAlgorithmOutput* hashBlockGeometrySourceOutput,
 		vtkAlgorithmOutput* voxelGeometrySourceOutput) {
 
@@ -143,46 +145,11 @@ inline std::string to_string(Vector6i vector) {
 	return s.str();
 }
 
-inline Vector6i ComputeBoundsAroundPoint(Vector3i point, int radiusInPlane, int radiusOutOfPlane, const Plane& plane) {
-	Vector6i bounds;
-	switch (plane) {
-		case PLANE_YZ:
-			bounds.min_y = point.y - radiusInPlane;
-			bounds.max_y = point.y + radiusInPlane + 1;
-			bounds.min_z = point.z - radiusInPlane;
-			bounds.max_z = point.z + radiusInPlane + 1;
-			bounds.min_x = point.x - radiusOutOfPlane;
-			bounds.max_x = point.x + radiusOutOfPlane + 1;
-			break;
-		case PLANE_XZ:
-			bounds.min_x = point.x - radiusInPlane;
-			bounds.max_x = point.x + radiusInPlane + 1;
-			bounds.min_z = point.z - radiusInPlane;
-			bounds.max_z = point.z + radiusInPlane + 1;
-			bounds.min_y = point.y - radiusOutOfPlane;
-			bounds.max_y = point.y + radiusOutOfPlane + 1;
-			break;
-		case PLANE_XY:
-			bounds.min_x = point.x - radiusInPlane;
-			bounds.max_x = point.x + radiusInPlane + 1;
-			bounds.min_y = point.y - radiusInPlane;
-			bounds.max_y = point.y + radiusInPlane + 1;
-			bounds.min_z = point.z - radiusOutOfPlane;
-			bounds.max_z = point.z + radiusOutOfPlane + 1;
-			break;
-		default:
-			DIEWITHEXCEPTION_REPORTLOCATION("PLANE NOT SUPPORTED");
-	}
-	return bounds;
-}
-
-
-
 
 // region ====================================== CONSTRUCTORS / DESTRUCTORS ============================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::ITMScene3DSliceVisualizer(
+ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneSliceVisualizer3D(
 		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 		ITMScene<TVoxelLive, TIndex>* liveScene,
 		Vector3i focusCoordinates, Plane plane,
@@ -192,14 +159,14 @@ ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::ITMScene3DSliceV
 		bounds(ComputeBoundsAroundPoint(focusCoordinates, radiusInPlane, radiusOutOfPlane, plane)),
 		focusCoordinates(focusCoordinates),
 		scaleMode(VOXEL_SCALE_HIDE_UNKNOWNS) {
-	this->thread = new std::thread(&ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::Run, this);
+	this->thread = new std::thread(&ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::Run, this);
 	std::unique_lock<std::mutex> lock(mutex);
 	conditionVariable.wait(lock, [this] { return this->initialized; });
 }
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::~ITMScene3DSliceVisualizer() {
+ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneSliceVisualizer3D() {
 }
 
 // endregion ===========================================================================================================
@@ -302,45 +269,11 @@ private:
 	vtkPoints* hashBlockPoints;
 
 };
-//
-//template<typename TVoxel, typename TVoxelDataRetriever, typename TIndex>
-//struct VoxelVisualizationStructureBuildFunctor;
-//
-//template<typename TVoxel, typename TVoxelDataRetriever>
-//struct VoxelVisualizationStructureBuildFunctor<TVoxel, TVoxelDataRetriever, ITMVoxelBlockHash> {
-//	static void BuildVisualizationStructures(vtkSmartPointer<vtkFloatArray> scaleAttribute,
-//	                                         vtkSmartPointer<vtkFloatArray> alternativeScaleAttribute,
-//	                                         vtkSmartPointer<vtkIntArray> colorAttribute,
-//	                                         vtkSmartPointer<vtkPoints> voxelPoints,
-//	                                         vtkSmartPointer<vtkPoints> hashBlockPoints, Vector3i focusCoordinates,
-//	                                         ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector6i bounds) {
-//		AddVoxelPointFunctor<TVoxel, TVoxelDataRetriever> addVoxelPointFunctor(
-//				scaleAttribute, alternativeScaleAttribute, colorAttribute, voxelPoints, hashBlockPoints,
-//				focusCoordinates);
-//		VoxelPositionAndHashEntryTraversalWithinBounds_CPU(scene, addVoxelPointFunctor, bounds);
-//	}
-//};
-//
-//
-//template<typename TVoxel, typename TVoxelDataRetriever>
-//struct VoxelVisualizationStructureBuildFunctor<TVoxel, TVoxelDataRetriever, ITMPlainVoxelArray> {
-//	static void BuildVisualizationStructures(vtkSmartPointer<vtkFloatArray> scaleAttribute,
-//	                                         vtkSmartPointer<vtkFloatArray> alternativeScaleAttribute,
-//	                                         vtkSmartPointer<vtkIntArray> colorAttribute,
-//	                                         vtkSmartPointer<vtkPoints> voxelPoints,
-//	                                         vtkSmartPointer<vtkPoints> hashBlockPoints, Vector3i focusCoordinates,
-//	                                         ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector6i bounds) {
-//		AddVoxelPointFunctor<TVoxel, TVoxelDataRetriever> addVoxelPointFunctor(
-//				scaleAttribute, alternativeScaleAttribute, colorAttribute, voxelPoints, hashBlockPoints,
-//				focusCoordinates);
-//		VoxelPositionAndHashEntryTraversalWithinBounds_CPU(scene, addVoxelPointFunctor, bounds);
-//	}
-//};
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 template<typename TVoxel, typename TVoxelDataRetriever>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::BuildVoxelAndHashBlockPolyDataFromScene(
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::BuildVoxelAndHashBlockPolyDataFromScene(
 		ITMScene<TVoxel, TIndex>* scene, SceneSlice& sceneSlice) {
 	vtkSmartPointer<vtkPoints> voxelPoints = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkPoints> hashBlockPoints = vtkSmartPointer<vtkPoints>::New();
@@ -376,7 +309,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::BuildVoxelA
 // region ========================== PRIVATE INIT MEMBER FUNCTIONS =====================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::BuildInitialSlices() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::BuildInitialSlices() {
 	BuildVoxelAndHashBlockPolyDataFromScene<TVoxelCanonical, RetrieveVoxelDataBasicStaticFunctior<TVoxelCanonical>>(
 			canonicalScene, canonicalSlice);
 	BuildVoxelAndHashBlockPolyDataFromScene<TVoxelLive, RetrieveVoxelDataFieldIndex1StaticFunctior<TVoxelLive>>(
@@ -393,7 +326,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::BuildInitia
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::AddSliceActorsToRenderers() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::AddSliceActorsToRenderers() {
 	window->AddActorToFirstLayer(this->canonicalSlice.voxelActor);
 	window->AddActorToFirstLayer(this->canonicalSlice.hashBlockActor);
 	window->AddActorToFirstLayer(this->liveSlice.voxelActor);
@@ -405,7 +338,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::AddSliceAct
  * \brief Sets up the geometry to use for voxel & hash block display
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SetUpGeometrySources() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::SetUpGeometrySources() {
 	//Individual voxel shape
 	voxelVizGeometrySource->SetThetaResolution(6);
 	voxelVizGeometrySource->SetPhiResolution(6);
@@ -418,7 +351,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SetUpGeomet
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SetUpSDFColorLookupTable(
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::SetUpSDFColorLookupTable(
 		vtkSmartPointer<vtkLookupTable>& table,
 		const double* highlightColor,
 		const double* positiveTruncatedColor,
@@ -442,7 +375,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SetUpSDFCol
 // endregion ===========================================================================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::ToggleScaleMode() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::ToggleScaleMode() {
 	if (scaleMode == VoxelScaleMode::VOXEL_SCALE_HIDE_UNKNOWNS) {
 		scaleMode = VoxelScaleMode::VOXEL_SCALE_SHOW_UNKNOWNS;
 		canonicalSlice.voxelMapper->SetScaleArray(scaleUnknownsVisibleAttributeName);
@@ -455,12 +388,12 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::ToggleScale
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-VoxelScaleMode ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::GetCurrentScaleMode() {
+VoxelScaleMode ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::GetCurrentScaleMode() {
 	return this->scaleMode;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::InitializeVoxels() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::InitializeVoxels() {
 
 	// *** initializations ***
 	liveSlice.Initialize();
@@ -473,7 +406,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::InitializeV
 
 
 	window = ITMVisualizationWindowManager::Instance().MakeOrGet3DWindow(
-			"Scene3DSliceVisualizer" + to_string(this->bounds),
+			"SceneSliceVisualizer3D" + to_string(this->bounds),
 			"Scene 3D Slice Visualizer for bounds (" + to_string(this->bounds) + "))");
 
 	// Create the color maps
@@ -497,7 +430,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::InitializeV
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::InitializeWarps() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::InitializeWarps() {
 	vtkSmartPointer<vtkPoints> updatePoints = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkFloatArray> updateVectors = vtkSmartPointer<vtkFloatArray>::New();
 	updateVectors->SetName("Warp update vectors");
@@ -559,7 +492,7 @@ private:
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpUpdates() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpUpdates() {
 	std::unique_lock<std::mutex> lock(mutex);
 	vtkPoints* updatePoints = this->updatesData->GetPoints();
 	vtkFloatArray* updateVectors = vtkFloatArray::SafeDownCast(this->updatesData->GetPointData()->GetVectors());
@@ -614,7 +547,7 @@ private:
 };
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawSmoothnessVectors() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::DrawSmoothnessVectors() {
 	std::unique_lock<std::mutex> lock(mutex);
 	vtkPoints* updatePoints = this->smoothingVectorData->GetPoints();
 	vtkFloatArray* updateVectors = vtkFloatArray::SafeDownCast(this->smoothingVectorData->GetPointData()->GetVectors());
@@ -634,7 +567,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::DrawSmoothn
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::BuildFusedCanonicalFromCurrentScene() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::BuildFusedCanonicalFromCurrentScene() {
 	std::unique_lock<std::mutex> lock(mutex);
 	BuildVoxelAndHashBlockPolyDataFromScene<TVoxelCanonical, RetrieveVoxelDataBasicStaticFunctior<TVoxelCanonical>>(
 			canonicalScene, fusedCanonicalSlice);
@@ -651,7 +584,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::BuildFusedC
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::UpdateLiveState() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::UpdateLiveState() {
 	std::unique_lock<std::mutex> lock(mutex);
 	liveSlice.voxelVizData = vtkSmartPointer<vtkPolyData>::New();
 	switch (liveSamplingFieldIndex) {
@@ -681,7 +614,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::UpdateLiveS
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::Run() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::Run() {
 	std::unique_lock<std::mutex> lock(mutex);
 
 	this->InitializeVoxels();
@@ -691,8 +624,8 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::Run() {
 	threadCallback = vtkSmartPointer<ThreadInteropCommand<TVoxelCanonical, TVoxelLive, TIndex>>::New();
 	threadCallback->parent = this;
 	this->window->AddLoopCallback(threadCallback);
-	vtkSmartPointer<ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>> style =
-			vtkSmartPointer<ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>>::New();
+	vtkSmartPointer<ITMSceneSliceVisualizer3DInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>> style =
+			vtkSmartPointer<ITMSceneSliceVisualizer3DInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>>::New();
 	style->SetParent(this);
 
 	this->window->SetInteractorStyle(style);
@@ -707,7 +640,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::Run() {
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::TriggerDrawWarpUpdates() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::TriggerDrawWarpUpdates() {
 	this->threadCallback->operation = DRAW_WARP_UPDATES;
 	std::unique_lock<std::mutex> lock(mutex);
 	conditionVariable.wait(lock, [this] { return this->warpUpdatePerformed; });
@@ -715,7 +648,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::TriggerDraw
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::TriggerDrawSmoothingVectors() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::TriggerDrawSmoothingVectors() {
 	this->threadCallback->operation = DRAW_SMOOTHING_VECTORS;
 	std::unique_lock<std::mutex> lock(mutex);
 	conditionVariable.wait(lock, [this] { return this->smoothingVectorsDrawn; });
@@ -724,7 +657,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::TriggerDraw
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::TriggerUpdateLiveState() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::TriggerUpdateLiveState() {
 	this->threadCallback->operation = UPDATE_LIVE_STATE;
 	std::unique_lock<std::mutex> lock(mutex);
 	conditionVariable.wait(lock, [this] { return this->liveStateUpdated; });
@@ -733,7 +666,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::TriggerUpda
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::TriggerBuildFusedCanonical() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::TriggerBuildFusedCanonical() {
 	this->threadCallback->operation = BUILD_FUSED_CANONICAL;
 	std::unique_lock<std::mutex> lock(mutex);
 	conditionVariable.wait(lock, [this] { return this->fusedCanonicalBuilt; });
@@ -741,7 +674,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::TriggerBuil
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibilityMode(VisibilityMode mode) {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibilityMode(VisibilityMode mode) {
 	this->visibilityMode = mode;
 	switch (mode) {
 		case VISIBILITY_CANONICAL_WITH_UPDATES:
@@ -773,7 +706,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibili
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::AdvanceLiveStateVizualization() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::AdvanceLiveStateVizualization() {
 	if (visibleOptimizationStepIndex < this->liveSliceStates.size() - 1) {
 		visibleOptimizationStepIndex++;
 		this->liveSlice.voxelMapper->SetInputData(liveSliceStates[visibleOptimizationStepIndex]);
@@ -783,7 +716,7 @@ void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::AdvanceLive
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMScene3DSliceVisualizer<TVoxelCanonical, TVoxelLive, TIndex>::RetreatLiveStateVizualization() {
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::RetreatLiveStateVizualization() {
 	if (visibleOptimizationStepIndex > 0) {
 		visibleOptimizationStepIndex--;
 		this->liveSlice.voxelMapper->SetInputData(liveSliceStates[visibleOptimizationStepIndex]);

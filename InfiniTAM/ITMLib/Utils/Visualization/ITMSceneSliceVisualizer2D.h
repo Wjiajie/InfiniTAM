@@ -25,20 +25,18 @@
 
 namespace ITMLib {
 
+
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-class ITMScene2DSliceVisualizer {
+class ITMSceneSliceVisualizer2D {
 
 	//TODO: positions of voxels to highlight / draw around should be defined extenally in the user code, not as class static members. Static functions should be probably changed to become member functions, with focus coordinates (testPos1, testPos2...) being set in user code during construction. -Greg (GitHub: Algomorph)
 public:
-
-
-
 	static float SdfToShadeValue(float sdf);
 
-	explicit ITMScene2DSliceVisualizer(Vector3i focusCoordinates, unsigned int imageSizeVoxels, float pixelsPerVoxel,
+	explicit ITMSceneSliceVisualizer2D(Vector3i focusCoordinates, unsigned int imageSizeVoxels, float pixelsPerVoxel,
 		                                   Plane plane);
 
-	virtual ~ITMScene2DSliceVisualizer() = default;
+	virtual ~ITMSceneSliceVisualizer2D() = default;
 
 	Plane GetPlane() const;
 
@@ -58,9 +56,6 @@ public:
 	void MarkWarpedSceneImageAroundFocusPoint(ITMScene <TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn);
 	void MarkWarpedSceneImageAroundPoint(ITMScene <TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn, Vector3i positionOfVoxelToMark);
 
-
-
-
 	const std::string outputDirectory;
 	const float pixelsPerVoxel;
 
@@ -75,33 +70,22 @@ private:
 	template<typename TVoxel>
 	cv::Mat DrawWarpedSceneImageTemplated(ITMScene <TVoxel, TIndex>* scene);
 
-
 	Vector2i GetVoxelImageCoordinates(Vector3i coordinates, Plane plane);
 	Vector2i GetVoxelImageCoordinates(Vector3f coordinates, Plane plane);
 
-	bool IsVoxelInImageRange(int x, int y, int z, Plane plane) const;
-	bool IsVoxelBlockInImageRange(Vector3i blockVoxelCoords, Plane plane) const;
-	bool IsVoxelBlockInImageRangeTolerance(Vector3i blockVoxelCoords, int tolerance, Plane plane) const;
+	bool IsPointInImageRange(int x, int y, int z) const;
 
 	static const bool absFillingStrategy;
 
 	const int imageSizeVoxels;
 	const int imageHalfSizeVoxels;
 
-	const int imgRangeStartX;
-	const int imgRangeEndX;
-	const int imgRangeStartY;
-	const int imgRangeEndY;
-	const int imgRangeStartZ;
-	const int imgRangeEndZ;
+	const Vector6i bounds;
+
 
 	const int imgXSlice;
 	const int imgYSlice;
 	const int imgZSlice;
-
-	const int imgVoxelRangeX;
-	const int imgVoxelRangeY;
-	const int imgVoxelRangeZ;
 
 	const int imgPixelRangeX;
 	const int imgPixelRangeY;

@@ -26,7 +26,7 @@
 #include "../Engines/Manipulation/ITMSceneManipulation.h"
 #include "../Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "../Utils/ITMPrintHelpers.h"
-#include "../Utils/Visualization/ITMScene2DSliceVisualizer.h"
+#include "../Utils/Visualization/ITMSceneSliceVisualizer2D.h"
 #include "../Utils/Analytics/ITMBenchmarkUtils.h"
 #include "../Utils/FileIO/ITMSceneLogger.h"
 #include "../../Tests/TestUtils.h"

@@ -18,7 +18,7 @@
 #include <array>
 
 // local
-#include "ITMScene3DSliceVisualizerCommon.h"
+#include "ITMSceneSliceVisualizer3DCommon.h"
 
 namespace ITMLib {
 namespace Viz {

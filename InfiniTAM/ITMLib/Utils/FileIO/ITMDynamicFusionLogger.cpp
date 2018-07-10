@@ -264,13 +264,13 @@ void ITMDynamicFusionLogger::InitializeFrameRecording() {
 	if (hasFocusCoordinates) {
 
 		if (recordingScene1DSlicesWithUpdates) {
-			this->scene1DSliceVisualizer.reset(new ITMScene1DSliceVisualizer(focusCoordinates, AXIS_X, 16));
+			this->scene1DSliceVisualizer.reset(new ITMSceneSliceVisualizer1D(focusCoordinates, AXIS_X, 16));
 			scene1DSliceVisualizer->Plot1DSceneSlice(canonicalScene, Vector4i(97, 181, 193, 255), 3.0);
 			scene1DSliceVisualizer->Plot1DIndexedSceneSlice(liveScene, Vector4i(183, 115, 46, 255), 3.0, 0);
 		}
 
 		scene2DSliceVisualizer.reset(
-				new ITMScene2DSliceVisualizer<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(focusCoordinates, 100,
+				new ITMSceneSliceVisualizer2D<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(focusCoordinates, 100,
 				                                                                              16.0, planeFor2Dand3DSlices));
 
 		if (recordingCanonicalSceneAs2DSlices) {
@@ -290,7 +290,7 @@ void ITMDynamicFusionLogger::InitializeFrameRecording() {
 		}
 
 		if (recordingScene3DSlicesWithUpdates && !scene3DSliceVisualizer) {
-			scene3DSliceVisualizer.reset(new ITMScene3DSliceVisualizer<ITMVoxelCanonical,ITMVoxelLive, ITMVoxelIndex>
+			scene3DSliceVisualizer.reset(new ITMSceneSliceVisualizer3D<ITMVoxelCanonical,ITMVoxelLive, ITMVoxelIndex>
 					                             (canonicalScene, liveScene, focusCoordinates,
 					                              planeFor2Dand3DSlices, _3dSliceInPlaneRadius, _3dSliceOutOfPlaneRadius));
 		}

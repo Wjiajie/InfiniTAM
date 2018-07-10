@@ -33,9 +33,8 @@ set(sources
     main.cpp
     SDFViz.cpp
     SDFVizInteractorStyle.cpp
-    ../../ITMLib/Utils/Visualization/ITMScene3DSliceVisualizer.tpp
+    ../../ITMLib/Utils/Visualization/ITMSceneSliceVisualizer3D.tpp
     ExplicitInstantiations.cpp
-    ../../ITMLib/Utils/Visualization/ITMCanonicalScene3DSliceVisualizer_Deprecated.cpp
     HighlightVisualization.cpp
     #===helpers===
     )
@@ -44,11 +43,10 @@ set(headers
     #===core files===
     SDFViz.h
     SDFVizInteractorStyle.h
-    ../../ITMLib/Utils/Visualization/ITMScene3DSliceVisualizer.h
-    ../../ITMLib/Utils/Visualization/ITMCanonicalScene3DSliceVisualizer_Deprecated.h
+    ../../ITMLib/Utils/Visualization/ITMSceneSliceVisualizer3D.h
     HighlightVisualization.h
     SDFVizGlobalDefines.h
-    ../../ITMLib/Utils/Visualization/ITMScene3DSliceVisualizerCommon.h
+    ../../ITMLib/Utils/Visualization/ITMSceneSliceVisualizer3DCommon.h
     #===helpers===
     )
 

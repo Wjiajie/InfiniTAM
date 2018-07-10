@@ -31,7 +31,7 @@
 //ITMLib
 #include "../../Objects/Scene/ITMScene.h"
 #include "../FileIO/ITMSceneLogger.h"
-#include "ITMScene3DSliceVisualizerCommon.h"
+#include "ITMSceneSliceVisualizer3DCommon.h"
 #include "ITMVisualizationWindowManager.h"
 #include "ITMVisualizationCommon.h"
 #include "../../ITMLibDefines.h"
@@ -49,13 +49,13 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ThreadInteropCommand;
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-class ITMScene3DSliceVisualizerInteractorStyle;
+class ITMSceneSliceVisualizer3DInteractorStyle;
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-class ITMScene3DSliceVisualizer {
+class ITMSceneSliceVisualizer3D {
 
 	friend class ThreadInteropCommand<TVoxelCanonical, TVoxelLive, TIndex>;
-	friend class ITMScene3DSliceVisualizerInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>;
+	friend class ITMSceneSliceVisualizer3DInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>;
 
 public:
 	//================= CONSTANTS ================
@@ -64,11 +64,11 @@ public:
 	static const char* scaleUnknownsVisibleAttributeName;
 
 	// ====================== CONSTRUCTORS / DESTRUCTORS ==================
-	ITMScene3DSliceVisualizer(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	ITMSceneSliceVisualizer3D(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                          ITMScene<TVoxelLive, TIndex>* liveScene,
 	                          Vector3i focusCoordinates, Plane plane = PLANE_XY,
 	                          int radiusInPlane = 10, int radiusOutOfPlane = 0);
-	virtual ~ITMScene3DSliceVisualizer();
+	virtual ~ITMSceneSliceVisualizer3D();
 
 	// ====================== MEMBER FUNCTIONS ===========================
 	VoxelScaleMode GetCurrentScaleMode();

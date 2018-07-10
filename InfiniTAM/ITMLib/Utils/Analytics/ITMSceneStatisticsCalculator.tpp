@@ -21,72 +21,101 @@
 
 using namespace ITMLib;
 
-/**
- * \brief Computes minimum and maximum point in the current scene.
- * \tparam TVoxel
- * \tparam TIndex
- * \param scene
- * \param minVoxelPoint
- * \param maxVoxelPoint
- */
-template<typename TVoxel, typename TIndex>
-void ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeVoxelBounds(const ITMScene<TVoxel, TIndex>* scene,
-                                                                      Vector3i& minVoxelPoint,
-                                                                      Vector3i& maxVoxelPoint) {
 
-	minVoxelPoint = maxVoxelPoint = Vector3i(0);
-	const TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
-	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
-	int noTotalEntries = scene->index.noTotalEntries;
+template <typename TVoxel, typename TIndex>
+struct ComputeVoxelBoundsFunctor;
 
-	//TODO: if OpenMP standard is 3.1 or above, use OpenMP parallel for reduction clause with (max:maxVoxelPointX,...) -Greg (GitHub: Algomorph)
-	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+template <typename TVoxel>
+struct ComputeVoxelBoundsFunctor<TVoxel, ITMVoxelBlockHash>{
+	static Vector6i Compute(const ITMScene<TVoxel, ITMVoxelBlockHash>* scene){
+		Vector6i bounds = Vector6i(0);
+		
+		const TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
+		const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
+		int noTotalEntries = scene->index.noTotalEntries;
 
-		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
+		//TODO: if OpenMP standard is 3.1 or above, use OpenMP parallel for reduction clause with (max:maxVoxelPointX,...) -Greg (GitHub: Algomorph)
+		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 
-		if (currentHashEntry.ptr < 0) continue;
+			const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
 
-		//position of the current entry in 3D space
-		Vector3i currentHashBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-		Vector3i hashBlockLimitPositionVoxels = (currentHashEntry.pos.toInt() + Vector3i(1, 1, 1)) * SDF_BLOCK_SIZE;
+			if (currentHashEntry.ptr < 0) continue;
 
-		if (minVoxelPoint.x > currentHashBlockPositionVoxels.x) {
-			minVoxelPoint.x = currentHashBlockPositionVoxels.x;
-		}
-		if (maxVoxelPoint.x < hashBlockLimitPositionVoxels.x) {
-			maxVoxelPoint.x = hashBlockLimitPositionVoxels.x;
-		}
-		if (minVoxelPoint.y > currentHashBlockPositionVoxels.y) {
-			minVoxelPoint.y = currentHashBlockPositionVoxels.y;
-		}
-		if (maxVoxelPoint.y < hashBlockLimitPositionVoxels.y) {
-			maxVoxelPoint.y = hashBlockLimitPositionVoxels.y;
-		}
-		if (minVoxelPoint.z > currentHashBlockPositionVoxels.z) {
-			minVoxelPoint.z = currentHashBlockPositionVoxels.z;
-		}
-		if (maxVoxelPoint.z < hashBlockLimitPositionVoxels.z) {
-			maxVoxelPoint.z = hashBlockLimitPositionVoxels.z;
+			//position of the current entry in 3D space
+			Vector3i currentHashBlockPositionVoxels = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			Vector3i hashBlockLimitPositionVoxels = (currentHashEntry.pos.toInt() + Vector3i(1, 1, 1)) * SDF_BLOCK_SIZE;
+
+			if (bounds.min_x> currentHashBlockPositionVoxels.x) {
+				bounds.min_x = currentHashBlockPositionVoxels.x;
+			}
+			if (bounds.max_x < hashBlockLimitPositionVoxels.x) {
+				bounds.max_x = hashBlockLimitPositionVoxels.x;
+			}
+			if (bounds.min_y > currentHashBlockPositionVoxels.y) {
+				bounds.min_y = currentHashBlockPositionVoxels.y;
+			}
+			if (bounds.max_y < hashBlockLimitPositionVoxels.y) {
+				bounds.max_y = hashBlockLimitPositionVoxels.y;
+			}
+			if (bounds.min_z > currentHashBlockPositionVoxels.z) {
+				bounds.min_z = currentHashBlockPositionVoxels.z;
+			}
+			if (bounds.max_z < hashBlockLimitPositionVoxels.z) {
+				bounds.max_z = hashBlockLimitPositionVoxels.z;
+			}
 		}
 	}
+};
+
+template <typename TVoxel>
+struct ComputeVoxelBoundsFunctor<TVoxel, ITMPlainVoxelArray>{
+	static Vector6i Compute(const ITMScene<TVoxel, ITMPlainVoxelArray>* scene){
+		const ITMPlainVoxelArray::IndexData* indexData = scene->index.getIndexData();
+		return Vector6i(indexData->offset.x, indexData->offset.y, indexData->offset.z,
+		                indexData->offset.x + indexData->size.x, indexData->offset.y + indexData->size.y,
+		                indexData->offset.z + indexData->size.z);
+	}
+};
+
+
+template<typename TVoxel, typename TIndex>
+Vector6i ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeVoxelBounds(const ITMScene<TVoxel, TIndex>* scene) {
+	return ComputeVoxelBoundsFunctor<TVoxel,TIndex>::Compute(scene);
 }
 
 //============================================== COUNT VOXELS ==========================================================
 template<typename TVoxel, typename TIndex>
-int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeAllocatedVoxelCount(ITMScene<TVoxel, TIndex>* scene) {
-	int count = 0;
+struct ComputeAllocatedVoxelCountFunctor;
 
-	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
-	int noTotalEntries = scene->index.noTotalEntries;
+template<typename TVoxel>
+struct ComputeAllocatedVoxelCountFunctor<TVoxel,ITMVoxelBlockHash>{
+	static int Compute(ITMScene<TVoxel,ITMVoxelBlockHash>* scene){
+		int count = 0;
+
+		const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
+		int noTotalEntries = scene->index.noTotalEntries;
 #ifdef WITH_OPENMP
 #pragma omp parallel for reduction(+:count)
 #endif
-	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
-		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
-		if (currentHashEntry.ptr < 0) continue;
-		count += SDF_BLOCK_SIZE3;
+		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+			const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
+			if (currentHashEntry.ptr < 0) continue;
+			count += SDF_BLOCK_SIZE3;
+		}
+		return count;
 	}
-	return count;
+};
+
+template<typename TVoxel>
+struct ComputeAllocatedVoxelCountFunctor<TVoxel,ITMPlainVoxelArray>{
+	static int Compute(ITMScene<TVoxel,ITMPlainVoxelArray>* scene){
+		return scene->index.getVolumeSize().x*scene->index.getVolumeSize().y*scene->index.getVolumeSize().z;
+	}
+};
+
+template<typename TVoxel, typename TIndex>
+int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeAllocatedVoxelCount(ITMScene<TVoxel, TIndex>* scene) {
+	return ComputeAllocatedVoxelCountFunctor<TVoxel,TIndex>::Compute(scene);
 }
 
 template<bool hasSemanticInformation, typename TVoxel, typename TIndex>
@@ -191,28 +220,49 @@ double ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeTruncatedVoxelAbsSdf
 //======================================================================================================================
 
 template<typename TVoxel, typename TIndex>
-std::vector<int> ITMSceneStatisticsCalculator<TVoxel, TIndex>::GetFilledHashBlockIds(ITMScene<TVoxel, TIndex>* scene) {
-	std::vector<int> ids;
-	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
-	int noTotalEntries = scene->index.noTotalEntries;
-	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
-		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
-		if (currentHashEntry.ptr < 0) continue;
-		ids.push_back(entryId);
+struct HashOnlyStatisticsFunctor;
+template<typename TVoxel>
+struct HashOnlyStatisticsFunctor<TVoxel,ITMPlainVoxelArray>{
+	static std::vector<int> GetFilledHashBlockIds(ITMScene<TVoxel,ITMPlainVoxelArray>* scene){
+		return std::vector<int>();
 	}
-	return ids;
+	static int ComputeAllocatedHashBlockCount(ITMScene<TVoxel, ITMPlainVoxelArray>* scene){
+		return 0;
+	}
+};
+template<typename TVoxel>
+struct HashOnlyStatisticsFunctor<TVoxel,ITMVoxelBlockHash>{
+	static std::vector<int> GetFilledHashBlockIds(ITMScene<TVoxel,ITMVoxelBlockHash>* scene){
+		std::vector<int> ids;
+		const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
+		int noTotalEntries = scene->index.noTotalEntries;
+		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+			const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
+			if (currentHashEntry.ptr < 0) continue;
+			ids.push_back(entryId);
+		}
+		return ids;
+	}
+	static int ComputeAllocatedHashBlockCount(ITMScene<TVoxel, ITMVoxelBlockHash>* scene){
+		int count;
+		const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
+		int noTotalEntries = scene->index.noTotalEntries;
+		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+			const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
+			if (currentHashEntry.ptr >= 0) count++;
+		}
+		return count;
+	}
+};
+
+template<typename TVoxel, typename TIndex>
+std::vector<int> ITMSceneStatisticsCalculator<TVoxel, TIndex>::GetFilledHashBlockIds(ITMScene<TVoxel, TIndex>* scene) {
+	HashOnlyStatisticsFunctor<TVoxel,TIndex>::GetFilledHashBlockIds(scene);
 }
 
 template<typename TVoxel, typename TIndex>
 int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeAllocatedHashBlockCount(ITMScene<TVoxel, TIndex>* scene) {
-	int count;
-	const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
-	int noTotalEntries = scene->index.noTotalEntries;
-	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
-		const ITMHashEntry& currentHashEntry = canonicalHashTable[entryId];
-		if (currentHashEntry.ptr >= 0) count++;
-	}
-	return count;
+	HashOnlyStatisticsFunctor<TVoxel,TIndex>::ComputeAllocatedHashBlockCount(scene);
 }
 // region ================================ VOXEL GRADIENTS =============================================================
 
@@ -272,13 +322,5 @@ float ITMSceneStatisticsCalculator<TVoxel, TIndex>::FindMaxGradient0LengthAndPos
 	return MaxGradientFunctor<TVoxel, TIndex>::find(scene, false, positionOut);
 }
 
-template<typename TVoxel, typename TIndex>
-void ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeVoxelBounds(const ITMScene<TVoxel, TIndex>* scene,
-                                                                      Vector6i& bounds) {
-	Vector3i minPoint, maxPoint;
-	this->ComputeVoxelBounds(scene, minPoint,maxPoint);
-	bounds.min_x = minPoint.x;bounds.min_y = minPoint.y;bounds.min_z = minPoint.z;
-	bounds.max_x = maxPoint.x;bounds.max_y = maxPoint.y;bounds.max_z = maxPoint.z;
-}
 // endregion ===========================================================================================================
 
