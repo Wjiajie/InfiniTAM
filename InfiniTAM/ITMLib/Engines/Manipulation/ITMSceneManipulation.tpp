@@ -71,17 +71,15 @@ CopySceneSDFandFlagsWithOffset_CPU(
 template<typename TVoxel>
 inline static int
 ComputeLinearIndexFromPosition_PlainVoxelArray(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3i position) {
-	int destinationIndex = position.z * (scene->index.getVolumeSize().z * scene->index.getVolumeSize().y)
+	return position.z * (scene->index.getVolumeSize().z * scene->index.getVolumeSize().y)
 	                       + position.y * (scene->index.getVolumeSize().x + position.x);
-	return destinationIndex;
 };
 
 template<typename TVoxel>
 inline static int
 ComputeLinearIndexFromPosition_PlainVoxelArray(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, int x, int y, int z) {
-	int destinationIndex = z * (scene->index.getVolumeSize().z * scene->index.getVolumeSize().y)
+	return z * (scene->index.getVolumeSize().z * scene->index.getVolumeSize().y)
 	                       + y * (scene->index.getVolumeSize().x + x);
-	return destinationIndex;
 };
 
 

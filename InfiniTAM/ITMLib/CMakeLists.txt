@@ -510,8 +510,8 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_HEADERS
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_SOURCES
     SceneMotionTrackers/CPU/ITMWarpGradientCommon.h
-    SceneMotionTrackers/CPU/ITMCalculateWarpGradientBasedOnRawLiveFunctor_UNUSED.h
-    SceneMotionTrackers/CPU/ITMCalculateWarpGradientBasedOnWarpedLiveFunctor.h
+    SceneMotionTrackers/Shared/ITMCalculateWarpGradientBasedOnRawLiveFunctor_UNUSED.h
+    SceneMotionTrackers/Shared/ITMCalculateWarpGradientBasedOnWarpedLiveFunctor.h
     SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.tpp
     SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.tpp
     )
@@ -540,6 +540,7 @@ set (ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS
      SceneMotionTrackers/Shared/ITMSceneMotionTracker_Shared_Old.h
      SceneMotionTrackers/Shared/ITMSceneMotionTracker_Shared.h
      SceneMotionTrackers/Shared/ITMSceneMotionTracker_Debug.h
+     SceneMotionTrackers/Shared/ITMSceneMotionTracker_Functors.h
      )
 
 # ======================================================================================================================

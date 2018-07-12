@@ -81,7 +81,7 @@ bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition, ITMHashEntry* hash
 	}
 }
 
-int
+_CPU_AND_GPU_CODE_ int
 FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, const THREADPTR(Vector3s)& at) {
 	int hash = hashIndex(at);
 	while (true)
@@ -99,7 +99,20 @@ FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, 
 	return -1;
 }
 
-
+inline static int
+ComputeLinearIndexFromPosition_PlainVoxelArray(const ITMLib::ITMPlainVoxelArray::IndexData* data, Vector3i position) {
+	return position.z * (data->size.z * data->size.y)
+	       + position.y * (data->size.x + position.x);
+};
+// stub (mostly)
+void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, int& zInBlock,
+                        const CONSTPTR(ITMLib::ITMPlainVoxelArray::IndexData)* indexData,
+                        ITMLib::ITMPlainVoxelArray::IndexCache& cache, const CONSTPTR(Vector3i)& point) {
+	vmIndex = 0; locId = ComputeLinearIndexFromPosition_PlainVoxelArray(indexData,point);
+	xInBlock = point.x;
+	yInBlock = point.y;
+	zInBlock = point.z;
+}
 /**
  * \brief Return the exact local positioning indices for a voxel with the given coordinates within a hash data structure
  * \tparam TVoxel type of voxel
@@ -113,6 +126,7 @@ FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, 
  * \param cache
  * \param point
  */
+_CPU_AND_GPU_CODE_
 void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, int& zInBlock,
                         const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* hashEntries,
                         ITMLib::ITMVoxelBlockHash::IndexCache& cache, const CONSTPTR(Vector3i)& point) {

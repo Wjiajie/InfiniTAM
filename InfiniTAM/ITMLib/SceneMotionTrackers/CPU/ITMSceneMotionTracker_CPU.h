@@ -18,7 +18,7 @@
 #include <opencv2/core/mat.hpp>
 #include "../Interface/ITMSceneMotionTracker.h"
 #include "../../Utils/ITMHashBlockProperties.h"
-#include "ITMCalculateWarpGradientBasedOnWarpedLiveFunctor.h"
+#include "../Shared/ITMCalculateWarpGradientBasedOnWarpedLiveFunctor.h"
 #include "../../Engines/Reconstruction/CPU/ITMDynamicHashManagementEngine_CPU.tpp"
 
 
@@ -56,7 +56,7 @@ public:
 private:
 
 	ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive> hashManager;
-	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor<TVoxelCanonical, TVoxelLive> calculateGradientFunctor;
+	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash> calculateGradientFunctor;
 
 
 };
@@ -86,6 +86,9 @@ public:
 			ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex) override;
 
 	void ResetWarps(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) override;
+
+private:
+	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray> calculateGradientFunctor;
 
 };
 

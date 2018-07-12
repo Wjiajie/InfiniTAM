@@ -401,9 +401,12 @@ public:
 int FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, const THREADPTR(Vector3s)& at);
 
 void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, int& zInBlock,
+                        const CONSTPTR(ITMLib::ITMPlainVoxelArray::IndexData)* indexData,
+                        ITMLib::ITMPlainVoxelArray::IndexCache& cache,
+                        const CONSTPTR(Vector3i)& at);
+void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, int& zInBlock,
                         const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* hashEntries,
                         ITMLib::ITMVoxelBlockHash::IndexCache& cache,
                         const CONSTPTR(Vector3i)& at);
-
 
 }//namespace ITMLib

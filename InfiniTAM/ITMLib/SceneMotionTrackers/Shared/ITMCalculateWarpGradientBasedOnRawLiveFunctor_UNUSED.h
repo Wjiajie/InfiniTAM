@@ -20,16 +20,16 @@
 #include <iomanip>
 
 //local
-#include "../Shared/ITMSceneMotionTracker_Shared.h"
-#include "../Shared/ITMSceneMotionTracker_Debug.h"
+#include "ITMSceneMotionTracker_Shared.h"
+#include "ITMSceneMotionTracker_Debug.h"
 #include "../../Engines/Manipulation/ITMSceneManipulation.h"
 #include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
 #include "../../Utils/ITMVoxelFlags.h"
 #include "../../Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "../Interface/ITMSceneMotionTracker.h"
-#include "ITMSceneMotionTracker_CPU.h"
+#include "../CPU/ITMSceneMotionTracker_CPU.h"
 #include "../../Utils/FileIO/ITMDynamicFusionLogger.h"
-#include "ITMWarpGradientCommon.h"
+#include "../CPU/ITMWarpGradientCommon.h"
 
 
 namespace ITMLib {
@@ -295,8 +295,8 @@ public:
 				GetVoxelHashLocals(hash, x, y, y, z, liveHashEntries, liveCache, position);
 				hash -= 1;
 				std::array<ITMNeighborVoxelIterationInfo, 9> neighbors;
-				FindHighlightNeighborInfo(neighbors, position, hash, canonicalVoxels,
-				                          canonicalHashEntries, liveVoxels, liveHashEntries, liveCache);
+				FindHighlightNeighborInfo(neighbors, position, hash, canonicalVoxels, canonicalHashEntries,
+				                          canonicalCache, liveVoxels, liveHashEntries, liveCache);
 				//TODO: get rid of iteration + frame fields in HighlightIterationInfo
 				ITMHighlightIterationInfo info =
 						{hash, locId, position, warp, canonicalSdf, liveSdf,

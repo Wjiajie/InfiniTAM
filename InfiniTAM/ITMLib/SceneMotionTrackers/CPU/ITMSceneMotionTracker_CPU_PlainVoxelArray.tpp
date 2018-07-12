@@ -19,7 +19,7 @@
 #include "../../Utils/ITMVoxelFlags.h"
 #include "../../Utils/ITMPrintHelpers.h"
 #include "../../Engines/Manipulation/ITMSceneManipulation.h"
-#include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
+#include "../../Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h"
 #include "../Shared/ITMSceneMotionTracker_Debug.h"
 
 using namespace ITMLib;
@@ -28,18 +28,28 @@ using namespace ITMLib;
 // region ================================ CONSTRUCTORS AND DESTRUCTORS ================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ITMSceneMotionTracker_CPU(const ITMLibSettings* settings)
-		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>(settings) {
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ITMSceneMotionTracker_CPU(
+		const ITMLibSettings* settings)
+		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>(settings),
+		  calculateGradientFunctor(this->parameters, this->switches){
 }
 // endregion ============================== END CONSTRUCTORS AND DESTRUCTORS============================================
 // region ===================================== CALCULATE GRADIENT SMOOTHING ===========================================
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::CalculateWarpGradient(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-                                                                                                  ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, bool hasFocusCoordinates,
-                                                                                                  const Vector3i& focusCoordinates, int sourceFieldIndex, bool restrictZTrackingForDebugging) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::CalculateWarpGradient(
+		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
+		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, bool hasFocusCoordinates,
+		const Vector3i& focusCoordinates, int sourceFieldIndex, bool restrictZTrackingForDebugging) {
+
+	StaticVoxelTraversal_CPU<ClearOutGradientStaticFunctor<TVoxelCanonical>>(canonicalScene);
+	calculateGradientFunctor.PrepareForOptimization(liveScene, canonicalScene, sourceFieldIndex, hasFocusCoordinates,
+	                                                focusCoordinates, restrictZTrackingForDebugging);
+
+	DualVoxelPositionTraversal_CPU(liveScene, canonicalScene, calculateGradientFunctor);
+
+	calculateGradientFunctor.FinalizePrintAndRecordStatistics();
 }
 
 // endregion ===========================================================================================================
@@ -53,7 +63,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>:
 		int sourceFieldIndex) {
 
 	if (this->switches.enableGradientSmoothing) {
-		DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+		SmoothWarpGradient_common(liveScene,canonicalScene,sourceFieldIndex);
 	}
 }
 
@@ -66,7 +76,7 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::UpdateWarps(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	return UpdateWarps_common(canonicalScene,liveScene,sourceSdfIndex,this->parameters.gradientDescentLearningRate,this->switches.enableGradientSmoothing);
 }
 
 
@@ -76,17 +86,17 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMLib::ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ResetWarps(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	StaticVoxelTraversal_CPU<WarpClearFunctor<TVoxelCanonical>>(canonicalScene);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ClearOutFramewiseWarp(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	StaticVoxelTraversal_CPU<ClearOutFramewiseWarpStaticFunctor<TVoxelCanonical>>(canonicalScene);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::AddFramewiseWarpToWarp(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene, bool clearFramewiseWarp) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	AddFramewiseWarpToWarp_common(canonicalScene,clearFramewiseWarp);
 };

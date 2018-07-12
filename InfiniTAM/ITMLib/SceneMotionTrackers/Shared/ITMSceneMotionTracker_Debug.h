@@ -61,16 +61,36 @@ ReadVoxelAndLinearIndex(const CONSTPTR(TVoxel)* voxelData,
 	return TVoxel();
 }
 
+inline static int
+ComputeLinearIndexFromPosition_PlainVoxelArray(const ITMLib::ITMPlainVoxelArray::IndexData* data, Vector3i position) {
+	return position.z * (data->size.z * data->size.y)
+	       + position.y * (data->size.x + position.x);
+};
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TLiveCache>
+//DEBUG
+template<class TVoxel>
+_CPU_AND_GPU_CODE_ inline TVoxel
+ReadVoxelAndLinearIndex(const CONSTPTR(TVoxel)* voxelData,
+                        const CONSTPTR(ITMLib::ITMPlainVoxelArray::IndexData)* voxelIndex,
+                        const THREADPTR(Vector3i)& point, THREADPTR(int)& vmIndex,
+                        THREADPTR(ITMLib::ITMPlainVoxelArray::IndexCache)& cache, THREADPTR(int)& linearIdx) {
+
+	linearIdx = ComputeLinearIndexFromPosition_PlainVoxelArray(voxelIndex, point);
+	return voxelData[linearIdx];
+}
+
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndexData, typename TCache>
 inline void FindHighlightNeighborInfo(std::array<ITMLib::ITMNeighborVoxelIterationInfo, 9>& neighbors,
                                       const CONSTPTR(Vector3i)& highlightPosition,
                                       const CONSTPTR(int)& highlightHash,
                                       const CONSTPTR(TVoxelCanonical)* canonicalVoxelData,
-                                      const CONSTPTR(ITMHashEntry)* canonicalHashTable,
+                                      const CONSTPTR(TIndexData)* canonicalIndexData,
+                                      THREADPTR(TCache)& canonicalCache,
                                       const CONSTPTR(TVoxelLive)* liveVoxelData,
-                                      const CONSTPTR(ITMHashEntry)* liveHashTable,
-                                      THREADPTR(TLiveCache)& liveCache) {
+                                      const CONSTPTR(TIndexData)* liveIndexData,
+                                      THREADPTR(TCache)& liveCache
+									  ) {
 	//    0        1        2          3         4         5           6         7         8
 	//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
 	Vector3i locations[9] = {Vector3i(-1, 0, 0), Vector3i(0, -1, 0), Vector3i(0, 0, -1),
@@ -78,15 +98,14 @@ inline void FindHighlightNeighborInfo(std::array<ITMLib::ITMNeighborVoxelIterati
 	                         Vector3i(1, 1, 0), Vector3i(0, 1, 1), Vector3i(1, 0, 1)};
 	int vmIndex, localId = 0;
 	vmIndex = highlightHash + 1;
-	ITMLib::ITMVoxelBlockHash::IndexCache cache;
 	int iNeighbor = 0;
 	for (auto location : locations) {
 		ITMLib::ITMNeighborVoxelIterationInfo& info = neighbors[iNeighbor];
 		Vector3i neighborPosition = highlightPosition + (location);
-		TVoxelCanonical voxelCanonical = ReadVoxelAndLinearIndex(canonicalVoxelData, canonicalHashTable,
+		TVoxelCanonical voxelCanonical = ReadVoxelAndLinearIndex(canonicalVoxelData, canonicalIndexData,
 		                                                         neighborPosition,
-		                                                         vmIndex, cache, localId);
-		const TVoxelLive& voxelLive = readVoxel(liveVoxelData, liveHashTable, neighborPosition, vmIndex, liveCache);
+		                                                         vmIndex, canonicalCache, localId);
+		const TVoxelLive& voxelLive = readVoxel(liveVoxelData, liveIndexData, neighborPosition, vmIndex, liveCache);
 		if (vmIndex != 0) {
 			info.unknown = voxelCanonical.flags == ITMLib::VOXEL_TRUNCATED;
 			info.hash = vmIndex - 1;
@@ -223,7 +242,7 @@ inline void find6ConnectedNeighborInfo(
 #undef PROCESS_VOXEL
 }
 
-template<typename TVoxel, typename TCache>
+template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void find6ConnectedNeighborInfoIndexedFields(
 		THREADPTR(bool)* neighborKnown, //x6, out
@@ -232,10 +251,10 @@ inline void find6ConnectedNeighborInfoIndexedFields(
 		THREADPTR(float)* neighborSdf, //x6, out
 		const CONSTPTR(Vector3i)& voxelPosition,
 		const CONSTPTR(TVoxel)* voxels,
-		const CONSTPTR(ITMHashEntry)* hashEntries,
+		const CONSTPTR(TIndexData)* hashEntries,
 		THREADPTR(TCache)& cache,
 		int fieldIndex) {
-	int vmIndex;
+	int vmIndex = 0;
 
 	TVoxel voxel;
 	//TODO: define inline function instead of macro
@@ -258,12 +277,12 @@ inline void find6ConnectedNeighborInfoIndexedFields(
 
 
 
-template<typename TVoxel, typename TCache>
+template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void print6ConnectedNeighborInfo(
 		const CONSTPTR(Vector3i)& voxelPosition,
 		const CONSTPTR(TVoxel)* voxels,
-		const CONSTPTR(ITMHashEntry)* hashEntries,
+		const CONSTPTR(TIndexData)* indexData,
 		THREADPTR(TCache)& cache) {
 	const int neighborhoodSize = 6;
 	bool neighborKnown[neighborhoodSize];
@@ -272,7 +291,7 @@ inline void print6ConnectedNeighborInfo(
 	float neighborSdf[neighborhoodSize];
 
 	find6ConnectedNeighborInfo(neighborKnown, neighborTruncated, neighborAllocated, neighborSdf, voxelPosition, voxels,
-	                           hashEntries, cache);
+	                           indexData, cache);
 	const Vector3i positions[6] = {Vector3i(-1, 0, 0), Vector3i(0, -1, 0), Vector3i(0, 0, -1),
 	                               Vector3i(1, 0, 0), Vector3i(0, 1, 0), Vector3i(0, 0, 1)};
 
@@ -285,14 +304,14 @@ inline void print6ConnectedNeighborInfo(
 }
 
 
-template<typename TVoxel, typename TCache>
+template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void print6ConnectedNeighborInfoIndexedFields(
 		const CONSTPTR(Vector3i)& voxelPosition,
 		const CONSTPTR(TVoxel)* voxels,
-		const CONSTPTR(ITMHashEntry)* hashEntries,
+		const CONSTPTR(TIndexData)* indexData,
 		THREADPTR(TCache)& cache,
-		int fieldIndex) {
+		const CONSTPTR(int)& fieldIndex) {
 	const int neighborhoodSize = 6;
 	bool neighborKnown[neighborhoodSize];
 	bool neighborTruncated[neighborhoodSize];
@@ -300,7 +319,7 @@ inline void print6ConnectedNeighborInfoIndexedFields(
 	float neighborSdf[neighborhoodSize];
 
 	find6ConnectedNeighborInfoIndexedFields(neighborKnown, neighborTruncated, neighborAllocated, neighborSdf,
-	                                        voxelPosition, voxels, hashEntries, cache, fieldIndex);
+	                                        voxelPosition, voxels, indexData, cache, fieldIndex);
 	const Vector3i positions[6] = {Vector3i(-1, 0, 0), Vector3i(0, -1, 0), Vector3i(0, 0, -1),
 	                               Vector3i(1, 0, 0), Vector3i(0, 1, 0), Vector3i(0, 0, 1)};
 

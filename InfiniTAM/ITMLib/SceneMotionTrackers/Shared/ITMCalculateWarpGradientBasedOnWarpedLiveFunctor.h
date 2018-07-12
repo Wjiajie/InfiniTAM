@@ -20,16 +20,15 @@
 #include <iomanip>
 
 //local
-#include "../Shared/ITMSceneMotionTracker_Shared.h"
-#include "../Shared/ITMSceneMotionTracker_Debug.h"
+#include "ITMSceneMotionTracker_Shared.h"
+#include "ITMSceneMotionTracker_Debug.h"
 #include "../../Engines/Manipulation/ITMSceneManipulation.h"
-#include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
 #include "../../Utils/ITMVoxelFlags.h"
 #include "../../Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "../Interface/ITMSceneMotionTracker.h"
-#include "ITMSceneMotionTracker_CPU.h"
+#include "../CPU/ITMSceneMotionTracker_CPU.h"
 #include "../../Utils/FileIO/ITMDynamicFusionLogger.h"
-#include "ITMWarpGradientCommon.h"
+#include "../CPU/ITMWarpGradientCommon.h"
 
 
 namespace ITMLib {
@@ -38,7 +37,7 @@ namespace ITMLib {
 
 
 
-template<typename TVoxelCanonical, typename TVoxelLive>
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 struct ITMCalculateWarpGradientBasedOnWarpedLiveFunctor {
 private:
 
@@ -46,7 +45,7 @@ private:
 	                             const Vector3f& voxelWarp, const float& canonicalSdf, const float& liveSdf) {
 		if (hasFocusCoordinates && voxelPosition == focusCoordinates) {
 			int x = 0, y = 0, z = 0, vmIndex = 0, locId = 0;
-			GetVoxelHashLocals(vmIndex, locId, x, y, z, liveHashEntries, liveCache, voxelPosition);
+			GetVoxelHashLocals(vmIndex, locId, x, y, z, liveIndexData, liveCache, voxelPosition);
 			std::cout << std::endl << bright_cyan << "*** Printing voxel at " << voxelPosition
 			          << " *** " << reset << std::endl;
 			std::cout << "Position within block (x,y,z): " << x << ", " << y << ", " << z << std::endl;
@@ -66,24 +65,24 @@ public:
 
 	// region ========================================= CONSTRUCTOR ====================================================
 	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor(
-			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Parameters parameters,
-			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Switches switches) :
+			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::Parameters parameters,
+			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::Switches switches) :
 			liveCache(),
 			canonicalCache(),
 			parameters(parameters),
 			switches(switches) {}
 
-	void PrepareForOptimization(ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
-	                            ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, int sourceSdfIndex,
+	void PrepareForOptimization(ITMScene<TVoxelLive, TIndex>* liveScene,
+	                            ITMScene<TVoxelCanonical, TIndex>* canonicalScene, int sourceSdfIndex,
 	                            bool hasFocusCoordinates, Vector3i focusCoordinates,
 	                            bool restrictZtrackingForDebugging) {
 		ResetStatistics();
 		this->liveScene = liveScene;
 		this->liveVoxels = liveScene->localVBA.GetVoxelBlocks(),
-		this->liveHashEntries = liveScene->index.GetEntries(),
+		this->liveIndexData = liveScene->index.getIndexData(),
 		this->canonicalScene = canonicalScene;
 		this->canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
-		this->canonicalHashEntries = canonicalScene->index.GetEntries();
+		this->canonicalIndexData = canonicalScene->index.getIndexData();
 		this->hasFocusCoordinates = hasFocusCoordinates;
 		this->focusCoordinates = focusCoordinates;
 		this->restrictZtrackingForDebugging = restrictZtrackingForDebugging;
@@ -143,7 +142,7 @@ public:
 			findPoint2ndDerivativeNeighborhoodPreviousUpdate(
 					neighborWarpUpdates/*x9*/, neighborKnown, neighborTruncated,
 					neighborAllocated, position, canonicalVoxels,
-					canonicalHashEntries, canonicalCache);
+					canonicalIndexData, canonicalCache);
 			for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
 				if (!neighborAllocated[iNeighbor]) {
 					//assign current warp to neighbor warp if the neighbor is not allocated
@@ -154,7 +153,7 @@ public:
 			findPoint2ndDerivativeNeighborhoodFramewiseWarp(
 					neighborFramewiseWarps/*x9*/, neighborKnown, neighborTruncated,
 					neighborAllocated, position, canonicalVoxels,
-					canonicalHashEntries, canonicalCache);
+					canonicalIndexData, canonicalCache);
 			//TODO: revise this to reflect new realities
 			for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
 				if (!neighborAllocated[iNeighbor]) {
@@ -167,7 +166,7 @@ public:
 
 		if (printVoxelResult) {
 			std::cout << blue << "Live 6-connected neighbor information:" << reset << std::endl;
-			print6ConnectedNeighborInfoIndexedFields(position, liveVoxels, liveHashEntries, liveCache,
+			print6ConnectedNeighborInfoIndexedFields(position, liveVoxels, liveIndexData, liveCache,
 			                                         sourceSdfIndex);
 		}
 
@@ -175,7 +174,7 @@ public:
 
 		if (haveFullData && (switches.enableLevelSetTerm || switches.enableDataTerm)) {
 			ComputeLiveJacobian_CentralDifferences_IndexedFields(
-					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex);
+					liveSdfJacobian, position, liveVoxels, liveIndexData, liveCache, sourceSdfIndex);
 			//_DEBUG
 //			ComputeLiveJacobian_CentralDifferences_ChangeTruncatedsSignToCanonicals(
 //					liveSdfJacobian, position, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex, canonicalSdf);
@@ -218,7 +217,7 @@ public:
 
 		if (switches.enableLevelSetTerm && haveFullData) {
 			ComputeSdfHessian_IndexedFields(liveSdfHessian, position, liveSdf, liveVoxels,
-			                                liveHashEntries, liveCache, sourceSdfIndex);
+			                                liveIndexData, liveCache, sourceSdfIndex);
 			float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
 			float sdfJacobianNormMinusUnity = sdfJacobianNorm - parameters.unity;
 			localLevelSetEnergyGradient = sdfJacobianNormMinusUnity * (liveSdfHessian * liveSdfJacobian) /
@@ -344,11 +343,11 @@ public:
 			if (recordVoxelResult) {
 				//TODO: legacy, revise/remove -Greg
 				int x = 0, y = 0, z = 0, hash = 0, locId = 0;
-				GetVoxelHashLocals(hash, x, y, y, z, liveHashEntries, liveCache, position);
+				GetVoxelHashLocals(hash, x, y, y, z, liveIndexData, liveCache, position);
 				hash -= 1;
 				std::array<ITMNeighborVoxelIterationInfo, 9> neighbors;
-				FindHighlightNeighborInfo(neighbors, position, hash, canonicalVoxels,
-				                          canonicalHashEntries, liveVoxels, liveHashEntries, liveCache);
+				FindHighlightNeighborInfo(neighbors, position, hash, canonicalVoxels, canonicalIndexData,
+				                          canonicalCache, liveVoxels, liveIndexData, liveCache);
 
 				ITMHighlightIterationInfo info =
 						{hash, locId, position, framewiseWarp, canonicalSdf, liveSdf,
@@ -404,16 +403,16 @@ private:
 	}
 
 	// *** data structure accessors
-	ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene;
+	ITMScene<TVoxelLive, TIndex>* liveScene;
 	int sourceSdfIndex{};
 	TVoxelLive* liveVoxels;
-	ITMHashEntry* liveHashEntries{};
-	ITMVoxelBlockHash::IndexCache liveCache;
+	typename TIndex::IndexData* liveIndexData;
+	typename TIndex::IndexCache liveCache;
 
-	ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene;
+	ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
 	TVoxelCanonical* canonicalVoxels;
-	ITMHashEntry* canonicalHashEntries{};
-	ITMVoxelBlockHash::IndexCache canonicalCache;
+	typename TIndex::IndexData* canonicalIndexData;
+	typename TIndex::IndexCache canonicalCache;
 
 	// *** statistical aggregates
 	double cumulativeCanonicalSdf = 0.0;
@@ -435,8 +434,8 @@ private:
 	Vector3i focusCoordinates;
 	bool restrictZtrackingForDebugging = false;
 
-	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Parameters parameters;
-	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Switches switches;
+	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::Parameters parameters;
+	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::Switches switches;
 
 };
 }// namespace ITMLib

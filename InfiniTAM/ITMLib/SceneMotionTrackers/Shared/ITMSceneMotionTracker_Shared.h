@@ -37,25 +37,25 @@
  * 3) everything else (non-truncated), of course, as found
  * \param[in] voxelPosition exact position of voxel in the scene.
  * \param[in] voxels
- * \param[in] hashEntries
+ * \param[in] indexData
  * \param[in] cache
  */
-template<typename TVoxel, typename TCache>
+template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void findPoint2ndDerivativeNeighborhoodFramewiseWarp(THREADPTR(Vector3f)* neighborFramewiseWarps, //x9, out
-                                                   THREADPTR(bool)* neighborKnown, //x9, out
-                                                   THREADPTR(bool)* neighborTruncated, //x9, out
-                                                   THREADPTR(bool)* neighborAllocated, //x9, out
-                                                   const CONSTPTR(Vector3i)& voxelPosition,
-                                                   const CONSTPTR(TVoxel)* voxels,
-                                                   const CONSTPTR(ITMHashEntry)* hashEntries,
-                                                   THREADPTR(TCache)& cache) {
-	int vmIndex;
+                                                            THREADPTR(bool)* neighborKnown, //x9, out
+                                                            THREADPTR(bool)* neighborTruncated, //x9, out
+                                                            THREADPTR(bool)* neighborAllocated, //x9, out
+                                                            const CONSTPTR(Vector3i)& voxelPosition,
+                                                            const CONSTPTR(TVoxel)* voxels,
+                                                            const CONSTPTR(TIndexData)* indexData,
+                                                            THREADPTR(TCache)& cache) {
+	int vmIndex = 0;
 
 	TVoxel voxel;
 	//TODO: define inline function instead of macro
 #define PROCESS_VOXEL(location, index)\
-    voxel = readVoxel(voxels, hashEntries, voxelPosition + (location), vmIndex, cache);\
+    voxel = readVoxel(voxels, indexData, voxelPosition + (location), vmIndex, cache);\
     neighborFramewiseWarps[index] = voxel.framewise_warp;\
     neighborAllocated[index] = vmIndex != 0;\
     neighborKnown[index] = voxel.flags != ITMLib::VOXEL_UNKNOWN;\
@@ -92,25 +92,25 @@ inline void findPoint2ndDerivativeNeighborhoodFramewiseWarp(THREADPTR(Vector3f)*
  * 3) everything else (non-truncated), of course, as found
  * \param[in] voxelPosition exact position of voxel in the scene.
  * \param[in] voxels
- * \param[in] hashEntries
+ * \param[in] indexData
  * \param[in] cache
  */
-template<typename TVoxel, typename TCache>
+template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void findPoint2ndDerivativeNeighborhoodPreviousUpdate(THREADPTR(Vector3f)* neighborUpdates, //x9, out
-                                                            THREADPTR(bool)* neighborKnown, //x9, out
-                                                            THREADPTR(bool)* neighborTruncated, //x9, out
-                                                            THREADPTR(bool)* neighborAllocated, //x9, out
-                                                            const CONSTPTR(Vector3i)& voxelPosition,
-                                                            const CONSTPTR(TVoxel)* voxels,
-                                                            const CONSTPTR(ITMHashEntry)* hashEntries,
-                                                            THREADPTR(TCache)& cache) {
-	int vmIndex;
+                                                             THREADPTR(bool)* neighborKnown, //x9, out
+                                                             THREADPTR(bool)* neighborTruncated, //x9, out
+                                                             THREADPTR(bool)* neighborAllocated, //x9, out
+                                                             const CONSTPTR(Vector3i)& voxelPosition,
+                                                             const CONSTPTR(TVoxel)* voxels,
+                                                             const CONSTPTR(TIndexData)* indexData,
+                                                             THREADPTR(TCache)& cache) {
+	int vmIndex = 0;
 
 	TVoxel voxel;
 	//TODO: define inline function instead of macro
 #define PROCESS_VOXEL(location, index)\
-    voxel = readVoxel(voxels, hashEntries, voxelPosition + (location), vmIndex, cache);\
+    voxel = readVoxel(voxels, indexData, voxelPosition + (location), vmIndex, cache);\
     neighborUpdates[index] = voxel.warp_update;\
     neighborAllocated[index] = vmIndex != 0;\
     neighborKnown[index] = voxel.flags != ITMLib::VOXEL_UNKNOWN;\
@@ -147,10 +147,10 @@ inline void findPoint2ndDerivativeNeighborhoodPreviousUpdate(THREADPTR(Vector3f)
  * 3) everything else (non-truncated), of course, as found
  * \param[in] voxelPosition exact position of voxel in the scene.
  * \param[in] voxels
- * \param[in] hashEntries
+ * \param[in] indexData
  * \param[in] cache
  */
-template<typename TVoxel, typename TCache>
+template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* neighborWarps, //x9, out
                                                    THREADPTR(bool)* neighborKnown, //x9, out
@@ -158,14 +158,14 @@ inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* neighbor
                                                    THREADPTR(bool)* neighborAllocated, //x9, out
                                                    const CONSTPTR(Vector3i)& voxelPosition,
                                                    const CONSTPTR(TVoxel)* voxels,
-                                                   const CONSTPTR(ITMHashEntry)* hashEntries,
+                                                   const CONSTPTR(TIndexData)* indexData,
                                                    THREADPTR(TCache)& cache) {
-	int vmIndex;
+	int vmIndex = 0;
 
 	TVoxel voxel;
 	//TODO: define inline function instead of macro
 #define PROCESS_VOXEL(location, index)\
-    voxel = readVoxel(voxels, hashEntries, voxelPosition + (location), vmIndex, cache);\
+    voxel = readVoxel(voxels, indexData, voxelPosition + (location), vmIndex, cache);\
     neighborWarps[index] = voxel.warp;\
     neighborAllocated[index] = vmIndex != 0;\
     neighborKnown[index] = voxel.flags != ITMLib::VOXEL_UNKNOWN;\
@@ -195,16 +195,16 @@ inline void findPoint2ndDerivativeNeighborhoodWarp(THREADPTR(Vector3f)* neighbor
 
 //region ================================= SDF JACOBIAN ================================================================
 
-template<typename TVoxel, typename TCache>
+template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
-void ComputeLiveJacobianForwardDifferences(Vector3f& jacobian,
-                                           const Vector3i& position,
-                                           const float& sdfAtPosition,
-                                           const TVoxel* voxels,
-                                           const ITMHashEntry* hashEntries,
-                                           TCache cache) {
-	int vmIndex;
-#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, hashEntries, position + (offset), vmIndex, cache).sdf))
+void ComputeLiveJacobianForwardDifferences(THREADPTR(Vector3f)& jacobian,
+                                           const CONSTPTR(Vector3i)& position,
+                                           const CONSTPTR(float)& sdfAtPosition,
+                                           const CONSTPTR(TVoxel)* voxels,
+                                           const CONSTPTR(TIndexData)* indexData,
+                                           THREADPTR(TCache) cache) {
+	int vmIndex = 0;
+#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, indexData, position + (offset), vmIndex, cache).sdf))
 	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
 	float sdfAtYplusOne = sdf_at(Vector3i(0, 1, 0));
 	float sdfAtZplusOne = sdf_at(Vector3i(0, 0, 1));
@@ -215,15 +215,15 @@ void ComputeLiveJacobianForwardDifferences(Vector3f& jacobian,
 	jacobian[2] = sdfAtZplusOne - sdfAtPosition;
 };
 
-template<typename TVoxel, typename TCache>
+template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
-void ComputeLiveJacobian_ForwardDifferences(Vector3f& jacobian,
-                                            const Vector3i& position,
-                                            const TVoxel* voxels,
-                                            const ITMHashEntry* hashEntries,
-                                            TCache cache) {
-	int vmIndex;
-#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, hashEntries, position + (offset), vmIndex, cache).sdf))
+void ComputeLiveJacobian_ForwardDifferences(THREADPTR(Vector3f)& jacobian,
+                                            const CONSTPTR(Vector3i)& position,
+                                            const CONSTPTR(TVoxel)* voxels,
+                                            const CONSTPTR(TIndexData)* indexData,
+                                            THREADPTR(TCache) cache) {
+	int vmIndex = 0;
+#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, indexData, position + (offset), vmIndex, cache).sdf))
 	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
 	float sdfAtYplusOne = sdf_at(Vector3i(0, 1, 0));
 	float sdfAtZplusOne = sdf_at(Vector3i(0, 0, 1));
@@ -236,15 +236,15 @@ void ComputeLiveJacobian_ForwardDifferences(Vector3f& jacobian,
 };
 
 
-template<typename TVoxel, typename TCache>
+template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
-void ComputeLiveJacobian_CentralDifferences(Vector3f& jacobian,
-                                            const Vector3i& voxelPosition,
-                                            const TVoxel* voxels,
-                                            const ITMHashEntry* hashEntries,
-                                            TCache cache) {
-	int vmIndex;
-#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, hashEntries, voxelPosition + (offset), vmIndex, cache).sdf))
+void ComputeLiveJacobian_CentralDifferences(THREADPTR(Vector3f)& jacobian,
+                                            const CONSTPTR(Vector3i)& voxelPosition,
+                                            const CONSTPTR(TVoxel)* voxels,
+                                            const CONSTPTR(TIndexData)* indexData,
+                                            THREADPTR(TCache) cache) {
+	int vmIndex = 0;
+#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, indexData, voxelPosition + (offset), vmIndex, cache).sdf))
 
 	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
 	float sdfAtYplusOne = sdf_at(Vector3i(0, 1, 0));
@@ -259,15 +259,15 @@ void ComputeLiveJacobian_CentralDifferences(Vector3f& jacobian,
 	jacobian[2] = 0.5f * (sdfAtZplusOne - sdfAtZminusOne);
 };
 
-template<typename TVoxel, typename TCache>
+template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
 void ComputeLiveJacobian_CentralDifferences(Vector3f& jacobian,
                                             const Vector3f& voxelPosition,
                                             const TVoxel* voxels,
-                                            const ITMHashEntry* hashEntries,
-                                            TCache cache) {
-	int vmIndex;
-#define sdf_at(offset) (_DEBUG_InterpolateTrilinearly(voxels, hashEntries, voxelPosition + (offset),  cache))
+                                            const TIndexData* indexData,
+                                            THREADPTR(TCache) cache) {
+	int vmIndex = 0;
+#define sdf_at(offset) (_DEBUG_InterpolateTrilinearly(voxels, indexData, voxelPosition + (offset),  cache))
 
 	float sdfAtXplusOne = sdf_at(Vector3f(1, 0, 0));
 	float sdfAtYplusOne = sdf_at(Vector3f(0, 1, 0));
@@ -283,17 +283,17 @@ void ComputeLiveJacobian_CentralDifferences(Vector3f& jacobian,
 };
 
 
-template<typename TVoxel, typename TCache>
+template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
 void ComputeLiveJacobian_CentralDifferences_IndexedFields(
-		Vector3f& jacobian,
-		const Vector3i& voxelPosition,
-		const TVoxel* voxels,
-		const ITMHashEntry* hashEntries,
+		THREADPTR(Vector3f)& jacobian,
+		const CONSTPTR(Vector3i)& voxelPosition,
+		const CONSTPTR(TVoxel)* voxels,
+		const CONSTPTR(TIndexData)* indexData,
 		THREADPTR(TCache) cache,
-		int fieldIndex) {
-	int vmIndex;
-#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, hashEntries, voxelPosition + (offset), vmIndex, cache).sdf_values[fieldIndex]))
+		const CONSTPTR(int)& fieldIndex) {
+	int vmIndex = 0;
+#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, indexData, voxelPosition + (offset), vmIndex, cache).sdf_values[fieldIndex]))
 
 	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
 	float sdfAtYplusOne = sdf_at(Vector3i(0, 1, 0));
@@ -311,17 +311,17 @@ void ComputeLiveJacobian_CentralDifferences_IndexedFields(
 
 // region ================================= SDF HESSIAN ================================================================
 
-template<typename TVoxel, typename TCache>
+template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void ComputeSdfHessian(THREADPTR(Matrix3f)& hessian,
                               const CONSTPTR(Vector3i &) position,
                               const CONSTPTR(float)& sdfAtPosition,
 		//const CONSTPTR(Vector3f&) jacobianAtPosition,
 		                      const CONSTPTR(TVoxel)* voxels,
-		                      const CONSTPTR(ITMHashEntry)* hashEntries,
+		                      const CONSTPTR(TIndexData)* indexData,
 		                      THREADPTR(TCache) cache) {
-	int vmIndex;
-#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, hashEntries, position + (offset), vmIndex, cache).sdf))
+	int vmIndex = 0;
+#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, indexData, position + (offset), vmIndex, cache).sdf))
 	//for xx, yy, zz
 	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
 	float sdfAtYplusOne = sdf_at(Vector3i(0, 1, 0));
@@ -362,18 +362,17 @@ inline void ComputeSdfHessian(THREADPTR(Matrix3f)& hessian,
 };
 
 
-template<typename TVoxel, typename TCache>
+template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void ComputeSdfHessian_IndexedFields(THREADPTR(Matrix3f)& hessian,
-                              const CONSTPTR(Vector3i &) position,
-                              const CONSTPTR(float)& sdfAtPosition,
-		//const CONSTPTR(Vector3f&) jacobianAtPosition,
-		                      const CONSTPTR(TVoxel)* voxels,
-		                      const CONSTPTR(ITMHashEntry)* hashEntries,
-		                      THREADPTR(TCache) cache,
-		                                    int fieldIndex) {
-	int vmIndex;
-#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, hashEntries, position + (offset), vmIndex, cache).sdf_values[fieldIndex]))
+                                            const CONSTPTR(Vector3i &) position,
+                                            const CONSTPTR(float)& sdfAtPosition,
+		                                    const CONSTPTR(TVoxel)* voxels,
+		                                    const CONSTPTR(TIndexData)* indexData,
+		                                    THREADPTR(TCache) cache,
+		                                    const CONSTPTR(int)& fieldIndex) {
+	int vmIndex = 0;
+#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, indexData, position + (offset), vmIndex, cache).sdf_values[fieldIndex]))
 	//for xx, yy, zz
 	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
 	float sdfAtYplusOne = sdf_at(Vector3i(0, 1, 0));
@@ -520,27 +519,28 @@ inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxe
 	hessian[2].setValues(valsW);
 
 };
+
 // endregion
-template<class TVoxel>
-_CPU_AND_GPU_CODE_ inline void GetVoxel(THREADPTR(TVoxel)*& voxel, THREADPTR(TVoxel) *voxelData,
-const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData) *voxelIndex, const THREADPTR(Vector3i) & point, THREADPTR(ITMLib::ITMVoxelBlockHash::IndexCache) & cache){
+template<typename TVoxel>
+_CPU_AND_GPU_CODE_ inline void GetVoxel(THREADPTR(TVoxel)*& voxel, THREADPTR(TVoxel)* voxelData,
+                                        const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex,
+                                        const THREADPTR(Vector3i)& point,
+                                        THREADPTR(ITMLib::ITMVoxelBlockHash::IndexCache)& cache) {
 	Vector3i blockPos;
 	int linearIdx = pointToVoxelBlockPos(point, blockPos);
-	if IS_EQUAL3(blockPos, cache.blockPos)
-	{
+	if IS_EQUAL3(blockPos, cache.blockPos) {
 		voxel = &voxelData[cache.blockPtr + linearIdx];
 		return;
 	}
 
 	int hashIdx = hashIndex(blockPos);
 
-	while (true)
-	{
+	while (true) {
 		ITMHashEntry hashEntry = voxelIndex[hashIdx];
 
-		if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= 0)
-		{
-			cache.blockPos = blockPos; cache.blockPtr = hashEntry.ptr * SDF_BLOCK_SIZE3;
+		if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= 0) {
+			cache.blockPos = blockPos;
+			cache.blockPtr = hashEntry.ptr * SDF_BLOCK_SIZE3;
 
 			voxel = &voxelData[cache.blockPtr + linearIdx];
 			return;
