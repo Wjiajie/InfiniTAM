@@ -28,41 +28,26 @@ namespace ITMLib {
 
 // region ================================ DYNAMIC SINGLE-SCENE TRAVERSAL ==============================================
 
-template<typename TVoxel>
-inline static int
-ComputeLinearIndexFromPosition_PlainVoxelArray(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3i position) {
-	int linearIndex = position.z * (scene->index.getVolumeSize().z * scene->index.getVolumeSize().y)
-	                  + position.y * (scene->index.getVolumeSize().x + position.x);
-	return linearIndex;
-};
 
-template<typename TVoxel>
-inline static int
-ComputeLinearIndexFromPosition_PlainVoxelArray(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, int x, int y, int z) {
-	int linearIndex = z * (scene->index.getVolumeSize().z * scene->index.getVolumeSize().y)
-	                  + y * (scene->index.getVolumeSize().x + x);
-	return linearIndex;
-};
-
-template<typename TVoxel>
 inline static void
-ComputePositionFromLinearIndex_PlainVoxelArray(int& x, int& y, int& z, ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+ComputePositionFromLinearIndex_PlainVoxelArray(int& x, int& y, int& z, const ITMPlainVoxelArray::IndexData* indexData,
                                                int linearIndex) {
-	z = linearIndex / (scene->index.getVolumeSize().x * scene->index.getVolumeSize().y);
-	int tmp = linearIndex - z * scene->index.getVolumeSize().x * scene->index.getVolumeSize().y;
-	y = tmp / scene->index.getVolumeSize().x;
-	x = tmp - y * scene->index.getVolumeSize().x;
+
+	z = linearIndex / (indexData->size.x * indexData->size.y);
+	int tmp = linearIndex - z * indexData->size.x * indexData->size.y;
+	y = tmp / indexData->size.x;
+	x = tmp - y * indexData->size.x;
+	x += indexData->offset.x; y += indexData->offset.y; z += indexData->offset.z;
 }
 
-template<typename TVoxel>
 inline static Vector3i
-ComputePositionVectorFromLinearIndex_PlainVoxelArray(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+ComputePositionVectorFromLinearIndex_PlainVoxelArray(const ITMPlainVoxelArray::IndexData* indexData,
                                                      int linearIndex) {
-	int z = linearIndex / (scene->index.getVolumeSize().x * scene->index.getVolumeSize().y);
-	int tmp = linearIndex - z * scene->index.getVolumeSize().x * scene->index.getVolumeSize().y;
-	int y = tmp / scene->index.getVolumeSize().x;
-	int x = tmp - y * scene->index.getVolumeSize().x;
-	return {x, y, z};
+	int z = linearIndex / (indexData->size.x * indexData->size.y);
+	int tmp = linearIndex - z * indexData->size.x * indexData->size.y;
+	int y = tmp / indexData->size.x;
+	int x = tmp - y * indexData->size.x;
+	return {x + indexData->offset.x, y + indexData->offset.y, z + indexData->offset.z};
 }
 
 
@@ -93,12 +78,12 @@ inline
 void VoxelPositionTraversal_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	int voxelCount = scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
-
+	const ITMPlainVoxelArray::IndexData* indexData = scene->index.getIndexData();
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
 	for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
-		Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(scene, linearIndex);
+		Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(indexData, linearIndex);
 		TVoxel& voxel = voxels[linearIndex];
 		functor(voxel, voxelPosition);
 	}
@@ -109,14 +94,15 @@ template<typename TFunctor, typename TVoxel>
 inline void
 VoxelTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor, Vector6i bounds) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
-	int voxelCount = scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
+	int vmIndex = 0;
+	const ITMPlainVoxelArray::IndexData* indexData = scene->index.getIndexData();
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
 	for (int z = bounds.min_z; z < bounds.max_z; z++) {
 		for (int y = bounds.min_y; y < bounds.max_y; y++) {
 			for (int x = bounds.min_x; x < bounds.max_x; x++) {
-				int linearIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(scene, x, y, z);
+				int linearIndex = findVoxel(indexData, Vector3i(x, y, z), vmIndex);
 				TVoxel& voxel = voxels[linearIndex];
 				functor(voxel);
 			}
@@ -131,8 +117,8 @@ inline void
 VoxelPositionTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor,
                                        Vector6i bounds) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
-	int voxelCount = scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
-
+	int vmIndex = 0;
+	const ITMPlainVoxelArray::IndexData* indexData = scene->index.getIndexData();
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -140,7 +126,7 @@ VoxelPositionTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* sce
 		for (int y = bounds.min_y; y < bounds.max_y; y++) {
 			for (int x = bounds.min_x; x < bounds.max_x; x++) {
 				Vector3i position(x, y, z);
-				int linearIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(scene, x, y, z);
+				int linearIndex = findVoxel(indexData, Vector3i(x, y, z), vmIndex);
 				TVoxel& voxel = voxels[linearIndex];
 				functor(voxel, position);
 			}
@@ -153,8 +139,8 @@ inline void
 VoxelPositionAndHashEntryTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor,
                                        Vector6i bounds) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
-	int voxelCount = scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
-
+	int vmIndex = 0;
+	const ITMPlainVoxelArray::IndexData* indexData = scene->index.getIndexData();
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -162,7 +148,7 @@ VoxelPositionAndHashEntryTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMPlainVoxe
 		for (int y = bounds.min_y; y < bounds.max_y; y++) {
 			for (int x = bounds.min_x; x < bounds.max_x; x++) {
 				Vector3i position(x, y, z);
-				int linearIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(scene, x, y, z);
+				int linearIndex = findVoxel(indexData, Vector3i(x, y, z), vmIndex);
 				TVoxel& voxel = voxels[linearIndex];
 				functor(voxel, position);
 			}
@@ -266,12 +252,12 @@ inline void DualVoxelPositionTraversal_CPU(
 	//asserted to be the same
 	int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
 	                 primaryScene->index.getVolumeSize().z;
-
+	const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.getIndexData();
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
 	for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
-		Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(primaryScene, linearIndex);
+		Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(indexData, linearIndex);
 		TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
 		TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
 		functor(primaryVoxel, secondaryVoxel, voxelPosition);
@@ -292,9 +278,9 @@ inline void DualVoxelPositionTraversal_CPU_SingleThreaded(
 	//asserted to be the same
 	int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
 	                 primaryScene->index.getVolumeSize().z;
-
+	const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.getIndexData();
 	for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
-		Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(primaryScene, linearIndex);
+		Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(indexData, linearIndex);
 		TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
 		TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
 		functor(primaryVoxel, secondaryVoxel, voxelPosition);

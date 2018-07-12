@@ -99,16 +99,11 @@ FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, 
 	return -1;
 }
 
-inline static int
-ComputeLinearIndexFromPosition_PlainVoxelArray(const ITMLib::ITMPlainVoxelArray::IndexData* data, Vector3i position) {
-	return position.z * (data->size.z * data->size.y)
-	       + position.y * (data->size.x + position.x);
-};
 // stub (mostly)
 void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, int& zInBlock,
                         const CONSTPTR(ITMLib::ITMPlainVoxelArray::IndexData)* indexData,
                         ITMLib::ITMPlainVoxelArray::IndexCache& cache, const CONSTPTR(Vector3i)& point) {
-	vmIndex = 0; locId = ComputeLinearIndexFromPosition_PlainVoxelArray(indexData,point);
+	locId = findVoxel(indexData, point, vmIndex);
 	xInBlock = point.x;
 	yInBlock = point.y;
 	zInBlock = point.z;

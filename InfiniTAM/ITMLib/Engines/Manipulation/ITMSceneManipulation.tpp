@@ -68,21 +68,6 @@ CopySceneSDFandFlagsWithOffset_CPU(
 
 }
 
-template<typename TVoxel>
-inline static int
-ComputeLinearIndexFromPosition_PlainVoxelArray(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3i position) {
-	return position.z * (scene->index.getVolumeSize().z * scene->index.getVolumeSize().y)
-	                       + position.y * (scene->index.getVolumeSize().x + position.x);
-};
-
-template<typename TVoxel>
-inline static int
-ComputeLinearIndexFromPosition_PlainVoxelArray(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, int x, int y, int z) {
-	return z * (scene->index.getVolumeSize().z * scene->index.getVolumeSize().y)
-	                       + y * (scene->index.getVolumeSize().x + x);
-};
-
-
 template<typename TVoxelSource, typename TVoxelDestination>
 void
 ITMTwoSceneManipulationEngine_CPU<TVoxelSource, TVoxelDestination, ITMPlainVoxelArray>::CopySceneSDFandFlagsWithOffset_CPU(
@@ -92,6 +77,7 @@ ITMTwoSceneManipulationEngine_CPU<TVoxelSource, TVoxelDestination, ITMPlainVoxel
 
 	const TVoxelSource* originalVoxels = source->localVBA.GetVoxelBlocks();
 	TVoxelDestination* destinationVoxels = destination->localVBA.GetVoxelBlocks();
+	const ITMPlainVoxelArray::IndexData* indexData = destination->index.getIndexData();
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -106,12 +92,15 @@ ITMTwoSceneManipulationEngine_CPU<TVoxelSource, TVoxelDestination, ITMPlainVoxel
 		int destY = y + offset.y;
 		int destZ = z + offset.z;
 
-		if (destX < 0 || destX > destination->index.getVolumeSize().x ||
-		    destY < 0 || destY > destination->index.getVolumeSize().y ||
-		    destZ < 0 || destZ > destination->index.getVolumeSize().z)
+		//debug
+//		if (destX < 0 || destX > destination->index.getVolumeSize().x ||
+//		    destY < 0 || destY > destination->index.getVolumeSize().y ||
+//		    destZ < 0 || destZ > destination->index.getVolumeSize().z)
+		int vmIndex = 0;
+		int destinationIndex = findVoxel(indexData, Vector3i(destX, destY, destZ), vmIndex);
+		if(!vmIndex){
 			continue; //out-of-bounds
-
-		int destinationIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(destination, destX, destY, destZ);
+		}
 		const TVoxelSource& sourceVoxel = originalVoxels[sourceIndex];
 		TVoxelDestination& destinationVoxel = destinationVoxels[destinationIndex];
 		destinationVoxel.sdf = sourceVoxel.sdf;
@@ -174,7 +163,8 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMScen
 template<typename TVoxel>
 bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::SetVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
                                                                           Vector3i at, TVoxel voxel) {
-	int arrayIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(scene, at);
+	int vmIndex = 0;
+	int arrayIndex = findVoxel(scene->index.getIndexData(), at, vmIndex);
 	scene->localVBA.GetVoxelBlocks()[arrayIndex] = voxel;
 }
 
@@ -202,8 +192,9 @@ template<typename TVoxel>
 TVoxel
 ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
                                                                       Vector3i at) {
-	int index = ComputeLinearIndexFromPosition_PlainVoxelArray(scene, at);
-	return scene->localVBA.GetVoxelBlocks()[index];
+	int vmIndex = 0;
+	int arrayIndex = findVoxel(scene->index.getIndexData(), at, vmIndex);
+	return scene->localVBA.GetVoxelBlocks()[arrayIndex];
 }
 
 template<typename TVoxel>
@@ -211,8 +202,9 @@ TVoxel
 ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
                                                                       Vector3i at,
                                                                       ITMPlainVoxelArray::IndexCache& cache) {
-	int index = ComputeLinearIndexFromPosition_PlainVoxelArray(scene, at);
-	return scene->localVBA.GetVoxelBlocks()[index];
+	int vmIndex = 0;
+	int arrayIndex = findVoxel(scene->index.getIndexData(), at, vmIndex);
+	return scene->localVBA.GetVoxelBlocks()[arrayIndex];
 }
 
 
@@ -382,11 +374,12 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopySceneSlice(
 
 	TVoxel* sourceVoxels = source->localVBA.GetVoxelBlocks();
 	TVoxel* destinationVoxels = destination->localVBA.GetVoxelBlocks();
-
+	const ITMPlainVoxelArray::IndexData* indexData = source->index.getIndexData();
 	for (int z = bounds.min_z; z < bounds.max_z; z++) {
 		for (int y = bounds.min_y; y < bounds.max_y; y++) {
 			for (int x = bounds.min_x; x < bounds.max_x; x++) {
-				int linearIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(source, x, y, z);
+				int vmIndex = 0;
+				int linearIndex = findVoxel(indexData, Vector3i(x, y, z), vmIndex);
 				memcpy(&destinationVoxels[linearIndex], &sourceVoxels[linearIndex], sizeof(TVoxel));
 			}
 		}

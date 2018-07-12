@@ -94,6 +94,10 @@ struct TrilinearInterpolationFunctor {
 	                Vector3i warpAndDestinationVoxelPosition) {
 		int vmIndex;
 
+		if(warpSourceVoxel.flags != VOXEL_UNKNOWN){
+			int i = 42;
+		}
+
 		Vector3f warpedPosition =
 				TLookupPositionFunctor::GetWarpedPosition(warpSourceVoxel, warpAndDestinationVoxelPosition);
 
