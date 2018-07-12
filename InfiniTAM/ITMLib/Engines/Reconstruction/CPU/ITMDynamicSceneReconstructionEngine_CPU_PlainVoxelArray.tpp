@@ -47,6 +47,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPla
 	const ITMPlainVoxelArray::IndexData* arrayInfo = scene->index.getIndexData();
 
 	bool stopIntegratingAtMaxW = scene->sceneParams->stopIntegratingAtMaxW;
+	float* confidence = view->depthConfidence->GetData(MEMORYDEVICE_CPU);
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -60,7 +61,6 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPla
 
 		Vector4f pt_model;
 
-		if (stopIntegratingAtMaxW) if (voxelArray[locId].w_depth == maxW) continue;
 
 		pt_model.x = (float) (x + arrayInfo->offset.x) * voxelSize;
 		pt_model.y = (float) (y + arrayInfo->offset.y) * voxelSize;
@@ -71,8 +71,9 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPla
 				TVoxelLive::hasColorInformation,
 				TVoxelLive::hasConfidenceInformation,
 				TVoxelLive::hasSemanticInformation,
-				TVoxelLive>::compute(voxelArray[locId], pt_model, M_d, projParams_d, M_rgb, projParams_rgb, mu, maxW,
-		                             depth, depthImgSize, rgb, rgbImgSize);
+				TVoxelLive>::compute(voxelArray[locId], pt_model, M_d,
+		                             projParams_d, M_rgb, projParams_rgb, mu, maxW, depth, confidence,
+		                             depthImgSize, rgb, rgbImgSize);
 	}
 }
 
