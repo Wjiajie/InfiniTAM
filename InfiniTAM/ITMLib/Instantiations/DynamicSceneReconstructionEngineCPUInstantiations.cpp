@@ -14,6 +14,7 @@
 //  limitations under the License.
 //  ================================================================
 #include "../Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU_VoxelBlockHash.tpp"
+#include "../Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU_PlainVoxelArray.tpp"
 #include "../ITMLibDefines.h"
 
 
