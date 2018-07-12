@@ -435,8 +435,7 @@ ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlice
                                                                                   const std::string& outputFolder,
                                                                                   bool verbose) {
 
-	ITMSceneStatisticsCalculator<TVoxel, TIndex> calculator;
-	Vector6i bounds = calculator.ComputeVoxelBounds(scene);
+	Vector6i bounds = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeVoxelBounds(scene);
 	Vector3i minPoint(bounds.min_x, bounds.min_y, bounds.min_z);
 
 	int imageSizeX, imageSizeY, imageSizeZ;

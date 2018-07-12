@@ -278,30 +278,26 @@ const ITMScene<TVoxel, TIndex>* ITMWarpSceneLogger<TVoxel, TIndex>::GetScene() c
 template<typename TVoxel, typename TIndex>
 void ITMWarpSceneLogger<TVoxel, TIndex>::Load() {
 	scene->LoadFromDirectory(scenePath.c_str());
-	ITMSceneStatisticsCalculator<TVoxel, TIndex> statisticsCalculator;
-	voxelCount = statisticsCalculator.ComputeAllocatedVoxelCount(scene);
+	voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(scene);
 }
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpSceneLogger<TVoxel, TIndex>::Save() {
 	scene->SaveToDirectory(scenePath.c_str());
-	ITMSceneStatisticsCalculator<TVoxel, TIndex> statisticsCalculator;
-	this->voxelCount = statisticsCalculator.ComputeAllocatedVoxelCount(scene);
+	this->voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(scene);
 }
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpSceneLogger<TVoxel, TIndex>::SaveCompact() {
 	ITMSceneFileIOEngine<TVoxel,TIndex>::SaveToDirectoryCompact(scene,scenePath.string());
-	ITMSceneStatisticsCalculator<TVoxel, TIndex> statisticsCalculator;
-	this->voxelCount = statisticsCalculator.ComputeAllocatedVoxelCount(scene);
+	this->voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(scene);
 }
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpSceneLogger<TVoxel, TIndex>::LoadCompact() {
 	ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ResetScene(scene);
 	ITMSceneFileIOEngine<TVoxel,TIndex>::LoadFromDirectoryCompact(scene,scenePath.string());
-	ITMSceneStatisticsCalculator<TVoxel, TIndex> statisticsCalculator;
-	this->voxelCount = statisticsCalculator.ComputeAllocatedVoxelCount(scene);
+	this->voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(scene);
 }
 //endregion
 // region ======================================== LOAD / SAVE HIGHLIGHTS ==============================================

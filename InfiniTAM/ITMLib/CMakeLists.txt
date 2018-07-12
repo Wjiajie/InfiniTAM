@@ -213,6 +213,7 @@ set(ITMLIB_ENGINES_RECONSTRUCTION_INTERFACE_HEADERS
 set(ITMLIB_ENGINES_RECONSTRUCTION_SHARED_HEADERS
     Engines/Reconstruction/Shared/ITMSceneReconstructionEngine_Shared.h
     Engines/Reconstruction/Shared/ITMDynamicSceneReconstructionEngine_Shared.h
+    Engines/Reconstruction/Shared/ITMDynamicSceneReconstructionEngine_Functors.h
     Engines/Reconstruction/Shared/ITMDynamicHashManagementEngine_Shared.h
     Engines/Reconstruction/Shared/ITMSurfelSceneReconstructionEngine_Shared.h
     )

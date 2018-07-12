@@ -22,11 +22,18 @@ namespace ITMLib {
 template<typename TVoxel, typename TIndex>
 class ITMSceneStatisticsCalculator {
 public:
+	static ITMSceneStatisticsCalculator & Instance(){
+		static ITMSceneStatisticsCalculator instance;
+		return instance;
+	}
+
+	ITMSceneStatisticsCalculator(ITMSceneStatisticsCalculator const&) = delete;
+	void operator=(ITMSceneStatisticsCalculator const&) = delete;
+
 	Vector6i ComputeVoxelBounds(const ITMScene<TVoxel, TIndex>* scene);
 	int ComputeAllocatedVoxelCount(ITMScene<TVoxel, TIndex>* scene);
 	std::vector<int> GetFilledHashBlockIds(ITMScene<TVoxel, TIndex>* scene);
 	int ComputeAllocatedHashBlockCount(ITMScene<TVoxel, TIndex>* scene);
-
 
 	int ComputeNonTruncatedVoxelCount(ITMScene<TVoxel, TIndex>* scene);
 	int ComputeVoxelWithValueCount(ITMScene<TVoxel, TIndex>* scene, float value);
@@ -35,7 +42,9 @@ public:
 
 	float FindMaxGradient1LengthAndPosition(ITMScene<TVoxel, TIndex>* scene, Vector3i& positionOut);
 	float FindMaxGradient0LengthAndPosition(ITMScene<TVoxel, TIndex>* scene, Vector3i& positionOut);
-
+private:
+	ITMSceneStatisticsCalculator() = default;
+	~ITMSceneStatisticsCalculator() = default;
 };
 
 }//end namespace ITMLib

@@ -584,6 +584,7 @@ inline float _DEBUG_InterpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
 	return sdf;
 }
 
+//PlainVoxelArray version of the same function
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float _DEBUG_InterpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
@@ -1063,11 +1064,29 @@ inline float InterpolateTrilinearly_TruncatedCopySign(const CONSTPTR(TVoxel)* vo
 }
 
 
-//sdf without color, struck non-Truncated check, struck known check,
-template<typename TVoxel, typename TCache>
+//sdf without color, struck known check, indexed fields
+/**
+ * \brief Given an arbitrary (float-valued) point, use trilinear interpolation to get the signed distance function value
+ * at this point.
+ * \details The sdf_values field will be sampled using sdfIndex, i.e. sdf_values[sdfIndex]. In the meantime,
+ * also determines whether any of the voxels in the sampling space (2x2x2 voxels) has a known (established) value,
+ * to discriminate it from the newly-initialized voxels set to the default sdf value.
+ * \tparam TVoxel
+ * \tparam TCache
+ * \param voxelData
+ * \param voxelIndex
+ * \param point
+ * \param sdfIndex
+ * \param cache
+ * \param struckKnownVoxels
+ * \param printData
+ * \return
+ */
+
+template<typename TVoxel, typename TCache, typename TIndexData>
 _CPU_AND_GPU_CODE_
 inline float _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* voxelData,
-                                                               const CONSTPTR(ITMHashEntry)* voxelHash,
+                                                               const CONSTPTR(TIndexData)* voxelIndex,
                                                                const CONSTPTR(Vector3f)& point,
                                                                const CONSTPTR(int)& sdfIndex,
                                                                THREADPTR(TCache)& cache,
@@ -1109,7 +1128,7 @@ inline float _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TV
 	}
 	float cumulativeWeight = 0.0f;
 	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
-		const TVoxel& v = readVoxel(voxelData, voxelHash, pos + (positions[iNeighbor]), vmIndex, cache);
+		const TVoxel& v = readVoxel(voxelData, voxelIndex, pos + (positions[iNeighbor]), vmIndex, cache);
 		bool curKnown = v.flag_values[sdfIndex] != ITMLib::VOXEL_UNKNOWN;
 		//_DEBUG
 		//float weight = coefficients[iNeighbor] * curKnown;
@@ -1132,6 +1151,7 @@ inline float _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TV
 	}
 	return sdf;
 }
+
 
 
 //sdf without color, struck non-Truncated check, struck known check,

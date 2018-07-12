@@ -5,9 +5,14 @@
 #include "ITMVoxelBlockHash.h"
 #include "ITMVoxelTypes.h"
 
-//template<typename T> _CPU_AND_GPU_CODE_ inline int hashIndex(const THREADPTR(T) & blockPos) {
-//	return (((uint)blockPos.x * 73856093u) ^ ((uint)blockPos.y * 19349669u) ^ ((uint)blockPos.z * 83492791u)) & (uint)SDF_HASH_MASK;
-//}
+template<typename TVoxel>
+_CPU_AND_GPU_CODE_
+inline int
+computeLinearIndexFromPosition_PlainVoxelArray(const Vector3i& volumeSize, const Vector3i& position) {
+	int destinationIndex = position.z * (volumeSize.z * volumeSize.y)
+	                       + position.y * (volumeSize.x + position.x);
+	return destinationIndex;
+};
 
 template<typename T> _CPU_AND_GPU_CODE_ inline int hashIndex(const THREADPTR(T) & blockPos) {
 	return (((uint)blockPos.x * 73856093u) ^ ((uint)blockPos.y * 19349669u) ^ ((uint)blockPos.z * 83492791u)) & (uint)SDF_HASH_MASK;
@@ -72,6 +77,7 @@ findVoxel(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData) *voxelIndex, Vect
 	foundPoint = vmIndex != 0;
 	return result;
 }
+
 
 template<class TVoxel>
 _CPU_AND_GPU_CODE_ inline TVoxel readVoxel(const CONSTPTR(TVoxel) *voxelData, const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData) *voxelIndex,

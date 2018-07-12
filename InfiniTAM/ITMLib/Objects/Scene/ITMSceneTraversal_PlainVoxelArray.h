@@ -246,8 +246,8 @@ inline void DualVoxelTraversal_CPU(
 #pragma omp parallel for
 #endif
 	for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
-		TVoxelPrimary& primaryVoxel = primaryScene[linearIndex];
-		TVoxelSecondary& secondaryVoxel = secondaryScene[linearIndex];
+		TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
+		TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
 		functor(primaryVoxel, secondaryVoxel);
 	}
 };
@@ -272,8 +272,8 @@ inline void DualVoxelPositionTraversal_CPU(
 #endif
 	for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
 		Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(primaryScene, linearIndex);
-		TVoxelPrimary& primaryVoxel = primaryScene[linearIndex];
-		TVoxelSecondary& secondaryVoxel = secondaryScene[linearIndex];
+		TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
+		TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
 		functor(primaryVoxel, secondaryVoxel, voxelPosition);
 
 	}
@@ -295,8 +295,8 @@ inline void DualVoxelPositionTraversal_CPU_SingleThreaded(
 
 	for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
 		Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(primaryScene, linearIndex);
-		TVoxelPrimary& primaryVoxel = primaryScene[linearIndex];
-		TVoxelSecondary& secondaryVoxel = secondaryScene[linearIndex];
+		TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
+		TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
 		functor(primaryVoxel, secondaryVoxel, voxelPosition);
 	}
 }

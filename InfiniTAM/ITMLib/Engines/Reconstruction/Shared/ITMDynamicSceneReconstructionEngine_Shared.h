@@ -19,26 +19,8 @@
 #include "../../../Utils/ITMPixelUtils.h"
 #include "../../../Utils/ITMVoxelFlags.h"
 
-//
-//template<class TVoxel>
-//_CPU_AND_GPU_CODE_ inline void updateSdfAndFlagsBasedOnDistanceSurfaceToVoxel(
-//		DEVICEPTR(TVoxel)& voxel, float signedDistanceSurfaceToVoxelAlongCameraRay, float narrowBandHalfWidth){
-//	if (signedDistanceSurfaceToVoxelAlongCameraRay < -narrowBandHalfWidth) {
-//		//the voxel is beyond the narrow band, on the other side of the surface. Set SDF to -1.0
-//		voxel.sdf = TVoxel::floatToValue(-1.0);
-//		voxel.flags = ITMLib::VOXEL_TRUNCATED;
-//	} else if (signedDistanceSurfaceToVoxelAlongCameraRay > narrowBandHalfWidth) {
-//		//the voxel is in front of the narrow band, between the surface and the camera. Set SDF to 1.0
-//		voxel.sdf = TVoxel::floatToValue(1.0);
-//		voxel.flags = ITMLib::VOXEL_TRUNCATED;
-//	} else {
-//		// The voxel lies within the narrow band, between truncation boundaries.
-//		// Update SDF in proportion to the distance from surface.
-//		voxel.sdf = TVoxel::floatToValue(signedDistanceSurfaceToVoxelAlongCameraRay / narrowBandHalfWidth);
-//		voxel.flags = ITMLib::VOXEL_NONTRUNCATED;
-//	}
-//}
 
+// region ============================== UPDATE SDF/COLOR IN VOXEL USING DEPTH PIXEL ===================================
 
 template<class TVoxel>
 _CPU_AND_GPU_CODE_ inline void updateSdfAndFlagsBasedOnDistanceSurfaceToVoxel(
@@ -211,11 +193,12 @@ _CPU_AND_GPU_CODE_ inline void computeUpdatedLiveVoxelColorInfo(
 
 	voxel.clr = TO_UCHAR3(TO_VECTOR3(interpolateBilinear(rgbImage, voxelPointProjectedToImage, imageSize)));
 }
+// endregion ===========================================================================================================
 
 template<bool hasColor, bool hasConfidence, bool hasSemanticInformation, typename TVoxel>
 struct ComputeUpdatedLiveVoxelInfo;
 
-//================= VOXEL UPDATES FOR VOXELS WITH NO SEMANTIC INFORMATION ==============================================
+// region ========= VOXEL UPDATES FOR VOXELS WITH NO SEMANTIC INFORMATION ==============================================
 //arguments to the "compute" member function should always be the same
 #define COMPUTE_VOXEL_UPDATE_PARAMETERS \
 DEVICEPTR(TVoxel) & voxel, const THREADPTR(Vector4f) & pt_model,\
@@ -257,7 +240,8 @@ struct ComputeUpdatedLiveVoxelInfo<true, true, false, TVoxel> {
 		computeUpdatedLiveVoxelColorInfo(voxel, pt_model, M_rgb, projParams_rgb, mu, eta, rgb, imgSize_rgb);
 	}
 };
-//================= VOXEL UPDATES FOR VOXELS WITH SEMANTIC INFORMATION =================================================
+// endregion ===========================================================================================================
+// region ========= VOXEL UPDATES FOR VOXELS WITH SEMANTIC INFORMATION =================================================
 
 template<class TVoxel>
 struct ComputeUpdatedLiveVoxelInfo<false, false, true, TVoxel> {
@@ -292,4 +276,4 @@ struct ComputeUpdatedLiveVoxelInfo<true, true, true, TVoxel> {
 };
 
 #undef COMPUTE_VOXEL_UPDATE_PARAMETERS
-//======================================================================================================================
+// endregion ===========================================================================================================

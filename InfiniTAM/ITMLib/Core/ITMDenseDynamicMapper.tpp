@@ -51,7 +51,7 @@ template<typename TVoxel, typename TIndex>
 inline static void PrintSceneStatistics(
 		ITMScene<TVoxel, TIndex>* scene,
 		std::string description) {
-	ITMSceneStatisticsCalculator<TVoxel, TIndex> calculator;
+	ITMSceneStatisticsCalculator<TVoxel, TIndex>& calculator = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance();
 	std::cout << green << "=== Stats for scene '" << description << "' ===" << reset << std::endl;
 	std::cout << "    Total voxel count: " << calculator.ComputeAllocatedVoxelCount(scene) << std::endl;
 	std::cout << "    NonTruncated voxel count: " << calculator.ComputeNonTruncatedVoxelCount(scene) << std::endl;

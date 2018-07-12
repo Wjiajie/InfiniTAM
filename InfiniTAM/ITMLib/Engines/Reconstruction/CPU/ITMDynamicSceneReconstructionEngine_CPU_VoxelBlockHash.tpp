@@ -3,12 +3,12 @@
 #include <cfloat>
 #include "ITMDynamicSceneReconstructionEngine_CPU.h"
 #include "../../Manipulation/ITMSceneManipulation.h"
-#include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../Manipulation/ITMSceneManipulation.h"
 #include "../../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
 #include "../../../Objects/Scene/ITMTrilinearInterpolation.h"
-
+#include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
+#include "../Shared/ITMDynamicSceneReconstructionEngine_Functors.h"
 using namespace ITMLib;
 
 
@@ -95,38 +95,6 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 // endregion ===========================================================================================================
 // region =================================== FUSION ===================================================================
 
-template <typename TVoxelLive, typename TVoxelCanonical>
-struct FusionFunctor{
-	FusionFunctor(int maximumWeight, int liveSourceFieldIndex) :
-			maximumWeight(maximumWeight),
-			liveSourceFieldIndex(liveSourceFieldIndex){}
-	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel){
-		if (canonicalVoxel.flags != VOXEL_NONTRUNCATED &&
-		    liveVoxel.flag_values[liveSourceFieldIndex] != VOXEL_NONTRUNCATED)
-			return;
-		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[liveSourceFieldIndex]);
-
-		int oldWDepth = canonicalVoxel.w_depth;
-		float oldSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
-
-		float newSdf = oldWDepth * oldSdf + liveSdf;
-		float newWDepth = oldWDepth + 1.0f;
-		newSdf /= newWDepth;
-		newWDepth = MIN(newWDepth, maximumWeight);
-
-		canonicalVoxel.sdf = TVoxelCanonical::floatToValue(newSdf);
-		canonicalVoxel.w_depth = (uchar) newWDepth;
-		if(canonicalVoxel.flags != ITMLib::VOXEL_NONTRUNCATED){
-			canonicalVoxel.flags = liveVoxel.flag_values[liveSourceFieldIndex];
-		}
-
-	}
-private:
-	const int maximumWeight;
-	const int liveSourceFieldIndex;
-};
-
-
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::FuseLiveIntoCanonicalSdf(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
@@ -149,95 +117,6 @@ ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlo
 // endregion ===========================================================================================================
 // region ===================================== APPLY WARP/UPDATE TO LIVE ==============================================
 
-template<typename TVoxelMulti>
-struct IndexedFieldClearFunctor {
-	IndexedFieldClearFunctor(int flagFieldIndex) : flagFieldIndex(flagFieldIndex) {}
-
-	void operator()(TVoxelMulti& voxel) {
-		voxel.flag_values[flagFieldIndex] = ITMLib::VOXEL_UNKNOWN;
-		voxel.sdf_values[flagFieldIndex] = TVoxelMulti::SDF_initialValue();//for vis
-	}
-
-private:
-	const int flagFieldIndex;
-};
-
-
-
-template<typename TVoxelWarpSource, typename TVoxelSdf, typename TLookupPositionFunctor>
-struct TrilinearInterpolationFunctor {
-	/**
-	 * \brief Initialize to transfer data from source sdf scene to a target sdf scene using the warps in the warp source scene
-	 * \details traverses
-	 * \param sdfSourceScene
-	 * \param warpSourceScene
-	 */
-	TrilinearInterpolationFunctor(
-			ITMScene<TVoxelSdf, ITMVoxelBlockHash>* sdfSourceScene,
-			ITMScene<TVoxelWarpSource, ITMVoxelBlockHash>* warpSourceScene,
-			int sourceSdfIndex, int targetSdfIndex, bool hasFocusCoordinates, Vector3i focusCoordinates) :
-
-			sdfSourceScene(sdfSourceScene),
-			sdfSourceVoxels(sdfSourceScene->localVBA.GetVoxelBlocks()),
-			sdfSourceHashEntries(sdfSourceScene->index.GetEntries()),
-			sdfSourceCache(),
-
-			warpSourceScene(warpSourceScene),
-			warpSourceVoxels(warpSourceScene->localVBA.GetVoxelBlocks()),
-			warpSourceHashEntries(warpSourceScene->index.GetEntries()),
-			warpSourceCache(),
-			sourceSdfIndex(sourceSdfIndex),
-			targetSdfIndex(targetSdfIndex),
-			hasFocusCoordinates(hasFocusCoordinates),
-			focusCoordinates(focusCoordinates)
-			{}
-
-
-	void operator()(TVoxelSdf& destinationVoxel,TVoxelWarpSource& warpSourceVoxel,
-	                Vector3i warpAndDestinationVoxelPosition) {
-		int vmIndex;
-
-		Vector3f warpedPosition =
-				TLookupPositionFunctor::GetWarpedPosition(warpSourceVoxel, warpAndDestinationVoxelPosition);
-
-		bool struckKnown, struckNonTruncated;
-		float cumulativeWeight;
-
-		float sdf = _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(
-				sdfSourceVoxels, sdfSourceHashEntries, warpedPosition, sourceSdfIndex, sdfSourceCache, struckKnown,
-				hasFocusCoordinates && warpAndDestinationVoxelPosition == focusCoordinates);
-
-		// Update flags
-		if (struckKnown) {
-			destinationVoxel.sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sdf);
-			if (1.0f - std::abs(sdf) < 1e-5f) {
-				destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_TRUNCATED;
-			} else {
-				destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_NONTRUNCATED;
-			}
-		}
-	}
-
-private:
-
-	ITMScene<TVoxelSdf, ITMVoxelBlockHash>* sdfSourceScene;
-	TVoxelSdf* sdfSourceVoxels;
-	ITMHashEntry* sdfSourceHashEntries;
-	ITMVoxelBlockHash::IndexCache sdfSourceCache;
-
-	ITMScene<TVoxelWarpSource, ITMVoxelBlockHash>* warpSourceScene;
-	TVoxelWarpSource* warpSourceVoxels;
-	ITMHashEntry* warpSourceHashEntries;
-	ITMVoxelBlockHash::IndexCache warpSourceCache;
-
-	//_DEBUG
-	bool hasFocusCoordinates;
-	Vector3i focusCoordinates;
-
-
-	const int sourceSdfIndex;
-	const int targetSdfIndex;
-};
 
 
 // region ===================================== VOXEL LOOKUPS ==========================================================
@@ -291,7 +170,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 	hashManager.AllocateLiveUsingWarpUpdates(
 			canonicalScene, liveScene, sourceSdfIndex);
 
-	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>
+	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash, LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>
 			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex,
 			                              hasFocusCoordinates, focusCoordinates);
 
@@ -333,7 +212,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 	// Allocate new blocks where necessary, filter based on flags from source
 	hashManager.AllocateLiveUsingWholeWarps(canonicalScene, liveScene, sourceSdfIndex);
 
-	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>
+	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash, LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>
 			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex,
 			                              hasFocusCoordinates, focusCoordinates);
 

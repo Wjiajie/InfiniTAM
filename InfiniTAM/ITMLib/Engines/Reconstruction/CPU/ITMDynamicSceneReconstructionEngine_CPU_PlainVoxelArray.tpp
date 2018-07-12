@@ -16,6 +16,8 @@
 
 #include "ITMDynamicSceneReconstructionEngine_CPU.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
+#include "../../../Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h"
+#include "../../../Utils/Analytics/ITMSceneStatisticsCalculator.h"
 
 using namespace ITMLib;
 
@@ -81,7 +83,8 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::FuseLiveIntoCanonicalSdf(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int liveSourceFieldIndex) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	FusionFunctor<TVoxelLive,TVoxelCanonical> fusionFunctor(canonicalScene->sceneParams->maxW,liveSourceFieldIndex);
+	DualVoxelTraversal_CPU(liveScene,canonicalScene,fusionFunctor);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
@@ -100,12 +103,23 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPla
 	//do nothing
 }
 
+
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::WarpScene(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex,
 		bool hasFocusCoordinates, Vector3i focusCoordinates) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	// Clear out the flags at target index
+	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
+	VoxelTraversal_CPU(liveScene, flagClearFunctor);
+
+
+	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray, LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>
+			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex,
+			                              hasFocusCoordinates, focusCoordinates);
+
+	// Interpolate to obtain the new live frame values (at target index)
+	DualVoxelPositionTraversal_CPU(liveScene,canonicalScene,trilinearInterpolationFunctor);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
@@ -113,6 +127,16 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPla
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex,
 		bool hasFocusCoordinates, Vector3i focusCoordinates) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+
+	// Clear out the flags at target index
+	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
+	VoxelTraversal_CPU(liveScene, flagClearFunctor);
+
+	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray, LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>
+			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex,
+			                              hasFocusCoordinates, focusCoordinates);
+
+	// Interpolate to obtain the new live frame values (at target index)
+	DualVoxelPositionTraversal_CPU(liveScene,canonicalScene,trilinearInterpolationFunctor);
 }
 // endregion ===========================================================================================================
