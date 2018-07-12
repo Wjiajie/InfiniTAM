@@ -26,4 +26,4 @@ using namespace ITMLib;
 
 template class ITMSceneManipulationEngine_CPU<ITMVoxelCanonical,ITMVoxelIndex>;
 template class ITMSceneManipulationEngine_CPU<ITMVoxelLive,ITMVoxelIndex>;
-template class ITMTwoSceneManipulationEngine_CPU<ITMVoxelLive,ITMVoxelCanonical,ITMVoxelIndex>;
+template class ITMTwoSceneManipulationEngine_CPU<ITMVoxelCanonical,ITMVoxelLive,ITMVoxelIndex>;

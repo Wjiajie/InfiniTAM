@@ -24,6 +24,7 @@
 #include "../Engines/Swapping/CPU/ITMSwappingEngine_CPU.tpp"
 #include "../Engines/Visualisation/CPU/ITMVisualisationEngine_CPU.tpp"
 #include "../Engines/Meshing/CPU/ITMMeshingEngine_CPU.tpp"
+#include "../Engines/SceneFileIO/ITMSceneFileIOEngine.tpp"
 #include "../Utils/Analytics/ITMSceneStatisticsCalculator.tpp"
 #include "../Utils/Analytics/ITMNeighborVoxelIterationInfo.h"
 #include "../Utils/Visualization/ITMSceneSliceVisualizer2D.tpp"
@@ -34,12 +35,11 @@
 #include "../Utils/Collections/ITM3DNestedMap.tpp"
 
 
-//dynamic fusion
+
 template class ITMSwappingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
-
-
-//template class ITMSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
+template class ITMSceneFileIOEngine<ITMVoxelCanonical,ITMVoxelIndex>;
+template class ITMSceneFileIOEngine<ITMVoxelLive,ITMVoxelIndex>;
 template class ITMVisualisationEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;
 template class ITMVisualisationEngine_CPU<ITMVoxelLive, ITMVoxelIndex>;
 template class ITMMeshingEngine_CPU<ITMVoxelCanonical, ITMVoxelIndex>;

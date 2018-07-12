@@ -35,7 +35,6 @@
 //ITMLib
 #include "../../ITMLib/ITMLibDefines.h"
 #include "../../ITMLib/Objects/Scene/ITMScene.h"
-#include "../../ITMLib/Utils/Visualization/ITMCanonicalScene3DSliceVisualizer_Deprecated.h"
 #include "HighlightVisualization.h"
 
 using namespace ITMLib;

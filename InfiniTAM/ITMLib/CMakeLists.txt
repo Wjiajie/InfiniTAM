@@ -27,7 +27,6 @@ find_package(Boost REQUIRED filesystem)
 
 ##
 set(ITMLIB_TOPLEVEL_CPU_SOURCES
-
     Instantiations/SceneManipulationCPUInstantiations.cpp
     Instantiations/CPUInstantiations.cpp
     Instantiations/DynamicFusionCPUInstantiations.cpp

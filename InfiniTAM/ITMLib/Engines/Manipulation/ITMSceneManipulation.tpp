@@ -29,9 +29,12 @@ namespace ITMLib {
 
 template<typename TVoxelSource, typename TVoxelDestination>
 void
-ITMTwoSceneManipulationEngine_CPU<TVoxelSource, TVoxelDestination, ITMVoxelBlockHash>::CopySceneSDFandFlagsWithOffset_CPU(
-		ITMScene<TVoxelDestination, ITMVoxelBlockHash>* destination, ITMScene<TVoxelSource, ITMVoxelBlockHash>* source,
+ITMTwoSceneManipulationEngine_CPU<TVoxelSource, TVoxelDestination, ITMVoxelBlockHash>::
+CopySceneSDFandFlagsWithOffset_CPU(
+		ITMScene<TVoxelDestination, ITMVoxelBlockHash>* destination,
+		ITMScene<TVoxelSource, ITMVoxelBlockHash>* source,
 		Vector3i offset) {
+
 	ITMSceneManipulationEngine_CPU<TVoxelDestination, ITMVoxelBlockHash>::ResetScene(destination);
 
 	TVoxelSource* originalVoxels = source->localVBA.GetVoxelBlocks();

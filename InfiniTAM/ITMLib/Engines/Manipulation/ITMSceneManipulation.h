@@ -61,8 +61,9 @@ public:
 	 * \param maxPoint maximum point in the desired slice (inclusive), i.e. maximum x, y, and z coordinates
 	 * \return true on success (destination scene contains the slice), false on failure (there are no allocated hash blocks
 	 */
-	static bool CopySceneSlice(ITMScene <TVoxel, ITMVoxelBlockHash>* destination, ITMScene <TVoxel, ITMVoxelBlockHash>* source,
-		                           Vector6i bounds);
+	static bool
+	CopySceneSlice(ITMScene<TVoxel, ITMVoxelBlockHash>* destination, ITMScene<TVoxel, ITMVoxelBlockHash>* source,
+	               Vector6i bounds);
 
 };
 
@@ -328,8 +329,10 @@ void BoundsFromExtrema(Vector6i bounds, const Vector3i& extremum1, const Vector3
 inline
 bool
 IsHashBlockFullyInRange(const Vector3i& hashBlockPositionVoxels, const Vector6i& bounds) {
-	return hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 <= bounds.max_x && hashBlockPositionVoxels.x >= bounds.min_x &&
-	       hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 <= bounds.max_y && hashBlockPositionVoxels.y >= bounds.min_y &&
+	return hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 <= bounds.max_x &&
+	       hashBlockPositionVoxels.x >= bounds.min_x &&
+	       hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 <= bounds.max_y &&
+	       hashBlockPositionVoxels.y >= bounds.min_y &&
 	       hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 <= bounds.max_z && hashBlockPositionVoxels.z >= bounds.min_z;
 }
 
@@ -365,7 +368,7 @@ class ITMTwoSceneManipulationEngine_CPU {
 
 template<typename TVoxelSource, typename TVoxelDestination>
 class ITMTwoSceneManipulationEngine_CPU<TVoxelSource, TVoxelDestination, ITMVoxelBlockHash> {
-
+public:
 	/**
 	 * \brief Copies all the sdf & flag values from the source scene to the destination scene with the desired offset
 	 * \param destination destination scene
@@ -383,6 +386,12 @@ class ITMTwoSceneManipulationEngine_CPU<TVoxelSource, TVoxelDestination, ITMVoxe
 template<typename TVoxelSource, typename TVoxelDestination>
 class ITMTwoSceneManipulationEngine_CPU<TVoxelSource, TVoxelDestination, ITMPlainVoxelArray> {
 public:
+	/**
+	 * \brief Copies all the sdf & flag values from the source scene to the destination scene with the desired offset
+	 * \param destination destination scene
+	 * \param source source scene
+	 * \param offset offset to use when copying the values
+	 */
 	static void CopySceneSDFandFlagsWithOffset_CPU(ITMScene<TVoxelDestination, ITMPlainVoxelArray>* destination,
 	                                               ITMScene<TVoxelSource, ITMPlainVoxelArray>* source,
 	                                               Vector3i offset);
