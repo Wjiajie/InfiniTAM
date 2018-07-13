@@ -149,11 +149,11 @@ ITMTrackingState::TrackingResult ITMMultiEngine<TVoxel, TIndex>::ProcessFrame(IT
 	// prepare image and turn it into a depth image
 	if (imuMeasurement == NULL)
 		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useThresholdFilter,
-		                        settings->useBilateralFilter, false, false);
+		                        settings->useBilateralFilter, false, true);
 	else
 		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useThresholdFilter,
 		                        settings->useBilateralFilter, imuMeasurement,
-		                        false, false);
+		                        false, true);
 
 	// find primary data, if available
 	int primaryDataIdx = mActiveDataManager->findPrimaryDataIdx();
