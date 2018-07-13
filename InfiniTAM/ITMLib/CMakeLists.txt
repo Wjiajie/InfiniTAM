@@ -419,7 +419,8 @@ set(ITMLIB_OBJECTS_SCENE_HEADERS
     Objects/Scene/ITMSurfelTypes.h
     Objects/Scene/ITMVoxelBlockHash.h
     Objects/Scene/ITMVoxelTypes.h
-    Engines/Manipulation/ITMSceneManipulation.h
+    Objects/Scene/ITMIndexEnumeration.h
+
     Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h
     Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h
     #_DEBUG
@@ -427,6 +428,8 @@ set(ITMLIB_OBJECTS_SCENE_HEADERS
     ../Tests/TestUtils.cpp
     ../Tests/TestUtils.tpp
     ../Tests/Instantiations.cpp
+#TODO: move the manipilation sources & header to their own CMAKE variables -Greg(GitHub: Algomorph)
+    Engines/Manipulation/ITMSceneManipulation.h
     )
 
 ##

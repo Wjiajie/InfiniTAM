@@ -22,6 +22,10 @@
 #include "../../ITMLib/Utils/FileIO/ITMDynamicFusionLogger.h"
 
 
+//TODO: we should never have to downcast the main engine to some other engine type, architecture needs to be altered
+// (potentially by introducting empty method stubs) -Greg (GitHub:Algomorph)
+
+
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
@@ -60,7 +64,7 @@ void UIEngine_BPO::GlutDisplayFunction() {
 
 	// get updated images from processing thread
 	uiEngine.mainEngine->GetImage(uiEngine.outImage[0], uiEngine.outImageType[0], &uiEngine.freeviewPose,
-	                               &uiEngine.freeviewIntrinsics);
+	                              &uiEngine.freeviewIntrinsics);
 
 
 	if (!uiEngine.inStepByStepMode) {
@@ -168,8 +172,8 @@ void UIEngine_BPO::GlutDisplayFunction() {
 		        "i: %d frames \t d: one step \t p: pause \t v: write video %s \t w: log 3D warps %s \t Alt+w: log 2D warps %s",
 		        uiEngine.autoIntervalFrameCount,
 		        uiEngine.depthVideoWriter != nullptr ? "off" : "on",
-		        ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().IsRecording3DSceneAndWarpProgression()? "off" : "on",
-		        ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().IsRecordingScene2DSlicesWithUpdates() ? "off" : "on");
+		        uiEngine.logger->IsRecording3DSceneAndWarpProgression() ? "off" : "on",
+		        uiEngine.logger->IsRecordingScene2DSlicesWithUpdates() ? "off" : "on");
 		Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
 	}
 	glutSwapBuffers();
@@ -179,7 +183,7 @@ void UIEngine_BPO::GlutDisplayFunction() {
 
 void UIEngine_BPO::GlutIdleFunction() {
 	UIEngine_BPO& uiEngine = UIEngine_BPO::Instance();
-	if(uiEngine.shutdownRequested){
+	if (uiEngine.shutdownRequested) {
 		uiEngine.mainLoopAction = UIEngine_BPO::EXIT;
 	}
 	switch (uiEngine.mainLoopAction) {
@@ -214,7 +218,7 @@ void UIEngine_BPO::GlutIdleFunction() {
 			uiEngine.needsRefresh = true;
 			if ((uiEngine.processedFrameNo - uiEngine.autoIntervalFrameStart) >= uiEngine.autoIntervalFrameCount) {
 				uiEngine.mainLoopAction = PROCESS_PAUSED;
-				if(uiEngine.saveAfterAutoprocessing){
+				if (uiEngine.saveAfterAutoprocessing) {
 					uiEngine.mainEngine->SaveToFile();
 				}
 				bench::PrintAllCumulativeTimes();
@@ -329,12 +333,26 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 						uiEngine.outImage[0]->ChangeDims(uiEngine.mainEngine->GetView()->depth->noDims);
 					}
 
-					auto* multiEngine = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMVoxelIndex>*>(uiEngine.mainEngine);
-					if (multiEngine != nullptr) {
-						int idx = multiEngine->findPrimaryLocalMapIdx();
-						if (idx < 0) idx = 0;
-						multiEngine->setFreeviewLocalMapIdx(idx);
+					switch (uiEngine.indexingMethod) {
+						case HASH: {
+							auto* multiEngine = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMVoxelBlockHash>*>(uiEngine.mainEngine);
+							if (multiEngine != nullptr) {
+								int idx = multiEngine->findPrimaryLocalMapIdx();
+								if (idx < 0) idx = 0;
+								multiEngine->setFreeviewLocalMapIdx(idx);
+							}
+						}
+							break;
+						case ARRAY:
+							auto* multiEngine = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMPlainVoxelArray>*>(uiEngine.mainEngine);
+							if (multiEngine != nullptr) {
+								int idx = multiEngine->findPrimaryLocalMapIdx();
+								if (idx < 0) idx = 0;
+								multiEngine->setFreeviewLocalMapIdx(idx);
+							}
+							break;
 					}
+
 
 					uiEngine.freeviewActive = true;
 				}
@@ -363,34 +381,19 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 				break;
 			case 't': {
 				uiEngine.integrationActive = !uiEngine.integrationActive;
-
-				auto* basicEngine = dynamic_cast<ITMBasicEngine<ITMVoxel, ITMVoxelIndex>*>(uiEngine.mainEngine);
-				if (basicEngine != nullptr) {
-					if (uiEngine.integrationActive) basicEngine->turnOnIntegration();
-					else basicEngine->turnOffIntegration();
-				}
-
-				auto* basicSurfelEngine = dynamic_cast<ITMBasicSurfelEngine<ITMSurfelT>*>(uiEngine.mainEngine);
-				if (basicSurfelEngine != nullptr) {
-					if (uiEngine.integrationActive) basicSurfelEngine->turnOnIntegration();
-					else basicSurfelEngine->turnOffIntegration();
-				}
+				uiEngine.mainEngine->turnOffIntegration();
 			}
 				break;
 			case 'w': {
 				if (modifiers && GLUT_ACTIVE_ALT) {
-					ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().ToggleRecording3DSceneAndWarpProgression();
-				}else{
-					ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().ToggleRecordingScene2DSlicesWithUpdates();
+					uiEngine.logger->ToggleRecording3DSceneAndWarpProgression();
+				} else {
+					uiEngine.logger->ToggleRecordingScene2DSlicesWithUpdates();
 				}
 			}
 				break;
 			case 'r': {
-				auto* basicEngine = dynamic_cast<ITMBasicEngine<ITMVoxel, ITMVoxelIndex>*>(uiEngine.mainEngine);
-				if (basicEngine != nullptr) basicEngine->resetAll();
-
-				auto* basicSurfelEngine = dynamic_cast<ITMBasicSurfelEngine<ITMSurfelT>*>(uiEngine.mainEngine);
-				if (basicSurfelEngine != nullptr) basicSurfelEngine->resetAll();
+				uiEngine.mainEngine->resetAll();
 			}
 				break;
 			case 's': {
@@ -427,12 +430,20 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 				break;
 			case '[':
 			case ']': {
-				auto* multiEngine = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMVoxelIndex>*>(uiEngine.mainEngine);
-				if (multiEngine != nullptr) {
-					int idx = multiEngine->getFreeviewLocalMapIdx();
+				auto* multiEngineVBH = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMVoxelBlockHash>*>(uiEngine.mainEngine);
+				if (multiEngineVBH != nullptr) {
+					int idx = multiEngineVBH->getFreeviewLocalMapIdx();
 					if (key == '[') idx--;
 					else idx++;
-					multiEngine->changeFreeviewLocalMapIdx(&(uiEngine.freeviewPose), idx);
+					multiEngineVBH->changeFreeviewLocalMapIdx(&(uiEngine.freeviewPose), idx);
+					uiEngine.needsRefresh = true;
+				}
+				auto* multiEnginePVA = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMPlainVoxelArray>*>(uiEngine.mainEngine);
+				if (multiEnginePVA != nullptr) {
+					int idx = multiEnginePVA->getFreeviewLocalMapIdx();
+					if (key == '[') idx--;
+					else idx++;
+					multiEnginePVA->changeFreeviewLocalMapIdx(&(uiEngine.freeviewPose), idx);
 					uiEngine.needsRefresh = true;
 				}
 			}
@@ -568,7 +579,7 @@ void UIEngine_BPO::GlutMouseMoveFunction(int x, int y) {
 		case 2: {
 			// right button: translation in x and y direction
 			uiEngine.freeviewPose.SetT(uiEngine.freeviewPose.GetT() +
-			                            scale_translation * Vector3f((float) movement.x, (float) movement.y, 0.0f));
+			                           scale_translation * Vector3f((float) movement.x, (float) movement.y, 0.0f));
 			uiEngine.needsRefresh = true;
 			break;
 		}

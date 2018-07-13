@@ -37,9 +37,14 @@
 #include "../../ITMLib/Utils/Analytics/ITMBenchmarkUtils.h"
 #include "../../ITMLib/Core/ITMDynamicEngine.h"
 #include "../../ITMLib/Utils/ITMPrintHelpers.h"
+#include "../../ITMLib/Objects/Scene/ITMIndexEnumeration.h"
 
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+
+
+//TODO: we should never have to downcast the main engine to some other engine type, architecture needs to be altered
+// (potentially by introducting empty method stubs) -Greg (GitHub:Algomorph)
 
 using namespace InfiniTAM::Engine;
 using namespace InputSource;
@@ -70,8 +75,10 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
                               int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
                               bool startInStepByStep,
                               bool saveAfterFirstNFrames, bool loadBeforeProcessing,
-                              ITMLib::ITMDynamicFusionLogger_Interface* logger) {
+                              ITMLib::ITMDynamicFusionLogger_Interface* logger,
+                              ITMLib::IndexingMethod indexingMethod) {
 	this->logger = logger;
+	this->indexingMethod = indexingMethod;
 
 	this->inStepByStepMode = startInStepByStep;
 	this->saveAfterAutoprocessing = saveAfterFirstNFrames;
@@ -189,7 +196,6 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 	}
 
 	if (loadBeforeProcessing) {
-		auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>*>(mainEngine);
 		logger->SetOutputDirectory(
 				this->GenerateCurrentFrameOutputDirectory());
 		mainEngine->LoadFromFile();
@@ -293,8 +299,18 @@ void UIEngine_BPO::Shutdown() {
 bool UIEngine_BPO::BeginStepByStepModeForFrame() {
 	if (!imageSource->hasMoreImages()) return false;
 
-	auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>*>(mainEngine);
-	if (dynamicEngine == nullptr) return false;
+	switch (indexingMethod) {
+		case HASH: {
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>*>(mainEngine);
+			if (dynamicEngine == nullptr) return false;
+		}
+			break;
+		case ARRAY: {
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>*>(mainEngine);
+			if (dynamicEngine == nullptr) return false;
+		}
+			break;
+	}
 
 
 	imageSource->getImages(inputRGBImage, inputRawDepthImage);
@@ -310,10 +326,24 @@ bool UIEngine_BPO::BeginStepByStepModeForFrame() {
 	RecordDepthAndRGBInputToVideo();
 
 	//actual processing on the mailEngine
-	if (imuSource != nullptr)
-		dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage, inputIMUMeasurement);
-	else dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage);
-
+	switch (indexingMethod) {
+		case HASH: {
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>*>(mainEngine);
+			if (imuSource != nullptr)
+				dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage,
+				                                                    inputIMUMeasurement);
+			else dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage);
+		}
+			break;
+		case ARRAY: {
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>*>(mainEngine);
+			if (imuSource != nullptr)
+				dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage,
+				                                                    inputIMUMeasurement);
+			else dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage);
+		}
+			break;
+	}
 	return true;
 }
 
@@ -334,18 +364,40 @@ std::string UIEngine_BPO::GenerateCurrentFrameOutputDirectory() const {
 }
 
 bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
-	auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>*>(mainEngine);
-	if (dynamicEngine == nullptr) return false;
-	bool keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();
-	if (!keepProcessingFrame) {
-		trackingResult = dynamicEngine->GetStepByStepTrackingResult();
+	bool keepProcessingFrame = false;
+	switch (indexingMethod) {
+		case HASH:{
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>*>(mainEngine);
+			if (dynamicEngine == nullptr) return false;
+			bool keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();
+			if (!keepProcessingFrame) {
+				trackingResult = dynamicEngine->GetStepByStepTrackingResult();
 #ifndef COMPILE_WITHOUT_CUDA
-		ORcudaSafeCall(cudaThreadSynchronize());
+				ORcudaSafeCall(cudaThreadSynchronize());
 #endif
-		currentFrameNo++;
-	} else {
-		RecordReconstructionToVideo();
+				currentFrameNo++;
+			} else {
+				RecordReconstructionToVideo();
+			}
+		}
+			break;
+		case ARRAY: {
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>*>(mainEngine);
+			if (dynamicEngine == nullptr) return false;
+			bool keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();
+			if (!keepProcessingFrame) {
+				trackingResult = dynamicEngine->GetStepByStepTrackingResult();
+#ifndef COMPILE_WITHOUT_CUDA
+				ORcudaSafeCall(cudaThreadSynchronize());
+#endif
+				currentFrameNo++;
+			} else {
+				RecordReconstructionToVideo();
+			}
+		}
+			break;
 	}
+
 	return keepProcessingFrame;
 }
 
@@ -405,12 +457,10 @@ void UIEngine_BPO::RecordDepthAndRGBInputToImages() {
 
 void UIEngine_BPO::PrintProcessingFrameHeader() const {
 	std::cout << bright_cyan << "PROCESSING FRAME " << GetCurrentFrameIndex() + 1;
-	if (ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::
-	Instance().IsRecording3DSceneAndWarpProgression()) {
+	if (logger->IsRecording3DSceneAndWarpProgression()) {
 		std::cout << " [3D SCENE AND WARP UPDATE RECORDING: ON]";
 	}
-	if (ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::
-	Instance().IsRecordingScene2DSlicesWithUpdates()) {
+	if (logger->IsRecordingScene2DSlicesWithUpdates()) {
 		std::cout << " [2D SCENE SLICE & WARP UPDATE RECORDING: ON]";
 	}
 	std::cout << reset << std::endl;

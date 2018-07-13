@@ -32,6 +32,7 @@
 #include "../../ITMLib/Core/ITMDynamicEngine.h"
 #include "../../ITMLib/Utils/Visualization/ITMVisualizationWindowManager.h"
 #include "../../ITMLib/Utils/Visualization/ITMVisualizationCommon.h"
+#include "../../ITMLib/Objects/Scene/ITMIndexEnumeration.h"
 
 
 //local
@@ -53,9 +54,6 @@ bool isPathMask(const std::string& arg) {
 	return arg.find('%') != std::string::npos;
 }
 
-enum IndexingMethod {
-	HASH, ARRAY
-};
 
 ITMDynamicFusionLogger_Interface& GetLogger(IndexingMethod method) {
 	switch (method) {
@@ -110,29 +108,25 @@ int main(int argc, char** argv) {
 				("calib_file,c", po::value<std::string>(), "Calibration file, e.g.: ./Files/Teddy/calib.txt")
 
 				("input_file,i", po::value<std::vector<std::string>>(), "Input file. 0-3 total arguments. "
-						"Usage scenarios:\n"
-						"    (0) No arguments: tries to get frames\n"
-	                    "        from attached device (OpenNI,\n"
-					    "        RealSense, etc.). \n"
-						"    (1) One argument: tries to load OpenNI\n"
-	                    "        video at that location. \n"
-						"    (2) Two arguments (files): tries to\n"
-	                    "        load rgb & depth from two separate\n"
-					    "        files when paths do NOT \n"
-		                "        contain '%'.\n"
-						"    (3) Two arguments (masks): tries to \n"
-	                    "        load rgb & depth frames as single\n"
-					    "        images using the provided two\n"
-		                "        arguments as file path masks\n "
-				        "        containing '%',\n"
-						"e.g.: ./Files/Teddy/Frames/%%04i.ppm ./Files/Teddy/Frames/%%04i.pgm\n"
-						"    (4) An extra mask argument (beyond 2)\n"
-	                    "        containing '%' will signify a file\n"
-					    "        mask to mask images. \n"
-						"    (5) An extra path argument (beyond 2)\n"
-	                    "        NOT containing the '%' character\n"
-					    "        will signify a path to the IMU\n"
-		                "        file source.\n\n"
+						"Usage scenarios:\n\n"
+						"(0) No arguments: tries to get frames from attached device (OpenNI, "
+	                        "RealSense, etc.). \n"
+						"(1) One argument: tries to load OpenNI video at that location. \n"
+						"(2) Two arguments (files): tries to load rgb & depth from two separate files when paths "
+	                         "do NOT contain '%'.\n"
+						"(3) Two arguments (masks): tries to "
+	                        "load rgb & depth frames as single "
+					        "images using the provided two "
+		                    "arguments as file path masks "
+				            "containing '%',\n"
+						    "e.g.: ./Files/Teddy/Frames/%%04i.ppm ./Files/Teddy/Frames/%%04i.pgm\n"
+						"(4) An extra mask argument (beyond 2) "
+	                        "containing '%' will signify a file "
+					        "mask to mask images."
+						"(5) An extra path argument (beyond 2) "
+	                    "NOT containing the '%' character "
+					    "will signify a path to the IMU "
+		                "file source.\n\n"
 						"Currently, either (4) or (5) can only be combined with (3), but NOT both at the same time."
 						"No other usage scenario takes them into account.\n"
 				)
@@ -275,7 +269,7 @@ int main(int argc, char** argv) {
 				maskImageFileMask, imuInputPath;
 
 		std::vector<std::string> inputFiles;
-		if(vm.count("input_file")){
+		if (vm.count("input_file")) {
 			inputFiles = vm["input_file"].as<std::vector<std::string>>();
 		}
 		auto inputFileCount = inputFiles.size();
@@ -399,31 +393,60 @@ int main(int argc, char** argv) {
 		}
 
 		ITMMainEngine* mainEngine = nullptr;
+
+
 		switch (settings->libMode) {
 			case ITMLibSettings::LIBMODE_BASIC:
-				mainEngine = new ITMBasicEngine<ITMVoxel, ITMVoxelIndex>(settings, imageSource->getCalib(),
-				                                                         imageSource->getRGBImageSize(),
-				                                                         imageSource->getDepthImageSize());
+				switch (chosenIndexingMethod) {
+					case HASH:
+						mainEngine = new ITMBasicEngine<ITMVoxel, ITMVoxelBlockHash>(
+								settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
+								imageSource->getDepthImageSize());
+						break;
+					case ARRAY:
+						mainEngine = new ITMBasicEngine<ITMVoxel, ITMPlainVoxelArray>(
+								settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
+								imageSource->getDepthImageSize());
+						break;
+				}
 				break;
 			case ITMLibSettings::LIBMODE_BASIC_SURFELS:
-				mainEngine = new ITMBasicSurfelEngine<ITMSurfelT>(settings, imageSource->getCalib(),
-				                                                  imageSource->getRGBImageSize(),
-				                                                  imageSource->getDepthImageSize());
+				mainEngine = new ITMBasicSurfelEngine<ITMSurfelT>(
+						settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
+						imageSource->getDepthImageSize());
 				break;
 			case ITMLibSettings::LIBMODE_LOOPCLOSURE:
-				mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelIndex>(settings, imageSource->getCalib(),
-				                                                         imageSource->getRGBImageSize(),
-				                                                         imageSource->getDepthImageSize());
+				switch (chosenIndexingMethod) {
+					case HASH:
+						mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelBlockHash>(
+								settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
+								imageSource->getDepthImageSize());
+						break;
+					case ARRAY:
+						mainEngine = new ITMMultiEngine<ITMVoxel, ITMPlainVoxelArray>(
+								settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
+								imageSource->getDepthImageSize());
+						break;
+				}
 				break;
 			case ITMLibSettings::LIBMODE_DYNAMIC:
-				mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(settings,
-				                                                                                  imageSource->getCalib(),
-				                                                                                  imageSource->getRGBImageSize(),
-				                                                                                  imageSource->getDepthImageSize());
+				switch (chosenIndexingMethod) {
+					case HASH:
+						mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>(
+								settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
+								imageSource->getDepthImageSize());
+						break;
+					case ARRAY:
+						mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>(
+								settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
+								imageSource->getDepthImageSize());
+						break;
+				}
 				break;
 			default:
 				throw std::runtime_error("Unsupported library mode!");
 		}
+
 		if (fixCamera) {
 			std::cout << "fix_camera flag passed, automatically locking camera if possible "
 			             "(attempting to disable tracking)." << std::endl;
@@ -460,7 +483,7 @@ int main(int argc, char** argv) {
 		                                    settings->analysisSettings.outputPath.c_str(), settings->deviceType,
 		                                    processNFramesOnLaunch, skipFirstNFrames, recordReconstructionToVideo,
 		                                    startInStepByStep, saveAfterInitialProcessing, loadBeforeProcessing,
-		                                    &logger);
+		                                    &logger, chosenIndexingMethod);
 
 
 // endregion ===========================================================================================================
