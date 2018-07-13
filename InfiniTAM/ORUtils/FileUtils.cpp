@@ -10,6 +10,9 @@
 #else 
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wunused-result"
+#endif
 #endif
 
 #ifdef USE_LIBPNG

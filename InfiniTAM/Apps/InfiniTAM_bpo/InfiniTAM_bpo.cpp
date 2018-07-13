@@ -53,6 +53,21 @@ bool isPathMask(const std::string& arg) {
 	return arg.find('%') != std::string::npos;
 }
 
+enum IndexingMethod {
+	HASH, ARRAY
+};
+
+ITMDynamicFusionLogger_Interface& GetLogger(IndexingMethod method) {
+	switch (method) {
+		case HASH: {
+			return static_cast<ITMDynamicFusionLogger_Interface&>(ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>::Instance());
+		}
+		case ARRAY: {
+			return static_cast<ITMDynamicFusionLogger_Interface&>(ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>::Instance());
+		}
+	}
+};
+
 int main(int argc, char** argv) {
 	try {
 		po::options_description arguments{"Arguments"};
@@ -122,6 +137,8 @@ int main(int argc, char** argv) {
 						"No other usage scenario takes them into account.\n"
 				)
 				("output,o", po::value<std::string>()->default_value("./Output"), "Output directory, e.g.: ./Output")
+
+				("index", po::value<std::string>()->default_value("hash"), "Indexing method. May be one of [hash, array].")
 
 				("record_reconstruction_video", po::bool_switch(&recordReconstructionToVideo)->default_value(false),
 				 "Whether to record the reconstruction rendering to video after each frame is processed.")
@@ -257,7 +274,10 @@ int main(int argc, char** argv) {
 		std::string openniFilePath, rgbVideoFilePath, depthVideoFilePath, rgbImageFileMask, depthImageFileMask,
 				maskImageFileMask, imuInputPath;
 
-		std::vector<std::string> inputFiles = vm["input_file"].as<std::vector<std::string>>();
+		std::vector<std::string> inputFiles;
+		if(vm.count("input_file")){
+			inputFiles = vm["input_file"].as<std::vector<std::string>>();
+		}
 		auto inputFileCount = inputFiles.size();
 		switch (inputFileCount) {
 			case 0:
@@ -300,6 +320,23 @@ int main(int argc, char** argv) {
 			printHelp();
 			return EXIT_FAILURE;
 		}
+
+
+		IndexingMethod chosenIndexingMethod = HASH;
+		if (!vm["index"].empty()) {
+			std::string indexingArgumentValue = vm["index"].as<std::string>();
+			if (indexingArgumentValue == "hash") {
+				chosenIndexingMethod = HASH;
+			} else if (indexingArgumentValue == "array") {
+				chosenIndexingMethod = ARRAY;
+			} else {
+				printHelp();
+				return EXIT_FAILURE;
+			}
+		}
+
+		ITMDynamicFusionLogger_Interface& logger = GetLogger(chosenIndexingMethod);
+
 // region ================================ SET MAIN ENGINE SETTINGS WITH CLI ARGUMENTS =================================
 		auto* settings = new ITMLibSettings();
 		settings->analysisSettings.outputPath = vm["output"].as<std::string>().c_str();
@@ -314,7 +351,7 @@ int main(int argc, char** argv) {
 			}
 			memcpy(focusCoordiantes.values, focusCoordsVec.data(), sizeof(int) * 3);
 			settings->SetFocusCoordinates(focusCoordiantes);
-			ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().SetFocusCoordinates(focusCoordiantes);
+			logger.SetFocusCoordinates(focusCoordiantes);
 		}
 
 		if (killingModeEnabled) {
@@ -395,14 +432,14 @@ int main(int argc, char** argv) {
 // endregion ===========================================================================================================
 // region =========================== SET LOGGER / VISUALIZERS WITH CLI ARGUMENTS ======================================
 		//NB: Logger's focus coordinates set above together with main engine settings, if provided
-		if(plotEnergies) ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().TurnPlottingEnergiesOn();
-		ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().SetPlaneFor2Dand3DSlices(planeFor2Dand3DSlices);
-		if(record3DSceneAndWarps) ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().TurnRecording3DSceneAndWarpProgressionOn();
-		if(record1DSlices) ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().TurnRecordingScene1DSlicesWithUpdatesOn();
-		if(record2DSlices) ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().TurnRecordingScene2DSlicesWithUpdatesOn();
-		if(record3DSlices) ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().TurnRecordingScene3DSlicesWithUpdatesOn();
-		ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().Set3DSliceInPlaneRadius(_3DSliceRadius);
-		ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().Set3DSliceOutOfPlaneRadius(_3DSliceExtraThicknessMargin);
+		if (plotEnergies) logger.TurnPlottingEnergiesOn();
+		if (record3DSceneAndWarps) logger.TurnRecording3DSceneAndWarpProgressionOn();
+		if (record1DSlices) logger.TurnRecordingScene1DSlicesWithUpdatesOn();
+		if (record2DSlices) logger.TurnRecordingScene2DSlicesWithUpdatesOn();
+		if (record3DSlices) logger.TurnRecordingScene3DSlicesWithUpdatesOn();
+		logger.SetPlaneFor2Dand3DSlices(planeFor2Dand3DSlices);
+		logger.Set3DSliceInPlaneRadius(_3DSliceRadius);
+		logger.Set3DSliceOutOfPlaneRadius(_3DSliceExtraThicknessMargin);
 
 // endregion
 // region =========================== SET UI ENGINE SETTINGS WITH CLI ARGUMENTS ========================================
@@ -419,17 +456,18 @@ int main(int argc, char** argv) {
 		//TODO (see top of file)
 		XInitThreads();
 
-		UIEngine_BPO::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine,
-		                                     settings->analysisSettings.outputPath.c_str(), settings->deviceType,
-		                                     processNFramesOnLaunch, skipFirstNFrames, recordReconstructionToVideo,
-		                                     startInStepByStep, saveAfterInitialProcessing, loadBeforeProcessing);
+		UIEngine_BPO::Instance().Initialise(argc, argv, imageSource, imuSource, mainEngine,
+		                                    settings->analysisSettings.outputPath.c_str(), settings->deviceType,
+		                                    processNFramesOnLaunch, skipFirstNFrames, recordReconstructionToVideo,
+		                                    startInStepByStep, saveAfterInitialProcessing, loadBeforeProcessing,
+		                                    &logger);
 
 
 // endregion ===========================================================================================================
 
 		//ITMVisualizationWindowManager::Instance().Run();
-		UIEngine_BPO::Instance()->Run();
-		UIEngine_BPO::Instance()->Shutdown();
+		UIEngine_BPO::Instance().Run();
+		UIEngine_BPO::Instance().Shutdown();
 
 // region ========================================= CLEANUP ============================================================
 

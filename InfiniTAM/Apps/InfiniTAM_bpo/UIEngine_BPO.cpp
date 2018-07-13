@@ -48,8 +48,6 @@ using namespace ITMLib;
 
 namespace bench = ITMLib::Bench;
 
-UIEngine_BPO* UIEngine_BPO::instance;
-
 
 /**
  * \brief Initialize the UIEngine using the specified settings
@@ -66,11 +64,14 @@ UIEngine_BPO* UIEngine_BPO::instance;
  * set interval to this number of frames
  */
 void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
-                              InputSource::IMUSourceEngine* imuSource, ITMLib::ITMMainEngine* mainEngine,
-                              const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
+                              InputSource::IMUSourceEngine* imuSource,
+                              ITMLib::ITMMainEngine* mainEngine, const char* outFolder,
+                              ITMLib::ITMLibSettings::DeviceType deviceType,
                               int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
-                              bool startInStepByStep, bool saveAfterFirstNFrames, bool loadBeforeProcessing) {
-
+                              bool startInStepByStep,
+                              bool saveAfterFirstNFrames, bool loadBeforeProcessing,
+                              ITMLib::ITMDynamicFusionLogger_Interface* logger) {
+	this->logger = logger;
 
 	this->inStepByStepMode = startInStepByStep;
 	this->saveAfterAutoprocessing = saveAfterFirstNFrames;
@@ -189,12 +190,12 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 
 	if (loadBeforeProcessing) {
 		auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>*>(mainEngine);
-		ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().SetOutputDirectory(
+		logger->SetOutputDirectory(
 				this->GenerateCurrentFrameOutputDirectory());
 		mainEngine->LoadFromFile();
 		SkipFrames(1);
 	}
-	ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().SetShutdownRequestedFlagLocation(
+	logger->SetShutdownRequestedFlagLocation(
 			&this->shutdownRequested);
 	printf("initialised.\n");
 }
@@ -218,7 +219,7 @@ void UIEngine_BPO::SkipFrames(int numberOfFramesToSkip) {
 
 
 void UIEngine_BPO::ProcessFrame() {
-	if (ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().IsRecording3DSceneAndWarpProgression()) {
+	if (logger->IsRecording3DSceneAndWarpProgression()) {
 		std::cout << yellow << "***" << bright_cyan << "PROCESSING FRAME " << GetCurrentFrameIndex()
 		          << " (WITH RECORDING 3D SCENES ON)" << yellow << "***" << reset << std::endl;
 	} else {
@@ -234,7 +235,7 @@ void UIEngine_BPO::ProcessFrame() {
 		else imuSource->getMeasurement(inputIMUMeasurement);
 	}
 
-	ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().SetOutputDirectory(
+	logger->SetOutputDirectory(
 			this->GenerateCurrentFrameOutputDirectory());
 	RecordDepthAndRGBInputToImages();
 	RecordDepthAndRGBInputToVideo();
@@ -268,6 +269,8 @@ int UIEngine_BPO::GetCurrentFrameIndex() const {
 
 void UIEngine_BPO::Run() { glutMainLoop(); }
 
+
+//TODO: should just be in the destructor and triggered when the object goes out of scope -Greg (GitHub:Algomorph)
 void UIEngine_BPO::Shutdown() {
 	sdkDeleteTimer(&timer_instant);
 	sdkDeleteTimer(&timer_average);
@@ -285,8 +288,6 @@ void UIEngine_BPO::Shutdown() {
 
 	delete[] outFolder;
 	delete saveImage;
-	delete instance;
-	instance = nullptr;
 }
 
 bool UIEngine_BPO::BeginStepByStepModeForFrame() {
@@ -303,13 +304,13 @@ bool UIEngine_BPO::BeginStepByStepModeForFrame() {
 		else imuSource->getMeasurement(inputIMUMeasurement);
 	}
 
-	ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().SetOutputDirectory(
+	logger->SetOutputDirectory(
 			this->GenerateCurrentFrameOutputDirectory());
 	RecordDepthAndRGBInputToImages();
 	RecordDepthAndRGBInputToVideo();
 
 	//actual processing on the mailEngine
-	if (imuSource != NULL)
+	if (imuSource != nullptr)
 		dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage, inputIMUMeasurement);
 	else dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage);
 
@@ -405,11 +406,11 @@ void UIEngine_BPO::RecordDepthAndRGBInputToImages() {
 void UIEngine_BPO::PrintProcessingFrameHeader() const {
 	std::cout << bright_cyan << "PROCESSING FRAME " << GetCurrentFrameIndex() + 1;
 	if (ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::
-	        Instance().IsRecording3DSceneAndWarpProgression()) {
+	Instance().IsRecording3DSceneAndWarpProgression()) {
 		std::cout << " [3D SCENE AND WARP UPDATE RECORDING: ON]";
 	}
 	if (ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::
-	        Instance().IsRecordingScene2DSlicesWithUpdates()) {
+	Instance().IsRecordingScene2DSlicesWithUpdates()) {
 		std::cout << " [2D SCENE SLICE & WARP UPDATE RECORDING: ON]";
 	}
 	std::cout << reset << std::endl;

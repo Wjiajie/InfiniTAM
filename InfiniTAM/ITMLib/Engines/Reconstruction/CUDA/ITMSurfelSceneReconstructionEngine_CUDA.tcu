@@ -6,7 +6,7 @@
   #pragma warning(disable:4267)
 #else
   // Suppress some GCC warnings that are produced when including the Thrust headers.
-  #pragma GCC diagnostic ignored "-Wunused-private-field"
+  //#pragma GCC diagnostic ignored "-Wunused-private-field"
 #endif
 
 #include <thrust/device_ptr.h>
@@ -17,7 +17,7 @@
 #ifdef _MSC_VER
   #pragma warning(default:4267)
 #else
-  #pragma GCC diagnostic warning "-Wunused-private-field"
+  //#pragma GCC diagnostic warning "-Wunused-private-field"
 #endif
 
 #include "../Shared/ITMSurfelSceneReconstructionEngine_Shared.h"

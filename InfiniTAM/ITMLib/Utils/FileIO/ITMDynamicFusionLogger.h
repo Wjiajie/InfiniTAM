@@ -24,9 +24,58 @@
 
 namespace ITMLib {
 
+class ITMDynamicFusionLogger_Interface{
+public:
+
+// region ============================= SETTERS & SWITCHES =============================================================
+	virtual void SetOutputDirectory(std::string outputDirectory) = 0;
+	virtual void SetFocusCoordinates(Vector3i focusCoordinates) = 0;
+	virtual void SetPlaneFor2Dand3DSlices(Plane plane) = 0;
+	virtual void Set3DSliceInPlaneRadius(unsigned int _3dSliceInPlaneRadius) = 0;
+	virtual void Set3DSliceOutOfPlaneRadius(unsigned int _3dSliceOutOfPlaneRadius) = 0;
+	virtual void SetShutdownRequestedFlagLocation(bool* flag) = 0;
+
+	virtual void RequestAppShutdown() = 0;
+
+	virtual void TurnRecordingLiveSceneAs2DSlicesOn() = 0;
+	virtual void TurnRecordingLiveSceneAs2DSlicesOff() = 0;
+	virtual void ToggleRecordingLiveSceneAs2DSlices() = 0;
+	virtual void TurnRecordingCanonicalSceneAs2DSlicesOn() = 0;
+	virtual void TurnRecordingCanonicalSceneAs2DSlicesOff() = 0;
+	virtual void TurnRecordingScene1DSlicesWithUpdatesOn() = 0;
+	virtual void TurnRecordingScene1DSlicesWithUpdatesOff() = 0;
+	virtual void TurnRecordingScene2DSlicesWithUpdatesOn() = 0;
+	virtual void TurnRecordingScene2DSlicesWithUpdatesOff() = 0;
+	virtual void TurnRecordingScene3DSlicesWithUpdatesOn() = 0;
+	virtual void TurnRecordingScene3DSlicesWithUpdatesOff() = 0;
+	virtual void ToggleRecordingScene2DSlicesWithUpdates() = 0;
+	virtual void TurnRecording3DSceneAndWarpProgressionOn() = 0;
+	virtual void TurnRecording3DSceneAndWarpProgressionOff() = 0;
+	virtual void ToggleRecording3DSceneAndWarpProgression() = 0;
+	virtual void TurnRecordingEnergiesToFilesOn() = 0;
+	virtual void TurnRecordingEnergiesToFilesOff() = 0;
+	virtual void TurnPlottingEnergiesOn() = 0;
+	virtual void TurnPlottingEnergiesOff() = 0;
+	
+//endregion ============================================================================================================
+// region ============================= GETTERS ========================================================================
+
+	virtual std::string GetOutputDirectory() const = 0;
+
+	virtual bool IsRecordingLiveSceneAs2DSlices() const = 0;
+	virtual bool IsRecordingCanonicalSceneAs2DSlices() const = 0;
+	virtual bool IsRecordingScene1DSlicesWithUpdates() const = 0;
+	virtual bool IsRecordingScene2DSlicesWithUpdates() const = 0;
+	virtual bool IsRecordingScene3DSlicesWithUpdates() const = 0;
+	virtual bool IsRecording3DSceneAndWarpProgression() const = 0;
+	virtual bool IsRecordingEnergiesToFile() const = 0;
+	virtual bool IsPlottingEnergies() const = 0;
+
+// endregion ===========================================================================================================
+};
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-class ITMDynamicFusionLogger {
+class ITMDynamicFusionLogger : public ITMDynamicFusionLogger_Interface {
 public:
 // where to save the images within the output directory
 	static const std::string iterationFramesFolderName;

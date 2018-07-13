@@ -11,6 +11,7 @@
 #include "../../ITMLib/Utils/ITMLibSettings.h"
 #include "../../ORUtils/FileUtils.h"
 #include "../../ORUtils/NVTimer.h"
+#include "../../ITMLib/Utils/FileIO/ITMDynamicFusionLogger.h"
 
 //stdlib
 #include <vector>
@@ -22,7 +23,7 @@
 namespace InfiniTAM {
 namespace Engine {
 class UIEngine_BPO {
-	static UIEngine_BPO* instance;
+private:
 
 	enum MainLoopAction {
 		PROCESS_PAUSED, PROCESS_FRAME, PROCESS_VIDEO, EXIT,
@@ -48,13 +49,12 @@ class UIEngine_BPO {
 
 	InputSource::ImageSourceEngine* imageSource;
 	InputSource::IMUSourceEngine* imuSource;
-	ITMLib::ITMLibSettings internalSettings;
 	ITMLib::ITMMainEngine* mainEngine;
 
 	StopWatchInterface* timer_instant;
 	StopWatchInterface* timer_average;
 
-private: // For UI layout
+	// For UI layout
 	static const int NUM_WIN = 3;
 	Vector4f winReg[NUM_WIN]; // (x1, y1, x2, y2)
 	Vector2i winSize;
@@ -82,8 +82,8 @@ private: // For UI layout
 	InputSource::FFMPEGWriter* rgbVideoWriter = nullptr;
 	InputSource::FFMPEGWriter* depthVideoWriter = nullptr;
 public:
-	static UIEngine_BPO* Instance() {
-		if (instance == nullptr) instance = new UIEngine_BPO();
+	static UIEngine_BPO& Instance() {
+		static UIEngine_BPO instance;
 		return instance;
 	}
 
@@ -105,12 +105,16 @@ public:
 	bool allocateGPU;
 	bool shutdownRequested = false;
 	ITMUChar4Image* saveImage;
+	ITMLib::ITMDynamicFusionLogger_Interface* logger;
 
 	void Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
-		                InputSource::IMUSourceEngine* imuSource, ITMLib::ITMMainEngine* mainEngine,
-		                const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
-		                int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
-		                bool startInStepByStep, bool saveAfterFirstNFrames, bool loadBeforeProcessing);
+	                InputSource::IMUSourceEngine* imuSource,
+	                ITMLib::ITMMainEngine* mainEngine, const char* outFolder,
+	                ITMLib::ITMLibSettings::DeviceType deviceType,
+	                int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
+	                bool startInStepByStep,
+	                bool saveAfterFirstNFrames, bool loadBeforeProcessing,
+	                ITMLib::ITMDynamicFusionLogger_Interface* logger);
 	void Shutdown();
 
 	void Run();
