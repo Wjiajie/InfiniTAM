@@ -20,12 +20,12 @@
 #include "../Visualization/ITMSceneSliceVisualizer1D.h"
 #include "../Visualization/ITMSceneSliceVisualizer2D.h"
 #include "../Visualization/ITMSceneSliceVisualizer3D.h"
-#include "../../ITMLibDefines.h"
 #include "../Visualization/ITMSceneTrackingEnergyPlotter.h"
 
 namespace ITMLib {
 
 
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMDynamicFusionLogger {
 public:
 // where to save the images within the output directory
@@ -41,7 +41,7 @@ public:
 
 // region ============================= SETTERS & SWITCHES =============================================================
 
-	void SetScenes(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene,ITMScene<ITMVoxelLive, ITMVoxelIndex>* liveScene);
+	void SetScenes(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,ITMScene<TVoxelLive, TIndex>* liveScene);
 	void SetOutputDirectory(std::string outputDirectory);
 	void SetFocusCoordinates(Vector3i focusCoordinates);
 	void SetPlaneFor2Dand3DSlices(Plane plane);
@@ -110,8 +110,8 @@ private:
 	ITMDynamicFusionLogger();
 	~ITMDynamicFusionLogger();
 
-	void InitializeWarp2DSliceRecording(ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene,
-	                                    ITMScene<ITMVoxelLive, ITMVoxelIndex>* sourceLiveScene);
+	void InitializeWarp2DSliceRecording(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                                    ITMScene<TVoxelLive, TIndex>* sourceLiveScene);
 	std::string GetOutputDirectoryFor2DSceneSlicesWithWarps() const;
 	std::string GetOutputDirectoryFor2DLiveSceneSliceProgression() const;
 	std::string GetOutputDirectoryPrefixForLiveSceneAsSlices() const;
@@ -120,14 +120,14 @@ private:
 
 	// various loggers & visualizers
 	std::unique_ptr<ITMSceneSliceVisualizer1D> scene1DSliceVisualizer;
-	std::unique_ptr<ITMSceneSliceVisualizer2D<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>> scene2DSliceVisualizer;
-	std::unique_ptr<ITMSceneSliceVisualizer3D<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>> scene3DSliceVisualizer;
+	std::unique_ptr<ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>> scene2DSliceVisualizer;
+	std::unique_ptr<ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>> scene3DSliceVisualizer;
 	std::unique_ptr<ITMSceneTrackingEnergyPlotter> energyPlotter;
-	ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>* scene3DLogger = nullptr;
+	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>* scene3DLogger = nullptr;
 
 	// internal references to the scenes
-	ITMScene<ITMVoxelCanonical, ITMVoxelIndex>* canonicalScene = nullptr;
-	ITMScene<ITMVoxelLive, ITMVoxelIndex>* liveScene = nullptr;
+	ITMScene<TVoxelCanonical, TIndex>* canonicalScene = nullptr;
+	ITMScene<TVoxelLive, TIndex>* liveScene = nullptr;
 
 	std::ofstream energyStatisticsFile;
 
@@ -153,11 +153,7 @@ private:
 	Vector3i focusCoordinates;
 	int _3dSliceInPlaneRadius;
 	unsigned int _3dSliceOutOfPlaneRadius;
-	const int focusSliceRadius;//=3;
-
-
-
-
+	const int focusSliceRadius;
 };
 
 } //namespace InfiniTAM

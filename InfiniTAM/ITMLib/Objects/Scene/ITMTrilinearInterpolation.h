@@ -584,7 +584,7 @@ inline float _DEBUG_InterpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,
 	return sdf;
 }
 
-//PlainVoxelArray version of the same function
+//VoxelBlockHash version of the same function
 template<class TVoxel, typename TCache>
 _CPU_AND_GPU_CODE_
 inline float _DEBUG_InterpolateTrilinearly(const CONSTPTR(TVoxel)* voxelData,

@@ -13,22 +13,12 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "../ITMLibDefines.h"
 
-#include "../Engines/Swapping/CUDA/ITMSwappingEngine_CUDA.tcu"
-#include "../Engines/Visualisation/CUDA/ITMVisualisationEngine_CUDA.tcu"
-#include "../Engines/Meshing/CUDA/ITMMeshingEngine_CUDA.tcu"
+#include "../../ITMLibDefines.h"
+//#include "../SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA.tcu"
 
-namespace ITMLib {
+namespace ITMLib{
 
-template
-class ITMSwappingEngine_CUDA<ITMVoxelCanonical, ITMVoxelIndex>;
-
-template
-class ITMVisualisationEngine_CUDA<ITMVoxelLive, ITMVoxelIndex>;
-template
-class ITMVisualisationEngine_CUDA<ITMVoxelCanonical, ITMVoxelIndex>;
-template
-class ITMMeshingEngine_CUDA<ITMVoxelCanonical, ITMVoxelIndex>;
+//template class ITMSceneMotionTracker_CUDA<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>;
 
 }

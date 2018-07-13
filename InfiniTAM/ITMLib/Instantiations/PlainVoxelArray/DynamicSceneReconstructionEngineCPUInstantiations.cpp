@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 6/20/18.
+//  Created by Gregory Kramida on 6/19/18.
 //  Copyright (c) 2018-2025 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -13,10 +13,9 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+#include "../../Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU_VoxelBlockHash.tpp"
+#include "../../Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU_PlainVoxelArray.tpp"
+#include "../../ITMLibDefines.h"
 
-#include "../ITMLibDefines.h"
-#include "../Utils/Visualization/ITMSceneSliceVisualizer3D.tpp"
-#include "../Utils/Visualization/ITMSceneSliceVisualizer3DInteractorStyle.tpp"
 
-template class ITMSceneSliceVisualizer3D<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
-template class ITMSceneSliceVisualizer3DInteractorStyle<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+template class ITMDynamicSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>;

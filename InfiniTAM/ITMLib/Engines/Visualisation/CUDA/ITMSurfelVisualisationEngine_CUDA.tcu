@@ -6,134 +6,132 @@
 
 #include "../Shared/ITMSurfelVisualisationEngine_Shared.h"
 
-namespace ITMLib
-{
+using namespace ITMLib;
+
+namespace {
 
 //#################### CUDA KERNELS ####################
 
-__global__ void ck_clear_surfel_index_image(int pixelCount, unsigned int *surfelIndexImage, int *depthBuffer)
-{
+__global__ void ck_clear_surfel_index_image(int pixelCount, unsigned int* surfelIndexImage, int* depthBuffer) {
   int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
+  if (locId < pixelCount) {
     clear_surfel_index_image(locId, surfelIndexImage, depthBuffer);
   }
 }
 
-template <typename TSurfel>
-__global__ void ck_copy_correspondences_to_buffers(int surfelCount, const TSurfel *surfels, float *newPositions, float *oldPositions, float *correspondences)
-{
+template<typename TSurfel>
+__global__ void
+ck_copy_correspondences_to_buffers(int surfelCount, const TSurfel* surfels, float* newPositions, float* oldPositions,
+                                   float* correspondences) {
   int surfelId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(surfelId < surfelCount)
-  {
+  if (surfelId < surfelCount) {
     copy_correspondences_to_buffers(surfelId, surfels, newPositions, oldPositions, correspondences);
   }
 }
 
-template <typename TSurfel>
-__global__ void ck_copy_surfel_data_to_icp_maps(int pixelCount, const TSurfel *surfels, const unsigned int *surfelIndexImage, Matrix4f invT,
-                                                float trackingSurfelMaxDepth, float trackingSurfelMinConfidence, Vector4f *pointsMap, Vector4f *normalsMap)
-{
+template<typename TSurfel>
+__global__ void
+ck_copy_surfel_data_to_icp_maps(int pixelCount, const TSurfel* surfels, const unsigned int* surfelIndexImage,
+                                Matrix4f invT,
+                                float trackingSurfelMaxDepth, float trackingSurfelMinConfidence, Vector4f* pointsMap,
+                                Vector4f* normalsMap) {
   int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
-    copy_surfel_data_to_icp_maps(locId, surfels, surfelIndexImage, invT, trackingSurfelMaxDepth, trackingSurfelMinConfidence, pointsMap, normalsMap);
+  if (locId < pixelCount) {
+    copy_surfel_data_to_icp_maps(locId, surfels, surfelIndexImage, invT, trackingSurfelMaxDepth,
+                                 trackingSurfelMinConfidence, pointsMap, normalsMap);
   }
 }
 
-template <typename TSurfel>
-__global__ void ck_copy_scene_to_buffers(int surfelCount, const TSurfel *surfels, float *positions, unsigned char *normals, unsigned char *colours)
-{
+template<typename TSurfel>
+__global__ void
+ck_copy_scene_to_buffers(int surfelCount, const TSurfel* surfels, float* positions, unsigned char* normals,
+                         unsigned char* colours) {
   int surfelId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(surfelId < surfelCount)
-  {
+  if (surfelId < surfelCount) {
     copy_surfel_to_buffers(surfelId, surfels, positions, normals, colours);
   }
 }
 
-template <typename TSurfel>
-__global__ void ck_shade_pixel_colour(int pixelCount, const unsigned int *surfelIndexImage, const TSurfel *surfels, Vector4u *outputImage)
-{
+template<typename TSurfel>
+__global__ void ck_shade_pixel_colour(int pixelCount, const unsigned int* surfelIndexImage, const TSurfel* surfels,
+                                      Vector4u* outputImage) {
   int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
+  if (locId < pixelCount) {
     shade_pixel_colour(locId, surfelIndexImage, surfels, outputImage);
   }
 }
 
-template <typename TSurfel>
-__global__ void ck_shade_pixel_confidence(int pixelCount, const unsigned int *surfelIndexImage, const TSurfel *surfels, float stableSurfelConfidence, Vector4u *outputImage)
-{
+template<typename TSurfel>
+__global__ void ck_shade_pixel_confidence(int pixelCount, const unsigned int* surfelIndexImage, const TSurfel* surfels,
+                                          float stableSurfelConfidence, Vector4u* outputImage) {
   int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
+  if (locId < pixelCount) {
     shade_pixel_confidence(locId, surfelIndexImage, surfels, stableSurfelConfidence, outputImage);
   }
 }
 
-template <typename TSurfel>
-__global__ void ck_shade_pixel_depth(int pixelCount, const unsigned int *surfelIndexImage, const TSurfel *surfels, Vector3f cameraPosition,
-                                     float *outputImage)
-{
+template<typename TSurfel>
+__global__ void ck_shade_pixel_depth(int pixelCount, const unsigned int* surfelIndexImage, const TSurfel* surfels,
+                                     Vector3f cameraPosition,
+                                     float* outputImage) {
   int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
+  if (locId < pixelCount) {
     shade_pixel_depth(locId, surfelIndexImage, surfels, cameraPosition, outputImage);
   }
 }
 
-template <typename TSurfel>
-__global__ void ck_shade_pixel_grey(int pixelCount, const unsigned int *surfelIndexImage, const TSurfel *surfels, Vector3f lightPos, Vector3f viewerPos,
-                                    SurfelLightingType lightingType, Vector4u *outputImage)
-{
+template<typename TSurfel>
+__global__ void
+ck_shade_pixel_grey(int pixelCount, const unsigned int* surfelIndexImage, const TSurfel* surfels, Vector3f lightPos,
+                    Vector3f viewerPos,
+                    SurfelLightingType lightingType, Vector4u* outputImage) {
   int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
+  if (locId < pixelCount) {
     shade_pixel_grey(locId, surfelIndexImage, surfels, lightPos, viewerPos, lightingType, outputImage);
   }
 }
 
-template <typename TSurfel>
-__global__ void ck_shade_pixel_normal(int pixelCount, const unsigned int *surfelIndexImage, const TSurfel *surfels, Vector4u *outputImage)
-{
+template<typename TSurfel>
+__global__ void ck_shade_pixel_normal(int pixelCount, const unsigned int* surfelIndexImage, const TSurfel* surfels,
+                                      Vector4u* outputImage) {
   int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
+  if (locId < pixelCount) {
     shade_pixel_normal(locId, surfelIndexImage, surfels, outputImage);
   }
 }
 
-template <typename TSurfel>
-__global__ void ck_update_depth_buffer_for_surfel(int surfelCount, const TSurfel *surfels, Matrix4f invT, ITMIntrinsics intrinsics,
-                                                  int indexImageWidth, int indexImageHeight, int scaleFactor, bool useRadii,
-                                                  UnstableSurfelRenderingMode unstableSurfelRenderingMode, float stableSurfelConfidence,
-                                                  int unstableSurfelZOffset, int *depthBuffer)
-{
+template<typename TSurfel>
+__global__ void
+ck_update_depth_buffer_for_surfel(int surfelCount, const TSurfel* surfels, Matrix4f invT, ITMIntrinsics intrinsics,
+                                  int indexImageWidth, int indexImageHeight, int scaleFactor, bool useRadii,
+                                  UnstableSurfelRenderingMode unstableSurfelRenderingMode, float stableSurfelConfidence,
+                                  int unstableSurfelZOffset, int* depthBuffer) {
   int surfelId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(surfelId < surfelCount)
-  {
+  if (surfelId < surfelCount) {
     update_depth_buffer_for_surfel(
-      surfelId, surfels, invT, intrinsics, indexImageWidth, indexImageHeight, scaleFactor, useRadii, unstableSurfelRenderingMode,
-      stableSurfelConfidence, unstableSurfelZOffset, depthBuffer
+            surfelId, surfels, invT, intrinsics, indexImageWidth, indexImageHeight, scaleFactor, useRadii,
+            unstableSurfelRenderingMode,
+            stableSurfelConfidence, unstableSurfelZOffset, depthBuffer
     );
   }
 }
 
-template <typename TSurfel>
-__global__ void ck_update_index_image_for_surfel(int surfelCount, const TSurfel *surfels, Matrix4f invT, ITMIntrinsics intrinsics,
-                                                 int indexImageWidth, int indexImageHeight, int scaleFactor, const int *depthBuffer, bool useRadii,
-                                                 UnstableSurfelRenderingMode unstableSurfelRenderingMode, float stableSurfelConfidence,
-                                                 int unstableSurfelZOffset, unsigned int *surfelIndexImage)
-{
+template<typename TSurfel>
+__global__ void
+ck_update_index_image_for_surfel(int surfelCount, const TSurfel* surfels, Matrix4f invT, ITMIntrinsics intrinsics,
+                                 int indexImageWidth, int indexImageHeight, int scaleFactor, const int* depthBuffer,
+                                 bool useRadii,
+                                 UnstableSurfelRenderingMode unstableSurfelRenderingMode, float stableSurfelConfidence,
+                                 int unstableSurfelZOffset, unsigned int* surfelIndexImage) {
   int surfelId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(surfelId < surfelCount)
-  {
+  if (surfelId < surfelCount) {
     update_index_image_for_surfel(
-      surfelId, surfels, invT, intrinsics, indexImageWidth, indexImageHeight, scaleFactor, depthBuffer, useRadii,
-      unstableSurfelRenderingMode, stableSurfelConfidence, unstableSurfelZOffset, surfelIndexImage
+            surfelId, surfels, invT, intrinsics, indexImageWidth, indexImageHeight, scaleFactor, depthBuffer, useRadii,
+            unstableSurfelRenderingMode, stableSurfelConfidence, unstableSurfelZOffset, surfelIndexImage
     );
   }
 }
+} //namespace
 
 //#################### PUBLIC MEMBER FUNCTIONS ####################
 
@@ -340,6 +338,4 @@ void ITMSurfelVisualisationEngine_CUDA<TSurfel>::MakeIndexImage(const ITMSurfelS
     surfelIndexImage
   );
   ORcudaKernelCheck;
-}
-
 }

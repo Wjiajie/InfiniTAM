@@ -169,7 +169,7 @@ void ITMSceneSliceVisualizer3DInteractorStyle<TVoxelCanonical, TVoxelLive, TInde
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneSliceVisualizer3DInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>::RequestShutdown() {
-	ITMDynamicFusionLogger::Instance().RequestAppShutdown();
+	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().RequestAppShutdown();
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

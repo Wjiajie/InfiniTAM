@@ -36,7 +36,7 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(const IT
 	this->liveScene = new ITMScene<TVoxelLive, TIndex>(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 	const ITMLibSettings::DeviceType deviceType = settings->deviceType;
-	ITMDynamicFusionLogger::Instance().SetScenes(canonicalScene,liveScene);
+	ITMDynamicFusionLogger<TVoxelCanonical,TVoxelLive,TIndex>::Instance().SetScenes(canonicalScene,liveScene);
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
@@ -124,7 +124,7 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveSceneToMesh(cons
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveToFile() {
-	std::string nextFrameOutputPath = ITMDynamicFusionLogger::Instance().GetOutputDirectory();
+	std::string nextFrameOutputPath = ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().GetOutputDirectory();
 	// throws error if any of the saves fail
 	if (relocaliser) relocaliser->SaveToDirectory(nextFrameOutputPath + "/Relocaliser/");
 	ITMSceneFileIOEngine<TVoxelCanonical,TIndex>::SaveToDirectoryCompact(canonicalScene,nextFrameOutputPath + "/canonical");
@@ -134,7 +134,7 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveToFile() {
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::LoadFromFile() {
-	std::string nextFrameOutputPath = ITMDynamicFusionLogger::Instance().GetOutputDirectory();
+	std::string nextFrameOutputPath = ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().GetOutputDirectory();
 	std::string relocaliserInputDirectory = nextFrameOutputPath + "Relocaliser/";
 
 	////TODO: add factory for relocaliser and rebuild using config from relocaliserOutputDirectory + "config.txt"

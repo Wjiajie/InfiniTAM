@@ -168,8 +168,8 @@ void UIEngine_BPO::GlutDisplayFunction() {
 		        "i: %d frames \t d: one step \t p: pause \t v: write video %s \t w: log 3D warps %s \t Alt+w: log 2D warps %s",
 		        uiEngine->autoIntervalFrameCount,
 		        uiEngine->depthVideoWriter != nullptr ? "off" : "on",
-		        ITMDynamicFusionLogger::Instance().IsRecording3DSceneAndWarpProgression()? "off" : "on",
-		        ITMDynamicFusionLogger::Instance().IsRecordingScene2DSlicesWithUpdates() ? "off" : "on");
+		        ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().IsRecording3DSceneAndWarpProgression()? "off" : "on",
+		        ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().IsRecordingScene2DSlicesWithUpdates() ? "off" : "on");
 		Safe_GlutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*) str);
 	}
 	glutSwapBuffers();
@@ -379,9 +379,9 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 				break;
 			case 'w': {
 				if (modifiers && GLUT_ACTIVE_ALT) {
-					ITMDynamicFusionLogger::Instance().ToggleRecording3DSceneAndWarpProgression();
+					ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().ToggleRecording3DSceneAndWarpProgression();
 				}else{
-					ITMDynamicFusionLogger::Instance().ToggleRecordingScene2DSlicesWithUpdates();
+					ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().ToggleRecordingScene2DSlicesWithUpdates();
 				}
 			}
 				break;

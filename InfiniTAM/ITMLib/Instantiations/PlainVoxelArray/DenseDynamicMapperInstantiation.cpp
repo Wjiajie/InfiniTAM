@@ -15,6 +15,6 @@
 //  ================================================================
 
 
-#include "../Core/ITMDenseDynamicMapper.tpp"
+#include "../../Core/ITMDenseDynamicMapper.tpp"
 
-template class ITMDenseDynamicMapper<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
+template class ITMDenseDynamicMapper<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>;

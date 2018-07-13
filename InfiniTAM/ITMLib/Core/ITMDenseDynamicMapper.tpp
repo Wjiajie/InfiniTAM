@@ -151,7 +151,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProce
 	sceneReconstructor->WarpScene(canonicalScene, liveScene, 0, 1, true, focusCoordinates);
 	bench::StopTimer("TrackMotion_35_WarpLiveScene");
 
-	ITMDynamicFusionLogger::Instance().InitializeFrameRecording();
+	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().InitializeFrameRecording();
 	maxVectorUpdate = std::numeric_limits<float>::infinity();
 };
 
@@ -169,7 +169,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeProcess
 	sceneMotionTracker->AddFramewiseWarpToWarp(canonicalScene, true);
 	bench::StopTimer("AddFramewiseWarpToWarp");
 
-	ITMDynamicFusionLogger::Instance().FinalizeFrameRecording();
+	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().FinalizeFrameRecording();
 
 	ProcessSwapping(canonicalScene, renderState);
 };
@@ -234,7 +234,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 	sourceSdfIndex = (iteration + 1) % 2;
 	targetSdfIndex = iteration % 2;
 
-	ITMDynamicFusionLogger::Instance().SaveWarpSlices(iteration);
+	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().SaveWarpSlices(iteration);
 	std::cout << red << "Iteration: " << iteration << reset << std::endl;
 	//** warp update gradient computation
 	PrintOperationStatus("Calculating warp energy gradient...");
@@ -245,7 +245,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 	                                          focusCoordinates, sourceSdfIndex,
 	                                          analysisFlags.restrictZtrackingForDebugging);
 
-	ITMDynamicFusionLogger::Instance().UpdateSmoothingVectors();
+	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().UpdateSmoothingVectors();
 
 	bench::StopTimer("TrackMotion_31_CalculateWarpUpdate");
 
@@ -265,7 +265,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 	sceneReconstructor->UpdateWarpedScene(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex,
 	                                      analysisFlags.hasFocusCoordinates, focusCoordinates);
 	bench::StopTimer("TrackMotion_35_WarpLiveScene");
-	ITMDynamicFusionLogger::Instance().SaveWarps();
+	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().SaveWarps();
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

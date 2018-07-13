@@ -27,20 +27,34 @@ find_package(Boost REQUIRED filesystem)
 
 ##
 set(ITMLIB_TOPLEVEL_CPU_SOURCES
-    Instantiations/SceneManipulationCPUInstantiations.cpp
-    Instantiations/CPUInstantiations.cpp
-    Instantiations/DynamicFusionCPUInstantiations.cpp
-    Instantiations/DynamicSceneReconstructionEngineCPUInstantiations.cpp
-    Instantiations/DynamicHashManagementEngineCPUInstantiation.cpp
-    Instantiations/DenseDynamicMapperInstantiation.cpp
-    Instantiations/SceneMotionTrackerCPUInstantiation.cpp
-    Instantiations/ITMScene3DSliceVisualizerInstantiations.cpp
+    Instantiations/VoxelBlockHash/SceneManipulationCPUInstantiations.cpp
+    Instantiations/VoxelBlockHash/CPUInstantiations.cpp
+    Instantiations/VoxelBlockHash/DynamicFusionCPUInstantiations.cpp
+    Instantiations/VoxelBlockHash/DynamicFusionLoggerInstantiation.cpp
+    Instantiations/VoxelBlockHash/DynamicSceneReconstructionEngineCPUInstantiations.cpp
+    Instantiations/VoxelBlockHash/DenseDynamicMapperInstantiation.cpp
+    Instantiations/VoxelBlockHash/DynamicHashManagementEngineCPUInstantiation.cpp
+    Instantiations/VoxelBlockHash/SceneMotionTrackerCPUInstantiation.cpp
+    Instantiations/VoxelBlockHash/ITMScene3DSliceVisualizerInstantiations.cpp
+
+    Instantiations/PlainVoxelArray/SceneManipulationCPUInstantiations.cpp
+    Instantiations/PlainVoxelArray/CPUInstantiations.cpp
+    Instantiations/PlainVoxelArray/DynamicFusionCPUInstantiations.cpp
+    Instantiations/PlainVoxelArray/DynamicFusionLoggerInstantiation.cpp
+    Instantiations/PlainVoxelArray/DynamicSceneReconstructionEngineCPUInstantiations.cpp
+    Instantiations/PlainVoxelArray/DenseDynamicMapperInstantiation.cpp
+    Instantiations/PlainVoxelArray/SceneMotionTrackerCPUInstantiation.cpp
+    Instantiations/PlainVoxelArray/ITMScene3DSliceVisualizerInstantiations.cpp
     )
 
 set(ITMLIB_TOPLEVEL_CUDA_SOURCES
-    Instantiations/CUDAInstantiations.cu
-    Instantiations/DynamicFusionCUDAInstantiations.cu
-    Instantiations/SceneMotionTrackerCUDAInstantiation.cu
+    Instantiations/VoxelBlockHash/CUDAInstantiations.cu
+    Instantiations/VoxelBlockHash/DynamicFusionCUDAInstantiations.cu
+    Instantiations/VoxelBlockHash/SceneMotionTrackerCUDAInstantiation.cu
+
+    Instantiations/PlainVoxelArray/CUDAInstantiations.cu
+    Instantiations/PlainVoxelArray/DynamicFusionCUDAInstantiations.cu
+    Instantiations/PlainVoxelArray/SceneMotionTrackerCUDAInstantiation.cu
     )
 
 set(ITMLIB_TOPLEVEL_HEADERS
@@ -583,7 +597,7 @@ set(ITMLIB_UTILS_HEADERS
 
 set(ITMLIB_UTILS_FILEIO_SOURCES
     Utils/FileIO/ITMSceneLogger.tpp
-    Utils/FileIO/ITMDynamicFusionLogger.cpp
+    Utils/FileIO/ITMDynamicFusionLogger.tpp
     Utils/FileIO/ITMSceneLogger_SceneSlice.tpp
     Utils/FileIO/ITMWarpSceneLogger.tpp)
 

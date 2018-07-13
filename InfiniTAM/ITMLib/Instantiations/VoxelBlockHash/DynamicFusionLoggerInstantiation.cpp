@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 5/22/18.
+//  Created by Gregory Kramida on 7/13/18.
 //  Copyright (c) 2018-2025 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -14,11 +14,7 @@
 //  limitations under the License.
 //  ================================================================
 
-#include "../ITMLibDefines.h"
-//#include "../SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA.tcu"
+#include "../../ITMLibDefines.h"
+#include "../../Utils/FileIO/ITMDynamicFusionLogger.tpp"
 
-namespace ITMLib{
-
-//template class ITMSceneMotionTracker_CUDA<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>;
-
-}
+template class ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>;

@@ -1,5 +1,4 @@
 // InfiniTAM: Surffuse. Copyright (c) Torr Vision Group and the authors of InfiniTAM, 2016.
-
 #include "ITMSurfelSceneReconstructionEngine_CUDA.h"
 
 #ifdef _MSC_VER
@@ -25,146 +24,148 @@
 
 #define DEBUGGING 0
 
-namespace ITMLib
-{
+using namespace ITMLib;
+
+namespace {
 
 //#################### CUDA KERNELS ####################
 
-template <typename TSurfel>
-__global__ void ck_add_new_surfel(int pixelCount, Matrix4f T, int timestamp, const unsigned short *newPointsMask, const unsigned int *newPointsPrefixSum,
-                                  const Vector4f *vertexMap, const Vector3f *normalMap, const float *radiusMap, const Vector4u *colourMap,
+template<typename TSurfel>
+__global__ void ck_add_new_surfel(int pixelCount, Matrix4f T, int timestamp, const unsigned short* newPointsMask,
+                                  const unsigned int* newPointsPrefixSum,
+                                  const Vector4f* vertexMap, const Vector3f* normalMap, const float* radiusMap,
+                                  const Vector4u* colourMap,
                                   int depthMapWidth, int depthMapHeight, int colourMapWidth, int colourMapHeight,
-                                  Matrix4f depthToRGB, Vector4f projParamsRGB, bool useGaussianSampleConfidence, float gaussianConfidenceSigma,
-                                  float maxSurfelRadius, TSurfel *newSurfels)
-{
-  int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
-    add_new_surfel(
-      locId, T, timestamp, newPointsMask, newPointsPrefixSum, vertexMap, normalMap, radiusMap, colourMap,
-      depthMapWidth, depthMapHeight, colourMapWidth, colourMapHeight,
-      depthToRGB, projParamsRGB, useGaussianSampleConfidence, gaussianConfidenceSigma,
-      maxSurfelRadius, newSurfels
-    );
-  }
+                                  Matrix4f depthToRGB, Vector4f projParamsRGB, bool useGaussianSampleConfidence,
+                                  float gaussianConfidenceSigma,
+                                  float maxSurfelRadius, TSurfel* newSurfels) {
+	int locId = threadIdx.x + blockDim.x * blockIdx.x;
+	if (locId < pixelCount) {
+		add_new_surfel(
+				locId, T, timestamp, newPointsMask, newPointsPrefixSum, vertexMap, normalMap, radiusMap, colourMap,
+				depthMapWidth, depthMapHeight, colourMapWidth, colourMapHeight,
+				depthToRGB, projParamsRGB, useGaussianSampleConfidence, gaussianConfidenceSigma,
+				maxSurfelRadius, newSurfels
+		);
+	}
 }
 
-__global__ void ck_calculate_normal(int pixelCount, const Vector4f *vertexMap, int width, int height, Vector3f *normalMap)
-{
-  int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
-    calculate_normal(locId, vertexMap, width, height, normalMap);
-  }
+__global__ void
+ck_calculate_normal(int pixelCount, const Vector4f* vertexMap, int width, int height, Vector3f* normalMap) {
+	int locId = threadIdx.x + blockDim.x * blockIdx.x;
+	if (locId < pixelCount) {
+		calculate_normal(locId, vertexMap, width, height, normalMap);
+	}
 }
 
-__global__ void ck_calculate_radius(int pixelCount, const float *depthMap, const Vector3f *normalMap, ITMIntrinsics intrinsics, float *radiusMap)
-{
-  int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
-    calculate_radius(locId, depthMap, normalMap, intrinsics, radiusMap);
-  }
+__global__ void
+ck_calculate_radius(int pixelCount, const float* depthMap, const Vector3f* normalMap, ITMIntrinsics intrinsics,
+                    float* radiusMap) {
+	int locId = threadIdx.x + blockDim.x * blockIdx.x;
+	if (locId < pixelCount) {
+		calculate_radius(locId, depthMap, normalMap, intrinsics, radiusMap);
+	}
 }
 
-__global__ void ck_calculate_vertex_position(int pixelCount, int width, ITMIntrinsics intrinsics, const float *depthMap, Vector4f *vertexMap)
-{
-  int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
-    calculate_vertex_position(locId, width, intrinsics, depthMap, vertexMap);
-  }
+__global__ void ck_calculate_vertex_position(int pixelCount, int width, ITMIntrinsics intrinsics, const float* depthMap,
+                                             Vector4f* vertexMap) {
+	int locId = threadIdx.x + blockDim.x * blockIdx.x;
+	if (locId < pixelCount) {
+		calculate_vertex_position(locId, width, intrinsics, depthMap, vertexMap);
+	}
 }
 
-__global__ void ck_clear_merge_target(int pixelCount, unsigned int *mergeTargetMap)
-{
-  int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
-    clear_merge_target(locId, mergeTargetMap);
-  }
+__global__ void ck_clear_merge_target(int pixelCount, unsigned int* mergeTargetMap) {
+	int locId = threadIdx.x + blockDim.x * blockIdx.x;
+	if (locId < pixelCount) {
+		clear_merge_target(locId, mergeTargetMap);
+	}
 }
 
-__global__ void ck_clear_removal_mask_entry(int surfelCount, unsigned int *surfelRemovalMask)
-{
-  int surfelId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(surfelId < surfelCount)
-  {
-    clear_removal_mask_entry(surfelId, surfelRemovalMask);
-  }
+__global__ void ck_clear_removal_mask_entry(int surfelCount, unsigned int* surfelRemovalMask) {
+	int surfelId = threadIdx.x + blockDim.x * blockIdx.x;
+	if (surfelId < surfelCount) {
+		clear_removal_mask_entry(surfelId, surfelRemovalMask);
+	}
 }
 
-template <typename TSurfel>
-__global__ void ck_find_corresponding_surfel(int pixelCount, Matrix4f invT, const float *depthMap, int depthMapWidth, const Vector3f *normalMap, const unsigned int *indexMap,
-                                             int supersamplingFactor, const TSurfel *surfels, unsigned int *correspondenceMap, unsigned short *newPointsMask)
-{
-  int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
-    find_corresponding_surfel(locId, invT, depthMap, depthMapWidth, normalMap, indexMap, supersamplingFactor, surfels, correspondenceMap, newPointsMask);
-  }
+template<typename TSurfel>
+__global__ void ck_find_corresponding_surfel(int pixelCount, Matrix4f invT, const float* depthMap, int depthMapWidth,
+                                             const Vector3f* normalMap, const unsigned int* indexMap,
+                                             int supersamplingFactor, const TSurfel* surfels,
+                                             unsigned int* correspondenceMap, unsigned short* newPointsMask) {
+	int locId = threadIdx.x + blockDim.x * blockIdx.x;
+	if (locId < pixelCount) {
+		find_corresponding_surfel(locId, invT, depthMap, depthMapWidth, normalMap, indexMap, supersamplingFactor,
+		                          surfels, correspondenceMap, newPointsMask);
+	}
 }
 
-template <typename TSurfel>
-__global__ void ck_find_mergeable_surfel(int pixelCount, const unsigned int *indexImage, int indexImageWidth, int indexImageHeight, const unsigned int *correspondenceMap,
-                                         const TSurfel *surfels, float stableSurfelConfidence, float maxMergeDist, float maxMergeAngle, float minRadiusOverlapFactor,
-                                         unsigned int *mergeTargetMap)
-{
-  int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
-    find_mergeable_surfel(locId, indexImage, indexImageWidth, indexImageHeight, correspondenceMap, surfels, stableSurfelConfidence, maxMergeDist, maxMergeAngle, minRadiusOverlapFactor, mergeTargetMap);
-  }
+template<typename TSurfel>
+__global__ void
+ck_find_mergeable_surfel(int pixelCount, const unsigned int* indexImage, int indexImageWidth, int indexImageHeight,
+                         const unsigned int* correspondenceMap,
+                         const TSurfel* surfels, float stableSurfelConfidence, float maxMergeDist, float maxMergeAngle,
+                         float minRadiusOverlapFactor,
+                         unsigned int* mergeTargetMap) {
+	int locId = threadIdx.x + blockDim.x * blockIdx.x;
+	if (locId < pixelCount) {
+		find_mergeable_surfel(locId, indexImage, indexImageWidth, indexImageHeight, correspondenceMap, surfels,
+		                      stableSurfelConfidence, maxMergeDist, maxMergeAngle, minRadiusOverlapFactor,
+		                      mergeTargetMap);
+	}
 }
 
-template <typename TSurfel>
-__global__ void ck_fuse_matched_point(int pixelCount, const unsigned int *correspondenceMap, Matrix4f T, int timestamp,
-                                      const Vector4f *vertexMap, const Vector3f *normalMap, const float *radiusMap, const Vector4u *colourMap,
+template<typename TSurfel>
+__global__ void ck_fuse_matched_point(int pixelCount, const unsigned int* correspondenceMap, Matrix4f T, int timestamp,
+                                      const Vector4f* vertexMap, const Vector3f* normalMap, const float* radiusMap,
+                                      const Vector4u* colourMap,
                                       int depthMapWidth, int depthMapHeight, int colourMapWidth, int colourMapHeight,
                                       Matrix4f depthToRGB, Vector4f projParamsRGB, float deltaRadius,
-                                      bool useGaussianSampleConfidence, float gaussianConfidenceSigma, float maxSurfelRadius,
-                                      TSurfel *surfels)
-{
-  int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
-    fuse_matched_point(
-      locId, correspondenceMap, T, timestamp, vertexMap, normalMap, radiusMap, colourMap, depthMapWidth, depthMapHeight, colourMapWidth, colourMapHeight,
-      depthToRGB, projParamsRGB, deltaRadius, useGaussianSampleConfidence, gaussianConfidenceSigma, maxSurfelRadius, surfels
-    );
-  }
+                                      bool useGaussianSampleConfidence, float gaussianConfidenceSigma,
+                                      float maxSurfelRadius,
+                                      TSurfel* surfels) {
+	int locId = threadIdx.x + blockDim.x * blockIdx.x;
+	if (locId < pixelCount) {
+		fuse_matched_point(
+				locId, correspondenceMap, T, timestamp, vertexMap, normalMap, radiusMap, colourMap, depthMapWidth,
+				depthMapHeight, colourMapWidth, colourMapHeight,
+				depthToRGB, projParamsRGB, deltaRadius, useGaussianSampleConfidence, gaussianConfidenceSigma,
+				maxSurfelRadius, surfels
+		);
+	}
 }
 
-template <typename TSurfel>
-__global__ void ck_mark_for_removal_if_unstable(int surfelCount, const TSurfel *surfels, int timestamp, float stableSurfelConfidence,
-                                                int unstableSurfelPeriod, unsigned int *surfelRemovalMask)
-{
-  int surfelId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(surfelId < surfelCount)
-  {
-    mark_for_removal_if_unstable(surfelId, surfels, timestamp, stableSurfelConfidence, unstableSurfelPeriod, surfelRemovalMask);
-  }
+template<typename TSurfel>
+__global__ void
+ck_mark_for_removal_if_unstable(int surfelCount, const TSurfel* surfels, int timestamp, float stableSurfelConfidence,
+                                int unstableSurfelPeriod, unsigned int* surfelRemovalMask) {
+	int surfelId = threadIdx.x + blockDim.x * blockIdx.x;
+	if (surfelId < surfelCount) {
+		mark_for_removal_if_unstable(surfelId, surfels, timestamp, stableSurfelConfidence, unstableSurfelPeriod,
+		                             surfelRemovalMask);
+	}
 }
 
-template <typename TSurfel>
-__global__ void ck_perform_surfel_merge(int pixelCount, unsigned int *mergeTargetMap, TSurfel *surfels, unsigned int *surfelRemovalMask, const unsigned int *indexImage,
-                                        float maxSurfelRadius)
-{
-  int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
-    perform_surfel_merge(locId, mergeTargetMap, surfels, surfelRemovalMask, indexImage, maxSurfelRadius);
-  }
+template<typename TSurfel>
+__global__ void
+ck_perform_surfel_merge(int pixelCount, unsigned int* mergeTargetMap, TSurfel* surfels, unsigned int* surfelRemovalMask,
+                        const unsigned int* indexImage,
+                        float maxSurfelRadius) {
+	int locId = threadIdx.x + blockDim.x * blockIdx.x;
+	if (locId < pixelCount) {
+		perform_surfel_merge(locId, mergeTargetMap, surfels, surfelRemovalMask, indexImage, maxSurfelRadius);
+	}
 }
 
-__global__ void ck_prevent_merge_chain(int pixelCount, unsigned int *mergeTargetMap)
-{
-  int locId = threadIdx.x + blockDim.x * blockIdx.x;
-  if(locId < pixelCount)
-  {
-    prevent_merge_chain(locId, mergeTargetMap);
-  }
+__global__ void ck_prevent_merge_chain(int pixelCount, unsigned int* mergeTargetMap) {
+	int locId = threadIdx.x + blockDim.x * blockIdx.x;
+	if (locId < pixelCount) {
+		prevent_merge_chain(locId, mergeTargetMap);
+	}
 }
+
+}// namespace
 
 //#################### CONSTRUCTORS ####################
 
@@ -448,6 +449,4 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::RemoveMarkedSurfels(ITMSu
   thrust::device_ptr<TSurfel> surfelsBegin(surfels);
   thrust::sort_by_key(surfelRemovalMaskBegin, surfelRemovalMaskEnd, surfelsBegin);
   scene->DeallocateRemovedSurfels(thrust::reduce(surfelRemovalMaskBegin, surfelRemovalMaskEnd));
-}
-
 }

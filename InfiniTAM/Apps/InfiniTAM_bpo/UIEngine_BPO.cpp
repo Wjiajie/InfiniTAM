@@ -51,8 +51,6 @@ namespace bench = ITMLib::Bench;
 UIEngine_BPO* UIEngine_BPO::instance;
 
 
-
-
 /**
  * \brief Initialize the UIEngine using the specified settings
  * \param argc arguments to the main function
@@ -191,11 +189,13 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 
 	if (loadBeforeProcessing) {
 		auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>*>(mainEngine);
-		ITMDynamicFusionLogger::Instance().SetOutputDirectory(this->GenerateCurrentFrameOutputDirectory());
+		ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().SetOutputDirectory(
+				this->GenerateCurrentFrameOutputDirectory());
 		mainEngine->LoadFromFile();
 		SkipFrames(1);
 	}
-	ITMDynamicFusionLogger::Instance().SetShutdownRequestedFlagLocation(&this->shutdownRequested);
+	ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().SetShutdownRequestedFlagLocation(
+			&this->shutdownRequested);
 	printf("initialised.\n");
 }
 
@@ -218,7 +218,7 @@ void UIEngine_BPO::SkipFrames(int numberOfFramesToSkip) {
 
 
 void UIEngine_BPO::ProcessFrame() {
-	if (ITMDynamicFusionLogger::Instance().IsRecording3DSceneAndWarpProgression()) {
+	if (ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().IsRecording3DSceneAndWarpProgression()) {
 		std::cout << yellow << "***" << bright_cyan << "PROCESSING FRAME " << GetCurrentFrameIndex()
 		          << " (WITH RECORDING 3D SCENES ON)" << yellow << "***" << reset << std::endl;
 	} else {
@@ -234,7 +234,8 @@ void UIEngine_BPO::ProcessFrame() {
 		else imuSource->getMeasurement(inputIMUMeasurement);
 	}
 
-	ITMDynamicFusionLogger::Instance().SetOutputDirectory(this->GenerateCurrentFrameOutputDirectory());
+	ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().SetOutputDirectory(
+			this->GenerateCurrentFrameOutputDirectory());
 	RecordDepthAndRGBInputToImages();
 	RecordDepthAndRGBInputToVideo();
 
@@ -302,7 +303,8 @@ bool UIEngine_BPO::BeginStepByStepModeForFrame() {
 		else imuSource->getMeasurement(inputIMUMeasurement);
 	}
 
-	ITMDynamicFusionLogger::Instance().SetOutputDirectory(this->GenerateCurrentFrameOutputDirectory());
+	ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::Instance().SetOutputDirectory(
+			this->GenerateCurrentFrameOutputDirectory());
 	RecordDepthAndRGBInputToImages();
 	RecordDepthAndRGBInputToVideo();
 
@@ -402,10 +404,12 @@ void UIEngine_BPO::RecordDepthAndRGBInputToImages() {
 
 void UIEngine_BPO::PrintProcessingFrameHeader() const {
 	std::cout << bright_cyan << "PROCESSING FRAME " << GetCurrentFrameIndex() + 1;
-	if (ITMDynamicFusionLogger::Instance().IsRecording3DSceneAndWarpProgression()) {
+	if (ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::
+	        Instance().IsRecording3DSceneAndWarpProgression()) {
 		std::cout << " [3D SCENE AND WARP UPDATE RECORDING: ON]";
 	}
-	if (ITMDynamicFusionLogger::Instance().IsRecordingScene2DSlicesWithUpdates()) {
+	if (ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>::
+	        Instance().IsRecordingScene2DSlicesWithUpdates()) {
 		std::cout << " [2D SCENE SLICE & WARP UPDATE RECORDING: ON]";
 	}
 	std::cout << reset << std::endl;

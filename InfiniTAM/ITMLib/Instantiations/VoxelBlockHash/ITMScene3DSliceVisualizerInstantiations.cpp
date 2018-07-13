@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 6/19/18.
+//  Created by Gregory Kramida on 6/20/18.
 //  Copyright (c) 2018-2025 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -13,7 +13,10 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "../Engines/Reconstruction/CPU/ITMDynamicHashManagementEngine_CPU.tpp"
-#include "../ITMLibDefines.h"
 
-template class ITMDynamicHashManagementEngine_CPU<ITMVoxelCanonical,ITMVoxelLive>;
+#include "../../ITMLibDefines.h"
+#include "../../Utils/Visualization/ITMSceneSliceVisualizer3D.tpp"
+#include "../../Utils/Visualization/ITMSceneSliceVisualizer3DInteractorStyle.tpp"
+
+template class ITMSceneSliceVisualizer3D<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>;
+template class ITMSceneSliceVisualizer3DInteractorStyle<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>;

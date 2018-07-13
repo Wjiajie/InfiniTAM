@@ -55,7 +55,7 @@ private:
 
 			std::cout << std::endl;
 			printVoxelResult = true;
-			if (ITMDynamicFusionLogger::Instance().IsRecordingScene2DSlicesWithUpdates()) {
+			if (ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().IsRecordingScene2DSlicesWithUpdates()) {
 				recordVoxelResult = true; //TODO: legacy, revise -Greg
 			}
 		}
@@ -357,7 +357,7 @@ public:
 						 localKillingEnergy, localTikhonovEnergy,
 						 liveSdfJacobian, liveSdfJacobian, liveSdfHessian, framewiseWarpJacobian,
 						 framewiseWarpHessian[0], framewiseWarpHessian[1], framewiseWarpHessian[2], neighbors, true};
-				ITMDynamicFusionLogger::Instance().LogHighlight(hash, locId, info);
+				ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().LogHighlight(hash, locId, info);
 			}
 		}
 		// endregion ===================================================================================================
@@ -374,7 +374,7 @@ public:
 		                      totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
 
 		//save all energies to file
-		ITMDynamicFusionLogger::Instance().RecordAndPlotEnergies(
+		ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().RecordAndPlotEnergies(
 				totalDataEnergy, totalLevelSetEnergy, totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
 
 
