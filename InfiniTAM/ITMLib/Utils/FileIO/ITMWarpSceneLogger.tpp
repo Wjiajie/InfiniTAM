@@ -211,13 +211,12 @@ ITMWarpSceneLogger<TVoxel, TIndex>::ITMWarpSceneLogger(const Vector6i& bounds, b
 		highlights("Hash ID", "Local voxel ix", "Frame", ""),
 		sliceIdentifier(GenerateSliceStringIdentifier(bounds)) {
 
-	ITMLibSettings* settings = new ITMLibSettings;
+	ITMLibSettings& settings = ITMLibSettings::Instance();
 	MemoryDeviceType memoryType =
-			settings->deviceType == ITMLibSettings::DEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
-	this->scene = new ITMScene<TVoxel, TIndex>(&settings->sceneParams,
-	                                           settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+			settings.deviceType == ITMLibSettings::DEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
+	this->scene = new ITMScene<TVoxel, TIndex>(&settings.sceneParams,
+	                                           settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                           memoryType);
-	delete settings;
 
 	SetPath(fullScenePath);
 }

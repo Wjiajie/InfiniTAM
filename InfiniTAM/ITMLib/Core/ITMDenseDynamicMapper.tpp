@@ -71,22 +71,22 @@ inline static void PrintOperationStatus(const char* status) {
 // region ===================================== CONSTRUCTORS / DESTRUCTORS =============================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMapper(const ITMLibSettings* settings) :
+ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMapper() :
 		sceneReconstructor(
 				ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex>
-						(settings->deviceType)),
+						(ITMLibSettings::Instance().deviceType)),
 		sceneMotionTracker(
-				ITMSceneMotionTrackerFactory::MakeSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>(settings)),
-		swappingEngine(settings->swappingMode != ITMLibSettings::SWAPPINGMODE_DISABLED
-		               ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxelCanonical, TIndex>(settings->deviceType)
+				ITMSceneMotionTrackerFactory::MakeSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>()),
+		swappingEngine(ITMLibSettings::Instance().swappingMode != ITMLibSettings::SWAPPINGMODE_DISABLED
+		               ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxelCanonical, TIndex>(ITMLibSettings::Instance().deviceType)
 		               : nullptr),
-		swappingMode(settings->swappingMode),
-		parameters{settings->sceneTrackingMaxOptimizationIterationCount,
-		           settings->sceneTrackingOptimizationVectorUpdateThresholdMeters,
-		           settings->sceneTrackingOptimizationVectorUpdateThresholdMeters / settings->sceneParams.voxelSize},
-		analysisFlags{settings->restrictZtrackingForDebugging, settings->simpleSceneExperimentModeEnabled,
-		              settings->FocusCoordinatesAreSpecified()},
-		focusCoordinates(settings->GetFocusCoordinates()) {}
+		swappingMode(ITMLibSettings::Instance().swappingMode),
+		parameters{ITMLibSettings::Instance().sceneTrackingMaxOptimizationIterationCount,
+		           ITMLibSettings::Instance().sceneTrackingOptimizationVectorUpdateThresholdMeters,
+		           ITMLibSettings::Instance().sceneTrackingOptimizationVectorUpdateThresholdMeters / ITMLibSettings::Instance().sceneParams.voxelSize},
+		analysisFlags{ITMLibSettings::Instance().restrictZtrackingForDebugging, ITMLibSettings::Instance().simpleSceneExperimentModeEnabled,
+		              ITMLibSettings::Instance().FocusCoordinatesAreSpecified()},
+		focusCoordinates(ITMLibSettings::Instance().GetFocusCoordinates()) {}
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::~ITMDenseDynamicMapper() {

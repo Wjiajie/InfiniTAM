@@ -69,17 +69,21 @@ try
 	switch (internalSettings->libMode)
 	{
 	case ITMLibSettings::LIBMODE_BASIC:
-		mainEngine = new ITMBasicEngine<ITMVoxel, ITMVoxelIndex>(internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize());
+		mainEngine = new ITMBasicEngine<ITMVoxel, ITMVoxelIndex>(imageSource->getCalib(),
+		                                                         imageSource->getRGBImageSize(),
+		                                                         imageSource->getDepthImageSize());
 		break;
 	case ITMLibSettings::LIBMODE_BASIC_SURFELS:
-		mainEngine = new ITMBasicSurfelEngine<ITMSurfelT>(internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize());
+		mainEngine = new ITMBasicSurfelEngine<ITMSurfelT>(imageSource->getCalib(), imageSource->getRGBImageSize(),
+		                                                  imageSource->getDepthImageSize());
 		break;
 	case ITMLibSettings::LIBMODE_LOOPCLOSURE:
-		mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelIndex>(internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize());
+		mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelIndex>(imageSource->getCalib(),
+		                                                         imageSource->getRGBImageSize(),
+		                                                         imageSource->getDepthImageSize());
 		break;
 	case ITMLibSettings::LIBMODE_DYNAMIC:
-		mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(internalSettings,
-		                                                                                  imageSource->getCalib(),
+		mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(imageSource->getCalib(),
 		                                                                                  imageSource->getRGBImageSize(),
 		                                                                                  imageSource->getDepthImageSize());
 		break;

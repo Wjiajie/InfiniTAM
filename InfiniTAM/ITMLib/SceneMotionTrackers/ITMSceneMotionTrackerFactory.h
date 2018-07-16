@@ -28,12 +28,12 @@ public:
 */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 static ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>*
-MakeSceneMotionTracker(const ITMLibSettings* settings) {
+MakeSceneMotionTracker() {
 	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>* sceneRecoEngine = nullptr;
-
-	switch (settings->deviceType) {
+	auto& settings = ITMLibSettings::Instance();
+	switch (settings.deviceType) {
 		case ITMLibSettings::DEVICE_CPU:
-			sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>(settings);
+			sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>();
 			break;
 		case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA

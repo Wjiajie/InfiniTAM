@@ -41,7 +41,6 @@ namespace ITMLib
 	class ITMVoxelMapGraphManager : public ITMMapGraphManager
 	{
 	private:
-		const ITMLibSettings *settings;
 		const ITMVisualisationEngine<TVoxel, TIndex> *visualisationEngine;
 		const ITMDenseMapper<TVoxel, TIndex> *denseMapper;
 		Vector2i trackedImageSize;
@@ -49,7 +48,8 @@ namespace ITMLib
 		std::vector<ITMLocalMap<TVoxel, TIndex>*> allData;
 
 	public:
-		ITMVoxelMapGraphManager(const ITMLibSettings *settings, const ITMVisualisationEngine<TVoxel, TIndex> *visualisationEngine, const ITMDenseMapper<TVoxel, TIndex> *denseMapper, const Vector2i & trackedImageSize);
+		ITMVoxelMapGraphManager(const ITMVisualisationEngine<TVoxel, TIndex>* visualisationEngine,
+				                        const ITMDenseMapper<TVoxel, TIndex>* denseMapper, const Vector2i& trackedImageSize);
 		~ITMVoxelMapGraphManager(void);
 
 		int createNewLocalMap(void);

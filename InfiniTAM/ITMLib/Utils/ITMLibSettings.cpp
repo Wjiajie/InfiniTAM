@@ -4,6 +4,11 @@
 using namespace ITMLib;
 
 
+
+void ITMLibSettings::SetFromVariableMap(const po::variables_map& vm) {
+
+}
+
 ITMLibSettings::ITMLibSettings()
 :   //mu(m), maxW, voxel size(m), clipping min, clipping max, stopIntegratingAtMaxW
 	sceneParams(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG
@@ -145,4 +150,6 @@ void ITMLibSettings::SetFocusCoordinates(const Vector3i& coordiantes) {
 	analysisSettings.focusCoordinatesSpecified = true;
 	analysisSettings.focusCoordinates = coordiantes;
 }
+
+
 

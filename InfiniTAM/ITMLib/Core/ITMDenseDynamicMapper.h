@@ -32,7 +32,7 @@ public:
 		Ommitting a separate image size for the depth images
 		will assume same resolution as for the RGB images.
 	*/
-	explicit ITMDenseDynamicMapper(const ITMLibSettings* settings);
+	explicit ITMDenseDynamicMapper();
 	~ITMDenseDynamicMapper();
 	// endregion
 	// region ========================================= INTERNAL DATASTRUCTURES ========================================

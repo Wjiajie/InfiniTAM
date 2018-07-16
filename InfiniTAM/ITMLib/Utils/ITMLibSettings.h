@@ -8,11 +8,28 @@
 #include "../../ORUtils/MemoryDeviceType.h"
 #include "ITMMath.h"
 
+//boost
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
+
 namespace ITMLib
 {
 	class ITMLibSettings
 	{
 	public:
+		static void SetFromVariableMap(const po::variables_map& vm);
+
+		static ITMLibSettings& Instance(){
+			static ITMLibSettings instance;
+			return instance;
+		}
+
+		~ITMLibSettings() = default;
+
+		// Suppress the default copy constructor and assignment operator
+		ITMLibSettings(const ITMLibSettings &) = delete;
+		ITMLibSettings& operator=(const ITMLibSettings &) = delete;
+
 		// TODO: this class should be made into a singleton, whose instance gets created using a static factory method
 		// accepting program arguments from boost::program_options. One of the arguments may be a .json config file, which should
 		// then be read in using boost::property_tree. The program_options parser should also be generated within this
@@ -75,17 +92,9 @@ namespace ITMLib
 		ITMSceneParams sceneParams;
 		ITMSurfelSceneParams surfelSceneParams;
 
-		ITMLibSettings();
-		virtual ~ITMLibSettings() = default;
-
-		// Suppress the default copy constructor and assignment operator
-		ITMLibSettings(const ITMLibSettings&) = delete;
-		ITMLibSettings& operator=(const ITMLibSettings&) = delete;
-
 		MemoryDeviceType GetMemoryType() const;
 
 		/// Dynamic Fusion parameters
-
 		struct AnalysisSettings{
 			std::string outputPath;
 			bool focusCoordinatesSpecified = false;
@@ -121,6 +130,7 @@ namespace ITMLib
 		float sceneTrackingWeightLevelSetTerm;
 		float sceneTrackingLevelSetTermEpsilon;
 
-
+	private:
+		ITMLibSettings();
 	};
 }

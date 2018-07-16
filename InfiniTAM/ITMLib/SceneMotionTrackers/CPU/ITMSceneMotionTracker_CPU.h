@@ -26,7 +26,9 @@ namespace ITMLib {
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMSceneMotionTracker_CPU:
-		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>{};
+		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>{
+	ITMSceneMotionTracker_CPU() {}
+};
 
 
 //region ======================================== VOXEL BLOCK HASH =====================================================
@@ -35,7 +37,7 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 class ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash> :
 		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash> {
 public:
-	explicit ITMSceneMotionTracker_CPU(const ITMLibSettings* settings);
+	explicit ITMSceneMotionTracker_CPU();
 	virtual ~ITMSceneMotionTracker_CPU() = default;
 
 	void ClearOutFramewiseWarp(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) override;
@@ -68,7 +70,7 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 class ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray> :
 		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray> {
 public:
-	explicit ITMSceneMotionTracker_CPU(const ITMLibSettings* settings);
+	explicit ITMSceneMotionTracker_CPU();
 	virtual ~ITMSceneMotionTracker_CPU() = default;
 
 	void ClearOutFramewiseWarp(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) override;

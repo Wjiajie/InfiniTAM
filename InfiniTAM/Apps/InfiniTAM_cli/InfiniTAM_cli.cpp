@@ -77,9 +77,9 @@ try
 		}
 	}
 
-	ITMMainEngine *mainEngine = new ITMBasicEngine<ITMVoxel,ITMVoxelIndex>(
-		internalSettings, imageSource->getCalib(), imageSource->getRGBImageSize(), imageSource->getDepthImageSize()
-	);
+	ITMMainEngine *mainEngine = new ITMBasicEngine<ITMVoxel, ITMVoxelIndex>(imageSource->getCalib(),
+	                                                                        imageSource->getRGBImageSize(),
+	                                                                        imageSource->getDepthImageSize());
 
 	CLIEngine::Instance()->Initialise(imageSource, imuSource, mainEngine, internalSettings->deviceType);
 	CLIEngine::Instance()->Run();

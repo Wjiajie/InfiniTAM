@@ -142,10 +142,10 @@ public:
 	/**
 	 * \brief Makes a tracker of the type specified in the settings.
 	 */
-	ITMCameraTracker* Make(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, const ITMLibSettings* settings,
-	                 const ITMLowLevelEngine* lowLevelEngine,
-	                 ITMIMUCalibrator* imuCalibrator, const ITMSceneParams* sceneParams) const {
-		return Make(settings->deviceType, settings->trackerConfig, imgSize_rgb, imgSize_d, lowLevelEngine,
+	ITMCameraTracker* Make(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, const ITMLowLevelEngine* lowLevelEngine,
+	                       ITMIMUCalibrator* imuCalibrator, const ITMSceneParams* sceneParams) const {
+		auto& settings = ITMLibSettings::Instance();
+		return Make(settings.deviceType, settings.trackerConfig, imgSize_rgb, imgSize_d, lowLevelEngine,
 		            imuCalibrator, sceneParams);
 	}
 

@@ -533,7 +533,9 @@ public:
 			updateStartPoint = iterator->second;
 		}
 		//TODO: remove magic value -- use -learningRate from the settings -Greg
-		Vector3f updateVector = -0.1 * voxel.gradient1;
+		//_DEBUG
+		//Vector3f updateVector = -0.1 * voxel.smoothing_term_gradient;
+		Vector3f updateVector = -0.1 * voxel.gradient0;
 		points->InsertNextPoint(updateStartPoint.values);
 		vectors->InsertNextTuple(updateVector.values);
 		Vector3d endpoint = updateStartPoint + updateVector.toDouble();

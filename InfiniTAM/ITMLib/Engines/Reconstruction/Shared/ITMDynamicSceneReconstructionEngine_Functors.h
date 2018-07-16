@@ -35,9 +35,11 @@ struct FusionFunctor{
 			maximumWeight(maximumWeight),
 			liveSourceFieldIndex(liveSourceFieldIndex){}
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel){
-		if (canonicalVoxel.flags != VOXEL_NONTRUNCATED &&
-		    liveVoxel.flag_values[liveSourceFieldIndex] != VOXEL_NONTRUNCATED)
-			return;
+		//_DEBUG
+		//DO NOT UNCOMMENT! WILL DESTROY SMOOTHING RESULT!
+//		if (canonicalVoxel.flags != VOXEL_NONTRUNCATED &&
+//		    liveVoxel.flag_values[liveSourceFieldIndex] != VOXEL_NONTRUNCATED)
+//			return;
 		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[liveSourceFieldIndex]);
 
 		int oldWDepth = canonicalVoxel.w_depth;
@@ -93,10 +95,6 @@ struct TrilinearInterpolationFunctor {
 	void operator()(TVoxelSdf& destinationVoxel,TVoxelWarpSource& warpSourceVoxel,
 	                Vector3i warpAndDestinationVoxelPosition) {
 		int vmIndex;
-
-		if(warpSourceVoxel.flags != VOXEL_UNKNOWN){
-			int i = 42;
-		}
 
 		Vector3f warpedPosition =
 				TLookupPositionFunctor::GetWarpedPosition(warpSourceVoxel, warpAndDestinationVoxelPosition);

@@ -7,8 +7,8 @@
 namespace ITMLib
 {
 	template<class TVoxel, class TIndex>
-	ITMVoxelMapGraphManager<TVoxel, TIndex>::ITMVoxelMapGraphManager(const ITMLibSettings *_settings, const ITMVisualisationEngine<TVoxel, TIndex> *_visualisationEngine, const ITMDenseMapper<TVoxel, TIndex> *_denseMapper, const Vector2i & _trackedImageSize)
-		: settings(_settings), visualisationEngine(_visualisationEngine), denseMapper(_denseMapper), trackedImageSize(_trackedImageSize)
+	ITMVoxelMapGraphManager<TVoxel, TIndex>::ITMVoxelMapGraphManager(const ITMVisualisationEngine<TVoxel, TIndex> *_visualisationEngine, const ITMDenseMapper<TVoxel, TIndex> *_denseMapper, const Vector2i & _trackedImageSize)
+		: visualisationEngine(_visualisationEngine), denseMapper(_denseMapper), trackedImageSize(_trackedImageSize)
 	{
 	}
 
@@ -26,7 +26,7 @@ namespace ITMLib
 	int ITMVoxelMapGraphManager<TVoxel, TIndex>::createNewLocalMap(void)
 	{
 		int newIdx = (int)allData.size();
-		allData.push_back(new ITMLocalMap<TVoxel, TIndex>(settings, visualisationEngine, trackedImageSize));
+		allData.push_back(new ITMLocalMap<TVoxel, TIndex>(visualisationEngine, trackedImageSize));
 
 		denseMapper->ResetScene(allData[newIdx]->scene);
 		return newIdx;

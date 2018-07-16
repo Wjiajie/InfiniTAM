@@ -32,7 +32,7 @@ namespace ITMLib
 		    Ommitting a separate image size for the depth images
 		    will assume same resolution as for the RGB images.
 		*/
-		explicit ITMDenseMapper(const ITMLibSettings *settings);
+		explicit ITMDenseMapper();
 		~ITMDenseMapper();
 	};
 }

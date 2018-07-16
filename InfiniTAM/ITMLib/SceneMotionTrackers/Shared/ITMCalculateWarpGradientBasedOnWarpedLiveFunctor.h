@@ -34,7 +34,50 @@
 namespace ITMLib {
 
 // region ========================== CALCULATE WARP GRADIENT ===========================================================
+template<typename TVoxelCanonical, bool hasDebugInformation>
+struct SetGradientFunctor;
 
+template<typename TVoxelCanonical>
+struct SetGradientFunctor<TVoxelCanonical, false> {
+	static void SetGradient(TVoxelCanonical& voxel,
+	                        const float& weightDataTerm,
+	                        const float& weightLevelSetTerm,
+	                        const float& weightSmoothingTerm,
+	                        const Vector3f& localDataEnergyGradient,
+	                        const Vector3f& localLevelSetEnergyGradient,
+	                        const Vector3f& localSmoothingEnergyGradient,
+	                        const bool& restrictZtrackingForDebugging
+	) {
+		Vector3f localEnergyGradient =
+				weightDataTerm * localDataEnergyGradient +
+				weightLevelSetTerm * localLevelSetEnergyGradient +
+				weightSmoothingTerm * localSmoothingEnergyGradient;
+		if (restrictZtrackingForDebugging) localEnergyGradient.z = 0.0f;
+		voxel.gradient0 = localEnergyGradient;
+	}
+};
+
+template<typename TVoxelCanonical>
+struct SetGradientFunctor<TVoxelCanonical, true> {
+	static void SetGradient(TVoxelCanonical& voxel,
+	                        const float& weightDataTerm,
+	                        const float& weightLevelSetTerm,
+	                        const float& weightSmoothingTerm,
+	                        const Vector3f& localDataEnergyGradient,
+	                        const Vector3f& localLevelSetEnergyGradient,
+	                        const Vector3f& localSmoothingEnergyGradient,
+	                        const bool& restrictZtrackingForDebugging
+	) {
+		voxel.data_term_gradient = weightDataTerm * localDataEnergyGradient;
+		voxel.smoothing_term_gradient = weightLevelSetTerm * localSmoothingEnergyGradient;
+		Vector3f localEnergyGradient =
+				voxel.data_term_gradient +
+				weightLevelSetTerm * localLevelSetEnergyGradient +
+				voxel.smoothing_term_gradient;
+		if (restrictZtrackingForDebugging) localEnergyGradient.z = 0.0f;
+		voxel.gradient0 = localEnergyGradient;
+	}
+};
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -275,12 +318,12 @@ public:
 
 				localSmoothnessEnergy = localTikhonovEnergy + localKillingEnergy;
 			} else {
-				if(switches.usePreviousUpdateVectorsForSmoothing){
+				if (switches.usePreviousUpdateVectorsForSmoothing) {
 					ComputeWarpLaplacianAndJacobian(framewiseWarpLaplacian, framewiseWarpJacobian,
 					                                canonicalVoxel.warp_update, neighborWarpUpdates);
-				}else{
+				} else {
 					ComputeWarpLaplacianAndJacobian(framewiseWarpLaplacian, framewiseWarpJacobian, framewiseWarp,
-				                                    neighborFramewiseWarps);
+					                                neighborFramewiseWarps);
 				}
 				if (printVoxelResult) {
 					_DEBUG_PrintTikhonovTermStuff(neighborFramewiseWarps, framewiseWarpLaplacian);
@@ -294,24 +337,15 @@ public:
 			}
 		}
 		// endregion
-
 		// region =============================== COMPUTE ENERGY GRADIENT ==================================
-
-		Vector3f localEnergyGradient =
-				parameters.weightDataTerm * localDataEnergyGradient +
-				parameters.weightLevelSetTerm * localLevelSetEnergyGradient +
-				parameters.weightSmoothnessTerm * localSmoothnessEnergyGradient;
-
-		if (restrictZtrackingForDebugging) localEnergyGradient.z = 0.0f;
-
-		canonicalVoxel.gradient0 = localEnergyGradient;
-		//_DEBUG
-		canonicalVoxel.gradient1 = parameters.weightSmoothnessTerm * localSmoothnessEnergyGradient;
-
+		SetGradientFunctor<TVoxelCanonical, TVoxelCanonical::hasDebugInformation>::SetGradient(
+				canonicalVoxel,
+				parameters.weightDataTerm, parameters.weightLevelSetTerm, parameters.weightSmoothnessTerm,
+				localDataEnergyGradient, localLevelSetEnergyGradient, localSmoothnessEnergyGradient,
+				restrictZtrackingForDebugging);
 		// endregion
-
 		// region =============================== AGGREGATE VOXEL STATISTICS ===============================
-		float energyGradeintLength = ORUtils::length(localEnergyGradient);//meters
+		float energyGradeintLength = ORUtils::length(canonicalVoxel.gradient0);//meters
 		float warpLength = ORUtils::length(canonicalVoxel.warp);
 		double localEnergy = localDataEnergy + parameters.weightLevelSetTerm * localLevelSetEnergy
 		                     + parameters.weightSmoothnessTerm * localSmoothnessEnergy;
@@ -336,7 +370,7 @@ public:
 			std::cout << cyan << " Level set gradient: " << localLevelSetEnergyGradient * -1;
 			std::cout << yellow << " Smoothness gradient: " << localSmoothnessEnergyGradient * -1;
 			std::cout << std::endl;
-			std::cout << green << "Energy gradient: " << localEnergyGradient * -1 << reset;
+			std::cout << green << "Energy gradient: " << canonicalVoxel.gradient0 * -1 << reset;
 			std::cout << " Energy gradient length: " << energyGradeintLength << red
 			          << " Gradients shown are negated." << reset << std::endl << std::endl;
 
@@ -351,7 +385,7 @@ public:
 
 				ITMHighlightIterationInfo info =
 						{hash, locId, position, framewiseWarp, canonicalSdf, liveSdf,
-						 localEnergyGradient, localDataEnergyGradient, localLevelSetEnergyGradient,
+						 canonicalVoxel.gradient0, localDataEnergyGradient, localLevelSetEnergyGradient,
 						 localSmoothnessEnergyGradient,
 						 localEnergy, localDataEnergy, localLevelSetEnergy, localSmoothnessEnergy,
 						 localKillingEnergy, localTikhonovEnergy,

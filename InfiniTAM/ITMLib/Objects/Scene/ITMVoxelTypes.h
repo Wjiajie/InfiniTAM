@@ -19,6 +19,7 @@ struct ITMVoxel_f_rgb
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
 	static const CONSTPTR(bool) hasWarpInformation = false;
+	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -52,6 +53,7 @@ struct ITMVoxel_s_rgb
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
 	static const CONSTPTR(bool) hasWarpInformation = false;
+	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	short sdf;
@@ -84,6 +86,7 @@ struct ITMVoxel_s
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
 	static const CONSTPTR(bool) hasWarpInformation = false;
+	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	short sdf;
@@ -110,6 +113,7 @@ struct ITMVoxel_f
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
 	static const CONSTPTR(bool) hasWarpInformation = false;
+	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -136,6 +140,7 @@ struct ITMVoxel_f_conf
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
 	static const CONSTPTR(bool) hasWarpInformation = false;
+	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -164,6 +169,7 @@ struct ITMVoxel_s_rgb_conf
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
+	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	short sdf;
@@ -197,6 +203,7 @@ struct ITMVoxel_f_rgb_conf
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
+	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -232,6 +239,7 @@ struct ITMVoxel_f_dynamic_canonical
 	static const CONSTPTR(bool) hasSemanticInformation = true;
 	static const CONSTPTR(bool) hasWeightInformation = true;
 	static const CONSTPTR(bool) hasWarpInformation = false;
+	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	float sdf;
@@ -273,6 +281,51 @@ struct ITMVoxel_f_dynamic_canonical
 	}
 };
 
+struct ITMVoxel_f_dynamic_canonical_debug
+{
+	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return 1.0f; }
+	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
+	_CPU_AND_GPU_CODE_ static float floatToValue(float x) { return x; }
+
+	static const CONSTPTR(bool) hasColorInformation = false;
+	static const CONSTPTR(bool) hasConfidenceInformation = false;
+	static const CONSTPTR(bool) hasSemanticInformation = true;
+	static const CONSTPTR(bool) hasWeightInformation = true;
+	static const CONSTPTR(bool) hasWarpInformation = false;
+	static const CONSTPTR(bool) hasDebugInformation = true;
+
+	/** Value of the truncated signed distance transformation. */
+	float sdf;
+	/** Number of fused observations that make up @p sdf. */
+	uchar w_depth;
+	/** refer to ITMVoxelFlags for flag bit array values */
+	unsigned char flags;
+	/** vector translating the current point to a different location **/
+	Vector3f warp;
+	Vector3f framewise_warp;
+	/** vectors translating the current point to a different location **/
+	union{
+		Vector3f gradient0;
+		Vector3f warp_update;
+	};
+	Vector3f gradient1;
+	Vector3f data_term_gradient;
+	Vector3f smoothing_term_gradient;
+
+
+	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic_canonical_debug() :
+			flags(ITMLib::VOXEL_UNKNOWN),
+			sdf(SDF_initialValue()),
+			w_depth(0),
+			warp(Vector3f(0.f)),
+			gradient0(Vector3f(0.0f)),
+			gradient1(Vector3f(0.0f)),
+			framewise_warp(Vector3f(0.0f)),
+			data_term_gradient(Vector3f(0.0f)),
+			smoothing_term_gradient(Vector3f(0.0f))
+	{}
+};
+
 struct ITMVoxel_f_dynamic_live
 {
 	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return 1.0f; }
@@ -284,6 +337,7 @@ struct ITMVoxel_f_dynamic_live
 	static const CONSTPTR(bool) hasSemanticInformation = true;
 	static const CONSTPTR(bool) hasWeightInformation = false;
 	static const CONSTPTR(bool) hasWarpInformation = false;
+	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
 	union {

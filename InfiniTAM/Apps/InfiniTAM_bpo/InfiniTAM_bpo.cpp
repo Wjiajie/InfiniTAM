@@ -332,8 +332,8 @@ int main(int argc, char** argv) {
 		ITMDynamicFusionLogger_Interface& logger = GetLogger(chosenIndexingMethod);
 
 // region ================================ SET MAIN ENGINE SETTINGS WITH CLI ARGUMENTS =================================
-		auto* settings = new ITMLibSettings();
-		settings->analysisSettings.outputPath = vm["output"].as<std::string>().c_str();
+		auto& settings = ITMLibSettings::Instance();
+		settings.analysisSettings.outputPath = vm["output"].as<std::string>().c_str();
 		bool haveFocusCoordinate = !vm["focus_coordinates"].empty();
 		Vector3i focusCoordiantes(0);
 		if (haveFocusCoordinate) {
@@ -344,88 +344,88 @@ int main(int argc, char** argv) {
 				return EXIT_FAILURE;
 			}
 			memcpy(focusCoordiantes.values, focusCoordsVec.data(), sizeof(int) * 3);
-			settings->SetFocusCoordinates(focusCoordiantes);
+			settings.SetFocusCoordinates(focusCoordiantes);
 			logger.SetFocusCoordinates(focusCoordiantes);
 		}
 
 		if (killingModeEnabled) {
-			settings->enableLevelSetTerm = true;
-			settings->enableKillingTerm = true;
-			settings->enableGradientSmoothing = false;
+			settings.enableLevelSetTerm = true;
+			settings.enableKillingTerm = true;
+			settings.enableGradientSmoothing = false;
 
 
-			settings->sceneTrackingRigidityEnforcementFactor = 0.1;
-			settings->sceneTrackingWeightSmoothingTerm = 0.5;
-			settings->sceneTrackingWeightLevelSetTerm = 0.2;
+			settings.sceneTrackingRigidityEnforcementFactor = 0.1;
+			settings.sceneTrackingWeightSmoothingTerm = 0.5;
+			settings.sceneTrackingWeightLevelSetTerm = 0.2;
 		}
 
 		//_DEBUG
-		settings->restrictZtrackingForDebugging = restrictZMotion;
-		settings->simpleSceneExperimentModeEnabled = simpleScene;
+		settings.restrictZtrackingForDebugging = restrictZMotion;
+		settings.simpleSceneExperimentModeEnabled = simpleScene;
 
-		settings->enableDataTerm = !disableDataTerm;
-		settings->enableLevelSetTerm = enableLevelSetTerm;
-		settings->enableSmoothingTerm = !disableSmoothingTerm;
-		settings->enableKillingTerm = enableKillingTerm;
-		settings->enableGradientSmoothing = !disableGradientSmoothing;
-		settings->usePreviousUpdateVectorsForSmoothing = usePreviousUpdateVectorsForSmoothing;
+		settings.enableDataTerm = !disableDataTerm;
+		settings.enableLevelSetTerm = enableLevelSetTerm;
+		settings.enableSmoothingTerm = !disableSmoothingTerm;
+		settings.enableKillingTerm = enableKillingTerm;
+		settings.enableGradientSmoothing = !disableGradientSmoothing;
+		settings.usePreviousUpdateVectorsForSmoothing = usePreviousUpdateVectorsForSmoothing;
 
 		if (!vm["max_iterations"].empty()) {
-			settings->sceneTrackingMaxOptimizationIterationCount = vm["max_iterations"].as<unsigned int>();
+			settings.sceneTrackingMaxOptimizationIterationCount = vm["max_iterations"].as<unsigned int>();
 		}
 		if (!vm["vector_update_threshold"].empty()) {
-			settings->sceneTrackingOptimizationVectorUpdateThresholdMeters = vm["vector_update_threshold"].as<float>();
+			settings.sceneTrackingOptimizationVectorUpdateThresholdMeters = vm["vector_update_threshold"].as<float>();
 		}
 		if (!vm["learning_rate"].empty()) {
-			settings->sceneTrackingGradientDescentLearningRate = vm["learning_rate"].as<float>();
+			settings.sceneTrackingGradientDescentLearningRate = vm["learning_rate"].as<float>();
 		}
 		if (!vm["rigidity_enforcement_factor"].empty()) {
-			settings->sceneTrackingRigidityEnforcementFactor = vm["rigidity_enforcement_factor"].as<float>();
+			settings.sceneTrackingRigidityEnforcementFactor = vm["rigidity_enforcement_factor"].as<float>();
 		}
 		if (!vm["weight_data_term"].empty()) {
-			settings->sceneTrackingWeightDataTerm = vm["weight_data_term"].as<float>();
+			settings.sceneTrackingWeightDataTerm = vm["weight_data_term"].as<float>();
 		}
 		if (!vm["weight_smoothing_term"].empty()) {
-			settings->sceneTrackingWeightSmoothingTerm = vm["weight_smoothing_term"].as<float>();
+			settings.sceneTrackingWeightSmoothingTerm = vm["weight_smoothing_term"].as<float>();
 		}
 		if (!vm["weight_level_set_term"].empty()) {
-			settings->sceneTrackingWeightLevelSetTerm = vm["weight_level_set_term"].as<float>();
+			settings.sceneTrackingWeightLevelSetTerm = vm["weight_level_set_term"].as<float>();
 		}
 
 		ITMMainEngine* mainEngine = nullptr;
 
 
-		switch (settings->libMode) {
+		switch (settings.libMode) {
 			case ITMLibSettings::LIBMODE_BASIC:
 				switch (chosenIndexingMethod) {
 					case HASH:
-						mainEngine = new ITMBasicEngine<ITMVoxel, ITMVoxelBlockHash>(
-								settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
-								imageSource->getDepthImageSize());
+						mainEngine = new ITMBasicEngine<ITMVoxel, ITMVoxelBlockHash>(imageSource->getCalib(),
+						                                                             imageSource->getRGBImageSize(),
+						                                                             imageSource->getDepthImageSize());
 						break;
 					case ARRAY:
-						mainEngine = new ITMBasicEngine<ITMVoxel, ITMPlainVoxelArray>(
-								settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
-								imageSource->getDepthImageSize());
+						mainEngine = new ITMBasicEngine<ITMVoxel, ITMPlainVoxelArray>(imageSource->getCalib(),
+						                                                              imageSource->getRGBImageSize(),
+						                                                              imageSource->getDepthImageSize());
 						break;
 				}
 				break;
 			case ITMLibSettings::LIBMODE_BASIC_SURFELS:
-				mainEngine = new ITMBasicSurfelEngine<ITMSurfelT>(
-						settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
-						imageSource->getDepthImageSize());
+				mainEngine = new ITMBasicSurfelEngine<ITMSurfelT>(imageSource->getCalib(),
+				                                                  imageSource->getRGBImageSize(),
+				                                                  imageSource->getDepthImageSize());
 				break;
 			case ITMLibSettings::LIBMODE_LOOPCLOSURE:
 				switch (chosenIndexingMethod) {
 					case HASH:
-						mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelBlockHash>(
-								settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
-								imageSource->getDepthImageSize());
+						mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelBlockHash>(imageSource->getCalib(),
+						                                                             imageSource->getRGBImageSize(),
+						                                                             imageSource->getDepthImageSize());
 						break;
 					case ARRAY:
-						mainEngine = new ITMMultiEngine<ITMVoxel, ITMPlainVoxelArray>(
-								settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
-								imageSource->getDepthImageSize());
+						mainEngine = new ITMMultiEngine<ITMVoxel, ITMPlainVoxelArray>(imageSource->getCalib(),
+						                                                              imageSource->getRGBImageSize(),
+						                                                              imageSource->getDepthImageSize());
 						break;
 				}
 				break;
@@ -433,12 +433,12 @@ int main(int argc, char** argv) {
 				switch (chosenIndexingMethod) {
 					case HASH:
 						mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>(
-								settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
+								imageSource->getCalib(), imageSource->getRGBImageSize(),
 								imageSource->getDepthImageSize());
 						break;
 					case ARRAY:
 						mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>(
-								settings, imageSource->getCalib(), imageSource->getRGBImageSize(),
+								imageSource->getCalib(), imageSource->getRGBImageSize(),
 								imageSource->getDepthImageSize());
 						break;
 				}
@@ -478,9 +478,9 @@ int main(int argc, char** argv) {
 
 		//TODO (see top of file)
 		XInitThreads();
-
+		
 		UIEngine_BPO::Instance().Initialise(argc, argv, imageSource, imuSource, mainEngine,
-		                                    settings->analysisSettings.outputPath.c_str(), settings->deviceType,
+		                                    settings.analysisSettings.outputPath.c_str(), settings.deviceType,
 		                                    processNFramesOnLaunch, skipFirstNFrames, recordReconstructionToVideo,
 		                                    startInStepByStep, saveAfterInitialProcessing, loadBeforeProcessing,
 		                                    &logger, chosenIndexingMethod);
@@ -495,7 +495,6 @@ int main(int argc, char** argv) {
 // region ========================================= CLEANUP ============================================================
 
 		delete mainEngine;
-		delete settings;
 		delete imageSource;
 		delete imuSource;
 

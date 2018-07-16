@@ -110,10 +110,9 @@ namespace ITMLib
 			}
 		}
 
-		ITMTrackingController(ITMCameraTracker *tracker, const ITMLibSettings *settings)
+		ITMTrackingController(ITMCameraTracker* tracker)
 		{
 			this->tracker = tracker;
-			this->settings = settings;
 		}
 
 		const Vector2i& GetTrackedImageSize(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d) const

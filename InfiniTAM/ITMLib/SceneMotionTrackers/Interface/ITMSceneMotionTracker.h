@@ -68,23 +68,23 @@ public:
 //============================= CONSTRUCTORS / DESTRUCTORS =============================================================
 //TODO: write documentation block -Greg (Github: Algomorph)
 
-	explicit ITMSceneMotionTracker(const ITMLibSettings* settings) :
+	explicit ITMSceneMotionTracker() :
 			parameters{
-					settings->sceneTrackingGradientDescentLearningRate,
-					settings->sceneTrackingRigidityEnforcementFactor,
-					settings->sceneTrackingWeightDataTerm,
-					settings->sceneTrackingWeightSmoothingTerm,
-					settings->sceneTrackingWeightLevelSetTerm,
-					settings->sceneTrackingLevelSetTermEpsilon,
-					settings->sceneParams.voxelSize / settings->sceneParams.mu
+					ITMLibSettings::Instance().sceneTrackingGradientDescentLearningRate,
+					ITMLibSettings::Instance().sceneTrackingRigidityEnforcementFactor,
+					ITMLibSettings::Instance().sceneTrackingWeightDataTerm,
+					ITMLibSettings::Instance().sceneTrackingWeightSmoothingTerm,
+					ITMLibSettings::Instance().sceneTrackingWeightLevelSetTerm,
+					ITMLibSettings::Instance().sceneTrackingLevelSetTermEpsilon,
+					ITMLibSettings::Instance().sceneParams.voxelSize / ITMLibSettings::Instance().sceneParams.mu
 			},
 			switches{
-					settings->enableDataTerm,
-					settings->enableLevelSetTerm,
-					settings->enableSmoothingTerm,
-					settings->enableKillingTerm,
-					settings->enableGradientSmoothing,
-					settings->usePreviousUpdateVectorsForSmoothing
+					ITMLibSettings::Instance().enableDataTerm,
+					ITMLibSettings::Instance().enableLevelSetTerm,
+					ITMLibSettings::Instance().enableSmoothingTerm,
+					ITMLibSettings::Instance().enableKillingTerm,
+					ITMLibSettings::Instance().enableGradientSmoothing,
+					ITMLibSettings::Instance().usePreviousUpdateVectorsForSmoothing
 			} {
 		PrintSettings();
 	}
