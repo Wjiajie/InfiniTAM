@@ -30,11 +30,12 @@ namespace ITMLib {
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 inline
-bool VoxelIsConsideredForTracking(TVoxelCanonical& voxelCanonical, TVoxelLive voxelLive, int sourceFieldIndex){
+bool VoxelIsConsideredForTracking(TVoxelCanonical& voxelCanonical, TVoxelLive voxelLive, int sourceFieldIndex) {
 	return voxelCanonical.flags == VOXEL_NONTRUNCATED || voxelLive.flag_values[sourceFieldIndex] == VOXEL_NONTRUNCATED;
 };
 
 //_DEBUG
+// this seems to give more noise in the results (visually)
 //template<typename TVoxelCanonical, typename TVoxelLive>
 //inline
 //bool VoxelIsConsideredForTracking(TVoxelCanonical& voxelCanonical, TVoxelLive voxelLive, int sourceFieldIndex){
@@ -91,15 +92,15 @@ public:
 
 	virtual ~ITMSceneMotionTracker() = default;
 //============================= MEMBER FUNCTIONS =======================================================================
-	virtual void CalculateWarpGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
-	                                   bool hasFocusCoordinates, const Vector3i& focusCoordinates, int sourceFieldIndex,
-	                                   bool restrictZTrackingForDebugging) = 0;
+	virtual void
+	CalculateWarpGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
+	                      bool hasFocusCoordinates, const Vector3i& focusCoordinates, int sourceFieldIndex,
+	                      bool restrictZTrackingForDebugging) = 0;
 	virtual void SmoothWarpGradient(
 			ITMScene<TVoxelLive, TIndex>* liveScene,
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, int sourceFieldIndex) = 0;
-	virtual float UpdateWarps(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-			ITMScene<TVoxelLive, TIndex>* liveScene, int sourceSdfIndex) = 0;
+	virtual float UpdateWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	                          ITMScene<TVoxelLive, TIndex>* liveScene, int sourceSdfIndex) = 0;
 	virtual void ClearOutFramewiseWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
 	virtual void AddFramewiseWarpToWarp(
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, bool clearFramewiseWarp) = 0;

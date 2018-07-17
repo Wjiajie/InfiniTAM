@@ -78,13 +78,16 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMappe
 		sceneMotionTracker(
 				ITMSceneMotionTrackerFactory::MakeSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>()),
 		swappingEngine(ITMLibSettings::Instance().swappingMode != ITMLibSettings::SWAPPINGMODE_DISABLED
-		               ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxelCanonical, TIndex>(ITMLibSettings::Instance().deviceType)
+		               ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxelCanonical, TIndex>(
+						ITMLibSettings::Instance().deviceType)
 		               : nullptr),
 		swappingMode(ITMLibSettings::Instance().swappingMode),
 		parameters{ITMLibSettings::Instance().sceneTrackingMaxOptimizationIterationCount,
 		           ITMLibSettings::Instance().sceneTrackingOptimizationVectorUpdateThresholdMeters,
-		           ITMLibSettings::Instance().sceneTrackingOptimizationVectorUpdateThresholdMeters / ITMLibSettings::Instance().sceneParams.voxelSize},
-		analysisFlags{ITMLibSettings::Instance().restrictZtrackingForDebugging, ITMLibSettings::Instance().simpleSceneExperimentModeEnabled,
+		           ITMLibSettings::Instance().sceneTrackingOptimizationVectorUpdateThresholdMeters /
+		           ITMLibSettings::Instance().sceneParams.voxelSize},
+		analysisFlags{ITMLibSettings::Instance().restrictZtrackingForDebugging,
+		              ITMLibSettings::Instance().simpleSceneExperimentModeEnabled,
 		              ITMLibSettings::Instance().FocusCoordinatesAreSpecified()},
 		focusCoordinates(ITMLibSettings::Instance().GetFocusCoordinates()) {}
 
@@ -131,13 +134,14 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessInitialF
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProcessing(const ITMView* view, const ITMTrackingState* trackingState,
-                                                                                      ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
-                                                                                      ITMRenderState* renderState) {
+void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProcessing(
+		const ITMView* view, const ITMTrackingState* trackingState, ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+		ITMScene<TVoxelLive, TIndex>* liveScene, ITMRenderState* renderState) {
 
 	if (analysisFlags.simpleSceneExperimentModeEnabled) {
 		GenerateTestScene01(canonicalScene);
-		ITMTwoSceneManipulationEngine_CPU<TVoxelCanonical,TVoxelLive,TIndex>::CopySceneSDFandFlagsWithOffset_CPU(liveScene, canonicalScene, Vector3i(-5, 0, 0));
+		ITMTwoSceneManipulationEngine_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CopySceneSDFandFlagsWithOffset_CPU(
+				liveScene, canonicalScene, Vector3i(-5, 0, 0));
 	} else {
 		PrintOperationStatus("Generating raw live frame from view...");
 		bench::StartTimer("GenerateRawLiveFrame");
@@ -148,7 +152,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProce
 	PrintOperationStatus(
 			"Initializing live frame SDF by mapping from raw live SDF to warped SDF based on previous-frame warp...");
 	bench::StartTimer("TrackMotion_35_WarpLiveScene");
-	sceneReconstructor->WarpScene(canonicalScene, liveScene, 0, 1, true, focusCoordinates);
+	sceneReconstructor->WarpScene(canonicalScene, liveScene, 0, 1, analysisFlags.hasFocusCoordinates, focusCoordinates);
 	bench::StopTimer("TrackMotion_35_WarpLiveScene");
 
 	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().InitializeFrameRecording();
@@ -299,9 +303,11 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessSwapping
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
-ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrameInStepByStepMode(const ITMView* view, const ITMTrackingState* trackingState,
+ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrameInStepByStepMode(const ITMView* view,
+                                                                                                 const ITMTrackingState* trackingState,
                                                                                                  ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-                                                                                                 ITMScene<TVoxelLive, TIndex>* liveScene, ITMRenderState* renderState) {
+                                                                                                 ITMScene<TVoxelLive, TIndex>* liveScene,
+                                                                                                 ITMRenderState* renderState) {
 	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Already in step-by-step tracking mode, cannot restart.");
 	}
