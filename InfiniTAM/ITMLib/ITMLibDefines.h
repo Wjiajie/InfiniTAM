@@ -17,6 +17,8 @@ typedef ITMLib::ITMSurfel_rgb ITMSurfelT;
 */
 typedef ITMVoxel_s ITMVoxel;
 typedef ITMVoxel_f_dynamic_canonical ITMVoxelCanonical;
+//Use for visualization of individual scene tracking vector components
+//typedef ITMVoxel_f_dynamic_canonical_debug ITMVoxelCanonical;
 typedef ITMVoxel_f_dynamic_live ITMVoxelLive;
 
 

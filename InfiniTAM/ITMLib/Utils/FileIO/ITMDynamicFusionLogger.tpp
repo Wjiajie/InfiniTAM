@@ -297,11 +297,15 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeFram
 			InitializeWarp2DSliceRecording(canonicalScene, liveScene);
 		}
 
-		if (recordingScene3DSlicesWithUpdates && !scene3DSliceVisualizer) {
-			scene3DSliceVisualizer.reset(new ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>
+		if (recordingScene3DSlicesWithUpdates) {
+			if(!scene3DSliceVisualizer){
+				scene3DSliceVisualizer.reset(new ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>
 					                             (canonicalScene, liveScene, focusCoordinates,
 					                              planeFor2Dand3DSlices, _3dSliceInPlaneRadius,
 					                              _3dSliceOutOfPlaneRadius));
+			}else{
+				scene3DSliceVisualizer->TriggerRebuildSlices();
+			}
 		}
 
 	}
@@ -387,15 +391,6 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveWarpSlices
 		if (recordingScene3DSlicesWithUpdates) {
 			scene3DSliceVisualizer->TriggerDrawWarpUpdates();
 			scene3DSliceVisualizer->TriggerUpdateLiveState();
-		}
-	}
-}
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::UpdateSmoothingVectors() {
-	if (hasFocusCoordinates) {
-		if (recordingScene3DSlicesWithUpdates) {
-			scene3DSliceVisualizer->TriggerDrawSmoothingVectors();
 		}
 	}
 }

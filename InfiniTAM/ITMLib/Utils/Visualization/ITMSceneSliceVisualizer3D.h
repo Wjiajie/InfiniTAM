@@ -73,9 +73,9 @@ public:
 	// ====================== MEMBER FUNCTIONS ===========================
 	VoxelScaleMode GetCurrentScaleMode();
 	void TriggerDrawWarpUpdates();
-	void TriggerDrawSmoothingVectors();
 	void TriggerUpdateLiveState();
 	void TriggerBuildFusedCanonical();
+	void TriggerRebuildSlices();
 	virtual void ToggleScaleMode();
 
 	void SetVisibilityMode(VisibilityMode mode);
@@ -140,12 +140,12 @@ private:
 	void BuildVoxelAndHashBlockPolyDataFromScene(
 			ITMScene <TVoxel, TIndex>* scene, SceneSlice& sceneSlice);
 	void BuildInitialSlices();
+	void RebuildSlices();
 	void InitializeWarps();
 	void AddSliceActorsToRenderers();
 	void SetUpGeometrySources();
 	void Run();
 	void DrawWarpUpdates();
-	void DrawSmoothnessVectors();
 	void AdvanceLiveStateVizualization();
 	void RetreatLiveStateVizualization();
 
@@ -175,10 +175,15 @@ private:
 	vtkSmartPointer<vtkPolyDataMapper> updatesMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 	vtkSmartPointer<vtkActor> updatesActor = vtkSmartPointer<vtkActor>::New();
 
-	vtkSmartPointer<vtkPolyData> smoothingVectorData = vtkSmartPointer<vtkPolyData>::New();
+	vtkSmartPointer<vtkPolyData> smoothingTermVectorData = vtkSmartPointer<vtkPolyData>::New();
 	vtkSmartPointer<vtkPolyDataMapper> smoothingVectorMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	vtkSmartPointer<vtkActor> smoothingVectorActor = vtkSmartPointer<vtkActor>::New();
-	std::unordered_map<std::string, Vector3d> smoothingHedgehogEndpoints;
+	vtkSmartPointer<vtkActor> smoothingTermVectorActor = vtkSmartPointer<vtkActor>::New();
+
+	vtkSmartPointer<vtkPolyData> dataTermVectorData = vtkSmartPointer<vtkPolyData>::New();
+	vtkSmartPointer<vtkPolyDataMapper> dataTermVectorMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	vtkSmartPointer<vtkActor> dataTermVectorActor = vtkSmartPointer<vtkActor>::New();
+
+	std::unordered_map<std::string, std::pair<Vector3d,Vector3d>> componentHedgehogEndpoints;
 
 
 	// ** live updates **
@@ -207,9 +212,9 @@ private:
 	std::condition_variable conditionVariable;
 	bool initialized = false;
 	bool warpUpdatePerformed = false;
-	bool smoothingVectorsDrawn = false;
 	bool fusedCanonicalBuilt = false;
 	bool liveStateUpdated = false;
+	bool slicesRebuilt = false;
 	int liveSamplingFieldIndex = 0;
 	int visibleOptimizationStepIndex = 0;
 	std::thread* thread = nullptr;

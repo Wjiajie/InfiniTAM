@@ -139,7 +139,6 @@ public:
 
 
 	void SaveWarpSlices(int iteration);
-	void UpdateSmoothingVectors();
 	void SaveWarps();
 	void FinalizeFrameRecording();
 	void RecordAndPlotEnergies(double totalDataEnergy,

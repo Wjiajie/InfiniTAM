@@ -139,6 +139,33 @@ int main(int argc, char** argv) {
 				("start_in_step_by_step_mode", po::bool_switch(&startInStepByStep)->default_value(false),
 				 "Whether to start in step-by-step mode (dynamic fusion only).")
 
+
+
+				("fix_camera", po::bool_switch(&fixCamera)->default_value(false),
+				 "Whether or not to turn of the camera tracking (fix the virtual camera position)")
+
+
+
+				/* Ranges for frame skipping or automated processing on launch */
+				("process_N_frames, N", po::value<int>(), "Launch immediately and process the specified number of "
+				 "frames (potentially, with recording, if corresponding commands are issued), and then stop.")
+			    ("start_from_frame_ix, S", po::value<int>(), "Skip the first S frames / start at frame index S.\n")
+
+				/* Automated loading / saving on particular frame */
+				("save_after_initial_processing", po::bool_switch(&saveAfterInitialProcessing)->default_value(false),
+				 "Save scene after the frames specified with process_N_frames were processed.")
+				("load_before_processing", po::bool_switch(&loadBeforeProcessing)->default_value(false),
+				 "Start by loading scene from disk before any processing takes place.")
+
+
+
+				/* Debugging parameters for scene-tracking */
+				("restrict_z",po::bool_switch(&restrictZMotion)->default_value(false),
+				 "Used in dynamic fusion. Restrict scene motion updates in z direction (for debugging).")
+				("simple_scene",po::bool_switch(&simpleScene)->default_value(false),
+				 "Used in dynamic fusion. Simple scene experiment mode (for debugging).")
+
+				/* Visualization and logging for visual debugging of scene-tracking*/
 				("focus_coordinates,f", po::value<std::vector<int>>()->multitoken(), "The coordinates of the voxel"
 						" which to focus on for logging/debugging, as 3 integers separated by spaces, \"x y z\"."
 	                    " When specified:\n"
@@ -147,51 +174,6 @@ int main(int argc, char** argv) {
 					    "        it will, instead of recording the whole scene, record a small slice of voxels "
 		                "        around this voxel."
 				)
-
-				("fix_camera", po::bool_switch(&fixCamera)->default_value(false),
-				 "Whether or not to turn of the camera tracking (fix the virtual camera position)")
-
-			    /* Enable / disable dynamic fusion optimization terms / procedures */
-				("disable_data_term", po::bool_switch(&disableDataTerm)->default_value(false),
-				 "Whether or not to disable the data term if using the DynamicFusion algorithm")
-				("enable_level_set_term", po::bool_switch(&enableLevelSetTerm)->default_value(false),
-				 "Whether or not to disable the level set term if using the DynamicFusion algorithm")
-				("disable_smoothing_term", po::bool_switch(&disableSmoothingTerm)->default_value(false),
-				 "Whether or not to disable the smoothness term if using the DynamicFusion algorithm")
-				("enable_killing_term", po::bool_switch(&enableKillingTerm)->default_value(false),
-				 "Whether or not to enable the Killing term (isometric motion enforcement regularizer) if using the "
-	             "DynamicFusion algorithm")
-				("disable_gradient_smoothing", po::bool_switch(&disableGradientSmoothing)->default_value(false),
-				 "Whether or not to disable the Sobolev gradient smoothing if using the DynamicFusion algorithm\n")
-				("use_update_vectors_smoothing", po::bool_switch(&usePreviousUpdateVectorsForSmoothing)->default_value(false),
-				 "Whether to only use the previous update vectors, rather than the entire cumulative framewise warps, for smoothing\n")
-
-				/* Ranges for frame skipping or automated processing on launch */
-				("process_N_frames, N", po::value<int>(), "Launch immediately and process the specified number of "
-				 "frames (potentially, with recording, if corresponding commands are issued), and then stop.")
-			    ("start_from_frame_ix, S", po::value<int>(), "Skip the first S frames / start at frame index S.\n")
-				("save_after_initial_processing", po::bool_switch(&saveAfterInitialProcessing)->default_value(false),
-				 "Save scene after the frames specified with process_N_frames were processed.")
-				("load_before_processing", po::bool_switch(&loadBeforeProcessing)->default_value(false),
-				 "Start by loading scene from disk before any processing takes place.")
-
-				/* Parameters for scene tracking optimization (KillingFusion/SobolevFusion)*/
-				("max_iterations", po::value<unsigned int>(),
-				        "Maximum number of iterations in each frame of scene tracking optimization.")
-				("vector_update_threshold", po::value<float>(),
-					        "Unit: meters. Used in scene tracking optimization. Termination condition: optimization "
-			     "stops when warp vector update lengths don't exceed this distance threshold.")
-			    ("learning_rate", po::value<float>(),
-					        "Used in scene tracking optimization. Gradient descent step magnitude / learning rate.")
-				("rigidity_enforcement_factor", po::value<float>(),
-				 "Used in scene tracking optimization when the Killing regularization term is enabled."
-		         " Greater values penalize non-isometric scene deformations.")
-
-				("restrict_z",po::bool_switch(&restrictZMotion)->default_value(false),
-				 "Used in dynamic fusion. Restrict scene motion updates in z direction (for debugging).")
-				("simple_scene",po::bool_switch(&simpleScene)->default_value(false),
-				 "Used in dynamic fusion. Simple scene experiment mode (for debugging).")
-
 				("plot_energies",po::bool_switch(&plotEnergies)->default_value(false),
 				 "Used in dynamic fusion. Plot graphs of energy contributions from all terms used during scene "
 	             "tracking optimization.")
@@ -210,29 +192,60 @@ int main(int argc, char** argv) {
 				("3d_slice_thickness_margin",po::value<unsigned int>(&_3DSliceExtraThicknessMargin)->default_value(0),
 				 "(Dynamic fusion) extra margin to include, in voxels, from the 3D slice center along the axis "
 	             "perpendicular to the slice plane.")
-
 				("slice_plane",po::value<ITMLib::Plane>(&planeFor2Dand3DSlices)->default_value(PLANE_XY),
 				 "(Dynamic fusion) plane to use for recording of 2d slices.")
 				("record_3d_scene_and_warps",po::bool_switch(&record3DSceneAndWarps)->default_value(false),
 				 "Used in dynamic fusion. Record 3D scenes at each frame and complete warp progression at every iteration.")
 
+				/*================================================================================*/
+				/*=== Parameters for scene tracking optimization (KillingFusion/SobolevFusion) ===*/
+				/*================================================================================*/
 
+				/* convergence parameters & learning rate*/
+				("max_iterations", po::value<unsigned int>(),
+				        "Maximum number of iterations in each frame of scene tracking optimization.")
+				("vector_update_threshold", po::value<float>(),
+					        "Unit: meters. Used in scene tracking optimization. Termination condition: optimization "
+			     "stops when warp vector update lengths don't exceed this distance threshold.")
+			    ("learning_rate", po::value<float>(),
+					        "Used in scene tracking optimization. Gradient descent step magnitude / learning rate.")
 
+				/* term weights / factors */
 				("weight_data_term", po::value<float>()->default_value(1.0f),
-					 "Used in scene tracking optimization when the data term is enabled."
-				         " Greater values make the difference between canonical and live SDF grids induce greater warp updates.")
-				("weight_smoothing_term", po::value<float>()->default_value(0.1f),
+				 "Used in scene tracking optimization when the data term is enabled."
+				 " Greater values make the difference between canonical and live SDF grids induce greater warp updates.")
+				("weight_smoothing_term", po::value<float>()->default_value(0.2f),
 				 "Used in scene tracking optimization when the smoothness regularization term is enabled."
 			         " Greater values penalize non-smooth scene deformations.")
+				("rigidity_enforcement_factor", po::value<float>(),
+				 "Used in scene tracking optimization when the Killing regularization term is enabled."
+		         " Greater values penalize non-isometric scene deformations.")
 				("weight_level_set_term", po::value<float>()->default_value(0.2f),
-					 "Used in scene tracking optimization when the level set regularization term is enabled."
-				         " Greater values penalize deformations resulting in non-SDF-like voxel grid.")
+				 "Used in scene tracking optimization when the level set regularization term is enabled."
+				 " Greater values penalize deformations resulting in non-SDF-like voxel grid.")
 
+				/* Enable / disable dynamic fusion optimization terms / procedures */
+				("disable_data_term", po::bool_switch(&disableDataTerm)->default_value(false),
+				 "Whether or not to disable the data term if using the DynamicFusion algorithm")
+				("enable_level_set_term", po::bool_switch(&enableLevelSetTerm)->default_value(false),
+				 "Whether or not to disable the level set term if using the DynamicFusion algorithm")
+				("disable_smoothing_term", po::bool_switch(&disableSmoothingTerm)->default_value(false),
+				 "Whether or not to disable the smoothness term if using the DynamicFusion algorithm")
+				("enable_killing_term", po::bool_switch(&enableKillingTerm)->default_value(false),
+				 "Whether or not to enable the Killing term (isometric motion enforcement regularizer) if using the "
+	             "DynamicFusion algorithm")
+				("disable_gradient_smoothing", po::bool_switch(&disableGradientSmoothing)->default_value(false),
+				 "Whether or not to disable the Sobolev gradient smoothing if using the DynamicFusion algorithm\n")
+				("use_update_vectors_smoothing", po::bool_switch(&usePreviousUpdateVectorsForSmoothing)->default_value(false),
+				 "Whether to only use the previous update vectors, rather than the entire cumulative framewise warps,"
+	             " for smoothing term in Sobolev/Killing fusion\n")
+
+				/* modes (parameter presets)*/
 				("KillingFusion", po::bool_switch(&killingModeEnabled)->default_value(false),
-						 "Uses parameters from KillingFusion (2017) article. Individual parameters can still be overridden. Equivalent to: "
-	   "--disable_gradient_smoothing --enable_level_set_term --enable_killing_term --rigidity_enforcement_factor 0.1 --weight_smoothness_term 0.5 --weight_level_set 0.2")
-
-
+				 "Uses parameters from KillingFusion (2017) article by Slavcheva et al.. Individual parameters can"
+	             " still be overridden. Equivalent to: \n"
+	             "--disable_gradient_smoothing --enable_level_set_term --enable_killing_term "
+			     "--rigidity_enforcement_factor 0.1 --weight_smoothness_term 0.5 --weight_level_set 0.2")
 				;
 
 		//@formatter:on

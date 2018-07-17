@@ -245,7 +245,6 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 	                                          focusCoordinates, sourceSdfIndex,
 	                                          analysisFlags.restrictZtrackingForDebugging);
 
-	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().UpdateSmoothingVectors();
 
 	bench::StopTimer("TrackMotion_31_CalculateWarpUpdate");
 

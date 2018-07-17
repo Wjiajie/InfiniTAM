@@ -42,6 +42,7 @@
 #include "ITMSceneSliceVisualizer3DInteractorStyle.h"
 #include "../../Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h"
 #include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
+#include "../ITMLibSettings.h"
 
 
 
@@ -60,9 +61,9 @@ const char* ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::scal
 enum RequestedOperation {
 	NONE,
 	DRAW_WARP_UPDATES,
-	DRAW_SMOOTHING_VECTORS,
 	BUILD_FUSED_CANONICAL,
-	UPDATE_LIVE_STATE
+	UPDATE_LIVE_STATE,
+	REBUILD_SLICES,
 
 };
 
@@ -86,12 +87,15 @@ vtkTypeMacro(ThreadInteropCommand, vtkCommand);
 			case DRAW_WARP_UPDATES:
 				parent->DrawWarpUpdates();
 				break;
-			case DRAW_SMOOTHING_VECTORS:
-				parent->DrawSmoothnessVectors();
 			case BUILD_FUSED_CANONICAL:
 				parent->BuildFusedCanonicalFromCurrentScene();
+				break;
 			case UPDATE_LIVE_STATE:
 				parent->UpdateLiveState();
+				break;
+			case REBUILD_SLICES:
+				parent->RebuildSlices();
+				break;
 			default:
 				break;
 		}
@@ -326,6 +330,23 @@ void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::BuildInitia
 
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::RebuildSlices() {
+	std::unique_lock<std::mutex> lock(mutex);
+	BuildVoxelAndHashBlockPolyDataFromScene<TVoxelCanonical, RetrieveVoxelDataBasicStaticFunctior<TVoxelCanonical>>(
+			canonicalScene, canonicalSlice);
+	BuildVoxelAndHashBlockPolyDataFromScene<TVoxelLive, RetrieveVoxelDataFieldIndex1StaticFunctior<TVoxelLive>>(
+			liveScene, liveSlice);
+	canonicalSlice.voxelVizData->Modified();
+	liveSlice.voxelVizData->Modified();
+	window->Update();
+	slicesRebuilt=true;
+	lock.unlock();
+	conditionVariable.notify_all();
+
+}
+
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::AddSliceActorsToRenderers() {
 	window->AddActorToFirstLayer(this->canonicalSlice.voxelActor);
 	window->AddActorToFirstLayer(this->canonicalSlice.hashBlockActor);
@@ -431,83 +452,36 @@ void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::InitializeV
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::InitializeWarps() {
-	vtkSmartPointer<vtkPoints> updatePoints = vtkSmartPointer<vtkPoints>::New();
-	vtkSmartPointer<vtkFloatArray> updateVectors = vtkSmartPointer<vtkFloatArray>::New();
-	updateVectors->SetName("Warp update vectors");
-	updateVectors->SetNumberOfComponents(3);
-
-	this->updatesData->SetPoints(updatePoints);
-	this->updatesData->GetPointData()->SetVectors(updateVectors);
-
-	vtkSmartPointer<vtkHedgeHog> hedgehog = vtkSmartPointer<vtkHedgeHog>::New();
-	hedgehog->SetInputData(this->updatesData);
-	updatesMapper->SetInputConnection(hedgehog->GetOutputPort());
-
-	updatesActor->SetMapper(updatesMapper);
-	updatesActor->GetProperty()->SetColor(0, 0, 0);
 
 	this->window->AddLayer(Vector4d(1.0, 1.0, 1.0, 0.0));
-	this->window->AddActorToLayer(updatesActor, 1);
 
-	//TODO: DRY violation below
+	auto initializeWarpSet = [this](vtkSmartPointer<vtkPolyData> polyData, vtkSmartPointer<vtkMapper> mapper,
+	                                vtkSmartPointer<vtkActor> actor, const char* vectorArrayName, Vector3d color) {
+		vtkSmartPointer<vtkPoints> updatePoints = vtkSmartPointer<vtkPoints>::New();
+		vtkSmartPointer<vtkFloatArray> updateVectors = vtkSmartPointer<vtkFloatArray>::New();
+		updateVectors->SetName(vectorArrayName);
+		updateVectors->SetNumberOfComponents(3);
 
-	vtkSmartPointer<vtkPoints> smoothingVectorPoints = vtkSmartPointer<vtkPoints>::New();
-	vtkSmartPointer<vtkFloatArray> smoothingVectorVectors = vtkSmartPointer<vtkFloatArray>::New();
-	smoothingVectorVectors->SetName("Warp smoothingVector vectors");
-	smoothingVectorVectors->SetNumberOfComponents(3);
+		polyData->SetPoints(updatePoints);
+		polyData->GetPointData()->SetVectors(updateVectors);
 
-	this->smoothingVectorData->SetPoints(smoothingVectorPoints);
-	this->smoothingVectorData->GetPointData()->SetVectors(smoothingVectorVectors);
+		vtkSmartPointer<vtkHedgeHog> hedgehog = vtkSmartPointer<vtkHedgeHog>::New();
+		hedgehog->SetInputData(polyData);
+		mapper->SetInputConnection(hedgehog->GetOutputPort());
 
-	vtkSmartPointer<vtkHedgeHog> smoothingVectorHedgehog = vtkSmartPointer<vtkHedgeHog>::New();
-	smoothingVectorHedgehog->SetInputData(this->smoothingVectorData);
-	smoothingVectorMapper->SetInputConnection(smoothingVectorHedgehog->GetOutputPort());
+		actor->SetMapper(mapper);
+		actor->GetProperty()->SetColor(color.values);
+		this->window->AddActorToLayer(actor, 1);
+	};
 
-	smoothingVectorActor->SetMapper(smoothingVectorMapper);
-	smoothingVectorActor->GetProperty()->SetColor(0, .8, .2);
-
-	this->window->AddLayer(Vector4d(1.0, 1.0, 1.0, 0.0));
-	this->window->AddActorToLayer(smoothingVectorActor, 1);
+	initializeWarpSet(updatesData, updatesMapper, updatesActor, "Warp update vectors", Vector3d(0.0,0.0,0.0));
+	initializeWarpSet(dataTermVectorData, dataTermVectorMapper, dataTermVectorActor, "Warp data term vectors",
+	                  Vector3d(0.0,0.0,1.0));
+	initializeWarpSet(smoothingTermVectorData, smoothingVectorMapper, smoothingTermVectorActor,
+	                  "Warp smoothing term vectors", Vector3d(0.0,1.0,0.0));
 }
 
 //region ============================= VISUALIZE WARP UPDATES ==========================================================
-
-template<typename TVoxel>
-struct TransferWarpUpdatesToVtkStructuresFunctor {
-public:
-	TransferWarpUpdatesToVtkStructuresFunctor(vtkPoints* points, vtkFloatArray* vectors) :
-			points(points), vectors(vectors) {}
-
-	void operator()(const TVoxel& voxel, const Vector3i& position) {
-		Vector3f updateStartPoint = position.toFloat() + voxel.framewise_warp - voxel.warp_update;
-		Vector3f updateVector = voxel.warp_update;
-		points->InsertNextPoint(updateStartPoint.x, updateStartPoint.y, updateStartPoint.z);
-		vectors->InsertNextTuple(updateVector.values);
-	}
-
-private:
-	vtkPoints* points;
-	vtkFloatArray* vectors;
-};
-
-
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpUpdates() {
-	std::unique_lock<std::mutex> lock(mutex);
-	vtkPoints* updatePoints = this->updatesData->GetPoints();
-	vtkFloatArray* updateVectors = vtkFloatArray::SafeDownCast(this->updatesData->GetPointData()->GetVectors());
-	TransferWarpUpdatesToVtkStructuresFunctor<ITMVoxelCanonical> transferWarpUpdatesToVtkStructuresFunctor(
-			updatePoints, updateVectors);
-	VoxelPositionTraversalWithinBounds_CPU(this->canonicalScene, transferWarpUpdatesToVtkStructuresFunctor,
-	                                       this->bounds);
-
-	this->updatesData->Modified();
-	this->window->Update();
-	this->warpUpdatePerformed = true;
-	lock.unlock();
-	conditionVariable.notify_all();
-}
-
 static inline
 std::string stringifyVoxelCoordinate(const Vector3i& position) {
 	std::stringstream ss;
@@ -516,54 +490,136 @@ std::string stringifyVoxelCoordinate(const Vector3i& position) {
 }
 
 template<typename TVoxel>
-struct TransferSmoothingVectorsToVtkStructuresFunctor {
+struct TransferWarpUpdatesToVtkStructuresFunctor {
 public:
-	TransferSmoothingVectorsToVtkStructuresFunctor(vtkPoints* points, vtkFloatArray* vectors,
-	                                               std::unordered_map<std::string, Vector3d>* smoothingHedgehogEndpoints)
-			:
-			points(points), vectors(vectors), smoothingHedgehogEndpoints(smoothingHedgehogEndpoints) {}
+	TransferWarpUpdatesToVtkStructuresFunctor(vtkPoints* updatePoints, vtkFloatArray* updateVectors) :
+			updatePoints(updatePoints), updateVectors(updateVectors) {}
 
 	void operator()(const TVoxel& voxel, const Vector3i& position) {
-		Vector3d updateStartPoint;
-		std::string positionAsString = stringifyVoxelCoordinate(position);
-		auto iterator = smoothingHedgehogEndpoints->find(positionAsString);
-		if (iterator == smoothingHedgehogEndpoints->end()) {
-			updateStartPoint = position.toDouble();
-		} else {
-			updateStartPoint = iterator->second;
-		}
-		//TODO: remove magic value -- use -learningRate from the settings -Greg
-		//_DEBUG
-		//Vector3f updateVector = -0.1 * voxel.smoothing_term_gradient;
-		Vector3f updateVector = -0.1 * voxel.gradient0;
-		points->InsertNextPoint(updateStartPoint.values);
-		vectors->InsertNextTuple(updateVector.values);
-		Vector3d endpoint = updateStartPoint + updateVector.toDouble();
-		(*smoothingHedgehogEndpoints)[positionAsString] = endpoint;
+		Vector3f updateStartPoint = position.toFloat() + voxel.framewise_warp - voxel.warp_update;
+		Vector3f updateVector = voxel.warp_update;
+		updatePoints->InsertNextPoint(updateStartPoint.x, updateStartPoint.y, updateStartPoint.z);
+		updateVectors->InsertNextTuple(updateVector.values);
 	}
 
 private:
-	std::unordered_map<std::string, Vector3d>* smoothingHedgehogEndpoints;
-	vtkPoints* points;
-	vtkFloatArray* vectors;
+	vtkPoints* updatePoints;
+	vtkFloatArray* updateVectors;
 };
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::DrawSmoothnessVectors() {
-	std::unique_lock<std::mutex> lock(mutex);
-	vtkPoints* updatePoints = this->smoothingVectorData->GetPoints();
-	vtkFloatArray* updateVectors = vtkFloatArray::SafeDownCast(this->smoothingVectorData->GetPointData()->GetVectors());
-	TransferSmoothingVectorsToVtkStructuresFunctor<ITMVoxelCanonical> TransferSmoothingVectorsToVtkStructuresFunctor(
-			updatePoints, updateVectors, &this->smoothingHedgehogEndpoints);
-	VoxelPositionTraversalWithinBounds_CPU(this->canonicalScene, TransferSmoothingVectorsToVtkStructuresFunctor,
-	                                       this->bounds);
 
-	this->smoothingVectorData->Modified();
+template<typename TVoxel>
+struct TransferWarpUpdatesToVtkStructuresFunctor_WithComponents {
+public:
+	TransferWarpUpdatesToVtkStructuresFunctor_WithComponents(
+			vtkSmartPointer<vtkPolyData> updatesData,
+			vtkSmartPointer<vtkPolyData> dataTermData,
+			vtkSmartPointer<vtkPolyData> smoothingTermData,
+			std::unordered_map<std::string, std::pair<Vector3d,Vector3d>>& componentHedgehogEndpoints)
+			:
+			updatePoints(updatesData->GetPoints()),updateVectors(vtkFloatArray::SafeDownCast(updatesData->GetPointData()->GetVectors())),
+			dataTermPoints(dataTermData->GetPoints()), dataTermVectors(vtkFloatArray::SafeDownCast(dataTermData->GetPointData()->GetVectors())),
+			smoothingTermPoints(smoothingTermData->GetPoints()), smoothingTermVectors(vtkFloatArray::SafeDownCast(smoothingTermData->GetPointData()->GetVectors())), componentHedgehogEndpoints(componentHedgehogEndpoints){}
+
+	void operator()(const TVoxel& voxel, const Vector3i& position) {
+		std::string positionAsString = stringifyVoxelCoordinate(position);
+
+		// whole update vector
+		Vector3f updateStartPoint = position.toFloat() + voxel.framewise_warp - voxel.warp_update;
+		Vector3f updateVector = voxel.warp_update;
+		updatePoints->InsertNextPoint(updateStartPoint.x, updateStartPoint.y, updateStartPoint.z);
+		updateVectors->InsertNextTuple(updateVector.values);
+
+		// data & smoothing terms
+		Vector3d dataTermVectorStartPoint,smoothingTermVectorStartPoint;
+
+		auto iterator = componentHedgehogEndpoints.find(positionAsString);
+		if (iterator == componentHedgehogEndpoints.end()) {
+			dataTermVectorStartPoint = position.toDouble();
+			smoothingTermVectorStartPoint = position.toDouble();
+		} else {
+			dataTermVectorStartPoint = iterator->second.first;
+			smoothingTermVectorStartPoint = iterator->second.second;
+		}
+		Vector3f dataTermVector =
+				-ITMLibSettings::Instance().sceneTrackingGradientDescentLearningRate * voxel.data_term_gradient;
+		Vector3f smoothingTermVector =
+				-ITMLibSettings::Instance().sceneTrackingGradientDescentLearningRate * voxel.smoothing_term_gradient;
+
+		dataTermPoints->InsertNextPoint(dataTermVectorStartPoint.values);
+		dataTermVectors->InsertNextTuple(dataTermVector.values);
+		smoothingTermPoints->InsertNextPoint(smoothingTermVectorStartPoint.values);
+		smoothingTermVectors->InsertNextTuple(smoothingTermVector.values);
+		componentHedgehogEndpoints[positionAsString] =
+				std::make_pair(dataTermVectorStartPoint + dataTermVector.toDouble(),
+				               smoothingTermVectorStartPoint + smoothingTermVector.toDouble());
+	}
+
+private:
+	std::unordered_map<std::string, std::pair<Vector3d,Vector3d>>& componentHedgehogEndpoints;
+	vtkPoints* smoothingTermPoints;
+	vtkFloatArray* smoothingTermVectors;
+	vtkPoints* dataTermPoints;
+	vtkFloatArray* dataTermVectors;
+
+	vtkPoints* updatePoints;
+	vtkFloatArray* updateVectors;
+};
+
+template<typename TVoxelCanonical, typename TIndex, bool hasDebugInfo>
+struct DrawWarpUpdateFunctor;
+
+template<typename TVoxelCanonical, typename TIndex>
+struct DrawWarpUpdateFunctor<TVoxelCanonical, TIndex, false> {
+	static void
+	run(vtkSmartPointer<vtkPolyData> updatesData,vtkSmartPointer<vtkPolyData> dataTermData,
+	    vtkSmartPointer<vtkPolyData> smoothingTermData, ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	    Vector6i bounds, std::unordered_map<std::string, std::pair<Vector3d,Vector3d>>& componentHedgehogEndpoints) {
+
+		vtkPoints* updatePoints = updatesData->GetPoints();
+		vtkFloatArray* updateVectors = vtkFloatArray::SafeDownCast(updatesData->GetPointData()->GetVectors());
+		TransferWarpUpdatesToVtkStructuresFunctor<ITMVoxelCanonical> transferWarpUpdatesToVtkStructuresFunctor(
+				updatePoints, updateVectors);
+		VoxelPositionTraversalWithinBounds_CPU(canonicalScene, transferWarpUpdatesToVtkStructuresFunctor, bounds);
+		updatesData->Modified();
+	}
+};
+
+template<typename TVoxelCanonical, typename TIndex>
+struct DrawWarpUpdateFunctor<TVoxelCanonical, TIndex, true> {
+	static void
+	run(vtkSmartPointer<vtkPolyData> updatesData,vtkSmartPointer<vtkPolyData> dataTermData,
+	    vtkSmartPointer<vtkPolyData> smoothingTermData, ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+	    Vector6i bounds, std::unordered_map<std::string, std::pair<Vector3d,Vector3d>>& componentHedgehogEndpoints) {
+
+		TransferWarpUpdatesToVtkStructuresFunctor_WithComponents<ITMVoxelCanonical>
+		        transferSmoothingVectorsToVtkStructuresFunctor(
+				updatesData, dataTermData, smoothingTermData, componentHedgehogEndpoints);
+		VoxelPositionTraversalWithinBounds_CPU(canonicalScene, transferSmoothingVectorsToVtkStructuresFunctor,bounds);
+		updatesData->Modified();
+		dataTermData->Modified();
+		smoothingTermData->Modified();
+	}
+};
+
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpUpdates() {
+	std::unique_lock<std::mutex> lock(mutex);
+
+	DrawWarpUpdateFunctor<TVoxelCanonical, TIndex, TVoxelCanonical::hasDebugInformation>::
+	        run(updatesData,dataTermVectorData, smoothingTermVectorData, canonicalScene, bounds, this->componentHedgehogEndpoints);
+
+	this->dataTermVectorData->Modified();
 	this->window->Update();
-	this->smoothingVectorsDrawn = true;
+	this->warpUpdatePerformed = true;
+
 	lock.unlock();
 	conditionVariable.notify_all();
 }
+
+
+
 
 // endregion ===========================================================================================================
 
@@ -649,14 +705,6 @@ void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::TriggerDraw
 	this->warpUpdatePerformed = false;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::TriggerDrawSmoothingVectors() {
-	this->threadCallback->operation = DRAW_SMOOTHING_VECTORS;
-	std::unique_lock<std::mutex> lock(mutex);
-	conditionVariable.wait(lock, [this] { return this->smoothingVectorsDrawn; });
-	this->smoothingVectorsDrawn = false;
-}
-
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::TriggerUpdateLiveState() {
@@ -676,30 +724,44 @@ void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::TriggerBuil
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::TriggerRebuildSlices() {
+	this->threadCallback->operation = REBUILD_SLICES;
+	std::unique_lock<std::mutex> lock(mutex);
+	conditionVariable.wait(lock, [this] { return this->slicesRebuilt; });
+	this->slicesRebuilt = false;
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibilityMode(VisibilityMode mode) {
 	this->visibilityMode = mode;
 	switch (mode) {
 		case VISIBILITY_CANONICAL_WITH_UPDATES:
 			this->canonicalSlice.voxelActor->VisibilityOn();
-			this->updatesActor->VisibilityOn();
+			this->updatesActor->VisibilityOn(); 
+			this->dataTermVectorActor->VisibilityOn(); this->smoothingTermVectorActor->VisibilityOn();
 			this->liveSlice.voxelActor->VisibilityOff();
 			this->fusedCanonicalSlice.voxelActor->VisibilityOff();
 			break;
 		case VISIBILITY_LIVE:
 			this->canonicalSlice.voxelActor->VisibilityOff();
 			this->updatesActor->VisibilityOff();
+			this->dataTermVectorActor->VisibilityOff(); this->smoothingTermVectorActor->VisibilityOff();
 			this->liveSlice.voxelActor->VisibilityOn();
+			this->liveSlice.voxelActor->GetProperty()->SetOpacity(1.0);
 			this->fusedCanonicalSlice.voxelActor->VisibilityOff();
 			break;
 		case VISIBILITY_LIVE_AND_CANONICAL_WITH_UPDATES:
 			this->canonicalSlice.voxelActor->VisibilityOn();
 			this->updatesActor->VisibilityOn();
+			this->dataTermVectorActor->VisibilityOff(); this->smoothingTermVectorActor->VisibilityOff();
 			this->liveSlice.voxelActor->VisibilityOn();
+			this->liveSlice.voxelActor->GetProperty()->SetOpacity(0.5);
 			this->fusedCanonicalSlice.voxelActor->VisibilityOff();
 			break;
 		case VISIBILITY_FUSED_CANONICAL:
 			this->canonicalSlice.voxelActor->VisibilityOff();
 			this->updatesActor->VisibilityOff();
+			this->dataTermVectorActor->VisibilityOff(); this->smoothingTermVectorActor->VisibilityOff();
 			this->liveSlice.voxelActor->VisibilityOff();
 			this->fusedCanonicalSlice.voxelActor->VisibilityOn();
 			break;
@@ -726,3 +788,6 @@ void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::RetreatLive
 		window->Update();
 	}
 }
+
+
+
