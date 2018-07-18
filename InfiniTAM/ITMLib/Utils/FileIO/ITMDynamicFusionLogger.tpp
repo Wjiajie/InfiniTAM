@@ -280,7 +280,7 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeFram
 				new ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>(focusCoordinates, 100,
 				                                                                              16.0,
 				                                                                              planeFor2Dand3DSlices));
-
+		MakeOrClearOutputDirectoriesFor2DSceneSlices();
 		if (recordingCanonicalSceneAs2DSlices) {
 			scene2DSliceVisualizer->SaveCanonicalSceneSlicesAs2DImages_AllDirections(
 					canonicalScene, GetOutputDirectoryPrefixForCanonicalSceneAsSlices());
@@ -344,7 +344,7 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeWarp
 	cv::Mat canonicalImgOut;
 	canonicalImg.convertTo(canonicalImgOut, CV_8UC1);
 	cv::cvtColor(canonicalImgOut, canonicalImgOut, cv::COLOR_GRAY2BGR);
-	MakeOrClearOutputDirectoriesFor2DSceneSlices();
+
 	cv::imwrite(GetOutputDirectoryFor2DSceneSlicesWithWarps() + "/canonical.png", canonicalImgOut);
 	cv::Mat liveImg = scene2DSliceVisualizer->DrawLiveSceneImageAroundPoint(sourceLiveScene, 0) * 255.0f;
 	cv::Mat liveImgOut;

@@ -91,6 +91,8 @@ int main(int argc, char** argv) {
 		bool restrictZMotion = false;
 		bool simpleScene = false;
 
+		bool recordCanonicalSceneAsSlices = false;
+		bool recordLiveSceneAsSlices = false;
 		bool record1DSlices = false;
 		bool record2DSlices = false;
 		bool record3DSlices = false;
@@ -180,6 +182,10 @@ int main(int argc, char** argv) {
 				("record_1d_slices",po::bool_switch(&record1DSlices)->default_value(false),
 				 "Used in dynamic fusion. Plot graphs of canonical and live SDF (around the focus coordinate,"
 	             " if provided), plot the live frame progression and warp vectors (for visual debugging).")
+				("record_live_as_slices",po::bool_switch(&recordLiveSceneAsSlices)->default_value(false),
+				 "Used in dynamic fusion. Slice up the whole live scene as images in each direction. ")
+				("record_canonical_as_slices",po::bool_switch(&recordCanonicalSceneAsSlices)->default_value(false),
+				 "Used in dynamic fusion. Slice up the whole canonical scene as images in each direction. ")
 				("record_2d_slices",po::bool_switch(&record2DSlices)->default_value(false),
 				 "Used in dynamic fusion. Render warps from each frame onto an image of the original live frame"
 	             " (around the focus coordinate, if provided), as well as warped live frame"
@@ -470,6 +476,8 @@ int main(int argc, char** argv) {
 		//NB: Logger's focus coordinates set above together with main engine settings, if provided
 		if (plotEnergies) logger.TurnPlottingEnergiesOn();
 		if (record3DSceneAndWarps) logger.TurnRecording3DSceneAndWarpProgressionOn();
+		if (recordCanonicalSceneAsSlices) logger.TurnRecordingCanonicalSceneAs2DSlicesOn();
+		if (recordLiveSceneAsSlices) logger.TurnRecordingLiveSceneAs2DSlicesOn();
 		if (record1DSlices) logger.TurnRecordingScene1DSlicesWithUpdatesOn();
 		if (record2DSlices) logger.TurnRecordingScene2DSlicesWithUpdatesOn();
 		if (record3DSlices) logger.TurnRecordingScene3DSlicesWithUpdatesOn();

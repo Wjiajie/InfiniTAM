@@ -489,6 +489,9 @@ ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlice
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::SaveLiveSceneSlicesAs2DImages_AllDirections(
 		ITMScene<TVoxelLive, TIndex>* scene, std::string pathWithoutPostfix) {
+	fs::create_directories(pathWithoutPostfix + "/X");
+	fs::create_directories(pathWithoutPostfix + "/Y");
+	fs::create_directories(pathWithoutPostfix + "/Z");
 	ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::SaveLiveSceneSlicesAs2DImages(
 			scene, AXIS_X, pathWithoutPostfix + "_X");
 	ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::SaveLiveSceneSlicesAs2DImages(
@@ -500,12 +503,15 @@ void ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::SaveLiveSce
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::SaveCanonicalSceneSlicesAs2DImages_AllDirections(
 		ITMScene<TVoxelCanonical, TIndex>* scene, std::string pathWithoutPostfix) {
+	fs::create_directories(pathWithoutPostfix + "/X");
+	fs::create_directories(pathWithoutPostfix + "/Y");
+	fs::create_directories(pathWithoutPostfix + "/Z");
 	ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::SaveCanonicalSceneSlicesAs2DImages(
-			scene, AXIS_X, pathWithoutPostfix + "_X");
+			scene, AXIS_X, pathWithoutPostfix + "/X");
 	ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::SaveCanonicalSceneSlicesAs2DImages(
-			scene, AXIS_Y, pathWithoutPostfix + "_Y");
+			scene, AXIS_Y, pathWithoutPostfix + "/Y");
 	ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::SaveCanonicalSceneSlicesAs2DImages(
-			scene, AXIS_Z, pathWithoutPostfix + "_Z");
+			scene, AXIS_Z, pathWithoutPostfix + "/Z");
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>

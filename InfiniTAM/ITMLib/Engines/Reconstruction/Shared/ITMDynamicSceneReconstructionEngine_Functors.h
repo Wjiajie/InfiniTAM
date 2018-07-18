@@ -15,6 +15,8 @@
 //  ================================================================
 #pragma once
 
+#include "../../../Objects/Scene/ITMTrilinearInterpolation.h"
+
 template<typename TVoxelMulti>
 struct IndexedFieldClearFunctor {
 	IndexedFieldClearFunctor(int flagFieldIndex) : flagFieldIndex(flagFieldIndex) {}

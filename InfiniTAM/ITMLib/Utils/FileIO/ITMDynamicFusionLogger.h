@@ -91,48 +91,48 @@ public:
 // region ============================= SETTERS & SWITCHES =============================================================
 
 	void SetScenes(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,ITMScene<TVoxelLive, TIndex>* liveScene);
-	void SetOutputDirectory(std::string outputDirectory);
-	void SetFocusCoordinates(Vector3i focusCoordinates);
-	void SetPlaneFor2Dand3DSlices(Plane plane);
-	void Set3DSliceInPlaneRadius(unsigned int _3dSliceInPlaneRadius);
-	void Set3DSliceOutOfPlaneRadius(unsigned int _3dSliceOutOfPlaneRadius);
-	void SetShutdownRequestedFlagLocation(bool* flag);
+	void SetOutputDirectory(std::string outputDirectory) override;
+	void SetFocusCoordinates(Vector3i focusCoordinates) override;
+	void SetPlaneFor2Dand3DSlices(Plane plane) override;
+	void Set3DSliceInPlaneRadius(unsigned int _3dSliceInPlaneRadius) override;
+	void Set3DSliceOutOfPlaneRadius(unsigned int _3dSliceOutOfPlaneRadius) override;
+	void SetShutdownRequestedFlagLocation(bool* flag) override;
 
-	void RequestAppShutdown();
+	void RequestAppShutdown() override;
 
-	void TurnRecordingLiveSceneAs2DSlicesOn();
-	void TurnRecordingLiveSceneAs2DSlicesOff();
-	void ToggleRecordingLiveSceneAs2DSlices();
-	void TurnRecordingCanonicalSceneAs2DSlicesOn();
-	void TurnRecordingCanonicalSceneAs2DSlicesOff();
-	void TurnRecordingScene1DSlicesWithUpdatesOn();
-	void TurnRecordingScene1DSlicesWithUpdatesOff();
-	void TurnRecordingScene2DSlicesWithUpdatesOn();
-	void TurnRecordingScene2DSlicesWithUpdatesOff();
-	void TurnRecordingScene3DSlicesWithUpdatesOn();
-	void TurnRecordingScene3DSlicesWithUpdatesOff();
-	void ToggleRecordingScene2DSlicesWithUpdates();
-	void TurnRecording3DSceneAndWarpProgressionOn();
-	void TurnRecording3DSceneAndWarpProgressionOff();
-	void ToggleRecording3DSceneAndWarpProgression();
-	void TurnRecordingEnergiesToFilesOn();
-	void TurnRecordingEnergiesToFilesOff();
-	void TurnPlottingEnergiesOn();
-	void TurnPlottingEnergiesOff();
+	void TurnRecordingLiveSceneAs2DSlicesOn() override;
+	void TurnRecordingLiveSceneAs2DSlicesOff() override;
+	void ToggleRecordingLiveSceneAs2DSlices() override;
+	void TurnRecordingCanonicalSceneAs2DSlicesOn() override;
+	void TurnRecordingCanonicalSceneAs2DSlicesOff() override;
+	void TurnRecordingScene1DSlicesWithUpdatesOn() override;
+	void TurnRecordingScene1DSlicesWithUpdatesOff() override;
+	void TurnRecordingScene2DSlicesWithUpdatesOn() override;
+	void TurnRecordingScene2DSlicesWithUpdatesOff() override;
+	void TurnRecordingScene3DSlicesWithUpdatesOn() override;
+	void TurnRecordingScene3DSlicesWithUpdatesOff() override;
+	void ToggleRecordingScene2DSlicesWithUpdates() override;
+	void TurnRecording3DSceneAndWarpProgressionOn() override;
+	void TurnRecording3DSceneAndWarpProgressionOff() override;
+	void ToggleRecording3DSceneAndWarpProgression() override;
+	void TurnRecordingEnergiesToFilesOn() override;
+	void TurnRecordingEnergiesToFilesOff() override;
+	void TurnPlottingEnergiesOn() override;
+	void TurnPlottingEnergiesOff() override;
 
 // endregion ===========================================================================================================
 // region ============================= GETTERS ========================================================================
 
-	std::string GetOutputDirectory() const;
+	std::string GetOutputDirectory() const override;
 
-	bool IsRecordingLiveSceneAs2DSlices() const;
-	bool IsRecordingCanonicalSceneAs2DSlices() const;
-	bool IsRecordingScene1DSlicesWithUpdates() const;
-	bool IsRecordingScene2DSlicesWithUpdates() const;
-	bool IsRecordingScene3DSlicesWithUpdates() const;
-	bool IsRecording3DSceneAndWarpProgression() const;
-	bool IsRecordingEnergiesToFile() const;
-	bool IsPlottingEnergies() const;
+	bool IsRecordingLiveSceneAs2DSlices() const override;
+	bool IsRecordingCanonicalSceneAs2DSlices() const override;
+	bool IsRecordingScene1DSlicesWithUpdates() const override;
+	bool IsRecordingScene2DSlicesWithUpdates() const override;
+	bool IsRecordingScene3DSlicesWithUpdates() const override;
+	bool IsRecording3DSceneAndWarpProgression() const override;
+	bool IsRecordingEnergiesToFile() const override;
+	bool IsPlottingEnergies() const override;
 
 // endregion ===========================================================================================================
 	void InitializeFrameRecording();

@@ -64,6 +64,7 @@ struct ComputeVoxelBoundsFunctor<TVoxel, ITMVoxelBlockHash>{
 				bounds.max_z = hashBlockLimitPositionVoxels.z;
 			}
 		}
+		return bounds;
 	}
 };
 
