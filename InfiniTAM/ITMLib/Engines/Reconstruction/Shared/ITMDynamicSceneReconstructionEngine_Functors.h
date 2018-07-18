@@ -35,11 +35,7 @@ struct FusionFunctor{
 			maximumWeight(maximumWeight),
 			liveSourceFieldIndex(liveSourceFieldIndex){}
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel){
-		//_DEBUG
-		//DO NOT UNCOMMENT! WILL DESTROY SMOOTHING RESULT!
-//		if (canonicalVoxel.flags != VOXEL_NONTRUNCATED &&
-//		    liveVoxel.flag_values[liveSourceFieldIndex] != VOXEL_NONTRUNCATED)
-//			return;
+		if(liveVoxel.flag_values[liveSourceFieldIndex] == VOXEL_UNKNOWN) return;
 		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[liveSourceFieldIndex]);
 
 		int oldWDepth = canonicalVoxel.w_depth;
@@ -54,6 +50,8 @@ struct FusionFunctor{
 		canonicalVoxel.w_depth = (uchar) newWDepth;
 		if(canonicalVoxel.flags != ITMLib::VOXEL_NONTRUNCATED){
 			canonicalVoxel.flags = liveVoxel.flag_values[liveSourceFieldIndex];
+		}else if(1.0f - std::abs(newSdf) < 1e-5f){
+			canonicalVoxel.flags = ITMLib::VOXEL_TRUNCATED;
 		}
 
 	}

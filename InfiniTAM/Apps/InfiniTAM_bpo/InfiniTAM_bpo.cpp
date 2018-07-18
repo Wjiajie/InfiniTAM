@@ -189,7 +189,7 @@ int main(int argc, char** argv) {
 	             " and the live scene as they evolve.")
 				("3d_slice_radius",po::value<unsigned int>(&_3DSliceRadius)->default_value(10),
 				 "(Dynamic fusion) half-width of the square of pixels (in plane) in the slice for 3d slice recording.")
-				("3d_slice_thickness_margin",po::value<unsigned int>(&_3DSliceExtraThicknessMargin)->default_value(0),
+				("3d_slice_margin",po::value<unsigned int>(&_3DSliceExtraThicknessMargin)->default_value(0),
 				 "(Dynamic fusion) extra margin to include, in voxels, from the 3D slice center along the axis "
 	             "perpendicular to the slice plane.")
 				("slice_plane",po::value<ITMLib::Plane>(&planeFor2Dand3DSlices)->default_value(PLANE_XY),
@@ -202,9 +202,9 @@ int main(int argc, char** argv) {
 				/*================================================================================*/
 
 				/* convergence parameters & learning rate*/
-				("max_iterations", po::value<unsigned int>(),
+				("max_iterations", po::value<unsigned int>()->default_value(200),
 				        "Maximum number of iterations in each frame of scene tracking optimization.")
-				("vector_update_threshold", po::value<float>(),
+				("vector_update_threshold", po::value<float>()->default_value(0.0001f),
 					        "Unit: meters. Used in scene tracking optimization. Termination condition: optimization "
 			     "stops when warp vector update lengths don't exceed this distance threshold.")
 			    ("learning_rate", po::value<float>(),

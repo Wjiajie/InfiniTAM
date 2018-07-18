@@ -1092,9 +1092,6 @@ inline float _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TV
                                                                THREADPTR(TCache)& cache,
                                                                THREADPTR(bool)& struckKnownVoxels,
                                                                bool printData) {
-	if(printData){
-		int i = 42;
-	}
 	Vector3f ratios;
 	Vector3f inverseRatios(1.0f);
 	Vector3i pos;
@@ -1131,8 +1128,8 @@ inline float _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TV
 		const TVoxel& v = readVoxel(voxelData, voxelIndex, pos + (positions[iNeighbor]), vmIndex, cache);
 		bool curKnown = v.flag_values[sdfIndex] != ITMLib::VOXEL_UNKNOWN;
 		//_DEBUG
-		//float weight = coefficients[iNeighbor] * curKnown;
-		float weight = coefficients[iNeighbor];
+		float weight = coefficients[iNeighbor] * curKnown;
+		//float weight = coefficients[iNeighbor];
 		sdf += weight * TVoxel::valueToFloat(v.sdf_values[sdfIndex]);
 		struckKnownVoxels |= curKnown;
 		if(printData){
