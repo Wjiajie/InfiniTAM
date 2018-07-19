@@ -148,9 +148,13 @@ public:
 //		}else if(liveVoxel.flags != VOXEL_NONTRUNCATED){
 //			liveSdf = std::copysign(1.0f, canonicalSdf);
 //		}
-		bool haveFullData = canonicalVoxel.flags != VOXEL_UNKNOWN && liveVoxel.flags != VOXEL_UNKNOWN;
+		//Data condition: ALWAYS
+		bool haveFullData = true;
+		//Data condition: IGNORE_UNKNOWN
+		//bool haveFullData = canonicalVoxel.flags != VOXEL_UNKNOWN && liveVoxel.flags != VOXEL_UNKNOWN;
+		//Data condition: IGNORE_LIVE_UNKNOWN
 //		bool haveFullData = canonicalVoxel.flags != VOXEL_UNKNOWN;
-		//_DEBUG
+		//Data condition: ONLY_NONTRUNCATED
 //		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
 //		                    && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
 //		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
