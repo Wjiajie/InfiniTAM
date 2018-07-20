@@ -455,7 +455,7 @@ void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::InitializeW
 
 	this->window->AddLayer(Vector4d(1.0, 1.0, 1.0, 0.0));
 
-	auto initializeWarpSet = [this](vtkSmartPointer<vtkPolyData> polyData, vtkSmartPointer<vtkMapper> mapper,
+	auto initializeWarpSet = [this](vtkSmartPointer<vtkPolyData> polyData, vtkSmartPointer<vtkPolyDataMapper> mapper,
 	                                vtkSmartPointer<vtkActor> actor, const char* vectorArrayName, Vector3d color) {
 		vtkSmartPointer<vtkPoints> updatePoints = vtkSmartPointer<vtkPoints>::New();
 		vtkSmartPointer<vtkFloatArray> updateVectors = vtkSmartPointer<vtkFloatArray>::New();
@@ -467,7 +467,11 @@ void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::InitializeW
 
 		vtkSmartPointer<vtkHedgeHog> hedgehog = vtkSmartPointer<vtkHedgeHog>::New();
 		hedgehog->SetInputData(polyData);
+
+
+		mapper->SetColorModeToDirectScalars();
 		mapper->SetInputConnection(hedgehog->GetOutputPort());
+
 
 		actor->SetMapper(mapper);
 		actor->GetProperty()->SetColor(color.values);

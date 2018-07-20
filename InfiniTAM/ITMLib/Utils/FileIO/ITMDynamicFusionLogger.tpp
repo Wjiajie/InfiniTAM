@@ -25,6 +25,7 @@
 #include "ITMDynamicFusionLogger.h"
 #include "../Analytics/ITMBenchmarkUtils.h"
 #include "../ITMPrintHelpers.h"
+#include "../ITMLibSettings.h"
 
 
 using namespace ITMLib;
@@ -260,12 +261,9 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeFram
 
 	//TODO: make all visualizer/logger classes re-usable, i.e. just change the path & build them in the constructor (don't use pointers) -Greg (GitHub:Algomorph)
 
-	this->canonicalScene = canonicalScene;
-	this->liveScene = liveScene;
-
-	this->hasFocusCoordinates = hasFocusCoordinates;
-	this->focusCoordinates = focusCoordinates;
-	this->outputDirectory = outputDirectory;
+	this->hasFocusCoordinates = ITMLibSettings::Instance().FocusCoordinatesAreSpecified();
+	this->focusCoordinates = ITMLibSettings::Instance().GetFocusCoordinates();
+	this->outputDirectory = ITMLibSettings::Instance().analysisSettings.outputPath;
 
 	// region ================================== 1D/2D SLICE RECORDING =================================================
 	if (hasFocusCoordinates) {
@@ -278,8 +276,8 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeFram
 
 		scene2DSliceVisualizer.reset(
 				new ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>(focusCoordinates, 100,
-				                                                                              16.0,
-				                                                                              planeFor2Dand3DSlices));
+				                                                                   16.0,
+				                                                                   planeFor2Dand3DSlices));
 		MakeOrClearOutputDirectoriesFor2DSceneSlices();
 		if (recordingCanonicalSceneAs2DSlices) {
 			scene2DSliceVisualizer->SaveCanonicalSceneSlicesAs2DImages_AllDirections(
@@ -298,16 +296,22 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeFram
 		}
 
 		if (recordingScene3DSlicesWithUpdates) {
-			if(!scene3DSliceVisualizer){
+			if (!scene3DSliceVisualizer) {
 				scene3DSliceVisualizer.reset(new ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>
-					                             (canonicalScene, liveScene, focusCoordinates,
-					                              planeFor2Dand3DSlices, _3dSliceInPlaneRadius,
-					                              _3dSliceOutOfPlaneRadius));
-			}else{
+						                             (canonicalScene, liveScene, focusCoordinates,
+						                              planeFor2Dand3DSlices, _3dSliceInPlaneRadius,
+						                              _3dSliceOutOfPlaneRadius));
+			} else {
 				scene3DSliceVisualizer->TriggerRebuildSlices();
 			}
 		}
 
+	} else {
+		if (recordingScene1DSlicesWithUpdates || recordingCanonicalSceneAs2DSlices || recordingLiveSceneAs2DSlices ||
+		    recordingScene2DSlicesWithUpdates || recordingScene3DSlicesWithUpdates) {
+			std::cout << red << "WARNING: Recording 1D/2D/3D slices or saving live/canonical frames as 2D slices "
+			                    "requires focus coordinates to be set (and they were not)." << reset << std::endl;
+		}
 	}
 	// endregion
 	if (plottingEnergies) {
@@ -419,8 +423,10 @@ void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeFrameR
 		energyPlotter->SaveScreenshot(this->outputDirectory + "/energy_plot.png");
 		energyPlotter.reset();
 	}
-	if (recordingScene3DSlicesWithUpdates) {
-		scene3DSliceVisualizer->TriggerBuildFusedCanonical();
+	if (hasFocusCoordinates) {
+		if (recordingScene3DSlicesWithUpdates) {
+			scene3DSliceVisualizer->TriggerBuildFusedCanonical();
+		}
 	}
 	scene1DSliceVisualizer.reset();
 	scene2DSliceVisualizer.reset();
