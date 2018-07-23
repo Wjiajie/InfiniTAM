@@ -32,6 +32,7 @@
 #include <mutex>
 #include <vtkHedgeHog.h>
 #include <vtkVertexGlyphFilter.h>
+#include <vtkPolyLineSource.h>
 
 
 //Local
@@ -46,7 +47,7 @@
 
 
 
-//TODO: alter OO design such that constructor isn't calling virual / override member functions -Greg (GitHub: Algomorph)
+//TODO: split up file -- move functors into a separate header file, to ease code navigation -Greg(GitHub:Algomorph)
 
 using namespace ITMLib;
 
@@ -339,7 +340,7 @@ void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::RebuildSlic
 	canonicalSlice.voxelVizData->Modified();
 	liveSlice.voxelVizData->Modified();
 	window->Update();
-	slicesRebuilt=true;
+	slicesRebuilt = true;
 	lock.unlock();
 	conditionVariable.notify_all();
 
@@ -455,34 +456,64 @@ void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::InitializeW
 
 	this->window->AddLayer(Vector4d(1.0, 1.0, 1.0, 0.0));
 
-	auto initializeWarpSet = [this](vtkSmartPointer<vtkPolyData> polyData, vtkSmartPointer<vtkPolyDataMapper> mapper,
-	                                vtkSmartPointer<vtkActor> actor, const char* vectorArrayName, Vector3d color) {
-		vtkSmartPointer<vtkPoints> updatePoints = vtkSmartPointer<vtkPoints>::New();
-		vtkSmartPointer<vtkFloatArray> updateVectors = vtkSmartPointer<vtkFloatArray>::New();
-		updateVectors->SetName(vectorArrayName);
-		updateVectors->SetNumberOfComponents(3);
+	auto initializeWarpSet = [this](vtkSmartPointer<vtkPolyData>& polyData, vtkSmartPointer<vtkPolyDataMapper>& mapper,
+	                                vtkSmartPointer<vtkActor>& actor, Vector4d colorRGBA) {
+		vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 
-		polyData->SetPoints(updatePoints);
-		polyData->GetPointData()->SetVectors(updateVectors);
+		//set up orientation vectors
+		vtkSmartPointer<vtkFloatArray> vectors = vtkSmartPointer<vtkFloatArray>::New();
+		vectors->SetName("vectors");
+		vectors->SetNumberOfComponents(3);
+
+		//set up color index array
+		vtkSmartPointer<vtkIntArray> colorIndices = vtkSmartPointer<vtkIntArray>::New();
+		colorIndices->SetName("colors");
+		colorIndices->SetNumberOfComponents(1);
+
+		//set up points
+		polyData->SetPoints(points);
+		polyData->GetPointData()->SetVectors(vectors);
+		polyData->GetPointData()->SetScalars(colorIndices);
+
+		//set up color table (with two values)
+		vtkSmartPointer<vtkLookupTable> colorTable =
+				vtkSmartPointer<vtkLookupTable>::New();
+		colorTable->SetNumberOfTableValues(2);
+		colorTable->SetTableRange(0, 2);
+		colorTable->SetNumberOfColors(2);
+		colorTable->Build();
+		colorTable->SetTableValue(0, colorRGBA.values);
+
+		Vector4d zebraLighterColor;
+		//_DEBUG: expirimental -- zebra with brighter shade of the same color -- TODO: make a class setting
+//		float zebraLighterCoefficient = 0.7;
+
+//		for (int iValue = 0; iValue < 3; iValue++) {
+//			zebraLighterColor[iValue] = std::min(1.0,colorRGBA[iValue] + (1.0 - colorRGBA[iValue]) * zebraLighterCoefficient);
+//		}
+		zebraLighterColor.a = colorRGBA.a;
+		zebraLighterColor.r = 1.0;
+		zebraLighterColor.g = 1.0;
+		zebraLighterColor.b = 0.0;
+		colorTable->SetTableValue(1, zebraLighterColor.values);
 
 		vtkSmartPointer<vtkHedgeHog> hedgehog = vtkSmartPointer<vtkHedgeHog>::New();
 		hedgehog->SetInputData(polyData);
 
-
-		mapper->SetColorModeToDirectScalars();
+		mapper->ScalarVisibilityOn();
+		mapper->SetScalarModeToUsePointData();
+		mapper->SetColorModeToMapScalars();
+		mapper->SetLookupTable(colorTable);
 		mapper->SetInputConnection(hedgehog->GetOutputPort());
-
-
 		actor->SetMapper(mapper);
-		actor->GetProperty()->SetColor(color.values);
+		actor->GetProperty()->SetColor(colorRGBA.r, colorRGBA.g, colorRGBA.b);
 		this->window->AddActorToLayer(actor, 1);
 	};
 
-	initializeWarpSet(updatesData, updatesMapper, updatesActor, "Warp update vectors", Vector3d(0.0,0.0,0.0));
-	initializeWarpSet(dataTermVectorData, dataTermVectorMapper, dataTermVectorActor, "Warp data term vectors",
-	                  Vector3d(0.0,0.0,1.0));
-	initializeWarpSet(smoothingTermVectorData, smoothingVectorMapper, smoothingTermVectorActor,
-	                  "Warp smoothing term vectors", Vector3d(0.0,1.0,0.0));
+	initializeWarpSet(updatesData, updatesMapper, updatesActor, Vector4d(1.0, 0.0, 0.0, 1.0));
+	initializeWarpSet(dataTermVectorData, dataTermVectorMapper, dataTermVectorActor,
+	                Vector4d(0.0,0.0,1.0,1.0));
+	initializeWarpSet(smoothingTermVectorData, smoothingVectorMapper, smoothingTermVectorActor, Vector4d(0.0,1.0,0.0,1.0));
 }
 
 //region ============================= VISUALIZE WARP UPDATES ==========================================================
@@ -496,19 +527,27 @@ std::string stringifyVoxelCoordinate(const Vector3i& position) {
 template<typename TVoxel>
 struct TransferWarpUpdatesToVtkStructuresFunctor {
 public:
-	TransferWarpUpdatesToVtkStructuresFunctor(vtkPoints* updatePoints, vtkFloatArray* updateVectors) :
-			updatePoints(updatePoints), updateVectors(updateVectors) {}
+	TransferWarpUpdatesToVtkStructuresFunctor(vtkSmartPointer<vtkPolyData> updatesData, bool currentZebraIndex) :
+			updatePoints(updatesData->GetPoints()),
+			updateVectors(vtkFloatArray::SafeDownCast(updatesData->GetPointData()->GetVectors())),
+			updateColors(vtkIntArray::SafeDownCast(updatesData->GetPointData()->GetScalars())),
+			currentZebraIndex(currentZebraIndex) {}
 
 	void operator()(const TVoxel& voxel, const Vector3i& position) {
+
 		Vector3f updateStartPoint = position.toFloat() + voxel.framewise_warp - voxel.warp_update;
 		Vector3f updateVector = voxel.warp_update;
 		updatePoints->InsertNextPoint(updateStartPoint.x, updateStartPoint.y, updateStartPoint.z);
 		updateVectors->InsertNextTuple(updateVector.values);
+		updateColors->InsertNextValue(currentZebraIndex);
+
 	}
 
 private:
+	const bool currentZebraIndex;
 	vtkPoints* updatePoints;
 	vtkFloatArray* updateVectors;
+	vtkIntArray* updateColors;
 };
 
 
@@ -519,11 +558,19 @@ public:
 			vtkSmartPointer<vtkPolyData> updatesData,
 			vtkSmartPointer<vtkPolyData> dataTermData,
 			vtkSmartPointer<vtkPolyData> smoothingTermData,
-			std::unordered_map<std::string, std::pair<Vector3d,Vector3d>>& componentHedgehogEndpoints)
+			std::unordered_map<std::string, std::pair<Vector3d, Vector3d>>& componentHedgehogEndpoints,
+			bool currentZebraIndex)
 			:
-			updatePoints(updatesData->GetPoints()),updateVectors(vtkFloatArray::SafeDownCast(updatesData->GetPointData()->GetVectors())),
-			dataTermPoints(dataTermData->GetPoints()), dataTermVectors(vtkFloatArray::SafeDownCast(dataTermData->GetPointData()->GetVectors())),
-			smoothingTermPoints(smoothingTermData->GetPoints()), smoothingTermVectors(vtkFloatArray::SafeDownCast(smoothingTermData->GetPointData()->GetVectors())), componentHedgehogEndpoints(componentHedgehogEndpoints){}
+			updatePoints(updatesData->GetPoints()),
+			updateVectors(vtkFloatArray::SafeDownCast(updatesData->GetPointData()->GetVectors())),
+			updateColors(vtkIntArray::SafeDownCast(updatesData->GetPointData()->GetScalars())),
+			dataTermPoints(dataTermData->GetPoints()),
+			dataTermVectors(vtkFloatArray::SafeDownCast(dataTermData->GetPointData()->GetVectors())),
+			dataTermColors(vtkIntArray::SafeDownCast(dataTermData->GetPointData()->GetScalars())),
+			smoothingTermPoints(smoothingTermData->GetPoints()),
+			smoothingTermVectors(vtkFloatArray::SafeDownCast(smoothingTermData->GetPointData()->GetVectors())),
+			smoothingTermColors(vtkIntArray::SafeDownCast(smoothingTermData->GetPointData()->GetScalars())),
+			componentHedgehogEndpoints(componentHedgehogEndpoints), currentZebraIndex(currentZebraIndex) {}
 
 	void operator()(const TVoxel& voxel, const Vector3i& position) {
 		std::string positionAsString = stringifyVoxelCoordinate(position);
@@ -533,9 +580,10 @@ public:
 		Vector3f updateVector = voxel.warp_update;
 		updatePoints->InsertNextPoint(updateStartPoint.x, updateStartPoint.y, updateStartPoint.z);
 		updateVectors->InsertNextTuple(updateVector.values);
+		updateColors->InsertNextValue(currentZebraIndex);
 
 		// data & smoothing terms
-		Vector3d dataTermVectorStartPoint,smoothingTermVectorStartPoint;
+		Vector3d dataTermVectorStartPoint, smoothingTermVectorStartPoint;
 
 		auto iterator = componentHedgehogEndpoints.find(positionAsString);
 		if (iterator == componentHedgehogEndpoints.end()) {
@@ -552,22 +600,30 @@ public:
 
 		dataTermPoints->InsertNextPoint(dataTermVectorStartPoint.values);
 		dataTermVectors->InsertNextTuple(dataTermVector.values);
+		dataTermColors->InsertNextValue(currentZebraIndex);
 		smoothingTermPoints->InsertNextPoint(smoothingTermVectorStartPoint.values);
 		smoothingTermVectors->InsertNextTuple(smoothingTermVector.values);
+		smoothingTermColors->InsertNextValue(currentZebraIndex);
 		componentHedgehogEndpoints[positionAsString] =
 				std::make_pair(dataTermVectorStartPoint + dataTermVector.toDouble(),
 				               smoothingTermVectorStartPoint + smoothingTermVector.toDouble());
 	}
 
 private:
-	std::unordered_map<std::string, std::pair<Vector3d,Vector3d>>& componentHedgehogEndpoints;
+	const bool currentZebraIndex;
+
+	std::unordered_map<std::string, std::pair<Vector3d, Vector3d>>& componentHedgehogEndpoints;
 	vtkPoints* smoothingTermPoints;
 	vtkFloatArray* smoothingTermVectors;
+	vtkIntArray* smoothingTermColors;
+
 	vtkPoints* dataTermPoints;
 	vtkFloatArray* dataTermVectors;
+	vtkIntArray* dataTermColors;
 
 	vtkPoints* updatePoints;
 	vtkFloatArray* updateVectors;
+	vtkIntArray* updateColors;
 };
 
 template<typename TVoxelCanonical, typename TIndex, bool hasDebugInfo>
@@ -576,14 +632,13 @@ struct DrawWarpUpdateFunctor;
 template<typename TVoxelCanonical, typename TIndex>
 struct DrawWarpUpdateFunctor<TVoxelCanonical, TIndex, false> {
 	static void
-	run(vtkSmartPointer<vtkPolyData> updatesData,vtkSmartPointer<vtkPolyData> dataTermData,
+	run(vtkSmartPointer<vtkPolyData> updatesData, vtkSmartPointer<vtkPolyData> dataTermData,
 	    vtkSmartPointer<vtkPolyData> smoothingTermData, ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	    Vector6i bounds, std::unordered_map<std::string, std::pair<Vector3d,Vector3d>>& componentHedgehogEndpoints) {
+	    Vector6i bounds, std::unordered_map<std::string, std::pair<Vector3d, Vector3d>>& componentHedgehogEndpoints,
+	    bool currentZebraIndex) {
 
-		vtkPoints* updatePoints = updatesData->GetPoints();
-		vtkFloatArray* updateVectors = vtkFloatArray::SafeDownCast(updatesData->GetPointData()->GetVectors());
 		TransferWarpUpdatesToVtkStructuresFunctor<ITMVoxelCanonical> transferWarpUpdatesToVtkStructuresFunctor(
-				updatePoints, updateVectors);
+				updatesData, currentZebraIndex);
 		VoxelPositionTraversalWithinBounds_CPU(canonicalScene, transferWarpUpdatesToVtkStructuresFunctor, bounds);
 		updatesData->Modified();
 	}
@@ -592,14 +647,15 @@ struct DrawWarpUpdateFunctor<TVoxelCanonical, TIndex, false> {
 template<typename TVoxelCanonical, typename TIndex>
 struct DrawWarpUpdateFunctor<TVoxelCanonical, TIndex, true> {
 	static void
-	run(vtkSmartPointer<vtkPolyData> updatesData,vtkSmartPointer<vtkPolyData> dataTermData,
+	run(vtkSmartPointer<vtkPolyData> updatesData, vtkSmartPointer<vtkPolyData> dataTermData,
 	    vtkSmartPointer<vtkPolyData> smoothingTermData, ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	    Vector6i bounds, std::unordered_map<std::string, std::pair<Vector3d,Vector3d>>& componentHedgehogEndpoints) {
+	    Vector6i bounds, std::unordered_map<std::string, std::pair<Vector3d, Vector3d>>& componentHedgehogEndpoints,
+	    bool currentZebraIndex) {
 
 		TransferWarpUpdatesToVtkStructuresFunctor_WithComponents<ITMVoxelCanonical>
-		        transferSmoothingVectorsToVtkStructuresFunctor(
-				updatesData, dataTermData, smoothingTermData, componentHedgehogEndpoints);
-		VoxelPositionTraversalWithinBounds_CPU(canonicalScene, transferSmoothingVectorsToVtkStructuresFunctor,bounds);
+				transferSmoothingVectorsToVtkStructuresFunctor(
+				updatesData, dataTermData, smoothingTermData, componentHedgehogEndpoints, currentZebraIndex);
+		VoxelPositionTraversalWithinBounds_CPU(canonicalScene, transferSmoothingVectorsToVtkStructuresFunctor, bounds);
 		updatesData->Modified();
 		dataTermData->Modified();
 		smoothingTermData->Modified();
@@ -612,7 +668,10 @@ void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarpUpd
 	std::unique_lock<std::mutex> lock(mutex);
 
 	DrawWarpUpdateFunctor<TVoxelCanonical, TIndex, TVoxelCanonical::hasDebugInformation>::
-	        run(updatesData,dataTermVectorData, smoothingTermVectorData, canonicalScene, bounds, this->componentHedgehogEndpoints);
+	run(updatesData, dataTermVectorData, smoothingTermVectorData, canonicalScene, bounds,
+	    this->componentHedgehogEndpoints, currentZebraIndex);
+
+	currentZebraIndex = !currentZebraIndex;
 
 	this->dataTermVectorData->Modified();
 	this->window->Update();
@@ -741,15 +800,17 @@ void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibili
 	switch (mode) {
 		case VISIBILITY_CANONICAL_WITH_UPDATES:
 			this->canonicalSlice.voxelActor->VisibilityOn();
-			this->updatesActor->VisibilityOn(); 
-			this->dataTermVectorActor->VisibilityOn(); this->smoothingTermVectorActor->VisibilityOn();
+			this->updatesActor->VisibilityOn();
+			this->dataTermVectorActor->VisibilityOn();
+			this->smoothingTermVectorActor->VisibilityOn();
 			this->liveSlice.voxelActor->VisibilityOff();
 			this->fusedCanonicalSlice.voxelActor->VisibilityOff();
 			break;
 		case VISIBILITY_LIVE:
 			this->canonicalSlice.voxelActor->VisibilityOff();
 			this->updatesActor->VisibilityOff();
-			this->dataTermVectorActor->VisibilityOff(); this->smoothingTermVectorActor->VisibilityOff();
+			this->dataTermVectorActor->VisibilityOff();
+			this->smoothingTermVectorActor->VisibilityOff();
 			this->liveSlice.voxelActor->VisibilityOn();
 			this->liveSlice.voxelActor->GetProperty()->SetOpacity(1.0);
 			this->fusedCanonicalSlice.voxelActor->VisibilityOff();
@@ -757,7 +818,8 @@ void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibili
 		case VISIBILITY_LIVE_AND_CANONICAL_WITH_UPDATES:
 			this->canonicalSlice.voxelActor->VisibilityOn();
 			this->updatesActor->VisibilityOn();
-			this->dataTermVectorActor->VisibilityOff(); this->smoothingTermVectorActor->VisibilityOff();
+			this->dataTermVectorActor->VisibilityOff();
+			this->smoothingTermVectorActor->VisibilityOff();
 			this->liveSlice.voxelActor->VisibilityOn();
 			this->liveSlice.voxelActor->GetProperty()->SetOpacity(0.5);
 			this->fusedCanonicalSlice.voxelActor->VisibilityOff();
@@ -765,7 +827,8 @@ void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::SetVisibili
 		case VISIBILITY_FUSED_CANONICAL:
 			this->canonicalSlice.voxelActor->VisibilityOff();
 			this->updatesActor->VisibilityOff();
-			this->dataTermVectorActor->VisibilityOff(); this->smoothingTermVectorActor->VisibilityOff();
+			this->dataTermVectorActor->VisibilityOff();
+			this->smoothingTermVectorActor->VisibilityOff();
 			this->liveSlice.voxelActor->VisibilityOff();
 			this->fusedCanonicalSlice.voxelActor->VisibilityOn();
 			break;

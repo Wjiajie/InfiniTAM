@@ -170,6 +170,7 @@ private:
 	SceneSlice canonicalSlice;
 	SceneSlice fusedCanonicalSlice;
 
+
 	// ** warp updates **
 	vtkSmartPointer<vtkPolyData> updatesData = vtkSmartPointer<vtkPolyData>::New();
 	vtkSmartPointer<vtkPolyDataMapper> updatesMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
@@ -184,6 +185,7 @@ private:
 	vtkSmartPointer<vtkActor> dataTermVectorActor = vtkSmartPointer<vtkActor>::New();
 
 	std::unordered_map<std::string, std::pair<Vector3d,Vector3d>> componentHedgehogEndpoints;
+	bool currentZebraIndex = 0;
 
 
 	// ** live updates **

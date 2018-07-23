@@ -408,7 +408,7 @@ void ITMExtendedTracker::UpdatePoseQuality(int noValidPoints_old, float *hessian
 		Vector4f normalisedVector = (inputVector - mu) / sigma;
 
 		float mapped[20];
-		map->evaluate(mapped, normalisedVector.v, 4);
+		map->evaluate(mapped, normalisedVector.values, 4);
 
 		float score = svmClassifier->Classify(mapped);
 

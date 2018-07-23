@@ -17,8 +17,9 @@ namespace ORUtils {
 		union {
 			struct { T x, y; }; // standard names for components
 			struct { T s, t; }; // standard names for components
-			struct { T width, height; };
-			T v[2];     // array access
+			struct { T u, v; }; // standard names for components
+			struct { T width, height; }; // standard names for components
+			T values[2];     // array access
 		};
 	};
 
@@ -37,20 +38,20 @@ namespace ORUtils {
 			struct { T x, y, z, w; }; // standard names for components
 			struct { T r, g, b, a; }; // standard names for components
 			struct { T s, t, p, q; }; // standard names for components
-			T v[4];
+			T values[4];
 		};
 	};
 
 	template <class T> struct Vector6_ {
 		union {
 			struct { T min_x, min_y, min_z, max_x, max_y, max_z; };// standard names for components
-			T v[6];
+			T values[6];
 		};
 	};
 
 	template<class T, int s> struct VectorX_
 	{
-		T v[s];
+		T values[s];
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -90,16 +91,16 @@ namespace ORUtils {
 			return Vector2<float>((float)this->x, (float)this->y);
 		}
 
-		_CPU_AND_GPU_CODE_ const T *getValues() const { return this->v; }
+		_CPU_AND_GPU_CODE_ const T *getValues() const { return this->values; }
 		_CPU_AND_GPU_CODE_ Vector2<T> &setValues(const T *rhs) { this->x = rhs[0]; this->y = rhs[1]; return *this; }
 
 		// indexing operators
-		_CPU_AND_GPU_CODE_ T &operator [](int i) { return this->v[i]; }
-		_CPU_AND_GPU_CODE_ const T &operator [](int i) const { return this->v[i]; }
+		_CPU_AND_GPU_CODE_ T &operator [](int i) { return this->values[i]; }
+		_CPU_AND_GPU_CODE_ const T &operator [](int i) const { return this->values[i]; }
 
 		// type-cast operators
-		_CPU_AND_GPU_CODE_ operator T *() { return this->v; }
-		_CPU_AND_GPU_CODE_ operator const T *() const { return this->v; }
+		_CPU_AND_GPU_CODE_ operator T *() { return this->values; }
+		_CPU_AND_GPU_CODE_ operator const T *() const { return this->values; }
 
 		////////////////////////////////////////////////////////
 		//  Math operators
@@ -423,16 +424,16 @@ namespace ORUtils {
 			return Vector3<T>(this->x, this->y, this->z);
 		}
 
-		_CPU_AND_GPU_CODE_ const T *getValues() const { return this->v; }
+		_CPU_AND_GPU_CODE_ const T *getValues() const { return this->values; }
 		_CPU_AND_GPU_CODE_ Vector4<T> &setValues(const T *rhs) { this->x = rhs[0]; this->y = rhs[1]; this->z = rhs[2]; this->w = rhs[3]; return *this; }
 
 		// indexing operators
-		_CPU_AND_GPU_CODE_ T &operator [](int i) { return this->v[i]; }
-		_CPU_AND_GPU_CODE_ const T &operator [](int i) const { return this->v[i]; }
+		_CPU_AND_GPU_CODE_ T &operator [](int i) { return this->values[i]; }
+		_CPU_AND_GPU_CODE_ const T &operator [](int i) const { return this->values[i]; }
 
 		// type-cast operators
-		_CPU_AND_GPU_CODE_ operator T *() { return this->v; }
-		_CPU_AND_GPU_CODE_ operator const T *() const { return this->v; }
+		_CPU_AND_GPU_CODE_ operator T *() { return this->values; }
+		_CPU_AND_GPU_CODE_ operator const T *() const { return this->values; }
 
 		////////////////////////////////////////////////////////
 		//  Math operators
@@ -539,12 +540,12 @@ namespace ORUtils {
 		////////////////////////////////////////////////////////
 
 		_CPU_AND_GPU_CODE_ Vector6() {} // Default constructor
-		_CPU_AND_GPU_CODE_ explicit Vector6(const T &t) { this->v[0] = t; this->v[1] = t; this->v[2] = t; this->v[3] = t; this->v[4] = t; this->v[5] = t; } //Scalar constructor
-		_CPU_AND_GPU_CODE_ explicit Vector6(const T *tp) { this->v[0] = tp[0]; this->v[1] = tp[1]; this->v[2] = tp[2]; this->v[3] = tp[3]; this->v[4] = tp[4]; this->v[5] = tp[5]; } // Construct from array
-		_CPU_AND_GPU_CODE_ Vector6(const T v0, const T v1, const T v2, const T v3, const T v4, const T v5) { this->v[0] = v0; this->v[1] = v1; this->v[2] = v2; this->v[3] = v3; this->v[4] = v4; this->v[5] = v5; } // Construct from explicit values
-		_CPU_AND_GPU_CODE_ explicit Vector6(const Vector4_<T> &u, T v0, T v1) { this->v[0] = u.x; this->v[1] = u.y; this->v[2] = u.z; this->v[3] = u.w; this->v[4] = v0; this->v[5] = v1; }
-		_CPU_AND_GPU_CODE_ explicit Vector6(const Vector3_<T> &u, T v0, T v1, T v2) { this->v[0] = u.x; this->v[1] = u.y; this->v[2] = u.z; this->v[3] = v0; this->v[4] = v1; this->v[5] = v2; }
-		_CPU_AND_GPU_CODE_ explicit Vector6(const Vector2_<T> &u, T v0, T v1, T v2, T v3) { this->v[0] = u.x; this->v[1] = u.y; this->v[2] = v0; this->v[3] = v1; this->v[4] = v2, this->v[5] = v3; }
+		_CPU_AND_GPU_CODE_ explicit Vector6(const T &t) { this->values[0] = t; this->values[1] = t; this->values[2] = t; this->values[3] = t; this->values[4] = t; this->values[5] = t; } //Scalar constructor
+		_CPU_AND_GPU_CODE_ explicit Vector6(const T *tp) { this->values[0] = tp[0]; this->values[1] = tp[1]; this->values[2] = tp[2]; this->values[3] = tp[3]; this->values[4] = tp[4]; this->values[5] = tp[5]; } // Construct from array
+		_CPU_AND_GPU_CODE_ Vector6(const T v0, const T v1, const T v2, const T v3, const T v4, const T v5) { this->values[0] = v0; this->values[1] = v1; this->values[2] = v2; this->values[3] = v3; this->values[4] = v4; this->values[5] = v5; } // Construct from explicit values
+		_CPU_AND_GPU_CODE_ explicit Vector6(const Vector4_<T> &u, T v0, T v1) { this->values[0] = u.x; this->values[1] = u.y; this->values[2] = u.z; this->values[3] = u.w; this->values[4] = v0; this->values[5] = v1; }
+		_CPU_AND_GPU_CODE_ explicit Vector6(const Vector3_<T> &u, T v0, T v1, T v2) { this->values[0] = u.x; this->values[1] = u.y; this->values[2] = u.z; this->values[3] = v0; this->values[4] = v1; this->values[5] = v2; }
+		_CPU_AND_GPU_CODE_ explicit Vector6(const Vector2_<T> &u, T v0, T v1, T v2, T v3) { this->values[0] = u.x; this->values[1] = u.y; this->values[2] = v0; this->values[3] = v1; this->values[4] = v2, this->values[5] = v3; }
 
 		_CPU_AND_GPU_CODE_ inline Vector6<int> toIntRound() const {
 			return Vector6<int>((int)ROUND(this[0]), (int)ROUND(this[1]), (int)ROUND(this[2]), (int)ROUND(this[3]), (int)ROUND(this[4]), (int)ROUND(this[5]));
@@ -558,16 +559,16 @@ namespace ORUtils {
 			return Vector6<float>((float)this[0], (float)this[1], (float)this[2], (float)this[3], (float)this[4], (float)this[5]);
 		}
 
-		_CPU_AND_GPU_CODE_ const T *getValues() const { return this->v; }
+		_CPU_AND_GPU_CODE_ const T *getValues() const { return this->values; }
 		_CPU_AND_GPU_CODE_ Vector6<T> &setValues(const T *rhs) { this[0] = rhs[0]; this[1] = rhs[1]; this[2] = rhs[2]; this[3] = rhs[3]; this[4] = rhs[4]; this[5] = rhs[5]; return *this; }
 
 		// indexing operators
-		_CPU_AND_GPU_CODE_ T &operator [](int i) { return this->v[i]; }
-		_CPU_AND_GPU_CODE_ const T &operator [](int i) const { return this->v[i]; }
+		_CPU_AND_GPU_CODE_ T &operator [](int i) { return this->values[i]; }
+		_CPU_AND_GPU_CODE_ const T &operator [](int i) const { return this->values[i]; }
 
 		// type-cast operators
-		_CPU_AND_GPU_CODE_ operator T *() { return this->v; }
-		_CPU_AND_GPU_CODE_ operator const T *() const { return this->v; }
+		_CPU_AND_GPU_CODE_ operator T *() { return this->values; }
+		_CPU_AND_GPU_CODE_ operator const T *() const { return this->values; }
 
 		////////////////////////////////////////////////////////
 		//  Math operators
@@ -676,17 +677,17 @@ namespace ORUtils {
 		////////////////////////////////////////////////////////
 
 		_CPU_AND_GPU_CODE_ VectorX() { } // Default constructor
-		_CPU_AND_GPU_CODE_ explicit VectorX(const T &t) { for (int i = 0; i < s; i++) this->v[i] = t; } //Scalar constructor
-		_CPU_AND_GPU_CODE_ explicit VectorX(const T *tp) { for (int i = 0; i < s; i++) this->v[i] = tp[i]; } // Construct from array
+		_CPU_AND_GPU_CODE_ explicit VectorX(const T &t) { for (int i = 0; i < s; i++) this->values[i] = t; } //Scalar constructor
+		_CPU_AND_GPU_CODE_ explicit VectorX(const T *tp) { for (int i = 0; i < s; i++) this->values[i] = tp[i]; } // Construct from array
 
 		// indexing operators
-		_CPU_AND_GPU_CODE_ T &operator [](int i) { return this->v[i]; }
-		_CPU_AND_GPU_CODE_ const T &operator [](int i) const { return this->v[i]; }
+		_CPU_AND_GPU_CODE_ T &operator [](int i) { return this->values[i]; }
+		_CPU_AND_GPU_CODE_ const T &operator [](int i) const { return this->values[i]; }
 
 
 		_CPU_AND_GPU_CODE_ inline VectorX<int, s> toIntRound() const {
 			VectorX<int, s> retv;
-			for (int i = 0; i < s; i++) retv[i] = (int)ROUND(this->v[i]);
+			for (int i = 0; i < s; i++) retv[i] = (int)ROUND(this->values[i]);
 			return retv;
 		}
 
@@ -699,21 +700,21 @@ namespace ORUtils {
 
 		_CPU_AND_GPU_CODE_ inline VectorX<float, s> toFloat() const {
 			VectorX<float, s> retv;
-			for (int i = 0; i < s; i++) retv[i] = (float) this->v[i];
+			for (int i = 0; i < s; i++) retv[i] = (float) this->values[i];
 			return retv;
 		}
 
-		_CPU_AND_GPU_CODE_ const T *getValues() const { return this->v; }
-		_CPU_AND_GPU_CODE_ VectorX<T, s> &setValues(const T *rhs) { for (int i = 0; i < s; i++) this->v[i] = rhs[i]; return *this; }
+		_CPU_AND_GPU_CODE_ const T *getValues() const { return this->values; }
+		_CPU_AND_GPU_CODE_ VectorX<T, s> &setValues(const T *rhs) { for (int i = 0; i < s; i++) this->values[i] = rhs[i]; return *this; }
 		_CPU_AND_GPU_CODE_ void Clear(T v){
 			for (int i = 0; i < s; i++)
-				this->v[i] = v;
+				this->values[i] = v;
 		}
 
 
 		// type-cast operators
-		_CPU_AND_GPU_CODE_ operator T *() { return this->v; }
-		_CPU_AND_GPU_CODE_ operator const T *() const { return this->v; }
+		_CPU_AND_GPU_CODE_ operator T *() { return this->values; }
+		_CPU_AND_GPU_CODE_ operator const T *() const { return this->values; }
 
 		////////////////////////////////////////////////////////
 		//  Math operators

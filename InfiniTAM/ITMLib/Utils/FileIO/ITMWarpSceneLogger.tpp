@@ -119,7 +119,7 @@ void ITMWarpSceneLogger<TVoxel, TIndex>::ExtractBoundsFromSliceStringIdentifier(
 		}
 		coordinates[iCoord] = coordinate;
 	}
-	memcpy(bounds.v, coordinates, sizeof(int) * 6);
+	memcpy(bounds.values, coordinates, sizeof(int) * 6);
 }
 
 template<typename TVoxel, typename TIndex>
