@@ -44,8 +44,8 @@ public:
 	void AddFramewiseWarpToWarp(
 			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, bool clearFramewiseWarp) override;
 	void CalculateWarpGradient(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-		                           ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, bool hasFocusCoordinates,
-		                           const Vector3i& focusCoordinates, int sourceFieldIndex, bool restrictZTrackingForDebugging) override;
+		                           ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceFieldIndex,
+		                           bool restrictZTrackingForDebugging) override;
 	void SmoothWarpGradient(
 			ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
 			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, int sourceFieldIndex) override;
@@ -77,9 +77,8 @@ public:
 	void AddFramewiseWarpToWarp(
 			ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene, bool clearFramewiseWarp) override;
 	void CalculateWarpGradient(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-	                           ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, bool hasFocusCoordinates,
-	                           const Vector3i& focusCoordinates, int sourceFieldIndex,
-	                           bool restrictZTrackingForDebugging) override;
+		                           ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceFieldIndex,
+		                           bool restrictZTrackingForDebugging) override;
 	void SmoothWarpGradient(ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene,
 	                        ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 	                        int sourceFieldIndex) override;

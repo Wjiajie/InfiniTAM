@@ -30,12 +30,10 @@ public:
 	                              ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
 	                              int liveSourceFieldIndex) override;
 	void WarpScene(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-	               ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex,
-	               bool hasFocusCoordinates, Vector3i focusCoordinates) override;
-	void UpdateWarpedScene(
-			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-			ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex,
-			bool hasFocusCoordinates, Vector3i focusCoordinates) override;
+	               ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) override;
+	void UpdateWarpedScene(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+	                       ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex,
+	                       int targetSdfIndex) override;
 protected:
 	void IntegrateIntoScene(ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view,
 	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);
@@ -61,12 +59,11 @@ public:
 	                              ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene,
 	                              int liveSourceFieldIndex) override;
 	void WarpScene(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-	               ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex,
-	               bool hasFocusCoordinates, Vector3i focusCoordinates) override;
-	void UpdateWarpedScene(
-			ITMScene <TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-			ITMScene <TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex,
-			bool hasFocusCoordinates, Vector3i focusCoordinates) override;
+	               ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex,
+	               int targetSdfIndex) override;
+	void UpdateWarpedScene(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
+	                       ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex,
+	                       int targetSdfIndex) override;
 
 	ITMDynamicSceneReconstructionEngine_CPU() = default;
 	~ITMDynamicSceneReconstructionEngine_CPU() = default;

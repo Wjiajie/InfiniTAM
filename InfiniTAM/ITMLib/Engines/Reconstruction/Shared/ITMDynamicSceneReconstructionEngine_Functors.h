@@ -84,10 +84,9 @@ struct TrilinearInterpolationFunctor {
 	 * \param sdfSourceScene
 	 * \param warpSourceScene
 	 */
-	TrilinearInterpolationFunctor(
-			ITMScene<TVoxelSdf, TIndex>* sdfSourceScene,
-			ITMScene<TVoxelWarpSource, TIndex>* warpSourceScene,
-			int sourceSdfIndex, int targetSdfIndex, bool hasFocusCoordinates, Vector3i focusCoordinates) :
+	TrilinearInterpolationFunctor(ITMScene<TVoxelSdf, TIndex>* sdfSourceScene,
+	                              ITMScene<TVoxelWarpSource, TIndex>* warpSourceScene, int sourceSdfIndex,
+	                              int targetSdfIndex) :
 
 			sdfSourceScene(sdfSourceScene),
 			sdfSourceVoxels(sdfSourceScene->localVBA.GetVoxelBlocks()),
@@ -100,8 +99,8 @@ struct TrilinearInterpolationFunctor {
 			warpSourceCache(),
 			sourceSdfIndex(sourceSdfIndex),
 			targetSdfIndex(targetSdfIndex),
-			hasFocusCoordinates(hasFocusCoordinates),
-			focusCoordinates(focusCoordinates)
+			hasFocusCoordinates(ITMLibSettings::Instance().FocusCoordinatesAreSpecified()),
+			focusCoordinates(ITMLibSettings::Instance().GetFocusCoordinates())
 	{}
 
 

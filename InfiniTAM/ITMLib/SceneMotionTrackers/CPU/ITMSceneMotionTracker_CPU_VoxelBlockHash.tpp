@@ -92,15 +92,14 @@ inline static void PrintSceneStatistics(
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::CalculateWarpGradient(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, bool hasFocusCoordinates,
-		const Vector3i& focusCoordinates, int sourceFieldIndex, bool restrictZTrackingForDebugging) {
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::CalculateWarpGradient(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+                                                                                                 ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceFieldIndex,
+                                                                                                 bool restrictZTrackingForDebugging) {
 
 	StaticVoxelTraversal_CPU<ClearOutGradientStaticFunctor<TVoxelCanonical>>(canonicalScene);
 	hashManager.AllocateCanonicalFromLive(canonicalScene, liveScene);
-	calculateGradientFunctor.PrepareForOptimization(liveScene, canonicalScene, sourceFieldIndex, hasFocusCoordinates,
-	                                                focusCoordinates, restrictZTrackingForDebugging);
+	calculateGradientFunctor.PrepareForOptimization(liveScene, canonicalScene, sourceFieldIndex,
+	                                                restrictZTrackingForDebugging);
 
 	DualVoxelPositionTraversal_CPU(liveScene, canonicalScene, calculateGradientFunctor);
 

@@ -38,8 +38,8 @@ class ITMDynamicSceneReconstructionEngine
 
 public:
 
-	ITMDynamicSceneReconstructionEngine(void) = default;
-	virtual ~ITMDynamicSceneReconstructionEngine(void) = default;
+	ITMDynamicSceneReconstructionEngine() = default;
+	virtual ~ITMDynamicSceneReconstructionEngine() = default;
 
 
 	virtual void UpdateVisibleList(ITMScene<TVoxelLive, TIndex>* scene, const ITMView* view, const ITMTrackingState* trackingState,const ITMRenderState* renderState, bool resetVisibleList) = 0;
@@ -65,7 +65,6 @@ public:
 	                                      ITMScene<TVoxelLive, TIndex>* liveScene,
 	                                      int liveSourceFieldIndex) = 0;
 
-
 	/**
 	 * \brief apply warp vectors to live scene: compute the the target SDF fields in live scene using trilinear lookup
 	 * at corresponding warps from the source SDF fields in live scene
@@ -74,9 +73,8 @@ public:
 	 * \param sourceSdfIndex index of the source SDF field in each live voxel
 	 * \param targetSdfIndex index of the target SDF field in each live voxel
 	 */
-	virtual void WarpScene(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	ITMScene<TVoxelLive, TIndex>* liveScene, int sourceSdfIndex, int targetSdfIndex,
-	bool hasFocusCoordinates, Vector3i focusCoordinates) = 0;
+	virtual void WarpScene(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+	                       ITMScene <TVoxelLive, TIndex>* liveScene, int sourceSdfIndex, int targetSdfIndex) = 0;
 
 	/**
 	 * \brief apply warp update vectors to live scene: compute the the target SDF fields in live scene using trilinear lookup
@@ -86,16 +84,14 @@ public:
 	 * \param sourceSdfIndex index of the source SDF field in each live voxel
 	 * \param targetSdfIndex index of the target SDF field in each live voxel
 	 */
-	virtual void UpdateWarpedScene(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-			ITMScene <TVoxelLive, TIndex>* liveScene, int sourceSdfIndex, int targetSdfIndex,
-			bool hasFocusCoordinates, Vector3i focusCoordinates) = 0;
+	virtual void UpdateWarpedScene(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
+	                               ITMScene <TVoxelLive, TIndex>* liveScene, int sourceSdfIndex,
+	                               int targetSdfIndex) = 0;
 protected:
 
 
 	/** Update the voxel blocks by integrating depth and
-	possibly colour information from the given view.
-*/
+	possibly colour information from the given view.*/
 	virtual void IntegrateIntoScene(ITMScene<TVoxelLive,TIndex> *scene, const ITMView *view,
 	                                const ITMTrackingState *trackingState, const ITMRenderState *renderState) = 0;
 

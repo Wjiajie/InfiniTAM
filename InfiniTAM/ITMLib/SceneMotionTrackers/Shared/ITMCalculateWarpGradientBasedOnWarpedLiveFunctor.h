@@ -113,12 +113,13 @@ public:
 			liveCache(),
 			canonicalCache(),
 			parameters(parameters),
-			switches(switches) {}
+			switches(switches),
+			hasFocusCoordinates(ITMLibSettings::Instance().FocusCoordinatesAreSpecified()),
+			focusCoordinates(ITMLibSettings::Instance().GetFocusCoordinates())
+			{}
 
-	void PrepareForOptimization(ITMScene<TVoxelLive, TIndex>* liveScene,
-	                            ITMScene<TVoxelCanonical, TIndex>* canonicalScene, int sourceSdfIndex,
-	                            bool hasFocusCoordinates, Vector3i focusCoordinates,
-	                            bool restrictZtrackingForDebugging) {
+	void PrepareForOptimization(ITMScene<TVoxelLive, TIndex>* liveScene, ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+		                            int sourceSdfIndex, bool restrictZtrackingForDebugging) {
 		ResetStatistics();
 		this->liveScene = liveScene;
 		this->liveVoxels = liveScene->localVBA.GetVoxelBlocks(),
@@ -126,8 +127,6 @@ public:
 		this->canonicalScene = canonicalScene;
 		this->canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
 		this->canonicalIndexData = canonicalScene->index.getIndexData();
-		this->hasFocusCoordinates = hasFocusCoordinates;
-		this->focusCoordinates = focusCoordinates;
 		this->restrictZtrackingForDebugging = restrictZtrackingForDebugging;
 		this->sourceSdfIndex = sourceSdfIndex;
 	}

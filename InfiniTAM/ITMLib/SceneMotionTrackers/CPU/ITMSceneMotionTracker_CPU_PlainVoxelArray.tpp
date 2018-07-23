@@ -37,14 +37,13 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ITMS
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::CalculateWarpGradient(
-		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, bool hasFocusCoordinates,
-		const Vector3i& focusCoordinates, int sourceFieldIndex, bool restrictZTrackingForDebugging) {
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::CalculateWarpGradient(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
+                                                                                                  ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceFieldIndex,
+                                                                                                  bool restrictZTrackingForDebugging) {
 
 	StaticVoxelTraversal_CPU<ClearOutGradientStaticFunctor<TVoxelCanonical>>(canonicalScene);
-	calculateGradientFunctor.PrepareForOptimization(liveScene, canonicalScene, sourceFieldIndex, hasFocusCoordinates,
-	                                                focusCoordinates, restrictZTrackingForDebugging);
+	calculateGradientFunctor.PrepareForOptimization(liveScene, canonicalScene, sourceFieldIndex,
+	                                                restrictZTrackingForDebugging);
 
 	DualVoxelPositionTraversal_CPU(liveScene, canonicalScene, calculateGradientFunctor);
 

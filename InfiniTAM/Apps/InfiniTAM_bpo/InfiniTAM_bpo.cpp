@@ -1,7 +1,9 @@
 // Copyright 2014-2017 Oxford University Innovation Limited and the authors of InfiniTAM
 
 //TODO: not supported on platforms besides Linux, adjust via CMake -Greg(GitHub: Algomorph)
+#ifndef WIN32
 #include <X11/Xlib.h>
+#endif
 
 //stdlib
 #include <cstdlib>
@@ -498,8 +500,9 @@ int main(int argc, char** argv) {
 		}
 
 		//TODO (see top of file)
+#ifndef WIN32
 		XInitThreads();
-		
+#endif
 		UIEngine_BPO::Instance().Initialise(argc, argv, imageSource, imuSource, mainEngine,
 		                                    settings.analysisSettings.outputPath.c_str(), settings.deviceType,
 		                                    processNFramesOnLaunch, skipFirstNFrames, recordReconstructionToVideo,

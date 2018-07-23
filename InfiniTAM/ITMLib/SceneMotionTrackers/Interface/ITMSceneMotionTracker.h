@@ -93,9 +93,9 @@ public:
 	virtual ~ITMSceneMotionTracker() = default;
 //============================= MEMBER FUNCTIONS =======================================================================
 	virtual void
-	CalculateWarpGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
-	                      bool hasFocusCoordinates, const Vector3i& focusCoordinates, int sourceFieldIndex,
-	                      bool restrictZTrackingForDebugging) = 0;
+	CalculateWarpGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+		                      ITMScene<TVoxelLive, TIndex>* liveScene, int sourceFieldIndex,
+		                      bool restrictZTrackingForDebugging) = 0;
 	virtual void SmoothWarpGradient(
 			ITMScene<TVoxelLive, TIndex>* liveScene,
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, int sourceFieldIndex) = 0;
