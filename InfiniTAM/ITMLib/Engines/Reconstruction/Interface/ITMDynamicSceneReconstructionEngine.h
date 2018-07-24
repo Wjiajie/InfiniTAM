@@ -77,6 +77,14 @@ public:
 	                       ITMScene <TVoxelLive, TIndex>* liveScene, int sourceSdfIndex, int targetSdfIndex) = 0;
 
 	/**
+	 * \brief Copy the live indexed scene from one index to another
+	 * \param liveScene
+	 * \param sourceSdfIndex
+	 * \param targetSdfIndex
+	 */
+	virtual void CopyIndexedScene(ITMScene <TVoxelLive, TIndex>* liveScene, int sourceSdfIndex, int targetSdfIndex) = 0;
+
+	/**
 	 * \brief apply warp update vectors to live scene: compute the the target SDF fields in live scene using trilinear lookup
 	 * at corresponding warp updates from the source SDF fields in live scene
 	 * \param canonicalScene canonical scene, where the warp update vectors are specified

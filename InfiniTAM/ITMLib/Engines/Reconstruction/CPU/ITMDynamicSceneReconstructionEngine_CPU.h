@@ -34,6 +34,7 @@ public:
 	void UpdateWarpedScene(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 	                       ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex,
 	                       int targetSdfIndex) override;
+	void CopyIndexedScene(ITMScene <TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) override;
 protected:
 	void IntegrateIntoScene(ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view,
 	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);
@@ -61,6 +62,7 @@ public:
 	void WarpScene(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 	               ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex,
 	               int targetSdfIndex) override;
+	void CopyIndexedScene(ITMScene <TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) override;
 	void UpdateWarpedScene(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 	                       ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex,
 	                       int targetSdfIndex) override;

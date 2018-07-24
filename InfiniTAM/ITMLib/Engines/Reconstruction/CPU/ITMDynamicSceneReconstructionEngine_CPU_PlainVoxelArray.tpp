@@ -129,10 +129,19 @@ ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVox
 	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
 	VoxelTraversal_CPU(liveScene, flagClearFunctor);
 
-	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray, LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>
+	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray,
+			LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>
 			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
 
 	// Interpolate to obtain the new live frame values (at target index)
 	DualVoxelPositionTraversal_CPU(liveScene, canonicalScene, trilinearInterpolationFunctor);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::CopyIndexedScene(
+		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+	CopyIndexedSceneFunctor<TVoxelLive> copyIndexedSceneFunctor(sourceSdfIndex, targetSdfIndex);
+	VoxelPositionTraversal_CPU(liveScene,copyIndexedSceneFunctor);
+
 }
 // endregion ===========================================================================================================

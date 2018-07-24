@@ -149,3 +149,17 @@ private:
 	const int targetSdfIndex;
 };
 
+template<typename TVoxel>
+struct CopyIndexedSceneFunctor{
+	CopyIndexedSceneFunctor(int sourceIndex, int destinationIndex):
+	sourceIndex(sourceIndex), destinationIndex(destinationIndex)
+	{}
+	void operator()(TVoxel& voxel,Vector3i voxelPosition) {
+		voxel.sdf_values[destinationIndex] = voxel.sdf_values[sourceIndex];
+		voxel.flag_values[destinationIndex] = voxel.flag_values[sourceIndex];
+	}
+private:
+	int sourceIndex;
+	int destinationIndex;
+};
+

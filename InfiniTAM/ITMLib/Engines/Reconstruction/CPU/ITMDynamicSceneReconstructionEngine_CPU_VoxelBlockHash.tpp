@@ -217,4 +217,11 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 		const ITMRenderState* renderState, bool resetVisibleList) {
 	hashManager.AllocateLiveSceneFromDepth(scene, view, trackingState, renderState, true, resetVisibleList);
 }
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::CopyIndexedScene(
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+	CopyIndexedSceneFunctor<TVoxelLive> copyIndexedSceneFunctor(sourceSdfIndex, targetSdfIndex);
+	VoxelPositionTraversal_CPU(liveScene,copyIndexedSceneFunctor);
+}
 // endregion ===========================================================================================================
