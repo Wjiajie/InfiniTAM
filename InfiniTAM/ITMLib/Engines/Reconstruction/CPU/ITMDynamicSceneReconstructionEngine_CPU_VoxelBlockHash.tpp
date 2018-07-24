@@ -2,13 +2,15 @@
 
 #include <cfloat>
 #include "ITMDynamicSceneReconstructionEngine_CPU.h"
-#include "../../Manipulation/ITMSceneManipulation.h"
+#include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
-#include "../../Manipulation/ITMSceneManipulation.h"
+#include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
 #include "../../../Objects/Scene/ITMTrilinearInterpolation.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Functors.h"
+#include "../../Common/ITMCommonFunctors.h"
+
 using namespace ITMLib;
 
 
@@ -47,6 +49,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 	int* visibleEntryIds = renderState_vh->GetVisibleEntryIDs();
 	int noVisibleEntries = renderState_vh->noVisibleEntries;
 
+
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -79,6 +82,8 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 
 					Vector3i pos(globalPos.x + x, globalPos.y + y, globalPos.z + z);
 
+
+
 					ComputeUpdatedLiveVoxelInfo<
 							TVoxelLive::hasColorInformation,
 							TVoxelLive::hasConfidenceInformation,
@@ -96,7 +101,7 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::FuseLiveIntoCanonicalSdf(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int liveSourceFieldIndex) {
-	hashManager.AllocateCanonicalFromLive(canonicalScene,liveScene);
+	this->hashManager.AllocateCanonicalFromLive(canonicalScene,liveScene);
 	FusionFunctor<TVoxelLive,TVoxelCanonical> fusionFunctor(canonicalScene->sceneParams->maxW,liveSourceFieldIndex);
 	DualVoxelTraversal_CPU(liveScene,canonicalScene,fusionFunctor);
 }
@@ -106,33 +111,13 @@ void
 ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::GenerateRawLiveSceneFromView(
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState) {
-	liveSceneManager.ResetScene(scene);
-	hashManager.AllocateLiveSceneFromDepth(scene,view,trackingState,renderState);
+	this->liveSceneManager.ResetScene(scene);
+	this->hashManager.AllocateLiveSceneFromDepth(scene,view,trackingState,renderState);
 	this->IntegrateIntoScene(scene,view,trackingState,renderState);
 }
 
 // endregion ===========================================================================================================
 // region ===================================== APPLY WARP/UPDATE TO LIVE ==============================================
-
-
-
-// region ===================================== VOXEL LOOKUPS ==========================================================
-//TODO: take care of DRY violations (this matches equivalent region in ITMDynamicHashManagementEngine_CPU.tpp)
-template <typename TVoxel>
-struct LookupBasedOnWarpStaticFunctor{
-	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
-		return position.toFloat() + voxel.warp;
-	}
-};
-
-
-template <typename TVoxel>
-struct LookupBasedOnWarpUpdateStaticFunctor{
-	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
-		return position.toFloat() + voxel.warp_update;
-	}
-};
-// endregion ===========================================================================================================
 
 /**
  * \brief Uses trilinear interpolation of the live frame at [canonical voxel positions + scaled engergy gradient]

@@ -15,11 +15,11 @@
 //  ================================================================
 #pragma once
 
-#include "../../Objects/Scene/ITMScene.h"
-#include "../../ITMLibDefines.h"
-#include "../../Utils/ITMHashBlockProperties.h"
-#include "../../Objects/Scene/ITMRepresentationAccess.h"
-#include "../../Utils/ITMPrintHelpers.h"
+#include "../../../Objects/Scene/ITMScene.h"
+#include "../../../ITMLibDefines.h"
+#include "../../../Utils/ITMHashBlockProperties.h"
+#include "../../../Objects/Scene/ITMRepresentationAccess.h"
+#include "../../../Utils/ITMPrintHelpers.h"
 
 //TODO: Make GPU versions -Greg (GitHub: Algomorph)
 

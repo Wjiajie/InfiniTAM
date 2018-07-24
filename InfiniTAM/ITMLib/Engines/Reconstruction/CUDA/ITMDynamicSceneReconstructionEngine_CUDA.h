@@ -1,26 +1,38 @@
-// Copyright 2014-2017 Oxford University Innovation Limited and the authors of InfiniTAM
+//  ================================================================
+//  Created by Gregory Kramida on 7/24/18.
+//  Copyright (c) 2018-2025 Gregory Kramida
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
 
+//  http://www.apache.org/licenses/LICENSE-2.0
+
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//  ================================================================
 #pragma once
 
-#include "../../../SceneMotionTrackers/Interface/ITMSceneMotionTracker.h"
 #include "../Interface/ITMDynamicSceneReconstructionEngine.h"
 #include "../../../Objects/Scene/ITMPlainVoxelArray.h"
-#include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "ITMDynamicHashManagementEngine_CPU.h"
+#include "../../Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 
 
 namespace ITMLib {
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-class ITMDynamicSceneReconstructionEngine_CPU
+class ITMDynamicSceneReconstructionEngine_CUDA
 		: public ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex> {
 };
 
+
 template<typename TVoxelCanonical, typename TVoxelLive>
-class ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>
+class ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>
 		: public ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash> {
 public:
-	ITMDynamicSceneReconstructionEngine_CPU() = default;
-	~ITMDynamicSceneReconstructionEngine_CPU() = default;
+	ITMDynamicSceneReconstructionEngine_CUDA() = default;
+	~ITMDynamicSceneReconstructionEngine_CUDA() = default;
 	void UpdateVisibleList(ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view,
 	                       const ITMTrackingState* trackingState, const ITMRenderState* renderState,
 	                       bool resetVisibleList) override;
@@ -42,13 +54,14 @@ protected:
 
 
 private:
-	ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive> hashManager;
-	ITMSceneManipulationEngine_CPU<TVoxelLive, ITMVoxelBlockHash> liveSceneManager;
-
+	//ITMDynamicHashManagementEngine_CUDA<TVoxelCanonical, TVoxelLive> hashManager;
+	ITMSceneManipulationEngine_CUDA<TVoxelLive, ITMVoxelBlockHash> liveSceneManager;
 };
 
+
+
 template<typename TVoxelCanonical, typename TVoxelLive>
-class ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>
+class ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>
 		: public ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray> {
 public:
 	void UpdateVisibleList(ITMScene<TVoxelLive, ITMPlainVoxelArray>* scene, const ITMView* view,
@@ -68,12 +81,15 @@ public:
 	                       ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex,
 	                       int targetSdfIndex) override;
 
-	ITMDynamicSceneReconstructionEngine_CPU() = default;
-	~ITMDynamicSceneReconstructionEngine_CPU() = default;
+	ITMDynamicSceneReconstructionEngine_CUDA() = default;
+	~ITMDynamicSceneReconstructionEngine_CUDA() = default;
 protected:
 	void IntegrateIntoScene(ITMScene<TVoxelLive, ITMPlainVoxelArray>* scene, const ITMView* view,
 	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);
 private:
-	ITMSceneManipulationEngine_CPU<TVoxelLive, ITMPlainVoxelArray> liveSceneManager;
+	ITMSceneManipulationEngine_CUDA<TVoxelLive, ITMPlainVoxelArray> liveSceneManager;
 };
-}
+
+
+
+}//namespace ITMLib

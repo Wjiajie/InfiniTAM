@@ -23,7 +23,7 @@
 #include "../Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../Engines/Swapping/ITMSwappingEngineFactory.h"
 #include "../SceneMotionTrackers/ITMSceneMotionTrackerFactory.h"
-#include "../Engines/Manipulation/ITMSceneManipulation.h"
+#include "../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "../Utils/ITMPrintHelpers.h"
 #include "../Utils/Visualization/ITMSceneSliceVisualizer2D.h"

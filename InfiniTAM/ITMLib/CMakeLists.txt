@@ -27,6 +27,7 @@ find_package(Boost REQUIRED filesystem)
 
 ##
 set(ITMLIB_TOPLEVEL_CPU_SOURCES
+    ## VBH - CPU
     Instantiations/VoxelBlockHash/SceneManipulationCPUInstantiations.cpp
     Instantiations/VoxelBlockHash/CPUInstantiations.cpp
     Instantiations/VoxelBlockHash/DynamicFusionCPUInstantiations.cpp
@@ -37,6 +38,7 @@ set(ITMLIB_TOPLEVEL_CPU_SOURCES
     Instantiations/VoxelBlockHash/SceneMotionTrackerCPUInstantiation.cpp
     Instantiations/VoxelBlockHash/ITMScene3DSliceVisualizerInstantiations.cpp
 
+    ## PVA - CPU
     Instantiations/PlainVoxelArray/SceneManipulationCPUInstantiations.cpp
     Instantiations/PlainVoxelArray/CPUInstantiations.cpp
     Instantiations/PlainVoxelArray/DynamicFusionCPUInstantiations.cpp
@@ -55,6 +57,8 @@ set(ITMLIB_TOPLEVEL_CUDA_SOURCES
     Instantiations/PlainVoxelArray/CUDAInstantiations.cu
     Instantiations/PlainVoxelArray/DynamicFusionCUDAInstantiations.cu
     Instantiations/PlainVoxelArray/SceneMotionTrackerCUDAInstantiation.cu
+    Instantiations/PlainVoxelArray/SceneManipulationCUDAInstantiations.cu
+    Instantiations/PlainVoxelArray/DynamicSceneReconstructionEngineCUDAInstantiations.cu
     )
 
 set(ITMLIB_TOPLEVEL_HEADERS
@@ -84,6 +88,11 @@ set(ITMLIB_CORE_HEADERS
     Core/ITMDynamicEngine.h
     )
 
+#======================================= COMMON TO MULTIPLE ENGINES ====================================================
+set(ITMLIB_ENGINES_COMMON_HEADERS
+    Engines/Common/ITMCommonFunctors.h
+    )
+#======================================= LOW-LEVEL ENGINES =============================================================
 ##
 set(ITMLIB_ENGINES_LOWLEVEL_SOURCES
     Engines/LowLevel/ITMLowLevelEngineFactory.cpp
@@ -121,6 +130,28 @@ set(ITMLIB_ENGINES_LOWLEVEL_SHARED_HEADERS
     Engines/LowLevel/Shared/ITMLowLevelEngine_Shared.h
     )
 
+#====================================== SCENE MANIPULATION ENGINES =====================================================
+##
+set(ITMLIB_ENGINES_MANIPULATION_CPU_SOURCES
+    Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.cpp
+    Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.tpp
+    )
+
+set(ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS
+    Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h
+    )
+
+##
+set(ITMLIB_ENGINES_MANIPULATION_CUDA_SOURCES
+    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.tcu
+    )
+
+set(ITMLIB_ENGINES_MANIPULATION_CUDA_HEADERS
+    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h
+    )
+
+
+#====================================== MESHING ENGINES ================================================================
 ##
 set(ITMLIB_ENGINES_MESHING_HEADERS
     Engines/Meshing/ITMMeshingEngineFactory.h
@@ -205,11 +236,14 @@ set(ITMLIB_ENGINES_RECONSTRUCTION_CPU_HEADERS
 set(ITMLIB_ENGINES_RECONSTRUCTION_CUDA_SOURCES
     Engines/Reconstruction/CUDA/ITMSceneReconstructionEngine_CUDA.tcu
     Engines/Reconstruction/CUDA/ITMSurfelSceneReconstructionEngine_CUDA.tcu
+    Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA_PlainVoxelArray.tcu
+    Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA_VoxelBlockHash.tpp
     )
 
 set(ITMLIB_ENGINES_RECONSTRUCTION_CUDA_HEADERS
     Engines/Reconstruction/CUDA/ITMSceneReconstructionEngine_CUDA.h
     Engines/Reconstruction/CUDA/ITMSurfelSceneReconstructionEngine_CUDA.h
+    Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA.h
     )
 
 ##
@@ -428,14 +462,6 @@ set(ITMLIB_OBJECTS_SCENE_HEADERS
     ../Tests/TestUtils.cpp
     ../Tests/TestUtils.tpp
     ../Tests/Instantiations.cpp
-#TODO: move the manipilation sources & header to their own CMAKE variables -Greg(GitHub: Algomorph)
-    Engines/Manipulation/ITMSceneManipulation.h
-    )
-
-##
-set(ITMLIB_OBJECTS_SCENE_SOURCES
-    Engines/Manipulation/ITMSceneManipulation.cpp
-    Engines/Manipulation/ITMSceneManipulation.tpp
     )
 
 ##
@@ -646,6 +672,8 @@ set(sources
     ${ITMLIB_ENGINES_LOWLEVEL_SOURCES}
     ${ITMLIB_ENGINES_LOWLEVEL_CPU_SOURCES}
     ${ITMLIB_ENGINES_LOWLEVEL_CUDA_SOURCES}
+    ${ITMLIB_ENGINES_MANIPULATION_CPU_SOURCES}
+    ${ITMLIB_ENGINES_MANIPULATION_CUDA_SOURCES}
     ${ITMLIB_ENGINES_MESHING_CPU_SOURCES}
     ${ITMLIB_ENGINES_MESHING_CUDA_SOURCES}
     ${ITMLIB_ENGINES_MULTISCENE_SOURCES}
@@ -681,9 +709,12 @@ set(sources
 set(headers
     ${ITMLIB_TOPLEVEL_HEADERS}
     ${ITMLIB_CORE_HEADERS}
+    ${ITMLIB_ENGINES_COMMON_HEADERS}
     ${ITMLIB_ENGINES_LOWLEVEL_HEADERS}
     ${ITMLIB_ENGINES_LOWLEVEL_CPU_HEADERS}
     ${ITMLIB_ENGINES_LOWLEVEL_CUDA_HEADERS}
+    ${ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS}
+    ${ITMLIB_ENGINES_MANIPULATION_CUDA_HEADERS}
     ${ITMLIB_ENGINES_LOWLEVEL_INTERFACE_HEADERS}
     ${ITMLIB_ENGINES_LOWLEVEL_SHARED_HEADERS}
     ${ITMLIB_ENGINES_MESHING_HEADERS}

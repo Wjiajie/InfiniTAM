@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 5/22/18.
+//  Created by Gregory Kramida on 7/24/18.
 //  Copyright (c) 2018-2025 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -13,17 +13,23 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+#pragma once
 
-#include "../../ITMLibDefines.h"
+// region ===================================== VOXEL LOOKUPS ==========================================================
+template <typename TVoxel>
+struct LookupBasedOnWarpStaticFunctor{
+	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
+		return position.toFloat() + voxel.warp;
+	}
+};
 
-//Note: ".tpp" files have to be included for all explicit instantiations in order to link properly
-#include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.tpp"
-#include "../../Objects/Scene/ITMScene.h"
 
-using namespace ITMLib;
+template <typename TVoxel>
+struct LookupBasedOnWarpUpdateStaticFunctor{
+	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
+		return position.toFloat() + voxel.warp_update;
+	}
+};
+// endregion ===========================================================================================================
 
-//scene manipulation functions
 
-template class ITMSceneManipulationEngine_CPU<ITMVoxelCanonical,ITMPlainVoxelArray>;
-template class ITMSceneManipulationEngine_CPU<ITMVoxelLive,ITMPlainVoxelArray>;
-template class ITMTwoSceneManipulationEngine_CPU<ITMVoxelCanonical,ITMVoxelLive,ITMPlainVoxelArray>;

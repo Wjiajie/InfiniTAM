@@ -52,8 +52,7 @@ struct ITMDynamicSceneReconstructionEngineFactory
 				break;
 			case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-				DIEWITHEXCEPTION_REPORTLOCATION("Not yet implemented");
-				//sceneRecoEngine = new ITMSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive,TIndex>;
+				sceneRecoEngine = new ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, TIndex>;
 #endif
 				break;
 			case ITMLibSettings::DEVICE_METAL:

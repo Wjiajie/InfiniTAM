@@ -17,7 +17,7 @@
 #pragma once
 
 #include "ITMScene.h"
-#include "../../Engines/Manipulation/ITMSceneManipulation.h"
+#include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 
 namespace ITMLib {
 

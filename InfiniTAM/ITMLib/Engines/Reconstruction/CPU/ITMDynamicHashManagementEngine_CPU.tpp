@@ -14,12 +14,12 @@
 //  limitations under the License.
 //  ================================================================
 #include "ITMDynamicHashManagementEngine_CPU.h"
-#include "../../Manipulation/ITMSceneManipulation.h"
+#include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../../Utils/ITMHashBlockProperties.h"
 #include "../Shared/ITMDynamicHashManagementEngine_Shared.h"
 #include "../Shared/ITMSceneReconstructionEngine_Shared.h"
-#include "../../Manipulation/ITMSceneManipulation.h"
+#include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
 
 

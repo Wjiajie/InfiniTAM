@@ -17,7 +17,7 @@
 #include "../../ITMLibDefines.h"
 
 //Note: ".tpp" files have to be included for all explicit instantiations in order to link properly
-#include "../../Engines/Manipulation/ITMSceneManipulation.tpp"
+#include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.tpp"
 #include "../../Objects/Scene/ITMScene.h"
 
 using namespace ITMLib;

@@ -36,7 +36,7 @@
 #include "../../Objects/Scene/ITMScene.h"
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
 #include "ITMVisualizationWindowManager.h"
-#include "../../Engines/Manipulation/ITMSceneManipulation.h"
+#include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 
 using namespace ITMLib;
 

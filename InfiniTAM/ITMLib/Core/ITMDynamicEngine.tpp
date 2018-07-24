@@ -16,7 +16,7 @@
 //#define OUTPUT_TRAJECTORY_QUATERNIONS
 
 #include "../../ORUtils/FileUtils.h"
-#include "../Engines/Manipulation/ITMSceneManipulation.h"
+#include "../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 
 using namespace ITMLib;
 

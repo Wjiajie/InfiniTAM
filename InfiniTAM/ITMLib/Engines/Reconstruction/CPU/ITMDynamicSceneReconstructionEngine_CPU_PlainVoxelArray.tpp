@@ -18,6 +18,8 @@
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
 #include "../../../Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h"
 #include "../../../Utils/Analytics/ITMSceneStatisticsCalculator.h"
+#include "../Shared/ITMDynamicSceneReconstructionEngine_Functors.h"
+#include "../../Common/ITMCommonFunctors.h"
 
 using namespace ITMLib;
 
@@ -48,7 +50,6 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPla
 
 	const ITMPlainVoxelArray::IndexData* arrayInfo = scene->index.getIndexData();
 
-	bool stopIntegratingAtMaxW = scene->sceneParams->stopIntegratingAtMaxW;
 	float* confidence = view->depthConfidence->GetData(MEMORYDEVICE_CPU);
 
 #ifdef WITH_OPENMP
@@ -56,6 +57,8 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPla
 #endif
 	for (int locId = 0; locId < scene->index.getVolumeSize().x * scene->index.getVolumeSize().y *
 	                            scene->index.getVolumeSize().z; ++locId) {
+
+
 		int z = locId / (scene->index.getVolumeSize().x * scene->index.getVolumeSize().y);
 		int tmp = locId - z * scene->index.getVolumeSize().x * scene->index.getVolumeSize().y;
 		int y = tmp / scene->index.getVolumeSize().x;
@@ -92,7 +95,7 @@ void
 ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::GenerateRawLiveSceneFromView(
 		ITMScene<TVoxelLive, ITMPlainVoxelArray>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState) {
-	liveSceneManager.ResetScene(scene);
+	this->liveSceneManager.ResetScene(scene);
 	this->IntegrateIntoScene(scene, view, trackingState, renderState);
 }
 

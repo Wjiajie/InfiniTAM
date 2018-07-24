@@ -22,7 +22,7 @@
 //local
 #include "ITMSceneMotionTracker_Shared.h"
 #include "ITMSceneMotionTracker_Debug.h"
-#include "../../Engines/Manipulation/ITMSceneManipulation.h"
+#include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../Utils/ITMVoxelFlags.h"
 #include "../../Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "../Interface/ITMSceneMotionTracker.h"
@@ -129,6 +129,7 @@ public:
 		this->canonicalIndexData = canonicalScene->index.getIndexData();
 		this->restrictZtrackingForDebugging = restrictZtrackingForDebugging;
 		this->sourceSdfIndex = sourceSdfIndex;
+
 	}
 
 

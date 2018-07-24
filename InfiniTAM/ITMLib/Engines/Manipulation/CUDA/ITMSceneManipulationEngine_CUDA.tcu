@@ -1,0 +1,68 @@
+//  ================================================================
+//  Created by Gregory Kramida on 7/24/18.
+//  Copyright (c) 2018-2025 Gregory Kramida
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+
+//  http://www.apache.org/licenses/LICENSE-2.0
+
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//  ================================================================
+
+#include "ITMSceneManipulationEngine_CUDA.h"
+#include "../../../Utils/ITMCUDAUtils.h"
+
+using namespace ITMLib;
+
+template<typename TVoxel>
+void
+ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ResetScene(ITMScene<TVoxel, ITMPlainVoxelArray>* scene) {
+	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
+	int blockSize = scene->index.getVoxelBlockSize();
+
+	TVoxel *voxelBlocks_ptr = scene->localVBA.GetVoxelBlocks();
+	memsetKernel<TVoxel>(voxelBlocks_ptr, TVoxel(), numBlocks * blockSize);
+	int *vbaAllocationList_ptr = scene->localVBA.GetAllocationList();
+	fillArrayKernel<int>(vbaAllocationList_ptr, numBlocks);
+	scene->localVBA.lastFreeBlockId = numBlocks - 1;
+}
+
+template<typename TVoxel>
+bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::SetVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+                                                                           Vector3i at, TVoxel voxel) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+}
+
+template<typename TVoxel>
+TVoxel
+ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+                                                                       Vector3i at) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+}
+
+template<typename TVoxel>
+TVoxel
+ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+                                                                       Vector3i at,
+                                                                       ITMPlainVoxelArray::IndexCache& cache) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+}
+
+template<typename TVoxel>
+void
+ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::OffsetWarps(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+                                                                         Vector3f offset) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+}
+
+template<typename TVoxel>
+bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::CopySceneSlice(
+		ITMScene<TVoxel, ITMPlainVoxelArray>* destination, ITMScene<TVoxel, ITMPlainVoxelArray>* source,
+		Vector6i bounds) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+}

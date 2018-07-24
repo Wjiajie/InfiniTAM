@@ -14,15 +14,15 @@
 //  limitations under the License.
 //  ================================================================
 
-#include "ITMSceneManipulation.h"
-#include "../../Objects/Scene/ITMScene.h"
-#include "../../Objects/Scene/ITMRepresentationAccess.h"
-#include "../../Objects/Scene/ITMVoxelBlockHash.h"
-#include "../../Objects/Scene/ITMPlainVoxelArray.h"
-#include "../../Utils/ITMLibSettings.h"
-#include "../Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
-#include "../Reconstruction/Interface/ITMSceneReconstructionEngine.h"
-#include "../Reconstruction/ITMSceneReconstructionEngineFactory.h"
+#include "ITMSceneManipulationEngine_CPU.h"
+#include "../../../Objects/Scene/ITMScene.h"
+#include "../../../Objects/Scene/ITMRepresentationAccess.h"
+#include "../../../Objects/Scene/ITMVoxelBlockHash.h"
+#include "../../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../../../Utils/ITMLibSettings.h"
+#include "../../Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
+#include "../../Reconstruction/Interface/ITMSceneReconstructionEngine.h"
+#include "../../Reconstruction/ITMSceneReconstructionEngineFactory.h"
 
 
 namespace ITMLib {

@@ -23,7 +23,7 @@ struct IndexedFieldClearFunctor {
 
 	void operator()(TVoxelMulti& voxel) {
 		voxel.flag_values[flagFieldIndex] = ITMLib::VOXEL_UNKNOWN;
-		voxel.sdf_values[flagFieldIndex] = TVoxelMulti::SDF_initialValue();//for vis
+		voxel.sdf_values[flagFieldIndex] = TVoxelMulti::SDF_initialValue();
 	}
 
 private:
@@ -37,38 +37,7 @@ struct FusionFunctor{
 			maximumWeight(maximumWeight),
 			liveSourceFieldIndex(liveSourceFieldIndex){}
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel){
-		//_DEBUG
-
-		//fusion condition "HARSH" -- yields results almost identical to "COMBINED"
-//		if(canonicalVoxel.flags != VOXEL_NONTRUNCATED
-//				   && liveVoxel.flag_values[liveSourceFieldIndex] != VOXEL_NONTRUNCATED) return;
-
-		//fusion condition "COMBINED"
-		if(liveVoxel.flag_values[liveSourceFieldIndex] == VOXEL_UNKNOWN
-		   || (canonicalVoxel.flags != VOXEL_NONTRUNCATED
-		   && liveVoxel.flag_values[liveSourceFieldIndex] != VOXEL_NONTRUNCATED)) return;
-
-		//fusion condition "LIVE_UNKNOWN"
-//		if(liveVoxel.flag_values[liveSourceFieldIndex] == VOXEL_UNKNOWN) return;
-
-		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[liveSourceFieldIndex]);
-
-		int oldWDepth = canonicalVoxel.w_depth;
-		float oldSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
-
-		float newSdf = oldWDepth * oldSdf + liveSdf;
-		float newWDepth = oldWDepth + 1.0f;
-		newSdf /= newWDepth;
-		newWDepth = MIN(newWDepth, maximumWeight);
-
-		canonicalVoxel.sdf = TVoxelCanonical::floatToValue(newSdf);
-		canonicalVoxel.w_depth = (uchar) newWDepth;
-		if(canonicalVoxel.flags != ITMLib::VOXEL_NONTRUNCATED){
-			canonicalVoxel.flags = liveVoxel.flag_values[liveSourceFieldIndex];
-		} else if (1.0f - std::abs(newSdf) < 1e-5f){
-			canonicalVoxel.flags = ITMLib::VOXEL_TRUNCATED;
-		}
-
+		fuseLiveVoxelIntoCanonical(liveVoxel,liveSourceFieldIndex,maximumWeight,canonicalVoxel);
 	}
 private:
 	const int maximumWeight;
@@ -90,7 +59,7 @@ struct TrilinearInterpolationFunctor {
 
 			sdfSourceScene(sdfSourceScene),
 			sdfSourceVoxels(sdfSourceScene->localVBA.GetVoxelBlocks()),
-			sdfSourceHashEntries(sdfSourceScene->index.getIndexData()),
+			sdfSourceIndexData(sdfSourceScene->index.getIndexData()),
 			sdfSourceCache(),
 
 			warpSourceScene(warpSourceScene),
@@ -114,7 +83,7 @@ struct TrilinearInterpolationFunctor {
 		bool struckKnown;
 
 		float sdf = _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(
-				sdfSourceVoxels, sdfSourceHashEntries, warpedPosition, sourceSdfIndex, sdfSourceCache, struckKnown,
+				sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sourceSdfIndex, sdfSourceCache, struckKnown,
 				hasFocusCoordinates && warpAndDestinationVoxelPosition == focusCoordinates);
 
 		// Update flags
@@ -132,7 +101,7 @@ private:
 
 	ITMScene<TVoxelSdf, TIndex>* sdfSourceScene;
 	TVoxelSdf* sdfSourceVoxels;
-	typename TIndex::IndexData* sdfSourceHashEntries;
+	typename TIndex::IndexData* sdfSourceIndexData;
 	typename TIndex::IndexCache sdfSourceCache;
 
 	ITMScene<TVoxelWarpSource, TIndex>* warpSourceScene;
@@ -162,4 +131,3 @@ private:
 	int sourceIndex;
 	int destinationIndex;
 };
-

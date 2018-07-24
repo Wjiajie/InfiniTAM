@@ -18,7 +18,7 @@
 #include "ITMSceneMotionTracker_CPU.h"
 #include "../../Utils/ITMVoxelFlags.h"
 #include "../../Utils/ITMPrintHelpers.h"
-#include "../../Engines/Manipulation/ITMSceneManipulation.h"
+#include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h"
 #include "../Shared/ITMSceneMotionTracker_Debug.h"
 

@@ -25,7 +25,7 @@
 //ITMLib
 #include "ITMSceneLogger.h"
 #include "../ITMLibSettings.h"
-#include "../../Engines/Manipulation/ITMSceneManipulation.h"
+#include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
 #include "../../Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h"
 

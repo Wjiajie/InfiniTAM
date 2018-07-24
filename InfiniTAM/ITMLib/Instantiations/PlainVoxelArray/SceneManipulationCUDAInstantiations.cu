@@ -17,13 +17,12 @@
 #include "../../ITMLibDefines.h"
 
 //Note: ".tpp" files have to be included for all explicit instantiations in order to link properly
-#include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.tpp"
+#include "../../Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.tcu"
 #include "../../Objects/Scene/ITMScene.h"
 
 using namespace ITMLib;
 
 //scene manipulation functions
 
-template class ITMSceneManipulationEngine_CPU<ITMVoxelCanonical,ITMPlainVoxelArray>;
-template class ITMSceneManipulationEngine_CPU<ITMVoxelLive,ITMPlainVoxelArray>;
-template class ITMTwoSceneManipulationEngine_CPU<ITMVoxelCanonical,ITMVoxelLive,ITMPlainVoxelArray>;
+template class ITMSceneManipulationEngine_CUDA<ITMVoxelCanonical,ITMPlainVoxelArray>;
+template class ITMSceneManipulationEngine_CUDA<ITMVoxelLive,ITMPlainVoxelArray>;

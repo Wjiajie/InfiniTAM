@@ -29,7 +29,7 @@
 #include "../ITMLib/Objects/Scene/ITMScene.h"
 #include "../ITMLib/Objects/Scene/ITMRepresentationAccess.h"
 #include "../ITMLib/Trackers/Shared/ITMSceneMotionTracker_Shared_Old.h"
-#include "../ITMLib/Engines/Manipulation/ITMSceneManipulation.h"
+#include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/Utils/ITMLibSettings.h"
 #include "../ITMLib/Engines/Reconstruction/Interface/ITMSceneReconstructionEngine.h"
 #include "../ITMLib/Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"

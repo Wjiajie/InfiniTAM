@@ -277,3 +277,43 @@ struct ComputeUpdatedLiveVoxelInfo<true, true, true, TVoxel> {
 
 #undef COMPUTE_VOXEL_UPDATE_PARAMETERS
 // endregion ===========================================================================================================
+// region ===================================== SDF2SDF FUSION =========================================================
+
+template<typename TVoxelLive, typename TVoxelCanonical>
+_CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxelLive)& liveVoxel,
+                                                          int liveSourceFieldIndex, int maximumWeight,
+                                                          DEVICEPTR(TVoxelCanonical)& canonicalVoxel){
+	//_DEBUG
+
+	//fusion condition "HARSH" -- yields results almost identical to "COMBINED"
+//		if(canonicalVoxel.flags != VOXEL_NONTRUNCATED
+//				   && liveVoxel.flag_values[liveSourceFieldIndex] != VOXEL_NONTRUNCATED) return;
+
+	//fusion condition "COMBINED"
+	if(liveVoxel.flag_values[liveSourceFieldIndex] == ITMLib::VoxelFlags::VOXEL_UNKNOWN
+	   || (canonicalVoxel.flags != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED
+	       && liveVoxel.flag_values[liveSourceFieldIndex] != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED)) return;
+
+	//fusion condition "LIVE_UNKNOWN"
+//		if(liveVoxel.flag_values[liveSourceFieldIndex] == VOXEL_UNKNOWN) return;
+
+	float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[liveSourceFieldIndex]);
+
+	int oldWDepth = canonicalVoxel.w_depth;
+	float oldSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
+
+	float newSdf = oldWDepth * oldSdf + liveSdf;
+	float newWDepth = oldWDepth + 1.0f;
+	newSdf /= newWDepth;
+	newWDepth = MIN(newWDepth, maximumWeight);
+
+	canonicalVoxel.sdf = TVoxelCanonical::floatToValue(newSdf);
+	canonicalVoxel.w_depth = (uchar) newWDepth;
+	if(canonicalVoxel.flags != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED){
+		canonicalVoxel.flags = liveVoxel.flag_values[liveSourceFieldIndex];
+	} else if (1.0f - std::abs(newSdf) < 1e-5f){
+		canonicalVoxel.flags = ITMLib::VoxelFlags::VOXEL_TRUNCATED;
+	}
+};
+
+// endregion ===========================================================================================================

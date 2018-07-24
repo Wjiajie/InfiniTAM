@@ -37,7 +37,7 @@
 
 #include "../../Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "../../Objects/Scene/ITMTrilinearDistribution.h"
-#include "../../Engines/Manipulation/ITMSceneManipulation.h"
+#include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../Utils/ITMLibSettings.h"
 #include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
 
