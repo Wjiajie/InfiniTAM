@@ -130,7 +130,7 @@ ITMLibSettings::ITMLibSettings()
 	sceneTrackingWeightDataTerm = 1.0f; // not used in Killing/Sobolev Fusion (implicitly adjusted using other weights & thresholds)
 	sceneTrackingWeightSmoothingTerm = 0.2f; // default from SobolevFusion, 0.5f used in KillingFusion
 	sceneTrackingWeightLevelSetTerm = 0.2f; // default from KillingFusion
-	sceneTrackingLevelSetTermEpsilon = 0.00001; // default from KillingFusion
+	sceneTrackingLevelSetTermEpsilon = 1e-5f; // default from KillingFusion //TODO: scaling factor of 0.01, since their units are mm and ours are m?
 }
 
 bool ITMLibSettings::FocusCoordinatesAreSpecified() const {
