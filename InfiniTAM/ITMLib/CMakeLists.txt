@@ -832,3 +832,14 @@ include(${VTK_USE_FILE})
 
 target_include_directories(${targetname} PUBLIC ${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 target_link_libraries(${targetname} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${VTK_LIBRARIES})
+
+#fix potential warning causing from error in VTK compile definitions
+# "<command-line>:0:20: warning: ISO C++11 requires whitespace after the macro name"
+get_property(COMPILE_DEFINITIONS_PROPERTY DIRECTORY PROPERTY COMPILE_DEFINITIONS)
+list(FIND COMPILE_DEFINITIONS_PROPERTY "vtkRenderingCore_AUTOINIT=3(vtkInteractionStyle,vtkRenderingFreeType,vtkRenderingOpenGL2)" INDEX)
+if(NOT INDEX EQUAL -1)
+    list(REMOVE_AT COMPILE_DEFINITIONS_PROPERTY ${INDEX})
+    list(APPEND COMPILE_DEFINITIONS_PROPERTY "vtkRenderingCore_AUTOINIT=3(vtkInteractionStyle ,vtkRenderingFreeType ,vtkRenderingOpenGL2 )")
+    #replace with the same properties with spaces after the macro name
+    set_property(DIRECTORY PROPERTY COMPILE_DEFINITIONS ${COMPILE_DEFINITIONS_PROPERTY})
+endif()
