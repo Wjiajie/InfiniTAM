@@ -75,26 +75,12 @@ struct TrilinearInterpolationFunctor {
 
 	void operator()(TVoxelSdf& destinationVoxel,TVoxelWarpSource& warpSourceVoxel,
 	                Vector3i warpAndDestinationVoxelPosition) {
-		int vmIndex;
 
-		Vector3f warpedPosition =
-				TLookupPositionFunctor::GetWarpedPosition(warpSourceVoxel, warpAndDestinationVoxelPosition);
+		bool printResult = hasFocusCoordinates && warpAndDestinationVoxelPosition == focusCoordinates;
 
-		bool struckKnown;
-
-		float sdf = _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(
-				sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sourceSdfIndex, sdfSourceCache, struckKnown,
-				hasFocusCoordinates && warpAndDestinationVoxelPosition == focusCoordinates);
-
-		// Update flags
-		if (struckKnown) {
-			destinationVoxel.sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sdf);
-			if (1.0f - std::abs(sdf) < 1e-5f) {
-				destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_TRUNCATED;
-			} else {
-				destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_NONTRUNCATED;
-			}
-		}
+		interpolateBetweenIndexes<TVoxelWarpSource,TVoxelSdf,TIndex,TLookupPositionFunctor>(
+				sdfSourceVoxels,sdfSourceIndexData,sdfSourceCache,warpSourceVoxel,destinationVoxel,
+				warpAndDestinationVoxelPosition,sourceSdfIndex,targetSdfIndex,printResult);
 	}
 
 private:

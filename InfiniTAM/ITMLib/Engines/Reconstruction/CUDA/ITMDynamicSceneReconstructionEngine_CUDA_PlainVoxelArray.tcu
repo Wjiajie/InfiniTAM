@@ -80,7 +80,7 @@ clearIndexedFields_device(TVoxelMulti* voxelArray, const ITMPlainVoxelArray::ITM
 template<typename TVoxelWarpSource, typename TVoxelSdf, typename TLookupPositionFunctor>
 __global__ void interpolateTriliearlyBetweenIndexedFields(
 		TVoxelSdf* sdfSourceVoxels, TVoxelWarpSource* warpSourceVoxels,
-		const ITMPlainVoxelArray::ITMVoxelArrayInfo* sdfSourceIndexData,
+		const ITMPlainVoxelArray::IndexData* sdfSourceIndexData,
 		int sourceSdfIndex, int targetSdfIndex) {
 
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -99,25 +99,9 @@ __global__ void interpolateTriliearlyBetweenIndexedFields(
 	warpAndDestinationVoxelPosition.y = y + sdfSourceIndexData->offset.y;
 	warpAndDestinationVoxelPosition.z = z + sdfSourceIndexData->offset.z;
 
-	Vector3f warpedPosition =
-			TLookupPositionFunctor::GetWarpedPosition(warpSourceVoxel, warpAndDestinationVoxelPosition);
-
-	bool struckKnown;
-
-
-	float sdf = _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(
-			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sourceSdfIndex, sdfSourceCache,
-			struckKnown);
-
-	// Update flags
-	if (struckKnown) {
-		destinationVoxel.sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sdf);
-		if (1.0f - std::abs(sdf) < 1e-5f) {
-			destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_TRUNCATED;
-		} else {
-			destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_NONTRUNCATED;
-		}
-	}
+	interpolateBetweenIndexes<TVoxelWarpSource,TVoxelSdf,ITMPlainVoxelArray,TLookupPositionFunctor>(
+			sdfSourceVoxels,sdfSourceIndexData,sdfSourceCache,warpSourceVoxel,destinationVoxel,
+			warpAndDestinationVoxelPosition,sourceSdfIndex,targetSdfIndex,false);
 }
 
 } //namespace

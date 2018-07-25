@@ -24,7 +24,7 @@
 
 template<class TVoxel>
 _CPU_AND_GPU_CODE_ inline void updateSdfAndFlagsBasedOnDistanceSurfaceToVoxel(
-		DEVICEPTR(TVoxel)& voxel, float signedDistanceSurfaceToVoxelAlongCameraRay, float narrowBandHalfWidth){
+		DEVICEPTR(TVoxel)& voxel, float signedDistanceSurfaceToVoxelAlongCameraRay, float narrowBandHalfWidth) {
 	if (signedDistanceSurfaceToVoxelAlongCameraRay < -narrowBandHalfWidth + 4e-07) {
 		//the voxel is beyond the narrow band, on the other side of the surface. Set SDF to -1.0
 		voxel.sdf = TVoxel::floatToValue(-1.0);
@@ -185,7 +185,7 @@ _CPU_AND_GPU_CODE_ inline void computeUpdatedLiveVoxelColorInfo(
 			/ voxelInCameraCoordinates.z + rgbCameraProjectionParameters.w;
 //TODO: the magic value 0.25f used to determine the cutoff distance for color processing should be pre-defined as a parameter -Greg (GitHub:Algomorph)
 	//cut off voxels that are too far from the surface
-	if(std::abs(signedDistanceSurfaceToVoxel) < 0.25f * narrowBandHalfWidth) return;
+	if (std::abs(signedDistanceSurfaceToVoxel) < 0.25f * narrowBandHalfWidth) return;
 
 	if ((voxelPointProjectedToImage.x < 1) || (voxelPointProjectedToImage.x > imageSize.x - 2) ||
 	    (voxelPointProjectedToImage.y < 1) || (voxelPointProjectedToImage.y > imageSize.y - 2))
@@ -282,7 +282,7 @@ struct ComputeUpdatedLiveVoxelInfo<true, true, true, TVoxel> {
 template<typename TVoxelLive, typename TVoxelCanonical>
 _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxelLive)& liveVoxel,
                                                           int liveSourceFieldIndex, int maximumWeight,
-                                                          DEVICEPTR(TVoxelCanonical)& canonicalVoxel){
+                                                          DEVICEPTR(TVoxelCanonical)& canonicalVoxel) {
 	//_DEBUG
 
 	//fusion condition "HARSH" -- yields results almost identical to "COMBINED"
@@ -290,9 +290,10 @@ _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxel
 //				   && liveVoxel.flag_values[liveSourceFieldIndex] != VOXEL_NONTRUNCATED) return;
 
 	//fusion condition "COMBINED"
-	if(liveVoxel.flag_values[liveSourceFieldIndex] == ITMLib::VoxelFlags::VOXEL_UNKNOWN
-	   || (canonicalVoxel.flags != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED
-	       && liveVoxel.flag_values[liveSourceFieldIndex] != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED)) return;
+	if (liveVoxel.flag_values[liveSourceFieldIndex] == ITMLib::VoxelFlags::VOXEL_UNKNOWN
+	    || (canonicalVoxel.flags != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED
+	        && liveVoxel.flag_values[liveSourceFieldIndex] != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED))
+		return;
 
 	//fusion condition "LIVE_UNKNOWN"
 //		if(liveVoxel.flag_values[liveSourceFieldIndex] == VOXEL_UNKNOWN) return;
@@ -309,16 +310,41 @@ _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxel
 
 	canonicalVoxel.sdf = TVoxelCanonical::floatToValue(newSdf);
 	canonicalVoxel.w_depth = (uchar) newWDepth;
-	if(canonicalVoxel.flags != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED){
+	if (canonicalVoxel.flags != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED) {
 		canonicalVoxel.flags = liveVoxel.flag_values[liveSourceFieldIndex];
-	} else if (1.0f - std::abs(newSdf) < 1e-5f){
+	} else if (1.0f - std::abs(newSdf) < 1e-5f) {
 		canonicalVoxel.flags = ITMLib::VoxelFlags::VOXEL_TRUNCATED;
 	}
 };
 
 // endregion ===========================================================================================================
 // region ====================== TRILINEAR INTERPOLATION BASED ON WARP VECTOR ==========================================
+template<typename TVoxelWarpSource, typename TVoxelSdf, typename TIndex, typename TLookupPositionFunctor>
+_CPU_AND_GPU_CODE_
+inline void interpolateBetweenIndexes(TVoxelSdf* sdfSourceVoxels,
+                                      const typename TIndex::IndexData* sdfSourceIndexData,
+                                      typename TIndex::IndexCache& sdfSourceCache, const TVoxelWarpSource& warpSourceVoxel,
+                                      TVoxelSdf& destinationVoxel, const Vector3i& warpAndDestinationVoxelPosition,
+                                      int sourceSdfIndex, int targetSdfIndex, bool printResult) {
+	Vector3f warpedPosition =
+			TLookupPositionFunctor::GetWarpedPosition(warpSourceVoxel, warpAndDestinationVoxelPosition);
 
+	bool struckKnown;
+
+	float sdf = _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(
+			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sourceSdfIndex, sdfSourceCache, struckKnown,
+			printResult);
+
+	// Update flags
+	if (struckKnown) {
+		destinationVoxel.sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sdf);
+		if (1.0f - std::abs(sdf) < 1e-5f) {
+			destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_TRUNCATED;
+		} else {
+			destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_NONTRUNCATED;
+		}
+	}
+}
 
 
 // endregion ===========================================================================================================

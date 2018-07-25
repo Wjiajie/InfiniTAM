@@ -19,7 +19,7 @@
 template <typename TVoxel>
 struct LookupBasedOnWarpStaticFunctor{
 	_CPU_AND_GPU_CODE_
-	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
+	static inline Vector3f GetWarpedPosition(const TVoxel& voxel,const Vector3i& position){
 		return position.toFloat() + voxel.warp;
 	}
 };
@@ -28,7 +28,7 @@ struct LookupBasedOnWarpStaticFunctor{
 template <typename TVoxel>
 struct LookupBasedOnWarpUpdateStaticFunctor{
 	_CPU_AND_GPU_CODE_
-	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
+	static inline Vector3f GetWarpedPosition(const TVoxel& voxel,const Vector3i& position){
 		return position.toFloat() + voxel.warp_update;
 	}
 };
