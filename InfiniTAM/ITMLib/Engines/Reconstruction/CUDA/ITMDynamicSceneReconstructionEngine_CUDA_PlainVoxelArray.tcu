@@ -104,6 +104,21 @@ __global__ void interpolateTriliearlyBetweenIndexedFields(
 			warpAndDestinationVoxelPosition,sourceSdfIndex,targetSdfIndex,false);
 }
 
+template<typename TVoxelMulti>
+__global__ void
+copyIndexedFields_device(TVoxelMulti* voxelArray, const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+                          int sourceIndex, int destinationIndex) {
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y;
+	int z = blockIdx.z * blockDim.z + threadIdx.z;
+
+	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
+	TVoxelMulti& voxel = voxelArray[locId];
+	voxel.sdf_values[destinationIndex] = voxel.sdf_values[sourceIndex];
+	voxel.flag_values[destinationIndex] = voxel.flag_values[sourceIndex];
+
+}
+
 } //namespace
 
 template<typename TVoxelCanonical, typename TVoxelLive>
@@ -147,6 +162,7 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::WarpScene(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+
 	TVoxelLive* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
 	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
 	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = canonicalScene->index.getIndexData();
@@ -168,14 +184,40 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMPl
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::CopyIndexedScene(
 		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
-	DIEWITHEXCEPTION_REPORTLOCATION("NOT IMPLEMENTED");
+
+	TVoxelLive* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
+	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = liveScene->index.getIndexData();
+
+	dim3 cudaBlockSize(8, 8, 8);
+	dim3 gridSize(liveScene->index.getVolumeSize().x / cudaBlockSize.x,
+	              liveScene->index.getVolumeSize().y / cudaBlockSize.y,
+	              liveScene->index.getVolumeSize().z / cudaBlockSize.z);
+
+	copyIndexedFields_device<TVoxelLive> << < gridSize, cudaBlockSize >> >
+	                                                     (liveVoxels, arrayInfo, sourceSdfIndex, targetSdfIndex);
+
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::UpdateWarpedScene(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
-	DIEWITHEXCEPTION_REPORTLOCATION("NOT IMPLEMENTED");
+
+	TVoxelLive* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
+	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
+	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = canonicalScene->index.getIndexData();
+
+	dim3 cudaBlockSize(8, 8, 8);
+	dim3 gridSize(canonicalScene->index.getVolumeSize().x / cudaBlockSize.x,
+	              canonicalScene->index.getVolumeSize().y / cudaBlockSize.y,
+	              canonicalScene->index.getVolumeSize().z / cudaBlockSize.z);
+
+	clearIndexedFields_device<TVoxelLive> << < gridSize, cudaBlockSize >> >
+	                                                     (liveVoxels, arrayInfo, targetSdfIndex);
+
+	interpolateTriliearlyBetweenIndexedFields<TVoxelCanonical,TVoxelLive, LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>
+			<< < gridSize, cudaBlockSize >> >
+	                       (liveVoxels,canonicalVoxels,arrayInfo,sourceSdfIndex,targetSdfIndex);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
