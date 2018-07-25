@@ -18,7 +18,6 @@ namespace InfiniTAM
 	{
 		class UIEngine
 		{
-			static UIEngine* instance;
 
 			enum MainLoopAction
 			{
@@ -37,7 +36,6 @@ namespace InfiniTAM
 
 			InputSource::ImageSourceEngine *imageSource;
 			InputSource::IMUSourceEngine *imuSource;
-			ITMLib::ITMLibSettings internalSettings;
 			ITMLib::ITMMainEngine *mainEngine;
 
 			StopWatchInterface *timer_instant;
@@ -69,8 +67,8 @@ namespace InfiniTAM
 			InputSource::FFMPEGWriter *depthVideoWriter;
 		public:
 			static UIEngine* Instance(void) {
-				if (instance == NULL) instance = new UIEngine();
-				return instance;
+				static UIEngine instance;
+				return &instance;
 			}
 
 			static void glutDisplayFunction();

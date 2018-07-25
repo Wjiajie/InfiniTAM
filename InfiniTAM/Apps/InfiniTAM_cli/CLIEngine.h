@@ -15,11 +15,10 @@ namespace InfiniTAM
 	{
 		class CLIEngine
 		{
-			static CLIEngine* instance;
 
 			InputSource::ImageSourceEngine *imageSource;
 			InputSource::IMUSourceEngine *imuSource;
-			ITMLib::ITMLibSettings internalSettings;
+
 			ITMLib::ITMMainEngine *mainEngine;
 
 			StopWatchInterface *timer_instant;
@@ -31,9 +30,9 @@ namespace InfiniTAM
 
 			int currentFrameNo;
 		public:
-			static CLIEngine* Instance(void) {
-				if (instance == NULL) instance = new CLIEngine();
-				return instance;
+			static CLIEngine* Instance() {
+				static CLIEngine instance;
+				return &instance;
 			}
 
 			float processedTime;

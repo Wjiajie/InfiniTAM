@@ -80,7 +80,8 @@ clearIndexedFields_device(TVoxelMulti* voxelArray, const ITMPlainVoxelArray::ITM
 template<typename TVoxelWarpSource, typename TVoxelSdf, typename TLookupPositionFunctor>
 __global__ void interpolateTriliearlyBetweenIndexedFields(
 		TVoxelSdf* sdfSourceVoxels, TVoxelWarpSource* warpSourceVoxels,
-		const ITMPlainVoxelArray::ITMVoxelArrayInfo* sdfSourceIndexData, int sourceSdfIndex, int targetSdfIndex) {
+		const ITMPlainVoxelArray::ITMVoxelArrayInfo* sdfSourceIndexData,
+		int sourceSdfIndex, int targetSdfIndex) {
 
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -90,7 +91,7 @@ __global__ void interpolateTriliearlyBetweenIndexedFields(
 
 	TVoxelSdf& destinationVoxel = sdfSourceVoxels[locId];
 	TVoxelWarpSource& warpSourceVoxel = warpSourceVoxels[locId];
-	ITMPlainVoxelArray::IndexCache sdfSourceCache();
+	ITMPlainVoxelArray::IndexCache sdfSourceCache;
 
 	Vector3i warpAndDestinationVoxelPosition;
 
@@ -102,6 +103,7 @@ __global__ void interpolateTriliearlyBetweenIndexedFields(
 			TLookupPositionFunctor::GetWarpedPosition(warpSourceVoxel, warpAndDestinationVoxelPosition);
 
 	bool struckKnown;
+
 
 	float sdf = _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(
 			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sourceSdfIndex, sdfSourceCache,
@@ -172,10 +174,10 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMPl
 
 	clearIndexedFields_device<TVoxelLive> << < gridSize, cudaBlockSize >> >
 	                                                     (liveVoxels, arrayInfo, targetSdfIndex);
-	//TODO
-//	interpolateTriliearlyBetweenIndexedFields<TVoxelCanonical,TVoxelLive, LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>
-//			<< < gridSize, cudaBlockSize >> >
-//			(liveVoxels,canonicalVoxels,arrayInfo,sourceSdfIndex,targetSdfIndex);
+
+	interpolateTriliearlyBetweenIndexedFields<TVoxelCanonical,TVoxelLive, LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>
+			<< < gridSize, cudaBlockSize >> >
+			(liveVoxels,canonicalVoxels,arrayInfo,sourceSdfIndex,targetSdfIndex);
 
 }
 

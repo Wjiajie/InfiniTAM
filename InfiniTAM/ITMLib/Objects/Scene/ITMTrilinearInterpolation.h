@@ -22,6 +22,12 @@
 #include "../../Utils/ITMVoxelFlags.h"
 #include "ITMRepresentationAccess.h"
 
+#if defined(__CUDACC__) && defined(__CUDA_ARCH__)
+#include "ITMTrilinearInterpolation_ANY_DEVICE.h"
+#else
+#include "ITMTrilinearInterpolation_CPU_DEBUG.h"
+#endif
+
 
 //sdf and color + knownVoxelHit + smart weights
 /**
@@ -1064,159 +1070,6 @@ inline float InterpolateTrilinearly_TruncatedCopySign(const CONSTPTR(TVoxel)* vo
 }
 
 
-_CPU_AND_GPU_CODE_
-inline void ComputeTrilinearCoefficents(const CONSTPTR(Vector3f)& point, THREADPTR(Vector3i)& pos,
-                                        THREADPTR(float*) coefficients /*x8*/){
-	Vector3f ratios;
-	Vector3f inverseRatios(1.0f);
-
-	TO_INT_FLOOR3(pos, ratios, point);
-	inverseRatios -= ratios;
-
-	//@formatter:off
-	coefficients[0] = inverseRatios.x * inverseRatios.y * inverseRatios.z; //000
-	coefficients[1] = ratios.x *        inverseRatios.y * inverseRatios.z; //100
-	coefficients[2] = inverseRatios.x * ratios.y *        inverseRatios.z; //010
-	coefficients[3] = ratios.x *        ratios.y *        inverseRatios.z; //110
-	coefficients[4] = inverseRatios.x * inverseRatios.y * ratios.z;        //001
-	coefficients[5] = ratios.x *        inverseRatios.y * ratios.z;        //101
-	coefficients[6] = inverseRatios.x * ratios.y *        ratios.z;        //011
-	coefficients[7] = ratios.x *        ratios.y *        ratios.z;        //111
-}
-
-
-template<typename TVoxel, typename TCache, typename TIndexData>
-_CPU_AND_GPU_CODE_
-inline float ProcessTrilinearNeighbor(const CONSTPTR(TVoxel)* voxelData,
-                                     const CONSTPTR(TIndexData)* voxelIndex,
-                                     const CONSTPTR(int)& sdfIndex,
-                                     const CONSTPTR(Vector3i)& position,
-                                     const CONSTPTR(float*) coefficients,
-                                     THREADPTR(TCache)& cache,
-                                     THREADPTR(bool)& struckKnownVoxels,
-                                     int iNeighbor,
-                                     THREADPTR(float)& sdf,
-                                     THREADPTR(float)& cumulativeWeight){
-	int vmIndex;
-
-	const TVoxel& v = readVoxel(voxelData, voxelIndex, position, vmIndex, cache);
-	bool curKnown = v.flag_values[sdfIndex] != ITMLib::VOXEL_UNKNOWN;
-
-	//_DEBUG
-	//trilinear unknown filter: ON
-	//float weight = coefficients[iNeighbor] * curKnown;
-	//trilinear unknown filter: OFF
-	float weight = coefficients[iNeighbor];
-
-	sdf += weight * TVoxel::valueToFloat(v.sdf_values[sdfIndex]);
-	struckKnownVoxels |= curKnown;
-	cumulativeWeight += weight;
-	return weight;
-};
-
-
-//sdf without color, struck known check, indexed fields
-/**
- * \brief Given an arbitrary (float-valued) point, use trilinear interpolation to get the signed distance function value
- * at this point.
- * \details The sdf_values field will be sampled using sdfIndex, i.e. sdf_values[sdfIndex]. In the meantime,
- * also determines whether any of the voxels in the sampling space (2x2x2 voxels) has a known (established) value,
- * to discriminate it from the newly-initialized voxels set to the default sdf value.
- * \tparam TVoxel
- * \tparam TCache
- * \param voxelData
- * \param voxelIndex
- * \param point
- * \param sdfIndex
- * \param cache
- * \param struckKnownVoxels
- * \param printData
- * \return
- */
-
-template<typename TVoxel, typename TCache, typename TIndexData>
-_CPU_AND_GPU_CODE_
-inline float _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* voxelData,
-                                                               const CONSTPTR(TIndexData)* voxelIndex,
-                                                               const CONSTPTR(Vector3f)& point,
-                                                               int sdfIndex,
-                                                               THREADPTR(TCache)& cache,
-                                                               THREADPTR(bool)& struckKnownVoxels,
-                                                               bool printData) {
-
-	const int neighborCount = 8;
-	const Vector3i positions[neighborCount] = {Vector3i(0, 0, 0), Vector3i(1, 0, 0),
-	                                           Vector3i(0, 1, 0), Vector3i(1, 1, 0),
-	                                           Vector3i(0, 0, 1), Vector3i(1, 0, 1),
-	                                           Vector3i(0, 1, 1), Vector3i(1, 1, 1)};
-	float coefficients[neighborCount];
-	Vector3i pos;
-	ComputeTrilinearCoefficents(point,pos,coefficients);
-
-	if(printData){
-		std::cout << ITMLib::bright_cyan << "*** Printing interpolation data for point "
-									  << point << " ***" << ITMLib::reset << std::endl;
-		std::cout << "Truncated position: " << pos << std::endl;
-	}
-
-	struckKnownVoxels = false;
-	float cumulativeWeight = 0.0f;
-	float sdf = 0.0f;
-
-	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
-		float weight = ProcessTrilinearNeighbor(voxelData,voxelIndex,sdfIndex,pos + positions[iNeighbor],coefficients,cache,
-		                         struckKnownVoxels,iNeighbor,sdf,cumulativeWeight);
-		if(printData){
-			std::cout << "Neighbor position: " << positions[iNeighbor] << " Sdf: "
-																 << sdf << " Weight: " << weight << std::endl;
-		}
-	}
-	if(cumulativeWeight > FLT_EPSILON){
-		sdf /= cumulativeWeight;
-	}else{
-		sdf = TVoxel::SDF_initialValue();
-	}
-	if(printData){
-		std::cout << "New sdf: " << sdf << std::endl;
-	}
-	return sdf;
-}
-
-
-template<typename TVoxel, typename TCache, typename TIndexData>
-_CPU_AND_GPU_CODE_
-inline float _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* voxelData,
-                                                               const CONSTPTR(TIndexData)* voxelIndex,
-                                                               const CONSTPTR(Vector3f)& point,
-                                                               int sdfIndex,
-                                                               THREADPTR(TCache)& cache,
-                                                               THREADPTR(bool)& struckKnownVoxels) {
-
-	const int neighborCount = 8;
-	const Vector3i positions[neighborCount] = {Vector3i(0, 0, 0), Vector3i(1, 0, 0),
-	                                           Vector3i(0, 1, 0), Vector3i(1, 1, 0),
-	                                           Vector3i(0, 0, 1), Vector3i(1, 0, 1),
-	                                           Vector3i(0, 1, 1), Vector3i(1, 1, 1)};
-	float coefficients[neighborCount];
-	Vector3i pos;
-	ComputeTrilinearCoefficents(point,pos,coefficients);
-
-	struckKnownVoxels = false;
-	float cumulativeWeight = 0.0f;
-	float sdf = 0.0f;
-
-	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
-		float weight = ProcessTrilinearNeighbor(voxelData,voxelIndex,sdfIndex,pos + positions[iNeighbor],coefficients,cache,
-		                                        struckKnownVoxels,iNeighbor,sdf,cumulativeWeight);
-
-	}
-	if(cumulativeWeight > FLT_EPSILON){
-		sdf /= cumulativeWeight;
-	}else{
-		sdf = TVoxel::SDF_initialValue();
-	}
-	return sdf;
-}
 
 
 

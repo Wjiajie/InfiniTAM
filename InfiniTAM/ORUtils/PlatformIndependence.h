@@ -8,24 +8,28 @@
 #endif
 
 #if defined(__CUDACC__) && defined(__CUDA_ARCH__)
-#define _CPU_AND_GPU_CODE_ __device__	// for CUDA device code
+// for CUDA device code
+#define _CPU_AND_GPU_CODE_ __device__
 #else
 #define _CPU_AND_GPU_CODE_ 
 #endif
 
 #if defined(__CUDACC__)
-#define _CPU_AND_GPU_CODE_TEMPLATE_ __device__ // for CUDA device code
+// for CUDA device code
+#define _CPU_AND_GPU_CODE_TEMPLATE_ __device__
 #else
 #define _CPU_AND_GPU_CODE_TEMPLATE_
 #endif
 
 #if defined(__CUDACC__) && defined(__CUDA_ARCH__)
-#define _CPU_AND_GPU_CONSTANT_ __constant__	// for CUDA device code
+// for CUDA device code
+#define _CPU_AND_GPU_CONSTANT_ __constant__
 #else
 #define _CPU_AND_GPU_CONSTANT_
 #endif
 
-#if defined(__METALC__) // for METAL device code
+// for METAL device code
+#if defined(__METALC__)
 #define THREADPTR(x) thread x
 #define DEVICEPTR(x) device x
 #define THREADGRPPTR(x) threadgroup x

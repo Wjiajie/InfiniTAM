@@ -63,7 +63,7 @@ try
 		return -1;
 	}
 
-	ITMLibSettings *internalSettings = new ITMLibSettings();
+	ITMLibSettings *internalSettings = &ITMLibSettings::Instance();
 
 	ITMMainEngine *mainEngine = NULL;
 	switch (internalSettings->libMode)

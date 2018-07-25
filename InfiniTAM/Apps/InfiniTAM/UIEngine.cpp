@@ -29,8 +29,6 @@ using namespace InfiniTAM::Engine;
 using namespace InputSource;
 using namespace ITMLib;
 
-UIEngine* UIEngine::instance;
-
 static void Safe_GlutBitmapString(void *font, const char *str)
 {
 	size_t len = strlen(str);
@@ -698,6 +696,4 @@ void UIEngine::Shutdown()
 
 	delete[] outFolder;
 	delete saveImage;
-	delete instance;
-	instance = NULL;
 }

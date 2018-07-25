@@ -54,7 +54,8 @@ _CPU_AND_GPU_CODE_ inline void filterDepth(DEVICEPTR(float) *imageData_out, cons
 	imageData_out[x + y*imgDims.x] = final_depth;
 }
 
-#define DIFFERENCE_THRESHOLD 0.2f //20%
+//20%
+#define DIFFERENCE_THRESHOLD 0.2f
 _CPU_AND_GPU_CODE_ inline void thresholdDepth(DEVICEPTR(float) *imageData_out, const CONSTPTR(float) *imageData_in, int x, int y, Vector2i imgDims)
 {
 	float z, tmpz, sum = 0.0f;

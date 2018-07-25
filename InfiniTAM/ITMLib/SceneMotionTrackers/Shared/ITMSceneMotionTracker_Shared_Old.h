@@ -20,9 +20,10 @@
 #include "../../Objects/Scene/ITMTrilinearInterpolation.h"
 
 #include <cfloat>
-
-#define FLT_EPSILON2 FLT_EPSILON //_DEBUG (convert define uses to FLT_EPSILON?)
-//#define FLT_EPSILON2 10e-5 //_DEBUG
+//_DEBUG (convert define uses to FLT_EPSILON?)
+#define FLT_EPSILON2 FLT_EPSILON
+//_DEBUG
+//#define FLT_EPSILON2 10e-5
 
 _CPU_AND_GPU_CODE_
 inline float squareDistance(const CONSTPTR(Vector3f)& vec1,

@@ -46,7 +46,7 @@ try
 	}
 
 	printf("initialising ...\n");
-	ITMLibSettings *internalSettings = new ITMLibSettings();
+	ITMLibSettings *internalSettings = &ITMLibSettings::Instance();
 
 	ImageSourceEngine *imageSource;
 	IMUSourceEngine *imuSource = NULL;

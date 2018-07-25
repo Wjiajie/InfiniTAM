@@ -10,7 +10,6 @@ using namespace InfiniTAM::Engine;
 using namespace InputSource;
 using namespace ITMLib;
 
-CLIEngine* CLIEngine::instance;
 
 void CLIEngine::Initialise(ImageSourceEngine *imageSource, IMUSourceEngine *imuSource, ITMMainEngine *mainEngine,
 	ITMLibSettings::DeviceType deviceType)
@@ -87,6 +86,4 @@ void CLIEngine::Shutdown()
 	delete inputRGBImage;
 	delete inputRawDepthImage;
 	delete inputIMUMeasurement;
-
-	delete instance;
 }

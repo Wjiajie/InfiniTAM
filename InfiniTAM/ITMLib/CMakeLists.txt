@@ -447,6 +447,9 @@ set(ITMLIB_OBJECTS_SCENE_HEADERS
     Objects/Scene/ITMPlainVoxelArray.h
     Objects/Scene/ITMRepresentationAccess.h
     Objects/Scene/ITMTrilinearInterpolation.h
+    Objects/Scene/ITMTrilinearInterpolation_ANY_DEVICE.h
+    Objects/Scene/ITMTrilinearInterpolation_CPU_DEBUG.h
+    Objects/Scene/ITMTrilinearInterpolation_Shared.h
     Objects/Scene/ITMTrilinearDistribution.h
     Objects/Scene/ITMScene.h
     Objects/Scene/ITMSurfelScene.h
