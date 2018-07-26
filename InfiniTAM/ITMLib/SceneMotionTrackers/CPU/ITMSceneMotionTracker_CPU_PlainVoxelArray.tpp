@@ -19,7 +19,7 @@
 #include "../../Utils/ITMVoxelFlags.h"
 #include "../../Utils/ITMPrintHelpers.h"
 #include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "../../Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h"
+#include "../../Objects/Scene/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 #include "../Shared/ITMSceneMotionTracker_Debug.h"
 
 using namespace ITMLib;

@@ -20,7 +20,7 @@
 #include "../Shared/ITMDynamicHashManagementEngine_Shared.h"
 #include "../Shared/ITMSceneReconstructionEngine_Shared.h"
 #include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "../../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
+#include "../../../Objects/Scene/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 
 
 using namespace ITMLib;

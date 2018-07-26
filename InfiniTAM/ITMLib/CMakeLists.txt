@@ -458,8 +458,9 @@ set(ITMLIB_OBJECTS_SCENE_HEADERS
     Objects/Scene/ITMVoxelTypes.h
     Objects/Scene/ITMIndexEnumeration.h
 
-    Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h
-    Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h
+    Objects/Scene/ITMSceneTraversal_CUDA.h
+    Objects/Scene/ITMSceneTraversal_CPU_VoxelBlockHash.h
+    Objects/Scene/ITMSceneTraversal_CPU_PlainVoxelArray.h
     #_DEBUG
     ../Tests/TestUtils.h
     ../Tests/TestUtils.cpp
@@ -568,10 +569,11 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_HEADERS
 ##
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_SOURCES
-
+    SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_PlainVoxelArray.tpp
+    SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash.tpp
     )
 set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_HEADERS
-
+    SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA.h
     )
 ##
 
@@ -772,6 +774,8 @@ set(headers
 #############################
 # Specify the source groups #
 #############################
+
+#TODO: add missing source groups from dynamic fusion algorithms -Greg(GitHub:Algomorph)
 
 source_group("" FILES ${ITMLIB_TOPLEVEL_CPU_SOURCES} ${ITMLIB_TOPLEVEL_CUDA_SOURCES} ${ITMLIB_TOPLEVEL_HEADERS})
 source_group(Core FILES ${ITMLIB_CORE_SOURCES} ${ITMLIB_CORE_HEADERS})

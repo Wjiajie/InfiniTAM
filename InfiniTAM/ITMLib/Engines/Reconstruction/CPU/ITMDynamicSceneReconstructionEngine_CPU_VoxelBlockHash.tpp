@@ -5,7 +5,7 @@
 #include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "../../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
+#include "../../../Objects/Scene/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../../../Objects/Scene/ITMTrilinearInterpolation.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Functors.h"

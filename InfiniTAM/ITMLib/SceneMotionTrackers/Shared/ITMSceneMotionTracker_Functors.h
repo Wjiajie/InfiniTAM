@@ -21,14 +21,16 @@
 
 template<typename TVoxel>
 struct WarpClearFunctor {
-	static void run(TVoxel& voxel) {
+	_CPU_AND_GPU_CODE_
+	static inline void run(TVoxel& voxel) {
 		voxel.warp = Vector3f(0.0f);
 	}
 };
 
 template<typename TVoxelCanonical>
 struct ClearOutFramewiseWarpStaticFunctor {
-	static void run(TVoxelCanonical& voxel) {
+	_CPU_AND_GPU_CODE_
+	static inline void run(TVoxelCanonical& voxel) {
 		voxel.framewise_warp = Vector3f(0.0f);
 	}
 };
@@ -36,7 +38,8 @@ struct ClearOutFramewiseWarpStaticFunctor {
 
 template<typename TVoxelCanonical>
 struct ClearOutGradientStaticFunctor {
-	static void run(TVoxelCanonical& voxel) {
+	_CPU_AND_GPU_CODE_
+	static inline void run(TVoxelCanonical& voxel) {
 		voxel.gradient0 = Vector3f(0.0f);
 		voxel.gradient1 = Vector3f(0.0f);
 	}

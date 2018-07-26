@@ -26,6 +26,7 @@ class ITMDynamicSceneReconstructionEngine_CUDA
 		: public ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex> {
 };
 
+//region =================================== VOXEL BLOCK HASH ==========================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 class ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>
@@ -58,7 +59,8 @@ private:
 	ITMSceneManipulationEngine_CUDA<TVoxelLive, ITMVoxelBlockHash> liveSceneManager;
 };
 
-
+// endregion ===========================================================================================================
+// region ==================================== PLAIN VOXEL ARRAY =======================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 class ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>
@@ -90,6 +92,6 @@ private:
 	ITMSceneManipulationEngine_CUDA<TVoxelLive, ITMPlainVoxelArray> liveSceneManager;
 };
 
-
+// endregion ===========================================================================================================
 
 }//namespace ITMLib

@@ -22,8 +22,8 @@
 #include "../Analytics/ITMSceneStatisticsCalculator.h"
 #include "../ITMLibSettings.h"
 #include "../../Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
-#include "../../Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h"
-#include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
+#include "../../Objects/Scene/ITMSceneTraversal_CPU_PlainVoxelArray.h"
+#include "../../Objects/Scene/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../../Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 
 

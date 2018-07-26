@@ -16,7 +16,7 @@
 
 #include "ITMDynamicSceneReconstructionEngine_CPU.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
-#include "../../../Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h"
+#include "../../../Objects/Scene/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 #include "../../../Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Functors.h"
 #include "../../Common/ITMCommonFunctors.h"

@@ -41,8 +41,8 @@
 #include "ITMSceneSliceVisualizerCommon.h"
 #include "ITMVisualizationCommon.h"
 #include "ITMSceneSliceVisualizer3DInteractorStyle.h"
-#include "../../Objects/Scene/ITMSceneTraversal_PlainVoxelArray.h"
-#include "../../Objects/Scene/ITMSceneTraversal_VoxelBlockHash.h"
+#include "../../Objects/Scene/ITMSceneTraversal_CPU_PlainVoxelArray.h"
+#include "../../Objects/Scene/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../ITMLibSettings.h"
 
 
