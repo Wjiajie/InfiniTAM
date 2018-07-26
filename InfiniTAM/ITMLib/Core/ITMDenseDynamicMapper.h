@@ -44,7 +44,6 @@ public:
 	};
 	struct AnalysisFlags{
 		bool restrictZtrackingForDebugging;
-		bool simpleSceneExperimentModeEnabled;
 		bool hasFocusCoordinates;
 	};
 

@@ -87,7 +87,6 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMappe
 		           ITMLibSettings::Instance().sceneTrackingOptimizationVectorUpdateThresholdMeters /
 		           ITMLibSettings::Instance().sceneParams.voxelSize},
 		analysisFlags{ITMLibSettings::Instance().restrictZtrackingForDebugging,
-		              ITMLibSettings::Instance().simpleSceneExperimentModeEnabled,
 		              ITMLibSettings::Instance().FocusCoordinatesAreSpecified()},
 		focusCoordinates(ITMLibSettings::Instance().GetFocusCoordinates()) {}
 
@@ -138,16 +137,12 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProce
 		const ITMView* view, const ITMTrackingState* trackingState, ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 		ITMScene<TVoxelLive, TIndex>* liveScene, ITMRenderState* renderState) {
 
-	if (analysisFlags.simpleSceneExperimentModeEnabled) {
-		GenerateTestScene01(canonicalScene);
-		ITMTwoSceneManipulationEngine_CPU<TVoxelCanonical, TVoxelLive, TIndex>::CopySceneSDFandFlagsWithOffset_CPU(
-				liveScene, canonicalScene, Vector3i(-5, 0, 0));
-	} else {
-		PrintOperationStatus("Generating raw live frame from view...");
-		bench::StartTimer("GenerateRawLiveFrame");
-		sceneReconstructor->GenerateRawLiveSceneFromView(liveScene, view, trackingState, renderState);
-		bench::StopTimer("GenerateRawLiveFrame");
-	}
+
+	PrintOperationStatus("Generating raw live frame from view...");
+	bench::StartTimer("GenerateRawLiveFrame");
+	sceneReconstructor->GenerateRawLiveSceneFromView(liveScene, view, trackingState, renderState);
+	bench::StopTimer("GenerateRawLiveFrame");
+
 
 	PrintOperationStatus(
 			"Initializing live frame SDF by mapping from raw live SDF to warped SDF based on previous-frame warp...");

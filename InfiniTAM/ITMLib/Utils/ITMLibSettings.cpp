@@ -110,7 +110,6 @@ ITMLibSettings::ITMLibSettings()
 	analysisSettings.outputPath = "./State/";
 
 	restrictZtrackingForDebugging = false;
-	simpleSceneExperimentModeEnabled = false;
 
 
 	// Dynamic fusion switches

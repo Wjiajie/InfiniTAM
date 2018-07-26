@@ -91,7 +91,6 @@ int main(int argc, char** argv) {
 
 		bool startInStepByStep = false;
 		bool restrictZMotion = false;
-		bool simpleScene = false;
 
 		bool recordCanonicalSceneAsSlices = false;
 		bool recordLiveSceneAsSlices = false;
@@ -167,8 +166,6 @@ int main(int argc, char** argv) {
 				/* Debugging parameters for scene-tracking */
 				("restrict_z",po::bool_switch(&restrictZMotion)->default_value(false),
 				 "Used in dynamic fusion. Restrict scene motion updates in z direction (for debugging).")
-				("simple_scene",po::bool_switch(&simpleScene)->default_value(false),
-				 "Used in dynamic fusion. Simple scene experiment mode (for debugging).")
 
 				/* Visualization and logging for visual debugging of scene-tracking*/
 				("focus_coordinates,f", po::value<std::vector<int>>()->multitoken(), "The coordinates of the voxel"
@@ -398,7 +395,6 @@ int main(int argc, char** argv) {
 
 		//_DEBUG
 		settings.restrictZtrackingForDebugging = restrictZMotion;
-		settings.simpleSceneExperimentModeEnabled = simpleScene;
 
 		settings.enableDataTerm = !disableDataTerm;
 		settings.enableLevelSetTerm = enableLevelSetTerm;
