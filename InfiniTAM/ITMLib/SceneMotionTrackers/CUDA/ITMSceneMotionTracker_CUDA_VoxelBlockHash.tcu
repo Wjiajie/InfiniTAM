@@ -20,10 +20,14 @@
 
 using namespace ITMLib;
 
+
 template<typename TVoxelCanonical, typename TVoxelLive>
-ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ITMSceneMotionTracker_CUDA() {
+ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ITMSceneMotionTracker_CUDA()
+		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>(),
+		  calculateGradientFunctor(this->parameters, this->switches){
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
+
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ClearOutFramewiseWarp(

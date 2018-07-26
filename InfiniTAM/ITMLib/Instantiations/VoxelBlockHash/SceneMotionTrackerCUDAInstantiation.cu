@@ -15,10 +15,10 @@
 //  ================================================================
 
 #include "../../ITMLibDefines.h"
-//#include "../SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA.tcu"
+#include "../../SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash.tcu"
 
 namespace ITMLib{
 
-//template class ITMSceneMotionTracker_CUDA<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>;
+template class ITMSceneMotionTracker_CUDA<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>;
 
 }

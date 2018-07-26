@@ -566,8 +566,8 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_HEADERS
 ##
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_SOURCES
-    SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_PlainVoxelArray.tpp
-    SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash.tpp
+    SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_PlainVoxelArray.tcu
+    SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash.tcu
     )
 set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_HEADERS
     SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA.h

@@ -52,7 +52,7 @@ public:
 private:
 
 	//ITMDynamicHashManagementEngine_CUDA<TVoxelCanonical, TVoxelLive> hashManager;
-	//ITMCalculateWarpGradientBasedOnWarpedLiveFunctor<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash> calculateGradientFunctor;
+	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash> calculateGradientFunctor;
 
 };
 

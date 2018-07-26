@@ -137,6 +137,7 @@ int main(int argc, char** argv) {
 				("output,o", po::value<std::string>()->default_value("./Output"), "Output directory, e.g.: ./Output")
 
 				("index", po::value<std::string>()->default_value("hash"), "Indexing method. May be one of [hash, array].")
+				("device", po::value<std::string>()->default_value("CPU"), "Compute device. May be one of [CPU, CUDA]")
 
 				("record_reconstruction_video", po::bool_switch(&recordReconstructionToVideo)->default_value(false),
 				 "Whether to record the reconstruction rendering to video after each frame is processed.")
@@ -336,7 +337,7 @@ int main(int argc, char** argv) {
 			return EXIT_FAILURE;
 		}
 
-
+// region ================================= SET ENUM VALUES BASED ON CLI ARGUMENTS =====================================
 		IndexingMethod chosenIndexingMethod = HASH;
 		if (!vm["index"].empty()) {
 			std::string indexingArgumentValue = vm["index"].as<std::string>();
@@ -349,11 +350,26 @@ int main(int argc, char** argv) {
 				return EXIT_FAILURE;
 			}
 		}
+		ITMLibSettings::DeviceType chosenDeviceType = ITMLibSettings::DEVICE_CPU;
+		if (!vm["device"].empty()){
+			std::string deviceArgumentValue = vm["device"].as<std::string>();
+			if(deviceArgumentValue == "CPU" || deviceArgumentValue == "cpu"){
+				chosenDeviceType = ITMLibSettings::DEVICE_CPU;
+			}else if(deviceArgumentValue == "CUDA" || deviceArgumentValue == "cuda"){
+				chosenDeviceType = ITMLibSettings::DEVICE_CUDA;
+			}else{
+				printHelp();
+				return EXIT_FAILURE;
+			}
+		}
+// endregion ===========================================================================================================
 
 		ITMDynamicFusionLogger_Interface& logger = GetLogger(chosenIndexingMethod);
 
 // region ================================ SET MAIN ENGINE SETTINGS WITH CLI ARGUMENTS =================================
 		auto& settings = ITMLibSettings::Instance();
+		settings.deviceType = chosenDeviceType;
+
 		settings.analysisSettings.outputPath = vm["output"].as<std::string>().c_str();
 		bool haveFocusCoordinate = !vm["focus_coordinates"].empty();
 		Vector3i focusCoordiantes(0);

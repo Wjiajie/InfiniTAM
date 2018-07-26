@@ -15,7 +15,7 @@
 //  ================================================================
 
 #include "../../ITMLibDefines.h"
-#include "../../SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_PlainVoxelArray.tpp"
+#include "../../SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_PlainVoxelArray.tcu"
 
 namespace ITMLib{
 

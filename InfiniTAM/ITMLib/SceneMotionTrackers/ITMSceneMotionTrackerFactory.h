@@ -17,6 +17,7 @@
 
 #include "Interface/ITMSceneMotionTracker.h"
 #include "CPU/ITMSceneMotionTracker_CPU.h"
+#include "CUDA/ITMSceneMotionTracker_CUDA.h"
 
 namespace ITMLib{
 class ITMSceneMotionTrackerFactory {
@@ -37,7 +38,7 @@ MakeSceneMotionTracker() {
 			break;
 		case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-			DIEWITHEXCEPTION_REPORTLOCATION("NOT IMPLEMENTED");
+			sceneRecoEngine = new ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>();
 #endif
 			break;
 		case ITMLibSettings::DEVICE_METAL:
