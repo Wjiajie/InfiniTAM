@@ -50,10 +50,13 @@ set(ITMLIB_TOPLEVEL_CPU_SOURCES
     )
 
 set(ITMLIB_TOPLEVEL_CUDA_SOURCES
+    ## VBH - CUDA
     Instantiations/VoxelBlockHash/CUDAInstantiations.cu
     Instantiations/VoxelBlockHash/DynamicFusionCUDAInstantiations.cu
     Instantiations/VoxelBlockHash/SceneMotionTrackerCUDAInstantiation.cu
+    Instantiations/VoxelBlockHash/SceneManipulationCUDAInstantiations.cu
 
+    ## PVA - CUDA
     Instantiations/PlainVoxelArray/CUDAInstantiations.cu
     Instantiations/PlainVoxelArray/DynamicFusionCUDAInstantiations.cu
     Instantiations/PlainVoxelArray/SceneMotionTrackerCUDAInstantiation.cu

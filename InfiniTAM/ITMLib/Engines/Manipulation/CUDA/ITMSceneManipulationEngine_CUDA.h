@@ -51,41 +51,41 @@ public:
 };
 
 
+template<typename TVoxel>
+class ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash> {
+public:
+	/**
+	 * \brief Clear out scene and reset the index
+	 * \param scene
+	 */
+	static void ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash>* scene);
+	static bool SetVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
+	static TVoxel ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at);
+	static TVoxel
+	ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, ITMVoxelBlockHash::IndexCache& cache);
+	/**
+	 * \brief offset warps by a fixed amount in each direction
+	 * \param scene the scene to modify
+	 * \param offset the offset vector to use
+	 */
+	static void OffsetWarps(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset);
+	/**
+	 * \brief Copies the slice (box-like window) specified by points extremum1 and extremum2 from the source scene into a
+	 * destination scene. Clears the destination scene before copying.
+	 * \tparam TVoxel type of voxel
+	 * \tparam TIndex type of voxel index
+	 * \param destination destination voxel grid (can be uninitialized)
+	 * \param source source voxel grid
+	 * \param bounds minimum point in the desired slice (inclusive), i.e. minimum x, y, and z coordinates
+	 * \param maxPoint maximum point in the desired slice (inclusive), i.e. maximum x, y, and z coordinates
+	 * \return true on success (destination scene contains the slice), false on failure (there are no allocated hash blocks
+	 */
+	static bool
+	CopySceneSlice(ITMScene<TVoxel, ITMVoxelBlockHash>* destination, ITMScene<TVoxel, ITMVoxelBlockHash>* source,
+	               Vector6i bounds);
 
-//
-//template<typename TVoxel>
-//class ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash> {
-//public:
-//	/**
-//	 * \brief Clear out scene and reset the index
-//	 * \param scene
-//	 */
-//	static void ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash>* scene);
-//	static bool SetVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
-//	static TVoxel ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at);
-//	static TVoxel
-//	ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, ITMVoxelBlockHash::IndexCache& cache);
-//	/**
-//	 * \brief offset warps by a fixed amount in each direction
-//	 * \param scene the scene to modify
-//	 * \param offset the offset vector to use
-//	 */
-//	static void OffsetWarps(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset);
-//	/**
-//	 * \brief Copies the slice (box-like window) specified by points extremum1 and extremum2 from the source scene into a
-//	 * destination scene. Clears the destination scene before copying.
-//	 * \tparam TVoxel type of voxel
-//	 * \tparam TIndex type of voxel index
-//	 * \param destination destination voxel grid (can be uninitialized)
-//	 * \param source source voxel grid
-//	 * \param bounds minimum point in the desired slice (inclusive), i.e. minimum x, y, and z coordinates
-//	 * \param maxPoint maximum point in the desired slice (inclusive), i.e. maximum x, y, and z coordinates
-//	 * \return true on success (destination scene contains the slice), false on failure (there are no allocated hash blocks
-//	 */
-//	static bool
-//	CopySceneSlice(ITMScene<TVoxel, ITMVoxelBlockHash>* destination, ITMScene<TVoxel, ITMVoxelBlockHash>* source,
-//	               Vector6i bounds);
-//
-//};
+};
+
+
 
 }//namespace ITMLib

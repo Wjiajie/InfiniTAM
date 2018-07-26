@@ -65,9 +65,8 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(const Vector3i& e
 		return false;
 	}
 	auto logger = new ITMWarpSceneLogger<TVoxelCanonical, TIndex>(bounds, this->path);
-	if (!ITMSceneManipulationEngine_CPU<TVoxelCanonical, TIndex>::CopySceneSlice(logger->scene,
-	                                                                             fullCanonicalSceneLogger->scene,
-	                                                                             bounds)) {
+	if (!ITMSceneManipulationEngine_CPU<TVoxelCanonical, TIndex>::CopySceneSlice(
+			logger->scene,fullCanonicalSceneLogger->scene,bounds)) {
 		return false;
 	}
 	fs::path outputPath = logger->path;

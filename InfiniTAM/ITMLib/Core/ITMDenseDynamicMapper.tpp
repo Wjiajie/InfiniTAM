@@ -17,6 +17,8 @@
 //#include <limits>
 #include <chrono>
 
+//boost
+#include <boost/filesystem.hpp>
 
 //local
 #include "ITMDenseDynamicMapper.h"
@@ -24,6 +26,7 @@
 #include "../Engines/Swapping/ITMSwappingEngineFactory.h"
 #include "../SceneMotionTrackers/ITMSceneMotionTrackerFactory.h"
 #include "../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "../Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "../Utils/ITMPrintHelpers.h"
 #include "../Utils/Visualization/ITMSceneSliceVisualizer2D.h"
@@ -31,18 +34,11 @@
 #include "../Utils/FileIO/ITMSceneLogger.h"
 #include "../../Tests/TestUtils.h"
 
-//boost
-#include <boost/filesystem.hpp>
 
-//opencv
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/core/mat.hpp>
-#include <opencv2/imgproc.hpp>
 
 
 using namespace ITMLib;
 
-namespace fs = boost::filesystem;
 namespace bench = ITMLib::Bench;
 
 // region ========================================= DEBUG PRINTING =====================================================
@@ -104,13 +100,33 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
 ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetCanonicalScene(
 		ITMScene<TVoxelCanonical, TIndex>* scene) const {
-	ITMSceneManipulationEngine_CPU<TVoxelCanonical, TIndex>::ResetScene(scene);
+	switch (ITMLibSettings::Instance().deviceType){
+		case ITMLibSettings::DEVICE_CPU:
+			ITMSceneManipulationEngine_CPU<TVoxelCanonical, TIndex>::ResetScene(scene);
+			break;
+		case ITMLibSettings::DEVICE_CUDA:
+			ITMSceneManipulationEngine_CUDA<TVoxelCanonical, TIndex>::ResetScene(scene);
+			break;
+		case ITMLibSettings::DEVICE_METAL:
+			DIEWITHEXCEPTION_REPORTLOCATION("NOT IMPLEMENTED");
+			break;
+	}
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetLiveScene(
 		ITMScene<TVoxelLive, TIndex>* scene) const {
-	ITMSceneManipulationEngine_CPU<TVoxelLive, TIndex>::ResetScene(scene);
+	switch (ITMLibSettings::Instance().deviceType){
+		case ITMLibSettings::DEVICE_CPU:
+			ITMSceneManipulationEngine_CPU<TVoxelLive, TIndex>::ResetScene(scene);
+			break;
+		case ITMLibSettings::DEVICE_CUDA:
+			ITMSceneManipulationEngine_CUDA<TVoxelLive, TIndex>::ResetScene(scene);
+			break;
+		case ITMLibSettings::DEVICE_METAL:
+			DIEWITHEXCEPTION_REPORTLOCATION("NOT IMPLEMENTED");
+			break;
+	}
 }
 
 

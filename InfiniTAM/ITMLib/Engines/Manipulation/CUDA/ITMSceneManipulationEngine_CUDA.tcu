@@ -19,6 +19,49 @@
 
 using namespace ITMLib;
 
+// region ================================== VOXEL BLOCK HASH ==========================================================
+
+template<typename TVoxel>
+void
+ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash>* scene) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+}
+
+template<typename TVoxel>
+bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
+                                                                          Vector3i at, TVoxel voxel) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+}
+
+template<typename TVoxel>
+TVoxel ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
+                                                                             Vector3i at) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+}
+
+template<typename TVoxel>
+TVoxel ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
+                                                                             Vector3i at,
+                                                                             ITMVoxelBlockHash::IndexCache& cache) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+}
+
+template<typename TVoxel>
+void ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::OffsetWarps(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
+                                                                             Vector3f offset) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+}
+
+template<typename TVoxel>
+bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
+		ITMScene<TVoxel, ITMVoxelBlockHash>* destination, ITMScene<TVoxel, ITMVoxelBlockHash>* source,
+		Vector6i bounds) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+}
+
+// endregion ===========================================================================================================
+// region ================================== PLAIN VOXEL ARRAY =========================================================
+
 template<typename TVoxel>
 void
 ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ResetScene(ITMScene<TVoxel, ITMPlainVoxelArray>* scene) {
@@ -66,3 +109,5 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::CopySceneSlice
 		Vector6i bounds) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
+
+//endregion ============================================================================================================
