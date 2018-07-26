@@ -16,12 +16,14 @@
 #pragma once
 
 #include "../Interface/ITMSceneMotionTracker.h"
+#include "../Shared/ITMCalculateWarpGradientBasedOnWarpedLiveFunctor.h"
+
 namespace ITMLib {
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-class ITMSceneMotionTracker_CPU :
+class ITMSceneMotionTracker_CUDA :
 		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex> {
-	ITMSceneMotionTracker_CPU() {}
+	ITMSceneMotionTracker_CUDA() {}
 };
 // region ================================= VOXEL BLOCK HASH ===========================================================
 
@@ -80,7 +82,7 @@ public:
 	void ResetWarps(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) override;
 
 private:
-	//ITMCalculateWarpGradientBasedOnWarpedLiveFunctor<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray> calculateGradientFunctor;
+	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray> calculateGradientFunctor;
 
 };
 // endregion ===========================================================================================================

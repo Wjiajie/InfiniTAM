@@ -430,7 +430,7 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::SaveCurrentWarpState() {
 	warpOFStream.write(reinterpret_cast<const char* >(&this->iterationCursor), sizeof(iterationCursor));
 	WarpAndUpdateWriteFunctor<TVoxel>
 			warpAndUpdateWriteFunctor(&this->warpOFStream, this->warpByteSize, this->updateByteSize);
-	VoxelTraversal_CPU(scene, warpAndUpdateWriteFunctor);
+	VoxelTraversal(scene, warpAndUpdateWriteFunctor);
 	std::cout << "Written warp updates for iteration " << iterationCursor << " to disk." << std::endl;
 	iterationCursor++;
 	return true;
@@ -527,7 +527,7 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::LoadCurrentWarpState() {
 
 	WarpAndUpdateReadFunctor<TVoxel>
 			warpAndUpdateReadFunctor(&this->warpIFStream, this->warpByteSize, this->updateByteSize);
-	VoxelTraversal_CPU(scene, warpAndUpdateReadFunctor);
+	VoxelTraversal(scene, warpAndUpdateReadFunctor);
 	return true;
 }
 
@@ -546,7 +546,7 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::LoadPreviousWarpState() {
 	}
 	WarpAndUpdateReadFunctor<TVoxel>
 			warpAndUpdateReadFunctor(&this->warpIFStream, this->warpByteSize, this->updateByteSize);
-	VoxelTraversal_CPU(scene, warpAndUpdateReadFunctor);
+	VoxelTraversal(scene, warpAndUpdateReadFunctor);
 	return true;
 }
 

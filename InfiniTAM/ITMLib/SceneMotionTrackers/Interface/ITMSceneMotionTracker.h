@@ -16,23 +16,18 @@
 #pragma once
 
 //local
-#include "../../Utils/FileIO/ITMDynamicFusionLogger.h"
 #include "../../Objects/Scene/ITMScene.h"
 #include "../../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.h"
 #include "../../Utils/Visualization/ITMSceneSliceVisualizer2D.h"
 #include "../../Utils/ITMLibSettings.h"
 #include "../../Utils/FileIO/ITMSceneLogger.h"
 #include "../../Utils/ITMPrintHelpers.h"
-#include "../Shared/ITMSceneMotionTracker_Debug.h"
+#include "../../Utils/ITMVoxelFlags.h"
 
 namespace ITMLib {
 
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-inline
-bool VoxelIsConsideredForTracking(TVoxelCanonical& voxelCanonical, TVoxelLive voxelLive, int sourceFieldIndex) {
-	return voxelCanonical.flags == VOXEL_NONTRUNCATED || voxelLive.flag_values[sourceFieldIndex] == VOXEL_NONTRUNCATED;
-};
+
 
 //_DEBUG
 // this seems to give more noise in the results (visually)

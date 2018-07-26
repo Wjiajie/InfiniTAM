@@ -59,7 +59,7 @@ ComputePositionVectorFromLinearIndex_PlainVoxelArray(const ITMPlainVoxelArray::I
 
 template<typename TFunctor, typename TVoxel>
 inline
-void VoxelTraversal_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
+void VoxelTraversal(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	int voxelCount = scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
 
@@ -75,7 +75,7 @@ void VoxelTraversal_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& f
 
 template<typename TFunctor, typename TVoxel>
 inline
-void VoxelPositionTraversal_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
+void VoxelPositionTraversal(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	int voxelCount = scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
 	const ITMPlainVoxelArray::IndexData* indexData = scene->index.getIndexData();
@@ -92,7 +92,7 @@ void VoxelPositionTraversal_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFu
 
 template<typename TFunctor, typename TVoxel>
 inline void
-VoxelTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor, Vector6i bounds) {
+VoxelTraversalWithinBounds(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor, Vector6i bounds) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	int vmIndex = 0;
 	const ITMPlainVoxelArray::IndexData* indexData = scene->index.getIndexData();
@@ -114,8 +114,8 @@ VoxelTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFun
 
 template<typename TFunctor, typename TVoxel>
 inline void
-VoxelPositionTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor,
-                                       Vector6i bounds) {
+VoxelPositionTraversalWithinBounds(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor,
+                                   Vector6i bounds) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	int vmIndex = 0;
 	const ITMPlainVoxelArray::IndexData* indexData = scene->index.getIndexData();
@@ -136,8 +136,8 @@ VoxelPositionTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* sce
 
 template<typename TFunctor, typename TVoxel>
 inline void
-VoxelPositionAndHashEntryTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor,
-                                       Vector6i bounds) {
+VoxelPositionAndHashEntryTraversalWithinBounds(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor,
+                                               Vector6i bounds) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	int vmIndex = 0;
 	const ITMPlainVoxelArray::IndexData* indexData = scene->index.getIndexData();
@@ -161,7 +161,7 @@ VoxelPositionAndHashEntryTraversalWithinBounds_CPU(ITMScene<TVoxel, ITMPlainVoxe
 // region ================================ STATIC SINGLE-SCENE TRAVERSAL ===============================================
 
 template<typename TStaticFunctor, typename TVoxel>
-inline void StaticVoxelTraversal_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* scene) {
+inline void StaticVoxelTraversal(ITMScene<TVoxel, ITMPlainVoxelArray>* scene) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	int voxelCount = scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
 #ifdef WITH_OPENMP
@@ -175,7 +175,7 @@ inline void StaticVoxelTraversal_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* scene
 };
 
 template<typename TStaticFunctor, typename TVoxel>
-inline void StaticVoxelPositionTraversal_CPU(ITMScene<TVoxel, ITMPlainVoxelArray>* scene) {
+inline void StaticVoxelPositionTraversal(ITMScene<TVoxel, ITMPlainVoxelArray>* scene) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	int voxelCount = scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
 #ifdef WITH_OPENMP
@@ -189,9 +189,10 @@ inline void StaticVoxelPositionTraversal_CPU(ITMScene<TVoxel, ITMPlainVoxelArray
 };
 
 // endregion
-// region ================================ DYNAMIC TWO-SCENE TRAVERSAL =================================================
+// region ================================ STATIC TWO-SCENE TRAVERSAL ==================================================
+
 template<typename TStaticFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
-inline void StaticDualVoxelTraversal_CPU(
+inline void StaticDualVoxelTraversal(
 		ITMScene<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
 		ITMScene<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene) {
 	assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
@@ -212,10 +213,13 @@ inline void StaticDualVoxelTraversal_CPU(
 		TStaticFunctor::run(primaryVoxel, secondaryVoxel);
 	}
 };
+// endregion
+// region ================================ DYNAMIC TWO-SCENE TRAVERSAL =================================================
+
 
 
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
-inline void DualVoxelTraversal_CPU(
+inline void DualVoxelTraversal(
 		ITMScene<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
 		ITMScene<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
 		TFunctor& functor) {
@@ -240,7 +244,7 @@ inline void DualVoxelTraversal_CPU(
 
 
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
-inline void DualVoxelPositionTraversal_CPU(
+inline void DualVoxelPositionTraversal(
 		ITMScene<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
 		ITMScene<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
 		TFunctor& functor) {
@@ -267,7 +271,7 @@ inline void DualVoxelPositionTraversal_CPU(
 
 
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
-inline void DualVoxelPositionTraversal_CPU_SingleThreaded(
+inline void DualVoxelPositionTraversal_SingleThreaded(
 		ITMScene<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
 		ITMScene<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
 		TFunctor& functor) {

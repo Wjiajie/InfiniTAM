@@ -22,13 +22,14 @@
 //local
 #include "ITMSceneMotionTracker_Shared.h"
 #include "ITMSceneMotionTracker_Debug.h"
-#include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../Utils/ITMVoxelFlags.h"
 #include "../../Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "../Interface/ITMSceneMotionTracker.h"
-#include "../CPU/ITMSceneMotionTracker_CPU.h"
-#include "../../Utils/FileIO/ITMDynamicFusionLogger.h"
+
+#ifndef __CUDACC__
 #include "../CPU/ITMWarpGradientCommon.h"
+#include "../../Utils/FileIO/ITMDynamicFusionLogger.h"
+#endif
 
 
 namespace ITMLib {
@@ -39,7 +40,8 @@ struct SetGradientFunctor;
 
 template<typename TVoxelCanonical>
 struct SetGradientFunctor<TVoxelCanonical, false> {
-	static void SetGradient(TVoxelCanonical& voxel,
+	_CPU_AND_GPU_CODE_
+	inline static void SetGradient(TVoxelCanonical& voxel,
 	                        const float& weightDataTerm,
 	                        const float& weightLevelSetTerm,
 	                        const float& weightSmoothingTerm,
@@ -59,7 +61,8 @@ struct SetGradientFunctor<TVoxelCanonical, false> {
 
 template<typename TVoxelCanonical>
 struct SetGradientFunctor<TVoxelCanonical, true> {
-	static void SetGradient(TVoxelCanonical& voxel,
+	_CPU_AND_GPU_CODE_
+	inline static void SetGradient(TVoxelCanonical& voxel,
 	                        const float& weightDataTerm,
 	                        const float& weightLevelSetTerm,
 	                        const float& weightSmoothingTerm,
@@ -84,6 +87,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 struct ITMCalculateWarpGradientBasedOnWarpedLiveFunctor {
 private:
 
+#ifndef __CUDACC__
 	void SetUpFocusVoxelPrinting(bool& printVoxelResult, bool& recordVoxelResult, const Vector3i& voxelPosition,
 	                             const Vector3f& voxelWarp, const float& canonicalSdf, const float& liveSdf) {
 		if (hasFocusCoordinates && voxelPosition == focusCoordinates) {
@@ -103,6 +107,7 @@ private:
 			}
 		}
 	}
+#endif
 
 public:
 
@@ -132,9 +137,8 @@ public:
 
 	}
 
-
 	// endregion =======================================================================================================
-
+_CPU_AND_GPU_CODE_
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i position) {
 
 		if (!VoxelIsConsideredForTracking(canonicalVoxel, liveVoxel, sourceSdfIndex)) return;
@@ -173,9 +177,11 @@ public:
 		Matrix3f framewiseWarpHessian[3] = {Matrix3f(0.0f), Matrix3f(0.0f), Matrix3f(0.0f)};
 		// endregion
 
+#ifndef __CUDACC__
 		bool printVoxelResult = false, recordVoxelResult = false;
 		this->SetUpFocusVoxelPrinting(printVoxelResult, recordVoxelResult, position, framewiseWarp, canonicalSdf,
 		                              liveSdf);
+#endif
 		// region ============================== RETRIEVE NEIGHBOR'S WARPS =================================
 
 		const int neighborhoodSize = 9;
@@ -210,12 +216,13 @@ public:
 			}
 		}
 
-
+#ifndef __CUDACC__
 		if (printVoxelResult) {
 			std::cout << blue << "Live 6-connected neighbor information:" << reset << std::endl;
 			print6ConnectedNeighborInfoIndexedFields(position, liveVoxels, liveIndexData, liveCache,
 			                                         sourceSdfIndex);
 		}
+#endif
 
 		//endregion
 
@@ -245,12 +252,14 @@ public:
 			// φ_n(Ψ) = φ_n(x+u, y+v, z+w), where u = u(x,y,z), v = v(x,y,z), w = w(x,y,z)
 			// φ_{global} = φ_{global}(x, y, z)
 			localDataEnergyGradient = sdfDifferenceBetweenLiveAndCanonical * liveSdfJacobian;
-
+#ifndef __CUDACC__
 			dataVoxelCount++;
 			cumulativeSdfDiff += std::abs(sdfDifferenceBetweenLiveAndCanonical);
+#endif
 			localDataEnergy =
 					0.5f * (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
 		}
+#ifndef __CUDACC__
 		if (printVoxelResult) {
 			if (switches.enableDataTerm) {
 				_DEBUG_PrintDataTermStuff(liveSdfJacobian);
@@ -258,6 +267,7 @@ public:
 				std::cout << std::endl;
 			}
 		}
+#endif
 		// endregion
 
 		// region =============================== LEVEL SET TERM ===========================================
@@ -269,7 +279,9 @@ public:
 			float sdfJacobianNormMinusUnity = sdfJacobianNorm - parameters.unity;
 			localLevelSetEnergyGradient = sdfJacobianNormMinusUnity * (liveSdfHessian * liveSdfJacobian) /
 			                              (sdfJacobianNorm + parameters.epsilon);
+#ifndef __CUDACC__
 			levelSetVoxelCount++;
+#endif
 			localLevelSetEnergy =
 					parameters.weightLevelSetTerm * 0.5f * (sdfJacobianNormMinusUnity * sdfJacobianNormMinusUnity);
 		}
@@ -281,10 +293,12 @@ public:
 			if (switches.enableKillingTerm) {
 				ComputePerVoxelWarpJacobianAndHessian(framewiseWarp, neighborFramewiseWarps, framewiseWarpJacobian,
 				                                      framewiseWarpHessian);
+#ifndef __CUDACC__
 				if (printVoxelResult) {
 					_DEBUG_PrintKillingTermStuff(neighborFramewiseWarps, neighborKnown, neighborTruncated,
 					                             framewiseWarpJacobian, framewiseWarpHessian);
 				}
+#endif
 
 				float gamma = parameters.rigidityEnforcementFactor;
 				float onePlusGamma = 1.0f + gamma;
@@ -329,9 +343,11 @@ public:
 					ComputeWarpLaplacianAndJacobian(framewiseWarpLaplacian, framewiseWarpJacobian, framewiseWarp,
 					                                neighborFramewiseWarps);
 				}
+#ifndef __CUDACC__
 				if (printVoxelResult) {
 					_DEBUG_PrintTikhonovTermStuff(neighborFramewiseWarps, framewiseWarpLaplacian);
 				}
+#endif
 				//∇E_{reg}(Ψ) = −[∆U ∆V ∆W]' ,
 				localSmoothnessEnergyGradient = -framewiseWarpLaplacian;
 				localTikhonovEnergy = dot(framewiseWarpJacobian.getColumn(0), framewiseWarpJacobian.getColumn(0)) +
@@ -349,11 +365,12 @@ public:
 				restrictZtrackingForDebugging);
 		// endregion
 		// region =============================== AGGREGATE VOXEL STATISTICS ===============================
-		float energyGradeintLength = ORUtils::length(canonicalVoxel.gradient0);//meters
+		//skip aggregates for parallel cuda implementation
+#ifndef __CUDACC__
+		float energyGradientLength = ORUtils::length(canonicalVoxel.gradient0);//meters
 		float warpLength = ORUtils::length(canonicalVoxel.warp);
 		double localEnergy = localDataEnergy + parameters.weightLevelSetTerm * localLevelSetEnergy
 		                     + parameters.weightSmoothnessTerm * localSmoothnessEnergy;
-
 
 		totalDataEnergy += localDataEnergy;
 		totalLevelSetEnergy += parameters.weightLevelSetTerm * localLevelSetEnergy;
@@ -368,15 +385,9 @@ public:
 		// endregion
 
 		// region ======================== FINALIZE RESULT PRINTING / RECORDING ========================================
-		//TODO: move to separate function?
+
 		if (printVoxelResult) {
-			std::cout << blue << "Data gradient: " << localDataEnergyGradient * -1;
-			std::cout << cyan << " Level set gradient: " << localLevelSetEnergyGradient * -1;
-			std::cout << yellow << " Smoothness gradient: " << localSmoothnessEnergyGradient * -1;
-			std::cout << std::endl;
-			std::cout << green << "Energy gradient: " << canonicalVoxel.gradient0 * -1 << reset;
-			std::cout << " Energy gradient length: " << energyGradeintLength << red
-			          << " Gradients shown are negated." << reset << std::endl << std::endl;
+			PrintVoxelResult(localDataEnergyGradient,localLevelSetEnergyGradient,localSmoothnessEnergyGradient,canonicalVoxel.gradient0,energyGradientLength);
 
 			if (recordVoxelResult) {
 				//TODO: legacy, revise/remove -Greg
@@ -399,9 +410,26 @@ public:
 			}
 		}
 		// endregion ===================================================================================================
+#endif
+	}
+
+	void PrintVoxelResult(const Vector3f& localDataEnergyGradient,
+	                      const Vector3f& localLevelSetEnergyGradient,
+	                      const Vector3f& localSmoothnessEnergyGradient,
+	                      const Vector3f& localCompleteEnergyGradient,
+	                      float energyGradientLength
+	){
+		std::cout << blue << "Data gradient: " << localDataEnergyGradient * -1;
+		std::cout << cyan << " Level set gradient: " << localLevelSetEnergyGradient * -1;
+		std::cout << yellow << " Smoothness gradient: " << localSmoothnessEnergyGradient * -1;
+		std::cout << std::endl;
+		std::cout << green << "Energy gradient: " << localCompleteEnergyGradient * -1 << reset;
+		std::cout << " Energy gradient length: " << energyGradientLength << red
+		          << " Gradients shown are negated." << reset << std::endl << std::endl;
 	}
 
 	void FinalizePrintAndRecordStatistics() {
+#ifndef __CUDACC__
 		double totalEnergy = totalDataEnergy + totalLevelSetEnergy + totalSmoothnessEnergy;
 
 		std::cout << bright_cyan << "*** General Iteration Statistics ***" << reset << std::endl;
@@ -420,11 +448,13 @@ public:
 				this->switches.enableDataTerm, this->switches.enableLevelSetTerm, cumulativeCanonicalSdf,
 				cumulativeLiveSdf,
 				cumulativeWarpDist, cumulativeSdfDiff, consideredVoxelCount, dataVoxelCount, levelSetVoxelCount);
+#endif
 	}
 
 
 private:
 	void ResetStatistics() {
+#ifndef __CUDACC__
 		cumulativeCanonicalSdf = 0.0;
 		cumulativeLiveSdf = 0.0;
 		cumulativeSdfDiff = 0.0;
@@ -438,6 +468,7 @@ private:
 		totalTikhonovEnergy = 0.0;
 		totalKillingEnergy = 0.0;
 		totalSmoothnessEnergy = 0.0;
+#endif
 	}
 
 	// *** data structure accessors
@@ -452,6 +483,7 @@ private:
 	typename TIndex::IndexData* canonicalIndexData;
 	typename TIndex::IndexCache canonicalCache;
 
+#ifndef __CUDACC__
 	// *** statistical aggregates
 	double cumulativeCanonicalSdf = 0.0;
 	double cumulativeLiveSdf = 0.0;
@@ -466,7 +498,7 @@ private:
 	double totalTikhonovEnergy = 0.0;
 	double totalKillingEnergy = 0.0;
 	double totalSmoothnessEnergy = 0.0;
-
+#endif
 	// *** debuging / analysis variables
 	bool hasFocusCoordinates{};
 	Vector3i focusCoordinates;

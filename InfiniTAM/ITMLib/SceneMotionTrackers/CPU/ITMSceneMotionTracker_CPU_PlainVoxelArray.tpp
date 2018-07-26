@@ -20,6 +20,7 @@
 #include "../../Utils/ITMPrintHelpers.h"
 #include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../Objects/Scene/ITMSceneTraversal_CPU_PlainVoxelArray.h"
+#include "../Shared/ITMSceneMotionTracker_Functors.h"
 #include "../Shared/ITMSceneMotionTracker_Debug.h"
 
 using namespace ITMLib;
@@ -41,11 +42,11 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::Calc
                                                                                                   ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceFieldIndex,
                                                                                                   bool restrictZTrackingForDebugging) {
 
-	StaticVoxelTraversal_CPU<ClearOutGradientStaticFunctor<TVoxelCanonical>>(canonicalScene);
+	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TVoxelCanonical>>(canonicalScene);
 	calculateGradientFunctor.PrepareForOptimization(liveScene, canonicalScene, sourceFieldIndex,
 	                                                restrictZTrackingForDebugging);
 
-	DualVoxelPositionTraversal_CPU(liveScene, canonicalScene, calculateGradientFunctor);
+	DualVoxelPositionTraversal(liveScene, canonicalScene, calculateGradientFunctor);
 
 	calculateGradientFunctor.FinalizePrintAndRecordStatistics();
 }
@@ -84,13 +85,13 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMLib::ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ResetWarps(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) {
-	StaticVoxelTraversal_CPU<WarpClearFunctor<TVoxelCanonical>>(canonicalScene);
+	StaticVoxelTraversal<WarpClearFunctor<TVoxelCanonical>>(canonicalScene);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ClearOutFramewiseWarp(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) {
-	StaticVoxelTraversal_CPU<ClearOutFramewiseWarpStaticFunctor<TVoxelCanonical>>(canonicalScene);
+	StaticVoxelTraversal<ClearOutFramewiseWarpStaticFunctor<TVoxelCanonical>>(canonicalScene);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>

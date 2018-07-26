@@ -59,14 +59,14 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ITMSc
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ResetWarps(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
-	StaticVoxelTraversal_CPU<WarpClearFunctor<TVoxelCanonical>>(canonicalScene);
+	StaticVoxelTraversal<WarpClearFunctor<TVoxelCanonical>>(canonicalScene);
 };
 
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ClearOutFramewiseWarp(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
-	StaticVoxelTraversal_CPU<ClearOutFramewiseWarpStaticFunctor<TVoxelCanonical>>(canonicalScene);
+	StaticVoxelTraversal<ClearOutFramewiseWarpStaticFunctor<TVoxelCanonical>>(canonicalScene);
 }
 
 
@@ -96,12 +96,12 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Calcu
                                                                                                  ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceFieldIndex,
                                                                                                  bool restrictZTrackingForDebugging) {
 
-	StaticVoxelTraversal_CPU<ClearOutGradientStaticFunctor<TVoxelCanonical>>(canonicalScene);
+	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TVoxelCanonical>>(canonicalScene);
 	hashManager.AllocateCanonicalFromLive(canonicalScene, liveScene);
 	calculateGradientFunctor.PrepareForOptimization(liveScene, canonicalScene, sourceFieldIndex,
 	                                                restrictZTrackingForDebugging);
 
-	DualVoxelPositionTraversal_CPU(liveScene, canonicalScene, calculateGradientFunctor);
+	DualVoxelPositionTraversal(liveScene, canonicalScene, calculateGradientFunctor);
 
 	calculateGradientFunctor.FinalizePrintAndRecordStatistics();
 }

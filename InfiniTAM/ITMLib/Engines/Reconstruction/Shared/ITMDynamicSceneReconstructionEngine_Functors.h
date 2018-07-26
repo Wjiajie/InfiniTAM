@@ -53,8 +53,8 @@ struct TrilinearInterpolationFunctor {
 	 * \param sdfSourceScene
 	 * \param warpSourceScene
 	 */
-	TrilinearInterpolationFunctor(ITMScene<TVoxelSdf, TIndex>* sdfSourceScene,
-	                              ITMScene<TVoxelWarpSource, TIndex>* warpSourceScene, int sourceSdfIndex,
+	TrilinearInterpolationFunctor(ITMLib::ITMScene<TVoxelSdf, TIndex>* sdfSourceScene,
+	                              ITMLib::ITMScene<TVoxelWarpSource, TIndex>* warpSourceScene, int sourceSdfIndex,
 	                              int targetSdfIndex) :
 
 			sdfSourceScene(sdfSourceScene),
@@ -68,8 +68,8 @@ struct TrilinearInterpolationFunctor {
 			warpSourceCache(),
 			sourceSdfIndex(sourceSdfIndex),
 			targetSdfIndex(targetSdfIndex),
-			hasFocusCoordinates(ITMLibSettings::Instance().FocusCoordinatesAreSpecified()),
-			focusCoordinates(ITMLibSettings::Instance().GetFocusCoordinates())
+			hasFocusCoordinates(ITMLib::ITMLibSettings::Instance().FocusCoordinatesAreSpecified()),
+			focusCoordinates(ITMLib::ITMLibSettings::Instance().GetFocusCoordinates())
 	{}
 
 
@@ -85,12 +85,12 @@ struct TrilinearInterpolationFunctor {
 
 private:
 
-	ITMScene<TVoxelSdf, TIndex>* sdfSourceScene;
+	ITMLib::ITMScene<TVoxelSdf, TIndex>* sdfSourceScene;
 	TVoxelSdf* sdfSourceVoxels;
 	typename TIndex::IndexData* sdfSourceIndexData;
 	typename TIndex::IndexCache sdfSourceCache;
 
-	ITMScene<TVoxelWarpSource, TIndex>* warpSourceScene;
+	ITMLib::ITMScene<TVoxelWarpSource, TIndex>* warpSourceScene;
 	TVoxelWarpSource* warpSourceVoxels;
 	typename TIndex::IndexData* warpSourceHashEntries;
 	typename TIndex::IndexCache warpSourceCache;

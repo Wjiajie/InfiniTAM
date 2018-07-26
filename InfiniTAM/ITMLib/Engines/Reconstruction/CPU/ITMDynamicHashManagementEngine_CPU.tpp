@@ -294,7 +294,7 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLi
 	//Mark up hash entries in the target scene that will need allocation
 	WarpBasedAllocationMarkerFunctor<TVoxelCanonical, TVoxelLive, TLookupPositionFunctor>
 			hashMarkerFunctor(sdfScene, allocationBlockCoords, liveEntryAllocationTypes, sourceSdfIndex);
-	VoxelAndHashBlockPositionTraversal_CPU(warpSourceScene, hashMarkerFunctor);
+	VoxelAndHashBlockPositionTraversal(warpSourceScene, hashMarkerFunctor);
 
 	//Allocate the hash entries that will potentially have any data
 	AllocateHashEntriesUsingLists_CPU(sdfScene, liveEntryAllocationTypes, allocationBlockCoords);

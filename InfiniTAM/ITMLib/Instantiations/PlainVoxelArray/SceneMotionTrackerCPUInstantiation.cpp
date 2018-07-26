@@ -14,7 +14,6 @@
 //  limitations under the License.
 //  ================================================================
 
-#include "../../SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.tpp"
 #include "../../SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.tpp"
 #include "../../ITMLibDefines.h"
 

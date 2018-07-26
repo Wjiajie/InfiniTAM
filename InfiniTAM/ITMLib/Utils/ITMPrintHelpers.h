@@ -495,7 +495,6 @@ operator<<(basic_ostream<TChar, TCharTraits> & stream, const T & container)
 
 
 //_DEBUG
-_CPU_AND_GPU_CODE_
 inline std::string printBool(bool value) {
 	std::ostringstream os;
 	os << (value ? ITMLib::green : ITMLib::red) << (value ? "true" : "false") << ITMLib::reset;

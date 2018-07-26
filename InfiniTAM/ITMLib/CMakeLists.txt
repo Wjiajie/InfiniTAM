@@ -447,9 +447,6 @@ set(ITMLIB_OBJECTS_SCENE_HEADERS
     Objects/Scene/ITMPlainVoxelArray.h
     Objects/Scene/ITMRepresentationAccess.h
     Objects/Scene/ITMTrilinearInterpolation.h
-    Objects/Scene/ITMTrilinearInterpolation_ANY_DEVICE.h
-    Objects/Scene/ITMTrilinearInterpolation_CPU_DEBUG.h
-    Objects/Scene/ITMTrilinearInterpolation_Shared.h
     Objects/Scene/ITMTrilinearDistribution.h
     Objects/Scene/ITMScene.h
     Objects/Scene/ITMSurfelScene.h
@@ -458,7 +455,7 @@ set(ITMLIB_OBJECTS_SCENE_HEADERS
     Objects/Scene/ITMVoxelTypes.h
     Objects/Scene/ITMIndexEnumeration.h
 
-    Objects/Scene/ITMSceneTraversal_CUDA.h
+    Objects/Scene/ITMSceneTraversal_CUDA_PlainVoxelArray.h
     Objects/Scene/ITMSceneTraversal_CPU_VoxelBlockHash.h
     Objects/Scene/ITMSceneTraversal_CPU_PlainVoxelArray.h
     #_DEBUG

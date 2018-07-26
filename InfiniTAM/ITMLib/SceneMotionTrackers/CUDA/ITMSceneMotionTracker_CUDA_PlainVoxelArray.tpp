@@ -16,76 +16,63 @@
 #pragma once
 
 #include "ITMSceneMotionTracker_CUDA.h"
+#include "../../Objects/Scene/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
 #include "../Shared/ITMSceneMotionTracker_Functors.h"
-#include "../../Objects/Scene/ITMSceneTraversal_CUDA.h"
 
-namespace {
-//CUDA device functions
-template<typename TVoxelMulti>
-__global__ void
-clearOutGradient_device(TVoxelMulti* voxelArray, const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
-                          int flagFieldIndex) {
-	int x = blockIdx.x * blockDim.x + threadIdx.x;
-	int y = blockIdx.y * blockDim.y + threadIdx.y;
-	int z = blockIdx.z * blockDim.z + threadIdx.z;
 
-	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
-	TVoxelMulti& voxel = voxelArray[locId];
+using namespace ITMLib;
 
-}
-}
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-ITMLib::ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ITMSceneMotionTracker_CUDA() {
+ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ITMSceneMotionTracker_CUDA()
+		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>(),
+			calculateGradientFunctor(this->parameters, this->switches){
 
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMLib::ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ClearOutFramewiseWarp(
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ClearOutFramewiseWarp(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) {
+	StaticVoxelTraversal<ClearOutFramewiseWarpStaticFunctor<TVoxelCanonical>>(canonicalScene);
 
-	StaticVoxelTraversal_CPU<TVoxelCanonical, ClearOutFramewiseWarpStaticFunctor>(canonicalScene);
-
-	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = canonicalScene->index.getIndexData();
-
-	dim3 cudaBlockSize(8, 8, 8);
-	dim3 gridSize(canonicalScene->index.getVolumeSize().x / cudaBlockSize.x,
-	              canonicalScene->index.getVolumeSize().y / cudaBlockSize.y,
-	              canonicalScene->index.getVolumeSize().z / cudaBlockSize.z);
-
-	ORcudaKernelCheck;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMLib::ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::AddFramewiseWarpToWarp(
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::AddFramewiseWarpToWarp(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene, bool clearFramewiseWarp) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	AddFramewiseWarpToWarp_common(canonicalScene,clearFramewiseWarp);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMLib::ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::CalculateWarpGradient(
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::CalculateWarpGradient(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceFieldIndex, bool restrictZTrackingForDebugging) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TVoxelCanonical>>(canonicalScene);
+	calculateGradientFunctor.PrepareForOptimization(liveScene, canonicalScene, sourceFieldIndex,
+	                                                restrictZTrackingForDebugging);
+
+	DualVoxelPositionTraversal(liveScene, canonicalScene, calculateGradientFunctor);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMLib::ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::SmoothWarpGradient(
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::SmoothWarpGradient(
 		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene,
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene, int sourceFieldIndex) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	if (this->switches.enableGradientSmoothing) {
+		SmoothWarpGradient_common(liveScene,canonicalScene,sourceFieldIndex);
+	}
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-float ITMLib::ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::UpdateWarps(
+float ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::UpdateWarps(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	return UpdateWarps_common(canonicalScene,liveScene,sourceSdfIndex,
+	                          this->parameters.gradientDescentLearningRate,this->switches.enableGradientSmoothing);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMLib::ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ResetWarps(
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ResetWarps(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	StaticVoxelTraversal<WarpClearFunctor<TVoxelCanonical>>(canonicalScene);
 }

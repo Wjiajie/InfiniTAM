@@ -21,6 +21,14 @@
 #include "../../Utils/ITMPrintHelpers.h"
 
 
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+_CPU_AND_GPU_CODE_ inline
+bool VoxelIsConsideredForTracking(TVoxelCanonical& voxelCanonical, TVoxelLive voxelLive, int sourceFieldIndex) {
+	return voxelCanonical.flags == ITMLib::VOXEL_NONTRUNCATED || voxelLive.flag_values[sourceFieldIndex] == ITMLib::VOXEL_NONTRUNCATED;
+};
+
+
 // region =================================EXPLORATION OF NEIGHBORHOOD AROUND CANONICAL VOXEL===========================
 
 
@@ -416,7 +424,7 @@ inline void ComputeSdfHessian_IndexedFields(THREADPTR(Matrix3f)& hessian,
 //endregion
 
 // region ================================ WARP LAPLACIAN (SMOOTHING/TIKHONOV TERM) ====================================
-
+_CPU_AND_GPU_CODE_
 inline void ComputeWarpLaplacian(THREADPTR(Vector3f)& laplacian,
                                  const CONSTPTR(Vector3f)& voxelWarp,
                                  const CONSTPTR(Vector3f*) neighborWarps) {//in, x6-9
@@ -429,7 +437,7 @@ inline void ComputeWarpLaplacian(THREADPTR(Vector3f)& laplacian,
 	}
 	laplacian -= 6 * voxelWarp;
 }
-
+_CPU_AND_GPU_CODE_
 inline void ComputeWarpLaplacianAndJacobian(THREADPTR(Vector3f)& laplacian,
                                             THREADPTR(Matrix3f)& jacobian,
                                             const CONSTPTR(Vector3f)& voxelWarp,

@@ -122,7 +122,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveSliceWarp(const Vector6
 		unsigned int sliceIterationCursor = fullCanonicalSceneLogger->GetIterationCursor();
 		sliceWarpOfstream.write(reinterpret_cast<const char* >(&sliceIterationCursor), sizeof(sliceIterationCursor));
 
-		VoxelTraversalWithinBounds_CPU(fullCanonicalSceneLogger->scene, warpAndUpdateWriteFunctor, voxelRange);
+		VoxelTraversalWithinBounds(fullCanonicalSceneLogger->scene, warpAndUpdateWriteFunctor, voxelRange);
 	}
 	sliceWarpOfstream.close();
 	fullCanonicalSceneLogger->StopLoadingWarpState();

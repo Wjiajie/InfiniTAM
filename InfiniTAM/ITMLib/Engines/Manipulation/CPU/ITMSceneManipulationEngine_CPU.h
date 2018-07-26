@@ -349,7 +349,7 @@ bool IsHashBlockPartiallyInRange(const Vector3i& hashBlockPositionVoxels, const 
 }
 
 inline
-bool
+void
 ComputeCopyRanges(int& xRangeStart, int& xRangeEnd, int& yRangeStart, int& yRangeEnd, int& zRangeStart, int& zRangeEnd,
                   const Vector3i& hashBlockPositionVoxels, const Vector6i& bounds) {
 	zRangeStart = std::max(0, bounds.min_z - hashBlockPositionVoxels.z);

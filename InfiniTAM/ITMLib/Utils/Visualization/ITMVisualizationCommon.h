@@ -33,7 +33,10 @@ inline std::string AxisToString(Axis axis) {
 			return "Y";
 		case AXIS_Z:
 			return "Z";
+		default:
+			return  "Unknown";
 	}
+
 }
 
 enum Plane {
@@ -64,6 +67,8 @@ inline std::string PlaneToString(Plane plane) {
 			return "ZX";
 		case PLANE_YX:
 			return "YX";
+		default:
+			return "Unknown";
 	}
 }
 

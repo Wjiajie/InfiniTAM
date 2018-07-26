@@ -132,7 +132,7 @@ template<class TVoxel, typename TIndex>
 struct ComputeNonTruncatedVoxelCountFunctor<true, TVoxel, TIndex> {
 	static int compute(ITMScene<TVoxel, TIndex>* scene) {
 		ComputeNonTruncatedVoxelCountFunctor instance;
-		VoxelTraversal_CPU(scene, instance);
+		VoxelTraversal(scene, instance);
 		return instance.count;
 	}
 
@@ -155,7 +155,7 @@ struct ComputeVoxelWithValueCountFunctor {
 	static int compute(ITMScene<TVoxel, TIndex>* scene, float value) {
 		ComputeVoxelWithValueCountFunctor instance;
 		instance.value = value;
-		VoxelTraversal_CPU(scene, instance);
+		VoxelTraversal(scene, instance);
 		return instance.count;
 	}
 
@@ -190,7 +190,7 @@ struct SumSDFFunctor<true, TVoxel, TIndex> {
 	static double compute(ITMScene<TVoxel, TIndex>* scene, ITMLib::VoxelFlags voxelType) {
 		SumSDFFunctor instance;
 		instance.voxelType = voxelType;
-		VoxelTraversal_CPU(scene, instance);
+		VoxelTraversal(scene, instance);
 		return instance.sum;
 	}
 
@@ -289,7 +289,7 @@ struct MaxGradientFunctor<ITMVoxelCanonical, TIndex> {
 	static float find(ITMScene<ITMVoxelCanonical, TIndex>* scene, bool secondGradientField, Vector3i& maxPosition) {
 		MaxGradientFunctor instance;
 		instance.secondGradientField = secondGradientField;
-		VoxelPositionTraversal_CPU(scene, instance);
+		VoxelPositionTraversal(scene, instance);
 		maxPosition = instance.maxPosition;
 		return instance.maxLength;
 	}

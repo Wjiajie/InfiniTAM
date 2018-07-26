@@ -17,7 +17,8 @@
 
 
 #include "../../Utils/ITMMath.h"
-
+#include "../../Objects/Scene/ITMScene.h"
+#include "ITMSceneMotionTracker_Shared.h"
 
 template<typename TVoxel>
 struct WarpClearFunctor {
@@ -46,7 +47,6 @@ struct ClearOutGradientStaticFunctor {
 };
 
 
-
 template<typename TVoxelLive, typename TVoxelCanonical>
 struct WarpUpdateFunctor {
 	WarpUpdateFunctor(float learningRate, bool gradientSmoothingEnabled, int sourceSdfIndex) :
@@ -54,6 +54,7 @@ struct WarpUpdateFunctor {
 			maxFramewiseWarpLength(0.0f), maxWarpUpdateLength(0.0f), maxFramewiseWarpPosition(0),
 			maxWarpUpdatePosition(0), sourceSdfIndex(sourceSdfIndex) {}
 
+	_CPU_AND_GPU_CODE_
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, const Vector3i& position) {
 		if (!VoxelIsConsideredForTracking(canonicalVoxel, liveVoxel, sourceSdfIndex)) return;
 		Vector3f warpUpdate = -learningRate * (gradientSmoothingEnabled ?
@@ -80,19 +81,21 @@ struct WarpUpdateFunctor {
 	Vector3i maxFramewiseWarpPosition;
 	Vector3i maxWarpUpdatePosition;
 
-
+	_CPU_AND_GPU_CODE_
 	void PrintWarp() {
+#ifndef __CUDACC__
 		std::cout << green << "Max warp: [" << maxFramewiseWarpLength << " at " << maxFramewiseWarpPosition
 		          << "] Max update: [" << maxWarpUpdateLength << " at " << maxWarpUpdatePosition << "]." << reset
 		          << std::endl;
+#endif
 	}
+
 
 private:
 	const float learningRate;
 	const bool gradientSmoothingEnabled;
 	const int sourceSdfIndex;
 };
-
 
 
 template<typename TVoxelLive, typename TVoxelCanonical>
@@ -110,12 +113,12 @@ struct WarpHistogramFunctor {
 		const int histBinCount = WarpHistogramFunctor<TVoxelLive, TVoxelCanonical>::histBinCount;
 		int binIdx = 0;
 		if (maxWarpLength > 0) {
-			binIdx = std::min(histBinCount - 1, (int) (framewiseWarpLength * histBinCount / maxWarpLength));
+			binIdx = MIN(histBinCount - 1, (int) (framewiseWarpLength * histBinCount / maxWarpLength));
 		}
 		warpBins[binIdx]++;
 		if (maxWarpUpdateLength > 0) {
-			binIdx = std::min(histBinCount - 1,
-			                  (int) (warpUpdateLength * histBinCount / maxWarpUpdateLength));
+			binIdx = MIN(histBinCount - 1,
+			             (int) (warpUpdateLength * histBinCount / maxWarpUpdateLength));
 		}
 		updateBins[binIdx]++;
 	}
@@ -133,6 +136,7 @@ struct WarpHistogramFunctor {
 		std::cout << std::endl;
 	}
 
+
 private:
 	const float maxWarpLength;
 	const float maxWarpUpdateLength;
@@ -149,14 +153,26 @@ enum TraversalDirection : int {
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex, TraversalDirection TDirection>
 struct GradientSmoothingPassFunctor {
-	GradientSmoothingPassFunctor(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, int sourceSdfFieldIndex) :
+	GradientSmoothingPassFunctor(ITMLib::ITMScene<TVoxelCanonical, TIndex>* canonicalScene, int sourceSdfFieldIndex) :
 			canonicalScene(canonicalScene),
 			canonicalVoxels(canonicalScene->localVBA.GetVoxelBlocks()),
 			canonicalIndexData(canonicalScene->index.getIndexData()),
 			canonicalCache(),
 			sourceSdfFieldIndex(sourceSdfFieldIndex) {}
 
+	_CPU_AND_GPU_CODE_
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i position) {
+		const int sobolevFilterSize = 7;
+		const float sobolevFilter1D[sobolevFilterSize] = {
+				2.995861099047703036e-04f,
+				4.410932423926419363e-03f,
+				6.571314272194948847e-02f,
+				9.956527876693953560e-01f,
+				6.571314272194946071e-02f,
+				4.410932423926422832e-03f,
+				2.995861099045313996e-04f
+		};
+
 		int vmIndex = 0;
 		if (!VoxelIsConsideredForTracking(canonicalVoxel, liveVoxel, sourceSdfFieldIndex)) return;
 
@@ -175,7 +191,8 @@ struct GradientSmoothingPassFunctor {
 	}
 
 private:
-	Vector3f GetGradient(const TVoxelCanonical& voxel) const {
+	_CPU_AND_GPU_CODE_
+	static inline Vector3f GetGradient(const TVoxelCanonical& voxel) {
 		switch (TDirection) {
 			case X:
 				return voxel.gradient0;
@@ -183,10 +200,13 @@ private:
 				return voxel.gradient1;
 			case Z:
 				return voxel.gradient0;
+			default:
+				return Vector3f(0.0);
 		}
 	}
 
-	void SetGradient(TVoxelCanonical& voxel, const Vector3f gradient) const {
+	_CPU_AND_GPU_CODE_
+	static inline void SetGradient(TVoxelCanonical& voxel, const Vector3f gradient) {
 		switch (TDirection) {
 			case X:
 				voxel.gradient1 = gradient;
@@ -200,44 +220,32 @@ private:
 		}
 	}
 
-	ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
+	ITMLib::ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
 	TVoxelCanonical* canonicalVoxels;
 	typename TIndex::IndexData* canonicalIndexData;
 	int sourceSdfFieldIndex;
 	typename TIndex::IndexCache canonicalCache;
 
-	static const int sobolevFilterSize;
-	static const float sobolevFilter1D[];
 };
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex, TraversalDirection TDirection>
-const int GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, TDirection>::sobolevFilterSize = 7;
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex, TraversalDirection TDirection>
-const float GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, TDirection>::sobolevFilter1D[] = {
-		2.995861099047703036e-04f,
-		4.410932423926419363e-03f,
-		6.571314272194948847e-02f,
-		9.956527876693953560e-01f,
-		6.571314272194946071e-02f,
-		4.410932423926422832e-03f,
-		2.995861099045313996e-04f};
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 inline
-void SmoothWarpGradient_common(ITMScene<TVoxelLive, TIndex>* liveScene,
-                        ITMScene<TVoxelCanonical, TIndex>* canonicalScene, int sourceFieldIndex){
+void SmoothWarpGradient_common(ITMLib::ITMScene<TVoxelLive, TIndex>* liveScene,
+                               ITMLib::ITMScene<TVoxelCanonical, TIndex>* canonicalScene, int sourceFieldIndex) {
 	GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, X> passFunctorX(canonicalScene, sourceFieldIndex);
 	GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, Y> passFunctorY(canonicalScene, sourceFieldIndex);
 	GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, Z> passFunctorZ(canonicalScene, sourceFieldIndex);
 
-	DualVoxelPositionTraversal_CPU(liveScene, canonicalScene, passFunctorX);
-	DualVoxelPositionTraversal_CPU(liveScene, canonicalScene, passFunctorY);
-	DualVoxelPositionTraversal_CPU(liveScene, canonicalScene, passFunctorZ);
+	DualVoxelPositionTraversal(liveScene, canonicalScene, passFunctorX);
+	DualVoxelPositionTraversal(liveScene, canonicalScene, passFunctorY);
+	DualVoxelPositionTraversal(liveScene, canonicalScene, passFunctorZ);
 }
 
 template<typename TVoxelCanonical>
 struct AddFramewiseWarpToWarpWithClearStaticFunctor {
-	static void run(TVoxelCanonical& voxel) {
+	_CPU_AND_GPU_CODE_
+	static inline void run(TVoxelCanonical& voxel) {
 		voxel.warp += voxel.framewise_warp;
 		voxel.framewise_warp = Vector3f(0.0f);
 	}
@@ -245,37 +253,40 @@ struct AddFramewiseWarpToWarpWithClearStaticFunctor {
 
 template<typename TVoxelCanonical>
 struct AddFramewiseWarpToWarpStaticFunctor {
-	static void run(TVoxelCanonical& voxel) {
+	_CPU_AND_GPU_CODE_
+	static inline void run(TVoxelCanonical& voxel) {
 		voxel.warp += voxel.framewise_warp;
 	}
 };
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 inline float UpdateWarps_common(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-		ITMScene<TVoxelLive, TIndex>* liveScene, int sourceSdfIndex, float gradientDescentLearningRate, bool gradeintSmoothingEnabled) {
+		ITMLib::ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+		ITMLib::ITMScene<TVoxelLive, TIndex>* liveScene, int sourceSdfIndex, float gradientDescentLearningRate,
+		bool gradeintSmoothingEnabled) {
 	WarpUpdateFunctor<TVoxelLive, TVoxelCanonical>
 			warpUpdateFunctor(gradientDescentLearningRate, gradeintSmoothingEnabled,
 			                  sourceSdfIndex);
 
-	DualVoxelPositionTraversal_CPU(liveScene, canonicalScene, warpUpdateFunctor);
-
+	DualVoxelPositionTraversal(liveScene, canonicalScene, warpUpdateFunctor);
+	//don't compute histogram in CUDA version
+#ifndef __CUDACC__
 	WarpHistogramFunctor<TVoxelLive, TVoxelCanonical>
 			warpHistogramFunctor(warpUpdateFunctor.maxFramewiseWarpLength, warpUpdateFunctor.maxWarpUpdateLength,
 			                     sourceSdfIndex);
-	DualVoxelTraversal_CPU(liveScene, canonicalScene, warpHistogramFunctor);
-
+	DualVoxelTraversal(liveScene, canonicalScene, warpHistogramFunctor);
 	warpHistogramFunctor.PrintHistogram();
 	warpUpdateFunctor.PrintWarp();
-
+#endif
 	return warpUpdateFunctor.maxWarpUpdateLength;
 }
 
 template<typename TVoxelCanonical, typename TIndex>
-inline void AddFramewiseWarpToWarp_common(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, bool clearFramewiseWarp){
+inline void
+AddFramewiseWarpToWarp_common(ITMLib::ITMScene<TVoxelCanonical, TIndex>* canonicalScene, bool clearFramewiseWarp) {
 	if (clearFramewiseWarp) {
-		StaticVoxelTraversal_CPU<AddFramewiseWarpToWarpWithClearStaticFunctor<TVoxelCanonical>>(canonicalScene);
+		ITMLib::StaticVoxelTraversal<AddFramewiseWarpToWarpWithClearStaticFunctor<TVoxelCanonical>>(canonicalScene);
 	} else {
-		StaticVoxelTraversal_CPU<AddFramewiseWarpToWarpStaticFunctor<TVoxelCanonical>>(canonicalScene);
+		ITMLib::StaticVoxelTraversal<AddFramewiseWarpToWarpStaticFunctor<TVoxelCanonical>>(canonicalScene);
 	}
 };

@@ -155,7 +155,7 @@ cv::Mat ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::DrawScen
 	DrawSceneVoxelAtOriginalPositionFunctor<TVoxel, RetrieveVoxelSdfRegularFunctor<TVoxel>> drawSceneVoxelFunctor(
 			imgPixelRangeY, imgPixelRangeZ, bounds, plane,
 			this->pixelsPerVoxel, absFillingStrategy, img);
-	VoxelPositionTraversalWithinBounds_CPU(scene, drawSceneVoxelFunctor, bounds);
+	VoxelPositionTraversalWithinBounds(scene, drawSceneVoxelFunctor, bounds);
 	return img;
 }
 
@@ -171,14 +171,14 @@ cv::Mat ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::DrawScen
 			DrawSceneVoxelAtOriginalPositionFunctor<TVoxel, RetrieveVoxelSdfIndex0Functor<TVoxel>> drawSceneVoxelFunctor0(
 					imgPixelRangeY, imgPixelRangeZ, bounds, plane,
 					this->pixelsPerVoxel, absFillingStrategy, img);
-			VoxelPositionTraversalWithinBounds_CPU(scene, drawSceneVoxelFunctor0, bounds);
+			VoxelPositionTraversalWithinBounds(scene, drawSceneVoxelFunctor0, bounds);
 		}
 			break;
 		case 1:{
 			DrawSceneVoxelAtOriginalPositionFunctor<TVoxel, RetrieveVoxelSdfIndex1Functor<TVoxel>> drawSceneVoxelFunctor1(
 					imgPixelRangeY, imgPixelRangeZ, bounds, plane,
 					this->pixelsPerVoxel, absFillingStrategy, img);
-			VoxelPositionTraversalWithinBounds_CPU(scene, drawSceneVoxelFunctor1, bounds);
+			VoxelPositionTraversalWithinBounds(scene, drawSceneVoxelFunctor1, bounds);
 		}
 			break;
 		default:
@@ -259,7 +259,7 @@ cv::Mat ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarp
 	DrawSceneVoxelAtWarpedPositionFunctor<TVoxel, RetrieveVoxelSdfRegularFunctor<TVoxel>> drawSceneVoxelFunctor(
 			imgPixelRangeY, imgPixelRangeZ, bounds, plane,
 			this->pixelsPerVoxel, absFillingStrategy, img);
-	VoxelPositionTraversalWithinBounds_CPU(scene, drawSceneVoxelFunctor, expandedBounds);
+	VoxelPositionTraversalWithinBounds(scene, drawSceneVoxelFunctor, expandedBounds);
 	return img;
 }
 
@@ -473,7 +473,7 @@ ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlice
 	}
 	DrawSingleVoxelForSliceFunctor<TVoxel> drawSingleVoxelForSliceFunctor(images, axis, focusCoordinates, minPoint,
 	                                                                      absFillingStrategy);
-	VoxelPositionTraversal_CPU(scene, drawSingleVoxelForSliceFunctor);
+	VoxelPositionTraversal(scene, drawSingleVoxelForSliceFunctor);
 
 	for (int iImage = 0; iImage < imageCount; iImage++) {
 		std::stringstream ss;

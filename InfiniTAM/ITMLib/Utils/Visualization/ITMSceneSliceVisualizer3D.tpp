@@ -297,7 +297,7 @@ void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::BuildVoxelA
 
 	AddVoxelPointFunctor<TVoxel, TVoxelDataRetriever> addVoxelPointFunctor(
 			scaleAttribute, alternativeScaleAttribute, colorAttribute, voxelPoints, hashBlockPoints, focusCoordinates);
-	VoxelPositionAndHashEntryTraversalWithinBounds_CPU(scene, addVoxelPointFunctor, bounds);
+	VoxelPositionAndHashEntryTraversalWithinBounds(scene, addVoxelPointFunctor, bounds);
 	sceneSlice.voxelCount = addVoxelPointFunctor.voxelCount;
 
 	vtkSmartPointer<vtkPolyData> voxelVizData = sceneSlice.voxelVizData;
@@ -639,7 +639,7 @@ struct DrawWarpUpdateFunctor<TVoxelCanonical, TIndex, false> {
 
 		TransferWarpUpdatesToVtkStructuresFunctor<ITMVoxelCanonical> transferWarpUpdatesToVtkStructuresFunctor(
 				updatesData, currentZebraIndex);
-		VoxelPositionTraversalWithinBounds_CPU(canonicalScene, transferWarpUpdatesToVtkStructuresFunctor, bounds);
+		VoxelPositionTraversalWithinBounds(canonicalScene, transferWarpUpdatesToVtkStructuresFunctor, bounds);
 		updatesData->Modified();
 	}
 };
@@ -655,7 +655,7 @@ struct DrawWarpUpdateFunctor<TVoxelCanonical, TIndex, true> {
 		TransferWarpUpdatesToVtkStructuresFunctor_WithComponents<ITMVoxelCanonical>
 				transferSmoothingVectorsToVtkStructuresFunctor(
 				updatesData, dataTermData, smoothingTermData, componentHedgehogEndpoints, currentZebraIndex);
-		VoxelPositionTraversalWithinBounds_CPU(canonicalScene, transferSmoothingVectorsToVtkStructuresFunctor, bounds);
+		VoxelPositionTraversalWithinBounds(canonicalScene, transferSmoothingVectorsToVtkStructuresFunctor, bounds);
 		updatesData->Modified();
 		dataTermData->Modified();
 		smoothingTermData->Modified();
