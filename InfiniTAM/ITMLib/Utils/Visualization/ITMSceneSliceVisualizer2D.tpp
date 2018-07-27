@@ -28,8 +28,8 @@
 #include "ITMSceneSliceVisualizerCommon.h"
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../Analytics/ITMSceneStatisticsCalculator.h"
-#include "../../Objects/Scene/ITMSceneTraversal_CPU_PlainVoxelArray.h"
-#include "../../Objects/Scene/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
+#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 
 using namespace ITMLib;
 namespace fs = boost::filesystem;
@@ -155,7 +155,7 @@ cv::Mat ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::DrawScen
 	DrawSceneVoxelAtOriginalPositionFunctor<TVoxel, RetrieveVoxelSdfRegularFunctor<TVoxel>> drawSceneVoxelFunctor(
 			imgPixelRangeY, imgPixelRangeZ, bounds, plane,
 			this->pixelsPerVoxel, absFillingStrategy, img);
-	VoxelPositionTraversalWithinBounds(scene, drawSceneVoxelFunctor, bounds);
+	ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::VoxelPositionTraversalWithinBounds(scene, drawSceneVoxelFunctor, bounds);
 	return img;
 }
 
@@ -171,14 +171,16 @@ cv::Mat ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::DrawScen
 			DrawSceneVoxelAtOriginalPositionFunctor<TVoxel, RetrieveVoxelSdfIndex0Functor<TVoxel>> drawSceneVoxelFunctor0(
 					imgPixelRangeY, imgPixelRangeZ, bounds, plane,
 					this->pixelsPerVoxel, absFillingStrategy, img);
-			VoxelPositionTraversalWithinBounds(scene, drawSceneVoxelFunctor0, bounds);
+			ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::
+			        VoxelPositionTraversalWithinBounds(scene, drawSceneVoxelFunctor0, bounds);
 		}
 			break;
 		case 1:{
 			DrawSceneVoxelAtOriginalPositionFunctor<TVoxel, RetrieveVoxelSdfIndex1Functor<TVoxel>> drawSceneVoxelFunctor1(
 					imgPixelRangeY, imgPixelRangeZ, bounds, plane,
 					this->pixelsPerVoxel, absFillingStrategy, img);
-			VoxelPositionTraversalWithinBounds(scene, drawSceneVoxelFunctor1, bounds);
+			ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::
+			        VoxelPositionTraversalWithinBounds(scene, drawSceneVoxelFunctor1, bounds);
 		}
 			break;
 		default:
@@ -259,7 +261,8 @@ cv::Mat ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::DrawWarp
 	DrawSceneVoxelAtWarpedPositionFunctor<TVoxel, RetrieveVoxelSdfRegularFunctor<TVoxel>> drawSceneVoxelFunctor(
 			imgPixelRangeY, imgPixelRangeZ, bounds, plane,
 			this->pixelsPerVoxel, absFillingStrategy, img);
-	VoxelPositionTraversalWithinBounds(scene, drawSceneVoxelFunctor, expandedBounds);
+	ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::
+	        VoxelPositionTraversalWithinBounds(scene, drawSceneVoxelFunctor, expandedBounds);
 	return img;
 }
 
@@ -473,7 +476,8 @@ ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>::RenderSceneSlice
 	}
 	DrawSingleVoxelForSliceFunctor<TVoxel> drawSingleVoxelForSliceFunctor(images, axis, focusCoordinates, minPoint,
 	                                                                      absFillingStrategy);
-	VoxelPositionTraversal(scene, drawSingleVoxelForSliceFunctor);
+	ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::
+	        VoxelPositionTraversal(scene, drawSingleVoxelForSliceFunctor);
 
 	for (int iImage = 0; iImage < imageCount; iImage++) {
 		std::stringstream ss;

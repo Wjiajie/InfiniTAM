@@ -5,7 +5,7 @@
 #include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "../../../Objects/Scene/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#include "../../Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../../../Objects/Scene/ITMTrilinearInterpolation.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Functors.h"
@@ -103,7 +103,8 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int liveSourceFieldIndex) {
 	this->hashManager.AllocateCanonicalFromLive(canonicalScene,liveScene);
 	FusionFunctor<TVoxelLive,TVoxelCanonical> fusionFunctor(canonicalScene->sceneParams->maxW,liveSourceFieldIndex);
-	DualVoxelTraversal(liveScene, canonicalScene, fusionFunctor);
+	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
+	        DualVoxelTraversal(liveScene, canonicalScene, fusionFunctor);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
@@ -144,7 +145,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 
 	// Clear out the flags at target index
 	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
-	VoxelTraversal(liveScene, flagClearFunctor);
+	ITMSceneTraversalEngine<TVoxelLive,ITMVoxelBlockHash,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(liveScene, flagClearFunctor);
 
 	// Allocate new blocks where necessary, filter based on flags from source
 	hashManager.AllocateLiveUsingWarpUpdates(
@@ -155,6 +156,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 
 
 	// Interpolate to obtain the new live frame values (at target index)
+	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
 	DualVoxelPositionTraversal_DefaultForMissingSecondary(liveScene, canonicalScene, trilinearInterpolationFunctor);
 }
 
@@ -184,7 +186,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 
 	// Clear out the flags at target index
 	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
-	VoxelTraversal(liveScene, flagClearFunctor);
+	ITMSceneTraversalEngine<TVoxelLive,ITMVoxelBlockHash,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(liveScene, flagClearFunctor);
 
 	// Allocate new blocks where necessary, filter based on flags from source
 	hashManager.AllocateLiveUsingWholeWarps(canonicalScene, liveScene, sourceSdfIndex);
@@ -193,6 +195,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
 
 	// Interpolate to obtain the new live frame values (at target index)
+	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
 	DualVoxelPositionTraversal_DefaultForMissingSecondary(liveScene, canonicalScene, trilinearInterpolationFunctor);
 }
 
@@ -207,6 +210,6 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::CopyIndexedScene(
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
 	CopyIndexedSceneFunctor<TVoxelLive> copyIndexedSceneFunctor(sourceSdfIndex, targetSdfIndex);
-	VoxelPositionTraversal(liveScene, copyIndexedSceneFunctor);
+	ITMSceneTraversalEngine<TVoxelLive,ITMVoxelBlockHash,ITMLibSettings::DEVICE_CPU>::VoxelPositionTraversal(liveScene, copyIndexedSceneFunctor);
 }
 // endregion ===========================================================================================================

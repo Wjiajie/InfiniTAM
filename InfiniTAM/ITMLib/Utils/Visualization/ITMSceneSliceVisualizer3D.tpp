@@ -41,8 +41,8 @@
 #include "ITMSceneSliceVisualizerCommon.h"
 #include "ITMVisualizationCommon.h"
 #include "ITMSceneSliceVisualizer3DInteractorStyle.h"
-#include "../../Objects/Scene/ITMSceneTraversal_CPU_PlainVoxelArray.h"
-#include "../../Objects/Scene/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
+#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../ITMLibSettings.h"
 
 
@@ -297,7 +297,8 @@ void ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>::BuildVoxelA
 
 	AddVoxelPointFunctor<TVoxel, TVoxelDataRetriever> addVoxelPointFunctor(
 			scaleAttribute, alternativeScaleAttribute, colorAttribute, voxelPoints, hashBlockPoints, focusCoordinates);
-	VoxelPositionAndHashEntryTraversalWithinBounds(scene, addVoxelPointFunctor, bounds);
+	ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::
+	        VoxelPositionAndHashEntryTraversalWithinBounds(scene, addVoxelPointFunctor, bounds);
 	sceneSlice.voxelCount = addVoxelPointFunctor.voxelCount;
 
 	vtkSmartPointer<vtkPolyData> voxelVizData = sceneSlice.voxelVizData;
@@ -639,7 +640,8 @@ struct DrawWarpUpdateFunctor<TVoxelCanonical, TIndex, false> {
 
 		TransferWarpUpdatesToVtkStructuresFunctor<ITMVoxelCanonical> transferWarpUpdatesToVtkStructuresFunctor(
 				updatesData, currentZebraIndex);
-		VoxelPositionTraversalWithinBounds(canonicalScene, transferWarpUpdatesToVtkStructuresFunctor, bounds);
+		ITMSceneTraversalEngine<TVoxelCanonical,TIndex,ITMLibSettings::DEVICE_CPU>::
+		        VoxelPositionTraversalWithinBounds(canonicalScene, transferWarpUpdatesToVtkStructuresFunctor, bounds);
 		updatesData->Modified();
 	}
 };
@@ -655,7 +657,8 @@ struct DrawWarpUpdateFunctor<TVoxelCanonical, TIndex, true> {
 		TransferWarpUpdatesToVtkStructuresFunctor_WithComponents<ITMVoxelCanonical>
 				transferSmoothingVectorsToVtkStructuresFunctor(
 				updatesData, dataTermData, smoothingTermData, componentHedgehogEndpoints, currentZebraIndex);
-		VoxelPositionTraversalWithinBounds(canonicalScene, transferSmoothingVectorsToVtkStructuresFunctor, bounds);
+		ITMSceneTraversalEngine<TVoxelCanonical,TIndex,ITMLibSettings::DEVICE_CPU>::
+		        VoxelPositionTraversalWithinBounds(canonicalScene, transferSmoothingVectorsToVtkStructuresFunctor, bounds);
 		updatesData->Modified();
 		dataTermData->Modified();
 		smoothingTermData->Modified();

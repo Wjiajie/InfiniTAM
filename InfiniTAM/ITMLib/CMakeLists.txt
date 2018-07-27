@@ -134,14 +134,22 @@ set(ITMLIB_ENGINES_LOWLEVEL_SHARED_HEADERS
     )
 
 #====================================== SCENE MANIPULATION ENGINES =====================================================
+
+##
+set(ITMLIB_ENGINES_MANIPULATION_INTERFACE_HEADERS
+    Engines/Manipulation/Interface/ITMSceneTraversal.h
+    )
 ##
 set(ITMLIB_ENGINES_MANIPULATION_CPU_SOURCES
     Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.cpp
     Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.tpp
+
     )
 
 set(ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS
     Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h
+    Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h
+    Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h
     )
 
 ##
@@ -151,8 +159,8 @@ set(ITMLIB_ENGINES_MANIPULATION_CUDA_SOURCES
 
 set(ITMLIB_ENGINES_MANIPULATION_CUDA_HEADERS
     Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h
+    Engines/Manipulation/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h
     )
-
 
 #====================================== MESHING ENGINES ================================================================
 ##
@@ -457,10 +465,6 @@ set(ITMLIB_OBJECTS_SCENE_HEADERS
     Objects/Scene/ITMVoxelBlockHash.h
     Objects/Scene/ITMVoxelTypes.h
     Objects/Scene/ITMIndexEnumeration.h
-
-    Objects/Scene/ITMSceneTraversal_CUDA_PlainVoxelArray.h
-    Objects/Scene/ITMSceneTraversal_CPU_VoxelBlockHash.h
-    Objects/Scene/ITMSceneTraversal_CPU_PlainVoxelArray.h
     #_DEBUG
     ../Tests/TestUtils.h
     ../Tests/TestUtils.cpp
@@ -718,6 +722,7 @@ set(headers
     ${ITMLIB_ENGINES_LOWLEVEL_HEADERS}
     ${ITMLIB_ENGINES_LOWLEVEL_CPU_HEADERS}
     ${ITMLIB_ENGINES_LOWLEVEL_CUDA_HEADERS}
+    ${ITMLIB_ENGINES_MANIPULATION_INTERFACE_HEADERS}
     ${ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS}
     ${ITMLIB_ENGINES_MANIPULATION_CUDA_HEADERS}
     ${ITMLIB_ENGINES_LOWLEVEL_INTERFACE_HEADERS}

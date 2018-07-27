@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 5/22/18.
+//  Created by Gregory Kramida on 7/27/18.
 //  Copyright (c) 2018-2025 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -13,12 +13,19 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+#pragma once
 
-#include "../../SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash.tcu"
-#include "../../ITMLibDefines.h"
+#include "../../../Utils/ITMLibSettings.h"
 
 namespace ITMLib{
 
-template class ITMSceneMotionTracker_CUDA<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>;
+template<typename TVoxel, typename TIndex, ITMLibSettings::DeviceType TDeviceType>
+class ITMSceneTraversalEngine;
 
-}
+template<typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex, ITMLibSettings::DeviceType TDeviceType>
+class ITMDualSceneTraversalEngine;
+
+
+}//namespace ITMLib
+
+

@@ -39,7 +39,7 @@
 #include "../../Objects/Scene/ITMTrilinearDistribution.h"
 #include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../Utils/ITMLibSettings.h"
-#include "../../Objects/Scene/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 
 
 using namespace ITMLib;
@@ -59,6 +59,7 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ITMSc
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ResetWarps(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
+	ITMSceneTraversalEngine<TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
 	StaticVoxelTraversal<WarpClearFunctor<TVoxelCanonical>>(canonicalScene);
 };
 
@@ -66,6 +67,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ClearOutFramewiseWarp(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
+	ITMSceneTraversalEngine<TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
 	StaticVoxelTraversal<ClearOutFramewiseWarpStaticFunctor<TVoxelCanonical>>(canonicalScene);
 }
 
@@ -92,15 +94,17 @@ inline static void PrintSceneStatistics(
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::CalculateWarpGradient(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-                                                                                                 ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceFieldIndex,
-                                                                                                 bool restrictZTrackingForDebugging) {
-
+ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::CalculateWarpGradient(
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceFieldIndex,
+		bool restrictZTrackingForDebugging) {
+	ITMSceneTraversalEngine<TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
 	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TVoxelCanonical>>(canonicalScene);
 	hashManager.AllocateCanonicalFromLive(canonicalScene, liveScene);
 	calculateGradientFunctor.PrepareForOptimization(liveScene, canonicalScene, sourceFieldIndex,
 	                                                restrictZTrackingForDebugging);
 
+	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
 	DualVoxelPositionTraversal(liveScene, canonicalScene, calculateGradientFunctor);
 
 	calculateGradientFunctor.FinalizePrintAndRecordStatistics();
@@ -116,7 +120,8 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, int sourceFieldIndex) {
 
 	if (this->switches.enableGradientSmoothing) {
-		SmoothWarpGradient_common(liveScene,canonicalScene,sourceFieldIndex);
+		SmoothWarpGradient_common<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>
+				(liveScene, canonicalScene, sourceFieldIndex);
 	}
 }
 
@@ -127,13 +132,16 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::UpdateWarps(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex) {
-	return UpdateWarps_common(canonicalScene,liveScene,sourceSdfIndex,this->parameters.gradientDescentLearningRate,this->switches.enableGradientSmoothing);
+	return UpdateWarps_common<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>(
+			canonicalScene, liveScene, sourceSdfIndex, this->parameters.gradientDescentLearningRate,
+			this->switches.enableGradientSmoothing);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::AddFramewiseWarpToWarp(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, bool clearFramewiseWarp) {
-	AddFramewiseWarpToWarp_common(canonicalScene,clearFramewiseWarp);
+	AddFramewiseWarpToWarp_common<TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>
+			(canonicalScene, clearFramewiseWarp);
 }
 
 //endregion ============================================================================================================

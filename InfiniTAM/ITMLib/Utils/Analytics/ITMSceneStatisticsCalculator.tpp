@@ -17,7 +17,7 @@
 #include "../ITMMath.h"
 #include "../../Objects/Scene/ITMScene.h"
 #include "../../Objects/Scene/ITMVoxelBlockHash.h"
-#include "../../Objects/Scene/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 
 using namespace ITMLib;
 
@@ -132,7 +132,7 @@ template<class TVoxel, typename TIndex>
 struct ComputeNonTruncatedVoxelCountFunctor<true, TVoxel, TIndex> {
 	static int compute(ITMScene<TVoxel, TIndex>* scene) {
 		ComputeNonTruncatedVoxelCountFunctor instance;
-		VoxelTraversal(scene, instance);
+		ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(scene, instance);
 		return instance.count;
 	}
 
@@ -155,7 +155,7 @@ struct ComputeVoxelWithValueCountFunctor {
 	static int compute(ITMScene<TVoxel, TIndex>* scene, float value) {
 		ComputeVoxelWithValueCountFunctor instance;
 		instance.value = value;
-		VoxelTraversal(scene, instance);
+		ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(scene, instance);
 		return instance.count;
 	}
 
@@ -190,7 +190,7 @@ struct SumSDFFunctor<true, TVoxel, TIndex> {
 	static double compute(ITMScene<TVoxel, TIndex>* scene, ITMLib::VoxelFlags voxelType) {
 		SumSDFFunctor instance;
 		instance.voxelType = voxelType;
-		VoxelTraversal(scene, instance);
+		ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(scene, instance);
 		return instance.sum;
 	}
 
@@ -289,7 +289,7 @@ struct MaxGradientFunctor<ITMVoxelCanonical, TIndex> {
 	static float find(ITMScene<ITMVoxelCanonical, TIndex>* scene, bool secondGradientField, Vector3i& maxPosition) {
 		MaxGradientFunctor instance;
 		instance.secondGradientField = secondGradientField;
-		VoxelPositionTraversal(scene, instance);
+		ITMSceneTraversalEngine<ITMVoxelCanonical,TIndex,ITMLibSettings::DEVICE_CPU>::VoxelPositionTraversal(scene, instance);
 		maxPosition = instance.maxPosition;
 		return instance.maxLength;
 	}

@@ -20,7 +20,7 @@
 #include "../Shared/ITMDynamicHashManagementEngine_Shared.h"
 #include "../Shared/ITMSceneReconstructionEngine_Shared.h"
 #include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "../../../Objects/Scene/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#include "../../Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 
 
 using namespace ITMLib;
@@ -294,7 +294,7 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLi
 	//Mark up hash entries in the target scene that will need allocation
 	WarpBasedAllocationMarkerFunctor<TVoxelCanonical, TVoxelLive, TLookupPositionFunctor>
 			hashMarkerFunctor(sdfScene, allocationBlockCoords, liveEntryAllocationTypes, sourceSdfIndex);
-	VoxelAndHashBlockPositionTraversal(warpSourceScene, hashMarkerFunctor);
+	ITMSceneTraversalEngine<TVoxelCanonical,ITMVoxelBlockHash,ITMLibSettings::DEVICE_CPU>::VoxelAndHashBlockPositionTraversal(warpSourceScene, hashMarkerFunctor);
 
 	//Allocate the hash entries that will potentially have any data
 	AllocateHashEntriesUsingLists_CPU(sdfScene, liveEntryAllocationTypes, allocationBlockCoords);

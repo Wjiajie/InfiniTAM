@@ -22,6 +22,8 @@
 
 using namespace ITMLib;
 
+//TODO: refactor this to use CUDA-based traversal methods where applicable -Greg (GitHub: Algomorph)
+
 namespace {
 // device functions
 

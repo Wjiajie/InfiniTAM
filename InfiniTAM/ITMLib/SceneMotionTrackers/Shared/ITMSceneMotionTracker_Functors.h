@@ -19,6 +19,7 @@
 #include "../../Utils/ITMMath.h"
 #include "../../Objects/Scene/ITMScene.h"
 #include "ITMSceneMotionTracker_Shared.h"
+#include "../../Utils/ITMLibSettings.h"
 
 template<typename TVoxel>
 struct WarpClearFunctor {
@@ -229,7 +230,7 @@ private:
 };
 
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex, ITMLib::ITMLibSettings::DeviceType TDeviceType>
 inline
 void SmoothWarpGradient_common(ITMLib::ITMScene<TVoxelLive, TIndex>* liveScene,
                                ITMLib::ITMScene<TVoxelCanonical, TIndex>* canonicalScene, int sourceFieldIndex) {
@@ -237,8 +238,11 @@ void SmoothWarpGradient_common(ITMLib::ITMScene<TVoxelLive, TIndex>* liveScene,
 	GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, Y> passFunctorY(canonicalScene, sourceFieldIndex);
 	GradientSmoothingPassFunctor<TVoxelCanonical, TVoxelLive, TIndex, Z> passFunctorZ(canonicalScene, sourceFieldIndex);
 
+	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, TIndex, TDeviceType>::
 	DualVoxelPositionTraversal(liveScene, canonicalScene, passFunctorX);
+	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, TIndex, TDeviceType>::
 	DualVoxelPositionTraversal(liveScene, canonicalScene, passFunctorY);
+	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, TIndex, TDeviceType>::
 	DualVoxelPositionTraversal(liveScene, canonicalScene, passFunctorZ);
 }
 
@@ -259,7 +263,7 @@ struct AddFramewiseWarpToWarpStaticFunctor {
 	}
 };
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex, ITMLib::ITMLibSettings::DeviceType TDeviceType>
 inline float UpdateWarps_common(
 		ITMLib::ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 		ITMLib::ITMScene<TVoxelLive, TIndex>* liveScene, int sourceSdfIndex, float gradientDescentLearningRate,
@@ -268,12 +272,14 @@ inline float UpdateWarps_common(
 			warpUpdateFunctor(gradientDescentLearningRate, gradeintSmoothingEnabled,
 			                  sourceSdfIndex);
 
+	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, TIndex, TDeviceType>::
 	DualVoxelPositionTraversal(liveScene, canonicalScene, warpUpdateFunctor);
 	//don't compute histogram in CUDA version
 #ifndef __CUDACC__
 	WarpHistogramFunctor<TVoxelLive, TVoxelCanonical>
 			warpHistogramFunctor(warpUpdateFunctor.maxFramewiseWarpLength, warpUpdateFunctor.maxWarpUpdateLength,
 			                     sourceSdfIndex);
+	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, TIndex, TDeviceType>::
 	DualVoxelTraversal(liveScene, canonicalScene, warpHistogramFunctor);
 	warpHistogramFunctor.PrintHistogram();
 	warpUpdateFunctor.PrintWarp();
@@ -281,12 +287,14 @@ inline float UpdateWarps_common(
 	return warpUpdateFunctor.maxWarpUpdateLength;
 }
 
-template<typename TVoxelCanonical, typename TIndex>
+template<typename TVoxelCanonical, typename TIndex, ITMLib::ITMLibSettings::DeviceType TDeviceType>
 inline void
 AddFramewiseWarpToWarp_common(ITMLib::ITMScene<TVoxelCanonical, TIndex>* canonicalScene, bool clearFramewiseWarp) {
 	if (clearFramewiseWarp) {
-		ITMLib::StaticVoxelTraversal<AddFramewiseWarpToWarpWithClearStaticFunctor<TVoxelCanonical>>(canonicalScene);
+		ITMLib::ITMSceneTraversalEngine<TVoxelCanonical, TIndex, TDeviceType>::
+		template StaticVoxelTraversal<AddFramewiseWarpToWarpWithClearStaticFunctor<TVoxelCanonical>>(canonicalScene);
 	} else {
-		ITMLib::StaticVoxelTraversal<AddFramewiseWarpToWarpStaticFunctor<TVoxelCanonical>>(canonicalScene);
+		ITMLib::ITMSceneTraversalEngine<TVoxelCanonical, TIndex, TDeviceType>::
+		template StaticVoxelTraversal<AddFramewiseWarpToWarpStaticFunctor<TVoxelCanonical>>(canonicalScene);
 	}
 };
