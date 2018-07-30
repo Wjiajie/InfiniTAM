@@ -32,7 +32,7 @@ set(ITMLIB_TOPLEVEL_CPU_SOURCES
     Instantiations/VoxelBlockHash/CPUInstantiations.cpp
     Instantiations/VoxelBlockHash/DynamicFusionCPUInstantiations.cpp
     Instantiations/VoxelBlockHash/DynamicFusionLoggerInstantiation.cpp
-    Instantiations/VoxelBlockHash/DynamicSceneReconstructionEngineCPUInstantiations.cpp
+    Instantiations/VoxelBlockHash/DynamicSceneReconstructionEngineCUDAInstantiations.cpp
     Instantiations/VoxelBlockHash/DenseDynamicMapperInstantiation.cpp
     Instantiations/VoxelBlockHash/DynamicHashManagementEngineCPUInstantiation.cpp
     Instantiations/VoxelBlockHash/SceneMotionTrackerCPUInstantiation.cpp
@@ -55,6 +55,7 @@ set(ITMLIB_TOPLEVEL_CUDA_SOURCES
     Instantiations/VoxelBlockHash/DynamicFusionCUDAInstantiations.cu
     Instantiations/VoxelBlockHash/SceneMotionTrackerCUDAInstantiation.cu
     Instantiations/VoxelBlockHash/SceneManipulationCUDAInstantiations.cu
+    Instantiations/VoxelBlockHash/DynamicSceneReconstructionEngineCUDAInstantiations.cu
 
     ## PVA - CUDA
     Instantiations/PlainVoxelArray/CUDAInstantiations.cu
@@ -248,7 +249,7 @@ set(ITMLIB_ENGINES_RECONSTRUCTION_CUDA_SOURCES
     Engines/Reconstruction/CUDA/ITMSceneReconstructionEngine_CUDA.tcu
     Engines/Reconstruction/CUDA/ITMSurfelSceneReconstructionEngine_CUDA.tcu
     Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA_PlainVoxelArray.tcu
-    Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA_VoxelBlockHash.tpp
+    Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA_VoxelBlockHash.tcu
     )
 
 set(ITMLIB_ENGINES_RECONSTRUCTION_CUDA_HEADERS

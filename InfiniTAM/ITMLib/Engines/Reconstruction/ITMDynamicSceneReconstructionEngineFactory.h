@@ -19,7 +19,7 @@
 
 #include "CPU/ITMDynamicSceneReconstructionEngine_CPU.h"
 #ifndef COMPILE_WITHOUT_CUDA
-//#include "CUDA/ITMDynamicSceneReconstructionEngine_CUDA.h" TODO
+#include "CUDA/ITMDynamicSceneReconstructionEngine_CUDA.h"
 #endif
 #ifdef COMPILE_WITH_METAL
 #error "NOT CURRENTLY SUPPORTED"
@@ -52,7 +52,7 @@ struct ITMDynamicSceneReconstructionEngineFactory
 				break;
 			case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-				sceneRecoEngine = new ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, TIndex>;
+				sceneRecoEngine = new ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, TIndex>;
 #endif
 				break;
 			case ITMLibSettings::DEVICE_METAL:

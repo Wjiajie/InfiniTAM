@@ -17,7 +17,13 @@
 
 #include "Interface/ITMSceneMotionTracker.h"
 #include "CPU/ITMSceneMotionTracker_CPU.h"
+
+#ifndef COMPILE_WITHOUT_CUDA
 #include "CUDA/ITMSceneMotionTracker_CUDA.h"
+#endif
+#ifdef COMPILE_WITH_METAL
+#error "NOT CURRENTLY SUPPORTED"
+#endif
 
 namespace ITMLib{
 class ITMSceneMotionTrackerFactory {

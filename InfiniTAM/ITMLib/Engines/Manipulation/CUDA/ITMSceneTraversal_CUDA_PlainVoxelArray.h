@@ -124,16 +124,17 @@ public:
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
-		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = secondaryScene->index.getIndexData();
+		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.getIndexData();
 
 		dim3 cudaBlockSize(8, 8, 8);
-		dim3 gridSize(secondaryScene->index.getVolumeSize().x / cudaBlockSize.x,
-		              secondaryScene->index.getVolumeSize().y / cudaBlockSize.y,
-		              secondaryScene->index.getVolumeSize().z / cudaBlockSize.z);
+		dim3 gridSize(primaryScene->index.getVolumeSize().x / cudaBlockSize.x,
+		              primaryScene->index.getVolumeSize().y / cudaBlockSize.y,
+		              primaryScene->index.getVolumeSize().z / cudaBlockSize.z);
 
 		dualVoxelPositionTraversal_device<TFunctor, TVoxelPrimary, TVoxelSecondary>
 				<< < gridSize, cudaBlockSize >> >
 		                       (primaryVoxels, secondaryVoxels, arrayInfo, functor);
+		ORcudaKernelCheck;
 
 	}
 
@@ -148,16 +149,17 @@ public:
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
-		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = secondaryScene->index.getIndexData();
+		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.getIndexData();
 
 		dim3 cudaBlockSize(8, 8, 8);
-		dim3 gridSize(secondaryScene->index.getVolumeSize().x / cudaBlockSize.x,
-		              secondaryScene->index.getVolumeSize().y / cudaBlockSize.y,
-		              secondaryScene->index.getVolumeSize().z / cudaBlockSize.z);
+		dim3 gridSize(primaryScene->index.getVolumeSize().x / cudaBlockSize.x,
+		              primaryScene->index.getVolumeSize().y / cudaBlockSize.y,
+		              primaryScene->index.getVolumeSize().z / cudaBlockSize.z);
 
 		dualVoxelTraversal_device<TFunctor, TVoxelPrimary, TVoxelSecondary>
 				<< < gridSize, cudaBlockSize >> >
 		                       (primaryVoxels, secondaryVoxels, arrayInfo, functor);
+		ORcudaKernelCheck;
 
 	}
 

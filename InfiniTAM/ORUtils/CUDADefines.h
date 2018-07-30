@@ -2,6 +2,8 @@
 
 #pragma once
 
+#define CUDA_DEBUG
+
 #ifndef COMPILE_WITHOUT_CUDA
 
 #if (!defined USING_CMAKE) && (defined _MSC_VER)
@@ -43,11 +45,13 @@ inline void __cudaSafeCall( cudaError err, const char *file, const int line )
 
 #ifndef ORcudaKernelCheck
 
+#ifdef CUDA_DEBUG
+// For debugging purposes
+#define ORcudaKernelCheck { cudaDeviceSynchronize(); ORUtils::__cudaSafeCall(cudaPeekAtLastError(), __FILE__, __LINE__); }
+#else
 // For normal operation
 #define ORcudaKernelCheck
-
-// For debugging purposes
-//#define ORcudaKernelCheck { cudaDeviceSynchronize(); ORUtils::__cudaSafeCall(cudaPeekAtLastError(), __FILE__, __LINE__); }
+#endif
 
 #endif
 

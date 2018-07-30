@@ -155,8 +155,9 @@ ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVo
 	              canonicalScene->index.getVolumeSize().y / cudaBlockSize.y,
 	              canonicalScene->index.getVolumeSize().z / cudaBlockSize.z);
 
-	fuseSdf2Sdf_device<TVoxelLive, TVoxelCanonical> << < gridSize, cudaBlockSize >> >
-	                                                               (liveVoxels, canonicalVoxels, arrayInfo, liveSourceFieldIndex, maxW);
+	fuseSdf2Sdf_device<TVoxelLive, TVoxelCanonical>
+	        << < gridSize, cudaBlockSize >> >
+	        (liveVoxels, canonicalVoxels, arrayInfo, liveSourceFieldIndex, maxW);
 	ORcudaKernelCheck;
 }
 
@@ -176,10 +177,11 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMPl
 
 	clearIndexedFields_device<TVoxelLive> << < gridSize, cudaBlockSize >> >
 	                                                     (liveVoxels, arrayInfo, targetSdfIndex);
-
+	ORcudaKernelCheck;
 	interpolateTriliearlyBetweenIndexedFields<TVoxelCanonical,TVoxelLive, LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>
 			<< < gridSize, cudaBlockSize >> >
 			(liveVoxels,canonicalVoxels,arrayInfo,sourceSdfIndex,targetSdfIndex);
+	ORcudaKernelCheck;
 
 }
 
@@ -197,6 +199,7 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMPl
 
 	copyIndexedFields_device<TVoxelLive> << < gridSize, cudaBlockSize >> >
 	                                                     (liveVoxels, arrayInfo, sourceSdfIndex, targetSdfIndex);
+	ORcudaKernelCheck;
 
 }
 
@@ -220,6 +223,7 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMPl
 	interpolateTriliearlyBetweenIndexedFields<TVoxelCanonical,TVoxelLive, LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>
 			<< < gridSize, cudaBlockSize >> >
 	                       (liveVoxels,canonicalVoxels,arrayInfo,sourceSdfIndex,targetSdfIndex);
+	ORcudaKernelCheck;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
