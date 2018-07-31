@@ -162,11 +162,13 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProce
 
 	PrintOperationStatus(
 			"Initializing live frame SDF by mapping from raw live SDF to warped SDF based on previous-frame warp...");
-	bench::StartTimer("TrackMotion_35_WarpLiveScene");
-	sceneReconstructor->WarpScene(canonicalScene, liveScene, 0, 1);
+	bench::StartTimer("TrackMotion_35_Initialize");
+	//sceneReconstructor->WarpScene(canonicalScene, liveScene, 0, 1);
 	//sceneReconstructor->CopyIndexedScene(liveScene,0,1);
 	//sceneReconstructor->UpdateWarpedScene(canonicalScene, liveScene, 0, 1);
-	bench::StopTimer("TrackMotion_35_WarpLiveScene");
+
+	//sceneMotionTracker->ClearOutFramewiseWarp(canonicalScene);
+	bench::StopTimer("TrackMotion_35_Initialize");
 
 	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().InitializeFrameRecording();
 	maxVectorUpdate = std::numeric_limits<float>::infinity();

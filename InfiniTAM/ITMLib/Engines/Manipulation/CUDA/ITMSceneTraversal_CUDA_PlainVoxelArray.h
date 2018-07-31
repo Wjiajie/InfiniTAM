@@ -62,7 +62,19 @@ dualVoxelPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 
 	TVoxelPrimary& voxelPrimary = primaryVoxels[locId];
 	TVoxelSecondary& voxelSecondary = secondaryVoxels[locId];
-	functor(voxelPrimary, voxelSecondary, voxelPosition);
+	//if(x > 256 || y > 256 || z < 256) return;
+//	printf("Hello from block %d, thread %d, coord %d, %d, %d\n",
+//			blockIdx.x, threadIdx.x, voxelPosition.x, voxelPosition.y, voxelPosition.z);
+	//functor(voxelPrimary, voxelSecondary, voxelPosition);
+	int vmIndex;
+	TVoxelSecondary voxel;
+	voxel = readVoxel(secondaryVoxels, arrayInfo, voxelPosition + Vector3i(-1,0,0), vmIndex);
+	voxel = readVoxel(secondaryVoxels, arrayInfo, voxelPosition + Vector3i(0,-1,0), vmIndex);
+	voxel = readVoxel(secondaryVoxels, arrayInfo, voxelPosition + Vector3i(0,0,-1), vmIndex);
+	voxel = readVoxel(secondaryVoxels, arrayInfo, voxelPosition + Vector3i(1,0,0), vmIndex);
+	voxel = readVoxel(secondaryVoxels, arrayInfo, voxelPosition + Vector3i(0,1,0), vmIndex);
+	voxel = readVoxel(secondaryVoxels, arrayInfo, voxelPosition + Vector3i(0,0,1), vmIndex);
+
 };
 
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>

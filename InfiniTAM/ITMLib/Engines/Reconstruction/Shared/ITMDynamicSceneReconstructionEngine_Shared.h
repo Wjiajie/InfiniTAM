@@ -295,10 +295,23 @@ _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxel
 	        && liveVoxel.flag_values[liveSourceFieldIndex] != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED))
 		return;
 
+	float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[liveSourceFieldIndex]);
+
+	//TODO: make threshold parameter
+	// parameter eta from SobolevFusion, Sec. 3.1, divided by voxel size
+	//(voxel size, m) / (narrow-band half-width eta, m) * -("2-3 voxels", we use 3)
+	const float threshold = -0.3;
+
+	//fusion condition "THRESHOLD"
+	if (liveVoxel.flag_values[liveSourceFieldIndex] == ITMLib::VoxelFlags::VOXEL_UNKNOWN
+	    || (canonicalVoxel.flags != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED
+	        && liveVoxel.flag_values[liveSourceFieldIndex] != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED) || liveSdf < threshold)
+		return;
+
 	//fusion condition "LIVE_UNKNOWN"
 //		if(liveVoxel.flag_values[liveSourceFieldIndex] == VOXEL_UNKNOWN) return;
 
-	float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[liveSourceFieldIndex]);
+
 
 	int oldWDepth = canonicalVoxel.w_depth;
 	float oldSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);

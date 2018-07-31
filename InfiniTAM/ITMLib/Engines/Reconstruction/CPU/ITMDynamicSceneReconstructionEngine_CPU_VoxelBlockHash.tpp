@@ -151,7 +151,9 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 	hashManager.AllocateLiveUsingWarpUpdates(
 			canonicalScene, liveScene, sourceSdfIndex);
 
-	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash, LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>
+//	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash, LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>
+//			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
+	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash, LookupBasedOnFramewiseWarpStaticFunctor<TVoxelCanonical>>
 			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
 
 

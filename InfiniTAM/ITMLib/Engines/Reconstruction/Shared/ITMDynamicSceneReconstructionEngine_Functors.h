@@ -15,7 +15,11 @@
 //  ================================================================
 #pragma once
 
+#include "ITMDynamicSceneReconstructionEngine_Shared.h"
 #include "../../../Objects/Scene/ITMTrilinearInterpolation.h"
+#include "../../../Objects/Scene/ITMScene.h"
+#include "../../../Utils/ITMLibSettings.h"
+
 
 template<typename TVoxelMulti>
 struct IndexedFieldClearFunctor {

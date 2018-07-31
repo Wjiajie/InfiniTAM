@@ -220,7 +220,10 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMPl
 	clearIndexedFields_device<TVoxelLive> << < gridSize, cudaBlockSize >> >
 	                                                     (liveVoxels, arrayInfo, targetSdfIndex);
 
-	interpolateTriliearlyBetweenIndexedFields<TVoxelCanonical,TVoxelLive, LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>
+//	interpolateTriliearlyBetweenIndexedFields<TVoxelCanonical,TVoxelLive, LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>
+//			<< < gridSize, cudaBlockSize >> >
+//	                       (liveVoxels,canonicalVoxels,arrayInfo,sourceSdfIndex,targetSdfIndex);
+	interpolateTriliearlyBetweenIndexedFields<TVoxelCanonical,TVoxelLive, LookupBasedOnFramewiseWarpStaticFunctor<TVoxelCanonical>>
 			<< < gridSize, cudaBlockSize >> >
 	                       (liveVoxels,canonicalVoxels,arrayInfo,sourceSdfIndex,targetSdfIndex);
 	ORcudaKernelCheck;

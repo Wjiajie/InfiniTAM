@@ -21,6 +21,7 @@
 #include "../Shared/ITMSceneReconstructionEngine_Shared.h"
 #include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#include "../../Common/ITMCommonFunctors.h"
 
 
 using namespace ITMLib;
@@ -301,23 +302,7 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLi
 }
 
 
-// region ===================================== VOXEL LOOKUPS ==========================================================
-
-template <typename TVoxel>
-struct LookupBasedOnWarpStaticFunctor{
-	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
-		return position.toFloat() + voxel.warp;
-	}
-};
-
-
-template <typename TVoxel>
-struct LookupBasedOnWarpUpdateStaticFunctor{
-	static inline Vector3f GetWarpedPosition(TVoxel& voxel, Vector3i position){
-		return position.toFloat() + voxel.warp_update;
-	}
-};
-// endregion ===========================================================================================================
+// region ===================================== ALLOCATIONS FOR INTERPOLATION ==========================================
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLiveUsingWholeWarps(
@@ -330,7 +315,8 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLiveUsingWarpUpdates(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex) {
-	this->AllocateLive<LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>(warpSourceScene, sdfScene, sourceSdfIndex);
+	//this->AllocateLive<LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>(warpSourceScene, sdfScene, sourceSdfIndex);
+	this->AllocateLive<LookupBasedOnFramewiseWarpStaticFunctor<TVoxelCanonical>>(warpSourceScene, sdfScene, sourceSdfIndex);
 }
 
 // endregion ==================================== END CANONICAL HASH BLOCK ALLOCATION ==================================
