@@ -284,7 +284,8 @@ inline float UpdateWarps_common(
 	warpHistogramFunctor.PrintHistogram();
 	warpUpdateFunctor.PrintWarp();
 #endif
-	return warpUpdateFunctor.maxWarpUpdateLength;
+	//return warpUpdateFunctor.maxWarpUpdateLength;
+	return warpUpdateFunctor.maxFramewiseWarpLength;
 }
 
 template<typename TVoxelCanonical, typename TIndex, ITMLib::ITMLibSettings::DeviceType TDeviceType>

@@ -164,7 +164,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProce
 			"Initializing live frame SDF by mapping from raw live SDF to warped SDF based on previous-frame warp...");
 	bench::StartTimer("TrackMotion_35_Initialize");
 	//sceneReconstructor->WarpScene(canonicalScene, liveScene, 0, 1);
-	//sceneReconstructor->CopyIndexedScene(liveScene,0,1);
+	sceneReconstructor->CopyIndexedScene(liveScene,0,1);
 	//sceneReconstructor->UpdateWarpedScene(canonicalScene, liveScene, 0, 1);
 
 	//sceneMotionTracker->ClearOutFramewiseWarp(canonicalScene);

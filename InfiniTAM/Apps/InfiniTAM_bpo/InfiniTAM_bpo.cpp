@@ -208,7 +208,7 @@ int main(int argc, char** argv) {
 				/*================================================================================*/
 
 				/* convergence parameters & learning rate*/
-				("max_iterations", po::value<unsigned int>()->default_value(200),
+				("max_iterations", po::value<unsigned int>()->default_value(1200),
 				        "Maximum number of iterations in each frame of scene tracking optimization.")
 				("vector_update_threshold", po::value<float>()->default_value(0.0001f),
 					        "Unit: meters. Used in scene tracking optimization. Termination condition: optimization "

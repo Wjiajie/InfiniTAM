@@ -157,11 +157,11 @@ public:
 //			liveSdf = std::copysign(1.0f, canonicalSdf);
 //		}
 		//Data condition: ALWAYS
-		bool haveFullData = true;
+//		bool haveFullData = true;
 		//Data condition: IGNORE_UNKNOWN
 		//bool haveFullData = canonicalVoxel.flags != VOXEL_UNKNOWN && liveVoxel.flags != VOXEL_UNKNOWN;
-		//Data condition: IGNORE_LIVE_UNKNOWN
-//		bool haveFullData = canonicalVoxel.flags != VOXEL_UNKNOWN;
+		//Data condition: IGNORE_CANONICAL_UNKNOWN
+		bool haveFullData = canonicalVoxel.flags != VOXEL_UNKNOWN;
 		//Data condition: ONLY_NONTRUNCATED
 //		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
 //		                    && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
