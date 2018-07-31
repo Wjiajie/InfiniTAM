@@ -284,21 +284,27 @@ _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxel
                                                           int liveSourceFieldIndex, int maximumWeight,
                                                           DEVICEPTR(TVoxelCanonical)& canonicalVoxel) {
 	//_DEBUG
+	float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[liveSourceFieldIndex]);
 
 	//fusion condition "HARSH" -- yields results almost identical to "COMBINED"
 //		if(canonicalVoxel.flags != VOXEL_NONTRUNCATED
 //				   && liveVoxel.flag_values[liveSourceFieldIndex] != VOXEL_NONTRUNCATED) return;
 
 	//fusion condition "COMBINED"
+//	if (liveVoxel.flag_values[liveSourceFieldIndex] == ITMLib::VoxelFlags::VOXEL_UNKNOWN
+//	    || (canonicalVoxel.flags != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED
+//	        && liveVoxel.flag_values[liveSourceFieldIndex] != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED) || )
+//		return;
+	//fusion condition "COMBINED_THRESHOLD"
 	if (liveVoxel.flag_values[liveSourceFieldIndex] == ITMLib::VoxelFlags::VOXEL_UNKNOWN
 	    || (canonicalVoxel.flags != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED
-	        && liveVoxel.flag_values[liveSourceFieldIndex] != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED))
+	        && liveVoxel.flag_values[liveSourceFieldIndex] != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED) || liveSdf < -0.3f)
 		return;
 
 	//fusion condition "LIVE_UNKNOWN"
 //		if(liveVoxel.flag_values[liveSourceFieldIndex] == VOXEL_UNKNOWN) return;
 
-	float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[liveSourceFieldIndex]);
+
 
 	int oldWDepth = canonicalVoxel.w_depth;
 	float oldSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);

@@ -149,15 +149,17 @@ _CPU_AND_GPU_CODE_
 		//_DEBUG
 //		if(canonicalVoxel.flags == VOXEL_TRUNCATED){
 //			canonicalSdf = std::copysign(1.0f, liveSdf);
-//		}else if(liveVoxel.flags != VOXEL_NONTRUNCATED){
+//		}else if(liveVoxel.flag_values[sourceSdfIndex] != VOXEL_NONTRUNCATED){
 //			liveSdf = std::copysign(1.0f, canonicalSdf);
 //		}
 		//Data condition: ALWAYS
 		bool haveFullData = true;
 		//Data condition: IGNORE_UNKNOWN
-		//bool haveFullData = canonicalVoxel.flags != VOXEL_UNKNOWN && liveVoxel.flags != VOXEL_UNKNOWN;
-		//Data condition: IGNORE_LIVE_UNKNOWN
+//		bool haveFullData = canonicalVoxel.flags != VOXEL_UNKNOWN && liveVoxel.flag_values[sourceSdfIndex] != VOXEL_UNKNOWN;
+		//Data condition: IGNORE_CANONICAL_UNKNOWN
 //		bool haveFullData = canonicalVoxel.flags != VOXEL_UNKNOWN;
+		//Data condition: IGNORE_LIVE_UNKNOWN
+//		bool haveFullData = canonicalVoxel.flag_values[sourceSdfIndex] != VOXEL_UNKNOWN;
 		//Data condition: ONLY_NONTRUNCATED
 //		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
 //		                    && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
