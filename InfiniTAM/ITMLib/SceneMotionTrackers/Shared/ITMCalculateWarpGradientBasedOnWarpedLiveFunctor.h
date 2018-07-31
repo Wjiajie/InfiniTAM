@@ -157,15 +157,15 @@ public:
 //			liveSdf = std::copysign(1.0f, canonicalSdf);
 //		}
 		//Data condition: ALWAYS
-//		bool haveFullData = true;
+//		bool computeDataTerm = true;
 		//Data condition: IGNORE_UNKNOWN
-		//bool haveFullData = canonicalVoxel.flags != VOXEL_UNKNOWN && liveVoxel.flags != VOXEL_UNKNOWN;
+		//bool computeDataTerm = canonicalVoxel.flags != VOXEL_UNKNOWN && liveVoxel.flags != VOXEL_UNKNOWN;
 		//Data condition: IGNORE_CANONICAL_UNKNOWN
-		bool haveFullData = canonicalVoxel.flags != VOXEL_UNKNOWN;
+		bool computeDataTerm = canonicalVoxel.flags != VOXEL_UNKNOWN;
 		//Data condition: ONLY_NONTRUNCATED
-//		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
+//		bool computeDataTerm = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
 //		                    && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
-//		bool haveFullData = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
+//		bool computeDataTerm = liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
 //		                    && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED && std::abs(canonicalSdf - liveSdf) < 1.0;
 
 		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
@@ -233,7 +233,7 @@ public:
 
 		//endregion
 
-		if (haveFullData && (switches.enableLevelSetTerm || switches.enableDataTerm)) {
+		if (computeDataTerm && (switches.enableLevelSetTerm || switches.enableDataTerm)) {
 			ComputeLiveJacobian_CentralDifferences_IndexedFields(
 					liveSdfJacobian, position, liveVoxels, liveIndexData, liveCache, sourceSdfIndex);
 			//_DEBUG
@@ -252,7 +252,7 @@ public:
 		}
 
 		// region =============================== DATA TERM ================================================
-		if (switches.enableDataTerm && haveFullData) {
+		if (switches.enableDataTerm && computeDataTerm) {
 			// Compute data term error / energy
 			float sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
 			// (φ_n(Ψ)−φ_{global}) ∇φ_n(Ψ) - also denoted as - (φ_{proj}(Ψ)−φ_{model}) ∇φ_{proj}(Ψ)
@@ -279,7 +279,7 @@ public:
 
 		// region =============================== LEVEL SET TERM ===========================================
 
-		if (switches.enableLevelSetTerm && haveFullData) {
+		if (switches.enableLevelSetTerm && computeDataTerm) {
 			ComputeSdfHessian_IndexedFields(liveSdfHessian, position, liveSdf, liveVoxels,
 			                                liveIndexData, liveCache, sourceSdfIndex);
 			float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
@@ -517,6 +517,7 @@ private:
 
 };
 
+/*
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 struct ITMCalculateWarpGradientBasedOnWarpedLiveFunctor_DEBUG {
@@ -584,7 +585,7 @@ public:
 		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[sourceSdfIndex]);
 		float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
 
-		bool haveFullData = true;
+		bool computeDataTerm = true;
 
 
 		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
@@ -612,7 +613,7 @@ public:
 
 		if (this->switches.usePreviousUpdateVectorsForSmoothing) {
 			findPoint2ndDerivativeNeighborhoodPreviousUpdate(
-					neighborWarpUpdates/*x9*/, neighborKnown, neighborTruncated,
+					neighborWarpUpdates, neighborKnown, neighborTruncated,
 					neighborAllocated, position, canonicalVoxels,
 					canonicalIndexData, canonicalCache);
 			for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
@@ -623,7 +624,7 @@ public:
 			}
 		} else {
 			findPoint2ndDerivativeNeighborhoodFramewiseWarp_DEBUG(
-					neighborFramewiseWarps/*x9*/, neighborKnown, neighborTruncated,
+					neighborFramewiseWarps, neighborKnown, neighborTruncated,
 					neighborAllocated, position, canonicalVoxels,
 					canonicalIndexData, canonicalCache);
 //			//TODO: revise this to reflect new realities
@@ -638,13 +639,13 @@ public:
 //
 //		//endregion
 //
-//		if (haveFullData && (switches.enableLevelSetTerm || switches.enableDataTerm)) {
+//		if (computeDataTerm && (switches.enableLevelSetTerm || switches.enableDataTerm)) {
 //			ComputeLiveJacobian_CentralDifferences_IndexedFields(
 //					liveSdfJacobian, position, liveVoxels, liveIndexData, liveCache, sourceSdfIndex);
 //		}
 //
 //		// region =============================== DATA TERM ================================================
-//		if (switches.enableDataTerm && haveFullData) {
+//		if (switches.enableDataTerm && computeDataTerm) {
 //			// Compute data term error / energy
 //			float sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
 //			// (φ_n(Ψ)−φ_{global}) ∇φ_n(Ψ) - also denoted as - (φ_{proj}(Ψ)−φ_{model}) ∇φ_{proj}(Ψ)
@@ -660,7 +661,7 @@ public:
 //
 //		// region =============================== LEVEL SET TERM ===========================================
 //
-//		if (switches.enableLevelSetTerm && haveFullData) {
+//		if (switches.enableLevelSetTerm && computeDataTerm) {
 //			ComputeSdfHessian_IndexedFields(liveSdfHessian, position, liveSdf, liveVoxels,
 //			                                liveIndexData, liveCache, sourceSdfIndex);
 //			float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
@@ -789,4 +790,6 @@ private:
 	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::Switches switches;
 
 };
+*/
+
 }// namespace ITMLib
