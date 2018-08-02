@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include <tgmath.h>
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../../Utils/ITMPixelUtils.h"
 #include "../../../Utils/ITMVoxelFlags.h"

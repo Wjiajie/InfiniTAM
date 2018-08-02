@@ -165,7 +165,13 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::SetVoxel(ITMSce
                                                                           Vector3i at, TVoxel voxel) {
 	int vmIndex = 0;
 	int arrayIndex = findVoxel(scene->index.getIndexData(), at, vmIndex);
-	scene->localVBA.GetVoxelBlocks()[arrayIndex] = voxel;
+	if(vmIndex){
+		scene->localVBA.GetVoxelBlocks()[arrayIndex] = voxel;
+		return true;
+	}else{
+		return false;
+	}
+
 }
 
 

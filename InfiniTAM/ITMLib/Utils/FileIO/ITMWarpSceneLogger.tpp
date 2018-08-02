@@ -247,6 +247,7 @@ bool ITMWarpSceneLogger<TVoxel, TIndex>::SetIterationCursor(unsigned int iterati
 	}
 	//assume that index matches the file
 	iterationCursor = iterationIndex;
+	return true;
 }
 
 template<typename TVoxel, typename TIndex>
@@ -276,13 +277,13 @@ const ITMScene<TVoxel, TIndex>* ITMWarpSceneLogger<TVoxel, TIndex>::GetScene() c
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpSceneLogger<TVoxel, TIndex>::Load() {
-	scene->LoadFromDirectory(scenePath.c_str());
+	scene->LoadFromDirectory(scenePath.string());
 	voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(scene);
 }
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpSceneLogger<TVoxel, TIndex>::Save() {
-	scene->SaveToDirectory(scenePath.c_str());
+	scene->SaveToDirectory(scenePath.string());
 	this->voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(scene);
 }
 
@@ -305,13 +306,13 @@ template<typename TVoxel, typename TIndex>
 bool ITMWarpSceneLogger<TVoxel, TIndex>::SaveHighlights(std::string filePostfix) {
 	fs::path rootPath = fs::path(warpPath).parent_path();
 	highlightsBinaryPath = rootPath / ("highlights" + filePostfix + binaryFileExtension);
-	if (!this->highlights.SaveToFile(highlightsBinaryPath.c_str())) {
+	if (!this->highlights.SaveToFile(highlightsBinaryPath.string())) {
 		std::cerr << "Could not save highlights to " << highlightsBinaryPath << std::endl;
 		return false;
 	} else {
 		std::cout << "Saved highlights to" << highlightsBinaryPath << std::endl;
 	}
-	if (!this->highlights.SaveToTextFile(highlightsTextPath.c_str())) {
+	if (!this->highlights.SaveToTextFile(highlightsTextPath.string())) {
 		std::cerr << "Could not save highlights to " << highlightsTextPath << std::endl;
 		return false;
 	} else {
@@ -325,7 +326,7 @@ template<typename TVoxel, typename TIndex>
 bool ITMWarpSceneLogger<TVoxel, TIndex>::LoadHighlights(bool applyFilters, std::string filePostfix) {
 	fs::path rootPath = fs::path(warpPath).parent_path();
 	highlightsBinaryPath = rootPath / ("highlights" + filePostfix + binaryFileExtension);
-	if (!this->highlights.LoadFromFile(highlightsBinaryPath.c_str())) {
+	if (!this->highlights.LoadFromFile(highlightsBinaryPath.string())) {
 		std::cout << "Could not load highlights from " << highlightsBinaryPath << std::endl;
 		return false;
 	} else {

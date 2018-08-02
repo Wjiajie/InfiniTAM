@@ -259,11 +259,13 @@ struct HashOnlyStatisticsFunctor<TVoxel,ITMVoxelBlockHash>{
 template<typename TVoxel, typename TIndex>
 std::vector<int> ITMSceneStatisticsCalculator<TVoxel, TIndex>::GetFilledHashBlockIds(ITMScene<TVoxel, TIndex>* scene) {
 	HashOnlyStatisticsFunctor<TVoxel,TIndex>::GetFilledHashBlockIds(scene);
+	DIEWITHEXCEPTION("Not implemented");
 }
 
 template<typename TVoxel, typename TIndex>
 int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeAllocatedHashBlockCount(ITMScene<TVoxel, TIndex>* scene) {
 	HashOnlyStatisticsFunctor<TVoxel,TIndex>::ComputeAllocatedHashBlockCount(scene);
+	DIEWITHEXCEPTION("Not implemented");
 }
 // region ================================ VOXEL GRADIENTS =============================================================
 

@@ -352,12 +352,12 @@ inline
 void
 ComputeCopyRanges(int& xRangeStart, int& xRangeEnd, int& yRangeStart, int& yRangeEnd, int& zRangeStart, int& zRangeEnd,
                   const Vector3i& hashBlockPositionVoxels, const Vector6i& bounds) {
-	zRangeStart = std::max(0, bounds.min_z - hashBlockPositionVoxels.z);
-	zRangeEnd = std::min(SDF_BLOCK_SIZE, bounds.max_z - hashBlockPositionVoxels.z + 1);
-	yRangeStart = std::max(0, bounds.min_y - hashBlockPositionVoxels.y);
-	yRangeEnd = std::min(SDF_BLOCK_SIZE, bounds.max_y - hashBlockPositionVoxels.y + 1);
-	xRangeStart = std::max(0, bounds.min_x - hashBlockPositionVoxels.x);
-	xRangeEnd = std::min(SDF_BLOCK_SIZE, bounds.max_x - hashBlockPositionVoxels.x + 1);
+	zRangeStart = MAX(0, bounds.min_z - hashBlockPositionVoxels.z);
+	zRangeEnd = MIN(SDF_BLOCK_SIZE, bounds.max_z - hashBlockPositionVoxels.z + 1);
+	yRangeStart = MAX(0, bounds.min_y - hashBlockPositionVoxels.y);
+	yRangeEnd = MIN(SDF_BLOCK_SIZE, bounds.max_y - hashBlockPositionVoxels.y + 1);
+	xRangeStart = MAX(0, bounds.min_x - hashBlockPositionVoxels.x);
+	xRangeEnd = MIN(SDF_BLOCK_SIZE, bounds.max_x - hashBlockPositionVoxels.x + 1);
 }
 
 // endregion ===========================================================================================================

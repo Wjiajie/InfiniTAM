@@ -39,9 +39,9 @@ public:
 	bool operator==(const ITM3DNestedMapOfArrays &other) const;
 
 	//*** I/O ****
-	bool SaveToFile(const char* path);
-	bool SaveToTextFile(const char* path);
-	bool LoadFromFile(const char* path);
+	bool SaveToFile(std::string path);
+	bool SaveToTextFile(std::string path);
+	bool LoadFromFile(std::string path);
 	template<typename FT>
 	friend std::ostream& operator<<(std::ostream& stream, const ITM3DNestedMapOfArrays<FT>& nestedMap3D);
 

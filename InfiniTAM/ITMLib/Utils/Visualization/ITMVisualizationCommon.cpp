@@ -24,7 +24,9 @@ namespace ITMLib{
 std::istream& operator >> (std::istream& in, ITMLib::Plane& plane)
 {
 	std::string token;
-	in >> token;
+	char c[3];
+	in >> c;
+	token = c;
 	if (token == "yz" || token == "YZ")
 		plane = Plane::PLANE_YZ;
 	else if (token == "xz" || token == "XZ")

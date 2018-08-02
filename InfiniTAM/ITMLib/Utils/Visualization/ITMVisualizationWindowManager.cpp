@@ -14,7 +14,6 @@
 //  limitations under the License.
 //  ================================================================
 
-#include <GL/freeglut.h>
 
 //stdlib
 #include <memory>

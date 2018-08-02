@@ -51,7 +51,7 @@ ITM3DNestedMapOfArrays<T>::ITM3DNestedMapOfArrays(const char* prefixLevel3, cons
 		prefixLevel0(prefixLevel0) {}
 
 template<typename T>
-bool ITM3DNestedMapOfArrays<T>::SaveToFile(const char* path) {
+bool ITM3DNestedMapOfArrays<T>::SaveToFile(std::string path) {
 	std::ofstream file = std::ofstream(path, std::ios::binary | std::ios::out);
 	if (!file) {
 		std::cerr
@@ -85,7 +85,7 @@ bool ITM3DNestedMapOfArrays<T>::SaveToFile(const char* path) {
 }
 
 template<typename T>
-bool ITM3DNestedMapOfArrays<T>::LoadFromFile(const char* path) {
+bool ITM3DNestedMapOfArrays<T>::LoadFromFile(std::string path) {
 	internalMap.clear();
 	std::ifstream file = std::ifstream(path, std::ios::binary | std::ios::in);
 	if (!file) {
@@ -216,7 +216,7 @@ ITM3DNestedMapOfArrays<T> ITM3DNestedMapOfArrays<T>::FilterBasedOnLevel0Lengths(
 }
 
 template<typename T>
-bool ITM3DNestedMapOfArrays<T>::SaveToTextFile(const char* path) {
+bool ITM3DNestedMapOfArrays<T>::SaveToTextFile(std::string path) {
 	std::ofstream file = std::ofstream(path, std::ios::out);
 	if (!file) {
 		std::cerr

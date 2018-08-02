@@ -230,7 +230,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenes() {
 	}
 	std::cout << "Loading scenes for current frame (this might take awhile)..." << std::endl;
 	std::cout.flush();
-	liveScene->LoadFromDirectory(livePath.c_str());
+	liveScene->LoadFromDirectory(livePath.string());
 	activeWarpLogger->Load();
 	std::cout << "Scenes loaded." << std::endl;
 	return true;
