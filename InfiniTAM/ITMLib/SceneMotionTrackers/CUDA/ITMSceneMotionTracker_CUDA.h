@@ -81,9 +81,6 @@ public:
 
 	void ResetWarps(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) override;
 
-private:
-	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray> calculateGradientFunctor;
-
 };
 // endregion ===========================================================================================================
 }//

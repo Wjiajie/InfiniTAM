@@ -20,14 +20,50 @@
 #include "ITMSceneMotionTracker_CUDA.h"
 #include "../Shared/ITMSceneMotionTracker_Functors.h"
 
+namespace {
+
+
+
+template<typename TVoxelLive, typename TVoxelCanonical>
+__global__ void
+computeGradientDataTerm(TVoxelLive* liveVoxels, TVoxelCanonical* canonicalVoxels,
+                        const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+                        int sourceFieldIndex) {
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y;
+	int z = blockIdx.z * blockDim.z + threadIdx.z;
+
+	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
+
+	Vector3i voxelPosition;
+
+	voxelPosition.x = x + arrayInfo->offset.x;
+	voxelPosition.y = y + arrayInfo->offset.y;
+	voxelPosition.z = z + arrayInfo->offset.z;
+
+
+	TVoxelLive& voxelLive = liveVoxels[locId];
+	TVoxelCanonical& voxelCanonical = canonicalVoxels[locId];
+	if(!VoxelIsConsideredForTracking(voxelCanonical, voxelLive, sourceFieldIndex)
+		|| !VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive, sourceFieldIndex)) return;
+	Vector3f liveSdfJacobian;
+	Matrix3f liveSdfHessian;
+
+	ITMLib::ITMPlainVoxelArray::IndexCache liveCache;
+
+	ComputeLiveJacobian_CentralDifferences_IndexedFields(
+			liveSdfJacobian, voxelPosition, liveVoxels, arrayInfo, liveCache, sourceFieldIndex);
+
+};
+}
+
 
 using namespace ITMLib;
 
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ITMSceneMotionTracker_CUDA()
-		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>(),
-		  calculateGradientFunctor(this->parameters, this->switches) {
+		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>() {
 
 }
 
@@ -52,11 +88,22 @@ void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>
 		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceFieldIndex, bool restrictZTrackingForDebugging) {
 	ITMSceneTraversalEngine<TVoxelCanonical, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA>::template
 	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TVoxelCanonical> >(canonicalScene);
-	calculateGradientFunctor.PrepareForOptimization(liveScene, canonicalScene, sourceFieldIndex,
-	                                                restrictZTrackingForDebugging);
 
-	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA>::
-	DualVoxelPositionTraversal(liveScene, canonicalScene, calculateGradientFunctor);
+	TVoxelLive* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
+	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
+	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = liveScene->index.getIndexData();
+
+	dim3 cudaBlockSize(8, 8, 8);
+	dim3 gridSize(liveScene->index.getVolumeSize().x / cudaBlockSize.x,
+	              liveScene->index.getVolumeSize().y / cudaBlockSize.y,
+	              liveScene->index.getVolumeSize().z / cudaBlockSize.z);
+
+	computeGradientDataTerm<TVoxelLive, TVoxelCanonical>
+			<< < gridSize, cudaBlockSize >> >
+	                       (liveVoxels, canonicalVoxels, arrayInfo, sourceFieldIndex);
+
+	DIEWITHEXCEPTION_REPORTLOCATION("Implementation pending");
+
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>

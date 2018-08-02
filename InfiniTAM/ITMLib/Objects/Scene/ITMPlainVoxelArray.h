@@ -23,7 +23,7 @@ namespace ITMLib
 			/// offset of the lower left front corner of the volume in voxels
 			Vector3i offset;
 
-			ITMVoxelArrayInfo(void)
+			ITMVoxelArrayInfo()
 			{
 				size.x = size.y = size.z = 512;
 				offset.x = -256;
@@ -52,7 +52,7 @@ namespace ITMLib
 			indexData->UpdateDeviceFromHost();
 		}
 
-		~ITMPlainVoxelArray(void)
+		~ITMPlainVoxelArray()
 		{
 			delete indexData;
 		}

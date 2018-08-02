@@ -52,7 +52,7 @@ dualVoxelPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
 
-	//int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
+	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
 
 	Vector3i voxelPosition;
 
@@ -60,20 +60,10 @@ dualVoxelPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 	voxelPosition.y = y + arrayInfo->offset.y;
 	voxelPosition.z = z + arrayInfo->offset.z;
 
-//	TVoxelPrimary& voxelPrimary = primaryVoxels[locId];
-//	TVoxelSecondary& voxelSecondary = secondaryVoxels[locId];
-	//if(x > 256 || y > 256 || z < 256) return;
-//	printf("Hello from block %d, thread %d, coord %d, %d, %d\n",
-//			blockIdx.x, threadIdx.x, voxelPosition.x, voxelPosition.y, voxelPosition.z);
-	//functor(voxelPrimary, voxelSecondary, voxelPosition);
-	int vmIndex;
-	TVoxelSecondary voxel;
-	voxel = readVoxel(secondaryVoxels, arrayInfo, voxelPosition + Vector3i(-1,0,0), vmIndex);
-	voxel = readVoxel(secondaryVoxels, arrayInfo, voxelPosition + Vector3i(0,-1,0), vmIndex);
-	voxel = readVoxel(secondaryVoxels, arrayInfo, voxelPosition + Vector3i(0,0,-1), vmIndex);
-	voxel = readVoxel(secondaryVoxels, arrayInfo, voxelPosition + Vector3i(1,0,0), vmIndex);
-	voxel = readVoxel(secondaryVoxels, arrayInfo, voxelPosition + Vector3i(0,1,0), vmIndex);
-	voxel = readVoxel(secondaryVoxels, arrayInfo, voxelPosition + Vector3i(0,0,1), vmIndex);
+	TVoxelPrimary& voxelPrimary = primaryVoxels[locId];
+	TVoxelSecondary& voxelSecondary = secondaryVoxels[locId];
+
+	functor(voxelPrimary, voxelSecondary, voxelPosition);
 
 };
 
