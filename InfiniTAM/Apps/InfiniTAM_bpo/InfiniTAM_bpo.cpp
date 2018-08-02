@@ -13,6 +13,7 @@
 
 
 
+#define BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE
 //boost
 #include <boost/program_options.hpp>
 
@@ -151,9 +152,9 @@ int main(int argc, char** argv) {
 
 
 				/* Ranges for frame skipping or automated processing on launch */
-				("process_N_frames, N", po::value<int>(), "Launch immediately and process the specified number of "
+				("process_N_frames,N", po::value<int>(), "Launch immediately and process the specified number of "
 				 "frames (potentially, with recording, if corresponding commands are issued), and then stop.")
-			    ("start_from_frame_ix, S", po::value<int>(), "Skip the first S frames / start at frame index S.\n")
+			    ("start_from_frame_ix,S", po::value<int>(), "Skip the first S frames / start at frame index S.\n")
 
 				/* Automated loading / saving on particular frame */
 				("save_after_initial_processing", po::bool_switch(&saveAfterInitialProcessing)->default_value(false),

@@ -840,8 +840,14 @@ include(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
 
+find_package(Boost REQUIRED filesystem)
+
 target_include_directories(${targetname} PUBLIC ${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 target_link_libraries(${targetname} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${VTK_LIBRARIES})
+
+if(CMAKE_CXX_COMPILER_ID EQUAL MSVC)
+	link_directories(${Boost_LIBRARY_DIRS})
+endif()
 
 #fix potential warning causing from error in VTK compile definitions
 # "<command-line>:0:20: warning: ISO C++11 requires whitespace after the macro name"

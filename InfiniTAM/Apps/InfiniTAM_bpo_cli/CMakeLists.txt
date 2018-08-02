@@ -70,6 +70,12 @@ INCLUDE(${PROJECT_SOURCE_DIR}/cmake/LinkUVC.cmake)
 # Extra libraries (application-specific)
 #################################
 find_package(Boost COMPONENTS program_options REQUIRED)
+
+if(CMAKE_CXX_COMPILER_ID EQUAL MSVC)
+	link_directories(${Boost_LIBRARY_DIRS})
+endif()
+message(STATUS "BLD:  ${Boost_LIBRARY_DIRS}")
+
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
 target_link_libraries(${targetname} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${VTK_LIBRARIES})
