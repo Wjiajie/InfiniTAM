@@ -214,7 +214,7 @@ ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMScene<T
 }
 
 
-template<typename TVoxel, typename TIndex, bool hasWarpInformation>
+template<typename TVoxel, typename TIndex, bool hasGlobalWarp>
 struct OffsetWarpsFunctor;
 
 template<typename TVoxel>
@@ -276,14 +276,14 @@ template<typename TVoxel>
 void
 ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::OffsetWarps(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
                                                                         Vector3f offset) {
-	OffsetWarpsFunctor<TVoxel, ITMPlainVoxelArray, TVoxel::hasWarpInformation>::OffsetWarps(scene, offset);
+	OffsetWarpsFunctor<TVoxel, ITMPlainVoxelArray, TVoxel::hasGlobalWarp>::OffsetWarps(scene, offset);
 }
 
 
 template<typename TVoxel>
 void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::OffsetWarps(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
                                                                             Vector3f offset) {
-	OffsetWarpsFunctor<TVoxel, ITMVoxelBlockHash, TVoxel::hasWarpInformation>::OffsetWarps(scene, offset);
+	OffsetWarpsFunctor<TVoxel, ITMVoxelBlockHash, TVoxel::hasGlobalWarp>::OffsetWarps(scene, offset);
 }
 
 template<typename TVoxel>

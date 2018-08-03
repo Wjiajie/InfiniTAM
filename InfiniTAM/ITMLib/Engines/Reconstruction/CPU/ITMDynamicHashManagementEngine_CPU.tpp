@@ -308,8 +308,8 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLiveUsingWholeWarps(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Disabled due to low VRAM on WIndows machine");
-	//this->AllocateLive<LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>(warpSourceScene, sdfScene, sourceSdfIndex);
+	this->AllocateLive<LookupBasedOnWarpStaticFunctor<TVoxelCanonical, TVoxelCanonical::hasGlobalWarp>>
+	(warpSourceScene, sdfScene, sourceSdfIndex);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
@@ -317,7 +317,7 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLi
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex) {
 	//this->AllocateLive<LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>(warpSourceScene, sdfScene, sourceSdfIndex);
-	this->AllocateLive<LookupBasedOnFramewiseWarpStaticFunctor<TVoxelCanonical>>(warpSourceScene, sdfScene, sourceSdfIndex);
+	this->AllocateLive<LookupBasedOnFramewiseWarpStaticFunctor<TVoxelCanonical, TVoxelCanonical::hasFramewiseWarp>>(warpSourceScene, sdfScene, sourceSdfIndex);
 }
 
 // endregion ==================================== END CANONICAL HASH BLOCK ALLOCATION ==================================

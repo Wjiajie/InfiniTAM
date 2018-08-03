@@ -165,8 +165,8 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::WarpScene(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not enough VRAM here");
-	/*TVoxelLive* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
+
+	TVoxelLive* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
 	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
 	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = canonicalScene->index.getIndexData();
 
@@ -178,10 +178,10 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMPl
 	clearIndexedFields_device<TVoxelLive> << < gridSize, cudaBlockSize >> >
 	                                                     (liveVoxels, arrayInfo, targetSdfIndex);
 	ORcudaKernelCheck;
-	interpolateTriliearlyBetweenIndexedFields<TVoxelCanonical,TVoxelLive, LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>
+	interpolateTriliearlyBetweenIndexedFields<TVoxelCanonical,TVoxelLive, LookupBasedOnWarpStaticFunctor<TVoxelCanonical, TVoxelCanonical::hasGlobalWarp>>
 			<< < gridSize, cudaBlockSize >> >
 			(liveVoxels,canonicalVoxels,arrayInfo,sourceSdfIndex,targetSdfIndex);
-	ORcudaKernelCheck;*/
+	ORcudaKernelCheck;
 
 }
 
@@ -223,7 +223,7 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMPl
 //	interpolateTriliearlyBetweenIndexedFields<TVoxelCanonical,TVoxelLive, LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>
 //			<< < gridSize, cudaBlockSize >> >
 //	                       (liveVoxels,canonicalVoxels,arrayInfo,sourceSdfIndex,targetSdfIndex);
-	interpolateTriliearlyBetweenIndexedFields<TVoxelCanonical,TVoxelLive, LookupBasedOnFramewiseWarpStaticFunctor<TVoxelCanonical>>
+	interpolateTriliearlyBetweenIndexedFields<TVoxelCanonical,TVoxelLive, LookupBasedOnFramewiseWarpStaticFunctor<TVoxelCanonical,TVoxelCanonical::hasFramewiseWarp>>
 			<< < gridSize, cudaBlockSize >> >
 	                       (liveVoxels,canonicalVoxels,arrayInfo,sourceSdfIndex,targetSdfIndex);
 	ORcudaKernelCheck;

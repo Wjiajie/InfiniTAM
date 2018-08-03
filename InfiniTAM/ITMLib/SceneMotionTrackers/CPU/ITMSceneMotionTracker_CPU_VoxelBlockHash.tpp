@@ -59,9 +59,8 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ITMSc
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ResetWarps(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Disabled due to VRAM constraints on my windows machine");
-	//ITMSceneTraversalEngine<TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
-	//StaticVoxelTraversal<WarpClearFunctor<TVoxelCanonical>>(canonicalScene);
+	ITMSceneTraversalEngine<TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
+	StaticVoxelTraversal<WarpClearFunctor<TVoxelCanonical, TVoxelCanonical::hasGlobalWarp>>(canonicalScene);
 };
 
 
@@ -141,9 +140,9 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>:
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::AddFramewiseWarpToWarp(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, bool clearFramewiseWarp) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Disabled due to VRAM constraints on my windows machine");
-	//AddFramewiseWarpToWarp_common<TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>
-	//	(canonicalScene, clearFramewiseWarp);
+
+	AddFramewiseWarpToWarp_common<TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>
+		(canonicalScene, clearFramewiseWarp);
 }
 
 //endregion ============================================================================================================

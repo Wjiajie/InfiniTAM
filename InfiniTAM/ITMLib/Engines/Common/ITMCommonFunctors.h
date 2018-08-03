@@ -19,19 +19,41 @@
 #include "../../Utils/ITMMath.h"
 
 // region ===================================== VOXEL LOOKUPS ==========================================================
-//template <typename TVoxel>
-//struct LookupBasedOnWarpStaticFunctor{
-//	_CPU_AND_GPU_CODE_
-//	static inline Vector3f GetWarpedPosition(const TVoxel& voxel,const Vector3i& position){
-//		return position.toFloat() + voxel.warp;
-//	}
-//};
+template <typename TVoxel, bool hasGlobalWarp>
+struct LookupBasedOnWarpStaticFunctor;
 
 template <typename TVoxel>
-struct LookupBasedOnFramewiseWarpStaticFunctor{
+struct LookupBasedOnWarpStaticFunctor<TVoxel,true>{
+	_CPU_AND_GPU_CODE_
+	static inline Vector3f GetWarpedPosition(const TVoxel& voxel,const Vector3i& position){
+		return position.toFloat() + voxel.warp;
+	}
+};
+
+template <typename TVoxel>
+struct LookupBasedOnWarpStaticFunctor<TVoxel,false>{
+	_CPU_AND_GPU_CODE_
+	static inline Vector3f GetWarpedPosition(const TVoxel& voxel, const Vector3i& position){
+		return position.toFloat();
+	}
+};
+
+template <typename TVoxel, bool hasFramewiseWarp>
+struct LookupBasedOnFramewiseWarpStaticFunctor;
+
+template <typename TVoxel>
+struct LookupBasedOnFramewiseWarpStaticFunctor<TVoxel, true> {
 	_CPU_AND_GPU_CODE_
 	static inline Vector3f GetWarpedPosition(const TVoxel& voxel,const Vector3i& position){
 		return position.toFloat() + voxel.framewise_warp;
+	}
+};
+
+template <typename TVoxel>
+struct LookupBasedOnFramewiseWarpStaticFunctor<TVoxel, false> {
+	_CPU_AND_GPU_CODE_
+	static inline Vector3f GetWarpedPosition(const TVoxel& voxel,const Vector3i& position){
+		return position.toFloat();
 	}
 };
 
