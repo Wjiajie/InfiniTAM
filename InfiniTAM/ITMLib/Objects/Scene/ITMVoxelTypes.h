@@ -254,9 +254,9 @@ struct ITMVoxel_f_dynamic_canonical
 	//uchar w_color;
 	//float confidence;
 	/** vector translating the current point to a different location **/
-	Vector3f warp;
+	//Vector3f warp;
 	Vector3f framewise_warp;
-	/** vectors translating the current point to a different location **/
+	/** intermediate results for computing the gradient & the points motion**/
 	union{
 	Vector3f gradient0;
 	Vector3f warp_update;
@@ -268,7 +268,7 @@ struct ITMVoxel_f_dynamic_canonical
 			flags(ITMLib::VOXEL_UNKNOWN),
 			sdf(SDF_initialValue()),
 			w_depth(0),
-			warp(Vector3f(0.f)),
+			//warp(Vector3f(0.f)),
 			gradient0(Vector3f(0.0f)),
 			gradient1(Vector3f(0.0f)),
 			framewise_warp(Vector3f(0.0f))

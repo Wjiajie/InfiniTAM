@@ -361,7 +361,7 @@ public:
 		//skip aggregates for parallel cuda implementation
 #ifndef __CUDACC__
 		float energyGradientLength = ORUtils::length(canonicalVoxel.gradient0);//meters
-		float warpLength = ORUtils::length(canonicalVoxel.warp);
+		float warpLength = ORUtils::length(canonicalVoxel.framewise_warp);
 		double localEnergy = localDataEnergy + parameters.weightLevelSetTerm * localLevelSetEnergy
 		                     + parameters.weightSmoothnessTerm * localSmoothnessEnergy;
 
@@ -373,7 +373,7 @@ public:
 
 		cumulativeCanonicalSdf += canonicalSdf;
 		cumulativeLiveSdf += liveSdf;
-		cumulativeWarpDist += ORUtils::length(canonicalVoxel.warp);
+		cumulativeWarpDist += ORUtils::length(canonicalVoxel.framewise_warp);
 		consideredVoxelCount += 1;
 		// endregion
 

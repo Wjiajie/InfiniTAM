@@ -20,14 +20,14 @@
 #include "../../Objects/Scene/ITMScene.h"
 #include "ITMSceneMotionTracker_Shared.h"
 #include "../../Utils/ITMLibSettings.h"
-
-template<typename TVoxel>
-struct WarpClearFunctor {
-	_CPU_AND_GPU_CODE_
-	static inline void run(TVoxel& voxel) {
-		voxel.warp = Vector3f(0.0f);
-	}
-};
+//
+//template<typename TVoxel>
+//struct WarpClearFunctor {
+//	_CPU_AND_GPU_CODE_
+//	static inline void run(TVoxel& voxel) {
+//		voxel.warp = Vector3f(0.0f);
+//	}
+//};
 
 template<typename TVoxelCanonical>
 struct ClearOutFramewiseWarpStaticFunctor {
@@ -246,22 +246,22 @@ void SmoothWarpGradient_common(ITMLib::ITMScene<TVoxelLive, TIndex>* liveScene,
 	DualVoxelPositionTraversal(liveScene, canonicalScene, passFunctorZ);
 }
 
-template<typename TVoxelCanonical>
-struct AddFramewiseWarpToWarpWithClearStaticFunctor {
-	_CPU_AND_GPU_CODE_
-	static inline void run(TVoxelCanonical& voxel) {
-		voxel.warp += voxel.framewise_warp;
-		voxel.framewise_warp = Vector3f(0.0f);
-	}
-};
-
-template<typename TVoxelCanonical>
-struct AddFramewiseWarpToWarpStaticFunctor {
-	_CPU_AND_GPU_CODE_
-	static inline void run(TVoxelCanonical& voxel) {
-		voxel.warp += voxel.framewise_warp;
-	}
-};
+//template<typename TVoxelCanonical>
+//struct AddFramewiseWarpToWarpWithClearStaticFunctor {
+//	_CPU_AND_GPU_CODE_
+//	static inline void run(TVoxelCanonical& voxel) {
+//		voxel.warp += voxel.framewise_warp;
+//		voxel.framewise_warp = Vector3f(0.0f);
+//	}
+//};
+//
+//template<typename TVoxelCanonical>
+//struct AddFramewiseWarpToWarpStaticFunctor {
+//	_CPU_AND_GPU_CODE_
+//	static inline void run(TVoxelCanonical& voxel) {
+//		voxel.warp += voxel.framewise_warp;
+//	}
+//};
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex, ITMLib::ITMLibSettings::DeviceType TDeviceType>
 inline float UpdateWarps_common(
@@ -288,14 +288,14 @@ inline float UpdateWarps_common(
 	return warpUpdateFunctor.maxFramewiseWarpLength;
 }
 
-template<typename TVoxelCanonical, typename TIndex, ITMLib::ITMLibSettings::DeviceType TDeviceType>
-inline void
-AddFramewiseWarpToWarp_common(ITMLib::ITMScene<TVoxelCanonical, TIndex>* canonicalScene, bool clearFramewiseWarp) {
-	if (clearFramewiseWarp) {
-		ITMLib::ITMSceneTraversalEngine<TVoxelCanonical, TIndex, TDeviceType>::
-		template StaticVoxelTraversal<AddFramewiseWarpToWarpWithClearStaticFunctor<TVoxelCanonical>>(canonicalScene);
-	} else {
-		ITMLib::ITMSceneTraversalEngine<TVoxelCanonical, TIndex, TDeviceType>::
-		template StaticVoxelTraversal<AddFramewiseWarpToWarpStaticFunctor<TVoxelCanonical>>(canonicalScene);
-	}
-};
+//template<typename TVoxelCanonical, typename TIndex, ITMLib::ITMLibSettings::DeviceType TDeviceType>
+//inline void
+//AddFramewiseWarpToWarp_common(ITMLib::ITMScene<TVoxelCanonical, TIndex>* canonicalScene, bool clearFramewiseWarp) {
+//	if (clearFramewiseWarp) {
+//		ITMLib::ITMSceneTraversalEngine<TVoxelCanonical, TIndex, TDeviceType>::
+//		template StaticVoxelTraversal<AddFramewiseWarpToWarpWithClearStaticFunctor<TVoxelCanonical>>(canonicalScene);
+//	} else {
+//		ITMLib::ITMSceneTraversalEngine<TVoxelCanonical, TIndex, TDeviceType>::
+//		template StaticVoxelTraversal<AddFramewiseWarpToWarpStaticFunctor<TVoxelCanonical>>(canonicalScene);
+//	}
+//};

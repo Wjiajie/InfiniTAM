@@ -308,7 +308,8 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLiveUsingWholeWarps(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex) {
-	this->AllocateLive<LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>(warpSourceScene, sdfScene, sourceSdfIndex);
+	DIEWITHEXCEPTION_REPORTLOCATION("Disabled due to low VRAM on WIndows machine");
+	//this->AllocateLive<LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>(warpSourceScene, sdfScene, sourceSdfIndex);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>

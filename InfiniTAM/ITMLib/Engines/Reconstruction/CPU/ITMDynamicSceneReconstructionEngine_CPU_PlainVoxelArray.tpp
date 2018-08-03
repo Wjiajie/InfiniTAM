@@ -112,16 +112,17 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::WarpScene(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Disabled due to low VRAM");
 	// Clear out the flags at target index
-	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
-	ITMSceneTraversalEngine<TVoxelLive,ITMPlainVoxelArray,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(liveScene, flagClearFunctor);
+	//IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
+	//ITMSceneTraversalEngine<TVoxelLive,ITMPlainVoxelArray,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(liveScene, flagClearFunctor);
 
-	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray, LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>
-			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
+	//TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray, LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>
+	//		trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
 
 	// Interpolate to obtain the new live frame values (at target index)
-	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
-	DualVoxelPositionTraversal(liveScene, canonicalScene, trilinearInterpolationFunctor);
+	//ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
+	//DualVoxelPositionTraversal(liveScene, canonicalScene, trilinearInterpolationFunctor);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>

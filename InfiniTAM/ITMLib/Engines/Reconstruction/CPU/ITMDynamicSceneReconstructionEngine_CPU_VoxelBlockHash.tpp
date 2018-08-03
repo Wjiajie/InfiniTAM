@@ -186,19 +186,20 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::WarpScene(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
                                                                                                         ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
 
+	DIEWITHEXCEPTION_REPORTLOCATION("I hate developing on windows");
 	// Clear out the flags at target index
-	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
-	ITMSceneTraversalEngine<TVoxelLive,ITMVoxelBlockHash,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(liveScene, flagClearFunctor);
+	//IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
+	//ITMSceneTraversalEngine<TVoxelLive,ITMVoxelBlockHash,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(liveScene, flagClearFunctor);
 
 	// Allocate new blocks where necessary, filter based on flags from source
-	hashManager.AllocateLiveUsingWholeWarps(canonicalScene, liveScene, sourceSdfIndex);
+	//hashManager.AllocateLiveUsingWholeWarps(canonicalScene, liveScene, sourceSdfIndex);
 
-	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash, LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>
-			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
+	//TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash, LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>
+	//		trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
 
 	// Interpolate to obtain the new live frame values (at target index)
-	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
-	DualVoxelPositionTraversal_DefaultForMissingSecondary(liveScene, canonicalScene, trilinearInterpolationFunctor);
+	//ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
+	//DualVoxelPositionTraversal_DefaultForMissingSecondary(liveScene, canonicalScene, trilinearInterpolationFunctor);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>

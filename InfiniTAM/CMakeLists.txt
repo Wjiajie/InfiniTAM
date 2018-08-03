@@ -42,6 +42,12 @@ IF(MSVC_IDE)
   ADD_DEFINITIONS(-DUSING_CMAKE=1)
 ENDIF()
 
+
+
+file(GLOB_RECURSE CMAKE_SOURCES "cmake/*")
+add_custom_target(cmake SOURCES ${CMAKE_SOURCES})
+source_group(CMake FILES ${CMAKE_SOURCES})
+
 ######################
 # Add subdirectories #
 ######################

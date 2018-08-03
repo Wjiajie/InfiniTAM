@@ -313,9 +313,9 @@ _CPU_AND_GPU_CODE_ inline void drawPixelGrey(DEVICEPTR(Vector4u) & dest, const T
 _CPU_AND_GPU_CODE_ inline void drawPixelGreen(DEVICEPTR(Vector4u)& dest, const THREADPTR(float)& angle)
 {
 	float outRes = (0.8f * angle + 0.2f) * 255.0f;
-	const float factorRed = 0.5;
-	const float factorGreen = 1.0;
-	const float factorBlue = 0.7;
+	const float factorRed = 0.5f;
+	const float factorGreen = 1.0f;
+	const float factorBlue = 0.7f;
 	dest = Vector4u((uchar)(outRes * factorRed),(uchar)(outRes * factorGreen), (uchar)(outRes * factorBlue),255);
 }
 

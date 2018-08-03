@@ -245,7 +245,7 @@ struct HashOnlyStatisticsFunctor<TVoxel,ITMVoxelBlockHash>{
 		return ids;
 	}
 	static int ComputeAllocatedHashBlockCount(ITMScene<TVoxel, ITMVoxelBlockHash>* scene){
-		int count;
+		int count = 0;
 		const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
 		int noTotalEntries = scene->index.noTotalEntries;
 		for (int entryId = 0; entryId < noTotalEntries; entryId++) {

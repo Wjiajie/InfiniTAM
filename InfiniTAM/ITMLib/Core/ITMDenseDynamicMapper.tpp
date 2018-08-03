@@ -184,9 +184,9 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeProcess
 	sceneReconstructor->FuseLiveIntoCanonicalSdf(canonicalScene, liveScene, targetSdfIndex);
 	bench::StopTimer("FuseLiveIntoCanonicalSdf");
 
-	bench::StartTimer("AddFramewiseWarpToWarp");
-	sceneMotionTracker->AddFramewiseWarpToWarp(canonicalScene, true);
-	bench::StopTimer("AddFramewiseWarpToWarp");
+	//bench::StartTimer("AddFramewiseWarpToWarp");
+	//sceneMotionTracker->AddFramewiseWarpToWarp(canonicalScene, true);
+	//bench::StopTimer("AddFramewiseWarpToWarp");
 
 	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().FinalizeFrameRecording();
 

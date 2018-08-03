@@ -78,8 +78,9 @@ void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::AddFramewiseWarpToWarp(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene, bool clearFramewiseWarp) {
-	AddFramewiseWarpToWarp_common<TVoxelCanonical, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA>(canonicalScene,
-	                                                                                                clearFramewiseWarp);
+	DIEWITHEXCEPTION_REPORTLOCATION("Disabled due to VRAM constraints on the Windows machine");
+	/*AddFramewiseWarpToWarp_common<TVoxelCanonical, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA>(canonicalScene,
+	                                                                                                clearFramewiseWarp);*/
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
@@ -128,6 +129,7 @@ float ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray
 template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ResetWarps(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) {
-	ITMSceneTraversalEngine<TVoxelCanonical, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA>::template
-	StaticVoxelTraversal<WarpClearFunctor<TVoxelCanonical>>(canonicalScene);
+	DIEWITHEXCEPTION_REPORTLOCATION("Disabled due to VRAM constraints on the Windows machine");
+	//ITMSceneTraversalEngine<TVoxelCanonical, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA>::template
+	//StaticVoxelTraversal<WarpClearFunctor<TVoxelCanonical>>(canonicalScene);
 }

@@ -19,13 +19,13 @@
 #include "../../Utils/ITMMath.h"
 
 // region ===================================== VOXEL LOOKUPS ==========================================================
-template <typename TVoxel>
-struct LookupBasedOnWarpStaticFunctor{
-	_CPU_AND_GPU_CODE_
-	static inline Vector3f GetWarpedPosition(const TVoxel& voxel,const Vector3i& position){
-		return position.toFloat() + voxel.warp;
-	}
-};
+//template <typename TVoxel>
+//struct LookupBasedOnWarpStaticFunctor{
+//	_CPU_AND_GPU_CODE_
+//	static inline Vector3f GetWarpedPosition(const TVoxel& voxel,const Vector3i& position){
+//		return position.toFloat() + voxel.warp;
+//	}
+//};
 
 template <typename TVoxel>
 struct LookupBasedOnFramewiseWarpStaticFunctor{
