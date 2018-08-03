@@ -23,6 +23,22 @@ INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UsePNG.cmake)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseRealSense.cmake)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseUVC.cmake)
 
+
+#################################
+# Extra libraries (application-specific)
+#################################
+find_package(VTK REQUIRED)
+include(${VTK_USE_FILE})
+
+SET (Boost_FIND_REQUIRED TRUE)
+SET (Boost_FIND_QUIETLY TRUE)
+set (Boost_USE_MULTITHREADED TRUE)
+if(CMAKE_CXX_COMPILER_ID MATCHES MSVC)
+	set (Boost_USE_STATIC_LIBS TRUE)
+	set(Boost_USE_STATIC_RUNTIME OFF)
+endif()
+find_package(Boost REQUIRED COMPONENTS program_options)
+
 #############################
 # Specify the project files #
 #############################
@@ -66,16 +82,7 @@ INCLUDE(${PROJECT_SOURCE_DIR}/cmake/LinkRealSense.cmake)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/LinkUVC.cmake)
 
 
-#################################
-# Extra libraries (application-specific)
-#################################
-find_package(Boost COMPONENTS program_options REQUIRED)
-
-if(CMAKE_CXX_COMPILER_ID EQUAL MSVC)
-	link_directories(${Boost_LIBRARY_DIRS})
-endif()
-message(STATUS "BLD:  ${Boost_LIBRARY_DIRS}")
-
-find_package(VTK REQUIRED)
-include(${VTK_USE_FILE})
 target_link_libraries(${targetname} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${VTK_LIBRARIES})
+if(CMAKE_CXX_COMPILER_ID MATCHES MSVC)
+	target_compile_definitions(${targetname} PUBLIC -DBOOST_ALL_NO_LIB  -DBOOST_SYSTEM_NO_DEPRECATED)
+endif()
