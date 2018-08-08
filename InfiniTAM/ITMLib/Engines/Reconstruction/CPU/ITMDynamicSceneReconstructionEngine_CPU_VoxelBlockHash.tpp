@@ -83,7 +83,6 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVox
 					Vector3i pos(globalPos.x + x, globalPos.y + y, globalPos.z + z);
 
 
-
 					ComputeUpdatedLiveVoxelInfo<
 							TVoxelLive::hasColorInformation,
 							TVoxelLive::hasConfidenceInformation,
@@ -101,10 +100,10 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::FuseLiveIntoCanonicalSdf(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int liveSourceFieldIndex) {
-	this->hashManager.AllocateCanonicalFromLive(canonicalScene,liveScene);
-	FusionFunctor<TVoxelLive,TVoxelCanonical> fusionFunctor(canonicalScene->sceneParams->maxW,liveSourceFieldIndex);
+	this->hashManager.AllocateCanonicalFromLive(canonicalScene, liveScene);
+	FusionFunctor<TVoxelLive, TVoxelCanonical> fusionFunctor(canonicalScene->sceneParams->maxW, liveSourceFieldIndex);
 	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
-	        DualVoxelTraversal(liveScene, canonicalScene, fusionFunctor);
+	DualVoxelTraversal(liveScene, canonicalScene, fusionFunctor);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
@@ -113,15 +112,17 @@ ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlo
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState) {
 	this->liveSceneManager.ResetScene(scene);
-	this->hashManager.AllocateLiveSceneFromDepth(scene,view,trackingState,renderState);
-	this->IntegrateIntoScene(scene,view,trackingState,renderState);
+	this->hashManager.AllocateLiveSceneFromDepth(scene, view, trackingState, renderState);
+	this->IntegrateIntoScene(scene, view, trackingState, renderState);
 }
 
 // endregion ===========================================================================================================
 // region ===================================== APPLY WARP/UPDATE TO LIVE ==============================================
 
+
+
 /**
- * \brief Uses trilinear interpolation of the live frame at [canonical voxel positions + scaled engergy gradient]
+ * \brief Uses trilinear interpolation of the live frame at [canonical voxel positions + TWarpSource vector]
  *  (not complete warps) to generate a new live SDF grid in the target scene. Intended to be used at every iteration.
  * \details Assumes target frame is empty / has been reset.
  * Does 3 things:
@@ -138,68 +139,28 @@ ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlo
  * \param canonicalScene canonical scene with warp vectors at each voxel.
  * \param liveScene source (current iteration) live scene
  * \param targetLiveScene target (next iteration) live scene
+ * \tparam TWarp type of warp vector to use for interpolation
  */
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::UpdateWarpedScene(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-                                                                                                                ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+template<Warp TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::WarpScene(
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
 
 	// Clear out the flags at target index
 	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
-	ITMSceneTraversalEngine<TVoxelLive,ITMVoxelBlockHash,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(liveScene, flagClearFunctor);
+	ITMSceneTraversalEngine<TVoxelLive, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::VoxelTraversal(liveScene,
+	                                                                                                   flagClearFunctor);
 
 	// Allocate new blocks where necessary, filter based on flags from source
-	hashManager.AllocateLiveUsingWarpUpdates(
-			canonicalScene, liveScene, sourceSdfIndex);
+	hashManager.template AllocateWarpedLive<TWarp>(canonicalScene, liveScene, sourceSdfIndex);
 
-//	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash, LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>
-//			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
-	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash, LookupBasedOnFramewiseWarpStaticFunctor<TVoxelCanonical, TVoxelCanonical::hasFramewiseWarp>>
+	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash, WarpVoxelStaticFunctor<TVoxelCanonical, TWarp>>
 			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
-
 
 	// Interpolate to obtain the new live frame values (at target index)
 	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
 	DualVoxelPositionTraversal_DefaultForMissingSecondary(liveScene, canonicalScene, trilinearInterpolationFunctor);
-}
-
-
-/**
- * \brief Uses trilinear interpolation of the live frame at [canonical voxel positions + scaled engergy gradient]
- *  (not complete warps) to generate a new live SDF grid in the target scene. Intended to be used at every iteration.
- * \details Assumes target frame is empty / has been reset.
- * Does 3 things:
- * <ol>
- *  <li> Traverses allocated canonical hash blocks and voxels, checks raw frame at [current voxel position + warp vector],
- *       if there is a non-truncated voxel in the live frame, marks the block in target SDF volume at the current hash
- *       block position for allocation
- *  <li> Traverses target hash blocks, if one is marked for allocation, allocates it
- *  <li> Traverses allocated target hash blocks and voxels, retrieves canonical voxel at same location, if it is marked
- *       as "truncated", skips it, otherwise uses trilinear interpolation at [current voxel position + warp vector] to
- *       retrieve SDF value from live frame, then stores it into the current target voxel, and marks latter voxel as
- *       truncated, non-truncated, or unknown based on the lookup flags & resultant SDF value.
- * </ol>
- * \param canonicalScene canonical scene with warp vectors at each voxel.
- * \param liveScene source (current iteration) live scene
- * \param targetLiveScene target (next iteration) live scene
- */
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::WarpScene(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-                                                                                                        ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
-
-	DIEWITHEXCEPTION_REPORTLOCATION("I hate developing on windows");
-	// Clear out the flags at target index
-	//IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
-	//ITMSceneTraversalEngine<TVoxelLive,ITMVoxelBlockHash,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(liveScene, flagClearFunctor);
-
-	// Allocate new blocks where necessary, filter based on flags from source
-	//hashManager.AllocateLiveUsingWholeWarps(canonicalScene, liveScene, sourceSdfIndex);
-
-	//TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash, LookupBasedOnWarpStaticFunctor<TVoxelCanonical>>
-	//		trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
-
-	// Interpolate to obtain the new live frame values (at target index)
-	//ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
-	//DualVoxelPositionTraversal_DefaultForMissingSecondary(liveScene, canonicalScene, trilinearInterpolationFunctor);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
@@ -213,6 +174,29 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::CopyIndexedScene(
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
 	CopyIndexedSceneFunctor<TVoxelLive> copyIndexedSceneFunctor(sourceSdfIndex, targetSdfIndex);
-	ITMSceneTraversalEngine<TVoxelLive,ITMVoxelBlockHash,ITMLibSettings::DEVICE_CPU>::VoxelPositionTraversal(liveScene, copyIndexedSceneFunctor);
+	ITMSceneTraversalEngine<TVoxelLive, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::VoxelPositionTraversal(
+			liveScene, copyIndexedSceneFunctor);
 }
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::WarpScene_CumulativeWarps(
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+	this->template WarpScene<WARP_CUMULATIVE>(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::WarpScene_FlowWarps(
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+	this->template WarpScene<WARP_FLOW>(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::WarpScene_WarpUpdates(
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
+		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+	this->template WarpScene<WARP_UPDATE>(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
+}
+
 // endregion ===========================================================================================================

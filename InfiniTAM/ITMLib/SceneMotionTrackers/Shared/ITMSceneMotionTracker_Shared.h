@@ -21,6 +21,16 @@
 #include "../../Utils/ITMPrintHelpers.h"
 
 
+
+
+//_DEBUG
+// this seems to give more noise in the results (visually)
+//template<typename TVoxelCanonical, typename TVoxelLive>
+//inline
+//bool VoxelIsConsideredForTracking(TVoxelCanonical& voxelCanonical, TVoxelLive voxelLive, int sourceFieldIndex){
+//	return voxelLive.flag_values[sourceFieldIndex] == VOXEL_NONTRUNCATED;
+//};
+
 template<typename TVoxelCanonical, typename TVoxelLive>
 _CPU_AND_GPU_CODE_ inline
 bool VoxelIsConsideredForTracking(const TVoxelCanonical& voxelCanonical, const TVoxelLive& voxelLive, int sourceFieldIndex) {
@@ -79,7 +89,7 @@ inline void findPoint2ndDerivativeNeighborhoodFramewiseWarp(THREADPTR(Vector3f)*
 	//TODO: define inline function instead of macro
 #define PROCESS_VOXEL(location, index)\
     voxel = readVoxel(voxels, indexData, voxelPosition + (location), vmIndex, cache);\
-    neighborFramewiseWarps[index] = voxel.framewise_warp;\
+    neighborFramewiseWarps[index] = voxel.flow_warp;\
     neighborAllocated[index] = vmIndex != 0;\
     neighborKnown[index] = voxel.flags != ITMLib::VOXEL_UNKNOWN;\
     neighborTruncated[index] = voxel.flags == ITMLib::VOXEL_TRUNCATED;
@@ -118,7 +128,7 @@ inline void findPoint2ndDerivativeNeighborhoodFramewiseWarp_DEBUG(
 	TVoxel voxel;
 	//TODO: define inline function instead of macro
 	voxel = readVoxel(voxels, indexData, voxelPosition + Vector3i(0, 0, 0), vmIndex, cache);
-	neighborFramewiseWarps[0] = voxel.framewise_warp;
+	neighborFramewiseWarps[0] = voxel.flow_warp;
 	neighborAllocated[0] = vmIndex != 0;
 	neighborKnown[0] = voxel.flags != ITMLib::VOXEL_UNKNOWN;
 	neighborTruncated[0] = voxel.flags == ITMLib::VOXEL_TRUNCATED;

@@ -29,14 +29,6 @@ namespace ITMLib {
 
 
 
-//_DEBUG
-// this seems to give more noise in the results (visually)
-//template<typename TVoxelCanonical, typename TVoxelLive>
-//inline
-//bool VoxelIsConsideredForTracking(TVoxelCanonical& voxelCanonical, TVoxelLive voxelLive, int sourceFieldIndex){
-//	return voxelLive.flag_values[sourceFieldIndex] == VOXEL_NONTRUNCATED;
-//};
-
 //TODO: write documentation block -Greg (Github: Algomorph)
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 class ITMSceneMotionTracker {

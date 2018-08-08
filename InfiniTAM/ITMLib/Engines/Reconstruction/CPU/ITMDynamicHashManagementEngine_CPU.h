@@ -21,6 +21,7 @@
 #include "../../../Objects/Views/ITMView.h"
 #include "../../../Objects/Scene/ITMScene.h"
 #include "../../../Utils/ITMHashBlockProperties.h"
+#include "../../Common/ITMWarpEnums.h"
 
 namespace ITMLib{
 
@@ -45,24 +46,18 @@ public:
 			const ITMTrackingState* trackingState,const ITMRenderState* renderState,
 			bool onlyUpdateVisibleList = false, bool resetVisibleList = false);
 
+
 	void AllocateCanonicalFromLive(ITMScene <TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 	                               ITMScene <TVoxelLive, ITMVoxelBlockHash>* liveScene);
 
-	void AllocateLiveUsingWholeWarps(
-			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
-			ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex);
-
-	void AllocateLiveUsingWarpUpdates(
-			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
-			ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex);
+	template<Warp TWarp>
+	void AllocateWarpedLive(
+			ITMScene <TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
+			ITMScene <TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex);
 
 	void ChangeCanonicalHashEntryState(int hash, ITMLib::HashBlockState);
 
 private:
-	template<typename TLookupPositionFunctor>
-	void AllocateLive(
-			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
-			ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex);
 
 	ORUtils::MemoryBlock<unsigned char>* liveEntryAllocationTypes;
 	ORUtils::MemoryBlock<unsigned char>* canonicalEntryAllocationTypes;

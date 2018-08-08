@@ -17,3 +17,16 @@
 #include "../../ITMLibDefines.h"
 
 template class ITMDynamicHashManagementEngine_CPU<ITMVoxelCanonical,ITMVoxelLive>;
+
+template void ITMDynamicHashManagementEngine_CPU<ITMVoxelCanonical,ITMVoxelLive>::AllocateWarpedLive<Warp::WARP_CUMULATIVE>(
+		ITMScene <ITMVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
+		ITMScene <ITMVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex
+		);
+template void ITMDynamicHashManagementEngine_CPU<ITMVoxelCanonical,ITMVoxelLive>::AllocateWarpedLive<Warp::WARP_FLOW>(
+		ITMScene <ITMVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
+		ITMScene <ITMVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex
+);
+template void ITMDynamicHashManagementEngine_CPU<ITMVoxelCanonical,ITMVoxelLive>::AllocateWarpedLive<Warp::WARP_UPDATE>(
+		ITMScene <ITMVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
+		ITMScene <ITMVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex
+);

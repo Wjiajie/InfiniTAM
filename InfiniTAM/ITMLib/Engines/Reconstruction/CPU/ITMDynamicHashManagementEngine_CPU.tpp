@@ -271,8 +271,10 @@ private:
 
 
 
+// region ===================================== ALLOCATIONS FOR INTERPOLATION ==========================================
+
 /**
- * \brief Helper method which looks at voxel grid with warps and an SDF voxel grid and allocates all hash blocks in the
+ * \brief method which looks at voxel grid with warps and an SDF voxel grid and allocates all hash blocks in the
  * SDF grid where warp vectors are pointing to (if not already allocated).
  * \details scans each (allocated) voxel in the SDF voxel grid, checks the warp vector at the corresponding location,
  * finds the voxel where the warp vector is pointing to, and, if the hash block for that voxel is not yet allocated,
@@ -280,10 +282,11 @@ private:
  * \param warpSourceScene voxel grid where each voxel has a .warp Vector3f field defined
  * \param sdfScene sdf grid whose hash blocks to allocate if needed
  * \param sourceSdfIndex index of the sdf / flag field to use in the sdfScene
+ * \tparam TWarp the type of warp vector to use
  */
 template<typename TVoxelCanonical, typename TVoxelLive>
-template<typename TLookupPositionFunctor>
-void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLive(
+template<Warp TWarp>
+void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateWarpedLive(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
 		ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex) {
 	int entryCount = ITMVoxelBlockHash::noTotalEntries;
@@ -293,31 +296,12 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLi
 	memset(liveEntryAllocationTypes, (unsigned char) 0, static_cast<size_t>(entryCount));
 
 	//Mark up hash entries in the target scene that will need allocation
-	WarpBasedAllocationMarkerFunctor<TVoxelCanonical, TVoxelLive, TLookupPositionFunctor>
+	WarpBasedAllocationMarkerFunctor<TVoxelCanonical, TVoxelLive, WarpVoxelStaticFunctor<TVoxelCanonical,TWarp>>
 			hashMarkerFunctor(sdfScene, allocationBlockCoords, liveEntryAllocationTypes, sourceSdfIndex);
 	ITMSceneTraversalEngine<TVoxelCanonical,ITMVoxelBlockHash,ITMLibSettings::DEVICE_CPU>::VoxelAndHashBlockPositionTraversal(warpSourceScene, hashMarkerFunctor);
 
 	//Allocate the hash entries that will potentially have any data
 	AllocateHashEntriesUsingLists_CPU(sdfScene, liveEntryAllocationTypes, allocationBlockCoords);
-}
-
-
-// region ===================================== ALLOCATIONS FOR INTERPOLATION ==========================================
-
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLiveUsingWholeWarps(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex) {
-	this->AllocateLive<LookupBasedOnWarpStaticFunctor<TVoxelCanonical, TVoxelCanonical::hasGlobalWarp>>
-	(warpSourceScene, sdfScene, sourceSdfIndex);
-}
-
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLiveUsingWarpUpdates(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex) {
-	//this->AllocateLive<LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>(warpSourceScene, sdfScene, sourceSdfIndex);
-	this->AllocateLive<LookupBasedOnFramewiseWarpStaticFunctor<TVoxelCanonical, TVoxelCanonical::hasFramewiseWarp>>(warpSourceScene, sdfScene, sourceSdfIndex);
 }
 
 // endregion ==================================== END CANONICAL HASH BLOCK ALLOCATION ==================================

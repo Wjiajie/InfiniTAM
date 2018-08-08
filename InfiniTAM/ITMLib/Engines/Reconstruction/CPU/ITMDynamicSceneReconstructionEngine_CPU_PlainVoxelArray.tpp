@@ -109,15 +109,16 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPla
 
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::WarpScene(
-		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+template<Warp TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::WarpScene(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
+                                                                                                         ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
 //	 Clear out the flags at target index
 	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
-	ITMSceneTraversalEngine<TVoxelLive,ITMPlainVoxelArray,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(liveScene, flagClearFunctor);
+	ITMSceneTraversalEngine<TVoxelLive, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::VoxelTraversal(liveScene,
+	                                                                                                    flagClearFunctor);
 
 	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray,
-	LookupBasedOnWarpStaticFunctor<TVoxelCanonical, TVoxelCanonical::hasGlobalWarp>>
+			WarpVoxelStaticFunctor<TVoxelCanonical, TWarp>>
 			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
 
 //	 Interpolate to obtain the new live frame values (at target index)
@@ -126,29 +127,32 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPla
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void
-ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::UpdateWarpedScene(
-		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
-
-	// Clear out the flags at target index
-	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
-	ITMSceneTraversalEngine<TVoxelLive,ITMPlainVoxelArray,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(liveScene, flagClearFunctor);
-
-	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray,
-			LookupBasedOnWarpUpdateStaticFunctor<TVoxelCanonical>>
-			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
-
-	// Interpolate to obtain the new live frame values (at target index)
-	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
-	DualVoxelPositionTraversal(liveScene, canonicalScene, trilinearInterpolationFunctor);
-}
-
-template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::CopyIndexedScene(
 		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
 	CopyIndexedSceneFunctor<TVoxelLive> copyIndexedSceneFunctor(sourceSdfIndex, targetSdfIndex);
-	ITMSceneTraversalEngine<TVoxelLive,ITMPlainVoxelArray,ITMLibSettings::DEVICE_CPU>::VoxelPositionTraversal(liveScene, copyIndexedSceneFunctor);
+	ITMSceneTraversalEngine<TVoxelLive, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::VoxelPositionTraversal(
+			liveScene, copyIndexedSceneFunctor);
 
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::WarpScene_CumulativeWarps(
+		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
+		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+	this->template WarpScene<WARP_CUMULATIVE>(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::WarpScene_FlowWarps(
+		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
+		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+	this->template WarpScene<WARP_FLOW>(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
+}
+
+template<typename TVoxelCanonical, typename TVoxelLive>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::WarpScene_WarpUpdates(
+		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
+		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+	this->template WarpScene<WARP_UPDATE>(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
 }
 // endregion ===========================================================================================================

@@ -44,10 +44,26 @@
 #define TOSTRING(s) TOSTRING_INTERNAL(s)
 #define TOSTRING_INTERNAL(s) #s
 
-#ifdef ANDROID
+#if defined(ANDROID)
 #define DIEWITHEXCEPTION(x) { fprintf(stderr, "%s\n", x); exit(-1); }
 #define DIEWITHEXCEPTION_REPORTLOCATION(x) { fprintf(stderr, "%s\n", x x __FILE__ TOSTRING(__LINE__)); exit(-1); }
+//#elif defined(__CUDACC__) && defined(__CUDA_ARCH__)
+////TODO: set string via host-mapped memory pointer, __threadfence_system() call before "trap", somehow print the string with the CUDA error-handling macro
+//#define DIEWITHEXCEPTION(x) { asm("trap;"); }
+//#define DIEWITHEXCEPTION_REPORTLOCATION(x) { asm("trap;"); }
 #else
 #define DIEWITHEXCEPTION(x) throw std::runtime_error(x)
 #define DIEWITHEXCEPTION_REPORTLOCATION(x) throw std::runtime_error( x "\n[" __FILE__ ":" TOSTRING(__LINE__) "]")
+#endif
+
+#if defined(__CUDACC__) && defined(__CUDA_ARCH__)
+#define DEVICE_ASSERT(EXP)               \
+{ do {                                          \
+    if (!(EXP)) {                           	\
+        asm("trap;");                       	\
+    }                                       	\
+} while (0); }
+#else
+#include <cassert>
+#define DEVICE_ASSERT(EXP) {assert(EXP);}
 #endif

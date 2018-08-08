@@ -95,6 +95,7 @@ set(ITMLIB_CORE_HEADERS
 #======================================= COMMON TO MULTIPLE ENGINES ====================================================
 set(ITMLIB_ENGINES_COMMON_HEADERS
     Engines/Common/ITMCommonFunctors.h
+    Engines/Common/ITMWarpEnums.h
     )
 #======================================= LOW-LEVEL ENGINES =============================================================
 ##

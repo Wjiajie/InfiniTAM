@@ -24,7 +24,7 @@
 #include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 
 
-template<typename TVoxel, bool hasGlobalWarp>
+template<typename TVoxel, bool hasCumulativeWarp>
 struct WarpClearFunctor;
 
 template<typename TVoxel>
@@ -45,7 +45,7 @@ template<typename TVoxelCanonical>
 struct ClearOutFramewiseWarpStaticFunctor {
 	_CPU_AND_GPU_CODE_
 	static inline void run(TVoxelCanonical& voxel) {
-		voxel.framewise_warp = Vector3f(0.0f);
+		voxel.flow_warp = Vector3f(0.0f);
 	}
 };
 
@@ -74,10 +74,10 @@ struct WarpUpdateFunctor {
 		                                       canonicalVoxel.gradient1 : canonicalVoxel.gradient0);
 
 		canonicalVoxel.warp_update = warpUpdate;
-		canonicalVoxel.framewise_warp += warpUpdate;
+		canonicalVoxel.flow_warp += warpUpdate;
 
 		// update stats
-		float framewiseWarpLength = ORUtils::length(canonicalVoxel.framewise_warp);
+		float framewiseWarpLength = ORUtils::length(canonicalVoxel.flow_warp);
 		float warpUpdateLength = ORUtils::length(warpUpdate);
 		if (framewiseWarpLength > maxFramewiseWarpLength) {
 			maxFramewiseWarpLength = framewiseWarpLength;
@@ -121,7 +121,7 @@ struct WarpHistogramFunctor {
 
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel) {
 		if (!VoxelIsConsideredForTracking(canonicalVoxel, liveVoxel, sourceSdfIndex)) return;
-		float framewiseWarpLength = ORUtils::length(canonicalVoxel.framewise_warp);
+		float framewiseWarpLength = ORUtils::length(canonicalVoxel.flow_warp);
 		float warpUpdateLength = ORUtils::length(canonicalVoxel.gradient0);
 		const int histBinCount = WarpHistogramFunctor<TVoxelLive, TVoxelCanonical>::histBinCount;
 		int binIdx = 0;
@@ -258,15 +258,15 @@ void SmoothWarpGradient_common(ITMLib::ITMScene<TVoxelLive, TIndex>* liveScene,
 	DualVoxelPositionTraversal(liveScene, canonicalScene, passFunctorZ);
 }
 
-template<typename TVoxelCanonical, bool hasGlobalWarp>
+template<typename TVoxelCanonical, bool hasCumulativeWarp>
 struct AddFramewiseWarpToWarpWithClearStaticFunctor;
 
 template<typename TVoxelCanonical>
 struct AddFramewiseWarpToWarpWithClearStaticFunctor<TVoxelCanonical, true> {
 	_CPU_AND_GPU_CODE_
 	static inline void run(TVoxelCanonical& voxel) {
-		voxel.warp += voxel.framewise_warp;
-		voxel.framewise_warp = Vector3f(0.0f);
+		voxel.warp += voxel.flow_warp;
+		voxel.flow_warp = Vector3f(0.0f);
 	}
 };
 
@@ -276,14 +276,14 @@ struct AddFramewiseWarpToWarpWithClearStaticFunctor<TVoxelCanonical, false> {
 	static inline void run(TVoxelCanonical& voxel) {
 	}
 };
-template<typename TVoxelCanonical, bool hasGlobalWarp>
+template<typename TVoxelCanonical, bool hasCumulativeWarp>
 struct AddFramewiseWarpToWarpStaticFunctor;
 
 template<typename TVoxelCanonical>
 struct AddFramewiseWarpToWarpStaticFunctor<TVoxelCanonical, true> {
 	_CPU_AND_GPU_CODE_
 	static inline void run(TVoxelCanonical& voxel) {
-		voxel.warp += voxel.framewise_warp;
+		voxel.warp += voxel.flow_warp;
 	}
 };
 
@@ -325,12 +325,12 @@ AddFramewiseWarpToWarp_common(ITMLib::ITMScene<TVoxelCanonical, TIndex>* canonic
 	if (clearFramewiseWarp) {
 		ITMLib::ITMSceneTraversalEngine<TVoxelCanonical, TIndex, TDeviceType>::
 		template StaticVoxelTraversal<
-				AddFramewiseWarpToWarpWithClearStaticFunctor<TVoxelCanonical, TVoxelCanonical::hasGlobalWarp>>
+				AddFramewiseWarpToWarpWithClearStaticFunctor<TVoxelCanonical, TVoxelCanonical::hasCumulativeWarp>>
 				(canonicalScene);
 	} else {
 		ITMLib::ITMSceneTraversalEngine<TVoxelCanonical, TIndex, TDeviceType>::
 		template StaticVoxelTraversal<
-		        AddFramewiseWarpToWarpStaticFunctor<TVoxelCanonical, TVoxelCanonical::hasGlobalWarp>
+		        AddFramewiseWarpToWarpStaticFunctor<TVoxelCanonical, TVoxelCanonical::hasCumulativeWarp>
 		        >(canonicalScene);
 	}
 };

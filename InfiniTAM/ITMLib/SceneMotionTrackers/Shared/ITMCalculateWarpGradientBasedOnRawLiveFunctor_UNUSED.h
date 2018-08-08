@@ -96,7 +96,7 @@ public:
 	// endregion =======================================================================================================
 
 	void operator()(TVoxelCanonical& canonicalVoxel, Vector3i position) {
-		Vector3f& warp = canonicalVoxel.framewise_warp;
+		Vector3f& warp = canonicalVoxel.flow_warp;
 		Vector3f warpedPosition = position.toFloat() + warp;
 		float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
 		bool struckNonTruncatedLiveVoxels;

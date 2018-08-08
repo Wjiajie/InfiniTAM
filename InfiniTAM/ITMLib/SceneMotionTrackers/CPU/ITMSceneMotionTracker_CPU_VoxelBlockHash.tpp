@@ -60,7 +60,7 @@ template<typename TVoxelCanonical, typename TVoxelLive>
 void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ResetWarps(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
 	ITMSceneTraversalEngine<TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
-	StaticVoxelTraversal<WarpClearFunctor<TVoxelCanonical, TVoxelCanonical::hasGlobalWarp>>(canonicalScene);
+	StaticVoxelTraversal<WarpClearFunctor<TVoxelCanonical, TVoxelCanonical::hasCumulativeWarp>>(canonicalScene);
 };
 
 

@@ -91,7 +91,7 @@ void ITMLib::ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxe
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) {
 
 	ITMSceneTraversalEngine<TVoxelCanonical, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::template
-	StaticVoxelTraversal<WarpClearFunctor<TVoxelCanonical, TVoxelCanonical::hasGlobalWarp>>(canonicalScene);
+	StaticVoxelTraversal<WarpClearFunctor<TVoxelCanonical, TVoxelCanonical::hasCumulativeWarp>>(canonicalScene);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>

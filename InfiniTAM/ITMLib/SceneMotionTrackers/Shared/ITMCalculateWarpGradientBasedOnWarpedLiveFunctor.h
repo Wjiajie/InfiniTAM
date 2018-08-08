@@ -147,7 +147,7 @@ public:
 
 		if (!VoxelIsConsideredForTracking(canonicalVoxel, liveVoxel, sourceSdfIndex)) return;
 
-		Vector3f& framewiseWarp = canonicalVoxel.framewise_warp;
+		Vector3f& framewiseWarp = canonicalVoxel.flow_warp;
 		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[sourceSdfIndex]);
 		float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
 
@@ -361,7 +361,7 @@ public:
 		//skip aggregates for parallel cuda implementation
 #ifndef __CUDACC__
 		float energyGradientLength = ORUtils::length(canonicalVoxel.gradient0);//meters
-		float warpLength = ORUtils::length(canonicalVoxel.framewise_warp);
+		float warpLength = ORUtils::length(canonicalVoxel.flow_warp);
 		double localEnergy = localDataEnergy + parameters.weightLevelSetTerm * localLevelSetEnergy
 		                     + parameters.weightSmoothnessTerm * localSmoothnessEnergy;
 
@@ -373,7 +373,7 @@ public:
 
 		cumulativeCanonicalSdf += canonicalSdf;
 		cumulativeLiveSdf += liveSdf;
-		cumulativeWarpDist += ORUtils::length(canonicalVoxel.framewise_warp);
+		cumulativeWarpDist += ORUtils::length(canonicalVoxel.flow_warp);
 		consideredVoxelCount += 1;
 		// endregion
 

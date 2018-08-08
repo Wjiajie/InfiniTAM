@@ -18,8 +18,9 @@ struct ITMVoxel_f_rgb
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
-	static const CONSTPTR(bool) hasFramewiseWarp = false;
-	static const CONSTPTR(bool) hasGlobalWarp = false;
+	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasWarpUpdate = false;
+	static const CONSTPTR(bool) hasCumulativeWarp = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
@@ -53,8 +54,9 @@ struct ITMVoxel_s_rgb
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
-	static const CONSTPTR(bool) hasFramewiseWarp = false;
-	static const CONSTPTR(bool) hasGlobalWarp = false;
+	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasWarpUpdate = false;
+	static const CONSTPTR(bool) hasCumulativeWarp = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
@@ -87,7 +89,8 @@ struct ITMVoxel_s
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
-	static const CONSTPTR(bool) hasFramewiseWarp = false;
+	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasWarpUpdate = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
@@ -114,7 +117,8 @@ struct ITMVoxel_f
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
-	static const CONSTPTR(bool) hasFramewiseWarp = false;
+	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasWarpUpdate = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
@@ -141,7 +145,8 @@ struct ITMVoxel_f_conf
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
-	static const CONSTPTR(bool) hasFramewiseWarp = false;
+	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasWarpUpdate = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
@@ -171,8 +176,9 @@ struct ITMVoxel_s_rgb_conf
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
-	static const CONSTPTR(bool) hasFramewiseWarp = false;
-	static const CONSTPTR(bool) hasGlobalWarp = false;
+	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasCumulativeWarp = false;
+	static const CONSTPTR(bool) hasWarpUpdate = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
@@ -207,8 +213,9 @@ struct ITMVoxel_f_rgb_conf
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
-	static const CONSTPTR(bool) hasFramewiseWarp = false;
-	static const CONSTPTR(bool) hasGlobalWarp = false;
+	static const CONSTPTR(bool) hasCumulativeWarp = false;
+	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasWarpUpdate = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
@@ -244,8 +251,9 @@ struct ITMVoxel_f_dynamic_canonical
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = true;
 	static const CONSTPTR(bool) hasWeightInformation = true;
-	static const CONSTPTR(bool) hasFramewiseWarp = true;
-	static const CONSTPTR(bool) hasGlobalWarp = false;
+	static const CONSTPTR(bool) hasCumulativeWarp = false;
+	static const CONSTPTR(bool) hasFlowWarp = true;
+	static const CONSTPTR(bool) hasWarpUpdate = true;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
@@ -261,7 +269,7 @@ struct ITMVoxel_f_dynamic_canonical
 	//uchar w_color;
 	//float confidence;
 	/** vector translating the current point to a different location **/
-	Vector3f framewise_warp;
+	Vector3f flow_warp;
 	/** intermediate results for computing the gradient & the points motion**/
 	union{
 	Vector3f gradient0;
@@ -277,7 +285,7 @@ struct ITMVoxel_f_dynamic_canonical
 			//warp(Vector3f(0.f)),
 			gradient0(Vector3f(0.0f)),
 			gradient1(Vector3f(0.0f)),
-			framewise_warp(Vector3f(0.0f))
+			flow_warp(Vector3f(0.0f))
 	{
 
 		//confidence = 0.0f;
@@ -297,8 +305,9 @@ struct ITMVoxel_f_dynamic_canonical_debug
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = true;
 	static const CONSTPTR(bool) hasWeightInformation = true;
-	static const CONSTPTR(bool) hasFramewiseWarp = true;
-	static const CONSTPTR(bool) hasGlobalWarp = true;
+	static const CONSTPTR(bool) hasCumulativeWarp = true;
+	static const CONSTPTR(bool) hasFlowWarp = true;
+	static const CONSTPTR(bool) hasWarpUpdate = true;
 	static const CONSTPTR(bool) hasDebugInformation = true;
 
 	/** Value of the truncated signed distance transformation. */
@@ -309,7 +318,7 @@ struct ITMVoxel_f_dynamic_canonical_debug
 	unsigned char flags;
 	/** vector translating the current point to a different location **/
 	Vector3f warp;
-	Vector3f framewise_warp;
+	Vector3f flow_warp;
 	/** vectors translating the current point to a different location **/
 	union{
 		Vector3f gradient0;
@@ -327,7 +336,7 @@ struct ITMVoxel_f_dynamic_canonical_debug
 			warp(Vector3f(0.f)),
 			gradient0(Vector3f(0.0f)),
 			gradient1(Vector3f(0.0f)),
-			framewise_warp(Vector3f(0.0f)),
+			flow_warp(Vector3f(0.0f)),
 			data_term_gradient(Vector3f(0.0f)),
 			smoothing_term_gradient(Vector3f(0.0f))
 	{}
@@ -343,8 +352,9 @@ struct ITMVoxel_f_dynamic_live
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = true;
 	static const CONSTPTR(bool) hasWeightInformation = false;
-	static const CONSTPTR(bool) hasFramewiseWarp = false;
-	static const CONSTPTR(bool) hasGlobalWarp = false;
+	static const CONSTPTR(bool) hasCumulativeWarp = false;
+	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasWarpUpdate = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
