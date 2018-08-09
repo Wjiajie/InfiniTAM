@@ -27,9 +27,10 @@ find_package(Boost REQUIRED filesystem)
 
 ##
 set(ITMLIB_TOPLEVEL_CPU_SOURCES
-    ## VBH - CPU
+    
+	## VBH - CPU
+	Instantiations/VoxelBlockHash/CPUInstantiations.cpp
     Instantiations/VoxelBlockHash/SceneManipulationCPUInstantiations.cpp
-    Instantiations/VoxelBlockHash/CPUInstantiations.cpp
     Instantiations/VoxelBlockHash/DynamicFusionCPUInstantiations.cpp
     Instantiations/VoxelBlockHash/DynamicFusionLoggerInstantiation.cpp
     Instantiations/VoxelBlockHash/DynamicSceneReconstructionEngineCUDAInstantiations.cpp
@@ -39,8 +40,8 @@ set(ITMLIB_TOPLEVEL_CPU_SOURCES
     Instantiations/VoxelBlockHash/ITMScene3DSliceVisualizerInstantiations.cpp
 
     ## PVA - CPU
-    Instantiations/PlainVoxelArray/SceneManipulationCPUInstantiations.cpp
     Instantiations/PlainVoxelArray/CPUInstantiations.cpp
+	Instantiations/PlainVoxelArray/SceneManipulationCPUInstantiations.cpp
     Instantiations/PlainVoxelArray/DynamicFusionCPUInstantiations.cpp
     Instantiations/PlainVoxelArray/DynamicFusionLoggerInstantiation.cpp
     Instantiations/PlainVoxelArray/DynamicSceneReconstructionEngineCPUInstantiations.cpp
@@ -52,6 +53,7 @@ set(ITMLIB_TOPLEVEL_CPU_SOURCES
 set(ITMLIB_TOPLEVEL_CUDA_SOURCES
     ## VBH - CUDA
     Instantiations/VoxelBlockHash/CUDAInstantiations.cu
+	Instantiations/VoxelBlockHash/SurfelCUDAInstantiations.cu
     Instantiations/VoxelBlockHash/DynamicFusionCUDAInstantiations.cu
     Instantiations/VoxelBlockHash/SceneMotionTrackerCUDAInstantiation.cu
     Instantiations/VoxelBlockHash/SceneManipulationCUDAInstantiations.cu
