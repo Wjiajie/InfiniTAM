@@ -2,20 +2,23 @@
 # SetCUDAAppTarget.cmake #
 ##########################
 
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/Flags.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/Flags.cmake)
 
-#IF(WITH_CUDA)
-#  CUDA_ADD_EXECUTABLE(${targetname} ${sources} ${headers} ${templates})
-#ELSE()
-#  ADD_EXECUTABLE(${targetname} ${sources} ${headers} ${templates})
-#ENDIF()
+# TODO: test that with MSVC, the desired effect is achieved with CMake v. <3.9 (CMake boolean/if syntax is kind-of obscure)
+if (${CMAKE_VERSION} VERSION_LESS 3.8 OR (MSVC_IDE AND ${CMAKE_VERSION} VERSION_LESS 3.9))
+    if (WITH_CUDA)
+        cuda_add_executable(${targetname} ${sources} ${headers} ${templates})
+    else ()
+        add_executable(${targetname} ${sources} ${headers} ${templates})
+    endif ()
+else ()
+    if (WITH_CUDA)
+        enable_language(CUDA)
+    endif ()
+    add_executable(${targetname} ${sources} ${headers} ${templates})
+endif ()
 
-if(WITH_CUDA)
-	enable_language(CUDA)
-endif()
-
-add_executable(${targetname} ${sources} ${headers} ${templates})
-
-IF(MSVC_IDE)
-  SET_TARGET_PROPERTIES(${targetname} PROPERTIES LINK_FLAGS_DEBUG "/DEBUG")
-ENDIF()
+# TODO: not sure if this is still needed, it looks like a work-around for a CMake/MSVC bug that may have been resolved
+if (MSVC_IDE)
+    set_target_properties(${targetname} PROPERTIES LINK_FLAGS_DEBUG "/DEBUG")
+endif ()

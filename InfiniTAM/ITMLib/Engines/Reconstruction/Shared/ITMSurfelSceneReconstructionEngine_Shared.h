@@ -25,7 +25,7 @@ enum RadiusCombinationMode
 //#################### HELPERS ####################
 
 _CPU_AND_GPU_CODE_ Vector3f transform_normal(const Matrix4f& T, const Vector3f& n);
-_CPU_AND_GPU_CODE_ Vector3f transform_point(const Matrix4f& T, const Vector3f& p);
+_CPU_AND_GPU_CODE_ Vector3f reconstruction_transform_point(const Matrix4f& T, const Vector3f& p);
 
 /**
  * \brief Calculates a Gaussian-based confidence value for a depth sample.
@@ -67,7 +67,7 @@ inline Vector3u compute_surfel_colour(const Vector3f& depthPos3D, const Matrix4f
                                       const Vector4u *colourMap, int colourMapWidth, int colourMapHeight)
 {
   // Transform the surfel's position into live 3D colour coordinates and project it onto the colour map.
-  Vector3f rgbPos3D = transform_point(depthToRGB, depthPos3D);
+  Vector3f rgbPos3D = reconstruction_transform_point(depthToRGB, depthPos3D);
   int x = static_cast<int>(projParamsRGB.x * rgbPos3D.x / rgbPos3D.z + projParamsRGB.z + 0.5f);
   int y = static_cast<int>(projParamsRGB.y * rgbPos3D.y / rgbPos3D.z + projParamsRGB.w + 0.5f);
 
@@ -111,7 +111,7 @@ inline TSurfel make_surfel(int locId, const Matrix4f& T, const Vector4f *vertexM
 {
   TSurfel surfel;
   const Vector3f v = vertexMap[locId].toVector3();
-  surfel.position = transform_point(T, v);
+  surfel.position = reconstruction_transform_point(T, v);
   surfel.normal = transform_normal(T, normalMap[locId]);
   surfel.radius = radiusMap[locId];
   if(surfel.radius > maxSurfelRadius) surfel.radius = maxSurfelRadius;
@@ -201,7 +201,7 @@ inline Vector3f transform_normal(const Matrix4f& T, const Vector3f& n)
  * \return  The result of applying the transformation to the point vector.
  */
 _CPU_AND_GPU_CODE_
-inline Vector3f transform_point(const Matrix4f& T, const Vector3f& p)
+inline Vector3f reconstruction_transform_point(const Matrix4f& T, const Vector3f& p)
 {
   Vector4f v(p.x, p.y, p.z, 1.0f);
   return (T * v).toVector3();
@@ -457,7 +457,7 @@ inline void find_corresponding_surfel(int locId, const Matrix4f& invT, const flo
       {
         // TODO: Make this slightly more sophisticated, as per the paper.
         TSurfel surfel = surfels[surfelIndex];
-        Vector3f liveSurfelPos = transform_point(invT, surfel.position);
+        Vector3f liveSurfelPos = reconstruction_transform_point(invT, surfel.position);
         float surfelDepth = liveSurfelPos.z;
 
         const float deltaDepth = 0.01f;

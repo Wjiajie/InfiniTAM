@@ -2,46 +2,46 @@
 # Top-level CMakeLists.txt for InfiniTAM #
 ##########################################
 
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.5.1)
 
-PROJECT(InfiniTAM)
+project(InfiniTAM)
 
 #################################
 # CMake policies #
 #################################
-if(POLICY CMP0020)
+if (POLICY CMP0020)
     cmake_policy(SET CMP0020 NEW)
-endif()
+endif ()
 
 #################################
 # Specify the CMake module path #
 #################################
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 #################################
 # Add additional compiler flags #
 #################################
 
-IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++ -Wno-deprecated-declarations -Wno-unused-function")
-ENDIF()
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++ -Wno-deprecated-declarations -Wno-unused-function")
+endif ()
 
-IF(NOT MSVC_IDE)
-  SET(CFLAGS_WARN "-Wall -Wextra -Wno-unused-parameter -Wno-strict-aliasing")
-  SET(CMAKE_C_FLAGS_RELEASE "-fPIC -O3 -march=native ${CFLAGS_WARN} ${CMAKE_C_FLAGS_RELEASE}")
-  SET(CMAKE_C_FLAGS_DEBUG "-fPIC -g -march=native ${CFLAGS_WARN} ${CMAKE_C_FLAGS_DEBUG}")
-  #SET(CMAKE_CXX_FLAGS "-fPIC -g ${CFLAGS_WARN} ${CMAKE_CXX_FLAGS}")
-ENDIF()
+if (NOT MSVC_IDE)
+    set(CFLAGS_WARN "-Wall -Wextra -Wno-unused-parameter -Wno-strict-aliasing")
+    set(CMAKE_C_FLAGS_RELEASE "-fPIC -O3 -march=native ${CFLAGS_WARN} ${CMAKE_C_FLAGS_RELEASE}")
+    set(CMAKE_C_FLAGS_DEBUG "-fPIC -g -march=native ${CFLAGS_WARN} ${CMAKE_C_FLAGS_DEBUG}")
+    #SET(CMAKE_CXX_FLAGS "-fPIC -g ${CFLAGS_WARN} ${CMAKE_CXX_FLAGS}")
+endif ()
 
 #########################
 # Suppress auto-linking #
 #########################
 
-IF(MSVC_IDE)
-  ADD_DEFINITIONS(-DUSING_CMAKE=1)
-ENDIF()
-
+if (MSVC_IDE)
+    add_definitions(-DUSING_CMAKE=1)
+    add_compile_options("/MP")
+endif ()
 
 
 file(GLOB_RECURSE CMAKE_SOURCES "cmake/*")
@@ -52,10 +52,10 @@ source_group(CMake FILES ${CMAKE_SOURCES})
 # Add subdirectories #
 ######################
 
-ADD_SUBDIRECTORY(Apps)
-ADD_SUBDIRECTORY(FernRelocLib)
-ADD_SUBDIRECTORY(InputSource)
-ADD_SUBDIRECTORY(ITMLib)
-ADD_SUBDIRECTORY(MiniSlamGraphLib)
-ADD_SUBDIRECTORY(ORUtils)
-ADD_SUBDIRECTORY(Tests)
+add_subdirectory(Apps)
+add_subdirectory(FernRelocLib)
+add_subdirectory(InputSource)
+add_subdirectory(ITMLib)
+add_subdirectory(MiniSlamGraphLib)
+add_subdirectory(ORUtils)
+add_subdirectory(Tests)
