@@ -896,3 +896,9 @@ if(NOT INDEX EQUAL -1)
     #replace with the same properties with spaces after the macro name
     set_property(DIRECTORY PROPERTY COMPILE_DEFINITIONS ${COMPILE_DEFINITIONS_PROPERTY})
 endif()
+
+#workaround for https://codereview.qt-project.org/#/c/195531/
+get_property(core_options TARGET Qt5::Core PROPERTY INTERFACE_COMPILE_OPTIONS)
+string(REPLACE "-fPIC" "" new_core_options ${core_options})
+set_property(TARGET Qt5::Core PROPERTY INTERFACE_COMPILE_OPTIONS ${new_core_options})
+set_property(TARGET Qt5::Core PROPERTY INTERFACE_POSITION_INDEPENDENT_CODE "ON")

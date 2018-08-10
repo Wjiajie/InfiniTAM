@@ -27,12 +27,15 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++ -Wno-deprecated-declarations -Wno-unused-function")
 endif ()
 
+
 if (NOT MSVC_IDE)
     set(CFLAGS_WARN "-Wall -Wextra -Wno-unused-parameter -Wno-strict-aliasing")
-    set(CMAKE_C_FLAGS_RELEASE "-fPIC -O3 -march=native ${CFLAGS_WARN} ${CMAKE_C_FLAGS_RELEASE}")
-    set(CMAKE_C_FLAGS_DEBUG "-fPIC -g -march=native ${CFLAGS_WARN} ${CMAKE_C_FLAGS_DEBUG}")
-    #SET(CMAKE_CXX_FLAGS "-fPIC -g ${CFLAGS_WARN} ${CMAKE_CXX_FLAGS}")
+    set(CMAKE_C_FLAGS_RELEASE "-O3 -march=native ${CFLAGS_WARN} ${CMAKE_C_FLAGS_RELEASE}")
+    set(CMAKE_C_FLAGS_DEBUG "-g -march=native ${CFLAGS_WARN} ${CMAKE_C_FLAGS_DEBUG}")
+    #SET(CMAKE_CXX_FLAGS "-g ${CFLAGS_WARN} ${CMAKE_CXX_FLAGS}")
 endif ()
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 #########################
 # Suppress auto-linking #

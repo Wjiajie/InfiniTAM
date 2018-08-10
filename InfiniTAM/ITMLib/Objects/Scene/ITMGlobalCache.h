@@ -72,7 +72,7 @@ namespace ITMLib
 
 			ORcudaSafeCall(cudaMalloc((void**)&neededEntryIDs_device, SDF_TRANSFER_BLOCK_NUM * sizeof(int)));
 #else
-			syncedVoxelBlocks_host = (TVoxelCanonical *)malloc(SDF_TRANSFER_BLOCK_NUM * sizeof(TVoxelCanonical) * SDF_BLOCK_SIZE3);
+			syncedVoxelBlocks_host = (TVoxel *)malloc(SDF_TRANSFER_BLOCK_NUM * sizeof(TVoxel) * SDF_BLOCK_SIZE3);
 			hasSyncedData_host = (bool*)malloc(SDF_TRANSFER_BLOCK_NUM * sizeof(bool));
 			neededEntryIDs_host = (int*)malloc(SDF_TRANSFER_BLOCK_NUM * sizeof(int));
 #endif

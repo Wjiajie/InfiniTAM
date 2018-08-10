@@ -301,7 +301,7 @@ void AllocateHashEntriesUsingLists_SetVisibility_CPU(ITMScene<TVoxel, TIndex>* s
 // region ======================================== HELPER RANGE COMPUTATION / CHECK ROUTINES ===========================
 // =====================================================================================================================
 inline
-void BoundsFromExtrema(Vector6i bounds, const Vector3i& extremum1, const Vector3i& extremum2) {
+void BoundsFromExtrema(Vector6i& bounds, const Vector3i& extremum1, const Vector3i& extremum2) {
 	// ** set min/max **
 	if (extremum1.x > extremum2.x) {
 		bounds.min_x = extremum2.x;
