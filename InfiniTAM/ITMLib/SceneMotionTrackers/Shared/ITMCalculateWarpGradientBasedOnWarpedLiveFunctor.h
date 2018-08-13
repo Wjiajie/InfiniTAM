@@ -186,27 +186,29 @@ public:
 					neighborWarpUpdates/*x9*/, neighborKnown, neighborTruncated,
 					neighborAllocated, voxelPosition, canonicalVoxels,
 					canonicalIndexData, canonicalCache);
-			if (switches.enableKillingTerm) {
+
+			//if (switches.enableKillingTerm) {
 				for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
 					if (!neighborAllocated[iNeighbor]) {
 						//assign current warp to neighbor warp if the neighbor is not allocated
 						neighborWarpUpdates[iNeighbor] = canonicalVoxel.warp_update;
 					}
 				}
-			}
+			//}
 		} else {
 			findPoint2ndDerivativeNeighborhoodFramewiseWarp(
 					neighborFramewiseWarps/*x9*/, neighborKnown, neighborTruncated,
 					neighborAllocated, voxelPosition, canonicalVoxels,
 					canonicalIndexData, canonicalCache);
-			if (switches.enableKillingTerm) {
+			//TODO: probably remove the commented conditions, mathematically they don't make sense, i.e. setting unknown neighbors warp to current warp is alright for 3D Laplacian -Greg (Github: Algomorph)
+			//if (switches.enableKillingTerm) {
 				for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
 					if (!neighborAllocated[iNeighbor]) {
 						//assign current warp to neighbor warp if the neighbor is not allocated
 						neighborFramewiseWarps[iNeighbor] = framewiseWarp;
 					}
 				}
-			}
+			//}
 		}
 
 #ifndef __CUDACC__
