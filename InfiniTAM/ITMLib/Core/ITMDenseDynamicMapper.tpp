@@ -105,7 +105,9 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetCanonicalScene(
 			ITMSceneManipulationEngine_CPU<TVoxelCanonical, TIndex>::ResetScene(scene);
 			break;
 		case ITMLibSettings::DEVICE_CUDA:
+#ifndef COMPILE_WITHOUT_CUDA
 			ITMSceneManipulationEngine_CUDA<TVoxelCanonical, TIndex>::ResetScene(scene);
+#endif
 			break;
 		case ITMLibSettings::DEVICE_METAL:
 			DIEWITHEXCEPTION_REPORTLOCATION("NOT IMPLEMENTED");
@@ -121,7 +123,9 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetLiveScene(
 			ITMSceneManipulationEngine_CPU<TVoxelLive, TIndex>::ResetScene(scene);
 			break;
 		case ITMLibSettings::DEVICE_CUDA:
+#ifndef COMPILE_WITHOUT_CUDA
 			ITMSceneManipulationEngine_CUDA<TVoxelLive, TIndex>::ResetScene(scene);
+#endif
 			break;
 		case ITMLibSettings::DEVICE_METAL:
 			DIEWITHEXCEPTION_REPORTLOCATION("NOT IMPLEMENTED");
