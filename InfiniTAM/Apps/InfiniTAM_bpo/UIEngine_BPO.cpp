@@ -369,7 +369,7 @@ bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 		case HASH:{
 			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
-			bool keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();
+			keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();
 			if (!keepProcessingFrame) {
 				trackingResult = dynamicEngine->GetStepByStepTrackingResult();
 #ifndef COMPILE_WITHOUT_CUDA
@@ -384,7 +384,7 @@ bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 		case ARRAY: {
 			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
-			bool keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();
+			keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();
 			if (!keepProcessingFrame) {
 				trackingResult = dynamicEngine->GetStepByStepTrackingResult();
 #ifndef COMPILE_WITHOUT_CUDA
