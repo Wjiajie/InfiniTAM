@@ -63,7 +63,7 @@ bool VoxelIsConsideredForDataTerm(const TVoxelCanonical& canonicalVoxel, const T
  *	(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
  * \tparam TVoxel
  * \tparam TCache
- * \param[out] neighborFramewiseWarps
+ * \param[out] neighborFlowWarps
  * \param[out] neighborKnown - current behavior is:
  * 1) record unallocated voxels as non-found
  * 2) truncated voxels marked unknown or known as found
@@ -75,7 +75,7 @@ bool VoxelIsConsideredForDataTerm(const TVoxelCanonical& canonicalVoxel, const T
  */
 template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
-inline void findPoint2ndDerivativeNeighborhoodFramewiseWarp(THREADPTR(Vector3f)* neighborFramewiseWarps, //x9, out
+inline void findPoint2ndDerivativeNeighborhoodFlowWarp(THREADPTR(Vector3f)* neighborFlowWarps, //x9, out
                                                             THREADPTR(bool)* neighborKnown, //x9, out
                                                             THREADPTR(bool)* neighborTruncated, //x9, out
                                                             THREADPTR(bool)* neighborAllocated, //x9, out
@@ -89,7 +89,7 @@ inline void findPoint2ndDerivativeNeighborhoodFramewiseWarp(THREADPTR(Vector3f)*
 	//TODO: define inline function instead of macro
 #define PROCESS_VOXEL(location, index)\
     voxel = readVoxel(voxels, indexData, voxelPosition + (location), vmIndex, cache);\
-    neighborFramewiseWarps[index] = voxel.flow_warp;\
+    neighborFlowWarps[index] = voxel.flow_warp;\
     neighborAllocated[index] = vmIndex != 0;\
     neighborKnown[index] = voxel.flags != ITMLib::VOXEL_UNKNOWN;\
     neighborTruncated[index] = voxel.flags == ITMLib::VOXEL_TRUNCATED;
@@ -114,8 +114,8 @@ inline void findPoint2ndDerivativeNeighborhoodFramewiseWarp(THREADPTR(Vector3f)*
 
 template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
-inline void findPoint2ndDerivativeNeighborhoodFramewiseWarp_DEBUG(
-		THREADPTR(Vector3f)* neighborFramewiseWarps, //x9, out
+inline void findPoint2ndDerivativeNeighborhoodFlowWarp_DEBUG(
+		THREADPTR(Vector3f)* neighborFlowWarps, //x9, out
 		THREADPTR(bool)* neighborKnown, //x9, out
 		THREADPTR(bool)* neighborTruncated, //x9, out
 		THREADPTR(bool)* neighborAllocated, //x9, out
@@ -128,7 +128,7 @@ inline void findPoint2ndDerivativeNeighborhoodFramewiseWarp_DEBUG(
 	TVoxel voxel;
 	//TODO: define inline function instead of macro
 	voxel = readVoxel(voxels, indexData, voxelPosition + Vector3i(0, 0, 0), vmIndex, cache);
-	neighborFramewiseWarps[0] = voxel.flow_warp;
+	neighborFlowWarps[0] = voxel.flow_warp;
 	neighborAllocated[0] = vmIndex != 0;
 	neighborKnown[0] = voxel.flags != ITMLib::VOXEL_UNKNOWN;
 	neighborTruncated[0] = voxel.flags == ITMLib::VOXEL_TRUNCATED;
@@ -510,8 +510,8 @@ inline void ComputeWarpLaplacianAndJacobian(THREADPTR(Vector3f)& laplacian,
 // region =================================== WARP JACOBIAN AND HESSIAN (SMOOTHING/KILLING TERM) =======================
 //Computes the jacobian and hessian approximation for the warp vectors themselves in a given neighborhood
 _CPU_AND_GPU_CODE_
-inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxelFramewiseWarp,
-                                                  const CONSTPTR(Vector3f*) neighborFramewiseWarps, //in, x9
+inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxelFlowWarp,
+                                                  const CONSTPTR(Vector3f*) neighborFlowWarps, //in, x9
                                                   THREADPTR(Matrix3f)& jacobian, //out
                                                   THREADPTR(Matrix3f)* hessian //out, x3
 ) {
@@ -521,17 +521,17 @@ inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxe
 	// |u_x, u_y, u_z|       |m00, m10, m20|
 	// |v_x, v_y, v_z|       |m01, m11, m21|
 	// |w_x, w_y, w_z|       |m02, m12, m22|
-	jacobian.setColumn(0, neighborFramewiseWarps[3] - voxelFramewiseWarp);//1st derivative in x
-	jacobian.setColumn(1, neighborFramewiseWarps[4] - voxelFramewiseWarp);//1st derivative in y
-	jacobian.setColumn(2, neighborFramewiseWarps[5] - voxelFramewiseWarp);//1st derivative in z
+	jacobian.setColumn(0, neighborFlowWarps[3] - voxelFlowWarp);//1st derivative in x
+	jacobian.setColumn(1, neighborFlowWarps[4] - voxelFlowWarp);//1st derivative in y
+	jacobian.setColumn(2, neighborFlowWarps[5] - voxelFlowWarp);//1st derivative in z
 
 	Matrix3f backwardDifferences;
 	// |u_x, u_y, u_z|
 	// |v_x, v_y, v_z|
 	// |w_x, w_y, w_z|
-	backwardDifferences.setColumn(0, voxelFramewiseWarp - neighborFramewiseWarps[0]);//1st derivative in x
-	backwardDifferences.setColumn(1, voxelFramewiseWarp - neighborFramewiseWarps[1]);//1st derivative in y
-	backwardDifferences.setColumn(2, voxelFramewiseWarp - neighborFramewiseWarps[2]);//1st derivative in z
+	backwardDifferences.setColumn(0, voxelFlowWarp - neighborFlowWarps[0]);//1st derivative in x
+	backwardDifferences.setColumn(1, voxelFlowWarp - neighborFlowWarps[1]);//1st derivative in y
+	backwardDifferences.setColumn(2, voxelFlowWarp - neighborFlowWarps[2]);//1st derivative in z
 
 	//second derivatives in same direction
 	// |u_xx, u_yy, u_zz|       |m00, m10, m20|
@@ -540,9 +540,9 @@ inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxe
 	Matrix3f dd_XX_YY_ZZ = jacobian - backwardDifferences;
 
 	Matrix3f neighborDifferences;
-	neighborDifferences.setColumn(0, neighborFramewiseWarps[6] - neighborFramewiseWarps[4]);//(0,1,0)->(1,1,0)
-	neighborDifferences.setColumn(1, neighborFramewiseWarps[7] - neighborFramewiseWarps[5]);//(0,0,1)->(0,1,1)
-	neighborDifferences.setColumn(2, neighborFramewiseWarps[8] - neighborFramewiseWarps[3]);//(1,0,0)->(1,0,1)
+	neighborDifferences.setColumn(0, neighborFlowWarps[6] - neighborFlowWarps[4]);//(0,1,0)->(1,1,0)
+	neighborDifferences.setColumn(1, neighborFlowWarps[7] - neighborFlowWarps[5]);//(0,0,1)->(0,1,1)
+	neighborDifferences.setColumn(2, neighborFlowWarps[8] - neighborFlowWarps[3]);//(1,0,0)->(1,0,1)
 
 	//second derivatives in different directions
 	// |u_xy, u_yz, u_zx|      |m00, m10, m20|

@@ -68,19 +68,19 @@ ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ITM
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ClearOutFramewiseWarp(
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::ClearOutFlowWarp(
 		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) {
 	ITMSceneTraversalEngine<TVoxelCanonical, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA>::template
-	StaticVoxelTraversal<ClearOutFramewiseWarpStaticFunctor<TVoxelCanonical> >(canonicalScene);
+	StaticVoxelTraversal<ClearOutFlowWarpStaticFunctor<TVoxelCanonical> >(canonicalScene);
 
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::AddFramewiseWarpToWarp(
-		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene, bool clearFramewiseWarp) {
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::AddFlowWarpToWarp(
+		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene, bool clearFlowWarp) {
 
-	AddFramewiseWarpToWarp_common<TVoxelCanonical, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA>(canonicalScene,
-	                                                                                                clearFramewiseWarp);
+	AddFlowWarpToWarp_common<TVoxelCanonical, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA>(canonicalScene,
+	                                                                                                clearFlowWarp);
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>

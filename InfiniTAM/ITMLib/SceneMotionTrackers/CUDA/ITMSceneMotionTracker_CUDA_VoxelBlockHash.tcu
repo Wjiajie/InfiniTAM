@@ -30,14 +30,14 @@ ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ITMS
 
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ClearOutFramewiseWarp(
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ClearOutFlowWarp(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::AddFramewiseWarpToWarp(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, bool clearFramewiseWarp) {
+void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::AddFlowWarpToWarp(
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, bool clearFlowWarp) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 

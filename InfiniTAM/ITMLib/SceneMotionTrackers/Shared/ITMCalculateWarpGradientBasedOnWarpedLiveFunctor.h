@@ -175,7 +175,7 @@ public:
 		// region ============================== RETRIEVE NEIGHBOR'S WARPS =================================
 
 		const int neighborhoodSize = 9;
-		Vector3f neighborFramewiseWarps[neighborhoodSize], neighborWarpUpdates[neighborhoodSize];
+		Vector3f neighborFlowWarps[neighborhoodSize], neighborWarpUpdates[neighborhoodSize];
 		bool neighborKnown[neighborhoodSize], neighborTruncated[neighborhoodSize], neighborAllocated[neighborhoodSize];
 
 		//    0        1        2          3         4         5           6         7         8
@@ -196,8 +196,8 @@ public:
 				}
 			//}
 		} else {
-			findPoint2ndDerivativeNeighborhoodFramewiseWarp(
-					neighborFramewiseWarps/*x9*/, neighborKnown, neighborTruncated,
+			findPoint2ndDerivativeNeighborhoodFlowWarp(
+					neighborFlowWarps/*x9*/, neighborKnown, neighborTruncated,
 					neighborAllocated, voxelPosition, canonicalVoxels,
 					canonicalIndexData, canonicalCache);
 			//TODO: probably remove the commented conditions, mathematically they don't make sense, i.e. setting unknown neighbors warp to current warp is alright for 3D Laplacian -Greg (Github: Algomorph)
@@ -205,7 +205,7 @@ public:
 				for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
 					if (!neighborAllocated[iNeighbor]) {
 						//assign current warp to neighbor warp if the neighbor is not allocated
-						neighborFramewiseWarps[iNeighbor] = framewiseWarp;
+						neighborFlowWarps[iNeighbor] = framewiseWarp;
 					}
 				}
 			//}
@@ -286,11 +286,11 @@ public:
 
 		if (switches.enableSmoothingTerm) {
 			if (switches.enableKillingTerm) {
-				ComputePerVoxelWarpJacobianAndHessian(framewiseWarp, neighborFramewiseWarps, framewiseWarpJacobian,
+				ComputePerVoxelWarpJacobianAndHessian(framewiseWarp, neighborFlowWarps, framewiseWarpJacobian,
 				                                      framewiseWarpHessian);
 #ifndef __CUDACC__
 				if (printVoxelResult) {
-					_DEBUG_PrintKillingTermStuff(neighborFramewiseWarps, neighborKnown, neighborTruncated,
+					_DEBUG_PrintKillingTermStuff(neighborFlowWarps, neighborKnown, neighborTruncated,
 					                             framewiseWarpJacobian, framewiseWarpHessian);
 				}
 #endif
@@ -336,11 +336,11 @@ public:
 					                                canonicalVoxel.warp_update, neighborWarpUpdates);
 				} else {
 					ComputeWarpLaplacianAndJacobian(framewiseWarpLaplacian, framewiseWarpJacobian, framewiseWarp,
-					                                neighborFramewiseWarps);
+					                                neighborFlowWarps);
 				}
 #ifndef __CUDACC__
 				if (printVoxelResult) {
-					_DEBUG_PrintTikhonovTermStuff(neighborFramewiseWarps, framewiseWarpLaplacian);
+					_DEBUG_PrintTikhonovTermStuff(neighborFlowWarps, framewiseWarpLaplacian);
 				}
 #endif
 				//∇E_{reg}(Ψ) = −[∆U ∆V ∆W]' ,

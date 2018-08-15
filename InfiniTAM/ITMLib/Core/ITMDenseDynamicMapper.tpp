@@ -35,8 +35,6 @@
 #include "../../Tests/TestUtils.h"
 
 
-
-
 using namespace ITMLib;
 
 namespace bench = ITMLib::Bench;
@@ -100,7 +98,7 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
 ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetCanonicalScene(
 		ITMScene<TVoxelCanonical, TIndex>* scene) const {
-	switch (ITMLibSettings::Instance().deviceType){
+	switch (ITMLibSettings::Instance().deviceType) {
 		case ITMLibSettings::DEVICE_CPU:
 			ITMSceneManipulationEngine_CPU<TVoxelCanonical, TIndex>::ResetScene(scene);
 			break;
@@ -118,7 +116,7 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetCanonicalScene(
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetLiveScene(
 		ITMScene<TVoxelLive, TIndex>* scene) const {
-	switch (ITMLibSettings::Instance().deviceType){
+	switch (ITMLibSettings::Instance().deviceType) {
 		case ITMLibSettings::DEVICE_CPU:
 			ITMSceneManipulationEngine_CPU<TVoxelLive, TIndex>::ResetScene(scene);
 			break;
@@ -168,10 +166,10 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProce
 			"Initializing live frame SDF by mapping from raw live SDF to warped SDF based on previous-frame warp...");
 	bench::StartTimer("TrackMotion_35_Initialize");
 	//sceneReconstructor->WarpScene(canonicalScene, liveScene, 0, 1);
-	sceneReconstructor->CopyIndexedScene(liveScene,0,1);
+	sceneReconstructor->CopyIndexedScene(liveScene, 0, 1);
 	//sceneReconstructor->UpdateWarpedScene(canonicalScene, liveScene, 0, 1);
 
-	//sceneMotionTracker->ClearOutFramewiseWarp(canonicalScene);
+	sceneMotionTracker->ClearOutFlowWarp(canonicalScene);
 	bench::StopTimer("TrackMotion_35_Initialize");
 
 	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().InitializeFrameRecording();
@@ -188,9 +186,9 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeProcess
 	sceneReconstructor->FuseLiveIntoCanonicalSdf(canonicalScene, liveScene, targetSdfIndex);
 	bench::StopTimer("FuseLiveIntoCanonicalSdf");
 
-	//bench::StartTimer("AddFramewiseWarpToWarp");
-	//sceneMotionTracker->AddFramewiseWarpToWarp(canonicalScene, true);
-	//bench::StopTimer("AddFramewiseWarpToWarp");
+	//bench::StartTimer("AddFlowWarpToWarp");
+	//sceneMotionTracker->AddFlowWarpToWarp(canonicalScene, true);
+	//bench::StopTimer("AddFlowWarpToWarp");
 
 	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().FinalizeFrameRecording();
 
@@ -320,16 +318,15 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessSwapping
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
-ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrameInStepByStepMode(const ITMView* view,
-                                                                                                 const ITMTrackingState* trackingState,
-                                                                                                 ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-                                                                                                 ITMScene<TVoxelLive, TIndex>* liveScene,
-                                                                                                 ITMRenderState* renderState) {
+ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrameInStepByStepMode(
+		const ITMView* view, const ITMTrackingState* trackingState,  ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+		ITMScene<TVoxelLive, TIndex>* liveScene, ITMRenderState* renderState) {
 	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Already in step-by-step tracking mode, cannot restart.");
 	}
 	inStepByStepProcessingMode = true;
 	InitializeProcessing(view, trackingState, canonicalScene, liveScene, renderState);
+	iteration = 0;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -345,6 +342,7 @@ bool ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::TakeNextStepInS
 		return true;
 	} else {
 		FinalizeProcessing(canonicalScene, liveScene, renderState);
+		inStepByStepProcessingMode = false;
 		return false;
 	}
 }

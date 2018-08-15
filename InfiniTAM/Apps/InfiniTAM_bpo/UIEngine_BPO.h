@@ -78,6 +78,7 @@ private:
 
 	int currentFrameNo;
 	bool isRecordingImages;
+	bool inStepByStepMode;
 
 	InputSource::FFMPEGWriter* reconstructionVideoWriter = nullptr;
 	InputSource::FFMPEGWriter* rgbVideoWriter = nullptr;
@@ -102,7 +103,7 @@ public:
 	ITMLib::ITMTrackingState::TrackingResult trackingResult;
 	char* outFolder;
 	bool needsRefresh;
-	bool inStepByStepMode;
+
 	bool allocateGPU;
 	bool shutdownRequested = false;
 	ITMUChar4Image* saveImage;
@@ -119,8 +120,10 @@ public:
 	void Run();
 	void PrintProcessingFrameHeader() const;
 	void ProcessFrame();
+
 	//For scene-tracking updates
-	bool BeginStepByStepModeForFrame();
+	bool BeginStepByStepMode();
+	bool InStepByStepMode() { return this->inStepByStepMode;}
 	bool ContinueStepByStepModeForFrame();
 
 	void GetScreenshot(ITMUChar4Image* dest) const;

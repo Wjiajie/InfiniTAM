@@ -133,6 +133,7 @@ void UIEngine_BPO::GlutDisplayFunction() {
 	}
 
 	char str[200];
+
 	//print previous frame index
 	int lastFrameIx = uiEngine.startedProcessingFromFrameIx + uiEngine.processedFrameNo - 1;
 	if (lastFrameIx >= 0) {
@@ -163,6 +164,7 @@ void UIEngine_BPO::GlutDisplayFunction() {
 			followOrFreeview = "free viewpoint";
 		}
 
+		//Draw keyboard shortcut legend
 		sprintf(str, "n: one frame \t b: continuous \t q/e/esc: exit \t r: reset \t s: save scene \t l: load scene\t"
 		             " f: %s \t c: colours (currently %s) \t t: turn fusion %s", followOrFreeview, modeName,
 		        uiEngine.integrationActive ? "off" : "on");
@@ -189,21 +191,29 @@ void UIEngine_BPO::GlutIdleFunction() {
 	switch (uiEngine.mainLoopAction) {
 		case PROCESS_FRAME:
 			uiEngine.ProcessFrame();
-			uiEngine.processedFrameNo++;
+			uiEngine.processedFrameNo++; //done with current frame, increment the frame counter
 			uiEngine.mainLoopAction = PROCESS_PAUSED;
 			uiEngine.needsRefresh = true;
 			break;
 		case PROCESS_SINGLE_STEP:
 			uiEngine.mainLoopAction = PROCESS_PAUSED;
 		case PROCESS_STEPS_CONTINUOUS:
-			if (!uiEngine.ContinueStepByStepModeForFrame()) {
-				if ((uiEngine.processedFrameNo - uiEngine.autoIntervalFrameStart) >=
-				    uiEngine.autoIntervalFrameCount) {
-					uiEngine.inStepByStepMode = false;
-					uiEngine.mainLoopAction = PROCESS_PAUSED;
-				} else {
-					uiEngine.BeginStepByStepModeForFrame();
+			if (uiEngine.InStepByStepMode()) {
+				// if we find that we're in the step-by-step mode, try to make another step.
+				if(!uiEngine.ContinueStepByStepModeForFrame()){
+					// if we cannot take any more steps, this means we are done with current frame,
+					// increment the frame counter
+					uiEngine.processedFrameNo++;
+					if ((uiEngine.processedFrameNo - uiEngine.autoIntervalFrameStart) >=
+					    uiEngine.autoIntervalFrameCount) {
+						/* check whether we're done with all the frames for the automated interval processing, and,
+						 * if so, pause the program */
+						uiEngine.mainLoopAction = PROCESS_PAUSED;
+					}
 				}
+			} else {
+				/* if the UI engine is not in step-by-step mode, we need to begin that*/
+				uiEngine.BeginStepByStepMode();
 			}
 			uiEngine.needsRefresh = true;
 			break;
@@ -368,7 +378,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 				uiEngine.needsRefresh = true;
 				break;
 			case 'd':
-				if (uiEngine.BeginStepByStepModeForFrame()) {
+				if (uiEngine.BeginStepByStepMode()) {
 					uiEngine.freeviewActive = true;
 					uiEngine.inStepByStepMode = true;
 					uiEngine.needsRefresh = true;
@@ -454,7 +464,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 		}
 	}
 
-	if (uiEngine.inStepByStepMode) {
+	if (uiEngine.InStepByStepMode()) {
 		uiEngine.outImageType[0] = uiEngine.colourMode_stepByStep.type;
 	} else {
 		if (uiEngine.freeviewActive) uiEngine.outImageType[0] = uiEngine.colourModes_freeview[uiEngine.currentColourMode].type;
