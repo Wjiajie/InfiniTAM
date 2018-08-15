@@ -34,9 +34,9 @@ public:
 	explicit ITMSceneMotionTracker_CUDA();
 	virtual ~ITMSceneMotionTracker_CUDA() = default;
 
-	void ClearOutFramewiseWarp(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) override;
-	void AddFramewiseWarpToWarp(
-			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, bool clearFramewiseWarp) override;
+	void ClearOutFlowWarp(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) override;
+	void AddFlowWarpToWarp(
+			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, bool clearFlowWarp) override;
 	void CalculateWarpGradient(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
 	                           ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceFieldIndex,
 	                           bool restrictZTrackingForDebugging) override;
@@ -66,9 +66,9 @@ public:
 	explicit ITMSceneMotionTracker_CUDA();
 	virtual ~ITMSceneMotionTracker_CUDA() = default;
 
-	void ClearOutFramewiseWarp(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) override;
-	void AddFramewiseWarpToWarp(
-			ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene, bool clearFramewiseWarp) override;
+	void ClearOutFlowWarp(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) override;
+	void AddFlowWarpToWarp(
+			ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene, bool clearFlowWarp) override;
 	void CalculateWarpGradient(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
 	                           ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceFieldIndex,
 	                           bool restrictZTrackingForDebugging) override;

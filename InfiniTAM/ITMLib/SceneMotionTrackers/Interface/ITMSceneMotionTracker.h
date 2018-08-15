@@ -88,9 +88,9 @@ public:
 			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, int sourceFieldIndex) = 0;
 	virtual float UpdateWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 	                          ITMScene<TVoxelLive, TIndex>* liveScene, int sourceSdfIndex) = 0;
-	virtual void ClearOutFramewiseWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
-	virtual void AddFramewiseWarpToWarp(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, bool clearFramewiseWarp) = 0;
+	virtual void ClearOutFlowWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
+	virtual void AddFlowWarpToWarp(
+			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, bool clearFlowWarp) = 0;
 	virtual void ResetWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
 //============================= MEMBER VARIABLES =======================================================================
 

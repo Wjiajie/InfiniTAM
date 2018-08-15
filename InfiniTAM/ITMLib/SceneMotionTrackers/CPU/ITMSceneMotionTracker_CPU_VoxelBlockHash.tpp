@@ -65,10 +65,10 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::
 
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ClearOutFramewiseWarp(
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ClearOutFlowWarp(
 		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
 	ITMSceneTraversalEngine<TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
-	StaticVoxelTraversal<ClearOutFramewiseWarpStaticFunctor<TVoxelCanonical>>(canonicalScene);
+	StaticVoxelTraversal<ClearOutFlowWarpStaticFunctor<TVoxelCanonical>>(canonicalScene);
 }
 
 
@@ -138,11 +138,11 @@ float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>:
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::AddFramewiseWarpToWarp(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, bool clearFramewiseWarp) {
+void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::AddFlowWarpToWarp(
+		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, bool clearFlowWarp) {
 
-	AddFramewiseWarpToWarp_common<TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>
-		(canonicalScene, clearFramewiseWarp);
+	AddFlowWarpToWarp_common<TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>
+		(canonicalScene, clearFlowWarp);
 }
 
 //endregion ============================================================================================================

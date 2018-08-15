@@ -182,7 +182,6 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 	}
 
 	if (startInStepByStep) {
-		BeginStepByStepModeForFrame();
 		mainLoopAction = autoIntervalFrameCount ? PROCESS_STEPS_CONTINUOUS : PROCESS_SINGLE_STEP;
 		outImageType[0] = this->colourMode_stepByStep.type;
 	} else {
@@ -296,7 +295,7 @@ void UIEngine_BPO::Shutdown() {
 	delete saveImage;
 }
 
-bool UIEngine_BPO::BeginStepByStepModeForFrame() {
+bool UIEngine_BPO::BeginStepByStepMode() {
 	if (!imageSource->hasMoreImages()) return false;
 
 	switch (indexingMethod) {
@@ -344,6 +343,7 @@ bool UIEngine_BPO::BeginStepByStepModeForFrame() {
 		}
 			break;
 	}
+	this->inStepByStepMode = true;
 	return true;
 }
 
@@ -366,7 +366,7 @@ std::string UIEngine_BPO::GenerateCurrentFrameOutputDirectory() const {
 bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 	bool keepProcessingFrame = false;
 	switch (indexingMethod) {
-		case HASH:{
+		case HASH: {
 			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 			keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();
@@ -397,7 +397,7 @@ bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 		}
 			break;
 	}
-
+	inStepByStepMode = keepProcessingFrame;
 	return keepProcessingFrame;
 }
 
