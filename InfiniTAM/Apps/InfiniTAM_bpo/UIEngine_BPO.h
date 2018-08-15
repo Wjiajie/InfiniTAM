@@ -78,7 +78,7 @@ private:
 
 	int currentFrameNo;
 	bool isRecordingImages;
-	bool inStepByStepMode;
+	bool inStepByStepMode = false;
 
 	InputSource::FFMPEGWriter* reconstructionVideoWriter = nullptr;
 	InputSource::FFMPEGWriter* rgbVideoWriter = nullptr;

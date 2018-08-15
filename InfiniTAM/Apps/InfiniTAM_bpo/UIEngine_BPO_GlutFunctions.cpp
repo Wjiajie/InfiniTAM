@@ -380,7 +380,6 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 			case 'd':
 				if (uiEngine.BeginStepByStepMode()) {
 					uiEngine.freeviewActive = true;
-					uiEngine.inStepByStepMode = true;
 					uiEngine.needsRefresh = true;
 					if (modifiers & GLUT_ACTIVE_ALT) {
 						uiEngine.mainLoopAction = PROCESS_STEPS_CONTINUOUS;
