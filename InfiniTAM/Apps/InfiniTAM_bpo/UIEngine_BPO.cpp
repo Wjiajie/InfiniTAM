@@ -80,7 +80,7 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 	this->logger = logger;
 	this->indexingMethod = indexingMethod;
 
-	this->inStepByStepMode = startInStepByStep;
+	this->inStepByStepMode = false;
 	this->saveAfterAutoprocessing = saveAfterFirstNFrames;
 
 	this->freeviewActive = true;
