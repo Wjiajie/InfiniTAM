@@ -91,7 +91,7 @@ private:
 
 #ifndef __CUDACC__
 
-	void SetUpFocusVoxelPrinting(bool& printVoxelResult, bool& recordVoxelResult, const Vector3i& voxelPosition,
+	void SetUpFocusVoxelPrinting(bool& printVoxelResult, const Vector3i& voxelPosition,
 	                             const Vector3f& voxelWarp, const float& canonicalSdf, const float& liveSdf) {
 		if (hasFocusCoordinates && voxelPosition == focusCoordinates) {
 			int x = 0, y = 0, z = 0, vmIndex = 0, locId = 0;
@@ -105,9 +105,6 @@ private:
 
 			std::cout << std::endl;
 			printVoxelResult = true;
-			if (ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().IsRecordingScene2DSlicesWithUpdates()) {
-				recordVoxelResult = true; //TODO: legacy, revise -Greg
-			}
 		}
 	}
 
@@ -146,33 +143,24 @@ public:
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i voxelPosition) {
 
 		if (!VoxelIsConsideredForTracking(canonicalVoxel, liveVoxel, sourceSdfIndex)) return;
+		bool computeDataTerm = VoxelIsConsideredForDataTerm(canonicalVoxel, liveVoxel, sourceSdfIndex);
 
 		Vector3f& framewiseWarp = canonicalVoxel.flow_warp;
 		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[sourceSdfIndex]);
 		float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
 
-		bool computeDataTerm = VoxelIsConsideredForDataTerm(canonicalVoxel, liveVoxel, sourceSdfIndex);
-
-
 		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
 
-		float localDataEnergy = 0.0f, localLevelSetEnergy = 0.0f, localSmoothnessEnergy = 0.0f,
+		float localDataEnergy = 0.0f, localLevelSetEnergy = 0.0f, localSmoothingEnergy = 0.0f,
 				localTikhonovEnergy = 0.0f, localKillingEnergy = 0.0f; // used for energy calculations in verbose output
 
 		Vector3f localSmoothnessEnergyGradient(0.0f), localDataEnergyGradient(0.0f), localLevelSetEnergyGradient(0.0f);
-		Matrix3f framewiseWarpJacobian(0.0f);
-		Vector3f liveSdfJacobian, framewiseWarpLaplacian;
-		Matrix3f framewiseWarpHessian[3] = {Matrix3f(0.0f), Matrix3f(0.0f), Matrix3f(0.0f)};
+
 		// endregion
 
 #ifndef __CUDACC__
-		bool printVoxelResult = false, recordVoxelResult = false;
-		this->SetUpFocusVoxelPrinting(printVoxelResult, recordVoxelResult, voxelPosition, framewiseWarp, canonicalSdf,
-		                              liveSdf);
-#endif
-
-
-#ifndef __CUDACC__
+		bool printVoxelResult = false;
+		this->SetUpFocusVoxelPrinting(printVoxelResult, voxelPosition, framewiseWarp, canonicalSdf,liveSdf);
 		if (printVoxelResult) {
 			std::cout << blue << "Live 6-connected neighbor information:" << reset << std::endl;
 			print6ConnectedNeighborInfoIndexedFields(voxelPosition, liveVoxels, liveIndexData, liveCache,
@@ -180,14 +168,11 @@ public:
 		}
 #endif
 
-
-
-		if (computeDataTerm && (switches.enableLevelSetTerm || switches.enableDataTerm)) {
-
-		}
-
 		// region =============================== DATA TERM ================================================
 		if (switches.enableDataTerm && computeDataTerm) {
+			Vector3f liveSdfJacobian;
+			ComputeLiveJacobian_CentralDifferences_IndexedFields(
+					liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache, sourceSdfIndex);
 			// Compute data term error / energy
 			float sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
 			// (φ_n(Ψ)−φ_{global}) ∇φ_n(Ψ) - also denoted as - (φ_{proj}(Ψ)−φ_{model}) ∇φ_{proj}(Ψ)
@@ -200,24 +185,22 @@ public:
 #endif
 			localDataEnergy =
 					0.5f * (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
-		}
 #ifndef __CUDACC__
-		if (printVoxelResult) {
-			if (switches.enableDataTerm) {
-				_DEBUG_PrintDataTermStuff(liveSdfJacobian);
-			} else {
-				std::cout << std::endl;
+			if (printVoxelResult) {
+					_DEBUG_PrintDataTermStuff(liveSdfJacobian);
 			}
-		}
 #endif
+		}
+
 		// endregion
 
 		// region =============================== LEVEL SET TERM ===========================================
 
 		if (switches.enableLevelSetTerm && computeDataTerm) {
+			Matrix3f liveSdfHessian;Vector3f liveSdfJacobian;
 			ComputeLiveJacobian_CentralDifferences_IndexedFields(
 					liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache, sourceSdfIndex);
-			Matrix3f liveSdfHessian;
+
 			ComputeSdfHessian_IndexedFields(liveSdfHessian, voxelPosition, liveSdf, liveVoxels,
 			                                liveIndexData, liveCache, sourceSdfIndex);
 			float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
@@ -258,6 +241,8 @@ public:
 			//endregion=================================================================================================
 
 			if (switches.enableKillingTerm) {
+				Matrix3f framewiseWarpJacobian(0.0f);
+				Matrix3f framewiseWarpHessian[3] = {Matrix3f(0.0f), Matrix3f(0.0f), Matrix3f(0.0f)};
 				ComputePerVoxelWarpJacobianAndHessian(framewiseWarp, neighborFlowWarps, framewiseWarpJacobian,
 				                                      framewiseWarpHessian);
 #ifndef __CUDACC__
@@ -301,8 +286,10 @@ public:
 				                      dot(warpJacobianTranspose.getColumn(1), framewiseWarpJacobian.getColumn(1)) +
 				                      dot(warpJacobianTranspose.getColumn(2), framewiseWarpJacobian.getColumn(2)));
 
-				localSmoothnessEnergy = localTikhonovEnergy + localKillingEnergy;
+				localSmoothingEnergy = localTikhonovEnergy + localKillingEnergy;
 			} else {
+				Matrix3f framewiseWarpJacobian(0.0f);
+				Vector3f framewiseWarpLaplacian;
 				ComputeWarpLaplacianAndJacobian(framewiseWarpLaplacian, framewiseWarpJacobian, framewiseWarp,
 					                                neighborFlowWarps);
 
@@ -316,7 +303,7 @@ public:
 				localTikhonovEnergy = dot(framewiseWarpJacobian.getColumn(0), framewiseWarpJacobian.getColumn(0)) +
 				                      dot(framewiseWarpJacobian.getColumn(1), framewiseWarpJacobian.getColumn(1)) +
 				                      dot(framewiseWarpJacobian.getColumn(2), framewiseWarpJacobian.getColumn(2));
-				localSmoothnessEnergy = localTikhonovEnergy;
+				localSmoothingEnergy = localTikhonovEnergy;
 			}
 		}
 		// endregion
@@ -333,13 +320,13 @@ public:
 		float energyGradientLength = ORUtils::length(canonicalVoxel.gradient0);//meters
 		float warpLength = ORUtils::length(canonicalVoxel.flow_warp);
 		double localEnergy = localDataEnergy + parameters.weightLevelSetTerm * localLevelSetEnergy
-		                     + parameters.weightSmoothnessTerm * localSmoothnessEnergy;
+		                     + parameters.weightSmoothnessTerm * localSmoothingEnergy;
 
 		totalDataEnergy += localDataEnergy;
 		totalLevelSetEnergy += parameters.weightLevelSetTerm * localLevelSetEnergy;
 		totalTikhonovEnergy += parameters.weightSmoothnessTerm * localTikhonovEnergy;
 		totalKillingEnergy += parameters.weightSmoothnessTerm * localKillingEnergy;
-		totalSmoothnessEnergy += parameters.weightSmoothnessTerm * localSmoothnessEnergy;
+		totalSmoothnessEnergy += parameters.weightSmoothnessTerm * localSmoothingEnergy;
 
 		cumulativeCanonicalSdf += canonicalSdf;
 		cumulativeLiveSdf += liveSdf;
@@ -352,26 +339,6 @@ public:
 		if (printVoxelResult) {
 			PrintVoxelResult(localDataEnergyGradient, localLevelSetEnergyGradient, localSmoothnessEnergyGradient,
 			                 canonicalVoxel.gradient0, energyGradientLength);
-
-			if (recordVoxelResult) {
-				//TODO: legacy, revise/remove -Greg
-				int x = 0, y = 0, z = 0, hash = 0, locId = 0;
-				GetVoxelHashLocals(hash, x, y, y, z, liveIndexData, liveCache, voxelPosition);
-				hash -= 1;
-				std::array<ITMNeighborVoxelIterationInfo, 9> neighbors;
-				FindHighlightNeighborInfo(neighbors, voxelPosition, hash, canonicalVoxels, canonicalIndexData,
-				                          canonicalCache, liveVoxels, liveIndexData, liveCache);
-
-				ITMHighlightIterationInfo info =
-						{hash, locId, voxelPosition, framewiseWarp, canonicalSdf, liveSdf,
-						 canonicalVoxel.gradient0, localDataEnergyGradient, localLevelSetEnergyGradient,
-						 localSmoothnessEnergyGradient,
-						 localEnergy, localDataEnergy, localLevelSetEnergy, localSmoothnessEnergy,
-						 localKillingEnergy, localTikhonovEnergy,
-						 liveSdfJacobian, liveSdfJacobian, liveSdfHessian, framewiseWarpJacobian,
-						 framewiseWarpHessian[0], framewiseWarpHessian[1], framewiseWarpHessian[2], neighbors, true};
-				ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().LogHighlight(hash, locId, info);
-			}
 		}
 		// endregion ===================================================================================================
 #endif
