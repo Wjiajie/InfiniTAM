@@ -578,34 +578,4 @@ inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxe
 };
 
 // endregion
-template<typename TVoxel>
-_CPU_AND_GPU_CODE_ inline void GetVoxel(THREADPTR(TVoxel)*& voxel, THREADPTR(TVoxel)* voxelData,
-                                        const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex,
-                                        const THREADPTR(Vector3i)& point,
-                                        THREADPTR(ITMLib::ITMVoxelBlockHash::IndexCache)& cache) {
-	Vector3i blockPos;
-	int linearIdx = pointToVoxelBlockPos(point, blockPos);
-	if IS_EQUAL3(blockPos, cache.blockPos) {
-		voxel = &voxelData[cache.blockPtr + linearIdx];
-		return;
-	}
-
-	int hashIdx = hashIndex(blockPos);
-
-	while (true) {
-		ITMHashEntry hashEntry = voxelIndex[hashIdx];
-
-		if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= 0) {
-			cache.blockPos = blockPos;
-			cache.blockPtr = hashEntry.ptr * SDF_BLOCK_SIZE3;
-
-			voxel = &voxelData[cache.blockPtr + linearIdx];
-			return;
-		}
-
-		if (hashEntry.offset < 1) break;
-		hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
-	}
-	voxel = nullptr;
-}
 
