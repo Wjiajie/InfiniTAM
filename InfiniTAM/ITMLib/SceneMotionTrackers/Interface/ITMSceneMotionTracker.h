@@ -51,7 +51,6 @@ public:
 		const bool enableSmoothingTerm;
 		const bool enableKillingTerm;
 		const bool enableGradientSmoothing;
-		const bool usePreviousUpdateVectorsForSmoothing;
 	};
 //============================= CONSTRUCTORS / DESTRUCTORS =============================================================
 //TODO: write documentation block -Greg (Github: Algomorph)
@@ -71,8 +70,7 @@ public:
 					ITMLibSettings::Instance().enableLevelSetTerm,
 					ITMLibSettings::Instance().enableSmoothingTerm,
 					ITMLibSettings::Instance().enableKillingTerm,
-					ITMLibSettings::Instance().enableGradientSmoothing,
-					ITMLibSettings::Instance().usePreviousUpdateVectorsForSmoothing
+					ITMLibSettings::Instance().enableGradientSmoothing
 			} {
 		PrintSettings();
 	}

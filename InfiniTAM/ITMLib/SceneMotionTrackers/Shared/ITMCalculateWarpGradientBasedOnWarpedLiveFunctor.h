@@ -156,13 +156,11 @@ public:
 
 		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
 
-
-
 		float localDataEnergy = 0.0f, localLevelSetEnergy = 0.0f, localSmoothnessEnergy = 0.0f,
 				localTikhonovEnergy = 0.0f, localKillingEnergy = 0.0f; // used for energy calculations in verbose output
 
 		Vector3f localSmoothnessEnergyGradient(0.0f), localDataEnergyGradient(0.0f), localLevelSetEnergyGradient(0.0f);
-		Matrix3f liveSdfHessian, framewiseWarpJacobian(0.0f);
+		Matrix3f framewiseWarpJacobian(0.0f);
 		Vector3f liveSdfJacobian, framewiseWarpLaplacian;
 		Matrix3f framewiseWarpHessian[3] = {Matrix3f(0.0f), Matrix3f(0.0f), Matrix3f(0.0f)};
 		// endregion
@@ -172,44 +170,7 @@ public:
 		this->SetUpFocusVoxelPrinting(printVoxelResult, recordVoxelResult, voxelPosition, framewiseWarp, canonicalSdf,
 		                              liveSdf);
 #endif
-		// region ============================== RETRIEVE NEIGHBOR'S WARPS =================================
 
-		const int neighborhoodSize = 9;
-		Vector3f neighborFlowWarps[neighborhoodSize], neighborWarpUpdates[neighborhoodSize];
-		bool neighborKnown[neighborhoodSize], neighborTruncated[neighborhoodSize], neighborAllocated[neighborhoodSize];
-
-		//    0        1        2          3         4         5           6         7         8
-		//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
-
-		if (this->switches.usePreviousUpdateVectorsForSmoothing) {
-			findPoint2ndDerivativeNeighborhoodPreviousUpdate(
-					neighborWarpUpdates/*x9*/, neighborKnown, neighborTruncated,
-					neighborAllocated, voxelPosition, canonicalVoxels,
-					canonicalIndexData, canonicalCache);
-
-			//if (switches.enableKillingTerm) {
-				for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
-					if (!neighborAllocated[iNeighbor]) {
-						//assign current warp to neighbor warp if the neighbor is not allocated
-						neighborWarpUpdates[iNeighbor] = canonicalVoxel.warp_update;
-					}
-				}
-			//}
-		} else {
-			findPoint2ndDerivativeNeighborhoodFlowWarp(
-					neighborFlowWarps/*x9*/, neighborKnown, neighborTruncated,
-					neighborAllocated, voxelPosition, canonicalVoxels,
-					canonicalIndexData, canonicalCache);
-			//TODO: probably remove the commented conditions, mathematically they don't make sense, i.e. setting unknown neighbors warp to current warp is alright for 3D Laplacian -Greg (Github: Algomorph)
-			//if (switches.enableKillingTerm) {
-				for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
-					if (!neighborAllocated[iNeighbor]) {
-						//assign current warp to neighbor warp if the neighbor is not allocated
-						neighborFlowWarps[iNeighbor] = framewiseWarp;
-					}
-				}
-			//}
-		}
 
 #ifndef __CUDACC__
 		if (printVoxelResult) {
@@ -219,24 +180,10 @@ public:
 		}
 #endif
 
-		//endregion
+
 
 		if (computeDataTerm && (switches.enableLevelSetTerm || switches.enableDataTerm)) {
-			ComputeLiveJacobian_CentralDifferences_IndexedFields(
-					liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache, sourceSdfIndex);
-			//_DEBUG
-//			ComputeLiveJacobian_CentralDifferences_ChangeTruncatedsSignToCanonicals(
-//					liveSdfJacobian, voxelPosition, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex, canonicalSdf);
-//			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_CanonicalSdf2(
-//					liveSdfJacobian, voxelPosition, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex, canonicalSdf);
-//			ComputeLiveJacobian_CentralDifferences_SuperHackyVersion_LiveSdf(
-//					liveSdfJacobian, voxelPosition, liveVoxels, liveHashEntries, liveCache, sourceSdfIndex);
-//			ComputeLiveJacobian_CentralDifferences_IgnoreUnknown_IndexedFields(
-//					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
-//			ComputeLiveJacobian_CentralDifferences_NontruncatedOnly_IndexedFields(
-//					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
-//			ComputeLiveJacobian_CentralDifferences_SmallDifferences_IndexedFields(
-//					liveSdfJacobian, voxelPosition, liveVoxels,liveHashEntries, liveCache, sourceSdfIndex);
+
 		}
 
 		// region =============================== DATA TERM ================================================
@@ -268,6 +215,9 @@ public:
 		// region =============================== LEVEL SET TERM ===========================================
 
 		if (switches.enableLevelSetTerm && computeDataTerm) {
+			ComputeLiveJacobian_CentralDifferences_IndexedFields(
+					liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache, sourceSdfIndex);
+			Matrix3f liveSdfHessian;
 			ComputeSdfHessian_IndexedFields(liveSdfHessian, voxelPosition, liveSdf, liveVoxels,
 			                                liveIndexData, liveCache, sourceSdfIndex);
 			float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
@@ -285,6 +235,28 @@ public:
 		// region =============================== SMOOTHING TERM (TIKHONOV & KILLING) ======================
 
 		if (switches.enableSmoothingTerm) {
+			// region ============================== RETRIEVE NEIGHBOR'S WARPS =========================================
+
+			const int neighborhoodSize = 9;
+			Vector3f neighborFlowWarps[neighborhoodSize];
+			bool neighborKnown[neighborhoodSize], neighborTruncated[neighborhoodSize], neighborAllocated[neighborhoodSize];
+
+			//    0        1        2          3         4         5           6         7         8
+			//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
+
+			findPoint2ndDerivativeNeighborhoodFlowWarp(
+					neighborFlowWarps/*x9*/, neighborKnown, neighborTruncated,
+					neighborAllocated, voxelPosition, canonicalVoxels,
+					canonicalIndexData, canonicalCache);
+
+			for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
+				if (!neighborAllocated[iNeighbor]) {
+					//assign current warp to neighbor warp if the neighbor is not allocated
+					neighborFlowWarps[iNeighbor] = framewiseWarp;
+				}
+			}
+			//endregion=================================================================================================
+
 			if (switches.enableKillingTerm) {
 				ComputePerVoxelWarpJacobianAndHessian(framewiseWarp, neighborFlowWarps, framewiseWarpJacobian,
 				                                      framewiseWarpHessian);
@@ -331,13 +303,9 @@ public:
 
 				localSmoothnessEnergy = localTikhonovEnergy + localKillingEnergy;
 			} else {
-				if (switches.usePreviousUpdateVectorsForSmoothing) {
-					ComputeWarpLaplacianAndJacobian(framewiseWarpLaplacian, framewiseWarpJacobian,
-					                                canonicalVoxel.warp_update, neighborWarpUpdates);
-				} else {
-					ComputeWarpLaplacianAndJacobian(framewiseWarpLaplacian, framewiseWarpJacobian, framewiseWarp,
+				ComputeWarpLaplacianAndJacobian(framewiseWarpLaplacian, framewiseWarpJacobian, framewiseWarp,
 					                                neighborFlowWarps);
-				}
+
 #ifndef __CUDACC__
 				if (printVoxelResult) {
 					_DEBUG_PrintTikhonovTermStuff(neighborFlowWarps, framewiseWarpLaplacian);
