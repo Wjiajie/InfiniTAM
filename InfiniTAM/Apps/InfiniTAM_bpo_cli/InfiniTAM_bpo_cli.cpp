@@ -82,7 +82,6 @@ int main(int argc, char** argv) {
 		bool enableKillingTerm = false;
 		bool disableGradientSmoothing = false;
 		bool killingModeEnabled = false;
-		bool usePreviousUpdateVectorsForSmoothing = false;
 
 		bool recordReconstructionToVideo = false;
 
@@ -242,9 +241,6 @@ int main(int argc, char** argv) {
 	             "DynamicFusion algorithm")
 				("disable_gradient_smoothing", po::bool_switch(&disableGradientSmoothing)->default_value(false),
 				 "Whether or not to disable the Sobolev gradient smoothing if using the DynamicFusion algorithm\n")
-				("use_update_vectors_smoothing", po::bool_switch(&usePreviousUpdateVectorsForSmoothing)->default_value(false),
-				 "Whether to only use the previous update vectors, rather than the entire cumulative framewise warps,"
-	             " for smoothing term in Sobolev/Killing fusion\n")
 
 				/* modes (parameter presets)*/
 				("KillingFusion", po::bool_switch(&killingModeEnabled)->default_value(false),
@@ -401,7 +397,6 @@ int main(int argc, char** argv) {
 		settings.enableSmoothingTerm = !disableSmoothingTerm;
 		settings.enableKillingTerm = enableKillingTerm;
 		settings.enableGradientSmoothing = !disableGradientSmoothing;
-		settings.usePreviousUpdateVectorsForSmoothing = usePreviousUpdateVectorsForSmoothing;
 
 		if (!vm["max_iterations"].empty()) {
 			settings.sceneTrackingMaxOptimizationIterationCount = vm["max_iterations"].as<unsigned int>();
