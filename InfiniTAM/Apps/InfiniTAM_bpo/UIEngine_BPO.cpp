@@ -195,8 +195,10 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 	}
 
 	if (loadBeforeProcessing) {
-		logger->SetOutputDirectory(
-				this->GenerateCurrentFrameOutputDirectory());
+		if(logger->NeedsFramewiseOutputFolder()){
+			logger->SetOutputDirectory(
+					this->GenerateCurrentFrameOutputDirectory());
+		}
 		mainEngine->LoadFromFile();
 		SkipFrames(1);
 	}
@@ -239,9 +241,10 @@ void UIEngine_BPO::ProcessFrame() {
 		if (!imuSource->hasMoreMeasurements()) return;
 		else imuSource->getMeasurement(inputIMUMeasurement);
 	}
-
-	logger->SetOutputDirectory(
-			this->GenerateCurrentFrameOutputDirectory());
+	if(logger->NeedsFramewiseOutputFolder()){
+		logger->SetOutputDirectory(
+				this->GenerateCurrentFrameOutputDirectory());
+	}
 	RecordDepthAndRGBInputToImages();
 	RecordDepthAndRGBInputToVideo();
 
@@ -318,9 +321,10 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 		if (!imuSource->hasMoreMeasurements()) return false;
 		else imuSource->getMeasurement(inputIMUMeasurement);
 	}
-
-	logger->SetOutputDirectory(
-			this->GenerateCurrentFrameOutputDirectory());
+	if(logger->NeedsFramewiseOutputFolder()){
+		logger->SetOutputDirectory(
+				this->GenerateCurrentFrameOutputDirectory());
+	}
 	RecordDepthAndRGBInputToImages();
 	RecordDepthAndRGBInputToVideo();
 

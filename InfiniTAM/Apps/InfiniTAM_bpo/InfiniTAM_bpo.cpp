@@ -365,9 +365,9 @@ int main(int argc, char** argv) {
 		settings.deviceType = chosenDeviceType;
 
 		settings.analysisSettings.outputPath = vm["output"].as<std::string>().c_str();
-		bool haveFocusCoordinate = !vm["focus_coordinates"].empty();
+		bool haveFocusCoordinates = !vm["focus_coordinates"].empty();
 		Vector3i focusCoordiantes(0);
-		if (haveFocusCoordinate) {
+		if (haveFocusCoordinates) {
 			std::vector<int> focusCoordsVec = vm["focus_coordinates"].as<std::vector<int> >();
 			if (focusCoordsVec.size() != 3) {
 				std::cerr << "Could not parse focus coordiantes vector as exactly 3 integers, \"x y z\"" << std::endl;
@@ -491,6 +491,11 @@ int main(int argc, char** argv) {
 		if (record1DSlices) logger.TurnRecordingScene1DSlicesWithUpdatesOn();
 		if (record2DSlices) logger.TurnRecordingScene2DSlicesWithUpdatesOn();
 		if (record3DSlices) logger.TurnRecordingScene3DSlicesWithUpdatesOn();
+		if(settings.FocusCoordinatesAreSpecified()){
+			logger.SetFocusCoordinates(settings.GetFocusCoordinates());
+		}
+		logger.SetOutputDirectory(settings.analysisSettings.outputPath);
+
 		logger.SetPlaneFor2Dand3DSlices(planeFor2Dand3DSlices);
 		logger.Set3DSliceInPlaneRadius(_3DSliceRadius);
 		logger.Set3DSliceOutOfPlaneRadius(_3DSliceExtraThicknessMargin);
