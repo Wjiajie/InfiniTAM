@@ -35,6 +35,7 @@ public:
 	virtual void Set3DSliceOutOfPlaneRadius(unsigned int _3dSliceOutOfPlaneRadius) = 0;
 	virtual void SetShutdownRequestedFlagLocation(bool* flag) = 0;
 
+
 	virtual void RequestAppShutdown() = 0;
 
 	virtual void TurnRecordingLiveSceneAs2DSlicesOn() = 0;
@@ -70,8 +71,8 @@ public:
 	virtual bool IsRecording3DSceneAndWarpProgression() const = 0;
 	virtual bool IsRecordingEnergiesToFile() const = 0;
 	virtual bool IsPlottingEnergies() const = 0;
+	virtual bool NeedsFramewiseOutputFolder() const = 0;
 
-// endregion ===========================================================================================================
 };
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -133,9 +134,10 @@ public:
 	bool IsRecording3DSceneAndWarpProgression() const override;
 	bool IsRecordingEnergiesToFile() const override;
 	bool IsPlottingEnergies() const override;
+	bool NeedsFramewiseOutputFolder() const override;
 
-// endregion ===========================================================================================================
 	void InitializeFrameRecording();
+
 
 
 	void SaveWarpSlices(int iteration);

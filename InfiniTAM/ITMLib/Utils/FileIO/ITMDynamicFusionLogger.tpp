@@ -246,6 +246,11 @@ bool ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsPlottingEner
 	return this->plottingEnergies;
 }
 
+template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+bool ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::NeedsFramewiseOutputFolder() const {
+	return (this->recording3DSceneAndWarpProgression || this->recordingScene2DSlicesWithUpdates || this->recordingScene1DSlicesWithUpdates || this->recordingCanonicalSceneAs2DSlices || this->recordingLiveSceneAs2DSlices || this->recordingScene3DSlicesWithUpdates) && this->hasFocusCoordinates;
+}
+
 // endregion ===========================================================================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -254,16 +259,11 @@ ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicFusionLog
 		scene1DSliceVisualizer(),
 		scene2DSliceVisualizer() {}
 
-// region ===================================== RECORDING ==============================================================
-
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::InitializeFrameRecording() {
 
 	//TODO: make all visualizer/logger classes re-usable, i.e. just change the path & build them in the constructor (don't use pointers) -Greg (GitHub:Algomorph)
 
-	this->hasFocusCoordinates = ITMLibSettings::Instance().FocusCoordinatesAreSpecified();
-	this->focusCoordinates = ITMLibSettings::Instance().GetFocusCoordinates();
-	this->outputDirectory = ITMLibSettings::Instance().analysisSettings.outputPath;
 
 	// region ================================== 1D/2D SLICE RECORDING =================================================
 	if (hasFocusCoordinates) {
