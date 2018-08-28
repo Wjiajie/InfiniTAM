@@ -208,7 +208,7 @@ int main(int argc, char** argv) {
 				/*================================================================================*/
 
 				/* convergence parameters & learning rate*/
-				("max_iterations", po::value<unsigned int>()->default_value(100),
+				("max_iterations", po::value<unsigned int>()->default_value(300),
 				        "Maximum number of iterations in each frame of scene tracking optimization.")
 				("vector_update_threshold", po::value<float>()->default_value(0.0001f),
 					        "Unit: meters. Used in scene tracking optimization. Termination condition: optimization "
@@ -365,7 +365,7 @@ int main(int argc, char** argv) {
 		settings.deviceType = chosenDeviceType;
 
 		settings.analysisSettings.outputPath = vm["output"].as<std::string>().c_str();
-		bool haveFocusCoordinates = !vm["focus_coordinates"].empty();
+		bool haveFocusCoordinates = !vm["focus_coordi nates"].empty();
 		Vector3i focusCoordiantes(0);
 		if (haveFocusCoordinates) {
 			std::vector<int> focusCoordsVec = vm["focus_coordinates"].as<std::vector<int> >();

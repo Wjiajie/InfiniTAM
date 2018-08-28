@@ -265,7 +265,6 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 	sceneMotionTracker->CalculateWarpGradient(canonicalScene, liveScene, sourceSdfIndex,
 	                                          analysisFlags.restrictZtrackingForDebugging);
 
-
 	bench::StopTimer("TrackMotion_31_CalculateWarpUpdate");
 
 	PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");
@@ -281,7 +280,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 	PrintOperationStatus(
 			"Updating live frame SDF by mapping from raw live SDF to new warped SDF based on latest warp...");
 	bench::StartTimer("TrackMotion_35_WarpLiveScene");
-	sceneReconstructor->WarpScene_FlowWarps(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
+	sceneReconstructor->WarpScene_WarpUpdates(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
 	bench::StopTimer("TrackMotion_35_WarpLiveScene");
 	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().SaveWarps();
 }
