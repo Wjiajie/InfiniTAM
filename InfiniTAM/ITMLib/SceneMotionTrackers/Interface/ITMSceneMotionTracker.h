@@ -15,6 +15,9 @@
 //  ================================================================
 #pragma once
 
+//stdlib
+#include <cmath>
+
 //local
 #include "../../Objects/Scene/ITMScene.h"
 #include "../../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.h"
@@ -43,6 +46,8 @@ public:
 		const float weightLevelSetTerm;// = 0.2f;
 		const float epsilon;// = 1e-5f;
 		const float unity; // voxelSize / mu, i.e. voxelSize / [narrow-band half-width]
+		const float sdfToVoxelsFactor; // = 10.0 (SDF 1.0 represents [narrow-band half-width, which is usually 10 voxels]
+		const float sdfToVoxelsFactorSquared;
 	};
 
 	struct Switches {
@@ -63,7 +68,9 @@ public:
 					ITMLibSettings::Instance().sceneTrackingWeightSmoothingTerm,
 					ITMLibSettings::Instance().sceneTrackingWeightLevelSetTerm,
 					ITMLibSettings::Instance().sceneTrackingLevelSetTermEpsilon,
-					ITMLibSettings::Instance().sceneParams.voxelSize / ITMLibSettings::Instance().sceneParams.mu
+					ITMLibSettings::Instance().sceneParams.voxelSize / ITMLibSettings::Instance().sceneParams.mu,
+					ITMLibSettings::Instance().sceneParams.mu / ITMLibSettings::Instance().sceneParams.voxelSize,
+					std::pow(ITMLibSettings::Instance().sceneParams.mu / ITMLibSettings::Instance().sceneParams.voxelSize, 2.0f)
 			},
 			switches{
 					ITMLibSettings::Instance().enableDataTerm,

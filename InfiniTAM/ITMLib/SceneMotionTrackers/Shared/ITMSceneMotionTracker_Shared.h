@@ -33,14 +33,16 @@
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 _CPU_AND_GPU_CODE_ inline
-bool VoxelIsConsideredForTracking(const TVoxelCanonical& voxelCanonical, const TVoxelLive& voxelLive, int sourceFieldIndex) {
+bool
+VoxelIsConsideredForTracking(const TVoxelCanonical& voxelCanonical, const TVoxelLive& voxelLive, int sourceFieldIndex) {
 	return voxelCanonical.flags == ITMLib::VOXEL_NONTRUNCATED ||
 	       voxelLive.flag_values[sourceFieldIndex] == ITMLib::VOXEL_NONTRUNCATED;
 };
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 _CPU_AND_GPU_CODE_ inline
-bool VoxelIsConsideredForDataTerm(const TVoxelCanonical& canonicalVoxel, const TVoxelLive& liveVoxel, int sourceSdfIndex) {
+bool
+VoxelIsConsideredForDataTerm(const TVoxelCanonical& canonicalVoxel, const TVoxelLive& liveVoxel, int sourceSdfIndex) {
 	//_DEBUG
 	//Data condition: ALWAYS
 	//return true;
@@ -48,7 +50,7 @@ bool VoxelIsConsideredForDataTerm(const TVoxelCanonical& canonicalVoxel, const T
 	//return canonicalVoxel.flags != ITMLib::VOXEL_UNKNOWN && liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_UNKNOWN;
 	//Data condition: ONLY_NONTRUNCATED
 	//return liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
-    //                     && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+	//                     && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
 	//Data condition: IGNORE_CANONICAL_UNKNOWN
 	return canonicalVoxel.flags != ITMLib::VOXEL_UNKNOWN;
 };
@@ -76,13 +78,13 @@ bool VoxelIsConsideredForDataTerm(const TVoxelCanonical& canonicalVoxel, const T
 template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void findPoint2ndDerivativeNeighborhoodFlowWarp(THREADPTR(Vector3f)* neighborFlowWarps, //x9, out
-                                                            THREADPTR(bool)* neighborKnown, //x9, out
-                                                            THREADPTR(bool)* neighborTruncated, //x9, out
-                                                            THREADPTR(bool)* neighborAllocated, //x9, out
-                                                            const CONSTPTR(Vector3i)& voxelPosition,
-                                                            const CONSTPTR(TVoxel)* voxels,
-                                                            const CONSTPTR(TIndexData)* indexData,
-                                                            THREADPTR(TCache)& cache) {
+                                                       THREADPTR(bool)* neighborKnown, //x9, out
+                                                       THREADPTR(bool)* neighborTruncated, //x9, out
+                                                       THREADPTR(bool)* neighborAllocated, //x9, out
+                                                       const CONSTPTR(Vector3i)& voxelPosition,
+                                                       const CONSTPTR(TVoxel)* voxels,
+                                                       const CONSTPTR(TIndexData)* indexData,
+                                                       THREADPTR(TCache)& cache) {
 	int vmIndex = 0;
 
 	TVoxel voxel;
@@ -341,7 +343,32 @@ void ComputeLiveJacobian_CentralDifferences(Vector3f& jacobian,
 
 template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
-void ComputeLiveJacobian_CentralDifferences_IndexedFields(
+void ComputeLiveGradient(
+		THREADPTR(Vector3f)& jacobian,
+		const CONSTPTR(Vector3i)& voxelPosition,
+		const CONSTPTR(TVoxel)* voxels,
+		const CONSTPTR(TIndexData)* indexData,
+		THREADPTR(TCache)& cache,
+		const CONSTPTR(int)& fieldIndex) {
+	int vmIndex = 0;
+#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, indexData, voxelPosition + (offset), vmIndex, cache).sdf_values[fieldIndex]))
+
+	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
+	float sdfAtYplusOne = sdf_at(Vector3i(0, 1, 0));
+	float sdfAtZplusOne = sdf_at(Vector3i(0, 0, 1));
+	float sdfAtXminusOne = sdf_at(Vector3i(-1, 0, 0));
+	float sdfAtYminusOne = sdf_at(Vector3i(0, -1, 0));
+	float sdfAtZminusOne = sdf_at(Vector3i(0, 0, -1));
+
+#undef sdf_at
+	jacobian[0] = 0.5f * (sdfAtXplusOne - sdfAtXminusOne);
+	jacobian[1] = 0.5f * (sdfAtYplusOne - sdfAtYminusOne);
+	jacobian[2] = 0.5f * (sdfAtZplusOne - sdfAtZminusOne);
+};
+
+template<typename TVoxel, typename TIndexData, typename TCache>
+_CPU_AND_GPU_CODE_
+void ComputeLiveGradient_CentralDifferences_IndexedFields(
 		THREADPTR(Vector3f)& jacobian,
 		const CONSTPTR(Vector3i)& voxelPosition,
 		const CONSTPTR(TVoxel)* voxels,
@@ -578,4 +605,33 @@ inline void ComputePerVoxelWarpJacobianAndHessian(const CONSTPTR(Vector3f)& voxe
 };
 
 // endregion
+// region =========================================== DATA TERM ========================================================
 
+template<typename TVoxel, typename TIndexData, typename TCache>
+inline void
+_CPU_AND_GPU_CODE_
+computeDataTermUpdateContribution(
+		THREADPTR(Vector3f)& localDataEnergyGradient,
+		THREADPTR(float)& localDataEnergy,
+		THREADPTR(TCache)& liveCache,
+		const CONSTPTR(Vector3i)& voxelPosition,
+		const CONSTPTR(TVoxel)* liveVoxels,
+		const CONSTPTR(TIndexData)* liveIndexData,
+		const CONSTPTR(int)& sourceSdfIndex,
+		const CONSTPTR(float)& liveSdf,
+		const CONSTPTR(float)& canonicalSdf,
+		const CONSTPTR(float)& sdfToVoxelScalingFactorSquared) {
+
+	Vector3f liveSdfJacobian;
+	ComputeLiveGradient_CentralDifferences_IndexedFields(
+			liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache, sourceSdfIndex);
+
+	// Compute data term error / energy
+	float sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
+	// (φ_n(Ψ)−φ_{global}) ∇φ_n(Ψ) - also denoted as - (φ_{proj}(Ψ)−φ_{model}) ∇φ_{proj}(Ψ)
+	// φ_n(Ψ) = φ_n(x+u, y+v, z+w), where u = u(x,y,z), v = v(x,y,z), w = w(x,y,z)
+	// φ_{global} = φ_{global}(x, y, z)
+	localDataEnergyGradient = sdfDifferenceBetweenLiveAndCanonical * liveSdfJacobian * sdfToVoxelScalingFactorSquared;
+	localDataEnergy =
+			0.5f * (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical * sdfToVoxelScalingFactorSquared);
+}

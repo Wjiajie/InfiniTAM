@@ -63,43 +63,35 @@ struct ClearOutGradientStaticFunctor {
 template<typename TVoxelLive, typename TVoxelCanonical>
 struct WarpUpdateFunctor {
 	WarpUpdateFunctor(float learningRate, bool gradientSmoothingEnabled, int sourceSdfIndex) :
-			learningRate(learningRate), gradientSmoothingEnabled(gradientSmoothingEnabled),
-			maxFlowWarpLength(0.0f), maxWarpUpdateLength(0.0f), maxFlowWarpPosition(0),
-			maxWarpUpdatePosition(0), sourceSdfIndex(sourceSdfIndex) {}
+			learningRate(learningRate),
+			gradientSmoothingEnabled(gradientSmoothingEnabled),
+			maxFlowWarpLength(0.0f),
+			maxFlowWarpPosition(0),
+			sourceSdfIndex(sourceSdfIndex) {}
 
 	_CPU_AND_GPU_CODE_
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, const Vector3i& position) {
-		if (!VoxelIsConsideredForTracking(canonicalVoxel, liveVoxel, sourceSdfIndex)) return;
-		Vector3f warpUpdate = -learningRate * (gradientSmoothingEnabled ?
-		                                       canonicalVoxel.gradient1 : canonicalVoxel.gradient0);
-
-		canonicalVoxel.warp_update = warpUpdate;
-		canonicalVoxel.flow_warp += warpUpdate;
+		canonicalVoxel.flow_warp = -learningRate * (gradientSmoothingEnabled ?
+		                                            canonicalVoxel.gradient1 : canonicalVoxel.gradient0);
 
 		// update stats
 		float framewiseWarpLength = ORUtils::length(canonicalVoxel.flow_warp);
-		float warpUpdateLength = ORUtils::length(warpUpdate);
+
 		if (framewiseWarpLength > maxFlowWarpLength) {
 			maxFlowWarpLength = framewiseWarpLength;
 			maxFlowWarpPosition = position;
 		}
-		if (warpUpdateLength > maxWarpUpdateLength) {
-			maxWarpUpdateLength = warpUpdateLength;
-			maxWarpUpdatePosition = position;
-		}
 	}
 
 	float maxFlowWarpLength;
-	float maxWarpUpdateLength;
 	Vector3i maxFlowWarpPosition;
-	Vector3i maxWarpUpdatePosition;
+
 
 	_CPU_AND_GPU_CODE_
 	void PrintWarp() {
 #ifndef __CUDACC__
 		std::cout << ITMLib::green << "Max warp: [" << maxFlowWarpLength << " at " << maxFlowWarpPosition
-		          << "] Max update: [" << maxWarpUpdateLength << " at " << maxWarpUpdatePosition << "]." << ITMLib::reset
-		          << std::endl;
+		          << "]." << ITMLib::reset << std::endl;
 #endif
 	}
 
@@ -113,8 +105,8 @@ private:
 
 template<typename TVoxelLive, typename TVoxelCanonical>
 struct WarpHistogramFunctor {
-	WarpHistogramFunctor(float maxWarpLength, float maxWarpUpdateLength, int sourceSdfIndex) :
-			maxWarpLength(maxWarpLength), maxWarpUpdateLength(maxWarpUpdateLength), sourceSdfIndex(sourceSdfIndex) {
+	WarpHistogramFunctor(float maxWarpLength, int sourceSdfIndex) :
+			maxWarpLength(maxWarpLength), sourceSdfIndex(sourceSdfIndex) {
 	}
 
 	static const int histBinCount = 10;
@@ -129,11 +121,6 @@ struct WarpHistogramFunctor {
 			binIdx = MIN(histBinCount - 1, (int) (framewiseWarpLength * histBinCount / maxWarpLength));
 		}
 		warpBins[binIdx]++;
-		if (maxWarpUpdateLength > 0) {
-			binIdx = MIN(histBinCount - 1,
-			             (int) (warpUpdateLength * histBinCount / maxWarpUpdateLength));
-		}
-		updateBins[binIdx]++;
 	}
 
 	void PrintHistogram() {
@@ -142,22 +129,15 @@ struct WarpHistogramFunctor {
 			std::cout << std::setfill(' ') << std::setw(7) << warpBins[iBin] << "  ";
 		}
 		std::cout << std::endl;
-		std::cout << "Update length histogram: ";
-		for (int iBin = 0; iBin < histBinCount; iBin++) {
-			std::cout << std::setfill(' ') << std::setw(7) << updateBins[iBin] << "  ";
-		}
-		std::cout << std::endl;
 	}
 
 
 private:
 	const float maxWarpLength;
-	const float maxWarpUpdateLength;
 	const int sourceSdfIndex;
 
 	// <20%, 40%, 60%, 80%, 100%
 	int warpBins[histBinCount] = {0};
-	int updateBins[histBinCount] = {0};
 };
 
 enum TraversalDirection : int {
@@ -308,8 +288,7 @@ inline float UpdateWarps_common(
 	//don't compute histogram in CUDA version
 #ifndef __CUDACC__
 	WarpHistogramFunctor<TVoxelLive, TVoxelCanonical>
-			warpHistogramFunctor(warpUpdateFunctor.maxFlowWarpLength, warpUpdateFunctor.maxWarpUpdateLength,
-			                     sourceSdfIndex);
+			warpHistogramFunctor(warpUpdateFunctor.maxFlowWarpLength, sourceSdfIndex);
 	ITMLib::ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, TIndex, TDeviceType>::
 	DualVoxelTraversal(liveScene, canonicalScene, warpHistogramFunctor);
 	warpHistogramFunctor.PrintHistogram();

@@ -160,7 +160,7 @@ public:
 
 #ifndef __CUDACC__
 		bool printVoxelResult = false;
-		this->SetUpFocusVoxelPrinting(printVoxelResult, voxelPosition, framewiseWarp, canonicalSdf,liveSdf);
+		this->SetUpFocusVoxelPrinting(printVoxelResult, voxelPosition, framewiseWarp, canonicalSdf, liveSdf);
 		if (printVoxelResult) {
 			std::cout << blue << "Live 6-connected neighbor information:" << reset << std::endl;
 			print6ConnectedNeighborInfoIndexedFields(voxelPosition, liveVoxels, liveIndexData, liveCache,
@@ -170,35 +170,19 @@ public:
 
 		// region =============================== DATA TERM ================================================
 		if (switches.enableDataTerm && computeDataTerm) {
-			Vector3f liveSdfJacobian;
-			ComputeLiveJacobian_CentralDifferences_IndexedFields(
-					liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache, sourceSdfIndex);
-			// Compute data term error / energy
-			float sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
-			// (φ_n(Ψ)−φ_{global}) ∇φ_n(Ψ) - also denoted as - (φ_{proj}(Ψ)−φ_{model}) ∇φ_{proj}(Ψ)
-			// φ_n(Ψ) = φ_n(x+u, y+v, z+w), where u = u(x,y,z), v = v(x,y,z), w = w(x,y,z)
-			// φ_{global} = φ_{global}(x, y, z)
-			localDataEnergyGradient = sdfDifferenceBetweenLiveAndCanonical * liveSdfJacobian;
+			computeDataTermUpdateContribution(localDataEnergyGradient, localDataEnergy, liveCache,
+					voxelPosition, liveVoxels, liveIndexData, sourceSdfIndex, liveSdf, canonicalSdf, parameters.sdfToVoxelsFactorSquared);
 #ifndef __CUDACC__
 			dataVoxelCount++;
-			cumulativeSdfDiff += std::abs(sdfDifferenceBetweenLiveAndCanonical);
-#endif
-			localDataEnergy =
-					0.5f * (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
-#ifndef __CUDACC__
-			if (printVoxelResult) {
-					_DEBUG_PrintDataTermStuff(liveSdfJacobian);
-			}
 #endif
 		}
-
 		// endregion
 
 		// region =============================== LEVEL SET TERM ===========================================
-
 		if (switches.enableLevelSetTerm && computeDataTerm) {
-			Matrix3f liveSdfHessian;Vector3f liveSdfJacobian;
-			ComputeLiveJacobian_CentralDifferences_IndexedFields(
+			Matrix3f liveSdfHessian;
+			Vector3f liveSdfJacobian;
+			ComputeLiveGradient_CentralDifferences_IndexedFields(
 					liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache, sourceSdfIndex);
 
 			ComputeSdfHessian_IndexedFields(liveSdfHessian, voxelPosition, liveSdf, liveVoxels,
@@ -291,7 +275,7 @@ public:
 				Matrix3f framewiseWarpJacobian(0.0f);
 				Vector3f framewiseWarpLaplacian;
 				ComputeWarpLaplacianAndJacobian(framewiseWarpLaplacian, framewiseWarpJacobian, framewiseWarp,
-					                                neighborFlowWarps);
+				                                neighborFlowWarps);
 
 #ifndef __CUDACC__
 				if (printVoxelResult) {
@@ -378,7 +362,7 @@ public:
 		CalculateAndPrintAdditionalStatistics(
 				this->switches.enableDataTerm, this->switches.enableLevelSetTerm, cumulativeCanonicalSdf,
 				cumulativeLiveSdf,
-				cumulativeWarpDist, cumulativeSdfDiff, consideredVoxelCount, dataVoxelCount, levelSetVoxelCount);
+				cumulativeWarpDist, consideredVoxelCount, dataVoxelCount, levelSetVoxelCount);
 #endif
 	}
 
@@ -388,7 +372,6 @@ private:
 #ifndef __CUDACC__
 		cumulativeCanonicalSdf = 0.0;
 		cumulativeLiveSdf = 0.0;
-		cumulativeSdfDiff = 0.0;
 		cumulativeWarpDist = 0.0;
 		consideredVoxelCount = 0;
 		dataVoxelCount = 0;
@@ -418,7 +401,6 @@ private:
 	// *** statistical aggregates
 	double cumulativeCanonicalSdf = 0.0;
 	double cumulativeLiveSdf = 0.0;
-	double cumulativeSdfDiff = 0.0;
 	double cumulativeWarpDist = 0.0;
 	unsigned int consideredVoxelCount = 0;
 	unsigned int dataVoxelCount = 0;

@@ -121,7 +121,7 @@ ITMLibSettings::ITMLibSettings()
 
 	// Dynamic fusion optimization termination parameters
 	sceneTrackingMaxOptimizationIterationCount = 200;
-	sceneTrackingOptimizationVectorUpdateThresholdMeters = 0.0001f;// in meters, default from KillingFusion
+	sceneTrackingOptimizationVectorUpdateThresholdVoxels = 0.0001f;// in meters, default from KillingFusion
 
 	// Dynamic fusion weights / factors used during scene tracking
 	sceneTrackingGradientDescentLearningRate = 0.1f; // default from KillingFusion & SobolevFusion

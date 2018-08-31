@@ -77,9 +77,7 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMappe
 		               : nullptr),
 		swappingMode(ITMLibSettings::Instance().swappingMode),
 		parameters{ITMLibSettings::Instance().sceneTrackingMaxOptimizationIterationCount,
-		           ITMLibSettings::Instance().sceneTrackingOptimizationVectorUpdateThresholdMeters,
-		           ITMLibSettings::Instance().sceneTrackingOptimizationVectorUpdateThresholdMeters /
-		           ITMLibSettings::Instance().sceneParams.voxelSize},
+		           ITMLibSettings::Instance().sceneTrackingOptimizationVectorUpdateThresholdVoxels},
 		analysisFlags{ITMLibSettings::Instance().restrictZtrackingForDebugging,
 		              ITMLibSettings::Instance().FocusCoordinatesAreSpecified()},
 		focusCoordinates(ITMLibSettings::Instance().GetFocusCoordinates()) {}
@@ -196,12 +194,12 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeProcess
 };
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(const ITMView* view,
-                                                                              const ITMTrackingState* trackingState,
-                                                                              ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-                                                                              ITMScene<TVoxelLive, TIndex>* liveScene,
-                                                                              ITMRenderState* renderState) {
-
+void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(
+		const ITMView* view,
+		const ITMTrackingState* trackingState,
+		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+		ITMScene<TVoxelLive, TIndex>* liveScene,
+		ITMRenderState* renderState) {
 
 	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Cannot track motion for full frame when in step-by-step mode");
@@ -244,7 +242,6 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::TrackFrameMotio
 	}
 	bench::StopTimer("TrackMotion_3_Optimization");
 	PrintOperationStatus("*** Warp optimization finished for current frame. ***");
-
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
@@ -280,7 +277,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 	PrintOperationStatus(
 			"Updating live frame SDF by mapping from raw live SDF to new warped SDF based on latest warp...");
 	bench::StartTimer("TrackMotion_35_WarpLiveScene");
-	sceneReconstructor->WarpScene_WarpUpdates(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
+	sceneReconstructor->WarpScene_FlowWarps(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
 	bench::StopTimer("TrackMotion_35_WarpLiveScene");
 	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().SaveWarps();
 }
@@ -318,7 +315,7 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessSwapping
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void
 ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrameInStepByStepMode(
-		const ITMView* view, const ITMTrackingState* trackingState,  ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
+		const ITMView* view, const ITMTrackingState* trackingState, ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
 		ITMScene<TVoxelLive, TIndex>* liveScene, ITMRenderState* renderState) {
 	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Already in step-by-step tracking mode, cannot restart.");
@@ -352,7 +349,6 @@ template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PrintSettings() {
 	std::cout << bright_cyan << "*** ITMDenseDynamicMapper Settings: ***" << reset << std::endl;
 	std::cout << "Max iteration count: " << this->parameters.maxIterationCount << std::endl;
-	std::cout << "Warp vector update threshold: " << this->parameters.maxVectorUpdateThresholdMeters << " m, ";
-	std::cout << this->parameters.maxVectorUpdateThresholdVoxels << " voxels" << std::endl;
+	std::cout << "Warp vector update threshold: " << this->parameters.maxVectorUpdateThresholdVoxels << " voxels, ";
 	std::cout << bright_cyan << "*** *********************************** ***" << reset << std::endl;
 }

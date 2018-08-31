@@ -39,8 +39,7 @@ public:
 
 	struct Parameters {
 		const unsigned int maxIterationCount;// = 200;
-		const float maxVectorUpdateThresholdMeters;// = 0.0001f;//m //original for KillingFusion
-		const float maxVectorUpdateThresholdVoxels;
+		const float maxVectorUpdateThresholdVoxels;// = 0.0001f; // 0.1 mm from original for KillingFusion paper, but we think this is a typo and it means in voxels
 	};
 	struct AnalysisFlags{
 		bool restrictZtrackingForDebugging;

@@ -120,7 +120,7 @@ namespace ITMLib
 		//*** Scene Tracking Parameters ***
 		//** optimization loop
 		unsigned int sceneTrackingMaxOptimizationIterationCount;
-		float sceneTrackingOptimizationVectorUpdateThresholdMeters;
+		float sceneTrackingOptimizationVectorUpdateThresholdVoxels;
 		//** gradient calculation
 		float sceneTrackingGradientDescentLearningRate;
 		float sceneTrackingRigidityEnforcementFactor;

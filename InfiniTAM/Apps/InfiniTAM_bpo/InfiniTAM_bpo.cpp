@@ -210,8 +210,8 @@ int main(int argc, char** argv) {
 				/* convergence parameters & learning rate*/
 				("max_iterations", po::value<unsigned int>()->default_value(300),
 				        "Maximum number of iterations in each frame of scene tracking optimization.")
-				("vector_update_threshold", po::value<float>()->default_value(0.0001f),
-					        "Unit: meters. Used in scene tracking optimization. Termination condition: optimization "
+				("vector_update_threshold", po::value<float>()->default_value(0.1f),
+					        "Unit: voxels. Used in scene tracking optimization. Termination condition: optimization "
 			     "stops when warp vector update lengths don't exceed this distance threshold.")
 			    ("learning_rate", po::value<float>(),
 					        "Used in scene tracking optimization. Gradient descent step magnitude / learning rate.")
@@ -403,7 +403,7 @@ int main(int argc, char** argv) {
 			settings.sceneTrackingMaxOptimizationIterationCount = vm["max_iterations"].as<unsigned int>();
 		}
 		if (!vm["vector_update_threshold"].empty()) {
-			settings.sceneTrackingOptimizationVectorUpdateThresholdMeters = vm["vector_update_threshold"].as<float>();
+			settings.sceneTrackingOptimizationVectorUpdateThresholdVoxels = vm["vector_update_threshold"].as<float>();
 		}
 		if (!vm["learning_rate"].empty()) {
 			settings.sceneTrackingGradientDescentLearningRate = vm["learning_rate"].as<float>();

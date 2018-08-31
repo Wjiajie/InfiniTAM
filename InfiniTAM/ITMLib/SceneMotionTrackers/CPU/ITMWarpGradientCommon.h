@@ -57,7 +57,6 @@ void CalculateAndPrintAdditionalStatistics(const bool& enableDataTerm,
                                            const double& cumulativeCanonicalSdf,
                                            const double& cumulativeLiveSdf,
                                            const double& cumulativeWarpDist,
-                                           const double& cumulativeSdfDiff,
                                            const unsigned int& consideredVoxelCount,
                                            const unsigned int& dataVoxelCount,
                                            const unsigned int& levelSetVoxelCount) {
@@ -66,10 +65,6 @@ void CalculateAndPrintAdditionalStatistics(const bool& enableDataTerm,
 	double averageLiveSdf = cumulativeLiveSdf / consideredVoxelCount;
 	double averageWarpDist = cumulativeWarpDist / consideredVoxelCount;
 	double averageSdfDiff = 0.0;
-
-	if (enableDataTerm) {
-		averageSdfDiff = cumulativeSdfDiff / dataVoxelCount;
-	}
 
 	std::cout << " Ave canonical SDF: " << averageCanonicalSdf
 	          << " Ave live SDF: " << averageLiveSdf;

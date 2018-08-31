@@ -27,32 +27,35 @@ namespace {
 template<typename TVoxelLive, typename TVoxelCanonical>
 __global__ void
 computeGradientDataTerm(TVoxelLive* liveVoxels, TVoxelCanonical* canonicalVoxels,
-                        const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
-                        int sourceFieldIndex) {
+                        const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* liveIndexData,
+                        int sourceSdfIndex, float sdfToVoxelsFactorSquared) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
 
-	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
+	int locId = x + y * liveIndexData->size.x + z * liveIndexData->size.x * liveIndexData->size.y;
 
 	Vector3i voxelPosition;
 
-	voxelPosition.x = x + arrayInfo->offset.x;
-	voxelPosition.y = y + arrayInfo->offset.y;
-	voxelPosition.z = z + arrayInfo->offset.z;
+	voxelPosition.x = x + liveIndexData->offset.x;
+	voxelPosition.y = y + liveIndexData->offset.y;
+	voxelPosition.z = z + liveIndexData->offset.z;
 
 
 	TVoxelLive& voxelLive = liveVoxels[locId];
 	TVoxelCanonical& voxelCanonical = canonicalVoxels[locId];
-	if(!VoxelIsConsideredForTracking(voxelCanonical, voxelLive, sourceFieldIndex)
-		|| !VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive, sourceFieldIndex)) return;
-	Vector3f liveSdfJacobian;
-	Matrix3f liveSdfHessian;
+	if(!VoxelIsConsideredForTracking(voxelCanonical, voxelLive, sourceSdfIndex)
+		|| !VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive, sourceSdfIndex)) return;
+
+	Vector3f localDataEnergyGradient;
+	float localDataEnergy;
 
 	ITMLib::ITMPlainVoxelArray::IndexCache liveCache;
 
-	ComputeLiveJacobian_CentralDifferences_IndexedFields(
-			liveSdfJacobian, voxelPosition, liveVoxels, arrayInfo, liveCache, sourceFieldIndex);
+	computeDataTermUpdateContribution(localDataEnergyGradient, localDataEnergy, liveCache,
+	                                  voxelPosition, liveVoxels, liveIndexData, sourceSdfIndex, voxelLive.sdf,
+	                                  voxelCanonical.sdf, sdfToVoxelsFactorSquared);
+
 
 };
 }
@@ -101,7 +104,7 @@ void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>
 
 	computeGradientDataTerm<TVoxelLive, TVoxelCanonical>
 			<< < gridSize, cudaBlockSize >> >
-	                       (liveVoxels, canonicalVoxels, arrayInfo, sourceFieldIndex);
+	                       (liveVoxels, canonicalVoxels, arrayInfo, sourceFieldIndex, this->parameters.sdfToVoxelsFactorSquared);
 
 	DIEWITHEXCEPTION_REPORTLOCATION("Implementation pending");
 
