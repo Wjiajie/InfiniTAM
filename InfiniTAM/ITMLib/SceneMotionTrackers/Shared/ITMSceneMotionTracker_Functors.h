@@ -75,7 +75,7 @@ struct WarpUpdateFunctor {
 		                                            canonicalVoxel.gradient1 : canonicalVoxel.gradient0);
 
 		//_DEBUG
-		if(position == Vector3i(-18, 48, 213)){
+		if(position == Vector3i(-23, 60, 227)){
 			int i = 42;
 		}
 

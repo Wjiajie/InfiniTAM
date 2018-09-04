@@ -143,7 +143,7 @@ public:
 	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i position) {
 
 		//_DEBUG
-		if(position == Vector3i(-18, 48, 213)){
+		if(position == Vector3i(-23, 60, 227)){
 			int i = 42;
 		}
 

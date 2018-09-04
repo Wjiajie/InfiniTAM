@@ -365,7 +365,7 @@ int main(int argc, char** argv) {
 		settings.deviceType = chosenDeviceType;
 
 		settings.analysisSettings.outputPath = vm["output"].as<std::string>().c_str();
-		bool haveFocusCoordinates = !vm["focus_coordi nates"].empty();
+		bool haveFocusCoordinates = !vm["focus_coordinates"].empty();
 		Vector3i focusCoordiantes(0);
 		if (haveFocusCoordinates) {
 			std::vector<int> focusCoordsVec = vm["focus_coordinates"].as<std::vector<int> >();

@@ -326,7 +326,7 @@ _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxel
 	canonicalVoxel.w_depth = (uchar) newWDepth;
 	if (canonicalVoxel.flags != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED) {
 		canonicalVoxel.flags = liveVoxel.flag_values[liveSourceFieldIndex];
-	} else if (1.0f - std::abs(newSdf) < 1e-3f) {
+	} else if (1.0f - std::abs(newSdf) < 1e-5f) {
 		canonicalVoxel.flags = ITMLib::VoxelFlags::VOXEL_TRUNCATED;
 	}
 };
@@ -340,6 +340,7 @@ inline void interpolateBetweenIndexes(TVoxelSdf* sdfSourceVoxels,
                                       typename TIndex::IndexCache& sdfSourceCache, TVoxelWarpSource& warpSourceVoxel,
                                       TVoxelSdf& destinationVoxel, const Vector3i& warpAndDestinationVoxelPosition,
                                       int sourceSdfIndex, int targetSdfIndex, bool printResult) {
+
 	Vector3f warpedPosition =
 			TLookupPositionFunctor::GetWarpedPosition(warpSourceVoxel, warpAndDestinationVoxelPosition);
 
@@ -352,7 +353,7 @@ inline void interpolateBetweenIndexes(TVoxelSdf* sdfSourceVoxels,
 	// Update flags
 	if (struckKnown) {
 		destinationVoxel.sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sdf);
-		if (1.0f - std::abs(sdf) < 1e-3f) {
+		if (1.0f - std::abs(sdf) < 1e-5f) {
 			destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_TRUNCATED;
 			warpSourceVoxel.flow_warp = Vector3f(0.0f);//TODO
 		} else {

@@ -404,53 +404,57 @@ inline void ComputeLiveGradient_CentralDifferences_IndexedFields_AdvancedGrad(
 		THREADPTR(TCache)& cache,
 		const CONSTPTR(int)& fieldIndex,
 		const CONSTPTR(float)& currentSdf) {
+	float thresh = 0.25;
 	int vmIndex = 0;
 	{
 		TVoxel xPlusOne = readVoxel(voxels, indexData, voxelPosition + Vector3i(1, 0, 0), vmIndex, cache);
+		float sdfAtXplusOne = TVoxel::valueToFloat(xPlusOne.sdf_values[fieldIndex]);
 		TVoxel xMinusOne = readVoxel(voxels, indexData, voxelPosition + Vector3i(-1, 0, 0), vmIndex, cache);
-		if (xPlusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
-			if (xMinusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
+		float sdfAtXminusOne = TVoxel::valueToFloat(xMinusOne.sdf_values[fieldIndex]);
+		if (xPlusOne.flag_values[fieldIndex] != ITMLib::VOXEL_NONTRUNCATED || std::abs(currentSdf - sdfAtXplusOne) > thresh) {
+			if (xMinusOne.flag_values[fieldIndex] != ITMLib::VOXEL_NONTRUNCATED || std::abs(currentSdf - sdfAtXminusOne) > thresh) {
 				gradient.x = 0.0f;
 			} else {
-				gradient.x = currentSdf - TVoxel::valueToFloat(xMinusOne.sdf_values[fieldIndex]);
+				gradient.x = currentSdf - sdfAtXminusOne;
 			}
-		} else if (xMinusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
-			gradient.x = TVoxel::valueToFloat(xPlusOne.sdf_values[fieldIndex]) - currentSdf;
+		} else if (xMinusOne.flag_values[fieldIndex] != ITMLib::VOXEL_NONTRUNCATED || std::abs(currentSdf - sdfAtXminusOne) > thresh) {
+			gradient.x = sdfAtXplusOne - currentSdf;
 		} else {
-			gradient.x = 0.5f * (TVoxel::valueToFloat(xPlusOne.sdf_values[fieldIndex]) -
-			                     TVoxel::valueToFloat(xMinusOne.sdf_values[fieldIndex]));
+			gradient.x = 0.5f * (sdfAtXplusOne - sdfAtXminusOne);
 		}
 	}
 	{
 		TVoxel yPlusOne = readVoxel(voxels, indexData, voxelPosition + Vector3i(0, 1, 0), vmIndex, cache);
+		float sdfAtYplusOne = TVoxel::valueToFloat(yPlusOne.sdf_values[fieldIndex]);
 		TVoxel yMinusOne = readVoxel(voxels, indexData, voxelPosition + Vector3i(0, -1, 0), vmIndex, cache);
-		if (yPlusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
-			if (yMinusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
+		float sdfAtYminusOne = TVoxel::valueToFloat(yMinusOne.sdf_values[fieldIndex]);
+		if (yPlusOne.flag_values[fieldIndex] != ITMLib::VOXEL_NONTRUNCATED || std::abs(currentSdf - sdfAtYplusOne) > thresh) {
+			if (yMinusOne.flag_values[fieldIndex] != ITMLib::VOXEL_NONTRUNCATED || std::abs(currentSdf - sdfAtYminusOne) > thresh) {
 				gradient.y = 0.0f;
 			} else {
 				gradient.y = currentSdf - TVoxel::valueToFloat(yMinusOne.sdf_values[fieldIndex]);
 			}
-		} else if (yMinusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
+		} else if (yMinusOne.flag_values[fieldIndex] != ITMLib::VOXEL_NONTRUNCATED || std::abs(currentSdf - sdfAtYminusOne) > thresh) {
 			gradient.y = TVoxel::valueToFloat(yPlusOne.sdf_values[fieldIndex]) - currentSdf;
 		} else {
-			gradient.y = 0.5f * (TVoxel::valueToFloat(yPlusOne.sdf_values[fieldIndex]) -
-			                     TVoxel::valueToFloat(yMinusOne.sdf_values[fieldIndex]));
+			gradient.y = 0.5f * (sdfAtYplusOne - sdfAtYminusOne);
 		}
 	}
 	{
 		TVoxel zPlusOne = readVoxel(voxels, indexData, voxelPosition + Vector3i(0, 0, 1), vmIndex, cache);
+		float sdfAtZplusOne = TVoxel::valueToFloat(zPlusOne.sdf_values[fieldIndex]);
 		TVoxel zMinusOne = readVoxel(voxels, indexData, voxelPosition + Vector3i(0, 0, -1), vmIndex, cache);
-		if (zPlusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
-			if (zMinusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
+		float sdfAtZminusOne = TVoxel::valueToFloat(zMinusOne.sdf_values[fieldIndex]);
+		if (zPlusOne.flag_values[fieldIndex] != ITMLib::VOXEL_NONTRUNCATED || std::abs(currentSdf - sdfAtZplusOne) > thresh) {
+			if (zMinusOne.flag_values[fieldIndex] != ITMLib::VOXEL_NONTRUNCATED || std::abs(currentSdf - sdfAtZminusOne) > thresh) {
 				gradient.z = 0.0f;
 			} else {
 				gradient.z = currentSdf - TVoxel::valueToFloat(zMinusOne.sdf_values[fieldIndex]);
 			}
-		} else if (zMinusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
+		} else if (zMinusOne.flag_values[fieldIndex] != ITMLib::VOXEL_NONTRUNCATED || std::abs(currentSdf - sdfAtZminusOne) > thresh) {
 			gradient.z = TVoxel::valueToFloat(zPlusOne.sdf_values[fieldIndex]) - currentSdf;
 		} else {
-			gradient.z = 0.5f * (TVoxel::valueToFloat(zPlusOne.sdf_values[fieldIndex]) -
-			                     TVoxel::valueToFloat(zMinusOne.sdf_values[fieldIndex]));
+			gradient.z = 0.5f * (sdfAtZplusOne - sdfAtZminusOne);
 		}
 	}
 };

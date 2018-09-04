@@ -48,6 +48,11 @@ private:
 	const int liveSourceFieldIndex;
 };
 
+struct DiscontinuityRemovalFunctor {
+	//TODO
+	float thresh = 0.25;
+};
+
 
 template<typename TVoxelWarpSource, typename TVoxelSdf, typename TIndex, typename TLookupPositionFunctor>
 struct TrilinearInterpolationFunctor {
@@ -79,6 +84,7 @@ struct TrilinearInterpolationFunctor {
 
 	void operator()(TVoxelSdf& destinationVoxel,TVoxelWarpSource& warpSourceVoxel,
 	                Vector3i warpAndDestinationVoxelPosition) {
+
 
 		bool printResult = hasFocusCoordinates && warpAndDestinationVoxelPosition == focusCoordinates;
 
