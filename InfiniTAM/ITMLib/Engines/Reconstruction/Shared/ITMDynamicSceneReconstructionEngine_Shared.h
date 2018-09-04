@@ -18,6 +18,7 @@
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../../Utils/ITMPixelUtils.h"
 #include "../../../Utils/ITMVoxelFlags.h"
+#include "../../../Objects/Scene/ITMTrilinearInterpolation.h"
 
 
 // region ============================== UPDATE SDF/COLOR IN VOXEL USING DEPTH PIXEL ===================================
@@ -325,7 +326,7 @@ _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxel
 	canonicalVoxel.w_depth = (uchar) newWDepth;
 	if (canonicalVoxel.flags != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED) {
 		canonicalVoxel.flags = liveVoxel.flag_values[liveSourceFieldIndex];
-	} else if (1.0f - std::abs(newSdf) < 1e-5f) {
+	} else if (1.0f - std::abs(newSdf) < 1e-3f) {
 		canonicalVoxel.flags = ITMLib::VoxelFlags::VOXEL_TRUNCATED;
 	}
 };
@@ -336,7 +337,7 @@ template<typename TVoxelWarpSource, typename TVoxelSdf, typename TIndex, typenam
 _CPU_AND_GPU_CODE_
 inline void interpolateBetweenIndexes(TVoxelSdf* sdfSourceVoxels,
                                       const typename TIndex::IndexData* sdfSourceIndexData,
-                                      typename TIndex::IndexCache& sdfSourceCache, const TVoxelWarpSource& warpSourceVoxel,
+                                      typename TIndex::IndexCache& sdfSourceCache, TVoxelWarpSource& warpSourceVoxel,
                                       TVoxelSdf& destinationVoxel, const Vector3i& warpAndDestinationVoxelPosition,
                                       int sourceSdfIndex, int targetSdfIndex, bool printResult) {
 	Vector3f warpedPosition =
@@ -344,17 +345,19 @@ inline void interpolateBetweenIndexes(TVoxelSdf* sdfSourceVoxels,
 
 	bool struckKnown;
 
-	float sdf = _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(
-			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sourceSdfIndex, sdfSourceCache, struckKnown,
-			printResult);
+	float sdf = _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown_SubstituteUnknown(
+			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, destinationVoxel.sdf_values[sourceSdfIndex],
+			sourceSdfIndex, sdfSourceCache, struckKnown, printResult);
 
 	// Update flags
 	if (struckKnown) {
 		destinationVoxel.sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sdf);
-		if (1.0f - std::abs(sdf) < 1e-5f) {
+		if (1.0f - std::abs(sdf) < 1e-3f) {
 			destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_TRUNCATED;
+			warpSourceVoxel.flow_warp = Vector3f(0.0f);//TODO
 		} else {
 			destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_NONTRUNCATED;
+			warpSourceVoxel.flow_warp = Vector3f(0.0f);
 		}
 	}
 }

@@ -49,10 +49,12 @@ VoxelIsConsideredForDataTerm(const TVoxelCanonical& canonicalVoxel, const TVoxel
 	//Data condition: IGNORE_UNKNOWN
 	//return canonicalVoxel.flags != ITMLib::VOXEL_UNKNOWN && liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_UNKNOWN;
 	//Data condition: ONLY_NONTRUNCATED
-	//return liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
-	//                     && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+//	return liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED &&
+//	       canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
 	//Data condition: IGNORE_CANONICAL_UNKNOWN
-	return canonicalVoxel.flags != ITMLib::VOXEL_UNKNOWN;
+	//return canonicalVoxel.flags != ITMLib::VOXEL_UNKNOWN;
+	//Data condition: MIXED01
+	return canonicalVoxel.flags != ITMLib::VOXEL_UNKNOWN && liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED;
 };
 
 
@@ -368,7 +370,7 @@ void ComputeLiveGradient(
 
 template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
-void ComputeLiveGradient_CentralDifferences_IndexedFields(
+inline void ComputeLiveGradient_CentralDifferences_IndexedFields(
 		THREADPTR(Vector3f)& jacobian,
 		const CONSTPTR(Vector3i)& voxelPosition,
 		const CONSTPTR(TVoxel)* voxels,
@@ -389,6 +391,68 @@ void ComputeLiveGradient_CentralDifferences_IndexedFields(
 	jacobian[0] = 0.5f * (sdfAtXplusOne - sdfAtXminusOne);
 	jacobian[1] = 0.5f * (sdfAtYplusOne - sdfAtYminusOne);
 	jacobian[2] = 0.5f * (sdfAtZplusOne - sdfAtZminusOne);
+};
+
+
+template<typename TVoxel, typename TIndexData, typename TCache>
+_CPU_AND_GPU_CODE_
+inline void ComputeLiveGradient_CentralDifferences_IndexedFields_AdvancedGrad(
+		THREADPTR(Vector3f)& gradient,
+		const CONSTPTR(Vector3i)& voxelPosition,
+		const CONSTPTR(TVoxel)* voxels,
+		const CONSTPTR(TIndexData)* indexData,
+		THREADPTR(TCache)& cache,
+		const CONSTPTR(int)& fieldIndex,
+		const CONSTPTR(float)& currentSdf) {
+	int vmIndex = 0;
+	{
+		TVoxel xPlusOne = readVoxel(voxels, indexData, voxelPosition + Vector3i(1, 0, 0), vmIndex, cache);
+		TVoxel xMinusOne = readVoxel(voxels, indexData, voxelPosition + Vector3i(-1, 0, 0), vmIndex, cache);
+		if (xPlusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
+			if (xMinusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
+				gradient.x = 0.0f;
+			} else {
+				gradient.x = currentSdf - TVoxel::valueToFloat(xMinusOne.sdf_values[fieldIndex]);
+			}
+		} else if (xMinusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
+			gradient.x = TVoxel::valueToFloat(xPlusOne.sdf_values[fieldIndex]) - currentSdf;
+		} else {
+			gradient.x = 0.5f * (TVoxel::valueToFloat(xPlusOne.sdf_values[fieldIndex]) -
+			                     TVoxel::valueToFloat(xMinusOne.sdf_values[fieldIndex]));
+		}
+	}
+	{
+		TVoxel yPlusOne = readVoxel(voxels, indexData, voxelPosition + Vector3i(0, 1, 0), vmIndex, cache);
+		TVoxel yMinusOne = readVoxel(voxels, indexData, voxelPosition + Vector3i(0, -1, 0), vmIndex, cache);
+		if (yPlusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
+			if (yMinusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
+				gradient.y = 0.0f;
+			} else {
+				gradient.y = currentSdf - TVoxel::valueToFloat(yMinusOne.sdf_values[fieldIndex]);
+			}
+		} else if (yMinusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
+			gradient.y = TVoxel::valueToFloat(yPlusOne.sdf_values[fieldIndex]) - currentSdf;
+		} else {
+			gradient.y = 0.5f * (TVoxel::valueToFloat(yPlusOne.sdf_values[fieldIndex]) -
+			                     TVoxel::valueToFloat(yMinusOne.sdf_values[fieldIndex]));
+		}
+	}
+	{
+		TVoxel zPlusOne = readVoxel(voxels, indexData, voxelPosition + Vector3i(0, 0, 1), vmIndex, cache);
+		TVoxel zMinusOne = readVoxel(voxels, indexData, voxelPosition + Vector3i(0, 0, -1), vmIndex, cache);
+		if (zPlusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
+			if (zMinusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
+				gradient.z = 0.0f;
+			} else {
+				gradient.z = currentSdf - TVoxel::valueToFloat(zMinusOne.sdf_values[fieldIndex]);
+			}
+		} else if (zMinusOne.flags != ITMLib::VOXEL_NONTRUNCATED) {
+			gradient.z = TVoxel::valueToFloat(zPlusOne.sdf_values[fieldIndex]) - currentSdf;
+		} else {
+			gradient.z = 0.5f * (TVoxel::valueToFloat(zPlusOne.sdf_values[fieldIndex]) -
+			                     TVoxel::valueToFloat(zMinusOne.sdf_values[fieldIndex]));
+		}
+	}
 };
 // endregion
 
@@ -622,16 +686,17 @@ computeDataTermUpdateContribution(
 		const CONSTPTR(float)& canonicalSdf,
 		const CONSTPTR(float)& sdfToVoxelScalingFactorSquared) {
 
-	Vector3f liveSdfJacobian;
-	ComputeLiveGradient_CentralDifferences_IndexedFields(
-			liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache, sourceSdfIndex);
+	Vector3f liveSdfGradient;
+	ComputeLiveGradient_CentralDifferences_IndexedFields_AdvancedGrad(
+			liveSdfGradient, voxelPosition, liveVoxels, liveIndexData, liveCache, sourceSdfIndex, liveSdf);
 
 	// Compute data term error / energy
 	float sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
 	// (φ_n(Ψ)−φ_{global}) ∇φ_n(Ψ) - also denoted as - (φ_{proj}(Ψ)−φ_{model}) ∇φ_{proj}(Ψ)
 	// φ_n(Ψ) = φ_n(x+u, y+v, z+w), where u = u(x,y,z), v = v(x,y,z), w = w(x,y,z)
 	// φ_{global} = φ_{global}(x, y, z)
-	localDataEnergyGradient = sdfDifferenceBetweenLiveAndCanonical * liveSdfJacobian * sdfToVoxelScalingFactorSquared;
+	localDataEnergyGradient = sdfDifferenceBetweenLiveAndCanonical * liveSdfGradient * sdfToVoxelScalingFactorSquared;
 	localDataEnergy =
-			0.5f * (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical * sdfToVoxelScalingFactorSquared);
+			0.5f * (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical *
+			        sdfToVoxelScalingFactorSquared);
 }

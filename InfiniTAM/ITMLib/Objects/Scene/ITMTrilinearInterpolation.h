@@ -23,6 +23,34 @@
 #include "ITMRepresentationAccess.h"
 
 
+//Newer version with substitution based on the 2D prototype
+template<typename TVoxel, typename TCache, typename TIndexData>
+_CPU_AND_GPU_CODE_
+inline float ProcessTrilinearNeighbor_SubstituteUnknowns(
+		const CONSTPTR(TVoxel)* voxelData,
+		const CONSTPTR(TIndexData)* voxelIndex,
+		const CONSTPTR(int)& sdfIndex,
+		const CONSTPTR(Vector3i)& position,
+		const CONSTPTR(float*) coefficients,
+		THREADPTR(TCache)& cache,
+		THREADPTR(bool)& struckKnownVoxels,
+		const CONSTPTR(int)& iNeighbor,
+		const CONSTPTR(float)& substitute,
+		THREADPTR(float)& sdf,
+		THREADPTR(float)& cumulativeWeight) {
+	int vmIndex;
+	const TVoxel& v = readVoxel(voxelData, voxelIndex, position, vmIndex, cache);
+	float weight = coefficients[iNeighbor];
+	if (v.flag_values[sdfIndex] != ITMLib::VOXEL_UNKNOWN) {
+		sdf += weight * TVoxel::valueToFloat(v.sdf_values[sdfIndex]);
+		struckKnownVoxels = true;
+		cumulativeWeight += weight;
+	} else {
+		sdf += weight * substitute;
+	}
+	return weight;
+};
+
 
 template<typename TVoxel, typename TCache, typename TIndexData>
 _CPU_AND_GPU_CODE_
@@ -35,7 +63,7 @@ inline float ProcessTrilinearNeighbor(const CONSTPTR(TVoxel)* voxelData,
                                       THREADPTR(bool)& struckKnownVoxels,
                                       int iNeighbor,
                                       THREADPTR(float)& sdf,
-                                      THREADPTR(float)& cumulativeWeight){
+                                      THREADPTR(float)& cumulativeWeight) {
 	int vmIndex;
 
 	const TVoxel& v = readVoxel(voxelData, voxelIndex, position, vmIndex, cache);
@@ -54,7 +82,7 @@ inline float ProcessTrilinearNeighbor(const CONSTPTR(TVoxel)* voxelData,
 
 _CPU_AND_GPU_CODE_
 inline void ComputeTrilinearCoefficents(const CONSTPTR(Vector3f)& point, THREADPTR(Vector3i)& pos,
-                                        THREADPTR(float*) coefficients /*x8*/){
+                                        THREADPTR(float*) coefficients /*x8*/) {
 	Vector3f ratios;
 	Vector3f inverseRatios(1.0f);
 
@@ -70,6 +98,62 @@ inline void ComputeTrilinearCoefficents(const CONSTPTR(Vector3f)& point, THREADP
 	coefficients[5] = ratios.x *        inverseRatios.y * ratios.z;        //101
 	coefficients[6] = inverseRatios.x * ratios.y *        ratios.z;        //011
 	coefficients[7] = ratios.x *        ratios.y *        ratios.z;        //111
+}
+
+//Transferred from 2D prototype Sept 4
+template<typename TVoxel, typename TCache, typename TIndexData>
+_CPU_AND_GPU_CODE_
+inline float _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown_SubstituteUnknown(
+		const CONSTPTR(TVoxel)* voxelData,
+		const CONSTPTR(TIndexData)* voxelIndex,
+		const CONSTPTR(Vector3f)& point,
+		const CONSTPTR(float)& substituteValue,
+		int sdfIndex, THREADPTR(TCache)& cache,
+		bool& struckKnownVoxels,
+		bool verbose) {
+
+	const int neighborCount = 8;
+	const Vector3i positions[neighborCount] = {Vector3i(0, 0, 0), Vector3i(1, 0, 0),
+	                                           Vector3i(0, 1, 0), Vector3i(1, 1, 0),
+	                                           Vector3i(0, 0, 1), Vector3i(1, 0, 1),
+	                                           Vector3i(0, 1, 1), Vector3i(1, 1, 1)};
+	float coefficients[neighborCount];
+	Vector3i pos;
+	ComputeTrilinearCoefficents(point, pos, coefficients);
+#ifndef __CUDACC__
+	if (verbose) {
+		std::cout << ITMLib::bright_cyan << "*** Printing interpolation data for point "
+		          << point << " ***" << ITMLib::reset << std::endl;
+		std::cout << "Truncated position: " << pos << std::endl;
+	}
+#endif
+	struckKnownVoxels = false;
+	float cumulativeWeight = 0.0f;
+	float sdf = 0.0f;
+
+	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
+		float weight = ProcessTrilinearNeighbor_SubstituteUnknowns(
+				voxelData, voxelIndex, sdfIndex, pos + positions[iNeighbor],
+                coefficients, cache, struckKnownVoxels, iNeighbor, substituteValue,
+                sdf, cumulativeWeight);
+#ifndef __CUDACC__
+		if (verbose) {
+			std::cout << "Neighbor position: " << positions[iNeighbor] << " Sdf: "
+			          << sdf << " Weight: " << weight << std::endl;
+		}
+#endif
+	}
+	if (cumulativeWeight > FLT_EPSILON) {
+		sdf /= cumulativeWeight;
+	} else {
+		sdf = TVoxel::SDF_initialValue();
+	}
+#ifndef __CUDACC__
+	if (verbose) {
+		std::cout << "New sdf: " << sdf << std::endl;
+	}
+#endif
+	return sdf;
 }
 
 

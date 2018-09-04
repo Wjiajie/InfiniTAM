@@ -47,7 +47,7 @@ public:
 		const float epsilon;// = 1e-5f;
 		const float unity; // voxelSize / mu, i.e. voxelSize / [narrow-band half-width]
 		const float sdfToVoxelsFactor; // = 10.0 (SDF 1.0 represents [narrow-band half-width, which is usually 10 voxels]
-		const float sdfToVoxelsFactorSquared;
+		const float sdfToVoxelsFactorSquared; // the above quantity squared
 	};
 
 	struct Switches {

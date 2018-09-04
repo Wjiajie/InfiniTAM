@@ -140,7 +140,12 @@ public:
 
 	// endregion =======================================================================================================
 	_CPU_AND_GPU_CODE_
-	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i voxelPosition) {
+	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i position) {
+
+		//_DEBUG
+		if(position == Vector3i(-18, 48, 213)){
+			int i = 42;
+		}
 
 		if (!VoxelIsConsideredForTracking(canonicalVoxel, liveVoxel, sourceSdfIndex)) return;
 		bool computeDataTerm = VoxelIsConsideredForDataTerm(canonicalVoxel, liveVoxel, sourceSdfIndex);
@@ -160,10 +165,10 @@ public:
 
 #ifndef __CUDACC__
 		bool printVoxelResult = false;
-		this->SetUpFocusVoxelPrinting(printVoxelResult, voxelPosition, framewiseWarp, canonicalSdf, liveSdf);
+		this->SetUpFocusVoxelPrinting(printVoxelResult, position, framewiseWarp, canonicalSdf, liveSdf);
 		if (printVoxelResult) {
 			std::cout << blue << "Live 6-connected neighbor information:" << reset << std::endl;
-			print6ConnectedNeighborInfoIndexedFields(voxelPosition, liveVoxels, liveIndexData, liveCache,
+			print6ConnectedNeighborInfoIndexedFields(position, liveVoxels, liveIndexData, liveCache,
 			                                         sourceSdfIndex);
 		}
 #endif
@@ -171,7 +176,7 @@ public:
 		// region =============================== DATA TERM ================================================
 		if (switches.enableDataTerm && computeDataTerm) {
 			computeDataTermUpdateContribution(localDataEnergyGradient, localDataEnergy, liveCache,
-					voxelPosition, liveVoxels, liveIndexData, sourceSdfIndex, liveSdf, canonicalSdf, parameters.sdfToVoxelsFactorSquared);
+					position, liveVoxels, liveIndexData, sourceSdfIndex, liveSdf, canonicalSdf, parameters.sdfToVoxelsFactorSquared);
 #ifndef __CUDACC__
 			dataVoxelCount++;
 #endif
@@ -182,10 +187,10 @@ public:
 		if (switches.enableLevelSetTerm && computeDataTerm) {
 			Matrix3f liveSdfHessian;
 			Vector3f liveSdfJacobian;
-			ComputeLiveGradient_CentralDifferences_IndexedFields(
-					liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache, sourceSdfIndex);
+			ComputeLiveGradient_CentralDifferences_IndexedFields_AdvancedGrad(
+					liveSdfJacobian, position, liveVoxels, liveIndexData, liveCache, sourceSdfIndex, liveSdf);
 
-			ComputeSdfHessian_IndexedFields(liveSdfHessian, voxelPosition, liveSdf, liveVoxels,
+			ComputeSdfHessian_IndexedFields(liveSdfHessian, position, liveSdf, liveVoxels,
 			                                liveIndexData, liveCache, sourceSdfIndex);
 			float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
 			float sdfJacobianNormMinusUnity = sdfJacobianNorm - parameters.unity;
@@ -213,7 +218,7 @@ public:
 
 			findPoint2ndDerivativeNeighborhoodFlowWarp(
 					neighborFlowWarps/*x9*/, neighborKnown, neighborTruncated,
-					neighborAllocated, voxelPosition, canonicalVoxels,
+					neighborAllocated, position, canonicalVoxels,
 					canonicalIndexData, canonicalCache);
 
 			for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {

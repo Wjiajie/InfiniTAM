@@ -81,7 +81,7 @@ clearIndexedFields_device(TVoxelMulti* voxelArray, const ITMPlainVoxelArray::ITM
 
 template<typename TVoxelWarpSource, typename TVoxelSdf, typename TLookupPositionFunctor>
 __global__ void interpolateTriliearlyBetweenIndexedFields(
-		TVoxelSdf* sdfSourceVoxels, TVoxelWarpSource* warpSourceVoxels,
+		TVoxelSdf* sdfVoxels, TVoxelWarpSource* warpVoxels,
 		const ITMPlainVoxelArray::IndexData* sdfSourceIndexData,
 		int sourceSdfIndex, int targetSdfIndex) {
 
@@ -91,8 +91,8 @@ __global__ void interpolateTriliearlyBetweenIndexedFields(
 
 	int locId = x + y * sdfSourceIndexData->size.x + z * sdfSourceIndexData->size.x * sdfSourceIndexData->size.y;
 
-	TVoxelSdf& destinationVoxel = sdfSourceVoxels[locId];
-	TVoxelWarpSource& warpSourceVoxel = warpSourceVoxels[locId];
+	TVoxelSdf& destinationVoxel = sdfVoxels[locId];
+	TVoxelWarpSource& warpSourceVoxel = warpVoxels[locId];
 	ITMPlainVoxelArray::IndexCache sdfSourceCache;
 
 	Vector3i warpAndDestinationVoxelPosition;
@@ -102,8 +102,8 @@ __global__ void interpolateTriliearlyBetweenIndexedFields(
 	warpAndDestinationVoxelPosition.z = z + sdfSourceIndexData->offset.z;
 
 	interpolateBetweenIndexes<TVoxelWarpSource, TVoxelSdf, ITMPlainVoxelArray, TLookupPositionFunctor>(
-			sdfSourceVoxels, sdfSourceIndexData, sdfSourceCache, warpSourceVoxel, destinationVoxel,
-			warpAndDestinationVoxelPosition, sourceSdfIndex, targetSdfIndex, false);
+			sdfVoxels, sdfSourceIndexData, sdfSourceCache, warpSourceVoxel, destinationVoxel,
+			warpAndDestinationVoxelPosition, sourceSdfIndex, targetSdfIndex,  false);
 }
 
 template<typename TVoxelMulti>
