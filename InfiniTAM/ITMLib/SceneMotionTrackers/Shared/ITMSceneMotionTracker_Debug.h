@@ -332,9 +332,9 @@ inline void print6ConnectedNeighborInfoIndexedFields(
 
 #ifdef USE_SPATIAL_PRINTING
 	//for now, use x-z for in-plane printing, y +/- for additional pair
-	std::printf("                     %sz+1:%s%+.3f, %s\n", ITMLib::yellow.c_str(), ITMLib::reset.c_str(),
+	std::printf("                     %sz+1%s:%+.3f, %s\n", ITMLib::yellow.c_str(), ITMLib::reset.c_str(),
 	            neighborSdf[2], printKnown(neighborKnown[2]));
-	std::printf(" %1$sx-1%2$s:%3$+.3f,%4$s %1$scur%2$s: %5$+.3f, %6$s %1$sx+1%2$s: %7$+.3f,%8$s         "
+	std::printf("  %1$sx-1%2$s:%3$+.3f,%4$s %1$scur%2$s:%5$+.3f, %6$s %1$sx+1%2$s: %7$+.3f,%8$s         "
 	            "%1$sy-1%2$s: %9$+.3f,%10$s / %1$sy+1%2$s: %11$+.3f,%12$s\n",
 	            ITMLib::yellow.c_str(), ITMLib::reset.c_str(),
 	            neighborSdf[0], printKnown(neighborKnown[0]),

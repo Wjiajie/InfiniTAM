@@ -404,6 +404,7 @@ inline void ComputeLiveGradient_CentralDifferences_IndexedFields_AdvancedGrad(
 		THREADPTR(TCache)& cache,
 		const CONSTPTR(int)& fieldIndex,
 		const CONSTPTR(float)& currentSdf) {
+
 	float thresh = 0.25;
 	int vmIndex = 0;
 	{

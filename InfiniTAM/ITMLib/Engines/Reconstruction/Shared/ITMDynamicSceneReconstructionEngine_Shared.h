@@ -332,6 +332,16 @@ _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxel
 };
 
 // endregion ===========================================================================================================
+
+_CPU_AND_GPU_CODE_
+inline float sign(float x){
+#ifdef __CUDACC__
+	return (x > 0.0f) - (x < 0.0f);
+#else
+	return std::copysign(1.0f,x);
+#endif
+}
+
 // region ====================== TRILINEAR INTERPOLATION BASED ON WARP VECTOR ==========================================
 template<typename TVoxelWarpSource, typename TVoxelSdf, typename TIndex, typename TLookupPositionFunctor>
 _CPU_AND_GPU_CODE_
@@ -346,28 +356,20 @@ inline void interpolateBetweenIndexes(TVoxelSdf* sdfSourceVoxels,
 
 	bool struckKnown;
 
-	if(warpAndDestinationVoxelPosition == Vector3i(50, 40, 152)){
-		int i = 42;
-	}
-
 	float sdf = _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown_SubstituteUnknown(
 			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, destinationVoxel.sdf_values[sourceSdfIndex],
 			sourceSdfIndex, sdfSourceCache, struckKnown, printResult);
 
-	//_DEBUG
-	if(std::abs(sdf) > 1.0f ){
-		int i = 42;
-	}
-
 	// Update flags
 	if (struckKnown) {
-		destinationVoxel.sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sdf);
+
 		if (1.0f - std::abs(sdf) < 1e-5f) {
 			destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_TRUNCATED;
-			warpSourceVoxel.flow_warp = Vector3f(0.0f);//TODO
+			destinationVoxel.sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sign(sdf));
+			warpSourceVoxel.flow_warp = Vector3f(0.0f);//NB: this is just a trial for now, assuming interpolation is done with the flow warps
 		} else {
+			destinationVoxel.sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sdf);
 			destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_NONTRUNCATED;
-			warpSourceVoxel.flow_warp = Vector3f(0.0f);
 		}
 	}
 }
