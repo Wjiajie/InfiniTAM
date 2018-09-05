@@ -346,9 +346,18 @@ inline void interpolateBetweenIndexes(TVoxelSdf* sdfSourceVoxels,
 
 	bool struckKnown;
 
+	if(warpAndDestinationVoxelPosition == Vector3i(50, 40, 152)){
+		int i = 42;
+	}
+
 	float sdf = _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown_SubstituteUnknown(
 			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, destinationVoxel.sdf_values[sourceSdfIndex],
 			sourceSdfIndex, sdfSourceCache, struckKnown, printResult);
+
+	//_DEBUG
+	if(std::abs(sdf) > 1.0f ){
+		int i = 42;
+	}
 
 	// Update flags
 	if (struckKnown) {

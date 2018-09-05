@@ -44,10 +44,11 @@ inline float ProcessTrilinearNeighbor_SubstituteUnknowns(
 	if (v.flag_values[sdfIndex] != ITMLib::VOXEL_UNKNOWN) {
 		sdf += weight * TVoxel::valueToFloat(v.sdf_values[sdfIndex]);
 		struckKnownVoxels = true;
-		cumulativeWeight += weight;
+
 	} else {
 		sdf += weight * substitute;
 	}
+	cumulativeWeight += weight;
 	return weight;
 };
 

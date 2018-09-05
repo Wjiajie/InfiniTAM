@@ -88,6 +88,8 @@ struct TrilinearInterpolationFunctor {
 
 		bool printResult = hasFocusCoordinates && warpAndDestinationVoxelPosition == focusCoordinates;
 
+		//TODO: move printing out into a separate function (since it only has to be done for one voxel per iteration)
+
 		interpolateBetweenIndexes<TVoxelWarpSource,TVoxelSdf,TIndex,TLookupPositionFunctor>(
 				sdfSourceVoxels,sdfSourceIndexData,sdfSourceCache,warpSourceVoxel,destinationVoxel,
 				warpAndDestinationVoxelPosition,sourceSdfIndex,targetSdfIndex,printResult);

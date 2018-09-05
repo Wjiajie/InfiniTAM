@@ -75,9 +75,9 @@ struct WarpUpdateFunctor {
 		                                            canonicalVoxel.gradient1 : canonicalVoxel.gradient0);
 
 		//_DEBUG
-		if(position == Vector3i(-23, 60, 227)){
-			int i = 42;
-		}
+//		if(position == Vector3i(-23, 60, 227)){
+//			int i = 42;
+//		}
 
 		// update stats
 		float framewiseWarpLength = ORUtils::length(canonicalVoxel.flow_warp);
