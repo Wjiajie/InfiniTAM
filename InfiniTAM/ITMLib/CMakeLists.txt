@@ -864,7 +864,7 @@ source_group(Utils\\Visualization FILES ${ITMLIB_UTILS_VISUALIZATION_SOURCES} ${
 include(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
 
 #_DEBUG
-find_package(VTK REQUIRED)
+find_package(VTK 8.1 REQUIRED)
 include(${VTK_USE_FILE})
 set (Boost_FIND_REQUIRED TRUE)
 set (Boost_FIND_QUIETLY TRUE)
