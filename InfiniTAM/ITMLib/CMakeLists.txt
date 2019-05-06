@@ -864,7 +864,23 @@ source_group(Utils\\Visualization FILES ${ITMLIB_UTILS_VISUALIZATION_SOURCES} ${
 include(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
 
 #_DEBUG
-find_package(VTK 8.1 REQUIRED)
+find_package(VTK 8.1 COMPONENTS
+			 vtkIOImage
+			 vtkChartsCore
+			 vtkCommonColor
+			 vtkCommonCore
+			 vtkCommonDataModel
+			 vtkFiltersSources
+			 vtkInteractionStyle
+			 vtkInteractionWidgets
+			 vtkRenderingContext2D
+			 vtkRenderingContextOpenGL2
+			 vtkRenderingCore
+			 vtkRenderingFreeType
+			 vtkRenderingOpenGL2
+			 vtkRenderingGL2PSOpenGL2
+			 vtkViewsContext2D
+			 REQUIRED)
 include(${VTK_USE_FILE})
 set (Boost_FIND_REQUIRED TRUE)
 set (Boost_FIND_QUIETLY TRUE)
@@ -904,3 +920,4 @@ if(TARGET Qt5::Core)
 	set_property(TARGET Qt5::Core PROPERTY INTERFACE_COMPILE_OPTIONS ${new_core_options})
 	set_property(TARGET Qt5::Core PROPERTY INTERFACE_POSITION_INDEPENDENT_CODE "ON")
 endif()
+
