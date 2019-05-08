@@ -12,6 +12,9 @@ project(InfiniTAM)
 if (POLICY CMP0020)
     cmake_policy(SET CMP0020 NEW)
 endif ()
+if (POLICY CMP0072)
+    cmake_policy(SET CMP0072 NEW)
+endif ()
 
 #################################
 # Specify the CMake module path #

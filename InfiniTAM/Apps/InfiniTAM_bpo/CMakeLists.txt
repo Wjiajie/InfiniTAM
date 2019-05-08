@@ -27,7 +27,23 @@ INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseUVC.cmake)
 #################################
 # Find other packages (TODO: revise so falls into USE<blah>.cmake format above)
 #################################
-find_package(VTK REQUIRED)
+find_package(VTK 8.1 COMPONENTS
+			 vtkIOImage
+			 vtkChartsCore
+			 vtkCommonColor
+			 vtkCommonCore
+			 vtkCommonDataModel
+			 vtkFiltersSources
+			 vtkInteractionStyle
+			 vtkInteractionWidgets
+			 vtkRenderingContext2D
+			 vtkRenderingContextOpenGL2
+			 vtkRenderingCore
+			 vtkRenderingFreeType
+			 vtkRenderingOpenGL2
+			 vtkRenderingGL2PSOpenGL2
+			 vtkViewsContext2D
+			 REQUIRED)
 include(${VTK_USE_FILE})
 
 set (Boost_FIND_REQUIRED TRUE)

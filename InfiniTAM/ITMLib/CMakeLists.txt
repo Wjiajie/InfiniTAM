@@ -864,7 +864,23 @@ source_group(Utils\\Visualization FILES ${ITMLIB_UTILS_VISUALIZATION_SOURCES} ${
 include(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
 
 #_DEBUG
-find_package(VTK REQUIRED)
+find_package(VTK 8.1 COMPONENTS
+			 vtkIOImage
+			 vtkChartsCore
+			 vtkCommonColor
+			 vtkCommonCore
+			 vtkCommonDataModel
+			 vtkFiltersSources
+			 vtkInteractionStyle
+			 vtkInteractionWidgets
+			 vtkRenderingContext2D
+			 vtkRenderingContextOpenGL2
+			 vtkRenderingCore
+			 vtkRenderingFreeType
+			 vtkRenderingOpenGL2
+			 vtkRenderingGL2PSOpenGL2
+			 vtkViewsContext2D
+			 REQUIRED)
 include(${VTK_USE_FILE})
 set (Boost_FIND_REQUIRED TRUE)
 set (Boost_FIND_QUIETLY TRUE)
@@ -898,7 +914,9 @@ if(NOT INDEX EQUAL -1)
 endif()
 
 #workaround for https://codereview.qt-project.org/#/c/195531/
-get_property(core_options TARGET Qt5::Core PROPERTY INTERFACE_COMPILE_OPTIONS)
-string(REPLACE "-fPIC" "" new_core_options ${core_options})
-set_property(TARGET Qt5::Core PROPERTY INTERFACE_COMPILE_OPTIONS ${new_core_options})
-set_property(TARGET Qt5::Core PROPERTY INTERFACE_POSITION_INDEPENDENT_CODE "ON")
+if(TARGET Qt5::Core)
+	get_property(core_options TARGET Qt5::Core PROPERTY INTERFACE_COMPILE_OPTIONS)
+	string(REPLACE "-fPIC" "" new_core_options ${core_options})
+	set_property(TARGET Qt5::Core PROPERTY INTERFACE_COMPILE_OPTIONS ${new_core_options})
+	set_property(TARGET Qt5::Core PROPERTY INTERFACE_POSITION_INDEPENDENT_CODE "ON")
+endif()

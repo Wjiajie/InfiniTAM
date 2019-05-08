@@ -79,7 +79,23 @@ include(${PROJECT_SOURCE_DIR}/cmake/LinkUVC.cmake)
 #################################
 # Extra libraries (this project only)
 #################################
-find_package(VTK REQUIRED)
+find_package(VTK 8.1 COMPONENTS
+             vtkIOImage
+             vtkChartsCore
+             vtkCommonColor
+             vtkCommonCore
+             vtkCommonDataModel
+             vtkFiltersSources
+             vtkInteractionStyle
+             vtkInteractionWidgets
+             vtkRenderingContext2D
+             vtkRenderingContextOpenGL2
+             vtkRenderingCore
+             vtkRenderingFreeType
+             vtkRenderingOpenGL2
+             vtkRenderingGL2PSOpenGL2
+             vtkViewsContext2D
+             REQUIRED)
 find_package(Boost COMPONENTS program_options REQUIRED)
 
 include(${VTK_USE_FILE})
