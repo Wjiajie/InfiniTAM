@@ -96,6 +96,12 @@ namespace ITMLib
 
 		MemoryDeviceType memoryType;
 
+		void Initialize(MemoryDeviceType memoryType){
+			this->memoryType = memoryType;
+			hashEntries = new ORUtils::MemoryBlock<ITMHashEntry>(noTotalEntries, memoryType);
+			excessAllocationList = new ORUtils::MemoryBlock<int>(SDF_EXCESS_LIST_SIZE, memoryType);
+		}
+
 	public:
 		MemoryDeviceType getMemoryType(){
 			return memoryType;
@@ -103,9 +109,12 @@ namespace ITMLib
 
 		ITMVoxelBlockHash(MemoryDeviceType memoryType)
 		{
-			this->memoryType = memoryType;
-			hashEntries = new ORUtils::MemoryBlock<ITMHashEntry>(noTotalEntries, memoryType);
-			excessAllocationList = new ORUtils::MemoryBlock<int>(SDF_EXCESS_LIST_SIZE, memoryType);
+			Initialize(memoryType);
+		}
+
+		ITMVoxelBlockHash(MemoryDeviceType memoryType, Vector3i size, Vector3i offset)
+		{
+			Initialize(memoryType);
 		}
 
 		~ITMVoxelBlockHash(void)
@@ -118,6 +127,12 @@ namespace ITMLib
 		const ITMHashEntry *GetEntries(void) const { return hashEntries->GetData(memoryType); }
 		ITMHashEntry *GetEntries(void) { return hashEntries->GetData(memoryType); }
 
+		/**Get the memory type used for storage.**/
+		MemoryDeviceType GetMemoryType() const{
+			return this->memoryType;
+		}
+
+		/** Get the list of actual entries in the hash table (alternative to GetEntries). */
 		const IndexData *getIndexData(void) const { return hashEntries->GetData(memoryType); }
 		IndexData *getIndexData(void) { return hashEntries->GetData(memoryType); }
 

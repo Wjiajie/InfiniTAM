@@ -4,6 +4,9 @@ cmake-build-*/
 Doxyfile.bak
 cmake_install.cmake
 Makefile
+.settings/
+.project
+.cproject
 
 *.kdev4
 *.opensdf

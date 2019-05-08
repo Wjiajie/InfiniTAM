@@ -2,7 +2,7 @@
 # CMakeLists.txt for Tests
 #####################################
 
-option(BUILD_TESTS "Build automated tests with the project (Boost-test required)." OFF)
+option(BUILD_TESTS "Build automated tests with the project (Boost-test required)." ON)
 
 if(BUILD_TESTS)
     ###########################

@@ -142,7 +142,7 @@ set(ITMLIB_ENGINES_LOWLEVEL_SHARED_HEADERS
 ##
 set(ITMLIB_ENGINES_MANIPULATION_INTERFACE_HEADERS
     Engines/Manipulation/Interface/ITMSceneTraversal.h
-    )
+	)
 ##
 set(ITMLIB_ENGINES_MANIPULATION_CPU_SOURCES
     Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.cpp
@@ -445,6 +445,7 @@ set(ITMLIB_OBJECTS_RENDERSTATES_SOURCES
     Objects/RenderStates/ITMSurfelRenderState.cpp
     )
 
+##
 set(ITMLIB_OBJECTS_RENDERSTATES_HEADERS
     Objects/RenderStates/ITMRenderState.h
     Objects/RenderStates/ITMRenderStateMultiScene.h
@@ -452,6 +453,12 @@ set(ITMLIB_OBJECTS_RENDERSTATES_HEADERS
     Objects/RenderStates/ITMRenderStateFactory.h
     Objects/RenderStates/ITMSurfelRenderState.h
     )
+
+##
+set(ITMLIB_OBJECTS_SCENE_SOURCES
+	Objects/Scene/ITMScene.tpp
+	Objects/Scene/ITMScene.cpp
+	)
 
 ##
 set(ITMLIB_OBJECTS_SCENE_HEADERS
@@ -632,6 +639,7 @@ set(ITMLIB_UTILS_HEADERS
     Utils/ITMSceneParams.h
     Utils/ITMSurfelSceneParams.h
     Utils/ITMPrintHelpers.h
+	Utils/ITMThrowAssert.h
     Utils/Analytics/ITMBenchmarkUtils.h
     )
 
@@ -762,6 +770,7 @@ set(headers
     ${ITMLIB_OBJECTS_MESHING_HEADERS}
     ${ITMLIB_OBJECTS_MISC_HEADERS}
     ${ITMLIB_OBJECTS_RENDERSTATES_HEADERS}
+	${ITMLIB_OBJECTS_SCENE_SOURCES}
     ${ITMLIB_OBJECTS_SCENE_HEADERS}
     ${ITMLIB_OBJECTS_TRACKING_HEADERS}
     ${ITMLIB_OBJECTS_VIEWS_HEADERS}

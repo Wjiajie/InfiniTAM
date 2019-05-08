@@ -24,6 +24,7 @@
 #include "../Collections/ITM3DNestedMapOfArrays.h"
 #include "../Analytics/ITMNeighborVoxelIterationInfo.h"
 #include "ITMWarpSceneLogger.h"
+#include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 
 //boost
 #include <boost/filesystem.hpp>
@@ -50,6 +51,9 @@ public:
 	static const std::string binaryFileExtension;
 	static const std::string liveName;
 	static const std::string continuousHighlightsPostfix;
+
+	typedef ITMSceneManipulationEngine_CPU<TVoxelCanonical, TIndex> CanonicalSceneManipulationEngine;
+	typedef ITMSceneManipulationEngine_CPU<TVoxelLive, TIndex> LiveSceneManipulationEngine;
 
 // endregion
 // region === PUBLIC ENUMS ===

@@ -40,20 +40,21 @@ namespace ITMLib
 			index.LoadFromDirectory(outputDirectory);
 		}
 
-		ITMScene(const ITMSceneParams *_sceneParams, bool _useSwapping, MemoryDeviceType _memoryType)
-			: sceneParams(_sceneParams), index(_memoryType), localVBA(_memoryType, index.getNumAllocatedVoxelBlocks(), index.getVoxelBlockSize())
-		{
-			if (_useSwapping) globalCache = new ITMGlobalCache<TVoxel>();
-			else globalCache = NULL;
-		}
+		ITMScene(const ITMSceneParams *_sceneParams, bool _useSwapping, MemoryDeviceType _memoryType,
+				Vector3i size = Vector3i(512), Vector3i offset = Vector3i(-256,-256,0));
 
 		~ITMScene(void)
 		{
-			if (globalCache != NULL) delete globalCache;
+			if (globalCache != nullptr) delete globalCache;
 		}
 
-		// Suppress the default copy constructor and assignment operator
-		ITMScene(const ITMScene&);
-		ITMScene& operator=(const ITMScene&);
+		/** Return whether this scene is using swapping mechanism or not. **/
+		bool Swapping() const{
+			return this->globalCache != nullptr;
+		}
+
+		// Suppress the default copy constructor and assignment operator (C++11 way)
+		ITMScene(const ITMScene&) = delete;
+		ITMScene& operator=(const ITMScene&) = delete;
 	};
 }//end namespace ITMLib

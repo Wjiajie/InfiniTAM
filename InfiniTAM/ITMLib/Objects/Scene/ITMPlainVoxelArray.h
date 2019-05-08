@@ -30,6 +30,8 @@ namespace ITMLib
 				offset.y = -256;
 				offset.z = 0;
 			}
+
+			ITMVoxelArrayInfo(Vector3i size, Vector3i offset) : size(size), offset(offset){}
 		};
 
 		typedef ITMVoxelArrayInfo IndexData;
@@ -40,16 +42,25 @@ namespace ITMLib
 
 		MemoryDeviceType memoryType;
 
-	public:
-		ITMPlainVoxelArray(MemoryDeviceType memoryType)
-		{
+		void Initialize(MemoryDeviceType memoryType, Vector3i size = Vector3i(512), Vector3i offset = Vector3i(-256,-256,0)){
 			this->memoryType = memoryType;
 
 			if (memoryType == MEMORYDEVICE_CUDA) indexData = new ORUtils::MemoryBlock<IndexData>(1, true, true);
 			else indexData = new ORUtils::MemoryBlock<IndexData>(1, true, false);
 
-			indexData->GetData(MEMORYDEVICE_CPU)[0] = IndexData();
+			indexData->GetData(MEMORYDEVICE_CPU)[0] = IndexData(size,offset);
 			indexData->UpdateDeviceFromHost();
+		}
+
+	public:
+		ITMPlainVoxelArray(MemoryDeviceType memoryType)
+		{
+			Initialize(memoryType);
+		}
+
+		ITMPlainVoxelArray(MemoryDeviceType memoryType, Vector3i size, Vector3i offset)
+		{
+			Initialize(memoryType, size, offset);
 		}
 
 		~ITMPlainVoxelArray()
@@ -67,6 +78,11 @@ namespace ITMLib
 		}
 
 		const Vector3i getVolumeSize(void) { return indexData->GetData(MEMORYDEVICE_CPU)->size; }
+
+		/**Get the memory type used for storage.**/
+		MemoryDeviceType GetMemoryType() const{
+			return this->memoryType;
+		}
 
 		const IndexData* getIndexData(void) const { return indexData->GetData(memoryType); }
 		IndexData* getIndexData(void) { return indexData->GetData(memoryType); }

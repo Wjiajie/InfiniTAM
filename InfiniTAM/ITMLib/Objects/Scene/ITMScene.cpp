@@ -1,6 +1,6 @@
 //  ================================================================
-//  Created by Gregory Kramida on 10/24/17.
-//  Copyright (c) 2017-2025 Gregory Kramida
+//  Created by Gregory Kramida on 5/8/19.
+//  Copyright (c) 2019 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
 //  You may obtain a copy of the License at
@@ -13,14 +13,16 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#pragma once
 
-#include "../ITMLib/ITMLibDefines.h"
+#include "ITMScene.tpp"
+#include "../../ITMLibDefines.h"
 
-#include "../ITMLib/Objects/Scene/ITMRepresentationAccess.h"
-#include "../ITMLib/Objects/Scene/ITMScene.h"
-
-using namespace ITMLib;
-
-template<class TVoxel, class TIndex>
-void GenerateTestScene01(ITMScene<TVoxel, TIndex>* scene);
+// Explicit template instantiations for ITMScene
+namespace ITMLib {
+	template class ITMScene<ITMVoxel, ITMPlainVoxelArray>;
+	template class ITMScene<ITMVoxel, ITMVoxelBlockHash>;
+	template class ITMScene<ITMVoxelLive, ITMPlainVoxelArray>;
+	template class ITMScene<ITMVoxelLive, ITMVoxelBlockHash>;
+	template class ITMScene<ITMVoxelCanonical, ITMPlainVoxelArray>;
+	template class ITMScene<ITMVoxelCanonical, ITMVoxelBlockHash>;
+}  // namespace ITMLib
