@@ -29,6 +29,7 @@ namespace ITMLib {
 
 template<typename TVoxel, typename TIndex>
 class ITMSceneManipulationEngine_CPU {
+
 };
 
 
@@ -41,9 +42,11 @@ public:
 	 */
 	static void ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash>* scene);
 	static bool SetVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
+	static bool SetVoxelNoAllocation(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
 	static TVoxel ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at);
-	static TVoxel
-	ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, ITMVoxelBlockHash::IndexCache& cache);
+	static TVoxel ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, ITMVoxelBlockHash::IndexCache& cache);
+
+
 	/**
 	 * \brief offset warps by a fixed amount in each direction
 	 * \param scene the scene to modify
@@ -63,7 +66,10 @@ public:
 	 */
 	static bool
 	CopySceneSlice(ITMScene<TVoxel, ITMVoxelBlockHash>* destination, ITMScene<TVoxel, ITMVoxelBlockHash>* source,
-	               Vector6i bounds);
+	               Vector6i bounds, const Vector3i& offset = Vector3i(0));
+	static bool CopyScene(ITMScene<TVoxel, ITMVoxelBlockHash>* destination,
+	                      ITMScene<TVoxel, ITMVoxelBlockHash>* source,
+	                      const Vector3i& offset = Vector3i(0));
 
 };
 
@@ -75,21 +81,37 @@ public:
 	static TVoxel ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at);
 	static TVoxel
 	ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, ITMPlainVoxelArray::IndexCache& cache);
+	static bool IsPointInBounds(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, const Vector3i& at);
 	static void OffsetWarps(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset);
 	/**
 	 * \brief Copies the slice (box-like window) specified by points extremum1 and extremum2 from the source scene into a
 	 * destination scene. Clears the destination scene before copying.
 	 * \tparam TVoxel type of voxel
 	 * \tparam TIndex type of voxel index
-	 * \param destination destination voxel grid (can be uninitialized)
+	 * \param destination destination voxel grid (must be initialized)
 	 * \param source source voxel grid
-	 * \param bounds minimum point in the desired slice (inclusive), i.e. minimum x, y, and z coordinates
-	 * \param maxPoint maximum point in the desired slice (inclusive), i.e. maximum x, y, and z coordinates
+	 * \param bounds a vector representing the minimum point in the desired slice (inclusive), i.e. minimum x, y,
+	 * and z coordinates, and maximum point in the desired slice (inclusive), i.e. maximum x, y, and z coordinates
+	 * \param offset if non-zero, the slice will be copied at the specified offset in the space of the destination scene
+	 * from the source slice in the source scene.
 	 * \return true on success (destination scene contains the slice), false on failure (there are no allocated hash blocks
 	 */
 	static bool CopySceneSlice(ITMScene<TVoxel, ITMPlainVoxelArray>* destination,
 	                           ITMScene<TVoxel, ITMPlainVoxelArray>* source,
-	                           Vector6i bounds);
+	                           Vector6i bounds, const Vector3i& offset = Vector3i(0));
+
+	/**
+	 * \brief Copies the whole scene
+	 * \param destination destination voxel grid (may be uninitialized, will be erased)
+	 * \param source source voxel grid
+	 * \param offset copies voxels at the specified offset -- leaves the leftover margin as default values, the source
+	 * values that go out-of-range due to the offset will be omitted
+	 * \return true on success, false on failure
+	 */
+	static bool CopyScene(ITMScene<TVoxel, ITMPlainVoxelArray>* destination,
+	                      ITMScene<TVoxel, ITMPlainVoxelArray>* source,
+	                      const Vector3i& offset = Vector3i(0));
+
 };
 
 // endregion ================= SCENE MANIPULATION ENGINE ===============================================================

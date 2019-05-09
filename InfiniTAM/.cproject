@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
+    	
+    <storageModule moduleId="org.eclipse.cdt.core.settings">
+        		
+        <cconfiguration id="com.nvidia.cuda.toolchain.linux.configuration.debug.321335">
+            			
+            <storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.nvidia.cuda.toolchain.linux.configuration.debug.321335" moduleId="org.eclipse.cdt.core.settings" name="Debug">
+                				
+                <externalSettings/>
+                				
+                <extensions>
+                    					
+                    <extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+                    					
+                    <extension id="com.nvidia.cuda.toolchain.nvccErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    				
+                </extensions>
+                			
+            </storageModule>
+            			
+            <storageModule moduleId="cdtBuildSystem" version="4.0.0">
+                				
+                <configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" description="" id="com.nvidia.cuda.toolchain.linux.configuration.debug.321335" name="Debug" optionalBuildProperties="org.eclipse.cdt.docker.launcher.containerbuild.property.volumes=,org.eclipse.cdt.docker.launcher.containerbuild.property.selectedvolumes=" parent="com.nvidia.cuda.toolchain.linux.configuration.debug">
+                    					
+                    <folderInfo id="com.nvidia.cuda.toolchain.linux.configuration.debug.321335." name="/" resourcePath="">
+                        						
+                        <toolChain id="com.nvidia.cuda.toolchain.linux.debugToolchain.751209387" name="CUDA Linux toolchain" superClass="com.nvidia.cuda.toolchain.linux.debugToolchain">
+                            							
+                            <targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="com.nvidia.cuda.toolchain.targetLinuxPlatform.1513682760" isAbstract="false" osList="linux" superClass="com.nvidia.cuda.toolchain.targetLinuxPlatform"/>
+                            							
+                            <builder buildPath="/InfiniTAM/build/Debug" id="de.marw.cdt.cmake.core.genscriptbuilder.1697827985" parallelBuildOn="false" superClass="de.marw.cdt.cmake.core.genscriptbuilder"/>
+                            							
+                            <tool id="nvcc.linker.209174917" name="NVCC linker" superClass="nvcc.linker">
+                                								
+                                <inputType id="com.nvidia.cuda.toolchain.nvcc.linker.input.1011117984" superClass="com.nvidia.cuda.toolchain.nvcc.linker.input">
+                                    									
+                                    <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
+                                    									
+                                    <additionalInput kind="additionalinput" paths="$(LIBS)"/>
+                                    								
+                                </inputType>
+                                							
+                            </tool>
+                            							
+                            <tool id="nvcc.archiver.2143823765" name="NVCC archiver" superClass="nvcc.archiver"/>
+                            							
+                            <tool id="nvcc.compiler.1301590598" name="NVCC Compiler" superClass="nvcc.compiler">
+                                								
+                                <option defaultValue="true" id="com.nvidia.cuda.toolchain.compiler.device-debug.1285671817" name="Generate debug information for device code (-G)" superClass="com.nvidia.cuda.toolchain.compiler.device-debug" useByScannerDiscovery="false" valueType="boolean"/>
+                                								
+                                <option defaultValue="true" id="com.nvidia.cuda.toolchain.compiler.debug.798657919" name="Generate debug information for host code (-g)" superClass="com.nvidia.cuda.toolchain.compiler.debug" useByScannerDiscovery="false" valueType="boolean"/>
+                                								
+                                <option id="nvcc.compiler.pic.91183243" name="Position Independent Code (-fPIC)" superClass="nvcc.compiler.pic" useByScannerDiscovery="false"/>
+                                								
+                                <inputType id="com.nvidia.cuda.toolchain.input.c.1153491069" superClass="com.nvidia.cuda.toolchain.input.c"/>
+                                								
+                                <inputType id="com.nvidia.cuda.toolchain.input.cu.1637146445" superClass="com.nvidia.cuda.toolchain.input.cu"/>
+                                								
+                                <inputType id="com.nvidia.cuda.toolchain.input.cpp.885752876" superClass="com.nvidia.cuda.toolchain.input.cpp"/>
+                                							
+                            </tool>
+                            						
+                        </toolChain>
+                        					
+                    </folderInfo>
+                    				
+                </configuration>
+                			
+            </storageModule>
+            			
+            <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+            		
+        </cconfiguration>
+        		
+        <cconfiguration id="com.nvidia.cuda.toolchain.linux.configuration.release.346718">
+            			
+            <storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.nvidia.cuda.toolchain.linux.configuration.release.346718" moduleId="org.eclipse.cdt.core.settings" name="Release">
+                				
+                <externalSettings/>
+                				
+                <extensions>
+                    					
+                    <extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+                    					
+                    <extension id="com.nvidia.cuda.toolchain.nvccErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    				
+                </extensions>
+                			
+            </storageModule>
+            			
+            <storageModule moduleId="cdtBuildSystem" version="4.0.0">
+                				
+                <configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.nvidia.cuda.toolchain.linux.configuration.release.346718" name="Release" optionalBuildProperties="" parent="com.nvidia.cuda.toolchain.linux.configuration.release">
+                    					
+                    <folderInfo id="com.nvidia.cuda.toolchain.linux.configuration.release.346718." name="/" resourcePath="">
+                        						
+                        <toolChain id="com.nvidia.cuda.toolchain.linux.releaseToolchain.40118159" name="CUDA Linux toolchain" superClass="com.nvidia.cuda.toolchain.linux.releaseToolchain">
+                            							
+                            <targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="com.nvidia.cuda.toolchain.targetLinuxPlatform.457990973" isAbstract="false" osList="linux" superClass="com.nvidia.cuda.toolchain.targetLinuxPlatform"/>
+                            							
+                            <builder buildPath="/InfiniTAM/build/Release" id="de.marw.cdt.cmake.core.genscriptbuilder.560970431" parallelBuildOn="false" superClass="de.marw.cdt.cmake.core.genscriptbuilder"/>
+                            							
+                            <tool id="nvcc.linker.1767648924" name="NVCC linker" superClass="nvcc.linker">
+                                								
+                                <inputType id="com.nvidia.cuda.toolchain.nvcc.linker.input.193056612" superClass="com.nvidia.cuda.toolchain.nvcc.linker.input">
+                                    									
+                                    <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
+                                    									
+                                    <additionalInput kind="additionalinput" paths="$(LIBS)"/>
+                                    								
+                                </inputType>
+                                							
+                            </tool>
+                            							
+                            <tool id="nvcc.archiver.1004127473" name="NVCC archiver" superClass="nvcc.archiver"/>
+                            							
+                            <tool id="nvcc.compiler.538754589" name="NVCC Compiler" superClass="nvcc.compiler">
+                                								
+                                <option defaultValue="com.nvidia.cuda.toolchain.compiler.optimization.level3" id="com.nvidia.cuda.toolchain.compiler.optimization.1753566591" name="Optimization level" superClass="com.nvidia.cuda.toolchain.compiler.optimization" useByScannerDiscovery="false" valueType="enumerated"/>
+                                								
+                                <option id="nvcc.compiler.pic.1869204698" name="Position Independent Code (-fPIC)" superClass="nvcc.compiler.pic" useByScannerDiscovery="false"/>
+                                								
+                                <inputType id="com.nvidia.cuda.toolchain.input.c.1396638660" superClass="com.nvidia.cuda.toolchain.input.c"/>
+                                								
+                                <inputType id="com.nvidia.cuda.toolchain.input.cu.1713560172" superClass="com.nvidia.cuda.toolchain.input.cu"/>
+                                								
+                                <inputType id="com.nvidia.cuda.toolchain.input.cpp.410046413" superClass="com.nvidia.cuda.toolchain.input.cpp"/>
+                                							
+                            </tool>
+                            						
+                        </toolChain>
+                        					
+                    </folderInfo>
+                    				
+                </configuration>
+                			
+            </storageModule>
+            			
+            <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+            			
+            <storageModule buildDir="build/${ConfigName}" moduleId="de.marw.cdt.cmake.core.settings">
+                				
+                <options clearCache="true"/>
+                				
+                <defs/>
+                				
+                <undefs/>
+                			
+            </storageModule>
+            		
+        </cconfiguration>
+        	
+    </storageModule>
+    	
+    <storageModule moduleId="cdtBuildSystem" version="4.0.0">
+        		
+        <project id="InfiniTAM.com.nvidia.cuda.toolchain.linux.build.exe.125131914" name="Executable" projectType="com.nvidia.cuda.toolchain.linux.build.exe"/>
+        	
+    </storageModule>
+    	
+    <storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+    	
+    <storageModule moduleId="scannerConfiguration">
+        		
+        <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+        		
+        <scannerConfigBuildInfo instanceId="com.nvidia.cuda.toolchain.linux.configuration.release.346718;com.nvidia.cuda.toolchain.linux.configuration.release.346718.;nvcc.compiler.538754589;com.nvidia.cuda.toolchain.input.cu.1713560172">
+            			
+            <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
+            		
+        </scannerConfigBuildInfo>
+        		
+        <scannerConfigBuildInfo instanceId="com.nvidia.cuda.toolchain.linux.configuration.release.346718;com.nvidia.cuda.toolchain.linux.configuration.release.346718.;nvcc.compiler.538754589;com.nvidia.cuda.toolchain.input.c.1396638660">
+            			
+            <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
+            		
+        </scannerConfigBuildInfo>
+        		
+        <scannerConfigBuildInfo instanceId="com.nvidia.cuda.toolchain.linux.configuration.release.346718;com.nvidia.cuda.toolchain.linux.configuration.release.346718.;nvcc.compiler.538754589;com.nvidia.cuda.toolchain.input.cpp.410046413">
+            			
+            <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
+            		
+        </scannerConfigBuildInfo>
+        		
+        <scannerConfigBuildInfo instanceId="com.nvidia.cuda.toolchain.linux.configuration.debug.321335;com.nvidia.cuda.toolchain.linux.configuration.debug.321335.;nvcc.compiler.1301590598;com.nvidia.cuda.toolchain.input.cpp.885752876">
+            			
+            <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
+            		
+        </scannerConfigBuildInfo>
+        		
+        <scannerConfigBuildInfo instanceId="com.nvidia.cuda.toolchain.linux.configuration.debug.321335;com.nvidia.cuda.toolchain.linux.configuration.debug.321335.;nvcc.compiler.1301590598;com.nvidia.cuda.toolchain.input.c.1153491069">
+            			
+            <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
+            		
+        </scannerConfigBuildInfo>
+        		
+        <scannerConfigBuildInfo instanceId="com.nvidia.cuda.toolchain.linux.configuration.debug.321335;com.nvidia.cuda.toolchain.linux.configuration.debug.321335.;nvcc.compiler.1301590598;com.nvidia.cuda.toolchain.input.cu.1637146445">
+            			
+            <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
+            		
+        </scannerConfigBuildInfo>
+        	
+    </storageModule>
+    	
+    <storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+    
+</cproject>

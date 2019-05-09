@@ -60,118 +60,133 @@ struct ITMHashEntry
 
 namespace ITMLib
 {
-	/** \brief
-	This is the central class for the voxel block hash
-	implementation. It contains all the data needed on the CPU
-	and a pointer to the data structure on the GPU.
-	*/
-	class ITMVoxelBlockHash
-	{
-	public:
-		typedef ITMHashEntry IndexData;
+/** \brief
+This is the central class for the voxel block hash
+implementation. It contains all the data needed on the CPU
+and a pointer to the data structure on the GPU.
+*/
+class ITMVoxelBlockHash
+{
+public:
+	typedef ITMHashEntry IndexData;
 
-		struct IndexCache {
-			Vector3i blockPos;
-			int blockPtr;
-			_CPU_AND_GPU_CODE_ IndexCache(void) : blockPos(0x7fffffff), blockPtr(-1) {}
-		};
+	struct IndexCache {
+		Vector3i blockPos;
+		int blockPtr;
+		_CPU_AND_GPU_CODE_ IndexCache(void) : blockPos(0x7fffffff), blockPtr(-1) {}
+	};
 
-		/** Maximum number of total entries. */
-		static const CONSTPTR(int) noTotalEntries = SDF_BUCKET_NUM + SDF_EXCESS_LIST_SIZE;
-		static const CONSTPTR(int) voxelBlockSize = SDF_BLOCK_SIZE * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	/** Maximum number of total entries. */
+	static const CONSTPTR(int) noTotalEntries = SDF_BUCKET_NUM + SDF_EXCESS_LIST_SIZE;
+	static const CONSTPTR(int) voxelBlockSize = SDF_BLOCK_SIZE * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 
 #ifndef __METALC__
-	private:
-		int lastFreeExcessListId;
+private:
+	int lastFreeExcessListId;
 
-		/** The actual data in the hash table. */
-		ORUtils::MemoryBlock<ITMHashEntry> *hashEntries;
+	/** The actual data in the hash table. */
+	ORUtils::MemoryBlock<ITMHashEntry> *hashEntries;
 
-		/** Identifies which entries of the overflow
-		list are allocated. This is used if too
-		many hash collisions caused the buckets to
-		overflow.
-		*/
-		ORUtils::MemoryBlock<int> *excessAllocationList;
+	/** Identifies which entries of the overflow
+	list are allocated. This is used if too
+	many hash collisions caused the buckets to
+	overflow.
+	*/
+	ORUtils::MemoryBlock<int> *excessAllocationList;
 
-		MemoryDeviceType memoryType;
+	MemoryDeviceType memoryType;
 
-	public:
-		MemoryDeviceType getMemoryType(){
-			return memoryType;
-		}
+	void Initialize(MemoryDeviceType memoryType){
+		this->memoryType = memoryType;
+		hashEntries = new ORUtils::MemoryBlock<ITMHashEntry>(noTotalEntries, memoryType);
+		excessAllocationList = new ORUtils::MemoryBlock<int>(SDF_EXCESS_LIST_SIZE, memoryType);
+	}
 
-		ITMVoxelBlockHash(MemoryDeviceType memoryType)
-		{
-			this->memoryType = memoryType;
-			hashEntries = new ORUtils::MemoryBlock<ITMHashEntry>(noTotalEntries, memoryType);
-			excessAllocationList = new ORUtils::MemoryBlock<int>(SDF_EXCESS_LIST_SIZE, memoryType);
-		}
+public:
+	MemoryDeviceType getMemoryType(){
+		return memoryType;
+	}
 
-		~ITMVoxelBlockHash(void)
-		{
-			delete hashEntries;
-			delete excessAllocationList;
-		}
+	ITMVoxelBlockHash(MemoryDeviceType memoryType)
+	{
+		Initialize(memoryType);
+	}
 
-		/** Get the list of actual entries in the hash table. */
-		const ITMHashEntry *GetEntries(void) const { return hashEntries->GetData(memoryType); }
-		ITMHashEntry *GetEntries(void) { return hashEntries->GetData(memoryType); }
+	ITMVoxelBlockHash(MemoryDeviceType memoryType, Vector3i size, Vector3i offset)
+	{
+		Initialize(memoryType);
+	}
 
-		const IndexData *getIndexData(void) const { return hashEntries->GetData(memoryType); }
-		IndexData *getIndexData(void) { return hashEntries->GetData(memoryType); }
+	~ITMVoxelBlockHash(void)
+	{
+		delete hashEntries;
+		delete excessAllocationList;
+	}
 
-		/** Get the list that identifies which entries of the
-		overflow list are allocated. This is used if too
-		many hash collisions caused the buckets to overflow.
-		*/
-		const int *GetExcessAllocationList(void) const { return excessAllocationList->GetData(memoryType); }
-		int *GetExcessAllocationList(void) { return excessAllocationList->GetData(memoryType); }
+	/** Get the list of actual entries in the hash table. */
+	const ITMHashEntry *GetEntries(void) const { return hashEntries->GetData(memoryType); }
+	ITMHashEntry *GetEntries(void) { return hashEntries->GetData(memoryType); }
 
-		int GetLastFreeExcessListId(void) { return lastFreeExcessListId; }
-		void SetLastFreeExcessListId(int lastFreeExcessListId) { this->lastFreeExcessListId = lastFreeExcessListId; }
+	/**Get the memory type used for storage.**/
+	MemoryDeviceType GetMemoryType() const{
+		return this->memoryType;
+	}
+
+	/** Get the list of actual entries in the hash table (alternative to GetEntries). */
+	const IndexData *getIndexData(void) const { return hashEntries->GetData(memoryType); }
+	IndexData *getIndexData(void) { return hashEntries->GetData(memoryType); }
+
+	/** Get the list that identifies which entries of the
+	overflow list are allocated. This is used if too
+	many hash collisions caused the buckets to overflow.
+	*/
+	const int *GetExcessAllocationList(void) const { return excessAllocationList->GetData(memoryType); }
+	int *GetExcessAllocationList(void) { return excessAllocationList->GetData(memoryType); }
+
+	int GetLastFreeExcessListId(void) { return lastFreeExcessListId; }
+	void SetLastFreeExcessListId(int lastFreeExcessListId) { this->lastFreeExcessListId = lastFreeExcessListId; }
 
 #ifdef COMPILE_WITH_METAL
-		const void* GetEntries_MB(void) { return hashEntries->GetMetalBuffer(); }
+	const void* GetEntries_MB(void) { return hashEntries->GetMetalBuffer(); }
 		const void* GetExcessAllocationList_MB(void) { return excessAllocationList->GetMetalBuffer(); }
 		const void* getIndexData_MB(void) const { return hashEntries->GetMetalBuffer(); }
 #endif
 
-		/** Maximum number of total entries. */
-		int getNumAllocatedVoxelBlocks(void) { return SDF_LOCAL_BLOCK_NUM; }
-		int getVoxelBlockSize(void) { return SDF_BLOCK_SIZE3; }
+	/** Maximum number of total entries. */
+	int getNumAllocatedVoxelBlocks(void) { return SDF_LOCAL_BLOCK_NUM; }
+	int getVoxelBlockSize(void) { return SDF_BLOCK_SIZE3; }
 
-		void SaveToDirectory(const std::string &outputDirectory) const
-		{
-			std::string hashEntriesFileName = outputDirectory + "hash.dat";
-			std::string excessAllocationListFileName = outputDirectory + "excess.dat";
-			std::string lastFreeExcessListIdFileName = outputDirectory + "last.txt";
+	void SaveToDirectory(const std::string &outputDirectory) const
+	{
+		std::string hashEntriesFileName = outputDirectory + "hash.dat";
+		std::string excessAllocationListFileName = outputDirectory + "excess.dat";
+		std::string lastFreeExcessListIdFileName = outputDirectory + "last.txt";
 
-			std::ofstream ofs(lastFreeExcessListIdFileName.c_str());
-			if (!ofs) throw std::runtime_error("Could not open " + lastFreeExcessListIdFileName + " for writing");
+		std::ofstream ofs(lastFreeExcessListIdFileName.c_str());
+		if (!ofs) throw std::runtime_error("Could not open " + lastFreeExcessListIdFileName + " for writing");
 
-			ofs << lastFreeExcessListId;
-			ORUtils::MemoryBlockPersister::SaveMemoryBlock(hashEntriesFileName, *hashEntries, memoryType);
-			ORUtils::MemoryBlockPersister::SaveMemoryBlock(excessAllocationListFileName, *excessAllocationList, memoryType);
-		}
+		ofs << lastFreeExcessListId;
+		ORUtils::MemoryBlockPersister::SaveMemoryBlock(hashEntriesFileName, *hashEntries, memoryType);
+		ORUtils::MemoryBlockPersister::SaveMemoryBlock(excessAllocationListFileName, *excessAllocationList, memoryType);
+	}
 
-		void LoadFromDirectory(const std::string &inputDirectory)
-		{
-			std::string hashEntriesFileName = inputDirectory + "hash.dat";
-			std::string excessAllocationListFileName = inputDirectory + "excess.dat";
-			std::string lastFreeExcessListIdFileName = inputDirectory + "last.txt";
+	void LoadFromDirectory(const std::string &inputDirectory)
+	{
+		std::string hashEntriesFileName = inputDirectory + "hash.dat";
+		std::string excessAllocationListFileName = inputDirectory + "excess.dat";
+		std::string lastFreeExcessListIdFileName = inputDirectory + "last.txt";
 
-			std::ifstream ifs(lastFreeExcessListIdFileName.c_str());
-			if (!ifs) throw std::runtime_error("Count not open " + lastFreeExcessListIdFileName + " for reading");
+		std::ifstream ifs(lastFreeExcessListIdFileName.c_str());
+		if (!ifs) throw std::runtime_error("Count not open " + lastFreeExcessListIdFileName + " for reading");
 
-			ifs >> this->lastFreeExcessListId;
-			ORUtils::MemoryBlockPersister::LoadMemoryBlock(hashEntriesFileName.c_str(), *hashEntries, memoryType);
-			ORUtils::MemoryBlockPersister::LoadMemoryBlock(excessAllocationListFileName.c_str(), *excessAllocationList, memoryType);
-		}
+		ifs >> this->lastFreeExcessListId;
+		ORUtils::MemoryBlockPersister::LoadMemoryBlock(hashEntriesFileName.c_str(), *hashEntries, memoryType);
+		ORUtils::MemoryBlockPersister::LoadMemoryBlock(excessAllocationListFileName.c_str(), *excessAllocationList, memoryType);
+	}
 
-		// Suppress the default copy constructor and assignment operator
-		ITMVoxelBlockHash(const ITMVoxelBlockHash&);
-		ITMVoxelBlockHash& operator=(const ITMVoxelBlockHash&);
+	// Suppress the default copy constructor and assignment operator
+	ITMVoxelBlockHash(const ITMVoxelBlockHash&);
+	ITMVoxelBlockHash& operator=(const ITMVoxelBlockHash&);
 #endif
-	};
+};
 }
