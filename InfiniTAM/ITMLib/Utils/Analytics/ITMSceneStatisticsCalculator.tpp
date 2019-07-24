@@ -264,8 +264,7 @@ std::vector<int> ITMSceneStatisticsCalculator<TVoxel, TIndex>::GetFilledHashBloc
 
 template<typename TVoxel, typename TIndex>
 int ITMSceneStatisticsCalculator<TVoxel, TIndex>::ComputeAllocatedHashBlockCount(ITMScene<TVoxel, TIndex>* scene) {
-	HashOnlyStatisticsFunctor<TVoxel,TIndex>::ComputeAllocatedHashBlockCount(scene);
-	DIEWITHEXCEPTION("Not implemented");
+	return HashOnlyStatisticsFunctor<TVoxel,TIndex>::ComputeAllocatedHashBlockCount(scene);
 }
 // region ================================ VOXEL GRADIENTS =============================================================
 

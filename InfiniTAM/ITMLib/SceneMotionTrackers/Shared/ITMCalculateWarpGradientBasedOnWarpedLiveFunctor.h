@@ -375,10 +375,14 @@ public:
 				totalDataEnergy, totalLevelSetEnergy, totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
 
 
+		ITMSceneStatisticsCalculator<TVoxelCanonical, TIndex>& calculator = ITMSceneStatisticsCalculator<TVoxelCanonical, TIndex>::Instance();
+
+		int allocated_hash_block_count = calculator.ComputeAllocatedHashBlockCount(canonicalScene);
+
 		CalculateAndPrintAdditionalStatistics(
 				this->switches.enableDataTerm, this->switches.enableLevelSetTerm, cumulativeCanonicalSdf,
 				cumulativeLiveSdf,
-				cumulativeWarpDist, cumulativeSdfDiff, consideredVoxelCount, dataVoxelCount, levelSetVoxelCount);
+				cumulativeWarpDist, cumulativeSdfDiff, consideredVoxelCount, dataVoxelCount, levelSetVoxelCount, allocated_hash_block_count);
 #endif
 	}
 

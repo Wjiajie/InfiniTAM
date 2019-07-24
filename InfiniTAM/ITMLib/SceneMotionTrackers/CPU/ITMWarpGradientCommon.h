@@ -60,7 +60,8 @@ void CalculateAndPrintAdditionalStatistics(const bool& enableDataTerm,
                                            const double& cumulativeSdfDiff,
                                            const unsigned int& consideredVoxelCount,
                                            const unsigned int& dataVoxelCount,
-                                           const unsigned int& levelSetVoxelCount) {
+                                           const unsigned int& levelSetVoxelCount,
+                                           const unsigned int usedHashblockCount = 0) {
 
 	double averageCanonicalSdf = cumulativeCanonicalSdf / consideredVoxelCount;
 	double averageLiveSdf = cumulativeLiveSdf / consideredVoxelCount;
@@ -82,6 +83,11 @@ void CalculateAndPrintAdditionalStatistics(const bool& enableDataTerm,
 		std::cout << " LS term v-count: " << levelSetVoxelCount;
 	}
 	std::cout << " Ave warp distance: " << averageWarpDist;
+
+
+	if (usedHashblockCount > 0){
+		std::cout << " Used hash block count: " << usedHashblockCount;
+	}
 	std::cout << std::endl;
 }
 

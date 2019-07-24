@@ -412,7 +412,7 @@ inline void ComputeSdfHessian(THREADPTR(Matrix3f)& hessian,
 
 	float vals[9] = {delta_xx, delta_xy, delta_xz,
 	                 delta_xy, delta_yy, delta_yz,
-	                 delta_yz, delta_yz, delta_zz};
+	                 delta_xz, delta_yz, delta_zz};
 
 	hessian.setValues(vals);
 };
@@ -463,7 +463,7 @@ inline void ComputeSdfHessian_IndexedFields(THREADPTR(Matrix3f)& hessian,
 
 	float vals[9] = {delta_xx, delta_xy, delta_xz,
 	                 delta_xy, delta_yy, delta_yz,
-	                 delta_yz, delta_yz, delta_zz};
+	                 delta_xz, delta_yz, delta_zz};
 
 	hessian.setValues(vals);
 };
