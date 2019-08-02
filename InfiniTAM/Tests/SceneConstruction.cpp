@@ -15,10 +15,13 @@
 //  limitations under the License.
 //  ================================================================
 
-#define BOOST_TEST_MODULE AllTests
+#define BOOST_TEST_MODULE SceneConstruction
 #ifndef WIN32
 #define BOOST_TEST_DYN_LINK
 #endif
+
+//stdlib
+#include <iostream>
 
 //boost
 #include <boost/test/unit_test.hpp>
@@ -49,13 +52,13 @@ using namespace ITMLib;
 BOOST_AUTO_TEST_CASE(testSetVoxelAndCopyScene_PlainVoxelArray) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
 	settings->deviceType = ITMLibSettings::DEVICE_CPU;
+
 	ITMScene<ITMVoxelCanonical, ITMPlainVoxelArray> scene1(&settings->sceneParams,
 	                                                       settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                       settings->GetMemoryType());
 
 	typedef ITMSceneManipulationEngine_CPU<ITMVoxelCanonical, ITMPlainVoxelArray> CanonicalSceneManipulationEngine;
 	typedef ITMSceneManipulationEngine_CPU<ITMVoxelLive, ITMPlainVoxelArray> LiveSceneManipulationEngine;
-
 
 	CanonicalSceneManipulationEngine::ResetScene(&scene1);
 
@@ -102,6 +105,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopyScene_PlainVoxelArray) {
 
 BOOST_AUTO_TEST_CASE(testSetVoxelAndCopyScene_VoxelBlockHash) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
+
 	settings->deviceType = ITMLibSettings::DEVICE_CPU;
 	ITMScene<ITMVoxelCanonical, ITMVoxelBlockHash> scene1(&settings->sceneParams,
 	                                                      settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
@@ -189,6 +193,8 @@ BOOST_AUTO_TEST_CASE(testITMIntArrayMap3D) {
 	BOOST_REQUIRE(map3 == map4);
 }
 
+
+//TODO: delete or restore
 //BOOST_AUTO_TEST_CASE(testSceneSaveLoadCompact) {
 //	ITMLibSettings* settings = &ITMLibSettings::Instance();
 //

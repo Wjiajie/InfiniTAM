@@ -32,6 +32,7 @@ CUDADefines.h
 FileUtils.h
 HomkerMap.h
 Image.h
+JetbrainsCUDASyntax.hpp
 KeyValueConfig.h
 LexicalCast.h
 MathUtils.h

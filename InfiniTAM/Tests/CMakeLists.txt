@@ -19,7 +19,7 @@ if(BUILD_TESTS)
     #############################
     # Specify the project files #
     #############################
-    SET(sources AllTests.cpp TestUtils.cpp Instantiations.cpp )
+    SET(sources SceneConstruction.cpp TestUtils.cpp Instantiations.cpp)
     SET(headers TestUtils.h TestUtils.tpp )
 
     ################################

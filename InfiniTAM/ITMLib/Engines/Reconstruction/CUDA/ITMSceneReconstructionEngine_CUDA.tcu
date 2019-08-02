@@ -5,6 +5,7 @@
 #include "../Shared/ITMSceneReconstructionEngine_Shared.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../../Utils/ITMCUDAUtils.h"
+#include "../../../../ORUtils/JetbrainsCUDASyntax.hpp"
 
 struct AllocationTempData {
 	int noAllocatedVoxelEntries;
@@ -118,7 +119,7 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateScene
 	int *voxelAllocationList = scene->localVBA.GetAllocationList();
 	int *excessAllocationList = scene->index.GetExcessAllocationList();
 	ITMHashEntry *hashTable = scene->index.GetEntries();
-	ITMHashSwapState *swapStates = scene->globalCache != NULL ? scene->globalCache->GetSwapStates(true) : 0;
+	ITMHashSwapState *swapStates = scene->Swapping() ? scene->globalCache->GetSwapStates(true) : 0;
 
 	int noTotalEntries = scene->index.noTotalEntries;
 
@@ -155,7 +156,7 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateScene
 		scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max);
 	ORcudaKernelCheck;
 
-	bool useSwapping = scene->globalCache != NULL;
+	bool useSwapping = scene->Swapping();
 	if (onlyUpdateVisibleList) useSwapping = false;
 	if (!onlyUpdateVisibleList)
 	{

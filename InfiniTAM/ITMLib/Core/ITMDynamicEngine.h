@@ -1,4 +1,5 @@
 // Copyright 2014-2017 Oxford University Innovation Limited and the authors of InfiniTAM
+// Modified/expanded work copyright 2017-2019 Gregory Kramida
 
 #pragma once
 

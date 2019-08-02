@@ -72,7 +72,7 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLi
 	float* depth = view->depth->GetData(MEMORYDEVICE_CPU);
 	int* voxelAllocationList = scene->localVBA.GetAllocationList();
 	ITMHashEntry* hashTable = scene->index.GetEntries();
-	ITMHashSwapState* swapStates = scene->globalCache != nullptr ? scene->globalCache->GetSwapStates(false) : 0;
+	ITMHashSwapState* swapStates = scene->Swapping() ? scene->globalCache->GetSwapStates(false) : 0;
 	int* visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
 	uchar* hashBlockVisibilityTypes = renderState_vh->GetEntriesVisibleType();
 	uchar* liveEntryAllocationTypes = this->liveEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
