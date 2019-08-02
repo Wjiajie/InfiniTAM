@@ -1,3 +1,50 @@
+# InfiniTAM-Based Experiment With Dynamic-scene Reconstruction
+
+This project started out about two years ago with a graduate student (myself) trying to replicate the results of the KillingFusion (Slavcheva et al., CVPR2017) and, later, the SobolevFusion (Slavcheva et al., CVPR2018) algorithms, without any access to the source code and little guidance from the original authors. It does not currently fully replicate the results, i.e. there is significant drift on the "Snoopy" depth video sequence originally used by the Killing/SobolevFusion authors, as the below figure demonstrates.
+
+The image on the left shows the reconstruction result in the canonical pose for frames 15-65 of the Snoopy sequence. The image on the right shows the continued reconstruction after frame 135, with the noise resulting from drift highlighted.
+![Figure showing the result before drift on the left and with significant drift on the right](https://i.ibb.co/x2gj8Q0/snoopy.png)
+
+## What may be going wrong?
+
+I don't know exactly yet, but one thing we do know is that the rigid alignment doesn't always give us the best result. I am using one of InfiniTAM's original trackers, I haven't tried to play with it's settings yet. Mira Slavcheva's algorithms both use SDF-2-SDF Fusion (also published by Slavcheva et al.) for rigid tracking, which she has shown to work better than the existing alternative glorified ICP versions. I will continue to experiment to see if rigid tracking is the issue and potentially implement SDF-2-SDF fusion as a separate Tracker within InfiniTAM.
+
+It could be that some detail is missing from the implementation, and could be that it is near-impossible to tune. A lot of details about the algorithm are missing from the official publications, there are a lot of things that can be interpreted ambiguiously (for instance, when exactly is the data materialized for every stage of the algorithm?) and correspondence I've had with the authors so far appears to be self-contradicting about subtle details, such as ignoring / not ignoring values from certain voxels for part / all of the gradient computation and similar things.
+
+## What details are currently missing that we know of, and what are some known issues?
+
+1. SDF-2-SDF rigid alignment (InfiniTAM's trackers are used instead)
+2. Capability to run the optimization in-reverse, in order to forward-animate the more-complete canonical mesh.
+3. OpenMP-parallelized CPU implementation currently has a bug
+4. CUDA implementation is incomplete and has all sorts of bugs
+
+## How do I try this code out?
+
+1. You need to be somewhat well-versed in using CMake. 3rd-party requirements are all open-source, and you can glean what you're missing by running the CMake generator.
+2. Linux currently is the only officially supported OS. All of the required CMake packages and this code in theory should work on any major platform, so you can try on MacOS or Windows at your own risk, and let me know if you'd like to fix things that are not working on your platform. If this project achieves greater success, then I'll probably start officially supporting the other systems.
+3. Build without OpenMP (use CMake to disable it) since it's buggy at the time of writing! I also recommend building with FFMPEG, since that will enable visual debugging/video recording.
+4. To obtain the result shown above, download the (original snoopy sequence)[http://campar.in.tum.de/personal/slavcheva/deformable-dataset/index.html], and run like this (modify the paths for your environment):
+
+<build_folder>/Apps/InfiniTAM_bpo/InfiniTAM_bpo "snoopy/snoopy_calib.txt" "snoopy/frames/color_%06i.png" "snoopy/frames/depth_%06i.png" "snoopy/frames/omask_%06i.png" --output debug_output/snoopy --start_from_frame_ix 16 --process_N_frames 50 --record_reconstruction_video --max_iterations 300 --weight_data_term 2.0
+
+**Note**: If you build with FFMPEG, this will also record a video in the folder specified, here shown as "debug_output/snoopy", which shows the reconstruction result in the canonical pose of successive frames.
+
+## Is this code being worked on / maintained?
+
+Yes, after a looong break, I'm officially switching to try to do something with it again, at least for awhile. Even if I'm not actively working on it, I do my best to respond to new issues or collaboration requests.
+
+## Will I merge this back into InfiniTAM?
+
+TLDR: Maybe. 
+
+Originally, that was the plan. However, at the time of writing I'm exhausted from trying to stick to the open(for extension)-closed(for modification) principle. The code wasn't originally designed for dynamic-scene fusion, so some things really do need to change to make the new things more maintainable. I've already changed a lot of code from the original InfiniTAM codebase, IMHO, for the better.
+
+If this fork achieves reasonable success, I'll reach out to the InfiniTAM authors and ask whether they'd like to work on integrating my changes into their codebase. I (hope that I) didn't break anything so far, but the original code lacks any hint of continuous integration, which I plan to add to it, at least for my code, shortly.
+
+This code is still privy to the original LICENSE included within.
+
+The Following is the original InfiniTAM README:
+
 # InfiniTAM v3
 
 This is the main branch of the software bundle "InfiniTAM", the current version is actively maintained by:
