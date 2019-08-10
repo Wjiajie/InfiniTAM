@@ -22,7 +22,7 @@
 //local
 #include "ITMSceneSliceVisualizer1D.h"
 #include "ITMSceneSliceVisualizer1D.tpp"
-#include "../../Objects/Scene/ITMScene.h"
+#include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../ITMPrintHelpers.h"
 
@@ -63,37 +63,37 @@ void ITMSceneSliceVisualizer1D::SaveScreenshot(std::string path) {
 // region ==================================== EXPLICIT INSTANTIATIONS =================================================
 
 template void
-ITMSceneSliceVisualizer1D::Plot1DSceneSlice<ITMVoxelCanonical, ITMPlainVoxelArray>(
-		ITMScene<ITMVoxelCanonical, ITMPlainVoxelArray>* scene, Vector4i color, double width);
+ITMSceneSliceVisualizer1D::Plot1DSceneSlice<ITMVoxel, ITMPlainVoxelArray>(
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* scene, Vector4i color, double width);
 
 template void
-ITMSceneSliceVisualizer1D::Plot1DSceneSlice<ITMVoxelLive, ITMPlainVoxelArray>(ITMScene<ITMVoxelLive, ITMPlainVoxelArray>* scene,
-                                                                         Vector4i color, double width);
+ITMSceneSliceVisualizer1D::Plot1DSceneSlice<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* scene,
+                                                                          Vector4i color, double width);
 
 template void
-ITMSceneSliceVisualizer1D::Plot1DIndexedSceneSlice<ITMVoxelLive, ITMPlainVoxelArray>(
-		ITMScene<ITMVoxelLive, ITMPlainVoxelArray>* scene, Vector4i color, double width, int fieldIndex);
+ITMSceneSliceVisualizer1D::Plot1DIndexedSceneSlice<ITMVoxel, ITMPlainVoxelArray>(
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* scene, Vector4i color, double width, int fieldIndex);
 
 template void
-ITMSceneSliceVisualizer1D::Draw1DWarpUpdateVector<ITMVoxelCanonical, ITMPlainVoxelArray>(
-		ITMScene<ITMVoxelCanonical, ITMPlainVoxelArray>* scene, Vector4i color);
+ITMSceneSliceVisualizer1D::Draw1DWarpUpdateVector<ITMVoxel, ITMPlainVoxelArray>(
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* scene, Vector4i color);
 
 //###
 
 template void
-ITMSceneSliceVisualizer1D::Plot1DSceneSlice<ITMVoxelCanonical, ITMVoxelBlockHash>(
-		ITMScene<ITMVoxelCanonical, ITMVoxelBlockHash>* scene, Vector4i color, double width);
+ITMSceneSliceVisualizer1D::Plot1DSceneSlice<ITMVoxel, ITMVoxelBlockHash>(
+		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* scene, Vector4i color, double width);
 
 template void
-ITMSceneSliceVisualizer1D::Plot1DSceneSlice<ITMVoxelLive, ITMVoxelBlockHash>(ITMScene<ITMVoxelLive, ITMVoxelBlockHash>* scene,
+ITMSceneSliceVisualizer1D::Plot1DSceneSlice<ITMVoxel, ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* scene,
                                                                          Vector4i color, double width);
 
 template void
-ITMSceneSliceVisualizer1D::Plot1DIndexedSceneSlice<ITMVoxelLive, ITMVoxelBlockHash>(
-		ITMScene<ITMVoxelLive, ITMVoxelBlockHash>* scene, Vector4i color, double width, int fieldIndex);
+ITMSceneSliceVisualizer1D::Plot1DIndexedSceneSlice<ITMVoxel, ITMVoxelBlockHash>(
+		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* scene, Vector4i color, double width, int fieldIndex);
 
 template void
-ITMSceneSliceVisualizer1D::Draw1DWarpUpdateVector<ITMVoxelCanonical, ITMVoxelBlockHash>(
-		ITMScene<ITMVoxelCanonical, ITMVoxelBlockHash>* scene, Vector4i color);
+ITMSceneSliceVisualizer1D::Draw1DWarpUpdateVector<ITMVoxel, ITMVoxelBlockHash>(
+		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* scene, Vector4i color);
 
 //======================================================================================================================

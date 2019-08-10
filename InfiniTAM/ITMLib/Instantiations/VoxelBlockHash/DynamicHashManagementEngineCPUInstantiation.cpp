@@ -16,17 +16,20 @@
 #include "../../Engines/Reconstruction/CPU/ITMDynamicHashManagementEngine_CPU.tpp"
 #include "../../ITMLibDefines.h"
 
-template class ITMDynamicHashManagementEngine_CPU<ITMVoxelCanonical,ITMVoxelLive>;
+template class ITMDynamicHashManagementEngine_CPU<ITMVoxel,ITMWarp>;
 
-template void ITMDynamicHashManagementEngine_CPU<ITMVoxelCanonical,ITMVoxelLive>::AllocateWarpedLive<Warp::WARP_CUMULATIVE>(
-		ITMScene <ITMVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
-		ITMScene <ITMVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex
+template void ITMDynamicHashManagementEngine_CPU<ITMVoxel,ITMWarp>::AllocateWarpedLive<WarpType::WARP_CUMULATIVE>(
+		ITMVoxelVolume <ITMWarp, ITMVoxelBlockHash>* warpField,
+		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* sourceTSDF,
+		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* targetTSDF
 		);
-template void ITMDynamicHashManagementEngine_CPU<ITMVoxelCanonical,ITMVoxelLive>::AllocateWarpedLive<Warp::WARP_FLOW>(
-		ITMScene <ITMVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
-		ITMScene <ITMVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex
+template void ITMDynamicHashManagementEngine_CPU<ITMVoxel,ITMWarp>::AllocateWarpedLive<WarpType::WARP_FLOW>(
+		ITMVoxelVolume <ITMWarp, ITMVoxelBlockHash>* warpField,
+		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* sourceTSDF,
+		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* targetTSDF
 );
-template void ITMDynamicHashManagementEngine_CPU<ITMVoxelCanonical,ITMVoxelLive>::AllocateWarpedLive<Warp::WARP_UPDATE>(
-		ITMScene <ITMVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
-		ITMScene <ITMVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex
+template void ITMDynamicHashManagementEngine_CPU<ITMVoxel,ITMWarp>::AllocateWarpedLive<WarpType::WARP_UPDATE>(
+		ITMVoxelVolume <ITMWarp, ITMVoxelBlockHash>* warpField,
+		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* sourceTSDF,
+		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* targetTSDF
 );

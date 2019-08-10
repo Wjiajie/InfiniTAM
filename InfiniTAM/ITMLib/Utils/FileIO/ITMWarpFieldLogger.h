@@ -16,7 +16,7 @@
 #pragma once
 
 
-#include "../../Objects/Scene/ITMScene.h"
+#include "../../Objects/Scene/ITMVoxelVolume.h"
 //boost
 #include <boost/filesystem.hpp>
 namespace fs = boost::filesystem;
@@ -34,8 +34,8 @@ class ITMSceneLogger;
  * \tparam TVoxel Type of voxel. Needs to have warp information.
  * \tparam TIndex Type of voxel index.
  */
-template<typename TVoxel, typename TIndex>
-class ITMWarpSceneLogger{
+template<typename TWarp, typename TIndex>
+class ITMWarpFieldLogger{
 	template<typename TVoxelCanonical, typename TVoxelLive, typename TIndexLogger>
 	friend class ITMSceneLogger;
 public:
@@ -80,9 +80,9 @@ public:
 	// endregion
 	// region ================================ CONSTRUCTORS & DESTRUCTORS ==============================================
 
-	explicit ITMWarpSceneLogger(ITMScene <TVoxel, TIndex>* scene, boost::filesystem::path path);
-	explicit ITMWarpSceneLogger(const Vector6i& bounds, boost::filesystem::path fullScenePath);
-	~ITMWarpSceneLogger();
+	explicit ITMWarpFieldLogger(ITMVoxelVolume <TWarp, TIndex>* warpField, boost::filesystem::path path);
+	explicit ITMWarpFieldLogger(const Vector6i& bounds, boost::filesystem::path fullScenePath);
+	~ITMWarpFieldLogger();
 
 	// endregion
 	// region ================================ MEMBER FUNCTIONS ========================================================
@@ -95,7 +95,7 @@ public:
 	bool Loaded() const;
 	void Load();
 	std::string GetSliceIdentifier() const;
-	const ITMScene<TVoxel,TIndex>* GetScene() const;
+	const ITMVoxelVolume<TWarp,TIndex>* GetScene() const;
 
 	//*** scene saving / loading ***
 	void Save();
@@ -143,7 +143,7 @@ private:
 	fs::path highlightsTextPath;
 
 	// data structures
-	ITMScene<TVoxel, TIndex>* scene;
+	ITMVoxelVolume<TWarp, TIndex>* scene;
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
 	int minHighlightRecurrenceCount = 0;
 

@@ -33,9 +33,9 @@
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 _CPU_AND_GPU_CODE_ inline
-bool VoxelIsConsideredForTracking(const TVoxelCanonical& voxelCanonical, const TVoxelLive& voxelLive, int sourceFieldIndex) {
+bool VoxelIsConsideredForTracking(const TVoxelCanonical& voxelCanonical, const TVoxelLive& voxelLive) {
 	return voxelCanonical.flags == ITMLib::VOXEL_NONTRUNCATED ||
-	       voxelLive.flag_values[sourceFieldIndex] == ITMLib::VOXEL_NONTRUNCATED;
+	       voxelLive.flags == ITMLib::VOXEL_NONTRUNCATED;
 };
 
 template<typename TVoxelCanonical, typename TVoxelLive>

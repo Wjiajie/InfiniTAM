@@ -10,9 +10,9 @@ namespace ITMLib
 	class ITMSwappingEngine_CUDA : public ITMSwappingEngine < TVoxel, TIndex >
 	{
 	public:
-		void IntegrateGlobalIntoLocal(ITMScene<TVoxel, TIndex> *scene, ITMRenderState *renderState) {}
-		void SaveToGlobalMemory(ITMScene<TVoxel, TIndex> *scene, ITMRenderState *renderState) {}
-		void CleanLocalMemory(ITMScene<TVoxel, TIndex> *scene, ITMRenderState *renderState) {}
+		void IntegrateGlobalIntoLocal(ITMVoxelVolume<TVoxel, TIndex> *scene, ITMRenderState *renderState) {}
+		void SaveToGlobalMemory(ITMVoxelVolume<TVoxel, TIndex> *scene, ITMRenderState *renderState) {}
+		void CleanLocalMemory(ITMVoxelVolume<TVoxel, TIndex> *scene, ITMRenderState *renderState) {}
 	};
 
 	template<class TVoxel>
@@ -22,12 +22,12 @@ namespace ITMLib
 		int *noNeededEntries_device, *noAllocatedVoxelEntries_device;
 		int *entriesToClean_device;
 
-		int LoadFromGlobalMemory(ITMScene<TVoxel, ITMVoxelBlockHash> *scene);
+		int LoadFromGlobalMemory(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene);
 
 	public:
-		void IntegrateGlobalIntoLocal(ITMScene<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState);
-		void SaveToGlobalMemory(ITMScene<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState);
-		void CleanLocalMemory(ITMScene<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState);
+		void IntegrateGlobalIntoLocal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState);
+		void SaveToGlobalMemory(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState);
+		void CleanLocalMemory(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState);
 
 		ITMSwappingEngine_CUDA(void);
 		~ITMSwappingEngine_CUDA(void);

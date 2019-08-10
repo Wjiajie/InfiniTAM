@@ -22,7 +22,7 @@
 #include "../SceneMotionTrackers/Interface/ITMSceneMotionTracker.h"
 
 namespace ITMLib {
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 class ITMDenseDynamicMapper {
 
 public:
@@ -35,7 +35,7 @@ public:
 	explicit ITMDenseDynamicMapper();
 	~ITMDenseDynamicMapper();
 	// endregion
-	// region ========================================= INTERNAL DATASTRUCTURES ========================================
+	// region ========================================= INTERNAL DATA STRUCTURES =======================================
 
 	struct Parameters {
 		const unsigned int maxIterationCount;// = 200;
@@ -50,8 +50,8 @@ public:
 	// endregion =======================================================================================================
 	// region ========================================== MEMBER FUNCTIONS ==============================================
 
-	void ResetCanonicalScene(ITMScene<TVoxelCanonical, TIndex>* scene) const;
-	void ResetLiveScene(ITMScene<TVoxelLive, TIndex>* live_scene) const;
+	void ResetCanonicalScene(ITMVoxelVolume<TVoxel, TIndex>* scene) const;
+	void ResetLiveScene(ITMVoxelVolume<TVoxel, TIndex>* live_scene) const;
 
 	/**
 	* \brief Tracks motions of all points between frames and fuses the new data into the canonical frame
@@ -68,50 +68,56 @@ public:
 	* \param liveScene - live/target 3D scene generated from the incoming single frame of the video
 	* \param renderState
 	*/
-	void ProcessFrame(const ITMView* view,
-		                  const ITMTrackingState* trackingState,
-		                  ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-		                  ITMScene<TVoxelLive, TIndex>* liveScene,
-		                  ITMRenderState* renderState);
+	void ProcessFrame(const ITMView* view, const ITMTrackingState* trackingState,
+	                  ITMVoxelVolume <TVoxel, TIndex>* canonicalScene, ITMVoxelVolume <TVoxel, TIndex>* liveScenePair,
+	                  ITMVoxelVolume <TWarp, TIndex>* warpField, ITMRenderState* renderState);
 
 	void ProcessInitialFrame(const ITMView* view, const ITMTrackingState* trackingState,
-	                         ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
+	                         ITMVoxelVolume<TVoxel, TIndex>* canonicalScene, ITMVoxelVolume<TVoxel, TIndex>* liveScene,
 	                         ITMRenderState* renderState);
 
 
 	void BeginProcessingFrameInStepByStepMode(const ITMView* view, const ITMTrackingState* trackingState,
-		                                          ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-		                                          ITMScene<TVoxelLive, TIndex>* liveScene, ITMRenderState* renderState_live);
+	                                          ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+	                                          ITMVoxelVolume<TVoxel, TIndex>* liveScene, ITMRenderState* renderState_live);
 
-	bool TakeNextStepInStepByStepMode(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                  ITMScene<TVoxelLive, TIndex>*& liveScene, ITMRenderState* renderState);
+	bool TakeNextStepInStepByStepMode(ITMVoxelVolume <TVoxel, TIndex>* canonicalScene,
+	                                  ITMVoxelVolume <TVoxel, TIndex>* liveScenePair,
+	                                  ITMVoxelVolume <TWarp, TIndex>* warpField, ITMRenderState* renderState);
 
 	/// Update the visible list (this can be called to update the visible list when fusion is turned off)
 	void UpdateVisibleList(const ITMView* view, const ITMTrackingState* trackingState,
-	                  ITMScene<TVoxelLive, TIndex>* scene, ITMRenderState* renderState, bool resetVisibleList = false);
+	                       ITMVoxelVolume<TVoxel, TIndex>* scene, ITMRenderState* renderState, bool resetVisibleList = false);
 	// endregion
 private:
 	// region ========================================== FUNCTIONS =====================================================
 	void ProcessSwapping(
-			ITMScene <TVoxelCanonical, TIndex>* canonicalScene, ITMRenderState* renderState);
+			ITMVoxelVolume <TVoxel, TIndex>* canonicalScene, ITMRenderState* renderState);
 
-	void TrackFrameMotion(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene);
+	ITMVoxelVolume<TVoxel, TIndex>* TrackFrameMotion(
+			ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+			ITMVoxelVolume<TVoxel, TIndex>* liveScenePair,
+			ITMVoxelVolume<TWarp, TIndex>* warpField);
 
 	bool SceneMotionOptimizationConditionNotReached();
 	void InitializeProcessing(const ITMView* view, const ITMTrackingState* trackingState,
-		                          ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
-		                          ITMRenderState* renderState);
-	void FinalizeProcessing(ITMScene <TVoxelCanonical, TIndex>* canonicalScene,
-	                        ITMScene <TVoxelLive, TIndex>* liveScene,ITMRenderState* renderState);
+	                          ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+	                          ITMVoxelVolume<TVoxel, TIndex>* liveScenePair,
+	                          ITMRenderState* renderState);
+	void FinalizeProcessing(ITMVoxelVolume <TVoxel, TIndex>* canonicalScene,
+	                        ITMVoxelVolume <TVoxel, TIndex>* liveScene, ITMRenderState* renderState);
 	void PerformSingleOptimizationStep(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
+			ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+			ITMVoxelVolume<TVoxel, TIndex>* initialLiveScene,
+			ITMVoxelVolume<TVoxel, TIndex>* finalLiveScene,
+			ITMVoxelVolume<TWarp, TIndex>* warpField,
+			int iteration);
 	void PrintSettings();
 	// endregion =======================================================================================================
 	// region =========================================== MEMBER VARIABLES =============================================
-	ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex>* sceneReconstructor;
-	ITMSwappingEngine<TVoxelCanonical, TIndex>* swappingEngine;
-	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>* sceneMotionTracker;
+	ITMDynamicSceneReconstructionEngine<TVoxel, TWarp, TIndex>* sceneReconstructor;
+	ITMSwappingEngine<TVoxel, TIndex>* swappingEngine;
+	ITMSceneMotionTracker<TVoxel, TWarp, TIndex>* sceneMotionTracker;
 
 	ITMLibSettings::SwappingMode swappingMode;
 

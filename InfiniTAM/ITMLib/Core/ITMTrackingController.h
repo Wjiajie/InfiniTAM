@@ -74,8 +74,8 @@ namespace ITMLib
 		 * \param renderState
 		 */
 		template <typename TVoxel, typename TIndex>
-		void Prepare(ITMTrackingState *trackingState, const ITMScene<TVoxel,TIndex> *scene, const ITMView *view,
-			const ITMVisualisationEngine<TVoxel,TIndex> *visualisationEngine, ITMRenderState *renderState)
+		void Prepare(ITMTrackingState *trackingState, const ITMVoxelVolume<TVoxel,TIndex> *scene, const ITMView *view,
+		             const ITMVisualisationEngine<TVoxel,TIndex> *visualisationEngine, ITMRenderState *renderState)
 		{
 			if (!tracker->requiresPointCloudRendering())
 				return;

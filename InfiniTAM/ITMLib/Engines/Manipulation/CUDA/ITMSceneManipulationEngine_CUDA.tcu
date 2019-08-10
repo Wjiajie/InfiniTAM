@@ -23,38 +23,38 @@ using namespace ITMLib;
 
 template<typename TVoxel>
 void
-ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash>* scene) {
+ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
 template<typename TVoxel>
-bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
+bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
                                                                           Vector3i at, TVoxel voxel) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
 template<typename TVoxel>
-TVoxel ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
+TVoxel ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
                                                                              Vector3i at) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
 template<typename TVoxel>
-TVoxel ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
+TVoxel ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
                                                                              Vector3i at,
                                                                              ITMVoxelBlockHash::IndexCache& cache) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
 template<typename TVoxel>
-void ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::OffsetWarps(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
+void ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::OffsetWarps(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
                                                                              Vector3f offset) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
 template<typename TVoxel>
 bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
-		ITMScene<TVoxel, ITMVoxelBlockHash>* destination, ITMScene<TVoxel, ITMVoxelBlockHash>* source,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
 		Vector6i bounds) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
@@ -64,7 +64,7 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 
 template<typename TVoxel>
 void
-ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ResetScene(ITMScene<TVoxel, ITMPlainVoxelArray>* scene) {
+ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ResetScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) {
 	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
 	int blockSize = scene->index.getVoxelBlockSize();
 
@@ -77,21 +77,21 @@ ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ResetScene(ITMScene
 }
 
 template<typename TVoxel>
-bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::SetVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::SetVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
                                                                            Vector3i at, TVoxel voxel) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
 template<typename TVoxel>
 TVoxel
-ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
                                                                        Vector3i at) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
 template<typename TVoxel>
 TVoxel
-ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
                                                                        Vector3i at,
                                                                        ITMPlainVoxelArray::IndexCache& cache) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
@@ -99,14 +99,14 @@ ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMScene<
 
 template<typename TVoxel>
 void
-ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::OffsetWarps(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::OffsetWarps(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
                                                                          Vector3f offset) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
 template<typename TVoxel>
 bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::CopySceneSlice(
-		ITMScene<TVoxel, ITMPlainVoxelArray>* destination, ITMScene<TVoxel, ITMPlainVoxelArray>* source,
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* destination, ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source,
 		Vector6i bounds) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }

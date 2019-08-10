@@ -22,7 +22,7 @@
 //local
 #include "../Interface/ITMSceneTraversal.h"
 #include "ITMSceneManipulationEngine_CPU.h"
-#include "../../../Objects/Scene/ITMScene.h"
+#include "../../../Objects/Scene/ITMVoxelVolume.h"
 
 
 namespace ITMLib {
@@ -64,7 +64,7 @@ public:
 // region ================================ DYNAMIC SINGLE-SCENE TRAVERSAL ==============================================
 	template<typename TFunctor>
 	inline static void
-	VoxelTraversal(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
+	VoxelTraversal(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		int voxelCount =
 				scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
@@ -81,7 +81,7 @@ public:
 
 	template<typename TFunctor>
 	inline static void
-	VoxelPositionTraversal(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
+	VoxelPositionTraversal(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		int voxelCount =
 				scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
@@ -99,7 +99,7 @@ public:
 
 	template<typename TFunctor>
 	inline static void
-	VoxelTraversalWithinBounds(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor, Vector6i bounds) {
+	VoxelTraversalWithinBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor, Vector6i bounds) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		int vmIndex = 0;
 		const ITMPlainVoxelArray::IndexData* indexData = scene->index.getIndexData();
@@ -120,7 +120,7 @@ public:
 
 	template<typename TFunctor>
 	inline static void
-	VoxelPositionTraversalWithinBounds(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor,
+	VoxelPositionTraversalWithinBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor,
 	                                   Vector6i bounds) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		int vmIndex = 0;
@@ -142,7 +142,7 @@ public:
 
 	template<typename TFunctor>
 	inline static void
-	VoxelPositionAndHashEntryTraversalWithinBounds(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor,
+	VoxelPositionAndHashEntryTraversalWithinBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor,
 	                                               Vector6i bounds) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		int vmIndex = 0;
@@ -166,7 +166,7 @@ public:
 
 // region ================================ STATIC SINGLE-SCENE TRAVERSAL ===============================================
 	template<typename TStaticFunctor>
-	inline static void StaticVoxelTraversal(ITMScene<TVoxel, ITMPlainVoxelArray>* scene) {
+	inline static void StaticVoxelTraversal(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		int voxelCount =
 				scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
@@ -181,7 +181,7 @@ public:
 	}
 
 	template<typename TStaticFunctor>
-	inline static void StaticVoxelPositionTraversal(ITMScene<TVoxel, ITMPlainVoxelArray>* scene) {
+	inline static void StaticVoxelPositionTraversal(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		int voxelCount =
 				scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
@@ -198,6 +198,7 @@ public:
 
 };
 
+
 template<typename TVoxelPrimary, typename TVoxelSecondary>
 class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU> {
 public:
@@ -206,8 +207,8 @@ public:
 	template<typename TStaticFunctor>
 	inline static void
 	StaticDualVoxelTraversal(
-			ITMScene<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
-			ITMScene<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene) {
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene) {
 		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
 // *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
@@ -221,21 +222,48 @@ public:
 #pragma omp parallel for
 #endif
 		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
-			TVoxelPrimary& primaryVoxel = primaryScene[linearIndex];
-			TVoxelSecondary& secondaryVoxel = secondaryScene[linearIndex];
+			TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
+			TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
 			TStaticFunctor::run(primaryVoxel, secondaryVoxel);
 		}
 	}
 // endregion
-// region ================================ DYNAMIC TWO-SCENE TRAVERSAL =================================================
+// region ================================ STATIC TWO-SCENE TRAVERSAL WITH VOXEL POSITION ==============================
+
+	template<typename TStaticFunctor>
+	inline static void
+	StaticDualVoxelPositionTraversal(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene) {
+		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+// *** traversal vars
+		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		//asserted to be the same
+		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
+		                 primaryScene->index.getVolumeSize().z;
+		const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.getIndexData();
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
+			Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(indexData, linearIndex);
+			TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
+			TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
+			TStaticFunctor::run(primaryVoxel, secondaryVoxel, voxelPosition);
+		}
+	}
+// endregion
+
+// region ================================ DYNAMIC TWO-SCENE TRAVERSAL FOR SCENES WITH DIFFERING VOXEL TYPES ===========
 
 
 
 	template<typename TFunctor>
 	inline static void
 	DualVoxelTraversal(
-			ITMScene<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
-			ITMScene<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
 			TFunctor& functor) {
 
 		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
@@ -260,8 +288,8 @@ public:
 	template<typename TFunctor>
 	inline static void
 	DualVoxelPositionTraversal(
-			ITMScene<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
-			ITMScene<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
 			TFunctor& functor) {
 
 		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
@@ -288,8 +316,8 @@ public:
 	template<typename TFunctor>
 	inline static void
 	DualVoxelPositionTraversal_SingleThreaded(
-			ITMScene<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
-			ITMScene<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
 			TFunctor& functor) {
 		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
 		// *** traversal vars
@@ -304,6 +332,134 @@ public:
 			TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
 			TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
 			functor(primaryVoxel, secondaryVoxel, voxelPosition);
+		}
+	}
+// endregion ===========================================================================================================
+};
+
+template<typename TVoxel, typename TWarp>
+class ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU> {
+	/**
+	 * \brief Concurrent traversal of 2 scenes with the same voxel type and a warp field
+	 * \details All scenes must have matching dimensions
+	 */
+public:
+// region ================================ STATIC TWO-SCENE TRAVERSAL WITH WARPS =======================================
+
+	template<typename TStaticFunctor>
+	inline static void
+	StaticDualVoxelTraversal(
+			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* secondaryScene,
+			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
+		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize() &&
+		       primaryScene->index.getVolumeSize() == warpField->index.getVolumeSize());
+// *** traversal vars
+		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+		//asserted to be the same
+		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
+		                 primaryScene->index.getVolumeSize().z;
+
+
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
+			TVoxel& primaryVoxel = primaryVoxels[linearIndex];
+			TVoxel& secondaryVoxel = secondaryVoxels[linearIndex];
+			TWarp& warpVoxel = warpVoxels[linearIndex];
+			TStaticFunctor::run(primaryVoxel, secondaryVoxel, warpVoxel);
+		}
+	}
+// endregion
+// region ================================ DYNAMIC TWO-SCENE TRAVERSAL WITH WARPS ======================================
+
+
+
+	template<typename TFunctor>
+	inline static void
+	DualVoxelTraversal(
+			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* secondaryScene,
+			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
+			TFunctor& functor) {
+
+		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+// *** traversal vars
+		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+		//asserted to be the same
+		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
+		                 primaryScene->index.getVolumeSize().z;
+
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
+			TVoxel& primaryVoxel = primaryVoxels[linearIndex];
+			TVoxel& secondaryVoxel = secondaryVoxels[linearIndex];
+			TWarp& warpVoxel = warpVoxels[linearIndex];
+			functor(primaryVoxel, secondaryVoxel, warpVoxel);
+		}
+	}
+
+
+	template<typename TFunctor>
+	inline static void
+	DualVoxelPositionTraversal(
+			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* secondaryScene,
+			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
+			TFunctor& functor) {
+
+		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+// *** traversal vars
+		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+		//asserted to be the same
+		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
+		                 primaryScene->index.getVolumeSize().z;
+		const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.getIndexData();
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
+			Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(indexData, linearIndex);
+			TVoxel& primaryVoxel = primaryVoxels[linearIndex];
+			TVoxel& secondaryVoxel = secondaryVoxels[linearIndex];
+			TWarp& warpVoxel = warpVoxels[linearIndex];
+			functor(primaryVoxel, secondaryVoxel, warpVoxel, voxelPosition);
+		}
+	}
+
+
+	template<typename TFunctor>
+	inline static void
+	DualVoxelPositionTraversal_SingleThreaded(
+			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* secondaryScene,
+			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
+			TFunctor& functor) {
+		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize() &&
+		       warpField->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+		// *** traversal vars
+		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+		//asserted to be the same
+		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
+		                 primaryScene->index.getVolumeSize().z;
+		const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.getIndexData();
+		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
+			Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(indexData, linearIndex);
+			TVoxel& primaryVoxel = primaryVoxels[linearIndex];
+			TVoxel& secondaryVoxel = secondaryVoxels[linearIndex];
+			TWarp& warpVoxel = warpVoxels[linearIndex];
+			functor(primaryVoxel, secondaryVoxel, warpVoxel, voxelPosition);
 		}
 	}
 // endregion ===========================================================================================================

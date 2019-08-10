@@ -25,6 +25,9 @@ class ITMSceneTraversalEngine;
 template<typename TVoxelPrimary, typename TVoxelSecondary, typename TIndex, ITMLibSettings::DeviceType TDeviceType>
 class ITMDualSceneTraversalEngine;
 
+template<typename TVoxel, typename TWarp, typename TIndex, ITMLibSettings::DeviceType TDeviceType>
+class ITMDualSceneWarpTraversalEngine;
+
 
 }//namespace ITMLib
 

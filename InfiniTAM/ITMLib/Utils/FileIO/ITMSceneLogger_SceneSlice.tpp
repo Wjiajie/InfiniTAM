@@ -59,12 +59,12 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(const Vector3i& e
 
 	Vector6i bounds;
 	BoundsFromExtrema(bounds, extremum1, extremum2);
-	identifier = ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceStringIdentifier(bounds);
+	identifier = ITMWarpFieldLogger<TVoxelCanonical, TIndex>::GenerateSliceStringIdentifier(bounds);
 
 	if (slices.find(identifier) != slices.end()) {
 		return false;
 	}
-	auto logger = new ITMWarpSceneLogger<TVoxelCanonical, TIndex>(bounds, this->path);
+	auto logger = new ITMWarpFieldLogger<TVoxelCanonical, TIndex>(bounds, this->path);
 	if (!ITMSceneManipulationEngine_CPU<TVoxelCanonical, TIndex>::CopySceneSlice(
 			logger->scene,fullCanonicalSceneLogger->scene,bounds)) {
 		return false;
@@ -81,7 +81,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSlice(const Vector3i& e
 	logger->SaveCompact();
 	logger->sliceLoaded = true;
 	logger->highlights = MakeSliceHighlights(bounds);
-	logger->SaveHighlights(ITMWarpSceneLogger<TVoxelCanonical,TIndex>::continuousHighlightsPostfix);
+	logger->SaveHighlights(ITMWarpFieldLogger<TVoxelCanonical,TIndex>::continuousHighlightsPostfix);
 	slices[identifier] = logger;
 	return true;
 }
@@ -164,11 +164,11 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::MakeSliceHighlights(const V
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SliceExistsOnDisk(const std::string& sliceIdentifier) const {
 	fs::path sliceFolderPath =
-			ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceFolderPath(path, sliceIdentifier);
+			ITMWarpFieldLogger<TVoxelCanonical, TIndex>::GenerateSliceFolderPath(path, sliceIdentifier);
 	fs::path sliceScenePath =
-			ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceSceneFilename_Full(path, sliceIdentifier);
+			ITMWarpFieldLogger<TVoxelCanonical, TIndex>::GenerateSliceSceneFilename_Full(path, sliceIdentifier);
 	fs::path sliceWarpPath =
-			ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceWarpFilename(path, sliceIdentifier);
+			ITMWarpFieldLogger<TVoxelCanonical, TIndex>::GenerateSliceWarpFilename(path, sliceIdentifier);
 	return fs::is_directory(sliceFolderPath) && fs::is_regular_file(sliceScenePath) &&
 	       fs::is_regular_file(sliceWarpPath);
 }
@@ -185,11 +185,11 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SliceExistsOnDisk(cons
 	Vector6i bounds;
 	BoundsFromExtrema(bounds, extremum1,extremum2);
 	fs::path sliceFolderPath =
-			ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceFolderPath(path, bounds);
+			ITMWarpFieldLogger<TVoxelCanonical, TIndex>::GenerateSliceFolderPath(path, bounds);
 	fs::path sliceScenePath =
-			ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceSceneFilename_Full(path, bounds);
+			ITMWarpFieldLogger<TVoxelCanonical, TIndex>::GenerateSliceSceneFilename_Full(path, bounds);
 	fs::path sliceWarpPath =
-			ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceWarpFilename(path, bounds);
+			ITMWarpFieldLogger<TVoxelCanonical, TIndex>::GenerateSliceWarpFilename(path, bounds);
 	return fs::is_directory(sliceFolderPath) && fs::is_regular_file(sliceScenePath) &&
 	       fs::is_regular_file(sliceWarpPath);
 }
@@ -217,9 +217,9 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadSlice(const std::s
 		return false;
 	}
 	Vector6i bounds;
-	ITMWarpSceneLogger<TVoxelCanonical, TIndex>::ExtractBoundsFromSliceStringIdentifier(sliceIdentifier, bounds);
-	ITMWarpSceneLogger<TVoxelCanonical, TIndex>* logger =
-			new ITMWarpSceneLogger<TVoxelCanonical, TIndex>(bounds, path);
+	ITMWarpFieldLogger<TVoxelCanonical, TIndex>::ExtractBoundsFromSliceStringIdentifier(sliceIdentifier, bounds);
+	ITMWarpFieldLogger<TVoxelCanonical, TIndex>* logger =
+			new ITMWarpFieldLogger<TVoxelCanonical, TIndex>(bounds, path);
 	logger->LoadCompact();
 	logger->sliceLoaded = true;
 	slices[sliceIdentifier] = logger;
@@ -236,7 +236,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SwitchActiveScene(std:
 	bool isLoadingWarps = activeWarpLogger->IsLoadingWarpState();
 	int iterationCursor = static_cast<int>(activeWarpLogger->GetIterationCursor());
 
-	if (sliceIdentifier == ITMWarpSceneLogger<TVoxelCanonical, TIndex>::fullSceneSliceIdentifier) {
+	if (sliceIdentifier == ITMWarpFieldLogger<TVoxelCanonical, TIndex>::fullSceneSliceIdentifier) {
 		if (fullCanonicalSceneLogger != nullptr) {
 			mode = FULL_SCENE;
 			activeWarpLogger->StopLoadingWarpState();
@@ -294,10 +294,10 @@ std::vector<std::string> ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::Lo
 
 	for (auto& directoryNameAndWriteTime : sliceDirectoryNamesAndWriteTimes){
 		Vector6i bounds;
-		ITMWarpSceneLogger<TVoxelCanonical, TIndex>::ExtractBoundsFromSliceStringIdentifier(
+		ITMWarpFieldLogger<TVoxelCanonical, TIndex>::ExtractBoundsFromSliceStringIdentifier(
 				std::get<0>(directoryNameAndWriteTime), bounds);
 		std::string sliceIdentifier =
-				ITMWarpSceneLogger<TVoxelCanonical, TIndex>::GenerateSliceStringIdentifier(bounds);
+				ITMWarpFieldLogger<TVoxelCanonical, TIndex>::GenerateSliceStringIdentifier(bounds);
 		if (LoadSlice(sliceIdentifier)) {
 			identifiers.push_back(sliceIdentifier);
 		}

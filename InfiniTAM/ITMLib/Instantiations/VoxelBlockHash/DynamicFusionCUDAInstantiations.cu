@@ -21,14 +21,8 @@
 
 namespace ITMLib {
 
-template
-class ITMSwappingEngine_CUDA<ITMVoxelCanonical, ITMVoxelBlockHash>;
-
-template
-class ITMVisualisationEngine_CUDA<ITMVoxelLive, ITMVoxelBlockHash>;
-template
-class ITMVisualisationEngine_CUDA<ITMVoxelCanonical, ITMVoxelBlockHash>;
-template
-class ITMMeshingEngine_CUDA<ITMVoxelCanonical, ITMVoxelBlockHash>;
+template class ITMSwappingEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>;
+template class ITMVisualisationEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>;
+template class ITMMeshingEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>;
 
 }

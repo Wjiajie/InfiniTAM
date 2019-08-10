@@ -16,7 +16,7 @@
 #pragma once
 
 #include "../../../Objects/Scene/ITMPlainVoxelArray.h"
-#include "../../../Objects/Scene/ITMScene.h"
+#include "../../../Objects/Scene/ITMVoxelVolume.h"
 
 
 namespace ITMLib {
@@ -28,12 +28,12 @@ class ITMSceneManipulationEngine_CUDA {
 template<typename TVoxel>
 class ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray> {
 public:
-	static void ResetScene(ITMScene <TVoxel, ITMPlainVoxelArray>* scene);
-	static bool SetVoxel(ITMScene <TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, TVoxel voxel);
-	static TVoxel ReadVoxel(ITMScene <TVoxel, ITMPlainVoxelArray>* scene, Vector3i at);
+	static void ResetScene(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* scene);
+	static bool SetVoxel(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, TVoxel voxel);
+	static TVoxel ReadVoxel(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* scene, Vector3i at);
 	static TVoxel
-	ReadVoxel(ITMScene <TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, ITMPlainVoxelArray::IndexCache& cache);
-	static void OffsetWarps(ITMScene <TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset);
+	ReadVoxel(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, ITMPlainVoxelArray::IndexCache& cache);
+	static void OffsetWarps(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset);
 	/**
 	 * \brief Copies the slice (box-like window) specified by points extremum1 and extremum2 from the source scene into a
 	 * destination scene. Clears the destination scene before copying.
@@ -45,8 +45,8 @@ public:
 	 * \param maxPoint maximum point in the desired slice (inclusive), i.e. maximum x, y, and z coordinates
 	 * \return true on success (destination scene contains the slice), false on failure (there are no allocated hash blocks
 	 */
-	static bool CopySceneSlice(ITMScene <TVoxel, ITMPlainVoxelArray>* destination,
-	                           ITMScene <TVoxel, ITMPlainVoxelArray>* source,
+	static bool CopySceneSlice(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* destination,
+	                           ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* source,
 	                           Vector6i bounds);
 };
 
@@ -58,17 +58,17 @@ public:
 	 * \brief Clear out scene and reset the index
 	 * \param scene
 	 */
-	static void ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash>* scene);
-	static bool SetVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
-	static TVoxel ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at);
+	static void ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene);
+	static bool SetVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
+	static TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at);
 	static TVoxel
-	ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, ITMVoxelBlockHash::IndexCache& cache);
+	ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, ITMVoxelBlockHash::IndexCache& cache);
 	/**
 	 * \brief offset warps by a fixed amount in each direction
 	 * \param scene the scene to modify
 	 * \param offset the offset vector to use
 	 */
-	static void OffsetWarps(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset);
+	static void OffsetWarps(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset);
 	/**
 	 * \brief Copies the slice (box-like window) specified by points extremum1 and extremum2 from the source scene into a
 	 * destination scene. Clears the destination scene before copying.
@@ -81,7 +81,7 @@ public:
 	 * \return true on success (destination scene contains the slice), false on failure (there are no allocated hash blocks
 	 */
 	static bool
-	CopySceneSlice(ITMScene<TVoxel, ITMVoxelBlockHash>* destination, ITMScene<TVoxel, ITMVoxelBlockHash>* source,
+	CopySceneSlice(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
 	               Vector6i bounds);
 
 };

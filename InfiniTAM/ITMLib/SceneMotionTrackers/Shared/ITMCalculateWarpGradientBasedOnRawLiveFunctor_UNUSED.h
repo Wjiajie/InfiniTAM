@@ -75,8 +75,8 @@ public:
 			switches(switches),
 			logger(logger) {}
 
-	void PrepareForOptimization(ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
-	                            ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, int sourceSdfIndex,
+	void PrepareForOptimization(ITMVoxelVolume<TVoxelLive, ITMVoxelBlockHash>* liveScene,
+	                            ITMVoxelVolume<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, int sourceSdfIndex,
 	                            bool hasFocusCoordinates, Vector3i focusCoordinates,
 	                            bool restrictZtrackingForDebugging) {
 		ResetStatistics();
@@ -352,13 +352,13 @@ private:
 	}
 
 	// *** data structure accessors
-	ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene;
+	ITMVoxelVolume<TVoxelLive, ITMVoxelBlockHash>* liveScene;
 	int sourceSdfIndex{};
 	TVoxelLive* liveVoxels;
 	ITMHashEntry* liveHashEntries{};
 	ITMVoxelBlockHash::IndexCache liveCache;
 
-	ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene;
+	ITMVoxelVolume<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene;
 	TVoxelCanonical* canonicalVoxels;
 	ITMHashEntry* canonicalHashEntries{};
 	ITMVoxelBlockHash::IndexCache canonicalCache;

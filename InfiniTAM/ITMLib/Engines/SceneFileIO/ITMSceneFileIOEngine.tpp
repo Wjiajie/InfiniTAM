@@ -21,7 +21,7 @@ const std::string compactFilePostfixAndExtension = "compact.dat";
 //TODO: revise member functions & their usages to accept the full path as argument instead of the directory
 
 template<typename TVoxel>
-void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
+void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
                                                                              const std::string& outputDirectory) {
 	std::string path = outputDirectory + compactFilePostfixAndExtension;
 	std::ofstream ofStream = std::ofstream(path.c_str(),std::ios_base::binary | std::ios_base::out);
@@ -62,7 +62,7 @@ void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(ITM
 
 template<typename TVoxel>
 void
-ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
+ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
                                                                           const std::string& outputDirectory) {
 	std::string path = outputDirectory + "compact.dat";
 	std::ifstream ifStream = std::ifstream(path.c_str(),std::ios_base::binary | std::ios_base::in);
@@ -94,7 +94,7 @@ ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(ITMSce
 
 template<typename TVoxel>
 void
-ITMSceneFileIOEngine<TVoxel, ITMPlainVoxelArray>::SaveToDirectoryCompact(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+ITMSceneFileIOEngine<TVoxel, ITMPlainVoxelArray>::SaveToDirectoryCompact(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
                                                                          const std::string& outputDirectory) {
 	scene->SaveToDirectory(outputDirectory);
 }
@@ -102,7 +102,7 @@ ITMSceneFileIOEngine<TVoxel, ITMPlainVoxelArray>::SaveToDirectoryCompact(ITMScen
 
 template<typename TVoxel>
 void
-ITMSceneFileIOEngine<TVoxel, ITMPlainVoxelArray>::LoadFromDirectoryCompact(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+ITMSceneFileIOEngine<TVoxel, ITMPlainVoxelArray>::LoadFromDirectoryCompact(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
                                                                            const std::string& outputDirectory) {
 	scene->LoadFromDirectory(outputDirectory);
 }

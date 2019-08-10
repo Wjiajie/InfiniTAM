@@ -17,4 +17,4 @@
 #include "../../ITMLibDefines.h"
 
 
-template class ITMDynamicSceneReconstructionEngine_CPU<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>;
+template class ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;

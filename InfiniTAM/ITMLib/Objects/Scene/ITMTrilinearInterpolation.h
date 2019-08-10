@@ -28,7 +28,6 @@ template<typename TVoxel, typename TCache, typename TIndexData>
 _CPU_AND_GPU_CODE_
 inline float ProcessTrilinearNeighbor(const CONSTPTR(TVoxel)* voxelData,
                                       const CONSTPTR(TIndexData)* voxelIndex,
-                                      const CONSTPTR(int)& sdfIndex,
                                       const CONSTPTR(Vector3i)& position,
                                       const CONSTPTR(float*) coefficients,
                                       THREADPTR(TCache)& cache,
@@ -39,14 +38,14 @@ inline float ProcessTrilinearNeighbor(const CONSTPTR(TVoxel)* voxelData,
 	int vmIndex;
 
 	const TVoxel& v = readVoxel(voxelData, voxelIndex, position, vmIndex, cache);
-	bool curKnown = v.flag_values[sdfIndex] != ITMLib::VOXEL_UNKNOWN;
+	bool curKnown = v.flags != ITMLib::VOXEL_UNKNOWN;
 	//_DEBUG
 	//trilinear unknown filter: ON
 	//float weight = coefficients[iNeighbor] * curKnown;
 	//trilinear unknown filter: OFF
 	float weight = coefficients[iNeighbor];
 
-	sdf += weight * TVoxel::valueToFloat(v.sdf_values[sdfIndex]);
+	sdf += weight * TVoxel::valueToFloat(v.sdf);
 	struckKnownVoxels |= curKnown;
 	cumulativeWeight += weight;
 	return weight;
@@ -76,15 +75,13 @@ inline void ComputeTrilinearCoefficents(const CONSTPTR(Vector3f)& point, THREADP
 /**
  * \brief Given an arbitrary (float-valued) point, use trilinear interpolation to get the signed distance function value
  * at this point.
- * \details The sdf_values field will be sampled using sdfIndex, i.e. sdf_values[sdfIndex]. In the meantime,
- * also determines whether any of the voxels in the sampling space (2x2x2 voxels) has a known (established) value,
- * to discriminate it from the newly-initialized voxels set to the default sdf value.
+ * \details also determines whether any of the voxels in the sampling space (2x2x2 voxels) has a known (established)
+ * value to discriminate it from the newly-initialized voxels set to the default sdf value.
  * \tparam TVoxel
  * \tparam TCache
  * \param voxelData
  * \param voxelIndex
  * \param point
- * \param sdfIndex
  * \param cache
  * \param struckKnownVoxels
  * \param verbose - print additional information about the operation
@@ -92,12 +89,12 @@ inline void ComputeTrilinearCoefficents(const CONSTPTR(Vector3f)& point, THREADP
  */
 template<typename TVoxel, typename TCache, typename TIndexData>
 _CPU_AND_GPU_CODE_
-inline float _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* voxelData,
-                                                               const CONSTPTR(TIndexData)* voxelIndex,
-                                                               const CONSTPTR(Vector3f)& point,
-                                                               int sdfIndex, THREADPTR(TCache)& cache,
-                                                               bool& struckKnownVoxels,
-                                                               bool verbose) {
+inline float _DEBUG_InterpolateTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* voxelData,
+                                                       const CONSTPTR(TIndexData)* voxelIndex,
+                                                       const CONSTPTR(Vector3f)& point,
+                                                       THREADPTR(TCache)& cache,
+                                                       bool& struckKnownVoxels,
+                                                       bool verbose) {
 
 	const int neighborCount = 8;
 	const Vector3i positions[neighborCount] = {Vector3i(0, 0, 0), Vector3i(1, 0, 0),
@@ -119,7 +116,7 @@ inline float _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(const CONSTPTR(TV
 	float sdf = 0.0f;
 
 	for (int iNeighbor = 0; iNeighbor < neighborCount; iNeighbor++) {
-		float weight = ProcessTrilinearNeighbor(voxelData, voxelIndex, sdfIndex, pos + positions[iNeighbor],
+		float weight = ProcessTrilinearNeighbor(voxelData, voxelIndex, pos + positions[iNeighbor],
 		                                        coefficients, cache,
 		                                        struckKnownVoxels, iNeighbor, sdf, cumulativeWeight);
 #ifndef __CUDACC__

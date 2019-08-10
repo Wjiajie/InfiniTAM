@@ -241,108 +241,33 @@ struct ITMVoxel_f_rgb_conf
 };
 
 
-struct ITMVoxel_f_dynamic_canonical
-{
-	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return 1.0f; }
-	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
-	_CPU_AND_GPU_CODE_ static float floatToValue(float x) { return x; }
-
+struct ITMVoxel_f_warp{
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
-	static const CONSTPTR(bool) hasSemanticInformation = true;
-	static const CONSTPTR(bool) hasWeightInformation = true;
+	static const CONSTPTR(bool) hasSemanticInformation = false;
+	static const CONSTPTR(bool) hasWeightInformation = false;
 	static const CONSTPTR(bool) hasCumulativeWarp = false;
 	static const CONSTPTR(bool) hasFlowWarp = true;
 	static const CONSTPTR(bool) hasWarpUpdate = true;
 	static const CONSTPTR(bool) hasDebugInformation = false;
-
-	/** Value of the truncated signed distance transformation. */
-	float sdf;
-	/** Number of fused observations that make up @p sdf. */
-	uchar w_depth;
-	/** refer to ITMVoxelFlags for flag bit array values */
-	unsigned char flags;
-	/** RGB colour information stored for this voxel. */
-	//Vector3u clr;
-	/** Trilinear weight information stored for this voxel.
-	/** Number of observations that made up @p clr. */
-	//uchar w_color;
-	//float confidence;
 	/** vector translating the current point to a different location **/
 	Vector3f flow_warp;
 	/** intermediate results for computing the gradient & the points motion**/
-	union{
-	Vector3f gradient0;
-	Vector3f warp_update;
-	};
-	Vector3f gradient1;
-
-
-	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic_canonical() :
-			flags(ITMLib::VOXEL_UNKNOWN),
-			sdf(SDF_initialValue()),
-			w_depth(0),
-			//warp(Vector3f(0.f)),
-			gradient0(Vector3f(0.0f)),
-			gradient1(Vector3f(0.0f)),
-			flow_warp(Vector3f(0.0f))
-	{
-
-		//confidence = 0.0f;
-		//clr = Vector3u((uchar)0);
-		//w_color = 0;
-
-	}
-};
-
-struct ITMVoxel_f_dynamic_canonical_debug
-{
-	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return 1.0f; }
-	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
-	_CPU_AND_GPU_CODE_ static float floatToValue(float x) { return x; }
-
-	static const CONSTPTR(bool) hasColorInformation = false;
-	static const CONSTPTR(bool) hasConfidenceInformation = false;
-	static const CONSTPTR(bool) hasSemanticInformation = true;
-	static const CONSTPTR(bool) hasWeightInformation = true;
-	static const CONSTPTR(bool) hasCumulativeWarp = true;
-	static const CONSTPTR(bool) hasFlowWarp = true;
-	static const CONSTPTR(bool) hasWarpUpdate = true;
-	static const CONSTPTR(bool) hasDebugInformation = true;
-
-	/** Value of the truncated signed distance transformation. */
-	float sdf;
-	/** Number of fused observations that make up @p sdf. */
-	uchar w_depth;
-	/** refer to ITMVoxelFlags for flag bit array values */
-	unsigned char flags;
-	/** vector translating the current point to a different location **/
-	Vector3f warp;
-	Vector3f flow_warp;
-	/** vectors translating the current point to a different location **/
 	union{
 		Vector3f gradient0;
 		Vector3f warp_update;
 	};
 	Vector3f gradient1;
-	Vector3f data_term_gradient;
-	Vector3f smoothing_term_gradient;
 
-
-	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic_canonical_debug() :
-			flags(ITMLib::VOXEL_UNKNOWN),
-			sdf(SDF_initialValue()),
-			w_depth(0),
-			warp(Vector3f(0.f)),
-			gradient0(Vector3f(0.0f)),
-			gradient1(Vector3f(0.0f)),
-			flow_warp(Vector3f(0.0f)),
-			data_term_gradient(Vector3f(0.0f)),
-			smoothing_term_gradient(Vector3f(0.0f))
-	{}
+	_CPU_AND_GPU_CODE_ ITMVoxel_f_warp():
+		flow_warp(0.0f),
+		gradient0(0.0f),
+		gradient1(0.0f)
+		{}
 };
 
-struct ITMVoxel_f_dynamic_live
+
+struct ITMVoxel_f_flags
 {
 	_CPU_AND_GPU_CODE_ static float SDF_initialValue() { return 1.0f; }
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
@@ -351,34 +276,20 @@ struct ITMVoxel_f_dynamic_live
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = true;
-	static const CONSTPTR(bool) hasWeightInformation = false;
+	static const CONSTPTR(bool) hasWeightInformation = true;
 	static const CONSTPTR(bool) hasCumulativeWarp = false;
-	static const CONSTPTR(bool) hasFlowWarp = false;
-	static const CONSTPTR(bool) hasWarpUpdate = false;
+	static const CONSTPTR(bool) hasFlowWarp = true;
+	static const CONSTPTR(bool) hasWarpUpdate = true;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */
-	union {
-		struct {
-			float sdf;
-			float sdf1;
-		};
-		float sdf_values[2];
-	};
-
+	float sdf;
+	/** Number of fused observations that make up @p sdf. */
+	uchar w_depth;
 	/** refer to ITMVoxelFlags for flag bit array values */
-	union {
-		struct{
-			unsigned char flags;
-			unsigned char flags1;
-		};
-		unsigned char flag_values[2];
-	};
-
-	_CPU_AND_GPU_CODE_ ITMVoxel_f_dynamic_live() :
-		flags(ITMLib::VOXEL_UNKNOWN),
-		flags1(ITMLib::VOXEL_UNKNOWN),
-		sdf(SDF_initialValue()),
-		sdf1(SDF_initialValue())
-	{}
+	unsigned char flags;
+	_CPU_AND_GPU_CODE_ ITMVoxel_f_flags() :
+			flags(ITMLib::VOXEL_UNKNOWN),
+			sdf(SDF_initialValue()),
+			w_depth(0){}
 };

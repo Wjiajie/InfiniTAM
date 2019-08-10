@@ -18,11 +18,11 @@
 #include "../ITMLib/ITMLibDefines.h"
 
 #include "../ITMLib/Objects/Scene/ITMRepresentationAccess.h"
-#include "../ITMLib/Objects/Scene/ITMScene.h"
+#include "../ITMLib/Objects/Scene/ITMVoxelVolume.h"
 
 using namespace ITMLib;
 
 template<class TVoxel, class TIndex>
-void GenerateTestScene01(ITMScene<TVoxel, TIndex>* scene);
+void GenerateTestScene01(ITMVoxelVolume<TVoxel, TIndex>* scene);
 
 void GenerateAndLogKillingScene01();

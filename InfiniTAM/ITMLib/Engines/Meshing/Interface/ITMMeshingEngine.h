@@ -5,7 +5,7 @@
 #include <math.h>
 
 #include "../../../Objects/Meshing/ITMMesh.h"
-#include "../../../Objects/Scene/ITMScene.h"
+#include "../../../Objects/Scene/ITMVoxelVolume.h"
 
 namespace ITMLib
 {
@@ -24,7 +24,7 @@ namespace ITMLib
 		 * \param mesh[out] mesh that is generated
 		 * \param scene[in] voxel grid with SDF values
 		 */
-		virtual void MeshScene(ITMMesh *mesh, const ITMScene<TVoxel,TIndex> *scene) = 0;
+		virtual void MeshScene(ITMMesh *mesh, const ITMVoxelVolume<TVoxel,TIndex> *scene) = 0;
 
 		ITMMeshingEngine(void) { }
 		virtual ~ITMMeshingEngine(void) { }

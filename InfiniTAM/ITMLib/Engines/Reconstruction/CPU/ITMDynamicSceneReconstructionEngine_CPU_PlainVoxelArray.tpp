@@ -24,9 +24,9 @@
 using namespace ITMLib;
 
 // region ========================================= PLAIN VOXEL ARRAY ==================================================
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::IntegrateIntoScene(
-		ITMScene<TVoxelLive, ITMPlainVoxelArray>* scene, const ITMView* view,
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateIntoScene(
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
 		const ITMTrackingState* trackingState, const ITMRenderState* renderState) {
 	Vector2i rgbImgSize = view->rgb->noDims;
 	Vector2i depthImgSize = view->depth->noDims;
@@ -36,7 +36,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPla
 	Vector4f projParams_d, projParams_rgb;
 
 	M_d = trackingState->pose_d->GetM();
-	if (TVoxelLive::hasColorInformation) M_rgb = view->calib.trafo_rgb_to_depth.calib_inv * M_d;
+	if (TVoxel::hasColorInformation) M_rgb = view->calib.trafo_rgb_to_depth.calib_inv * M_d;
 
 	projParams_d = view->calib.intrinsics_d.projectionParamsSimple.all;
 	projParams_rgb = view->calib.intrinsics_rgb.projectionParamsSimple.all;
@@ -46,7 +46,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPla
 
 	float* depth = view->depth->GetData(MEMORYDEVICE_CPU);
 	Vector4u* rgb = view->rgb->GetData(MEMORYDEVICE_CPU);
-	TVoxelLive* voxelArray = scene->localVBA.GetVoxelBlocks();
+	TVoxel* voxelArray = scene->localVBA.GetVoxelBlocks();
 
 	const ITMPlainVoxelArray::IndexData* arrayInfo = scene->index.getIndexData();
 
@@ -73,86 +73,93 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPla
 		pt_model.w = 1.0f;
 
 		ComputeUpdatedLiveVoxelInfo<
-				TVoxelLive::hasColorInformation,
-				TVoxelLive::hasConfidenceInformation,
-				TVoxelLive::hasSemanticInformation,
-				TVoxelLive>::compute(voxelArray[locId], pt_model, M_d,
-		                             projParams_d, M_rgb, projParams_rgb, mu, maxW, depth, confidence,
-		                             depthImgSize, rgb, rgbImgSize);
+				TVoxel::hasColorInformation,
+				TVoxel::hasConfidenceInformation,
+				TVoxel::hasSemanticInformation,
+				TVoxel>::compute(voxelArray[locId], pt_model, M_d,
+		                         projParams_d, M_rgb, projParams_rgb, mu, maxW, depth, confidence,
+		                         depthImgSize, rgb, rgbImgSize);
 	}
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::FuseLiveIntoCanonicalSdf(
-		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int liveSourceFieldIndex) {
-	FusionFunctor<TVoxelLive, TVoxelCanonical> fusionFunctor(canonicalScene->sceneParams->maxW, liveSourceFieldIndex);
-	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::FuseLiveIntoCanonicalSdf(
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene) {
+	TSDFFusionFunctor<TVoxel> fusionFunctor(canonicalScene->sceneParams->maxW);
+	ITMDualSceneTraversalEngine<TVoxel, TVoxel, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
 	DualVoxelTraversal(liveScene, canonicalScene, fusionFunctor);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
+template<typename TVoxel, typename TWarp>
 void
-ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::GenerateRawLiveSceneFromView(
-		ITMScene<TVoxelLive, ITMPlainVoxelArray>* scene, const ITMView* view, const ITMTrackingState* trackingState,
+ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::GenerateRawLiveSceneFromView(
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
+		const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState) {
-	this->liveSceneManager.ResetScene(scene);
+	this->sceneManager.ResetScene(scene);
 	this->IntegrateIntoScene(scene, view, trackingState, renderState);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::UpdateVisibleList(
-		ITMScene<TVoxelLive, ITMPlainVoxelArray>* scene, const ITMView* view, const ITMTrackingState* trackingState,
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::UpdateVisibleList(
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
+		const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState, bool resetVisibleList) {
 	//do nothing
 }
 
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-template<Warp TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::WarpScene(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-                                                                                                         ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+template<typename TVoxel, typename TWarp>
+template<WarpType TWarpType>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::WarpScene(
+		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {
 //	 Clear out the flags at target index
-	IndexedFieldClearFunctor<TVoxelLive> flagClearFunctor(targetSdfIndex);
-	ITMSceneTraversalEngine<TVoxelLive, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::VoxelTraversal(liveScene,
-	                                                                                                    flagClearFunctor);
+	FieldClearFunctor<TVoxel> flagClearFunctor;
+	ITMSceneTraversalEngine<TVoxel, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::VoxelTraversal(targetTSDF,
+	                                                                                                flagClearFunctor);
 
-	TrilinearInterpolationFunctor<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray,
-			WarpVoxelStaticFunctor<TVoxelCanonical, TWarp>>
-			trilinearInterpolationFunctor(liveScene, canonicalScene, sourceSdfIndex, targetSdfIndex);
+	TrilinearInterpolationFunctor<TWarp, TVoxel, ITMPlainVoxelArray,
+			WarpVoxelStaticFunctor<TWarp, TWarpType>>
+			trilinearInterpolationFunctor(sourceTSDF, warpField);
 
 //	 Interpolate to obtain the new live frame values (at target index)
-	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
-	DualVoxelPositionTraversal(liveScene, canonicalScene, trilinearInterpolationFunctor);
+	ITMDualSceneTraversalEngine<TVoxel, TWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
+	DualVoxelPositionTraversal(targetTSDF, warpField, trilinearInterpolationFunctor);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::CopyIndexedScene(
-		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
-	CopyIndexedSceneFunctor<TVoxelLive> copyIndexedSceneFunctor(sourceSdfIndex, targetSdfIndex);
-	ITMSceneTraversalEngine<TVoxelLive, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::VoxelPositionTraversal(
-			liveScene, copyIndexedSceneFunctor);
-
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::CopyScene(
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {
+	ITMDualSceneTraversalEngine<TVoxel, TVoxel, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
+	        template StaticDualVoxelPositionTraversal<CopySceneFunctor<TVoxel> >(sourceTSDF, targetTSDF);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::WarpScene_CumulativeWarps(
-		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
-	this->template WarpScene<WARP_CUMULATIVE>(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
+template<typename TVoxel, typename TWarp>
+void
+ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::WarpScene_CumulativeWarps(
+		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {
+	this->template WarpScene<WARP_CUMULATIVE>(warpField, sourceTSDF, targetTSDF);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::WarpScene_FlowWarps(
-		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
-	this->template WarpScene<WARP_FLOW>(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::WarpScene_FlowWarps(
+		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {
+	this->template WarpScene<WARP_FLOW>(warpField, sourceTSDF, targetTSDF);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>::WarpScene_WarpUpdates(
-		ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-		ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
-	this->template WarpScene<WARP_UPDATE>(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::WarpScene_WarpUpdates(
+		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {
+	this->template WarpScene<WARP_UPDATE>(warpField, sourceTSDF, targetTSDF);
 }
 // endregion ===========================================================================================================

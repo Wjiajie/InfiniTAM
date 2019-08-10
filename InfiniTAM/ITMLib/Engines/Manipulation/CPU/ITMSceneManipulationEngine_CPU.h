@@ -15,7 +15,7 @@
 //  ================================================================
 #pragma once
 
-#include "../../../Objects/Scene/ITMScene.h"
+#include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../ITMLibDefines.h"
 #include "../../../Utils/ITMHashBlockProperties.h"
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
@@ -40,11 +40,11 @@ public:
 	 * \brief Clear out scene and reset the index
 	 * \param scene
 	 */
-	static void ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash>* scene);
-	static bool SetVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
-	static bool SetVoxelNoAllocation(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
-	static TVoxel ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at);
-	static TVoxel ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, ITMVoxelBlockHash::IndexCache& cache);
+	static void ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene);
+	static bool SetVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
+	static bool SetVoxelNoAllocation(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
+	static TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at);
+	static TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, ITMVoxelBlockHash::IndexCache& cache);
 
 
 	/**
@@ -52,7 +52,7 @@ public:
 	 * \param scene the scene to modify
 	 * \param offset the offset vector to use
 	 */
-	static void OffsetWarps(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset);
+	static void OffsetWarps(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset);
 	/**
 	 * \brief Copies the slice (box-like window) specified by points extremum1 and extremum2 from the source scene into a
 	 * destination scene. Clears the destination scene before copying.
@@ -65,10 +65,10 @@ public:
 	 * \return true on success (destination scene contains the slice), false on failure (there are no allocated hash blocks
 	 */
 	static bool
-	CopySceneSlice(ITMScene<TVoxel, ITMVoxelBlockHash>* destination, ITMScene<TVoxel, ITMVoxelBlockHash>* source,
+	CopySceneSlice(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
 	               Vector6i bounds, const Vector3i& offset = Vector3i(0));
-	static bool CopyScene(ITMScene<TVoxel, ITMVoxelBlockHash>* destination,
-	                      ITMScene<TVoxel, ITMVoxelBlockHash>* source,
+	static bool CopyScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination,
+	                      ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
 	                      const Vector3i& offset = Vector3i(0));
 
 };
@@ -76,13 +76,13 @@ public:
 template<typename TVoxel>
 class ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray> {
 public:
-	static void ResetScene(ITMScene<TVoxel, ITMPlainVoxelArray>* scene);
-	static bool SetVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, TVoxel voxel);
-	static TVoxel ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at);
+	static void ResetScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene);
+	static bool SetVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, TVoxel voxel);
+	static TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at);
 	static TVoxel
-	ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, ITMPlainVoxelArray::IndexCache& cache);
-	static bool IsPointInBounds(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, const Vector3i& at);
-	static void OffsetWarps(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset);
+	ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, ITMPlainVoxelArray::IndexCache& cache);
+	static bool IsPointInBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const Vector3i& at);
+	static void OffsetWarps(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset);
 	/**
 	 * \brief Copies the slice (box-like window) specified by points extremum1 and extremum2 from the source scene into a
 	 * destination scene. Clears the destination scene before copying.
@@ -96,8 +96,8 @@ public:
 	 * from the source slice in the source scene.
 	 * \return true on success (destination scene contains the slice), false on failure (there are no allocated hash blocks
 	 */
-	static bool CopySceneSlice(ITMScene<TVoxel, ITMPlainVoxelArray>* destination,
-	                           ITMScene<TVoxel, ITMPlainVoxelArray>* source,
+	static bool CopySceneSlice(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* destination,
+	                           ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source,
 	                           Vector6i bounds, const Vector3i& offset = Vector3i(0));
 
 	/**
@@ -108,8 +108,8 @@ public:
 	 * values that go out-of-range due to the offset will be omitted
 	 * \return true on success, false on failure
 	 */
-	static bool CopyScene(ITMScene<TVoxel, ITMPlainVoxelArray>* destination,
-	                      ITMScene<TVoxel, ITMPlainVoxelArray>* source,
+	static bool CopyScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* destination,
+	                      ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source,
 	                      const Vector3i& offset = Vector3i(0));
 
 };
@@ -215,7 +215,7 @@ inline bool MarkAsNeedingAllocationIfNotFound(uchar* entryAllocationTypes, Vecto
 
 template<typename TVoxel, typename TIndex>
 inline
-void AllocateHashEntriesUsingLists_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* entryAllocationTypes,
+void AllocateHashEntriesUsingLists_CPU(ITMVoxelVolume<TVoxel, TIndex>* scene, uchar* entryAllocationTypes,
                                        Vector3s* allocationBlockCoordinates) {
 	int entryCount = TIndex::noTotalEntries;
 	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
@@ -267,7 +267,7 @@ void AllocateHashEntriesUsingLists_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* e
 
 template<typename TVoxel, typename TIndex>
 inline
-void AllocateHashEntriesUsingLists_SetVisibility_CPU(ITMScene<TVoxel, TIndex>* scene, uchar* entryAllocationTypes,
+void AllocateHashEntriesUsingLists_SetVisibility_CPU(ITMVoxelVolume<TVoxel, TIndex>* scene, uchar* entryAllocationTypes,
                                                      Vector3s* allocationBlockCoordinates, uchar* entriesVisibleType) {
 	int entryCount = TIndex::noTotalEntries;
 	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
@@ -397,8 +397,8 @@ public:
 	 * \param source source scene
 	 * \param offset offset to use when copying the values
 	 */
-	static void CopySceneSDFandFlagsWithOffset_CPU(ITMScene<TVoxelDestination, ITMVoxelBlockHash>* destination,
-	                                               ITMScene<TVoxelSource, ITMVoxelBlockHash>* source,
+	static void CopySceneSDFandFlagsWithOffset_CPU(ITMVoxelVolume<TVoxelDestination, ITMVoxelBlockHash>* destination,
+	                                               ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* source,
 	                                               Vector3i offset);
 
 
@@ -414,8 +414,8 @@ public:
 	 * \param source source scene
 	 * \param offset offset to use when copying the values
 	 */
-	static void CopySceneSDFandFlagsWithOffset_CPU(ITMScene<TVoxelDestination, ITMPlainVoxelArray>* destination,
-	                                               ITMScene<TVoxelSource, ITMPlainVoxelArray>* source,
+	static void CopySceneSDFandFlagsWithOffset_CPU(ITMVoxelVolume<TVoxelDestination, ITMPlainVoxelArray>* destination,
+	                                               ITMVoxelVolume<TVoxelSource, ITMPlainVoxelArray>* source,
 	                                               Vector3i offset);
 };
 

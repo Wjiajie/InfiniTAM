@@ -16,7 +16,7 @@
 #pragma once
 
 namespace ITMLib{
-enum Warp{
+enum WarpType{
 	WARP_CUMULATIVE,
 	WARP_FLOW,
 	WARP_UPDATE

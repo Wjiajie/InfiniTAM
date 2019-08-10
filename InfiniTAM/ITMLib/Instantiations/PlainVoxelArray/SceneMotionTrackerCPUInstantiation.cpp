@@ -17,4 +17,4 @@
 #include "../../SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.tpp"
 #include "../../ITMLibDefines.h"
 
-template class ITMSceneMotionTracker_CPU<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>;
+template class ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;

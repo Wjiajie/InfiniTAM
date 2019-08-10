@@ -14,15 +14,13 @@
 //  limitations under the License.
 //  ================================================================
 
-#include "ITMScene.tpp"
+#include "ITMVoxelVolume.tpp"
 #include "../../ITMLibDefines.h"
 
-// Explicit template instantiations for ITMScene
+// Explicit template instantiations for ITMVoxelVolume
 namespace ITMLib {
-	template class ITMScene<ITMVoxel, ITMPlainVoxelArray>;
-	template class ITMScene<ITMVoxel, ITMVoxelBlockHash>;
-	template class ITMScene<ITMVoxelLive, ITMPlainVoxelArray>;
-	template class ITMScene<ITMVoxelLive, ITMVoxelBlockHash>;
-	template class ITMScene<ITMVoxelCanonical, ITMPlainVoxelArray>;
-	template class ITMScene<ITMVoxelCanonical, ITMVoxelBlockHash>;
+	template class ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>;
+	template class ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>;
+	template class ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>;
+	template class ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>;
 }  // namespace ITMLib

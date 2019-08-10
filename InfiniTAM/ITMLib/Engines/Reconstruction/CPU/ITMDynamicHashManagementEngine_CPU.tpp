@@ -46,9 +46,9 @@ ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::~ITMDynamicHash
 }
 
 // endregion ===========================================================================================================
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLiveSceneFromDepth(
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
+template<typename TVoxel, typename TWarp>
+void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateLiveSceneFromDepth(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState, bool onlyUpdateVisibleList, bool resetVisibleList) {
 	Vector2i depthImgSize = view->depth->noDims;
 	float voxelSize = scene->sceneParams->voxelSize;
@@ -164,10 +164,10 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateLi
 
 // region =========================== CANONICAL HASH BLOCK ALLOCATION ==================================================
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateCanonicalFromLive(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene) {
+template<typename TVoxel, typename TWarp>
+void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateCanonicalFromLive(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene) {
 
 	uchar* canonicalEntryAllocationTypes = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
 
@@ -212,45 +212,46 @@ void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::ChangeCano
 }
 
 
-template<typename TVoxelWarpSource, typename TVoxelSdfSource, typename TLookupPositionFunctor>
+template<typename TVoxelWarpSource, typename TVoxelTSDF, typename TLookupPositionFunctor>
 struct WarpBasedAllocationMarkerFunctor {
 	WarpBasedAllocationMarkerFunctor(
-			ITMScene<TVoxelSdfSource, ITMVoxelBlockHash>* sceneToAllocate,
+			ITMVoxelVolume<TVoxelTSDF, ITMVoxelBlockHash>* sourceVolume,
+			ITMVoxelVolume<TVoxelTSDF, ITMVoxelBlockHash>* volumeToAllocate,
 			Vector3s* allocationBlockCoords,
-			uchar* warpedEntryAllocationTypes,
-			int flagIndex) :
+			uchar* warpedEntryAllocationTypes) :
 
-			sdfScene(sceneToAllocate),
-			sdfVoxels(sceneToAllocate->localVBA.GetVoxelBlocks()),
-			sdfHashEntries(sceneToAllocate->index.GetEntries()),
-			sdfCache(),
+			targetTSDFScene(volumeToAllocate),
+			targetTSDFVoxels(volumeToAllocate->localVBA.GetVoxelBlocks()),
+			targetTSDFHashEntries(volumeToAllocate->index.GetEntries()),
+			targetTSDFCache(),
+
+			sourceTSDFScene(sourceVolume),
+			sourceTSDFVoxels(sourceVolume->localVBA.GetVoxelBlocks()),
+			sourceTSDFHashEntries(sourceVolume->index.GetEntries()),
+			sourceTSDFCache(),
 
 			allocationBlockCoords(allocationBlockCoords),
-			warpedEntryAllocationTypes(warpedEntryAllocationTypes),
-
-			sourceFieldIndex(flagIndex) {}
+			warpedEntryAllocationTypes(warpedEntryAllocationTypes) {}
 
 	void operator()(TVoxelWarpSource& voxel, Vector3i voxelPosition, Vector3s hashBlockPosition) {
 		Vector3f warpedPosition = TLookupPositionFunctor::GetWarpedPosition(voxel, voxelPosition);
 		Vector3i warpedPositionTruncated = warpedPosition.toInt();
-		// perform lookup
+		// perform lookup in source volume
 		int vmIndex;
-		const TVoxelSdfSource& sdfVoxelAtWarp = readVoxel(sdfVoxels, sdfHashEntries, warpedPositionTruncated,
-		                                                  vmIndex, sdfCache);
-
+		const TVoxelTSDF& sourceTSDFVoxelAtWarp = readVoxel(sourceTSDFVoxels, sourceTSDFHashEntries, warpedPositionTruncated,
+		                                                    vmIndex, sourceTSDFCache);
 
 		voxelCount++;
-		// skip truncated voxels in raw/old live scene
-		if (sdfVoxelAtWarp.flag_values[sourceFieldIndex] != ITMLib::VOXEL_NONTRUNCATED) return;
+		// skip truncated voxels in source scene
+		if (sourceTSDFVoxelAtWarp.flags != ITMLib::VOXEL_NONTRUNCATED) return;
 		nontruncatedCount++;
 
 		int liveBlockHash = hashIndex(hashBlockPosition);
 		bool collisionDetected = false;
 		if (MarkAsNeedingAllocationIfNotFound(warpedEntryAllocationTypes, allocationBlockCoords, liveBlockHash,
-		                                      hashBlockPosition, sdfHashEntries, collisionDetected)) {
+		                                      hashBlockPosition, targetTSDFHashEntries, collisionDetected)) {
 			countToAllocate++;
 		}
-
 	}
 
 	//_DEBUG
@@ -258,15 +259,18 @@ struct WarpBasedAllocationMarkerFunctor {
 	int voxelCount = 0;
 	int nontruncatedCount = 0;
 private:
-	ITMScene<TVoxelSdfSource, ITMVoxelBlockHash>* sdfScene;
-	TVoxelSdfSource* sdfVoxels;
-	ITMHashEntry* sdfHashEntries;
-	ITMVoxelBlockHash::IndexCache sdfCache;
+	ITMVoxelVolume<TVoxelTSDF, ITMVoxelBlockHash>* targetTSDFScene;
+	TVoxelTSDF* targetTSDFVoxels;
+	ITMHashEntry* targetTSDFHashEntries;
+	ITMVoxelBlockHash::IndexCache targetTSDFCache;
 
+	ITMVoxelVolume<TVoxelTSDF, ITMVoxelBlockHash>* sourceTSDFScene;
+	TVoxelTSDF* sourceTSDFVoxels;
+	ITMHashEntry* sourceTSDFHashEntries;
+	ITMVoxelBlockHash::IndexCache sourceTSDFCache;
 
 	Vector3s* allocationBlockCoords;
 	uchar* warpedEntryAllocationTypes;
-	const int sourceFieldIndex;
 };
 
 
@@ -279,29 +283,30 @@ private:
  * \details scans each (allocated) voxel in the SDF voxel grid, checks the warp vector at the corresponding location,
  * finds the voxel where the warp vector is pointing to, and, if the hash block for that voxel is not yet allocated,
  * allocates it.
- * \param warpSourceScene voxel grid where each voxel has a .warp Vector3f field defined
- * \param sdfScene sdf grid whose hash blocks to allocate if needed
+ * \param warpField voxel grid where each voxel has a .warp Vector3f field defined
+ * \param sourceTsdf sdf grid whose hash blocks to allocate if needed
  * \param sourceSdfIndex index of the sdf / flag field to use in the sdfScene
- * \tparam TWarp the type of warp vector to use
+ * \tparam TWarpType the type of warp vector to use
  */
-template<typename TVoxelCanonical, typename TVoxelLive>
-template<Warp TWarp>
-void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::AllocateWarpedLive(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex) {
+template<typename TVoxel, typename TWarp>
+template<WarpType TWarpType>
+void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateWarpedLive(
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
 	int entryCount = ITMVoxelBlockHash::noTotalEntries;
-	Vector3s* allocationBlockCoords = this->allocationBlockCoordinates->GetData(MEMORYDEVICE_CPU);
-	uchar* liveEntryAllocationTypes = this->liveEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
+	Vector3s* allocationBlockCoordinatesData = this->allocationBlockCoordinates->GetData(MEMORYDEVICE_CPU);
+	uchar* liveEntryAllocationTypesData = this->liveEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
 	//reset allocation types
-	memset(liveEntryAllocationTypes, (unsigned char) 0, static_cast<size_t>(entryCount));
+	memset(liveEntryAllocationTypesData, (unsigned char) 0, static_cast<size_t>(entryCount));
 
 	//Mark up hash entries in the target scene that will need allocation
-	WarpBasedAllocationMarkerFunctor<TVoxelCanonical, TVoxelLive, WarpVoxelStaticFunctor<TVoxelCanonical,TWarp>>
-			hashMarkerFunctor(sdfScene, allocationBlockCoords, liveEntryAllocationTypes, sourceSdfIndex);
-	ITMSceneTraversalEngine<TVoxelCanonical,ITMVoxelBlockHash,ITMLibSettings::DEVICE_CPU>::VoxelAndHashBlockPositionTraversal(warpSourceScene, hashMarkerFunctor);
+	WarpBasedAllocationMarkerFunctor<TWarp, TVoxel, WarpVoxelStaticFunctor<TWarp,TWarpType>>
+			hashMarkerFunctor(sourceTSDF, targetTSDF, allocationBlockCoordinatesData, liveEntryAllocationTypesData);
+	ITMSceneTraversalEngine<TWarp,ITMVoxelBlockHash,ITMLibSettings::DEVICE_CPU>::VoxelAndHashBlockPositionTraversal(warpField, hashMarkerFunctor);
 
 	//Allocate the hash entries that will potentially have any data
-	AllocateHashEntriesUsingLists_CPU(sdfScene, liveEntryAllocationTypes, allocationBlockCoords);
+	AllocateHashEntriesUsingLists_CPU(sourceTSDF, liveEntryAllocationTypesData, allocationBlockCoordinatesData);
 }
 
 // endregion ==================================== END CANONICAL HASH BLOCK ALLOCATION ==================================

@@ -21,14 +21,8 @@
 
 namespace ITMLib {
 
-template
-class ITMSwappingEngine_CUDA<ITMVoxelCanonical, ITMPlainVoxelArray>;
-
-template
-class ITMVisualisationEngine_CUDA<ITMVoxelLive, ITMPlainVoxelArray>;
-template
-class ITMVisualisationEngine_CUDA<ITMVoxelCanonical, ITMPlainVoxelArray>;
-template
-class ITMMeshingEngine_CUDA<ITMVoxelCanonical, ITMPlainVoxelArray>;
+template class ITMSwappingEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
+template class ITMVisualisationEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
+template class ITMMeshingEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
 
 }

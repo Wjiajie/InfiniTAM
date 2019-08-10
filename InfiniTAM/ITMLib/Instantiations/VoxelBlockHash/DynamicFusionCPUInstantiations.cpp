@@ -18,7 +18,7 @@
 
 #include "../../Core/ITMDynamicEngine.tpp"
 
-#include "../../Objects/Scene/ITMScene.h"
+#include "../../Objects/Scene/ITMVoxelVolume.h"
 
 
 #include "../../Engines/Swapping/CPU/ITMSwappingEngine_CPU.tpp"
@@ -36,22 +36,19 @@
 
 
 
-template class ITMSwappingEngine_CPU<ITMVoxelCanonical, ITMVoxelBlockHash>;
-template class ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>;
-template class ITMSceneFileIOEngine<ITMVoxelCanonical,ITMVoxelBlockHash>;
-template class ITMSceneFileIOEngine<ITMVoxelLive,ITMVoxelBlockHash>;
-template class ITMVisualisationEngine_CPU<ITMVoxelCanonical, ITMVoxelBlockHash>;
-template class ITMVisualisationEngine_CPU<ITMVoxelLive, ITMVoxelBlockHash>;
-template class ITMMeshingEngine_CPU<ITMVoxelCanonical, ITMVoxelBlockHash>;
-template class ITMWarpSceneLogger<ITMVoxelCanonical, ITMVoxelBlockHash>;
-template class ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>;
+template class ITMSwappingEngine_CPU<ITMVoxel, ITMVoxelBlockHash>;
+template class ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>;
+template class ITMSceneFileIOEngine<ITMVoxel,ITMVoxelBlockHash>;
+template class ITMVisualisationEngine_CPU<ITMVoxel, ITMVoxelBlockHash>;
+template class ITMMeshingEngine_CPU<ITMVoxel, ITMVoxelBlockHash>;
+template class ITMWarpFieldLogger<ITMWarp, ITMVoxelBlockHash>;
+template class ITMSceneLogger<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>;
 
 //TODO: Cleanup -Greg (GitHub: Algomorph)
 //dynamic fusion utility classes
-template class ITMSceneSliceVisualizer2D<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>;
+template class ITMSceneSliceVisualizer2D<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>;
 
-template class ITMSceneStatisticsCalculator<ITMVoxelCanonical,ITMVoxelBlockHash>;
-template class ITMSceneStatisticsCalculator<ITMVoxelLive,ITMVoxelBlockHash>;
+template class ITMSceneStatisticsCalculator<ITMVoxel,ITMVoxelBlockHash>;;
 template class ITM3DNestedMap<int>;
 template class ITM3DNestedMap<std::tuple<int,int>>;
 template class ITM3DNestedMapOfArrays<int>;

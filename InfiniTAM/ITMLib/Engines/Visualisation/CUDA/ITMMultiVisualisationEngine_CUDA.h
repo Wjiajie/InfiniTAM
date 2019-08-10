@@ -17,7 +17,7 @@ namespace ITMLib {
 		ITMMultiVisualisationEngine_CUDA(void);
 		~ITMMultiVisualisationEngine_CUDA(void);
 
-		ITMRenderState* CreateRenderState(const ITMScene<TVoxel, TIndex> *scene, const Vector2i & imgSize) const;
+		ITMRenderState* CreateRenderState(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Vector2i & imgSize) const;
 
 		void PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, TIndex> & sceneManager, ITMRenderState *state);
 
@@ -37,7 +37,7 @@ namespace ITMLib {
 		ITMMultiVisualisationEngine_CUDA(void);
 		~ITMMultiVisualisationEngine_CUDA(void);
 
-		ITMRenderState* CreateRenderState(const ITMScene<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const;
+		ITMRenderState* CreateRenderState(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const;
 
 		void PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, ITMVoxelBlockHash> & sceneManager, ITMRenderState *state);
 

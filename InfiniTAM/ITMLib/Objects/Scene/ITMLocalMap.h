@@ -6,7 +6,7 @@
 
 #include "../../Engines/Visualisation/Interface/ITMVisualisationEngine.h"
 #include "../../Objects/RenderStates/ITMRenderState.h"
-#include "../../Objects/Scene/ITMScene.h"
+#include "ITMVoxelVolume.h"
 #include "../../Objects/Tracking/ITMTrackingState.h"
 #include "../../Utils/ITMLibSettings.h"
 
@@ -43,7 +43,7 @@ namespace ITMLib {
 	class ITMLocalMap
 	{
 	public:
-		ITMScene<TVoxel, TIndex> *scene;
+		ITMVoxelVolume<TVoxel, TIndex> *scene;
 		ITMRenderState *renderState;
 		ITMTrackingState *trackingState;
 		ConstraintList relations;
@@ -53,7 +53,7 @@ namespace ITMLib {
 		{
 			auto& settings = ITMLibSettings::Instance();
 			MemoryDeviceType memoryType = settings.deviceType == ITMLibSettings::DEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
-			scene = new ITMScene<TVoxel, TIndex>(&settings.sceneParams, settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
+			scene = new ITMVoxelVolume<TVoxel, TIndex>(&settings.sceneParams, settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 			renderState = visualisationEngine->CreateRenderState(scene, trackedImageSize);
 			trackingState = new ITMTrackingState(trackedImageSize, memoryType);
 		}

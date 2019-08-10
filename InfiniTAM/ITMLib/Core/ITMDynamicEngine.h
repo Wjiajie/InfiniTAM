@@ -18,7 +18,7 @@
 
 namespace ITMLib
 {
-	template <typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+	template <typename TVoxel, typename TWarp, typename TIndex>
 	class ITMDynamicEngine : public ITMMainEngine
 	{
 	public:
@@ -77,17 +77,18 @@ namespace ITMLib
 		int framesProcessed, relocalisationCount;
 
 		ITMLowLevelEngine* lowLevelEngine;
-		ITMVisualisationEngine<TVoxelLive, TIndex>* liveVisualisationEngine;
-		ITMVisualisationEngine<TVoxelCanonical, TIndex>* canonicalVisualisationEngine;
+		ITMVisualisationEngine<TVoxel, TIndex>* liveVisualisationEngine;
+		ITMVisualisationEngine<TVoxel, TIndex>* canonicalVisualisationEngine;
 
-		ITMMeshingEngine<TVoxelCanonical, TIndex>* meshingEngine;
+		ITMMeshingEngine<TVoxel, TIndex>* meshingEngine;
 
 		ITMViewBuilder* viewBuilder;
-		ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>* denseMapper;
+		ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>* denseMapper;
 		ITMTrackingController* cameraTrackingController;
 
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
-		ITMScene<TVoxelLive, TIndex>* liveScene;
+		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene;
+		ITMVoxelVolume<TVoxel, TIndex>* liveScene;
+		ITMVoxelVolume<TWarp, TIndex>* warpField;
 		ITMRenderState* renderState_live;
 		ITMRenderState* renderState_freeview;
 

@@ -13,7 +13,7 @@ Represents the 3D world model as a hash of small voxel
 blocks
 */
 template<class TVoxel, class TIndex>
-class ITMScene
+class ITMVoxelVolume
 {
 public:
 	/** Scene parameters like voxel size etc. */
@@ -40,10 +40,10 @@ public:
 		index.LoadFromDirectory(outputDirectory);
 	}
 
-	ITMScene(const ITMSceneParams *_sceneParams, bool _useSwapping, MemoryDeviceType _memoryType,
-	         Vector3i size = Vector3i(512), Vector3i offset = Vector3i(-256,-256,0));
+	ITMVoxelVolume(const ITMSceneParams *_sceneParams, bool _useSwapping, MemoryDeviceType _memoryType,
+	               Vector3i size = Vector3i(512), Vector3i offset = Vector3i(-256,-256,0));
 
-	~ITMScene(void)
+	~ITMVoxelVolume(void)
 	{
 		if (globalCache != nullptr) delete globalCache;
 	}
@@ -54,7 +54,8 @@ public:
 	}
 
 	// Suppress the default copy constructor and assignment operator (C++11 way)
-	ITMScene(const ITMScene&) = delete;
-	ITMScene& operator=(const ITMScene&) = delete;
+	ITMVoxelVolume(const ITMVoxelVolume&) = delete;
+	ITMVoxelVolume& operator=(const ITMVoxelVolume&) = delete;
 };
+
 }//end namespace ITMLib

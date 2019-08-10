@@ -85,7 +85,7 @@ struct SetGradientFunctor<TVoxelCanonical, true> {
 };
 
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 struct ITMCalculateWarpGradientBasedOnWarpedLiveFunctor {
 private:
 
@@ -114,8 +114,8 @@ public:
 
 	// region ========================================= CONSTRUCTOR ====================================================
 	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor(
-			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::Parameters parameters,
-			typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::Switches switches) :
+			typename ITMSceneMotionTracker<TVoxel, TWarp, TIndex>::Parameters parameters,
+			typename ITMSceneMotionTracker<TVoxel, TWarp, TIndex>::Switches switches) :
 			liveCache(),
 			canonicalCache(),
 			parameters(parameters),
@@ -124,8 +124,8 @@ public:
 			focusCoordinates(ITMLibSettings::Instance().GetFocusCoordinates()) {}
 
 	void
-	PrepareForOptimization(ITMScene<TVoxelLive, TIndex>* liveScene, ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                       int sourceSdfIndex, bool restrictZtrackingForDebugging) {
+	PrepareForOptimization(ITMVoxelVolume<TVoxel, TIndex>* liveScene, ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+	                       ITMVoxelVolume<TWarp, TIndex>* warpField, bool restrictZtrackingForDebugging) {
 		ResetStatistics();
 		this->liveScene = liveScene;
 		this->liveVoxels = liveScene->localVBA.GetVoxelBlocks(),
@@ -135,19 +135,18 @@ public:
 		this->canonicalIndexData = canonicalScene->index.getIndexData();
 		this->restrictZtrackingForDebugging = restrictZtrackingForDebugging;
 		this->sourceSdfIndex = sourceSdfIndex;
-
 	}
 
 	// endregion =======================================================================================================
 	_CPU_AND_GPU_CODE_
-	void operator()(TVoxelLive& liveVoxel, TVoxelCanonical& canonicalVoxel, Vector3i voxelPosition) {
+	void operator()(TVoxel& liveVoxel, TVoxel& canonicalVoxel, TVoxel& warpVoxel, Vector3i voxelPosition) {
 
 		if (!VoxelIsConsideredForTracking(canonicalVoxel, liveVoxel, sourceSdfIndex)) return;
 		bool computeDataTerm = VoxelIsConsideredForDataTerm(canonicalVoxel, liveVoxel, sourceSdfIndex);
 
 		Vector3f& framewiseWarp = canonicalVoxel.flow_warp;
-		float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[sourceSdfIndex]);
-		float canonicalSdf = TVoxelCanonical::valueToFloat(canonicalVoxel.sdf);
+		float liveSdf = TVoxel::valueToFloat(liveVoxel.sdf_values[sourceSdfIndex]);
+		float canonicalSdf = TVoxel::valueToFloat(canonicalVoxel.sdf);
 
 		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
 
@@ -308,8 +307,8 @@ public:
 		}
 		// endregion
 		// region =============================== COMPUTE ENERGY GRADIENT ==================================
-		SetGradientFunctor<TVoxelCanonical, TVoxelCanonical::hasDebugInformation>::SetGradient(
-				canonicalVoxel,
+		SetGradientFunctor<TWarp, TWarp::hasDebugInformation>::SetGradient(
+				warpVoxel,
 				parameters.weightDataTerm, parameters.weightLevelSetTerm, parameters.weightSmoothnessTerm,
 				localDataEnergyGradient, localLevelSetEnergyGradient, localSmoothnessEnergyGradient,
 				restrictZtrackingForDebugging);
@@ -317,8 +316,8 @@ public:
 		// region =============================== AGGREGATE VOXEL STATISTICS ===============================
 		//skip aggregates for parallel cuda implementation
 #ifndef __CUDACC__
-		float energyGradientLength = ORUtils::length(canonicalVoxel.gradient0);//meters
-		float warpLength = ORUtils::length(canonicalVoxel.flow_warp);
+		float energyGradientLength = ORUtils::length(warpVoxel.gradient0);//meters
+		float warpLength = ORUtils::length(warpVoxel.flow_warp);
 		double localEnergy = localDataEnergy + parameters.weightLevelSetTerm * localLevelSetEnergy
 		                     + parameters.weightSmoothnessTerm * localSmoothingEnergy;
 
@@ -371,12 +370,11 @@ public:
 		                      totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
 
 		//save all energies to file
-		ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().RecordAndPlotEnergies(
+		ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().RecordAndPlotEnergies(
 				totalDataEnergy, totalLevelSetEnergy, totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
 
 
-		ITMSceneStatisticsCalculator<TVoxelCanonical, TIndex>& calculator = ITMSceneStatisticsCalculator<TVoxelCanonical, TIndex>::Instance();
-
+		ITMSceneStatisticsCalculator<TVoxel, TIndex>& calculator = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance();
 		int allocated_hash_block_count = calculator.ComputeAllocatedHashBlockCount(canonicalScene);
 
 		CalculateAndPrintAdditionalStatistics(
@@ -407,14 +405,14 @@ private:
 	}
 
 	// *** data structure accessors
-	ITMScene<TVoxelLive, TIndex>* liveScene;
+	ITMVoxelVolume<TVoxel, TIndex>* liveScene;
 	int sourceSdfIndex{};
-	TVoxelLive* liveVoxels;
+	TVoxel* liveVoxels;
 	typename TIndex::IndexData* liveIndexData;
 	typename TIndex::IndexCache liveCache;
 
-	ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
-	TVoxelCanonical* canonicalVoxels;
+	ITMVoxelVolume<TVoxel, TIndex>* canonicalScene;
+	TVoxel* canonicalVoxels;
 	typename TIndex::IndexData* canonicalIndexData;
 	typename TIndex::IndexCache canonicalCache;
 
@@ -439,8 +437,8 @@ private:
 	Vector3i focusCoordinates;
 	bool restrictZtrackingForDebugging = false;
 
-	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::Parameters parameters;
-	const typename ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>::Switches switches;
+	const typename ITMSceneMotionTracker<TVoxel, TWarp, TIndex>::Parameters parameters;
+	const typename ITMSceneMotionTracker<TVoxel, TWarp, TIndex>::Switches switches;
 
 };
 

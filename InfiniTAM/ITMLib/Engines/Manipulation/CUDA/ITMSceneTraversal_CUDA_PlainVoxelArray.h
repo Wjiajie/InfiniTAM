@@ -20,7 +20,7 @@
 
 //local
 #include "../Interface/ITMSceneTraversal.h"
-#include "../../../Objects/Scene/ITMScene.h"
+#include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Objects/Scene/ITMPlainVoxelArray.h"
 #include "../../../Utils/ITMLibSettings.h"
 
@@ -31,15 +31,15 @@
 
 namespace {
 //CUDA device functions
-template<typename TStaticFunctor, typename TVoxel>
+template<typename TStaticFunctor, typename TWarp>
 __global__ void
-staticVoxelTraversal_device(TVoxel* voxelArray, const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo) {
+staticVoxelTraversal_device(TWarp* warpVoxels, const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
 
 	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
-	TVoxel& voxel = voxelArray[locId];
+	TWarp& voxel = warpVoxels[locId];
 	TStaticFunctor::run(voxel);
 }
 
@@ -94,7 +94,7 @@ class ITMSceneTraversalEngine<TVoxel, ITMPlainVoxelArray, ITMLibSettings::DEVICE
 public:
 // region ================================ STATIC SINGLE-SCENE TRAVERSAL ===============================================
 	template<typename TStaticFunctor>
-	inline static void StaticVoxelTraversal(ITMScene<TVoxel, ITMPlainVoxelArray>* scene) {
+	inline static void StaticVoxelTraversal(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) {
 		TVoxel* voxelArray = scene->localVBA.GetVoxelBlocks();
 		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.getIndexData();
 
@@ -118,8 +118,8 @@ public:
 	template<typename TFunctor>
 	inline static void
 	DualVoxelPositionTraversal(
-			ITMScene<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
-			ITMScene<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
 			TFunctor& functor) {
 
 		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
@@ -143,8 +143,8 @@ public:
 	template<typename TFunctor>
 	inline static void
 	DualVoxelTraversal(
-			ITMScene<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
-			ITMScene<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
 			TFunctor& functor) {
 
 		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());

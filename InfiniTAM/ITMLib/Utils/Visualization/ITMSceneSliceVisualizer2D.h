@@ -20,13 +20,13 @@
 
 // local
 #include "../ITMMath.h"
-#include "../../Objects/Scene/ITMScene.h"
+#include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "ITMVisualizationCommon.h"
 
 namespace ITMLib {
 
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 class ITMSceneSliceVisualizer2D {
 
 	//TODO: positions of voxels to highlight / draw around should be defined extenally in the user code, not as class static members. Static functions should be probably changed to become member functions, with focus coordinates (testPos1, testPos2...) being set in user code during construction. -Greg (GitHub: Algomorph)
@@ -40,35 +40,27 @@ public:
 
 	Plane GetPlane() const;
 
-	void SaveLiveSceneSlicesAs2DImages_AllDirections(
-			ITMScene <TVoxelLive, TIndex>* scene, std::string pathWithoutPostfix);
-	void SaveCanonicalSceneSlicesAs2DImages_AllDirections(
-			ITMScene <TVoxelCanonical, TIndex>* scene, std::string pathWithoutPostfix);
-	void SaveCanonicalSceneSlicesAs2DImages(ITMScene <TVoxelCanonical, TIndex>* scene,
-	                                        Axis axis, std::string path);
-	void SaveLiveSceneSlicesAs2DImages(ITMScene <TVoxelLive, TIndex>* scene,
-	                                   Axis axis, std::string path);
+	void SaveSceneSlicesAs2DImages_AllDirections(
+			ITMVoxelVolume <TVoxel, TIndex>* scene, std::string pathWithoutPostfix);
+	void SaveSceneSlicesAs2DImages(ITMVoxelVolume <TVoxel, TIndex>* scene,
+	                               Axis axis, std::string path);
 
-	cv::Mat DrawCanonicalSceneImageAroundPoint(ITMScene <TVoxelCanonical, TIndex>* scene);
-	cv::Mat DrawLiveSceneImageAroundPoint(ITMScene <TVoxelLive, TIndex>* scene, int fieldIndex);
-	cv::Mat DrawWarpedSceneImageAroundPoint(ITMScene <TVoxelCanonical, TIndex>* scene);
+	cv::Mat DrawSceneImageAroundPoint(ITMVoxelVolume <TVoxel, TIndex>* scene);
+	cv::Mat DrawWarpedSceneImageAroundPoint(ITMVoxelVolume <TVoxel, TIndex>* scene, ITMVoxelVolume <TWarp, TIndex>* warpField);
 
-	void MarkWarpedSceneImageAroundFocusPoint(ITMScene <TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn);
-	void MarkWarpedSceneImageAroundPoint(ITMScene <TVoxelCanonical, TIndex>* scene, cv::Mat& imageToMarkOn, Vector3i positionOfVoxelToMark);
+	void MarkWarpedSceneImageAroundFocusPoint(ITMVoxelVolume <TVoxel, TIndex>* scene,
+			ITMVoxelVolume <TWarp, TIndex>* warpField, cv::Mat& imageToMarkOn);
+	void MarkWarpedSceneImageAroundPoint(ITMVoxelVolume <TVoxel, TIndex>* scene,
+			ITMVoxelVolume <TWarp, TIndex>* warpField, cv::Mat& imageToMarkOn, Vector3i positionOfVoxelToMark);
 
 	const std::string outputDirectory;
 	const float pixelsPerVoxel;
 
 private:
-	template<typename TVoxel>
-	void RenderSceneSlices(ITMScene <TVoxel, TIndex>* scene,
+	void RenderSceneSlices(ITMVoxelVolume <TVoxel, TIndex>* scene,
 	                       Axis axis,
 	                       const std::string& outputFolder,
 	                       bool verbose = false);
-	template<typename TVoxel>
-	cv::Mat DrawSceneImageAroundPoint(ITMScene <TVoxel, TIndex>* scene);
-	template<typename TVoxel>
-	cv::Mat DrawWarpedSceneImageTemplated(ITMScene <TVoxel, TIndex>* scene);
 
 	Vector2i GetVoxelImageCoordinates(Vector3i coordinates, Plane plane);
 	Vector2i GetVoxelImageCoordinates(Vector3f coordinates, Plane plane);
@@ -93,9 +85,6 @@ private:
 
 	Plane plane;
 	const Vector3i focusCoordinates;
-
-	template<typename TVoxel>
-	cv::Mat DrawSceneImageAroundPointIndexedFields(ITMScene <TVoxel, TIndex>* scene, int fieldIndex);
 };
 
 

@@ -10,13 +10,13 @@
 using namespace ITMLib;
 
 template<class TVoxel, class TIndex>
-ITMRenderState* ITMMultiVisualisationEngine_CPU<TVoxel, TIndex>::CreateRenderState(const ITMScene<TVoxel, TIndex> *scene, const Vector2i & imgSize) const
+ITMRenderState* ITMMultiVisualisationEngine_CPU<TVoxel, TIndex>::CreateRenderState(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Vector2i & imgSize) const
 {
 	return new ITMRenderStateMultiScene<TVoxel, TIndex>(imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CPU);
 }
 
 template<class TVoxel>
-ITMRenderState* ITMMultiVisualisationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CreateRenderState(const ITMScene<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const
+ITMRenderState* ITMMultiVisualisationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CreateRenderState(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const
 {
 	return new ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>(imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CPU);
 }

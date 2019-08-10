@@ -16,6 +16,7 @@
 #pragma once
 
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
+#include "../../../Objects/Scene/ITMTrilinearInterpolation.h"
 #include "../../../Utils/ITMPixelUtils.h"
 #include "../../../Utils/ITMVoxelFlags.h"
 
@@ -280,8 +281,7 @@ struct ComputeUpdatedLiveVoxelInfo<true, true, true, TVoxel> {
 // region ===================================== SDF2SDF FUSION =========================================================
 
 template<typename TVoxelLive, typename TVoxelCanonical>
-_CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxelLive)& liveVoxel,
-                                                          int liveSourceFieldIndex, int maximumWeight,
+_CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxelLive)& liveVoxel, int maximumWeight,
                                                           DEVICEPTR(TVoxelCanonical)& canonicalVoxel) {
 	//_DEBUG
 
@@ -290,12 +290,12 @@ _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxel
 //				   && liveVoxel.flag_values[liveSourceFieldIndex] != VOXEL_NONTRUNCATED) return;
 
 	//fusion condition "COMBINED"
-	if (liveVoxel.flag_values[liveSourceFieldIndex] == ITMLib::VoxelFlags::VOXEL_UNKNOWN
+	if (liveVoxel.flags == ITMLib::VoxelFlags::VOXEL_UNKNOWN
 	    || (canonicalVoxel.flags != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED
-	        && liveVoxel.flag_values[liveSourceFieldIndex] != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED))
+	        && liveVoxel.flags != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED))
 		return;
 
-	float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf_values[liveSourceFieldIndex]);
+	float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf);
 
 	//TODO: make threshold parameter
 	// parameter eta from SobolevFusion, Sec. 3.1, divided by voxel size
@@ -303,13 +303,13 @@ _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxel
 	const float threshold = -0.3;
 
 	//fusion condition "THRESHOLD"
-	if (liveVoxel.flag_values[liveSourceFieldIndex] == ITMLib::VoxelFlags::VOXEL_UNKNOWN
+	if (liveVoxel.flags == ITMLib::VoxelFlags::VOXEL_UNKNOWN
 	    || (canonicalVoxel.flags != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED
-	        && liveVoxel.flag_values[liveSourceFieldIndex] != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED) || liveSdf < threshold)
+	        && liveVoxel.flags != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED) || liveSdf < threshold)
 		return;
 
 	//fusion condition "LIVE_UNKNOWN"
-//		if(liveVoxel.flag_values[liveSourceFieldIndex] == VOXEL_UNKNOWN) return;
+//		if(liveVoxel.flags == VOXEL_UNKNOWN) return;
 
 
 
@@ -324,7 +324,7 @@ _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxel
 	canonicalVoxel.sdf = TVoxelCanonical::floatToValue(newSdf);
 	canonicalVoxel.w_depth = (uchar) newWDepth;
 	if (canonicalVoxel.flags != ITMLib::VoxelFlags::VOXEL_NONTRUNCATED) {
-		canonicalVoxel.flags = liveVoxel.flag_values[liveSourceFieldIndex];
+		canonicalVoxel.flags = liveVoxel.flags;
 	} else if (1.0f - std::abs(newSdf) < 1e-5f) {
 		canonicalVoxel.flags = ITMLib::VoxelFlags::VOXEL_TRUNCATED;
 	}
@@ -332,29 +332,30 @@ _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxel
 
 // endregion ===========================================================================================================
 // region ====================== TRILINEAR INTERPOLATION BASED ON WARP VECTOR ==========================================
-template<typename TVoxelWarpSource, typename TVoxelSdf, typename TIndex, typename TLookupPositionFunctor>
+template<typename TWarp, typename TVoxel, typename TIndex, typename TLookupPositionFunctor>
 _CPU_AND_GPU_CODE_
-inline void interpolateBetweenIndexes(TVoxelSdf* sdfSourceVoxels,
-                                      const typename TIndex::IndexData* sdfSourceIndexData,
-                                      typename TIndex::IndexCache& sdfSourceCache, const TVoxelWarpSource& warpSourceVoxel,
-                                      TVoxelSdf& destinationVoxel, const Vector3i& warpAndDestinationVoxelPosition,
-                                      int sourceSdfIndex, int targetSdfIndex, bool printResult) {
+inline void interpolateTSDFVolume(TVoxel* sdfSourceVoxels,
+                                  const typename TIndex::IndexData* sdfSourceIndexData,
+                                  typename TIndex::IndexCache& sdfSourceCache,
+
+                                  const TWarp& warp,
+                                  TVoxel& destinationVoxel, const Vector3i& warpAndDestinationVoxelPosition,
+                                  bool printResult) {
 	Vector3f warpedPosition =
-			TLookupPositionFunctor::GetWarpedPosition(warpSourceVoxel, warpAndDestinationVoxelPosition);
+			TLookupPositionFunctor::GetWarpedPosition(warp, warpAndDestinationVoxelPosition);
 
 	bool struckKnown;
 
-	float sdf = _DEBUG_InterpolateMultiSdfTrilinearly_StruckKnown(
-			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sourceSdfIndex, sdfSourceCache, struckKnown,
-			printResult);
+	float sdf = _DEBUG_InterpolateTrilinearly_StruckKnown(
+			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sdfSourceCache, struckKnown, printResult);
 
 	// Update flags
 	if (struckKnown) {
-		destinationVoxel.sdf_values[targetSdfIndex] = TVoxelSdf::floatToValue(sdf);
+		destinationVoxel.sdf = TVoxel::floatToValue(sdf);
 		if (1.0f - std::abs(sdf) < 1e-5f) {
-			destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_TRUNCATED;
+			destinationVoxel.flags = ITMLib::VOXEL_TRUNCATED;
 		} else {
-			destinationVoxel.flag_values[targetSdfIndex] = ITMLib::VOXEL_NONTRUNCATED;
+			destinationVoxel.flags = ITMLib::VOXEL_NONTRUNCATED;
 		}
 	}
 }

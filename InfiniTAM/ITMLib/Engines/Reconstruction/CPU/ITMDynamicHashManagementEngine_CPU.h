@@ -19,13 +19,13 @@
 #include "../../../Objects/Tracking/ITMTrackingState.h"
 #include "../../../Objects/RenderStates/ITMRenderState.h"
 #include "../../../Objects/Views/ITMView.h"
-#include "../../../Objects/Scene/ITMScene.h"
+#include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Utils/ITMHashBlockProperties.h"
 #include "../../Common/ITMWarpEnums.h"
 
 namespace ITMLib{
 
-template<typename TVoxelCanonical, typename TVoxelLive>
+template<typename TVoxel, typename TWarp>
 class ITMDynamicHashManagementEngine_CPU {
 public:
 	ITMDynamicHashManagementEngine_CPU();
@@ -42,18 +42,20 @@ public:
 	 * \param resetVisibleList  [in] reset visibility list upon completion
 	 */
 	void AllocateLiveSceneFromDepth(
-			ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view,
-			const ITMTrackingState* trackingState,const ITMRenderState* renderState,
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
+			const ITMTrackingState* trackingState, const ITMRenderState* renderState,
 			bool onlyUpdateVisibleList = false, bool resetVisibleList = false);
 
 
-	void AllocateCanonicalFromLive(ITMScene <TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-	                               ITMScene <TVoxelLive, ITMVoxelBlockHash>* liveScene);
+	//TODO: rename f
+	void AllocateCanonicalFromLive(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* canonicalScene,
+	                               ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* liveScene);
 
-	template<Warp TWarp>
+	template<WarpType TWarpType>
 	void AllocateWarpedLive(
-			ITMScene <TVoxelCanonical, ITMVoxelBlockHash>* warpSourceScene,
-			ITMScene <TVoxelLive, ITMVoxelBlockHash>* sdfScene, int sourceSdfIndex);
+			ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* warpField,
+			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* sourceTSDF,
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF);
 
 	void ChangeCanonicalHashEntryState(int hash, ITMLib::HashBlockState);
 

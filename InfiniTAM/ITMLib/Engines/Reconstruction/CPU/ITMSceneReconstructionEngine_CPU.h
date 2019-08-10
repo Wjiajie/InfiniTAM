@@ -19,13 +19,13 @@ namespace ITMLib
 		ORUtils::MemoryBlock<Vector3s> *blockCoords;
 
 	public:
-		void ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash> *scene);
+		void ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene);
 
-		void AllocateSceneFromDepth(ITMScene<TVoxel, ITMVoxelBlockHash> *scene, const ITMView *view, const ITMTrackingState *trackingState,
-			const ITMRenderState *renderState, bool onlyUpdateVisibleList = false, bool resetVisibleList = false) override;
+		void AllocateSceneFromDepth(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const ITMView *view, const ITMTrackingState *trackingState,
+		                            const ITMRenderState *renderState, bool onlyUpdateVisibleList = false, bool resetVisibleList = false) override;
 
-		void IntegrateIntoScene(ITMScene<TVoxel, ITMVoxelBlockHash> *scene, const ITMView *view, const ITMTrackingState *trackingState,
-			const ITMRenderState *renderState);
+		void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const ITMView *view, const ITMTrackingState *trackingState,
+		                        const ITMRenderState *renderState);
 
 		ITMSceneReconstructionEngine_CPU(void);
 		~ITMSceneReconstructionEngine_CPU(void);
@@ -35,13 +35,13 @@ namespace ITMLib
 	class ITMSceneReconstructionEngine_CPU<TVoxel, ITMPlainVoxelArray> : public ITMSceneReconstructionEngine < TVoxel, ITMPlainVoxelArray >
 	{
 	public:
-		void ResetScene(ITMScene<TVoxel, ITMPlainVoxelArray> *scene);
+		void ResetScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray> *scene);
 
-		void AllocateSceneFromDepth(ITMScene<TVoxel, ITMPlainVoxelArray> *scene, const ITMView *view, const ITMTrackingState *trackingState,
-			const ITMRenderState *renderState, bool onlyUpdateVisibleList = false, bool resetVisibleList = false);
+		void AllocateSceneFromDepth(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray> *scene, const ITMView *view, const ITMTrackingState *trackingState,
+		                            const ITMRenderState *renderState, bool onlyUpdateVisibleList = false, bool resetVisibleList = false);
 
-		void IntegrateIntoScene(ITMScene<TVoxel, ITMPlainVoxelArray> *scene, const ITMView *view, const ITMTrackingState *trackingState,
-			const ITMRenderState *renderState);
+		void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray> *scene, const ITMView *view, const ITMTrackingState *trackingState,
+		                        const ITMRenderState *renderState);
 
 		ITMSceneReconstructionEngine_CPU(void);
 		~ITMSceneReconstructionEngine_CPU(void);

@@ -21,89 +21,91 @@
 
 
 namespace ITMLib {
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 class ITMDynamicSceneReconstructionEngine_CUDA
-		: public ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex> {
+		: public ITMDynamicSceneReconstructionEngine<TVoxel, TVoxel, TIndex> {
 };
 
 //region =================================== VOXEL BLOCK HASH ==========================================================
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-class ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>
-		: public ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash> {
+template<typename TVoxel, typename TWarp>
+class ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>
+		: public ITMDynamicSceneReconstructionEngine<TVoxel, TWarp, ITMVoxelBlockHash> {
 public:
 	ITMDynamicSceneReconstructionEngine_CUDA() = default;
 	~ITMDynamicSceneReconstructionEngine_CUDA() = default;
-	void UpdateVisibleList(ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view,
+	void UpdateVisibleList(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 	                       const ITMTrackingState* trackingState, const ITMRenderState* renderState,
 	                       bool resetVisibleList) override;
-	void GenerateRawLiveSceneFromView(ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view,
+	void GenerateRawLiveSceneFromView(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 	                                  const ITMTrackingState* trackingState,
 	                                  const ITMRenderState* renderState) override;
-	void FuseLiveIntoCanonicalSdf(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-	                              ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
-	                              int liveSourceFieldIndex) override;
-	void WarpScene_CumulativeWarps(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-	                               ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex,
-	                               int targetSdfIndex) override;
-	void WarpScene_FlowWarps(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-	                         ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex,
-	                         int targetSdfIndex) override;
-	void WarpScene_WarpUpdates(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-	                           ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex,
-	                           int targetSdfIndex) override;
-	void CopyIndexedScene(ITMScene <TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) override;
+	void FuseLiveIntoCanonicalSdf(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
+	                              ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene) override;
+	void WarpScene_CumulativeWarps(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+	                               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
+	                               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
+	void WarpScene_FlowWarps(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+	                         ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
+	                         ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
+	void WarpScene_WarpUpdates(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
+	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
+	void CopyScene(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* sourceTSDF,
+			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
 protected:
-	void IntegrateIntoScene(ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view,
+	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);
-	template<Warp TWarpSource>
-	void WarpScene(ITMScene <TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-	               ITMScene <TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex);
+	template<WarpType TWarpSource>
+	void WarpScene(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
+	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF);
 
 private:
-	//ITMDynamicHashManagementEngine_CUDA<TVoxelCanonical, TVoxelLive> hashManager;
-	ITMSceneManipulationEngine_CUDA<TVoxelLive, ITMVoxelBlockHash> liveSceneManager;
+	//ITMDynamicHashManagementEngine_CUDA<TVoxel, TWarp> hashManager;
+	ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash> liveSceneManager;
 };
 
 // endregion ===========================================================================================================
 // region ==================================== PLAIN VOXEL ARRAY =======================================================
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-class ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray>
-		: public ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray> {
+template<typename TVoxel, typename TWarp>
+class ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
+		: public ITMDynamicSceneReconstructionEngine<TVoxel, TWarp, ITMPlainVoxelArray> {
 public:
-	void UpdateVisibleList(ITMScene<TVoxelLive, ITMPlainVoxelArray>* scene, const ITMView* view,
+	void UpdateVisibleList(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
 	                       const ITMTrackingState* trackingState, const ITMRenderState* renderState,
 	                       bool resetVisibleList) override;
-	void GenerateRawLiveSceneFromView(ITMScene<TVoxelLive, ITMPlainVoxelArray>* scene, const ITMView* view,
+	void GenerateRawLiveSceneFromView(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
 	                                  const ITMTrackingState* trackingState,
 	                                  const ITMRenderState* renderState) override;
-	void FuseLiveIntoCanonicalSdf(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-	                              ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene,
-	                              int liveSourceFieldIndex) override;
-	void WarpScene_CumulativeWarps(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-	                               ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex,
-	                               int targetSdfIndex) override;
-	void WarpScene_FlowWarps(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-	                         ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex,
-	                         int targetSdfIndex) override;
-	void WarpScene_WarpUpdates(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-	                           ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex,
-	                           int targetSdfIndex) override;
+	void FuseLiveIntoCanonicalSdf(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
+	                              ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene) override;
+	void WarpScene_CumulativeWarps(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
+	                               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF,
+	                               ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
+	void WarpScene_FlowWarps(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
+	                         ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF,
+	                         ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
+	void WarpScene_WarpUpdates(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
+	                           ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF,
+	                           ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
 
-	void CopyIndexedScene(ITMScene <TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) override;
+	void CopyScene(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* sourceTSDF,
+			ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* targetTSDF) override;
 
 	ITMDynamicSceneReconstructionEngine_CUDA() = default;
 	~ITMDynamicSceneReconstructionEngine_CUDA() = default;
 protected:
-	void IntegrateIntoScene(ITMScene<TVoxelLive, ITMPlainVoxelArray>* scene, const ITMView* view,
+	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
 	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);
 private:
-	ITMSceneManipulationEngine_CUDA<TVoxelLive, ITMPlainVoxelArray> liveSceneManager;
+	ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray> liveSceneManager;
 
-	template<Warp TWarpSource>
-	void WarpScene(ITMScene <TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-	               ITMScene <TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex);
+	template<WarpType TWarpSource>
+	void WarpScene(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* sourceTSDF,
+	               ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* targetTSDF,
+	               ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField);
 };
 
 // endregion ===========================================================================================================

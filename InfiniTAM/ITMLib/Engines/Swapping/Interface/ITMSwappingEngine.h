@@ -3,7 +3,7 @@
 #pragma once
 
 #include "../../../Objects/RenderStates/ITMRenderState.h"
-#include "../../../Objects/Scene/ITMScene.h"
+#include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Objects/Views/ITMView.h"
 
 namespace ITMLib
@@ -17,9 +17,9 @@ namespace ITMLib
 	class ITMSwappingEngine
 	{
 	public:
-		virtual void IntegrateGlobalIntoLocal(ITMScene<TVoxel, TIndex> *scene, ITMRenderState *renderState) = 0;
-		virtual void SaveToGlobalMemory(ITMScene<TVoxel, TIndex> *scene, ITMRenderState *renderState) = 0;
-		virtual void CleanLocalMemory(ITMScene<TVoxel, TIndex> *scene, ITMRenderState *renderState) = 0;
+		virtual void IntegrateGlobalIntoLocal(ITMVoxelVolume<TVoxel, TIndex> *scene, ITMRenderState *renderState) = 0;
+		virtual void SaveToGlobalMemory(ITMVoxelVolume<TVoxel, TIndex> *scene, ITMRenderState *renderState) = 0;
+		virtual void CleanLocalMemory(ITMVoxelVolume<TVoxel, TIndex> *scene, ITMRenderState *renderState) = 0;
 
 		virtual ~ITMSwappingEngine(void) { }
 	};

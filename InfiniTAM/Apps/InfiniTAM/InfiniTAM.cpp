@@ -83,9 +83,9 @@ try
 		                                                         imageSource->getDepthImageSize());
 		break;
 	case ITMLibSettings::LIBMODE_DYNAMIC:
-		mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(imageSource->getCalib(),
-		                                                                                  imageSource->getRGBImageSize(),
-		                                                                                  imageSource->getDepthImageSize());
+		mainEngine = new ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMVoxelIndex>(imageSource->getCalib(),
+		                                                                     imageSource->getRGBImageSize(),
+		                                                                     imageSource->getDepthImageSize());
 		break;
 	default: 
 		throw std::runtime_error("Unsupported library mode!");

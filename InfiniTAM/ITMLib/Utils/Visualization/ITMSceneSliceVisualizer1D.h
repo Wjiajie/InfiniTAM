@@ -21,7 +21,7 @@
 //local
 #include "ITMVisualizationCommon.h"
 #include "../ITMMath.h"
-#include "../../Objects/Scene/ITMScene.h"
+#include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "ITMVisualizationWindowManager.h"
 
 template<typename T>
@@ -37,17 +37,17 @@ public:
 
 
 	template<typename TVoxel, typename TIndex>
-	void Plot1DSceneSlice(ITMScene <TVoxel, TIndex>* scene, Vector4i color, double width);
+	void Plot1DSceneSlice(ITMVoxelVolume <TVoxel, TIndex>* scene, Vector4i color, double width);
 	template<typename TVoxel, typename TIndex>
-	void Draw1DWarpUpdateVector(ITMScene <TVoxel, TIndex>* scene, Vector4i color);
+	void Draw1DWarpUpdateVector(ITMVoxelVolume <TVoxel, TIndex>* scene, Vector4i color);
 	template<typename TVoxel, typename TIndex>
-	void Plot1DIndexedSceneSlice(ITMScene<TVoxel, TIndex>* scene, Vector4i color, double width, int fieldIndex);
+	void Plot1DIndexedSceneSlice(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector4i color, double width, int fieldIndex);
 	void SaveScreenshot(std::string path);
 
 
 private:
 	template<typename TVoxel, typename TIndex, typename TGetSDFFunctor>
-	void Plot1DSceneSliceHelper(ITMScene <TVoxel, TIndex>* scene, Vector4i color, double width);
+	void Plot1DSceneSliceHelper(ITMVoxelVolume <TVoxel, TIndex>* scene, Vector4i color, double width);
 
 	ITMChartWindow* window;
 

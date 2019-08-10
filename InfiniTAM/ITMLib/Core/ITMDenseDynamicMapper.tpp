@@ -43,7 +43,7 @@ namespace bench = ITMLib::Bench;
 //_DEBUG
 template<typename TVoxel, typename TIndex>
 inline static void PrintSceneStatistics(
-		ITMScene<TVoxel, TIndex>* scene,
+		ITMVoxelVolume<TVoxel, TIndex>* scene,
 		std::string description) {
 	ITMSceneStatisticsCalculator<TVoxel, TIndex>& calculator = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance();
 	std::cout << green << "=== Stats for scene '" << description << "' ===" << reset << std::endl;
@@ -64,15 +64,15 @@ inline static void PrintOperationStatus(const char* status) {
 
 // region ===================================== CONSTRUCTORS / DESTRUCTORS =============================================
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMapper() :
+template<typename TVoxel, typename TWarp, typename TIndex>
+ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ITMDenseDynamicMapper() :
 		sceneReconstructor(
-				ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxelCanonical, TVoxelLive, TIndex>
+				ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel, TWarp, TIndex>
 						(ITMLibSettings::Instance().deviceType)),
 		sceneMotionTracker(
-				ITMSceneMotionTrackerFactory::MakeSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>()),
+				ITMSceneMotionTrackerFactory::MakeSceneMotionTracker<TVoxel, TWarp, TIndex>()),
 		swappingEngine(ITMLibSettings::Instance().swappingMode != ITMLibSettings::SWAPPINGMODE_DISABLED
-		               ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxelCanonical, TIndex>(
+		               ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxel, TIndex>(
 						ITMLibSettings::Instance().deviceType)
 		               : nullptr),
 		swappingMode(ITMLibSettings::Instance().swappingMode),
@@ -84,8 +84,8 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ITMDenseDynamicMappe
 		              ITMLibSettings::Instance().FocusCoordinatesAreSpecified()},
 		focusCoordinates(ITMLibSettings::Instance().GetFocusCoordinates()) {}
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::~ITMDenseDynamicMapper() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::~ITMDenseDynamicMapper() {
 	delete sceneReconstructor;
 	delete swappingEngine;
 	delete sceneMotionTracker;
@@ -94,17 +94,17 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::~ITMDenseDynamicMapp
 
 
 //TODO: deprecate in favor of SceneManipulation
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 void
-ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetCanonicalScene(
-		ITMScene<TVoxelCanonical, TIndex>* scene) const {
+ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetCanonicalScene(
+		ITMVoxelVolume<TVoxel, TIndex>* scene) const {
 	switch (ITMLibSettings::Instance().deviceType) {
 		case ITMLibSettings::DEVICE_CPU:
-			ITMSceneManipulationEngine_CPU<TVoxelCanonical, TIndex>::ResetScene(scene);
+			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ResetScene(scene);
 			break;
 		case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-			ITMSceneManipulationEngine_CUDA<TVoxelCanonical, TIndex>::ResetScene(scene);
+			ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::ResetScene(scene);
 #endif
 			break;
 		case ITMLibSettings::DEVICE_METAL:
@@ -113,16 +113,16 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetCanonicalScene(
 	}
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetLiveScene(
-		ITMScene<TVoxelLive, TIndex>* scene) const {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetLiveScene(
+		ITMVoxelVolume<TVoxel, TIndex>* scene) const {
 	switch (ITMLibSettings::Instance().deviceType) {
 		case ITMLibSettings::DEVICE_CPU:
-			ITMSceneManipulationEngine_CPU<TVoxelLive, TIndex>::ResetScene(scene);
+			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ResetScene(scene);
 			break;
 		case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-			ITMSceneManipulationEngine_CUDA<TVoxelLive, TIndex>::ResetScene(scene);
+			ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::ResetScene(scene);
 #endif
 			break;
 		case ITMLibSettings::DEVICE_METAL:
@@ -132,10 +132,10 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ResetLiveScene(
 }
 
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessInitialFrame(
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessInitialFrame(
 		const ITMView* view, const ITMTrackingState* trackingState,
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
+		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene, ITMVoxelVolume<TVoxel, TIndex>* liveScene,
 		ITMRenderState* renderState) {
 	PrintOperationStatus("Generating raw live frame from view...");
 	bench::StartTimer("GenerateRawLiveFrame");
@@ -145,20 +145,21 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessInitialF
 	PrintOperationStatus("Fusing data from live frame into canonical frame...");
 	//** fuse the live into canonical directly
 	bench::StartTimer("FuseLiveIntoCanonicalSdf");
-	sceneReconstructor->FuseLiveIntoCanonicalSdf(canonicalScene, liveScene, 0);
+	sceneReconstructor->FuseLiveIntoCanonicalSdf(canonicalScene, liveScene);
 	bench::StopTimer("FuseLiveIntoCanonicalSdf");
 	ProcessSwapping(canonicalScene, renderState);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProcessing(
-		const ITMView* view, const ITMTrackingState* trackingState, ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-		ITMScene<TVoxelLive, TIndex>* liveScene, ITMRenderState* renderState) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::InitializeProcessing(
+		const ITMView* view, const ITMTrackingState* trackingState, ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+		ITMVoxelVolume<TVoxel, TIndex>* liveScenePair,
+		ITMRenderState* renderState) {
 
 
 	PrintOperationStatus("Generating raw live frame from view...");
 	bench::StartTimer("GenerateRawLiveFrame");
-	sceneReconstructor->GenerateRawLiveSceneFromView(liveScene, view, trackingState, renderState);
+	sceneReconstructor->GenerateRawLiveSceneFromView(&liveScenePair[0], view, trackingState, renderState);
 	bench::StopTimer("GenerateRawLiveFrame");
 
 
@@ -166,58 +167,59 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::InitializeProce
 			"Initializing live frame SDF by mapping from raw live SDF to warped SDF based on previous-frame warp...");
 	bench::StartTimer("TrackMotion_35_Initialize");
 	//sceneReconstructor->WarpScene(canonicalScene, liveScene, 0, 1);
-	sceneReconstructor->CopyIndexedScene(liveScene, 0, 1);
+	sceneReconstructor->CopyScene(&liveScenePair[0], &liveScenePair[1]);
 	//sceneReconstructor->UpdateWarpedScene(canonicalScene, liveScene, 0, 1);
 
 	sceneMotionTracker->ClearOutFlowWarp(canonicalScene);
 	bench::StopTimer("TrackMotion_35_Initialize");
 
-	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().InitializeFrameRecording();
+	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().InitializeFrameRecording();
 	maxVectorUpdate = std::numeric_limits<float>::infinity();
 };
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::FinalizeProcessing(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene,
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::FinalizeProcessing(
+		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene, ITMVoxelVolume<TVoxel, TIndex>* liveScene,
 		ITMRenderState* renderState) {
 
 	//fuse warped live into canonical
 	bench::StartTimer("FuseLiveIntoCanonicalSdf");
-	sceneReconstructor->FuseLiveIntoCanonicalSdf(canonicalScene, liveScene, targetSdfIndex);
+	sceneReconstructor->FuseLiveIntoCanonicalSdf(canonicalScene, liveScene);
 	bench::StopTimer("FuseLiveIntoCanonicalSdf");
 
 	//bench::StartTimer("AddFlowWarpToWarp");
 	//sceneMotionTracker->AddFlowWarpToWarp(canonicalScene, true);
 	//bench::StopTimer("AddFlowWarpToWarp");
 
-	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().FinalizeFrameRecording();
+	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().FinalizeFrameRecording();
 
 	ProcessSwapping(canonicalScene, renderState);
 };
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(const ITMView* view,
-                                                                              const ITMTrackingState* trackingState,
-                                                                              ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-                                                                              ITMScene<TVoxelLive, TIndex>* liveScene,
-                                                                              ITMRenderState* renderState) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void
+ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessFrame(const ITMView* view, const ITMTrackingState* trackingState,
+                                                           ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+                                                           ITMVoxelVolume<TVoxel, TIndex>* liveScenePair,
+                                                           ITMVoxelVolume<TWarp, TIndex>* warpField,
+                                                           ITMRenderState* renderState) {
 
 
 	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Cannot track motion for full frame when in step-by-step mode");
 	}
-	InitializeProcessing(view, trackingState, canonicalScene, liveScene, renderState);
+	InitializeProcessing(view, trackingState, canonicalScene, liveScenePair, renderState);
 	bench::StartTimer("TrackMotion");
-	TrackFrameMotion(canonicalScene, liveScene);
+	TrackFrameMotion(canonicalScene, liveScenePair, warpField);
 	bench::StopTimer("TrackMotion");
-	FinalizeProcessing(canonicalScene, liveScene, renderState);
+	FinalizeProcessing(canonicalScene, liveScenePair, renderState);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::UpdateVisibleList(
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::UpdateVisibleList(
 		const ITMView* view,
 		const ITMTrackingState* trackingState,
-		ITMScene<TVoxelLive, TIndex>* scene, ITMRenderState* renderState,
+		ITMVoxelVolume<TVoxel, TIndex>* scene, ITMRenderState* renderState,
 		bool resetVisibleList) {
 	sceneReconstructor->UpdateVisibleList(scene, view, trackingState, renderState, resetVisibleList);
 }
@@ -230,39 +232,46 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::UpdateVisibleLi
  * \param canonicalScene the canonical voxel grid
  * \param liveScene the live voxel grid (typcially obtained by integrating a single depth image into an empty TSDF grid)
  */
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::TrackFrameMotion(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>*& liveScene) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+ITMVoxelVolume<TVoxel, TIndex>* ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::TrackFrameMotion(
+		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+		ITMVoxelVolume<TVoxel, TIndex>* liveScenePair,
+		ITMVoxelVolume<TWarp, TIndex>* warpField) {
 	if (analysisFlags.restrictZtrackingForDebugging) {
 		std::cout << red << "WARNING: UPDATES IN Z DIRECTION HAVE BEEN DISABLED FOR DEBUGGING"
 		                    " PURPOSES. DO NOT EXPECT PROPER RESULTS!" << reset << std::endl;
 	}
 	PrintOperationStatus("*** Optimizing warp based on difference between canonical and live SDF. ***");
 	bench::StartTimer("TrackMotion_3_Optimization");
-	for (iteration = 0; SceneMotionOptimizationConditionNotReached(); iteration++) {
-		PerformSingleOptimizationStep(canonicalScene, liveScene);
+	int sourceLiveSceneIndex;
+	int targetLiveSceneIndex;
+	for (int iteration = 0; SceneMotionOptimizationConditionNotReached(); iteration++) {
+		sourceLiveSceneIndex = iteration % 2;
+		targetLiveSceneIndex = (iteration + 1) %2;
+		PerformSingleOptimizationStep(canonicalScene, &liveScenePair[sourceLiveSceneIndex],
+				&liveScenePair[targetLiveSceneIndex], warpField, iteration);
 	}
 	bench::StopTimer("TrackMotion_3_Optimization");
 	PrintOperationStatus("*** Warp optimization finished for current frame. ***");
-
+	return &liveScenePair[targetLiveSceneIndex];
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOptimizationStep(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::PerformSingleOptimizationStep(
+		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+		ITMVoxelVolume<TVoxel, TIndex>* initialLiveScene,
+		ITMVoxelVolume<TVoxel, TIndex>* finalLiveScene,
+		ITMVoxelVolume<TWarp, TIndex>* warpField,
+		int iteration) {
 
-	//ping-pong between the SDF field indices in the live frame (preserves memory locality during traversal)
-	sourceSdfIndex = (iteration + 1) % 2;
-	targetSdfIndex = iteration % 2;
-
-	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().SaveWarpSlices(iteration);
+	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().SaveWarpSlices(iteration);
 	std::cout << red << "Iteration: " << iteration << reset << std::endl;
 	//** warp update gradient computation
 	PrintOperationStatus("Calculating warp energy gradient...");
 	bench::StartTimer("TrackMotion_31_CalculateWarpUpdate");
 
 
-	sceneMotionTracker->CalculateWarpGradient(canonicalScene, liveScene, sourceSdfIndex,
+	sceneMotionTracker->CalculateWarpGradient(canonicalScene, initialLiveScene, warpField,
 	                                          analysisFlags.restrictZtrackingForDebugging);
 
 
@@ -270,32 +279,32 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PerformSingleOp
 
 	PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");
 	bench::StartTimer("TrackMotion_32_ApplySmoothingToGradient");
-	sceneMotionTracker->SmoothWarpGradient(liveScene, canonicalScene, sourceSdfIndex);
+	sceneMotionTracker->SmoothWarpGradient(canonicalScene, initialLiveScene, warpField);
 	bench::StopTimer("TrackMotion_32_ApplySmoothingToGradient");
 
 	PrintOperationStatus("Applying warp update (based on energy gradient) to the cumulative warp...");
 	bench::StartTimer("TrackMotion_33_UpdateWarps");
-	maxVectorUpdate = sceneMotionTracker->UpdateWarps(canonicalScene, liveScene, sourceSdfIndex);
+	maxVectorUpdate = sceneMotionTracker->UpdateWarps(canonicalScene, initialLiveScene, warpField);
 	bench::StopTimer("TrackMotion_33_UpdateWarps");
 
 	PrintOperationStatus(
 			"Updating live frame SDF by mapping from raw live SDF to new warped SDF based on latest warp...");
 	bench::StartTimer("TrackMotion_35_WarpLiveScene");
-	sceneReconstructor->WarpScene_FlowWarps(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
+	sceneReconstructor->WarpScene_FlowWarps(warpField, initialLiveScene, finalLiveScene);
 	bench::StopTimer("TrackMotion_35_WarpLiveScene");
-	ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().SaveWarps();
+	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().SaveWarps();
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::SceneMotionOptimizationConditionNotReached() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::SceneMotionOptimizationConditionNotReached() {
 	return maxVectorUpdate > parameters.maxVectorUpdateThresholdVoxels && iteration < parameters.maxIterationCount;
 }
 
 //endregion ============================================================================================================
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessSwapping(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMRenderState* renderState) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessSwapping(
+		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene, ITMRenderState* renderState) {
 	if (swappingEngine != nullptr) {
 		// swapping: CPU -> GPU
 		if (swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED)
@@ -316,11 +325,11 @@ void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::ProcessSwapping
 }
 // region ======================================= STEP-BY-STEP MODE ====================================================
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 void
-ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrameInStepByStepMode(
-		const ITMView* view, const ITMTrackingState* trackingState,  ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-		ITMScene<TVoxelLive, TIndex>* liveScene, ITMRenderState* renderState) {
+ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::BeginProcessingFrameInStepByStepMode(
+		const ITMView* view, const ITMTrackingState* trackingState, ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+		ITMVoxelVolume<TVoxel, TIndex>* liveScene, ITMRenderState* renderState) {
 	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Already in step-by-step tracking mode, cannot restart.");
 	}
@@ -329,19 +338,24 @@ ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrame
 	iteration = 0;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::TakeNextStepInStepByStepMode(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-		ITMScene<TVoxelLive, TIndex>*& liveScene, ITMRenderState* renderState) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::TakeNextStepInStepByStepMode(
+		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+		ITMVoxelVolume<TVoxel, TIndex>* liveScenePair,
+		ITMVoxelVolume<TWarp, TIndex>* warpField,
+		ITMRenderState* renderState) {
 	if (!inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Step-by-step mode not initialized.");
 	}
 	if (SceneMotionOptimizationConditionNotReached()) {
-		PerformSingleOptimizationStep(canonicalScene, liveScene);
+		int sourceLiveSceneIndex = iteration % 2;
+		int targetLiveSceneIndex = (iteration + 1) % 2;
+		PerformSingleOptimizationStep(canonicalScene, &liveScenePair[sourceLiveSceneIndex],
+				&liveScenePair[targetLiveSceneIndex], warpField, iteration);
 		iteration++;
 		return true;
 	} else {
-		FinalizeProcessing(canonicalScene, liveScene, renderState);
+		FinalizeProcessing(canonicalScene, liveScenePair, renderState);
 		inStepByStepProcessingMode = false;
 		return false;
 	}
@@ -349,8 +363,8 @@ bool ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::TakeNextStepInS
 
 // endregion
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>::PrintSettings() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::PrintSettings() {
 	std::cout << bright_cyan << "*** ITMDenseDynamicMapper Settings: ***" << reset << std::endl;
 	std::cout << "Max iteration count: " << this->parameters.maxIterationCount << std::endl;
 	std::cout << "Warp vector update threshold: " << this->parameters.maxVectorUpdateThresholdMeters << " m, ";

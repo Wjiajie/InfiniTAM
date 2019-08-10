@@ -15,14 +15,9 @@
 //  ================================================================
 
 #include "ITMSceneManipulationEngine_CPU.h"
-#include "../../../Objects/Scene/ITMScene.h"
+#include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
-#include "../../../Objects/Scene/ITMVoxelBlockHash.h"
-#include "../../../Objects/Scene/ITMPlainVoxelArray.h"
-#include "../../../Utils/ITMLibSettings.h"
 #include "../../Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
-#include "../../Reconstruction/Interface/ITMSceneReconstructionEngine.h"
-#include "../../Reconstruction/ITMSceneReconstructionEngineFactory.h"
 
 
 namespace ITMLib {
@@ -34,7 +29,7 @@ struct OffsetWarpsFunctor;
 
 template<typename TVoxel>
 struct OffsetWarpsFunctor<TVoxel, ITMVoxelBlockHash, true> {
-	static void OffsetWarps(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset) {
+	static void OffsetWarps(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
 		int noTotalEntries = scene->index.noTotalEntries;
@@ -60,7 +55,7 @@ struct OffsetWarpsFunctor<TVoxel, ITMVoxelBlockHash, true> {
 
 template<typename TVoxel>
 struct OffsetWarpsFunctor<TVoxel, ITMPlainVoxelArray, true> {
-	static void OffsetWarps(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset) {
+	static void OffsetWarps(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -75,21 +70,21 @@ struct OffsetWarpsFunctor<TVoxel, ITMPlainVoxelArray, true> {
 
 template<typename TVoxel>
 struct OffsetWarpsFunctor<TVoxel, ITMVoxelBlockHash, false> {
-	static void OffsetWarps(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset) {
+	static void OffsetWarps(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Warps not defined for scene of using this voxel type.");
 	}
 };
 
 
 template<typename TVoxel>
-void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::OffsetWarps(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
+void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::OffsetWarps(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
                                                                             Vector3f offset) {
 	OffsetWarpsFunctor<TVoxel, ITMVoxelBlockHash, TVoxel::hasCumulativeWarp>::OffsetWarps(scene, offset);
 }
 
 template<typename TVoxel>
 struct OffsetWarpsFunctor<TVoxel, ITMPlainVoxelArray, false> {
-	static void OffsetWarps(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset) {
+	static void OffsetWarps(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Warps not defined for scene of using this voxel type.");
 	}
 };
@@ -99,7 +94,7 @@ struct OffsetWarpsFunctor<TVoxel, ITMPlainVoxelArray, false> {
 
 template<typename TVoxel>
 void ITMLib::ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(
-		ITMLib::ITMScene<TVoxel, ITMLib::ITMVoxelBlockHash>* scene) {
+		ITMLib::ITMVoxelVolume<TVoxel, ITMLib::ITMVoxelBlockHash>* scene) {
 	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
 	int blockSize = scene->index.getVoxelBlockSize();
 
@@ -121,7 +116,7 @@ void ITMLib::ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetSce
 }
 
 template<typename TVoxel>
-bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
+bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
                                                                          Vector3i at, TVoxel voxel) {
 	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
 	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
@@ -147,7 +142,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMScen
 
 template<typename TVoxel>
 bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::SetVoxelNoAllocation(
-		ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
 		Vector3i at, TVoxel voxel) {
 	ITMHashEntry* hashTable = scene->index.GetEntries();
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
@@ -165,7 +160,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::SetVoxelNoAlloca
 
 
 template<typename TVoxel>
-TVoxel ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
+TVoxel ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
                                                                             Vector3i at) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* hashTable = scene->index.GetEntries();
@@ -174,7 +169,7 @@ TVoxel ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMS
 }
 
 template<typename TVoxel>
-TVoxel ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMScene<TVoxel, ITMVoxelBlockHash>* scene,
+TVoxel ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
                                                                             Vector3i at,
                                                                             ITMVoxelBlockHash::IndexCache& cache) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
@@ -185,7 +180,7 @@ TVoxel ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMS
 
 template<typename TVoxel>
 bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
-		ITMScene<TVoxel, ITMVoxelBlockHash>* destination, ITMScene<TVoxel, ITMVoxelBlockHash>* source,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
 		Vector6i bounds, const Vector3i& offset) {
 
 	//temporary stuff
@@ -303,7 +298,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 
 template<typename TVoxel>
 bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
-		ITMScene<TVoxel, ITMVoxelBlockHash>* destination, ITMScene<TVoxel, ITMVoxelBlockHash>* source,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
 		const Vector3i& offset) {
 
 	//reset destination scene
@@ -399,7 +394,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 
 
 template<typename TVoxel>
-bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::SetVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::SetVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
                                                                           Vector3i at, TVoxel voxel) {
 	int vmIndex = 0;
 	int arrayIndex = findVoxel(scene->index.getIndexData(), at, vmIndex);
@@ -414,7 +409,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::SetVoxel(ITMSce
 
 template<typename TVoxel>
 TVoxel
-ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
                                                                       Vector3i at) {
 	int vmIndex = 0;
 	int arrayIndex = findVoxel(scene->index.getIndexData(), at, vmIndex);
@@ -423,7 +418,7 @@ ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMScene<T
 
 template<typename TVoxel>
 TVoxel
-ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
                                                                       Vector3i at,
                                                                       ITMPlainVoxelArray::IndexCache& cache) {
 	int vmIndex = 0;
@@ -433,7 +428,7 @@ ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMScene<T
 
 template<typename TVoxel>
 bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::
-IsPointInBounds(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, const Vector3i& point) {
+IsPointInBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const Vector3i& point) {
 	ITMLib::ITMPlainVoxelArray::IndexData* index_bounds = scene->index.getIndexData();
 	Vector3i point2 = point - index_bounds->offset;
 	return !((point2.x < 0) || (point2.x >= index_bounds->size.x) ||
@@ -444,7 +439,7 @@ IsPointInBounds(ITMScene<TVoxel, ITMPlainVoxelArray>* scene, const Vector3i& poi
 
 template<typename TVoxel>
 void
-ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::OffsetWarps(ITMScene<TVoxel, ITMPlainVoxelArray>* scene,
+ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::OffsetWarps(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
                                                                         Vector3f offset) {
 	OffsetWarpsFunctor<TVoxel, ITMPlainVoxelArray, TVoxel::hasCumulativeWarp>::OffsetWarps(scene, offset);
 }
@@ -452,7 +447,7 @@ ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::OffsetWarps(ITMScene
 
 template<typename TVoxel>
 bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopySceneSlice(
-		ITMScene<TVoxel, ITMPlainVoxelArray>* destination, ITMScene<TVoxel, ITMPlainVoxelArray>* source,
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* destination, ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source,
 		Vector6i bounds, const Vector3i& offset) {
 
 	Vector3i min_pt_source = Vector3i(bounds.min_x, bounds.min_y, bounds.min_z);
@@ -522,7 +517,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopySceneSlice(
 }
 
 template<typename TVoxel>
-static Vector6i GetSceneBounds(ITMScene<TVoxel, ITMPlainVoxelArray>* source) {
+static Vector6i GetSceneBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source) {
 	ITMPlainVoxelArray::IndexData* indexData = source->index.getIndexData();
 	return {indexData->offset.x, indexData->offset.y, indexData->offset.z,
 	        indexData->offset.x + indexData->size.x,
@@ -533,8 +528,8 @@ static Vector6i GetSceneBounds(ITMScene<TVoxel, ITMPlainVoxelArray>* source) {
 
 template<typename TVoxel>
 bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::
-CopyScene(ITMScene<TVoxel, ITMPlainVoxelArray>* destination,
-          ITMScene<TVoxel, ITMPlainVoxelArray>* source,
+CopyScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* destination,
+          ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source,
           const Vector3i& offset) {
 	ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ResetScene(destination);
 	Vector6i bounds = GetSceneBounds(source);
@@ -560,7 +555,7 @@ CopyScene(ITMScene<TVoxel, ITMPlainVoxelArray>* destination,
 
 template<typename TVoxel>
 void ITMLib::ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ResetScene(
-		ITMLib::ITMScene<TVoxel, ITMLib::ITMPlainVoxelArray>* scene) {
+		ITMLib::ITMVoxelVolume<TVoxel, ITMLib::ITMPlainVoxelArray>* scene) {
 	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
 	int blockSize = scene->index.getVoxelBlockSize();
 

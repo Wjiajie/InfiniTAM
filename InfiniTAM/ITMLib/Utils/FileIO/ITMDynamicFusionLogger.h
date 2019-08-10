@@ -15,7 +15,7 @@
 //  ================================================================
 #pragma once
 
-#include "../../Objects/Scene/ITMScene.h"
+#include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "ITMSceneLogger.h"
 #include "../Visualization/ITMSceneSliceVisualizer1D.h"
 #include "../Visualization/ITMSceneSliceVisualizer2D.h"
@@ -75,7 +75,7 @@ public:
 
 };
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 class ITMDynamicFusionLogger : public ITMDynamicFusionLogger_Interface {
 public:
 // where to save the images within the output directory
@@ -91,7 +91,8 @@ public:
 
 // region ============================= SETTERS & SWITCHES =============================================================
 
-	void SetScenes(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,ITMScene<TVoxelLive, TIndex>* liveScene);
+	void SetScenes(ITMVoxelVolume<TVoxel, TIndex>* canonicalScene, ITMVoxelVolume<TVoxel, TIndex>* liveScene,
+			ITMVoxelVolume<TWarp, TIndex>* warpField);
 	void SetOutputDirectory(std::string outputDirectory) override;
 	void SetFocusCoordinates(Vector3i focusCoordinates) override;
 	void SetPlaneFor2Dand3DSlices(Plane plane) override;
@@ -160,8 +161,8 @@ private:
 	ITMDynamicFusionLogger();
 	~ITMDynamicFusionLogger();
 
-	void InitializeWarp2DSliceRecording(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                    ITMScene<TVoxelLive, TIndex>* sourceLiveScene);
+	void InitializeWarp2DSliceRecording(ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+	                                    ITMVoxelVolume<TVoxel, TIndex>* sourceLiveScene);
 	std::string GetOutputDirectoryFor2DSceneSlicesWithWarps() const;
 	std::string GetOutputDirectoryFor2DLiveSceneSliceProgression() const;
 	std::string GetOutputDirectoryPrefixForLiveSceneAsSlices() const;
@@ -170,14 +171,15 @@ private:
 
 	// various loggers & visualizers
 	std::unique_ptr<ITMSceneSliceVisualizer1D> scene1DSliceVisualizer;
-	std::unique_ptr<ITMSceneSliceVisualizer2D<TVoxelCanonical, TVoxelLive, TIndex>> scene2DSliceVisualizer;
-	std::unique_ptr<ITMSceneSliceVisualizer3D<TVoxelCanonical, TVoxelLive, TIndex>> scene3DSliceVisualizer;
+	std::unique_ptr<ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>> scene2DSliceVisualizer;
+	std::unique_ptr<ITMSceneSliceVisualizer3D<TVoxel, TWarp, TIndex>> scene3DSliceVisualizer;
 	std::unique_ptr<ITMSceneTrackingEnergyPlotter> energyPlotter;
-	ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>* scene3DLogger = nullptr;
+	ITMSceneLogger<TVoxel, TWarp, TIndex>* scene3DLogger = nullptr;
 
 	// internal references to the scenes
-	ITMScene<TVoxelCanonical, TIndex>* canonicalScene = nullptr;
-	ITMScene<TVoxelLive, TIndex>* liveScene = nullptr;
+	ITMVoxelVolume<TVoxel, TIndex>* canonicalScene = nullptr;
+	ITMVoxelVolume<TVoxel, TIndex>* liveScene = nullptr;
+	ITMVoxelVolume<TWarp, TIndex>* warpField = nullptr;
 
 	std::ofstream energyStatisticsFile;
 

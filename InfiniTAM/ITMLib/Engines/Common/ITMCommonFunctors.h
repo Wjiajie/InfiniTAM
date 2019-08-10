@@ -26,18 +26,18 @@ namespace  SpecializedWarpLookups {
 template<typename TVoxel, bool hasCumulativeWarp>
 struct LookupBasedOnCumulativeWarpStaticFunctor;
 
-template<typename TVoxel>
-struct LookupBasedOnCumulativeWarpStaticFunctor<TVoxel, true> {
+template<typename TWarp>
+struct LookupBasedOnCumulativeWarpStaticFunctor<TWarp, true> {
 	_CPU_AND_GPU_CODE_
-	static inline Vector3f GetWarpedPosition(const TVoxel& voxel, const Vector3i& position) {
+	static inline Vector3f GetWarpedPosition(const TWarp& voxel, const Vector3i& position) {
 		return position.toFloat() + voxel.warp;
 	}
 };
 
-template<typename TVoxel>
-struct LookupBasedOnCumulativeWarpStaticFunctor<TVoxel, false> {
+template<typename TWarp>
+struct LookupBasedOnCumulativeWarpStaticFunctor<TWarp, false> {
 	_CPU_AND_GPU_CODE_
-	static inline Vector3f GetWarpedPosition(const TVoxel& voxel, const Vector3i& position) {
+	static inline Vector3f GetWarpedPosition(const TWarp& voxel, const Vector3i& position) {
 		//TODO: after proper CUDA error-handling is in place, reinstate the "exception", likewise for the other 2 "error" functor versions
 		//DIEWITHEXCEPTION_REPORTLOCATION("Attempting to use cumulative warps with voxel type that doesn't have them.");
 		DEVICE_ASSERT(false);
@@ -45,44 +45,44 @@ struct LookupBasedOnCumulativeWarpStaticFunctor<TVoxel, false> {
 	}
 };
 
-template<typename TVoxel, bool hasFlowWarp>
+template<typename TWarp, bool hasFlowWarp>
 struct LookupBasedOnFlowWarpStaticFunctor;
 
-template<typename TVoxel>
-struct LookupBasedOnFlowWarpStaticFunctor<TVoxel, true> {
+template<typename TWarp>
+struct LookupBasedOnFlowWarpStaticFunctor<TWarp, true> {
 	_CPU_AND_GPU_CODE_
-	static inline Vector3f GetWarpedPosition(const TVoxel& voxel, const Vector3i& position) {
+	static inline Vector3f GetWarpedPosition(const TWarp& voxel, const Vector3i& position) {
 		return position.toFloat() + voxel.flow_warp;
 	}
 };
 
-template<typename TVoxel>
-struct LookupBasedOnFlowWarpStaticFunctor<TVoxel, false> {
+template<typename TWarp>
+struct LookupBasedOnFlowWarpStaticFunctor<TWarp, false> {
 	_CPU_AND_GPU_CODE_
-	static inline Vector3f GetWarpedPosition(const TVoxel& voxel, const Vector3i& position) {
+	static inline Vector3f GetWarpedPosition(const TWarp& voxel, const Vector3i& position) {
 		//DIEWITHEXCEPTION_REPORTLOCATION("Attempting to use flow warps with voxel type that doesn't have them.");
 		DEVICE_ASSERT(false);
 		return position.toFloat();
 	}
 };
 
-template <typename TVoxel, bool hasWarpUpdate>
+template <typename TWarp, bool hasWarpUpdate>
 struct LookupBasedOnWarpUpdateStaticFunctor;
 
-template<typename TVoxel>
-struct LookupBasedOnWarpUpdateStaticFunctor<TVoxel, true> {
+template<typename TWarp>
+struct LookupBasedOnWarpUpdateStaticFunctor<TWarp, true> {
 	_CPU_AND_GPU_CODE_
-	static inline Vector3f GetWarpedPosition(const TVoxel& voxel, const Vector3i& position) {
+	static inline Vector3f GetWarpedPosition(const TWarp& voxel, const Vector3i& position) {
 		return position.toFloat() + voxel.warp_update;
 
 	}
 };
 
 
-template<typename TVoxel>
-struct LookupBasedOnWarpUpdateStaticFunctor<TVoxel, false> {
+template<typename TWarp>
+struct LookupBasedOnWarpUpdateStaticFunctor<TWarp, false> {
 	_CPU_AND_GPU_CODE_
-	static inline Vector3f GetWarpedPosition(const TVoxel& voxel, const Vector3i& position) {
+	static inline Vector3f GetWarpedPosition(const TWarp& voxel, const Vector3i& position) {
 		//DIEWITHEXCEPTION_REPORTLOCATION("Attempting to use warp updates with voxel type that doesn't have them.");
 		DEVICE_ASSERT(false);
 		return position.toFloat();
@@ -92,29 +92,30 @@ struct LookupBasedOnWarpUpdateStaticFunctor<TVoxel, false> {
 
 }//namespace SpecializedWarpLookups
 
-template<typename TVoxel, Warp TWarp>
+template<typename TWarp, WarpType TWarpType>
 struct WarpVoxelStaticFunctor;
-template<typename TVoxel>
-struct WarpVoxelStaticFunctor<TVoxel, Warp::WARP_CUMULATIVE>{
+
+template<typename TWarp>
+struct WarpVoxelStaticFunctor<TWarp, WarpType::WARP_CUMULATIVE>{
 	_CPU_AND_GPU_CODE_
-	static inline Vector3f GetWarpedPosition(const TVoxel& voxel, const Vector3i& position){
-		return SpecializedWarpLookups::LookupBasedOnCumulativeWarpStaticFunctor<TVoxel, TVoxel::hasCumulativeWarp>::GetWarpedPosition(voxel, position);
+	static inline Vector3f GetWarpedPosition(const TWarp& voxel, const Vector3i& position){
+		return SpecializedWarpLookups::LookupBasedOnCumulativeWarpStaticFunctor<TWarp, TWarp::hasCumulativeWarp>::GetWarpedPosition(voxel, position);
 	}
 };
 
-template<typename TVoxel>
-struct WarpVoxelStaticFunctor<TVoxel, Warp::WARP_FLOW>{
+template<typename TWarp>
+struct WarpVoxelStaticFunctor<TWarp, WarpType::WARP_FLOW>{
 	_CPU_AND_GPU_CODE_
-	static inline Vector3f GetWarpedPosition(const TVoxel& voxel, const Vector3i& position){
-		return SpecializedWarpLookups::LookupBasedOnFlowWarpStaticFunctor<TVoxel, TVoxel::hasFlowWarp>::GetWarpedPosition(voxel, position);
+	static inline Vector3f GetWarpedPosition(const TWarp& warp, const Vector3i& position){
+		return SpecializedWarpLookups::LookupBasedOnFlowWarpStaticFunctor<TWarp, TWarp::hasFlowWarp>::GetWarpedPosition(warp, position);
 	}
 };
 
-template<typename TVoxel>
-struct WarpVoxelStaticFunctor<TVoxel, Warp::WARP_UPDATE>{
+template<typename TWarp>
+struct WarpVoxelStaticFunctor<TWarp, WarpType::WARP_UPDATE>{
 	_CPU_AND_GPU_CODE_
-	static inline Vector3f GetWarpedPosition(const TVoxel& voxel, const Vector3i& position){
-		return SpecializedWarpLookups::LookupBasedOnWarpUpdateStaticFunctor<TVoxel, TVoxel::hasWarpUpdate>::GetWarpedPosition(voxel, position);
+	static inline Vector3f GetWarpedPosition(const TWarp& voxel, const Vector3i& position){
+		return SpecializedWarpLookups::LookupBasedOnWarpUpdateStaticFunctor<TWarp, TWarp::hasWarpUpdate>::GetWarpedPosition(voxel, position);
 	}
 };
 

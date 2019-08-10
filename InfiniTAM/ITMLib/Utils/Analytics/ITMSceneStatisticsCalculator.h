@@ -16,7 +16,7 @@
 #pragma once
 
 #include "../ITMMath.h"
-#include "../../Objects/Scene/ITMScene.h"
+#include "../../Objects/Scene/ITMVoxelVolume.h"
 
 namespace ITMLib {
 template<typename TVoxel, typename TIndex>
@@ -30,18 +30,18 @@ public:
 	ITMSceneStatisticsCalculator(ITMSceneStatisticsCalculator const&) = delete;
 	void operator=(ITMSceneStatisticsCalculator const&) = delete;
 
-	Vector6i ComputeVoxelBounds(const ITMScene<TVoxel, TIndex>* scene);
-	int ComputeAllocatedVoxelCount(ITMScene<TVoxel, TIndex>* scene);
-	std::vector<int> GetFilledHashBlockIds(ITMScene<TVoxel, TIndex>* scene);
-	int ComputeAllocatedHashBlockCount(ITMScene<TVoxel, TIndex>* scene);
+	Vector6i ComputeVoxelBounds(const ITMVoxelVolume<TVoxel, TIndex>* scene);
+	int ComputeAllocatedVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene);
+	std::vector<int> GetFilledHashBlockIds(ITMVoxelVolume<TVoxel, TIndex>* scene);
+	int ComputeAllocatedHashBlockCount(ITMVoxelVolume<TVoxel, TIndex>* scene);
 
-	int ComputeNonTruncatedVoxelCount(ITMScene<TVoxel, TIndex>* scene);
-	int ComputeVoxelWithValueCount(ITMScene<TVoxel, TIndex>* scene, float value);
-	double ComputeNonTruncatedVoxelAbsSdfSum(ITMScene<TVoxel, TIndex>* scene);
-	double ComputeTruncatedVoxelAbsSdfSum(ITMScene<TVoxel, TIndex>* scene);
+	int ComputeNonTruncatedVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene);
+	int ComputeVoxelWithValueCount(ITMVoxelVolume<TVoxel, TIndex>* scene, float value);
+	double ComputeNonTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene);
+	double ComputeTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene);
 
-	float FindMaxGradient1LengthAndPosition(ITMScene<TVoxel, TIndex>* scene, Vector3i& positionOut);
-	float FindMaxGradient0LengthAndPosition(ITMScene<TVoxel, TIndex>* scene, Vector3i& positionOut);
+	float FindMaxGradient1LengthAndPosition(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector3i& positionOut);
+	float FindMaxGradient0LengthAndPosition(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector3i& positionOut);
 private:
 	ITMSceneStatisticsCalculator() = default;
 	~ITMSceneStatisticsCalculator() = default;

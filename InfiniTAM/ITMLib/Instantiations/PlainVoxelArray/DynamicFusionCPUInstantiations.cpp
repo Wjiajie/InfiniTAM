@@ -18,7 +18,7 @@
 
 #include "../../Core/ITMDynamicEngine.tpp"
 
-#include "../../Objects/Scene/ITMScene.h"
+#include "../../Objects/Scene/ITMVoxelVolume.h"
 
 
 #include "../../Engines/Swapping/CPU/ITMSwappingEngine_CPU.tpp"
@@ -36,22 +36,19 @@
 
 
 
-template class ITMSwappingEngine_CPU<ITMVoxelCanonical, ITMPlainVoxelArray>;
-template class ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>;
-template class ITMSceneFileIOEngine<ITMVoxelCanonical,ITMPlainVoxelArray>;
-template class ITMSceneFileIOEngine<ITMVoxelLive,ITMPlainVoxelArray>;
-template class ITMVisualisationEngine_CPU<ITMVoxelCanonical, ITMPlainVoxelArray>;
-template class ITMVisualisationEngine_CPU<ITMVoxelLive, ITMPlainVoxelArray>;
-template class ITMMeshingEngine_CPU<ITMVoxelCanonical, ITMPlainVoxelArray>;
-template class ITMWarpSceneLogger<ITMVoxelCanonical, ITMPlainVoxelArray>;
-template class ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>;
+template class ITMSwappingEngine_CPU<ITMVoxel, ITMPlainVoxelArray>;
+template class ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMPlainVoxelArray>;
+template class ITMSceneFileIOEngine<ITMVoxel,ITMPlainVoxelArray>;
+template class ITMVisualisationEngine_CPU<ITMVoxel, ITMPlainVoxelArray>;
+template class ITMMeshingEngine_CPU<ITMVoxel, ITMPlainVoxelArray>;
+template class ITMWarpFieldLogger<ITMWarp, ITMPlainVoxelArray>;
+template class ITMSceneLogger<ITMVoxel, ITMVoxel, ITMPlainVoxelArray>;
 
 //TODO: Cleanup -Greg (GitHub: Algomorph)
 //dynamic fusion utility classes
-template class ITMSceneSliceVisualizer2D<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>;
+template class ITMSceneSliceVisualizer2D<ITMVoxel, ITMVoxel, ITMPlainVoxelArray>;
 
-template class ITMSceneStatisticsCalculator<ITMVoxelCanonical,ITMPlainVoxelArray>;
-template class ITMSceneStatisticsCalculator<ITMVoxelLive,ITMPlainVoxelArray>;
+template class ITMSceneStatisticsCalculator<ITMVoxel,ITMPlainVoxelArray>;
 template class ITM3DNestedMap<int>;
 template class ITM3DNestedMap<std::tuple<int,int>>;
 template class ITM3DNestedMapOfArrays<int>;

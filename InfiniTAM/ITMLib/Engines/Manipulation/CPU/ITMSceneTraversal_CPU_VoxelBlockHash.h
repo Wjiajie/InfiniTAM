@@ -18,7 +18,7 @@
 
 //local
 #include "../Interface/ITMSceneTraversal.h"
-#include "../../../Objects/Scene/ITMScene.h"
+#include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "ITMSceneManipulationEngine_CPU.h"
 
 namespace ITMLib {
@@ -61,7 +61,7 @@ public:
 
 	template<typename TFunctor>
 	inline static void
-	VoxelTraversal(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
+	VoxelTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
 		int noTotalEntries = scene->index.noTotalEntries;
@@ -86,7 +86,7 @@ public:
 
 	template<typename TFunctor>
 	inline static void
-	VoxelPositionTraversal(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
+	VoxelPositionTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
 		int noTotalEntries = scene->index.noTotalEntries;
@@ -114,7 +114,7 @@ public:
 
 	template<typename TFunctor>
 	inline static void
-	VoxelAndHashBlockPositionTraversal(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
+	VoxelAndHashBlockPositionTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
 		int noTotalEntries = scene->index.noTotalEntries;
@@ -142,7 +142,7 @@ public:
 
 	template<typename TFunctor>
 	inline static void
-	VoxelTraversalWithinBounds(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor, Vector6i bounds) {
+	VoxelTraversalWithinBounds(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor, Vector6i bounds) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
 		int noTotalEntries = scene->index.noTotalEntries;
@@ -174,7 +174,8 @@ public:
 
 	template<typename TFunctor>
 	inline static void
-	VoxelPositionTraversalWithinBounds(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor, Vector6i bounds) {
+	VoxelPositionTraversalWithinBounds(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor,
+	                                   Vector6i bounds) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
 		int noTotalEntries = scene->index.noTotalEntries;
@@ -209,7 +210,7 @@ public:
 
 	template<typename TFunctor>
 	inline static void
-	VoxelPositionAndHashEntryTraversalWithinBounds(ITMScene<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor,
+	VoxelPositionAndHashEntryTraversalWithinBounds(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor,
 	                                               Vector6i bounds) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
@@ -249,7 +250,7 @@ public:
 // endregion ===========================================================================================================
 // region ================================ STATIC SINGLE-SCENE TRAVERSAL ===============================================
 	template<typename TStaticFunctor>
-	inline static void StaticVoxelTraversal(ITMScene<TVoxel, ITMVoxelBlockHash>* scene) {
+	inline static void StaticVoxelTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
 		int noTotalEntries = scene->index.noTotalEntries;
@@ -273,7 +274,7 @@ public:
 	}
 
 	template<typename TStaticFunctor>
-	inline static void StaticVoxelPositionTraversal(ITMScene<TVoxel, ITMVoxelBlockHash>* scene) {
+	inline static void StaticVoxelPositionTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
 		int noTotalEntries = scene->index.noTotalEntries;
@@ -302,25 +303,24 @@ public:
 };
 
 
+// ====================== FOR TWO SCENES WITH DIFFERING VOXEL TYPES ====================================================
+
 template<typename TVoxelPrimary, typename TVoxelSecondary>
 class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU> {
 public:
-// region ================================ DYNAMIC TWO-SCENE TRAVERSAL =================================================
+// region ================================ STATIC TWO-SCENE TRAVERSAL =================================================
 	template<typename TStaticFunctor>
 	inline static void StaticDualVoxelTraversal(
-			ITMScene<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
-			ITMScene<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene) {
+			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene) {
 
 // *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
-		typename ITMVoxelBlockHash::IndexCache secondaryCache;
-
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 		int noTotalEntries = primaryScene->index.noTotalEntries;
-		typename ITMVoxelBlockHash::IndexCache primaryCache;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -360,24 +360,79 @@ public:
 		}
 	}
 
+	// endregion
+	// region ================================ STATIC TWO-SCENE TRAVERSAL WITH VOXEL POSITION ==========================
+	template<typename TStaticFunctor>
+	inline static void StaticDualVoxelPositionTraversal(
+			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene) {
 
+// *** traversal vars
+		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
+
+		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
+		int noTotalEntries = primaryScene->index.noTotalEntries;
+
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int hash = 0; hash < noTotalEntries; hash++) {
+			const ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
+			if (currentLiveHashEntry.ptr < 0) continue;
+			ITMHashEntry currentCanonicalHashEntry = secondaryHashTable[hash];
+
+			// the rare case where we have different positions for primary & secondary voxel block with the same index:
+			// we have a hash bucket miss, find the secondary voxel with the matching coordinates
+			if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
+				int secondaryHash;
+				if (!FindHashAtPosition(secondaryHash, currentLiveHashEntry.pos, secondaryHashTable)) {
+					std::stringstream stream;
+					stream << "Could not find corresponding secondary scene block at postion "
+					       << currentLiveHashEntry.pos
+					       << ". " << __FILE__ << ": " << __LINE__;
+					DIEWITHEXCEPTION(stream.str());
+				} else {
+					currentCanonicalHashEntry = secondaryHashTable[secondaryHash];
+				}
+			}
+			// position of the current entry in 3D space in voxel units
+			Vector3i hashBlockPosition = currentLiveHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxelSecondary* localCanonicalVoxelBlock = &(secondaryVoxels[currentCanonicalHashEntry.ptr *
+			                                                              (SDF_BLOCK_SIZE3)]);
+			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
+						TVoxelPrimary& primaryVoxel = localLiveVoxelBlock[locId];
+						TVoxelSecondary& secondaryVoxel = localCanonicalVoxelBlock[locId];
+						TStaticFunctor::run(primaryVoxel, secondaryVoxel, voxelPosition);
+					}
+				}
+			}
+		}
+	}
+
+// endregion
+// region ================================ DYNAMIC TWO-SCENE TRAVERSAL =================================================
 	template<typename TFunctor>
 	inline static void
 	DualVoxelTraversal(
-			ITMScene<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
-			ITMScene<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
 			TFunctor& functor) {
 
 // *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
-		typename ITMVoxelBlockHash::IndexCache secondaryCache;
 
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 		int noTotalEntries = primaryScene->index.noTotalEntries;
-		typename ITMVoxelBlockHash::IndexCache primaryCache;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -418,24 +473,21 @@ public:
 		}
 	}
 
-
+// ========================== WITH VOXEL POSITION ==============
 	template<typename TFunctor>
 	inline static void
 	DualVoxelPositionTraversal(
-			ITMScene<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
-			ITMScene<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
 			TFunctor& functor) {
 
 // *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
-		typename ITMVoxelBlockHash::IndexCache secondaryCache;
-
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 		int noTotalEntries = primaryScene->index.noTotalEntries;
-		typename ITMVoxelBlockHash::IndexCache primaryCache;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -480,24 +532,87 @@ public:
 		}
 	}
 
+	template<typename TFunctor>
+	inline static void
+	DualVoxelPositionTraversalWithinBounds(
+			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
+			TFunctor& functor, Vector6i bounds) {
+
+// *** traversal vars
+		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
+
+		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
+		int noTotalEntries = primaryScene->index.noTotalEntries;
+
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int hash = 0; hash < noTotalEntries; hash++) {
+			const ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
+			if (currentLiveHashEntry.ptr < 0) continue;
+			ITMHashEntry currentCanonicalHashEntry = secondaryHashTable[hash];
+
+			// the rare case where we have different positions for primary & secondary voxel block with the same index:
+			// we have a hash bucket miss, find the secondary voxel with the matching coordinates
+			if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
+				int secondaryHash;
+
+				if (!FindHashAtPosition(secondaryHash, currentLiveHashEntry.pos, secondaryHashTable)) {
+					std::stringstream stream;
+					stream << "Could not find corresponding secondary scene block at postion "
+					       << currentLiveHashEntry.pos
+					       << ". " << __FILE__ << ": " << __LINE__;
+					DIEWITHEXCEPTION(stream.str());
+				} else {
+					currentCanonicalHashEntry = secondaryHashTable[secondaryHash];
+				}
+			}
+			// position of the current entry in 3D space in voxel units
+			Vector3i hashBlockPosition = currentLiveHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+
+			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxelSecondary* localCanonicalVoxelBlock = &(secondaryVoxels[currentCanonicalHashEntry.ptr *
+			                                                              (SDF_BLOCK_SIZE3)]);
+
+			Vector3i hashEntryMinPoint = currentLiveHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(SDF_BLOCK_SIZE);
+			if (HashBlockDoesNotIntersectBounds(hashEntryMinPoint, hashEntryMaxPoint, bounds)) {
+				continue;
+			}
+			Vector6i localBounds = computeLocalBounds(hashEntryMinPoint, hashEntryMaxPoint, bounds);
+
+			for (int z = localBounds.min_z; z < localBounds.max_z; z++) {
+				for (int y = localBounds.min_y; y < localBounds.max_y; y++) {
+					for (int x = localBounds.min_x; x < localBounds.max_x; x++) {
+						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
+						TVoxelPrimary& primaryVoxel = localLiveVoxelBlock[locId];
+						TVoxelSecondary& secondaryVoxel = localCanonicalVoxelBlock[locId];
+						functor(primaryVoxel, secondaryVoxel, voxelPosition);
+					}
+				}
+			}
+		}
+	}
+
 
 	template<typename TFunctor>
 	inline static void
 	DualVoxelPositionTraversal_DefaultForMissingSecondary(
-			ITMScene<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
-			ITMScene<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
 			TFunctor& functor) {
 
 // *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
-		typename ITMVoxelBlockHash::IndexCache secondaryCache;
-
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 		int noTotalEntries = primaryScene->index.noTotalEntries;
-		typename ITMVoxelBlockHash::IndexCache primaryCache;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -554,20 +669,17 @@ public:
 	template<typename TFunctor>
 	inline static void
 	DualVoxelPositionTraversal_SingleThreaded(
-			ITMScene<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
-			ITMScene<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
 			TFunctor& functor) {
 
 // *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
-		typename ITMVoxelBlockHash::IndexCache secondaryCache;
-
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 		int noTotalEntries = primaryScene->index.noTotalEntries;
-		typename ITMVoxelBlockHash::IndexCache primaryCache;
 
 		for (int hash = 0; hash < noTotalEntries; hash++) {
 			const ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
@@ -602,6 +714,395 @@ public:
 						TVoxelPrimary& primaryVoxel = localLiveVoxelBlock[locId];
 						TVoxelSecondary& secondaryVoxel = localCanonicalVoxelBlock[locId];
 						functor(primaryVoxel, secondaryVoxel, voxelPosition);
+					}
+				}
+			}
+		}
+	}
+// endregion ===========================================================================================================
+};
+
+// FOR TWO SCENES WITH SAME VOXEL TYPE AND DIFFERING WARP TYPE
+// ====================== FOR TWO SCENES WITH DIFFERING VOXEL TYPES ====================================================
+
+template<typename TVoxel, typename TWarp>
+class ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU> {
+public:
+// region ================================ DYNAMIC TWO-SCENE TRAVERSAL =================================================
+	template<typename TStaticFunctor>
+	inline static void StaticDualVoxelTraversal(
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
+
+// *** traversal vars
+		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
+
+		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
+
+		TVoxel* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
+
+		int noTotalEntries = warpField->index.noTotalEntries;
+
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int hash = 0; hash < noTotalEntries; hash++) {
+			const ITMHashEntry& currentWarpHashEntry = warpHashTable[hash];
+			if (currentWarpHashEntry.ptr < 0) continue;
+
+			ITMHashEntry currentPrimaryHashEntry = primaryHashTable[hash];
+			ITMHashEntry currentSecondaryHashEntry = secondaryHashTable[hash];
+
+			// the rare case where we have different positions for warp & primary voxel block with the same index:
+			// we have a hash bucket miss, find the primary voxel with the matching coordinates
+			if (currentPrimaryHashEntry.pos != currentWarpHashEntry.pos) {
+				int primaryHash;
+				if (!FindHashAtPosition(primaryHash, currentWarpHashEntry.pos, primaryHashTable)) {
+					std::stringstream stream;
+					stream << "Could not find corresponding secondary scene block at postion "
+					       << currentWarpHashEntry.pos
+					       << ". " << __FILE__ << ": " << __LINE__;
+					DIEWITHEXCEPTION(stream.str());
+				} else {
+					currentPrimaryHashEntry = primaryHashTable[primaryHash];
+				}
+			}
+			// the rare case where we have different positions for primary & secondary voxel block with the same index:
+			// we have a hash bucket miss, find the secondary voxel with the matching coordinates
+			if (currentSecondaryHashEntry.pos != currentPrimaryHashEntry.pos) {
+				int secondaryHash;
+				if (!FindHashAtPosition(secondaryHash, currentPrimaryHashEntry.pos, secondaryHashTable)) {
+					std::stringstream stream;
+					stream << "Could not find corresponding secondary scene block at postion "
+					       << currentPrimaryHashEntry.pos
+					       << ". " << __FILE__ << ": " << __LINE__;
+					DIEWITHEXCEPTION(stream.str());
+				} else {
+					currentSecondaryHashEntry = secondaryHashTable[secondaryHash];
+				}
+			}
+			TVoxel* localPrimaryVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
+			TVoxel* localSecondaryVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
+			TWarp* localWarpVoxelBlock = &(warpVoxels[currentWarpHashEntry.ptr * SDF_BLOCK_SIZE3]);
+			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+						int indexWithinBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						TVoxel& primaryVoxel = localPrimaryVoxelBlock[indexWithinBlock];
+						TVoxel& secondaryVoxel = localSecondaryVoxelBlock[indexWithinBlock];
+						TWarp& warp = localWarpVoxelBlock[indexWithinBlock];
+						TStaticFunctor::run(primaryVoxel, secondaryVoxel, warp);
+					}
+				}
+			}
+		}
+	}
+
+
+	template<typename TFunctor>
+	inline static void
+	DualVoxelTraversal(
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+			TFunctor& functor) {
+
+// *** traversal vars
+		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
+
+		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
+
+		TVoxel* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
+
+		int noTotalEntries = warpField->index.noTotalEntries;
+
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int hash = 0; hash < noTotalEntries; hash++) {
+
+			const ITMHashEntry& currentWarpHashEntry = warpHashTable[hash];
+			if (currentWarpHashEntry.ptr < 0) continue;
+
+			ITMHashEntry currentPrimaryHashEntry = primaryHashTable[hash];
+			ITMHashEntry currentSecondaryHashEntry = secondaryHashTable[hash];
+
+			// the rare case where we have different positions for warp & primary voxel block with the same index:
+			// we have a hash bucket miss, find the primary voxel with the matching coordinates
+			if (currentPrimaryHashEntry.pos != currentWarpHashEntry.pos) {
+				int primaryHash;
+				if (!FindHashAtPosition(primaryHash, currentWarpHashEntry.pos, primaryHashTable)) {
+					std::stringstream stream;
+					stream << "Could not find corresponding secondary scene block at postion "
+					       << currentWarpHashEntry.pos
+					       << ". " << __FILE__ << ": " << __LINE__;
+					DIEWITHEXCEPTION(stream.str());
+				} else {
+					currentPrimaryHashEntry = primaryHashTable[primaryHash];
+				}
+			}
+			// the rare case where we have different positions for primary & secondary voxel block with the same index:
+			// we have a hash bucket miss, find the secondary voxel with the matching coordinates
+			if (currentSecondaryHashEntry.pos != currentPrimaryHashEntry.pos) {
+				int secondaryHash;
+				if (!FindHashAtPosition(secondaryHash, currentPrimaryHashEntry.pos, secondaryHashTable)) {
+					std::stringstream stream;
+					stream << "Could not find corresponding secondary scene block at postion "
+					       << currentPrimaryHashEntry.pos
+					       << ". " << __FILE__ << ": " << __LINE__;
+					DIEWITHEXCEPTION(stream.str());
+				} else {
+					currentSecondaryHashEntry = secondaryHashTable[secondaryHash];
+				}
+			}
+			TVoxel* localPrimaryVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
+			TVoxel* localSecondaryVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
+			TWarp* localWarpVoxelBlock = &(warpVoxels[currentWarpHashEntry.ptr * SDF_BLOCK_SIZE3]);
+
+			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+						int indexWithinBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						TVoxel& primaryVoxel = localPrimaryVoxelBlock[indexWithinBlock];
+						TVoxel& secondaryVoxel = localSecondaryVoxelBlock[indexWithinBlock];
+						TWarp& warp = localWarpVoxelBlock[indexWithinBlock];
+						functor(primaryVoxel, secondaryVoxel, warp);
+					}
+				}
+			}
+		}
+	}
+
+
+	template<typename TFunctor>
+	inline static void
+	DualVoxelPositionTraversal(
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+			TFunctor& functor) {
+
+// *** traversal vars
+		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
+
+		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
+
+		TVoxel* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
+
+		int noTotalEntries = warpField->index.noTotalEntries;
+
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int hash = 0; hash < noTotalEntries; hash++) {
+			const ITMHashEntry& currentWarpHashEntry = warpHashTable[hash];
+			if (currentWarpHashEntry.ptr < 0) continue;
+
+			ITMHashEntry currentPrimaryHashEntry = primaryHashTable[hash];
+			ITMHashEntry currentSecondaryHashEntry = secondaryHashTable[hash];
+			// the rare case where we have different positions for warp & primary voxel block with the same index:
+			// we have a hash bucket miss, find the primary voxel with the matching coordinates
+			if (currentPrimaryHashEntry.pos != currentWarpHashEntry.pos) {
+				int primaryHash;
+				if (!FindHashAtPosition(primaryHash, currentWarpHashEntry.pos, primaryHashTable)) {
+					std::stringstream stream;
+					stream << "Could not find corresponding secondary scene block at postion "
+					       << currentWarpHashEntry.pos
+					       << ". " << __FILE__ << ": " << __LINE__;
+					DIEWITHEXCEPTION(stream.str());
+				} else {
+					currentPrimaryHashEntry = primaryHashTable[primaryHash];
+				}
+			}
+			// the rare case where we have different positions for primary & secondary voxel block with the same index:
+			// we have a hash bucket miss, find the secondary voxel with the matching coordinates
+			if (currentSecondaryHashEntry.pos != currentPrimaryHashEntry.pos) {
+				int secondaryHash;
+				if (!FindHashAtPosition(secondaryHash, currentPrimaryHashEntry.pos, secondaryHashTable)) {
+					std::stringstream stream;
+					stream << "Could not find corresponding secondary scene block at postion "
+					       << currentPrimaryHashEntry.pos
+					       << ". " << __FILE__ << ": " << __LINE__;
+					DIEWITHEXCEPTION(stream.str());
+				} else {
+					currentSecondaryHashEntry = secondaryHashTable[secondaryHash];
+				}
+			}
+			Vector3i hashBlockPosition = currentWarpHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+
+			TVoxel* localPrimaryVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
+			TVoxel* localSecondaryVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
+			TWarp* localWarpVoxelBlock = &(warpVoxels[currentWarpHashEntry.ptr * SDF_BLOCK_SIZE3]);
+
+			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+						Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
+						int indexWithinBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						TVoxel& primaryVoxel = localPrimaryVoxelBlock[indexWithinBlock];
+						TVoxel& secondaryVoxel = localSecondaryVoxelBlock[indexWithinBlock];
+						TWarp& warp = localWarpVoxelBlock[indexWithinBlock];
+						functor(primaryVoxel, secondaryVoxel, warp, voxelPosition);
+					}
+				}
+			}
+		}
+	}
+
+
+	template<typename TFunctor>
+	inline static void
+	DualVoxelPositionTraversal_DefaultForMissingEntries(
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+			TFunctor& functor) {
+
+// *** traversal vars
+		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
+
+		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
+
+		TVoxel* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
+
+		int noTotalEntries = warpField->index.noTotalEntries;
+
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int hash = 0; hash < noTotalEntries; hash++) {
+			const ITMHashEntry& currentWarpHashEntry = warpHashTable[hash];
+			if (currentWarpHashEntry.ptr < 0) continue;
+
+			ITMHashEntry currentPrimaryHashEntry = primaryHashTable[hash];
+			ITMHashEntry currentSecondaryHashEntry = secondaryHashTable[hash];
+			bool primaryFound = true, secondaryFound = true;
+// the rare case where we have different positions for warp & primary voxel block with the same index:
+			// we have a hash bucket miss, find the primary voxel with the matching coordinates
+			if (currentPrimaryHashEntry.pos != currentWarpHashEntry.pos) {
+				int primaryHash;
+				if (!FindHashAtPosition(primaryHash, currentWarpHashEntry.pos, primaryHashTable)) {
+					primaryFound = false;
+				} else {
+					currentPrimaryHashEntry = primaryHashTable[primaryHash];
+				}
+			}
+			// the rare case where we have different positions for primary & secondary voxel block with the same index:
+			// we have a hash bucket miss, find the secondary voxel with the matching coordinates
+			if (currentSecondaryHashEntry.pos != currentPrimaryHashEntry.pos) {
+				int secondaryHash;
+				if (!FindHashAtPosition(secondaryHash, currentPrimaryHashEntry.pos, secondaryHashTable)) {
+					secondaryFound = false;
+				} else {
+					currentSecondaryHashEntry = secondaryHashTable[secondaryHash];
+				}
+			}
+			Vector3i hashBlockPosition = currentWarpHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+
+			TVoxel* localPrimaryVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
+			TVoxel* localSecondaryVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
+			TWarp* localWarpVoxelBlock = &(warpVoxels[currentWarpHashEntry.ptr * SDF_BLOCK_SIZE3]);
+			TVoxel defaultVoxel;
+
+			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
+						int indexWithinBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						TVoxel& primaryVoxel = primaryFound ? localPrimaryVoxelBlock[indexWithinBlock] : defaultVoxel;
+						TVoxel& secondaryVoxel = secondaryFound ? localSecondaryVoxelBlock[indexWithinBlock]
+						                                        : defaultVoxel;
+						TWarp& warp = localWarpVoxelBlock[indexWithinBlock];
+						functor(primaryVoxel, secondaryVoxel, warp, voxelPosition);
+					}
+				}
+			}
+		}
+	}
+
+
+	template<typename TFunctor>
+	inline static void
+	DualVoxelPositionTraversal_SingleThreaded(
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+			TFunctor& functor) {
+
+// *** traversal vars
+		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
+
+		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
+
+		TVoxel* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
+
+		int noTotalEntries = warpField->index.noTotalEntries;
+
+		for (int hash = 0; hash < noTotalEntries; hash++) {
+			const ITMHashEntry& currentWarpHashEntry = warpHashTable[hash];
+			if (currentWarpHashEntry.ptr < 0) continue;
+
+			ITMHashEntry currentPrimaryHashEntry = primaryHashTable[hash];
+			ITMHashEntry currentSecondaryHashEntry = secondaryHashTable[hash];
+
+			// the rare case where we have different positions for warp & primary voxel block with the same index:
+			// we have a hash bucket miss, find the primary voxel with the matching coordinates
+			if (currentPrimaryHashEntry.pos != currentWarpHashEntry.pos) {
+				int primaryHash;
+				if (!FindHashAtPosition(primaryHash, currentWarpHashEntry.pos, primaryHashTable)) {
+					std::stringstream stream;
+					stream << "Could not find corresponding secondary scene block at postion "
+					       << currentWarpHashEntry.pos
+					       << ". " << __FILE__ << ": " << __LINE__;
+					DIEWITHEXCEPTION(stream.str());
+				} else {
+					currentPrimaryHashEntry = primaryHashTable[primaryHash];
+				}
+			}
+			// the rare case where we have different positions for primary & secondary voxel block with the same index:
+			// we have a hash bucket miss, find the secondary voxel with the matching coordinates
+			if (currentSecondaryHashEntry.pos != currentPrimaryHashEntry.pos) {
+				int secondaryHash;
+				if (!FindHashAtPosition(secondaryHash, currentPrimaryHashEntry.pos, secondaryHashTable)) {
+					std::stringstream stream;
+					stream << "Could not find corresponding secondary scene block at postion "
+					       << currentPrimaryHashEntry.pos
+					       << ". " << __FILE__ << ": " << __LINE__;
+					DIEWITHEXCEPTION(stream.str());
+				} else {
+					currentSecondaryHashEntry = secondaryHashTable[secondaryHash];
+				}
+			}
+			Vector3i hashBlockPosition = currentWarpHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			TVoxel* localPrimaryVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
+			TVoxel* localSecondaryVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
+			TWarp* localWarpVoxelBlock = &(warpVoxels[currentWarpHashEntry.ptr * SDF_BLOCK_SIZE3]);
+			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+						Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
+						int indexWithinBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						TVoxel& primaryVoxel = localPrimaryVoxelBlock[indexWithinBlock];
+						TVoxel& secondaryVoxel = localSecondaryVoxelBlock[indexWithinBlock];
+						TWarp& warp = localWarpVoxelBlock[indexWithinBlock];
+						functor(primaryVoxel, secondaryVoxel, warp, voxelPosition);
 					}
 				}
 			}

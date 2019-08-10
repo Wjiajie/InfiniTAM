@@ -13,7 +13,7 @@ namespace ITMLib {
 	public:
 		virtual ~ITMMultiVisualisationEngine(void) {}
 
-		virtual ITMRenderState* CreateRenderState(const ITMScene<TVoxel, TIndex> *scene, const Vector2i & imgSize) const = 0;
+		virtual ITMRenderState* CreateRenderState(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Vector2i & imgSize) const = 0;
 
 		virtual void PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, TIndex> & sceneManager, ITMRenderState *state) = 0;
 

@@ -18,7 +18,7 @@
 #include <cmath>
 
 #include "../../../Objects/RenderStates/ITMRenderState.h"
-#include "../../../Objects/Scene/ITMScene.h"
+#include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Objects/Tracking/ITMTrackingState.h"
 #include "../../../Objects/Views/ITMView.h"
 #include "../../Common/ITMCommonFunctors.h"
@@ -33,7 +33,7 @@ namespace ITMLib {
 	an ITMLib::Objects::ITMScene and fuse new image information
 	into them.
 */
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 class ITMDynamicSceneReconstructionEngine {
 
 public:
@@ -43,7 +43,7 @@ public:
 
 
 	virtual void
-	UpdateVisibleList(ITMScene<TVoxelLive, TIndex>* scene, const ITMView* view, const ITMTrackingState* trackingState,
+	UpdateVisibleList(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 	                  const ITMRenderState* renderState, bool resetVisibleList) = 0;
 	/**
 	 * \brief Clears given scene, then uses the depth image from provided live view to generate an SDF
@@ -53,32 +53,32 @@ public:
 	 * \param trackingState state of tracking
 	 * \param renderState state of rendering the stuff
 	 */
-	virtual void GenerateRawLiveSceneFromView(ITMScene<TVoxelLive, TIndex>* scene, const ITMView* view,
+	virtual void GenerateRawLiveSceneFromView(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
 	                                          const ITMTrackingState* trackingState,
 	                                          const ITMRenderState* renderState) = 0;
 
 	/**
-	 * \brief Fuses the live scene into the canonical scene based on the motion warp of the canonical scene
-	 * \details Typically called after TrackMotion is called
+	 * \brief Fuses the live scene into the canonical scene
+	 * \details Operation happens after the motion is tracked, at this point liveScene should be as close to the canonical
+	 * as possible
 	 * \param canonicalScene the canonical voxel grid, representing the state at the beginning of the sequence
 	 * \param liveScene the live voxel grid, a TSDF generated from a single recent depth image
 	 * \param liveSourceFieldIndex index of the sdf field to use at live scene voxels
 	 */
-	virtual void FuseLiveIntoCanonicalSdf(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                      ITMScene<TVoxelLive, TIndex>* liveScene,
-	                                      int liveSourceFieldIndex) = 0;
+	virtual void FuseLiveIntoCanonicalSdf(ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+	                                      ITMVoxelVolume<TVoxel, TIndex>* liveScene) = 0;
 
 	/**
 	 * \brief apply warp vectors to live scene: compute the the target SDF fields in live scene using trilinear lookup
 	 * at corresponding composite warps from the source SDF fields in live scene
 	 * \param canonicalScene canonical scene, where the warp update vectors are specified
-	 * \param liveScene live scene (voxel grid)
+	 * \param sourceTSDF live scene (voxel grid)
 	 * \param sourceSdfIndex index of the source SDF field in each live voxel
 	 * \param targetSdfIndex index of the target SDF field in each live voxel
 	 */
-	virtual void WarpScene_CumulativeWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                      ITMScene<TVoxelLive, TIndex>* liveScene, int sourceSdfIndex,
-	                                      int targetSdfIndex) = 0;
+	virtual void WarpScene_CumulativeWarps(ITMVoxelVolume<TWarp, TIndex>* warpField,
+	                                       ITMVoxelVolume<TVoxel, TIndex>* sourceTSDF,
+	                                       ITMVoxelVolume<TVoxel, TIndex>* targetTSDF) = 0;
 
 	/**
 	 * \brief apply warp update vectors to live scene: compute the the target SDF fields in live scene using trilinear lookup
@@ -88,9 +88,9 @@ public:
 	 * \param sourceSdfIndex index of the source SDF field in each live voxel
 	 * \param targetSdfIndex index of the target SDF field in each live voxel
 	 */
-	virtual void WarpScene_FlowWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                 ITMScene<TVoxelLive, TIndex>* liveScene, int sourceSdfIndex,
-	                                 int targetSdfIndex) = 0;
+	virtual void WarpScene_FlowWarps(ITMVoxelVolume<TWarp, TIndex>* warpField,
+	                                 ITMVoxelVolume<TVoxel, TIndex>* sourceTSDF,
+	                                 ITMVoxelVolume<TVoxel, TIndex>* targetTSDF) = 0;
 
 	/**
 	 * \brief apply warp update vectors to live scene: compute the the target SDF fields in live scene using trilinear lookup
@@ -100,25 +100,26 @@ public:
 	 * \param sourceSdfIndex index of the source SDF field in each live voxel
 	 * \param targetSdfIndex index of the target SDF field in each live voxel
 	 */
-	virtual void WarpScene_WarpUpdates(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                                   ITMScene<TVoxelLive, TIndex>* liveScene, int sourceSdfIndex,
-	                                   int targetSdfIndex) = 0;
+	virtual void WarpScene_WarpUpdates(ITMVoxelVolume<TWarp, TIndex>* warpField,
+	                                   ITMVoxelVolume<TVoxel, TIndex>* sourceTSDF,
+	                                   ITMVoxelVolume<TVoxel, TIndex>* targetTSDF) = 0;
 
 
+	//TODO: move this to ITMSceneManipulationEngine
 	/**
 	 * \brief Copy the live indexed scene from one index to another
 	 * \param liveScene
 	 * \param sourceSdfIndex
 	 * \param targetSdfIndex
 	 */
-	virtual void CopyIndexedScene(ITMScene<TVoxelLive, TIndex>* liveScene, int sourceSdfIndex, int targetSdfIndex) = 0;
+	virtual void CopyScene(ITMVoxelVolume<TVoxel, TIndex>* sourceTSDF,
+	                       ITMVoxelVolume<TVoxel, TIndex>* targetTSDF) = 0;
 
 protected:
 
-
 	/** Update the voxel blocks by integrating depth and
 	possibly colour information from the given view.*/
-	virtual void IntegrateIntoScene(ITMScene<TVoxelLive, TIndex>* scene, const ITMView* view,
+	virtual void IntegrateIntoScene(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
 	                                const ITMTrackingState* trackingState, const ITMRenderState* renderState) = 0;
 
 };

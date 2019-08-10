@@ -19,67 +19,74 @@
 
 using namespace ITMLib;
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::UpdateVisibleList(
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::UpdateVisibleList(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState, bool resetVisibleList) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
+template<typename TVoxel, typename TWarp>
 void
-ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::GenerateRawLiveSceneFromView(
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
+ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::GenerateRawLiveSceneFromView(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::FuseLiveIntoCanonicalSdf(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int liveSourceFieldIndex) {
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::FuseLiveIntoCanonicalSdf(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-template<Warp TWarpSource>
-void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::WarpScene(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-                                                                                                         ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+template<typename TVoxel, typename TWarp>
+template<WarpType TWarpSource>
+void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::WarpScene(
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::CopyIndexedScene(
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::CopyScene(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceScene,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetScene) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::IntegrateIntoScene(
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::IntegrateIntoScene(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
+		const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
+template<typename TVoxel, typename TWarp>
 void
-ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::WarpScene_CumulativeWarps(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
-	this->template WarpScene<WARP_CUMULATIVE>(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
+ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::WarpScene_CumulativeWarps(
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
+	this->template WarpScene<WARP_CUMULATIVE>(warpField, sourceTSDF, targetTSDF);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::WarpScene_FlowWarps(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
-	this->template WarpScene<WARP_FLOW>(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::WarpScene_FlowWarps(
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
+	this->template WarpScene<WARP_FLOW>(warpField, sourceTSDF, targetTSDF);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::WarpScene_WarpUpdates(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
-	this->template WarpScene<WARP_UPDATE>(canonicalScene, liveScene, sourceSdfIndex, targetSdfIndex);
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::WarpScene_WarpUpdates(
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
+	this->template WarpScene<WARP_UPDATE>(warpField, sourceTSDF, targetTSDF);
 }

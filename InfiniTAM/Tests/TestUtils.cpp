@@ -25,10 +25,10 @@ using namespace ITMLib;
 //
 //void GenerateAndLogKillingScene01() {
 //	auto settings = new ITMLibSettings();
-//	auto canonicalScene = new ITMScene<ITMVoxelCanonical, ITMVoxelIndex>(
+//	auto canonicalScene = new ITMVoxelVolume<ITMVoxel, ITMVoxelIndex>(
 //			&settings->sceneParams, settings->swappingMode ==
 //			                        ITMLibSettings::SWAPPINGMODE_ENABLED, settings->GetMemoryType());
-//	auto liveScene = new ITMScene<ITMVoxelLive, ITMVoxelIndex>(
+//	auto liveScene = new ITMVoxelVolume<ITMVoxel, ITMVoxelIndex>(
 //			&settings->sceneParams, settings->swappingMode ==
 //			                        ITMLibSettings::SWAPPINGMODE_ENABLED, settings->GetMemoryType());
 //
@@ -38,7 +38,7 @@ using namespace ITMLib;
 //	CopySceneWithOffset_CPU(*liveScene, *canonicalScene,offset);
 //
 //
-//	ITMSceneLogger<ITMVoxelCanonical,ITMVoxelLive,ITMVoxelIndex> logger(testScenePath,canonicalScene,liveScene);
+//	ITMSceneLogger<ITMVoxel,ITMVoxel,ITMVoxelIndex> logger(testScenePath,canonicalScene,liveScene);
 //	logger.SaveScenesCompact();
 //
 //	//TODO: fix with new highlight system --Greg (GitHub:Algomorph)

@@ -18,7 +18,7 @@
 #include "../../../Objects/Scene/ITMVoxelBlockHash.h"
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../../ITMLibDefines.h"
-#include "../../../Objects/Scene/ITMScene.h"
+#include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Utils/ITMLibSettings.h"
 #include "../../Reconstruction/Interface/ITMSceneReconstructionEngine.h"
 #include "../../Reconstruction/ITMSceneReconstructionEngineFactory.h"

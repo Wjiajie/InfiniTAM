@@ -20,10 +20,10 @@
 
 
 //local
-#include "../../Objects/Scene/ITMScene.h"
+#include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "../Collections/ITM3DNestedMapOfArrays.h"
 #include "../Analytics/ITMNeighborVoxelIterationInfo.h"
-#include "ITMWarpSceneLogger.h"
+#include "ITMWarpFieldLogger.h"
 #include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 
 //boost
@@ -67,10 +67,10 @@ public:
 
 //endregion
 // region === CONSTRUCTORS / DESTRUCTORS ===
-	ITMSceneLogger(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	               ITMScene<TVoxelLive, TIndex>* liveScene,
+	ITMSceneLogger(ITMVoxelVolume<TVoxelCanonical, TIndex>* canonicalScene,
+	               ITMVoxelVolume<TVoxelLive, TIndex>* liveScene,
 	               std::string path = "");
-	ITMSceneLogger(ITMScene<TVoxelLive, TIndex>* liveScene,
+	ITMSceneLogger(ITMVoxelVolume<TVoxelLive, TIndex>* liveScene,
 	               std::string path);
 
 	ITMSceneLogger();
@@ -80,7 +80,7 @@ public:
 // region === MEMBER FUNCTIONS ===
 
 	//*** setters / preparation
-	void SetScenes(ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene);
+	void SetScenes(ITMVoxelVolume<TVoxelCanonical, TIndex>* canonicalScene, ITMVoxelVolume<TVoxelLive, TIndex>* liveScene);
 	void SetPath(std::string path);
 
 	//*** getters
@@ -93,8 +93,8 @@ public:
 
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> GetHighlights() const;
 	std::vector<int> GetInterestRegionHashes() const;
-	const ITMScene<TVoxelCanonical, TIndex>* GetActiveWarpScene() const;
-	const ITMScene<TVoxelLive, TIndex>* GetLiveScene() const;
+	const ITMVoxelVolume<TVoxelCanonical, TIndex>* GetActiveWarpScene() const;
+	const ITMVoxelVolume<TVoxelLive, TIndex>* GetLiveScene() const;
 	bool GetIsActiveSceneASlice() const;
 	std::vector<std::string> GetSliceIds() const;
 	void GetActiveSceneBounds(Vector6i& bounds) const;
@@ -149,7 +149,7 @@ public:
 	bool SliceExistsOnDisk(const std::string& sliceIdentifier) const;
 	bool LoadSlice(const std::string& sliceIdentifier);
 	bool SwitchActiveScene(
-			std::string sliceIdentifier = ITMWarpSceneLogger<TVoxelCanonical, TIndex>::fullSceneSliceIdentifier);
+			std::string sliceIdentifier = ITMWarpFieldLogger<TVoxelCanonical, TIndex>::fullSceneSliceIdentifier);
 
 
 //endregion
@@ -172,12 +172,12 @@ private:
 	fs::path livePath;
 
 // *** scene structures ***
-	ITMWarpSceneLogger<TVoxelCanonical, TIndex>* fullCanonicalSceneLogger;
-	ITMWarpSceneLogger<TVoxelCanonical, TIndex>* activeWarpLogger;
-	ITMScene<TVoxelLive, TIndex>* liveScene;
+	ITMWarpFieldLogger<TVoxelCanonical, TIndex>* fullCanonicalSceneLogger;
+	ITMWarpFieldLogger<TVoxelCanonical, TIndex>* activeWarpLogger;
+	ITMVoxelVolume<TVoxelLive, TIndex>* liveScene;
 
 // *** scene meta-information + reading/writing
-	std::map<std::string, ITMWarpSceneLogger<TVoxelCanonical, TIndex>*> slices;
+	std::map<std::string, ITMWarpFieldLogger<TVoxelCanonical, TIndex>*> slices;
 
 // *** state ***
 	Mode mode;

@@ -24,7 +24,7 @@ ITMBasicEngine<TVoxel,TIndex>::ITMBasicEngine(const ITMRGBDCalib& calib, Vector2
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 
 	MemoryDeviceType memoryType = settings.GetMemoryType();
-	this->scene = new ITMScene<TVoxel,TIndex>(&settings.sceneParams, settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
+	this->scene = new ITMVoxelVolume<TVoxel,TIndex>(&settings.sceneParams, settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 
 	const ITMLibSettings::DeviceType deviceType = settings.deviceType;
 

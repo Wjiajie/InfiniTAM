@@ -61,10 +61,10 @@ bool isPathMask(const std::string& arg) {
 ITMDynamicFusionLogger_Interface& GetLogger(IndexingMethod method) {
 	switch (method) {
 		case HASH: {
-			return static_cast<ITMDynamicFusionLogger_Interface&>(ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>::Instance());
+			return static_cast<ITMDynamicFusionLogger_Interface&>(ITMDynamicFusionLogger<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>::Instance());
 		}
 		case ARRAY: {
-			return static_cast<ITMDynamicFusionLogger_Interface&>(ITMDynamicFusionLogger<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>::Instance());
+			return static_cast<ITMDynamicFusionLogger_Interface&>(ITMDynamicFusionLogger<ITMVoxel, ITMVoxel, ITMPlainVoxelArray>::Instance());
 		}
 	}
 };
@@ -461,12 +461,12 @@ int main(int argc, char** argv) {
 			case ITMLibSettings::LIBMODE_DYNAMIC:
 				switch (chosenIndexingMethod) {
 					case HASH:
-						mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>(
+						mainEngine = new ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>(
 								imageSource->getCalib(), imageSource->getRGBImageSize(),
 								imageSource->getDepthImageSize());
 						break;
 					case ARRAY:
-						mainEngine = new ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>(
+						mainEngine = new ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMPlainVoxelArray>(
 								imageSource->getCalib(), imageSource->getRGBImageSize(),
 								imageSource->getDepthImageSize());
 						break;

@@ -34,15 +34,15 @@ using namespace ITMLib;
 // region ================================= CONSTANT DEFINITIONS =======================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::warpUpdatesFilename = ITMWarpSceneLogger<TVoxelCanonical, TIndex>::warpUpdatesFilename;
+const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::warpUpdatesFilename = ITMWarpFieldLogger<TVoxelCanonical, TIndex>::warpUpdatesFilename;
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::binaryFileExtension =
-		ITMWarpSceneLogger<TVoxelCanonical, TIndex>::binaryFileExtension;
+		ITMWarpFieldLogger<TVoxelCanonical, TIndex>::binaryFileExtension;
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::liveName = "live";
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::continuousHighlightsPostfix =
-		ITMWarpSceneLogger<TVoxelCanonical, TIndex>::continuousHighlightsPostfix;
+		ITMWarpFieldLogger<TVoxelCanonical, TIndex>::continuousHighlightsPostfix;
 //endregion
 // region ================================= CONSTRUCTORS & DESTRUCTORS =================================================
 
@@ -57,10 +57,10 @@ const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::continuou
  */
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-		ITMScene<TVoxelLive, TIndex>* liveScene,
+		ITMVoxelVolume<TVoxelCanonical, TIndex>* canonicalScene,
+		ITMVoxelVolume<TVoxelLive, TIndex>* liveScene,
 		std::string path) :
-		fullCanonicalSceneLogger(new ITMWarpSceneLogger<TVoxelCanonical, TIndex>(canonicalScene, path)),
+		fullCanonicalSceneLogger(new ITMWarpFieldLogger<TVoxelCanonical, TIndex>(canonicalScene, path)),
 		activeWarpLogger(fullCanonicalSceneLogger),
 		liveScene(liveScene),
 
@@ -71,7 +71,7 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(ITMScene<TVoxelLive, TIndex>* liveScene,
+ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(ITMVoxelVolume<TVoxelLive, TIndex>* liveScene,
                                                                     std::string path):
 	fullCanonicalSceneLogger(nullptr),
 	activeWarpLogger(nullptr),
@@ -125,7 +125,7 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetScenesLoaded() cons
 }
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
 void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetScenes(
-		ITMScene<TVoxelCanonical, TIndex>* canonicalScene, ITMScene<TVoxelLive, TIndex>* liveScene) {
+		ITMVoxelVolume<TVoxelCanonical, TIndex>* canonicalScene, ITMVoxelVolume<TVoxelLive, TIndex>* liveScene) {
 	this->liveScene = liveScene;
 	this->activeWarpLogger->scene = canonicalScene;
 }
@@ -184,12 +184,12 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetPath(std::string pa
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const ITMScene<TVoxelCanonical, TIndex>* ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetActiveWarpScene() const{
+const ITMVoxelVolume<TVoxelCanonical, TIndex>* ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetActiveWarpScene() const{
 	return this->activeWarpLogger->scene;
 }
 
 template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const ITMScene<TVoxelLive, TIndex>* ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetLiveScene() const{
+const ITMVoxelVolume<TVoxelLive, TIndex>* ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetLiveScene() const{
 	return this->liveScene;
 }
 

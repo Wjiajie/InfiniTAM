@@ -21,49 +21,54 @@
 using namespace ITMLib;
 
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ITMSceneMotionTracker_CUDA()
-		: ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>(),
+template<typename TVoxel, typename TWarp>
+ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::ITMSceneMotionTracker_CUDA()
+		: ITMSceneMotionTracker<TVoxel, TWarp, ITMVoxelBlockHash>(),
 		  calculateGradientFunctor(this->parameters, this->switches){
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ClearOutFlowWarp(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::ClearOutFlowWarp(
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::AddFlowWarpToWarp(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, bool clearFlowWarp) {
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::AddFlowWarpToWarp(
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+		bool clearFlowWarp) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::CalculateWarpGradient(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceFieldIndex, bool restrictZTrackingForDebugging) {
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::CalculateWarpGradient(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+		bool restrictZTrackingForDebugging) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::SmoothWarpGradient(
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, int sourceFieldIndex) {
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::SmoothWarpGradient(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-float ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::UpdateWarps(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex) {
+template<typename TVoxel, typename TWarp>
+float ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::UpdateWarps(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ResetWarps(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::ResetWarps(
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }

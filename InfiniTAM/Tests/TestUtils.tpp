@@ -21,7 +21,7 @@
 using namespace ITMLib;
 
 template<class TVoxel, class TIndex>
-void GenerateTestScene01(ITMScene<TVoxel, TIndex>* scene) {
+void GenerateTestScene01(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ResetScene(scene);
 	const int narrowBandThicknessVoxels = 10;
 	int xOffset = 8;

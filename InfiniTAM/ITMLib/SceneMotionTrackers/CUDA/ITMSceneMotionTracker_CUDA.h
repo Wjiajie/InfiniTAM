@@ -20,66 +20,71 @@
 
 namespace ITMLib {
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 class ITMSceneMotionTracker_CUDA :
-		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex> {
+		public ITMSceneMotionTracker<TVoxel, TWarp, TIndex> {
 	ITMSceneMotionTracker_CUDA() {}
 };
 // region ================================= VOXEL BLOCK HASH ===========================================================
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-class ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash> :
-		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash> {
+template<typename TVoxel, typename TWarp>
+class ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash> :
+		public ITMSceneMotionTracker<TVoxel, TWarp, ITMVoxelBlockHash> {
 public:
 	explicit ITMSceneMotionTracker_CUDA();
 	virtual ~ITMSceneMotionTracker_CUDA() = default;
 
-	void ClearOutFlowWarp(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) override;
+	void ClearOutFlowWarp(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) override;
 	void AddFlowWarpToWarp(
-			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, bool clearFlowWarp) override;
-	void CalculateWarpGradient(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-	                           ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceFieldIndex,
+			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField, bool clearFlowWarp) override;
+	void CalculateWarpGradient(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
+	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
+	                           ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	                           bool restrictZTrackingForDebugging) override;
 	void SmoothWarpGradient(
-			ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
-			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, int sourceFieldIndex) override;
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
+			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) override;
 	float UpdateWarps(
-			ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-			ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex) override;
-	void ResetWarps(ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) override;
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
+			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) override;
+	void ResetWarps(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) override;
 
 
 private:
 
-	//ITMDynamicHashManagementEngine_CUDA<TVoxelCanonical, TVoxelLive> hashManager;
-	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash> calculateGradientFunctor;
+	//ITMDynamicHashManagementEngine_CUDA<TVoxel, TWarp> hashManager;
+	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor<TVoxel, TWarp, ITMVoxelBlockHash> calculateGradientFunctor;
 
 };
 
 // endregion ===========================================================================================================
 // region ================================= PLAIN VOXEL ARRAY ==========================================================
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-class ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray> :
-		public ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMPlainVoxelArray> {
+template<typename TVoxel, typename TWarp>
+class ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray> :
+		public ITMSceneMotionTracker<TVoxel, TWarp, ITMPlainVoxelArray> {
 public:
 	explicit ITMSceneMotionTracker_CUDA();
 	virtual ~ITMSceneMotionTracker_CUDA() = default;
 
-	void ClearOutFlowWarp(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) override;
+	void ClearOutFlowWarp(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
 	void AddFlowWarpToWarp(
-			ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene, bool clearFlowWarp) override;
-	void CalculateWarpGradient(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-	                           ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceFieldIndex,
+			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* canonicalScene, bool clearFlowWarp) override;
+	void CalculateWarpGradient(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
+	                           ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
+	                           ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 	                           bool restrictZTrackingForDebugging) override;
-	void SmoothWarpGradient(ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene,
-	                        ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-	                        int sourceFieldIndex) override;
+	void SmoothWarpGradient(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
+	                        ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
+	                        ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
 	float UpdateWarps(
-			ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene,
-			ITMScene<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex) override;
+			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
+			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
+			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
 
-	void ResetWarps(ITMScene<TVoxelCanonical, ITMPlainVoxelArray>* canonicalScene) override;
+	void ResetWarps(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
 
 };
 // endregion ===========================================================================================================

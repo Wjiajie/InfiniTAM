@@ -456,8 +456,8 @@ set(ITMLIB_OBJECTS_RENDERSTATES_HEADERS
 
 ##
 set(ITMLIB_OBJECTS_SCENE_SOURCES
-	Objects/Scene/ITMScene.tpp
-	Objects/Scene/ITMScene.cpp
+	Objects/Scene/ITMVoxelVolume.tpp
+	Objects/Scene/ITMVoxelVolume.cpp
 	)
 
 ##
@@ -470,7 +470,7 @@ set(ITMLIB_OBJECTS_SCENE_HEADERS
     Objects/Scene/ITMRepresentationAccess.h
     Objects/Scene/ITMTrilinearInterpolation.h
     Objects/Scene/ITMTrilinearDistribution.h
-    Objects/Scene/ITMScene.h
+	Objects/Scene/ITMVoxelVolume.h
     Objects/Scene/ITMSurfelScene.h
     Objects/Scene/ITMSurfelTypes.h
     Objects/Scene/ITMVoxelBlockHash.h
@@ -653,7 +653,7 @@ set(ITMLIB_UTILS_FILEIO_SOURCES
 set (ITMLIB_UTILS_FILEIO_HEADERS
      Utils/FileIO/ITMSceneLogger.h
      Utils/FileIO/ITMDynamicFusionLogger.h
-     Utils/FileIO/ITMWarpSceneLogger.h)
+     Utils/FileIO/ITMWarpFieldLogger.h)
 ##
 
 set(ITMLIB_UTILS_VISUALIZATION_SOURCES

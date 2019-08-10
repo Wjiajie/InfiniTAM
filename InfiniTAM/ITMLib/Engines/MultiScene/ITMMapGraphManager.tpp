@@ -90,7 +90,7 @@ namespace ITMLib
 	{
 		if ((localMapId < 0) || ((unsigned)localMapId >= allData.size())) return -1;
 
-		ITMScene<TVoxel, TIndex> *scene = allData[localMapId]->scene;
+		ITMVoxelVolume<TVoxel, TIndex> *scene = allData[localMapId]->scene;
 		return scene->index.getNumAllocatedVoxelBlocks() - scene->localVBA.lastFreeBlockId - 1;
 	}
 

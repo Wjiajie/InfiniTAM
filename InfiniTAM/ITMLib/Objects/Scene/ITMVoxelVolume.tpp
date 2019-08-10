@@ -14,7 +14,7 @@
 //  limitations under the License.
 //  ================================================================
 
-#include "ITMScene.h"
+#include "ITMVoxelVolume.h"
 
 namespace ITMLib {
 
@@ -27,8 +27,8 @@ namespace ITMLib {
  * \param offset (optional) offset of the scene -- affects only bounded index types, such as ITMPlainVoxelArray
  */
 template<typename TVoxel, typename TIndex>
-ITMScene<TVoxel,TIndex>::ITMScene(const ITMSceneParams* _sceneParams, bool _useSwapping, MemoryDeviceType _memoryType,
-               Vector3i size, Vector3i offset)
+ITMVoxelVolume<TVoxel,TIndex>::ITMVoxelVolume(const ITMSceneParams* _sceneParams, bool _useSwapping, MemoryDeviceType _memoryType,
+                                              Vector3i size, Vector3i offset)
 	: sceneParams(_sceneParams),
 		index(_memoryType, size, offset),
 	  localVBA(_memoryType, index.getNumAllocatedVoxelBlocks(), index.getVoxelBlockSize())

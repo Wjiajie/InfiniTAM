@@ -303,12 +303,12 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 
 	switch (indexingMethod) {
 		case HASH: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 		}
 			break;
 		case ARRAY: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMPlainVoxelArray>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 		}
 			break;
@@ -331,7 +331,7 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 	//actual processing on the mailEngine
 	switch (indexingMethod) {
 		case HASH: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>*>(mainEngine);
 			if (imuSource != nullptr)
 				dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage,
 				                                                    inputIMUMeasurement);
@@ -339,7 +339,7 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 		}
 			break;
 		case ARRAY: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMPlainVoxelArray>*>(mainEngine);
 			if (imuSource != nullptr)
 				dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage,
 				                                                    inputIMUMeasurement);
@@ -371,7 +371,7 @@ bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 	bool keepProcessingFrame = false;
 	switch (indexingMethod) {
 		case HASH: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelBlockHash>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 			keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();
 			if (!keepProcessingFrame) {
@@ -386,7 +386,7 @@ bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 		}
 			break;
 		case ARRAY: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxelCanonical, ITMVoxelLive, ITMPlainVoxelArray>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMPlainVoxelArray>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 			keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();
 			if (!keepProcessingFrame) {

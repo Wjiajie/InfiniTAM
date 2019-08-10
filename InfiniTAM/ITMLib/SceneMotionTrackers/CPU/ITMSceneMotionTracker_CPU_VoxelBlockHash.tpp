@@ -47,28 +47,28 @@ using namespace ITMLib;
 // region ================================ CONSTRUCTORS AND DESTRUCTORS ================================================
 
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ITMSceneMotionTracker_CPU()
-		:ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>(),
+template<typename TVoxel, typename TWarp>
+ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ITMSceneMotionTracker_CPU()
+		:ITMSceneMotionTracker<TVoxel, TWarp, ITMVoxelBlockHash>(),
 		 calculateGradientFunctor(this->parameters, this->switches) {};
 // endregion ============================== END CONSTRUCTORS AND DESTRUCTORS============================================
 
 // region ===================================== HOUSEKEEPING ===========================================================
 
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ResetWarps(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
-	ITMSceneTraversalEngine<TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
-	StaticVoxelTraversal<WarpClearFunctor<TVoxelCanonical, TVoxelCanonical::hasCumulativeWarp>>(canonicalScene);
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ResetWarps(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene) {
+	ITMSceneTraversalEngine<TVoxel, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
+	StaticVoxelTraversal<WarpClearFunctor<TWarp, TWarp::hasCumulativeWarp>>(canonicalScene);
 };
 
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::ClearOutFlowWarp(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene) {
-	ITMSceneTraversalEngine<TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
-	StaticVoxelTraversal<ClearOutFlowWarpStaticFunctor<TVoxelCanonical>>(canonicalScene);
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ClearOutFlowWarp(
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
+	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
+	StaticVoxelTraversal<ClearOutFlowWarpStaticFunctor<TWarp>>(warpField);
 }
 
 
@@ -77,7 +77,7 @@ void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::
 //_DEBUG
 template<typename TVoxel, typename TIndex>
 inline static void PrintSceneStatistics(
-		ITMScene<TVoxel, TIndex>* scene,
+		ITMVoxelVolume<TVoxel, TIndex>* scene,
 		std::string description) {
 	ITMSceneStatisticsCalculator<TVoxel, TIndex>& calculator = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance();
 	std::cout << green << "=== Stats for scene '" << description << "' ===" << reset << std::endl;
@@ -92,20 +92,21 @@ inline static void PrintSceneStatistics(
 
 // region ===================================== CALCULATE GRADIENT SMOOTHING ===========================================
 
-template<typename TVoxelCanonical, typename TVoxelLive>
+template<typename TVoxel, typename TWarp>
 void
-ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::CalculateWarpGradient(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceFieldIndex,
+ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::CalculateWarpGradient(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 		bool restrictZTrackingForDebugging) {
-	ITMSceneTraversalEngine<TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
-	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TVoxelCanonical>>(canonicalScene);
+	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
+	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TWarp>>(warpField);
 	hashManager.AllocateCanonicalFromLive(canonicalScene, liveScene);
-	calculateGradientFunctor.PrepareForOptimization(liveScene, canonicalScene, sourceFieldIndex,
+	calculateGradientFunctor.PrepareForOptimization(liveScene, canonicalScene, warpField,
 	                                                restrictZTrackingForDebugging);
 
-	ITMDualSceneTraversalEngine<TVoxelLive, TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
-	DualVoxelPositionTraversal(liveScene, canonicalScene, calculateGradientFunctor);
+	ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
+	DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, calculateGradientFunctor);
 
 	calculateGradientFunctor.FinalizePrintAndRecordStatistics();
 }
@@ -114,35 +115,35 @@ ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::Calcu
 // region ========================================== SOBOLEV GRADIENT SMOOTHING ========================================
 
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::SmoothWarpGradient(
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene,
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, int sourceFieldIndex) {
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::SmoothWarpGradient(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 
 	if (this->switches.enableGradientSmoothing) {
-		SmoothWarpGradient_common<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>
-				(liveScene, canonicalScene, sourceFieldIndex);
+		SmoothWarpGradient_common<TVoxel, TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>
+				(liveScene, canonicalScene, warpField);
 	}
 }
 
 // endregion ===========================================================================================================
 
 // region ============================= UPDATE FRAMEWISE & GLOBAL (CUMULATIVE) WARPS ===================================
-template<typename TVoxelCanonical, typename TVoxelLive>
-float ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::UpdateWarps(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene,
-		ITMScene<TVoxelLive, ITMVoxelBlockHash>* liveScene, int sourceSdfIndex) {
-	return UpdateWarps_common<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>(
-			canonicalScene, liveScene, sourceSdfIndex, this->parameters.gradientDescentLearningRate,
+template<typename TVoxel, typename TWarp>
+float ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::UpdateWarps(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
+	return UpdateWarps_common<TVoxel, TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>(
+			canonicalScene, liveScene, warpField, this->parameters.gradientDescentLearningRate,
 			this->switches.enableGradientSmoothing);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, ITMVoxelBlockHash>::AddFlowWarpToWarp(
-		ITMScene<TVoxelCanonical, ITMVoxelBlockHash>* canonicalScene, bool clearFlowWarp) {
-
-	AddFlowWarpToWarp_common<TVoxelCanonical, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>
-		(canonicalScene, clearFlowWarp);
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::AddFlowWarpToWarp(
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField, bool clearFlowWarp) {
+	AddFlowWarpToWarp_common<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>(warpField, clearFlowWarp);
 }
 
 //endregion ============================================================================================================

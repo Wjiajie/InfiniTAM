@@ -29,7 +29,7 @@
 
 
 //ITMLib
-#include "../../Objects/Scene/ITMScene.h"
+#include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "../FileIO/ITMSceneLogger.h"
 #include "ITMSceneSliceVisualizer3DCommon.h"
 #include "ITMVisualizationWindowManager.h"
@@ -45,17 +45,17 @@ class vtkPolyDataMapper;
 
 namespace ITMLib {
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 class ThreadInteropCommand;
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 class ITMSceneSliceVisualizer3DInteractorStyle;
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 class ITMSceneSliceVisualizer3D {
 
-	friend class ThreadInteropCommand<TVoxelCanonical, TVoxelLive, TIndex>;
-	friend class ITMSceneSliceVisualizer3DInteractorStyle<TVoxelCanonical, TVoxelLive, TIndex>;
+	friend class ThreadInteropCommand<TVoxel, TWarp, TIndex>;
+	friend class ITMSceneSliceVisualizer3DInteractorStyle<TVoxel, TWarp, TIndex>;
 
 public:
 	//================= CONSTANTS ================
@@ -64,8 +64,9 @@ public:
 	static const char* scaleUnknownsVisibleAttributeName;
 
 	// ====================== CONSTRUCTORS / DESTRUCTORS ==================
-	ITMSceneSliceVisualizer3D(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                          ITMScene<TVoxelLive, TIndex>* liveScene,
+	ITMSceneSliceVisualizer3D(ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+	                          ITMVoxelVolume<TVoxel, TIndex>* liveScene,
+	                          ITMVoxelVolume<TWarp, TIndex>* warpField,
 	                          Vector3i focusCoordinates, Plane plane = PLANE_XY,
 	                          int radiusInPlane = 10, int radiusOutOfPlane = 0);
 	virtual ~ITMSceneSliceVisualizer3D();
@@ -136,9 +137,8 @@ private:
 
 	// region ============== MEMBER FUNCTIONS ===========================
 	void InitializeVoxels();
-	template <typename TVoxel, typename TVoxelDataRetriever>
 	void BuildVoxelAndHashBlockPolyDataFromScene(
-			ITMScene <TVoxel, TIndex>* scene, SceneSlice& sceneSlice);
+			ITMVoxelVolume <TVoxel, TIndex>* scene, SceneSlice& sceneSlice);
 	void BuildInitialSlices();
 	void RebuildSlices();
 	void InitializeWarps();
@@ -155,8 +155,9 @@ private:
 	// ===================== MEMBER VARIABLES ============================
 
 
-	ITMScene<TVoxelCanonical, TIndex>* canonicalScene;
-	ITMScene<TVoxelLive, TIndex>* liveScene;
+	ITMVoxelVolume<TVoxel, TIndex>* canonicalScene;
+	ITMVoxelVolume<TVoxel, TIndex>* liveScene;
+	ITMVoxelVolume<TWarp, TIndex>* warpField;
 
 	// ** visualization modes / states **
 	VisibilityMode visibilityMode;
@@ -217,10 +218,9 @@ private:
 	bool fusedCanonicalBuilt = false;
 	bool liveStateUpdated = false;
 	bool slicesRebuilt = false;
-	int liveSamplingFieldIndex = 0;
 	int visibleOptimizationStepIndex = 0;
 	std::thread* thread = nullptr;
-	vtkSmartPointer<ThreadInteropCommand<TVoxelCanonical, TVoxelLive, TIndex>> threadCallback;
+	vtkSmartPointer<ThreadInteropCommand<TVoxel, TWarp, TIndex>> threadCallback;
 
 
 	//endregion

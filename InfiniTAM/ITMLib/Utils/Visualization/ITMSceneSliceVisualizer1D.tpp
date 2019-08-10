@@ -33,7 +33,7 @@
 
 //local
 #include "ITMSceneSliceVisualizer1D.h"
-#include "../../Objects/Scene/ITMScene.h"
+#include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
 #include "ITMVisualizationWindowManager.h"
 #include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
@@ -56,7 +56,7 @@ struct TGetIndexedSDFFunctor{
 
 
 template<typename TVoxel, typename TIndex, typename TGetSDFFunctor>
-void ITMSceneSliceVisualizer1D::Plot1DSceneSliceHelper(ITMScene<TVoxel, TIndex>* scene, Vector4i color, double width) {
+void ITMSceneSliceVisualizer1D::Plot1DSceneSliceHelper(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector4i color, double width) {
 
 	// set up table & columns
 	vtkSmartPointer<vtkFloatArray> horizontalAxisPoints = vtkSmartPointer<vtkFloatArray>::New();
@@ -104,13 +104,13 @@ void ITMSceneSliceVisualizer1D::Plot1DSceneSliceHelper(ITMScene<TVoxel, TIndex>*
 
 
 template<typename TVoxel, typename TIndex>
-void ITMSceneSliceVisualizer1D::Plot1DSceneSlice(ITMScene<TVoxel, TIndex>* scene, Vector4i color, double width) {
+void ITMSceneSliceVisualizer1D::Plot1DSceneSlice(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector4i color, double width) {
 	Plot1DSceneSliceHelper<TVoxel,TIndex, TGetRegularSDFFunctor<TVoxel>>(scene, color, width);
 }
 
 
 template<typename TVoxel, typename TIndex>
-void ITMSceneSliceVisualizer1D::Plot1DIndexedSceneSlice(ITMScene<TVoxel, TIndex>* scene, Vector4i color, double width, int fieldIndex) {
+void ITMSceneSliceVisualizer1D::Plot1DIndexedSceneSlice(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector4i color, double width, int fieldIndex) {
 	switch (fieldIndex){
 		default:
 		case 0:
@@ -124,7 +124,7 @@ void ITMSceneSliceVisualizer1D::Plot1DIndexedSceneSlice(ITMScene<TVoxel, TIndex>
 
 
 template<typename TVoxel, typename TIndex>
-void ITMSceneSliceVisualizer1D::Draw1DWarpUpdateVector(ITMScene<TVoxel, TIndex>* scene, Vector4i color) {
+void ITMSceneSliceVisualizer1D::Draw1DWarpUpdateVector(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector4i color) {
 	// scene access variables
 
 	TVoxel voxel = ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ReadVoxel(scene, focusCoordinates);

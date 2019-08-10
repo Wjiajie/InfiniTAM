@@ -20,21 +20,21 @@
 
 using namespace ITMLib;
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb, Vector2i imgSize_d) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb, Vector2i imgSize_d) {
 
 	ITMLibSettings& settings = ITMLibSettings::Instance();
 
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 
 	MemoryDeviceType memoryType = settings.GetMemoryType();
-	this->canonicalScene = new ITMScene<TVoxelCanonical, TIndex>(
+	this->canonicalScene = new ITMVoxelVolume<TVoxelCanonical, TIndex>(
 			&settings.sceneParams, settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 
-	this->liveScene = new ITMScene<TVoxelLive, TIndex>(
+	this->liveScene = new ITMVoxelVolume<TVoxelLive, TIndex>(
 			&settings.sceneParams, settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 	const ITMLibSettings::DeviceType deviceType = settings.deviceType;
-	ITMDynamicFusionLogger<TVoxelCanonical,TVoxelLive,TIndex>::Instance().SetScenes(canonicalScene,liveScene);
+	ITMDynamicFusionLogger<TVoxelCanonical,TVoxelLive,TIndex>::Instance().SetScenes(canonicalScene,liveScene, warpField);
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
@@ -46,7 +46,7 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(const IT
 	if (settings.createMeshingEngine)
 		meshingEngine = ITMMeshingEngineFactory::MakeMeshingEngine<TVoxelCanonical, TIndex>(deviceType);
 
-	denseMapper = new ITMDenseDynamicMapper<TVoxelCanonical, TVoxelLive, TIndex>();
+	denseMapper = new ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>();
 	denseMapper->ResetCanonicalScene(canonicalScene);
 	denseMapper->ResetLiveScene(liveScene);
 
@@ -82,8 +82,8 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ITMDynamicEngine(const IT
 	framesProcessed = 0;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::~ITMDynamicEngine() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+ITMDynamicEngine<TVoxel, TWarp, TIndex>::~ITMDynamicEngine() {
 	delete renderState_live;
 	if (renderState_freeview != nullptr) delete renderState_freeview;
 
@@ -111,8 +111,8 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::~ITMDynamicEngine() {
 	if (meshingEngine != nullptr) delete meshingEngine;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveSceneToMesh(const char* objFileName) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDynamicEngine<TVoxel, TWarp, TIndex>::SaveSceneToMesh(const char* objFileName) {
 	if (meshingEngine == nullptr) return;
 	ITMMesh* mesh = new ITMMesh(ITMLibSettings::Instance().GetMemoryType());
 	meshingEngine->MeshScene(mesh, canonicalScene);
@@ -120,9 +120,9 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveSceneToMesh(cons
 	delete mesh;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveToFile() {
-	std::string nextFrameOutputPath = ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().GetOutputDirectory();
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDynamicEngine<TVoxel, TWarp, TIndex>::SaveToFile() {
+	std::string nextFrameOutputPath = ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().GetOutputDirectory();
 	// throws error if any of the saves fail
 	if (relocaliser) relocaliser->SaveToDirectory(nextFrameOutputPath + "/Relocaliser/");
 	ITMSceneFileIOEngine<TVoxelCanonical,TIndex>::SaveToDirectoryCompact(canonicalScene,nextFrameOutputPath + "/canonical");
@@ -130,9 +130,9 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::SaveToFile() {
 	std::cout << "Saving scenes in a compact way to '" << nextFrameOutputPath << "'." << std::endl;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::LoadFromFile() {
-	std::string nextFrameOutputPath = ITMDynamicFusionLogger<TVoxelCanonical, TVoxelLive, TIndex>::Instance().GetOutputDirectory();
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDynamicEngine<TVoxel, TWarp, TIndex>::LoadFromFile() {
+	std::string nextFrameOutputPath = ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().GetOutputDirectory();
 	std::string relocaliserInputDirectory = nextFrameOutputPath + "Relocaliser/";
 
 	////TODO: add factory for relocaliser and rebuild using config from relocaliserOutputDirectory + "config.txt"
@@ -176,8 +176,8 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::LoadFromFile() {
 	}
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::resetAll() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDynamicEngine<TVoxel, TWarp, TIndex>::resetAll() {
 	denseMapper->ResetCanonicalScene(canonicalScene);
 	denseMapper->ResetLiveScene(liveScene);
 	trackingState->Reset();
@@ -257,9 +257,9 @@ static void QuaternionFromRotationMatrix(const double *matrix, double *q) {
 #endif
 
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 ITMTrackingState::TrackingResult
-ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Image* rgbImage,
+ITMDynamicEngine<TVoxel, TWarp, TIndex>::ProcessFrame(ITMUChar4Image* rgbImage,
                                                                     ITMShortImage* rawDepthImage,
                                                                     ITMIMUMeasurement* imuMeasurement) {
 
@@ -269,7 +269,7 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
 	if ((lastTrackerResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) &&
 	    (relocalisationCount == 0)) {
 		if (framesProcessed > 0) {
-			denseMapper->ProcessFrame(view, trackingState, canonicalScene, liveScene, renderState_live);
+			denseMapper->ProcessFrame(view, trackingState, canonicalScene, liveScene, nullptr, renderState_live);
 		} else {
 			denseMapper->ProcessInitialFrame(view, trackingState, canonicalScene, liveScene, renderState_live);
 		}
@@ -301,13 +301,13 @@ ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::ProcessFrame(ITMUChar4Ima
 	return lastTrackerResult;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-Vector2i ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImageSize(void) const {
+template<typename TVoxel, typename TWarp, typename TIndex>
+Vector2i ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImageSize(void) const {
 	return renderState_live->raycastImage->noDims;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Image* out, GetImageType getImageType,
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetImageType getImageType,
                                                                      ORUtils::SE3Pose* pose,
                                                                      ITMIntrinsics* intrinsics) {
 	auto& settings = ITMLibSettings::Instance();
@@ -448,28 +448,28 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetImage(ITMUChar4Im
 	};
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOnTracking() { trackingActive = true; }
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDynamicEngine<TVoxel, TWarp, TIndex>::turnOnTracking() { trackingActive = true; }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOffTracking() { trackingActive = false; }
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDynamicEngine<TVoxel, TWarp, TIndex>::turnOffTracking() { trackingActive = false; }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOnIntegration() { fusionActive = true; }
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDynamicEngine<TVoxel, TWarp, TIndex>::turnOnIntegration() { fusionActive = true; }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOffIntegration() { fusionActive = false; }
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDynamicEngine<TVoxel, TWarp, TIndex>::turnOffIntegration() { fusionActive = false; }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOnMainProcessing() { mainProcessingActive = true; }
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDynamicEngine<TVoxel, TWarp, TIndex>::turnOnMainProcessing() { mainProcessingActive = true; }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::turnOffMainProcessing() { mainProcessingActive = false; }
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDynamicEngine<TVoxel, TWarp, TIndex>::turnOffMainProcessing() { mainProcessingActive = false; }
 
 // region ==================================== STEP-BY-STEP MODE =======================================================
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrameInStepByStepMode(
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDynamicEngine<TVoxel, TWarp, TIndex>::BeginProcessingFrameInStepByStepMode(
 		ITMUChar4Image* rgbImage,
 		ITMShortImage* rawDepthImage,
 		ITMIMUMeasurement* imuMeasurement) {
@@ -485,12 +485,13 @@ void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrame
 	}
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::UpdateCurrentFrameSingleStep() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMDynamicEngine<TVoxel, TWarp, TIndex>::UpdateCurrentFrameSingleStep() {
 
 	bool trackingNotFinished;
 	if (canFuse) {
-		trackingNotFinished = denseMapper->TakeNextStepInStepByStepMode(canonicalScene, liveScene, renderState_live);
+		trackingNotFinished = denseMapper->TakeNextStepInStepByStepMode(canonicalScene, liveScene, nullptr,
+		                                                                renderState_live);
 		if (trackingNotFinished) {
 			fusionSucceeded = true;
 			if (framesProcessed > 50) trackingInitialised = true;
@@ -512,13 +513,13 @@ bool ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::UpdateCurrentFrameSi
 	return trackingNotFinished;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMTrackingState::TrackingResult ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::GetStepByStepTrackingResult() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+ITMTrackingState::TrackingResult ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetStepByStepTrackingResult() {
 	return this->lastTrackerResult;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMDynamicEngine<TVoxelCanonical, TVoxelLive, TIndex>::BeginProcessingFrame(ITMUChar4Image* rgbImage,
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDynamicEngine<TVoxel, TWarp, TIndex>::BeginProcessingFrame(ITMUChar4Image* rgbImage,
                                                                                  ITMShortImage* rawDepthImage,
                                                                                  ITMIMUMeasurement* imuMeasurement) {
 

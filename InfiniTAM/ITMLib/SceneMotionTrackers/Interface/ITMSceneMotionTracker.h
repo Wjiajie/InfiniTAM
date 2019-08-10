@@ -16,7 +16,7 @@
 #pragma once
 
 //local
-#include "../../Objects/Scene/ITMScene.h"
+#include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.h"
 #include "../../Utils/Visualization/ITMSceneSliceVisualizer2D.h"
 #include "../../Utils/ITMLibSettings.h"
@@ -28,9 +28,14 @@ namespace ITMLib {
 
 
 
-
-//TODO: write documentation block -Greg (Github: Algomorph)
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+//TODO: rename to "ITMSurfaceMotionTracker"
+/**
+ * \brief Class responcible for tracking motion of rigid or dynamic surfaces within the scene
+ * \tparam TVoxel TSDF voxel type
+ * \tparam TWarp Warp vector voxel type
+ * \tparam TIndex Indexing structure type used for voxel volumes
+ */
+template<typename TVoxel, typename TWarp, typename TIndex>
 class ITMSceneMotionTracker {
 
 public:
@@ -54,7 +59,6 @@ public:
 	};
 //============================= CONSTRUCTORS / DESTRUCTORS =============================================================
 //TODO: write documentation block -Greg (Github: Algomorph)
-
 	explicit ITMSceneMotionTracker() :
 			parameters{
 					ITMLibSettings::Instance().sceneTrackingGradientDescentLearningRate,
@@ -78,18 +82,21 @@ public:
 	virtual ~ITMSceneMotionTracker() = default;
 //============================= MEMBER FUNCTIONS =======================================================================
 	virtual void
-	CalculateWarpGradient(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-		                      ITMScene<TVoxelLive, TIndex>* liveScene, int sourceFieldIndex,
-		                      bool restrictZTrackingForDebugging) = 0;
+	CalculateWarpGradient(ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+	                      ITMVoxelVolume<TVoxel, TIndex>* liveScene,
+	                      ITMVoxelVolume<TWarp, TIndex>* warpField,
+	                      bool restrictZTrackingForDebugging) = 0;
 	virtual void SmoothWarpGradient(
-			ITMScene<TVoxelLive, TIndex>* liveScene,
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, int sourceFieldIndex) = 0;
-	virtual float UpdateWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene,
-	                          ITMScene<TVoxelLive, TIndex>* liveScene, int sourceSdfIndex) = 0;
-	virtual void ClearOutFlowWarp(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
+			ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+			ITMVoxelVolume<TVoxel, TIndex>* liveScene,
+			ITMVoxelVolume<TWarp, TIndex>* warpField) = 0;
+	virtual float UpdateWarps(ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+	                          ITMVoxelVolume<TVoxel, TIndex>* liveScene,
+	                          ITMVoxelVolume<TWarp, TIndex>* warpField) = 0;
+	virtual void ClearOutFlowWarp(ITMVoxelVolume<TWarp, TIndex>* warpField) = 0;
 	virtual void AddFlowWarpToWarp(
-			ITMScene<TVoxelCanonical, TIndex>* canonicalScene, bool clearFlowWarp) = 0;
-	virtual void ResetWarps(ITMScene<TVoxelCanonical, TIndex>* canonicalScene) = 0;
+			ITMVoxelVolume<TWarp, TIndex>* warpField, bool clearFlowWarp) = 0;
+	virtual void ResetWarps(ITMVoxelVolume<TWarp, TIndex>* warpField) = 0;
 //============================= MEMBER VARIABLES =======================================================================
 
 	const Parameters parameters;
