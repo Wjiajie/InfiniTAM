@@ -65,25 +65,24 @@ __global__ void fuseSdf2Sdf_device(TVoxel* voxelArrayLive, TVoxel* voxelArrayCan
 	fuseLiveVoxelIntoCanonical(voxelArrayLive[locId], maximumWeight, voxelArrayCanonical[locId]);
 }
 
-template<typename TVoxelMulti>
+template<typename TVoxel>
 __global__ void
-clearIndexedFields_device(TVoxelMulti* voxelArray, const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
-                          int flagFieldIndex) {
+clearFields_device(TVoxel* voxelArray, const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
 
 	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
-	TVoxelMulti& voxel = voxelArray[locId];
-	voxel.flag_values[flagFieldIndex] = ITMLib::VOXEL_UNKNOWN;
-	voxel.sdf_values[flagFieldIndex] = TVoxelMulti::SDF_initialValue();
+	TVoxel& voxel = voxelArray[locId];
+	voxel.flags = ITMLib::VOXEL_UNKNOWN;
+	voxel.sdf = TVoxel::SDF_initialValue();
 }
 
-template<typename TVoxelWarpSource, typename TVoxelSdf, typename TLookupPositionFunctor>
+template<typename TVoxel, typename TWarp, typename TLookupPositionFunctor>
 __global__ void interpolateTriliearlyBetweenIndexedFields(
-		TVoxelSdf* sdfSourceVoxels, TVoxelWarpSource* warpSourceVoxels,
-		const ITMPlainVoxelArray::IndexData* sdfSourceIndexData,
-		int sourceSdfIndex, int targetSdfIndex) {
+		TVoxel* sdfSourceVoxels,
+		TWarp* warpSourceVoxels,
+		const ITMPlainVoxelArray::IndexData* sdfSourceIndexData) {
 
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -91,8 +90,8 @@ __global__ void interpolateTriliearlyBetweenIndexedFields(
 
 	int locId = x + y * sdfSourceIndexData->size.x + z * sdfSourceIndexData->size.x * sdfSourceIndexData->size.y;
 
-	TVoxelSdf& destinationVoxel = sdfSourceVoxels[locId];
-	TVoxelWarpSource& warpSourceVoxel = warpSourceVoxels[locId];
+	TVoxel& destinationVoxel = sdfSourceVoxels[locId];
+	TWarp& warpSourceVoxel = warpSourceVoxels[locId];
 	ITMPlainVoxelArray::IndexCache sdfSourceCache;
 
 	Vector3i warpAndDestinationVoxelPosition;
@@ -101,21 +100,22 @@ __global__ void interpolateTriliearlyBetweenIndexedFields(
 	warpAndDestinationVoxelPosition.y = y + sdfSourceIndexData->offset.y;
 	warpAndDestinationVoxelPosition.z = z + sdfSourceIndexData->offset.z;
 
-	interpolateTSDFVolume<TVoxelWarpSource, TVoxelSdf, ITMPlainVoxelArray, TLookupPositionFunctor>(
+	interpolateTSDFVolume<TWarp, TVoxel, ITMPlainVoxelArray, TLookupPositionFunctor>(
 			sdfSourceVoxels, sdfSourceIndexData, sdfSourceCache, warpSourceVoxel, destinationVoxel,
 			warpAndDestinationVoxelPosition, false);
 }
 
 template<typename TVoxelMulti>
 __global__ void
-copyIndexedFields_device(TVoxelMulti* voxelArray, const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
-                         int sourceIndex, int destinationIndex) {
+copyIndexedFields_device(TVoxelMulti* sourceVoxels,
+                         TVoxelMulti* targetVoxels,
+                         const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
 
 	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
-	TVoxelMulti& voxel = voxelArray[locId];
+	TVoxelMulti& voxel = sourceVoxels[locId];
 	voxel.sdf_values[destinationIndex] = voxel.sdf_values[sourceIndex];
 	voxel.flag_values[destinationIndex] = voxel.flag_values[sourceIndex];
 
@@ -167,8 +167,8 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
 
-	TVoxelLive* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
-	TVoxelCanonical* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
+	TVoxel* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
+	TVoxel* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
 	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = canonicalScene->index.getIndexData();
 
 	dim3 cudaBlockSize(8, 8, 8);
@@ -176,30 +176,31 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 	              canonicalScene->index.getVolumeSize().y / cudaBlockSize.y,
 	              canonicalScene->index.getVolumeSize().z / cudaBlockSize.z);
 
-	clearIndexedFields_device<TVoxelLive> << < gridSize, cudaBlockSize >> >
-	                                                     (liveVoxels, arrayInfo, targetSdfIndex);
+	clearFields_device < TVoxel > << < gridSize, cudaBlockSize >> >
+	                                              (liveVoxels, arrayInfo);
 	ORcudaKernelCheck;
-	interpolateTriliearlyBetweenIndexedFields<TVoxel, TWarp, WarpVoxelStaticFunctor<TVoxelCanonical, TWarpType>>
-	<< < gridSize, cudaBlockSize >> >
-	(liveVoxels, canonicalVoxels, arrayInfo, sourceSdfIndex, targetSdfIndex);
+	interpolateTriliearlyBetweenIndexedFields<TVoxel, TWarp, WarpVoxelStaticFunctor<TWarp, TWarpType>>
+	<< < gridSize, cudaBlockSize >> > (liveVoxels, warpField, arrayInfo);
 	ORcudaKernelCheck;
 
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::CopyIndexedScene(
-		ITMVoxelVolume<TVoxelLive, ITMPlainVoxelArray>* liveScene, int sourceSdfIndex, int targetSdfIndex) {
+void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::CopyScene(
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {
 
-	TVoxelLive* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = liveScene->index.getIndexData();
+	TVoxel* sourceVoxels = sourceTSDF->localVBA.GetVoxelBlocks();
+	TVoxel* targetVoxels = targetTSDF->localVBA.GetVoxelBlocks();
+	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = sourceTSDF->index.getIndexData();
 
 	dim3 cudaBlockSize(8, 8, 8);
-	dim3 gridSize(liveScene->index.getVolumeSize().x / cudaBlockSize.x,
-	              liveScene->index.getVolumeSize().y / cudaBlockSize.y,
-	              liveScene->index.getVolumeSize().z / cudaBlockSize.z);
+	dim3 gridSize(sourceTSDF->index.getVolumeSize().x / cudaBlockSize.x,
+	              sourceTSDF->index.getVolumeSize().y / cudaBlockSize.y,
+	              sourceTSDF->index.getVolumeSize().z / cudaBlockSize.z);
 
 	copyIndexedFields_device<TVoxelLive> << < gridSize, cudaBlockSize >> >
-	                                                    (liveVoxels, arrayInfo, sourceSdfIndex, targetSdfIndex);
+	                                                    (sourceVoxels, targetVoxels, arrayInfo);
 	ORcudaKernelCheck;
 
 }
@@ -207,7 +208,7 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 
 template<typename TVoxel, typename TWarp>
 void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateIntoScene(
-		ITMVoxelVolume<TVoxelLive, ITMPlainVoxelArray>* scene, const ITMView* view, const ITMTrackingState* trackingState,
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState) {
 	Vector2i rgbImgSize = view->rgb->noDims;
 	Vector2i depthImgSize = view->depth->noDims;
@@ -217,7 +218,7 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 	Vector4f projParams_d, projParams_rgb;
 
 	M_d = trackingState->pose_d->GetM();
-	if (TVoxelLive::hasColorInformation) M_rgb = view->calib.trafo_rgb_to_depth.calib_inv * M_d;
+	if (TVoxel::hasColorInformation) M_rgb = view->calib.trafo_rgb_to_depth.calib_inv * M_d;
 
 	projParams_d = view->calib.intrinsics_d.projectionParamsSimple.all;
 	projParams_rgb = view->calib.intrinsics_rgb.projectionParamsSimple.all;
@@ -228,7 +229,7 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 	float* depth = view->depth->GetData(MEMORYDEVICE_CUDA);
 	float* confidence = view->depthConfidence->GetData(MEMORYDEVICE_CUDA);
 	Vector4u* rgb = view->rgb->GetData(MEMORYDEVICE_CUDA);
-	TVoxelLive* localVBA = scene->localVBA.GetVoxelBlocks();
+	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
 	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.getIndexData();
 
 	dim3 cudaBlockSize(8, 8, 8);
@@ -248,7 +249,7 @@ ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::War
 		ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* sourceTSDF,
 		ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* targetTSDF,
 		ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField) {
-	this->template WarpScene<WARP_CUMULATIVE>(canonicalScene, liveScene, warpField);
+	this->template WarpScene<WARP_CUMULATIVE>(sourceTSDF, targetTSDF, warpField);
 }
 
 template<typename TVoxel, typename TWarp>
@@ -256,7 +257,7 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 		ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* sourceTSDF,
 		ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* targetTSDF,
 		ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField) {
-	this->template WarpScene<WARP_FLOW>(canonicalScene, liveScene, warpField);
+	this->template WarpScene<WARP_FLOW>(sourceTSDF, targetTSDF, warpField);
 }
 
 template<typename TVoxel, typename TWarp>
@@ -264,5 +265,5 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 		ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* sourceTSDF,
 		ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* targetTSDF,
 		ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField) {
-	this->template WarpScene<WARP_UPDATE>(canonicalScene, liveScene, warpField);
+	this->template WarpScene<WARP_UPDATE>(sourceTSDF, targetTSDF, warpField);
 }
