@@ -1,6 +1,6 @@
 # InfiniTAM-Based Experiment With Dynamic-scene Reconstruction
 
-This project started out about two years ago with a graduate student (myself) trying to replicate the results of the KillingFusion (Slavcheva et al., CVPR2017) and, later, the SobolevFusion (Slavcheva et al., CVPR2018) algorithms, without any access to the source code and little guidance from the original authors. It does not currently fully replicate the results, i.e. there is significant drift on the "Snoopy" depth video sequence originally used by the Killing/SobolevFusion authors, as the below figure demonstrates.
+This project started out about two years ago with a graduate student (me) trying to replicate the results of the KillingFusion (Slavcheva et al., CVPR2017) and, later, the SobolevFusion (Slavcheva et al., CVPR2018) algorithms, without any access to the source code and little guidance from the original authors. It does not currently fully replicate the results, i.e. there is significant drift on the "Snoopy" depth video sequence originally used by the Killing/SobolevFusion authors, as the below figure demonstrates.
 
 The image on the left shows the reconstruction result in the canonical pose for frames 15-65 of the Snoopy sequence. The image on the right shows the continued reconstruction after frame 135, with the noise resulting from drift highlighted.
 ![Figure showing the result before drift on the left and with significant drift on the right](https://i.ibb.co/x2gj8Q0/snoopy.png)
