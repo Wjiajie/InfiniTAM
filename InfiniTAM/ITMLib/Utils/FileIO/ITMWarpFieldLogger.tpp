@@ -183,7 +183,7 @@ std::string ITMWarpFieldLogger<TVoxel, TIndex>::GenerateSliceWarpFilename(const 
  */
 template<typename TVoxel, typename TIndex>
 ITMWarpFieldLogger<TVoxel, TIndex>::ITMWarpFieldLogger(ITMVoxelVolume<TVoxel, TIndex>* scene, boost::filesystem::path path):
-		scene(scene),
+		warpField(scene),
 		path(""),
 		isSlice(false),
 		bounds(0),
@@ -204,7 +204,7 @@ ITMWarpFieldLogger<TVoxel, TIndex>::ITMWarpFieldLogger(ITMVoxelVolume<TVoxel, TI
  */
 template<typename TVoxel, typename TIndex>
 ITMWarpFieldLogger<TVoxel, TIndex>::ITMWarpFieldLogger(const Vector6i& bounds, boost::filesystem::path fullScenePath):
-		scene(nullptr),
+		warpField(nullptr),
 		path(""),
 		isSlice(true),
 		bounds(bounds),
@@ -214,9 +214,9 @@ ITMWarpFieldLogger<TVoxel, TIndex>::ITMWarpFieldLogger(const Vector6i& bounds, b
 	ITMLibSettings& settings = ITMLibSettings::Instance();
 	MemoryDeviceType memoryType =
 			settings.deviceType == ITMLibSettings::DEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
-	this->scene = new ITMVoxelVolume<TVoxel, TIndex>(&settings.sceneParams,
+	this->warpField = new ITMVoxelVolume<TVoxel, TIndex>(&settings.sceneParams,
 	                                           settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                 memoryType);
+	                                                     memoryType);
 
 	SetPath(fullScenePath);
 }
@@ -224,7 +224,7 @@ ITMWarpFieldLogger<TVoxel, TIndex>::ITMWarpFieldLogger(const Vector6i& bounds, b
 template<typename TVoxel, typename TIndex>
 ITMWarpFieldLogger<TVoxel, TIndex>::~ITMWarpFieldLogger() {
 	if (isSlice) {
-		delete scene;
+		delete warpField;
 	}
 }
 
@@ -252,7 +252,7 @@ bool ITMWarpFieldLogger<TVoxel, TIndex>::SetIterationCursor(unsigned int iterati
 
 template<typename TVoxel, typename TIndex>
 bool ITMWarpFieldLogger<TVoxel, TIndex>::Empty() const {
-	return scene == nullptr;
+	return warpField == nullptr;
 }
 
 template<typename TVoxel, typename TIndex>
@@ -270,34 +270,34 @@ std::string ITMWarpFieldLogger<TVoxel, TIndex>::GetSliceIdentifier() const {
 
 template<typename TVoxel, typename TIndex>
 const ITMVoxelVolume<TVoxel, TIndex>* ITMWarpFieldLogger<TVoxel, TIndex>::GetScene() const {
-	return this->scene;
+	return this->warpField;
 }
 // endregion
 // region ======================================== LOAD / SAVE SCENE ===================================================
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpFieldLogger<TVoxel, TIndex>::Load() {
-	scene->LoadFromDirectory(scenePath.string());
-	voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(scene);
+	warpField->LoadFromDirectory(scenePath.string());
+	voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(warpField);
 }
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpFieldLogger<TVoxel, TIndex>::Save() {
-	scene->SaveToDirectory(scenePath.string());
-	this->voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(scene);
+	warpField->SaveToDirectory(scenePath.string());
+	this->voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(warpField);
 }
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpFieldLogger<TVoxel, TIndex>::SaveCompact() {
-	ITMSceneFileIOEngine<TVoxel,TIndex>::SaveToDirectoryCompact(scene,scenePath.string());
-	this->voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(scene);
+	ITMSceneFileIOEngine<TVoxel,TIndex>::SaveToDirectoryCompact(warpField, scenePath.string());
+	this->voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(warpField);
 }
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpFieldLogger<TVoxel, TIndex>::LoadCompact() {
-	ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ResetScene(scene);
-	ITMSceneFileIOEngine<TVoxel,TIndex>::LoadFromDirectoryCompact(scene,scenePath.string());
-	this->voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(scene);
+	ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ResetScene(warpField);
+	ITMSceneFileIOEngine<TVoxel,TIndex>::LoadFromDirectoryCompact(warpField, scenePath.string());
+	this->voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(warpField);
 }
 //endregion
 // region ======================================== LOAD / SAVE HIGHLIGHTS ==============================================
@@ -431,7 +431,7 @@ bool ITMWarpFieldLogger<TVoxel, TIndex>::SaveCurrentWarpState() {
 	warpOFStream.write(reinterpret_cast<const char* >(&this->iterationCursor), sizeof(iterationCursor));
 	WarpAndUpdateWriteFunctor<TVoxel>
 			warpAndUpdateWriteFunctor(&this->warpOFStream, this->warpByteSize, this->updateByteSize);
-	ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(scene, warpAndUpdateWriteFunctor);
+	ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(warpField, warpAndUpdateWriteFunctor);
 	std::cout << "Written warp updates for iteration " << iterationCursor << " to disk." << std::endl;
 	iterationCursor++;
 	return true;
@@ -528,7 +528,7 @@ bool ITMWarpFieldLogger<TVoxel, TIndex>::LoadCurrentWarpState() {
 
 	WarpAndUpdateReadFunctor<TVoxel>
 			warpAndUpdateReadFunctor(&this->warpIFStream, this->warpByteSize, this->updateByteSize);
-	ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(scene, warpAndUpdateReadFunctor);
+	ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(warpField, warpAndUpdateReadFunctor);
 	return true;
 }
 
@@ -547,7 +547,7 @@ bool ITMWarpFieldLogger<TVoxel, TIndex>::LoadPreviousWarpState() {
 	}
 	WarpAndUpdateReadFunctor<TVoxel>
 			warpAndUpdateReadFunctor(&this->warpIFStream, this->warpByteSize, this->updateByteSize);
-	ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(scene, warpAndUpdateReadFunctor);
+	ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(warpField, warpAndUpdateReadFunctor);
 	return true;
 }
 

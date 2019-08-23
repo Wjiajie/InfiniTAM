@@ -23,7 +23,7 @@ namespace fs = boost::filesystem;
 
 namespace ITMLib{
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 class ITMSceneLogger;
 
 /**
@@ -36,7 +36,7 @@ class ITMSceneLogger;
  */
 template<typename TWarp, typename TIndex>
 class ITMWarpFieldLogger{
-	template<typename TVoxelCanonical, typename TVoxelLive, typename TIndexLogger>
+	template<typename TVoxelLogger, typename TWarpLogger, typename TIndexLogger>
 	friend class ITMSceneLogger;
 public:
 	// region ================================ STATIC CONSTANTS ========================================================
@@ -143,7 +143,7 @@ private:
 	fs::path highlightsTextPath;
 
 	// data structures
-	ITMVoxelVolume<TWarp, TIndex>* scene;
+	ITMVoxelVolume<TWarp, TIndex>* warpField;
 	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
 	int minHighlightRecurrenceCount = 0;
 

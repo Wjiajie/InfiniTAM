@@ -33,7 +33,7 @@ set(ITMLIB_TOPLEVEL_CPU_SOURCES
     Instantiations/VoxelBlockHash/SceneManipulationCPUInstantiations.cpp
     Instantiations/VoxelBlockHash/DynamicFusionCPUInstantiations.cpp
     Instantiations/VoxelBlockHash/DynamicFusionLoggerInstantiation.cpp
-    Instantiations/VoxelBlockHash/DynamicSceneReconstructionEngineCUDAInstantiations.cpp
+	Instantiations/VoxelBlockHash/DynamicSceneReconstructionEngineCPUInstantiations.cpp
     Instantiations/VoxelBlockHash/DenseDynamicMapperInstantiation.cpp
     Instantiations/VoxelBlockHash/DynamicHashManagementEngineCPUInstantiation.cpp
     Instantiations/VoxelBlockHash/SceneMotionTrackerCPUInstantiation.cpp
@@ -163,7 +163,8 @@ set(ITMLIB_ENGINES_MANIPULATION_CUDA_SOURCES
 
 set(ITMLIB_ENGINES_MANIPULATION_CUDA_HEADERS
     Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h
-    Engines/Manipulation/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h
+	Engines/Manipulation/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h
+	Engines/Manipulation/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h
     )
 
 #====================================== MESHING ENGINES ================================================================
@@ -572,7 +573,6 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_HEADERS
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_SOURCES
     SceneMotionTrackers/CPU/ITMWarpGradientCommon.h
-    SceneMotionTrackers/Shared/ITMCalculateWarpGradientBasedOnRawLiveFunctor_UNUSED.h
     SceneMotionTrackers/Shared/ITMCalculateWarpGradientBasedOnWarpedLiveFunctor.h
     SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.tpp
     SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.tpp
@@ -645,10 +645,10 @@ set(ITMLIB_UTILS_HEADERS
 ##
 
 set(ITMLIB_UTILS_FILEIO_SOURCES
-    Utils/FileIO/ITMSceneLogger.tpp
-    Utils/FileIO/ITMDynamicFusionLogger.tpp
-    Utils/FileIO/ITMSceneLogger_SceneSlice.tpp
-    Utils/FileIO/ITMWarpSceneLogger.tpp)
+	Utils/FileIO/ITMSceneLogger.tpp
+	Utils/FileIO/ITMDynamicFusionLogger.tpp
+	Utils/FileIO/ITMSceneLogger_SceneSlice.tpp
+	Utils/FileIO/ITMWarpFieldLogger.tpp)
 
 set (ITMLIB_UTILS_FILEIO_HEADERS
      Utils/FileIO/ITMSceneLogger.h

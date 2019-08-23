@@ -29,7 +29,7 @@
 #include "../../Utils/Analytics/ITMNeighborVoxelIterationInfo.h"
 #include "../../Utils/Visualization/ITMSceneSliceVisualizer2D.tpp"
 #include "../../Utils/Visualization/ITMSceneSliceVisualizer1D.tpp"
-#include "../../Utils/FileIO/ITMWarpSceneLogger.tpp"
+#include "../../Utils/FileIO/ITMWarpFieldLogger.tpp"
 #include "../../Utils/FileIO/ITMSceneLogger.tpp"
 #include "../../Utils/Collections/ITM3DNestedMapOfArrays.tpp"
 #include "../../Utils/Collections/ITM3DNestedMap.tpp"
@@ -37,18 +37,18 @@
 
 
 template class ITMSwappingEngine_CPU<ITMVoxel, ITMVoxelBlockHash>;
-template class ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>;
+template class ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>;
 template class ITMSceneFileIOEngine<ITMVoxel,ITMVoxelBlockHash>;
 template class ITMVisualisationEngine_CPU<ITMVoxel, ITMVoxelBlockHash>;
 template class ITMMeshingEngine_CPU<ITMVoxel, ITMVoxelBlockHash>;
 template class ITMWarpFieldLogger<ITMWarp, ITMVoxelBlockHash>;
-template class ITMSceneLogger<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>;
+template class ITMSceneLogger<ITMVoxel, ITMWarp, ITMVoxelBlockHash>;
 
 //TODO: Cleanup -Greg (GitHub: Algomorph)
 //dynamic fusion utility classes
-template class ITMSceneSliceVisualizer2D<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>;
+template class ITMSceneSliceVisualizer2D<ITMVoxel, ITMWarp, ITMVoxelBlockHash>;
 
-template class ITMSceneStatisticsCalculator<ITMVoxel,ITMVoxelBlockHash>;;
+template class ITMSceneStatisticsCalculator<ITMVoxel, ITMVoxelBlockHash>;;
 template class ITM3DNestedMap<int>;
 template class ITM3DNestedMap<std::tuple<int,int>>;
 template class ITM3DNestedMapOfArrays<int>;

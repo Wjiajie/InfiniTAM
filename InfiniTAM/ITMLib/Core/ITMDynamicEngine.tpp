@@ -28,23 +28,23 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 
 	MemoryDeviceType memoryType = settings.GetMemoryType();
-	this->canonicalScene = new ITMVoxelVolume<TVoxelCanonical, TIndex>(
+	this->canonicalScene = new ITMVoxelVolume<TVoxel, TIndex>(
 			&settings.sceneParams, settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 
-	this->liveScene = new ITMVoxelVolume<TVoxelLive, TIndex>(
+	this->liveScene = new ITMVoxelVolume<TVoxel, TIndex>(
 			&settings.sceneParams, settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 	const ITMLibSettings::DeviceType deviceType = settings.deviceType;
-	ITMDynamicFusionLogger<TVoxelCanonical,TVoxelLive,TIndex>::Instance().SetScenes(canonicalScene,liveScene, warpField);
+	ITMDynamicFusionLogger<TVoxel,TWarp,TIndex>::Instance().SetScenes(canonicalScene, liveScene, warpField);
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
-	liveVisualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxelLive, TIndex>(deviceType);
-	canonicalVisualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxelCanonical, TIndex>(
-			deviceType);
+	liveVisualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxel, TIndex>(deviceType);
+	canonicalVisualisationEngine =
+			ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxel, TIndex>(deviceType);
 
 	meshingEngine = nullptr;
 	if (settings.createMeshingEngine)
-		meshingEngine = ITMMeshingEngineFactory::MakeMeshingEngine<TVoxelCanonical, TIndex>(deviceType);
+		meshingEngine = ITMMeshingEngineFactory::MakeMeshingEngine<TVoxel, TIndex>(deviceType);
 
 	denseMapper = new ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>();
 	denseMapper->ResetCanonicalScene(canonicalScene);
@@ -125,8 +125,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::SaveToFile() {
 	std::string nextFrameOutputPath = ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().GetOutputDirectory();
 	// throws error if any of the saves fail
 	if (relocaliser) relocaliser->SaveToDirectory(nextFrameOutputPath + "/Relocaliser/");
-	ITMSceneFileIOEngine<TVoxelCanonical,TIndex>::SaveToDirectoryCompact(canonicalScene,nextFrameOutputPath + "/canonical");
-	ITMSceneFileIOEngine<TVoxelLive,TIndex>::SaveToDirectoryCompact(liveScene,nextFrameOutputPath + "/live");
+	ITMSceneFileIOEngine<TVoxel,TIndex>::SaveToDirectoryCompact(canonicalScene,nextFrameOutputPath + "/canonical");
+	ITMSceneFileIOEngine<TVoxel,TIndex>::SaveToDirectoryCompact(liveScene,nextFrameOutputPath + "/live");
 	std::cout << "Saving scenes in a compact way to '" << nextFrameOutputPath << "'." << std::endl;
 }
 
@@ -164,8 +164,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::LoadFromFile() {
 	try // load scene
 	{
 		std::cout << "Loading scenes from '" << nextFrameOutputPath << "'." << std::endl;
-		ITMSceneFileIOEngine<TVoxelCanonical,TIndex>::LoadFromDirectoryCompact(canonicalScene,nextFrameOutputPath + "/canonical");
-		ITMSceneFileIOEngine<TVoxelLive,TIndex>::LoadFromDirectoryCompact(liveScene,nextFrameOutputPath + "/live");
+		ITMSceneFileIOEngine<TVoxel,TIndex>::LoadFromDirectoryCompact(canonicalScene,nextFrameOutputPath + "/canonical");
+		ITMSceneFileIOEngine<TVoxel,TIndex>::LoadFromDirectoryCompact(liveScene,nextFrameOutputPath + "/live");
 		if(framesProcessed == 0){
 			framesProcessed = 1; //to skip initialization
 		}
@@ -325,7 +325,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 		case ITMDynamicEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH:
 			out->ChangeDims(view->depth->noDims);
 			if (settings.deviceType == ITMLibSettings::DEVICE_CUDA) view->depth->UpdateHostFromDevice();
-			ITMVisualisationEngine<TVoxelCanonical, TIndex>::DepthToUchar4(out, view->depth);
+			ITMVisualisationEngine<TVoxel, TIndex>::DepthToUchar4(out, view->depth);
 			break;
 		case ITMDynamicEngine::InfiniTAM_IMAGE_SCENERAYCAST:
 		case ITMDynamicEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME:
@@ -480,7 +480,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::BeginProcessingFrameInStepByStepMo
 	if ((lastTrackerResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) &&
 	    (relocalisationCount == 0)) {
 		canFuse = true;
-		denseMapper->BeginProcessingFrameInStepByStepMode(view, trackingState, canonicalScene, liveScene,
+		denseMapper->BeginProcessingFrameInStepByStepMode(view, trackingState, warpField, liveScene,
 		                                                  renderState_live);
 	}
 }

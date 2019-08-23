@@ -19,6 +19,6 @@
 
 namespace ITMLib{
 
-template class ITMSceneMotionTracker_CUDA<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>;
+template class ITMSceneMotionTracker_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash>;
 
 }

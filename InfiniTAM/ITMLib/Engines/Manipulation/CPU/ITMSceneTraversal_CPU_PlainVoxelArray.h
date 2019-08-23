@@ -308,7 +308,39 @@ public:
 			TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
 			TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
 			functor(primaryVoxel, secondaryVoxel, voxelPosition);
+		}
+	}
 
+	template<typename TFunctor>
+	inline static void
+	DualVoxelPositionTraversalWithinBounds(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
+			TFunctor& functor, Vector6i bounds) {
+
+		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+// *** traversal vars
+		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		//asserted to be the same
+		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
+		                 primaryScene->index.getVolumeSize().z;
+		const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.getIndexData();
+		int vmIndex;
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int z = bounds.min_z; z < bounds.max_z; z++) {
+			for (int y = bounds.min_y; y < bounds.max_y; y++) {
+				for (int x = bounds.min_x; x < bounds.max_x; x++) {
+					Vector3i position(x, y, z);
+					int linearIndex = findVoxel(indexData, Vector3i(x, y, z), vmIndex);
+					Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(indexData, linearIndex);
+					TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
+					TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
+					functor(primaryVoxel, secondaryVoxel, voxelPosition);
+				}
+			}
 		}
 	}
 
@@ -415,7 +447,8 @@ public:
 			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 			TFunctor& functor) {
 
-		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize() &&
+		       primaryScene->index.getVolumeSize() == warpField->index.getVolumeSize());
 // *** traversal vars
 		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();

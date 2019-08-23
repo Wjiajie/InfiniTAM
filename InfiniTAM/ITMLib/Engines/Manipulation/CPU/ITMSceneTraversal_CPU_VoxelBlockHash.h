@@ -742,7 +742,7 @@ public:
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 
-		TVoxel* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
 
 		int noTotalEntries = warpField->index.noTotalEntries;
@@ -818,7 +818,7 @@ public:
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 
-		TVoxel* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
 
 		int noTotalEntries = warpField->index.noTotalEntries;
@@ -896,7 +896,7 @@ public:
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 
-		TVoxel* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
 
 		int noTotalEntries = warpField->index.noTotalEntries;
@@ -975,7 +975,7 @@ public:
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 
-		TVoxel* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
 
 		int noTotalEntries = warpField->index.noTotalEntries;
@@ -1050,7 +1050,7 @@ public:
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 
-		TVoxel* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
 
 		int noTotalEntries = warpField->index.noTotalEntries;

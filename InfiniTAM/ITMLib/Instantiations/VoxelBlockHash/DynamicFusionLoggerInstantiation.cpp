@@ -17,4 +17,4 @@
 #include "../../ITMLibDefines.h"
 #include "../../Utils/FileIO/ITMDynamicFusionLogger.tpp"
 
-template class ITMDynamicFusionLogger<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>;
+template class ITMDynamicFusionLogger<ITMVoxel, ITMWarp, ITMVoxelBlockHash>;

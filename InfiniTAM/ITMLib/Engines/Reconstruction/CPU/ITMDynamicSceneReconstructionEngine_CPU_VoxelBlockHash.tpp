@@ -2,14 +2,10 @@
 
 #include <cfloat>
 #include "ITMDynamicSceneReconstructionEngine_CPU.h"
-#include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "../../../Objects/RenderStates/ITMRenderState_VH.h"
-#include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "../../Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
-#include "../../../Objects/Scene/ITMTrilinearInterpolation.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
+#include "../../Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Functors.h"
-#include "../../Common/ITMCommonFunctors.h"
+#include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 
 using namespace ITMLib;
 
@@ -149,7 +145,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
 
 	// Clear out the flags at target index
-	FieldClearFunctor<TVoxel> flagClearFunctor();
+	FieldClearFunctor<TVoxel> flagClearFunctor;
 	ITMSceneTraversalEngine<TVoxel, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::VoxelTraversal(targetTSDF,
 	                                                                                                   flagClearFunctor);
 
@@ -175,7 +171,7 @@ template<typename TVoxel, typename TWarp>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::CopyScene(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
-	ITMDualSceneTraversalEngine<TVoxel, TVoxel, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
+	ITMDualSceneTraversalEngine<TVoxel, TVoxel, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
 	        template StaticDualVoxelPositionTraversal<CopySceneFunctor<TVoxel>>(sourceTSDF, targetTSDF);
 
 }
@@ -185,7 +181,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
-	this->template WarpScene<WARP_CUMULATIVE>(sourceTSDF, targetTSDF, warpField);
+	this->template WarpScene<WARP_CUMULATIVE>(warpField, sourceTSDF, targetTSDF);
 }
 
 template<typename TVoxel, typename TWarp>
@@ -193,7 +189,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
-	this->template WarpScene<WARP_FLOW>(sourceTSDF, targetTSDF, warpField);
+	this->template WarpScene<WARP_FLOW>(warpField, sourceTSDF, targetTSDF);
 }
 
 template<typename TVoxel, typename TWarp>
@@ -201,7 +197,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
-	this->template WarpScene<WARP_UPDATE>(sourceTSDF, targetTSDF, warpField);
+	this->template WarpScene<WARP_UPDATE>(warpField, sourceTSDF, targetTSDF);
 }
 
 // endregion ===========================================================================================================

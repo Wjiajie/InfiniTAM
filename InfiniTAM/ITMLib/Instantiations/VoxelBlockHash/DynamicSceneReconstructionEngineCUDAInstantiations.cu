@@ -17,4 +17,4 @@
 #include "../../ITMLibDefines.h"
 
 
-template class ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>;
+template class ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash>;

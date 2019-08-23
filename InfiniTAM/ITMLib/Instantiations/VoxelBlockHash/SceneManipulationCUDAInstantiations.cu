@@ -25,3 +25,4 @@ using namespace ITMLib;
 //scene manipulation functions
 
 template class ITMSceneManipulationEngine_CUDA<ITMVoxel,ITMVoxelBlockHash>;
+template class ITMSceneManipulationEngine_CUDA<ITMWarp,ITMVoxelBlockHash>;

@@ -44,7 +44,7 @@ private:
 };
 
 
-template<typename TWarp, typename TVoxel, typename TIndex, typename TLookupPositionFunctor>
+template<typename TVoxel, typename TWarp, typename TIndex, typename TLookupPositionFunctor>
 struct TrilinearInterpolationFunctor {
 	/**
 	 * \brief Initialize to transfer data from source sdf scene to a target sdf scene using the warps in the warp source scene
@@ -75,7 +75,7 @@ struct TrilinearInterpolationFunctor {
 
 		bool printResult = hasFocusCoordinates && warpAndDestinationVoxelPosition == focusCoordinates;
 
-		interpolateTSDFVolume<TWarp, TVoxel, TIndex, TLookupPositionFunctor>(
+		interpolateTSDFVolume<TVoxel, TWarp, TIndex, TLookupPositionFunctor>(
 				sdfSourceVoxels, sdfSourceIndexData, sdfSourceCache, warp, destinationVoxel,
 				warpAndDestinationVoxelPosition, printResult);
 	}

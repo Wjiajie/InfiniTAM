@@ -56,7 +56,7 @@ public:
 			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
 			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) override;
-	void ResetWarps(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene) override;
+	void ResetWarps(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) override;
 
 
 private:
@@ -69,6 +69,9 @@ private:
 
 // endregion ===========================================================================================================
 //region ======================================== PLAIN VOXEL ARRAY ====================================================
+
+//TODO: reorder argument lists in both classes for consistency with reconstruction engine: warp field should come first,
+//  canonical (as the "target") should come last
 
 template<typename TVoxel, typename TWarp>
 class ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray> :

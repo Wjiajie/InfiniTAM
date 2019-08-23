@@ -152,9 +152,8 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessInitialFrame(
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::InitializeProcessing(
-		const ITMView* view, const ITMTrackingState* trackingState, ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
-		ITMVoxelVolume<TVoxel, TIndex>* liveScenePair,
-		ITMRenderState* renderState) {
+		const ITMView* view, const ITMTrackingState* trackingState, ITMVoxelVolume<TWarp, TIndex>* warpField,
+		ITMVoxelVolume<TVoxel, TIndex>* liveScenePair, ITMRenderState* renderState) {
 
 
 	PrintOperationStatus("Generating raw live frame from view...");
@@ -164,13 +163,14 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::InitializeProcessing(
 
 
 	PrintOperationStatus(
-			"Initializing live frame SDF by mapping from raw live SDF to warped SDF based on previous-frame warp...");
+			"Initializing live frame SDF by mapping from raw "
+			"live SDF to warped SDF based on previous-frame warp...");
 	bench::StartTimer("TrackMotion_35_Initialize");
 	//sceneReconstructor->WarpScene(canonicalScene, liveScene, 0, 1);
 	sceneReconstructor->CopyScene(&liveScenePair[0], &liveScenePair[1]);
 	//sceneReconstructor->UpdateWarpedScene(canonicalScene, liveScene, 0, 1);
 
-	sceneMotionTracker->ClearOutFlowWarp(canonicalScene);
+	sceneMotionTracker->ClearOutFlowWarp(warpField);
 	bench::StopTimer("TrackMotion_35_Initialize");
 
 	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().InitializeFrameRecording();
@@ -208,7 +208,7 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessFrame(const ITMView* view, 
 	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Cannot track motion for full frame when in step-by-step mode");
 	}
-	InitializeProcessing(view, trackingState, canonicalScene, liveScenePair, renderState);
+	InitializeProcessing(view, trackingState, warpField, liveScenePair, renderState);
 	bench::StartTimer("TrackMotion");
 	TrackFrameMotion(canonicalScene, liveScenePair, warpField);
 	bench::StopTimer("TrackMotion");
@@ -247,9 +247,9 @@ ITMVoxelVolume<TVoxel, TIndex>* ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::Tr
 	int targetLiveSceneIndex;
 	for (int iteration = 0; SceneMotionOptimizationConditionNotReached(); iteration++) {
 		sourceLiveSceneIndex = iteration % 2;
-		targetLiveSceneIndex = (iteration + 1) %2;
+		targetLiveSceneIndex = (iteration + 1) % 2;
 		PerformSingleOptimizationStep(canonicalScene, &liveScenePair[sourceLiveSceneIndex],
-				&liveScenePair[targetLiveSceneIndex], warpField, iteration);
+		                              &liveScenePair[targetLiveSceneIndex], warpField, iteration);
 	}
 	bench::StopTimer("TrackMotion_3_Optimization");
 	PrintOperationStatus("*** Warp optimization finished for current frame. ***");
@@ -328,13 +328,13 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessSwapping(
 template<typename TVoxel, typename TWarp, typename TIndex>
 void
 ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::BeginProcessingFrameInStepByStepMode(
-		const ITMView* view, const ITMTrackingState* trackingState, ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+		const ITMView* view, const ITMTrackingState* trackingState, ITMVoxelVolume<TWarp, TIndex>* warpField,
 		ITMVoxelVolume<TVoxel, TIndex>* liveScene, ITMRenderState* renderState) {
 	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Already in step-by-step tracking mode, cannot restart.");
 	}
 	inStepByStepProcessingMode = true;
-	InitializeProcessing(view, trackingState, canonicalScene, liveScene, renderState);
+	InitializeProcessing(view, trackingState, warpField, liveScene, renderState);
 	iteration = 0;
 }
 
@@ -351,7 +351,7 @@ bool ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::TakeNextStepInStepByStepMode(
 		int sourceLiveSceneIndex = iteration % 2;
 		int targetLiveSceneIndex = (iteration + 1) % 2;
 		PerformSingleOptimizationStep(canonicalScene, &liveScenePair[sourceLiveSceneIndex],
-				&liveScenePair[targetLiveSceneIndex], warpField, iteration);
+		                              &liveScenePair[targetLiveSceneIndex], warpField, iteration);
 		iteration++;
 		return true;
 	} else {

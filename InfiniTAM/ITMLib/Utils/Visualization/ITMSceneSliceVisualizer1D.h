@@ -38,10 +38,10 @@ public:
 
 	template<typename TVoxel, typename TIndex>
 	void Plot1DSceneSlice(ITMVoxelVolume <TVoxel, TIndex>* scene, Vector4i color, double width);
-	template<typename TVoxel, typename TIndex>
-	void Draw1DWarpUpdateVector(ITMVoxelVolume <TVoxel, TIndex>* scene, Vector4i color);
-	template<typename TVoxel, typename TIndex>
-	void Plot1DIndexedSceneSlice(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector4i color, double width, int fieldIndex);
+	template<typename TVoxel, typename TWarp, typename TIndex>
+	void Draw1DWarpUpdateVector(
+			ITMVoxelVolume <TVoxel, TIndex>* TSDF,
+			ITMVoxelVolume<TWarp, TIndex>* warp, Vector4i color);
 	void SaveScreenshot(std::string path);
 
 

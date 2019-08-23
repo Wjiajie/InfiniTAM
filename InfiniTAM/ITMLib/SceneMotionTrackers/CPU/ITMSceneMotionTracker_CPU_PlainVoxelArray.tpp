@@ -43,7 +43,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::CalculateWarpGradi
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 		bool restrictZTrackingForDebugging) {
-	ITMSceneTraversalEngine<TVoxel, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::template
+	ITMSceneTraversalEngine<TWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::template
 	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TWarp>>(warpField);
 	calculateGradientFunctor.PrepareForOptimization(liveScene, canonicalScene, warpField, restrictZTrackingForDebugging);
 	ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::

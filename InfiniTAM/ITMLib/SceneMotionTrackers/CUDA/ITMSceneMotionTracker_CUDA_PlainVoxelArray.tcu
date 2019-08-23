@@ -16,13 +16,13 @@
 #pragma once
 
 
-#include "../../Engines/Manipulation/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
+
 #include "ITMSceneMotionTracker_CUDA.h"
+#include "../../../ORUtils/JetbrainsCUDASyntax.hpp"
+#include "../../Engines/Manipulation/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
 #include "../Shared/ITMSceneMotionTracker_Functors.h"
 
 namespace {
-
-
 //TODO: incomplete
 template<typename TVoxel, typename TWarp>
 __global__ void
@@ -43,21 +43,21 @@ computeGradientDataTerm(TVoxel* liveVoxels,
 	voxelPosition.z = z + arrayInfo->offset.z;
 
 
-	TVoxelLive& voxelLive = liveVoxels[locId];
-	TVoxelCanonical& voxelCanonical = canonicalVoxels[locId];
-	if (!VoxelIsConsideredForTracking(voxelCanonical, voxelLive, sourceFieldIndex)
-	    || !VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive, sourceFieldIndex))
+	TVoxel& voxelLive = liveVoxels[locId];
+	TVoxel& voxelCanonical = canonicalVoxels[locId];
+	if (!VoxelIsConsideredForTracking(voxelCanonical, voxelLive)
+	    || !VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive))
 		return;
 	Vector3f liveSdfJacobian;
 	Matrix3f liveSdfHessian;
 
 	ITMLib::ITMPlainVoxelArray::IndexCache liveCache;
 
-	ComputeLiveJacobian_CentralDifferences_IndexedFields(
-			liveSdfJacobian, voxelPosition, liveVoxels, arrayInfo, liveCache, sourceFieldIndex);
+	ComputeLiveJacobian_CentralDifferences(
+			liveSdfJacobian, voxelPosition, liveVoxels, arrayInfo, liveCache);
 
 };
-}
+} //end anonymous namespace
 
 
 using namespace ITMLib;
@@ -95,7 +95,7 @@ void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::CalculateWar
 
 	TVoxel* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
 	TVoxel* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
-	TVoxel* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+	TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 
 	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = liveScene->index.getIndexData();
 

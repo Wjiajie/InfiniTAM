@@ -20,42 +20,42 @@
 #include "../../../ORUtils/PlatformIndependence.h"
 #include "../../Utils/ITMPrintHelpers.h"
 
-
-
-
-//_DEBUG
-// this seems to give more noise in the results (visually)
-//template<typename TVoxelCanonical, typename TVoxelLive>
-//inline
-//bool VoxelIsConsideredForTracking(TVoxelCanonical& voxelCanonical, TVoxelLive voxelLive, int sourceFieldIndex){
-//	return voxelLive.flag_values[sourceFieldIndex] == VOXEL_NONTRUNCATED;
-//};
-
-template<typename TVoxelCanonical, typename TVoxelLive>
+//_DEBUG preprocessor options
+#ifdef TRACK_LIVE_NONTRUNCATED
+template<typename TVoxel>
 _CPU_AND_GPU_CODE_ inline
-bool VoxelIsConsideredForTracking(const TVoxelCanonical& voxelCanonical, const TVoxelLive& voxelLive) {
+bool VoxelIsConsideredForTracking(const TVoxel& voxelCanonical, const TVoxel& voxelLive){
+	return voxelLive.flags == ITMLib::VOXEL_NONTRUNCATED;
+};
+#else
+template<typename TVoxel>
+_CPU_AND_GPU_CODE_ inline
+bool VoxelIsConsideredForTracking(const TVoxel& voxelCanonical, const TVoxel& voxelLive) {
 	return voxelCanonical.flags == ITMLib::VOXEL_NONTRUNCATED ||
 	       voxelLive.flags == ITMLib::VOXEL_NONTRUNCATED;
 };
+#endif
 
-template<typename TVoxelCanonical, typename TVoxelLive>
+template<typename TVoxel>
 _CPU_AND_GPU_CODE_ inline
-bool VoxelIsConsideredForDataTerm(const TVoxelCanonical& canonicalVoxel, const TVoxelLive& liveVoxel, int sourceSdfIndex) {
-	//_DEBUG
-	//Data condition: ALWAYS
-	//return true;
-	//Data condition: IGNORE_UNKNOWN
-	//return canonicalVoxel.flags != ITMLib::VOXEL_UNKNOWN && liveVoxel.flag_values[sourceSdfIndex] != ITMLib::VOXEL_UNKNOWN;
-	//Data condition: ONLY_NONTRUNCATED
-	//return liveVoxel.flag_values[sourceSdfIndex] == ITMLib::VOXEL_NONTRUNCATED
-    //                     && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+bool VoxelIsConsideredForDataTerm(const TVoxel& canonicalVoxel, const TVoxel& liveVoxel) {
+//_DEBUG preprocessor options
+#if defined(DATA_CONDITION_ALWAYS)
+	return true;
+#elif defined(DATA_CONDITION_IGNORE_UNKNOWN)
+	return canonicalVoxel.flags != ITMLib::VOXEL_UNKNOWN && liveVoxel.flags != ITMLib::VOXEL_UNKNOWN;
+#elif defined(DATA_CONDITION_ONLY_NONTRUNCATED)
+	return liveVoxel.flags == ITMLib::VOXEL_NONTRUNCATED
+                         && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+#else
+	//Currently, I think this works best (visually judging results)
 	//Data condition: IGNORE_CANONICAL_UNKNOWN
 	return canonicalVoxel.flags != ITMLib::VOXEL_UNKNOWN;
+#endif
 };
 
 
 // region =================================EXPLORATION OF NEIGHBORHOOD AROUND CANONICAL VOXEL===========================
-
 
 /**
  * \brief Finds neighbor voxel's warps in the order specified below.
@@ -69,46 +69,73 @@ bool VoxelIsConsideredForDataTerm(const TVoxelCanonical& canonicalVoxel, const T
  * 2) truncated voxels marked unknown or known as found
  * 3) everything else (non-truncated), of course, as found
  * \param[in] voxelPosition exact position of voxel in the scene.
- * \param[in] voxels
+ * \param[in] warps
  * \param[in] indexData
  * \param[in] cache
  */
-template<typename TVoxel, typename TIndexData, typename TCache>
+template<typename TVoxel, typename TWarp, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void findPoint2ndDerivativeNeighborhoodFlowWarp(THREADPTR(Vector3f)* neighborFlowWarps, //x9, out
                                                             THREADPTR(bool)* neighborKnown, //x9, out
                                                             THREADPTR(bool)* neighborTruncated, //x9, out
                                                             THREADPTR(bool)* neighborAllocated, //x9, out
                                                             const CONSTPTR(Vector3i)& voxelPosition,
+                                                            const CONSTPTR(TWarp)* warps,
+                                                            const CONSTPTR(TIndexData)* warpIndexData,
+                                                            THREADPTR(TCache)& warpCache,
                                                             const CONSTPTR(TVoxel)* voxels,
-                                                            const CONSTPTR(TIndexData)* indexData,
-                                                            THREADPTR(TCache)& cache) {
+                                                            const CONSTPTR(TIndexData)* voxelIndexData,
+                                                            THREADPTR(TCache)& voxelCache) {
 	int vmIndex = 0;
 
 	TVoxel voxel;
+	TWarp warp;
 	//TODO: define inline function instead of macro
-#define PROCESS_VOXEL(location, index)\
-    voxel = readVoxel(voxels, indexData, voxelPosition + (location), vmIndex, cache);\
-    neighborFlowWarps[index] = voxel.flow_warp;\
-    neighborAllocated[index] = vmIndex != 0;\
-    neighborKnown[index] = voxel.flags != ITMLib::VOXEL_UNKNOWN;\
-    neighborTruncated[index] = voxel.flags == ITMLib::VOXEL_TRUNCATED;
-
+	auto process_voxel = [&](Vector3i location, int index){
+		warp = readVoxel(warps, warpIndexData, voxelPosition + (location), vmIndex, warpCache);
+	    voxel = readVoxel(voxels, voxelIndexData, voxelPosition + (location), vmIndex, voxelCache);
+	    neighborFlowWarps[index] = warp.flow_warp;
+	    neighborAllocated[index] = vmIndex != 0;
+	    neighborKnown[index] = voxel.flags != ITMLib::VOXEL_UNKNOWN;
+	    neighborTruncated[index] = voxel.flags == ITMLib::VOXEL_TRUNCATED;
+	};
 	//necessary for 2nd derivatives in same direction, e.g. xx and zz
-	PROCESS_VOXEL(Vector3i(-1, 0, 0), 0);
-	PROCESS_VOXEL(Vector3i(0, -1, 0), 1);
-	PROCESS_VOXEL(Vector3i(0, 0, -1), 2);
+	process_voxel(Vector3i(-1, 0, 0), 0);
+	process_voxel(Vector3i(0, -1, 0), 1);
+	process_voxel(Vector3i(0, 0, -1), 2);
 
 	//necessary for 1st derivatives
-	PROCESS_VOXEL(Vector3i(1, 0, 0), 3);
-	PROCESS_VOXEL(Vector3i(0, 1, 0), 4);
-	PROCESS_VOXEL(Vector3i(0, 0, 1), 5);
+	process_voxel(Vector3i(1, 0, 0), 3);
+	process_voxel(Vector3i(0, 1, 0), 4);
+	process_voxel(Vector3i(0, 0, 1), 5);
 
 	//necessary for 2nd derivatives in mixed directions, e.g. xy and yz
-	PROCESS_VOXEL(Vector3i(1, 1, 0), 6);//xy corner
-	PROCESS_VOXEL(Vector3i(0, 1, 1), 7);//yz corner
-	PROCESS_VOXEL(Vector3i(1, 0, 1), 8);//xz corner
-#undef PROCESS_VOXEL
+	process_voxel(Vector3i(1, 1, 0), 6);//xy corner
+	process_voxel(Vector3i(0, 1, 1), 7);//yz corner
+	process_voxel(Vector3i(1, 0, 1), 8);//xz corner
+//#define PROCESS_VOXEL(location, index)\
+//    voxel = readVoxel(warps, warpIndexData, voxelPosition + (location), vmIndex, warpCache);\
+//    voxel = readVoxel(voxels, voxelIndexData, voxelPosition + (location), vmIndex, voxelCache);\
+//    neighborFlowWarps[index] = voxel.flow_warp;\
+//    neighborAllocated[index] = vmIndex != 0;\
+//    neighborKnown[index] = voxel.flags != ITMLib::VOXEL_UNKNOWN;\
+//    neighborTruncated[index] = voxel.flags == ITMLib::VOXEL_TRUNCATED;
+//
+//	//necessary for 2nd derivatives in same direction, e.g. xx and zz
+//	PROCESS_VOXEL(Vector3i(-1, 0, 0), 0);
+//	PROCESS_VOXEL(Vector3i(0, -1, 0), 1);
+//	PROCESS_VOXEL(Vector3i(0, 0, -1), 2);
+//
+//	//necessary for 1st derivatives
+//	PROCESS_VOXEL(Vector3i(1, 0, 0), 3);
+//	PROCESS_VOXEL(Vector3i(0, 1, 0), 4);
+//	PROCESS_VOXEL(Vector3i(0, 0, 1), 5);
+//
+//	//necessary for 2nd derivatives in mixed directions, e.g. xy and yz
+//	PROCESS_VOXEL(Vector3i(1, 1, 0), 6);//xy corner
+//	PROCESS_VOXEL(Vector3i(0, 1, 1), 7);//yz corner
+//	PROCESS_VOXEL(Vector3i(1, 0, 1), 8);//xz corner
+//#undef PROCESS_VOXEL
 }
 
 
@@ -337,32 +364,6 @@ void ComputeLiveJacobian_CentralDifferences(Vector3f& jacobian,
 	jacobian[1] = 0.5f * (sdfAtYplusOne - sdfAtYminusOne);
 	jacobian[2] = 0.5f * (sdfAtZplusOne - sdfAtZminusOne);
 };
-
-
-template<typename TVoxel, typename TIndexData, typename TCache>
-_CPU_AND_GPU_CODE_
-void ComputeLiveJacobian_CentralDifferences_IndexedFields(
-		THREADPTR(Vector3f)& jacobian,
-		const CONSTPTR(Vector3i)& voxelPosition,
-		const CONSTPTR(TVoxel)* voxels,
-		const CONSTPTR(TIndexData)* indexData,
-		THREADPTR(TCache)& cache,
-		const CONSTPTR(int)& fieldIndex) {
-	int vmIndex = 0;
-#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, indexData, voxelPosition + (offset), vmIndex, cache).sdf_values[fieldIndex]))
-
-	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
-	float sdfAtYplusOne = sdf_at(Vector3i(0, 1, 0));
-	float sdfAtZplusOne = sdf_at(Vector3i(0, 0, 1));
-	float sdfAtXminusOne = sdf_at(Vector3i(-1, 0, 0));
-	float sdfAtYminusOne = sdf_at(Vector3i(0, -1, 0));
-	float sdfAtZminusOne = sdf_at(Vector3i(0, 0, -1));
-
-#undef sdf_at
-	jacobian[0] = 0.5f * (sdfAtXplusOne - sdfAtXminusOne);
-	jacobian[1] = 0.5f * (sdfAtYplusOne - sdfAtYminusOne);
-	jacobian[2] = 0.5f * (sdfAtZplusOne - sdfAtZminusOne);
-};
 // endregion
 
 // region ================================= SDF HESSIAN ================================================================
@@ -378,57 +379,6 @@ inline void ComputeSdfHessian(THREADPTR(Matrix3f)& hessian,
 		                      THREADPTR(TCache)& cache) {
 	int vmIndex = 0;
 #define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, indexData, position + (offset), vmIndex, cache).sdf))
-	//for xx, yy, zz
-	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
-	float sdfAtYplusOne = sdf_at(Vector3i(0, 1, 0));
-	float sdfAtZplusOne = sdf_at(Vector3i(0, 0, 1));
-	float sdfAtXminusOne = sdf_at(Vector3i(-1, 0, 0));
-	float sdfAtYminusOne = sdf_at(Vector3i(0, -1, 0));
-	float sdfAtZminusOne = sdf_at(Vector3i(0, 0, -1));
-
-	//for xy, xz, yz
-	float sdfAtXplusOneYplusOne = sdf_at(Vector3i(1, 1, 0));
-	float sdfAtXminusOneYminusOne = sdf_at(Vector3i(-1, -1, 0));
-	float sdfAtYplusOneZplusOne = sdf_at(Vector3i(0, 1, 1));
-	float sdfAtYminusOneZminusOne = sdf_at(Vector3i(0, -1, -1));
-	float sdfAtXplusOneZplusOne = sdf_at(Vector3i(1, 0, 1));
-	float sdfAtXminusOneZminusOne = sdf_at(Vector3i(-1, 0, -1));
-#undef sdf_at
-	float delta_xx = sdfAtXplusOne - 2 * sdfAtPosition + sdfAtXminusOne;
-	float delta_yy = sdfAtYplusOne - 2 * sdfAtPosition + sdfAtYminusOne;
-	float delta_zz = sdfAtZplusOne - 2 * sdfAtPosition + sdfAtZminusOne;
-
-	float delta_xy = 0.5f * (sdfAtXplusOneYplusOne - sdfAtXplusOne - sdfAtYplusOne
-	                         + 2 * sdfAtPosition
-	                         - sdfAtXminusOne - sdfAtYminusOne + sdfAtXminusOneYminusOne);
-
-	float delta_yz = 0.5f * (sdfAtYplusOneZplusOne - sdfAtYplusOne - sdfAtZplusOne
-	                         + 2 * sdfAtPosition
-	                         - sdfAtYminusOne - sdfAtZminusOne + sdfAtYminusOneZminusOne);
-
-	float delta_xz = 0.5f * (sdfAtXplusOneZplusOne - sdfAtXplusOne - sdfAtZplusOne
-	                         + 2 * sdfAtPosition
-	                         - sdfAtXminusOne - sdfAtZminusOne + sdfAtXminusOneZminusOne);
-
-	float vals[9] = {delta_xx, delta_xy, delta_xz,
-	                 delta_xy, delta_yy, delta_yz,
-	                 delta_xz, delta_yz, delta_zz};
-
-	hessian.setValues(vals);
-};
-
-
-template<typename TVoxel, typename TIndexData, typename TCache>
-_CPU_AND_GPU_CODE_
-inline void ComputeSdfHessian_IndexedFields(THREADPTR(Matrix3f)& hessian,
-                                            const CONSTPTR(Vector3i &) position,
-                                            const CONSTPTR(float)& sdfAtPosition,
-                                            const CONSTPTR(TVoxel)* voxels,
-                                            const CONSTPTR(TIndexData)* indexData,
-                                            THREADPTR(TCache)& cache,
-                                            const CONSTPTR(int)& fieldIndex) {
-	int vmIndex = 0;
-#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, indexData, position + (offset), vmIndex, cache).sdf_values[fieldIndex]))
 	//for xx, yy, zz
 	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
 	float sdfAtYplusOne = sdf_at(Vector3i(0, 1, 0));

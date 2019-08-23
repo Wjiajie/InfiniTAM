@@ -33,13 +33,14 @@
 //local
 #include "ITMSceneMotionTracker_CPU.h"
 
+#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../Shared/ITMSceneMotionTracker_Functors.h"
 
 #include "../../Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "../../Objects/Scene/ITMTrilinearDistribution.h"
 #include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../Utils/ITMLibSettings.h"
-#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+
 
 
 using namespace ITMLib;
@@ -58,8 +59,8 @@ ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ITMSceneMotionTrack
 
 template<typename TVoxel, typename TWarp>
 void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ResetWarps(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene) {
-	ITMSceneTraversalEngine<TVoxel, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* canonicalScene) {
+	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
 	StaticVoxelTraversal<WarpClearFunctor<TWarp, TWarp::hasCumulativeWarp>>(canonicalScene);
 };
 

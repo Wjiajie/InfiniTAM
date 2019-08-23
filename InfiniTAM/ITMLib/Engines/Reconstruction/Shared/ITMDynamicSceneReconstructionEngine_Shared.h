@@ -332,14 +332,15 @@ _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxel
 
 // endregion ===========================================================================================================
 // region ====================== TRILINEAR INTERPOLATION BASED ON WARP VECTOR ==========================================
-template<typename TWarp, typename TVoxel, typename TIndex, typename TLookupPositionFunctor>
+template<typename TVoxel, typename TWarp, typename TIndex, typename TLookupPositionFunctor>
 _CPU_AND_GPU_CODE_
 inline void interpolateTSDFVolume(TVoxel* sdfSourceVoxels,
                                   const typename TIndex::IndexData* sdfSourceIndexData,
                                   typename TIndex::IndexCache& sdfSourceCache,
 
                                   const TWarp& warp,
-                                  TVoxel& destinationVoxel, const Vector3i& warpAndDestinationVoxelPosition,
+                                  TVoxel& destinationVoxel,
+                                  const Vector3i& warpAndDestinationVoxelPosition,
                                   bool printResult) {
 	Vector3f warpedPosition =
 			TLookupPositionFunctor::GetWarpedPosition(warp, warpAndDestinationVoxelPosition);

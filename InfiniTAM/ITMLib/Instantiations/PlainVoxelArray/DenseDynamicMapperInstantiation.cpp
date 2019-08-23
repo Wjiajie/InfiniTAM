@@ -17,4 +17,4 @@
 
 #include "../../Core/ITMDenseDynamicMapper.tpp"
 
-template class ITMDenseDynamicMapper<ITMVoxel, ITMVoxel, ITMPlainVoxelArray>;
+template class ITMDenseDynamicMapper<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;

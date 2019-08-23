@@ -51,8 +51,8 @@ public:
 	void WarpScene_WarpUpdates(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
-	void CopyScene(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* sourceTSDF,
-			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
+	void CopyScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
+	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
 protected:
 	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);
@@ -81,18 +81,21 @@ public:
 	                                  const ITMRenderState* renderState) override;
 	void FuseLiveIntoCanonicalSdf(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 	                              ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene) override;
-	void WarpScene_CumulativeWarps(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
-	                               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF,
-	                               ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
-	void WarpScene_FlowWarps(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
-	                         ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF,
-	                         ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
-	void WarpScene_WarpUpdates(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
-	                           ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF,
-	                           ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
+	void WarpScene_CumulativeWarps(
+			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
+			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
+			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) override;
+	void WarpScene_FlowWarps(
+			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
+			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
+			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) override;
+	void WarpScene_WarpUpdates(
+			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
+			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
+			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) override;
 
-	void CopyScene(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* sourceTSDF,
-			ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* targetTSDF) override;
+	void CopyScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
+	               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) override;
 
 	ITMDynamicSceneReconstructionEngine_CUDA() = default;
 	~ITMDynamicSceneReconstructionEngine_CUDA() = default;
@@ -103,9 +106,9 @@ private:
 	ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray> liveSceneManager;
 
 	template<WarpType TWarpSource>
-	void WarpScene(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* sourceTSDF,
-	               ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* targetTSDF,
-	               ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField);
+	void WarpScene(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
+	               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
+	               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF);
 };
 
 // endregion ===========================================================================================================

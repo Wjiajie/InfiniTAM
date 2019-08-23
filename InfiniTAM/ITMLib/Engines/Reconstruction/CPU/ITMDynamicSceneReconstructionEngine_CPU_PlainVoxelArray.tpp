@@ -17,9 +17,7 @@
 #include "ITMDynamicSceneReconstructionEngine_CPU.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
 #include "../../Manipulation/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
-#include "../../../Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Functors.h"
-#include "../../Common/ITMCommonFunctors.h"
 
 using namespace ITMLib;
 
@@ -121,7 +119,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 	ITMSceneTraversalEngine<TVoxel, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::VoxelTraversal(targetTSDF,
 	                                                                                                flagClearFunctor);
 
-	TrilinearInterpolationFunctor<TWarp, TVoxel, ITMPlainVoxelArray,
+	TrilinearInterpolationFunctor<TVoxel, TWarp, ITMPlainVoxelArray,
 			WarpVoxelStaticFunctor<TWarp, TWarpType>>
 			trilinearInterpolationFunctor(sourceTSDF, warpField);
 

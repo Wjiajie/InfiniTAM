@@ -83,7 +83,7 @@ try
 		                                                         imageSource->getDepthImageSize());
 		break;
 	case ITMLibSettings::LIBMODE_DYNAMIC:
-		mainEngine = new ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMVoxelIndex>(imageSource->getCalib(),
+		mainEngine = new ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelIndex>(imageSource->getCalib(),
 		                                                                     imageSource->getRGBImageSize(),
 		                                                                     imageSource->getDepthImageSize());
 		break;

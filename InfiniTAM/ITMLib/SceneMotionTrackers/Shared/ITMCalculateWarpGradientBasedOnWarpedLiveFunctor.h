@@ -37,13 +37,13 @@
 namespace ITMLib {
 
 // region ========================== CALCULATE WARP GRADIENT ===========================================================
-template<typename TVoxelCanonical, bool hasDebugInformation>
+template<typename TWarp, bool hasDebugInformation>
 struct SetGradientFunctor;
 
-template<typename TVoxelCanonical>
-struct SetGradientFunctor<TVoxelCanonical, false> {
+template<typename TWarp>
+struct SetGradientFunctor<TWarp, false> {
 	_CPU_AND_GPU_CODE_
-	inline static void SetGradient(TVoxelCanonical& voxel,
+	inline static void SetGradient(TWarp& warp,
 	                               const float& weightDataTerm,
 	                               const float& weightLevelSetTerm,
 	                               const float& weightSmoothingTerm,
@@ -57,14 +57,14 @@ struct SetGradientFunctor<TVoxelCanonical, false> {
 				weightLevelSetTerm * localLevelSetEnergyGradient +
 				weightSmoothingTerm * localSmoothingEnergyGradient;
 		if (restrictZtrackingForDebugging) localEnergyGradient.z = 0.0f;
-		voxel.gradient0 = localEnergyGradient;
+		warp.gradient0 = localEnergyGradient;
 	}
 };
 
-template<typename TVoxelCanonical>
-struct SetGradientFunctor<TVoxelCanonical, true> {
+template<typename TWarp>
+struct SetGradientFunctor<TWarp, true> {
 	_CPU_AND_GPU_CODE_
-	inline static void SetGradient(TVoxelCanonical& voxel,
+	inline static void SetGradient(TWarp& warp,
 	                               const float& weightDataTerm,
 	                               const float& weightLevelSetTerm,
 	                               const float& weightSmoothingTerm,
@@ -73,14 +73,14 @@ struct SetGradientFunctor<TVoxelCanonical, true> {
 	                               const Vector3f& localSmoothingEnergyGradient,
 	                               const bool& restrictZtrackingForDebugging
 	) {
-		voxel.data_term_gradient = weightDataTerm * localDataEnergyGradient;
-		voxel.smoothing_term_gradient = weightLevelSetTerm * localSmoothingEnergyGradient;
+		warp.data_term_gradient = weightDataTerm * localDataEnergyGradient;
+		warp.smoothing_term_gradient = weightLevelSetTerm * localSmoothingEnergyGradient;
 		Vector3f localEnergyGradient =
-				voxel.data_term_gradient +
+				warp.data_term_gradient +
 				weightLevelSetTerm * localLevelSetEnergyGradient +
-				voxel.smoothing_term_gradient;
+				warp.smoothing_term_gradient;
 		if (restrictZtrackingForDebugging) localEnergyGradient.z = 0.0f;
-		voxel.gradient0 = localEnergyGradient;
+		warp.gradient0 = localEnergyGradient;
 	}
 };
 
@@ -133,19 +133,22 @@ public:
 		this->canonicalScene = canonicalScene;
 		this->canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
 		this->canonicalIndexData = canonicalScene->index.getIndexData();
+		this->warpField = warpField;
+		this->warps = warpField->localVBA.GetVoxelBlocks();
+		this->warpIndexData = warpField->index.getIndexData();
 		this->restrictZtrackingForDebugging = restrictZtrackingForDebugging;
 		this->sourceSdfIndex = sourceSdfIndex;
 	}
 
 	// endregion =======================================================================================================
 	_CPU_AND_GPU_CODE_
-	void operator()(TVoxel& liveVoxel, TVoxel& canonicalVoxel, TVoxel& warpVoxel, Vector3i voxelPosition) {
+	void operator()(TVoxel& liveVoxel, TVoxel& canonicalVoxel, TWarp& warp, Vector3i voxelPosition) {
 
-		if (!VoxelIsConsideredForTracking(canonicalVoxel, liveVoxel, sourceSdfIndex)) return;
-		bool computeDataTerm = VoxelIsConsideredForDataTerm(canonicalVoxel, liveVoxel, sourceSdfIndex);
+		if (!VoxelIsConsideredForTracking(canonicalVoxel, liveVoxel)) return;
+		bool computeDataTerm = VoxelIsConsideredForDataTerm(canonicalVoxel, liveVoxel);
 
-		Vector3f& framewiseWarp = canonicalVoxel.flow_warp;
-		float liveSdf = TVoxel::valueToFloat(liveVoxel.sdf_values[sourceSdfIndex]);
+		Vector3f& framewiseWarp = warp.flow_warp;
+		float liveSdf = TVoxel::valueToFloat(liveVoxel.sdf);
 		float canonicalSdf = TVoxel::valueToFloat(canonicalVoxel.sdf);
 
 		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
@@ -170,8 +173,8 @@ public:
 		// region =============================== DATA TERM ================================================
 		if (switches.enableDataTerm && computeDataTerm) {
 			Vector3f liveSdfJacobian;
-			ComputeLiveJacobian_CentralDifferences_IndexedFields(
-					liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache, sourceSdfIndex);
+			ComputeLiveJacobian_CentralDifferences(
+					liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache);
 			// Compute data term error / energy
 			float sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
 			// (φ_n(Ψ)−φ_{global}) ∇φ_n(Ψ) - also denoted as - (φ_{proj}(Ψ)−φ_{model}) ∇φ_{proj}(Ψ)
@@ -197,11 +200,11 @@ public:
 
 		if (switches.enableLevelSetTerm && computeDataTerm) {
 			Matrix3f liveSdfHessian;Vector3f liveSdfJacobian;
-			ComputeLiveJacobian_CentralDifferences_IndexedFields(
-					liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache, sourceSdfIndex);
+			ComputeLiveJacobian_CentralDifferences(
+					liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache);
 
-			ComputeSdfHessian_IndexedFields(liveSdfHessian, voxelPosition, liveSdf, liveVoxels,
-			                                liveIndexData, liveCache, sourceSdfIndex);
+			ComputeSdfHessian(liveSdfHessian, voxelPosition, liveSdf, liveVoxels, liveIndexData, liveCache);
+
 			float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
 			float sdfJacobianNormMinusUnity = sdfJacobianNorm - parameters.unity;
 			localLevelSetEnergyGradient = sdfJacobianNormMinusUnity * (liveSdfHessian * liveSdfJacobian) /
@@ -225,11 +228,9 @@ public:
 
 			//    0        1        2          3         4         5           6         7         8
 			//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
-
 			findPoint2ndDerivativeNeighborhoodFlowWarp(
-					neighborFlowWarps/*x9*/, neighborKnown, neighborTruncated,
-					neighborAllocated, voxelPosition, canonicalVoxels,
-					canonicalIndexData, canonicalCache);
+					neighborFlowWarps/*x9*/, neighborKnown, neighborTruncated, neighborAllocated, voxelPosition,
+					warps, warpIndexData, warpCache, canonicalVoxels, canonicalIndexData, canonicalCache);
 
 			for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
 				if (!neighborAllocated[iNeighbor]) {
@@ -308,16 +309,15 @@ public:
 		// endregion
 		// region =============================== COMPUTE ENERGY GRADIENT ==================================
 		SetGradientFunctor<TWarp, TWarp::hasDebugInformation>::SetGradient(
-				warpVoxel,
-				parameters.weightDataTerm, parameters.weightLevelSetTerm, parameters.weightSmoothnessTerm,
+				warp, parameters.weightDataTerm, parameters.weightLevelSetTerm, parameters.weightSmoothnessTerm,
 				localDataEnergyGradient, localLevelSetEnergyGradient, localSmoothnessEnergyGradient,
 				restrictZtrackingForDebugging);
 		// endregion
 		// region =============================== AGGREGATE VOXEL STATISTICS ===============================
 		//skip aggregates for parallel cuda implementation
 #ifndef __CUDACC__
-		float energyGradientLength = ORUtils::length(warpVoxel.gradient0);//meters
-		float warpLength = ORUtils::length(warpVoxel.flow_warp);
+		float energyGradientLength = ORUtils::length(warp.gradient0);//meters
+		float warpLength = ORUtils::length(warp.flow_warp);
 		double localEnergy = localDataEnergy + parameters.weightLevelSetTerm * localLevelSetEnergy
 		                     + parameters.weightSmoothnessTerm * localSmoothingEnergy;
 
@@ -329,7 +329,7 @@ public:
 
 		cumulativeCanonicalSdf += canonicalSdf;
 		cumulativeLiveSdf += liveSdf;
-		cumulativeWarpDist += ORUtils::length(canonicalVoxel.flow_warp);
+		cumulativeWarpDist += ORUtils::length(warp.flow_warp);
 		consideredVoxelCount += 1;
 		// endregion
 
@@ -337,7 +337,7 @@ public:
 
 		if (printVoxelResult) {
 			PrintVoxelResult(localDataEnergyGradient, localLevelSetEnergyGradient, localSmoothnessEnergyGradient,
-			                 canonicalVoxel.gradient0, energyGradientLength);
+			                 warp.gradient0, energyGradientLength);
 		}
 		// endregion ===================================================================================================
 #endif
@@ -415,6 +415,11 @@ private:
 	TVoxel* canonicalVoxels;
 	typename TIndex::IndexData* canonicalIndexData;
 	typename TIndex::IndexCache canonicalCache;
+
+	ITMVoxelVolume<TWarp, TIndex>* warpField;
+	TWarp* warps;
+	typename TIndex::IndexData* warpIndexData;
+	typename TIndex::IndexCache warpCache;
 
 #ifndef __CUDACC__
 	// *** statistical aggregates

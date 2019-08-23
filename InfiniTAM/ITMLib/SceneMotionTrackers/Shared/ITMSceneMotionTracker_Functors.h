@@ -20,8 +20,12 @@
 #include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "ITMSceneMotionTracker_Shared.h"
 #include "../../Utils/ITMLibSettings.h"
-#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
-#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+
+//#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
+//#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+//#include "../../Engines/Manipulation/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
+//#include "../../Engines/Manipulation/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h"
+
 
 
 template<typename TVoxel, bool hasCumulativeWarp>
@@ -184,7 +188,7 @@ struct GradientSmoothingPassFunctor {
 		};
 
 		int vmIndex = 0;
-		if (!VoxelIsConsideredForTracking(canonicalVoxel, liveVoxel, sourceSdfFieldIndex)) return;
+		if (!VoxelIsConsideredForTracking(canonicalVoxel, liveVoxel)) return;
 
 		const auto directionIndex = (int) TDirection;
 
@@ -197,7 +201,7 @@ struct GradientSmoothingPassFunctor {
 			                                                  receptiveVoxelPosition, vmIndex, warpFieldCache);
 			smoothedGradient += sobolevFilter1D[iVoxel] * GetGradient(receptiveVoxel);
 		}
-		SetGradient(canonicalVoxel, smoothedGradient);
+		SetGradient(warp, smoothedGradient);
 	}
 
 private:
@@ -240,7 +244,6 @@ private:
 
 
 template<typename TVoxel, typename TWarp, typename TIndex, ITMLib::ITMLibSettings::DeviceType TDeviceType>
-inline
 void SmoothWarpGradient_common(ITMLib::ITMVoxelVolume<TVoxel, TIndex>* liveScene,
                                ITMLib::ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
                                ITMLib::ITMVoxelVolume<TWarp, TIndex>* warpField) {
@@ -249,12 +252,12 @@ void SmoothWarpGradient_common(ITMLib::ITMVoxelVolume<TVoxel, TIndex>* liveScene
 	GradientSmoothingPassFunctor<TVoxel, TWarp, TIndex, Y> passFunctorY(warpField);
 	GradientSmoothingPassFunctor<TVoxel, TWarp, TIndex, Z> passFunctorZ(warpField);
 
-	ITMLib::ITMDualSceneTraversalEngine<TVoxel, TWarp, TIndex, TDeviceType>::
-	DualVoxelPositionTraversal(liveScene, canonicalScene, passFunctorX);
-	ITMLib::ITMDualSceneTraversalEngine<TVoxel, TWarp, TIndex, TDeviceType>::
-	DualVoxelPositionTraversal(liveScene, canonicalScene, passFunctorY);
-	ITMLib::ITMDualSceneTraversalEngine<TVoxel, TWarp, TIndex, TDeviceType>::
-	DualVoxelPositionTraversal(liveScene, canonicalScene, passFunctorZ);
+	ITMLib::ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, TIndex, TDeviceType>::
+	        template DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, passFunctorX);
+	ITMLib::ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, TIndex, TDeviceType>::
+	        template DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, passFunctorY);
+	ITMLib::ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, TIndex, TDeviceType>::
+	        template DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, passFunctorZ);
 }
 
 template<typename TWarp, bool hasCumulativeWarp>

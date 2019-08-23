@@ -78,7 +78,7 @@ public:
 
 
 	void BeginProcessingFrameInStepByStepMode(const ITMView* view, const ITMTrackingState* trackingState,
-	                                          ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+	                                          ITMVoxelVolume<TWarp, TIndex>* warpField,
 	                                          ITMVoxelVolume<TVoxel, TIndex>* liveScene, ITMRenderState* renderState_live);
 
 	bool TakeNextStepInStepByStepMode(ITMVoxelVolume <TVoxel, TIndex>* canonicalScene,
@@ -101,7 +101,7 @@ private:
 
 	bool SceneMotionOptimizationConditionNotReached();
 	void InitializeProcessing(const ITMView* view, const ITMTrackingState* trackingState,
-	                          ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+	                          ITMVoxelVolume<TWarp, TIndex>* warpField,
 	                          ITMVoxelVolume<TVoxel, TIndex>* liveScenePair,
 	                          ITMRenderState* renderState);
 	void FinalizeProcessing(ITMVoxelVolume <TVoxel, TIndex>* canonicalScene,

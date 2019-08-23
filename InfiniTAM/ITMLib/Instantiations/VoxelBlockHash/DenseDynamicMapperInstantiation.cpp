@@ -17,4 +17,4 @@
 
 #include "../../Core/ITMDenseDynamicMapper.tpp"
 
-template class ITMDenseDynamicMapper<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>;
+template class ITMDenseDynamicMapper<ITMVoxel, ITMWarp, ITMVoxelBlockHash>;

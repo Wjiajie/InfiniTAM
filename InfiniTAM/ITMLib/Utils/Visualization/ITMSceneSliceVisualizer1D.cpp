@@ -67,33 +67,20 @@ ITMSceneSliceVisualizer1D::Plot1DSceneSlice<ITMVoxel, ITMPlainVoxelArray>(
 		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* scene, Vector4i color, double width);
 
 template void
-ITMSceneSliceVisualizer1D::Plot1DSceneSlice<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* scene,
-                                                                          Vector4i color, double width);
+ITMSceneSliceVisualizer1D::Draw1DWarpUpdateVector<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* TSDF,
+		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warpField,
+		Vector4i color);
 
-template void
-ITMSceneSliceVisualizer1D::Plot1DIndexedSceneSlice<ITMVoxel, ITMPlainVoxelArray>(
-		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* scene, Vector4i color, double width, int fieldIndex);
-
-template void
-ITMSceneSliceVisualizer1D::Draw1DWarpUpdateVector<ITMVoxel, ITMPlainVoxelArray>(
-		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* scene, Vector4i color);
-
-//###
 
 template void
 ITMSceneSliceVisualizer1D::Plot1DSceneSlice<ITMVoxel, ITMVoxelBlockHash>(
 		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* scene, Vector4i color, double width);
 
 template void
-ITMSceneSliceVisualizer1D::Plot1DSceneSlice<ITMVoxel, ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* scene,
-                                                                         Vector4i color, double width);
-
-template void
-ITMSceneSliceVisualizer1D::Plot1DIndexedSceneSlice<ITMVoxel, ITMVoxelBlockHash>(
-		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* scene, Vector4i color, double width, int fieldIndex);
-
-template void
-ITMSceneSliceVisualizer1D::Draw1DWarpUpdateVector<ITMVoxel, ITMVoxelBlockHash>(
-		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* scene, Vector4i color);
+ITMSceneSliceVisualizer1D::Draw1DWarpUpdateVector<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(
+		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* TSDF,
+		ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warpField,
+		Vector4i color);
 
 //======================================================================================================================

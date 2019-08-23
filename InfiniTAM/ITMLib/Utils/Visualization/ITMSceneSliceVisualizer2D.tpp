@@ -148,7 +148,7 @@ struct DrawSceneVoxelAtWarpedPositionFunctor {
 			imageRangeY(imageRangeY), imageRangeZ(imageRangeZ), bounds(bounds), plane(plane),
 			pixelsPerVoxel(pixelsPerVoxel), absFillingStrategy(absFillingStrategy), img(img) {}
 
-	void operator()(TVoxel& voxel, TVoxel& warp, Vector3i& position) {
+	void operator()(TVoxel& voxel, TWarp& warp, Vector3i& position) {
 
 		Vector3f projectedPosition = position.toFloat() + warp.flow_warp;
 		Vector3i projectedPositionFloored = projectedPosition.toIntFloor();
@@ -213,7 +213,7 @@ cv::Mat ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>::DrawWarpedSceneImageAr
 			imgPixelRangeY, imgPixelRangeZ, bounds, plane,
 			this->pixelsPerVoxel, absFillingStrategy, img);
 	ITMDualSceneTraversalEngine<TVoxel, TWarp, TIndex, ITMLibSettings::DEVICE_CPU>::
-	DualVoxelPositionTraversalWithinBounds(scene, warpField, drawSceneVoxelFunctor, expandedBounds);
+	        template DualVoxelPositionTraversalWithinBounds(scene, warpField, drawSceneVoxelFunctor, expandedBounds);
 	return img;
 }
 
@@ -234,7 +234,7 @@ void ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>::MarkWarpedSceneImageAroun
 		Vector3i positionOfVoxelToMark) {
 	bool vmIndex;
 	TVoxel voxel = ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ReadVoxel(scene, positionOfVoxelToMark);
-	TWarp warp = ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ReadVoxel(warpField, positionOfVoxelToMark);
+	TWarp warp = ITMSceneManipulationEngine_CPU<TWarp, TIndex>::ReadVoxel(warpField, positionOfVoxelToMark);
 
 	Vector3f projectedPosition = positionOfVoxelToMark.toFloat() + warp.flow_warp;
 	Vector3i projectedPositionFloored = projectedPosition.toIntFloor();
@@ -449,8 +449,7 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>::MarkWarpedSceneImageAroundFocusPoint(
 		ITMVoxelVolume<TVoxel, TIndex>* scene,
 		ITMVoxelVolume<TWarp, TIndex>* warpField, cv::Mat& imageToMarkOn) {
-	MarkWarpedSceneImageAroundPoint(scene, imageToMarkOn, focusCoordinates);
-
+	MarkWarpedSceneImageAroundPoint(scene, warpField, imageToMarkOn, focusCoordinates);
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>

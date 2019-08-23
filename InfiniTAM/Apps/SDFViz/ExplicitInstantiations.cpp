@@ -18,5 +18,4 @@
 #include "../../ITMLib/ITMLibDefines.h"
 
 
-template class ITMScene3DSliceVisualizer<ITMVoxelCanonical,ITMVoxelIndex>;
-template class ITMScene3DSliceVisualizer<ITMVoxelLive,ITMVoxelIndex>;
+template class ITMScene3DSliceVisualizer<ITMVoxel,ITMWarp, ITMVoxelIndex>;

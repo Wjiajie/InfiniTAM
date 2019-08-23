@@ -257,22 +257,21 @@ inline void find6ConnectedNeighborInfoIndexedFields(
 	int vmIndex = 0;
 
 	TVoxel voxel;
-	//TODO: define inline function instead of macro
-#define PROCESS_VOXEL(location, index)\
-    voxel = readVoxel(voxels, hashEntries, voxelPosition + (location), vmIndex, cache);\
-    neighborAllocated[index] = vmIndex != 0;\
-    neighborKnown[index] = voxel.flag_values[fieldIndex] != ITMLib::VOXEL_UNKNOWN;\
-    neighborTruncated[index] = voxel.flag_values[fieldIndex] != ITMLib::VOXEL_NONTRUNCATED;\
-    neighborSdf[index] = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+	auto process_voxel = [&](Vector3i location, int index){
+		voxel = readVoxel(voxels, hashEntries, voxelPosition + (location), vmIndex, cache);
+	    neighborAllocated[index] = vmIndex != 0;
+	    neighborKnown[index] = voxel.flags != ITMLib::VOXEL_UNKNOWN;
+	    neighborTruncated[index] = voxel.flags != ITMLib::VOXEL_NONTRUNCATED;
+	    neighborSdf[index] = TVoxel::valueToFloat(voxel.sdf);	
+	};
+	process_voxel(Vector3i(-1, 0, 0), 0);
+	process_voxel(Vector3i(0, -1, 0), 1);
+	process_voxel(Vector3i(0, 0, -1), 2);
 
-	PROCESS_VOXEL(Vector3i(-1, 0, 0), 0);
-	PROCESS_VOXEL(Vector3i(0, -1, 0), 1);
-	PROCESS_VOXEL(Vector3i(0, 0, -1), 2);
+	process_voxel(Vector3i(1, 0, 0), 3);
+	process_voxel(Vector3i(0, 1, 0), 4);
+	process_voxel(Vector3i(0, 0, 1), 5);
 
-	PROCESS_VOXEL(Vector3i(1, 0, 0), 3);
-	PROCESS_VOXEL(Vector3i(0, 1, 0), 4);
-	PROCESS_VOXEL(Vector3i(0, 0, 1), 5);
-#undef PROCESS_VOXEL
 }
 
 

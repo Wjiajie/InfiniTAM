@@ -169,7 +169,7 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 	processedTime = 0.0f;
 
 #ifndef COMPILE_WITHOUT_CUDA
-	ORcudaSafeCall(cudaThreadSynchronize());
+	ORcudaSafeCall(cudaDeviceSynchronize());
 #endif
 
 	sdkCreateTimer(&timer_instant);
@@ -258,7 +258,7 @@ void UIEngine_BPO::ProcessFrame() {
 	else trackingResult = mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage);
 
 #ifndef COMPILE_WITHOUT_CUDA
-	ORcudaSafeCall(cudaThreadSynchronize());
+	ORcudaSafeCall(cudaDeviceSynchronize());
 #endif
 	sdkStopTimer(&timer_instant);
 	sdkStopTimer(&timer_average);
@@ -303,12 +303,12 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 
 	switch (indexingMethod) {
 		case HASH: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 		}
 			break;
 		case ARRAY: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMPlainVoxelArray>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 		}
 			break;
@@ -331,7 +331,7 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 	//actual processing on the mailEngine
 	switch (indexingMethod) {
 		case HASH: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>*>(mainEngine);
 			if (imuSource != nullptr)
 				dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage,
 				                                                    inputIMUMeasurement);
@@ -339,7 +339,7 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 		}
 			break;
 		case ARRAY: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMPlainVoxelArray>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>*>(mainEngine);
 			if (imuSource != nullptr)
 				dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage,
 				                                                    inputIMUMeasurement);
@@ -371,13 +371,13 @@ bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 	bool keepProcessingFrame = false;
 	switch (indexingMethod) {
 		case HASH: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMVoxelBlockHash>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 			keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();
 			if (!keepProcessingFrame) {
 				trackingResult = dynamicEngine->GetStepByStepTrackingResult();
 #ifndef COMPILE_WITHOUT_CUDA
-				ORcudaSafeCall(cudaThreadSynchronize());
+				ORcudaSafeCall(cudaDeviceSynchronize());
 #endif
 				currentFrameNo++;
 			} else {
@@ -386,13 +386,13 @@ bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 		}
 			break;
 		case ARRAY: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMVoxel, ITMPlainVoxelArray>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 			keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();
 			if (!keepProcessingFrame) {
 				trackingResult = dynamicEngine->GetStepByStepTrackingResult();
 #ifndef COMPILE_WITHOUT_CUDA
-				ORcudaSafeCall(cudaThreadSynchronize());
+				ORcudaSafeCall(cudaDeviceSynchronize());
 #endif
 				currentFrameNo++;
 			} else {

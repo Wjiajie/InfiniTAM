@@ -56,8 +56,7 @@ void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::SetScenes(
 	this->canonicalScene = canonicalScene;
 	this->liveScene = liveScene;
 	this->warpField = warpField;
-	this->scene3DLogger = new ITMSceneLogger<TVoxel, TWarp, TIndex>(
-			canonicalScene, liveScene, outputDirectory);
+	this->scene3DLogger = new ITMSceneLogger<TVoxel, TWarp, TIndex>(canonicalScene, liveScene, warpField, outputDirectory);
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
@@ -273,7 +272,7 @@ void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::InitializeFrameRecording() {
 		if (recordingScene1DSlicesWithUpdates) {
 			this->scene1DSliceVisualizer.reset(new ITMSceneSliceVisualizer1D(focusCoordinates, AXIS_X, 16));
 			scene1DSliceVisualizer->Plot1DSceneSlice(canonicalScene, Vector4i(97, 181, 193, 255), 3.0);
-			scene1DSliceVisualizer->Plot1DIndexedSceneSlice(liveScene, Vector4i(183, 115, 46, 255), 3.0, 0);
+			scene1DSliceVisualizer->Plot1DSceneSlice(liveScene, Vector4i(183, 115, 46, 255), 3.0);
 		}
 
 		scene2DSliceVisualizer.reset(
@@ -391,8 +390,8 @@ void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::SaveWarpSlices(int iteration
 			            ".png", liveImgOut);
 		}
 		if (recordingScene1DSlicesWithUpdates) {
-			scene1DSliceVisualizer->Plot1DIndexedSceneSlice(liveScene, Vector4i(0, 0, 0, 255), 1.0, 1);
-			scene1DSliceVisualizer->Draw1DWarpUpdateVector(canonicalScene, Vector4i(255, 0, 0, 255));
+			scene1DSliceVisualizer->Plot1DSceneSlice(liveScene, Vector4i(0, 0, 0, 255), 1.0);
+			scene1DSliceVisualizer->Draw1DWarpUpdateVector(canonicalScene, warpField, Vector4i(255, 0, 0, 255));
 		}
 		if (recordingScene3DSlicesWithUpdates) {
 			scene3DSliceVisualizer->TriggerDrawWarpUpdates();

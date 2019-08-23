@@ -109,28 +109,18 @@ void ITMSceneSliceVisualizer1D::Plot1DSceneSlice(ITMVoxelVolume<TVoxel, TIndex>*
 }
 
 
-template<typename TVoxel, typename TIndex>
-void ITMSceneSliceVisualizer1D::Plot1DIndexedSceneSlice(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector4i color, double width, int fieldIndex) {
-	switch (fieldIndex){
-		default:
-		case 0:
-			Plot1DSceneSliceHelper<TVoxel,TIndex, TGetIndexedSDFFunctor<TVoxel,0>>(scene, color, width);
-			break;
-		case 1:
-			Plot1DSceneSliceHelper<TVoxel,TIndex, TGetIndexedSDFFunctor<TVoxel,1>>(scene, color, width);
-			break;
-	}
-}
-
-
-template<typename TVoxel, typename TIndex>
-void ITMSceneSliceVisualizer1D::Draw1DWarpUpdateVector(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector4i color) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMSceneSliceVisualizer1D::Draw1DWarpUpdateVector(
+		ITMVoxelVolume<TVoxel, TIndex>* TSDF,
+		ITMVoxelVolume<TWarp, TIndex>* warpField,
+		Vector4i color) {
 	// scene access variables
 
-	TVoxel voxel = ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ReadVoxel(scene, focusCoordinates);
+	TWarp warp = ITMSceneManipulationEngine_CPU<TWarp, TIndex>::ReadVoxel(warpField, focusCoordinates);
+	TVoxel voxel = ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ReadVoxel(TSDF, focusCoordinates);
 
-	float warp1D = voxel.flow_warp[axis];
-	float warpUpdate1D = voxel.gradient0[axis];
+	float warp1D = warp.flow_warp[axis];
+	float warpUpdate1D = warp.gradient0[axis];
 	float startPoint = static_cast<float>(focusCoordinates[axis]) + warp1D - warpUpdate1D;
 	float endPoint = static_cast<float>(focusCoordinates[axis]) + warp1D;
 	float sdfValue = TVoxel::valueToFloat(voxel.sdf);

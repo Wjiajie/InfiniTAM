@@ -74,7 +74,6 @@ struct LookupBasedOnWarpUpdateStaticFunctor<TWarp, true> {
 	_CPU_AND_GPU_CODE_
 	static inline Vector3f GetWarpedPosition(const TWarp& voxel, const Vector3i& position) {
 		return position.toFloat() + voxel.warp_update;
-
 	}
 };
 

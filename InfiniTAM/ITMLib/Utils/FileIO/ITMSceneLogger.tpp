@@ -33,16 +33,17 @@ using namespace ITMLib;
 
 // region ================================= CONSTANT DEFINITIONS =======================================================
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::warpUpdatesFilename = ITMWarpFieldLogger<TVoxelCanonical, TIndex>::warpUpdatesFilename;
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::binaryFileExtension =
-		ITMWarpFieldLogger<TVoxelCanonical, TIndex>::binaryFileExtension;
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::liveName = "live";
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::continuousHighlightsPostfix =
-		ITMWarpFieldLogger<TVoxelCanonical, TIndex>::continuousHighlightsPostfix;
+template<typename TVoxel, typename TWarp, typename TIndex>
+const std::string ITMSceneLogger<TVoxel, TWarp, TIndex>::warpUpdatesFilename =
+		ITMWarpFieldLogger<TWarp, TIndex>::warpUpdatesFilename;
+template<typename TVoxel, typename TWarp, typename TIndex>
+const std::string ITMSceneLogger<TVoxel, TWarp, TIndex>::binaryFileExtension =
+		ITMWarpFieldLogger<TVoxel, TIndex>::binaryFileExtension;
+template<typename TVoxel, typename TWarp, typename TIndex>
+const std::string ITMSceneLogger<TVoxel, TWarp, TIndex>::liveName = "live";
+template<typename TVoxel, typename TWarp, typename TIndex>
+const std::string ITMSceneLogger<TVoxel, TWarp, TIndex>::continuousHighlightsPostfix =
+		ITMWarpFieldLogger<TWarp, TIndex>::continuousHighlightsPostfix;
 //endregion
 // region ================================= CONSTRUCTORS & DESTRUCTORS =================================================
 
@@ -55,13 +56,15 @@ const std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::continuou
  * \param canonicalScene
  * \param liveScene
  */
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
-		ITMVoxelVolume<TVoxelCanonical, TIndex>* canonicalScene,
-		ITMVoxelVolume<TVoxelLive, TIndex>* liveScene,
+template<typename TVoxel, typename TWarp, typename TIndex>
+ITMSceneLogger<TVoxel, TWarp, TIndex>::ITMSceneLogger(
+		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+		ITMVoxelVolume<TVoxel, TIndex>* liveScene,
+		ITMVoxelVolume<TWarp, TIndex>* warpField,
 		std::string path) :
-		fullCanonicalSceneLogger(new ITMWarpFieldLogger<TVoxelCanonical, TIndex>(canonicalScene, path)),
-		activeWarpLogger(fullCanonicalSceneLogger),
+		fullWarpLogger(new ITMWarpFieldLogger<TWarp, TIndex>(warpField, path)),
+		activeWarpLogger(fullWarpLogger),
+		canonicalScene(canonicalScene),
 		liveScene(liveScene),
 
 		mode(FULL_SCENE){
@@ -70,14 +73,11 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(
 	}
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(ITMVoxelVolume<TVoxelLive, TIndex>* liveScene,
+template<typename TVoxel, typename TWarp, typename TIndex>
+ITMSceneLogger<TVoxel, TWarp, TIndex>::ITMSceneLogger(ITMVoxelVolume<TVoxel, TIndex>* liveScene,
                                                                     std::string path):
-	fullCanonicalSceneLogger(nullptr),
-	activeWarpLogger(nullptr),
-	liveScene(liveScene),
-	mode(SLICE)
-	{
+	fullWarpLogger(nullptr), activeWarpLogger(nullptr),
+	liveScene(liveScene), mode(SLICE) {
 	SetPath(path);
 	std::vector<std::string> ids = LoadAllSlices();
 	if(slices.empty()){
@@ -88,18 +88,18 @@ ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger(ITMVoxelVolu
 
 
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::~ITMSceneLogger() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+ITMSceneLogger<TVoxel, TWarp, TIndex>::~ITMSceneLogger() {
 	for(auto idAndSliceIterator = this->slices.begin(); idAndSliceIterator != this->slices.end(); ++idAndSliceIterator){
 		delete idAndSliceIterator->second;
 	}
-	delete fullCanonicalSceneLogger;
+	delete fullWarpLogger;
 }
 //endregion
 // region ================================= GETTERS, SETTERS, PRINTERS =================================================
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelCount() const {
+template<typename TVoxel, typename TWarp, typename TIndex>
+int ITMSceneLogger<TVoxel, TWarp, TIndex>::GetVoxelCount() const {
 	return activeWarpLogger->GetVoxelCount();
 }
 
@@ -108,52 +108,55 @@ int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetVoxelCount() const {
  * \param bounds [out] minimum point
  * \param maxPoint [out] maximum point
  */
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetActiveSceneBounds(Vector6i& bounds) const {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMSceneLogger<TVoxel, TWarp, TIndex>::GetActiveSceneBounds(Vector6i& bounds) const {
 	if(this->activeWarpLogger){
 		if(this->activeWarpLogger->isSlice){
 			bounds = activeWarpLogger->bounds;
 		}else{
-			ITMSceneStatisticsCalculator<TVoxelCanonical, TIndex>::Instance().ComputeVoxelBounds(this->activeWarpLogger->scene);
+			ITMSceneStatisticsCalculator<TWarp, TIndex>::Instance().ComputeVoxelBounds(this->activeWarpLogger->warpField);
 		}
 	}
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetScenesLoaded() const {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::GetScenesLoaded() const {
 	return activeWarpLogger->Loaded();
 }
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetScenes(
-		ITMVoxelVolume<TVoxelCanonical, TIndex>* canonicalScene, ITMVoxelVolume<TVoxelLive, TIndex>* liveScene) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMSceneLogger<TVoxel, TWarp, TIndex>::SetScenes(
+		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+		ITMVoxelVolume<TVoxel, TIndex>* liveScene,
+		ITMVoxelVolume<TWarp, TIndex>* warpField) {
 	this->liveScene = liveScene;
-	this->activeWarpLogger->scene = canonicalScene;
+	this->canonicalScene = canonicalScene;
+	this->activeWarpLogger->warpField = warpField;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-std::string ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetPath() const {
+template<typename TVoxel, typename TWarp, typename TIndex>
+std::string ITMSceneLogger<TVoxel, TWarp, TIndex>::GetPath() const {
 	return this->path.string();
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-unsigned int ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetGeneralIterationCursor() const {
+template<typename TVoxel, typename TWarp, typename TIndex>
+unsigned int ITMSceneLogger<TVoxel, TWarp, TIndex>::GetGeneralIterationCursor() const {
 	return this->activeWarpLogger->GetIterationCursor();
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetHighlights() const {
+ITMSceneLogger<TVoxel, TWarp, TIndex>::GetHighlights() const {
 	return ITM3DNestedMapOfArrays<ITMHighlightIterationInfo>(activeWarpLogger->highlights);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::PrintHighlights() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMSceneLogger<TVoxel, TWarp, TIndex>::PrintHighlights() {
 	std::cout << "*** Highlights ***" << std::endl;
 	std::cout << this->activeWarpLogger->highlights << std::endl;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::CheckPath() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::CheckPath() {
 	if (!fs::is_directory(this->path)) {
 		std::cout << "The directory '" << path << "' was not found.";
 		return false;
@@ -166,8 +169,8 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::CheckPath() {
  * will be created.
  * \param path the new path.
  */
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetPath(std::string path) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMSceneLogger<TVoxel, TWarp, TIndex>::SetPath(std::string path) {
 	if(this->path != ""){
 		//clean up
 		slices.clear();
@@ -183,23 +186,23 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SetPath(std::string pa
 
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const ITMVoxelVolume<TVoxelCanonical, TIndex>* ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetActiveWarpScene() const{
-	return this->activeWarpLogger->scene;
+template<typename TVoxel, typename TWarp, typename TIndex>
+const ITMVoxelVolume<TWarp, TIndex>* ITMSceneLogger<TVoxel, TWarp, TIndex>::GetActiveWarpScene() const{
+	return this->activeWarpLogger->warpField;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-const ITMVoxelVolume<TVoxelLive, TIndex>* ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetLiveScene() const{
+template<typename TVoxel, typename TWarp, typename TIndex>
+const ITMVoxelVolume<TVoxel, TIndex>* ITMSceneLogger<TVoxel, TWarp, TIndex>::GetLiveScene() const{
 	return this->liveScene;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetIsActiveSceneASlice() const {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::GetIsActiveSceneASlice() const {
 	return this->activeWarpLogger->isSlice;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-std::vector<std::string> ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::GetSliceIds() const {
+template<typename TVoxel, typename TWarp, typename TIndex>
+std::vector<std::string> ITMSceneLogger<TVoxel, TWarp, TIndex>::GetSliceIds() const {
 	std::vector<std::string> ids;
 	for(auto iterator = slices.begin(); iterator != slices.end(); iterator++){
 		ids.push_back(iterator->first);
@@ -209,8 +212,8 @@ std::vector<std::string> ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::Ge
 //endregion
 // region ================================= SCENE SAVING / LOADING =====================================================
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::SaveScenes() {
 	if (!CheckPath()) {
 		return false;
 	}
@@ -223,8 +226,8 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenes() {
 }
 
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenes() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::LoadScenes() {
 	if (!CheckPath()) {
 		return false;
 	}
@@ -236,8 +239,8 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenes() {
 	return true;
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenesCompact() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::SaveScenesCompact() {
 	if (!liveScene || activeWarpLogger->Empty()) {
 		std::cerr << "At least one of the two scenes, canonical/live, was not set to an actual scene. "
 		          << __FILE__ << ":" << __LINE__ << std::endl;
@@ -248,21 +251,21 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveScenesCompact() {
 	}
 	std::cout << "Saving scenes for current frame (this might take awhile)..." << std::endl;
 	std::cout.flush();
-	ITMSceneFileIOEngine<TVoxelLive,TIndex>::SaveToDirectoryCompact(liveScene,livePath.string());
+	ITMSceneFileIOEngine<TVoxel,TIndex>::SaveToDirectoryCompact(liveScene,livePath.string());
 	activeWarpLogger->SaveCompact();
 	std::cout << "Scenes saved." << std::endl;
 	return true;
 };
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenesCompact() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::LoadScenesCompact() {
 	if (!CheckPath()) {
 		return false;
 	}
 	std::cout << "Loading scenes for current frame (this might take awhile)..." << std::endl;
 	std::cout.flush();
-	ITMSceneManipulationEngine_CPU<TVoxelLive,TIndex>::ResetScene(liveScene);
-	ITMSceneFileIOEngine<TVoxelLive,TIndex>::LoadFromDirectoryCompact(liveScene,livePath.string());
+	ITMSceneManipulationEngine_CPU<TVoxel,TIndex>::ResetScene(liveScene);
+	ITMSceneFileIOEngine<TVoxel,TIndex>::LoadFromDirectoryCompact(liveScene,livePath.string());
 	if(!activeWarpLogger->isSlice || !activeWarpLogger->sliceLoaded){
 		activeWarpLogger->LoadCompact();
 	}
@@ -272,33 +275,33 @@ bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadScenesCompact() {
 //endregion
 // region ================================= WARP STATE ONLINE SAVING / LOADING / BUFFERING =============================
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartSavingWarpState() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::StartSavingWarpState() {
 	return activeWarpLogger->StartSavingWarpState();
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StopSavingWarpState() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMSceneLogger<TVoxel, TWarp, TIndex>::StopSavingWarpState() {
 	activeWarpLogger->StopSavingWarpState();
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveCurrentWarpState() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::SaveCurrentWarpState() {
 	return activeWarpLogger->SaveCurrentWarpState();
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartLoadingWarpState() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::StartLoadingWarpState() {
 	return activeWarpLogger->StartLoadingWarpState();
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StartLoadingWarpState(unsigned int& frameIx) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::StartLoadingWarpState(unsigned int& frameIx) {
 	return activeWarpLogger->StartLoadingWarpState(frameIx);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StopLoadingWarpState() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMSceneLogger<TVoxel, TWarp, TIndex>::StopLoadingWarpState() {
 	activeWarpLogger->StopLoadingWarpState();
 }
 
@@ -307,68 +310,68 @@ void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::StopLoadingWarpState()
  * the current iteration.
  * \return True on success, false otherwise
  */
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadCurrentWarpState() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::LoadCurrentWarpState() {
 	return activeWarpLogger->LoadCurrentWarpState();
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadPreviousWarpState() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::LoadPreviousWarpState() {
 	return activeWarpLogger->LoadPreviousWarpState();
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::IsLoadingWarpState() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::IsLoadingWarpState() {
 	return activeWarpLogger->IsLoadingWarpState();
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferCurrentWarpState(void* externalBuffer) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::BufferCurrentWarpState(void* externalBuffer) {
 	return activeWarpLogger->BufferCurrentWarpState(externalBuffer);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferPreviousWarpState(void* externalBuffer) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::BufferPreviousWarpState(void* externalBuffer) {
 	return activeWarpLogger->BufferPreviousWarpState(externalBuffer);
 }
 
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::BufferWarpStateAt(void* externalBuffer,
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::BufferWarpStateAt(void* externalBuffer,
                                                                             unsigned int iterationIndex) {
 	return activeWarpLogger->BufferWarpStateAt(externalBuffer, iterationIndex);
 }
 //endregion
 // region ================================= HIGHLIGHTS =================================================================
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LogHighlight(
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMSceneLogger<TVoxel, TWarp, TIndex>::LogHighlight(
 		int hashId, int voxelLocalIndex, int frameNumber, ITMHighlightIterationInfo info) {
 	activeWarpLogger->highlights.InsertOrdered(hashId, voxelLocalIndex, frameNumber, info);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::SaveHighlights(std::string filePostfix) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::SaveHighlights(std::string filePostfix) {
 	return activeWarpLogger->SaveHighlights(filePostfix);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-bool ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::LoadHighlights(bool applyFilters, std::string filePostfix) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+bool ITMSceneLogger<TVoxel, TWarp, TIndex>::LoadHighlights(bool applyFilters, std::string filePostfix) {
 	return activeWarpLogger->LoadHighlights(applyFilters, filePostfix);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::FilterHighlights(int anomalyFrameCountMinimum) {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMSceneLogger<TVoxel, TWarp, TIndex>::FilterHighlights(int anomalyFrameCountMinimum) {
 	this->activeWarpLogger->FilterHighlights(anomalyFrameCountMinimum);
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-void ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ClearHighlights() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMSceneLogger<TVoxel, TWarp, TIndex>::ClearHighlights() {
 	this->activeWarpLogger->highlights.Clear();
 }
 
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-ITMSceneLogger<TVoxelCanonical, TVoxelLive, TIndex>::ITMSceneLogger() {
+template<typename TVoxel, typename TWarp, typename TIndex>
+ITMSceneLogger<TVoxel, TWarp, TIndex>::ITMSceneLogger() {
 
 }
 
