@@ -30,24 +30,24 @@ using namespace ITMLib;
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::ITMDynamicHashManagementEngine_CPU() :
-		canonicalEntryAllocationTypes(
+		targetSceneHashBlockStates(
 				new ORUtils::MemoryBlock<unsigned char>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU)),
-		liveEntryAllocationTypes(
+		liveSceneHashBlockStates(
 				new ORUtils::MemoryBlock<unsigned char>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU)),
-		allocationBlockCoordinates(
+		targetSceneHashBlockCoordinates(
 				new ORUtils::MemoryBlock<Vector3s>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU)) {}
 
 
 template<typename TVoxelCanonical, typename TVoxelLive>
 ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::~ITMDynamicHashManagementEngine_CPU() {
-	delete canonicalEntryAllocationTypes;
-	delete liveEntryAllocationTypes;
-	delete allocationBlockCoordinates;
+	delete targetSceneHashBlockStates;
+	delete liveSceneHashBlockStates;
+	delete targetSceneHashBlockCoordinates;
 }
 
 // endregion ===========================================================================================================
 template<typename TVoxel, typename TWarp>
-void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateLiveSceneFromDepth(
+void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateFromDepth(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState, bool onlyUpdateVisibleList, bool resetVisibleList) {
 	Vector2i depthImgSize = view->depth->noDims;
@@ -75,8 +75,8 @@ void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateLiveSceneFromDep
 	ITMHashSwapState* swapStates = scene->Swapping() ? scene->globalCache->GetSwapStates(false) : 0;
 	int* visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
 	uchar* hashBlockVisibilityTypes = renderState_vh->GetEntriesVisibleType();
-	uchar* liveEntryAllocationTypes = this->liveEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
-	Vector3s* allocationBlockCoordinates = this->allocationBlockCoordinates->GetData(MEMORYDEVICE_CPU);
+	uchar* liveEntryAllocationTypes = this->liveSceneHashBlockStates->GetData(MEMORYDEVICE_CPU);
+	Vector3s* allocationBlockCoordinates = this->targetSceneHashBlockCoordinates->GetData(MEMORYDEVICE_CPU);
 	int noTotalEntries = scene->index.noTotalEntries;
 
 	float oneOverHashEntrySize = 1.0f / (voxelSize * SDF_BLOCK_SIZE);//m
@@ -165,50 +165,63 @@ void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateLiveSceneFromDep
 // region =========================== CANONICAL HASH BLOCK ALLOCATION ==================================================
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateCanonicalFromLive(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene) {
+void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateTSDFVolumeFromTSDFVolume(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetVolume,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceVolume) {
+	AllocateFromVolumeGeneric(targetVolume, sourceVolume);
+}
 
-	uchar* canonicalEntryAllocationTypes = this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
 
-	Vector3s* allocationBlockCoordinates = this->allocationBlockCoordinates->GetData(MEMORYDEVICE_CPU);
-	ITMHashEntry* canonicalHashEntries = canonicalScene->index.GetEntries();
-	ITMHashEntry* liveHashEntries = liveScene->index.GetEntries();
+template<typename TVoxel, typename TWarp>
+void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateWarpVolumeFromTSDFVolume(
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* targetVolume,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceVolume) {
+	AllocateFromVolumeGeneric(targetVolume, sourceVolume);
+}
+
+template<typename TVoxel, typename TWarp>
+template<typename TVoxelTarget, typename TVoxelSource>
+void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateFromVolumeGeneric(
+		ITMVoxelVolume<TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
+		ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* sourceVolume) {
+
+	uchar* targetSceneHashBlockStateData = this->targetSceneHashBlockStates->GetData(MEMORYDEVICE_CPU);
+
+	Vector3s* targetSceneHashBlockCoordinateData = this->targetSceneHashBlockCoordinates->GetData(MEMORYDEVICE_CPU);
+	ITMHashEntry* targetHashEntries = targetVolume->index.GetEntries();
+	ITMHashEntry* sourceHashEntries = sourceVolume->index.GetEntries();
 
 	bool collisionDetected;
 
 	do {
 		collisionDetected = false;
-		memset(canonicalEntryAllocationTypes, ITMLib::NEEDS_NO_CHANGE, static_cast<size_t>(ITMVoxelBlockHash::noTotalEntries));
+		//reset target allocation states
+		memset(targetSceneHashBlockStateData, ITMLib::NEEDS_NO_CHANGE,
+		       static_cast<size_t>(ITMVoxelBlockHash::noTotalEntries));
 		// at frame zero, allocate all the same blocks as in live frame
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
-		for (int liveHash = 0; liveHash < ITMVoxelBlockHash::noTotalEntries; liveHash++) {
+		for (int sourceHash = 0; sourceHash < ITMVoxelBlockHash::noTotalEntries; sourceHash++) {
 
-			const ITMHashEntry& currentLiveHashBlock = liveHashEntries[liveHash];
+			const ITMHashEntry& currentSourceHashBlock = sourceHashEntries[sourceHash];
 			//skip unfilled live blocks
-			if (currentLiveHashBlock.ptr < 0) {
+			if (currentSourceHashBlock.ptr < 0) {
 				continue;
 			}
-			Vector3s liveHashBlockCoords = currentLiveHashBlock.pos;
+			Vector3s sourceHashBlockCoords = currentSourceHashBlock.pos;
 
 			//try to find a corresponding canonical block, and mark it for allocation if not found
-			int canonicalHash = hashIndex(liveHashBlockCoords);
+			int targetHash = hashIndex(sourceHashBlockCoords);
 
-			MarkAsNeedingAllocationIfNotFound(canonicalEntryAllocationTypes, allocationBlockCoordinates,
-					                                  canonicalHash, liveHashBlockCoords, canonicalHashEntries,
-					                                  collisionDetected);
+			MarkAsNeedingAllocationIfNotFound(targetSceneHashBlockStateData, targetSceneHashBlockCoordinateData,
+			                                  targetHash, sourceHashBlockCoords, targetHashEntries,
+			                                  collisionDetected);
 		}
-		AllocateHashEntriesUsingLists_CPU(canonicalScene, canonicalEntryAllocationTypes, allocationBlockCoordinates);
+		AllocateHashEntriesUsingLists_CPU(targetVolume, targetSceneHashBlockStateData,
+		                                  targetSceneHashBlockCoordinateData);
 	} while (collisionDetected);
 
-}
-
-template<typename TVoxelCanonical, typename TVoxelLive>
-void ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::ChangeCanonicalHashEntryState(
-		int hash, ITMLib::HashBlockState state) {
-	this->canonicalEntryAllocationTypes->GetData(MEMORYDEVICE_CPU)[hash] = state;
 }
 
 
@@ -238,7 +251,8 @@ struct WarpBasedAllocationMarkerFunctor {
 		Vector3i warpedPositionTruncated = warpedPosition.toInt();
 		// perform lookup in source volume
 		int vmIndex;
-		const TVoxelTSDF& sourceTSDFVoxelAtWarp = readVoxel(sourceTSDFVoxels, sourceTSDFHashEntries, warpedPositionTruncated,
+		const TVoxelTSDF& sourceTSDFVoxelAtWarp = readVoxel(sourceTSDFVoxels, sourceTSDFHashEntries,
+		                                                    warpedPositionTruncated,
 		                                                    vmIndex, sourceTSDFCache);
 
 		voxelCount++;
@@ -290,24 +304,26 @@ private:
  */
 template<typename TVoxel, typename TWarp>
 template<WarpType TWarpType>
-void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateWarpedLive(
+void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateFromWarpedVolume(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
 	int entryCount = ITMVoxelBlockHash::noTotalEntries;
-	Vector3s* allocationBlockCoordinatesData = this->allocationBlockCoordinates->GetData(MEMORYDEVICE_CPU);
-	uchar* liveEntryAllocationTypesData = this->liveEntryAllocationTypes->GetData(MEMORYDEVICE_CPU);
+	Vector3s* allocationBlockCoordinatesData = this->targetSceneHashBlockCoordinates->GetData(MEMORYDEVICE_CPU);
+	uchar* liveEntryAllocationTypesData = this->liveSceneHashBlockStates->GetData(MEMORYDEVICE_CPU);
 	//reset allocation types
 	memset(liveEntryAllocationTypesData, (unsigned char) 0, static_cast<size_t>(entryCount));
 
 	//Mark up hash entries in the target scene that will need allocation
-	WarpBasedAllocationMarkerFunctor<TWarp, TVoxel, WarpVoxelStaticFunctor<TWarp,TWarpType>>
+	WarpBasedAllocationMarkerFunctor<TWarp, TVoxel, WarpVoxelStaticFunctor<TWarp, TWarpType>>
 			hashMarkerFunctor(sourceTSDF, targetTSDF, allocationBlockCoordinatesData, liveEntryAllocationTypesData);
-	ITMSceneTraversalEngine<TWarp,ITMVoxelBlockHash,ITMLibSettings::DEVICE_CPU>::VoxelAndHashBlockPositionTraversal(warpField, hashMarkerFunctor);
+	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::VoxelAndHashBlockPositionTraversal(
+			warpField, hashMarkerFunctor);
 
 	//Allocate the hash entries that will potentially have any data
 	AllocateHashEntriesUsingLists_CPU(sourceTSDF, liveEntryAllocationTypesData, allocationBlockCoordinatesData);
 }
+
 
 // endregion ==================================== END CANONICAL HASH BLOCK ALLOCATION ==================================
 

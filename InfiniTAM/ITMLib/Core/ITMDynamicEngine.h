@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <array>
 #include "ITMDenseDynamicMapper.h"
 #include "ITMMainEngine.h"
 #include "ITMTrackingController.h"
@@ -87,7 +88,7 @@ namespace ITMLib
 		ITMTrackingController* cameraTrackingController;
 
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene;
-		ITMVoxelVolume<TVoxel, TIndex>* liveScene;
+		std::vector<ITMVoxelVolume<TVoxel, TIndex>> liveScenePair;
 		ITMVoxelVolume<TWarp, TIndex>* warpField;
 		ITMRenderState* renderState_live;
 		ITMRenderState* renderState_freeview;

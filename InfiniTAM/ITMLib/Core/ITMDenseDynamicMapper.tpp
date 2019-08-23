@@ -96,11 +96,11 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::~ITMDenseDynamicMapper() {
 //TODO: deprecate in favor of SceneManipulation
 template<typename TVoxel, typename TWarp, typename TIndex>
 void
-ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetCanonicalScene(
-		ITMVoxelVolume<TVoxel, TIndex>* scene) const {
+ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetTSDFVolume(
+		ITMVoxelVolume<TVoxel, TIndex>* volume) const {
 	switch (ITMLibSettings::Instance().deviceType) {
 		case ITMLibSettings::DEVICE_CPU:
-			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ResetScene(scene);
+			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ResetScene(volume);
 			break;
 		case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
@@ -114,15 +114,15 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetCanonicalScene(
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetLiveScene(
-		ITMVoxelVolume<TVoxel, TIndex>* scene) const {
+void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetWarpVolume(
+		ITMVoxelVolume<TWarp, TIndex>* warpVolume) const {
 	switch (ITMLibSettings::Instance().deviceType) {
 		case ITMLibSettings::DEVICE_CPU:
-			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ResetScene(scene);
+			ITMSceneManipulationEngine_CPU<TWarp, TIndex>::ResetScene(warpVolume);
 			break;
 		case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-			ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::ResetScene(scene);
+			ITMSceneManipulationEngine_CUDA<TWarp, TIndex>::ResetScene(scene);
 #endif
 			break;
 		case ITMLibSettings::DEVICE_METAL:
@@ -153,25 +153,25 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessInitialFrame(
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::InitializeProcessing(
 		const ITMView* view, const ITMTrackingState* trackingState, ITMVoxelVolume<TWarp, TIndex>* warpField,
-		ITMVoxelVolume<TVoxel, TIndex>* liveScenePair, ITMRenderState* renderState) {
+		ITMVoxelVolume<TVoxel, TIndex>* liveScene, ITMRenderState* renderState) {
 
 
 	PrintOperationStatus("Generating raw live frame from view...");
 	bench::StartTimer("GenerateRawLiveFrame");
-	sceneReconstructor->GenerateRawLiveSceneFromView(&liveScenePair[0], view, trackingState, renderState);
+	sceneReconstructor->GenerateRawLiveSceneFromView(liveScene, view, trackingState, renderState);
 	bench::StopTimer("GenerateRawLiveFrame");
 
 
-	PrintOperationStatus(
-			"Initializing live frame SDF by mapping from raw "
-			"live SDF to warped SDF based on previous-frame warp...");
-	bench::StartTimer("TrackMotion_35_Initialize");
+//	PrintOperationStatus(
+//			"Initializing live frame SDF by mapping from raw "
+//			"live SDF to warped SDF based on previous-frame warp...");
+//	bench::StartTimer("TrackMotion_35_Initialize");
 	//sceneReconstructor->WarpScene(canonicalScene, liveScene, 0, 1);
-	sceneReconstructor->CopyScene(&liveScenePair[0], &liveScenePair[1]);
+	//sceneReconstructor->CopyScene(&liveScenePair[0], &liveScenePair[1]);
 	//sceneReconstructor->UpdateWarpedScene(canonicalScene, liveScene, 0, 1);
 
 	sceneMotionTracker->ClearOutFlowWarp(warpField);
-	bench::StopTimer("TrackMotion_35_Initialize");
+//	bench::StopTimer("TrackMotion_35_Initialize");
 
 	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().InitializeFrameRecording();
 	maxVectorUpdate = std::numeric_limits<float>::infinity();
@@ -208,7 +208,7 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessFrame(const ITMView* view, 
 	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Cannot track motion for full frame when in step-by-step mode");
 	}
-	InitializeProcessing(view, trackingState, warpField, liveScenePair, renderState);
+	InitializeProcessing(view, trackingState, warpField, &liveScenePair[0], renderState);
 	bench::StartTimer("TrackMotion");
 	TrackFrameMotion(canonicalScene, liveScenePair, warpField);
 	bench::StopTimer("TrackMotion");
@@ -243,8 +243,8 @@ ITMVoxelVolume<TVoxel, TIndex>* ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::Tr
 	}
 	PrintOperationStatus("*** Optimizing warp based on difference between canonical and live SDF. ***");
 	bench::StartTimer("TrackMotion_3_Optimization");
-	int sourceLiveSceneIndex;
-	int targetLiveSceneIndex;
+	int sourceLiveSceneIndex = 0;
+	int targetLiveSceneIndex = 0;
 	for (int iteration = 0; SceneMotionOptimizationConditionNotReached(); iteration++) {
 		sourceLiveSceneIndex = iteration % 2;
 		targetLiveSceneIndex = (iteration + 1) % 2;

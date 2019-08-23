@@ -96,7 +96,7 @@ template<typename TVoxel, typename TWarp>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::FuseLiveIntoCanonicalSdf(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene) {
-	this->hashManager.AllocateCanonicalFromLive(canonicalScene, liveScene);
+	this->hashManager.AllocateTSDFVolumeFromTSDFVolume(canonicalScene, liveScene);
 	TSDFFusionFunctor<TVoxel> fusionFunctor(canonicalScene->sceneParams->maxW);
 	ITMDualSceneTraversalEngine<TVoxel, TVoxel, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
 	DualVoxelTraversal(liveScene, canonicalScene, fusionFunctor);
@@ -108,7 +108,7 @@ ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::Gener
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState) {
 	this->sceneManager.ResetScene(scene);
-	this->hashManager.AllocateLiveSceneFromDepth(scene, view, trackingState, renderState);
+	this->hashManager.AllocateFromDepth(scene, view, trackingState, renderState);
 	this->IntegrateIntoScene(scene, view, trackingState, renderState);
 }
 
@@ -150,7 +150,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 	                                                                                                   flagClearFunctor);
 
 	// Allocate new blocks where necessary, filter based on flags from source
-	hashManager.template AllocateWarpedLive<TWarpType>(warpField, sourceTSDF, targetTSDF);
+	hashManager.template AllocateFromWarpedVolume<TWarpType>(warpField, sourceTSDF, targetTSDF);
 
 	TrilinearInterpolationFunctor<TVoxel, TWarp, ITMVoxelBlockHash, WarpVoxelStaticFunctor<TWarp, TWarpType>>
 			trilinearInterpolationFunctor(sourceTSDF, warpField);
@@ -164,13 +164,14 @@ template<typename TVoxel, typename TWarp>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::UpdateVisibleList(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState, bool resetVisibleList) {
-	hashManager.AllocateLiveSceneFromDepth(scene, view, trackingState, renderState, true, resetVisibleList);
+	hashManager.AllocateFromDepth(scene, view, trackingState, renderState, true, resetVisibleList);
 }
 
 template<typename TVoxel, typename TWarp>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::CopyScene(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
+	hashManager.AllocateTSDFVolumeFromTSDFVolume(targetTSDF, sourceTSDF);
 	ITMDualSceneTraversalEngine<TVoxel, TVoxel, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
 	        template StaticDualVoxelPositionTraversal<CopySceneFunctor<TVoxel>>(sourceTSDF, targetTSDF);
 

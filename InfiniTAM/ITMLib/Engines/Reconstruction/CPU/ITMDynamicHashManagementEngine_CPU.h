@@ -23,7 +23,7 @@
 #include "../../../Utils/ITMHashBlockProperties.h"
 #include "../../Common/ITMWarpEnums.h"
 
-namespace ITMLib{
+namespace ITMLib {
 
 template<typename TVoxel, typename TWarp>
 class ITMDynamicHashManagementEngine_CPU {
@@ -41,32 +41,33 @@ public:
 	 * \param onlyUpdateVisibleList [in] whether we want to allocate only the hash entry blocks currently visible
 	 * \param resetVisibleList  [in] reset visibility list upon completion
 	 */
-	void AllocateLiveSceneFromDepth(
-			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
+	void AllocateFromDepth(
+			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 			const ITMTrackingState* trackingState, const ITMRenderState* renderState,
 			bool onlyUpdateVisibleList = false, bool resetVisibleList = false);
 
+	void AllocateTSDFVolumeFromTSDFVolume(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* targetVolume,
+	                                      ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* sourceVolume);
 
-	//TODO: rename f
-	void AllocateCanonicalFromLive(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* canonicalScene,
-	                               ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* liveScene);
+	void AllocateWarpVolumeFromTSDFVolume(ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* targetVolume,
+	                                      ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* sourceVolume);
 
 	template<WarpType TWarpType>
-	void AllocateWarpedLive(
+	void AllocateFromWarpedVolume(
 			ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* warpField,
 			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* sourceTSDF,
-			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF);
-
-	void ChangeCanonicalHashEntryState(int hash, ITMLib::HashBlockState);
+			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* targetTSDF);
 
 private:
 
-	ORUtils::MemoryBlock<unsigned char>* liveEntryAllocationTypes;
-	ORUtils::MemoryBlock<unsigned char>* canonicalEntryAllocationTypes;
-	ORUtils::MemoryBlock<Vector3s>* allocationBlockCoordinates;
+	template<typename TVoxelTarget, typename TVoxelSource>
+	void AllocateFromVolumeGeneric(ITMVoxelVolume <TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
+	                               ITMVoxelVolume <TVoxelSource, ITMVoxelBlockHash>* sourceVolume);
+
+	ORUtils::MemoryBlock<unsigned char>* liveSceneHashBlockStates;
+	ORUtils::MemoryBlock<unsigned char>* targetSceneHashBlockStates;
+	ORUtils::MemoryBlock<Vector3s>* targetSceneHashBlockCoordinates;
 };
-
-
 
 
 }// namespace ITMLib

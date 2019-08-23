@@ -379,28 +379,28 @@ public:
 #pragma omp parallel for
 #endif
 		for (int hash = 0; hash < noTotalEntries; hash++) {
-			const ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
-			if (currentLiveHashEntry.ptr < 0) continue;
-			ITMHashEntry currentCanonicalHashEntry = secondaryHashTable[hash];
+			const ITMHashEntry& currentPrimaryHashEntry = primaryHashTable[hash];
+			if (currentPrimaryHashEntry.ptr < 0) continue;
+			ITMHashEntry currentSecondaryHashEntry = secondaryHashTable[hash];
 
 			// the rare case where we have different positions for primary & secondary voxel block with the same index:
 			// we have a hash bucket miss, find the secondary voxel with the matching coordinates
-			if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
+			if (currentSecondaryHashEntry.pos != currentPrimaryHashEntry.pos) {
 				int secondaryHash;
-				if (!FindHashAtPosition(secondaryHash, currentLiveHashEntry.pos, secondaryHashTable)) {
+				if (!FindHashAtPosition(secondaryHash, currentPrimaryHashEntry.pos, secondaryHashTable)) {
 					std::stringstream stream;
 					stream << "Could not find corresponding secondary scene block at postion "
-					       << currentLiveHashEntry.pos
+					       << currentPrimaryHashEntry.pos
 					       << ". " << __FILE__ << ": " << __LINE__;
 					DIEWITHEXCEPTION(stream.str());
 				} else {
-					currentCanonicalHashEntry = secondaryHashTable[secondaryHash];
+					currentSecondaryHashEntry = secondaryHashTable[secondaryHash];
 				}
 			}
 			// position of the current entry in 3D space in voxel units
-			Vector3i hashBlockPosition = currentLiveHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-			TVoxelSecondary* localCanonicalVoxelBlock = &(secondaryVoxels[currentCanonicalHashEntry.ptr *
+			Vector3i hashBlockPosition = currentPrimaryHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxelSecondary* localCanonicalVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr *
 			                                                              (SDF_BLOCK_SIZE3)]);
 			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {

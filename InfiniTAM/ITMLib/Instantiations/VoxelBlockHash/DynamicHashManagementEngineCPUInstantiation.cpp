@@ -18,17 +18,17 @@
 
 template class ITMDynamicHashManagementEngine_CPU<ITMVoxel,ITMWarp>;
 
-template void ITMDynamicHashManagementEngine_CPU<ITMVoxel,ITMWarp>::AllocateWarpedLive<WarpType::WARP_CUMULATIVE>(
+template void ITMDynamicHashManagementEngine_CPU<ITMVoxel,ITMWarp>::AllocateFromWarpedVolume<WarpType::WARP_CUMULATIVE>(
 		ITMVoxelVolume <ITMWarp, ITMVoxelBlockHash>* warpField,
 		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* sourceTSDF,
 		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* targetTSDF
 		);
-template void ITMDynamicHashManagementEngine_CPU<ITMVoxel,ITMWarp>::AllocateWarpedLive<WarpType::WARP_FLOW>(
+template void ITMDynamicHashManagementEngine_CPU<ITMVoxel,ITMWarp>::AllocateFromWarpedVolume<WarpType::WARP_FLOW>(
 		ITMVoxelVolume <ITMWarp, ITMVoxelBlockHash>* warpField,
 		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* sourceTSDF,
 		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* targetTSDF
 );
-template void ITMDynamicHashManagementEngine_CPU<ITMVoxel,ITMWarp>::AllocateWarpedLive<WarpType::WARP_UPDATE>(
+template void ITMDynamicHashManagementEngine_CPU<ITMVoxel,ITMWarp>::AllocateFromWarpedVolume<WarpType::WARP_UPDATE>(
 		ITMVoxelVolume <ITMWarp, ITMVoxelBlockHash>* warpField,
 		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* sourceTSDF,
 		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* targetTSDF

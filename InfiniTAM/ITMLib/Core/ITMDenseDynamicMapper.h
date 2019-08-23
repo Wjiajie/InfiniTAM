@@ -50,8 +50,8 @@ public:
 	// endregion =======================================================================================================
 	// region ========================================== MEMBER FUNCTIONS ==============================================
 
-	void ResetCanonicalScene(ITMVoxelVolume<TVoxel, TIndex>* scene) const;
-	void ResetLiveScene(ITMVoxelVolume<TVoxel, TIndex>* live_scene) const;
+	void ResetTSDFVolume(ITMVoxelVolume<TVoxel, TIndex>* volume) const;
+	void ResetWarpVolume(ITMVoxelVolume<TWarp, TIndex>* warpVolume) const;
 
 	/**
 	* \brief Tracks motions of all points between frames and fuses the new data into the canonical frame
@@ -102,7 +102,7 @@ private:
 	bool SceneMotionOptimizationConditionNotReached();
 	void InitializeProcessing(const ITMView* view, const ITMTrackingState* trackingState,
 	                          ITMVoxelVolume<TWarp, TIndex>* warpField,
-	                          ITMVoxelVolume<TVoxel, TIndex>* liveScenePair,
+	                          ITMVoxelVolume<TVoxel, TIndex>* liveScene,
 	                          ITMRenderState* renderState);
 	void FinalizeProcessing(ITMVoxelVolume <TVoxel, TIndex>* canonicalScene,
 	                        ITMVoxelVolume <TVoxel, TIndex>* liveScene, ITMRenderState* renderState);
