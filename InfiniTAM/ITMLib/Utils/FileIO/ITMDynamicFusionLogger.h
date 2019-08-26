@@ -24,6 +24,9 @@
 
 namespace ITMLib {
 
+//TODO: adapt to record warpField properly (+test)
+//TODO: adapt to live-scene-pair structure; the live scene is now split into two that are being ping-ponged (+test)
+
 class ITMDynamicFusionLogger_Interface{
 public:
 

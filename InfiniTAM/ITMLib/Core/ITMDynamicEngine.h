@@ -72,6 +72,8 @@ namespace ITMLib
 		void turnOffMainProcessing() override;
 
 	private:
+		void InitializeScenes();
+		static const int liveSceneCount = 2;
 		void BeginProcessingFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement = nullptr);
 
 		bool trackingActive, fusionActive, mainProcessingActive, trackingInitialised;
@@ -88,7 +90,7 @@ namespace ITMLib
 		ITMTrackingController* cameraTrackingController;
 
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene;
-		std::vector<ITMVoxelVolume<TVoxel, TIndex>> liveScenePair;
+		ITMVoxelVolume<TVoxel, TIndex>** liveScenes;
 		ITMVoxelVolume<TWarp, TIndex>* warpField;
 		ITMRenderState* renderState_live;
 		ITMRenderState* renderState_freeview;

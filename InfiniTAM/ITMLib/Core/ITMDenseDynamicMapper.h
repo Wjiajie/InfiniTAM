@@ -69,7 +69,7 @@ public:
 	* \param renderState
 	*/
 	void ProcessFrame(const ITMView* view, const ITMTrackingState* trackingState,
-	                  ITMVoxelVolume <TVoxel, TIndex>* canonicalScene, ITMVoxelVolume <TVoxel, TIndex>* liveScenePair,
+	                  ITMVoxelVolume <TVoxel, TIndex>* canonicalScene, ITMVoxelVolume <TVoxel, TIndex>** liveScenePair,
 	                  ITMVoxelVolume <TWarp, TIndex>* warpField, ITMRenderState* renderState);
 
 	void ProcessInitialFrame(const ITMView* view, const ITMTrackingState* trackingState,
@@ -79,10 +79,11 @@ public:
 
 	void BeginProcessingFrameInStepByStepMode(const ITMView* view, const ITMTrackingState* trackingState,
 	                                          ITMVoxelVolume<TWarp, TIndex>* warpField,
-	                                          ITMVoxelVolume<TVoxel, TIndex>* liveScene, ITMRenderState* renderState_live);
+	                                          ITMVoxelVolume<TVoxel, TIndex>* liveScene,
+	                                          ITMRenderState* renderState_live);
 
 	bool TakeNextStepInStepByStepMode(ITMVoxelVolume <TVoxel, TIndex>* canonicalScene,
-	                                  ITMVoxelVolume <TVoxel, TIndex>* liveScenePair,
+	                                  ITMVoxelVolume <TVoxel, TIndex>** liveScenePair,
 	                                  ITMVoxelVolume <TWarp, TIndex>* warpField, ITMRenderState* renderState);
 
 	/// Update the visible list (this can be called to update the visible list when fusion is turned off)
@@ -96,7 +97,7 @@ private:
 
 	ITMVoxelVolume<TVoxel, TIndex>* TrackFrameMotion(
 			ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
-			ITMVoxelVolume<TVoxel, TIndex>* liveScenePair,
+			ITMVoxelVolume<TVoxel, TIndex>** liveScenePair,
 			ITMVoxelVolume<TWarp, TIndex>* warpField);
 
 	bool SceneMotionOptimizationConditionNotReached();

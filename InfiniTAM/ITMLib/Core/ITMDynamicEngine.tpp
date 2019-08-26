@@ -24,21 +24,12 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb,
                                                           Vector2i imgSize_d) {
 
+	this->InitializeScenes();
 	ITMLibSettings& settings = ITMLibSettings::Instance();
-
-	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
-
-	MemoryDeviceType memoryType = settings.GetMemoryType();
-	this->canonicalScene = new ITMVoxelVolume<TVoxel, TIndex>(
-			&settings.sceneParams, settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
-
-	this->liveScenePair.emplace_back(&settings.sceneParams,
-	                                 settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
-	this->liveScenePair.emplace_back(&settings.sceneParams,
-	                                 settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
-
 	const ITMLibSettings::DeviceType deviceType = settings.deviceType;
-	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().SetScenes(canonicalScene, &liveScenePair[0], warpField);
+	MemoryDeviceType memoryType = settings.GetMemoryType();
+	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
+	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().SetScenes(canonicalScene, liveScenes[0], warpField);
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
@@ -52,8 +43,9 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 
 	denseMapper = new ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>();
 	denseMapper->ResetTSDFVolume(canonicalScene);
-	denseMapper->ResetTSDFVolume(&liveScenePair[0]);
-	denseMapper->ResetTSDFVolume(&liveScenePair[1]);
+	for (int iScene = 0; iScene < ITMDynamicEngine<TVoxel, TWarp, TIndex>::liveSceneCount; iScene++){
+		denseMapper->ResetTSDFVolume(liveScenes[iScene]);
+	}
 	denseMapper->ResetWarpVolume(warpField);
 
 	imuCalibrator = new ITMIMUCalibrator_iPad();
@@ -89,10 +81,33 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
+void ITMDynamicEngine<TVoxel, TWarp, TIndex>::InitializeScenes(){
+	ITMLibSettings& settings = ITMLibSettings::Instance();
+	MemoryDeviceType memoryType = settings.GetMemoryType();
+	this->canonicalScene = new ITMVoxelVolume<TVoxel, TIndex>(
+			&settings.sceneParams, settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
+	this->liveScenes = new ITMVoxelVolume<TVoxel, TIndex>* [2];
+	for (int iLiveScene = 0; iLiveScene < ITMDynamicEngine<TVoxel, TWarp, TIndex>::liveSceneCount; iLiveScene++) {
+		this->liveScenes[iLiveScene] = new ITMVoxelVolume<TVoxel, TIndex>(&settings.sceneParams,
+		                                                                  settings.swappingMode ==
+		                                                                  ITMLibSettings::SWAPPINGMODE_ENABLED,
+		                                                                  memoryType);
+	}
+	this->warpField = new ITMVoxelVolume<TWarp, TIndex>(&settings.sceneParams,
+	                                                    settings.swappingMode ==
+	                                                    ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    memoryType);
+}
+
+template<typename TVoxel, typename TWarp, typename TIndex>
 ITMDynamicEngine<TVoxel, TWarp, TIndex>::~ITMDynamicEngine() {
 	delete renderState_live;
 	if (renderState_freeview != nullptr) delete renderState_freeview;
 
+	for (int iScene = 0; iScene < ITMDynamicEngine<TVoxel, TWarp, TIndex>::liveSceneCount; iScene++) {
+		delete liveScenes[iScene];
+	}
+	delete liveScenes;
 	delete canonicalScene;
 
 	delete denseMapper;
@@ -131,7 +146,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::SaveToFile() {
 	// throws error if any of the saves fail
 	if (relocaliser) relocaliser->SaveToDirectory(nextFrameOutputPath + "/Relocaliser/");
 	ITMSceneFileIOEngine<TVoxel, TIndex>::SaveToDirectoryCompact(canonicalScene, nextFrameOutputPath + "/canonical");
-	ITMSceneFileIOEngine<TVoxel, TIndex>::SaveToDirectoryCompact(&liveScenePair[0], nextFrameOutputPath + "/live");
+	ITMSceneFileIOEngine<TVoxel, TIndex>::SaveToDirectoryCompact(liveScenes[0], nextFrameOutputPath + "/live");
 	std::cout << "Saving scenes in a compact way to '" << nextFrameOutputPath << "'." << std::endl;
 }
 
@@ -171,7 +186,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::LoadFromFile() {
 		std::cout << "Loading scenes from '" << nextFrameOutputPath << "'." << std::endl;
 		ITMSceneFileIOEngine<TVoxel, TIndex>::LoadFromDirectoryCompact(canonicalScene,
 		                                                               nextFrameOutputPath + "/canonical");
-		ITMSceneFileIOEngine<TVoxel, TIndex>::LoadFromDirectoryCompact(&liveScenePair[0],
+		ITMSceneFileIOEngine<TVoxel, TIndex>::LoadFromDirectoryCompact(liveScenes[0],
 		                                                               nextFrameOutputPath + "/live");
 		if (framesProcessed == 0) {
 			framesProcessed = 1; //to skip initialization
@@ -186,8 +201,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::LoadFromFile() {
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDynamicEngine<TVoxel, TWarp, TIndex>::resetAll() {
 	denseMapper->ResetTSDFVolume(canonicalScene);
-	denseMapper->ResetTSDFVolume(&liveScenePair[0]);
-	denseMapper->ResetTSDFVolume(&liveScenePair[1]);
+	denseMapper->ResetTSDFVolume(liveScenes[0]);
+	denseMapper->ResetTSDFVolume(liveScenes[1]);
 	denseMapper->ResetWarpVolume(warpField);
 	trackingState->Reset();
 }
@@ -278,10 +293,10 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ProcessFrame(ITMUChar4Image* rgbImage,
 	if ((lastTrackerResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) &&
 	    (relocalisationCount == 0)) {
 		if (framesProcessed > 0) {
-			denseMapper->ProcessFrame(view, trackingState, canonicalScene, liveScenePair.data(), nullptr,
+			denseMapper->ProcessFrame(view, trackingState, canonicalScene, liveScenes, nullptr,
 			                          renderState_live);
 		} else {
-			denseMapper->ProcessInitialFrame(view, trackingState, canonicalScene, &liveScenePair[0], renderState_live);
+			denseMapper->ProcessInitialFrame(view, trackingState, canonicalScene, liveScenes[0], renderState_live);
 		}
 		fusionSucceeded = true;
 		if (framesProcessed > 50) trackingInitialised = true;
@@ -290,10 +305,10 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ProcessFrame(ITMUChar4Image* rgbImage,
 
 	if (lastTrackerResult == ITMTrackingState::TRACKING_GOOD ||
 	    lastTrackerResult == ITMTrackingState::TRACKING_POOR) {
-		if (!fusionSucceeded) denseMapper->UpdateVisibleList(view, trackingState, &liveScenePair[0], renderState_live);
+		if (!fusionSucceeded) denseMapper->UpdateVisibleList(view, trackingState, liveScenes[0], renderState_live);
 
 		// raycast to renderState_live for tracking and free visualisation
-		cameraTrackingController->Prepare(trackingState, &liveScenePair[0], view, liveVisualisationEngine,
+		cameraTrackingController->Prepare(trackingState, liveScenes[0], view, liveVisualisationEngine,
 		                                  renderState_live);
 	} else *trackingState->pose_d = previousFramePose;
 
@@ -363,7 +378,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 					imageType = IITMVisualisationEngine::RENDER_SHADED_GREYSCALE_IMAGENORMALS;
 			}
 
-			liveVisualisationEngine->RenderImage(&liveScenePair[0], trackingState->pose_d, &view->calib.intrinsics_d,
+			liveVisualisationEngine->RenderImage(liveScenes[0], trackingState->pose_d, &view->calib.intrinsics_d,
 			                                     renderState_live, renderState_live->raycastImage, imageType,
 			                                     raycastType);
 
@@ -393,13 +408,13 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 
 			if (renderState_freeview == nullptr) {
 				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
-				                                                                        liveScenePair[0].sceneParams,
+				                                                                        liveScenes[0]->sceneParams,
 				                                                                        settings.GetMemoryType());
 			}
 
-			liveVisualisationEngine->FindVisibleBlocks(&liveScenePair[0], pose, intrinsics, renderState_freeview);
-			liveVisualisationEngine->CreateExpectedDepths(&liveScenePair[0], pose, intrinsics, renderState_freeview);
-			liveVisualisationEngine->RenderImage(&liveScenePair[0], pose, intrinsics, renderState_freeview,
+			liveVisualisationEngine->FindVisibleBlocks(liveScenes[0], pose, intrinsics, renderState_freeview);
+			liveVisualisationEngine->CreateExpectedDepths(liveScenes[0], pose, intrinsics, renderState_freeview);
+			liveVisualisationEngine->RenderImage(liveScenes[0], pose, intrinsics, renderState_freeview,
 			                                     renderState_freeview->raycastImage, type);
 
 			if (settings.deviceType == ITMLibSettings::DEVICE_CUDA)
@@ -411,13 +426,13 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 
 			if (renderState_freeview == nullptr) {
 				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
-				                                                                        liveScenePair[0].sceneParams,
+				                                                                        liveScenes[0]->sceneParams,
 				                                                                        settings.GetMemoryType());
 			}
 
-			liveVisualisationEngine->FindVisibleBlocks(&liveScenePair[0], pose, intrinsics, renderState_freeview);
-			liveVisualisationEngine->CreateExpectedDepths(&liveScenePair[0], pose, intrinsics, renderState_freeview);
-			liveVisualisationEngine->RenderImage(&liveScenePair[0], pose, intrinsics, renderState_freeview,
+			liveVisualisationEngine->FindVisibleBlocks(liveScenes[0], pose, intrinsics, renderState_freeview);
+			liveVisualisationEngine->CreateExpectedDepths(liveScenes[0], pose, intrinsics, renderState_freeview);
+			liveVisualisationEngine->RenderImage(liveScenes[0], pose, intrinsics, renderState_freeview,
 			                                     renderState_freeview->raycastImage,
 			                                     IITMVisualisationEngine::RENDER_SHADED_GREEN);
 			canonicalVisualisationEngine->FindVisibleBlocks(canonicalScene, pose, intrinsics, renderState_freeview);
@@ -491,7 +506,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::BeginProcessingFrameInStepByStepMo
 	if ((lastTrackerResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) &&
 	    (relocalisationCount == 0)) {
 		canFuse = true;
-		denseMapper->BeginProcessingFrameInStepByStepMode(view, trackingState, warpField, &liveScenePair[0],
+		denseMapper->BeginProcessingFrameInStepByStepMode(view, trackingState, warpField, liveScenes[0],
 		                                                  renderState_live);
 	}
 }
@@ -501,7 +516,7 @@ bool ITMDynamicEngine<TVoxel, TWarp, TIndex>::UpdateCurrentFrameSingleStep() {
 
 	bool trackingNotFinished;
 	if (canFuse) {
-		trackingNotFinished = denseMapper->TakeNextStepInStepByStepMode(canonicalScene, &liveScenePair[0], nullptr,
+		trackingNotFinished = denseMapper->TakeNextStepInStepByStepMode(canonicalScene, liveScenes, warpField,
 		                                                                renderState_live);
 		if (trackingNotFinished) {
 			fusionSucceeded = true;
@@ -515,10 +530,10 @@ bool ITMDynamicEngine<TVoxel, TWarp, TIndex>::UpdateCurrentFrameSingleStep() {
 		if (lastTrackerResult == ITMTrackingState::TRACKING_GOOD ||
 		    lastTrackerResult == ITMTrackingState::TRACKING_POOR) {
 			if (!fusionSucceeded)
-				denseMapper->UpdateVisibleList(view, trackingState, &liveScenePair[0], renderState_live);
+				denseMapper->UpdateVisibleList(view, trackingState, liveScenes[0], renderState_live);
 
 			// raycast to renderState_live for tracking and free visualisation
-			cameraTrackingController->Prepare(trackingState, &liveScenePair[0], view, liveVisualisationEngine,
+			cameraTrackingController->Prepare(trackingState, liveScenes[0], view, liveVisualisationEngine,
 			                                  renderState_live);
 		} else *trackingState->pose_d = previousFramePose;
 	}
@@ -585,9 +600,9 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::BeginProcessingFrame(ITMUChar4Imag
 					const FernRelocLib::PoseDatabase::PoseInScene& keyframe = relocaliser->RetrievePose(NN);
 					trackingState->pose_d->SetFrom(&keyframe.pose);
 
-					denseMapper->UpdateVisibleList(view, trackingState, &liveScenePair[0], renderState_live, true);
+					denseMapper->UpdateVisibleList(view, trackingState, liveScenes[0], renderState_live, true);
 
-					cameraTrackingController->Prepare(trackingState, &liveScenePair[0], view, liveVisualisationEngine,
+					cameraTrackingController->Prepare(trackingState, liveScenes[0], view, liveVisualisationEngine,
 					                                  renderState_live);
 					cameraTrackingController->Track(trackingState, view);
 

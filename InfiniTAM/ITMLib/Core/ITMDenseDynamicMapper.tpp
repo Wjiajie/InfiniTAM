@@ -104,7 +104,7 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetTSDFVolume(
 			break;
 		case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-			ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::ResetScene(scene);
+			ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::ResetScene(volume);
 #endif
 			break;
 		case ITMLibSettings::DEVICE_METAL:
@@ -122,7 +122,7 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetWarpVolume(
 			break;
 		case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-			ITMSceneManipulationEngine_CUDA<TWarp, TIndex>::ResetScene(scene);
+			ITMSceneManipulationEngine_CUDA<TWarp, TIndex>::ResetScene(warpVolume);
 #endif
 			break;
 		case ITMLibSettings::DEVICE_METAL:
@@ -200,7 +200,7 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 void
 ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessFrame(const ITMView* view, const ITMTrackingState* trackingState,
                                                            ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
-                                                           ITMVoxelVolume<TVoxel, TIndex>* liveScenePair,
+                                                           ITMVoxelVolume<TVoxel, TIndex>** liveScenePair,
                                                            ITMVoxelVolume<TWarp, TIndex>* warpField,
                                                            ITMRenderState* renderState) {
 
@@ -208,11 +208,11 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessFrame(const ITMView* view, 
 	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Cannot track motion for full frame when in step-by-step mode");
 	}
-	InitializeProcessing(view, trackingState, warpField, &liveScenePair[0], renderState);
+	InitializeProcessing(view, trackingState, warpField, liveScenePair[0], renderState);
 	bench::StartTimer("TrackMotion");
-	TrackFrameMotion(canonicalScene, liveScenePair, warpField);
+	ITMVoxelVolume<TVoxel, TIndex>* finalWarpedLiveScene = TrackFrameMotion(canonicalScene, liveScenePair, warpField);
 	bench::StopTimer("TrackMotion");
-	FinalizeProcessing(canonicalScene, liveScenePair, renderState);
+	FinalizeProcessing(canonicalScene, finalWarpedLiveScene, renderState);
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
@@ -235,7 +235,7 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::UpdateVisibleList(
 template<typename TVoxel, typename TWarp, typename TIndex>
 ITMVoxelVolume<TVoxel, TIndex>* ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::TrackFrameMotion(
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
-		ITMVoxelVolume<TVoxel, TIndex>* liveScenePair,
+		ITMVoxelVolume<TVoxel, TIndex>** liveScenePair,
 		ITMVoxelVolume<TWarp, TIndex>* warpField) {
 	if (analysisFlags.restrictZtrackingForDebugging) {
 		std::cout << red << "WARNING: UPDATES IN Z DIRECTION HAVE BEEN DISABLED FOR DEBUGGING"
@@ -248,12 +248,12 @@ ITMVoxelVolume<TVoxel, TIndex>* ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::Tr
 	for (int iteration = 0; SceneMotionOptimizationConditionNotReached(); iteration++) {
 		sourceLiveSceneIndex = iteration % 2;
 		targetLiveSceneIndex = (iteration + 1) % 2;
-		PerformSingleOptimizationStep(canonicalScene, &liveScenePair[sourceLiveSceneIndex],
-		                              &liveScenePair[targetLiveSceneIndex], warpField, iteration);
+		PerformSingleOptimizationStep(canonicalScene, liveScenePair[sourceLiveSceneIndex],
+		                              liveScenePair[targetLiveSceneIndex], warpField, iteration);
 	}
 	bench::StopTimer("TrackMotion_3_Optimization");
 	PrintOperationStatus("*** Warp optimization finished for current frame. ***");
-	return &liveScenePair[targetLiveSceneIndex];
+	return liveScenePair[targetLiveSceneIndex];
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
@@ -341,7 +341,7 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::BeginProcessingFrameInStepByStepMo
 template<typename TVoxel, typename TWarp, typename TIndex>
 bool ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::TakeNextStepInStepByStepMode(
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
-		ITMVoxelVolume<TVoxel, TIndex>* liveScenePair,
+		ITMVoxelVolume<TVoxel, TIndex>** liveScenePair,
 		ITMVoxelVolume<TWarp, TIndex>* warpField,
 		ITMRenderState* renderState) {
 	if (!inStepByStepProcessingMode) {
@@ -350,12 +350,15 @@ bool ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::TakeNextStepInStepByStepMode(
 	if (SceneMotionOptimizationConditionNotReached()) {
 		int sourceLiveSceneIndex = iteration % 2;
 		int targetLiveSceneIndex = (iteration + 1) % 2;
-		PerformSingleOptimizationStep(canonicalScene, &liveScenePair[sourceLiveSceneIndex],
-		                              &liveScenePair[targetLiveSceneIndex], warpField, iteration);
+		PerformSingleOptimizationStep(canonicalScene,
+		                              liveScenePair[sourceLiveSceneIndex],
+		                              liveScenePair[targetLiveSceneIndex],
+		                              warpField, iteration);
 		iteration++;
 		return true;
 	} else {
-		FinalizeProcessing(canonicalScene, liveScenePair, renderState);
+		int finalLiveSceneIndex = iteration % 2;
+		FinalizeProcessing(canonicalScene, liveScenePair[finalLiveSceneIndex], renderState);
 		inStepByStepProcessingMode = false;
 		return false;
 	}
