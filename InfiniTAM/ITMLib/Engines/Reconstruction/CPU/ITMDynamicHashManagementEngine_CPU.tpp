@@ -231,7 +231,7 @@ struct WarpBasedAllocationMarkerFunctor {
 			ITMVoxelVolume<TVoxelTSDF, ITMVoxelBlockHash>* sourceVolume,
 			ITMVoxelVolume<TVoxelTSDF, ITMVoxelBlockHash>* volumeToAllocate,
 			Vector3s* allocationBlockCoords,
-			uchar* warpedEntryAllocationTypes) :
+			uchar* warpedEntryAllocationStates) :
 
 			targetTSDFScene(volumeToAllocate),
 			targetTSDFVoxels(volumeToAllocate->localVBA.GetVoxelBlocks()),
@@ -244,7 +244,7 @@ struct WarpBasedAllocationMarkerFunctor {
 			sourceTSDFCache(),
 
 			allocationBlockCoords(allocationBlockCoords),
-			warpedEntryAllocationTypes(warpedEntryAllocationTypes) {}
+			warpedEntryAllocationStates(warpedEntryAllocationStates) {}
 
 	void operator()(TVoxelWarpSource& voxel, Vector3i voxelPosition, Vector3s hashBlockPosition) {
 		Vector3f warpedPosition = TLookupPositionFunctor::GetWarpedPosition(voxel, voxelPosition);
@@ -262,7 +262,7 @@ struct WarpBasedAllocationMarkerFunctor {
 
 		int liveBlockHash = hashIndex(hashBlockPosition);
 		bool collisionDetected = false;
-		if (MarkAsNeedingAllocationIfNotFound(warpedEntryAllocationTypes, allocationBlockCoords, liveBlockHash,
+		if (MarkAsNeedingAllocationIfNotFound(warpedEntryAllocationStates, allocationBlockCoords, liveBlockHash,
 		                                      hashBlockPosition, targetTSDFHashEntries, collisionDetected)) {
 			countToAllocate++;
 		}
@@ -284,7 +284,7 @@ private:
 	ITMVoxelBlockHash::IndexCache sourceTSDFCache;
 
 	Vector3s* allocationBlockCoords;
-	uchar* warpedEntryAllocationTypes;
+	uchar* warpedEntryAllocationStates;
 };
 
 
@@ -310,18 +310,18 @@ void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateFromWarpedVolume
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
 	int entryCount = ITMVoxelBlockHash::noTotalEntries;
 	Vector3s* allocationBlockCoordinatesData = this->targetSceneHashBlockCoordinates->GetData(MEMORYDEVICE_CPU);
-	uchar* liveEntryAllocationTypesData = this->liveSceneHashBlockStates->GetData(MEMORYDEVICE_CPU);
+	uchar* liveEntryAllocationStates = this->liveSceneHashBlockStates->GetData(MEMORYDEVICE_CPU);
 	//reset allocation types
-	memset(liveEntryAllocationTypesData, (unsigned char) 0, static_cast<size_t>(entryCount));
+	memset(liveEntryAllocationStates, (unsigned char) 0, static_cast<size_t>(entryCount));
 
 	//Mark up hash entries in the target scene that will need allocation
 	WarpBasedAllocationMarkerFunctor<TWarp, TVoxel, WarpVoxelStaticFunctor<TWarp, TWarpType>>
-			hashMarkerFunctor(sourceTSDF, targetTSDF, allocationBlockCoordinatesData, liveEntryAllocationTypesData);
+			hashMarkerFunctor(sourceTSDF, targetTSDF, allocationBlockCoordinatesData, liveEntryAllocationStates);
 	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::VoxelAndHashBlockPositionTraversal(
 			warpField, hashMarkerFunctor);
 
 	//Allocate the hash entries that will potentially have any data
-	AllocateHashEntriesUsingLists_CPU(sourceTSDF, liveEntryAllocationTypesData, allocationBlockCoordinatesData);
+	AllocateHashEntriesUsingLists_CPU(targetTSDF, liveEntryAllocationStates, allocationBlockCoordinatesData);
 }
 
 

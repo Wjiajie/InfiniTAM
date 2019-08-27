@@ -245,7 +245,7 @@ ITMVoxelVolume<TVoxel, TIndex>* ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::Tr
 	bench::StartTimer("TrackMotion_3_Optimization");
 	int sourceLiveSceneIndex = 0;
 	int targetLiveSceneIndex = 0;
-	for (int iteration = 0; SceneMotionOptimizationConditionNotReached(); iteration++) {
+	for (iteration = 0; SceneMotionOptimizationConditionNotReached(); iteration++) {
 		sourceLiveSceneIndex = iteration % 2;
 		targetLiveSceneIndex = (iteration + 1) % 2;
 		PerformSingleOptimizationStep(canonicalScene, liveScenePair[sourceLiveSceneIndex],

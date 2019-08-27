@@ -60,9 +60,9 @@ struct TrilinearInterpolationFunctor {
 			sdfSourceIndexData(sourceTSDF->index.getIndexData()),
 			sdfSourceCache(),
 
-			warpSourceScene(warpSourceScene),
-			warpSourceVoxels(warpSourceScene->localVBA.GetVoxelBlocks()),
-			warpSourceHashEntries(warpSourceScene->index.getIndexData()),
+			warpSourceScene(warpField),
+			warpSourceVoxels(warpField->localVBA.GetVoxelBlocks()),
+			warpSourceHashEntries(warpField->index.getIndexData()),
 			warpSourceCache(),
 
 			hasFocusCoordinates(ITMLib::ITMLibSettings::Instance().FocusCoordinatesAreSpecified()),

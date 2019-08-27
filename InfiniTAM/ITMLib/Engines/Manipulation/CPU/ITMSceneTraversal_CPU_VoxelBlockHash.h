@@ -827,25 +827,23 @@ public:
 #pragma omp parallel for
 #endif
 		for (int hash = 0; hash < noTotalEntries; hash++) {
-
-			const ITMHashEntry& currentWarpHashEntry = warpHashTable[hash];
-			if (currentWarpHashEntry.ptr < 0) continue;
-
-			ITMHashEntry currentPrimaryHashEntry = primaryHashTable[hash];
+			const ITMHashEntry& currentPrimaryHashEntry = primaryHashTable[hash];
+			if (currentPrimaryHashEntry.ptr < 0) continue;
+			ITMHashEntry currentWarpHashEntry = warpHashTable[hash];
 			ITMHashEntry currentSecondaryHashEntry = secondaryHashTable[hash];
 
 			// the rare case where we have different positions for warp & primary voxel block with the same index:
 			// we have a hash bucket miss, find the primary voxel with the matching coordinates
 			if (currentPrimaryHashEntry.pos != currentWarpHashEntry.pos) {
-				int primaryHash;
-				if (!FindHashAtPosition(primaryHash, currentWarpHashEntry.pos, primaryHashTable)) {
+				int warpHash;
+				if (!FindHashAtPosition(warpHash, currentPrimaryHashEntry.pos, warpHashTable)) {
 					std::stringstream stream;
-					stream << "Could not find corresponding secondary scene block at postion "
+					stream << "Could not find corresponding warp scene block at position "
 					       << currentWarpHashEntry.pos
 					       << ". " << __FILE__ << ": " << __LINE__;
 					DIEWITHEXCEPTION(stream.str());
 				} else {
-					currentPrimaryHashEntry = primaryHashTable[primaryHash];
+					currentWarpHashEntry = warpHashTable[warpHash];
 				}
 			}
 			// the rare case where we have different positions for primary & secondary voxel block with the same index:
@@ -905,23 +903,22 @@ public:
 #pragma omp parallel for
 #endif
 		for (int hash = 0; hash < noTotalEntries; hash++) {
-			const ITMHashEntry& currentWarpHashEntry = warpHashTable[hash];
-			if (currentWarpHashEntry.ptr < 0) continue;
-
-			ITMHashEntry currentPrimaryHashEntry = primaryHashTable[hash];
+			const ITMHashEntry& currentPrimaryHashEntry = primaryHashTable[hash];
+			ITMHashEntry currentWarpHashEntry = warpHashTable[hash];
 			ITMHashEntry currentSecondaryHashEntry = secondaryHashTable[hash];
+			if (currentPrimaryHashEntry.ptr < 0) continue;
 			// the rare case where we have different positions for warp & primary voxel block with the same index:
 			// we have a hash bucket miss, find the primary voxel with the matching coordinates
 			if (currentPrimaryHashEntry.pos != currentWarpHashEntry.pos) {
-				int primaryHash;
-				if (!FindHashAtPosition(primaryHash, currentWarpHashEntry.pos, primaryHashTable)) {
+				int warpHash;
+				if (!FindHashAtPosition(warpHash, currentPrimaryHashEntry.pos, warpHashTable)) {
 					std::stringstream stream;
-					stream << "Could not find corresponding secondary scene block at postion "
+					stream << "Could not find corresponding warp scene block at position "
 					       << currentWarpHashEntry.pos
 					       << ". " << __FILE__ << ": " << __LINE__;
 					DIEWITHEXCEPTION(stream.str());
 				} else {
-					currentPrimaryHashEntry = primaryHashTable[primaryHash];
+					currentWarpHashEntry = warpHashTable[warpHash];
 				}
 			}
 			// the rare case where we have different positions for primary & secondary voxel block with the same index:

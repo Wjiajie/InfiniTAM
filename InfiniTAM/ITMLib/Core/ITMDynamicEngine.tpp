@@ -293,8 +293,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ProcessFrame(ITMUChar4Image* rgbImage,
 	if ((lastTrackerResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) &&
 	    (relocalisationCount == 0)) {
 		if (framesProcessed > 0) {
-			denseMapper->ProcessFrame(view, trackingState, canonicalScene, liveScenes, nullptr,
-			                          renderState_live);
+			denseMapper->ProcessFrame(view, trackingState, canonicalScene, liveScenes, warpField, renderState_live);
 		} else {
 			denseMapper->ProcessInitialFrame(view, trackingState, canonicalScene, liveScenes[0], renderState_live);
 		}
