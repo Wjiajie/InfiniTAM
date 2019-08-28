@@ -84,7 +84,7 @@ inline static void PrintSceneStatistics(
 	std::cout << green << "=== Stats for scene '" << description << "' ===" << reset << std::endl;
 	std::cout << "    Total voxel count: " << calculator.ComputeAllocatedVoxelCount(scene) << std::endl;
 	std::cout << "    NonTruncated voxel count: " << calculator.ComputeNonTruncatedVoxelCount(scene) << std::endl;
-	std::cout << "    +1.0 voxel count: " << calculator.ComputeVoxelWithValueCount(scene, 1.0f) << std::endl;
+	std::cout << "    +1.0 voxel count: " << calculator.ComputeVoxelWithNonZeroSdfCount(scene, 1.0f) << std::endl;
 	std::vector<int> allocatedHashes = calculator.GetFilledHashBlockIds(scene);
 	std::cout << "    Allocated hash count: " << allocatedHashes.size() << std::endl;
 	std::cout << "    NonTruncated SDF sum: " << calculator.ComputeNonTruncatedVoxelAbsSdfSum(scene) << std::endl;

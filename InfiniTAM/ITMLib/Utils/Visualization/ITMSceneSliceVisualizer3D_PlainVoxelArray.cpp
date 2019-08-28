@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 7/13/18.
+//  Created by Gregory Kramida on 6/20/18.
 //  Copyright (c) 2018-2025 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
 //  ================================================================
 
 #include "../../ITMLibDefines.h"
-#include "../../Utils/FileIO/ITMDynamicFusionLogger.tpp"
+#include "ITMSceneSliceVisualizer3D.tpp"
+#include "ITMSceneSliceVisualizer3DInteractorStyle.tpp"
 
-template class ITMDynamicFusionLogger<ITMVoxel, ITMWarp, ITMVoxelBlockHash>;
+template class ITMSceneSliceVisualizer3D<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;
+template class ITMSceneSliceVisualizer3DInteractorStyle<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;

@@ -28,6 +28,7 @@
 #include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
+#include "ITMWriteAndReadFunctors.h"
 
 using namespace ITMLib;
 

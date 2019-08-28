@@ -13,6 +13,9 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+#include <fstream>
+#include <iostream>
+#include <algorithm>
 #include "ITM3DNestedMapOfArrays.h"
 
 using namespace ITMLib;

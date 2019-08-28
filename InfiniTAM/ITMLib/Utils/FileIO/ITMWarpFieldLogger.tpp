@@ -25,6 +25,7 @@
 #include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 #include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../../Engines/SceneFileIO/ITMSceneFileIOEngine.h"
+#include "ITMWriteAndReadFunctors.h"
 
 
 using namespace ITMLib;
@@ -387,38 +388,9 @@ void ITMWarpFieldLogger<TVoxel, TIndex>::StopSavingWarpState() {
 }
 
 
-template<typename TVoxel>
-struct WarpAndUpdateWriteFunctor {
-	WarpAndUpdateWriteFunctor(std::ofstream* warpOFStream,
-	                          size_t warpByteSize,
-	                          size_t updateByteSize) : warpOFStream(warpOFStream),
-	                                                   warpByteSize(warpByteSize),
-	                                                   updateByteSize(updateByteSize) {}
 
-	void operator()(TVoxel& voxel) {
-		warpOFStream->write(reinterpret_cast<const char* >(&voxel.flow_warp), warpByteSize);
-		warpOFStream->write(reinterpret_cast<const char* >(&voxel.warp_update), updateByteSize);
-	}
 
-private:
-	std::ofstream* warpOFStream;
-	const size_t warpByteSize;
-	const size_t updateByteSize;
-};
 
-//TODO: experimental replacement candidate -Greg
-template<typename TVoxel>
-struct WarpAndUpdateWriteFunctor_Experimental {
-	WarpAndUpdateWriteFunctor_Experimental(std::ofstream* warpOFStream) : warpOFStream(warpOFStream) {}
-
-	void operator()(TVoxel& voxel) {
-		warpOFStream->write(reinterpret_cast<const char* >(&voxel.warp), sizeof(voxel.warp));
-		warpOFStream->write(reinterpret_cast<const char* >(&voxel.warp_update), sizeof(voxel.warp_update));
-	}
-
-private:
-	std::ofstream* warpOFStream;
-};
 
 
 template<typename TVoxel, typename TIndex>
@@ -489,25 +461,6 @@ void ITMWarpFieldLogger<TVoxel, TIndex>::StopLoadingWarpState() {
 	warpIFStream.close();
 }
 
-
-template<typename TVoxel>
-struct WarpAndUpdateReadFunctor {
-	WarpAndUpdateReadFunctor(std::ifstream* warpIFStream,
-	                         size_t warpByteSize,
-	                         size_t updateByteSize) : warpIFStream(warpIFStream),
-	                                                  warpByteSize(warpByteSize),
-	                                                  updateByteSize(updateByteSize) {}
-
-	void operator()(TVoxel& voxel) {
-		warpIFStream->read(reinterpret_cast<char*>(&voxel.flow_warp), warpByteSize);
-		warpIFStream->read(reinterpret_cast<char*>(&voxel.warp_update), updateByteSize);
-	}
-
-private:
-	std::ifstream* warpIFStream;
-	const size_t warpByteSize;
-	const size_t updateByteSize;
-};
 
 /**
  * \brief Transfers the warp state from the warp file to the scene, imitating the .warp and .gradient fields after

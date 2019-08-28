@@ -16,6 +16,7 @@
 
 #include "ITMSceneManipulationEngine_CUDA.h"
 #include "../../../Utils/ITMCUDAUtils.h"
+#include "../../../../ORUtils/PlatformIndependence.h"
 
 using namespace ITMLib;
 

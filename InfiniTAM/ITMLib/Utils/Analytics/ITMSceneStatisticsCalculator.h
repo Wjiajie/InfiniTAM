@@ -15,6 +15,7 @@
 //  ================================================================
 #pragma once
 
+#include <vector>
 #include "../ITMMath.h"
 #include "../../Objects/Scene/ITMVoxelVolume.h"
 
@@ -36,7 +37,7 @@ public:
 	int ComputeAllocatedHashBlockCount(ITMVoxelVolume<TVoxel, TIndex>* scene);
 
 	int ComputeNonTruncatedVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene);
-	int ComputeVoxelWithValueCount(ITMVoxelVolume<TVoxel, TIndex>* scene, float value);
+	int ComputeVoxelWithNonZeroSdfCount(ITMVoxelVolume<TVoxel, TIndex>* scene, float value);
 	double ComputeNonTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene);
 	double ComputeTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene);
 

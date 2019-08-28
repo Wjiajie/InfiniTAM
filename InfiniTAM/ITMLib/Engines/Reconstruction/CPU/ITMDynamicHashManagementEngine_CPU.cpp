@@ -13,9 +13,10 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "../../Engines/Reconstruction/CPU/ITMDynamicHashManagementEngine_CPU.tpp"
-#include "../../ITMLibDefines.h"
+#include "ITMDynamicHashManagementEngine_CPU.tpp"
+#include "../../../ITMLibDefines.h"
 
+namespace ITMLib{
 template class ITMDynamicHashManagementEngine_CPU<ITMVoxel,ITMWarp>;
 
 template void ITMDynamicHashManagementEngine_CPU<ITMVoxel,ITMWarp>::AllocateFromWarpedVolume<WarpType::WARP_CUMULATIVE>(
@@ -33,3 +34,4 @@ template void ITMDynamicHashManagementEngine_CPU<ITMVoxel,ITMWarp>::AllocateFrom
 		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* sourceTSDF,
 		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* targetTSDF
 );
+}//namespace ITMLib

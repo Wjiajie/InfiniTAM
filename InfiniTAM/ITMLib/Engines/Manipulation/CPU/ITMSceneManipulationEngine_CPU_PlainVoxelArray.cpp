@@ -14,11 +14,11 @@
 //  limitations under the License.
 //  ================================================================
 
-#include "../../ITMLibDefines.h"
+#include "../../../ITMLibDefines.h"
 
 //Note: ".tpp" files have to be included for all explicit instantiations in order to link properly
-#include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.tpp"
-#include "../../Objects/Scene/ITMVoxelVolume.h"
+#include "ITMSceneManipulationEngine_CPU.tpp"
+#include "../../../Objects/Scene/ITMVoxelVolume.h"
 
 using namespace ITMLib;
 

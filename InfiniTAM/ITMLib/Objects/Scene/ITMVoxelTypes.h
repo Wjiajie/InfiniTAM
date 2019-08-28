@@ -14,6 +14,7 @@ struct ITMVoxel_f_rgb
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
 	_CPU_AND_GPU_CODE_ static float floatToValue(float x) { return x; }
 
+	static const CONSTPTR(bool) hasSDFInformation = true;
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
@@ -50,6 +51,7 @@ struct ITMVoxel_s_rgb
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return (float)(x) / 32767.0f; }
 	_CPU_AND_GPU_CODE_ static short floatToValue(float x) { return (short)((x) * 32767.0f); }
 
+	static const CONSTPTR(bool) hasSDFInformation = true;
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
@@ -85,6 +87,7 @@ struct ITMVoxel_s
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return (float)(x) / 32767.0f; }
 	_CPU_AND_GPU_CODE_ static short floatToValue(float x) { return (short)((x) * 32767.0f); }
 
+	static const CONSTPTR(bool) hasSDFInformation = true;
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
@@ -113,6 +116,7 @@ struct ITMVoxel_f
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
 	_CPU_AND_GPU_CODE_ static float floatToValue(float x) { return x; }
 
+	static const CONSTPTR(bool) hasSDFInformation = true;
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
@@ -141,6 +145,7 @@ struct ITMVoxel_f_conf
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
 	_CPU_AND_GPU_CODE_ static float floatToValue(float x) { return x; }
 
+	static const CONSTPTR(bool) hasSDFInformation = true;
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
@@ -172,6 +177,7 @@ struct ITMVoxel_s_rgb_conf
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return (float)(x) / 32767.0f; }
 	_CPU_AND_GPU_CODE_ static short floatToValue(float x) { return (short)((x) * 32767.0f); }
 
+	static const CONSTPTR(bool) hasSDFInformation = true;
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
@@ -209,6 +215,7 @@ struct ITMVoxel_f_rgb_conf
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
 	_CPU_AND_GPU_CODE_ static float floatToValue(float x) { return x; }
 
+	static const CONSTPTR(bool) hasSDFInformation = true;
 	static const CONSTPTR(bool) hasColorInformation = true;
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
@@ -242,6 +249,7 @@ struct ITMVoxel_f_rgb_conf
 
 
 struct ITMVoxel_f_warp{
+	static const CONSTPTR(bool) hasSDFInformation = false;
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
@@ -273,6 +281,7 @@ struct ITMVoxel_f_flags
 	_CPU_AND_GPU_CODE_ static float valueToFloat(float x) { return x; }
 	_CPU_AND_GPU_CODE_ static float floatToValue(float x) { return x; }
 
+	static const CONSTPTR(bool) hasSDFInformation = true;
 	static const CONSTPTR(bool) hasColorInformation = false;
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = true;

@@ -27,45 +27,19 @@ find_package(Boost REQUIRED filesystem)
 
 ##
 set(ITMLIB_TOPLEVEL_CPU_SOURCES
-    
 	## VBH - CPU
 	Instantiations/VoxelBlockHash/CPUInstantiations.cpp
-    Instantiations/VoxelBlockHash/SceneManipulationCPUInstantiations.cpp
-    Instantiations/VoxelBlockHash/DynamicFusionCPUInstantiations.cpp
-    Instantiations/VoxelBlockHash/DynamicFusionLoggerInstantiation.cpp
-	Instantiations/VoxelBlockHash/DynamicSceneReconstructionEngineCPUInstantiations.cpp
-    Instantiations/VoxelBlockHash/DenseDynamicMapperInstantiation.cpp
-    Instantiations/VoxelBlockHash/DynamicHashManagementEngineCPUInstantiation.cpp
-    Instantiations/VoxelBlockHash/SceneMotionTrackerCPUInstantiation.cpp
-    Instantiations/VoxelBlockHash/ITMScene3DSliceVisualizerInstantiations.cpp
-
     ## PVA - CPU
     Instantiations/PlainVoxelArray/CPUInstantiations.cpp
-	Instantiations/PlainVoxelArray/SceneManipulationCPUInstantiations.cpp
-    Instantiations/PlainVoxelArray/DynamicFusionCPUInstantiations.cpp
-    Instantiations/PlainVoxelArray/DynamicFusionLoggerInstantiation.cpp
-    Instantiations/PlainVoxelArray/DynamicSceneReconstructionEngineCPUInstantiations.cpp
-    Instantiations/PlainVoxelArray/DenseDynamicMapperInstantiation.cpp
-    Instantiations/PlainVoxelArray/SceneMotionTrackerCPUInstantiation.cpp
-    Instantiations/PlainVoxelArray/ITMScene3DSliceVisualizerInstantiations.cpp
     )
 
 set(ITMLIB_TOPLEVEL_CUDA_SOURCES
     ## VBH - CUDA
     Instantiations/VoxelBlockHash/CUDAInstantiations.cu
 	Instantiations/VoxelBlockHash/SurfelCUDAInstantiations.cu
-    Instantiations/VoxelBlockHash/DynamicFusionCUDAInstantiations.cu
-    Instantiations/VoxelBlockHash/SceneMotionTrackerCUDAInstantiation.cu
-    Instantiations/VoxelBlockHash/SceneManipulationCUDAInstantiations.cu
-    Instantiations/VoxelBlockHash/DynamicSceneReconstructionEngineCUDAInstantiations.cu
-
-    ## PVA - CUDA
+	## PVA - CUDA
     Instantiations/PlainVoxelArray/CUDAInstantiations.cu
-    Instantiations/PlainVoxelArray/DynamicFusionCUDAInstantiations.cu
-    Instantiations/PlainVoxelArray/SceneMotionTrackerCUDAInstantiation.cu
-    Instantiations/PlainVoxelArray/SceneManipulationCUDAInstantiations.cu
-    Instantiations/PlainVoxelArray/DynamicSceneReconstructionEngineCUDAInstantiations.cu
-    )
+	)
 
 set(ITMLIB_TOPLEVEL_HEADERS
     ITMLibDefines.h
@@ -78,8 +52,12 @@ set(ITMLIB_CORE_SOURCES
     Core/ITMDenseMapper.tpp
     Core/ITMDenseSurfelMapper.tpp
     Core/ITMDenseDynamicMapper.tpp
+	Core/ITMDenseDynamicMapper_PlainVoxelArray.cpp
+	Core/ITMDenseDynamicMapper_VoxelBlockHash.cpp
     Core/ITMMultiEngine.tpp
     Core/ITMDynamicEngine.tpp
+	Core/ITMDynamicEngine_VoxelBlockHash.cpp
+	Core/ITMDynamicEngine_PlainVoxelArray.cpp
     )
 
 set(ITMLIB_CORE_HEADERS
@@ -147,7 +125,8 @@ set(ITMLIB_ENGINES_MANIPULATION_INTERFACE_HEADERS
 set(ITMLIB_ENGINES_MANIPULATION_CPU_SOURCES
     Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.cpp
     Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.tpp
-
+	Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU_VoxelBlockHash.cpp
+	Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU_PlainVoxelArray.cpp
     )
 
 set(ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS
@@ -159,6 +138,8 @@ set(ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS
 ##
 set(ITMLIB_ENGINES_MANIPULATION_CUDA_SOURCES
     Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.tcu
+	Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_VoxelBlockHash.cu
+	Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_PlainVoxelArray.cu
     )
 
 set(ITMLIB_ENGINES_MANIPULATION_CUDA_HEADERS
@@ -236,9 +217,12 @@ set(ITMLIB_ENGINES_RECONSTRUCTION_HEADERS
 set(ITMLIB_ENGINES_RECONSTRUCTION_CPU_SOURCES
     Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.tpp
     Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU_VoxelBlockHash.tpp
+	Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU_VoxelBlockHash.cpp
     Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU_PlainVoxelArray.tpp
+	Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU_PlainVoxelArray.cpp
     Engines/Reconstruction/CPU/ITMSurfelSceneReconstructionEngine_CPU.tpp
     Engines/Reconstruction/CPU/ITMDynamicHashManagementEngine_CPU.tpp
+	Engines/Reconstruction/CPU/ITMDynamicHashManagementEngine_CPU.cpp
     )
 
 set(ITMLIB_ENGINES_RECONSTRUCTION_CPU_HEADERS
@@ -253,7 +237,9 @@ set(ITMLIB_ENGINES_RECONSTRUCTION_CUDA_SOURCES
     Engines/Reconstruction/CUDA/ITMSceneReconstructionEngine_CUDA.tcu
     Engines/Reconstruction/CUDA/ITMSurfelSceneReconstructionEngine_CUDA.tcu
     Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA_PlainVoxelArray.tcu
+	Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA_PlainVoxelArray.cu
     Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA_VoxelBlockHash.tcu
+	Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA_VoxelBlockHash.cu
     )
 
 set(ITMLIB_ENGINES_RECONSTRUCTION_CUDA_HEADERS
@@ -287,6 +273,8 @@ set(ITMLIB_ENGINES_SCENEFILEIO_HEADERS
     )
 set(ITMLIB_ENGINES_SCENEFILEIO_SOURCES
     Engines/SceneFileIO/ITMSceneFileIOEngine.tpp
+	Engines/SceneFileIO/ITMSceneFileIOEngine_PlainVoxelArray.cpp
+	Engines/SceneFileIO/ITMSceneFileIOEngine_VoxelBlockHash.cpp
     )
 ## ======================================= SWAPPING ENGINES ============================================================
 set(ITMLIB_ENGINES_SWAPPING_HEADERS
@@ -575,7 +563,9 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_SOURCES
     SceneMotionTrackers/CPU/ITMWarpGradientCommon.h
     SceneMotionTrackers/Shared/ITMCalculateWarpGradientBasedOnWarpedLiveFunctor.h
     SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.tpp
+	SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.cpp
     SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.tpp
+	SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.cpp
     )
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_HEADERS
@@ -585,7 +575,9 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_HEADERS
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_SOURCES
     SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_PlainVoxelArray.tcu
+	SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_PlainVoxelArray.cu
     SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash.tcu
+	SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash.cu
     )
 set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_HEADERS
     SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA.h
@@ -610,9 +602,13 @@ set (ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS
 # =================================================== UTILITIES ========================================================
 set(ITMLIB_UTILS_SOURCES
     Utils/Collections/ITM3DNestedMapOfArrays.tpp
+	Utils/Collections/ITM3DNestedMapOfArrays.cpp
     Utils/Collections/ITM3DNestedMap.tpp
+	Utils/Collections/ITM3DNestedMap.cpp
 
     Utils/Analytics/ITMSceneStatisticsCalculator.tpp
+	Utils/Analytics/ITMSceneStatisticsCalculator_PlainVoxelArray.cpp
+	Utils/Analytics/ITMSceneStatisticsCalculator_VoxelBlockHash.cpp
     Utils/Analytics/ITMNeighborVoxelIterationInfo.cpp
 
     Utils/ITMLibSettings.cpp
@@ -645,21 +641,30 @@ set(ITMLIB_UTILS_HEADERS
 ##
 
 set(ITMLIB_UTILS_FILEIO_SOURCES
+	Utils/FileIO/ITMDynamicFusionLogger_PlainVoxelArray.cpp
+	Utils/FileIO/ITMDynamicFusionLogger_VoxelBlockHash.cpp
 	Utils/FileIO/ITMSceneLogger.tpp
+	Utils/FileIO/ITMSceneLogger_PlainVoxelArray.cpp
+	Utils/FileIO/ITMSceneLogger_VoxelBlockHash.cpp
 	Utils/FileIO/ITMDynamicFusionLogger.tpp
 	Utils/FileIO/ITMSceneLogger_SceneSlice.tpp
-	Utils/FileIO/ITMWarpFieldLogger.tpp)
+	Utils/FileIO/ITMWarpFieldLogger.tpp
+	Utils/FileIO/ITMWarpFieldLogger_PlainVoxelArray.cpp
+	Utils/FileIO/ITMWarpFieldLogger_VoxelBlockHash.cpp
+	)
 
 set (ITMLIB_UTILS_FILEIO_HEADERS
-     Utils/FileIO/ITMSceneLogger.h
-     Utils/FileIO/ITMDynamicFusionLogger.h
-     Utils/FileIO/ITMWarpFieldLogger.h)
+	 Utils/FileIO/ITMWriteAndReadFunctors.h
+	 Utils/FileIO/ITMSceneLogger.h
+	 Utils/FileIO/ITMDynamicFusionLogger.h
+	 Utils/FileIO/ITMWarpFieldLogger.h)
 ##
 
 set(ITMLIB_UTILS_VISUALIZATION_SOURCES
     Utils/Visualization/ITMSceneSliceVisualizer2D.tpp
-    Utils/Visualization/ITMSceneSliceVisualizer2D.cpp
-    Utils/Visualization/ITMSceneSliceVisualizer1D.cpp
+	Utils/Visualization/ITMSceneSliceVisualizer2D_PlainVoxelArray.cpp
+	Utils/Visualization/ITMSceneSliceVisualizer2D_VoxelBlockHash.cpp
+	Utils/Visualization/ITMSceneSliceVisualizer1D.cpp
     Utils/Visualization/ITMSceneSliceVisualizer1D.tpp
     Utils/Visualization/ITMVisualizationCommon.cpp
     Utils/Visualization/ITMVisualizationWindowManager.cpp
@@ -667,6 +672,8 @@ set(ITMLIB_UTILS_VISUALIZATION_SOURCES
     Utils/Visualization/ITMSceneSliceVisualizer3D.tpp
     Utils/Visualization/ITMSceneSliceVisualizer3DInteractorStyle.tpp
     Utils/Visualization/ITMSceneSliceVisualizer3DCommon.cpp
+	Utils/Visualization/ITMSceneSliceVisualizer3D_PlainVoxelArray.cpp
+	Utils/Visualization/ITMSceneSliceVisualizer3D_VoxelBlockHash.cpp
     )
 
 set(ITMLIB_UTILS_VISUALIZATION_HEADERS

@@ -14,11 +14,15 @@
 //  limitations under the License.
 //  ================================================================
 
-#include "../../SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash.tcu"
-#include "../../ITMLibDefines.h"
+#include "../../../ITMLibDefines.h"
 
-namespace ITMLib{
+//Note: ".tpp" files have to be included for all explicit instantiations in order to link properly
+#include "ITMSceneManipulationEngine_CUDA.tcu"
+#include "../../../Objects/Scene/ITMVoxelVolume.h"
 
-template class ITMSceneMotionTracker_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash>;
+using namespace ITMLib;
 
-}
+//scene manipulation functions
+
+template class ITMSceneManipulationEngine_CUDA<ITMVoxel,ITMPlainVoxelArray>;
+template class ITMSceneManipulationEngine_CUDA<ITMWarp,ITMPlainVoxelArray>;

@@ -15,13 +15,17 @@
 //  ================================================================
 #pragma once
 
-
-#include "../../Objects/Scene/ITMVoxelVolume.h"
 //boost
 #include <boost/filesystem.hpp>
+
+//local
+#include "../../Objects/Scene/ITMVoxelVolume.h"
+#include "../Collections/ITM3DNestedMapOfArrays.h"
+#include "../Analytics/ITMNeighborVoxelIterationInfo.h"
+
 namespace fs = boost::filesystem;
 
-namespace ITMLib{
+namespace ITMLib {
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 class ITMSceneLogger;
@@ -35,9 +39,10 @@ class ITMSceneLogger;
  * \tparam TIndex Type of voxel index.
  */
 template<typename TWarp, typename TIndex>
-class ITMWarpFieldLogger{
+class ITMWarpFieldLogger {
 	template<typename TVoxelLogger, typename TWarpLogger, typename TIndexLogger>
-	friend class ITMSceneLogger;
+	friend
+	class ITMSceneLogger;
 public:
 	// region ================================ STATIC CONSTANTS ========================================================
 	static const size_t warpByteSize;
@@ -55,7 +60,7 @@ public:
 
 	static const std::string sliceFolderPrefix;
 	static const std::string sliceScenePrefix;
-	static const std::string continuousHighlightsPostfix ;
+	static const std::string continuousHighlightsPostfix;
 	//endregion
 	// region ================================ STATIC FUNCTIONS ========================================================
 
@@ -64,18 +69,18 @@ public:
 	static std::string GenerateSliceStringIdentifier(const Vector6i& bounds);
 	static boost::filesystem::path GenerateSliceFolderPath(const fs::path& fullScenePath, const Vector6i& bounds);
 	static boost::filesystem::path GenerateSliceFolderPath(const fs::path& fullScenePath,
-		                                                       const std::string& sliceIdentifier);
+	                                                       const std::string& sliceIdentifier);
 	static std::string GenerateSliceSceneFilename_UpToPostfix(const fs::path& fullScenePath,
 	                                                          const Vector6i& bounds);
 	static std::string GenerateSliceSceneFilename_UpToPostfix(const fs::path& fullScenePath,
-		                                                          const std::string& sliceIdentifier);
+	                                                          const std::string& sliceIdentifier);
 	static std::string GenerateSliceSceneFilename_Full(const fs::path& fullScenePath,
 	                                                   const Vector6i& bounds);
 	static std::string GenerateSliceSceneFilename_Full(const fs::path& fullScenePath,
-		                                                   const std::string& sliceIdentifier);
+	                                                   const std::string& sliceIdentifier);
 	static std::string GenerateSliceWarpFilename(const fs::path& rootScenePath, const Vector6i& bounds);
 	static std::string GenerateSliceWarpFilename(const fs::path& rootScenePath,
-		                                             const std::string& sliceIdentifier);
+	                                             const std::string& sliceIdentifier);
 
 	// endregion
 	// region ================================ CONSTRUCTORS & DESTRUCTORS ==============================================
@@ -95,7 +100,7 @@ public:
 	bool Loaded() const;
 	void Load();
 	std::string GetSliceIdentifier() const;
-	const ITMVoxelVolume<TWarp,TIndex>* GetScene() const;
+	const ITMVoxelVolume <TWarp, TIndex>* GetScene() const;
 
 	//*** scene saving / loading ***
 	void Save();
@@ -143,8 +148,8 @@ private:
 	fs::path highlightsTextPath;
 
 	// data structures
-	ITMVoxelVolume<TWarp, TIndex>* warpField;
-	ITM3DNestedMapOfArrays<ITMHighlightIterationInfo> highlights;
+	ITMVoxelVolume <TWarp, TIndex>* warpField;
+	ITM3DNestedMapOfArrays <ITMHighlightIterationInfo> highlights;
 	int minHighlightRecurrenceCount = 0;
 
 	// iterators & stats

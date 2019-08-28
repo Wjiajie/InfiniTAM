@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 5/22/18.
+//  Created by Gregory Kramida on 6/19/18.
 //  Copyright (c) 2018-2025 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -13,16 +13,10 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "../../ITMLibDefines.h"
-
-#include "../../Engines/Swapping/CUDA/ITMSwappingEngine_CUDA.tcu"
-#include "../../Engines/Visualisation/CUDA/ITMVisualisationEngine_CUDA.tcu"
-#include "../../Engines/Meshing/CUDA/ITMMeshingEngine_CUDA.tcu"
+#include "ITMDynamicSceneReconstructionEngine_CUDA_VoxelBlockHash.tcu"
+#include "../../../ITMLibDefines.h"
 
 namespace ITMLib {
-
-template class ITMSwappingEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>;
-template class ITMVisualisationEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>;
-template class ITMMeshingEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>;
-
+template
+class ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash>;
 }
