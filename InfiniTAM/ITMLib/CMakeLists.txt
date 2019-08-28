@@ -610,10 +610,12 @@ set(ITMLIB_UTILS_SOURCES
 	Utils/Analytics/ITMSceneStatisticsCalculator_PlainVoxelArray.cpp
 	Utils/Analytics/ITMSceneStatisticsCalculator_VoxelBlockHash.cpp
     Utils/Analytics/ITMNeighborVoxelIterationInfo.cpp
+	Utils/Analytics/ITMBenchmarkUtils.cpp
 
     Utils/ITMLibSettings.cpp
     Utils/ITMPrintHelpers.cpp
-    Utils/Analytics/ITMBenchmarkUtils.cpp
+	Utils/ITMAlmostEqual.tpp
+	Utils/ITMAlmostEqual.cpp
     )
 
 set(ITMLIB_UTILS_HEADERS
@@ -623,6 +625,7 @@ set(ITMLIB_UTILS_HEADERS
     Utils/Analytics/ITMSceneStatisticsCalculator.h
     Utils/Analytics/ITMNeighborVoxelIterationInfo.h
 
+	Utils/ITMAlmostEqual.h
     Utils/ITMCUDAUtils.h
     Utils/ITMImageTypes.h
     Utils/ITMHashBlockProperties.h
