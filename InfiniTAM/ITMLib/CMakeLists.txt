@@ -133,6 +133,8 @@ set(ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS
     Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h
     Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h
     Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h
+	Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PVA_to_VBH.h
+	Engines/Manipulation/CPU/ITMSceneTraversal_CPU_AuxilaryFunctions.h
     )
 
 ##
@@ -614,9 +616,10 @@ set(ITMLIB_UTILS_SOURCES
 
     Utils/ITMLibSettings.cpp
     Utils/ITMPrintHelpers.cpp
-	Utils/ITMAlmostEqual.tpp
-	Utils/ITMAlmostEqual.cpp
-	Utils/ITMVoxelVolumeComparison.tcu
+#	Utils/ITMAlmostEqual.tpp
+#	Utils/ITMAlmostEqual.cpp
+	Utils/ITMVoxelVolumeComparison_CPU.tpp
+	Utils/ITMVoxelVolumeComparison_CPU.cpp
     )
 
 set(ITMLIB_UTILS_HEADERS
@@ -626,8 +629,6 @@ set(ITMLIB_UTILS_HEADERS
     Utils/Analytics/ITMSceneStatisticsCalculator.h
     Utils/Analytics/ITMNeighborVoxelIterationInfo.h
 
-	Utils/ITMAlmostEqual.h
-	Utils/ITMVoxelVolumeComparison.h
     Utils/ITMCUDAUtils.h
     Utils/ITMImageTypes.h
     Utils/ITMHashBlockProperties.h
@@ -641,6 +642,8 @@ set(ITMLIB_UTILS_HEADERS
     Utils/ITMSurfelSceneParams.h
     Utils/ITMPrintHelpers.h
     Utils/Analytics/ITMBenchmarkUtils.h
+	Utils/ITMAlmostEqual.h
+	Utils/ITMVoxelVolumeComparison_CPU.h
     )
 
 ##

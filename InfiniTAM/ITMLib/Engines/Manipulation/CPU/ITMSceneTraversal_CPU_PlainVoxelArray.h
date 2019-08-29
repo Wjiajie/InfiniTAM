@@ -23,36 +23,10 @@
 #include "../Interface/ITMSceneTraversal.h"
 #include "ITMSceneManipulationEngine_CPU.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
-
+#include "ITMSceneTraversal_CPU_AuxilaryFunctions.h"
 
 namespace ITMLib {
 
-//region ================================= AUXILIARY FUNCTIONS =========================================================
-
-inline static void
-ComputePositionFromLinearIndex_PlainVoxelArray(int& x, int& y, int& z, const ITMPlainVoxelArray::IndexData* indexData,
-                                               int linearIndex) {
-
-	z = linearIndex / (indexData->size.x * indexData->size.y);
-	int tmp = linearIndex - z * indexData->size.x * indexData->size.y;
-	y = tmp / indexData->size.x;
-	x = tmp - y * indexData->size.x;
-	x += indexData->offset.x;
-	y += indexData->offset.y;
-	z += indexData->offset.z;
-}
-
-inline static Vector3i
-ComputePositionVectorFromLinearIndex_PlainVoxelArray(const ITMPlainVoxelArray::IndexData* indexData,
-                                                     int linearIndex) {
-	int z = linearIndex / (indexData->size.x * indexData->size.y);
-	int tmp = linearIndex - z * indexData->size.x * indexData->size.y;
-	int y = tmp / indexData->size.x;
-	int x = tmp - y * indexData->size.x;
-	return {x + indexData->offset.x, y + indexData->offset.y, z + indexData->offset.z};
-}
-
-//endregion
 
 //======================================================================================================================
 //                         CONTAINS TRAVERSAL FUNCTIONS FOR SCENES USING ITMPlainVoxelArray FOR INDEXING
@@ -217,7 +191,6 @@ public:
 		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
 		                 primaryScene->index.getVolumeSize().z;
 
-
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -226,6 +199,32 @@ public:
 			TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
 			TStaticFunctor::run(primaryVoxel, secondaryVoxel);
 		}
+	}
+
+	template<typename TStaticFunctor>
+	inline static bool
+	StaticDualVoxelTraversal_AllTrue(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene) {
+		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+// *** traversal vars
+		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		//asserted to be the same
+		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
+		                 primaryScene->index.getVolumeSize().z;
+
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
+			TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
+			TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
+			if(!TStaticFunctor::run(primaryVoxel, secondaryVoxel)){
+				return false;
+			}
+		}
+		return true;
 	}
 // endregion
 // region ================================ STATIC TWO-SCENE TRAVERSAL WITH VOXEL POSITION ==============================
@@ -282,6 +281,34 @@ public:
 			TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
 			functor(primaryVoxel, secondaryVoxel);
 		}
+	}
+
+	template<typename TFunctor>
+	inline static bool
+	DualVoxelTraversal_AllTrue(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
+			TFunctor& functor) {
+
+		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+// *** traversal vars
+		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		//asserted to be the same
+		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
+		                 primaryScene->index.getVolumeSize().z;
+
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
+			TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
+			TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
+			if(!(functor(primaryVoxel, secondaryVoxel))){
+				return false;
+			}
+		}
+		return true;
 	}
 
 

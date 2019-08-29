@@ -20,33 +20,9 @@
 #include "../Interface/ITMSceneTraversal.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "ITMSceneManipulationEngine_CPU.h"
+#include "ITMSceneTraversal_CPU_AuxilaryFunctions.h"
 
 namespace ITMLib {
-
-// region ======================================= AUXILIARY FUNCTIONS ==================================================
-
-inline bool HashBlockDoesNotIntersectBounds(const Vector3i& hashEntryMinPoint, const Vector3i& hashEntryMaxPoint,
-                                            const Vector6i& bounds) {
-	return hashEntryMaxPoint.x < bounds.min_x ||
-	       hashEntryMaxPoint.y < bounds.min_y ||
-	       hashEntryMaxPoint.z < bounds.min_z ||
-	       hashEntryMinPoint.x >= bounds.max_x ||
-	       hashEntryMinPoint.y >= bounds.max_y ||
-	       hashEntryMinPoint.z >= bounds.max_z;
-}
-
-inline
-Vector6i computeLocalBounds(const Vector3i& hashEntryMinPoint, const Vector3i& hashEntryMaxPoint,
-                            const Vector6i& bounds) {
-	return Vector6i(std::max(0, bounds.min_x - hashEntryMinPoint.x),
-	                std::max(0, bounds.min_y - hashEntryMinPoint.y),
-	                std::max(0, bounds.min_z - hashEntryMinPoint.z),
-	                std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.x - bounds.max_x)),
-	                std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.y - bounds.max_y)),
-	                std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.z - bounds.max_z)));
-}
-
-// endregion ===========================================================================================================
 
 
 //======================================================================================================================
@@ -471,6 +447,64 @@ public:
 				}
 			}
 		}
+	}
+
+	template<typename TFunctor>
+	inline static bool
+	DualVoxelTraversal_AllTrue(
+			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
+			TFunctor& functor) {
+
+// *** traversal vars
+		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
+
+
+		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
+		int noTotalEntries = primaryScene->index.noTotalEntries;
+
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int hash = 0; hash < noTotalEntries; hash++) {
+
+			const ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
+			if (currentLiveHashEntry.ptr < 0) continue;
+			ITMHashEntry currentCanonicalHashEntry = secondaryHashTable[hash];
+
+			// the rare case where we have different positions for primary & secondary voxel block with the same index:
+			// we have a hash bucket miss, find the secondary voxel with the matching coordinates
+			if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
+				int secondaryHash;
+				if (!FindHashAtPosition(secondaryHash, currentLiveHashEntry.pos, secondaryHashTable)) {
+					std::stringstream stream;
+					stream << "Could not find corresponding secondary scene block at postion "
+					       << currentLiveHashEntry.pos
+					       << ". " << __FILE__ << ": " << __LINE__;
+					DIEWITHEXCEPTION(stream.str());
+				} else {
+					currentCanonicalHashEntry = secondaryHashTable[secondaryHash];
+				}
+			}
+			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxelSecondary* localCanonicalVoxelBlock = &(secondaryVoxels[currentCanonicalHashEntry.ptr *
+			                                                              (SDF_BLOCK_SIZE3)]);
+			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						TVoxelPrimary& primaryVoxel = localLiveVoxelBlock[locId];
+						TVoxelSecondary& secondaryVoxel = localCanonicalVoxelBlock[locId];
+						if(!functor(primaryVoxel, secondaryVoxel)){
+							return false;
+						}
+					}
+				}
+			}
+		}
+		return true;
 	}
 
 // ========================== WITH VOXEL POSITION ==============

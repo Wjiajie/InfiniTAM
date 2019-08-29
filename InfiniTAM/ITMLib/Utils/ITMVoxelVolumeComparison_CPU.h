@@ -20,17 +20,19 @@ namespace ITMLib{
 /**
  * \brief Determine if every pair of corresponding voxels within the two voxel volumes is within the provided tolerance
  * of each other.
- * \details Correspondence is determined by coinciding spatial location. The two scenes may use different indices.
+ * \details Voxel correspondence between the two volumes is determined by coinciding spatial location within both volumes.
+ * The two scenes may use different indices.
  * \tparam TVoxel voxel type
- * \tparam TIndexA
- * \tparam TIndexB
- * \tparam ToleranceType
- * \param a
- * \param b
- * \param tolerance
- * \return
+ * \tparam TIndexA type of index for the first volume
+ * \tparam TIndexB type of index for the second volume
+ * \tparam ToleranceType type of the tolerance metric
+ * \param a the first voxel volume
+ * \param b the second voxel volume
+ * \param tolerance (absolute) difference bound for each quantitative value in each voxel
+ * \return true if scene content matches (to within specified tolerance), false otherwise
  */
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
-bool contentAlmostEqual(ITMVoxelVolume<TVoxel,TIndexA> a, ITMVoxelVolume<TVoxel,TIndexB> b, ToleranceType tolerance);
+bool contentAlmostEqual_CPU(ITMVoxelVolume<TVoxel,TIndexA> a, ITMVoxelVolume<TVoxel,TIndexB> b, ToleranceType tolerance);
+
 } // namespace ITMLib
 

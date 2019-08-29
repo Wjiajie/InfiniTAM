@@ -15,10 +15,7 @@
 //  ================================================================
 #pragma once
 
-//stdlib
-#include <cmath>
-#include <string>
-#include <limits>
+
 
 //local
 #include "ITMAlmostEqual.h"
