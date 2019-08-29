@@ -23,11 +23,12 @@
 //local
 #include "ITMAlmostEqual.h"
 
-namespace ITMLib{
+namespace ITMLib {
 
 // region ==================== ABSOLUTE / RELATIVE REAL TYPE COMPARISONS ===============================================
+
 template<typename TReal>
-bool almostEqualRelative(TReal a, TReal b, TReal epsilon = 3e-6) {
+inline bool almostEqualRelative(TReal a, TReal b, TReal epsilon = 3e-6) {
 	const TReal absA = std::abs(a);
 	const TReal absB = std::abs(b);
 	const TReal diff = std::abs(a - b);
@@ -44,9 +45,54 @@ bool almostEqualRelative(TReal a, TReal b, TReal epsilon = 3e-6) {
 }
 
 template<typename TReal>
-bool almostEqualAbsolute(TReal a, TReal b, TReal epsilon = 3e-6) {
+inline bool almostEqualAbsolute(TReal a, TReal b, TReal epsilon = 3e-6) {
 	return std::abs(a - b) < epsilon;
 }
 // endregion
+// region =========================== FUNCTIONS TO DETERMINE WHETHER A VOXEL HAS BEEN ALTERED FROM DEFAULT =============
+
+template<bool hasSDFInformation, bool hasSemanticInformation, bool hasFlowWarpInformation, bool hasWarpUpdateInformation, typename TVoxel>
+struct IsAlteredFunctor;
+
+template<typename TVoxel>
+struct IsAlteredFunctor<true, false, false, false, TVoxel> {
+	inline
+	bool evaluate(const TVoxel& voxel) {
+		return voxel.w_depth != 0;
+	}
+};
+
+template<typename TVoxel>
+struct IsAlteredFunctor<true, true, false, false, TVoxel> {
+	inline
+	bool evaluate(const TVoxel& voxel) {
+		return voxel.flags != ITMLib::VOXEL_UNKNOWN;
+	}
+};
+
+template<typename TVoxel>
+struct IsAlteredFunctor<false, true, false, false, TVoxel> {
+	inline
+	bool evaluate(const TVoxel& voxel) {
+		return voxel.flags != ITMLib::VOXEL_UNKNOWN;
+	}
+};
+
+template<typename TVoxel>
+struct IsAlteredFunctor<false, false, true, true, TVoxel> {
+	inline
+	bool evaluate(const TVoxel& voxel) {
+		return voxel.flow_warp != Vector3f(0.0f) || voxel.warp_update != Vector3f(0.0f);
+	}
+};
+
+template<typename TVoxel>
+bool isAltered(TVoxel& voxel) {
+	return IsAlteredFunctor<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFlowWarpInformation,
+			TVoxel::hasWarpUpdateInformation, TVoxel>::evaluate(voxel);
+}
+// endregion
+
+
 
 } // namespace ITMLib

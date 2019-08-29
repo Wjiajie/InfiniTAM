@@ -1,0 +1,60 @@
+//  ================================================================
+//  Created by Gregory Kramida on 8/28/19.
+//  Copyright (c) 2019 Gregory Kramida
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+
+//  http://www.apache.org/licenses/LICENSE-2.0
+
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//  ================================================================
+#pragma once
+#include "ITMVoxelVolumeComparison.h"
+#include "../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../Objects/Scene/ITMVoxelBlockHash.h"
+#include "../../ORUtils/MemoryDeviceType.h"
+
+
+namespace ITMLib{
+//region ================================= VOXEL VOLUME CONTENT COMPARISON FUNCTIONS ==================================
+
+template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
+struct ContentAlmostEqualFunctor_CPU;
+
+template<typename TVoxel, typename ToleranceType>
+struct ContentAlmostEqualFunctor_CPU<TVoxel, ITMPlainVoxelArray, ITMVoxelBlockHash, ToleranceType> {
+	inline
+	bool evaluate(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray> a, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> b, ToleranceType tolerance) {
+
+	}
+};
+
+template<typename TVoxel, typename ToleranceType >
+struct ContentAlmostEqualFunctor_CPU<TVoxel, ITMVoxelBlockHash, ITMPlainVoxelArray, ToleranceType> {
+	inline
+	bool evaluate(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> a, ITMVoxelVolume<TVoxel, ITMPlainVoxelArray> b, ToleranceType tolerance) {
+		// a simple argument reordering
+		return ContentAlmostEqualFunctor_CPU<TVoxel, ITMPlainVoxelArray, ITMVoxelBlockHash, ToleranceType>::evaluate(b, a, tolerance);
+	}
+};
+
+template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
+bool contentAlmostEqual(ITMVoxelVolume<TVoxel,TIndexA> a, ITMVoxelVolume<TVoxel,TIndexB> b, ToleranceType tolerance){
+	MemoryDeviceType memoryDeviceA = a.localVBA.memoryType;
+	MemoryDeviceType memoryDeviceB = b.localVBA.memoryType;
+	if(memoryDeviceA == MEMORYDEVICE_CPU && memoryDeviceB){
+		ContentAlmostEqualFunctor_CPU<TVoxel,TIndexA,TIndexB, ToleranceType>::evaluate(a, b, tolerance);
+	}else if(memoryDeviceA == MEMORYDEVICE_CUDA && memoryDeviceB == MEMORYDEVICE_CUDA){
+		DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	}else{
+		DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	}
+}
+
+//endregion
+}

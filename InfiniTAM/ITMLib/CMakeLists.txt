@@ -451,20 +451,20 @@ set(ITMLIB_OBJECTS_SCENE_SOURCES
 
 ##
 set(ITMLIB_OBJECTS_SCENE_HEADERS
-    Objects/Scene/ITMGlobalCache.h
-    Objects/Scene/ITMLocalMap.h
-    Objects/Scene/ITMLocalVBA.h
-    Objects/Scene/ITMMultiSceneAccess.h
-    Objects/Scene/ITMPlainVoxelArray.h
-    Objects/Scene/ITMRepresentationAccess.h
-    Objects/Scene/ITMTrilinearInterpolation.h
-    Objects/Scene/ITMTrilinearDistribution.h
+	Objects/Scene/ITMGlobalCache.h
+	Objects/Scene/ITMLocalMap.h
+	Objects/Scene/ITMLocalVBA.h
+	Objects/Scene/ITMMultiSceneAccess.h
+	Objects/Scene/ITMPlainVoxelArray.h
+	Objects/Scene/ITMRepresentationAccess.h
+	Objects/Scene/ITMTrilinearInterpolation.h
+	Objects/Scene/ITMTrilinearDistribution.h
 	Objects/Scene/ITMVoxelVolume.h
-    Objects/Scene/ITMSurfelScene.h
-    Objects/Scene/ITMSurfelTypes.h
-    Objects/Scene/ITMVoxelBlockHash.h
-    Objects/Scene/ITMVoxelTypes.h
-    Objects/Scene/ITMIndexEnumeration.h
+	Objects/Scene/ITMSurfelScene.h
+	Objects/Scene/ITMSurfelTypes.h
+	Objects/Scene/ITMVoxelBlockHash.h
+	Objects/Scene/ITMVoxelTypes.h
+	Objects/Scene/ITMIndexEnumeration.h
     #_DEBUG
     ../Tests/TestUtils.h
     ../Tests/TestUtils.cpp
@@ -616,6 +616,7 @@ set(ITMLIB_UTILS_SOURCES
     Utils/ITMPrintHelpers.cpp
 	Utils/ITMAlmostEqual.tpp
 	Utils/ITMAlmostEqual.cpp
+	Utils/ITMVoxelVolumeComparison.tcu
     )
 
 set(ITMLIB_UTILS_HEADERS
@@ -626,6 +627,7 @@ set(ITMLIB_UTILS_HEADERS
     Utils/Analytics/ITMNeighborVoxelIterationInfo.h
 
 	Utils/ITMAlmostEqual.h
+	Utils/ITMVoxelVolumeComparison.h
     Utils/ITMCUDAUtils.h
     Utils/ITMImageTypes.h
     Utils/ITMHashBlockProperties.h
