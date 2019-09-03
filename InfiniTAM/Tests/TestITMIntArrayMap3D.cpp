@@ -13,3 +13,54 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+//stdlib
+#include <iostream>
+
+#define BOOST_TEST_MODULE SceneConstruction
+#ifndef WIN32
+#define BOOST_TEST_DYN_LINK
+#endif
+
+//stdlib
+#include <iostream>
+
+//boost
+#include <boost/test/unit_test.hpp>
+#include "../ITMLib/Utils/Collections/ITM3DNestedMapOfArrays.h"
+
+
+using namespace ITMLib;
+
+
+BOOST_AUTO_TEST_CASE(testITMIntArrayMap3D) {
+		ITM3DNestedMapOfArrays<int> map("one", "two", "three", "four");
+		const int maxElementsOnEachLevel = 3;
+
+		for (int keyLevel3 = 0; keyLevel3 < maxElementsOnEachLevel; keyLevel3++) {
+			for (int keyLevel2 = 0; keyLevel2 < maxElementsOnEachLevel; keyLevel2++) {
+				for (int keyLevel1 = 0; keyLevel1 < maxElementsOnEachLevel; keyLevel1++) {
+					for (int valueLevel0 = 0; valueLevel0 < maxElementsOnEachLevel; valueLevel0++) {
+						map.InsertOrdered(keyLevel3, keyLevel2, keyLevel1, valueLevel0);
+					}
+				}
+			}
+		}
+		const char* testFilename = "int_array_map_test.dat";
+		map.SaveToFile(testFilename);
+		ITM3DNestedMapOfArrays<int> map2("one", "two", "three", "four");
+		map2.LoadFromFile(testFilename);
+		BOOST_REQUIRE(map == map2);
+
+
+		ITM3DNestedMapOfArrays<int> map3("one", "two", "three", "four");
+		map3.InsertOrdered(84651, 358, 1, 5);
+		map3.InsertOrdered(84651, 358, 1, 6);
+		map3.InsertOrdered(102821, 436, 1, 1);
+		map3.InsertOrdered(155667, 495, 1, 2);
+		map3.InsertOrdered(179874, 446, 1, 28);
+		map3.InsertOrdered(179874, 446, 1, 30);
+		map3.SaveToFile(testFilename);
+		ITM3DNestedMapOfArrays<int> map4("one", "two", "three", "four");
+		map4.LoadFromFile(testFilename);
+		BOOST_REQUIRE(map3 == map4);
+}

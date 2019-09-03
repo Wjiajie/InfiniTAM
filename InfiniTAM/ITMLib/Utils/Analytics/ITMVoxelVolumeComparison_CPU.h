@@ -14,7 +14,7 @@
 //  limitations under the License.
 //  ================================================================
 #pragma once
-#include "../Objects/Scene/ITMVoxelVolume.h"
+#include "../../Objects/Scene/ITMVoxelVolume.h"
 
 namespace ITMLib{
 /**
@@ -32,7 +32,7 @@ namespace ITMLib{
  * \return true if scene content matches (to within specified tolerance), false otherwise
  */
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
-bool contentAlmostEqual_CPU(ITMVoxelVolume<TVoxel,TIndexA> a, ITMVoxelVolume<TVoxel,TIndexB> b, ToleranceType tolerance);
+bool contentAlmostEqual_CPU(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<TVoxel,TIndexB>* b, ToleranceType tolerance);
 
 } // namespace ITMLib
 

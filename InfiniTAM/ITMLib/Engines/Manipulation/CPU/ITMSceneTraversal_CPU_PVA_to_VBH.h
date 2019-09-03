@@ -24,10 +24,9 @@
 namespace ITMLib {
 
 
-
 template<typename TVoxelPrimary, typename TVoxelSecondary>
 class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelArray, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU> {
-
+public:
 	/**
 	 * \brief Routine allowing some kind of comparison function call on voxel pairs from the two scenes where both
 	 * voxels share the same spatial location.
@@ -59,29 +58,22 @@ class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelA
 		Vector3i endVoxel = pvaOffset + pvaSize; // open last traversal bound (this voxel doesn't get processed)
 
 		//determine the opposite corners of the 3d extent, [start, end), in voxel hash blocks, to traverse.
-		Vector3s startBlockCoords(pvaOffset.x / SDF_BLOCK_SIZE - (pvaOffset.x % SDF_BLOCK_SIZE != 0),
-		                          pvaOffset.y / SDF_BLOCK_SIZE - (pvaOffset.y % SDF_BLOCK_SIZE != 0),
-		                          pvaOffset.z / SDF_BLOCK_SIZE - (pvaOffset.z % SDF_BLOCK_SIZE != 0));
-		Vector3s endBlockCoords((endVoxel.x - 1) / SDF_BLOCK_SIZE + ((endVoxel.x - 1) % SDF_BLOCK_SIZE != 0) + 1,
-		                        (endVoxel.y - 1) / SDF_BLOCK_SIZE + ((endVoxel.y - 1) % SDF_BLOCK_SIZE != 0) + 1,
-		                        (endVoxel.z - 1) / SDF_BLOCK_SIZE + ((endVoxel.z - 1) % SDF_BLOCK_SIZE != 0) + 1);
+		Vector3i startBlockCoords, endBlockCoords;
+		pointToVoxelBlockPos(pvaOffset, startBlockCoords);
+		pointToVoxelBlockPos(endVoxel-Vector3i(1), endBlockCoords);
+		endBlockCoords+=Vector3i(1);
 
 
-		ORUtils::MemoryBlock<bool> hashBlockUsed_MemBlock(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU);
-		bool* hashBlocksUsed = hashBlockUsed_MemBlock.GetData(MEMORYDEVICE_CPU);
-		memset(hashBlocksUsed, false, static_cast<size_t>(ITMVoxelBlockHash::noTotalEntries));
-
-		int linearIndex = 0;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
-		for (short zVoxelBlock = startBlockCoords.z; zVoxelBlock < endBlockCoords.z; zVoxelBlock++) {
+		for (int zVoxelBlock = startBlockCoords.z; zVoxelBlock < endBlockCoords.z; zVoxelBlock++) {
 			int zVoxelStart = std::max(zVoxelBlock * SDF_BLOCK_SIZE, pvaOffset.y);
 			int zVoxelEnd = std::min((zVoxelBlock + 1) * SDF_BLOCK_SIZE, endVoxel.y);
-			for (short yVoxelBlock = startBlockCoords.y; yVoxelBlock < endBlockCoords.y; yVoxelBlock++) {
+			for (int yVoxelBlock = startBlockCoords.y; yVoxelBlock < endBlockCoords.y; yVoxelBlock++) {
 				int yVoxelStart = std::max(yVoxelBlock * SDF_BLOCK_SIZE, pvaOffset.y);
 				int yVoxelEnd = std::min((yVoxelBlock + 1) * SDF_BLOCK_SIZE, endVoxel.y);
-				for (short xVoxelBlock = startBlockCoords.x; xVoxelBlock < endBlockCoords.x; xVoxelBlock++) {
+				for (int xVoxelBlock = startBlockCoords.x; xVoxelBlock < endBlockCoords.x; xVoxelBlock++) {
 					int xVoxelStart = std::max(xVoxelBlock * SDF_BLOCK_SIZE, pvaOffset.x);
 					int xVoxelEnd = std::min((xVoxelBlock + 1) * SDF_BLOCK_SIZE, endVoxel.x);
 					Vector3s voxelBlockCoords(xVoxelBlock, yVoxelBlock, zVoxelBlock);
@@ -98,18 +90,16 @@ class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelA
 					// functional when matched with corresponding voxels from the VBH-indexed volume.
 					// If the block is not allocated in the VBH volume at all but the PVA voxel is modified,
 					// short-circuit to "false"
-					int locId = 0;
 					for (int z = zVoxelStart; z < zVoxelEnd; z++) {
 						for (int y = yVoxelStart; y < yVoxelEnd; y++) {
 							for (int x = xVoxelStart; x < xVoxelEnd; x++) {
 								Vector3i voxelPosition = Vector3i(x, y, z);
-								//TODO: remove the check once you run this on some non-empty scenes
-								Vector3i gtVoxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(
-										pvaIndexData, linearIndex);
-								if (gtVoxelPosition != voxelPosition) {
-									DIEWITHEXCEPTION_REPORTLOCATION(
-											"The voxel positions didn't match -- this routine has a logic error.");
-								}
+								Vector3i voxelPositionSansOffset = voxelPosition - pvaOffset;
+								int linearIndex = voxelPositionSansOffset.x + voxelPositionSansOffset.y * pvaSize.x +
+								                  voxelPositionSansOffset.z * pvaSize.x * pvaSize.y;
+								int locId = voxelPosition.x + (voxelPosition.y - voxelBlockCoords.x) * SDF_BLOCK_SIZE +
+								            (voxelPosition.z - voxelBlockCoords.y) * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE -
+								            voxelBlockCoords.z * SDF_BLOCK_SIZE3;
 								TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
 								if (voxelBlockAllocated) {
 									TVoxelSecondary& secondaryVoxel = localSecondaryVoxelBlock[locId];
@@ -121,8 +111,6 @@ class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelA
 										return false;
 									}
 								}
-								linearIndex++;
-								locId++;
 							}
 						}
 					}
@@ -135,17 +123,19 @@ class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelA
 };
 
 template<typename TVoxelPrimary, typename TVoxelSecondary, typename TFunctor>
-struct ITMFlipArgumentBooleanFunctor{
-	ITMFlipArgumentBooleanFunctor(TFunctor functor) : functor(functor){}
-	bool operator()(TVoxelPrimary& voxelPrimary, TVoxelSecondary& voxelSecondary){
-		return  functor(voxelSecondary,voxelPrimary);
+struct ITMFlipArgumentBooleanFunctor {
+	ITMFlipArgumentBooleanFunctor(TFunctor functor) : functor(functor) {}
+
+	bool operator()(TVoxelPrimary& voxelPrimary, TVoxelSecondary& voxelSecondary) {
+		return functor(voxelSecondary, voxelPrimary);
 	}
+
 	TFunctor functor;
 };
 
 template<typename TVoxelPrimary, typename TVoxelSecondary>
 class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMVoxelBlockHash, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU> {
-
+public:
 	/**
 	 * \brief Routine allowing some kind of comparison function call on voxel pairs from the two scenes where both
 	 * voxels share the same spatial location.
@@ -161,12 +151,12 @@ class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMVoxelBlockH
 	template<typename TFunctor>
 	inline static bool
 	DualVoxelTraversal_AllTrue(
-			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
-			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
+			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryVolume,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryVolume,
 			TFunctor& functor) {
 		auto flipFunctor(functor);
 		return ITMDualSceneTraversalEngine<TVoxelSecondary, TVoxelPrimary, ITMPlainVoxelArray, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
-		        DualVoxelTraversal_AllTrue(secondaryVolume,primaryVolume,flipFunctor);
+		DualVoxelTraversal_AllTrue(secondaryVolume, primaryVolume, flipFunctor);
 
 	}
 };

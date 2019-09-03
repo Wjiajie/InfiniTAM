@@ -20,7 +20,7 @@
 #include <limits>
 
 //local
-#include "../ITMVoxelVolumeComparison_CPU.h"
+#include "ITMVoxelVolumeComparison_CPU.h"
 #include "../../Objects/Scene/ITMVoxelTypes.h"
 #include "../ITMMath.h"
 #include "../../../ORUtils/PlatformIndependence.h"

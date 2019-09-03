@@ -13,7 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "../ITMLibDefines.h"
+#include "../../ITMLibDefines.h"
 #include "ITMVoxelVolumeComparison_CPU.tpp"
 
 namespace ITMLib {
@@ -28,5 +28,14 @@ bool contentAlmostEqual_CPU<ITMVoxel, ITMVoxelBlockHash, ITMVoxelBlockHash, floa
 		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
 		float tolerance);
 
+template
+bool contentAlmostEqual_CPU<ITMVoxel, ITMPlainVoxelArray, ITMVoxelBlockHash, float>(
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
+		float tolerance);
+
+template
+bool contentAlmostEqual_CPU<ITMVoxel, ITMVoxelBlockHash, ITMPlainVoxelArray, float>(
+		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* b,
+		float tolerance);
 
 }

@@ -31,7 +31,7 @@ struct IsAlteredFunctor;
 template<typename TVoxel>
 struct IsAlteredFunctor<true, false, false, false, TVoxel> {
 	_CPU_AND_GPU_CODE_
-	inline
+	static inline
 	bool evaluate(const TVoxel& voxel) {
 		return voxel.w_depth != 0;
 	}
@@ -40,7 +40,7 @@ struct IsAlteredFunctor<true, false, false, false, TVoxel> {
 template<typename TVoxel>
 struct IsAlteredFunctor<true, true, false, false, TVoxel> {
 	_CPU_AND_GPU_CODE_
-	inline
+	static inline
 	bool evaluate(const TVoxel& voxel) {
 		return voxel.flags != ITMLib::VOXEL_UNKNOWN;
 	}
@@ -49,7 +49,7 @@ struct IsAlteredFunctor<true, true, false, false, TVoxel> {
 template<typename TVoxel>
 struct IsAlteredFunctor<false, true, false, false, TVoxel> {
 	_CPU_AND_GPU_CODE_
-	inline
+	static inline
 	bool evaluate(const TVoxel& voxel) {
 		return voxel.flags != ITMLib::VOXEL_UNKNOWN;
 	}
@@ -58,7 +58,7 @@ struct IsAlteredFunctor<false, true, false, false, TVoxel> {
 template<typename TVoxel>
 struct IsAlteredFunctor<false, false, true, true, TVoxel> {
 	_CPU_AND_GPU_CODE_
-	inline
+	static inline
 	bool evaluate(const TVoxel& voxel) {
 		return voxel.flow_warp != Vector3f(0.0f) || voxel.warp_update != Vector3f(0.0f);
 	}
@@ -67,8 +67,8 @@ struct IsAlteredFunctor<false, false, true, true, TVoxel> {
 _CPU_AND_GPU_CODE_
 template<typename TVoxel>
 bool isAltered(TVoxel& voxel) {
-	return IsAlteredFunctor<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFlowWarpInformation,
-			TVoxel::hasWarpUpdateInformation, TVoxel>::evaluate(voxel);
+	return IsAlteredFunctor<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFlowWarp,
+			TVoxel::hasWarpUpdate, TVoxel>::evaluate(voxel);
 }
 // endregion
 

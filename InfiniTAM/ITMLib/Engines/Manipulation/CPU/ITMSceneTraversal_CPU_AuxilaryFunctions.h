@@ -43,6 +43,7 @@ ComputePositionVectorFromLinearIndex_PlainVoxelArray(const ITMPlainVoxelArray::I
 	int x = tmp - y * indexData->size.x;
 	return {x + indexData->offset.x, y + indexData->offset.y, z + indexData->offset.z};
 }
+
 // endregion ===========================================================================================================
 
 // region ======================================= AUXILIARY FUNCTIONS (VOXEL HASH BLOCKS) ==============================

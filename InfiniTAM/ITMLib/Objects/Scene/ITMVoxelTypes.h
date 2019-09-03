@@ -287,8 +287,8 @@ struct ITMVoxel_f_flags
 	static const CONSTPTR(bool) hasSemanticInformation = true;
 	static const CONSTPTR(bool) hasWeightInformation = true;
 	static const CONSTPTR(bool) hasCumulativeWarp = false;
-	static const CONSTPTR(bool) hasFlowWarp = true;
-	static const CONSTPTR(bool) hasWarpUpdate = true;
+	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasWarpUpdate = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 
 	/** Value of the truncated signed distance transformation. */

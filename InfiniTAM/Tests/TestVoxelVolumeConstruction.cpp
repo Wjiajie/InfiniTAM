@@ -21,11 +21,11 @@
 #endif
 
 //stdlib
-#include <iostream>
+#include <vector>
+#include <random>
 
 //boost
 #include <boost/test/unit_test.hpp>
-
 
 //ITMlib
 #include "../ITMLib/ITMLibDefines.h"
@@ -33,28 +33,30 @@
 #include "../ITMLib/Objects/Scene/ITMRepresentationAccess.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/Utils/ITMLibSettings.h"
+#include "../ITMLib/Utils/Analytics/ITMSceneStatisticsCalculator.h"
+#include "../ITMLib/Utils/Analytics/ITMVoxelVolumeComparison_CPU.h"
 #include "../ITMLib/Engines/Reconstruction/Interface/ITMSceneReconstructionEngine.h"
 #include "../ITMLib/Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
-
-//local
-#include "TestUtils.h"
-#include "../ITMLib/Utils/Analytics/ITMSceneStatisticsCalculator.h"
-#include "../ORUtils/FileUtils.h"
-#include "../InputSource/ImageSourceEngine.h"
-#include "../ITMLib/Utils/Collections/ITM3DNestedMapOfArrays.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 
+#include "../ORUtils/FileUtils.h"
+#include "../InputSource/ImageSourceEngine.h"
+
+//local
+#include "TestUtils.h"
+
+
 using namespace ITMLib;
 
 
-BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_PlainVoxelArray) {
+BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_PlainVoxelArray_CPU) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
 	settings->deviceType = ITMLibSettings::DEVICE_CPU;
 
-	Vector3i volumeSize (20);
-	Vector3i volumeOffset (-10, -10, 0);
+	Vector3i volumeSize(20);
+	Vector3i volumeOffset(-10, -10, 0);
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&settings->sceneParams,
 	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
@@ -62,53 +64,53 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_PlainVoxelArray) {
 	                                                    volumeSize,
 	                                                    volumeOffset);
 
-	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray> sceneManipulationEngine;
+	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray> SceneManipulationEngine;
 
-	sceneManipulationEngine::ResetScene(&scene1);
+	SceneManipulationEngine::ResetScene(&scene1);
 
 	ITMVoxel voxelZero;
 	voxelZero.sdf = 0.0f;
-	sceneManipulationEngine::SetVoxel(&scene1, Vector3i(0, 0, 0), voxelZero);
+	SceneManipulationEngine::SetVoxel(&scene1, Vector3i(0, 0, 0), voxelZero);
 
 	ITMVoxel out;
-	out = sceneManipulationEngine::ReadVoxel(&scene1, Vector3i(0, 0, 0));
+	out = SceneManipulationEngine::ReadVoxel(&scene1, Vector3i(0, 0, 0));
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);
 	ITMVoxel voxelHalf;
 	voxelHalf.sdf = 0.5f;
 
-	sceneManipulationEngine::SetVoxel(&scene1, Vector3i(1, 1, 1), voxelHalf);
-	out = sceneManipulationEngine::ReadVoxel(&scene1, Vector3i(1, 1, 1));
+	SceneManipulationEngine::SetVoxel(&scene1, Vector3i(1, 1, 1), voxelHalf);
+	out = SceneManipulationEngine::ReadVoxel(&scene1, Vector3i(1, 1, 1));
 	BOOST_REQUIRE(out.sdf == voxelHalf.sdf);
-	sceneManipulationEngine::SetVoxel(&scene1, Vector3i(9, 9, 9), voxelZero);
-	sceneManipulationEngine::SetVoxel(&scene1, Vector3i(9, 9, 9), voxelHalf);
-	sceneManipulationEngine::SetVoxel(&scene1, Vector3i(3, 3, 3), voxelHalf);
-	out = sceneManipulationEngine::ReadVoxel(&scene1, Vector3i(9, 9, 9));
+	SceneManipulationEngine::SetVoxel(&scene1, Vector3i(9, 9, 9), voxelZero);
+	SceneManipulationEngine::SetVoxel(&scene1, Vector3i(9, 9, 9), voxelHalf);
+	SceneManipulationEngine::SetVoxel(&scene1, Vector3i(3, 3, 3), voxelHalf);
+	out = SceneManipulationEngine::ReadVoxel(&scene1, Vector3i(9, 9, 9));
 	BOOST_REQUIRE(out.sdf == voxelHalf.sdf);
 	Vector3i voxelPos(8, 5, 2);
-	sceneManipulationEngine::SetVoxel(&scene1, voxelPos, voxelZero);
-	out = sceneManipulationEngine::ReadVoxel(&scene1, voxelPos);
+	SceneManipulationEngine::SetVoxel(&scene1, voxelPos, voxelZero);
+	out = SceneManipulationEngine::ReadVoxel(&scene1, voxelPos);
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);
-	out = sceneManipulationEngine::ReadVoxel(&scene1, Vector3i(0, 0, 0));
+	out = SceneManipulationEngine::ReadVoxel(&scene1, Vector3i(0, 0, 0));
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);
 
 	Vector3i offset(-2, 3, 4);
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(&settings->sceneParams,
 	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                    settings->GetMemoryType());
-	sceneManipulationEngine::ResetScene(&scene2);
+	SceneManipulationEngine::ResetScene(&scene2);
 
-	sceneManipulationEngine::CopyScene(&scene2, &scene1, offset);
-	out = sceneManipulationEngine::ReadVoxel(&scene2, voxelPos + offset);
+	SceneManipulationEngine::CopyScene(&scene2, &scene1, offset);
+	out = SceneManipulationEngine::ReadVoxel(&scene2, voxelPos + offset);
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);
-	out = sceneManipulationEngine::ReadVoxel(&scene2, Vector3i(0, 0, 0) + offset);
+	out = SceneManipulationEngine::ReadVoxel(&scene2, Vector3i(0, 0, 0) + offset);
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);
-	out = sceneManipulationEngine::ReadVoxel(&scene2, Vector3i(3, 3, 3) + offset);
+	out = SceneManipulationEngine::ReadVoxel(&scene2, Vector3i(3, 3, 3) + offset);
 	BOOST_REQUIRE(out.sdf == voxelHalf.sdf);
-	out = sceneManipulationEngine::ReadVoxel(&scene2, Vector3i(1, 1, 1) + offset);
+	out = SceneManipulationEngine::ReadVoxel(&scene2, Vector3i(1, 1, 1) + offset);
 	BOOST_REQUIRE(out.sdf == voxelHalf.sdf);
 }
 
-BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash) {
+BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CPU) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
 
 	settings->deviceType = ITMLibSettings::DEVICE_CPU;
@@ -116,34 +118,32 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash) {
 	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType());
 
-	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> CanonicalSceneManipulationEngine;
-	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> LiveSceneManipulationEngine;
+	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> SceneManipulationEngine;
 
-
-	CanonicalSceneManipulationEngine::ResetScene(&scene1);
+	SceneManipulationEngine::ResetScene(&scene1);
 
 	ITMVoxel voxelZero;
 	voxelZero.sdf = 0.0f;
-	CanonicalSceneManipulationEngine::SetVoxel(&scene1, Vector3i(0, 0, 0), voxelZero);
+	SceneManipulationEngine::SetVoxel(&scene1, Vector3i(0, 0, 0), voxelZero);
 
 	ITMVoxel out;
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene1, Vector3i(0, 0, 0));
+	out = SceneManipulationEngine::ReadVoxel(&scene1, Vector3i(0, 0, 0));
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);
 	ITMVoxel voxelHalf;
 	voxelHalf.sdf = 0.5f;
 
-	CanonicalSceneManipulationEngine::SetVoxel(&scene1, Vector3i(1, 1, 1), voxelHalf);
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene1, Vector3i(1, 1, 1));
+	SceneManipulationEngine::SetVoxel(&scene1, Vector3i(1, 1, 1), voxelHalf);
+	out = SceneManipulationEngine::ReadVoxel(&scene1, Vector3i(1, 1, 1));
 	BOOST_REQUIRE(out.sdf == voxelHalf.sdf);
-	CanonicalSceneManipulationEngine::SetVoxel(&scene1, Vector3i(9, 9, 9), voxelZero);
-	CanonicalSceneManipulationEngine::SetVoxel(&scene1, Vector3i(9, 9, 9), voxelHalf);
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene1, Vector3i(9, 9, 9));
+	SceneManipulationEngine::SetVoxel(&scene1, Vector3i(9, 9, 9), voxelZero);
+	SceneManipulationEngine::SetVoxel(&scene1, Vector3i(9, 9, 9), voxelHalf);
+	out = SceneManipulationEngine::ReadVoxel(&scene1, Vector3i(9, 9, 9));
 	BOOST_REQUIRE(out.sdf == voxelHalf.sdf);
 	Vector3i voxelPos(232, 125, 62);
-	CanonicalSceneManipulationEngine::SetVoxel(&scene1, voxelPos, voxelZero);
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene1, voxelPos);
+	SceneManipulationEngine::SetVoxel(&scene1, voxelPos, voxelZero);
+	out = SceneManipulationEngine::ReadVoxel(&scene1, voxelPos);
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene1, Vector3i(0, 0, 0));
+	out = SceneManipulationEngine::ReadVoxel(&scene1, Vector3i(0, 0, 0));
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);
 
 	Vector3i offset(-34, 6, 9);
@@ -151,51 +151,81 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash) {
 	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType());
 
-	CanonicalSceneManipulationEngine::CopyScene(&scene2, &scene1, offset);
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene2, voxelPos + offset);
+	SceneManipulationEngine::CopyScene(&scene2, &scene1, offset);
+	out = SceneManipulationEngine::ReadVoxel(&scene2, voxelPos + offset);
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene2, Vector3i(0, 0, 0) + offset);
+	out = SceneManipulationEngine::ReadVoxel(&scene2, Vector3i(0, 0, 0) + offset);
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene2, Vector3i(9, 9, 9) + offset);
+	out = SceneManipulationEngine::ReadVoxel(&scene2, Vector3i(9, 9, 9) + offset);
 	BOOST_REQUIRE(out.sdf == voxelHalf.sdf);
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene2, Vector3i(1, 1, 1) + offset);
+	out = SceneManipulationEngine::ReadVoxel(&scene2, Vector3i(1, 1, 1) + offset);
 	BOOST_REQUIRE(out.sdf == voxelHalf.sdf);
 }
 
-BOOST_AUTO_TEST_CASE(testITMIntArrayMap3D) {
-	ITM3DNestedMapOfArrays<int> map("one", "two", "three", "four");
-	const int maxElementsOnEachLevel = 3;
 
-	for (int keyLevel3 = 0; keyLevel3 < maxElementsOnEachLevel; keyLevel3++) {
-		for (int keyLevel2 = 0; keyLevel2 < maxElementsOnEachLevel; keyLevel2++) {
-			for (int keyLevel1 = 0; keyLevel1 < maxElementsOnEachLevel; keyLevel1++) {
-				for (int valueLevel0 = 0; valueLevel0 < maxElementsOnEachLevel; valueLevel0++) {
-					map.InsertOrdered(keyLevel3, keyLevel2, keyLevel1, valueLevel0);
-				}
-			}
-		}
-	}
-	const char* testFilename = "int_array_map_test.dat";
-	map.SaveToFile(testFilename);
-	ITM3DNestedMapOfArrays<int> map2("one", "two", "three", "four");
-	map2.LoadFromFile(testFilename);
-	BOOST_REQUIRE(map == map2);
+BOOST_AUTO_TEST_CASE(testCompareScenes_CPU) {
+	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray> PVA_ManipulationEngine;
+	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> VBH_ManipulationEngine;
+
+	ITMLibSettings* settings = &ITMLibSettings::Instance();
+	settings->deviceType = ITMLibSettings::DEVICE_CPU;
+
+	Vector3i volumeSize(40);
+	Vector3i volumeOffset(-20, -20, 0);
+	Vector3i extentEndVoxel = volumeOffset + volumeSize;
+
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&settings->sceneParams,
+	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->GetMemoryType(),
+	                                                    volumeSize,
+	                                                    volumeOffset);
+	PVA_ManipulationEngine::ResetScene(&scene1);
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(&settings->sceneParams,
+	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->GetMemoryType(),
+	                                                    volumeSize,
+	                                                    volumeOffset);
+	PVA_ManipulationEngine::ResetScene(&scene2);
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(&settings->sceneParams,
+	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->GetMemoryType());
+	VBH_ManipulationEngine::ResetScene(&scene3);
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(&settings->sceneParams,
+	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->GetMemoryType());
+	VBH_ManipulationEngine::ResetScene(&scene4);
+
+	std::random_device random_device;
+	std::mt19937 generator(random_device());
+	std::uniform_real_distribution<float> sdf_distribution(-1.0f, 1.0f);
+	std::uniform_int_distribution<int> coordinate_distribution(0, extentEndVoxel.x);
+	const int modifiedVoxelCount = 120;
+	ITMVoxel voxel;
+	voxel.sdf = 0.4;
+	Vector3i coordinate(16,1,1);
+	PVA_ManipulationEngine::SetVoxel(&scene1, coordinate, voxel);
+	PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, voxel);
+	VBH_ManipulationEngine::SetVoxel(&scene3, coordinate, voxel);
+	VBH_ManipulationEngine::SetVoxel(&scene4, coordinate, voxel);
+	//generate only in the positive coordinates' volume, to make sure that the unneeded voxel hash blocks are properly dismissed
+//	for (int iVoxel = 0; iVoxel < modifiedVoxelCount; iVoxel++) {
+//		ITMVoxel voxel;
+//		voxel.sdf = sdf_distribution(generator);
+//		Vector3i coordinate(coordinate_distribution(generator),
+//		                    coordinate_distribution(generator),
+//		                    coordinate_distribution(generator));
+//		PVA_ManipulationEngine::SetVoxel(&scene1, coordinate, voxel);
+//		PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, voxel);
+//		VBH_ManipulationEngine::SetVoxel(&scene3, coordinate, voxel);
+//		VBH_ManipulationEngine::SetVoxel(&scene4, coordinate, voxel);
+//	}
+	float tolerance = 1e-6;
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene2, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene3, &scene4, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene3, tolerance));
 
 
-	ITM3DNestedMapOfArrays<int> map3("one", "two", "three", "four");
-	map3.InsertOrdered(84651, 358, 1, 5);
-	map3.InsertOrdered(84651, 358, 1, 6);
-	map3.InsertOrdered(102821, 436, 1, 1);
-	map3.InsertOrdered(155667, 495, 1, 2);
-	map3.InsertOrdered(179874, 446, 1, 28);
-	map3.InsertOrdered(179874, 446, 1, 30);
-	map3.SaveToFile(testFilename);
-	ITM3DNestedMapOfArrays<int> map4("one", "two", "three", "four");
-	map4.LoadFromFile(testFilename);
-	BOOST_REQUIRE(map3 == map4);
 }
-
-
 //TODO: delete or restore
 //BOOST_AUTO_TEST_CASE(testSceneSaveLoadCompact) {
 //	ITMLibSettings* settings = &ITMLibSettings::Instance();
