@@ -212,7 +212,7 @@ cv::Mat ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>::DrawWarpedSceneImageAr
 	DrawSceneVoxelAtWarpedPositionFunctor<TVoxel, TWarp> drawSceneVoxelFunctor(
 			imgPixelRangeY, imgPixelRangeZ, bounds, plane,
 			this->pixelsPerVoxel, absFillingStrategy, img);
-	ITMDualSceneTraversalEngine<TVoxel, TWarp, TIndex, ITMLibSettings::DEVICE_CPU>::
+	ITMDualSceneTraversalEngine<TVoxel, TWarp, TIndex, TIndex, ITMLibSettings::DEVICE_CPU>::
 	        template DualVoxelPositionTraversalWithinBounds(scene, warpField, drawSceneVoxelFunctor, expandedBounds);
 	return img;
 }

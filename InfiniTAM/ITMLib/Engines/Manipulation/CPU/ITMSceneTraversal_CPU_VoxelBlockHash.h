@@ -282,7 +282,7 @@ public:
 // ====================== FOR TWO SCENES WITH DIFFERING VOXEL TYPES ====================================================
 
 template<typename TVoxelPrimary, typename TVoxelSecondary>
-class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU> {
+class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMVoxelBlockHash, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU> {
 public:
 // region ================================ STATIC TWO-SCENE TRAVERSAL =================================================
 	template<typename TStaticFunctor>
@@ -320,15 +320,15 @@ public:
 					currentCanonicalHashEntry = secondaryHashTable[secondaryHash];
 				}
 			}
-			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-			TVoxelSecondary* localCanonicalVoxelBlock = &(secondaryVoxels[currentCanonicalHashEntry.ptr *
+			TVoxelPrimary* localPrimaryVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxelSecondary* localSecondaryVoxelBlock = &(secondaryVoxels[currentCanonicalHashEntry.ptr *
 			                                                              (SDF_BLOCK_SIZE3)]);
 			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-						TVoxelPrimary& primaryVoxel = localLiveVoxelBlock[locId];
-						TVoxelSecondary& secondaryVoxel = localCanonicalVoxelBlock[locId];
+						TVoxelPrimary& primaryVoxel = localPrimaryVoxelBlock[locId];
+						TVoxelSecondary& secondaryVoxel = localSecondaryVoxelBlock[locId];
 						TStaticFunctor::run(primaryVoxel, secondaryVoxel);
 					}
 				}

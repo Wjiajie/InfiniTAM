@@ -18,6 +18,7 @@
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
+#include "ITMSceneTraversal_CPU_AuxilaryFunctions.h"
 
 
 namespace ITMLib {

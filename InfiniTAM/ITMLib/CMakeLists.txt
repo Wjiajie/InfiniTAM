@@ -616,8 +616,6 @@ set(ITMLIB_UTILS_SOURCES
 
     Utils/ITMLibSettings.cpp
     Utils/ITMPrintHelpers.cpp
-#	Utils/ITMAlmostEqual.tpp
-#	Utils/ITMAlmostEqual.cpp
 	Utils/ITMVoxelVolumeComparison_CPU.tpp
 	Utils/ITMVoxelVolumeComparison_CPU.cpp
     )
@@ -642,7 +640,8 @@ set(ITMLIB_UTILS_HEADERS
     Utils/ITMSurfelSceneParams.h
     Utils/ITMPrintHelpers.h
     Utils/Analytics/ITMBenchmarkUtils.h
-	Utils/ITMAlmostEqual.h
+	Utils/Analytics/ITMAlmostEqual.h
+	Utils/Analytics/ITMIsAltered.h
 	Utils/ITMVoxelVolumeComparison_CPU.h
     )
 

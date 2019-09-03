@@ -15,14 +15,12 @@
 //  ================================================================
 
 #include "../../../ITMLibDefines.h"
-
-//Note: ".tpp" files have to be included for all explicit instantiations in order to link properly
-#include "ITMSceneManipulationEngine_CPU.tpp"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
+#include "ITMSceneManipulationEngine_CPU.tpp"
 
-using namespace ITMLib;
-
-//scene manipulation functions
-
-template class ITMSceneManipulationEngine_CPU<ITMVoxel,ITMVoxelBlockHash>;
-template class ITMSceneManipulationEngine_CPU<ITMWarp,ITMVoxelBlockHash>;
+namespace ITMLib {
+template
+class ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash>;
+template
+class ITMSceneManipulationEngine_CPU<ITMWarp, ITMVoxelBlockHash>;
+} // namespace ITMLib

@@ -15,8 +15,11 @@
 //  ================================================================
 #pragma once
 
+//local
+#include "../../../Objects/Scene/ITMPlainVoxelArray.h"
+
 namespace ITMLib {
-//region ================================= AUXILIARY FUNCTIONS =========================================================
+//region ================================= AUXILIARY FUNCTIONS (PLAIN VOXEL ARRAY) =====================================
 
 inline static void
 ComputePositionFromLinearIndex_PlainVoxelArray(int& x, int& y, int& z, const ITMPlainVoxelArray::IndexData* indexData,
@@ -40,9 +43,9 @@ ComputePositionVectorFromLinearIndex_PlainVoxelArray(const ITMPlainVoxelArray::I
 	int x = tmp - y * indexData->size.x;
 	return {x + indexData->offset.x, y + indexData->offset.y, z + indexData->offset.z};
 }
+// endregion ===========================================================================================================
 
-
-// region ======================================= AUXILIARY FUNCTIONS ==================================================
+// region ======================================= AUXILIARY FUNCTIONS (VOXEL HASH BLOCKS) ==============================
 
 inline bool HashBlockDoesNotIntersectBounds(const Vector3i& hashEntryMinPoint, const Vector3i& hashEntryMaxPoint,
                                             const Vector6i& bounds) {
@@ -65,8 +68,40 @@ Vector6i computeLocalBounds(const Vector3i& hashEntryMinPoint, const Vector3i& h
 	                std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.z - bounds.max_z)));
 }
 
+/**
+ * \brief Look for the hash index of the hash entry with the specified position
+ * \param hashIdx [out] the index of the hash entry corresponding to the specified position
+ * \param hashBlockPosition [in] spacial position of the sough-after hash entry (in hash blocks)
+ * \param hashTable [in] the hash table to search
+ * \return true if hash block is allocated, false otherwise
+ */
+inline bool FindHashAtPosition(THREADPTR(int)& hashIdx,
+                               const CONSTPTR(Vector3s)& hashBlockPosition,
+                               const CONSTPTR(ITMHashEntry)* hashTable) {
+	hashIdx = hashIndex(hashBlockPosition);
+	ITMHashEntry hashEntry = hashTable[hashIdx];
+
+	if (!(IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1)) {
+		if (hashEntry.ptr >= -1) {
+			//search excess list only if there is no room in ordered part
+			while (hashEntry.offset >= 1) {
+				hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
+				hashEntry = hashTable[hashIdx];
+
+				if (IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1) {
+					return true;
+				}
+			}
+			return false;
+		}
+		return false;
+	}
+	return true;
+}
+
+
 // endregion ===========================================================================================================
 
 
-//endregion
+
 } // namespace ITMLib

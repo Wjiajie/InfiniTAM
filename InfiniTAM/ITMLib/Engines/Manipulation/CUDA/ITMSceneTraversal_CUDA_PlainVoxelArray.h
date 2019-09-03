@@ -196,7 +196,7 @@ public:
 };
 
 template<typename TVoxelPrimary, typename TVoxelSecondary>
-class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA> {
+class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelArray, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA> {
 public:
 
 // region ============================== DUAL-SCENE DYNAMIC TRAVERSAL ==================================================
