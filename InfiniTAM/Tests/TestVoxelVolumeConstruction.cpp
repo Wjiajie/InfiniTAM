@@ -200,25 +200,19 @@ BOOST_AUTO_TEST_CASE(testCompareScenes_CPU) {
 	std::uniform_real_distribution<float> sdf_distribution(-1.0f, 1.0f);
 	std::uniform_int_distribution<int> coordinate_distribution(0, extentEndVoxel.x);
 	const int modifiedVoxelCount = 120;
-	ITMVoxel voxel;
-	voxel.sdf = 0.4;
-	Vector3i coordinate(16,1,1);
-	PVA_ManipulationEngine::SetVoxel(&scene1, coordinate, voxel);
-	PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, voxel);
-	VBH_ManipulationEngine::SetVoxel(&scene3, coordinate, voxel);
-	VBH_ManipulationEngine::SetVoxel(&scene4, coordinate, voxel);
-	//generate only in the positive coordinates' volume, to make sure that the unneeded voxel hash blocks are properly dismissed
-//	for (int iVoxel = 0; iVoxel < modifiedVoxelCount; iVoxel++) {
-//		ITMVoxel voxel;
-//		voxel.sdf = sdf_distribution(generator);
-//		Vector3i coordinate(coordinate_distribution(generator),
-//		                    coordinate_distribution(generator),
-//		                    coordinate_distribution(generator));
-//		PVA_ManipulationEngine::SetVoxel(&scene1, coordinate, voxel);
-//		PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, voxel);
-//		VBH_ManipulationEngine::SetVoxel(&scene3, coordinate, voxel);
-//		VBH_ManipulationEngine::SetVoxel(&scene4, coordinate, voxel);
-//	}
+
+//	generate only in the positive coordinates' volume, to make sure that the unneeded voxel hash blocks are properly dismissed
+	for (int iVoxel = 0; iVoxel < modifiedVoxelCount; iVoxel++) {
+		ITMVoxel voxel;
+		voxel.sdf = sdf_distribution(generator);
+		Vector3i coordinate(coordinate_distribution(generator),
+		                    coordinate_distribution(generator),
+		                    coordinate_distribution(generator));
+		PVA_ManipulationEngine::SetVoxel(&scene1, coordinate, voxel);
+		PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, voxel);
+		VBH_ManipulationEngine::SetVoxel(&scene3, coordinate, voxel);
+		VBH_ManipulationEngine::SetVoxel(&scene4, coordinate, voxel);
+	}
 	float tolerance = 1e-6;
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene2, tolerance));
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene3, &scene4, tolerance));
