@@ -14,6 +14,7 @@
 //  limitations under the License.
 //  ================================================================
 #include "TestUtils.h"
+#include "TestUtils.tpp"
 
 
 #include "../ITMLib/Utils/ITMLibSettings.h"
@@ -22,6 +23,9 @@
 #include "../ITMLib/Utils/Analytics/ITMSceneStatisticsCalculator.h"
 
 using namespace ITMLib;
+
+template void GenerateTestScene01<ITMVoxel,ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* destination);
+template void GenerateTestScene01<ITMVoxel,ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* destination);
 //
 //void GenerateAndLogKillingScene01() {
 //	auto settings = new ITMLibSettings();

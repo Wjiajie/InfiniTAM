@@ -471,7 +471,6 @@ set(ITMLIB_OBJECTS_SCENE_HEADERS
     ../Tests/TestUtils.h
     ../Tests/TestUtils.cpp
     ../Tests/TestUtils.tpp
-    ../Tests/Instantiations.cpp
     )
 
 ##

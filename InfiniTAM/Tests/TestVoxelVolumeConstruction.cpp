@@ -49,66 +49,71 @@
 using namespace ITMLib;
 
 
-BOOST_AUTO_TEST_CASE(testSetVoxelAndCopyScene_PlainVoxelArray) {
+BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_PlainVoxelArray) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
 	settings->deviceType = ITMLibSettings::DEVICE_CPU;
 
+	Vector3i volumeSize (20);
+	Vector3i volumeOffset (-10, -10, 0);
+
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&settings->sceneParams,
-	                                                       settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                    settings->GetMemoryType());
+	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->GetMemoryType(),
+	                                                    volumeSize,
+	                                                    volumeOffset);
 
-	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray> CanonicalSceneManipulationEngine;
-	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray> LiveSceneManipulationEngine;
+	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray> sceneManipulationEngine;
 
-	CanonicalSceneManipulationEngine::ResetScene(&scene1);
+	sceneManipulationEngine::ResetScene(&scene1);
 
 	ITMVoxel voxelZero;
 	voxelZero.sdf = 0.0f;
-	CanonicalSceneManipulationEngine::SetVoxel(&scene1, Vector3i(0, 0, 0), voxelZero);
+	sceneManipulationEngine::SetVoxel(&scene1, Vector3i(0, 0, 0), voxelZero);
 
 	ITMVoxel out;
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene1, Vector3i(0, 0, 0));
+	out = sceneManipulationEngine::ReadVoxel(&scene1, Vector3i(0, 0, 0));
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);
 	ITMVoxel voxelHalf;
 	voxelHalf.sdf = 0.5f;
 
-	CanonicalSceneManipulationEngine::SetVoxel(&scene1, Vector3i(1, 1, 1), voxelHalf);
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene1, Vector3i(1, 1, 1));
+	sceneManipulationEngine::SetVoxel(&scene1, Vector3i(1, 1, 1), voxelHalf);
+	out = sceneManipulationEngine::ReadVoxel(&scene1, Vector3i(1, 1, 1));
 	BOOST_REQUIRE(out.sdf == voxelHalf.sdf);
-	CanonicalSceneManipulationEngine::SetVoxel(&scene1, Vector3i(9, 9, 9), voxelZero);
-	CanonicalSceneManipulationEngine::SetVoxel(&scene1, Vector3i(9, 9, 9), voxelHalf);
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene1, Vector3i(9, 9, 9));
+	sceneManipulationEngine::SetVoxel(&scene1, Vector3i(9, 9, 9), voxelZero);
+	sceneManipulationEngine::SetVoxel(&scene1, Vector3i(9, 9, 9), voxelHalf);
+	sceneManipulationEngine::SetVoxel(&scene1, Vector3i(3, 3, 3), voxelHalf);
+	out = sceneManipulationEngine::ReadVoxel(&scene1, Vector3i(9, 9, 9));
 	BOOST_REQUIRE(out.sdf == voxelHalf.sdf);
-	Vector3i voxelPos(232, 125, 62);
-	CanonicalSceneManipulationEngine::SetVoxel(&scene1, voxelPos, voxelZero);
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene1, voxelPos);
+	Vector3i voxelPos(8, 5, 2);
+	sceneManipulationEngine::SetVoxel(&scene1, voxelPos, voxelZero);
+	out = sceneManipulationEngine::ReadVoxel(&scene1, voxelPos);
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene1, Vector3i(0, 0, 0));
+	out = sceneManipulationEngine::ReadVoxel(&scene1, Vector3i(0, 0, 0));
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);
 
-	Vector3i offset(-34, 6, 9);
+	Vector3i offset(-2, 3, 4);
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(&settings->sceneParams,
-	                                                       settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                    settings->GetMemoryType());
-	CanonicalSceneManipulationEngine::ResetScene(&scene2);
+	sceneManipulationEngine::ResetScene(&scene2);
 
-	CanonicalSceneManipulationEngine::CopyScene(&scene2, &scene1, offset);
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene2, voxelPos + offset);
+	sceneManipulationEngine::CopyScene(&scene2, &scene1, offset);
+	out = sceneManipulationEngine::ReadVoxel(&scene2, voxelPos + offset);
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene2, Vector3i(0, 0, 0) + offset);
+	out = sceneManipulationEngine::ReadVoxel(&scene2, Vector3i(0, 0, 0) + offset);
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene2, Vector3i(9, 9, 9) + offset);
+	out = sceneManipulationEngine::ReadVoxel(&scene2, Vector3i(3, 3, 3) + offset);
 	BOOST_REQUIRE(out.sdf == voxelHalf.sdf);
-	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene2, Vector3i(1, 1, 1) + offset);
+	out = sceneManipulationEngine::ReadVoxel(&scene2, Vector3i(1, 1, 1) + offset);
 	BOOST_REQUIRE(out.sdf == voxelHalf.sdf);
 }
 
-BOOST_AUTO_TEST_CASE(testSetVoxelAndCopyScene_VoxelBlockHash) {
+BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
 
 	settings->deviceType = ITMLibSettings::DEVICE_CPU;
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene1(&settings->sceneParams,
-	                                                      settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType());
 
 	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> CanonicalSceneManipulationEngine;
@@ -143,9 +148,8 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopyScene_VoxelBlockHash) {
 
 	Vector3i offset(-34, 6, 9);
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene2(&settings->sceneParams,
-	                                                      settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType());
-	CanonicalSceneManipulationEngine::ResetScene(&scene2);
 
 	CanonicalSceneManipulationEngine::CopyScene(&scene2, &scene1, offset);
 	out = CanonicalSceneManipulationEngine::ReadVoxel(&scene2, voxelPos + offset);
@@ -171,8 +175,6 @@ BOOST_AUTO_TEST_CASE(testITMIntArrayMap3D) {
 			}
 		}
 	}
-//	std::cout << __FILE__ << ": " << __LINE__ << ": map to save." << std::endl;
-//	std::cout << map << std::endl;
 	const char* testFilename = "int_array_map_test.dat";
 	map.SaveToFile(testFilename);
 	ITM3DNestedMapOfArrays<int> map2("one", "two", "three", "four");
