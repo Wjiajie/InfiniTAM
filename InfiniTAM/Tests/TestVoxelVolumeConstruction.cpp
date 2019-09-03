@@ -218,7 +218,17 @@ BOOST_AUTO_TEST_CASE(testCompareScenes_CPU) {
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene3, &scene4, tolerance));
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene3, tolerance));
 
-
+	std::uniform_int_distribution<int> coordinate_distribution2(volumeOffset.x, 0);
+	ITMVoxel voxel;
+	voxel.sdf = -0.1;
+	Vector3i coordinate(coordinate_distribution2(generator),
+	                    coordinate_distribution2(generator),
+	                    0);
+	PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, voxel);
+	VBH_ManipulationEngine::SetVoxel(&scene4, coordinate, voxel);
+	BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene1, &scene2, tolerance));
+	BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene3, &scene4, tolerance));
+	BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene1, &scene4, tolerance));
 }
 //TODO: delete or restore
 //BOOST_AUTO_TEST_CASE(testSceneSaveLoadCompact) {
