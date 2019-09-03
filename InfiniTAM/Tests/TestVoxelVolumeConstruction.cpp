@@ -221,8 +221,11 @@ BOOST_AUTO_TEST_CASE(testCompareScenes_CPU) {
 	std::uniform_int_distribution<int> coordinate_distribution2(volumeOffset.x, 0);
 	ITMVoxel voxel;
 	voxel.sdf = -0.1;
-	Vector3i coordinate(coordinate_distribution2(generator),
-	                    coordinate_distribution2(generator),
+//	Vector3i coordinate(coordinate_distribution2(generator),
+//	                    coordinate_distribution2(generator),
+//	                    0);
+	Vector3i coordinate(-6,
+	                    -12,
 	                    0);
 	PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, voxel);
 	VBH_ManipulationEngine::SetVoxel(&scene4, coordinate, voxel);

@@ -470,26 +470,32 @@ public:
 #endif
 		for (int hash = 0; hash < noTotalEntries; hash++) {
 
-			const ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
-			if (currentLiveHashEntry.ptr < 0) continue;
+			const ITMHashEntry& currentPrimaryHashEntry = primaryHashTable[hash];
+			ITMHashEntry currentSecondaryHashEntry = secondaryHashTable[hash];
+			if (currentPrimaryHashEntry.ptr < 0) {
+				if (currentSecondaryHashEntry.ptr < 0) {
+					continue;
+				} else {
+					int alternativePrimaryHash;
+					if (!FindHashAtPosition(alternativePrimaryHash, currentSecondaryHashEntry.pos, primaryHashTable)) {
+						return false;
+					}
+				}
+			}
 			ITMHashEntry currentCanonicalHashEntry = secondaryHashTable[hash];
 
 			// the rare case where we have different positions for primary & secondary voxel block with the same index:
 			// we have a hash bucket miss, find the secondary voxel with the matching coordinates
-			if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
+			if (currentSecondaryHashEntry.pos != currentPrimaryHashEntry.pos) {
 				int secondaryHash;
-				if (!FindHashAtPosition(secondaryHash, currentLiveHashEntry.pos, secondaryHashTable)) {
-					std::stringstream stream;
-					stream << "Could not find corresponding secondary scene block at postion "
-					       << currentLiveHashEntry.pos
-					       << ". " << __FILE__ << ": " << __LINE__;
-					DIEWITHEXCEPTION(stream.str());
+				if (!FindHashAtPosition(secondaryHash, currentPrimaryHashEntry.pos, secondaryHashTable)) {
+					return false;
 				} else {
-					currentCanonicalHashEntry = secondaryHashTable[secondaryHash];
+					currentSecondaryHashEntry = secondaryHashTable[secondaryHash];
 				}
 			}
-			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-			TVoxelSecondary* localCanonicalVoxelBlock = &(secondaryVoxels[currentCanonicalHashEntry.ptr *
+			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxelSecondary* localCanonicalVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr *
 			                                                              (SDF_BLOCK_SIZE3)]);
 			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
@@ -497,7 +503,7 @@ public:
 						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 						TVoxelPrimary& primaryVoxel = localLiveVoxelBlock[locId];
 						TVoxelSecondary& secondaryVoxel = localCanonicalVoxelBlock[locId];
-						if(!functor(primaryVoxel, secondaryVoxel)){
+						if (!functor(primaryVoxel, secondaryVoxel)) {
 							return false;
 						}
 					}
