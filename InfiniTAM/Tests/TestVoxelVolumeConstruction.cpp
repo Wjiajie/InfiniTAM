@@ -41,8 +41,6 @@
 #include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 
-#include "../ORUtils/FileUtils.h"
-#include "../InputSource/ImageSourceEngine.h"
 
 //local
 #include "TestUtils.h"
@@ -221,11 +219,8 @@ BOOST_AUTO_TEST_CASE(testCompareScenes_CPU) {
 	std::uniform_int_distribution<int> coordinate_distribution2(volumeOffset.x, 0);
 	ITMVoxel voxel;
 	voxel.sdf = -0.1;
-//	Vector3i coordinate(coordinate_distribution2(generator),
-//	                    coordinate_distribution2(generator),
-//	                    0);
-	Vector3i coordinate(-6,
-	                    -12,
+	Vector3i coordinate(coordinate_distribution2(generator),
+	                    coordinate_distribution2(generator),
 	                    0);
 	PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, voxel);
 	VBH_ManipulationEngine::SetVoxel(&scene4, coordinate, voxel);
@@ -267,46 +262,4 @@ BOOST_AUTO_TEST_CASE(testCompareScenes_CPU) {
 //	delete settings;
 //	delete scene1;
 //	delete scene2;
-//}
-
-//TODO: provide test data (put in Tests/Data directory, copy from there to tests runtime dir via CMake), then uncomment
-//BOOST_AUTO_TEST_CASE(testImageMaskReader) {
-//
-//	using namespace InputSource;
-//	auto* rgb = new ITMUChar4Image(true, false);
-//	auto* depth = new ITMShortImage(true, false);
-//	auto* gtMaskedRgb = new ITMUChar4Image(true, false);
-//	auto* gtMaskedDepth = new ITMShortImage(true, false);
-//
-//	ITMUCharImage* mask = new ITMUCharImage(true, false);
-//
-//	InputSource::ImageMaskPathGenerator pathGenerator("frames/color_%06i.png", "frames/depth_%06i.png",
-//	                                                  "frames/omask_%06i.png");
-//	InputSource::ImageSourceEngine* imageSource = new InputSource::ImageFileReader<InputSource::ImageMaskPathGenerator>(
-//			"frames/snoopy_calib.txt", pathGenerator);
-//	imageSource->getImages(rgb, depth);
-//
-////	BOOST_REQUIRE(ReadImageFromFile(rgb, "frames/color_000000.png"));
-////	BOOST_REQUIRE(ReadImageFromFile(depth, "frames/depth_000000.png"));
-//	BOOST_REQUIRE(ReadImageFromFile(mask, "frames/omask_000000.png"));
-//
-////	rgb->ApplyMask(*mask,Vector4u((unsigned char)0));
-////	depth->ApplyMask(*mask,0);
-//
-////	SaveImageToFile(rgb, "frames/color_000000_masked2.pnm");
-////	SaveImageToFile(depth, "frames/depth_000000_masked2.pnm");
-//
-//	ReadImageFromFile(gtMaskedRgb, "frames/color_000000.png");
-//	gtMaskedRgb->ApplyMask(*mask, Vector4u((unsigned char) 0));
-//	ReadImageFromFile(gtMaskedDepth, "frames/depth_000000_masked.pnm");
-//
-//	BOOST_REQUIRE(*rgb == *gtMaskedRgb);
-//	BOOST_REQUIRE(*depth == *gtMaskedDepth);
-//
-//	delete rgb;
-//	delete depth;
-//	//delete mask;
-//	delete imageSource;
-//	delete gtMaskedDepth;
-//	delete gtMaskedRgb;
 //}
