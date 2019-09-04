@@ -21,8 +21,9 @@
 #endif
 
 //stdlib
-#include <vector>
 #include <random>
+#include <vector>
+
 
 //boost
 #include <boost/test/unit_test.hpp>
@@ -166,10 +167,46 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CPU) {
 	BOOST_REQUIRE(out.sdf == voxelHalf.sdf);
 }
 
+template<bool hasSemanticInformation, typename TVoxel>
+struct HandleFlagsFunctor;
+
+template<typename TVoxel>
+struct HandleFlagsFunctor<true, TVoxel> {
+	inline static
+	void run(TVoxel& voxel) {
+		if (voxel.sdf > -1.0f && voxel.sdf < 1.0f) {
+			voxel.flags = VoxelFlags::VOXEL_NONTRUNCATED;
+		} else {
+			voxel.flags = VoxelFlags::VOXEL_TRUNCATED;
+		}
+	}
+};
+
+template<typename TVoxel>
+struct HandleFlagsFunctor<false, TVoxel> {
+	inline static
+	void run(TVoxel& voxel) {}
+};
+
 
 BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU) {
+
+	//TODO: test with the following (find out which of the multi-voxel test coordinates is the culprit):
+//	coordinate single:-9, -13, 0
+//	coordinate:10, 2, 20
+//	coordinate:7, 7, 12
+//	coordinate:12, 4, 8
+//	coordinate:20, 17, 7
+//	coordinate:8, 2, 0
+//	coordinate:7, 6, 2
+//	coordinate:0, 2, 8
+//	coordinate:9, 6, 8
+//	coordinate:16, 13, 6
+//	coordinate:12, 5, 5
+
 	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray> PVA_ManipulationEngine;
 	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> VBH_ManipulationEngine;
+	float tolerance = 1e-6;
 
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
 	settings->deviceType = ITMLibSettings::DEVICE_CPU;
@@ -201,98 +238,70 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU) {
 
 	std::random_device random_device;
 	std::mt19937 generator(random_device());
+
+	auto singleVoxelTests = [&]() {
+		std::uniform_int_distribution<int> coordinate_distribution2(volumeOffset.x, 0);
+		ITMVoxel voxel;
+		voxel.sdf = ITMVoxel::floatToValue(-0.1f);
+		HandleFlagsFunctor<ITMVoxel::hasSemanticInformation, ITMVoxel>::run(voxel);
+
+		Vector3i coordinate(coordinate_distribution2(generator), coordinate_distribution2(generator), 0);
+		std::cout << "coordinate single:" << coordinate << std::endl;
+
+		PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, voxel);
+		VBH_ManipulationEngine::SetVoxel(&scene4, coordinate, voxel);
+		BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene1, &scene2, tolerance));
+		BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene3, &scene4, tolerance));
+		BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene1, &scene4, tolerance));
+
+		ITMVoxel defaultVoxel;
+		PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, defaultVoxel);
+		VBH_ManipulationEngine::SetVoxel(&scene4, coordinate, defaultVoxel);
+		BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene2, tolerance));
+		BOOST_REQUIRE(contentAlmostEqual_CPU(&scene3, &scene4, tolerance));
+
+		coordinate = volumeOffset + volumeSize - Vector3i(1);
+		voxel = PVA_ManipulationEngine::ReadVoxel(&scene2, coordinate);
+		voxel.sdf = fmod((voxel.sdf + 0.1f), 1.0f);
+		HandleFlagsFunctor<ITMVoxel::hasSemanticInformation, ITMVoxel>::run(voxel);
+		PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, voxel);
+		VBH_ManipulationEngine::SetVoxel(&scene4, coordinate, voxel);
+		BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene1, &scene2, tolerance));
+		BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene3, &scene4, tolerance));
+		BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene1, &scene4, tolerance));
+
+		PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, defaultVoxel);
+		VBH_ManipulationEngine::SetVoxel(&scene4, coordinate, defaultVoxel);
+	};
+
 	std::uniform_real_distribution<float> sdf_distribution(-1.0f, 1.0f);
 	std::uniform_int_distribution<int> coordinate_distribution(0, extentEndVoxel.x);
-	const int modifiedVoxelCount = 120;
+
+	const int modifiedVoxelCount = 10;
+
+	singleVoxelTests();
 
 //	generate only in the positive coordinates' volume, to make sure that the unneeded voxel hash blocks are properly dismissed
 	for (int iVoxel = 0; iVoxel < modifiedVoxelCount; iVoxel++) {
 		ITMVoxel voxel;
 		voxel.sdf = sdf_distribution(generator);
+		HandleFlagsFunctor<ITMVoxel::hasSemanticInformation, ITMVoxel>::run(voxel);
 		Vector3i coordinate(coordinate_distribution(generator),
 		                    coordinate_distribution(generator),
 		                    coordinate_distribution(generator));
+		std::cout << "coordinate:" << coordinate << std::endl;
 		PVA_ManipulationEngine::SetVoxel(&scene1, coordinate, voxel);
 		PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, voxel);
 		VBH_ManipulationEngine::SetVoxel(&scene3, coordinate, voxel);
 		VBH_ManipulationEngine::SetVoxel(&scene4, coordinate, voxel);
 	}
-	float tolerance = 1e-6;
+
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene2, tolerance));
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene3, &scene4, tolerance));
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene3, tolerance));
 
-	std::uniform_int_distribution<int> coordinate_distribution2(volumeOffset.x, 0);
-	ITMVoxel voxel;
-	voxel.sdf = -0.1;
-	Vector3i coordinate(coordinate_distribution2(generator),
-	                    coordinate_distribution2(generator),
-	                    0);
-	PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, voxel);
-	VBH_ManipulationEngine::SetVoxel(&scene4, coordinate, voxel);
-	BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene1, &scene2, tolerance));
-	BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene3, &scene4, tolerance));
-	BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene1, &scene4, tolerance));
+	singleVoxelTests();
 }
-
-BOOST_AUTO_TEST_CASE(testGenerateVoxelVolumeFromImage_CPU_PlainVoxelArray) {
-	ITMLibSettings* settings = &ITMLibSettings::Instance();
-
-	// region ================================= CONSTRUCT VIEW =========================================================
-
-	settings->deviceType = ITMLibSettings::DEVICE_CPU;
-	settings->useBilateralFilter = false;
-	settings->useThresholdFilter = false;
-
-	ITMRGBDCalib calibrationData;
-	readRGBDCalib("TestData/snoopy_calib.txt", calibrationData);
-
-	ITMViewBuilder* viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calibrationData, settings->deviceType);
-	Vector2i imageSize(640, 480);
-	ITMView* view = nullptr;
-
-	auto* rgb = new ITMUChar4Image(true, false);
-	auto* depth = new ITMShortImage(true, false);
-	BOOST_REQUIRE(ReadImageFromFile(rgb, "TestData/stripes_color.png"));
-	BOOST_REQUIRE(ReadImageFromFile(depth, "TestData/stripes_depth.png"));
-
-	viewBuilder->UpdateView(&view, rgb, depth, settings->useThresholdFilter,
-	                        settings->useBilateralFilter, false, true);
-
-	// endregion =======================================================================================================
-
-	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine =
-			ITMDynamicSceneReconstructionEngineFactory
-			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(settings->deviceType);
-
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&settings->sceneParams,
-	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                    settings->GetMemoryType());
-	ITMTrackingState trackingState(imageSize, settings->GetMemoryType());
-
-	reconstructionEngine->GenerateRawLiveSceneFromView(&scene1, view, &trackingState, nullptr);
-
-
-	int relevant_voxel_x_coords_mm[] = {-142, -160, -176, -191, -205, -217, -227, -236, -244, -250, -254,
-	                                    -256, -258, -257, -255, -252, -247, -240, -232, -222, -211, -198,
-	                                    -184, -168, -151, -132, -111, -89, -66, -41, -14, 14, 44,
-	                                    75, 108, 143, 179, 216, 255, 296, 338, 382, 427, 474,
-	                                    522, 572, 624, 677, 731, 787, 845, 904, 965, 1027, 1091,
-	                                    1156, 1223, 1292, 1362, 1433, 1506, 1581};
-	int relevant_voxel_z_coords_mm[] = {240, 280, 320, 360, 400, 440, 480, 520, 560, 600, 640,
-	                                    680, 720, 760, 800, 840, 880, 920, 960, 1000, 1040, 1080,
-	                                    1120, 1160, 1200, 1240, 1280, 1320, 1360, 1400, 1440, 1480, 1520,
-	                                    1560, 1600, 1640, 1680, 1720, 1760, 1800, 1840, 1880, 1920, 1960,
-	                                    2000, 2040, 2080, 2120, 2160, 2200, 2240, 2280, 2320, 2360, 2400,
-	                                    2440, 2480, 2520, 2560, 2600, 2640, 2680};
-
-	delete view;
-	delete reconstructionEngine;
-	delete viewBuilder;
-	delete rgb;
-	delete depth;
-}
-
 
 //TODO: restore
 //BOOST_AUTO_TEST_CASE(testSceneSaveLoadCompact) {

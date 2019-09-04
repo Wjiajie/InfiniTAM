@@ -449,6 +449,21 @@ public:
 		}
 	}
 
+	template<typename TVoxel>
+	inline static bool
+	IsVoxelBlockAltered(TVoxel* voxelBlock) {
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int locId = 0; locId < SDF_BLOCK_SIZE3; locId++) {
+			TVoxel& voxel = voxelBlock[locId];
+			if (isAltered(voxel)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	template<typename TFunctor>
 	inline static bool
 	DualVoxelTraversal_AllTrue(
@@ -465,44 +480,60 @@ public:
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 		int noTotalEntries = primaryScene->index.noTotalEntries;
 
+
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
 		for (int hash = 0; hash < noTotalEntries; hash++) {
 
-			const ITMHashEntry& currentPrimaryHashEntry = primaryHashTable[hash];
-			ITMHashEntry currentSecondaryHashEntry = secondaryHashTable[hash];
-			if (currentPrimaryHashEntry.ptr < 0) {
-				if (currentSecondaryHashEntry.ptr < 0) {
+			const ITMHashEntry& primaryHashEntry = primaryHashTable[hash];
+			ITMHashEntry secondaryHashEntry = secondaryHashTable[hash];
+			if (primaryHashEntry.ptr < 0) {
+				if (secondaryHashEntry.ptr < 0) {
 					continue;
 				} else {
 					int alternativePrimaryHash;
-					if (!FindHashAtPosition(alternativePrimaryHash, currentSecondaryHashEntry.pos, primaryHashTable)) {
-						return false;
+					if (!FindHashAtPosition(alternativePrimaryHash, secondaryHashEntry.pos, primaryHashTable)) {
+						TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr *
+						                                                         (SDF_BLOCK_SIZE3)]);
+						if (IsVoxelBlockAltered(secondaryVoxelBlock)) {
+							return false;
+						} else {
+							continue;
+						}
 					}
 				}
 			}
-			ITMHashEntry currentCanonicalHashEntry = secondaryHashTable[hash];
 
 			// the rare case where we have different positions for primary & secondary voxel block with the same index:
-			// we have a hash bucket miss, find the secondary voxel with the matching coordinates
-			if (currentSecondaryHashEntry.pos != currentPrimaryHashEntry.pos) {
+			// we have a hash bucket miss, find the secondary voxel block with the matching coordinates
+			if (secondaryHashEntry.pos != primaryHashEntry.pos) {
 				int secondaryHash;
-				if (!FindHashAtPosition(secondaryHash, currentPrimaryHashEntry.pos, secondaryHashTable)) {
-					return false;
+				if (!FindHashAtPosition(secondaryHash, primaryHashEntry.pos, secondaryHashTable)) {
+					// If we cannot find this block, we check whether the primary voxel block has been altered, and
+					// return "false" if it is -- i.e. the secondary voxel volume does not have a match.
+					// If the primary voxel block has not been altered, we assume the allocation mismatch is benign and
+					// continue to the next hash block.
+					TVoxelPrimary* primaryVoxelBlock = &(primaryVoxels[primaryHashEntry.ptr *
+					                                                   (SDF_BLOCK_SIZE3)]);
+					if (IsVoxelBlockAltered(primaryVoxelBlock)) {
+						return false;
+					} else {
+						continue;
+					}
 				} else {
-					currentSecondaryHashEntry = secondaryHashTable[secondaryHash];
+					secondaryHashEntry = secondaryHashTable[secondaryHash];
 				}
 			}
-			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-			TVoxelSecondary* localCanonicalVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr *
-			                                                              (SDF_BLOCK_SIZE3)]);
+			TVoxelPrimary* primaryVoxelBlock = &(primaryVoxels[primaryHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr *
+			                                                         (SDF_BLOCK_SIZE3)]);
 			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
 						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-						TVoxelPrimary& primaryVoxel = localLiveVoxelBlock[locId];
-						TVoxelSecondary& secondaryVoxel = localCanonicalVoxelBlock[locId];
+						TVoxelPrimary& primaryVoxel = primaryVoxelBlock[locId];
+						TVoxelSecondary& secondaryVoxel = secondaryVoxelBlock[locId];
 						if (!functor(primaryVoxel, secondaryVoxel)) {
 							return false;
 						}

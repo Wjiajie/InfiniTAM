@@ -50,7 +50,8 @@ if(BUILD_TESTS)
 
     find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 
-    itm_add_test(NAME VoxelVolumeConstruction SOURCES TestVoxelVolumeConstruction.cpp TestUtils.cpp TestUtils.h TestUtils.tpp)
+    itm_add_test(NAME VoxelVolume_SetCopyCompare SOURCES TestVoxelVolume_SetCopyCompare.cpp TestUtils.cpp TestUtils.h TestUtils.tpp)
+    itm_add_test(NAME VoxelVolume_ConstructFromImage SOURCES TestVoxelVolume_ConstructFromImage.cpp)
     itm_add_test(NAME IntArrayMap3D SOURCES TestIntArrayMap3D.cpp)
     itm_add_test(NAME ImageMaskReader SOURCES TestImageMaskReader.cpp)
 

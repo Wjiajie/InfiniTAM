@@ -68,8 +68,8 @@ public:
 #pragma omp parallel for
 #endif
 		for (int zVoxelBlock = startBlockCoords.z; zVoxelBlock < endBlockCoords.z; zVoxelBlock++) {
-			int zVoxelStart = std::max(zVoxelBlock * SDF_BLOCK_SIZE, pvaOffset.y);
-			int zVoxelEnd = std::min((zVoxelBlock + 1) * SDF_BLOCK_SIZE, endVoxel.y);
+			int zVoxelStart = std::max(zVoxelBlock * SDF_BLOCK_SIZE, pvaOffset.z);
+			int zVoxelEnd = std::min((zVoxelBlock + 1) * SDF_BLOCK_SIZE, endVoxel.z);
 			for (int yVoxelBlock = startBlockCoords.y; yVoxelBlock < endBlockCoords.y; yVoxelBlock++) {
 				int yVoxelStart = std::max(yVoxelBlock * SDF_BLOCK_SIZE, pvaOffset.y);
 				int yVoxelEnd = std::min((yVoxelBlock + 1) * SDF_BLOCK_SIZE, endVoxel.y);
