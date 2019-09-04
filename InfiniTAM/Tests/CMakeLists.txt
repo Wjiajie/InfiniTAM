@@ -53,4 +53,22 @@ if(BUILD_TESTS)
     itm_add_test(NAME VoxelVolumeConstruction SOURCES TestVoxelVolumeConstruction.cpp TestUtils.cpp TestUtils.h TestUtils.tpp)
     itm_add_test(NAME IntArrayMap3D SOURCES TestIntArrayMap3D.cpp)
     itm_add_test(NAME ImageMaskReader SOURCES TestImageMaskReader.cpp)
+
+    ###########################################
+    # Transfer test data to working directory #
+    ###########################################
+
+    file(GLOB TEST_DATA_FILES
+         "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.png"
+         "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.pnm"
+         "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.txt")
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/TestData")
+    foreach(TEST_DATA_FILE ${TEST_DATA_FILES})
+        get_filename_component(FILENAME ${TEST_DATA_FILE} NAME)
+        configure_file(
+                ${TEST_DATA_FILE}
+                "${CMAKE_CURRENT_BINARY_DIR}/TestData/${FILENAME}"
+                COPYONLY
+        )
+    endforeach(TEST_DATA_FILE)
 endif()
