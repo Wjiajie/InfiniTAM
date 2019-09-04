@@ -18,21 +18,22 @@
 #include "../../Utils/ITMLibSettings.h"
 
 #include "CPU/ITMDynamicSceneReconstructionEngine_CPU.h"
+
 #ifndef COMPILE_WITHOUT_CUDA
+
 #include "CUDA/ITMDynamicSceneReconstructionEngine_CUDA.h"
+
 #endif
 #ifdef COMPILE_WITH_METAL
 #error "NOT CURRENTLY SUPPORTED"
 #endif
 
-namespace ITMLib
-{
+namespace ITMLib {
 
 /**
  * \brief This struct provides functions that can be used to construct scene reconstruction engines.
  */
-struct ITMDynamicSceneReconstructionEngineFactory
-{
+struct ITMDynamicSceneReconstructionEngineFactory {
 	//#################### PUBLIC STATIC MEMBER FUNCTIONS ####################
 
 	/**
@@ -40,24 +41,23 @@ struct ITMDynamicSceneReconstructionEngineFactory
 	 *
 	 * \param deviceType  The device on which the scene reconstruction engine should operate.
 	 */
-	template <typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-	static ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive,TIndex>* MakeSceneReconstructionEngine(ITMLibSettings::DeviceType deviceType)
-	{
-		ITMDynamicSceneReconstructionEngine<TVoxelCanonical, TVoxelLive,TIndex> *sceneRecoEngine = NULL;
+	template<typename TVoxel, typename TWarp, typename TIndex>
+	static ITMDynamicSceneReconstructionEngine<TVoxel, TWarp, TIndex>*
+	MakeSceneReconstructionEngine(ITMLibSettings::DeviceType deviceType) {
+		ITMDynamicSceneReconstructionEngine<TVoxel, TWarp, TIndex>* sceneRecoEngine = NULL;
 
-		switch(deviceType)
-		{
+		switch (deviceType) {
 			case ITMLibSettings::DEVICE_CPU:
-				sceneRecoEngine = new ITMDynamicSceneReconstructionEngine_CPU<TVoxelCanonical, TVoxelLive,TIndex>;
+				sceneRecoEngine = new ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, TIndex>;
 				break;
 			case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-				sceneRecoEngine = new ITMDynamicSceneReconstructionEngine_CUDA<TVoxelCanonical, TVoxelLive, TIndex>;
+				sceneRecoEngine = new ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, TIndex>;
 #endif
 				break;
 			case ITMLibSettings::DEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
-				sceneRecoEngine = new ITMSceneReconstructionEngine_Metal<TVoxelCanonical,TIndex>;
+				sceneRecoEngine = new ITMSceneReconstructionEngine_Metal<TVoxel,TIndex>;
 #endif
 				break;
 		}

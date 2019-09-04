@@ -39,7 +39,7 @@ namespace ITMLib
 		*/
 		int maxW;
 
-		/** Stop integration once maxW has been reached. */
+		/** Stop integration/fusion once maxW has been reached. */
 		bool stopIntegratingAtMaxW;
 
 		ITMSceneParams(void) {}

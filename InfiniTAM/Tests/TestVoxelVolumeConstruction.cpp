@@ -31,16 +31,22 @@
 #include "../ITMLib/ITMLibDefines.h"
 #include "../ITMLib/Objects/Scene/ITMVoxelVolume.h"
 #include "../ITMLib/Objects/Scene/ITMRepresentationAccess.h"
-#include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../ITMLib/Objects/Camera/ITMCalibIO.h"
+
 #include "../ITMLib/Utils/ITMLibSettings.h"
 #include "../ITMLib/Utils/Analytics/ITMSceneStatisticsCalculator.h"
 #include "../ITMLib/Utils/Analytics/ITMVoxelVolumeComparison_CPU.h"
-#include "../ITMLib/Engines/Reconstruction/Interface/ITMSceneReconstructionEngine.h"
-#include "../ITMLib/Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
+
+#include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
+#include "../ITMLib/Engines/ViewBuilding/ITMViewBuilderFactory.h"
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
+#include "../ITMLib/Engines/Reconstruction/Interface/ITMDynamicSceneReconstructionEngine.h"
+#include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 
+#include "../InputSource/ImageSourceEngine.h"
+#include "../ORUtils/FileUtils.h"
 
 //local
 #include "TestUtils.h"
@@ -161,7 +167,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CPU) {
 }
 
 
-BOOST_AUTO_TEST_CASE(testCompareScenes_CPU) {
+BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU) {
 	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray> PVA_ManipulationEngine;
 	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> VBH_ManipulationEngine;
 
@@ -228,7 +234,67 @@ BOOST_AUTO_TEST_CASE(testCompareScenes_CPU) {
 	BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene3, &scene4, tolerance));
 	BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene1, &scene4, tolerance));
 }
-//TODO: delete or restore
+
+BOOST_AUTO_TEST_CASE(testGenerateVoxelVolumeFromImage_CPU_PlainVoxelArray) {
+	ITMLibSettings* settings = &ITMLibSettings::Instance();
+
+	// region ================================= CONSTRUCT VIEW =========================================================
+
+	settings->deviceType = ITMLibSettings::DEVICE_CPU;
+	settings->useBilateralFilter = false;
+	settings->useThresholdFilter = false;
+
+	ITMRGBDCalib calibrationData;
+	readRGBDCalib("TestData/snoopy_calib.txt", calibrationData);
+
+	ITMViewBuilder* viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calibrationData, settings->deviceType);
+	Vector2i imageSize(640, 480);
+	ITMView* view = nullptr;
+
+	auto* rgb = new ITMUChar4Image(true, false);
+	auto* depth = new ITMShortImage(true, false);
+	BOOST_REQUIRE(ReadImageFromFile(rgb, "TestData/stripes_color.png"));
+	BOOST_REQUIRE(ReadImageFromFile(depth, "TestData/stripes_depth.png"));
+
+	viewBuilder->UpdateView(&view, rgb, depth, settings->useThresholdFilter,
+	                        settings->useBilateralFilter, false, true);
+
+	// endregion =======================================================================================================
+
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine =
+			ITMDynamicSceneReconstructionEngineFactory
+			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(settings->deviceType);
+
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&settings->sceneParams,
+	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->GetMemoryType());
+	ITMTrackingState trackingState(imageSize, settings->GetMemoryType());
+
+	reconstructionEngine->GenerateRawLiveSceneFromView(&scene1, view, &trackingState, nullptr);
+
+
+	int relevant_voxel_x_coords_mm[] = {-142, -160, -176, -191, -205, -217, -227, -236, -244, -250, -254,
+	                                    -256, -258, -257, -255, -252, -247, -240, -232, -222, -211, -198,
+	                                    -184, -168, -151, -132, -111, -89, -66, -41, -14, 14, 44,
+	                                    75, 108, 143, 179, 216, 255, 296, 338, 382, 427, 474,
+	                                    522, 572, 624, 677, 731, 787, 845, 904, 965, 1027, 1091,
+	                                    1156, 1223, 1292, 1362, 1433, 1506, 1581};
+	int relevant_voxel_z_coords_mm[] = {240, 280, 320, 360, 400, 440, 480, 520, 560, 600, 640,
+	                                    680, 720, 760, 800, 840, 880, 920, 960, 1000, 1040, 1080,
+	                                    1120, 1160, 1200, 1240, 1280, 1320, 1360, 1400, 1440, 1480, 1520,
+	                                    1560, 1600, 1640, 1680, 1720, 1760, 1800, 1840, 1880, 1920, 1960,
+	                                    2000, 2040, 2080, 2120, 2160, 2200, 2240, 2280, 2320, 2360, 2400,
+	                                    2440, 2480, 2520, 2560, 2600, 2640, 2680};
+
+	delete view;
+	delete reconstructionEngine;
+	delete viewBuilder;
+	delete rgb;
+	delete depth;
+}
+
+
+//TODO: restore
 //BOOST_AUTO_TEST_CASE(testSceneSaveLoadCompact) {
 //	ITMLibSettings* settings = &ITMLibSettings::Instance();
 //
