@@ -293,7 +293,7 @@ template<>
 inline
 bool almostEqual<ITMVoxel_f_warp, float>(ITMVoxel_f_warp& a, ITMVoxel_f_warp& b, float tolerance) {
 	return almostEqual(a.flow_warp, b.flow_warp, tolerance) &&
-	       almostEqual(a.gradient0, b.gradient1, tolerance) &&
+	       almostEqual(a.gradient0, b.gradient0, tolerance) &&
 	       almostEqual(a.gradient1, b.gradient1, tolerance);
 }
 

@@ -18,6 +18,8 @@
 
 namespace ITMLib {
 
+// region ======================= Instantiations with ITMVoxel =========================================================
+
 template
 bool contentAlmostEqual_CPU<ITMVoxel, ITMPlainVoxelArray, ITMPlainVoxelArray, float>(
 		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* b,
@@ -48,4 +50,39 @@ bool allocatedContentAlmostEqual_CPU<ITMVoxel, ITMVoxelBlockHash, ITMPlainVoxelA
 		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* b,
 		float tolerance);
 
-}
+//endregion
+// region =================== Instantiations with ITMWarp ==============================================================
+
+template
+bool contentAlmostEqual_CPU<ITMWarp, ITMPlainVoxelArray, ITMPlainVoxelArray, float>(
+		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* b,
+		float tolerance);
+
+template
+bool contentAlmostEqual_CPU<ITMWarp, ITMVoxelBlockHash, ITMVoxelBlockHash, float>(
+		ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* b,
+		float tolerance);
+
+template
+bool contentAlmostEqual_CPU<ITMWarp, ITMPlainVoxelArray, ITMVoxelBlockHash, float>(
+		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* b,
+		float tolerance);
+
+template
+bool contentAlmostEqual_CPU<ITMWarp, ITMVoxelBlockHash, ITMPlainVoxelArray, float>(
+		ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* b,
+		float tolerance);
+
+template
+bool allocatedContentAlmostEqual_CPU<ITMWarp, ITMPlainVoxelArray, ITMVoxelBlockHash, float>(
+		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* b,
+		float tolerance);
+
+template
+bool allocatedContentAlmostEqual_CPU<ITMWarp, ITMVoxelBlockHash, ITMPlainVoxelArray, float>(
+		ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* b,
+		float tolerance);
+
+// endregion
+
+} // namespace ITMLib 

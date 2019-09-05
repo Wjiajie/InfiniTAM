@@ -143,7 +143,7 @@ public:
 		for (int hash = 0; hash < totalHashEntryCount; hash++) {
 			if (foundMismatch) continue;
 			ITMHashEntry secondaryHashEntry = hashTable[hash];
-			if (secondaryHashEntry.ptr < 0 || coveredBlockHashes.find(hash) == coveredBlockHashes.end()) continue;
+			if (secondaryHashEntry.ptr < 0 || coveredBlockHashes.find(hash) != coveredBlockHashes.end()) continue;
 			//found allocated hash block that wasn't spanned by the volume, check to make sure it wasn't altered
 			TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 			if (isVoxelBlockAltered(secondaryVoxelBlock)) {
