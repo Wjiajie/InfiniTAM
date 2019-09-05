@@ -190,20 +190,6 @@ struct HandleFlagsFunctor<false, TVoxel> {
 
 
 BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU) {
-
-	//TODO: test with the following (find out which of the multi-voxel test coordinates is the culprit):
-//	coordinate single:-9, -13, 0
-//	coordinate:10, 2, 20
-//	coordinate:7, 7, 12
-//	coordinate:12, 4, 8
-//	coordinate:20, 17, 7
-//	coordinate:8, 2, 0
-//	coordinate:7, 6, 2
-//	coordinate:0, 2, 8
-//	coordinate:9, 6, 8
-//	coordinate:16, 13, 6
-//	coordinate:12, 5, 5
-
 	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray> PVA_ManipulationEngine;
 	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> VBH_ManipulationEngine;
 	float tolerance = 1e-6;
@@ -246,7 +232,6 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU) {
 		HandleFlagsFunctor<ITMVoxel::hasSemanticInformation, ITMVoxel>::run(voxel);
 
 		Vector3i coordinate(coordinate_distribution2(generator), coordinate_distribution2(generator), 0);
-		std::cout << "coordinate single:" << coordinate << std::endl;
 
 		PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, voxel);
 		VBH_ManipulationEngine::SetVoxel(&scene4, coordinate, voxel);
@@ -277,7 +262,7 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU) {
 	std::uniform_real_distribution<float> sdf_distribution(-1.0f, 1.0f);
 	std::uniform_int_distribution<int> coordinate_distribution(0, extentEndVoxel.x);
 
-	const int modifiedVoxelCount = 10;
+	const int modifiedVoxelCount = 120;
 
 	singleVoxelTests();
 
@@ -289,7 +274,7 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU) {
 		Vector3i coordinate(coordinate_distribution(generator),
 		                    coordinate_distribution(generator),
 		                    coordinate_distribution(generator));
-		std::cout << "coordinate:" << coordinate << std::endl;
+
 		PVA_ManipulationEngine::SetVoxel(&scene1, coordinate, voxel);
 		PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, voxel);
 		VBH_ManipulationEngine::SetVoxel(&scene3, coordinate, voxel);

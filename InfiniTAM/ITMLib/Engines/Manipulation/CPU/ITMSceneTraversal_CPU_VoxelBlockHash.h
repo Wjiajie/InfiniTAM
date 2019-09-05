@@ -480,7 +480,6 @@ public:
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
 		int noTotalEntries = primaryScene->index.noTotalEntries;
 
-
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -488,19 +487,30 @@ public:
 
 			const ITMHashEntry& primaryHashEntry = primaryHashTable[hash];
 			ITMHashEntry secondaryHashEntry = secondaryHashTable[hash];
+
+			auto secondaryHashEntryHasMatchingPrimary = [&](){
+				int alternativePrimaryHash;
+				if (!FindHashAtPosition(alternativePrimaryHash, secondaryHashEntry.pos, primaryHashTable)) {
+					// could not find primary block corresponding to the secondary hash
+					TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr *
+					                                                         (SDF_BLOCK_SIZE3)]);
+					// if the secondary block is unaltered anyway, so no need to match and we're good, so return "true"
+					return !IsVoxelBlockAltered(secondaryVoxelBlock);
+				} else {
+					// alternative primary hash found, skip this primary hash since the corresponding secondary
+					// block will be (or has been) processed with the alternative primary hash.
+					return true;
+				}
+			};
+
 			if (primaryHashEntry.ptr < 0) {
 				if (secondaryHashEntry.ptr < 0) {
 					continue;
 				} else {
-					int alternativePrimaryHash;
-					if (!FindHashAtPosition(alternativePrimaryHash, secondaryHashEntry.pos, primaryHashTable)) {
-						TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr *
-						                                                         (SDF_BLOCK_SIZE3)]);
-						if (IsVoxelBlockAltered(secondaryVoxelBlock)) {
-							return false;
-						} else {
-							continue;
-						}
+					if (!secondaryHashEntryHasMatchingPrimary()){
+						return false;
+					}else{
+						continue;
 					}
 				}
 			}
@@ -508,6 +518,12 @@ public:
 			// the rare case where we have different positions for primary & secondary voxel block with the same index:
 			// we have a hash bucket miss, find the secondary voxel block with the matching coordinates
 			if (secondaryHashEntry.pos != primaryHashEntry.pos) {
+				if(secondaryHashEntry.ptr >= 0){
+					if (!secondaryHashEntryHasMatchingPrimary()){
+						return false;
+					}
+				}
+
 				int secondaryHash;
 				if (!FindHashAtPosition(secondaryHash, primaryHashEntry.pos, secondaryHashTable)) {
 					// If we cannot find this block, we check whether the primary voxel block has been altered, and
