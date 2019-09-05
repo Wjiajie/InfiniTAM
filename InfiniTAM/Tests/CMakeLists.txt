@@ -4,7 +4,13 @@
 
 option(BUILD_TESTS "Build automated tests with the project (Boost-test required)." OFF)
 
-macro (ITM_ADD_TEST)
+set(COMMON_TEST_SOURCES
+    TestUtils.cpp
+    TestUtils.h
+    TestUtils.tpp
+    )
+
+macro(itm_add_test)
     set(options)
     set(oneValueArgs NAME)
     set(multiValueArgs SOURCES)
@@ -42,7 +48,7 @@ macro (ITM_ADD_TEST)
     include(${PROJECT_SOURCE_DIR}/cmake/LinkUVC.cmake)
 endmacro()
 
-if(BUILD_TESTS)
+if (BUILD_TESTS)
 
     ###########################
     # Find additional packages #
@@ -50,8 +56,9 @@ if(BUILD_TESTS)
 
     find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 
-    itm_add_test(NAME VoxelVolume_SetCopyCompare SOURCES TestVoxelVolume_SetCopyCompare.cpp TestUtils.cpp TestUtils.h TestUtils.tpp)
-    itm_add_test(NAME VoxelVolume_ConstructFromImage SOURCES TestVoxelVolume_ConstructFromImage.cpp)
+    itm_add_test(NAME VoxelVolume_SetCopyCompare_CPU SOURCES TestVoxelVolume_SetCopyCompare_CPU.cpp)
+    itm_add_test(NAME VoxelVolume_ConstructFromImage_CPU SOURCES TestVoxelVolume_ConstructFromImage_CPU.cpp)
+    itm_add_test(NAME VoxelVolume_SaveLoadCompact_CPU SOURCES TestVoxelVolume_SaveLoadCompact_CPU.cpp)
     itm_add_test(NAME IntArrayMap3D SOURCES TestIntArrayMap3D.cpp)
     itm_add_test(NAME ImageMaskReader SOURCES TestImageMaskReader.cpp)
 
@@ -64,12 +71,12 @@ if(BUILD_TESTS)
          "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.pnm"
          "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.txt")
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/TestData")
-    foreach(TEST_DATA_FILE ${TEST_DATA_FILES})
+    foreach (TEST_DATA_FILE ${TEST_DATA_FILES})
         get_filename_component(FILENAME ${TEST_DATA_FILE} NAME)
         configure_file(
                 ${TEST_DATA_FILE}
                 "${CMAKE_CURRENT_BINARY_DIR}/TestData/${FILENAME}"
                 COPYONLY
         )
-    endforeach(TEST_DATA_FILE)
-endif()
+    endforeach (TEST_DATA_FILE)
+endif ()

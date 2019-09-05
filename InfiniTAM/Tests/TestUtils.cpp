@@ -26,6 +26,8 @@ using namespace ITMLib;
 
 template void GenerateTestScene01<ITMVoxel,ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* destination);
 template void GenerateTestScene01<ITMVoxel,ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* destination);
+
+template void simulateVoxelAlteration<ITMVoxel>(ITMVoxel& voxel);
 //
 //void GenerateAndLogKillingScene01() {
 //	auto settings = new ITMLibSettings();

@@ -35,14 +35,8 @@ void GenerateTestScene01(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 		TVoxel voxelPos, voxelNeg;
 		voxelPos.sdf = sdfMagnitude;
 		voxelNeg.sdf = -sdfMagnitude;
-		bool isTruncated = (1.0f - sdfMagnitude) < FLT_EPSILON;
-		if(isTruncated){
-			voxelPos.flags = ITMLib::VOXEL_TRUNCATED;
-			voxelNeg.flags =ITMLib::VOXEL_TRUNCATED;
-		}else{
-			voxelPos.flags = ITMLib::VOXEL_NONTRUNCATED;
-			voxelNeg.flags = ITMLib::VOXEL_NONTRUNCATED;
-		}
+		simulateVoxelAlteration(voxelNeg);
+		simulateVoxelAlteration(voxelPos);
 
 		for (int z = 0; z < surfaceSizeVoxelsZ; z++) {
 			for (int y = 0; y < surfaceSizeVoxelsY; y++) {
@@ -52,4 +46,33 @@ void GenerateTestScene01(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 		}
 	}
 
+}
+
+
+template<bool hasSemanticInformation, typename TVoxel>
+struct SimulateVoxelAlterationFunctor;
+
+template<typename TVoxel>
+struct SimulateVoxelAlterationFunctor<true, TVoxel> {
+	inline static
+	void run(TVoxel& voxel) {
+		if (voxel.sdf > -1.0f && voxel.sdf < 1.0f) {
+			voxel.flags = VoxelFlags::VOXEL_NONTRUNCATED;
+		} else {
+			voxel.flags = VoxelFlags::VOXEL_TRUNCATED;
+		}
+	}
+};
+
+template<typename TVoxel>
+struct SimulateVoxelAlterationFunctor<false, TVoxel> {
+	inline static
+	void run(TVoxel& voxel) {
+		voxel.w_depth = 1;
+	}
+};
+
+template<typename TVoxel>
+void simulateVoxelAlteration(TVoxel& voxel){
+	SimulateVoxelAlterationFunctor<ITMVoxel::hasSemanticInformation, ITMVoxel>::run(voxel);
 }

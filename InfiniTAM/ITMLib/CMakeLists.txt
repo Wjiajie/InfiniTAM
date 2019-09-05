@@ -275,6 +275,7 @@ set(ITMLIB_ENGINES_SCENEFILEIO_HEADERS
     )
 set(ITMLIB_ENGINES_SCENEFILEIO_SOURCES
     Engines/SceneFileIO/ITMSceneFileIOEngine.tpp
+	Engines/SceneFileIO/ITMSceneFileIOEngine.cpp
 	Engines/SceneFileIO/ITMSceneFileIOEngine_PlainVoxelArray.cpp
 	Engines/SceneFileIO/ITMSceneFileIOEngine_VoxelBlockHash.cpp
     )

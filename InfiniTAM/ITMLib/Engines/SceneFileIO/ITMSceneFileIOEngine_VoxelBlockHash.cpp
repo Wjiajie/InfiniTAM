@@ -17,6 +17,7 @@
 #include "ITMSceneFileIOEngine.tpp"
 
 namespace ITMLib {
+
 template
 class ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash>;
 template

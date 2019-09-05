@@ -21,7 +21,7 @@
 
 namespace ITMLib{
 
-static const std::string compactFilePostfixAndExtension;
+static const std::string compactFilePostfixAndExtension = "compact.dat";
 
 template<typename TVoxel, typename TIndex>
 class ITMSceneFileIOEngine;

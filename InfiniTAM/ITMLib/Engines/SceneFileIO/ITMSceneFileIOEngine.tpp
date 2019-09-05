@@ -17,7 +17,6 @@
 
 using namespace ITMLib;
 
-const std::string compactFilePostfixAndExtension = "compact.dat";
 //TODO: revise member functions & their usages to accept the full path as argument instead of the directory
 
 template<typename TVoxel>

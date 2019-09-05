@@ -1,6 +1,6 @@
 //  ================================================================
-//  Created by Gregory Kramida on 10/24/17.
-//  Copyright (c) 2017-2025 Gregory Kramida
+//  Created by Gregory Kramida on 9/5/19.
+//  Copyright (c) 2019 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
 //  You may obtain a copy of the License at
@@ -13,19 +13,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#pragma once
+#include "ITMSceneFileIOEngine.h"
 
-#include "../ITMLib/ITMLibDefines.h"
-
-#include "../ITMLib/Objects/Scene/ITMRepresentationAccess.h"
-#include "../ITMLib/Objects/Scene/ITMVoxelVolume.h"
-
-using namespace ITMLib;
-
-template<class TVoxel, class TIndex>
-void GenerateTestScene01(ITMVoxelVolume<TVoxel, TIndex>* scene);
-
-void GenerateAndLogKillingScene01();
-
-template<typename TVoxel>
-void simulateVoxelAlteration(TVoxel& voxel);
+namespace ITMLib{
+	//const std::string compactFilePostfixAndExtension = "compact.dat";
+} // namespace ITMLib
