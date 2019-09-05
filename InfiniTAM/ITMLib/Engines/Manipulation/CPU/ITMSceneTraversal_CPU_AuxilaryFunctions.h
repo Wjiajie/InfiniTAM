@@ -21,6 +21,7 @@
 namespace ITMLib {
 //region ================================= AUXILIARY FUNCTIONS (PLAIN VOXEL ARRAY) =====================================
 
+_CPU_AND_GPU_CODE_
 inline static void
 ComputePositionFromLinearIndex_PlainVoxelArray(int& x, int& y, int& z, const ITMPlainVoxelArray::IndexData* indexData,
                                                int linearIndex) {
@@ -34,6 +35,7 @@ ComputePositionFromLinearIndex_PlainVoxelArray(int& x, int& y, int& z, const ITM
 	z += indexData->offset.z;
 }
 
+_CPU_AND_GPU_CODE_
 inline static Vector3i
 ComputePositionVectorFromLinearIndex_PlainVoxelArray(const ITMPlainVoxelArray::IndexData* indexData,
                                                      int linearIndex) {
@@ -47,7 +49,7 @@ ComputePositionVectorFromLinearIndex_PlainVoxelArray(const ITMPlainVoxelArray::I
 // endregion ===========================================================================================================
 
 // region ======================================= AUXILIARY FUNCTIONS (VOXEL HASH BLOCKS) ==============================
-
+_CPU_AND_GPU_CODE_
 inline bool HashBlockDoesNotIntersectBounds(const Vector3i& hashEntryMinPoint, const Vector3i& hashEntryMaxPoint,
                                             const Vector6i& bounds) {
 	return hashEntryMaxPoint.x < bounds.min_x ||
@@ -58,6 +60,7 @@ inline bool HashBlockDoesNotIntersectBounds(const Vector3i& hashEntryMinPoint, c
 	       hashEntryMinPoint.z >= bounds.max_z;
 }
 
+_CPU_AND_GPU_CODE_
 inline
 Vector6i computeLocalBounds(const Vector3i& hashEntryMinPoint, const Vector3i& hashEntryMaxPoint,
                             const Vector6i& bounds) {
@@ -67,6 +70,17 @@ Vector6i computeLocalBounds(const Vector3i& hashEntryMinPoint, const Vector3i& h
 	                std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.x - bounds.max_x)),
 	                std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.y - bounds.max_y)),
 	                std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.z - bounds.max_z)));
+}
+
+_CPU_AND_GPU_CODE_
+inline
+bool isPointInBounds(const Vector3i& point, const Vector6i& bounds){
+	return point.x >= bounds.min_x &&
+	       point.y >= bounds.min_y &&
+	       point.z >= bounds.min_z &&
+	       point.x < bounds.max_x &&
+	       point.y < bounds.max_y &&
+	       point.z < bounds.max_z;
 }
 
 /**

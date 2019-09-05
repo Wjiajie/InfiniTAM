@@ -39,12 +39,25 @@ struct VoxelEqualFunctor {
 };
 
 
+
+
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
 bool contentAlmostEqual_CPU(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b,
                             ToleranceType tolerance) {
 	VoxelEqualFunctor<TVoxel, ToleranceType> functor(tolerance);
 	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, ITMLibSettings::DEVICE_CPU>
 	::template DualVoxelTraversal_AllTrue(a, b, functor);
+}
+
+
+
+template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
+bool allocatedContentAlmostEqual_CPU(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b,
+                                     ToleranceType tolerance){
+	VoxelEqualFunctor<TVoxel, ToleranceType> functor(tolerance);
+	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, ITMLibSettings::DEVICE_CPU>
+	::template DualVoxelTraversal_AllTrue_AllocatedOnly(a, b, functor);
+
 }
 
 //endregion

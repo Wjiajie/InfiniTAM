@@ -24,15 +24,21 @@
 //ITMLib
 #include "../ITMLib/ITMLibDefines.h"
 #include "../ITMLib/Engines/Reconstruction/Interface/ITMDynamicSceneReconstructionEngine.h"
-#include "../ITMLib/Utils/ITMLibSettings.h"
 #include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../ITMLib/Engines/ViewBuilding/Interface/ITMViewBuilder.h"
 #include "../ITMLib/Engines/ViewBuilding/ITMViewBuilderFactory.h"
+#include "../ITMLib/Utils/ITMLibSettings.h"
+#include "../ITMLib/Utils/Analytics/ITMAlmostEqual.h"
+#include "../ITMLib/Utils/Analytics/ITMVoxelVolumeComparison_CPU.h"
 #include "../ORUtils/FileUtils.h"
+#include "../ITMLib/Objects/RenderStates/ITMRenderStateFactory.h"
 
 using namespace ITMLib;
 
-BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU_PlainVoxelArray) {
+typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray> SceneManipulationEngine_PVA;
+typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> SceneManipulationEngine_VBH;
+
+BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
 
 	// region ================================= CONSTRUCT VIEW =========================================================
@@ -40,6 +46,8 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU_PlainVoxelArray) {
 	settings->deviceType = ITMLibSettings::DEVICE_CPU;
 	settings->useBilateralFilter = false;
 	settings->useThresholdFilter = false;
+	settings->sceneParams.mu = 0.04; // non-truncated narrow-band half-width, in meters
+	settings->sceneParams.voxelSize = 0.004; // m
 
 	ITMRGBDCalib calibrationData;
 	readRGBDCalib("TestData/snoopy_calib.txt", calibrationData);
@@ -58,20 +66,21 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU_PlainVoxelArray) {
 
 	// endregion =======================================================================================================
 
-	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine =
-			ITMDynamicSceneReconstructionEngineFactory
-			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(settings->deviceType);
+	Vector3i volumeSize(1024, 32, 1024), volumeOffset(-volumeSize.x / 2, -volumeSize.y / 2, 0);
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&settings->sceneParams,
 	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                    settings->GetMemoryType());
+	                                                    settings->GetMemoryType(),
+	                                                    volumeSize,
+	                                                    volumeOffset);
+	SceneManipulationEngine_PVA::ResetScene(&scene1);
 	ITMTrackingState trackingState(imageSize, settings->GetMemoryType());
 
-	reconstructionEngine->GenerateRawLiveSceneFromView(&scene1, view, &trackingState, nullptr);
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine_PVA =
+			ITMDynamicSceneReconstructionEngineFactory
+			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(settings->deviceType);
+	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(&scene1, view, &trackingState, nullptr);
 
-	auto getVoxelCoord = [](Vector3f coordinateMeters, float voxelSize) {
-		return (coordinateMeters / voxelSize).toInt();
-	};
 	const int num_stripes = 62;
 	int relevant_voxel_x_coords_mm[] = {-142, -160, -176, -191, -205, -217, -227, -236, -244, -250, -254,
 	                                    -256, -258, -257, -255, -252, -247, -240, -232, -222, -211, -198,
@@ -86,17 +95,85 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU_PlainVoxelArray) {
 	                                    2000, 2040, 2080, 2120, 2160, 2200, 2240, 2280, 2320, 2360, 2400,
 	                                    2440, 2480, 2520, 2560, 2600, 2640, 2680};
 
-	std::vector<Vector3i> relevantVoxelCoords;
+	std::vector<Vector3i> zeroLevelSetCoords;
+	auto getVoxelCoord = [](Vector3f coordinateMeters, float voxelSize) {
+		return TO_INT_ROUND3(coordinateMeters / voxelSize);
+	};
 	for (int iVoxel = 0; iVoxel < num_stripes; iVoxel++) {
-		Vector3f coordinateMeters(relevant_voxel_x_coords_mm[iVoxel], 0.0f, relevant_voxel_z_coords_mm[iVoxel]);
-		relevantVoxelCoords.push_back(getVoxelCoord(coordinateMeters, settings->sceneParams.voxelSize));
+		Vector3f coordinateMeters(
+				static_cast<float>(relevant_voxel_x_coords_mm[iVoxel]) / 1000.0f,
+				0.0f,
+				static_cast<float>(relevant_voxel_z_coords_mm[iVoxel]) / 1000.0f
+		);
+		zeroLevelSetCoords.push_back(getVoxelCoord(coordinateMeters, settings->sceneParams.voxelSize));
 	}
 
+	float tolerance = 1e-4;
+	int narrowBandHalfwidthVoxels = static_cast<int>(std::round(
+			scene1.sceneParams->mu / scene1.sceneParams->voxelSize));
+	float maxSdfStep = 1.0f / narrowBandHalfwidthVoxels;
 
+	for (int iCoord = 0; iCoord < zeroLevelSetCoords.size(); iCoord++) {
+		Vector3i coord = zeroLevelSetCoords[iCoord];
+		ITMVoxel voxel = SceneManipulationEngine_PVA::ReadVoxel(&scene1, coord);
+		float sdf = ITMVoxel::valueToFloat(voxel.sdf);
+		BOOST_REQUIRE(almostEqual(sdf, 0.0f, tolerance));
 
+		// for extremely lateral points close to the camera, the rays are highly skewed,
+		// so the value progression won't hold. Skip those.
+		if (iCoord > 17) {
+			// don't go into low negative sdf values, since those will be overwritten by positive values
+			// during sdf construction in certain cases
+			for (int iLevelSet = -narrowBandHalfwidthVoxels; iLevelSet < (narrowBandHalfwidthVoxels/2); iLevelSet++) {
+				Vector3i augmentedCoord(coord.x, coord.y, coord.z + iLevelSet);
+				float expectedSdf = -static_cast<float>(iLevelSet) * maxSdfStep;
+				voxel = SceneManipulationEngine_PVA::ReadVoxel(&scene1, augmentedCoord);
+				sdf = ITMVoxel::valueToFloat(voxel.sdf);
+				BOOST_REQUIRE( almostEqual(sdf, expectedSdf, tolerance));
+			}
+		}
+	}
+
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene2(&settings->sceneParams,
+	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->GetMemoryType());
+	SceneManipulationEngine_VBH::ResetScene(&scene2);
+
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
+			ITMDynamicSceneReconstructionEngineFactory
+			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(settings->deviceType);
+
+	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize, &settings->sceneParams, settings->GetMemoryType());
+	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene2, view, &trackingState, renderState);
+
+	tolerance = 1e-5;
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(&scene1, &scene2, tolerance));
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene3(&settings->sceneParams,
+	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->GetMemoryType(),
+	                                                   volumeSize, volumeOffset);
+	SceneManipulationEngine_PVA::ResetScene(&scene3);
+	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, nullptr);
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene3, tolerance));
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(&settings->sceneParams,
+	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->GetMemoryType());
+	SceneManipulationEngine_VBH::ResetScene(&scene4);
+	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene4, view, &trackingState, renderState);
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene2, &scene4, tolerance));
+
+	Vector3i coordinate = zeroLevelSetCoords[0];
+	ITMVoxel voxel = SceneManipulationEngine_PVA::ReadVoxel(&scene3, coordinate);
+	voxel.sdf = ITMVoxel::floatToValue(ITMVoxel::valueToFloat(voxel.sdf) + 0.05f);
+	SceneManipulationEngine_PVA::SetVoxel(&scene3, coordinate, voxel);
+	SceneManipulationEngine_VBH::SetVoxel(&scene2, coordinate, voxel);
+	BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene1, &scene3, tolerance));
+	BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene2, &scene4, tolerance));
+	BOOST_REQUIRE(!allocatedContentAlmostEqual_CPU(&scene1, &scene2, tolerance));
 
 	delete view;
-	delete reconstructionEngine;
+	delete reconstructionEngine_PVA;
+	delete reconstructionEngine_VBH;
 	delete viewBuilder;
 	delete rgb;
 	delete depth;

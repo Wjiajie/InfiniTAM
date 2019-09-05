@@ -64,13 +64,33 @@ struct IsAlteredFunctor<false, false, true, true, TVoxel> {
 	}
 };
 
-_CPU_AND_GPU_CODE_
+
+/**
+ * \brief Tries to determine whether the voxel been altered from default
+ * \tparam TVoxel voxel type
+ * \param voxel the voxel to evaluate
+ * \return true if the voxel has been altered for certain, false if not (or voxel seems to have default value)
+ **/
 template<typename TVoxel>
+_CPU_AND_GPU_CODE_
+inline
 bool isAltered(TVoxel& voxel) {
 	return IsAlteredFunctor<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFlowWarp,
 			TVoxel::hasWarpUpdate, TVoxel>::evaluate(voxel);
 }
 // endregion
+
+template<typename TVoxel>
+inline static bool
+isVoxelBlockAltered(TVoxel* voxelBlock) {
+	for (int locId = 0; locId < SDF_BLOCK_SIZE3; locId++) {
+		TVoxel& voxel = voxelBlock[locId];
+		if (isAltered(voxel)) {
+			return true;
+		}
+	}
+	return false;
+}
 
 } // namespace ITMLib
 

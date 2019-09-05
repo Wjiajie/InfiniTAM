@@ -420,6 +420,10 @@ ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMVoxelVo
                                                                       Vector3i at) {
 	int vmIndex = 0;
 	int arrayIndex = findVoxel(scene->index.getIndexData(), at, vmIndex);
+	if(arrayIndex < 0){
+		TVoxel voxel;
+		return voxel;
+	}
 	return scene->localVBA.GetVoxelBlocks()[arrayIndex];
 }
 
@@ -430,6 +434,10 @@ ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMVoxelVo
                                                                       ITMPlainVoxelArray::IndexCache& cache) {
 	int vmIndex = 0;
 	int arrayIndex = findVoxel(scene->index.getIndexData(), at, vmIndex);
+	if(arrayIndex < 0){
+		TVoxel voxel;
+		return voxel;
+	}
 	return scene->localVBA.GetVoxelBlocks()[arrayIndex];
 }
 
