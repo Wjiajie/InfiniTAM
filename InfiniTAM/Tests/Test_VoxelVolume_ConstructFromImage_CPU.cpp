@@ -32,11 +32,17 @@
 #include "../ITMLib/Utils/Analytics/ITMVoxelVolumeComparison_CPU.h"
 #include "../ORUtils/FileUtils.h"
 #include "../ITMLib/Objects/RenderStates/ITMRenderStateFactory.h"
+#include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
+#include "../ITMLib/Utils/Analytics/ITMSceneStatisticsCalculator.h"
 
 using namespace ITMLib;
 
 typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray> SceneManipulationEngine_PVA;
 typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> SceneManipulationEngine_VBH;
+typedef ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray> SceneFileIOEngine_PVA;
+typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
+typedef ITMSceneStatisticsCalculator<ITMVoxel, ITMPlainVoxelArray> SceneStatisticsCalculator_PVA;
+typedef ITMSceneStatisticsCalculator<ITMVoxel, ITMVoxelBlockHash> SceneStatisticsCalculator_VBH;
 
 BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
@@ -82,18 +88,20 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(&scene1, view, &trackingState, nullptr);
 
 	const int num_stripes = 62;
-	int relevant_voxel_x_coords_mm[] = {-142, -160, -176, -191, -205, -217, -227, -236, -244, -250, -254,
-	                                    -256, -258, -257, -255, -252, -247, -240, -232, -222, -211, -198,
-	                                    -184, -168, -151, -132, -111, -89, -66, -41, -14, 14, 44,
-	                                    75, 108, 143, 179, 216, 255, 296, 338, 382, 427, 474,
-	                                    522, 572, 624, 677, 731, 787, 845, 904, 965, 1027, 1091,
-	                                    1156, 1223, 1292, 1362, 1433, 1506, 1581};
-	int relevant_voxel_z_coords_mm[] = {240, 280, 320, 360, 400, 440, 480, 520, 560, 600, 640,
-	                                    680, 720, 760, 800, 840, 880, 920, 960, 1000, 1040, 1080,
-	                                    1120, 1160, 1200, 1240, 1280, 1320, 1360, 1400, 1440, 1480, 1520,
-	                                    1560, 1600, 1640, 1680, 1720, 1760, 1800, 1840, 1880, 1920, 1960,
-	                                    2000, 2040, 2080, 2120, 2160, 2200, 2240, 2280, 2320, 2360, 2400,
-	                                    2440, 2480, 2520, 2560, 2600, 2640, 2680};
+
+	//These hardcoded values were precomputed mathematically based on the generated stripe images
+	int zero_level_set_voxel_x_coords_mm[] = {-142, -160, -176, -191, -205, -217, -227, -236, -244, -250, -254,
+	                                          -256, -258, -257, -255, -252, -247, -240, -232, -222, -211, -198,
+	                                          -184, -168, -151, -132, -111, -89, -66, -41, -14, 14, 44,
+	                                          75, 108, 143, 179, 216, 255, 296, 338, 382, 427, 474,
+	                                          522, 572, 624, 677, 731, 787, 845, 904, 965, 1027, 1091,
+	                                          1156, 1223, 1292, 1362, 1433, 1506, 1581};
+	int zero_level_set_voxel_z_coords_mm[] = {240, 280, 320, 360, 400, 440, 480, 520, 560, 600, 640,
+	                                          680, 720, 760, 800, 840, 880, 920, 960, 1000, 1040, 1080,
+	                                          1120, 1160, 1200, 1240, 1280, 1320, 1360, 1400, 1440, 1480, 1520,
+	                                          1560, 1600, 1640, 1680, 1720, 1760, 1800, 1840, 1880, 1920, 1960,
+	                                          2000, 2040, 2080, 2120, 2160, 2200, 2240, 2280, 2320, 2360, 2400,
+	                                          2440, 2480, 2520, 2560, 2600, 2640, 2680};
 
 	std::vector<Vector3i> zeroLevelSetCoords;
 	auto getVoxelCoord = [](Vector3f coordinateMeters, float voxelSize) {
@@ -101,9 +109,9 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	};
 	for (int iVoxel = 0; iVoxel < num_stripes; iVoxel++) {
 		Vector3f coordinateMeters(
-				static_cast<float>(relevant_voxel_x_coords_mm[iVoxel]) / 1000.0f,
+				static_cast<float>(zero_level_set_voxel_x_coords_mm[iVoxel]) / 1000.0f,
 				0.0f,
-				static_cast<float>(relevant_voxel_z_coords_mm[iVoxel]) / 1000.0f
+				static_cast<float>(zero_level_set_voxel_z_coords_mm[iVoxel]) / 1000.0f
 		);
 		zeroLevelSetCoords.push_back(getVoxelCoord(coordinateMeters, settings->sceneParams.voxelSize));
 	}
@@ -113,6 +121,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 			scene1.sceneParams->mu / scene1.sceneParams->voxelSize));
 	float maxSdfStep = 1.0f / narrowBandHalfwidthVoxels;
 
+	// check constructed scene integrity
 	for (int iCoord = 0; iCoord < zeroLevelSetCoords.size(); iCoord++) {
 		Vector3i coord = zeroLevelSetCoords[iCoord];
 		ITMVoxel voxel = SceneManipulationEngine_PVA::ReadVoxel(&scene1, coord);
@@ -167,9 +176,15 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	voxel.sdf = ITMVoxel::floatToValue(ITMVoxel::valueToFloat(voxel.sdf) + 0.05f);
 	SceneManipulationEngine_PVA::SetVoxel(&scene3, coordinate, voxel);
 	SceneManipulationEngine_VBH::SetVoxel(&scene2, coordinate, voxel);
+
 	BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene1, &scene3, tolerance));
 	BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene2, &scene4, tolerance));
 	BOOST_REQUIRE(!allocatedContentAlmostEqual_CPU(&scene1, &scene2, tolerance));
+
+	std::string path = "TestData/test_VBH_ConstructFromImage_";
+
+	std::cout << SceneStatisticsCalculator_VBH::Instance().ComputeAllocatedVoxelCount(&scene2) * sizeof(ITMVoxel) << std::endl;
+	SceneFileIOEngine_VBH::SaveToDirectoryCompact(&scene2, path);
 
 	delete view;
 	delete reconstructionEngine_PVA;

@@ -15,11 +15,6 @@ set(targetname ITMLib)
 include(${PROJECT_SOURCE_DIR}/cmake/UseCUDA.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/UseOpenMP.cmake)
 
-#BEGIN _DEBUG
-find_package(OpenCV REQUIRED core highgui imgproc imgcodecs)
-#TODO: make optional -Greg (GitHub: Algomorph)
-find_package(Boost REQUIRED filesystem)
-#END _DEBUG
 
 #############################
 # Specify the project files #
@@ -805,9 +800,6 @@ set(headers
 #############################
 # Specify the source groups #
 #############################
-
-#TODO: add missing source groups from dynamic fusion algorithms -Greg(GitHub:Algomorph)
-
 source_group(Instantiations FILES ${ITMLIB_TOPLEVEL_CPU_SOURCES} ${ITMLIB_TOPLEVEL_CUDA_SOURCES} ${ITMLIB_TOPLEVEL_HEADERS})
 source_group(Core FILES ${ITMLIB_CORE_SOURCES} ${ITMLIB_CORE_HEADERS})
 
@@ -885,7 +877,12 @@ source_group(Utils\\Visualization FILES ${ITMLIB_UTILS_VISUALIZATION_SOURCES} ${
 
 include(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
 
-#_DEBUG
+#TODO: make these optional and consistent with the overal CMake package usage in the project -Greg (GitHub: Algomorph)
+##########################################
+# Find and link extra packages #
+##########################################
+
+find_package(OpenCV REQUIRED core highgui imgproc imgcodecs)
 find_package(VTK 8.1 COMPONENTS
 			 vtkIOImage
 			 vtkChartsCore
@@ -911,10 +908,9 @@ if(CMAKE_CXX_COMPILER_ID EQUAL MSVC)
 	set (Boost_USE_STATIC_LIBS TRUE)
 	set(Boost_USE_STATIC_RUNTIME OFF)
 endif()
-find_package(Boost REQUIRED COMPONENTS filesystem)
+find_package(Boost REQUIRED COMPONENTS filesystem iostreams)
 if(CMAKE_CXX_COMPILER_ID MATCHES MSVC)
 	target_compile_definitions(${targetname} PUBLIC -DBOOST_ALL_NO_LIB -DBOOST_SYSTEM_NO_DEPRECATED)
-	link_directories(${Boost_LIBRARY_DIRS})
 endif()
 
 target_include_directories(${targetname} PUBLIC ${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
@@ -923,6 +919,8 @@ target_link_libraries(${targetname} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${VTK_LIBR
 if(CMAKE_CXX_COMPILER_ID MATCHES MSVC)
 	link_directories(${Boost_LIBRARY_DIRS})
 endif()
+
+target_compile_definitions(${targetname} PUBLIC WITH_BOOST)
 
 #fix potential warning causing from error in VTK compile definitions
 # "<command-line>:0:20: warning: ISO C++11 requires whitespace after the macro name"

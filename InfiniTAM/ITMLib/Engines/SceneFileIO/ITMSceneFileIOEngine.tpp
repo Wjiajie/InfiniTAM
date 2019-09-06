@@ -13,27 +13,41 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+
+//boost
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+
+//local
 #include "ITMSceneFileIOEngine.h"
 
 using namespace ITMLib;
+namespace b_ios = boost::iostreams;
 
 //TODO: revise member functions & their usages to accept the full path as argument instead of the directory
+
 
 template<typename TVoxel>
 void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
                                                                              const std::string& outputDirectory) {
+
+
 	std::string path = outputDirectory + compactFilePostfixAndExtension;
 	std::ofstream ofStream = std::ofstream(path.c_str(),std::ios_base::binary | std::ios_base::out);
 	if (!ofStream) throw std::runtime_error("Could not open '" + path + "' for writing.");
+
+	b_ios::filtering_ostream outFilter;
+	outFilter.push(b_ios::zlib_compressor());
+	outFilter.push(ofStream);
 
 	const TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
 
 	int lastExcessListId = scene->index.GetLastFreeExcessListId();
-	ofStream.write(reinterpret_cast<const char* >(&scene->localVBA.lastFreeBlockId), sizeof(int));
-	ofStream.write(reinterpret_cast<const char* >(&scene->localVBA.allocatedSize), sizeof(int));
-	ofStream.write(reinterpret_cast<const char* >(&lastExcessListId), sizeof(int));
+	outFilter.write(reinterpret_cast<const char* >(&scene->localVBA.lastFreeBlockId), sizeof(int));
+	outFilter.write(reinterpret_cast<const char* >(&scene->localVBA.allocatedSize), sizeof(int));
+	outFilter.write(reinterpret_cast<const char* >(&lastExcessListId), sizeof(int));
 	//count filled entries
 	int allocatedHashBlockCount = 0;
 #ifdef WITH_OPENMP
@@ -47,16 +61,17 @@ void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(ITM
 		allocatedHashBlockCount++;
 	}
 
-	ofStream.write(reinterpret_cast<const char* >(&allocatedHashBlockCount), sizeof(int));
+	outFilter.write(reinterpret_cast<const char* >(&allocatedHashBlockCount), sizeof(int));
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 		const ITMHashEntry& currentHashEntry = hashTable[entryId];
 		//skip unfilled hash
 		if (currentHashEntry.ptr < 0) continue;
-		ofStream.write(reinterpret_cast<const char* >(&entryId), sizeof(int));
-		ofStream.write(reinterpret_cast<const char* >(&currentHashEntry), sizeof(ITMHashEntry));
+		outFilter.write(reinterpret_cast<const char* >(&entryId), sizeof(int));
+		outFilter.write(reinterpret_cast<const char* >(&currentHashEntry), sizeof(ITMHashEntry));
 		const TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-		ofStream.write(reinterpret_cast<const char* >(localVoxelBlock), sizeof(TVoxel)*SDF_BLOCK_SIZE3);
+		outFilter.write(reinterpret_cast<const char* >(localVoxelBlock), sizeof(TVoxel)*SDF_BLOCK_SIZE3);
 	}
+
 }
 
 template<typename TVoxel>
@@ -66,27 +81,30 @@ ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(ITMVox
 	std::string path = outputDirectory + "compact.dat";
 	std::ifstream ifStream = std::ifstream(path.c_str(),std::ios_base::binary | std::ios_base::in);
 	if (!ifStream) throw std::runtime_error("Could not open '" + path + "' for reading.");
+	b_ios::filtering_istream inFilter;
+	inFilter.push(b_ios::zlib_decompressor());
+	inFilter.push(ifStream);
 
 	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* hashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
 	int lastExcessListId;
 	int lastOrderedListId;
-	ifStream.read(reinterpret_cast<char* >(&lastOrderedListId), sizeof(int));
-	ifStream.read(reinterpret_cast<char* >(&scene->localVBA.allocatedSize), sizeof(int));
-	ifStream.read(reinterpret_cast<char* >(&lastExcessListId), sizeof(int));
+	inFilter.read(reinterpret_cast<char* >(&lastOrderedListId), sizeof(int));
+	inFilter.read(reinterpret_cast<char* >(&scene->localVBA.allocatedSize), sizeof(int));
+	inFilter.read(reinterpret_cast<char* >(&lastExcessListId), sizeof(int));
 	scene->index.SetLastFreeExcessListId(lastExcessListId);
 	scene->localVBA.lastFreeBlockId = lastOrderedListId;
 	//count filled entries
 	int allocatedHashBlockCount;
-	ifStream.read(reinterpret_cast<char* >(&allocatedHashBlockCount), sizeof(int));
+	inFilter.read(reinterpret_cast<char* >(&allocatedHashBlockCount), sizeof(int));
 	for (int iEntry = 0; iEntry < allocatedHashBlockCount; iEntry++) {
 		int entryId;
-		ifStream.read(reinterpret_cast<char* >(&entryId), sizeof(int));
+		inFilter.read(reinterpret_cast<char* >(&entryId), sizeof(int));
 		ITMHashEntry& currentHashEntry = hashTable[entryId];
-		ifStream.read(reinterpret_cast<char* >(&currentHashEntry), sizeof(ITMHashEntry));
+		inFilter.read(reinterpret_cast<char* >(&currentHashEntry), sizeof(ITMHashEntry));
 		TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-		ifStream.read(reinterpret_cast<char* >(localVoxelBlock), sizeof(TVoxel)*SDF_BLOCK_SIZE3);
+		inFilter.read(reinterpret_cast<char* >(localVoxelBlock), sizeof(TVoxel)*SDF_BLOCK_SIZE3);
 	}
 }
 

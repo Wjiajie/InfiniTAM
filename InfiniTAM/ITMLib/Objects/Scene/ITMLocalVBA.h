@@ -39,8 +39,8 @@ namespace ITMLib
 			std::string ALFileName = outputDirectory + "alloc.dat";
 			std::string AllocSizeFileName = outputDirectory + "vba.txt";
 
-			ORUtils::MemoryBlockPersister::SaveMemoryBlock(VBFileName, *voxelBlocks, memoryType);
-			ORUtils::MemoryBlockPersister::SaveMemoryBlock(ALFileName, *allocationList, memoryType);
+			ORUtils::MemoryBlockPersister::SaveMemoryBlock(VBFileName, *voxelBlocks, memoryType, true);
+			ORUtils::MemoryBlockPersister::SaveMemoryBlock(ALFileName, *allocationList, memoryType, true);
 
 			std::ofstream ofs(AllocSizeFileName.c_str());
 			if (!ofs) throw std::runtime_error("Could not open " + AllocSizeFileName + " for writing");
@@ -54,8 +54,8 @@ namespace ITMLib
 			std::string ALFileName = inputDirectory + "alloc.dat";
 			std::string AllocSizeFileName = inputDirectory + "vba.txt";
 
-			ORUtils::MemoryBlockPersister::LoadMemoryBlock(VBFileName, *voxelBlocks, memoryType);
-			ORUtils::MemoryBlockPersister::LoadMemoryBlock(ALFileName, *allocationList, memoryType);
+			ORUtils::MemoryBlockPersister::LoadMemoryBlock(VBFileName, *voxelBlocks, memoryType, true);
+			ORUtils::MemoryBlockPersister::LoadMemoryBlock(ALFileName, *allocationList, memoryType, true);
 
 			std::ifstream ifs(AllocSizeFileName.c_str());
 			if (!ifs) throw std::runtime_error("Could not open " + AllocSizeFileName + " for reading");

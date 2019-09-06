@@ -32,18 +32,17 @@
 
 using namespace ITMLib;
 
+typedef ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray> SceneFileIOEngine_PVA;
+typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
+typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray> SceneManipulationEngine_PVA;
+typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> SceneManipulationEngine_VBH;
+typedef ITMSceneStatisticsCalculator<ITMVoxel, ITMPlainVoxelArray> SceneStatisticsCalculator_PVA;
+typedef ITMSceneStatisticsCalculator<ITMVoxel, ITMVoxelBlockHash> SceneStatisticsCalculator_VBH;
+
 BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
 	settings->deviceType = ITMLibSettings::DEVICE_CPU;
-
-	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray> SceneManipulationEngine_PVA;
-	typedef ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray> SceneFileIOEngine_PVA;
-	typedef ITMSceneStatisticsCalculator<ITMVoxel, ITMPlainVoxelArray> SceneStatisticsCalculator_PVA;
-
-	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> SceneManipulationEngine_VBH;
-	typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
-	typedef ITMSceneStatisticsCalculator<ITMVoxel, ITMVoxelBlockHash> SceneStatisticsCalculator_VBH;
 
 	Vector3i volumeSize(40, 68, 20);
 	Vector3i volumeOffset(-20, 0, 0);

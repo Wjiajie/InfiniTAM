@@ -2,10 +2,20 @@
 
 #pragma once
 
+//stdlib
 #include <fstream>
 #include <string>
 
+#ifdef WITH_BOOST
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+#endif
+
 #include "MemoryBlock.h"
+
+#ifdef WITH_BOOST
+namespace b_ios = boost::iostreams;
+#endif
 
 namespace ORUtils
 {
@@ -25,14 +35,34 @@ namespace ORUtils
 		 * \param memoryDeviceType  The type of memory device on which to load the data.
 		 */
 		template <typename T>
-		static void LoadMemoryBlock(const std::string& filename, ORUtils::MemoryBlock<T>& block, MemoryDeviceType memoryDeviceType)
+		static void LoadMemoryBlock(const std::string& filename, ORUtils::MemoryBlock<T>& block, MemoryDeviceType memoryDeviceType, bool useCompression = false)
 		{
-			size_t blockSize = ReadBlockSize(filename);
+			std::istream* fs;
+			std::ifstream file(filename.c_str(), std::ios::binary);
+			if (!file) throw std::runtime_error("Could not open " + filename + " for reading");
+#ifdef WITH_BOOST
+			b_ios::filtering_istream inFilter;
+			if(useCompression){
+				inFilter.push(b_ios::zlib_decompressor());
+				inFilter.push(file);
+				fs = &inFilter;
+			} else {
+				fs = &file;
+			}
+#else
+			if(useCompression){
+				std::cerr << "Warning! Attempting to use compression w/o boost iostreams library linked to the project."
+				 " Defaulting to saving without compression." << std::endl;
+			}
+			fs = &file;
+#endif
+
+			size_t blockSize = ReadBlockSize(*fs);
 			if (memoryDeviceType == MEMORYDEVICE_CUDA)
 			{
 				// If we're loading into a block on the GPU, first try and read the data into a temporary block on the CPU.
 				ORUtils::MemoryBlock<T> cpuBlock(block.dataSize, MEMORYDEVICE_CPU);
-				ReadBlockData(filename, cpuBlock, blockSize);
+				ReadBlockData(*fs, cpuBlock, blockSize);
 
 				// Then copy the data across to the GPU.
 				block.SetFrom(&cpuBlock, ORUtils::MemoryBlock<T>::CPU_TO_CUDA);
@@ -40,8 +70,9 @@ namespace ORUtils
 			else
 			{
 				// If we're loading into a block on the CPU, read the data directly into the block.
-				ReadBlockData(filename, block, blockSize);
+				ReadBlockData(*fs, block, blockSize);
 			}
+
 		}
         
 		/**
@@ -84,10 +115,28 @@ namespace ORUtils
 		 * \param memoryDeviceType  The type of memory device from which to save the data.
 		 */
 		template <typename T>
-		static void SaveMemoryBlock(const std::string& filename, const ORUtils::MemoryBlock<T>& block, MemoryDeviceType memoryDeviceType)
+		static void SaveMemoryBlock(const std::string& filename, const ORUtils::MemoryBlock<T>& block, MemoryDeviceType memoryDeviceType, bool useCompression = false)
 		{
-			std::ofstream fs(filename.c_str(), std::ios::binary);
-			if (!fs) throw std::runtime_error("Could not open " + filename + " for writing");
+			std::ostream* fs;
+			std::ofstream file(filename.c_str(), std::ios::binary);
+			if (!file) throw std::runtime_error("Could not open " + filename + " for writing");
+#ifdef WITH_BOOST
+			b_ios::filtering_ostream outFilter;
+			if(useCompression){
+				outFilter.push(b_ios::zlib_compressor());
+				outFilter.push(file);
+				fs = &outFilter;
+			} else {
+				fs = &file;
+			}
+#else
+			if(useCompression){
+				std::cerr << "Warning! Attempting to use compression w/o boost iostreams. "
+				 "Defaulting to saving without compression." << std::endl;
+			}
+			fs = &file;
+#endif
+
 
 			if (memoryDeviceType == MEMORYDEVICE_CUDA)
 			{
@@ -96,17 +145,19 @@ namespace ORUtils
 				cpuBlock.SetFrom(&block, ORUtils::MemoryBlock<T>::CUDA_TO_CPU);
 
 				// Then write the CPU copy to disk.
-				WriteBlock(fs, cpuBlock);
+				WriteBlock(*fs, cpuBlock);
 			}
 			else
 			{
 				// If we are saving the memory block from the CPU, write it directly to disk.
-				WriteBlock(fs, block);
+				WriteBlock(*fs, block);
 			}
 		}
 
 		//#################### PRIVATE STATIC MEMBER FUNCTIONS ####################
 	private:
+
+
 		/**
 		 * \brief Attempts to read data into a memory block allocated on the CPU from an input stream.
 		 *
