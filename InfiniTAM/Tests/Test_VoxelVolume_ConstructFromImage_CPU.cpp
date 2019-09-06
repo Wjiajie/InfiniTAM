@@ -181,10 +181,15 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene2, &scene4, tolerance));
 	BOOST_REQUIRE(!allocatedContentAlmostEqual_CPU(&scene1, &scene2, tolerance));
 
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene5(
+			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+			settings->GetMemoryType());
+	SceneManipulationEngine_VBH::ResetScene(&scene5);
 	std::string path = "TestData/test_VBH_ConstructFromImage_";
-
-	std::cout << SceneStatisticsCalculator_VBH::Instance().ComputeAllocatedVoxelCount(&scene2) * sizeof(ITMVoxel) << std::endl;
-	SceneFileIOEngine_VBH::SaveToDirectoryCompact(&scene2, path);
+	SceneFileIOEngine_VBH::SaveToDirectoryCompact(&scene4, path);
+	SceneFileIOEngine_VBH::LoadFromDirectoryCompact(&scene5, path);
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(&scene1, &scene5, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene4, &scene5, tolerance));
 
 	delete view;
 	delete reconstructionEngine_PVA;

@@ -69,7 +69,9 @@ if (BUILD_TESTS)
     file(GLOB TEST_DATA_FILES
          "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.png"
          "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.pnm"
-         "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.txt")
+         "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.txt"
+         "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.dat"
+         )
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/TestData")
     foreach (TEST_DATA_FILE ${TEST_DATA_FILES})
         get_filename_component(FILENAME ${TEST_DATA_FILE} NAME)
