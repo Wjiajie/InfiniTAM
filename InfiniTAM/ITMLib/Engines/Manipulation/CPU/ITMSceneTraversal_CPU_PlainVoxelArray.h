@@ -1,3 +1,4 @@
+
 //  ================================================================
 //  Created by Gregory Kramida on 5/22/18.
 //  Copyright (c) 2018-2025 Gregory Kramida
@@ -13,6 +14,11 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+//TODO: take care of explicit OpenMP data-sharing rules, i.e. the default(none) clause and such;
+// (consult http://jakascorner.com/blog/2016/06/omp-data-sharing-attributes.html for reference)
+// then remove the below two pragmas.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "openmp-use-default-none"
 
 #pragma once
 
@@ -201,6 +207,7 @@ public:
 		}
 	}
 
+
 	template<typename TStaticFunctor>
 	inline static bool
 	StaticDualVoxelTraversal_AllTrue(
@@ -213,19 +220,21 @@ public:
 		//asserted to be the same
 		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
 		                 primaryScene->index.getVolumeSize().z;
-
+		volatile bool mismatchFound = false;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
 		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
+			if(mismatchFound) continue;
 			TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
 			TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
 			if(!TStaticFunctor::run(primaryVoxel, secondaryVoxel)){
-				return false;
+				mismatchFound = true;
 			}
 		}
-		return true;
+		return !mismatchFound;
 	}
+
 // endregion
 // region ================================ STATIC TWO-SCENE TRAVERSAL WITH VOXEL POSITION ==============================
 
@@ -297,18 +306,19 @@ public:
 		//asserted to be the same
 		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
 		                 primaryScene->index.getVolumeSize().z;
-
+		volatile bool mismatchFound = false;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
 		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
+			if(mismatchFound) continue;
 			TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
 			TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
 			if(!(functor(primaryVoxel, secondaryVoxel))){
-				return false;
+				mismatchFound = true;
 			}
 		}
-		return true;
+		return !mismatchFound;
 	}
 
 
@@ -525,3 +535,4 @@ public:
 // endregion ===========================================================================================================
 };
 }//namespace ITMLib
+#pragma clang diagnostic pop
