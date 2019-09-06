@@ -13,6 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+#include <random>
 #include "TestUtils.h"
 #include "../ITMLib/Utils/ITMLibSettings.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
@@ -29,19 +30,17 @@ void GenerateTestScene01(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	int surfaceSizeVoxelsY = 64;
 
 	for (int iVoxelAcrossBand = 0; iVoxelAcrossBand < narrowBandThicknessVoxels + 1; iVoxelAcrossBand++) {
-		float sdfMagnitude = 0.0F + iVoxelAcrossBand * (1.0F / narrowBandThicknessVoxels);
+		float sdfMagnitude = 0.0f + static_cast<float>(iVoxelAcrossBand) * (1.0f / narrowBandThicknessVoxels);
 		int xPos = xOffset + iVoxelAcrossBand;
 		int xNeg = xOffset - iVoxelAcrossBand;
 		TVoxel voxelPos, voxelNeg;
-		voxelPos.sdf = sdfMagnitude;
-		voxelNeg.sdf = -sdfMagnitude;
-		simulateVoxelAlteration(voxelNeg);
-		simulateVoxelAlteration(voxelPos);
+		simulateVoxelAlteration(voxelNeg, sdfMagnitude);
+		simulateVoxelAlteration(voxelPos, -sdfMagnitude);
 
 		for (int z = 0; z < surfaceSizeVoxelsZ; z++) {
 			for (int y = 0; y < surfaceSizeVoxelsY; y++) {
-				ITMSceneManipulationEngine_CPU<TVoxel,TIndex>::SetVoxel(scene, Vector3i(xPos, y, z), voxelPos);
-				ITMSceneManipulationEngine_CPU<TVoxel,TIndex>::SetVoxel(scene, Vector3i(xNeg, y, z), voxelNeg);
+				ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::SetVoxel(scene, Vector3i(xPos, y, z), voxelPos);
+				ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::SetVoxel(scene, Vector3i(xNeg, y, z), voxelNeg);
 			}
 		}
 	}
@@ -50,10 +49,11 @@ void GenerateTestScene01(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 
 
 template<bool hasSemanticInformation, typename TVoxel>
-struct SimulateVoxelAlterationFunctor;
+struct HandleSDFBasedFlagsAlterationFunctor;
 
 template<typename TVoxel>
-struct SimulateVoxelAlterationFunctor<true, TVoxel> {
+struct HandleSDFBasedFlagsAlterationFunctor<true, TVoxel> {
+	_CPU_AND_GPU_CODE_
 	inline static
 	void run(TVoxel& voxel) {
 		if (voxel.sdf > -1.0f && voxel.sdf < 1.0f) {
@@ -65,14 +65,83 @@ struct SimulateVoxelAlterationFunctor<true, TVoxel> {
 };
 
 template<typename TVoxel>
-struct SimulateVoxelAlterationFunctor<false, TVoxel> {
-	inline static
-	void run(TVoxel& voxel) {
-		voxel.w_depth = 1;
+struct HandleSDFBasedFlagsAlterationFunctor<false, TVoxel> {
+	_CPU_AND_GPU_CODE_
+	inline static void run(TVoxel& voxel) {}
+};
+
+//judiciously ignore clang warnings about something from stdlib throwing uncatchable exceptions in default constructors
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "cert-err58-cpp"
+namespace internal {
+std::random_device random_device;
+std::mt19937 generator(random_device());
+std::uniform_real_distribution<float> floatDistribution(-1.0f, 1.0f);
+}
+#pragma clang diagnostic pop
+
+template<bool hasSDFInformation, typename TVoxel>
+struct HandleSDFAlterationFunctor;
+
+template<typename TVoxel>
+struct HandleSDFAlterationFunctor<true, TVoxel> {
+	_CPU_AND_GPU_CODE_
+	inline static void setValue(TVoxel& voxel, float value) {
+		voxel.sdf = TVoxel::floatToValue(value);
+		voxel.w_depth += 1;
+		HandleSDFBasedFlagsAlterationFunctor<TVoxel::hasSemanticInformation, TVoxel>::run(voxel);
+	}
+
+	_CPU_AND_GPU_CODE_
+	inline static void setRandom(TVoxel& voxel) {
+		float value = internal::floatDistribution(internal::generator);
 	}
 };
 
 template<typename TVoxel>
-void simulateVoxelAlteration(TVoxel& voxel){
-	SimulateVoxelAlterationFunctor<ITMVoxel::hasSemanticInformation, ITMVoxel>::run(voxel);
+struct HandleSDFAlterationFunctor<false, TVoxel> {
+	_CPU_AND_GPU_CODE_
+	inline static void setValue(TVoxel& voxel, float value) {}
+
+	_CPU_AND_GPU_CODE_
+	inline static void setRandom(TVoxel& voxel) {}
+};
+
+template<bool hasFlowWarp, typename TVoxel>
+struct HandleFlowWarpAlterationFunctor;
+
+template<typename TVoxel>
+struct HandleFlowWarpAlterationFunctor<true, TVoxel> {
+	_CPU_AND_GPU_CODE_
+	inline static void setValue(TVoxel& voxel, Vector3f value) {
+		voxel.flow_warp = value;
+	}
+
+	_CPU_AND_GPU_CODE_
+	inline static void setRandom(TVoxel& voxel) {
+		Vector3f value(internal::floatDistribution(internal::generator),
+		               internal::floatDistribution(internal::generator),
+		               internal::floatDistribution(internal::generator));
+	}
+};
+
+template<typename TVoxel>
+struct HandleFlowWarpAlterationFunctor<false, TVoxel> {
+	_CPU_AND_GPU_CODE_
+	inline static void setValue(TVoxel& voxel, float value) {}
+
+	_CPU_AND_GPU_CODE_
+	inline static void setRandom(TVoxel& voxel) {}
+};
+
+
+template<typename TVoxel>
+void simulateVoxelAlteration(TVoxel& voxel, float newSdfValue) {
+	HandleSDFAlterationFunctor<TVoxel::hasSDFInformation, TVoxel>::setValue(voxel, newSdfValue);
+}
+
+template<typename TVoxel>
+void simulateRandomVoxelAlteration(TVoxel& voxel) {
+	HandleSDFAlterationFunctor<TVoxel::hasSDFInformation, TVoxel>::setRandom(voxel);
+	HandleFlowWarpAlterationFunctor<TVoxel::hasFlowWarp, TVoxel>::setRandom(voxel);
 }

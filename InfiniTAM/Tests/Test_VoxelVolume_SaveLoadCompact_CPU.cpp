@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 	typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
 	typedef ITMSceneStatisticsCalculator<ITMVoxel, ITMVoxelBlockHash> SceneStatisticsCalculator_VBH;
 
-	Vector3i volumeSize(24, 68, 20);
+	Vector3i volumeSize(40, 68, 20);
 	Vector3i volumeOffset(-20, 0, 0);
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 	SceneFileIOEngine_PVA::LoadFromDirectoryCompact(&scene2, path);
 
 	float tolerance = 1e-8;
-	BOOST_REQUIRE_EQUAL( SceneStatisticsCalculator_PVA::Instance().ComputeNonTruncatedVoxelCount(&scene2), 5120);
+	BOOST_REQUIRE_EQUAL( SceneStatisticsCalculator_PVA::Instance().ComputeNonTruncatedVoxelCount(&scene2), 19456);
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene2, tolerance));
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(
@@ -80,8 +80,7 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 	SceneManipulationEngine_VBH::ResetScene(&scene4);
 	SceneFileIOEngine_VBH::LoadFromDirectoryCompact(&scene4, path);
 
-	std::cout << SceneStatisticsCalculator_VBH::Instance().ComputeNonTruncatedVoxelCount(&scene3) << std::endl;
-
-	BOOST_REQUIRE_EQUAL( SceneStatisticsCalculator_VBH::Instance().ComputeNonTruncatedVoxelCount(&scene4), 5120);
+	BOOST_REQUIRE_EQUAL( SceneStatisticsCalculator_VBH::Instance().ComputeNonTruncatedVoxelCount(&scene4), 19456);
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene3, &scene4, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene4, tolerance));
 }

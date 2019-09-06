@@ -28,4 +28,7 @@ void GenerateTestScene01(ITMVoxelVolume<TVoxel, TIndex>* scene);
 void GenerateAndLogKillingScene01();
 
 template<typename TVoxel>
-void simulateVoxelAlteration(TVoxel& voxel);
+void simulateVoxelAlteration(TVoxel& voxel, float newSdfValue);
+
+template<typename TVoxel>
+void simulateRandomVoxelAlteration(TVoxel& voxel);

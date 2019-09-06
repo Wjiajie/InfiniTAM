@@ -208,8 +208,7 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU_ITMVoxel) {
 	auto singleVoxelTests = [&]() {
 		std::uniform_int_distribution<int> coordinate_distribution2(volumeOffset.x, 0);
 		ITMVoxel voxel;
-		voxel.sdf = ITMVoxel::floatToValue(-0.1f);
-		simulateVoxelAlteration(voxel);
+		simulateVoxelAlteration(voxel, -0.1f);
 
 		Vector3i coordinate(coordinate_distribution2(generator), coordinate_distribution2(generator), 0);
 
@@ -227,8 +226,7 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU_ITMVoxel) {
 
 		coordinate = volumeOffset + volumeSize - Vector3i(1);
 		voxel = PVA_ManipulationEngine::ReadVoxel(&scene2, coordinate);
-		voxel.sdf = fmod((voxel.sdf + 0.1f), 1.0f);
-		simulateVoxelAlteration(voxel);
+		simulateVoxelAlteration(voxel, fmod((ITMVoxel::valueToFloat(voxel.sdf) + 0.1f), 1.0f));
 		PVA_ManipulationEngine::SetVoxel(&scene2, coordinate, voxel);
 		VBH_ManipulationEngine::SetVoxel(&scene4, coordinate, voxel);
 		BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene1, &scene2, tolerance));
@@ -249,8 +247,7 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU_ITMVoxel) {
 //	generate only in the positive coordinates' volume, to make sure that the unneeded voxel hash blocks are properly dismissed
 	for (int iVoxel = 0; iVoxel < modifiedVoxelCount; iVoxel++) {
 		ITMVoxel voxel;
-		voxel.sdf = sdf_distribution(generator);
-		simulateVoxelAlteration(voxel);
+		simulateVoxelAlteration(voxel, sdf_distribution(generator));
 		Vector3i coordinate(coordinate_distribution(generator),
 		                    coordinate_distribution(generator),
 		                    coordinate_distribution(generator));
