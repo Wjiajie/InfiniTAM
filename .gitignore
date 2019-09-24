@@ -1,4 +1,10 @@
+#IDE & editor files
 .idea/
+.settings/
+.cproject
+.project
+.vimrc
+
 doxygen-html/
 cmake-build-*/
 Doxyfile.bak

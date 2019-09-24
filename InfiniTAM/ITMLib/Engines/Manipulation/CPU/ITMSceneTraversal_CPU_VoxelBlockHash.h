@@ -39,11 +39,11 @@ public:
 	template<typename TFunctor>
 	inline static void
 	VoxelTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
-		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
-		const ITMHashEntry* hashTable = scene->index.GetEntries();
-		int noTotalEntries = scene->index.noTotalEntries;
+		TVoxel* const voxels = scene->localVBA.GetVoxelBlocks();
+		const ITMHashEntry* const hashTable = scene->index.GetEntries();
+		const int noTotalEntries = scene->index.noTotalEntries;
 #ifdef WITH_OPENMP
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(functor)
 #endif
 		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 			const ITMHashEntry& currentHashEntry = hashTable[entryId];
@@ -63,12 +63,34 @@ public:
 
 	template<typename TFunctor>
 	inline static void
-	VoxelPositionTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
+	VoxelTraversal_SingleThreaded(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
 		int noTotalEntries = scene->index.noTotalEntries;
+		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+			const ITMHashEntry& currentHashEntry = hashTable[entryId];
+			if (currentHashEntry.ptr < 0) continue;
+			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
+				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
+					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						TVoxel& voxel = localVoxelBlock[locId];
+						functor(voxel);
+					}
+				}
+			}
+		}
+	}
+
+	template<typename TFunctor>
+	inline static void
+	VoxelPositionTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
+		TVoxel* const voxels = scene->localVBA.GetVoxelBlocks();
+		const ITMHashEntry* const hashTable = scene->index.GetEntries();
+		const int noTotalEntries = scene->index.noTotalEntries;
 #ifdef WITH_OPENMP
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(functor)
 #endif
 		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 			const ITMHashEntry& currentHashEntry = hashTable[entryId];
@@ -92,13 +114,13 @@ public:
 	template<typename TFunctor>
 	inline static void
 	VoxelAndHashBlockPositionTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
-		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
-		const ITMHashEntry* hashTable = scene->index.GetEntries();
-		int noTotalEntries = scene->index.noTotalEntries;
+		TVoxel* const voxels = scene->localVBA.GetVoxelBlocks();
+		const ITMHashEntry* const hashTable = scene->index.GetEntries();
+		const int hashEntryCount = scene->index.noTotalEntries;
 #ifdef WITH_OPENMP
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(functor)
 #endif
-		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
+		for (int entryId = 0; entryId < hashEntryCount; entryId++) {
 			const ITMHashEntry& currentHashEntry = hashTable[entryId];
 			if (currentHashEntry.ptr < 0) continue;
 			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
@@ -119,12 +141,12 @@ public:
 
 	template<typename TFunctor>
 	inline static void
-	VoxelTraversalWithinBounds(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor, Vector6i bounds) {
-		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
-		const ITMHashEntry* hashTable = scene->index.GetEntries();
-		int noTotalEntries = scene->index.noTotalEntries;
+	VoxelTraversalWithinBounds(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor, const Vector6i& bounds) {
+		TVoxel* const voxels = scene->localVBA.GetVoxelBlocks();
+		const ITMHashEntry* const hashTable = scene->index.GetEntries();
+		const int noTotalEntries = scene->index.noTotalEntries;
 #ifdef WITH_OPENMP
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(functor, bounds)
 #endif
 		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 			const ITMHashEntry& currentHashEntry = hashTable[entryId];

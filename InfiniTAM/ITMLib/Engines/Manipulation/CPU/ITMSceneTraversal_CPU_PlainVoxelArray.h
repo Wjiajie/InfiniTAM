@@ -58,6 +58,18 @@ public:
 		}
 	}
 
+	template<typename TFunctor>
+	inline static void
+	VoxelTraversal_SingleThreaded(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
+		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
+		int voxelCount =
+				scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
+		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
+			TVoxel& voxel = voxels[linearIndex];
+			functor(voxel);
+		}
+	}
+
 
 	template<typename TFunctor>
 	inline static void

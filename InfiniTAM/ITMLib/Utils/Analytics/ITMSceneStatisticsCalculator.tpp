@@ -134,7 +134,7 @@ template<class TVoxel, typename TIndex>
 struct ComputeNonTruncatedVoxelCountFunctor<true, TVoxel, TIndex> {
 	static int compute(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 		ComputeNonTruncatedVoxelCountFunctor instance;
-		ITMSceneTraversalEngine<TVoxel, TIndex, ITMLibSettings::DEVICE_CPU>::VoxelTraversal(scene, instance);
+		ITMSceneTraversalEngine<TVoxel, TIndex, ITMLibSettings::DEVICE_CPU>::VoxelTraversal_SingleThreaded(scene, instance);
 		return instance.count;
 	}
 
