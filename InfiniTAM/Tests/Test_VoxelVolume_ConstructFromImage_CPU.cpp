@@ -198,3 +198,75 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	delete rgb;
 	delete depth;
 }
+
+BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CPU)
+{
+	ITMLibSettings* settings = &ITMLibSettings::Instance();
+
+	// region ================================= CONSTRUCT VIEW =========================================================
+
+	settings->deviceType = ITMLibSettings::DEVICE_CPU;
+	settings->useBilateralFilter = false;
+	settings->useThresholdFilter = false;
+	settings->sceneParams.mu = 0.04; // non-truncated narrow-band half-width, in meters
+	settings->sceneParams.voxelSize = 0.004; // m
+
+	ITMRGBDCalib calibrationData;
+	readRGBDCalib("TestData/snoopy_calib.txt", calibrationData);
+
+	ITMViewBuilder* viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calibrationData, settings->deviceType);
+	Vector2i imageSize(640, 480);
+	ITMView* view = nullptr;
+
+	auto* rgb = new ITMUChar4Image(true, false);
+	auto* depth = new ITMShortImage(true, false);
+	BOOST_REQUIRE(ReadImageFromFile(rgb, "TestData/snoopy_color_000000.png"));
+	BOOST_REQUIRE(ReadImageFromFile(depth, "TestData/snoopy_depth_000000.png"));
+
+	viewBuilder->UpdateView(&view, rgb, depth, settings->useThresholdFilter,
+	                        settings->useBilateralFilter, false, true);
+
+	// endregion =======================================================================================================
+
+	Vector3i volumeSize(512, 512, 512), volumeOffset(-volumeSize.x / 2, -volumeSize.y / 2, 0);
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&settings->sceneParams,
+	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->GetMemoryType(),
+	                                                    volumeSize,
+	                                                    volumeOffset);
+
+	SceneManipulationEngine_PVA::ResetScene(&scene1);
+	ITMTrackingState trackingState(imageSize, settings->GetMemoryType());
+
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine_PVA =
+			ITMDynamicSceneReconstructionEngineFactory
+			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(settings->deviceType);
+	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(&scene1, view, &trackingState, nullptr);
+
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(&settings->sceneParams,
+	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->GetMemoryType(),
+	                                                    volumeSize,
+	                                                    volumeOffset);
+
+	std::string path = "TestData/test_PVA_ConstructFromImage2_";
+	SceneManipulationEngine_PVA::ResetScene(&scene2);
+	SceneFileIOEngine_PVA::LoadFromDirectoryCompact(&scene2, path);
+
+	float tolerance = 1e-5;
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene2, tolerance));
+
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(&settings->sceneParams,
+	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->GetMemoryType());
+	SceneManipulationEngine_VBH::ResetScene(&scene3);
+
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
+			ITMDynamicSceneReconstructionEngineFactory
+			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(settings->deviceType);
+
+	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize, &settings->sceneParams, settings->GetMemoryType());
+	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, renderState);
+
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(&scene2, &scene3, tolerance));
+}
