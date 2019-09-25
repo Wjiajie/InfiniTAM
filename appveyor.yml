@@ -33,7 +33,7 @@ install:
       sudo DEBIAN_FRONTEND=noninteractive apt-get -y install libpng-dev libxss-dev  libegl1-mesa-dev libglu1-mesa-dev libglvnd-dev
       cd ~ && mkdir VTK
       cd VTK && wget https://www.vtk.org/files/release/8.2/VTK-8.2.0.tar.gz
-      tar -xvf VTK-8.2.0.tar.gz
+      tar -zxf VTK-8.2.0.tar.gz
       mkdir build
       mdkir install
       cd build
@@ -46,7 +46,7 @@ build_script:
       echo "Ubuntu Build Script"
       cd ~/InfiniTAM
       mkdir build && cd build
-      cmake -DCMAKE_BUILD_TYPE=$Configuration -DWITH_OPENMP=ON -DWITH_FFMPEG=ON -DWITH_PNG=ON -DVTK_DIR=/home/algomorph/Garage/VTK/install82/lib/cmake/vtk-8.2 -DWITH_CUDA=ON -DBUILD_TESTS=ON
+      cmake .. -DCMAKE_BUILD_TYPE=$Configuration -DWITH_OPENMP=ON -DWITH_FFMPEG=ON -DWITH_PNG=ON -DVTK_DIR=~/VTK/install/lib/cmake/vtk-8.2 -DWITH_CUDA=ON -DBUILD_TESTS=ON
       make -j2
 
 test_script:
