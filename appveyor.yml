@@ -49,9 +49,10 @@ build_script:
       cmake -DCMAKE_BUILD_TYPE=$Configuration -DWITH_OPENMP=ON -DWITH_FFMPEG=ON -DWITH_PNG=ON -DVTK_DIR=/home/algomorph/Garage/VTK/install82/lib/cmake/vtk-8.2 -DWITH_CUDA=ON -DBUILD_TESTS=ON
       make -j2
 
-test_stript:
+test_script:
   - sh: |
       echo "Running Tests..."
+      cd ~/InfiniTAM/build/Tests
       ctest
 
 
