@@ -1,0 +1,67 @@
+image:
+  - Ubuntu1804
+  # - Visual Studio 2017
+
+platform: x64
+
+configuration: Release
+
+matrix:
+  fast_finish: true
+
+for:
+  -
+    matrix:
+      only:
+        - image: Ubuntu1804
+    clone_folder: ~/InfiniTAM
+  # -
+  #   matrix:
+  #     only:
+  #       - image: Visual Studio 2017
+  #   clone_folder: c:\projects\InfiniTAM
+
+# scripts that run after cloning repository
+install:
+  # Ubuntu
+  - sh: |
+      sudo DEBIAN_FRONTEND=noninteractive apt-get update -qq && sudo apt-get install -qq
+      sudo DEBIAN_FRONTEND=noninteractive apt-get -y install libboost-filesystem-dev libboost-iostreams-dev libboost-test-dev libboost-program-options-dev
+      sudo DEBIAN_FRONTEND=noninteractive apt-get -y install libopencv-dev
+      sudo DEBIAN_FRONTEND=noninteractive apt-get -y install qtbase5-dev qttools5-dev libqt5x11extras5-dev qt5-default
+      sudo DEBIAN_FRONTEND=noninteractive apt-get -y install libavcodec-dev libavfilter-dev libavdevice-dev libavformat-dev libavresample-dev libswresample-dev libswscale-dev
+      sudo DEBIAN_FRONTEND=noninteractive apt-get -y install libpng-dev libxss-dev  libegl1-mesa-dev libglu1-mesa-dev libglvnd-dev
+      cd ~ && mkdir VTK
+      cd VTK && wget https://www.vtk.org/files/release/8.2/VTK-8.2.0.tar.gz
+      tar -xvf VTK-8.2.0.tar.gz
+      mkdir build
+      mdkir install
+      cd build
+      cmake ../VTK-8.2.0 -DCMAKE_BUILD_TYPE=$Configuration -DCMAKE_INSTALL_PREFIX=~/VTK/install -DVTK_QT_VERSION=5 -DVTK_Group_Qt=ON -DModule_vtkGUISupportQt=ON
+      make -j2 && make install
+
+# scripts that run after install scripts finish and services are started
+build_script:
+  - sh: |
+      echo "Ubuntu Build Script"
+      cd ~/InfiniTAM
+      mkdir build && cd build
+      cmake -DCMAKE_BUILD_TYPE=$Configuration -DWITH_OPENMP=ON -DWITH_FFMPEG=ON -DWITH_PNG=ON -DVTK_DIR=/home/algomorph/Garage/VTK/install82/lib/cmake/vtk-8.2 -DWITH_CUDA=ON -DBUILD_TESTS=ON
+      make -j2
+
+test_stript:
+  - sh: |
+      echo "Running Tests..."
+      ctest
+
+
+
+
+
+
+
+
+
+
+
+
