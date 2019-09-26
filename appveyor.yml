@@ -9,12 +9,12 @@ configuration: Release
 matrix:
   fast_finish: true
 
-for:
-  -
-    matrix:
-      only:
-        - image: Ubuntu1804
-    clone_folder: ~/InfiniTAM
+# for:
+#   -
+#     matrix:
+#       only:
+#         - image: Ubuntu1804
+#     clone_folder: ~/InfiniTAM
   # -
   #   matrix:
   #     only:
