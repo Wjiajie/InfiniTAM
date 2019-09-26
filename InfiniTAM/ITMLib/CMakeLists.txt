@@ -144,16 +144,19 @@ set(ITMLIB_ENGINES_TRAVERSAL_CUDA_HEADERS
 
 ##
 set(ITMLIB_ENGINES_MANIPULATION_INTERFACE_HEADERS
+	Engines/Manipulation/Interface/ITMSceneManipulationEngine.h
     )
 ##
 set(ITMLIB_ENGINES_MANIPULATION_SHARED_HEADERS
 	Engines/Manipulation/Shared/ITMSceneManipulationEngine_Shared.h
+	Engines/Manipulation/Shared/ITMSceneManipulationEngine_Functors.h
 	)
 
 ##
 set(ITMLIB_ENGINES_MANIPULATION_CPU_SOURCES
     Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.cpp
-    Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.tpp
+	Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU_VoxelBlockHash.tpp
+	Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU_PlainVoxelArray.tpp
 	Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU_VoxelBlockHash.cpp
 	Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU_PlainVoxelArray.cpp
     )

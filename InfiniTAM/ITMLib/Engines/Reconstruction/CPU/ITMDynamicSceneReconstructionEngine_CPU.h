@@ -56,7 +56,7 @@ private:
 	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF);
 	ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp> hashManager;
-	ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash> sceneManager;
+	ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>& sceneManager = ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::Inst();
 
 };
 
@@ -96,6 +96,6 @@ private:
 	void WarpScene(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 	               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
 	               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF);
-	ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray> sceneManager;
+	ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>& sceneManager = ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::Inst();
 };
 }

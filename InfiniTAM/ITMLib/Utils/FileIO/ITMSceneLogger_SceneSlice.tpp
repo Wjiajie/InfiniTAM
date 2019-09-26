@@ -70,7 +70,7 @@ ITMSceneLogger<TVoxel, TWarp, TIndex>::MakeSlice(const Vector3i& extremum1, cons
 		return false;
 	}
 	auto logger = new ITMWarpFieldLogger<TWarp, TIndex>(bounds, this->path);
-	if (!ITMSceneManipulationEngine_CPU<TWarp, TIndex>::CopySceneSlice(
+	if (!ITMSceneManipulationEngine_CPU<TWarp, TIndex>::Inst().CopySceneSlice(
 			logger->warpField, fullWarpLogger->warpField, bounds)) {
 		return false;
 	}

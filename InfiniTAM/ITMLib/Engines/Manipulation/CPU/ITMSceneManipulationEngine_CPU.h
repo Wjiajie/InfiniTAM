@@ -20,6 +20,7 @@
 #include "../../../Utils/ITMHashBlockProperties.h"
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../../Utils/ITMPrintHelpers.h"
+#include "../Interface/ITMSceneManipulationEngine.h"
 
 //TODO: Make GPU versions -Greg (GitHub: Algomorph)
 
@@ -28,21 +29,33 @@ namespace ITMLib {
 // region ==================== SCENE MANIPULATION ENGINE ===============================================================
 
 template<typename TVoxel, typename TIndex>
-class ITMSceneManipulationEngine_CPU {};
+class ITMSceneManipulationEngine_CPU : public ITMSceneManipulationEngine<TVoxel, TIndex> {};
 
 
 template<typename TVoxel>
-class ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash> {
+class ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash> : public ITMSceneManipulationEngine<TVoxel, ITMVoxelBlockHash> {
+private:
+	ITMSceneManipulationEngine_CPU() = default;
+
 public:
+	ITMSceneManipulationEngine_CPU(ITMSceneManipulationEngine_CPU const&)               = delete;
+	void operator=(ITMSceneManipulationEngine_CPU const&)  = delete;
+
+	static ITMSceneManipulationEngine_CPU& Inst()
+	{
+		static ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>    instance; // Guaranteed to be destroyed.
+		// Instantiated on first use.
+		return instance;
+	}
 	/**
 	 * \brief Clear out scene and reset the index
 	 * \param scene
 	 */
-	static void ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene);
-	static bool SetVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
-	static bool SetVoxelNoAllocation(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
-	static TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at);
-	static TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, ITMVoxelBlockHash::IndexCache& cache);
+	void ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) override ;
+	bool SetVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel) override ;
+	bool SetVoxelNoAllocation(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
+	TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at) override ;
+	TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, ITMVoxelBlockHash::IndexCache& cache) override;
 
 
 	/**
@@ -50,7 +63,7 @@ public:
 	 * \param scene the scene to modify
 	 * \param offset the offset vector to use
 	 */
-	static void OffsetWarps(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset);
+	void OffsetWarps(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset) override;
 	/**
 	 * \brief Copies the slice (box-like window) specified by points extremum1 and extremum2 from the source scene into a
 	 * destination scene. Clears the destination scene before copying.
@@ -62,24 +75,38 @@ public:
 	 * \param maxPoint maximum point in the desired slice (inclusive), i.e. maximum x, y, and z coordinates
 	 * \return true on success (destination scene contains the slice), false on failure (there are no allocated hash blocks
 	 */
-	static bool
+	bool
 	CopySceneSlice(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
-	               Vector6i bounds, const Vector3i& offset = Vector3i(0));
-	static bool CopyScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination,
+	               Vector6i bounds, const Vector3i& offset = Vector3i(0)) override;
+	bool CopyScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination,
 	                      ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
-	                      const Vector3i& offset = Vector3i(0));
+	                      const Vector3i& offset = Vector3i(0)) override;
 
+	virtual ~ITMSceneManipulationEngine_CPU() = default;
 };
 
 template<typename TVoxel>
-class ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray> {
+class ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray> : public ITMSceneManipulationEngine<TVoxel, ITMPlainVoxelArray> {
+private:
+	ITMSceneManipulationEngine_CPU() = default;
+
 public:
-	static void ResetScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene);
-	static bool SetVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, TVoxel voxel);
-	static TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at);
-	static TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, ITMPlainVoxelArray::IndexCache& cache);
-	static bool IsPointInBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const Vector3i& at);
-	static void OffsetWarps(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset);
+	ITMSceneManipulationEngine_CPU(ITMSceneManipulationEngine_CPU const&)               = delete;
+	void operator=(ITMSceneManipulationEngine_CPU const&)  = delete;
+
+	static ITMSceneManipulationEngine_CPU& Inst()
+	{
+		static ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>    instance; // Guaranteed to be destroyed.
+		// Instantiated on first use.
+		return instance;
+	}
+
+	void ResetScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) override;
+	bool SetVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, TVoxel voxel)  override;
+	TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at)  override;
+	TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, ITMPlainVoxelArray::IndexCache& cache)  override;
+	bool IsPointInBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const Vector3i& at);
+	void OffsetWarps(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset) override;
 	/**
 	 * \brief Copies the slice (box-like window) specified by points extremum1 and extremum2 from the source scene into a
 	 * destination scene. Clears the destination scene before copying.
@@ -93,9 +120,9 @@ public:
 	 * from the source slice in the source scene.
 	 * \return true on success (destination scene contains the slice), false on failure (there are no allocated hash blocks
 	 */
-	static bool CopySceneSlice(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* destination,
+	bool CopySceneSlice(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* destination,
 	                           ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source,
-	                           Vector6i bounds, const Vector3i& offset = Vector3i(0));
+	                           Vector6i bounds, const Vector3i& offset = Vector3i(0))  override;
 
 	/**
 	 * \brief Copies the whole scene
@@ -105,9 +132,9 @@ public:
 	 * values that go out-of-range due to the offset will be omitted
 	 * \return true on success, false on failure
 	 */
-	static bool CopyScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* destination,
+	bool CopyScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* destination,
 	                      ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source,
-	                      const Vector3i& offset = Vector3i(0));
+	                      const Vector3i& offset = Vector3i(0))  override;
 
 };
 
@@ -277,6 +304,11 @@ void AllocateHashEntriesUsingLists_SetVisibility_CPU(ITMVoxelVolume<TVoxel, TInd
 	scene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
 	scene->index.SetLastFreeExcessListId(lastFreeExcessListId);
 }
+
+typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray> SceneManipulationEngine_PVA;
+typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> SceneManipulationEngine_VBH;
+typedef ITMSceneManipulationEngine_CPU<ITMWarp, ITMPlainVoxelArray> SceneManipulationEngine_PVA_Warp;
+typedef ITMSceneManipulationEngine_CPU<ITMWarp, ITMVoxelBlockHash> SceneManipulationEngine_VBH_Warp;
 
 // endregion ===========================================================================================================
 // region ======================================== HELPER RANGE COMPUTATION / CHECK ROUTINES ===========================

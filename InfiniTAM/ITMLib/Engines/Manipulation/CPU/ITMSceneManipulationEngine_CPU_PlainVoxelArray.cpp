@@ -17,7 +17,7 @@
 #include "../../../ITMLibDefines.h"
 
 //Note: ".tpp" files have to be included for all explicit instantiations in order to link properly
-#include "ITMSceneManipulationEngine_CPU.tpp"
+#include "ITMSceneManipulationEngine_CPU_PlainVoxelArray.tpp"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 
 using namespace ITMLib;

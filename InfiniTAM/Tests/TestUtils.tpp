@@ -23,7 +23,7 @@ using namespace ITMLib;
 
 template<class TVoxel, class TIndex>
 void GenerateTestScene01(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::ResetScene(scene);
+	ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(scene);
 	const int narrowBandThicknessVoxels = 10;
 	int xOffset = 8;
 	int surfaceSizeVoxelsZ = 16;
@@ -39,8 +39,8 @@ void GenerateTestScene01(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 
 		for (int z = 0; z < surfaceSizeVoxelsZ; z++) {
 			for (int y = 0; y < surfaceSizeVoxelsY; y++) {
-				ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::SetVoxel(scene, Vector3i(xPos, y, z), voxelPos);
-				ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::SetVoxel(scene, Vector3i(xNeg, y, z), voxelNeg);
+				ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().SetVoxel(scene, Vector3i(xPos, y, z), voxelPos);
+				ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().SetVoxel(scene, Vector3i(xNeg, y, z), voxelNeg);
 			}
 		}
 	}
