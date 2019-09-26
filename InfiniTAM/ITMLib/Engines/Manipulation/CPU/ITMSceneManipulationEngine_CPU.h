@@ -28,9 +28,7 @@ namespace ITMLib {
 // region ==================== SCENE MANIPULATION ENGINE ===============================================================
 
 template<typename TVoxel, typename TIndex>
-class ITMSceneManipulationEngine_CPU {
-
-};
+class ITMSceneManipulationEngine_CPU {};
 
 
 template<typename TVoxel>
@@ -79,8 +77,7 @@ public:
 	static void ResetScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene);
 	static bool SetVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, TVoxel voxel);
 	static TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at);
-	static TVoxel
-	ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, ITMPlainVoxelArray::IndexCache& cache);
+	static TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, ITMPlainVoxelArray::IndexCache& cache);
 	static bool IsPointInBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const Vector3i& at);
 	static void OffsetWarps(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset);
 	/**
@@ -116,13 +113,6 @@ public:
 
 // endregion ================= SCENE MANIPULATION ENGINE ===============================================================
 
-// region ==================================== GENERAL HASH MANAGEMENT =================================================
-
-bool AllocateHashEntry_CPU(const Vector3s& hashEntryPosition, ITMHashEntry* hashTable, ITMHashEntry*& resultEntry,
-                           int& lastFreeVoxelBlockId, int& lastFreeExcessListId, const int* voxelAllocationList,
-                           const int* excessAllocationList, int& hash);
-// endregion ===========================================================================================================
-// endregion ===========================================================================================================
 // region =================================== HELPER ROUTINES FOR SCENE OPTIMIZATION PREP ==============================
 //======================================================================================================================
 /**

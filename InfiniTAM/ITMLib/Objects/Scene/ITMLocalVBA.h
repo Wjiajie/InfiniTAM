@@ -33,6 +33,8 @@ namespace ITMLib
 
 		int allocatedSize;
 
+		MemoryDeviceType GetMemoryType() const { return this->memoryType; }
+
 		void SaveToDirectory(const std::string &outputDirectory) const
 		{
 			std::string VBFileName = outputDirectory + "voxel.dat";

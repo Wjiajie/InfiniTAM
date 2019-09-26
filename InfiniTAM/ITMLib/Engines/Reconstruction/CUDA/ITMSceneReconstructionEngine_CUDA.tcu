@@ -7,7 +7,7 @@
 #include "../../../Utils/ITMCUDAUtils.h"
 #include "../../../../ORUtils/JetbrainsCUDASyntax.hpp"
 
-struct AllocationTempData {
+struct SetVoxelTempData {
 	int noAllocatedVoxelEntries;
 	int noAllocatedExcessEntries;
 	int noVisibleEntries;
@@ -33,17 +33,17 @@ __global__ void buildHashAllocAndVisibleType_device(uchar *entriesAllocType, uch
 	float viewFrustrum_max);
 
 __global__ void allocateVoxelBlocksList_device(int *voxelAllocationList, int *excessAllocationList, ITMHashEntry *hashTable, int noTotalEntries,
-	AllocationTempData *allocData, uchar *entriesAllocType, uchar *entriesVisibleType, Vector3s *blockCoords);
+                                               SetVoxelTempData *allocData, uchar *entriesAllocType, uchar *entriesVisibleType, Vector3s *blockCoords);
 
 __global__ void reAllocateSwappedOutVoxelBlocks_device(int *voxelAllocationList, ITMHashEntry *hashTable, int noTotalEntries,
-	AllocationTempData *allocData, uchar *entriesVisibleType);
+                                                       SetVoxelTempData *allocData, uchar *entriesVisibleType);
 
 __global__ void setToType3(uchar *entriesVisibleType, int *visibleEntryIDs, int noVisibleEntries);
 
 template<bool useSwapping>
 __global__ void buildVisibleList_device(ITMHashEntry *hashTable, ITMHashSwapState *swapStates, int noTotalEntries,
-	int *visibleEntryIDs, AllocationTempData *allocData, uchar *entriesVisibleType,
-	Matrix4f M_d, Vector4f projParams_d, Vector2i depthImgSize, float voxelSize);
+                                        int *visibleEntryIDs, SetVoxelTempData *allocData, uchar *entriesVisibleType,
+                                        Matrix4f M_d, Vector4f projParams_d, Vector2i depthImgSize, float voxelSize);
 
 }
 
@@ -52,8 +52,8 @@ __global__ void buildVisibleList_device(ITMHashEntry *hashTable, ITMHashSwapStat
 template<class TVoxel>
 ITMSceneReconstructionEngine_CUDA<TVoxel,ITMVoxelBlockHash>::ITMSceneReconstructionEngine_CUDA(void)
 {
-	ORcudaSafeCall(cudaMalloc((void**)&allocationTempData_device, sizeof(AllocationTempData)));
-	ORcudaSafeCall(cudaMallocHost((void**)&allocationTempData_host, sizeof(AllocationTempData)));
+	ORcudaSafeCall(cudaMalloc((void**)&allocationTempData_device, sizeof(SetVoxelTempData)));
+	ORcudaSafeCall(cudaMallocHost((void**)&allocationTempData_host, sizeof(SetVoxelTempData)));
 
 	int noTotalEntries = ITMVoxelBlockHash::noTotalEntries;
 	ORcudaSafeCall(cudaMalloc((void**)&entriesAllocType_device, noTotalEntries));
@@ -137,11 +137,11 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateScene
 
 	float oneOverVoxelSize = 1.0f / (voxelSize * SDF_BLOCK_SIZE);
 
-	AllocationTempData *tempData = (AllocationTempData*)allocationTempData_host;
+	SetVoxelTempData *tempData = (SetVoxelTempData*)allocationTempData_host;
 	tempData->noAllocatedVoxelEntries = scene->localVBA.lastFreeBlockId;
 	tempData->noAllocatedExcessEntries = scene->index.GetLastFreeExcessListId();
 	tempData->noVisibleEntries = 0;
-	ORcudaSafeCall(cudaMemcpyAsync(allocationTempData_device, tempData, sizeof(AllocationTempData), cudaMemcpyHostToDevice));
+	ORcudaSafeCall(cudaMemcpyAsync(allocationTempData_device, tempData, sizeof(SetVoxelTempData), cudaMemcpyHostToDevice));
 
 	ORcudaSafeCall(cudaMemsetAsync(entriesAllocType_device, 0, sizeof(unsigned char)* noTotalEntries));
 
@@ -161,7 +161,7 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateScene
 	if (!onlyUpdateVisibleList)
 	{
 		allocateVoxelBlocksList_device << <gridSizeAL, cudaBlockSizeAL >> >(voxelAllocationList, excessAllocationList, hashTable,
-			noTotalEntries, (AllocationTempData*)allocationTempData_device, entriesAllocType_device, entriesVisibleType,
+			noTotalEntries, (SetVoxelTempData*)allocationTempData_device, entriesAllocType_device, entriesVisibleType,
 			blockCoords_device);
 		ORcudaKernelCheck;
 	}
@@ -169,24 +169,24 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateScene
 	if (useSwapping)
 	{
 		buildVisibleList_device<true> << <gridSizeAL, cudaBlockSizeAL >> >(hashTable, swapStates, noTotalEntries, visibleEntryIDs,
-			(AllocationTempData*)allocationTempData_device, entriesVisibleType, M_d, projParams_d, depthImgSize, voxelSize);
+			(SetVoxelTempData*)allocationTempData_device, entriesVisibleType, M_d, projParams_d, depthImgSize, voxelSize);
 		ORcudaKernelCheck;
 	}
 	else
 	{
 		buildVisibleList_device<false> << <gridSizeAL, cudaBlockSizeAL >> >(hashTable, swapStates, noTotalEntries, visibleEntryIDs,
-			(AllocationTempData*)allocationTempData_device, entriesVisibleType, M_d, projParams_d, depthImgSize, voxelSize);
+			(SetVoxelTempData*)allocationTempData_device, entriesVisibleType, M_d, projParams_d, depthImgSize, voxelSize);
 		ORcudaKernelCheck;
 	}
 
 	if (useSwapping)
 	{
 		reAllocateSwappedOutVoxelBlocks_device << <gridSizeAL, cudaBlockSizeAL >> >(voxelAllocationList, hashTable, noTotalEntries,
-			(AllocationTempData*)allocationTempData_device, entriesVisibleType);
+			(SetVoxelTempData*)allocationTempData_device, entriesVisibleType);
 		ORcudaKernelCheck;
 	}
 
-	ORcudaSafeCall(cudaMemcpy(tempData, allocationTempData_device, sizeof(AllocationTempData), cudaMemcpyDeviceToHost));
+	ORcudaSafeCall(cudaMemcpy(tempData, allocationTempData_device, sizeof(SetVoxelTempData), cudaMemcpyDeviceToHost));
 	renderState_vh->noVisibleEntries = tempData->noVisibleEntries;
 	scene->localVBA.lastFreeBlockId = tempData->noAllocatedVoxelEntries;
 	scene->index.SetLastFreeExcessListId(tempData->noAllocatedExcessEntries);
@@ -388,8 +388,8 @@ __global__ void setToType3(uchar *entriesVisibleType, int *visibleEntryIDs, int 
 
 __global__ void allocateVoxelBlocksList_device(
 		int *voxelAllocationList, int *excessAllocationList,
-        ITMHashEntry *hashTable, int noTotalEntries,
-	    AllocationTempData *allocData, uchar *entriesAllocType, uchar *entriesVisibleType, Vector3s *blockCoords)
+		ITMHashEntry *hashTable, int noTotalEntries,
+		SetVoxelTempData *allocData, uchar *entriesAllocType, uchar *entriesVisibleType, Vector3s *blockCoords)
 {
 	int targetIdx = threadIdx.x + blockIdx.x * blockDim.x;
 	if (targetIdx > noTotalEntries - 1) return;
@@ -452,7 +452,7 @@ __global__ void allocateVoxelBlocksList_device(
 }
 
 __global__ void reAllocateSwappedOutVoxelBlocks_device(int *voxelAllocationList, ITMHashEntry *hashTable, int noTotalEntries,
-	AllocationTempData *allocData, /*int *noAllocatedVoxelEntries,*/ uchar *entriesVisibleType)
+                                                       SetVoxelTempData *allocData, /*int *noAllocatedVoxelEntries,*/ uchar *entriesVisibleType)
 {
 	int targetIdx = threadIdx.x + blockIdx.x * blockDim.x;
 	if (targetIdx > noTotalEntries - 1) return;
@@ -470,8 +470,8 @@ __global__ void reAllocateSwappedOutVoxelBlocks_device(int *voxelAllocationList,
 
 template<bool useSwapping>
 __global__ void buildVisibleList_device(ITMHashEntry *hashTable, ITMHashSwapState *swapStates, int noTotalEntries,
-	int *visibleEntryIDs, AllocationTempData *allocData, uchar *entriesVisibleType,
-	Matrix4f M_d, Vector4f projParams_d, Vector2i depthImgSize, float voxelSize)
+                                        int *visibleEntryIDs, SetVoxelTempData *allocData, uchar *entriesVisibleType,
+                                        Matrix4f M_d, Vector4f projParams_d, Vector2i depthImgSize, float voxelSize)
 {
 	int targetIdx = threadIdx.x + blockIdx.x * blockDim.x;
 	if (targetIdx > noTotalEntries - 1) return;

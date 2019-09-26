@@ -19,6 +19,7 @@
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "ITMSceneTraversal_CPU_AuxilaryFunctions.h"
+#include "../Shared/ITMSceneManipulationEngine_Shared.h"
 
 
 namespace ITMLib {
@@ -132,8 +133,8 @@ ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMVoxelVolu
 	Vector3i blockPos;
 	int linearIdx = pointToVoxelBlockPos(at, blockPos);
 	int hash;
-	if (AllocateHashEntry_CPU(TO_SHORT_FLOOR3(blockPos), hashTable, entry, lastFreeVoxelBlockId, lastFreeExcessListId,
-	                          voxelAllocationList, excessAllocationList, hash)) {
+	if (FindOrAllocateHashEntry(TO_SHORT_FLOOR3(blockPos), hashTable, entry, lastFreeVoxelBlockId, lastFreeExcessListId,
+	                            voxelAllocationList, excessAllocationList, hash)) {
 		TVoxel* localVoxelBlock = &(voxels[entry->ptr * (SDF_BLOCK_SIZE3)]);
 		localVoxelBlock[linearIdx] = voxel;
 	} else {
@@ -494,10 +495,9 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopySceneSlice(
 		DIEWITHEXCEPTION_REPORTLOCATION(
 				"Targeted volume is at least partially out of bounds of the destination scene.");
 	}
-
+	TVoxel* sourceVoxels = source->localVBA.GetVoxelBlocks();
+	TVoxel* destinationVoxels = destination->localVBA.GetVoxelBlocks();
 	if (offset == Vector3i(0)) {
-		TVoxel* sourceVoxels = source->localVBA.GetVoxelBlocks();
-		TVoxel* destinationVoxels = destination->localVBA.GetVoxelBlocks();
 		const ITMPlainVoxelArray::IndexData* indexData = source->index.getIndexData();
 		for (int source_z = bounds.min_z; source_z < bounds.max_z; source_z++) {
 			for (int source_y = bounds.min_y; source_y < bounds.max_y; source_y++) {
@@ -509,8 +509,6 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopySceneSlice(
 			}
 		}
 	} else {
-		TVoxel* sourceVoxels = source->localVBA.GetVoxelBlocks();
-		TVoxel* destinationVoxels = destination->localVBA.GetVoxelBlocks();
 		const ITMPlainVoxelArray::IndexData* sourceIndexData = source->index.getIndexData();
 		const ITMPlainVoxelArray::IndexData* destinationIndexData = destination->index.getIndexData();
 		for (int source_z = bounds.min_z; source_z < bounds.max_z; source_z++) {
@@ -533,7 +531,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopySceneSlice(
 }
 
 template<typename TVoxel>
-static Vector6i GetSceneBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source) {
+inline static Vector6i GetSceneBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source) {
 	ITMPlainVoxelArray::IndexData* indexData = source->index.getIndexData();
 	return {indexData->offset.x, indexData->offset.y, indexData->offset.z,
 	        indexData->offset.x + indexData->size.x,

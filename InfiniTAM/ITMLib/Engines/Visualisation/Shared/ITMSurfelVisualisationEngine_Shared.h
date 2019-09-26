@@ -12,7 +12,7 @@ namespace ITMLib {
 
 
 /*TODO: same as reconstruction_transform_point in ITMSurfelSceneReconstructionEngine_Shared.h,
-  make a header in Engines/Common to avoid dry duplication / re-definition*/
+  make a header in Engines/Shared to avoid dry duplication / re-definition*/
 /**
  * \brief Applies a rigid-body transformation to a point vector.
  *

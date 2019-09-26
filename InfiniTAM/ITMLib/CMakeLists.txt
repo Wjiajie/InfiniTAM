@@ -117,6 +117,10 @@ set(ITMLIB_ENGINES_MANIPULATION_INTERFACE_HEADERS
     Engines/Manipulation/Interface/ITMSceneTraversal.h
     )
 ##
+set(ITMLIB_ENGINES_MANIPULATION_SHARED_HEADERS
+	Engines/Manipulation/Shared/ITMSceneManipulationEngine_Shared.h
+	)
+
 set(ITMLIB_ENGINES_MANIPULATION_CPU_SOURCES
     Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.cpp
     Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.tpp
@@ -613,6 +617,8 @@ set(ITMLIB_UTILS_SOURCES
     Utils/ITMPrintHelpers.cpp
     Utils/Analytics/ITMVoxelVolumeComparison_CPU.tpp
     Utils/Analytics/ITMVoxelVolumeComparison_CPU.cpp
+	Utils/Analytics/ITMVoxelVolumeComparison_CUDA.tcu
+	Utils/Analytics/ITMVoxelVolumeComparison_CUDA.cu
     )
 
 set(ITMLIB_UTILS_HEADERS
@@ -637,7 +643,9 @@ set(ITMLIB_UTILS_HEADERS
     Utils/Analytics/ITMBenchmarkUtils.h
 	Utils/Analytics/ITMAlmostEqual.h
 	Utils/Analytics/ITMIsAltered.h
+
     Utils/Analytics/ITMVoxelVolumeComparison_CPU.h
+	Utils/Analytics/ITMVoxelVolumeComparison_CUDA.h
     )
 
 ##
@@ -743,6 +751,7 @@ set(headers
     ${ITMLIB_ENGINES_LOWLEVEL_CPU_HEADERS}
     ${ITMLIB_ENGINES_LOWLEVEL_CUDA_HEADERS}
     ${ITMLIB_ENGINES_MANIPULATION_INTERFACE_HEADERS}
+	${ITMLIB_ENGINES_MANIPULATION_SHARED_HEADERS}
     ${ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS}
     ${ITMLIB_ENGINES_MANIPULATION_CUDA_HEADERS}
     ${ITMLIB_ENGINES_LOWLEVEL_INTERFACE_HEADERS}
