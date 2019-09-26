@@ -19,7 +19,7 @@
 
 #include "ITMSceneMotionTracker_CUDA.h"
 #include "../../../ORUtils/JetbrainsCUDASyntax.hpp"
-#include "../../Engines/Manipulation/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
+#include "../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
 #include "../Shared/ITMSceneMotionTracker_Functors.h"
 
 namespace {

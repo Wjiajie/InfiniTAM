@@ -33,7 +33,7 @@
 //local
 #include "ITMSceneMotionTracker_CPU.h"
 
-#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../Shared/ITMSceneMotionTracker_Functors.h"
 
 #include "../../Utils/Analytics/ITMSceneStatisticsCalculator.h"

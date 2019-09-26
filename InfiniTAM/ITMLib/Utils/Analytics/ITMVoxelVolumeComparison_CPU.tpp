@@ -20,9 +20,9 @@
 #include "../../Objects/Scene/ITMVoxelBlockHash.h"
 #include "ITMAlmostEqual.h"
 #include "../../../ORUtils/MemoryDeviceType.h"
-#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
-#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
-#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PVA_to_VBH.h"
+#include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
+#include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PVA_to_VBH.h"
 
 
 namespace ITMLib {

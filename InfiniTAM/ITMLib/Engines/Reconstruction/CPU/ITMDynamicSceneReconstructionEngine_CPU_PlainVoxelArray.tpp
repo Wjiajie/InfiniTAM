@@ -16,7 +16,7 @@
 
 #include "ITMDynamicSceneReconstructionEngine_CPU.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
-#include "../../Manipulation/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
+#include "../../Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Functors.h"
 
 using namespace ITMLib;

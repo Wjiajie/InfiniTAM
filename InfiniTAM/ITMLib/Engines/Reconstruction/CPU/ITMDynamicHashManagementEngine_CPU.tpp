@@ -20,7 +20,7 @@
 #include "../Shared/ITMDynamicHashManagementEngine_Shared.h"
 #include "../Shared/ITMSceneReconstructionEngine_Shared.h"
 #include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "../../Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#include "../../Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../../Common/ITMCommonFunctors.h"
 
 

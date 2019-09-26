@@ -19,8 +19,8 @@
 //local
 #include "../Interface/ITMSceneTraversal.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
-#include "ITMSceneManipulationEngine_CPU.h"
-#include "ITMSceneTraversal_CPU_AuxilaryFunctions.h"
+#include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../../Manipulation/CPU/ITMSceneTraversal_CPU_AuxilaryFunctions.h"
 #include "../../../Utils/Analytics/ITMIsAltered.h"
 
 namespace ITMLib {

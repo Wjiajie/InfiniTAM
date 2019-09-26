@@ -110,17 +110,47 @@ set(ITMLIB_ENGINES_LOWLEVEL_SHARED_HEADERS
     Engines/LowLevel/Shared/ITMLowLevelEngine_Shared.h
     )
 
+#====================================== SCENE TRAVERSAL ENGINES ======================================================
+
+##
+set(ITMLIB_ENGINES_TRAVERSAL_INTERFACE_HEADERS
+	Engines/Traversal/Interface/ITMSceneTraversal.h
+	)
+##
+set(ITMLIB_ENGINES_TRAVERSAL_SHARED_HEADERS
+	)
+
+##
+set(ITMLIB_ENGINES_TRAVERSAL_CPU_SOURCES
+	)
+
+set(ITMLIB_ENGINES_TRAVERSAL_CPU_HEADERS
+	Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h
+	Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h
+	Engines/Traversal/CPU/ITMSceneTraversal_CPU_PVA_to_VBH.h
+	)
+
+##
+set(ITMLIB_ENGINES_TRAVERSAL_CUDA_SOURCES
+	)
+
+set(ITMLIB_ENGINES_TRAVERSAL_CUDA_HEADERS
+	Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h
+	Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h
+	)
+
+
 #====================================== SCENE MANIPULATION ENGINES =====================================================
 
 ##
 set(ITMLIB_ENGINES_MANIPULATION_INTERFACE_HEADERS
-    Engines/Manipulation/Interface/ITMSceneTraversal.h
     )
 ##
 set(ITMLIB_ENGINES_MANIPULATION_SHARED_HEADERS
 	Engines/Manipulation/Shared/ITMSceneManipulationEngine_Shared.h
 	)
 
+##
 set(ITMLIB_ENGINES_MANIPULATION_CPU_SOURCES
     Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.cpp
     Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.tpp
@@ -130,9 +160,6 @@ set(ITMLIB_ENGINES_MANIPULATION_CPU_SOURCES
 
 set(ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS
     Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h
-    Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h
-    Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h
-	Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PVA_to_VBH.h
 	Engines/Manipulation/CPU/ITMSceneTraversal_CPU_AuxilaryFunctions.h
     )
 
@@ -145,8 +172,6 @@ set(ITMLIB_ENGINES_MANIPULATION_CUDA_SOURCES
 
 set(ITMLIB_ENGINES_MANIPULATION_CUDA_HEADERS
     Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h
-	Engines/Manipulation/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h
-	Engines/Manipulation/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h
     )
 
 #====================================== MESHING ENGINES ================================================================
@@ -711,6 +736,8 @@ set(sources
     ${ITMLIB_ENGINES_LOWLEVEL_CUDA_SOURCES}
     ${ITMLIB_ENGINES_MANIPULATION_CPU_SOURCES}
     ${ITMLIB_ENGINES_MANIPULATION_CUDA_SOURCES}
+	${ITMLIB_ENGINES_TRAVERSAL_CPU_SOURCES}
+	${ITMLIB_ENGINES_TRAVERSAL_CUDA_SOURCES}
     ${ITMLIB_ENGINES_MESHING_CPU_SOURCES}
     ${ITMLIB_ENGINES_MESHING_CUDA_SOURCES}
     ${ITMLIB_ENGINES_MULTISCENE_SOURCES}
@@ -754,6 +781,10 @@ set(headers
 	${ITMLIB_ENGINES_MANIPULATION_SHARED_HEADERS}
     ${ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS}
     ${ITMLIB_ENGINES_MANIPULATION_CUDA_HEADERS}
+	${ITMLIB_ENGINES_TRAVERSAL_INTERFACE_HEADERS}
+	${ITMLIB_ENGINES_TRAVERSAL_SHARED_HEADERS}
+	${ITMLIB_ENGINES_TRAVERSAL_CPU_HEADERS}
+	${ITMLIB_ENGINES_TRAVERSAL_CUDA_HEADERS}
     ${ITMLIB_ENGINES_LOWLEVEL_INTERFACE_HEADERS}
     ${ITMLIB_ENGINES_LOWLEVEL_SHARED_HEADERS}
     ${ITMLIB_ENGINES_MESHING_HEADERS}
@@ -821,6 +852,12 @@ source_group(Engines\\LowLevel\\Shared FILES ${ITMLIB_ENGINES_LOWLEVEL_SHARED_HE
 source_group(Engines\\Manipulation\\Interface FILES ${ITMLIB_ENGINES_MANIPULATION_INTERFACE_HEADERS})
 source_group(Engines\\Manipulation\\CPU FILES ${ITMLIB_ENGINES_MANIPULATION_CPU_SOURCES} ${ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS})
 source_group(Engines\\Manipulation\\CUDA FILES ${ITMLIB_ENGINES_MANIPULATION_CUDA_SOURCES} ${ITMLIB_ENGINES_MANIPULATION_CUDA_HEADERS})
+source_group(Engines\\Manipulation\\Shared FILES ${ITMLIB_ENGINES_MANIPULATION_SHARED_HEADERS})
+
+source_group(Engines\\Manipulation\\Interface FILES ${ITMLIB_ENGINES_TRAVERSAL_INTERFACE_HEADERS})
+source_group(Engines\\Manipulation\\CPU FILES ${ITMLIB_ENGINES_TRAVERSAL_CPU_SOURCES} ${ITMLIB_ENGINES_TRAVERSAL_CPU_HEADERS})
+source_group(Engines\\Manipulation\\CUDA FILES ${ITMLIB_ENGINES_TRAVERSAL_CUDA_SOURCES} ${ITMLIB_ENGINES_TRAVERSAL_CUDA_HEADERS})
+source_group(Engines\\Manipulation\\Shared FILES ${ITMLIB_ENGINES_TRAVERSAL_SHARED_HEADERS})
 
 source_group(Engines\\Meshing FILES ${ITMLIB_ENGINES_MESHING_HEADERS})
 source_group(Engines\\Meshing\\CPU FILES ${ITMLIB_ENGINES_MESHING_CPU_SOURCES} ${ITMLIB_ENGINES_MESHING_CPU_HEADERS})

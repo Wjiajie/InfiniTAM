@@ -3,7 +3,7 @@
 #include <cfloat>
 #include "ITMDynamicSceneReconstructionEngine_CPU.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
-#include "../../Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#include "../../Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Functors.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../../Utils/Analytics/ITMSceneStatisticsCalculator.h"

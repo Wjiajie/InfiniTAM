@@ -17,8 +17,8 @@
 #include "../ITMMath.h"
 #include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../Objects/Scene/ITMVoxelBlockHash.h"
-#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
-#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
+#include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 #include "../../Objects/Scene/ITMVoxelTypes.h"
 
 using namespace ITMLib;

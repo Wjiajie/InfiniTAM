@@ -28,8 +28,8 @@
 #include "ITMSceneSliceVisualizerCommon.h"
 #include "../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../Analytics/ITMSceneStatisticsCalculator.h"
-#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
-#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
+#include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 
 using namespace ITMLib;
 namespace fs = boost::filesystem;
