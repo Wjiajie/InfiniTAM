@@ -37,16 +37,16 @@ install:
       mkdir build
       mdkir install
       cd build
-      cmake ../VTK-8.2.0 -DCMAKE_BUILD_TYPE=$Configuration -DCMAKE_INSTALL_PREFIX=~/VTK/install -DVTK_QT_VERSION=5 -DVTK_Group_Qt=ON -DModule_vtkGUISupportQt=ON
+      cmake ../VTK-8.2.0 -DCMAKE_BUILD_TYPE=$CONFIGURATION -DCMAKE_INSTALL_PREFIX=~/VTK/install -DVTK_QT_VERSION=5 -DVTK_Group_Qt=ON -DModule_vtkGUISupportQt=ON
       make -j2 && make install
 
 # scripts that run after install scripts finish and services are started
 build_script:
   - sh: |
       echo "Ubuntu Build Script"
-      cd ~/InfiniTAM
+      cd $APPVEYOR_BUILD_FOLDER
       mkdir build && cd build
-      cmake .. -DCMAKE_BUILD_TYPE=$Configuration -DWITH_OPENMP=ON -DWITH_FFMPEG=ON -DWITH_PNG=ON -DVTK_DIR=~/VTK/install/lib/cmake/vtk-8.2 -DWITH_CUDA=ON -DBUILD_TESTS=ON
+      cmake -DCMAKE_BUILD_TYPE=$CONFIGURATION -DWITH_OPENMP=ON -DWITH_FFMPEG=ON -DWITH_PNG=ON -DVTK_DIR=~/VTK/install/lib/cmake/vtk-8.2 -DWITH_CUDA=ON -DBUILD_TESTS=ON ..
       make -j2
 
 test_script:
