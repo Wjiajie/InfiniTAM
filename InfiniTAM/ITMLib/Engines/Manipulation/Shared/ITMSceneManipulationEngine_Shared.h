@@ -21,6 +21,7 @@
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 
 _CPU_AND_GPU_CODE_
+inline
 bool FindOrAllocateHashEntry(const Vector3s& hashEntryPosition, ITMHashEntry* hashTable, ITMHashEntry*& resultEntry,
                              int& lastFreeVoxelBlockId, int& lastFreeExcessListId, const int* voxelAllocationList,
                              const int* excessAllocationList, int& hash) {

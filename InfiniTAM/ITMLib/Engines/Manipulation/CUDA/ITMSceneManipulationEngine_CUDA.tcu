@@ -46,19 +46,19 @@ __global__ void setVoxel_device(TVoxel* voxelArray, const ITMPlainVoxelArray::IT
 template<class TVoxel>
 __global__ void setVoxel_device(TVoxel* voxelArray, ITMHashEntry* hashTable,
                                 const Vector3i& at, TVoxel value, SetVoxelTempData* setVoxelTempData,
-                                const int* voxelAllocationList, const int* excessAllocationList) {
-	Vector3i blockPos;
+                                const int* voxelAllocationList, const int* excessAllocationList, int voxelIndexInBlock,
+                                const Vector3s& blockPos) {
+
 	ITMHashEntry* entry = nullptr;
-	int linearIdx = pointToVoxelBlockPos(at, blockPos);
 	int hash;
-	if (FindOrAllocateHashEntry(TO_SHORT_FLOOR3(blockPos), hashTable, entry,
+	if (FindOrAllocateHashEntry(blockPos, hashTable, entry,
 	                            setVoxelTempData->noAllocatedVoxelEntries,
 	                            setVoxelTempData->noAllocatedExcessEntries, voxelAllocationList, excessAllocationList,
 	                            hash)) {
 		TVoxel* localVoxelBlock = &(voxelArray[entry->ptr * (SDF_BLOCK_SIZE3)]);
-		localVoxelBlock[linearIdx] = value;
+		localVoxelBlock[voxelIndexInBlock] = value;
 		setVoxelTempData->success = true;
-	}else{
+	} else {
 		setVoxelTempData->success = false;
 	}
 }
@@ -68,6 +68,32 @@ __global__ void readVoxel_device(TVoxel* voxelArray, const ITMPlainVoxelArray::I
                                  const Vector3i& at, TVoxel* voxel, bool* found) {
 	int vmIndex = 0;
 	int arrayIndex = findVoxel(arrayInfo, at, vmIndex);
+	if (arrayIndex < 0) {
+		*found = false;
+	} else {
+		*found = true;
+		*voxel = voxelArray[arrayIndex];
+	}
+}
+
+template<class TVoxel>
+__global__ void readVoxel_device(TVoxel* voxelArray, const ITMHashEntry* hashTable,
+                                 const Vector3i& at, TVoxel* voxel, bool* found) {
+	int vmIndex = 0;
+	int arrayIndex = findVoxel(hashTable, at, vmIndex);
+	if (arrayIndex < 0) {
+		*found = false;
+	} else {
+		*found = true;
+		*voxel = voxelArray[arrayIndex];
+	}
+}
+
+template<class TVoxel>
+__global__ void readVoxel_device(TVoxel* voxelArray, const ITMHashEntry* hashTable,
+                                 const Vector3i& at, TVoxel* voxel, bool* found, ITMLib::ITMVoxelBlockHash::IndexCache* cache) {
+	int vmIndex = 0;
+	int arrayIndex = findVoxel(hashTable, at, vmIndex, *cache);
 	if (arrayIndex < 0) {
 		*found = false;
 	} else {
@@ -152,25 +178,44 @@ ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMVoxelVol
 	int* voxelAllocationList = scene->localVBA.GetAllocationList();
 	int* excessAllocationList = scene->index.GetExcessAllocationList();
 
+	//TODO: both vars should not be local & be reused
 	SetVoxelTempData setVoxelTempData{lastFreeVoxelBlockId, lastFreeExcessListId};
 	SetVoxelTempData* setVoxelTempData_device = nullptr;
-	ORcudaSafeCall(cudaMalloc((void**)&setVoxelTempData_device, sizeof(SetVoxelTempData)));
-	ORcudaSafeCall(cudaMemcpyAsync(setVoxelTempData_device, &setVoxelTempData, sizeof(SetVoxelTempData), cudaMemcpyHostToDevice));
+	ORcudaSafeCall(cudaMalloc((void**) &setVoxelTempData_device, sizeof(SetVoxelTempData)));
+	ORcudaSafeCall(cudaMemcpyAsync(setVoxelTempData_device, &setVoxelTempData, sizeof(SetVoxelTempData),
+	                               cudaMemcpyHostToDevice));
 
-	setVoxel_device<TVoxel> << < 1, 1 >> > (voxels, hashTable, at, voxel, setVoxelTempData, voxelAllocationList, excessAllocationList);
+	Vector3s blockPos;
+	int voxelIndexInBlock = pointToVoxelBlockPos(at, blockPos);
 
-	ORcudaSafeCall(cudaMemcpy(&setVoxelTempData, setVoxelTempData_device, sizeof(SetVoxelTempData), cudaMemcpyDeviceToHost));
+	setVoxel_device<TVoxel> << < 1, 1 >> > (voxels, hashTable, at, voxel, setVoxelTempData_device,
+			voxelAllocationList, excessAllocationList, voxelIndexInBlock, blockPos);
+
+	ORcudaSafeCall(
+			cudaMemcpy(&setVoxelTempData, setVoxelTempData_device, sizeof(SetVoxelTempData), cudaMemcpyDeviceToHost));
 	ORcudaSafeCall(cudaFree(setVoxelTempData_device));
 	scene->localVBA.lastFreeBlockId = setVoxelTempData.noAllocatedVoxelEntries;
 	scene->index.SetLastFreeExcessListId(setVoxelTempData.noAllocatedExcessEntries);
-	return true;
+	return setVoxelTempData.success;
 }
+
 
 template<typename TVoxel>
 TVoxel
 ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
                                                                       Vector3i at) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* hashTable = scene->index.GetEntries();
+	TVoxel* voxel_CUDA = nullptr;
+	TVoxel voxel;
+	bool* found_CUDA = nullptr;
+	bool found;
+	readVoxel_device<TVoxel> << < 1, 1 >> > (localVBA, hashTable, at, voxel_CUDA, found_CUDA);
+	ORcudaSafeCall(cudaMemcpy(&found, found_CUDA, sizeof(bool), cudaMemcpyDeviceToHost));
+	if (found) {
+		ORcudaSafeCall(cudaMemcpy(&voxel, voxel_CUDA, sizeof(TVoxel), cudaMemcpyDeviceToHost));
+	}
+	return voxel;
 }
 
 template<typename TVoxel>
@@ -178,14 +223,26 @@ TVoxel
 ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
                                                                       Vector3i at,
                                                                       ITMVoxelBlockHash::IndexCache& cache) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* hashTable = scene->index.GetEntries();
+	TVoxel* voxel_CUDA = nullptr;
+	TVoxel voxel;
+	bool* found_CUDA = nullptr;
+	bool found;
+	readVoxel_device<TVoxel> << < 1, 1 >> > (localVBA, hashTable, at, voxel_CUDA, found_CUDA, &cache);
+	ORcudaSafeCall(cudaMemcpy(&found, found_CUDA, sizeof(bool), cudaMemcpyDeviceToHost));
+	if (found) {
+		ORcudaSafeCall(cudaMemcpy(&voxel, voxel_CUDA, sizeof(TVoxel), cudaMemcpyDeviceToHost));
+	}
+	return voxel;
 }
 
 template<typename TVoxel>
 bool
 ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::IsPointInBounds(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const Vector3i& at) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	//A voxel block hash has infinite spatial bounds
+	return true;
 }
 
 template<typename TVoxel>

@@ -63,6 +63,10 @@ typedef class ORUtils::Vector6<int> Vector6i;
 #define TO_SHORT_FLOOR3(x) (x).toShortFloor()
 #endif
 
+#ifndef TO_SHORT3
+#define TO_SHORT3(x) (x).toShort()
+#endif
+
 #ifndef TO_UCHAR3
 #define TO_UCHAR3(x) (x).toUChar()
 #endif

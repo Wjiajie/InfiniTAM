@@ -207,6 +207,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 	bool voxelsWereCopied = false;
 
 	if (offset == Vector3i(0)) {
+		// *** allocate missing entries in target hash table
 		// traverse source hash blocks, see which ones are at least partially inside the specified bounds
 		for (int sourceHash = 0; sourceHash < totalHashEntryCount; sourceHash++) {
 			const ITMHashEntry& currentSourceHashEntry = sourceHashTable[sourceHash];
@@ -223,6 +224,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 
 		AllocateHashEntriesUsingLists_CPU(destination, entriesAllocType, allocationBlockCoords);
 
+		//iterate over source hash blocks & fill in the target hash blocks
 		for (int sourceHash = 0; sourceHash < totalHashEntryCount; sourceHash++) {
 			const ITMHashEntry& sourceHashEntry = sourceHashTable[sourceHash];
 
@@ -240,6 +242,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 				memcpy(localDestinationVoxelBlock, localSourceVoxelBlock, sizeof(TVoxel) * SDF_BLOCK_SIZE3);
 				voxelsWereCopied = true;
 			} else if (IsHashBlockPartiallyInRange(sourceHashBlockPositionVoxels, bounds)) {
+				//we have to copy only parts of the scene that are within bounds
 				int zRangeStart, zRangeEnd, yRangeStart, yRangeEnd, xRangeStart, xRangeEnd;
 				ComputeCopyRanges(xRangeStart, xRangeEnd, yRangeStart, yRangeEnd, zRangeStart, zRangeEnd,
 				                  sourceHashBlockPositionVoxels, bounds);

@@ -230,6 +230,10 @@ namespace ORUtils {
 			return Vector3<short>((short)ROUND(this->x), (short)ROUND(this->y), (short)ROUND(this->z));
 		}
 
+		_CPU_AND_GPU_CODE_ inline Vector3<short> toShort() const {
+			return Vector3<short>((short)(this->x), (short)(this->y), (short)(this->z));
+		}
+
 		_CPU_AND_GPU_CODE_ inline Vector3<short> toShortFloor() const {
 			return Vector3<short>((short)floor(this->x), (short)floor(this->y), (short)floor(this->z));
 		}
