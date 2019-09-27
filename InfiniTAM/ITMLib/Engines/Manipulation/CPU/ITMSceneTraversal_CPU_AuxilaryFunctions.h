@@ -72,17 +72,6 @@ Vector6i computeLocalBounds(const Vector3i& hashEntryMinPoint, const Vector3i& h
 	                std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.z - bounds.max_z)));
 }
 
-_CPU_AND_GPU_CODE_
-inline
-bool isPointInBounds(const Vector3i& point, const Vector6i& bounds){
-	return point.x >= bounds.min_x &&
-	       point.y >= bounds.min_y &&
-	       point.z >= bounds.min_z &&
-	       point.x < bounds.max_x &&
-	       point.y < bounds.max_y &&
-	       point.z < bounds.max_z;
-}
-
 /**
  * \brief Look for the hash index of the hash entry with the specified position
  * \param hashIdx [out] the index of the hash entry corresponding to the specified position

@@ -14,7 +14,6 @@
 //  limitations under the License.
 //  ================================================================
 #include "ITMDynamicHashManagementEngine_CPU.h"
-#include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../../Utils/ITMHashBlockProperties.h"
 #include "../Shared/ITMDynamicHashManagementEngine_Shared.h"
@@ -22,6 +21,7 @@
 #include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../../Common/ITMCommonFunctors.h"
+#include "../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
 
 
 using namespace ITMLib;

@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	                                                    settings->GetMemoryType(),
 	                                                    volumeSize,
 	                                                    volumeOffset);
-	SceneManipulationEngine_PVA::Inst().ResetScene(&scene1);
+	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&scene1);
 	ITMTrackingState trackingState(imageSize, settings->GetMemoryType());
 
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine_PVA =
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	// check constructed scene integrity
 	for (int iCoord = 0; iCoord < zeroLevelSetCoords.size(); iCoord++) {
 		Vector3i coord = zeroLevelSetCoords[iCoord];
-		ITMVoxel voxel = SceneManipulationEngine_PVA::Inst().ReadVoxel(&scene1, coord);
+		ITMVoxel voxel = ManipulationEngine_CPU_PVA_Voxel::Inst().ReadVoxel(&scene1, coord);
 		float sdf = ITMVoxel::valueToFloat(voxel.sdf);
 		BOOST_REQUIRE(almostEqual(sdf, 0.0f, tolerance));
 
@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 			for (int iLevelSet = -narrowBandHalfwidthVoxels; iLevelSet < (narrowBandHalfwidthVoxels/2); iLevelSet++) {
 				Vector3i augmentedCoord(coord.x, coord.y, coord.z + iLevelSet);
 				float expectedSdf = -static_cast<float>(iLevelSet) * maxSdfStep;
-				voxel = SceneManipulationEngine_PVA::Inst().ReadVoxel(&scene1, augmentedCoord);
+				voxel = ManipulationEngine_CPU_PVA_Voxel::Inst().ReadVoxel(&scene1, augmentedCoord);
 				sdf = ITMVoxel::valueToFloat(voxel.sdf);
 				BOOST_REQUIRE( almostEqual(sdf, expectedSdf, tolerance));
 			}
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene2(&settings->sceneParams,
 	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                    settings->GetMemoryType());
-	SceneManipulationEngine_VBH::Inst().ResetScene(&scene2);
+	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene2);
 
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
 			ITMDynamicSceneReconstructionEngineFactory
@@ -159,21 +159,21 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType(),
 	                                                   volumeSize, volumeOffset);
-	SceneManipulationEngine_PVA::Inst().ResetScene(&scene3);
+	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&scene3);
 	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, nullptr);
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene3, tolerance));
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(&settings->sceneParams,
 	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                    settings->GetMemoryType());
-	SceneManipulationEngine_VBH::Inst().ResetScene(&scene4);
+	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene4);
 	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene4, view, &trackingState, renderState);
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene2, &scene4, tolerance));
 
 	Vector3i coordinate = zeroLevelSetCoords[0];
-	ITMVoxel voxel = SceneManipulationEngine_PVA::Inst().ReadVoxel(&scene3, coordinate);
+	ITMVoxel voxel = ManipulationEngine_CPU_PVA_Voxel::Inst().ReadVoxel(&scene3, coordinate);
 	voxel.sdf = ITMVoxel::floatToValue(ITMVoxel::valueToFloat(voxel.sdf) + 0.05f);
-	SceneManipulationEngine_PVA::Inst().SetVoxel(&scene3, coordinate, voxel);
-	SceneManipulationEngine_VBH::Inst().SetVoxel(&scene2, coordinate, voxel);
+	ManipulationEngine_CPU_PVA_Voxel::Inst().SetVoxel(&scene3, coordinate, voxel);
+	ManipulationEngine_CPU_VBH_Voxel::Inst().SetVoxel(&scene2, coordinate, voxel);
 
 	BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene1, &scene3, tolerance));
 	BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene2, &scene4, tolerance));
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene5(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 			settings->GetMemoryType());
-	SceneManipulationEngine_VBH::Inst().ResetScene(&scene5);
+	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene5);
 	std::string path = "TestData/test_VBH_ConstructFromImage_";
 	SceneFileIOEngine_VBH::SaveToDirectoryCompact(&scene4, path);
 	SceneFileIOEngine_VBH::LoadFromDirectoryCompact(&scene5, path);
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CPU)
 	                                                    volumeSize,
 	                                                    volumeOffset);
 
-	SceneManipulationEngine_PVA::Inst().ResetScene(&scene1);
+	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&scene1);
 	ITMTrackingState trackingState(imageSize, settings->GetMemoryType());
 
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine_PVA =
@@ -248,7 +248,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CPU)
 	                                                    volumeOffset);
 
 	std::string path = "TestData/test_PVA_ConstructFromImage2_";
-	SceneManipulationEngine_PVA::Inst().ResetScene(&scene2);
+	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&scene2);
 	SceneFileIOEngine_PVA::LoadFromDirectoryCompact(&scene2, path);
 
 	float tolerance = 1e-5;
@@ -257,7 +257,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CPU)
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(&settings->sceneParams,
 	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType());
-	SceneManipulationEngine_VBH::Inst().ResetScene(&scene3);
+	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene3);
 
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
 			ITMDynamicSceneReconstructionEngineFactory

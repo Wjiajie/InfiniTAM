@@ -21,7 +21,18 @@
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 
 
+struct AllocationTempData {
+	int noAllocatedVoxelEntries;
+	int noAllocatedExcessEntries;
+	int noBlocksToCopy;
+	bool success;
+};
 
+struct CopyHashBlockPairInfo{
+	int sourceHash;
+	int destinationHash;
+	bool fullyInBounds;
+};
 
 _CPU_AND_GPU_CODE_
 inline
@@ -79,4 +90,104 @@ bool FindOrAllocateHashEntry(const Vector3s& hashEntryPosition, ITMHashEntry* ha
 		resultEntry = &hashTable[hash];
 		return true;
 	}
+}
+
+_CPU_AND_GPU_CODE_
+inline
+bool
+IsHashBlockFullyInRange(const Vector3i& hashBlockPositionVoxels, const Vector6i& bounds) {
+	return hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 <= bounds.max_x &&
+	       hashBlockPositionVoxels.x >= bounds.min_x &&
+	       hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 <= bounds.max_y &&
+	       hashBlockPositionVoxels.y >= bounds.min_y &&
+	       hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 <= bounds.max_z && hashBlockPositionVoxels.z >= bounds.min_z;
+}
+
+_CPU_AND_GPU_CODE_
+inline
+bool IsHashBlockPartiallyInRange(const Vector3i& hashBlockPositionVoxels, const Vector6i& bounds) {
+	//@formatter:off
+	return ((hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 >= bounds.max_x && hashBlockPositionVoxels.x <= bounds.max_x)
+	     || (hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 >= bounds.min_x && hashBlockPositionVoxels.x <= bounds.min_x)) &&
+	       ((hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 >= bounds.max_y && hashBlockPositionVoxels.y <= bounds.max_y)
+	     || (hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 >= bounds.min_y && hashBlockPositionVoxels.y <= bounds.min_y)) &&
+	       ((hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 >= bounds.max_z && hashBlockPositionVoxels.z <= bounds.max_z)
+	     || (hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 >= bounds.min_z && hashBlockPositionVoxels.z <= bounds.min_z));
+	//@formatter:on
+}
+
+/**
+ * \brief Determines whether the hash block at the specified block position needs it's voxels to be allocated, as well
+ * as whether they should be allocated in the excess list or the ordered list of the hash table.
+ * If any of these are true, marks the corresponding entry in \param entryAllocationTypes
+ * \param[in,out] entryAllocationTypes  array where to set the allocation type at final hashIdx index
+ * \param[in,out] hashBlockCoordinates  array block coordinates for the new hash blocks at final hashIdx index
+ * \param[in,out] hashIdx  takes in original index assuming coords, i.e. \refitem hashIndex(\param desiredHashBlockPosition),
+ * returns final index of the hash block to be allocated (may be updated based on hash closed chaining)
+ * \param[in] desiredHashBlockPosition  position of the hash block to check / allocate
+ * \param[in] hashTable  hash table with existing blocks
+ * \return true if the block needs allocation, false otherwise
+ */
+_CPU_AND_GPU_CODE_
+inline bool MarkAsNeedingAllocationIfNotFound(uchar* entryAllocationTypes, Vector3s* hashBlockCoordinates, int& hashIdx,
+                                              const CONSTPTR(Vector3s)& desiredHashBlockPosition,
+                                              const CONSTPTR(ITMHashEntry)* hashTable, bool& collisionDetected) {
+
+	ITMHashEntry hashEntry = hashTable[hashIdx];
+	//check if hash table contains entry
+
+	if (!(IS_EQUAL3(hashEntry.pos, desiredHashBlockPosition) && hashEntry.ptr >= -1)) {
+		if (hashEntry.ptr >= -1) {
+			//search excess list only if there is no room in ordered part
+			while (hashEntry.offset >= 1) {
+				hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
+				hashEntry = hashTable[hashIdx];
+
+				if (IS_EQUAL3(hashEntry.pos, desiredHashBlockPosition) && hashEntry.ptr >= -1) {
+					return false;
+				}
+			}
+			if (entryAllocationTypes[hashIdx] != ITMLib::NEEDS_NO_CHANGE) {
+				collisionDetected = true;
+				return false;
+			} else {
+				entryAllocationTypes[hashIdx] = ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST;
+				hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
+				return true;
+			}
+
+		}
+		if (entryAllocationTypes[hashIdx] != ITMLib::NEEDS_NO_CHANGE) {
+			collisionDetected = true;
+			return false;
+		} else {
+			entryAllocationTypes[hashIdx] = ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST;
+			hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
+			return true;
+		}
+
+	}
+	// already have hash block, no allocation needed
+	return false;
+
+};
+
+//find the hash block at the specified spatial coordinates and return its hash
+_CPU_AND_GPU_CODE_
+inline int
+FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, const THREADPTR(Vector3s)& at) {
+	int hash = hashIndex(at);
+	while (true)
+	{
+		ITMHashEntry hashEntry = voxelIndex[hash];
+
+		if (IS_EQUAL3(hashEntry.pos, at) && hashEntry.ptr >= 0)
+		{
+			return hash;
+		}
+
+		if (hashEntry.offset < 1) break;
+		hash = SDF_BUCKET_NUM + hashEntry.offset - 1;
+	}
+	return -1;
 }

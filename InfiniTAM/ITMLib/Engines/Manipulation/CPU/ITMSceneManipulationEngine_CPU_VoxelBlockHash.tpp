@@ -17,22 +17,17 @@
 
 
 #include "ITMSceneManipulationEngine_CPU.h"
-#include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "ITMSceneTraversal_CPU_AuxilaryFunctions.h"
 #include "../Shared/ITMSceneManipulationEngine_Shared.h"
-#include "../Shared/ITMSceneManipulationEngine_Functors.h"
-
-
 
 namespace ITMLib {
 
 // region ==================================== Voxel Hash Scene Manipulation Engine ====================================
 
 template<typename TVoxel>
-void ITMLib::ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(
-		ITMLib::ITMVoxelVolume<TVoxel, ITMLib::ITMVoxelBlockHash>* scene) {
+void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
 	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
 	int blockSize = scene->index.getVoxelBlockSize();
 
@@ -120,15 +115,19 @@ ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVol
 }
 
 template<typename TVoxel>
+void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::OffsetWarps(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset){
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented!");
+}
+
+template<typename TVoxel>
 bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
 		Vector6i bounds, const Vector3i& offset) {
 
 	//temporary stuff
-	ORUtils::MemoryBlock<unsigned char>* entryAllocationTypes
+	auto entryAllocationTypes
 			= new ORUtils::MemoryBlock<unsigned char>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU);
-	ORUtils::MemoryBlock<Vector3s>* blockCoords = new ORUtils::MemoryBlock<Vector3s>(ITMVoxelBlockHash::noTotalEntries,
-	                                                                                 MEMORYDEVICE_CPU);
+	auto blockCoords = new ORUtils::MemoryBlock<Vector3s>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU);
 	uchar* entriesAllocType = entryAllocationTypes->GetData(MEMORYDEVICE_CPU);
 	Vector3s* allocationBlockCoords = blockCoords->GetData(MEMORYDEVICE_CPU);
 

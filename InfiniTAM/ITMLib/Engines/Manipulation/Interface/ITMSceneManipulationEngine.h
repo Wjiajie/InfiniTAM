@@ -26,6 +26,8 @@ class ITMSceneManipulationEngine {
 	 * \brief Interface to engines implementing basic scene manipulation routines for different scene types.
 	 */
 public:
+	ITMSceneManipulationEngine() = default;
+	virtual ~ITMSceneManipulationEngine() = default;
 	/**
 	 * \brief Clear out scene and reset the index
 	 * \param scene
@@ -50,8 +52,8 @@ public:
 	 * \return value of the voxel at desired location
 	 */
 	virtual TVoxel ReadVoxel(ITMVoxelVolume <TVoxel, TIndex>* scene, Vector3i at) = 0;
-	virtual TVoxel
-	ReadVoxel(ITMVoxelVolume <TVoxel, TIndex>* scene, Vector3i at, typename TIndex::IndexCache& cache) = 0;
+	virtual TVoxel ReadVoxel(ITMVoxelVolume <TVoxel, TIndex>* scene, Vector3i at,
+			typename TIndex::IndexCache& cache) = 0;
 
 
 	/**

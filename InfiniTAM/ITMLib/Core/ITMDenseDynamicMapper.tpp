@@ -104,7 +104,7 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetTSDFVolume(
 			break;
 		case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-			ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::ResetScene(volume);
+			ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(volume);
 #endif
 			break;
 		case ITMLibSettings::DEVICE_METAL:
@@ -122,7 +122,7 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetWarpVolume(
 			break;
 		case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-			ITMSceneManipulationEngine_CUDA<TWarp, TIndex>::ResetScene(warpVolume);
+			ITMSceneManipulationEngine_CUDA<TWarp, TIndex>::Inst().ResetScene(warpVolume);
 #endif
 			break;
 		case ITMLibSettings::DEVICE_METAL:

@@ -16,7 +16,6 @@
 
 #include "ITMSceneManipulationEngine_CUDA.h"
 #include "../Shared/ITMSceneManipulationEngine_Shared.h"
-#include "../../../Utils/ITMCUDAUtils.h"
 #include "../../../../ORUtils/PlatformIndependence.h"
 #include "../../../Utils/ITMCUDAUtils.h"
 #include "../../../../ORUtils/JetbrainsCUDASyntax.hpp"
@@ -30,12 +29,6 @@ namespace {
 
 // device functions
 
-struct SetVoxelTempData {
-	int noAllocatedVoxelEntries;
-	int noAllocatedExcessEntries;
-	bool success;
-};
-
 template<class TVoxel>
 __global__ void setVoxel_device(TVoxel* voxelArray, const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
                                 const Vector3i& location, TVoxel value) {
@@ -44,56 +37,10 @@ __global__ void setVoxel_device(TVoxel* voxelArray, const ITMPlainVoxelArray::IT
 }
 
 template<class TVoxel>
-__global__ void setVoxel_device(TVoxel* voxelArray, ITMHashEntry* hashTable,
-                                const Vector3i& at, TVoxel value, SetVoxelTempData* setVoxelTempData,
-                                const int* voxelAllocationList, const int* excessAllocationList, int voxelIndexInBlock,
-                                const Vector3s& blockPos) {
-
-	ITMHashEntry* entry = nullptr;
-	int hash;
-	if (FindOrAllocateHashEntry(blockPos, hashTable, entry,
-	                            setVoxelTempData->noAllocatedVoxelEntries,
-	                            setVoxelTempData->noAllocatedExcessEntries, voxelAllocationList, excessAllocationList,
-	                            hash)) {
-		TVoxel* localVoxelBlock = &(voxelArray[entry->ptr * (SDF_BLOCK_SIZE3)]);
-		localVoxelBlock[voxelIndexInBlock] = value;
-		setVoxelTempData->success = true;
-	} else {
-		setVoxelTempData->success = false;
-	}
-}
-
-template<class TVoxel>
 __global__ void readVoxel_device(TVoxel* voxelArray, const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
                                  const Vector3i& at, TVoxel* voxel, bool* found) {
 	int vmIndex = 0;
 	int arrayIndex = findVoxel(arrayInfo, at, vmIndex);
-	if (arrayIndex < 0) {
-		*found = false;
-	} else {
-		*found = true;
-		*voxel = voxelArray[arrayIndex];
-	}
-}
-
-template<class TVoxel>
-__global__ void readVoxel_device(TVoxel* voxelArray, const ITMHashEntry* hashTable,
-                                 const Vector3i& at, TVoxel* voxel, bool* found) {
-	int vmIndex = 0;
-	int arrayIndex = findVoxel(hashTable, at, vmIndex);
-	if (arrayIndex < 0) {
-		*found = false;
-	} else {
-		*found = true;
-		*voxel = voxelArray[arrayIndex];
-	}
-}
-
-template<class TVoxel>
-__global__ void readVoxel_device(TVoxel* voxelArray, const ITMHashEntry* hashTable,
-                                 const Vector3i& at, TVoxel* voxel, bool* found, ITMLib::ITMVoxelBlockHash::IndexCache* cache) {
-	int vmIndex = 0;
-	int arrayIndex = findVoxel(hashTable, at, vmIndex, *cache);
 	if (arrayIndex < 0) {
 		*found = false;
 	} else {
@@ -140,134 +87,6 @@ __global__ void offsetCopy_device(TVoxel* destinationArray, const TVoxel* source
 
 } // anonymous namespace (device functions)
 
-// region ================================== VOXEL BLOCK HASH ==========================================================
-
-template<typename TVoxel>
-void
-ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ResetScene(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
-	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
-	int blockSize = scene->index.getVoxelBlockSize();
-
-	TVoxel* voxelBlocks_ptr = scene->localVBA.GetVoxelBlocks();
-	memsetKernel<TVoxel>(voxelBlocks_ptr, TVoxel(), numBlocks * blockSize);
-	int* vbaAllocationList_ptr = scene->localVBA.GetAllocationList();
-	fillArrayKernel<int>(vbaAllocationList_ptr, numBlocks);
-	scene->localVBA.lastFreeBlockId = numBlocks - 1;
-
-	ITMHashEntry tmpEntry;
-	memset(&tmpEntry, 0, sizeof(ITMHashEntry));
-	tmpEntry.ptr = -2;
-	ITMHashEntry* hashEntry_ptr = scene->index.GetEntries();
-	memsetKernel<ITMHashEntry>(hashEntry_ptr, tmpEntry, scene->index.noTotalEntries);
-	int* excessList_ptr = scene->index.GetExcessAllocationList();
-	fillArrayKernel<int>(excessList_ptr, SDF_EXCESS_LIST_SIZE);
-
-	scene->index.SetLastFreeExcessListId(SDF_EXCESS_LIST_SIZE - 1);
-}
-
-template<typename TVoxel>
-bool
-ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
-                                                                     Vector3i at, TVoxel voxel) {
-	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
-	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
-	ITMHashEntry* hashTable = scene->index.GetEntries();
-
-	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
-	int* voxelAllocationList = scene->localVBA.GetAllocationList();
-	int* excessAllocationList = scene->index.GetExcessAllocationList();
-
-	//TODO: both vars should not be local & be reused
-	SetVoxelTempData setVoxelTempData{lastFreeVoxelBlockId, lastFreeExcessListId};
-	SetVoxelTempData* setVoxelTempData_device = nullptr;
-	ORcudaSafeCall(cudaMalloc((void**) &setVoxelTempData_device, sizeof(SetVoxelTempData)));
-	ORcudaSafeCall(cudaMemcpyAsync(setVoxelTempData_device, &setVoxelTempData, sizeof(SetVoxelTempData),
-	                               cudaMemcpyHostToDevice));
-
-	Vector3s blockPos;
-	int voxelIndexInBlock = pointToVoxelBlockPos(at, blockPos);
-
-	setVoxel_device<TVoxel> << < 1, 1 >> > (voxels, hashTable, at, voxel, setVoxelTempData_device,
-			voxelAllocationList, excessAllocationList, voxelIndexInBlock, blockPos);
-
-	ORcudaSafeCall(
-			cudaMemcpy(&setVoxelTempData, setVoxelTempData_device, sizeof(SetVoxelTempData), cudaMemcpyDeviceToHost));
-	ORcudaSafeCall(cudaFree(setVoxelTempData_device));
-	scene->localVBA.lastFreeBlockId = setVoxelTempData.noAllocatedVoxelEntries;
-	scene->index.SetLastFreeExcessListId(setVoxelTempData.noAllocatedExcessEntries);
-	return setVoxelTempData.success;
-}
-
-
-template<typename TVoxel>
-TVoxel
-ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
-                                                                      Vector3i at) {
-	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
-	const ITMHashEntry* hashTable = scene->index.GetEntries();
-	TVoxel* voxel_CUDA = nullptr;
-	TVoxel voxel;
-	bool* found_CUDA = nullptr;
-	bool found;
-	readVoxel_device<TVoxel> << < 1, 1 >> > (localVBA, hashTable, at, voxel_CUDA, found_CUDA);
-	ORcudaSafeCall(cudaMemcpy(&found, found_CUDA, sizeof(bool), cudaMemcpyDeviceToHost));
-	if (found) {
-		ORcudaSafeCall(cudaMemcpy(&voxel, voxel_CUDA, sizeof(TVoxel), cudaMemcpyDeviceToHost));
-	}
-	return voxel;
-}
-
-template<typename TVoxel>
-TVoxel
-ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
-                                                                      Vector3i at,
-                                                                      ITMVoxelBlockHash::IndexCache& cache) {
-	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
-	const ITMHashEntry* hashTable = scene->index.GetEntries();
-	TVoxel* voxel_CUDA = nullptr;
-	TVoxel voxel;
-	bool* found_CUDA = nullptr;
-	bool found;
-	readVoxel_device<TVoxel> << < 1, 1 >> > (localVBA, hashTable, at, voxel_CUDA, found_CUDA, &cache);
-	ORcudaSafeCall(cudaMemcpy(&found, found_CUDA, sizeof(bool), cudaMemcpyDeviceToHost));
-	if (found) {
-		ORcudaSafeCall(cudaMemcpy(&voxel, voxel_CUDA, sizeof(TVoxel), cudaMemcpyDeviceToHost));
-	}
-	return voxel;
-}
-
-template<typename TVoxel>
-bool
-ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::IsPointInBounds(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const Vector3i& at) {
-	//A voxel block hash has infinite spatial bounds
-	return true;
-}
-
-template<typename TVoxel>
-void ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::OffsetWarps(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
-		Vector3f offset) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
-}
-
-template<typename TVoxel>
-bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
-		Vector6i bounds) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
-}
-
-template<typename TVoxel>
-bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopyScene(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination,
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
-		const Vector3i& offset) {
-	DIEWITHEXCEPTION_REPORTLOCATION("NOT IMPLEMENTED");
-}
-
-// endregion ===========================================================================================================
 // region ================================== PLAIN VOXEL ARRAY =========================================================
 
 template<typename TVoxel>
@@ -442,5 +261,6 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::CopyScene(
 	return ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::
 	CopySceneSlice(destination, source, bounds, offset);
 }
+
 
 //endregion ============================================================================================================

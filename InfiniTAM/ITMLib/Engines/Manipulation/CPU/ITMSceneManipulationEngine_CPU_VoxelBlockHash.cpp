@@ -15,7 +15,6 @@
 //  ================================================================
 
 #include "../../../ITMLibDefines.h"
-#include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "ITMSceneManipulationEngine_CPU_VoxelBlockHash.tpp"
 
 namespace ITMLib {

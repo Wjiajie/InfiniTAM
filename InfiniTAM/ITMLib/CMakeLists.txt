@@ -168,7 +168,8 @@ set(ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS
 
 ##
 set(ITMLIB_ENGINES_MANIPULATION_CUDA_SOURCES
-    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.tcu
+	Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_VoxelBlockHash.tcu
+    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_PlainVoxelArray.tcu
 	Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_VoxelBlockHash.cu
 	Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_PlainVoxelArray.cu
     )
@@ -656,6 +657,7 @@ set(ITMLIB_UTILS_HEADERS
     Utils/Analytics/ITMSceneStatisticsCalculator.h
     Utils/Analytics/ITMNeighborVoxelIterationInfo.h
 
+	Utils/ITMGeometryOpernations.h
     Utils/ITMCUDAUtils.h
     Utils/ITMImageTypes.h
     Utils/ITMHashBlockProperties.h
