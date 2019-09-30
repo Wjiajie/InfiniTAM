@@ -27,6 +27,7 @@
 
 using namespace ITMLib;
 
+
 namespace {
 
 // device functions
@@ -78,7 +79,7 @@ __global__ void readVoxel_device(TVoxel* voxelArray, const ITMHashEntry* hashTab
 	}
 }
 
-__global__ void determineDestinationAllocationForCopy_device(
+__global__ void determineDestinationAllocationForNoOffsetCopy_device(
 		ITMHashEntry* destinationHashTable,
 		const ITMHashEntry* sourceHashTable,
 		int noTotalEntries,
@@ -109,6 +110,39 @@ __global__ void determineDestinationAllocationForCopy_device(
 	copyHashIdBuffer[allocData->noBlocksToCopy].sourceHash = sourceHash;
 	copyHashIdBuffer[allocData->noBlocksToCopy].destinationHash = destinationHash;
 	copyHashIdBuffer[allocData->noBlocksToCopy].fullyInBounds = isFullyInRange;
+	atomicAdd(&allocData->noBlocksToCopy, 1);
+}
+
+__global__ void determineDestinationAllocationForOffsetCopy_device(
+		ITMHashEntry* destinationHashTable,
+		const ITMHashEntry* sourceHashTable,
+		uchar* entriesAllocType,
+		Vector3s* allocationBlockCoords,
+		AllocationTempData* allocData,
+		OffsetCopyHashBlockInfo* copyHashIdBuffer,
+		const Vector6i& destinationBounds,
+		const Vector6i& inverseOffsetBlockRange,
+		const Vector3i& range) {
+	int blockX = threadIdx.x + blockIdx.x * blockDim.x;
+	int blockY = threadIdx.y + blockIdx.y * blockDim.y;
+	int blockZ = threadIdx.z + blockIdx.z * blockDim.z;
+	if (blockX > range.x || blockY > range.y || blockZ > range.z) return;
+	Vector3s destinationBlockPos = Vector3s(blockX, blockY, blockZ);
+
+	if (!HashBlockAllocatedAtOffset(sourceHashTable, destinationBlockPos,inverseOffsetBlockRange)){
+		return;
+	}
+
+	int destinationHash = hashIndex(destinationBlockPos);
+	bool collisionDetected = false;
+	MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, destinationHash,
+	                                  destinationBlockPos, destinationHashTable, collisionDetected);
+	//report operation success, as we know some voxels will be copied here
+	allocData->success = true;
+	//mark which hash to copy from and which to copy to
+	copyHashIdBuffer[allocData->noBlocksToCopy].destinationHash = destinationHash;
+	copyHashIdBuffer[allocData->noBlocksToCopy].fullyInBounds =
+			IsHashBlockFullyInRange(destinationBlockPos.toInt() * SDF_BLOCK_SIZE, destinationBounds);
 	atomicAdd(&allocData->noBlocksToCopy, 1);
 }
 
@@ -167,11 +201,12 @@ __global__ void allocateVoxelBlocksList_device(
 }
 
 template<class TVoxel>
-__global__ void directCopy_device(TVoxel* destinationVoxels, const TVoxel* sourceVoxels,
-                                  const ITMHashEntry* destinationHashTable,
-                                  const ITMHashEntry* sourceHashTable,
-                                  int totalBlocksToCopy, const CopyHashBlockPairInfo* copyHashIdBuffer,
-                                  const Vector6i& bounds) {
+__global__ void noOffsetCopy_device(TVoxel* destinationVoxels, const TVoxel* sourceVoxels,
+                                    const ITMHashEntry* destinationHashTable,
+                                    const ITMHashEntry* sourceHashTable,
+                                    int totalBlocksToCopy,
+                                    const CopyHashBlockPairInfo* copyHashIdBuffer,
+                                    const Vector6i& bounds) {
 
 	if (blockIdx.x > totalBlocksToCopy - 1) return;
 	const CopyHashBlockPairInfo& hashBlockPairInfo = copyHashIdBuffer[blockIdx.x];
@@ -179,7 +214,7 @@ __global__ void directCopy_device(TVoxel* destinationVoxels, const TVoxel* sourc
 	int destinationHash = hashBlockPairInfo.destinationHash;
 
 	const ITMHashEntry& destinationHashEntry = destinationHashTable[destinationHash];
-	if(destinationHashEntry.ptr < 0) return;
+	if (destinationHashEntry.ptr < 0) return;
 	const ITMHashEntry& sourceHashEntry = sourceHashTable[sourceHash];
 
 	TVoxel* destinationVoxelBlock = &(destinationVoxels[destinationHashEntry.ptr * SDF_BLOCK_SIZE3]);
@@ -193,17 +228,40 @@ __global__ void directCopy_device(TVoxel* destinationVoxels, const TVoxel* sourc
 	globalPos.y += y;
 	globalPos.z += z;
 
-	if(hashBlockPairInfo.fullyInBounds || isPointInBounds(globalPos, bounds)){
+	if (hashBlockPairInfo.fullyInBounds || isPointInBounds(globalPos, bounds)) {
 		destinationVoxelBlock[locId] = sourceVoxelBlock[locId];
 	}
 }
 
 template<class TVoxel>
-__global__ void offsetCopy_device(TVoxel* destinationArray, const TVoxel* sourceArray,
+__global__ void offsetCopy_device(TVoxel* destinationVoxels, const TVoxel* sourceVoxels,
                                   const ITMHashEntry* destinationHashTable,
                                   const ITMHashEntry* sourceHashTable,
-                                  const Vector3i& offset, const Vector3i& minPointSourceSansOffset) {
-	//TODO
+                                  int totalBlocksToCopy,
+                                  const OffsetCopyHashBlockInfo* copyHashIdBuffer,
+                                  const Vector3i& offset,
+                                  const Vector6i& bounds) {
+	if (blockIdx.x > totalBlocksToCopy - 1) return;
+	const OffsetCopyHashBlockInfo& copyHashBlockInfo = copyHashIdBuffer[blockIdx.x];
+	const ITMHashEntry& destinationHashEntry = destinationHashTable[copyHashBlockInfo.destinationHash];
+	if (destinationHashEntry.ptr < 0) return;
+	TVoxel* destinationVoxelBlock = &(destinationVoxels[destinationHashEntry.ptr * SDF_BLOCK_SIZE3]);
+
+	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
+	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	Vector3i sourcePoint = destinationHashEntry.pos.toInt() * SDF_BLOCK_SIZE - offset;
+	sourcePoint.x += x;
+	sourcePoint.y += y;
+	sourcePoint.z += z;
+
+	int vmIndex;
+	int sourceVoxelIx = findVoxel(sourceHashTable, sourcePoint, vmIndex);
+	if(!vmIndex) return;
+
+	if(copyHashBlockInfo.fullyInBounds || isPointInBounds(sourcePoint, bounds)){
+		destinationVoxelBlock[locId] = sourceVoxels[sourceVoxelIx];
+	}
+
 }
 
 } // anonymous namespace (device functions)
@@ -337,8 +395,7 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 		Vector6i bounds, const Vector3i& offset) {
 
 	int totalHashEntryCount = source->index.noTotalEntries;
-	ORUtils::MemoryBlock<CopyHashBlockPairInfo> copyHashIdBlock(totalHashEntryCount, MEMORYDEVICE_CUDA);
-	CopyHashBlockPairInfo* copyHashIdBuffer = copyHashIdBlock.GetData(MEMORYDEVICE_CUDA);
+
 
 	TVoxel* sourceVoxels = source->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* sourceHashTable = source->index.GetEntries();
@@ -357,16 +414,21 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 			cudaMemcpyAsync(allocationTempData_device, tempData, sizeof(AllocationTempData), cudaMemcpyHostToDevice));
 
 	ORcudaSafeCall(cudaMemsetAsync(entriesAllocType_device, 0, sizeof(unsigned char) * totalHashEntryCount));
+	Vector6i destination_bounds(bounds.min_x + offset.x, bounds.min_y + offset.y, bounds.min_z + offset.z,
+	                            bounds.max_x + offset.x, bounds.max_y + offset.y, bounds.max_z + offset.z);
 
 	if (offset == Vector3i(0)) {
+		ORUtils::MemoryBlock<CopyHashBlockPairInfo> copyHashIdBlock(totalHashEntryCount, MEMORYDEVICE_CUDA);
+		CopyHashBlockPairInfo* copyHashIdBuffer = copyHashIdBlock.GetData(MEMORYDEVICE_CUDA);
+
 		// no offset; direct copy
 		dim3 cudaBlockSizeAL(256, 1);
 		dim3 gridSizeAL((int) ceil((float) totalHashEntryCount / (float) cudaBlockSizeAL.x));
-		determineDestinationAllocationForCopy_device << < cudaBlockSizeAL, gridSizeAL >> > (
+		determineDestinationAllocationForNoOffsetCopy_device << < cudaBlockSizeAL, gridSizeAL >> > (
 				destinationHashTable, sourceHashTable, totalHashEntryCount, entriesAllocType_device,
 						blockCoords_device, (AllocationTempData*) allocationTempData_device, copyHashIdBuffer, bounds);
 		allocateVoxelBlocksList_device << < cudaBlockSizeAL, gridSizeAL >> > (voxelAllocationList, excessAllocationList,
-				(AllocationTempData*) allocationTempData_device,  destinationHashTable, totalHashEntryCount,
+				(AllocationTempData*) allocationTempData_device, destinationHashTable, totalHashEntryCount,
 				entriesAllocType_device, blockCoords_device);
 
 		ORcudaSafeCall(
@@ -377,10 +439,44 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 		dim3 cudaBlockSizeCP(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
 		dim3 gridSizeCP(tempData->noBlocksToCopy);
 
-		directCopy_device<TVoxel> << < cudaBlockSizeCP, gridSizeCP >> > (destinationVoxels, sourceVoxels,
+		noOffsetCopy_device<TVoxel> << < cudaBlockSizeCP, gridSizeCP >> > (destinationVoxels, sourceVoxels,
 				destinationHashTable, sourceHashTable, tempData->noBlocksToCopy, copyHashIdBuffer, bounds);
 	} else {
+		ORUtils::MemoryBlock<OffsetCopyHashBlockInfo> copyHashIdBlock(totalHashEntryCount, MEMORYDEVICE_CUDA);
+		OffsetCopyHashBlockInfo* copyHashIdBuffer = copyHashIdBlock.GetData(MEMORYDEVICE_CUDA);
+		//non-zero-offset case
+		//We need to allocate needed blocks in the destination hash
+		//This can be done by using the destination bounds
+		Vector6i destinationBounds(bounds.min_x + offset.x, bounds.min_y + offset.y, bounds.min_z + offset.z,
+		                           bounds.max_x + offset.x, bounds.max_y + offset.y, bounds.max_z + offset.z);
+		Vector3i ranges(bounds.max_x - bounds.min_x, bounds.max_y - bounds.min_y, bounds.max_x - bounds.min_x);
+		Vector6i inverseOffsetBlockRange;
+		ComputeVoxelBlockOffsetRange(-offset, inverseOffsetBlockRange);
+		dim3 cudaBlockSizeMK(8, 8, 8);
+		dim3 gridSizeMK((int) ceil((float) ranges.x / (float) cudaBlockSizeMK.x),
+		                (int) ceil((float) ranges.y / (float) cudaBlockSizeMK.x),
+		                (int) ceil((float) ranges.z / (float) cudaBlockSizeMK.x));
+		determineDestinationAllocationForOffsetCopy_device << < cudaBlockSizeMK, gridSizeMK >> > (
+				destinationHashTable, sourceHashTable, entriesAllocType_device,
+						blockCoords_device, (AllocationTempData*) allocationTempData_device, copyHashIdBuffer,
+						destination_bounds, inverseOffsetBlockRange, ranges);
 
+		dim3 cudaBlockSizeAL(256, 1);
+		dim3 gridSizeAL((int) ceil((float) totalHashEntryCount / (float) cudaBlockSizeAL.x));
+
+		allocateVoxelBlocksList_device << < cudaBlockSizeAL, gridSizeAL >> > (voxelAllocationList, excessAllocationList,
+				(AllocationTempData*) allocationTempData_device, destinationHashTable, totalHashEntryCount,
+				entriesAllocType_device, blockCoords_device);
+		ORcudaSafeCall(
+				cudaMemcpy(tempData, allocationTempData_device, sizeof(AllocationTempData), cudaMemcpyDeviceToHost));
+		destination->localVBA.lastFreeBlockId = tempData->noAllocatedVoxelEntries;
+		destination->index.SetLastFreeExcessListId(tempData->noAllocatedExcessEntries);
+
+		dim3 cudaBlockSizeCP(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+		dim3 gridSizeCP(tempData->noBlocksToCopy);
+
+		offsetCopy_device<TVoxel> << < cudaBlockSizeCP, gridSizeCP >> > (destinationVoxels, sourceVoxels,
+				destinationHashTable, sourceHashTable, tempData->noBlocksToCopy, copyHashIdBuffer, offset, bounds);
 	}
 
 	return tempData->success;

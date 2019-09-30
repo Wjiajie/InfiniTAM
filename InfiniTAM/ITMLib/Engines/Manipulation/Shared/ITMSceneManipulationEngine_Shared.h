@@ -28,8 +28,13 @@ struct AllocationTempData {
 	bool success;
 };
 
-struct CopyHashBlockPairInfo{
+struct CopyHashBlockPairInfo {
 	int sourceHash;
+	int destinationHash;
+	bool fullyInBounds;
+};
+
+struct OffsetCopyHashBlockInfo{
 	int destinationHash;
 	bool fullyInBounds;
 };
@@ -172,17 +177,20 @@ inline bool MarkAsNeedingAllocationIfNotFound(uchar* entryAllocationTypes, Vecto
 
 };
 
-//find the hash block at the specified spatial coordinates and return its hash
+ /**
+  * \brief find the hash block at the specified spatial coordinates (in blocks, not voxels!) and return its hash
+  * \param voxelIndex
+  * \param at
+  * \return
+  */
 _CPU_AND_GPU_CODE_
 inline int
 FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, const THREADPTR(Vector3s)& at) {
 	int hash = hashIndex(at);
-	while (true)
-	{
+	while (true) {
 		ITMHashEntry hashEntry = voxelIndex[hash];
 
-		if (IS_EQUAL3(hashEntry.pos, at) && hashEntry.ptr >= 0)
-		{
+		if (IS_EQUAL3(hashEntry.pos, at) && hashEntry.ptr >= 0) {
 			return hash;
 		}
 
@@ -190,4 +198,97 @@ FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, 
 		hash = SDF_BUCKET_NUM + hashEntry.offset - 1;
 	}
 	return -1;
+}
+
+_CPU_AND_GPU_CODE_
+inline void 
+ComputeVoxelBlockOffsetRange(const CONSTPTR(Vector3i)& offset,
+                             THREADPTR(Vector6i)& offsetRange){
+#define  ITM_CMP(a,b)    (((a) > (b)) - ((a) < (b)))
+#define  ITM_SIGN(a)     ITM_CMP((a),0)
+
+	int xA = offset.x / SDF_BLOCK_SIZE;
+	int xB = xA + ITM_SIGN(offset.x % SDF_BLOCK_SIZE);
+	int yA = offset.y / SDF_BLOCK_SIZE;
+	int yB = yA + ITM_SIGN(offset.y % SDF_BLOCK_SIZE);
+	int zA = offset.z / SDF_BLOCK_SIZE;
+	int zB = zA + ITM_SIGN(offset.z % SDF_BLOCK_SIZE);
+	int tmp;
+	if (xA > xB) {
+		tmp = xA;
+		xA = xB;
+		xB = tmp;
+	}
+	if (yA > yB) {
+		tmp = yA;
+		yA = yB;
+		yB = tmp;
+	}
+	if (zA > zB) {
+		tmp = zA;
+		zA = zB;
+		zB = tmp;
+	}
+	offsetRange.min_x = xA;
+	offsetRange.min_y = yA;
+	offsetRange.min_z = zA;
+	offsetRange.max_x = xB + 1;
+	offsetRange.max_y = yB + 1;
+	offsetRange.max_z = zB + 1;
+#undef ITM_CMP
+#undef ITM_SIGN
+}
+
+/**
+ * \brief Determine if hash blocks spanning any part of the volume offset from the given block by a given vector are allocated
+ * \param targetIndex Target index where to check the blocks being allocated
+ * \param blockCoord coordinate of the given block (before offset)
+ * \param offset offset, in voxels (not blocks!)
+ * \return true if any of the said blocks are allocated, false otherwise
+ */
+_CPU_AND_GPU_CODE_
+inline bool
+HashBlockAllocatedAtOffset(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* targetIndex,
+                           const THREADPTR(Vector3s)& blockCoord,
+                           const CONSTPTR(Vector3i)& offset) {
+	Vector6i blockRange;
+	ComputeVoxelBlockOffsetRange(offset, blockRange);
+
+	bool allocated = false;
+	for (int z = blockCoord.z + blockRange.min_x; z < blockCoord.z + blockRange.max_x; z++){
+		for (int y = blockCoord.y + blockRange.min_y; y < blockCoord.y + blockRange.max_y; y++){
+			for (int x = blockCoord.x + blockRange.min_z; x < blockCoord.x + blockRange.max_z; x++){
+				if(FindHashBlock(targetIndex, Vector3s(x,y,z)) != -1){
+					allocated = true;
+				}
+			}
+		}
+	}
+	return allocated;
+}
+
+/**
+ * \brief Same as above, except with block ranges spanning the offset volume of the given block precomputed and provided
+ * \param targetIndex Target index where to check the blocks being allocated
+ * \param blockCoord coordinate of the given block (before offset)
+ * \param offsetBlockRange block range to check (in blocks!) - each value of the range is an offset from block coord
+ * \return  true if any of the blocks in blockCoord + [values within offset range] are allocated, false otherwise
+ */
+_CPU_AND_GPU_CODE_
+inline bool
+HashBlockAllocatedAtOffset(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* targetIndex,
+                           const THREADPTR(Vector3s)& blockCoord,
+                           const CONSTPTR(Vector6i)& offsetBlockRange) {
+
+	bool allocated = false;
+	for (int z = blockCoord.z + offsetBlockRange.min_x; z < blockCoord.z + offsetBlockRange.max_x; z++){
+		for (int y = blockCoord.y + offsetBlockRange.min_y; y < blockCoord.y + offsetBlockRange.max_y; y++){
+			for (int x = blockCoord.x + offsetBlockRange.min_z; x < blockCoord.x + offsetBlockRange.max_z; x++){
+				if(FindHashBlock(targetIndex, Vector3s(x,y,z)) != -1){
+					allocated = true;
+				}
+			}
+		}
+	}
+	return allocated;
 }
