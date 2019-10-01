@@ -33,14 +33,14 @@
 #include "../ORUtils/FileUtils.h"
 #include "../ITMLib/Objects/RenderStates/ITMRenderStateFactory.h"
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
-#include "../ITMLib/Utils/Analytics/ITMSceneStatisticsCalculator.h"
+#include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 
 using namespace ITMLib;
 
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray> SceneFileIOEngine_PVA;
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
-typedef ITMSceneStatisticsCalculator<ITMVoxel, ITMPlainVoxelArray> SceneStatisticsCalculator_PVA;
-typedef ITMSceneStatisticsCalculator<ITMVoxel, ITMVoxelBlockHash> SceneStatisticsCalculator_VBH;
+typedef ITMSceneStatisticsCalculator_CPU<ITMVoxel, ITMPlainVoxelArray> SceneStatisticsCalculator_PVA;
+typedef ITMSceneStatisticsCalculator_CPU<ITMVoxel, ITMVoxelBlockHash> SceneStatisticsCalculator_VBH;
 
 BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();

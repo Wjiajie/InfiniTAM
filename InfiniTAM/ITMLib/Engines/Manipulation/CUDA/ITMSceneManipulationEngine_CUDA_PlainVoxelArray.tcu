@@ -22,6 +22,7 @@
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 
 #include <cstring>
+#include <iostream>
 
 using namespace ITMLib;
 
@@ -31,27 +32,31 @@ namespace {
 
 template<class TVoxel>
 __global__ void setVoxel_device(TVoxel* voxelArray, const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
-                                const Vector3i& location, TVoxel value) {
-	int locId = location.x + location.y * arrayInfo->size.x + location.z * arrayInfo->size.x * arrayInfo->size.y;
-	voxelArray[locId] = value;
+                                const Vector3i location, TVoxel value) {
+	int vmIndex;
+	int linearIndex = findVoxel(arrayInfo, location, vmIndex);
+
+	if (linearIndex > -1) {
+		voxelArray[linearIndex] = value;
+	}
 }
 
 template<class TVoxel>
 __global__ void readVoxel_device(TVoxel* voxelArray, const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
-                                 const Vector3i& at, TVoxel* voxel, bool* found) {
+                                 const Vector3i at, ReadVoxelResult<TVoxel>* result) {
 	int vmIndex = 0;
 	int arrayIndex = findVoxel(arrayInfo, at, vmIndex);
 	if (arrayIndex < 0) {
-		*found = false;
+		result->found = false;
 	} else {
-		*found = true;
-		*voxel = voxelArray[arrayIndex];
+		result->found = true;
+		result->voxel = voxelArray[arrayIndex];
 	}
 }
 
 __global__ void isPointInBounds_device(
 		const ITMPlainVoxelArray::ITMVoxelArrayInfo* index_bounds,
-		const Vector3i& at, bool* answer) {
+		const Vector3i at, bool* answer) {
 	Vector3i point2 = at - index_bounds->offset;
 	*answer = !((point2.x < 0) || (point2.x >= index_bounds->size.x) ||
 	            (point2.y < 0) || (point2.y >= index_bounds->size.y) ||
@@ -74,12 +79,21 @@ template<class TVoxel>
 __global__ void offsetCopy_device(TVoxel* destinationArray, const TVoxel* sourceArray,
                                   const ITMPlainVoxelArray::ITMVoxelArrayInfo* destinationIndexData,
                                   const ITMPlainVoxelArray::ITMVoxelArrayInfo* sourceIndexData,
-                                  const Vector3i& offset, const Vector3i& minPointSourceSansOffset) {
-	int x = blockIdx.x * blockDim.x + threadIdx.x + minPointSourceSansOffset.x;
-	int y = blockIdx.y * blockDim.y + threadIdx.y + minPointSourceSansOffset.y;
-	int z = blockIdx.z * blockDim.z + threadIdx.z + minPointSourceSansOffset.z;
+                                  const Vector3i offset, const Vector3i minPointSourceSansOffset,
+                                  const Vector3i extent) {
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y;
+	int z = blockIdx.z * blockDim.z + threadIdx.z;
+	if(x >= extent.x || y >= extent.y || z >= extent.z ) return;
+	x += minPointSourceSansOffset.x;
+	y += minPointSourceSansOffset.y;
+	z += minPointSourceSansOffset.z;
 	int linearSourceIndex = x + y * sourceIndexData->size.x + z * sourceIndexData->size.x * sourceIndexData->size.y;
-	int destination_z = z + offset.z, destination_y = y + offset.y, destination_x = x + offset.x;
+	int destination_z, destination_y, destination_x;
+	destination_z = z + sourceIndexData->offset.z - destinationIndexData->offset.z + offset.z;
+	destination_y = y + sourceIndexData->offset.y - destinationIndexData->offset.y + offset.y;
+	destination_x = x + sourceIndexData->offset.x - destinationIndexData->offset.x + offset.x;
+
 	int linearDestinationIndex = destination_x + destination_y * destinationIndexData->size.x +
 	                             destination_z * destinationIndexData->size.x * destinationIndexData->size.y;
 	destinationArray[linearDestinationIndex] = sourceArray[linearSourceIndex];
@@ -88,6 +102,19 @@ __global__ void offsetCopy_device(TVoxel* destinationArray, const TVoxel* source
 } // anonymous namespace (device functions)
 
 // region ================================== PLAIN VOXEL ARRAY =========================================================
+
+
+template<typename TVoxel>
+ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ITMSceneManipulationEngine_CUDA() {
+	ORcudaSafeCall(cudaMalloc((void**) &readVoxelResult_device, sizeof(ReadVoxelResult<TVoxel>)));
+	ORcudaSafeCall(cudaMallocHost((void**) &readVoxelResult_host, sizeof(ReadVoxelResult<TVoxel>)));
+}
+
+template<typename TVoxel>
+ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::~ITMSceneManipulationEngine_CUDA() {
+	ORcudaSafeCall(cudaFree(readVoxelResult_device));
+	ORcudaSafeCall(cudaFreeHost(readVoxelResult_host));
+}
 
 template<typename TVoxel>
 void
@@ -111,6 +138,7 @@ ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::SetVoxel(ITMVoxelVo
 	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
 	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.getIndexData();
 	setVoxel_device<TVoxel> << < 1, 1 >> > (localVBA, arrayInfo, at, voxel);
+	ORcudaKernelCheck;
 	return true;
 }
 
@@ -119,18 +147,24 @@ TVoxel
 ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ReadVoxel(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
 		Vector3i at) {
+
 	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
 	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.getIndexData();
-	TVoxel* voxel_CUDA = nullptr;
-	TVoxel voxel;
-	bool* found_CUDA = nullptr;
-	bool found;
-	readVoxel_device<TVoxel> << < 1, 1 >> > (localVBA, arrayInfo, at, voxel_CUDA, found_CUDA);
-	ORcudaSafeCall(cudaMemcpy(&found, found_CUDA, sizeof(bool), cudaMemcpyDeviceToHost));
-	if (found) {
-		ORcudaSafeCall(cudaMemcpy(&voxel, voxel_CUDA, sizeof(TVoxel), cudaMemcpyDeviceToHost));
+
+	readVoxel_device<TVoxel> << < 1, 1 >> >
+	                                 (localVBA, arrayInfo, at, (ReadVoxelResult<TVoxel>*) readVoxelResult_device);
+	ORcudaKernelCheck;
+
+	ReadVoxelResult<TVoxel>* readVoxelResult = (ReadVoxelResult<TVoxel>*) readVoxelResult_host;
+	ORcudaSafeCall(cudaMemcpy(readVoxelResult, readVoxelResult_device, sizeof(ReadVoxelResult<TVoxel>),
+	                          cudaMemcpyDeviceToHost));
+
+	if (readVoxelResult->found) {
+		return readVoxelResult->voxel;
+	} else {
+		TVoxel voxel;
+		return voxel;
 	}
-	return voxel;
 }
 
 template<typename TVoxel>
@@ -154,11 +188,14 @@ template<typename TVoxel>
 bool
 ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::IsPointInBounds(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const Vector3i& at) {
-	bool* in_bounds_CUDA = nullptr;
+	bool* in_bounds_CUDA;
+	ORcudaSafeCall(cudaMalloc((void**) &in_bounds_CUDA, sizeof(bool)));
 	bool in_bounds;
 	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.getIndexData();
 	isPointInBounds_device << < 1, 1 >> > (arrayInfo, at, in_bounds_CUDA);
+	ORcudaKernelCheck;
 	ORcudaSafeCall(cudaMemcpy(&in_bounds, in_bounds_CUDA, sizeof(bool), cudaMemcpyDeviceToHost));
+	ORcudaSafeCall(cudaFree(in_bounds_CUDA));
 	return in_bounds;
 }
 
@@ -167,7 +204,7 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::CopySceneSlice
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* destination, ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source,
 		Vector6i bounds, const Vector3i& offset) {
 	Vector3i min_pt_source = Vector3i(bounds.min_x, bounds.min_y, bounds.min_z);
-	Vector3i max_pt_source = Vector3i(bounds.max_x - 1, bounds.max_y - 1, bounds.max_z - 1);
+	Vector3i max_pt_source = Vector3i(bounds.max_x-1, bounds.max_y - 1, bounds.max_z - 1);
 
 	if (!ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::IsPointInBounds(source, min_pt_source) ||
 	    !ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::IsPointInBounds(source, max_pt_source)) {
@@ -209,19 +246,25 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::CopySceneSlice
 		              source->index.getVolumeSize().z / cudaBlockSize.z);
 
 		directCopy_device<TVoxel> << < gridSize, cudaBlockSize >> > (destinationVoxels, sourceVoxels, indexData);
+		ORcudaKernelCheck;
 
 	} else {
 		const ITMPlainVoxelArray::IndexData* sourceIndexData = source->index.getIndexData();
 		const ITMPlainVoxelArray::IndexData* destinationIndexData = destination->index.getIndexData();
 
-		Vector3i extent = max_pt_source - min_pt_source;
+		Vector3i extent = max_pt_source + Vector3i(1,1,1) - min_pt_source;
 		Vector3i minSourcePointSansOffset = min_pt_source - source->index.getVolumeOffset();
 		dim3 cudaBlockSize(8, 8, 8);
-		dim3 gridSize(extent.x / cudaBlockSize.x, extent.y / cudaBlockSize.y, extent.z / cudaBlockSize.z);
+		//(int) ceil((float) totalHashEntryCount / (float) cudaBlockSizeAL.x)
+		dim3 gridSize((int) ceil((float) extent.x / (float) cudaBlockSize.x),
+		              (int) ceil((float) extent.y / (float) cudaBlockSize.y),
+		              (int) ceil((float) extent.z / (float) cudaBlockSize.z));
 
 		offsetCopy_device<TVoxel> << < gridSize, cudaBlockSize >> >
-		                                         (destinationVoxels, sourceVoxels, destinationIndexData, sourceIndexData, offset,
-				                                         minSourcePointSansOffset);
+		                                         (destinationVoxels, sourceVoxels, destinationIndexData,
+				                                         sourceIndexData, offset, minSourcePointSansOffset,
+				                                         extent);
+		ORcudaKernelCheck;
 
 	}
 	return true;
@@ -229,11 +272,10 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::CopySceneSlice
 
 template<typename TVoxel>
 inline static Vector6i GetSceneBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source) {
-	ITMPlainVoxelArray::IndexData* indexData = source->index.getIndexData();
-	return {indexData->offset.x, indexData->offset.y, indexData->offset.z,
-	        indexData->offset.x + indexData->size.x,
-	        indexData->offset.y + indexData->size.y,
-	        indexData->offset.z + indexData->size.z};
+	Vector3i offset = source->index.getVolumeOffset();
+	Vector3i size = source->index.getVolumeSize();
+	return {offset.x, offset.y, offset.z,
+	        offset.x + size.x, offset.y + size.y, offset.z + size.z};
 }
 
 template<typename TVoxel>
@@ -242,6 +284,7 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::CopyScene(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source,
 		const Vector3i& offset) {
 	ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ResetScene(destination);
+	//TODO: this bounds treatment isn't quite correct -- it assumes same bounds for source & dest. Need to fix.
 	Vector6i bounds = GetSceneBounds(source);
 	if (offset.x > 0) {
 		bounds.max_x -= offset.x;

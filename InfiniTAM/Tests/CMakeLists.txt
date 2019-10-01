@@ -57,7 +57,7 @@ if (BUILD_TESTS)
     find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 
     itm_add_test(NAME VoxelVolume_SetCopyCompare_CPU SOURCES Test_VoxelVolume_SetCopyCompare_CPU.cpp)
-    itm_add_test(NAME VoxelVolume_SetCopyCompare_GPU SOURCES Test_VoxelVolume_SetCopyCompare_CUDA.cpp)
+    itm_add_test(NAME VoxelVolume_SetCopyCompare_CUDA SOURCES Test_VoxelVolume_SetCopyCompare_CUDA.cpp)
     itm_add_test(NAME VoxelVolume_ConstructFromImage_CPU SOURCES Test_VoxelVolume_ConstructFromImage_CPU.cpp)
     itm_add_test(NAME VoxelVolume_SaveLoadCompact_CPU SOURCES Test_VoxelVolume_SaveLoadCompact_CPU.cpp)
     itm_add_test(NAME IntArrayMap3D SOURCES TestIntArrayMap3D.cpp)

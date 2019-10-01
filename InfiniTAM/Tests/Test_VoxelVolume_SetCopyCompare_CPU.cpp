@@ -35,7 +35,7 @@
 #include "../ITMLib/Objects/Camera/ITMCalibIO.h"
 
 #include "../ITMLib/Utils/ITMLibSettings.h"
-#include "../ITMLib/Utils/Analytics/ITMSceneStatisticsCalculator.h"
+#include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "../ITMLib/Utils/Analytics/ITMVoxelVolumeComparison_CPU.h"
 
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"

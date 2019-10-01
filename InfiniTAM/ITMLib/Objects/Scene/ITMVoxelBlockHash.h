@@ -103,7 +103,7 @@ private:
 	}
 
 public:
-	MemoryDeviceType getMemoryType(){
+	MemoryDeviceType getMemoryType() const{
 		return memoryType;
 	}
 

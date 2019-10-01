@@ -23,7 +23,7 @@
 #include "ITMSceneMotionTracker_Shared.h"
 #include "ITMSceneMotionTracker_Debug.h"
 #include "../../Utils/ITMVoxelFlags.h"
-#include "../../Utils/Analytics/ITMSceneStatisticsCalculator.h"
+#include "../../Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "../Interface/ITMSceneMotionTracker.h"
 
 #ifndef __CUDACC__
@@ -374,7 +374,7 @@ public:
 				totalDataEnergy, totalLevelSetEnergy, totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
 
 
-		ITMSceneStatisticsCalculator<TVoxel, TIndex>& calculator = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance();
+		ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>& calculator = ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::Instance();
 		int allocated_hash_block_count = calculator.ComputeAllocatedHashBlockCount(canonicalScene);
 
 		CalculateAndPrintAdditionalStatistics(

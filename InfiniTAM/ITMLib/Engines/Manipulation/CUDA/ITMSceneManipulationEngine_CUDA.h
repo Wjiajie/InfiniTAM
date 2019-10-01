@@ -19,6 +19,7 @@
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../Interface/ITMSceneManipulationEngine.h"
 #include "../../../Utils/ITMHashBlockProperties.h"
+#include "../../../ITMLibDefines.h"
 
 
 namespace ITMLib {
@@ -31,8 +32,13 @@ class ITMSceneManipulationEngine_CUDA : public ITMSceneManipulationEngine<TVoxel
 template<typename TVoxel>
 class ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray> :
 		public ITMSceneManipulationEngine<TVoxel, ITMPlainVoxelArray> {
-public:
+private:
+	void* readVoxelResult_device;
+	void* readVoxelResult_host;
 
+public:
+	ITMSceneManipulationEngine_CUDA();
+	~ITMSceneManipulationEngine_CUDA();
 	//can be used as a singleton, but doesn't HAVE TO be
 	static ITMSceneManipulationEngine_CUDA& Inst() {
 		static ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray> instance; // Guaranteed to be destroyed.
@@ -65,6 +71,8 @@ private:
 	void* allocationTempData_host;
 	unsigned char* entriesAllocType_device;
 	Vector3s* blockCoords_device;
+	void* readVoxelResult_device;
+	void* readVoxelResult_host;
 
 public:
 	ITMSceneManipulationEngine_CUDA();
@@ -91,6 +99,11 @@ public:
 	               const Vector3i& offset = Vector3i(0)) override;
 
 };
+
+typedef ITMSceneManipulationEngine_CUDA<ITMVoxel, ITMPlainVoxelArray> ManipulationEngine_CUDA_PVA_Voxel;
+typedef ITMSceneManipulationEngine_CUDA<ITMVoxel, ITMVoxelBlockHash> ManipulationEngine_CUDA_VBH_Voxel;
+typedef ITMSceneManipulationEngine_CUDA<ITMWarp, ITMPlainVoxelArray> ManipulationEngine_CUDA_PVA_Warp;
+typedef ITMSceneManipulationEngine_CUDA<ITMWarp, ITMVoxelBlockHash> ManipulationEngine_CUDA_VBH_Warp;
 
 
 }//namespace ITMLib

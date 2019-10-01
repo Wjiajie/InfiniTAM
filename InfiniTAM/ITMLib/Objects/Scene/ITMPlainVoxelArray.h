@@ -77,8 +77,8 @@ public:
 		       indexData->GetData(MEMORYDEVICE_CPU)->size.z;
 	}
 
-	const Vector3i getVolumeSize(void) { return indexData->GetData(MEMORYDEVICE_CPU)->size; }
-	const Vector3i getVolumeOffset(void) { return indexData->GetData(MEMORYDEVICE_CPU)->offset; }
+	const Vector3i getVolumeSize(void) const { return indexData->GetData(MEMORYDEVICE_CPU)->size; }
+	const Vector3i getVolumeOffset(void) const { return indexData->GetData(MEMORYDEVICE_CPU)->offset; }
 
 	/**Get the memory type used for storage.**/
 	MemoryDeviceType GetMemoryType() const{

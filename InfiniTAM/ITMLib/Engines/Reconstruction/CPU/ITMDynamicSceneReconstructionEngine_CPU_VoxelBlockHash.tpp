@@ -6,7 +6,7 @@
 #include "../../Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Functors.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
-#include "../../../Utils/Analytics/ITMSceneStatisticsCalculator.h"
+#include "../../../Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 
 using namespace ITMLib;
 

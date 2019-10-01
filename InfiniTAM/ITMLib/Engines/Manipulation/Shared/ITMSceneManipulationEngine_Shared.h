@@ -28,6 +28,12 @@ struct AllocationTempData {
 	bool success;
 };
 
+template<typename TVoxel>
+struct ReadVoxelResult{
+	TVoxel voxel;
+	bool found;
+};
+
 struct CopyHashBlockPairInfo {
 	int sourceHash;
 	int destinationHash;

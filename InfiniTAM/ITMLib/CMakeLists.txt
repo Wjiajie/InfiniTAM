@@ -629,33 +629,27 @@ set (ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS
      )
 
 # ======================================================================================================================
-# =================================================== UTILITIES ========================================================
+# =================================================== UTILITIES (MISC) =================================================
 set(ITMLIB_UTILS_SOURCES
     Utils/Collections/ITM3DNestedMapOfArrays.tpp
 	Utils/Collections/ITM3DNestedMapOfArrays.cpp
     Utils/Collections/ITM3DNestedMap.tpp
 	Utils/Collections/ITM3DNestedMap.cpp
 
-    Utils/Analytics/ITMSceneStatisticsCalculator.tpp
-	Utils/Analytics/ITMSceneStatisticsCalculator_PlainVoxelArray.cpp
-	Utils/Analytics/ITMSceneStatisticsCalculator_VoxelBlockHash.cpp
     Utils/Analytics/ITMNeighborVoxelIterationInfo.cpp
 	Utils/Analytics/ITMBenchmarkUtils.cpp
-
-    Utils/ITMLibSettings.cpp
-    Utils/ITMPrintHelpers.cpp
     Utils/Analytics/ITMVoxelVolumeComparison_CPU.tpp
     Utils/Analytics/ITMVoxelVolumeComparison_CPU.cpp
 	Utils/Analytics/ITMVoxelVolumeComparison_CUDA.tcu
 	Utils/Analytics/ITMVoxelVolumeComparison_CUDA.cu
+
+	Utils/ITMLibSettings.cpp
+	Utils/ITMPrintHelpers.cpp
     )
 
 set(ITMLIB_UTILS_HEADERS
     Utils/Collections/ITM3DNestedMapOfArrays.h
     Utils/Collections/ITM3DNestedMap.h
-
-    Utils/Analytics/ITMSceneStatisticsCalculator.h
-    Utils/Analytics/ITMNeighborVoxelIterationInfo.h
 
 	Utils/ITMGeometryOpernations.h
     Utils/ITMCUDAUtils.h
@@ -670,16 +664,44 @@ set(ITMLIB_UTILS_HEADERS
     Utils/ITMSceneParams.h
     Utils/ITMSurfelSceneParams.h
     Utils/ITMPrintHelpers.h
+
     Utils/Analytics/ITMBenchmarkUtils.h
 	Utils/Analytics/ITMAlmostEqual.h
 	Utils/Analytics/ITMIsAltered.h
-
+	Utils/Analytics/ITMNeighborVoxelIterationInfo.h
     Utils/Analytics/ITMVoxelVolumeComparison_CPU.h
 	Utils/Analytics/ITMVoxelVolumeComparison_CUDA.h
     )
 
-##
+## ================================================ UTILS - SCENE STATISTICS CALCULATOR ================================
 
+set(ITMLIB_UTILS_STATCALC_INTERFACE_HEADERS
+	Utils/Analytics/SceneStatisticsCalculator/Interface/ITMSceneStatisticsCalculator.h
+	)
+set(ITMLIB_UTILS_STATCALC_SHARED_HEADERS
+	)
+
+set(ITMLIB_UTILS_STATCALC_CPU_HEADERS
+	Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h
+	)
+
+set(ITMLIB_UTILS_STATCALC_CPU_SOURCES
+	Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.tpp
+	Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU_PlainVoxelArray.cpp
+	Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU_VoxelBlockHash.cpp
+	)
+
+set(ITMLIB_UTILS_STATCALC_CUDA_HEADERS
+	Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h
+	)
+set(ITMLIB_UTILS_STATCALC_CUDA_SOURCES
+	Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.tcu
+	Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA_PlainVoxelArray.cu
+	Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA_VoxelBlockHash.cu
+	)
+
+
+## ================================================ UTILS - FILEIO =====================================================
 set(ITMLIB_UTILS_FILEIO_SOURCES
 	Utils/FileIO/ITMDynamicFusionLogger_PlainVoxelArray.cpp
 	Utils/FileIO/ITMDynamicFusionLogger_VoxelBlockHash.cpp
@@ -771,6 +793,8 @@ set(sources
     ${ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_SOURCES}
     ${ITMLIB_SCENE_MOTION_TRACKERS_SHARED_SOURCES}
     ${ITMLIB_UTILS_SOURCES}
+	${ITMLIB_UTILS_STATCALC_CPU_SOURCES}
+	${ITMLIB_UTILS_STATCALC_CUDA_SOURCES}
     ${ITMLIB_UTILS_FILEIO_SOURCES}
     ${ITMLIB_UTILS_VISUALIZATION_SOURCES}
     )
@@ -838,6 +862,10 @@ set(headers
     ${ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_HEADERS}
     ${ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS}
     ${ITMLIB_UTILS_HEADERS}
+	${ITMLIB_UTILS_STATCALC_INTERFACE_HEADERS}
+	${ITMLIB_UTILS_STATCALC_SHARED_HEADERS}
+	${ITMLIB_UTILS_STATCALC_CPU_HEADERS}
+	${ITMLIB_UTILS_STATCALC_CUDA_HEADERS}
     ${ITMLIB_UTILS_FILEIO_HEADERS}
     ${ITMLIB_UTILS_VISUALIZATION_HEADERS}
     )
@@ -921,6 +949,12 @@ source_group(SceneMotionTrackers\\Interface FILES ${ITMLIB_SCENE_MOTION_TRACKERS
 source_group(Utils FILES ${ITMLIB_UTILS_SOURCES} ${ITMLIB_UTILS_HEADERS})
 source_group(Utils\\FileIO FILES ${ITMLIB_UTILS_FILEIO_SOURCES} ${ITMLIB_UTILS_FILEIO_HEADERS})
 source_group(Utils\\Visualization FILES ${ITMLIB_UTILS_VISUALIZATION_SOURCES} ${ITMLIB_UTILS_VISUALIZATION_HEADERS})
+source_group(Utils\\SceneStatisticsCalculator\\Interface FILES ${ITMLIB_UTILS_STATCALC_INTERFACE_HEADERS})
+source_group(Utils\\SceneStatisticsCalculator\\Shared FILES ${ITMLIB_UTILS_STATCALC_SHARED_HEADERS})
+source_group(Utils\\SceneStatisticsCalculator\\CPU FILES ${ITMLIB_UTILS_STATCALC_CPU_HEADERS}
+			 ${ITMLIB_UTILS_STATCALC_CPU_SOURCES})
+source_group(Utils\\SceneStatisticsCalculator\\CUDA FILES ${ITMLIB_UTILS_STATCALC_CUDA_HEADERS}
+			 ${ITMLIB_UTILS_STATCALC_CUDA_SOURCES})
 
 ##########################################
 # Specify the target and where to put it #

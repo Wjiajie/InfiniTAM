@@ -19,7 +19,7 @@
 
 //local
 #include "ITMWarpFieldLogger.h"
-#include "../Analytics/ITMSceneStatisticsCalculator.h"
+#include "../Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "../ITMLibSettings.h"
 #include "../../Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
@@ -279,26 +279,26 @@ const ITMVoxelVolume<TVoxel, TIndex>* ITMWarpFieldLogger<TVoxel, TIndex>::GetSce
 template<typename TVoxel, typename TIndex>
 void ITMWarpFieldLogger<TVoxel, TIndex>::Load() {
 	warpField->LoadFromDirectory(scenePath.string());
-	voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(warpField);
+	voxelCount = ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(warpField);
 }
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpFieldLogger<TVoxel, TIndex>::Save() {
 	warpField->SaveToDirectory(scenePath.string());
-	this->voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(warpField);
+	this->voxelCount = ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(warpField);
 }
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpFieldLogger<TVoxel, TIndex>::SaveCompact() {
 	ITMSceneFileIOEngine<TVoxel,TIndex>::SaveToDirectoryCompact(warpField, scenePath.string());
-	this->voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(warpField);
+	this->voxelCount = ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(warpField);
 }
 
 template<typename TVoxel, typename TIndex>
 void ITMWarpFieldLogger<TVoxel, TIndex>::LoadCompact() {
 	ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(warpField);
 	ITMSceneFileIOEngine<TVoxel,TIndex>::LoadFromDirectoryCompact(warpField, scenePath.string());
-	this->voxelCount = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(warpField);
+	this->voxelCount = ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::Instance().ComputeAllocatedVoxelCount(warpField);
 }
 //endregion
 // region ======================================== LOAD / SAVE HIGHLIGHTS ==============================================

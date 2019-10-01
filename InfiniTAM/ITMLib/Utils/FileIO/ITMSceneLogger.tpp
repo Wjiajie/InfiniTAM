@@ -24,7 +24,7 @@
 #include "ITMSceneLogger_SceneSlice.tpp"
 #include "../../Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../../Engines/SceneFileIO/ITMSceneFileIOEngine.h"
-#include "../Analytics/ITMSceneStatisticsCalculator.h"
+#include "../Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 
 
 
@@ -115,7 +115,7 @@ void ITMSceneLogger<TVoxel, TWarp, TIndex>::GetActiveSceneBounds(Vector6i& bound
 		if (this->activeWarpLogger->isSlice) {
 			bounds = activeWarpLogger->bounds;
 		} else {
-			ITMSceneStatisticsCalculator<TWarp, TIndex>::Instance().ComputeVoxelBounds(
+			ITMSceneStatisticsCalculator_CPU<TWarp, TIndex>::Instance().ComputeVoxelBounds(
 					this->activeWarpLogger->warpField);
 		}
 	}

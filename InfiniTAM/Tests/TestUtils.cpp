@@ -20,7 +20,7 @@
 #include "../ITMLib/Utils/ITMLibSettings.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/Utils/FileIO/ITMSceneLogger.h"
-#include "../ITMLib/Utils/Analytics/ITMSceneStatisticsCalculator.h"
+#include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 
 using namespace ITMLib;
 

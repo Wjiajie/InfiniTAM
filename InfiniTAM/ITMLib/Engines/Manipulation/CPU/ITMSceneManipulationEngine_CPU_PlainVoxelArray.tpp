@@ -485,6 +485,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopyScene(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source,
 		const Vector3i& offset) {
 	ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ResetScene(destination);
+	//TODO: this bounds treatment isn't quite correct -- it assumes same bounds for source & dest. Need to fix.
 	Vector6i bounds = GetSceneBounds(source);
 	if (offset.x > 0) {
 		bounds.max_x -= offset.x;

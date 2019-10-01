@@ -36,7 +36,7 @@
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../Shared/ITMSceneMotionTracker_Functors.h"
 
-#include "../../Utils/Analytics/ITMSceneStatisticsCalculator.h"
+#include "../../Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "../../Objects/Scene/ITMTrilinearDistribution.h"
 #include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../Utils/ITMLibSettings.h"
@@ -80,7 +80,7 @@ template<typename TVoxel, typename TIndex>
 inline static void PrintSceneStatistics(
 		ITMVoxelVolume<TVoxel, TIndex>* scene,
 		std::string description) {
-	ITMSceneStatisticsCalculator<TVoxel, TIndex>& calculator = ITMSceneStatisticsCalculator<TVoxel, TIndex>::Instance();
+	ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>& calculator = ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::Instance();
 	std::cout << green << "=== Stats for scene '" << description << "' ===" << reset << std::endl;
 	std::cout << "    Total voxel count: " << calculator.ComputeAllocatedVoxelCount(scene) << std::endl;
 	std::cout << "    NonTruncated voxel count: " << calculator.ComputeNonTruncatedVoxelCount(scene) << std::endl;

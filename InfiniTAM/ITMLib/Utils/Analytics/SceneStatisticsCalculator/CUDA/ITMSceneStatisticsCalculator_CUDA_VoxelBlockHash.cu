@@ -13,12 +13,12 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "../../ITMLibDefines.h"
-#include "ITMSceneStatisticsCalculator.tpp"
+#include "../../../../ITMLibDefines.h"
+#include "ITMSceneStatisticsCalculator_CUDA.tcu"
 
 namespace ITMLib {
 template
-class ITMSceneStatisticsCalculator<ITMVoxel, ITMVoxelBlockHash>;
+class ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMVoxelBlockHash>;
 template
-class ITMSceneStatisticsCalculator<ITMWarp, ITMVoxelBlockHash>;
+class ITMSceneStatisticsCalculator_CUDA<ITMWarp, ITMVoxelBlockHash>;
 } // namespace ITMLib

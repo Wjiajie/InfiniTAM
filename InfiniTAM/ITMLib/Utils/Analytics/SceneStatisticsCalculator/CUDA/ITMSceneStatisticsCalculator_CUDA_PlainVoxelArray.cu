@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 8/27/19.
+//  Created by Gregory Kramida on 10/1/19.
 //  Copyright (c) 2019 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -13,12 +13,12 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "../../ITMLibDefines.h"
-#include "ITMSceneStatisticsCalculator.tpp"
+#include "../../../../ITMLibDefines.h"
+#include "ITMSceneStatisticsCalculator_CUDA.tcu"
 
 namespace ITMLib {
 template
-class ITMSceneStatisticsCalculator<ITMVoxel, ITMPlainVoxelArray>;
+class ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMPlainVoxelArray>;
 template
-class ITMSceneStatisticsCalculator<ITMWarp, ITMPlainVoxelArray>;
+class ITMSceneStatisticsCalculator_CUDA<ITMWarp, ITMPlainVoxelArray>;
 } // namespace ITMLib
