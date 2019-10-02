@@ -33,7 +33,7 @@ template<typename TVoxel>
 struct ComputeVoxelBoundsFunctor<TVoxel, ITMVoxelBlockHash> {
 	static Vector6i Compute(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
 
-		Vector6i bounds;
+		Vector6i bounds = Vector6i(0);
 		const TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
 		int noTotalEntries = scene->index.noTotalEntries;
@@ -44,6 +44,7 @@ struct ComputeVoxelBoundsFunctor<TVoxel, ITMVoxelBlockHash> {
 		Vector6i* boundsCuda = nullptr;
 
 		ORcudaSafeCall(cudaMalloc((void**)&boundsCuda, sizeof(Vector6i)));
+		ORcudaSafeCall(cudaMemcpy(boundsCuda, (void*)&bounds, sizeof(Vector6i), cudaMemcpyHostToDevice));
 
 		computeVoxelBounds << <cudaGridSize, cudaBlockSize>> > (hashTable, boundsCuda, noTotalEntries);
 		ORcudaKernelCheck;

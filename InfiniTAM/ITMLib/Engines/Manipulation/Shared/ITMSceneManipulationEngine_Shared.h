@@ -261,9 +261,9 @@ HashBlockAllocatedAtOffset(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)*
 	ComputeVoxelBlockOffsetRange(offset, blockRange);
 
 	bool allocated = false;
-	for (int z = blockCoord.z + blockRange.min_x; z < blockCoord.z + blockRange.max_x; z++){
+	for (int z = blockCoord.z + blockRange.min_z; z < blockCoord.z + blockRange.max_z; z++){
 		for (int y = blockCoord.y + blockRange.min_y; y < blockCoord.y + blockRange.max_y; y++){
-			for (int x = blockCoord.x + blockRange.min_z; x < blockCoord.x + blockRange.max_z; x++){
+			for (int x = blockCoord.x + blockRange.min_x; x < blockCoord.x + blockRange.max_x; x++){
 				if(FindHashBlock(targetIndex, Vector3s(x,y,z)) != -1){
 					allocated = true;
 				}
@@ -287,9 +287,9 @@ HashBlockAllocatedAtOffset(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)*
                            const CONSTPTR(Vector6i)& offsetBlockRange) {
 
 	bool allocated = false;
-	for (int z = blockCoord.z + offsetBlockRange.min_x; z < blockCoord.z + offsetBlockRange.max_x; z++){
+	for (int z = blockCoord.z + offsetBlockRange.min_z; z < blockCoord.z + offsetBlockRange.max_z; z++){
 		for (int y = blockCoord.y + offsetBlockRange.min_y; y < blockCoord.y + offsetBlockRange.max_y; y++){
-			for (int x = blockCoord.x + offsetBlockRange.min_z; x < blockCoord.x + offsetBlockRange.max_z; x++){
+			for (int x = blockCoord.x + offsetBlockRange.min_x; x < blockCoord.x + offsetBlockRange.max_x; x++){
 				if(FindHashBlock(targetIndex, Vector3s(x,y,z)) != -1){
 					allocated = true;
 				}

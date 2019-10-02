@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CUDA) {
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene2(&settings->sceneParams,
 	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType());
-
+	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene2);
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().CopyScene(&scene2, &scene1, offset);
 	out = ManipulationEngine_CUDA_VBH_Voxel::Inst().ReadVoxel(&scene2, voxelPos + offset);
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);

@@ -176,6 +176,7 @@ set(ITMLIB_ENGINES_MANIPULATION_CUDA_SOURCES
 
 set(ITMLIB_ENGINES_MANIPULATION_CUDA_HEADERS
     Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h
+	Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_VoxelBlockHash_Kernels.h
     )
 
 #====================================== MESHING ENGINES ================================================================

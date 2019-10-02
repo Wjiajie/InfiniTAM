@@ -27,26 +27,16 @@ namespace ITMLib {
 // region ==================================== Voxel Hash Scene Manipulation Engine ====================================
 
 template<typename TVoxel>
-void ITMLib::ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(
-		ITMLib::ITMVoxelVolume<TVoxel, ITMLib::ITMVoxelBlockHash>* scene) {
+void ITMLib::ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ResetScene(
+		ITMLib::ITMVoxelVolume<TVoxel, ITMLib::ITMPlainVoxelArray>* scene) {
 	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
 	int blockSize = scene->index.getVoxelBlockSize();
 
-	TVoxel* voxelBlocks_ptr = scene->localVBA.GetVoxelBlocks();
+	TVoxel *voxelBlocks_ptr = scene->localVBA.GetVoxelBlocks();
 	for (int i = 0; i < numBlocks * blockSize; ++i) voxelBlocks_ptr[i] = TVoxel();
-	int* vbaAllocationList_ptr = scene->localVBA.GetAllocationList();
+	int *vbaAllocationList_ptr = scene->localVBA.GetAllocationList();
 	for (int i = 0; i < numBlocks; ++i) vbaAllocationList_ptr[i] = i;
 	scene->localVBA.lastFreeBlockId = numBlocks - 1;
-
-	ITMHashEntry tmpEntry;
-	memset(&tmpEntry, 0, sizeof(ITMHashEntry));
-	tmpEntry.ptr = -2;
-	ITMHashEntry* hashEntry_ptr = scene->index.GetEntries();
-	for (int i = 0; i < scene->index.noTotalEntries; ++i) hashEntry_ptr[i] = tmpEntry;
-	int* excessList_ptr = scene->index.GetExcessAllocationList();
-	for (int i = 0; i < SDF_EXCESS_LIST_SIZE; ++i) excessList_ptr[i] = i;
-
-	scene->index.SetLastFreeExcessListId(SDF_EXCESS_LIST_SIZE - 1);
 }
 
 template<typename TVoxel>
@@ -504,20 +494,6 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopyScene(
 	}
 	return ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopySceneSlice(destination, source, bounds,
 	                                                                                  offset);
-}
-
-
-template<typename TVoxel>
-void ITMLib::ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::ResetScene(
-		ITMLib::ITMVoxelVolume<TVoxel, ITMLib::ITMPlainVoxelArray>* scene) {
-	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
-	int blockSize = scene->index.getVoxelBlockSize();
-
-	TVoxel* voxelBlocks_ptr = scene->localVBA.GetVoxelBlocks();
-	for (int i = 0; i < numBlocks * blockSize; ++i) voxelBlocks_ptr[i] = TVoxel();
-	int* vbaAllocationList_ptr = scene->localVBA.GetAllocationList();
-	for (int i = 0; i < numBlocks; ++i) vbaAllocationList_ptr[i] = i;
-	scene->localVBA.lastFreeBlockId = numBlocks - 1;
 }
 
 //endregion ============================================================================================================
