@@ -15,7 +15,7 @@
 //  ================================================================
 #pragma once
 
-#include "../../Objects/Scene/ITMVoxelVolume.h"
+#include "../../../Objects/Scene/ITMVoxelVolume.h"
 
 namespace ITMLib{
 /**

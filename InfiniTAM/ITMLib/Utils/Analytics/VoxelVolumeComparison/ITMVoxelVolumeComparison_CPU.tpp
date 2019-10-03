@@ -16,28 +16,17 @@
 #pragma once
 
 #include "ITMVoxelVolumeComparison_CPU.h"
-#include "../../Objects/Scene/ITMPlainVoxelArray.h"
-#include "../../Objects/Scene/ITMVoxelBlockHash.h"
-#include "ITMAlmostEqual.h"
-#include "../../../ORUtils/MemoryDeviceType.h"
-#include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
-#include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
-#include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PVA_to_VBH.h"
+#include "../../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../../../Objects/Scene/ITMVoxelBlockHash.h"
+#include "../../../../ORUtils/MemoryDeviceType.h"
+#include "../../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
+#include "../../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#include "../../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PVA_to_VBH.h"
+#include "ITMVoxelVolumeComparison_Functors.h"
 
 
 namespace ITMLib {
 //region ================================= VOXEL VOLUME CONTENT COMPARISON FUNCTIONS ==================================
-template<typename TVoxel, typename ToleranceType>
-struct VoxelEqualFunctor {
-	explicit VoxelEqualFunctor(ToleranceType tolerance) : tolerance(tolerance) {}
-
-	bool operator()(TVoxel& a, TVoxel& b) {
-		return almostEqual(a, b, tolerance);
-	}
-
-	ToleranceType tolerance;
-};
-
 
 
 

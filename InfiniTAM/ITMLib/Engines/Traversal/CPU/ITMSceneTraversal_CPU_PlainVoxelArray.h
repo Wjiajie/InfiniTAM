@@ -29,7 +29,7 @@
 #include "../Interface/ITMSceneTraversal.h"
 #include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
-#include "../../Manipulation/CPU/ITMSceneTraversal_CPU_AuxilaryFunctions.h"
+#include "../Shared/ITMSceneTraversal_Shared.h"
 
 namespace ITMLib {
 

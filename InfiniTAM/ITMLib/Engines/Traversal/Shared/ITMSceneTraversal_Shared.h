@@ -18,7 +18,7 @@
 //local
 #include "../../../Objects/Scene/ITMPlainVoxelArray.h"
 
-namespace ITMLib {
+
 //region ================================= AUXILIARY FUNCTIONS (PLAIN VOXEL ARRAY) =====================================
 
 _CPU_AND_GPU_CODE_
@@ -79,6 +79,7 @@ Vector6i computeLocalBounds(const Vector3i& hashEntryMinPoint, const Vector3i& h
  * \param hashTable [in] the hash table to search
  * \return true if hash block is allocated, false otherwise
  */
+_CPU_AND_GPU_CODE_
 inline bool FindHashAtPosition(THREADPTR(int)& hashIdx,
                                const CONSTPTR(Vector3s)& hashBlockPosition,
                                const CONSTPTR(ITMHashEntry)* hashTable) {
@@ -107,5 +108,3 @@ inline bool FindHashAtPosition(THREADPTR(int)& hashIdx,
 // endregion ===========================================================================================================
 
 
-
-} // namespace ITMLib

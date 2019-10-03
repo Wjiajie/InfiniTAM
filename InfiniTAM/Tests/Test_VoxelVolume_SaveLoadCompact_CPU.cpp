@@ -28,7 +28,7 @@
 #include "TestUtils.h"
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
-#include "../ITMLib/Utils/Analytics/ITMVoxelVolumeComparison_CPU.h"
+#include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 
 using namespace ITMLib;
 

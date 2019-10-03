@@ -29,7 +29,7 @@
 #include "../ITMLib/Engines/ViewBuilding/ITMViewBuilderFactory.h"
 #include "../ITMLib/Utils/ITMLibSettings.h"
 #include "../ITMLib/Utils/Analytics/ITMAlmostEqual.h"
-#include "../ITMLib/Utils/Analytics/ITMVoxelVolumeComparison_CPU.h"
+#include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ORUtils/FileUtils.h"
 #include "../ITMLib/Objects/RenderStates/ITMRenderStateFactory.h"
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"

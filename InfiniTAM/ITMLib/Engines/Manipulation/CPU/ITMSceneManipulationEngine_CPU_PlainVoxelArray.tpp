@@ -17,7 +17,7 @@
 #include "ITMSceneManipulationEngine_CPU.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
-#include "ITMSceneTraversal_CPU_AuxilaryFunctions.h"
+#include "../../Traversal/Shared/ITMSceneTraversal_Shared.h"
 #include "../Shared/ITMSceneManipulationEngine_Shared.h"
 #include "../Shared/ITMSceneManipulationEngine_Functors.h"
 

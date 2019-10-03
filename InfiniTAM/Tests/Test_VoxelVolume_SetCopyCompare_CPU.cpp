@@ -36,7 +36,7 @@
 
 #include "../ITMLib/Utils/ITMLibSettings.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
-#include "../ITMLib/Utils/Analytics/ITMVoxelVolumeComparison_CPU.h"
+#include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"

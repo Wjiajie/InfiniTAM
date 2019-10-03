@@ -18,7 +18,7 @@
 #include <unordered_set>
 
 //local
-#include "../../Manipulation/CPU/ITMSceneTraversal_CPU_AuxilaryFunctions.h"
+#include "../Shared/ITMSceneTraversal_Shared.h"
 #include "../Interface/ITMSceneTraversal.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Utils/Analytics/ITMIsAltered.h"

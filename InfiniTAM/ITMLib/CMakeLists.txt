@@ -118,6 +118,7 @@ set(ITMLIB_ENGINES_TRAVERSAL_INTERFACE_HEADERS
 	)
 ##
 set(ITMLIB_ENGINES_TRAVERSAL_SHARED_HEADERS
+	Engines/Traversal/Shared/ITMSceneTraversal_Shared.h
 	)
 
 ##
@@ -136,7 +137,9 @@ set(ITMLIB_ENGINES_TRAVERSAL_CUDA_SOURCES
 
 set(ITMLIB_ENGINES_TRAVERSAL_CUDA_HEADERS
 	Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h
+	Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash_Kernels.h
 	Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h
+	Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray_Kernels.h
 	)
 
 
@@ -163,7 +166,6 @@ set(ITMLIB_ENGINES_MANIPULATION_CPU_SOURCES
 
 set(ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS
     Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h
-	Engines/Manipulation/CPU/ITMSceneTraversal_CPU_AuxilaryFunctions.h
     )
 
 ##
@@ -639,10 +641,11 @@ set(ITMLIB_UTILS_SOURCES
 
     Utils/Analytics/ITMNeighborVoxelIterationInfo.cpp
 	Utils/Analytics/ITMBenchmarkUtils.cpp
-    Utils/Analytics/ITMVoxelVolumeComparison_CPU.tpp
-    Utils/Analytics/ITMVoxelVolumeComparison_CPU.cpp
-	Utils/Analytics/ITMVoxelVolumeComparison_CUDA.tcu
-	Utils/Analytics/ITMVoxelVolumeComparison_CUDA.cu
+
+    Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.tpp
+    Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.cpp
+    Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.tcu
+    Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.cu
 
 	Utils/ITMLibSettings.cpp
 	Utils/ITMPrintHelpers.cpp
@@ -670,8 +673,10 @@ set(ITMLIB_UTILS_HEADERS
 	Utils/Analytics/ITMAlmostEqual.h
 	Utils/Analytics/ITMIsAltered.h
 	Utils/Analytics/ITMNeighborVoxelIterationInfo.h
-    Utils/Analytics/ITMVoxelVolumeComparison_CPU.h
-	Utils/Analytics/ITMVoxelVolumeComparison_CUDA.h
+
+	Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h
+    Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h
+	Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_Functors.h
     )
 
 ## ================================================ UTILS - SCENE STATISTICS CALCULATOR ================================

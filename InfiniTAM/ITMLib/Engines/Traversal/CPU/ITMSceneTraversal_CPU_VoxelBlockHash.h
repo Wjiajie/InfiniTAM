@@ -20,7 +20,7 @@
 #include "../Interface/ITMSceneTraversal.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "../../Manipulation/CPU/ITMSceneTraversal_CPU_AuxilaryFunctions.h"
+#include "../Shared/ITMSceneTraversal_Shared.h"
 #include "../../../Utils/Analytics/ITMIsAltered.h"
 
 namespace ITMLib {
@@ -490,8 +490,6 @@ public:
 		int noTotalEntries = primaryScene->index.noTotalEntries;
 
 		bool mismatchFound = false;
-
-		//TODO: OMP parallelization requires to remove return statements from within parallel block
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for

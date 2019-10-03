@@ -17,54 +17,62 @@
 
 #include "../../../Objects/Scene/ITMVoxelBlockHash.h"
 #include "../../../../ORUtils/JetbrainsCUDASyntax.hpp"
+#include "ITMSceneTraversal_CUDA_VoxelBlockHash_Kernels.h"
+#include "../Interface/ITMSceneTraversal.h"
+#include "../../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../../../Objects/Scene/ITMVoxelVolume.h"
+
+namespace ITMLib {
+
+template<typename TVoxelPrimary, typename TVoxelSecondary>
+class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMVoxelBlockHash, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA>{
+	template<typename TBooleanFunctor>
+	inline static bool
+	DualVoxelTraversal_AllTrue(
+			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
+			TBooleanFunctor& functor) {
+
+		// allocate boolean varaible for answer
+		bool* falseEncountered_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &falseEncountered_device, sizeof(bool)));
+		ORcudaSafeCall(cudaMemset(falseEncountered_device, 0, sizeof(bool)));
+
+		// transfer functor from RAM to VRAM
+		TBooleanFunctor* functor_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TBooleanFunctor)));
+		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TBooleanFunctor), cudaMemcpyHostToDevice));
 
 
-/* NOTE: this functionality is purposefully kept in headers w/o explicit instantiations to allow for further inlining by
- * the compiler*/
-namespace {
-//CUDA device functions
-template<typename TStaticFunctor, typename TVoxel>
-__global__ void
-staticVoxelTraversal_device(TVoxel* voxelBlocks, const ITMLib::ITMVoxelBlockHash::IndexData* hashEntries) {
-	int x = blockIdx.x * blockDim.x + threadIdx.x;
-	int y = blockIdx.y * blockDim.y + threadIdx.y;
-	int z = blockIdx.z * blockDim.z + threadIdx.z;
+		// perform traversal on the GPU
+		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		const ITMHashEntry* primaryHashTable = primaryScene->index.getIndexData();
+		const ITMHashEntry* secondaryHashTable = secondaryScene->index.getIndexData();
+		int totalPrimaryHashEntryCount = primaryScene->index.noTotalEntries;
+		dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+		dim3 gridSize(totalPrimaryHashEntryCount);
 
-	int locId = x + y * hashEntries->size.x + z * hashEntries->size.x * hashEntries->size.y;
-	TVoxel& voxel = voxelBlocks[locId];
-	TStaticFunctor::run(voxel);
-}
+		dualVoxelTraversal_AllTrue_device<TBooleanFunctor, TVoxelPrimary, TVoxelSecondary>
+		<< < gridSize, cudaBlockSize >> >
+		(primaryVoxels, secondaryVoxels, primaryHashTable, secondaryHashTable, functor_device, falseEncountered_device);
+		ORcudaKernelCheck;
 
-template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
-__global__ void
-dualVoxelPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-                                  const ITMLib::ITMVoxelBlockHash::IndexData* indexData,
-                                  TFunctor& functor) {
-	Vector3i globalPos;
+		// transfer functor from VRAM back to RAM
+		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TBooleanFunctor), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(functor_device));
 
-	const ITMHashEntry &currentHashEntry = indexData[blockIdx.x];
+		bool falseEncountered;
+		ORcudaSafeCall(cudaMemcpy(&falseEncountered, falseEncountered_device, sizeof(bool), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(falseEncountered_device));
 
-	if (currentHashEntry.ptr < 0) return;
+		return !falseEncountered;
+	}
 
-	globalPos = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-
-	TVoxel* localVoxelBlock = &(localVBA[currentHashEntry.ptr * SDF_BLOCK_SIZE3]);
-
-	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
-
-	Vector3f voxelPosition; int locId;
-
-	locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-
-	voxelPosition.x = (float)(globalPos.x + x) * _voxelSize;
-	voxelPosition.y = (float)(globalPos.y + y) * _voxelSize;
-	voxelPosition.z = (float)(globalPos.z + z) * _voxelSize;
-
-	TVoxelPrimary& voxelPrimary = primaryVoxels[locId];
-	TVoxelSecondary& voxelSecondary = secondaryVoxels[locId];
-
-	functor(voxelPrimary, voxelSecondary, voxelPosition);
 
 };
 
-}// end anonymous namespace
+} // namespace ITMLib
+
+
+

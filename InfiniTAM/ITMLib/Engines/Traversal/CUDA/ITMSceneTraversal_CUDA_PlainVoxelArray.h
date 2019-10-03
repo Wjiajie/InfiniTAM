@@ -23,153 +23,7 @@
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Objects/Scene/ITMPlainVoxelArray.h"
 #include "../../../Utils/ITMLibSettings.h"
-
-
-/* NOTE: this functionality is purposefully kept in headers w/o explicit instantiations to allow for further inlining by
- * the compiler*/
-namespace {
-//CUDA device functions
-template<typename TStaticFunctor, typename TVoxel>
-__global__ void
-staticVoxelTraversal_device(TVoxel* voxels, const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo) {
-	int x = blockIdx.x * blockDim.x + threadIdx.x;
-	int y = blockIdx.y * blockDim.y + threadIdx.y;
-	int z = blockIdx.z * blockDim.z + threadIdx.z;
-
-	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
-	TVoxel& voxel = voxels[locId];
-	TStaticFunctor::run(voxel);
-}
-
-template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
-__global__ void
-dualVoxelPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-                                  const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
-                                  TFunctor& functor) {
-	int x = blockIdx.x * blockDim.x + threadIdx.x;
-	int y = blockIdx.y * blockDim.y + threadIdx.y;
-	int z = blockIdx.z * blockDim.z + threadIdx.z;
-
-	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
-
-	Vector3i voxelPosition;
-
-	voxelPosition.x = x + arrayInfo->offset.x;
-	voxelPosition.y = y + arrayInfo->offset.y;
-	voxelPosition.z = z + arrayInfo->offset.z;
-
-	TVoxelPrimary& voxelPrimary = primaryVoxels[locId];
-	TVoxelSecondary& voxelSecondary = secondaryVoxels[locId];
-
-	functor(voxelPrimary, voxelSecondary, voxelPosition);
-
-};
-
-template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
-__global__ void
-dualVoxelTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-                          const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
-                          TFunctor& functor) {
-	int x = blockIdx.x * blockDim.x + threadIdx.x;
-	int y = blockIdx.y * blockDim.y + threadIdx.y;
-	int z = blockIdx.z * blockDim.z + threadIdx.z;
-
-	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
-
-	TVoxelPrimary& voxelPrimary = primaryVoxels[locId];
-	TVoxelSecondary& voxelSecondary = secondaryVoxels[locId];
-	functor(voxelPrimary, voxelSecondary);
-};
-
-template<typename TStaticFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TWarp>
-__global__ void
-staticDualVoxelWarpTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-                                    TWarp* warpVoxels, const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo) {
-	int x = blockIdx.x * blockDim.x + threadIdx.x;
-	int y = blockIdx.y * blockDim.y + threadIdx.y;
-	int z = blockIdx.z * blockDim.z + threadIdx.z;
-
-	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
-
-	TVoxelPrimary& voxelPrimary = primaryVoxels[locId];
-	TVoxelSecondary& voxelSecondary = secondaryVoxels[locId];
-	TWarp& warp = warpVoxels[locId];
-
-	TStaticFunctor::run(voxelPrimary, voxelSecondary, warp);
-};
-
-
-template<typename TStaticFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TWarp>
-__global__ void
-staticDualVoxelWarpPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-                                            TWarp* warpVoxels,
-                                            const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo) {
-	int x = blockIdx.x * blockDim.x + threadIdx.x;
-	int y = blockIdx.y * blockDim.y + threadIdx.y;
-	int z = blockIdx.z * blockDim.z + threadIdx.z;
-
-	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
-
-	Vector3i voxelPosition;
-
-	voxelPosition.x = x + arrayInfo->offset.x;
-	voxelPosition.y = y + arrayInfo->offset.y;
-	voxelPosition.z = z + arrayInfo->offset.z;
-
-	TVoxelPrimary& voxelPrimary = primaryVoxels[locId];
-	TVoxelSecondary& voxelSecondary = secondaryVoxels[locId];
-	TWarp& warp = warpVoxels[locId];
-
-	TStaticFunctor::run(voxelPrimary, voxelSecondary, warp, voxelPosition);
-
-};
-
-
-template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TWarp>
-__global__ void
-dualVoxelWarpTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-                              TWarp* warpVoxels, const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
-                              TFunctor& functor) {
-	int x = blockIdx.x * blockDim.x + threadIdx.x;
-	int y = blockIdx.y * blockDim.y + threadIdx.y;
-	int z = blockIdx.z * blockDim.z + threadIdx.z;
-
-	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
-
-	TVoxelPrimary& voxelPrimary = primaryVoxels[locId];
-	TVoxelSecondary& voxelSecondary = secondaryVoxels[locId];
-	TWarp& warp = warpVoxels[locId];
-
-	functor(voxelPrimary, voxelSecondary, warp);
-
-};
-
-template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TWarp>
-__global__ void
-dualVoxelWarpPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-                                      TWarp* warpVoxels, const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
-                                      TFunctor& functor) {
-	int x = blockIdx.x * blockDim.x + threadIdx.x;
-	int y = blockIdx.y * blockDim.y + threadIdx.y;
-	int z = blockIdx.z * blockDim.z + threadIdx.z;
-
-	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
-
-	Vector3i voxelPosition;
-
-	voxelPosition.x = x + arrayInfo->offset.x;
-	voxelPosition.y = y + arrayInfo->offset.y;
-	voxelPosition.z = z + arrayInfo->offset.z;
-
-	TVoxelPrimary& voxelPrimary = primaryVoxels[locId];
-	TVoxelSecondary& voxelSecondary = secondaryVoxels[locId];
-	TWarp& warp = warpVoxels[locId];
-
-	functor(voxelPrimary, voxelSecondary, warp, voxelPosition);
-
-};
-
-}// namespace
+#include "ITMSceneTraversal_CUDA_PlainVoxelArray_Kernels.h"
 
 namespace ITMLib {
 
@@ -198,7 +52,41 @@ public:
 template<typename TVoxelPrimary, typename TVoxelSecondary>
 class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelArray, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA> {
 public:
+// region ============================== DUAL-SCENE STATIC TRAVERSAL ===================================================
 
+	template<typename TStaticBooleanFunctor>
+	inline static bool StaticDualVoxelTraversal_AllTrue(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene) {
+
+		bool* falseEncountered_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &falseEncountered_device, sizeof(bool)));
+		ORcudaSafeCall(cudaMemset(falseEncountered_device, 0, sizeof(bool)));
+
+
+		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.getIndexData();
+		dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+		dim3 gridSize(
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().x) / cudaBlockSize.x)),
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().y) / cudaBlockSize.y)),
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().z) / cudaBlockSize.z))
+		);
+
+		staticDualVoxelTraversal_AllTrue_device<TStaticBooleanFunctor, TVoxelPrimary, TVoxelSecondary>
+				<< < gridSize, cudaBlockSize >> >
+		                       (primaryVoxels, secondaryVoxels, arrayInfo, falseEncountered_device);
+		ORcudaKernelCheck;
+
+		bool falseEncountered;
+		ORcudaSafeCall(cudaMemcpy(&falseEncountered, falseEncountered_device, sizeof(bool), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(falseEncountered_device));
+
+		return !falseEncountered;
+	}
+
+// endregion
 // region ============================== DUAL-SCENE DYNAMIC TRAVERSAL ==================================================
 
 	template<typename TFunctor>
@@ -210,20 +98,77 @@ public:
 
 		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
 
+		// transfer functor from RAM to VRAM
+		TFunctor* functor_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TFunctor)));
+		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TFunctor), cudaMemcpyHostToDevice));
+
+		// perform traversal on the GPU
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.getIndexData();
-
 		dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
-		dim3 gridSize(primaryScene->index.getVolumeSize().x / cudaBlockSize.x,
-		              primaryScene->index.getVolumeSize().y / cudaBlockSize.y,
-		              primaryScene->index.getVolumeSize().z / cudaBlockSize.z);
-
+		dim3 gridSize(
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().x) / cudaBlockSize.x)),
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().y) / cudaBlockSize.y)),
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().z) / cudaBlockSize.z))
+		);
 		dualVoxelPositionTraversal_device<TFunctor, TVoxelPrimary, TVoxelSecondary>
 				<< < gridSize, cudaBlockSize >> >
-		                       (primaryVoxels, secondaryVoxels, arrayInfo, functor);
+		                       (primaryVoxels, secondaryVoxels, arrayInfo, functor_device);
 		ORcudaKernelCheck;
 
+		// transfer functor from VRAM back to RAM
+		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TFunctor), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(functor_device));
+
+	}
+
+	template<typename TBooleanFunctor>
+	inline static bool
+	DualVoxelTraversal_AllTrue(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
+			TBooleanFunctor& functor) {
+
+		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+
+		// allocate boolean varaible for answer
+		bool* falseEncountered_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &falseEncountered_device, sizeof(bool)));
+		ORcudaSafeCall(cudaMemset(falseEncountered_device, 0, sizeof(bool)));
+
+		// transfer functor from RAM to VRAM
+		TBooleanFunctor* functor_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TBooleanFunctor)));
+		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TBooleanFunctor), cudaMemcpyHostToDevice));
+
+
+		// perform traversal on the GPU
+		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.getIndexData();
+		dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+		dim3 gridSize(
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().x) / cudaBlockSize.x)),
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().y) / cudaBlockSize.y)),
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().z) / cudaBlockSize.z))
+		);
+
+		dualVoxelTraversal_AllTrue_device<TBooleanFunctor, TVoxelPrimary, TVoxelSecondary>
+				<< < gridSize, cudaBlockSize >> >
+		                       (primaryVoxels, secondaryVoxels, arrayInfo, functor_device, falseEncountered_device);
+		ORcudaKernelCheck;
+
+		// transfer functor from VRAM back to RAM
+		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TBooleanFunctor), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(functor_device));
+
+		bool falseEncountered;
+		ORcudaSafeCall(cudaMemcpy(&falseEncountered, falseEncountered_device, sizeof(bool), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(falseEncountered_device));
+
+		return !falseEncountered;
 	}
 
 	template<typename TFunctor>
@@ -235,20 +180,30 @@ public:
 
 		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
 
+		// transfer functor from RAM to VRAM
+		TFunctor* functor_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TFunctor)));
+		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TFunctor), cudaMemcpyHostToDevice));
+
+		// perform traversal on the GPU
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.getIndexData();
-
 		dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
-		dim3 gridSize(primaryScene->index.getVolumeSize().x / cudaBlockSize.x,
-		              primaryScene->index.getVolumeSize().y / cudaBlockSize.y,
-		              primaryScene->index.getVolumeSize().z / cudaBlockSize.z);
+		dim3 gridSize(
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().x) / cudaBlockSize.x)),
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().y) / cudaBlockSize.y)),
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().z) / cudaBlockSize.z))
+		);
 
 		dualVoxelTraversal_device<TFunctor, TVoxelPrimary, TVoxelSecondary>
 				<< < gridSize, cudaBlockSize >> >
-		                       (primaryVoxels, secondaryVoxels, arrayInfo, functor);
+		                       (primaryVoxels, secondaryVoxels, arrayInfo, functor_device);
 		ORcudaKernelCheck;
 
+		// transfer functor from VRAM back to RAM
+		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TFunctor), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(functor_device));
 	}
 
 // endregion ===========================================================================================================
@@ -280,9 +235,11 @@ public:
 		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.getIndexData();
 
 		dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
-		dim3 gridSize(primaryScene->index.getVolumeSize().x / cudaBlockSize.x,
-		              primaryScene->index.getVolumeSize().y / cudaBlockSize.y,
-		              primaryScene->index.getVolumeSize().z / cudaBlockSize.z);
+		dim3 gridSize(
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().x) / cudaBlockSize.x)),
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().y) / cudaBlockSize.y)),
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().z) / cudaBlockSize.z))
+		);
 
 		staticDualVoxelWarpTraversal_device<TStaticFunctor, TVoxel>
 				<< < gridSize, cudaBlockSize >> >
@@ -312,9 +269,11 @@ public:
 		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.getIndexData();
 
 		dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
-		dim3 gridSize(primaryScene->index.getVolumeSize().x / cudaBlockSize.x,
-		              primaryScene->index.getVolumeSize().y / cudaBlockSize.y,
-		              primaryScene->index.getVolumeSize().z / cudaBlockSize.z);
+		dim3 gridSize(
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().x) / cudaBlockSize.x)),
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().y) / cudaBlockSize.y)),
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().z) / cudaBlockSize.z))
+		);
 
 		dualVoxelWarpTraversal_device<TFunctor, TVoxel>
 				<< < gridSize, cudaBlockSize >> >
@@ -333,6 +292,12 @@ public:
 
 		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize() &&
 		       primaryScene->index.getVolumeSize() == warpField->index.getVolumeSize());
+
+		// transfer functor from RAM to VRAM
+		TFunctor* functor_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TFunctor)));
+		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TFunctor), cudaMemcpyHostToDevice));
+
 // *** traversal vars
 		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
@@ -341,13 +306,18 @@ public:
 		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.getIndexData();
 
 		dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
-		dim3 gridSize(primaryScene->index.getVolumeSize().x / cudaBlockSize.x,
-		              primaryScene->index.getVolumeSize().y / cudaBlockSize.y,
-		              primaryScene->index.getVolumeSize().z / cudaBlockSize.z);
+		dim3 gridSize(
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().x) / cudaBlockSize.x)),
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().y) / cudaBlockSize.y)),
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().z) / cudaBlockSize.z))
+		);
 
 		dualVoxelWarpPositionTraversal_device<TFunctor, TVoxel>
 				<< < gridSize, cudaBlockSize >> >
-		                       (primaryVoxels, secondaryVoxels, warpVoxels, arrayInfo, functor);
+		                       (primaryVoxels, secondaryVoxels, warpVoxels, arrayInfo, functor_device);
+		// transfer functor from VRAM back to RAM
+		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TFunctor), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(functor_device));
 		ORcudaKernelCheck;
 	}
 // endregion ===========================================================================================================

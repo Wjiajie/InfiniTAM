@@ -19,9 +19,6 @@
 #include "../ITMVoxelFlags.h"
 #include "../ITMMath.h"
 
-namespace ITMLib {
-
-
 // region =========================== FUNCTIONS TO DETERMINE WHETHER A VOXEL HAS BEEN ALTERED FROM DEFAULT =============
 
 template<bool hasSDFInformation, bool hasSemanticInformation, bool hasFlowWarpInformation, bool hasWarpUpdateInformation, typename TVoxel>
@@ -91,6 +88,4 @@ isVoxelBlockAltered(TVoxel* voxelBlock) {
 	}
 	return false;
 }
-
-} // namespace ITMLib
 

@@ -15,13 +15,19 @@
 //  ================================================================
 #pragma once
 #include "ITMVoxelVolumeComparison_CUDA.h"
-#include "../../../ORUtils/PlatformIndependence.h"
+#include "../../../../ORUtils/PlatformIndependence.h"
+#include "../../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
+#include "ITMVoxelVolumeComparison_Functors.h"
 
 
 namespace ITMLib{
+
+
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
 bool contentAlmostEqual_CUDA(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<TVoxel,TIndexB>* b, ToleranceType tolerance){
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	VoxelEqualFunctor<TVoxel, ToleranceType> functor(tolerance);
+	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, ITMLibSettings::DEVICE_CUDA>
+	::template DualVoxelTraversal_AllTrue(a, b, functor);
 }
 
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>

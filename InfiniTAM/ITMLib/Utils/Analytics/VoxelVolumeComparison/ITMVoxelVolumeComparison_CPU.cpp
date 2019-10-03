@@ -13,7 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "../../ITMLibDefines.h"
+#include "../../../ITMLibDefines.h"
 #include "ITMVoxelVolumeComparison_CPU.tpp"
 
 namespace ITMLib {
