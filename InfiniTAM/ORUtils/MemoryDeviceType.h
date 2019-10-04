@@ -2,6 +2,9 @@
 
 #pragma once
 
+//TODO: instead of having a separate "DeviceType" in the ITMLibSettings and a "MemoryDeviceType" here, just have a single,
+// unified enum for DeviceType here.
+
 /**
  * \brief The values of this enumeration denote the different types of memory device on which code may be running.
  */

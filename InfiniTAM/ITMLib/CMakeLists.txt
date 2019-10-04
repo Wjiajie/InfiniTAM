@@ -140,6 +140,8 @@ set(ITMLIB_ENGINES_TRAVERSAL_CUDA_HEADERS
 	Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash_Kernels.h
 	Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h
 	Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray_Kernels.h
+	Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PVA_to_VBH.h
+	Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PVA_to_VBH_Kernels.h
 	)
 
 

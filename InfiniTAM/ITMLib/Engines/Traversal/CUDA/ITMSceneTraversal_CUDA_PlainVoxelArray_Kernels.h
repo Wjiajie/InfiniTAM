@@ -15,18 +15,11 @@
 //  ================================================================
 #pragma once
 
-//stdlib
-#include <cassert>
-
 //local
 #include "../Interface/ITMSceneTraversal.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Objects/Scene/ITMPlainVoxelArray.h"
-#include "../../../Utils/ITMLibSettings.h"
 
-
-/* NOTE: this functionality is purposefully kept in headers w/o explicit instantiations to allow for further inlining by
- * the compiler*/
 namespace {
 //CUDA device functions
 template<typename TStaticFunctor, typename TVoxel>

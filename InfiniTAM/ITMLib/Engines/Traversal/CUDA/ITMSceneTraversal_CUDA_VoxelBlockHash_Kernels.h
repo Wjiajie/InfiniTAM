@@ -21,18 +21,17 @@
 #include "../../../Utils/Analytics/ITMIsAltered.h"
 
 
-
 struct HashPair {
 	int primaryHash;
 	int secondaryHash;
 };
 
-struct UnmatchedHash{
+struct UnmatchedHash {
 	int hash;
 	bool primary;
 };
 
-struct HashMatchInfo{
+struct HashMatchInfo {
 	int matchedHashCount;
 	int unmatchedHashCount;
 };
@@ -40,13 +39,13 @@ struct HashMatchInfo{
 namespace {
 __global__ void matchUpHashEntriesByPosition(const ITMHashEntry* primaryHashTable,
                                              const ITMHashEntry* secondaryHashTable,
-                                             int totalHashEntryCount,
-                                             HashPair* hashPairs,
+                                             int hashEntryCount,
+                                             HashPair* matchedHashPairs,
                                              UnmatchedHash* unmatchedHashes,
                                              HashMatchInfo* hashMatchInfo) {
 
 	int hash = blockIdx.x * blockDim.x + threadIdx.x;
-	if (hash > totalHashEntryCount) return;
+	if (hash > hashEntryCount) return;
 
 	const ITMHashEntry& primaryHashEntry = primaryHashTable[hash];
 	const ITMHashEntry secondaryHashEntry = secondaryHashTable[hash];
@@ -59,7 +58,7 @@ __global__ void matchUpHashEntriesByPosition(const ITMHashEntry* primaryHashTabl
 			int alternativePrimaryHash;
 			// found no primary at hash index, but did find secondary. Ensure we have a matching primary.
 			if (!FindHashAtPosition(alternativePrimaryHash, secondaryHashEntry.pos, primaryHashTable)) {
-				int unmatchedHashIdx = atomicAdd(hashMatchInfo->unmatchedHashCount);
+				int unmatchedHashIdx = atomicAdd(&hashMatchInfo->unmatchedHashCount, 1);
 				unmatchedHashes[unmatchedHashIdx].hash = hash;
 				unmatchedHashes[unmatchedHashIdx].primary = false;
 				return;
@@ -76,7 +75,7 @@ __global__ void matchUpHashEntriesByPosition(const ITMHashEntry* primaryHashTabl
 		if (secondaryHashEntry.ptr >= 0) {
 			int alternativePrimaryHash;
 			if (!FindHashAtPosition(alternativePrimaryHash, secondaryHashEntry.pos, primaryHashTable)) {
-				int unmatchedHashIdx = atomicAdd(hashMatchInfo->unmatchedHashCount);
+				int unmatchedHashIdx = atomicAdd(&hashMatchInfo->unmatchedHashCount, 1);
 				unmatchedHashes[unmatchedHashIdx].hash = hash;
 				unmatchedHashes[unmatchedHashIdx].primary = false;
 				return;
@@ -85,29 +84,64 @@ __global__ void matchUpHashEntriesByPosition(const ITMHashEntry* primaryHashTabl
 
 		if (!FindHashAtPosition(secondaryHash, primaryHashEntry.pos, secondaryHashTable)) {
 			// If we cannot find the matching secondary hash, we will check whether the primary voxel block has been altered later
-			int unmatchedHashIdx = atomicAdd(hashMatchInfo->unmatchedHashCount);
+			int unmatchedHashIdx = atomicAdd(&hashMatchInfo->unmatchedHashCount, 1);
 			unmatchedHashes[unmatchedHashIdx].hash = hash;
 			unmatchedHashes[unmatchedHashIdx].primary = true;
 			return;
 		}
 	}
 
-	int matchedPairIdx = atomicAdd(hashMatchInfo->matchedHashCount);
-	hashPairs[matchedPairIdx].primaryHash = hash;
-	hashPairs[matchedPairIdx].secondaryHash = secondaryHash;
+	int matchedPairIdx = atomicAdd(&hashMatchInfo->matchedHashCount, 1);
+	matchedHashPairs[matchedPairIdx].primaryHash = hash;
+	matchedHashPairs[matchedPairIdx].secondaryHash = secondaryHash;
 }
 
-template<typename TBooleanFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
-__global__ void dualVoxelTraversal_AllTrue_device(
-		TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
+template<typename TVoxelPrimary, typename TVoxelSecondary>
+__global__ void checkIfUnmatchedVoxelBlocksAreAltered(
+		const TVoxelPrimary* primaryVoxels, const TVoxelSecondary* secondaryVoxels,
 		const ITMHashEntry* primaryHashTable, const ITMHashEntry* secondaryHashTable,
-		int totalHashEntryCount, TBooleanFunctor* functor, bool* falseEncountered) {
+		const UnmatchedHash* unmatchedHashes, const HashMatchInfo* hashMatchInfo,
+		bool* alteredVoxelEncountered) {
 
+	if (*alteredVoxelEncountered) return;
+
+	// assume one thread block per hash block
+	int hashIdx = blockIdx.x;
+	if (hashIdx > hashMatchInfo->unmatchedHashCount) return;
+	int hash = unmatchedHashes[hashIdx].hash;
 
 	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
 	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 
+	bool voxelAltered;
+	if (unmatchedHashes[hashIdx].primary) {
+		voxelAltered = isAltered(primaryVoxels[primaryHashTable[hash].ptr * SDF_BLOCK_SIZE3 + locId]);
+	} else {
+		voxelAltered = isAltered(secondaryVoxels[secondaryHashTable[hash].ptr * SDF_BLOCK_SIZE3 + locId]);
+	}
+	if (voxelAltered) *alteredVoxelEncountered = true;
+}
 
+template<typename TBooleanFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
+__global__ void checkIfMatchingHashBlockVoxelsYieldTrue(
+		TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
+		const ITMHashEntry* primaryHashTable, const ITMHashEntry* secondaryHashTable,
+		const HashPair* matchedHashes, const HashMatchInfo* matchInfo, TBooleanFunctor* functor,
+		bool* falseEncountered) {
+	if (*falseEncountered) return;
+
+	int hashPairIdx = blockIdx.x;
+	if (hashPairIdx > matchInfo->matchedHashCount) return;
+	int primaryHash = matchedHashes[hashPairIdx].primaryHash;
+	int secondaryHash = matchedHashes[hashPairIdx].secondaryHash;
+
+	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
+	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+
+	if (!(*functor)(primaryVoxels[primaryHashTable[primaryHash].ptr * SDF_BLOCK_SIZE3 + locId],
+	                secondaryVoxels[secondaryHashTable[secondaryHash].ptr * SDF_BLOCK_SIZE3 + locId])) {
+		*falseEncountered = true;
+	}
 }
 
 }// end anonymous namespace (CUDA kernels)

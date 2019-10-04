@@ -25,7 +25,8 @@
 namespace ITMLib {
 
 template<typename TVoxelPrimary, typename TVoxelSecondary>
-class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMVoxelBlockHash, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA>{
+class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMVoxelBlockHash, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA> {
+public:
 	template<typename TBooleanFunctor>
 	inline static bool
 	DualVoxelTraversal_AllTrue(
@@ -33,40 +34,78 @@ class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMVoxelBlockH
 			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
 			TBooleanFunctor& functor) {
 
-		// allocate boolean varaible for answer
-		bool* falseEncountered_device = nullptr;
-		ORcudaSafeCall(cudaMalloc((void**) &falseEncountered_device, sizeof(bool)));
-		ORcudaSafeCall(cudaMemset(falseEncountered_device, 0, sizeof(bool)));
+		// assumes functor is allocated in main memory
+		int hashEntryCount = primaryScene->index.noTotalEntries;
 
-		// transfer functor from RAM to VRAM
-		TBooleanFunctor* functor_device = nullptr;
-		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TBooleanFunctor)));
-		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TBooleanFunctor), cudaMemcpyHostToDevice));
+		// allocate intermediate-result buffers for use on the GPU in subsequent routine calls
+		ORUtils::MemoryBlock<bool> badResultEncountered_device(1, true, true);
+		*badResultEncountered_device.GetData(MEMORYDEVICE_CPU) = false;
+		badResultEncountered_device.UpdateDeviceFromHost();
+		ORUtils::MemoryBlock<HashMatchInfo> hashMatchInfo(1, true, true);
+		hashMatchInfo.GetData(MEMORYDEVICE_CPU)->matchedHashCount = 0;
+		hashMatchInfo.GetData(MEMORYDEVICE_CPU)->unmatchedHashCount = 0;
+		hashMatchInfo.UpdateDeviceFromHost();
+		ORUtils::MemoryBlock<HashPair> matchedHashPairs(hashEntryCount, true, true);
+		ORUtils::MemoryBlock<UnmatchedHash> unmatchedHashes(hashEntryCount, true, true);
 
-
-		// perform traversal on the GPU
+		// these will be needed for various matching & traversal operations
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* primaryHashTable = primaryScene->index.getIndexData();
 		const ITMHashEntry* secondaryHashTable = secondaryScene->index.getIndexData();
-		int totalPrimaryHashEntryCount = primaryScene->index.noTotalEntries;
-		dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
-		dim3 gridSize(totalPrimaryHashEntryCount);
 
-		dualVoxelTraversal_AllTrue_device<TBooleanFunctor, TVoxelPrimary, TVoxelSecondary>
-		<< < gridSize, cudaBlockSize >> >
-		(primaryVoxels, secondaryVoxels, primaryHashTable, secondaryHashTable, functor_device, falseEncountered_device);
+		dim3 cudaBlockSize_HashPerThread(256);
+		dim3 gridSize_MultipleHashBlocks(static_cast<int>(ceil(static_cast<float>(hashEntryCount) /
+		                                                       static_cast<float>(cudaBlockSize_HashPerThread.x))));
+
+		matchUpHashEntriesByPosition
+				<< < cudaBlockSize_HashPerThread, gridSize_MultipleHashBlocks >> >
+		                                          (primaryHashTable, secondaryHashTable, hashEntryCount,
+				                                          matchedHashPairs.GetData(MEMORYDEVICE_CUDA),
+				                                          unmatchedHashes.GetData(MEMORYDEVICE_CUDA),
+				                                          hashMatchInfo.GetData(MEMORYDEVICE_CUDA));
 		ORcudaKernelCheck;
 
-		// transfer functor from VRAM back to RAM
+		dim3 cudaBlockSize_BlockVoxelPerThread(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+
+		dim3 gridSize_UnmatchedBlocks(hashMatchInfo.GetData(MEMORYDEVICE_CPU)->unmatchedHashCount);
+		checkIfUnmatchedVoxelBlocksAreAltered
+				<< < gridSize_UnmatchedBlocks, cudaBlockSize_BlockVoxelPerThread >> >
+		                                       (primaryVoxels, secondaryVoxels,
+				                                       primaryHashTable, secondaryHashTable,
+				                                       unmatchedHashes.GetData(MEMORYDEVICE_CUDA),
+				                                       hashMatchInfo.GetData(MEMORYDEVICE_CUDA),
+				                                       badResultEncountered_device.GetData(MEMORYDEVICE_CUDA));
+		ORcudaKernelCheck;
+		hashMatchInfo.UpdateHostFromDevice();
+
+		// if an unmatched block in either volume was altered, return false
+		badResultEncountered_device.UpdateHostFromDevice();
+		if (*badResultEncountered_device.GetData(MEMORYDEVICE_CPU)) return false;
+
+		// transfer functor from RAM to VRAM (has to be done manually, i.e. without MemoryBlock at this point)
+		TBooleanFunctor* functor_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TBooleanFunctor)));
+		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TBooleanFunctor), cudaMemcpyHostToDevice));
+
+		// perform voxel traversal on the GPU, matching individual voxels at corresponding locations
+		dim3 gridSize_MatchedBlocks(hashMatchInfo.GetData(MEMORYDEVICE_CPU)->matchedHashCount);
+		checkIfMatchingHashBlockVoxelsYieldTrue<TBooleanFunctor, TVoxelPrimary, TVoxelSecondary>
+				<< < gridSize_MatchedBlocks, cudaBlockSize_BlockVoxelPerThread >> >
+		                                     (primaryVoxels, secondaryVoxels,
+				                                     primaryHashTable, secondaryHashTable,
+				                                     matchedHashPairs.GetData(MEMORYDEVICE_CUDA),
+				                                     hashMatchInfo.GetData(MEMORYDEVICE_CUDA),
+				                                     functor_device,
+				                                     badResultEncountered_device.GetData(MEMORYDEVICE_CUDA));
+		ORcudaKernelCheck;
+
+		// transfer functor from VRAM back to RAM (in case there was any alteration to the functor object)
 		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TBooleanFunctor), cudaMemcpyDeviceToHost));
 		ORcudaSafeCall(cudaFree(functor_device));
 
-		bool falseEncountered;
-		ORcudaSafeCall(cudaMemcpy(&falseEncountered, falseEncountered_device, sizeof(bool), cudaMemcpyDeviceToHost));
-		ORcudaSafeCall(cudaFree(falseEncountered_device));
-
-		return !falseEncountered;
+		badResultEncountered_device.UpdateHostFromDevice();
+		return !(*badResultEncountered_device.GetData(MEMORYDEVICE_CPU));
 	}
 
 

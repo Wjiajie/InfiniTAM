@@ -17,13 +17,14 @@
 
 //local
 #include "../../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../../../Objects/Scene/ITMRepresentationAccess.h"
 
 
 //region ================================= AUXILIARY FUNCTIONS (PLAIN VOXEL ARRAY) =====================================
 
 _CPU_AND_GPU_CODE_
 inline static void
-ComputePositionFromLinearIndex_PlainVoxelArray(int& x, int& y, int& z, const ITMPlainVoxelArray::IndexData* indexData,
+ComputePositionFromLinearIndex_PlainVoxelArray(int& x, int& y, int& z, const ITMLib::ITMPlainVoxelArray::IndexData* indexData,
                                                int linearIndex) {
 
 	z = linearIndex / (indexData->size.x * indexData->size.y);
@@ -37,7 +38,7 @@ ComputePositionFromLinearIndex_PlainVoxelArray(int& x, int& y, int& z, const ITM
 
 _CPU_AND_GPU_CODE_
 inline static Vector3i
-ComputePositionVectorFromLinearIndex_PlainVoxelArray(const ITMPlainVoxelArray::IndexData* indexData,
+ComputePositionVectorFromLinearIndex_PlainVoxelArray(const ITMLib::ITMPlainVoxelArray::IndexData* indexData,
                                                      int linearIndex) {
 	int z = linearIndex / (indexData->size.x * indexData->size.y);
 	int tmp = linearIndex - z * indexData->size.x * indexData->size.y;

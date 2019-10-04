@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CUDA) {
 	BOOST_REQUIRE(out.sdf == voxelHalf.sdf);
 }
 
-
+//
 //
 //BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CUDA_ITMVoxel) {
 //	float tolerance = 1e-6;
@@ -260,7 +260,8 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CUDA) {
 //
 //	singleVoxelTests();
 //}
-//
+
+
 //BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CUDA_ITMWarp) {
 //
 //	float tolerance = 1e-6;
