@@ -112,6 +112,5 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue(
 	}
 }
 
-//template<typename TStaticFunctor, typename TVoxel>
 
 } // anonymous namespace (CUDA kernels)
