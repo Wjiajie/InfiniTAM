@@ -105,7 +105,17 @@ inline bool FindHashAtPosition(THREADPTR(int)& hashIdx,
 	return true;
 }
 
-
 // endregion ===========================================================================================================
 
+
+template<typename TVoxelPrimary, typename TVoxelSecondary, typename TFunctor>
+struct ITMFlipArgumentBooleanFunctor {
+	ITMFlipArgumentBooleanFunctor(TFunctor functor) : functor(functor) {}
+	_CPU_AND_GPU_CODE_
+	bool operator()(TVoxelPrimary& voxelPrimary, TVoxelSecondary& voxelSecondary) {
+		return functor(voxelSecondary, voxelPrimary);
+	}
+
+	TFunctor functor;
+};
 

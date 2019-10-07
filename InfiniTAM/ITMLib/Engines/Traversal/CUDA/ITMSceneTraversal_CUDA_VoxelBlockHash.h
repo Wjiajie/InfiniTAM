@@ -33,8 +33,8 @@ public:
 			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
 			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
 			TBooleanFunctor& functor) {
-
 		// assumes functor is allocated in main memory
+
 		int hashEntryCount = primaryScene->index.noTotalEntries;
 
 		// allocate intermediate-result buffers for use on the GPU in subsequent routine calls
@@ -54,34 +54,41 @@ public:
 		const ITMHashEntry* primaryHashTable = primaryScene->index.getIndexData();
 		const ITMHashEntry* secondaryHashTable = secondaryScene->index.getIndexData();
 
-		dim3 cudaBlockSize_HashPerThread(256);
+		dim3 cudaBlockSize_HashPerThread(256, 1);
 		dim3 gridSize_MultipleHashBlocks(static_cast<int>(ceil(static_cast<float>(hashEntryCount) /
 		                                                       static_cast<float>(cudaBlockSize_HashPerThread.x))));
 
 		matchUpHashEntriesByPosition
-				<< < cudaBlockSize_HashPerThread, gridSize_MultipleHashBlocks >> >
+				<< < gridSize_MultipleHashBlocks, cudaBlockSize_HashPerThread >> >
 		                                          (primaryHashTable, secondaryHashTable, hashEntryCount,
 				                                          matchedHashPairs.GetData(MEMORYDEVICE_CUDA),
 				                                          unmatchedHashes.GetData(MEMORYDEVICE_CUDA),
 				                                          hashMatchInfo.GetData(MEMORYDEVICE_CUDA));
 		ORcudaKernelCheck;
 
-		dim3 cudaBlockSize_BlockVoxelPerThread(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
-
-		dim3 gridSize_UnmatchedBlocks(hashMatchInfo.GetData(MEMORYDEVICE_CPU)->unmatchedHashCount);
-		checkIfUnmatchedVoxelBlocksAreAltered
-				<< < gridSize_UnmatchedBlocks, cudaBlockSize_BlockVoxelPerThread >> >
-		                                       (primaryVoxels, secondaryVoxels,
-				                                       primaryHashTable, secondaryHashTable,
-				                                       unmatchedHashes.GetData(MEMORYDEVICE_CUDA),
-				                                       hashMatchInfo.GetData(MEMORYDEVICE_CUDA),
-				                                       badResultEncountered_device.GetData(MEMORYDEVICE_CUDA));
-		ORcudaKernelCheck;
+		// check unmatched hashes
 		hashMatchInfo.UpdateHostFromDevice();
+		dim3 cudaBlockSize_BlockVoxelPerThread(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+		int unmatchedHashCount = hashMatchInfo.GetData(MEMORYDEVICE_CPU)->unmatchedHashCount;
+		if(unmatchedHashCount > 0){
+			dim3 gridSize_UnmatchedBlocks(unmatchedHashCount);
+			checkIfUnmatchedVoxelBlocksAreAltered
+					<< < gridSize_UnmatchedBlocks, cudaBlockSize_BlockVoxelPerThread >> >
+			                                       (primaryVoxels, secondaryVoxels,
+					                                       primaryHashTable, secondaryHashTable,
+					                                       unmatchedHashes.GetData(MEMORYDEVICE_CUDA),
+					                                       hashMatchInfo.GetData(MEMORYDEVICE_CUDA),
+					                                       badResultEncountered_device.GetData(MEMORYDEVICE_CUDA));
+			ORcudaKernelCheck;
+		}
 
 		// if an unmatched block in either volume was altered, return false
 		badResultEncountered_device.UpdateHostFromDevice();
 		if (*badResultEncountered_device.GetData(MEMORYDEVICE_CPU)) return false;
+
+		int matchedHashCount = hashMatchInfo.GetData(MEMORYDEVICE_CPU)->matchedHashCount;
+
+		if (matchedHashCount == 0) return true;
 
 		// transfer functor from RAM to VRAM (has to be done manually, i.e. without MemoryBlock at this point)
 		TBooleanFunctor* functor_device = nullptr;
@@ -89,7 +96,7 @@ public:
 		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TBooleanFunctor), cudaMemcpyHostToDevice));
 
 		// perform voxel traversal on the GPU, matching individual voxels at corresponding locations
-		dim3 gridSize_MatchedBlocks(hashMatchInfo.GetData(MEMORYDEVICE_CPU)->matchedHashCount);
+		dim3 gridSize_MatchedBlocks(matchedHashCount);
 		checkIfMatchingHashBlockVoxelsYieldTrue<TBooleanFunctor, TVoxelPrimary, TVoxelSecondary>
 				<< < gridSize_MatchedBlocks, cudaBlockSize_BlockVoxelPerThread >> >
 		                                     (primaryVoxels, secondaryVoxels,

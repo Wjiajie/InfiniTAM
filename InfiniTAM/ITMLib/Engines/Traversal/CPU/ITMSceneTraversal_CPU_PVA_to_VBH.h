@@ -221,16 +221,6 @@ public:
 	}
 };
 
-template<typename TVoxelPrimary, typename TVoxelSecondary, typename TFunctor>
-struct ITMFlipArgumentBooleanFunctor {
-	ITMFlipArgumentBooleanFunctor(TFunctor functor) : functor(functor) {}
-
-	bool operator()(TVoxelPrimary& voxelPrimary, TVoxelSecondary& voxelSecondary) {
-		return functor(voxelSecondary, voxelPrimary);
-	}
-
-	TFunctor functor;
-};
 
 template<typename TVoxelPrimary, typename TVoxelSecondary>
 class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMVoxelBlockHash, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU> {

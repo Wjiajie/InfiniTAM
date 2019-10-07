@@ -165,101 +165,102 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CUDA) {
 	BOOST_REQUIRE(out.sdf == voxelHalf.sdf);
 }
 
-//
-//
-//BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CUDA_ITMVoxel) {
-//	float tolerance = 1e-6;
-//
-//	ITMLibSettings* settings = &ITMLibSettings::Instance();
-//	settings->deviceType = ITMLibSettings::DEVICE_CUDA;
-//
-//	Vector3i volumeSize(40);
-//	Vector3i volumeOffset(-20, -20, 0);
-//	Vector3i extentEndVoxel = volumeOffset + volumeSize;
-//
-//	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&settings->sceneParams,
-//	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-//	                                                    settings->GetMemoryType(),
-//	                                                    volumeSize,
-//	                                                    volumeOffset);
-//	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(&scene1);
-//	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(&settings->sceneParams,
-//	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-//	                                                    settings->GetMemoryType(),
-//	                                                    volumeSize,
-//	                                                    volumeOffset);
-//	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(&scene2);
-//	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(&settings->sceneParams,
-//	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-//	                                                   settings->GetMemoryType());
-//	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene3);
-//	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(&settings->sceneParams,
-//	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-//	                                                   settings->GetMemoryType());
-//	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene4);
-//
-//	std::random_device random_device;
-//	std::mt19937 generator(random_device());
-//
-//	auto singleVoxelTests = [&]() {
-//		std::uniform_int_distribution<int> coordinate_distribution2(volumeOffset.x, 0);
-//		ITMVoxel voxel;
-//		simulateVoxelAlteration(voxel, -0.1f);
-//
-//		Vector3i coordinate(coordinate_distribution2(generator), coordinate_distribution2(generator), 0);
-//
-//		ManipulationEngine_CUDA_PVA_Voxel::Inst().SetVoxel(&scene2, coordinate, voxel);
-//		ManipulationEngine_CUDA_VBH_Voxel::Inst().SetVoxel(&scene4, coordinate, voxel);
-//		BOOST_REQUIRE(!contentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
-//		BOOST_REQUIRE(!contentAlmostEqual_CUDA(&scene3, &scene4, tolerance));
-//		BOOST_REQUIRE(!contentAlmostEqual_CUDA(&scene1, &scene4, tolerance));
-//
-//		ITMVoxel defaultVoxel;
-//		ManipulationEngine_CUDA_PVA_Voxel::Inst().SetVoxel(&scene2, coordinate, defaultVoxel);
-//		ManipulationEngine_CUDA_VBH_Voxel::Inst().SetVoxel(&scene4, coordinate, defaultVoxel);
-//		BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
-//		BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene3, &scene4, tolerance));
-//
-//		coordinate = volumeOffset + volumeSize - Vector3i(1);
-//		voxel = ManipulationEngine_CUDA_PVA_Voxel::Inst().ReadVoxel(&scene2, coordinate);
-//		simulateVoxelAlteration(voxel, fmod((ITMVoxel::valueToFloat(voxel.sdf) + 0.1f), 1.0f));
-//		ManipulationEngine_CUDA_PVA_Voxel::Inst().SetVoxel(&scene2, coordinate, voxel);
-//		ManipulationEngine_CUDA_VBH_Voxel::Inst().SetVoxel(&scene4, coordinate, voxel);
-//		BOOST_REQUIRE(!contentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
-//		BOOST_REQUIRE(!contentAlmostEqual_CUDA(&scene3, &scene4, tolerance));
-//		BOOST_REQUIRE(!contentAlmostEqual_CUDA(&scene1, &scene4, tolerance));
-//
-//		ManipulationEngine_CUDA_PVA_Voxel::Inst().SetVoxel(&scene2, coordinate, defaultVoxel);
-//		ManipulationEngine_CUDA_VBH_Voxel::Inst().SetVoxel(&scene4, coordinate, defaultVoxel);
-//	};
-//
-//	std::uniform_real_distribution<float> sdf_distribution(-1.0f, 1.0f);
-//	std::uniform_int_distribution<int> coordinate_distribution(0, extentEndVoxel.x);
-//
-//	const int modifiedVoxelCount = 120;
-//
-//	singleVoxelTests();
-//
-////	generate only in the positive coordinates' volume, to make sure that the unneeded voxel hash blocks are properly dismissed
-//	for (int iVoxel = 0; iVoxel < modifiedVoxelCount; iVoxel++) {
-//		ITMVoxel voxel;
-//		simulateVoxelAlteration(voxel, sdf_distribution(generator));
-//		Vector3i coordinate(coordinate_distribution(generator),
-//		                    coordinate_distribution(generator),
-//		                    coordinate_distribution(generator));
-//
-//		ManipulationEngine_CUDA_PVA_Voxel::Inst().SetVoxel(&scene1, coordinate, voxel);
-//		ManipulationEngine_CUDA_PVA_Voxel::Inst().SetVoxel(&scene2, coordinate, voxel);
-//		ManipulationEngine_CUDA_VBH_Voxel::Inst().SetVoxel(&scene3, coordinate, voxel);
-//		ManipulationEngine_CUDA_VBH_Voxel::Inst().SetVoxel(&scene4, coordinate, voxel);
-//	}
-//
-//	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
-//	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene3, &scene4, tolerance));
-//	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene3, tolerance));
-//
-//	singleVoxelTests();
-//}
+
+
+BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CUDA_ITMVoxel) {
+	float tolerance = 1e-6;
+
+	ITMLibSettings* settings = &ITMLibSettings::Instance();
+	settings->deviceType = ITMLibSettings::DEVICE_CUDA;
+
+	Vector3i volumeSize(40);
+	Vector3i volumeOffset(-20, -20, 0);
+	Vector3i extentEndVoxel = volumeOffset + volumeSize;
+
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&settings->sceneParams,
+	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->GetMemoryType(),
+	                                                    volumeSize,
+	                                                    volumeOffset);
+	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(&scene1);
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(&settings->sceneParams,
+	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->GetMemoryType(),
+	                                                    volumeSize,
+	                                                    volumeOffset);
+	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(&scene2);
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(&settings->sceneParams,
+	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->GetMemoryType());
+	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene3);
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(&settings->sceneParams,
+	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->GetMemoryType());
+	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene4);
+
+	std::random_device random_device;
+	std::mt19937 generator(random_device());
+
+	auto singleVoxelTests = [&]() {
+		std::uniform_int_distribution<int> coordinate_distribution2(volumeOffset.x, 0);
+		ITMVoxel voxel;
+		simulateVoxelAlteration(voxel, -0.1f);
+
+		Vector3i coordinate(coordinate_distribution2(generator), coordinate_distribution2(generator), 0);
+
+		ManipulationEngine_CUDA_PVA_Voxel::Inst().SetVoxel(&scene2, coordinate, voxel);
+		ManipulationEngine_CUDA_VBH_Voxel::Inst().SetVoxel(&scene4, coordinate, voxel);
+		BOOST_REQUIRE(!contentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
+		BOOST_REQUIRE(!contentAlmostEqual_CUDA(&scene3, &scene4, tolerance));
+		BOOST_REQUIRE(!contentAlmostEqual_CUDA(&scene1, &scene4, tolerance));
+
+		ITMVoxel defaultVoxel;
+		ManipulationEngine_CUDA_PVA_Voxel::Inst().SetVoxel(&scene2, coordinate, defaultVoxel);
+		ManipulationEngine_CUDA_VBH_Voxel::Inst().SetVoxel(&scene4, coordinate, defaultVoxel);
+		BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
+		BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene3, &scene4, tolerance));
+
+		coordinate = volumeOffset + volumeSize - Vector3i(1);
+		voxel = ManipulationEngine_CUDA_PVA_Voxel::Inst().ReadVoxel(&scene2, coordinate);
+		simulateVoxelAlteration(voxel, fmod((ITMVoxel::valueToFloat(voxel.sdf) + 0.1f), 1.0f));
+		ManipulationEngine_CUDA_PVA_Voxel::Inst().SetVoxel(&scene2, coordinate, voxel);
+		ManipulationEngine_CUDA_VBH_Voxel::Inst().SetVoxel(&scene4, coordinate, voxel);
+		BOOST_REQUIRE(!contentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
+		BOOST_REQUIRE(!contentAlmostEqual_CUDA(&scene3, &scene4, tolerance));
+		BOOST_REQUIRE(!contentAlmostEqual_CUDA(&scene1, &scene4, tolerance));
+
+		ManipulationEngine_CUDA_PVA_Voxel::Inst().SetVoxel(&scene2, coordinate, defaultVoxel);
+		ManipulationEngine_CUDA_VBH_Voxel::Inst().SetVoxel(&scene4, coordinate, defaultVoxel);
+	};
+
+	std::uniform_real_distribution<float> sdf_distribution(-1.0f, 1.0f);
+	std::uniform_int_distribution<int> coordinate_distribution(0, extentEndVoxel.x-1);
+
+	const int modifiedVoxelCount = 120;
+
+	singleVoxelTests();
+
+//	generate only in the positive coordinates' volume, to make sure that the unneeded voxel hash blocks are properly dismissed
+	for (int iVoxel = 0; iVoxel < modifiedVoxelCount; iVoxel++) {
+		ITMVoxel voxel;
+
+		simulateVoxelAlteration(voxel, sdf_distribution(generator));
+		Vector3i coordinate(coordinate_distribution(generator),
+		                    coordinate_distribution(generator),
+		                    coordinate_distribution(generator));
+
+		ManipulationEngine_CUDA_PVA_Voxel::Inst().SetVoxel(&scene1, coordinate, voxel);
+		ManipulationEngine_CUDA_PVA_Voxel::Inst().SetVoxel(&scene2, coordinate, voxel);
+		ManipulationEngine_CUDA_VBH_Voxel::Inst().SetVoxel(&scene3, coordinate, voxel);
+		ManipulationEngine_CUDA_VBH_Voxel::Inst().SetVoxel(&scene4, coordinate, voxel);
+	}
+
+	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene3, &scene4, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene3, tolerance));
+
+	singleVoxelTests();
+}
 
 
 //BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CUDA_ITMWarp) {
@@ -330,7 +331,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CUDA) {
 //	};
 //
 //	std::uniform_real_distribution<float> warp_distribution(-1.0f, 1.0f);
-//	std::uniform_int_distribution<int> coordinate_distribution(0, extentEndVoxel.x);
+//	std::uniform_int_distribution<int> coordinate_distribution(0, extentEndVoxel.x-1);
 //
 //	const int modifiedWarpCount = 120;
 //

@@ -231,7 +231,7 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU_ITMVoxel) {
 	};
 
 	std::uniform_real_distribution<float> sdf_distribution(-1.0f, 1.0f);
-	std::uniform_int_distribution<int> coordinate_distribution(0, extentEndVoxel.x);
+	std::uniform_int_distribution<int> coordinate_distribution(0, extentEndVoxel.x - 1);
 
 	const int modifiedVoxelCount = 120;
 
@@ -326,7 +326,7 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU_ITMWarp) {
 	};
 
 	std::uniform_real_distribution<float> warp_distribution(-1.0f, 1.0f);
-	std::uniform_int_distribution<int> coordinate_distribution(0, extentEndVoxel.x);
+	std::uniform_int_distribution<int> coordinate_distribution(0, extentEndVoxel.x - 1);
 
 	const int modifiedWarpCount = 120;
 

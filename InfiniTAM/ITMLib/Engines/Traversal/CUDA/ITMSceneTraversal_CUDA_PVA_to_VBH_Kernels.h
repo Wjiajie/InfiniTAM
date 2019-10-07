@@ -36,46 +36,80 @@ __global__ void findBlocksNotSpannedByArray(
 	Vector3i blockPosVoxels = hashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 	Vector3i arrayMinCoord = arrayInfo->offset;
 	Vector3i arrayMaxCoord = arrayInfo->offset + arrayInfo->size;
-	if (blockPosVoxels.x < arrayMinCoord.x || blockPosVoxels.x + SDF_BLOCK_SIZE > arrayMaxCoord.x ||
-	    blockPosVoxels.y < arrayMinCoord.y || blockPosVoxels.y + SDF_BLOCK_SIZE > arrayMaxCoord.y ||
-	    blockPosVoxels.z < arrayMinCoord.z || blockPosVoxels.z + SDF_BLOCK_SIZE > arrayMaxCoord.z) {
-		int unspannedHashIdx = atomicAdd(*countHashesNotSpanned, 1);
+	if (blockPosVoxels.x + SDF_BLOCK_SIZE < arrayMinCoord.x || blockPosVoxels.x > arrayMaxCoord.x ||
+	    blockPosVoxels.y + SDF_BLOCK_SIZE < arrayMinCoord.y || blockPosVoxels.y > arrayMaxCoord.y ||
+	    blockPosVoxels.z + SDF_BLOCK_SIZE < arrayMinCoord.z || blockPosVoxels.z > arrayMaxCoord.z) {
+		int unspannedHashIdx = atomicAdd(countHashesNotSpanned, 1);
 		hashesNotSpanned[unspannedHashIdx] = hash;
 	}
 }
 
-template<typename TVoxelArray, typename TVoxelHash>
+template<typename TVoxel>
+__global__ void
+checkIfHashVoxelBlocksAreAltered(const TVoxel* voxels, const ITMHashEntry* hashTable, int* hashesToCheck,
+                                 int countHashesToCheck, bool* alteredBlockEncountered) {
+	if (*alteredBlockEncountered) return;
+	int hashToCheckIdx = static_cast<int>(blockIdx.x);
+	if (hashToCheckIdx > countHashesToCheck) return;
+	int hash = hashesToCheck[hashToCheckIdx];
+	const ITMHashEntry& hashEntry = hashTable[hash];
+	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
+	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	if (isAltered(voxels[hashEntry.ptr * SDF_BLOCK_SIZE3 + locId])){
+		*alteredBlockEncountered = true;
+	}
+}
+
+template<typename TBooleanFunctor, typename TVoxelArray, typename TVoxelHash>
 __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue(
-		const TVoxelArray* arrayVoxels,
+		TVoxelArray* arrayVoxels,
 		const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
-		const TVoxelHash* hashVoxels, const ITMHashEntry* hashTable,
-		int hashEntryCount, bool* falseOrAlteredEncountered) {
+		TVoxelHash* hashVoxels, const ITMHashEntry* hashTable,
+		int hashEntryCount, const Vector3i minArrayCoord,
+		const Vector3i maxArrayCoord, const Vector3s minBlockPos,
+		TBooleanFunctor* functor, bool* falseOrAlteredEncountered) {
 
 	if (*falseOrAlteredEncountered) return;
+
 	int xVoxel = static_cast<int>(blockIdx.x * blockDim.x + threadIdx.x);
 	int yVoxel = static_cast<int>(blockIdx.y * blockDim.y + threadIdx.y);
 	int zVoxel = static_cast<int>(blockIdx.z * blockDim.z + threadIdx.z);
 
-	//TODO: starting index is messed up here!!!! should be determined by passed-in minArrayCoord and maxArrayCoord!
-	// minArrayCoord would be the arrayInfo->offset - minIndexingCoord
-	// maxArrayCoord would be maxIndexingCoord - (arrayInfo->offset + arrayInfo->size)
-	if (xVoxel < arrayInfo->offset.x || xVoxel > arrayInfo->offset.x + arrayInfo->size.x ||
-	    yVoxel < arrayInfo->offset.y || yVoxel > arrayInfo->offset.y + arrayInfo->size.y ||
-	    zVoxel < arrayInfo->offset.z || zVoxel > arrayInfo->offset.z + arrayInfo->size.z) {
+	Vector3i indexingCoord(xVoxel, yVoxel, zVoxel);
+	//local (block) coords;
+	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
+	int idxInBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+
+	Vector3s blockPosition(blockIdx.x, blockIdx.y, blockIdx.z);
+	blockPosition += minBlockPos;
+
+	int hash;
+	if (xVoxel < minArrayCoord.x || xVoxel >= maxArrayCoord.x ||
+	    yVoxel < minArrayCoord.y || yVoxel >= maxArrayCoord.y ||
+	    zVoxel < minArrayCoord.z || zVoxel >= maxArrayCoord.z) {
+		if (FindHashAtPosition(hash, blockPosition, hashTable) &&
+				isAltered(hashVoxels[hashTable[hash].ptr * SDF_BLOCK_SIZE3 + idxInBlock])){
+			// voxel falls just outside of array BUT is still in hash block, if it's altered -- return false
+			*falseOrAlteredEncountered = true;
+			return;
+		}
+
 		return;
 	}
 
-	Vector3s blockPosition(blockIdx.x, blockIdx.y, blockIdx.z);
+	Vector3i arrayCoord = indexingCoord - minArrayCoord;
+	int idxInArray = arrayCoord.x + arrayCoord.y * arrayInfo->size.x +
+	                 arrayCoord.z * arrayInfo->size.x * arrayInfo->size.y;
 
-	int hash;
-
-	if(FindHashAtPosition(hash, blockPosition, hashTable)){
-		//TODO
-	}else{
-		//if(isAltered(arrayVoxels[]))
+	if (FindHashAtPosition(hash, blockPosition, hashTable)) {
+		if (!(*functor)(hashVoxels[hashTable[hash].ptr * SDF_BLOCK_SIZE3 + idxInBlock], arrayVoxels[idxInArray])) {
+			*falseOrAlteredEncountered = true;
+		}
+	} else {
+		if (isAltered(arrayVoxels[idxInArray])) {
+			*falseOrAlteredEncountered = true;
+		}
 	}
-
-
 }
 
 //template<typename TStaticFunctor, typename TVoxel>

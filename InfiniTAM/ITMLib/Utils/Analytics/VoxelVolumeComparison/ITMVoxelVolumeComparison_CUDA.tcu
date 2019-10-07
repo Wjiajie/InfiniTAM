@@ -18,6 +18,7 @@
 #include "../../../../ORUtils/PlatformIndependence.h"
 #include "../../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
 #include "../../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h"
+#include "../../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PVA_to_VBH.h"
 #include "ITMVoxelVolumeComparison_Functors.h"
 
 
