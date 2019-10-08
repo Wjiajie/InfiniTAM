@@ -60,8 +60,8 @@ build_script:
 test_script:
   - sh: |
       echo "Running Tests..."
-      cd $APPVEYOR_BUILD_FOLDER/InfiniTAM/build/Tests
-      ctest
+      cd $APPVEYOR_BUILD_FOLDER/InfiniTAM/build/
+      make check CTEST_OUTPUT_ON_FAILURE=TRUE
 
 
 
