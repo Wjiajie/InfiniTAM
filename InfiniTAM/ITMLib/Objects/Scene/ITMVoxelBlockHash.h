@@ -117,6 +117,15 @@ public:
 		Initialize(memoryType);
 	}
 
+	ITMVoxelBlockHash(const ITMVoxelBlockHash& other, MemoryDeviceType memoryType) :
+		lastFreeExcessListId(other.lastFreeExcessListId)
+	{
+		Initialize(memoryType);
+		MemoryCopyDirection memoryCopyDirection = determineMemoryCopyDirection(this->memoryType, other.memoryType);
+		this->hashEntries->SetFrom(other.hashEntries, memoryCopyDirection);
+		this->excessAllocationList->SetFrom(other.excessAllocationList, memoryCopyDirection);
+	}
+
 	~ITMVoxelBlockHash(void)
 	{
 		delete hashEntries;

@@ -37,7 +37,7 @@ namespace ITMLib
 			if (memoryType == MEMORYDEVICE_CUDA)
 			{
 				cpu_triangles = new ORUtils::MemoryBlock<Triangle>(noMaxTriangles, MEMORYDEVICE_CPU);
-				cpu_triangles->SetFrom(triangles, ORUtils::MemoryBlock<Triangle>::CUDA_TO_CPU);
+				cpu_triangles->SetFrom(triangles, MemoryCopyDirection::CUDA_TO_CPU);
 				shoulDelete = true;
 			}
 			else cpu_triangles = triangles;
@@ -67,7 +67,7 @@ namespace ITMLib
 			if (memoryType == MEMORYDEVICE_CUDA)
 			{
 				cpu_triangles = new ORUtils::MemoryBlock<Triangle>(noMaxTriangles, MEMORYDEVICE_CPU);
-				cpu_triangles->SetFrom(triangles, ORUtils::MemoryBlock<Triangle>::CUDA_TO_CPU);
+				cpu_triangles->SetFrom(triangles, MemoryCopyDirection::CUDA_TO_CPU);
 				shoulDelete = true;
 			}
 			else cpu_triangles = triangles;

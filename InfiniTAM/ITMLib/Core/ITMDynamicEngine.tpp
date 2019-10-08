@@ -344,8 +344,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 		case ITMDynamicEngine::InfiniTAM_IMAGE_ORIGINAL_RGB:
 			out->ChangeDims(view->rgb->noDims);
 			if (settings.deviceType == ITMLibSettings::DEVICE_CUDA)
-				out->SetFrom(view->rgb, ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CPU);
-			else out->SetFrom(view->rgb, ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU);
+				out->SetFrom(view->rgb, MemoryCopyDirection::CUDA_TO_CPU);
+			else out->SetFrom(view->rgb, MemoryCopyDirection::CPU_TO_CPU);
 			break;
 		case ITMDynamicEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH:
 			out->ChangeDims(view->depth->noDims);
@@ -388,8 +388,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 
 			out->ChangeDims(srcImage->noDims);
 			if (settings.deviceType == ITMLibSettings::DEVICE_CUDA)
-				out->SetFrom(srcImage, ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CPU);
-			else out->SetFrom(srcImage, ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU);
+				out->SetFrom(srcImage, MemoryCopyDirection::CUDA_TO_CPU);
+			else out->SetFrom(srcImage, MemoryCopyDirection::CPU_TO_CPU);
 
 			break;
 		}
@@ -417,8 +417,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			                                     renderState_freeview->raycastImage, type);
 
 			if (settings.deviceType == ITMLibSettings::DEVICE_CUDA)
-				out->SetFrom(renderState_freeview->raycastImage, ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CPU);
-			else out->SetFrom(renderState_freeview->raycastImage, ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU);
+				out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CUDA_TO_CPU);
+			else out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CPU_TO_CPU);
 			break;
 		}
 		case ITMMainEngine::InfiniTAM_IMAGE_STEP_BY_STEP: {
@@ -442,8 +442,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 
 
 			if (settings.deviceType == ITMLibSettings::DEVICE_CUDA)
-				out->SetFrom(renderState_freeview->raycastImage, ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CPU);
-			else out->SetFrom(renderState_freeview->raycastImage, ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU);
+				out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CUDA_TO_CPU);
+			else out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CPU_TO_CPU);
 
 
 			break;
@@ -463,8 +463,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			                                          renderState_freeview->raycastImage, type);
 
 			if (settings.deviceType == ITMLibSettings::DEVICE_CUDA)
-				out->SetFrom(renderState_freeview->raycastImage, ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CPU);
-			else out->SetFrom(renderState_freeview->raycastImage, ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU);
+				out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CUDA_TO_CPU);
+			else out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CPU_TO_CPU);
 			break;
 		}
 

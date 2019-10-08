@@ -33,11 +33,11 @@ void ITMViewBuilder_CPU::UpdateView(ITMView** view_ptr, ITMUChar4Image* rgbImage
 	if (storePreviousImage)
 	{
 		if (!view->rgb_prev) view->rgb_prev = new ITMUChar4Image(rgbImage->noDims, true, false);
-		else view->rgb_prev->SetFrom(view->rgb, MemoryBlock<Vector4u>::CPU_TO_CPU);
+		else view->rgb_prev->SetFrom(view->rgb, MemoryCopyDirection::CPU_TO_CPU);
 	}
 
-	view->rgb->SetFrom(rgbImage, MemoryBlock<Vector4u>::CPU_TO_CPU);
-	this->shortImage->SetFrom(rawDepthImage, MemoryBlock<short>::CPU_TO_CPU);
+	view->rgb->SetFrom(rgbImage, MemoryCopyDirection::CPU_TO_CPU);
+	this->shortImage->SetFrom(rawDepthImage, MemoryCopyDirection::CPU_TO_CPU);
 
 	switch (view->calib.disparityCalib.GetType())
 	{
@@ -53,7 +53,7 @@ void ITMViewBuilder_CPU::UpdateView(ITMView** view_ptr, ITMUChar4Image* rgbImage
 
 	if (useThresholdFilter){
 		this->ThresholdFiltering(this->floatImage, view->depth);
-		view->depth->SetFrom(this->floatImage, MemoryBlock<float>::CPU_TO_CPU);
+		view->depth->SetFrom(this->floatImage,MemoryCopyDirection::CPU_TO_CPU);
 	}
 
 	if (useBilateralFilter)
@@ -64,7 +64,7 @@ void ITMViewBuilder_CPU::UpdateView(ITMView** view_ptr, ITMUChar4Image* rgbImage
 		this->DepthFiltering(this->floatImage, view->depth);
 		this->DepthFiltering(view->depth, this->floatImage);
 		this->DepthFiltering(this->floatImage, view->depth);
-		view->depth->SetFrom(this->floatImage, MemoryBlock<float>::CPU_TO_CPU);
+		view->depth->SetFrom(this->floatImage, MemoryCopyDirection::CPU_TO_CPU);
 	}
 
 	if (modelSensorNoise)

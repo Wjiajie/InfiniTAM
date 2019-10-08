@@ -38,8 +38,6 @@ namespace ORUtils
 		void *data_metalBuffer;
 #endif
 	public:
-		enum MemoryCopyDirection { CPU_TO_CPU, CPU_TO_CUDA, CUDA_TO_CPU, CUDA_TO_CUDA };
-
 		/** Total number of allocated entries in the data array. */
 		size_t dataSize;
 
@@ -314,6 +312,8 @@ namespace ORUtils
 			std::swap(this->isAllocated_CUDA, rhs.isAllocated_CUDA);
 			std::swap(this->isMetalCompatible, rhs.isMetalCompatible);
 		}
+
+
 
 		// Suppress the default copy constructor and assignment operator
 		MemoryBlock(const MemoryBlock&);

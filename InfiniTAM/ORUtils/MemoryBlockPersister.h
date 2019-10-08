@@ -65,7 +65,7 @@ namespace ORUtils
 				ReadBlockData(*fs, cpuBlock, blockSize);
 
 				// Then copy the data across to the GPU.
-				block.SetFrom(&cpuBlock, ORUtils::MemoryBlock<T>::CPU_TO_CUDA);
+				block.SetFrom(&cpuBlock, MemoryCopyDirection::CPU_TO_CUDA);
 			}
 			else
 			{
@@ -142,7 +142,7 @@ namespace ORUtils
 			{
 				// If we are saving the memory block from the GPU, first make a CPU copy of it.
 				ORUtils::MemoryBlock<T> cpuBlock(block.dataSize, MEMORYDEVICE_CPU);
-				cpuBlock.SetFrom(&block, ORUtils::MemoryBlock<T>::CUDA_TO_CPU);
+				cpuBlock.SetFrom(&block, MemoryCopyDirection::CUDA_TO_CPU);
 
 				// Then write the CPU copy to disk.
 				WriteBlock(*fs, cpuBlock);

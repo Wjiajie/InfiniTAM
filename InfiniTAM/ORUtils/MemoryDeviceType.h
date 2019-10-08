@@ -8,8 +8,33 @@
 /**
  * \brief The values of this enumeration denote the different types of memory device on which code may be running.
  */
-enum MemoryDeviceType
-{
-  MEMORYDEVICE_CPU,
-  MEMORYDEVICE_CUDA
+enum MemoryDeviceType {
+	MEMORYDEVICE_CPU,
+	MEMORYDEVICE_CUDA
 };
+
+enum MemoryCopyDirection {
+	CPU_TO_CPU, CPU_TO_CUDA, CUDA_TO_CPU, CUDA_TO_CUDA
+};
+
+inline
+MemoryCopyDirection determineMemoryCopyDirection(MemoryDeviceType targetMemoryType, MemoryDeviceType sourceMemoryType){
+	if(targetMemoryType == sourceMemoryType){
+		switch(targetMemoryType){
+			default:
+			case MEMORYDEVICE_CPU:
+				return CPU_TO_CPU;
+			case MEMORYDEVICE_CUDA:
+				return CUDA_TO_CUDA;
+		}
+	}else{
+		switch(targetMemoryType){
+			default:
+			case MEMORYDEVICE_CPU:
+				return CUDA_TO_CPU;
+			case MEMORYDEVICE_CUDA:
+				return CPU_TO_CUDA;
+		}
+	}
+}
+

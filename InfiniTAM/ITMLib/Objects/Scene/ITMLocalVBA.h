@@ -65,24 +65,22 @@ namespace ITMLib
 			ifs >> lastFreeBlockId >> allocatedSize;
 		}
 
-		ITMLocalVBA(MemoryDeviceType memoryType, int noBlocks, int blockSize)
-		{
-			this->memoryType = memoryType;
-
-			allocatedSize = noBlocks * blockSize;
-
-			voxelBlocks = new ORUtils::MemoryBlock<TVoxel>(allocatedSize, memoryType);
-			allocationList = new ORUtils::MemoryBlock<int>(noBlocks, memoryType);
+		void UpdateDeviceFromHost(){
+			this->voxelBlocks->UpdateDeviceFromHost();
 		}
 
-		~ITMLocalVBA(void)
-		{
-			delete voxelBlocks;
-			delete allocationList;
+		void UpdateHostFromDevice(){
+			this->voxelBlocks->UpdateHostFromDevice();
 		}
+
+
+		ITMLocalVBA(MemoryDeviceType memoryType, int noBlocks, int blockSize);
+		ITMLocalVBA(const ITMLocalVBA& other, MemoryDeviceType memoryType);
+
+		~ITMLocalVBA();
 
 		// Suppress the default copy constructor and assignment operator
-		ITMLocalVBA(const ITMLocalVBA&);
-		ITMLocalVBA& operator=(const ITMLocalVBA&);
+		ITMLocalVBA(const ITMLocalVBA&) = delete;
+		ITMLocalVBA& operator=(const ITMLocalVBA&) = delete;
 	};
 }

@@ -97,7 +97,7 @@ dualVoxelPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 	TVoxelSecondary& voxelSecondary = secondaryVoxels[locId];
 
 	(*functor)(voxelPrimary, voxelSecondary, voxelPosition);
-};
+}
 
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
 __global__ void
@@ -115,7 +115,7 @@ dualVoxelTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* seconda
 	TVoxelPrimary& voxelPrimary = primaryVoxels[locId];
 	TVoxelSecondary& voxelSecondary = secondaryVoxels[locId];
 	(*functor)(voxelPrimary, voxelSecondary);
-};
+}
 
 
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
@@ -138,7 +138,7 @@ dualVoxelTraversal_AllTrue_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 	if(!(*functor)(voxelPrimary, voxelSecondary)){
 		*falseEncountered = true;
 	}
-};
+}
 
 template<typename TStaticFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TWarp>
 __global__ void
@@ -157,7 +157,7 @@ staticDualVoxelWarpTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondar
 	TWarp& warp = warpVoxels[locId];
 
 	TStaticFunctor::run(voxelPrimary, voxelSecondary, warp);
-};
+}
 
 
 template<typename TStaticFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TWarp>
@@ -185,7 +185,7 @@ staticDualVoxelWarpPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxel
 
 	TStaticFunctor::run(voxelPrimary, voxelSecondary, warp, voxelPosition);
 
-};
+}
 
 
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TWarp>
@@ -205,7 +205,7 @@ dualVoxelWarpTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* sec
 
 	functor(voxelPrimary, voxelSecondary, warp);
 
-};
+}
 
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TWarp>
 __global__ void
@@ -232,6 +232,6 @@ dualVoxelWarpPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecond
 
 	(*functor)(voxelPrimary, voxelSecondary, warp, voxelPosition);
 
-};
+}
 
 }// end anonymous namespace (CUDA kernels)

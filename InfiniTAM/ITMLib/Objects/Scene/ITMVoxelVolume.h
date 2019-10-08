@@ -43,6 +43,9 @@ public:
 	ITMVoxelVolume(const ITMSceneParams *_sceneParams, bool _useSwapping, MemoryDeviceType _memoryType,
 	               Vector3i size = Vector3i(512), Vector3i offset = Vector3i(-256,-256,0));
 
+	// TODO
+	ITMVoxelVolume(const ITMVoxelVolume& other, MemoryDeviceType _memoryType);
+
 	~ITMVoxelVolume(void)
 	{
 		if (globalCache != nullptr) delete globalCache;

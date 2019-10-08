@@ -37,4 +37,17 @@ ITMVoxelVolume<TVoxel,TIndex>::ITMVoxelVolume(const ITMSceneParams* _sceneParams
 	else globalCache = nullptr;
 }
 
+template<class TVoxel, class TIndex>
+ITMVoxelVolume<TVoxel, TIndex>::ITMVoxelVolume(const ITMVoxelVolume& other, MemoryDeviceType _memoryType)
+	: sceneParams(other.sceneParams),
+	index(other.index,_memoryType),
+	localVBA(other.localVBA, _memoryType){
+	if(other.globalCache != nullptr){
+		// TODO: not sure if global cache needs to be shared or copied between copied scenes
+		globalCache = new ITMGlobalCache<TVoxel>();
+	}else{
+		globalCache = nullptr;
+	}
+}
+
 }  // namespace ITMLib

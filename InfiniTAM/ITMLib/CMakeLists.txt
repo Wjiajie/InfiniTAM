@@ -483,6 +483,8 @@ set(ITMLIB_OBJECTS_RENDERSTATES_HEADERS
 set(ITMLIB_OBJECTS_SCENE_SOURCES
 	Objects/Scene/ITMVoxelVolume.tpp
 	Objects/Scene/ITMVoxelVolume.cpp
+	Objects/Scene/ITMLocalVBA.tpp
+	Objects/Scene/ITMLocalVBA.cpp
 	)
 
 ##
