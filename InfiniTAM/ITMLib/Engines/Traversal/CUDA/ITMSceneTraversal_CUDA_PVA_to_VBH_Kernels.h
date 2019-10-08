@@ -65,7 +65,7 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue(
 		TVoxelArray* arrayVoxels,
 		const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
 		TVoxelHash* hashVoxels, const ITMHashEntry* hashTable,
-		int hashEntryCount, const Vector3i minArrayCoord,
+		const Vector3i minArrayCoord,
 		const Vector3i maxArrayCoord, const Vector3s minBlockPos,
 		TBooleanFunctor* functor, bool* falseOrAlteredEncountered) {
 
@@ -102,13 +102,48 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue(
 	                 arrayCoord.z * arrayInfo->size.x * arrayInfo->size.y;
 
 	if (FindHashAtPosition(hash, blockPosition, hashTable)) {
-		if (!(*functor)(hashVoxels[hashTable[hash].ptr * SDF_BLOCK_SIZE3 + idxInBlock], arrayVoxels[idxInArray])) {
+		if (!(*functor)(arrayVoxels[idxInArray], hashVoxels[hashTable[hash].ptr * SDF_BLOCK_SIZE3 + idxInBlock])) {
 			*falseOrAlteredEncountered = true;
 		}
 	} else {
 		if (isAltered(arrayVoxels[idxInArray])) {
 			*falseOrAlteredEncountered = true;
 		}
+	}
+}
+
+template<typename TBooleanFunctor, typename TVoxelArray, typename TVoxelHash>
+__global__ void checkIfAllocatedHashBlocksYieldTrue(
+		TVoxelArray* arrayVoxels, TVoxelHash* hashVoxels, const ITMHashEntry* hashTable,
+		int hashEntryCount, Vector6i arrayBounds, Vector3i arraySize,
+		TBooleanFunctor* functor, bool* falseEncountered) {
+
+	if (*falseEncountered || blockIdx.x > hashEntryCount || hashTable[blockIdx.x].ptr < 0) return;
+
+	const ITMHashEntry& hashEntry = hashTable[blockIdx.x];
+
+	//local (block) coords;
+	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
+	int idxInBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+
+	Vector3i globalPosition = (hashEntry.pos.toInt() * SDF_BLOCK_SIZE) + Vector3i(x,y,z);
+
+	if (globalPosition.x < arrayBounds.min_x || globalPosition.x >= arrayBounds.max_x ||
+	    globalPosition.y < arrayBounds.min_y || globalPosition.y >= arrayBounds.max_y ||
+	    globalPosition.z < arrayBounds.min_z || globalPosition.z >= arrayBounds.max_z) {
+		// outside of the array bounds
+		return;
+	}
+
+	Vector3i voxelPositionSansOffset = globalPosition - Vector3i(arrayBounds.min_x, arrayBounds.min_y, arrayBounds.min_z);
+	int idexInArray = voxelPositionSansOffset.x + voxelPositionSansOffset.y * arraySize.x +
+	                  voxelPositionSansOffset.z * arraySize.x * arraySize.y;
+
+	TVoxelHash hashVoxel = hashVoxels[hashEntry.ptr * SDF_BLOCK_SIZE3 + idxInBlock];
+	TVoxelArray arrayVoxel = arrayVoxels[idexInArray];
+
+	if (!(*functor)(arrayVoxel,hashVoxel)) {
+		*falseEncountered = true;
 	}
 }
 

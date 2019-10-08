@@ -123,7 +123,7 @@ public:
 
 		checkIfArrayContentIsUnalteredOrYieldsTrue
 				<< < gridSize_ArrayBlockEnvelope, cudaBlockSize_BlockVoxelPerThread >> >
-		                                          (voxelsArray, arrayInfo, voxelsHash, hashTable, hashEntryCount,
+		                                          (voxelsArray, arrayInfo, voxelsHash, hashTable,
 				                                          minArrayCoord, maxArrayCoord, minBlockPos, functor_device,
 				                                          falseOrAlteredEncountered.GetData(MEMORYDEVICE_CUDA));
 		ORcudaKernelCheck;
@@ -137,6 +137,45 @@ public:
 
 	}
 
+	template<typename TBooleanFunctor>
+	inline static bool
+	DualVoxelTraversal_AllTrue_AllocatedOnly(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
+			TBooleanFunctor& functor) {
+
+		int hashEntryCount = secondaryVolume->index.noTotalEntries;
+		TVoxelSecondary* hashVoxels = secondaryVolume->localVBA.GetVoxelBlocks();
+		TVoxelPrimary* arrayVoxels = primaryVolume->localVBA.GetVoxelBlocks();
+		const ITMVoxelBlockHash::IndexData* hashTable = secondaryVolume->index.getIndexData();
+		const ITMPlainVoxelArray::IndexData* arrayInfo = primaryVolume->index.getIndexData();
+		Vector3i startVoxel = primaryVolume->index.getVolumeOffset();
+		Vector3i arraySize = primaryVolume->index.getVolumeSize();
+		Vector3i endVoxel = startVoxel + arraySize; // open last traversal bound (this voxel doesn't get processed)
+		Vector6i arrayBounds(startVoxel.x, startVoxel.y, startVoxel.z, endVoxel.x, endVoxel.y, endVoxel.z);
+
+		// for result storage
+		ORUtils::MemoryBlock<bool> falseEncountered(1, true, true);
+		*falseEncountered.GetData(MEMORYDEVICE_CPU) = false;
+		falseEncountered.UpdateDeviceFromHost();
+		// transfer functor from RAM to VRAM (has to be done manually, i.e. without MemoryBlock at this point)
+		TBooleanFunctor* functor_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TBooleanFunctor)));
+		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TBooleanFunctor), cudaMemcpyHostToDevice));
+
+		dim3 cudaBlockSize_BlockVoxelPerThread(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+		dim3 gridSize_HashPerBlock(hashEntryCount);
+
+		checkIfAllocatedHashBlocksYieldTrue << <gridSize_HashPerBlock, cudaBlockSize_BlockVoxelPerThread>> >
+				(arrayVoxels, hashVoxels, hashTable, hashEntryCount, arrayBounds,
+				 arraySize, functor_device, falseEncountered.GetData(MEMORYDEVICE_CUDA));
+		ORcudaKernelCheck;
+// transfer functor from VRAM back to RAM (in case there was any alteration to the functor object)
+		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TBooleanFunctor), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(functor_device));
+		falseEncountered.UpdateHostFromDevice();
+		return !(*falseEncountered.GetData(MEMORYDEVICE_CPU));
+	}
 
 };
 
@@ -156,28 +195,29 @@ public:
 	 * \param functor a function object accepting two voxels by reference as arguments and returning true/false
 	 * \return true if the matching functor returns "true" for all allocated voxels, false otherwise.
 	 */
-	template<typename TFunctor>
+	template<typename TBooleanFunctor>
 	inline static bool
 	DualVoxelTraversal_AllTrue(
 			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryVolume,
 			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryVolume,
-			TFunctor& functor) {
-		ITMFlipArgumentBooleanFunctor<TVoxelPrimary, TVoxelSecondary, TFunctor> flipFunctor(functor);
+			TBooleanFunctor& functor) {
+		ITMFlipArgumentBooleanFunctor<TVoxelPrimary, TVoxelSecondary, TBooleanFunctor> flipFunctor(functor);
 		return ITMDualSceneTraversalEngine<TVoxelSecondary, TVoxelPrimary, ITMPlainVoxelArray, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA>::
 		DualVoxelTraversal_AllTrue(secondaryVolume, primaryVolume, flipFunctor);
 
 	}
 
 
-	template<typename TFunctor>
+	template<typename TBooleanFunctor>
 	inline static bool
 	DualVoxelTraversal_AllTrue_AllocatedOnly(
 			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryVolume,
 			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryVolume,
-			TFunctor& functor) {
-		ITMFlipArgumentBooleanFunctor<TVoxelPrimary, TVoxelSecondary, TFunctor> flipFunctor(functor);
+			TBooleanFunctor& functor) {
+		ITMFlipArgumentBooleanFunctor<TVoxelPrimary, TVoxelSecondary, TBooleanFunctor> flipFunctor(functor);
 		return ITMDualSceneTraversalEngine<TVoxelSecondary, TVoxelPrimary, ITMPlainVoxelArray, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA>::
 		DualVoxelTraversal_AllTrue_AllocatedOnly(secondaryVolume, primaryVolume, flipFunctor);
+
 	}
 };
 }//namespace ITMLib

@@ -19,7 +19,7 @@
 #include "../Interface/ITMSceneMotionTracker.h"
 #include "../../Utils/ITMHashBlockProperties.h"
 #include "../Shared/ITMCalculateWarpGradientBasedOnWarpedLiveFunctor.h"
-#include "../../Engines/Reconstruction/CPU/ITMDynamicHashManagementEngine_CPU.tpp"
+#include "../../Engines/Reconstruction/CPU/ITMHashAllocationEngine_CPU.tpp"
 
 
 namespace ITMLib {
@@ -61,7 +61,7 @@ public:
 
 private:
 
-	ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp> hashManager;
+	ITMHashAllocationEngine_CPU<TVoxel, TWarp> hashManager;
 	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor<TVoxel, TWarp, ITMVoxelBlockHash> calculateGradientFunctor;
 
 

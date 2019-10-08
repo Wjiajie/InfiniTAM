@@ -256,15 +256,15 @@ set(ITMLIB_ENGINES_RECONSTRUCTION_CPU_SOURCES
     Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU_PlainVoxelArray.tpp
 	Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU_PlainVoxelArray.cpp
     Engines/Reconstruction/CPU/ITMSurfelSceneReconstructionEngine_CPU.tpp
-    Engines/Reconstruction/CPU/ITMDynamicHashManagementEngine_CPU.tpp
-	Engines/Reconstruction/CPU/ITMDynamicHashManagementEngine_CPU.cpp
+	Engines/Reconstruction/CPU/ITMHashAllocationEngine_CPU.tpp
+	Engines/Reconstruction/CPU/ITMHashAllocationEngine_CPU.cpp
     )
 
 set(ITMLIB_ENGINES_RECONSTRUCTION_CPU_HEADERS
     Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.h
     Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU.h
     Engines/Reconstruction/CPU/ITMSurfelSceneReconstructionEngine_CPU.h
-    Engines/Reconstruction/CPU/ITMDynamicHashManagementEngine_CPU.h
+	Engines/Reconstruction/CPU/ITMHashAllocationEngine_CPU.h
     )
 
 ##
@@ -289,6 +289,7 @@ set(ITMLIB_ENGINES_RECONSTRUCTION_INTERFACE_SOURCES
     )
 
 set(ITMLIB_ENGINES_RECONSTRUCTION_INTERFACE_HEADERS
+	Engines/Reconstruction/Interface/ITMHashAllocationEngine.h
     Engines/Reconstruction/Interface/ITMSceneReconstructionEngine.h
     Engines/Reconstruction/Interface/ITMSurfelSceneReconstructionEngine.h
     Engines/Reconstruction/Interface/ITMDynamicSceneReconstructionEngine.h

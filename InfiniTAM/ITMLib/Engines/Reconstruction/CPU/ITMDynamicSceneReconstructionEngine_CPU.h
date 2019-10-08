@@ -6,7 +6,7 @@
 #include "../Interface/ITMDynamicSceneReconstructionEngine.h"
 #include "../../../Objects/Scene/ITMPlainVoxelArray.h"
 #include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "ITMDynamicHashManagementEngine_CPU.h"
+#include "ITMHashAllocationEngine_CPU.h"
 #include "../../Common/ITMWarpEnums.h"
 
 
@@ -55,7 +55,7 @@ private:
 	void WarpScene(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF);
-	ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp> hashManager;
+	ITMHashAllocationEngine_CPU<TVoxel, TWarp> hashManager;
 	ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>& sceneManager = ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::Inst();
 
 };

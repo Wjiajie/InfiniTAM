@@ -1,6 +1,6 @@
 //  ================================================================
-//  Created by Gregory Kramida on 5/25/18.
-//  Copyright (c) 2018-2025 Gregory Kramida
+//  Created by Gregory Kramida on 10/8/19.
+//  Copyright (c) 2019 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
 //  You may obtain a copy of the License at
@@ -15,21 +15,24 @@
 //  ================================================================
 #pragma once
 
-#include "../../../Objects/Scene/ITMVoxelBlockHash.h"
-#include "../../../Objects/Tracking/ITMTrackingState.h"
-#include "../../../Objects/RenderStates/ITMRenderState.h"
-#include "../../../Objects/Views/ITMView.h"
+#include "../../../Utils/ITMMath.h"
+#include "../../../../ORUtils/MemoryBlock.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
-#include "../../../Utils/ITMHashBlockProperties.h"
 #include "../../Common/ITMWarpEnums.h"
+#include "../../../Objects/RenderStates/ITMRenderState.h"
+#include "../../../Objects/Tracking/ITMTrackingState.h"
+#include "../../../Objects/Views/ITMView.h"
 
 namespace ITMLib {
-
+/**
+ * \brief A utility for allocating hash blocks in a voxel volume based on various inputs
+ * \tparam TVoxel type of voxels containing signed distance information
+ * \tparam TWarp type of warp (vectors used to map voxels between different locations)
+ */
 template<typename TVoxel, typename TWarp>
-class ITMDynamicHashManagementEngine_CPU {
+class ITMHashAllocationEngine {
+
 public:
-	ITMDynamicHashManagementEngine_CPU();
-	~ITMDynamicHashManagementEngine_CPU();
 	/**
 	 * \brief Given a view with a new depth image, compute the
 		visible blocks, allocate them and update the hash
@@ -42,34 +45,21 @@ public:
 	 * \param resetVisibleList  [in] reset visibility list upon completion
 	 */
 	void AllocateFromDepth(
-			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 			const ITMTrackingState* trackingState, const ITMRenderState* renderState,
-			bool onlyUpdateVisibleList = false, bool resetVisibleList = false);
+			bool onlyUpdateVisibleList = false, bool resetVisibleList = false) = 0;
 
-	void AllocateTSDFVolumeFromTSDFVolume(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* targetVolume,
-	                                      ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* sourceVolume);
+	void AllocateTSDFVolumeFromTSDFVolume(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetVolume,
+	                                      ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceVolume) = 0;
 
-	void AllocateWarpVolumeFromTSDFVolume(ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* targetVolume,
-	                                      ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* sourceVolume);
+	void AllocateWarpVolumeFromTSDFVolume(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* targetVolume,
+	                                      ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceVolume) = 0;
 
 	template<WarpType TWarpType>
 	void AllocateFromWarpedVolume(
-			ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* warpField,
-			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* sourceTSDF,
-			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* targetTSDF);
-
-private:
-
-	template<typename TVoxelTarget, typename TVoxelSource>
-	void AllocateFromVolumeGeneric(ITMVoxelVolume <TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
-	                               ITMVoxelVolume <TVoxelSource, ITMVoxelBlockHash>* sourceVolume);
-
-	ORUtils::MemoryBlock<unsigned char>* liveSceneHashBlockStates;
-	ORUtils::MemoryBlock<unsigned char>* targetSceneHashBlockStates;
-	ORUtils::MemoryBlock<Vector3s>* targetSceneHashBlockCoordinates;
+			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) = 0;
 };
 
-
-}// namespace ITMLib
-
-
+} // namespace ITMLib

@@ -13,7 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "ITMDynamicHashManagementEngine_CPU.h"
+#include "ITMHashAllocationEngine_CPU.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../../Utils/ITMHashBlockProperties.h"
 #include "../Shared/ITMDynamicHashManagementEngine_Shared.h"
@@ -29,25 +29,25 @@ using namespace ITMLib;
 // region ================================== CONSTRUCTORS / DESTRUCTORS ================================================
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::ITMDynamicHashManagementEngine_CPU() :
+ITMHashAllocationEngine_CPU<TVoxelCanonical, TVoxelLive>::ITMHashAllocationEngine_CPU() :
 		targetSceneHashBlockStates(
 				new ORUtils::MemoryBlock<unsigned char>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU)),
-		liveSceneHashBlockStates(
+		sourceSceneHashBlockStates(
 				new ORUtils::MemoryBlock<unsigned char>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU)),
 		targetSceneHashBlockCoordinates(
 				new ORUtils::MemoryBlock<Vector3s>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU)) {}
 
 
 template<typename TVoxelCanonical, typename TVoxelLive>
-ITMDynamicHashManagementEngine_CPU<TVoxelCanonical, TVoxelLive>::~ITMDynamicHashManagementEngine_CPU() {
+ITMHashAllocationEngine_CPU<TVoxelCanonical, TVoxelLive>::~ITMHashAllocationEngine_CPU() {
 	delete targetSceneHashBlockStates;
-	delete liveSceneHashBlockStates;
+	delete sourceSceneHashBlockStates;
 	delete targetSceneHashBlockCoordinates;
 }
 
 // endregion ===========================================================================================================
 template<typename TVoxel, typename TWarp>
-void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateFromDepth(
+void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromDepth(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState, bool onlyUpdateVisibleList, bool resetVisibleList) {
 	Vector2i depthImgSize = view->depth->noDims;
@@ -75,7 +75,7 @@ void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateFromDepth(
 	ITMHashSwapState* swapStates = scene->Swapping() ? scene->globalCache->GetSwapStates(false) : 0;
 	int* visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
 	uchar* hashBlockVisibilityTypes = renderState_vh->GetEntriesVisibleType();
-	uchar* liveEntryAllocationTypes = this->liveSceneHashBlockStates->GetData(MEMORYDEVICE_CPU);
+	uchar* liveEntryAllocationTypes = this->sourceSceneHashBlockStates->GetData(MEMORYDEVICE_CPU);
 	Vector3s* allocationBlockCoordinates = this->targetSceneHashBlockCoordinates->GetData(MEMORYDEVICE_CPU);
 	int noTotalEntries = scene->index.noTotalEntries;
 
@@ -165,7 +165,7 @@ void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateFromDepth(
 // region =========================== CANONICAL HASH BLOCK ALLOCATION ==================================================
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateTSDFVolumeFromTSDFVolume(
+void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateTSDFVolumeFromTSDFVolume(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetVolume,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceVolume) {
 	AllocateFromVolumeGeneric(targetVolume, sourceVolume);
@@ -173,7 +173,7 @@ void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateTSDFVolumeFromTS
 
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateWarpVolumeFromTSDFVolume(
+void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateWarpVolumeFromTSDFVolume(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* targetVolume,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceVolume) {
 	AllocateFromVolumeGeneric(targetVolume, sourceVolume);
@@ -181,7 +181,7 @@ void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateWarpVolumeFromTS
 
 template<typename TVoxel, typename TWarp>
 template<typename TVoxelTarget, typename TVoxelSource>
-void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateFromVolumeGeneric(
+void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromVolumeGeneric(
 		ITMVoxelVolume<TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
 		ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* sourceVolume) {
 
@@ -304,13 +304,13 @@ private:
  */
 template<typename TVoxel, typename TWarp>
 template<WarpType TWarpType>
-void ITMDynamicHashManagementEngine_CPU<TVoxel, TWarp>::AllocateFromWarpedVolume(
+void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromWarpedVolume(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
 	int entryCount = ITMVoxelBlockHash::noTotalEntries;
 	Vector3s* allocationBlockCoordinatesData = this->targetSceneHashBlockCoordinates->GetData(MEMORYDEVICE_CPU);
-	uchar* liveEntryAllocationStates = this->liveSceneHashBlockStates->GetData(MEMORYDEVICE_CPU);
+	uchar* liveEntryAllocationStates = this->sourceSceneHashBlockStates->GetData(MEMORYDEVICE_CPU);
 	//reset allocation types
 	memset(liveEntryAllocationStates, (unsigned char) 0, static_cast<size_t>(entryCount));
 
