@@ -46,9 +46,15 @@ macro(itm_add_test)
     include(${PROJECT_SOURCE_DIR}/cmake/LinkPNG.cmake)
     include(${PROJECT_SOURCE_DIR}/cmake/LinkRealSense.cmake)
     include(${PROJECT_SOURCE_DIR}/cmake/LinkUVC.cmake)
+
+    ##########################################
+    # Add the target as a CMake CTest        #
+    ##########################################
+    add_test(NAME ${ITM_ADD_TEST_NAME} COMMAND test_${ITM_ADD_TEST_NAME})
 endmacro()
 
 if (BUILD_TESTS)
+    enable_testing()
 
     ###########################
     # Find additional packages #
