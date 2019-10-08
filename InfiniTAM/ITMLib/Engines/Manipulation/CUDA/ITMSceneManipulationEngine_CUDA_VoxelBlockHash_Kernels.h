@@ -28,7 +28,7 @@ namespace {
 __global__
 void allocateVoxelBlocksList_device(
 		int* voxelAllocationList, int* excessAllocationList,
-		AllocationTempData* allocData,
+		CopyAllocationTempData* allocData,
 		ITMHashEntry* hashTable, int noTotalEntries,
 		uchar* entriesAllocType, Vector3s* blockCoords) {
 	int hash = threadIdx.x + blockIdx.x * blockDim.x;
@@ -147,7 +147,7 @@ __global__ void offsetCopy_device(TVoxel* destinationVoxels, const TVoxel* sourc
 
 template<typename TVoxel>
 __global__ void setVoxel_device(TVoxel* voxelArray, ITMHashEntry* hashTable,
-                                const Vector3i at, TVoxel value, AllocationTempData* setVoxelTempData,
+                                const Vector3i at, TVoxel value, CopyAllocationTempData* setVoxelTempData,
                                 const int* voxelAllocationList, const int* excessAllocationList, int voxelIndexInBlock,
                                 const Vector3s blockPos) {
 
@@ -205,7 +205,7 @@ __global__ void determineDestinationAllocationForNoOffsetCopy_device(
 		int noTotalEntries,
 		uchar* entriesAllocType,
 		Vector3s* allocationBlockCoords,
-		AllocationTempData* allocData,
+		CopyAllocationTempData* allocData,
 		CopyHashBlockPairInfo* copyHashIdBuffer,
 		const Vector6i bounds) {
 	int sourceHash = threadIdx.x + blockIdx.x * blockDim.x;
@@ -243,7 +243,7 @@ __global__ void determineDestinationAllocationForNoOffsetCopy_device(
 		const int noTotalEntries,
 		uchar* entriesAllocType,
 		Vector3s* allocationBlockCoords,
-		AllocationTempData* allocData,
+		CopyAllocationTempData* allocData,
 		CopyHashBlockPairInfo* copyHashIdBuffer) {
 	int sourceHash = threadIdx.x + blockIdx.x * blockDim.x;
 	if (sourceHash > noTotalEntries - 1) return;
@@ -271,7 +271,7 @@ __global__ void determineDestinationAllocationForOffsetCopy_device(
 		const ITMHashEntry* sourceHashTable,
 		uchar* entriesAllocType,
 		Vector3s* allocationBlockCoords,
-		AllocationTempData* allocData,
+		CopyAllocationTempData* allocData,
 		OffsetCopyHashBlockInfo* copyHashIdBuffer,
 		const Vector6i destinationBounds,
 		const Vector6i inverseOffsetBlockRange,

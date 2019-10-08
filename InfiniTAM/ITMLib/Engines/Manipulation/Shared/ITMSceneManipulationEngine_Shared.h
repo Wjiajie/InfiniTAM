@@ -21,7 +21,7 @@
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 
 
-struct AllocationTempData {
+struct CopyAllocationTempData {
 	int noAllocatedVoxelEntries;
 	int noAllocatedExcessEntries;
 	int noBlocksToCopy;

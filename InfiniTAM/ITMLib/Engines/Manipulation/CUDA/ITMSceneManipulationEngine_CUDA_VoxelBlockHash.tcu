@@ -33,8 +33,8 @@
 
 template<typename TVoxel>
 ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ITMSceneManipulationEngine_CUDA() {
-	ORcudaSafeCall(cudaMalloc((void**) &allocationTempData_device, sizeof(AllocationTempData)));
-	ORcudaSafeCall(cudaMallocHost((void**) &allocationTempData_host, sizeof(AllocationTempData)));
+	ORcudaSafeCall(cudaMalloc((void**) &allocationTempData_device, sizeof(CopyAllocationTempData)));
+	ORcudaSafeCall(cudaMallocHost((void**) &allocationTempData_host, sizeof(CopyAllocationTempData)));
 
 	ORcudaSafeCall(cudaMalloc((void**) &readVoxelResult_device, sizeof(ReadVoxelResult<TVoxel>)));
 	ORcudaSafeCall(cudaMallocHost((void**) &readVoxelResult_host, sizeof(ReadVoxelResult<TVoxel>)));
@@ -89,23 +89,23 @@ ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMVoxelVol
 	int* voxelAllocationList = scene->localVBA.GetAllocationList();
 	int* excessAllocationList = scene->index.GetExcessAllocationList();
 
-	AllocationTempData* tempData_host = (AllocationTempData*) allocationTempData_host;
+	CopyAllocationTempData* tempData_host = (CopyAllocationTempData*) allocationTempData_host;
 	tempData_host->noAllocatedVoxelEntries = scene->localVBA.lastFreeBlockId;
 	tempData_host->noAllocatedExcessEntries = scene->index.GetLastFreeExcessListId();
 	tempData_host->noBlocksToCopy = 0;
 	tempData_host->success = false;
 
-	ORcudaSafeCall(cudaMemcpyAsync(allocationTempData_device, tempData_host, sizeof(AllocationTempData),
+	ORcudaSafeCall(cudaMemcpyAsync(allocationTempData_device, tempData_host, sizeof(CopyAllocationTempData),
 	                               cudaMemcpyHostToDevice));
 	Vector3s blockPos;
 	int voxelIndexInBlock = pointToVoxelBlockPos(at, blockPos);
 
 	setVoxel_device<TVoxel> << < 1, 1 >> >
-	                                (voxels, hashTable, at, voxel, (AllocationTempData*) allocationTempData_device,
+	                                (voxels, hashTable, at, voxel, (CopyAllocationTempData*) allocationTempData_device,
 			                                voxelAllocationList, excessAllocationList, voxelIndexInBlock, blockPos);
 	ORcudaKernelCheck;
 	ORcudaSafeCall(
-			cudaMemcpy(tempData_host, allocationTempData_device, sizeof(AllocationTempData), cudaMemcpyDeviceToHost));
+			cudaMemcpy(tempData_host, allocationTempData_device, sizeof(CopyAllocationTempData), cudaMemcpyDeviceToHost));
 
 	scene->localVBA.lastFreeBlockId = tempData_host->noAllocatedVoxelEntries;
 	scene->index.SetLastFreeExcessListId(tempData_host->noAllocatedExcessEntries);
@@ -181,13 +181,13 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 	int* voxelAllocationList = destination->localVBA.GetAllocationList();
 	int* excessAllocationList = destination->index.GetExcessAllocationList();
 
-	AllocationTempData* tempData = (AllocationTempData*) allocationTempData_host;
+	CopyAllocationTempData* tempData = (CopyAllocationTempData*) allocationTempData_host;
 	tempData->noAllocatedVoxelEntries = destination->localVBA.lastFreeBlockId;
 	tempData->noAllocatedExcessEntries = destination->index.GetLastFreeExcessListId();
 	tempData->noBlocksToCopy = 0;
 	tempData->success = false;
 	ORcudaSafeCall(
-			cudaMemcpyAsync(allocationTempData_device, tempData, sizeof(AllocationTempData), cudaMemcpyHostToDevice));
+			cudaMemcpyAsync(allocationTempData_device, tempData, sizeof(CopyAllocationTempData), cudaMemcpyHostToDevice));
 
 	ORcudaSafeCall(cudaMemsetAsync(entriesAllocType_device, 0, sizeof(unsigned char) * totalHashEntryCount));
 	Vector6i destinationBounds(bounds.min_x + offset.x, bounds.min_y + offset.y, bounds.min_z + offset.z,
@@ -202,13 +202,13 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 		dim3 gridSizeAL((int) ceil((float) totalHashEntryCount / (float) cudaBlockSizeAL.x));
 		determineDestinationAllocationForNoOffsetCopy_device << < gridSizeAL, cudaBlockSizeAL >> > (
 				destinationHashTable, sourceHashTable, totalHashEntryCount, entriesAllocType_device,
-						blockCoords_device, (AllocationTempData*) allocationTempData_device, copyHashIdBuffer, bounds);
+						blockCoords_device, (CopyAllocationTempData*) allocationTempData_device, copyHashIdBuffer, bounds);
 		ORcudaKernelCheck;
 		ORcudaSafeCall(
-				cudaMemcpy(tempData, allocationTempData_device, sizeof(AllocationTempData), cudaMemcpyDeviceToHost));
+				cudaMemcpy(tempData, allocationTempData_device, sizeof(CopyAllocationTempData), cudaMemcpyDeviceToHost));
 		if (tempData->noBlocksToCopy == 0) return false; //source volume empty in bounds or destination hash full
 		allocateVoxelBlocksList_device << < gridSizeAL, cudaBlockSizeAL >> > (voxelAllocationList, excessAllocationList,
-				(AllocationTempData*) allocationTempData_device, destinationHashTable, totalHashEntryCount,
+				(CopyAllocationTempData*) allocationTempData_device, destinationHashTable, totalHashEntryCount,
 				entriesAllocType_device, blockCoords_device);
 		ORcudaKernelCheck;
 
@@ -246,18 +246,18 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 
 		determineDestinationAllocationForOffsetCopy_device << < gridSizeMK, cudaBlockSizeMK >> > (
 				destinationHashTable, sourceHashTable, entriesAllocType_device,
-						blockCoords_device, (AllocationTempData*) allocationTempData_device, copyHashIdBuffer,
+						blockCoords_device, (CopyAllocationTempData*) allocationTempData_device, copyHashIdBuffer,
 						destinationBounds, inverseOffsetBlockRange, destinationBlockRange, minDestinationBlockCoord);
 		ORcudaKernelCheck;
 		ORcudaSafeCall(
-				cudaMemcpy(tempData, allocationTempData_device, sizeof(AllocationTempData), cudaMemcpyDeviceToHost));
+				cudaMemcpy(tempData, allocationTempData_device, sizeof(CopyAllocationTempData), cudaMemcpyDeviceToHost));
 		if (tempData->noBlocksToCopy == 0) return false; //source volume empty in bounds or destination hash full
 
 		dim3 cudaBlockSizeAL(256, 1);
 		dim3 gridSizeAL((int) ceil((float) totalHashEntryCount / (float) cudaBlockSizeAL.x));
 
 		allocateVoxelBlocksList_device << < gridSizeAL, cudaBlockSizeAL >> > (voxelAllocationList, excessAllocationList,
-				(AllocationTempData*) allocationTempData_device, destinationHashTable, totalHashEntryCount,
+				(CopyAllocationTempData*) allocationTempData_device, destinationHashTable, totalHashEntryCount,
 				entriesAllocType_device, blockCoords_device);
 		ORcudaKernelCheck;
 
@@ -292,13 +292,13 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopyScene(
 	int* voxelAllocationList = destination->localVBA.GetAllocationList();
 	int* excessAllocationList = destination->index.GetExcessAllocationList();
 
-	AllocationTempData* tempData = (AllocationTempData*) allocationTempData_host;
+	CopyAllocationTempData* tempData = (CopyAllocationTempData*) allocationTempData_host;
 	tempData->noAllocatedVoxelEntries = destination->localVBA.lastFreeBlockId;
 	tempData->noAllocatedExcessEntries = destination->index.GetLastFreeExcessListId();
 	tempData->noBlocksToCopy = 0;
 	tempData->success = false;
 	ORcudaSafeCall(
-			cudaMemcpyAsync(allocationTempData_device, tempData, sizeof(AllocationTempData), cudaMemcpyHostToDevice));
+			cudaMemcpyAsync(allocationTempData_device, tempData, sizeof(CopyAllocationTempData), cudaMemcpyHostToDevice));
 
 	ORcudaSafeCall(cudaMemsetAsync(entriesAllocType_device, 0, sizeof(unsigned char) * totalHashEntryCount));
 
@@ -312,16 +312,16 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopyScene(
 		// compile lists of blocks to be allocated and lists of block pairs to be copied
 		determineDestinationAllocationForNoOffsetCopy_device << < gridSizeAL, cudaBlockSizeAL >> > (
 				destinationHashTable, sourceHashTable, totalHashEntryCount, entriesAllocType_device,
-						blockCoords_device, (AllocationTempData*) allocationTempData_device, copyHashIdBuffer);
+						blockCoords_device, (CopyAllocationTempData*) allocationTempData_device, copyHashIdBuffer);
 		ORcudaKernelCheck;
 		// allocate the necessary voxel blocks in the destination structure.
 		allocateVoxelBlocksList_device << < gridSizeAL, cudaBlockSizeAL >> > (voxelAllocationList, excessAllocationList,
-				(AllocationTempData*) allocationTempData_device, destinationHashTable, totalHashEntryCount,
+				(CopyAllocationTempData*) allocationTempData_device, destinationHashTable, totalHashEntryCount,
 				entriesAllocType_device, blockCoords_device);
 		ORcudaKernelCheck;
 
 		ORcudaSafeCall(
-				cudaMemcpy(tempData, allocationTempData_device, sizeof(AllocationTempData), cudaMemcpyDeviceToHost));
+				cudaMemcpy(tempData, allocationTempData_device, sizeof(CopyAllocationTempData), cudaMemcpyDeviceToHost));
 		destination->localVBA.lastFreeBlockId = tempData->noAllocatedVoxelEntries;
 		destination->index.SetLastFreeExcessListId(tempData->noAllocatedExcessEntries);
 

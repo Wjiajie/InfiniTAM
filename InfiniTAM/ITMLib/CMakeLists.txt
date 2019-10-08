@@ -281,6 +281,7 @@ set(ITMLIB_ENGINES_RECONSTRUCTION_CUDA_SOURCES
 
 set(ITMLIB_ENGINES_RECONSTRUCTION_CUDA_HEADERS
 	Engines/Reconstruction/CUDA/ITMHashAllocationEngine_CUDA.h
+	Engines/Reconstruction/CUDA/ITMHashAllocationEngine_CUDA_Kernels.h
     Engines/Reconstruction/CUDA/ITMSceneReconstructionEngine_CUDA.h
     Engines/Reconstruction/CUDA/ITMSurfelSceneReconstructionEngine_CUDA.h
     Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA.h

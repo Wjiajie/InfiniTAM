@@ -7,11 +7,6 @@
 #include "../../../Utils/ITMCUDAUtils.h"
 #include "../../../../ORUtils/JetbrainsCUDASyntax.hpp"
 
-struct AllocationTempData {
-	int noAllocatedVoxelEntries;
-	int noAllocatedExcessEntries;
-	int noVisibleEntries;
-};
 
 using namespace ITMLib;
 
