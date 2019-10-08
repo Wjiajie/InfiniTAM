@@ -18,6 +18,7 @@
 #include "../Interface/ITMDynamicSceneReconstructionEngine.h"
 #include "../../../Objects/Scene/ITMPlainVoxelArray.h"
 #include "../../Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
+#include "ITMHashAllocationEngine_CUDA.h"
 
 
 namespace ITMLib {
@@ -62,7 +63,7 @@ protected:
 	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF);
 
 private:
-	//ITMDynamicHashManagementEngine_CUDA<TVoxel, TWarp> hashManager;
+	ITMHashAllocationEngine_CUDA<TVoxel, TWarp> hashManager;
 	ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash> liveSceneManager;
 };
 

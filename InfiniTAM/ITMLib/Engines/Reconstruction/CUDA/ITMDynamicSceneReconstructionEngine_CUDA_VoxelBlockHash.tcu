@@ -17,6 +17,8 @@
 
 #include "ITMDynamicSceneReconstructionEngine_CUDA.h"
 
+#include "../../Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
+
 using namespace ITMLib;
 
 template<typename TVoxel, typename TWarp>
@@ -31,7 +33,9 @@ void
 ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::GenerateRawLiveSceneFromView(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(scene);
+	this->hashManager.AllocateFromDepth(scene,view,trackingState,renderState,false,false);
+	this->IntegrateIntoScene(scene,view,trackingState,renderState);
 }
 
 template<typename TVoxel, typename TWarp>
@@ -63,6 +67,7 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>:
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 		const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState) {
+	//TODO:
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
