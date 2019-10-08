@@ -1,6 +1,6 @@
 //  ================================================================
-//  Created by Gregory Kramida on 5/25/18.
-//  Copyright (c) 2018-2025 Gregory Kramida
+//  Created by Gregory Kramida on 10/8/19.
+//  Copyright (c) 2019 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
 //  You may obtain a copy of the License at
@@ -16,22 +16,14 @@
 #pragma once
 
 #include "../Interface/ITMHashAllocationEngine.h"
-#include "../../../Objects/Scene/ITMVoxelBlockHash.h"
-#include "../../../Objects/Tracking/ITMTrackingState.h"
-#include "../../../Objects/RenderStates/ITMRenderState.h"
-#include "../../../Objects/Views/ITMView.h"
-#include "../../../Objects/Scene/ITMVoxelVolume.h"
-#include "../../../Utils/ITMHashBlockProperties.h"
-#include "../../Common/ITMWarpEnums.h"
 
-namespace ITMLib {
-
+namespace ITMLib{
 template<typename TVoxel, typename TWarp>
-class ITMHashAllocationEngine_CPU :
+class ITMHashAllocationEngine_CUDA :
 		public ITMHashAllocationEngine<TVoxel, TWarp> {
 public:
-	ITMHashAllocationEngine_CPU();
-	~ITMHashAllocationEngine_CPU();
+	ITMHashAllocationEngine_CUDA();
+	~ITMHashAllocationEngine_CUDA();
 
 	void AllocateFromDepth(
 			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
@@ -62,6 +54,4 @@ private:
 };
 
 
-}// namespace ITMLib
-
-
+} // namespace ITMLib

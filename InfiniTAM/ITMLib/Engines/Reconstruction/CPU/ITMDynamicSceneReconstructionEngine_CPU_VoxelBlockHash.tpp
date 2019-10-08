@@ -109,7 +109,7 @@ ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::Gener
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState) {
 	this->sceneManager.ResetScene(scene);
-	this->hashManager.AllocateFromDepth(scene, view, trackingState, renderState);
+	this->hashManager.AllocateFromDepth(scene, view, trackingState, renderState, false, false);
 	this->IntegrateIntoScene(scene, view, trackingState, renderState);
 }
 

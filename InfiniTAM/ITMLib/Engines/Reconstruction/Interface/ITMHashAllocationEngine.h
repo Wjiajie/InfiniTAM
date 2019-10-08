@@ -44,22 +44,17 @@ public:
 	 * \param onlyUpdateVisibleList [in] whether we want to allocate only the hash entry blocks currently visible
 	 * \param resetVisibleList  [in] reset visibility list upon completion
 	 */
-	void AllocateFromDepth(
+	virtual void AllocateFromDepth(
 			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 			const ITMTrackingState* trackingState, const ITMRenderState* renderState,
-			bool onlyUpdateVisibleList = false, bool resetVisibleList = false) = 0;
+			bool onlyUpdateVisibleList, bool resetVisibleList) = 0;
 
-	void AllocateTSDFVolumeFromTSDFVolume(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetVolume,
+	virtual void AllocateTSDFVolumeFromTSDFVolume(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetVolume,
 	                                      ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceVolume) = 0;
 
-	void AllocateWarpVolumeFromTSDFVolume(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* targetVolume,
+	virtual void AllocateWarpVolumeFromTSDFVolume(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* targetVolume,
 	                                      ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceVolume) = 0;
 
-	template<WarpType TWarpType>
-	void AllocateFromWarpedVolume(
-			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
-			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
-			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) = 0;
 };
 
 } // namespace ITMLib

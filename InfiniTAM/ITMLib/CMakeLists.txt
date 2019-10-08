@@ -270,6 +270,8 @@ set(ITMLIB_ENGINES_RECONSTRUCTION_CPU_HEADERS
 ##
 set(ITMLIB_ENGINES_RECONSTRUCTION_CUDA_SOURCES
     Engines/Reconstruction/CUDA/ITMSceneReconstructionEngine_CUDA.tcu
+	Engines/Reconstruction/CUDA/ITMHashAllocationEngine_CUDA.tcu
+	Engines/Reconstruction/CUDA/ITMHashAllocationEngine_CUDA.cu
     Engines/Reconstruction/CUDA/ITMSurfelSceneReconstructionEngine_CUDA.tcu
     Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA_PlainVoxelArray.tcu
 	Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA_PlainVoxelArray.cu
@@ -278,6 +280,7 @@ set(ITMLIB_ENGINES_RECONSTRUCTION_CUDA_SOURCES
     )
 
 set(ITMLIB_ENGINES_RECONSTRUCTION_CUDA_HEADERS
+	Engines/Reconstruction/CUDA/ITMHashAllocationEngine_CUDA.h
     Engines/Reconstruction/CUDA/ITMSceneReconstructionEngine_CUDA.h
     Engines/Reconstruction/CUDA/ITMSurfelSceneReconstructionEngine_CUDA.h
     Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA.h
