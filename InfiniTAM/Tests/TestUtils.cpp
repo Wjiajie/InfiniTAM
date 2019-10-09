@@ -24,8 +24,10 @@
 
 using namespace ITMLib;
 
-template void GenerateTestScene01<ITMVoxel,ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* destination);
-template void GenerateTestScene01<ITMVoxel,ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* destination);
+template void GenerateTestScene_CPU<ITMVoxel,ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* scene);
+template void GenerateTestScene_CPU<ITMVoxel,ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* scene);
+template void GenerateTestScene_CUDA<ITMVoxel,ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* scene);
+template void GenerateTestScene_CUDA<ITMVoxel,ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* scene);
 
 template void simulateVoxelAlteration<ITMVoxel>(ITMVoxel& voxel, float newSdfValue);
 template void simulateRandomVoxelAlteration<ITMVoxel>(ITMVoxel& voxel);

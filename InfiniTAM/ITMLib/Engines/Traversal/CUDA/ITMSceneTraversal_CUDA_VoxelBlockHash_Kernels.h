@@ -37,6 +37,33 @@ struct HashMatchInfo {
 };
 
 namespace {
+// CUDA kernels
+
+template<typename TStaticFunctor, typename TVoxel>
+__global__ void
+staticVoxelTraversal_device(TVoxel* voxels, const ITMHashEntry* hashTable) {
+	int hash = blockIdx.x;
+	const ITMHashEntry& hashEntry = hashTable[hash];
+	if(hashEntry.ptr < 0) return;
+	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
+	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	TVoxel& voxel = voxels[hashEntry.ptr * SDF_BLOCK_SIZE3 + locId];
+	TStaticFunctor::run(voxel);
+}
+
+template<typename TFunctor, typename TVoxel>
+__global__ void
+voxelTraversal_device(TVoxel* voxels, const ITMHashEntry* hashTable,
+                      TFunctor* functor) {
+	int hash = blockIdx.x;
+	const ITMHashEntry& hashEntry = hashTable[hash];
+	if(hashEntry.ptr < 0) return;
+	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
+	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	TVoxel& voxel = voxels[hashEntry.ptr * SDF_BLOCK_SIZE3 + locId];
+	(*functor)(voxel);
+}
+
 __global__ void matchUpHashEntriesByPosition(const ITMHashEntry* primaryHashTable,
                                              const ITMHashEntry* secondaryHashTable,
                                              int hashEntryCount,

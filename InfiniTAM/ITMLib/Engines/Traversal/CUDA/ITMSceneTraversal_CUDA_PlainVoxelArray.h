@@ -28,7 +28,6 @@
 namespace ITMLib {
 
 
-// static-member-only classes are used here instead of namespaces to utilize template specialization (and maximize code reuse)
 template<typename TVoxel>
 class ITMSceneTraversalEngine<TVoxel, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA> {
 public:
@@ -45,6 +44,31 @@ public:
 
 		staticVoxelTraversal_device<TStaticFunctor, TVoxel> << < gridSize, cudaBlockSize >> > (voxelArray, arrayInfo);
 		ORcudaKernelCheck;
+	}
+// endregion ===========================================================================================================
+// region ================================ DYNAMIC SINGLE-SCENE TRAVERSAL ==============================================
+	template<typename TFunctor>
+	inline static void
+	VoxelTraversal(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
+		TVoxel* voxelArray = scene->localVBA.GetVoxelBlocks();
+		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.getIndexData();
+
+		dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+		dim3 gridSize(scene->index.getVolumeSize().x / cudaBlockSize.x,
+		              scene->index.getVolumeSize().y / cudaBlockSize.y,
+		              scene->index.getVolumeSize().z / cudaBlockSize.z);
+
+		// transfer functor from RAM to VRAM
+		TFunctor* functor_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TFunctor)));
+		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TFunctor), cudaMemcpyHostToDevice));
+
+		voxelTraversal_device<TFunctor, TVoxel> << < gridSize, cudaBlockSize >> > (voxelArray, arrayInfo, functor_device);
+		ORcudaKernelCheck;
+
+		// transfer functor from VRAM back to RAM
+		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TFunctor), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(functor_device));
 	}
 // endregion ===========================================================================================================
 };

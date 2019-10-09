@@ -150,7 +150,7 @@ struct ComputeNonTruncatedVoxelCountFunctor<true, TVoxel, TIndex> {
 template<typename TVoxel, typename TIndex>
 int ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeNonTruncatedVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	return ComputeNonTruncatedVoxelCountFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene);
-};
+}
 //================================================== COUNT VOXELS WITH SPECIFIC VALUE ==================================
 
 template<bool hasSDFInformation, typename TVoxel, typename TIndex>
@@ -186,7 +186,7 @@ int
 ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeVoxelWithNonZeroSdfCount(ITMVoxelVolume<TVoxel, TIndex>* scene,
                                                                                   float value) {
 	return ComputeVoxelWithNonZeroSDFCountFunctor<TVoxel::hasSDFInformation, TVoxel, TIndex>::compute(scene, value);
-};
+}
 //================================================== SUM OF TOTAL SDF ==================================================
 
 template<bool hasSemanticInformation, typename TVoxel, typename TIndex>
@@ -225,13 +225,13 @@ ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeNonTruncatedVoxelAbsSdf
 	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene,
 	                                                                              VoxelFlags::VOXEL_NONTRUNCATED);
 
-};
+}
 
 template<typename TVoxel, typename TIndex>
 double
 ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene, VoxelFlags::VOXEL_TRUNCATED);
-};
+}
 
 //======================================================================================================================
 

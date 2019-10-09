@@ -16,6 +16,9 @@
 
 #include <device_atomic_functions.h>
 #include "ITMSceneStatisticsCalculator_CUDA.h"
+#include "../../../ITMLibSettings.h"
+#include "../../../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h"
+#include "../../../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
 
 using namespace ITMLib;
 
@@ -39,17 +42,17 @@ struct ComputeVoxelBoundsFunctor<TVoxel, ITMVoxelBlockHash> {
 		int noTotalEntries = scene->index.noTotalEntries;
 
 		dim3 cudaBlockSize(256, 1);
-		dim3 cudaGridSize((int)ceil((float)noTotalEntries / (float)cudaBlockSize.x));
+		dim3 cudaGridSize((int) ceil((float) noTotalEntries / (float) cudaBlockSize.x));
 
 		Vector6i* boundsCuda = nullptr;
 
-		ORcudaSafeCall(cudaMalloc((void**)&boundsCuda, sizeof(Vector6i)));
-		ORcudaSafeCall(cudaMemcpy(boundsCuda, (void*)&bounds, sizeof(Vector6i), cudaMemcpyHostToDevice));
+		ORcudaSafeCall(cudaMalloc((void**) &boundsCuda, sizeof(Vector6i)));
+		ORcudaSafeCall(cudaMemcpy(boundsCuda, (void*) &bounds, sizeof(Vector6i), cudaMemcpyHostToDevice));
 
-		computeVoxelBounds << <cudaGridSize, cudaBlockSize>> > (hashTable, boundsCuda, noTotalEntries);
+		computeVoxelBounds << < cudaGridSize, cudaBlockSize >> > (hashTable, boundsCuda, noTotalEntries);
 		ORcudaKernelCheck;
 
-		ORcudaSafeCall(cudaMemcpy((void*)&bounds, boundsCuda, sizeof(Vector6i), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaMemcpy((void*) &bounds, boundsCuda, sizeof(Vector6i), cudaMemcpyDeviceToHost));
 		ORcudaSafeCall(cudaFree(boundsCuda));
 		return bounds;
 	}
@@ -89,10 +92,48 @@ int ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeAllocatedHashBlock
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
+
+template<bool hasSemanticInformation, typename TVoxel, typename TIndex>
+struct ComputeNonTruncatedVoxelCountFunctor;
+
+template<class TVoxel, typename TIndex>
+struct ComputeNonTruncatedVoxelCountFunctor<false, TVoxel, TIndex> {
+	static int compute(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+		DIEWITHEXCEPTION("Voxels need to have semantic information to be marked as truncated or non-truncated.");
+	}
+};
+template<class TVoxel, typename TIndex>
+struct ComputeNonTruncatedVoxelCountFunctor<true, TVoxel, TIndex> {
+	//not an optimal way (reduction would be much faster), but works -- we don't need this uber-fast
+	__host__
+	static int compute(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+		ComputeNonTruncatedVoxelCountFunctor instance;
+
+		ITMSceneTraversalEngine<TVoxel, TIndex, ITMLibSettings::DEVICE_CUDA>::
+		        VoxelTraversal(scene,instance);
+		int count = 0;
+		cudaMemcpy(&count, instance.count_device, sizeof(int), cudaMemcpyDeviceToHost);
+		return count;
+	}
+
+	int* count_device = nullptr;
+	__device__
+	void operator()(TVoxel& voxel) {
+		atomicAdd(count_device, (int) (voxel.flags == ITMLib::VOXEL_NONTRUNCATED));
+	}
+	ComputeNonTruncatedVoxelCountFunctor(){
+		ORcudaSafeCall(cudaMalloc((void**)&count_device, sizeof(int)));
+		ORcudaSafeCall(cudaMemset(count_device, 0, sizeof(int)));
+	}
+	~ComputeNonTruncatedVoxelCountFunctor(){
+		ORcudaSafeCall(cudaFree(count_device));
+	}
+};
+
 template<typename TVoxel, typename TIndex>
 int ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeNonTruncatedVoxelCount(
 		ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	return ComputeNonTruncatedVoxelCountFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene);
 }
 
 template<typename TVoxel, typename TIndex>

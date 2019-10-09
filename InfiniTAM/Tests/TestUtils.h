@@ -23,7 +23,10 @@
 using namespace ITMLib;
 
 template<class TVoxel, class TIndex>
-void GenerateTestScene01(ITMVoxelVolume<TVoxel, TIndex>* scene);
+void GenerateTestScene_CPU(ITMVoxelVolume<TVoxel, TIndex>* scene);
+
+template<class TVoxel, class TIndex>
+void GenerateTestScene_CUDA(ITMVoxelVolume<TVoxel, TIndex>* scene);
 
 void GenerateAndLogKillingScene01();
 

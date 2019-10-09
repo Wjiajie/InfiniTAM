@@ -1,3 +1,6 @@
+# temporarily disable online tests (VTK build is too slow -- causes overtime -- need to make VTK optional first)
+test: off
+
 image:
   - Ubuntu1804
   # - Visual Studio 2017

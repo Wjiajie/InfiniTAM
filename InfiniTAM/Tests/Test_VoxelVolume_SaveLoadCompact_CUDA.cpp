@@ -24,23 +24,23 @@
 #include "../ITMLib/ITMLibDefines.h"
 #include "../ITMLib/Objects/Scene/ITMVoxelVolume.h"
 #include "../ITMLib/Utils/ITMLibSettings.h"
-#include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "TestUtils.h"
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
-#include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
-#include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
+#include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
+#include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h"
 
 using namespace ITMLib;
 
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray> SceneFileIOEngine_PVA;
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
-typedef ITMSceneStatisticsCalculator_CPU<ITMVoxel, ITMPlainVoxelArray> SceneStatisticsCalculator_PVA;
-typedef ITMSceneStatisticsCalculator_CPU<ITMVoxel, ITMVoxelBlockHash> SceneStatisticsCalculator_VBH;
+typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMPlainVoxelArray> SceneStatisticsCalculator_PVA;
+typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMVoxelBlockHash> SceneStatisticsCalculator_VBH;
 
-BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
+BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CUDA) {
 
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
-	settings->deviceType = ITMLibSettings::DEVICE_CPU;
+	settings->deviceType = ITMLibSettings::DEVICE_CUDA;
 
 	Vector3i volumeSize(40, 68, 20);
 	Vector3i volumeOffset(-20, 0, 0);
@@ -53,15 +53,15 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 			settings->GetMemoryType(), volumeSize, volumeOffset);
 
-	GenerateTestScene_CPU(&scene1);
+	GenerateTestScene_CUDA(&scene1);
 	std::string path = "TestData/test_PVA_";
 	SceneFileIOEngine_PVA::SaveToDirectoryCompact(&scene1, path);
-	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&scene2);
+	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(&scene2);
 	SceneFileIOEngine_PVA::LoadFromDirectoryCompact(&scene2, path);
 
 	float tolerance = 1e-8;
 	BOOST_REQUIRE_EQUAL( SceneStatisticsCalculator_PVA::Instance().ComputeNonTruncatedVoxelCount(&scene2), 19456);
-	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene2, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
@@ -71,13 +71,13 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 			settings->GetMemoryType());
 
-	GenerateTestScene_CPU(&scene3);
+	GenerateTestScene_CUDA(&scene3);
 	path = "TestData/test_VBH_";
 	SceneFileIOEngine_VBH::SaveToDirectoryCompact(&scene3, path);
-	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene4);
+	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene4);
 	SceneFileIOEngine_VBH::LoadFromDirectoryCompact(&scene4, path);
 
 	BOOST_REQUIRE_EQUAL( SceneStatisticsCalculator_VBH::Instance().ComputeNonTruncatedVoxelCount(&scene4), 19456);
-	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene3, &scene4, tolerance));
-	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene4, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene3, &scene4, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene4, tolerance));
 }

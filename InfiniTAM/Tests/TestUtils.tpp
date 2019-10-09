@@ -17,12 +17,13 @@
 #include "TestUtils.h"
 #include "../ITMLib/Utils/ITMLibSettings.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "../ITMLib/Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
 
 using namespace ITMLib;
 
 template<class TVoxel, class TIndex>
-void GenerateTestScene01(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+void GenerateTestScene_CPU(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(scene);
 	const int narrowBandThicknessVoxels = 10;
 	int xOffset = 8;
@@ -41,6 +42,32 @@ void GenerateTestScene01(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 			for (int y = 0; y < surfaceSizeVoxelsY; y++) {
 				ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().SetVoxel(scene, Vector3i(xPos, y, z), voxelPos);
 				ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().SetVoxel(scene, Vector3i(xNeg, y, z), voxelNeg);
+			}
+		}
+	}
+
+}
+
+template<class TVoxel, class TIndex>
+void GenerateTestScene_CUDA(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+	ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(scene);
+	const int narrowBandThicknessVoxels = 10;
+	int xOffset = 8;
+	int surfaceSizeVoxelsZ = 16;
+	int surfaceSizeVoxelsY = 64;
+
+	for (int iVoxelAcrossBand = 0; iVoxelAcrossBand < narrowBandThicknessVoxels + 1; iVoxelAcrossBand++) {
+		float sdfMagnitude = 0.0f + static_cast<float>(iVoxelAcrossBand) * (1.0f / narrowBandThicknessVoxels);
+		int xPos = xOffset + iVoxelAcrossBand;
+		int xNeg = xOffset - iVoxelAcrossBand;
+		TVoxel voxelPos, voxelNeg;
+		simulateVoxelAlteration(voxelNeg, sdfMagnitude);
+		simulateVoxelAlteration(voxelPos, -sdfMagnitude);
+
+		for (int z = 0; z < surfaceSizeVoxelsZ; z++) {
+			for (int y = 0; y < surfaceSizeVoxelsY; y++) {
+				ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst().SetVoxel(scene, Vector3i(xPos, y, z), voxelPos);
+				ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst().SetVoxel(scene, Vector3i(xNeg, y, z), voxelNeg);
 			}
 		}
 	}

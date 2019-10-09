@@ -29,11 +29,26 @@ staticVoxelTraversal_device(TVoxel* voxels, const ITMLib::ITMPlainVoxelArray::IT
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
 
-	if (x > arrayInfo->size.x || y > arrayInfo->size.y || z > arrayInfo->size.z) return;
+	if (x >= arrayInfo->size.x || y >= arrayInfo->size.y || z >= arrayInfo->size.z) return;
 
 	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
 	TVoxel& voxel = voxels[locId];
 	TStaticFunctor::run(voxel);
+}
+
+template<typename TFunctor, typename TVoxel>
+__global__ void
+voxelTraversal_device(TVoxel* voxels, const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+                      TFunctor* functor) {
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y;
+	int z = blockIdx.z * blockDim.z + threadIdx.z;
+
+	if (x >= arrayInfo->size.x || y >= arrayInfo->size.y || z >= arrayInfo->size.z) return;
+
+	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
+	TVoxel& voxel = voxels[locId];
+	(*functor)(voxel);
 }
 
 template<typename TStaticFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
@@ -63,7 +78,7 @@ staticDualVoxelTraversal_AllTrue_device(TVoxelPrimary* primaryVoxels, TVoxelSeco
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
 
-	if (x > arrayInfo->size.x || y > arrayInfo->size.y || z > arrayInfo->size.z) return;
+	if (x >= arrayInfo->size.x || y >= arrayInfo->size.y || z >= arrayInfo->size.z) return;
 
 	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
 	TVoxelPrimary& voxelPrimary = primaryVoxels[locId];
@@ -83,7 +98,7 @@ dualVoxelPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
 
-	if (x > arrayInfo->size.x || y > arrayInfo->size.y || z > arrayInfo->size.z) return;
+	if (x >= arrayInfo->size.x || y >= arrayInfo->size.y || z >= arrayInfo->size.z) return;
 
 	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
 
@@ -108,7 +123,7 @@ dualVoxelTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* seconda
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
 
-	if (x > arrayInfo->size.x || y > arrayInfo->size.y || z > arrayInfo->size.z) return;
+	if (x >= arrayInfo->size.x || y >= arrayInfo->size.y || z >= arrayInfo->size.z) return;
 
 	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
 
@@ -129,7 +144,7 @@ dualVoxelTraversal_AllTrue_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
 
-	if (x > arrayInfo->size.x || y > arrayInfo->size.y || z > arrayInfo->size.z) return;
+	if (x >= arrayInfo->size.x || y >= arrayInfo->size.y || z >= arrayInfo->size.z) return;
 
 	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
 
@@ -148,7 +163,7 @@ staticDualVoxelWarpTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondar
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
 
-	if (x > arrayInfo->size.x || y > arrayInfo->size.y || z > arrayInfo->size.z) return;
+	if (x >= arrayInfo->size.x || y >= arrayInfo->size.y || z >= arrayInfo->size.z) return;
 
 	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
 
@@ -169,7 +184,7 @@ staticDualVoxelWarpPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxel
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
 
-	if (x > arrayInfo->size.x || y > arrayInfo->size.y || z > arrayInfo->size.z) return;
+	if (x >= arrayInfo->size.x || y >= arrayInfo->size.y || z >= arrayInfo->size.z) return;
 
 	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
 
@@ -216,7 +231,7 @@ dualVoxelWarpPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecond
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
 
-	if (x > arrayInfo->size.x || y > arrayInfo->size.y || z > arrayInfo->size.z) return;
+	if (x >= arrayInfo->size.x || y >= arrayInfo->size.y || z >= arrayInfo->size.z) return;
 
 	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
 

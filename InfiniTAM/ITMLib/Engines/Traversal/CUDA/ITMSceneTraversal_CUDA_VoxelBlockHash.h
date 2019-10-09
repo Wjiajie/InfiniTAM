@@ -24,6 +24,58 @@
 
 namespace ITMLib {
 
+//Nota Bene: "STATIC" and "DYNAMIC" in region titles refer to the way functors are used, i.e.
+// for "static" traversal, the template argument needs to have a static "run" function, and no actual functor object
+// needs to be passed. For "dynamic" traversal, the functor is actually passed in, which can be critical for any
+// kind of traversal where some state is updated in a thread-safe manner: this state can be stored as a part of the
+// functor.
+
+template<typename TVoxel>
+class ITMSceneTraversalEngine<TVoxel, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA> {
+public:
+// region ================================ STATIC SINGLE-SCENE TRAVERSAL ===============================================
+	template<typename TStaticFunctor>
+	inline static void StaticVoxelTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
+		TVoxel* voxelArray = scene->localVBA.GetVoxelBlocks();
+		const ITMHashEntry* hashTable = scene->index.getIndexData();
+		int hashEntryCount = scene->index.noTotalEntries;
+
+		dim3 cudaBlockSize_BlockVoxelPerThread(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+		dim3 gridSize_HashPerBlock(hashEntryCount);
+
+		staticVoxelTraversal_device<TStaticFunctor, TVoxel>
+		        << < gridSize_HashPerBlock, cudaBlockSize_BlockVoxelPerThread >> > (voxelArray, hashTable);
+		ORcudaKernelCheck;
+	}
+// endregion ===========================================================================================================
+// region ================================ DYNAMIC SINGLE-SCENE TRAVERSAL ==============================================
+	template<typename TFunctor>
+	inline static void
+	VoxelTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
+		TVoxel* voxelArray = scene->localVBA.GetVoxelBlocks();
+		const ITMHashEntry* hashTable = scene->index.getIndexData();
+		int hashEntryCount = scene->index.noTotalEntries;
+
+		dim3 cudaBlockSize_BlockVoxelPerThread(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+		dim3 gridSize_HashPerBlock(hashEntryCount);
+
+		// transfer functor from RAM to VRAM
+		TFunctor* functor_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TFunctor)));
+		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TFunctor), cudaMemcpyHostToDevice));
+
+		voxelTraversal_device<TFunctor, TVoxel>
+		        << < gridSize_HashPerBlock, cudaBlockSize_BlockVoxelPerThread >> >
+		        (voxelArray, hashTable, functor_device);
+		ORcudaKernelCheck;
+
+		// transfer functor from VRAM back to RAM
+		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TFunctor), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(functor_device));
+	}
+// endregion ===========================================================================================================
+};
+
 template<typename TVoxelPrimary, typename TVoxelSecondary>
 class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMVoxelBlockHash, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA> {
 public:

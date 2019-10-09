@@ -67,6 +67,7 @@ if (BUILD_TESTS)
     itm_add_test(NAME VoxelVolume_ConstructFromImage_CPU SOURCES Test_VoxelVolume_ConstructFromImage_CPU.cpp)
     itm_add_test(NAME VoxelVolume_ConstructFromImage_CUDA SOURCES Test_VoxelVolume_ConstructFromImage_CUDA.cpp)
     itm_add_test(NAME VoxelVolume_SaveLoadCompact_CPU SOURCES Test_VoxelVolume_SaveLoadCompact_CPU.cpp)
+    itm_add_test(NAME VoxelVolume_SaveLoadCompact_CUDA SOURCES Test_VoxelVolume_SaveLoadCompact_CUDA.cpp)
     itm_add_test(NAME IntArrayMap3D SOURCES TestIntArrayMap3D.cpp)
     itm_add_test(NAME ImageMaskReader SOURCES TestImageMaskReader.cpp)
 
