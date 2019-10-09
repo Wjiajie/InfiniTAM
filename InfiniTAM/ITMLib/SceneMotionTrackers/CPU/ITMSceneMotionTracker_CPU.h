@@ -18,7 +18,7 @@
 #include <opencv2/core/mat.hpp>
 #include "../Interface/ITMSceneMotionTracker.h"
 #include "../../Utils/ITMHashBlockProperties.h"
-#include "../Shared/ITMCalculateWarpGradientBasedOnWarpedLiveFunctor.h"
+#include "../Shared/ITMSceneMotionTracker_WarpCalculationFunctors.h"
 #include "../../Engines/Reconstruction/CPU/ITMHashAllocationEngine_CPU.tpp"
 
 

@@ -113,6 +113,7 @@ private:
 public:
 
 	// region ========================================= CONSTRUCTOR ====================================================
+	_CPU_AND_GPU_CODE_
 	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor(
 			typename ITMSceneMotionTracker<TVoxel, TWarp, TIndex>::Parameters parameters,
 			typename ITMSceneMotionTracker<TVoxel, TWarp, TIndex>::Switches switches) :
@@ -123,6 +124,7 @@ public:
 			hasFocusCoordinates(ITMLibSettings::Instance().FocusCoordinatesAreSpecified()),
 			focusCoordinates(ITMLibSettings::Instance().GetFocusCoordinates()) {}
 
+	_CPU_AND_GPU_CODE_
 	void
 	PrepareForOptimization(ITMVoxelVolume<TVoxel, TIndex>* liveScene, ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
 	                       ITMVoxelVolume<TWarp, TIndex>* warpField, bool restrictZtrackingForDebugging) {
@@ -142,14 +144,14 @@ public:
 
 	// endregion =======================================================================================================
 	_CPU_AND_GPU_CODE_
-	void operator()(TVoxel& liveVoxel, TVoxel& canonicalVoxel, TWarp& warp, Vector3i voxelPosition) {
+	void operator()(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) {
 
-		if (!VoxelIsConsideredForTracking(canonicalVoxel, liveVoxel)) return;
-		bool computeDataTerm = VoxelIsConsideredForDataTerm(canonicalVoxel, liveVoxel);
+		if (!VoxelIsConsideredForTracking(voxelCanonical, voxelLive)) return;
+		bool computeDataTerm = VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive);
 
 		Vector3f& framewiseWarp = warp.flow_warp;
-		float liveSdf = TVoxel::valueToFloat(liveVoxel.sdf);
-		float canonicalSdf = TVoxel::valueToFloat(canonicalVoxel.sdf);
+		float liveSdf = TVoxel::valueToFloat(voxelLive.sdf);
+		float canonicalSdf = TVoxel::valueToFloat(voxelCanonical.sdf);
 
 		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
 
@@ -445,6 +447,43 @@ private:
 	const typename ITMSceneMotionTracker<TVoxel, TWarp, TIndex>::Parameters parameters;
 	const typename ITMSceneMotionTracker<TVoxel, TWarp, TIndex>::Switches switches;
 
+};
+
+template<typename TVoxel, typename TWarp>
+struct ITMSceneMotionDataTermFunctor{
+
+	ITMSceneMotionDataTermFunctor(){
+
+	}
+
+	~ITMSceneMotionDataTermFunctor(){
+		//TODO
+	}
+
+	float* dataEnergy;
+
+	_CPU_AND_GPU_CODE_
+	void operator()(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition){
+		if (!VoxelIsConsideredForTracking(voxelCanonical, voxelLive)
+		    || !VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive))
+			return;
+		Vector3f& framewiseWarp = warp.flow_warp;
+		float liveSdf = TVoxel::valueToFloat(voxelLive.sdf);
+		float canonicalSdf = TVoxel::valueToFloat(voxelCanonical.sdf);
+		Vector3f localDataEnergyGradient(0.0f);
+		float localDataEnergy;
+		Vector3f liveSdfJacobian;
+
+		ComputeLiveJacobian_CentralDifferences(
+				liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache);
+		// Compute data term error / energy
+		float sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
+		// (φ_n(Ψ)−φ_{global}) ∇φ_n(Ψ) - also denoted as - (φ_{proj}(Ψ)−φ_{model}) ∇φ_{proj}(Ψ)
+		// φ_n(Ψ) = φ_n(x+u, y+v, z+w), where u = u(x,y,z), v = v(x,y,z), w = w(x,y,z)
+		// φ_{global} = φ_{global}(x, y, z)
+		localDataEnergyGradient = sdfDifferenceBetweenLiveAndCanonical * liveSdfJacobian;
+		localDataEnergy = 0.5f * (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
+	}
 };
 
 }// namespace ITMLib

@@ -16,7 +16,7 @@
 #pragma once
 
 #include "../Interface/ITMSceneMotionTracker.h"
-#include "../Shared/ITMCalculateWarpGradientBasedOnWarpedLiveFunctor.h"
+#include "../Shared/ITMSceneMotionTracker_WarpCalculationFunctors.h"
 
 namespace ITMLib {
 

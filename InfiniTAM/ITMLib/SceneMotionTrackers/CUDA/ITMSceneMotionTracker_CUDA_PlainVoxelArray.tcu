@@ -15,49 +15,10 @@
 //  ================================================================
 #pragma once
 
-
-
 #include "ITMSceneMotionTracker_CUDA.h"
-#include "../../../ORUtils/JetbrainsCUDASyntax.hpp"
 #include "../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
 #include "../Shared/ITMSceneMotionTracker_Functors.h"
-
-namespace {
-//TODO: incomplete
-template<typename TVoxel, typename TWarp>
-__global__ void
-computeGradientDataTerm(TVoxel* liveVoxels,
-                        TVoxel* canonicalVoxels,
-                        TWarp* warpField,
-                        const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo) {
-	int x = blockIdx.x * blockDim.x + threadIdx.x;
-	int y = blockIdx.y * blockDim.y + threadIdx.y;
-	int z = blockIdx.z * blockDim.z + threadIdx.z;
-
-	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
-
-	Vector3i voxelPosition;
-
-	voxelPosition.x = x + arrayInfo->offset.x;
-	voxelPosition.y = y + arrayInfo->offset.y;
-	voxelPosition.z = z + arrayInfo->offset.z;
-
-
-	TVoxel& voxelLive = liveVoxels[locId];
-	TVoxel& voxelCanonical = canonicalVoxels[locId];
-	if (!VoxelIsConsideredForTracking(voxelCanonical, voxelLive)
-	    || !VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive))
-		return;
-	Vector3f liveSdfJacobian;
-	Matrix3f liveSdfHessian;
-
-	ITMLib::ITMPlainVoxelArray::IndexCache liveCache;
-
-	ComputeLiveJacobian_CentralDifferences(
-			liveSdfJacobian, voxelPosition, liveVoxels, arrayInfo, liveCache);
-
-};
-} //end anonymous namespace
+#include "ITMSceneMotionTracker_CUDA_PlainVoxelArray_Kernels.h"
 
 
 using namespace ITMLib;
@@ -99,14 +60,16 @@ void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::CalculateWar
 
 	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = liveScene->index.getIndexData();
 
-	dim3 cudaBlockSize(8, 8, 8);
-	dim3 gridSize(liveScene->index.getVolumeSize().x / cudaBlockSize.x,
-	              liveScene->index.getVolumeSize().y / cudaBlockSize.y,
-	              liveScene->index.getVolumeSize().z / cudaBlockSize.z);
+	dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+	Vector3i volumeSize = liveScene->index.getVolumeSize();
+	dim3 gridSize(
+			static_cast<int>(ceil(static_cast<float>(volumeSize.x) / static_cast<float>(cudaBlockSize.x))),
+			static_cast<int>(ceil(static_cast<float>(volumeSize.y) / static_cast<float>(cudaBlockSize.y))),
+			static_cast<int>(ceil(static_cast<float>(volumeSize.z) / static_cast<float>(cudaBlockSize.z))));
 
-	computeGradientDataTerm<TVoxel, TWarp>
-			<< < gridSize, cudaBlockSize >> >
-	                       (liveVoxels, canonicalVoxels, warpVoxels, arrayInfo);
+//	computeGradientDataTerm<TVoxel, TWarp>
+//			<< < gridSize, cudaBlockSize >> >
+//	                       (liveVoxels, canonicalVoxels, warpVoxels, arrayInfo);
 
 	DIEWITHEXCEPTION_REPORTLOCATION("Implementation pending");
 
