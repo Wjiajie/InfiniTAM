@@ -40,6 +40,14 @@ void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(ITM
 	outFilter.push(b_ios::zlib_compressor());
 	outFilter.push(ofStream);
 
+	bool tempSceneUsed = false;
+	if(scene->localVBA.GetMemoryType() == MEMORYDEVICE_CUDA){
+		// we cannot access CUDA blocks directly, so the easiest solution here is to make a local main-memory copy first
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene_cpu_copy = new ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>(*scene, MEMORYDEVICE_CPU);
+		scene = scene_cpu_copy;
+		tempSceneUsed = true;
+	}
+
 	const TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = scene->index.GetEntries();
 	int noTotalEntries = scene->index.noTotalEntries;
@@ -53,7 +61,6 @@ void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(ITM
 #ifdef WITH_OPENMP
 #pragma omp parallel for reduction(+:allocatedHashBlockCount)
 #endif
-
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 		const ITMHashEntry& currentHashEntry = hashTable[entryId];
 		//skip unfilled hash
@@ -72,6 +79,9 @@ void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(ITM
 		outFilter.write(reinterpret_cast<const char* >(localVoxelBlock), sizeof(TVoxel)*SDF_BLOCK_SIZE3);
 	}
 
+	if(tempSceneUsed){
+		delete scene;
+	}
 }
 
 template<typename TVoxel>
@@ -84,6 +94,16 @@ ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(ITMVox
 	b_ios::filtering_istream inFilter;
 	inFilter.push(b_ios::zlib_decompressor());
 	inFilter.push(ifStream);
+
+	ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetScene = scene;
+	bool copyToCUDA = false;
+	if(scene->localVBA.GetMemoryType() == MEMORYDEVICE_CUDA){
+		// we cannot access CUDA blocks directly, so the easiest solution here is to make a local main-memory copy
+		// first, read it in from disk, and then copy it over into the target
+		auto scene_cpu_copy = new ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>(*scene, MEMORYDEVICE_CPU);
+		scene = scene_cpu_copy;
+		copyToCUDA = true;
+	}
 
 	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* hashTable = scene->index.GetEntries();
@@ -105,6 +125,11 @@ ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(ITMVox
 		inFilter.read(reinterpret_cast<char* >(&currentHashEntry), sizeof(ITMHashEntry));
 		TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 		inFilter.read(reinterpret_cast<char* >(localVoxelBlock), sizeof(TVoxel)*SDF_BLOCK_SIZE3);
+	}
+
+	if(copyToCUDA){
+		targetScene->SetFrom(*scene);
+		delete scene;
 	}
 }
 

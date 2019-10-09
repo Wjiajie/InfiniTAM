@@ -136,11 +136,11 @@ __global__ void checkIfAllocatedHashBlocksYieldTrue(
 	}
 
 	Vector3i voxelPositionSansOffset = globalPosition - Vector3i(arrayBounds.min_x, arrayBounds.min_y, arrayBounds.min_z);
-	int idexInArray = voxelPositionSansOffset.x + voxelPositionSansOffset.y * arraySize.x +
+	int idxInArray = voxelPositionSansOffset.x + voxelPositionSansOffset.y * arraySize.x +
 	                  voxelPositionSansOffset.z * arraySize.x * arraySize.y;
 
 	TVoxelHash hashVoxel = hashVoxels[hashEntry.ptr * SDF_BLOCK_SIZE3 + idxInBlock];
-	TVoxelArray arrayVoxel = arrayVoxels[idexInArray];
+	TVoxelArray arrayVoxel = arrayVoxels[idxInArray];
 
 	if (!(*functor)(arrayVoxel,hashVoxel)) {
 		*falseEncountered = true;

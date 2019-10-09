@@ -121,6 +121,11 @@ public:
 		lastFreeExcessListId(other.lastFreeExcessListId)
 	{
 		Initialize(memoryType);
+		this->SetFrom(other);
+	}
+
+	void SetFrom(const ITMVoxelBlockHash& other)
+	{
 		MemoryCopyDirection memoryCopyDirection = determineMemoryCopyDirection(this->memoryType, other.memoryType);
 		this->hashEntries->SetFrom(other.hashEntries, memoryCopyDirection);
 		this->excessAllocationList->SetFrom(other.excessAllocationList, memoryCopyDirection);

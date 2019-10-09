@@ -76,6 +76,7 @@ namespace ITMLib
 
 		ITMLocalVBA(MemoryDeviceType memoryType, int noBlocks, int blockSize);
 		ITMLocalVBA(const ITMLocalVBA& other, MemoryDeviceType memoryType);
+		void SetFrom(const ITMLocalVBA& other);
 
 		~ITMLocalVBA();
 

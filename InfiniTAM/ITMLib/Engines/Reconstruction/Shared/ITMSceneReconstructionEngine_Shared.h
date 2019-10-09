@@ -6,6 +6,8 @@
 #include "../../../Utils/ITMPixelUtils.h"
 #include "../../../Utils/ITMVoxelFlags.h"
 #include "../../../Utils/ITMHashBlockProperties.h"
+#include <cuda_runtime.h>
+//#include "../../../Utils/ITMCUDAUtils.h"
 
 struct AllocationTempData {
 	int noAllocatedVoxelEntries;
@@ -274,6 +276,7 @@ struct ComputeUpdatedVoxelInfo<true, true, true, TVoxel> {
 #undef FLAG_UPDATE_CHECK
 #undef COMPUTE_VOXEL_UPDATE_PARAMETERS
 //======================================================================================================================
+
 _CPU_AND_GPU_CODE_ inline void
 buildHashAllocAndVisibleTypePP(uchar* entriesAllocType, uchar* entriesVisibleType, int x, int y, Vector3s* blockCoords,
                                const CONSTPTR(float)* depth, Matrix4f invM_d, Vector4f projParams_d, float mu,
@@ -294,7 +297,7 @@ buildHashAllocAndVisibleTypePP(uchar* entriesAllocType, uchar* entriesVisibleTyp
 	float norm = sqrtf(pt_camera_f.x * pt_camera_f.x + pt_camera_f.y * pt_camera_f.y + pt_camera_f.z * pt_camera_f.z);
 
 	Vector4f pt_buff;
-	
+
 	pt_buff = pt_camera_f * (1.0f - mu / norm); pt_buff.w = 1.0f;
 	bandStartHashEntryPosition = TO_VECTOR3(invM_d * pt_buff) * oneOverVoxelSize;
 

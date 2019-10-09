@@ -38,6 +38,12 @@ ITMLocalVBA<TVoxel>::ITMLocalVBA(const ITMLocalVBA& other, MemoryDeviceType memo
 		lastFreeBlockId(other.lastFreeBlockId),
 		voxelBlocks(new ORUtils::MemoryBlock<TVoxel>(other.allocatedSize, memoryType)),
 		allocationList(new ORUtils::MemoryBlock<int>(other.allocationList->dataSize, memoryType)) {
+	this->SetFrom(other);
+}
+
+template<class TVoxel>
+void ITMLocalVBA<TVoxel>::SetFrom(const ITMLocalVBA& other) {
+	lastFreeBlockId = other.lastFreeBlockId;
 	MemoryCopyDirection memoryCopyDirection = determineMemoryCopyDirection(this->memoryType, other.memoryType);
 	voxelBlocks->SetFrom(other.voxelBlocks, memoryCopyDirection);
 	allocationList->SetFrom(other.allocationList, memoryCopyDirection);

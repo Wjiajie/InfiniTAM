@@ -14,9 +14,26 @@
 //  limitations under the License.
 //  ================================================================
 #include "ITMHashAllocationEngine_CUDA.tcu"
+#include "../../../ITMLibDefines.h"
 
 namespace ITMLib{
 
+template class ITMHashAllocationEngine_CUDA<ITMVoxel,ITMWarp>;
 
+template void ITMHashAllocationEngine_CUDA<ITMVoxel,ITMWarp>::AllocateFromWarpedVolume<WarpType::WARP_CUMULATIVE>(
+		ITMVoxelVolume <ITMWarp, ITMVoxelBlockHash>* warpField,
+		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* sourceTSDF,
+		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* targetTSDF
+);
+template void ITMHashAllocationEngine_CUDA<ITMVoxel,ITMWarp>::AllocateFromWarpedVolume<WarpType::WARP_FLOW>(
+		ITMVoxelVolume <ITMWarp, ITMVoxelBlockHash>* warpField,
+		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* sourceTSDF,
+		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* targetTSDF
+);
+template void ITMHashAllocationEngine_CUDA<ITMVoxel,ITMWarp>::AllocateFromWarpedVolume<WarpType::WARP_UPDATE>(
+		ITMVoxelVolume <ITMWarp, ITMVoxelBlockHash>* warpField,
+		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* sourceTSDF,
+		ITMVoxelVolume <ITMVoxel, ITMVoxelBlockHash>* targetTSDF
+);
 
 } // namespace ITMLib

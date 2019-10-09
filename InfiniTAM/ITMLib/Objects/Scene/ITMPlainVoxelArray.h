@@ -65,6 +65,10 @@ public:
 
 	ITMPlainVoxelArray(const ITMPlainVoxelArray& other, MemoryDeviceType memoryType){
 		Initialize(memoryType, other.getVolumeSize(), other.getVolumeOffset());
+		this->SetFrom(other);
+	}
+
+	void SetFrom(const ITMPlainVoxelArray& other){
 		MemoryCopyDirection memoryCopyDirection = determineMemoryCopyDirection(this->memoryType, other.memoryType);
 		this->indexData->SetFrom(other.indexData,memoryCopyDirection);
 	}

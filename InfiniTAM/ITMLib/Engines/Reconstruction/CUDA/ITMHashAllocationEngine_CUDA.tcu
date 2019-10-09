@@ -71,7 +71,6 @@ void ITMHashAllocationEngine_CUDA<TVoxel, TWarp>::AllocateFromDepth(
 	ITMHashSwapState* swapStates = scene->Swapping() ? scene->globalCache->GetSwapStates(true) : 0;
 
 
-	this->sourceSceneHashBlockStates->Clear();
 	uchar* entryAllocationTypes_device = this->sourceSceneHashBlockStates->GetData(MEMORYDEVICE_CUDA);
 	Vector3s* allocationBlockCoordinates_device = this->targetSceneHashBlockCoordinates->GetData(MEMORYDEVICE_CUDA);
 
@@ -108,14 +107,17 @@ void ITMHashAllocationEngine_CUDA<TVoxel, TWarp>::AllocateFromDepth(
 
 	bool useSwapping = scene->globalCache != nullptr;
 	do {
-		memset(entryAllocationTypes_device, (uint) NEEDS_NO_CHANGE, static_cast<size_t>(noTotalEntries));
+		this->sourceSceneHashBlockStates->Clear(NEEDS_NO_CHANGE);
 		*collisionDetected.GetData(MEMORYDEVICE_CPU) = false;
 		collisionDetected.UpdateDeviceFromHost();
+
+
 
 		buildHashAllocAndVisibleType_device << <gridSizeHV, cudaBlockSizeHV >> >(entryAllocationTypes_device,
 				hashBlockVisibilityTypes_device,
 				allocationBlockCoordinates_device, depth, invM_d, invProjParams_d, mu, depthImgSize, oneOverHashEntrySize, hashTable,
-				scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, collisionDetected.GetData(MEMORYDEVICE_CUDA));
+				scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max,
+				collisionDetected.GetData(MEMORYDEVICE_CUDA));
 		ORcudaKernelCheck;
 
 		if (onlyUpdateVisibleList) {

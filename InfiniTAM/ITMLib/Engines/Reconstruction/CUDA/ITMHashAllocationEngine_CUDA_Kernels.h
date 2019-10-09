@@ -21,6 +21,7 @@
 #include "../../../Objects/Scene/ITMGlobalCache.h"
 
 namespace {
+//CUDA kernels
 
 //TODO: provide a better nomenclature for hash block visibility, i.e. an enum inheriting from unsigned char
 __global__ void setToType3(uchar *entriesVisibleType, int *visibleEntryIDs, int noVisibleEntries)
@@ -30,7 +31,6 @@ __global__ void setToType3(uchar *entriesVisibleType, int *visibleEntryIDs, int 
 	entriesVisibleType[visibleEntryIDs[entryId]] = 3;
 }
 
-//CUDA kernels
 __global__
 void allocateHashedVoxelBlocksUsingLists_SetVisibility_device(
 		int* voxelAllocationList, int* excessAllocationList,
@@ -40,6 +40,10 @@ void allocateHashedVoxelBlocksUsingLists_SetVisibility_device(
 		uchar* entriesVisibleType) {
 	int hash = threadIdx.x + blockIdx.x * blockDim.x;
 	if (hash > noTotalEntries - 1) return;
+
+	if(hash == 673306){
+
+	}
 
 	int vbaIdx, exlIdx;
 

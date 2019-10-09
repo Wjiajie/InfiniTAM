@@ -18,6 +18,8 @@
 #include "ITMDynamicSceneReconstructionEngine_CUDA.h"
 
 #include "../../Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
+#include "ITMDynamicSceneReconstructionEngine_CUDA_VoxelBlockHash_Kernels.h"
+#include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 
 using namespace ITMLib;
 
@@ -67,8 +69,41 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>:
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 		const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState) {
-	//TODO:
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+
+	Vector2i rgbImgSize = view->rgb->noDims;
+	Vector2i depthImgSize = view->depth->noDims;
+	float voxelSize = scene->sceneParams->voxelSize;
+
+	Matrix4f M_d, M_rgb;
+	Vector4f projParams_d, projParams_rgb;
+
+	ITMRenderState_VH *renderState_vh = (ITMRenderState_VH*)renderState;
+	if(renderState_vh->noVisibleEntries == 0) return;
+
+	M_d = trackingState->pose_d->GetM();
+	// compute modelview matrix of the RGB camera
+	if (TVoxel::hasColorInformation) M_rgb = view->calib.trafo_rgb_to_depth.calib_inv * M_d;
+
+	projParams_d = view->calib.intrinsics_d.projectionParamsSimple.all;
+	projParams_rgb = view->calib.intrinsics_rgb.projectionParamsSimple.all;
+
+	float mu = scene->sceneParams->mu; int maxW = scene->sceneParams->maxW;
+
+	float *depth = view->depth->GetData(MEMORYDEVICE_CUDA);
+	float *confidence = view->depthConfidence->GetData(MEMORYDEVICE_CUDA);
+	Vector4u *rgb = view->rgb->GetData(MEMORYDEVICE_CUDA);
+	TVoxel *localVBA = scene->localVBA.GetVoxelBlocks();
+	ITMHashEntry *hashTable = scene->index.GetEntries();
+
+	int *visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
+
+	dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+	dim3 gridSize(renderState_vh->noVisibleEntries);
+
+	integrateIntoScene_device<TVoxel> << <gridSize, cudaBlockSize >> >(localVBA, hashTable, visibleEntryIDs,
+			rgb, rgbImgSize, depth, confidence, depthImgSize, M_d, M_rgb, projParams_d, projParams_rgb, voxelSize, mu, maxW);
+	ORcudaKernelCheck;
+
 }
 
 template<typename TVoxel, typename TWarp>

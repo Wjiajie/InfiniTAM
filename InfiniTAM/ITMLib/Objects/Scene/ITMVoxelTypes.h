@@ -40,6 +40,11 @@ struct ITMVoxel_f_rgb
 		clr = Vector3u((uchar)0);
 		w_color = 0;
 	}
+
+	_CPU_AND_GPU_CODE_ void print_self(){
+		printf("voxel:{sdf: %f, w_depth: %d, clr: [%d, %d, %d], w_color: %d}\n",
+				sdf, w_depth, clr.r, clr.g, clr.b, w_color);
+	}
 };
 
 /** \brief
@@ -79,6 +84,11 @@ struct ITMVoxel_s_rgb
 		clr = Vector3u((uchar)0);
 		w_color = 0;
 	}
+
+	_CPU_AND_GPU_CODE_ void print_self(){
+		printf("voxel:{sdf: %d, w_depth: %d,clr::[%d, %d, %d],w_color: %d}\n",
+		       sdf, w_depth, clr.r, clr.g, clr.b, w_color);
+	}
 };
 
 struct ITMVoxel_s
@@ -108,6 +118,10 @@ struct ITMVoxel_s
 		sdf = SDF_initialValue();
 		w_depth = 0;
 	}
+
+	_CPU_AND_GPU_CODE_ void print_self(){
+		printf("voxel:{sdf:%d,w_depth:%d}\n", sdf, w_depth);
+	}
 };
 
 struct ITMVoxel_f
@@ -136,6 +150,10 @@ struct ITMVoxel_f
 	{
 		sdf = SDF_initialValue();
 		w_depth = 0;
+	}
+
+	_CPU_AND_GPU_CODE_ void print_self(){
+		printf("voxel:{sdf: %f, w_depth: %d}\n", sdf, w_depth);
 	}
 };
 
@@ -167,6 +185,11 @@ struct ITMVoxel_f_conf
 		sdf = SDF_initialValue();
 		w_depth = 0;
 		confidence = 0.0f;
+	}
+
+	_CPU_AND_GPU_CODE_ void print_self(){
+		printf("voxel:{sdf: %f, w_depth: %d, conf: %f}\n",
+		       sdf, w_depth, confidence);
 	}
 };
 
@@ -207,6 +230,11 @@ struct ITMVoxel_s_rgb_conf
 		clr = Vector3u((uchar)0);
 		w_color = 0;
 	}
+
+	_CPU_AND_GPU_CODE_ void print_self(){
+		printf("voxel:{sdf: %d, w_depth: %d, clr: [%d, %d, %d], w_color: %d, confidence: %f}\n",
+		       sdf, w_depth, clr.r, clr.g, clr.b, w_color, confidence);
+	}
 };
 
 struct ITMVoxel_f_rgb_conf
@@ -245,6 +273,11 @@ struct ITMVoxel_f_rgb_conf
 		clr = Vector3u((uchar)0);
 		w_color = 0;
 	}
+
+	_CPU_AND_GPU_CODE_ void print_self(){
+		printf("voxel:{sdf: %f, w_depth: %d, clr: [%d, %d, %d], w_color: %d, confidence: %f}\n",
+		       sdf, w_depth, clr.r, clr.g, clr.b, w_color, confidence);
+	}
 };
 
 
@@ -272,6 +305,11 @@ struct ITMVoxel_f_warp{
 		gradient0(0.0f),
 		gradient1(0.0f)
 		{}
+	_CPU_AND_GPU_CODE_ void print_self(){
+		printf("warp:{flow_warp: [%f, %f, %f], gradient0: [%f, %f, %f], gradient1: [%f, %f, %f]}\n",
+		       flow_warp.x, flow_warp.y, flow_warp.z, gradient0.x, gradient0.y, gradient0.z,
+		       gradient1.x, gradient1.y, gradient1.z);
+	}
 };
 
 
@@ -301,4 +339,9 @@ struct ITMVoxel_f_flags
 			flags(ITMLib::VOXEL_UNKNOWN),
 			sdf(SDF_initialValue()),
 			w_depth(0){}
+
+	_CPU_AND_GPU_CODE_ void print_self(){
+		printf("voxel:{sdf: %f, w_depth: %d, flags: %d}\n",
+		       sdf, w_depth, flags);
+	}
 };
