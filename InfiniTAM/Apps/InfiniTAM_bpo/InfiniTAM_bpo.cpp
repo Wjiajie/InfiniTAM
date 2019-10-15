@@ -204,7 +204,7 @@ int main(int argc, char** argv) {
 				 "Used in dynamic fusion. Record 3D scenes at each frame and complete warp progression at every iteration.")
 
 				/*================================================================================*/
-				/*=== Parameters for scene tracking optimization (KillingFusion/SobolevFusion) ===*/
+				/*=== ITMSceneMotionOptimizationParameters for scene tracking optimization (KillingFusion/SobolevFusion) ===*/
 				/*================================================================================*/
 
 				/* convergence parameters & learning rate*/

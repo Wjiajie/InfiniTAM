@@ -17,6 +17,7 @@
 #include "../../ITMLibDefines.h"
 #include "ITMSceneMotionTracker_CUDA_PlainVoxelArray.tcu"
 
+
 namespace ITMLib {
 template
 class ITMSceneMotionTracker_CUDA<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;

@@ -40,7 +40,7 @@
 #include "../../Objects/Scene/ITMTrilinearDistribution.h"
 #include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../../Utils/ITMLibSettings.h"
-
+#include "../Shared/ITMWarpGradientFunctors.h"
 
 
 using namespace ITMLib;
@@ -51,7 +51,7 @@ using namespace ITMLib;
 template<typename TVoxel, typename TWarp>
 ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ITMSceneMotionTracker_CPU()
 		:ITMSceneMotionTracker<TVoxel, TWarp, ITMVoxelBlockHash>(),
-		 calculateGradientFunctor(this->parameters, this->switches) {};
+		 calculateGradientFunctor_Old(this->parameters, this->switches) {};
 // endregion ============================== END CONSTRUCTORS AND DESTRUCTORS============================================
 
 // region ===================================== HOUSEKEEPING ===========================================================
@@ -100,17 +100,44 @@ ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::CalculateWarpGradie
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 		bool restrictZTrackingForDebugging) {
+
+	// manage hash
 	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
 	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TWarp>>(warpField);
 	hashManager.AllocateTSDFVolumeFromTSDFVolume(canonicalScene, liveScene);
-	hashManager.AllocateWarpVolumeFromTSDFVolume(warpField,liveScene);
-	calculateGradientFunctor.PrepareForOptimization(liveScene, canonicalScene, warpField,
-	                                                restrictZTrackingForDebugging);
+	hashManager.AllocateWarpVolumeFromTSDFVolume(warpField, liveScene);
+
+	ITMSceneMotionEnergyGradientCompositeFunctor<TVoxel, TWarp, ITMHashEntry, ITMVoxelBlockHash::IndexCache>
+			calculateGradientFunctor(this->parameters, this->switches,
+			                         liveScene->localVBA.GetVoxelBlocks(), liveScene->index.getIndexData(),
+			                         canonicalScene->localVBA.GetVoxelBlocks(), canonicalScene->index.getIndexData(),
+			                         warpField->localVBA.GetVoxelBlocks(), warpField->index.getIndexData());
 
 	ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
-	DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, calculateGradientFunctor);
+	DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, calculateGradientFunctor_Old);
 
-	calculateGradientFunctor.FinalizePrintAndRecordStatistics();
+	calculateGradientFunctor.PrintStatistics();
+}
+
+
+template<typename TVoxel, typename TWarp>
+void
+ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::CalculateWarpGradient_OldCombinedFunctor(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+		bool restrictZTrackingForDebugging) {
+	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
+	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TWarp>>(warpField);
+	hashManager.AllocateTSDFVolumeFromTSDFVolume(canonicalScene, liveScene);
+	hashManager.AllocateWarpVolumeFromTSDFVolume(warpField, liveScene);
+	calculateGradientFunctor_Old.PrepareForOptimization(liveScene, canonicalScene, warpField,
+	                                                    restrictZTrackingForDebugging);
+
+	ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
+	DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, calculateGradientFunctor_Old);
+
+	calculateGradientFunctor_Old.FinalizePrintAndRecordStatistics();
 }
 
 // endregion ===========================================================================================================

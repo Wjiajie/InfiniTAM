@@ -25,6 +25,7 @@
 #include "../../Utils/ITMVoxelFlags.h"
 #include "../../Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "../Interface/ITMSceneMotionTracker.h"
+#include "../../../ORUtils/PlatformIndependentAtomics.h"
 
 #ifndef __CUDACC__
 
@@ -86,7 +87,7 @@ struct SetGradientFunctor<TWarp, true> {
 
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-struct ITMCalculateWarpGradientBasedOnWarpedLiveFunctor {
+struct ITMCalculateWarpGradientFunctor {
 private:
 
 #ifndef __CUDACC__
@@ -113,10 +114,10 @@ private:
 public:
 
 	// region ========================================= CONSTRUCTOR ====================================================
-	_CPU_AND_GPU_CODE_
-	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor(
-			typename ITMSceneMotionTracker<TVoxel, TWarp, TIndex>::Parameters parameters,
-			typename ITMSceneMotionTracker<TVoxel, TWarp, TIndex>::Switches switches) :
+
+	ITMCalculateWarpGradientFunctor(
+			ITMSceneMotionOptimizationParameters parameters,
+			ITMSceneMotionOptimizationSwitches switches) :
 			liveCache(),
 			canonicalCache(),
 			parameters(parameters),
@@ -156,7 +157,7 @@ public:
 		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
 
 		float localDataEnergy = 0.0f, localLevelSetEnergy = 0.0f, localSmoothingEnergy = 0.0f,
-				localTikhonovEnergy = 0.0f, localKillingEnergy = 0.0f; // used for energy calculations in verbose output
+				localTikhonovEnergy = 0.0f, localRigidityEnergy = 0.0f; // used for energy calculations in verbose output
 
 		Vector3f localSmoothnessEnergyGradient(0.0f), localDataEnergyGradient(0.0f), localLevelSetEnergyGradient(0.0f);
 
@@ -187,7 +188,7 @@ public:
 			dataVoxelCount++;
 			cumulativeSdfDiff += std::abs(sdfDifferenceBetweenLiveAndCanonical);
 #endif
-			localDataEnergy =
+			localDataEnergy = parameters.weightDataTerm *
 					0.5f * (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
 #ifndef __CUDACC__
 			if (printVoxelResult) {
@@ -215,7 +216,7 @@ public:
 			levelSetVoxelCount++;
 #endif
 			localLevelSetEnergy =
-					parameters.weightLevelSetTerm * 0.5f * (sdfJacobianNormMinusUnity * sdfJacobianNormMinusUnity);
+					0.5f * (sdfJacobianNormMinusUnity * sdfJacobianNormMinusUnity);
 		}
 		// endregion =======================================================================================
 
@@ -283,12 +284,12 @@ public:
 				                      dot(framewiseWarpJacobian.getColumn(1), framewiseWarpJacobian.getColumn(1)) +
 				                      dot(framewiseWarpJacobian.getColumn(2), framewiseWarpJacobian.getColumn(2));
 
-				localKillingEnergy = gamma *
-				                     (dot(warpJacobianTranspose.getColumn(0), framewiseWarpJacobian.getColumn(0)) +
+				localRigidityEnergy = gamma *
+				                      (dot(warpJacobianTranspose.getColumn(0), framewiseWarpJacobian.getColumn(0)) +
 				                      dot(warpJacobianTranspose.getColumn(1), framewiseWarpJacobian.getColumn(1)) +
 				                      dot(warpJacobianTranspose.getColumn(2), framewiseWarpJacobian.getColumn(2)));
 
-				localSmoothingEnergy = localTikhonovEnergy + localKillingEnergy;
+				localSmoothingEnergy = localTikhonovEnergy + localRigidityEnergy;
 			} else {
 				Matrix3f framewiseWarpJacobian(0.0f);
 				Vector3f framewiseWarpLaplacian;
@@ -311,7 +312,7 @@ public:
 		// endregion
 		// region =============================== COMPUTE ENERGY GRADIENT ==================================
 		SetGradientFunctor<TWarp, TWarp::hasDebugInformation>::SetGradient(
-				warp, parameters.weightDataTerm, parameters.weightLevelSetTerm, parameters.weightSmoothnessTerm,
+				warp, parameters.weightDataTerm, parameters.weightLevelSetTerm, parameters.weightSmoothingTerm,
 				localDataEnergyGradient, localLevelSetEnergyGradient, localSmoothnessEnergyGradient,
 				restrictZtrackingForDebugging);
 		// endregion
@@ -321,13 +322,13 @@ public:
 		float energyGradientLength = ORUtils::length(warp.gradient0);//meters
 		float warpLength = ORUtils::length(warp.flow_warp);
 		double localEnergy = localDataEnergy + parameters.weightLevelSetTerm * localLevelSetEnergy
-		                     + parameters.weightSmoothnessTerm * localSmoothingEnergy;
+		                     + parameters.weightSmoothingTerm * localSmoothingEnergy;
 
 		totalDataEnergy += localDataEnergy;
 		totalLevelSetEnergy += parameters.weightLevelSetTerm * localLevelSetEnergy;
-		totalTikhonovEnergy += parameters.weightSmoothnessTerm * localTikhonovEnergy;
-		totalKillingEnergy += parameters.weightSmoothnessTerm * localKillingEnergy;
-		totalSmoothnessEnergy += parameters.weightSmoothnessTerm * localSmoothingEnergy;
+		totalTikhonovEnergy += parameters.weightSmoothingTerm * localTikhonovEnergy;
+		totalRigidityEnergy += parameters.weightSmoothingTerm * localRigidityEnergy;
+		totalSmoothnessEnergy += parameters.weightSmoothingTerm * localSmoothingEnergy;
 
 		cumulativeCanonicalSdf += canonicalSdf;
 		cumulativeLiveSdf += liveSdf;
@@ -364,16 +365,15 @@ public:
 #ifndef __CUDACC__
 		double totalEnergy = totalDataEnergy + totalLevelSetEnergy + totalSmoothnessEnergy;
 
-		std::cout << bright_cyan << "*** General Iteration Statistics ***" << reset << std::endl;
+		std::cout << bright_cyan << "*** Non-rigid Alignment Iteration Statistics ***" << reset << std::endl;
 		PrintEnergyStatistics(this->switches.enableDataTerm, this->switches.enableLevelSetTerm,
 		                      this->switches.enableSmoothingTerm, this->switches.enableKillingTerm,
 		                      this->parameters.rigidityEnforcementFactor,
-		                      totalDataEnergy, totalLevelSetEnergy, totalTikhonovEnergy,
-		                      totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
+		                      totalDataEnergy, totalLevelSetEnergy, totalTikhonovEnergy, totalRigidityEnergy);
 
 		//save all energies to file
 		ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().RecordAndPlotEnergies(
-				totalDataEnergy, totalLevelSetEnergy, totalKillingEnergy, totalSmoothnessEnergy, totalEnergy);
+				totalDataEnergy, totalLevelSetEnergy, totalRigidityEnergy, totalSmoothnessEnergy, totalEnergy);
 
 
 		ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>& calculator = ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::Instance();
@@ -401,7 +401,7 @@ private:
 		totalDataEnergy = 0.0;
 		totalLevelSetEnergy = 0.0;
 		totalTikhonovEnergy = 0.0;
-		totalKillingEnergy = 0.0;
+		totalRigidityEnergy = 0.0;
 		totalSmoothnessEnergy = 0.0;
 #endif
 	}
@@ -436,7 +436,7 @@ private:
 	double totalDataEnergy = 0.0;
 	double totalLevelSetEnergy = 0.0;
 	double totalTikhonovEnergy = 0.0;
-	double totalKillingEnergy = 0.0;
+	double totalRigidityEnergy = 0.0;
 	double totalSmoothnessEnergy = 0.0;
 #endif
 	// *** debuging / analysis variables
@@ -444,46 +444,9 @@ private:
 	Vector3i focusCoordinates;
 	bool restrictZtrackingForDebugging = false;
 
-	const typename ITMSceneMotionTracker<TVoxel, TWarp, TIndex>::Parameters parameters;
-	const typename ITMSceneMotionTracker<TVoxel, TWarp, TIndex>::Switches switches;
+	const ITMSceneMotionOptimizationParameters parameters;
+	const ITMSceneMotionOptimizationSwitches switches;
 
-};
-
-template<typename TVoxel, typename TWarp>
-struct ITMSceneMotionDataTermFunctor{
-
-	ITMSceneMotionDataTermFunctor(){
-
-	}
-
-	~ITMSceneMotionDataTermFunctor(){
-		//TODO
-	}
-
-	float* dataEnergy;
-
-	_CPU_AND_GPU_CODE_
-	void operator()(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition){
-		if (!VoxelIsConsideredForTracking(voxelCanonical, voxelLive)
-		    || !VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive))
-			return;
-		Vector3f& framewiseWarp = warp.flow_warp;
-		float liveSdf = TVoxel::valueToFloat(voxelLive.sdf);
-		float canonicalSdf = TVoxel::valueToFloat(voxelCanonical.sdf);
-		Vector3f localDataEnergyGradient(0.0f);
-		float localDataEnergy;
-		Vector3f liveSdfJacobian;
-
-		ComputeLiveJacobian_CentralDifferences(
-				liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache);
-		// Compute data term error / energy
-		float sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
-		// (φ_n(Ψ)−φ_{global}) ∇φ_n(Ψ) - also denoted as - (φ_{proj}(Ψ)−φ_{model}) ∇φ_{proj}(Ψ)
-		// φ_n(Ψ) = φ_n(x+u, y+v, z+w), where u = u(x,y,z), v = v(x,y,z), w = w(x,y,z)
-		// φ_{global} = φ_{global}(x, y, z)
-		localDataEnergyGradient = sdfDifferenceBetweenLiveAndCanonical * liveSdfJacobian;
-		localDataEnergy = 0.5f * (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
-	}
 };
 
 }// namespace ITMLib

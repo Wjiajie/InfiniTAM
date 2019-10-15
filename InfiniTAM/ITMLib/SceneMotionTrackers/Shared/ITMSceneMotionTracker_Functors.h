@@ -18,8 +18,8 @@
 
 #include "../../Utils/ITMMath.h"
 #include "../../Objects/Scene/ITMVoxelVolume.h"
-#include "ITMSceneMotionTracker_Shared.h"
 #include "../../Utils/ITMLibSettings.h"
+#include "ITMSceneMotionTracker_Shared.h"
 
 //#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 //#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"

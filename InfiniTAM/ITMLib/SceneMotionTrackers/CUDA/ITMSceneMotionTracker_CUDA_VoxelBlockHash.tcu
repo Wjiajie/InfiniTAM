@@ -43,6 +43,13 @@ void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::AddFlowWarpTo
 }
 
 template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::CalculateWarpGradient_OldCombinedFunctor(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField, bool restrictZTrackingForDebugging) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented (and never will be)");
+}
+
+template<typename TVoxel, typename TWarp>
 void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::CalculateWarpGradient(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
@@ -72,3 +79,4 @@ void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::ResetWarps(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
+

@@ -62,21 +62,22 @@ if (BUILD_TESTS)
 
     find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 
-    itm_add_test(NAME VoxelVolume_SetCopyCompare_CPU SOURCES Test_VoxelVolume_SetCopyCompare_CPU.cpp)
-    itm_add_test(NAME VoxelVolume_SetCopyCompare_CUDA SOURCES Test_VoxelVolume_SetCopyCompare_CUDA.cpp)
-    itm_add_test(NAME VoxelVolume_ConstructFromImage_CPU SOURCES Test_VoxelVolume_ConstructFromImage_CPU.cpp)
-    itm_add_test(NAME VoxelVolume_ConstructFromImage_CUDA SOURCES Test_VoxelVolume_ConstructFromImage_CUDA.cpp)
-    itm_add_test(NAME VoxelVolume_SaveLoadCompact_CPU SOURCES Test_VoxelVolume_SaveLoadCompact_CPU.cpp)
-    itm_add_test(NAME VoxelVolume_SaveLoadCompact_CUDA SOURCES Test_VoxelVolume_SaveLoadCompact_CUDA.cpp)
+    itm_add_test(NAME SetCopyCompare_CPU SOURCES Test_SetCopyCompare_CPU.cpp)
+    itm_add_test(NAME SetCopyCompare_CUDA SOURCES Test_SetCopyCompare_CUDA.cpp)
+    itm_add_test(NAME ConstructVolumeFromImage_CPU SOURCES Test_ConstructVolumeFromImage_CPU.cpp)
+    itm_add_test(NAME ConstructVolumeFromImage_CUDA SOURCES Test_ConstructVolumeFromImage_CUDA.cpp)
+    itm_add_test(NAME VolumeSaveLoadCompact_CPU SOURCES Test_VolumeSaveLoadCompact_CPU.cpp)
+    itm_add_test(NAME VolumeSaveLoadCompact_CUDA SOURCES Test_VolumeSaveLoadCompact_CUDA.cpp)
     itm_add_test(NAME IntArrayMap3D SOURCES TestIntArrayMap3D.cpp)
     itm_add_test(NAME ImageMaskReader SOURCES TestImageMaskReader.cpp)
+    itm_add_test(NAME WarpGradient_CPU SOURCES Test_WarpGradient_CPU.cpp)
 
 
-    ###########################################
-    # Transfer test data to working directory #
-    ###########################################
+    #####################################################
+    # Recursively transfer test data to build directory #
+    #####################################################
 
-    file(GLOB TEST_DATA_FILES
+    file(GLOB_RECURSE TEST_DATA_FILES
          "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.png"
          "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.pnm"
          "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.txt"
@@ -84,10 +85,12 @@ if (BUILD_TESTS)
          )
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/TestData")
     foreach (TEST_DATA_FILE ${TEST_DATA_FILES})
-        get_filename_component(FILENAME ${TEST_DATA_FILE} NAME)
+        string(REPLACE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} NEW_FILE ${TEST_DATA_FILE})
+        get_filename_component(TARGET_DIR ${NEW_FILE} DIRECTORY)
+        file(MAKE_DIRECTORY ${TARGET_DIR})
         configure_file(
                 ${TEST_DATA_FILE}
-                "${CMAKE_CURRENT_BINARY_DIR}/TestData/${FILENAME}"
+                ${NEW_FILE}
                 COPYONLY
         )
     endforeach (TEST_DATA_FILE)

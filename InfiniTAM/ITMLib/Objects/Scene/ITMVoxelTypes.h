@@ -297,6 +297,7 @@ struct ITMVoxel_f_warp{
 	union{
 		Vector3f gradient0;
 		Vector3f warp_update;
+		Vector3f gradient;
 	};
 	Vector3f gradient1;
 

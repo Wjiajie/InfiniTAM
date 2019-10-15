@@ -16,7 +16,7 @@
 #pragma once
 
 #include "../Interface/ITMSceneMotionTracker.h"
-#include "../Shared/ITMSceneMotionTracker_WarpCalculationFunctors.h"
+#include "../Shared/ITMCalculateWarpGradientFunctor.h"
 
 namespace ITMLib {
 
@@ -41,6 +41,10 @@ public:
 	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
 	                           ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	                           bool restrictZTrackingForDebugging) override;
+	void CalculateWarpGradient_OldCombinedFunctor(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
+	                                              ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
+	                                              ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+	                                              bool restrictZTrackingForDebugging) override;
 	void SmoothWarpGradient(
 			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
@@ -55,7 +59,7 @@ public:
 private:
 
 	//ITMDynamicHashManagementEngine_CUDA<TVoxel, TWarp> hashManager;
-	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor<TVoxel, TWarp, ITMVoxelBlockHash> calculateGradientFunctor;
+	ITMCalculateWarpGradientFunctor<TVoxel, TWarp, ITMVoxelBlockHash> calculateGradientFunctor;
 
 };
 
@@ -76,6 +80,10 @@ public:
 	                           ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 	                           ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 	                           bool restrictZTrackingForDebugging) override;
+	void CalculateWarpGradient_OldCombinedFunctor(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
+	                                              ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
+	                                              ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
+	                                              bool restrictZTrackingForDebugging) override;
 	void SmoothWarpGradient(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 	                        ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 	                        ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;

@@ -25,28 +25,31 @@ namespace ITMLib {
 inline static
 void PrintEnergyStatistics(const bool& enableDataTerm,
                            const bool& enableLevelSetTerm,
-                           const bool& enableSmoothnessTerm,
-                           const bool& useIsometryEnforcementFactorInSmoothingTerm,
+                           const bool& enableSmoothingTerm,
+                           const bool& enableRigidityTerm,
                            const float& gamma,
                            const double& totalDataEnergy,
                            const double& totalLevelSetEnergy,
                            const double& totalTikhonovEnergy,
-                           const double& totalKillingEnergy,
-                           const double& totalSmoothnessEnergy,
-                           const double& totalEnergy) {
+                           const double& totalRigidityEnergy) {
 	std::cout << " [ENERGY]";
+	double totalEnergy = 0.f;
 	if (enableDataTerm) {
 		std::cout << blue << " Data term: " << totalDataEnergy;
+		totalEnergy += totalDataEnergy;
 	}
 	if (enableLevelSetTerm) {
 		std::cout << red << " Level set term: " << totalLevelSetEnergy;
+		totalEnergy +=  totalLevelSetEnergy;
 	}
-	if (enableSmoothnessTerm) {
-		if (useIsometryEnforcementFactorInSmoothingTerm) {
+	if (enableSmoothingTerm) {
+		if (enableRigidityTerm) {
 			std::cout << yellow << " Tikhonov term: " << totalTikhonovEnergy;
-			std::cout << yellow << " Killing term: " << totalKillingEnergy;
+			std::cout << yellow << " Killing term: " << totalRigidityEnergy;
 		}
-		std::cout << cyan << " Smoothness term: " << totalSmoothnessEnergy;
+		double totalSmoothingEnergy = totalTikhonovEnergy + totalRigidityEnergy;
+		std::cout << cyan << " Smoothing term: " << totalSmoothingEnergy;
+		totalEnergy +=  totalSmoothingEnergy;
 	}
 	std::cout << green << " Total: " << totalEnergy << reset << std::endl;
 }

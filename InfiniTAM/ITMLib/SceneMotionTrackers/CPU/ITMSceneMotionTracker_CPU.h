@@ -18,7 +18,7 @@
 #include <opencv2/core/mat.hpp>
 #include "../Interface/ITMSceneMotionTracker.h"
 #include "../../Utils/ITMHashBlockProperties.h"
-#include "../Shared/ITMSceneMotionTracker_WarpCalculationFunctors.h"
+#include "../Shared/ITMCalculateWarpGradientFunctor.h"
 #include "../../Engines/Reconstruction/CPU/ITMHashAllocationEngine_CPU.tpp"
 
 
@@ -47,6 +47,10 @@ public:
 	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
 	                           ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	                           bool restrictZTrackingForDebugging) override;
+	void CalculateWarpGradient_OldCombinedFunctor(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
+	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
+	                           ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+	                           bool restrictZTrackingForDebugging) override;
 	void SmoothWarpGradient(
 			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
@@ -62,7 +66,7 @@ public:
 private:
 
 	ITMHashAllocationEngine_CPU<TVoxel, TWarp> hashManager;
-	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor<TVoxel, TWarp, ITMVoxelBlockHash> calculateGradientFunctor;
+	ITMCalculateWarpGradientFunctor<TVoxel, TWarp, ITMVoxelBlockHash> calculateGradientFunctor_Old;
 
 
 };
@@ -87,6 +91,10 @@ public:
 	                           ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 	                           ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 	                           bool restrictZTrackingForDebugging) override;
+	void CalculateWarpGradient_OldCombinedFunctor(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
+	                                              ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
+	                                              ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
+	                                              bool restrictZTrackingForDebugging) override;
 	void SmoothWarpGradient(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 	                        ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 	                        ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
@@ -98,7 +106,7 @@ public:
 	void ResetWarps(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
 
 private:
-	ITMCalculateWarpGradientBasedOnWarpedLiveFunctor<TVoxel, TWarp, ITMPlainVoxelArray> calculateGradientFunctor;
+	ITMCalculateWarpGradientFunctor<TVoxel, TWarp, ITMPlainVoxelArray> calculateGradientFunctor_Old;
 
 };
 

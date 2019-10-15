@@ -327,7 +327,9 @@ void ComputeLiveJacobian_CentralDifferences(THREADPTR(Vector3f)& jacobian,
                                             const CONSTPTR(TIndexData)* indexData,
                                             THREADPTR(TCache)& cache) {
 	int vmIndex = 0;
-#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, indexData, voxelPosition + (offset), vmIndex, cache).sdf))
+    auto sdf_at = [&](Vector3i offset) {
+	    return TVoxel::valueToFloat(readVoxel(voxels, indexData, voxelPosition + (offset), vmIndex, cache).sdf);
+    };
 
 	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
 	float sdfAtYplusOne = sdf_at(Vector3i(0, 1, 0));
@@ -336,7 +338,7 @@ void ComputeLiveJacobian_CentralDifferences(THREADPTR(Vector3f)& jacobian,
 	float sdfAtYminusOne = sdf_at(Vector3i(0, -1, 0));
 	float sdfAtZminusOne = sdf_at(Vector3i(0, 0, -1));
 
-#undef sdf_at
+
 	jacobian[0] = 0.5f * (sdfAtXplusOne - sdfAtXminusOne);
 	jacobian[1] = 0.5f * (sdfAtYplusOne - sdfAtYminusOne);
 	jacobian[2] = 0.5f * (sdfAtZplusOne - sdfAtZminusOne);

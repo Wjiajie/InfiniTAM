@@ -33,18 +33,18 @@ public:
 *
 * \param settings  settings to use
 */
-template<typename TVoxelCanonical, typename TVoxelLive, typename TIndex>
-static ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>*
+template<typename TVoxel, typename TWarp, typename TIndex>
+static ITMSceneMotionTracker<TVoxel, TWarp, TIndex>*
 MakeSceneMotionTracker() {
-	ITMSceneMotionTracker<TVoxelCanonical, TVoxelLive, TIndex>* sceneRecoEngine = nullptr;
+	ITMSceneMotionTracker<TVoxel, TWarp, TIndex>* motionTracker = nullptr;
 	auto& settings = ITMLibSettings::Instance();
 	switch (settings.deviceType) {
 		case ITMLibSettings::DEVICE_CPU:
-			sceneRecoEngine = new ITMSceneMotionTracker_CPU<TVoxelCanonical, TVoxelLive, TIndex>();
+			motionTracker = new ITMSceneMotionTracker_CPU<TVoxel, TWarp, TIndex>();
 			break;
 		case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-			sceneRecoEngine = new ITMSceneMotionTracker_CUDA<TVoxelCanonical, TVoxelLive, TIndex>();
+			motionTracker = new ITMSceneMotionTracker_CUDA<TVoxel, TWarp, TIndex>();
 #endif
 			break;
 		case ITMLibSettings::DEVICE_METAL:
@@ -55,7 +55,7 @@ MakeSceneMotionTracker() {
 			break;
 	}
 
-	return sceneRecoEngine;
+	return motionTracker;
 }
 };
 }//namespace ITMLib

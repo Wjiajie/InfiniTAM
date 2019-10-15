@@ -23,10 +23,9 @@
 #include "../../Utils/FileIO/ITMSceneLogger.h"
 #include "../../Utils/ITMPrintHelpers.h"
 #include "../../Utils/ITMVoxelFlags.h"
+#include "../Shared/ITMSceneMotionOptimizationParameters.h"
 
 namespace ITMLib {
-
-
 
 //TODO: rename to "ITMSurfaceMotionTracker"
 /**
@@ -39,24 +38,7 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 class ITMSceneMotionTracker {
 
 public:
-//============================= INNER DATA STRUCTURES ==================================================================
-	struct Parameters {
-		const float gradientDescentLearningRate;// = 0.1f;
-		const float rigidityEnforcementFactor;// = 0.1f;
-		const float weightDataTerm;
-		const float weightSmoothnessTerm;// = 0.2f; //0.2 is default for SobolevFusion, 0.5 is default for KillingFusion
-		const float weightLevelSetTerm;// = 0.2f;
-		const float epsilon;// = 1e-5f;
-		const float unity; // voxelSize / mu, i.e. voxelSize / [narrow-band half-width]
-	};
 
-	struct Switches {
-		const bool enableDataTerm;
-		const bool enableLevelSetTerm;
-		const bool enableSmoothingTerm;
-		const bool enableKillingTerm;
-		const bool enableGradientSmoothing;
-	};
 //============================= CONSTRUCTORS / DESTRUCTORS =============================================================
 //TODO: write documentation block -Greg (Github: Algomorph)
 	explicit ITMSceneMotionTracker() :
@@ -86,6 +68,12 @@ public:
 	                      ITMVoxelVolume<TVoxel, TIndex>* liveScene,
 	                      ITMVoxelVolume<TWarp, TIndex>* warpField,
 	                      bool restrictZTrackingForDebugging) = 0;
+	[[deprecated]]
+	virtual void
+	CalculateWarpGradient_OldCombinedFunctor(ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+	                                         ITMVoxelVolume<TVoxel, TIndex>* liveScene,
+	                                         ITMVoxelVolume<TWarp, TIndex>* warpField,
+	                                         bool restrictZTrackingForDebugging) = 0;
 	virtual void SmoothWarpGradient(
 			ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
 			ITMVoxelVolume<TVoxel, TIndex>* liveScene,
@@ -99,8 +87,8 @@ public:
 	virtual void ResetWarps(ITMVoxelVolume<TWarp, TIndex>* warpField) = 0;
 //============================= MEMBER VARIABLES =======================================================================
 
-	const Parameters parameters;
-	const Switches switches;
+	const ITMSceneMotionOptimizationParameters parameters;
+	const ITMSceneMotionOptimizationSwitches switches;
 protected:
 	void PrintSettings() {
 		std::cout << bright_cyan << "*** ITMSceneMotionTracker_CPU Settings: ***" << reset << std::endl;
@@ -114,7 +102,7 @@ protected:
 		std::cout << "Gradient descent learning rate: " << this->parameters.gradientDescentLearningRate << std::endl;
 		std::cout << "Rigidity enforcement factor: " << this->parameters.rigidityEnforcementFactor << std::endl;
 		std::cout << "Weight of the data term: " << this->parameters.weightDataTerm << std::endl;
-		std::cout << "Weight of the smoothness term: " << this->parameters.weightSmoothnessTerm << std::endl;
+		std::cout << "Weight of the smoothness term: " << this->parameters.weightSmoothingTerm << std::endl;
 		std::cout << "Weight of the level set term: " << this->parameters.weightLevelSetTerm << std::endl;
 		std::cout << "Epsilon for the level set term: " << this->parameters.epsilon << std::endl;
 		std::cout << "Unity scaling factor: " << this->parameters.unity << std::endl;

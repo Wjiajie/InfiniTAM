@@ -26,6 +26,7 @@
 	#define __CUDACC__
 	#include <device_functions.h>
 
+
 	// These headers are all implicitly present when you compile CUDA with clang. Clion doesn't know that, so
 	// we include them explicitly to make the indexer happy. Doing this when you actually build is, obviously,
 	// a terrible idea :D

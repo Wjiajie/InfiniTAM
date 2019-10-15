@@ -18,6 +18,7 @@
 #include "ITMSceneMotionTracker_CUDA.h"
 #include "../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
 #include "../Shared/ITMSceneMotionTracker_Functors.h"
+#include "../Shared/ITMWarpGradientFunctors.h"
 #include "ITMSceneMotionTracker_CUDA_PlainVoxelArray_Kernels.h"
 
 
@@ -70,9 +71,23 @@ void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::CalculateWar
 //	computeGradientDataTerm<TVoxel, TWarp>
 //			<< < gridSize, cudaBlockSize >> >
 //	                       (liveVoxels, canonicalVoxels, warpVoxels, arrayInfo);
+//
+//	ITMSceneMotionDataTermFunctor<TVoxel,TWarp,ITMPlainVoxelArray::IndexData, ITMPlainVoxelArray::IndexCache>
+//	        dataTermFunctor(liveVoxels, arrayInfo, parameters->weightDataTerm);
+//	ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA>::
+//	DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, dataTermFunctor);
 
 	DIEWITHEXCEPTION_REPORTLOCATION("Implementation pending");
 
+}
+
+
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::CalculateWarpGradient_OldCombinedFunctor(
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene, ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
+		bool restrictZTrackingForDebugging) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented (and never will be)");
 }
 
 template<typename TVoxel, typename TWarp>
@@ -102,3 +117,4 @@ void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::ResetWarps(
 	ITMSceneTraversalEngine<TWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA>::template
 	StaticVoxelTraversal<WarpClearFunctor<TWarp, TWarp::hasCumulativeWarp>>(warpField);
 }
+

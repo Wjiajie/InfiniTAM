@@ -110,14 +110,14 @@ namespace ITMLib
 
 		AnalysisSettings analysisSettings;
 
-		//*** Scene Tracking Switches ***
+		//*** Scene Tracking ITMSceneMotionOptimizationSwitches ***
 		bool enableDataTerm;
 		bool enableLevelSetTerm;
 		bool enableSmoothingTerm;
 		bool enableKillingTerm;
 		bool enableGradientSmoothing;
 
-		//*** Scene Tracking Parameters ***
+		//*** Scene Tracking ITMSceneMotionOptimizationParameters ***
 		//** optimization loop
 		unsigned int sceneTrackingMaxOptimizationIterationCount;
 		float sceneTrackingOptimizationVectorUpdateThresholdMeters;
