@@ -15,16 +15,14 @@
 //  ================================================================
 #pragma once
 
-#include <opencv2/core/mat.hpp>
 #include "../Interface/ITMSceneMotionTracker.h"
 #include "../../Utils/ITMHashBlockProperties.h"
-#include "../Shared/ITMCalculateWarpGradientFunctor.h"
-#include "../../Engines/Reconstruction/CPU/ITMHashAllocationEngine_CPU.tpp"
+#include "../../Engines/Reconstruction/CPU/ITMHashAllocationEngine_CPU.h"
 
 
 namespace ITMLib {
 
-template<typename TVoxel, typename TWarp, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TGradientFunctor, typename TIndex>
 class ITMSceneMotionTracker_CPU:
 		public ITMSceneMotionTracker<TVoxel, TWarp, TIndex>{
 	ITMSceneMotionTracker_CPU() {}
@@ -33,8 +31,8 @@ class ITMSceneMotionTracker_CPU:
 
 //region ======================================== VOXEL BLOCK HASH =====================================================
 
-template<typename TVoxel, typename TWarp>
-class ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash> :
+template<typename TVoxel, typename TWarp,  typename TGradientFunctor>
+class ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMVoxelBlockHash> :
 		public ITMSceneMotionTracker<TVoxel, TWarp, ITMVoxelBlockHash> {
 public:
 	explicit ITMSceneMotionTracker_CPU();
@@ -44,10 +42,6 @@ public:
 	void AddFlowWarpToWarp(
 			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField, bool clearFlowWarp) override;
 	void CalculateWarpGradient(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
-	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
-	                           ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
-	                           bool restrictZTrackingForDebugging) override;
-	void CalculateWarpGradient_OldCombinedFunctor(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
 	                           ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	                           bool restrictZTrackingForDebugging) override;
@@ -66,7 +60,6 @@ public:
 private:
 
 	ITMHashAllocationEngine_CPU<TVoxel, TWarp> hashManager;
-	ITMCalculateWarpGradientFunctor<TVoxel, TWarp, ITMVoxelBlockHash> calculateGradientFunctor_Old;
 
 
 };
@@ -77,8 +70,8 @@ private:
 //TODO: reorder argument lists in both classes for consistency with reconstruction engine: warp field should come first,
 //  canonical (as the "target") should come last
 
-template<typename TVoxel, typename TWarp>
-class ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray> :
+template<typename TVoxel, typename TWarp, typename TGradientFunctor >
+class ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelArray> :
 		public ITMSceneMotionTracker<TVoxel, TWarp, ITMPlainVoxelArray> {
 public:
 	explicit ITMSceneMotionTracker_CPU();
@@ -91,10 +84,6 @@ public:
 	                           ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 	                           ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 	                           bool restrictZTrackingForDebugging) override;
-	void CalculateWarpGradient_OldCombinedFunctor(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
-	                                              ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
-	                                              ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
-	                                              bool restrictZTrackingForDebugging) override;
 	void SmoothWarpGradient(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 	                        ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 	                        ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
@@ -105,8 +94,6 @@ public:
 
 	void ResetWarps(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
 
-private:
-	ITMCalculateWarpGradientFunctor<TVoxel, TWarp, ITMPlainVoxelArray> calculateGradientFunctor_Old;
 
 };
 

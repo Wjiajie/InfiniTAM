@@ -17,15 +17,18 @@
 
 #include "Interface/ITMSceneMotionTracker.h"
 #include "CPU/ITMSceneMotionTracker_CPU.h"
+#include "Shared/ITMCalculateWarpGradientFunctor.h"
 
 #ifndef COMPILE_WITHOUT_CUDA
+
 #include "CUDA/ITMSceneMotionTracker_CUDA.h"
+
 #endif
 #ifdef COMPILE_WITH_METAL
 #error "NOT CURRENTLY SUPPORTED"
 #endif
 
-namespace ITMLib{
+namespace ITMLib {
 class ITMSceneMotionTrackerFactory {
 public:
 /**
@@ -33,29 +36,35 @@ public:
 *
 * \param settings  settings to use
 */
-template<typename TVoxel, typename TWarp, typename TIndex>
-static ITMSceneMotionTracker<TVoxel, TWarp, TIndex>*
-MakeSceneMotionTracker() {
-	ITMSceneMotionTracker<TVoxel, TWarp, TIndex>* motionTracker = nullptr;
-	auto& settings = ITMLibSettings::Instance();
-	switch (settings.deviceType) {
-		case ITMLibSettings::DEVICE_CPU:
-			motionTracker = new ITMSceneMotionTracker_CPU<TVoxel, TWarp, TIndex>();
-			break;
-		case ITMLibSettings::DEVICE_CUDA:
+	template<typename TVoxel, typename TWarp, typename TIndex>
+	static ITMSceneMotionTracker<TVoxel, TWarp, TIndex>*
+	MakeSceneMotionTracker() {
+		ITMSceneMotionTracker<TVoxel, TWarp, TIndex>* motionTracker = nullptr;
+		auto& settings = ITMLibSettings::Instance();
+		switch (settings.deviceType) {
+			case ITMLibSettings::DEVICE_CPU:
+				motionTracker = new ITMSceneMotionTracker_CPU<TVoxel, TWarp,
+						ITMCalculateWarpGradientFunctor<ITMVoxel, ITMWarp, typename TIndex::IndexData,
+								typename TIndex::IndexCache>,
+						TIndex>();
+				break;
+			case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-			motionTracker = new ITMSceneMotionTracker_CUDA<TVoxel, TWarp, TIndex>();
+				motionTracker = new ITMSceneMotionTracker_CUDA<TVoxel, TWarp,
+						ITMCalculateWarpGradientFunctor<ITMVoxel, ITMWarp, typename TIndex::IndexData,
+								typename TIndex::IndexCache>,
+						TIndex>();
 #endif
-			break;
-		case ITMLibSettings::DEVICE_METAL:
+				break;
+			case ITMLibSettings::DEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
-			//TODO
-				DIEWITHEXCEPTION("Motion Scene Tracking not yet implemented on Metal")
+				//TODO
+					DIEWITHEXCEPTION("Motion Scene Tracking not yet implemented on Metal")
 #endif
-			break;
-	}
+				break;
+		}
 
-	return motionTracker;
-}
+		return motionTracker;
+	}
 };
 }//namespace ITMLib

@@ -21,10 +21,13 @@
 #include "../../Utils/ITMLibSettings.h"
 #include "ITMSceneMotionTracker_Shared.h"
 
-//#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
-//#include "../../Engines/Manipulation/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
-//#include "../../Engines/Manipulation/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
-//#include "../../Engines/Manipulation/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h"
+#include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
+#include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#ifdef __CUDACC__
+#include "../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
+#include "../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h"
+#endif
+
 
 
 
@@ -306,7 +309,7 @@ inline float UpdateWarps_common(
 	WarpUpdateFunctor<TVoxel, TWarp>
 			warpUpdateFunctor(gradientDescentLearningRate, gradeintSmoothingEnabled);
 
-	ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, TIndex, TDeviceType>::
+	ITMLib::ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, TIndex, TDeviceType>::
 	DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, warpUpdateFunctor);
 
 	//don't compute histogram in CUDA version

@@ -271,8 +271,8 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::PerformSingleOptimizationStep
 	bench::StartTimer("TrackMotion_31_CalculateWarpUpdate");
 
 
-	sceneMotionTracker->CalculateWarpGradient_OldCombinedFunctor(canonicalScene, initialLiveScene, warpField,
-	                                                             analysisFlags.restrictZtrackingForDebugging);
+	sceneMotionTracker->CalculateWarpGradient(canonicalScene, initialLiveScene, warpField,
+	                                          analysisFlags.restrictZtrackingForDebugging);
 
 
 	bench::StopTimer("TrackMotion_31_CalculateWarpUpdate");

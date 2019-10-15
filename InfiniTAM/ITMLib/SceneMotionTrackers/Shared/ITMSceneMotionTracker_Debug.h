@@ -210,7 +210,7 @@ inline void _DEBUG_PrintTikhonovTermStuff(const CONSTPTR(Vector3f*) neighborWarp
 };
 
 
-template<typename TVoxel, typename TCache>
+template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void find6ConnectedNeighborInfo(
 		THREADPTR(bool)* neighborKnown, //x6, out
@@ -219,41 +219,8 @@ inline void find6ConnectedNeighborInfo(
 		THREADPTR(float)* neighborSdf, //x6, out
 		const CONSTPTR(Vector3i)& voxelPosition,
 		const CONSTPTR(TVoxel)* voxels,
-		const CONSTPTR(ITMHashEntry)* hashEntries,
-		THREADPTR(TCache)& cache) {
-	int vmIndex;
-
-	TVoxel voxel;
-	//TODO: define inline function instead of macro
-#define PROCESS_VOXEL(location, index)\
-    voxel = readVoxel(voxels, hashEntries, voxelPosition + (location), vmIndex, cache);\
-    neighborAllocated[index] = vmIndex != 0;\
-    neighborKnown[index] = voxel.flags != ITMLib::VOXEL_UNKNOWN;\
-    neighborTruncated[index] = voxel.flags == ITMLib::VOXEL_TRUNCATED;\
-    neighborSdf[index] = TVoxel::valueToFloat(voxel.sdf);
-
-	PROCESS_VOXEL(Vector3i(-1, 0, 0), 0);
-	PROCESS_VOXEL(Vector3i(0, -1, 0), 1);
-	PROCESS_VOXEL(Vector3i(0, 0, -1), 2);
-
-	PROCESS_VOXEL(Vector3i(1, 0, 0), 3);
-	PROCESS_VOXEL(Vector3i(0, 1, 0), 4);
-	PROCESS_VOXEL(Vector3i(0, 0, 1), 5);
-#undef PROCESS_VOXEL
-}
-
-template<typename TVoxel, typename TIndexData, typename TCache>
-_CPU_AND_GPU_CODE_
-inline void find6ConnectedNeighborInfoIndexedFields(
-		THREADPTR(bool)* neighborKnown, //x6, out
-		THREADPTR(bool)* neighborTruncated, //x6, out
-		THREADPTR(bool)* neighborAllocated, //x6, out
-		THREADPTR(float)* neighborSdf, //x6, out
-		const CONSTPTR(Vector3i)& voxelPosition,
-		const CONSTPTR(TVoxel)* voxels,
 		const CONSTPTR(TIndexData)* hashEntries,
-		THREADPTR(TCache)& cache,
-		int fieldIndex) {
+		THREADPTR(TCache)& cache) {
 	int vmIndex = 0;
 
 	TVoxel voxel;
@@ -275,7 +242,6 @@ inline void find6ConnectedNeighborInfoIndexedFields(
 }
 
 
-
 template<typename TVoxel, typename TIndexData, typename TCache>
 _CPU_AND_GPU_CODE_
 inline void print6ConnectedNeighborInfo(
@@ -289,36 +255,8 @@ inline void print6ConnectedNeighborInfo(
 	bool neighborAllocated[neighborhoodSize];
 	float neighborSdf[neighborhoodSize];
 
-	find6ConnectedNeighborInfo(neighborKnown, neighborTruncated, neighborAllocated, neighborSdf, voxelPosition, voxels,
-	                           indexData, cache);
-	const Vector3i positions[6] = {Vector3i(-1, 0, 0), Vector3i(0, -1, 0), Vector3i(0, 0, -1),
-	                               Vector3i(1, 0, 0), Vector3i(0, 1, 0), Vector3i(0, 0, 1)};
-
-	for (int iNeighbor = 0; iNeighbor < 6; iNeighbor++) {
-		std::cout << ITMLib::yellow << "[" << positions[iNeighbor] << "]" << ITMLib::reset
-		          << " allocated: " << printBool(neighborAllocated[iNeighbor])
-		          << " truncated: " << printBool(neighborTruncated[iNeighbor]) << " known: "
-		          << printBool(neighborKnown[iNeighbor]) << " sdf: " << neighborSdf[iNeighbor] << std::endl;
-	}
-}
-
-
-template<typename TVoxel, typename TIndexData, typename TCache>
-_CPU_AND_GPU_CODE_
-inline void print6ConnectedNeighborInfoIndexedFields(
-		const CONSTPTR(Vector3i)& voxelPosition,
-		const CONSTPTR(TVoxel)* voxels,
-		const CONSTPTR(TIndexData)* indexData,
-		THREADPTR(TCache)& cache,
-		const CONSTPTR(int)& fieldIndex) {
-	const int neighborhoodSize = 6;
-	bool neighborKnown[neighborhoodSize];
-	bool neighborTruncated[neighborhoodSize];
-	bool neighborAllocated[neighborhoodSize];
-	float neighborSdf[neighborhoodSize];
-
-	find6ConnectedNeighborInfoIndexedFields(neighborKnown, neighborTruncated, neighborAllocated, neighborSdf,
-	                                        voxelPosition, voxels, indexData, cache, fieldIndex);
+	find6ConnectedNeighborInfo(neighborKnown, neighborTruncated, neighborAllocated, neighborSdf,
+	                           voxelPosition, voxels, indexData, cache);
 	const Vector3i positions[6] = {Vector3i(-1, 0, 0), Vector3i(0, -1, 0), Vector3i(0, 0, -1),
 	                               Vector3i(1, 0, 0), Vector3i(0, 1, 0), Vector3i(0, 0, 1)};
 

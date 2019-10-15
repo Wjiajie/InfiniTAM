@@ -435,7 +435,6 @@ public:
 #endif
 
 	void PrintStatistics() {
-		std::cout << bright_cyan << "*** Non-rigid Alignment Iteration Statistics ***" << reset << std::endl;
 #ifdef __CUDACC__
 		// assume calculation was done on the GPU
 		UpdateHostFromDevice();

@@ -68,12 +68,6 @@ public:
 	                      ITMVoxelVolume<TVoxel, TIndex>* liveScene,
 	                      ITMVoxelVolume<TWarp, TIndex>* warpField,
 	                      bool restrictZTrackingForDebugging) = 0;
-	[[deprecated]]
-	virtual void
-	CalculateWarpGradient_OldCombinedFunctor(ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
-	                                         ITMVoxelVolume<TVoxel, TIndex>* liveScene,
-	                                         ITMVoxelVolume<TWarp, TIndex>* warpField,
-	                                         bool restrictZTrackingForDebugging) = 0;
 	virtual void SmoothWarpGradient(
 			ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
 			ITMVoxelVolume<TVoxel, TIndex>* liveScene,

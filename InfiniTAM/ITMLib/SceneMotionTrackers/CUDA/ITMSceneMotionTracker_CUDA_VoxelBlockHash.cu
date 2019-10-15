@@ -16,9 +16,18 @@
 
 #include "../../ITMLibDefines.h"
 #include "ITMSceneMotionTracker_CUDA_VoxelBlockHash.tcu"
+#include "../Shared/ITMCalculateWarpGradientFunctor.h"
+#include "../Shared/ITMWarpGradientFunctors.h"
 
 
 namespace ITMLib {
 template
-class ITMSceneMotionTracker_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash>;
+class ITMSceneMotionTracker_CUDA<ITMVoxel, ITMWarp,
+		ITMCalculateWarpGradientFunctor<ITMVoxel,ITMWarp,ITMVoxelBlockHash::IndexData, ITMVoxelBlockHash::IndexCache>,
+		        ITMVoxelBlockHash>;
+
+template
+class ITMSceneMotionTracker_CUDA<ITMVoxel, ITMWarp,
+		ITMSceneMotionEnergyGradientCompositeFunctor<ITMVoxel,ITMWarp,ITMVoxelBlockHash::IndexData, ITMVoxelBlockHash::IndexCache>,
+		ITMVoxelBlockHash>;
 }
