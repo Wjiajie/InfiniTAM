@@ -85,7 +85,7 @@ public:
 	const ITMSceneMotionOptimizationSwitches switches;
 protected:
 	void PrintSettings() {
-		std::cout << bright_cyan << "*** ITMSceneMotionTracker_CPU Settings: ***" << reset << std::endl;
+		std::cout << bright_cyan << "*** Scene Motion Tracker Settings: ***" << reset << std::endl;
 		std::cout << "Data term enabled: " << printBool(this->switches.enableDataTerm) << std::endl;
 		std::cout << "Smoothing term enabled: " << printBool(this->switches.enableSmoothingTerm) << std::endl;
 		std::cout << "Level Set term enabled: " << printBool(this->switches.enableLevelSetTerm) << std::endl;

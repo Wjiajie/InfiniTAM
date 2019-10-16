@@ -14,46 +14,49 @@
 //  limitations under the License.
 //  ================================================================
 #pragma once
-#if !(defined(__CUDACC__) && defined(__CUDA_ARCH__))
+#if !defined(__CUDACC__)
 #include <atomic>
 
+template<typename T>
 inline
-float atomicAdd_CPU(std::atomic<float>& variable, float addend) {
+T atomicAdd_CPU(std::atomic<T>& variable, T addend) {
 	auto current = variable.load();
 	while (!variable.compare_exchange_weak(current, current + addend, std::memory_order_relaxed, std::memory_order_relaxed));
 	return current;
 }
 
+template<>
 inline
-int atomicAdd_CPU(std::atomic<int>& variable, int addend){
+int atomicAdd_CPU<int>(std::atomic<int>& variable, int addend){
+	return variable.fetch_add(addend, std::memory_order_relaxed);
+}
+
+template<>
+inline
+unsigned int atomicAdd_CPU<unsigned int>(std::atomic<unsigned int>& variable, unsigned int addend){
 	return variable.fetch_add(addend, std::memory_order_relaxed);
 }
 #endif
 
-#if defined(__CUDACC__) && defined(__CUDA_ARCH__)
-inline void initializeAtomicInt(int* var, int value){
-	ORcudaSafeCall(cudaMalloc((void**)&var,sizeof(int)));
-	ORcudaSafeCall(cudaMemcpy(var, &value, sizeof(int),cudaMemcpyHostToDevice));
-}
-inline void initializeAtomicFloat(float* var, float value){
-	ORcudaSafeCall(cudaMalloc((void**)&var,sizeof(float)));
-	ORcudaSafeCall(cudaMemcpy(var, &value, sizeof(float),cudaMemcpyHostToDevice));
+#if defined(__CUDACC__)
+template <typename T>
+inline void initializeAtomic(T* var, T value){
+	ORcudaSafeCall(cudaMalloc((void**)&var, sizeof(T)));
+	ORcudaSafeCall(cudaMemcpy(var, &value, sizeof(T), cudaMemcpyHostToDevice));
 }
 #else
-inline void initializeAtomicInt(std::atomic<int>& var, int value){
-	var.store(value);
-}
-inline void initializeAtomicFloat(std::atomic<float>& var, float value){
+template <typename T>
+inline void initializeAtomic(std::atomic<T>& var, T value){
 	var.store(value);
 }
 #endif
 
-#define INITIALIZE_ATOMIC_INT(name, value) initializeAtomicInt( name , value )
-#define INITIALIZE_ATOMIC_FLOAT(name, value) initializeAtomicFloat( name , value )
+#define INITIALIZE_ATOMIC(name, value) initializeAtomic( name , value )
 
-#if defined(__CUDACC__) && defined(__CUDA_ARCH__)
+#if defined(__CUDACC__)
 // for CUDA device code
 #define DECLARE_ATOMIC_INT(name)  int* name
+#define DECLARE_ATOMIC_UINT(name) unsigned int* name
 #define DECLARE_ATOMIC_FLOAT(name) float* name
 #define CLEAN_UP_ATOMIC(name) ORcudaSafeCall (cudaFree(name))
 #define GET_ATOMIC_VALUE(name) (* name)
@@ -61,6 +64,7 @@ inline void initializeAtomicFloat(std::atomic<float>& var, float value){
 #define ATOMIC_INT_ARGUMENT_TYPE int*
 #else
 #define DECLARE_ATOMIC_INT(name)  std::atomic<int> name
+#define DECLARE_ATOMIC_UINT(name)  std::atomic<unsigned int> name
 #define DECLARE_ATOMIC_FLOAT(name) std::atomic<float> name
 #define CLEAN_UP_ATOMIC(name) ;
 #define GET_ATOMIC_VALUE(name) (name .load())
@@ -68,9 +72,12 @@ inline void initializeAtomicFloat(std::atomic<float>& var, float value){
 #define ATOMIC_INT_ARGUMENT_TYPE std::atomic<int>&
 #endif
 
-#if defined(__CUDACC__) && defined(__CUDA_ARCH__)
+#if defined(__CUDACC__)
 #define ATOMIC_ADD(name, value) atomicAdd( name , value )
+#define _DEVICE_WHEN_AVAILABLE_ __device__
 #else
 #define ATOMIC_ADD(name, value) atomicAdd_CPU( name, value)
+#define _DEVICE_WHEN_AVAILABLE_
 #endif
+
 

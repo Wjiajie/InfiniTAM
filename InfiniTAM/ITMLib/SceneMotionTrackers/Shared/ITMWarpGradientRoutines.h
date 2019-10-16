@@ -18,6 +18,7 @@
 #include "../../Utils/ITMMath.h"
 #include "../../../ORUtils/PlatformIndependence.h"
 #include "../../../ORUtils/PlatformIndependentAtomics.h"
+#include "ITMWarpGradientAggregates.h"
 
 _CPU_AND_GPU_CODE_
 template<typename TVoxel, typename TIndexData, typename TCache>
@@ -51,6 +52,12 @@ Vector3f computeDataTerm(float liveSdf, float canonicalSdf, float weight,
 }
 
 _CPU_AND_GPU_CODE_
+inline
+float computeDataEnergy(float weight, float sdfDifferenceBetweenLiveAndCanonical) {
+	return weight * 0.5f * (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
+}
+
+_CPU_AND_GPU_CODE_
 template<typename TVoxel, typename TIndexData, typename TCache>
 inline
 Vector3f computeDataTerm(float& localDataEnergy, float liveSdf, float canonicalSdf, float weight,
@@ -62,7 +69,80 @@ Vector3f computeDataTerm(float& localDataEnergy, float liveSdf, float canonicalS
 	                                            canonicalSdf, weight, voxelPosition, liveVoxels, liveIndexData,
 	                                            liveCache);
 
-	localDataEnergy = 0.5f * (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
+	localDataEnergy = computeDataEnergy(weight, sdfDifferenceBetweenLiveAndCanonical);
+	return dataTermGradient;
+}
+
+_CPU_AND_GPU_CODE_
+template<typename TVoxel, typename TIndexData, typename TCache>
+inline
+Vector3f computeDataTerm(ComponentEnergies& energies, float liveSdf, float canonicalSdf, float weight,
+                         const Vector3i& voxelPosition, const TVoxel* liveVoxels, const TIndexData* liveIndexData,
+                         TCache liveCache) {
+	Vector3f liveSdfJacobian;
+	float sdfDifferenceBetweenLiveAndCanonical;
+	Vector3f dataTermGradient = computeDataTerm(liveSdfJacobian, sdfDifferenceBetweenLiveAndCanonical, liveSdf,
+	                                            canonicalSdf, weight, voxelPosition, liveVoxels, liveIndexData,
+	                                            liveCache);
+
+	float localDataEnergy = computeDataEnergy(weight, sdfDifferenceBetweenLiveAndCanonical);
+	ATOMIC_ADD(energies.totalDataEnergy, localDataEnergy);
+	return dataTermGradient;
 }
 
 
+_CPU_AND_GPU_CODE_
+template<typename TVoxel, typename TIndexData, typename TCache>
+inline Vector3f
+computeDataTerm(ComponentEnergies& energies, AdditionalGradientAggregates& aggregates, float liveSdf,
+                         float canonicalSdf, float weight, const Vector3i& voxelPosition, const TVoxel* liveVoxels,
+                         const TIndexData* liveIndexData, TCache liveCache) {
+	Vector3f liveSdfJacobian;
+	float sdfDifferenceBetweenLiveAndCanonical;
+	Vector3f dataTermGradient = computeDataTerm(liveSdfJacobian, sdfDifferenceBetweenLiveAndCanonical, liveSdf,
+	                                            canonicalSdf, weight, voxelPosition, liveVoxels, liveIndexData,
+	                                            liveCache);
+
+	float localDataEnergy = computeDataEnergy(weight, sdfDifferenceBetweenLiveAndCanonical);
+	ATOMIC_ADD(energies.totalDataEnergy, localDataEnergy);
+	ATOMIC_ADD(aggregates.dataVoxelCount, 1u);
+	ATOMIC_ADD(aggregates.cumulativeSdfDiff, std::abs(sdfDifferenceBetweenLiveAndCanonical));
+	return dataTermGradient;
+}
+
+_CPU_AND_GPU_CODE_
+template<typename TVoxel, typename TIndexData, typename TCache>
+inline Vector3f
+computeDataTerm(ComponentEnergies& energies, AdditionalGradientAggregates& aggregates, Vector3f& liveSdfJacobian,
+                float liveSdf, float canonicalSdf, float weight, const Vector3i& voxelPosition, const TVoxel* liveVoxels,
+                const TIndexData* liveIndexData, TCache liveCache) {
+	float sdfDifferenceBetweenLiveAndCanonical;
+	Vector3f dataTermGradient = computeDataTerm(liveSdfJacobian, sdfDifferenceBetweenLiveAndCanonical, liveSdf,
+	                                            canonicalSdf, weight, voxelPosition, liveVoxels, liveIndexData,
+	                                            liveCache);
+
+	float localDataEnergy = computeDataEnergy(weight, sdfDifferenceBetweenLiveAndCanonical);
+	ATOMIC_ADD(energies.totalDataEnergy, localDataEnergy);
+	ATOMIC_ADD(aggregates.dataVoxelCount, 1u);
+	ATOMIC_ADD(aggregates.cumulativeSdfDiff, std::abs(sdfDifferenceBetweenLiveAndCanonical));
+	return dataTermGradient;
+}
+// TODO
+//_CPU_AND_GPU_CODE_
+//template<typename TVoxel, typename TIndexData, typename TCache>
+//inline Vector3f
+//computeLevelSetTerm(){
+//	Matrix3f liveSdfHessian;Vector3f liveSdfJacobian;
+//	ComputeLiveJacobian_CentralDifferences(
+//			liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache);
+//
+//	ComputeSdfHessian(liveSdfHessian, voxelPosition, liveSdf, liveVoxels, liveIndexData, liveCache);
+//
+//	float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
+//	float sdfJacobianNormMinusUnity = sdfJacobianNorm - parameters.unity;
+//	localLevelSetEnergyGradient = sdfJacobianNormMinusUnity * (liveSdfHessian * liveSdfJacobian) /
+//	                              (sdfJacobianNorm + parameters.epsilon);
+//	ATOMIC_ADD(aggregates.dataVoxelCount, 1u);
+//	localLevelSetEnergy =
+//			0.5f * (sdfJacobianNormMinusUnity * sdfJacobianNormMinusUnity);
+//}

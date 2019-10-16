@@ -40,7 +40,6 @@ void ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelArr
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 		bool restrictZTrackingForDebugging) {
 
-	// manage hash
 	ITMSceneTraversalEngine<TWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::template
 	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TWarp>>(warpField);
 

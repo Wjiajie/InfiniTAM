@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include "../../Utils/ITMPrintHelpers.h"
+#include "ITMWarpGradientAggregates.h"
 
 namespace ITMLib {
 // region ==================================== STATIC PRINTING / STATISTICS FUNCTIONS ==================================
@@ -28,11 +29,12 @@ void PrintEnergyStatistics(const bool& enableDataTerm,
                            const bool& enableSmoothingTerm,
                            const bool& enableRigidityTerm,
                            const float& gamma,
-                           const double& totalDataEnergy,
-                           const double& totalLevelSetEnergy,
-                           const double& totalTikhonovEnergy,
-                           const double& totalRigidityEnergy) {
+                           float totalDataEnergy,
+                           float totalLevelSetEnergy,
+                           float totalTikhonovEnergy,
+                           float totalRigidityEnergy) {
 	std::cout << " [ENERGY]";
+
 	double totalEnergy = 0.f;
 	if (enableDataTerm) {
 		std::cout << blue << " Data term: " << totalDataEnergy;
@@ -55,24 +57,36 @@ void PrintEnergyStatistics(const bool& enableDataTerm,
 }
 
 inline static
+void PrintEnergyStatistics(const bool& enableDataTerm,
+                           const bool& enableLevelSetTerm,
+                           const bool& enableSmoothingTerm,
+                           const bool& enableRigidityTerm,
+                           const float& gamma,
+                           ComponentEnergies& energies) {
+	std::cout << " [ENERGY]";
+
+	float totalDataEnergy = GET_ATOMIC_VALUE(energies.totalDataEnergy);
+	float totalLevelSetEnergy = GET_ATOMIC_VALUE(energies.totalLevelSetEnergy);
+	float totalTikhonovEnergy = GET_ATOMIC_VALUE(energies.totalTikhonovEnergy);
+	float totalRigidityEnergy = GET_ATOMIC_VALUE(energies.totalRigidityEnergy);
+	PrintEnergyStatistics(enableDataTerm,enableLevelSetTerm,enableSmoothingTerm,enableRigidityTerm, gamma,
+			totalDataEnergy, totalLevelSetEnergy, totalTikhonovEnergy, totalRigidityEnergy);
+}
+
+inline static
 void CalculateAndPrintAdditionalStatistics(const bool& enableDataTerm,
                                            const bool& enableLevelSetTerm,
-                                           const double& cumulativeCanonicalSdf,
-                                           const double& cumulativeLiveSdf,
-                                           const double& cumulativeWarpDist,
-                                           const double& cumulativeSdfDiff,
-                                           const unsigned int& consideredVoxelCount,
-                                           const unsigned int& dataVoxelCount,
-                                           const unsigned int& levelSetVoxelCount,
+                                           AdditionalGradientAggregates& aggregates,
                                            const unsigned int usedHashblockCount = 0) {
 
-	double averageCanonicalSdf = cumulativeCanonicalSdf / consideredVoxelCount;
-	double averageLiveSdf = cumulativeLiveSdf / consideredVoxelCount;
-	double averageWarpDist = cumulativeWarpDist / consideredVoxelCount;
+	int consideredVoxelCount = GET_ATOMIC_VALUE(aggregates.consideredVoxelCount);
+	double averageCanonicalSdf = GET_ATOMIC_VALUE(aggregates.cumulativeCanonicalSdf) / consideredVoxelCount;
+	double averageLiveSdf = GET_ATOMIC_VALUE(aggregates.cumulativeLiveSdf) / consideredVoxelCount;
+	double averageWarpDist = GET_ATOMIC_VALUE(aggregates.cumulativeWarpDist) / consideredVoxelCount;
 	double averageSdfDiff = 0.0;
 
 	if (enableDataTerm) {
-		averageSdfDiff = cumulativeSdfDiff / dataVoxelCount;
+		averageSdfDiff = GET_ATOMIC_VALUE(aggregates.cumulativeSdfDiff) / GET_ATOMIC_VALUE(aggregates.dataVoxelCount);
 	}
 
 	std::cout << " Ave canonical SDF: " << averageCanonicalSdf
@@ -81,9 +95,9 @@ void CalculateAndPrintAdditionalStatistics(const bool& enableDataTerm,
 		std::cout << " Ave SDF diff: " << averageSdfDiff;
 	}
 	std::cout << " Used voxel count: " << consideredVoxelCount
-	          << " Data term v-count: " << dataVoxelCount;
+	          << " Data term v-count: " << GET_ATOMIC_VALUE(aggregates.dataVoxelCount);
 	if (enableLevelSetTerm) {
-		std::cout << " LS term v-count: " << levelSetVoxelCount;
+		std::cout << " LS term v-count: " << GET_ATOMIC_VALUE(aggregates.levelSetVoxelCount);
 	}
 	std::cout << " Ave warp distance: " << averageWarpDist;
 

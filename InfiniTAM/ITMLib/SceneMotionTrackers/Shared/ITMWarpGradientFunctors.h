@@ -21,15 +21,16 @@
 #include "../../../ORUtils/JetbrainsCUDASyntax.hpp"
 #include "ITMSceneMotionTracker_Shared.h"
 #include "ITMSceneMotionOptimizationParameters.h"
+#include "ITMWarpGradientCommon.h"
 #include <unordered_map>
 
 namespace ITMLib {
 
 template<typename TVoxel, typename TWarp>
 struct ITMSceneMotionGradientTermFunctor {
-	_CPU_AND_GPU_CODE_
+	_DEVICE_WHEN_AVAILABLE_
 	virtual void run(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) = 0;
-	_CPU_AND_GPU_CODE_
+	_DEVICE_WHEN_AVAILABLE_
 	virtual float getEnergy() const = 0;
 };
 
@@ -42,7 +43,7 @@ struct ITMSceneMotionDataTermFunctor
 	ITMSceneMotionDataTermFunctor(TVoxel* liveVoxels, const TIndexData* liveIndexData,
 	                              float weight) :
 			weight(weight), liveVoxels(liveVoxels), liveIndexData(liveIndexData), liveCache() {
-		INITIALIZE_ATOMIC_FLOAT(energy, 0.0f);
+		INITIALIZE_ATOMIC(energy, 0.0f);
 	}
 
 	~ITMSceneMotionDataTermFunctor() {
@@ -55,7 +56,7 @@ struct ITMSceneMotionDataTermFunctor
 	TCache liveCache;
 	DECLARE_ATOMIC_FLOAT(energy);
 
-	_CPU_AND_GPU_CODE_
+	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) {
 		if (!VoxelIsConsideredForTracking(voxelCanonical, voxelLive)
 		    || !VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive))
@@ -82,12 +83,12 @@ struct ITMSceneMotionDataTermFunctor
 
 	}
 
-	_CPU_AND_GPU_CODE_
+	_DEVICE_WHEN_AVAILABLE_
 	void run(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) override {
 		this->operator()(voxelLive, voxelCanonical, warp, voxelPosition);
 	}
 
-	_CPU_AND_GPU_CODE_
+	_DEVICE_WHEN_AVAILABLE_
 	float getEnergy() const override {
 		return GET_ATOMIC_VALUE(energy);
 	}
@@ -100,7 +101,7 @@ struct ITMSceneMotionLevelSetTermFunctor : public ITMSceneMotionGradientTermFunc
 	                                  float weight = 0.2f, float epsilon = 1e-5f, float unity = 0.1f) :
 			liveVoxels(liveVoxels), liveIndexData(liveIndexData), liveCache(), epsilon(epsilon), unity(unity),
 			weight(weight) {
-		INITIALIZE_ATOMIC_FLOAT(energy, 0.0f);
+		INITIALIZE_ATOMIC(energy, 0.0f);
 	}
 
 	~ITMSceneMotionLevelSetTermFunctor() {
@@ -115,7 +116,7 @@ struct ITMSceneMotionLevelSetTermFunctor : public ITMSceneMotionGradientTermFunc
 	const float unity;
 	const float weight;
 
-	_CPU_AND_GPU_CODE_
+	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) {
 		Matrix3f liveSdfHessian;
 		Vector3f liveSdfJacobian;
@@ -139,13 +140,13 @@ struct ITMSceneMotionLevelSetTermFunctor : public ITMSceneMotionGradientTermFunc
 
 	}
 
-	_CPU_AND_GPU_CODE_
+	_DEVICE_WHEN_AVAILABLE_
 	void run(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) override {
 		this->operator()(voxelLive, voxelCanonical, warp, voxelPosition);
 	}
 
 
-	_CPU_AND_GPU_CODE_
+	_DEVICE_WHEN_AVAILABLE_
 	float getEnergy() const override {
 		return GET_ATOMIC_VALUE(energy);
 	}
@@ -163,7 +164,7 @@ struct ITMSceneMotionTikhonovTermFunctor : public ITMSceneMotionGradientTermFunc
 			canonicalVoxels(canonicalVoxels), canonicalIndexData(canonicalIndexData),
 			warps(warps), warpIndexData(warpIndexData),
 			weight(weight) {
-		INITIALIZE_ATOMIC_FLOAT(energy, 0.0f);
+		INITIALIZE_ATOMIC(energy, 0.0f);
 	}
 
 	~ITMSceneMotionTikhonovTermFunctor() {
@@ -184,7 +185,7 @@ struct ITMSceneMotionTikhonovTermFunctor : public ITMSceneMotionGradientTermFunc
 	DECLARE_ATOMIC_FLOAT(energy);
 	const float weight;
 
-	_CPU_AND_GPU_CODE_
+	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) {
 		Vector3f& framewiseWarp = warp.flow_warp;
 		const int neighborhoodSize = 9;
@@ -222,13 +223,13 @@ struct ITMSceneMotionTikhonovTermFunctor : public ITMSceneMotionGradientTermFunc
 
 	}
 
-	_CPU_AND_GPU_CODE_
+	_DEVICE_WHEN_AVAILABLE_
 	void run(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) override {
 		this->operator()(voxelLive, voxelCanonical, warp, voxelPosition);
 	}
 
 
-	_CPU_AND_GPU_CODE_
+	_DEVICE_WHEN_AVAILABLE_
 	float getEnergy() const override {
 		return GET_ATOMIC_VALUE(energy);
 	}
@@ -247,12 +248,13 @@ struct ITMSceneMotionKillingTermFunctor : public ITMSceneMotionGradientTermFunct
 			warps(warps), warpIndexData(warpIndexData),
 			canonicalVoxels(canonicalVoxels), canonicalIndexData(canonicalIndexData),
 			weight(weight), rigidityWeight(rigidityWeight) {
-		INITIALIZE_ATOMIC_FLOAT(energy, 0.0f);
-		INITIALIZE_ATOMIC_FLOAT(rigidityEnergy, 0.0f);
+		INITIALIZE_ATOMIC(energy, 0.0f);
+		INITIALIZE_ATOMIC(rigidityEnergy, 0.0f);
 	}
 
 	~ITMSceneMotionKillingTermFunctor() {
-		CLEAN_UP_ATOMIC(smoothingEnergy);CLEAN_UP_ATOMIC(rigidityEnergy);
+		CLEAN_UP_ATOMIC(energy);
+		CLEAN_UP_ATOMIC(rigidityEnergy);
 	}
 
 	TVoxel* liveVoxels;
@@ -271,7 +273,7 @@ struct ITMSceneMotionKillingTermFunctor : public ITMSceneMotionGradientTermFunct
 	const float weight;
 	const float rigidityWeight;
 
-	_CPU_AND_GPU_CODE_
+	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) {
 		Vector3f& framewiseWarp = warp.flow_warp;
 		const int neighborhoodSize = 9;
@@ -339,13 +341,13 @@ struct ITMSceneMotionKillingTermFunctor : public ITMSceneMotionGradientTermFunct
 		ATOMIC_ADD(rigidityEnergy, localRigidityEnergy);
 	}
 
-	_CPU_AND_GPU_CODE_
+	_DEVICE_WHEN_AVAILABLE_
 	void run(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) override {
 		this->operator()(voxelLive, voxelCanonical, warp, voxelPosition);
 	}
 
 
-	_CPU_AND_GPU_CODE_
+	_DEVICE_WHEN_AVAILABLE_
 	float getEnergy() const override {
 		return GET_ATOMIC_VALUE(energy);
 	}
@@ -409,7 +411,7 @@ public:
 #endif
 	}
 
-	_CPU_AND_GPU_CODE_
+	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) {
 		for (int iFunctor = 0; iFunctor < functorCount; iFunctor++) {
 			functors_Current[iFunctor]->run(voxelLive, voxelCanonical, warp, voxelPosition);

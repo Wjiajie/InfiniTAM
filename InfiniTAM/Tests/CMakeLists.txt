@@ -70,7 +70,7 @@ if (BUILD_TESTS)
     itm_add_test(NAME VolumeSaveLoadCompact_CUDA SOURCES Test_VolumeSaveLoadCompact_CUDA.cpp)
     itm_add_test(NAME IntArrayMap3D SOURCES TestIntArrayMap3D.cpp)
     itm_add_test(NAME ImageMaskReader SOURCES TestImageMaskReader.cpp)
-    itm_add_test(NAME WarpGradient_CPU SOURCES Test_WarpGradient_CPU.cpp)
+    itm_add_test(NAME WarpGradient SOURCES Test_WarpGradient.cpp)
 
 
     #####################################################

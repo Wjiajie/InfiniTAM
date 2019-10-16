@@ -604,7 +604,7 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_HEADERS
     )
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_SOURCES
-    SceneMotionTrackers/CPU/ITMWarpGradientCommon.h
+	SceneMotionTrackers/Shared/ITMWarpGradientCommon.h
     SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.tpp
 	SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.cpp
     SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.tpp
@@ -685,6 +685,7 @@ set(ITMLIB_UTILS_HEADERS
     Utils/ITMSceneParams.h
     Utils/ITMSurfelSceneParams.h
     Utils/ITMPrintHelpers.h
+	Utils/ITMCPrintHelpers.h
 
     Utils/Analytics/ITMBenchmarkUtils.h
 	Utils/Analytics/ITMAlmostEqual.h

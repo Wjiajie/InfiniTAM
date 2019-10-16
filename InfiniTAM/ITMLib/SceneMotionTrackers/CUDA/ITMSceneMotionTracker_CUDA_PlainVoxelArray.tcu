@@ -56,30 +56,15 @@ void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelAr
 	ITMSceneTraversalEngine<TWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA>::template
 	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TWarp> >(warpField);
 
-	TVoxel* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
-	TVoxel* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
-	TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+	TGradientFunctor
+			calculateGradientFunctor(this->parameters, this->switches,
+			                         liveScene->localVBA.GetVoxelBlocks(), liveScene->index.getIndexData(),
+			                         canonicalScene->localVBA.GetVoxelBlocks(), canonicalScene->index.getIndexData(),
+			                         warpField->localVBA.GetVoxelBlocks(), warpField->index.getIndexData());
 
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = liveScene->index.getIndexData();
-
-	dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
-	Vector3i volumeSize = liveScene->index.getVolumeSize();
-	dim3 gridSize(
-			static_cast<int>(ceil(static_cast<float>(volumeSize.x) / static_cast<float>(cudaBlockSize.x))),
-			static_cast<int>(ceil(static_cast<float>(volumeSize.y) / static_cast<float>(cudaBlockSize.y))),
-			static_cast<int>(ceil(static_cast<float>(volumeSize.z) / static_cast<float>(cudaBlockSize.z))));
-
-//	computeGradientDataTerm<TVoxel, TWarp>
-//			<< < gridSize, cudaBlockSize >> >
-//	                       (liveVoxels, canonicalVoxels, warpVoxels, arrayInfo);
-//
-//	ITMSceneMotionDataTermFunctor<TVoxel,TWarp,ITMPlainVoxelArray::IndexData, ITMPlainVoxelArray::IndexCache>
-//	        dataTermFunctor(liveVoxels, arrayInfo, parameters->weightDataTerm);
-//	ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA>::
-//	DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, dataTermFunctor);
-
-	DIEWITHEXCEPTION_REPORTLOCATION("Implementation pending");
-
+	ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA>::
+	DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, calculateGradientFunctor);
+	calculateGradientFunctor.PrintStatistics();
 }
 
 template<typename TVoxel, typename TWarp, typename TGradientFunctor>

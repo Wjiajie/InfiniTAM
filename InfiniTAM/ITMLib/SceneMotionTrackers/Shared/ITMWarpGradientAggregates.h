@@ -18,14 +18,24 @@
 
 struct AdditionalGradientAggregates{
 	AdditionalGradientAggregates(){
-		INITIALIZE_ATOMIC_FLOAT(cumulativeCanonicalSdf, 0.f);
-		INITIALIZE_ATOMIC_FLOAT(cumulativeLiveSdf,0.f);
-		INITIALIZE_ATOMIC_FLOAT(cumulativeSdfDiff, 0.f);
-		INITIALIZE_ATOMIC_FLOAT(cumulativeWarpDist, 0.f);
+		INITIALIZE_ATOMIC(cumulativeCanonicalSdf, 0.f);
+		INITIALIZE_ATOMIC(cumulativeLiveSdf,0.f);
+		INITIALIZE_ATOMIC(cumulativeSdfDiff, 0.f);
+		INITIALIZE_ATOMIC(cumulativeWarpDist, 0.f);
 
-		INITIALIZE_ATOMIC_INT(consideredVoxelCount, 0);
-		INITIALIZE_ATOMIC_INT(dataVoxelCount, 0);
-		INITIALIZE_ATOMIC_INT(levelSetVoxelCount, 0);
+		INITIALIZE_ATOMIC(consideredVoxelCount, 0u);
+		INITIALIZE_ATOMIC(dataVoxelCount, 0u);
+		INITIALIZE_ATOMIC(levelSetVoxelCount, 0u);
+	}
+	~AdditionalGradientAggregates(){
+		CLEAN_UP_ATOMIC(cumulativeCanonicalSdf);
+		CLEAN_UP_ATOMIC(cumulativeLiveSdf);
+		CLEAN_UP_ATOMIC(cumulativeSdfDiff);
+		CLEAN_UP_ATOMIC(cumulativeWarpDist);
+
+		CLEAN_UP_ATOMIC(consideredVoxelCount);
+		CLEAN_UP_ATOMIC(dataVoxelCount);
+		CLEAN_UP_ATOMIC(levelSetVoxelCount);
 	}
 
 	DECLARE_ATOMIC_FLOAT(cumulativeCanonicalSdf);
@@ -33,23 +43,27 @@ struct AdditionalGradientAggregates{
 	DECLARE_ATOMIC_FLOAT(cumulativeSdfDiff);
 	DECLARE_ATOMIC_FLOAT(cumulativeWarpDist);
 
-	DECLARE_ATOMIC_INT(consideredVoxelCount);
-	DECLARE_ATOMIC_INT(dataVoxelCount);
-	DECLARE_ATOMIC_INT(levelSetVoxelCount);
+	DECLARE_ATOMIC_UINT(consideredVoxelCount);
+	DECLARE_ATOMIC_UINT(dataVoxelCount);
+	DECLARE_ATOMIC_UINT(levelSetVoxelCount);
 };
 
 struct ComponentEnergies{
 	ComponentEnergies(){
-		INITIALIZE_ATOMIC_FLOAT(totalDataEnergy, 0.f);
-		INITIALIZE_ATOMIC_FLOAT(totalLevelSetEnergy,0.f);
-		INITIALIZE_ATOMIC_FLOAT(totalTikhonovEnergy,0.f);
-		INITIALIZE_ATOMIC_FLOAT(totalRigidityEnergy,0.f);
-		INITIALIZE_ATOMIC_FLOAT(totalSmoothnessEnergy,0.f);
+		INITIALIZE_ATOMIC(totalDataEnergy, 0.f);
+		INITIALIZE_ATOMIC(totalLevelSetEnergy,0.f);
+		INITIALIZE_ATOMIC(totalTikhonovEnergy,0.f);
+		INITIALIZE_ATOMIC(totalRigidityEnergy,0.f);
+	}
+	~ComponentEnergies(){
+		CLEAN_UP_ATOMIC(totalDataEnergy);
+		CLEAN_UP_ATOMIC(totalLevelSetEnergy);
+		CLEAN_UP_ATOMIC(totalTikhonovEnergy);
+		CLEAN_UP_ATOMIC(totalRigidityEnergy);
 	}
 	DECLARE_ATOMIC_FLOAT(totalDataEnergy);
 	DECLARE_ATOMIC_FLOAT(totalLevelSetEnergy);
 	DECLARE_ATOMIC_FLOAT(totalTikhonovEnergy);
 	DECLARE_ATOMIC_FLOAT(totalRigidityEnergy);
-	DECLARE_ATOMIC_FLOAT(totalSmoothnessEnergy);
 };
 
