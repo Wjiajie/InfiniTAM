@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(testDataTerm_CPU) {
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&canonical_scene_CPU);
 	std::cout << "Scene size: " << canonical_scene_CPU.index.getVolumeSize() << std::endl;
 	std::cout << "Scene offset: " << canonical_scene_CPU.index.getVolumeOffset() << std::endl;
-	canonical_scene_CPU.LoadFromDirectory("TestData/snoopy_result_frame_17_PVA/canonical");
+	canonical_scene_CPU.LoadFromDirectory("TestData/snoopy_result_fr16-17_PVA/canonical");
 	std::cout << "Orig canonical nontruncated:" << SceneStatCalc_CPU_PVA_Voxel::Instance().ComputeNonTruncatedVoxelCount(&canonical_scene_CPU) << std::endl;
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> live_scene_CPU(&settings->sceneParams,
@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(testDataTerm_CPU) {
 	                                                         ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                            settings->GetMemoryType());
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&live_scene_CPU);
-	live_scene_CPU.LoadFromDirectory("TestData/snoopy_result_frame_17_PVA/live");
+	live_scene_CPU.LoadFromDirectory("TestData/snoopy_result_fr16-17_PVA/live");
 	std::cout << "Orig live nontruncated:" << SceneStatCalc_CPU_PVA_Voxel::Instance().ComputeNonTruncatedVoxelCount(&live_scene_CPU) << std::endl;
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> canonical_scene_slice_CPU(&settings->sceneParams,

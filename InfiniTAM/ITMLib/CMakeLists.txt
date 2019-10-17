@@ -672,7 +672,10 @@ set(ITMLIB_UTILS_HEADERS
     Utils/Collections/ITM3DNestedMapOfArrays.h
     Utils/Collections/ITM3DNestedMap.h
 
-	Utils/ITMGeometryOpernations.h
+	Utils/Geometry/ITMGeometryBooleanOpernations.h
+	Utils/Geometry/ITMGeometryConversionOperations.h
+	Utils/Geometry/ITM3DIndexConversions.h
+
     Utils/ITMCUDAUtils.h
     Utils/ITMImageTypes.h
     Utils/ITMHashBlockProperties.h

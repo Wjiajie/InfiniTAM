@@ -45,6 +45,7 @@ typedef class ORUtils::Vector4<double> Vector4d;
 
 typedef class ORUtils::Vector6<float> Vector6f;
 typedef class ORUtils::Vector6<int> Vector6i;
+typedef class ORUtils::Vector6<int> Extent3D;
 
 
 #ifndef TO_INT_ROUND3

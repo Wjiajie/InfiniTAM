@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 9/27/19.
+//  Created by Gregory Kramida on 10/17/19.
 //  Copyright (c) 2019 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -15,17 +15,16 @@
 //  ================================================================
 #pragma once
 
-#include "../../ORUtils/PlatformIndependence.h"
-#include "ITMMath.h"
+#include "../../../ORUtils/PlatformIndependence.h"
+#include "../../../ORUtils/MathUtils.h"
+//TODO: separate out common geometry object, i.e. PVA info is the logical equivalent of a box, make a separate Box geometry class
+// (need to eliminate as much interdependence between classes in folders as possible, i.e. reduce coupling & increase cohesion)
+#include "../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../ITMMath.h"
 
 _CPU_AND_GPU_CODE_
 inline
-bool isPointInBounds(const Vector3i& point, const Vector6i& bounds){
-	return point.x >= bounds.min_x &&
-	       point.y >= bounds.min_y &&
-	       point.z >= bounds.min_z &&
-	       point.x < bounds.max_x &&
-	       point.y < bounds.max_y &&
-	       point.z < bounds.max_z;
+Vector6i PVA_InfoToExtent(const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo& info) {
+	return {info.offset.x, info.offset.y, info.offset.z, info.offset.x + info.size.x, info.offset.y + info.size.y,
+	        info.offset.z + info.size.z};
 }
-

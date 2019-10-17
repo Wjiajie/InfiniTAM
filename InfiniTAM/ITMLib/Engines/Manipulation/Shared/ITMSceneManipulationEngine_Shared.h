@@ -103,6 +103,8 @@ bool FindOrAllocateHashEntry(const Vector3s& hashEntryPosition, ITMHashEntry* ha
 	}
 }
 
+
+//TODO: move to GeometryBooleanOperations in Utils
 _CPU_AND_GPU_CODE_
 inline
 bool
@@ -114,6 +116,7 @@ IsHashBlockFullyInRange(const Vector3i& hashBlockPositionVoxels, const Vector6i&
 	       hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 <= bounds.max_z && hashBlockPositionVoxels.z >= bounds.min_z;
 }
 
+//TODO: move to GeometryBooleanOperations in Utils
 _CPU_AND_GPU_CODE_
 inline
 bool IsHashBlockPartiallyInRange(const Vector3i& hashBlockPositionVoxels, const Vector6i& bounds) {
@@ -311,7 +314,8 @@ void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, 
 	zInBlock = point.z;
 }
 /**
- * \brief Return the exact local positioning indices for a voxel with the given coordinates within a hash data structure
+ * \brief Find the exact local positioning indices (1D and 3D) for a voxel with the given world coordinates
+ * within a hash block
  * \tparam TVoxel type of voxel
  * \param vmIndex 0 if not found, 1 if in cache, positive integer representing hash + 1
  * \param locId
@@ -333,6 +337,7 @@ void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, 
 	zInBlock = linearIdx / (SDF_BLOCK_SIZE * SDF_BLOCK_SIZE);
 	yInBlock = (linearIdx % (SDF_BLOCK_SIZE * SDF_BLOCK_SIZE)) / SDF_BLOCK_SIZE;
 	xInBlock = linearIdx - zInBlock * (SDF_BLOCK_SIZE*SDF_BLOCK_SIZE) - yInBlock * SDF_BLOCK_SIZE;
+	locId = linearIdx;
 
 	if IS_EQUAL3(blockPos, cache.blockPos){
 		vmIndex = true;

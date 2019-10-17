@@ -28,6 +28,7 @@ class ITMSceneManipulationEngine {
 public:
 	ITMSceneManipulationEngine() = default;
 	virtual ~ITMSceneManipulationEngine() = default;
+	// TODO: better to make ResetScene a function of Scene (and template Scene on device type as well)
 	/**
 	 * \brief Clear out scene and reset the index
 	 * \param scene

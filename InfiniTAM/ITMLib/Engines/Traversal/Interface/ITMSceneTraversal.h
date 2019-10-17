@@ -23,7 +23,6 @@ template<typename TVoxel, typename TIndex, ITMLibSettings::DeviceType TDeviceTyp
 class ITMSceneTraversalEngine;
 
 
-
 template<typename TVoxelPrimary, typename TVoxelSecondary, typename TIndexPrimary, typename TIndexSecondary,
         ITMLibSettings::DeviceType TDeviceType>
 class ITMDualSceneTraversalEngine;

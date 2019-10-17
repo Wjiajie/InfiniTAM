@@ -17,8 +17,8 @@
 //TODO: take care of explicit OpenMP data-sharing rules, i.e. the default(none) clause and such;
 // (consult http://jakascorner.com/blog/2016/06/omp-data-sharing-attributes.html for reference)
 // then remove the below two pragmas.
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "openmp-use-default-none"
+//#pragma clang diagnostic push
+//#pragma ide diagnostic ignored "openmp-use-default-none"
 
 #pragma once
 
@@ -28,8 +28,10 @@
 //local
 #include "../Interface/ITMSceneTraversal.h"
 #include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../../../Utils/Geometry/ITM3DIndexConversions.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../Shared/ITMSceneTraversal_Shared.h"
+#include "../../../Utils/Geometry/ITMGeometryBooleanOpernations.h"
 
 namespace ITMLib {
 
@@ -237,10 +239,10 @@ public:
 #pragma omp parallel for
 #endif
 		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
-			if(mismatchFound) continue;
+			if (mismatchFound) continue;
 			TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
 			TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
-			if(!TStaticFunctor::run(primaryVoxel, secondaryVoxel)){
+			if (!TStaticFunctor::run(primaryVoxel, secondaryVoxel)) {
 				mismatchFound = true;
 			}
 		}
@@ -307,29 +309,99 @@ public:
 	template<typename TFunctor>
 	inline static bool
 	DualVoxelTraversal_AllTrue(
-			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
-			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryVolume,
 			TFunctor& functor) {
 
-		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+		assert(primaryVolume->index.getVolumeSize() == secondaryVolume->index.getVolumeSize());
 // *** traversal vars
-		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
-		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		TVoxelSecondary* secondaryVoxels = secondaryVolume->localVBA.GetVoxelBlocks();
+		TVoxelPrimary* primaryVoxels = primaryVolume->localVBA.GetVoxelBlocks();
 		//asserted to be the same
-		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
-		                 primaryScene->index.getVolumeSize().z;
+		int voxelCount = primaryVolume->index.getVolumeSize().x * primaryVolume->index.getVolumeSize().y *
+		                 primaryVolume->index.getVolumeSize().z;
 		volatile bool mismatchFound = false;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
 		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
-			if(mismatchFound) continue;
+			if (mismatchFound) continue;
 			TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
 			TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
-			if(!(functor(primaryVoxel, secondaryVoxel))){
+			if (!(functor(primaryVoxel, secondaryVoxel))) {
 				mismatchFound = true;
 			}
 		}
+		return !mismatchFound;
+	}
+
+	/**
+	 * \brief Runs a functor returning true/false pairs of voxels within the allocation bounds of both
+	 * voxel volumes until such locations are exhausted or one of the runs returns false.
+	 * \tparam TFunctor
+	 * \param primaryVolume
+	 * \param secondaryVolume
+	 * \param functor
+	 * \return
+	 */
+	template<typename TFunctor>
+	inline static bool
+	DualVoxelTraversal_AllTrue_AllocatedOnly(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryVolume,
+			TFunctor& functor) {
+		//TODO
+
+		//1) Maximum bbox of volume union
+		//2) Traverse that, check matching parts with functor, check rest with "isAltered"
+// *** traversal vars
+
+		TVoxelSecondary* secondaryVoxels = secondaryVolume->localVBA.GetVoxelBlocks();
+		const ITMPlainVoxelArray::IndexData* secondaryVolumeBox = primaryVolume->index.getIndexData();
+		TVoxelPrimary* primaryVoxels = primaryVolume->localVBA.GetVoxelBlocks();
+		const ITMPlainVoxelArray::IndexData* primaryVolumeBox = primaryVolume->index.getIndexData();
+
+		const Extent3D boundingExtent = maximumExtent(*primaryVolumeBox, *secondaryVolumeBox);
+
+		volatile bool mismatchFound = false;
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int z = boundingExtent.min_z; z < boundingExtent.max_z; z++) {
+			if (mismatchFound) continue;
+			for (int y = boundingExtent.min_y; y < boundingExtent.max_y; y++) {
+				for (int x = boundingExtent.min_x; x < boundingExtent.max_x; x++) {
+					Vector3i position(x, y, z);
+					if (isPointInBounds(position, *primaryVolumeBox)) {
+						int primaryLinearIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(primaryVolumeBox,
+						                                                                        position);
+						TVoxelPrimary& primaryVoxel = primaryVoxels[primaryLinearIndex];
+						if (isPointInBounds(position, *secondaryVolumeBox)) {
+							int secondaryLinearIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(
+									secondaryVolumeBox, position);
+							TVoxelSecondary& secondaryVoxel = secondaryVoxels[secondaryLinearIndex];
+							if (!(functor(primaryVoxel, secondaryVoxel))) {
+								mismatchFound = true;
+							}
+						} else {
+							if (isAltered(primaryVoxel)){
+								mismatchFound = true;
+							}
+						}
+					} else {
+						if (isPointInBounds(position, *secondaryVolumeBox)) {
+							int secondaryLinearIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(
+									secondaryVolumeBox, position);
+							TVoxelSecondary& secondaryVoxel = secondaryVoxels[secondaryLinearIndex];
+							if(isAltered(secondaryVoxel)){
+								mismatchFound = true;
+							}
+						}
+					}
+				}
+			}
+		}
+
 		return !mismatchFound;
 	}
 
@@ -384,7 +456,8 @@ public:
 				for (int x = bounds.min_x; x < bounds.max_x; x++) {
 					Vector3i position(x, y, z);
 					int linearIndex = findVoxel(indexData, Vector3i(x, y, z), vmIndex);
-					Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(indexData, linearIndex);
+					Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(indexData,
+					                                                                              linearIndex);
 					TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
 					TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
 					functor(primaryVoxel, secondaryVoxel, voxelPosition);
@@ -547,4 +620,4 @@ public:
 // endregion ===========================================================================================================
 };
 }//namespace ITMLib
-#pragma clang diagnostic pop
+//#pragma clang diagnostic pop

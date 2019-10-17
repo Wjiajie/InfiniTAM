@@ -71,6 +71,7 @@ if (BUILD_TESTS)
     itm_add_test(NAME IntArrayMap3D SOURCES TestIntArrayMap3D.cpp)
     itm_add_test(NAME ImageMaskReader SOURCES TestImageMaskReader.cpp)
     itm_add_test(NAME WarpGradient SOURCES Test_WarpGradient.cpp)
+    itm_add_test(NAME SceneSlicingPVA_CPU SOURCES Test_SceneSlicingPVA_CPU.cpp)
 
 
     #####################################################

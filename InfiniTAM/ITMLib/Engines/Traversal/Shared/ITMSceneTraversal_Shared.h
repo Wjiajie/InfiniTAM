@@ -20,35 +20,6 @@
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 
 
-//region ================================= AUXILIARY FUNCTIONS (PLAIN VOXEL ARRAY) =====================================
-
-_CPU_AND_GPU_CODE_
-inline static void
-ComputePositionFromLinearIndex_PlainVoxelArray(int& x, int& y, int& z, const ITMLib::ITMPlainVoxelArray::IndexData* indexData,
-                                               int linearIndex) {
-
-	z = linearIndex / (indexData->size.x * indexData->size.y);
-	int tmp = linearIndex - z * indexData->size.x * indexData->size.y;
-	y = tmp / indexData->size.x;
-	x = tmp - y * indexData->size.x;
-	x += indexData->offset.x;
-	y += indexData->offset.y;
-	z += indexData->offset.z;
-}
-
-_CPU_AND_GPU_CODE_
-inline static Vector3i
-ComputePositionVectorFromLinearIndex_PlainVoxelArray(const ITMLib::ITMPlainVoxelArray::IndexData* indexData,
-                                                     int linearIndex) {
-	int z = linearIndex / (indexData->size.x * indexData->size.y);
-	int tmp = linearIndex - z * indexData->size.x * indexData->size.y;
-	int y = tmp / indexData->size.x;
-	int x = tmp - y * indexData->size.x;
-	return {x + indexData->offset.x, y + indexData->offset.y, z + indexData->offset.z};
-}
-
-// endregion ===========================================================================================================
-
 // region ======================================= AUXILIARY FUNCTIONS (VOXEL HASH BLOCKS) ==============================
 _CPU_AND_GPU_CODE_
 inline bool HashBlockDoesNotIntersectBounds(const Vector3i& hashEntryMinPoint, const Vector3i& hashEntryMaxPoint,

@@ -21,6 +21,7 @@
 #include "../../Utils/ITMPrintHelpers.h"
 #include "../../Utils/ITMCPrintHelpers.h"
 #include "../../Objects/Scene/ITMTrilinearInterpolation.h"
+#include "../../Utils/Geometry/ITM3DIndexConversions.h"
 
 using namespace ITMLib;
 
@@ -62,11 +63,6 @@ ReadVoxelAndLinearIndex(const CONSTPTR(TVoxel)* voxelData,
 	return TVoxel();
 }
 
-inline static int
-ComputeLinearIndexFromPosition_PlainVoxelArray(const ITMLib::ITMPlainVoxelArray::IndexData* data, Vector3i position) {
-	return position.z * (data->size.z * data->size.y)
-	       + position.y * (data->size.x + position.x);
-};
 
 //DEBUG
 template<class TVoxel>
