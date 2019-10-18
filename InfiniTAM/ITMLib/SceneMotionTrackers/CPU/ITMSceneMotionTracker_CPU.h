@@ -22,7 +22,7 @@
 
 namespace ITMLib {
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 class ITMSceneMotionTracker_CPU:
 		public ITMSceneMotionTracker<TVoxel, TWarp, TIndex>{
 	ITMSceneMotionTracker_CPU() {}
@@ -31,8 +31,8 @@ class ITMSceneMotionTracker_CPU:
 
 //region ======================================== VOXEL BLOCK HASH =====================================================
 
-template<typename TVoxel, typename TWarp,  typename TGradientFunctor>
-class ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMVoxelBlockHash> :
+template<typename TVoxel, typename TWarp>
+class ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash> :
 		public ITMSceneMotionTracker<TVoxel, TWarp, ITMVoxelBlockHash> {
 public:
 	explicit ITMSceneMotionTracker_CPU();
@@ -70,8 +70,8 @@ private:
 //TODO: reorder argument lists in both classes for consistency with reconstruction engine: warp field should come first,
 //  canonical (as the "target") should come last
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor >
-class ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelArray> :
+template<typename TVoxel, typename TWarp >
+class ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray> :
 		public ITMSceneMotionTracker<TVoxel, TWarp, ITMPlainVoxelArray> {
 public:
 	explicit ITMSceneMotionTracker_CPU();

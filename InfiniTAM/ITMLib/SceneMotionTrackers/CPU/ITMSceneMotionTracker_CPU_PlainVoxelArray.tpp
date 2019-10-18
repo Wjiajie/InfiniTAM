@@ -18,14 +18,15 @@
 #include "ITMSceneMotionTracker_CPU.h"
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 #include "../Shared/ITMSceneMotionTracker_Functors.h"
+#include "../Shared/ITMCalculateWarpGradientFunctor.h"
 
 using namespace ITMLib;
 
 
 // region ================================ CONSTRUCTORS AND DESTRUCTORS ================================================
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor>
-ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelArray>::ITMSceneMotionTracker_CPU()
+template<typename TVoxel, typename TWarp>
+ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::ITMSceneMotionTracker_CPU()
 		: ITMSceneMotionTracker<TVoxel, TWarp, ITMPlainVoxelArray>()
 		  {
 }
@@ -33,8 +34,8 @@ ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelArray>::
 // region ===================================== CALCULATE GRADIENT SMOOTHING ===========================================
 
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor>
-void ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelArray>::CalculateWarpGradient(
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::CalculateWarpGradient(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
@@ -44,7 +45,7 @@ void ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelArr
 	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TWarp>>(warpField);
 
 
-	TGradientFunctor
+	ITMCalculateWarpGradientFunctor<TVoxel, TWarp, ITMPlainVoxelArray::IndexData, ITMPlainVoxelArray::IndexCache>
 			calculateGradientFunctor(this->parameters, this->switches,
 			                         liveScene->localVBA.GetVoxelBlocks(), liveScene->index.getIndexData(),
 			                         canonicalScene->localVBA.GetVoxelBlocks(), canonicalScene->index.getIndexData(),
@@ -61,8 +62,8 @@ void ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelArr
 // region ========================================== SOBOLEV GRADIENT SMOOTHING ========================================
 
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor>
-void ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelArray>::SmoothWarpGradient(
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::SmoothWarpGradient(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
@@ -78,8 +79,8 @@ void ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelArr
 // region ======================================== APPLY WARP UPDATE TO THE WARP ITSELF ================================
 
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor>
-float ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelArray>::UpdateWarps(
+template<typename TVoxel, typename TWarp>
+float ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::UpdateWarps(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
@@ -92,23 +93,23 @@ float ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelAr
 //endregion ============================================================================================================
 
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor>
-void ITMLib::ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelArray>::ResetWarps(
+template<typename TVoxel, typename TWarp>
+void ITMLib::ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::ResetWarps(
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
 
 	ITMSceneTraversalEngine<TWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::template
 	StaticVoxelTraversal<WarpClearFunctor<TWarp, TWarp::hasCumulativeWarp>>(warpField);
 }
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor>
-void ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelArray>::ClearOutFlowWarp(
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::ClearOutFlowWarp(
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
 	ITMSceneTraversalEngine<TWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::template
 	StaticVoxelTraversal<ClearOutFlowWarpStaticFunctor<TWarp>>(warpField);
 }
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor>
-void ITMSceneMotionTracker_CPU<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelArray>::AddFlowWarpToWarp(
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::AddFlowWarpToWarp(
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField, bool clearFlowWarp) {
 
 	AddFlowWarpToWarp_common<TWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>

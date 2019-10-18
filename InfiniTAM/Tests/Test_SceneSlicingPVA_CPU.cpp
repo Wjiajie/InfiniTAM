@@ -111,5 +111,6 @@ BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 
 	canonical_scene_slice_from_disk_CPU.LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/canonical");
 
-
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&canonical_scene_slice_different_dimensions_CPU,
+	                                              &canonical_scene_slice_from_disk_CPU, tolerance));
 }

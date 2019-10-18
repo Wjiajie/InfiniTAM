@@ -18,14 +18,14 @@
 
 struct AdditionalGradientAggregates{
 	AdditionalGradientAggregates(){
-		INITIALIZE_ATOMIC(cumulativeCanonicalSdf, 0.f);
-		INITIALIZE_ATOMIC(cumulativeLiveSdf,0.f);
-		INITIALIZE_ATOMIC(cumulativeSdfDiff, 0.f);
-		INITIALIZE_ATOMIC(cumulativeWarpDist, 0.f);
+		INITIALIZE_ATOMIC(float, cumulativeCanonicalSdf, 0.f);
+		INITIALIZE_ATOMIC(float, cumulativeLiveSdf,0.f);
+		INITIALIZE_ATOMIC(float, cumulativeSdfDiff, 0.f);
+		INITIALIZE_ATOMIC(float, cumulativeWarpDist, 0.f);
 
-		INITIALIZE_ATOMIC(consideredVoxelCount, 0u);
-		INITIALIZE_ATOMIC(dataVoxelCount, 0u);
-		INITIALIZE_ATOMIC(levelSetVoxelCount, 0u);
+		INITIALIZE_ATOMIC(unsigned int, consideredVoxelCount, 0u);
+		INITIALIZE_ATOMIC(unsigned int, dataVoxelCount, 0u);
+		INITIALIZE_ATOMIC(unsigned int, levelSetVoxelCount, 0u);
 	}
 	~AdditionalGradientAggregates(){
 		CLEAN_UP_ATOMIC(cumulativeCanonicalSdf);
@@ -50,10 +50,10 @@ struct AdditionalGradientAggregates{
 
 struct ComponentEnergies{
 	ComponentEnergies(){
-		INITIALIZE_ATOMIC(totalDataEnergy, 0.f);
-		INITIALIZE_ATOMIC(totalLevelSetEnergy,0.f);
-		INITIALIZE_ATOMIC(totalTikhonovEnergy,0.f);
-		INITIALIZE_ATOMIC(totalRigidityEnergy,0.f);
+		INITIALIZE_ATOMIC(float, totalDataEnergy, 0.f);
+		INITIALIZE_ATOMIC(float, totalLevelSetEnergy,0.f);
+		INITIALIZE_ATOMIC(float, totalTikhonovEnergy,0.f);
+		INITIALIZE_ATOMIC(float, totalRigidityEnergy,0.f);
 	}
 	~ComponentEnergies(){
 		CLEAN_UP_ATOMIC(totalDataEnergy);

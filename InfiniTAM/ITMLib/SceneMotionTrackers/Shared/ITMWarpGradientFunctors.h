@@ -30,8 +30,43 @@ template<typename TVoxel, typename TWarp>
 struct ITMSceneMotionGradientTermFunctor {
 	_DEVICE_WHEN_AVAILABLE_
 	virtual void run(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) = 0;
-	_DEVICE_WHEN_AVAILABLE_
+
 	virtual float getEnergy() const = 0;
+};
+
+
+template<typename TVoxel, typename TWarp, typename TIndexData, typename TCache>
+struct ITMGradientDummyFunctor
+		: public ITMSceneMotionGradientTermFunctor<TVoxel, TWarp> {
+
+	ITMGradientDummyFunctor(ITMSceneMotionOptimizationParameters parameters,
+	                              ITMSceneMotionOptimizationSwitches switches,
+	                              TVoxel* liveVoxels, const TIndexData* liveIndexData,
+	                              TVoxel* canonicalVoxels, const TIndexData* canonicalIndexData,
+	                              TWarp* warps, const TIndexData* warpIndexData){
+	}
+	_DEVICE_WHEN_AVAILABLE_
+	void operator()(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) {
+
+
+	}
+
+	_DEVICE_WHEN_AVAILABLE_
+	void run(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) override {
+		this->operator()(voxelLive, voxelCanonical, warp, voxelPosition);
+	}
+
+	float getEnergy() const override {
+		return 0.0f;
+	}
+
+	void PrintStatistics() {
+
+		std::cout << bright_cyan << "*** Non-rigid Alignment Iteration Statistics ***" << reset << std::endl;
+		PrintEnergyStatistics(false, false, false, false, 0.0f,
+		                      0.0, 0.0, 0.0, 0.0);
+	}
+
 };
 
 
@@ -39,11 +74,19 @@ template<typename TVoxel, typename TWarp, typename TIndexData, typename TCache>
 struct ITMSceneMotionDataTermFunctor
 		: public ITMSceneMotionGradientTermFunctor<TVoxel, TWarp> {
 
+	ITMSceneMotionDataTermFunctor(ITMSceneMotionOptimizationParameters parameters,
+	                              ITMSceneMotionOptimizationSwitches switches,
+	                              TVoxel* liveVoxels, const TIndexData* liveIndexData,
+	                              TVoxel* canonicalVoxels, const TIndexData* canonicalIndexData,
+	                              TWarp* warps, const TIndexData* warpIndexData) :
+			weight(parameters.weightDataTerm), liveVoxels(liveVoxels), liveIndexData(liveIndexData), liveCache(){
+		INITIALIZE_ATOMIC(float, energy, 0.0f);
+	}
 
 	ITMSceneMotionDataTermFunctor(TVoxel* liveVoxels, const TIndexData* liveIndexData,
 	                              float weight) :
 			weight(weight), liveVoxels(liveVoxels), liveIndexData(liveIndexData), liveCache() {
-		INITIALIZE_ATOMIC(energy, 0.0f);
+		INITIALIZE_ATOMIC(float, energy, 0.0f);
 	}
 
 	~ITMSceneMotionDataTermFunctor() {
@@ -88,10 +131,17 @@ struct ITMSceneMotionDataTermFunctor
 		this->operator()(voxelLive, voxelCanonical, warp, voxelPosition);
 	}
 
-	_DEVICE_WHEN_AVAILABLE_
 	float getEnergy() const override {
-		return GET_ATOMIC_VALUE(energy);
+		return GET_ATOMIC_VALUE_CPU(energy);
 	}
+
+	void PrintStatistics() {
+
+		std::cout << bright_cyan << "*** Non-rigid Alignment Iteration Statistics ***" << reset << std::endl;
+		PrintEnergyStatistics(true, false, false, false, 0.0f,
+		                      GET_ATOMIC_VALUE_CPU(energy), 0.0, 0.0, 0.0);
+	}
+
 };
 
 template<typename TVoxel, typename TWarp, typename TIndexData, typename TCache>
@@ -101,7 +151,7 @@ struct ITMSceneMotionLevelSetTermFunctor : public ITMSceneMotionGradientTermFunc
 	                                  float weight = 0.2f, float epsilon = 1e-5f, float unity = 0.1f) :
 			liveVoxels(liveVoxels), liveIndexData(liveIndexData), liveCache(), epsilon(epsilon), unity(unity),
 			weight(weight) {
-		INITIALIZE_ATOMIC(energy, 0.0f);
+		INITIALIZE_ATOMIC(float, energy, 0.0f);
 	}
 
 	~ITMSceneMotionLevelSetTermFunctor() {
@@ -118,6 +168,9 @@ struct ITMSceneMotionLevelSetTermFunctor : public ITMSceneMotionGradientTermFunc
 
 	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) {
+		if (!VoxelIsConsideredForTracking(voxelCanonical, voxelLive)
+		    || !VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive))
+			return;
 		Matrix3f liveSdfHessian;
 		Vector3f liveSdfJacobian;
 		ComputeLiveJacobian_CentralDifferences(
@@ -146,9 +199,9 @@ struct ITMSceneMotionLevelSetTermFunctor : public ITMSceneMotionGradientTermFunc
 	}
 
 
-	_DEVICE_WHEN_AVAILABLE_
+
 	float getEnergy() const override {
-		return GET_ATOMIC_VALUE(energy);
+		return GET_ATOMIC_VALUE_CPU(energy);
 	}
 };
 
@@ -164,7 +217,7 @@ struct ITMSceneMotionTikhonovTermFunctor : public ITMSceneMotionGradientTermFunc
 			canonicalVoxels(canonicalVoxels), canonicalIndexData(canonicalIndexData),
 			warps(warps), warpIndexData(warpIndexData),
 			weight(weight) {
-		INITIALIZE_ATOMIC(energy, 0.0f);
+		INITIALIZE_ATOMIC(float, energy, 0.0f);
 	}
 
 	~ITMSceneMotionTikhonovTermFunctor() {
@@ -187,6 +240,7 @@ struct ITMSceneMotionTikhonovTermFunctor : public ITMSceneMotionGradientTermFunc
 
 	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) {
+		if (!VoxelIsConsideredForTracking(voxelCanonical, voxelLive)) return;
 		Vector3f& framewiseWarp = warp.flow_warp;
 		const int neighborhoodSize = 9;
 		Vector3f neighborFlowWarps[neighborhoodSize];
@@ -229,13 +283,12 @@ struct ITMSceneMotionTikhonovTermFunctor : public ITMSceneMotionGradientTermFunc
 	}
 
 
-	_DEVICE_WHEN_AVAILABLE_
 	float getEnergy() const override {
-		return GET_ATOMIC_VALUE(energy);
+		return GET_ATOMIC_VALUE_CPU(energy);
 	}
 };
 
-//TODO: make a term that _ONLY_ uses the rigitity part (for easier balancing with Tikhonov)
+//TODO: make a term that _ONLY_ uses the rigidity part (for easier balancing with Tikhonov)
 //NB: combines Tikhonov & rigidity energy
 template<typename TVoxel, typename TWarp, typename TIndexData, typename TCache>
 struct ITMSceneMotionKillingTermFunctor : public ITMSceneMotionGradientTermFunctor<TVoxel, TWarp> {
@@ -248,8 +301,8 @@ struct ITMSceneMotionKillingTermFunctor : public ITMSceneMotionGradientTermFunct
 			warps(warps), warpIndexData(warpIndexData),
 			canonicalVoxels(canonicalVoxels), canonicalIndexData(canonicalIndexData),
 			weight(weight), rigidityWeight(rigidityWeight) {
-		INITIALIZE_ATOMIC(energy, 0.0f);
-		INITIALIZE_ATOMIC(rigidityEnergy, 0.0f);
+		INITIALIZE_ATOMIC(float, energy, 0.0f);
+		INITIALIZE_ATOMIC(float, rigidityEnergy, 0.0f);
 	}
 
 	~ITMSceneMotionKillingTermFunctor() {
@@ -275,6 +328,7 @@ struct ITMSceneMotionKillingTermFunctor : public ITMSceneMotionGradientTermFunct
 
 	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) {
+		if (!VoxelIsConsideredForTracking(voxelCanonical, voxelLive)) return;
 		Vector3f& framewiseWarp = warp.flow_warp;
 		const int neighborhoodSize = 9;
 		Vector3f neighborFlowWarps[neighborhoodSize];
@@ -347,9 +401,8 @@ struct ITMSceneMotionKillingTermFunctor : public ITMSceneMotionGradientTermFunct
 	}
 
 
-	_DEVICE_WHEN_AVAILABLE_
 	float getEnergy() const override {
-		return GET_ATOMIC_VALUE(energy);
+		return GET_ATOMIC_VALUE_CPU(energy);
 	}
 };
 
@@ -518,7 +571,7 @@ private:
 		float rigidityEnergy = 0.0f;
 		if (functorMap.find(KILLING) != functorMap.end()) {
 			auto killingFunctor = dynamic_cast<ITMSceneMotionKillingTermFunctor<TVoxel, TWarp, TIndexData, TCache>*>(functorMap[KILLING]);
-			rigidityEnergy = GET_ATOMIC_VALUE(killingFunctor->rigidityEnergy);
+			rigidityEnergy = GET_ATOMIC_VALUE_CPU(killingFunctor->rigidityEnergy);
 		}
 		return rigidityEnergy;
 	}

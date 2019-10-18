@@ -15,19 +15,10 @@
 //  ================================================================
 
 #include "../../ITMLibDefines.h"
-#include "../Shared/ITMCalculateWarpGradientFunctor.h"
-#include "../Shared/ITMWarpGradientFunctors.h"
 #include "ITMSceneMotionTracker_CPU_PlainVoxelArray.tpp"
 
 
 namespace ITMLib {
 template
-class ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarp,
-		ITMCalculateWarpGradientFunctor<ITMVoxel,ITMWarp,ITMPlainVoxelArray::IndexData, ITMPlainVoxelArray::IndexCache>,
-		ITMPlainVoxelArray>;
-
-template
-class ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarp,
-		ITMSceneMotionEnergyGradientCompositeFunctor<ITMVoxel,ITMWarp,ITMPlainVoxelArray::IndexData, ITMPlainVoxelArray::IndexCache>,
-		ITMPlainVoxelArray>;
-}
+class ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;
+} // namespace ITMLib

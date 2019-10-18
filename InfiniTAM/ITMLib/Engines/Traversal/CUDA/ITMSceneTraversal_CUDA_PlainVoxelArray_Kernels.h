@@ -151,6 +151,8 @@ dualVoxelTraversal_AllTrue_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 	TVoxelPrimary& voxelPrimary = primaryVoxels[locId];
 	TVoxelSecondary& voxelSecondary = secondaryVoxels[locId];
 	if(!(*functor)(voxelPrimary, voxelSecondary)){
+		Vector3i pos(x,y,z);
+		pos -= arrayInfo->offset;
 		*falseEncountered = true;
 	}
 }

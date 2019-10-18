@@ -21,7 +21,11 @@
 
 // region =========================== FUNCTIONS TO DETERMINE WHETHER A VOXEL HAS BEEN ALTERED FROM DEFAULT =============
 
-template<bool hasSDFInformation, bool hasSemanticInformation, bool hasFlowWarpInformation, bool hasWarpUpdateInformation, typename TVoxel>
+template<bool hasSDFInformation,
+		bool hasSemanticInformation,
+		bool hasFlowWarpInformation,
+		bool hasWarpUpdateInformation,
+		typename TVoxel>
 struct IsAlteredFunctor;
 
 

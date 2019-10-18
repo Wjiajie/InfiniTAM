@@ -42,7 +42,7 @@ void PrintEnergyStatistics(const bool& enableDataTerm,
 	}
 	if (enableLevelSetTerm) {
 		std::cout << red << " Level set term: " << totalLevelSetEnergy;
-		totalEnergy +=  totalLevelSetEnergy;
+		totalEnergy += totalLevelSetEnergy;
 	}
 	if (enableSmoothingTerm) {
 		if (enableRigidityTerm) {
@@ -51,7 +51,7 @@ void PrintEnergyStatistics(const bool& enableDataTerm,
 		}
 		double totalSmoothingEnergy = totalTikhonovEnergy + totalRigidityEnergy;
 		std::cout << cyan << " Smoothing term: " << totalSmoothingEnergy;
-		totalEnergy +=  totalSmoothingEnergy;
+		totalEnergy += totalSmoothingEnergy;
 	}
 	std::cout << green << " Total: " << totalEnergy << reset << std::endl;
 }
@@ -65,12 +65,56 @@ void PrintEnergyStatistics(const bool& enableDataTerm,
                            ComponentEnergies& energies) {
 	std::cout << " [ENERGY]";
 
-	float totalDataEnergy = GET_ATOMIC_VALUE(energies.totalDataEnergy);
-	float totalLevelSetEnergy = GET_ATOMIC_VALUE(energies.totalLevelSetEnergy);
-	float totalTikhonovEnergy = GET_ATOMIC_VALUE(energies.totalTikhonovEnergy);
-	float totalRigidityEnergy = GET_ATOMIC_VALUE(energies.totalRigidityEnergy);
-	PrintEnergyStatistics(enableDataTerm,enableLevelSetTerm,enableSmoothingTerm,enableRigidityTerm, gamma,
-			totalDataEnergy, totalLevelSetEnergy, totalTikhonovEnergy, totalRigidityEnergy);
+	float totalDataEnergy = GET_ATOMIC_VALUE_CPU(energies.totalDataEnergy);
+	float totalLevelSetEnergy = GET_ATOMIC_VALUE_CPU(energies.totalLevelSetEnergy);
+	float totalTikhonovEnergy = GET_ATOMIC_VALUE_CPU(energies.totalTikhonovEnergy);
+	float totalRigidityEnergy = GET_ATOMIC_VALUE_CPU(energies.totalRigidityEnergy);
+	PrintEnergyStatistics(enableDataTerm, enableLevelSetTerm, enableSmoothingTerm, enableRigidityTerm, gamma,
+	                      totalDataEnergy, totalLevelSetEnergy, totalTikhonovEnergy, totalRigidityEnergy);
+}
+
+
+//cumulativeLiveSdf, cumulativeWarpDist, cumulativeSdfDiff, consideredVoxelCount, dataVoxelCount, levelSetVoxelCount;
+
+inline static
+void CalculateAndPrintAdditionalStatistics(const bool& enableDataTerm,
+                                           const bool& enableLevelSetTerm, double cumulativeCanonicalSdf,
+                                           double cumulativeLiveSdf, double cumulativeWarpDist,
+                                           double cumulativeSdfDiff,
+                                           unsigned int consideredVoxelCount, unsigned int dataVoxelCount,
+                                           unsigned int levelSetVoxelCount, unsigned int usedHashblockCount = 0) {
+
+	double averageCanonicalSdf = cumulativeCanonicalSdf / consideredVoxelCount;
+	double averageLiveSdf = cumulativeLiveSdf / consideredVoxelCount;
+	double averageWarpDist = cumulativeWarpDist / consideredVoxelCount;
+	double averageSdfDiff = 0.0;
+
+	if (enableDataTerm) {
+		averageSdfDiff = cumulativeSdfDiff / dataVoxelCount;
+	}
+
+	std::cout << " Ave canonical SDF: " << averageCanonicalSdf
+	          << " Ave live SDF: " <<
+	          averageLiveSdf;
+	if (enableDataTerm) {
+		std::cout << " Ave SDF diff: " <<
+		          averageSdfDiff;
+	}
+	std::cout << " Used voxel count: " << consideredVoxelCount
+	          << " Data term v-count: " << dataVoxelCount;
+	if (enableLevelSetTerm) {
+		std::cout << " LS term v-count: " << levelSetVoxelCount;
+	}
+	std::cout << " Ave warp distance: " <<
+	          averageWarpDist;
+
+
+	if (usedHashblockCount > 0) {
+		std::cout << " Used hash block count: " <<
+		          usedHashblockCount;
+	}
+	std::cout <<
+	          std::endl;
 }
 
 inline static
@@ -79,33 +123,18 @@ void CalculateAndPrintAdditionalStatistics(const bool& enableDataTerm,
                                            AdditionalGradientAggregates& aggregates,
                                            const unsigned int usedHashblockCount = 0) {
 
-	int consideredVoxelCount = GET_ATOMIC_VALUE(aggregates.consideredVoxelCount);
-	double averageCanonicalSdf = GET_ATOMIC_VALUE(aggregates.cumulativeCanonicalSdf) / consideredVoxelCount;
-	double averageLiveSdf = GET_ATOMIC_VALUE(aggregates.cumulativeLiveSdf) / consideredVoxelCount;
-	double averageWarpDist = GET_ATOMIC_VALUE(aggregates.cumulativeWarpDist) / consideredVoxelCount;
-	double averageSdfDiff = 0.0;
+	unsigned int consideredVoxelCount = GET_ATOMIC_VALUE_CPU(aggregates.consideredVoxelCount);
+	unsigned int dataVoxelCount = GET_ATOMIC_VALUE_CPU(aggregates.dataVoxelCount);
+	unsigned int levelSetVoxelCount = GET_ATOMIC_VALUE_CPU(aggregates.levelSetVoxelCount);
+	double cumulativeCanonicalSdf = GET_ATOMIC_VALUE_CPU(aggregates.cumulativeCanonicalSdf);
+	double cumulativeLiveSdf = GET_ATOMIC_VALUE_CPU(aggregates.cumulativeLiveSdf);
+	double cumulativeWarpDist = GET_ATOMIC_VALUE_CPU(aggregates.cumulativeWarpDist);
+	double cumulativeSdfDiff = GET_ATOMIC_VALUE_CPU(aggregates.cumulativeSdfDiff);
 
-	if (enableDataTerm) {
-		averageSdfDiff = GET_ATOMIC_VALUE(aggregates.cumulativeSdfDiff) / GET_ATOMIC_VALUE(aggregates.dataVoxelCount);
-	}
-
-	std::cout << " Ave canonical SDF: " << averageCanonicalSdf
-	          << " Ave live SDF: " << averageLiveSdf;
-	if (enableDataTerm) {
-		std::cout << " Ave SDF diff: " << averageSdfDiff;
-	}
-	std::cout << " Used voxel count: " << consideredVoxelCount
-	          << " Data term v-count: " << GET_ATOMIC_VALUE(aggregates.dataVoxelCount);
-	if (enableLevelSetTerm) {
-		std::cout << " LS term v-count: " << GET_ATOMIC_VALUE(aggregates.levelSetVoxelCount);
-	}
-	std::cout << " Ave warp distance: " << averageWarpDist;
-
-
-	if (usedHashblockCount > 0){
-		std::cout << " Used hash block count: " << usedHashblockCount;
-	}
-	std::cout << std::endl;
+	CalculateAndPrintAdditionalStatistics(enableDataTerm, enableLevelSetTerm, cumulativeCanonicalSdf,
+	                                      cumulativeLiveSdf, cumulativeWarpDist, cumulativeSdfDiff,
+	                                      consideredVoxelCount, dataVoxelCount,
+	                                      levelSetVoxelCount, usedHashblockCount);
 }
 
 // endregion ===========================================================================================================

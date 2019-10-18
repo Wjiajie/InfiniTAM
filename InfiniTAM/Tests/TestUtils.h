@@ -15,6 +15,7 @@
 //  ================================================================
 #pragma once
 
+#include <chrono>
 #include "../ITMLib/ITMLibDefines.h"
 
 #include "../ITMLib/Objects/Scene/ITMRepresentationAccess.h"
@@ -35,3 +36,13 @@ void simulateVoxelAlteration(TVoxel& voxel, float newSdfValue);
 
 template<typename TVoxel>
 void simulateRandomVoxelAlteration(TVoxel& voxel);
+
+inline
+void TimeIt(std::function<void (void)> function, const std::string& description = "Timed Operation"){
+	std::cout << description << "Basic functor gradient computation (PVA, CPU): " << std::endl;
+	auto start = std::chrono::high_resolution_clock::now();
+	function();
+	auto finish = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> elapsed = finish - start;
+	std::cout << "Elapsed time: " << elapsed.count() << " s\n";
+}

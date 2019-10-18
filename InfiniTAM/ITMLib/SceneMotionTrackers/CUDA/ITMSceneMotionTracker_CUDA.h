@@ -20,15 +20,15 @@
 
 namespace ITMLib {
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor, typename TIndex>
+template<typename TVoxel, typename TWarp, typename TIndex>
 class ITMSceneMotionTracker_CUDA :
 		public ITMSceneMotionTracker<TVoxel, TWarp, TIndex> {
 	ITMSceneMotionTracker_CUDA() {}
 };
 // region ================================= VOXEL BLOCK HASH ===========================================================
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor>
-class ITMSceneMotionTracker_CUDA<TVoxel, TWarp, TGradientFunctor, ITMVoxelBlockHash> :
+template<typename TVoxel, typename TWarp>
+class ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash> :
 		public ITMSceneMotionTracker<TVoxel, TWarp, ITMVoxelBlockHash> {
 public:
 	explicit ITMSceneMotionTracker_CUDA();
@@ -62,8 +62,8 @@ private:
 // endregion ===========================================================================================================
 // region ================================= PLAIN VOXEL ARRAY ==========================================================
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor>
-class ITMSceneMotionTracker_CUDA<TVoxel, TWarp, TGradientFunctor, ITMPlainVoxelArray> :
+template<typename TVoxel, typename TWarp>
+class ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray> :
 		public ITMSceneMotionTracker<TVoxel, TWarp, ITMPlainVoxelArray> {
 public:
 	explicit ITMSceneMotionTracker_CUDA();

@@ -21,28 +21,28 @@
 using namespace ITMLib;
 
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor>
-ITMSceneMotionTracker_CUDA<TVoxel, TWarp, TGradientFunctor, ITMVoxelBlockHash>::ITMSceneMotionTracker_CUDA()
+template<typename TVoxel, typename TWarp>
+ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::ITMSceneMotionTracker_CUDA()
 		: ITMSceneMotionTracker<TVoxel, TWarp, ITMVoxelBlockHash>(){
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor>
-void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, TGradientFunctor, ITMVoxelBlockHash>::ClearOutFlowWarp(
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::ClearOutFlowWarp(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor>
-void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, TGradientFunctor, ITMVoxelBlockHash>::AddFlowWarpToWarp(
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::AddFlowWarpToWarp(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 		bool clearFlowWarp) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor>
-void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, TGradientFunctor, ITMVoxelBlockHash>::CalculateWarpGradient(
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::CalculateWarpGradient(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
@@ -50,24 +50,24 @@ void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, TGradientFunctor, ITMVoxelBlockHa
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor>
-void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, TGradientFunctor, ITMVoxelBlockHash>::SmoothWarpGradient(
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::SmoothWarpGradient(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor>
-float ITMSceneMotionTracker_CUDA<TVoxel, TWarp, TGradientFunctor, ITMVoxelBlockHash>::UpdateWarps(
+template<typename TVoxel, typename TWarp>
+float ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::UpdateWarps(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
-template<typename TVoxel, typename TWarp, typename TGradientFunctor>
-void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, TGradientFunctor, ITMVoxelBlockHash>::ResetWarps(
+template<typename TVoxel, typename TWarp>
+void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::ResetWarps(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }

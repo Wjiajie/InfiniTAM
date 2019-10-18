@@ -42,15 +42,18 @@ bool VoxelIsConsideredForDataTerm(const TVoxel& canonicalVoxel, const TVoxel& li
 //_DEBUG preprocessor options
 #if defined(DATA_CONDITION_ALWAYS)
 	return true;
-#elif defined(DATA_CONDITION_IGNORE_UNKNOWN)
+#elif defined(DATA_CONDITION_IGNORE_ANY_UNKNOWN)
 	return canonicalVoxel.flags != ITMLib::VOXEL_UNKNOWN && liveVoxel.flags != ITMLib::VOXEL_UNKNOWN;
 #elif defined(DATA_CONDITION_ONLY_NONTRUNCATED)
 	return liveVoxel.flags == ITMLib::VOXEL_NONTRUNCATED
                          && canonicalVoxel.flags == ITMLib::VOXEL_NONTRUNCATED;
+#elif defined(DATA_CONDITION_IGNORE_BOTH_UNKNOWN)
+	return canonicalVoxel.flags != ITMLib::VOXEL_UNKNOWN || liveVoxel.flags != ITMLib::VOXEL_UNKNOWN;
 #else
 	//Currently, I think this works best (visually judging results)
 	//Data condition: IGNORE_CANONICAL_UNKNOWN
 	return canonicalVoxel.flags != ITMLib::VOXEL_UNKNOWN;
+
 #endif
 };
 

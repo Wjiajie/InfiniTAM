@@ -167,6 +167,11 @@ float ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::FindMaxGradient1LengthA
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
+template<typename TVoxel, typename TIndex>
+unsigned  int ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeAlteredVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+}
+
 namespace {
 // CUDA kernel implementations
 

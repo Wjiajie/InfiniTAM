@@ -43,17 +43,11 @@ public:
 		auto& settings = ITMLibSettings::Instance();
 		switch (settings.deviceType) {
 			case ITMLibSettings::DEVICE_CPU:
-				motionTracker = new ITMSceneMotionTracker_CPU<TVoxel, TWarp,
-						ITMCalculateWarpGradientFunctor<ITMVoxel, ITMWarp, typename TIndex::IndexData,
-								typename TIndex::IndexCache>,
-						TIndex>();
+				motionTracker = new ITMSceneMotionTracker_CPU<TVoxel, TWarp, TIndex>();
 				break;
 			case ITMLibSettings::DEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-				motionTracker = new ITMSceneMotionTracker_CUDA<TVoxel, TWarp,
-						ITMCalculateWarpGradientFunctor<ITMVoxel, ITMWarp, typename TIndex::IndexData,
-								typename TIndex::IndexCache>,
-						TIndex>();
+				motionTracker = new ITMSceneMotionTracker_CUDA<TVoxel, TWarp, TIndex>();
 #endif
 				break;
 			case ITMLibSettings::DEVICE_METAL:
