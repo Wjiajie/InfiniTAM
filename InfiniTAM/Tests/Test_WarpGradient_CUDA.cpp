@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(testDataTerm_CUDA) {
 	                                                            sizeSlice, offsetSlice);
 	ManipulationEngine_CUDA_PVA_Warp::Inst().ResetScene(&warp_field_CUDA1);
 
-	warp_field_CUDA1.LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/gradient0");
+	warp_field_CUDA1.LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/gradient0_data_");
 
 
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CUDA2(&settings->sceneParams,
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(testDataTerm_CUDA) {
 
 	TimeIt([&](){
 		motionTracker_PVA_CUDA->CalculateWarpGradient(&canonical_scene_CUDA, &live_scene_CUDA, &warp_field_CUDA2, false);
-	}, "Calculate Warp Gradient - Basic");
+	}, "Calculate Warp Gradient - PVA CUDA data term");
 
 
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU(warp_field_CUDA2, MEMORYDEVICE_CPU);
@@ -125,7 +125,6 @@ BOOST_AUTO_TEST_CASE(testDataTerm_CUDA) {
 	functor.count.store(0u);
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU, functor);
-	std::cout << "Count altered warps: " << functor.count.load() << std::endl;
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 36627u);
 
 	float tolerance = 1e-5;

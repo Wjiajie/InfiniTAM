@@ -63,8 +63,6 @@ void PrintEnergyStatistics(const bool& enableDataTerm,
                            const bool& enableRigidityTerm,
                            const float& gamma,
                            ComponentEnergies& energies) {
-	std::cout << " [ENERGY]";
-
 	float totalDataEnergy = GET_ATOMIC_VALUE_CPU(energies.totalDataEnergy);
 	float totalLevelSetEnergy = GET_ATOMIC_VALUE_CPU(energies.totalLevelSetEnergy);
 	float totalTikhonovEnergy = GET_ATOMIC_VALUE_CPU(energies.totalTikhonovEnergy);
