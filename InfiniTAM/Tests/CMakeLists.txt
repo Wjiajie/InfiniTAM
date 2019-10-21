@@ -70,8 +70,8 @@ if (BUILD_TESTS)
     itm_add_test(NAME VolumeSaveLoadCompact_CUDA SOURCES Test_VolumeSaveLoadCompact_CUDA.cpp)
     itm_add_test(NAME IntArrayMap3D SOURCES TestIntArrayMap3D.cpp)
     itm_add_test(NAME ImageMaskReader SOURCES TestImageMaskReader.cpp)
-    itm_add_test(NAME WarpGradient_CPU SOURCES Test_WarpGradient_CPU.cpp)
-    itm_add_test(NAME WarpGradient_CUDA SOURCES Test_WarpGradient_CUDA.cpp)
+    itm_add_test(NAME WarpGradient_CPU SOURCES Test_WarpGradient_CPU.cpp Test_WarpGradient_Common.h)
+    itm_add_test(NAME WarpGradient_CUDA SOURCES Test_WarpGradient_CUDA.cpp Test_WarpGradient_Common.h)
     itm_add_test(NAME SceneSlicingPVA_CPU SOURCES Test_SceneSlicingPVA_CPU.cpp)
 
 

@@ -80,7 +80,7 @@ struct WarpUpdateFunctor {
 	}
 
 	~WarpUpdateFunctor() {
-		CLEAN_UP_ATOMIC(maxWarpUpdateLength);
+		CLEAN_UP_ATOMIC(maxFlowWarpLength);
 		CLEAN_UP_ATOMIC(maxWarpUpdateLength);
 	}
 
