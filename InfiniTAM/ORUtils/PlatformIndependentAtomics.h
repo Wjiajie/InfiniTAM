@@ -19,6 +19,15 @@
 
 template<typename T>
 inline
+T atomicMax_CPU(std::atomic<T>& variable, T value) {
+	auto current = variable.load();
+	while (current < value && !variable.compare_exchange_weak(current, value, std::memory_order_relaxed, std::memory_order_relaxed));
+	return current;
+}
+
+
+template<typename T>
+inline
 T atomicAdd_CPU(std::atomic<T>& variable, T addend) {
 	auto current = variable.load();
 	while (!variable.compare_exchange_weak(current, current + addend, std::memory_order_relaxed, std::memory_order_relaxed));
@@ -86,9 +95,11 @@ initializeAtomic_CPU< type > (var, value)
 
 #if defined(__CUDACC__)
 #define ATOMIC_ADD(name, value) atomicAdd( name , value )
+#define ATOMIC_MAX(name, value) atomicMax( name, value )
 #define _DEVICE_WHEN_AVAILABLE_ __device__
 #else
-#define ATOMIC_ADD(name, value) atomicAdd_CPU( name, value)
+#define ATOMIC_ADD(name, value) atomicAdd_CPU( name, value )
+#define ATOMIC_MAX(name, value) atomicMax_CPU( name, value )
 #define _DEVICE_WHEN_AVAILABLE_
 #endif
 

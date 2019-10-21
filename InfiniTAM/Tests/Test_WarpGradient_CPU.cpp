@@ -75,55 +75,79 @@ struct AlteredFlowWarpCountFunctor {
 	std::atomic<unsigned int> count;
 };
 
-struct DataFixture {
-	DataFixture() :
+template<MemoryDeviceType TMemoryType>
+struct WarpGradientDataFixture {
+	WarpGradientDataFixture() :
 			settings(&ITMLibSettings::Instance()),
 			offsetSlice(-64, -24, 168),
 			sizeSlice(80, 96, 144),
 			warp_field_data_term(nullptr), canonical_scene_CPU(nullptr), live_scene_CPU(nullptr) {
-		settings->deviceType = ITMLibSettings::DEVICE_CPU;
 		settings->enableKillingTerm = false;
 		settings->enableDataTerm = true;
 		settings->enableSmoothingTerm = false;
 		settings->enableGradientSmoothing = false;
 		settings->enableLevelSetTerm = false;
+
 		BOOST_TEST_MESSAGE("setup fixture");
 		warp_field_data_term = new ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>(&settings->sceneParams,
 		                                                                       settings->swappingMode ==
 		                                                                       ITMLibSettings::SWAPPINGMODE_ENABLED,
-		                                                                       settings->GetMemoryType(),
+		                                                                       TMemoryType,
 		                                                                       sizeSlice, offsetSlice);
 		warp_field_data_term->LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/gradient0_data_");
 
 		warp_field_iter0 = new ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>(&settings->sceneParams,
-		                                                                       settings->swappingMode ==
-		                                                                       ITMLibSettings::SWAPPINGMODE_ENABLED,
-		                                                                       settings->GetMemoryType(),
-		                                                                       sizeSlice, offsetSlice);
+		                                                                   settings->swappingMode ==
+		                                                                   ITMLibSettings::SWAPPINGMODE_ENABLED,
+		                                                                   TMemoryType,
+		                                                                   sizeSlice, offsetSlice);
 		warp_field_iter0->LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/warp_iter0");
-		
-		
+
+		warp_field_tikhonov_term = new ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>(&settings->sceneParams,
+		                                                                           settings->swappingMode ==
+		                                                                           ITMLibSettings::SWAPPINGMODE_ENABLED,
+		                                                                           TMemoryType,
+		                                                                           sizeSlice, offsetSlice);
+		warp_field_tikhonov_term->LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/gradient0_tikhonov_");
+
+		warp_field_killing_term = new ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>(&settings->sceneParams,
+		                                                                          settings->swappingMode ==
+		                                                                          ITMLibSettings::SWAPPINGMODE_ENABLED,
+		                                                                          settings->GetMemoryType(),
+		                                                                          sizeSlice, offsetSlice);
+		warp_field_killing_term->LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/gradient0_killing_");
+
+		warp_field_level_set_term = new ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>(&settings->sceneParams,
+		                                                                            settings->swappingMode ==
+		                                                                            ITMLibSettings::SWAPPINGMODE_ENABLED,
+		                                                                            TMemoryType,
+		                                                                            sizeSlice, offsetSlice);
+		warp_field_level_set_term->LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/gradient0_level_set_");
+
+
 		canonical_scene_CPU = new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(&settings->sceneParams,
 		                                                                       settings->swappingMode ==
 		                                                                       ITMLibSettings::SWAPPINGMODE_ENABLED,
-		                                                                       settings->GetMemoryType(),
+		                                                                       TMemoryType,
 		                                                                       sizeSlice, offsetSlice);
 
 		canonical_scene_CPU->LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/canonical");
 		live_scene_CPU = new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(&settings->sceneParams,
 		                                                                  settings->swappingMode ==
 		                                                                  ITMLibSettings::SWAPPINGMODE_ENABLED,
-		                                                                  settings->GetMemoryType(),
+		                                                                  TMemoryType,
 		                                                                  sizeSlice, offsetSlice);
 		live_scene_CPU->LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/live");
-		
-		
+
+
 	}
 
-	~DataFixture() {
+	~WarpGradientDataFixture() {
 		BOOST_TEST_MESSAGE("teardown fixture");
 		delete warp_field_data_term;
 		delete warp_field_iter0;
+		delete warp_field_tikhonov_term;
+		delete warp_field_killing_term;
 		delete canonical_scene_CPU;
 		delete live_scene_CPU;
 	}
@@ -133,11 +157,14 @@ struct DataFixture {
 	Vector3i sizeSlice;
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warp_field_data_term;
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warp_field_iter0;
+	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warp_field_tikhonov_term;
+	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warp_field_killing_term;
+	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warp_field_level_set_term;
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* canonical_scene_CPU;
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* live_scene_CPU;
 };
 
-BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU, DataFixture) {
+BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU, WarpGradientDataFixture<MEMORYDEVICE_CPU>) {
 
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(&settings->sceneParams,
 	                                                            settings->swappingMode ==
@@ -156,7 +183,6 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU, DataFixture) {
 
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
-	functor.count.store(0u);
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 36627u);
@@ -165,21 +191,22 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU, DataFixture) {
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_term, tolerance));
 }
 
-BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU, DataFixture) {
+BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU, WarpGradientDataFixture<MEMORYDEVICE_CPU>) {
+	settings->enableGradientSmoothing = false;
 	auto motionTracker_PVA_CPU = new ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray>();
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_copy(*warp_field_data_term,
 	                                                            MemoryDeviceType::MEMORYDEVICE_CPU);
 
 	AlteredGradientCountFunctor<ITMWarp> agcFunctor;
-	agcFunctor.count.store(0u);
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
 	VoxelTraversal(&warp_field_copy, agcFunctor);
 	BOOST_REQUIRE_EQUAL(agcFunctor.count.load(), 36627u);
-	
-	
-	motionTracker_PVA_CPU->UpdateWarps(canonical_scene_CPU, live_scene_CPU, &warp_field_copy);
+
+
+	float maxWarp = motionTracker_PVA_CPU->UpdateWarps(canonical_scene_CPU, live_scene_CPU, &warp_field_copy);
+	BOOST_REQUIRE_CLOSE(maxWarp, 0.0870865062f, 1e-7);
+
 	AlteredFlowWarpCountFunctor<ITMWarp> functor;
-	functor.count.store(0u);
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
 	VoxelTraversal(&warp_field_copy, functor);
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 36627u);
@@ -188,14 +215,13 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU, DataFixture) {
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_copy, warp_field_iter0, tolerance));
 }
 
-BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU, DataFixture) {
+BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU, WarpGradientDataFixture<MEMORYDEVICE_CPU>) {
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = true;
 	settings->enableLevelSetTerm = false;
 	settings->enableKillingTerm = false;
 
-	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(*warp_field_data_term, settings->GetMemoryType());
-	ManipulationEngine_CPU_PVA_Warp::Inst().ResetScene(&warp_field_CPU1);
+	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(*warp_field_iter0, settings->GetMemoryType());
 
 
 	auto motionTracker_PVA_CPU = new ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray>();
@@ -207,12 +233,65 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU, DataFixture) {
 
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
-	functor.count.store(0u);
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
-	std::cout << functor.count.load() << std::endl;
-//	BOOST_REQUIRE_EQUAL(functor.count.load(), 36627u);
-//
-//	float tolerance = 1e-5;
-//	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_term, tolerance));
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 42417);
+
+	float tolerance = 1e-8;
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_tikhonov_term, tolerance));
+}
+
+
+BOOST_FIXTURE_TEST_CASE(testKillingTerm_CPU, WarpGradientDataFixture<MEMORYDEVICE_CPU>) {
+	settings->enableDataTerm = true;
+	settings->enableSmoothingTerm = true;
+	settings->enableLevelSetTerm = false;
+	settings->enableKillingTerm = true;
+	settings->sceneTrackingRigidityEnforcementFactor = 0.1;
+
+	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(*warp_field_iter0, settings->GetMemoryType());
+
+
+	auto motionTracker_PVA_CPU = new ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray>();
+
+
+	TimeIt([&]() {
+		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_scene_CPU, live_scene_CPU, &warp_field_CPU1, false);
+	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
+
+
+	AlteredGradientCountFunctor<ITMWarp> functor;
+	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
+	VoxelTraversal(&warp_field_CPU1, functor);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 42670);
+
+	float tolerance = 1e-8;
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_killing_term, tolerance));
+}
+
+
+BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CPU, WarpGradientDataFixture<MEMORYDEVICE_CPU>) {
+	settings->enableDataTerm = true;
+	settings->enableSmoothingTerm = false;
+	settings->enableLevelSetTerm = true;
+	settings->enableKillingTerm = false;
+
+	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(*warp_field_iter0, settings->GetMemoryType());
+
+
+	auto motionTracker_PVA_CPU = new ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray>();
+
+
+	TimeIt([&]() {
+		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_scene_CPU, live_scene_CPU, &warp_field_CPU1, false);
+	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
+
+
+	AlteredGradientCountFunctor<ITMWarp> functor;
+	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
+	VoxelTraversal(&warp_field_CPU1, functor);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 41275);
+
+	float tolerance = 1e-8;
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_level_set_term, tolerance));
 }

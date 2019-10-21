@@ -679,6 +679,7 @@ set(ITMLIB_UTILS_HEADERS
 	Utils/Geometry/ITM3DIndexConversions.h
 
     Utils/ITMCUDAUtils.h
+	Utils/ITMValuePosition.h
     Utils/ITMImageTypes.h
     Utils/ITMHashBlockProperties.h
     Utils/ITMVoxelFlags.h

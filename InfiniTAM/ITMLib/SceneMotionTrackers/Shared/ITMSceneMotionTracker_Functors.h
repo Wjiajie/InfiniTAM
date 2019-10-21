@@ -20,15 +20,17 @@
 #include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../Utils/ITMLibSettings.h"
 #include "ITMSceneMotionTracker_Shared.h"
+#include "../../../ORUtils/PlatformIndependentAtomics.h"
+
 
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+
 #ifdef __CUDACC__
+#include "../../Utils/ITMCUDAUtils.h"
 #include "../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
 #include "../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h"
 #endif
-
-
 
 
 template<typename TVoxel, bool hasCumulativeWarp>
@@ -71,10 +73,18 @@ template<typename TVoxel, typename TWarp>
 struct WarpUpdateFunctor {
 	WarpUpdateFunctor(float learningRate, bool gradientSmoothingEnabled) :
 			learningRate(learningRate), gradientSmoothingEnabled(gradientSmoothingEnabled),
-			maxFlowWarpLength(0.0f), maxWarpUpdateLength(0.0f), maxFlowWarpPosition(0),
-			maxWarpUpdatePosition(0) {}
+			maxFlowWarpPosition(0),
+			maxWarpUpdatePosition(0) {
+		INITIALIZE_ATOMIC(float, maxFlowWarpLength, 0.0f);
+		INITIALIZE_ATOMIC(float, maxWarpUpdateLength, 0.0f);
+	}
 
-	_CPU_AND_GPU_CODE_
+	~WarpUpdateFunctor() {
+		CLEAN_UP_ATOMIC(maxWarpUpdateLength);
+		CLEAN_UP_ATOMIC(maxWarpUpdateLength);
+	}
+
+	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& liveVoxel, TVoxel& canonicalVoxel, TWarp& warp, const Vector3i& position) {
 		if (!VoxelIsConsideredForTracking(canonicalVoxel, liveVoxel)) return;
 		Vector3f warpUpdate = -learningRate * (gradientSmoothingEnabled ?
@@ -86,28 +96,36 @@ struct WarpUpdateFunctor {
 		// update stats
 		float framewiseWarpLength = ORUtils::length(warp.flow_warp);
 		float warpUpdateLength = ORUtils::length(warpUpdate);
-		if (framewiseWarpLength > maxFlowWarpLength) {
-			maxFlowWarpLength = framewiseWarpLength;
+
+#if !defined(__CUDACC__) && !defined(WITH_OPENMP)
+		//single-threaded CPU version (for debugging max warp position)
+		if (framewiseWarpLength > maxFlowWarpLength.load()) {
+			maxFlowWarpLength.store(framewiseWarpLength);
 			maxFlowWarpPosition = position;
 		}
-		if (warpUpdateLength > maxWarpUpdateLength) {
-			maxWarpUpdateLength = warpUpdateLength;
+		if (warpUpdateLength > maxWarpUpdateLength.load()) {
+			maxWarpUpdateLength.store(warpUpdateLength);
 			maxWarpUpdatePosition = position;
 		}
+#else
+		ATOMIC_MAX(maxFlowWarpLength, framewiseWarpLength);
+		ATOMIC_MAX(maxWarpUpdateLength, warpUpdateLength);
+#endif
 	}
 
-	// TODO: these should be addressed as atomics
-	float maxFlowWarpLength;
-	float maxWarpUpdateLength;
+	DECLARE_ATOMIC_FLOAT(maxFlowWarpLength);
+	DECLARE_ATOMIC_FLOAT(maxWarpUpdateLength);
 	Vector3i maxFlowWarpPosition;
 	Vector3i maxWarpUpdatePosition;
 
-	_CPU_AND_GPU_CODE_
+	_DEVICE_WHEN_AVAILABLE_
 	void PrintWarp() {
-#ifndef __CUDACC__
+#if !defined(__CUDACC__) && !defined(WITH_OPENMP)
 		std::cout << ITMLib::green << "Max warp: [" << maxFlowWarpLength << " at " << maxFlowWarpPosition
-		          << "] Max update: [" << maxWarpUpdateLength << " at " << maxWarpUpdatePosition << "]." << ITMLib::reset
+		          << "] Max update: [" << maxWarpUpdateLength << " at " << maxWarpUpdatePosition << "]."
+		          << ITMLib::reset
 		          << std::endl;
+#else
 #endif
 	}
 
@@ -202,7 +220,7 @@ struct GradientSmoothingPassFunctor {
 
 		for (int iVoxel = 0; iVoxel < sobolevFilterSize; iVoxel++, receptiveVoxelPosition[directionIndex]++) {
 			const TWarp& receptiveVoxel = readVoxel(warpVoxels, warpIndexData,
-			                                                  receptiveVoxelPosition, vmIndex, warpFieldCache);
+			                                        receptiveVoxelPosition, vmIndex, warpFieldCache);
 			smoothedGradient += sobolevFilter1D[iVoxel] * GetGradient(receptiveVoxel);
 		}
 		SetGradient(warp, smoothedGradient);
@@ -257,11 +275,11 @@ void SmoothWarpGradient_common(ITMLib::ITMVoxelVolume<TVoxel, TIndex>* liveScene
 	GradientSmoothingPassFunctor<TVoxel, TWarp, TIndex, Z> passFunctorZ(warpField);
 
 	ITMLib::ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, TIndex, TDeviceType>::
-	        template DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, passFunctorX);
+	template DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, passFunctorX);
 	ITMLib::ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, TIndex, TDeviceType>::
-	        template DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, passFunctorY);
+	template DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, passFunctorY);
 	ITMLib::ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, TIndex, TDeviceType>::
-	        template DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, passFunctorZ);
+	template DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, passFunctorZ);
 }
 
 template<typename TWarp, bool hasCumulativeWarp>
@@ -323,7 +341,7 @@ inline float UpdateWarps_common(
 	warpUpdateFunctor.PrintWarp();
 #endif
 	//return warpUpdateFunctor.maxWarpUpdateLength;
-	return warpUpdateFunctor.maxFlowWarpLength;
+	return GET_ATOMIC_VALUE_CPU(warpUpdateFunctor.maxFlowWarpLength);
 }
 
 template<typename TVoxelCanonical, typename TIndex, ITMLib::ITMLibSettings::DeviceType TDeviceType>
@@ -333,11 +351,11 @@ AddFlowWarpToWarp_common(ITMLib::ITMVoxelVolume<TVoxelCanonical, TIndex>* canoni
 		ITMLib::ITMSceneTraversalEngine<TVoxelCanonical, TIndex, TDeviceType>::
 		template StaticVoxelTraversal<
 				AddFlowWarpToWarpWithClearStaticFunctor<TVoxelCanonical, TVoxelCanonical::hasCumulativeWarp>>
-				(canonicalScene);
+		(canonicalScene);
 	} else {
 		ITMLib::ITMSceneTraversalEngine<TVoxelCanonical, TIndex, TDeviceType>::
 		template StaticVoxelTraversal<
-		        AddFlowWarpToWarpStaticFunctor<TVoxelCanonical, TVoxelCanonical::hasCumulativeWarp>
-		        >(canonicalScene);
+				AddFlowWarpToWarpStaticFunctor<TVoxelCanonical, TVoxelCanonical::hasCumulativeWarp>
+		>(canonicalScene);
 	}
 };

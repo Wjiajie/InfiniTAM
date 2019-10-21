@@ -2,6 +2,7 @@
 
 #pragma once
 
+
 template<class T>
 inline __device__ void warpReduce(volatile T* sdata, int tid) {
 	sdata[tid] += sdata[tid + 32];
@@ -72,6 +73,7 @@ __device__ int computePrefixSum_device(uint element, T *sum, int localSize, int 
 
 	return offset;
 }
+
 
 __device__ static inline void atomicMin(float* address, float val)
 {
