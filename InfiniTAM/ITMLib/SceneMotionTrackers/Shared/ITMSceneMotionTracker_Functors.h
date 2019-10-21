@@ -96,6 +96,7 @@ struct WarpUpdateFunctor {
 		}
 	}
 
+	// TODO: these should be addressed as atomics
 	float maxFlowWarpLength;
 	float maxWarpUpdateLength;
 	Vector3i maxFlowWarpPosition;
