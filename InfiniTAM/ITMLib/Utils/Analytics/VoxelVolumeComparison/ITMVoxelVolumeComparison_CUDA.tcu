@@ -33,6 +33,14 @@ bool contentAlmostEqual_CUDA(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<T
 }
 
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
+bool contentAlmostEqual_CUDA_Verbose(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<TVoxel,TIndexB>* b, ToleranceType tolerance){
+	VoxelEqualVerboseFunctor<TVoxel, ToleranceType> functor(tolerance);
+	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, ITMLibSettings::DEVICE_CUDA>
+	::template DualVoxelPositionTraversal_AllTrue(a, b, functor);
+}
+
+
+template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
 bool allocatedContentAlmostEqual_CUDA(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<TVoxel,TIndexB>* b, ToleranceType tolerance){
 	VoxelEqualFunctor<TVoxel, ToleranceType> functor(tolerance);
 	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, ITMLibSettings::DEVICE_CUDA>

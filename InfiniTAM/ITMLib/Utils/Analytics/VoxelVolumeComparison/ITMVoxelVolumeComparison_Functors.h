@@ -24,8 +24,19 @@ struct VoxelEqualFunctor {
 	explicit VoxelEqualFunctor(ToleranceType tolerance) : tolerance(tolerance) {}
 	_CPU_AND_GPU_CODE_
 	inline
-	bool operator()(const TVoxel& a, const TVoxel& b) {
+	bool operator()(const TVoxel& a, const TVoxel& b) const {
 		return almostEqual(a, b, tolerance);
+	}
+	ToleranceType tolerance;
+};
+
+template<typename TVoxel, typename ToleranceType>
+struct VoxelEqualVerboseFunctor {
+	explicit VoxelEqualVerboseFunctor(ToleranceType tolerance) : tolerance(tolerance) {}
+	_CPU_AND_GPU_CODE_
+	inline
+	bool operator()(const TVoxel& a, const TVoxel& b, const Vector3i& position) const {
+		return almostEqualVerbose_Position(a, b, position, tolerance);
 	}
 	ToleranceType tolerance;
 };

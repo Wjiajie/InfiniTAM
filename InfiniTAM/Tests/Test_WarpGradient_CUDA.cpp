@@ -100,7 +100,7 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CUDA, WarpGradientDataFixture<MEMORYDEV
 
 	TimeIt([&]() {
 		motionTracker_PVA_CUDA->CalculateWarpGradient(canonical_scene, live_scene, &warp_field_CUDA1, false);
-	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
+	}, "Calculate Warp Gradient - PVA CPU data term + Tikhonov term");
 
 
 	float tolerance = 1e-8;
@@ -123,12 +123,11 @@ BOOST_FIXTURE_TEST_CASE(testKillingTerm_CUDA, WarpGradientDataFixture<MEMORYDEVI
 
 	TimeIt([&]() {
 		motionTracker_PVA_CUDA->CalculateWarpGradient(canonical_scene, live_scene, &warp_field_CUDA1, false);
-	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
+	}, "Calculate Warp Gradient - PVA CPU data term + Killing term");
 
 
 	float tolerance = 1e-8;
-	//BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_killing_term, tolerance));
-	BOOST_REQUIRE(contentAlmostEqual_CUDA(warp_field_killing_term, warp_field_killing_term, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_killing_term, tolerance));
 }
 
 
@@ -146,9 +145,9 @@ BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CUDA, WarpGradientDataFixture<MEMORYDEV
 
 	TimeIt([&]() {
 		motionTracker_PVA_CUDA->CalculateWarpGradient(canonical_scene, live_scene, &warp_field_CUDA1, false);
-	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
+	}, "Calculate Warp Gradient - PVA CPU data term + level set term");
 
 
-	float tolerance = 1e-8;
-	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_level_set_term, tolerance));
+	float tolerance = 1e-7;
+	BOOST_REQUIRE(contentAlmostEqual_CUDA_Verbose(&warp_field_CUDA1, warp_field_level_set_term, tolerance));
 }

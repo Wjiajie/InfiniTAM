@@ -45,6 +45,7 @@ public:
 		staticVoxelTraversal_device<TStaticFunctor, TVoxel> << < gridSize, cudaBlockSize >> > (voxelArray, arrayInfo);
 		ORcudaKernelCheck;
 	}
+
 // endregion ===========================================================================================================
 // region ================================ DYNAMIC SINGLE-SCENE TRAVERSAL ==============================================
 	template<typename TFunctor>
@@ -63,7 +64,8 @@ public:
 		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TFunctor)));
 		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TFunctor), cudaMemcpyHostToDevice));
 
-		voxelTraversal_device<TFunctor, TVoxel> << < gridSize, cudaBlockSize >> > (voxelArray, arrayInfo, functor_device);
+		voxelTraversal_device<TFunctor, TVoxel> << < gridSize, cudaBlockSize >> >
+		                                                       (voxelArray, arrayInfo, functor_device);
 		ORcudaKernelCheck;
 
 		// transfer functor from VRAM back to RAM
@@ -75,6 +77,53 @@ public:
 
 template<typename TVoxelPrimary, typename TVoxelSecondary>
 class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelArray, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA> {
+private:
+	template<typename TBooleanFunctor, typename TDeviceTraversalFunction>
+	inline static bool
+	DualVoxelTraversal_AllTrue_Generic(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
+			TBooleanFunctor& functor, TDeviceTraversalFunction&& deviceTraversalFunction) {
+
+		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+
+		// allocate boolean varaible for answer
+		bool* falseEncountered_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &falseEncountered_device, sizeof(bool)));
+		ORcudaSafeCall(cudaMemset(falseEncountered_device, 0, sizeof(bool)));
+
+		// transfer functor from RAM to VRAM
+		TBooleanFunctor* functor_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TBooleanFunctor)));
+		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TBooleanFunctor), cudaMemcpyHostToDevice));
+
+
+		// perform traversal on the GPU
+		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.getIndexData();
+		dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+		dim3 gridSize(
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().x) / cudaBlockSize.x)),
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().y) / cudaBlockSize.y)),
+				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().z) / cudaBlockSize.z))
+		);
+		std::forward<TDeviceTraversalFunction>(deviceTraversalFunction)(gridSize, cudaBlockSize, primaryVoxels,
+		                                                                secondaryVoxels, arrayInfo, functor_device,
+		                                                                falseEncountered_device);
+		ORcudaKernelCheck;
+
+		// transfer functor from VRAM back to RAM
+		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TBooleanFunctor), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(functor_device));
+
+		bool falseEncountered;
+		ORcudaSafeCall(cudaMemcpy(&falseEncountered, falseEncountered_device, sizeof(bool), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(falseEncountered_device));
+
+		return !falseEncountered;
+	}
+
 public:
 // region ============================== DUAL-SCENE STATIC TRAVERSAL ===================================================
 
@@ -148,51 +197,43 @@ public:
 
 	}
 
+
 	template<typename TBooleanFunctor>
 	inline static bool
 	DualVoxelTraversal_AllTrue(
 			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
 			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
 			TBooleanFunctor& functor) {
-
-		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
-
-		// allocate boolean varaible for answer
-		bool* falseEncountered_device = nullptr;
-		ORcudaSafeCall(cudaMalloc((void**) &falseEncountered_device, sizeof(bool)));
-		ORcudaSafeCall(cudaMemset(falseEncountered_device, 0, sizeof(bool)));
-
-		// transfer functor from RAM to VRAM
-		TBooleanFunctor* functor_device = nullptr;
-		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TBooleanFunctor)));
-		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TBooleanFunctor), cudaMemcpyHostToDevice));
-
-
-		// perform traversal on the GPU
-		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
-		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
-		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.getIndexData();
-		dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
-		dim3 gridSize(
-				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().x) / cudaBlockSize.x)),
-				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().y) / cudaBlockSize.y)),
-				static_cast<int>(ceil(static_cast<float>(primaryScene->index.getVolumeSize().z) / cudaBlockSize.z))
+		return DualVoxelTraversal_AllTrue_Generic(
+				primaryScene, secondaryScene, functor,
+				[&](const dim3& gridSize, const dim3& cudaBlockSize,
+				    TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
+				    const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+				    TBooleanFunctor* functor_device, bool* falseEncountered_device) {
+					dualVoxelTraversal_AllTrue_device<TBooleanFunctor, TVoxelPrimary, TVoxelSecondary>
+							<< < gridSize, cudaBlockSize >> >
+					                       (primaryVoxels, secondaryVoxels, arrayInfo, functor_device, falseEncountered_device);
+				}
 		);
+	}
 
-		dualVoxelTraversal_AllTrue_device<TBooleanFunctor, TVoxelPrimary, TVoxelSecondary>
-				<< < gridSize, cudaBlockSize >> >
-		                       (primaryVoxels, secondaryVoxels, arrayInfo, functor_device, falseEncountered_device);
-		ORcudaKernelCheck;
-
-		// transfer functor from VRAM back to RAM
-		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TBooleanFunctor), cudaMemcpyDeviceToHost));
-		ORcudaSafeCall(cudaFree(functor_device));
-
-		bool falseEncountered;
-		ORcudaSafeCall(cudaMemcpy(&falseEncountered, falseEncountered_device, sizeof(bool), cudaMemcpyDeviceToHost));
-		ORcudaSafeCall(cudaFree(falseEncountered_device));
-
-		return !falseEncountered;
+	template<typename TBooleanFunctor>
+	inline static bool
+	DualVoxelPositionTraversal_AllTrue(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
+			TBooleanFunctor& functor) {
+		return DualVoxelTraversal_AllTrue_Generic(
+				primaryScene, secondaryScene, functor,
+				[&](const dim3& gridSize, const dim3& cudaBlockSize,
+				    TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
+				    const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+				    TBooleanFunctor* functor_device, bool* falseEncountered_device) {
+					dualVoxelPositionTraversal_AllTrue_device<TBooleanFunctor, TVoxelPrimary, TVoxelSecondary>
+							<< < gridSize, cudaBlockSize >> >
+					                       (primaryVoxels, secondaryVoxels, arrayInfo, functor_device, falseEncountered_device);
+				}
+		);
 	}
 
 	template<typename TFunctor>
@@ -231,6 +272,7 @@ public:
 	}
 
 // endregion ===========================================================================================================
+
 };
 
 

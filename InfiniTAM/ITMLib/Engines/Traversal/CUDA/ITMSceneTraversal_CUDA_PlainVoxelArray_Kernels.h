@@ -151,8 +151,39 @@ dualVoxelTraversal_AllTrue_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 	TVoxelPrimary& voxelPrimary = primaryVoxels[locId];
 	TVoxelSecondary& voxelSecondary = secondaryVoxels[locId];
 	if(!(*functor)(voxelPrimary, voxelSecondary)){
+		//_DEBUG
 		Vector3i pos(x,y,z);
 		pos -= arrayInfo->offset;
+		printf("Mismatch at: %d %d %d\n", pos.x, pos.y, pos.z);
+		*falseEncountered = true;
+	}
+}
+
+template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
+__global__ void
+dualVoxelPositionTraversal_AllTrue_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
+                                  const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+                                  TFunctor* functor, bool* falseEncountered) {
+	if(*falseEncountered) return;
+
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y;
+	int z = blockIdx.z * blockDim.z + threadIdx.z;
+
+	if (x >= arrayInfo->size.x || y >= arrayInfo->size.y || z >= arrayInfo->size.z) return;
+
+	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
+
+	TVoxelPrimary& voxelPrimary = primaryVoxels[locId];
+	TVoxelSecondary& voxelSecondary = secondaryVoxels[locId];
+
+	Vector3i voxelPosition;
+
+	voxelPosition.x = x + arrayInfo->offset.x;
+	voxelPosition.y = y + arrayInfo->offset.y;
+	voxelPosition.z = z + arrayInfo->offset.z;
+
+	if(!(*functor)(voxelPrimary, voxelSecondary, voxelPosition)){
 		*falseEncountered = true;
 	}
 }
