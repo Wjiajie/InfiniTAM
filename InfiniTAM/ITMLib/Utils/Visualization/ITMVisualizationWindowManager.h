@@ -20,6 +20,7 @@
 
 #include <vector>
 
+#ifdef WITH_VTK
 //vtk
 #include <vtkRenderWindowInteractor.h>
 #include <vtkContextView.h>
@@ -27,6 +28,7 @@
 #include <vtkActor.h>
 #include <vtkActor2D.h>
 #include <vtkOrientationMarkerWidget.h>
+#endif
 
 //local
 #include "../ITMMath.h"

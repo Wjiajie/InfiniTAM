@@ -14,6 +14,7 @@ set(targetname ITMLib)
 
 include(${PROJECT_SOURCE_DIR}/cmake/UseCUDA.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/UseOpenMP.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseVTK.cmake)
 
 
 #############################
@@ -998,24 +999,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
 ##########################################
 
 find_package(OpenCV REQUIRED core highgui imgproc imgcodecs)
-find_package(VTK 8.1 COMPONENTS
-			 vtkIOImage
-			 vtkChartsCore
-			 vtkCommonColor
-			 vtkCommonCore
-			 vtkCommonDataModel
-			 vtkFiltersSources
-			 vtkInteractionStyle
-			 vtkInteractionWidgets
-			 vtkRenderingContext2D
-			 vtkRenderingContextOpenGL2
-			 vtkRenderingCore
-			 vtkRenderingFreeType
-			 vtkRenderingOpenGL2
-			 vtkRenderingGL2PSOpenGL2
-			 vtkViewsContext2D
-			 REQUIRED)
-include(${VTK_USE_FILE})
+
 set (Boost_FIND_REQUIRED TRUE)
 set (Boost_FIND_QUIETLY TRUE)
 set (Boost_USE_MULTITHREADED TRUE)
@@ -1028,6 +1012,9 @@ if(CMAKE_CXX_COMPILER_ID MATCHES MSVC)
 	target_compile_definitions(${targetname} PUBLIC -DBOOST_ALL_NO_LIB -DBOOST_SYSTEM_NO_DEPRECATED)
 endif()
 
+if(WITH_VTK)
+	target_compile_definitions(${targetname} PUBLIC -DWITH_VTK)
+endif()
 target_include_directories(${targetname} PUBLIC ${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 target_link_libraries(${targetname} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${VTK_LIBRARIES})
 
@@ -1046,12 +1033,4 @@ if(NOT INDEX EQUAL -1)
     list(APPEND COMPILE_DEFINITIONS_PROPERTY "vtkRenderingCore_AUTOINIT=3(vtkInteractionStyle ,vtkRenderingFreeType ,vtkRenderingOpenGL2 )")
     #replace with the same properties with spaces after the macro name
     set_property(DIRECTORY PROPERTY COMPILE_DEFINITIONS ${COMPILE_DEFINITIONS_PROPERTY})
-endif()
-
-#workaround for https://codereview.qt-project.org/#/c/195531/
-if(TARGET Qt5::Core)
-	get_property(core_options TARGET Qt5::Core PROPERTY INTERFACE_COMPILE_OPTIONS)
-	string(REPLACE "-fPIC" "" new_core_options ${core_options})
-	set_property(TARGET Qt5::Core PROPERTY INTERFACE_COMPILE_OPTIONS ${new_core_options})
-	set_property(TARGET Qt5::Core PROPERTY INTERFACE_POSITION_INDEPENDENT_CODE "ON")
 endif()

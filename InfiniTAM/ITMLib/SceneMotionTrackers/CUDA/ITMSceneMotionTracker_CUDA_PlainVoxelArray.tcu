@@ -59,7 +59,6 @@ void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::CalculateWar
 	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TWarp> >(warpField);
 
 	ITMCalculateWarpGradientFunctor<TVoxel, TWarp, ITMPlainVoxelArray::IndexData, ITMPlainVoxelArray::IndexCache>
-//	ITMSceneMotionDataTermCUDAFunctor<TVoxel, TWarp, ITMPlainVoxelArray::IndexData, ITMPlainVoxelArray::IndexCache>
 			calculateGradientFunctor(this->parameters, this->switches,
 			                         liveScene->localVBA.GetVoxelBlocks(), liveScene->index.getIndexData(),
 			                         canonicalScene->localVBA.GetVoxelBlocks(), canonicalScene->index.getIndexData(),

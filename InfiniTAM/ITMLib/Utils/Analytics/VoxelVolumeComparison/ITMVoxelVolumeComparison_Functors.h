@@ -24,7 +24,7 @@ struct VoxelEqualFunctor {
 	explicit VoxelEqualFunctor(ToleranceType tolerance) : tolerance(tolerance) {}
 	_CPU_AND_GPU_CODE_
 	inline
-	bool operator()(TVoxel& a, TVoxel& b) {
+	bool operator()(const TVoxel& a, const TVoxel& b) {
 		return almostEqual(a, b, tolerance);
 	}
 	ToleranceType tolerance;

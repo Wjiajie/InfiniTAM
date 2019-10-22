@@ -15,8 +15,6 @@
 //  ================================================================
 #pragma once
 
-//VTK
-#include <vtkContextView.h>
 
 //local
 #include "ITMVisualizationCommon.h"

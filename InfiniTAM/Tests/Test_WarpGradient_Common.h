@@ -62,7 +62,7 @@ struct WarpGradientDataFixture {
 		warp_field_killing_term = new ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>(&settings->sceneParams,
 		                                                                          settings->swappingMode ==
 		                                                                          ITMLibSettings::SWAPPINGMODE_ENABLED,
-		                                                                          settings->GetMemoryType(),
+		                                                                          TMemoryType,
 		                                                                          sizeSlice, offsetSlice);
 		warp_field_killing_term->LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/gradient0_killing_");
 
