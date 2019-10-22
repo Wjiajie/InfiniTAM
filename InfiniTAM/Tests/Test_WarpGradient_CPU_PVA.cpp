@@ -76,8 +76,8 @@ struct AlteredFlowWarpCountFunctor {
 	std::atomic<unsigned int> count;
 };
 
-
-BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU, WarpGradientDataFixture<MEMORYDEVICE_CPU>) {
+typedef WarpGradientDataFixture<MemoryDeviceType::MEMORYDEVICE_CPU, ITMPlainVoxelArray> DataFixture;
+BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_PVA, DataFixture) {
 
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(&settings->sceneParams,
 	                                                            settings->swappingMode ==
@@ -104,7 +104,7 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU, WarpGradientDataFixture<MEMORYDEVICE_C
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_term, tolerance));
 }
 
-BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU, WarpGradientDataFixture<MEMORYDEVICE_CPU>) {
+BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_PVA, DataFixture) {
 	settings->enableGradientSmoothing = false;
 	auto motionTracker_PVA_CPU = new ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray>();
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_copy(*warp_field_data_term,
@@ -128,7 +128,7 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU, WarpGradientDataFixture<MEMORYDEVIC
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_copy, warp_field_iter0, tolerance));
 }
 
-BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU, WarpGradientDataFixture<MEMORYDEVICE_CPU>) {
+BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU_PVA, DataFixture) {
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = true;
 	settings->enableLevelSetTerm = false;
@@ -155,7 +155,7 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU, WarpGradientDataFixture<MEMORYDEVI
 }
 
 
-BOOST_FIXTURE_TEST_CASE(testKillingTerm_CPU, WarpGradientDataFixture<MEMORYDEVICE_CPU>) {
+BOOST_FIXTURE_TEST_CASE(testKillingTerm_CPU_PVA, DataFixture) {
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = true;
 	settings->enableLevelSetTerm = false;
@@ -183,7 +183,7 @@ BOOST_FIXTURE_TEST_CASE(testKillingTerm_CPU, WarpGradientDataFixture<MEMORYDEVIC
 }
 
 
-BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CPU, WarpGradientDataFixture<MEMORYDEVICE_CPU>) {
+BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CPU_PVA, DataFixture) {
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = false;
 	settings->enableLevelSetTerm = true;

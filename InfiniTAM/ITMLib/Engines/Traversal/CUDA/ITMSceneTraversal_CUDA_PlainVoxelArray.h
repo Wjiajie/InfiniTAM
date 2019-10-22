@@ -28,6 +28,8 @@
 namespace ITMLib {
 
 
+//TODO: many DRY violations within this file -- figure out how to reduce them
+
 template<typename TVoxel>
 class ITMSceneTraversalEngine<TVoxel, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA> {
 public:

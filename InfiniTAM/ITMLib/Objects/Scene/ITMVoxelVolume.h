@@ -28,17 +28,9 @@ public:
 	/** Global content of the 8x8x8 voxel blocks -- stored on host only */
 	ITMGlobalCache<TVoxel> *globalCache;
 
-	void SaveToDirectory(const std::string &outputDirectory) const
-	{
-		localVBA.SaveToDirectory(outputDirectory);
-		index.SaveToDirectory(outputDirectory);
-	}
+	void SaveToDirectory(const std::string &outputDirectory) const;
 
-	void LoadFromDirectory(const std::string &outputDirectory)
-	{
-		localVBA.LoadFromDirectory(outputDirectory);
-		index.LoadFromDirectory(outputDirectory);
-	}
+	void LoadFromDirectory(const std::string &outputDirectory);
 
 	ITMVoxelVolume(const ITMSceneParams *_sceneParams, bool _useSwapping, MemoryDeviceType _memoryType,
 	               Vector3i size = Vector3i(512), Vector3i offset = Vector3i(-256,-256,0));

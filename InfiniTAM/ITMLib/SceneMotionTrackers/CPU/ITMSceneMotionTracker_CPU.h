@@ -67,9 +67,6 @@ private:
 // endregion ===========================================================================================================
 //region ======================================== PLAIN VOXEL ARRAY ====================================================
 
-//TODO: reorder argument lists in both classes for consistency with reconstruction engine: warp field should come first,
-//  canonical (as the "target") should come last
-
 template<typename TVoxel, typename TWarp >
 class ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray> :
 		public ITMSceneMotionTracker<TVoxel, TWarp, ITMPlainVoxelArray> {

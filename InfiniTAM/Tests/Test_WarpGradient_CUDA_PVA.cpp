@@ -34,24 +34,18 @@
 #include "../ITMLib/Utils/ITMLibSettings.h"
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
-#include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "../ITMLib/SceneMotionTrackers/Interface/ITMSceneMotionTracker.h"
 #include "../ITMLib/SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA.h"
-#include "../ITMLib/SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA.h"
-#include "../ITMLib/SceneMotionTrackers/Shared/ITMCalculateWarpGradientFunctor.h"
-#include "../ITMLib/SceneMotionTrackers/Shared/ITMLegacyCalculateWarpGradientFunctor.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h"
-#include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
 
 using namespace ITMLib;
 
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray> SceneFileIOEngine_PVA;
-typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
 
 
 
-
-BOOST_FIXTURE_TEST_CASE(testDataTerm_CUDA, WarpGradientDataFixture<MEMORYDEVICE_CUDA>) {
+typedef WarpGradientDataFixture<MemoryDeviceType::MEMORYDEVICE_CUDA, ITMPlainVoxelArray> DataFixture;
+BOOST_FIXTURE_TEST_CASE(testDataTerm_CUDA, DataFixture) {
 
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CUDA1(&settings->sceneParams,
 	                                                            settings->swappingMode ==
@@ -72,7 +66,7 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CUDA, WarpGradientDataFixture<MEMORYDEVICE_
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_data_term, tolerance));
 }
 
-BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CUDA, WarpGradientDataFixture<MEMORYDEVICE_CUDA>) {
+BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CUDA, DataFixture) {
 	settings->enableGradientSmoothing = false;
 	auto motionTracker_PVA_CUDA = new ITMSceneMotionTracker_CUDA<ITMVoxel, ITMWarp, ITMPlainVoxelArray>();
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_copy(*warp_field_data_term,
@@ -86,7 +80,7 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CUDA, WarpGradientDataFixture<MEMORYDEVI
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_copy, warp_field_iter0, tolerance));
 }
 
-BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CUDA, WarpGradientDataFixture<MEMORYDEVICE_CUDA>) {
+BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CUDA, DataFixture) {
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = true;
 	settings->enableLevelSetTerm = false;
@@ -108,7 +102,7 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CUDA, WarpGradientDataFixture<MEMORYDEV
 }
 
 
-BOOST_FIXTURE_TEST_CASE(testKillingTerm_CUDA, WarpGradientDataFixture<MEMORYDEVICE_CUDA>) {
+BOOST_FIXTURE_TEST_CASE(testKillingTerm_CUDA, DataFixture) {
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = true;
 	settings->enableLevelSetTerm = false;
@@ -131,7 +125,7 @@ BOOST_FIXTURE_TEST_CASE(testKillingTerm_CUDA, WarpGradientDataFixture<MEMORYDEVI
 }
 
 
-BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CUDA, WarpGradientDataFixture<MEMORYDEVICE_CUDA>) {
+BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CUDA, DataFixture) {
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = false;
 	settings->enableLevelSetTerm = true;
@@ -144,7 +138,8 @@ BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CUDA, WarpGradientDataFixture<MEMORYDEV
 
 
 	TimeIt([&]() {
-		motionTracker_PVA_CUDA->CalculateWarpGradient(canonical_scene, live_scene, &warp_field_CUDA1, false);
+		motionTracker_PVA_CUDA->CalculateWarpGradient(canonical_scene,
+				live_scene, &warp_field_CUDA1, false);
 	}, "Calculate Warp Gradient - PVA CPU data term + level set term");
 
 

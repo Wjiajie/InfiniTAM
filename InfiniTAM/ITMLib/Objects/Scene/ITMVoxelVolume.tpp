@@ -15,6 +15,7 @@
 //  ================================================================
 
 #include "ITMVoxelVolume.h"
+#include "../../Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 
 namespace ITMLib {
 
@@ -60,6 +61,16 @@ void ITMVoxelVolume<TVoxel, TIndex>::SetFrom(const ITMVoxelVolume& other) {
 	}else{
 		globalCache = nullptr;
 	}
+}
+
+template<class TVoxel, class TIndex>
+void ITMVoxelVolume<TVoxel, TIndex>::SaveToDirectory(const std::string& outputDirectory) const {
+	ITMSceneFileIOEngine<TVoxel,TIndex>::SaveToDirectoryCompact(this, outputDirectory);
+}
+
+template<class TVoxel, class TIndex>
+void ITMVoxelVolume<TVoxel, TIndex>::LoadFromDirectory(const std::string& outputDirectory) {
+	ITMSceneFileIOEngine<TVoxel,TIndex>::LoadFromDirectoryCompact(this, outputDirectory);
 }
 
 }  // namespace ITMLib

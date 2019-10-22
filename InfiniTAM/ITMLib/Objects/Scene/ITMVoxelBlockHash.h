@@ -157,7 +157,7 @@ public:
 	const int *GetExcessAllocationList(void) const { return excessAllocationList->GetData(memoryType); }
 	int *GetExcessAllocationList(void) { return excessAllocationList->GetData(memoryType); }
 
-	int GetLastFreeExcessListId(void) { return lastFreeExcessListId; }
+	int GetLastFreeExcessListId(void) const { return lastFreeExcessListId; }
 	void SetLastFreeExcessListId(int lastFreeExcessListId) { this->lastFreeExcessListId = lastFreeExcessListId; }
 
 #ifdef COMPILE_WITH_METAL
@@ -167,8 +167,8 @@ public:
 #endif
 
 	/** Maximum number of total entries. */
-	int getNumAllocatedVoxelBlocks(void) { return SDF_LOCAL_BLOCK_NUM; }
-	int getVoxelBlockSize(void) { return SDF_BLOCK_SIZE3; }
+	int getNumAllocatedVoxelBlocks(void) const { return SDF_LOCAL_BLOCK_NUM; }
+	int getVoxelBlockSize(void) const { return SDF_BLOCK_SIZE3; }
 
 	void SaveToDirectory(const std::string &outputDirectory) const
 	{

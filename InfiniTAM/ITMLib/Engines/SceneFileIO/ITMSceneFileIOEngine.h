@@ -29,7 +29,7 @@ class ITMSceneFileIOEngine;
 template<typename TVoxel>
 class ITMSceneFileIOEngine<TVoxel,ITMVoxelBlockHash>{
 public:
-	static void SaveToDirectoryCompact(ITMVoxelVolume<TVoxel,ITMVoxelBlockHash>* scene, const std::string& outputDirectory);
+	static void SaveToDirectoryCompact(const ITMVoxelVolume<TVoxel,ITMVoxelBlockHash>* scene, const std::string& outputDirectory);
 	static void LoadFromDirectoryCompact(ITMVoxelVolume<TVoxel,ITMVoxelBlockHash>* scene, const std::string& outputDirectory);
 };
 
@@ -37,7 +37,7 @@ public:
 template<typename TVoxel>
 class ITMSceneFileIOEngine<TVoxel,ITMPlainVoxelArray>{
 public:
-	static void SaveToDirectoryCompact(ITMVoxelVolume<TVoxel,ITMPlainVoxelArray>* scene, const std::string& outputDirectory);
+	static void SaveToDirectoryCompact(const ITMVoxelVolume<TVoxel,ITMPlainVoxelArray>* scene, const std::string& outputDirectory);
 	static void LoadFromDirectoryCompact(ITMVoxelVolume<TVoxel,ITMPlainVoxelArray>* scene, const std::string& outputDirectory);
 };
 

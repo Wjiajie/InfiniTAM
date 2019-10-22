@@ -28,7 +28,7 @@ namespace b_ios = boost::iostreams;
 
 
 template<typename TVoxel>
-void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
+void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
                                                                              const std::string& outputDirectory) {
 
 
@@ -136,9 +136,10 @@ ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(ITMVox
 
 template<typename TVoxel>
 void
-ITMSceneFileIOEngine<TVoxel, ITMPlainVoxelArray>::SaveToDirectoryCompact(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
+ITMSceneFileIOEngine<TVoxel, ITMPlainVoxelArray>::SaveToDirectoryCompact(const ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
                                                                          const std::string& outputDirectory) {
-	scene->SaveToDirectory(outputDirectory);
+	scene->localVBA.SaveToDirectory(outputDirectory);
+	scene->index.SaveToDirectory(outputDirectory);
 }
 
 
@@ -146,5 +147,6 @@ template<typename TVoxel>
 void
 ITMSceneFileIOEngine<TVoxel, ITMPlainVoxelArray>::LoadFromDirectoryCompact(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
                                                                            const std::string& outputDirectory) {
-	scene->LoadFromDirectory(outputDirectory);
+	scene->localVBA.LoadFromDirectory(outputDirectory);
+	scene->index.LoadFromDirectory(outputDirectory);
 }

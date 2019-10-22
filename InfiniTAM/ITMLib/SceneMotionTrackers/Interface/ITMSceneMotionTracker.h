@@ -27,9 +27,9 @@
 
 namespace ITMLib {
 
-//TODO: rename to "ITMSurfaceMotionTracker"
+//TODO: rename to "ITMSurfaceTracker" or "SurfaceTracker"
 /**
- * \brief Class responcible for tracking motion of rigid or dynamic surfaces within the scene
+ * \brief Class responsible for tracking motion of rigid or dynamic surfaces within the scene
  * \tparam TVoxel TSDF voxel type
  * \tparam TWarp Warp vector voxel type
  * \tparam TIndex Indexing structure type used for voxel volumes
@@ -41,6 +41,10 @@ public:
 
 //============================= CONSTRUCTORS / DESTRUCTORS =============================================================
 //TODO: write documentation block -Greg (Github: Algomorph)
+
+
+//TODO: reorder argument lists in both classes for consistency with reconstruction engine: warp field should come first,
+//  canonical (as the "target") should come last
 	explicit ITMSceneMotionTracker() :
 			parameters{
 					ITMLibSettings::Instance().sceneTrackingGradientDescentLearningRate,

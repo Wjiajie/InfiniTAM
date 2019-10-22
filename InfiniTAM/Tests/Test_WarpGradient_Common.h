@@ -24,7 +24,21 @@
 
 using namespace ITMLib;
 
-template<MemoryDeviceType TMemoryType>
+template<typename TIndex>
+std::string getIndexSuffix();
+
+template<>
+std::string getIndexSuffix<ITMVoxelBlockHash>(){
+	return "VBH";
+}
+
+template<>
+std::string getIndexSuffix<ITMPlainVoxelArray>(){
+	return "PVA";
+}
+
+
+template<MemoryDeviceType TMemoryType, typename TIndex>
 struct WarpGradientDataFixture {
 	WarpGradientDataFixture() :
 			settings(&ITMLibSettings::Instance()),
@@ -38,57 +52,58 @@ struct WarpGradientDataFixture {
 		settings->enableLevelSetTerm = false;
 
 		BOOST_TEST_MESSAGE("setup fixture");
-		warp_field_data_term = new ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>(&settings->sceneParams,
+		std::string pathToData = "TestData/snoopy_result_fr16-17_partial_" + getIndexSuffix<TIndex>() + "/";
+//		
+//		warp_field_data_term = new ITMVoxelVolume<ITMWarp, TIndex>(&settings->sceneParams,
+//		                                                                       settings->swappingMode ==
+//		                                                                       ITMLibSettings::SWAPPINGMODE_ENABLED,
+//		                                                                       TMemoryType,
+//		                                                                       sizeSlice, offsetSlice);
+//		
+//		warp_field_data_term->LoadFromDirectory(pathToData + "gradient0_data_");
+//
+//		warp_field_iter0 = new ITMVoxelVolume<ITMWarp, TIndex>(&settings->sceneParams,
+//		                                                                   settings->swappingMode ==
+//		                                                                   ITMLibSettings::SWAPPINGMODE_ENABLED,
+//		                                                                   TMemoryType,
+//		                                                                   sizeSlice, offsetSlice);
+//		warp_field_iter0->LoadFromDirectory(pathToData + "warp_iter0");
+//
+//		warp_field_tikhonov_term = new ITMVoxelVolume<ITMWarp, TIndex>(&settings->sceneParams,
+//		                                                                           settings->swappingMode ==
+//		                                                                           ITMLibSettings::SWAPPINGMODE_ENABLED,
+//		                                                                           TMemoryType,
+//		                                                                           sizeSlice, offsetSlice);
+//		warp_field_tikhonov_term->LoadFromDirectory(pathToData + "gradient0_tikhonov_");
+//
+//		warp_field_killing_term = new ITMVoxelVolume<ITMWarp, TIndex>(&settings->sceneParams,
+//		                                                                          settings->swappingMode ==
+//		                                                                          ITMLibSettings::SWAPPINGMODE_ENABLED,
+//		                                                                          TMemoryType,
+//		                                                                          sizeSlice, offsetSlice);
+//		warp_field_killing_term->LoadFromDirectory(pathToData + "gradient0_killing_");
+//
+//		warp_field_level_set_term = new ITMVoxelVolume<ITMWarp, TIndex>(&settings->sceneParams,
+//		                                                                            settings->swappingMode ==
+//		                                                                            ITMLibSettings::SWAPPINGMODE_ENABLED,
+//		                                                                            TMemoryType,
+//		                                                                            sizeSlice, offsetSlice);
+//		warp_field_level_set_term->LoadFromDirectory(pathToData + "gradient0_level_set_");
+
+
+		canonical_scene = new ITMVoxelVolume<ITMVoxel, TIndex>(&settings->sceneParams,
 		                                                                       settings->swappingMode ==
 		                                                                       ITMLibSettings::SWAPPINGMODE_ENABLED,
-		                                                                       TMemoryType,
-		                                                                       sizeSlice, offsetSlice);
-		warp_field_data_term->LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/gradient0_data_");
-
-		warp_field_iter0 = new ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>(&settings->sceneParams,
-		                                                                   settings->swappingMode ==
-		                                                                   ITMLibSettings::SWAPPINGMODE_ENABLED,
-		                                                                   TMemoryType,
-		                                                                   sizeSlice, offsetSlice);
-		warp_field_iter0->LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/warp_iter0");
-
-		warp_field_tikhonov_term = new ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>(&settings->sceneParams,
-		                                                                           settings->swappingMode ==
-		                                                                           ITMLibSettings::SWAPPINGMODE_ENABLED,
-		                                                                           TMemoryType,
-		                                                                           sizeSlice, offsetSlice);
-		warp_field_tikhonov_term->LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/gradient0_tikhonov_");
-
-		warp_field_killing_term = new ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>(&settings->sceneParams,
-		                                                                          settings->swappingMode ==
-		                                                                          ITMLibSettings::SWAPPINGMODE_ENABLED,
-		                                                                          TMemoryType,
-		                                                                          sizeSlice, offsetSlice);
-		warp_field_killing_term->LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/gradient0_killing_");
-
-		warp_field_level_set_term = new ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>(&settings->sceneParams,
-		                                                                            settings->swappingMode ==
-		                                                                            ITMLibSettings::SWAPPINGMODE_ENABLED,
-		                                                                            TMemoryType,
-		                                                                            sizeSlice, offsetSlice);
-		warp_field_level_set_term->LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/gradient0_level_set_");
-
-
-		canonical_scene = new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(&settings->sceneParams,
-		                                                                       settings->swappingMode ==
-		                                                                       ITMLibSettings::SWAPPINGMODE_ENABLED,
 		                                                                   TMemoryType,
 		                                                                   sizeSlice, offsetSlice);
 
-		canonical_scene->LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/canonical");
-		live_scene = new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(&settings->sceneParams,
+		canonical_scene->LoadFromDirectory(pathToData + "canonical");
+		live_scene = new ITMVoxelVolume<ITMVoxel, TIndex>(&settings->sceneParams,
 		                                                                  settings->swappingMode ==
 		                                                                  ITMLibSettings::SWAPPINGMODE_ENABLED,
 		                                                              TMemoryType,
 		                                                              sizeSlice, offsetSlice);
-		live_scene->LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/live");
-
-
+		live_scene->LoadFromDirectory(pathToData + "live");
 	}
 
 	~WarpGradientDataFixture() {
@@ -104,11 +119,11 @@ struct WarpGradientDataFixture {
 	ITMLibSettings* settings;
 	Vector3i offsetSlice;
 	Vector3i sizeSlice;
-	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warp_field_data_term;
-	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warp_field_iter0;
-	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warp_field_tikhonov_term;
-	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warp_field_killing_term;
-	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warp_field_level_set_term;
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* canonical_scene;
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* live_scene;
+	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_data_term;
+	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_iter0;
+	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_tikhonov_term;
+	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_killing_term;
+	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_level_set_term;
+	ITMVoxelVolume<ITMVoxel, TIndex>* canonical_scene;
+	ITMVoxelVolume<ITMVoxel, TIndex>* live_scene;
 };
