@@ -19,6 +19,7 @@
 #include "../Shared/ITMSceneReconstructionEngine_Shared.h"
 #include "../../../Utils/ITMCUDAUtils.h"
 #include "../../../Objects/Scene/ITMGlobalCache.h"
+#include "../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
 
 namespace {
 //CUDA kernels
@@ -39,12 +40,7 @@ void allocateHashedVoxelBlocksUsingLists_SetVisibility_device(
 		uchar* entriesAllocType, Vector3s* blockCoords,
 		uchar* entriesVisibleType) {
 	int hash = threadIdx.x + blockIdx.x * blockDim.x;
-	if (hash > noTotalEntries - 1) return;
-
-	if(hash == 673306){
-
-	}
-
+	if (hash >= noTotalEntries) return;
 	int vbaIdx, exlIdx;
 
 	switch (entriesAllocType[hash]) {
@@ -91,6 +87,78 @@ void allocateHashedVoxelBlocksUsingLists_SetVisibility_device(
 			break;
 	}
 }
+
+
+
+__global__
+void allocateHashedVoxelBlocksUsingLists_device(
+		int* voxelAllocationList, int* excessAllocationList,
+		AllocationTempData* allocData,
+		ITMHashEntry* hashTable, int noTotalEntries,
+		uchar* entriesAllocType, Vector3s* blockCoords) {
+	int hash = threadIdx.x + blockIdx.x * blockDim.x;
+	if (hash >= noTotalEntries) return;
+
+	int vbaIdx, exlIdx;
+
+	switch (entriesAllocType[hash]) {
+		case ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST: //needs allocation, fits in the ordered list
+			vbaIdx = atomicSub(&allocData->noAllocatedVoxelEntries, 1);
+
+			if (vbaIdx >= 0) //there is room in the voxel block array
+			{
+				ITMHashEntry hashEntry;
+				hashEntry.pos = blockCoords[hash];
+				hashEntry.ptr = voxelAllocationList[vbaIdx];
+				hashEntry.offset = 0;
+				hashTable[hash] = hashEntry;
+			} else {
+				// Restore the previous value to avoid leaks.
+				atomicAdd(&allocData->noAllocatedVoxelEntries, 1);
+			}
+			break;
+
+		case ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST: //needs allocation in the excess list
+			vbaIdx = atomicSub(&allocData->noAllocatedVoxelEntries, 1);
+			exlIdx = atomicSub(&allocData->noAllocatedExcessEntries, 1);
+
+			if (vbaIdx >= 0 && exlIdx >= 0) //there is room in the voxel block array and excess list
+			{
+				ITMHashEntry hashEntry;
+				hashEntry.pos = blockCoords[hash];
+				hashEntry.ptr = voxelAllocationList[vbaIdx];
+				hashEntry.offset = 0;
+
+				int exlOffset = excessAllocationList[exlIdx];
+
+				hashTable[hash].offset = exlOffset + 1; //connect to child
+
+				hashTable[SDF_BUCKET_NUM + exlOffset] = hashEntry; //add child to the excess list
+			} else {
+				// Restore the previous values to avoid leaks.
+				atomicAdd(&allocData->noAllocatedVoxelEntries, 1);
+				atomicAdd(&allocData->noAllocatedExcessEntries, 1);
+			}
+
+			break;
+	}
+}
+
+__global__
+void buildHashAllocationTypeList_VolumeToVolume(uchar* entriesAllocType, Vector3s* blockCoords,
+					ITMHashEntry* targetHashTable, const ITMHashEntry* sourceHashTable, int hashEntryCount,
+					bool* collisionDetected){
+	int hashCode = threadIdx.x + blockIdx.x * blockDim.x;
+	if (hashCode >= hashEntryCount) return;
+	const ITMHashEntry& sourceHashEntry = sourceHashTable[hashCode];
+	if(sourceHashEntry.ptr < 0) return;
+	Vector3s sourceBlockCoordinates = sourceHashEntry.pos;
+	int targetHash = hashIndex(sourceBlockCoordinates);
+	MarkAsNeedingAllocationIfNotFound(entriesAllocType, blockCoords,
+	                                  targetHash, sourceBlockCoordinates, targetHashTable,
+	                                  *collisionDetected);
+}
+
 
 __global__ void buildHashAllocAndVisibleType_device(uchar *entriesAllocType, uchar *entriesVisibleType, Vector3s *blockCoords, const float *depth,
                                                     Matrix4f invM_d, Vector4f projParams_d, float mu, Vector2i _imgSize, float _voxelSize, ITMHashEntry *hashTable, float viewFrustum_min,

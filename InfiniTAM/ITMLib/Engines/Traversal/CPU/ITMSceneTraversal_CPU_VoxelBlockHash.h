@@ -141,7 +141,8 @@ public:
 
 	template<typename TFunctor>
 	inline static void
-	VoxelTraversalWithinBounds(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor, const Vector6i& bounds) {
+	VoxelTraversalWithinBounds(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor,
+	                           const Vector6i& bounds) {
 		TVoxel* const voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* const hashTable = scene->index.GetEntries();
 		const int noTotalEntries = scene->index.noTotalEntries;
@@ -594,38 +595,37 @@ public:
 #pragma omp parallel for
 #endif
 		for (int hash = 0; hash < noTotalEntries; hash++) {
-			const ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
-			if (currentLiveHashEntry.ptr < 0) continue;
-			ITMHashEntry currentCanonicalHashEntry = secondaryHashTable[hash];
+			const ITMHashEntry& primaryHashEntry = primaryHashTable[hash];
+			if (primaryHashEntry.ptr < 0) continue;
+			ITMHashEntry secondaryHashEntry = secondaryHashTable[hash];
 
 			// the rare case where we have different positions for primary & secondary voxel block with the same index:
 			// we have a hash bucket miss, find the secondary voxel with the matching coordinates
-			if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
+			if (secondaryHashEntry.pos != primaryHashEntry.pos) {
 				int secondaryHash;
 
-				if (!FindHashAtPosition(secondaryHash, currentLiveHashEntry.pos, secondaryHashTable)) {
+				if (!FindHashAtPosition(secondaryHash, primaryHashEntry.pos, secondaryHashTable)) {
 					std::stringstream stream;
 					stream << "Could not find corresponding secondary scene block at postion "
-					       << currentLiveHashEntry.pos
+					       << primaryHashEntry.pos
 					       << ". " << __FILE__ << ": " << __LINE__;
 					DIEWITHEXCEPTION(stream.str());
 				} else {
-					currentCanonicalHashEntry = secondaryHashTable[secondaryHash];
+					secondaryHashEntry = secondaryHashTable[secondaryHash];
 				}
 			}
 			// position of the current entry in 3D space in voxel units
-			Vector3i hashBlockPosition = currentLiveHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			Vector3i hashBlockPosition = primaryHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
 
-			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-			TVoxelSecondary* localCanonicalVoxelBlock = &(secondaryVoxels[currentCanonicalHashEntry.ptr *
-			                                                              (SDF_BLOCK_SIZE3)]);
+			TVoxelPrimary* primaryVoxelBlock = &(primaryVoxels[primaryHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
 			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
 				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
 					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						int linearIndexInBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 						Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
-						TVoxelPrimary& primaryVoxel = localLiveVoxelBlock[locId];
-						TVoxelSecondary& secondaryVoxel = localCanonicalVoxelBlock[locId];
+						TVoxelPrimary& primaryVoxel = primaryVoxelBlock[linearIndexInBlock];
+						TVoxelSecondary& secondaryVoxel = secondaryVoxelBlock[linearIndexInBlock];
 						functor(primaryVoxel, secondaryVoxel, voxelPosition);
 					}
 				}
@@ -987,7 +987,6 @@ public:
 			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* secondaryScene,
 			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 			TFunctor& functor) {
-
 // *** traversal vars
 		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
@@ -998,12 +997,11 @@ public:
 		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
 
-		int noTotalEntries = warpField->index.noTotalEntries;
-
+		int hashEntryCount = warpField->index.noTotalEntries;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
-		for (int hash = 0; hash < noTotalEntries; hash++) {
+		for (int hash = 0; hash < hashEntryCount; hash++) {
 			const ITMHashEntry& currentPrimaryHashEntry = primaryHashTable[hash];
 			ITMHashEntry currentWarpHashEntry = warpHashTable[hash];
 			ITMHashEntry currentSecondaryHashEntry = secondaryHashTable[hash];

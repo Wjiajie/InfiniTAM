@@ -40,10 +40,6 @@
 
 using namespace ITMLib;
 
-typedef ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray> SceneFileIOEngine_PVA;
-
-
-
 typedef WarpGradientDataFixture<MemoryDeviceType::MEMORYDEVICE_CUDA, ITMPlainVoxelArray> DataFixture;
 BOOST_FIXTURE_TEST_CASE(testDataTerm_CUDA, DataFixture) {
 
@@ -59,21 +55,24 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CUDA, DataFixture) {
 
 
 	TimeIt([&]() {
-		motionTracker_PVA_CUDA->CalculateWarpGradient(canonical_scene, live_scene, &warp_field_CUDA1, false);
+		motionTracker_PVA_CUDA->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CUDA1, false);
 	}, "Calculate Warp Gradient - PVA CPU data term");
 
 	float tolerance = 1e-5;
+	loadWarpFieldDataTerm();
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_data_term, tolerance));
+	clearWarpFieldDataTerm();
 }
 
 BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CUDA, DataFixture) {
 	settings->enableGradientSmoothing = false;
 	auto motionTracker_PVA_CUDA = new ITMSceneMotionTracker_CUDA<ITMVoxel, ITMWarp, ITMPlainVoxelArray>();
+	loadWarpFieldDataTerm();
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_copy(*warp_field_data_term,
 	                                                            MemoryDeviceType::MEMORYDEVICE_CUDA);
+	clearWarpFieldDataTerm();
 
-
-	float maxWarp = motionTracker_PVA_CUDA->UpdateWarps(canonical_scene, live_scene, &warp_field_copy);
+	float maxWarp = motionTracker_PVA_CUDA->UpdateWarps(canonical_volume, live_volume, &warp_field_copy);
 	BOOST_REQUIRE_CLOSE(maxWarp, 0.0870865062f, 1e-7);
 
 	float tolerance = 1e-8;
@@ -93,12 +92,14 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CUDA, DataFixture) {
 
 
 	TimeIt([&]() {
-		motionTracker_PVA_CUDA->CalculateWarpGradient(canonical_scene, live_scene, &warp_field_CUDA1, false);
+		motionTracker_PVA_CUDA->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CUDA1, false);
 	}, "Calculate Warp Gradient - PVA CPU data term + Tikhonov term");
 
 
 	float tolerance = 1e-8;
+	loadWarpFieldTikhonovTerm();
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_tikhonov_term, tolerance));
+	clearWarpFieldTikhonovTerm();
 }
 
 
@@ -116,12 +117,14 @@ BOOST_FIXTURE_TEST_CASE(testKillingTerm_CUDA, DataFixture) {
 
 
 	TimeIt([&]() {
-		motionTracker_PVA_CUDA->CalculateWarpGradient(canonical_scene, live_scene, &warp_field_CUDA1, false);
+		motionTracker_PVA_CUDA->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CUDA1, false);
 	}, "Calculate Warp Gradient - PVA CPU data term + Killing term");
 
 
 	float tolerance = 1e-8;
+	loadWarpFieldKillingTerm();
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_killing_term, tolerance));
+	clearWarpFieldKillingTerm();
 }
 
 
@@ -138,11 +141,13 @@ BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CUDA, DataFixture) {
 
 
 	TimeIt([&]() {
-		motionTracker_PVA_CUDA->CalculateWarpGradient(canonical_scene,
-				live_scene, &warp_field_CUDA1, false);
+		motionTracker_PVA_CUDA->CalculateWarpGradient(canonical_volume,
+		                                              live_volume, &warp_field_CUDA1, false);
 	}, "Calculate Warp Gradient - PVA CPU data term + level set term");
 
 
 	float tolerance = 1e-7;
+	loadWarpFieldLevelSetTerm();
 	BOOST_REQUIRE(contentAlmostEqual_CUDA_Verbose(&warp_field_CUDA1, warp_field_level_set_term, tolerance));
+	clearWarpFieldLevelSetTerm();
 }

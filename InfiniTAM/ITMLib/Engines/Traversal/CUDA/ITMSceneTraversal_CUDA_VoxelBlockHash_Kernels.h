@@ -44,7 +44,7 @@ __global__ void
 staticVoxelTraversal_device(TVoxel* voxels, const ITMHashEntry* hashTable) {
 	int hash = blockIdx.x;
 	const ITMHashEntry& hashEntry = hashTable[hash];
-	if(hashEntry.ptr < 0) return;
+	if (hashEntry.ptr < 0) return;
 	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
 	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 	TVoxel& voxel = voxels[hashEntry.ptr * SDF_BLOCK_SIZE3 + locId];
@@ -57,7 +57,7 @@ voxelTraversal_device(TVoxel* voxels, const ITMHashEntry* hashTable,
                       TFunctor* functor) {
 	int hash = blockIdx.x;
 	const ITMHashEntry& hashEntry = hashTable[hash];
-	if(hashEntry.ptr < 0) return;
+	if (hashEntry.ptr < 0) return;
 	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
 	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
 	TVoxel& voxel = voxels[hashEntry.ptr * SDF_BLOCK_SIZE3 + locId];
@@ -169,6 +169,102 @@ __global__ void checkIfMatchingHashBlockVoxelsYieldTrue(
 	                secondaryVoxels[secondaryHashTable[secondaryHash].ptr * SDF_BLOCK_SIZE3 + locId])) {
 		*falseEncountered = true;
 	}
+}
+
+
+template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
+__global__ void
+dualVoxelTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
+                          const ITMHashEntry* primaryHashTable, const ITMHashEntry* secondaryHashTable,
+                          TFunctor* functor) {
+	int hashCode = blockIdx.x;
+
+	const ITMHashEntry& primaryHashEntry = primaryHashTable[hashCode];
+	if (primaryHashEntry.ptr < 0) return;
+	ITMHashEntry secondaryHashEntry = secondaryHashTable[hashCode];
+
+	if (secondaryHashEntry.pos != primaryHashEntry.pos) {
+		int secondaryHashCode;
+		assert(FindHashAtPosition(secondaryHashCode, primaryHashEntry.pos, secondaryHashTable));
+		secondaryHashEntry = secondaryHashTable[secondaryHashCode];
+	}
+
+	int x = threadIdx.x;
+	int y = threadIdx.y;
+	int z = threadIdx.z;
+	int linearIndexInBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+
+	TVoxelPrimary& voxelPrimary = primaryVoxels[primaryHashEntry.ptr * (SDF_BLOCK_SIZE3) + linearIndexInBlock];
+	TVoxelSecondary& voxelSecondary = secondaryVoxels[secondaryHashEntry.ptr * (SDF_BLOCK_SIZE3) + linearIndexInBlock];
+
+	(*functor)(voxelPrimary, voxelSecondary);
+}
+
+template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
+__global__ void
+dualVoxelPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
+                                  const ITMHashEntry* primaryHashTable, const ITMHashEntry* secondaryHashTable,
+                                  TFunctor* functor) {
+	int hashCode = blockIdx.x;
+
+	const ITMHashEntry& primaryHashEntry = primaryHashTable[hashCode];
+	if (primaryHashEntry.ptr < 0) return;
+	ITMHashEntry secondaryHashEntry = secondaryHashTable[hashCode];
+
+	if (secondaryHashEntry.pos != primaryHashEntry.pos) {
+		int secondaryHashCode;
+		assert(FindHashAtPosition(secondaryHashCode, primaryHashEntry.pos, secondaryHashTable));
+		secondaryHashEntry = secondaryHashTable[secondaryHashCode];
+	}
+
+	int x = threadIdx.x;
+	int y = threadIdx.y;
+	int z = threadIdx.z;
+	int linearIndexInBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+
+	// position of the current voxel in 3D space in voxel units
+	Vector3i voxelPosition = primaryHashEntry.pos.toInt() * SDF_BLOCK_SIZE + Vector3i(x, y, z);
+	TVoxelPrimary& voxelPrimary = primaryVoxels[primaryHashEntry.ptr * (SDF_BLOCK_SIZE3) + linearIndexInBlock];
+	TVoxelSecondary& voxelSecondary = secondaryVoxels[secondaryHashEntry.ptr * (SDF_BLOCK_SIZE3) + linearIndexInBlock];
+
+	(*functor)(voxelPrimary, voxelSecondary, voxelPosition);
+}
+
+
+template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TWarp>
+__global__ void
+dualVoxelWarpPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels, TWarp* warpVoxels,
+                                      const ITMHashEntry* primaryHashTable, const ITMHashEntry* secondaryHashTable,
+                                      const ITMHashEntry* warpHashTable, TFunctor* functor) {
+	int hashCode = blockIdx.x;
+
+	const ITMHashEntry& primaryHashEntry = primaryHashTable[hashCode];
+	if (primaryHashEntry.ptr < 0) return;
+	ITMHashEntry secondaryHashEntry = secondaryHashTable[hashCode];
+	ITMHashEntry warpHashEntry = warpHashTable[hashCode];
+
+	if (secondaryHashEntry.pos != primaryHashEntry.pos) {
+		int secondaryHashCode;
+		assert(FindHashAtPosition(secondaryHashCode, primaryHashEntry.pos, secondaryHashTable));
+		secondaryHashEntry = secondaryHashTable[secondaryHashCode];
+	}
+	if (warpHashEntry.pos != primaryHashEntry.pos) {
+		int warpHashCode;
+		assert(FindHashAtPosition(warpHashCode, primaryHashEntry.pos, warpHashTable));
+		secondaryHashEntry = secondaryHashTable[warpHashCode];
+	}
+
+	int x = threadIdx.x;
+	int y = threadIdx.y;
+	int z = threadIdx.z;
+	int linearIndexInBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+
+	// position of the current voxel in 3D space in voxel units
+	Vector3i voxelPosition = primaryHashEntry.pos.toInt() * SDF_BLOCK_SIZE + Vector3i(x, y, z);
+	TVoxelPrimary& voxelPrimary = primaryVoxels[primaryHashEntry.ptr * (SDF_BLOCK_SIZE3) + linearIndexInBlock];
+	TVoxelSecondary& voxelSecondary = secondaryVoxels[secondaryHashEntry.ptr * (SDF_BLOCK_SIZE3) + linearIndexInBlock];
+	TWarp& warp = warpVoxels[warpHashEntry.ptr *(SDF_BLOCK_SIZE3) + linearIndexInBlock];
+	(*functor)(voxelPrimary, voxelSecondary, warp, voxelPosition);
 }
 
 }// end anonymous namespace (CUDA kernels)

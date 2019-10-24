@@ -26,6 +26,7 @@ namespace {
 //CUDA kernel declaration
 
 __global__ void computeVoxelBounds(const ITMHashEntry* hashTable, Vector6i* bounds, int noTotalEntries);
+__global__ void computeHashBlockCount(const ITMHashEntry* hashTable, int noTotalEntries, int* count);
 
 } // end anonymous namespace
 
@@ -86,10 +87,40 @@ ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::GetFilledHashBlockIds(ITMVoxe
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
+
+template<typename TIndexData>
+struct ComputeAllocatedHashBlockCountFunctor;
+
+template<>
+struct ComputeAllocatedHashBlockCountFunctor<ITMPlainVoxelArray::IndexData>{
+	inline
+	static int compute(ITMPlainVoxelArray::IndexData* indexData){
+		return 0;
+	}
+};
+
+template<>
+struct ComputeAllocatedHashBlockCountFunctor<ITMHashEntry>{
+	inline
+	static int compute(ITMHashEntry* hashTable){
+		dim3 cudaBlockSize(256, 1);
+		dim3 cudaGridSize((int) ceil((float) ITMVoxelBlockHash::noTotalEntries / (float) cudaBlockSize.x));
+		ORUtils::MemoryBlock<int> result(1,true,true);
+		*result.GetData(MEMORYDEVICE_CPU) = 0;
+		result.UpdateDeviceFromHost();
+		computeHashBlockCount<< <cudaGridSize, cudaBlockSize>> >(hashTable, ITMVoxelBlockHash::noTotalEntries,
+				result.GetData(MEMORYDEVICE_CUDA));
+		ORcudaKernelCheck;
+		result.UpdateHostFromDevice();
+		return *result.GetData(MEMORYDEVICE_CPU);
+	}
+};
+
+
 template<typename TVoxel, typename TIndex>
 int ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeAllocatedHashBlockCount(
 		ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	return ComputeAllocatedHashBlockCountFunctor<typename TIndex::IndexData>::compute(scene->index.getIndexData());
 }
 
 
@@ -190,6 +221,15 @@ __global__ void computeVoxelBounds(const ITMHashEntry* hashTable, Vector6i* boun
 	atomicMax(&(bounds->max_x), hashEntryPosVoxels.x + SDF_BLOCK_SIZE);
 	atomicMax(&(bounds->max_y), hashEntryPosVoxels.y + SDF_BLOCK_SIZE);
 	atomicMax(&(bounds->max_z), hashEntryPosVoxels.z + SDF_BLOCK_SIZE);
+}
+__global__ void computeHashBlockCount(const ITMHashEntry* hashTable, int noTotalEntries, int* count){
+	int hash = threadIdx.x + blockIdx.x * blockDim.x;
+	if (hash >= noTotalEntries) return;
+
+	const ITMHashEntry& hashEntry = hashTable[hash];
+	if (hashEntry.ptr < 0) return;
+
+	atomicAdd(count, 1);
 }
 
 } // end anonymous namespace

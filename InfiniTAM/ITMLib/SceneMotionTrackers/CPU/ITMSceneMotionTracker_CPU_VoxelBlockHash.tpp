@@ -58,9 +58,9 @@ ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ITMSceneMotionTrack
 
 template<typename TVoxel, typename TWarp>
 void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ResetWarps(
-		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* canonicalScene) {
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
-	StaticVoxelTraversal<WarpClearFunctor<TWarp, TWarp::hasCumulativeWarp>>(canonicalScene);
+	StaticVoxelTraversal<WarpClearFunctor<TWarp, TWarp::hasCumulativeWarp>>(warpField);
 };
 
 

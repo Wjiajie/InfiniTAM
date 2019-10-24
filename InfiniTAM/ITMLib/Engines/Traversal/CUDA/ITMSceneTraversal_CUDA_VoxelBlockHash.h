@@ -44,9 +44,10 @@ public:
 		dim3 gridSize_HashPerBlock(hashEntryCount);
 
 		staticVoxelTraversal_device<TStaticFunctor, TVoxel>
-		        << < gridSize_HashPerBlock, cudaBlockSize_BlockVoxelPerThread >> > (voxelArray, hashTable);
+				<< < gridSize_HashPerBlock, cudaBlockSize_BlockVoxelPerThread >> > (voxelArray, hashTable);
 		ORcudaKernelCheck;
 	}
+
 // endregion ===========================================================================================================
 // region ================================ DYNAMIC SINGLE-SCENE TRAVERSAL ==============================================
 	template<typename TFunctor>
@@ -65,8 +66,8 @@ public:
 		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TFunctor), cudaMemcpyHostToDevice));
 
 		voxelTraversal_device<TFunctor, TVoxel>
-		        << < gridSize_HashPerBlock, cudaBlockSize_BlockVoxelPerThread >> >
-		        (voxelArray, hashTable, functor_device);
+				<< < gridSize_HashPerBlock, cudaBlockSize_BlockVoxelPerThread >> >
+		                                    (voxelArray, hashTable, functor_device);
 		ORcudaKernelCheck;
 
 		// transfer functor from VRAM back to RAM
@@ -122,7 +123,7 @@ public:
 		hashMatchInfo.UpdateHostFromDevice();
 		dim3 cudaBlockSize_BlockVoxelPerThread(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
 		int unmatchedHashCount = hashMatchInfo.GetData(MEMORYDEVICE_CPU)->unmatchedHashCount;
-		if(unmatchedHashCount > 0){
+		if (unmatchedHashCount > 0) {
 			dim3 gridSize_UnmatchedBlocks(unmatchedHashCount);
 			checkIfUnmatchedVoxelBlocksAreAltered
 					<< < gridSize_UnmatchedBlocks, cudaBlockSize_BlockVoxelPerThread >> >
@@ -167,7 +168,88 @@ public:
 		return !(*badResultEncountered_device.GetData(MEMORYDEVICE_CPU));
 	}
 
+	template<typename TFunctor>
+	inline static void
+	DualVoxelPositionTraversal(
+			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
+			TFunctor& functor) {
+		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		const ITMHashEntry* primaryHashTable = primaryScene->index.getIndexData();
+		const ITMHashEntry* secondaryHashTable = secondaryScene->index.getIndexData();
+		int hashEntryCount = primaryScene->index.noTotalEntries;
 
+		// transfer functor from RAM to VRAM
+		TFunctor* functor_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TFunctor)));
+		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TFunctor), cudaMemcpyHostToDevice));
+
+		dim3 cudaBlockSize_BlockVoxelPerThread(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+		dim3 gridSize_HashPerBlock(hashEntryCount);
+
+		dualVoxelPositionTraversal_device<TFunctor, TVoxelPrimary, TVoxelSecondary>
+				<< < gridSize_HashPerBlock, cudaBlockSize_BlockVoxelPerThread >> >
+		                                    (primaryVoxels, secondaryVoxels, primaryHashTable,
+				                                    secondaryHashTable, functor_device);
+		ORcudaKernelCheck;
+
+		// transfer functor from VRAM back to RAM
+		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TFunctor), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(functor_device));
+	}
+
+};
+
+
+template<typename TVoxel, typename TWarp>
+class ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA> {
+	/**
+	 * \brief Concurrent traversal of 2 scenes with the same voxel type and a warp field
+	 */
+public:
+// region ================================ DYNAMIC TWO-SCENE TRAVERSAL WITH WARPS ======================================
+
+
+	template<typename TFunctor>
+	inline static void
+	DualVoxelPositionTraversal(
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+			TFunctor& functor) {
+// *** traversal vars
+		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
+
+		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
+
+		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
+		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
+
+		int hashEntryCount = warpField->index.noTotalEntries;
+
+		// transfer functor from RAM to VRAM
+		TFunctor* functor_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TFunctor)));
+		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TFunctor), cudaMemcpyHostToDevice));
+
+		dim3 cudaBlockSize_BlockVoxelPerThread(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+		dim3 gridSize_HashPerBlock(hashEntryCount);
+
+		dualVoxelWarpPositionTraversal_device<TFunctor, TVoxel, TVoxel, TWarp>
+				<< < gridSize_HashPerBlock, cudaBlockSize_BlockVoxelPerThread >> >
+		                                    (primaryVoxels, secondaryVoxels, warpVoxels,
+				                                    primaryHashTable, secondaryHashTable, warpHashTable, functor_device);
+		ORcudaKernelCheck;
+
+		// transfer functor from VRAM back to RAM
+		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TFunctor), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(functor_device));
+	}
+
+// endregion
 };
 
 } // namespace ITMLib

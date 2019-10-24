@@ -16,7 +16,9 @@
 #pragma once
 
 #include "ITMSceneMotionTracker_CUDA.h"
-
+#include "../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h"
+#include "../Shared/ITMSceneMotionTracker_Functors.h"
+#include "../Shared/ITMCalculateWarpGradientFunctor.h"
 
 using namespace ITMLib;
 
@@ -24,21 +26,21 @@ using namespace ITMLib;
 template<typename TVoxel, typename TWarp>
 ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::ITMSceneMotionTracker_CUDA()
 		: ITMSceneMotionTracker<TVoxel, TWarp, ITMVoxelBlockHash>(){
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
 
 template<typename TVoxel, typename TWarp>
 void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::ClearOutFlowWarp(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA>::template
+	StaticVoxelTraversal<ClearOutFlowWarpStaticFunctor<TWarp> >(warpField);
 }
 
 template<typename TVoxel, typename TWarp>
 void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::AddFlowWarpToWarp(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 		bool clearFlowWarp) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	AddFlowWarpToWarp_common<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA>(warpField, clearFlowWarp);
 }
 
 template<typename TVoxel, typename TWarp>
@@ -47,7 +49,21 @@ void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::CalculateWarp
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 		bool restrictZTrackingForDebugging) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA>::template
+	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TWarp>>(warpField);
+	hashManager.AllocateTSDFVolumeFromTSDFVolume(canonicalScene, liveScene);
+	hashManager.AllocateWarpVolumeFromTSDFVolume(warpField, liveScene);
+
+	ITMCalculateWarpGradientFunctor<TVoxel, TWarp, ITMVoxelBlockHash::IndexData, ITMVoxelBlockHash::IndexCache>
+			calculateGradientFunctor(this->parameters, this->switches,
+			                         liveScene->localVBA.GetVoxelBlocks(), liveScene->index.getIndexData(),
+			                         canonicalScene->localVBA.GetVoxelBlocks(), canonicalScene->index.getIndexData(),
+			                         warpField->localVBA.GetVoxelBlocks(), warpField->index.getIndexData());
+
+	ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA>::
+	DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, calculateGradientFunctor);
+
+	calculateGradientFunctor.PrintStatistics();
 }
 
 template<typename TVoxel, typename TWarp>
@@ -55,7 +71,10 @@ void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::SmoothWarpGra
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	if (this->switches.enableGradientSmoothing) {
+		SmoothWarpGradient_common<TVoxel, TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA>
+				(liveScene, canonicalScene, warpField);
+	}
 }
 
 template<typename TVoxel, typename TWarp>
@@ -63,12 +82,15 @@ float ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::UpdateWarps(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	return UpdateWarps_common<TVoxel, TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA>(
+			canonicalScene, liveScene, warpField, this->parameters.gradientDescentLearningRate,
+			this->switches.enableGradientSmoothing);
 }
 
 template<typename TVoxel, typename TWarp>
 void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::ResetWarps(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA>::template
+	StaticVoxelTraversal<WarpClearFunctor<TWarp, TWarp::hasCumulativeWarp>>(warpField);
 }
 

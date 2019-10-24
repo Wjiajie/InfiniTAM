@@ -46,10 +46,6 @@
 
 using namespace ITMLib;
 
-typedef ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray> SceneFileIOEngine_PVA;
-typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
-
-
 template<typename TVoxel>
 struct AlteredGradientCountFunctor {
 	AlteredGradientCountFunctor() : count(0) {};
@@ -91,7 +87,7 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_PVA, DataFixture) {
 
 
 	TimeIt([&]() {
-		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_scene, live_scene, &warp_field_CPU1, false);
+		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1, false);
 	}, "Calculate Warp Gradient - PVA CPU data term");
 
 
@@ -101,14 +97,18 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_PVA, DataFixture) {
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 36627u);
 
 	float tolerance = 1e-5;
+	loadWarpFieldDataTerm();
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_term, tolerance));
+	clearWarpFieldDataTerm();
 }
 
 BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_PVA, DataFixture) {
 	settings->enableGradientSmoothing = false;
 	auto motionTracker_PVA_CPU = new ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray>();
+	loadWarpFieldDataTerm();
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_copy(*warp_field_data_term,
 	                                                            MemoryDeviceType::MEMORYDEVICE_CPU);
+	clearWarpFieldDataTerm();
 
 	AlteredGradientCountFunctor<ITMWarp> agcFunctor;
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
@@ -116,7 +116,7 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_PVA, DataFixture) {
 	BOOST_REQUIRE_EQUAL(agcFunctor.count.load(), 36627u);
 
 
-	float maxWarp = motionTracker_PVA_CPU->UpdateWarps(canonical_scene, live_scene, &warp_field_copy);
+	float maxWarp = motionTracker_PVA_CPU->UpdateWarps(canonical_volume, live_volume, &warp_field_copy);
 	BOOST_REQUIRE_CLOSE(maxWarp, 0.0870865062f, 1e-7);
 
 	AlteredFlowWarpCountFunctor<ITMWarp> functor;
@@ -141,7 +141,7 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU_PVA, DataFixture) {
 
 
 	TimeIt([&]() {
-		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_scene, live_scene, &warp_field_CPU1, false);
+		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1, false);
 	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
 
 
@@ -151,7 +151,9 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU_PVA, DataFixture) {
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 42417);
 
 	float tolerance = 1e-8;
+	loadWarpFieldTikhonovTerm();
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_tikhonov_term, tolerance));
+	clearWarpFieldTikhonovTerm();
 }
 
 
@@ -169,7 +171,7 @@ BOOST_FIXTURE_TEST_CASE(testKillingTerm_CPU_PVA, DataFixture) {
 
 
 	TimeIt([&]() {
-		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_scene, live_scene, &warp_field_CPU1, false);
+		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1, false);
 	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
 
 
@@ -179,7 +181,9 @@ BOOST_FIXTURE_TEST_CASE(testKillingTerm_CPU_PVA, DataFixture) {
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 42670);
 
 	float tolerance = 1e-8;
+	loadWarpFieldKillingTerm();
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_killing_term, tolerance));
+	clearWarpFieldKillingTerm();
 }
 
 
@@ -196,7 +200,7 @@ BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CPU_PVA, DataFixture) {
 
 
 	TimeIt([&]() {
-		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_scene, live_scene, &warp_field_CPU1, false);
+		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1, false);
 	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
 
 
@@ -206,5 +210,7 @@ BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CPU_PVA, DataFixture) {
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 41275);
 
 	float tolerance = 1e-8;
+	loadWarpFieldLevelSetTerm();
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_level_set_term, tolerance));
+	clearWarpFieldLevelSetTerm();
 }

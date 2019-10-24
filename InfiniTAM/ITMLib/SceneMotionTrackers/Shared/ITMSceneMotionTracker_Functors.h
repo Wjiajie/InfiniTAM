@@ -331,6 +331,7 @@ inline float UpdateWarps_common(
 	ITMLib::ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, TIndex, TDeviceType>::
 	DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, warpUpdateFunctor);
 
+	//TODO: move histogram printing / logging to a separate function
 	//don't compute histogram in CUDA version
 #ifndef __CUDACC__
 	WarpHistogramFunctor<TVoxel, TWarp>
