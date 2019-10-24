@@ -148,7 +148,7 @@ void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::SaveToGlobalMemory(ITMVox
 			swapStates[entryDestId].state = 0;
 
 			int vbaIdx = noAllocatedVoxelEntries;
-			if (vbaIdx < SDF_BUCKET_NUM - 1)
+			if (vbaIdx < DEFAULT_ORDERED_LIST_SIZE - 1)
 			{
 				noAllocatedVoxelEntries++;
 				voxelAllocationList[vbaIdx + 1] = localPtr;
@@ -200,7 +200,7 @@ void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::CleanLocalMemory(ITMVoxel
 			TVoxel *localVBALocation = localVBA + localPtr * SDF_BLOCK_SIZE3;
 
 			int vbaIdx = noAllocatedVoxelEntries;
-			if (vbaIdx < SDF_BUCKET_NUM - 1)
+			if (vbaIdx < DEFAULT_ORDERED_LIST_SIZE - 1)
 			{
 				noAllocatedVoxelEntries++;
 				voxelAllocationList[vbaIdx + 1] = localPtr;

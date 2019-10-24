@@ -43,7 +43,7 @@ ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ITMSwappingEngine_CUDA(void)
 {
 	ORcudaSafeCall(cudaMalloc((void**)&noAllocatedVoxelEntries_device, sizeof(int)));
 	ORcudaSafeCall(cudaMalloc((void**)&noNeededEntries_device, sizeof(int)));
-	ORcudaSafeCall(cudaMalloc((void**)&entriesToClean_device, SDF_LOCAL_BLOCK_NUM * sizeof(int)));
+	ORcudaSafeCall(cudaMalloc((void**)&entriesToClean_device, DEFAULT_SDF_LOCAL_BLOCK_NUM * sizeof(int)));
 }
 
 template<class TVoxel>
@@ -197,7 +197,7 @@ void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SaveToGlobalMemory(ITMVo
 
 			ORcudaSafeCall(cudaMemcpy(&scene->localVBA.lastFreeBlockId, noAllocatedVoxelEntries_device, sizeof(int), cudaMemcpyDeviceToHost));
 			scene->localVBA.lastFreeBlockId = MAX(scene->localVBA.lastFreeBlockId, 0);
-			scene->localVBA.lastFreeBlockId = MIN(scene->localVBA.lastFreeBlockId, SDF_LOCAL_BLOCK_NUM);
+			scene->localVBA.lastFreeBlockId = MIN(scene->localVBA.lastFreeBlockId, DEFAULT_SDF_LOCAL_BLOCK_NUM);
 		}
 
 		ORcudaSafeCall(cudaMemcpy(neededEntryIDs_global, neededEntryIDs_local, sizeof(int) * noNeededEntries, cudaMemcpyDeviceToHost));
@@ -255,7 +255,7 @@ void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CleanLocalMemory(ITMVoxe
 
 			ORcudaSafeCall(cudaMemcpy(&scene->localVBA.lastFreeBlockId, noAllocatedVoxelEntries_device, sizeof(int), cudaMemcpyDeviceToHost));
 			scene->localVBA.lastFreeBlockId = MAX(scene->localVBA.lastFreeBlockId, 0);
-			scene->localVBA.lastFreeBlockId = MIN(scene->localVBA.lastFreeBlockId, SDF_LOCAL_BLOCK_NUM);
+			scene->localVBA.lastFreeBlockId = MIN(scene->localVBA.lastFreeBlockId, DEFAULT_SDF_LOCAL_BLOCK_NUM);
 		}
 	}
 }
@@ -323,7 +323,7 @@ namespace
 		swapStates[entryDestId].state = 0;
 
 		int vbaIdx = atomicAdd(&noAllocatedVoxelEntries[0], 1);
-		if (vbaIdx < SDF_LOCAL_BLOCK_NUM - 1)
+		if (vbaIdx < DEFAULT_SDF_LOCAL_BLOCK_NUM - 1)
 		{
 			voxelAllocationList[vbaIdx + 1] = hashTable[entryDestId].ptr;
 			hashTable[entryDestId].ptr = -1;
@@ -363,7 +363,7 @@ namespace
 		int entryDestId = neededEntryIDs_local[locId];
 
 		int vbaIdx = atomicAdd(&noAllocatedVoxelEntries[0], 1);
-		if (vbaIdx < SDF_LOCAL_BLOCK_NUM - 1)
+		if (vbaIdx < DEFAULT_SDF_LOCAL_BLOCK_NUM - 1)
 		{
 			voxelAllocationList[vbaIdx + 1] = hashTable[entryDestId].ptr;
 			hashTable[entryDestId].ptr = -2;

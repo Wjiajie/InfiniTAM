@@ -134,7 +134,7 @@ void AllocateHashEntriesUsingLists_CPU(ITMVoxelVolume<TVoxel, TIndex>* scene, uc
 					hashEntry.offset = 0;
 					int exlOffset = excessAllocationList[lastFreeExcessListId];
 					hashTable[hash].offset = exlOffset + 1; //connect to child
-					hashTable[SDF_BUCKET_NUM + exlOffset] = hashEntry; //add child to the excess list
+					hashTable[DEFAULT_ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
 					lastFreeVoxelBlockId--;
 					lastFreeExcessListId--;
 				}
@@ -188,8 +188,8 @@ void AllocateHashEntriesUsingLists_SetVisibility_CPU(ITMVoxelVolume<TVoxel, TInd
 					hashEntry.offset = 0;
 					int exlOffset = excessAllocationList[lastFreeExcessListId];
 					hashTable[hash].offset = exlOffset + 1; //connect to child
-					hashTable[SDF_BUCKET_NUM + exlOffset] = hashEntry; //add child to the excess list
-					entriesVisibleType[SDF_BUCKET_NUM + exlOffset] = 1; //make child visible and in memory
+					hashTable[DEFAULT_ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
+					entriesVisibleType[DEFAULT_ORDERED_LIST_SIZE + exlOffset] = 1; //make child visible and in memory
 					lastFreeVoxelBlockId--;
 					lastFreeExcessListId--;
 				}

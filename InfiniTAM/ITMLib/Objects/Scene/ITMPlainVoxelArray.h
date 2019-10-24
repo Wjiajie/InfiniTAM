@@ -17,6 +17,7 @@ a pointer to the data structure on the GPU.
 class ITMPlainVoxelArray
 {
 public:
+
 	struct ITMVoxelArrayInfo {
 		/// Size in voxels
 		Vector3i size;
@@ -35,6 +36,7 @@ public:
 	};
 
 	typedef ITMVoxelArrayInfo IndexData;
+	typedef ITMVoxelArrayInfo InitializationParameters;
 	struct IndexCache {};
 
 private:
@@ -42,35 +44,33 @@ private:
 
 	MemoryDeviceType memoryType;
 
-	void Initialize(MemoryDeviceType memoryType, Vector3i size = Vector3i(512), Vector3i offset = Vector3i(-256,-256,0)){
+	void Initialize(MemoryDeviceType memoryType,
+			Vector3i size  = Vector3i(512),
+			Vector3i offset= Vector3i(-256,-256,0) ){
 		this->memoryType = memoryType;
-
-		if (memoryType == MEMORYDEVICE_CUDA) indexData = new ORUtils::MemoryBlock<IndexData>(1, true, true);
-		else indexData = new ORUtils::MemoryBlock<IndexData>(1, true, false);
-
-		indexData->GetData(MEMORYDEVICE_CPU)[0] = IndexData(size,offset);
-		indexData->UpdateDeviceFromHost();
 	}
 
 public:
-	ITMPlainVoxelArray(MemoryDeviceType memoryType)
-	{
-		Initialize(memoryType);
-	}
 
-	ITMPlainVoxelArray(MemoryDeviceType memoryType, Vector3i size, Vector3i offset)
-	{
-		Initialize(memoryType, size, offset);
+	ITMPlainVoxelArray(ITMPlainVoxelArray::InitializationParameters info, MemoryDeviceType memoryType) :
+		memoryType(memoryType),
+		indexData(new ORUtils::MemoryBlock<IndexData>(1, memoryType == MEMORYDEVICE_CPU, memoryType == MEMORYDEVICE_CUDA))
+		{
+		indexData->GetData(MEMORYDEVICE_CPU)[0] = info;
+		indexData->UpdateDeviceFromHost();
 	}
+	explicit ITMPlainVoxelArray(MemoryDeviceType memoryType, Vector3i size = Vector3i(512),
+	                   Vector3i offset = Vector3i(-256,-256,0)) : ITMPlainVoxelArray({size, offset}, memoryType){}
 
-	ITMPlainVoxelArray(const ITMPlainVoxelArray& other, MemoryDeviceType memoryType){
+	ITMPlainVoxelArray(const ITMPlainVoxelArray& other, MemoryDeviceType memoryType) :
+		ITMPlainVoxelArray({other.getVolumeSize(), other.getVolumeOffset()}, memoryType){
 		Initialize(memoryType, other.getVolumeSize(), other.getVolumeOffset());
 		this->SetFrom(other);
 	}
 
 	void SetFrom(const ITMPlainVoxelArray& other){
 		MemoryCopyDirection memoryCopyDirection = determineMemoryCopyDirection(this->memoryType, other.memoryType);
-		this->indexData->SetFrom(other.indexData,memoryCopyDirection);
+		this->indexData->SetFrom(other.indexData, memoryCopyDirection);
 	}
 
 	~ITMPlainVoxelArray()

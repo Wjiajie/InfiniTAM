@@ -57,7 +57,7 @@ bool FindOrAllocateHashEntry(const Vector3s& hashEntryPosition, ITMHashEntry* ha
 		//search excess list only if there is no room in ordered part
 		if (hashEntry.ptr >= -1) {
 			while (hashEntry.offset >= 1) {
-				hash = SDF_BUCKET_NUM + hashEntry.offset - 1;
+				hash = DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1;
 				hashEntry = hashTable[hash];
 				if (IS_EQUAL3(hashEntry.pos, hashEntryPosition) && hashEntry.ptr >= -1) {
 					resultEntry = &hashTable[hash];
@@ -76,9 +76,9 @@ bool FindOrAllocateHashEntry(const Vector3s& hashEntryPosition, ITMHashEntry* ha
 			newHashEntry.offset = 0;
 			int exlOffset = excessAllocationList[lastFreeExcessListId];
 			hashTable[hash].offset = exlOffset + 1; //connect to child
-			hashTable[SDF_BUCKET_NUM +
+			hashTable[DEFAULT_ORDERED_LIST_SIZE +
 			          exlOffset] = newHashEntry; //add child to the excess list
-			resultEntry = &hashTable[SDF_BUCKET_NUM +
+			resultEntry = &hashTable[DEFAULT_ORDERED_LIST_SIZE +
 			                         exlOffset];
 			lastFreeVoxelBlockId--;
 			lastFreeExcessListId--;
@@ -154,7 +154,7 @@ inline bool MarkAsNeedingAllocationIfNotFound(uchar* entryAllocationTypes, Vecto
 		if (hashEntry.ptr >= -1) {
 			//search excess list only if there is no room in ordered part
 			while (hashEntry.offset >= 1) {
-				hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
+				hashIdx = DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1;
 				hashEntry = hashTable[hashIdx];
 
 				if (IS_EQUAL3(hashEntry.pos, desiredHashBlockPosition) && hashEntry.ptr >= -1) {
@@ -204,7 +204,7 @@ FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, 
 		}
 
 		if (hashEntry.offset < 1) break;
-		hash = SDF_BUCKET_NUM + hashEntry.offset - 1;
+		hash = DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1;
 	}
 	return -1;
 }
@@ -354,7 +354,7 @@ void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, 
 		}
 
 		if (hashEntry.offset < 1) break;
-		hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
+		hashIdx = DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1;
 	}
 
 	vmIndex = false;

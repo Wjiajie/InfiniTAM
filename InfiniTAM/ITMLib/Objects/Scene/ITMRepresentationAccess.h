@@ -58,7 +58,7 @@ _CPU_AND_GPU_CODE_ inline int findVoxel(const CONSTPTR(ITMLib::ITMVoxelBlockHash
 		}
 
 		if (hashEntry.offset < 1) break;
-		hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
+		hashIdx = DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1;
 	}
 
 	vmIndex = false;
@@ -110,7 +110,7 @@ _CPU_AND_GPU_CODE_ inline TVoxel readVoxel(const CONSTPTR(TVoxel) *voxelData, co
 		}
 
 		if (hashEntry.offset < 1) break;
-		hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
+		hashIdx = DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1;
 	}
 
 	vmIndex = false;

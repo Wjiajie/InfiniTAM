@@ -27,7 +27,7 @@ __global__ void findAllocateBlocks(Vector4s *visibleBlockGlobalPos, const ITMHas
 template<class TVoxel>
 ITMMeshingEngine_CUDA<TVoxel,ITMVoxelBlockHash>::ITMMeshingEngine_CUDA(void) 
 {
-	ORcudaSafeCall(cudaMalloc((void**)&visibleBlockGlobalPos_device, SDF_LOCAL_BLOCK_NUM * sizeof(Vector4s)));
+	ORcudaSafeCall(cudaMalloc((void**)&visibleBlockGlobalPos_device, DEFAULT_SDF_LOCAL_BLOCK_NUM * sizeof(Vector4s)));
 	ORcudaSafeCall(cudaMalloc((void**)&noTriangles_device, sizeof(unsigned int)));
 }
 
@@ -49,7 +49,7 @@ void ITMMeshingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMMesh *mesh, 
 	float factor = scene->sceneParams->voxelSize;
 
 	ORcudaSafeCall(cudaMemset(noTriangles_device, 0, sizeof(unsigned int)));
-	ORcudaSafeCall(cudaMemset(visibleBlockGlobalPos_device, 0, sizeof(Vector4s) * SDF_LOCAL_BLOCK_NUM));
+	ORcudaSafeCall(cudaMemset(visibleBlockGlobalPos_device, 0, sizeof(Vector4s) * DEFAULT_SDF_LOCAL_BLOCK_NUM));
 
 	{ // identify used voxel blocks
 		dim3 cudaBlockSize(256); 
@@ -61,7 +61,7 @@ void ITMMeshingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMMesh *mesh, 
 
 	{ // mesh used voxel blocks
 		dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
-		dim3 gridSize(SDF_LOCAL_BLOCK_NUM / 16, 16);
+		dim3 gridSize(DEFAULT_SDF_LOCAL_BLOCK_NUM / 16, 16);
 
 		meshScene_device<TVoxel> << <gridSize, cudaBlockSize >> >(triangles, noTriangles_device, factor, noTotalEntries, noMaxTriangles,
 			visibleBlockGlobalPos_device, localVBA, hashTable);

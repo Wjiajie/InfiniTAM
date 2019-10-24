@@ -344,7 +344,7 @@ buildHashAllocAndVisibleTypePP(uchar* entriesAllocType, uchar* entriesVisibleTyp
 			{
 				while (hashEntry.offset >= 1)
 				{
-					hashIdx = static_cast<unsigned int>(SDF_BUCKET_NUM + hashEntry.offset - 1);
+					hashIdx = static_cast<unsigned int>(DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1);
 					hashEntry = hashTable[hashIdx];
 
 					if (IS_EQUAL3(hashEntry.pos, hashEntryPosition) && hashEntry.ptr >= -1)

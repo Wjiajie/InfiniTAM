@@ -17,6 +17,12 @@ if (POLICY CMP0072)
 endif ()
 
 #################################
+# Enforce C++ language standards
+#################################
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+#################################
 # Specify the CMake module path #
 #################################
 

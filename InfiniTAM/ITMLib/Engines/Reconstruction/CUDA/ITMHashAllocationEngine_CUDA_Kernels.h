@@ -76,8 +76,8 @@ void allocateHashedVoxelBlocksUsingLists_SetVisibility_device(
 
 				hashTable[hash].offset = exlOffset + 1; //connect to child
 
-				hashTable[SDF_BUCKET_NUM + exlOffset] = hashEntry; //add child to the excess list
-				entriesVisibleType[SDF_BUCKET_NUM + exlOffset] = 1;
+				hashTable[DEFAULT_ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
+				entriesVisibleType[DEFAULT_ORDERED_LIST_SIZE + exlOffset] = 1;
 			} else {
 				// Restore the previous values to avoid leaks.
 				atomicAdd(&allocData->noAllocatedVoxelEntries, 1);
@@ -133,7 +133,7 @@ void allocateHashedVoxelBlocksUsingLists_device(
 
 				hashTable[hash].offset = exlOffset + 1; //connect to child
 
-				hashTable[SDF_BUCKET_NUM + exlOffset] = hashEntry; //add child to the excess list
+				hashTable[DEFAULT_ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
 			} else {
 				// Restore the previous values to avoid leaks.
 				atomicAdd(&allocData->noAllocatedVoxelEntries, 1);

@@ -50,7 +50,7 @@ namespace ITMLib
 
 		int noTotalEntries; 
 
-		ITMGlobalCache() : noTotalEntries(SDF_BUCKET_NUM + SDF_EXCESS_LIST_SIZE)
+		ITMGlobalCache() : noTotalEntries(DEFAULT_ORDERED_LIST_SIZE + SDF_EXCESS_LIST_SIZE)
 		{	
 			hasStoredData = (bool*)malloc(noTotalEntries * sizeof(bool));
 			storedVoxelBlocks = (TVoxel*)malloc(noTotalEntries * sizeof(TVoxel) * SDF_BLOCK_SIZE3);

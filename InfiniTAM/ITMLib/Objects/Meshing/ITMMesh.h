@@ -17,7 +17,7 @@ namespace ITMLib
 		MemoryDeviceType memoryType;
 
 		uint noTotalTriangles;
-		static const uint noMaxTriangles_default = SDF_LOCAL_BLOCK_NUM * 32 * 16;
+		static const uint noMaxTriangles_default = DEFAULT_SDF_LOCAL_BLOCK_NUM * 32 * 16;
 		uint noMaxTriangles;
 
 		ORUtils::MemoryBlock<Triangle> *triangles;

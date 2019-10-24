@@ -18,22 +18,22 @@
 #define SDF_BLOCK_SIZE3 512
 
 // Number of locally stored blocks, currently 2^17
-#define SDF_LOCAL_BLOCK_NUM 0x40000
+#define DEFAULT_SDF_LOCAL_BLOCK_NUM 0x40000
 
-// Number of Hash Bucket, should be 2^n and bigger than SDF_LOCAL_BLOCK_NUM, SDF_HASH_MASK = SDF_BUCKET_NUM - 1
-#define SDF_BUCKET_NUM 0x100000
-// Used for get hashing value of the bucket index,  SDF_HASH_MASK = SDF_BUCKET_NUM - 1
+// Number of Hash Buckets, should be 2^n and bigger than DEFAULT_SDF_LOCAL_BLOCK_NUM, SDF_HASH_MASK = DEFAULT_ORDERED_LIST_SIZE - 1
+#define DEFAULT_ORDERED_LIST_SIZE 0x100000
+// Used for get hashing value of the bucket index,  SDF_HASH_MASK = DEFAULT_ORDERED_LIST_SIZE - 1
 #define SDF_HASH_MASK 0xfffff
 // 0x20000 Size of excess list, used to handle collisions. Also max offset (unsigned short) value.
 #define SDF_EXCESS_LIST_SIZE 0x20000
 
 //// for loop closure
 // Number of locally stored blocks, currently 2^12
-//#define SDF_LOCAL_BLOCK_NUM 0x10000
+//#define DEFAULT_SDF_LOCAL_BLOCK_NUM 0x10000
 //
-// Number of Hash Bucket, should be 2^n and bigger than SDF_LOCAL_BLOCK_NUM, SDF_HASH_MASK = SDF_BUCKET_NUM - 1
-//#define SDF_BUCKET_NUM 0x40000
-// Used for get hashing value of the bucket index,  SDF_HASH_MASK = SDF_BUCKET_NUM - 1
+// Number of Hash Bucket, should be 2^n and bigger than DEFAULT_SDF_LOCAL_BLOCK_NUM, SDF_HASH_MASK = DEFAULT_ORDERED_LIST_SIZE - 1
+//#define DEFAULT_ORDERED_LIST_SIZE 0x40000
+// Used for get hashing value of the bucket index,  SDF_HASH_MASK = DEFAULT_ORDERED_LIST_SIZE - 1
 //#define SDF_HASH_MASK 0x3ffff
 // 0x8000 Size of excess list, used to handle collisions. Also max offset (unsigned short) value.
 //#define SDF_EXCESS_LIST_SIZE 0x8000
@@ -68,6 +68,12 @@ and a pointer to the data structure on the GPU.
 class ITMVoxelBlockHash
 {
 public:
+	struct ITMVoxelBlockHashParameters{
+		int allocatedBlockCount;
+		ITMVoxelBlockHashParameters() : allocatedBlockCount(DEFAULT_SDF_LOCAL_BLOCK_NUM){};
+
+	};
+	typedef ITMVoxelBlockHashParameters InitializationParameters;
 	typedef ITMHashEntry IndexData;
 
 	struct IndexCache {
@@ -77,11 +83,14 @@ public:
 	};
 
 	/** Maximum number of total entries. */
-	static const CONSTPTR(int) noTotalEntries = SDF_BUCKET_NUM + SDF_EXCESS_LIST_SIZE;
-	static const CONSTPTR(int) voxelBlockSize = SDF_BLOCK_SIZE * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	const CONSTPTR(int) noTotalEntries = SDF_BUCKET_NUM + SDF_EXCESS_LIST_SIZE;
+	const CONSTPTR(int) voxelBlockSize = SDF_BLOCK_SIZE3;
+	const CONSTPTR(int) orderedListSize;
+	//const CONSTPTR
 
 #ifndef __METALC__
 private:
+
 	int lastFreeExcessListId;
 
 	/** The actual data in the hash table. */
@@ -106,6 +115,8 @@ public:
 	MemoryDeviceType getMemoryType() const{
 		return memoryType;
 	}
+
+
 
 	ITMVoxelBlockHash(MemoryDeviceType memoryType)
 	{
@@ -167,7 +178,7 @@ public:
 #endif
 
 	/** Maximum number of total entries. */
-	int getNumAllocatedVoxelBlocks(void) const { return SDF_LOCAL_BLOCK_NUM; }
+	int getNumAllocatedVoxelBlocks(void) const { return DEFAULT_SDF_LOCAL_BLOCK_NUM; }
 	int getVoxelBlockSize(void) const { return SDF_BLOCK_SIZE3; }
 
 	void SaveToDirectory(const std::string &outputDirectory) const

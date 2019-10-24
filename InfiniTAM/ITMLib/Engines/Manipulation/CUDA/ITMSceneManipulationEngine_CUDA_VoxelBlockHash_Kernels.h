@@ -69,7 +69,7 @@ void allocateVoxelBlocksList_device(
 
 				hashTable[hash].offset = exlOffset + 1; //connect to child
 
-				hashTable[SDF_BUCKET_NUM + exlOffset] = hashEntry; //add child to the excess list
+				hashTable[DEFAULT_ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
 			} else {
 				// Restore the previous values to avoid leaks.
 				atomicAdd(&allocData->noAllocatedVoxelEntries, 1);

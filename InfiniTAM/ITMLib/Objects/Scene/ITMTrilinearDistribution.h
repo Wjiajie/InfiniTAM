@@ -48,7 +48,7 @@ ReadVoxelRef(THREADPTR(TVoxel)* voxelData, const CONSTPTR(ITMLib::ITMVoxelBlockH
 		}
 
 		if (hashEntry.offset < 1) break;
-		hashIdx = SDF_BUCKET_NUM + hashEntry.offset - 1;
+		hashIdx = DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1;
 	}
 	static TVoxel emptyVoxel;
 

@@ -20,7 +20,7 @@ __global__ void findAllocateBlocks(Vector4s *visibleBlockGlobalPos, const TMulti
 template<class TVoxel>
 ITMMultiMeshingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ITMMultiMeshingEngine_CUDA(void)
 {
-	ORcudaSafeCall(cudaMalloc((void**)&visibleBlockGlobalPos_device, SDF_LOCAL_BLOCK_NUM * sizeof(Vector4s) * MAX_NUM_LOCALMAPS));
+	ORcudaSafeCall(cudaMalloc((void**)&visibleBlockGlobalPos_device, DEFAULT_SDF_LOCAL_BLOCK_NUM * sizeof(Vector4s) * MAX_NUM_LOCALMAPS));
 	ORcudaSafeCall(cudaMalloc((void**)&noTriangles_device, sizeof(unsigned int)));
 
 	ORcudaSafeCall(cudaMalloc((void**)&indexData_device, sizeof(MultiIndexData)));
@@ -72,7 +72,7 @@ void ITMMultiMeshingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMMesh *m
 	float factor = sceneParams.voxelSize;
 
 	ORcudaSafeCall(cudaMemset(noTriangles_device, 0, sizeof(unsigned int)));
-	ORcudaSafeCall(cudaMemset(visibleBlockGlobalPos_device, 0, sizeof(Vector4s) * SDF_LOCAL_BLOCK_NUM));
+	ORcudaSafeCall(cudaMemset(visibleBlockGlobalPos_device, 0, sizeof(Vector4s) * DEFAULT_SDF_LOCAL_BLOCK_NUM));
 
 	{ // identify used voxel blocks
 		dim3 cudaBlockSize(256);
@@ -84,7 +84,7 @@ void ITMMultiMeshingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMMesh *m
 
 	{ // mesh used voxel blocks
 		dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
-		dim3 gridSize(SDF_LOCAL_BLOCK_NUM / 16, 16, numLocalMaps);
+		dim3 gridSize(DEFAULT_SDF_LOCAL_BLOCK_NUM / 16, 16, numLocalMaps);
 
 		meshScene_device<VD, typename ID::IndexData> << <gridSize, cudaBlockSize >> >(triangles, noTriangles_device, factor, noTotalEntries, noMaxTriangles,
 			visibleBlockGlobalPos_device, voxelData_device, indexData_device);
@@ -106,14 +106,14 @@ __global__ void findAllocateBlocks(Vector4s *visibleBlockGlobalPos, const TMulti
 	const ITMHashEntry &currentHashEntry = hashTable[entryId];
 
 	if (currentHashEntry.ptr >= 0)
-		visibleBlockGlobalPos[currentHashEntry.ptr + blockIdx.y * SDF_LOCAL_BLOCK_NUM] = Vector4s(currentHashEntry.pos.x, currentHashEntry.pos.y, currentHashEntry.pos.z, 1);
+		visibleBlockGlobalPos[currentHashEntry.ptr + blockIdx.y * DEFAULT_SDF_LOCAL_BLOCK_NUM] = Vector4s(currentHashEntry.pos.x, currentHashEntry.pos.y, currentHashEntry.pos.z, 1);
 }
 
 template<class TMultiVoxel, class TMultiIndex>
 __global__ void meshScene_device(ITMMesh::Triangle *triangles, unsigned int *noTriangles_device, float factor, int noTotalEntries,
 	int noMaxTriangles, const Vector4s *visibleBlockGlobalPos, const TMultiVoxel *localVBAs, const TMultiIndex *hashTables)
 {
-	const Vector4s globalPos_4s = visibleBlockGlobalPos[blockIdx.x + gridDim.x * blockIdx.y + blockIdx.z * SDF_LOCAL_BLOCK_NUM];
+	const Vector4s globalPos_4s = visibleBlockGlobalPos[blockIdx.x + gridDim.x * blockIdx.y + blockIdx.z * DEFAULT_SDF_LOCAL_BLOCK_NUM];
 
 	if (globalPos_4s.w == 0) return;
 
