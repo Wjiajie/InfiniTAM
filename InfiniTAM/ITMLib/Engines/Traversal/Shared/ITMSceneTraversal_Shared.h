@@ -39,9 +39,9 @@ Vector6i computeLocalBounds(const Vector3i& hashEntryMinPoint, const Vector3i& h
 	return Vector6i(std::max(0, bounds.min_x - hashEntryMinPoint.x),
 	                std::max(0, bounds.min_y - hashEntryMinPoint.y),
 	                std::max(0, bounds.min_z - hashEntryMinPoint.z),
-	                std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.x - bounds.max_x)),
-	                std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.y - bounds.max_y)),
-	                std::min(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE - (hashEntryMaxPoint.z - bounds.max_z)));
+	                std::min(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE - (hashEntryMaxPoint.x - bounds.max_x)),
+	                std::min(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE - (hashEntryMaxPoint.y - bounds.max_y)),
+	                std::min(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE - (hashEntryMaxPoint.z - bounds.max_z)));
 }
 
 /**
@@ -62,7 +62,7 @@ inline bool FindHashAtPosition(THREADPTR(int)& hashIdx,
 		if (hashEntry.ptr >= -1) {
 			//search excess list only if there is no room in ordered part
 			while (hashEntry.offset >= 1) {
-				hashIdx = DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1;
+				hashIdx = ORDERED_LIST_SIZE + hashEntry.offset - 1;
 				hashEntry = hashTable[hashIdx];
 
 				if (IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1) {

@@ -80,11 +80,14 @@ void ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::CreateExpectedDepths(cons
 template<class TVoxel>
 void ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
 {
-	ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash> *renderState = (ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>*)_renderState;
+	auto *renderState = (ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>*)_renderState;
 
 	// reset min max image
 	Vector2i imgSize = renderState->renderingRangeImage->noDims;
 	Vector2f *minmaxData = renderState->renderingRangeImage->GetData(MEMORYDEVICE_CUDA);
+
+	ITMRenderState_VH* renderStateVh = dynamic_cast<ITMRenderState_VH*>(renderState);
+	const int hashEntryCount = renderStateVh->hashEntryCount;
 
 	Vector2f init;
 	init.x = FAR_AWAY; init.y = VERY_CLOSE;
@@ -104,11 +107,10 @@ void ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CreateExpected
 		float voxelSize = renderState->sceneParams.voxelSize;
 		const ITMHashEntry *indexData = renderState->indexData_host.index[localMapId];
 		Matrix4f localPose = pose->GetM() * renderState->indexData_host.posesInv[localMapId];
-		int noHashEntries = ITMVoxelBlockHash::noTotalEntries;
 		dim3 blockSize(256);
-		dim3 gridSize((int)ceil((float)noHashEntries / (float)blockSize.x));
+		dim3 gridSize((int)ceil((float)hashEntryCount / (float)blockSize.x));
 		ORcudaSafeCall(cudaMemset(noTotalBlocks_device, 0, sizeof(uint)));
-		checkProjectAndSplitBlocks_device << <gridSize, blockSize >> > (indexData, noHashEntries, localPose, intrinsics->projectionParamsSimple.all, imgSize, voxelSize, renderingBlockList_device, noTotalBlocks_device);
+		checkProjectAndSplitBlocks_device << <gridSize, blockSize >> > (indexData, hashEntryCount, localPose, intrinsics->projectionParamsSimple.all, imgSize, voxelSize, renderingBlockList_device, noTotalBlocks_device);
 		ORcudaKernelCheck;
 
 		uint noTotalBlocks;

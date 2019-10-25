@@ -46,21 +46,21 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 	Vector4u* rgb = view->rgb->GetData(MEMORYDEVICE_CPU);
 	TVoxel* voxelArray = scene->localVBA.GetVoxelBlocks();
 
-	const ITMPlainVoxelArray::IndexData* arrayInfo = scene->index.getIndexData();
+	const ITMPlainVoxelArray::IndexData* arrayInfo = scene->index.GetIndexData();
 
 	float* confidence = view->depthConfidence->GetData(MEMORYDEVICE_CPU);
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
-	for (int locId = 0; locId < scene->index.getVolumeSize().x * scene->index.getVolumeSize().y *
-	                            scene->index.getVolumeSize().z; ++locId) {
+	for (int locId = 0; locId < scene->index.GetVolumeSize().x * scene->index.GetVolumeSize().y *
+	                            scene->index.GetVolumeSize().z; ++locId) {
 
 
-		int z = locId / (scene->index.getVolumeSize().x * scene->index.getVolumeSize().y);
-		int tmp = locId - z * scene->index.getVolumeSize().x * scene->index.getVolumeSize().y;
-		int y = tmp / scene->index.getVolumeSize().x;
-		int x = tmp - y * scene->index.getVolumeSize().x;
+		int z = locId / (scene->index.GetVolumeSize().x * scene->index.GetVolumeSize().y);
+		int tmp = locId - z * scene->index.GetVolumeSize().x * scene->index.GetVolumeSize().y;
+		int y = tmp / scene->index.GetVolumeSize().x;
+		int x = tmp - y * scene->index.GetVolumeSize().x;
 
 		Vector4f pt_model;
 

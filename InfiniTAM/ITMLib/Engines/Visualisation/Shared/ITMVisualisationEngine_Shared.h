@@ -45,7 +45,7 @@ _CPU_AND_GPU_CODE_ inline bool ProjectSingleBlock(const THREADPTR(Vector3s) & bl
 		tmp.x += (corner & 1) ? 1 : 0;
 		tmp.y += (corner & 2) ? 1 : 0;
 		tmp.z += (corner & 4) ? 1 : 0;
-		Vector4f pt3d(TO_FLOAT3(tmp) * (float)SDF_BLOCK_SIZE * voxelSize, 1.0f);
+		Vector4f pt3d(TO_FLOAT3(tmp) * (float)VOXEL_BLOCK_SIZE * voxelSize, 1.0f);
 		pt3d = pose * pt3d;
 		if (pt3d.z < 1e-6) continue;
 
@@ -169,7 +169,7 @@ _CPU_AND_GPU_CODE_ inline bool castRay(DEVICEPTR(Vector4f) &pt_out, DEVICEPTR(uc
 		}
 
 		if (!vmIndex) {
-			stepLength = SDF_BLOCK_SIZE;
+			stepLength = VOXEL_BLOCK_SIZE;
 		} else {
 			if ((sdfValue <= 0.1f) && (sdfValue >= -0.5f)) {
 				sdfValue = readFromSDF_float_interpolated(voxelData, voxelIndex, pt_result, vmIndex, cache);

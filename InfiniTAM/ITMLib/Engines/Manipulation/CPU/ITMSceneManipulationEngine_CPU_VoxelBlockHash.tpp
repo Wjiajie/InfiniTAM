@@ -28,8 +28,8 @@ namespace ITMLib {
 
 template<typename TVoxel>
 void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
-	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
-	int blockSize = scene->index.getVoxelBlockSize();
+	int numBlocks = scene->index.GetAllocatedBlockCount();
+	int blockSize = scene->index.GetVoxelBlockSize();
 
 	TVoxel* voxelBlocks_ptr = scene->localVBA.GetVoxelBlocks();
 	for (int i = 0; i < numBlocks * blockSize; ++i) voxelBlocks_ptr[i] = TVoxel();
@@ -41,11 +41,11 @@ void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(ITMVo
 	memset(&tmpEntry, 0, sizeof(ITMHashEntry));
 	tmpEntry.ptr = -2;
 	ITMHashEntry* hashEntry_ptr = scene->index.GetEntries();
-	for (int i = 0; i < scene->index.noTotalEntries; ++i) hashEntry_ptr[i] = tmpEntry;
+	for (int i = 0; i < scene->index.hashEntryCount; ++i) hashEntry_ptr[i] = tmpEntry;
 	int* excessList_ptr = scene->index.GetExcessAllocationList();
-	for (int i = 0; i < SDF_EXCESS_LIST_SIZE; ++i) excessList_ptr[i] = i;
+	for (int i = 0; i < scene->index.GetExcessListSize(); ++i) excessList_ptr[i] = i;
 
-	scene->index.SetLastFreeExcessListId(SDF_EXCESS_LIST_SIZE - 1);
+	scene->index.SetLastFreeExcessListId(scene->index.GetExcessListSize() - 1);
 }
 
 template<typename TVoxel>
@@ -64,7 +64,7 @@ ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMVoxelVolu
 	int hash;
 	if (FindOrAllocateHashEntry(TO_SHORT_FLOOR3(blockPos), hashTable, entry, lastFreeVoxelBlockId, lastFreeExcessListId,
 	                            voxelAllocationList, excessAllocationList, hash)) {
-		TVoxel* localVoxelBlock = &(voxels[entry->ptr * (SDF_BLOCK_SIZE3)]);
+		TVoxel* localVoxelBlock = &(voxels[entry->ptr * (VOXEL_BLOCK_SIZE3)]);
 		localVoxelBlock[linearIdx] = voxel;
 	} else {
 		return false;
@@ -124,16 +124,18 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
 		Vector6i bounds, const Vector3i& offset) {
 
+	assert(destination->index.hashEntryCount == source->index.hashEntryCount);
+
 	//temporary stuff
-	auto entryAllocationTypes
-			= new ORUtils::MemoryBlock<unsigned char>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU);
-	auto blockCoords = new ORUtils::MemoryBlock<Vector3s>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU);
-	uchar* entriesAllocType = entryAllocationTypes->GetData(MEMORYDEVICE_CPU);
-	Vector3s* allocationBlockCoords = blockCoords->GetData(MEMORYDEVICE_CPU);
+	const int hashEntryCount = source->index.hashEntryCount;
+	ORUtils::MemoryBlock<HashEntryState> hashEntryStates(hashEntryCount, MEMORYDEVICE_CPU);
+	HashEntryState* hashEntryStates_device = hashEntryStates.GetData(MEMORYDEVICE_CPU);
+	ORUtils::MemoryBlock<Vector3s> blockCoords(hashEntryCount, MEMORYDEVICE_CPU);
+	Vector3s* blockCoords_device = blockCoords.GetData(MEMORYDEVICE_CPU);
 
 	TVoxel* sourceVoxels = source->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* sourceHashTable = source->index.GetEntries();
-	int totalHashEntryCount = source->index.noTotalEntries;
+
 	ITMHashEntry* destinationHashTable = destination->index.GetEntries();
 	TVoxel* destinationVoxels = destination->localVBA.GetVoxelBlocks();
 
@@ -142,23 +144,23 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 	if (offset == Vector3i(0)) {
 		// *** allocate missing entries in target hash table
 		// traverse source hash blocks, see which ones are at least partially inside the specified bounds
-		for (int sourceHash = 0; sourceHash < totalHashEntryCount; sourceHash++) {
+		for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
 			const ITMHashEntry& currentSourceHashEntry = sourceHashTable[sourceHash];
 			if (currentSourceHashEntry.ptr < 0) continue;
-			Vector3i originalHashBlockPosition = currentSourceHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			Vector3i originalHashBlockPosition = currentSourceHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 			if (IsHashBlockFullyInRange(originalHashBlockPosition, bounds) ||
 			    IsHashBlockPartiallyInRange(originalHashBlockPosition, bounds)) {
 				int destinationHash = hashIndex(currentSourceHashEntry.pos);
 				bool collisionDetected = false;
-				MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, destinationHash,
+				MarkAsNeedingAllocationIfNotFound(hashEntryStates_device, blockCoords_device, destinationHash,
 				                                  currentSourceHashEntry.pos, destinationHashTable, collisionDetected);
 			}
 		}
 
-		AllocateHashEntriesUsingLists_CPU(destination, entriesAllocType, allocationBlockCoords);
+		AllocateHashEntriesUsingLists_CPU(destination, hashEntryStates_device, blockCoords_device);
 
 		//iterate over source hash blocks & fill in the target hash blocks
-		for (int sourceHash = 0; sourceHash < totalHashEntryCount; sourceHash++) {
+		for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
 			const ITMHashEntry& sourceHashEntry = sourceHashTable[sourceHash];
 
 			if (sourceHashEntry.ptr < 0) continue;
@@ -167,12 +169,12 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 			const ITMHashEntry& destinationHashEntry = destinationHashTable[destinationHash];
 
 			//position of the current entry in 3D space (in voxel units)
-			Vector3i sourceHashBlockPositionVoxels = sourceHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-			TVoxel* localSourceVoxelBlock = &(sourceVoxels[sourceHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-			TVoxel* localDestinationVoxelBlock = &(destinationVoxels[destinationHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			Vector3i sourceHashBlockPositionVoxels = sourceHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+			TVoxel* localSourceVoxelBlock = &(sourceVoxels[sourceHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
+			TVoxel* localDestinationVoxelBlock = &(destinationVoxels[destinationHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			if (IsHashBlockFullyInRange(sourceHashBlockPositionVoxels, bounds)) {
 				//we can safely copy the whole block
-				memcpy(localDestinationVoxelBlock, localSourceVoxelBlock, sizeof(TVoxel) * SDF_BLOCK_SIZE3);
+				memcpy(localDestinationVoxelBlock, localSourceVoxelBlock, sizeof(TVoxel) * VOXEL_BLOCK_SIZE3);
 				voxelsWereCopied = true;
 			} else if (IsHashBlockPartiallyInRange(sourceHashBlockPositionVoxels, bounds)) {
 				//we have to copy only parts of the scene that are within bounds
@@ -182,7 +184,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 				for (int z = zRangeStart; z < zRangeEnd; z++) {
 					for (int y = yRangeStart; y < yRangeEnd; y++) {
 						for (int x = xRangeStart; x < xRangeEnd; x++) {
-							int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+							int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 							memcpy(&localDestinationVoxelBlock[locId], &localSourceVoxelBlock[locId], sizeof(TVoxel));
 						}
 					}
@@ -210,12 +212,12 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 					Vector3i blockPos(block_x, block_y, block_x);
 					int destinationHash = hashIndex(blockPos);
 					bool collisionDetected = false;
-					MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, destinationHash,
+					MarkAsNeedingAllocationIfNotFound(hashEntryStates_device, blockCoords_device, destinationHash,
 					                                  blockPos.toShortFloor(), destinationHashTable, collisionDetected);
 				}
 			}
 		}
-		AllocateHashEntriesUsingLists_CPU(destination, entriesAllocType, allocationBlockCoords);
+		AllocateHashEntriesUsingLists_CPU(destination, hashEntryStates_device, blockCoords_device);
 		ITMVoxelBlockHash::IndexCache source_cache;
 
 		for (int source_z = bounds.min_z; source_z < bounds.max_z; source_z++) {
@@ -233,8 +235,6 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 			}
 		}
 	}
-	delete blockCoords;
-	delete entryAllocationTypes;
 
 	return voxelsWereCopied;
 }
@@ -244,20 +244,22 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
 		const Vector3i& offset) {
 
+	assert(destination->index.hashEntryCount == source->index.hashEntryCount);
+
 	//reset destination scene
 	ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(destination);
 
-	//temporary stuff
-	auto entryAllocationTypes
-			= new ORUtils::MemoryBlock<unsigned char>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU);
-	auto blockCoords = new ORUtils::MemoryBlock<Vector3s>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU);
+	const int hashEntryCount = source->index.hashEntryCount;
 
-	uchar* entriesAllocType = entryAllocationTypes->GetData(MEMORYDEVICE_CPU);
-	Vector3s* allocationBlockCoords = blockCoords->GetData(MEMORYDEVICE_CPU);
+	//temporary stuff
+	ORUtils::MemoryBlock<HashEntryState> entryAllocationTypes (hashEntryCount, MEMORYDEVICE_CPU);
+	ORUtils::MemoryBlock<Vector3s> blockCoords (hashEntryCount, MEMORYDEVICE_CPU);
+	HashEntryState* entriesAllocType = entryAllocationTypes.GetData(MEMORYDEVICE_CPU);
+	Vector3s* allocationBlockCoords = blockCoords.GetData(MEMORYDEVICE_CPU);
 
 	TVoxel* sourceVoxels = source->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* sourceHashTable = source->index.GetEntries();
-	int totalHashEntryCount = source->index.noTotalEntries;
+
 	ITMHashEntry* destinationHashTable = destination->index.GetEntries();
 	TVoxel* destinationVoxels = destination->localVBA.GetVoxelBlocks();
 
@@ -265,10 +267,10 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 
 	if (offset == Vector3i(0)) {
 		// traverse source hash blocks, see which ones need to be allocated in destination
-		for (int sourceHash = 0; sourceHash < totalHashEntryCount; sourceHash++) {
+		for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
 			const ITMHashEntry& currentSourceHashEntry = sourceHashTable[sourceHash];
 			if (currentSourceHashEntry.ptr < 0) continue;
-			Vector3i originalHashBlockPosition = currentSourceHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			Vector3i originalHashBlockPosition = currentSourceHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 			int destinationHash = hashIndex(currentSourceHashEntry.pos);
 			bool collisionDetected = false;
 			MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, destinationHash,
@@ -277,7 +279,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 
 		AllocateHashEntriesUsingLists_CPU(destination, entriesAllocType, allocationBlockCoords);
 
-		for (int sourceHash = 0; sourceHash < totalHashEntryCount; sourceHash++) {
+		for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
 			const ITMHashEntry& sourceHashEntry = sourceHashTable[sourceHash];
 
 			if (sourceHashEntry.ptr < 0) continue;
@@ -286,35 +288,35 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 			const ITMHashEntry& destinationHashEntry = destinationHashTable[destinationHash];
 
 			//position of the current entry in 3D space (in voxel units)
-			Vector3i sourceHashBlockPositionVoxels = sourceHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-			TVoxel* localSourceVoxelBlock = &(sourceVoxels[sourceHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-			TVoxel* localDestinationVoxelBlock = &(destinationVoxels[destinationHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			Vector3i sourceHashBlockPositionVoxels = sourceHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+			TVoxel* localSourceVoxelBlock = &(sourceVoxels[sourceHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
+			TVoxel* localDestinationVoxelBlock = &(destinationVoxels[destinationHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			//we can safely copy the whole block
-			memcpy(localDestinationVoxelBlock, localSourceVoxelBlock, sizeof(TVoxel) * SDF_BLOCK_SIZE3);
+			memcpy(localDestinationVoxelBlock, localSourceVoxelBlock, sizeof(TVoxel) * VOXEL_BLOCK_SIZE3);
 			voxelsWereCopied = true;
 		}
 	} else {
 		// traverse source hash blocks
-		for (int sourceHash = 0; sourceHash < totalHashEntryCount; sourceHash++) {
+		for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
 			const ITMHashEntry& currentSourceHashEntry = sourceHashTable[sourceHash];
 			if (currentSourceHashEntry.ptr < 0) continue;
 
-			Vector3i originalHashBlockPosition = currentSourceHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			Vector3i originalHashBlockPosition = currentSourceHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 			Vector3i sourceBlockPos;
 			sourceBlockPos.x = currentSourceHashEntry.pos.x;
 			sourceBlockPos.y = currentSourceHashEntry.pos.y;
 			sourceBlockPos.z = currentSourceHashEntry.pos.z;
-			sourceBlockPos *= SDF_BLOCK_SIZE;
+			sourceBlockPos *= VOXEL_BLOCK_SIZE;
 
-			TVoxel* localSourceVoxelBlock = &(sourceVoxels[currentSourceHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxel* localSourceVoxelBlock = &(sourceVoxels[currentSourceHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
 						int locId;
 						Vector3i sourcePoint(sourceBlockPos.x + x, sourceBlockPos.y + y, sourceBlockPos.z + z);
 						Vector3i destinationPoint = sourcePoint + offset;
-						locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						TVoxel sourceVoxel = localSourceVoxelBlock[locId];
 						ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::
 						SetVoxel(destination, destinationPoint, sourceVoxel);
@@ -324,9 +326,6 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 			}
 		}
 	}
-	delete blockCoords;
-	delete entryAllocationTypes;
-
 	return voxelsWereCopied;
 }
 

@@ -42,13 +42,13 @@
 using namespace ITMLib;
 
 
-typedef WarpGradientDataFixture<MemoryDeviceType::MEMORYDEVICE_CPU, ITMVoxelBlockHash> DataFixture;
+typedef WarpGradientDataFixture<MemoryDeviceType::MEMORYDEVICE_CUDA, ITMVoxelBlockHash> DataFixture;
 BOOST_FIXTURE_TEST_CASE(testDataTerm_CUDA_VBH, DataFixture) {
+
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CUDA1(&settings->sceneParams,
 	                                                            settings->swappingMode ==
 	                                                            ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                            MEMORYDEVICE_CUDA,
-	                                                            sizeSlice, offsetSlice);
+	                                                            MEMORYDEVICE_CUDA, indexParameters);
 	ManipulationEngine_CUDA_VBH_Warp::Inst().ResetScene(&warp_field_CUDA1);
 
 
@@ -66,30 +66,22 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CUDA_VBH, DataFixture) {
 	//warp_field_CUDA1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_data_");
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CPU1(warp_field_CUDA1, MEMORYDEVICE_CPU);
 	float tolerance = 1e-7;
-	loadWarpFieldDataTerm();
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_term, tolerance));
-	clearWarpFieldDataTerm();
 }
 
 BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CUDA_VBH, DataFixture) {
 	settings->enableGradientSmoothing = false;
 	auto motionTracker_VBH_CUDA = new ITMSceneMotionTracker_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash>();
-	clearWarpFieldIter0();
-	loadWarpFieldDataTerm();
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_copy(*warp_field_data_term,
 	                                                            MemoryDeviceType::MEMORYDEVICE_CUDA);
-	clearWarpFieldDataTerm();
 
 	BOOST_REQUIRE_EQUAL(SceneStatCalc_CUDA_VBH_Warp::Instance().ComputeAllocatedHashBlockCount(&warp_field_copy), 366);
-
 
 	float maxWarp = motionTracker_VBH_CUDA->UpdateWarps(canonical_volume, live_volume, &warp_field_copy);
 	//warp_field_copy.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warp_iter0");
 	BOOST_REQUIRE_CLOSE(maxWarp, 0.0213166066f, 1e-7f);
 
-
 	float tolerance = 1e-8;
-	loadWarpFieldIter0();
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_copy, warp_field_iter0, tolerance));
 }
 
@@ -113,9 +105,7 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CUDA_VBH, DataFixture) {
 
 
 	float tolerance = 1e-8;
-	loadWarpFieldTikhonovTerm();
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CUDA1, warp_field_tikhonov_term, tolerance));
-	clearWarpFieldTikhonovTerm();
 }
 
 
@@ -138,9 +128,7 @@ BOOST_FIXTURE_TEST_CASE(testKillingTerm_CUDA_VBH, DataFixture) {
 	//warp_field_CUDA1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_killing_");
 
 	float tolerance = 1e-8;
-	loadWarpFieldKillingTerm();
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CUDA1, warp_field_killing_term, tolerance));
-	clearWarpFieldKillingTerm();
 }
 
 
@@ -163,7 +151,5 @@ BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CUDA_VBH, DataFixture) {
 
 
 	float tolerance = 1e-8;
-	loadWarpFieldLevelSetTerm();
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CUDA1, warp_field_level_set_term, tolerance));
-	clearWarpFieldLevelSetTerm();
 }

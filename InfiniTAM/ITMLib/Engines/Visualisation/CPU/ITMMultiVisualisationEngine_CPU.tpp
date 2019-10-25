@@ -62,13 +62,13 @@ void ITMMultiVisualisationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CreateExpectedD
 	{
 		float voxelSize = renderState->sceneParams.voxelSize;
 		const ITMHashEntry *hash_entries = renderState->indexData_host.index[localMapId];
-		int noHashEntries = ITMVoxelBlockHash::noTotalEntries;
+		int hashEntryCount = dynamic_cast<ITMRenderState_VH*>(renderState)->hashEntryCount;
 
 		std::vector<RenderingBlock> renderingBlocks(MAX_RENDERING_BLOCKS);
 		int numRenderingBlocks = 0;
 
 		Matrix4f localPose = pose->GetM() * renderState->indexData_host.posesInv[localMapId];
-		for (int blockNo = 0; blockNo < noHashEntries; ++blockNo) {
+		for (int blockNo = 0; blockNo < hashEntryCount; ++blockNo) {
 			const ITMHashEntry & blockData(hash_entries[blockNo]);
 
 			Vector2i upperLeft, lowerRight;

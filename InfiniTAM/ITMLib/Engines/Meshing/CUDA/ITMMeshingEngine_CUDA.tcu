@@ -27,7 +27,7 @@ __global__ void findAllocateBlocks(Vector4s *visibleBlockGlobalPos, const ITMHas
 template<class TVoxel>
 ITMMeshingEngine_CUDA<TVoxel,ITMVoxelBlockHash>::ITMMeshingEngine_CUDA(void) 
 {
-	ORcudaSafeCall(cudaMalloc((void**)&visibleBlockGlobalPos_device, DEFAULT_SDF_LOCAL_BLOCK_NUM * sizeof(Vector4s)));
+	ORcudaSafeCall(cudaMalloc((void**)&visibleBlockGlobalPos_device, DEFAULT_VOXEL_BLOCK_NUM * sizeof(Vector4s)));
 	ORcudaSafeCall(cudaMalloc((void**)&noTriangles_device, sizeof(unsigned int)));
 }
 
@@ -45,11 +45,11 @@ void ITMMeshingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMMesh *mesh, 
 	const TVoxel *localVBA = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry *hashTable = scene->index.GetEntries();
 
-	int noMaxTriangles = mesh->noMaxTriangles, noTotalEntries = scene->index.noTotalEntries;
+	int noMaxTriangles = mesh->noMaxTriangles, noTotalEntries = scene->index.hashEntryCount;
 	float factor = scene->sceneParams->voxelSize;
 
 	ORcudaSafeCall(cudaMemset(noTriangles_device, 0, sizeof(unsigned int)));
-	ORcudaSafeCall(cudaMemset(visibleBlockGlobalPos_device, 0, sizeof(Vector4s) * DEFAULT_SDF_LOCAL_BLOCK_NUM));
+	ORcudaSafeCall(cudaMemset(visibleBlockGlobalPos_device, 0, sizeof(Vector4s) * DEFAULT_VOXEL_BLOCK_NUM));
 
 	{ // identify used voxel blocks
 		dim3 cudaBlockSize(256); 
@@ -60,8 +60,8 @@ void ITMMeshingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMMesh *mesh, 
 	}
 
 	{ // mesh used voxel blocks
-		dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
-		dim3 gridSize(DEFAULT_SDF_LOCAL_BLOCK_NUM / 16, 16);
+		dim3 cudaBlockSize(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
+		dim3 gridSize(DEFAULT_VOXEL_BLOCK_NUM / 16, 16);
 
 		meshScene_device<TVoxel> << <gridSize, cudaBlockSize >> >(triangles, noTriangles_device, factor, noTotalEntries, noMaxTriangles,
 			visibleBlockGlobalPos_device, localVBA, hashTable);
@@ -91,7 +91,7 @@ __global__ void meshScene_device(ITMMesh::Triangle *triangles, unsigned int *noT
 
 	if (globalPos_4s.w == 0) return;
 
-	Vector3i globalPos = Vector3i(globalPos_4s.x, globalPos_4s.y, globalPos_4s.z) * SDF_BLOCK_SIZE;
+	Vector3i globalPos = Vector3i(globalPos_4s.x, globalPos_4s.y, globalPos_4s.z) * VOXEL_BLOCK_SIZE;
 
 	Vector3f vertList[12];
 	int cubeIndex = buildVertexList(vertList, globalPos, Vector3i(threadIdx.x, threadIdx.y, threadIdx.z), localVBA,

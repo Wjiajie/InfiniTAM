@@ -41,18 +41,18 @@ public:
 	VoxelTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
 		TVoxel* const voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* const hashTable = scene->index.GetEntries();
-		const int noTotalEntries = scene->index.noTotalEntries;
+		const int noTotalEntries = scene->index.hashEntryCount;
 #ifdef WITH_OPENMP
 #pragma omp parallel for default(none) shared(functor)
 #endif
 		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 			const ITMHashEntry& currentHashEntry = hashTable[entryId];
 			if (currentHashEntry.ptr < 0) continue;
-			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						TVoxel& voxel = localVoxelBlock[locId];
 						functor(voxel);
 					}
@@ -66,15 +66,15 @@ public:
 	VoxelTraversal_SingleThreaded(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
-		int noTotalEntries = scene->index.noTotalEntries;
+		int noTotalEntries = scene->index.hashEntryCount;
 		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 			const ITMHashEntry& currentHashEntry = hashTable[entryId];
 			if (currentHashEntry.ptr < 0) continue;
-			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						TVoxel& voxel = localVoxelBlock[locId];
 						functor(voxel);
 					}
@@ -88,20 +88,20 @@ public:
 	VoxelPositionTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
 		TVoxel* const voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* const hashTable = scene->index.GetEntries();
-		const int noTotalEntries = scene->index.noTotalEntries;
+		const int noTotalEntries = scene->index.hashEntryCount;
 #ifdef WITH_OPENMP
 #pragma omp parallel for default(none) shared(functor)
 #endif
 		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 			const ITMHashEntry& currentHashEntry = hashTable[entryId];
 			if (currentHashEntry.ptr < 0) continue;
-			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			//position of the current entry in 3D space (in voxel units)
-			Vector3i hashEntryPosition = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			Vector3i hashEntryPosition = currentHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						Vector3i voxelPosition = hashEntryPosition + Vector3i(x, y, z);
 						TVoxel& voxel = localVoxelBlock[locId];
 						functor(voxel, voxelPosition);
@@ -116,20 +116,20 @@ public:
 	VoxelAndHashBlockPositionTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
 		TVoxel* const voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* const hashTable = scene->index.GetEntries();
-		const int hashEntryCount = scene->index.noTotalEntries;
+		const int hashEntryCount = scene->index.hashEntryCount;
 #ifdef WITH_OPENMP
 #pragma omp parallel for default(none) shared(functor)
 #endif
 		for (int entryId = 0; entryId < hashEntryCount; entryId++) {
 			const ITMHashEntry& currentHashEntry = hashTable[entryId];
 			if (currentHashEntry.ptr < 0) continue;
-			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			//position of the current entry in 3D space (in voxel units)
-			Vector3i hashEntryPosition = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			Vector3i hashEntryPosition = currentHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						Vector3i voxelPosition = hashEntryPosition + Vector3i(x, y, z);
 						TVoxel& voxel = localVoxelBlock[locId];
 						functor(voxel, voxelPosition, currentHashEntry.pos);
@@ -145,24 +145,24 @@ public:
 	                           const Vector6i& bounds) {
 		TVoxel* const voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* const hashTable = scene->index.GetEntries();
-		const int noTotalEntries = scene->index.noTotalEntries;
+		const int noTotalEntries = scene->index.hashEntryCount;
 #ifdef WITH_OPENMP
 #pragma omp parallel for default(none) shared(functor, bounds)
 #endif
 		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 			const ITMHashEntry& currentHashEntry = hashTable[entryId];
 			if (currentHashEntry.ptr < 0) continue;
-			Vector3i hashEntryMinPoint = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-			Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(SDF_BLOCK_SIZE);
+			Vector3i hashEntryMinPoint = currentHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+			Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(VOXEL_BLOCK_SIZE);
 			if (HashBlockDoesNotIntersectBounds(hashEntryMinPoint, hashEntryMaxPoint, bounds)) {
 				continue;
 			}
 			Vector6i localBounds = computeLocalBounds(hashEntryMinPoint, hashEntryMaxPoint, bounds);
-			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			for (int z = localBounds.min_z; z < localBounds.max_z; z++) {
 				for (int y = localBounds.min_y; y < localBounds.max_y; y++) {
 					for (int x = localBounds.min_x; x < localBounds.max_x; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						TVoxel& voxel = localVoxelBlock[locId];
 						functor(voxel);
 					}
@@ -178,27 +178,27 @@ public:
 	                                   Vector6i bounds) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
-		int noTotalEntries = scene->index.noTotalEntries;
+		int noTotalEntries = scene->index.hashEntryCount;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
 		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 			const ITMHashEntry& currentHashEntry = hashTable[entryId];
 			if (currentHashEntry.ptr < 0) continue;
-			Vector3i hashEntryMinPoint = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-			Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(SDF_BLOCK_SIZE);
+			Vector3i hashEntryMinPoint = currentHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+			Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(VOXEL_BLOCK_SIZE);
 			if (HashBlockDoesNotIntersectBounds(hashEntryMinPoint, hashEntryMaxPoint, bounds)) {
 				continue;
 			}
 			Vector6i localBounds = computeLocalBounds(hashEntryMinPoint, hashEntryMaxPoint, bounds);
-			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			//position of the current entry in 3D space (in voxel units)
-			Vector3i hashEntryPosition = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			Vector3i hashEntryPosition = currentHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 
 			for (int z = localBounds.min_z; z < localBounds.max_z; z++) {
 				for (int y = localBounds.min_y; y < localBounds.max_y; y++) {
 					for (int x = localBounds.min_x; x < localBounds.max_x; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						Vector3i voxelPosition = hashEntryPosition + Vector3i(x, y, z);
 						TVoxel& voxel = localVoxelBlock[locId];
 						functor(voxel, voxelPosition);
@@ -214,15 +214,15 @@ public:
 	                                               Vector6i bounds) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
-		int noTotalEntries = scene->index.noTotalEntries;
+		int noTotalEntries = scene->index.hashEntryCount;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
 		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 			const ITMHashEntry& currentHashEntry = hashTable[entryId];
 			if (currentHashEntry.ptr < 0) continue;
-			Vector3i hashEntryMinPoint = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-			Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(SDF_BLOCK_SIZE);
+			Vector3i hashEntryMinPoint = currentHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+			Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(VOXEL_BLOCK_SIZE);
 			if (HashBlockDoesNotIntersectBounds(hashEntryMinPoint, hashEntryMaxPoint, bounds)) {
 				continue;
 			}
@@ -230,14 +230,14 @@ public:
 
 			functor.processHashEntry(currentHashEntry);
 
-			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			//position of the current entry in 3D space (in voxel units)
-			Vector3i hashEntryPosition = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			Vector3i hashEntryPosition = currentHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 
 			for (int z = localBounds.min_z; z < localBounds.max_z; z++) {
 				for (int y = localBounds.min_y; y < localBounds.max_y; y++) {
 					for (int x = localBounds.min_x; x < localBounds.max_x; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						Vector3i voxelPosition = hashEntryPosition + Vector3i(x, y, z);
 						TVoxel& voxel = localVoxelBlock[locId];
 						functor(voxel, voxelPosition);
@@ -253,18 +253,18 @@ public:
 	inline static void StaticVoxelTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
-		int noTotalEntries = scene->index.noTotalEntries;
+		int noTotalEntries = scene->index.hashEntryCount;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
 		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 			const ITMHashEntry& currentHashEntry = hashTable[entryId];
 			if (currentHashEntry.ptr < 0) continue;
-			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						TVoxel& voxel = localVoxelBlock[locId];
 						TStaticFunctor::run(voxel);
 					}
@@ -277,21 +277,21 @@ public:
 	inline static void StaticVoxelPositionTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
-		int noTotalEntries = scene->index.noTotalEntries;
+		int noTotalEntries = scene->index.hashEntryCount;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
 		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 			const ITMHashEntry& currentHashEntry = hashTable[entryId];
 			if (currentHashEntry.ptr < 0) continue;
-			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			//position of the current entry in 3D space (in voxel units)
-			Vector3i hashEntryPosition = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+			Vector3i hashEntryPosition = currentHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
 						Vector3i voxelPosition = hashEntryPosition + Vector3i(x, y, z);
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						TVoxel& voxel = localVoxelBlock[locId];
 						TStaticFunctor::run(voxel, voxelPosition);
 					}
@@ -320,7 +320,7 @@ public:
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
-		int noTotalEntries = primaryScene->index.noTotalEntries;
+		int noTotalEntries = primaryScene->index.hashEntryCount;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -344,13 +344,13 @@ public:
 					currentCanonicalHashEntry = secondaryHashTable[secondaryHash];
 				}
 			}
-			TVoxelPrimary* localPrimaryVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxelPrimary* localPrimaryVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			TVoxelSecondary* localSecondaryVoxelBlock = &(secondaryVoxels[currentCanonicalHashEntry.ptr *
-			                                                              (SDF_BLOCK_SIZE3)]);
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			                                                              (VOXEL_BLOCK_SIZE3)]);
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						TVoxelPrimary& primaryVoxel = localPrimaryVoxelBlock[locId];
 						TVoxelSecondary& secondaryVoxel = localSecondaryVoxelBlock[locId];
 						TStaticFunctor::run(primaryVoxel, secondaryVoxel);
@@ -373,7 +373,7 @@ public:
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
-		int totalHashEntryCount = primaryScene->index.noTotalEntries;
+		int totalHashEntryCount = primaryScene->index.hashEntryCount;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -398,14 +398,14 @@ public:
 				}
 			}
 			// position of the current entry in 3D space in voxel units
-			Vector3i hashBlockPosition = currentPrimaryHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			Vector3i hashBlockPosition = currentPrimaryHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			TVoxelSecondary* localCanonicalVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr *
-			                                                              (SDF_BLOCK_SIZE3)]);
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			                                                              (VOXEL_BLOCK_SIZE3)]);
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
 						TVoxelPrimary& primaryVoxel = localLiveVoxelBlock[locId];
 						TVoxelSecondary& secondaryVoxel = localCanonicalVoxelBlock[locId];
@@ -432,7 +432,7 @@ public:
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
-		int noTotalEntries = primaryScene->index.noTotalEntries;
+		int noTotalEntries = primaryScene->index.hashEntryCount;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -457,13 +457,13 @@ public:
 					currentCanonicalHashEntry = secondaryHashTable[secondaryHash];
 				}
 			}
-			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			TVoxelSecondary* localCanonicalVoxelBlock = &(secondaryVoxels[currentCanonicalHashEntry.ptr *
-			                                                              (SDF_BLOCK_SIZE3)]);
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			                                                              (VOXEL_BLOCK_SIZE3)]);
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						TVoxelPrimary& primaryVoxel = localLiveVoxelBlock[locId];
 						TVoxelSecondary& secondaryVoxel = localCanonicalVoxelBlock[locId];
 						functor(primaryVoxel, secondaryVoxel);
@@ -488,7 +488,7 @@ public:
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
-		int noTotalEntries = primaryScene->index.noTotalEntries;
+		int noTotalEntries = primaryScene->index.hashEntryCount;
 
 		bool mismatchFound = false;
 
@@ -505,7 +505,7 @@ public:
 				if (!FindHashAtPosition(alternativePrimaryHash, secondaryHashEntry.pos, primaryHashTable)) {
 					// could not find primary block corresponding to the secondary hash
 					TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr *
-					                                                         (SDF_BLOCK_SIZE3)]);
+					                                                         (VOXEL_BLOCK_SIZE3)]);
 					// if the secondary block is unaltered anyway, so no need to match and we're good, so return "true"
 					return !isVoxelBlockAltered(secondaryVoxelBlock);
 				} else {
@@ -545,7 +545,7 @@ public:
 					// If the primary voxel block has not been altered, we assume the allocation mismatch is benign and
 					// continue to the next hash block.
 					TVoxelPrimary* primaryVoxelBlock = &(primaryVoxels[primaryHashEntry.ptr *
-					                                                   (SDF_BLOCK_SIZE3)]);
+					                                                   (VOXEL_BLOCK_SIZE3)]);
 					if (isVoxelBlockAltered(primaryVoxelBlock)) {
 						mismatchFound = true;
 						continue;
@@ -556,13 +556,13 @@ public:
 					secondaryHashEntry = secondaryHashTable[secondaryHash];
 				}
 			}
-			TVoxelPrimary* primaryVoxelBlock = &(primaryVoxels[primaryHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxelPrimary* primaryVoxelBlock = &(primaryVoxels[primaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr *
-			                                                         (SDF_BLOCK_SIZE3)]);
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			                                                         (VOXEL_BLOCK_SIZE3)]);
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						TVoxelPrimary& primaryVoxel = primaryVoxelBlock[locId];
 						TVoxelSecondary& secondaryVoxel = secondaryVoxelBlock[locId];
 						if (!functor(primaryVoxel, secondaryVoxel)) {
@@ -589,7 +589,7 @@ public:
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
-		int noTotalEntries = primaryScene->index.noTotalEntries;
+		int noTotalEntries = primaryScene->index.hashEntryCount;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -615,14 +615,14 @@ public:
 				}
 			}
 			// position of the current entry in 3D space in voxel units
-			Vector3i hashBlockPosition = primaryHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			Vector3i hashBlockPosition = primaryHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 
-			TVoxelPrimary* primaryVoxelBlock = &(primaryVoxels[primaryHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-			TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int linearIndexInBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			TVoxelPrimary* primaryVoxelBlock = &(primaryVoxels[primaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
+			TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int linearIndexInBlock = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
 						TVoxelPrimary& primaryVoxel = primaryVoxelBlock[linearIndexInBlock];
 						TVoxelSecondary& secondaryVoxel = secondaryVoxelBlock[linearIndexInBlock];
@@ -646,7 +646,7 @@ public:
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
-		int totalHashEntryCount = primaryScene->index.noTotalEntries;
+		int totalHashEntryCount = primaryScene->index.hashEntryCount;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -671,24 +671,24 @@ public:
 					secondaryHashEntry = secondaryHashTable[secondaryHash];
 				}
 			}
-			Vector3i hashEntryMinPoint = primaryHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-			Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(SDF_BLOCK_SIZE);
+			Vector3i hashEntryMinPoint = primaryHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+			Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(VOXEL_BLOCK_SIZE);
 			if (HashBlockDoesNotIntersectBounds(hashEntryMinPoint, hashEntryMaxPoint, bounds)) {
 				continue;
 			}
 
 			// position of the current entry in 3D space in voxel units
-			Vector3i hashBlockPosition = primaryHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			Vector3i hashBlockPosition = primaryHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 
-			TVoxelPrimary* primaryVoxelBlock = &(primaryVoxels[primaryHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-			TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxelPrimary* primaryVoxelBlock = &(primaryVoxels[primaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
+			TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 
 			Vector6i localBounds = computeLocalBounds(hashEntryMinPoint, hashEntryMaxPoint, bounds);
 
 			for (int z = localBounds.min_z; z < localBounds.max_z; z++) {
 				for (int y = localBounds.min_y; y < localBounds.max_y; y++) {
 					for (int x = localBounds.min_x; x < localBounds.max_x; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
 						TVoxelPrimary& primaryVoxel = primaryVoxelBlock[locId];
 						TVoxelSecondary& secondaryVoxel = secondaryVoxelBlock[locId];
@@ -713,7 +713,7 @@ public:
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
-		int noTotalEntries = primaryScene->index.noTotalEntries;
+		int noTotalEntries = primaryScene->index.hashEntryCount;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -728,13 +728,13 @@ public:
 			if (currentCanonicalHashEntry.pos != currentLiveHashEntry.pos) {
 				int secondaryHash;
 				if (!FindHashAtPosition(secondaryHash, currentLiveHashEntry.pos, secondaryHashTable)) {
-					TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-					Vector3i hashBlockPosition = currentLiveHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+					TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
+					Vector3i hashBlockPosition = currentLiveHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 					TVoxelSecondary secondaryVoxel;
-					for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-						for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-							for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-								int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+					for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+						for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+							for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+								int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 								Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
 								TVoxelPrimary& primaryVoxel = localLiveVoxelBlock[locId];
 								functor(primaryVoxel, secondaryVoxel, voxelPosition);
@@ -747,15 +747,15 @@ public:
 				}
 			}
 			// position of the current entry in 3D space in voxel units
-			Vector3i hashBlockPosition = currentLiveHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			Vector3i hashBlockPosition = currentLiveHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 
-			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			TVoxelSecondary* localCanonicalVoxelBlock = &(secondaryVoxels[currentCanonicalHashEntry.ptr *
-			                                                              (SDF_BLOCK_SIZE3)]);
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			                                                              (VOXEL_BLOCK_SIZE3)]);
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
 						TVoxelPrimary& primaryVoxel = localLiveVoxelBlock[locId];
 						TVoxelSecondary& secondaryVoxel = localCanonicalVoxelBlock[locId];
@@ -780,7 +780,7 @@ public:
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
-		int noTotalEntries = primaryScene->index.noTotalEntries;
+		int noTotalEntries = primaryScene->index.hashEntryCount;
 
 		for (int hash = 0; hash < noTotalEntries; hash++) {
 			const ITMHashEntry& currentLiveHashEntry = primaryHashTable[hash];
@@ -802,15 +802,15 @@ public:
 				}
 			}
 			// position of the current entry in 3D space in voxel units
-			Vector3i hashBlockPosition = currentLiveHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			Vector3i hashBlockPosition = currentLiveHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 
-			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxelPrimary* localLiveVoxelBlock = &(primaryVoxels[currentLiveHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			TVoxelSecondary* localCanonicalVoxelBlock = &(secondaryVoxels[currentCanonicalHashEntry.ptr *
-			                                                              (SDF_BLOCK_SIZE3)]);
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			                                                              (VOXEL_BLOCK_SIZE3)]);
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
 						TVoxelPrimary& primaryVoxel = localLiveVoxelBlock[locId];
 						TVoxelSecondary& secondaryVoxel = localCanonicalVoxelBlock[locId];
@@ -846,7 +846,7 @@ public:
 		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
 
-		int noTotalEntries = warpField->index.noTotalEntries;
+		int noTotalEntries = warpField->index.hashEntryCount;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -886,13 +886,13 @@ public:
 					currentSecondaryHashEntry = secondaryHashTable[secondaryHash];
 				}
 			}
-			TVoxel* localPrimaryVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
-			TVoxel* localSecondaryVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
-			TWarp* localWarpVoxelBlock = &(warpVoxels[currentWarpHashEntry.ptr * SDF_BLOCK_SIZE3]);
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int indexWithinBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			TVoxel* localPrimaryVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
+			TVoxel* localSecondaryVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
+			TWarp* localWarpVoxelBlock = &(warpVoxels[currentWarpHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int indexWithinBlock = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						TVoxel& primaryVoxel = localPrimaryVoxelBlock[indexWithinBlock];
 						TVoxel& secondaryVoxel = localSecondaryVoxelBlock[indexWithinBlock];
 						TWarp& warp = localWarpVoxelBlock[indexWithinBlock];
@@ -922,7 +922,7 @@ public:
 		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
 
-		int noTotalEntries = warpField->index.noTotalEntries;
+		int noTotalEntries = warpField->index.hashEntryCount;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -961,14 +961,14 @@ public:
 					currentSecondaryHashEntry = secondaryHashTable[secondaryHash];
 				}
 			}
-			TVoxel* localPrimaryVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
-			TVoxel* localSecondaryVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
-			TWarp* localWarpVoxelBlock = &(warpVoxels[currentWarpHashEntry.ptr * SDF_BLOCK_SIZE3]);
+			TVoxel* localPrimaryVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
+			TVoxel* localSecondaryVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
+			TWarp* localWarpVoxelBlock = &(warpVoxels[currentWarpHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
 
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int indexWithinBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int indexWithinBlock = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						TVoxel& primaryVoxel = localPrimaryVoxelBlock[indexWithinBlock];
 						TVoxel& secondaryVoxel = localSecondaryVoxelBlock[indexWithinBlock];
 						TWarp& warp = localWarpVoxelBlock[indexWithinBlock];
@@ -997,7 +997,7 @@ public:
 		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
 
-		int hashEntryCount = warpField->index.noTotalEntries;
+		int hashEntryCount = warpField->index.hashEntryCount;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -1034,17 +1034,17 @@ public:
 					currentSecondaryHashEntry = secondaryHashTable[secondaryHash];
 				}
 			}
-			Vector3i hashBlockPosition = currentWarpHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			Vector3i hashBlockPosition = currentWarpHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 
-			TVoxel* localPrimaryVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
-			TVoxel* localSecondaryVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
-			TWarp* localWarpVoxelBlock = &(warpVoxels[currentWarpHashEntry.ptr * SDF_BLOCK_SIZE3]);
+			TVoxel* localPrimaryVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
+			TVoxel* localSecondaryVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
+			TWarp* localWarpVoxelBlock = &(warpVoxels[currentWarpHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
 
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
 						Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
-						int indexWithinBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						int indexWithinBlock = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						TVoxel& primaryVoxel = localPrimaryVoxelBlock[indexWithinBlock];
 						TVoxel& secondaryVoxel = localSecondaryVoxelBlock[indexWithinBlock];
 						TWarp& warp = localWarpVoxelBlock[indexWithinBlock];
@@ -1074,7 +1074,7 @@ public:
 		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
 
-		int noTotalEntries = warpField->index.noTotalEntries;
+		int noTotalEntries = warpField->index.hashEntryCount;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -1106,19 +1106,19 @@ public:
 					currentSecondaryHashEntry = secondaryHashTable[secondaryHash];
 				}
 			}
-			Vector3i hashBlockPosition = currentWarpHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			Vector3i hashBlockPosition = currentWarpHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 
-			TVoxel* localPrimaryVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
-			TVoxel* localSecondaryVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
-			TWarp* localWarpVoxelBlock = &(warpVoxels[currentWarpHashEntry.ptr * SDF_BLOCK_SIZE3]);
+			TVoxel* localPrimaryVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
+			TVoxel* localSecondaryVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
+			TWarp* localWarpVoxelBlock = &(warpVoxels[currentWarpHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
 			TVoxel defaultVoxel;
 
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
-						int indexWithinBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						int indexWithinBlock = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						TVoxel& primaryVoxel = primaryFound ? localPrimaryVoxelBlock[indexWithinBlock] : defaultVoxel;
 						TVoxel& secondaryVoxel = secondaryFound ? localSecondaryVoxelBlock[indexWithinBlock]
 						                                        : defaultVoxel;
@@ -1149,7 +1149,7 @@ public:
 		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 		ITMHashEntry* warpHashTable = warpField->index.GetEntries();
 
-		int noTotalEntries = warpField->index.noTotalEntries;
+		int noTotalEntries = warpField->index.hashEntryCount;
 
 		for (int hash = 0; hash < noTotalEntries; hash++) {
 			const ITMHashEntry& currentWarpHashEntry = warpHashTable[hash];
@@ -1186,15 +1186,15 @@ public:
 					currentSecondaryHashEntry = secondaryHashTable[secondaryHash];
 				}
 			}
-			Vector3i hashBlockPosition = currentWarpHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-			TVoxel* localPrimaryVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
-			TVoxel* localSecondaryVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr * SDF_BLOCK_SIZE3]);
-			TWarp* localWarpVoxelBlock = &(warpVoxels[currentWarpHashEntry.ptr * SDF_BLOCK_SIZE3]);
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+			Vector3i hashBlockPosition = currentWarpHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+			TVoxel* localPrimaryVoxelBlock = &(primaryVoxels[currentPrimaryHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
+			TVoxel* localSecondaryVoxelBlock = &(secondaryVoxels[currentSecondaryHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
+			TWarp* localWarpVoxelBlock = &(warpVoxels[currentWarpHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
 						Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
-						int indexWithinBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						int indexWithinBlock = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						TVoxel& primaryVoxel = localPrimaryVoxelBlock[indexWithinBlock];
 						TVoxel& secondaryVoxel = localSecondaryVoxelBlock[indexWithinBlock];
 						TWarp& warp = localWarpVoxelBlock[indexWithinBlock];

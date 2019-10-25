@@ -108,9 +108,9 @@ ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::CalculateWarpGradie
 
 	ITMCalculateWarpGradientFunctor<TVoxel, TWarp, ITMVoxelBlockHash::IndexData, ITMVoxelBlockHash::IndexCache>
 			calculateGradientFunctor(this->parameters, this->switches,
-			                         liveScene->localVBA.GetVoxelBlocks(), liveScene->index.getIndexData(),
-			                         canonicalScene->localVBA.GetVoxelBlocks(), canonicalScene->index.getIndexData(),
-			                         warpField->localVBA.GetVoxelBlocks(), warpField->index.getIndexData());
+			                         liveScene->localVBA.GetVoxelBlocks(), liveScene->index.GetIndexData(),
+			                         canonicalScene->localVBA.GetVoxelBlocks(), canonicalScene->index.GetIndexData(),
+			                         warpField->localVBA.GetVoxelBlocks(), warpField->index.GetIndexData());
 
 	ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
 	DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, calculateGradientFunctor);

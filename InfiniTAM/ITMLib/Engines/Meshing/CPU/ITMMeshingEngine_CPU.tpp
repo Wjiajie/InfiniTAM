@@ -12,7 +12,7 @@ void ITMMeshingEngine_CPU<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMMesh *mesh, c
 	const TVoxel *localVBA = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry *hashTable = scene->index.GetEntries();
 
-	int noTriangles = 0, noMaxTriangles = mesh->noMaxTriangles, noTotalEntries = scene->index.noTotalEntries;
+	int noTriangles = 0, noMaxTriangles = mesh->noMaxTriangles, noTotalEntries = scene->index.hashEntryCount;
 	float factor = scene->sceneParams->voxelSize;
 
 	mesh->triangles->Clear();
@@ -25,9 +25,9 @@ void ITMMeshingEngine_CPU<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMMesh *mesh, c
 		if (currentHashEntry.ptr < 0) continue;
 
 		//position of the voxel at the current hash block corner with minimum coordinates
-		hashBlockCornerPosition = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		hashBlockCornerPosition = currentHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 
-		for (int z = 0; z < SDF_BLOCK_SIZE; z++) for (int y = 0; y < SDF_BLOCK_SIZE; y++) for (int x = 0; x < SDF_BLOCK_SIZE; x++)
+		for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) for (int x = 0; x < VOXEL_BLOCK_SIZE; x++)
 		{
 			Vector3f vertexList[12];
 			// build vertices by interpolating edges of cubes that intersect with the isosurface

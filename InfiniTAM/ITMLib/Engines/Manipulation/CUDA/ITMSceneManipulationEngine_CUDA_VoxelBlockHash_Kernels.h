@@ -30,50 +30,50 @@ void allocateVoxelBlocksList_device(
 		int* voxelAllocationList, int* excessAllocationList,
 		CopyAllocationTempData* allocData,
 		ITMHashEntry* hashTable, int noTotalEntries,
-		uchar* entriesAllocType, Vector3s* blockCoords) {
-	int hash = threadIdx.x + blockIdx.x * blockDim.x;
-	if (hash > noTotalEntries - 1) return;
+		HashEntryState* hashEntryStates, Vector3s* blockCoords) {
+	int hashCode = threadIdx.x + blockIdx.x * blockDim.x;
+	if (hashCode > noTotalEntries - 1) return;
 
 	int vbaIdx, exlIdx;
 
-	switch (entriesAllocType[hash]) {
+	switch (hashEntryStates[hashCode]) {
 		case ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST: //needs allocation, fits in the ordered list
-			vbaIdx = atomicSub(&allocData->noAllocatedVoxelEntries, 1);
+			vbaIdx = atomicSub(&allocData->countOfAllocatedOrderedEntries, 1);
 
 			if (vbaIdx >= 0) //there is room in the voxel block array
 			{
 				ITMHashEntry hashEntry;
-				hashEntry.pos = blockCoords[hash];
+				hashEntry.pos = blockCoords[hashCode];
 				hashEntry.ptr = voxelAllocationList[vbaIdx];
 				hashEntry.offset = 0;
 
-				hashTable[hash] = hashEntry;
+				hashTable[hashCode] = hashEntry;
 			} else {
 				// Restore the previous value to avoid leaks.
-				atomicAdd(&allocData->noAllocatedVoxelEntries, 1);
+				atomicAdd(&allocData->countOfAllocatedOrderedEntries, 1);
 			}
 			break;
 
 		case ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST: //needs allocation in the excess list
-			vbaIdx = atomicSub(&allocData->noAllocatedVoxelEntries, 1);
-			exlIdx = atomicSub(&allocData->noAllocatedExcessEntries, 1);
+			vbaIdx = atomicSub(&allocData->countOfAllocatedOrderedEntries, 1);
+			exlIdx = atomicSub(&allocData->countOfAllocatedExcessEntries, 1);
 
 			if (vbaIdx >= 0 && exlIdx >= 0) //there is room in the voxel block array and excess list
 			{
 				ITMHashEntry hashEntry;
-				hashEntry.pos = blockCoords[hash];
+				hashEntry.pos = blockCoords[hashCode];
 				hashEntry.ptr = voxelAllocationList[vbaIdx];
 				hashEntry.offset = 0;
 
 				int exlOffset = excessAllocationList[exlIdx];
 
-				hashTable[hash].offset = exlOffset + 1; //connect to child
+				hashTable[hashCode].offset = exlOffset + 1; //connect to child
 
-				hashTable[DEFAULT_ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
+				hashTable[ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
 			} else {
 				// Restore the previous values to avoid leaks.
-				atomicAdd(&allocData->noAllocatedVoxelEntries, 1);
-				atomicAdd(&allocData->noAllocatedExcessEntries, 1);
+				atomicAdd(&allocData->countOfAllocatedOrderedEntries, 1);
+				atomicAdd(&allocData->countOfAllocatedExcessEntries, 1);
 			}
 
 			break;
@@ -97,13 +97,13 @@ __global__ void noOffsetCopy_device(TVoxel* destinationVoxels, const TVoxel* sou
 	if (destinationHashEntry.ptr < 0) return;
 	const ITMHashEntry& sourceHashEntry = sourceHashTable[sourceHash];
 
-	TVoxel* destinationVoxelBlock = &(destinationVoxels[destinationHashEntry.ptr * SDF_BLOCK_SIZE3]);
-	const TVoxel* sourceVoxelBlock = &(sourceVoxels[sourceHashEntry.ptr * SDF_BLOCK_SIZE3]);
+	TVoxel* destinationVoxelBlock = &(destinationVoxels[destinationHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
+	const TVoxel* sourceVoxelBlock = &(sourceVoxels[sourceHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
 
 	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
-	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 
-	Vector3i globalPos = destinationHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+	Vector3i globalPos = destinationHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 	globalPos.x += x;
 	globalPos.y += y;
 	globalPos.z += z;
@@ -127,11 +127,11 @@ __global__ void offsetCopy_device(TVoxel* destinationVoxels, const TVoxel* sourc
 	const ITMHashEntry& destinationHashEntry = destinationHashTable[copyHashBlockInfo.destinationHash];
 	if (destinationHashEntry.ptr < 0) return;
 
-	TVoxel* destinationVoxelBlock = &(destinationVoxels[destinationHashEntry.ptr * SDF_BLOCK_SIZE3]);
+	TVoxel* destinationVoxelBlock = &(destinationVoxels[destinationHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
 
 	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
-	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-	Vector3i sourcePoint = destinationHashEntry.pos.toInt() * SDF_BLOCK_SIZE - offset;
+	int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
+	Vector3i sourcePoint = destinationHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE - offset;
 	sourcePoint.x += x;
 	sourcePoint.y += y;
 	sourcePoint.z += z;
@@ -154,10 +154,10 @@ __global__ void setVoxel_device(TVoxel* voxelArray, ITMHashEntry* hashTable,
 	ITMHashEntry* entry = nullptr;
 	int hash;
 	if (FindOrAllocateHashEntry(blockPos, hashTable, entry,
-	                            setVoxelTempData->noAllocatedVoxelEntries,
-	                            setVoxelTempData->noAllocatedExcessEntries, voxelAllocationList, excessAllocationList,
+	                            setVoxelTempData->countOfAllocatedOrderedEntries,
+	                            setVoxelTempData->countOfAllocatedExcessEntries, voxelAllocationList, excessAllocationList,
 	                            hash)) {
-		TVoxel* localVoxelBlock = &(voxelArray[entry->ptr * (SDF_BLOCK_SIZE3)]);
+		TVoxel* localVoxelBlock = &(voxelArray[entry->ptr * (VOXEL_BLOCK_SIZE3)]);
 		localVoxelBlock[voxelIndexInBlock] = value;
 		setVoxelTempData->success = true;
 	} else {
@@ -203,7 +203,7 @@ __global__ void determineDestinationAllocationForNoOffsetCopy_device(
 		ITMHashEntry* destinationHashTable,
 		const ITMHashEntry* sourceHashTable,
 		int noTotalEntries,
-		uchar* entriesAllocType,
+		ITMLib::HashEntryState* entriesAllocType,
 		Vector3s* allocationBlockCoords,
 		CopyAllocationTempData* allocData,
 		CopyHashBlockPairInfo* copyHashIdBuffer,
@@ -213,7 +213,7 @@ __global__ void determineDestinationAllocationForNoOffsetCopy_device(
 
 	const ITMHashEntry& currentSourceHashEntry = sourceHashTable[sourceHash];
 	if (currentSourceHashEntry.ptr < 0) return;
-	Vector3i originalHashBlockPosition = currentSourceHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+	Vector3i originalHashBlockPosition = currentSourceHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 	bool isFullyInRange = IsHashBlockFullyInRange(originalHashBlockPosition, bounds);
 	bool isPartiallyInRange = false;
 	if (!isFullyInRange) {
@@ -229,7 +229,7 @@ __global__ void determineDestinationAllocationForNoOffsetCopy_device(
 	//report operation success, as we know some voxels will be copied here
 	allocData->success = true;
 	//mark which hash to copy from and which to copy to
-	int bufferIdx = atomicAdd(&allocData->noBlocksToCopy, 1);
+	int bufferIdx = atomicAdd(&allocData->countOfBlocksToCopy, 1);
 	copyHashIdBuffer[bufferIdx].sourceHash = sourceHash;
 	copyHashIdBuffer[bufferIdx].destinationHash = destinationHash;
 	copyHashIdBuffer[bufferIdx].fullyInBounds = isFullyInRange;
@@ -241,7 +241,7 @@ __global__ void determineDestinationAllocationForNoOffsetCopy_device(
 		ITMHashEntry* destinationHashTable,
 		const ITMHashEntry* sourceHashTable,
 		const int noTotalEntries,
-		uchar* entriesAllocType,
+		ITMLib::HashEntryState* entriesAllocType,
 		Vector3s* allocationBlockCoords,
 		CopyAllocationTempData* allocData,
 		CopyHashBlockPairInfo* copyHashIdBuffer) {
@@ -259,7 +259,7 @@ __global__ void determineDestinationAllocationForNoOffsetCopy_device(
 	// report operation success, as we know some voxels will be copied here
 	allocData->success = true;
 	// mark which hash to copy from and which to copy to
-	int bufferIdx = atomicAdd(&allocData->noBlocksToCopy, 1);
+	int bufferIdx = atomicAdd(&allocData->countOfBlocksToCopy, 1);
 	copyHashIdBuffer[bufferIdx].sourceHash = sourceHash;
 	copyHashIdBuffer[bufferIdx].destinationHash = destinationHash;
 	copyHashIdBuffer[bufferIdx].fullyInBounds = true;
@@ -269,7 +269,7 @@ __global__ void determineDestinationAllocationForNoOffsetCopy_device(
 __global__ void determineDestinationAllocationForOffsetCopy_device(
 		ITMHashEntry* destinationHashTable,
 		const ITMHashEntry* sourceHashTable,
-		uchar* entriesAllocType,
+		ITMLib::HashEntryState* entriesAllocType,
 		Vector3s* allocationBlockCoords,
 		CopyAllocationTempData* allocData,
 		OffsetCopyHashBlockInfo* copyHashIdBuffer,
@@ -300,10 +300,10 @@ __global__ void determineDestinationAllocationForOffsetCopy_device(
 	//report operation success, as we know some voxels will be copied here
 	allocData->success = true;
 	//mark which hash to copy from and which to copy to
-	int bufferIdx = atomicAdd(&allocData->noBlocksToCopy, 1);
+	int bufferIdx = atomicAdd(&allocData->countOfBlocksToCopy, 1);
 	copyHashIdBuffer[bufferIdx].destinationHash = destinationHash;
 	copyHashIdBuffer[bufferIdx].fullyInBounds =
-			IsHashBlockFullyInRange(destinationBlockPos.toInt() * SDF_BLOCK_SIZE, destinationBounds);
+			IsHashBlockFullyInRange(destinationBlockPos.toInt() * VOXEL_BLOCK_SIZE, destinationBounds);
 
 }
 

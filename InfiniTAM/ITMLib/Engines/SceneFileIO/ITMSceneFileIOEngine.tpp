@@ -50,7 +50,7 @@ void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(con
 
 	const TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* hashTable = scene->index.GetEntries();
-	int noTotalEntries = scene->index.noTotalEntries;
+	int noTotalEntries = scene->index.hashEntryCount;
 
 	int lastExcessListId = scene->index.GetLastFreeExcessListId();
 	outFilter.write(reinterpret_cast<const char* >(&scene->localVBA.lastFreeBlockId), sizeof(int));
@@ -75,8 +75,8 @@ void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(con
 		if (currentHashEntry.ptr < 0) continue;
 		outFilter.write(reinterpret_cast<const char* >(&entryId), sizeof(int));
 		outFilter.write(reinterpret_cast<const char* >(&currentHashEntry), sizeof(ITMHashEntry));
-		const TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-		outFilter.write(reinterpret_cast<const char* >(localVoxelBlock), sizeof(TVoxel)*SDF_BLOCK_SIZE3);
+		const TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
+		outFilter.write(reinterpret_cast<const char* >(localVoxelBlock), sizeof(TVoxel) * VOXEL_BLOCK_SIZE3);
 	}
 
 	if(tempSceneUsed){
@@ -107,7 +107,7 @@ ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(ITMVox
 
 	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* hashTable = scene->index.GetEntries();
-	int noTotalEntries = scene->index.noTotalEntries;
+	int noTotalEntries = scene->index.hashEntryCount;
 	int lastExcessListId;
 	int lastOrderedListId;
 	inFilter.read(reinterpret_cast<char* >(&lastOrderedListId), sizeof(int));
@@ -123,8 +123,8 @@ ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(ITMVox
 		inFilter.read(reinterpret_cast<char* >(&entryId), sizeof(int));
 		ITMHashEntry& currentHashEntry = hashTable[entryId];
 		inFilter.read(reinterpret_cast<char* >(&currentHashEntry), sizeof(ITMHashEntry));
-		TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-		inFilter.read(reinterpret_cast<char* >(localVoxelBlock), sizeof(TVoxel)*SDF_BLOCK_SIZE3);
+		TVoxel* localVoxelBlock = &(voxelBlocks[currentHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
+		inFilter.read(reinterpret_cast<char* >(localVoxelBlock), sizeof(TVoxel) * VOXEL_BLOCK_SIZE3);
 	}
 
 	if(copyToCUDA){

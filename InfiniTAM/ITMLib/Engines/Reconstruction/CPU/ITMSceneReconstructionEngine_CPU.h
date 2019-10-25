@@ -14,9 +14,6 @@ namespace ITMLib
 	template<class TVoxel>
 	class ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash> : public ITMSceneReconstructionEngine < TVoxel, ITMVoxelBlockHash >
 	{
-	protected:
-		ORUtils::MemoryBlock<unsigned char> *entriesAllocType;
-		ORUtils::MemoryBlock<Vector3s> *blockCoords;
 
 	public:
 		void ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene);
@@ -27,8 +24,8 @@ namespace ITMLib
 		void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const ITMView *view, const ITMTrackingState *trackingState,
 		                        const ITMRenderState *renderState);
 
-		ITMSceneReconstructionEngine_CPU(void);
-		~ITMSceneReconstructionEngine_CPU(void);
+		ITMSceneReconstructionEngine_CPU() = default;
+		~ITMSceneReconstructionEngine_CPU() = default;
 	};
 
 	template<class TVoxel>

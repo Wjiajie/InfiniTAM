@@ -22,14 +22,14 @@
 
 
 struct CopyAllocationTempData {
-	int noAllocatedVoxelEntries;
-	int noAllocatedExcessEntries;
-	int noBlocksToCopy;
+	int countOfAllocatedOrderedEntries;
+	int countOfAllocatedExcessEntries;
+	int countOfBlocksToCopy;
 	bool success;
 };
 
 template<typename TVoxel>
-struct ReadVoxelResult{
+struct ReadVoxelResult {
 	TVoxel voxel;
 	bool found;
 };
@@ -40,7 +40,7 @@ struct CopyHashBlockPairInfo {
 	bool fullyInBounds;
 };
 
-struct OffsetCopyHashBlockInfo{
+struct OffsetCopyHashBlockInfo {
 	int destinationHash;
 	bool fullyInBounds;
 };
@@ -57,7 +57,7 @@ bool FindOrAllocateHashEntry(const Vector3s& hashEntryPosition, ITMHashEntry* ha
 		//search excess list only if there is no room in ordered part
 		if (hashEntry.ptr >= -1) {
 			while (hashEntry.offset >= 1) {
-				hash = DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1;
+				hash = ORDERED_LIST_SIZE + hashEntry.offset - 1;
 				hashEntry = hashTable[hash];
 				if (IS_EQUAL3(hashEntry.pos, hashEntryPosition) && hashEntry.ptr >= -1) {
 					resultEntry = &hashTable[hash];
@@ -76,9 +76,9 @@ bool FindOrAllocateHashEntry(const Vector3s& hashEntryPosition, ITMHashEntry* ha
 			newHashEntry.offset = 0;
 			int exlOffset = excessAllocationList[lastFreeExcessListId];
 			hashTable[hash].offset = exlOffset + 1; //connect to child
-			hashTable[DEFAULT_ORDERED_LIST_SIZE +
+			hashTable[ORDERED_LIST_SIZE +
 			          exlOffset] = newHashEntry; //add child to the excess list
-			resultEntry = &hashTable[DEFAULT_ORDERED_LIST_SIZE +
+			resultEntry = &hashTable[ORDERED_LIST_SIZE +
 			                         exlOffset];
 			lastFreeVoxelBlockId--;
 			lastFreeExcessListId--;
@@ -109,11 +109,12 @@ _CPU_AND_GPU_CODE_
 inline
 bool
 IsHashBlockFullyInRange(const Vector3i& hashBlockPositionVoxels, const Vector6i& bounds) {
-	return hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 <= bounds.max_x &&
+	return hashBlockPositionVoxels.x + VOXEL_BLOCK_SIZE - 1 <= bounds.max_x &&
 	       hashBlockPositionVoxels.x >= bounds.min_x &&
-	       hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 <= bounds.max_y &&
+	       hashBlockPositionVoxels.y + VOXEL_BLOCK_SIZE - 1 <= bounds.max_y &&
 	       hashBlockPositionVoxels.y >= bounds.min_y &&
-	       hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 <= bounds.max_z && hashBlockPositionVoxels.z >= bounds.min_z;
+	       hashBlockPositionVoxels.z + VOXEL_BLOCK_SIZE - 1 <= bounds.max_z &&
+	       hashBlockPositionVoxels.z >= bounds.min_z;
 }
 
 //TODO: move to GeometryBooleanOperations in Utils
@@ -121,12 +122,12 @@ _CPU_AND_GPU_CODE_
 inline
 bool IsHashBlockPartiallyInRange(const Vector3i& hashBlockPositionVoxels, const Vector6i& bounds) {
 	//@formatter:off
-	return ((hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 >= bounds.max_x && hashBlockPositionVoxels.x <= bounds.max_x)
-	     || (hashBlockPositionVoxels.x + SDF_BLOCK_SIZE - 1 >= bounds.min_x && hashBlockPositionVoxels.x <= bounds.min_x)) &&
-	       ((hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 >= bounds.max_y && hashBlockPositionVoxels.y <= bounds.max_y)
-	     || (hashBlockPositionVoxels.y + SDF_BLOCK_SIZE - 1 >= bounds.min_y && hashBlockPositionVoxels.y <= bounds.min_y)) &&
-	       ((hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 >= bounds.max_z && hashBlockPositionVoxels.z <= bounds.max_z)
-	     || (hashBlockPositionVoxels.z + SDF_BLOCK_SIZE - 1 >= bounds.min_z && hashBlockPositionVoxels.z <= bounds.min_z));
+	return ((hashBlockPositionVoxels.x + VOXEL_BLOCK_SIZE - 1 >= bounds.max_x && hashBlockPositionVoxels.x <= bounds.max_x)
+	     || (hashBlockPositionVoxels.x + VOXEL_BLOCK_SIZE - 1 >= bounds.min_x && hashBlockPositionVoxels.x <= bounds.min_x)) &&
+	       ((hashBlockPositionVoxels.y + VOXEL_BLOCK_SIZE - 1 >= bounds.max_y && hashBlockPositionVoxels.y <= bounds.max_y)
+	     || (hashBlockPositionVoxels.y + VOXEL_BLOCK_SIZE - 1 >= bounds.min_y && hashBlockPositionVoxels.y <= bounds.min_y)) &&
+	       ((hashBlockPositionVoxels.z + VOXEL_BLOCK_SIZE - 1 >= bounds.max_z && hashBlockPositionVoxels.z <= bounds.max_z)
+	     || (hashBlockPositionVoxels.z + VOXEL_BLOCK_SIZE - 1 >= bounds.min_z && hashBlockPositionVoxels.z <= bounds.min_z));
 	//@formatter:on
 }
 
@@ -143,7 +144,8 @@ bool IsHashBlockPartiallyInRange(const Vector3i& hashBlockPositionVoxels, const 
  * \return true if the block needs allocation, false otherwise
  */
 _CPU_AND_GPU_CODE_
-inline bool MarkAsNeedingAllocationIfNotFound(uchar* entryAllocationTypes, Vector3s* hashBlockCoordinates, int& hashIdx,
+inline bool MarkAsNeedingAllocationIfNotFound(ITMLib::HashEntryState* entryAllocationTypes,
+                                              Vector3s* hashBlockCoordinates, int& hashIdx,
                                               const CONSTPTR(Vector3s)& desiredHashBlockPosition,
                                               const CONSTPTR(ITMHashEntry)* hashTable, bool& collisionDetected) {
 
@@ -154,7 +156,7 @@ inline bool MarkAsNeedingAllocationIfNotFound(uchar* entryAllocationTypes, Vecto
 		if (hashEntry.ptr >= -1) {
 			//search excess list only if there is no room in ordered part
 			while (hashEntry.offset >= 1) {
-				hashIdx = DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1;
+				hashIdx = ORDERED_LIST_SIZE + hashEntry.offset - 1;
 				hashEntry = hashTable[hashIdx];
 
 				if (IS_EQUAL3(hashEntry.pos, desiredHashBlockPosition) && hashEntry.ptr >= -1) {
@@ -186,12 +188,12 @@ inline bool MarkAsNeedingAllocationIfNotFound(uchar* entryAllocationTypes, Vecto
 
 };
 
- /**
-  * \brief find the hash block at the specified spatial coordinates (in blocks, not voxels!) and return its hash
-  * \param voxelIndex
-  * \param at
-  * \return
-  */
+/**
+ * \brief find the hash block at the specified spatial coordinates (in blocks, not voxels!) and return its hash
+ * \param voxelIndex
+ * \param at
+ * \return
+ */
 _CPU_AND_GPU_CODE_
 inline int
 FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, const THREADPTR(Vector3s)& at) {
@@ -204,24 +206,24 @@ FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, 
 		}
 
 		if (hashEntry.offset < 1) break;
-		hash = DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1;
+		hash = ORDERED_LIST_SIZE + hashEntry.offset - 1;
 	}
 	return -1;
 }
 
 _CPU_AND_GPU_CODE_
-inline void 
+inline void
 ComputeVoxelBlockOffsetRange(const CONSTPTR(Vector3i)& offset,
-                             THREADPTR(Vector6i)& offsetRange){
-#define  ITM_CMP(a,b)    (((a) > (b)) - ((a) < (b)))
+                             THREADPTR(Vector6i)& offsetRange) {
+#define  ITM_CMP(a, b)    (((a) > (b)) - ((a) < (b)))
 #define  ITM_SIGN(a)     ITM_CMP((a),0)
 
-	int xA = offset.x / SDF_BLOCK_SIZE;
-	int xB = xA + ITM_SIGN(offset.x % SDF_BLOCK_SIZE);
-	int yA = offset.y / SDF_BLOCK_SIZE;
-	int yB = yA + ITM_SIGN(offset.y % SDF_BLOCK_SIZE);
-	int zA = offset.z / SDF_BLOCK_SIZE;
-	int zB = zA + ITM_SIGN(offset.z % SDF_BLOCK_SIZE);
+	int xA = offset.x / VOXEL_BLOCK_SIZE;
+	int xB = xA + ITM_SIGN(offset.x % VOXEL_BLOCK_SIZE);
+	int yA = offset.y / VOXEL_BLOCK_SIZE;
+	int yB = yA + ITM_SIGN(offset.y % VOXEL_BLOCK_SIZE);
+	int zA = offset.z / VOXEL_BLOCK_SIZE;
+	int zB = zA + ITM_SIGN(offset.z % VOXEL_BLOCK_SIZE);
 	int tmp;
 	if (xA > xB) {
 		tmp = xA;
@@ -264,10 +266,10 @@ HashBlockAllocatedAtOffset(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)*
 	ComputeVoxelBlockOffsetRange(offset, blockRange);
 
 	bool allocated = false;
-	for (int z = blockCoord.z + blockRange.min_z; z < blockCoord.z + blockRange.max_z; z++){
-		for (int y = blockCoord.y + blockRange.min_y; y < blockCoord.y + blockRange.max_y; y++){
-			for (int x = blockCoord.x + blockRange.min_x; x < blockCoord.x + blockRange.max_x; x++){
-				if(FindHashBlock(targetIndex, Vector3s(x,y,z)) != -1){
+	for (int z = blockCoord.z + blockRange.min_z; z < blockCoord.z + blockRange.max_z; z++) {
+		for (int y = blockCoord.y + blockRange.min_y; y < blockCoord.y + blockRange.max_y; y++) {
+			for (int x = blockCoord.x + blockRange.min_x; x < blockCoord.x + blockRange.max_x; x++) {
+				if (FindHashBlock(targetIndex, Vector3s(x, y, z)) != -1) {
 					allocated = true;
 				}
 			}
@@ -290,10 +292,10 @@ HashBlockAllocatedAtOffset(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)*
                            const CONSTPTR(Vector6i)& offsetBlockRange) {
 
 	bool allocated = false;
-	for (int z = blockCoord.z + offsetBlockRange.min_z; z < blockCoord.z + offsetBlockRange.max_z; z++){
-		for (int y = blockCoord.y + offsetBlockRange.min_y; y < blockCoord.y + offsetBlockRange.max_y; y++){
-			for (int x = blockCoord.x + offsetBlockRange.min_x; x < blockCoord.x + offsetBlockRange.max_x; x++){
-				if(FindHashBlock(targetIndex, Vector3s(x,y,z)) != -1){
+	for (int z = blockCoord.z + offsetBlockRange.min_z; z < blockCoord.z + offsetBlockRange.max_z; z++) {
+		for (int y = blockCoord.y + offsetBlockRange.min_y; y < blockCoord.y + offsetBlockRange.max_y; y++) {
+			for (int x = blockCoord.x + offsetBlockRange.min_x; x < blockCoord.x + offsetBlockRange.max_x; x++) {
+				if (FindHashBlock(targetIndex, Vector3s(x, y, z)) != -1) {
 					allocated = true;
 				}
 			}
@@ -334,27 +336,28 @@ void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, 
                         ITMLib::ITMVoxelBlockHash::IndexCache& cache, const CONSTPTR(Vector3i)& point) {
 	Vector3i blockPos;
 	int linearIdx = pointToVoxelBlockPos(point, blockPos);
-	zInBlock = linearIdx / (SDF_BLOCK_SIZE * SDF_BLOCK_SIZE);
-	yInBlock = (linearIdx % (SDF_BLOCK_SIZE * SDF_BLOCK_SIZE)) / SDF_BLOCK_SIZE;
-	xInBlock = linearIdx - zInBlock * (SDF_BLOCK_SIZE*SDF_BLOCK_SIZE) - yInBlock * SDF_BLOCK_SIZE;
+	zInBlock = linearIdx / (VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE);
+	yInBlock = (linearIdx % (VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE)) / VOXEL_BLOCK_SIZE;
+	xInBlock = linearIdx - zInBlock * (VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE) - yInBlock * VOXEL_BLOCK_SIZE;
 	locId = linearIdx;
 
-	if IS_EQUAL3(blockPos, cache.blockPos){
+	if IS_EQUAL3(blockPos, cache.blockPos) {
 		vmIndex = true;
 	}
 
 	int hashIdx = hashIndex(blockPos);
 
-	while (true){
+	while (true) {
 		ITMHashEntry hashEntry = hashEntries[hashIdx];
 
-		if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= 0){
-			cache.blockPos = blockPos; cache.blockPtr = hashEntry.ptr * SDF_BLOCK_SIZE3;
+		if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= 0) {
+			cache.blockPos = blockPos;
+			cache.blockPtr = hashEntry.ptr * VOXEL_BLOCK_SIZE3;
 			vmIndex = hashIdx + 1; // add 1 to support legacy true / false operations for isFound
 		}
 
 		if (hashEntry.offset < 1) break;
-		hashIdx = DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1;
+		hashIdx = ORDERED_LIST_SIZE + hashEntry.offset - 1;
 	}
 
 	vmIndex = false;

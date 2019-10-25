@@ -40,7 +40,7 @@ struct ComputeVoxelBoundsFunctor<TVoxel, ITMVoxelBlockHash> {
 		Vector6i bounds = Vector6i(0);
 		const TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
-		int noTotalEntries = scene->index.noTotalEntries;
+		int noTotalEntries = scene->index.hashEntryCount;
 
 		dim3 cudaBlockSize(256, 1);
 		dim3 cudaGridSize((int) ceil((float) noTotalEntries / (float) cudaBlockSize.x));
@@ -62,7 +62,7 @@ struct ComputeVoxelBoundsFunctor<TVoxel, ITMVoxelBlockHash> {
 template<typename TVoxel>
 struct ComputeVoxelBoundsFunctor<TVoxel, ITMPlainVoxelArray> {
 	static Vector6i Compute(const ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) {
-		const ITMPlainVoxelArray::IndexData* indexData = scene->index.getIndexData();
+		const ITMPlainVoxelArray::IndexData* indexData = scene->index.GetIndexData();
 		return Vector6i(indexData->offset.x, indexData->offset.y, indexData->offset.z,
 		                indexData->offset.x + indexData->size.x, indexData->offset.y + indexData->size.y,
 		                indexData->offset.z + indexData->size.z);
@@ -88,27 +88,27 @@ ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::GetFilledHashBlockIds(ITMVoxe
 }
 
 
-template<typename TIndexData>
+template<typename TIndex>
 struct ComputeAllocatedHashBlockCountFunctor;
 
 template<>
-struct ComputeAllocatedHashBlockCountFunctor<ITMPlainVoxelArray::IndexData>{
+struct ComputeAllocatedHashBlockCountFunctor<ITMPlainVoxelArray>{
 	inline
-	static int compute(ITMPlainVoxelArray::IndexData* indexData){
+	static int compute(const ITMPlainVoxelArray& index){
 		return 0;
 	}
 };
 
 template<>
-struct ComputeAllocatedHashBlockCountFunctor<ITMHashEntry>{
+struct ComputeAllocatedHashBlockCountFunctor<ITMVoxelBlockHash>{
 	inline
-	static int compute(ITMHashEntry* hashTable){
+	static int compute(const ITMVoxelBlockHash& index){
 		dim3 cudaBlockSize(256, 1);
-		dim3 cudaGridSize((int) ceil((float) ITMVoxelBlockHash::noTotalEntries / (float) cudaBlockSize.x));
+		dim3 cudaGridSize((int) ceil((float) index.hashEntryCount / (float) cudaBlockSize.x));
 		ORUtils::MemoryBlock<int> result(1,true,true);
 		*result.GetData(MEMORYDEVICE_CPU) = 0;
 		result.UpdateDeviceFromHost();
-		computeHashBlockCount<< <cudaGridSize, cudaBlockSize>> >(hashTable, ITMVoxelBlockHash::noTotalEntries,
+		computeHashBlockCount<< <cudaGridSize, cudaBlockSize>> >(index.GetIndexData(), index.hashEntryCount,
 				result.GetData(MEMORYDEVICE_CUDA));
 		ORcudaKernelCheck;
 		result.UpdateHostFromDevice();
@@ -120,7 +120,7 @@ struct ComputeAllocatedHashBlockCountFunctor<ITMHashEntry>{
 template<typename TVoxel, typename TIndex>
 int ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeAllocatedHashBlockCount(
 		ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return ComputeAllocatedHashBlockCountFunctor<typename TIndex::IndexData>::compute(scene->index.getIndexData());
+	return ComputeAllocatedHashBlockCountFunctor<TIndex>::compute(scene->index);
 }
 
 
@@ -213,14 +213,14 @@ __global__ void computeVoxelBounds(const ITMHashEntry* hashTable, Vector6i* boun
 	const ITMHashEntry& hashEntry = hashTable[hash];
 	if (hashEntry.ptr < 0) return;
 
-	Vector3i hashEntryPosVoxels = hashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+	Vector3i hashEntryPosVoxels = hashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 
 	atomicMin(&(bounds->min_x), hashEntryPosVoxels.x);
 	atomicMin(&(bounds->min_y), hashEntryPosVoxels.y);
 	atomicMin(&(bounds->min_z), hashEntryPosVoxels.z);
-	atomicMax(&(bounds->max_x), hashEntryPosVoxels.x + SDF_BLOCK_SIZE);
-	atomicMax(&(bounds->max_y), hashEntryPosVoxels.y + SDF_BLOCK_SIZE);
-	atomicMax(&(bounds->max_z), hashEntryPosVoxels.z + SDF_BLOCK_SIZE);
+	atomicMax(&(bounds->max_x), hashEntryPosVoxels.x + VOXEL_BLOCK_SIZE);
+	atomicMax(&(bounds->max_y), hashEntryPosVoxels.y + VOXEL_BLOCK_SIZE);
+	atomicMax(&(bounds->max_z), hashEntryPosVoxels.z + VOXEL_BLOCK_SIZE);
 }
 __global__ void computeHashBlockCount(const ITMHashEntry* hashTable, int noTotalEntries, int* count){
 	int hash = threadIdx.x + blockIdx.x * blockDim.x;

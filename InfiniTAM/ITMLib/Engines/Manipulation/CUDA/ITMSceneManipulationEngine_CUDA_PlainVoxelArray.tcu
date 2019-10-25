@@ -120,8 +120,8 @@ template<typename TVoxel>
 void
 ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ResetScene(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) {
-	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
-	int blockSize = scene->index.getVoxelBlockSize();
+	int numBlocks = scene->index.GetAllocatedBlockCount();
+	int blockSize = scene->index.GetVoxelBlockSize();
 
 	TVoxel* voxelBlocks_ptr = scene->localVBA.GetVoxelBlocks();
 	memsetKernel<TVoxel>(voxelBlocks_ptr, TVoxel(), numBlocks * blockSize);
@@ -136,7 +136,7 @@ bool
 ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::SetVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
                                                                       Vector3i at, TVoxel voxel) {
 	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.getIndexData();
+	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.GetIndexData();
 	setVoxel_device<TVoxel> << < 1, 1 >> > (localVBA, arrayInfo, at, voxel);
 	ORcudaKernelCheck;
 	return true;
@@ -149,7 +149,7 @@ ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ReadVoxel(
 		Vector3i at) {
 
 	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.getIndexData();
+	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.GetIndexData();
 
 	readVoxel_device<TVoxel> << < 1, 1 >> >
 	                                 (localVBA, arrayInfo, at, (ReadVoxelResult<TVoxel>*) readVoxelResult_device);
@@ -191,7 +191,7 @@ ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::IsPointInBounds(
 	bool* in_bounds_CUDA;
 	ORcudaSafeCall(cudaMalloc((void**) &in_bounds_CUDA, sizeof(bool)));
 	bool in_bounds;
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.getIndexData();
+	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.GetIndexData();
 	isPointInBounds_device << < 1, 1 >> > (arrayInfo, at, in_bounds_CUDA);
 	ORcudaKernelCheck;
 	ORcudaSafeCall(cudaMemcpy(&in_bounds, in_bounds_CUDA, sizeof(bool), cudaMemcpyDeviceToHost));
@@ -238,22 +238,22 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::CopySceneSlice
 	TVoxel* destinationVoxels = destination->localVBA.GetVoxelBlocks();
 
 	if (offset == Vector3i(0)) {
-		const ITMPlainVoxelArray::IndexData* indexData = source->index.getIndexData();
+		const ITMPlainVoxelArray::IndexData* indexData = source->index.GetIndexData();
 
 		dim3 cudaBlockSize(8, 8, 8);
-		dim3 gridSize(source->index.getVolumeSize().x / cudaBlockSize.x,
-		              source->index.getVolumeSize().y / cudaBlockSize.y,
-		              source->index.getVolumeSize().z / cudaBlockSize.z);
+		dim3 gridSize(source->index.GetVolumeSize().x / cudaBlockSize.x,
+		              source->index.GetVolumeSize().y / cudaBlockSize.y,
+		              source->index.GetVolumeSize().z / cudaBlockSize.z);
 
 		directCopy_device<TVoxel> << < gridSize, cudaBlockSize >> > (destinationVoxels, sourceVoxels, indexData);
 		ORcudaKernelCheck;
 
 	} else {
-		const ITMPlainVoxelArray::IndexData* sourceIndexData = source->index.getIndexData();
-		const ITMPlainVoxelArray::IndexData* destinationIndexData = destination->index.getIndexData();
+		const ITMPlainVoxelArray::IndexData* sourceIndexData = source->index.GetIndexData();
+		const ITMPlainVoxelArray::IndexData* destinationIndexData = destination->index.GetIndexData();
 
 		Vector3i extent = max_pt_source + Vector3i(1,1,1) - min_pt_source;
-		Vector3i minSourcePointSansOffset = min_pt_source - source->index.getVolumeOffset();
+		Vector3i minSourcePointSansOffset = min_pt_source - source->index.GetVolumeOffset();
 		dim3 cudaBlockSize(8, 8, 8);
 		//(int) ceil((float) totalHashEntryCount / (float) cudaBlockSizeAL.x)
 		dim3 gridSize((int) ceil((float) extent.x / (float) cudaBlockSize.x),
@@ -272,8 +272,8 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray>::CopySceneSlice
 
 template<typename TVoxel>
 inline static Vector6i GetSceneBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source) {
-	Vector3i offset = source->index.getVolumeOffset();
-	Vector3i size = source->index.getVolumeSize();
+	Vector3i offset = source->index.GetVolumeOffset();
+	Vector3i size = source->index.GetVolumeSize();
 	return {offset.x, offset.y, offset.z,
 	        offset.x + size.x, offset.y + size.y, offset.z + size.z};
 }

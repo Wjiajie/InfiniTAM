@@ -33,11 +33,11 @@ public:
 	void LoadFromDirectory(const std::string &outputDirectory);
 
 	ITMVoxelVolume(const ITMSceneParams *_sceneParams, bool _useSwapping, MemoryDeviceType _memoryType,
-	               Vector3i size = Vector3i(512), Vector3i offset = Vector3i(-256,-256,0));
+			typename TIndex::InitializationParameters indexParameters = typename TIndex::InitializationParameters());
 
 	ITMVoxelVolume(const ITMVoxelVolume& other, MemoryDeviceType _memoryType);
 
-	~ITMVoxelVolume(void)
+	~ITMVoxelVolume()
 	{
 		if (globalCache != nullptr) delete globalCache;
 	}

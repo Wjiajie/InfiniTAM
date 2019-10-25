@@ -29,10 +29,10 @@ namespace ITMLib {
  */
 template<typename TVoxel, typename TIndex>
 ITMVoxelVolume<TVoxel,TIndex>::ITMVoxelVolume(const ITMSceneParams* _sceneParams, bool _useSwapping, MemoryDeviceType _memoryType,
-                                              Vector3i size, Vector3i offset)
+		typename TIndex::InitializationParameters indexParameters)
 	: sceneParams(_sceneParams),
-		index(_memoryType, size, offset),
-	  localVBA(_memoryType, index.getNumAllocatedVoxelBlocks(), index.getVoxelBlockSize())
+		index(indexParameters, _memoryType),
+	  localVBA(_memoryType, index.GetAllocatedBlockCount(), index.GetVoxelBlockSize())
 {
 	if (_useSwapping) globalCache = new ITMGlobalCache<TVoxel>();
 	else globalCache = nullptr;

@@ -109,7 +109,7 @@ AddVoxelPoint(const Vector3i& currentBlockPositionVoxels, int x, int y, int z, c
 	    voxelPosition.z < bounds.min_z || voxelPosition.z >= bounds.max_z) {
 		return;
 	}
-	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 	const TVoxel& voxel = localVoxelBlock[locId];
 	float sdf = TVoxel::valueToFloat(voxel.sdf);
 	float voxelScale = COMPUTE_VOXEL_SCALE_HIDE_UNKNOWNS(sdf, voxel.flags);

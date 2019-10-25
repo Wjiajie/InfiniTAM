@@ -224,7 +224,7 @@ public:
 	}
 
 	void processHashEntry(const ITMHashEntry& hashEntry) {
-		Vector3i currentBlockPositionVoxels = hashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+		Vector3i currentBlockPositionVoxels = hashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 		const double centerOffset = -0.5;
 		//draw hash block
 		hashBlockPoints->InsertNextPoint((currentBlockPositionVoxels.x + centerOffset),
@@ -332,7 +332,7 @@ void ITMSceneSliceVisualizer3D<TVoxel, TWarp, TIndex>::SetUpGeometrySources() {
 	voxelVizGeometrySource->Update();
 
 	//Voxel hash block shape
-	hashBlockVizGeometrySource->SetBounds(0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE, 0, SDF_BLOCK_SIZE);
+	hashBlockVizGeometrySource->SetBounds(0, VOXEL_BLOCK_SIZE, 0, VOXEL_BLOCK_SIZE, 0, VOXEL_BLOCK_SIZE);
 }
 
 

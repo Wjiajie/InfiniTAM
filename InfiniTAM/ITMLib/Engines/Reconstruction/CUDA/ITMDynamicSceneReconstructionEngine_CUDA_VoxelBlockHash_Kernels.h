@@ -35,16 +35,16 @@ __global__ void integrateIntoScene_device(TVoxel *localVBA, const ITMHashEntry *
 
 	if (currentHashEntry.ptr < 0) return;
 
-	globalPos = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+	globalPos = currentHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 
-	TVoxel* localVoxelBlock = &(localVBA[currentHashEntry.ptr * SDF_BLOCK_SIZE3]);
+	TVoxel* localVoxelBlock = &(localVBA[currentHashEntry.ptr * VOXEL_BLOCK_SIZE3]);
 
 	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
 
 	Vector4f pt_model;
 	int locId;
 
-	locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 
 	pt_model.x = (float) (globalPos.x + x) * _voxelSize;
 	pt_model.y = (float) (globalPos.y + y) * _voxelSize;

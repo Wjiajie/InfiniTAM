@@ -17,8 +17,6 @@ namespace ITMLib
 	private:
 		void *allocationTempData_device;
 		void *allocationTempData_host;
-		unsigned char *entriesAllocType_device;
-		Vector3s *blockCoords_device;
 
 	public:
 		void ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene);

@@ -41,14 +41,14 @@ ReadVoxelRef(THREADPTR(TVoxel)* voxelData, const CONSTPTR(ITMLib::ITMVoxelBlockH
 
 		if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= 0) {
 			cache.blockPos = blockPos;
-			cache.blockPtr = hashEntry.ptr * SDF_BLOCK_SIZE3;
+			cache.blockPtr = hashEntry.ptr * VOXEL_BLOCK_SIZE3;
 			vmIndex = hashIdx + 1; // add 1 to support legacy true / false operations for isFound
 
 			return voxelData[cache.blockPtr + linearIdx];
 		}
 
 		if (hashEntry.offset < 1) break;
-		hashIdx = DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1;
+		hashIdx = ORDERED_LIST_SIZE + hashEntry.offset - 1;
 	}
 	static TVoxel emptyVoxel;
 

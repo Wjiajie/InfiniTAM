@@ -84,7 +84,7 @@ bool isAltered(TVoxel& voxel) {
 template<typename TVoxel>
 inline static bool
 isVoxelBlockAltered(TVoxel* voxelBlock) {
-	for (int locId = 0; locId < SDF_BLOCK_SIZE3; locId++) {
+	for (int locId = 0; locId < VOXEL_BLOCK_SIZE3; locId++) {
 		TVoxel& voxel = voxelBlock[locId];
 		if (isAltered(voxel)) {
 			return true;

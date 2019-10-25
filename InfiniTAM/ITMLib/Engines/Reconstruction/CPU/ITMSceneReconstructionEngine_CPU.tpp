@@ -5,27 +5,11 @@
 #include "../Shared/ITMSceneReconstructionEngine_Shared.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 using namespace ITMLib;
-
-template<class TVoxel>
-ITMSceneReconstructionEngine_CPU<TVoxel,ITMVoxelBlockHash>::ITMSceneReconstructionEngine_CPU(void)
-{
-	size_t noTotalEntries = ITMVoxelBlockHash::noTotalEntries;
-	entriesAllocType = new ORUtils::MemoryBlock<unsigned char>(noTotalEntries, MEMORYDEVICE_CPU);
-	blockCoords = new ORUtils::MemoryBlock<Vector3s>(noTotalEntries, MEMORYDEVICE_CPU);
-}
-
-template<class TVoxel>
-ITMSceneReconstructionEngine_CPU<TVoxel,ITMVoxelBlockHash>::~ITMSceneReconstructionEngine_CPU(void)
-{
-	delete entriesAllocType;
-	delete blockCoords;
-}
-
 template<class TVoxel>
 void ITMSceneReconstructionEngine_CPU<TVoxel,ITMVoxelBlockHash>::ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene)
 {
-	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
-	int blockSize = scene->index.getVoxelBlockSize();
+	int numBlocks = scene->index.GetAllocatedBlockCount();
+	int blockSize = scene->index.GetVoxelBlockSize();
 
 	TVoxel *voxelBlocks_ptr = scene->localVBA.GetVoxelBlocks();
 	for (int i = 0; i < numBlocks * blockSize; ++i) voxelBlocks_ptr[i] = TVoxel();
@@ -37,11 +21,11 @@ void ITMSceneReconstructionEngine_CPU<TVoxel,ITMVoxelBlockHash>::ResetScene(ITMV
 	memset(&tmpEntry, 0, sizeof(ITMHashEntry));
 	tmpEntry.ptr = -2;
 	ITMHashEntry *hashEntry_ptr = scene->index.GetEntries();
-	for (int i = 0; i < scene->index.noTotalEntries; ++i) hashEntry_ptr[i] = tmpEntry;
+	for (int i = 0; i < scene->index.hashEntryCount; ++i) hashEntry_ptr[i] = tmpEntry;
 	int *excessList_ptr = scene->index.GetExcessAllocationList();
-	for (int i = 0; i < SDF_EXCESS_LIST_SIZE; ++i) excessList_ptr[i] = i;
+	for (int i = 0; i < DEFAULT_EXCESS_LIST_SIZE; ++i) excessList_ptr[i] = i;
 
-	scene->index.SetLastFreeExcessListId(SDF_EXCESS_LIST_SIZE - 1);
+	scene->index.SetLastFreeExcessListId(DEFAULT_EXCESS_LIST_SIZE - 1);
 }
 
 template<class TVoxel>
@@ -91,15 +75,15 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 		globalPos.x = currentHashEntry.pos.x;
 		globalPos.y = currentHashEntry.pos.y;
 		globalPos.z = currentHashEntry.pos.z;
-		globalPos *= SDF_BLOCK_SIZE;
+		globalPos *= VOXEL_BLOCK_SIZE;
 
-		TVoxel *localVoxelBlock = &(localVBA[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		TVoxel *localVoxelBlock = &(localVBA[currentHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 
-		for (int z = 0; z < SDF_BLOCK_SIZE; z++) for (int y = 0; y < SDF_BLOCK_SIZE; y++) for (int x = 0; x < SDF_BLOCK_SIZE; x++)
+		for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) for (int x = 0; x < VOXEL_BLOCK_SIZE; x++)
 		{
 			Vector4f pt_model; int locId;
 
-			locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 
 			if (stopIntegratingAtMaxW) if (localVoxelBlock[locId].w_depth == maxW) continue;
 
@@ -147,20 +131,24 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 	ITMHashSwapState *swapStates = scene->Swapping() ? scene->globalCache->GetSwapStates(false) : 0;
 	int *visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
 	uchar *entriesVisibleType = renderState_vh->GetEntriesVisibleType();
-	uchar *entriesAllocType = this->entriesAllocType->GetData(MEMORYDEVICE_CPU);
-	Vector3s *blockCoords = this->blockCoords->GetData(MEMORYDEVICE_CPU);
-	int noTotalEntries = scene->index.noTotalEntries;
+
+	int hashEntryCount = scene->index.hashEntryCount;
+	ORUtils::MemoryBlock<HashEntryState> hashEntryStates (hashEntryCount, MEMORYDEVICE_CPU);
+	ORUtils::MemoryBlock<Vector3s> blockCoords(hashEntryCount, MEMORYDEVICE_CPU);
+	HashEntryState* hashEntryStates_device = hashEntryStates.GetData(MEMORYDEVICE_CPU);
+	Vector3s* blockCoords_device = blockCoords.GetData(MEMORYDEVICE_CPU);
+
 
 	bool useSwapping = scene->Swapping();
 
-	float oneOverHashEntrySize = 1.0f / (voxelSize * SDF_BLOCK_SIZE);//m
+	float oneOverHashEntrySize = 1.0f / (voxelSize * VOXEL_BLOCK_SIZE);//m
 
 	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
 	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
 
 	int noVisibleEntries = 0;
 
-	memset(entriesAllocType, 0, noTotalEntries);
+	memset(hashEntryStates_device, HashEntryState::NEEDS_NO_CHANGE, hashEntryCount);
 
 	for (int i = 0; i < renderState_vh->noVisibleEntries; i++)
 		entriesVisibleType[visibleEntryIDs[i]] = 3; // visible at previous frame and unstreamed
@@ -174,7 +162,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 		int y = locId / depthImgSize.x;
 		int x = locId - y * depthImgSize.x;
 		bool collisionDetected = false;
-		buildHashAllocAndVisibleTypePP(entriesAllocType, entriesVisibleType, x, y, blockCoords, depth, invM_d,
+		buildHashAllocAndVisibleTypePP(hashEntryStates_device, entriesVisibleType, x, y, blockCoords_device, depth, invM_d,
 		                               invProjParams_d, mu, depthImgSize, oneOverHashEntrySize,
 		                               hashTable, scene->sceneParams->viewFrustum_min,
 		                               scene->sceneParams->viewFrustum_max, collisionDetected);
@@ -184,10 +172,10 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 	if (!onlyUpdateVisibleList)
 	{
 		//allocate
-		for (int targetIdx = 0; targetIdx < noTotalEntries; targetIdx++)
+		for (int targetIdx = 0; targetIdx < hashEntryCount; targetIdx++)
 		{
 			int vbaIdx, exlIdx;
-			unsigned char hashChangeType = entriesAllocType[targetIdx];
+			unsigned char hashChangeType = hashEntryStates_device[targetIdx];
 
 			switch (hashChangeType)
 			{
@@ -197,7 +185,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 				if (vbaIdx >= 0) //there is room in the voxel block array
 				{
 					ITMHashEntry hashEntry;
-					hashEntry.pos = blockCoords[targetIdx];
+					hashEntry.pos = blockCoords_device[targetIdx];
 					hashEntry.ptr = voxelAllocationList[vbaIdx];
 					hashEntry.offset = 0;
 
@@ -220,7 +208,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 				if (vbaIdx >= 0 && exlIdx >= 0) //there is room in the voxel block array and excess list
 				{
 					ITMHashEntry hashEntry;
-					hashEntry.pos = blockCoords[targetIdx];
+					hashEntry.pos = blockCoords_device[targetIdx];
 					hashEntry.ptr = voxelAllocationList[vbaIdx];
 					hashEntry.offset = 0;
 
@@ -228,9 +216,9 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 
 					hashTable[targetIdx].offset = exlOffset + 1; //connect to child
 
-					hashTable[DEFAULT_ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
+					hashTable[ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
 
-					entriesVisibleType[DEFAULT_ORDERED_LIST_SIZE + exlOffset] = 1; //make child visible and in memory
+					entriesVisibleType[ORDERED_LIST_SIZE + exlOffset] = 1; //make child visible and in memory
 				}
 				else
 				{
@@ -246,7 +234,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 	}
 
 	//build visible list
-	for (int targetIdx = 0; targetIdx < noTotalEntries; targetIdx++)
+	for (int targetIdx = 0; targetIdx < hashEntryCount; targetIdx++)
 	{
 		unsigned char hashVisibleType = entriesVisibleType[targetIdx];
 		const ITMHashEntry &hashEntry = hashTable[targetIdx];
@@ -290,7 +278,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 	//reallocate deleted ones from previous swap operation
 	if (useSwapping)
 	{
-		for (int targetIdx = 0; targetIdx < noTotalEntries; targetIdx++)
+		for (int targetIdx = 0; targetIdx < hashEntryCount; targetIdx++)
 		{
 			int vbaIdx;
 			ITMHashEntry hashEntry = hashTable[targetIdx];
@@ -321,8 +309,8 @@ ITMSceneReconstructionEngine_CPU<TVoxel,ITMPlainVoxelArray>::~ITMSceneReconstruc
 template<class TVoxel>
 void ITMSceneReconstructionEngine_CPU<TVoxel,ITMPlainVoxelArray>::ResetScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray> *scene)
 {
-	int numBlocks = scene->index.getNumAllocatedVoxelBlocks();
-	int blockSize = scene->index.getVoxelBlockSize();
+	int numBlocks = scene->index.GetAllocatedBlockCount();
+	int blockSize = scene->index.GetVoxelBlockSize();
 
 	TVoxel *voxelBlocks_ptr = scene->localVBA.GetVoxelBlocks();
 	for (int i = 0; i < numBlocks * blockSize; ++i) voxelBlocks_ptr[i] = TVoxel();
@@ -360,7 +348,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMPlainVoxelArray>::IntegrateInto
 	Vector4u *rgb = view->rgb->GetData(MEMORYDEVICE_CPU);
 	TVoxel *voxelArray = scene->localVBA.GetVoxelBlocks();
 
-	const ITMPlainVoxelArray::IndexData *arrayInfo = scene->index.getIndexData();
+	const ITMPlainVoxelArray::IndexData *arrayInfo = scene->index.GetIndexData();
 
 	bool stopIntegratingAtMaxW = scene->sceneParams->stopIntegratingAtMaxW;
 	//bool approximateIntegration = !trackingState->requiresFullRendering;
@@ -368,12 +356,13 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMPlainVoxelArray>::IntegrateInto
 #ifdef WITH_OPENMP
 	#pragma omp parallel for
 #endif
-	for (int locId = 0; locId < scene->index.getVolumeSize().x*scene->index.getVolumeSize().y*scene->index.getVolumeSize().z; ++locId)
+	for (int locId = 0; locId < scene->index.GetVolumeSize().x * scene->index.GetVolumeSize().y *
+	                            scene->index.GetVolumeSize().z; ++locId)
 	{
-		int z = locId / (scene->index.getVolumeSize().x*scene->index.getVolumeSize().y);
-		int tmp = locId - z * scene->index.getVolumeSize().x*scene->index.getVolumeSize().y;
-		int y = tmp / scene->index.getVolumeSize().x;
-		int x = tmp - y * scene->index.getVolumeSize().x;
+		int z = locId / (scene->index.GetVolumeSize().x * scene->index.GetVolumeSize().y);
+		int tmp = locId - z * scene->index.GetVolumeSize().x * scene->index.GetVolumeSize().y;
+		int y = tmp / scene->index.GetVolumeSize().x;
+		int x = tmp - y * scene->index.GetVolumeSize().x;
 
 		Vector4f pt_model;
 

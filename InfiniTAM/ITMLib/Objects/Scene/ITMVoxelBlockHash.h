@@ -3,49 +3,49 @@
 #pragma once
 
 #ifndef __METALC__
+
 #include <stdlib.h>
 #include <fstream>
 #include <iostream>
+
 #endif
 
 #include "../../Utils/ITMMath.h"
 #include "../../../ORUtils/MemoryBlock.h"
 #include "../../../ORUtils/MemoryBlockPersister.h"
 
-// SDF block size
-#define SDF_BLOCK_SIZE 8
-// SDF_BLOCK_SIZE3 = SDF_BLOCK_SIZE * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE
-#define SDF_BLOCK_SIZE3 512
+#define VOXEL_BLOCK_SIZE 8
+// VOXEL_BLOCK_SIZE3 = VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE
+#define VOXEL_BLOCK_SIZE3 512
 
 // Number of locally stored blocks, currently 2^17
-#define DEFAULT_SDF_LOCAL_BLOCK_NUM 0x40000
+#define DEFAULT_VOXEL_BLOCK_NUM 0x40000
 
-// Number of Hash Buckets, should be 2^n and bigger than DEFAULT_SDF_LOCAL_BLOCK_NUM, SDF_HASH_MASK = DEFAULT_ORDERED_LIST_SIZE - 1
-#define DEFAULT_ORDERED_LIST_SIZE 0x100000
-// Used for get hashing value of the bucket index,  SDF_HASH_MASK = DEFAULT_ORDERED_LIST_SIZE - 1
-#define SDF_HASH_MASK 0xfffff
+// Number of Hash Buckets, should be 2^n and bigger than DEFAULT_VOXEL_BLOCK_NUM, VOXEL_HASH_MASK = ORDERED_LIST_SIZE - 1
+#define ORDERED_LIST_SIZE 0x100000
+// Used for get hashing value of the bucket index,  VOXEL_HASH_MASK = ORDERED_LIST_SIZE - 1
+#define VOXEL_HASH_MASK 0xfffff
 // 0x20000 Size of excess list, used to handle collisions. Also max offset (unsigned short) value.
-#define SDF_EXCESS_LIST_SIZE 0x20000
+#define DEFAULT_EXCESS_LIST_SIZE 0x20000
 
 //// for loop closure
 // Number of locally stored blocks, currently 2^12
-//#define DEFAULT_SDF_LOCAL_BLOCK_NUM 0x10000
+//#define DEFAULT_VOXEL_BLOCK_NUM 0x10000
 //
-// Number of Hash Bucket, should be 2^n and bigger than DEFAULT_SDF_LOCAL_BLOCK_NUM, SDF_HASH_MASK = DEFAULT_ORDERED_LIST_SIZE - 1
-//#define DEFAULT_ORDERED_LIST_SIZE 0x40000
-// Used for get hashing value of the bucket index,  SDF_HASH_MASK = DEFAULT_ORDERED_LIST_SIZE - 1
-//#define SDF_HASH_MASK 0x3ffff
+// Number of Hash Bucket, should be 2^n and bigger than DEFAULT_VOXEL_BLOCK_NUM, VOXEL_HASH_MASK = ORDERED_LIST_SIZE - 1
+//#define ORDERED_LIST_SIZE 0x40000
+// Used for get hashing value of the bucket index,  VOXEL_HASH_MASK = ORDERED_LIST_SIZE - 1
+//#define VOXEL_HASH_MASK 0x3ffff
 // 0x8000 Size of excess list, used to handle collisions. Also max offset (unsigned short) value.
-//#define SDF_EXCESS_LIST_SIZE 0x8000
+//#define DEFAULT_EXCESS_LIST_SIZE 0x8000
 
 // Maximum number of blocks transfered in one swap operation
-#define SDF_TRANSFER_BLOCK_NUM 0x1000
+#define SWAP_OPERATION_BLOCK_COUNT 0x1000
 
 /** \brief
 	A single entry in the hash table.
 */
-struct ITMHashEntry
-{
+struct ITMHashEntry {
 	/** Position of the corner of the 8x8x8 volume, that identifies the entry. */
 	Vector3s pos;
 	/** Offset in the excess list. */
@@ -58,20 +58,23 @@ struct ITMHashEntry
 	int ptr;
 };
 
-namespace ITMLib
-{
+namespace ITMLib {
 /** \brief
 This is the central class for the voxel block hash
 implementation. It contains all the data needed on the CPU
 and a pointer to the data structure on the GPU.
 */
-class ITMVoxelBlockHash
-{
+class ITMVoxelBlockHash {
 public:
-	struct ITMVoxelBlockHashParameters{
-		int allocatedBlockCount;
-		ITMVoxelBlockHashParameters() : allocatedBlockCount(DEFAULT_SDF_LOCAL_BLOCK_NUM){};
+	struct ITMVoxelBlockHashParameters {
+		const int voxelBlockCount;
+		const int excessListSize;
 
+		ITMVoxelBlockHashParameters() : voxelBlockCount(DEFAULT_VOXEL_BLOCK_NUM),
+		                                excessListSize(DEFAULT_EXCESS_LIST_SIZE) {}
+
+		ITMVoxelBlockHashParameters(int voxelBlockCount, int excessListSize) :
+				voxelBlockCount(voxelBlockCount), excessListSize(excessListSize) {}
 	};
 	typedef ITMVoxelBlockHashParameters InitializationParameters;
 	typedef ITMHashEntry IndexData;
@@ -83,9 +86,11 @@ public:
 	};
 
 	/** Maximum number of total entries. */
-	const CONSTPTR(int) noTotalEntries = SDF_BUCKET_NUM + SDF_EXCESS_LIST_SIZE;
-	const CONSTPTR(int) voxelBlockSize = SDF_BLOCK_SIZE3;
-	const CONSTPTR(int) orderedListSize;
+	const CONSTPTR(int) voxelBlockCount;
+	const CONSTPTR(int) excessListSize;
+	const CONSTPTR(int) hashEntryCount;
+	const CONSTPTR(int) voxelBlockSize = VOXEL_BLOCK_SIZE3;
+
 	//const CONSTPTR
 
 #ifndef __METALC__
@@ -94,82 +99,77 @@ private:
 	int lastFreeExcessListId;
 
 	/** The actual data in the hash table. */
-	ORUtils::MemoryBlock<ITMHashEntry> *hashEntries;
+	ORUtils::MemoryBlock<ITMHashEntry>* hashEntries;
 
 	/** Identifies which entries of the overflow
 	list are allocated. This is used if too
 	many hash collisions caused the buckets to
 	overflow.
 	*/
-	ORUtils::MemoryBlock<int> *excessAllocationList;
+	ORUtils::MemoryBlock<int>* excessAllocationList;
 
 	MemoryDeviceType memoryType;
 
-	void Initialize(MemoryDeviceType memoryType){
-		this->memoryType = memoryType;
-		hashEntries = new ORUtils::MemoryBlock<ITMHashEntry>(noTotalEntries, memoryType);
-		excessAllocationList = new ORUtils::MemoryBlock<int>(SDF_EXCESS_LIST_SIZE, memoryType);
-	}
 
 public:
-	MemoryDeviceType getMemoryType() const{
+	MemoryDeviceType getMemoryType() const {
 		return memoryType;
 	}
 
-
-
-	ITMVoxelBlockHash(MemoryDeviceType memoryType)
-	{
-		Initialize(memoryType);
+	ITMVoxelBlockHash(ITMVoxelBlockHashParameters parameters, MemoryDeviceType memoryType) :
+			voxelBlockCount(parameters.voxelBlockCount),
+			excessListSize(parameters.excessListSize),
+			hashEntryCount(ORDERED_LIST_SIZE + parameters.excessListSize) {
+		this->memoryType = memoryType;
+		hashEntries = new ORUtils::MemoryBlock<ITMHashEntry>(hashEntryCount, memoryType);
+		excessAllocationList = new ORUtils::MemoryBlock<int>(excessListSize, memoryType);
 	}
 
-	ITMVoxelBlockHash(MemoryDeviceType memoryType, Vector3i size, Vector3i offset)
-	{
-		Initialize(memoryType);
-	}
+	ITMVoxelBlockHash(MemoryDeviceType memoryType) : ITMVoxelBlockHash(ITMVoxelBlockHashParameters(), memoryType) {}
+
 
 	ITMVoxelBlockHash(const ITMVoxelBlockHash& other, MemoryDeviceType memoryType) :
-		lastFreeExcessListId(other.lastFreeExcessListId)
-	{
-		Initialize(memoryType);
+			ITMVoxelBlockHash({other.voxelBlockCount, other.excessListSize}, memoryType) {
 		this->SetFrom(other);
 	}
 
-	void SetFrom(const ITMVoxelBlockHash& other)
-	{
+	void SetFrom(const ITMVoxelBlockHash& other) {
 		MemoryCopyDirection memoryCopyDirection = determineMemoryCopyDirection(this->memoryType, other.memoryType);
 		this->hashEntries->SetFrom(other.hashEntries, memoryCopyDirection);
 		this->excessAllocationList->SetFrom(other.excessAllocationList, memoryCopyDirection);
 	}
 
-	~ITMVoxelBlockHash(void)
-	{
+	~ITMVoxelBlockHash() {
 		delete hashEntries;
 		delete excessAllocationList;
 	}
 
 	/** Get the list of actual entries in the hash table. */
-	const ITMHashEntry *GetEntries(void) const { return hashEntries->GetData(memoryType); }
-	ITMHashEntry *GetEntries(void) { return hashEntries->GetData(memoryType); }
+	const ITMHashEntry* GetEntries() const { return hashEntries->GetData(memoryType); }
+
+	ITMHashEntry* GetEntries() { return hashEntries->GetData(memoryType); }
 
 	/**Get the memory type used for storage.**/
-	MemoryDeviceType GetMemoryType() const{
+	MemoryDeviceType GetMemoryType() const {
 		return this->memoryType;
 	}
 
 	/** Get the list of actual entries in the hash table (alternative to GetEntries). */
-	const IndexData *getIndexData(void) const { return hashEntries->GetData(memoryType); }
-	IndexData *getIndexData(void) { return hashEntries->GetData(memoryType); }
+	const IndexData* GetIndexData() const { return hashEntries->GetData(memoryType); }
+
+	IndexData* GetIndexData() { return hashEntries->GetData(memoryType); }
 
 	/** Get the list that identifies which entries of the
 	overflow list are allocated. This is used if too
 	many hash collisions caused the buckets to overflow.
 	*/
-	const int *GetExcessAllocationList(void) const { return excessAllocationList->GetData(memoryType); }
-	int *GetExcessAllocationList(void) { return excessAllocationList->GetData(memoryType); }
+	const int* GetExcessAllocationList() const { return excessAllocationList->GetData(memoryType); }
 
-	int GetLastFreeExcessListId(void) const { return lastFreeExcessListId; }
-	void SetLastFreeExcessListId(int lastFreeExcessListId) { this->lastFreeExcessListId = lastFreeExcessListId; }
+	int* GetExcessAllocationList() { return excessAllocationList->GetData(memoryType); }
+
+	int GetLastFreeExcessListId() const { return lastFreeExcessListId; }
+
+	void SetLastFreeExcessListId(int newLastFreeExcessListId) { this->lastFreeExcessListId = newLastFreeExcessListId; }
 
 #ifdef COMPILE_WITH_METAL
 	const void* GetEntries_MB(void) { return hashEntries->GetMetalBuffer(); }
@@ -177,12 +177,14 @@ public:
 		const void* getIndexData_MB(void) const { return hashEntries->GetMetalBuffer(); }
 #endif
 
-	/** Maximum number of total entries. */
-	int getNumAllocatedVoxelBlocks(void) const { return DEFAULT_SDF_LOCAL_BLOCK_NUM; }
-	int getVoxelBlockSize(void) const { return SDF_BLOCK_SIZE3; }
+	/** Number of allocated blocks. */
+	int GetAllocatedBlockCount() const { return this->voxelBlockCount; }
 
-	void SaveToDirectory(const std::string &outputDirectory) const
-	{
+	int GetVoxelBlockSize() const { return this->voxelBlockSize; }
+
+	int GetExcessListSize() const { return this->excessListSize; }
+
+	void SaveToDirectory(const std::string& outputDirectory) const {
 		std::string hashEntriesFileName = outputDirectory + "hash.dat";
 		std::string excessAllocationListFileName = outputDirectory + "excess.dat";
 		std::string lastFreeExcessListIdFileName = outputDirectory + "last.txt";
@@ -195,8 +197,7 @@ public:
 		ORUtils::MemoryBlockPersister::SaveMemoryBlock(excessAllocationListFileName, *excessAllocationList, memoryType);
 	}
 
-	void LoadFromDirectory(const std::string &inputDirectory)
-	{
+	void LoadFromDirectory(const std::string& inputDirectory) {
 		std::string hashEntriesFileName = inputDirectory + "hash.dat";
 		std::string excessAllocationListFileName = inputDirectory + "excess.dat";
 		std::string lastFreeExcessListIdFileName = inputDirectory + "last.txt";
@@ -205,13 +206,14 @@ public:
 		if (!ifs) throw std::runtime_error("Count not open " + lastFreeExcessListIdFileName + " for reading");
 
 		ifs >> this->lastFreeExcessListId;
-		ORUtils::MemoryBlockPersister::LoadMemoryBlock(hashEntriesFileName.c_str(), *hashEntries, memoryType);
-		ORUtils::MemoryBlockPersister::LoadMemoryBlock(excessAllocationListFileName.c_str(), *excessAllocationList, memoryType);
+		ORUtils::MemoryBlockPersister::LoadMemoryBlock(hashEntriesFileName, *hashEntries, memoryType);
+		ORUtils::MemoryBlockPersister::LoadMemoryBlock(excessAllocationListFileName, *excessAllocationList,
+		                                               memoryType);
 	}
 
 	// Suppress the default copy constructor and assignment operator
-	ITMVoxelBlockHash(const ITMVoxelBlockHash&);
-	ITMVoxelBlockHash& operator=(const ITMVoxelBlockHash&);
+	ITMVoxelBlockHash(const ITMVoxelBlockHash&) = delete;
+	ITMVoxelBlockHash& operator=(const ITMVoxelBlockHash&) = delete;
 #endif
 };
 }

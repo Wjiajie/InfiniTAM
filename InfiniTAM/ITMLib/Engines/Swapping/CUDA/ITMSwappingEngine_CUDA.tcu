@@ -43,7 +43,7 @@ ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ITMSwappingEngine_CUDA(void)
 {
 	ORcudaSafeCall(cudaMalloc((void**)&noAllocatedVoxelEntries_device, sizeof(int)));
 	ORcudaSafeCall(cudaMalloc((void**)&noNeededEntries_device, sizeof(int)));
-	ORcudaSafeCall(cudaMalloc((void**)&entriesToClean_device, DEFAULT_SDF_LOCAL_BLOCK_NUM * sizeof(int)));
+	ORcudaSafeCall(cudaMalloc((void**)&entriesToClean_device, DEFAULT_VOXEL_BLOCK_NUM * sizeof(int)));
 }
 
 template<class TVoxel>
@@ -70,7 +70,7 @@ int ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::LoadFromGlobalMemory(ITMV
 	int *neededEntryIDs_global = globalCache->GetNeededEntryIDs(false);
 
 	dim3 blockSize(256);
-	dim3 gridSize((int)ceil((float)scene->index.noTotalEntries / (float)blockSize.x));
+	dim3 gridSize((int)ceil((float)scene->index.hashEntryCount / (float)blockSize.x));
 
 	ORcudaSafeCall(cudaMemset(noNeededEntries_device, 0, sizeof(int)));
 
@@ -83,10 +83,10 @@ int ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::LoadFromGlobalMemory(ITMV
 
 	if (noNeededEntries > 0)
 	{
-		noNeededEntries = MIN(noNeededEntries, SDF_TRANSFER_BLOCK_NUM);
+		noNeededEntries = MIN(noNeededEntries, SWAP_OPERATION_BLOCK_COUNT);
 		ORcudaSafeCall(cudaMemcpy(neededEntryIDs_global, neededEntryIDs_local, sizeof(int) * noNeededEntries, cudaMemcpyDeviceToHost));
 
-		memset(syncedVoxelBlocks_global, 0, noNeededEntries * SDF_BLOCK_SIZE3 * sizeof(TVoxel));
+		memset(syncedVoxelBlocks_global, 0, noNeededEntries * VOXEL_BLOCK_SIZE3 * sizeof(TVoxel));
 		memset(hasSyncedData_global, 0, noNeededEntries * sizeof(bool));
 		for (int i = 0; i < noNeededEntries; i++)
 		{
@@ -95,12 +95,12 @@ int ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::LoadFromGlobalMemory(ITMV
 			if (globalCache->HasStoredData(entryId))
 			{
 				hasSyncedData_global[i] = true;
-				memcpy(syncedVoxelBlocks_global + i * SDF_BLOCK_SIZE3, globalCache->GetStoredVoxelBlock(entryId), SDF_BLOCK_SIZE3 * sizeof(TVoxel));
+				memcpy(syncedVoxelBlocks_global + i * VOXEL_BLOCK_SIZE3, globalCache->GetStoredVoxelBlock(entryId), VOXEL_BLOCK_SIZE3 * sizeof(TVoxel));
 			}
 		}
 
 		ORcudaSafeCall(cudaMemcpy(hasSyncedData_local, hasSyncedData_global, sizeof(bool) * noNeededEntries, cudaMemcpyHostToDevice));
-		ORcudaSafeCall(cudaMemcpy(syncedVoxelBlocks_local, syncedVoxelBlocks_global, sizeof(TVoxel) *SDF_BLOCK_SIZE3 * noNeededEntries, cudaMemcpyHostToDevice));
+		ORcudaSafeCall(cudaMemcpy(syncedVoxelBlocks_local, syncedVoxelBlocks_global, sizeof(TVoxel) * VOXEL_BLOCK_SIZE3 * noNeededEntries, cudaMemcpyHostToDevice));
 	}
 
 	return noNeededEntries;
@@ -125,7 +125,7 @@ void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::IntegrateGlobalIntoLocal
 	int maxW = scene->sceneParams->maxW;
 
 	if (noNeededEntries > 0) {
-		dim3 blockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+		dim3 blockSize(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
 		dim3 gridSize(noNeededEntries);
 
 		integrateOldIntoActiveData_device << <gridSize, blockSize >> >(localVBA, swapStates, syncedVoxelBlocks_local,
@@ -162,7 +162,7 @@ void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SaveToGlobalMemory(ITMVo
 
 	{
 		blockSize = dim3(256);
-		gridSize = dim3((int)ceil((float)scene->index.noTotalEntries / (float)blockSize.x));
+		gridSize = dim3((int)ceil((float)scene->index.hashEntryCount / (float)blockSize.x));
 
 		ORcudaSafeCall(cudaMemset(noNeededEntries_device, 0, sizeof(int)));
 
@@ -175,9 +175,9 @@ void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SaveToGlobalMemory(ITMVo
 
 	if (noNeededEntries > 0)
 	{
-		noNeededEntries = MIN(noNeededEntries, SDF_TRANSFER_BLOCK_NUM);
+		noNeededEntries = MIN(noNeededEntries, SWAP_OPERATION_BLOCK_COUNT);
 		{
-			blockSize = dim3(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+			blockSize = dim3(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
 			gridSize = dim3(noNeededEntries);
 
 			moveActiveDataToTransferBuffer_device << <gridSize, blockSize >> >(syncedVoxelBlocks_local, hasSyncedData_local,
@@ -197,17 +197,17 @@ void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SaveToGlobalMemory(ITMVo
 
 			ORcudaSafeCall(cudaMemcpy(&scene->localVBA.lastFreeBlockId, noAllocatedVoxelEntries_device, sizeof(int), cudaMemcpyDeviceToHost));
 			scene->localVBA.lastFreeBlockId = MAX(scene->localVBA.lastFreeBlockId, 0);
-			scene->localVBA.lastFreeBlockId = MIN(scene->localVBA.lastFreeBlockId, DEFAULT_SDF_LOCAL_BLOCK_NUM);
+			scene->localVBA.lastFreeBlockId = MIN(scene->localVBA.lastFreeBlockId, DEFAULT_VOXEL_BLOCK_NUM);
 		}
 
 		ORcudaSafeCall(cudaMemcpy(neededEntryIDs_global, neededEntryIDs_local, sizeof(int) * noNeededEntries, cudaMemcpyDeviceToHost));
 		ORcudaSafeCall(cudaMemcpy(hasSyncedData_global, hasSyncedData_local, sizeof(bool) * noNeededEntries, cudaMemcpyDeviceToHost));
-		ORcudaSafeCall(cudaMemcpy(syncedVoxelBlocks_global, syncedVoxelBlocks_local, sizeof(TVoxel) *SDF_BLOCK_SIZE3 * noNeededEntries, cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaMemcpy(syncedVoxelBlocks_global, syncedVoxelBlocks_local, sizeof(TVoxel) * VOXEL_BLOCK_SIZE3 * noNeededEntries, cudaMemcpyDeviceToHost));
 
 		for (int entryId = 0; entryId < noNeededEntries; entryId++)
 		{
 			if (hasSyncedData_global[entryId])
-				globalCache->SetStoredData(neededEntryIDs_global[entryId], syncedVoxelBlocks_global + entryId * SDF_BLOCK_SIZE3);
+				globalCache->SetStoredData(neededEntryIDs_global[entryId], syncedVoxelBlocks_global + entryId * VOXEL_BLOCK_SIZE3);
 		}
 	}
 }
@@ -226,20 +226,20 @@ void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CleanLocalMemory(ITMVoxe
 
 	{
 		blockSize = dim3(256);
-		gridSize = dim3((int)ceil((float)scene->index.noTotalEntries / (float)blockSize.x));
+		gridSize = dim3((int)ceil((float)scene->index.hashEntryCount / (float)blockSize.x));
 
 		ORcudaSafeCall(cudaMemset(noNeededEntries_device, 0, sizeof(int)));
 
-		buildListToClean_device << <gridSize, blockSize >> >(entriesToClean_device, noNeededEntries_device, hashTable, entriesVisibleType, scene->index.noTotalEntries);
+		buildListToClean_device << <gridSize, blockSize >> >(entriesToClean_device, noNeededEntries_device, hashTable, entriesVisibleType, scene->index.hashEntryCount);
 
 		ORcudaSafeCall(cudaMemcpy(&noNeededEntries, noNeededEntries_device, sizeof(int), cudaMemcpyDeviceToHost));
 	}
 	
 	if (noNeededEntries > 0)
 	{
-		noNeededEntries = MIN(noNeededEntries, SDF_TRANSFER_BLOCK_NUM);
+		noNeededEntries = MIN(noNeededEntries, SWAP_OPERATION_BLOCK_COUNT);
 		{
-			blockSize = dim3(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+			blockSize = dim3(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
 			gridSize = dim3(noNeededEntries);
 
 			cleanVBA << <gridSize, blockSize >> >(entriesToClean_device, hashTable, localVBA);
@@ -255,7 +255,7 @@ void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CleanLocalMemory(ITMVoxe
 
 			ORcudaSafeCall(cudaMemcpy(&scene->localVBA.lastFreeBlockId, noAllocatedVoxelEntries_device, sizeof(int), cudaMemcpyDeviceToHost));
 			scene->localVBA.lastFreeBlockId = MAX(scene->localVBA.lastFreeBlockId, 0);
-			scene->localVBA.lastFreeBlockId = MIN(scene->localVBA.lastFreeBlockId, DEFAULT_SDF_LOCAL_BLOCK_NUM);
+			scene->localVBA.lastFreeBlockId = MIN(scene->localVBA.lastFreeBlockId, DEFAULT_VOXEL_BLOCK_NUM);
 		}
 	}
 }
@@ -280,7 +280,7 @@ namespace
 		if (shouldPrefix)
 		{
 			int offset = computePrefixSum_device<int>(isNeededId, noNeededEntries, blockDim.x * blockDim.y, threadIdx.x);
-			if (offset != -1 && offset < SDF_TRANSFER_BLOCK_NUM) neededEntryIDs[offset] = targetIdx;
+			if (offset != -1 && offset < SWAP_OPERATION_BLOCK_COUNT) neededEntryIDs[offset] = targetIdx;
 		}
 	}
 
@@ -306,7 +306,7 @@ namespace
 		if (shouldPrefix)
 		{
 			int offset = computePrefixSum_device<int>(isNeededId, noNeededEntries, blockDim.x * blockDim.y, threadIdx.x);
-			if (offset != -1 && offset < SDF_TRANSFER_BLOCK_NUM) neededEntryIDs[offset] = targetIdx;
+			if (offset != -1 && offset < SWAP_OPERATION_BLOCK_COUNT) neededEntryIDs[offset] = targetIdx;
 		}
 	}
 
@@ -323,7 +323,7 @@ namespace
 		swapStates[entryDestId].state = 0;
 
 		int vbaIdx = atomicAdd(&noAllocatedVoxelEntries[0], 1);
-		if (vbaIdx < DEFAULT_SDF_LOCAL_BLOCK_NUM - 1)
+		if (vbaIdx < DEFAULT_VOXEL_BLOCK_NUM - 1)
 		{
 			voxelAllocationList[vbaIdx + 1] = hashTable[entryDestId].ptr;
 			hashTable[entryDestId].ptr = -1;
@@ -348,7 +348,7 @@ namespace
 		if (shouldPrefix)
 		{
 			int offset = computePrefixSum_device<int>(isNeededId, noNeededEntries, blockDim.x * blockDim.y, threadIdx.x);
-			if (offset != -1 && offset < SDF_TRANSFER_BLOCK_NUM) neededEntryIDs[offset] = targetIdx;
+			if (offset != -1 && offset < SWAP_OPERATION_BLOCK_COUNT) neededEntryIDs[offset] = targetIdx;
 		}
 	}
 
@@ -363,7 +363,7 @@ namespace
 		int entryDestId = neededEntryIDs_local[locId];
 
 		int vbaIdx = atomicAdd(&noAllocatedVoxelEntries[0], 1);
-		if (vbaIdx < DEFAULT_SDF_LOCAL_BLOCK_NUM - 1)
+		if (vbaIdx < DEFAULT_VOXEL_BLOCK_NUM - 1)
 		{
 			voxelAllocationList[vbaIdx + 1] = hashTable[entryDestId].ptr;
 			hashTable[entryDestId].ptr = -2;
@@ -377,9 +377,9 @@ namespace
 
 		ITMHashEntry &hashEntry = hashTable[entryDestId];
 
-		TVoxel *srcVB = localVBA + hashEntry.ptr * SDF_BLOCK_SIZE3;
+		TVoxel *srcVB = localVBA + hashEntry.ptr * VOXEL_BLOCK_SIZE3;
 
-		int vIdx = threadIdx.x + threadIdx.y * SDF_BLOCK_SIZE + threadIdx.z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+		int vIdx = threadIdx.x + threadIdx.y * VOXEL_BLOCK_SIZE + threadIdx.z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 		srcVB[vIdx] = TVoxel();
 	}
 
@@ -391,10 +391,10 @@ namespace
 
 		ITMHashEntry &hashEntry = hashTable[entryDestId];
 
-		TVoxel *dstVB = syncedVoxelBlocks_local + blockIdx.x * SDF_BLOCK_SIZE3;
-		TVoxel *srcVB = localVBA + hashEntry.ptr * SDF_BLOCK_SIZE3;
+		TVoxel *dstVB = syncedVoxelBlocks_local + blockIdx.x * VOXEL_BLOCK_SIZE3;
+		TVoxel *srcVB = localVBA + hashEntry.ptr * VOXEL_BLOCK_SIZE3;
 
-		int vIdx = threadIdx.x + threadIdx.y * SDF_BLOCK_SIZE + threadIdx.z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+		int vIdx = threadIdx.x + threadIdx.y * VOXEL_BLOCK_SIZE + threadIdx.z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 		dstVB[vIdx] = srcVB[vIdx];
 		srcVB[vIdx] = TVoxel();
 
@@ -407,10 +407,10 @@ namespace
 	{
 		int entryDestId = neededEntryIDs_local[blockIdx.x];
 
-		TVoxel *srcVB = syncedVoxelBlocks_local + blockIdx.x * SDF_BLOCK_SIZE3;
-		TVoxel *dstVB = localVBA + hashTable[entryDestId].ptr * SDF_BLOCK_SIZE3;
+		TVoxel *srcVB = syncedVoxelBlocks_local + blockIdx.x * VOXEL_BLOCK_SIZE3;
+		TVoxel *dstVB = localVBA + hashTable[entryDestId].ptr * VOXEL_BLOCK_SIZE3;
 
-		int vIdx = threadIdx.x + threadIdx.y * SDF_BLOCK_SIZE + threadIdx.z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+		int vIdx = threadIdx.x + threadIdx.y * VOXEL_BLOCK_SIZE + threadIdx.z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 
 		CombineVoxelInformation<TVoxel::hasColorInformation, TVoxel>::compute(srcVB[vIdx], dstVB[vIdx], maxW);
 

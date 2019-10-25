@@ -69,8 +69,7 @@ class ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash> :
 private:
 	void* allocationTempData_device;
 	void* allocationTempData_host;
-	unsigned char* entriesAllocType_device;
-	Vector3s* blockCoords_device;
+
 	void* readVoxelResult_device;
 	void* readVoxelResult_host;
 

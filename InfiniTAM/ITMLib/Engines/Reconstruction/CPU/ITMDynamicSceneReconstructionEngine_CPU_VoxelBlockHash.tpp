@@ -60,17 +60,17 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 		globalPos.x = currentHashEntry.pos.x;
 		globalPos.y = currentHashEntry.pos.y;
 		globalPos.z = currentHashEntry.pos.z;
-		globalPos *= SDF_BLOCK_SIZE;
+		globalPos *= VOXEL_BLOCK_SIZE;
 
-		TVoxel* localVoxelBlock = &(localVBA[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+		TVoxel* localVoxelBlock = &(localVBA[currentHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 
-		for (int z = 0; z < SDF_BLOCK_SIZE; z++)
-			for (int y = 0; y < SDF_BLOCK_SIZE; y++)
-				for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
+		for (int z = 0; z < VOXEL_BLOCK_SIZE; z++)
+			for (int y = 0; y < VOXEL_BLOCK_SIZE; y++)
+				for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
 					Vector4f pt_model;
 					int locId;
 
-					locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+					locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 
 					pt_model.x = (float) (globalPos.x + x) * voxelSize;
 					pt_model.y = (float) (globalPos.y + y) * voxelSize;

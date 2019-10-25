@@ -193,7 +193,7 @@ struct GradientSmoothingPassFunctor {
 	GradientSmoothingPassFunctor(ITMLib::ITMVoxelVolume<TWarp, TIndex>* warpField) :
 			warpField(warpField),
 			warpVoxels(warpField->localVBA.GetVoxelBlocks()),
-			warpIndexData(warpField->index.getIndexData()),
+			warpIndexData(warpField->index.GetIndexData()),
 			warpFieldCache() {}
 
 	_CPU_AND_GPU_CODE_

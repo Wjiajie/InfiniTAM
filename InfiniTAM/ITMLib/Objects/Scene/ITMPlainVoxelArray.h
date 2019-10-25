@@ -7,15 +7,13 @@
 #include "../../Utils/ITMMath.h"
 #include "../../../ORUtils/MemoryBlock.h"
 
-namespace ITMLib
-{
+namespace ITMLib {
 /** \brief
 This is the central class for the original fixed size volume
 representation. It contains the data needed on the CPU and
 a pointer to the data structure on the GPU.
 */
-class ITMPlainVoxelArray
-{
+class ITMPlainVoxelArray {
 public:
 
 	struct ITMVoxelArrayInfo {
@@ -24,95 +22,93 @@ public:
 		/// offset of the lower left front corner of the volume in voxels
 		Vector3i offset;
 
-		ITMVoxelArrayInfo()
-		{
+		ITMVoxelArrayInfo() {
 			size.x = size.y = size.z = 512;
 			offset.x = -256;
 			offset.y = -256;
 			offset.z = 0;
 		}
 
-		ITMVoxelArrayInfo(Vector3i size, Vector3i offset) : size(size), offset(offset){}
+		ITMVoxelArrayInfo(Vector3i size, Vector3i offset) : size(size), offset(offset) {}
 	};
 
 	typedef ITMVoxelArrayInfo IndexData;
 	typedef ITMVoxelArrayInfo InitializationParameters;
-	struct IndexCache {};
+	struct IndexCache {
+	};
 
 private:
-	ORUtils::MemoryBlock<IndexData> *indexData;
+	ORUtils::MemoryBlock<IndexData>* indexData;
 
 	MemoryDeviceType memoryType;
 
-	void Initialize(MemoryDeviceType memoryType,
-			Vector3i size  = Vector3i(512),
-			Vector3i offset= Vector3i(-256,-256,0) ){
-		this->memoryType = memoryType;
-	}
 
 public:
 
 	ITMPlainVoxelArray(ITMPlainVoxelArray::InitializationParameters info, MemoryDeviceType memoryType) :
-		memoryType(memoryType),
-		indexData(new ORUtils::MemoryBlock<IndexData>(1, memoryType == MEMORYDEVICE_CPU, memoryType == MEMORYDEVICE_CUDA))
-		{
+			memoryType(memoryType),
+			indexData(new ORUtils::MemoryBlock<IndexData>(1, memoryType == MEMORYDEVICE_CPU,
+			                                              memoryType == MEMORYDEVICE_CUDA)) {
 		indexData->GetData(MEMORYDEVICE_CPU)[0] = info;
 		indexData->UpdateDeviceFromHost();
 	}
+
 	explicit ITMPlainVoxelArray(MemoryDeviceType memoryType, Vector3i size = Vector3i(512),
-	                   Vector3i offset = Vector3i(-256,-256,0)) : ITMPlainVoxelArray({size, offset}, memoryType){}
+	                            Vector3i offset = Vector3i(-256, -256, 0)) : ITMPlainVoxelArray({size, offset},
+	                                                                                            memoryType) {}
 
 	ITMPlainVoxelArray(const ITMPlainVoxelArray& other, MemoryDeviceType memoryType) :
-		ITMPlainVoxelArray({other.getVolumeSize(), other.getVolumeOffset()}, memoryType){
-		Initialize(memoryType, other.getVolumeSize(), other.getVolumeOffset());
+			ITMPlainVoxelArray({other.GetVolumeSize(), other.GetVolumeOffset()}, memoryType) {
 		this->SetFrom(other);
 	}
 
-	void SetFrom(const ITMPlainVoxelArray& other){
+	void SetFrom(const ITMPlainVoxelArray& other) {
 		MemoryCopyDirection memoryCopyDirection = determineMemoryCopyDirection(this->memoryType, other.memoryType);
 		this->indexData->SetFrom(other.indexData, memoryCopyDirection);
 	}
 
-	~ITMPlainVoxelArray()
-	{
+	~ITMPlainVoxelArray() {
 		delete indexData;
 	}
 
 	/** Maximum number of total entries. */
-	int getNumAllocatedVoxelBlocks(void) { return 1; }
-	int getVoxelBlockSize(void)
-	{
+	int GetAllocatedBlockCount() { return 1; }
+
+	int GetVoxelBlockSize() {
 		return indexData->GetData(MEMORYDEVICE_CPU)->size.x *
 		       indexData->GetData(MEMORYDEVICE_CPU)->size.y *
 		       indexData->GetData(MEMORYDEVICE_CPU)->size.z;
 	}
 
-	const Vector3i getVolumeSize(void) const { return indexData->GetData(MEMORYDEVICE_CPU)->size; }
-	const Vector3i getVolumeOffset(void) const { return indexData->GetData(MEMORYDEVICE_CPU)->offset; }
+	Vector3i GetVolumeSize() const { return indexData->GetData(MEMORYDEVICE_CPU)->size; }
+
+	Vector3i GetVolumeOffset() const { return indexData->GetData(MEMORYDEVICE_CPU)->offset; }
 
 	/**Get the memory type used for storage.**/
-	MemoryDeviceType GetMemoryType() const{
+	MemoryDeviceType GetMemoryType() const {
 		return this->memoryType;
 	}
 
-	const IndexData* getIndexData(void) const { return indexData->GetData(memoryType); }
-	IndexData* getIndexData(void) { return indexData->GetData(memoryType); }
+	const IndexData* GetIndexData() const { return indexData->GetData(memoryType); }
 
-	void SaveToDirectory(const std::string &outputDirectory) const
-	{
+	IndexData* GetIndexData() { return indexData->GetData(memoryType); }
+
+	void SaveToDirectory(const std::string& outputDirectory) const {
 	}
 
-	void LoadFromDirectory(const std::string &outputDirectory)
-	{
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "MemberFunctionCanBeStatic"
+	void LoadFromDirectory(const std::string& outputDirectory) {
 	}
+#pragma clang diagnostic pop
 
 #ifdef COMPILE_WITH_METAL
 	const void *getIndexData_MB() const { return indexData->GetMetalBuffer(); }
 #endif
 
 	// Suppress the default copy constructor and assignment operator
-	ITMPlainVoxelArray(const ITMPlainVoxelArray&);
-	ITMPlainVoxelArray& operator=(const ITMPlainVoxelArray&);
+	ITMPlainVoxelArray(const ITMPlainVoxelArray&) = delete;
+	ITMPlainVoxelArray& operator=(const ITMPlainVoxelArray&) = delete;
 };
 }
 

@@ -21,7 +21,7 @@ enum HashBlockVisibility : unsigned char {
 	IN_MEMORY_AND_VISIBLE = 1,
 	INVISIBLE = 0
 };
-enum HashBlockState : unsigned char {
+enum HashEntryState : unsigned char {
 	NEEDS_NO_CHANGE = 0,
 	NEEDS_ALLOCATION_IN_ORDERED_LIST = 1,
 	NEEDS_ALLOCATION_IN_EXCESS_LIST = 2,

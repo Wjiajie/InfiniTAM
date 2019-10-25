@@ -72,7 +72,7 @@ namespace ITMLib
 		/** Given a render state, Count the number of visible blocks
 		with minBlockId <= blockID <= maxBlockId .
 		*/
-		virtual int CountVisibleBlocks(const ITMVoxelVolume<TVoxel,TIndex> *scene, const ITMRenderState *renderState, int minBlockId = 0, int maxBlockId = DEFAULT_SDF_LOCAL_BLOCK_NUM) const = 0;
+		virtual int CountVisibleBlocks(const ITMVoxelVolume<TVoxel,TIndex> *scene, const ITMRenderState *renderState, int minBlockId = 0, int maxBlockId = DEFAULT_VOXEL_BLOCK_NUM) const = 0;
 
 		/** Given scene, pose and intrinsics, create an estimate
 		of the minimum and maximum depths at each pixel of

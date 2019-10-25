@@ -33,14 +33,15 @@ namespace ITMLib
 	public:
 		/** Number of entries in the live list. */
 		int noVisibleEntries;
+		const int hashEntryCount;
            
-		ITMRenderState_VH(int noTotalEntries, const Vector2i & imgSize, float vf_min, float vf_max, MemoryDeviceType memoryType = MEMORYDEVICE_CPU)
-			: ITMRenderState(imgSize, vf_min, vf_max, memoryType)
+		ITMRenderState_VH(const int hashEntryCount, const Vector2i & imgSize, float vf_min, float vf_max, MemoryDeviceType memoryType = MEMORYDEVICE_CPU)
+			: ITMRenderState(imgSize, vf_min, vf_max, memoryType), hashEntryCount(hashEntryCount)
 		{
 			this->memoryType = memoryType;
 
-			visibleEntryIDs = new ORUtils::MemoryBlock<int>(DEFAULT_SDF_LOCAL_BLOCK_NUM, memoryType);
-			entriesVisibleType = new ORUtils::MemoryBlock<uchar>(noTotalEntries, memoryType);
+			visibleEntryIDs = new ORUtils::MemoryBlock<int>(DEFAULT_VOXEL_BLOCK_NUM, memoryType);
+			entriesVisibleType = new ORUtils::MemoryBlock<uchar>(hashEntryCount, memoryType);
 
 			noVisibleEntries = 0;
 		}

@@ -6,30 +6,30 @@
 #include "ITMVoxelTypes.h"
 
 template<typename T> _CPU_AND_GPU_CODE_ inline int hashIndex(const THREADPTR(T) & blockPos) {
-	return (((uint)blockPos.x * 73856093u) ^ ((uint)blockPos.y * 19349669u) ^ ((uint)blockPos.z * 83492791u)) & (uint)SDF_HASH_MASK;
+	return (((uint)blockPos.x * 73856093u) ^ ((uint)blockPos.y * 19349669u) ^ ((uint)blockPos.z * 83492791u)) & (uint)VOXEL_HASH_MASK;
 }
 
 
 _CPU_AND_GPU_CODE_ inline int pointToVoxelBlockPos(const THREADPTR(Vector3i) & point, THREADPTR(Vector3i) &blockPos) {
-	blockPos.x = ((point.x < 0) ? point.x - SDF_BLOCK_SIZE + 1 : point.x) / SDF_BLOCK_SIZE;
-	blockPos.y = ((point.y < 0) ? point.y - SDF_BLOCK_SIZE + 1 : point.y) / SDF_BLOCK_SIZE;
-	blockPos.z = ((point.z < 0) ? point.z - SDF_BLOCK_SIZE + 1 : point.z) / SDF_BLOCK_SIZE;
+	blockPos.x = ((point.x < 0) ? point.x - VOXEL_BLOCK_SIZE + 1 : point.x) / VOXEL_BLOCK_SIZE;
+	blockPos.y = ((point.y < 0) ? point.y - VOXEL_BLOCK_SIZE + 1 : point.y) / VOXEL_BLOCK_SIZE;
+	blockPos.z = ((point.z < 0) ? point.z - VOXEL_BLOCK_SIZE + 1 : point.z) / VOXEL_BLOCK_SIZE;
 
-	// Vector3i locPos = point - blockPos * SDF_BLOCK_SIZE;
-	// return locPos.x + locPos.y * SDF_BLOCK_SIZE + locPos.z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	// Vector3i locPos = point - blockPos * VOXEL_BLOCK_SIZE;
+	// return locPos.x + locPos.y * VOXEL_BLOCK_SIZE + locPos.z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 	// The two comment lines above are arithmetically simplified to:
-	return point.x + (point.y - blockPos.x) * SDF_BLOCK_SIZE + (point.z - blockPos.y) * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE - blockPos.z * SDF_BLOCK_SIZE3;
+	return point.x + (point.y - blockPos.x) * VOXEL_BLOCK_SIZE + (point.z - blockPos.y) * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE - blockPos.z * VOXEL_BLOCK_SIZE3;
 }
 
 _CPU_AND_GPU_CODE_ inline int pointToVoxelBlockPos(const THREADPTR(Vector3i) & point, THREADPTR(Vector3s) &blockPos) {
-	blockPos.x = ((point.x < 0) ? point.x - SDF_BLOCK_SIZE + 1 : point.x) / SDF_BLOCK_SIZE;
-	blockPos.y = ((point.y < 0) ? point.y - SDF_BLOCK_SIZE + 1 : point.y) / SDF_BLOCK_SIZE;
-	blockPos.z = ((point.z < 0) ? point.z - SDF_BLOCK_SIZE + 1 : point.z) / SDF_BLOCK_SIZE;
+	blockPos.x = ((point.x < 0) ? point.x - VOXEL_BLOCK_SIZE + 1 : point.x) / VOXEL_BLOCK_SIZE;
+	blockPos.y = ((point.y < 0) ? point.y - VOXEL_BLOCK_SIZE + 1 : point.y) / VOXEL_BLOCK_SIZE;
+	blockPos.z = ((point.z < 0) ? point.z - VOXEL_BLOCK_SIZE + 1 : point.z) / VOXEL_BLOCK_SIZE;
 
-	// Vector3i locPos = point - blockPos * SDF_BLOCK_SIZE;
-	// return locPos.x + locPos.y * SDF_BLOCK_SIZE + locPos.z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	// Vector3i locPos = point - blockPos * VOXEL_BLOCK_SIZE;
+	// return locPos.x + locPos.y * VOXEL_BLOCK_SIZE + locPos.z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 	// The two comment lines above are arithmetically simplified to:
-	return point.x + (point.y - blockPos.x) * SDF_BLOCK_SIZE + (point.z - blockPos.y) * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE - blockPos.z * SDF_BLOCK_SIZE3;
+	return point.x + (point.y - blockPos.x) * VOXEL_BLOCK_SIZE + (point.z - blockPos.y) * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE - blockPos.z * VOXEL_BLOCK_SIZE3;
 }
 
 _CPU_AND_GPU_CODE_ inline int findVoxel(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData) *voxelIndex, const THREADPTR(Vector3i) & point,
@@ -53,12 +53,12 @@ _CPU_AND_GPU_CODE_ inline int findVoxel(const CONSTPTR(ITMLib::ITMVoxelBlockHash
 		if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= 0)
 		{
 			vmIndex = true;
-			cache.blockPos = blockPos; cache.blockPtr = hashEntry.ptr * SDF_BLOCK_SIZE3;
+			cache.blockPos = blockPos; cache.blockPtr = hashEntry.ptr * VOXEL_BLOCK_SIZE3;
 			return cache.blockPtr + linearIdx;
 		}
 
 		if (hashEntry.offset < 1) break;
-		hashIdx = DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1;
+		hashIdx = ORDERED_LIST_SIZE + hashEntry.offset - 1;
 	}
 
 	vmIndex = false;
@@ -103,14 +103,14 @@ _CPU_AND_GPU_CODE_ inline TVoxel readVoxel(const CONSTPTR(TVoxel) *voxelData, co
 
 		if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= 0)
 		{
-			cache.blockPos = blockPos; cache.blockPtr = hashEntry.ptr * SDF_BLOCK_SIZE3;
+			cache.blockPos = blockPos; cache.blockPtr = hashEntry.ptr * VOXEL_BLOCK_SIZE3;
 			vmIndex = hashIdx + 1; // add 1 to support legacy true / false operations for isFound
 
 			return voxelData[cache.blockPtr + linearIdx];
 		}
 
 		if (hashEntry.offset < 1) break;
-		hashIdx = DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1;
+		hashIdx = ORDERED_LIST_SIZE + hashEntry.offset - 1;
 	}
 
 	vmIndex = false;

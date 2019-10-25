@@ -47,11 +47,11 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType(), volumeSize, volumeOffset);
+			settings->GetMemoryType(), {volumeSize, volumeOffset});
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType(), volumeSize, volumeOffset);
+			settings->GetMemoryType(), {volumeSize, volumeOffset});
 
 	GenerateTestScene_CPU(&scene1);
 	std::string path = "TestData/test_PVA_";

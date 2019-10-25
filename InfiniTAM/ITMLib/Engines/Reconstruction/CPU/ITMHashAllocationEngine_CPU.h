@@ -30,8 +30,8 @@ template<typename TVoxel, typename TWarp>
 class ITMHashAllocationEngine_CPU :
 		public ITMHashAllocationEngine<TVoxel, TWarp> {
 public:
-	ITMHashAllocationEngine_CPU();
-	~ITMHashAllocationEngine_CPU();
+	ITMHashAllocationEngine_CPU() = default;
+	~ITMHashAllocationEngine_CPU() = default;
 
 	void AllocateFromDepth(
 			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
@@ -56,9 +56,6 @@ private:
 	void AllocateFromVolumeGeneric(ITMVoxelVolume <TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
 	                               ITMVoxelVolume <TVoxelSource, ITMVoxelBlockHash>* sourceVolume);
 
-	ORUtils::MemoryBlock<unsigned char>* sourceSceneHashBlockStates;
-	ORUtils::MemoryBlock<unsigned char>* targetSceneHashBlockStates;
-	ORUtils::MemoryBlock<Vector3s>* targetSceneHashBlockCoordinates;
 };
 
 

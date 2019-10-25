@@ -37,25 +37,25 @@ void allocateHashedVoxelBlocksUsingLists_SetVisibility_device(
 		int* voxelAllocationList, int* excessAllocationList,
 		AllocationTempData* allocData,
 		ITMHashEntry* hashTable, int noTotalEntries,
-		uchar* entriesAllocType, Vector3s* blockCoords,
+		ITMLib::HashEntryState* hashEntryStates, Vector3s* blockCoords,
 		uchar* entriesVisibleType) {
-	int hash = threadIdx.x + blockIdx.x * blockDim.x;
-	if (hash >= noTotalEntries) return;
+	int hashCode = threadIdx.x + blockIdx.x * blockDim.x;
+	if (hashCode >= noTotalEntries) return;
 	int vbaIdx, exlIdx;
 
-	switch (entriesAllocType[hash]) {
+	switch (hashEntryStates[hashCode]) {
 		case ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST: //needs allocation, fits in the ordered list
 			vbaIdx = atomicSub(&allocData->noAllocatedVoxelEntries, 1);
 
 			if (vbaIdx >= 0) //there is room in the voxel block array
 			{
 				ITMHashEntry hashEntry;
-				hashEntry.pos = blockCoords[hash];
+				hashEntry.pos = blockCoords[hashCode];
 				hashEntry.ptr = voxelAllocationList[vbaIdx];
 				hashEntry.offset = 0;
-				hashTable[hash] = hashEntry;
+				hashTable[hashCode] = hashEntry;
 			} else {
-				entriesVisibleType[hash] = 0;
+				entriesVisibleType[hashCode] = 0;
 				// Restore the previous value to avoid leaks.
 				atomicAdd(&allocData->noAllocatedVoxelEntries, 1);
 			}
@@ -68,16 +68,16 @@ void allocateHashedVoxelBlocksUsingLists_SetVisibility_device(
 			if (vbaIdx >= 0 && exlIdx >= 0) //there is room in the voxel block array and excess list
 			{
 				ITMHashEntry hashEntry;
-				hashEntry.pos = blockCoords[hash];
+				hashEntry.pos = blockCoords[hashCode];
 				hashEntry.ptr = voxelAllocationList[vbaIdx];
 				hashEntry.offset = 0;
 
 				int exlOffset = excessAllocationList[exlIdx];
 
-				hashTable[hash].offset = exlOffset + 1; //connect to child
+				hashTable[hashCode].offset = exlOffset + 1; //connect to child
 
-				hashTable[DEFAULT_ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
-				entriesVisibleType[DEFAULT_ORDERED_LIST_SIZE + exlOffset] = 1;
+				hashTable[ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
+				entriesVisibleType[ORDERED_LIST_SIZE + exlOffset] = 1;
 			} else {
 				// Restore the previous values to avoid leaks.
 				atomicAdd(&allocData->noAllocatedVoxelEntries, 1);
@@ -95,23 +95,23 @@ void allocateHashedVoxelBlocksUsingLists_device(
 		int* voxelAllocationList, int* excessAllocationList,
 		AllocationTempData* allocData,
 		ITMHashEntry* hashTable, int noTotalEntries,
-		uchar* entriesAllocType, Vector3s* blockCoords) {
-	int hash = threadIdx.x + blockIdx.x * blockDim.x;
-	if (hash >= noTotalEntries) return;
+		ITMLib::HashEntryState* hashEntryStates, Vector3s* blockCoords) {
+	int hashCode = threadIdx.x + blockIdx.x * blockDim.x;
+	if (hashCode >= noTotalEntries) return;
 
 	int vbaIdx, exlIdx;
 
-	switch (entriesAllocType[hash]) {
+	switch (hashEntryStates[hashCode]) {
 		case ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST: //needs allocation, fits in the ordered list
 			vbaIdx = atomicSub(&allocData->noAllocatedVoxelEntries, 1);
 
 			if (vbaIdx >= 0) //there is room in the voxel block array
 			{
 				ITMHashEntry hashEntry;
-				hashEntry.pos = blockCoords[hash];
+				hashEntry.pos = blockCoords[hashCode];
 				hashEntry.ptr = voxelAllocationList[vbaIdx];
 				hashEntry.offset = 0;
-				hashTable[hash] = hashEntry;
+				hashTable[hashCode] = hashEntry;
 			} else {
 				// Restore the previous value to avoid leaks.
 				atomicAdd(&allocData->noAllocatedVoxelEntries, 1);
@@ -125,15 +125,15 @@ void allocateHashedVoxelBlocksUsingLists_device(
 			if (vbaIdx >= 0 && exlIdx >= 0) //there is room in the voxel block array and excess list
 			{
 				ITMHashEntry hashEntry;
-				hashEntry.pos = blockCoords[hash];
+				hashEntry.pos = blockCoords[hashCode];
 				hashEntry.ptr = voxelAllocationList[vbaIdx];
 				hashEntry.offset = 0;
 
 				int exlOffset = excessAllocationList[exlIdx];
 
-				hashTable[hash].offset = exlOffset + 1; //connect to child
+				hashTable[hashCode].offset = exlOffset + 1; //connect to child
 
-				hashTable[DEFAULT_ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
+				hashTable[ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
 			} else {
 				// Restore the previous values to avoid leaks.
 				atomicAdd(&allocData->noAllocatedVoxelEntries, 1);
@@ -145,7 +145,7 @@ void allocateHashedVoxelBlocksUsingLists_device(
 }
 
 __global__
-void buildHashAllocationTypeList_VolumeToVolume(uchar* entriesAllocType, Vector3s* blockCoords,
+void buildHashAllocationTypeList_VolumeToVolume(ITMLib::HashEntryState* entriesAllocType, Vector3s* blockCoords,
 					ITMHashEntry* targetHashTable, const ITMHashEntry* sourceHashTable, int hashEntryCount,
 					bool* collisionDetected){
 	int hashCode = threadIdx.x + blockIdx.x * blockDim.x;
@@ -160,7 +160,7 @@ void buildHashAllocationTypeList_VolumeToVolume(uchar* entriesAllocType, Vector3
 }
 
 
-__global__ void buildHashAllocAndVisibleType_device(uchar *entriesAllocType, uchar *entriesVisibleType, Vector3s *blockCoords, const float *depth,
+__global__ void buildHashAllocAndVisibleType_device(ITMLib::HashEntryState *hashEntryStates, uchar *entriesVisibleType, Vector3s *blockCoords, const float *depth,
                                                     Matrix4f invM_d, Vector4f projParams_d, float mu, Vector2i _imgSize, float _voxelSize, ITMHashEntry *hashTable, float viewFrustum_min,
                                                     float viewFrustum_max, bool* collisionDetected)
 {
@@ -168,7 +168,7 @@ __global__ void buildHashAllocAndVisibleType_device(uchar *entriesAllocType, uch
 
 	if (x > _imgSize.x - 1 || y > _imgSize.y - 1) return;
 
-	buildHashAllocAndVisibleTypePP(entriesAllocType, entriesVisibleType, x, y, blockCoords, depth, invM_d, projParams_d,
+	buildHashAllocAndVisibleTypePP(hashEntryStates, entriesVisibleType, x, y, blockCoords, depth, invM_d, projParams_d,
 	                               mu, _imgSize, _voxelSize,
 	                               hashTable, viewFrustum_min, viewFrustum_max, *collisionDetected);
 }
@@ -222,7 +222,7 @@ __global__ void buildVisibleList_device(ITMHashEntry *hashTable, ITMLib::ITMHash
 }
 
 __global__ void reAllocateSwappedOutVoxelBlocks_device(int *voxelAllocationList, ITMHashEntry *hashTable, int noTotalEntries,
-                                                       AllocationTempData *allocData, /*int *noAllocatedVoxelEntries,*/ uchar *entriesVisibleType)
+                                                       AllocationTempData *allocData, /*int *countOfAllocatedOrderedEntries,*/ uchar *entriesVisibleType)
 {
 	int targetIdx = threadIdx.x + blockIdx.x * blockDim.x;
 	if (targetIdx > noTotalEntries - 1) return;

@@ -46,8 +46,8 @@ staticVoxelTraversal_device(TVoxel* voxels, const ITMHashEntry* hashTable) {
 	const ITMHashEntry& hashEntry = hashTable[hash];
 	if (hashEntry.ptr < 0) return;
 	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
-	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-	TVoxel& voxel = voxels[hashEntry.ptr * SDF_BLOCK_SIZE3 + locId];
+	int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
+	TVoxel& voxel = voxels[hashEntry.ptr * VOXEL_BLOCK_SIZE3 + locId];
 	TStaticFunctor::run(voxel);
 }
 
@@ -59,8 +59,8 @@ voxelTraversal_device(TVoxel* voxels, const ITMHashEntry* hashTable,
 	const ITMHashEntry& hashEntry = hashTable[hash];
 	if (hashEntry.ptr < 0) return;
 	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
-	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-	TVoxel& voxel = voxels[hashEntry.ptr * SDF_BLOCK_SIZE3 + locId];
+	int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
+	TVoxel& voxel = voxels[hashEntry.ptr * VOXEL_BLOCK_SIZE3 + locId];
 	(*functor)(voxel);
 }
 
@@ -138,13 +138,13 @@ __global__ void checkIfUnmatchedVoxelBlocksAreAltered(
 	int hash = unmatchedHashes[hashIdx].hash;
 
 	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
-	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 
 	bool voxelAltered;
 	if (unmatchedHashes[hashIdx].primary) {
-		voxelAltered = isAltered(primaryVoxels[primaryHashTable[hash].ptr * SDF_BLOCK_SIZE3 + locId]);
+		voxelAltered = isAltered(primaryVoxels[primaryHashTable[hash].ptr * VOXEL_BLOCK_SIZE3 + locId]);
 	} else {
-		voxelAltered = isAltered(secondaryVoxels[secondaryHashTable[hash].ptr * SDF_BLOCK_SIZE3 + locId]);
+		voxelAltered = isAltered(secondaryVoxels[secondaryHashTable[hash].ptr * VOXEL_BLOCK_SIZE3 + locId]);
 	}
 	if (voxelAltered) *alteredVoxelEncountered = true;
 }
@@ -163,10 +163,10 @@ __global__ void checkIfMatchingHashBlockVoxelsYieldTrue(
 	int secondaryHash = matchedHashes[hashPairIdx].secondaryHash;
 
 	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
-	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 
-	if (!(*functor)(primaryVoxels[primaryHashTable[primaryHash].ptr * SDF_BLOCK_SIZE3 + locId],
-	                secondaryVoxels[secondaryHashTable[secondaryHash].ptr * SDF_BLOCK_SIZE3 + locId])) {
+	if (!(*functor)(primaryVoxels[primaryHashTable[primaryHash].ptr * VOXEL_BLOCK_SIZE3 + locId],
+	                secondaryVoxels[secondaryHashTable[secondaryHash].ptr * VOXEL_BLOCK_SIZE3 + locId])) {
 		*falseEncountered = true;
 	}
 }
@@ -192,10 +192,10 @@ dualVoxelTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* seconda
 	int x = threadIdx.x;
 	int y = threadIdx.y;
 	int z = threadIdx.z;
-	int linearIndexInBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	int linearIndexInBlock = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 
-	TVoxelPrimary& voxelPrimary = primaryVoxels[primaryHashEntry.ptr * (SDF_BLOCK_SIZE3) + linearIndexInBlock];
-	TVoxelSecondary& voxelSecondary = secondaryVoxels[secondaryHashEntry.ptr * (SDF_BLOCK_SIZE3) + linearIndexInBlock];
+	TVoxelPrimary& voxelPrimary = primaryVoxels[primaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3) + linearIndexInBlock];
+	TVoxelSecondary& voxelSecondary = secondaryVoxels[secondaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3) + linearIndexInBlock];
 
 	(*functor)(voxelPrimary, voxelSecondary);
 }
@@ -220,12 +220,12 @@ dualVoxelPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 	int x = threadIdx.x;
 	int y = threadIdx.y;
 	int z = threadIdx.z;
-	int linearIndexInBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	int linearIndexInBlock = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 
 	// position of the current voxel in 3D space in voxel units
-	Vector3i voxelPosition = primaryHashEntry.pos.toInt() * SDF_BLOCK_SIZE + Vector3i(x, y, z);
-	TVoxelPrimary& voxelPrimary = primaryVoxels[primaryHashEntry.ptr * (SDF_BLOCK_SIZE3) + linearIndexInBlock];
-	TVoxelSecondary& voxelSecondary = secondaryVoxels[secondaryHashEntry.ptr * (SDF_BLOCK_SIZE3) + linearIndexInBlock];
+	Vector3i voxelPosition = primaryHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE + Vector3i(x, y, z);
+	TVoxelPrimary& voxelPrimary = primaryVoxels[primaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3) + linearIndexInBlock];
+	TVoxelSecondary& voxelSecondary = secondaryVoxels[secondaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3) + linearIndexInBlock];
 
 	(*functor)(voxelPrimary, voxelSecondary, voxelPosition);
 }
@@ -257,13 +257,13 @@ dualVoxelWarpPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecond
 	int x = threadIdx.x;
 	int y = threadIdx.y;
 	int z = threadIdx.z;
-	int linearIndexInBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	int linearIndexInBlock = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 
 	// position of the current voxel in 3D space in voxel units
-	Vector3i voxelPosition = primaryHashEntry.pos.toInt() * SDF_BLOCK_SIZE + Vector3i(x, y, z);
-	TVoxelPrimary& voxelPrimary = primaryVoxels[primaryHashEntry.ptr * (SDF_BLOCK_SIZE3) + linearIndexInBlock];
-	TVoxelSecondary& voxelSecondary = secondaryVoxels[secondaryHashEntry.ptr * (SDF_BLOCK_SIZE3) + linearIndexInBlock];
-	TWarp& warp = warpVoxels[warpHashEntry.ptr *(SDF_BLOCK_SIZE3) + linearIndexInBlock];
+	Vector3i voxelPosition = primaryHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE + Vector3i(x, y, z);
+	TVoxelPrimary& voxelPrimary = primaryVoxels[primaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3) + linearIndexInBlock];
+	TVoxelSecondary& voxelSecondary = secondaryVoxels[secondaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3) + linearIndexInBlock];
+	TWarp& warp = warpVoxels[warpHashEntry.ptr *(VOXEL_BLOCK_SIZE3) + linearIndexInBlock];
 	(*functor)(voxelPrimary, voxelSecondary, warp, voxelPosition);
 }
 

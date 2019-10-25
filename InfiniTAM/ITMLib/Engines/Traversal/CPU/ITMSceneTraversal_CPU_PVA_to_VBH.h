@@ -51,10 +51,10 @@ public:
 // *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryVolume->localVBA.GetVoxelBlocks();
 		TVoxelPrimary* primaryVoxels = primaryVolume->localVBA.GetVoxelBlocks();
-		int totalPrimaryVoxelCount = primaryVolume->index.getVolumeSize().x * primaryVolume->index.getVolumeSize().y *
-		                             primaryVolume->index.getVolumeSize().z;
-		const ITMVoxelBlockHash::IndexData* hashTable = secondaryVolume->index.getIndexData();
-		const ITMPlainVoxelArray::IndexData* pvaIndexData = primaryVolume->index.getIndexData();
+		int totalPrimaryVoxelCount = primaryVolume->index.GetVolumeSize().x * primaryVolume->index.GetVolumeSize().y *
+		                             primaryVolume->index.GetVolumeSize().z;
+		const ITMVoxelBlockHash::IndexData* hashTable = secondaryVolume->index.GetIndexData();
+		const ITMPlainVoxelArray::IndexData* pvaIndexData = primaryVolume->index.GetIndexData();
 		Vector3i pvaOffset = pvaIndexData->offset;
 		Vector3i pvaSize = pvaIndexData->size;
 		Vector3i endVoxel = pvaOffset + pvaSize; // open last traversal bound (this voxel doesn't get processed)
@@ -76,14 +76,14 @@ public:
 #endif
 		for (int zVoxelBlock = startBlockCoords.z; zVoxelBlock < endBlockCoords.z; zVoxelBlock++) {
 			if (foundMismatch) continue;
-			int zVoxelStart = std::max(zVoxelBlock * SDF_BLOCK_SIZE, pvaOffset.z);
-			int zVoxelEnd = std::min((zVoxelBlock + 1) * SDF_BLOCK_SIZE, endVoxel.z);
+			int zVoxelStart = std::max(zVoxelBlock * VOXEL_BLOCK_SIZE, pvaOffset.z);
+			int zVoxelEnd = std::min((zVoxelBlock + 1) * VOXEL_BLOCK_SIZE, endVoxel.z);
 			for (int yVoxelBlock = startBlockCoords.y; yVoxelBlock < endBlockCoords.y && !foundMismatch; yVoxelBlock++) {
-				int yVoxelStart = std::max(yVoxelBlock * SDF_BLOCK_SIZE, pvaOffset.y);
-				int yVoxelEnd = std::min((yVoxelBlock + 1) * SDF_BLOCK_SIZE, endVoxel.y);
+				int yVoxelStart = std::max(yVoxelBlock * VOXEL_BLOCK_SIZE, pvaOffset.y);
+				int yVoxelEnd = std::min((yVoxelBlock + 1) * VOXEL_BLOCK_SIZE, endVoxel.y);
 				for (int xVoxelBlock = startBlockCoords.x; xVoxelBlock < endBlockCoords.x && !foundMismatch; xVoxelBlock++) {
-					int xVoxelStart = std::max(xVoxelBlock * SDF_BLOCK_SIZE, pvaOffset.x);
-					int xVoxelEnd = std::min((xVoxelBlock + 1) * SDF_BLOCK_SIZE, endVoxel.x);
+					int xVoxelStart = std::max(xVoxelBlock * VOXEL_BLOCK_SIZE, pvaOffset.x);
+					int xVoxelEnd = std::min((xVoxelBlock + 1) * VOXEL_BLOCK_SIZE, endVoxel.x);
 					Vector3s voxelBlockCoords(xVoxelBlock, yVoxelBlock, zVoxelBlock);
 					int hash;
 					bool voxelBlockAllocated = false;
@@ -92,7 +92,7 @@ public:
 					if (FindHashAtPosition(hash, voxelBlockCoords, hashTable)) {
 						voxelBlockAllocated = true;
 						localSecondaryVoxelBlock = &(secondaryVoxels[hashTable[hash].ptr *
-						                                             (SDF_BLOCK_SIZE3)]);
+						                                             (VOXEL_BLOCK_SIZE3)]);
 #ifdef WITH_OPENMP
 #pragma omp critical
 #endif
@@ -111,9 +111,9 @@ public:
 								Vector3i voxelPositionSansOffset = voxelPosition - pvaOffset;
 								int linearIndex = voxelPositionSansOffset.x + voxelPositionSansOffset.y * pvaSize.x +
 								                  voxelPositionSansOffset.z * pvaSize.x * pvaSize.y;
-								int locId = voxelPosition.x + (voxelPosition.y - voxelBlockCoords.x) * SDF_BLOCK_SIZE +
-								            (voxelPosition.z - voxelBlockCoords.y) * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE -
-								            voxelBlockCoords.z * SDF_BLOCK_SIZE3;
+								int locId = voxelPosition.x + (voxelPosition.y - voxelBlockCoords.x) * VOXEL_BLOCK_SIZE +
+								            (voxelPosition.z - voxelBlockCoords.y) * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE -
+								            voxelBlockCoords.z * VOXEL_BLOCK_SIZE3;
 								TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
 								if (voxelBlockAllocated) {
 									TVoxelSecondary& secondaryVoxel = localSecondaryVoxelBlock[locId];
@@ -136,7 +136,7 @@ public:
 		if (foundMismatch) {
 			return false;
 		}
-		int totalHashEntryCount = secondaryVolume->index.noTotalEntries;
+		int totalHashEntryCount = secondaryVolume->index.hashEntryCount;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -145,7 +145,7 @@ public:
 			ITMHashEntry secondaryHashEntry = hashTable[hash];
 			if (secondaryHashEntry.ptr < 0 || coveredBlockHashes.find(hash) != coveredBlockHashes.end()) continue;
 			//found allocated hash block that wasn't spanned by the volume, check to make sure it wasn't altered
-			TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			if (isVoxelBlockAltered(secondaryVoxelBlock)) {
 				foundMismatch = true;
 			}
@@ -174,11 +174,11 @@ public:
 			ITMVoxelVolume <TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
 			TFunctor& functor) {
 		volatile bool foundMismatch = false;
-		int totalHashEntryCount = secondaryVolume->index.noTotalEntries;
+		int totalHashEntryCount = secondaryVolume->index.hashEntryCount;
 		TVoxelSecondary* secondaryVoxels = secondaryVolume->localVBA.GetVoxelBlocks();
 		TVoxelPrimary* primaryVoxels = primaryVolume->localVBA.GetVoxelBlocks();
-		const ITMVoxelBlockHash::IndexData* hashTable = secondaryVolume->index.getIndexData();
-		const ITMPlainVoxelArray::IndexData* pvaIndexData = primaryVolume->index.getIndexData();
+		const ITMVoxelBlockHash::IndexData* hashTable = secondaryVolume->index.GetIndexData();
+		const ITMPlainVoxelArray::IndexData* pvaIndexData = primaryVolume->index.GetIndexData();
 		Vector3i startVoxel = pvaIndexData->offset;
 		Vector3i pvaSize = pvaIndexData->size;
 		Vector3i endVoxel = startVoxel + pvaSize; // open last traversal bound (this voxel doesn't get processed)
@@ -191,17 +191,17 @@ public:
 			if (foundMismatch) continue;
 			ITMHashEntry secondaryHashEntry = hashTable[hash];
 			if (secondaryHashEntry.ptr < 0  ) continue;
-			Vector3i hashEntryMinPoint = secondaryHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
-			Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(SDF_BLOCK_SIZE);
+			Vector3i hashEntryMinPoint = secondaryHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+			Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(VOXEL_BLOCK_SIZE);
 			if (HashBlockDoesNotIntersectBounds(hashEntryMinPoint, hashEntryMaxPoint, pvaBounds)) {
 				continue;
 			}
-			TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
+			TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			Vector6i localBounds = computeLocalBounds(hashEntryMinPoint, hashEntryMaxPoint, pvaBounds);
 			for (int z = localBounds.min_z; z < localBounds.max_z; z++) {
 				for (int y = localBounds.min_y; y < localBounds.max_y; y++) {
 					for (int x = localBounds.min_x; x < localBounds.max_x; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						Vector3i voxelBlockPosition = Vector3i(x, y, z);
 						Vector3i voxelAbsolutePosition = hashEntryMinPoint + voxelBlockPosition;
 						Vector3i voxelPositionSansOffset = voxelAbsolutePosition - startVoxel;

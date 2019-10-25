@@ -29,14 +29,15 @@ inline void ITMMultiMeshingEngine_CPU<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMM
 		hashTables.posesInv[localMapId].m31 /= sceneParams.voxelSize;
 		hashTables.posesInv[localMapId].m32 /= sceneParams.voxelSize;
 
-		hashTables.index[localMapId] = sceneManager.getLocalMap(localMapId)->scene->index.getIndexData();
+		hashTables.index[localMapId] = sceneManager.getLocalMap(localMapId)->scene->index.GetIndexData();
 		localVBAs.voxels[localMapId] = sceneManager.getLocalMap(localMapId)->scene->localVBA.GetVoxelBlocks();
 	}
 
 	ITMMesh::Triangle *triangles = mesh->triangles->GetData(MEMORYDEVICE_CPU);
 	mesh->triangles->Clear();
 
-	int noTriangles = 0, noMaxTriangles = mesh->noMaxTriangles, noTotalEntriesPerLocalMap = ITMVoxelBlockHash::noTotalEntries;
+	int noTriangles = 0, noMaxTriangles = mesh->noMaxTriangles;
+	int noTotalEntriesPerLocalMap = sceneManager.getLocalMap(0)->scene->index.hashEntryCount;
 	float factor = sceneParams.voxelSize;
 
 	// very dumb rendering -- likely to generate lots of duplicates
@@ -51,9 +52,9 @@ inline void ITMMultiMeshingEngine_CPU<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMM
 
 			if (currentHashEntry.ptr < 0) continue;
 
-			globalPos = currentHashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+			globalPos = currentHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) for (int y = 0; y < SDF_BLOCK_SIZE; y++) for (int x = 0; x < SDF_BLOCK_SIZE; x++)
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) for (int x = 0; x < VOXEL_BLOCK_SIZE; x++)
 			{
 				Vector3f vertList[12];
 				int cubeIndex = buildVertListMulti(vertList, globalPos, Vector3i(x, y, z), &localVBAs, &hashTables, localMapId);

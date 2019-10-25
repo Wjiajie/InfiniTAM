@@ -94,31 +94,29 @@ public:
 // region =================================== HELPER ROUTINES FOR SCENE OPTIMIZATION PREP ==============================
 //======================================================================================================================
 
-
-
-template<typename TVoxel, typename TIndex>
+template<typename TVoxel>
 inline
-void AllocateHashEntriesUsingLists_CPU(ITMVoxelVolume<TVoxel, TIndex>* scene, uchar* entryAllocationTypes,
+void AllocateHashEntriesUsingLists_CPU(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const HashEntryState* hashEntryStates,
                                        Vector3s* allocationBlockCoordinates) {
-	int entryCount = TIndex::noTotalEntries;
+	const int hashEntryCount = scene->index.hashEntryCount;
 	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
 	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
 	int* voxelAllocationList = scene->localVBA.GetAllocationList();
 	int* excessAllocationList = scene->index.GetExcessAllocationList();
 	ITMHashEntry* hashTable = scene->index.GetEntries();
 
-	for (int hash = 0; hash < entryCount; hash++) {
-		unsigned char entryAllocType = entryAllocationTypes[hash];
-		switch (entryAllocType) {
+	for (int hashCode = 0; hashCode < hashEntryCount; hashCode++) {
+		const HashEntryState& hashEntryState = hashEntryStates[hashCode];
+		switch (hashEntryState) {
 			case ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST:
 
 				if (lastFreeVoxelBlockId >= 0) //there is room in the voxel block array
 				{
 					ITMHashEntry hashEntry;
-					hashEntry.pos = allocationBlockCoordinates[hash];
+					hashEntry.pos = allocationBlockCoordinates[hashCode];
 					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
 					hashEntry.offset = 0;
-					hashTable[hash] = hashEntry;
+					hashTable[hashCode] = hashEntry;
 					lastFreeVoxelBlockId--;
 				}
 
@@ -129,12 +127,12 @@ void AllocateHashEntriesUsingLists_CPU(ITMVoxelVolume<TVoxel, TIndex>* scene, uc
 				    lastFreeExcessListId >= 0) //there is room in the voxel block array and excess list
 				{
 					ITMHashEntry hashEntry;
-					hashEntry.pos = allocationBlockCoordinates[hash];
+					hashEntry.pos = allocationBlockCoordinates[hashCode];
 					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
 					hashEntry.offset = 0;
 					int exlOffset = excessAllocationList[lastFreeExcessListId];
-					hashTable[hash].offset = exlOffset + 1; //connect to child
-					hashTable[DEFAULT_ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
+					hashTable[hashCode].offset = exlOffset + 1; //connect to child
+					hashTable[ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
 					lastFreeVoxelBlockId--;
 					lastFreeExcessListId--;
 				}
@@ -150,9 +148,10 @@ void AllocateHashEntriesUsingLists_CPU(ITMVoxelVolume<TVoxel, TIndex>* scene, uc
 
 template<typename TVoxel, typename TIndex>
 inline
-void AllocateHashEntriesUsingLists_SetVisibility_CPU(ITMVoxelVolume<TVoxel, TIndex>* scene, uchar* entryAllocationTypes,
+void AllocateHashEntriesUsingLists_SetVisibility_CPU(ITMVoxelVolume<TVoxel, TIndex>* scene,
+                                                     const ITMLib::HashEntryState* hashEntryStates,
                                                      Vector3s* allocationBlockCoordinates, uchar* entriesVisibleType) {
-	int entryCount = TIndex::noTotalEntries;
+	int entryCount = scene->index.hashEntryCount;
 	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
 	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
 	int* voxelAllocationList = scene->localVBA.GetAllocationList();
@@ -160,8 +159,8 @@ void AllocateHashEntriesUsingLists_SetVisibility_CPU(ITMVoxelVolume<TVoxel, TInd
 	ITMHashEntry* hashTable = scene->index.GetEntries();
 
 	for (int hash = 0; hash < entryCount; hash++) {
-		unsigned char entryAllocType = entryAllocationTypes[hash];
-		switch (entryAllocType) {
+		const HashEntryState& hashEntryState = hashEntryStates[hash];
+		switch (hashEntryState) {
 			case ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST:
 
 				if (lastFreeVoxelBlockId >= 0) //there is room in the voxel block array
@@ -188,8 +187,8 @@ void AllocateHashEntriesUsingLists_SetVisibility_CPU(ITMVoxelVolume<TVoxel, TInd
 					hashEntry.offset = 0;
 					int exlOffset = excessAllocationList[lastFreeExcessListId];
 					hashTable[hash].offset = exlOffset + 1; //connect to child
-					hashTable[DEFAULT_ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
-					entriesVisibleType[DEFAULT_ORDERED_LIST_SIZE + exlOffset] = 1; //make child visible and in memory
+					hashTable[ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
+					entriesVisibleType[ORDERED_LIST_SIZE + exlOffset] = 1; //make child visible and in memory
 					lastFreeVoxelBlockId--;
 					lastFreeExcessListId--;
 				}
@@ -241,11 +240,11 @@ void
 ComputeCopyRanges(int& xRangeStart, int& xRangeEnd, int& yRangeStart, int& yRangeEnd, int& zRangeStart, int& zRangeEnd,
                   const Vector3i& hashBlockPositionVoxels, const Vector6i& bounds) {
 	zRangeStart = MAX(0, bounds.min_z - hashBlockPositionVoxels.z);
-	zRangeEnd = MIN(SDF_BLOCK_SIZE, bounds.max_z - hashBlockPositionVoxels.z + 1);
+	zRangeEnd = MIN(VOXEL_BLOCK_SIZE, bounds.max_z - hashBlockPositionVoxels.z + 1);
 	yRangeStart = MAX(0, bounds.min_y - hashBlockPositionVoxels.y);
-	yRangeEnd = MIN(SDF_BLOCK_SIZE, bounds.max_y - hashBlockPositionVoxels.y + 1);
+	yRangeEnd = MIN(VOXEL_BLOCK_SIZE, bounds.max_y - hashBlockPositionVoxels.y + 1);
 	xRangeStart = MAX(0, bounds.min_x - hashBlockPositionVoxels.x);
-	xRangeEnd = MIN(SDF_BLOCK_SIZE, bounds.max_x - hashBlockPositionVoxels.x + 1);
+	xRangeEnd = MIN(VOXEL_BLOCK_SIZE, bounds.max_x - hashBlockPositionVoxels.x + 1);
 }
 
 // endregion ===========================================================================================================

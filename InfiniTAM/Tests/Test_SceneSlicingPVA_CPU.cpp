@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> canonical_scene_slice_different_dimensions_CPU(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType(), sizeSlice, offsetSlice);
+			settings->GetMemoryType(), {sizeSlice, offsetSlice});
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&canonical_scene_slice_different_dimensions_CPU);
 
 	ManipulationEngine_CPU_PVA_Voxel::Inst().CopySceneSlice(&canonical_scene_slice_different_dimensions_CPU,
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> canonical_scene_slice_from_disk_CPU(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType(), sizeSlice, offsetSlice);
+			settings->GetMemoryType(), {sizeSlice, offsetSlice});
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&canonical_scene_slice_from_disk_CPU);
 
 	canonical_scene_slice_from_disk_CPU.LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/canonical");

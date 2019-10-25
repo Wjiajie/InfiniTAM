@@ -29,18 +29,18 @@ struct OffsetWarpsFunctor<TVoxel, ITMVoxelBlockHash, true> {
 	static void OffsetWarps(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
-		int noTotalEntries = scene->index.noTotalEntries;
+		int noTotalEntries = scene->index.hashEntryCount;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
 		for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 			const ITMHashEntry& currentHashEntry = hashTable[entryId];
 			if (currentHashEntry.ptr < 0) continue;
-			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (SDF_BLOCK_SIZE3)]);
-			for (int z = 0; z < SDF_BLOCK_SIZE; z++) {
-				for (int y = 0; y < SDF_BLOCK_SIZE; y++) {
-					for (int x = 0; x < SDF_BLOCK_SIZE; x++) {
-						int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+			TVoxel* localVoxelBlock = &(voxels[currentHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
+			for (int z = 0; z < VOXEL_BLOCK_SIZE; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						localVoxelBlock[locId].warp += offset;
 					}
 				}
@@ -58,8 +58,8 @@ struct OffsetWarpsFunctor<TVoxel, ITMPlainVoxelArray, true> {
 #pragma omp parallel for
 #endif
 		for (int linearArrayIndex = 0;
-		     linearArrayIndex < scene->index.getVolumeSize().x * scene->index.getVolumeSize().y *
-		                        scene->index.getVolumeSize().z; ++linearArrayIndex) {
+		     linearArrayIndex < scene->index.GetVolumeSize().x * scene->index.GetVolumeSize().y *
+		                        scene->index.GetVolumeSize().z; ++linearArrayIndex) {
 			voxels[linearArrayIndex].warp += offset;
 		}
 	}

@@ -49,7 +49,7 @@ public:
 	VoxelTraversal(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		int voxelCount =
-				scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
+				scene->index.GetVolumeSize().x * scene->index.GetVolumeSize().y * scene->index.GetVolumeSize().z;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -65,7 +65,7 @@ public:
 	VoxelTraversal_SingleThreaded(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		int voxelCount =
-				scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
+				scene->index.GetVolumeSize().x * scene->index.GetVolumeSize().y * scene->index.GetVolumeSize().z;
 		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
 			TVoxel& voxel = voxels[linearIndex];
 			functor(voxel);
@@ -78,8 +78,8 @@ public:
 	VoxelPositionTraversal(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		int voxelCount =
-				scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
-		const ITMPlainVoxelArray::IndexData* indexData = scene->index.getIndexData();
+				scene->index.GetVolumeSize().x * scene->index.GetVolumeSize().y * scene->index.GetVolumeSize().z;
+		const ITMPlainVoxelArray::IndexData* indexData = scene->index.GetIndexData();
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -96,7 +96,7 @@ public:
 	VoxelTraversalWithinBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor, Vector6i bounds) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		int vmIndex = 0;
-		const ITMPlainVoxelArray::IndexData* indexData = scene->index.getIndexData();
+		const ITMPlainVoxelArray::IndexData* indexData = scene->index.GetIndexData();
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -118,7 +118,7 @@ public:
 	                                   Vector6i bounds) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		int vmIndex = 0;
-		const ITMPlainVoxelArray::IndexData* indexData = scene->index.getIndexData();
+		const ITMPlainVoxelArray::IndexData* indexData = scene->index.GetIndexData();
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -140,7 +140,7 @@ public:
 	                                               Vector6i bounds) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		int vmIndex = 0;
-		const ITMPlainVoxelArray::IndexData* indexData = scene->index.getIndexData();
+		const ITMPlainVoxelArray::IndexData* indexData = scene->index.GetIndexData();
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -163,7 +163,7 @@ public:
 	inline static void StaticVoxelTraversal(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		int voxelCount =
-				scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
+				scene->index.GetVolumeSize().x * scene->index.GetVolumeSize().y * scene->index.GetVolumeSize().z;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -178,7 +178,7 @@ public:
 	inline static void StaticVoxelPositionTraversal(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		int voxelCount =
-				scene->index.getVolumeSize().x * scene->index.getVolumeSize().y * scene->index.getVolumeSize().z;
+				scene->index.GetVolumeSize().x * scene->index.GetVolumeSize().y * scene->index.GetVolumeSize().z;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -203,13 +203,13 @@ public:
 	StaticDualVoxelTraversal(
 			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
 			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene) {
-		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+		assert(primaryScene->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize());
 // *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		//asserted to be the same
-		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
-		                 primaryScene->index.getVolumeSize().z;
+		int voxelCount = primaryScene->index.GetVolumeSize().x * primaryScene->index.GetVolumeSize().y *
+		                 primaryScene->index.GetVolumeSize().z;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -227,13 +227,13 @@ public:
 	StaticDualVoxelTraversal_AllTrue(
 			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
 			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene) {
-		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+		assert(primaryScene->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize());
 // *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		//asserted to be the same
-		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
-		                 primaryScene->index.getVolumeSize().z;
+		int voxelCount = primaryScene->index.GetVolumeSize().x * primaryScene->index.GetVolumeSize().y *
+		                 primaryScene->index.GetVolumeSize().z;
 		volatile bool mismatchFound = false;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -257,14 +257,14 @@ public:
 	StaticDualVoxelPositionTraversal(
 			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
 			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene) {
-		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+		assert(primaryScene->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize());
 // *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		//asserted to be the same
-		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
-		                 primaryScene->index.getVolumeSize().z;
-		const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.getIndexData();
+		int voxelCount = primaryScene->index.GetVolumeSize().x * primaryScene->index.GetVolumeSize().y *
+		                 primaryScene->index.GetVolumeSize().z;
+		const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.GetIndexData();
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -288,13 +288,13 @@ public:
 			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
 			TFunctor& functor) {
 
-		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+		assert(primaryScene->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize());
 // *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		//asserted to be the same
-		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
-		                 primaryScene->index.getVolumeSize().z;
+		int voxelCount = primaryScene->index.GetVolumeSize().x * primaryScene->index.GetVolumeSize().y *
+		                 primaryScene->index.GetVolumeSize().z;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -313,13 +313,13 @@ public:
 			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryVolume,
 			TFunctor& functor) {
 
-		assert(primaryVolume->index.getVolumeSize() == secondaryVolume->index.getVolumeSize());
+		assert(primaryVolume->index.GetVolumeSize() == secondaryVolume->index.GetVolumeSize());
 // *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryVolume->localVBA.GetVoxelBlocks();
 		TVoxelPrimary* primaryVoxels = primaryVolume->localVBA.GetVoxelBlocks();
 		//asserted to be the same
-		int voxelCount = primaryVolume->index.getVolumeSize().x * primaryVolume->index.getVolumeSize().y *
-		                 primaryVolume->index.getVolumeSize().z;
+		int voxelCount = primaryVolume->index.GetVolumeSize().x * primaryVolume->index.GetVolumeSize().y *
+		                 primaryVolume->index.GetVolumeSize().z;
 		volatile bool mismatchFound = false;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -357,9 +357,9 @@ public:
 // *** traversal vars
 
 		TVoxelSecondary* secondaryVoxels = secondaryVolume->localVBA.GetVoxelBlocks();
-		const ITMPlainVoxelArray::IndexData* secondaryVolumeBox = primaryVolume->index.getIndexData();
+		const ITMPlainVoxelArray::IndexData* secondaryVolumeBox = primaryVolume->index.GetIndexData();
 		TVoxelPrimary* primaryVoxels = primaryVolume->localVBA.GetVoxelBlocks();
-		const ITMPlainVoxelArray::IndexData* primaryVolumeBox = primaryVolume->index.getIndexData();
+		const ITMPlainVoxelArray::IndexData* primaryVolumeBox = primaryVolume->index.GetIndexData();
 
 		const Extent3D boundingExtent = maximumExtent(*primaryVolumeBox, *secondaryVolumeBox);
 
@@ -413,14 +413,14 @@ public:
 			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
 			TFunctor& functor) {
 
-		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+		assert(primaryScene->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize());
 // *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		//asserted to be the same
-		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
-		                 primaryScene->index.getVolumeSize().z;
-		const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.getIndexData();
+		int voxelCount = primaryScene->index.GetVolumeSize().x * primaryScene->index.GetVolumeSize().y *
+		                 primaryScene->index.GetVolumeSize().z;
+		const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.GetIndexData();
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -439,14 +439,14 @@ public:
 			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
 			TFunctor& functor, Vector6i bounds) {
 
-		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+		assert(primaryScene->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize());
 // *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		//asserted to be the same
-		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
-		                 primaryScene->index.getVolumeSize().z;
-		const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.getIndexData();
+		int voxelCount = primaryScene->index.GetVolumeSize().x * primaryScene->index.GetVolumeSize().y *
+		                 primaryScene->index.GetVolumeSize().z;
+		const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.GetIndexData();
 		int vmIndex;
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -473,14 +473,14 @@ public:
 			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryScene,
 			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryScene,
 			TFunctor& functor) {
-		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+		assert(primaryScene->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize());
 		// *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		//asserted to be the same
-		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
-		                 primaryScene->index.getVolumeSize().z;
-		const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.getIndexData();
+		int voxelCount = primaryScene->index.GetVolumeSize().x * primaryScene->index.GetVolumeSize().y *
+		                 primaryScene->index.GetVolumeSize().z;
+		const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.GetIndexData();
 		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
 			Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(indexData, linearIndex);
 			TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
@@ -506,15 +506,15 @@ public:
 			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* primaryScene,
 			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* secondaryScene,
 			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
-		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize() &&
-		       primaryScene->index.getVolumeSize() == warpField->index.getVolumeSize());
+		assert(primaryScene->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize() &&
+				       primaryScene->index.GetVolumeSize() == warpField->index.GetVolumeSize());
 // *** traversal vars
 		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 		//asserted to be the same
-		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
-		                 primaryScene->index.getVolumeSize().z;
+		int voxelCount = primaryScene->index.GetVolumeSize().x * primaryScene->index.GetVolumeSize().y *
+		                 primaryScene->index.GetVolumeSize().z;
 
 
 #ifdef WITH_OPENMP
@@ -540,14 +540,14 @@ public:
 			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 			TFunctor& functor) {
 
-		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+		assert(primaryScene->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize());
 // *** traversal vars
 		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 		//asserted to be the same
-		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
-		                 primaryScene->index.getVolumeSize().z;
+		int voxelCount = primaryScene->index.GetVolumeSize().x * primaryScene->index.GetVolumeSize().y *
+		                 primaryScene->index.GetVolumeSize().z;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -569,16 +569,16 @@ public:
 			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 			TFunctor& functor) {
 
-		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize() &&
-		       primaryScene->index.getVolumeSize() == warpField->index.getVolumeSize());
+		assert(primaryScene->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize() &&
+				       primaryScene->index.GetVolumeSize() == warpField->index.GetVolumeSize());
 // *** traversal vars
 		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 		//asserted to be the same
-		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
-		                 primaryScene->index.getVolumeSize().z;
-		const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.getIndexData();
+		int voxelCount = primaryScene->index.GetVolumeSize().x * primaryScene->index.GetVolumeSize().y *
+		                 primaryScene->index.GetVolumeSize().z;
+		const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.GetIndexData();
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -599,16 +599,16 @@ public:
 			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* secondaryScene,
 			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 			TFunctor& functor) {
-		assert(primaryScene->index.getVolumeSize() == secondaryScene->index.getVolumeSize() &&
-		       warpField->index.getVolumeSize() == secondaryScene->index.getVolumeSize());
+		assert(primaryScene->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize() &&
+				       warpField->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize());
 		// *** traversal vars
 		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 		//asserted to be the same
-		int voxelCount = primaryScene->index.getVolumeSize().x * primaryScene->index.getVolumeSize().y *
-		                 primaryScene->index.getVolumeSize().z;
-		const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.getIndexData();
+		int voxelCount = primaryScene->index.GetVolumeSize().x * primaryScene->index.GetVolumeSize().y *
+		                 primaryScene->index.GetVolumeSize().z;
+		const ITMPlainVoxelArray::IndexData* indexData = primaryScene->index.GetIndexData();
 		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
 			Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(indexData, linearIndex);
 			TVoxel& primaryVoxel = primaryVoxels[linearIndex];

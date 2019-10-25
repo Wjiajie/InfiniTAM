@@ -48,13 +48,13 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 
 	TVoxel* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
 	TVoxel* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = canonicalScene->index.getIndexData();
+	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = canonicalScene->index.GetIndexData();
 	int maxW = canonicalScene->sceneParams->maxW;
 
 	dim3 cudaBlockSize(8, 8, 8);
-	dim3 gridSize(canonicalScene->index.getVolumeSize().x / cudaBlockSize.x,
-	              canonicalScene->index.getVolumeSize().y / cudaBlockSize.y,
-	              canonicalScene->index.getVolumeSize().z / cudaBlockSize.z);
+	dim3 gridSize(canonicalScene->index.GetVolumeSize().x / cudaBlockSize.x,
+	              canonicalScene->index.GetVolumeSize().y / cudaBlockSize.y,
+	              canonicalScene->index.GetVolumeSize().z / cudaBlockSize.z);
 
 	fuseSdf2Sdf_device<TVoxel>
 			<< < gridSize, cudaBlockSize >> >
@@ -72,12 +72,12 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 	TVoxel* sourceVoxels = sourceTSDF->localVBA.GetVoxelBlocks();
 	TVoxel* targetVoxels = targetTSDF->localVBA.GetVoxelBlocks();
 	TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = sourceTSDF->index.getIndexData();
+	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = sourceTSDF->index.GetIndexData();
 
 	dim3 cudaBlockSize(8, 8, 8);
-	dim3 gridSize(sourceTSDF->index.getVolumeSize().x / cudaBlockSize.x,
-	              sourceTSDF->index.getVolumeSize().y / cudaBlockSize.y,
-	              sourceTSDF->index.getVolumeSize().z / cudaBlockSize.z);
+	dim3 gridSize(sourceTSDF->index.GetVolumeSize().x / cudaBlockSize.x,
+	              sourceTSDF->index.GetVolumeSize().y / cudaBlockSize.y,
+	              sourceTSDF->index.GetVolumeSize().z / cudaBlockSize.z);
 
 	clearFields_device<TVoxel> << < gridSize, cudaBlockSize >> >
 	                                          (targetVoxels, arrayInfo);
@@ -94,12 +94,12 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 
 	TVoxel* sourceVoxels = sourceTSDF->localVBA.GetVoxelBlocks();
 	TVoxel* targetVoxels = targetTSDF->localVBA.GetVoxelBlocks();
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = sourceTSDF->index.getIndexData();
+	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = sourceTSDF->index.GetIndexData();
 
 	dim3 cudaBlockSize(8, 8, 8);
-	dim3 gridSize(sourceTSDF->index.getVolumeSize().x / cudaBlockSize.x,
-	              sourceTSDF->index.getVolumeSize().y / cudaBlockSize.y,
-	              sourceTSDF->index.getVolumeSize().z / cudaBlockSize.z);
+	dim3 gridSize(sourceTSDF->index.GetVolumeSize().x / cudaBlockSize.x,
+	              sourceTSDF->index.GetVolumeSize().y / cudaBlockSize.y,
+	              sourceTSDF->index.GetVolumeSize().z / cudaBlockSize.z);
 
 	copyScene_device < TVoxel > << < gridSize, cudaBlockSize >> >
 	                                        (sourceVoxels, targetVoxels, arrayInfo);
@@ -132,12 +132,12 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 	float* confidence = view->depthConfidence->GetData(MEMORYDEVICE_CUDA);
 	Vector4u* rgb = view->rgb->GetData(MEMORYDEVICE_CUDA);
 	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.getIndexData();
+	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.GetIndexData();
 
 	dim3 cudaBlockSize(8, 8, 8);
-	dim3 gridSize(scene->index.getVolumeSize().x / cudaBlockSize.x,
-	              scene->index.getVolumeSize().y / cudaBlockSize.y,
-	              scene->index.getVolumeSize().z / cudaBlockSize.z);
+	dim3 gridSize(scene->index.GetVolumeSize().x / cudaBlockSize.x,
+	              scene->index.GetVolumeSize().y / cudaBlockSize.y,
+	              scene->index.GetVolumeSize().z / cudaBlockSize.z);
 
 	integrateIntoScene_device<TVoxel> << < gridSize, cudaBlockSize >> > (localVBA, arrayInfo,
 			rgb, rgbImgSize, depth, confidence, depthImgSize, M_d, M_rgb, projParams_d, projParams_rgb, voxelSize, mu, maxW);

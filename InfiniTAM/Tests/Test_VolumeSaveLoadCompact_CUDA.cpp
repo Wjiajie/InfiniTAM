@@ -47,11 +47,11 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CUDA) {
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType(), volumeSize, volumeOffset);
+			settings->GetMemoryType(), {volumeSize, volumeOffset});
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType(), volumeSize, volumeOffset);
+			settings->GetMemoryType(), {volumeSize, volumeOffset});
 
 	GenerateTestScene_CUDA(&scene1);
 	std::string path = "TestData/test_PVA_";
@@ -65,11 +65,11 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CUDA) {
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType());
+			settings->GetMemoryType(),{0x800, DEFAULT_EXCESS_LIST_SIZE});
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType());
+			settings->GetMemoryType(), {0x800, DEFAULT_EXCESS_LIST_SIZE});
 
 	GenerateTestScene_CUDA(&scene3);
 	path = "TestData/test_VBH_";

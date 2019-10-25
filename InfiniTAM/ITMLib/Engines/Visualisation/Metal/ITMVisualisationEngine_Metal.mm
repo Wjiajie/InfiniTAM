@@ -161,7 +161,7 @@ static void RenderImage_common_metal(const ITMScene<TVoxel,ITMVoxelBlockHash> *s
     Vector3f lightSource = -Vector3f(invM.getColumn(2));
     Vector4u *outRendering = outputImage->GetData(MEMORYDEVICE_CPU);
     const TVoxel *voxelData = scene->localVBA.GetVoxelBlocks();
-    const typename ITMVoxelBlockHash::IndexData *voxelIndex = scene->index.getIndexData();
+    const typename ITMVoxelBlockHash::IndexData *voxelIndex = scene->index.GetIndexData();
 
     if ((type == IITMVisualisationEngine::RENDER_COLOUR_FROM_VOLUME)&&
         (!TVoxel::hasColorInformation)) type = IITMVisualisationEngine::RENDER_SHADED_GREYSCALE;

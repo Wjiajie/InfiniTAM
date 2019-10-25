@@ -75,8 +75,8 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&settings->sceneParams,
 	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                    settings->GetMemoryType(),
-	                                                    volumeSize,
-	                                                    volumeOffset);
+	                                                    {volumeSize,
+	                                                     volumeOffset});
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&scene1);
 	ITMTrackingState trackingState(imageSize, settings->GetMemoryType());
 
@@ -131,40 +131,42 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 		if (iCoord > 17) {
 			// don't go into low negative sdf values, since those will be overwritten by positive values
 			// during sdf construction in certain cases
-			for (int iLevelSet = -narrowBandHalfwidthVoxels; iLevelSet < (narrowBandHalfwidthVoxels/2); iLevelSet++) {
+			for (int iLevelSet = -narrowBandHalfwidthVoxels; iLevelSet < (narrowBandHalfwidthVoxels / 2); iLevelSet++) {
 				Vector3i augmentedCoord(coord.x, coord.y, coord.z + iLevelSet);
 				float expectedSdf = -static_cast<float>(iLevelSet) * maxSdfStep;
 				voxel = ManipulationEngine_CPU_PVA_Voxel::Inst().ReadVoxel(&scene1, augmentedCoord);
 				sdf = ITMVoxel::valueToFloat(voxel.sdf);
-				BOOST_REQUIRE( almostEqual(sdf, expectedSdf, tolerance));
+				BOOST_REQUIRE(almostEqual(sdf, expectedSdf, tolerance));
 			}
 		}
 	}
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene2(&settings->sceneParams,
-	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                    settings->GetMemoryType());
+	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->GetMemoryType());
 	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene2);
 
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(settings->deviceType);
 
-	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize, &settings->sceneParams, settings->GetMemoryType());
+	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize,
+	                                                                                          &settings->sceneParams,
+	                                                                                          settings->GetMemoryType());
 	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene2, view, &trackingState, renderState);
 
 	tolerance = 1e-5;
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(&scene1, &scene2, tolerance));
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene3(&settings->sceneParams,
-	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                   settings->GetMemoryType(),
-	                                                   volumeSize, volumeOffset);
+	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->GetMemoryType(),
+	                                                    {volumeSize, volumeOffset});
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&scene3);
 	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, nullptr);
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene3, tolerance));
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(&settings->sceneParams,
-	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                    settings->GetMemoryType());
+	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->GetMemoryType(), {0x800, DEFAULT_EXCESS_LIST_SIZE});
 	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene4);
 	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene4, view, &trackingState, renderState);
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene2, &scene4, tolerance));
@@ -197,8 +199,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	delete depth;
 }
 
-BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CPU)
-{
+BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CPU) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
 
 	// region ================================= CONSTRUCT VIEW =========================================================
@@ -230,8 +231,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CPU)
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&settings->sceneParams,
 	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                    settings->GetMemoryType(),
-	                                                    volumeSize,
-	                                                    volumeOffset);
+	                                                    {volumeSize, volumeOffset});
 
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&scene1);
 	ITMTrackingState trackingState(imageSize, settings->GetMemoryType());
@@ -244,8 +244,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CPU)
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(&settings->sceneParams,
 	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                    settings->GetMemoryType(),
-	                                                    volumeSize,
-	                                                    volumeOffset);
+	                                                    {volumeSize, volumeOffset});
 
 	std::string path = "TestData/test_PVA_ConstructFromImage2_";
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&scene2);
@@ -256,14 +255,16 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CPU)
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(&settings->sceneParams,
 	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                   settings->GetMemoryType());
+	                                                   settings->GetMemoryType(), {0x800, DEFAULT_EXCESS_LIST_SIZE});
 	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene3);
 
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(settings->deviceType);
 
-	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize, &settings->sceneParams, settings->GetMemoryType());
+	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize,
+	                                                                                          &settings->sceneParams,
+	                                                                                          settings->GetMemoryType());
 	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, renderState);
 
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(&scene2, &scene3, tolerance));

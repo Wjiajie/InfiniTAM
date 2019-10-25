@@ -33,12 +33,12 @@ __global__ void findBlocksNotSpannedByArray(
 	int hash = static_cast<int>(blockIdx.x * blockDim.x + threadIdx.x);
 	if (hash > hashEntryCount) return;
 	const ITMHashEntry& hashEntry = hashTable[hash];
-	Vector3i blockPosVoxels = hashEntry.pos.toInt() * SDF_BLOCK_SIZE;
+	Vector3i blockPosVoxels = hashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 	Vector3i arrayMinCoord = arrayInfo->offset;
 	Vector3i arrayMaxCoord = arrayInfo->offset + arrayInfo->size;
-	if (blockPosVoxels.x + SDF_BLOCK_SIZE < arrayMinCoord.x || blockPosVoxels.x > arrayMaxCoord.x ||
-	    blockPosVoxels.y + SDF_BLOCK_SIZE < arrayMinCoord.y || blockPosVoxels.y > arrayMaxCoord.y ||
-	    blockPosVoxels.z + SDF_BLOCK_SIZE < arrayMinCoord.z || blockPosVoxels.z > arrayMaxCoord.z) {
+	if (blockPosVoxels.x + VOXEL_BLOCK_SIZE < arrayMinCoord.x || blockPosVoxels.x > arrayMaxCoord.x ||
+	    blockPosVoxels.y + VOXEL_BLOCK_SIZE < arrayMinCoord.y || blockPosVoxels.y > arrayMaxCoord.y ||
+	    blockPosVoxels.z + VOXEL_BLOCK_SIZE < arrayMinCoord.z || blockPosVoxels.z > arrayMaxCoord.z) {
 		int unspannedHashIdx = atomicAdd(countHashesNotSpanned, 1);
 		hashesNotSpanned[unspannedHashIdx] = hash;
 	}
@@ -54,8 +54,8 @@ checkIfHashVoxelBlocksAreAltered(const TVoxel* voxels, const ITMHashEntry* hashT
 	int hash = hashesToCheck[hashToCheckIdx];
 	const ITMHashEntry& hashEntry = hashTable[hash];
 	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
-	int locId = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
-	if (isAltered(voxels[hashEntry.ptr * SDF_BLOCK_SIZE3 + locId])){
+	int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
+	if (isAltered(voxels[hashEntry.ptr * VOXEL_BLOCK_SIZE3 + locId])){
 		*alteredBlockEncountered = true;
 	}
 }
@@ -78,7 +78,7 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue(
 	Vector3i indexingCoord(xVoxel, yVoxel, zVoxel);
 	//local (block) coords;
 	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
-	int idxInBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	int idxInBlock = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 
 	Vector3s blockPosition(blockIdx.x, blockIdx.y, blockIdx.z);
 	blockPosition += minBlockPos;
@@ -88,7 +88,7 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue(
 	    yVoxel < minArrayCoord.y || yVoxel >= maxArrayCoord.y ||
 	    zVoxel < minArrayCoord.z || zVoxel >= maxArrayCoord.z) {
 		if (FindHashAtPosition(hash, blockPosition, hashTable) &&
-				isAltered(hashVoxels[hashTable[hash].ptr * SDF_BLOCK_SIZE3 + idxInBlock])){
+				isAltered(hashVoxels[hashTable[hash].ptr * VOXEL_BLOCK_SIZE3 + idxInBlock])){
 			// voxel falls just outside of array BUT is still in hash block, if it's altered -- return false
 			*falseOrAlteredEncountered = true;
 			return;
@@ -102,7 +102,7 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue(
 	                 arrayCoord.z * arrayInfo->size.x * arrayInfo->size.y;
 
 	if (FindHashAtPosition(hash, blockPosition, hashTable)) {
-		if (!(*functor)(arrayVoxels[idxInArray], hashVoxels[hashTable[hash].ptr * SDF_BLOCK_SIZE3 + idxInBlock])) {
+		if (!(*functor)(arrayVoxels[idxInArray], hashVoxels[hashTable[hash].ptr * VOXEL_BLOCK_SIZE3 + idxInBlock])) {
 			*falseOrAlteredEncountered = true;
 		}
 	} else {
@@ -124,9 +124,9 @@ __global__ void checkIfAllocatedHashBlocksYieldTrue(
 
 	//local (block) coords;
 	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
-	int idxInBlock = x + y * SDF_BLOCK_SIZE + z * SDF_BLOCK_SIZE * SDF_BLOCK_SIZE;
+	int idxInBlock = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 
-	Vector3i globalPosition = (hashEntry.pos.toInt() * SDF_BLOCK_SIZE) + Vector3i(x,y,z);
+	Vector3i globalPosition = (hashEntry.pos.toInt() * VOXEL_BLOCK_SIZE) + Vector3i(x, y, z);
 
 	if (globalPosition.x < arrayBounds.min_x || globalPosition.x >= arrayBounds.max_x ||
 	    globalPosition.y < arrayBounds.min_y || globalPosition.y >= arrayBounds.max_y ||
@@ -139,7 +139,7 @@ __global__ void checkIfAllocatedHashBlocksYieldTrue(
 	int idxInArray = voxelPositionSansOffset.x + voxelPositionSansOffset.y * arraySize.x +
 	                  voxelPositionSansOffset.z * arraySize.x * arraySize.y;
 
-	TVoxelHash hashVoxel = hashVoxels[hashEntry.ptr * SDF_BLOCK_SIZE3 + idxInBlock];
+	TVoxelHash hashVoxel = hashVoxels[hashEntry.ptr * VOXEL_BLOCK_SIZE3 + idxInBlock];
 	TVoxelArray arrayVoxel = arrayVoxels[idxInArray];
 
 	if (!(*functor)(arrayVoxel,hashVoxel)) {

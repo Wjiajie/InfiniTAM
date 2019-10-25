@@ -26,26 +26,6 @@
 
 using namespace ITMLib;
 
-// region ================================== CONSTRUCTORS / DESTRUCTORS ================================================
-
-template<typename TVoxelCanonical, typename TVoxelLive>
-ITMHashAllocationEngine_CPU<TVoxelCanonical, TVoxelLive>::ITMHashAllocationEngine_CPU() :
-		targetSceneHashBlockStates(
-				new ORUtils::MemoryBlock<unsigned char>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU)),
-		sourceSceneHashBlockStates(
-				new ORUtils::MemoryBlock<unsigned char>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU)),
-		targetSceneHashBlockCoordinates(
-				new ORUtils::MemoryBlock<Vector3s>(ITMVoxelBlockHash::noTotalEntries, MEMORYDEVICE_CPU)) {}
-
-
-template<typename TVoxelCanonical, typename TVoxelLive>
-ITMHashAllocationEngine_CPU<TVoxelCanonical, TVoxelLive>::~ITMHashAllocationEngine_CPU() {
-	delete targetSceneHashBlockStates;
-	delete sourceSceneHashBlockStates;
-	delete targetSceneHashBlockCoordinates;
-}
-
-// endregion ===========================================================================================================
 template<typename TVoxel, typename TWarp>
 void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromDepth(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
@@ -75,17 +55,20 @@ void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromDepth(
 	ITMHashSwapState* swapStates = scene->Swapping() ? scene->globalCache->GetSwapStates(false) : 0;
 	int* visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
 	uchar* hashBlockVisibilityTypes = renderState_vh->GetEntriesVisibleType();
-	uchar* liveEntryAllocationTypes = this->sourceSceneHashBlockStates->GetData(MEMORYDEVICE_CPU);
-	Vector3s* allocationBlockCoordinates = this->targetSceneHashBlockCoordinates->GetData(MEMORYDEVICE_CPU);
-	int noTotalEntries = scene->index.noTotalEntries;
+	int hashEntryCount = scene->index.hashEntryCount;
 
-	float oneOverHashEntrySize = 1.0f / (voxelSize * SDF_BLOCK_SIZE);//m
+	ORUtils::MemoryBlock<HashEntryState> hashEntryStates(hashEntryCount, MEMORYDEVICE_CPU);
+	HashEntryState* hashEntryStates_device = hashEntryStates.GetData(MEMORYDEVICE_CPU);
+	ORUtils::MemoryBlock<Vector3s> targetSceneHashBlockCoordinates(hashEntryCount, MEMORYDEVICE_CPU);
+	Vector3s* allocationBlockCoordinates = targetSceneHashBlockCoordinates.GetData(MEMORYDEVICE_CPU);
+
+	float oneOverHashEntrySize = 1.0f / (voxelSize * VOXEL_BLOCK_SIZE);//m
 
 	bool collisionDetected;
 
 	bool useSwapping = scene->globalCache != nullptr;
 	do {
-		memset(liveEntryAllocationTypes, (uint) NEEDS_NO_CHANGE, static_cast<size_t>(noTotalEntries));
+		memset(hashEntryStates_device, NEEDS_NO_CHANGE, static_cast<size_t>(hashEntryCount));
 		collisionDetected = false;
 		for (int i = 0; i < renderState_vh->noVisibleEntries; i++)
 			hashBlockVisibilityTypes[visibleEntryIDs[i]] = 3; // visible at previous frame and unstreamed
@@ -97,7 +80,7 @@ void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromDepth(
 			int y = locId / depthImgSize.x;
 			int x = locId - y * depthImgSize.x;
 
-			buildHashAllocAndVisibleTypePP(liveEntryAllocationTypes, hashBlockVisibilityTypes, x, y,
+			buildHashAllocAndVisibleTypePP(hashEntryStates_device, hashBlockVisibilityTypes, x, y,
 			                               allocationBlockCoordinates, depth, invM_d, invProjParams_d, mu, depthImgSize,
 			                               oneOverHashEntrySize,
 			                               hashTable, scene->sceneParams->viewFrustum_min,
@@ -108,14 +91,14 @@ void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromDepth(
 			useSwapping = false;
 			collisionDetected = false;
 		} else {
-			AllocateHashEntriesUsingLists_SetVisibility_CPU(scene, liveEntryAllocationTypes,
+			AllocateHashEntriesUsingLists_SetVisibility_CPU(scene, hashEntryStates_device,
 			                                                allocationBlockCoordinates, hashBlockVisibilityTypes);
 		}
 	} while (collisionDetected);
 
 	int noVisibleEntries = 0;
 	//build visible list
-	for (int targetIdx = 0; targetIdx < noTotalEntries; targetIdx++) {
+	for (int targetIdx = 0; targetIdx < hashEntryCount; targetIdx++) {
 		unsigned char hashVisibleType = hashBlockVisibilityTypes[targetIdx];
 		const ITMHashEntry& hashEntry = hashTable[targetIdx];
 
@@ -148,7 +131,7 @@ void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromDepth(
 
 	//reallocate deleted hash blocks from previous swap operation
 	if (useSwapping) {
-		for (int targetIdx = 0; targetIdx < noTotalEntries; targetIdx++) {
+		for (int targetIdx = 0; targetIdx < hashEntryCount; targetIdx++) {
 			if (hashBlockVisibilityTypes[targetIdx] > 0 && hashTable[targetIdx].ptr == -1) {
 				if (lastFreeVoxelBlockId >= 0) {
 					hashTable[lastFreeVoxelBlockId].ptr = voxelAllocationList[lastFreeVoxelBlockId];
@@ -185,9 +168,13 @@ void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromVolumeGeneric(
 		ITMVoxelVolume<TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
 		ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* sourceVolume) {
 
-	uchar* targetSceneHashBlockStateData = this->targetSceneHashBlockStates->GetData(MEMORYDEVICE_CPU);
+	assert(targetVolume->index.hashEntryCount == sourceVolume->index.hashEntryCount);
 
-	Vector3s* targetSceneHashBlockCoordinateData = this->targetSceneHashBlockCoordinates->GetData(MEMORYDEVICE_CPU);
+	const int hashEntryCount = targetVolume->index.hashEntryCount;
+	ORUtils::MemoryBlock<HashEntryState> hashBlockStates(hashEntryCount, MEMORYDEVICE_CPU);
+	HashEntryState* hashBlockStates_device = hashBlockStates.GetData(MEMORYDEVICE_CPU);
+	ORUtils::MemoryBlock<Vector3s> hashBlockCoordinates(hashEntryCount, MEMORYDEVICE_CPU);
+	Vector3s* blockCoordinates_device = hashBlockCoordinates.GetData(MEMORYDEVICE_CPU);
 	ITMHashEntry* targetHashEntries = targetVolume->index.GetEntries();
 	ITMHashEntry* sourceHashEntries = sourceVolume->index.GetEntries();
 
@@ -196,13 +183,13 @@ void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromVolumeGeneric(
 	do {
 		collisionDetected = false;
 		//reset target allocation states
-		memset(targetSceneHashBlockStateData, ITMLib::NEEDS_NO_CHANGE,
-		       static_cast<size_t>(ITMVoxelBlockHash::noTotalEntries));
+		memset(hashBlockStates_device, ITMLib::NEEDS_NO_CHANGE,
+		       static_cast<size_t>(hashEntryCount));
 		// at frame zero, allocate all the same blocks as in live frame
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
-		for (int sourceHash = 0; sourceHash < ITMVoxelBlockHash::noTotalEntries; sourceHash++) {
+		for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
 
 			const ITMHashEntry& currentSourceHashBlock = sourceHashEntries[sourceHash];
 			//skip unfilled live blocks
@@ -214,12 +201,12 @@ void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromVolumeGeneric(
 			//try to find a corresponding canonical block, and mark it for allocation if not found
 			int targetHash = hashIndex(sourceHashBlockCoords);
 
-			MarkAsNeedingAllocationIfNotFound(targetSceneHashBlockStateData, targetSceneHashBlockCoordinateData,
+			MarkAsNeedingAllocationIfNotFound(hashBlockStates_device, blockCoordinates_device,
 			                                  targetHash, sourceHashBlockCoords, targetHashEntries,
 			                                  collisionDetected);
 		}
-		AllocateHashEntriesUsingLists_CPU(targetVolume, targetSceneHashBlockStateData,
-		                                  targetSceneHashBlockCoordinateData);
+		AllocateHashEntriesUsingLists_CPU(targetVolume, hashBlockStates_device,
+		                                  blockCoordinates_device);
 	} while (collisionDetected);
 
 }
@@ -231,7 +218,7 @@ struct WarpBasedAllocationMarkerFunctor {
 			ITMVoxelVolume<TVoxelTSDF, ITMVoxelBlockHash>* sourceVolume,
 			ITMVoxelVolume<TVoxelTSDF, ITMVoxelBlockHash>* volumeToAllocate,
 			Vector3s* allocationBlockCoords,
-			uchar* warpedEntryAllocationStates) :
+			HashEntryState* warpedEntryAllocationStates) :
 
 			targetTSDFScene(volumeToAllocate),
 			targetTSDFVoxels(volumeToAllocate->localVBA.GetVoxelBlocks()),
@@ -284,7 +271,7 @@ private:
 	ITMVoxelBlockHash::IndexCache sourceTSDFCache;
 
 	Vector3s* allocationBlockCoords;
-	uchar* warpedEntryAllocationStates;
+	HashEntryState* warpedEntryAllocationStates;
 };
 
 
@@ -308,20 +295,26 @@ void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromWarpedVolume(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
-	int entryCount = ITMVoxelBlockHash::noTotalEntries;
-	Vector3s* allocationBlockCoordinatesData = this->targetSceneHashBlockCoordinates->GetData(MEMORYDEVICE_CPU);
-	uchar* liveEntryAllocationStates = this->sourceSceneHashBlockStates->GetData(MEMORYDEVICE_CPU);
+	assert(warpField->index.hashEntryCount == sourceTSDF->index.hashEntryCount &&
+	 sourceTSDF->index.hashEntryCount == targetTSDF->index.hashEntryCount);
+	int hashEntryCount = warpField->index.hashEntryCount;
+
+	ORUtils::MemoryBlock<HashEntryState> hashEntryStates(hashEntryCount, MEMORYDEVICE_CPU);
+	HashEntryState* hashEntryStates_device = hashEntryStates.GetData(MEMORYDEVICE_CPU);
+	ORUtils::MemoryBlock<Vector3s> blockCoordinates(hashEntryCount, MEMORYDEVICE_CPU);
+	Vector3s* blockCoordinates_device = blockCoordinates.GetData(MEMORYDEVICE_CPU);
+
 	//reset allocation types
-	memset(liveEntryAllocationStates, (unsigned char) 0, static_cast<size_t>(entryCount));
+	memset(hashEntryStates_device, HashEntryState::NEEDS_NO_CHANGE, static_cast<size_t>(hashEntryCount));
 
 	//Mark up hash entries in the target scene that will need allocation
 	WarpBasedAllocationMarkerFunctor<TWarp, TVoxel, WarpVoxelStaticFunctor<TWarp, TWarpType>>
-			hashMarkerFunctor(sourceTSDF, targetTSDF, allocationBlockCoordinatesData, liveEntryAllocationStates);
+			hashMarkerFunctor(sourceTSDF, targetTSDF, blockCoordinates_device, hashEntryStates_device);
 	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::VoxelAndHashBlockPositionTraversal(
 			warpField, hashMarkerFunctor);
 
 	//Allocate the hash entries that will potentially have any data
-	AllocateHashEntriesUsingLists_CPU(targetTSDF, liveEntryAllocationStates, allocationBlockCoordinatesData);
+	AllocateHashEntriesUsingLists_CPU(targetTSDF, hashEntryStates_device, blockCoordinates_device);
 }
 
 

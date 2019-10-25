@@ -48,9 +48,9 @@ public:
 			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
 			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
 			TBooleanFunctor& functor) {
-		ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryVolume->index.getIndexData();
-		int hashEntryCount = secondaryVolume->index.noTotalEntries;
-		ITMHashEntry* hashTable = secondaryVolume->index.getIndexData();
+		ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryVolume->index.GetIndexData();
+		int hashEntryCount = secondaryVolume->index.hashEntryCount;
+		ITMHashEntry* hashTable = secondaryVolume->index.GetIndexData();
 
 		ORUtils::MemoryBlock<int> hashesNotSpanned(hashEntryCount, true, true);
 		ORUtils::MemoryBlock<int> countHashesNotSpanned(1, true, true);
@@ -74,7 +74,7 @@ public:
 		ORUtils::MemoryBlock<bool> falseOrAlteredEncountered(1, true, true);
 		*falseOrAlteredEncountered.GetData(MEMORYDEVICE_CPU) = false;
 		falseOrAlteredEncountered.UpdateDeviceFromHost();
-		dim3 cudaBlockSize_BlockVoxelPerThread(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+		dim3 cudaBlockSize_BlockVoxelPerThread(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
 		TVoxelSecondary* voxelsHash = secondaryVolume->localVBA.GetVoxelBlocks();
 
 		if (countHashesNotSpanned_host > 0) {
@@ -97,16 +97,16 @@ public:
 		}
 
 		TVoxelPrimary* voxelsArray = primaryVolume->localVBA.GetVoxelBlocks();
-		Vector3i arrayOffset = primaryVolume->index.getVolumeOffset();
-		Vector3i arraySize = primaryVolume->index.getVolumeSize();
+		Vector3i arrayOffset = primaryVolume->index.GetVolumeOffset();
+		Vector3i arraySize = primaryVolume->index.GetVolumeSize();
 
 		Vector3s minBlockPos(
-				static_cast<int>(floor(static_cast<float>(arrayOffset.x) / SDF_BLOCK_SIZE)),
-				static_cast<int>(floor(static_cast<float>(arrayOffset.y) / SDF_BLOCK_SIZE)),
-				static_cast<int>(floor(static_cast<float>(arrayOffset.z) / SDF_BLOCK_SIZE)));
-		Vector3i minIndexCoord(minBlockPos.x * SDF_BLOCK_SIZE,
-		                       minBlockPos.y * SDF_BLOCK_SIZE,
-		                       minBlockPos.z * SDF_BLOCK_SIZE);
+				static_cast<int>(floor(static_cast<float>(arrayOffset.x) / VOXEL_BLOCK_SIZE)),
+				static_cast<int>(floor(static_cast<float>(arrayOffset.y) / VOXEL_BLOCK_SIZE)),
+				static_cast<int>(floor(static_cast<float>(arrayOffset.z) / VOXEL_BLOCK_SIZE)));
+		Vector3i minIndexCoord(minBlockPos.x * VOXEL_BLOCK_SIZE,
+		                       minBlockPos.y * VOXEL_BLOCK_SIZE,
+		                       minBlockPos.z * VOXEL_BLOCK_SIZE);
 		Vector3i minArrayCoord = arrayOffset - minIndexCoord; // inclusive
 		Vector3i maxArrayCoord = minArrayCoord + arraySize; // exclusive
 
@@ -116,9 +116,9 @@ public:
 		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TBooleanFunctor), cudaMemcpyHostToDevice));
 
 		dim3 gridSize_ArrayBlockEnvelope(
-				static_cast<int>(ceil(static_cast<float>(maxArrayCoord.x) / SDF_BLOCK_SIZE)),
-				static_cast<int>(ceil(static_cast<float>(maxArrayCoord.y) / SDF_BLOCK_SIZE)),
-				static_cast<int>(ceil(static_cast<float>(maxArrayCoord.z) / SDF_BLOCK_SIZE))
+				static_cast<int>(ceil(static_cast<float>(maxArrayCoord.x) / VOXEL_BLOCK_SIZE)),
+				static_cast<int>(ceil(static_cast<float>(maxArrayCoord.y) / VOXEL_BLOCK_SIZE)),
+				static_cast<int>(ceil(static_cast<float>(maxArrayCoord.z) / VOXEL_BLOCK_SIZE))
 		);
 
 		checkIfArrayContentIsUnalteredOrYieldsTrue
@@ -144,13 +144,13 @@ public:
 			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
 			TBooleanFunctor& functor) {
 
-		int hashEntryCount = secondaryVolume->index.noTotalEntries;
+		int hashEntryCount = secondaryVolume->index.hashEntryCount;
 		TVoxelSecondary* hashVoxels = secondaryVolume->localVBA.GetVoxelBlocks();
 		TVoxelPrimary* arrayVoxels = primaryVolume->localVBA.GetVoxelBlocks();
-		const ITMVoxelBlockHash::IndexData* hashTable = secondaryVolume->index.getIndexData();
-		const ITMPlainVoxelArray::IndexData* arrayInfo = primaryVolume->index.getIndexData();
-		Vector3i startVoxel = primaryVolume->index.getVolumeOffset();
-		Vector3i arraySize = primaryVolume->index.getVolumeSize();
+		const ITMVoxelBlockHash::IndexData* hashTable = secondaryVolume->index.GetIndexData();
+		const ITMPlainVoxelArray::IndexData* arrayInfo = primaryVolume->index.GetIndexData();
+		Vector3i startVoxel = primaryVolume->index.GetVolumeOffset();
+		Vector3i arraySize = primaryVolume->index.GetVolumeSize();
 		Vector3i endVoxel = startVoxel + arraySize; // open last traversal bound (this voxel doesn't get processed)
 		Vector6i arrayBounds(startVoxel.x, startVoxel.y, startVoxel.z, endVoxel.x, endVoxel.y, endVoxel.z);
 
@@ -163,7 +163,7 @@ public:
 		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TBooleanFunctor)));
 		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TBooleanFunctor), cudaMemcpyHostToDevice));
 
-		dim3 cudaBlockSize_BlockVoxelPerThread(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+		dim3 cudaBlockSize_BlockVoxelPerThread(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
 		dim3 gridSize_HashPerBlock(hashEntryCount);
 
 		checkIfAllocatedHashBlocksYieldTrue << <gridSize_HashPerBlock, cudaBlockSize_BlockVoxelPerThread>> >

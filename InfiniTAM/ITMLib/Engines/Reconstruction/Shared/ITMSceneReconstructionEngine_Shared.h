@@ -278,7 +278,7 @@ struct ComputeUpdatedVoxelInfo<true, true, true, TVoxel> {
 //======================================================================================================================
 
 _CPU_AND_GPU_CODE_ inline void
-buildHashAllocAndVisibleTypePP(uchar* entriesAllocType, uchar* entriesVisibleType, int x, int y, Vector3s* blockCoords,
+buildHashAllocAndVisibleTypePP(ITMLib::HashEntryState* hashEntryStates, uchar* entriesVisibleType, int x, int y, Vector3s* blockCoords,
                                const CONSTPTR(float)* depth, Matrix4f invM_d, Vector4f projParams_d, float mu,
                                Vector2i imgSize, float oneOverVoxelSize, const CONSTPTR(ITMHashEntry)* hashTable,
                                float viewFrustum_min, float viewFrustum_max, bool& collisionDetected)
@@ -344,7 +344,7 @@ buildHashAllocAndVisibleTypePP(uchar* entriesAllocType, uchar* entriesVisibleTyp
 			{
 				while (hashEntry.offset >= 1)
 				{
-					hashIdx = static_cast<unsigned int>(DEFAULT_ORDERED_LIST_SIZE + hashEntry.offset - 1);
+					hashIdx = static_cast<unsigned int>(ORDERED_LIST_SIZE + hashEntry.offset - 1);
 					hashEntry = hashTable[hashIdx];
 
 					if (IS_EQUAL3(hashEntry.pos, hashEntryPosition) && hashEntry.ptr >= -1)
@@ -362,12 +362,12 @@ buildHashAllocAndVisibleTypePP(uchar* entriesAllocType, uchar* entriesVisibleTyp
 
 			if (!isFound) //still not found
 			{
-				if(entriesAllocType[hashIdx] != ITMLib::NEEDS_NO_CHANGE){
+				if(hashEntryStates[hashIdx] != ITMLib::NEEDS_NO_CHANGE){
 					collisionDetected = true;
 				}else{
 					//needs allocation
-					entriesAllocType[hashIdx] = isExcess ?
-							ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST : ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST;
+					hashEntryStates[hashIdx] = isExcess ?
+					                           ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST : ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST;
 					if (!isExcess) entriesVisibleType[hashIdx] = 1; //new entry is visible
 					blockCoords[hashIdx] = hashEntryPosition;
 				}
@@ -408,7 +408,7 @@ _CPU_AND_GPU_CODE_ inline void checkBlockVisibility(THREADPTR(bool) &isVisible, 
 	const CONSTPTR(float) &voxelSize, const CONSTPTR(Vector2i) &imgSize)
 {
 	Vector4f pt_image;
-	float factor = (float)SDF_BLOCK_SIZE * voxelSize;
+	float factor = (float)VOXEL_BLOCK_SIZE * voxelSize;
 
 	isVisible = false; isVisibleEnlarged = false;
 

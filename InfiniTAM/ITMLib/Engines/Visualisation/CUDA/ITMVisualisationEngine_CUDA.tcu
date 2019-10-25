@@ -54,7 +54,7 @@ template<class TVoxel>
 ITMRenderState_VH* ITMVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CreateRenderState(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const
 {
 	return new ITMRenderState_VH(
-		ITMVoxelBlockHash::noTotalEntries, imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CUDA
+			scene->index.hashEntryCount, imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CUDA
 	);
 }
 
@@ -67,7 +67,7 @@ template<class TVoxel>
 void ITMVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::FindVisibleBlocks(const ITMVoxelVolume<TVoxel,ITMVoxelBlockHash> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *renderState) const
 {
 	const ITMHashEntry *hashTable = scene->index.GetEntries();
-	int noTotalEntries = scene->index.noTotalEntries;
+	int noTotalEntries = scene->index.hashEntryCount;
 	float voxelSize = scene->sceneParams->voxelSize;
 	Vector2i imgSize = renderState->renderingRangeImage->noDims;
 
@@ -87,7 +87,7 @@ void ITMVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::FindVisibleBlocks(c
 
 	/*	if (this->scene->useSwapping)
 			{
-			reAllocateSwappedOutVoxelBlocks_device << <gridSizeAL, cudaBlockSizeAL >> >(voxelAllocationList, hashTable, noTotalEntries,
+			reAllocateSwappedOutVoxelBlocks_device << <gridSizeAL, cudaBlockSizeAL >> >(voxelAllocationList, hashTable, hashEntryCount,
 			noAllocatedVoxelEntries_device, entriesVisibleType);
 			}*/
 
@@ -198,7 +198,7 @@ static void GenericRaycast(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Ve
 			renderState->raycastResult->GetData(MEMORYDEVICE_CUDA),
 			entriesVisibleType,
 			scene->localVBA.GetVoxelBlocks(),
-			scene->index.getIndexData(),
+			scene->index.GetIndexData(),
 			imgSize,
 			invM,
 			InvertProjectionParams(projParams),
@@ -210,7 +210,7 @@ static void GenericRaycast(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Ve
 			renderState->raycastResult->GetData(MEMORYDEVICE_CUDA),
 			NULL,
 			scene->localVBA.GetVoxelBlocks(),
-			scene->index.getIndexData(),
+			scene->index.GetIndexData(),
 			imgSize,
 			invM,
 			InvertProjectionParams(projParams),
@@ -251,17 +251,17 @@ static void RenderImage_common(const ITMVoxelVolume<TVoxel, TIndex> *scene, cons
 	switch (type) {
 	case IITMVisualisationEngine::RENDER_COLOUR_FROM_VOLUME:
 		renderColour_device<TVoxel, TIndex> <<<gridSize, cudaBlockSize>>>(outRendering, pointsRay, scene->localVBA.GetVoxelBlocks(),
-			scene->index.getIndexData(), imgSize);
+			scene->index.GetIndexData(), imgSize);
 		ORcudaKernelCheck;
 		break;
 	case IITMVisualisationEngine::RENDER_COLOUR_FROM_NORMAL:
 		renderColourFromNormal_device<TVoxel, TIndex> <<<gridSize, cudaBlockSize>>>(outRendering, pointsRay, scene->localVBA.GetVoxelBlocks(),
-			scene->index.getIndexData(), imgSize, lightSource);
+			scene->index.GetIndexData(), imgSize, lightSource);
 		ORcudaKernelCheck;
 		break;
 	case IITMVisualisationEngine::RENDER_COLOUR_FROM_CONFIDENCE:
 		renderColourFromConfidence_device<TVoxel, TIndex> <<<gridSize, cudaBlockSize>>>(outRendering, pointsRay, scene->localVBA.GetVoxelBlocks(),
-			scene->index.getIndexData(), imgSize, lightSource);
+			scene->index.GetIndexData(), imgSize, lightSource);
 		ORcudaKernelCheck;
 		break;
 	case IITMVisualisationEngine::RENDER_SHADED_GREYSCALE_IMAGENORMALS:
@@ -280,7 +280,7 @@ static void RenderImage_common(const ITMVoxelVolume<TVoxel, TIndex> *scene, cons
 	case IITMVisualisationEngine::RENDER_SHADED_GREYSCALE:
 	default:
 		renderGrey_device<TVoxel, TIndex> <<<gridSize, cudaBlockSize>>>(outRendering, pointsRay, scene->localVBA.GetVoxelBlocks(),
-			scene->index.getIndexData(), imgSize, lightSource);
+			scene->index.GetIndexData(), imgSize, lightSource);
 		ORcudaKernelCheck;
 		break;
 	}
@@ -306,7 +306,7 @@ static void CreatePointCloud_common(const ITMVoxelVolume<TVoxel, TIndex> *scene,
 	dim3 cudaBlockSize(16, 16);
 	dim3 gridSize = getGridSize(imgSize, cudaBlockSize);
 	renderPointCloud_device<TVoxel, TIndex> << <gridSize, cudaBlockSize >> >(locations, colours, noTotalPoints_device,
-		pointsRay, scene->localVBA.GetVoxelBlocks(), scene->index.getIndexData(), skipPoints, scene->sceneParams->voxelSize, imgSize, lightSource);
+		pointsRay, scene->localVBA.GetVoxelBlocks(), scene->index.GetIndexData(), skipPoints, scene->sceneParams->voxelSize, imgSize, lightSource);
 	ORcudaKernelCheck;
 
 	ORcudaSafeCall(cudaMemcpy(&trackingState->pointCloud->noTotalPoints, noTotalPoints_device, sizeof(uint), cudaMemcpyDeviceToHost));
@@ -359,7 +359,7 @@ static void ForwardRender_common(const ITMVoxelVolume<TVoxel, TIndex> *scene, co
 	float oneOverVoxelSize = 1.0f / scene->sceneParams->voxelSize;
 	float voxelSize = scene->sceneParams->voxelSize;
 	const TVoxel *voxelData = scene->localVBA.GetVoxelBlocks();
-	const typename TIndex::IndexData *voxelIndex = scene->index.getIndexData();
+	const typename TIndex::IndexData *voxelIndex = scene->index.GetIndexData();
 
 	renderState->forwardProjection->Clear();
 

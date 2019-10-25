@@ -26,7 +26,8 @@ template<class TVoxel>
 ITMRenderState_VH* ITMVisualisationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CreateRenderState(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const
 {
 	return new ITMRenderState_VH(
-		ITMVoxelBlockHash::noTotalEntries, imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CPU
+			scene->index.hashEntryCount, imgSize, scene->sceneParams->viewFrustum_min,
+			scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CPU
 	);
 }
 
@@ -40,7 +41,7 @@ void ITMVisualisationEngine_CPU<TVoxel,ITMVoxelBlockHash>::FindVisibleBlocks(con
                                                                              ITMRenderState *renderState) const
 {
 	const ITMHashEntry *hashTable = scene->index.GetEntries();
-	int noTotalEntries = scene->index.noTotalEntries;
+	int noTotalEntries = scene->index.hashEntryCount;
 	float voxelSize = scene->sceneParams->voxelSize;
 	Vector2i imgSize = renderState->renderingRangeImage->noDims;
 
@@ -181,7 +182,7 @@ static void GenericRaycast(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Ve
 	float oneOverVoxelSize = 1.0f / scene->sceneParams->voxelSize;
 	Vector4f *pointsRay = renderState->raycastResult->GetData(MEMORYDEVICE_CPU);
 	const TVoxel *voxelData = scene->localVBA.GetVoxelBlocks();
-	const typename TIndex::IndexData *voxelIndex = scene->index.getIndexData();
+	const typename TIndex::IndexData *voxelIndex = scene->index.GetIndexData();
 	uchar *entriesVisibleType = NULL;
 	if (updateVisibleList&&(dynamic_cast<const ITMRenderState_VH*>(renderState)!=NULL))
 	{
@@ -252,7 +253,7 @@ static void RenderImage_common(const ITMVoxelVolume<TVoxel,TIndex> *scene, const
 	Vector3f lightSource = -Vector3f(invM.getColumn(2));
 	Vector4u *outRendering = outputImage->GetData(MEMORYDEVICE_CPU);
 	const TVoxel *voxelData = scene->localVBA.GetVoxelBlocks();
-	const typename TIndex::IndexData *voxelIndex = scene->index.getIndexData();
+	const typename TIndex::IndexData *voxelIndex = scene->index.GetIndexData();
 
 	if ((type == IITMVisualisationEngine::RENDER_COLOUR_FROM_VOLUME)&&
 	    (!TVoxel::hasColorInformation)) type = IITMVisualisationEngine::RENDER_SHADED_GREYSCALE;
@@ -361,7 +362,7 @@ static void CreatePointCloud_common(const ITMVoxelVolume<TVoxel,TIndex> *scene, 
 		trackingState->pointCloud->colours->GetData(MEMORYDEVICE_CPU),
 		renderState->raycastResult->GetData(MEMORYDEVICE_CPU),
 		scene->localVBA.GetVoxelBlocks(),
-		scene->index.getIndexData(),
+		scene->index.GetIndexData(),
 		skipPoints,
 		scene->sceneParams->voxelSize,
 		imgSize,
@@ -418,7 +419,7 @@ static void ForwardRender_common(const ITMVoxelVolume<TVoxel, TIndex> *scene, co
 	const Vector2f *minmaximg = renderState->renderingRangeImage->GetData(MEMORYDEVICE_CPU);
 	float voxelSize = scene->sceneParams->voxelSize;
 	const TVoxel *voxelData = scene->localVBA.GetVoxelBlocks();
-	const typename TIndex::IndexData *voxelIndex = scene->index.getIndexData();
+	const typename TIndex::IndexData *voxelIndex = scene->index.GetIndexData();
 
 	renderState->forwardProjection->Clear();
 
