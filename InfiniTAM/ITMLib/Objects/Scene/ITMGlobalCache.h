@@ -2,14 +2,21 @@
 
 #pragma once
 
-#include <stdlib.h>
-#include <stdio.h>
+#ifdef COMPILE_WITHOUT_CUDA
+#include <cstring>
+#endif
+#include <cstdio>
+
 
 #include "ITMVoxelBlockHash.h"
+#include "ITMPlainVoxelArray.h"
 #include "../../../ORUtils/CUDADefines.h"
 
 namespace ITMLib
 {
+	template<typename TVoxel, typename TIndex>
+	class ITMGlobalCache;
+
 	struct ITMHashSwapState
 	{
 		/// 0 - most recent data is on host, data not currently in active
@@ -21,8 +28,16 @@ namespace ITMLib
 		uchar state;
 	};
 
-	template<class TVoxel>
-	class ITMGlobalCache
+	template<typename TVoxel>
+	class ITMGlobalCache<TVoxel, ITMPlainVoxelArray>{
+	public:
+		explicit ITMGlobalCache(const ITMPlainVoxelArray& index){
+			DIEWITHEXCEPTION_REPORTLOCATION("Swappling / global cache not implemented for plain voxel array indexing.");
+		}
+	};
+
+	template<typename TVoxel>
+	class ITMGlobalCache<TVoxel, ITMVoxelBlockHash>
 	{
 	private:
 		bool *hasStoredData;
@@ -48,24 +63,24 @@ namespace ITMLib
 		ITMHashSwapState *GetSwapStates(bool useGPU) { return useGPU ? swapStates_device : swapStates_host; }
 		int *GetNeededEntryIDs(bool useGPU) { return useGPU ? neededEntryIDs_device : neededEntryIDs_host; }
 
-		int noTotalEntries; 
+		const int hashEntryCount;
 
-		ITMGlobalCache() : noTotalEntries(ORDERED_LIST_SIZE + DEFAULT_EXCESS_LIST_SIZE)
+		explicit ITMGlobalCache(const int hashEntryCount) : hashEntryCount(hashEntryCount)
 		{	
-			hasStoredData = (bool*)malloc(noTotalEntries * sizeof(bool));
-			storedVoxelBlocks = (TVoxel*)malloc(noTotalEntries * sizeof(TVoxel) * VOXEL_BLOCK_SIZE3);
-			memset(hasStoredData, 0, noTotalEntries);
+			hasStoredData = (bool*)malloc(hashEntryCount * sizeof(bool));
+			storedVoxelBlocks = (TVoxel*)malloc(hashEntryCount * sizeof(TVoxel) * VOXEL_BLOCK_SIZE3);
+			memset(hasStoredData, 0, hashEntryCount);
 
-			swapStates_host = (ITMHashSwapState *)malloc(noTotalEntries * sizeof(ITMHashSwapState));
-			memset(swapStates_host, 0, sizeof(ITMHashSwapState) * noTotalEntries);
+			swapStates_host = (ITMHashSwapState *)malloc(hashEntryCount * sizeof(ITMHashSwapState));
+			memset(swapStates_host, 0, sizeof(ITMHashSwapState) * hashEntryCount);
 
 #ifndef COMPILE_WITHOUT_CUDA
 			ORcudaSafeCall(cudaMallocHost((void**)&syncedVoxelBlocks_host, SWAP_OPERATION_BLOCK_COUNT * sizeof(TVoxel) * VOXEL_BLOCK_SIZE3));
 			ORcudaSafeCall(cudaMallocHost((void**)&hasSyncedData_host, SWAP_OPERATION_BLOCK_COUNT * sizeof(bool)));
 			ORcudaSafeCall(cudaMallocHost((void**)&neededEntryIDs_host, SWAP_OPERATION_BLOCK_COUNT * sizeof(int)));
 
-			ORcudaSafeCall(cudaMalloc((void**)&swapStates_device, noTotalEntries * sizeof(ITMHashSwapState)));
-			ORcudaSafeCall(cudaMemset(swapStates_device, 0, noTotalEntries * sizeof(ITMHashSwapState)));
+			ORcudaSafeCall(cudaMalloc((void**)&swapStates_device, hashEntryCount * sizeof(ITMHashSwapState)));
+			ORcudaSafeCall(cudaMemset(swapStates_device, 0, hashEntryCount * sizeof(ITMHashSwapState)));
 
 			ORcudaSafeCall(cudaMalloc((void**)&syncedVoxelBlocks_device, SWAP_OPERATION_BLOCK_COUNT * sizeof(TVoxel) * VOXEL_BLOCK_SIZE3));
 			ORcudaSafeCall(cudaMalloc((void**)&hasSyncedData_device, SWAP_OPERATION_BLOCK_COUNT * sizeof(bool)));
@@ -78,14 +93,41 @@ namespace ITMLib
 #endif
 		}
 
+		explicit ITMGlobalCache(const ITMVoxelBlockHash& index) : ITMGlobalCache(index.hashEntryCount){}
+
+		explicit ITMGlobalCache(const ITMGlobalCache& other) : ITMGlobalCache(other.hashEntryCount)
+		{
+
+#ifndef COMPILE_WITHOUT_CUDA
+			ORcudaSafeCall(cudaMemcpy(syncedVoxelBlocks_host, other.syncedVoxelBlocks_host,
+					SWAP_OPERATION_BLOCK_COUNT * sizeof(TVoxel) * VOXEL_BLOCK_SIZE3, cudaMemcpyHostToHost));
+			ORcudaSafeCall(cudaMemcpy(hasSyncedData_host, other.hasSyncedData_host,
+					SWAP_OPERATION_BLOCK_COUNT * sizeof(bool), cudaMemcpyHostToHost));
+			ORcudaSafeCall(cudaMemcpy(neededEntryIDs_host, other.neededEntryIDs_host,
+					SWAP_OPERATION_BLOCK_COUNT * sizeof(int), cudaMemcpyHostToHost));
+			ORcudaSafeCall(cudaMemcpy(swapStates_device, other.swapStates_device,
+					hashEntryCount * sizeof(ITMHashSwapState), cudaMemcpyDeviceToDevice));
+			ORcudaSafeCall(cudaMemcpy(syncedVoxelBlocks_device, other.syncedVoxelBlocks_device,
+					SWAP_OPERATION_BLOCK_COUNT * sizeof(TVoxel) * VOXEL_BLOCK_SIZE3, cudaMemcpyDeviceToDevice));
+			ORcudaSafeCall(cudaMemcpy(hasSyncedData_device, other.hasSyncedData_device,
+					SWAP_OPERATION_BLOCK_COUNT * sizeof(bool), cudaMemcpyDeviceToDevice));
+			ORcudaSafeCall(cudaMemcpy(neededEntryIDs_device, other.neededEntryIDs_device,
+			                          SWAP_OPERATION_BLOCK_COUNT * sizeof(int), cudaMemcpyDeviceToDevice));
+#else
+			memcpy(syncedVoxelBlocks_host, other.syncedVoxelBlocks_host,SWAP_OPERATION_BLOCK_COUNT * sizeof(TVoxel) * VOXEL_BLOCK_SIZE3);
+			memcpy(hasSyncedData_host, other.hasSyncedData_host, SWAP_OPERATION_BLOCK_COUNT * sizeof(bool));
+			memcpy(neededEntryIDs_host,other.neededEntryIDs_host, SWAP_OPERATION_BLOCK_COUNT * sizeof(int));
+#endif
+		}
+
 		void SaveToFile(char *fileName) const
 		{
 			TVoxel *storedData = storedVoxelBlocks;
 
 			FILE *f = fopen(fileName, "wb");
 
-			fwrite(hasStoredData, sizeof(bool), noTotalEntries, f);
-			for (int i = 0; i < noTotalEntries; i++)
+			fwrite(hasStoredData, sizeof(bool), hashEntryCount, f);
+			for (int i = 0; i < hashEntryCount; i++)
 			{
 				fwrite(storedData, sizeof(TVoxel) * VOXEL_BLOCK_SIZE3, 1, f);
 				storedData += VOXEL_BLOCK_SIZE3;
@@ -99,9 +141,9 @@ namespace ITMLib
 			TVoxel *storedData = storedVoxelBlocks;
 			FILE *f = fopen(fileName, "rb");
 
-			size_t tmp = fread(hasStoredData, sizeof(bool), noTotalEntries, f);
-			if (tmp == (size_t)noTotalEntries) {
-				for (int i = 0; i < noTotalEntries; i++)
+			size_t tmp = fread(hasStoredData, sizeof(bool), hashEntryCount, f);
+			if (tmp == (size_t)hashEntryCount) {
+				for (int i = 0; i < hashEntryCount; i++)
 				{
 					fread(storedData, sizeof(TVoxel) * VOXEL_BLOCK_SIZE3, 1, f);
 					storedData += VOXEL_BLOCK_SIZE3;

@@ -23,9 +23,9 @@ void ITMSceneReconstructionEngine_CPU<TVoxel,ITMVoxelBlockHash>::ResetScene(ITMV
 	ITMHashEntry *hashEntry_ptr = scene->index.GetEntries();
 	for (int i = 0; i < scene->index.hashEntryCount; ++i) hashEntry_ptr[i] = tmpEntry;
 	int *excessList_ptr = scene->index.GetExcessAllocationList();
-	for (int i = 0; i < DEFAULT_EXCESS_LIST_SIZE; ++i) excessList_ptr[i] = i;
+	for (int i = 0; i < scene->index.excessListSize; ++i) excessList_ptr[i] = i;
 
-	scene->index.SetLastFreeExcessListId(DEFAULT_EXCESS_LIST_SIZE - 1);
+	scene->index.SetLastFreeExcessListId(scene->index.excessListSize - 1);
 }
 
 template<class TVoxel>

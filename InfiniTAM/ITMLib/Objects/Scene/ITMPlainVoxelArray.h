@@ -47,8 +47,7 @@ public:
 
 	ITMPlainVoxelArray(ITMPlainVoxelArray::InitializationParameters info, MemoryDeviceType memoryType) :
 			memoryType(memoryType),
-			indexData(new ORUtils::MemoryBlock<IndexData>(1, memoryType == MEMORYDEVICE_CPU,
-			                                              memoryType == MEMORYDEVICE_CUDA)) {
+			indexData(new ORUtils::MemoryBlock<IndexData>(1, true, true)) {
 		indexData->GetData(MEMORYDEVICE_CPU)[0] = info;
 		indexData->UpdateDeviceFromHost();
 	}
@@ -80,6 +79,12 @@ public:
 		       indexData->GetData(MEMORYDEVICE_CPU)->size.z;
 	}
 
+	unsigned int GetMaxVoxelCount() const {
+		return static_cast<unsigned int>(indexData->GetData(MEMORYDEVICE_CPU)->size.x) *
+		       static_cast<unsigned int>(indexData->GetData(MEMORYDEVICE_CPU)->size.y) *
+		       static_cast<unsigned int>(indexData->GetData(MEMORYDEVICE_CPU)->size.z);
+	}
+
 	Vector3i GetVolumeSize() const { return indexData->GetData(MEMORYDEVICE_CPU)->size; }
 
 	Vector3i GetVolumeOffset() const { return indexData->GetData(MEMORYDEVICE_CPU)->offset; }
@@ -98,8 +103,10 @@ public:
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "MemberFunctionCanBeStatic"
+
 	void LoadFromDirectory(const std::string& outputDirectory) {
 	}
+
 #pragma clang diagnostic pop
 
 #ifdef COMPILE_WITH_METAL

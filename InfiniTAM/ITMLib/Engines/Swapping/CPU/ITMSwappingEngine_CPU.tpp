@@ -6,20 +6,11 @@
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 using namespace ITMLib;
 
-template<class TVoxel>
-ITMSwappingEngine_CPU<TVoxel,ITMVoxelBlockHash>::ITMSwappingEngine_CPU(void)
-{
-}
-
-template<class TVoxel>
-ITMSwappingEngine_CPU<TVoxel,ITMVoxelBlockHash>::~ITMSwappingEngine_CPU(void)
-{
-}
 
 template<class TVoxel>
 int ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::LoadFromGlobalMemory(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene)
 {
-	ITMGlobalCache<TVoxel> *globalCache = scene->globalCache;
+	ITMGlobalCache<TVoxel, ITMVoxelBlockHash> *globalCache = scene->globalCache;
 
 	ITMHashSwapState *swapStates = globalCache->GetSwapStates(false);
 
@@ -29,26 +20,26 @@ int ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::LoadFromGlobalMemory(ITMVo
 	bool *hasSyncedData_global = globalCache->GetHasSyncedData(false);
 	int *neededEntryIDs_global = globalCache->GetNeededEntryIDs(false);
 
-	int noTotalEntries = globalCache->noTotalEntries;
+	int hashEntryCount = globalCache->hashEntryCount;
 
-	int noNeededEntries = 0;
-	for (int entryId = 0; entryId < noTotalEntries; entryId++)
+	int neededHashEntryCount = 0;
+	for (int entryId = 0; entryId < hashEntryCount; entryId++)
 	{
-		if (noNeededEntries >= SWAP_OPERATION_BLOCK_COUNT) break;
+		if (neededHashEntryCount >= SWAP_OPERATION_BLOCK_COUNT) break;
 		if (swapStates[entryId].state == 1)
 		{
-			neededEntryIDs_local[noNeededEntries] = entryId;
-			noNeededEntries++;
+			neededEntryIDs_local[neededHashEntryCount] = entryId;
+			neededHashEntryCount++;
 		}
 	}
 
 	// would copy neededEntryIDs_local into neededEntryIDs_global here
 
-	if (noNeededEntries > 0)
+	if (neededHashEntryCount > 0)
 	{
-		memset(syncedVoxelBlocks_global, 0, noNeededEntries * VOXEL_BLOCK_SIZE3 * sizeof(TVoxel));
-		memset(hasSyncedData_global, 0, noNeededEntries * sizeof(bool));
-		for (int i = 0; i < noNeededEntries; i++)
+		memset(syncedVoxelBlocks_global, 0, neededHashEntryCount * VOXEL_BLOCK_SIZE3 * sizeof(TVoxel));
+		memset(hasSyncedData_global, 0, neededHashEntryCount * sizeof(bool));
+		for (int i = 0; i < neededHashEntryCount; i++)
 		{
 			int entryId = neededEntryIDs_global[i];
 
@@ -62,13 +53,13 @@ int ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::LoadFromGlobalMemory(ITMVo
 
 	// would copy syncedVoxelBlocks_global and hasSyncedData_global and syncedVoxelBlocks_local and hasSyncedData_local here
 
-	return noNeededEntries;
+	return neededHashEntryCount;
 }
 
 template<class TVoxel>
 void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateGlobalIntoLocal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState)
 {
-	ITMGlobalCache<TVoxel> *globalCache = scene->globalCache;
+	ITMGlobalCache<TVoxel, ITMVoxelBlockHash> *globalCache = scene->globalCache;
 
 	ITMHashEntry *hashTable = scene->index.GetEntries();
 
@@ -106,7 +97,7 @@ void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateGlobalIntoLocal(
 template<class TVoxel>
 void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::SaveToGlobalMemory(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState)
 {
-	ITMGlobalCache<TVoxel> *globalCache = scene->globalCache;
+	ITMGlobalCache<TVoxel, ITMVoxelBlockHash> *globalCache = scene->globalCache;
 
 	ITMHashSwapState *swapStates = globalCache->GetSwapStates(false);
 
@@ -124,14 +115,14 @@ void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::SaveToGlobalMemory(ITMVox
 	TVoxel *localVBA = scene->localVBA.GetVoxelBlocks();
 	int *voxelAllocationList = scene->localVBA.GetAllocationList();
 
-	int noTotalEntries = globalCache->noTotalEntries;
+	int hashEntryCount = globalCache->hashEntryCount;
 	
-	int noNeededEntries = 0;
-	int noAllocatedVoxelEntries = scene->localVBA.lastFreeBlockId;
+	int neededEntryCount = 0; // needed for what?
+	int allocatedEntryCount = scene->localVBA.lastFreeBlockId;
 
-	for (int entryDestId = 0; entryDestId < noTotalEntries; entryDestId++)
+	for (int entryDestId = 0; entryDestId < hashEntryCount; entryDestId++)
 	{
-		if (noNeededEntries >= SWAP_OPERATION_BLOCK_COUNT) break;
+		if (neededEntryCount >= SWAP_OPERATION_BLOCK_COUNT) break;
 
 		int localPtr = hashTable[entryDestId].ptr;
 		ITMHashSwapState &swapState = swapStates[entryDestId];
@@ -140,34 +131,34 @@ void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::SaveToGlobalMemory(ITMVox
 		{
 			TVoxel *localVBALocation = localVBA + localPtr * VOXEL_BLOCK_SIZE3;
 
-			neededEntryIDs_local[noNeededEntries] = entryDestId;
+			neededEntryIDs_local[neededEntryCount] = entryDestId;
 
-			hasSyncedData_local[noNeededEntries] = true;
-			memcpy(syncedVoxelBlocks_local + noNeededEntries * VOXEL_BLOCK_SIZE3, localVBALocation, VOXEL_BLOCK_SIZE3 * sizeof(TVoxel));
+			hasSyncedData_local[neededEntryCount] = true;
+			memcpy(syncedVoxelBlocks_local + neededEntryCount * VOXEL_BLOCK_SIZE3, localVBALocation, VOXEL_BLOCK_SIZE3 * sizeof(TVoxel));
 
 			swapStates[entryDestId].state = 0;
 
-			int vbaIdx = noAllocatedVoxelEntries;
+			int vbaIdx = allocatedEntryCount;
 			if (vbaIdx < ORDERED_LIST_SIZE - 1)
 			{
-				noAllocatedVoxelEntries++;
+				allocatedEntryCount++;
 				voxelAllocationList[vbaIdx + 1] = localPtr;
 				hashTable[entryDestId].ptr = -1;
 
 				for (int i = 0; i < VOXEL_BLOCK_SIZE3; i++) localVBALocation[i] = TVoxel();
 			}
 
-			noNeededEntries++;
+			neededEntryCount++;
 		}
 	}
 
-	scene->localVBA.lastFreeBlockId = noAllocatedVoxelEntries;
+	scene->localVBA.lastFreeBlockId = allocatedEntryCount;
 
 	// would copy neededEntryIDs_local, hasSyncedData_local and syncedVoxelBlocks_local into *_global here
 
-	if (noNeededEntries > 0)
+	if (neededEntryCount > 0)
 	{
-		for (int entryId = 0; entryId < noNeededEntries; entryId++)
+		for (int entryId = 0; entryId < neededEntryCount; entryId++)
 		{
 			if (hasSyncedData_global[entryId])
 				globalCache->SetStoredData(neededEntryIDs_global[entryId], syncedVoxelBlocks_global + entryId * VOXEL_BLOCK_SIZE3);

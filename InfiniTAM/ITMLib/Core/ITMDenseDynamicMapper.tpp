@@ -65,7 +65,7 @@ inline static void PrintOperationStatus(const char* status) {
 // region ===================================== CONSTRUCTORS / DESTRUCTORS =============================================
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ITMDenseDynamicMapper() :
+ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ITMDenseDynamicMapper(const TIndex& index) :
 		sceneReconstructor(
 				ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel, TWarp, TIndex>
 						(ITMLibSettings::Instance().deviceType)),
@@ -73,7 +73,7 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ITMDenseDynamicMapper() :
 				ITMSceneMotionTrackerFactory::MakeSceneMotionTracker<TVoxel, TWarp, TIndex>()),
 		swappingEngine(ITMLibSettings::Instance().swappingMode != ITMLibSettings::SWAPPINGMODE_DISABLED
 		               ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxel, TIndex>(
-						ITMLibSettings::Instance().deviceType)
+						ITMLibSettings::Instance().deviceType, index)
 		               : nullptr),
 		swappingMode(ITMLibSettings::Instance().swappingMode),
 		parameters{ITMLibSettings::Instance().sceneTrackingMaxOptimizationIterationCount,

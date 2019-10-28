@@ -18,26 +18,19 @@
 // VOXEL_BLOCK_SIZE3 = VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE
 #define VOXEL_BLOCK_SIZE3 512
 
-// Number of locally stored blocks, currently 2^17
-#define DEFAULT_VOXEL_BLOCK_NUM 0x40000
-
 // Number of Hash Buckets, should be 2^n and bigger than DEFAULT_VOXEL_BLOCK_NUM, VOXEL_HASH_MASK = ORDERED_LIST_SIZE - 1
 #define ORDERED_LIST_SIZE 0x100000
 // Used for get hashing value of the bucket index,  VOXEL_HASH_MASK = ORDERED_LIST_SIZE - 1
 #define VOXEL_HASH_MASK 0xfffff
-// 0x20000 Size of excess list, used to handle collisions. Also max offset (unsigned short) value.
-#define DEFAULT_EXCESS_LIST_SIZE 0x20000
+
 
 //// for loop closure
 // Number of locally stored blocks, currently 2^12
 //#define DEFAULT_VOXEL_BLOCK_NUM 0x10000
-//
-// Number of Hash Bucket, should be 2^n and bigger than DEFAULT_VOXEL_BLOCK_NUM, VOXEL_HASH_MASK = ORDERED_LIST_SIZE - 1
+
+// Number of Hash Bucket, should be a power of two and bigger than voxel block count, VOXEL_HASH_MASK = ORDERED_LIST_SIZE - 1
 //#define ORDERED_LIST_SIZE 0x40000
-// Used for get hashing value of the bucket index,  VOXEL_HASH_MASK = ORDERED_LIST_SIZE - 1
-//#define VOXEL_HASH_MASK 0x3ffff
-// 0x8000 Size of excess list, used to handle collisions. Also max offset (unsigned short) value.
-//#define DEFAULT_EXCESS_LIST_SIZE 0x8000
+
 
 // Maximum number of blocks transfered in one swap operation
 #define SWAP_OPERATION_BLOCK_COUNT 0x1000
@@ -67,14 +60,22 @@ and a pointer to the data structure on the GPU.
 class ITMVoxelBlockHash {
 public:
 	struct ITMVoxelBlockHashParameters {
+		private:
+		static const int defaultVoxelBlockCount = 0x40000;
+
+		static const int defaultExcessListSize =  0x20000;
+		public:
 		const int voxelBlockCount;
+		/** Size of excess list, used to handle collisions. Also max offset (unsigned short) value. **/
 		const int excessListSize;
 
-		ITMVoxelBlockHashParameters() : voxelBlockCount(DEFAULT_VOXEL_BLOCK_NUM),
-		                                excessListSize(DEFAULT_EXCESS_LIST_SIZE) {}
+		ITMVoxelBlockHashParameters() : voxelBlockCount(defaultVoxelBlockCount),
+		                                excessListSize(defaultExcessListSize) {}
 
 		ITMVoxelBlockHashParameters(int voxelBlockCount, int excessListSize) :
 				voxelBlockCount(voxelBlockCount), excessListSize(excessListSize) {}
+
+
 	};
 	typedef ITMVoxelBlockHashParameters InitializationParameters;
 	typedef ITMHashEntry IndexData;
@@ -119,13 +120,14 @@ public:
 	ITMVoxelBlockHash(ITMVoxelBlockHashParameters parameters, MemoryDeviceType memoryType) :
 			voxelBlockCount(parameters.voxelBlockCount),
 			excessListSize(parameters.excessListSize),
-			hashEntryCount(ORDERED_LIST_SIZE + parameters.excessListSize) {
+			hashEntryCount(ORDERED_LIST_SIZE + parameters.excessListSize),
+			lastFreeExcessListId(parameters.excessListSize - 1) {
 		this->memoryType = memoryType;
 		hashEntries = new ORUtils::MemoryBlock<ITMHashEntry>(hashEntryCount, memoryType);
 		excessAllocationList = new ORUtils::MemoryBlock<int>(excessListSize, memoryType);
 	}
 
-	ITMVoxelBlockHash(MemoryDeviceType memoryType) : ITMVoxelBlockHash(ITMVoxelBlockHashParameters(), memoryType) {}
+	explicit ITMVoxelBlockHash(MemoryDeviceType memoryType) : ITMVoxelBlockHash(ITMVoxelBlockHashParameters(), memoryType) {}
 
 
 	ITMVoxelBlockHash(const ITMVoxelBlockHash& other, MemoryDeviceType memoryType) :
@@ -171,6 +173,9 @@ public:
 
 	void SetLastFreeExcessListId(int newLastFreeExcessListId) { this->lastFreeExcessListId = newLastFreeExcessListId; }
 
+	/*VBH-specific*/
+	int GetExcessListSize() const { return this->excessListSize; }
+
 #ifdef COMPILE_WITH_METAL
 	const void* GetEntries_MB(void) { return hashEntries->GetMetalBuffer(); }
 		const void* GetExcessAllocationList_MB(void) { return excessAllocationList->GetMetalBuffer(); }
@@ -182,7 +187,11 @@ public:
 
 	int GetVoxelBlockSize() const { return this->voxelBlockSize; }
 
-	int GetExcessListSize() const { return this->excessListSize; }
+	unsigned int GetMaxVoxelCount() const {
+		return static_cast<unsigned int>(this->voxelBlockCount)
+		       * static_cast<unsigned int>(this->voxelBlockSize);
+	}
+
 
 	void SaveToDirectory(const std::string& outputDirectory) const {
 		std::string hashEntriesFileName = outputDirectory + "hash.dat";

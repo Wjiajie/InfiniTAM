@@ -17,12 +17,11 @@ namespace ITMLib
 		MemoryDeviceType memoryType;
 
 		uint noTotalTriangles;
-		static const uint noMaxTriangles_default = DEFAULT_VOXEL_BLOCK_NUM * 32 * 16;
 		uint noMaxTriangles;
 
 		ORUtils::MemoryBlock<Triangle> *triangles;
 
-		explicit ITMMesh(MemoryDeviceType memoryType, uint maxTriangles = noMaxTriangles_default)
+		explicit ITMMesh(MemoryDeviceType memoryType, uint maxTriangles)
 		{
 			this->memoryType = memoryType;
 			this->noTotalTriangles = 0;

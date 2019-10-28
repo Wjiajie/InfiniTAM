@@ -10,7 +10,12 @@ namespace ITMLib
 	template<class TVoxel, class TIndex>
 	class ITMMeshingEngine_CPU : public ITMMeshingEngine < TVoxel, TIndex >
 	{
-		void MeshScene(ITMMesh *mesh, const ITMVoxelVolume<TVoxel, TIndex> *scene) { }
+	public:
+		explicit ITMMeshingEngine_CPU(const TIndex& index) : ITMMeshingEngine<TVoxel,TIndex>(index){};
+		//TODO: implement meshing for PVA (for completeness / consistency)
+		void MeshScene(ITMMesh *mesh, const ITMVoxelVolume<TVoxel, TIndex> *scene) {
+			DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+		}
 	};
 
 	template<class TVoxel>
@@ -19,7 +24,8 @@ namespace ITMLib
 	public:
 		void MeshScene(ITMMesh *mesh, const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene);
 
-		ITMMeshingEngine_CPU(void) { }
-		~ITMMeshingEngine_CPU(void) { }
+		explicit ITMMeshingEngine_CPU(const ITMVoxelBlockHash& index) :
+			ITMMeshingEngine<TVoxel,ITMVoxelBlockHash>(index) { }
+		~ITMMeshingEngine_CPU() = default;
 	};
 }

@@ -10,6 +10,7 @@ namespace ITMLib
     class ITMSwappingEngine_Metal : public ITMSwappingEngine<TVoxel,TIndex>
     {
     public:
+    	explicit ITMSwappingEngine_Metal(const TIndex& index) = default;
         void IntegrateGlobalIntoLocal(ITMScene<TVoxel,TIndex> *scene, ITMView *view) {}
         void SaveToGlobalMemory(ITMScene<TVoxel,TIndex> *scene, ITMView *view) {}
     };
@@ -27,7 +28,7 @@ namespace ITMLib
         void IntegrateGlobalIntoLocal(ITMScene<TVoxel,ITMVoxelBlockHash> *scene, ITMView *view);
         void SaveToGlobalMemory(ITMScene<TVoxel,ITMVoxelBlockHash> *scene, ITMView *view);
         
-        ITMSwappingEngine_Metal(void);
+        explicit ITMSwappingEngine_Metal(const ITMVoxelBlockHash& index);
         ~ITMSwappingEngine_Metal(void);
     };
 }

@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_PlainVoxelArray_CUDA) {
 
 	ITMVoxel voxelZero;
 	voxelZero.sdf = 0.0f;
-	ManipulationEngine_CUDA_PVA_Voxel::Inst().SetVoxel(&scene1, Vector3i(0, 0, 0), voxelZero);
+	BOOST_REQUIRE(ManipulationEngine_CUDA_PVA_Voxel::Inst().SetVoxel(&scene1, Vector3i(0, 0, 0), voxelZero));
 
 	ITMVoxel out;
 	out = ManipulationEngine_CUDA_PVA_Voxel::Inst().ReadVoxel(&scene1, Vector3i(0, 0, 0));
@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CUDA_and_CPU_ITMVoxel) {
 	Vector3i volumeSize(40);
 	Vector3i volumeOffset(-20, -20, 0);
 	ITMPlainVoxelArray::InitializationParameters indexParametersPVA(volumeSize, volumeOffset);
-	ITMVoxelBlockHash::InitializationParameters indexParametersVBH(0x800, DEFAULT_EXCESS_LIST_SIZE);
+	ITMVoxelBlockHash::InitializationParameters indexParametersVBH(0x800, 0x20000);
 	Vector3i extentEndVoxel = volumeOffset + volumeSize;
 
 
@@ -294,7 +294,7 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CUDA_ITMWarp) {
 	Vector3i volumeSize(40);
 	Vector3i volumeOffset(-20, -20, 0);
 	ITMPlainVoxelArray::InitializationParameters indexParametersPVA(volumeSize, volumeOffset);
-	ITMVoxelBlockHash::InitializationParameters indexParametersVBH(0x800, DEFAULT_EXCESS_LIST_SIZE);
+	ITMVoxelBlockHash::InitializationParameters indexParametersVBH(0x800, 0x20000);
 	Vector3i extentEndVoxel = volumeOffset + volumeSize;
 
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> scene1(&settings->sceneParams,

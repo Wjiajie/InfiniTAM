@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene2(&settings->sceneParams,
 	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                   settings->GetMemoryType(), {0x800, DEFAULT_EXCESS_LIST_SIZE});
+	                                                   settings->GetMemoryType(), {0x800, 0x20000});
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene2);
 
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
@@ -154,7 +154,8 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 
 	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize,
 	                                                                                          &settings->sceneParams,
-	                                                                                          settings->GetMemoryType());
+	                                                                                          settings->GetMemoryType(),
+	                                                                                          scene2.index);
 	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene2, view, &trackingState, renderState);
 
 	tolerance = 1e-5;
@@ -168,7 +169,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene3, tolerance));
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(&settings->sceneParams,
 	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                   settings->GetMemoryType(), {0x800, DEFAULT_EXCESS_LIST_SIZE});
+	                                                   settings->GetMemoryType(), {0x800, 0x20000});
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene4);
 	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene4, view, &trackingState, renderState);
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene2, &scene4, tolerance));
@@ -185,7 +186,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene5(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType(), {0x800, DEFAULT_EXCESS_LIST_SIZE});
+			settings->GetMemoryType(), {0x800, 0x20000});
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene5);
 	std::string path = "TestData/test_VBH_ConstructFromImage_";
 	SceneFileIOEngine_VBH::SaveToDirectoryCompact(&scene4, path);
@@ -258,7 +259,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CUDA) {
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(&settings->sceneParams,
 	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType(),
-	                                                   {0x800, DEFAULT_EXCESS_LIST_SIZE});
+	                                                   {0x800, 0x20000});
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene3);
 
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
@@ -267,7 +268,8 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CUDA) {
 
 	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize,
 	                                                                                          &settings->sceneParams,
-	                                                                                          settings->GetMemoryType());
+	                                                                                          settings->GetMemoryType(),
+	                                                                                          scene3.index);
 	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, renderState);
 
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(&scene2, &scene3, tolerance));

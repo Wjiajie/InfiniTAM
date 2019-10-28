@@ -35,12 +35,12 @@ namespace ITMLib
 		int noVisibleEntries;
 		const int hashEntryCount;
            
-		ITMRenderState_VH(const int hashEntryCount, const Vector2i & imgSize, float vf_min, float vf_max, MemoryDeviceType memoryType = MEMORYDEVICE_CPU)
+		ITMRenderState_VH(const int hashEntryCount, const int voxelBlockCount, const Vector2i & imgSize, float vf_min, float vf_max, MemoryDeviceType memoryType = MEMORYDEVICE_CPU)
 			: ITMRenderState(imgSize, vf_min, vf_max, memoryType), hashEntryCount(hashEntryCount)
 		{
 			this->memoryType = memoryType;
 
-			visibleEntryIDs = new ORUtils::MemoryBlock<int>(DEFAULT_VOXEL_BLOCK_NUM, memoryType);
+			visibleEntryIDs = new ORUtils::MemoryBlock<int>(voxelBlockCount, memoryType);
 			entriesVisibleType = new ORUtils::MemoryBlock<uchar>(hashEntryCount, memoryType);
 
 			noVisibleEntries = 0;

@@ -3,6 +3,7 @@
 
 #include "ITMSwappingEngine_Metal.h"
 
+//TODO: implement or remove dead code
 //using namespace ITMLib::Engine;
 //
 //template<class TVoxel>

@@ -152,7 +152,8 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 
 	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize,
 	                                                                                          &settings->sceneParams,
-	                                                                                          settings->GetMemoryType());
+	                                                                                          settings->GetMemoryType(),
+	                                                                                          scene2.index);
 	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene2, view, &trackingState, renderState);
 
 	tolerance = 1e-5;
@@ -166,7 +167,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene3, tolerance));
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(&settings->sceneParams,
 	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                   settings->GetMemoryType(), {0x800, DEFAULT_EXCESS_LIST_SIZE});
+	                                                   settings->GetMemoryType(), {0x800, 0x20000});
 	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene4);
 	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene4, view, &trackingState, renderState);
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene2, &scene4, tolerance));
@@ -255,7 +256,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CPU) {
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(&settings->sceneParams,
 	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-	                                                   settings->GetMemoryType(), {0x800, DEFAULT_EXCESS_LIST_SIZE});
+	                                                   settings->GetMemoryType(), {0x800, 0x20000});
 	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene3);
 
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
@@ -264,7 +265,8 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CPU) {
 
 	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize,
 	                                                                                          &settings->sceneParams,
-	                                                                                          settings->GetMemoryType());
+	                                                                                          settings->GetMemoryType(),
+	                                                                                          scene3.index);
 	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, renderState);
 
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(&scene2, &scene3, tolerance));

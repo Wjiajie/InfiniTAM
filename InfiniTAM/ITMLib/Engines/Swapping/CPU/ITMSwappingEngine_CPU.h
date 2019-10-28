@@ -10,6 +10,7 @@ namespace ITMLib
 	class ITMSwappingEngine_CPU : public ITMSwappingEngine < TVoxel, TIndex >
 	{
 	public:
+		explicit ITMSwappingEngine_CPU(const TIndex& index){};
 		void IntegrateGlobalIntoLocal(ITMVoxelVolume<TVoxel, TIndex> *scene, ITMRenderState *renderState) {}
 		void SaveToGlobalMemory(ITMVoxelVolume<TVoxel, TIndex> *scene, ITMRenderState *renderState) {}
 		void CleanLocalMemory(ITMVoxelVolume<TVoxel, TIndex> *scene, ITMRenderState *renderState) {}
@@ -23,13 +24,13 @@ namespace ITMLib
 
 	public:
 		// This class is currently just for debugging purposes -- swaps CPU memory to CPU memory.
-		// Potentially this could stream into the host memory from somwhere else (disk, database, etc.).
+		// Potentially this could stream into the host memory from somewhere else (disk, database, etc.).
 
 		void IntegrateGlobalIntoLocal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState);
 		void SaveToGlobalMemory(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState);
 		void CleanLocalMemory(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState);
 
-		ITMSwappingEngine_CPU(void);
-		~ITMSwappingEngine_CPU(void);
+		explicit ITMSwappingEngine_CPU(const ITMVoxelBlockHash& index){};
+		~ITMSwappingEngine_CPU() = default;
 	};
 }

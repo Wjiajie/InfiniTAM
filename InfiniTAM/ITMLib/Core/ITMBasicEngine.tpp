@@ -34,9 +34,9 @@ ITMBasicEngine<TVoxel,TIndex>::ITMBasicEngine(const ITMRGBDCalib& calib, Vector2
 
 	meshingEngine = NULL;
 	if (settings.createMeshingEngine)
-		meshingEngine = ITMMeshingEngineFactory::MakeMeshingEngine<TVoxel,TIndex>(deviceType);
+		meshingEngine = ITMMeshingEngineFactory::MakeMeshingEngine<TVoxel,TIndex>(deviceType, scene->index);
 
-	denseMapper = new ITMDenseMapper<TVoxel, TIndex>();
+	denseMapper = new ITMDenseMapper<TVoxel, TIndex>(scene->index);
 	denseMapper->ResetScene(scene);
 
 	imuCalibrator = new ITMIMUCalibrator_iPad();
@@ -46,7 +46,7 @@ ITMBasicEngine<TVoxel,TIndex>::ITMBasicEngine(const ITMRGBDCalib& calib, Vector2
 
 	Vector2i trackedImageSize = trackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
 
-	renderState_live = ITMRenderStateFactory<TIndex>::CreateRenderState(trackedImageSize, scene->sceneParams, memoryType);
+	renderState_live = ITMRenderStateFactory<TIndex>::CreateRenderState(trackedImageSize, scene->sceneParams, memoryType, scene->index);
 	renderState_freeview = NULL; //will be created if needed
 
 	trackingState = new ITMTrackingState(trackedImageSize, memoryType);
@@ -101,7 +101,7 @@ void ITMBasicEngine<TVoxel,TIndex>::SaveSceneToMesh(const char *objFileName)
 {
 	if (meshingEngine == NULL) return;
 
-	ITMMesh *mesh = new ITMMesh(ITMLibSettings::Instance().GetMemoryType());
+	ITMMesh *mesh = new ITMMesh(ITMLibSettings::Instance().GetMemoryType(), scene->index.GetMaxVoxelCount());
 
 	meshingEngine->MeshScene(mesh, scene);
 	mesh->WriteSTL(objFileName);
@@ -428,7 +428,7 @@ void ITMBasicEngine<TVoxel,TIndex>::GetImage(ITMUChar4Image *out, GetImageType g
 
 		if (renderState_freeview == NULL)
 		{
-			renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims, scene->sceneParams, settings.GetMemoryType());
+			renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims, scene->sceneParams, settings.GetMemoryType(), scene->index);
 		}
 
 		visualisationEngine->FindVisibleBlocks(scene, pose, intrinsics, renderState_freeview);

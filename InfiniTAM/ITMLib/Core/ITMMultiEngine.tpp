@@ -35,24 +35,23 @@ ITMMultiEngine<TVoxel, TIndex>::ITMMultiEngine(const ITMRGBDCalib& calib, Vector
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
 	visualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxel, TIndex>(deviceType);
 
-	meshingEngine = NULL;
-	if (settings.createMeshingEngine)
-		meshingEngine = ITMMultiMeshingEngineFactory::MakeMeshingEngine<TVoxel, TIndex>(deviceType);
-
-	renderState_freeview = NULL; //will be created by the visualisation engine
-
-	denseMapper = new ITMDenseMapper<TVoxel, TIndex>();
-
-	imuCalibrator = new ITMIMUCalibrator_iPad();
 	tracker = ITMCameraTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, lowLevelEngine, imuCalibrator,
 	                                                   &settings.sceneParams);
 	trackingController = new ITMTrackingController(tracker);
 	trackedImageSize = trackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
 
-	freeviewLocalMapIdx = 0;
 	mapManager = new ITMVoxelMapGraphManager<TVoxel, TIndex>(visualisationEngine, denseMapper, trackedImageSize);
 	mActiveDataManager = new ITMActiveMapManager(mapManager);
 	mActiveDataManager->initiateNewLocalMap(true);
+	denseMapper = new ITMDenseMapper<TVoxel, TIndex>(mapManager->getLocalMap(0)->scene->index);
+
+	meshingEngine = NULL;
+	if (settings.createMeshingEngine)
+		meshingEngine = ITMMultiMeshingEngineFactory::MakeMeshingEngine<TVoxel, TIndex>(deviceType, mapManager->getLocalMap(0)->scene->index);
+
+	renderState_freeview = NULL; //will be created by the visualisation engine
+	imuCalibrator = new ITMIMUCalibrator_iPad();
+	freeviewLocalMapIdx = 0;
 
 	//TODO	tracker->UpdateInitialPose(allData[0]->trackingState);
 
@@ -309,7 +308,7 @@ void ITMMultiEngine<TVoxel, TIndex>::SaveSceneToMesh(const char *modelFileName)
 {
 	if (meshingEngine == NULL) return;
 
-	ITMMesh *mesh = new ITMMesh(ITMLibSettings::Instance().GetMemoryType());
+	ITMMesh *mesh = new ITMMesh(ITMLibSettings::Instance().GetMemoryType(), mapManager->getLocalMap(0)->scene->index.GetMaxVoxelCount());
 
 	meshingEngine->MeshScene(mesh, *mapManager);
 	mesh->WriteSTL(modelFileName);

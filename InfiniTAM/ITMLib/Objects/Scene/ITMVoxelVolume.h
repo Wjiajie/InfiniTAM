@@ -9,8 +9,7 @@
 namespace ITMLib
 {
 /** \brief
-Represents the 3D world model as a hash of small voxel
-blocks
+Represents the 3D world model as collection of voxel blocks, i.e. regular 3D grid
 */
 template<class TVoxel, class TIndex>
 class ITMVoxelVolume
@@ -19,14 +18,17 @@ public:
 	/** Scene parameters like voxel size etc. */
 	const ITMSceneParams *sceneParams;
 
-	/** Hash table to reference the 8x8x8 blocks */
+	/**
+	 * \brief An indexing method for access to the volume's voxels.
+	 * \details For instance, if ITMVoxelBlockHash is used as TIndex, this is a hash table to reference the 8x8x8
+	 * blocks. If it's an ITMPlainVoxelArray, it's just a dense regular 3D array. */
 	TIndex index;
 
 	/** Current local content of the 8x8x8 voxel blocks -- stored host or device */
 	ITMLocalVBA<TVoxel> localVBA;
 
-	/** Global content of the 8x8x8 voxel blocks -- stored on host only */
-	ITMGlobalCache<TVoxel> *globalCache;
+	/** "Global" content -- stored on in host memory only */
+	ITMGlobalCache<TVoxel, TIndex>* globalCache;
 
 	void SaveToDirectory(const std::string &outputDirectory) const;
 

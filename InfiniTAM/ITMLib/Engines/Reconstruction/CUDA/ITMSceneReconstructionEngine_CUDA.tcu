@@ -79,9 +79,9 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel,ITMVoxelBlockHash>::ResetScene(ITM
 	ITMHashEntry *hashEntry_ptr = scene->index.GetEntries();
 	memsetKernel<ITMHashEntry>(hashEntry_ptr, tmpEntry, scene->index.hashEntryCount);
 	int *excessList_ptr = scene->index.GetExcessAllocationList();
-	fillArrayKernel<int>(excessList_ptr, DEFAULT_EXCESS_LIST_SIZE);
+	fillArrayKernel<int>(excessList_ptr, scene->index.excessListSize);
 
-	scene->index.SetLastFreeExcessListId(DEFAULT_EXCESS_LIST_SIZE - 1);
+	scene->index.SetLastFreeExcessListId(scene->index.excessListSize - 1);
 }
 
 template<class TVoxel>

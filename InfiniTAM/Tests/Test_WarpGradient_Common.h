@@ -89,7 +89,7 @@ ITMPlainVoxelArray::InitializationParameters GetIndexParameters<ITMPlainVoxelArr
 
 template <>
 ITMVoxelBlockHash::InitializationParameters GetIndexParameters<ITMVoxelBlockHash>(){
-	return { 0x800, DEFAULT_EXCESS_LIST_SIZE};
+	return { 0x800, 0x20000};
 }
 
 template<MemoryDeviceType TMemoryType, typename TIndex>

@@ -34,7 +34,7 @@ ITMVoxelVolume<TVoxel,TIndex>::ITMVoxelVolume(const ITMSceneParams* _sceneParams
 		index(indexParameters, _memoryType),
 	  localVBA(_memoryType, index.GetAllocatedBlockCount(), index.GetVoxelBlockSize())
 {
-	if (_useSwapping) globalCache = new ITMGlobalCache<TVoxel>();
+	if (_useSwapping) globalCache = new ITMGlobalCache<TVoxel,TIndex>(this->index);
 	else globalCache = nullptr;
 }
 
@@ -42,13 +42,12 @@ template<class TVoxel, class TIndex>
 ITMVoxelVolume<TVoxel, TIndex>::ITMVoxelVolume(const ITMVoxelVolume& other, MemoryDeviceType _memoryType)
 	: sceneParams(other.sceneParams),
 	index(other.index,_memoryType),
-	localVBA(other.localVBA, _memoryType){
-	if(other.globalCache != nullptr){
-		// TODO: not sure if global cache needs to be shared or copied between copied scenes
-		globalCache = new ITMGlobalCache<TVoxel>();
-	}else{
-		globalCache = nullptr;
-	}
+	localVBA(other.localVBA, _memoryType),
+    globalCache(nullptr)
+	{
+    if(other.globalCache != nullptr){
+	    this->globalCache = new ITMGlobalCache<TVoxel,TIndex>(*other.globalCache);
+    }
 }
 
 template<class TVoxel, class TIndex>
@@ -57,7 +56,8 @@ void ITMVoxelVolume<TVoxel, TIndex>::SetFrom(const ITMVoxelVolume& other) {
 	localVBA.SetFrom(other.localVBA);
 	if(other.globalCache != nullptr){
 		// TODO: not sure if global cache needs to be shared or copied between copied scenes
-		globalCache = new ITMGlobalCache<TVoxel>();
+		delete this->globalCache;
+		globalCache = new ITMGlobalCache<TVoxel, TIndex>(*other.globalCache);
 	}else{
 		globalCache = nullptr;
 	}

@@ -11,6 +11,7 @@ namespace ITMLib
 	class ITMMultiMeshingEngine_CUDA : public ITMMultiMeshingEngine<TVoxel, TIndex>
 	{
 	public:
+		explicit ITMMultiMeshingEngine_CUDA(const TIndex& index){};
 		void MeshScene(ITMMesh *mesh, const ITMVoxelMapGraphManager<TVoxel, TIndex> & sceneManager) {}
 	};
 
@@ -31,8 +32,8 @@ namespace ITMLib
 
 		void MeshScene(ITMMesh *mesh, const MultiSceneManager & sceneManager);
 
-		ITMMultiMeshingEngine_CUDA(void);
-		~ITMMultiMeshingEngine_CUDA(void);
+		explicit ITMMultiMeshingEngine_CUDA(const ITMVoxelBlockHash& index);
+		~ITMMultiMeshingEngine_CUDA();
 	};
 }
 

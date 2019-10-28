@@ -184,7 +184,7 @@ dualVoxelTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* seconda
 	ITMHashEntry secondaryHashEntry = secondaryHashTable[hashCode];
 
 	if (secondaryHashEntry.pos != primaryHashEntry.pos) {
-		int secondaryHashCode;
+		int secondaryHashCode = 0;
 		assert(FindHashAtPosition(secondaryHashCode, primaryHashEntry.pos, secondaryHashTable));
 		secondaryHashEntry = secondaryHashTable[secondaryHashCode];
 	}
@@ -212,7 +212,7 @@ dualVoxelPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 	ITMHashEntry secondaryHashEntry = secondaryHashTable[hashCode];
 
 	if (secondaryHashEntry.pos != primaryHashEntry.pos) {
-		int secondaryHashCode;
+		int secondaryHashCode = 0;
 		assert(FindHashAtPosition(secondaryHashCode, primaryHashEntry.pos, secondaryHashTable));
 		secondaryHashEntry = secondaryHashTable[secondaryHashCode];
 	}
@@ -244,12 +244,12 @@ dualVoxelWarpPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecond
 	ITMHashEntry warpHashEntry = warpHashTable[hashCode];
 
 	if (secondaryHashEntry.pos != primaryHashEntry.pos) {
-		int secondaryHashCode;
+		int secondaryHashCode = 0;
 		assert(FindHashAtPosition(secondaryHashCode, primaryHashEntry.pos, secondaryHashTable));
 		secondaryHashEntry = secondaryHashTable[secondaryHashCode];
 	}
 	if (warpHashEntry.pos != primaryHashEntry.pos) {
-		int warpHashCode;
+		int warpHashCode = 0;
 		assert(FindHashAtPosition(warpHashCode, primaryHashEntry.pos, warpHashTable));
 		secondaryHashEntry = secondaryHashTable[warpHashCode];
 	}

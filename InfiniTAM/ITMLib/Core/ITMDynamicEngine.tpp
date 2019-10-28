@@ -39,9 +39,9 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 
 	meshingEngine = nullptr;
 	if (settings.createMeshingEngine)
-		meshingEngine = ITMMeshingEngineFactory::MakeMeshingEngine<TVoxel, TIndex>(deviceType);
+		meshingEngine = ITMMeshingEngineFactory::MakeMeshingEngine<TVoxel, TIndex>(deviceType, canonicalScene->index);
 
-	denseMapper = new ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>();
+	denseMapper = new ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>(canonicalScene->index);
 	denseMapper->ResetTSDFVolume(canonicalScene);
 	for (int iScene = 0; iScene < ITMDynamicEngine<TVoxel, TWarp, TIndex>::liveSceneCount; iScene++){
 		denseMapper->ResetTSDFVolume(liveScenes[iScene]);
@@ -56,7 +56,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 	Vector2i trackedImageSize = cameraTrackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
 
 	renderState_live = ITMRenderStateFactory<TIndex>::CreateRenderState(trackedImageSize, canonicalScene->sceneParams,
-	                                                                    memoryType);
+	                                                                    memoryType, liveScenes[0]->index);
 	renderState_freeview = nullptr; //will be created if needed
 
 	trackingState = new ITMTrackingState(trackedImageSize, memoryType);
@@ -134,7 +134,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::~ITMDynamicEngine() {
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDynamicEngine<TVoxel, TWarp, TIndex>::SaveSceneToMesh(const char* objFileName) {
 	if (meshingEngine == nullptr) return;
-	ITMMesh* mesh = new ITMMesh(ITMLibSettings::Instance().GetMemoryType());
+	ITMMesh* mesh = new ITMMesh(ITMLibSettings::Instance().GetMemoryType(), canonicalScene->index.GetMaxVoxelCount());
 	meshingEngine->MeshScene(mesh, canonicalScene);
 	mesh->WriteSTL(objFileName);
 	delete mesh;
@@ -408,7 +408,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			if (renderState_freeview == nullptr) {
 				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
 				                                                                        liveScenes[0]->sceneParams,
-				                                                                        settings.GetMemoryType());
+				                                                                        settings.GetMemoryType(),
+				                                                                        liveScenes[0]->index);
 			}
 
 			liveVisualisationEngine->FindVisibleBlocks(liveScenes[0], pose, intrinsics, renderState_freeview);
@@ -426,7 +427,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			if (renderState_freeview == nullptr) {
 				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
 				                                                                        liveScenes[0]->sceneParams,
-				                                                                        settings.GetMemoryType());
+				                                                                        settings.GetMemoryType(),
+				                                                                        liveScenes[0]->index);
 			}
 
 			liveVisualisationEngine->FindVisibleBlocks(liveScenes[0], pose, intrinsics, renderState_freeview);
@@ -454,7 +456,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			if (renderState_freeview == nullptr) {
 				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
 				                                                                        canonicalScene->sceneParams,
-				                                                                        settings.GetMemoryType());
+				                                                                        settings.GetMemoryType(),
+				                                                                        canonicalScene->index);
 			}
 
 			canonicalVisualisationEngine->FindVisibleBlocks(canonicalScene, pose, intrinsics, renderState_freeview);
