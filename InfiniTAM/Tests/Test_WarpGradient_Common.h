@@ -107,31 +107,31 @@ struct WarpGradientDataFixture {
 		settings->enableLevelSetTerm = false;
 
 		BOOST_TEST_MESSAGE("setup fixture");
-		auto loadSdfVolume = [&](ITMVoxelVolume<ITMVoxel, TIndex>* scene, const std::string& pathSuffix){
-			scene = new ITMVoxelVolume<ITMVoxel, TIndex>(&settings->sceneParams,
+		auto loadSdfVolume = [&](ITMVoxelVolume<ITMVoxel, TIndex>** scene, const std::string& pathSuffix){
+			*scene = new ITMVoxelVolume<ITMVoxel, TIndex>(&settings->sceneParams,
 			                                                   settings->swappingMode ==
 			                                                   ITMLibSettings::SWAPPINGMODE_ENABLED,
 			                                                   TMemoryType,
 			                                                   indexParameters);
-			PrepareVoxelVolume(scene, TMemoryType);
-			scene->LoadFromDirectory(pathToData + pathSuffix);
+			PrepareVoxelVolume(*scene, TMemoryType);
+			(*scene)->LoadFromDirectory(pathToData + pathSuffix);
 		};
-		auto loadWarpVolume = [&](ITMVoxelVolume<ITMWarp, TIndex>* scene, const std::string& pathSuffix){
-			scene = new ITMVoxelVolume<ITMWarp, TIndex>(&settings->sceneParams,
+		auto loadWarpVolume = [&](ITMVoxelVolume<ITMWarp, TIndex>** scene, const std::string& pathSuffix){
+			*scene = new ITMVoxelVolume<ITMWarp, TIndex>(&settings->sceneParams,
 			                                             settings->swappingMode ==
 			                                             ITMLibSettings::SWAPPINGMODE_ENABLED,
 			                                             TMemoryType,
 			                                             indexParameters);
-			PrepareVoxelVolume(scene, TMemoryType);
-			scene->LoadFromDirectory(pathToData + pathSuffix);
+			PrepareVoxelVolume(*scene, TMemoryType);
+			(*scene)->LoadFromDirectory(pathToData + pathSuffix);
 		};
-		loadSdfVolume(live_volume, "live");
-		loadSdfVolume(canonical_volume, "canonical");
-		loadWarpVolume(warp_field_data_term, "gradient0_data_");
-		loadWarpVolume(warp_field_iter0, "warp_iter0");
-		loadWarpVolume(warp_field_tikhonov_term, "gradient0_tikhonov_");
-		loadWarpVolume(warp_field_killing_term, "gradient0_killing_");
-		loadWarpVolume(warp_field_level_set_term, "gradient0_level_set_");
+		loadSdfVolume(&live_volume, "live");
+		loadSdfVolume(&canonical_volume, "canonical");
+		loadWarpVolume(&warp_field_data_term, "gradient0_data_");
+		loadWarpVolume(&warp_field_iter0, "warp_iter0");
+		loadWarpVolume(&warp_field_tikhonov_term, "gradient0_tikhonov_");
+		loadWarpVolume(&warp_field_killing_term, "gradient0_killing_");
+		loadWarpVolume(&warp_field_level_set_term, "gradient0_level_set_");
 	}
 
 	~WarpGradientDataFixture() {

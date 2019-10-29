@@ -28,12 +28,13 @@ namespace b_ios = boost::iostreams;
 
 
 template<typename TVoxel>
-void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
-                                                                             const std::string& outputDirectory) {
+void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(
+		const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
+		const std::string& outputDirectory) {
 
 
 	std::string path = outputDirectory + compactFilePostfixAndExtension;
-	std::ofstream ofStream = std::ofstream(path.c_str(),std::ios_base::binary | std::ios_base::out);
+	std::ofstream ofStream = std::ofstream(path.c_str(), std::ios_base::binary | std::ios_base::out);
 	if (!ofStream) throw std::runtime_error("Could not open '" + path + "' for writing.");
 
 	b_ios::filtering_ostream outFilter;
@@ -41,9 +42,10 @@ void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(con
 	outFilter.push(ofStream);
 
 	bool tempSceneUsed = false;
-	if(scene->localVBA.GetMemoryType() == MEMORYDEVICE_CUDA){
+	if (scene->localVBA.GetMemoryType() == MEMORYDEVICE_CUDA) {
 		// we cannot access CUDA blocks directly, so the easiest solution here is to make a local main-memory copy first
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene_cpu_copy = new ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>(*scene, MEMORYDEVICE_CPU);
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene_cpu_copy = new ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>(
+				*scene, MEMORYDEVICE_CPU);
 		scene = scene_cpu_copy;
 		tempSceneUsed = true;
 	}
@@ -57,18 +59,18 @@ void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(con
 	outFilter.write(reinterpret_cast<const char* >(&scene->localVBA.allocatedSize), sizeof(int));
 	outFilter.write(reinterpret_cast<const char* >(&lastExcessListId), sizeof(int));
 	//count filled entries
-	int allocatedHashBlockCount = 0;
+	int allocatedHashEntryCount = 0;
 #ifdef WITH_OPENMP
-#pragma omp parallel for reduction(+:allocatedHashBlockCount)
+#pragma omp parallel for reduction(+:allocatedHashEntryCount)
 #endif
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 		const ITMHashEntry& currentHashEntry = hashTable[entryId];
 		//skip unfilled hash
 		if (currentHashEntry.ptr < 0) continue;
-		allocatedHashBlockCount++;
+		allocatedHashEntryCount++;
 	}
 
-	outFilter.write(reinterpret_cast<const char* >(&allocatedHashBlockCount), sizeof(int));
+	outFilter.write(reinterpret_cast<const char* >(&allocatedHashEntryCount), sizeof(int));
 	for (int entryId = 0; entryId < noTotalEntries; entryId++) {
 		const ITMHashEntry& currentHashEntry = hashTable[entryId];
 		//skip unfilled hash
@@ -79,17 +81,18 @@ void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(con
 		outFilter.write(reinterpret_cast<const char* >(localVoxelBlock), sizeof(TVoxel) * VOXEL_BLOCK_SIZE3);
 	}
 
-	if(tempSceneUsed){
+	if (tempSceneUsed) {
 		delete scene;
 	}
 }
 
 template<typename TVoxel>
 void
-ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
-                                                                          const std::string& outputDirectory) {
+ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
+		const std::string& outputDirectory) {
 	std::string path = outputDirectory + "compact.dat";
-	std::ifstream ifStream = std::ifstream(path.c_str(),std::ios_base::binary | std::ios_base::in);
+	std::ifstream ifStream = std::ifstream(path.c_str(), std::ios_base::binary | std::ios_base::in);
 	if (!ifStream) throw std::runtime_error("Could not open '" + path + "' for reading.");
 	b_ios::filtering_istream inFilter;
 	inFilter.push(b_ios::zlib_decompressor());
@@ -97,7 +100,7 @@ ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(ITMVox
 
 	ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetScene = scene;
 	bool copyToCUDA = false;
-	if(scene->localVBA.GetMemoryType() == MEMORYDEVICE_CUDA){
+	if (scene->localVBA.GetMemoryType() == MEMORYDEVICE_CUDA) {
 		// we cannot access CUDA blocks directly, so the easiest solution here is to make a local main-memory copy
 		// first, read it in from disk, and then copy it over into the target
 		auto scene_cpu_copy = new ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>(*scene, MEMORYDEVICE_CPU);
@@ -115,10 +118,11 @@ ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(ITMVox
 	inFilter.read(reinterpret_cast<char* >(&lastExcessListId), sizeof(int));
 	scene->index.SetLastFreeExcessListId(lastExcessListId);
 	scene->localVBA.lastFreeBlockId = lastOrderedListId;
+
 	//count filled entries
-	int allocatedHashBlockCount;
-	inFilter.read(reinterpret_cast<char* >(&allocatedHashBlockCount), sizeof(int));
-	for (int iEntry = 0; iEntry < allocatedHashBlockCount; iEntry++) {
+	int allocatedHashEntryCount;
+	inFilter.read(reinterpret_cast<char* >(&allocatedHashEntryCount), sizeof(int));
+	for (int iEntry = 0; iEntry < allocatedHashEntryCount; iEntry++) {
 		int entryId;
 		inFilter.read(reinterpret_cast<char* >(&entryId), sizeof(int));
 		ITMHashEntry& currentHashEntry = hashTable[entryId];
@@ -127,7 +131,7 @@ ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(ITMVox
 		inFilter.read(reinterpret_cast<char* >(localVoxelBlock), sizeof(TVoxel) * VOXEL_BLOCK_SIZE3);
 	}
 
-	if(copyToCUDA){
+	if (copyToCUDA) {
 		targetScene->SetFrom(*scene);
 		delete scene;
 	}
@@ -136,8 +140,9 @@ ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(ITMVox
 
 template<typename TVoxel>
 void
-ITMSceneFileIOEngine<TVoxel, ITMPlainVoxelArray>::SaveToDirectoryCompact(const ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
-                                                                         const std::string& outputDirectory) {
+ITMSceneFileIOEngine<TVoxel, ITMPlainVoxelArray>::SaveToDirectoryCompact(
+		const ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
+		const std::string& outputDirectory) {
 	scene->localVBA.SaveToDirectory(outputDirectory);
 	scene->index.SaveToDirectory(outputDirectory);
 }
@@ -145,8 +150,9 @@ ITMSceneFileIOEngine<TVoxel, ITMPlainVoxelArray>::SaveToDirectoryCompact(const I
 
 template<typename TVoxel>
 void
-ITMSceneFileIOEngine<TVoxel, ITMPlainVoxelArray>::LoadFromDirectoryCompact(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
-                                                                           const std::string& outputDirectory) {
+ITMSceneFileIOEngine<TVoxel, ITMPlainVoxelArray>::LoadFromDirectoryCompact(
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
+		const std::string& outputDirectory) {
 	scene->localVBA.LoadFromDirectory(outputDirectory);
 	scene->index.LoadFromDirectory(outputDirectory);
 }

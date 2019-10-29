@@ -18,30 +18,20 @@
 #define BOOST_TEST_DYN_LINK
 #endif
 
-
-//stdlib
-#include <random>
-#include <vector>
-#include <chrono>
-
 //boost
 #include <boost/test/unit_test.hpp>
 
 //local
 #include "TestUtils.h"
 #include "../ITMLib/Utils/ITMLibSettings.h"
-#include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/SceneMotionTrackers/Interface/ITMSceneMotionTracker.h"
-#include "../ITMLib/SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU.h"
 #include "../ITMLib/SceneMotionTrackers/Shared/ITMWarpGradientFunctors.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 
 using namespace ITMLib;
 
-typedef ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray> SceneFileIOEngine_PVA;
-typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
 
 BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
@@ -61,6 +51,7 @@ BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 
 	const int nonTruncatedVoxelCount = 41307;
 	canonical_scene_CPU.LoadFromDirectory("TestData/snoopy_result_fr16-17_PVA/canonical");
+
 	BOOST_REQUIRE_EQUAL(SceneStatCalc_CPU_PVA_Voxel::Instance().ComputeNonTruncatedVoxelCount(&canonical_scene_CPU),
 	                    nonTruncatedVoxelCount);
 

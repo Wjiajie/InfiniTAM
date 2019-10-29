@@ -15,7 +15,7 @@
 //  limitations under the License.
 //  ================================================================
 
-#define BOOST_TEST_MODULE SceneConstruction
+#define BOOST_TEST_MODULE SetCopyCompare_CPU
 #ifndef WIN32
 #define BOOST_TEST_DYN_LINK
 #endif
@@ -118,8 +118,6 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CPU) {
 	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType(), {0x800, 0x20000});
 
-	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> SceneManipulationEngine;
-
 	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene1);
 
 	ITMVoxel voxelZero;
@@ -162,6 +160,27 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CPU) {
 	BOOST_REQUIRE(out.sdf == voxelHalf.sdf);
 }
 
+BOOST_AUTO_TEST_CASE(testCopyToDifferentlyInitializedVolume_VBH_CPU) {
+	ITMLibSettings* settings = &ITMLibSettings::Instance();
+
+	settings->deviceType = ITMLibSettings::DEVICE_CPU;
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene1(&settings->sceneParams,
+	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->GetMemoryType());
+	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene1);
+	std::string path = "TestData/snoopy_result_fr16-17_partial_VBH/live_default_voxel_alloc_";
+
+	scene1.LoadFromDirectory(path);
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene2(&settings->sceneParams,
+	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->GetMemoryType(), {0x800, 0x20000});
+	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene2);
+	ManipulationEngine_CPU_VBH_Voxel::Inst().CopyScene(&scene2, &scene1);
+//	std::string path2 = "../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_data2_";
+//	scene2.SaveToDirectory(path2);
+	float tolerance = 1e-8;
+	BOOST_REQUIRE(contentAlmostEqual_CPU_Verbose(&scene2, &scene1, tolerance));
+}
 
 BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU_ITMVoxel) {
 	float tolerance = 1e-6;

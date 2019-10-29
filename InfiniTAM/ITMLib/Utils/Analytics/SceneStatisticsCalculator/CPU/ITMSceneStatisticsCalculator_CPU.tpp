@@ -211,11 +211,11 @@ struct SumSDFFunctor<true, TVoxel, TIndex> {
 	static double compute(ITMVoxelVolume<TVoxel, TIndex>* scene, ITMLib::VoxelFlags voxelType) {
 		SumSDFFunctor instance;
 		instance.voxelType = voxelType;
-		ITMSceneTraversalEngine<TVoxel, TIndex, ITMLibSettings::DEVICE_CPU>::VoxelTraversal(scene, instance);
+		ITMSceneTraversalEngine<TVoxel, TIndex, ITMLibSettings::DEVICE_CPU>::VoxelTraversal_SingleThreaded(scene, instance);
 		return instance.sum;
 	}
 
-	double sum;
+	double sum = 0.0;
 	ITMLib::VoxelFlags voxelType;
 
 	void operator()(TVoxel& voxel) {

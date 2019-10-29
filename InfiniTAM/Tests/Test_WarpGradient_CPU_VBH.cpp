@@ -92,7 +92,7 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_VBH, DataFixture) {
 	VoxelTraversal(&warp_field_CPU1, functor);
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 36618u);
 
-	//warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_data_");
+//	warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_data_");
 	float tolerance = 1e-7;
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_term, tolerance));
 }
@@ -111,7 +111,7 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_VBH, DataFixture) {
 
 
 	float maxWarp = motionTracker_VBH_CPU->UpdateWarps(canonical_volume, live_volume, &warp_field_copy);
-	//warp_field_copy.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warp_iter0");
+//	warp_field_copy.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warp_iter0");
 	BOOST_REQUIRE_CLOSE(maxWarp, 0.0213166066f, 1e-7f);
 
 
@@ -140,7 +140,7 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU_VBH, DataFixture) {
 		motionTracker_VBH_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1, false);
 	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
 	BOOST_REQUIRE_EQUAL(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeAllocatedHashBlockCount(&warp_field_CPU1), 366);
-	//warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_tikhonov_");
+//	warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_tikhonov_");
 
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
@@ -169,7 +169,7 @@ BOOST_FIXTURE_TEST_CASE(testKillingTerm_CPU_VBH, DataFixture) {
 	TimeIt([&]() {
 		motionTracker_VBH_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1, false);
 	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
-	//warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_killing_");
+//	warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_killing_");
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
@@ -196,7 +196,7 @@ BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CPU_VBH, DataFixture) {
 	TimeIt([&]() {
 		motionTracker_VBH_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1, false);
 	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
-	//warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_level_set_");
+//	warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_level_set_");
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::

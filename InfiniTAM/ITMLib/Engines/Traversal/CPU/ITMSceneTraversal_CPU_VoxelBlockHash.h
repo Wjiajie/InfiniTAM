@@ -575,6 +575,7 @@ public:
 		return !mismatchFound;
 	}
 
+
 // ========================== WITH VOXEL POSITION ==============
 	template<typename TFunctor>
 	inline static void
@@ -632,6 +633,111 @@ public:
 			}
 		}
 	}
+
+	template<typename TFunctor>
+	inline static bool
+	DualVoxelPositionTraversal_AllTrue(
+			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
+			TFunctor& functor) {
+
+// *** traversal vars
+		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* secondaryHashTable = secondaryScene->index.GetEntries();
+
+
+		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
+		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
+		int noTotalEntries = primaryScene->index.hashEntryCount;
+
+		bool mismatchFound = false;
+
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int hash = 0; hash < noTotalEntries; hash++) {
+			if (mismatchFound) continue;
+			const ITMHashEntry& primaryHashEntry = primaryHashTable[hash];
+			ITMHashEntry secondaryHashEntry = secondaryHashTable[hash];
+
+			auto secondaryHashEntryHasMatchingPrimary = [&]() {
+				int alternativePrimaryHash;
+				if (!FindHashAtPosition(alternativePrimaryHash, secondaryHashEntry.pos, primaryHashTable)) {
+					// could not find primary block corresponding to the secondary hash
+					TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr *
+					                                                         (VOXEL_BLOCK_SIZE3)]);
+					// if the secondary block is unaltered anyway, so no need to match and we're good, so return "true"
+					return !isVoxelBlockAltered(secondaryVoxelBlock);
+				} else {
+					// alternative primary hash found, skip this primary hash since the corresponding secondary
+					// block will be (or has been) processed with the alternative primary hash.
+					return true;
+				}
+			};
+
+			if (primaryHashEntry.ptr < 0) {
+				if (secondaryHashEntry.ptr < 0) {
+					continue;
+				} else {
+					if (!secondaryHashEntryHasMatchingPrimary()) {
+						mismatchFound = true;
+						continue;
+					} else {
+						continue;
+					}
+				}
+			}
+
+			// the rare case where we have different positions for primary & secondary voxel block with the same index:
+			// we have a hash bucket miss, find the secondary voxel block with the matching coordinates
+			if (secondaryHashEntry.pos != primaryHashEntry.pos) {
+				if (secondaryHashEntry.ptr >= 0) {
+					if (!secondaryHashEntryHasMatchingPrimary()) {
+						mismatchFound = true;
+						continue;
+					}
+				}
+
+				int secondaryHash;
+				if (!FindHashAtPosition(secondaryHash, primaryHashEntry.pos, secondaryHashTable)) {
+					// If we cannot find this block, we check whether the primary voxel block has been altered, and
+					// return "false" if it is -- i.e. the secondary voxel volume does not have a match.
+					// If the primary voxel block has not been altered, we assume the allocation mismatch is benign and
+					// continue to the next hash block.
+					TVoxelPrimary* primaryVoxelBlock = &(primaryVoxels[primaryHashEntry.ptr *
+					                                                   (VOXEL_BLOCK_SIZE3)]);
+					if (isVoxelBlockAltered(primaryVoxelBlock)) {
+						mismatchFound = true;
+						continue;
+					} else {
+						continue;
+					}
+				} else {
+					secondaryHashEntry = secondaryHashTable[secondaryHash];
+				}
+			}
+			TVoxelPrimary* primaryVoxelBlock = &(primaryVoxels[primaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
+			TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr *
+			                                                         (VOXEL_BLOCK_SIZE3)]);
+			// position of the current entry in 3D space in voxel units
+			Vector3i hashBlockPosition = primaryHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+			for (int z = 0; z < VOXEL_BLOCK_SIZE && !mismatchFound; z++) {
+				for (int y = 0; y < VOXEL_BLOCK_SIZE; y++) {
+					for (int x = 0; x < VOXEL_BLOCK_SIZE; x++) {
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
+						Vector3i voxelPosition = hashBlockPosition + Vector3i(x, y, z);
+						TVoxelPrimary& primaryVoxel = primaryVoxelBlock[locId];
+						TVoxelSecondary& secondaryVoxel = secondaryVoxelBlock[locId];
+						if (!functor(primaryVoxel, secondaryVoxel, voxelPosition)) {
+							mismatchFound = true;
+						}
+					}
+				}
+			}
+		}
+		return !mismatchFound;
+	}
+
 
 	template<typename TFunctor>
 	inline static void

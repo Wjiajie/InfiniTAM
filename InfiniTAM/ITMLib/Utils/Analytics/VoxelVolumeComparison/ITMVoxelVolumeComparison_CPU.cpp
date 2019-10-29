@@ -31,6 +31,11 @@ bool contentAlmostEqual_CPU<ITMVoxel, ITMVoxelBlockHash, ITMVoxelBlockHash, floa
 		float tolerance);
 
 template
+bool contentAlmostEqual_CPU_Verbose<ITMVoxel, ITMVoxelBlockHash, ITMVoxelBlockHash, float>(
+		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
+		float tolerance);
+
+template
 bool contentAlmostEqual_CPU<ITMVoxel, ITMPlainVoxelArray, ITMVoxelBlockHash, float>(
 		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
 		float tolerance);

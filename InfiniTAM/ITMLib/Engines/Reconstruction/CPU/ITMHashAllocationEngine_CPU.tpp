@@ -171,8 +171,8 @@ void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromVolumeGeneric(
 	assert(targetVolume->index.hashEntryCount == sourceVolume->index.hashEntryCount);
 
 	const int hashEntryCount = targetVolume->index.hashEntryCount;
-	ORUtils::MemoryBlock<HashEntryState> hashBlockStates(hashEntryCount, MEMORYDEVICE_CPU);
-	HashEntryState* hashBlockStates_device = hashBlockStates.GetData(MEMORYDEVICE_CPU);
+	ORUtils::MemoryBlock<HashEntryState> hashEntryStates(hashEntryCount, MEMORYDEVICE_CPU);
+	HashEntryState* hashEntryStates_device = hashEntryStates.GetData(MEMORYDEVICE_CPU);
 	ORUtils::MemoryBlock<Vector3s> hashBlockCoordinates(hashEntryCount, MEMORYDEVICE_CPU);
 	Vector3s* blockCoordinates_device = hashBlockCoordinates.GetData(MEMORYDEVICE_CPU);
 	ITMHashEntry* targetHashEntries = targetVolume->index.GetEntries();
@@ -183,9 +183,8 @@ void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromVolumeGeneric(
 	do {
 		collisionDetected = false;
 		//reset target allocation states
-		memset(hashBlockStates_device, ITMLib::NEEDS_NO_CHANGE,
+		memset(hashEntryStates_device, ITMLib::NEEDS_NO_CHANGE,
 		       static_cast<size_t>(hashEntryCount));
-		// at frame zero, allocate all the same blocks as in live frame
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -201,11 +200,11 @@ void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromVolumeGeneric(
 			//try to find a corresponding canonical block, and mark it for allocation if not found
 			int targetHash = hashIndex(sourceHashBlockCoords);
 
-			MarkAsNeedingAllocationIfNotFound(hashBlockStates_device, blockCoordinates_device,
+			MarkAsNeedingAllocationIfNotFound(hashEntryStates_device, blockCoordinates_device,
 			                                  targetHash, sourceHashBlockCoords, targetHashEntries,
 			                                  collisionDetected);
 		}
-		AllocateHashEntriesUsingLists_CPU(targetVolume, hashBlockStates_device,
+		AllocateHashEntriesUsingLists_CPU(targetVolume, hashEntryStates_device,
 		                                  blockCoordinates_device);
 	} while (collisionDetected);
 

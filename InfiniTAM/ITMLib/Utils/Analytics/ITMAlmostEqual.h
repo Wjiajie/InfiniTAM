@@ -453,6 +453,30 @@ bool almostEqual<ITMVoxel_f_flags, float>(const ITMVoxel_f_flags& a, const ITMVo
 	       a.flags == b.flags;
 }
 
+
+template<>
+_CPU_AND_GPU_CODE_
+inline
+bool almostEqualVerbose_Position<ITMVoxel_f_flags, float>(const ITMVoxel_f_flags& a, const ITMVoxel_f_flags& b, const Vector3i& position, float tolerance) {
+
+	if(!almostEqual(a.sdf, b.sdf, tolerance)){
+		printf("Position %d, %d, %d: mismatch between voxel:{sdf: %f, w_depth: %d, flags: %d} and voxel:{sdf: %f, w_depth: %d, flags: %d}. Sdf not within tolerance %f.\n",
+		       position.x, position.y, position.z, a.sdf, a.w_depth, a.flags, b.sdf, b.w_depth, b.flags, tolerance);
+		return false;
+	}
+	if(a.w_depth != b.w_depth){
+		printf("Position %d, %d, %d: mismatch between voxel:{sdf: %f, w_depth: %d, flags: %d} and voxel:{sdf: %f, w_depth: %d, flags: %d}. The w_depth values are different.",
+		       position.x, position.y, position.z, a.sdf, a.w_depth, a.flags, b.sdf, b.w_depth, b.flags);
+		return false;
+	}
+	if(a.flags != b.flags) {
+		printf("Position %d, %d, %d: mismatch between voxel:{sdf: %f, w_depth: %d, flags: %d} and voxel:{sdf: %f, w_depth: %d, flags: %d}. The flags are different.",
+		       position.x, position.y, position.z, a.sdf, a.w_depth, a.flags, b.sdf, b.w_depth, b.flags);
+		return false;
+	}
+	return true;
+}
+
 // *********** unsigned int tolerance type (decimal places) ***********
 template<>
 _CPU_AND_GPU_CODE_

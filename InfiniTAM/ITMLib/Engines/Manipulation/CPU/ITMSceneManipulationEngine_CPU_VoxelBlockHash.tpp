@@ -252,10 +252,10 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 	const int hashEntryCount = source->index.hashEntryCount;
 
 	//temporary stuff
-	ORUtils::MemoryBlock<HashEntryState> entryAllocationTypes (hashEntryCount, MEMORYDEVICE_CPU);
-	ORUtils::MemoryBlock<Vector3s> blockCoords (hashEntryCount, MEMORYDEVICE_CPU);
-	HashEntryState* entriesAllocType = entryAllocationTypes.GetData(MEMORYDEVICE_CPU);
-	Vector3s* allocationBlockCoords = blockCoords.GetData(MEMORYDEVICE_CPU);
+	ORUtils::MemoryBlock<HashEntryState> hashEntryStates (hashEntryCount, MEMORYDEVICE_CPU);
+	ORUtils::MemoryBlock<Vector3s> blockCoordinates (hashEntryCount, MEMORYDEVICE_CPU);
+	HashEntryState* hashEntryStates_device = hashEntryStates.GetData(MEMORYDEVICE_CPU);
+	Vector3s* blockCoordinates_device = blockCoordinates.GetData(MEMORYDEVICE_CPU);
 
 	TVoxel* sourceVoxels = source->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* sourceHashTable = source->index.GetEntries();
@@ -267,18 +267,29 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 
 	if (offset == Vector3i(0)) {
 		// traverse source hash blocks, see which ones need to be allocated in destination
-		for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
-			const ITMHashEntry& currentSourceHashEntry = sourceHashTable[sourceHash];
-			if (currentSourceHashEntry.ptr < 0) continue;
-			Vector3i originalHashBlockPosition = currentSourceHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
-			int destinationHash = hashIndex(currentSourceHashEntry.pos);
-			bool collisionDetected = false;
-			MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, destinationHash,
-			                                  currentSourceHashEntry.pos, destinationHashTable, collisionDetected);
-		}
+		bool collisionDetected;
+		do{
+			collisionDetected = false;
+			//reset target allocation states
+			memset(hashEntryStates_device, ITMLib::NEEDS_NO_CHANGE,
+			       static_cast<size_t>(hashEntryCount));
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+			for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
 
-		AllocateHashEntriesUsingLists_CPU(destination, entriesAllocType, allocationBlockCoords);
+				const ITMHashEntry& currentSourceHashEntry = sourceHashTable[sourceHash];
+				if (currentSourceHashEntry.ptr < 0) continue;
+				int destinationHash = hashIndex(currentSourceHashEntry.pos);
 
+				MarkAsNeedingAllocationIfNotFound(hashEntryStates_device, blockCoordinates_device, destinationHash,
+				                                  currentSourceHashEntry.pos, destinationHashTable, collisionDetected);
+			}
+			AllocateHashEntriesUsingLists_CPU(destination, hashEntryStates_device, blockCoordinates_device);
+		} while(collisionDetected);
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
 		for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
 			const ITMHashEntry& sourceHashEntry = sourceHashTable[sourceHash];
 
@@ -286,9 +297,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 			int destinationHash;
 			FindHashAtPosition(destinationHash, sourceHashEntry.pos, destinationHashTable);
 			const ITMHashEntry& destinationHashEntry = destinationHashTable[destinationHash];
-
 			//position of the current entry in 3D space (in voxel units)
-			Vector3i sourceHashBlockPositionVoxels = sourceHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 			TVoxel* localSourceVoxelBlock = &(sourceVoxels[sourceHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			TVoxel* localDestinationVoxelBlock = &(destinationVoxels[destinationHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
 			//we can safely copy the whole block
@@ -301,7 +310,6 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 			const ITMHashEntry& currentSourceHashEntry = sourceHashTable[sourceHash];
 			if (currentSourceHashEntry.ptr < 0) continue;
 
-			Vector3i originalHashBlockPosition = currentSourceHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 			Vector3i sourceBlockPos;
 			sourceBlockPos.x = currentSourceHashEntry.pos.x;
 			sourceBlockPos.y = currentSourceHashEntry.pos.y;

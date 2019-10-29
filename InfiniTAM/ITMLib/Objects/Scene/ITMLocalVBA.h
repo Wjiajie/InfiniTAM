@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <iostream>
 #include "../../../ORUtils/MemoryBlock.h"
 #include "../../../ORUtils/MemoryBlockPersister.h"
 
