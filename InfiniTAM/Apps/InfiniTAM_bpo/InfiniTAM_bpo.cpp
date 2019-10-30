@@ -381,7 +381,7 @@ int main(int argc, char** argv) {
 
 		if (killingModeEnabled) {
 			settings.enableLevelSetTerm = true;
-			settings.enableKillingTerm = true;
+			settings.enableKillingConstraintInSmoothingTerm = true;
 			settings.enableGradientSmoothing = false;
 
 
@@ -396,7 +396,7 @@ int main(int argc, char** argv) {
 		settings.enableDataTerm = !disableDataTerm;
 		settings.enableLevelSetTerm = enableLevelSetTerm;
 		settings.enableSmoothingTerm = !disableSmoothingTerm;
-		settings.enableKillingTerm = enableKillingTerm;
+		settings.enableKillingConstraintInSmoothingTerm = enableKillingTerm;
 		settings.enableGradientSmoothing = !disableGradientSmoothing;
 
 		if (!vm["max_iterations"].empty()) {

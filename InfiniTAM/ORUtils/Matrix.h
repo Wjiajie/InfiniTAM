@@ -45,8 +45,8 @@ namespace ORUtils {
 				T u_y, v_y, w_y; // |1, 4, 7|     |v_x, v_y, v_z|
 				T u_z, v_z, w_z; // |2, 5, 8|     |w_x, w_y, w_z|
 			};
-			struct { //Hermitian struct representation
-				T xx, xy, xz; // |0, 3, 6|    |xx, yy, zx|
+			struct { //Hessian struct representation
+				T xx, xy, xz; // |0, 3, 6|    |xx, yx, zx|
 				T yx, yy, yz; // |1, 4, 7|    |xy, yy, zy|
 				T zx, zy, zz; // |2, 5, 8|    |xz, yz, zz|
 			};

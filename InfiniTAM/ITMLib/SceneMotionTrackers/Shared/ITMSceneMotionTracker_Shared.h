@@ -93,10 +93,15 @@ inline void findPoint2ndDerivativeNeighborhoodFlowWarp(THREADPTR(Vector3f)* neig
 
 	TVoxel voxel;
 	TWarp warp;
-	//TODO: define inline function instead of macro
+
 	auto process_voxel = [&](Vector3i location, int index){
+#if !defined(__CUDACC__) && !defined(WITH_OPENMP)
 		warp = readVoxel(warps, warpIndexData, voxelPosition + (location), vmIndex, warpCache);
 	    voxel = readVoxel(voxels, voxelIndexData, voxelPosition + (location), vmIndex, voxelCache);
+#else //don't use cache for multithreading
+		warp = readVoxel(warps, warpIndexData, voxelPosition + (location), vmIndex);
+	    voxel = readVoxel(voxels, voxelIndexData, voxelPosition + (location), vmIndex);
+#endif
 	    neighborFlowWarps[index] = warp.flow_warp;
 	    neighborAllocated[index] = vmIndex != 0;
 	    neighborKnown[index] = voxel.flags != ITMLib::VOXEL_UNKNOWN;
@@ -116,29 +121,6 @@ inline void findPoint2ndDerivativeNeighborhoodFlowWarp(THREADPTR(Vector3f)* neig
 	process_voxel(Vector3i(1, 1, 0), 6);//xy corner
 	process_voxel(Vector3i(0, 1, 1), 7);//yz corner
 	process_voxel(Vector3i(1, 0, 1), 8);//xz corner
-//#define PROCESS_VOXEL(location, index)\
-//    voxel = readVoxel(warps, warpIndexData, voxelPosition + (location), vmIndex, warpCache);\
-//    voxel = readVoxel(voxels, voxelIndexData, voxelPosition + (location), vmIndex, voxelCache);\
-//    neighborFlowWarps[index] = voxel.flow_warp;\
-//    neighborAllocated[index] = vmIndex != 0;\
-//    neighborKnown[index] = voxel.flags != ITMLib::VOXEL_UNKNOWN;\
-//    neighborTruncated[index] = voxel.flags == ITMLib::VOXEL_TRUNCATED;
-//
-//	//necessary for 2nd derivatives in same direction, e.g. xx and zz
-//	PROCESS_VOXEL(Vector3i(-1, 0, 0), 0);
-//	PROCESS_VOXEL(Vector3i(0, -1, 0), 1);
-//	PROCESS_VOXEL(Vector3i(0, 0, -1), 2);
-//
-//	//necessary for 1st derivatives
-//	PROCESS_VOXEL(Vector3i(1, 0, 0), 3);
-//	PROCESS_VOXEL(Vector3i(0, 1, 0), 4);
-//	PROCESS_VOXEL(Vector3i(0, 0, 1), 5);
-//
-//	//necessary for 2nd derivatives in mixed directions, e.g. xy and yz
-//	PROCESS_VOXEL(Vector3i(1, 1, 0), 6);//xy corner
-//	PROCESS_VOXEL(Vector3i(0, 1, 1), 7);//yz corner
-//	PROCESS_VOXEL(Vector3i(1, 0, 1), 8);//xz corner
-//#undef PROCESS_VOXEL
 }
 
 
@@ -329,9 +311,15 @@ void ComputeLiveJacobian_CentralDifferences(THREADPTR(Vector3f)& jacobian,
                                             const CONSTPTR(TVoxel)* voxels,
                                             const CONSTPTR(TIndexData)* indexData,
                                             THREADPTR(TCache)& cache) {
+
+
 	int vmIndex = 0;
     auto sdf_at = [&](Vector3i offset) {
+#if !defined(__CUDACC__) && !defined(WITH_OPENMP)
 	    return TVoxel::valueToFloat(readVoxel(voxels, indexData, voxelPosition + (offset), vmIndex, cache).sdf);
+#else
+	    return TVoxel::valueToFloat(readVoxel(voxels, indexData, voxelPosition + (offset), vmIndex).sdf);
+#endif
     };
 
 	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
@@ -340,7 +328,6 @@ void ComputeLiveJacobian_CentralDifferences(THREADPTR(Vector3f)& jacobian,
 	float sdfAtXminusOne = sdf_at(Vector3i(-1, 0, 0));
 	float sdfAtYminusOne = sdf_at(Vector3i(0, -1, 0));
 	float sdfAtZminusOne = sdf_at(Vector3i(0, 0, -1));
-
 
 	jacobian[0] = 0.5f * (sdfAtXplusOne - sdfAtXminusOne);
 	jacobian[1] = 0.5f * (sdfAtYplusOne - sdfAtYminusOne);
@@ -383,7 +370,15 @@ inline void ComputeSdfHessian(THREADPTR(Matrix3f)& hessian,
 		                      const CONSTPTR(TIndexData)* indexData,
 		                      THREADPTR(TCache)& cache) {
 	int vmIndex = 0;
-#define sdf_at(offset) (TVoxel::valueToFloat(readVoxel(voxels, indexData, position + (offset), vmIndex, cache).sdf))
+
+	auto sdf_at = [&](Vector3i offset){
+#if !defined(__CUDACC__) && !defined(WITH_OPENMP)
+		return TVoxel::valueToFloat(readVoxel(voxels, indexData, position + (offset), vmIndex, cache).sdf);
+#else //don't use cache when multithreading
+		return TVoxel::valueToFloat(readVoxel(voxels, indexData, position + (offset), vmIndex).sdf);
+#endif
+	};
+
 	//for xx, yy, zz
 	float sdfAtXplusOne = sdf_at(Vector3i(1, 0, 0));
 	float sdfAtYplusOne = sdf_at(Vector3i(0, 1, 0));
@@ -399,7 +394,7 @@ inline void ComputeSdfHessian(THREADPTR(Matrix3f)& hessian,
 	float sdfAtYminusOneZminusOne = sdf_at(Vector3i(0, -1, -1));
 	float sdfAtXplusOneZplusOne = sdf_at(Vector3i(1, 0, 1));
 	float sdfAtXminusOneZminusOne = sdf_at(Vector3i(-1, 0, -1));
-#undef sdf_at
+
 	float delta_xx = sdfAtXplusOne - 2 * sdfAtPosition + sdfAtXminusOne;
 	float delta_yy = sdfAtYplusOne - 2 * sdfAtPosition + sdfAtYminusOne;
 	float delta_zz = sdfAtZplusOne - 2 * sdfAtPosition + sdfAtZminusOne;

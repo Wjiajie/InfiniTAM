@@ -122,7 +122,7 @@ public:
 	void operator()(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) {
 
 		if (!VoxelIsConsideredForTracking(voxelCanonical, voxelLive)) return;
-		bool computeDataTerm = VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive);
+		bool computeDataAndLevelSetTerms = VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive);
 
 		Vector3f& framewiseWarp = warp.flow_warp;
 		float liveSdf = TVoxel::valueToFloat(voxelLive.sdf);
@@ -138,7 +138,7 @@ public:
 		bool printVoxelResult = false;
 		this->SetUpFocusVoxelPrinting(printVoxelResult, voxelPosition, framewiseWarp, canonicalSdf, liveSdf);
 		if (printVoxelResult) {
-			printf("%sLive 6-connected neighbor information:%s\n",c_blue, c_reset);
+			printf("%sLive 6-connected neighbor information:%s\n", c_blue, c_reset);
 			print6ConnectedNeighborInfo(voxelPosition, liveVoxels, liveIndexData, liveCache);
 		}
 
@@ -146,55 +146,58 @@ public:
 
 
 		// region =============================== DATA TERM ================================================
-		if (switches.enableDataTerm && computeDataTerm) {
+		if (computeDataAndLevelSetTerms) {
 			Vector3f liveSdfJacobian;
 			ComputeLiveJacobian_CentralDifferences(
 					liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache);
-			// Compute data term error / energy
-			float sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
-			// (φ_n(Ψ)−φ_{global}) ∇φ_n(Ψ) - also denoted as - (φ_{proj}(Ψ)−φ_{model}) ∇φ_{proj}(Ψ)
-			// φ_n(Ψ) = φ_n(x+u, y+v, z+w), where u = u(x,y,z), v = v(x,y,z), w = w(x,y,z)
-			// φ_{global} = φ_{global}(x, y, z)
-			localDataEnergyGradient =
-					parameters.weightDataTerm * sdfDifferenceBetweenLiveAndCanonical * liveSdfJacobian;
+			if (switches.enableDataTerm) {
 
-			ATOMIC_ADD(aggregates.dataVoxelCount, 1u);
-			float localDataEnergy = parameters.weightDataTerm * 0.5f *
-			                        (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
+				// Compute data term error / energy
+				float sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
+				// (φ_n(Ψ)−φ_{global}) ∇φ_n(Ψ) - also denoted as - (φ_{proj}(Ψ)−φ_{model}) ∇φ_{proj}(Ψ)
+				// φ_n(Ψ) = φ_n(x+u, y+v, z+w), where u = u(x,y,z), v = v(x,y,z), w = w(x,y,z)
+				// φ_{global} = φ_{global}(x, y, z)
+				localDataEnergyGradient =
+						parameters.weightDataTerm * sdfDifferenceBetweenLiveAndCanonical * liveSdfJacobian;
+
+				ATOMIC_ADD(aggregates.dataVoxelCount, 1u);
+				float localDataEnergy = parameters.weightDataTerm * 0.5f *
+				                        (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
 
 
-			ATOMIC_ADD(energies.totalDataEnergy, localDataEnergy);
+				ATOMIC_ADD(energies.totalDataEnergy, localDataEnergy);
 
-			ATOMIC_ADD(aggregates.dataVoxelCount, 1u);
+				ATOMIC_ADD(aggregates.dataVoxelCount, 1u);
 
-			//printf(*energies.totalDataEnergy);
-			if (printVoxelResult) {
-				_DEBUG_PrintDataTermStuff(liveSdfJacobian);
+				//printf(*energies.totalDataEnergy);
+				if (printVoxelResult) {
+					_DEBUG_PrintDataTermStuff(liveSdfJacobian);
+				}
 			}
+
+			// endregion
+
+			// region =============================== LEVEL SET TERM ===========================================
+
+			if (switches.enableLevelSetTerm) {
+				Matrix3f liveSdfHessian;
+				ComputeSdfHessian(liveSdfHessian, voxelPosition, liveSdf, liveVoxels, liveIndexData, liveCache);
+
+				float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
+				float sdfJacobianNormMinusUnity = sdfJacobianNorm - parameters.unity;
+				localLevelSetEnergyGradient = parameters.weightLevelSetTerm * sdfJacobianNormMinusUnity *
+				                              (liveSdfHessian * liveSdfJacobian) /
+				                              (sdfJacobianNorm + parameters.epsilon);
+				ATOMIC_ADD(aggregates.levelSetVoxelCount, 1u);
+				float localLevelSetEnergy = parameters.weightLevelSetTerm *
+						0.5f * (sdfJacobianNormMinusUnity * sdfJacobianNormMinusUnity);
+				ATOMIC_ADD(energies.totalLevelSetEnergy, localLevelSetEnergy);
+				if (printVoxelResult) {
+					_DEBUG_PrintLevelSetTermStuff(liveSdfJacobian, liveSdfHessian, sdfJacobianNormMinusUnity);
+				}
+			}
+			// endregion =======================================================================================
 		}
-
-		// endregion
-
-		// region =============================== LEVEL SET TERM ===========================================
-
-		if (switches.enableLevelSetTerm && computeDataTerm) {
-			Matrix3f liveSdfHessian;
-			Vector3f liveSdfJacobian;
-			ComputeLiveJacobian_CentralDifferences(
-					liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache);
-
-			ComputeSdfHessian(liveSdfHessian, voxelPosition, liveSdf, liveVoxels, liveIndexData, liveCache);
-
-			float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
-			float sdfJacobianNormMinusUnity = sdfJacobianNorm - parameters.unity;
-			localLevelSetEnergyGradient = parameters.weightLevelSetTerm * sdfJacobianNormMinusUnity *
-			                              (liveSdfHessian * liveSdfJacobian) / (sdfJacobianNorm + parameters.epsilon);
-			ATOMIC_ADD(aggregates.levelSetVoxelCount, 1u);
-			float localLevelSetEnergy =
-					0.5f * (sdfJacobianNormMinusUnity * sdfJacobianNormMinusUnity);
-			ATOMIC_ADD(energies.totalLevelSetEnergy, localLevelSetEnergy);
-		}
-		// endregion =======================================================================================
 
 		// region =============================== SMOOTHING TERM (TIKHONOV & KILLING) ======================
 
@@ -287,7 +290,7 @@ public:
 
 				//∇E_{reg}(Ψ) = −[∆U ∆V ∆W]' ,
 				localSmoothingEnergyGradient = -parameters.weightSmoothingTerm * framewiseWarpLaplacian;
-				float localTikhonovEnergy =
+				float localTikhonovEnergy = parameters.weightSmoothingTerm *
 						dot(framewiseWarpJacobian.getColumn(0), framewiseWarpJacobian.getColumn(0)) +
 						dot(framewiseWarpJacobian.getColumn(1), framewiseWarpJacobian.getColumn(1)) +
 						dot(framewiseWarpJacobian.getColumn(2), framewiseWarpJacobian.getColumn(2));

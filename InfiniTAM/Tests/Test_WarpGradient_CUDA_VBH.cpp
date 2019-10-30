@@ -20,9 +20,7 @@
 
 
 //stdlib
-#include <random>
 #include <vector>
-#include <chrono>
 #include <atomic>
 
 //boost
@@ -32,11 +30,10 @@
 #include "TestUtils.h"
 #include "Test_WarpGradient_Common.h"
 #include "../ITMLib/Utils/ITMLibSettings.h"
-#include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "../ITMLib/SceneMotionTrackers/Interface/ITMSceneMotionTracker.h"
 #include "../ITMLib/SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA.h"
-#include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
+#include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
 
 using namespace ITMLib;
@@ -44,7 +41,7 @@ using namespace ITMLib;
 
 typedef WarpGradientDataFixture<MemoryDeviceType::MEMORYDEVICE_CUDA, ITMVoxelBlockHash> DataFixture;
 BOOST_FIXTURE_TEST_CASE(testDataTerm_CUDA_VBH, DataFixture) {
-
+//	settings->SetFocusCoordinates(Vector3i(-21,-4,189));
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CUDA1(&settings->sceneParams,
 	                                                            settings->swappingMode ==
 	                                                            ITMLibSettings::SWAPPINGMODE_ENABLED,
@@ -54,19 +51,20 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CUDA_VBH, DataFixture) {
 
 	auto motionTracker_VBH_CUDA = new ITMSceneMotionTracker_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash>();
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> canonical_volume_CUDA(*canonical_volume, MEMORYDEVICE_CUDA);
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> live_volume_CUDA(*live_volume, MEMORYDEVICE_CUDA);
 
 	TimeIt([&]() {
-		motionTracker_VBH_CUDA->CalculateWarpGradient(&canonical_volume_CUDA, &live_volume_CUDA, &warp_field_CUDA1, false);
-	}, "Calculate Warp Gradient - PVA CPU data term");
+		motionTracker_VBH_CUDA->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CUDA1, false);
+	}, "Calculate Warp Gradient - VBH CUDA data term");
 
 	BOOST_REQUIRE_EQUAL(SceneStatCalc_CUDA_VBH_Warp::Instance().ComputeAllocatedHashBlockCount(&warp_field_CUDA1), 366);
+//
+//	ITMVoxel voxel = ManipulationEngine_CUDA_VBH_Voxel::Inst().ReadVoxel(live_volume, Vector3i(-21, -5, 189));
+//	std::cout << "SDF (-21, -5, 189): " << voxel.sdf << std::endl;
 
 	//warp_field_CUDA1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_data_");
-	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CPU1(warp_field_CUDA1, MEMORYDEVICE_CPU);
+
 	float tolerance = 1e-7;
-	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_term, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CUDA_Verbose(&warp_field_CUDA1, warp_field_data_term, tolerance));
 }
 
 BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CUDA_VBH, DataFixture) {
@@ -82,14 +80,15 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CUDA_VBH, DataFixture) {
 	BOOST_REQUIRE_CLOSE(maxWarp, 0.0213166066f, 1e-7f);
 
 	float tolerance = 1e-8;
-	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_copy, warp_field_iter0, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_copy, warp_field_iter0, tolerance));
 }
 
-BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CUDA_VBH, DataFixture) {
-	settings->enableDataTerm = true;
+
+BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CUDA_VBH, DataFixture){
+	settings->enableDataTerm = false;
 	settings->enableSmoothingTerm = true;
 	settings->enableLevelSetTerm = false;
-	settings->enableKillingTerm = false;
+	settings->enableKillingConstraintInSmoothingTerm = false;
 
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CUDA1(*warp_field_iter0, MEMORYDEVICE_CUDA);
 
@@ -97,23 +96,65 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CUDA_VBH, DataFixture) {
 	auto motionTracker_VBH_CUDA = new ITMSceneMotionTracker_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash>();
 
 
+	Vector3i testPosition(-40, 60, 200);
+	//settings->SetFocusCoordinates(testPosition);
+
 	TimeIt([&]() {
 		motionTracker_VBH_CUDA->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CUDA1, false);
-	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
+	}, "Calculate Warp Gradient - VBH CUDA tikhonov term");
 	BOOST_REQUIRE_EQUAL(SceneStatCalc_CUDA_VBH_Warp::Instance().ComputeAllocatedHashBlockCount(&warp_field_CUDA1), 366);
-	//warp_field_CUDA1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_tikhonov_");
+	//warp_field_CUDA1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warp_field_1_tikhonov_");
 
+	ITMWarp warp1 = ManipulationEngine_CUDA_VBH_Warp::Inst().ReadVoxel(&warp_field_CUDA1, testPosition);
+	ITMWarp warp2 = ManipulationEngine_CUDA_VBH_Warp::Inst().ReadVoxel(warp_field_tikhonov_term, testPosition);
 
-	float tolerance = 1e-8;
-	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CUDA1, warp_field_tikhonov_term, tolerance));
+	float relativeTolerance = 1.0f; //percent
+	BOOST_REQUIRE_CLOSE(warp1.gradient0.x, warp2.gradient0.x, relativeTolerance);
+	BOOST_REQUIRE_CLOSE(warp1.gradient0.y, warp2.gradient0.y, relativeTolerance);
+	BOOST_REQUIRE_CLOSE(warp1.gradient0.z, warp2.gradient0.z, relativeTolerance);
+
+	float absoluteTolerance = 1e-8;
+	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_tikhonov_term, absoluteTolerance));
 }
 
-
-BOOST_FIXTURE_TEST_CASE(testKillingTerm_CUDA_VBH, DataFixture) {
+BOOST_FIXTURE_TEST_CASE(testDataAndTikhonovTerm_CUDA_VBH, DataFixture) {
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = true;
 	settings->enableLevelSetTerm = false;
-	settings->enableKillingTerm = true;
+	settings->enableKillingConstraintInSmoothingTerm = false;
+
+
+
+	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CUDA1(*warp_field_iter0, MEMORYDEVICE_CUDA);
+
+
+	auto motionTracker_VBH_CUDA = new ITMSceneMotionTracker_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash>();
+
+	Vector3i testPosition(-40, 60, 200);
+	//settings->SetFocusCoordinates(testPosition);
+
+	TimeIt([&]() {
+		motionTracker_VBH_CUDA->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CUDA1, false);
+	}, "Calculate Warp Gradient - VBH CUDA data term + tikhonov term");
+	BOOST_REQUIRE_EQUAL(SceneStatCalc_CUDA_VBH_Warp::Instance().ComputeAllocatedHashBlockCount(&warp_field_CUDA1), 366);
+	//warp_field_CUDA1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_tikhonov_");
+
+	ITMWarp warp1 = ManipulationEngine_CUDA_VBH_Warp::Inst().ReadVoxel(&warp_field_CUDA1, testPosition);
+	ITMWarp warp2 = ManipulationEngine_CUDA_VBH_Warp::Inst().ReadVoxel(warp_field_data_and_tikhonov_term, testPosition);
+	float tolerance = 1e-8;
+	BOOST_REQUIRE_CLOSE(warp1.gradient0.x, warp2.gradient0.x, tolerance);
+	BOOST_REQUIRE_CLOSE(warp1.gradient0.y, warp2.gradient0.y, tolerance);
+	BOOST_REQUIRE_CLOSE(warp1.gradient0.z, warp2.gradient0.z, tolerance);
+
+	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_data_and_tikhonov_term, tolerance));
+}
+
+
+BOOST_FIXTURE_TEST_CASE(testDataAndKillingTerm_CUDA_VBH, DataFixture) {
+	settings->enableDataTerm = true;
+	settings->enableSmoothingTerm = true;
+	settings->enableLevelSetTerm = false;
+	settings->enableKillingConstraintInSmoothingTerm = true;
 	settings->sceneTrackingRigidityEnforcementFactor = 0.1;
 
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CUDA1(*warp_field_iter0, MEMORYDEVICE_CUDA);
@@ -124,19 +165,19 @@ BOOST_FIXTURE_TEST_CASE(testKillingTerm_CUDA_VBH, DataFixture) {
 
 	TimeIt([&]() {
 		motionTracker_VBH_CUDA->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CUDA1, false);
-	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
+	}, "Calculate Warp Gradient - VBH CUDA data term + killing term");
 	//warp_field_CUDA1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_killing_");
 
 	float tolerance = 1e-8;
-	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CUDA1, warp_field_killing_term, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_data_and_killing_term, tolerance));
 }
 
 
-BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CUDA_VBH, DataFixture) {
+BOOST_FIXTURE_TEST_CASE(testDataAndLevelSetTerm_CUDA_VBH, DataFixture) {
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = false;
 	settings->enableLevelSetTerm = true;
-	settings->enableKillingTerm = false;
+	settings->enableKillingConstraintInSmoothingTerm = false;
 
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CUDA1(*warp_field_iter0, MEMORYDEVICE_CUDA);
 
@@ -146,10 +187,10 @@ BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CUDA_VBH, DataFixture) {
 
 	TimeIt([&]() {
 		motionTracker_VBH_CUDA->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CUDA1, false);
-	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
+	}, "Calculate Warp Gradient - VBH CUDA data term + level set term");
 	//warp_field_CUDA1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_level_set_");
 
 
-	float tolerance = 1e-8;
-	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CUDA1, warp_field_level_set_term, tolerance));
+	float tolerance = 1e-7;
+	BOOST_REQUIRE(contentAlmostEqual_CUDA_Verbose(&warp_field_CUDA1, warp_field_data_and_level_set_term, tolerance));
 }

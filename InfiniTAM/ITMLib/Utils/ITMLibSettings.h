@@ -107,6 +107,7 @@ namespace ITMLib
 
 		Vector3i GetFocusCoordinates() const;
 		void SetFocusCoordinates(const Vector3i& coordiantes);
+		void SetFocusCoordinates(int x, int y, int z);
 
 		AnalysisSettings analysisSettings;
 
@@ -114,7 +115,7 @@ namespace ITMLib
 		bool enableDataTerm;
 		bool enableLevelSetTerm;
 		bool enableSmoothingTerm;
-		bool enableKillingTerm;
+		bool enableKillingConstraintInSmoothingTerm;
 		bool enableGradientSmoothing;
 
 		//*** Scene Tracking ITMSceneMotionOptimizationParameters ***

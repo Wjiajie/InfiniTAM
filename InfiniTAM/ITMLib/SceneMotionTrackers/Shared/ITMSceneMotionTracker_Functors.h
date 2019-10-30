@@ -80,8 +80,7 @@ struct WarpUpdateFunctor {
 	}
 
 	~WarpUpdateFunctor() {
-		CLEAN_UP_ATOMIC(maxFlowWarpLength);
-		CLEAN_UP_ATOMIC(maxWarpUpdateLength);
+		CLEAN_UP_ATOMIC(maxFlowWarpLength);CLEAN_UP_ATOMIC(maxWarpUpdateLength);
 	}
 
 	_DEVICE_WHEN_AVAILABLE_
@@ -356,7 +355,7 @@ AddFlowWarpToWarp_common(ITMLib::ITMVoxelVolume<TVoxelCanonical, TIndex>* canoni
 	} else {
 		ITMLib::ITMSceneTraversalEngine<TVoxelCanonical, TIndex, TDeviceType>::
 		template StaticVoxelTraversal<
-				AddFlowWarpToWarpStaticFunctor<TVoxelCanonical, TVoxelCanonical::hasCumulativeWarp>
-		>(canonicalScene);
+				AddFlowWarpToWarpStaticFunctor<TVoxelCanonical, TVoxelCanonical::hasCumulativeWarp>>
+		(canonicalScene);
 	}
 };

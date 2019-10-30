@@ -172,6 +172,35 @@ __global__ void checkIfMatchingHashBlockVoxelsYieldTrue(
 }
 
 
+template<typename TBooleanFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
+__global__ void checkIfMatchingHashBlockVoxelsYieldTrue_Position(
+		TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
+		const ITMHashEntry* primaryHashTable, const ITMHashEntry* secondaryHashTable,
+		const HashPair* matchedHashes, const HashMatchInfo* matchInfo, TBooleanFunctor* functor,
+		bool* falseEncountered) {
+	if (*falseEncountered) return;
+
+	int hashPairIdx = blockIdx.x;
+	if (hashPairIdx > matchInfo->matchedHashCount) return;
+	int primaryHash = matchedHashes[hashPairIdx].primaryHash;
+	int secondaryHash = matchedHashes[hashPairIdx].secondaryHash;
+
+	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
+	int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
+
+	const ITMHashEntry& primaryHashEntry = primaryHashTable[primaryHash];
+	// position of the current entry in 3D space in voxel units
+	Vector3i hashBlockPosition = primaryHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+	Vector3i voxelPosition = hashBlockPosition + Vector3i(x,y,z);
+
+	if (!(*functor)(primaryVoxels[primaryHashEntry.ptr * VOXEL_BLOCK_SIZE3 + locId],
+	                secondaryVoxels[secondaryHashTable[secondaryHash].ptr * VOXEL_BLOCK_SIZE3 + locId],
+	                voxelPosition)) {
+		*falseEncountered = true;
+	}
+}
+
+
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
 __global__ void
 dualVoxelTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,

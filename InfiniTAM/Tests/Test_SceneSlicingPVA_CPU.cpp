@@ -26,7 +26,6 @@
 #include "../ITMLib/Utils/ITMLibSettings.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/SceneMotionTrackers/Interface/ITMSceneMotionTracker.h"
-#include "../ITMLib/SceneMotionTrackers/Shared/ITMWarpGradientFunctors.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 
@@ -36,7 +35,7 @@ using namespace ITMLib;
 BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
 	settings->deviceType = ITMLibSettings::DEVICE_CPU;
-	settings->enableKillingTerm = false;
+	settings->enableKillingConstraintInSmoothingTerm = false;
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = false;
 	settings->enableGradientSmoothing = true;

@@ -18,7 +18,6 @@
 #include "ITMSceneMotionTracker_CUDA.h"
 #include "../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
 #include "../Shared/ITMSceneMotionTracker_Functors.h"
-#include "../Shared/ITMWarpGradientFunctors.h"
 #include "ITMSceneMotionTracker_CUDA_PlainVoxelArray_Kernels.h"
 #include "../Shared/ITMCalculateWarpGradientFunctor.h"
 

@@ -391,7 +391,7 @@ inline
 void printVector3fVoxelError(const Vector3f& a, const Vector3f& b, float tolerance, const char* description){
 	bool xMismatch, yMismatch, zMismatch;
 	getNonMatchingComponents(xMismatch,yMismatch,zMismatch, a, b, tolerance);
-	printf("(Showing first error only) %s not within %E: (%f, %f, %f) vs (%f, %f, %f)\n", description, tolerance,
+	printf("(Showing first error only) %s not within %E: (%E, %E, %E) vs (%E, %E, %E)\n", description, tolerance,
 			a.x, a.y, a.z, b.x, b.y, b.z);
 }
 
@@ -400,7 +400,7 @@ inline
 void printVector3fVoxelError_Position(const Vector3f& a, const Vector3f& b, float tolerance, const char* description, const Vector3i& position){
 	bool xMismatch, yMismatch, zMismatch;
 	getNonMatchingComponents(xMismatch,yMismatch,zMismatch, a, b, tolerance);
-	printf("Position %d, %d, %d:(Showing first error only) %s not within %E: (%f, %f, %f) vs (%f, %f, %f)\n",
+	printf("Position %d, %d, %d:(Showing first error only) %s not within %E: (%E, %E, %E) vs (%E, %E, %E)\n",
 			position.x, position.y, position.z, description, tolerance,
 	       a.x, a.y, a.z, b.x, b.y, b.z);
 }
@@ -429,16 +429,17 @@ template<>
 _CPU_AND_GPU_CODE_
 inline
 bool almostEqualVerbose_Position<ITMVoxel_f_warp, float>(const ITMVoxel_f_warp& a, const ITMVoxel_f_warp& b, const Vector3i& position, float tolerance) {
+
 	if(!almostEqual(a.flow_warp, b.flow_warp, tolerance)){
-		printVector3fVoxelError(a.flow_warp,b.flow_warp,tolerance,"flow_warp");
+		printVector3fVoxelError_Position(a.flow_warp,b.flow_warp,tolerance,"flow_warp", position);
 		return false;
 	}
 	if(!almostEqual(a.gradient0, b.gradient0, tolerance)){
-		printVector3fVoxelError(a.gradient0,b.gradient0,tolerance,"gradient0");
+		printVector3fVoxelError_Position(a.gradient0,b.gradient0,tolerance,"gradient0", position);
 		return false;
 	}
 	if(!almostEqual(a.gradient1, b.gradient1, tolerance)){
-		printVector3fVoxelError(a.gradient1,b.gradient1,tolerance,"gradient1");
+		printVector3fVoxelError_Position(a.gradient1,b.gradient1,tolerance,"gradient1", position);
 		return false;
 	}
 	return true;

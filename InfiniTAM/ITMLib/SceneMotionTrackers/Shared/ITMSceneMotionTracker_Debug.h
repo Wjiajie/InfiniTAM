@@ -127,26 +127,28 @@ inline void FindHighlightNeighborInfo(std::array<ITMLib::ITMNeighborVoxelIterati
 //_DEBUG printing routine
 _CPU_AND_GPU_CODE_
 inline void _DEBUG_PrintDataTermStuff(const CONSTPTR(Vector3f)& liveSdfJacobian) {
-	const char* cyan_C = "\033[0;36m";
-	const char* reset_C = "\033[0m";
-
-	printf("Jacobian of live SDF at current warp: %s%f,%f,%f%s\n",
-	       cyan_C, liveSdfJacobian.x, liveSdfJacobian.y, liveSdfJacobian.z, reset_C);
+	printf("Jacobian of live SDF at current warp: %s%E,%E,%E%s\n",
+	       c_cyan, liveSdfJacobian.x, liveSdfJacobian.y, liveSdfJacobian.z, c_reset);
 }
 
 //_DEBUG printing routine
+_CPU_AND_GPU_CODE_
 inline void _DEBUG_PrintLevelSetTermStuff(const CONSTPTR(Vector3f)& liveSdfJacobian,
-                                          const CONSTPTR(Vector3f)& liveSdf_Center_WarpForward,
-                                          const CONSTPTR(Vector3f)& warpedSdfJacobian,
-                                          const CONSTPTR(Matrix3f)& warpedSdfHessian) {
-	std::cout << std::endl;
-	std::cout << "Warped SDF Jacobian [Difference from neighbor's lookup values from live SDF]: " << green
-	          << warpedSdfJacobian << reset << std::endl;
-	std::cout << "Change in warped SDF Jacobian when warp changes (by one): " << std::endl
-	          << green << warpedSdfHessian << reset << std::endl;
+                                          const CONSTPTR(Matrix3f)& liveSdfHessian,
+                                          const CONSTPTR(float)& sdfJacobianNormMinusUnity) {
+	printf("Jacobian of live SDF at current warp: %s%E,%E,%E%s\nHessian of live SDF at current warp: %s\n"
+	       "%E %E %E\n"
+	       "%E %E %E\n"
+	       "%E %E %E\n"
+	       "%sJacobian norm minus unity: %s%E%s",
+	       c_cyan, liveSdfJacobian.x, liveSdfJacobian.y, liveSdfJacobian.z, c_reset, c_green,
+	       liveSdfHessian.xx, liveSdfHessian.xy, liveSdfHessian.xz,
+	       liveSdfHessian.yx, liveSdfHessian.yy, liveSdfHessian.yz,
+	       liveSdfHessian.zx, liveSdfHessian.zy, liveSdfHessian.zz,
+	       c_reset, c_blue, sdfJacobianNormMinusUnity, c_reset);
 }
 
-
+//TODO: make CUDA-compatible (substitute printf for std::cout usages)
 //_DEBUG printing routine
 inline void _DEBUG_PrintKillingTermStuff(const CONSTPTR(Vector3f*) neighborWarps,
                                          const CONSTPTR(bool*) neighborAllocated,
@@ -206,7 +208,7 @@ inline void _DEBUG_PrintTikhonovTermStuff(const CONSTPTR(Vector3f*) neighborWarp
 		printf("%s%d, %d, %d  (Neighbor %d): %s%f %f %f\n", c_reset, pos.x, pos.y, pos.z,
 		       iNeightbor, c_green, warp.x, warp.y, warp.z);
 	}
-	printf("\nLaplacian:\n%f %f %f%s\n", laplacian.x, laplacian.y, laplacian.z, c_reset);
+	printf("\nLaplacian:\n%E %E %E%s\n", laplacian.x, laplacian.y, laplacian.z, c_reset);
 };
 
 _CPU_AND_GPU_CODE_
@@ -218,15 +220,14 @@ void _DEBUG_printLocalEnergyGradients(const Vector3f& localDataEnergyGradient,
                                       float energyGradientLength
 ) {
 
-	printf("%s(Gradients) Data: %f, %f, %f %sLevel set: %f, %f, %f %sSmoothing: %f %f %f\n"
-	       "%sCombined: %f, %f, %f%sCombined length: %f",
+	printf("%s(Gradients) Data: %E, %E, %E %sLevel set: %E, %E, %E %sSmoothing: %E %E %E\n"
+	       "%sCombined: %E, %E, %E%s Combined length: %E\n",
 	       c_blue, localDataEnergyGradient.x, localDataEnergyGradient.y, localDataEnergyGradient.z,
 	       c_cyan, localLevelSetEnergyGradient.x, localLevelSetEnergyGradient.y, localLevelSetEnergyGradient.z,
 	       c_yellow, localSmoothnessEnergyGradient.x, localSmoothnessEnergyGradient.y, localSmoothnessEnergyGradient.z,
 	       c_green, localCompleteEnergyGradient.x, localCompleteEnergyGradient.y, localCompleteEnergyGradient.z,
 	       c_reset, energyGradientLength);
 }
-
 
 
 template<typename TVoxel, typename TIndexData, typename TCache>
@@ -281,9 +282,10 @@ inline void print6ConnectedNeighborInfo(
 
 	for (int iNeighbor = 0; iNeighbor < 6; iNeighbor++) {
 		const Vector3i& position = positions[iNeighbor];
-		printf("%s[%d,%d,%d]%s allocated: %s truncated: %s known: %s tsdf: %f\n", c_yellow, position.x, position.y, position.z, c_reset,
-			neighborAllocated[iNeighbor] ? "true" : "false", neighborTruncated[iNeighbor] ? "true" : "false",
-			neighborKnown[iNeighbor] ? "true" : "false", neighborSdf[iNeighbor]);
+		printf("%s[%d,%d,%d]%s allocated: %s truncated: %s known: %s tsdf: %f\n", c_yellow, position.x, position.y,
+		       position.z, c_reset,
+		       neighborAllocated[iNeighbor] ? "true" : "false", neighborTruncated[iNeighbor] ? "true" : "false",
+		       neighborKnown[iNeighbor] ? "true" : "false", neighborSdf[iNeighbor]);
 	}
 }
 

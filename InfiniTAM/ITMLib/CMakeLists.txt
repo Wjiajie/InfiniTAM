@@ -643,8 +643,6 @@ set (ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS
      SceneMotionTrackers/Shared/ITMSceneMotionTracker_Debug.h
      SceneMotionTrackers/Shared/ITMSceneMotionTracker_Functors.h
 	 SceneMotionTrackers/Shared/ITMCalculateWarpGradientFunctor.h
-	 SceneMotionTrackers/Shared/ITMLegacyCalculateWarpGradientFunctor.h
-	 SceneMotionTrackers/Shared/ITMWarpGradientFunctors.h
 	 SceneMotionTrackers/Shared/ITMSceneMotionOptimizationParameters.h
 	 SceneMotionTrackers/Shared/ITMWarpGradientRoutines.h
 	 SceneMotionTrackers/Shared/ITMWarpGradientAggregates.h

@@ -116,7 +116,7 @@ ITMLibSettings::ITMLibSettings()
 	enableDataTerm = true;
 	enableLevelSetTerm = true;
 	enableSmoothingTerm = true;
-	enableKillingTerm = false;
+	enableKillingConstraintInSmoothingTerm = false;
 	enableGradientSmoothing = true;
 
 	// Dynamic fusion optimization termination parameters
@@ -148,6 +148,10 @@ Vector3i ITMLibSettings::GetFocusCoordinates() const {
 void ITMLibSettings::SetFocusCoordinates(const Vector3i& coordiantes) {
 	analysisSettings.focusCoordinatesSpecified = true;
 	analysisSettings.focusCoordinates = coordiantes;
+}
+
+void ITMLibSettings::SetFocusCoordinates(int x, int y, int z) {
+	this->SetFocusCoordinates(Vector3i(x, y, z));
 }
 
 

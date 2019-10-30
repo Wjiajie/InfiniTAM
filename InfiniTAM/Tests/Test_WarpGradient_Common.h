@@ -100,7 +100,7 @@ struct WarpGradientDataFixture {
 			pathToData("TestData/snoopy_result_fr16-17_partial_" + getIndexSuffix<TIndex>() + "/"),
 			indexParameters(GetIndexParameters<TIndex>()){
 
-		settings->enableKillingTerm = false;
+		settings->enableKillingConstraintInSmoothingTerm = false;
 		settings->enableDataTerm = true;
 		settings->enableSmoothingTerm = false;
 		settings->enableGradientSmoothing = false;
@@ -127,11 +127,12 @@ struct WarpGradientDataFixture {
 		};
 		loadSdfVolume(&live_volume, "live");
 		loadSdfVolume(&canonical_volume, "canonical");
-		loadWarpVolume(&warp_field_data_term, "gradient0_data_");
-		loadWarpVolume(&warp_field_iter0, "warp_iter0");
-		loadWarpVolume(&warp_field_tikhonov_term, "gradient0_tikhonov_");
-		loadWarpVolume(&warp_field_killing_term, "gradient0_killing_");
-		loadWarpVolume(&warp_field_level_set_term, "gradient0_level_set_");
+		loadWarpVolume(&warp_field_data_term, "warp_field_0_data_");
+		loadWarpVolume(&warp_field_iter0, "warp_field_0_data_flow_warps_");
+		loadWarpVolume(&warp_field_tikhonov_term, "warp_field_1_tikhonov_");
+		loadWarpVolume(&warp_field_data_and_tikhonov_term, "warp_field_1_data_and_tikhonov_");
+		loadWarpVolume(&warp_field_data_and_killing_term, "warp_field_1_data_and_killing_");
+		loadWarpVolume(&warp_field_data_and_level_set_term, "warp_field_1_data_and_level_set_");
 	}
 
 	~WarpGradientDataFixture() {
@@ -141,16 +142,18 @@ struct WarpGradientDataFixture {
 		delete warp_field_data_term;
 		delete warp_field_iter0;
 		delete warp_field_tikhonov_term;
-		delete warp_field_killing_term;
-		delete warp_field_level_set_term;
+		delete warp_field_data_and_tikhonov_term;
+		delete warp_field_data_and_killing_term;
+		delete warp_field_data_and_level_set_term;
 	}
 
 	ITMLibSettings* settings;
 	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_data_term;
 	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_iter0;
 	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_tikhonov_term;
-	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_killing_term;
-	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_level_set_term;
+	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_data_and_tikhonov_term;
+	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_data_and_killing_term;
+	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_data_and_level_set_term;
 	ITMVoxelVolume<ITMVoxel, TIndex>* canonical_volume;
 	ITMVoxelVolume<ITMVoxel, TIndex>* live_volume;
 	const std::string pathToData;

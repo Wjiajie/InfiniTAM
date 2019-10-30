@@ -39,7 +39,6 @@
 #include "../ITMLib/SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU.h"
 #include "../ITMLib/SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA.h"
 #include "../ITMLib/SceneMotionTrackers/Shared/ITMCalculateWarpGradientFunctor.h"
-#include "../ITMLib/SceneMotionTrackers/Shared/ITMLegacyCalculateWarpGradientFunctor.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "../ITMLib/Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
@@ -128,7 +127,7 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU_PVA, DataFixture) {
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = true;
 	settings->enableLevelSetTerm = false;
-	settings->enableKillingTerm = false;
+	settings->enableKillingConstraintInSmoothingTerm = false;
 
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(*warp_field_iter0, MEMORYDEVICE_CPU);
 
@@ -147,7 +146,7 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU_PVA, DataFixture) {
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 42417);
 
 	float tolerance = 1e-8;
-	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_tikhonov_term, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_and_tikhonov_term, tolerance));
 }
 
 
@@ -155,7 +154,7 @@ BOOST_FIXTURE_TEST_CASE(testKillingTerm_CPU_PVA, DataFixture) {
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = true;
 	settings->enableLevelSetTerm = false;
-	settings->enableKillingTerm = true;
+	settings->enableKillingConstraintInSmoothingTerm = true;
 	settings->sceneTrackingRigidityEnforcementFactor = 0.1;
 
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(*warp_field_iter0, MEMORYDEVICE_CPU);
@@ -175,7 +174,7 @@ BOOST_FIXTURE_TEST_CASE(testKillingTerm_CPU_PVA, DataFixture) {
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 42670);
 
 	float tolerance = 1e-8;
-	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_killing_term, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_and_killing_term, tolerance));
 }
 
 
@@ -183,7 +182,7 @@ BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CPU_PVA, DataFixture) {
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = false;
 	settings->enableLevelSetTerm = true;
-	settings->enableKillingTerm = false;
+	settings->enableKillingConstraintInSmoothingTerm = false;
 
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(*warp_field_iter0, MEMORYDEVICE_CPU);
 
@@ -202,5 +201,5 @@ BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CPU_PVA, DataFixture) {
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 41275);
 
 	float tolerance = 1e-8;
-	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_level_set_term, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_and_level_set_term, tolerance));
 }

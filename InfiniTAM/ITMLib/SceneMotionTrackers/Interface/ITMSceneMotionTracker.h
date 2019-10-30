@@ -59,7 +59,7 @@ public:
 					ITMLibSettings::Instance().enableDataTerm,
 					ITMLibSettings::Instance().enableLevelSetTerm,
 					ITMLibSettings::Instance().enableSmoothingTerm,
-					ITMLibSettings::Instance().enableKillingTerm,
+					ITMLibSettings::Instance().enableKillingConstraintInSmoothingTerm,
 					ITMLibSettings::Instance().enableGradientSmoothing
 			} {
 		PrintSettings();
