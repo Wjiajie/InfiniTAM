@@ -97,6 +97,42 @@ __device__ static inline void atomicMax(float* address, float val)
 	} while (assumed != old);
 }
 
+__device__ static inline void atomicMin(double* address, double val)
+{
+	unsigned long long int* address_as_i = (unsigned long long int*)address;
+	unsigned long long int old = *address_as_i, assumed;
+	do {
+		assumed = old;
+		old = ::atomicCAS(address_as_i, assumed,
+		                  __double_as_longlong(::fmin(val, __longlong_as_double(assumed))));
+	} while (assumed != old);
+}
+
+__device__ static inline void atomicMax(double* address, double val)
+{
+	unsigned long long int* address_as_i = (unsigned long long int*)address;
+	unsigned long long int old = *address_as_i, assumed;
+	do {
+		assumed = old;
+		old = ::atomicCAS(address_as_i, assumed,
+		                  __double_as_longlong(::fmax(val, __longlong_as_double(assumed))));
+	} while (assumed != old);
+}
+#if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
+#else
+__device__ double atomicAdd(double* address, double val)
+{
+	unsigned long long int* address_as_ull = (unsigned long long int*)address;
+	unsigned long long int old = *address_as_ull, assumed;
+	do {
+		assumed = old;
+		old = atomicCAS(address_as_ull, assumed,
+		                __double_as_longlong(val + __longlong_as_double(assumed)));
+	} while (assumed != old);
+	return __longlong_as_double(old);
+}
+#endif
+
 template<typename T>
 __global__ void memsetKernel_device(T *devPtr, const T val, size_t nwords)
 {

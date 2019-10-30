@@ -52,7 +52,9 @@ public:
 	}
 
 	// Suppress the default copy constructor and assignment operator (C++11 way)
+
 	ITMVoxelVolume(const ITMVoxelVolume&) = delete;
+	//ITMVoxelVolume(ITMVoxelVolume&&) noexcept = default;
 	ITMVoxelVolume& operator=(const ITMVoxelVolume&) = delete;
 };
 

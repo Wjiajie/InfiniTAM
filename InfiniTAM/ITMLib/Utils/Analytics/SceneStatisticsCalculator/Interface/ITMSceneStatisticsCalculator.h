@@ -33,6 +33,10 @@ public:
 	virtual int ComputeVoxelWithNonZeroSdfCount(ITMVoxelVolume<TVoxel, TIndex>* scene, float value) = 0;
 	virtual double ComputeNonTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene) = 0;
 	virtual double ComputeTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene) = 0;
+	virtual double ComputeFlowWarpMin(ITMVoxelVolume<TVoxel,TIndex>* scene) = 0;
+	virtual double ComputeFlowWarpMax(ITMVoxelVolume<TVoxel,TIndex>* scene) = 0;
+	virtual double ComputeFlowWarpMean(ITMVoxelVolume<TVoxel,TIndex>* scene) = 0;
+
 
 	virtual float FindMaxGradient0LengthAndPosition(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector3i& positionOut) = 0;
 	virtual float FindMaxGradient1LengthAndPosition(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector3i& positionOut) = 0;

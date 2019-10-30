@@ -706,8 +706,12 @@ set(ITMLIB_UTILS_HEADERS
 set(ITMLIB_UTILS_STATCALC_INTERFACE_HEADERS
 	Utils/Analytics/SceneStatisticsCalculator/Interface/ITMSceneStatisticsCalculator.h
 	)
+
+
 set(ITMLIB_UTILS_STATCALC_SHARED_HEADERS
+	Utils/Analytics/SceneStatisticsCalculator/Shared/ITMSceneStatisticsCalculator_Functors.h
 	)
+
 
 set(ITMLIB_UTILS_STATCALC_CPU_HEADERS
 	Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h

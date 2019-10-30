@@ -74,7 +74,6 @@ void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ClearOutFlowWa
 
 // endregion ===========================================================================================================
 
-//_DEBUG
 template<typename TVoxel, typename TIndex>
 inline static void PrintSceneStatistics(
 		ITMVoxelVolume<TVoxel, TIndex>* scene,

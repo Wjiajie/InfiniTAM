@@ -25,6 +25,14 @@ T atomicMax_CPU(std::atomic<T>& variable, T value) {
 	return current;
 }
 
+template<typename T>
+inline
+T atomicMin_CPU(std::atomic<T>& variable, T value) {
+	auto current = variable.load();
+	while (current > value && !variable.compare_exchange_weak(current, value, std::memory_order_relaxed, std::memory_order_relaxed));
+	return current;
+}
+
 
 template<typename T>
 inline
@@ -63,12 +71,15 @@ inline T getDataCPU(T* var){
 
 #if defined(__CUDACC__)
 // for CUDA device code
+#define DECLARE_ATOMIC(type, name) type* name
 #define DECLARE_ATOMIC_INT(name)  int* name
 #define DECLARE_ATOMIC_UINT(name) unsigned int* name
 #define DECLARE_ATOMIC_FLOAT(name) float* name
+#define DECLARE_ATOMIC_DOUBLE(name) double* name
 #define CLEAN_UP_ATOMIC(name) ORcudaSafeCall (cudaFree(name))
 #define GET_ATOMIC_VALUE(name) (* name)
 #define GET_ATOMIC_VALUE_CPU(name) getDataCPU( name )
+#define ATOMIC_ARGUMENT(type) type *
 #define ATOMIC_FLOAT_ARGUMENT_TYPE float*
 #define ATOMIC_INT_ARGUMENT_TYPE int*
 
@@ -79,12 +90,15 @@ ORcudaSafeCall(cudaMalloc((void**)&var, sizeof( type ))); \
 ORcudaSafeCall(cudaMemcpy(var, &val, sizeof( type ), cudaMemcpyHostToDevice)); \
 }
 #else
+#define DECLARE_ATOMIC(type, name) std::atomic< type > name
 #define DECLARE_ATOMIC_INT(name)  std::atomic<int> name
 #define DECLARE_ATOMIC_UINT(name)  std::atomic<unsigned int> name
 #define DECLARE_ATOMIC_FLOAT(name) std::atomic<float> name
+#define DECLARE_ATOMIC_DOUBLE(name) std::atomic<double> name
 #define CLEAN_UP_ATOMIC(name) ;
 #define GET_ATOMIC_VALUE(name) (name .load())
 #define GET_ATOMIC_VALUE_CPU(name) GET_ATOMIC_VALUE(name)
+#define ATOMIC_ARGUMENT(type) std::atomic< type >&
 #define ATOMIC_FLOAT_ARGUMENT_TYPE std::atomic<float>&
 #define ATOMIC_INT_ARGUMENT_TYPE std::atomic<int>&
 
@@ -96,10 +110,12 @@ initializeAtomic_CPU< type > (var, value)
 #if defined(__CUDACC__)
 #define ATOMIC_ADD(name, value) atomicAdd( name , value )
 #define ATOMIC_MAX(name, value) atomicMax( name, value )
+#define ATOMIC_MIN(name, value) atomicMin( name, value )
 #define _DEVICE_WHEN_AVAILABLE_ __device__
 #else
 #define ATOMIC_ADD(name, value) atomicAdd_CPU( name, value )
 #define ATOMIC_MAX(name, value) atomicMax_CPU( name, value )
+#define ATOMIC_MIN(name, value) atomicMin_CPU( name, value )
 #define _DEVICE_WHEN_AVAILABLE_
 #endif
 

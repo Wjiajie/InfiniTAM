@@ -40,44 +40,6 @@ std::string getIndexSuffix<ITMPlainVoxelArray>() {
 	return "PVA";
 }
 
-template<typename TVoxel, typename TIndex>
-void PrepareVoxelVolume(ITMVoxelVolume<TVoxel, TIndex>* volume, MemoryDeviceType deviceType);
-
-//have nothing to prep for PVA -- everything gets copied off the disk exactly
-template<>
-void PrepareVoxelVolume(ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* volume, MemoryDeviceType deviceType) {}
-
-template<>
-void PrepareVoxelVolume(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume, MemoryDeviceType deviceType) {}
-
-//for VBH, the scene has to be reset -- there may be
-template<>
-void PrepareVoxelVolume(ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* volume, MemoryDeviceType deviceType) {
-	switch (deviceType) {
-		case MEMORYDEVICE_CPU:
-			ITMSceneManipulationEngine_CPU<ITMWarp, ITMVoxelBlockHash>::Inst().ResetScene(volume);
-			break;
-		case MEMORYDEVICE_CUDA:
-			ITMSceneManipulationEngine_CUDA<ITMWarp, ITMVoxelBlockHash>::Inst().ResetScene(volume);
-			break;
-		default:
-			DIEWITHEXCEPTION_REPORTLOCATION("Memory/Device type not supported");
-	}
-}
-
-template<>
-void PrepareVoxelVolume(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume, MemoryDeviceType deviceType) {
-	switch (deviceType) {
-		case MEMORYDEVICE_CPU:
-			ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(volume);
-			break;
-		case MEMORYDEVICE_CUDA:
-			ITMSceneManipulationEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(volume);
-			break;
-		default:
-			DIEWITHEXCEPTION_REPORTLOCATION("Memory/Device type not supported");
-	}
-}
 
 template <typename TIndex>
 typename TIndex::InitializationParameters GetIndexParameters();
@@ -113,7 +75,7 @@ struct WarpGradientDataFixture {
 			                                                   ITMLibSettings::SWAPPINGMODE_ENABLED,
 			                                                   TMemoryType,
 			                                                   indexParameters);
-			PrepareVoxelVolume(*scene, TMemoryType);
+			PrepareVoxelVolumeForLoading(*scene, TMemoryType);
 			(*scene)->LoadFromDirectory(pathToData + pathSuffix);
 		};
 		auto loadWarpVolume = [&](ITMVoxelVolume<ITMWarp, TIndex>** scene, const std::string& pathSuffix){
@@ -122,7 +84,7 @@ struct WarpGradientDataFixture {
 			                                             ITMLibSettings::SWAPPINGMODE_ENABLED,
 			                                             TMemoryType,
 			                                             indexParameters);
-			PrepareVoxelVolume(*scene, TMemoryType);
+			PrepareVoxelVolumeForLoading(*scene, TMemoryType);
 			(*scene)->LoadFromDirectory(pathToData + pathSuffix);
 		};
 		loadSdfVolume(&live_volume, "live");

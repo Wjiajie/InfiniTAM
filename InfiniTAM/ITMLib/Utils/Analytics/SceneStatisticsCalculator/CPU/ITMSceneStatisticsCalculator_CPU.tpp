@@ -21,6 +21,7 @@
 #include "../../../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../../../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 #include "../../../../Objects/Scene/ITMVoxelTypes.h"
+#include "../Shared/ITMSceneStatisticsCalculator_Functors.h"
 
 //atomic
 #include <atomic>
@@ -374,6 +375,21 @@ unsigned int ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeAlteredVox
 	IsAlteredCountFunctor<TVoxel> functor;
 	ITMSceneTraversalEngine<TVoxel, TIndex, ITMLibSettings::DEVICE_CPU>::VoxelTraversal(scene, functor);
 
+}
+
+template<typename TVoxel, typename TIndex>
+double ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeFlowWarpMin(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, ITMLibSettings::DEVICE_CPU, MINIMUM>::compute(scene);
+}
+
+template<typename TVoxel, typename TIndex>
+double ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeFlowWarpMax(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, ITMLibSettings::DEVICE_CPU, MAXIMUM>::compute(scene);
+}
+
+template<typename TVoxel, typename TIndex>
+double ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeFlowWarpMean(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, ITMLibSettings::DEVICE_CPU, MEAN>::compute(scene);
 }
 
 // endregion ===========================================================================================================

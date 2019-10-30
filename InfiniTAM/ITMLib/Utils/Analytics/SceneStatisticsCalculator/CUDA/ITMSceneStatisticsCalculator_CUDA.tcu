@@ -19,6 +19,7 @@
 #include "../../../ITMLibSettings.h"
 #include "../../../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h"
 #include "../../../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
+#include "../Shared/ITMSceneStatisticsCalculator_Functors.h"
 
 using namespace ITMLib;
 
@@ -201,6 +202,22 @@ float ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::FindMaxGradient1LengthA
 template<typename TVoxel, typename TIndex>
 unsigned  int ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeAlteredVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+}
+
+template<typename TVoxel, typename TIndex>
+double ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeFlowWarpMin(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, ITMLibSettings::DEVICE_CUDA, MINIMUM>::compute(scene);
+}
+
+
+template<typename TVoxel, typename TIndex>
+double ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeFlowWarpMax(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, ITMLibSettings::DEVICE_CUDA, MAXIMUM>::compute(scene);
+}
+
+template<typename TVoxel, typename TIndex>
+double ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeFlowWarpMean(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, ITMLibSettings::DEVICE_CUDA, MEAN>::compute(scene);
 }
 
 namespace {

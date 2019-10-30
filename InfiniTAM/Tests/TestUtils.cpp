@@ -24,12 +24,92 @@
 
 using namespace ITMLib;
 
-template void GenerateTestScene_CPU<ITMVoxel,ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* scene);
-template void GenerateTestScene_CPU<ITMVoxel,ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* scene);
-template void GenerateTestScene_CUDA<ITMVoxel,ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* scene);
-template void GenerateTestScene_CUDA<ITMVoxel,ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* scene);
+template void GenerateTestScene_CPU<ITMVoxel, ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* scene);
+template void GenerateTestScene_CPU<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* scene);
+template void GenerateTestScene_CUDA<ITMVoxel, ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* scene);
+template void GenerateTestScene_CUDA<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* scene);
 
 template void simulateVoxelAlteration<ITMVoxel>(ITMVoxel& voxel, float newSdfValue);
 template void simulateRandomVoxelAlteration<ITMVoxel>(ITMVoxel& voxel);
 template void simulateRandomVoxelAlteration<ITMWarp>(ITMWarp& voxel);
 
+
+//have nothing to prep for PVA -- everything gets copied off the disk exactly
+template<>
+void PrepareVoxelVolumeForLoading(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume, MemoryDeviceType deviceType) {}
+
+template<>
+void PrepareVoxelVolumeForLoading(ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* volume, MemoryDeviceType deviceType) {}
+
+//for VBH, the scene has to be reset -- there may be
+template<>
+void PrepareVoxelVolumeForLoading(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume, MemoryDeviceType deviceType) {
+	switch (deviceType) {
+		case MEMORYDEVICE_CPU:
+			ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(volume);
+			break;
+		case MEMORYDEVICE_CUDA:
+			ITMSceneManipulationEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(volume);
+			break;
+		default:
+			DIEWITHEXCEPTION_REPORTLOCATION("Memory/Device type not supported");
+	}
+}
+
+template<>
+void PrepareVoxelVolumeForLoading(ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* volume, MemoryDeviceType deviceType) {
+	switch (deviceType) {
+		case MEMORYDEVICE_CPU:
+			ITMSceneManipulationEngine_CPU<ITMWarp, ITMVoxelBlockHash>::Inst().ResetScene(volume);
+			break;
+		case MEMORYDEVICE_CUDA:
+			ITMSceneManipulationEngine_CUDA<ITMWarp, ITMVoxelBlockHash>::Inst().ResetScene(volume);
+			break;
+		default:
+			DIEWITHEXCEPTION_REPORTLOCATION("Memory/Device type not supported");
+	}
+}
+
+
+template<>
+ITMPlainVoxelArray::InitializationParameters GetCommonIndexParameters<ITMPlainVoxelArray>() {
+	return {Vector3i(80, 96, 144), Vector3i(-64, -24, 168)};
+}
+
+template<>
+ITMVoxelBlockHash::InitializationParameters GetCommonIndexParameters<ITMVoxelBlockHash>() {
+	return {0x800, 0x20000};
+}
+
+// FIXME: see TODO in header
+//template ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> loadSdfVolume<ITMVoxel, ITMPlainVoxelArray>(
+//                                                 const std::string& path, MemoryDeviceType memoryDeviceType,
+//                                                 ITMPlainVoxelArray::InitializationParameters initializationParameters,
+//                                                 ITMLibSettings::SwappingMode swappingMode);
+//template ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> loadSdfVolume<ITMVoxel, ITMVoxelBlockHash>(const std::string& path, MemoryDeviceType memoryDeviceType,
+//                                                 ITMVoxelBlockHash::InitializationParameters initializationParameters,
+//                                                 ITMLibSettings::SwappingMode swappingMode);
+//template ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> loadSdfVolume<ITMWarp, ITMPlainVoxelArray>(const std::string& path, MemoryDeviceType memoryDeviceType,
+//                                                          ITMPlainVoxelArray::InitializationParameters initializationParameters,
+//                                                          ITMLibSettings::SwappingMode swappingMode);
+//template ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> loadSdfVolume<ITMWarp, ITMVoxelBlockHash>(
+//                                                         const std::string& path, MemoryDeviceType memoryDeviceType,
+//                                                         ITMVoxelBlockHash::InitializationParameters initializationParameters,
+//                                                         ITMLibSettings::SwappingMode swappingMode);
+
+template void loadSdfVolume<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>** volume,
+                                                          const std::string& path, MemoryDeviceType memoryDeviceType,
+                                                          ITMPlainVoxelArray::InitializationParameters initializationParameters,
+                                                          ITMLibSettings::SwappingMode swappingMode);
+template void loadSdfVolume<ITMVoxel, ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>** volume,
+                                                         const std::string& path, MemoryDeviceType memoryDeviceType,
+                                                         ITMVoxelBlockHash::InitializationParameters initializationParameters,
+                                                         ITMLibSettings::SwappingMode swappingMode);
+template void loadSdfVolume<ITMWarp, ITMPlainVoxelArray>(ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>** volume,
+                                                         const std::string& path, MemoryDeviceType memoryDeviceType,
+                                                         ITMPlainVoxelArray::InitializationParameters initializationParameters,
+                                                         ITMLibSettings::SwappingMode swappingMode);
+template void loadSdfVolume<ITMWarp, ITMVoxelBlockHash>(ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>** volume,
+                                                        const std::string& path, MemoryDeviceType memoryDeviceType,
+                                                        ITMVoxelBlockHash::InitializationParameters initializationParameters,
+                                                        ITMLibSettings::SwappingMode swappingMode);

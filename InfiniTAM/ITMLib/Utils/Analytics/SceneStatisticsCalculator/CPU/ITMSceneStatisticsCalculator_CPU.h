@@ -44,6 +44,9 @@ public:
 	int ComputeVoxelWithNonZeroSdfCount(ITMVoxelVolume<TVoxel, TIndex>* scene, float value) override;
 	double ComputeNonTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene) override;
 	double ComputeTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene) override;
+	double ComputeFlowWarpMin(ITMVoxelVolume<TVoxel,TIndex>* scene) override;
+	double ComputeFlowWarpMax(ITMVoxelVolume<TVoxel,TIndex>* scene) override;
+	double ComputeFlowWarpMean(ITMVoxelVolume<TVoxel,TIndex>* scene) override;
 
 	float FindMaxGradient0LengthAndPosition(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector3i& positionOut) override;
 	float FindMaxGradient1LengthAndPosition(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector3i& positionOut) override;

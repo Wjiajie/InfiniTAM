@@ -20,6 +20,7 @@
 #include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "../ITMLib/Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
 
+
 using namespace ITMLib;
 
 template<class TVoxel, class TIndex>
@@ -172,3 +173,28 @@ void simulateRandomVoxelAlteration(TVoxel& voxel) {
 	HandleSDFAlterationFunctor<TVoxel::hasSDFInformation, TVoxel>::setRandom(voxel);
 	HandleFlowWarpAlterationFunctor<TVoxel::hasFlowWarp, TVoxel>::setRandom(voxel);
 }
+
+// FIXME: see TODO in header
+//template<typename TVoxel, typename TIndex>
+//ITMVoxelVolume<TVoxel, TIndex> loadSdfVolume (const std::string& path, MemoryDeviceType memoryDeviceType,
+//                    typename TIndex::InitializationParameters initializationParameters, ITMLibSettings::SwappingMode swappingMode){
+//	ITMLibSettings& settings = ITMLibSettings::Instance();
+//	ITMVoxelVolume<TVoxel, TIndex> scene(&settings.sceneParams,
+//	                                              swappingMode,
+//	                                              memoryDeviceType,initializationParameters);
+//	PrepareVoxelVolumeForLoading(&scene, memoryDeviceType);
+//	scene.LoadFromDirectory(path);
+//	return scene;
+//};
+
+template<typename TVoxel, typename TIndex>
+void loadSdfVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& path, MemoryDeviceType memoryDeviceType,
+                   typename TIndex::InitializationParameters initializationParameters,
+                   ITMLibSettings::SwappingMode swappingMode) {
+	ITMLibSettings& settings = ITMLibSettings::Instance();
+	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&settings.sceneParams,
+	                                               swappingMode,
+	                                               memoryDeviceType, initializationParameters);
+	PrepareVoxelVolumeForLoading(*volume, memoryDeviceType);
+	(*volume)->LoadFromDirectory(path);
+};

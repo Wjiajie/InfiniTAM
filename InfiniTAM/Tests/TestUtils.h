@@ -20,6 +20,8 @@
 
 #include "../ITMLib/Objects/Scene/ITMRepresentationAccess.h"
 #include "../ITMLib/Objects/Scene/ITMVoxelVolume.h"
+#include "../ITMLib/Utils/ITMLibSettings.h"
+
 
 using namespace ITMLib;
 
@@ -38,7 +40,7 @@ template<typename TVoxel>
 void simulateRandomVoxelAlteration(TVoxel& voxel);
 
 inline
-void TimeIt(std::function<void (void)> function, const std::string& description = "Timed Operation"){
+void TimeIt(std::function<void(void)> function, const std::string& description = "Timed Operation") {
 	std::cout << description << std::endl;
 	auto start = std::chrono::high_resolution_clock::now();
 	function();
@@ -46,3 +48,24 @@ void TimeIt(std::function<void (void)> function, const std::string& description 
 	std::chrono::duration<double> elapsed = finish - start;
 	std::cout << "Elapsed time: " << elapsed.count() << " s\n";
 }
+
+
+template<typename TVoxel, typename TIndex>
+void PrepareVoxelVolumeForLoading(ITMVoxelVolume<TVoxel, TIndex>* volume, MemoryDeviceType deviceType);
+
+
+template<typename TIndex>
+typename TIndex::InitializationParameters GetCommonIndexParameters();
+
+//TODO: figure out whether it still makes sense to suppress assignment operator of the ITMVoxelVolume class...
+// Then restore or delete this depending on the decision. If the decision is negative, provide a constructor that loads from path instead.
+//
+//template<typename TVoxel, typename TIndex>
+//ITMVoxelVolume<TVoxel, TIndex> loadSdfVolume (const std::string& path, MemoryDeviceType memoryDeviceType,
+//		typename TIndex::InitializationParameters initializationParameters = GetCommonIndexParameters<TIndex>(),
+//		ITMLibSettings::SwappingMode swappingMode = ITMLibSettings::SWAPPINGMODE_DISABLED);
+
+template<typename TVoxel, typename TIndex>
+void loadSdfVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& path, MemoryDeviceType memoryDeviceType,
+                   typename TIndex::InitializationParameters initializationParameters = GetCommonIndexParameters<TIndex>(),
+                   ITMLibSettings::SwappingMode swappingMode = ITMLibSettings::SWAPPINGMODE_DISABLED);
