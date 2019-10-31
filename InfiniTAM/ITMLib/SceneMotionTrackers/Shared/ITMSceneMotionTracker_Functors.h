@@ -218,8 +218,13 @@ struct GradientSmoothingPassFunctor {
 		Vector3f smoothedGradient(0.0f);
 
 		for (int iVoxel = 0; iVoxel < sobolevFilterSize; iVoxel++, receptiveVoxelPosition[directionIndex]++) {
+#if !defined(__CUDACC__) && !defined(WITH_OPENMP)
 			const TWarp& receptiveVoxel = readVoxel(warpVoxels, warpIndexData,
 			                                        receptiveVoxelPosition, vmIndex, warpFieldCache);
+#else
+			const TWarp& receptiveVoxel = readVoxel(warpVoxels, warpIndexData,
+			                                        receptiveVoxelPosition, vmIndex);
+#endif
 			smoothedGradient += sobolevFilter1D[iVoxel] * GetGradient(receptiveVoxel);
 		}
 		SetGradient(warp, smoothedGradient);

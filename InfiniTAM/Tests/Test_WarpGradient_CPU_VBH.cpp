@@ -36,6 +36,7 @@
 #include "../ITMLib/SceneMotionTrackers/Interface/ITMSceneMotionTracker.h"
 #include "../ITMLib/SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
+#include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "../ITMLib/Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 
 using namespace ITMLib;
@@ -65,6 +66,7 @@ struct AlteredFlowWarpCountFunctor {
 
 	std::atomic<unsigned int> count;
 };
+
 
 typedef WarpGradientDataFixture<MemoryDeviceType::MEMORYDEVICE_CPU, ITMVoxelBlockHash> DataFixture;
 BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_VBH, DataFixture) {
@@ -124,6 +126,24 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_VBH, DataFixture) {
 
 	float tolerance = 1e-8;
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_copy, warp_field_iter0, tolerance));
+}
+
+
+BOOST_FIXTURE_TEST_CASE(testSmoothWarpGradient_CPU_VBH, DataFixture) {
+	settings->enableGradientSmoothing = true;
+
+	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CPU1(*warp_field_data_term, MEMORYDEVICE_CPU);
+
+
+	auto motionTracker_VBH_CPU = new ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarp, ITMVoxelBlockHash>();
+
+	TimeIt([&]() {
+		motionTracker_VBH_CPU->SmoothWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
+	}, "Smooth Warp Gradient - VBH CPU");
+//	warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warp_field_0_smoothed_");
+
+	float tolerance = 1e-8;
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_term_smoothed, tolerance));
 }
 
 BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU_VBH, DataFixture){

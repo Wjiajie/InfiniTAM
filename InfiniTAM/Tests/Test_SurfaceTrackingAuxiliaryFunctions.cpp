@@ -27,19 +27,77 @@
 
 #include "TestUtils.h"
 #include "../ITMLib/SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU.h"
+#include "../ITMLib/SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA.h"
+#include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
+#include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
 
 using namespace ITMLib;
 
-BOOST_AUTO_TEST_CASE(Test_ClearOutFlowWarpCPU){
+BOOST_AUTO_TEST_CASE(Test_ClearOutFlowWarp_CPU_PVA){
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warps_PVA;
 	loadSdfVolume(&warps_PVA, "TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_data_flow_warps_", MEMORYDEVICE_CPU);
+	float relativeTolerance = 0.1f;//percent
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CPU_PVA_Warp::Instance().ComputeFlowWarpMax(warps_PVA), 0.0870865062f, relativeTolerance);
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CPU_PVA_Warp::Instance().ComputeFlowWarpMin(warps_PVA), 0.0f, relativeTolerance);
+
 	auto motionTracker_PVA_CPU = new ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray>();
 
-
+	motionTracker_PVA_CPU->ClearOutFlowWarp(warps_PVA);
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CPU_PVA_Warp::Instance().ComputeFlowWarpMax(warps_PVA), 0.0f, relativeTolerance);
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CPU_PVA_Warp::Instance().ComputeFlowWarpMin(warps_PVA), 0.0f, relativeTolerance);
 
 	delete warps_PVA;
 }
 
+BOOST_AUTO_TEST_CASE(Test_ClearOutFlowWarp_CPU_VBH){
+	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps_VBH;
+	loadSdfVolume(&warps_VBH, "TestData/snoopy_result_fr16-17_partial_VBH/warp_field_0_data_flow_warps_", MEMORYDEVICE_CPU);
+	float relativeTolerance = 0.1f;//percent
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeFlowWarpMax(warps_VBH), 0.021316606551f, relativeTolerance);
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeFlowWarpMin(warps_VBH), 0.0f, relativeTolerance);
+
+	auto motionTracker_VBH_CPU = new ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarp, ITMVoxelBlockHash>();
+
+	motionTracker_VBH_CPU->ClearOutFlowWarp(warps_VBH);
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeFlowWarpMax(warps_VBH), 0.0f, relativeTolerance);
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeFlowWarpMin(warps_VBH), 0.0f, relativeTolerance);
+
+	delete warps_VBH;
+}
+
 #ifndef COMPILE_WITHOUT_CUDA
+
+BOOST_AUTO_TEST_CASE(Test_ClearOutFlowWarp_CUDA_PVA){
+	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warps_PVA;
+	loadSdfVolume(&warps_PVA, "TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_data_flow_warps_", MEMORYDEVICE_CUDA);
+	float relativeTolerance = 0.1f;//percent
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CUDA_PVA_Warp::Instance().ComputeFlowWarpMax(warps_PVA), 0.0870865062f, relativeTolerance);
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CUDA_PVA_Warp::Instance().ComputeFlowWarpMin(warps_PVA), 0.0f, relativeTolerance);
+
+	auto motionTracker_PVA_CUDA = new ITMSceneMotionTracker_CUDA<ITMVoxel, ITMWarp, ITMPlainVoxelArray>();
+
+	motionTracker_PVA_CUDA->ClearOutFlowWarp(warps_PVA);
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CUDA_PVA_Warp::Instance().ComputeFlowWarpMax(warps_PVA), 0.0f, relativeTolerance);
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CUDA_PVA_Warp::Instance().ComputeFlowWarpMin(warps_PVA), 0.0f, relativeTolerance);
+
+	delete warps_PVA;
+}
+
+BOOST_AUTO_TEST_CASE(Test_ClearOutFlowWarp_CUDA_VBH){
+	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps_VBH;
+	loadSdfVolume(&warps_VBH, "TestData/snoopy_result_fr16-17_partial_VBH/warp_field_0_data_flow_warps_", MEMORYDEVICE_CUDA);
+	float relativeTolerance = 0.1f;//percent
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CUDA_VBH_Warp::Instance().ComputeFlowWarpMax(warps_VBH), 0.021316606551f, relativeTolerance);
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CUDA_VBH_Warp::Instance().ComputeFlowWarpMin(warps_VBH), 0.0f, relativeTolerance);
+
+	auto motionTracker_VBH_CUDA = new ITMSceneMotionTracker_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash>();
+
+	motionTracker_VBH_CUDA->ClearOutFlowWarp(warps_VBH);
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CUDA_VBH_Warp::Instance().ComputeFlowWarpMax(warps_VBH), 0.0f, relativeTolerance);
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CUDA_VBH_Warp::Instance().ComputeFlowWarpMin(warps_VBH), 0.0f, relativeTolerance);
+
+	delete warps_VBH;
+}
+
 
 #endif

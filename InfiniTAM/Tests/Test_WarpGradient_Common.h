@@ -90,6 +90,7 @@ struct WarpGradientDataFixture {
 		loadSdfVolume(&live_volume, "live");
 		loadSdfVolume(&canonical_volume, "canonical");
 		loadWarpVolume(&warp_field_data_term, "warp_field_0_data_");
+		loadWarpVolume(&warp_field_data_term_smoothed, "warp_field_0_smoothed_");
 		loadWarpVolume(&warp_field_iter0, "warp_field_0_data_flow_warps_");
 		loadWarpVolume(&warp_field_tikhonov_term, "warp_field_1_tikhonov_");
 		loadWarpVolume(&warp_field_data_and_tikhonov_term, "warp_field_1_data_and_tikhonov_");
@@ -102,6 +103,7 @@ struct WarpGradientDataFixture {
 		delete live_volume;
 		delete canonical_volume;
 		delete warp_field_data_term;
+		delete warp_field_data_term_smoothed;
 		delete warp_field_iter0;
 		delete warp_field_tikhonov_term;
 		delete warp_field_data_and_tikhonov_term;
@@ -111,6 +113,7 @@ struct WarpGradientDataFixture {
 
 	ITMLibSettings* settings;
 	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_data_term;
+	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_data_term_smoothed;
 	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_iter0;
 	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_tikhonov_term;
 	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_data_and_tikhonov_term;

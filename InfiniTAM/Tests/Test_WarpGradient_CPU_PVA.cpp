@@ -13,16 +13,14 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#define BOOST_TEST_MODULE SceneConstruction
+#define BOOST_TEST_MODULE WarpGradient_CPU_PVA
 #ifndef WIN32
 #define BOOST_TEST_DYN_LINK
 #endif
 
 
 //stdlib
-#include <random>
 #include <vector>
-#include <chrono>
 #include <atomic>
 
 //boost
@@ -32,15 +30,10 @@
 #include "TestUtils.h"
 #include "Test_WarpGradient_Common.h"
 #include "../ITMLib/Utils/ITMLibSettings.h"
-#include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "../ITMLib/SceneMotionTrackers/Interface/ITMSceneMotionTracker.h"
 #include "../ITMLib/SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU.h"
-#include "../ITMLib/SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA.h"
-#include "../ITMLib/SceneMotionTrackers/Shared/ITMCalculateWarpGradientFunctor.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
-#include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "../ITMLib/Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 
 using namespace ITMLib;
@@ -123,7 +116,24 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_PVA, DataFixture) {
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_copy, warp_field_iter0, tolerance));
 }
 
-BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU_PVA, DataFixture) {
+BOOST_FIXTURE_TEST_CASE(testSmoothWarpGradient_CPU_PVA, DataFixture) {
+	settings->enableGradientSmoothing = true;
+
+	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(*warp_field_data_term, MEMORYDEVICE_CPU);
+
+
+	auto motionTracker_PVA_CPU = new ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray>();
+
+	TimeIt([&]() {
+		motionTracker_PVA_CPU->SmoothWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
+	}, "Smooth Warp Gradient - PVA CPU");
+//	warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_smoothed_");
+
+	float tolerance = 1e-8;
+	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_term_smoothed, tolerance));
+}
+
+BOOST_FIXTURE_TEST_CASE(testDataAndTikhonovTerm_CPU_PVA, DataFixture) {
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = true;
 	settings->enableLevelSetTerm = false;
@@ -137,7 +147,7 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU_PVA, DataFixture) {
 
 	TimeIt([&]() {
 		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1, false);
-	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
+	}, "Calculate Warp Gradient - PVA CPU data + tikhonov term");
 
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
@@ -150,7 +160,7 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU_PVA, DataFixture) {
 }
 
 
-BOOST_FIXTURE_TEST_CASE(testKillingTerm_CPU_PVA, DataFixture) {
+BOOST_FIXTURE_TEST_CASE(testDataAndKillingTerm_CPU_PVA, DataFixture) {
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = true;
 	settings->enableLevelSetTerm = false;
@@ -178,7 +188,7 @@ BOOST_FIXTURE_TEST_CASE(testKillingTerm_CPU_PVA, DataFixture) {
 }
 
 
-BOOST_FIXTURE_TEST_CASE(testLevelSetTerm_CPU_PVA, DataFixture) {
+BOOST_FIXTURE_TEST_CASE(testDataAndLevelSetTerm_CPU_PVA, DataFixture) {
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = false;
 	settings->enableLevelSetTerm = true;

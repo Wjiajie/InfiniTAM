@@ -55,22 +55,24 @@ struct HandleAggregate;
 template <typename TVoxel>
 struct HandleAggregate<TVoxel, MINIMUM>{
 	_DEVICE_WHEN_AVAILABLE_
-	inline static void aggregateStatistic(ATOMIC_ARGUMENT(double) value, TVoxel& voxel){
+	inline static void aggregateStatistic(ATOMIC_ARGUMENT(double) value, ATOMIC_ARGUMENT(unsigned int) count, TVoxel& voxel){
 		ATOMIC_MIN(value, static_cast<double>(ORUtils::length(voxel.flow_warp)));
+
 	}
 };
 template <typename TVoxel>
 struct HandleAggregate<TVoxel, MAXIMUM>{
 	_DEVICE_WHEN_AVAILABLE_
-	inline static void aggregateStatistic(ATOMIC_ARGUMENT(double) value, TVoxel& voxel){
+	inline static void aggregateStatistic(ATOMIC_ARGUMENT(double) value, ATOMIC_ARGUMENT(unsigned int) count, TVoxel& voxel){
 		ATOMIC_MAX(value, static_cast<double>(ORUtils::length(voxel.flow_warp)));
 	}
 };
 template <typename TVoxel>
 struct HandleAggregate<TVoxel, MEAN>{
 	_DEVICE_WHEN_AVAILABLE_
-	inline static void aggregateStatistic(ATOMIC_ARGUMENT(double) value, TVoxel& voxel){
+	inline static void aggregateStatistic(ATOMIC_ARGUMENT(double) value, ATOMIC_ARGUMENT(unsigned int) count, TVoxel& voxel){
 		ATOMIC_ADD(value, static_cast<double>(ORUtils::length(voxel.flow_warp)));
+		ATOMIC_ADD(count, 1u);
 	}
 };
 
@@ -80,15 +82,23 @@ struct ComputeFlowWarpLengthStatisticFunctor<true, TVoxel, TIndex, TDeviceType, 
 
 	static double compute(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 		ComputeFlowWarpLengthStatisticFunctor instance;
+		INITIALIZE_ATOMIC(double, instance.aggregate, 0.0);
+		INITIALIZE_ATOMIC(unsigned int, instance.count, 0u);
 		ITMSceneTraversalEngine<TVoxel, TIndex, TDeviceType>::VoxelTraversal(scene, instance);
 		double aggregate = GET_ATOMIC_VALUE_CPU(instance.aggregate);
-		return aggregate;
+		unsigned int count = GET_ATOMIC_VALUE_CPU(instance.count);
+		if(TStatistic == MEAN){
+			return aggregate / count;
+		}else{
+			return aggregate;
+		}
 	}
 
 	DECLARE_ATOMIC(double, aggregate);
+	DECLARE_ATOMIC(unsigned int, count);
 
 	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& voxel) {
-		HandleAggregate<TVoxel,TStatistic>::aggregateStatistic(aggregate, voxel);
+		HandleAggregate<TVoxel,TStatistic>::aggregateStatistic(aggregate, count, voxel);
 	}
 };

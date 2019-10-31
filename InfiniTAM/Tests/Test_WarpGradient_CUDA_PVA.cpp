@@ -75,6 +75,23 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CUDA_PVA, DataFixture) {
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_copy, warp_field_iter0, tolerance));
 }
 
+BOOST_FIXTURE_TEST_CASE(testSmoothWarpGradient_CUDA_PVA, DataFixture) {
+	settings->enableGradientSmoothing = true;
+
+	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CUDA1(*warp_field_data_term, MEMORYDEVICE_CUDA);
+
+
+	auto motionTracker_PVA_CUDA = new ITMSceneMotionTracker_CUDA<ITMVoxel, ITMWarp, ITMPlainVoxelArray>();
+
+	TimeIt([&]() {
+		motionTracker_PVA_CUDA->SmoothWarpGradient(canonical_volume, live_volume, &warp_field_CUDA1);
+	}, "Smooth Warp Gradient - PVA CUDA");
+//	warp_field_CUDA1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_smoothed_");
+
+	float tolerance = 1e-8;
+	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_data_term_smoothed, tolerance));
+}
+
 BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CUDA_PVA, DataFixture){
 	settings->enableDataTerm = false;
 	settings->enableSmoothingTerm = true;
