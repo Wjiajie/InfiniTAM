@@ -145,7 +145,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
 
-	// Clear out the flags at target index
+	// Clear out the flags at target volume
 	FieldClearFunctor<TVoxel> flagClearFunctor;
 	ITMSceneTraversalEngine<TVoxel, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::VoxelTraversal(targetTSDF,
 	                                                                                                   flagClearFunctor);

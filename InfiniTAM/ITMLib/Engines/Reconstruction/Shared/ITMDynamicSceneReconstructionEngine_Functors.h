@@ -24,7 +24,7 @@
 template<typename TVoxel>
 struct FieldClearFunctor {
 	FieldClearFunctor() {}
-
+	_CPU_AND_GPU_CODE_
 	void operator()(TVoxel& voxel) {
 		voxel.flags = ITMLib::VOXEL_UNKNOWN;
 		voxel.sdf = TVoxel::SDF_initialValue();
@@ -36,6 +36,7 @@ template <typename TVoxel>
 struct TSDFFusionFunctor{
 	TSDFFusionFunctor(int maximumWeight) :
 			maximumWeight(maximumWeight){}
+	_CPU_AND_GPU_CODE_
 	void operator()(TVoxel& liveVoxel, TVoxel& canonicalVoxel){
 		fuseLiveVoxelIntoCanonical(liveVoxel, maximumWeight, canonicalVoxel);
 	}
@@ -69,7 +70,7 @@ struct TrilinearInterpolationFunctor {
 			focusCoordinates(ITMLib::ITMLibSettings::Instance().GetFocusCoordinates())
 	{}
 
-
+	_CPU_AND_GPU_CODE_
 	void operator()(TVoxel& destinationVoxel, TWarp& warp,
 	                Vector3i warpAndDestinationVoxelPosition) {
 

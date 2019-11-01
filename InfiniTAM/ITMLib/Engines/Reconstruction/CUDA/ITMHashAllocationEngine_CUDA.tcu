@@ -15,7 +15,9 @@
 //  ================================================================
 #include "ITMHashAllocationEngine_CUDA.h"
 #include "ITMHashAllocationEngine_CUDA_Kernels.h"
+#include "../Shared/ITMHashAllocationEngine_Shared.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
+#include "../../../Utils/ITMLibSettings.h"
 
 using namespace ITMLib;
 
@@ -165,7 +167,7 @@ template<WarpType TWarpType>
 void ITMHashAllocationEngine_CUDA<TVoxel, TWarp>::AllocateFromWarpedVolume(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented!");
+	allocateFromWarpedVolume_common<TVoxel,TWarp, TWarpType, ITMLibSettings::DEVICE_CUDA>(warpField,sourceTSDF,targetTSDF);
 }
 
 template<typename TVoxel, typename TWarp>

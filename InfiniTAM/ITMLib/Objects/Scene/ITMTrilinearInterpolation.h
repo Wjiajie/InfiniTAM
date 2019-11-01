@@ -19,9 +19,9 @@
 
 #include <cfloat>
 #include "../../Utils/ITMPrintHelpers.h"
+#include "../../Utils/ITMCPrintHelpers.h"
 #include "../../Utils/ITMVoxelFlags.h"
 #include "ITMRepresentationAccess.h"
-
 
 
 template<typename TVoxel, typename TCache, typename TIndexData>
@@ -34,10 +34,14 @@ inline float ProcessTrilinearNeighbor(const CONSTPTR(TVoxel)* voxelData,
                                       THREADPTR(bool)& struckKnownVoxels,
                                       int iNeighbor,
                                       THREADPTR(float)& sdf,
-                                      THREADPTR(float)& cumulativeWeight){
+                                      THREADPTR(float)& cumulativeWeight) {
 	int vmIndex;
 
+#if !defined(__CUDACC__) && !defined(WITH_OPENMP)
 	const TVoxel& v = readVoxel(voxelData, voxelIndex, position, vmIndex, cache);
+#else
+	const TVoxel& v = readVoxel(voxelData, voxelIndex, position, vmIndex);
+#endif
 	bool curKnown = v.flags != ITMLib::VOXEL_UNKNOWN;
 	//_DEBUG
 	//trilinear unknown filter: ON
@@ -53,7 +57,7 @@ inline float ProcessTrilinearNeighbor(const CONSTPTR(TVoxel)* voxelData,
 
 _CPU_AND_GPU_CODE_
 inline void ComputeTrilinearCoefficents(const CONSTPTR(Vector3f)& point, THREADPTR(Vector3i)& pos,
-                                        THREADPTR(float*) coefficients /*x8*/){
+                                        THREADPTR(float*) coefficients /*x8*/) {
 	Vector3f ratios;
 	Vector3f inverseRatios(1.0f);
 
@@ -104,13 +108,12 @@ inline float _DEBUG_InterpolateTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* v
 	float coefficients[neighborCount];
 	Vector3i pos;
 	ComputeTrilinearCoefficents(point, pos, coefficients);
-#ifndef __CUDACC__
+
 	if (verbose) {
-		std::cout << ITMLib::bright_cyan << "*** Printing interpolation data for point "
-		          << point << " ***" << ITMLib::reset << std::endl;
-		std::cout << "Truncated position: " << pos << std::endl;
+		printf("%s*** Printing interpolation data for point (%f, %f, %f) ***%s)\nTruncated position: (%d, %d, %d).\n",
+				c_bright_cyan, point.x, point.y, point.z, c_reset, pos.x, pos.y, pos.z);
 	}
-#endif
+
 	struckKnownVoxels = false;
 	float cumulativeWeight = 0.0f;
 	float sdf = 0.0f;
@@ -119,23 +122,23 @@ inline float _DEBUG_InterpolateTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* v
 		float weight = ProcessTrilinearNeighbor(voxelData, voxelIndex, pos + positions[iNeighbor],
 		                                        coefficients, cache,
 		                                        struckKnownVoxels, iNeighbor, sdf, cumulativeWeight);
-#ifndef __CUDACC__
 		if (verbose) {
-			std::cout << "Neighbor position: " << positions[iNeighbor] << " Sdf: "
-			          << sdf << " Weight: " << weight << std::endl;
+			const Vector3i& npos = positions[iNeighbor];
+			printf("Neighbor position: (%d, %d, %d) Sdf: %E Weight: %E\n", npos.x, npos.y, npos.z,
+					sdf, weight);
 		}
-#endif
+
 	}
 	if (cumulativeWeight > FLT_EPSILON) {
 		sdf /= cumulativeWeight;
 	} else {
 		sdf = TVoxel::SDF_initialValue();
 	}
-#ifndef __CUDACC__
+
 	if (verbose) {
-		std::cout << "New sdf: " << sdf << std::endl;
+		printf("New sdf: %E\n", sdf);
 	}
-#endif
+
 	return sdf;
 }
 

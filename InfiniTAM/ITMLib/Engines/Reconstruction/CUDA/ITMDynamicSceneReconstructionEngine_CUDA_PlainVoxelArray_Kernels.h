@@ -77,7 +77,7 @@ clearFields_device(TVoxel* voxelArray, const ITMLib::ITMPlainVoxelArray::ITMVoxe
 }
 
 template<typename TVoxel, typename TWarp, typename TLookupPositionFunctor>
-__global__ void interpolateTriliearlyBetweenIndexedFields(
+__global__ void interpolateTriliearlyUsingWarps(
 		TWarp* warpSourceVoxels,
 		TVoxel* sdfSourceVoxels,
 		TVoxel* sdfTargetVoxels,

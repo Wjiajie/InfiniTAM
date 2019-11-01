@@ -32,6 +32,31 @@ namespace ITMLib {
 
 template<typename TVoxel>
 class ITMSceneTraversalEngine<TVoxel, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA> {
+private:
+	template<typename TFunctor, typename TDeviceFunction>
+	inline static void
+	VoxelTraversal_Generic(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor, TDeviceFunction&& deviceFunction) {
+		TVoxel* voxelArray = scene->localVBA.GetVoxelBlocks();
+		const ITMHashEntry* hashTable = scene->index.GetIndexData();
+		int hashEntryCount = scene->index.hashEntryCount;
+
+		dim3 cudaBlockSize_BlockVoxelPerThread(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
+		dim3 gridSize_HashPerBlock(hashEntryCount);
+
+		// transfer functor from RAM to VRAM
+		TFunctor* functor_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TFunctor)));
+		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TFunctor), cudaMemcpyHostToDevice));
+
+		std::forward<TDeviceFunction>(deviceFunction)(gridSize_HashPerBlock,
+				cudaBlockSize_BlockVoxelPerThread,voxelArray, hashTable, functor_device);
+
+		ORcudaKernelCheck;
+
+		// transfer functor from VRAM back to RAM
+		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TFunctor), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(functor_device));
+	}
 public:
 // region ================================ STATIC SINGLE-SCENE TRAVERSAL ===============================================
 	template<typename TStaticFunctor>
@@ -53,26 +78,32 @@ public:
 	template<typename TFunctor>
 	inline static void
 	VoxelTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
-		TVoxel* voxelArray = scene->localVBA.GetVoxelBlocks();
-		const ITMHashEntry* hashTable = scene->index.GetIndexData();
-		int hashEntryCount = scene->index.hashEntryCount;
-
-		dim3 cudaBlockSize_BlockVoxelPerThread(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
-		dim3 gridSize_HashPerBlock(hashEntryCount);
-
-		// transfer functor from RAM to VRAM
-		TFunctor* functor_device = nullptr;
-		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TFunctor)));
-		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TFunctor), cudaMemcpyHostToDevice));
-
-		voxelTraversal_device<TFunctor, TVoxel>
-				<< < gridSize_HashPerBlock, cudaBlockSize_BlockVoxelPerThread >> >
-		                                    (voxelArray, hashTable, functor_device);
-		ORcudaKernelCheck;
-
-		// transfer functor from VRAM back to RAM
-		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TFunctor), cudaMemcpyDeviceToHost));
-		ORcudaSafeCall(cudaFree(functor_device));
+		VoxelTraversal_Generic(scene, functor, [](dim3 gridSize_HashPerBlock, dim3 cudaBlockSize_BlockVoxelPerThread,
+				TVoxel* voxelArray, const ITMHashEntry* hashTable, TFunctor* functor_device){
+			voxelTraversal_device<TFunctor, TVoxel>
+					<< < gridSize_HashPerBlock, cudaBlockSize_BlockVoxelPerThread >> >
+			                                    (voxelArray, hashTable, functor_device);
+		});
+	}
+	template<typename TFunctor>
+	inline static void
+	VoxelPositionTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
+		VoxelTraversal_Generic(scene, functor, [](dim3 gridSize_HashPerBlock, dim3 cudaBlockSize_BlockVoxelPerThread,
+		                                          TVoxel* voxelArray, const ITMHashEntry* hashTable, TFunctor* functor_device){
+			voxelPositionTraversal_device<TFunctor, TVoxel>
+					<< < gridSize_HashPerBlock, cudaBlockSize_BlockVoxelPerThread >> >
+			                                    (voxelArray, hashTable, functor_device);
+		});
+	}
+	template<typename TFunctor>
+	inline static void
+	VoxelAndHashBlockPositionTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
+		VoxelTraversal_Generic(scene, functor, [](dim3 gridSize_HashPerBlock, dim3 cudaBlockSize_BlockVoxelPerThread,
+		                                          TVoxel* voxelArray, const ITMHashEntry* hashTable, TFunctor* functor_device){
+			voxelAndHashBlockPositionTraversal_device<TFunctor, TVoxel>
+					<< < gridSize_HashPerBlock, cudaBlockSize_BlockVoxelPerThread >> >
+			                                    (voxelArray, hashTable, functor_device);
+		});
 	}
 // endregion ===========================================================================================================
 };

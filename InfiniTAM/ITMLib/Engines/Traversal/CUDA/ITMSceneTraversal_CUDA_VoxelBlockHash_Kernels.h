@@ -64,6 +64,40 @@ voxelTraversal_device(TVoxel* voxels, const ITMHashEntry* hashTable,
 	(*functor)(voxel);
 }
 
+template<typename TFunctor, typename TVoxel>
+__global__ void
+voxelPositionTraversal_device(TVoxel* voxels, const ITMHashEntry* hashTable,
+                      TFunctor* functor) {
+	int hash = blockIdx.x;
+	const ITMHashEntry& hashEntry = hashTable[hash];
+	if (hashEntry.ptr < 0) return;
+	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
+	int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
+	// position of the current entry in 3D space in voxel units
+	Vector3i hashBlockPosition = hashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+	Vector3i voxelPosition = hashBlockPosition + Vector3i(x,y,z);
+
+	TVoxel& voxel = voxels[hashEntry.ptr * VOXEL_BLOCK_SIZE3 + locId];
+	(*functor)(voxel, voxelPosition);
+}
+
+template<typename TFunctor, typename TVoxel>
+__global__ void
+voxelAndHashBlockPositionTraversal_device(TVoxel* voxels, const ITMHashEntry* hashTable,
+                              TFunctor* functor) {
+	int hash = blockIdx.x;
+	const ITMHashEntry& hashEntry = hashTable[hash];
+	if (hashEntry.ptr < 0) return;
+	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
+	int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
+	// position of the current entry in 3D space in voxel units
+	Vector3i hashBlockPosition = hashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+	Vector3i voxelPosition = hashBlockPosition + Vector3i(x,y,z);
+
+	TVoxel& voxel = voxels[hashEntry.ptr * VOXEL_BLOCK_SIZE3 + locId];
+	(*functor)(voxel, voxelPosition, hashEntry.pos);
+}
+
 __global__ void matchUpHashEntriesByPosition(const ITMHashEntry* primaryHashTable,
                                              const ITMHashEntry* secondaryHashTable,
                                              int hashEntryCount,

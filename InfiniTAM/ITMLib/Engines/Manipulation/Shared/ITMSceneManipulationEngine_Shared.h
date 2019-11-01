@@ -141,6 +141,7 @@ bool IsHashBlockPartiallyInRange(const Vector3i& hashBlockPositionVoxels, const 
  * returns final index of the hash block to be allocated (may be updated based on hash closed chaining)
  * \param[in] desiredHashBlockPosition  position of the hash block to check / allocate
  * \param[in] hashTable  hash table with existing blocks
+ * \param[in] collisionDetected set to true if a block with the same hashcode has already been marked for allocation ( a collision occured )
  * \return true if the block needs allocation, false otherwise
  */
 _CPU_AND_GPU_CODE_

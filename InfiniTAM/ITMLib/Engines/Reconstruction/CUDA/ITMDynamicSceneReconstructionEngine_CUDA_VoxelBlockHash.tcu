@@ -20,6 +20,8 @@
 #include "../../Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "ITMDynamicSceneReconstructionEngine_CUDA_VoxelBlockHash_Kernels.h"
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
+#include "../Shared/ITMDynamicSceneReconstructionEngine_Functors.h"
+#include "../../Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h"
 
 using namespace ITMLib;
 
@@ -48,12 +50,25 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>:
 }
 
 template<typename TVoxel, typename TWarp>
-template<WarpType TWarpSource>
+template<WarpType TWarpType>
 void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::WarpScene(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	// Clear out the flags at target volume
+	FieldClearFunctor<TVoxel> flagClearFunctor;
+	ITMSceneTraversalEngine<TVoxel, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA>::VoxelTraversal(targetTSDF,
+	                                                                                               flagClearFunctor);
+
+	// Allocate new blocks where necessary, filter based on flags from source
+	hashManager.template AllocateFromWarpedVolume<TWarpType>(warpField, sourceTSDF, targetTSDF);
+
+	TrilinearInterpolationFunctor<TVoxel, TWarp, ITMVoxelBlockHash, WarpVoxelStaticFunctor<TWarp, TWarpType>>
+			trilinearInterpolationFunctor(sourceTSDF, warpField);
+
+	// Interpolate to obtain the new live frame values (at target index)
+	ITMDualSceneTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA>::
+	DualVoxelPositionTraversal(targetTSDF, warpField, trilinearInterpolationFunctor);
 }
 
 
