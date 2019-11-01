@@ -23,17 +23,17 @@ ITMLibSettings::ITMLibSettings()
 	createMeshingEngine = true;
 
 #ifndef COMPILE_WITHOUT_CUDA
-	deviceType = DEVICE_CUDA;
+	deviceType = MEMORYDEVICE_CUDA;
 #else
 #ifdef COMPILE_WITH_METAL
-	deviceType = DEVICE_METAL;
+	deviceType = MEMORYDEVICE_METAL;
 #else
-	deviceType = DEVICE_CPU;
+	deviceType = MEMORYDEVICE_CPU;
 #endif
 #endif
 
 	//_DEBUG
-	deviceType = DEVICE_CPU;
+	deviceType = MEMORYDEVICE_CPU;
 
 	/// how swapping works: disabled, fully enabled (still with dragons) and delete what's not visible - not supported in loop closure version
 	swappingMode = SWAPPINGMODE_DISABLED;
@@ -138,7 +138,7 @@ bool ITMLibSettings::FocusCoordinatesAreSpecified() const {
 
 MemoryDeviceType ITMLibSettings::GetMemoryType() const
 {
-	return deviceType == ITMLibSettings::DEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
+	return deviceType == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
 }
 
 Vector3i ITMLibSettings::GetFocusCoordinates() const {

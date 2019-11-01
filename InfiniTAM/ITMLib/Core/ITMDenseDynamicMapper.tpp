@@ -99,15 +99,15 @@ void
 ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetTSDFVolume(
 		ITMVoxelVolume<TVoxel, TIndex>* volume) const {
 	switch (ITMLibSettings::Instance().deviceType) {
-		case ITMLibSettings::DEVICE_CPU:
+		case MEMORYDEVICE_CPU:
 			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(volume);
 			break;
-		case ITMLibSettings::DEVICE_CUDA:
+		case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
 			ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(volume);
 #endif
 			break;
-		case ITMLibSettings::DEVICE_METAL:
+		case MEMORYDEVICE_METAL:
 			DIEWITHEXCEPTION_REPORTLOCATION("NOT IMPLEMENTED");
 			break;
 	}
@@ -117,15 +117,15 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetWarpVolume(
 		ITMVoxelVolume<TWarp, TIndex>* warpVolume) const {
 	switch (ITMLibSettings::Instance().deviceType) {
-		case ITMLibSettings::DEVICE_CPU:
+		case MEMORYDEVICE_CPU:
 			ITMSceneManipulationEngine_CPU<TWarp, TIndex>::Inst().ResetScene(warpVolume);
 			break;
-		case ITMLibSettings::DEVICE_CUDA:
+		case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
 			ITMSceneManipulationEngine_CUDA<TWarp, TIndex>::Inst().ResetScene(warpVolume);
 #endif
 			break;
-		case ITMLibSettings::DEVICE_METAL:
+		case MEMORYDEVICE_METAL:
 			DIEWITHEXCEPTION_REPORTLOCATION("NOT IMPLEMENTED");
 			break;
 	}
@@ -306,11 +306,11 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessSwapping(
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene, ITMRenderState* renderState) {
 	if (swappingEngine != nullptr) {
-		// swapping: CPU -> GPU
+		// swapping: CPU -> CUDA
 		if (swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED)
 			swappingEngine->IntegrateGlobalIntoLocal(canonicalScene, renderState);
 
-		// swapping: GPU -> CPU
+		// swapping: CUDA -> CPU
 		switch (swappingMode) {
 			case ITMLibSettings::SWAPPINGMODE_ENABLED:
 				swappingEngine->SaveToGlobalMemory(canonicalScene, renderState);

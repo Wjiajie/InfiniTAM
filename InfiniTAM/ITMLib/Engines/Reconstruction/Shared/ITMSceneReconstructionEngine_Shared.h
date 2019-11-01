@@ -9,12 +9,6 @@
 #include <cuda_runtime.h>
 //#include "../../../Utils/ITMCUDAUtils.h"
 
-struct AllocationTempData {
-	int noAllocatedVoxelEntries;
-	int noAllocatedExcessEntries;
-	int noVisibleEntries;
-};
-
 /**
  * \brief Voxel update without confidence computation
  * \tparam TVoxel

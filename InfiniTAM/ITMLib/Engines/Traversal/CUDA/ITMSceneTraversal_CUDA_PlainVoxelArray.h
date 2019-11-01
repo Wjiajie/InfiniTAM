@@ -31,7 +31,7 @@ namespace ITMLib {
 //TODO: many DRY violations within this file -- figure out how to reduce them
 
 template<typename TVoxel>
-class ITMSceneTraversalEngine<TVoxel, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA> {
+class ITMSceneTraversalEngine<TVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CUDA> {
 public:
 // region ================================ STATIC SINGLE-SCENE TRAVERSAL ===============================================
 	template<typename TStaticFunctor>
@@ -78,7 +78,7 @@ public:
 };
 
 template<typename TVoxelPrimary, typename TVoxelSecondary>
-class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelArray, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA> {
+class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelArray, ITMPlainVoxelArray, MEMORYDEVICE_CUDA> {
 private:
 	template<typename TBooleanFunctor, typename TDeviceTraversalFunction>
 	inline static bool
@@ -100,7 +100,7 @@ private:
 		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TBooleanFunctor), cudaMemcpyHostToDevice));
 
 
-		// perform traversal on the GPU
+		// perform traversal on the CUDA
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.GetIndexData();
@@ -178,7 +178,7 @@ public:
 		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TFunctor)));
 		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TFunctor), cudaMemcpyHostToDevice));
 
-		// perform traversal on the GPU
+		// perform traversal on the CUDA
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.GetIndexData();
@@ -252,7 +252,7 @@ public:
 		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TFunctor)));
 		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TFunctor), cudaMemcpyHostToDevice));
 
-		// perform traversal on the GPU
+		// perform traversal on the CUDA
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.GetIndexData();
@@ -279,7 +279,7 @@ public:
 
 
 template<typename TVoxel, typename TWarp>
-class ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CUDA> {
+class ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA> {
 	/**
 	 * \brief Concurrent traversal of 2 scenes with the same voxel type and a warp field
 	 * \details All scenes must have matching dimensions

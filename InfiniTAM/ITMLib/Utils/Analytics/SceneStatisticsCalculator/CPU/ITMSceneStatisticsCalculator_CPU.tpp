@@ -141,8 +141,8 @@ template<class TVoxel, typename TIndex>
 struct ComputeNonTruncatedVoxelCountFunctor<true, TVoxel, TIndex> {
 	static int compute(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 		ComputeNonTruncatedVoxelCountFunctor instance;
-		ITMSceneTraversalEngine<TVoxel, TIndex, ITMLibSettings::DEVICE_CPU>::VoxelTraversal_SingleThreaded(scene,
-		                                                                                                   instance);
+		ITMSceneTraversalEngine<TVoxel, TIndex, MEMORYDEVICE_CPU>::VoxelTraversal_SingleThreaded(scene,
+		                                                                                                         instance);
 		return instance.count;
 	}
 
@@ -169,7 +169,7 @@ struct ComputeVoxelWithNonZeroSDFCountFunctor<true, TVoxel, TIndex> {
 	static int compute(ITMVoxelVolume<TVoxel, TIndex>* scene, float value) {
 		ComputeVoxelWithNonZeroSDFCountFunctor instance;
 		instance.value = value;
-		ITMSceneTraversalEngine<TVoxel, TIndex, ITMLibSettings::DEVICE_CPU>::VoxelTraversal(scene, instance);
+		ITMSceneTraversalEngine<TVoxel, TIndex, MEMORYDEVICE_CPU>::VoxelTraversal(scene, instance);
 		return instance.count;
 	}
 
@@ -212,7 +212,7 @@ struct SumSDFFunctor<true, TVoxel, TIndex> {
 	static double compute(ITMVoxelVolume<TVoxel, TIndex>* scene, ITMLib::VoxelFlags voxelType) {
 		SumSDFFunctor instance;
 		instance.voxelType = voxelType;
-		ITMSceneTraversalEngine<TVoxel, TIndex, ITMLibSettings::DEVICE_CPU>::VoxelTraversal_SingleThreaded(scene, instance);
+		ITMSceneTraversalEngine<TVoxel, TIndex, MEMORYDEVICE_CPU>::VoxelTraversal_SingleThreaded(scene, instance);
 		return instance.sum;
 	}
 
@@ -314,8 +314,8 @@ struct MaxGradientFunctor<ITMVoxel_f_warp, TIndex> {
 	static float find(ITMVoxelVolume<ITMWarp, TIndex>* scene, bool secondGradientField, Vector3i& maxPosition) {
 		MaxGradientFunctor maxGradientFunctor;
 		maxGradientFunctor.secondGradientField = secondGradientField;
-		ITMSceneTraversalEngine<ITMVoxel_f_warp, TIndex, ITMLibSettings::DEVICE_CPU>::VoxelPositionTraversal(scene,
-		                                                                                                     maxGradientFunctor);
+		ITMSceneTraversalEngine<ITMVoxel_f_warp, TIndex, MEMORYDEVICE_CPU>::VoxelPositionTraversal(scene,
+		                                                                                                           maxGradientFunctor);
 		maxPosition = maxGradientFunctor.maxPosition;
 		return maxGradientFunctor.maxLength;
 	}
@@ -373,23 +373,23 @@ struct IsAlteredCountFunctor {
 template<typename TVoxel, typename TIndex>
 unsigned int ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeAlteredVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	IsAlteredCountFunctor<TVoxel> functor;
-	ITMSceneTraversalEngine<TVoxel, TIndex, ITMLibSettings::DEVICE_CPU>::VoxelTraversal(scene, functor);
+	ITMSceneTraversalEngine<TVoxel, TIndex, MEMORYDEVICE_CPU>::VoxelTraversal(scene, functor);
 
 }
 
 template<typename TVoxel, typename TIndex>
 double ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeFlowWarpMin(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, ITMLibSettings::DEVICE_CPU, MINIMUM>::compute(scene);
+	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CPU, MINIMUM>::compute(scene);
 }
 
 template<typename TVoxel, typename TIndex>
 double ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeFlowWarpMax(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, ITMLibSettings::DEVICE_CPU, MAXIMUM>::compute(scene);
+	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CPU, MAXIMUM>::compute(scene);
 }
 
 template<typename TVoxel, typename TIndex>
 double ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeFlowWarpMean(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, ITMLibSettings::DEVICE_CPU, MEAN>::compute(scene);
+	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CPU, MEAN>::compute(scene);
 }
 
 // endregion ===========================================================================================================

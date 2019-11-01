@@ -59,7 +59,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ITMSceneMotionTrack
 template<typename TVoxel, typename TWarp>
 void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ResetWarps(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
-	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
+	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::template
 	StaticVoxelTraversal<WarpClearFunctor<TWarp, TWarp::hasCumulativeWarp>>(warpField);
 };
 
@@ -67,7 +67,7 @@ void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ResetWarps(
 template<typename TVoxel, typename TWarp>
 void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ClearOutFlowWarp(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
-	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
+	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::template
 	StaticVoxelTraversal<ClearOutFlowWarpStaticFunctor<TWarp>>(warpField);
 }
 
@@ -100,10 +100,12 @@ ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::CalculateWarpGradie
 		bool restrictZTrackingForDebugging) {
 
 	// manage hash
-	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::template
+	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::template
 	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TWarp>>(warpField);
-	hashManager.AllocateTSDFVolumeFromTSDFVolume(canonicalScene, liveScene);
-	hashManager.AllocateWarpVolumeFromTSDFVolume(warpField, liveScene);
+	ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
+			.AllocateUsingOtherVolume(canonicalScene, liveScene);
+	ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
+			.AllocateUsingOtherVolume(warpField, liveScene);
 
 	ITMCalculateWarpGradientFunctor<TVoxel, TWarp, ITMVoxelBlockHash::IndexData, ITMVoxelBlockHash::IndexCache>
 			calculateGradientFunctor(this->parameters, this->switches,
@@ -111,7 +113,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::CalculateWarpGradie
 			                         canonicalScene->localVBA.GetVoxelBlocks(), canonicalScene->index.GetIndexData(),
 			                         warpField->localVBA.GetVoxelBlocks(), warpField->index.GetIndexData());
 
-	ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
+	ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, calculateGradientFunctor);
 
 	calculateGradientFunctor.PrintStatistics();
@@ -128,7 +130,7 @@ void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::SmoothWarpGrad
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 
 	if (this->switches.enableGradientSmoothing) {
-		SmoothWarpGradient_common<TVoxel, TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>
+		SmoothWarpGradient_common<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>
 				(liveScene, canonicalScene, warpField);
 	}
 }
@@ -141,7 +143,7 @@ float ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::UpdateWarps(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
-	return UpdateWarps_common<TVoxel, TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>(
+	return UpdateWarps_common<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>(
 			canonicalScene, liveScene, warpField, this->parameters.gradientDescentLearningRate,
 			this->switches.enableGradientSmoothing);
 }
@@ -149,7 +151,7 @@ float ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::UpdateWarps(
 template<typename TVoxel, typename TWarp>
 void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::AddFlowWarpToWarp(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField, bool clearFlowWarp) {
-	AddFlowWarpToWarp_common<TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>(warpField, clearFlowWarp);
+	AddFlowWarpToWarp_common<TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>(warpField, clearFlowWarp);
 }
 
 //endregion ============================================================================================================

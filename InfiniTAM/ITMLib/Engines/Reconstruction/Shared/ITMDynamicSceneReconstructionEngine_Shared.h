@@ -337,7 +337,6 @@ _CPU_AND_GPU_CODE_
 inline void interpolateTSDFVolume(TVoxel* sdfSourceVoxels,
                                   const typename TIndex::IndexData* sdfSourceIndexData,
                                   typename TIndex::IndexCache& sdfSourceCache,
-
                                   const TWarp& warp,
                                   TVoxel& destinationVoxel,
                                   const Vector3i& warpAndDestinationVoxelPosition,

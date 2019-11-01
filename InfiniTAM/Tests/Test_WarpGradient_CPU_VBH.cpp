@@ -92,7 +92,7 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_VBH, DataFixture) {
 	BOOST_REQUIRE_EQUAL(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeAllocatedHashBlockCount(&warp_field_CPU1), 366);
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
-	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
+	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 36618u);
 
@@ -108,7 +108,7 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_VBH, DataFixture) {
 	                                                            MemoryDeviceType::MEMORYDEVICE_CPU);
 
 	AlteredGradientCountFunctor<ITMWarp> agcFunctor;
-	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
+	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_copy, agcFunctor);
 	BOOST_REQUIRE_EQUAL(agcFunctor.count.load(), 36618u);
 	BOOST_REQUIRE_EQUAL(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeAllocatedHashBlockCount(&warp_field_copy), 366);
@@ -120,7 +120,7 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_VBH, DataFixture) {
 
 
 	AlteredFlowWarpCountFunctor<ITMWarp> functor;
-	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
+	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_copy, functor);
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 36618u);
 
@@ -167,7 +167,7 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU_VBH, DataFixture){
 
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
-	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
+	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 42493);
 
@@ -204,7 +204,7 @@ BOOST_FIXTURE_TEST_CASE(testDataAndTikhonovTerm_CPU_VBH, DataFixture) {
 
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
-	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
+	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 42493);
 
@@ -239,7 +239,7 @@ BOOST_FIXTURE_TEST_CASE(testDataAndKillingTerm_CPU_VBH, DataFixture) {
 //	warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_killing_");
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
-	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
+	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 42757);
 
@@ -266,7 +266,7 @@ BOOST_FIXTURE_TEST_CASE(testDataAndLevelSetTerm_CPU_VBH, DataFixture) {
 //	warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_level_set_");
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
-	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU>::
+	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 41377);
 

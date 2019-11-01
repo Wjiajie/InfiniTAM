@@ -214,7 +214,7 @@ ITMWarpFieldLogger<TVoxel, TIndex>::ITMWarpFieldLogger(const Vector6i& bounds, b
 
 	ITMLibSettings& settings = ITMLibSettings::Instance();
 	MemoryDeviceType memoryType =
-			settings.deviceType == ITMLibSettings::DEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
+			settings.deviceType == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
 	this->warpField = new ITMVoxelVolume<TVoxel, TIndex>(&settings.sceneParams,
 	                                           settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                     memoryType);
@@ -403,7 +403,7 @@ bool ITMWarpFieldLogger<TVoxel, TIndex>::SaveCurrentWarpState() {
 	warpOFStream.write(reinterpret_cast<const char* >(&this->iterationCursor), sizeof(iterationCursor));
 	WarpAndUpdateWriteFunctor<TVoxel>
 			warpAndUpdateWriteFunctor(&this->warpOFStream, this->warpByteSize, this->updateByteSize);
-	ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(warpField, warpAndUpdateWriteFunctor);
+	ITMSceneTraversalEngine<TVoxel,TIndex,MEMORYDEVICE_CPU>::VoxelTraversal(warpField, warpAndUpdateWriteFunctor);
 	std::cout << "Written warp updates for iteration " << iterationCursor << " to disk." << std::endl;
 	iterationCursor++;
 	return true;
@@ -481,7 +481,7 @@ bool ITMWarpFieldLogger<TVoxel, TIndex>::LoadCurrentWarpState() {
 
 	WarpAndUpdateReadFunctor<TVoxel>
 			warpAndUpdateReadFunctor(&this->warpIFStream, this->warpByteSize, this->updateByteSize);
-	ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(warpField, warpAndUpdateReadFunctor);
+	ITMSceneTraversalEngine<TVoxel,TIndex,MEMORYDEVICE_CPU>::VoxelTraversal(warpField, warpAndUpdateReadFunctor);
 	return true;
 }
 
@@ -500,7 +500,7 @@ bool ITMWarpFieldLogger<TVoxel, TIndex>::LoadPreviousWarpState() {
 	}
 	WarpAndUpdateReadFunctor<TVoxel>
 			warpAndUpdateReadFunctor(&this->warpIFStream, this->warpByteSize, this->updateByteSize);
-	ITMSceneTraversalEngine<TVoxel,TIndex,ITMLibSettings::DEVICE_CPU>::VoxelTraversal(warpField, warpAndUpdateReadFunctor);
+	ITMSceneTraversalEngine<TVoxel,TIndex,MEMORYDEVICE_CPU>::VoxelTraversal(warpField, warpAndUpdateReadFunctor);
 	return true;
 }
 

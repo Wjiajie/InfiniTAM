@@ -40,10 +40,10 @@ namespace ITMLib{
 	};
 }
 
-template<bool hasCumulativeWarp, typename TVoxel, typename TIndex, ITMLibSettings::DeviceType TDeviceType, Statistic TStatistic>
+template<bool hasCumulativeWarp, typename TVoxel, typename TIndex, MemoryDeviceType TDeviceType, Statistic TStatistic>
 struct ComputeFlowWarpLengthStatisticFunctor;
 
-template<typename TVoxel, typename TIndex, ITMLibSettings::DeviceType TDeviceType, Statistic TStatistic>
+template<typename TVoxel, typename TIndex, MemoryDeviceType TDeviceType, Statistic TStatistic>
 struct ComputeFlowWarpLengthStatisticFunctor<false, TVoxel, TIndex, TDeviceType, TStatistic> {
 	static int compute(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 		DIEWITHEXCEPTION("Voxels need to have flow warp information to get flow warp statistics.");
@@ -77,7 +77,7 @@ struct HandleAggregate<TVoxel, MEAN>{
 };
 
 
-template<typename TVoxel, typename TIndex, ITMLibSettings::DeviceType TDeviceType, Statistic TStatistic>
+template<typename TVoxel, typename TIndex, MemoryDeviceType TDeviceType, Statistic TStatistic>
 struct ComputeFlowWarpLengthStatisticFunctor<true, TVoxel, TIndex, TDeviceType, TStatistic> {
 
 	static double compute(ITMVoxelVolume<TVoxel, TIndex>* scene) {

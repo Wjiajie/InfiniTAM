@@ -31,7 +31,7 @@ namespace ITMLib {
 // functor.
 
 template<typename TVoxel>
-class ITMSceneTraversalEngine<TVoxel, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA> {
+class ITMSceneTraversalEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA> {
 private:
 	template<typename TFunctor, typename TDeviceFunction>
 	inline static void
@@ -109,7 +109,7 @@ public:
 };
 
 template<typename TVoxelPrimary, typename TVoxelSecondary>
-class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMVoxelBlockHash, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA> {
+class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMVoxelBlockHash, ITMVoxelBlockHash, MEMORYDEVICE_CUDA> {
 private:
 	template<typename TBooleanFunctor, typename TDeviceTraversalFunction>
 	inline static bool
@@ -121,7 +121,7 @@ private:
 
 		int hashEntryCount = primaryScene->index.hashEntryCount;
 
-		// allocate intermediate-result buffers for use on the GPU in subsequent routine calls
+		// allocate intermediate-result buffers for use on the CUDA in subsequent routine calls
 		ORUtils::MemoryBlock<bool> badResultEncountered_device(1, true, true);
 		*badResultEncountered_device.GetData(MEMORYDEVICE_CPU) = false;
 		badResultEncountered_device.UpdateDeviceFromHost();
@@ -178,7 +178,7 @@ private:
 		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TBooleanFunctor)));
 		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TBooleanFunctor), cudaMemcpyHostToDevice));
 
-		// perform voxel traversal on the GPU, matching individual voxels at corresponding locations
+		// perform voxel traversal on the CUDA, matching individual voxels at corresponding locations
 		dim3 gridSize_MatchedBlocks(matchedHashCount);
 
 		std::forward<TDeviceTraversalFunction>(deviceTraversalFunction)(
@@ -280,7 +280,7 @@ public:
 
 
 template<typename TVoxel, typename TWarp>
-class ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CUDA> {
+class ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CUDA> {
 	/**
 	 * \brief Concurrent traversal of 2 scenes with the same voxel type and a warp field
 	 */

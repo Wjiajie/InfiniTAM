@@ -17,14 +17,14 @@
 
 #include "../Interface/ITMSceneMotionTracker.h"
 #include "../../Utils/ITMHashBlockProperties.h"
-#include "../../Engines/Reconstruction/CPU/ITMHashAllocationEngine_CPU.h"
+#include "../../Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU.h"
 
 
 namespace ITMLib {
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-class ITMSceneMotionTracker_CPU:
-		public ITMSceneMotionTracker<TVoxel, TWarp, TIndex>{
+class ITMSceneMotionTracker_CPU :
+		public ITMSceneMotionTracker<TVoxel, TWarp, TIndex> {
 	ITMSceneMotionTracker_CPU() {}
 };
 
@@ -38,58 +38,51 @@ public:
 	explicit ITMSceneMotionTracker_CPU();
 	virtual ~ITMSceneMotionTracker_CPU() = default;
 
-	void ClearOutFlowWarp(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) override;
+	void ClearOutFlowWarp(ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* warpField) override;
 	void AddFlowWarpToWarp(
-			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField, bool clearFlowWarp) override;
-	void CalculateWarpGradient(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
-	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
-	                           ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+			ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* warpField, bool clearFlowWarp) override;
+	void CalculateWarpGradient(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* canonicalScene,
+	                           ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* liveScene,
+	                           ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* warpField,
 	                           bool restrictZTrackingForDebugging) override;
 	void SmoothWarpGradient(
-			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
-			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
-			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) override;
+			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* canonicalScene,
+			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* liveScene,
+			ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* warpField) override;
 
 	float UpdateWarps(
-			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
-			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
-			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) override;
-	void ResetWarps(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) override;
-
-
-private:
-
-	ITMHashAllocationEngine_CPU<TVoxel, TWarp> hashManager;
-
-
+			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* canonicalScene,
+			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* liveScene,
+			ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* warpField) override;
+	void ResetWarps(ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* warpField) override;
 };
 
 // endregion ===========================================================================================================
 //region ======================================== PLAIN VOXEL ARRAY ====================================================
 
-template<typename TVoxel, typename TWarp >
+template<typename TVoxel, typename TWarp>
 class ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray> :
 		public ITMSceneMotionTracker<TVoxel, TWarp, ITMPlainVoxelArray> {
 public:
 	explicit ITMSceneMotionTracker_CPU();
 	virtual ~ITMSceneMotionTracker_CPU() = default;
 
-	void ClearOutFlowWarp(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
+	void ClearOutFlowWarp(ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField) override;
 	void AddFlowWarpToWarp(
-			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField, bool clearFlowWarp) override;
-	void CalculateWarpGradient(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
-	                           ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
-	                           ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
+			ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField, bool clearFlowWarp) override;
+	void CalculateWarpGradient(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* canonicalScene,
+	                           ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* liveScene,
+	                           ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField,
 	                           bool restrictZTrackingForDebugging) override;
-	void SmoothWarpGradient(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
-	                        ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
-	                        ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
+	void SmoothWarpGradient(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* canonicalScene,
+	                        ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* liveScene,
+	                        ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField) override;
 	float UpdateWarps(
-			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
-			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
-			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
+			ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* canonicalScene,
+			ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* liveScene,
+			ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField) override;
 
-	void ResetWarps(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
+	void ResetWarps(ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField) override;
 
 
 };

@@ -344,13 +344,13 @@ int main(int argc, char** argv) {
 				return EXIT_FAILURE;
 			}
 		}
-		ITMLibSettings::DeviceType chosenDeviceType = ITMLibSettings::DEVICE_CPU;
+		MemoryDeviceType chosenDeviceType = MEMORYDEVICE_CPU;
 		if (!vm["device"].empty()){
 			std::string deviceArgumentValue = vm["device"].as<std::string>();
 			if(deviceArgumentValue == "CPU" || deviceArgumentValue == "cpu"){
-				chosenDeviceType = ITMLibSettings::DEVICE_CPU;
+				chosenDeviceType = MEMORYDEVICE_CPU;
 			}else if(deviceArgumentValue == "CUDA" || deviceArgumentValue == "cuda"){
-				chosenDeviceType = ITMLibSettings::DEVICE_CUDA;
+				chosenDeviceType = MEMORYDEVICE_CUDA;
 			}else{
 				printHelp();
 				return EXIT_FAILURE;

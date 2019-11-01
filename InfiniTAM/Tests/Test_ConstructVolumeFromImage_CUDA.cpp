@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 
 	// region ================================= CONSTRUCT VIEW =========================================================
 
-	settings->deviceType = ITMLibSettings::DEVICE_CUDA;
+	settings->deviceType = MEMORYDEVICE_CUDA;
 	settings->useBilateralFilter = false;
 	settings->useThresholdFilter = false;
 	settings->sceneParams.mu = 0.04; // non-truncated narrow-band half-width, in meters
@@ -207,7 +207,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CUDA) {
 
 	// region ================================= CONSTRUCT VIEW =========================================================
 
-	settings->deviceType = ITMLibSettings::DEVICE_CUDA;
+	settings->deviceType = MEMORYDEVICE_CUDA;
 	settings->useBilateralFilter = false;
 	settings->useThresholdFilter = false;
 	settings->sceneParams.mu = 0.04; // non-truncated narrow-band half-width, in meters

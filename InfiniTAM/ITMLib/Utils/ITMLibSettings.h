@@ -30,7 +30,7 @@ namespace ITMLib
 		ITMLibSettings(const ITMLibSettings &) = delete;
 		ITMLibSettings& operator=(const ITMLibSettings &) = delete;
 
-		// TODO: this class should be made into a singleton, whose instance gets created using a static factory method
+
 		// accepting program arguments from boost::program_options. One of the arguments may be a .json config file, which should
 		// then be read in using boost::property_tree. The program_options parser should also be generated within this
 		// class. -Greg (GitHub: Algomorph)
@@ -38,12 +38,6 @@ namespace ITMLib
 		// right away in the constructor. Settings that are intended to change should be protected by class access
 		// modifiers / getters / setters as to grant access only to the objects that should be able to change them.
 		// -Greg (GitHub: Algomorph)
-		/// The device used to run the DeviceAgnostic code
-		typedef enum {
-			DEVICE_CPU,
-			DEVICE_CUDA,
-			DEVICE_METAL
-		} DeviceType;
 
 		typedef enum
 		{
@@ -70,7 +64,7 @@ namespace ITMLib
 
 
 		/// Select the type of device to use
-		DeviceType deviceType;
+		MemoryDeviceType deviceType;
 
 		bool useApproximateRaycast;
 

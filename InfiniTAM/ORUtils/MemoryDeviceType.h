@@ -2,15 +2,16 @@
 
 #pragma once
 
-//TODO: instead of having a separate "DeviceType" in the ITMLibSettings and a "MemoryDeviceType" here, just have a single,
-// unified enum for DeviceType here.
+//TODO: instead of having a separate "MemoryDeviceType" in the ITMLibSettings and a "MemoryDeviceType" here, just have a single,
+// unified enum for MemoryDeviceType here.
 
 /**
  * \brief The values of this enumeration denote the different types of memory device on which code may be running.
  */
 enum MemoryDeviceType {
 	MEMORYDEVICE_CPU,
-	MEMORYDEVICE_CUDA
+	MEMORYDEVICE_CUDA,
+	MEMORYDEVICE_METAL
 };
 
 enum MemoryCopyDirection {

@@ -85,7 +85,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene) {
 	TSDFFusionFunctor<TVoxel> fusionFunctor(canonicalScene->sceneParams->maxW);
-	ITMDualSceneTraversalEngine<TVoxel, TVoxel, ITMPlainVoxelArray, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
+	ITMDualSceneTraversalEngine<TVoxel, TVoxel, ITMPlainVoxelArray, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	DualVoxelTraversal(liveScene, canonicalScene, fusionFunctor);
 }
 
@@ -116,15 +116,15 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {
 //	 Clear out the flags at target index
 	FieldClearFunctor<TVoxel> flagClearFunctor;
-	ITMSceneTraversalEngine<TVoxel, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::VoxelTraversal(targetTSDF,
-	                                                                                                flagClearFunctor);
+	ITMSceneTraversalEngine<TVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::VoxelTraversal(targetTSDF,
+	                                                                                                      flagClearFunctor);
 
 	TrilinearInterpolationFunctor<TVoxel, TWarp, ITMPlainVoxelArray,
 			WarpVoxelStaticFunctor<TWarp, TWarpType>>
 			trilinearInterpolationFunctor(sourceTSDF, warpField);
 
 //	 Interpolate to obtain the new live frame values (at target index)
-	ITMDualSceneTraversalEngine<TVoxel, TWarp, ITMPlainVoxelArray, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
+	ITMDualSceneTraversalEngine<TVoxel, TWarp, ITMPlainVoxelArray, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	DualVoxelPositionTraversal(targetTSDF, warpField, trilinearInterpolationFunctor);
 }
 
@@ -132,7 +132,7 @@ template<typename TVoxel, typename TWarp>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::CopyScene(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {
-	ITMDualSceneTraversalEngine<TVoxel, TVoxel, ITMPlainVoxelArray, ITMPlainVoxelArray, ITMLibSettings::DEVICE_CPU>::
+	ITMDualSceneTraversalEngine<TVoxel, TVoxel, ITMPlainVoxelArray, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	        template StaticDualVoxelPositionTraversal<CopySceneFunctor<TVoxel> >(sourceTSDF, targetTSDF);
 }
 

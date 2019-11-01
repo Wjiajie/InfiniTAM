@@ -55,7 +55,7 @@ using namespace ITMLib;
 
 BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_PlainVoxelArray_CPU) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
-	settings->deviceType = ITMLibSettings::DEVICE_CPU;
+	settings->deviceType = MEMORYDEVICE_CPU;
 
 	Vector3i volumeSize(20);
 	Vector3i volumeOffset(-10, -10, 0);
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_PlainVoxelArray_CPU) {
 BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CPU) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
 
-	settings->deviceType = ITMLibSettings::DEVICE_CPU;
+	settings->deviceType = MEMORYDEVICE_CPU;
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene1(&settings->sceneParams,
 	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType(), {0x800, 0x20000});
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CPU) {
 BOOST_AUTO_TEST_CASE(testCopyToDifferentlyInitializedVolume_VBH_CPU) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
 
-	settings->deviceType = ITMLibSettings::DEVICE_CPU;
+	settings->deviceType = MEMORYDEVICE_CPU;
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene1(&settings->sceneParams,
 	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType());
@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU_ITMVoxel) {
 	float tolerance = 1e-6;
 
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
-	settings->deviceType = ITMLibSettings::DEVICE_CPU;
+	settings->deviceType = MEMORYDEVICE_CPU;
 
 	Vector3i volumeSize(40);
 	Vector3i volumeOffset(-20, -20, 0);
@@ -281,7 +281,7 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU_ITMWarp) {
 	float tolerance = 1e-6;
 
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
-	settings->deviceType = ITMLibSettings::DEVICE_CPU;
+	settings->deviceType = MEMORYDEVICE_CPU;
 
 	Vector3i volumeSize(40);
 	Vector3i volumeOffset(-20, -20, 0);

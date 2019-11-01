@@ -60,11 +60,11 @@ namespace ORUtils
 			size_t blockSize = ReadBlockSize(*fs);
 			if (memoryDeviceType == MEMORYDEVICE_CUDA)
 			{
-				// If we're loading into a block on the GPU, first try and read the data into a temporary block on the CPU.
+				// If we're loading into a block on the CUDA, first try and read the data into a temporary block on the CPU.
 				ORUtils::MemoryBlock<T> cpuBlock(block.dataSize, MEMORYDEVICE_CPU);
 				ReadBlockData(*fs, cpuBlock, blockSize);
 
-				// Then copy the data across to the GPU.
+				// Then copy the data across to the CUDA.
 				block.SetFrom(&cpuBlock, MemoryCopyDirection::CPU_TO_CUDA);
 			}
 			else
@@ -140,7 +140,7 @@ namespace ORUtils
 
 			if (memoryDeviceType == MEMORYDEVICE_CUDA)
 			{
-				// If we are saving the memory block from the GPU, first make a CPU copy of it.
+				// If we are saving the memory block from the CUDA, first make a CPU copy of it.
 				ORUtils::MemoryBlock<T> cpuBlock(block.dataSize, MEMORYDEVICE_CPU);
 				cpuBlock.SetFrom(&block, MemoryCopyDirection::CUDA_TO_CPU);
 

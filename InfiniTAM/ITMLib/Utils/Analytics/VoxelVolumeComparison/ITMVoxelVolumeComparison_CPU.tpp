@@ -34,7 +34,7 @@ template<typename TVoxel, typename TIndexA, typename TIndexB, typename Tolerance
 bool contentAlmostEqual_CPU(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b,
                             ToleranceType tolerance) {
 	VoxelEqualFunctor<TVoxel, ToleranceType> functor(tolerance);
-	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, ITMLibSettings::DEVICE_CPU>
+	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, MEMORYDEVICE_CPU>
 	::template DualVoxelTraversal_AllTrue(a, b, functor);
 }
 
@@ -42,7 +42,7 @@ template<typename TVoxel, typename TIndexA, typename TIndexB, typename Tolerance
 bool contentAlmostEqual_CPU_Verbose(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b,
                             ToleranceType tolerance) {
 	VoxelEqualVerboseFunctor<TVoxel, ToleranceType> functor(tolerance);
-	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, ITMLibSettings::DEVICE_CPU>
+	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, MEMORYDEVICE_CPU>
 	::template DualVoxelPositionTraversal_AllTrue(a, b, functor);
 }
 
@@ -52,7 +52,7 @@ template<typename TVoxel, typename TIndexA, typename TIndexB, typename Tolerance
 bool allocatedContentAlmostEqual_CPU(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b,
                                      ToleranceType tolerance){
 	VoxelEqualFunctor<TVoxel, ToleranceType> functor(tolerance);
-	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, ITMLibSettings::DEVICE_CPU>
+	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, MEMORYDEVICE_CPU>
 	::template DualVoxelTraversal_AllTrue_AllocatedOnly(a, b, functor);
 
 }

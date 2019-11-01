@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 10/8/19.
+//  Created by Gregory Kramida on 11/1/19.
 //  Copyright (c) 2019 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -15,24 +15,22 @@
 //  ================================================================
 #pragma once
 
-#include "../../../Utils/ITMMath.h"
-#include "../../../../ORUtils/MemoryBlock.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
-#include "../../Common/ITMWarpEnums.h"
-#include "../../../Objects/RenderStates/ITMRenderState.h"
-#include "../../../Objects/Tracking/ITMTrackingState.h"
+#include "../../../Utils/ITMHashBlockProperties.h"
 #include "../../../Objects/Views/ITMView.h"
+#include "../../../Objects/Tracking/ITMTrackingState.h"
+#include "../../../Objects/RenderStates/ITMRenderState.h"
 
 namespace ITMLib {
 /**
  * \brief A utility for allocating hash blocks in a voxel volume based on various inputs
- * \tparam TVoxel type of voxels containing signed distance information
- * \tparam TWarp type of warp (vectors used to map voxels between different locations)
+ * \tparam TVoxelA type of voxels A (typically reserved for voxels holding TSDF information)
+ * \tparam TVoxelB type of voxels B (typically reserved for voxels holing warp information , i.e. vectors used to map
+ * voxels between different locations)
  */
-template<typename TVoxel, typename TWarp>
-class ITMHashAllocationEngine {
+template<typename TVoxel>
+class ITMIndexingEngineInterface {
 
-public:
 	/**
 	 * \brief Given a view with a new depth image, compute the
 		visible blocks, allocate them and update the hash
@@ -49,12 +47,10 @@ public:
 			const ITMTrackingState* trackingState, const ITMRenderState* renderState,
 			bool onlyUpdateVisibleList, bool resetVisibleList) = 0;
 
-	virtual void AllocateTSDFVolumeFromTSDFVolume(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetVolume,
-	                                      ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceVolume) = 0;
-
-	virtual void AllocateWarpVolumeFromTSDFVolume(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* targetVolume,
-	                                      ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceVolume) = 0;
-
 };
 
-} // namespace ITMLib
+template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+class ITMIndexingEngine;
+
+}//namespace ITMLib
+

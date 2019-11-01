@@ -23,7 +23,7 @@
 #include "../Interface/ITMSceneManipulationEngine.h"
 
 
-//TODO: Make GPU versions -Greg (GitHub: Algomorph)
+//TODO: Make CUDA versions -Greg (GitHub: Algomorph)
 
 namespace ITMLib {
 
@@ -91,122 +91,11 @@ public:
 
 // endregion ================= SCENE MANIPULATION ENGINE ===============================================================
 
-// region =================================== HELPER ROUTINES FOR SCENE OPTIMIZATION PREP ==============================
-//======================================================================================================================
-
-template<typename TVoxel>
-inline
-void AllocateHashEntriesUsingLists_CPU(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const HashEntryState* hashEntryStates,
-                                       Vector3s* allocationBlockCoordinates) {
-	const int hashEntryCount = scene->index.hashEntryCount;
-	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
-	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
-	int* voxelAllocationList = scene->localVBA.GetAllocationList();
-	int* excessAllocationList = scene->index.GetExcessAllocationList();
-	ITMHashEntry* hashTable = scene->index.GetEntries();
-
-	for (int hashCode = 0; hashCode < hashEntryCount; hashCode++) {
-		const HashEntryState& hashEntryState = hashEntryStates[hashCode];
-		switch (hashEntryState) {
-			case ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST:
-
-				if (lastFreeVoxelBlockId >= 0) //there is room in the voxel block array
-				{
-					ITMHashEntry hashEntry;
-					hashEntry.pos = allocationBlockCoordinates[hashCode];
-					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
-					hashEntry.offset = 0;
-					hashTable[hashCode] = hashEntry;
-					lastFreeVoxelBlockId--;
-				}
-
-				break;
-			case NEEDS_ALLOCATION_IN_EXCESS_LIST:
-
-				if (lastFreeVoxelBlockId >= 0 &&
-				    lastFreeExcessListId >= 0) //there is room in the voxel block array and excess list
-				{
-					ITMHashEntry hashEntry;
-					hashEntry.pos = allocationBlockCoordinates[hashCode];
-					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
-					hashEntry.offset = 0;
-					int exlOffset = excessAllocationList[lastFreeExcessListId];
-					hashTable[hashCode].offset = exlOffset + 1; //connect to child
-					hashTable[ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
-					lastFreeVoxelBlockId--;
-					lastFreeExcessListId--;
-				}
-				break;
-			default:
-				break;
-		}
-	}
-	scene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
-	scene->index.SetLastFreeExcessListId(lastFreeExcessListId);
-}
-
-
-template<typename TVoxel, typename TIndex>
-inline
-void AllocateHashEntriesUsingLists_SetVisibility_CPU(ITMVoxelVolume<TVoxel, TIndex>* scene,
-                                                     const ITMLib::HashEntryState* hashEntryStates,
-                                                     Vector3s* allocationBlockCoordinates, uchar* entriesVisibleType) {
-	int entryCount = scene->index.hashEntryCount;
-	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
-	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
-	int* voxelAllocationList = scene->localVBA.GetAllocationList();
-	int* excessAllocationList = scene->index.GetExcessAllocationList();
-	ITMHashEntry* hashTable = scene->index.GetEntries();
-
-	for (int hash = 0; hash < entryCount; hash++) {
-		const HashEntryState& hashEntryState = hashEntryStates[hash];
-		switch (hashEntryState) {
-			case ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST:
-
-				if (lastFreeVoxelBlockId >= 0) //there is room in the voxel block array
-				{
-					ITMHashEntry hashEntry;
-					hashEntry.pos = allocationBlockCoordinates[hash];
-					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
-					hashEntry.offset = 0;
-					hashTable[hash] = hashEntry;
-					lastFreeVoxelBlockId--;
-				} else {
-					entriesVisibleType[hash] = 0;
-				}
-
-				break;
-			case NEEDS_ALLOCATION_IN_EXCESS_LIST:
-
-				if (lastFreeVoxelBlockId >= 0 &&
-				    lastFreeExcessListId >= 0) //there is room in the voxel block array and excess list
-				{
-					ITMHashEntry hashEntry;
-					hashEntry.pos = allocationBlockCoordinates[hash];
-					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
-					hashEntry.offset = 0;
-					int exlOffset = excessAllocationList[lastFreeExcessListId];
-					hashTable[hash].offset = exlOffset + 1; //connect to child
-					hashTable[ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
-					entriesVisibleType[ORDERED_LIST_SIZE + exlOffset] = 1; //make child visible and in memory
-					lastFreeVoxelBlockId--;
-					lastFreeExcessListId--;
-				}
-				break;
-			default:
-				break;
-		}
-	}
-	scene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
-	scene->index.SetLastFreeExcessListId(lastFreeExcessListId);
-}
-
 typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray> ManipulationEngine_CPU_PVA_Voxel;
 typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> ManipulationEngine_CPU_VBH_Voxel;
 typedef ITMSceneManipulationEngine_CPU<ITMWarp, ITMPlainVoxelArray> ManipulationEngine_CPU_PVA_Warp;
 typedef ITMSceneManipulationEngine_CPU<ITMWarp, ITMVoxelBlockHash> ManipulationEngine_CPU_VBH_Warp;
 
-// endregion ===========================================================================================================
 // region ======================================== HELPER RANGE COMPUTATION / CHECK ROUTINES ===========================
 // =====================================================================================================================
 inline

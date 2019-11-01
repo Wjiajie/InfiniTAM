@@ -126,7 +126,7 @@ ITMSceneLogger<TVoxel, TWarp, TIndex>::SaveSliceWarp(const Vector6i& voxelRange,
 		unsigned int sliceIterationCursor = fullWarpLogger->GetIterationCursor();
 		sliceWarpOfstream.write(reinterpret_cast<const char* >(&sliceIterationCursor), sizeof(sliceIterationCursor));
 
-		ITMSceneTraversalEngine<TWarp,TIndex,ITMLibSettings::DEVICE_CPU>::VoxelTraversalWithinBounds(fullWarpLogger->warpField, warpAndUpdateWriteFunctor, voxelRange);
+		ITMSceneTraversalEngine<TWarp,TIndex,MEMORYDEVICE_CPU>::VoxelTraversalWithinBounds(fullWarpLogger->warpField, warpAndUpdateWriteFunctor, voxelRange);
 	}
 	sliceWarpOfstream.close();
 	fullWarpLogger->StopLoadingWarpState();

@@ -40,7 +40,7 @@ typedef ITMSceneStatisticsCalculator_CPU<ITMVoxel, ITMVoxelBlockHash> SceneStati
 BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
-	settings->deviceType = ITMLibSettings::DEVICE_CPU;
+	settings->deviceType = MEMORYDEVICE_CPU;
 
 	Vector3i volumeSize(40, 68, 20);
 	Vector3i volumeOffset(-20, 0, 0);

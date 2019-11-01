@@ -141,7 +141,7 @@ struct ComputeNonTruncatedVoxelCountFunctor<true, TVoxel, TIndex> {
 	static int compute(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 		ComputeNonTruncatedVoxelCountFunctor instance;
 
-		ITMSceneTraversalEngine<TVoxel, TIndex, ITMLibSettings::DEVICE_CUDA>::
+		ITMSceneTraversalEngine<TVoxel, TIndex, MEMORYDEVICE_CUDA>::
 		        VoxelTraversal(scene,instance);
 		int count = 0;
 		cudaMemcpy(&count, instance.count_device, sizeof(int), cudaMemcpyDeviceToHost);
@@ -206,18 +206,18 @@ unsigned  int ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeAlteredV
 
 template<typename TVoxel, typename TIndex>
 double ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeFlowWarpMin(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, ITMLibSettings::DEVICE_CUDA, MINIMUM>::compute(scene);
+	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CUDA, MINIMUM>::compute(scene);
 }
 
 
 template<typename TVoxel, typename TIndex>
 double ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeFlowWarpMax(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, ITMLibSettings::DEVICE_CUDA, MAXIMUM>::compute(scene);
+	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CUDA, MAXIMUM>::compute(scene);
 }
 
 template<typename TVoxel, typename TIndex>
 double ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeFlowWarpMean(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, ITMLibSettings::DEVICE_CUDA, MEAN>::compute(scene);
+	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CUDA, MEAN>::compute(scene);
 }
 
 namespace {

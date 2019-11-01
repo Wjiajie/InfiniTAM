@@ -15,11 +15,11 @@ namespace ITMLib
 
 template <typename TSurfel>
 ITMSurfelSceneReconstructionEngine<TSurfel> *
-ITMSurfelSceneReconstructionEngineFactory<TSurfel>::make_surfel_scene_reconstruction_engine(const Vector2i& depthImageSize, ITMLibSettings::DeviceType deviceType)
+ITMSurfelSceneReconstructionEngineFactory<TSurfel>::make_surfel_scene_reconstruction_engine(const Vector2i& depthImageSize, MemoryDeviceType deviceType)
 {
   ITMSurfelSceneReconstructionEngine<TSurfel> *reconstructionEngine = NULL;
 
-  if(deviceType == ITMLibSettings::DEVICE_CUDA)
+  if(deviceType == MEMORYDEVICE_CUDA)
   {
 #ifndef COMPILE_WITHOUT_CUDA
     reconstructionEngine = new ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>(depthImageSize);

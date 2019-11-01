@@ -4,6 +4,7 @@
 
 #include "Interface/ITMLowLevelEngine.h"
 #include "../../Utils/ITMLibSettings.h"
+#include "../../../ORUtils/MemoryDeviceType.h"
 
 namespace ITMLib
 {
@@ -20,7 +21,7 @@ struct ITMLowLevelEngineFactory
    *
    * \param deviceType  The device on which the low-level engine should operate.
    */
-  static ITMLowLevelEngine *MakeLowLevelEngine(ITMLibSettings::DeviceType deviceType);
+  static ITMLowLevelEngine *MakeLowLevelEngine(MemoryDeviceType deviceType);
 };
 
 }

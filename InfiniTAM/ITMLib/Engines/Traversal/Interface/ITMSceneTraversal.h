@@ -19,15 +19,15 @@
 
 namespace ITMLib{
 
-template<typename TVoxel, typename TIndex, ITMLibSettings::DeviceType TDeviceType>
+template<typename TVoxel, typename TIndex, MemoryDeviceType TDeviceType>
 class ITMSceneTraversalEngine;
 
 
 template<typename TVoxelPrimary, typename TVoxelSecondary, typename TIndexPrimary, typename TIndexSecondary,
-        ITMLibSettings::DeviceType TDeviceType>
+        MemoryDeviceType TDeviceType>
 class ITMDualSceneTraversalEngine;
 
-template<typename TVoxel, typename TWarp, typename TIndex, ITMLibSettings::DeviceType TDeviceType>
+template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TDeviceType>
 class ITMDualSceneWarpTraversalEngine;
 
 

@@ -26,7 +26,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 
 	this->InitializeScenes();
 	ITMLibSettings& settings = ITMLibSettings::Instance();
-	const ITMLibSettings::DeviceType deviceType = settings.deviceType;
+	const MemoryDeviceType deviceType = settings.deviceType;
 	MemoryDeviceType memoryType = settings.GetMemoryType();
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().SetScenes(canonicalScene, liveScenes[0], warpField);
@@ -343,13 +343,13 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 	switch (getImageType) {
 		case ITMDynamicEngine::InfiniTAM_IMAGE_ORIGINAL_RGB:
 			out->ChangeDims(view->rgb->noDims);
-			if (settings.deviceType == ITMLibSettings::DEVICE_CUDA)
+			if (settings.deviceType == MEMORYDEVICE_CUDA)
 				out->SetFrom(view->rgb, MemoryCopyDirection::CUDA_TO_CPU);
 			else out->SetFrom(view->rgb, MemoryCopyDirection::CPU_TO_CPU);
 			break;
 		case ITMDynamicEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH:
 			out->ChangeDims(view->depth->noDims);
-			if (settings.deviceType == ITMLibSettings::DEVICE_CUDA) view->depth->UpdateHostFromDevice();
+			if (settings.deviceType == MEMORYDEVICE_CUDA) view->depth->UpdateHostFromDevice();
 			ITMVisualisationEngine<TVoxel, TIndex>::DepthToUchar4(out, view->depth);
 			break;
 		case ITMDynamicEngine::InfiniTAM_IMAGE_SCENERAYCAST:
@@ -387,7 +387,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			else srcImage = renderState_live->raycastImage;
 
 			out->ChangeDims(srcImage->noDims);
-			if (settings.deviceType == ITMLibSettings::DEVICE_CUDA)
+			if (settings.deviceType == MEMORYDEVICE_CUDA)
 				out->SetFrom(srcImage, MemoryCopyDirection::CUDA_TO_CPU);
 			else out->SetFrom(srcImage, MemoryCopyDirection::CPU_TO_CPU);
 
@@ -417,7 +417,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			liveVisualisationEngine->RenderImage(liveScenes[0], pose, intrinsics, renderState_freeview,
 			                                     renderState_freeview->raycastImage, type);
 
-			if (settings.deviceType == ITMLibSettings::DEVICE_CUDA)
+			if (settings.deviceType == MEMORYDEVICE_CUDA)
 				out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CUDA_TO_CPU);
 			else out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CPU_TO_CPU);
 			break;
@@ -443,7 +443,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			                                          IITMVisualisationEngine::RENDER_SHADED_OVERLAY);
 
 
-			if (settings.deviceType == ITMLibSettings::DEVICE_CUDA)
+			if (settings.deviceType == MEMORYDEVICE_CUDA)
 				out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CUDA_TO_CPU);
 			else out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CPU_TO_CPU);
 
@@ -465,7 +465,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			canonicalVisualisationEngine->RenderImage(canonicalScene, pose, intrinsics, renderState_freeview,
 			                                          renderState_freeview->raycastImage, type);
 
-			if (settings.deviceType == ITMLibSettings::DEVICE_CUDA)
+			if (settings.deviceType == MEMORYDEVICE_CUDA)
 				out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CUDA_TO_CPU);
 			else out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CPU_TO_CPU);
 			break;

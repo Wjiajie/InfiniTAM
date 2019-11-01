@@ -175,11 +175,11 @@ void simulateRandomVoxelAlteration(TVoxel& voxel) {
 }
 
 // FIXME: see TODO in header
-//template<typename TVoxel, typename TIndex>
-//ITMVoxelVolume<TVoxel, TIndex> loadSdfVolume (const std::string& path, MemoryDeviceType memoryDeviceType,
+//template<typename TVoxelA, typename TIndex>
+//ITMVoxelVolume<TVoxelA, TIndex> loadSdfVolume (const std::string& path, MemoryDeviceType memoryDeviceType,
 //                    typename TIndex::InitializationParameters initializationParameters, ITMLibSettings::SwappingMode swappingMode){
 //	ITMLibSettings& settings = ITMLibSettings::Instance();
-//	ITMVoxelVolume<TVoxel, TIndex> scene(&settings.sceneParams,
+//	ITMVoxelVolume<TVoxelA, TIndex> scene(&settings.sceneParams,
 //	                                              swappingMode,
 //	                                              memoryDeviceType,initializationParameters);
 //	PrepareVoxelVolumeForLoading(&scene, memoryDeviceType);

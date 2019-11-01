@@ -22,7 +22,7 @@ if(CUDA_FOUND)
         message(STATUS "didn't compile")
     endif()
     # COMPILE_RESULT_VAR is TRUE when compile succeeds
-    # RUN_RESULT_VAR is zero when a GPU is found
+    # RUN_RESULT_VAR is zero when a CUDA is found
     if(COMPILE_RESULT_VAR AND NOT RUN_RESULT_VAR)
         message(STATUS "worked")
         set(CUDA_HAVE_GPU TRUE CACHE BOOL "Whether a CUDA-capable GPU is present")

@@ -40,7 +40,7 @@ typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMVoxelBlockHash> SceneStat
 BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CUDA) {
 
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
-	settings->deviceType = ITMLibSettings::DEVICE_CUDA;
+	settings->deviceType = MEMORYDEVICE_CUDA;
 
 	Vector3i volumeSize(40, 68, 20);
 	Vector3i volumeOffset(-20, 0, 0);

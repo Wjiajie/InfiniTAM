@@ -19,8 +19,8 @@
 #include "../../../Utils/ITMMath.h"
 #include "../../../Objects/Scene/ITMVoxelBlockHash.h"
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
-#include "../../../Engines/Common/ITMCommonFunctors.h"
-#include "../../../Engines/Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
+#include "../../Common/ITMCommonFunctors.h"
+#include "../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
 #include "../../Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 
 #ifdef __CUDACC__
@@ -28,6 +28,13 @@
 #endif
 
 using namespace ITMLib;
+
+
+struct AllocationTempData {
+	int noAllocatedVoxelEntries;
+	int noAllocatedExcessEntries;
+	int noVisibleEntries;
+};
 
 template<typename TWarp, typename TVoxel, typename TLookupPositionFunctor>
 struct WarpBasedAllocationMarkerFunctor {
@@ -98,37 +105,3 @@ private:
 };
 
 
-template<typename TVoxel, typename TWarp, WarpType TWarpType, ITMLibSettings::DeviceType TDeviceType>
-inline
-void allocateFromWarpedVolume_common(
-		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
-
-	assert(warpField->index.hashEntryCount == sourceTSDF->index.hashEntryCount &&
-	       sourceTSDF->index.hashEntryCount == targetTSDF->index.hashEntryCount);
-
-	int hashEntryCount = warpField->index.hashEntryCount;
-
-	MemoryDeviceType memoryDeviceType = TDeviceType == ITMLibSettings::DEVICE_CPU ? MEMORYDEVICE_CPU : MEMORYDEVICE_CUDA;
-
-	ORUtils::MemoryBlock<HashEntryState> hashEntryStates(hashEntryCount, memoryDeviceType);
-	HashEntryState* hashEntryStates_device = hashEntryStates.GetData(memoryDeviceType);
-	ORUtils::MemoryBlock<Vector3s> blockCoordinates(hashEntryCount, memoryDeviceType);
-	Vector3s* blockCoordinates_device = blockCoordinates.GetData(memoryDeviceType);
-
-	//Mark up hash entries in the target scene that will need allocation
-	WarpBasedAllocationMarkerFunctor<TWarp, TVoxel, WarpVoxelStaticFunctor<TWarp, TWarpType>>
-	hashMarkerFunctor(sourceTSDF, targetTSDF, blockCoordinates_device, hashEntryStates_device);
-	do{
-		//reset allocation flags
-		hashEntryStates.Clear(NEEDS_NO_CHANGE);
-		hashMarkerFunctor.collisionDetected = false;
-		ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, TDeviceType>::VoxelAndHashBlockPositionTraversal(
-				warpField, hashMarkerFunctor);
-
-		//Allocate the hash entries that will potentially have any data
-		//FIXME (should be different for CUDA)
-		AllocateHashEntriesUsingLists_CPU(targetTSDF, hashEntryStates_device, blockCoordinates_device);
-	}while(hashMarkerFunctor.collisionDetected);
-}

@@ -32,7 +32,7 @@ namespace ITMLib {
 
 //static-member-only classes are used here instead of namespaces to utilize template specialization (and maximize code reuse)
 template<typename TVoxel>
-class ITMSceneTraversalEngine<TVoxel, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU> {
+class ITMSceneTraversalEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU> {
 public:
 // region ================================ DYNAMIC SINGLE-SCENE TRAVERSAL ==============================================
 
@@ -306,7 +306,7 @@ public:
 // ====================== FOR TWO SCENES WITH DIFFERING VOXEL TYPES ====================================================
 
 template<typename TVoxelPrimary, typename TVoxelSecondary>
-class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMVoxelBlockHash, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU> {
+class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMVoxelBlockHash, ITMVoxelBlockHash, MEMORYDEVICE_CPU> {
 public:
 // region ================================ STATIC TWO-SCENE TRAVERSAL =================================================
 	template<typename TStaticFunctor>
@@ -933,7 +933,7 @@ public:
 // ====================== FOR TWO SCENES WITH DIFFERING VOXEL TYPES ====================================================
 
 template<typename TVoxel, typename TWarp>
-class ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, ITMLibSettings::DEVICE_CPU> {
+class ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU> {
 public:
 // region ================================ DYNAMIC TWO-SCENE TRAVERSAL =================================================
 	template<typename TStaticFunctor>

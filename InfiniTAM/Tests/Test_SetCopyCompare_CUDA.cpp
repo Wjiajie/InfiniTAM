@@ -58,7 +58,7 @@ using namespace ITMLib;
 
 BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_PlainVoxelArray_CUDA) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
-	settings->deviceType = ITMLibSettings::DEVICE_CUDA;
+	settings->deviceType = MEMORYDEVICE_CUDA;
 
 	Vector3i volumeSize(20);
 	Vector3i volumeOffset(-10, -10, 0);
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_PlainVoxelArray_CUDA) {
 BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CUDA) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
 
-	settings->deviceType = ITMLibSettings::DEVICE_CUDA;
+	settings->deviceType = MEMORYDEVICE_CUDA;
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene1(&settings->sceneParams,
 	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType());
@@ -170,7 +170,7 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CUDA_and_CPU_ITMVoxel) {
 	float tolerance = 1e-6;
 
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
-	settings->deviceType = ITMLibSettings::DEVICE_CUDA;
+	settings->deviceType = MEMORYDEVICE_CUDA;
 
 	Vector3i volumeSize(40);
 	Vector3i volumeOffset(-20, -20, 0);
@@ -289,7 +289,7 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CUDA_ITMWarp) {
 	float tolerance = 1e-6;
 
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
-	settings->deviceType = ITMLibSettings::DEVICE_CPU;
+	settings->deviceType = MEMORYDEVICE_CPU;
 
 	Vector3i volumeSize(40);
 	Vector3i volumeOffset(-20, -20, 0);

@@ -15,11 +15,12 @@
 //  ================================================================
 #pragma once
 
-#include "../../../../ORUtils/JetbrainsCUDASyntax.hpp"
-#include "../Shared/ITMSceneReconstructionEngine_Shared.h"
-#include "../../../Utils/ITMCUDAUtils.h"
-#include "../../../Objects/Scene/ITMGlobalCache.h"
-#include "../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
+#include "../../../../../ORUtils/JetbrainsCUDASyntax.hpp"
+#include "../../../Reconstruction/Shared/ITMSceneReconstructionEngine_Shared.h"
+#include "../../../../Utils/ITMCUDAUtils.h"
+#include "../../../../Objects/Scene/ITMGlobalCache.h"
+#include "../../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
+#include "../../Shared/ITMIndexingEngine_Shared.h"
 
 namespace {
 //CUDA kernels
@@ -37,7 +38,7 @@ void allocateHashedVoxelBlocksUsingLists_SetVisibility_device(
 		int* voxelAllocationList, int* excessAllocationList,
 		AllocationTempData* allocData,
 		ITMHashEntry* hashTable, int noTotalEntries,
-		ITMLib::HashEntryState* hashEntryStates, Vector3s* blockCoords,
+		const ITMLib::HashEntryState* hashEntryStates, Vector3s* blockCoords,
 		uchar* entriesVisibleType) {
 	int hashCode = threadIdx.x + blockIdx.x * blockDim.x;
 	if (hashCode >= noTotalEntries) return;
@@ -94,10 +95,10 @@ __global__
 void allocateHashedVoxelBlocksUsingLists_device(
 		int* voxelAllocationList, int* excessAllocationList,
 		AllocationTempData* allocData,
-		ITMHashEntry* hashTable, int noTotalEntries,
-		ITMLib::HashEntryState* hashEntryStates, Vector3s* blockCoords) {
+		ITMHashEntry* hashTable, const int hashEntryCount,
+		const ITMLib::HashEntryState* hashEntryStates, Vector3s* blockCoords) {
 	int hashCode = threadIdx.x + blockIdx.x * blockDim.x;
-	if (hashCode >= noTotalEntries) return;
+	if (hashCode >= hashEntryCount) return;
 
 	int vbaIdx, exlIdx;
 

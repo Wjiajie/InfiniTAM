@@ -6,7 +6,7 @@
 #include "../Interface/ITMDynamicSceneReconstructionEngine.h"
 #include "../../../Objects/Scene/ITMPlainVoxelArray.h"
 #include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "ITMHashAllocationEngine_CPU.h"
+#include "../../Indexing/VBH/CPU/ITMIndexingEngine_CPU.h"
 #include "../../Common/ITMWarpEnums.h"
 
 
@@ -44,7 +44,7 @@ public:
 	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
 
 	void CopyScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
-			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
+	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
 protected:
 	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);
@@ -55,7 +55,6 @@ private:
 	void WarpScene(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF);
-	ITMHashAllocationEngine_CPU<TVoxel, TWarp> hashManager;
 	ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>& sceneManager = ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::Inst();
 
 };
@@ -83,7 +82,7 @@ public:
 	                           ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
 	                           ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) override;
 	void CopyScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
-			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) override;
+	               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) override;
 
 
 	ITMDynamicSceneReconstructionEngine_CPU() = default;

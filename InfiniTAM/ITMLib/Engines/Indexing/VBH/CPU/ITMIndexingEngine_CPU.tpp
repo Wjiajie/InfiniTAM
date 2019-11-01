@@ -1,6 +1,6 @@
 //  ================================================================
-//  Created by Gregory Kramida on 5/25/18.
-//  Copyright (c) 2018-2025 Gregory Kramida
+//  Created by Gregory Kramida on 11/1/19.
+//  Copyright (c) 2019 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
 //  You may obtain a copy of the License at
@@ -13,21 +13,19 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "ITMHashAllocationEngine_CPU.h"
-#include "../../../Objects/RenderStates/ITMRenderState_VH.h"
-#include "../../../Utils/ITMHashBlockProperties.h"
-#include "../Shared/ITMHashAllocationEngine_Shared.h"
-#include "../Shared/ITMSceneReconstructionEngine_Shared.h"
-#include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "../../Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
-#include "../../Common/ITMCommonFunctors.h"
-#include "../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
+#pragma once
 
+#include "ITMIndexingEngine_CPU.h"
+#include "../../../../Objects/Scene/ITMRepresentationAccess.h"
+#include "../../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
+#include "../../../../Objects/RenderStates/ITMRenderState_VH.h"
+#include "../../../Reconstruction/Shared/ITMSceneReconstructionEngine_Shared.h"
 
 using namespace ITMLib;
 
-template<typename TVoxel, typename TWarp>
-void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromDepth(
+
+template<typename TVoxel>
+void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFromDepth(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState, bool onlyUpdateVisibleList, bool resetVisibleList) {
 	Vector2i depthImgSize = view->depth->noDims;
@@ -74,7 +72,7 @@ void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromDepth(
 			hashBlockVisibilityTypes[visibleEntryIDs[i]] = 3; // visible at previous frame and unstreamed
 
 #ifdef WITH_OPENMP
-#pragma omp parallel for
+#pragma omp parallel for default(none)
 #endif
 		for (int locId = 0; locId < depthImgSize.x * depthImgSize.y; locId++) {
 			int y = locId / depthImgSize.x;
@@ -91,8 +89,8 @@ void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromDepth(
 			useSwapping = false;
 			collisionDetected = false;
 		} else {
-			AllocateHashEntriesUsingLists_SetVisibility_CPU(scene, hashEntryStates_device,
-			                                                allocationBlockCoordinates, hashBlockVisibilityTypes);
+			AllocateHashEntriesUsingLists_SetVisibility(scene, hashEntryStates_device,
+			                                            allocationBlockCoordinates, hashBlockVisibilityTypes);
 		}
 	} while (collisionDetected);
 
@@ -144,29 +142,11 @@ void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromDepth(
 	scene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
 }
 
-
-// region =========================== CANONICAL HASH BLOCK ALLOCATION ==================================================
-
-template<typename TVoxel, typename TWarp>
-void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateTSDFVolumeFromTSDFVolume(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetVolume,
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceVolume) {
-	AllocateFromVolumeGeneric(targetVolume, sourceVolume);
-}
-
-
-template<typename TVoxel, typename TWarp>
-void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateWarpVolumeFromTSDFVolume(
-		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* targetVolume,
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceVolume) {
-	AllocateFromVolumeGeneric(targetVolume, sourceVolume);
-}
-
-template<typename TVoxel, typename TWarp>
-template<typename TVoxelTarget, typename TVoxelSource>
-void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromVolumeGeneric(
-		ITMVoxelVolume<TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
-		ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* sourceVolume) {
+template<typename TVoxel>
+template<typename TVoxelATarget, typename TVoxelASource>
+void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateUsingOtherVolume(
+		ITMVoxelVolume<TVoxelATarget, ITMVoxelBlockHash>* targetVolume,
+		ITMVoxelVolume<TVoxelASource, ITMVoxelBlockHash>* sourceVolume) {
 
 	assert(targetVolume->index.hashEntryCount == sourceVolume->index.hashEntryCount);
 
@@ -186,7 +166,7 @@ void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromVolumeGeneric(
 		memset(hashEntryStates_device, ITMLib::NEEDS_NO_CHANGE,
 		       static_cast<size_t>(hashEntryCount));
 #ifdef WITH_OPENMP
-#pragma omp parallel for
+#pragma omp parallel for default(none)
 #endif
 		for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
 
@@ -204,35 +184,122 @@ void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromVolumeGeneric(
 			                                  targetHash, sourceHashBlockCoords, targetHashEntries,
 			                                  collisionDetected);
 		}
-		AllocateHashEntriesUsingLists_CPU(targetVolume, hashEntryStates_device,
-		                                  blockCoordinates_device);
+
+		ITMIndexingEngine<TVoxelATarget, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
+				.AllocateHashEntriesUsingLists(targetVolume, hashEntryStates_device,
+				                               blockCoordinates_device);
 	} while (collisionDetected);
 
 }
 
-// region ===================================== ALLOCATIONS FOR INTERPOLATION ==========================================
 
-/**
- * \brief method which looks at voxel grid with warps and an SDF voxel grid and allocates all hash blocks in the
- * SDF grid where warp vectors are pointing to (if not already allocated).
- * \details scans each (allocated) voxel in the SDF voxel grid, checks the warp vector at the corresponding location,
- * finds the voxel where the warp vector is pointing to, and, if the hash block for that voxel is not yet allocated,
- * allocates it.
- * \param warpField voxel grid where each voxel has a .warp Vector3f field defined
- * \param sourceTsdf sdf grid whose hash blocks to allocate if needed
- * \param sourceSdfIndex index of the sdf / flag field to use in the sdfScene
- * \tparam TWarpType the type of warp vector to use
- */
-template<typename TVoxel, typename TWarp>
-template<WarpType TWarpType>
-void ITMHashAllocationEngine_CPU<TVoxel, TWarp>::AllocateFromWarpedVolume(
-		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
-	allocateFromWarpedVolume_common<TVoxel,TWarp, TWarpType, ITMLibSettings::DEVICE_CPU>(warpField,sourceTSDF,targetTSDF);
+template<typename TVoxel>
+void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
+AllocateHashEntriesUsingLists(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
+		const HashEntryState* hashEntryStates_device,
+		Vector3s* blockCoordinates_device) {
+	const int hashEntryCount = scene->index.hashEntryCount;
+	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
+	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
+	int* voxelAllocationList = scene->localVBA.GetAllocationList();
+	int* excessAllocationList = scene->index.GetExcessAllocationList();
+	ITMHashEntry* hashTable = scene->index.GetEntries();
+
+	for (int hashCode = 0; hashCode < hashEntryCount; hashCode++) {
+		const HashEntryState& hashEntryState = hashEntryStates_device[hashCode];
+		switch (hashEntryState) {
+			case ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST:
+
+				if (lastFreeVoxelBlockId >= 0) //there is room in the voxel block array
+				{
+					ITMHashEntry hashEntry;
+					hashEntry.pos = blockCoordinates_device[hashCode];
+					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
+					hashEntry.offset = 0;
+					hashTable[hashCode] = hashEntry;
+					lastFreeVoxelBlockId--;
+				}
+
+				break;
+			case NEEDS_ALLOCATION_IN_EXCESS_LIST:
+
+				if (lastFreeVoxelBlockId >= 0 &&
+				    lastFreeExcessListId >= 0) //there is room in the voxel block array and excess list
+				{
+					ITMHashEntry hashEntry;
+					hashEntry.pos = blockCoordinates_device[hashCode];
+					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
+					hashEntry.offset = 0;
+					int exlOffset = excessAllocationList[lastFreeExcessListId];
+					hashTable[hashCode].offset = exlOffset + 1; //connect to child
+					hashTable[ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
+					lastFreeVoxelBlockId--;
+					lastFreeExcessListId--;
+				}
+				break;
+			default:
+				break;
+		}
+	}
+	scene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
+	scene->index.SetLastFreeExcessListId(lastFreeExcessListId);
 }
 
 
-// endregion ==================================== END CANONICAL HASH BLOCK ALLOCATION ==================================
+template<typename TVoxelA>
+void ITMIndexingEngine<TVoxelA, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
+AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxelA, ITMVoxelBlockHash>* scene,
+                                            const ITMLib::HashEntryState* hashEntryStates_device,
+                                            Vector3s* allocationBlockCoordinates_device,
+                                            uchar* hashBlockVisibilityTypes_device) {
+	int entryCount = scene->index.hashEntryCount;
+	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
+	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
+	int* voxelAllocationList = scene->localVBA.GetAllocationList();
+	int* excessAllocationList = scene->index.GetExcessAllocationList();
+	ITMHashEntry* hashTable = scene->index.GetEntries();
 
+	for (int hash = 0; hash < entryCount; hash++) {
+		const HashEntryState& hashEntryState = hashEntryStates_device[hash];
+		switch (hashEntryState) {
+			case ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST:
 
+				if (lastFreeVoxelBlockId >= 0) //there is room in the voxel block array
+				{
+					ITMHashEntry hashEntry;
+					hashEntry.pos = allocationBlockCoordinates_device[hash];
+					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
+					hashEntry.offset = 0;
+					hashTable[hash] = hashEntry;
+					lastFreeVoxelBlockId--;
+				} else {
+					hashBlockVisibilityTypes_device[hash] = 0;
+				}
+
+				break;
+			case NEEDS_ALLOCATION_IN_EXCESS_LIST:
+
+				if (lastFreeVoxelBlockId >= 0 &&
+				    lastFreeExcessListId >= 0) //there is room in the voxel block array and excess list
+				{
+					ITMHashEntry hashEntry;
+					hashEntry.pos = allocationBlockCoordinates_device[hash];
+					hashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
+					hashEntry.offset = 0;
+					int exlOffset = excessAllocationList[lastFreeExcessListId];
+					hashTable[hash].offset = exlOffset + 1; //connect to child
+					hashTable[ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
+					hashBlockVisibilityTypes_device[ORDERED_LIST_SIZE +
+					                                exlOffset] = 1; //make child visible and in memory
+					lastFreeVoxelBlockId--;
+					lastFreeExcessListId--;
+				}
+				break;
+			default:
+				break;
+		}
+	}
+	scene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
+	scene->index.SetLastFreeExcessListId(lastFreeExcessListId);
+}

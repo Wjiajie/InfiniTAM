@@ -40,10 +40,10 @@ void ITMDenseMapper<TVoxel,TIndex>::ProcessFrame(const ITMView *view, const ITMT
 	sceneRecoEngine->IntegrateIntoScene(scene, view, trackingState, renderState);
 
 	if (swappingEngine != NULL) {
-		// swapping: CPU -> GPU
+		// swapping: CPU -> CUDA
 		if (swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED) swappingEngine->IntegrateGlobalIntoLocal(scene, renderState);
 
-		// swapping: GPU -> CPU
+		// swapping: CUDA -> CPU
 		switch (swappingMode)
 		{
 		case ITMLibSettings::SWAPPINGMODE_ENABLED:

@@ -87,7 +87,7 @@ namespace ITMLib
 
 			ORcudaSafeCall(cudaMalloc((void**)&neededEntryIDs_device, SWAP_OPERATION_BLOCK_COUNT * sizeof(int)));
 #else
-			syncedVoxelBlocks_host = (TVoxel *)malloc(SWAP_OPERATION_BLOCK_COUNT * sizeof(TVoxel) * VOXEL_BLOCK_SIZE3);
+			syncedVoxelBlocks_host = (TVoxelA *)malloc(SWAP_OPERATION_BLOCK_COUNT * sizeof(TVoxelA) * VOXEL_BLOCK_SIZE3);
 			hasSyncedData_host = (bool*)malloc(SWAP_OPERATION_BLOCK_COUNT * sizeof(bool));
 			neededEntryIDs_host = (int*)malloc(SWAP_OPERATION_BLOCK_COUNT * sizeof(int));
 #endif
@@ -114,7 +114,7 @@ namespace ITMLib
 			ORcudaSafeCall(cudaMemcpy(neededEntryIDs_device, other.neededEntryIDs_device,
 			                          SWAP_OPERATION_BLOCK_COUNT * sizeof(int), cudaMemcpyDeviceToDevice));
 #else
-			memcpy(syncedVoxelBlocks_host, other.syncedVoxelBlocks_host,SWAP_OPERATION_BLOCK_COUNT * sizeof(TVoxel) * VOXEL_BLOCK_SIZE3);
+			memcpy(syncedVoxelBlocks_host, other.syncedVoxelBlocks_host,SWAP_OPERATION_BLOCK_COUNT * sizeof(TVoxelA) * VOXEL_BLOCK_SIZE3);
 			memcpy(hasSyncedData_host, other.hasSyncedData_host, SWAP_OPERATION_BLOCK_COUNT * sizeof(bool));
 			memcpy(neededEntryIDs_host,other.neededEntryIDs_host, SWAP_OPERATION_BLOCK_COUNT * sizeof(int));
 #endif

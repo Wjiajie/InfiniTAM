@@ -16,7 +16,7 @@
 #pragma once
 
 #include "../Interface/ITMSceneMotionTracker.h"
-#include "../../Engines/Reconstruction/CUDA/ITMHashAllocationEngine_CUDA.h"
+#include "../../Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA.h"
 
 namespace ITMLib {
 
@@ -50,13 +50,6 @@ public:
 			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
 			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) override;
 	void ResetWarps(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) override;
-
-
-private:
-
-	ITMHashAllocationEngine_CUDA<TVoxel, TWarp> hashManager;
-
-
 };
 
 // endregion ===========================================================================================================

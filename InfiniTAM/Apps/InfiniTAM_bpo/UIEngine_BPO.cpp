@@ -71,7 +71,7 @@ namespace bench = ITMLib::Bench;
 void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
                               InputSource::IMUSourceEngine* imuSource,
                               ITMLib::ITMMainEngine* mainEngine, const char* outFolder,
-                              ITMLib::ITMLibSettings::DeviceType deviceType,
+                              MemoryDeviceType deviceType,
                               int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
                               bool startInStepByStep,
                               bool saveAfterFirstNFrames, bool loadBeforeProcessing,
@@ -143,7 +143,7 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 #endif
 
 	allocateGPU = false;
-	if (deviceType == ITMLibSettings::DEVICE_CUDA) allocateGPU = true;
+	if (deviceType == MEMORYDEVICE_CUDA) allocateGPU = true;
 
 	for (int w = 0; w < NUM_WIN; w++) {
 		outImage[w] = new ITMUChar4Image(imageSource->getDepthImageSize(), true, allocateGPU);

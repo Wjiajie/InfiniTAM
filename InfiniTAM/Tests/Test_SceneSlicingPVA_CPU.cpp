@@ -34,7 +34,7 @@ using namespace ITMLib;
 
 BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
-	settings->deviceType = ITMLibSettings::DEVICE_CPU;
+	settings->deviceType = MEMORYDEVICE_CPU;
 	settings->enableKillingConstraintInSmoothingTerm = false;
 	settings->enableDataTerm = true;
 	settings->enableSmoothingTerm = false;

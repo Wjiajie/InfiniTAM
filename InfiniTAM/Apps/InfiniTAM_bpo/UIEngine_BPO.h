@@ -111,7 +111,7 @@ public:
 	ITMLib::IndexingMethod indexingMethod;
 
 	void Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource, InputSource::IMUSourceEngine* imuSource,
-		                ITMLib::ITMMainEngine* mainEngine, const char* outFolder, ITMLib::ITMLibSettings::DeviceType deviceType,
+		                ITMLib::ITMMainEngine* mainEngine, const char* outFolder, MemoryDeviceType deviceType,
 		                int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult, bool startInStepByStep,
 		                bool saveAfterFirstNFrames, bool loadBeforeProcessing, ITMLib::ITMDynamicFusionLogger_Interface* logger,
 		                ITMLib::IndexingMethod indexingMethod);

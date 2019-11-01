@@ -129,7 +129,7 @@ computeDataTerm(ComponentEnergies& energies, AdditionalGradientAggregates& aggre
 }
 // TODO
 //_CPU_AND_GPU_CODE_
-//template<typename TVoxel, typename TIndexData, typename TCache>
+//template<typename TVoxelA, typename TIndexData, typename TCache>
 //inline Vector3f
 //computeLevelSetTerm(){
 //	Matrix3f liveSdfHessian;Vector3f liveSdfJacobian;

@@ -12,21 +12,21 @@ namespace ITMLib
 
 //#################### PUBLIC STATIC MEMBER FUNCTIONS ####################
 
-ITMLowLevelEngine *ITMLowLevelEngineFactory::MakeLowLevelEngine(ITMLibSettings::DeviceType deviceType)
+ITMLowLevelEngine *ITMLowLevelEngineFactory::MakeLowLevelEngine(MemoryDeviceType deviceType)
 {
   ITMLowLevelEngine *lowLevelEngine = NULL;
 
   switch(deviceType)
   {
-    case ITMLibSettings::DEVICE_CPU:
+    case MEMORYDEVICE_CPU:
       lowLevelEngine = new ITMLowLevelEngine_CPU();
       break;
-    case ITMLibSettings::DEVICE_CUDA:
+    case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
       lowLevelEngine = new ITMLowLevelEngine_CUDA();
 #endif
       break;
-    case ITMLibSettings::DEVICE_METAL:
+    case MEMORYDEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
       lowLevelEngine = new ITMLowLevelEngine_CPU();
 #endif

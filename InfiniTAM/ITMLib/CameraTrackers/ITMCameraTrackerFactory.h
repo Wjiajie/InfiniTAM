@@ -39,7 +39,7 @@ namespace ITMLib {
 class ITMCameraTrackerFactory {
 private:
 	//#################### TYPEDEFS ####################
-	typedef ITMCameraTracker* MakerFunc(const Vector2i&, const Vector2i&, ITMLibSettings::DeviceType,
+	typedef ITMCameraTracker* MakerFunc(const Vector2i&, const Vector2i&, MemoryDeviceType,
 	                              const ORUtils::KeyValueConfig&, const ITMLowLevelEngine*, ITMIMUCalibrator*,
 	                              const ITMSceneParams*);
 
@@ -108,9 +108,9 @@ public:
 	/**
 	 * \brief Makes a tracker of the type specified in the trackerConfig string.
 	 */
-	ITMCameraTracker* Make(ITMLibSettings::DeviceType deviceType, const char* trackerConfig, const Vector2i& imgSize_rgb,
-	                 const Vector2i& imgSize_d, const ITMLowLevelEngine* lowLevelEngine,
-	                 ITMIMUCalibrator* imuCalibrator, const ITMSceneParams* sceneParams) const {
+	ITMCameraTracker* Make(MemoryDeviceType deviceType, const char* trackerConfig, const Vector2i& imgSize_rgb,
+	                       const Vector2i& imgSize_d, const ITMLowLevelEngine* lowLevelEngine,
+	                       ITMIMUCalibrator* imuCalibrator, const ITMSceneParams* sceneParams) const {
 		ORUtils::KeyValueConfig cfg(trackerConfig);
 		int verbose = 0;
 		if (cfg.getProperty("help") != NULL) if (verbose < 10) verbose = 10;
@@ -185,7 +185,7 @@ public:
 	 * \brief Makes a colour tracker.
 	 */
 	static ITMCameraTracker*
-	MakeColourTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, ITMLibSettings::DeviceType deviceType,
+	MakeColourTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, MemoryDeviceType deviceType,
 	                  const ORUtils::KeyValueConfig& cfg,
 	                  const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
 	                  const ITMSceneParams* sceneParams) {
@@ -198,17 +198,17 @@ public:
 
 		ITMColorTracker* ret = NULL;
 		switch (deviceType) {
-			case ITMLibSettings::DEVICE_CPU:
+			case MEMORYDEVICE_CPU:
 				ret = new ITMColorTracker_CPU(imgSize_rgb, &(levels[0]), static_cast<int>(levels.size()),
 				                              lowLevelEngine);
 				break;
-			case ITMLibSettings::DEVICE_CUDA:
+			case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
 				ret = new ITMColorTracker_CUDA(imgSize_rgb, &(levels[0]), static_cast<int>(levels.size()),
 				                               lowLevelEngine);
 #endif
 				break;
-			case ITMLibSettings::DEVICE_METAL:
+			case MEMORYDEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
 				ret = new ITMColorTracker_CPU(imgSize_rgb, &(levels[0]), static_cast<int>(levels.size()), lowLevelEngine);
 #endif
@@ -223,7 +223,7 @@ public:
 	 * \brief Makes an ICP tracker.
 	 */
 	static ITMCameraTracker*
-	MakeICPTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, ITMLibSettings::DeviceType deviceType,
+	MakeICPTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, MemoryDeviceType deviceType,
 	               const ORUtils::KeyValueConfig& cfg,
 	               const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
 	               const ITMSceneParams* sceneParams) {
@@ -250,17 +250,17 @@ public:
 
 		ITMDepthTracker* ret = NULL;
 		switch (deviceType) {
-			case ITMLibSettings::DEVICE_CPU:
+			case MEMORYDEVICE_CPU:
 				ret = new ITMDepthTracker_CPU(imgSize_d, &(levels[0]), static_cast<int>(levels.size()),
 				                              smallStepSizeCriterion, failureDetectorThd, lowLevelEngine);
 				break;
-			case ITMLibSettings::DEVICE_CUDA:
+			case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
 				ret = new ITMDepthTracker_CUDA(imgSize_d, &(levels[0]), static_cast<int>(levels.size()),
 				                               smallStepSizeCriterion, failureDetectorThd, lowLevelEngine);
 #endif
 				break;
-			case ITMLibSettings::DEVICE_METAL:
+			case MEMORYDEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
 				ret = new ITMDepthTracker_CPU(imgSize_d, &(levels[0]), static_cast<int>(levels.size()), smallStepSizeCriterion, failureDetectorThd, lowLevelEngine);
 #endif
@@ -283,7 +283,7 @@ public:
 #endif
 	>
 	static ITMCameraTracker* MakeExtendedLikeTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d,
-	                                           ITMLibSettings::DeviceType deviceType,
+	                                           MemoryDeviceType deviceType,
 	                                           const ORUtils::KeyValueConfig& cfg,
 	                                           const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
 	                                           const ITMSceneParams* sceneParams) {
@@ -348,7 +348,7 @@ public:
 
 		ITMExtendedTracker* ret = NULL;
 		switch (deviceType) {
-			case ITMLibSettings::DEVICE_CPU:
+			case MEMORYDEVICE_CPU:
 				ret = new TTracker_CPU(imgSize_d,
 				                       imgSize_rgb,
 				                       useDepth,
@@ -366,7 +366,7 @@ public:
 				                       framesToWeight,
 				                       lowLevelEngine);
 				break;
-			case ITMLibSettings::DEVICE_CUDA:
+			case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
 				ret = new TTracker_CUDA(imgSize_d,
 				                        imgSize_rgb,
@@ -386,7 +386,7 @@ public:
 				                        lowLevelEngine);
 #endif
 				break;
-			case ITMLibSettings::DEVICE_METAL:
+			case MEMORYDEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
 				ret = new TTracker_METAL(imgSize_d, imgSize_rgb, useDepth, useColour, colourWeight, &(levels[0]), static_cast<int>(levels.size()), smallStepSizeCriterion, failureDetectorThd,
 				scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, tukeyCutOff, framesToSkip, framesToWeight, lowLevelEngine);
@@ -404,7 +404,7 @@ public:
 	* \brief Makes an Extended tracker.
 	*/
 	static ITMCameraTracker*
-	MakeExtendedTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, ITMLibSettings::DeviceType deviceType,
+	MakeExtendedTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, MemoryDeviceType deviceType,
 	                    const ORUtils::KeyValueConfig& cfg,
 	                    const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
 	                    const ITMSceneParams* sceneParams) {
@@ -426,7 +426,7 @@ public:
 	 * \brief Makes a KillingFusion dynamic-scene tracker.
 	 */
 	static ITMCameraTracker* MakeKillingTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d,
-	                                      ITMLibSettings::DeviceType deviceType,
+	                                      MemoryDeviceType deviceType,
 	                                      const ORUtils::KeyValueConfig& cfg,
 	                                      const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
 	                                      const ITMSceneParams* sceneParams) {
@@ -445,7 +445,7 @@ public:
 	 * \brief Makes an IMU tracker.
 	 */
 	static ITMCameraTracker*
-	MakeIMUTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, ITMLibSettings::DeviceType deviceType,
+	MakeIMUTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, MemoryDeviceType deviceType,
 	               const ORUtils::KeyValueConfig& cfg,
 	               const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
 	               const ITMSceneParams* sceneParams) {
@@ -472,17 +472,17 @@ public:
 
 		ITMDepthTracker* dTracker = NULL;
 		switch (deviceType) {
-			case ITMLibSettings::DEVICE_CPU:
+			case MEMORYDEVICE_CPU:
 				dTracker = new ITMDepthTracker_CPU(imgSize_d, &(levels[0]), static_cast<int>(levels.size()),
 				                                   smallStepSizeCriterion, failureDetectorThd, lowLevelEngine);
 				break;
-			case ITMLibSettings::DEVICE_CUDA:
+			case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
 				dTracker = new ITMDepthTracker_CUDA(imgSize_d, &(levels[0]), static_cast<int>(levels.size()),
 				                                    smallStepSizeCriterion, failureDetectorThd, lowLevelEngine);
 #endif
 				break;
-			case ITMLibSettings::DEVICE_METAL:
+			case MEMORYDEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
 				dTracker = new ITMDepthTracker_CPU(imgSize_d, &(levels[0]), static_cast<int>(levels.size()), smallStepSizeCriterion, failureDetectorThd, lowLevelEngine);
 #endif
@@ -505,9 +505,9 @@ public:
 	* \brief Makes an Extended IMU tracker.
 	*/
 	static ITMCameraTracker* MakeExtendedIMUTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d,
-	                                          ITMLibSettings::DeviceType deviceType, const ORUtils::KeyValueConfig& cfg,
-	                                          const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
-	                                          const ITMSceneParams* sceneParams) {
+	                                                MemoryDeviceType deviceType, const ORUtils::KeyValueConfig& cfg,
+	                                                const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
+	                                                const ITMSceneParams* sceneParams) {
 		ITMCameraTracker* dTracker = MakeExtendedTracker(imgSize_rgb, imgSize_d, deviceType, cfg,
 		                                           lowLevelEngine, imuCalibrator, sceneParams);
 		if (dTracker == NULL) DIEWITHEXCEPTION("Failed to make extended tracker"); // Should never happen though
@@ -522,7 +522,7 @@ public:
 	 * \brief Makes a file based tracker.
 	 */
 	static ITMCameraTracker*
-	MakeFileBasedTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, ITMLibSettings::DeviceType deviceType,
+	MakeFileBasedTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, MemoryDeviceType deviceType,
 	                     const ORUtils::KeyValueConfig& cfg,
 	                     const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
 	                     const ITMSceneParams* sceneParams) {
@@ -539,7 +539,7 @@ public:
 	 * \brief Makes a force fail tracker.
 	 */
 	static ITMCameraTracker*
-	MakeForceFailTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, ITMLibSettings::DeviceType deviceType,
+	MakeForceFailTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, MemoryDeviceType deviceType,
 	                     const ORUtils::KeyValueConfig& cfg,
 	                     const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
 	                     const ITMSceneParams* sceneParams) {

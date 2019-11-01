@@ -505,27 +505,27 @@ void ComputeLiveJacobian_CentralDifferences_IgnoreUnknown_IndexedFields_BorderTr
 	xValid &= voxel.flags != ITMLib::VOXEL_UNKNOWN;
 	//TODO
 	DIEWITHEXCEPTION_REPORTLOCATION("NOT YET IMPLEMENTED");
-//	float sdfAtXplusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+//	float sdfAtXplusOne = TVoxelA::valueToFloat(voxel.sdf_values[fieldIndex]);
 //
 //	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 1, 0), vmIndex, cache);
 //	yValid &= voxel.flags != ITMLib::VOXEL_UNKNOWN;
-//	float sdfAtYplusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+//	float sdfAtYplusOne = TVoxelA::valueToFloat(voxel.sdf_values[fieldIndex]);
 //
 //	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 0, 1), vmIndex, cache);
 //	zValid &= voxel.flags != ITMLib::VOXEL_UNKNOWN;
-//	float sdfAtZplusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+//	float sdfAtZplusOne = TVoxelA::valueToFloat(voxel.sdf_values[fieldIndex]);
 //
 //	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(-1, 0, 0), vmIndex, cache);
 //	xValid &= voxel.flags != ITMLib::VOXEL_UNKNOWN;
-//	float sdfAtXminusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+//	float sdfAtXminusOne = TVoxelA::valueToFloat(voxel.sdf_values[fieldIndex]);
 //
 //	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, -1, 0), vmIndex, cache);
 //	yValid &= voxel.flags != ITMLib::VOXEL_UNKNOWN;
-//	float sdfAtYminusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+//	float sdfAtYminusOne = TVoxelA::valueToFloat(voxel.sdf_values[fieldIndex]);
 //
 //	voxel = readVoxel(voxels, hashEntries, voxelPosition + Vector3i(0, 0, -1), vmIndex, cache);
 //	zValid &= voxel.flags != ITMLib::VOXEL_UNKNOWN;
-//	float sdfAtZminusOne = TVoxel::valueToFloat(voxel.sdf_values[fieldIndex]);
+//	float sdfAtZminusOne = TVoxelA::valueToFloat(voxel.sdf_values[fieldIndex]);
 //
 //
 //	jacobian[0] = xValid ? 0.5f * (sdfAtXplusOne - sdfAtXminusOne) : 0.0f;

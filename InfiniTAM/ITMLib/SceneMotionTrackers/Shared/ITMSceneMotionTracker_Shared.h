@@ -22,9 +22,9 @@
 
 //_DEBUG preprocessor options
 #ifdef TRACK_LIVE_NONTRUNCATED
-template<typename TVoxel>
+template<typename TVoxelA>
 _CPU_AND_GPU_CODE_ inline
-bool VoxelIsConsideredForTracking(const TVoxel& voxelCanonical, const TVoxel& voxelLive){
+bool VoxelIsConsideredForTracking(const TVoxelA& voxelCanonical, const TVoxelA& voxelLive){
 	return voxelLive.flags == ITMLib::VOXEL_NONTRUNCATED;
 };
 #else

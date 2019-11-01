@@ -27,7 +27,8 @@ namespace ITMLib {
 // region ==================================== Voxel Hash Scene Manipulation Engine ====================================
 
 template<typename TVoxel>
-void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
+void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
 	int numBlocks = scene->index.GetAllocatedBlockCount();
 	int blockSize = scene->index.GetVoxelBlockSize();
 
@@ -115,7 +116,9 @@ ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVol
 }
 
 template<typename TVoxel>
-void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::OffsetWarps(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset){
+void
+ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::OffsetWarps(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
+                                                                       Vector3f offset) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented!");
 }
 
@@ -157,7 +160,8 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 			}
 		}
 
-		AllocateHashEntriesUsingLists_CPU(destination, hashEntryStates_device, blockCoords_device);
+		ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance().
+				AllocateHashEntriesUsingLists(destination, hashEntryStates_device, blockCoords_device);
 
 		//iterate over source hash blocks & fill in the target hash blocks
 		for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
@@ -217,7 +221,9 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 				}
 			}
 		}
-		AllocateHashEntriesUsingLists_CPU(destination, hashEntryStates_device, blockCoords_device);
+
+		ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance().
+				AllocateHashEntriesUsingLists(destination, hashEntryStates_device, blockCoords_device);
 		ITMVoxelBlockHash::IndexCache source_cache;
 
 		for (int source_z = bounds.min_z; source_z < bounds.max_z; source_z++) {
@@ -252,8 +258,8 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 	const int hashEntryCount = source->index.hashEntryCount;
 
 	//temporary stuff
-	ORUtils::MemoryBlock<HashEntryState> hashEntryStates (hashEntryCount, MEMORYDEVICE_CPU);
-	ORUtils::MemoryBlock<Vector3s> blockCoordinates (hashEntryCount, MEMORYDEVICE_CPU);
+	ORUtils::MemoryBlock<HashEntryState> hashEntryStates(hashEntryCount, MEMORYDEVICE_CPU);
+	ORUtils::MemoryBlock<Vector3s> blockCoordinates(hashEntryCount, MEMORYDEVICE_CPU);
 	HashEntryState* hashEntryStates_device = hashEntryStates.GetData(MEMORYDEVICE_CPU);
 	Vector3s* blockCoordinates_device = blockCoordinates.GetData(MEMORYDEVICE_CPU);
 
@@ -268,13 +274,13 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 	if (offset == Vector3i(0)) {
 		// traverse source hash blocks, see which ones need to be allocated in destination
 		bool collisionDetected;
-		do{
+		do {
 			collisionDetected = false;
 			//reset target allocation states
 			memset(hashEntryStates_device, ITMLib::NEEDS_NO_CHANGE,
 			       static_cast<size_t>(hashEntryCount));
 #ifdef WITH_OPENMP
-#pragma omp parallel for
+#pragma omp parallel for default(none)
 #endif
 			for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
 
@@ -285,10 +291,13 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 				MarkAsNeedingAllocationIfNotFound(hashEntryStates_device, blockCoordinates_device, destinationHash,
 				                                  currentSourceHashEntry.pos, destinationHashTable, collisionDetected);
 			}
-			AllocateHashEntriesUsingLists_CPU(destination, hashEntryStates_device, blockCoordinates_device);
-		} while(collisionDetected);
+
+
+			ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance().
+			AllocateHashEntriesUsingLists(destination, hashEntryStates_device, blockCoordinates_device);
+		} while (collisionDetected);
 #ifdef WITH_OPENMP
-#pragma omp parallel for
+#pragma omp parallel for default(none)
 #endif
 		for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
 			const ITMHashEntry& sourceHashEntry = sourceHashTable[sourceHash];

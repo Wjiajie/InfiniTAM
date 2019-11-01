@@ -269,7 +269,7 @@ private:
 };
 
 
-template<typename TVoxel, typename TWarp, typename TIndex, ITMLib::ITMLibSettings::DeviceType TDeviceType>
+template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TDeviceType>
 void SmoothWarpGradient_common(ITMLib::ITMVoxelVolume<TVoxel, TIndex>* liveScene,
                                ITMLib::ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
                                ITMLib::ITMVoxelVolume<TWarp, TIndex>* warpField) {
@@ -322,7 +322,7 @@ struct AddFlowWarpToWarpStaticFunctor<TVoxelCanonical, false> {
 	}
 };
 
-template<typename TVoxel, typename TWarp, typename TIndex, ITMLib::ITMLibSettings::DeviceType TDeviceType>
+template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TDeviceType>
 inline float UpdateWarps_common(
 		ITMLib::ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
 		ITMLib::ITMVoxelVolume<TVoxel, TIndex>* liveScene,
@@ -349,7 +349,7 @@ inline float UpdateWarps_common(
 	return GET_ATOMIC_VALUE_CPU(warpUpdateFunctor.maxFlowWarpLength);
 }
 
-template<typename TVoxelCanonical, typename TIndex, ITMLib::ITMLibSettings::DeviceType TDeviceType>
+template<typename TVoxelCanonical, typename TIndex, MemoryDeviceType TDeviceType>
 inline void
 AddFlowWarpToWarp_common(ITMLib::ITMVoxelVolume<TVoxelCanonical, TIndex>* canonicalScene, bool clearFlowWarp) {
 	if (clearFlowWarp) {

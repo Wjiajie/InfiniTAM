@@ -26,7 +26,7 @@ ITMBasicEngine<TVoxel,TIndex>::ITMBasicEngine(const ITMRGBDCalib& calib, Vector2
 	MemoryDeviceType memoryType = settings.GetMemoryType();
 	this->scene = new ITMVoxelVolume<TVoxel,TIndex>(&settings.sceneParams, settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
 
-	const ITMLibSettings::DeviceType deviceType = settings.deviceType;
+	const MemoryDeviceType deviceType = settings.deviceType;
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
@@ -326,7 +326,7 @@ ITMTrackingState::TrackingResult ITMBasicEngine<TVoxel,TIndex>::ProcessFrame(ITM
 		if (addKeyframeIdx >= 0)
 		{
 			MemoryCopyDirection memoryCopyDirection =
-				settings.deviceType == ITMLibSettings::DEVICE_CUDA ? MemoryCopyDirection::CUDA_TO_CUDA : MemoryCopyDirection::CPU_TO_CPU;
+				settings.deviceType == MEMORYDEVICE_CUDA ? MemoryCopyDirection::CUDA_TO_CUDA : MemoryCopyDirection::CPU_TO_CPU;
 
 			kfRaycast->SetFrom(renderState_live->raycastImage, memoryCopyDirection);
 		}
@@ -367,13 +367,13 @@ void ITMBasicEngine<TVoxel,TIndex>::GetImage(ITMUChar4Image *out, GetImageType g
 	{
 	case ITMBasicEngine::InfiniTAM_IMAGE_ORIGINAL_RGB:
 		out->ChangeDims(view->rgb->noDims);
-		if (settings.deviceType == ITMLibSettings::DEVICE_CUDA) 
+		if (settings.deviceType == MEMORYDEVICE_CUDA)
 			out->SetFrom(view->rgb, MemoryCopyDirection::CUDA_TO_CPU);
 		else out->SetFrom(view->rgb, MemoryCopyDirection::CPU_TO_CPU);
 		break;
 	case ITMBasicEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH:
 		out->ChangeDims(view->depth->noDims);
-		if (settings.deviceType == ITMLibSettings::DEVICE_CUDA) view->depth->UpdateHostFromDevice();
+		if (settings.deviceType == MEMORYDEVICE_CUDA) view->depth->UpdateHostFromDevice();
 		ITMVisualisationEngine<TVoxel, TIndex>::DepthToUchar4(out, view->depth);
 
 		break;
@@ -410,7 +410,7 @@ void ITMBasicEngine<TVoxel,TIndex>::GetImage(ITMUChar4Image *out, GetImageType g
 		else srcImage = renderState_live->raycastImage;
 
 		out->ChangeDims(srcImage->noDims);
-		if (settings.deviceType == ITMLibSettings::DEVICE_CUDA)
+		if (settings.deviceType == MEMORYDEVICE_CUDA)
 			out->SetFrom(srcImage, MemoryCopyDirection::CUDA_TO_CPU);
 		else out->SetFrom(srcImage, MemoryCopyDirection::CPU_TO_CPU);
 
@@ -435,7 +435,7 @@ void ITMBasicEngine<TVoxel,TIndex>::GetImage(ITMUChar4Image *out, GetImageType g
 		visualisationEngine->CreateExpectedDepths(scene, pose, intrinsics, renderState_freeview);
 		visualisationEngine->RenderImage(scene, pose, intrinsics, renderState_freeview, renderState_freeview->raycastImage, type);
 
-		if (settings.deviceType == ITMLibSettings::DEVICE_CUDA)
+		if (settings.deviceType == MEMORYDEVICE_CUDA)
 			out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CUDA_TO_CPU);
 		else out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CPU_TO_CPU);
 		break;

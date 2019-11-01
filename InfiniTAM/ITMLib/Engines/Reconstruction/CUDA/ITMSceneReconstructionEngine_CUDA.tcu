@@ -6,6 +6,7 @@
 #include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../../Utils/ITMCUDAUtils.h"
 #include "../../../../ORUtils/JetbrainsCUDASyntax.hpp"
+#include "../../Indexing/Shared/ITMIndexingEngine_Shared.h"
 
 
 using namespace ITMLib;

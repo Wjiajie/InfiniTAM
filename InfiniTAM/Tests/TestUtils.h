@@ -60,8 +60,8 @@ typename TIndex::InitializationParameters GetCommonIndexParameters();
 //TODO: figure out whether it still makes sense to suppress assignment operator of the ITMVoxelVolume class...
 // Then restore or delete this depending on the decision. If the decision is negative, provide a constructor that loads from path instead.
 //
-//template<typename TVoxel, typename TIndex>
-//ITMVoxelVolume<TVoxel, TIndex> loadSdfVolume (const std::string& path, MemoryDeviceType memoryDeviceType,
+//template<typename TVoxelA, typename TIndex>
+//ITMVoxelVolume<TVoxelA, TIndex> loadSdfVolume (const std::string& path, MemoryDeviceType memoryDeviceType,
 //		typename TIndex::InitializationParameters initializationParameters = GetCommonIndexParameters<TIndex>(),
 //		ITMLibSettings::SwappingMode swappingMode = ITMLibSettings::SWAPPINGMODE_DISABLED);
 

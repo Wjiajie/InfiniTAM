@@ -23,7 +23,7 @@ ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMRGBDCalib& calib, V
 	MemoryDeviceType memoryType = settings.GetMemoryType();
 	this->surfelScene = new ITMSurfelScene<TSurfel>(&settings.surfelSceneParams, memoryType);
 
-	const ITMLibSettings::DeviceType deviceType = settings.deviceType;
+	const MemoryDeviceType deviceType = settings.deviceType;
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
@@ -276,7 +276,7 @@ ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITMUChar4Image* rgbImage, ITMShortIm
 		if (addKeyframeIdx >= 0)
 		{
 			ORUtils::MemoryBlock<Vector4u>::MemoryCopyDirection memoryCopyDirection =
-				settings.deviceType == ITMLibSettings::DEVICE_CUDA ? ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CUDA : ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU;
+				settings.deviceType == MEMORYDEVICE_CUDA ? ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CUDA : ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU;
 
 			kfRaycast->SetFrom(renderState_live->raycastImage, memoryCopyDirection);
 		}
@@ -333,13 +333,13 @@ void ITMBasicSurfelEngine<TSurfel>::GetImage(ITMUChar4Image* out, GetImageType g
 	switch (getImageType) {
 		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_ORIGINAL_RGB:
 			out->ChangeDims(view->rgb->noDims);
-			if (settings.deviceType == ITMLibSettings::DEVICE_CUDA)
+			if (settings.deviceType == MEMORYDEVICE_CUDA)
 				out->SetFrom(view->rgb, MemoryCopyDirection::CUDA_TO_CPU);
 			else out->SetFrom(view->rgb, MemoryCopyDirection::CPU_TO_CPU);
 			break;
 		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH:
 			out->ChangeDims(view->depth->noDims);
-			if (settings.deviceType == ITMLibSettings::DEVICE_CUDA) view->depth->UpdateHostFromDevice();
+			if (settings.deviceType == MEMORYDEVICE_CUDA) view->depth->UpdateHostFromDevice();
 			IITMVisualisationEngine::DepthToUchar4(out, view->depth);
 			break;
 		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_SCENERAYCAST:

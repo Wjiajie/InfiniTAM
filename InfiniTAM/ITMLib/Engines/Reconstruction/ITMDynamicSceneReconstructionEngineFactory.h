@@ -43,21 +43,21 @@ struct ITMDynamicSceneReconstructionEngineFactory {
 	 */
 	template<typename TVoxel, typename TWarp, typename TIndex>
 	static ITMDynamicSceneReconstructionEngine<TVoxel, TWarp, TIndex>*
-	MakeSceneReconstructionEngine(ITMLibSettings::DeviceType deviceType) {
+	MakeSceneReconstructionEngine(MemoryDeviceType deviceType) {
 		ITMDynamicSceneReconstructionEngine<TVoxel, TWarp, TIndex>* sceneRecoEngine = NULL;
 
 		switch (deviceType) {
-			case ITMLibSettings::DEVICE_CPU:
+			case MEMORYDEVICE_CPU:
 				sceneRecoEngine = new ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, TIndex>;
 				break;
-			case ITMLibSettings::DEVICE_CUDA:
+			case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
 				sceneRecoEngine = new ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, TIndex>;
 #endif
 				break;
-			case ITMLibSettings::DEVICE_METAL:
+			case MEMORYDEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
-				sceneRecoEngine = new ITMSceneReconstructionEngine_Metal<TVoxel,TIndex>;
+				sceneRecoEngine = new ITMSceneReconstructionEngine_Metal<TVoxelA,TIndex>;
 #endif
 				break;
 		}

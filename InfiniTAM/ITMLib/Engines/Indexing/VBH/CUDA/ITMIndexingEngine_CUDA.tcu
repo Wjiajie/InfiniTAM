@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 10/8/19.
+//  Created by Gregory Kramida on 11/1/19.
 //  Copyright (c) 2019 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -13,18 +13,19 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "ITMHashAllocationEngine_CUDA.h"
-#include "ITMHashAllocationEngine_CUDA_Kernels.h"
-#include "../Shared/ITMHashAllocationEngine_Shared.h"
-#include "../../../Objects/RenderStates/ITMRenderState_VH.h"
-#include "../../../Utils/ITMLibSettings.h"
+#pragma once
+
+#include "ITMIndexingEngine_CUDA.h"
+#include "../../../../Objects/RenderStates/ITMRenderState_VH.h"
+#include "../../Shared/ITMIndexingEngine_Shared.h"
+#include "ITMIndexingEngine_CUDA_Kernels.h"
+
 
 using namespace ITMLib;
 
 
-
-template<typename TVoxel, typename TWarp>
-void ITMHashAllocationEngine_CUDA<TVoxel, TWarp>::AllocateFromDepth(
+template<typename TVoxel>
+void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFromDepth(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
 		const ITMView* view, const ITMTrackingState* trackingState, const ITMRenderState* renderState,
 		bool onlyUpdateVisibleList, bool resetVisibleList) {
@@ -121,15 +122,15 @@ void ITMHashAllocationEngine_CUDA<TVoxel, TWarp>::AllocateFromDepth(
 
 	if (useSwapping) {
 		buildVisibleList_device<true> << < gridSizeAL, cudaBlockSizeAL >> >
-		                                               (hashTable, swapStates, noTotalEntries, visibleEntryIDs_device,
-				                                               allocationTempData.GetData(
-						                                               MEMORYDEVICE_CUDA), hashBlockVisibilityTypes_device, M_d, projParams_d, depthImgSize, voxelSize);
+		(hashTable, swapStates, noTotalEntries, visibleEntryIDs_device,
+				allocationTempData.GetData(
+						MEMORYDEVICE_CUDA), hashBlockVisibilityTypes_device, M_d, projParams_d, depthImgSize, voxelSize);
 		ORcudaKernelCheck;
 	} else {
 		buildVisibleList_device<false> << < gridSizeAL, cudaBlockSizeAL >> >
-		                                                (hashTable, swapStates, noTotalEntries, visibleEntryIDs_device,
-				                                                allocationTempData.GetData(
-						                                                MEMORYDEVICE_CUDA), hashBlockVisibilityTypes_device, M_d, projParams_d, depthImgSize, voxelSize);
+		(hashTable, swapStates, noTotalEntries, visibleEntryIDs_device,
+				allocationTempData.GetData(
+						MEMORYDEVICE_CUDA), hashBlockVisibilityTypes_device, M_d, projParams_d, depthImgSize, voxelSize);
 		ORcudaKernelCheck;
 	}
 
@@ -148,33 +149,13 @@ void ITMHashAllocationEngine_CUDA<TVoxel, TWarp>::AllocateFromDepth(
 
 }
 
-template<typename TVoxel, typename TWarp>
-void ITMHashAllocationEngine_CUDA<TVoxel, TWarp>::AllocateTSDFVolumeFromTSDFVolume(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetVolume,
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceVolume) {
-	AllocateFromVolumeGeneric(targetVolume, sourceVolume);
-}
 
-template<typename TVoxel, typename TWarp>
-void ITMHashAllocationEngine_CUDA<TVoxel, TWarp>::AllocateWarpVolumeFromTSDFVolume(
-		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* targetVolume,
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceVolume) {
-	AllocateFromVolumeGeneric(targetVolume, sourceVolume);
-}
 
-template<typename TVoxel, typename TWarp>
-template<WarpType TWarpType>
-void ITMHashAllocationEngine_CUDA<TVoxel, TWarp>::AllocateFromWarpedVolume(
-		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
-	allocateFromWarpedVolume_common<TVoxel,TWarp, TWarpType, ITMLibSettings::DEVICE_CUDA>(warpField,sourceTSDF,targetTSDF);
-}
-
-template<typename TVoxel, typename TWarp>
-template<typename TVoxelTarget, typename TVoxelSource>
-void ITMHashAllocationEngine_CUDA<TVoxel, TWarp>::AllocateFromVolumeGeneric(
-		ITMVoxelVolume<TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
-		ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* sourceVolume) {
+template<typename TVoxel>
+template<typename TVoxelATarget, typename TVoxelASource>
+void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateUsingOtherVolume(
+		ITMVoxelVolume<TVoxelATarget, ITMVoxelBlockHash>* targetVolume,
+		ITMVoxelVolume<TVoxelASource, ITMVoxelBlockHash>* sourceVolume) {
 
 	assert(targetVolume->index.hashEntryCount == sourceVolume->index.hashEntryCount);
 
@@ -217,4 +198,64 @@ void ITMHashAllocationEngine_CUDA<TVoxel, TWarp>::AllocateFromVolumeGeneric(
 		ORcudaKernelCheck;
 		collisionDetected.UpdateHostFromDevice();
 	} while (*collisionDetected.GetData(MEMORYDEVICE_CPU));
+}
+
+template<typename TVoxel>
+void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::
+AllocateHashEntriesUsingLists(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
+		const HashEntryState* hashEntryStates_device,
+		Vector3s* blockCoordinates_device) {
+
+	const int hashEntryCount = scene->index.hashEntryCount;
+
+	int* voxelAllocationList = scene->localVBA.GetAllocationList();
+	int* excessAllocationList = scene->index.GetExcessAllocationList();
+	ITMHashEntry* hashTable = scene->index.GetIndexData();
+
+	ORUtils::MemoryBlock<AllocationTempData> allocationTempData(1, true, true);
+	AllocationTempData* allocationTempData_host = allocationTempData.GetData(MEMORYDEVICE_CPU);
+	allocationTempData_host->noAllocatedVoxelEntries = scene->localVBA.lastFreeBlockId;
+	allocationTempData_host->noAllocatedExcessEntries = scene->index.GetLastFreeExcessListId();
+	allocationTempData_host->noVisibleEntries = 0;
+	allocationTempData.UpdateDeviceFromHost();
+
+	dim3 cudaBlockSizeAL(256, 1);
+	dim3 gridSizeAL((int) ceil((float) hashEntryCount / (float) cudaBlockSizeAL.x));
+
+	allocateHashedVoxelBlocksUsingLists_device << < gridSizeAL, cudaBlockSizeAL >> > (
+			voxelAllocationList, excessAllocationList, allocationTempData.GetData(MEMORYDEVICE_CUDA),
+					hashTable, hashEntryCount, hashEntryStates_device,
+					blockCoordinates_device);
+}
+
+
+template<typename TVoxelA>
+void ITMIndexingEngine<TVoxelA, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::
+AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxelA, ITMVoxelBlockHash>* scene,
+                                            const ITMLib::HashEntryState* hashEntryStates_device,
+                                            Vector3s* blockCoordinates_device,
+                                            uchar* hashBlockVisibilityTypes_device) {
+
+
+	const int hashEntryCount = scene->index.hashEntryCount;
+
+	int* voxelAllocationList = scene->localVBA.GetAllocationList();
+	int* excessAllocationList = scene->index.GetExcessAllocationList();
+	ITMHashEntry* hashTable = scene->index.GetIndexData();
+
+	ORUtils::MemoryBlock<AllocationTempData> allocationTempData(1, true, true);
+	AllocationTempData* allocationTempData_host = allocationTempData.GetData(MEMORYDEVICE_CPU);
+	allocationTempData_host->noAllocatedVoxelEntries = scene->localVBA.lastFreeBlockId;
+	allocationTempData_host->noAllocatedExcessEntries = scene->index.GetLastFreeExcessListId();
+	allocationTempData_host->noVisibleEntries = 0;
+	allocationTempData.UpdateDeviceFromHost();
+
+	dim3 cudaBlockSizeAL(256, 1);
+	dim3 gridSizeAL((int) ceil((float) hashEntryCount / (float) cudaBlockSizeAL.x));
+
+	allocateHashedVoxelBlocksUsingLists_SetVisibility_device << < gridSizeAL, cudaBlockSizeAL >> > (
+			voxelAllocationList, excessAllocationList, allocationTempData.GetData(MEMORYDEVICE_CUDA),
+					hashTable, hashEntryCount, hashEntryStates_device,
+					blockCoordinates_device, hashBlockVisibilityTypes_device);
 }

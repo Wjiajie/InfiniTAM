@@ -26,21 +26,21 @@ struct ITMVisualisationEngineFactory
    * \param deviceType  The device on which the visualisation engine should operate.
    */
   template <typename TVoxel, typename TIndex>
-  static ITMVisualisationEngine<TVoxel,TIndex> *MakeVisualisationEngine(ITMLibSettings::DeviceType deviceType)
+  static ITMVisualisationEngine<TVoxel,TIndex> *MakeVisualisationEngine(MemoryDeviceType deviceType)
   {
     ITMVisualisationEngine<TVoxel,TIndex> *visualisationEngine = NULL;
 
     switch(deviceType)
     {
-      case ITMLibSettings::DEVICE_CPU:
+      case MEMORYDEVICE_CPU:
         visualisationEngine = new ITMVisualisationEngine_CPU<TVoxel,TIndex>;
         break;
-      case ITMLibSettings::DEVICE_CUDA:
+      case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
         visualisationEngine = new ITMVisualisationEngine_CUDA<TVoxel,TIndex>;
 #endif
         break;
-      case ITMLibSettings::DEVICE_METAL:
+      case MEMORYDEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
         visualisationEngine = new ITMVisualisationEngine_Metal<TVoxelCanonical,TIndex>;
 #endif

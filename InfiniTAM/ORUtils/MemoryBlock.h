@@ -78,7 +78,7 @@ namespace ORUtils
 			this->isAllocated_CUDA = false;
 			this->isMetalCompatible = false;
 
-#ifndef NDEBUG // When building in debug mode always allocate both on the CPU and the GPU
+#ifndef NDEBUG // When building in debug mode always allocate both on the CPU and the CUDA
 			if (allocate_CUDA) allocate_CPU = true;
 #endif
 
@@ -101,7 +101,7 @@ namespace ORUtils
 				case MEMORYDEVICE_CPU: Allocate(dataSize, true, false, true); break;
 				case MEMORYDEVICE_CUDA:
 				{
-#ifndef NDEBUG // When building in debug mode always allocate both on the CPU and the GPU
+#ifndef NDEBUG // When building in debug mode always allocate both on the CPU and the CUDA
 					Allocate(dataSize, true, true, true);
 #else
 					Allocate(dataSize, false, true, true);

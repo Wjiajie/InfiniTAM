@@ -135,7 +135,7 @@ cv::Mat ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>::DrawSceneImageAroundPo
 	DrawSceneVoxelAtOriginalPositionFunctor<TVoxel> drawSceneVoxelFunctor(
 			imgPixelRangeY, imgPixelRangeZ, bounds, plane,
 			this->pixelsPerVoxel, absFillingStrategy, img);
-	ITMSceneTraversalEngine<TVoxel, TIndex, ITMLibSettings::DEVICE_CPU>::
+	ITMSceneTraversalEngine<TVoxel, TIndex, MEMORYDEVICE_CPU>::
 	        VoxelPositionTraversalWithinBounds(scene,drawSceneVoxelFunctor, bounds);
 	return img;
 }
@@ -171,7 +171,7 @@ struct DrawSceneVoxelAtWarpedPositionFunctor {
 		                                              imageRangeY,
 		                                              imageRangeZ);
 		const int voxelOnImageSize = static_cast<int>(pixelsPerVoxel);
-		float value = 0.0;//SdfToShadeValue(TVoxel::valueToFloat(voxel.sdf));
+		float value = 0.0;//SdfToShadeValue(TVoxelA::valueToFloat(voxel.sdf));
 		//fill a pixel block with the source scene value
 		for (int row = imgCoords.y; row < imgCoords.y + voxelOnImageSize / 2; row++) {
 			for (int col = imgCoords.x; col < imgCoords.x + voxelOnImageSize / 2; col++) {
@@ -212,7 +212,7 @@ cv::Mat ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>::DrawWarpedSceneImageAr
 	DrawSceneVoxelAtWarpedPositionFunctor<TVoxel, TWarp> drawSceneVoxelFunctor(
 			imgPixelRangeY, imgPixelRangeZ, bounds, plane,
 			this->pixelsPerVoxel, absFillingStrategy, img);
-	ITMDualSceneTraversalEngine<TVoxel, TWarp, TIndex, TIndex, ITMLibSettings::DEVICE_CPU>::
+	ITMDualSceneTraversalEngine<TVoxel, TWarp, TIndex, TIndex, MEMORYDEVICE_CPU>::
 	        template DualVoxelPositionTraversalWithinBounds(scene, warpField, drawSceneVoxelFunctor, expandedBounds);
 	return img;
 }
@@ -410,7 +410,7 @@ ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>::RenderSceneSlices(ITMVoxelVolu
 	}
 	DrawSingleVoxelForSliceFunctor<TVoxel> drawSingleVoxelForSliceFunctor(images, axis, focusCoordinates, minPoint,
 	                                                                      absFillingStrategy);
-	ITMSceneTraversalEngine<TVoxel, TIndex, ITMLibSettings::DEVICE_CPU>::
+	ITMSceneTraversalEngine<TVoxel, TIndex, MEMORYDEVICE_CPU>::
 	VoxelPositionTraversal(scene, drawSingleVoxelForSliceFunctor);
 
 	for (int iImage = 0; iImage < imageCount; iImage++) {
