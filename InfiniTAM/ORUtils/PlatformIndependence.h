@@ -47,10 +47,10 @@
 #if defined(ANDROID)
 #define DIEWITHEXCEPTION(x) { fprintf(stderr, "%s\n", x); exit(-1); }
 #define DIEWITHEXCEPTION_REPORTLOCATION(x) { fprintf(stderr, "%s\n", x x __FILE__ TOSTRING(__LINE__)); exit(-1); }
-//#elif defined(__CUDACC__) && defined(__CUDA_ARCH__)
+#elif defined(__CUDACC__) && defined(__CUDA_ARCH__)
 ////TODO: set string via host-mapped memory pointer, __threadfence_system() call before "trap", somehow print the string with the CUDA error-handling macro
-//#define DIEWITHEXCEPTION(x) { asm("trap;"); }
-//#define DIEWITHEXCEPTION_REPORTLOCATION(x) { asm("trap;"); }
+#define DIEWITHEXCEPTION(x) { asm("trap;"); }
+#define DIEWITHEXCEPTION_REPORTLOCATION(x) { asm("trap;"); }
 #else
 #define DIEWITHEXCEPTION(x) throw std::runtime_error(x)
 #define DIEWITHEXCEPTION_REPORTLOCATION(x) throw std::runtime_error( x "\n[" __FILE__ ":" TOSTRING(__LINE__) "]")

@@ -104,17 +104,6 @@ public:
 	                                   ITMVoxelVolume<TVoxel, TIndex>* sourceTSDF,
 	                                   ITMVoxelVolume<TVoxel, TIndex>* targetTSDF) = 0;
 
-
-	//TODO: move this to ITMSceneManipulationEngine
-	/**
-	 * \brief Copy the live indexed scene from one index to another
-	 * \param liveScene
-	 * \param sourceSdfIndex
-	 * \param targetSdfIndex
-	 */
-	virtual void CopyScene(ITMVoxelVolume<TVoxel, TIndex>* sourceTSDF,
-	                       ITMVoxelVolume<TVoxel, TIndex>* targetTSDF) = 0;
-
 protected:
 
 	/** Update the voxel blocks by integrating depth and

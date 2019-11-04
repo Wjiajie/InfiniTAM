@@ -51,8 +51,6 @@ public:
 	void WarpScene_WarpUpdates(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
-	void CopyScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
-	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
 protected:
 	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);
@@ -92,9 +90,6 @@ public:
 			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
 			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) override;
-
-	void CopyScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
-	               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) override;
 
 	ITMDynamicSceneReconstructionEngine_CUDA() = default;
 	~ITMDynamicSceneReconstructionEngine_CUDA() = default;

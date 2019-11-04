@@ -120,20 +120,12 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 	                                                                                                      flagClearFunctor);
 
 	TrilinearInterpolationFunctor<TVoxel, TWarp, ITMPlainVoxelArray,
-			WarpVoxelStaticFunctor<TWarp, TWarpType>>
+			WarpVoxelStaticFunctor<TWarp, TWarpType>, MEMORYDEVICE_CPU>
 			trilinearInterpolationFunctor(sourceTSDF, warpField);
 
 //	 Interpolate to obtain the new live frame values (at target index)
 	ITMDualSceneTraversalEngine<TVoxel, TWarp, ITMPlainVoxelArray, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	DualVoxelPositionTraversal(targetTSDF, warpField, trilinearInterpolationFunctor);
-}
-
-template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::CopyScene(
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {
-	ITMDualSceneTraversalEngine<TVoxel, TVoxel, ITMPlainVoxelArray, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
-	        template StaticDualVoxelPositionTraversal<CopySceneFunctor<TVoxel> >(sourceTSDF, targetTSDF);
 }
 
 template<typename TVoxel, typename TWarp>

@@ -122,6 +122,7 @@ ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVo
 	                          cudaMemcpyDeviceToHost));
 
 	if (readVoxelResult->found) {
+		printf("found\n");
 		return readVoxelResult->voxel;
 	} else {
 		TVoxel voxel;

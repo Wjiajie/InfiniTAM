@@ -92,6 +92,7 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CPU_VBH) {
 	loadSdfVolume(&warped_live_volume_gt, "../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warped_live_",
 	              MEMORYDEVICE_CPU);
 
+
 	float absoluteTolerance = 1e-7;
 	BOOST_REQUIRE(!contentAlmostEqual_CPU(warped_live_volume, live_volume, absoluteTolerance));
 	BOOST_REQUIRE(contentAlmostEqual_CPU(warped_live_volume, warped_live_volume_gt, absoluteTolerance));

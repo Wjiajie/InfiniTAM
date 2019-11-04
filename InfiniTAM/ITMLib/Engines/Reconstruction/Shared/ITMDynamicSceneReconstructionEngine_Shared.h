@@ -341,9 +341,9 @@ inline void interpolateTSDFVolume(TVoxel* sdfSourceVoxels,
                                   TVoxel& destinationVoxel,
                                   const Vector3i& warpAndDestinationVoxelPosition,
                                   bool printResult) {
+
 	Vector3f warpedPosition =
 			TLookupPositionFunctor::GetWarpedPosition(warp, warpAndDestinationVoxelPosition);
-
 	bool struckKnown;
 
 	float sdf = _DEBUG_InterpolateTrilinearly_StruckKnown(

@@ -149,19 +149,19 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 
 	// Clear out the flags at target volume
 	FieldClearFunctor<TVoxel> flagClearFunctor;
-	ITMSceneTraversalEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::VoxelTraversal(targetTSDF,
-	                                                                                                     flagClearFunctor);
+	ITMSceneTraversalEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::VoxelTraversal(targetTSDF, flagClearFunctor);
 
 	// Allocate new blocks where necessary, filter based on flags from source
 	ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance().template AllocateFromWarpedVolume<TWarpType>(
 			warpField, sourceTSDF, targetTSDF);
 
-	TrilinearInterpolationFunctor<TVoxel, TWarp, ITMVoxelBlockHash, WarpVoxelStaticFunctor<TWarp, TWarpType>>
+	TrilinearInterpolationFunctor<TVoxel, TWarp, ITMVoxelBlockHash, WarpVoxelStaticFunctor<TWarp, TWarpType>, MEMORYDEVICE_CPU>
 			trilinearInterpolationFunctor(sourceTSDF, warpField);
 
 	// Interpolate to obtain the new live frame values (at target index)
 	ITMDualSceneTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
-	DualVoxelPositionTraversal_DefaultForMissingSecondary(targetTSDF, warpField, trilinearInterpolationFunctor);
+	//DualVoxelPositionTraversal_DefaultForMissingSecondary(targetTSDF, warpField, trilinearInterpolationFunctor);
+	DualVoxelPositionTraversal(targetTSDF,warpField,trilinearInterpolationFunctor);
 }
 
 template<typename TVoxel, typename TWarp>
@@ -170,17 +170,6 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 		const ITMRenderState* renderState, bool resetVisibleList) {
 	ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
 			.AllocateFromDepth(scene, view, trackingState, renderState, true, resetVisibleList);
-}
-
-template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::CopyScene(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
-	ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
-			.AllocateUsingOtherVolume(targetTSDF, sourceTSDF);
-	ITMDualSceneTraversalEngine<TVoxel, TVoxel, ITMVoxelBlockHash, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
-	template StaticDualVoxelPositionTraversal<CopySceneFunctor<TVoxel>>(sourceTSDF, targetTSDF);
-
 }
 
 template<typename TVoxel, typename TWarp>
