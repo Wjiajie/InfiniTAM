@@ -297,7 +297,6 @@ _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxel
 
 	float liveSdf = TVoxelLive::valueToFloat(liveVoxel.sdf);
 
-	//TODO: make threshold parameter
 	// parameter eta from SobolevFusion, Sec. 3.1, divided by voxel size
 	//(voxel size, m) / (narrow-band half-width eta, m) * -("2-3 voxels", we use 3)
 	const float threshold = -0.3;

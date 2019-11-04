@@ -77,6 +77,7 @@ if (BUILD_TESTS)
     itm_add_test(NAME SceneSlicingPVA_CPU SOURCES Test_SceneSlicingPVA_CPU.cpp)
     itm_add_test(NAME SurfaceTrackingAuxiliaryFunctions SOURCES Test_SurfaceTrackingAuxiliaryFunctions.cpp)
     itm_add_test(NAME WarpScene SOURCES Test_WarpScene.cpp)
+    itm_add_test(NAME FuseLifeIntoCanonical SOURCES Test_FuseLifeIntoCanonical.cpp)
 
     #####################################################
     # Recursively transfer test data to build directory #

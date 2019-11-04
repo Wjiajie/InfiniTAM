@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CPU_VBH) {
 	//warped_live_volume->SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warped_live_");
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* warped_live_volume_gt;
-	loadSdfVolume(&warped_live_volume_gt, "../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warped_live_",
+	loadSdfVolume(&warped_live_volume_gt, "TestData/snoopy_result_fr16-17_partial_VBH/warped_live_",
 	              MEMORYDEVICE_CPU);
 
 
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_PVA) {
 	//warped_live_volume->SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warped_live_");
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* warped_live_volume_gt;
-	loadSdfVolume(&warped_live_volume_gt, "../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warped_live_",
+	loadSdfVolume(&warped_live_volume_gt, "TestData/snoopy_result_fr16-17_partial_PVA/warped_live_",
 	              MEMORYDEVICE_CUDA);
 
 	float absoluteTolerance = 1e-7;
@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_VBH) {
 	//warped_live_volume->SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warped_live_");
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* warped_live_volume_gt;
-	loadSdfVolume(&warped_live_volume_gt, "../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warped_live_",
+	loadSdfVolume(&warped_live_volume_gt, "TestData/snoopy_result_fr16-17_partial_VBH/warped_live_",
 	              MEMORYDEVICE_CUDA);
 
 	float absoluteTolerance = 1e-7;
