@@ -14,7 +14,7 @@
 //  limitations under the License.
 //  ================================================================
 
-#include <device_atomic_functions.h>
+#include <vector>
 #include "ITMSceneStatisticsCalculator_CUDA.h"
 #include "../../../ITMLibSettings.h"
 #include "../../../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h"
@@ -80,12 +80,14 @@ template<typename TVoxel, typename TIndex>
 int
 ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeAllocatedVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	return 0;
 }
 
 template<typename TVoxel, typename TIndex>
 std::vector<int>
 ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::GetFilledHashBlockIds(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	return std::vector<int>();
 }
 
 
@@ -132,6 +134,7 @@ template<class TVoxel, typename TIndex>
 struct ComputeNonTruncatedVoxelCountFunctor<false, TVoxel, TIndex> {
 	static int compute(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 		DIEWITHEXCEPTION("Voxels need to have semantic information to be marked as truncated or non-truncated.");
+		return 0;
 	}
 };
 template<class TVoxel, typename TIndex>
@@ -195,18 +198,22 @@ template<typename TVoxel, typename TIndex>
 float ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::FindMaxGradient0LengthAndPosition(
 		ITMVoxelVolume<TVoxel, TIndex>* scene, Vector3i& positionOut) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	return 0.0f;
 }
 
 template<typename TVoxel, typename TIndex>
 float ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::FindMaxGradient1LengthAndPosition(
 		ITMVoxelVolume<TVoxel, TIndex>* scene, Vector3i& positionOut) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	return 0.0f;
 }
 
 template<typename TVoxel, typename TIndex>
 unsigned int
 ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeAlteredVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	IsAlteredCountFunctor<TVoxel> functor;
+	ITMSceneTraversalEngine<TVoxel, TIndex, MEMORYDEVICE_CPU>::VoxelTraversal(scene, functor);
+	return functor.GetCount();
 }
 
 template<typename TVoxel, typename TIndex>

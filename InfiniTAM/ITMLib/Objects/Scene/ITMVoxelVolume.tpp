@@ -22,7 +22,9 @@ namespace ITMLib {
 /**
  * \brief Generate a new scene (Caution: does not reset / initialize the voxel storage itself)
  * \param _sceneParams scene parameters (\see ITMSceneParams definition)
- * \param _useSwapping whether or not to use the swapping mechanism (TODO: better explanation of the swapping)
+ * \param _useSwapping whether or not to use the GPU<--> CPU swapping mechanism
+ * When on, keeps a larger global scene in main memory and a smaller, working part in VRAM, and continuously updates
+ * the former from the latter
  * \param _memoryType DRAM to use -- GPU or CPU
  * \param size (optional) size of the scene -- affects only bounded index types, such as ITMPlainVoxelArray
  * \param offset (optional) offset of the scene -- affects only bounded index types, such as ITMPlainVoxelArray
@@ -55,7 +57,6 @@ void ITMVoxelVolume<TVoxel, TIndex>::SetFrom(const ITMVoxelVolume& other) {
 	index.SetFrom(other.index);
 	localVBA.SetFrom(other.localVBA);
 	if(other.globalCache != nullptr){
-		// TODO: not sure if global cache needs to be shared or copied between copied scenes
 		delete this->globalCache;
 		globalCache = new ITMGlobalCache<TVoxel, TIndex>(*other.globalCache);
 	}else{

@@ -19,66 +19,10 @@
 #include "../Shared/ITMSceneManipulationEngine_Shared.h"
 #include "../../../Utils/ITMHashBlockProperties.h"
 #include "../../../Utils/Geometry/ITMGeometryBooleanOpernations.h"
-#include <cuda_runtime.h>
 
 using namespace ITMLib;
 
 namespace {
-//CUDA kernels
-__global__
-void allocateVoxelBlocksList_device(
-		int* voxelAllocationList, int* excessAllocationList,
-		CopyAllocationTempData* allocData,
-		ITMHashEntry* hashTable, int noTotalEntries,
-		HashEntryState* hashEntryStates, Vector3s* blockCoords) {
-	int hashCode = threadIdx.x + blockIdx.x * blockDim.x;
-	if (hashCode > noTotalEntries - 1) return;
-
-	int vbaIdx, exlIdx;
-
-	switch (hashEntryStates[hashCode]) {
-		case ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST: //needs allocation, fits in the ordered list
-			vbaIdx = atomicSub(&allocData->countOfAllocatedOrderedEntries, 1);
-
-			if (vbaIdx >= 0) //there is room in the voxel block array
-			{
-				ITMHashEntry hashEntry;
-				hashEntry.pos = blockCoords[hashCode];
-				hashEntry.ptr = voxelAllocationList[vbaIdx];
-				hashEntry.offset = 0;
-
-				hashTable[hashCode] = hashEntry;
-			} else {
-				// Restore the previous value to avoid leaks.
-				atomicAdd(&allocData->countOfAllocatedOrderedEntries, 1);
-			}
-			break;
-
-		case ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST: //needs allocation in the excess list
-			vbaIdx = atomicSub(&allocData->countOfAllocatedOrderedEntries, 1);
-			exlIdx = atomicSub(&allocData->countOfAllocatedExcessEntries, 1);
-
-			if (vbaIdx >= 0 && exlIdx >= 0) //there is room in the voxel block array and excess list
-			{
-				ITMHashEntry hashEntry;
-				hashEntry.pos = blockCoords[hashCode];
-				hashEntry.ptr = voxelAllocationList[vbaIdx];
-				hashEntry.offset = 0;
-
-				int exlOffset = excessAllocationList[exlIdx];
-
-				hashTable[hashCode].offset = exlOffset + 1; //connect to child
-
-				hashTable[ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
-			} else {
-				// Restore the previous values to avoid leaks.
-				atomicAdd(&allocData->countOfAllocatedOrderedEntries, 1);
-				atomicAdd(&allocData->countOfAllocatedExcessEntries, 1);
-			}
-
-			break;
-	}
-}
 
 template<class TVoxel>
 __global__ void noOffsetCopy_device(TVoxel* destinationVoxels, const TVoxel* sourceVoxels,

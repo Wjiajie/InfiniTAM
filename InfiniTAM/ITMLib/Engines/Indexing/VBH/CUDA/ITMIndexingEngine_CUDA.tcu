@@ -55,8 +55,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 	ITMHashEntry* hashTable = scene->index.GetEntries();
 	ITMHashSwapState* swapStates = scene->Swapping() ? scene->globalCache->GetSwapStates(true) : 0;
 
-	ORUtils::MemoryBlock<ITMLib::HashEntryState> hashEntryStates(scene->index.hashEntryCount, MEMORYDEVICE_CUDA);
-	ITMLib::HashEntryState* hashEntryStates_device = hashEntryStates.GetData(MEMORYDEVICE_CUDA);
+	ITMLib::HashEntryState* hashEntryStates_device = scene->index.GetHashEntryStates();
 	ORUtils::MemoryBlock<Vector3s> hashBlockCoordinates(scene->index.hashEntryCount, MEMORYDEVICE_CUDA);
 	Vector3s* allocationBlockCoordinates_device = hashBlockCoordinates.GetData(MEMORYDEVICE_CUDA);
 
@@ -94,7 +93,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 
 	bool useSwapping = scene->globalCache != nullptr;
 	do {
-		hashEntryStates.Clear(NEEDS_NO_CHANGE);
+		scene->index.ClearHashEntryStates();
 		*collisionDetected.GetData(MEMORYDEVICE_CPU) = false;
 		collisionDetected.UpdateDeviceFromHost();
 
@@ -165,8 +164,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateUs
 	int* excessAllocationList = targetVolume->index.GetExcessAllocationList();
 	int hashEntryCount = targetVolume->index.hashEntryCount;
 
-	ORUtils::MemoryBlock<HashEntryState> hashEntryStates(targetVolume->index.hashEntryCount, MEMORYDEVICE_CUDA);
-	HashEntryState* hashEntryStates_device = hashEntryStates.GetData(MEMORYDEVICE_CUDA);
+	HashEntryState* hashEntryStates_device = targetVolume->index.GetHashEntryStates();
 	ORUtils::MemoryBlock<Vector3s> blockCoordinates(targetVolume->index.hashEntryCount, MEMORYDEVICE_CUDA);
 	Vector3s* blockCoordinates_device = blockCoordinates.GetData(MEMORYDEVICE_CUDA);
 
@@ -183,7 +181,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateUs
 	dim3 gridSizeAL((int) ceil((float) hashEntryCount / (float) cudaBlockSizeAL.x));
 
 	do {
-		hashEntryStates.Clear(NEEDS_NO_CHANGE);
+		targetVolume->index.ClearHashEntryStates();
 		*collisionDetected.GetData(MEMORYDEVICE_CPU) = false;
 		collisionDetected.UpdateDeviceFromHost();
 

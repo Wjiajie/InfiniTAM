@@ -49,6 +49,7 @@ template<typename TVoxel, typename TIndex, MemoryDeviceType TDeviceType, Statist
 struct ComputeFlowWarpLengthStatisticFunctor<false, TVoxel, TIndex, TDeviceType, TStatistic> {
 	static int compute(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 		DIEWITHEXCEPTION("Voxels need to have flow warp information to get flow warp statistics.");
+		return 0;
 	}
 };
 
@@ -144,6 +145,7 @@ struct ComputeVoxelCountWithSpecificValue<false, TVoxel, TIndex, TMemoryDeviceTy
 	static int compute(ITMVoxelVolume<TVoxel, TIndex>* scene, float value) {
 		DIEWITHEXCEPTION("Voxel volume issued to count voxels with specific SDF value appears to have no sdf information. "
 		                 "Voxels need to have sdf information.");
+		return 0;
 	}
 };
 
@@ -158,6 +160,7 @@ struct SumSDFFunctor<false, TVoxel, TIndex> {
 	static double compute(ITMVoxelVolume<TVoxel, TIndex>* scene, ITMLib::VoxelFlags voxelType) {
 		DIEWITHEXCEPTION_REPORTLOCATION(
 				"Voxels need to have semantic information to be marked as truncated or non-truncated.");
+		return 0.0;
 	}
 };
 template<class TVoxel, typename TIndex>
@@ -183,4 +186,29 @@ struct SumSDFFunctor<true, TVoxel, TIndex> {
 			ATOMIC_ADD(sum, std::abs(static_cast<double>(TVoxel::valueToFloat(voxel.sdf))));
 		}
 	}
+};
+
+//========================================= COUNT ALTERED VOXELS =======================================================
+
+template<typename TVoxel>
+struct IsAlteredCountFunctor {
+	IsAlteredCountFunctor() {
+		INITIALIZE_ATOMIC(unsigned int, count, 0u);
+	};
+	~IsAlteredCountFunctor(){
+		CLEAN_UP_ATOMIC(count);
+	}
+
+	_DEVICE_WHEN_AVAILABLE_
+	void operator()(const TVoxel& voxel) {
+		if (isAltered(voxel)) {
+			ATOMIC_ADD(count, 1u);
+		}
+	}
+
+	unsigned int GetCount(){
+		return GET_ATOMIC_VALUE_CPU(count);
+	}
+
+	DECLARE_ATOMIC(unsigned int, count);
 };

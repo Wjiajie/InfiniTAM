@@ -301,26 +301,13 @@ ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::FindMaxGradient1LengthAndPosit
 }
 
 
-template<typename TVoxel>
-struct IsAlteredCountFunctor {
-	IsAlteredCountFunctor() : count(0u) {};
-
-	void operator()(const TVoxel& voxel) {
-		if (isAltered(voxel)) {
-			count.fetch_add(1, std::memory_order_relaxed);
-		}
-	}
-
-	std::atomic<unsigned int> count;
-};
-
 
 template<typename TVoxel, typename TIndex>
 unsigned int
 ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeAlteredVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	IsAlteredCountFunctor<TVoxel> functor;
 	ITMSceneTraversalEngine<TVoxel, TIndex, MEMORYDEVICE_CPU>::VoxelTraversal(scene, functor);
-
+	return functor.GetCount();
 }
 
 template<typename TVoxel, typename TIndex>

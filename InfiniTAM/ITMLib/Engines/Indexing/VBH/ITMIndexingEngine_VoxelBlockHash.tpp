@@ -33,9 +33,7 @@ void ITMIndexingEngine_VoxelBlockHash<TVoxel, TMemoryDeviceType, TDerivedClass>:
 
 	int hashEntryCount = warpField->index.hashEntryCount;
 
-
-	ORUtils::MemoryBlock<HashEntryState> hashEntryStates(hashEntryCount, TMemoryDeviceType);
-	HashEntryState* hashEntryStates_device = hashEntryStates.GetData(TMemoryDeviceType);
+	HashEntryState* hashEntryStates_device = targetTSDF->index.GetHashEntryStates();
 	ORUtils::MemoryBlock<Vector3s> blockCoordinates(hashEntryCount, TMemoryDeviceType);
 	Vector3s* blockCoordinates_device = blockCoordinates.GetData(TMemoryDeviceType);
 
@@ -44,7 +42,7 @@ void ITMIndexingEngine_VoxelBlockHash<TVoxel, TMemoryDeviceType, TDerivedClass>:
 			hashMarkerFunctor(sourceTSDF, targetTSDF, blockCoordinates_device, hashEntryStates_device);
 	do{
 		//reset allocation flags
-		hashEntryStates.Clear(NEEDS_NO_CHANGE);
+		targetTSDF->index.ClearHashEntryStates();
 		hashMarkerFunctor.collisionDetected = false;
 		ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, TMemoryDeviceType>::VoxelAndHashBlockPositionTraversal(
 				warpField, hashMarkerFunctor);

@@ -55,8 +55,8 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 	uchar* hashBlockVisibilityTypes = renderState_vh->GetEntriesVisibleType();
 	int hashEntryCount = scene->index.hashEntryCount;
 
-	ORUtils::MemoryBlock<HashEntryState> hashEntryStates(hashEntryCount, MEMORYDEVICE_CPU);
-	HashEntryState* hashEntryStates_device = hashEntryStates.GetData(MEMORYDEVICE_CPU);
+
+	HashEntryState* hashEntryStates_device = scene->index.GetHashEntryStates();
 	ORUtils::MemoryBlock<Vector3s> targetSceneHashBlockCoordinates(hashEntryCount, MEMORYDEVICE_CPU);
 	Vector3s* allocationBlockCoordinates = targetSceneHashBlockCoordinates.GetData(MEMORYDEVICE_CPU);
 
@@ -66,7 +66,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 
 	bool useSwapping = scene->globalCache != nullptr;
 	do {
-		memset(hashEntryStates_device, NEEDS_NO_CHANGE, static_cast<size_t>(hashEntryCount));
+		scene->index.ClearHashEntryStates();
 		collisionDetected = false;
 		for (int i = 0; i < renderState_vh->noVisibleEntries; i++)
 			hashBlockVisibilityTypes[visibleEntryIDs[i]] = 3; // visible at previous frame and unstreamed
@@ -151,8 +151,8 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateUsi
 	assert(targetVolume->index.hashEntryCount == sourceVolume->index.hashEntryCount);
 
 	const int hashEntryCount = targetVolume->index.hashEntryCount;
-	ORUtils::MemoryBlock<HashEntryState> hashEntryStates(hashEntryCount, MEMORYDEVICE_CPU);
-	HashEntryState* hashEntryStates_device = hashEntryStates.GetData(MEMORYDEVICE_CPU);
+
+	HashEntryState* hashEntryStates_device = targetVolume->index.GetHashEntryStates();
 	ORUtils::MemoryBlock<Vector3s> hashBlockCoordinates(hashEntryCount, MEMORYDEVICE_CPU);
 	Vector3s* blockCoordinates_device = hashBlockCoordinates.GetData(MEMORYDEVICE_CPU);
 	ITMHashEntry* targetHashEntries = targetVolume->index.GetEntries();
@@ -163,8 +163,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateUsi
 	do {
 		collisionDetected = false;
 		//reset target allocation states
-		memset(hashEntryStates_device, ITMLib::NEEDS_NO_CHANGE,
-		       static_cast<size_t>(hashEntryCount));
+		targetVolume->index.ClearHashEntryStates();
 #ifdef WITH_OPENMP
 #pragma omp parallel for default(none)
 #endif

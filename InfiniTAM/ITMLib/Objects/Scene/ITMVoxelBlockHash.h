@@ -13,6 +13,7 @@
 #include "../../Utils/ITMMath.h"
 #include "../../../ORUtils/MemoryBlock.h"
 #include "../../../ORUtils/MemoryBlockPersister.h"
+#include "../../Utils/ITMHashBlockProperties.h"
 
 #define VOXEL_BLOCK_SIZE 8
 // VOXEL_BLOCK_SIZE3 = VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE
@@ -60,11 +61,11 @@ and a pointer to the data structure on the GPU.
 class ITMVoxelBlockHash {
 public:
 	struct ITMVoxelBlockHashParameters {
-		private:
+	private:
 		static const int defaultVoxelBlockCount = 0x40000;
 
-		static const int defaultExcessListSize =  0x20000;
-		public:
+		static const int defaultExcessListSize = 0x20000;
+	public:
 		const int voxelBlockCount;
 		/** Size of excess list, used to handle collisions. Also max offset (unsigned short) value. **/
 		const int excessListSize;
@@ -101,12 +102,13 @@ private:
 
 	/** The actual data in the hash table. */
 	ORUtils::MemoryBlock<ITMHashEntry>* hashEntries;
+	ORUtils::MemoryBlock<HashEntryState> hashEntryStates;
+
 
 	/** Identifies which entries of the overflow
 	list are allocated. This is used if too
 	many hash collisions caused the buckets to
-	overflow.
-	*/
+	overflow. */
 	ORUtils::MemoryBlock<int>* excessAllocationList;
 
 	MemoryDeviceType memoryType;
@@ -121,13 +123,15 @@ public:
 			voxelBlockCount(parameters.voxelBlockCount),
 			excessListSize(parameters.excessListSize),
 			hashEntryCount(ORDERED_LIST_SIZE + parameters.excessListSize),
-			lastFreeExcessListId(parameters.excessListSize - 1) {
+			lastFreeExcessListId(parameters.excessListSize - 1),
+			hashEntryStates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType) {
 		this->memoryType = memoryType;
 		hashEntries = new ORUtils::MemoryBlock<ITMHashEntry>(hashEntryCount, memoryType);
 		excessAllocationList = new ORUtils::MemoryBlock<int>(excessListSize, memoryType);
 	}
 
-	explicit ITMVoxelBlockHash(MemoryDeviceType memoryType) : ITMVoxelBlockHash(ITMVoxelBlockHashParameters(), memoryType) {}
+	explicit ITMVoxelBlockHash(MemoryDeviceType memoryType) : ITMVoxelBlockHash(ITMVoxelBlockHashParameters(),
+	                                                                            memoryType) {}
 
 
 	ITMVoxelBlockHash(const ITMVoxelBlockHash& other, MemoryDeviceType memoryType) :
@@ -137,6 +141,7 @@ public:
 
 	void SetFrom(const ITMVoxelBlockHash& other) {
 		MemoryCopyDirection memoryCopyDirection = determineMemoryCopyDirection(this->memoryType, other.memoryType);
+		this->hashEntryStates.SetFrom(&other.hashEntryStates, memoryCopyDirection);
 		this->hashEntries->SetFrom(other.hashEntries, memoryCopyDirection);
 		this->excessAllocationList->SetFrom(other.excessAllocationList, memoryCopyDirection);
 	}
@@ -160,6 +165,13 @@ public:
 	const IndexData* GetIndexData() const { return hashEntries->GetData(memoryType); }
 
 	IndexData* GetIndexData() { return hashEntries->GetData(memoryType); }
+
+	//(VBH-specific)
+	/** Get a list of temporary hash entry state flags**/
+	const HashEntryState* GetHashEntryStates() const { return hashEntryStates.GetData(memoryType); }
+	void ClearHashEntryStates() { hashEntryStates.Clear(NEEDS_NO_CHANGE);}
+
+	HashEntryState* GetHashEntryStates() { return hashEntryStates.GetData(memoryType); }
 
 	/** Get the list that identifies which entries of the
 	overflow list are allocated. This is used if too
