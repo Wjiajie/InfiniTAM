@@ -93,23 +93,23 @@ template<typename TIndex>
 struct ComputeAllocatedHashBlockCountFunctor;
 
 template<>
-struct ComputeAllocatedHashBlockCountFunctor<ITMPlainVoxelArray>{
+struct ComputeAllocatedHashBlockCountFunctor<ITMPlainVoxelArray> {
 	inline
-	static int compute(const ITMPlainVoxelArray& index){
+	static int compute(const ITMPlainVoxelArray& index) {
 		return 0;
 	}
 };
 
 template<>
-struct ComputeAllocatedHashBlockCountFunctor<ITMVoxelBlockHash>{
+struct ComputeAllocatedHashBlockCountFunctor<ITMVoxelBlockHash> {
 	inline
-	static int compute(const ITMVoxelBlockHash& index){
+	static int compute(const ITMVoxelBlockHash& index) {
 		dim3 cudaBlockSize(256, 1);
 		dim3 cudaGridSize((int) ceil((float) index.hashEntryCount / (float) cudaBlockSize.x));
-		ORUtils::MemoryBlock<int> result(1,true,true);
+		ORUtils::MemoryBlock<int> result(1, true, true);
 		*result.GetData(MEMORYDEVICE_CPU) = 0;
 		result.UpdateDeviceFromHost();
-		computeHashBlockCount<< <cudaGridSize, cudaBlockSize>> >(index.GetIndexData(), index.hashEntryCount,
+		computeHashBlockCount << < cudaGridSize, cudaBlockSize >> > (index.GetIndexData(), index.hashEntryCount,
 				result.GetData(MEMORYDEVICE_CUDA));
 		ORcudaKernelCheck;
 		result.UpdateHostFromDevice();
@@ -142,7 +142,7 @@ struct ComputeNonTruncatedVoxelCountFunctor<true, TVoxel, TIndex> {
 		ComputeNonTruncatedVoxelCountFunctor instance;
 
 		ITMSceneTraversalEngine<TVoxel, TIndex, MEMORYDEVICE_CUDA>::
-		        VoxelTraversal(scene,instance);
+		VoxelTraversal(scene, instance);
 		int count = 0;
 		cudaMemcpy(&count, instance.count_device, sizeof(int), cudaMemcpyDeviceToHost);
 		return count;
@@ -153,11 +153,13 @@ struct ComputeNonTruncatedVoxelCountFunctor<true, TVoxel, TIndex> {
 	void operator()(TVoxel& voxel) {
 		atomicAdd(count_device, (int) (voxel.flags == ITMLib::VOXEL_NONTRUNCATED));
 	}
-	ComputeNonTruncatedVoxelCountFunctor(){
-		ORcudaSafeCall(cudaMalloc((void**)&count_device, sizeof(int)));
+
+	ComputeNonTruncatedVoxelCountFunctor() {
+		ORcudaSafeCall(cudaMalloc((void**) &count_device, sizeof(int)));
 		ORcudaSafeCall(cudaMemset(count_device, 0, sizeof(int)));
 	}
-	~ComputeNonTruncatedVoxelCountFunctor(){
+
+	~ComputeNonTruncatedVoxelCountFunctor() {
 		ORcudaSafeCall(cudaFree(count_device));
 	}
 };
@@ -169,21 +171,23 @@ int ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeNonTruncatedVoxelC
 }
 
 template<typename TVoxel, typename TIndex>
-int ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeVoxelWithNonZeroSdfCount(
+unsigned int ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::CountVoxelsWithSpecificSdfValue(
 		ITMVoxelVolume<TVoxel, TIndex>* scene, float value) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	return ComputeVoxelCountWithSpecificValue<TVoxel::hasSDFInformation, TVoxel, TIndex, MEMORYDEVICE_CPU>::compute(
+			scene, value);
 }
 
 template<typename TVoxel, typename TIndex>
 double ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeNonTruncatedVoxelAbsSdfSum(
 		ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene,
+	                                                                              VoxelFlags::VOXEL_NONTRUNCATED);
 }
 
 template<typename TVoxel, typename TIndex>
 double ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeTruncatedVoxelAbsSdfSum(
 		ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene, VoxelFlags::VOXEL_TRUNCATED);
 }
 
 
@@ -200,24 +204,28 @@ float ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::FindMaxGradient1LengthA
 }
 
 template<typename TVoxel, typename TIndex>
-unsigned  int ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeAlteredVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+unsigned int
+ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeAlteredVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
 template<typename TVoxel, typename TIndex>
 double ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeFlowWarpMin(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CUDA, MINIMUM>::compute(scene);
+	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CUDA, MINIMUM>::compute(
+			scene);
 }
 
 
 template<typename TVoxel, typename TIndex>
 double ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeFlowWarpMax(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CUDA, MAXIMUM>::compute(scene);
+	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CUDA, MAXIMUM>::compute(
+			scene);
 }
 
 template<typename TVoxel, typename TIndex>
 double ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeFlowWarpMean(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CUDA, MEAN>::compute(scene);
+	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CUDA, MEAN>::compute(
+			scene);
 }
 
 namespace {
@@ -239,7 +247,8 @@ __global__ void computeVoxelBounds(const ITMHashEntry* hashTable, Vector6i* boun
 	atomicMax(&(bounds->max_y), hashEntryPosVoxels.y + VOXEL_BLOCK_SIZE);
 	atomicMax(&(bounds->max_z), hashEntryPosVoxels.z + VOXEL_BLOCK_SIZE);
 }
-__global__ void computeHashBlockCount(const ITMHashEntry* hashTable, int noTotalEntries, int* count){
+
+__global__ void computeHashBlockCount(const ITMHashEntry* hashTable, int noTotalEntries, int* count) {
 	int hash = threadIdx.x + blockIdx.x * blockDim.x;
 	if (hash >= noTotalEntries) return;
 

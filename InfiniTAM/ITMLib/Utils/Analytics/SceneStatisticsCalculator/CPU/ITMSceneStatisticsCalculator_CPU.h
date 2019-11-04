@@ -41,7 +41,7 @@ public:
 
 	int ComputeNonTruncatedVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) override;
 	unsigned int ComputeAlteredVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) override;
-	int ComputeVoxelWithNonZeroSdfCount(ITMVoxelVolume<TVoxel, TIndex>* scene, float value) override;
+	unsigned int CountVoxelsWithSpecificSdfValue(ITMVoxelVolume<TVoxel, TIndex>* scene, float value) override;
 	double ComputeNonTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene) override;
 	double ComputeTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene) override;
 	double ComputeFlowWarpMin(ITMVoxelVolume<TVoxel,TIndex>* scene) override;

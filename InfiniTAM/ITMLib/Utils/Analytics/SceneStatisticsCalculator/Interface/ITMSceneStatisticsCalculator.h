@@ -30,7 +30,7 @@ public:
 
 	virtual int ComputeNonTruncatedVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) = 0;
 	virtual unsigned int ComputeAlteredVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) = 0;
-	virtual int ComputeVoxelWithNonZeroSdfCount(ITMVoxelVolume<TVoxel, TIndex>* scene, float value) = 0;
+	virtual unsigned int CountVoxelsWithSpecificSdfValue(ITMVoxelVolume<TVoxel, TIndex>* scene, float value) = 0;
 	virtual double ComputeNonTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene) = 0;
 	virtual double ComputeTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene) = 0;
 	virtual double ComputeFlowWarpMin(ITMVoxelVolume<TVoxel,TIndex>* scene) = 0;

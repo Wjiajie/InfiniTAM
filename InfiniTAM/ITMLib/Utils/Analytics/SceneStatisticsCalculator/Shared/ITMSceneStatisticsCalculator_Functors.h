@@ -40,6 +40,8 @@ namespace ITMLib{
 	};
 }
 
+//================================================ VECTOR/GRADIENT FIELDS ==============================================
+
 template<bool hasCumulativeWarp, typename TVoxel, typename TIndex, MemoryDeviceType TDeviceType, Statistic TStatistic>
 struct ComputeFlowWarpLengthStatisticFunctor;
 
@@ -80,6 +82,11 @@ struct HandleAggregate<TVoxel, MEAN>{
 template<typename TVoxel, typename TIndex, MemoryDeviceType TDeviceType, Statistic TStatistic>
 struct ComputeFlowWarpLengthStatisticFunctor<true, TVoxel, TIndex, TDeviceType, TStatistic> {
 
+	~ComputeFlowWarpLengthStatisticFunctor(){
+		CLEAN_UP_ATOMIC(aggregate);
+		CLEAN_UP_ATOMIC(count);
+	}
+
 	static double compute(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 		ComputeFlowWarpLengthStatisticFunctor instance;
 		INITIALIZE_ATOMIC(double, instance.aggregate, 0.0);
@@ -100,5 +107,80 @@ struct ComputeFlowWarpLengthStatisticFunctor<true, TVoxel, TIndex, TDeviceType, 
 	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& voxel) {
 		HandleAggregate<TVoxel,TStatistic>::aggregateStatistic(aggregate, count, voxel);
+	}
+};
+
+//================================================== COUNT VOXELS WITH SPECIFIC VALUE ==================================
+
+template<bool hasSDFInformation, typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+struct ComputeVoxelCountWithSpecificValue;
+
+template<class TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+struct ComputeVoxelCountWithSpecificValue<true, TVoxel, TIndex, TMemoryDeviceType> {
+	explicit ComputeVoxelCountWithSpecificValue(float value): value(value){
+		INITIALIZE_ATOMIC(unsigned int, count, 0u);
+	}
+	~ComputeVoxelCountWithSpecificValue(){
+		CLEAN_UP_ATOMIC(count);
+	}
+
+	static int compute(ITMVoxelVolume<TVoxel, TIndex>* scene, float value) {
+		ComputeVoxelCountWithSpecificValue instance(value);
+		ITMSceneTraversalEngine<TVoxel, TIndex, TMemoryDeviceType>::VoxelTraversal(scene, instance);
+		return GET_ATOMIC_VALUE_CPU(instance.count);
+	}
+
+	DECLARE_ATOMIC(unsigned int, count);
+	float value = 0.0f;
+
+	_DEVICE_WHEN_AVAILABLE_
+	void operator()(TVoxel& voxel) {
+		ATOMIC_ADD(count, (unsigned int)(TVoxel::valueToFloat(voxel.sdf) == value));
+	}
+};
+
+template<class TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+struct ComputeVoxelCountWithSpecificValue<false, TVoxel, TIndex, TMemoryDeviceType> {
+	static int compute(ITMVoxelVolume<TVoxel, TIndex>* scene, float value) {
+		DIEWITHEXCEPTION("Voxel volume issued to count voxels with specific SDF value appears to have no sdf information. "
+		                 "Voxels need to have sdf information.");
+	}
+};
+
+
+//================================================== SUM OF TOTAL SDF ==================================================
+
+template<bool hasSemanticInformation, typename TVoxel, typename TIndex>
+struct SumSDFFunctor;
+
+template<class TVoxel, typename TIndex>
+struct SumSDFFunctor<false, TVoxel, TIndex> {
+	static double compute(ITMVoxelVolume<TVoxel, TIndex>* scene, ITMLib::VoxelFlags voxelType) {
+		DIEWITHEXCEPTION_REPORTLOCATION(
+				"Voxels need to have semantic information to be marked as truncated or non-truncated.");
+	}
+};
+template<class TVoxel, typename TIndex>
+struct SumSDFFunctor<true, TVoxel, TIndex> {
+	explicit SumSDFFunctor(ITMLib::VoxelFlags voxelType) : voxelType(voxelType){
+		INITIALIZE_ATOMIC(double, sum, 0.0);
+	}
+	~SumSDFFunctor(){
+		CLEAN_UP_ATOMIC(sum);
+	}
+	static double compute(ITMVoxelVolume<TVoxel, TIndex>* scene, ITMLib::VoxelFlags voxelType) {
+		SumSDFFunctor instance(voxelType);
+		ITMSceneTraversalEngine<TVoxel, TIndex, MEMORYDEVICE_CPU>::VoxelTraversal(scene, instance);
+		return GET_ATOMIC_VALUE_CPU(instance.sum);
+	}
+
+	DECLARE_ATOMIC(double, sum);
+	ITMLib::VoxelFlags voxelType;
+
+	_DEVICE_WHEN_AVAILABLE_
+	void operator()(TVoxel& voxel) {
+		if (voxelType == (ITMLib::VoxelFlags) voxel.flags) {
+			ATOMIC_ADD(sum, std::abs(static_cast<double>(TVoxel::valueToFloat(voxel.sdf))));
+		}
 	}
 };

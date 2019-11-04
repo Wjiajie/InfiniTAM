@@ -248,7 +248,9 @@ dualVoxelTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* seconda
 
 	if (secondaryHashEntry.pos != primaryHashEntry.pos) {
 		int secondaryHashCode = 0;
-		assert(FindHashAtPosition(secondaryHashCode, primaryHashEntry.pos, secondaryHashTable));
+		if(!FindHashAtPosition(secondaryHashCode, primaryHashEntry.pos, secondaryHashTable)){
+			DIEWITHEXCEPTION_REPORTLOCATION("No hash block with corresponding position found in hash table.");
+		}
 		secondaryHashEntry = secondaryHashTable[secondaryHashCode];
 	}
 
@@ -275,14 +277,9 @@ dualVoxelPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 	ITMHashEntry secondaryHashEntry = secondaryHashTable[hashCode];
 
 	if (secondaryHashEntry.pos != primaryHashEntry.pos) {
-		//_DEBUG
-//		if(threadIdx.x == 7 && threadIdx.y == 3 && threadIdx.z == 1 && blockIdx.x == 111150){
-//			printf("PHE pos: %d %d %d\n", primaryHashEntry.pos.x, primaryHashEntry.pos.y, primaryHashEntry.pos.z);
-//			printf("SHE pos: %d %d %d\n", secondaryHashEntry.pos.x, secondaryHashEntry.pos.y, secondaryHashEntry.pos.z);
-//		}
 		int secondaryHashCode = 0;
 		if(!FindHashAtPosition(secondaryHashCode, primaryHashEntry.pos, secondaryHashTable)){
-			DIEWITHEXCEPTION("No hash block with corresponding position found in hash table.");
+			DIEWITHEXCEPTION_REPORTLOCATION("No hash block with corresponding position found in hash table.");
 		}
 		secondaryHashEntry = secondaryHashTable[secondaryHashCode];
 	}
@@ -297,13 +294,6 @@ dualVoxelPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 	TVoxelPrimary& voxelPrimary = primaryVoxels[primaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3) + linearIndexInBlock];
 	TVoxelSecondary& voxelSecondary = secondaryVoxels[secondaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3) + linearIndexInBlock];
 
-	//_DEBUG
-//	if(threadIdx.x == 7 && threadIdx.y == 3 && threadIdx.z == 1 && blockIdx.x == 111150){
-//		voxelPrimary.print_self();
-//		printf("PHE pos: %d %d %d\n", primaryHashEntry.pos.x, primaryHashEntry.pos.y, primaryHashEntry.pos.z);
-//		printf("SHE pos: %d %d %d\n", secondaryHashEntry.pos.x, secondaryHashEntry.pos.y, secondaryHashEntry.pos.z);
-//		voxelSecondary.print_self();
-//	}
 	(*functor)(voxelPrimary, voxelSecondary, voxelPosition);
 }
 
@@ -322,12 +312,16 @@ dualVoxelWarpPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecond
 
 	if (secondaryHashEntry.pos != primaryHashEntry.pos) {
 		int secondaryHashCode = 0;
-		assert(FindHashAtPosition(secondaryHashCode, primaryHashEntry.pos, secondaryHashTable));
+		if(!FindHashAtPosition(secondaryHashCode, primaryHashEntry.pos, secondaryHashTable)){
+			DIEWITHEXCEPTION_REPORTLOCATION("No hash block with corresponding position found in hash table.");
+		}
 		secondaryHashEntry = secondaryHashTable[secondaryHashCode];
 	}
 	if (warpHashEntry.pos != primaryHashEntry.pos) {
 		int warpHashCode = 0;
-		assert(FindHashAtPosition(warpHashCode, primaryHashEntry.pos, warpHashTable));
+		if(!FindHashAtPosition(warpHashCode, primaryHashEntry.pos, warpHashTable)){
+			DIEWITHEXCEPTION_REPORTLOCATION("No hash block with corresponding position found in hash table.");
+		}
 		secondaryHashEntry = secondaryHashTable[warpHashCode];
 	}
 
