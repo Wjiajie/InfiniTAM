@@ -29,25 +29,12 @@ namespace ITMLib {
 
 template<typename TVoxelPrimary, typename TVoxelSecondary>
 class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelArray, ITMVoxelBlockHash, MEMORYDEVICE_CUDA> {
-public:
-	/**
-	 * \brief Routine allowing some kind of comparison function call on voxel pairs from the two scenes where both
-	 * voxels share the same spatial location.
-	 * \details voxels that are not modified / have default value (see isModified for how that works) in the primary
-	 * voxel volume are ignored if the voxel hash block at this location at the secondary voxel volume has not been
-	 * allocated.
-	 * \tparam TFunctor type of the function object (see parameter description)
-	 * \param primaryVolume the primary volume -- indexed using plain voxel array (PVA)
-	 * \param secondaryVolume the secondary volume -- indexed using voxel block hash table (VBH)
-	 * \param functor a function object accepting two voxels by reference as arguments and returning true/false
-	 * \return true if the matching functor returns "true" for all allocated voxels, false otherwise.
-	 */
-	template<typename TBooleanFunctor>
+	template <typename TBooleanFunctor, typename TDeviceFunction>
 	inline static bool
-	DualVoxelTraversal_AllTrue(
+	DualVoxelTraversal_AllTrue_Generic(
 			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
-			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
-			TBooleanFunctor& functor) {
+	ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
+			TBooleanFunctor& functor, TDeviceFunction&& deviceFunction ){
 		ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryVolume->index.GetIndexData();
 		int hashEntryCount = secondaryVolume->index.hashEntryCount;
 		ITMHashEntry* hashTable = secondaryVolume->index.GetIndexData();
@@ -121,11 +108,10 @@ public:
 				static_cast<int>(ceil(static_cast<float>(maxArrayCoord.z) / VOXEL_BLOCK_SIZE))
 		);
 
-		checkIfArrayContentIsUnalteredOrYieldsTrue
-				<< < gridSize_ArrayBlockEnvelope, cudaBlockSize_BlockVoxelPerThread >> >
-		                                          (voxelsArray, arrayInfo, voxelsHash, hashTable,
-				                                          minArrayCoord, maxArrayCoord, minBlockPos, functor_device,
-				                                          falseOrAlteredEncountered.GetData(MEMORYDEVICE_CUDA));
+		std::forward<TDeviceFunction>(deviceFunction)(
+				gridSize_ArrayBlockEnvelope, cudaBlockSize_BlockVoxelPerThread, voxelsArray, arrayInfo, voxelsHash,
+				hashTable, minArrayCoord, maxArrayCoord, minBlockPos, functor_device,
+				falseOrAlteredEncountered.GetData(MEMORYDEVICE_CUDA));
 		ORcudaKernelCheck;
 
 		// transfer functor from VRAM back to RAM (in case there was any alteration to the functor object)
@@ -134,7 +120,73 @@ public:
 		falseOrAlteredEncountered.UpdateHostFromDevice();
 
 		return !(*falseOrAlteredEncountered.GetData(MEMORYDEVICE_CPU));
+	}
+public:
+	/**
+	 * \brief Routine allowing some kind of comparison function call on voxel pairs from the two scenes where both
+	 * voxels share the same spatial location.
+	 * \details voxels that are not modified / have default value (see isModified for how that works) in the primary
+	 * voxel volume are ignored if the voxel hash block at this location at the secondary voxel volume has not been
+	 * allocated.
+	 * \tparam TFunctor type of the function object (see parameter description)
+	 * \param primaryVolume the primary volume -- indexed using plain voxel array (PVA)
+	 * \param secondaryVolume the secondary volume -- indexed using voxel block hash table (VBH)
+	 * \param functor a function object accepting two voxels by reference as arguments and returning true/false
+	 * \return true if the matching functor returns "true" for all allocated voxels, false otherwise.
+	 */
+	template<typename TBooleanFunctor>
+	inline static bool
+	DualVoxelTraversal_AllTrue(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
+			TBooleanFunctor& functor) {
 
+		return DualVoxelTraversal_AllTrue_Generic(primaryVolume, secondaryVolume, functor, []
+		(dim3 gridSize_ArrayBlockEnvelope, dim3 cudaBlockSize_BlockVoxelPerThread,
+				TVoxelPrimary* voxelsArray, ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+				TVoxelSecondary* voxelsHash, ITMHashEntry* hashTable, Vector3i minArrayCoord,
+				Vector3i maxArrayCoord, Vector3s minBlockPos, TBooleanFunctor* functor_device,
+				bool* falseOrAlteredEncountered_device){
+			checkIfArrayContentIsUnalteredOrYieldsTrue
+					<< < gridSize_ArrayBlockEnvelope, cudaBlockSize_BlockVoxelPerThread >> >
+			                                          (voxelsArray, arrayInfo, voxelsHash, hashTable,
+					                                          minArrayCoord, maxArrayCoord, minBlockPos, functor_device,
+					                                          falseOrAlteredEncountered_device);
+		});
+	}
+
+	/**
+	 * \brief Routine allowing some kind of comparison function call on voxel pairs from the two scenes where both
+	 * voxels share the same spatial location (variant with functor accepting voxel position).
+	 * \details voxels that are not modified / have default value (see isModified for how that works) in the primary
+	 * voxel volume are ignored if the voxel hash block at this location at the secondary voxel volume has not been
+	 * allocated.
+	 * \tparam TFunctor type of the function object (see parameter description)
+	 * \param primaryVolume the primary volume -- indexed using plain voxel array (PVA)
+	 * \param secondaryVolume the secondary volume -- indexed using voxel block hash table (VBH)
+	 * \param functor a function object accepting two voxels by reference as arguments and their mutual spatial coordinate,
+	 *  and returning true/false
+	 * \return true if the matching functor returns "true" for all allocated voxels, false otherwise.
+	 */
+	template<typename TBooleanFunctor>
+	inline static bool
+	DualVoxelPositionTraversal_AllTrue(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
+			TBooleanFunctor& functor) {
+
+		return DualVoxelTraversal_AllTrue_Generic(primaryVolume, secondaryVolume, functor, []
+				(dim3 gridSize_ArrayBlockEnvelope, dim3 cudaBlockSize_BlockVoxelPerThread,
+				 TVoxelPrimary* voxelsArray, ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+				 TVoxelSecondary* voxelsHash, ITMHashEntry* hashTable, Vector3i minArrayCoord,
+				 Vector3i maxArrayCoord, Vector3s minBlockPos, TBooleanFunctor* functor_device,
+				 bool* falseOrAlteredEncountered_device){
+			checkIfArrayContentIsUnalteredOrYieldsTruePosition
+					<< < gridSize_ArrayBlockEnvelope, cudaBlockSize_BlockVoxelPerThread >> >
+			                                          (voxelsArray, arrayInfo, voxelsHash, hashTable,
+					                                          minArrayCoord, maxArrayCoord, minBlockPos, functor_device,
+					                                          falseOrAlteredEncountered_device);
+		});
 	}
 
 	template<typename TBooleanFunctor>

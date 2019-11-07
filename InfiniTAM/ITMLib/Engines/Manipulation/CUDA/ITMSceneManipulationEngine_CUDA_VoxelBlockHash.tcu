@@ -84,6 +84,8 @@ ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMVoxelVol
 	int* excessAllocationList = scene->index.GetExcessAllocationList();
 
 	CopyAllocationTempData* tempData_host = (CopyAllocationTempData*) allocationTempData_host;
+	tempData_host->countOfAllocatedOrderedEntries = scene->localVBA.lastFreeBlockId;
+	tempData_host->countOfAllocatedExcessEntries = scene->index.GetLastFreeExcessListId();
 	tempData_host->countOfBlocksToCopy = 0;
 	tempData_host->success = false;
 
@@ -99,7 +101,8 @@ ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMVoxelVol
 	ORcudaSafeCall(
 			cudaMemcpy(tempData_host, allocationTempData_device, sizeof(CopyAllocationTempData),
 			           cudaMemcpyDeviceToHost));
-
+	scene->localVBA.lastFreeBlockId = tempData_host->countOfAllocatedOrderedEntries;
+	scene->index.SetLastFreeExcessListId(tempData_host->countOfAllocatedExcessEntries);
 	return tempData_host->success;
 }
 

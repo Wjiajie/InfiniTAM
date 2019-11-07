@@ -236,6 +236,7 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CUDA_and_CPU_ITMVoxel) {
 		coordinate = volumeOffset + volumeSize - Vector3i(1);
 		voxel = ManipulationEngine_CUDA_PVA_Voxel::Inst().ReadVoxel(&scene_PVA2, coordinate);
 		simulateVoxelAlteration(voxel, fmod((ITMVoxel::valueToFloat(voxel.sdf) + 0.1f), 1.0f));
+		std::cout << coordinate << std::endl;
 		ManipulationEngine_CUDA_PVA_Voxel::Inst().SetVoxel(&scene_PVA2, coordinate, voxel);
 		ManipulationEngine_CUDA_VBH_Voxel::Inst().SetVoxel(&scene_VBH2, coordinate, voxel);
 		BOOST_REQUIRE(!contentAlmostEqual_CUDA(&scene_PVA1, &scene_PVA2, tolerance));
