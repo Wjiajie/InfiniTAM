@@ -31,11 +31,8 @@ void ITMIndexingEngine_VoxelBlockHash<TVoxel, TMemoryDeviceType, TDerivedClass>:
 	assert(warpField->index.hashEntryCount == sourceTSDF->index.hashEntryCount &&
 	       sourceTSDF->index.hashEntryCount == targetTSDF->index.hashEntryCount);
 
-	int hashEntryCount = warpField->index.hashEntryCount;
-
 	HashEntryState* hashEntryStates_device = targetTSDF->index.GetHashEntryStates();
-	ORUtils::MemoryBlock<Vector3s> blockCoordinates(hashEntryCount, TMemoryDeviceType);
-	Vector3s* blockCoordinates_device = blockCoordinates.GetData(TMemoryDeviceType);
+	Vector3s* blockCoordinates_device = targetTSDF->index.GetAllocationBlockCoordinates();
 
 	//Mark up hash entries in the target scene that will need allocation
 	WarpBasedAllocationMarkerFunctor<TWarp, TVoxel, WarpVoxelStaticFunctor<TWarp, TWarpType>>

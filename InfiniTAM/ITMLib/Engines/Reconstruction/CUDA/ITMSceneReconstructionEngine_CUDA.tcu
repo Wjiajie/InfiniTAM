@@ -136,11 +136,9 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateScene
 	tempData->noVisibleEntries = 0;
 	ORcudaSafeCall(cudaMemcpyAsync(allocationTempData_device, tempData, sizeof(AllocationTempData), cudaMemcpyHostToDevice));
 
-	ITMLib::HashEntryState* hashEntryStates_device;
-	ORcudaSafeCall(cudaMalloc((void**)&hashEntryStates_device, sizeof(HashEntryState) * hashEntryCount));
-	ORcudaSafeCall(cudaMemsetAsync(hashEntryStates_device, 0, sizeof(HashEntryState) * hashEntryCount));
-	Vector3s* blockCoordinates_device;
-	ORcudaSafeCall(cudaMalloc((void**)&blockCoordinates_device, hashEntryCount * sizeof(Vector3s)));
+	ITMLib::HashEntryState* hashEntryStates_device = scene->index.GetHashEntryStates();
+	scene->index.ClearHashEntryStates();
+	Vector3s* blockCoordinates_device = scene->index.GetAllocationBlockCoordinates();
 
 	if (gridSizeVS.x > 0)
 	{

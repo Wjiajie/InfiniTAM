@@ -133,10 +133,8 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 	uchar *entriesVisibleType = renderState_vh->GetEntriesVisibleType();
 
 	int hashEntryCount = scene->index.hashEntryCount;
-	ORUtils::MemoryBlock<HashEntryState> hashEntryStates (hashEntryCount, MEMORYDEVICE_CPU);
-	ORUtils::MemoryBlock<Vector3s> blockCoords(hashEntryCount, MEMORYDEVICE_CPU);
-	HashEntryState* hashEntryStates_device = hashEntryStates.GetData(MEMORYDEVICE_CPU);
-	Vector3s* blockCoords_device = blockCoords.GetData(MEMORYDEVICE_CPU);
+	HashEntryState* hashEntryStates_device = scene->index.GetHashEntryStates();
+	Vector3s* blockCoords_device = scene->index.GetAllocationBlockCoordinates();
 
 
 	bool useSwapping = scene->Swapping();
@@ -148,7 +146,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 
 	int noVisibleEntries = 0;
 
-	memset(hashEntryStates_device, HashEntryState::NEEDS_NO_CHANGE, hashEntryCount);
+	scene->index.ClearHashEntryStates();
 
 	for (int i = 0; i < renderState_vh->noVisibleEntries; i++)
 		entriesVisibleType[visibleEntryIDs[i]] = 3; // visible at previous frame and unstreamed

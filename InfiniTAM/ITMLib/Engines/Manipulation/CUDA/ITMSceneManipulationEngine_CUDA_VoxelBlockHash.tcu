@@ -183,8 +183,7 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 
 	// allocate space for intermediate results
 	HashEntryState* hashEntryStates_device = destination->index.GetHashEntryStates();
-	Vector3s* blockCoordinates_device;
-	ORcudaSafeCall(cudaMalloc((void**) &blockCoordinates_device, sizeof(Vector3s) * hashEntryCount));
+	Vector3s* blockCoordinates_device = destination->index.GetAllocationBlockCoordinates();
 
 	Vector6i destinationBounds(bounds.min_x + offset.x, bounds.min_y + offset.y, bounds.min_z + offset.z,
 	                           bounds.max_x + offset.x, bounds.max_y + offset.y, bounds.max_z + offset.z);
@@ -261,8 +260,6 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 		ORcudaKernelCheck;
 	}
 
-	ORcudaSafeCall(cudaFree(blockCoordinates_device));
-
 	return tempData->success;
 }
 
@@ -289,9 +286,7 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopyScene(
 			                cudaMemcpyHostToDevice));
 
 	HashEntryState* hashEntryStates_device = destination->index.GetHashEntryStates();
-
-	Vector3s* blockCoordinates_device;
-	ORcudaSafeCall(cudaMalloc((void**) &blockCoordinates_device, sizeof(Vector3s) * hashEntryCount));
+	Vector3s* blockCoordinates_device = destination->index.GetAllocationBlockCoordinates();
 
 	if (offset == Vector3i(0)) {
 		ORUtils::MemoryBlock<CopyHashBlockPairInfo> copyHashIdBlock(hashEntryCount, MEMORYDEVICE_CUDA);
@@ -324,7 +319,6 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopyScene(
 				source);
 		tempData->success = CopySceneSlice(destination, source, bounds, offset);
 	}
-	ORcudaSafeCall(cudaFree(blockCoordinates_device));
 
 	return tempData->success;
 

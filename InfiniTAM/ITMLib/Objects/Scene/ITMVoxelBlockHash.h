@@ -103,6 +103,7 @@ private:
 	/** The actual data in the hash table. */
 	ORUtils::MemoryBlock<ITMHashEntry>* hashEntries;
 	ORUtils::MemoryBlock<HashEntryState> hashEntryStates;
+	ORUtils::MemoryBlock<Vector3s> allocationBlockCoordinates;
 
 
 	/** Identifies which entries of the overflow
@@ -124,7 +125,8 @@ public:
 			excessListSize(parameters.excessListSize),
 			hashEntryCount(ORDERED_LIST_SIZE + parameters.excessListSize),
 			lastFreeExcessListId(parameters.excessListSize - 1),
-			hashEntryStates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType) {
+			hashEntryStates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType),
+			allocationBlockCoordinates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType){
 		this->memoryType = memoryType;
 		hashEntries = new ORUtils::MemoryBlock<ITMHashEntry>(hashEntryCount, memoryType);
 		excessAllocationList = new ORUtils::MemoryBlock<int>(excessListSize, memoryType);
@@ -169,9 +171,11 @@ public:
 	//(VBH-specific)
 	/** Get a list of temporary hash entry state flags**/
 	const HashEntryState* GetHashEntryStates() const { return hashEntryStates.GetData(memoryType); }
-	void ClearHashEntryStates() { hashEntryStates.Clear(NEEDS_NO_CHANGE);}
-
 	HashEntryState* GetHashEntryStates() { return hashEntryStates.GetData(memoryType); }
+	void ClearHashEntryStates() { hashEntryStates.Clear(NEEDS_NO_CHANGE);}
+	const Vector3s* GetAllocationBlockCoordinates() const { return allocationBlockCoordinates.GetData(memoryType); }
+	/** Get a temporary list for coordinates of voxel blocks to be soon allocated**/
+	Vector3s* GetAllocationBlockCoordinates() { return allocationBlockCoordinates.GetData(memoryType); }
 
 	/** Get the list that identifies which entries of the
 	overflow list are allocated. This is used if too

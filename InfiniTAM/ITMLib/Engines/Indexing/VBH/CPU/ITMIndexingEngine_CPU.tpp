@@ -55,10 +55,8 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 	uchar* hashBlockVisibilityTypes = renderState_vh->GetEntriesVisibleType();
 	int hashEntryCount = scene->index.hashEntryCount;
 
-
 	HashEntryState* hashEntryStates_device = scene->index.GetHashEntryStates();
-	ORUtils::MemoryBlock<Vector3s> targetSceneHashBlockCoordinates(hashEntryCount, MEMORYDEVICE_CPU);
-	Vector3s* allocationBlockCoordinates = targetSceneHashBlockCoordinates.GetData(MEMORYDEVICE_CPU);
+	Vector3s* allocationBlockCoordinates = scene->index.GetAllocationBlockCoordinates();
 
 	float oneOverHashEntrySize = 1.0f / (voxelSize * VOXEL_BLOCK_SIZE);//m
 
@@ -153,8 +151,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateUsi
 	const int hashEntryCount = targetVolume->index.hashEntryCount;
 
 	HashEntryState* hashEntryStates_device = targetVolume->index.GetHashEntryStates();
-	ORUtils::MemoryBlock<Vector3s> hashBlockCoordinates(hashEntryCount, MEMORYDEVICE_CPU);
-	Vector3s* blockCoordinates_device = hashBlockCoordinates.GetData(MEMORYDEVICE_CPU);
+	Vector3s* blockCoordinates_device = targetVolume->index.GetAllocationBlockCoordinates();
 	ITMHashEntry* targetHashEntries = targetVolume->index.GetEntries();
 	ITMHashEntry* sourceHashEntries = sourceVolume->index.GetEntries();
 

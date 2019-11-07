@@ -56,8 +56,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 	ITMHashSwapState* swapStates = scene->Swapping() ? scene->globalCache->GetSwapStates(true) : 0;
 
 	ITMLib::HashEntryState* hashEntryStates_device = scene->index.GetHashEntryStates();
-	ORUtils::MemoryBlock<Vector3s> hashBlockCoordinates(scene->index.hashEntryCount, MEMORYDEVICE_CUDA);
-	Vector3s* allocationBlockCoordinates_device = hashBlockCoordinates.GetData(MEMORYDEVICE_CUDA);
+	Vector3s* allocationBlockCoordinates_device = scene->index.GetAllocationBlockCoordinates();
 
 	int noTotalEntries = scene->index.hashEntryCount;
 
@@ -165,8 +164,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateUs
 	int hashEntryCount = targetVolume->index.hashEntryCount;
 
 	HashEntryState* hashEntryStates_device = targetVolume->index.GetHashEntryStates();
-	ORUtils::MemoryBlock<Vector3s> blockCoordinates(targetVolume->index.hashEntryCount, MEMORYDEVICE_CUDA);
-	Vector3s* blockCoordinates_device = blockCoordinates.GetData(MEMORYDEVICE_CUDA);
+	Vector3s* blockCoordinates_device = targetVolume->index.GetAllocationBlockCoordinates();
 
 	ORUtils::MemoryBlock<bool> collisionDetected(1, true, true);
 
