@@ -212,7 +212,7 @@ template<typename TVoxel, typename TIndex>
 unsigned int
 ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeAlteredVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	IsAlteredCountFunctor<TVoxel> functor;
-	ITMSceneTraversalEngine<TVoxel, TIndex, MEMORYDEVICE_CPU>::VoxelTraversal(scene, functor);
+	ITMSceneTraversalEngine<TVoxel, TIndex, MEMORYDEVICE_CUDA>::VoxelTraversal(scene, functor);
 	return functor.GetCount();
 }
 

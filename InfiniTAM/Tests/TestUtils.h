@@ -55,17 +55,32 @@ void PrepareVoxelVolumeForLoading(ITMVoxelVolume<TVoxel, TIndex>* volume, Memory
 
 
 template<typename TIndex>
-typename TIndex::InitializationParameters GetCommonIndexParameters();
+typename TIndex::InitializationParameters GetFrame17PartialIndexParameters();
+
+template<typename TIndex>
+typename TIndex::InitializationParameters GetStandard512IndexParameters();
+
+template<typename TIndex>
+typename TIndex::InitializationParameters GetStandard128IndexParameters();
 
 //TODO: figure out whether it still makes sense to suppress assignment operator of the ITMVoxelVolume class...
 // Then restore or delete this depending on the decision. If the decision is negative, provide a constructor that loads from path instead.
 //
 //template<typename TVoxelA, typename TIndex>
 //ITMVoxelVolume<TVoxelA, TIndex> loadSdfVolume (const std::string& path, MemoryDeviceType memoryDeviceType,
-//		typename TIndex::InitializationParameters initializationParameters = GetCommonIndexParameters<TIndex>(),
+//		typename TIndex::InitializationParameters initializationParameters = GetFrame17PartialIndexParameters<TIndex>(),
 //		ITMLibSettings::SwappingMode swappingMode = ITMLibSettings::SWAPPINGMODE_DISABLED);
 
 template<typename TVoxel, typename TIndex>
 void loadSdfVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& path, MemoryDeviceType memoryDeviceType,
-                   typename TIndex::InitializationParameters initializationParameters = GetCommonIndexParameters<TIndex>(),
+                   typename TIndex::InitializationParameters initializationParameters = GetFrame17PartialIndexParameters<TIndex>(),
                    ITMLibSettings::SwappingMode swappingMode = ITMLibSettings::SWAPPINGMODE_DISABLED);
+
+template<typename TVoxel, typename TIndex>
+void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
+                             const std::string& depth_path, const std::string& color_path, const std::string& mask_path,
+                             const std::string& calibration_path = "TestData/snoopy_calib.txt",
+                             MemoryDeviceType memoryDevice = MEMORYDEVICE_CUDA,
+                             typename TIndex::InitializationParameters initializationParameters = GetStandard512IndexParameters<TIndex>(),
+                             ITMLibSettings::SwappingMode swappingMode = ITMLibSettings::SWAPPINGMODE_DISABLED,
+                             bool useBilateralFilter = false);

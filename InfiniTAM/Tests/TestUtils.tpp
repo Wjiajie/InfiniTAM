@@ -14,11 +14,18 @@
 //  limitations under the License.
 //  ================================================================
 #include <random>
+#include <boost/test/test_tools.hpp>
+
 #include "TestUtils.h"
 #include "../ITMLib/Utils/ITMLibSettings.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "../ITMLib/Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
+#include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
+#include "../ITMLib/Engines/ViewBuilding/ITMViewBuilderFactory.h"
+#include "../ITMLib/Engines/Reconstruction/Interface/ITMDynamicSceneReconstructionEngine.h"
+#include "../ORUtils/FileUtils.h"
+#include "../ITMLib/Objects/RenderStates/ITMRenderStateFactory.h"
 
 
 using namespace ITMLib;
@@ -197,4 +204,70 @@ void loadSdfVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& p
 	                                               memoryDeviceType, initializationParameters);
 	PrepareVoxelVolumeForLoading(*volume, memoryDeviceType);
 	(*volume)->LoadFromDirectory(path);
-};
+}
+
+template<typename TVoxel, typename TIndex>
+void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
+                             const std::string& depth_path, const std::string& color_path, const std::string& mask_path,
+                             const std::string& calibration_path,
+                             MemoryDeviceType memoryDevice,
+                             typename TIndex::InitializationParameters initializationParameters,
+                             ITMLibSettings::SwappingMode swappingMode,
+                             bool useBilateralFilter){
+	ITMLibSettings* settings = &ITMLibSettings::Instance();
+
+	// region ================================= CONSTRUCT VIEW =========================================================
+
+	settings->deviceType = memoryDevice;
+	settings->useBilateralFilter = useBilateralFilter;
+	settings->useThresholdFilter = false;
+	settings->sceneParams.mu = 0.04; // non-truncated narrow-band half-width, in meters
+	settings->sceneParams.voxelSize = 0.004; // m
+
+	ITMRGBDCalib calibrationData;
+	readRGBDCalib(calibration_path.c_str(), calibrationData);
+
+	ITMViewBuilder* viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calibrationData, settings->deviceType);
+	Vector2i imageSize(640, 480);
+	ITMView* view = nullptr;
+
+	auto* rgb = new ITMUChar4Image(true, false);
+	auto* depth = new ITMShortImage(true, false);
+	auto* mask = new ITMUCharImage(true, false);
+	BOOST_REQUIRE(ReadImageFromFile(rgb, color_path.c_str()));
+	BOOST_REQUIRE(ReadImageFromFile(depth, depth_path.c_str()));
+	BOOST_REQUIRE(ReadImageFromFile(mask, mask_path.c_str()));
+	rgb->ApplyMask(*mask, Vector4u((unsigned char)0));
+	depth->ApplyMask(*mask, 0);
+
+	viewBuilder->UpdateView(&view, rgb, depth, settings->useThresholdFilter,
+	                        settings->useBilateralFilter, false, true);
+
+	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&settings->sceneParams, swappingMode,
+	                                               memoryDevice, initializationParameters);
+	switch (memoryDevice){
+		case MEMORYDEVICE_CUDA:
+			ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(*volume);
+			break;
+		case MEMORYDEVICE_CPU:
+			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(*volume);
+			break;
+	}.
+	ITMRenderState* renderState = ITMRenderStateFactory<TVoxel>::CreateRenderState(imageSize,
+	                                                                                          &settings->sceneParams,
+	                                                                                          settings->GetMemoryType(),
+	                                                                               &(*volume)->index);
+	ITMTrackingState trackingState(imageSize, settings->GetMemoryType());
+
+	ITMDynamicSceneReconstructionEngine<TVoxel, ITMWarp, TIndex>* reconstructionEngine_PVA =
+			ITMDynamicSceneReconstructionEngineFactory
+			::MakeSceneReconstructionEngine<TVoxel, ITMWarp, TIndex>(settings->deviceType);
+
+	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(*volume, view, &trackingState, nullptr);
+
+	delete reconstructionEngine_PVA;
+	delete rgb;
+	delete depth;
+	delete mask;
+}
+
