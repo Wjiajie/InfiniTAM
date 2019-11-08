@@ -78,6 +78,11 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedLiveVoxelDepthInfo(
 	voxelPointProjectedToImage.y = depthCameraProjectionParameters.y * voxelPointInCameraCoordinates.y
 	                               / voxelPointInCameraCoordinates.z + depthCameraProjectionParameters.w;
 
+	//_DEBUG
+//	if(voxelInSceneCoordinates == Vector4f(-4.000000E-03f, 0.000000E+00f, 1.600000E-02f, 1.0f)){
+//		printf("GOTCHA (%E, %E)\n", voxelPointProjectedToImage.x, voxelPointProjectedToImage.y);
+//	}
+
 	// point falls outside of the image bounds
 	if ((voxelPointProjectedToImage.x < 1) || (voxelPointProjectedToImage.x > imageSize.x - 2)
 	    || (voxelPointProjectedToImage.y < 1) || (voxelPointProjectedToImage.y > imageSize.y - 2)) {

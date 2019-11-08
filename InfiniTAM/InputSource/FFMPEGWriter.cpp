@@ -62,9 +62,11 @@ int FFMPEGWriter::PrivateData::open(const char *filename, int size_x, int size_y
 {
 	printf("saving to video file: %s\n", filename);
 
+	AVCodecParameters *codecpar;
 	AVStream *out_stream;
 	AVCodecContext *enc_ctx;
 	AVCodec *encoder;
+	AVRational framerate;
 	int ret;
 
 	ofmt_ctx = NULL;
@@ -81,17 +83,27 @@ int FFMPEGWriter::PrivateData::open(const char *filename, int size_x, int size_y
 		std::cerr << "Failed allocating ffmpeg output stream" << std::endl;
 		return -1;
 	}
+	codecpar = out_stream->codecpar;
 	enc_ctx = out_stream->codec;
+
 	encoder = avcodec_find_encoder(AV_CODEC_ID_FFV1);
 	if (!encoder) {
 		std::cerr << "Necessary encoder not found in ffmpeg" << std::endl;
 		return -1;
 	}
+	codecpar->width = size_x;
 	enc_ctx->width = size_x;
+	codecpar->height = size_y;
 	enc_ctx->height = size_y;
+	codecpar->sample_aspect_ratio.num = 1;
 	enc_ctx->sample_aspect_ratio.num = 1;
+	codecpar->sample_aspect_ratio.num = 1;
 	enc_ctx->sample_aspect_ratio.den = 1;
+	codecpar->format = isDepth?AV_PIX_FMT_GRAY16LE:AV_PIX_FMT_YUV422P;
 	enc_ctx->pix_fmt = isDepth?AV_PIX_FMT_GRAY16LE:AV_PIX_FMT_YUV422P;
+	framerate.num = 1;
+	framerate.den = fps;
+	out_stream->avg_frame_rate = framerate;
 	enc_ctx->time_base.num = 1;
 	enc_ctx->time_base.den = fps;
 

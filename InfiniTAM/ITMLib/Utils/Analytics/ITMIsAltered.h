@@ -64,7 +64,7 @@ struct IsAlteredFunctor<false, false, true, true, TVoxel> {
 		return voxel.flow_warp != Vector3f(0.0f) || voxel.warp_update != Vector3f(0.0f);
 	}
 };
-
+// endregion
 
 /**
  * \brief Tries to determine whether the voxel been altered from default
@@ -79,7 +79,54 @@ bool isAltered(TVoxel& voxel) {
 	return IsAlteredFunctor<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFlowWarp,
 			TVoxel::hasWarpUpdate, TVoxel>::evaluate(voxel);
 }
-// endregion
+
+/**
+ * \brief Tries to determine whether the voxel been altered from default; if it seems to have been altered,
+ * reports the position
+ * \tparam TVoxel voxel type
+ * \param voxel the voxel to evaluate
+ * \param position the position (presumably, of the voxel that's passed in)
+ * \return true if the voxel has been altered for certain, false if not (or voxel seems to have default value)
+ **/
+template<typename TVoxel>
+_CPU_AND_GPU_CODE_
+inline
+bool isAltered_VerbosePosition(TVoxel& voxel, Vector3i position, const char* message = "") {
+
+	bool altered = IsAlteredFunctor<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFlowWarp,
+			TVoxel::hasWarpUpdate, TVoxel>::evaluate(voxel);
+	if (altered) {
+		printf("%sVoxel altered at position %d, %d, %d.\n", message, position.x, position.y, position.z);
+	}
+
+	return altered;
+}
+
+/**
+ * \brief Tries to determine whether the voxel been altered from default; if it seems to have been altered,
+ * reports the position
+ * \tparam TVoxel voxel type
+ * \param voxel the voxel to evaluate
+ * \param position the position (presumably, of the voxel that's passed in)
+ * \return true if the voxel has been altered for certain, false if not (or voxel seems to have default value)
+ **/
+template<typename TVoxel>
+_CPU_AND_GPU_CODE_
+inline
+bool isAltered_VerbosePositionHash(TVoxel& voxel, Vector3i position, int hashCode, Vector3s blockPosition,
+                                   const char* message = "") {
+
+	bool altered = IsAlteredFunctor<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFlowWarp,
+			TVoxel::hasWarpUpdate, TVoxel>::evaluate(voxel);
+
+	if (altered) {
+		printf("%sVoxel altered at position %d, %d, %d (hash %d at %d, %d, %d).\n", message,
+		       position.x, position.y, position.z, hashCode, blockPosition.x, blockPosition.y, blockPosition.z);
+	}
+
+	return altered;
+}
+
 
 template<typename TVoxel>
 inline static bool

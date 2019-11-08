@@ -55,7 +55,7 @@ checkIfHashVoxelBlocksAreAltered(const TVoxel* voxels, const ITMHashEntry* hashT
 	const ITMHashEntry& hashEntry = hashTable[hash];
 	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
 	int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
-	if (isAltered(voxels[hashEntry.ptr * VOXEL_BLOCK_SIZE3 + locId])){
+	if (isAltered(voxels[hashEntry.ptr * VOXEL_BLOCK_SIZE3 + locId])) {
 		*alteredBlockEncountered = true;
 	}
 }
@@ -88,7 +88,7 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue(
 	    yVoxel < minArrayCoord.y || yVoxel >= maxArrayCoord.y ||
 	    zVoxel < minArrayCoord.z || zVoxel >= maxArrayCoord.z) {
 		if (FindHashAtPosition(hash, blockPosition, hashTable) &&
-				isAltered(hashVoxels[hashTable[hash].ptr * VOXEL_BLOCK_SIZE3 + idxInBlock])){
+		    isAltered(hashVoxels[hashTable[hash].ptr * VOXEL_BLOCK_SIZE3 + idxInBlock])) {
 			// voxel falls just outside of array BUT is still in hash block, if it's altered -- return false
 			*falseOrAlteredEncountered = true;
 			return;
@@ -134,13 +134,15 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTruePosition(
 
 	Vector3s blockPosition(blockIdx.x, blockIdx.y, blockIdx.z);
 	blockPosition += minBlockPos;
+	Vector3i voxelPosition = blockPosition.toInt() * VOXEL_BLOCK_SIZE + Vector3i(x, y, z);
 
 	int hash;
 	if (xVoxel < minArrayCoord.x || xVoxel >= maxArrayCoord.x ||
 	    yVoxel < minArrayCoord.y || yVoxel >= maxArrayCoord.y ||
 	    zVoxel < minArrayCoord.z || zVoxel >= maxArrayCoord.z) {
 		if (FindHashAtPosition(hash, blockPosition, hashTable) &&
-		    isAltered(hashVoxels[hashTable[hash].ptr * VOXEL_BLOCK_SIZE3 + idxInBlock])){
+		    isAltered_VerbosePositionHash(hashVoxels[hashTable[hash].ptr * VOXEL_BLOCK_SIZE3 + idxInBlock],
+		                                  voxelPosition, hash, blockPosition, "In voxel-block-hashed volume: ")) {
 			// voxel falls just outside of array BUT is still in hash block, if it's altered -- return false
 			*falseOrAlteredEncountered = true;
 			return;
@@ -154,13 +156,13 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTruePosition(
 	                 arrayCoord.z * arrayInfo->size.x * arrayInfo->size.y;
 
 	if (FindHashAtPosition(hash, blockPosition, hashTable)) {
-		Vector3i voxelPosition = blockPosition.toInt()*VOXEL_BLOCK_SIZE + Vector3i(x,y,z);
+
 		if (!(*functor)(arrayVoxels[idxInArray], hashVoxels[hashTable[hash].ptr * VOXEL_BLOCK_SIZE3 + idxInBlock],
-				voxelPosition)) {
+		                voxelPosition)) {
 			*falseOrAlteredEncountered = true;
 		}
 	} else {
-		if (isAltered(arrayVoxels[idxInArray])) {
+		if (isAltered_VerbosePosition(arrayVoxels[idxInArray], voxelPosition, "In plain-voxel-array volume: ")) {
 			*falseOrAlteredEncountered = true;
 		}
 	}
@@ -189,14 +191,15 @@ __global__ void checkIfAllocatedHashBlocksYieldTrue(
 		return;
 	}
 
-	Vector3i voxelPositionSansOffset = globalPosition - Vector3i(arrayBounds.min_x, arrayBounds.min_y, arrayBounds.min_z);
+	Vector3i voxelPositionSansOffset =
+			globalPosition - Vector3i(arrayBounds.min_x, arrayBounds.min_y, arrayBounds.min_z);
 	int idxInArray = voxelPositionSansOffset.x + voxelPositionSansOffset.y * arraySize.x +
-	                  voxelPositionSansOffset.z * arraySize.x * arraySize.y;
+	                 voxelPositionSansOffset.z * arraySize.x * arraySize.y;
 
 	TVoxelHash hashVoxel = hashVoxels[hashEntry.ptr * VOXEL_BLOCK_SIZE3 + idxInBlock];
 	TVoxelArray arrayVoxel = arrayVoxels[idxInArray];
 
-	if (!(*functor)(arrayVoxel,hashVoxel)) {
+	if (!(*functor)(arrayVoxel, hashVoxel)) {
 		*falseEncountered = true;
 	}
 }

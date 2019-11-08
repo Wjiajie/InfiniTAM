@@ -84,7 +84,7 @@ public:
 	struct IndexCache {
 		Vector3i blockPos;
 		int blockPtr;
-		_CPU_AND_GPU_CODE_ IndexCache(void) : blockPos(0x7fffffff), blockPtr(-1) {}
+		_CPU_AND_GPU_CODE_ IndexCache() : blockPos(0x7fffffff), blockPtr(-1) {}
 	};
 
 	/** Maximum number of total entries. */
@@ -157,6 +157,17 @@ public:
 	const ITMHashEntry* GetEntries() const { return hashEntries->GetData(memoryType); }
 
 	ITMHashEntry* GetEntries() { return hashEntries->GetData(memoryType); }
+
+	ITMHashEntry GetHashEntry_CPU(int index) const {
+		return hashEntries->GetElement(index, memoryType);
+	}
+
+	ITMHashEntry GetHashEntryAt_CPU(const Vector3s& pos) const;
+
+	ITMHashEntry GetHashEntryAt_CPU(int x, int y, int z) const{
+		Vector3s coord(x,y,z);
+		return GetHashEntryAt_CPU(coord);
+	}
 
 	/**Get the memory type used for storage.**/
 	MemoryDeviceType GetMemoryType() const {
@@ -241,4 +252,5 @@ public:
 	ITMVoxelBlockHash& operator=(const ITMVoxelBlockHash&) = delete;
 #endif
 };
+
 }

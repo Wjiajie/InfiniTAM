@@ -16,6 +16,6 @@ else ()
         enable_language(CUDA)
     endif ()
 
-    add_library(${targetname} STATIC ${sources} ${headers} ${templates})
+    add_library(${targetname} STATIC ${sources} ${headers} ${templates} ../ITMLib/Objects/Scene/ITMVoxelBlockHash.cpp)
     target_include_directories(${targetname} PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 endif ()

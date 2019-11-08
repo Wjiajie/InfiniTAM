@@ -31,6 +31,7 @@ public:
 	                                                         const HashEntryState* hashEntryStates_device,
 	                                                         Vector3s* blockCoordinates_device,
 	                                                         uchar* hashBlockVisibilityTypes_device) = 0;
+	virtual ITMHashEntry FindHashEntry(const ITMVoxelBlockHash& index, const Vector3s& coordinates) = 0;
 
 /**
  * \brief method which looks at voxel grid with warps and an SDF voxel grid and allocates all hash blocks in the

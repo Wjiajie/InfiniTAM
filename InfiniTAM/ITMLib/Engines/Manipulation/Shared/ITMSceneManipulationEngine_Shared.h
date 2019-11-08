@@ -193,11 +193,11 @@ inline bool MarkAsNeedingAllocationIfNotFound(ITMLib::HashEntryState* entryAlloc
  * \brief find the hash block at the specified spatial coordinates (in blocks, not voxels!) and return its hash
  * \param voxelIndex
  * \param at
- * \return
+ * \return -1 if hash block is not found, hash code of the block otherwise
  */
 _CPU_AND_GPU_CODE_
 inline int
-FindHashBlock(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, const THREADPTR(Vector3s)& at) {
+FindHashCodeAt(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, const THREADPTR(Vector3s)& at) {
 	int hash = hashIndex(at);
 	while (true) {
 		ITMHashEntry hashEntry = voxelIndex[hash];
@@ -270,7 +270,7 @@ HashBlockAllocatedAtOffset(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)*
 	for (int z = blockCoord.z + blockRange.min_z; z < blockCoord.z + blockRange.max_z; z++) {
 		for (int y = blockCoord.y + blockRange.min_y; y < blockCoord.y + blockRange.max_y; y++) {
 			for (int x = blockCoord.x + blockRange.min_x; x < blockCoord.x + blockRange.max_x; x++) {
-				if (FindHashBlock(targetIndex, Vector3s(x, y, z)) != -1) {
+				if (FindHashCodeAt(targetIndex, Vector3s(x, y, z)) != -1) {
 					allocated = true;
 				}
 			}
@@ -296,7 +296,7 @@ HashBlockAllocatedAtOffset(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)*
 	for (int z = blockCoord.z + offsetBlockRange.min_z; z < blockCoord.z + offsetBlockRange.max_z; z++) {
 		for (int y = blockCoord.y + offsetBlockRange.min_y; y < blockCoord.y + offsetBlockRange.max_y; y++) {
 			for (int x = blockCoord.x + offsetBlockRange.min_x; x < blockCoord.x + offsetBlockRange.max_x; x++) {
-				if (FindHashBlock(targetIndex, Vector3s(x, y, z)) != -1) {
+				if (FindHashCodeAt(targetIndex, Vector3s(x, y, z)) != -1) {
 					allocated = true;
 				}
 			}

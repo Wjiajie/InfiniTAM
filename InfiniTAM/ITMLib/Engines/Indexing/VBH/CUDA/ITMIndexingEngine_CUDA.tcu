@@ -120,15 +120,15 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 
 	if (useSwapping) {
 		buildVisibleList_device<true> << < gridSizeAL, cudaBlockSizeAL >> >
-		(hashTable, swapStates, noTotalEntries, visibleEntryIDs_device,
-				allocationTempData.GetData(
-						MEMORYDEVICE_CUDA), hashBlockVisibilityTypes_device, M_d, projParams_d, depthImgSize, voxelSize);
+		                                               (hashTable, swapStates, noTotalEntries, visibleEntryIDs_device,
+				                                               allocationTempData.GetData(
+						                                               MEMORYDEVICE_CUDA), hashBlockVisibilityTypes_device, M_d, projParams_d, depthImgSize, voxelSize);
 		ORcudaKernelCheck;
 	} else {
 		buildVisibleList_device<false> << < gridSizeAL, cudaBlockSizeAL >> >
-		(hashTable, swapStates, noTotalEntries, visibleEntryIDs_device,
-				allocationTempData.GetData(
-						MEMORYDEVICE_CUDA), hashBlockVisibilityTypes_device, M_d, projParams_d, depthImgSize, voxelSize);
+		                                                (hashTable, swapStates, noTotalEntries, visibleEntryIDs_device,
+				                                                allocationTempData.GetData(
+						                                                MEMORYDEVICE_CUDA), hashBlockVisibilityTypes_device, M_d, projParams_d, depthImgSize, voxelSize);
 		ORcudaKernelCheck;
 	}
 
@@ -146,7 +146,6 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 	scene->index.SetLastFreeExcessListId(allocationTempData_host->noAllocatedExcessEntries);
 
 }
-
 
 
 template<typename TVoxel>
@@ -254,4 +253,20 @@ AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxelA, ITMVoxelBloc
 			voxelAllocationList, excessAllocationList, allocationTempData.GetData(MEMORYDEVICE_CUDA),
 					hashTable, hashEntryCount, hashEntryStates_device,
 					blockCoordinates_device, hashBlockVisibilityTypes_device);
+}
+
+template<typename TVoxel>
+ITMHashEntry
+ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::FindHashEntry(const ITMVoxelBlockHash& index,
+                                                                               const Vector3s& coordinates) {
+	const ITMHashEntry* entries = index.GetEntries();
+	const ITMHashEntry* entry_device = nullptr;
+	findHashEntry_device << < 1, 1 >> > (entry_device, entries, coordinates);
+	if (entry_device == nullptr) {
+		return {Vector3s(0, 0, 0), 0, -2};
+	} else {
+		ITMHashEntry entry;
+		ORcudaSafeCall(cudaMemcpy(&entry, entry_device,sizeof(ITMHashEntry),cudaMemcpyDeviceToHost));
+		return entry;
+	}
 }

@@ -213,7 +213,7 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
                              MemoryDeviceType memoryDevice,
                              typename TIndex::InitializationParameters initializationParameters,
                              ITMLibSettings::SwappingMode swappingMode,
-                             bool useBilateralFilter){
+                             bool useBilateralFilter) {
 	ITMLibSettings* settings = &ITMLibSettings::Instance();
 
 	// region ================================= CONSTRUCT VIEW =========================================================
@@ -237,7 +237,7 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
 	BOOST_REQUIRE(ReadImageFromFile(rgb, color_path.c_str()));
 	BOOST_REQUIRE(ReadImageFromFile(depth, depth_path.c_str()));
 	BOOST_REQUIRE(ReadImageFromFile(mask, mask_path.c_str()));
-	rgb->ApplyMask(*mask, Vector4u((unsigned char)0));
+	rgb->ApplyMask(*mask, Vector4u((unsigned char) 0));
 	depth->ApplyMask(*mask, 0);
 
 	viewBuilder->UpdateView(&view, rgb, depth, settings->useThresholdFilter,
@@ -245,25 +245,25 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
 
 	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&settings->sceneParams, swappingMode,
 	                                               memoryDevice, initializationParameters);
-	switch (memoryDevice){
+	switch (memoryDevice) {
 		case MEMORYDEVICE_CUDA:
 			ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(*volume);
 			break;
 		case MEMORYDEVICE_CPU:
 			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(*volume);
 			break;
-	}.
-	ITMRenderState* renderState = ITMRenderStateFactory<TVoxel>::CreateRenderState(imageSize,
-	                                                                                          &settings->sceneParams,
-	                                                                                          settings->GetMemoryType(),
-	                                                                               &(*volume)->index);
+	}
+	ITMRenderState* renderState = ITMRenderStateFactory<TIndex>::CreateRenderState(imageSize,
+	                                                                               &settings->sceneParams,
+	                                                                               settings->GetMemoryType(),
+	                                                                               (*volume)->index);
 	ITMTrackingState trackingState(imageSize, settings->GetMemoryType());
 
 	ITMDynamicSceneReconstructionEngine<TVoxel, ITMWarp, TIndex>* reconstructionEngine_PVA =
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<TVoxel, ITMWarp, TIndex>(settings->deviceType);
 
-	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(*volume, view, &trackingState, nullptr);
+	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(*volume, view, &trackingState, renderState);
 
 	delete reconstructionEngine_PVA;
 	delete rgb;

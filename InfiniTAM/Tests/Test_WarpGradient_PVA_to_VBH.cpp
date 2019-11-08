@@ -43,14 +43,14 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_PVA_VBH) {
 			"TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
 			"TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA);
 
-	std::cout << SceneStatCalc_CUDA_PVA_Voxel::Instance().ComputeAlteredVoxelCount(volume_PVA) << std::endl;
-
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH;
 	buildSdfVolumeFromImage(&volume_VBH, "TestData/snoopy_depth_000016.png",
 	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
 	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA);
 
-	std::cout << SceneStatCalc_CUDA_VBH_Voxel::Instance().ComputeAlteredVoxelCount(volume_VBH) << std::endl;
+	float absoluteTolerance = 1e-7;
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(volume_PVA, volume_VBH, absoluteTolerance));
 
 	delete volume_PVA;
+	delete volume_VBH;
 }

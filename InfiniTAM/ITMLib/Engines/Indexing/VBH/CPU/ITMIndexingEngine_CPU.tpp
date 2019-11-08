@@ -299,3 +299,15 @@ AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxelA, ITMVoxelBloc
 	scene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
 	scene->index.SetLastFreeExcessListId(lastFreeExcessListId);
 }
+
+template<typename TVoxel>
+ITMHashEntry ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::FindHashEntry(const ITMVoxelBlockHash& index,
+                                                                                            const Vector3s& coordinates) {
+	const ITMHashEntry* entries = index.GetEntries();
+	int hashCode = FindHashCodeAt(entries, coordinates);
+	if (hashCode == -1) {
+		return {Vector3s(0, 0, 0), 0, -2};
+	} else {
+		return entries[hashCode];
+	}
+}
