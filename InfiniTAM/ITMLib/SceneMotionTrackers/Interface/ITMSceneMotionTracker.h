@@ -19,7 +19,7 @@
 #include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.h"
 #include "../../Utils/Visualization/ITMSceneSliceVisualizer2D.h"
-#include "../../Utils/ITMLibSettings.h"
+#include "../../Utils/Configuration.h"
 #include "../../Utils/FileIO/ITMSceneLogger.h"
 #include "../../Utils/ITMPrintHelpers.h"
 #include "../../Utils/ITMVoxelFlags.h"
@@ -47,20 +47,20 @@ public:
 //  canonical (as the "target") should come last
 	explicit ITMSceneMotionTracker() :
 			parameters{
-					ITMLibSettings::Instance().sceneTrackingGradientDescentLearningRate,
-					ITMLibSettings::Instance().sceneTrackingRigidityEnforcementFactor,
-					ITMLibSettings::Instance().sceneTrackingWeightDataTerm,
-					ITMLibSettings::Instance().sceneTrackingWeightSmoothingTerm,
-					ITMLibSettings::Instance().sceneTrackingWeightLevelSetTerm,
-					ITMLibSettings::Instance().sceneTrackingLevelSetTermEpsilon,
-					ITMLibSettings::Instance().sceneParams.voxelSize / ITMLibSettings::Instance().sceneParams.mu
+					Configuration::Instance().sceneTrackingGradientDescentLearningRate,
+					Configuration::Instance().sceneTrackingRigidityEnforcementFactor,
+					Configuration::Instance().sceneTrackingWeightDataTerm,
+					Configuration::Instance().sceneTrackingWeightSmoothingTerm,
+					Configuration::Instance().sceneTrackingWeightLevelSetTerm,
+					Configuration::Instance().sceneTrackingLevelSetTermEpsilon,
+					Configuration::Instance().sceneParams.voxelSize / Configuration::Instance().sceneParams.mu
 			},
 			switches{
-					ITMLibSettings::Instance().enableDataTerm,
-					ITMLibSettings::Instance().enableLevelSetTerm,
-					ITMLibSettings::Instance().enableSmoothingTerm,
-					ITMLibSettings::Instance().enableKillingConstraintInSmoothingTerm,
-					ITMLibSettings::Instance().enableGradientSmoothing
+					Configuration::Instance().enableDataTerm,
+					Configuration::Instance().enableLevelSetTerm,
+					Configuration::Instance().enableSmoothingTerm,
+					Configuration::Instance().enableKillingConstraintInSmoothingTerm,
+					Configuration::Instance().enableGradientSmoothing
 			} {
 		PrintSettings();
 	}

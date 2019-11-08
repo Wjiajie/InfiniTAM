@@ -40,7 +40,7 @@ public:
 	static ITMSceneMotionTracker<TVoxel, TWarp, TIndex>*
 	MakeSceneMotionTracker() {
 		ITMSceneMotionTracker<TVoxel, TWarp, TIndex>* motionTracker = nullptr;
-		auto& settings = ITMLibSettings::Instance();
+		auto& settings = Configuration::Instance();
 		switch (settings.deviceType) {
 			case MEMORYDEVICE_CPU:
 				motionTracker = new ITMSceneMotionTracker_CPU<TVoxel, TWarp, TIndex>();

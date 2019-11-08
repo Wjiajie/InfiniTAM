@@ -17,7 +17,7 @@
 #include "TestUtils.tpp"
 
 
-#include "../ITMLib/Utils/ITMLibSettings.h"
+#include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/Utils/FileIO/ITMSceneLogger.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
@@ -106,34 +106,34 @@ typename ITMVoxelBlockHash::InitializationParameters GetStandard128IndexParamete
 //template ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> loadSdfVolume<ITMVoxel, ITMPlainVoxelArray>(
 //                                                 const std::string& path, MemoryDeviceType memoryDeviceType,
 //                                                 ITMPlainVoxelArray::InitializationParameters initializationParameters,
-//                                                 ITMLibSettings::SwappingMode swappingMode);
+//                                                 Configuration::SwappingMode swappingMode);
 //template ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> loadSdfVolume<ITMVoxel, ITMVoxelBlockHash>(const std::string& path, MemoryDeviceType memoryDeviceType,
 //                                                 ITMVoxelBlockHash::InitializationParameters initializationParameters,
-//                                                 ITMLibSettings::SwappingMode swappingMode);
+//                                                 Configuration::SwappingMode swappingMode);
 //template ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> loadSdfVolume<ITMWarp, ITMPlainVoxelArray>(const std::string& path, MemoryDeviceType memoryDeviceType,
 //                                                          ITMPlainVoxelArray::InitializationParameters initializationParameters,
-//                                                          ITMLibSettings::SwappingMode swappingMode);
+//                                                          Configuration::SwappingMode swappingMode);
 //template ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> loadSdfVolume<ITMWarp, ITMVoxelBlockHash>(
 //                                                         const std::string& path, MemoryDeviceType memoryDeviceType,
 //                                                         ITMVoxelBlockHash::InitializationParameters initializationParameters,
-//                                                         ITMLibSettings::SwappingMode swappingMode);
+//                                                         Configuration::SwappingMode swappingMode);
 
 template void loadSdfVolume<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>** volume,
                                                           const std::string& path, MemoryDeviceType memoryDeviceType,
                                                           ITMPlainVoxelArray::InitializationParameters initializationParameters,
-                                                          ITMLibSettings::SwappingMode swappingMode);
+                                                          Configuration::SwappingMode swappingMode);
 template void loadSdfVolume<ITMVoxel, ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>** volume,
                                                          const std::string& path, MemoryDeviceType memoryDeviceType,
                                                          ITMVoxelBlockHash::InitializationParameters initializationParameters,
-                                                         ITMLibSettings::SwappingMode swappingMode);
+                                                         Configuration::SwappingMode swappingMode);
 template void loadSdfVolume<ITMWarp, ITMPlainVoxelArray>(ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>** volume,
                                                          const std::string& path, MemoryDeviceType memoryDeviceType,
                                                          ITMPlainVoxelArray::InitializationParameters initializationParameters,
-                                                         ITMLibSettings::SwappingMode swappingMode);
+                                                         Configuration::SwappingMode swappingMode);
 template void loadSdfVolume<ITMWarp, ITMVoxelBlockHash>(ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>** volume,
                                                         const std::string& path, MemoryDeviceType memoryDeviceType,
                                                         ITMVoxelBlockHash::InitializationParameters initializationParameters,
-                                                        ITMLibSettings::SwappingMode swappingMode);
+                                                        Configuration::SwappingMode swappingMode);
 
 template
 void buildSdfVolumeFromImage<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>** volume,
@@ -141,7 +141,7 @@ void buildSdfVolumeFromImage<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVox
                                                            const std::string& mask_path, const std::string& calibration_path,
                                                            MemoryDeviceType memoryDevice,
                                                            ITMPlainVoxelArray::InitializationParameters initializationParameters,
-                                                           ITMLibSettings::SwappingMode swappingMode,
+                                                           Configuration::SwappingMode swappingMode,
                                                            bool useBilateralFilter);
 
 template
@@ -150,6 +150,6 @@ void buildSdfVolumeFromImage<ITMVoxel, ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxe
                              const std::string& calibration_path,
                              MemoryDeviceType memoryDevice,
                              ITMVoxelBlockHash::InitializationParameters initializationParameters,
-                             ITMLibSettings::SwappingMode swappingMode,
+                             Configuration::SwappingMode swappingMode,
                              bool useBilateralFilter);
 

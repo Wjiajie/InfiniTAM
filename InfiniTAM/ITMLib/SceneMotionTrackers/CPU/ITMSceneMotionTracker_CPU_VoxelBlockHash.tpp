@@ -39,7 +39,7 @@
 #include "../../Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "../../Objects/Scene/ITMTrilinearDistribution.h"
 #include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "../../Utils/ITMLibSettings.h"
+#include "../../Utils/Configuration.h"
 #include "../Shared/ITMCalculateWarpGradientFunctor.h"
 
 

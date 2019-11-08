@@ -15,7 +15,7 @@
 //  ================================================================
 #pragma once
 
-#include "../../../Utils/ITMLibSettings.h"
+#include "../../../Utils/Configuration.h"
 
 namespace ITMLib{
 

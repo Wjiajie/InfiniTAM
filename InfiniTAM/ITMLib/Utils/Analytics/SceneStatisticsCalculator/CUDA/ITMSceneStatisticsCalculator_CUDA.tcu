@@ -16,7 +16,7 @@
 
 #include <vector>
 #include "ITMSceneStatisticsCalculator_CUDA.h"
-#include "../../../ITMLibSettings.h"
+#include "../../../Configuration.h"
 #include "../../../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h"
 #include "../../../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
 #include "../Shared/ITMSceneStatisticsCalculator_Functors.h"

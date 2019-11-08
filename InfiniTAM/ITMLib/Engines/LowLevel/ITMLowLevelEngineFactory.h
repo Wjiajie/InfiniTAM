@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Interface/ITMLowLevelEngine.h"
-#include "../../Utils/ITMLibSettings.h"
+#include "../../Utils/Configuration.h"
 #include "../../../ORUtils/MemoryDeviceType.h"
 
 namespace ITMLib

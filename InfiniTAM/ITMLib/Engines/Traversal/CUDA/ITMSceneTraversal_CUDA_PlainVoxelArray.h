@@ -22,7 +22,7 @@
 #include "../Interface/ITMSceneTraversal.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Objects/Scene/ITMPlainVoxelArray.h"
-#include "../../../Utils/ITMLibSettings.h"
+#include "../../../Utils/Configuration.h"
 #include "ITMSceneTraversal_CUDA_PlainVoxelArray_Kernels.h"
 
 namespace ITMLib {

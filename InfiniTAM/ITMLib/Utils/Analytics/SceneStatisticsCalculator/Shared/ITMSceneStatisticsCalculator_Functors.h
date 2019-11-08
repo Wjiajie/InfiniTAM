@@ -23,7 +23,7 @@
 
 #include "../../../../../ORUtils/PlatformIndependentAtomics.h"
 #include "../../../../../ORUtils/PlatformIndependence.h"
-#include "../../../ITMLibSettings.h"
+#include "../../../Configuration.h"
 #include "../../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 #include "../../../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"

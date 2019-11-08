@@ -112,7 +112,7 @@
 		A6AC2C3C1CBD34A7000CC89D /* ITMExtendedTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6AC2BE01CBD34A7000CC89D /* ITMExtendedTracker.cpp */; };
 		A6AC2C3D1CBD34A7000CC89D /* ITMIMUTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6AC2BE21CBD34A7000CC89D /* ITMIMUTracker.cpp */; };
 		A6AC2C3E1CBD34A7000CC89D /* ITMRenTracker.tpp in Resources */ = {isa = PBXBuildFile; fileRef = A6AC2BE51CBD34A7000CC89D /* ITMRenTracker.tpp */; };
-		A6AC2C471CBD34A7000CC89D /* ITMLibSettings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6AC2BFD1CBD34A7000CC89D /* ITMLibSettings.cpp */; };
+		A6AC2C471CBD34A7000CC89D /* Configuration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6AC2BFD1CBD34A7000CC89D /* Configuration.cpp */; };
 		A6AC2C491CBD3ADF000CC89D /* MetalInstantiations.mm in Sources */ = {isa = PBXBuildFile; fileRef = A6AC2C481CBD3ADF000CC89D /* MetalInstantiations.mm */; };
 		A6CA7EF91A0FDE0C0070848F /* iPhone_Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A6CA7EF81A0FDE0C0070848F /* iPhone_Main.storyboard */; };
 /* End PBXBuildFile section */
@@ -365,8 +365,8 @@
 		A6AC2BF91CBD34A7000CC89D /* ITMRenTracker_Shared.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMRenTracker_Shared.h; sourceTree = "<group>"; };
 		A6AC2BFB1CBD34A7000CC89D /* ITMCUDAUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMCUDAUtils.h; sourceTree = "<group>"; };
 		A6AC2BFC1CBD34A7000CC89D /* ITMImageTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMImageTypes.h; sourceTree = "<group>"; };
-		A6AC2BFD1CBD34A7000CC89D /* ITMLibSettings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ITMLibSettings.cpp; sourceTree = "<group>"; };
-		A6AC2BFE1CBD34A7000CC89D /* ITMLibSettings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMLibSettings.h; sourceTree = "<group>"; };
+		A6AC2BFD1CBD34A7000CC89D /* Configuration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Configuration.cpp; sourceTree = "<group>"; };
+		A6AC2BFE1CBD34A7000CC89D /* Configuration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Configuration.h; sourceTree = "<group>"; };
 		A6AC2BFF1CBD34A7000CC89D /* ITMMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMMath.h; sourceTree = "<group>"; };
 		A6AC2C001CBD34A7000CC89D /* ITMPixelUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMPixelUtils.h; sourceTree = "<group>"; };
 		A6AC2C011CBD34A7000CC89D /* ITMSceneParams.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMSceneParams.h; sourceTree = "<group>"; };
@@ -1140,8 +1140,8 @@
 			children = (
 				A6AC2BFB1CBD34A7000CC89D /* ITMCUDAUtils.h */,
 				A6AC2BFC1CBD34A7000CC89D /* ITMImageTypes.h */,
-				A6AC2BFD1CBD34A7000CC89D /* ITMLibSettings.cpp */,
-				A6AC2BFE1CBD34A7000CC89D /* ITMLibSettings.h */,
+				A6AC2BFD1CBD34A7000CC89D /* Configuration.cpp */,
+				A6AC2BFE1CBD34A7000CC89D /* Configuration.h */,
 				A6AC2BFF1CBD34A7000CC89D /* ITMMath.h */,
 				A6AC2C001CBD34A7000CC89D /* ITMPixelUtils.h */,
 				A6AC2C011CBD34A7000CC89D /* ITMSceneParams.h */,
@@ -1275,7 +1275,7 @@
 				A6AC29A91CBD3323000CC89D /* ImageSourceEngine.cpp in Sources */,
 				A6AC2B121CBD3348000CC89D /* RelocDatabase.cpp in Sources */,
 				A6AC2C2F1CBD34A7000CC89D /* ITMVisualisationEngine_Metal.mm in Sources */,
-				A6AC2C471CBD34A7000CC89D /* ITMLibSettings.cpp in Sources */,
+				A6AC2C471CBD34A7000CC89D /* Configuration.cpp in Sources */,
 				A6AC2C1C1CBD34A7000CC89D /* ITMSceneReconstructionEngine.metal in Sources */,
 				A6AC2C3A1CBD34A7000CC89D /* ITMColorTracker.cpp in Sources */,
 				A6AC2B031CBD333D000CC89D /* SE3Pose.cpp in Sources */,

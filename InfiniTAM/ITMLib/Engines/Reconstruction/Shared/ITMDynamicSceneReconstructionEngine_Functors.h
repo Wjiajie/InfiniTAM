@@ -18,7 +18,7 @@
 #include "ITMDynamicSceneReconstructionEngine_Shared.h"
 #include "../../../Objects/Scene/ITMTrilinearInterpolation.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
-#include "../../../Utils/ITMLibSettings.h"
+#include "../../../Utils/Configuration.h"
 #include "../../../../ORUtils/PlatformIndependentAtomics.h"
 
 
@@ -67,8 +67,8 @@ struct TrilinearInterpolationFunctor {
 			warpSourceHashEntries(warpField->index.GetIndexData()),
 			warpSourceCache(),
 
-			hasFocusCoordinates(ITMLib::ITMLibSettings::Instance().FocusCoordinatesAreSpecified()),
-			focusCoordinates(ITMLib::ITMLibSettings::Instance().GetFocusCoordinates())
+			hasFocusCoordinates(ITMLib::Configuration::Instance().FocusCoordinatesAreSpecified()),
+			focusCoordinates(ITMLib::Configuration::Instance().GetFocusCoordinates())
 	{}
 
 	_DEVICE_WHEN_AVAILABLE_

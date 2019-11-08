@@ -23,7 +23,7 @@
 //ITMLib
 #include "../ITMLib/ITMLibDefines.h"
 #include "../ITMLib/Objects/Scene/ITMVoxelVolume.h"
-#include "../ITMLib/Utils/ITMLibSettings.h"
+#include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "TestUtils.h"
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
@@ -39,18 +39,18 @@ typedef ITMSceneStatisticsCalculator_CPU<ITMVoxel, ITMVoxelBlockHash> SceneStati
 
 BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 
-	ITMLibSettings* settings = &ITMLibSettings::Instance();
+	Configuration* settings = &Configuration::Instance();
 	settings->deviceType = MEMORYDEVICE_CPU;
 
 	Vector3i volumeSize(40, 68, 20);
 	Vector3i volumeOffset(-20, 0, 0);
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(
-			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+			&settings->sceneParams, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 			settings->GetMemoryType(), {volumeSize, volumeOffset});
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(
-			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+			&settings->sceneParams, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 			settings->GetMemoryType(), {volumeSize, volumeOffset});
 
 	GenerateTestScene_CPU(&scene1);
@@ -64,11 +64,11 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene2, tolerance));
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(
-			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+			&settings->sceneParams, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 			settings->GetMemoryType());
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(
-			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+			&settings->sceneParams, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 			settings->GetMemoryType());
 
 	GenerateTestScene_CPU(&scene3);

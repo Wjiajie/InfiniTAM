@@ -43,7 +43,7 @@
 #include "ITMSceneSliceVisualizer3DInteractorStyle.h"
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
-#include "../ITMLibSettings.h"
+#include "../Configuration.h"
 
 
 
@@ -558,9 +558,9 @@ public:
 			smoothingTermVectorStartPoint = iterator->second.second;
 		}
 		Vector3f dataTermVector =
-				-ITMLibSettings::Instance().sceneTrackingGradientDescentLearningRate * voxel.data_term_gradient;
+				-Configuration::Instance().sceneTrackingGradientDescentLearningRate * voxel.data_term_gradient;
 		Vector3f smoothingTermVector =
-				-ITMLibSettings::Instance().sceneTrackingGradientDescentLearningRate * voxel.smoothing_term_gradient;
+				-Configuration::Instance().sceneTrackingGradientDescentLearningRate * voxel.smoothing_term_gradient;
 
 		dataTermPoints->InsertNextPoint(dataTermVectorStartPoint.values);
 		dataTermVectors->InsertNextTuple(dataTermVector.values);

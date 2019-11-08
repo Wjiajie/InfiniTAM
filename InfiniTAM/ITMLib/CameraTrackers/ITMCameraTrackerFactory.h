@@ -14,7 +14,7 @@
 #include "Interface/ITMForceFailTracker.h"
 #include "Interface/ITMCameraTracker.h"
 #include "../Engines/LowLevel/Interface/ITMLowLevelEngine.h"
-#include "../Utils/ITMLibSettings.h"
+#include "../Utils/Configuration.h"
 
 #ifndef COMPILE_WITHOUT_CUDA
 
@@ -144,7 +144,7 @@ public:
 	 */
 	ITMCameraTracker* Make(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, const ITMLowLevelEngine* lowLevelEngine,
 	                       ITMIMUCalibrator* imuCalibrator, const ITMSceneParams* sceneParams) const {
-		auto& settings = ITMLibSettings::Instance();
+		auto& settings = Configuration::Instance();
 		return Make(settings.deviceType, settings.trackerConfig, imgSize_rgb, imgSize_d, lowLevelEngine,
 		            imuCalibrator, sceneParams);
 	}

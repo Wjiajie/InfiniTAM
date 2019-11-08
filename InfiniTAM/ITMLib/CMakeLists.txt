@@ -698,7 +698,7 @@ set(ITMLIB_UTILS_SOURCES
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.tcu
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.cu
 
-    Utils/ITMLibSettings.cpp
+	Utils/Configuration.cpp
     Utils/ITMPrintHelpers.cpp
     )
 
@@ -715,7 +715,7 @@ set(ITMLIB_UTILS_HEADERS
     Utils/ITMImageTypes.h
     Utils/ITMHashBlockProperties.h
     Utils/ITMVoxelFlags.h
-    Utils/ITMLibSettings.h
+	Utils/Configuration.h
     Utils/ITMMath.h
     Utils/ITMMemoryBlockTypes.h
     Utils/ITMPixelUtils.h

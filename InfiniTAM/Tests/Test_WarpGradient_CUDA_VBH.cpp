@@ -29,7 +29,7 @@
 //local
 #include "TestUtils.h"
 #include "Test_WarpGradient_Common.h"
-#include "../ITMLib/Utils/ITMLibSettings.h"
+#include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "../ITMLib/SceneMotionTrackers/Interface/ITMSceneMotionTracker.h"
 #include "../ITMLib/SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA.h"
@@ -44,7 +44,7 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CUDA_VBH, DataFixture) {
 //	settings->SetFocusCoordinates(Vector3i(-21,-4,189));
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CUDA1(&settings->sceneParams,
 	                                                            settings->swappingMode ==
-	                                                            ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                            Configuration::SWAPPINGMODE_ENABLED,
 	                                                            MEMORYDEVICE_CUDA, indexParameters);
 	ManipulationEngine_CUDA_VBH_Warp::Inst().ResetScene(&warp_field_CUDA1);
 

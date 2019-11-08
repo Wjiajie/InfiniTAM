@@ -34,7 +34,7 @@
 #include "../ITMLib/Objects/Scene/ITMRepresentationAccess.h"
 #include "../ITMLib/Objects/Camera/ITMCalibIO.h"
 
-#include "../ITMLib/Utils/ITMLibSettings.h"
+#include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h"
 #include "../ITMLib/Utils/Analytics/ITMAlmostEqual.h"
@@ -57,7 +57,7 @@ using namespace ITMLib;
 
 
 BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_PlainVoxelArray_CUDA) {
-	ITMLibSettings* settings = &ITMLibSettings::Instance();
+	Configuration* settings = &Configuration::Instance();
 	settings->deviceType = MEMORYDEVICE_CUDA;
 
 	Vector3i volumeSize(20);
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_PlainVoxelArray_CUDA) {
 	ITMPlainVoxelArray::InitializationParameters indexParameters(volumeSize,volumeOffset);
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&settings->sceneParams,
-	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                    settings->GetMemoryType(), indexParameters);
 
 
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_PlainVoxelArray_CUDA) {
 
 	Vector3i offset(-2, 3, 4);
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(&settings->sceneParams,
-	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                    settings->GetMemoryType());
 	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(&scene2);
 	ManipulationEngine_CUDA_PVA_Voxel::Inst().CopyScene(&scene2, &scene1, offset);
@@ -114,11 +114,11 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_PlainVoxelArray_CUDA) {
 }
 
 BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CUDA) {
-	ITMLibSettings* settings = &ITMLibSettings::Instance();
+	Configuration* settings = &Configuration::Instance();
 
 	settings->deviceType = MEMORYDEVICE_CUDA;
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene1(&settings->sceneParams,
-	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType());
 
 	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> SceneManipulationEngine;
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CUDA) {
 
 	Vector3i offset(-34, 6, 9);
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene2(&settings->sceneParams,
-	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType());
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene2);
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().CopyScene(&scene2, &scene1, offset);
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CUDA) {
 BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CUDA_and_CPU_ITMVoxel) {
 	float tolerance = 1e-6;
 
-	ITMLibSettings* settings = &ITMLibSettings::Instance();
+	Configuration* settings = &Configuration::Instance();
 	settings->deviceType = MEMORYDEVICE_CUDA;
 
 	Vector3i volumeSize(40);
@@ -180,32 +180,32 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CUDA_and_CPU_ITMVoxel) {
 
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene_PVA1(&settings->sceneParams,
-	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                        settings->GetMemoryType(),
 	                                                        indexParametersPVA);
 	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(&scene_PVA1);
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene_PVA2(&settings->sceneParams,
-	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                        settings->GetMemoryType(),
 	                                                        indexParametersPVA);
 	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(&scene_PVA2);
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene_VBH1(&settings->sceneParams,
-	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                       settings->GetMemoryType(),
 	                                                       indexParametersVBH);
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene_VBH1);
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene_VBH2(&settings->sceneParams,
-	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                       settings->GetMemoryType(),
 	                                                       indexParametersVBH);
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene_VBH2);
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene5(&settings->sceneParams,
-	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                    MEMORYDEVICE_CPU,
 	                                                    indexParametersPVA);
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&scene5);
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene6(&settings->sceneParams,
-	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                   MEMORYDEVICE_CPU,
 	                                                   indexParametersVBH);
 	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene6);
@@ -289,7 +289,7 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CUDA_ITMWarp) {
 
 	float tolerance = 1e-6;
 
-	ITMLibSettings* settings = &ITMLibSettings::Instance();
+	Configuration* settings = &Configuration::Instance();
 	settings->deviceType = MEMORYDEVICE_CPU;
 
 	Vector3i volumeSize(40);
@@ -299,19 +299,19 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CUDA_ITMWarp) {
 	Vector3i extentEndVoxel = volumeOffset + volumeSize;
 
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> scene1(&settings->sceneParams,
-	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType(), indexParametersPVA);
 	ManipulationEngine_CPU_PVA_Warp::Inst().ResetScene(&scene1);
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> scene2(&settings->sceneParams,
-	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType(), indexParametersPVA);
 	ManipulationEngine_CPU_PVA_Warp::Inst().ResetScene(&scene2);
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> scene3(&settings->sceneParams,
-	                                                  settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                  settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                  settings->GetMemoryType(), indexParametersVBH);
 	ManipulationEngine_CPU_VBH_Warp::Inst().ResetScene(&scene3);
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> scene4(&settings->sceneParams,
-	                                                  settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                  settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                  settings->GetMemoryType(), indexParametersVBH);
 	ManipulationEngine_CPU_VBH_Warp::Inst().ResetScene(&scene4);
 

@@ -8,7 +8,7 @@
 #include "../../Objects/RenderStates/ITMRenderState.h"
 #include "ITMVoxelVolume.h"
 #include "../../Objects/Tracking/ITMTrackingState.h"
-#include "../../Utils/ITMLibSettings.h"
+#include "../../Utils/Configuration.h"
 
 namespace ITMLib {
 	struct ITMPoseConstraint

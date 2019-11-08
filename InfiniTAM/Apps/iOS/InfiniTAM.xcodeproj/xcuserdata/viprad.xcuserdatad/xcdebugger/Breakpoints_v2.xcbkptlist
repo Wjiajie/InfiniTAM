@@ -281,7 +281,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "25"
             endingLineNumber = "25"
-            landmarkName = "ITMMainEngine::ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib *calib, Vector2i imgSize_rgb, Vector2i imgSize_d)"
+            landmarkName = "ITMMainEngine::ITMMainEngine(const Configuration *settings, const ITMRGBDCalib *calib, Vector2i imgSize_rgb, Vector2i imgSize_d)"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
@@ -313,7 +313,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "36"
             endingLineNumber = "36"
-            landmarkName = "ITMMainEngine::ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib *calib, Vector2i imgSize_rgb, Vector2i imgSize_d)"
+            landmarkName = "ITMMainEngine::ITMMainEngine(const Configuration *settings, const ITMRGBDCalib *calib, Vector2i imgSize_rgb, Vector2i imgSize_d)"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
@@ -813,7 +813,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "9"
             endingLineNumber = "9"
-            landmarkName = "ITMMainEngine::ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib *calib, Vector2i imgSize_rgb, Vector2i imgSize_d)"
+            landmarkName = "ITMMainEngine::ITMMainEngine(const Configuration *settings, const ITMRGBDCalib *calib, Vector2i imgSize_rgb, Vector2i imgSize_d)"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
@@ -845,7 +845,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "14"
             endingLineNumber = "14"
-            landmarkName = "ITMDenseMapper(const ITMLibSettings *settings, ITMVoxelVolume&lt;TVoxelCanonical, TIndex&gt;* scene, ITMRenderState *renderState_live)"
+            landmarkName = "ITMDenseMapper(const Configuration *settings, ITMVoxelVolume&lt;TVoxelCanonical, TIndex&gt;* scene, ITMRenderState *renderState_live)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -903,13 +903,13 @@
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "Viewer/ITMLib/Utils/ITMLibSettings.cpp"
+            filePath = "Viewer/ITMLib/Utils/Configuration.cpp"
             timestampString = "464882815.119934"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "37"
             endingLineNumber = "37"
-            landmarkName = "ITMLibSettings::ITMLibSettings(void)"
+            landmarkName = "Configuration::Configuration(void)"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
@@ -925,7 +925,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "33"
             endingLineNumber = "33"
-            landmarkName = "ITMDenseMapper(const ITMLibSettings *settings, ITMVoxelVolume&lt;TVoxelCanonical, TIndex&gt;* scene, ITMRenderState *renderState_live)"
+            landmarkName = "ITMDenseMapper(const Configuration *settings, ITMVoxelVolume&lt;TVoxelCanonical, TIndex&gt;* scene, ITMRenderState *renderState_live)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -941,7 +941,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "32"
             endingLineNumber = "32"
-            landmarkName = "ITMDenseMapper(const ITMLibSettings *settings, ITMVoxelVolume&lt;TVoxelCanonical, TIndex&gt;* scene, ITMRenderState *renderState_live)"
+            landmarkName = "ITMDenseMapper(const Configuration *settings, ITMVoxelVolume&lt;TVoxelCanonical, TIndex&gt;* scene, ITMRenderState *renderState_live)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

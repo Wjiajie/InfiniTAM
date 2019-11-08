@@ -19,7 +19,7 @@
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../../ITMLibDefines.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
-#include "../../../Utils/ITMLibSettings.h"
+#include "../../../Utils/Configuration.h"
 #include "../../Reconstruction/Interface/ITMSceneReconstructionEngine.h"
 #include "../../Reconstruction/ITMSceneReconstructionEngineFactory.h"
 

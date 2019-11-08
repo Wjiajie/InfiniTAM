@@ -40,7 +40,7 @@ typedef ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMPlainVoxel
 typedef ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMVoxelBlockHash> RecoEngine_CPU_VBH;
 
 BOOST_AUTO_TEST_CASE(Test_WarpScene_CPU_PVA) {
-	const ITMLibSettings& settings = ITMLibSettings::Instance();
+	const Configuration& settings = Configuration::Instance();
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warps;
 	loadSdfVolume(&warps, "TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_complete_",
 	              MEMORYDEVICE_CPU);
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CPU_PVA) {
 }
 
 BOOST_AUTO_TEST_CASE(Test_WarpScene_CPU_VBH) {
-	const ITMLibSettings& settings = ITMLibSettings::Instance();
+	const Configuration& settings = Configuration::Instance();
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps;
 	loadSdfVolume(&warps, "TestData/snoopy_result_fr16-17_partial_VBH/warp_field_0_complete_",
 	              MEMORYDEVICE_CPU);
@@ -107,7 +107,7 @@ typedef ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMPlainVoxe
 typedef ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash> RecoEngine_CUDA_VBH;
 
 BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_PVA) {
-	const ITMLibSettings& settings = ITMLibSettings::Instance();
+	const Configuration& settings = Configuration::Instance();
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warps;
 	loadSdfVolume(&warps, "TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_complete_",
 	              MEMORYDEVICE_CUDA);
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_PVA) {
 }
 
 BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_VBH) {
-	const ITMLibSettings& settings = ITMLibSettings::Instance();
+	const Configuration& settings = Configuration::Instance();
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps;
 	loadSdfVolume(&warps, "TestData/snoopy_result_fr16-17_partial_VBH/warp_field_0_complete_",
 	              MEMORYDEVICE_CUDA);

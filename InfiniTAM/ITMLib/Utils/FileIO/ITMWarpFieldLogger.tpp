@@ -20,7 +20,7 @@
 //local
 #include "ITMWarpFieldLogger.h"
 #include "../Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
-#include "../ITMLibSettings.h"
+#include "../Configuration.h"
 #include "../../Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
@@ -212,11 +212,11 @@ ITMWarpFieldLogger<TVoxel, TIndex>::ITMWarpFieldLogger(const Vector6i& bounds, b
 		highlights("Hash ID", "Local voxel ix", "Frame", ""),
 		sliceIdentifier(GenerateSliceStringIdentifier(bounds)) {
 
-	ITMLibSettings& settings = ITMLibSettings::Instance();
+	Configuration& settings = Configuration::Instance();
 	MemoryDeviceType memoryType =
 			settings.deviceType == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
 	this->warpField = new ITMVoxelVolume<TVoxel, TIndex>(&settings.sceneParams,
-	                                           settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                           settings.swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                     memoryType);
 
 	SetPath(fullScenePath);

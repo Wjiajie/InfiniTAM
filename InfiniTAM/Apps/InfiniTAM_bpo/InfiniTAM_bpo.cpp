@@ -361,7 +361,7 @@ int main(int argc, char** argv) {
 		ITMDynamicFusionLogger_Interface& logger = GetLogger(chosenIndexingMethod);
 
 // region ================================ SET MAIN ENGINE SETTINGS WITH CLI ARGUMENTS =================================
-		auto& settings = ITMLibSettings::Instance();
+		auto& settings = Configuration::Instance();
 		settings.deviceType = chosenDeviceType;
 
 		settings.analysisSettings.outputPath = vm["output"].as<std::string>().c_str();
@@ -425,7 +425,7 @@ int main(int argc, char** argv) {
 
 
 		switch (settings.libMode) {
-			case ITMLibSettings::LIBMODE_BASIC:
+			case Configuration::LIBMODE_BASIC:
 				switch (chosenIndexingMethod) {
 					case HASH:
 						mainEngine = new ITMBasicEngine<ITMVoxel, ITMVoxelBlockHash>(imageSource->getCalib(),
@@ -439,12 +439,12 @@ int main(int argc, char** argv) {
 						break;
 				}
 				break;
-			case ITMLibSettings::LIBMODE_BASIC_SURFELS:
+			case Configuration::LIBMODE_BASIC_SURFELS:
 				mainEngine = new ITMBasicSurfelEngine<ITMSurfelT>(imageSource->getCalib(),
 				                                                  imageSource->getRGBImageSize(),
 				                                                  imageSource->getDepthImageSize());
 				break;
-			case ITMLibSettings::LIBMODE_LOOPCLOSURE:
+			case Configuration::LIBMODE_LOOPCLOSURE:
 				switch (chosenIndexingMethod) {
 					case HASH:
 						mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelBlockHash>(imageSource->getCalib(),
@@ -458,7 +458,7 @@ int main(int argc, char** argv) {
 						break;
 				}
 				break;
-			case ITMLibSettings::LIBMODE_DYNAMIC:
+			case Configuration::LIBMODE_DYNAMIC:
 				switch (chosenIndexingMethod) {
 					case HASH:
 						mainEngine = new ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(

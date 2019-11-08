@@ -8,7 +8,7 @@
 #include "../../Objects/RenderStates/ITMRenderState.h"
 #include "ITMVoxelVolume.h"
 #include "../../Objects/Tracking/ITMTrackingState.h"
-#include "../../Utils/ITMLibSettings.h"
+#include "../../Utils/Configuration.h"
 
 namespace ITMLib {
 	struct ITMPoseConstraint
@@ -51,9 +51,9 @@ namespace ITMLib {
 
 		ITMLocalMap(const ITMVisualisationEngine<TVoxel, TIndex>* visualisationEngine, const Vector2i& trackedImageSize)
 		{
-			auto& settings = ITMLibSettings::Instance();
+			auto& settings = Configuration::Instance();
 			MemoryDeviceType memoryType = settings.deviceType == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
-			scene = new ITMVoxelVolume<TVoxel, TIndex>(&settings.sceneParams, settings.swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED, memoryType);
+			scene = new ITMVoxelVolume<TVoxel, TIndex>(&settings.sceneParams, settings.swappingMode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
 			renderState = visualisationEngine->CreateRenderState(scene, trackedImageSize);
 			trackingState = new ITMTrackingState(trackedImageSize, memoryType);
 		}

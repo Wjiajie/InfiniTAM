@@ -19,7 +19,7 @@
 #include <boost/test/test_tools.hpp>
 #include "../ORUtils/MemoryDeviceType.h"
 #include "../ITMLib/ITMLibDefines.h"
-#include "../ITMLib/Utils/ITMLibSettings.h"
+#include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Objects/Scene/ITMVoxelVolume.h"
 #include "../ITMLib/Engines/Manipulation/Interface/ITMSceneManipulationEngine.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
@@ -57,7 +57,7 @@ ITMVoxelBlockHash::InitializationParameters GetIndexParameters<ITMVoxelBlockHash
 template<MemoryDeviceType TMemoryType, typename TIndex>
 struct WarpGradientDataFixture {
 	WarpGradientDataFixture() :
-			settings(&ITMLibSettings::Instance()),
+			settings(&Configuration::Instance()),
 			warp_field_data_term(nullptr), canonical_volume(nullptr), live_volume(nullptr),
 			pathToData("TestData/snoopy_result_fr16-17_partial_" + getIndexSuffix<TIndex>() + "/"),
 			indexParameters(GetIndexParameters<TIndex>()){
@@ -72,7 +72,7 @@ struct WarpGradientDataFixture {
 		auto loadSdfVolume = [&](ITMVoxelVolume<ITMVoxel, TIndex>** scene, const std::string& pathSuffix){
 			*scene = new ITMVoxelVolume<ITMVoxel, TIndex>(&settings->sceneParams,
 			                                                   settings->swappingMode ==
-			                                                   ITMLibSettings::SWAPPINGMODE_ENABLED,
+			                                                   Configuration::SWAPPINGMODE_ENABLED,
 			                                                   TMemoryType,
 			                                                   indexParameters);
 			PrepareVoxelVolumeForLoading(*scene, TMemoryType);
@@ -81,7 +81,7 @@ struct WarpGradientDataFixture {
 		auto loadWarpVolume = [&](ITMVoxelVolume<ITMWarp, TIndex>** scene, const std::string& pathSuffix){
 			*scene = new ITMVoxelVolume<ITMWarp, TIndex>(&settings->sceneParams,
 			                                             settings->swappingMode ==
-			                                             ITMLibSettings::SWAPPINGMODE_ENABLED,
+			                                             Configuration::SWAPPINGMODE_ENABLED,
 			                                             TMemoryType,
 			                                             indexParameters);
 			PrepareVoxelVolumeForLoading(*scene, TMemoryType);
@@ -111,7 +111,7 @@ struct WarpGradientDataFixture {
 		delete warp_field_data_and_level_set_term;
 	}
 
-	ITMLibSettings* settings;
+	Configuration* settings;
 	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_data_term;
 	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_data_term_smoothed;
 	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_iter0;

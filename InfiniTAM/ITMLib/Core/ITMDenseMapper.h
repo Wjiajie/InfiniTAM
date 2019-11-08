@@ -4,7 +4,7 @@
 
 #include "../Engines/Reconstruction/Interface/ITMSceneReconstructionEngine.h"
 #include "../Engines/Swapping/Interface/ITMSwappingEngine.h"
-#include "../Utils/ITMLibSettings.h"
+#include "../Utils/Configuration.h"
 
 namespace ITMLib
 {
@@ -17,7 +17,7 @@ namespace ITMLib
 		ITMSceneReconstructionEngine<TVoxel,TIndex> *sceneRecoEngine;
 		ITMSwappingEngine<TVoxel,TIndex> *swappingEngine;
 
-		ITMLibSettings::SwappingMode swappingMode;
+		Configuration::SwappingMode swappingMode;
 
 	public:
 		void ResetScene(ITMVoxelVolume<TVoxel,TIndex> *scene) const;

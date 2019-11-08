@@ -14,21 +14,21 @@ namespace po = boost::program_options;
 
 namespace ITMLib
 {
-	class ITMLibSettings
+	class Configuration
 	{
 	public:
 		static void SetFromVariableMap(const po::variables_map& vm);
 
-		static ITMLibSettings& Instance(){
-			static ITMLibSettings instance;
+		static Configuration& Instance(){
+			static Configuration instance;
 			return instance;
 		}
 
-		~ITMLibSettings() = default;
+		~Configuration() = default;
 
 		// Suppress the default copy constructor and assignment operator
-		ITMLibSettings(const ITMLibSettings &) = delete;
-		ITMLibSettings& operator=(const ITMLibSettings &) = delete;
+		Configuration(const Configuration &) = delete;
+		Configuration& operator=(const Configuration &) = delete;
 
 
 		// accepting program arguments from boost::program_options. One of the arguments may be a .json config file, which should
@@ -125,6 +125,6 @@ namespace ITMLib
 		float sceneTrackingLevelSetTermEpsilon;
 
 	private:
-		ITMLibSettings();
+		Configuration();
 	};
 }

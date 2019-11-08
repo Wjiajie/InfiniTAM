@@ -8,7 +8,7 @@
 #include "../../InputSource/FFMPEGWriter.h"
 #include "../../ITMLib/Core/ITMMainEngine.h"
 #include "../../ITMLib/Objects/Tracking/ITMTrackingState.h"
-#include "../../ITMLib/Utils/ITMLibSettings.h"
+#include "../../ITMLib/Utils/Configuration.h"
 #include "../../ORUtils/FileUtils.h"
 #include "../../ORUtils/NVTimer.h"
 #include "../../ITMLib/Utils/FileIO/ITMDynamicFusionLogger.h"

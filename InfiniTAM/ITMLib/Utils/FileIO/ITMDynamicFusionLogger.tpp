@@ -25,7 +25,7 @@
 #include "ITMDynamicFusionLogger.h"
 #include "../Analytics/ITMBenchmarkUtils.h"
 #include "../ITMPrintHelpers.h"
-#include "../ITMLibSettings.h"
+#include "../Configuration.h"
 
 
 using namespace ITMLib;

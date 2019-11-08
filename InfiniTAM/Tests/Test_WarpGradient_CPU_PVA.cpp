@@ -29,7 +29,7 @@
 //local
 #include "TestUtils.h"
 #include "Test_WarpGradient_Common.h"
-#include "../ITMLib/Utils/ITMLibSettings.h"
+#include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/SceneMotionTrackers/Interface/ITMSceneMotionTracker.h"
 #include "../ITMLib/SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU.h"
@@ -69,7 +69,7 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_PVA, DataFixture) {
 
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(&settings->sceneParams,
 	                                                            settings->swappingMode ==
-	                                                            ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                            Configuration::SWAPPINGMODE_ENABLED,
 	                                                            MEMORYDEVICE_CPU,
 	                                                            indexParameters);
 	ManipulationEngine_CPU_PVA_Warp::Inst().ResetScene(&warp_field_CPU1);

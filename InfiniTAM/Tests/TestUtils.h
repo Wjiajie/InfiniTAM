@@ -20,7 +20,7 @@
 
 #include "../ITMLib/Objects/Scene/ITMRepresentationAccess.h"
 #include "../ITMLib/Objects/Scene/ITMVoxelVolume.h"
-#include "../ITMLib/Utils/ITMLibSettings.h"
+#include "../ITMLib/Utils/Configuration.h"
 
 
 using namespace ITMLib;
@@ -69,12 +69,12 @@ typename TIndex::InitializationParameters GetStandard128IndexParameters();
 //template<typename TVoxelA, typename TIndex>
 //ITMVoxelVolume<TVoxelA, TIndex> loadSdfVolume (const std::string& path, MemoryDeviceType memoryDeviceType,
 //		typename TIndex::InitializationParameters initializationParameters = GetFrame17PartialIndexParameters<TIndex>(),
-//		ITMLibSettings::SwappingMode swappingMode = ITMLibSettings::SWAPPINGMODE_DISABLED);
+//		Configuration::SwappingMode swappingMode = Configuration::SWAPPINGMODE_DISABLED);
 
 template<typename TVoxel, typename TIndex>
 void loadSdfVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& path, MemoryDeviceType memoryDeviceType,
                    typename TIndex::InitializationParameters initializationParameters = GetFrame17PartialIndexParameters<TIndex>(),
-                   ITMLibSettings::SwappingMode swappingMode = ITMLibSettings::SWAPPINGMODE_DISABLED);
+                   Configuration::SwappingMode swappingMode = Configuration::SWAPPINGMODE_DISABLED);
 
 template<typename TVoxel, typename TIndex>
 void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
@@ -82,5 +82,5 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
                              const std::string& calibration_path = "TestData/snoopy_calib.txt",
                              MemoryDeviceType memoryDevice = MEMORYDEVICE_CUDA,
                              typename TIndex::InitializationParameters initializationParameters = GetStandard512IndexParameters<TIndex>(),
-                             ITMLibSettings::SwappingMode swappingMode = ITMLibSettings::SWAPPINGMODE_DISABLED,
+                             Configuration::SwappingMode swappingMode = Configuration::SWAPPINGMODE_DISABLED,
                              bool useBilateralFilter = false);

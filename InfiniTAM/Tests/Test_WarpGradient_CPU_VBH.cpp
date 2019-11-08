@@ -31,7 +31,7 @@
 //local
 #include "TestUtils.h"
 #include "Test_WarpGradient_Common.h"
-#include "../ITMLib/Utils/ITMLibSettings.h"
+#include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/SceneMotionTrackers/Interface/ITMSceneMotionTracker.h"
 #include "../ITMLib/SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU.h"
@@ -77,7 +77,7 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_VBH, DataFixture) {
 //	settings->SetFocusCoordinates(Vector3i(-21,-4,189));
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CPU1(&settings->sceneParams,
 	                                                            settings->swappingMode ==
-	                                                            ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                            Configuration::SWAPPINGMODE_ENABLED,
 	                                                            MEMORYDEVICE_CPU, indexParameters);
 	ManipulationEngine_CPU_VBH_Warp::Inst().ResetScene(&warp_field_CPU1);
 

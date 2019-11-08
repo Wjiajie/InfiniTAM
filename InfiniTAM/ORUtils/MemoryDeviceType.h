@@ -2,7 +2,7 @@
 
 #pragma once
 
-//TODO: instead of having a separate "MemoryDeviceType" in the ITMLibSettings and a "MemoryDeviceType" here, just have a single,
+//TODO: instead of having a separate "MemoryDeviceType" in the Configuration and a "MemoryDeviceType" here, just have a single,
 // unified enum for MemoryDeviceType here.
 
 /**

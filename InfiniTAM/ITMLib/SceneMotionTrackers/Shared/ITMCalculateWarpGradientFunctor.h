@@ -113,8 +113,8 @@ public:
 			warps(warps), warpIndexData(warpIndexData),
 			canonicalVoxels(canonicalVoxels), canonicalIndexData(canonicalIndexData),
 			liveCache(), canonicalCache(),
-			hasFocusCoordinates(ITMLibSettings::Instance().FocusCoordinatesAreSpecified()),
-			focusCoordinates(ITMLibSettings::Instance().GetFocusCoordinates()) {}
+			hasFocusCoordinates(Configuration::Instance().FocusCoordinatesAreSpecified()),
+			focusCoordinates(Configuration::Instance().GetFocusCoordinates()) {}
 
 	// endregion =======================================================================================================
 

@@ -1,15 +1,15 @@
 // Copyright 2014-2017 Oxford University Innovation Limited and the authors of InfiniTAM
 
-#include "ITMLibSettings.h"
+#include "Configuration.h"
 using namespace ITMLib;
 
 
 
-void ITMLibSettings::SetFromVariableMap(const po::variables_map& vm) {
+void Configuration::SetFromVariableMap(const po::variables_map& vm) {
 
 }
 
-ITMLibSettings::ITMLibSettings()
+Configuration::Configuration()
 :   //mu(m), maxW, voxel size(m), clipping min, clipping max, stopIntegratingAtMaxW
 	sceneParams(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG
 	//sceneParams(0.02f, 100, 0.005f, 0.2f, 3.0f, false),//standard InfiniTAM values
@@ -132,25 +132,25 @@ ITMLibSettings::ITMLibSettings()
 	sceneTrackingLevelSetTermEpsilon = 1e-5f; // default from KillingFusion //TODO: scaling factor of 0.01, since their units are mm and ours are m?
 }
 
-bool ITMLibSettings::FocusCoordinatesAreSpecified() const {
+bool Configuration::FocusCoordinatesAreSpecified() const {
 	return analysisSettings.focusCoordinatesSpecified;
 }
 
-MemoryDeviceType ITMLibSettings::GetMemoryType() const
+MemoryDeviceType Configuration::GetMemoryType() const
 {
 	return deviceType == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
 }
 
-Vector3i ITMLibSettings::GetFocusCoordinates() const {
+Vector3i Configuration::GetFocusCoordinates() const {
 	return analysisSettings.focusCoordinates;
 }
 
-void ITMLibSettings::SetFocusCoordinates(const Vector3i& coordiantes) {
+void Configuration::SetFocusCoordinates(const Vector3i& coordiantes) {
 	analysisSettings.focusCoordinatesSpecified = true;
 	analysisSettings.focusCoordinates = coordiantes;
 }
 
-void ITMLibSettings::SetFocusCoordinates(int x, int y, int z) {
+void Configuration::SetFocusCoordinates(int x, int y, int z) {
 	this->SetFocusCoordinates(Vector3i(x, y, z));
 }
 

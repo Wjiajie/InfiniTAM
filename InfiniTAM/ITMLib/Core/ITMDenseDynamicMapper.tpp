@@ -68,21 +68,21 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ITMDenseDynamicMapper(const TIndex& index) :
 		sceneReconstructor(
 				ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel, TWarp, TIndex>
-						(ITMLibSettings::Instance().deviceType)),
+						(Configuration::Instance().deviceType)),
 		sceneMotionTracker(
 				ITMSceneMotionTrackerFactory::MakeSceneMotionTracker<TVoxel, TWarp, TIndex>()),
-		swappingEngine(ITMLibSettings::Instance().swappingMode != ITMLibSettings::SWAPPINGMODE_DISABLED
+		swappingEngine(Configuration::Instance().swappingMode != Configuration::SWAPPINGMODE_DISABLED
 		               ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxel, TIndex>(
-						ITMLibSettings::Instance().deviceType, index)
+						Configuration::Instance().deviceType, index)
 		               : nullptr),
-		swappingMode(ITMLibSettings::Instance().swappingMode),
-		parameters{ITMLibSettings::Instance().sceneTrackingMaxOptimizationIterationCount,
-		           ITMLibSettings::Instance().sceneTrackingOptimizationVectorUpdateThresholdMeters,
-		           ITMLibSettings::Instance().sceneTrackingOptimizationVectorUpdateThresholdMeters /
-		           ITMLibSettings::Instance().sceneParams.voxelSize},
-		analysisFlags{ITMLibSettings::Instance().restrictZtrackingForDebugging,
-		              ITMLibSettings::Instance().FocusCoordinatesAreSpecified()},
-		focusCoordinates(ITMLibSettings::Instance().GetFocusCoordinates()) {}
+		swappingMode(Configuration::Instance().swappingMode),
+		parameters{Configuration::Instance().sceneTrackingMaxOptimizationIterationCount,
+		           Configuration::Instance().sceneTrackingOptimizationVectorUpdateThresholdMeters,
+		           Configuration::Instance().sceneTrackingOptimizationVectorUpdateThresholdMeters /
+		           Configuration::Instance().sceneParams.voxelSize},
+		analysisFlags{Configuration::Instance().restrictZtrackingForDebugging,
+		              Configuration::Instance().FocusCoordinatesAreSpecified()},
+		focusCoordinates(Configuration::Instance().GetFocusCoordinates()) {}
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::~ITMDenseDynamicMapper() {
@@ -98,7 +98,7 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 void
 ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetTSDFVolume(
 		ITMVoxelVolume<TVoxel, TIndex>* volume) const {
-	switch (ITMLibSettings::Instance().deviceType) {
+	switch (Configuration::Instance().deviceType) {
 		case MEMORYDEVICE_CPU:
 			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(volume);
 			break;
@@ -116,7 +116,7 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetTSDFVolume(
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetWarpVolume(
 		ITMVoxelVolume<TWarp, TIndex>* warpVolume) const {
-	switch (ITMLibSettings::Instance().deviceType) {
+	switch (Configuration::Instance().deviceType) {
 		case MEMORYDEVICE_CPU:
 			ITMSceneManipulationEngine_CPU<TWarp, TIndex>::Inst().ResetScene(warpVolume);
 			break;
@@ -306,18 +306,18 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessSwapping(
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene, ITMRenderState* renderState) {
 	if (swappingEngine != nullptr) {
 		// swapping: CPU -> CUDA
-		if (swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED)
+		if (swappingMode == Configuration::SWAPPINGMODE_ENABLED)
 			swappingEngine->IntegrateGlobalIntoLocal(canonicalScene, renderState);
 
 		// swapping: CUDA -> CPU
 		switch (swappingMode) {
-			case ITMLibSettings::SWAPPINGMODE_ENABLED:
+			case Configuration::SWAPPINGMODE_ENABLED:
 				swappingEngine->SaveToGlobalMemory(canonicalScene, renderState);
 				break;
-			case ITMLibSettings::SWAPPINGMODE_DELETE:
+			case Configuration::SWAPPINGMODE_DELETE:
 				swappingEngine->CleanLocalMemory(canonicalScene, renderState);
 				break;
-			case ITMLibSettings::SWAPPINGMODE_DISABLED:
+			case Configuration::SWAPPINGMODE_DISABLED:
 				break;
 		}
 	}

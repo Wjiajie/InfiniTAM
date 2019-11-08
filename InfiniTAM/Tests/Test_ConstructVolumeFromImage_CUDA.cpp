@@ -27,7 +27,7 @@
 #include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../ITMLib/Engines/ViewBuilding/Interface/ITMViewBuilder.h"
 #include "../ITMLib/Engines/ViewBuilding/ITMViewBuilderFactory.h"
-#include "../ITMLib/Utils/ITMLibSettings.h"
+#include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Utils/Analytics/ITMAlmostEqual.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h"
@@ -44,7 +44,7 @@ typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMPlainVoxelArray> SceneSta
 typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMVoxelBlockHash> SceneStatisticsCalculator_VBH;
 
 BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
-	ITMLibSettings* settings = &ITMLibSettings::Instance();
+	Configuration* settings = &Configuration::Instance();
 
 	// region ================================= CONSTRUCT VIEW =========================================================
 
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 	Vector3i volumeSize(1024, 32, 1024), volumeOffset(-volumeSize.x / 2, -volumeSize.y / 2, 0);
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&settings->sceneParams,
-	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                    settings->GetMemoryType(),
 	                                                    {volumeSize, volumeOffset});
 	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(&scene1);
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 	}
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene2(&settings->sceneParams,
-	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType(), {0x800, 0x20000});
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene2);
 
@@ -161,14 +161,14 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 	tolerance = 1e-5;
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene3(&settings->sceneParams,
-	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                    settings->GetMemoryType(),
 	                                                    {volumeSize, volumeOffset});
 	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(&scene3);
 	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, nullptr);
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene3, tolerance));
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(&settings->sceneParams,
-	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType(), {0x800, 0x20000});
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene4);
 	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene4, view, &trackingState, renderState);
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 	BOOST_REQUIRE(!allocatedContentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene5(
-			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+			&settings->sceneParams, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 			settings->GetMemoryType(), {0x800, 0x20000});
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene5);
 	std::string path = "TestData/test_VBH_ConstructFromImage_";
@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 }
 
 BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CUDA) {
-	ITMLibSettings* settings = &ITMLibSettings::Instance();
+	Configuration* settings = &Configuration::Instance();
 
 	// region ================================= CONSTRUCT VIEW =========================================================
 
@@ -232,7 +232,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CUDA) {
 
 	Vector3i volumeSize(512, 512, 512), volumeOffset(-volumeSize.x / 2, -volumeSize.y / 2, 0);
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&settings->sceneParams,
-	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                    settings->GetMemoryType(),
 	                                                    {volumeSize, volumeOffset});
 
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CUDA) {
 	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(&scene1, view, &trackingState, nullptr);
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(&settings->sceneParams,
-	                                                    settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                    settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                    settings->GetMemoryType(),
 	                                                    {volumeSize, volumeOffset});
 
@@ -257,7 +257,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CUDA) {
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(&settings->sceneParams,
-	                                                   settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
+	                                                   settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType());
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene3);
 

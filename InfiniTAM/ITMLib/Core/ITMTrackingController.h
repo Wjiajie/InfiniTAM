@@ -7,7 +7,7 @@
 #include "../Engines/Visualisation/Interface/ITMSurfelVisualisationEngine.h"
 #include "../Engines/Visualisation/Interface/ITMVisualisationEngine.h"
 #include "../CameraTrackers/Interface/ITMCameraTracker.h"
-#include "../Utils/ITMLibSettings.h"
+#include "../Utils/Configuration.h"
 #include "../CameraTrackers/Interface/ITMCameraTracker.h"
 
 namespace ITMLib
@@ -17,7 +17,7 @@ namespace ITMLib
 	class ITMTrackingController
 	{
 	private:
-		const ITMLibSettings *settings;
+		const Configuration *settings;
 		ITMCameraTracker *tracker;
 
 	public:

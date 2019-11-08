@@ -17,7 +17,7 @@
 #include <boost/test/test_tools.hpp>
 
 #include "TestUtils.h"
-#include "../ITMLib/Utils/ITMLibSettings.h"
+#include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "../ITMLib/Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
@@ -184,8 +184,8 @@ void simulateRandomVoxelAlteration(TVoxel& voxel) {
 // FIXME: see TODO in header
 //template<typename TVoxelA, typename TIndex>
 //ITMVoxelVolume<TVoxelA, TIndex> loadSdfVolume (const std::string& path, MemoryDeviceType memoryDeviceType,
-//                    typename TIndex::InitializationParameters initializationParameters, ITMLibSettings::SwappingMode swappingMode){
-//	ITMLibSettings& settings = ITMLibSettings::Instance();
+//                    typename TIndex::InitializationParameters initializationParameters, Configuration::SwappingMode swappingMode){
+//	Configuration& settings = Configuration::Instance();
 //	ITMVoxelVolume<TVoxelA, TIndex> scene(&settings.sceneParams,
 //	                                              swappingMode,
 //	                                              memoryDeviceType,initializationParameters);
@@ -197,8 +197,8 @@ void simulateRandomVoxelAlteration(TVoxel& voxel) {
 template<typename TVoxel, typename TIndex>
 void loadSdfVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& path, MemoryDeviceType memoryDeviceType,
                    typename TIndex::InitializationParameters initializationParameters,
-                   ITMLibSettings::SwappingMode swappingMode) {
-	ITMLibSettings& settings = ITMLibSettings::Instance();
+                   Configuration::SwappingMode swappingMode) {
+	Configuration& settings = Configuration::Instance();
 	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&settings.sceneParams,
 	                                               swappingMode,
 	                                               memoryDeviceType, initializationParameters);
@@ -212,9 +212,9 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
                              const std::string& calibration_path,
                              MemoryDeviceType memoryDevice,
                              typename TIndex::InitializationParameters initializationParameters,
-                             ITMLibSettings::SwappingMode swappingMode,
+                             Configuration::SwappingMode swappingMode,
                              bool useBilateralFilter) {
-	ITMLibSettings* settings = &ITMLibSettings::Instance();
+	Configuration* settings = &Configuration::Instance();
 
 	// region ================================= CONSTRUCT VIEW =========================================================
 

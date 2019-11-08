@@ -16,7 +16,7 @@
 #pragma once
 
 #include "../Engines/Reconstruction/Interface/ITMDynamicSceneReconstructionEngine.h"
-#include "../Utils/ITMLibSettings.h"
+#include "../Utils/Configuration.h"
 #include "../Engines/Swapping/Interface/ITMSwappingEngine.h"
 #include "../Utils/FileIO/ITMDynamicFusionLogger.h"
 #include "../SceneMotionTrackers/Interface/ITMSceneMotionTracker.h"
@@ -120,7 +120,7 @@ private:
 	ITMSwappingEngine<TVoxel, TIndex>* swappingEngine;
 	ITMSceneMotionTracker<TVoxel, TWarp, TIndex>* sceneMotionTracker;
 
-	ITMLibSettings::SwappingMode swappingMode;
+	Configuration::SwappingMode swappingMode;
 
 	unsigned int iteration = 0;
 	float maxVectorUpdate;
