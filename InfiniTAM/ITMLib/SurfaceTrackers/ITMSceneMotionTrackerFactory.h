@@ -15,13 +15,13 @@
 //  ================================================================
 #pragma once
 
-#include "Interface/ITMSceneMotionTracker.h"
+#include "Interface/SurfaceTrackerInterface.h"
 #include "CPU/ITMSceneMotionTracker_CPU.h"
 #include "Shared/ITMCalculateWarpGradientFunctor.h"
 
 #ifndef COMPILE_WITHOUT_CUDA
 
-#include "CUDA/ITMSceneMotionTracker_CUDA.h"
+#include "CUDA/SurfaceTracker.h"
 
 #endif
 #ifdef COMPILE_WITH_METAL
@@ -37,17 +37,17 @@ public:
 * \param settings  settings to use
 */
 	template<typename TVoxel, typename TWarp, typename TIndex>
-	static ITMSceneMotionTracker<TVoxel, TWarp, TIndex>*
+	static SurfaceTrackerInterface<TVoxel, TWarp, TIndex>*
 	MakeSceneMotionTracker() {
-		ITMSceneMotionTracker<TVoxel, TWarp, TIndex>* motionTracker = nullptr;
+		SurfaceTrackerInterface<TVoxel, TWarp, TIndex>* motionTracker = nullptr;
 		auto& settings = Configuration::Instance();
 		switch (settings.deviceType) {
 			case MEMORYDEVICE_CPU:
-				motionTracker = new ITMSceneMotionTracker_CPU<TVoxel, TWarp, TIndex>();
+				motionTracker = new SurfaceTracker<TVoxel, TWarp, TIndex, MEMORYDEVICE_CPU>();
 				break;
 			case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-				motionTracker = new ITMSceneMotionTracker_CUDA<TVoxel, TWarp, TIndex>();
+				motionTracker = new SurfaceTracker<TVoxel, TWarp, TIndex, MEMORYDEVICE_CUDA>();
 #endif
 				break;
 			case MEMORYDEVICE_METAL:

@@ -15,28 +15,21 @@
 //  ================================================================
 #pragma once
 
-#include "../Interface/ITMSceneMotionTracker.h"
+#include "../Interface/SurfaceTrackerInterface.h"
 #include "../../Utils/ITMHashBlockProperties.h"
 #include "../../Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU.h"
 
 
 namespace ITMLib {
 
-template<typename TVoxel, typename TWarp, typename TIndex>
-class ITMSceneMotionTracker_CPU :
-		public ITMSceneMotionTracker<TVoxel, TWarp, TIndex> {
-	ITMSceneMotionTracker_CPU() {}
-};
-
-
 //region ======================================== VOXEL BLOCK HASH =====================================================
 
 template<typename TVoxel, typename TWarp>
-class ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash> :
-		public ITMSceneMotionTracker<TVoxel, TWarp, ITMVoxelBlockHash> {
+class SurfaceTracker<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU> :
+		public SurfaceTrackerInterface<TVoxel, TWarp, ITMVoxelBlockHash>, public SlavchevaSurfaceTracker {
 public:
-	explicit ITMSceneMotionTracker_CPU();
-	virtual ~ITMSceneMotionTracker_CPU() = default;
+	explicit SurfaceTracker();
+	virtual ~SurfaceTracker() = default;
 
 	void ClearOutFlowWarp(ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* warpField) override;
 	void AddFlowWarpToWarp(
@@ -61,11 +54,11 @@ public:
 //region ======================================== PLAIN VOXEL ARRAY ====================================================
 
 template<typename TVoxel, typename TWarp>
-class ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray> :
-		public ITMSceneMotionTracker<TVoxel, TWarp, ITMPlainVoxelArray> {
+class SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU> :
+		public SurfaceTrackerInterface<TVoxel, TWarp, ITMPlainVoxelArray>, public SlavchevaSurfaceTracker  {
 public:
-	explicit ITMSceneMotionTracker_CPU();
-	virtual ~ITMSceneMotionTracker_CPU() = default;
+	explicit SurfaceTracker();
+	virtual ~SurfaceTracker() = default;
 
 	void ClearOutFlowWarp(ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField) override;
 	void AddFlowWarpToWarp(

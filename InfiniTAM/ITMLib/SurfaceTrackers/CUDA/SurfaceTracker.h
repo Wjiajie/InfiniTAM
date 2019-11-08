@@ -15,24 +15,19 @@
 //  ================================================================
 #pragma once
 
-#include "../Interface/ITMSceneMotionTracker.h"
+#include "../Interface/SurfaceTrackerInterface.h"
 #include "../../Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA.h"
 
 namespace ITMLib {
 
-template<typename TVoxel, typename TWarp, typename TIndex>
-class ITMSceneMotionTracker_CUDA :
-		public ITMSceneMotionTracker<TVoxel, TWarp, TIndex> {
-	ITMSceneMotionTracker_CUDA() {}
-};
 // region ================================= VOXEL BLOCK HASH ===========================================================
 
 template<typename TVoxel, typename TWarp>
-class ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMVoxelBlockHash> :
-		public ITMSceneMotionTracker<TVoxel, TWarp, ITMVoxelBlockHash> {
+class SurfaceTracker<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CUDA> :
+		public SurfaceTrackerInterface<TVoxel, TWarp, ITMVoxelBlockHash>, public SlavchevaSurfaceTracker {
 public:
-	explicit ITMSceneMotionTracker_CUDA();
-	virtual ~ITMSceneMotionTracker_CUDA() = default;
+	explicit SurfaceTracker();
+	virtual ~SurfaceTracker() = default;
 
 	void ClearOutFlowWarp(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) override;
 	void AddFlowWarpToWarp(
@@ -56,11 +51,11 @@ public:
 // region ================================= PLAIN VOXEL ARRAY ==========================================================
 
 template<typename TVoxel, typename TWarp>
-class ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray> :
-		public ITMSceneMotionTracker<TVoxel, TWarp, ITMPlainVoxelArray> {
+class SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA> :
+		public SurfaceTrackerInterface<TVoxel, TWarp, ITMPlainVoxelArray>, public SlavchevaSurfaceTracker {
 public:
-	explicit ITMSceneMotionTracker_CUDA();
-	virtual ~ITMSceneMotionTracker_CUDA() = default;
+	explicit SurfaceTracker();
+	virtual ~SurfaceTracker() = default;
 
 	void ClearOutFlowWarp(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
 	void AddFlowWarpToWarp(

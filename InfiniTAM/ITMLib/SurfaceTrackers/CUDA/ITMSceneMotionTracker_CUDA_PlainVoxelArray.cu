@@ -1,5 +1,5 @@
 //  ================================================================
-//  Created by Gregory Kramida on 4/12/18.
+//  Created by Gregory Kramida on 5/22/18.
 //  Copyright (c) 2018-2025 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -15,10 +15,9 @@
 //  ================================================================
 
 #include "../../ITMLibDefines.h"
-#include "ITMSceneMotionTracker_CPU_PlainVoxelArray.tpp"
+#include "ITMSceneMotionTracker_CUDA_PlainVoxelArray.tcu"
 
 
 namespace ITMLib {
-template
-class ITMSceneMotionTracker_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;
+template class SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>;
 } // namespace ITMLib

@@ -27,25 +27,31 @@
 
 namespace ITMLib {
 
-//TODO: rename to "ITMSurfaceTracker" or "SurfaceTracker"
-/**
- * \brief Class responsible for tracking motion of rigid or dynamic surfaces within the scene
- * \tparam TVoxel TSDF voxel type
- * \tparam TWarp Warp vector voxel type
- * \tparam TIndex Indexing structure type used for voxel volumes
- */
-template<typename TVoxel, typename TWarp, typename TIndex>
-class ITMSceneMotionTracker {
 
+class SlavchevaSurfaceTracker {
 public:
+	struct Parameters{
+		const float gradientDescentLearningRate;// = 0.1f;
+		const float rigidityEnforcementFactor;// = 0.1f;
+		const float weightDataTerm;// = 1.0f
+		const float weightSmoothingTerm;// = 0.2f; //0.2 is default for SobolevFusion, 0.5 is default for KillingFusion
+		const float weightLevelSetTerm;// = 0.2f;
+		const float epsilon;// = 1e-5f;
+		const float unity; // voxelSize/mu, i.e. 1/[narrow-band half-width in voxels] or [voxel size in metric units]/[narrow-band half-width in metric units]
+	};
 
-//============================= CONSTRUCTORS / DESTRUCTORS =============================================================
-//TODO: write documentation block -Greg (Github: Algomorph)
+	struct Switches{
+		const bool enableDataTerm;
+		const bool enableLevelSetTerm;
+		const bool enableTikhonovTerm;
+		const bool enableKillingRigidityEnforcementTerm;
+		const bool enableSobolevGradientSmoothing;
+	};
 
+	const Parameters parameters;
+	const Switches switches;
 
-//TODO: reorder argument lists in both classes for consistency with reconstruction engine: warp field should come first,
-//  canonical (as the "target") should come last
-	explicit ITMSceneMotionTracker() :
+	explicit SlavchevaSurfaceTracker() :
 			parameters{
 					Configuration::Instance().sceneTrackingGradientDescentLearningRate,
 					Configuration::Instance().sceneTrackingRigidityEnforcementFactor,
@@ -65,8 +71,45 @@ public:
 		PrintSettings();
 	}
 
-	virtual ~ITMSceneMotionTracker() = default;
-//============================= MEMBER FUNCTIONS =======================================================================
+protected:
+	void PrintSettings() {
+		std::cout << bright_cyan << "*** Scene Motion Tracker Settings: ***" << reset << std::endl;
+		std::cout << "Data term enabled: " << printBool(this->switches.enableDataTerm) << std::endl;
+		std::cout << "Smoothing term enabled: " << printBool(this->switches.enableTikhonovTerm) << std::endl;
+		std::cout << "Level Set term enabled: " << printBool(this->switches.enableLevelSetTerm) << std::endl;
+		std::cout << "Killing term enabled: " << printBool(this->switches.enableKillingRigidityEnforcementTerm) << std::endl;
+		std::cout << "Gradient smoothing enabled: " << printBool(this->switches.enableSobolevGradientSmoothing) << std::endl
+		          << std::endl;
+
+		std::cout << "Gradient descent learning rate: " << this->parameters.gradientDescentLearningRate << std::endl;
+		std::cout << "Rigidity enforcement factor: " << this->parameters.rigidityEnforcementFactor << std::endl;
+		std::cout << "Weight of the data term: " << this->parameters.weightDataTerm << std::endl;
+		std::cout << "Weight of the smoothness term: " << this->parameters.weightSmoothingTerm << std::endl;
+		std::cout << "Weight of the level set term: " << this->parameters.weightLevelSetTerm << std::endl;
+		std::cout << "Epsilon for the level set term: " << this->parameters.epsilon << std::endl;
+		std::cout << "Unity scaling factor: " << this->parameters.unity << std::endl;
+		std::cout << bright_cyan << "*** *********************************** ***" << reset << std::endl;
+	}
+};
+
+/**
+ * \brief Class responsible for tracking motion of rigid or dynamic surfaces within the scene
+ * \tparam TVoxel TSDF voxel type
+ * \tparam TWarp Warp vector voxel type
+ * \tparam TIndex Indexing structure type used for voxel volumes
+ */
+template<typename TVoxel, typename TWarp, typename TIndex>
+class SurfaceTrackerInterface {
+
+public:
+
+
+
+//TODO: reorder argument lists in both classes for consistency with reconstruction engine: warp field should come first,
+//  canonical (as the "target") should come last
+
+
+	virtual ~SurfaceTrackerInterface() = default;
 	virtual void
 	CalculateWarpGradient(ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
 	                      ITMVoxelVolume<TVoxel, TIndex>* liveScene,
@@ -83,32 +126,12 @@ public:
 	virtual void AddFlowWarpToWarp(
 			ITMVoxelVolume<TWarp, TIndex>* warpField, bool clearFlowWarp) = 0;
 	virtual void ResetWarps(ITMVoxelVolume<TWarp, TIndex>* warpField) = 0;
-//============================= MEMBER VARIABLES =======================================================================
 
-	const ITMSceneMotionOptimizationParameters parameters;
-	const ITMSceneMotionOptimizationSwitches switches;
-protected:
-	void PrintSettings() {
-		std::cout << bright_cyan << "*** Scene Motion Tracker Settings: ***" << reset << std::endl;
-		std::cout << "Data term enabled: " << printBool(this->switches.enableDataTerm) << std::endl;
-		std::cout << "Smoothing term enabled: " << printBool(this->switches.enableSmoothingTerm) << std::endl;
-		std::cout << "Level Set term enabled: " << printBool(this->switches.enableLevelSetTerm) << std::endl;
-		std::cout << "Killing term enabled: " << printBool(this->switches.enableKillingTerm) << std::endl;
-		std::cout << "Gradient smoothing enabled: " << printBool(this->switches.enableGradientSmoothing) << std::endl
-		          << std::endl;
-
-		std::cout << "Gradient descent learning rate: " << this->parameters.gradientDescentLearningRate << std::endl;
-		std::cout << "Rigidity enforcement factor: " << this->parameters.rigidityEnforcementFactor << std::endl;
-		std::cout << "Weight of the data term: " << this->parameters.weightDataTerm << std::endl;
-		std::cout << "Weight of the smoothness term: " << this->parameters.weightSmoothingTerm << std::endl;
-		std::cout << "Weight of the level set term: " << this->parameters.weightLevelSetTerm << std::endl;
-		std::cout << "Epsilon for the level set term: " << this->parameters.epsilon << std::endl;
-		std::cout << "Unity scaling factor: " << this->parameters.unity << std::endl;
-		std::cout << bright_cyan << "*** *********************************** ***" << reset << std::endl;
-	}
 
 };
 
+template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+class SurfaceTracker;
 
 }//namespace ITMLib
 

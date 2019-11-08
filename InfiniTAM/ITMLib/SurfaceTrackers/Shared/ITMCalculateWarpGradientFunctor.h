@@ -23,7 +23,7 @@
 #include "ITMSceneMotionTracker_Shared.h"
 #include "ITMSceneMotionTracker_Debug.h"
 #include "../../Utils/ITMVoxelFlags.h"
-#include "../Interface/ITMSceneMotionTracker.h"
+#include "../Interface/SurfaceTrackerInterface.h"
 #include "../../../ORUtils/PlatformIndependentAtomics.h"
 #include "ITMWarpGradientAggregates.h"
 #include "../../Utils/ITMCPrintHelpers.h"
@@ -103,8 +103,8 @@ public:
 
 	// region ========================================= CONSTRUCTOR ====================================================
 
-	ITMCalculateWarpGradientFunctor(ITMSceneMotionOptimizationParameters parameters,
-	                                ITMSceneMotionOptimizationSwitches switches,
+	ITMCalculateWarpGradientFunctor(SlavchevaSurfaceTracker::Parameters parameters,
+	                                SlavchevaSurfaceTracker::Switches switches,
 	                                TVoxel* liveVoxels, const TIndexData* liveIndexData,
 	                                TVoxel* canonicalVoxels, const TIndexData* canonicalIndexData,
 	                                TWarp* warps, const TIndexData* warpIndexData) :
@@ -201,7 +201,7 @@ public:
 
 		// region =============================== SMOOTHING TERM (TIKHONOV & KILLING) ======================
 
-		if (switches.enableSmoothingTerm) {
+		if (switches.enableTikhonovTerm) {
 			// region ============================== RETRIEVE NEIGHBOR'S WARPS =========================================
 
 			const int neighborhoodSize = 9;
@@ -222,7 +222,7 @@ public:
 			}
 			//endregion=================================================================================================
 
-			if (switches.enableKillingTerm) {
+			if (switches.enableKillingRigidityEnforcementTerm) {
 				Matrix3f framewiseWarpJacobian(0.0f);
 				Matrix3f framewiseWarpHessian[3] = {Matrix3f(0.0f), Matrix3f(0.0f), Matrix3f(0.0f)};
 				ComputePerVoxelWarpJacobianAndHessian(framewiseWarp, neighborFlowWarps, framewiseWarpJacobian,
@@ -329,7 +329,7 @@ public:
 	void PrintStatistics() {
 		std::cout << bright_cyan << "*** Non-rigid Alignment Iteration Statistics ***" << reset << std::endl;
 		PrintEnergyStatistics(this->switches.enableDataTerm, this->switches.enableLevelSetTerm,
-		                      this->switches.enableSmoothingTerm, this->switches.enableKillingTerm,
+		                      this->switches.enableTikhonovTerm, this->switches.enableKillingRigidityEnforcementTerm,
 		                      this->parameters.rigidityEnforcementFactor, energies);
 		CalculateAndPrintAdditionalStatistics(
 				this->switches.enableDataTerm, this->switches.enableLevelSetTerm, aggregates);
@@ -359,8 +359,8 @@ private:
 	Vector3i focusCoordinates;
 	bool restrictZtrackingForDebugging = false;
 
-	const ITMSceneMotionOptimizationParameters parameters;
-	const ITMSceneMotionOptimizationSwitches switches;
+	const SlavchevaSurfaceTracker::Parameters parameters;
+	const SlavchevaSurfaceTracker::Switches switches;
 };
 
 }// namespace ITMLib

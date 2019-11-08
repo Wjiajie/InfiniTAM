@@ -26,8 +26,8 @@ using namespace ITMLib;
 // region ================================ CONSTRUCTORS AND DESTRUCTORS ================================================
 
 template<typename TVoxel, typename TWarp>
-ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::ITMSceneMotionTracker_CPU()
-		: ITMSceneMotionTracker<TVoxel, TWarp, ITMPlainVoxelArray>()
+SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::SurfaceTracker()
+		: SurfaceTrackerInterface<TVoxel, TWarp, ITMPlainVoxelArray>()
 		  {
 }
 // endregion ============================== END CONSTRUCTORS AND DESTRUCTORS============================================
@@ -35,7 +35,7 @@ ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::ITMSceneMotionTrac
 
 
 template<typename TVoxel, typename TWarp>
-void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::CalculateWarpGradient(
+void SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::CalculateWarpGradient(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
@@ -63,12 +63,12 @@ void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::CalculateWarp
 
 
 template<typename TVoxel, typename TWarp>
-void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::SmoothWarpGradient(
+void SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::SmoothWarpGradient(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
 
-	if (this->switches.enableGradientSmoothing) {
+	if (this->switches.enableSobolevGradientSmoothing) {
 		SmoothWarpGradient_common<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>
 		        (liveScene, canonicalScene, warpField);
 	}
@@ -80,13 +80,13 @@ void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::SmoothWarpGra
 
 
 template<typename TVoxel, typename TWarp>
-float ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::UpdateWarps(
+float SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::UpdateWarps(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
 	return UpdateWarps_common<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>
 			(canonicalScene, liveScene, warpField, this->parameters.gradientDescentLearningRate,
-			 this->switches.enableGradientSmoothing);
+			 this->switches.enableSobolevGradientSmoothing);
 }
 
 
@@ -94,7 +94,7 @@ float ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::UpdateWarps(
 
 
 template<typename TVoxel, typename TWarp>
-void ITMLib::ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::ResetWarps(
+void ITMLib::SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::ResetWarps(
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
 
 	ITMSceneTraversalEngine<TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::template
@@ -102,14 +102,14 @@ void ITMLib::ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::Reset
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::ClearOutFlowWarp(
+void SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::ClearOutFlowWarp(
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
 	ITMSceneTraversalEngine<TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::template
 	StaticVoxelTraversal<ClearOutFlowWarpStaticFunctor<TWarp>>(warpField);
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::AddFlowWarpToWarp(
+void SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::AddFlowWarpToWarp(
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField, bool clearFlowWarp) {
 
 	AddFlowWarpToWarp_common<TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>

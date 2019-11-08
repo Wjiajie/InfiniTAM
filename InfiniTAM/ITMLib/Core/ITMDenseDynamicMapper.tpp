@@ -24,7 +24,7 @@
 #include "ITMDenseDynamicMapper.h"
 #include "../Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../Engines/Swapping/ITMSwappingEngineFactory.h"
-#include "../SceneMotionTrackers/ITMSceneMotionTrackerFactory.h"
+#include "../SurfaceTrackers/ITMSceneMotionTrackerFactory.h"
 #include "../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "../Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"

@@ -49,15 +49,15 @@ using namespace ITMLib;
 
 
 template<typename TVoxel, typename TWarp>
-ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ITMSceneMotionTracker_CPU()
-		:ITMSceneMotionTracker<TVoxel, TWarp, ITMVoxelBlockHash>() {};
+SurfaceTracker<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::SurfaceTracker()
+		:SurfaceTrackerInterface<TVoxel, TWarp, ITMVoxelBlockHash>() {};
 // endregion ============================== END CONSTRUCTORS AND DESTRUCTORS============================================
 
 // region ===================================== HOUSEKEEPING ===========================================================
 
 
 template<typename TVoxel, typename TWarp>
-void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ResetWarps(
+void SurfaceTracker<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::ResetWarps(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::template
 	StaticVoxelTraversal<WarpClearFunctor<TWarp, TWarp::hasCumulativeWarp>>(warpField);
@@ -65,7 +65,7 @@ void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ResetWarps(
 
 
 template<typename TVoxel, typename TWarp>
-void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::ClearOutFlowWarp(
+void SurfaceTracker<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::ClearOutFlowWarp(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::template
 	StaticVoxelTraversal<ClearOutFlowWarpStaticFunctor<TWarp>>(warpField);
@@ -93,7 +93,7 @@ inline static void PrintSceneStatistics(
 
 template<typename TVoxel, typename TWarp>
 void
-ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::CalculateWarpGradient(
+SurfaceTracker<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::CalculateWarpGradient(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
@@ -124,12 +124,12 @@ ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::CalculateWarpGradie
 
 
 template<typename TVoxel, typename TWarp>
-void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::SmoothWarpGradient(
+void SurfaceTracker<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::SmoothWarpGradient(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 
-	if (this->switches.enableGradientSmoothing) {
+	if (this->switches.enableSobolevGradientSmoothing) {
 		SmoothWarpGradient_common<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>
 				(liveScene, canonicalScene, warpField);
 	}
@@ -139,17 +139,17 @@ void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::SmoothWarpGrad
 
 // region ============================= UPDATE FRAMEWISE & GLOBAL (CUMULATIVE) WARPS ===================================
 template<typename TVoxel, typename TWarp>
-float ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::UpdateWarps(
+float SurfaceTracker<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::UpdateWarps(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 	return UpdateWarps_common<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>(
 			canonicalScene, liveScene, warpField, this->parameters.gradientDescentLearningRate,
-			this->switches.enableGradientSmoothing);
+			this->switches.enableSobolevGradientSmoothing);
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMSceneMotionTracker_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::AddFlowWarpToWarp(
+void SurfaceTracker<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AddFlowWarpToWarp(
 		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField, bool clearFlowWarp) {
 	AddFlowWarpToWarp_common<TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>(warpField, clearFlowWarp);
 }

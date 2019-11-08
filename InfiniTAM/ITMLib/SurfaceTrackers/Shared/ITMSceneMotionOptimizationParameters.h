@@ -30,9 +30,9 @@ namespace ITMLib{
 	struct ITMSceneMotionOptimizationSwitches {
 		const bool enableDataTerm;
 		const bool enableLevelSetTerm;
-		const bool enableSmoothingTerm;
-		const bool enableKillingTerm;
-		const bool enableGradientSmoothing;
+		const bool enableTikhonovTerm;
+		const bool enableKillingRigidityEnforcementTerm;
+		const bool enableSobolevGradientSmoothing;
 	};
 } // namespace ITMLib
 

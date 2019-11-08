@@ -19,7 +19,7 @@
 #include "../Utils/Configuration.h"
 #include "../Engines/Swapping/Interface/ITMSwappingEngine.h"
 #include "../Utils/FileIO/ITMDynamicFusionLogger.h"
-#include "../SceneMotionTrackers/Interface/ITMSceneMotionTracker.h"
+#include "../SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
 
 namespace ITMLib {
 template<typename TVoxel, typename TWarp, typename TIndex>
@@ -118,7 +118,7 @@ private:
 	// region =========================================== MEMBER VARIABLES =============================================
 	ITMDynamicSceneReconstructionEngine<TVoxel, TWarp, TIndex>* sceneReconstructor;
 	ITMSwappingEngine<TVoxel, TIndex>* swappingEngine;
-	ITMSceneMotionTracker<TVoxel, TWarp, TIndex>* sceneMotionTracker;
+	SurfaceTrackerInterface<TVoxel, TWarp, TIndex>* sceneMotionTracker;
 
 	Configuration::SwappingMode swappingMode;
 

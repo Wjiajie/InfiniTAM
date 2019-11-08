@@ -96,7 +96,6 @@ namespace ITMLib
 		};
 
 		bool restrictZtrackingForDebugging;// = false;
-		bool simpleSceneExperimentModeEnabled;// = false;
 		bool FocusCoordinatesAreSpecified() const;// = false; // CLI flag made in InfiniTAM_bpo
 
 		Vector3i GetFocusCoordinates() const;
@@ -106,6 +105,7 @@ namespace ITMLib
 		AnalysisSettings analysisSettings;
 
 		//*** Scene Tracking ITMSceneMotionOptimizationSwitches ***
+
 		bool enableDataTerm;
 		bool enableLevelSetTerm;
 		bool enableSmoothingTerm;

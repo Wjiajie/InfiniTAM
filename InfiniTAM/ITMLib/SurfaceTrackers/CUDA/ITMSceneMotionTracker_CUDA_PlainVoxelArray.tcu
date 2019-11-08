@@ -15,7 +15,7 @@
 //  ================================================================
 #pragma once
 
-#include "ITMSceneMotionTracker_CUDA.h"
+#include "SurfaceTracker.h"
 #include "../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
 #include "../Shared/ITMSceneMotionTracker_Functors.h"
 #include "ITMSceneMotionTracker_CUDA_PlainVoxelArray_Kernels.h"
@@ -26,13 +26,13 @@ using namespace ITMLib;
 
 
 template<typename TVoxel, typename TWarp>
-ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::ITMSceneMotionTracker_CUDA()
-		: ITMSceneMotionTracker<TVoxel, TWarp, ITMPlainVoxelArray>() {
+SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::SurfaceTracker()
+		: SurfaceTrackerInterface<TVoxel, TWarp, ITMPlainVoxelArray>() {
 
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::ClearOutFlowWarp(
+void SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::ClearOutFlowWarp(
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
 	ITMSceneTraversalEngine<TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::template
 	StaticVoxelTraversal<ClearOutFlowWarpStaticFunctor<TWarp> >(warpField);
@@ -40,14 +40,14 @@ void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::ClearOutFlow
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::AddFlowWarpToWarp(
+void SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::AddFlowWarpToWarp(
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField, bool clearFlowWarp) {
 
 	AddFlowWarpToWarp_common<TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>(warpField, clearFlowWarp);
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::CalculateWarpGradient(
+void SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::CalculateWarpGradient(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
@@ -68,28 +68,28 @@ void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::CalculateWar
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::SmoothWarpGradient(
+void SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::SmoothWarpGradient(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
-	if (this->switches.enableGradientSmoothing) {
+	if (this->switches.enableSobolevGradientSmoothing) {
 		SmoothWarpGradient_common<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>(
 				liveScene, canonicalScene, warpField);
 	}
 }
 
 template<typename TVoxel, typename TWarp>
-float ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::UpdateWarps(
+float SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::UpdateWarps(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
 	return UpdateWarps_common<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>
 			(canonicalScene, liveScene, warpField, this->parameters.gradientDescentLearningRate,
-			 this->switches.enableGradientSmoothing);
+			 this->switches.enableSobolevGradientSmoothing);
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMSceneMotionTracker_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::ResetWarps(
+void SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::ResetWarps(
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
 	ITMSceneTraversalEngine<TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::template
 	StaticVoxelTraversal<WarpClearFunctor<TWarp, TWarp::hasCumulativeWarp>>(warpField);

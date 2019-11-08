@@ -636,32 +636,32 @@ set(ITMLIB_CAMERA_TRACKERS_SHARED_HEADERS
     )
 # ============================================== SCENE MOTION TRACKERS =================================================
 set(ITMLIB_SCENE_MOTION_TRACKERS_HEADERS
-    SceneMotionTrackers/ITMSceneMotionTrackerFactory.h
+	SurfaceTrackers/ITMSceneMotionTrackerFactory.h
     )
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_SOURCES
-    SceneMotionTrackers/Shared/ITMWarpGradientCommon.h
-    SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.tpp
-    SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.cpp
-    SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.tpp
-    SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.cpp
+	SurfaceTrackers/Shared/ITMWarpGradientCommon.h
+	SurfaceTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.tpp
+	SurfaceTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.cpp
+	SurfaceTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.tpp
+	SurfaceTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.cpp
     )
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_HEADERS
-    SceneMotionTrackers/CPU/ITMSceneMotionTracker_CPU.h
+	SurfaceTrackers/CPU/ITMSceneMotionTracker_CPU.h
     )
 ##
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_SOURCES
-    SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_PlainVoxelArray.tcu
-    SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_PlainVoxelArray.cu
-    SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash.tcu
-    SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash.cu
+	SurfaceTrackers/CUDA/ITMSceneMotionTracker_CUDA_PlainVoxelArray.tcu
+	SurfaceTrackers/CUDA/ITMSceneMotionTracker_CUDA_PlainVoxelArray.cu
+	SurfaceTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash.tcu
+	SurfaceTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash.cu
     )
 set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_HEADERS
-    SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA.h
-    SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_PlainVoxelArray_Kernels.h
-    SceneMotionTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash_Kernels.h
+	SurfaceTrackers/CUDA/SurfaceTracker.h
+	SurfaceTrackers/CUDA/ITMSceneMotionTracker_CUDA_PlainVoxelArray_Kernels.h
+	SurfaceTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash_Kernels.h
     )
 ##
 
@@ -669,17 +669,17 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_SOURCES
 
     )
 set(ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_HEADERS
-    SceneMotionTrackers/Interface/ITMSceneMotionTracker.h
+	SurfaceTrackers/Interface/SurfaceTrackerInterface.h
     )
 ##
 set(ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS
-    SceneMotionTrackers/Shared/ITMSceneMotionTracker_Shared.h
-    SceneMotionTrackers/Shared/ITMSceneMotionTracker_Debug.h
-    SceneMotionTrackers/Shared/ITMSceneMotionTracker_Functors.h
-    SceneMotionTrackers/Shared/ITMCalculateWarpGradientFunctor.h
-    SceneMotionTrackers/Shared/ITMSceneMotionOptimizationParameters.h
-    SceneMotionTrackers/Shared/ITMWarpGradientRoutines.h
-    SceneMotionTrackers/Shared/ITMWarpGradientAggregates.h
+	SurfaceTrackers/Shared/ITMSceneMotionTracker_Shared.h
+	SurfaceTrackers/Shared/ITMSceneMotionTracker_Debug.h
+	SurfaceTrackers/Shared/ITMSceneMotionTracker_Functors.h
+	SurfaceTrackers/Shared/ITMCalculateWarpGradientFunctor.h
+	SurfaceTrackers/Shared/ITMSceneMotionOptimizationParameters.h
+	SurfaceTrackers/Shared/ITMWarpGradientRoutines.h
+	SurfaceTrackers/Shared/ITMWarpGradientAggregates.h
     )
 
 # ======================================================================================================================
@@ -1023,11 +1023,11 @@ source_group(CameraTrackers\\CUDA FILES ${ITMLIB_CAMERA_TRACKERS_CUDA_SOURCES} $
 source_group(CameraTrackers\\Interface FILES ${ITMLIB_CAMERA_TRACKERS_INTERFACE_SOURCES} ${ITMLIB_CAMERA_TRACKERS_INTERFACE_HEADERS})
 source_group(CameraTrackers\\Shared FILES ${ITMLIB_CAMERA_TRACKERS_SHARED_HEADERS})
 
-source_group(SceneMotionTrackers FILES ${ITMLIB_SCENE_MOTION_TRACKERS_HEADERS})
-source_group(SceneMotionTrackers\\CPU FILES ${ITMLIB_SCENE_MOTION_TRACKERS_CPU_SOURCES} ${ITMLIB_SCENE_MOTION_TRACKERS_CPU_HEADERS})
-source_group(SceneMotionTrackers\\CUDA FILES ${ITMLIB_SCENE_MOTION_TRACKERS_CUDA_SOURCES} ${ITMLIB_SCENE_MOTION_TRACKERS_CUDA_HEADERS})
-source_group(SceneMotionTrackers\\Interface FILES ${ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_SOURCES} ${ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_HEADERS})
-source_group(SceneMotionTrackers\\Interface FILES ${ITMLIB_SCENE_MOTION_TRACKERS_SHARED_SOURCES} ${ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS})
+source_group(SurfaceTrackers FILES ${ITMLIB_SCENE_MOTION_TRACKERS_HEADERS})
+source_group(SurfaceTrackers\\CPU FILES ${ITMLIB_SCENE_MOTION_TRACKERS_CPU_SOURCES} ${ITMLIB_SCENE_MOTION_TRACKERS_CPU_HEADERS})
+source_group(SurfaceTrackers\\CUDA FILES ${ITMLIB_SCENE_MOTION_TRACKERS_CUDA_SOURCES} ${ITMLIB_SCENE_MOTION_TRACKERS_CUDA_HEADERS})
+source_group(SurfaceTrackers\\Interface FILES ${ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_SOURCES} ${ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_HEADERS})
+source_group(SurfaceTrackers\\Interface FILES ${ITMLIB_SCENE_MOTION_TRACKERS_SHARED_SOURCES} ${ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS})
 
 source_group(Utils FILES ${ITMLIB_UTILS_SOURCES} ${ITMLIB_UTILS_HEADERS})
 source_group(Utils\\FileIO FILES ${ITMLIB_UTILS_FILEIO_SOURCES} ${ITMLIB_UTILS_FILEIO_HEADERS})
