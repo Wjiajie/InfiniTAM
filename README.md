@@ -16,7 +16,8 @@ It could be that some detail is missing from the implementation, and could be th
 1. SDF-2-SDF rigid alignment (InfiniTAM's trackers are used instead)
 2. Capability to run the optimization in-reverse, in order to forward-animate the more-complete canonical mesh.
 3. OpenMP-parallelized CPU implementation currently has a bug
-4. CUDA implementation is incomplete and has all sorts of bugs
+~4. CUDA implementation is incomplete and has all sorts of bugs~ *[Update]* CUDA implementation is now complete for both the plain voxel array and the voxel block hash indexing and has no difference from the signle-threaded CPU version if you believe the unit tests.
+5. VTK 8.1 & OpenCV are currently dependencies, making them optional is in the plan. This is especially critical in regards to VTK 8.1, which, as far as I know of, has to be built from source on Ubuntu.
 
 ## How do I try this code out?
 
