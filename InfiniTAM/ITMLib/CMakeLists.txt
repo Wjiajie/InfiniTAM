@@ -666,7 +666,7 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_HEADERS
 ##
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_SOURCES
-
+	SurfaceTrackers/Interface/SlavchevaSurfaceTracker.cpp
     )
 set(ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_HEADERS
 	SurfaceTrackers/Interface/SurfaceTrackerInterface.h

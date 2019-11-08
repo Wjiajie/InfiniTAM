@@ -27,10 +27,10 @@
 
 namespace ITMLib {
 
-
 class SlavchevaSurfaceTracker {
 public:
-	struct Parameters{
+
+	struct Parameters {
 		const float gradientDescentLearningRate;// = 0.1f;
 		const float rigidityEnforcementFactor;// = 0.1f;
 		const float weightDataTerm;// = 1.0f
@@ -40,7 +40,7 @@ public:
 		const float unity; // voxelSize/mu, i.e. 1/[narrow-band half-width in voxels] or [voxel size in metric units]/[narrow-band half-width in metric units]
 	};
 
-	struct Switches{
+	struct Switches {
 		const bool enableDataTerm;
 		const bool enableLevelSetTerm;
 		const bool enableTikhonovTerm;
@@ -51,46 +51,14 @@ public:
 	const Parameters parameters;
 	const Switches switches;
 
-	explicit SlavchevaSurfaceTracker() :
-			parameters{
-					Configuration::Instance().sceneTrackingGradientDescentLearningRate,
-					Configuration::Instance().sceneTrackingRigidityEnforcementFactor,
-					Configuration::Instance().sceneTrackingWeightDataTerm,
-					Configuration::Instance().sceneTrackingWeightSmoothingTerm,
-					Configuration::Instance().sceneTrackingWeightLevelSetTerm,
-					Configuration::Instance().sceneTrackingLevelSetTermEpsilon,
-					Configuration::Instance().sceneParams.voxelSize / Configuration::Instance().sceneParams.mu
-			},
-			switches{
-					Configuration::Instance().enableDataTerm,
-					Configuration::Instance().enableLevelSetTerm,
-					Configuration::Instance().enableSmoothingTerm,
-					Configuration::Instance().enableKillingConstraintInSmoothingTerm,
-					Configuration::Instance().enableGradientSmoothing
-			} {
-		PrintSettings();
-	}
+	explicit SlavchevaSurfaceTracker();
 
-protected:
-	void PrintSettings() {
-		std::cout << bright_cyan << "*** Scene Motion Tracker Settings: ***" << reset << std::endl;
-		std::cout << "Data term enabled: " << printBool(this->switches.enableDataTerm) << std::endl;
-		std::cout << "Smoothing term enabled: " << printBool(this->switches.enableTikhonovTerm) << std::endl;
-		std::cout << "Level Set term enabled: " << printBool(this->switches.enableLevelSetTerm) << std::endl;
-		std::cout << "Killing term enabled: " << printBool(this->switches.enableKillingRigidityEnforcementTerm) << std::endl;
-		std::cout << "Gradient smoothing enabled: " << printBool(this->switches.enableSobolevGradientSmoothing) << std::endl
-		          << std::endl;
-
-		std::cout << "Gradient descent learning rate: " << this->parameters.gradientDescentLearningRate << std::endl;
-		std::cout << "Rigidity enforcement factor: " << this->parameters.rigidityEnforcementFactor << std::endl;
-		std::cout << "Weight of the data term: " << this->parameters.weightDataTerm << std::endl;
-		std::cout << "Weight of the smoothness term: " << this->parameters.weightSmoothingTerm << std::endl;
-		std::cout << "Weight of the level set term: " << this->parameters.weightLevelSetTerm << std::endl;
-		std::cout << "Epsilon for the level set term: " << this->parameters.epsilon << std::endl;
-		std::cout << "Unity scaling factor: " << this->parameters.unity << std::endl;
-		std::cout << bright_cyan << "*** *********************************** ***" << reset << std::endl;
-	}
+private:
+	void PrintSettings();
 };
+
+
+
 
 /**
  * \brief Class responsible for tracking motion of rigid or dynamic surfaces within the scene

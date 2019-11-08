@@ -23,7 +23,6 @@
 #include "ITMSceneMotionTracker_Shared.h"
 #include "ITMSceneMotionTracker_Debug.h"
 #include "../../Utils/ITMVoxelFlags.h"
-#include "../Interface/SurfaceTrackerInterface.h"
 #include "../../../ORUtils/PlatformIndependentAtomics.h"
 #include "ITMWarpGradientAggregates.h"
 #include "../../Utils/ITMCPrintHelpers.h"

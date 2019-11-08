@@ -7,6 +7,7 @@
 #include "ITMSurfelSceneParams.h"
 #include "../../ORUtils/MemoryDeviceType.h"
 #include "ITMMath.h"
+#include "../SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
 
 //boost
 #include <boost/program_options.hpp>
