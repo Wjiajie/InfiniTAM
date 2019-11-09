@@ -26,7 +26,7 @@ namespace ITMLib {
 		MultiIndexData indexData_host;
 		MultiVoxelData voxelData_host;
 
-		ITMSceneParams sceneParams;
+		ITMSceneParameters sceneParams;
 
 		ITMRenderStateMultiScene(const Vector2i &imgSize, float vf_min, float vf_max, MemoryDeviceType _memoryType)
 			: ITMRenderState(imgSize, vf_min, vf_max, _memoryType)

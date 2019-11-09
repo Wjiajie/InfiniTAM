@@ -4,7 +4,7 @@
 
 #include "ITMLocalVBA.h"
 #include "ITMGlobalCache.h"
-#include "../../Utils/ITMSceneParams.h"
+#include "../../Utils/ITMSceneParameters.h"
 
 namespace ITMLib
 {
@@ -16,7 +16,7 @@ class ITMVoxelVolume
 {
 public:
 	/** Scene parameters like voxel size etc. */
-	const ITMSceneParams *sceneParams;
+	const ITMSceneParameters *sceneParams;
 
 	/**
 	 * \brief An indexing method for access to the volume's voxels.
@@ -34,8 +34,8 @@ public:
 
 	void LoadFromDirectory(const std::string &outputDirectory);
 
-	ITMVoxelVolume(const ITMSceneParams *_sceneParams, bool _useSwapping, MemoryDeviceType _memoryType,
-			typename TIndex::InitializationParameters indexParameters = typename TIndex::InitializationParameters());
+	ITMVoxelVolume(const ITMSceneParameters *_sceneParams, bool _useSwapping, MemoryDeviceType _memoryType,
+	               typename TIndex::InitializationParameters indexParameters = typename TIndex::InitializationParameters());
 
 	ITMVoxelVolume(const ITMVoxelVolume& other, MemoryDeviceType _memoryType);
 

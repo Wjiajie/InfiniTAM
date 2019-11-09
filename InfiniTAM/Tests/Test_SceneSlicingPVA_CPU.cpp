@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 	settings->enableLevelSetTerm = false;
 
 
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> canonical_scene_CPU(&settings->sceneParams,
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> canonical_scene_CPU(&settings->scene_parameters,
 	                                                                 settings->swappingMode ==
 	                                                                 Configuration::SWAPPINGMODE_ENABLED,
 	                                                                 settings->GetMemoryType());
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> canonical_scene_slice_same_dimensions_CPU(
-			&settings->sceneParams, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
+			&settings->scene_parameters, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 			settings->GetMemoryType());
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&canonical_scene_slice_same_dimensions_CPU);
 
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 	Vector3i sizeSlice(bounds.max_x - bounds.min_x, bounds.max_y - bounds.min_y, bounds.max_z - bounds.min_z);
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> canonical_scene_slice_different_dimensions_CPU(
-			&settings->sceneParams, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
+			&settings->scene_parameters, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 			settings->GetMemoryType(), {sizeSlice, offsetSlice});
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&canonical_scene_slice_different_dimensions_CPU);
 
@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 	                                              &canonical_scene_slice_different_dimensions_CPU, tolerance));
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> canonical_scene_slice_from_disk_CPU(
-			&settings->sceneParams, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
+			&settings->scene_parameters, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 			settings->GetMemoryType(), {sizeSlice, offsetSlice});
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&canonical_scene_slice_from_disk_CPU);
 

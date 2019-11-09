@@ -24,7 +24,7 @@ ITMBasicEngine<TVoxel,TIndex>::ITMBasicEngine(const ITMRGBDCalib& calib, Vector2
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 
 	MemoryDeviceType memoryType = settings.GetMemoryType();
-	this->scene = new ITMVoxelVolume<TVoxel,TIndex>(&settings.sceneParams, settings.swappingMode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
+	this->scene = new ITMVoxelVolume<TVoxel,TIndex>(&settings.scene_parameters, settings.swappingMode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
 
 	const MemoryDeviceType deviceType = settings.deviceType;
 
@@ -55,7 +55,7 @@ ITMBasicEngine<TVoxel,TIndex>::ITMBasicEngine(const ITMRGBDCalib& calib, Vector2
 	view = NULL; // will be allocated by the view builder
 	
 	if (settings.behaviourOnFailure == settings.FAILUREMODE_RELOCALISE)
-		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.sceneParams.viewFrustum_min, settings.sceneParams.viewFrustum_max), 0.2f, 500, 4);
+		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.scene_parameters.viewFrustum_min, settings.scene_parameters.viewFrustum_max), 0.2f, 500, 4);
 	else relocaliser = NULL;
 
 	kfRaycast = new ITMUChar4Image(imgSize_d, memoryType);
@@ -140,7 +140,7 @@ void ITMBasicEngine<TVoxel, TIndex>::LoadFromFile()
 
 	try // load relocaliser
 	{
-		FernRelocLib::Relocaliser<float> *relocaliser_temp = new FernRelocLib::Relocaliser<float>(view->depth->noDims, Vector2f(settings.sceneParams.viewFrustum_min, settings.sceneParams.viewFrustum_max), 0.2f, 500, 4);
+		FernRelocLib::Relocaliser<float> *relocaliser_temp = new FernRelocLib::Relocaliser<float>(view->depth->noDims, Vector2f(settings.scene_parameters.viewFrustum_min, settings.scene_parameters.viewFrustum_max), 0.2f, 500, 4);
 
 		relocaliser_temp->LoadFromDirectory(relocaliserInputDirectory);
 

@@ -15,7 +15,7 @@ inline void ITMMultiMeshingEngine_CPU<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMM
 	MultiIndexData hashTables;
 	MultiVoxelData localVBAs;
 
-	const ITMSceneParams & sceneParams = *(sceneManager.getLocalMap(0)->scene->sceneParams);
+	const ITMSceneParameters & sceneParams = *(sceneManager.getLocalMap(0)->scene->sceneParams);
 	hashTables.numLocalMaps = numLocalMaps;
 	for (int localMapId = 0; localMapId < numLocalMaps; ++localMapId)
 	{

@@ -19,18 +19,30 @@
 #include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.h"
 #include "../../Utils/Visualization/ITMSceneSliceVisualizer2D.h"
-#include "../../Utils/Configuration.h"
 #include "../../Utils/FileIO/ITMSceneLogger.h"
 #include "../../Utils/ITMPrintHelpers.h"
 #include "../../Utils/ITMVoxelFlags.h"
 #include "../Shared/ITMSceneMotionOptimizationParameters.h"
 
+//boost
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
+
 namespace ITMLib {
 
+//TODO: move to separate header
 class SlavchevaSurfaceTracker {
 public:
 
+	enum ConfigurationMode{
+		KILLING_FUSION,
+		SOBOLEV_FUSION
+	};
+
 	struct Parameters {
+		Parameters();
+		explicit Parameters(ConfigurationMode mode, float unity);
+		explicit Parameters(const po::variables_map& vm);
 		const float gradientDescentLearningRate;// = 0.1f;
 		const float rigidityEnforcementFactor;// = 0.1f;
 		const float weightDataTerm;// = 1.0f
@@ -38,14 +50,21 @@ public:
 		const float weightLevelSetTerm;// = 0.2f;
 		const float epsilon;// = 1e-5f;
 		const float unity; // voxelSize/mu, i.e. 1/[narrow-band half-width in voxels] or [voxel size in metric units]/[narrow-band half-width in metric units]
+	private:
+		Parameters(const po::variables_map& vm, ConfigurationMode mode, float unity);
 	};
 
 	struct Switches {
+		Switches();
+		explicit Switches(ConfigurationMode mode);
+		explicit Switches(const po::variables_map& vm);
 		const bool enableDataTerm;
 		const bool enableLevelSetTerm;
-		const bool enableTikhonovTerm;
+		const bool enableSmoothingTerm;
 		const bool enableKillingRigidityEnforcementTerm;
 		const bool enableSobolevGradientSmoothing;
+	private:
+		Switches(const po::variables_map& vm, ConfigurationMode mode);
 	};
 
 	const Parameters parameters;

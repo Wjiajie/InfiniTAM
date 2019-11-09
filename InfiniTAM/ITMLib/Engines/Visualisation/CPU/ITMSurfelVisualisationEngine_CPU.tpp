@@ -48,7 +48,7 @@ void ITMSurfelVisualisationEngine_CPU<TSurfel>::CreateICPMaps(const ITMSurfelSce
   Vector4f *normalsMap = trackingState->pointCloud->colours->GetData(MEMORYDEVICE_CPU);
   const int pixelCount = static_cast<int>(renderState->GetIndexImage()->dataSize);
   Vector4f *pointsMap = trackingState->pointCloud->locations->GetData(MEMORYDEVICE_CPU);
-  const ITMSurfelSceneParams& sceneParams = scene->GetParams();
+  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
   const unsigned int *surfelIndexImage = renderState->GetIndexImage()->GetData(MEMORYDEVICE_CPU);
   const TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CPU);
 
@@ -89,7 +89,7 @@ void ITMSurfelVisualisationEngine_CPU<TSurfel>::RenderImage(const ITMSurfelScene
 
   Vector4u *outputImagePtr = outputImage->GetData(MEMORYDEVICE_CPU);
   const int pixelCount = static_cast<int>(outputImage->dataSize);
-  const ITMSurfelSceneParams& sceneParams = scene->GetParams();
+  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
   const unsigned int *surfelIndexImagePtr = renderState->GetIndexImage()->GetData(MEMORYDEVICE_CPU);
   const TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CPU);
 
@@ -180,7 +180,7 @@ void ITMSurfelVisualisationEngine_CPU<TSurfel>::MakeIndexImage(const ITMSurfelSc
   }
 
   const Matrix4f& invT = pose->GetM();
-  const ITMSurfelSceneParams& sceneParams = scene->GetParams();
+  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
   const int surfelCount = static_cast<int>(scene->GetSurfelCount());
   const TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CPU);
 

@@ -127,7 +127,7 @@ namespace ITMLib
      * \param view          The current view (containing the live input images from the current image source).
      * \param sceneParams   The parameters associated with the surfel scene.
      */
-    virtual void PreprocessDepthMap(const ITMView *view, const ITMSurfelSceneParams& sceneParams) const = 0;
+    virtual void PreprocessDepthMap(const ITMView *view, const ITMSurfelSceneParameters& sceneParams) const = 0;
 
     /**
      * \brief Removes from the scene any surfels that have been marked by previous stages of the pipeline.

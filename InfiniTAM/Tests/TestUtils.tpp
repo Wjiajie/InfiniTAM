@@ -186,7 +186,7 @@ void simulateRandomVoxelAlteration(TVoxel& voxel) {
 //ITMVoxelVolume<TVoxelA, TIndex> loadSdfVolume (const std::string& path, MemoryDeviceType memoryDeviceType,
 //                    typename TIndex::InitializationParameters initializationParameters, Configuration::SwappingMode swappingMode){
 //	Configuration& settings = Configuration::Instance();
-//	ITMVoxelVolume<TVoxelA, TIndex> scene(&settings.sceneParams,
+//	ITMVoxelVolume<TVoxelA, TIndex> scene(&settings.scene_parameters,
 //	                                              swappingMode,
 //	                                              memoryDeviceType,initializationParameters);
 //	PrepareVoxelVolumeForLoading(&scene, memoryDeviceType);
@@ -199,7 +199,7 @@ void loadSdfVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& p
                    typename TIndex::InitializationParameters initializationParameters,
                    Configuration::SwappingMode swappingMode) {
 	Configuration& settings = Configuration::Instance();
-	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&settings.sceneParams,
+	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&settings.scene_parameters,
 	                                               swappingMode,
 	                                               memoryDeviceType, initializationParameters);
 	PrepareVoxelVolumeForLoading(*volume, memoryDeviceType);
@@ -221,8 +221,8 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
 	settings->deviceType = memoryDevice;
 	settings->useBilateralFilter = useBilateralFilter;
 	settings->useThresholdFilter = false;
-	settings->sceneParams.mu = 0.04; // non-truncated narrow-band half-width, in meters
-	settings->sceneParams.voxelSize = 0.004; // m
+	settings->scene_parameters.mu = 0.04; // non-truncated narrow-band half-width, in meters
+	settings->scene_parameters.voxelSize = 0.004; // m
 
 	ITMRGBDCalib calibrationData;
 	readRGBDCalib(calibration_path.c_str(), calibrationData);
@@ -243,7 +243,7 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
 	viewBuilder->UpdateView(&view, rgb, depth, settings->useThresholdFilter,
 	                        settings->useBilateralFilter, false, true);
 
-	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&settings->sceneParams, swappingMode,
+	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&settings->scene_parameters, swappingMode,
 	                                               memoryDevice, initializationParameters);
 	switch (memoryDevice) {
 		case MEMORYDEVICE_CUDA:
@@ -254,7 +254,7 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
 			break;
 	}
 	ITMRenderState* renderState = ITMRenderStateFactory<TIndex>::CreateRenderState(imageSize,
-	                                                                               &settings->sceneParams,
+	                                                                               &settings->scene_parameters,
 	                                                                               settings->GetMemoryType(),
 	                                                                               (*volume)->index);
 	ITMTrackingState trackingState(imageSize, settings->GetMemoryType());

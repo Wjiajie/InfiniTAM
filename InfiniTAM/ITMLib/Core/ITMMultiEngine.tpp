@@ -36,7 +36,7 @@ ITMMultiEngine<TVoxel, TIndex>::ITMMultiEngine(const ITMRGBDCalib& calib, Vector
 	visualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxel, TIndex>(deviceType);
 
 	tracker = ITMCameraTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, lowLevelEngine, imuCalibrator,
-	                                                   &settings.sceneParams);
+	                                                   &settings.scene_parameters);
 	trackingController = new ITMTrackingController(tracker);
 	trackedImageSize = trackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
 
@@ -57,7 +57,7 @@ ITMMultiEngine<TVoxel, TIndex>::ITMMultiEngine(const ITMRGBDCalib& calib, Vector
 
 	view = NULL; // will be allocated by the view builder
 
-	relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.sceneParams.viewFrustum_min, settings.sceneParams.viewFrustum_max), 0.1f, 1000, 4);
+	relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.scene_parameters.viewFrustum_min, settings.scene_parameters.viewFrustum_max), 0.1f, 1000, 4);
 
 	mGlobalAdjustmentEngine = new ITMGlobalAdjustmentEngine();
 	mScheduleGlobalAdjustment = false;

@@ -112,8 +112,8 @@ public:
 			warps(warps), warpIndexData(warpIndexData),
 			canonicalVoxels(canonicalVoxels), canonicalIndexData(canonicalIndexData),
 			liveCache(), canonicalCache(),
-			hasFocusCoordinates(Configuration::Instance().FocusCoordinatesAreSpecified()),
-			focusCoordinates(Configuration::Instance().GetFocusCoordinates()) {}
+			hasFocusCoordinates(Configuration::Instance().analysisSettings.focus_coordinates_specified),
+			focusCoordinates(Configuration::Instance().analysisSettings.focus_coordinates) {}
 
 	// endregion =======================================================================================================
 
@@ -200,7 +200,7 @@ public:
 
 		// region =============================== SMOOTHING TERM (TIKHONOV & KILLING) ======================
 
-		if (switches.enableTikhonovTerm) {
+		if (switches.enableSmoothingTerm) {
 			// region ============================== RETRIEVE NEIGHBOR'S WARPS =========================================
 
 			const int neighborhoodSize = 9;
@@ -328,7 +328,7 @@ public:
 	void PrintStatistics() {
 		std::cout << bright_cyan << "*** Non-rigid Alignment Iteration Statistics ***" << reset << std::endl;
 		PrintEnergyStatistics(this->switches.enableDataTerm, this->switches.enableLevelSetTerm,
-		                      this->switches.enableTikhonovTerm, this->switches.enableKillingRigidityEnforcementTerm,
+		                      this->switches.enableSmoothingTerm, this->switches.enableKillingRigidityEnforcementTerm,
 		                      this->parameters.rigidityEnforcementFactor, energies);
 		CalculateAndPrintAdditionalStatistics(
 				this->switches.enableDataTerm, this->switches.enableLevelSetTerm, aggregates);

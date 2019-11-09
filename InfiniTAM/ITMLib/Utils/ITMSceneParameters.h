@@ -2,16 +2,20 @@
 
 #pragma once
 
+//boost
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
+
 namespace ITMLib
 {
 	/** \brief
 	    Stores parameters of a scene like voxel size
 	*/
-	class ITMSceneParams
+	class ITMSceneParameters
 	{
 	public:
 		/// Size of a voxel, usually given in meters.
-		float voxelSize;
+		const float voxelSize;
 
 		/** @{ */
 		/** \brief
@@ -21,7 +25,7 @@ namespace ITMLib
 		    actual depth range should be determined
 		    automatically by a ITMLib::Engine::ITMVisualisationEngine.
 		*/
-		float viewFrustum_min, viewFrustum_max;
+		const float viewFrustum_min, viewFrustum_max;
 
 		/** @} */
 		/** \brief
@@ -31,18 +35,19 @@ namespace ITMLib
 		    meters. The resulting width in voxels is @ref mu
 		    divided by @ref voxelSize.
 		*/
-		float mu;
+		const float mu;
 
 		/** \brief
 		    Up to @ref maxW observations per voxel are averaged.
 		    Beyond that a sliding average is computed.
 		*/
-		int maxW;
+		const int maxW;
 
 		/** Stop integration/fusion once maxW has been reached. */
-		bool stopIntegratingAtMaxW;
+		const bool stopIntegratingAtMaxW;
 
-		ITMSceneParams(void) {}
+		ITMSceneParameters();
+		explicit ITMSceneParameters(const po::variables_map& vm);
 
 		/**
 		 * \brief standard constructor setting all elements to passed-in values
@@ -53,26 +58,8 @@ namespace ITMLib
 		 * \param viewFrustum_max distance (in meters) to far clipping plane of the view frustum, farther than which nothing is considered
 		 * \param stopIntegratingAtMaxW defines behavior after maxW observations have been gathered for a specific point
 		 */
-		ITMSceneParams(float mu, int maxW, float voxelSize, 
-			float viewFrustum_min, float viewFrustum_max, bool stopIntegratingAtMaxW)
-		{
-			this->mu = mu;
-			this->maxW = maxW;
-			this->voxelSize = voxelSize;
-			this->viewFrustum_min = viewFrustum_min; this->viewFrustum_max = viewFrustum_max;
-			this->stopIntegratingAtMaxW = stopIntegratingAtMaxW;
-		}
+		ITMSceneParameters(float mu, int maxW, float voxelSize,
+		                   float viewFrustum_min, float viewFrustum_max, bool stopIntegratingAtMaxW);
 
-		explicit ITMSceneParams(const ITMSceneParams *sceneParams) { this->SetFrom(sceneParams); }
-
-		void SetFrom(const ITMSceneParams *sceneParams)
-		{
-			this->voxelSize = sceneParams->voxelSize;
-			this->viewFrustum_min = sceneParams->viewFrustum_min;
-			this->viewFrustum_max = sceneParams->viewFrustum_max;
-			this->mu = sceneParams->mu;
-			this->maxW = sceneParams->maxW;
-			this->stopIntegratingAtMaxW = sceneParams->stopIntegratingAtMaxW;
-		}
 	};
 }

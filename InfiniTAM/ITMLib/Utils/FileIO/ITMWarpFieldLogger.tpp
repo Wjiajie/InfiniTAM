@@ -215,7 +215,7 @@ ITMWarpFieldLogger<TVoxel, TIndex>::ITMWarpFieldLogger(const Vector6i& bounds, b
 	Configuration& settings = Configuration::Instance();
 	MemoryDeviceType memoryType =
 			settings.deviceType == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
-	this->warpField = new ITMVoxelVolume<TVoxel, TIndex>(&settings.sceneParams,
+	this->warpField = new ITMVoxelVolume<TVoxel, TIndex>(&settings.scene_parameters,
 	                                           settings.swappingMode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                     memoryType);
 

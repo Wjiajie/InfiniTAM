@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CPU_PVA) {
 	loadSdfVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_PVA/live",
 	              MEMORYDEVICE_CPU);
 	auto warped_live_volume = new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(
-			&settings.sceneParams, false, MEMORYDEVICE_CPU,
+			&settings.scene_parameters, false, MEMORYDEVICE_CPU,
 			{live_volume->index.GetVolumeSize(), live_volume->index.GetVolumeOffset()});
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(warped_live_volume);
 
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CPU_VBH) {
 	loadSdfVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_VBH/live",
 	              MEMORYDEVICE_CPU);
 	auto warped_live_volume = new ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>(
-			&settings.sceneParams, false, MEMORYDEVICE_CPU,
+			&settings.scene_parameters, false, MEMORYDEVICE_CPU,
 			{live_volume->index.GetAllocatedBlockCount(), live_volume->index.GetExcessListSize()});
 	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(warped_live_volume);
 
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_PVA) {
 	loadSdfVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_PVA/live",
 	              MEMORYDEVICE_CUDA);
 	auto warped_live_volume = new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(
-			&settings.sceneParams, false, MEMORYDEVICE_CUDA,
+			&settings.scene_parameters, false, MEMORYDEVICE_CUDA,
 			{live_volume->index.GetVolumeSize(), live_volume->index.GetVolumeOffset()});
 	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(warped_live_volume);
 
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_VBH) {
 	loadSdfVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_VBH/live",
 	              MEMORYDEVICE_CUDA);
 	auto warped_live_volume = new ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>(
-			&settings.sceneParams, false, MEMORYDEVICE_CUDA,
+			&settings.scene_parameters, false, MEMORYDEVICE_CUDA,
 			{live_volume->index.GetAllocatedBlockCount(), live_volume->index.GetExcessListSize()});
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(warped_live_volume);
 

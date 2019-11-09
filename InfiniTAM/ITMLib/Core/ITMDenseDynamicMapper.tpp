@@ -76,13 +76,13 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ITMDenseDynamicMapper(const TIndex
 						Configuration::Instance().deviceType, index)
 		               : nullptr),
 		swappingMode(Configuration::Instance().swappingMode),
-		parameters{Configuration::Instance().sceneTrackingMaxOptimizationIterationCount,
-		           Configuration::Instance().sceneTrackingOptimizationVectorUpdateThresholdMeters,
-		           Configuration::Instance().sceneTrackingOptimizationVectorUpdateThresholdMeters /
-		           Configuration::Instance().sceneParams.voxelSize},
+		parameters{Configuration::Instance().surface_tracking_max_optimization_iteration_count,
+		           Configuration::Instance().surface_tracking_optimization_vector_update_threshold_meters,
+		           Configuration::Instance().surface_tracking_optimization_vector_update_threshold_meters /
+		           Configuration::Instance().scene_parameters.voxelSize},
 		analysisFlags{Configuration::Instance().restrictZtrackingForDebugging,
-		              Configuration::Instance().FocusCoordinatesAreSpecified()},
-		focusCoordinates(Configuration::Instance().GetFocusCoordinates()) {}
+		              Configuration::Instance().analysisSettings.focus_coordinates_specified},
+		focusCoordinates(Configuration::Instance().analysisSettings.focus_coordinates) {}
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::~ITMDenseDynamicMapper() {

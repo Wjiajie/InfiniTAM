@@ -53,7 +53,7 @@ namespace ITMLib {
 		{
 			auto& settings = Configuration::Instance();
 			MemoryDeviceType memoryType = settings.deviceType == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
-			scene = new ITMVoxelVolume<TVoxel, TIndex>(&settings.sceneParams, settings.swappingMode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
+			scene = new ITMVoxelVolume<TVoxel, TIndex>(&settings.scene_parameters, settings.swappingMode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
 			renderState = visualisationEngine->CreateRenderState(scene, trackedImageSize);
 			trackingState = new ITMTrackingState(trackedImageSize, memoryType);
 		}

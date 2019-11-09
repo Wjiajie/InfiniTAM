@@ -7,7 +7,7 @@ namespace ITMLib
   /**
    * \brief An instance of this struct can be used to specify parameters for a surfel scene.
    */
-  struct ITMSurfelSceneParams
+  struct ITMSurfelSceneParameters
   {
     //#################### PUBLIC VARIABLES ####################
 
@@ -73,10 +73,10 @@ namespace ITMLib
      * \param useGaussianSampleConfidence_  Whether or not to use a Gaussian-weighted sample confidence as described in the Keller paper.
      * \param useSurfelMerging_             Whether or not to use surfel merging.
      */
-    explicit ITMSurfelSceneParams(float deltaRadius_, float gaussianConfidenceSigma_, float maxMergeAngle_, float maxMergeDist_, float maxSurfelRadius_,
-                                  float minRadiusOverlapFactor_, float stableSurfelConfidence_, int supersamplingFactor_, float trackingSurfelMaxDepth_,
-                                  float trackingSurfelMinConfidence_, int unstableSurfelPeriod_, int unstableSurfelZOffset_, bool useGaussianSampleConfidence_,
-                                  bool useSurfelMerging_)
+    explicit ITMSurfelSceneParameters(float deltaRadius_, float gaussianConfidenceSigma_, float maxMergeAngle_, float maxMergeDist_, float maxSurfelRadius_,
+                                      float minRadiusOverlapFactor_, float stableSurfelConfidence_, int supersamplingFactor_, float trackingSurfelMaxDepth_,
+                                      float trackingSurfelMinConfidence_, int unstableSurfelPeriod_, int unstableSurfelZOffset_, bool useGaussianSampleConfidence_,
+                                      bool useSurfelMerging_)
     : deltaRadius(deltaRadius_),
       gaussianConfidenceSigma(gaussianConfidenceSigma_),
       maxMergeAngle(maxMergeAngle_),

@@ -65,8 +65,8 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 	view = nullptr; // will be allocated by the view builder
 
 	if (settings.behaviourOnFailure == settings.FAILUREMODE_RELOCALISE)
-		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.sceneParams.viewFrustum_min,
-		                                                                       settings.sceneParams.viewFrustum_max),
+		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.scene_parameters.viewFrustum_min,
+		                                                                       settings.scene_parameters.viewFrustum_max),
 		                                                   0.2f, 500, 4);
 	else relocaliser = nullptr;
 
@@ -85,15 +85,15 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::InitializeScenes(){
 	Configuration& settings = Configuration::Instance();
 	MemoryDeviceType memoryType = settings.GetMemoryType();
 	this->canonicalScene = new ITMVoxelVolume<TVoxel, TIndex>(
-			&settings.sceneParams, settings.swappingMode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
+			&settings.scene_parameters, settings.swappingMode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
 	this->liveScenes = new ITMVoxelVolume<TVoxel, TIndex>* [2];
 	for (int iLiveScene = 0; iLiveScene < ITMDynamicEngine<TVoxel, TWarp, TIndex>::liveSceneCount; iLiveScene++) {
-		this->liveScenes[iLiveScene] = new ITMVoxelVolume<TVoxel, TIndex>(&settings.sceneParams,
+		this->liveScenes[iLiveScene] = new ITMVoxelVolume<TVoxel, TIndex>(&settings.scene_parameters,
 		                                                                  settings.swappingMode ==
 		                                                                  Configuration::SWAPPINGMODE_ENABLED,
 		                                                                  memoryType);
 	}
-	this->warpField = new ITMVoxelVolume<TWarp, TIndex>(&settings.sceneParams,
+	this->warpField = new ITMVoxelVolume<TWarp, TIndex>(&settings.scene_parameters,
 	                                                    settings.swappingMode ==
 	                                                    Configuration::SWAPPINGMODE_ENABLED,
 	                                                    memoryType);
@@ -167,8 +167,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::LoadFromFile() {
 			FernRelocLib::Relocaliser<float>* relocaliser_temp =
 					new FernRelocLib::Relocaliser<float>(view->depth->noDims,
 					                                     Vector2f(
-							                                     settings.sceneParams.viewFrustum_min,
-							                                     settings.sceneParams.viewFrustum_max),
+							                                     settings.scene_parameters.viewFrustum_min,
+							                                     settings.scene_parameters.viewFrustum_max),
 					                                     0.2f, 500, 4);
 
 			relocaliser_temp->LoadFromDirectory(relocaliserInputDirectory);

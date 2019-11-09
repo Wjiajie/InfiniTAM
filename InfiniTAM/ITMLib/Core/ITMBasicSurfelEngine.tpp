@@ -21,7 +21,7 @@ ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMRGBDCalib& calib, V
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 
 	MemoryDeviceType memoryType = settings.GetMemoryType();
-	this->surfelScene = new ITMSurfelScene<TSurfel>(&settings.surfelSceneParams, memoryType);
+	this->surfelScene = new ITMSurfelScene<TSurfel>(&settings.surfel_scene_parameters, memoryType);
 
 	const MemoryDeviceType deviceType = settings.deviceType;
 
@@ -35,13 +35,13 @@ ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMRGBDCalib& calib, V
 
 	imuCalibrator = new ITMIMUCalibrator_iPad();
 	tracker = ITMCameraTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, lowLevelEngine, imuCalibrator,
-	                                                   &settings.sceneParams);
+	                                                   &settings.scene_parameters);
 	trackingController = new ITMTrackingController(tracker);
 
 	Vector2i trackedImageSize = trackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
 
 	surfelRenderState_live = new ITMSurfelRenderState(trackedImageSize,
-	                                                  settings.surfelSceneParams.supersamplingFactor);
+	                                                  settings.surfel_scene_parameters.supersamplingFactor);
 	surfelRenderState_freeview = NULL; //will be created if needed
 
 	trackingState = new ITMTrackingState(trackedImageSize, memoryType);
@@ -50,8 +50,8 @@ ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMRGBDCalib& calib, V
 	view = NULL; // will be allocated by the view builder
 
 	if (settings.behaviourOnFailure == settings.FAILUREMODE_RELOCALISE)
-		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.sceneParams.viewFrustum_min,
-		                                                                       settings.sceneParams.viewFrustum_max),
+		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.scene_parameters.viewFrustum_min,
+		                                                                       settings.scene_parameters.viewFrustum_max),
 		                                                   0.2f, 500, 4);
 	else relocaliser = NULL;
 

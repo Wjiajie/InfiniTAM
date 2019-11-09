@@ -3,8 +3,8 @@
 #pragma once
 
 #include <cfloat>
-#include "ITMSceneParams.h"
-#include "ITMSurfelSceneParams.h"
+#include "ITMSceneParameters.h"
+#include "ITMSurfelSceneParameters.h"
 #include "../../ORUtils/MemoryDeviceType.h"
 #include "ITMMath.h"
 #include "../SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
@@ -18,27 +18,18 @@ namespace ITMLib
 	class Configuration
 	{
 	public:
-		static void SetFromVariableMap(const po::variables_map& vm);
 
 		static Configuration& Instance(){
 			static Configuration instance;
 			return instance;
 		}
+		explicit Configuration(const po::variables_map& vm);
 
 		~Configuration() = default;
 
 		// Suppress the default copy constructor and assignment operator
 		Configuration(const Configuration &) = delete;
 		Configuration& operator=(const Configuration &) = delete;
-
-
-		// accepting program arguments from boost::program_options. One of the arguments may be a .json config file, which should
-		// then be read in using boost::property_tree. The program_options parser should also be generated within this
-		// class. -Greg (GitHub: Algomorph)
-		//TODO: settings that are not intended to be changed during runtime should be set to const and initialized
-		// right away in the constructor. Settings that are intended to change should be protected by class access
-		// modifiers / getters / setters as to grant access only to the objects that should be able to change them.
-		// -Greg (GitHub: Algomorph)
 
 		typedef enum
 		{
@@ -67,63 +58,52 @@ namespace ITMLib
 		/// Select the type of device to use
 		MemoryDeviceType deviceType;
 
-		bool useApproximateRaycast;
+		const bool useApproximateRaycast;
 
-		bool useThresholdFilter;
-		bool useBilateralFilter;
+		const bool useThresholdFilter;
+		const bool useBilateralFilter;
 
 		/// For ITMColorTracker: skip every other point in energy function evaluation.
-		bool skipPoints;
+		const bool skipPoints;
 
-		bool createMeshingEngine;
+		const bool createMeshingEngine;
         
-		FailureMode behaviourOnFailure;
-		SwappingMode swappingMode;
-		LibMode libMode;
+		const FailureMode behaviourOnFailure;
+		const SwappingMode swappingMode;
+		const LibMode libMode;
 
 		const char *trackerConfig;
 
 		/// Further, scene-specific parameters such as voxel size
-		ITMSceneParams sceneParams;
-		ITMSurfelSceneParams surfelSceneParams;
+		const ITMSceneParameters scene_parameters;
+		const ITMSurfelSceneParameters surfel_scene_parameters;
 
 		MemoryDeviceType GetMemoryType() const;
 
 		/// Dynamic Fusion parameters
 		struct AnalysisSettings{
-			std::string outputPath;
-			bool focusCoordinatesSpecified = false;
-			Vector3i focusCoordinates;
+			explicit AnalysisSettings(const po::variables_map& vm);
+			AnalysisSettings();
+			const std::string output_path;
+			const bool focus_coordinates_specified = false;
+			const Vector3i focus_coordinates;
 		};
 
-		bool restrictZtrackingForDebugging;// = false;
+		const bool restrictZtrackingForDebugging;// = false;
 		bool FocusCoordinatesAreSpecified() const;// = false; // CLI flag made in InfiniTAM_bpo
 
-		Vector3i GetFocusCoordinates() const;
-		void SetFocusCoordinates(const Vector3i& coordiantes);
-		void SetFocusCoordinates(int x, int y, int z);
-
-		AnalysisSettings analysisSettings;
+		const AnalysisSettings analysisSettings;
 
 		//*** Scene Tracking ITMSceneMotionOptimizationSwitches ***
 
-		bool enableDataTerm;
-		bool enableLevelSetTerm;
-		bool enableSmoothingTerm;
-		bool enableKillingConstraintInSmoothingTerm;
-		bool enableGradientSmoothing;
+		const SlavchevaSurfaceTracker::Parameters slavcheva_parameters;
+		const SlavchevaSurfaceTracker::Switches slavcheva_switches;
 
 		//*** Scene Tracking ITMSceneMotionOptimizationParameters ***
 		//** optimization loop
-		unsigned int sceneTrackingMaxOptimizationIterationCount;
-		float sceneTrackingOptimizationVectorUpdateThresholdMeters;
+		const unsigned int surface_tracking_max_optimization_iteration_count;
+		const float surface_tracking_optimization_vector_update_threshold_meters;
 		//** gradient calculation
-		float sceneTrackingGradientDescentLearningRate;
-		float sceneTrackingRigidityEnforcementFactor;
-		float sceneTrackingWeightDataTerm;
-		float sceneTrackingWeightSmoothingTerm;
-		float sceneTrackingWeightLevelSetTerm;
-		float sceneTrackingLevelSetTermEpsilon;
 
 	private:
 		Configuration();

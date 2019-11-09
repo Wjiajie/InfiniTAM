@@ -176,7 +176,7 @@ void ITMSurfelVisualisationEngine_CUDA<TSurfel>::CreateICPMaps(const ITMSurfelSc
 {
   const Matrix4f& invT = trackingState->pose_d->GetM();
   const int pixelCount = static_cast<int>(renderState->GetIndexImage()->dataSize);
-  const ITMSurfelSceneParams& sceneParams = scene->GetParams();
+  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
 
   int threadsPerBlock = 256;
   int numBlocks = (pixelCount + threadsPerBlock - 1) / threadsPerBlock;
@@ -226,7 +226,7 @@ void ITMSurfelVisualisationEngine_CUDA<TSurfel>::RenderImage(const ITMSurfelScen
 
   Vector4u *outputImagePtr = outputImage->GetData(MEMORYDEVICE_CUDA);
   const int pixelCount = static_cast<int>(outputImage->dataSize);
-  const ITMSurfelSceneParams& sceneParams = scene->GetParams();
+  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
   const unsigned int *surfelIndexImagePtr = renderState->GetIndexImage()->GetData(MEMORYDEVICE_CUDA);
   const TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CUDA);
 
@@ -300,7 +300,7 @@ void ITMSurfelVisualisationEngine_CUDA<TSurfel>::MakeIndexImage(const ITMSurfelS
   );
   ORcudaKernelCheck;
 
-  const ITMSurfelSceneParams& sceneParams = scene->GetParams();
+  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
   const int surfelCount = static_cast<int>(scene->GetSurfelCount());
   if(surfelCount == 0) return;
 

@@ -70,7 +70,7 @@ struct WarpGradientDataFixture {
 
 		BOOST_TEST_MESSAGE("setup fixture");
 		auto loadSdfVolume = [&](ITMVoxelVolume<ITMVoxel, TIndex>** scene, const std::string& pathSuffix){
-			*scene = new ITMVoxelVolume<ITMVoxel, TIndex>(&settings->sceneParams,
+			*scene = new ITMVoxelVolume<ITMVoxel, TIndex>(&settings->scene_parameters,
 			                                                   settings->swappingMode ==
 			                                                   Configuration::SWAPPINGMODE_ENABLED,
 			                                                   TMemoryType,
@@ -79,7 +79,7 @@ struct WarpGradientDataFixture {
 			(*scene)->LoadFromDirectory(pathToData + pathSuffix);
 		};
 		auto loadWarpVolume = [&](ITMVoxelVolume<ITMWarp, TIndex>** scene, const std::string& pathSuffix){
-			*scene = new ITMVoxelVolume<ITMWarp, TIndex>(&settings->sceneParams,
+			*scene = new ITMVoxelVolume<ITMWarp, TIndex>(&settings->scene_parameters,
 			                                             settings->swappingMode ==
 			                                             Configuration::SWAPPINGMODE_ENABLED,
 			                                             TMemoryType,

@@ -231,22 +231,23 @@ int main(int argc, char** argv) {
 				 " Greater values penalize deformations resulting in non-SDF-like voxel grid.")
 
 				/* Enable / disable dynamic fusion optimization terms / procedures */
-				("disable_data_term", po::bool_switch(&disableDataTerm)->default_value(false),
+				("disable_data_term", po::bool_switch(&disableDataTerm),
 				 "Whether or not to disable the data term if using the DynamicFusion algorithm")
-				("enable_level_set_term", po::bool_switch(&enableLevelSetTerm)->default_value(false),
+				("enable_level_set_term", po::bool_switch(&enableLevelSetTerm),
 				 "Whether or not to disable the level set term if using the DynamicFusion algorithm")
-				("disable_smoothing_term", po::bool_switch(&disableSmoothingTerm)->default_value(false),
+				("disable_smoothing_term", po::bool_switch(&disableSmoothingTerm),
 				 "Whether or not to disable the smoothness term if using the DynamicFusion algorithm")
-				("enable_killing_term", po::bool_switch(&enableKillingTerm)->default_value(false),
+				("enable_killing_term", po::bool_switch(&enableKillingTerm),
 				 "Whether or not to enable the Killing term (isometric motion enforcement regularizer) if using the "
-	             "DynamicFusion algorithm")
-				("disable_gradient_smoothing", po::bool_switch(&disableGradientSmoothing)->default_value(false),
+	             "dynamic scene fusion algorithm")
+				("disable_gradient_smoothing", po::bool_switch(&disableGradientSmoothing),
 				 "Whether or not to disable the Sobolev gradient smoothing if using the DynamicFusion algorithm\n")
 
 				/* modes (parameter presets)*/
-				("KillingFusion", po::bool_switch(&killingModeEnabled)->default_value(false),
-				 "Uses parameters from KillingFusion (2017) article by Slavcheva et al.. Individual parameters can"
-	             " still be overridden. Equivalent to: \n"
+				("preset_mode", po::value<std::string>()->default_value("SobolevFusion"),
+				 "Which default set of parameters to use for optimization. Individual parameters can still be overridden."
+	             "For instance, passing --preset_mode KillingFusion will envoke the parameters from KillingFusion "
+                 "(2017) article by Slavcheva et al., which would be equivalent to: \n"
 	             "--disable_gradient_smoothing --enable_level_set_term --enable_killing_term "
 			     "--rigidity_enforcement_factor 0.1 --weight_smoothness_term 0.5 --weight_level_set 0.2")
 				;
@@ -364,7 +365,7 @@ int main(int argc, char** argv) {
 		auto& settings = Configuration::Instance();
 		settings.deviceType = chosenDeviceType;
 
-		settings.analysisSettings.outputPath = vm["output"].as<std::string>().c_str();
+		settings.analysisSettings.output_path = vm["output"].as<std::string>().c_str();
 		bool haveFocusCoordinates = !vm["focus_coordinates"].empty();
 		Vector3i focusCoordiantes(0);
 		if (haveFocusCoordinates) {
@@ -379,47 +380,23 @@ int main(int argc, char** argv) {
 			logger.SetFocusCoordinates(focusCoordiantes);
 		}
 
-		if (killingModeEnabled) {
-			settings.enableLevelSetTerm = true;
-			settings.enableKillingConstraintInSmoothingTerm = true;
-			settings.enableGradientSmoothing = false;
 
 
-			settings.sceneTrackingRigidityEnforcementFactor = 0.1;
-			settings.sceneTrackingWeightSmoothingTerm = 0.5;
-			settings.sceneTrackingWeightLevelSetTerm = 0.2;
-		}
+		settings.slavcheva_parameters = SlavchevaSurfaceTracker::Parameters(vm, slavchevaConfigurationMode, 0.1);
+		settings.slavcheva_switches = SlavchevaSurfaceTracker::Switches(vm, slavchevaConfigurationMode);
 
 		//_DEBUG
 		settings.restrictZtrackingForDebugging = restrictZMotion;
 
-		settings.enableDataTerm = !disableDataTerm;
-		settings.enableLevelSetTerm = enableLevelSetTerm;
-		settings.enableSmoothingTerm = !disableSmoothingTerm;
-		settings.enableKillingConstraintInSmoothingTerm = enableKillingTerm;
-		settings.enableGradientSmoothing = !disableGradientSmoothing;
 
 		if (!vm["max_iterations"].empty()) {
-			settings.sceneTrackingMaxOptimizationIterationCount = vm["max_iterations"].as<unsigned int>();
+			settings.surface_tracking_max_optimization_iteration_count = vm["max_iterations"].as<unsigned int>();
 		}
 		if (!vm["vector_update_threshold"].empty()) {
-			settings.sceneTrackingOptimizationVectorUpdateThresholdMeters = vm["vector_update_threshold"].as<float>();
+			settings.surface_tracking_optimization_vector_update_threshold_meters = vm["vector_update_threshold"].as<float>();
 		}
-		if (!vm["learning_rate"].empty()) {
-			settings.sceneTrackingGradientDescentLearningRate = vm["learning_rate"].as<float>();
-		}
-		if (!vm["rigidity_enforcement_factor"].empty()) {
-			settings.sceneTrackingRigidityEnforcementFactor = vm["rigidity_enforcement_factor"].as<float>();
-		}
-		if (!vm["weight_data_term"].empty()) {
-			settings.sceneTrackingWeightDataTerm = vm["weight_data_term"].as<float>();
-		}
-		if (!vm["weight_smoothing_term"].empty()) {
-			settings.sceneTrackingWeightSmoothingTerm = vm["weight_smoothing_term"].as<float>();
-		}
-		if (!vm["weight_level_set_term"].empty()) {
-			settings.sceneTrackingWeightLevelSetTerm = vm["weight_level_set_term"].as<float>();
-		}
+
+
 
 		ITMMainEngine* mainEngine = nullptr;
 
@@ -494,7 +471,7 @@ int main(int argc, char** argv) {
 		if(settings.FocusCoordinatesAreSpecified()){
 			logger.SetFocusCoordinates(settings.GetFocusCoordinates());
 		}
-		logger.SetOutputDirectory(settings.analysisSettings.outputPath);
+		logger.SetOutputDirectory(settings.analysisSettings.output_path);
 
 		logger.SetPlaneFor2Dand3DSlices(planeFor2Dand3DSlices);
 		logger.Set3DSliceInPlaneRadius(_3DSliceRadius);
@@ -517,7 +494,7 @@ int main(int argc, char** argv) {
 		XInitThreads();
 #endif
 		UIEngine_BPO::Instance().Initialise(argc, argv, imageSource, imuSource, mainEngine,
-		                                    settings.analysisSettings.outputPath.c_str(), settings.deviceType,
+		                                    settings.analysisSettings.output_path.c_str(), settings.deviceType,
 		                                    processNFramesOnLaunch, skipFirstNFrames, recordReconstructionToVideo,
 		                                    startInStepByStep, saveAfterInitialProcessing, loadBeforeProcessing,
 		                                    &logger, chosenIndexingMethod);

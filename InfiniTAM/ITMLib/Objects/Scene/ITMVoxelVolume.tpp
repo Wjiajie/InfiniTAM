@@ -30,8 +30,8 @@ namespace ITMLib {
  * \param offset (optional) offset of the scene -- affects only bounded index types, such as ITMPlainVoxelArray
  */
 template<typename TVoxel, typename TIndex>
-ITMVoxelVolume<TVoxel,TIndex>::ITMVoxelVolume(const ITMSceneParams* _sceneParams, bool _useSwapping, MemoryDeviceType _memoryType,
-		typename TIndex::InitializationParameters indexParameters)
+ITMVoxelVolume<TVoxel,TIndex>::ITMVoxelVolume(const ITMSceneParameters* _sceneParams, bool _useSwapping, MemoryDeviceType _memoryType,
+                                              typename TIndex::InitializationParameters indexParameters)
 	: sceneParams(_sceneParams),
 		index(indexParameters, _memoryType),
 	  localVBA(_memoryType, index.GetAllocatedBlockCount(), index.GetVoxelBlockSize())

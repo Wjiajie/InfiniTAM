@@ -558,9 +558,9 @@ public:
 			smoothingTermVectorStartPoint = iterator->second.second;
 		}
 		Vector3f dataTermVector =
-				-Configuration::Instance().sceneTrackingGradientDescentLearningRate * voxel.data_term_gradient;
+				-Configuration::Instance().slavcheva_parameters.gradientDescentLearningRate * voxel.data_term_gradient;
 		Vector3f smoothingTermVector =
-				-Configuration::Instance().sceneTrackingGradientDescentLearningRate * voxel.smoothing_term_gradient;
+				-Configuration::Instance().slavcheva_parameters.gradientDescentLearningRate * voxel.smoothing_term_gradient;
 
 		dataTermPoints->InsertNextPoint(dataTermVectorStartPoint.values);
 		dataTermVectors->InsertNextTuple(dataTermVector.values);

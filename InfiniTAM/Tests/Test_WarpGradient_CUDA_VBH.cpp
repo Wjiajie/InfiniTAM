@@ -42,7 +42,7 @@ using namespace ITMLib;
 typedef WarpGradientDataFixture<MemoryDeviceType::MEMORYDEVICE_CUDA, ITMVoxelBlockHash> DataFixture;
 BOOST_FIXTURE_TEST_CASE(testDataTerm_CUDA_VBH, DataFixture) {
 //	settings->SetFocusCoordinates(Vector3i(-21,-4,189));
-	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CUDA1(&settings->sceneParams,
+	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CUDA1(&settings->scene_parameters,
 	                                                            settings->swappingMode ==
 	                                                            Configuration::SWAPPINGMODE_ENABLED,
 	                                                            MEMORYDEVICE_CUDA, indexParameters);

@@ -18,15 +18,17 @@ using namespace ITMLib;
 
 
 
-void Configuration::SetFromVariableMap(const po::variables_map& vm) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+Configuration::Configuration(const po::variables_map& vm) {
+
 }
 
 Configuration::Configuration()
 :   //mu(m), maxW, voxel size(m), clipping min, clipping max, stopIntegratingAtMaxW
-	sceneParams(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG
-	//sceneParams(0.02f, 100, 0.005f, 0.2f, 3.0f, false),//standard InfiniTAM values
-	surfelSceneParams(0.5f, 0.6f, static_cast<float>(20 * M_PI / 180), 0.01f, 0.004f, 3.5f, 25.0f, 4, 1.0f, 5.0f, 20, 10000000, true, true)
+	scene_parameters(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG
+	//scene_parameters(0.02f, 100, 0.005f, 0.2f, 3.0f, false),//standard InfiniTAM values
+	surfel_scene_parameters(0.5f, 0.6f, static_cast<float>(20 * M_PI / 180), 0.01f, 0.004f, 3.5f, 25.0f, 4, 1.0f, 5.0f, 20, 10000000, true, true),
+	slavcheva_parameters(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION,scene_parameters.voxelSize / scene_parameters.mu),
+	slavcheva_switches(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION)
 {
 	// skips every other point when using the colour renderer for creating a point cloud
 	skipPoints = true;
@@ -115,35 +117,19 @@ Configuration::Configuration()
 	//TODO: the following 3 groups should be kept in 4 separate structs in here, perpetually; these structs should be passed as pointers to the classes that use them (instead of being copied to structs in those classes)
 
 	// Dynamic fusion debugging/logging
-	analysisSettings.focusCoordinatesSpecified = false;
+	analysisSettings.focus_coordinates_specified = false;
 	//By default, write to a State folder within the current directory
-	analysisSettings.outputPath = "./State/";
+	analysisSettings.output_path = "./State/";
 
 	restrictZtrackingForDebugging = false;
 
-
-	// Dynamic fusion switches
-	enableDataTerm = true;
-	enableLevelSetTerm = true;
-	enableSmoothingTerm = true;
-	enableKillingConstraintInSmoothingTerm = false;
-	enableGradientSmoothing = true;
-
 	// Dynamic fusion optimization termination parameters
-	sceneTrackingMaxOptimizationIterationCount = 200;
-	sceneTrackingOptimizationVectorUpdateThresholdMeters = 0.0001f;// in meters, default from KillingFusion
-
-	// Dynamic fusion weights / factors used during scene tracking
-	sceneTrackingGradientDescentLearningRate = 0.1f; // default from KillingFusion & SobolevFusion
-	sceneTrackingRigidityEnforcementFactor = 0.1f; // default from KillingFusion
-	sceneTrackingWeightDataTerm = 1.0f; // not used in Killing/Sobolev Fusion (implicitly adjusted using other weights & thresholds)
-	sceneTrackingWeightSmoothingTerm = 0.2f; // default from SobolevFusion, 0.5f used in KillingFusion
-	sceneTrackingWeightLevelSetTerm = 0.2f; // default from KillingFusion
-	sceneTrackingLevelSetTermEpsilon = 1e-5f; // default from KillingFusion //TODO: scaling factor of 0.01, since their units are mm and ours are m?
+	surface_tracking_max_optimization_iteration_count = 200;
+	surface_tracking_optimization_vector_update_threshold_meters = 0.0001f;// in meters, default from KillingFusion
 }
 
 bool Configuration::FocusCoordinatesAreSpecified() const {
-	return analysisSettings.focusCoordinatesSpecified;
+	return analysisSettings.focus_coordinates_specified;
 }
 
 MemoryDeviceType Configuration::GetMemoryType() const
@@ -151,18 +137,27 @@ MemoryDeviceType Configuration::GetMemoryType() const
 	return deviceType == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
 }
 
-Vector3i Configuration::GetFocusCoordinates() const {
-	return analysisSettings.focusCoordinates;
+
+
+Configuration::AnalysisSettings::AnalysisSettings() :
+output_path("output/"),
+focus_coordinates_specified(false),
+focus_coordinates(Vector3i(0))
+{}
+
+static Vector3i vector3i_from_variable_map(const po::variables_map& vm, std::string argument){
+	Vector3i vec;
+	std::vector<int> int_vector = vm[argument].as<std::vector<int>>();
+	if (int_vector.size() != 3) {
+		DIEWITHEXCEPTION_REPORTLOCATION("Could not parse argument as exactly 3 integers, \"x y z\"");
+	}
+	memcpy(vec.values, int_vector.data(), sizeof(int) * 3);
+	return vec;
 }
 
-void Configuration::SetFocusCoordinates(const Vector3i& coordiantes) {
-	analysisSettings.focusCoordinatesSpecified = true;
-	analysisSettings.focusCoordinates = coordiantes;
-}
-
-void Configuration::SetFocusCoordinates(int x, int y, int z) {
-	this->SetFocusCoordinates(Vector3i(x, y, z));
-}
-
-
-
+Configuration::AnalysisSettings::AnalysisSettings(const po::variables_map& vm):
+output_path(vm["output"].empty() ? AnalysisSettings().output_path : vm["output"].as<std::string>().c_str()),
+focus_coordinates_specified(!vm["focus_coordinates"].empty()),
+focus_coordinates(vm["focus_coordinates"].empty() ? AnalysisSettings().focus_coordinates :
+vector3i_from_variable_map(vm, "focus_coordinates"))
+{}

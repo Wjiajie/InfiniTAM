@@ -194,7 +194,7 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::AddNewSurfels(ITMSurfelSc
   // Add the new surfels to the scene.
   const size_t newSurfelCount = static_cast<size_t>(this->m_newPointsPrefixSumMB->GetElement(pixelCount, MEMORYDEVICE_CUDA));
   TSurfel *newSurfels = scene->AllocateSurfels(newSurfelCount);
-  const ITMSurfelSceneParams& sceneParams = scene->GetParams();
+  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
   if(newSurfels == NULL) return;
 
   int threadsPerBlock = 256;
@@ -265,7 +265,7 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::FuseMatchedPoints(ITMSurf
   int threadsPerBlock = 256;
   int numBlocks = (pixelCount + threadsPerBlock - 1) / threadsPerBlock;
 
-  const ITMSurfelSceneParams& sceneParams = scene->GetParams();
+  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
 
   ck_fuse_matched_point<<<numBlocks,threadsPerBlock>>>(
     pixelCount,
@@ -299,7 +299,7 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::MarkBadSurfels(ITMSurfelS
   // If the scene is empty, early out.
   if(surfelCount == 0) return;
 
-  const ITMSurfelSceneParams& sceneParams = scene->GetParams();
+  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
   unsigned int *surfelRemovalMask = this->m_surfelRemovalMaskMB->GetData(MEMORYDEVICE_CUDA);
   TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CUDA);
 
@@ -339,7 +339,7 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::MergeSimilarSurfels(ITMSu
   const int indexImageWidth = renderState->GetIndexImage()->noDims.x;
   unsigned int *mergeTargetMap = this->m_mergeTargetMapMB->GetData(MEMORYDEVICE_CUDA);
   const int pixelCount = static_cast<int>(renderState->GetIndexImage()->dataSize);
-  const ITMSurfelSceneParams& sceneParams = scene->GetParams();
+  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
   TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CUDA);
   unsigned int *surfelRemovalMask = this->m_surfelRemovalMaskMB->GetData(MEMORYDEVICE_CUDA);
 
@@ -376,7 +376,7 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::MergeSimilarSurfels(ITMSu
 }
 
 template <typename TSurfel>
-void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::PreprocessDepthMap(const ITMView *view, const ITMSurfelSceneParams& sceneParams) const
+void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::PreprocessDepthMap(const ITMView *view, const ITMSurfelSceneParameters& sceneParams) const
 {
   const float *depthMap = view->depth->GetData(MEMORYDEVICE_CUDA);
   const int height = view->depth->noDims.y;

@@ -75,7 +75,7 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_VBH, DataFixture) {
 	settings->enableLevelSetTerm = false;
 	settings->enableKillingConstraintInSmoothingTerm = false;
 //	settings->SetFocusCoordinates(Vector3i(-21,-4,189));
-	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CPU1(&settings->sceneParams,
+	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CPU1(&settings->scene_parameters,
 	                                                            settings->swappingMode ==
 	                                                            Configuration::SWAPPINGMODE_ENABLED,
 	                                                            MEMORYDEVICE_CPU, indexParameters);

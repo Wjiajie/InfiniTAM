@@ -698,6 +698,8 @@ set(ITMLIB_UTILS_SOURCES
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.tcu
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.cu
 
+	Utils/ITMSceneParameters.cpp
+
 	Utils/Configuration.cpp
     Utils/ITMPrintHelpers.cpp
     )
@@ -720,8 +722,8 @@ set(ITMLIB_UTILS_HEADERS
     Utils/ITMMemoryBlockTypes.h
     Utils/ITMPixelUtils.h
     Utils/ITMProjectionUtils.h
-    Utils/ITMSceneParams.h
-    Utils/ITMSurfelSceneParams.h
+    Utils/ITMSceneParameters.h
+	Utils/ITMSurfelSceneParameters.h
     Utils/ITMPrintHelpers.h
     Utils/ITMCPrintHelpers.h
 

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "ITMRenderState_VH.h"
-#include "../../Utils/ITMSceneParams.h"
+#include "../../Utils/ITMSceneParameters.h"
 
 namespace ITMLib
 {
@@ -11,7 +11,7 @@ namespace ITMLib
   struct ITMRenderStateFactory
   {
     /** Creates a render state, containing rendering info for the scene. */
-    static ITMRenderState *CreateRenderState(const Vector2i& imgSize, const ITMSceneParams *sceneParams, MemoryDeviceType memoryType, const TIndex& index)
+    static ITMRenderState *CreateRenderState(const Vector2i& imgSize, const ITMSceneParameters *sceneParams, MemoryDeviceType memoryType, const TIndex& index)
     {
       return new ITMRenderState(imgSize, sceneParams->viewFrustum_min, sceneParams->viewFrustum_max, memoryType);
     }
@@ -21,7 +21,7 @@ namespace ITMLib
   struct ITMRenderStateFactory<ITMVoxelBlockHash>
   {
     /** Creates a render state, containing rendering info for the scene. */
-    static ITMRenderState *CreateRenderState(const Vector2i& imgSize, const ITMSceneParams *sceneParams, MemoryDeviceType memoryType, const ITMVoxelBlockHash& index)
+    static ITMRenderState *CreateRenderState(const Vector2i& imgSize, const ITMSceneParameters *sceneParams, MemoryDeviceType memoryType, const ITMVoxelBlockHash& index)
     {
       return new ITMRenderState_VH(index.hashEntryCount, index.voxelBlockCount, imgSize, sceneParams->viewFrustum_min, sceneParams->viewFrustum_max, memoryType);
     }
