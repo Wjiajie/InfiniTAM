@@ -15,9 +15,10 @@
 //  ================================================================
 
 #include "../../ITMLibDefines.h"
-#include "ITMSceneMotionTracker_CPU_VoxelBlockHash.tpp"
+#include "SurfaceTracker_CPU_PlainVoxelArray.tpp"
+
 
 namespace ITMLib {
 template
-class SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>;
+class SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>;
 } // namespace ITMLib

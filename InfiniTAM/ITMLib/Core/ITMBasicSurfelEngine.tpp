@@ -49,7 +49,7 @@ ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMRGBDCalib& calib, V
 
 	view = NULL; // will be allocated by the view builder
 
-	if (settings.behaviourOnFailure == settings.FAILUREMODE_RELOCALISE)
+	if (settings.behaviorOnFailure == settings.FAILUREMODE_RELOCALIZE)
 		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.scene_parameters.viewFrustum_min,
 		                                                                       settings.scene_parameters.viewFrustum_max),
 		                                                   0.2f, 500, 4);
@@ -204,8 +204,8 @@ ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITMUChar4Image* rgbImage, ITMShortIm
 	if (trackingActive) trackingController->Track(trackingState, view);
 
 	ITMTrackingState::TrackingResult trackerResult = ITMTrackingState::TRACKING_GOOD;
-	switch (settings.behaviourOnFailure) {
-		case Configuration::FAILUREMODE_RELOCALISE:
+	switch (settings.behaviorOnFailure) {
+		case Configuration::FAILUREMODE_RELOCALIZE:
 			trackerResult = trackingState->trackerResult;
 			break;
 		case Configuration::FAILUREMODE_STOP_INTEGRATION:
@@ -222,7 +222,7 @@ ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITMUChar4Image* rgbImage, ITMShortIm
 #if 0 //TODO: explain not compiled block in comment (see below)? --Greg(GitHub:Algomorph)
 	int addKeyframeIdx = -1;
 #endif
-	if (settings.behaviourOnFailure == Configuration::FAILUREMODE_RELOCALISE) {
+	if (settings.behaviorOnFailure == Configuration::FAILUREMODE_RELOCALIZE) {
 		if (trackerResult == ITMTrackingState::TRACKING_GOOD && relocalisationCount > 0) relocalisationCount--;
 
 		int NN;

@@ -641,27 +641,27 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_HEADERS
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_SOURCES
 	SurfaceTrackers/Shared/ITMWarpGradientCommon.h
-	SurfaceTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.tpp
-	SurfaceTrackers/CPU/ITMSceneMotionTracker_CPU_VoxelBlockHash.cpp
-	SurfaceTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.tpp
-	SurfaceTrackers/CPU/ITMSceneMotionTracker_CPU_PlainVoxelArray.cpp
+	SurfaceTrackers/CPU/SurfaceTracker_CPU_VoxelBlockHash.tpp
+	SurfaceTrackers/CPU/SurfaceTracker_CPU_VoxelBlockHash.cpp
+	SurfaceTrackers/CPU/SurfaceTracker_CPU_PlainVoxelArray.tpp
+	SurfaceTrackers/CPU/SurfaceTracker_CPU_PlainVoxelArray.cpp
     )
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_HEADERS
-	SurfaceTrackers/CPU/ITMSceneMotionTracker_CPU.h
+	SurfaceTrackers/CPU/SurfaceTracker_CPU.h
     )
 ##
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_SOURCES
-	SurfaceTrackers/CUDA/ITMSceneMotionTracker_CUDA_PlainVoxelArray.tcu
-	SurfaceTrackers/CUDA/ITMSceneMotionTracker_CUDA_PlainVoxelArray.cu
-	SurfaceTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash.tcu
-	SurfaceTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash.cu
+	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_PlainVoxelArray.tcu
+	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_PlainVoxelArray.cu
+	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_VoxelBlockHash.tcu
+	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_VoxelBlockHash.cu
     )
 set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_HEADERS
-	SurfaceTrackers/CUDA/SurfaceTracker.h
-	SurfaceTrackers/CUDA/ITMSceneMotionTracker_CUDA_PlainVoxelArray_Kernels.h
-	SurfaceTrackers/CUDA/ITMSceneMotionTracker_CUDA_VoxelBlockHash_Kernels.h
+	SurfaceTrackers/CUDA/SurfaceTracker_CUDA.h
+	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_PlainVoxelArray_Kernels.h
+	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_VoxelBlockHash_Kernels.h
     )
 ##
 
@@ -699,6 +699,7 @@ set(ITMLIB_UTILS_SOURCES
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.cu
 
 	Utils/ITMSceneParameters.cpp
+	Utils/ITMSurfelSceneParameters.cpp
 
 	Utils/Configuration.cpp
     Utils/ITMPrintHelpers.cpp

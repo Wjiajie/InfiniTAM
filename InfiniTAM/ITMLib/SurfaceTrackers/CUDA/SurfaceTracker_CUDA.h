@@ -34,8 +34,7 @@ public:
 			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField, bool clearFlowWarp) override;
 	void CalculateWarpGradient(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
-	                           ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
-	                           bool restrictZTrackingForDebugging) override;
+	                           ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) override;
 	void SmoothWarpGradient(
 			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
@@ -62,8 +61,7 @@ public:
 			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* canonicalScene, bool clearFlowWarp) override;
 	void CalculateWarpGradient(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 	                           ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
-	                           ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
-	                           bool restrictZTrackingForDebugging) override;
+	                           ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;
 	void SmoothWarpGradient(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
 	                        ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 	                        ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;

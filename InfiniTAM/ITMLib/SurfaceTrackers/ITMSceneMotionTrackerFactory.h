@@ -16,12 +16,12 @@
 #pragma once
 
 #include "Interface/SurfaceTrackerInterface.h"
-#include "CPU/ITMSceneMotionTracker_CPU.h"
+#include "CPU/SurfaceTracker_CPU.h"
 #include "Shared/ITMCalculateWarpGradientFunctor.h"
 
 #ifndef COMPILE_WITHOUT_CUDA
 
-#include "CUDA/SurfaceTracker.h"
+#include "CUDA/SurfaceTracker_CUDA.h"
 
 #endif
 #ifdef COMPILE_WITH_METAL

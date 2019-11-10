@@ -66,7 +66,7 @@ try
 	Configuration *internalSettings = &Configuration::Instance();
 
 	ITMMainEngine *mainEngine = NULL;
-	switch (internalSettings->libMode)
+	switch (internalSettings->library_mode)
 	{
 	case Configuration::LIBMODE_BASIC:
 		mainEngine = new ITMBasicEngine<ITMVoxel, ITMVoxelIndex>(imageSource->getCalib(),

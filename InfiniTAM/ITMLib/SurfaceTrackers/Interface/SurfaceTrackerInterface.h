@@ -100,8 +100,7 @@ public:
 	virtual void
 	CalculateWarpGradient(ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
 	                      ITMVoxelVolume<TVoxel, TIndex>* liveScene,
-	                      ITMVoxelVolume<TWarp, TIndex>* warpField,
-	                      bool restrictZTrackingForDebugging) = 0;
+	                      ITMVoxelVolume<TWarp, TIndex>* warpField) = 0;
 	virtual void SmoothWarpGradient(
 			ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
 			ITMVoxelVolume<TVoxel, TIndex>* liveScene,

@@ -13,139 +13,14 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+#include <unordered_map>
 #include "Configuration.h"
+
 using namespace ITMLib;
 
+// region ============================= Boost variables_map processing subroutines =====================================
 
-
-Configuration::Configuration(const po::variables_map& vm) {
-
-}
-
-Configuration::Configuration()
-:   //mu(m), maxW, voxel size(m), clipping min, clipping max, stopIntegratingAtMaxW
-	scene_parameters(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG
-	//scene_parameters(0.02f, 100, 0.005f, 0.2f, 3.0f, false),//standard InfiniTAM values
-	surfel_scene_parameters(0.5f, 0.6f, static_cast<float>(20 * M_PI / 180), 0.01f, 0.004f, 3.5f, 25.0f, 4, 1.0f, 5.0f, 20, 10000000, true, true),
-	slavcheva_parameters(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION,scene_parameters.voxelSize / scene_parameters.mu),
-	slavcheva_switches(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION)
-{
-	// skips every other point when using the colour renderer for creating a point cloud
-	skipPoints = true;
-
-	// create all the things required for marching cubes and mesh extraction
-	// - uses additional memory (lots!)
-	createMeshingEngine = true;
-
-#ifndef COMPILE_WITHOUT_CUDA
-	deviceType = MEMORYDEVICE_CUDA;
-#else
-#ifdef COMPILE_WITH_METAL
-	deviceType = MEMORYDEVICE_METAL;
-#else
-	deviceType = MEMORYDEVICE_CPU;
-#endif
-#endif
-
-	/// how swapping works: disabled, fully enabled (still with dragons) and delete what's not visible - not supported in loop closure version
-	swappingMode = SWAPPINGMODE_DISABLED;
-
-	/// enables or disables approximate raycast
-	useApproximateRaycast = false;
-
-	/// enable or disable threshold depth filtering
-	useThresholdFilter = false;
-
-	/// enable or disable bilateral depth filtering
-	useBilateralFilter = false;
-
-	/// what to do on tracker failure: ignore, relocalise or stop integration - not supported in loop closure version
-	behaviourOnFailure = FAILUREMODE_IGNORE;
-
-	/// switch between various library modes - basic, with loop closure, etc.
-	//libMode = LIBMODE_BASIC;
-	//libMode = LIBMODE_LOOPCLOSURE;
-	//libMode = LIBMODE_BASIC_SURFELS;
-	libMode = LIBMODE_DYNAMIC;//_DEBUG
-
-	//// Default ICP tracking
-	//trackerConfig = "type=icp,levels=rrrbb,minstep=1e-3,"
-	//				"outlierC=0.01,outlierF=0.002,"
-	//				"numiterC=10,numiterF=2,failureDec=5.0"; // 5 for normal, 20 for loop closure
-
-	// Depth-only extended tracker:
-	trackerConfig = "type=extended,levels=rrbb,useDepth=1,minstep=1e-4,"
-					  "outlierSpaceC=0.1,outlierSpaceF=0.004,"
-					  "numiterC=20,numiterF=50,tukeyCutOff=8,"
-					  "framesToSkip=20,framesToWeight=50,failureDec=20.0";
-
-	//// For hybrid intensity+depth tracking:
-	//trackerConfig = "type=extended,levels=bbb,useDepth=1,useColour=1,"
-	//				  "colourWeight=0.3,minstep=1e-4,"
-	//				  "outlierColourC=0.175,outlierColourF=0.005,"
-	//				  "outlierSpaceC=0.1,outlierSpaceF=0.004,"
-	//				  "numiterC=20,numiterF=50,tukeyCutOff=8,"
-	//				  "framesToSkip=20,framesToWeight=50,failureDec=20.0";
-
-	// Colour only tracking, using rendered colours
-	//trackerConfig = "type=rgb,levels=rrbb";
-
-	//trackerConfig = "type=imuicp,levels=tb,minstep=1e-3,outlierC=0.01,outlierF=0.005,numiterC=4,numiterF=2";
-	//trackerConfig = "type=extendedimu,levels=ttb,minstep=5e-4,outlierSpaceC=0.1,outlierSpaceF=0.004,numiterC=20,numiterF=5,tukeyCutOff=8,framesToSkip=20,framesToWeight=50,failureDec=20.0";
-
-	// Surfel tracking
-	if(libMode == LIBMODE_BASIC_SURFELS)
-	{
-		trackerConfig = "extended,levels=rrbb,minstep=1e-4,outlierSpaceC=0.1,outlierSpaceF=0.004,numiterC=20,numiterF=20,tukeyCutOff=8,framesToSkip=0,framesToWeight=1,failureDec=20.0";
-	}
-	// Killing-constraint tracking
-	if(libMode == LIBMODE_DYNAMIC)
-	{
-//		trackerConfig = "type=killing,levels=rrbb,useDepth=1,minstep=1e-4,"
-//				"outlierSpaceC=0.1,outlierSpaceF=0.004,"
-//				"numiterC=20,numiterF=50,tukeyCutOff=8,"
-//				"framesToSkip=20,framesToWeight=50,failureDec=20.0";
-		//// For hybrid intensity+depth tracking:
-		trackerConfig = "type=killing,levels=bbb,useDepth=1,useColour=1,"
-						  "colourWeight=0.3,minstep=1e-4,"
-						  "outlierColourC=0.175,outlierColourF=0.005,"
-						  "outlierSpaceC=0.1,outlierSpaceF=0.004,"
-						  "numiterC=20,numiterF=50,tukeyCutOff=8,"
-						  "framesToSkip=20,framesToWeight=50,failureDec=20.0";
-	}
-
-	//TODO: the following 3 groups should be kept in 4 separate structs in here, perpetually; these structs should be passed as pointers to the classes that use them (instead of being copied to structs in those classes)
-
-	// Dynamic fusion debugging/logging
-	analysisSettings.focus_coordinates_specified = false;
-	//By default, write to a State folder within the current directory
-	analysisSettings.output_path = "./State/";
-
-	restrictZtrackingForDebugging = false;
-
-	// Dynamic fusion optimization termination parameters
-	surface_tracking_max_optimization_iteration_count = 200;
-	surface_tracking_optimization_vector_update_threshold_meters = 0.0001f;// in meters, default from KillingFusion
-}
-
-bool Configuration::FocusCoordinatesAreSpecified() const {
-	return analysisSettings.focus_coordinates_specified;
-}
-
-MemoryDeviceType Configuration::GetMemoryType() const
-{
-	return deviceType == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
-}
-
-
-
-Configuration::AnalysisSettings::AnalysisSettings() :
-output_path("output/"),
-focus_coordinates_specified(false),
-focus_coordinates(Vector3i(0))
-{}
-
-static Vector3i vector3i_from_variable_map(const po::variables_map& vm, std::string argument){
+static Vector3i vector3i_from_variable_map(const po::variables_map& vm, std::string argument) {
 	Vector3i vec;
 	std::vector<int> int_vector = vm[argument].as<std::vector<int>>();
 	if (int_vector.size() != 3) {
@@ -155,9 +30,191 @@ static Vector3i vector3i_from_variable_map(const po::variables_map& vm, std::str
 	return vec;
 }
 
-Configuration::AnalysisSettings::AnalysisSettings(const po::variables_map& vm):
-output_path(vm["output"].empty() ? AnalysisSettings().output_path : vm["output"].as<std::string>().c_str()),
-focus_coordinates_specified(!vm["focus_coordinates"].empty()),
-focus_coordinates(vm["focus_coordinates"].empty() ? AnalysisSettings().focus_coordinates :
-vector3i_from_variable_map(vm, "focus_coordinates"))
-{}
+static MemoryDeviceType memory_device_type_from_variable_map(const po::variables_map& vm, std::string argument) {
+	static std::unordered_map<std::string, MemoryDeviceType> memory_device_type_by_string = {
+			{"CPU",   MEMORYDEVICE_CPU},
+			{"CUDA",  MEMORYDEVICE_CUDA},
+			{"METAL", MEMORYDEVICE_METAL},
+			{"cpu",   MEMORYDEVICE_CPU},
+			{"cuda",  MEMORYDEVICE_CUDA},
+			{"metal", MEMORYDEVICE_METAL},
+			{"Metal", MEMORYDEVICE_METAL}
+	};
+	std::string argument_value = vm[argument].as<std::string>();
+	if (memory_device_type_by_string.find(argument_value) == memory_device_type_by_string.end()) {
+		DIEWITHEXCEPTION_REPORTLOCATION("Unrecognized memory device type argument");
+	} else {
+		return memory_device_type_by_string[argument_value];
+	}
+}
+
+static Configuration::SwappingMode swapping_mode_from_variable_map(const po::variables_map& vm, std::string argument) {
+	static std::unordered_map<std::string, Configuration::SwappingMode > swapping_mode_by_string = {
+			{"enabled",   Configuration::SwappingMode::SWAPPINGMODE_ENABLED},
+			{"disabled",  Configuration::SwappingMode::SWAPPINGMODE_DISABLED},
+			{"delete", Configuration::SwappingMode::SWAPPINGMODE_DELETE}
+	};
+	std::string argument_value = vm[argument].as<std::string>();
+	if (swapping_mode_by_string.find(argument_value) == swapping_mode_by_string.end()) {
+		DIEWITHEXCEPTION_REPORTLOCATION("Unrecognized swapping mode argument");
+	} else {
+		return swapping_mode_by_string[argument_value];
+	}
+}
+
+static Configuration::FailureMode failure_mode_from_variable_map(const po::variables_map& vm, std::string argument) {
+	static std::unordered_map<std::string, Configuration::FailureMode > failure_mode_by_string = {
+			{"ignore",   Configuration::FailureMode::FAILUREMODE_IGNORE},
+			{"relocalize",  Configuration::FailureMode::FAILUREMODE_RELOCALIZE},
+			{"stop_integration", Configuration::FailureMode::FAILUREMODE_STOP_INTEGRATION}
+	};
+	std::string argument_value = vm[argument].as<std::string>();
+	if (failure_mode_by_string.find(argument_value) == failure_mode_by_string.end()) {
+		DIEWITHEXCEPTION_REPORTLOCATION("Unrecognized failure mode argument");
+	} else {
+		return failure_mode_by_string[argument_value];
+	}
+}
+
+static Configuration::LibMode lib_mode_from_variable_map(const po::variables_map& vm, std::string argument) {
+	static std::unordered_map<std::string, Configuration::LibMode > lib_mode_by_string = {
+			{"ignore",   Configuration::LibMode::LIBMODE_BASIC},
+			{"relocalize",  Configuration::LibMode::LIBMODE_BASIC_SURFELS},
+			{"stop_integration", Configuration::LibMode::LIBMODE_DYNAMIC},
+			{"stop_integration", Configuration::LibMode::LIBMODE_LOOPCLOSURE}
+	};
+	std::string argument_value = vm[argument].as<std::string>();
+	if (lib_mode_by_string.find(argument_value) == lib_mode_by_string.end()) {
+		DIEWITHEXCEPTION_REPORTLOCATION("Unrecognized failure mode argument");
+	} else {
+		return lib_mode_by_string[argument_value];
+	}
+}
+
+// endregion
+
+Configuration::Configuration(const po::variables_map& vm) :
+		scene_parameters(vm),
+		surfel_scene_parameters(vm),
+		slavcheva_parameters(vm),
+		slavcheva_switches(vm),
+		telemetry_settings(vm),
+		skipPoints(vm["skip_points"].empty() ?
+		           Configuration().skipPoints :
+		           vm["skip_points"].as<bool>()),
+		createMeshingEngine(vm["disable_meshing"].empty() ?
+		                    Configuration().createMeshingEngine :
+		                    !vm["disable_meshing"].as<bool>()),
+		deviceType(vm["device"].empty() ? Configuration().deviceType:
+				memory_device_type_from_variable_map(vm, "device")),
+		swappingMode(vm["swapping"].empty() ? Configuration().swappingMode:
+		             swapping_mode_from_variable_map(vm, "swapping")),
+		useApproximateRaycast(vm["use_approximate_raycast"].empty() ?
+		                      Configuration().useApproximateRaycast :
+		                      !vm["use_approximate_raycast"].as<bool>()),
+		useThresholdFilter(vm["use_threshold_filter"].empty() ?
+		                   Configuration().useThresholdFilter :
+		                   !vm["use_threshold_filter"].as<bool>()),
+		useBilateralFilter(vm["use_bilateral_filter"].empty() ?
+		                   Configuration().useBilateralFilter :
+		                   !vm["use_bilateral_filter"].as<bool>()),
+		behaviorOnFailure(vm["failure_mode"].empty() ? Configuration().behaviorOnFailure:
+		                  failure_mode_from_variable_map(vm, "failure_mode")),
+		library_mode(vm["mode"].empty() ? Configuration().library_mode :
+		             lib_mode_from_variable_map(vm, "mode")),
+		tracker_configuration(vm["tracker"].empty() ? (library_mode == LIBMODE_BASIC_SURFELS ? default_surfel_tracker_configuration :
+		                      default_depth_only_extended_tracker_configuration) : vm["tracker"].as<std::string>().c_str()),
+		surface_tracking_max_optimization_iteration_count(200),
+		surface_tracking_optimization_vector_update_threshold_meters(0.0001f)
+		{
+#ifdef COMPILE_WITHOUT_CUDA
+	if(deviceType == MEMORYDEVICE_CUDA){
+		DIEWITHEXCEPTION_REPORTLOCATION("CUDA compilation disabled, unable to use CUDA device type. Aborting!");
+	}
+#endif
+#ifdef COMPILE_WITHOUT_METAL
+	if(deviceType == MEMORYDEVICE_METAL){
+		DIEWITHEXCEPTION_REPORTLOCATION("Metal compilation disabled, unable to use Metal device type. Aborting!");
+	}
+#endif
+}
+
+Configuration::Configuration()
+		:   //mu(m), maxW, voxel size(m), clipping min, clipping max, stopIntegratingAtMaxW
+		scene_parameters(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG
+		//scene_parameters(0.02f, 100, 0.005f, 0.2f, 3.0f, false),//standard InfiniTAM values
+		surfel_scene_parameters(0.5f, 0.6f, static_cast<float>(20 * M_PI / 180), 0.01f, 0.004f, 3.5f, 25.0f, 4, 1.0f,
+		                        5.0f, 20, 10000000, true, true),
+		slavcheva_parameters(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION,
+		                     scene_parameters.voxelSize / scene_parameters.mu),
+		slavcheva_switches(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION),
+		telemetry_settings(),
+		skipPoints(true),
+		createMeshingEngine(true),
+#ifndef COMPILE_WITHOUT_CUDA
+		deviceType(MEMORYDEVICE_CUDA),
+#else
+		deviceType(MEMORYDEVICE_CPU),
+#endif
+		swappingMode(SWAPPINGMODE_DISABLED),
+		useApproximateRaycast(false),
+		useThresholdFilter(false),
+		useBilateralFilter(false),
+		behaviorOnFailure(FAILUREMODE_IGNORE),
+		library_mode(LIBMODE_DYNAMIC),
+		tracker_configuration(library_mode == LIBMODE_BASIC_SURFELS ? default_surfel_tracker_configuration :
+		                      default_depth_only_extended_tracker_configuration),
+		surface_tracking_max_optimization_iteration_count(200),
+		surface_tracking_optimization_vector_update_threshold_meters(0.0001f) {
+}
+
+const std::string Configuration::default_ICP_tracker_configuration =
+		"type=icp,levels=rrrbb,minstep=1e-3,"
+		"outlierC=0.01,outlierF=0.002,"
+		"numiterC=10,numiterF=2,failureDec=5.0"; // 5 for normal, 20 for loop closure
+const std::string Configuration::default_ICP_tracker_configuration_loop_closure =
+		"type=icp,levels=rrrbb,minstep=1e-3,"
+		"outlierC=0.01,outlierF=0.002,"
+		"numiterC=10,numiterF=2,failureDec=20.0"; // 5 for normal, 20 for loop closure
+const std::string Configuration::default_depth_only_extended_tracker_configuration =
+		"type=extended,levels=rrbb,useDepth=1,minstep=1e-4,"
+		"outlierSpaceC=0.1,outlierSpaceF=0.004,"
+		"numiterC=20,numiterF=50,tukeyCutOff=8,"
+		"framesToSkip=20,framesToWeight=50,failureDec=20.0";
+const std::string Configuration::default_intensity_depth_extended_tracker_configuration =
+		"type=extended,levels=bbb,useDepth=1,useColour=1,"
+		"colourWeight=0.3,minstep=1e-4,"
+		"outlierColourC=0.175,outlierColourF=0.005,"
+		"outlierSpaceC=0.1,outlierSpaceF=0.004,"
+		"numiterC=20,numiterF=50,tukeyCutOff=8,"
+		"framesToSkip=20,framesToWeight=50,failureDec=20.0";
+const std::string Configuration::default_color_only_tracker_configuration =
+		"type=rgb,levels=rrbb";
+const std::string Configuration::default_IMU_ICP_tracker_configuration =
+		"type=imuicp,levels=tb,minstep=1e-3,outlierC=0.01,"
+		"outlierF=0.005,numiterC=4,numiterF=2";
+const std::string Configuration::default_IMU_extended_tracker_configuration =
+		"type=extendedimu,levels=ttb,minstep=5e-4,outlierSpaceC=0.1,"
+		"outlierSpaceF=0.004,numiterC=20,numiterF=5,tukeyCutOff=8,"
+		"framesToSkip=20,framesToWeight=50,failureDec=20.0";
+
+bool Configuration::FocusCoordinatesAreSpecified() const {
+	return telemetry_settings.focus_coordinates_specified;
+}
+
+MemoryDeviceType Configuration::GetMemoryType() const {
+	return deviceType == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
+}
+
+
+Configuration::TelemetrySettings::TelemetrySettings() :
+		output_path("output/"),
+		focus_coordinates_specified(false),
+		focus_coordinates(Vector3i(0)) {}
+
+
+Configuration::TelemetrySettings::TelemetrySettings(const po::variables_map& vm) :
+		output_path(vm["output"].empty() ? TelemetrySettings().output_path : vm["output"].as<std::string>().c_str()),
+		focus_coordinates_specified(!vm["focus_coordinates"].empty()),
+		focus_coordinates(vm["focus_coordinates"].empty() ? TelemetrySettings().focus_coordinates :
+		                  vector3i_from_variable_map(vm, "focus_coordinates")) {}

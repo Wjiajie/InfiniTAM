@@ -64,7 +64,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 
 	view = nullptr; // will be allocated by the view builder
 
-	if (settings.behaviourOnFailure == settings.FAILUREMODE_RELOCALISE)
+	if (settings.behaviorOnFailure == settings.FAILUREMODE_RELOCALIZE)
 		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.scene_parameters.viewFrustum_min,
 		                                                                       settings.scene_parameters.viewFrustum_max),
 		                                                   0.2f, 500, 4);
@@ -573,8 +573,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::BeginProcessingFrame(ITMUChar4Imag
 
 	lastTrackerResult = ITMTrackingState::TRACKING_GOOD;
 
-	switch (settings.behaviourOnFailure) {
-		case Configuration::FAILUREMODE_RELOCALISE:
+	switch (settings.behaviorOnFailure) {
+		case Configuration::FAILUREMODE_RELOCALIZE:
 			//relocalisation
 			lastTrackerResult = trackingState->trackerResult;
 			if (lastTrackerResult == ITMTrackingState::TRACKING_GOOD && relocalisationCount > 0)

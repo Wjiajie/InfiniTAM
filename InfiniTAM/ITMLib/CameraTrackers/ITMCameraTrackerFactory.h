@@ -90,7 +90,7 @@ private:
 		makers.push_back(Maker("extendedimu", "Combined IMU and depth + colour ICP tracker", TRACKER_EXTENDEDIMU,
 		                       &MakeExtendedIMUTracker));
 		makers.push_back(Maker("forcefail", "Force fail tracker", TRACKER_FORCEFAIL, &MakeForceFailTracker));
-		makers.push_back(Maker("killing", "Dynamic scene tracker with softened Killing constraint", TRACKER_KILLING,
+		makers.push_back(Maker("dynamic", "Dynamic scene camera tracker", TRACKER_KILLING,
 		                       &MakeKillingTracker));
 	}
 
@@ -145,7 +145,7 @@ public:
 	ITMCameraTracker* Make(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, const ITMLowLevelEngine* lowLevelEngine,
 	                       ITMIMUCalibrator* imuCalibrator, const ITMSceneParameters* sceneParams) const {
 		auto& settings = Configuration::Instance();
-		return Make(settings.deviceType, settings.trackerConfig, imgSize_rgb, imgSize_d, lowLevelEngine,
+		return Make(settings.deviceType, settings.tracker_configuration.c_str(), imgSize_rgb, imgSize_d, lowLevelEngine,
 		            imuCalibrator, sceneParams);
 	}
 

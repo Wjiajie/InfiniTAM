@@ -32,7 +32,7 @@
 #include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "../ITMLib/SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
-#include "../ITMLib/SurfaceTrackers/CUDA/SurfaceTracker.h"
+#include "../ITMLib/SurfaceTrackers/CUDA/SurfaceTracker_CUDA.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
 

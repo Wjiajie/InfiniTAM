@@ -43,7 +43,6 @@ public:
 		const float maxVectorUpdateThresholdVoxels;
 	};
 	struct AnalysisFlags{
-		bool restrictZtrackingForDebugging;
 		bool hasFocusCoordinates;
 	};
 

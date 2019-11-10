@@ -32,7 +32,7 @@
 #include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
-#include "../ITMLib/SurfaceTrackers/CPU/ITMSceneMotionTracker_CPU.h"
+#include "../ITMLib/SurfaceTrackers/CPU/SurfaceTracker_CPU.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ITMLib/Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 
@@ -79,7 +79,7 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_PVA, DataFixture) {
 
 
 	TimeIt([&]() {
-		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1, false);
+		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
 	}, "Calculate Warp Gradient - PVA CPU data term");
 
 
@@ -146,7 +146,7 @@ BOOST_FIXTURE_TEST_CASE(testDataAndTikhonovTerm_CPU_PVA, DataFixture) {
 
 
 	TimeIt([&]() {
-		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1, false);
+		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
 	}, "Calculate Warp Gradient - PVA CPU data + tikhonov term");
 
 
@@ -174,7 +174,7 @@ BOOST_FIXTURE_TEST_CASE(testDataAndKillingTerm_CPU_PVA, DataFixture) {
 
 
 	TimeIt([&]() {
-		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1, false);
+		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
 	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
 
 
@@ -201,7 +201,7 @@ BOOST_FIXTURE_TEST_CASE(testDataAndLevelSetTerm_CPU_PVA, DataFixture) {
 
 
 	TimeIt([&]() {
-		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1, false);
+		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
 	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
 
 

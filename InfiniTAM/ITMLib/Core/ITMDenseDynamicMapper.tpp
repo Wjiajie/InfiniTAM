@@ -80,9 +80,8 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ITMDenseDynamicMapper(const TIndex
 		           Configuration::Instance().surface_tracking_optimization_vector_update_threshold_meters,
 		           Configuration::Instance().surface_tracking_optimization_vector_update_threshold_meters /
 		           Configuration::Instance().scene_parameters.voxelSize},
-		analysisFlags{Configuration::Instance().restrictZtrackingForDebugging,
-		              Configuration::Instance().analysisSettings.focus_coordinates_specified},
-		focusCoordinates(Configuration::Instance().analysisSettings.focus_coordinates) {}
+		analysisFlags{Configuration::Instance().telemetry_settings.focus_coordinates_specified},
+		focusCoordinates(Configuration::Instance().telemetry_settings.focus_coordinates) {}
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::~ITMDenseDynamicMapper() {
@@ -236,10 +235,7 @@ ITMVoxelVolume<TVoxel, TIndex>* ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::Tr
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
 		ITMVoxelVolume<TVoxel, TIndex>** liveScenePair,
 		ITMVoxelVolume<TWarp, TIndex>* warpField) {
-	if (analysisFlags.restrictZtrackingForDebugging) {
-		std::cout << red << "WARNING: UPDATES IN Z DIRECTION HAVE BEEN DISABLED FOR DEBUGGING"
-		                    " PURPOSES. DO NOT EXPECT PROPER RESULTS!" << reset << std::endl;
-	}
+
 	PrintOperationStatus("*** Optimizing warp based on difference between canonical and live SDF. ***");
 	bench::StartTimer("TrackMotion_3_Optimization");
 	int sourceLiveSceneIndex = 0;
@@ -270,8 +266,7 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::PerformSingleOptimizationStep
 	bench::StartTimer("TrackMotion_31_CalculateWarpUpdate");
 
 
-	sceneMotionTracker->CalculateWarpGradient(canonicalScene, initialLiveScene, warpField,
-	                                          analysisFlags.restrictZtrackingForDebugging);
+	sceneMotionTracker->CalculateWarpGradient(canonicalScene, initialLiveScene, warpField);
 
 
 	bench::StopTimer("TrackMotion_31_CalculateWarpUpdate");

@@ -15,7 +15,7 @@
 //  ================================================================
 
 #include <iomanip>
-#include "ITMSceneMotionTracker_CPU.h"
+#include "SurfaceTracker_CPU.h"
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 #include "../Shared/ITMSceneMotionTracker_Functors.h"
 #include "../Shared/ITMCalculateWarpGradientFunctor.h"
@@ -38,8 +38,7 @@ template<typename TVoxel, typename TWarp>
 void SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::CalculateWarpGradient(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
-		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
-		bool restrictZTrackingForDebugging) {
+		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
 
 	ITMSceneTraversalEngine<TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::template
 	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TWarp>>(warpField);

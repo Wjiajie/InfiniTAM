@@ -15,10 +15,10 @@
 //  ================================================================
 #pragma once
 
-#include "SurfaceTracker.h"
+#include "SurfaceTracker_CUDA.h"
 #include "../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
 #include "../Shared/ITMSceneMotionTracker_Functors.h"
-#include "ITMSceneMotionTracker_CUDA_PlainVoxelArray_Kernels.h"
+#include "SurfaceTracker_CUDA_PlainVoxelArray_Kernels.h"
 #include "../Shared/ITMCalculateWarpGradientFunctor.h"
 
 
@@ -50,8 +50,7 @@ template<typename TVoxel, typename TWarp>
 void SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::CalculateWarpGradient(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene,
-		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
-		bool restrictZTrackingForDebugging) {
+		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
 
 	ITMSceneTraversalEngine<TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::template
 	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TWarp> >(warpField);

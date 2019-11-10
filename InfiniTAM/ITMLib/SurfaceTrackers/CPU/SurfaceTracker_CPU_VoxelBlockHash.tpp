@@ -31,7 +31,7 @@
 #include <opencv/cv.hpp>
 
 //local
-#include "ITMSceneMotionTracker_CPU.h"
+#include "SurfaceTracker_CPU.h"
 
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../Shared/ITMSceneMotionTracker_Functors.h"
@@ -96,8 +96,7 @@ void
 SurfaceTracker<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::CalculateWarpGradient(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene,
-		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
-		bool restrictZTrackingForDebugging) {
+		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) {
 
 	// manage hash
 	ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::template

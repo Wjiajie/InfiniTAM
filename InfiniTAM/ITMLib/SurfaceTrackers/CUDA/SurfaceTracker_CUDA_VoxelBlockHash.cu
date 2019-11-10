@@ -15,7 +15,7 @@
 //  ================================================================
 
 #include "../../ITMLibDefines.h"
-#include "ITMSceneMotionTracker_CUDA_VoxelBlockHash.tcu"
+#include "SurfaceTracker_CUDA_VoxelBlockHash.tcu"
 
 namespace ITMLib {
 template class SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>;

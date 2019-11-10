@@ -90,7 +90,6 @@ int main(int argc, char** argv) {
 		bool loadBeforeProcessing = false;
 
 		bool startInStepByStep = false;
-		bool restrictZMotion = false;
 
 		bool recordCanonicalSceneAsSlices = false;
 		bool recordLiveSceneAsSlices = false;
@@ -161,11 +160,6 @@ int main(int argc, char** argv) {
 				("load_before_processing", po::bool_switch(&loadBeforeProcessing)->default_value(false),
 				 "Start by loading scene from disk before any processing takes place.")
 
-
-
-				/* Debugging parameters for scene-tracking */
-				("restrict_z",po::bool_switch(&restrictZMotion)->default_value(false),
-				 "Used in dynamic fusion. Restrict scene motion updates in z direction (for debugging).")
 
 				/* Visualization and logging for visual debugging of scene-tracking*/
 				("focus_coordinates,f", po::value<std::vector<int>>()->multitoken(), "The coordinates of the voxel"
@@ -365,7 +359,7 @@ int main(int argc, char** argv) {
 		auto& settings = Configuration::Instance();
 		settings.deviceType = chosenDeviceType;
 
-		settings.analysisSettings.output_path = vm["output"].as<std::string>().c_str();
+		settings.telemetry_settings.output_path = vm["output"].as<std::string>().c_str();
 		bool haveFocusCoordinates = !vm["focus_coordinates"].empty();
 		Vector3i focusCoordiantes(0);
 		if (haveFocusCoordinates) {
@@ -385,9 +379,6 @@ int main(int argc, char** argv) {
 		settings.slavcheva_parameters = SlavchevaSurfaceTracker::Parameters(vm, slavchevaConfigurationMode, 0.1);
 		settings.slavcheva_switches = SlavchevaSurfaceTracker::Switches(vm, slavchevaConfigurationMode);
 
-		//_DEBUG
-		settings.restrictZtrackingForDebugging = restrictZMotion;
-
 
 		if (!vm["max_iterations"].empty()) {
 			settings.surface_tracking_max_optimization_iteration_count = vm["max_iterations"].as<unsigned int>();
@@ -401,7 +392,7 @@ int main(int argc, char** argv) {
 		ITMMainEngine* mainEngine = nullptr;
 
 
-		switch (settings.libMode) {
+		switch (settings.library_mode) {
 			case Configuration::LIBMODE_BASIC:
 				switch (chosenIndexingMethod) {
 					case HASH:
@@ -471,7 +462,7 @@ int main(int argc, char** argv) {
 		if(settings.FocusCoordinatesAreSpecified()){
 			logger.SetFocusCoordinates(settings.GetFocusCoordinates());
 		}
-		logger.SetOutputDirectory(settings.analysisSettings.output_path);
+		logger.SetOutputDirectory(settings.telemetry_settings.output_path);
 
 		logger.SetPlaneFor2Dand3DSlices(planeFor2Dand3DSlices);
 		logger.Set3DSliceInPlaneRadius(_3DSliceRadius);
@@ -494,7 +485,7 @@ int main(int argc, char** argv) {
 		XInitThreads();
 #endif
 		UIEngine_BPO::Instance().Initialise(argc, argv, imageSource, imuSource, mainEngine,
-		                                    settings.analysisSettings.output_path.c_str(), settings.deviceType,
+		                                    settings.telemetry_settings.output_path.c_str(), settings.deviceType,
 		                                    processNFramesOnLaunch, skipFirstNFrames, recordReconstructionToVideo,
 		                                    startInStepByStep, saveAfterInitialProcessing, loadBeforeProcessing,
 		                                    &logger, chosenIndexingMethod);

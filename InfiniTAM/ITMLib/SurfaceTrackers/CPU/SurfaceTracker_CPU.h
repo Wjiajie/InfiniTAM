@@ -65,8 +65,7 @@ public:
 			ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField, bool clearFlowWarp) override;
 	void CalculateWarpGradient(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* canonicalScene,
 	                           ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* liveScene,
-	                           ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField,
-	                           bool restrictZTrackingForDebugging) override;
+	                           ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField) override;
 	void SmoothWarpGradient(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* canonicalScene,
 	                        ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* liveScene,
 	                        ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField) override;

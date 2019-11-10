@@ -34,7 +34,7 @@
 #include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
-#include "../ITMLib/SurfaceTrackers/CPU/ITMSceneMotionTracker_CPU.h"
+#include "../ITMLib/SurfaceTrackers/CPU/SurfaceTracker_CPU.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "../ITMLib/Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
