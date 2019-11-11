@@ -126,3 +126,27 @@ ITMSurfelSceneParameters::ITMSurfelSceneParameters(const po::variables_map& vm)
 		                   ITMSurfelSceneParameters().useSurfelMerging :
 		                   !vm["disable_surfel_merging"].as<bool>()) {}
 
+ITMSurfelSceneParameters ITMSurfelSceneParameters::BuildFromPTree(const pt::ptree& tree) {
+	boost::optional<float> deltaRadius_opt = tree.get_optional<float>("surfel_delta_radius");
+	boost::optional<float> gaussianConfidenceSigma_opt = tree.get_optional<float>("surfel_gaussian_convergence_sigma");
+	boost::optional<float> maxMergeAngle_opt = tree.get_optional<float>("surfel_max_merge_angle");
+	boost::optional<float> maxMergeDist_opt = tree.get_optional<float>("surfel_max_merge_distance");
+	boost::optional<float> maxSurfelRadius_opt = tree.get_optional<float>("surfel_max_radius");
+	boost::optional<float> minRadiusOverlapFactor_opt = tree.get_optional<float>("surfel_min_radius_overlap_factor");
+	boost::optional<float> stableSurfelConfidence_opt = tree.get_optional<float>("stable_surfel_confidence");
+	boost::optional<int> maxW_opt = tree.get_optional<int>("tracking_surfel_max_depth");
+	boost::optional<float> voxelSize_opt = tree.get_optional<float>("voxel_size_meters");
+	boost::optional<float> viewFrustum_min_opt = tree.get_optional<float>("view_frustum_near_clipping_distance");
+	boost::optional<float> viewFrustum_max_opt = tree.get_optional<float>("view_frustum_far_clipping_distance");
+	boost::optional<bool> stopIntegratingAtMaxW_opt = tree.get_optional<bool>("stop_integration_at_max_weight");
+
+	ITMSurfelSceneParameters default_ssp;
+
+	return {mu_opt ? mu_opt.get() : default_ssp.mu,
+	        maxW_opt ? maxW_opt.get() : default_ssp.maxW,
+	        voxelSize_opt ? voxelSize_opt.get() : default_ssp.voxelSize,
+	        viewFrustum_min_opt ? viewFrustum_min_opt.get() : default_ssp.viewFrustum_min,
+	        viewFrustum_max_opt ? viewFrustum_max_opt.get() : default_ssp.viewFrustum_max,
+	        stopIntegratingAtMaxW_opt ? stopIntegratingAtMaxW_opt.get() : default_ssp.stopIntegratingAtMaxW};
+}
+

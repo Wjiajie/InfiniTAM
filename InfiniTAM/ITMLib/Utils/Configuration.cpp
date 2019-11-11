@@ -146,6 +146,12 @@ Configuration::Configuration(const po::variables_map& vm) :
 #endif
 }
 
+//TODO
+//Configuration::Configuration(const pt::ptree& tree)
+//
+//{}
+
+
 Configuration::Configuration() noexcept
 		:   //mu(m), maxW, voxel size(m), clipping min, clipping max, stopIntegratingAtMaxW
 		scene_parameters(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG

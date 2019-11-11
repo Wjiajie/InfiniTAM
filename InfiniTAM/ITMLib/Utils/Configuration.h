@@ -8,6 +8,7 @@
 
 //boost
 #include <boost/program_options.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 //local
 #include "ITMSceneParameters.h"
@@ -16,8 +17,8 @@
 #include "ITMMath.h"
 #include "../SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
 
-
 namespace po = boost::program_options;
+namespace pt = boost::property_tree;
 
 namespace ITMLib {
 class Configuration {
@@ -117,6 +118,8 @@ public:
 private:
 	Configuration() noexcept;
 	explicit Configuration(const po::variables_map& vm);
+//TODO
+//	explicit Configuration(const pt::ptree& tree);
 	static std::unique_ptr<Configuration> instance;
 	static const std::string default_ICP_tracker_configuration;
 	static const std::string default_ICP_tracker_configuration_loop_closure;

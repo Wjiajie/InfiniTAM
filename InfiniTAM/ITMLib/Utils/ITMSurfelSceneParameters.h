@@ -4,7 +4,9 @@
 
 //boost
 #include <boost/program_options.hpp>
+#include <boost/property_tree/ptree.hpp>
 namespace po = boost::program_options;
+namespace pt = boost::property_tree;
 
 namespace ITMLib {
 /**
@@ -66,5 +68,7 @@ struct ITMSurfelSceneParameters {
 	                                  float trackingSurfelMaxDepth_, float trackingSurfelMinConfidence_,
 	                                  int unstableSurfelPeriod_, int unstableSurfelZOffset_,
 	                                  bool useGaussianSampleConfidence_, bool useSurfelMerging_);
+
+	static ITMSurfelSceneParameters BuildFromPTree(const pt::ptree& tree);
 };
 }

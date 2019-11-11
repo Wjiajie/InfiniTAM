@@ -4,7 +4,9 @@
 
 //boost
 #include <boost/program_options.hpp>
+#include <boost/property_tree/ptree.hpp>
 namespace po = boost::program_options;
+namespace pt = boost::property_tree;
 
 namespace ITMLib
 {
@@ -48,6 +50,7 @@ namespace ITMLib
 
 		ITMSceneParameters();
 		explicit ITMSceneParameters(const po::variables_map& vm);
+		static ITMSceneParameters BuildFromPTree(const pt::ptree& tree);
 
 		/**
 		 * \brief standard constructor setting all elements to passed-in values
@@ -60,6 +63,8 @@ namespace ITMLib
 		 */
 		ITMSceneParameters(float mu, int maxW, float voxelSize,
 		                   float viewFrustum_min, float viewFrustum_max, bool stopIntegratingAtMaxW);
+
+
 
 	};
 }
