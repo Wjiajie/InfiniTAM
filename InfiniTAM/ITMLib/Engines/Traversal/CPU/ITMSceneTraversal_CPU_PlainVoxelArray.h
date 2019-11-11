@@ -14,11 +14,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-//TODO: take care of explicit OpenMP data-sharing rules, i.e. the default(none) clause and such;
-// (consult http://jakascorner.com/blog/2016/06/omp-data-sharing-attributes.html for reference)
-// then remove the below two pragmas.
-//#pragma clang diagnostic push
-//#pragma ide diagnostic ignored "openmp-use-default-none"
+
 
 #pragma once
 
@@ -329,6 +325,37 @@ public:
 			TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
 			TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
 			if (!(functor(primaryVoxel, secondaryVoxel))) {
+				mismatchFound = true;
+			}
+		}
+		return !mismatchFound;
+	}
+
+	template<typename TFunctor>
+	inline static bool
+	DualVoxelPositionTraversal_AllTrue(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryVolume,
+			TFunctor& functor) {
+
+		assert(primaryVolume->index.GetVolumeSize() == secondaryVolume->index.GetVolumeSize());
+// *** traversal vars
+		TVoxelSecondary* secondaryVoxels = secondaryVolume->localVBA.GetVoxelBlocks();
+		TVoxelPrimary* primaryVoxels = primaryVolume->localVBA.GetVoxelBlocks();
+		//asserted to be the same
+		int voxelCount = primaryVolume->index.GetVolumeSize().x * primaryVolume->index.GetVolumeSize().y *
+		                 primaryVolume->index.GetVolumeSize().z;
+		volatile bool mismatchFound = false;
+		ITMPlainVoxelArray::IndexData* indexData = primaryVolume->index.GetIndexData();
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int linearIndex = 0; linearIndex < voxelCount; linearIndex++) {
+			if (mismatchFound) continue;
+			TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
+			TVoxelSecondary& secondaryVoxel = secondaryVoxels[linearIndex];
+			Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_PlainVoxelArray(indexData, linearIndex);
+			if (!(functor(primaryVoxel, secondaryVoxel, voxelPosition))) {
 				mismatchFound = true;
 			}
 		}
