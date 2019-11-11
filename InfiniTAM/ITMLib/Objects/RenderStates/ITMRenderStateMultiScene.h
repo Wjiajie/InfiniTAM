@@ -26,7 +26,8 @@ namespace ITMLib {
 		MultiIndexData indexData_host;
 		MultiVoxelData voxelData_host;
 
-		ITMSceneParameters sceneParams;
+		float mu;
+		float voxelSize;
 
 		ITMRenderStateMultiScene(const Vector2i &imgSize, float vf_min, float vf_max, MemoryDeviceType _memoryType)
 			: ITMRenderState(imgSize, vf_min, vf_max, _memoryType)
@@ -53,7 +54,8 @@ namespace ITMLib {
 
 		void PrepareLocalMaps(const MultiSceneManager & sceneManager)
 		{
-			sceneParams = *(sceneManager.getLocalMap(0)->scene->sceneParams);
+			voxelSize = sceneManager.getLocalMap(0)->scene->sceneParams->voxelSize;
+			mu = sceneManager.getLocalMap(0)->scene->sceneParams->mu;
 
 			int num = (int)sceneManager.numLocalMaps();
 			if (num > MAX_NUM_LOCALMAPS) num = MAX_NUM_LOCALMAPS;
@@ -61,9 +63,9 @@ namespace ITMLib {
 			for (int localMapId = 0; localMapId < num; ++localMapId) 
 			{
 				indexData_host.poses_vs[localMapId] = sceneManager.getEstimatedGlobalPose(localMapId).GetM();
-				indexData_host.poses_vs[localMapId].m30 /= sceneParams.voxelSize;
-				indexData_host.poses_vs[localMapId].m31 /= sceneParams.voxelSize;
-				indexData_host.poses_vs[localMapId].m32 /= sceneParams.voxelSize;
+				indexData_host.poses_vs[localMapId].m30 /= voxelSize;
+				indexData_host.poses_vs[localMapId].m31 /= voxelSize;
+				indexData_host.poses_vs[localMapId].m32 /= voxelSize;
 				indexData_host.posesInv[localMapId] = sceneManager.getEstimatedGlobalPose(localMapId).GetInvM();
 				indexData_host.index[localMapId] = sceneManager.getLocalMap(localMapId)->scene->index.GetIndexData();
 				voxelData_host.voxels[localMapId] = sceneManager.getLocalMap(localMapId)->scene->localVBA.GetVoxelBlocks();

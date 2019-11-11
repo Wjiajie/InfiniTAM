@@ -57,21 +57,17 @@ ITMVoxelBlockHash::InitializationParameters GetIndexParameters<ITMVoxelBlockHash
 template<MemoryDeviceType TMemoryType, typename TIndex>
 struct WarpGradientDataFixture {
 	WarpGradientDataFixture() :
-			settings(&Configuration::Instance()),
+			settings(nullptr),
 			warp_field_data_term(nullptr), canonical_volume(nullptr), live_volume(nullptr),
 			pathToData("TestData/snoopy_result_fr16-17_partial_" + getIndexSuffix<TIndex>() + "/"),
 			indexParameters(GetIndexParameters<TIndex>()){
-
-		settings->enableKillingConstraintInSmoothingTerm = false;
-		settings->enableDataTerm = true;
-		settings->enableSmoothingTerm = false;
-		settings->enableGradientSmoothing = false;
-		settings->enableLevelSetTerm = false;
+		Configuration::load_default();
+		settings = &Configuration::get();
 
 		BOOST_TEST_MESSAGE("setup fixture");
 		auto loadSdfVolume = [&](ITMVoxelVolume<ITMVoxel, TIndex>** scene, const std::string& pathSuffix){
-			*scene = new ITMVoxelVolume<ITMVoxel, TIndex>(&settings->scene_parameters,
-			                                                   settings->swappingMode ==
+			*scene = new ITMVoxelVolume<ITMVoxel, TIndex>(&Configuration::get().scene_parameters,
+			                                                   settings->swapping_mode ==
 			                                                   Configuration::SWAPPINGMODE_ENABLED,
 			                                                   TMemoryType,
 			                                                   indexParameters);
@@ -79,8 +75,8 @@ struct WarpGradientDataFixture {
 			(*scene)->LoadFromDirectory(pathToData + pathSuffix);
 		};
 		auto loadWarpVolume = [&](ITMVoxelVolume<ITMWarp, TIndex>** scene, const std::string& pathSuffix){
-			*scene = new ITMVoxelVolume<ITMWarp, TIndex>(&settings->scene_parameters,
-			                                             settings->swappingMode ==
+			*scene = new ITMVoxelVolume<ITMWarp, TIndex>(&Configuration::get().scene_parameters,
+			                                             settings->swapping_mode ==
 			                                             Configuration::SWAPPINGMODE_ENABLED,
 			                                             TMemoryType,
 			                                             indexParameters);

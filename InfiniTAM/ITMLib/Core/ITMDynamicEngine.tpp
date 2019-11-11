@@ -25,8 +25,8 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
                                                           Vector2i imgSize_d) {
 
 	this->InitializeScenes();
-	Configuration& settings = Configuration::Instance();
-	const MemoryDeviceType deviceType = settings.deviceType;
+	Configuration& settings = Configuration::get();
+	const MemoryDeviceType deviceType = settings.device_type;
 	MemoryDeviceType memoryType = settings.GetMemoryType();
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().SetScenes(canonicalScene, liveScenes[0], warpField);
@@ -38,7 +38,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 			ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxel, TIndex>(deviceType);
 
 	meshingEngine = nullptr;
-	if (settings.createMeshingEngine)
+	if (settings.create_meshing_engine)
 		meshingEngine = ITMMeshingEngineFactory::MakeMeshingEngine<TVoxel, TIndex>(deviceType, canonicalScene->index);
 
 	denseMapper = new ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>(canonicalScene->index);
@@ -64,7 +64,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 
 	view = nullptr; // will be allocated by the view builder
 
-	if (settings.behaviorOnFailure == settings.FAILUREMODE_RELOCALIZE)
+	if (settings.behavior_on_failure == settings.FAILUREMODE_RELOCALIZE)
 		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.scene_parameters.viewFrustum_min,
 		                                                                       settings.scene_parameters.viewFrustum_max),
 		                                                   0.2f, 500, 4);
@@ -82,19 +82,19 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDynamicEngine<TVoxel, TWarp, TIndex>::InitializeScenes(){
-	Configuration& settings = Configuration::Instance();
+	Configuration& settings = Configuration::get();
 	MemoryDeviceType memoryType = settings.GetMemoryType();
 	this->canonicalScene = new ITMVoxelVolume<TVoxel, TIndex>(
-			&settings.scene_parameters, settings.swappingMode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
+			&settings.scene_parameters, settings.swapping_mode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
 	this->liveScenes = new ITMVoxelVolume<TVoxel, TIndex>* [2];
 	for (int iLiveScene = 0; iLiveScene < ITMDynamicEngine<TVoxel, TWarp, TIndex>::liveSceneCount; iLiveScene++) {
 		this->liveScenes[iLiveScene] = new ITMVoxelVolume<TVoxel, TIndex>(&settings.scene_parameters,
-		                                                                  settings.swappingMode ==
+		                                                                  settings.swapping_mode ==
 		                                                                  Configuration::SWAPPINGMODE_ENABLED,
 		                                                                  memoryType);
 	}
 	this->warpField = new ITMVoxelVolume<TWarp, TIndex>(&settings.scene_parameters,
-	                                                    settings.swappingMode ==
+	                                                    settings.swapping_mode ==
 	                                                    Configuration::SWAPPINGMODE_ENABLED,
 	                                                    memoryType);
 }
@@ -134,7 +134,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::~ITMDynamicEngine() {
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDynamicEngine<TVoxel, TWarp, TIndex>::SaveSceneToMesh(const char* objFileName) {
 	if (meshingEngine == nullptr) return;
-	ITMMesh* mesh = new ITMMesh(Configuration::Instance().GetMemoryType(), canonicalScene->index.GetMaxVoxelCount());
+	ITMMesh* mesh = new ITMMesh(Configuration::get().GetMemoryType(), canonicalScene->index.GetMaxVoxelCount());
 	meshingEngine->MeshScene(mesh, canonicalScene);
 	mesh->WriteSTL(objFileName);
 	delete mesh;
@@ -163,7 +163,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::LoadFromFile() {
 	if (view != nullptr) {
 		try // load relocaliser
 		{
-			auto& settings = Configuration::Instance();
+			auto& settings = Configuration::get();
 			FernRelocLib::Relocaliser<float>* relocaliser_temp =
 					new FernRelocLib::Relocaliser<float>(view->depth->noDims,
 					                                     Vector2f(
@@ -335,7 +335,7 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetImageType getImageType,
                                                        ORUtils::SE3Pose* pose,
                                                        ITMIntrinsics* intrinsics) {
-	auto& settings = Configuration::Instance();
+	auto& settings = Configuration::get();
 	if (view == nullptr) return;
 
 	out->Clear();
@@ -343,13 +343,13 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 	switch (getImageType) {
 		case ITMDynamicEngine::InfiniTAM_IMAGE_ORIGINAL_RGB:
 			out->ChangeDims(view->rgb->noDims);
-			if (settings.deviceType == MEMORYDEVICE_CUDA)
+			if (settings.device_type == MEMORYDEVICE_CUDA)
 				out->SetFrom(view->rgb, MemoryCopyDirection::CUDA_TO_CPU);
 			else out->SetFrom(view->rgb, MemoryCopyDirection::CPU_TO_CPU);
 			break;
 		case ITMDynamicEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH:
 			out->ChangeDims(view->depth->noDims);
-			if (settings.deviceType == MEMORYDEVICE_CUDA) view->depth->UpdateHostFromDevice();
+			if (settings.device_type == MEMORYDEVICE_CUDA) view->depth->UpdateHostFromDevice();
 			ITMVisualisationEngine<TVoxel, TIndex>::DepthToUchar4(out, view->depth);
 			break;
 		case ITMDynamicEngine::InfiniTAM_IMAGE_SCENERAYCAST:
@@ -387,7 +387,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			else srcImage = renderState_live->raycastImage;
 
 			out->ChangeDims(srcImage->noDims);
-			if (settings.deviceType == MEMORYDEVICE_CUDA)
+			if (settings.device_type == MEMORYDEVICE_CUDA)
 				out->SetFrom(srcImage, MemoryCopyDirection::CUDA_TO_CPU);
 			else out->SetFrom(srcImage, MemoryCopyDirection::CPU_TO_CPU);
 
@@ -417,7 +417,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			liveVisualisationEngine->RenderImage(liveScenes[0], pose, intrinsics, renderState_freeview,
 			                                     renderState_freeview->raycastImage, type);
 
-			if (settings.deviceType == MEMORYDEVICE_CUDA)
+			if (settings.device_type == MEMORYDEVICE_CUDA)
 				out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CUDA_TO_CPU);
 			else out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CPU_TO_CPU);
 			break;
@@ -443,7 +443,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			                                          IITMVisualisationEngine::RENDER_SHADED_OVERLAY);
 
 
-			if (settings.deviceType == MEMORYDEVICE_CUDA)
+			if (settings.device_type == MEMORYDEVICE_CUDA)
 				out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CUDA_TO_CPU);
 			else out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CPU_TO_CPU);
 
@@ -465,7 +465,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			canonicalVisualisationEngine->RenderImage(canonicalScene, pose, intrinsics, renderState_freeview,
 			                                          renderState_freeview->raycastImage, type);
 
-			if (settings.deviceType == MEMORYDEVICE_CUDA)
+			if (settings.device_type == MEMORYDEVICE_CUDA)
 				out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CUDA_TO_CPU);
 			else out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CPU_TO_CPU);
 			break;
@@ -552,15 +552,15 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::BeginProcessingFrame(ITMUChar4Imag
                                                                    ITMShortImage* rawDepthImage,
                                                                    ITMIMUMeasurement* imuMeasurement) {
 
-	auto& settings = Configuration::Instance();
+	auto& settings = Configuration::get();
 
 	// prepare image and turn it into a depth image
 	if (imuMeasurement == nullptr)
-		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings.useThresholdFilter,
-		                        settings.useBilateralFilter, false, true);
+		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings.use_threshold_filter,
+		                        settings.use_bilateral_filter, false, true);
 	else
-		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings.useThresholdFilter,
-		                        settings.useBilateralFilter, imuMeasurement, false, true);
+		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings.use_threshold_filter,
+		                        settings.use_bilateral_filter, imuMeasurement, false, true);
 
 	if (!mainProcessingActive) {
 		lastTrackerResult = ITMTrackingState::TRACKING_FAILED;
@@ -573,7 +573,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::BeginProcessingFrame(ITMUChar4Imag
 
 	lastTrackerResult = ITMTrackingState::TRACKING_GOOD;
 
-	switch (settings.behaviorOnFailure) {
+	switch (settings.behavior_on_failure) {
 		case Configuration::FAILUREMODE_RELOCALIZE:
 			//relocalisation
 			lastTrackerResult = trackingState->trackerResult;

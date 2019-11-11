@@ -40,8 +40,8 @@ public:
 	static SurfaceTrackerInterface<TVoxel, TWarp, TIndex>*
 	MakeSceneMotionTracker() {
 		SurfaceTrackerInterface<TVoxel, TWarp, TIndex>* motionTracker = nullptr;
-		auto& settings = Configuration::Instance();
-		switch (settings.deviceType) {
+		auto& settings = Configuration::get();
+		switch (settings.device_type) {
 			case MEMORYDEVICE_CPU:
 				motionTracker = new SurfaceTracker<TVoxel, TWarp, TIndex, MEMORYDEVICE_CPU>();
 				break;

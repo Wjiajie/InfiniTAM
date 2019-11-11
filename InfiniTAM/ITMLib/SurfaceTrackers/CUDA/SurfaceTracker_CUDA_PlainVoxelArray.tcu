@@ -25,11 +25,6 @@
 using namespace ITMLib;
 
 
-template<typename TVoxel, typename TWarp>
-SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::SurfaceTracker()
-		: SurfaceTrackerInterface<TVoxel, TWarp, ITMPlainVoxelArray>() {
-
-}
 
 template<typename TVoxel, typename TWarp>
 void SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::ClearOutFlowWarp(

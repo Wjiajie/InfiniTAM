@@ -69,7 +69,7 @@ typename TIndex::InitializationParameters GetStandard128IndexParameters();
 //template<typename TVoxelA, typename TIndex>
 //ITMVoxelVolume<TVoxelA, TIndex> loadSdfVolume (const std::string& path, MemoryDeviceType memoryDeviceType,
 //		typename TIndex::InitializationParameters initializationParameters = GetFrame17PartialIndexParameters<TIndex>(),
-//		Configuration::SwappingMode swappingMode = Configuration::SWAPPINGMODE_DISABLED);
+//		Configuration::SwappingMode swapping_mode = Configuration::SWAPPINGMODE_DISABLED);
 
 template<typename TVoxel, typename TIndex>
 void loadSdfVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& path, MemoryDeviceType memoryDeviceType,

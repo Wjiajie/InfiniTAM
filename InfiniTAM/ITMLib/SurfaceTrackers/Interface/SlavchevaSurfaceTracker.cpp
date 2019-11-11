@@ -23,10 +23,14 @@
 using namespace ITMLib;
 
 SlavchevaSurfaceTracker::SlavchevaSurfaceTracker() :
-		parameters(Configuration::Instance().slavcheva_parameters),
-		switches(Configuration::Instance().slavcheva_switches) {
+		parameters(Configuration::get().slavcheva_parameters),
+		switches(Configuration::get().slavcheva_switches) {
 	PrintSettings();
 }
+
+SlavchevaSurfaceTracker::SlavchevaSurfaceTracker(Switches switches, Parameters parameters):
+	parameters(parameters), switches(switches)
+{}
 
 void SlavchevaSurfaceTracker::PrintSettings() {
 	std::cout << bright_cyan << "*** Scene Motion Tracker Settings: ***" << reset << std::endl;
@@ -138,5 +142,12 @@ SlavchevaSurfaceTracker::Switches::Switches(const po::variables_map& vm, Configu
 		enableSobolevGradientSmoothing(vm["disable_gradient_smoothing"].empty() ?  Switches(mode).enableSobolevGradientSmoothing : !vm["disable_gradient_smoothing"].as<bool>())
 {}
 
-SlavchevaSurfaceTracker::Switches::Switches(const po::variables_map& vm) : Switches(vm, determine_slavcheva_configuration_mode(vm)){};
+SlavchevaSurfaceTracker::Switches::Switches(const po::variables_map& vm) : Switches(vm, determine_slavcheva_configuration_mode(vm)){}
+
+SlavchevaSurfaceTracker::Switches::Switches(bool enableDataTerm, bool enableLevelSetTerm, bool enableSmoothingTerm,
+                                            bool enableKillingRigidityEnforcementTerm,
+                                            bool enableSobolevGradientSmoothing) :
+                                            enableDataTerm(enableDataTerm), enableLevelSetTerm(enableLevelSetTerm),
+                                            enableSmoothingTerm(enableSmoothingTerm), enableKillingRigidityEnforcementTerm(enableKillingRigidityEnforcementTerm),
+                                            enableSobolevGradientSmoothing(enableSobolevGradientSmoothing) {};
 

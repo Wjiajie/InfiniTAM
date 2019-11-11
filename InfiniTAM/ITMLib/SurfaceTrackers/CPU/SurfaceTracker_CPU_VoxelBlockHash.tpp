@@ -45,14 +45,6 @@
 
 using namespace ITMLib;
 
-// region ================================ CONSTRUCTORS AND DESTRUCTORS ================================================
-
-
-template<typename TVoxel, typename TWarp>
-SurfaceTracker<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::SurfaceTracker()
-		:SurfaceTrackerInterface<TVoxel, TWarp, ITMVoxelBlockHash>() {};
-// endregion ============================== END CONSTRUCTORS AND DESTRUCTORS============================================
-
 // region ===================================== HOUSEKEEPING ===========================================================
 
 

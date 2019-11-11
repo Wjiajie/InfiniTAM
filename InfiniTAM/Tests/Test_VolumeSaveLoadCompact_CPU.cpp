@@ -39,19 +39,18 @@ typedef ITMSceneStatisticsCalculator_CPU<ITMVoxel, ITMVoxelBlockHash> SceneStati
 
 BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 
-	Configuration* settings = &Configuration::Instance();
-	settings->deviceType = MEMORYDEVICE_CPU;
+	Configuration* settings = &Configuration::get();
 
 	Vector3i volumeSize(40, 68, 20);
 	Vector3i volumeOffset(-20, 0, 0);
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(
-			&settings->scene_parameters, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType(), {volumeSize, volumeOffset});
+			&Configuration::get().scene_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			MEMORYDEVICE_CPU, {volumeSize, volumeOffset});
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(
-			&settings->scene_parameters, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType(), {volumeSize, volumeOffset});
+			&Configuration::get().scene_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			MEMORYDEVICE_CPU, {volumeSize, volumeOffset});
 
 	GenerateTestScene_CPU(&scene1);
 	std::string path = "TestData/test_PVA_";
@@ -64,12 +63,12 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene2, tolerance));
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(
-			&settings->scene_parameters, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType());
+			&Configuration::get().scene_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			MEMORYDEVICE_CPU);
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(
-			&settings->scene_parameters, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType());
+			&Configuration::get().scene_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			MEMORYDEVICE_CPU);
 
 	GenerateTestScene_CPU(&scene3);
 	path = "TestData/test_VBH_";

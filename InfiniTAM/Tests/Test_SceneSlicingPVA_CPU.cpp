@@ -25,7 +25,6 @@
 #include "TestUtils.h"
 #include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "../ITMLib/SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 
@@ -33,19 +32,10 @@ using namespace ITMLib;
 
 
 BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
-	Configuration* settings = &Configuration::Instance();
-	settings->deviceType = MEMORYDEVICE_CPU;
-	settings->enableKillingConstraintInSmoothingTerm = false;
-	settings->enableDataTerm = true;
-	settings->enableSmoothingTerm = false;
-	settings->enableGradientSmoothing = true;
-	settings->enableLevelSetTerm = false;
-
-
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> canonical_scene_CPU(&settings->scene_parameters,
-	                                                                 settings->swappingMode ==
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> canonical_scene_CPU(&Configuration::get().scene_parameters,
+	                                                                 Configuration::get().swapping_mode ==
 	                                                                 Configuration::SWAPPINGMODE_ENABLED,
-	                                                                 settings->GetMemoryType());
+	                                                                 MEMORYDEVICE_CPU);
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&canonical_scene_CPU);
 
 	const int nonTruncatedVoxelCount = 41307;
@@ -59,8 +49,8 @@ BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> canonical_scene_slice_same_dimensions_CPU(
-			&settings->scene_parameters, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType());
+			&Configuration::get().scene_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			MEMORYDEVICE_CPU);
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&canonical_scene_slice_same_dimensions_CPU);
 
 
@@ -81,8 +71,8 @@ BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 	Vector3i sizeSlice(bounds.max_x - bounds.min_x, bounds.max_y - bounds.min_y, bounds.max_z - bounds.min_z);
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> canonical_scene_slice_different_dimensions_CPU(
-			&settings->scene_parameters, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType(), {sizeSlice, offsetSlice});
+			&Configuration::get().scene_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			MEMORYDEVICE_CPU, {sizeSlice, offsetSlice});
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&canonical_scene_slice_different_dimensions_CPU);
 
 	ManipulationEngine_CPU_PVA_Voxel::Inst().CopySceneSlice(&canonical_scene_slice_different_dimensions_CPU,
@@ -95,8 +85,8 @@ BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 	                                              &canonical_scene_slice_different_dimensions_CPU, tolerance));
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> canonical_scene_slice_from_disk_CPU(
-			&settings->scene_parameters, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType(), {sizeSlice, offsetSlice});
+			&Configuration::get().scene_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			MEMORYDEVICE_CPU, {sizeSlice, offsetSlice});
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&canonical_scene_slice_from_disk_CPU);
 
 	canonical_scene_slice_from_disk_CPU.LoadFromDirectory("TestData/snoopy_result_fr16-17_partial_PVA/canonical");

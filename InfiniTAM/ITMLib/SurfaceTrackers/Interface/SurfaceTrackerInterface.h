@@ -26,6 +26,7 @@
 
 //boost
 #include <boost/program_options.hpp>
+
 namespace po = boost::program_options;
 
 namespace ITMLib {
@@ -34,7 +35,7 @@ namespace ITMLib {
 class SlavchevaSurfaceTracker {
 public:
 
-	enum ConfigurationMode{
+	enum ConfigurationMode {
 		KILLING_FUSION,
 		SOBOLEV_FUSION
 	};
@@ -58,6 +59,8 @@ public:
 		Switches();
 		explicit Switches(ConfigurationMode mode);
 		explicit Switches(const po::variables_map& vm);
+		Switches(bool enableDataTerm, bool enableLevelSetTerm, bool enableSmoothingTerm,
+		         bool enableKillingRigidityEnforcementTerm, bool enableSobolevGradientSmoothing);
 		const bool enableDataTerm;
 		const bool enableLevelSetTerm;
 		const bool enableSmoothingTerm;
@@ -71,12 +74,11 @@ public:
 	const Switches switches;
 
 	explicit SlavchevaSurfaceTracker();
+	SlavchevaSurfaceTracker(Switches switches, Parameters parameters = Parameters());
 
 private:
 	void PrintSettings();
 };
-
-
 
 
 /**

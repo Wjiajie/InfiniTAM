@@ -39,19 +39,17 @@ typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMVoxelBlockHash> SceneStat
 
 BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CUDA) {
 
-	Configuration* settings = &Configuration::Instance();
-	settings->deviceType = MEMORYDEVICE_CUDA;
 
 	Vector3i volumeSize(40, 68, 20);
 	Vector3i volumeOffset(-20, 0, 0);
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(
-			&settings->scene_parameters, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType(), {volumeSize, volumeOffset});
+			&Configuration::get().scene_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			MEMORYDEVICE_CUDA, {volumeSize, volumeOffset});
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(
-			&settings->scene_parameters, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType(), {volumeSize, volumeOffset});
+			&Configuration::get().scene_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			MEMORYDEVICE_CUDA, {volumeSize, volumeOffset});
 
 	GenerateTestScene_CUDA(&scene1);
 	std::string path = "TestData/test_PVA_";
@@ -64,12 +62,12 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CUDA) {
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(
-			&settings->scene_parameters, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType(), {0x800, 0x20000});
+			&Configuration::get().scene_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			MEMORYDEVICE_CUDA, {0x800, 0x20000});
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(
-			&settings->scene_parameters, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType(), {0x800, 0x20000});
+			&Configuration::get().scene_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			MEMORYDEVICE_CUDA, {0x800, 0x20000});
 
 	GenerateTestScene_CUDA(&scene3);
 	path = "TestData/test_VBH_";

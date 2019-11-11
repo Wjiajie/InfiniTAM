@@ -212,11 +212,11 @@ ITMWarpFieldLogger<TVoxel, TIndex>::ITMWarpFieldLogger(const Vector6i& bounds, b
 		highlights("Hash ID", "Local voxel ix", "Frame", ""),
 		sliceIdentifier(GenerateSliceStringIdentifier(bounds)) {
 
-	Configuration& settings = Configuration::Instance();
+	Configuration& settings = Configuration::get();
 	MemoryDeviceType memoryType =
-			settings.deviceType == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
+			settings.device_type == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
 	this->warpField = new ITMVoxelVolume<TVoxel, TIndex>(&settings.scene_parameters,
-	                                           settings.swappingMode == Configuration::SWAPPINGMODE_ENABLED,
+	                                                     settings.swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                     memoryType);
 
 	SetPath(fullScenePath);

@@ -67,15 +67,16 @@ struct AlteredFlowWarpCountFunctor {
 typedef WarpGradientDataFixture<MemoryDeviceType::MEMORYDEVICE_CPU, ITMPlainVoxelArray> DataFixture;
 BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_PVA, DataFixture) {
 
-	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(&settings->scene_parameters,
-	                                                            settings->swappingMode ==
+	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(&Configuration::get().scene_parameters,
+	                                                            Configuration::get().swapping_mode ==
 	                                                            Configuration::SWAPPINGMODE_ENABLED,
 	                                                            MEMORYDEVICE_CPU,
 	                                                            indexParameters);
 	ManipulationEngine_CPU_PVA_Warp::Inst().ResetScene(&warp_field_CPU1);
 
 
-	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>();
+	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>(
+			SlavchevaSurfaceTracker::Switches(true, false, false, false, false));
 
 
 	TimeIt([&]() {
@@ -93,8 +94,8 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_PVA, DataFixture) {
 }
 
 BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_PVA, DataFixture) {
-	settings->enableGradientSmoothing = false;
-	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>();
+	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>(
+			SlavchevaSurfaceTracker::Switches(true, false, false, false, false));
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_copy(*warp_field_data_term,
 	                                                            MemoryDeviceType::MEMORYDEVICE_CPU);
 
@@ -117,12 +118,11 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_PVA, DataFixture) {
 }
 
 BOOST_FIXTURE_TEST_CASE(testSmoothWarpGradient_CPU_PVA, DataFixture) {
-	settings->enableGradientSmoothing = true;
-
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(*warp_field_data_term, MEMORYDEVICE_CPU);
 
 
-	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>();
+	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>(
+			SlavchevaSurfaceTracker::Switches(false, false, false, false, true));
 
 	TimeIt([&]() {
 		motionTracker_PVA_CPU->SmoothWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
@@ -134,15 +134,12 @@ BOOST_FIXTURE_TEST_CASE(testSmoothWarpGradient_CPU_PVA, DataFixture) {
 }
 
 BOOST_FIXTURE_TEST_CASE(testDataAndTikhonovTerm_CPU_PVA, DataFixture) {
-	settings->enableDataTerm = true;
-	settings->enableSmoothingTerm = true;
-	settings->enableLevelSetTerm = false;
-	settings->enableKillingConstraintInSmoothingTerm = false;
-
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(*warp_field_iter0, MEMORYDEVICE_CPU);
 
 
-	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>();
+	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>(
+			SlavchevaSurfaceTracker::Switches(true, false, true, false, false)
+	);
 
 
 	TimeIt([&]() {
@@ -161,16 +158,12 @@ BOOST_FIXTURE_TEST_CASE(testDataAndTikhonovTerm_CPU_PVA, DataFixture) {
 
 
 BOOST_FIXTURE_TEST_CASE(testDataAndKillingTerm_CPU_PVA, DataFixture) {
-	settings->enableDataTerm = true;
-	settings->enableSmoothingTerm = true;
-	settings->enableLevelSetTerm = false;
-	settings->enableKillingConstraintInSmoothingTerm = true;
-	settings->sceneTrackingRigidityEnforcementFactor = 0.1;
-
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(*warp_field_iter0, MEMORYDEVICE_CPU);
 
 
-	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>();
+	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>(
+			SlavchevaSurfaceTracker::Switches(true, false, true, true, false)
+	);
 
 
 	TimeIt([&]() {
@@ -189,20 +182,18 @@ BOOST_FIXTURE_TEST_CASE(testDataAndKillingTerm_CPU_PVA, DataFixture) {
 
 
 BOOST_FIXTURE_TEST_CASE(testDataAndLevelSetTerm_CPU_PVA, DataFixture) {
-	settings->enableDataTerm = true;
-	settings->enableSmoothingTerm = false;
-	settings->enableLevelSetTerm = true;
-	settings->enableKillingConstraintInSmoothingTerm = false;
 
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(*warp_field_iter0, MEMORYDEVICE_CPU);
 
 
-	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>();
+	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>(
+			SlavchevaSurfaceTracker::Switches(true, true, false, false, false)
+	);
 
 
 	TimeIt([&]() {
 		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
-	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
+	}, "Calculate Warp Gradient - PVA CPU data term + level set term");
 
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
@@ -211,5 +202,5 @@ BOOST_FIXTURE_TEST_CASE(testDataAndLevelSetTerm_CPU_PVA, DataFixture) {
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 41275);
 
 	float tolerance = 1e-8;
-	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_and_level_set_term, tolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CPU_Verbose(&warp_field_CPU1, warp_field_data_and_level_set_term, tolerance));
 }

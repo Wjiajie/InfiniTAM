@@ -44,20 +44,14 @@ typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMPlainVoxelArray> SceneSta
 typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMVoxelBlockHash> SceneStatisticsCalculator_VBH;
 
 BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
-	Configuration* settings = &Configuration::Instance();
+	Configuration* settings = &Configuration::get();
 
 	// region ================================= CONSTRUCT VIEW =========================================================
-
-	settings->deviceType = MEMORYDEVICE_CUDA;
-	settings->useBilateralFilter = false;
-	settings->useThresholdFilter = false;
-	settings->scene_parameters.mu = 0.04; // non-truncated narrow-band half-width, in meters
-	settings->scene_parameters.voxelSize = 0.004; // m
 
 	ITMRGBDCalib calibrationData;
 	readRGBDCalib("TestData/snoopy_calib.txt", calibrationData);
 
-	ITMViewBuilder* viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calibrationData, settings->deviceType);
+	ITMViewBuilder* viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calibrationData, MEMORYDEVICE_CUDA);
 	Vector2i imageSize(640, 480);
 	ITMView* view = nullptr;
 
@@ -68,15 +62,15 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 	rgb->UpdateDeviceFromHost();
 	depth->UpdateDeviceFromHost();
 
-	viewBuilder->UpdateView(&view, rgb, depth, settings->useThresholdFilter,
-	                        settings->useBilateralFilter, false, true);
+	viewBuilder->UpdateView(&view, rgb, depth, false, false, false, true);
 
 	// endregion =======================================================================================================
 
 	Vector3i volumeSize(1024, 32, 1024), volumeOffset(-volumeSize.x / 2, -volumeSize.y / 2, 0);
 
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&settings->scene_parameters,
-	                                                    settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&Configuration::get().scene_parameters,
+	                                                    Configuration::get().swapping_mode ==
+	                                                    Configuration::SWAPPINGMODE_ENABLED,
 	                                                    settings->GetMemoryType(),
 	                                                    {volumeSize, volumeOffset});
 	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(&scene1);
@@ -84,7 +78,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine_PVA =
 			ITMDynamicSceneReconstructionEngineFactory
-			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(settings->deviceType);
+			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(MEMORYDEVICE_CUDA);
 	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(&scene1, view, &trackingState, nullptr);
 
 	const int num_stripes = 62;
@@ -143,32 +137,35 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 		}
 	}
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene2(&settings->scene_parameters,
-	                                                   settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene2(&Configuration::get().scene_parameters,
+	                                                   Configuration::get().swapping_mode ==
+	                                                   Configuration::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType(), {0x800, 0x20000});
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene2);
 
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
 			ITMDynamicSceneReconstructionEngineFactory
-			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(settings->deviceType);
+			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(MEMORYDEVICE_CUDA);
 
 	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize,
-	                                                                                          &settings->scene_parameters,
+	                                                                                          &Configuration::get().scene_parameters,
 	                                                                                          settings->GetMemoryType(),
 	                                                                                          scene2.index);
 	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene2, view, &trackingState, renderState);
 
 	tolerance = 1e-5;
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene3(&settings->scene_parameters,
-	                                                    settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene3(&Configuration::get().scene_parameters,
+	                                                    Configuration::get().swapping_mode ==
+	                                                    Configuration::SWAPPINGMODE_ENABLED,
 	                                                    settings->GetMemoryType(),
 	                                                    {volumeSize, volumeOffset});
 	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(&scene3);
 	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, nullptr);
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene3, tolerance));
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(&settings->scene_parameters,
-	                                                   settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(&Configuration::get().scene_parameters,
+	                                                   Configuration::get().swapping_mode ==
+	                                                   Configuration::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType(), {0x800, 0x20000});
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene4);
 	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene4, view, &trackingState, renderState);
@@ -185,7 +182,8 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 	BOOST_REQUIRE(!allocatedContentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene5(
-			&settings->scene_parameters, settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
+			&Configuration::get().scene_parameters,
+			Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
 			settings->GetMemoryType(), {0x800, 0x20000});
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene5);
 	std::string path = "TestData/test_VBH_ConstructFromImage_";
@@ -203,20 +201,14 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 }
 
 BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CUDA) {
-	Configuration* settings = &Configuration::Instance();
+	Configuration* settings = &Configuration::get();
 
 	// region ================================= CONSTRUCT VIEW =========================================================
-
-	settings->deviceType = MEMORYDEVICE_CUDA;
-	settings->useBilateralFilter = false;
-	settings->useThresholdFilter = false;
-	settings->scene_parameters.mu = 0.04; // non-truncated narrow-band half-width, in meters
-	settings->scene_parameters.voxelSize = 0.004; // m
 
 	ITMRGBDCalib calibrationData;
 	readRGBDCalib("TestData/snoopy_calib.txt", calibrationData);
 
-	ITMViewBuilder* viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calibrationData, settings->deviceType);
+	ITMViewBuilder* viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calibrationData, MEMORYDEVICE_CUDA);
 	Vector2i imageSize(640, 480);
 	ITMView* view = nullptr;
 
@@ -225,48 +217,52 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CUDA) {
 	BOOST_REQUIRE(ReadImageFromFile(rgb, "TestData/snoopy_color_000000.png"));
 	BOOST_REQUIRE(ReadImageFromFile(depth, "TestData/snoopy_depth_000000.png"));
 
-	viewBuilder->UpdateView(&view, rgb, depth, settings->useThresholdFilter,
-	                        settings->useBilateralFilter, false, true);
+	viewBuilder->UpdateView(&view, rgb, depth, false, false, false, true);
 
 	// endregion =======================================================================================================
 
 	Vector3i volumeSize(512, 512, 512), volumeOffset(-volumeSize.x / 2, -volumeSize.y / 2, 0);
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&settings->scene_parameters,
-	                                                    settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(&Configuration::get().scene_parameters,
+	                                                    Configuration::get().swapping_mode ==
+	                                                    Configuration::SWAPPINGMODE_ENABLED,
 	                                                    settings->GetMemoryType(),
 	                                                    {volumeSize, volumeOffset});
-
-	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(&scene1);
-	ITMTrackingState trackingState(imageSize, settings->GetMemoryType());
-
-	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine_PVA =
-			ITMDynamicSceneReconstructionEngineFactory
-			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(settings->deviceType);
-	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(&scene1, view, &trackingState, nullptr);
-
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(&settings->scene_parameters,
-	                                                    settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
-	                                                    settings->GetMemoryType(),
-	                                                    {volumeSize, volumeOffset});
-
 	std::string path = "TestData/test_PVA_ConstructFromImage2_";
 	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(&scene2);
 	SceneFileIOEngine_PVA::LoadFromDirectoryCompact(&scene2, path);
+	ITMTrackingState trackingState(imageSize, settings->GetMemoryType());
 
 	float tolerance = 1e-5;
-	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
+	{
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&Configuration::get().scene_parameters,
+		                                                    Configuration::get().swapping_mode ==
+		                                                    Configuration::SWAPPINGMODE_ENABLED,
+		                                                    settings->GetMemoryType(),
+		                                                    {volumeSize, volumeOffset});
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(&settings->scene_parameters,
-	                                                   settings->swappingMode == Configuration::SWAPPINGMODE_ENABLED,
+		ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(&scene1);
+
+
+		ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine_PVA =
+				ITMDynamicSceneReconstructionEngineFactory
+				::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(MEMORYDEVICE_CUDA);
+		reconstructionEngine_PVA->GenerateRawLiveSceneFromView(&scene1, view, &trackingState, nullptr);
+
+		BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
+	}
+
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(&Configuration::get().scene_parameters,
+	                                                   Configuration::get().swapping_mode ==
+	                                                   Configuration::SWAPPINGMODE_ENABLED,
 	                                                   settings->GetMemoryType());
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene3);
 
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
 			ITMDynamicSceneReconstructionEngineFactory
-			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(settings->deviceType);
+			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(MEMORYDEVICE_CUDA);
 
 	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize,
-	                                                                                          &settings->scene_parameters,
+	                                                                                          &Configuration::get().scene_parameters,
 	                                                                                          settings->GetMemoryType(),
 	                                                                                          scene3.index);
 	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, renderState);

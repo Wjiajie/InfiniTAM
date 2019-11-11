@@ -339,55 +339,13 @@ int main(int argc, char** argv) {
 				return EXIT_FAILURE;
 			}
 		}
-		MemoryDeviceType chosenDeviceType = MEMORYDEVICE_CPU;
-		if (!vm["device"].empty()){
-			std::string deviceArgumentValue = vm["device"].as<std::string>();
-			if(deviceArgumentValue == "CPU" || deviceArgumentValue == "cpu"){
-				chosenDeviceType = MEMORYDEVICE_CPU;
-			}else if(deviceArgumentValue == "CUDA" || deviceArgumentValue == "cuda"){
-				chosenDeviceType = MEMORYDEVICE_CUDA;
-			}else{
-				printHelp();
-				return EXIT_FAILURE;
-			}
-		}
 // endregion ===========================================================================================================
 
 		ITMDynamicFusionLogger_Interface& logger = GetLogger(chosenIndexingMethod);
 
 // region ================================ SET MAIN ENGINE SETTINGS WITH CLI ARGUMENTS =================================
-		auto& settings = Configuration::Instance();
-		settings.deviceType = chosenDeviceType;
-
-		settings.telemetry_settings.output_path = vm["output"].as<std::string>().c_str();
-		bool haveFocusCoordinates = !vm["focus_coordinates"].empty();
-		Vector3i focusCoordiantes(0);
-		if (haveFocusCoordinates) {
-			std::vector<int> focusCoordsVec = vm["focus_coordinates"].as<std::vector<int> >();
-			if (focusCoordsVec.size() != 3) {
-				std::cerr << "Could not parse focus coordiantes vector as exactly 3 integers, \"x y z\"" << std::endl;
-				printHelp();
-				return EXIT_FAILURE;
-			}
-			memcpy(focusCoordiantes.values, focusCoordsVec.data(), sizeof(int) * 3);
-			settings.SetFocusCoordinates(focusCoordiantes);
-			logger.SetFocusCoordinates(focusCoordiantes);
-		}
-
-
-
-		settings.slavcheva_parameters = SlavchevaSurfaceTracker::Parameters(vm, slavchevaConfigurationMode, 0.1);
-		settings.slavcheva_switches = SlavchevaSurfaceTracker::Switches(vm, slavchevaConfigurationMode);
-
-
-		if (!vm["max_iterations"].empty()) {
-			settings.surface_tracking_max_optimization_iteration_count = vm["max_iterations"].as<unsigned int>();
-		}
-		if (!vm["vector_update_threshold"].empty()) {
-			settings.surface_tracking_optimization_vector_update_threshold_meters = vm["vector_update_threshold"].as<float>();
-		}
-
-
+		Configuration::load_from_variable_map(vm);
+		auto& settings = Configuration::get();
 
 		ITMMainEngine* mainEngine = nullptr;
 
@@ -459,8 +417,8 @@ int main(int argc, char** argv) {
 		if (record1DSlices) logger.TurnRecordingScene1DSlicesWithUpdatesOn();
 		if (record2DSlices) logger.TurnRecordingScene2DSlicesWithUpdatesOn();
 		if (record3DSlices) logger.TurnRecordingScene3DSlicesWithUpdatesOn();
-		if(settings.FocusCoordinatesAreSpecified()){
-			logger.SetFocusCoordinates(settings.GetFocusCoordinates());
+		if(settings.telemetry_settings.focus_coordinates_specified){
+			logger.SetFocusCoordinates(settings.telemetry_settings.focus_coordinates);
 		}
 		logger.SetOutputDirectory(settings.telemetry_settings.output_path);
 
@@ -485,7 +443,7 @@ int main(int argc, char** argv) {
 		XInitThreads();
 #endif
 		UIEngine_BPO::Instance().Initialise(argc, argv, imageSource, imuSource, mainEngine,
-		                                    settings.telemetry_settings.output_path.c_str(), settings.deviceType,
+		                                    settings.telemetry_settings.output_path.c_str(), settings.device_type,
 		                                    processNFramesOnLaunch, skipFirstNFrames, recordReconstructionToVideo,
 		                                    startInStepByStep, saveAfterInitialProcessing, loadBeforeProcessing,
 		                                    &logger, chosenIndexingMethod);
@@ -493,7 +451,7 @@ int main(int argc, char** argv) {
 
 // endregion ===========================================================================================================
 
-		//ITMVisualizationWindowManager::Instance().Run();
+		//ITMVisualizationWindowManager::get().Run();
 		UIEngine_BPO::Instance().Run();
 		UIEngine_BPO::Instance().Shutdown();
 
@@ -503,7 +461,7 @@ int main(int argc, char** argv) {
 		delete imageSource;
 		delete imuSource;
 
-		//ITMVisualizationWindowManager::Instance().ShutDown();
+		//ITMVisualizationWindowManager::get().ShutDown();
 // endregion ===========================================================================================================
 		return EXIT_SUCCESS;
 	} catch (std::exception& e) {

@@ -2,15 +2,20 @@
 
 #pragma once
 
+//stdlib
 #include <cfloat>
+#include <memory>
+
+//boost
+#include <boost/program_options.hpp>
+
+//local
 #include "ITMSceneParameters.h"
 #include "ITMSurfelSceneParameters.h"
 #include "../../ORUtils/MemoryDeviceType.h"
 #include "ITMMath.h"
 #include "../SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
 
-//boost
-#include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
 
@@ -18,12 +23,10 @@ namespace ITMLib {
 class Configuration {
 public:
 
-	static Configuration& Instance() {
-		static Configuration instance;
-		return instance;
-	}
+	static Configuration& get();
 
-	explicit Configuration(const po::variables_map& vm);
+	static void load_default();
+	static void load_from_variable_map(const po::variables_map& vm);
 
 	~Configuration() = default;
 
@@ -55,21 +58,21 @@ public:
 	// those settings exclusively used by a specific class should be in a public inner struct of this class
 
 	/// Select the type of device to use
-	MemoryDeviceType deviceType;
+	MemoryDeviceType device_type;
 	/// enables or disables approximate raycast
-	const bool useApproximateRaycast;
+	const bool use_approximate_raycast;
 	/// enable or disable threshold depth filtering
-	const bool useThresholdFilter;
+	const bool use_threshold_filter;
 	/// enable or disable bilateral depth filtering
-	const bool useBilateralFilter;
+	const bool use_bilateral_filter;
 	/// For ITMColorTracker: skips every other point when using the colour renderer for creating a point cloud
-	const bool skipPoints;
+	const bool skip_points;
 	/// create all the things required for marching cubes and mesh extraction (uses lots of additional memory)
-	const bool createMeshingEngine;
+	const bool create_meshing_engine;
 	/// what to do on tracker failure: ignore, relocalize or stop integration - not supported in loop closure version
-	const FailureMode behaviorOnFailure;
+	const FailureMode behavior_on_failure;
 	/// how swapping works: disabled, fully enabled (still with dragons) and delete what's not visible - not supported in loop closure version
-	const SwappingMode swappingMode;
+	const SwappingMode swapping_mode;
 	/// switch between various library modes - basic, with loop closure, etc.
 	const LibMode library_mode;
 	/*Note: library_mode declaration has to precede that of tracker_configuration,
@@ -112,7 +115,9 @@ public:
 
 
 private:
-	Configuration();
+	Configuration() noexcept;
+	explicit Configuration(const po::variables_map& vm);
+	static std::unique_ptr<Configuration> instance;
 	static const std::string default_ICP_tracker_configuration;
 	static const std::string default_ICP_tracker_configuration_loop_closure;
 	static const std::string default_depth_only_extended_tracker_configuration;

@@ -26,7 +26,7 @@ template<typename TVoxel, typename TWarp>
 class SurfaceTracker<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CUDA> :
 		public SurfaceTrackerInterface<TVoxel, TWarp, ITMVoxelBlockHash>, public SlavchevaSurfaceTracker {
 public:
-	explicit SurfaceTracker();
+	using SlavchevaSurfaceTracker::SlavchevaSurfaceTracker;
 	virtual ~SurfaceTracker() = default;
 
 	void ClearOutFlowWarp(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField) override;
@@ -53,7 +53,8 @@ template<typename TVoxel, typename TWarp>
 class SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA> :
 		public SurfaceTrackerInterface<TVoxel, TWarp, ITMPlainVoxelArray>, public SlavchevaSurfaceTracker {
 public:
-	explicit SurfaceTracker();
+	using SlavchevaSurfaceTracker::SlavchevaSurfaceTracker;
+
 	virtual ~SurfaceTracker() = default;
 
 	void ClearOutFlowWarp(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) override;

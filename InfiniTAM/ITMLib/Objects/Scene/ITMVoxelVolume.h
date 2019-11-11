@@ -16,7 +16,7 @@ class ITMVoxelVolume
 {
 public:
 	/** Scene parameters like voxel size etc. */
-	const ITMSceneParameters *sceneParams;
+	const ITMSceneParameters* sceneParams;
 
 	/**
 	 * \brief An indexing method for access to the volume's voxels.

@@ -28,7 +28,7 @@ template<typename TVoxel, typename TWarp>
 class SurfaceTracker<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU> :
 		public SurfaceTrackerInterface<TVoxel, TWarp, ITMVoxelBlockHash>, public SlavchevaSurfaceTracker {
 public:
-	explicit SurfaceTracker();
+	using SlavchevaSurfaceTracker::SlavchevaSurfaceTracker;
 	virtual ~SurfaceTracker() = default;
 
 	void ClearOutFlowWarp(ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* warpField) override;
@@ -36,8 +36,7 @@ public:
 			ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* warpField, bool clearFlowWarp) override;
 	void CalculateWarpGradient(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* canonicalScene,
 	                           ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* liveScene,
-	                           ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* warpField,
-	                           bool restrictZTrackingForDebugging) override;
+	                           ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* warpField) override;
 	void SmoothWarpGradient(
 			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* canonicalScene,
 			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* liveScene,
@@ -57,7 +56,7 @@ template<typename TVoxel, typename TWarp>
 class SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU> :
 		public SurfaceTrackerInterface<TVoxel, TWarp, ITMPlainVoxelArray>, public SlavchevaSurfaceTracker  {
 public:
-	explicit SurfaceTracker();
+	using SlavchevaSurfaceTracker::SlavchevaSurfaceTracker;
 	virtual ~SurfaceTracker() = default;
 
 	void ClearOutFlowWarp(ITMVoxelVolume <TWarp, ITMPlainVoxelArray>* warpField) override;

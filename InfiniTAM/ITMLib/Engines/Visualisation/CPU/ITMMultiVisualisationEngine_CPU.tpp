@@ -60,7 +60,7 @@ void ITMMultiVisualisationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CreateExpectedD
 	// add the values from each local map
 	for (int localMapId = 0; localMapId < renderState->indexData_host.numLocalMaps; ++localMapId) 
 	{
-		float voxelSize = renderState->sceneParams.voxelSize;
+		float voxelSize = renderState->voxelSize;
 		const ITMHashEntry *hash_entries = renderState->indexData_host.index[localMapId];
 		int hashEntryCount = dynamic_cast<ITMRenderState_VH*>(renderState)->hashEntryCount;
 
@@ -115,13 +115,13 @@ static void RenderImage_common(const ORUtils::SE3Pose *pose, const ITMIntrinsics
 	Matrix4f invM = pose->GetInvM();
 
 	// Generic Raycast
-	float voxelSize = renderState->sceneParams.voxelSize;
+	float voxelSize = renderState->voxelSize;
 	{
 		Vector4f projParams = intrinsics->projectionParamsSimple.all;
 		Vector4f invProjParams = InvertProjectionParams(projParams);
 
 		const Vector2f *minmaximg = renderState->renderingRangeImage->GetData(MEMORYDEVICE_CPU);
-		float mu = renderState->sceneParams.mu;
+		float mu = renderState->mu;
 		float oneOverVoxelSize = 1.0f / voxelSize;
 		Vector4f *pointsRay = renderState->raycastResult->GetData(MEMORYDEVICE_CPU);
 

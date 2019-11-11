@@ -112,8 +112,8 @@ public:
 			warps(warps), warpIndexData(warpIndexData),
 			canonicalVoxels(canonicalVoxels), canonicalIndexData(canonicalIndexData),
 			liveCache(), canonicalCache(),
-			hasFocusCoordinates(Configuration::Instance().telemetry_settings.focus_coordinates_specified),
-			focusCoordinates(Configuration::Instance().telemetry_settings.focus_coordinates) {}
+			hasFocusCoordinates(Configuration::get().telemetry_settings.focus_coordinates_specified),
+			focusCoordinates(Configuration::get().telemetry_settings.focus_coordinates) {}
 
 	// endregion =======================================================================================================
 

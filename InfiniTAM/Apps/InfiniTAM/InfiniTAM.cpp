@@ -63,7 +63,7 @@ try
 		return -1;
 	}
 
-	Configuration *internalSettings = &Configuration::Instance();
+	Configuration *internalSettings = &Configuration::get();
 
 	ITMMainEngine *mainEngine = NULL;
 	switch (internalSettings->library_mode)
@@ -92,7 +92,7 @@ try
 		break;
 	}
 
-	UIEngine::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine, "./Files/Out", internalSettings->deviceType);
+	UIEngine::Instance()->Initialise(argc, argv, imageSource, imuSource, mainEngine, "./Files/Out", internalSettings->device_type);
 	UIEngine::Instance()->Run();
 	UIEngine::Instance()->Shutdown();
 

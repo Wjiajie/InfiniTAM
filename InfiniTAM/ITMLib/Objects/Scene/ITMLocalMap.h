@@ -51,9 +51,9 @@ namespace ITMLib {
 
 		ITMLocalMap(const ITMVisualisationEngine<TVoxel, TIndex>* visualisationEngine, const Vector2i& trackedImageSize)
 		{
-			auto& settings = Configuration::Instance();
-			MemoryDeviceType memoryType = settings.deviceType == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
-			scene = new ITMVoxelVolume<TVoxel, TIndex>(&settings.scene_parameters, settings.swappingMode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
+			auto& settings = Configuration::get();
+			MemoryDeviceType memoryType = settings.device_type == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
+			scene = new ITMVoxelVolume<TVoxel, TIndex>(&settings.scene_parameters, settings.swapping_mode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
 			renderState = visualisationEngine->CreateRenderState(scene, trackedImageSize);
 			trackingState = new ITMTrackingState(trackedImageSize, memoryType);
 		}

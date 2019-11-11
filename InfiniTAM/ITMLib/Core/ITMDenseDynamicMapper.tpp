@@ -68,20 +68,20 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ITMDenseDynamicMapper(const TIndex& index) :
 		sceneReconstructor(
 				ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel, TWarp, TIndex>
-						(Configuration::Instance().deviceType)),
+						(Configuration::get().device_type)),
 		sceneMotionTracker(
 				ITMSceneMotionTrackerFactory::MakeSceneMotionTracker<TVoxel, TWarp, TIndex>()),
-		swappingEngine(Configuration::Instance().swappingMode != Configuration::SWAPPINGMODE_DISABLED
+		swappingEngine(Configuration::get().swapping_mode != Configuration::SWAPPINGMODE_DISABLED
 		               ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxel, TIndex>(
-						Configuration::Instance().deviceType, index)
+						Configuration::get().device_type, index)
 		               : nullptr),
-		swappingMode(Configuration::Instance().swappingMode),
-		parameters{Configuration::Instance().surface_tracking_max_optimization_iteration_count,
-		           Configuration::Instance().surface_tracking_optimization_vector_update_threshold_meters,
-		           Configuration::Instance().surface_tracking_optimization_vector_update_threshold_meters /
-		           Configuration::Instance().scene_parameters.voxelSize},
-		analysisFlags{Configuration::Instance().telemetry_settings.focus_coordinates_specified},
-		focusCoordinates(Configuration::Instance().telemetry_settings.focus_coordinates) {}
+		swappingMode(Configuration::get().swapping_mode),
+		parameters{Configuration::get().surface_tracking_max_optimization_iteration_count,
+		           Configuration::get().surface_tracking_optimization_vector_update_threshold_meters,
+		           Configuration::get().surface_tracking_optimization_vector_update_threshold_meters /
+		           Configuration::get().scene_parameters.voxelSize},
+		analysisFlags{Configuration::get().telemetry_settings.focus_coordinates_specified},
+		focusCoordinates(Configuration::get().telemetry_settings.focus_coordinates) {}
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::~ITMDenseDynamicMapper() {
@@ -97,7 +97,7 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 void
 ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetTSDFVolume(
 		ITMVoxelVolume<TVoxel, TIndex>* volume) const {
-	switch (Configuration::Instance().deviceType) {
+	switch (Configuration::get().device_type) {
 		case MEMORYDEVICE_CPU:
 			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(volume);
 			break;
@@ -115,7 +115,7 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetTSDFVolume(
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetWarpVolume(
 		ITMVoxelVolume<TWarp, TIndex>* warpVolume) const {
-	switch (Configuration::Instance().deviceType) {
+	switch (Configuration::get().device_type) {
 		case MEMORYDEVICE_CPU:
 			ITMSceneManipulationEngine_CPU<TWarp, TIndex>::Inst().ResetScene(warpVolume);
 			break;

@@ -16,14 +16,14 @@ using namespace ITMLib;
 
 template<typename TSurfel>
 ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb, Vector2i imgSize_d) {
-	auto& settings = Configuration::Instance();
+	auto& settings = Configuration::get();
 
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 
 	MemoryDeviceType memoryType = settings.GetMemoryType();
 	this->surfelScene = new ITMSurfelScene<TSurfel>(&settings.surfel_scene_parameters, memoryType);
 
-	const MemoryDeviceType deviceType = settings.deviceType;
+	const MemoryDeviceType deviceType = settings.device_type;
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
@@ -49,7 +49,7 @@ ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMRGBDCalib& calib, V
 
 	view = NULL; // will be allocated by the view builder
 
-	if (settings.behaviorOnFailure == settings.FAILUREMODE_RELOCALIZE)
+	if (settings.behavior_on_failure == settings.FAILUREMODE_RELOCALIZE)
 		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.scene_parameters.viewFrustum_min,
 		                                                                       settings.scene_parameters.viewFrustum_max),
 		                                                   0.2f, 500, 4);
@@ -188,14 +188,14 @@ template<typename TSurfel>
 ITMTrackingState::TrackingResult
 ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITMUChar4Image* rgbImage, ITMShortImage* rawDepthImage,
                                             ITMIMUMeasurement* imuMeasurement) {
-	auto& settings = Configuration::Instance();
+	auto& settings = Configuration::get();
 	// prepare image and turn it into a depth image
 	if (imuMeasurement == NULL)
-		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings.useThresholdFilter,
-		                        settings.useBilateralFilter, false, true);
+		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings.use_threshold_filter,
+		                        settings.use_bilateral_filter, false, true);
 	else
-		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings.useThresholdFilter,
-		                        settings.useBilateralFilter, imuMeasurement, false, true);
+		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings.use_threshold_filter,
+		                        settings.use_bilateral_filter, imuMeasurement, false, true);
 
 	if (!mainProcessingActive) return ITMTrackingState::TRACKING_FAILED;
 
@@ -204,7 +204,7 @@ ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITMUChar4Image* rgbImage, ITMShortIm
 	if (trackingActive) trackingController->Track(trackingState, view);
 
 	ITMTrackingState::TrackingResult trackerResult = ITMTrackingState::TRACKING_GOOD;
-	switch (settings.behaviorOnFailure) {
+	switch (settings.behavior_on_failure) {
 		case Configuration::FAILUREMODE_RELOCALIZE:
 			trackerResult = trackingState->trackerResult;
 			break;
@@ -222,7 +222,7 @@ ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITMUChar4Image* rgbImage, ITMShortIm
 #if 0 //TODO: explain not compiled block in comment (see below)? --Greg(GitHub:Algomorph)
 	int addKeyframeIdx = -1;
 #endif
-	if (settings.behaviorOnFailure == Configuration::FAILUREMODE_RELOCALIZE) {
+	if (settings.behavior_on_failure == Configuration::FAILUREMODE_RELOCALIZE) {
 		if (trackerResult == ITMTrackingState::TRACKING_GOOD && relocalisationCount > 0) relocalisationCount--;
 
 		int NN;
@@ -276,7 +276,7 @@ ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITMUChar4Image* rgbImage, ITMShortIm
 		if (addKeyframeIdx >= 0)
 		{
 			ORUtils::MemoryBlock<Vector4u>::MemoryCopyDirection memoryCopyDirection =
-				settings.deviceType == MEMORYDEVICE_CUDA ? ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CUDA : ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU;
+				settings.device_type == MEMORYDEVICE_CUDA ? ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CUDA : ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU;
 
 			kfRaycast->SetFrom(renderState_live->raycastImage, memoryCopyDirection);
 		}
@@ -325,7 +325,7 @@ template<typename TSurfel>
 void ITMBasicSurfelEngine<TSurfel>::GetImage(ITMUChar4Image* out, GetImageType getImageType, ORUtils::SE3Pose* pose,
                                              ITMIntrinsics* intrinsics) {
 
-	auto& settings = Configuration::Instance();
+	auto& settings = Configuration::get();
 	if (view == NULL) return;
 
 	out->Clear();
@@ -333,13 +333,13 @@ void ITMBasicSurfelEngine<TSurfel>::GetImage(ITMUChar4Image* out, GetImageType g
 	switch (getImageType) {
 		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_ORIGINAL_RGB:
 			out->ChangeDims(view->rgb->noDims);
-			if (settings.deviceType == MEMORYDEVICE_CUDA)
+			if (settings.device_type == MEMORYDEVICE_CUDA)
 				out->SetFrom(view->rgb, MemoryCopyDirection::CUDA_TO_CPU);
 			else out->SetFrom(view->rgb, MemoryCopyDirection::CPU_TO_CPU);
 			break;
 		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH:
 			out->ChangeDims(view->depth->noDims);
-			if (settings.deviceType == MEMORYDEVICE_CUDA) view->depth->UpdateHostFromDevice();
+			if (settings.device_type == MEMORYDEVICE_CUDA) view->depth->UpdateHostFromDevice();
 			IITMVisualisationEngine::DepthToUchar4(out, view->depth);
 			break;
 		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_SCENERAYCAST:

@@ -28,9 +28,9 @@ ITMMultiEngine<TVoxel, TIndex>::ITMMultiEngine(const ITMRGBDCalib& calib, Vector
 {
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 
-	auto& settings = Configuration::Instance();
+	auto& settings = Configuration::get();
 
-	const MemoryDeviceType deviceType = settings.deviceType;
+	const MemoryDeviceType deviceType = settings.device_type;
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
 	visualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxel, TIndex>(deviceType);
@@ -46,7 +46,7 @@ ITMMultiEngine<TVoxel, TIndex>::ITMMultiEngine(const ITMRGBDCalib& calib, Vector
 	denseMapper = new ITMDenseMapper<TVoxel, TIndex>(mapManager->getLocalMap(0)->scene->index);
 
 	meshingEngine = NULL;
-	if (settings.createMeshingEngine)
+	if (settings.create_meshing_engine)
 		meshingEngine = ITMMultiMeshingEngineFactory::MakeMeshingEngine<TVoxel, TIndex>(deviceType, mapManager->getLocalMap(0)->scene->index);
 
 	renderState_freeview = NULL; //will be created by the visualisation engine
@@ -143,17 +143,17 @@ struct TodoListEntry {
 template <typename TVoxel, typename TIndex>
 ITMTrackingState::TrackingResult ITMMultiEngine<TVoxel, TIndex>::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement)
 {
-	auto& settings = Configuration::Instance();
+	auto& settings = Configuration::get();
 	std::vector<TodoListEntry> todoList;
 	ITMTrackingState::TrackingResult primaryLocalMapTrackingResult = ITMTrackingState::TrackingResult::TRACKING_FAILED;
 
 	// prepare image and turn it into a depth image
 	if (imuMeasurement == NULL)
-		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings.useThresholdFilter,
-		                        settings.useBilateralFilter, false, true);
+		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings.use_threshold_filter,
+		                        settings.use_bilateral_filter, false, true);
 	else
-		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings.useThresholdFilter,
-		                        settings.useBilateralFilter, imuMeasurement,
+		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings.use_threshold_filter,
+		                        settings.use_bilateral_filter, imuMeasurement,
 		                        false, true);
 
 	// find primary data, if available
@@ -308,7 +308,7 @@ void ITMMultiEngine<TVoxel, TIndex>::SaveSceneToMesh(const char *modelFileName)
 {
 	if (meshingEngine == NULL) return;
 
-	ITMMesh *mesh = new ITMMesh(Configuration::Instance().GetMemoryType(), mapManager->getLocalMap(0)->scene->index.GetMaxVoxelCount());
+	ITMMesh *mesh = new ITMMesh(Configuration::get().GetMemoryType(), mapManager->getLocalMap(0)->scene->index.GetMaxVoxelCount());
 
 	meshingEngine->MeshScene(mesh, *mapManager);
 	mesh->WriteSTL(modelFileName);
@@ -338,7 +338,7 @@ template <typename TVoxel, typename TIndex>
 void ITMMultiEngine<TVoxel, TIndex>::GetImage(ITMUChar4Image *out, GetImageType getImageType, ORUtils::SE3Pose *pose, ITMIntrinsics *intrinsics)
 {
 	if (view == NULL) return;
-	auto& settings = Configuration::Instance();
+	auto& settings = Configuration::get();
 
 	out->Clear();
 
@@ -346,13 +346,13 @@ void ITMMultiEngine<TVoxel, TIndex>::GetImage(ITMUChar4Image *out, GetImageType 
 	{
 	case ITMMultiEngine::InfiniTAM_IMAGE_ORIGINAL_RGB:
 		out->ChangeDims(view->rgb->noDims);
-		if (settings.deviceType == MEMORYDEVICE_CUDA)
+		if (settings.device_type == MEMORYDEVICE_CUDA)
 			out->SetFrom(view->rgb, MemoryCopyDirection::CUDA_TO_CPU);
 		else out->SetFrom(view->rgb, MemoryCopyDirection::CPU_TO_CPU);
 		break;
 	case ITMMultiEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH:
 		out->ChangeDims(view->depth->noDims);
-		if (settings.deviceType == MEMORYDEVICE_CUDA) view->depth->UpdateHostFromDevice();
+		if (settings.device_type == MEMORYDEVICE_CUDA) view->depth->UpdateHostFromDevice();
 		ITMVisualisationEngine<TVoxel, TIndex>::DepthToUchar4(out, view->depth);
 		break;
     case ITMMultiEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME: //TODO: add colour rendering
@@ -386,7 +386,7 @@ void ITMMultiEngine<TVoxel, TIndex>::GetImage(ITMUChar4Image *out, GetImageType 
 
 		ORUtils::Image<Vector4u> *srcImage = activeLocalMap->renderState->raycastImage;
 		out->ChangeDims(srcImage->noDims);
-		if (settings.deviceType == MEMORYDEVICE_CUDA)
+		if (settings.device_type == MEMORYDEVICE_CUDA)
 			out->SetFrom(srcImage, MemoryCopyDirection::CUDA_TO_CPU);
 		else out->SetFrom(srcImage, MemoryCopyDirection::CPU_TO_CPU);
 		break;
@@ -410,7 +410,7 @@ void ITMMultiEngine<TVoxel, TIndex>::GetImage(ITMUChar4Image *out, GetImageType 
 			visualisationEngine->CreateExpectedDepths(activeData->scene, pose, intrinsics, renderState_freeview);
 			visualisationEngine->RenderImage(activeData->scene, pose, intrinsics, renderState_freeview, renderState_freeview->raycastImage, type);
 
-			if (settings.deviceType == MEMORYDEVICE_CUDA)
+			if (settings.device_type == MEMORYDEVICE_CUDA)
 				out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CUDA_TO_CPU);
 			else out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CPU_TO_CPU);
 		}
@@ -420,7 +420,7 @@ void ITMMultiEngine<TVoxel, TIndex>::GetImage(ITMUChar4Image *out, GetImageType 
 			multiVisualisationEngine->PrepareRenderState(*mapManager, renderState_multiscene);
 			multiVisualisationEngine->CreateExpectedDepths(pose, intrinsics, renderState_multiscene);
 			multiVisualisationEngine->RenderImage(pose, intrinsics, renderState_multiscene, renderState_multiscene->raycastImage, type);
-			if (settings.deviceType == MEMORYDEVICE_CUDA)
+			if (settings.device_type == MEMORYDEVICE_CUDA)
 				out->SetFrom(renderState_multiscene->raycastImage, MemoryCopyDirection::CUDA_TO_CPU);
 			else out->SetFrom(renderState_multiscene->raycastImage, MemoryCopyDirection::CPU_TO_CPU);
 		}

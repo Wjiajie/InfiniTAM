@@ -106,17 +106,17 @@ typename ITMVoxelBlockHash::InitializationParameters GetStandard128IndexParamete
 //template ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> loadSdfVolume<ITMVoxel, ITMPlainVoxelArray>(
 //                                                 const std::string& path, MemoryDeviceType memoryDeviceType,
 //                                                 ITMPlainVoxelArray::InitializationParameters initializationParameters,
-//                                                 Configuration::SwappingMode swappingMode);
+//                                                 Configuration::SwappingMode swapping_mode);
 //template ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> loadSdfVolume<ITMVoxel, ITMVoxelBlockHash>(const std::string& path, MemoryDeviceType memoryDeviceType,
 //                                                 ITMVoxelBlockHash::InitializationParameters initializationParameters,
-//                                                 Configuration::SwappingMode swappingMode);
+//                                                 Configuration::SwappingMode swapping_mode);
 //template ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> loadSdfVolume<ITMWarp, ITMPlainVoxelArray>(const std::string& path, MemoryDeviceType memoryDeviceType,
 //                                                          ITMPlainVoxelArray::InitializationParameters initializationParameters,
-//                                                          Configuration::SwappingMode swappingMode);
+//                                                          Configuration::SwappingMode swapping_mode);
 //template ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> loadSdfVolume<ITMWarp, ITMVoxelBlockHash>(
 //                                                         const std::string& path, MemoryDeviceType memoryDeviceType,
 //                                                         ITMVoxelBlockHash::InitializationParameters initializationParameters,
-//                                                         Configuration::SwappingMode swappingMode);
+//                                                         Configuration::SwappingMode swapping_mode);
 
 template void loadSdfVolume<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>** volume,
                                                           const std::string& path, MemoryDeviceType memoryDeviceType,

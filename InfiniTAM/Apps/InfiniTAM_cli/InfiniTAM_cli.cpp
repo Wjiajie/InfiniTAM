@@ -46,7 +46,7 @@ try
 	}
 
 	printf("initialising ...\n");
-	Configuration *internalSettings = &Configuration::Instance();
+	Configuration *internalSettings = &Configuration::get();
 
 	ImageSourceEngine *imageSource;
 	IMUSourceEngine *imuSource = NULL;
@@ -81,7 +81,7 @@ try
 	                                                                        imageSource->getRGBImageSize(),
 	                                                                        imageSource->getDepthImageSize());
 
-	CLIEngine::Instance()->Initialise(imageSource, imuSource, mainEngine, internalSettings->deviceType);
+	CLIEngine::Instance()->Initialise(imageSource, imuSource, mainEngine, internalSettings->device_type);
 	CLIEngine::Instance()->Run();
 	CLIEngine::Instance()->Shutdown();
 

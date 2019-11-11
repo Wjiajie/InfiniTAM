@@ -22,15 +22,6 @@
 
 using namespace ITMLib;
 
-
-// region ================================ CONSTRUCTORS AND DESTRUCTORS ================================================
-
-template<typename TVoxel, typename TWarp>
-SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::SurfaceTracker()
-		: SurfaceTrackerInterface<TVoxel, TWarp, ITMPlainVoxelArray>()
-		  {
-}
-// endregion ============================== END CONSTRUCTORS AND DESTRUCTORS============================================
 // region ===================================== CALCULATE GRADIENT SMOOTHING ===========================================
 
 

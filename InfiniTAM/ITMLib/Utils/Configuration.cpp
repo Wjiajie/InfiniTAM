@@ -49,10 +49,10 @@ static MemoryDeviceType memory_device_type_from_variable_map(const po::variables
 }
 
 static Configuration::SwappingMode swapping_mode_from_variable_map(const po::variables_map& vm, std::string argument) {
-	static std::unordered_map<std::string, Configuration::SwappingMode > swapping_mode_by_string = {
-			{"enabled",   Configuration::SwappingMode::SWAPPINGMODE_ENABLED},
-			{"disabled",  Configuration::SwappingMode::SWAPPINGMODE_DISABLED},
-			{"delete", Configuration::SwappingMode::SWAPPINGMODE_DELETE}
+	static std::unordered_map<std::string, Configuration::SwappingMode> swapping_mode_by_string = {
+			{"enabled",  Configuration::SwappingMode::SWAPPINGMODE_ENABLED},
+			{"disabled", Configuration::SwappingMode::SWAPPINGMODE_DISABLED},
+			{"delete",   Configuration::SwappingMode::SWAPPINGMODE_DELETE}
 	};
 	std::string argument_value = vm[argument].as<std::string>();
 	if (swapping_mode_by_string.find(argument_value) == swapping_mode_by_string.end()) {
@@ -63,9 +63,9 @@ static Configuration::SwappingMode swapping_mode_from_variable_map(const po::var
 }
 
 static Configuration::FailureMode failure_mode_from_variable_map(const po::variables_map& vm, std::string argument) {
-	static std::unordered_map<std::string, Configuration::FailureMode > failure_mode_by_string = {
-			{"ignore",   Configuration::FailureMode::FAILUREMODE_IGNORE},
-			{"relocalize",  Configuration::FailureMode::FAILUREMODE_RELOCALIZE},
+	static std::unordered_map<std::string, Configuration::FailureMode> failure_mode_by_string = {
+			{"ignore",           Configuration::FailureMode::FAILUREMODE_IGNORE},
+			{"relocalize",       Configuration::FailureMode::FAILUREMODE_RELOCALIZE},
 			{"stop_integration", Configuration::FailureMode::FAILUREMODE_STOP_INTEGRATION}
 	};
 	std::string argument_value = vm[argument].as<std::string>();
@@ -77,9 +77,9 @@ static Configuration::FailureMode failure_mode_from_variable_map(const po::varia
 }
 
 static Configuration::LibMode lib_mode_from_variable_map(const po::variables_map& vm, std::string argument) {
-	static std::unordered_map<std::string, Configuration::LibMode > lib_mode_by_string = {
-			{"ignore",   Configuration::LibMode::LIBMODE_BASIC},
-			{"relocalize",  Configuration::LibMode::LIBMODE_BASIC_SURFELS},
+	static std::unordered_map<std::string, Configuration::LibMode> lib_mode_by_string = {
+			{"ignore",           Configuration::LibMode::LIBMODE_BASIC},
+			{"relocalize",       Configuration::LibMode::LIBMODE_BASIC_SURFELS},
 			{"stop_integration", Configuration::LibMode::LIBMODE_DYNAMIC},
 			{"stop_integration", Configuration::LibMode::LIBMODE_LOOPCLOSURE}
 	};
@@ -99,47 +99,54 @@ Configuration::Configuration(const po::variables_map& vm) :
 		slavcheva_parameters(vm),
 		slavcheva_switches(vm),
 		telemetry_settings(vm),
-		skipPoints(vm["skip_points"].empty() ?
-		           Configuration().skipPoints :
-		           vm["skip_points"].as<bool>()),
-		createMeshingEngine(vm["disable_meshing"].empty() ?
-		                    Configuration().createMeshingEngine :
-		                    !vm["disable_meshing"].as<bool>()),
-		deviceType(vm["device"].empty() ? Configuration().deviceType:
-				memory_device_type_from_variable_map(vm, "device")),
-		swappingMode(vm["swapping"].empty() ? Configuration().swappingMode:
-		             swapping_mode_from_variable_map(vm, "swapping")),
-		useApproximateRaycast(vm["use_approximate_raycast"].empty() ?
-		                      Configuration().useApproximateRaycast :
-		                      !vm["use_approximate_raycast"].as<bool>()),
-		useThresholdFilter(vm["use_threshold_filter"].empty() ?
-		                   Configuration().useThresholdFilter :
-		                   !vm["use_threshold_filter"].as<bool>()),
-		useBilateralFilter(vm["use_bilateral_filter"].empty() ?
-		                   Configuration().useBilateralFilter :
-		                   !vm["use_bilateral_filter"].as<bool>()),
-		behaviorOnFailure(vm["failure_mode"].empty() ? Configuration().behaviorOnFailure:
-		                  failure_mode_from_variable_map(vm, "failure_mode")),
+		skip_points(vm["skip_points"].empty() ?
+		            Configuration().skip_points :
+		            vm["skip_points"].as<bool>()),
+		create_meshing_engine(vm["disable_meshing"].empty() ?
+		                      Configuration().create_meshing_engine :
+		                      !vm["disable_meshing"].as<bool>()),
+		device_type(vm["device"].empty() ? Configuration().device_type :
+		            memory_device_type_from_variable_map(vm, "device")),
+		swapping_mode(vm["swapping"].empty() ? Configuration().swapping_mode :
+		              swapping_mode_from_variable_map(vm, "swapping")),
+		use_approximate_raycast(vm["use_approximate_raycast"].empty() ?
+		                        Configuration().use_approximate_raycast :
+		                        !vm["use_approximate_raycast"].as<bool>()),
+		use_threshold_filter(vm["use_threshold_filter"].empty() ?
+		                     Configuration().use_threshold_filter :
+		                     !vm["use_threshold_filter"].as<bool>()),
+		use_bilateral_filter(vm["use_bilateral_filter"].empty() ?
+		                     Configuration().use_bilateral_filter :
+		                     !vm["use_bilateral_filter"].as<bool>()),
+		behavior_on_failure(vm["failure_mode"].empty() ? Configuration().behavior_on_failure :
+		                    failure_mode_from_variable_map(vm, "failure_mode")),
 		library_mode(vm["mode"].empty() ? Configuration().library_mode :
 		             lib_mode_from_variable_map(vm, "mode")),
-		tracker_configuration(vm["tracker"].empty() ? (library_mode == LIBMODE_BASIC_SURFELS ? default_surfel_tracker_configuration :
-		                      default_depth_only_extended_tracker_configuration) : vm["tracker"].as<std::string>().c_str()),
-		surface_tracking_max_optimization_iteration_count(200),
-		surface_tracking_optimization_vector_update_threshold_meters(0.0001f)
-		{
+		tracker_configuration(
+				vm["tracker"].empty() ? (library_mode == LIBMODE_BASIC_SURFELS ? default_surfel_tracker_configuration :
+				                         default_depth_only_extended_tracker_configuration)
+				                      : vm["tracker"].as<std::string>().c_str()),
+		surface_tracking_max_optimization_iteration_count(vm["max_iterations"].empty() ?
+		                                                  Configuration().surface_tracking_max_optimization_iteration_count
+		                                                                               :
+		                                                  vm["max_iterations"].as<unsigned int>()),
+		surface_tracking_optimization_vector_update_threshold_meters(vm["vector_update_threshold"].empty() ?
+		                                                             Configuration().surface_tracking_max_optimization_iteration_count
+		                                                                                                   :
+		                                                             vm["vector_update_threshold"].as<float>()) {
 #ifdef COMPILE_WITHOUT_CUDA
-	if(deviceType == MEMORYDEVICE_CUDA){
+	if(device_type == MEMORYDEVICE_CUDA){
 		DIEWITHEXCEPTION_REPORTLOCATION("CUDA compilation disabled, unable to use CUDA device type. Aborting!");
 	}
 #endif
 #ifdef COMPILE_WITHOUT_METAL
-	if(deviceType == MEMORYDEVICE_METAL){
+	if(device_type == MEMORYDEVICE_METAL){
 		DIEWITHEXCEPTION_REPORTLOCATION("Metal compilation disabled, unable to use Metal device type. Aborting!");
 	}
 #endif
 }
 
-Configuration::Configuration()
+Configuration::Configuration() noexcept
 		:   //mu(m), maxW, voxel size(m), clipping min, clipping max, stopIntegratingAtMaxW
 		scene_parameters(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG
 		//scene_parameters(0.02f, 100, 0.005f, 0.2f, 3.0f, false),//standard InfiniTAM values
@@ -149,18 +156,18 @@ Configuration::Configuration()
 		                     scene_parameters.voxelSize / scene_parameters.mu),
 		slavcheva_switches(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION),
 		telemetry_settings(),
-		skipPoints(true),
-		createMeshingEngine(true),
+		skip_points(true),
+		create_meshing_engine(true),
 #ifndef COMPILE_WITHOUT_CUDA
-		deviceType(MEMORYDEVICE_CUDA),
+		device_type(MEMORYDEVICE_CUDA),
 #else
-		deviceType(MEMORYDEVICE_CPU),
+		device_type(MEMORYDEVICE_CPU),
 #endif
-		swappingMode(SWAPPINGMODE_DISABLED),
-		useApproximateRaycast(false),
-		useThresholdFilter(false),
-		useBilateralFilter(false),
-		behaviorOnFailure(FAILUREMODE_IGNORE),
+		swapping_mode(SWAPPINGMODE_DISABLED),
+		use_approximate_raycast(false),
+		use_threshold_filter(false),
+		use_bilateral_filter(false),
+		behavior_on_failure(FAILUREMODE_IGNORE),
 		library_mode(LIBMODE_DYNAMIC),
 		tracker_configuration(library_mode == LIBMODE_BASIC_SURFELS ? default_surfel_tracker_configuration :
 		                      default_depth_only_extended_tracker_configuration),
@@ -198,12 +205,31 @@ const std::string Configuration::default_IMU_extended_tracker_configuration =
 		"outlierSpaceF=0.004,numiterC=20,numiterF=5,tukeyCutOff=8,"
 		"framesToSkip=20,framesToWeight=50,failureDec=20.0";
 
+const std::string Configuration::default_surfel_tracker_configuration =
+		"extended,levels=rrbb,minstep=1e-4,outlierSpaceC=0.1,outlierSpaceF=0.004,"
+		"numiterC=20,numiterF=20,tukeyCutOff=8,framesToSkip=0,framesToWeight=1,failureDec=20.0";
+
+std::unique_ptr<Configuration> Configuration::instance = std::unique_ptr<Configuration>(new Configuration());
+
+
 bool Configuration::FocusCoordinatesAreSpecified() const {
 	return telemetry_settings.focus_coordinates_specified;
 }
 
 MemoryDeviceType Configuration::GetMemoryType() const {
-	return deviceType == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
+	return device_type == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
+}
+
+void Configuration::load_from_variable_map(const po::variables_map& vm) {
+	instance.reset(new Configuration(vm));
+}
+
+void Configuration::load_default() {
+	instance.reset(new Configuration);
+}
+
+Configuration& Configuration::get() {
+	return *instance;
 }
 
 

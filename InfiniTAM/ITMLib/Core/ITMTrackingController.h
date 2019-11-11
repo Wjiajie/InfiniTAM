@@ -36,7 +36,7 @@ namespace ITMLib
 
 			//render for tracking
 			bool requiresColourRendering = tracker->requiresColourRendering();
-			bool requiresFullRendering = trackingState->TrackerFarFromPointCloud() || !settings->useApproximateRaycast;
+			bool requiresFullRendering = trackingState->TrackerFarFromPointCloud() || !settings->use_approximate_raycast;
 
 			if(requiresColourRendering)
 			{
@@ -82,13 +82,13 @@ namespace ITMLib
 
 			//render for tracking
 			bool requiresColourRendering = tracker->requiresColourRendering();
-			bool requiresFullRendering = trackingState->TrackerFarFromPointCloud() || !settings->useApproximateRaycast;
+			bool requiresFullRendering = trackingState->TrackerFarFromPointCloud() || !settings->use_approximate_raycast;
 
 			if (requiresColourRendering)
 			{
 				ORUtils::SE3Pose pose_rgb(view->calib.trafo_rgb_to_depth.calib_inv * trackingState->pose_d->GetM());
 				visualisationEngine->CreateExpectedDepths(scene, &pose_rgb, &(view->calib.intrinsics_rgb), renderState);
-				visualisationEngine->CreatePointCloud(scene, view, trackingState, renderState, settings->skipPoints);
+				visualisationEngine->CreatePointCloud(scene, view, trackingState, renderState, settings->skip_points);
 				trackingState->age_pointCloud = 0;
 			}
 			else
