@@ -65,12 +65,14 @@ SET(sources
     UIEngine_BPO.cpp
     UIEngine_BPO_GlutFunctions.cpp
     CreateDefaultImageSource.cpp
+	InputPaths.cpp
 )
 
 SET(headers
     UIEngine_BPO.h
     prettyprint.hpp
     CreateDefaultImageSource.h
+	InputPaths.h
 )
 
 #############################

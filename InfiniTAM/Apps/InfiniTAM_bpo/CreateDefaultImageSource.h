@@ -25,6 +25,7 @@
 #include "../../InputSource/RealSenseEngine.h"
 #include "../../InputSource/FFMPEGReader.h"
 #include "../../InputSource/IMUSourceEngine.h"
+#include "InputPaths.h"
 
 using namespace ITMLib;
 using namespace InputSource;
@@ -37,12 +38,4 @@ using namespace InputSource;
     @para arg4 the IMU images. If images are omitted, some live sources will
     be tried.
 */
-void CreateDefaultImageSource(ImageSourceEngine*& imageSource, IMUSourceEngine*& imuSource,
-                                     const std::string& calibFilePath = "",
-                                     const std::string& openniFilePath = "",
-                                     const std::string& rgbVideoFilePath = "",
-                                     const std::string& depthVideoFilePath = "",
-                                     const std::string& rgbImageFileMask = "",
-                                     const std::string& depthImageFileMask = "",
-                                     const std::string& maskImageFileMask = "",
-                                     const std::string& imuInputPath = "");
+void CreateDefaultImageSource(ImageSourceEngine*& imageSource, IMUSourceEngine*& imuSource, const InputPaths& inputPaths);

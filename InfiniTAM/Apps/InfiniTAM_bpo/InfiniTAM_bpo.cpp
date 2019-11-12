@@ -52,11 +52,6 @@ using namespace ITMLib;
 namespace po = boost::program_options;
 
 
-bool isPathMask(const std::string& arg) {
-	return arg.find('%') != std::string::npos;
-}
-
-
 ITMDynamicFusionLogger_Interface& GetLogger(Configuration::IndexingMethod method) {
 	switch (method) {
 		case Configuration::INDEX_HASH: {
@@ -106,9 +101,12 @@ int main(int argc, char** argv) {
 		//@formatter:off
 		arguments.add_options()
 				("help,h", "Print help screen")
-				("calib_file,c", po::value<std::string>(), "Calibration file, e.g.: ./Files/Teddy/calib.txt")
+				( "config,cfg", po::value<std::string>(),
+				        "Configuration file in JSON format, e.g.  ./default_config.json "
+			                      "WARNING: using this option will invalidate any other command line arguments.")
+				("calib_file,c", po::value<std::string>(), "Full path to the calibration file, e.g.: ./Files/Teddy/calib.txt")
 
-				("input_path,i", po::value<std::vector<std::string>>(), "Input file. 0-3 total arguments. "
+				("input_path,i", po::value<std::vector<std::string>>(), "Input files/paths. 0-3 total arguments. "
 						"Usage scenarios:\n\n"
 						"(0) No arguments: tries to get frames from attached device (OpenNI, "
 	                        "RealSense, etc.). \n"
@@ -244,8 +242,9 @@ int main(int argc, char** argv) {
 	             "--disable_gradient_smoothing --enable_level_set_term --enable_killing_term "
 			     "--rigidity_enforcement_factor 0.1 --weight_smoothness_term 0.5 --weight_level_set 0.2")
 				;
-
 		//@formatter:on
+
+
 		positional_arguments.add("calib_file", 1);
 		positional_arguments.add("input_path", 3);
 
@@ -253,6 +252,8 @@ int main(int argc, char** argv) {
 		po::store(po::command_line_parser(argc, argv).options(arguments).positional(positional_arguments).style(
 				po::command_line_style::unix_style ^ po::command_line_style::allow_short).run(), vm);
 		po::notify(vm);
+
+		InputPaths inputPaths;
 
 		auto printHelp = [&arguments, &positional_arguments, &argv]() {
 			std::cout << arguments << std::endl;
@@ -263,76 +264,39 @@ int main(int argc, char** argv) {
 			       "  %s ./Files/Teddy/calib.txt ./Files/Teddy/Frames/%%04i.ppm ./Files/Teddy/Frames/%%04i.pgm\n"
 			       "  %s ./Files/Teddy/calib.txt\n\n", argv[0], argv[0]);
 		};
-
 		if (vm.count("help")) {
 			printHelp();
 			return EXIT_SUCCESS;
 		}
 
-		if (vm.count("halp")){
+		if (vm.count("halp")) {
 			printf("Ya didn't think it would work, did ya now?\n");
 			printHelp();
 			return EXIT_SUCCESS;
 		}
 
-		std::string calibFilePath;
-		if (vm.count("calib_file")) {
-			calibFilePath = vm["calib_file"].as<std::string>();
-		}
-
-		//all initialized to empty string by default
-		std::string openniFilePath, rgbVideoFilePath, depthVideoFilePath, rgbImageFileMask, depthImageFileMask,
-				maskImageFileMask, imuInputPath;
-
-		std::vector<std::string> inputPaths;
-		if (vm.count("input_path")) {
-			inputPaths = vm["input_path"].as<std::vector<std::string>>();
-		}
-		auto inputFileCount = inputPaths.size();
-		switch (inputFileCount) {
-			case 0:
-				//no input files
-				break;
-			case 1:
-				//a single OpenNI file
-				openniFilePath = inputPaths[0];
-				break;
-			case 3:
-			default:
-				if (isPathMask(inputPaths[2])) { maskImageFileMask = inputPaths[2]; }
-				else { imuInputPath = inputPaths[2]; }
-			case 2:
-				if (isPathMask(inputPaths[0]) && isPathMask(inputPaths[1])) {
-					rgbImageFileMask = inputPaths[0];
-					depthImageFileMask = inputPaths[1];
-				} else if (!isPathMask(inputPaths[0]) && !isPathMask(inputPaths[1])) {
-					rgbVideoFilePath = inputPaths[0];
-					depthVideoFilePath = inputPaths[1];
-				} else {
-					std::cerr << "The first & second input_path arguments need to either both be masks or both be"
-					             " paths to video files." << std::endl;
-					printHelp();
-					return EXIT_FAILURE;
-
-				}
-				break;
+		if (vm["config"].empty()) {
+			inputPaths = InputPaths::FromVariablesMap(vm, printHelp);
+			Configuration::load_from_variable_map(vm);
+		} else {
+			std::string configPath = vm["config"].as<std::string>();
+			inputPaths = InputPaths::FromJsonFile(configPath);
+			Configuration::load_from_json_file(configPath);
 		}
 
 		printf("initialising ...\n");
 		ImageSourceEngine* imageSource = nullptr;
 		IMUSourceEngine* imuSource = nullptr;
 
-		CreateDefaultImageSource(imageSource, imuSource, calibFilePath, openniFilePath, rgbVideoFilePath,
-		                         depthVideoFilePath, rgbImageFileMask, depthImageFileMask, maskImageFileMask,
-		                         imuInputPath);
+		CreateDefaultImageSource(imageSource, imuSource, inputPaths);
 		if (imageSource == nullptr) {
 			std::cerr << "Failed to open any image stream." << std::endl;
 			printHelp();
 			return EXIT_FAILURE;
 		}
 
-// region ================================ SET MAIN ENGINE SETTINGS WITH CLI ARGUMENTS =================================
-		Configuration::load_from_variable_map(vm);
+
+// region ================================ GENERATE MAIN ENGINE ========================================================
 		auto& settings = Configuration::get();
 		Configuration::IndexingMethod chosenIndexingMethod = settings.indexing_method;
 		ITMDynamicFusionLogger_Interface& logger = GetLogger(chosenIndexingMethod);

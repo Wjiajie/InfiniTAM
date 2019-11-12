@@ -17,41 +17,37 @@
 #include "CreateDefaultImageSource.h"
 
 void
-CreateDefaultImageSource(ImageSourceEngine*& imageSource, IMUSourceEngine*& imuSource, const std::string& calibFilePath,
-                         const std::string& openniFilePath, const std::string& rgbVideoFilePath,
-                         const std::string& depthVideoFilePath, const std::string& rgbImageFileMask,
-                         const std::string& depthImageFileMask, const std::string& maskImageFileMask,
-                         const std::string& imuInputPath) {
+CreateDefaultImageSource(ImageSourceEngine*& imageSource, IMUSourceEngine*& imuSource, const InputPaths& inputPaths) {
 
 
-	if (calibFilePath == "viewer") {
+	if (inputPaths.calibFilePath == "viewer") {
 		imageSource = new BlankImageGenerator("", Vector2i(640, 480));
 		printf("starting in viewer mode: make sure to press n first to initialize the views ... \n");
 		return;
 	}
 
-	const char* calibFile = calibFilePath.empty() ? nullptr : calibFilePath.c_str();
+	const char* calibFile = inputPaths.calibFilePath.empty() ? nullptr : inputPaths.calibFilePath.c_str();
 
 	if (calibFile) {
-		printf("using calibration file: %s\n", calibFilePath.c_str());
+		printf("using calibration file: %s\n", inputPaths.calibFilePath.c_str());
 	} else {
 		printf("using default calibration file.\n");
 	}
 
-	if (imageSource == nullptr && !rgbImageFileMask.empty() && !depthImageFileMask.empty()) {
-		printf("using rgb images: %s\nusing depth images: %s\n", rgbImageFileMask.c_str(), depthImageFileMask.c_str());
-		if (!maskImageFileMask.empty() && imuInputPath.empty()) {
-			printf("using mask images: %s\n", maskImageFileMask.c_str());
+	if (imageSource == nullptr && !inputPaths.rgbImageFileMask.empty() && !inputPaths.depthImageFileMask.empty()) {
+		printf("using rgb images: %s\nusing depth images: %s\n", inputPaths.rgbImageFileMask.c_str(), inputPaths.depthImageFileMask.c_str());
+		if (!inputPaths.maskImageFileMask.empty() && inputPaths.imuInputPath.empty()) {
+			printf("using mask images: %s\n", inputPaths.maskImageFileMask.c_str());
 		}
-		if (imuInputPath.empty()) {
-			ImageMaskPathGenerator pathGenerator(rgbImageFileMask.c_str(), depthImageFileMask.c_str(),
-			                                     maskImageFileMask.empty() ? nullptr : maskImageFileMask.c_str());
-			imageSource = new ImageFileReader<ImageMaskPathGenerator>(calibFilePath.c_str(), pathGenerator);
+		if (inputPaths.imuInputPath.empty()) {
+			ImageMaskPathGenerator pathGenerator(inputPaths.rgbImageFileMask.c_str(), inputPaths.depthImageFileMask.c_str(),
+			                                     inputPaths.maskImageFileMask.empty() ? nullptr : inputPaths.maskImageFileMask.c_str());
+			imageSource = new ImageFileReader<ImageMaskPathGenerator>(inputPaths.calibFilePath.c_str(), pathGenerator);
 		} else {
-			printf("using imu data: %s\n", imuInputPath.c_str());
-			imageSource = new RawFileReader(calibFilePath.c_str(), rgbImageFileMask.c_str(),
-			                                depthImageFileMask.c_str(), Vector2i(320, 240), 0.5f);
-			imuSource = new IMUSourceEngine(imuInputPath.c_str());
+			printf("using imu data: %s\n", inputPaths.imuInputPath.c_str());
+			imageSource = new RawFileReader(inputPaths.calibFilePath.c_str(), inputPaths.rgbImageFileMask.c_str(),
+			                                inputPaths.depthImageFileMask.c_str(), Vector2i(320, 240), 0.5f);
+			imuSource = new IMUSourceEngine(inputPaths.imuInputPath.c_str());
 		}
 		int depthWidth = imageSource->getDepthImageSize().x;
 		if (depthWidth == 0) {
@@ -61,10 +57,10 @@ CreateDefaultImageSource(ImageSourceEngine*& imageSource, IMUSourceEngine*& imuS
 			imageSource = nullptr;
 		}
 	}
-	if ((imageSource == nullptr) && (!rgbVideoFilePath.empty() && !depthVideoFilePath.empty()) &&
-	    (imuInputPath.empty())) {
-		imageSource = new InputSource::FFMPEGReader(calibFilePath.c_str(), rgbVideoFilePath.c_str(),
-		                                            depthVideoFilePath.c_str());
+	if ((imageSource == nullptr) && (!inputPaths.rgbVideoFilePath.empty() && !inputPaths.depthVideoFilePath.empty()) &&
+	    (inputPaths.imuInputPath.empty())) {
+		imageSource = new InputSource::FFMPEGReader(inputPaths.calibFilePath.c_str(), inputPaths.rgbVideoFilePath.c_str(),
+		                                            inputPaths.depthVideoFilePath.c_str());
 		if (imageSource->getDepthImageSize().x == 0) {
 			delete imageSource;
 			imageSource = nullptr;
@@ -76,9 +72,9 @@ CreateDefaultImageSource(ImageSourceEngine*& imageSource, IMUSourceEngine*& imuS
 		bool useInternalCalibration = !calibFile || strlen(calibFile) == 0;
 
 		printf("trying OpenNI device: %s - calibration: %s\n",
-		       openniFilePath.empty() ? "<OpenNI default device>" : openniFilePath.c_str(),
+		       inputPaths.openniFilePath.empty() ? "<OpenNI default device>" : inputPaths.openniFilePath.c_str(),
 		       useInternalCalibration ? "internal" : "from file");
-		imageSource = new OpenNIEngine(calibFile, openniFilePath.empty() ? nullptr : openniFilePath.c_str(),
+		imageSource = new OpenNIEngine(calibFile, inputPaths.openniFilePath.empty() ? nullptr : inputPaths.openniFilePath.c_str(),
 		                               useInternalCalibration);
 		if (imageSource->getDepthImageSize().x == 0) {
 			delete imageSource;
