@@ -48,7 +48,6 @@ void SlavchevaSurfaceTracker::PrintSettings() {
 	std::cout << "Weight of the smoothness term: " << this->parameters.weightSmoothingTerm << std::endl;
 	std::cout << "Weight of the level set term: " << this->parameters.weightLevelSetTerm << std::endl;
 	std::cout << "Epsilon for the level set term: " << this->parameters.epsilon << std::endl;
-	std::cout << "Unity scaling factor: " << this->parameters.unity << std::endl;
 	std::cout << bright_cyan << "*** *********************************** ***" << reset << std::endl;
 }
 
@@ -59,19 +58,17 @@ SlavchevaSurfaceTracker::Parameters::Parameters() :
 		weightDataTerm(1.0f), // for an easier balancing of the terms (will be removed in optimized version)
 		weightSmoothingTerm(0.2f), //0.2 is default for SobolevFusion, 0.5 is default for KillingFusion
 		weightLevelSetTerm(0.2f),
-		epsilon(1e-5f),
-		unity(0.1f) // voxelSize/mu, i.e. 1/[narrow-band half-width in voxels] or [voxel size in metric units]/[narrow-band half-width in metric units]
+		epsilon(1e-5f)
 {}
 
-SlavchevaSurfaceTracker::Parameters::Parameters(SlavchevaSurfaceTracker::ConfigurationMode mode, float unity) :
+SlavchevaSurfaceTracker::Parameters::Parameters(SlavchevaSurfaceTracker::ConfigurationMode mode) :
 		gradientDescentLearningRate(0.1f),
 		rigidityEnforcementFactor(0.1f),
 		weightDataTerm(1.0f), // for an easier balancing of the terms (will be removed in optimized version)
 		weightSmoothingTerm(mode == KILLING_FUSION ? 0.5f
 		                                           : 0.2f), //0.2 is default for SobolevFusion, 0.5 is default for KillingFusion
 		weightLevelSetTerm(0.2f),
-		epsilon(1e-5f),
-		unity(unity) // voxelSize/mu, i.e. 1/[narrow-band half-width in voxels] or [voxel size in metric units]/[narrow-band half-width in metric units]
+		epsilon(1e-5f)
 {}
 
 static SlavchevaSurfaceTracker::ConfigurationMode determine_slavcheva_configuration_mode(const po::variables_map& vm){
@@ -82,12 +79,12 @@ static SlavchevaSurfaceTracker::ConfigurationMode determine_slavcheva_configurat
 					{"SobolevFusion", SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION},
 			}
 	);
-	if(!vm["preset_mode"].empty()){
-		std::string key = vm["preset_mode"].as<std::string>();
+	if(!vm["slavcheva_preset"].empty()){
+		std::string key = vm["slavcheva_preset"].as<std::string>();
 		if(slavchevaConfigurationModeMap.find(key) != slavchevaConfigurationModeMap.end()){
 			slavchevaConfigurationMode = slavchevaConfigurationModeMap[key];
 		}else{
-			std::cerr << "Unrecognized preset_mode: " << key << ". Can be one of: ";
+			std::cerr << "Unrecognized slavcheva_preset: " << key << ". Can be one of: ";
 			bool first = true;
 			for (auto& pair : slavchevaConfigurationModeMap){
 				std::cerr << (first ? "" : ",") << pair.first << std::endl;
@@ -98,31 +95,61 @@ static SlavchevaSurfaceTracker::ConfigurationMode determine_slavcheva_configurat
 	return slavchevaConfigurationMode;
 }
 
-SlavchevaSurfaceTracker::Parameters::Parameters(const po::variables_map& vm, ConfigurationMode mode, float unity) :
+SlavchevaSurfaceTracker::Parameters::Parameters(const po::variables_map& vm, ConfigurationMode mode) :
 		gradientDescentLearningRate(
 				vm["learning_rate"].empty() ?
-				Parameters(mode, unity).gradientDescentLearningRate : vm["learning_rate"].as<float>()),
+				Parameters(mode).gradientDescentLearningRate : vm["learning_rate"].as<float>()),
 		rigidityEnforcementFactor(
 				vm["rigidity_enforcement_factor"].empty() ?
-				Parameters(mode, unity).rigidityEnforcementFactor : vm["rigidity_enforcement_factor"].as<float>()),
+				Parameters(mode).rigidityEnforcementFactor : vm["rigidity_enforcement_factor"].as<float>()),
 		weightDataTerm(
 				vm["weight_data_term"].empty() ?
-				Parameters(mode, unity).weightDataTerm : vm["weight_data_term"].as<float>()),
+				Parameters(mode).weightDataTerm : vm["weight_data_term"].as<float>()),
 		weightSmoothingTerm(
 				vm["weight_smoothing_term"].empty() ?
-				Parameters(mode, unity).weightSmoothingTerm : vm["weight_smoothing_term"].as<float>()),
+				Parameters(mode).weightSmoothingTerm : vm["weight_smoothing_term"].as<float>()),
 		weightLevelSetTerm(
 				!vm["weight_level_set_term"].empty() ?
-				Parameters(mode, unity).weightLevelSetTerm : vm["weight_level_set_term"].as<float>()),
+				Parameters(mode).weightLevelSetTerm : vm["weight_level_set_term"].as<float>()),
 		epsilon(
 				!vm["level_set_epsilon"].empty() ?
-				Parameters(mode, unity).epsilon : vm["level_set_epsilon"].as<float>()),
-		unity(unity)
+				Parameters(mode).epsilon : vm["level_set_epsilon"].as<float>())
 {}
 
 SlavchevaSurfaceTracker::Parameters::Parameters(const po::variables_map& vm) :
-Parameters(vm, determine_slavcheva_configuration_mode(vm), ITMSceneParameters(vm).voxelSize / ITMSceneParameters(vm).mu )
+Parameters(vm, determine_slavcheva_configuration_mode(vm))
 {}
+
+SlavchevaSurfaceTracker::Parameters SlavchevaSurfaceTracker::Parameters::BuildFromPTree(const pt::ptree& tree, ConfigurationMode mode) {
+	boost::optional<float> gradientDescentLearningRate = tree.get_optional<float>("learning_rate");
+	boost::optional<float> rigidityEnforcementFactor = tree.get_optional<float>("rigidity_enforcement_factor");
+	boost::optional<float> weightDataTerm = tree.get_optional<float>("weight_data_term");
+	boost::optional<float> weightSmoothingTerm = tree.get_optional<float>("weight_smoothing_term");
+	boost::optional<float> weightLevelSetTerm = tree.get_optional<float>("weight_level_set_term");
+	boost::optional<float> epsilon = tree.get_optional<float>("level_set_epsilon");
+
+	SlavchevaSurfaceTracker::Parameters default_parameters(mode);
+
+	return {gradientDescentLearningRate ? gradientDescentLearningRate.get() : default_parameters.gradientDescentLearningRate,
+	        rigidityEnforcementFactor ? rigidityEnforcementFactor.get() : default_parameters.rigidityEnforcementFactor,
+	        weightDataTerm ? weightDataTerm.get() : default_parameters.weightDataTerm,
+	        weightSmoothingTerm ? weightSmoothingTerm.get() : default_parameters.weightSmoothingTerm,
+	        weightLevelSetTerm ? weightLevelSetTerm.get() : default_parameters.weightLevelSetTerm,
+	        epsilon ? epsilon.get() : default_parameters.epsilon};
+}
+
+SlavchevaSurfaceTracker::Parameters::Parameters(float gradientDescentLearningRate,
+                                                float rigidityEnforcementFactor,
+                                                float weightDataTerm,
+                                                float weightSmoothingTerm,
+                                                float weightLevelSetTerm,
+                                                float epsilon):
+                                                gradientDescentLearningRate(gradientDescentLearningRate),
+                                                rigidityEnforcementFactor(rigidityEnforcementFactor),
+                                                weightDataTerm(weightDataTerm),
+                                                weightSmoothingTerm(weightSmoothingTerm),
+                                                weightLevelSetTerm(weightLevelSetTerm),
+                                                epsilon(epsilon){}
 
 //Default preconfigured for Slavecheva's SobolevFusion
 SlavchevaSurfaceTracker::Switches::Switches() : Switches(SOBOLEV_FUSION) {}
@@ -149,5 +176,21 @@ SlavchevaSurfaceTracker::Switches::Switches(bool enableDataTerm, bool enableLeve
                                             bool enableSobolevGradientSmoothing) :
                                             enableDataTerm(enableDataTerm), enableLevelSetTerm(enableLevelSetTerm),
                                             enableSmoothingTerm(enableSmoothingTerm), enableKillingRigidityEnforcementTerm(enableKillingRigidityEnforcementTerm),
-                                            enableSobolevGradientSmoothing(enableSobolevGradientSmoothing) {};
+                                            enableSobolevGradientSmoothing(enableSobolevGradientSmoothing) {}
+
+SlavchevaSurfaceTracker::Switches SlavchevaSurfaceTracker::Switches::BuildFromPTree(const pt::ptree& tree, ConfigurationMode mode) {
+	boost::optional<bool> disableDataTerm = tree.get_optional<bool>("disable_data_term");
+	boost::optional<bool> enableLevelSetTerm = tree.get_optional<bool>("enable_level_set_term");
+	boost::optional<bool> disableSmoothingTerm = tree.get_optional<bool>("disable_smoothing_term");
+	boost::optional<bool> enableKillingRigidityEnforcementTerm = tree.get_optional<bool>("enable_killing_term");
+	boost::optional<bool> disableSobolevGradientSmoothing = tree.get_optional<bool>("disable_gradient_smoothing");
+
+	SlavchevaSurfaceTracker::Switches default_switches(mode);
+
+	return {disableDataTerm ? !disableDataTerm.get() : default_switches.enableDataTerm,
+	        enableLevelSetTerm ? enableLevelSetTerm.get() : default_switches.enableLevelSetTerm,
+	        disableSmoothingTerm ? !disableSmoothingTerm.get() : default_switches.enableSmoothingTerm,
+	        enableKillingRigidityEnforcementTerm ? enableKillingRigidityEnforcementTerm.get() : default_switches.enableKillingRigidityEnforcementTerm,
+	        disableSobolevGradientSmoothing ? !disableSobolevGradientSmoothing.get() : default_switches.enableSobolevGradientSmoothing};
+};
 

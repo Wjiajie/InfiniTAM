@@ -5,6 +5,7 @@
 //boost
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
+
 namespace po = boost::program_options;
 namespace pt = boost::property_tree;
 
@@ -62,12 +63,12 @@ struct ITMSurfelSceneParameters {
 
 	explicit ITMSurfelSceneParameters(const po::variables_map& vm);
 
-	explicit ITMSurfelSceneParameters(float deltaRadius_, float gaussianConfidenceSigma_, float maxMergeAngle_,
-	                                  float maxMergeDist_, float maxSurfelRadius_, float minRadiusOverlapFactor_,
-	                                  float stableSurfelConfidence_, int supersamplingFactor_,
-	                                  float trackingSurfelMaxDepth_, float trackingSurfelMinConfidence_,
-	                                  int unstableSurfelPeriod_, int unstableSurfelZOffset_,
-	                                  bool useGaussianSampleConfidence_, bool useSurfelMerging_);
+	ITMSurfelSceneParameters(float deltaRadius_, float gaussianConfidenceSigma_, float maxMergeAngle_,
+	                         float maxMergeDist_, float maxSurfelRadius_, float minRadiusOverlapFactor_,
+	                         float stableSurfelConfidence_, int supersamplingFactor_,
+	                         float trackingSurfelMaxDepth_, float trackingSurfelMinConfidence_,
+	                         int unstableSurfelPeriod_, int unstableSurfelZOffset_,
+	                         bool useGaussianSampleConfidence_, bool useSurfelMerging_);
 
 	static ITMSurfelSceneParameters BuildFromPTree(const pt::ptree& tree);
 };

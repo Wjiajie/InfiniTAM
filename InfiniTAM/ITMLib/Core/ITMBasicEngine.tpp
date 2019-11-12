@@ -23,7 +23,7 @@ ITMBasicEngine<TVoxel,TIndex>::ITMBasicEngine(const ITMRGBDCalib& calib, Vector2
 
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 
-	MemoryDeviceType memoryType = settings.GetMemoryType();
+	MemoryDeviceType memoryType = settings.device_type;
 	this->scene = new ITMVoxelVolume<TVoxel,TIndex>(&settings.scene_parameters, settings.swapping_mode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
 
 	const MemoryDeviceType deviceType = settings.device_type;
@@ -101,7 +101,7 @@ void ITMBasicEngine<TVoxel,TIndex>::SaveSceneToMesh(const char *objFileName)
 {
 	if (meshingEngine == NULL) return;
 
-	ITMMesh *mesh = new ITMMesh(Configuration::get().GetMemoryType(), scene->index.GetMaxVoxelCount());
+	ITMMesh *mesh = new ITMMesh(Configuration::get().device_type, scene->index.GetMaxVoxelCount());
 
 	meshingEngine->MeshScene(mesh, scene);
 	mesh->WriteSTL(objFileName);
@@ -428,7 +428,7 @@ void ITMBasicEngine<TVoxel,TIndex>::GetImage(ITMUChar4Image *out, GetImageType g
 
 		if (renderState_freeview == NULL)
 		{
-			renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims, scene->sceneParams, settings.GetMemoryType(), scene->index);
+			renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims, scene->sceneParams, settings.device_type, scene->index);
 		}
 
 		visualisationEngine->FindVisibleBlocks(scene, pose, intrinsics, renderState_freeview);

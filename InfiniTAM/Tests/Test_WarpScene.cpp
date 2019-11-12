@@ -21,20 +21,25 @@
 
 //boost
 #include <boost/test/unit_test.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 //local
 #include "../ITMLib/ITMLibDefines.h"
 #include "../ITMLib/Objects/Scene/ITMVoxelVolume.h"
 #include "../ITMLib/Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
+
 #ifndef COMPILE_WITHOUT_CUDA
+
 #include "../ITMLib/Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h"
+
 #endif
 
 #include "TestUtils.h"
 
 using namespace ITMLib;
+namespace pt = boost::property_tree;
 
 typedef ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray> RecoEngine_CPU_PVA;
 typedef ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMVoxelBlockHash> RecoEngine_CPU_VBH;
@@ -107,7 +112,6 @@ typedef ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMPlainVoxe
 typedef ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash> RecoEngine_CUDA_VBH;
 
 BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_PVA) {
-	const Configuration& settings = Configuration::get();
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warps;
 	loadSdfVolume(&warps, "TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_complete_",
 	              MEMORYDEVICE_CUDA);
@@ -115,7 +119,7 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_PVA) {
 	loadSdfVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_PVA/live",
 	              MEMORYDEVICE_CUDA);
 	auto warped_live_volume = new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(
-			&settings.scene_parameters, false, MEMORYDEVICE_CUDA,
+			&Configuration::get().scene_parameters, false, MEMORYDEVICE_CUDA,
 			{live_volume->index.GetVolumeSize(), live_volume->index.GetVolumeOffset()});
 	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(warped_live_volume);
 
@@ -137,7 +141,9 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_PVA) {
 }
 
 BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_VBH) {
-	const Configuration& settings = Configuration::get();
+	pt::ptree tree;
+
+
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps;
 	loadSdfVolume(&warps, "TestData/snoopy_result_fr16-17_partial_VBH/warp_field_0_complete_",
 	              MEMORYDEVICE_CUDA);
@@ -145,7 +151,7 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_VBH) {
 	loadSdfVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_VBH/live",
 	              MEMORYDEVICE_CUDA);
 	auto warped_live_volume = new ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>(
-			&settings.scene_parameters, false, MEMORYDEVICE_CUDA,
+			&Configuration::get().scene_parameters, false, MEMORYDEVICE_CUDA,
 			{live_volume->index.GetAllocatedBlockCount(), live_volume->index.GetExcessListSize()});
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(warped_live_volume);
 
@@ -165,4 +171,5 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_VBH) {
 	delete live_volume;
 	delete warped_live_volume;
 }
+
 #endif

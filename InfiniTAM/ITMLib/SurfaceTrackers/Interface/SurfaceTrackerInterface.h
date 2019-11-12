@@ -26,8 +26,10 @@
 
 //boost
 #include <boost/program_options.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 namespace po = boost::program_options;
+namespace pt = boost::property_tree;
 
 namespace ITMLib {
 
@@ -42,17 +44,23 @@ public:
 
 	struct Parameters {
 		Parameters();
-		explicit Parameters(ConfigurationMode mode, float unity);
+		explicit Parameters(ConfigurationMode mode);
 		explicit Parameters(const po::variables_map& vm);
+		static Parameters BuildFromPTree(const pt::ptree& tree, ConfigurationMode mode = SOBOLEV_FUSION);
 		const float gradientDescentLearningRate;// = 0.1f;
 		const float rigidityEnforcementFactor;// = 0.1f;
 		const float weightDataTerm;// = 1.0f
 		const float weightSmoothingTerm;// = 0.2f; //0.2 is default for SobolevFusion, 0.5 is default for KillingFusion
 		const float weightLevelSetTerm;// = 0.2f;
 		const float epsilon;// = 1e-5f;
-		const float unity; // voxelSize/mu, i.e. 1/[narrow-band half-width in voxels] or [voxel size in metric units]/[narrow-band half-width in metric units]
 	private:
-		Parameters(const po::variables_map& vm, ConfigurationMode mode, float unity);
+		Parameters(float gradientDescentLearningRate,
+		           float rigidityEnforcementFactor,
+		           float weightDataTerm,
+		           float weightSmoothingTerm,
+		           float weightLevelSetTerm,
+		           float epsilon);
+		Parameters(const po::variables_map& vm, ConfigurationMode mode);
 	};
 
 	struct Switches {
@@ -61,6 +69,7 @@ public:
 		explicit Switches(const po::variables_map& vm);
 		Switches(bool enableDataTerm, bool enableLevelSetTerm, bool enableSmoothingTerm,
 		         bool enableKillingRigidityEnforcementTerm, bool enableSobolevGradientSmoothing);
+		static Switches BuildFromPTree(const pt::ptree& tree, ConfigurationMode mode = SOBOLEV_FUSION);
 		const bool enableDataTerm;
 		const bool enableLevelSetTerm;
 		const bool enableSmoothingTerm;

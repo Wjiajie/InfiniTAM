@@ -12,7 +12,6 @@
 #include "../../ORUtils/FileUtils.h"
 #include "../../ORUtils/NVTimer.h"
 #include "../../ITMLib/Utils/FileIO/ITMDynamicFusionLogger.h"
-#include "../../ITMLib/Objects/Scene/ITMIndexEnumeration.h"
 
 //stdlib
 #include <vector>
@@ -108,13 +107,13 @@ public:
 	bool shutdownRequested = false;
 	ITMUChar4Image* saveImage;
 	ITMLib::ITMDynamicFusionLogger_Interface* logger;
-	ITMLib::IndexingMethod indexingMethod;
+	ITMLib::Configuration::IndexingMethod indexingMethod;
 
 	void Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource, InputSource::IMUSourceEngine* imuSource,
 		                ITMLib::ITMMainEngine* mainEngine, const char* outFolder, MemoryDeviceType deviceType,
 		                int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult, bool startInStepByStep,
 		                bool saveAfterFirstNFrames, bool loadBeforeProcessing, ITMLib::ITMDynamicFusionLogger_Interface* logger,
-		                ITMLib::IndexingMethod indexingMethod);
+		                ITMLib::Configuration::IndexingMethod indexingMethod);
 	void Shutdown();
 
 	void Run();

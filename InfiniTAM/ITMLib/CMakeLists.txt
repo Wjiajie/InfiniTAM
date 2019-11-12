@@ -545,7 +545,6 @@ set(ITMLIB_OBJECTS_SCENE_HEADERS
     Objects/Scene/ITMSurfelTypes.h
     Objects/Scene/ITMVoxelBlockHash.h
     Objects/Scene/ITMVoxelTypes.h
-    Objects/Scene/ITMIndexEnumeration.h
     #_DEBUG
     ../Tests/TestUtils.h
     ../Tests/TestUtils.cpp

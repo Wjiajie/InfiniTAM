@@ -106,7 +106,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 	auto* settings = new ITMLibSettings();
 	liveScene = new ITMScene<ITMVoxelLive, ITMVoxelIndex>(
 			&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-			settings->GetMemoryType());
+			settings->device_type);
 	if (slicesOnly) {
 		canonicalScene = nullptr;
 		sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(liveScene,
@@ -115,7 +115,7 @@ SDFViz::SDFViz(std::string pathToScene, bool hideNonInterestCanonicalVoxels, boo
 	} else {
 		canonicalScene = new ITMScene<ITMVoxelCanonical, ITMVoxelIndex>(
 				&settings->sceneParams, settings->swappingMode == ITMLibSettings::SWAPPINGMODE_ENABLED,
-				settings->GetMemoryType());
+				settings->device_type);
 		sceneLogger = new ITMSceneLogger<ITMVoxelCanonical, ITMVoxelLive, ITMVoxelIndex>(canonicalScene, liveScene,
 		                                                                                 GenerateExpectedFramePath());
 	}

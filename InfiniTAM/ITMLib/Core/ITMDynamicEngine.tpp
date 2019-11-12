@@ -27,7 +27,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 	this->InitializeScenes();
 	Configuration& settings = Configuration::get();
 	const MemoryDeviceType deviceType = settings.device_type;
-	MemoryDeviceType memoryType = settings.GetMemoryType();
+	MemoryDeviceType memoryType = settings.device_type;
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().SetScenes(canonicalScene, liveScenes[0], warpField);
 
@@ -83,7 +83,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDynamicEngine<TVoxel, TWarp, TIndex>::InitializeScenes(){
 	Configuration& settings = Configuration::get();
-	MemoryDeviceType memoryType = settings.GetMemoryType();
+	MemoryDeviceType memoryType = settings.device_type;
 	this->canonicalScene = new ITMVoxelVolume<TVoxel, TIndex>(
 			&settings.scene_parameters, settings.swapping_mode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
 	this->liveScenes = new ITMVoxelVolume<TVoxel, TIndex>* [2];
@@ -134,7 +134,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::~ITMDynamicEngine() {
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDynamicEngine<TVoxel, TWarp, TIndex>::SaveSceneToMesh(const char* objFileName) {
 	if (meshingEngine == nullptr) return;
-	ITMMesh* mesh = new ITMMesh(Configuration::get().GetMemoryType(), canonicalScene->index.GetMaxVoxelCount());
+	ITMMesh* mesh = new ITMMesh(Configuration::get().device_type, canonicalScene->index.GetMaxVoxelCount());
 	meshingEngine->MeshScene(mesh, canonicalScene);
 	mesh->WriteSTL(objFileName);
 	delete mesh;
@@ -408,7 +408,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			if (renderState_freeview == nullptr) {
 				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
 				                                                                        liveScenes[0]->sceneParams,
-				                                                                        settings.GetMemoryType(),
+				                                                                        settings.device_type,
 				                                                                        liveScenes[0]->index);
 			}
 
@@ -427,7 +427,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			if (renderState_freeview == nullptr) {
 				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
 				                                                                        liveScenes[0]->sceneParams,
-				                                                                        settings.GetMemoryType(),
+				                                                                        settings.device_type,
 				                                                                        liveScenes[0]->index);
 			}
 
@@ -456,7 +456,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			if (renderState_freeview == nullptr) {
 				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
 				                                                                        canonicalScene->sceneParams,
-				                                                                        settings.GetMemoryType(),
+				                                                                        settings.device_type,
 				                                                                        canonicalScene->index);
 			}
 

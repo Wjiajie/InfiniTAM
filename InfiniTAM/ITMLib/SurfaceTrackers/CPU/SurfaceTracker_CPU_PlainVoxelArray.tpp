@@ -39,7 +39,8 @@ void SurfaceTracker<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::Calcul
 			calculateGradientFunctor(this->parameters, this->switches,
 			                         liveScene->localVBA.GetVoxelBlocks(), liveScene->index.GetIndexData(),
 			                         canonicalScene->localVBA.GetVoxelBlocks(), canonicalScene->index.GetIndexData(),
-			                         warpField->localVBA.GetVoxelBlocks(), warpField->index.GetIndexData());
+			                         warpField->localVBA.GetVoxelBlocks(), warpField->index.GetIndexData(),
+			                         canonicalScene->sceneParams->voxelSize, canonicalScene->sceneParams->mu);
 
 	ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, calculateGradientFunctor);

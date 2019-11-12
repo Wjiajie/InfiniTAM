@@ -134,19 +134,30 @@ ITMSurfelSceneParameters ITMSurfelSceneParameters::BuildFromPTree(const pt::ptre
 	boost::optional<float> maxSurfelRadius_opt = tree.get_optional<float>("surfel_max_radius");
 	boost::optional<float> minRadiusOverlapFactor_opt = tree.get_optional<float>("surfel_min_radius_overlap_factor");
 	boost::optional<float> stableSurfelConfidence_opt = tree.get_optional<float>("stable_surfel_confidence");
-	boost::optional<int> maxW_opt = tree.get_optional<int>("tracking_surfel_max_depth");
-	boost::optional<float> voxelSize_opt = tree.get_optional<float>("voxel_size_meters");
-	boost::optional<float> viewFrustum_min_opt = tree.get_optional<float>("view_frustum_near_clipping_distance");
-	boost::optional<float> viewFrustum_max_opt = tree.get_optional<float>("view_frustum_far_clipping_distance");
-	boost::optional<bool> stopIntegratingAtMaxW_opt = tree.get_optional<bool>("stop_integration_at_max_weight");
+
+	boost::optional<int> supersamplingFactor_opt = tree.get_optional<int>("surfel_supersampling_factor");
+	boost::optional<float> trackingSurfelMaxDepth_opt = tree.get_optional<float>("tracking_surfel_max_depth");
+	boost::optional<float> trackingSurfelMinConfidence_opt = tree.get_optional<float>("tracking_surfel_min_confidence");
+	boost::optional<int> unstableSurfelPeriod_opt = tree.get_optional<int>("unstable_surfel_period");
+	boost::optional<int> unstableSurfelZOffset_opt = tree.get_optional<int>("unstable_surfel_z_offset");
+	boost::optional<bool> disableGaussianSampleConfidence_opt = tree.get_optional<bool>("disable_gaussian_sample_confidence");
+	boost::optional<bool> disableSurfelMerging_opt = tree.get_optional<bool>("disable_surfel_merging");
 
 	ITMSurfelSceneParameters default_ssp;
 
-	return {mu_opt ? mu_opt.get() : default_ssp.mu,
-	        maxW_opt ? maxW_opt.get() : default_ssp.maxW,
-	        voxelSize_opt ? voxelSize_opt.get() : default_ssp.voxelSize,
-	        viewFrustum_min_opt ? viewFrustum_min_opt.get() : default_ssp.viewFrustum_min,
-	        viewFrustum_max_opt ? viewFrustum_max_opt.get() : default_ssp.viewFrustum_max,
-	        stopIntegratingAtMaxW_opt ? stopIntegratingAtMaxW_opt.get() : default_ssp.stopIntegratingAtMaxW};
+	return {deltaRadius_opt ? deltaRadius_opt.get() : default_ssp.deltaRadius,
+	        gaussianConfidenceSigma_opt ? gaussianConfidenceSigma_opt.get() : default_ssp.gaussianConfidenceSigma,
+	        maxMergeAngle_opt ? maxMergeAngle_opt.get() : default_ssp.maxMergeAngle,
+	        maxMergeDist_opt ? maxMergeDist_opt.get() : default_ssp.maxMergeDist,
+	        maxSurfelRadius_opt ? maxSurfelRadius_opt.get() : default_ssp.maxSurfelRadius,
+	        minRadiusOverlapFactor_opt ? minRadiusOverlapFactor_opt.get() : default_ssp.minRadiusOverlapFactor,
+	        stableSurfelConfidence_opt ? stableSurfelConfidence_opt.get() : default_ssp.stableSurfelConfidence,
+	        supersamplingFactor_opt ? supersamplingFactor_opt.get() : default_ssp.supersamplingFactor,
+	        trackingSurfelMaxDepth_opt ? trackingSurfelMaxDepth_opt.get() : default_ssp.trackingSurfelMaxDepth,
+	        trackingSurfelMinConfidence_opt ? trackingSurfelMinConfidence_opt.get() : default_ssp.trackingSurfelMinConfidence,
+	        unstableSurfelPeriod_opt ? unstableSurfelPeriod_opt.get() : default_ssp.unstableSurfelPeriod,
+	        unstableSurfelZOffset_opt ? unstableSurfelZOffset_opt.get() : default_ssp.unstableSurfelZOffset,
+	        disableGaussianSampleConfidence_opt ? !disableGaussianSampleConfidence_opt.get() : default_ssp.useGaussianSampleConfidence,
+	        disableSurfelMerging_opt ? !disableSurfelMerging_opt.get() : default_ssp.useGaussianSampleConfidence};
 }
 

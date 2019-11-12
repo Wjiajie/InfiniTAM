@@ -20,7 +20,7 @@ ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMRGBDCalib& calib, V
 
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 
-	MemoryDeviceType memoryType = settings.GetMemoryType();
+	MemoryDeviceType memoryType = settings.device_type;
 	this->surfelScene = new ITMSurfelScene<TSurfel>(&settings.surfel_scene_parameters, memoryType);
 
 	const MemoryDeviceType deviceType = settings.device_type;

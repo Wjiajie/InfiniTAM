@@ -37,7 +37,6 @@
 #include "../../ITMLib/Utils/Analytics/ITMBenchmarkUtils.h"
 #include "../../ITMLib/Core/ITMDynamicEngine.h"
 #include "../../ITMLib/Utils/ITMPrintHelpers.h"
-#include "../../ITMLib/Objects/Scene/ITMIndexEnumeration.h"
 
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
@@ -76,7 +75,7 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
                               bool startInStepByStep,
                               bool saveAfterFirstNFrames, bool loadBeforeProcessing,
                               ITMLib::ITMDynamicFusionLogger_Interface* logger,
-                              ITMLib::IndexingMethod indexingMethod) {
+                              ITMLib::Configuration::IndexingMethod indexingMethod) {
 	this->logger = logger;
 	this->indexingMethod = indexingMethod;
 
@@ -302,12 +301,12 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 	if (!imageSource->hasMoreImages()) return false;
 
 	switch (indexingMethod) {
-		case HASH: {
+		case Configuration::INDEX_HASH: {
 			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 		}
 			break;
-		case ARRAY: {
+		case Configuration::INDEX_ARRAY: {
 			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 		}
@@ -330,7 +329,7 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 
 	//actual processing on the mailEngine
 	switch (indexingMethod) {
-		case HASH: {
+		case Configuration::INDEX_HASH: {
 			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>*>(mainEngine);
 			if (imuSource != nullptr)
 				dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage,
@@ -338,7 +337,7 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 			else dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage);
 		}
 			break;
-		case ARRAY: {
+		case Configuration::INDEX_ARRAY: {
 			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>*>(mainEngine);
 			if (imuSource != nullptr)
 				dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage,
@@ -370,7 +369,7 @@ std::string UIEngine_BPO::GenerateCurrentFrameOutputDirectory() const {
 bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 	bool keepProcessingFrame = false;
 	switch (indexingMethod) {
-		case HASH: {
+		case Configuration::INDEX_HASH: {
 			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 			keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();
@@ -385,7 +384,7 @@ bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 			}
 		}
 			break;
-		case ARRAY: {
+		case Configuration::INDEX_ARRAY: {
 			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 			keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();

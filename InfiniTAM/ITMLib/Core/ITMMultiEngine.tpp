@@ -308,7 +308,7 @@ void ITMMultiEngine<TVoxel, TIndex>::SaveSceneToMesh(const char *modelFileName)
 {
 	if (meshingEngine == NULL) return;
 
-	ITMMesh *mesh = new ITMMesh(Configuration::get().GetMemoryType(), mapManager->getLocalMap(0)->scene->index.GetMaxVoxelCount());
+	ITMMesh *mesh = new ITMMesh(Configuration::get().device_type, mapManager->getLocalMap(0)->scene->index.GetMaxVoxelCount());
 
 	meshingEngine->MeshScene(mesh, *mapManager);
 	mesh->WriteSTL(modelFileName);

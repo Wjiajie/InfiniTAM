@@ -106,14 +106,15 @@ public:
 	                                SlavchevaSurfaceTracker::Switches switches,
 	                                TVoxel* liveVoxels, const TIndexData* liveIndexData,
 	                                TVoxel* canonicalVoxels, const TIndexData* canonicalIndexData,
-	                                TWarp* warps, const TIndexData* warpIndexData) :
+	                                TWarp* warps, const TIndexData* warpIndexData, float voxelSize, float narrowBandHalfWidth) :
 			parameters(parameters), switches(switches),
 			liveVoxels(liveVoxels), liveIndexData(liveIndexData),
 			warps(warps), warpIndexData(warpIndexData),
 			canonicalVoxels(canonicalVoxels), canonicalIndexData(canonicalIndexData),
 			liveCache(), canonicalCache(),
 			hasFocusCoordinates(Configuration::get().telemetry_settings.focus_coordinates_specified),
-			focusCoordinates(Configuration::get().telemetry_settings.focus_coordinates) {}
+			focusCoordinates(Configuration::get().telemetry_settings.focus_coordinates),
+			sdfUnity(voxelSize/narrowBandHalfWidth){}
 
 	// endregion =======================================================================================================
 
@@ -183,7 +184,7 @@ public:
 				ComputeSdfHessian(liveSdfHessian, voxelPosition, liveSdf, liveVoxels, liveIndexData, liveCache);
 
 				float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
-				float sdfJacobianNormMinusUnity = sdfJacobianNorm - parameters.unity;
+				float sdfJacobianNormMinusUnity = sdfJacobianNorm - sdfUnity;
 				localLevelSetEnergyGradient = parameters.weightLevelSetTerm * sdfJacobianNormMinusUnity *
 				                              (liveSdfHessian * liveSdfJacobian) /
 				                              (sdfJacobianNorm + parameters.epsilon);
@@ -336,6 +337,8 @@ public:
 
 
 private:
+
+	const float sdfUnity;
 
 	// *** data structure accessors
 	const TVoxel* liveVoxels;

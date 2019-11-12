@@ -2,7 +2,9 @@
 
 //TODO: not supported on platforms besides Linux, adjust via CMake -Greg(GitHub: Algomorph)
 #ifndef WIN32
+
 #include <X11/Xlib.h>
+
 #endif
 
 //stdlib
@@ -10,7 +12,6 @@
 #include <iostream>
 #include <string>
 #include <thread>
-
 
 
 #define BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE
@@ -35,8 +36,6 @@
 #include "../../ITMLib/Core/ITMDynamicEngine.h"
 #include "../../ITMLib/Utils/Visualization/ITMVisualizationWindowManager.h"
 #include "../../ITMLib/Utils/Visualization/ITMVisualizationCommon.h"
-#include "../../ITMLib/Objects/Scene/ITMIndexEnumeration.h"
-
 
 //local
 #include "UIEngine_BPO.h"
@@ -58,12 +57,12 @@ bool isPathMask(const std::string& arg) {
 }
 
 
-ITMDynamicFusionLogger_Interface& GetLogger(IndexingMethod method) {
+ITMDynamicFusionLogger_Interface& GetLogger(Configuration::IndexingMethod method) {
 	switch (method) {
-		case HASH: {
+		case Configuration::INDEX_HASH: {
 			return static_cast<ITMDynamicFusionLogger_Interface&>(ITMDynamicFusionLogger<ITMVoxel, ITMWarp, ITMVoxelBlockHash>::Instance());
 		}
-		case ARRAY: {
+		case Configuration::INDEX_ARRAY: {
 			return static_cast<ITMDynamicFusionLogger_Interface&>(ITMDynamicFusionLogger<ITMVoxel, ITMWarp, ITMPlainVoxelArray>::Instance());
 		}
 	}
@@ -109,7 +108,7 @@ int main(int argc, char** argv) {
 				("help,h", "Print help screen")
 				("calib_file,c", po::value<std::string>(), "Calibration file, e.g.: ./Files/Teddy/calib.txt")
 
-				("input_file,i", po::value<std::vector<std::string>>(), "Input file. 0-3 total arguments. "
+				("input_path,i", po::value<std::vector<std::string>>(), "Input file. 0-3 total arguments. "
 						"Usage scenarios:\n\n"
 						"(0) No arguments: tries to get frames from attached device (OpenNI, "
 	                        "RealSense, etc.). \n"
@@ -248,7 +247,7 @@ int main(int argc, char** argv) {
 
 		//@formatter:on
 		positional_arguments.add("calib_file", 1);
-		positional_arguments.add("input_file", 3);
+		positional_arguments.add("input_path", 3);
 
 		po::variables_map vm;
 		po::store(po::command_line_parser(argc, argv).options(arguments).positional(positional_arguments).style(
@@ -270,6 +269,12 @@ int main(int argc, char** argv) {
 			return EXIT_SUCCESS;
 		}
 
+		if (vm.count("halp")){
+			printf("Ya didn't think it would work, did ya now?\n");
+			printHelp();
+			return EXIT_SUCCESS;
+		}
+
 		std::string calibFilePath;
 		if (vm.count("calib_file")) {
 			calibFilePath = vm["calib_file"].as<std::string>();
@@ -279,32 +284,32 @@ int main(int argc, char** argv) {
 		std::string openniFilePath, rgbVideoFilePath, depthVideoFilePath, rgbImageFileMask, depthImageFileMask,
 				maskImageFileMask, imuInputPath;
 
-		std::vector<std::string> inputFiles;
-		if (vm.count("input_file")) {
-			inputFiles = vm["input_file"].as<std::vector<std::string>>();
+		std::vector<std::string> inputPaths;
+		if (vm.count("input_path")) {
+			inputPaths = vm["input_path"].as<std::vector<std::string>>();
 		}
-		auto inputFileCount = inputFiles.size();
+		auto inputFileCount = inputPaths.size();
 		switch (inputFileCount) {
 			case 0:
 				//no input files
 				break;
 			case 1:
 				//a single OpenNI file
-				openniFilePath = inputFiles[0];
+				openniFilePath = inputPaths[0];
 				break;
 			case 3:
 			default:
-				if (isPathMask(inputFiles[2])) { maskImageFileMask = inputFiles[2]; }
-				else { imuInputPath = inputFiles[2]; }
+				if (isPathMask(inputPaths[2])) { maskImageFileMask = inputPaths[2]; }
+				else { imuInputPath = inputPaths[2]; }
 			case 2:
-				if (isPathMask(inputFiles[0]) && isPathMask(inputFiles[1])) {
-					rgbImageFileMask = inputFiles[0];
-					depthImageFileMask = inputFiles[1];
-				} else if (!isPathMask(inputFiles[0]) && !isPathMask(inputFiles[1])) {
-					rgbVideoFilePath = inputFiles[0];
-					depthVideoFilePath = inputFiles[1];
+				if (isPathMask(inputPaths[0]) && isPathMask(inputPaths[1])) {
+					rgbImageFileMask = inputPaths[0];
+					depthImageFileMask = inputPaths[1];
+				} else if (!isPathMask(inputPaths[0]) && !isPathMask(inputPaths[1])) {
+					rgbVideoFilePath = inputPaths[0];
+					depthVideoFilePath = inputPaths[1];
 				} else {
-					std::cerr << "The first & second input_file arguments need to either both be masks or both be"
+					std::cerr << "The first & second input_path arguments need to either both be masks or both be"
 					             " paths to video files." << std::endl;
 					printHelp();
 					return EXIT_FAILURE;
@@ -326,39 +331,23 @@ int main(int argc, char** argv) {
 			return EXIT_FAILURE;
 		}
 
-// region ================================= SET ENUM VALUES BASED ON CLI ARGUMENTS =====================================
-		IndexingMethod chosenIndexingMethod = HASH;
-		if (!vm["index"].empty()) {
-			std::string indexingArgumentValue = vm["index"].as<std::string>();
-			if (indexingArgumentValue == "hash") {
-				chosenIndexingMethod = HASH;
-			} else if (indexingArgumentValue == "array") {
-				chosenIndexingMethod = ARRAY;
-			} else {
-				printHelp();
-				return EXIT_FAILURE;
-			}
-		}
-// endregion ===========================================================================================================
-
-		ITMDynamicFusionLogger_Interface& logger = GetLogger(chosenIndexingMethod);
-
 // region ================================ SET MAIN ENGINE SETTINGS WITH CLI ARGUMENTS =================================
 		Configuration::load_from_variable_map(vm);
 		auto& settings = Configuration::get();
-
+		Configuration::IndexingMethod chosenIndexingMethod = settings.indexing_method;
+		ITMDynamicFusionLogger_Interface& logger = GetLogger(chosenIndexingMethod);
 		ITMMainEngine* mainEngine = nullptr;
 
 
 		switch (settings.library_mode) {
 			case Configuration::LIBMODE_BASIC:
 				switch (chosenIndexingMethod) {
-					case HASH:
+					case Configuration::INDEX_HASH:
 						mainEngine = new ITMBasicEngine<ITMVoxel, ITMVoxelBlockHash>(imageSource->getCalib(),
 						                                                             imageSource->getRGBImageSize(),
 						                                                             imageSource->getDepthImageSize());
 						break;
-					case ARRAY:
+					case Configuration::INDEX_ARRAY:
 						mainEngine = new ITMBasicEngine<ITMVoxel, ITMPlainVoxelArray>(imageSource->getCalib(),
 						                                                              imageSource->getRGBImageSize(),
 						                                                              imageSource->getDepthImageSize());
@@ -372,12 +361,12 @@ int main(int argc, char** argv) {
 				break;
 			case Configuration::LIBMODE_LOOPCLOSURE:
 				switch (chosenIndexingMethod) {
-					case HASH:
+					case Configuration::INDEX_HASH:
 						mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelBlockHash>(imageSource->getCalib(),
 						                                                             imageSource->getRGBImageSize(),
 						                                                             imageSource->getDepthImageSize());
 						break;
-					case ARRAY:
+					case Configuration::INDEX_ARRAY:
 						mainEngine = new ITMMultiEngine<ITMVoxel, ITMPlainVoxelArray>(imageSource->getCalib(),
 						                                                              imageSource->getRGBImageSize(),
 						                                                              imageSource->getDepthImageSize());
@@ -386,12 +375,12 @@ int main(int argc, char** argv) {
 				break;
 			case Configuration::LIBMODE_DYNAMIC:
 				switch (chosenIndexingMethod) {
-					case HASH:
+					case Configuration::INDEX_HASH:
 						mainEngine = new ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(
 								imageSource->getCalib(), imageSource->getRGBImageSize(),
 								imageSource->getDepthImageSize());
 						break;
-					case ARRAY:
+					case Configuration::INDEX_ARRAY:
 						mainEngine = new ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(
 								imageSource->getCalib(), imageSource->getRGBImageSize(),
 								imageSource->getDepthImageSize());
@@ -417,7 +406,7 @@ int main(int argc, char** argv) {
 		if (record1DSlices) logger.TurnRecordingScene1DSlicesWithUpdatesOn();
 		if (record2DSlices) logger.TurnRecordingScene2DSlicesWithUpdatesOn();
 		if (record3DSlices) logger.TurnRecordingScene3DSlicesWithUpdatesOn();
-		if(settings.telemetry_settings.focus_coordinates_specified){
+		if (settings.telemetry_settings.focus_coordinates_specified) {
 			logger.SetFocusCoordinates(settings.telemetry_settings.focus_coordinates);
 		}
 		logger.SetOutputDirectory(settings.telemetry_settings.output_path);
