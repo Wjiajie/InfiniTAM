@@ -71,5 +71,6 @@ struct ITMSurfelSceneParameters {
 	                         bool useGaussianSampleConfidence_, bool useSurfelMerging_);
 
 	static ITMSurfelSceneParameters BuildFromPTree(const pt::ptree& tree);
+	pt::ptree ToPTree();
 };
 }

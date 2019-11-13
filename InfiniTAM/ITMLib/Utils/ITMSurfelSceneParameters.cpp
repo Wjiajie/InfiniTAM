@@ -126,6 +126,26 @@ ITMSurfelSceneParameters::ITMSurfelSceneParameters(const po::variables_map& vm)
 		                   ITMSurfelSceneParameters().useSurfelMerging :
 		                   !vm["disable_surfel_merging"].as<bool>()) {}
 
+pt::ptree ITMSurfelSceneParameters::ToPTree() {
+	pt::ptree tree;
+	tree.add("surfel_delta_radius", deltaRadius);
+	tree.add("surfel_gaussian_convergence_sigma", gaussianConfidenceSigma);
+	tree.add("surfel_max_merge_angle", maxMergeAngle);
+	tree.add("surfel_max_merge_distance", maxMergeDist);
+	tree.add("surfel_max_radius",maxSurfelRadius);
+	tree.add("surfel_min_radius_overlap_factor", minRadiusOverlapFactor);
+	tree.add("stable_surfel_confidence", stableSurfelConfidence);
+	tree.add("surfel_supersampling_factor", supersamplingFactor);
+	tree.add("tracking_surfel_max_depth", trackingSurfelMaxDepth);
+	tree.add("tracking_surfel_min_confidence", trackingSurfelMinConfidence);
+	tree.add("unstable_surfel_period", unstableSurfelPeriod);
+	tree.add("unstable_surfel_z_offset", unstableSurfelZOffset);
+	tree.add("disable_gaussian_sample_confidence", !useGaussianSampleConfidence);
+	tree.add("disable_surfel_merging", !useSurfelMerging);
+
+	return tree;
+}
+
 ITMSurfelSceneParameters ITMSurfelSceneParameters::BuildFromPTree(const pt::ptree& tree) {
 	boost::optional<float> deltaRadius_opt = tree.get_optional<float>("surfel_delta_radius");
 	boost::optional<float> gaussianConfidenceSigma_opt = tree.get_optional<float>("surfel_gaussian_convergence_sigma");

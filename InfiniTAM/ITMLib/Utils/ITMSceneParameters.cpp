@@ -46,6 +46,17 @@ ITMSceneParameters::ITMSceneParameters(const po::variables_map& vm):
 	stopIntegratingAtMaxW(vm["stop_integration_at_max_weight"].empty() ? ITMSceneParameters().stopIntegratingAtMaxW : vm["stop_integration_at_max_weight"].as<bool>() )
 {}
 
+pt::ptree ITMSceneParameters::ToPTree() {
+	pt::ptree tree;
+	tree.add("narrow_band_half_width_meters", mu);
+	tree.add("max_integration_weight", maxW);
+	tree.add("voxel_size_meters", voxelSize);
+	tree.add("view_frustum_near_clipping_distance", viewFrustum_min);
+	tree.add("view_frustum_far_clipping_distance", viewFrustum_max);
+	tree.add("stop_integration_at_max_weight", stopIntegratingAtMaxW);
+	return tree;
+}
+
 ITMSceneParameters ITMSceneParameters::BuildFromPTree(const pt::ptree& tree) {
 	boost::optional<float> mu_opt = tree.get_optional<float>("narrow_band_half_width_meters");
 	boost::optional<int> maxW_opt = tree.get_optional<int>("max_integration_weight");

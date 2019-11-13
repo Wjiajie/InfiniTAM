@@ -51,6 +51,7 @@ namespace ITMLib
 		ITMSceneParameters();
 		explicit ITMSceneParameters(const po::variables_map& vm);
 		static ITMSceneParameters BuildFromPTree(const pt::ptree& tree);
+		pt::ptree ToPTree();
 
 		/**
 		 * \brief standard constructor setting all elements to passed-in values
