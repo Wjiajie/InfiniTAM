@@ -1,59 +1,64 @@
 {
     "scene_parameters": {
-        "narrow_band_half_width_meters": 0.0399999991,
-        "max_integration_weight": 100,
-        "voxel_size_meters": 0.00400000019,
-        "view_frustum_near_clipping_distance": 0.200000003,
-        "view_frustum_far_clipping_distance": 3,
-        "stop_integration_at_max_weight": "false"
+        "narrow_band_half_width_meters": 0.0500000007,
+        "max_integration_weight": 200,
+        "voxel_size_meters": 0.00499999989,
+        "view_frustum_near_clipping_distance": 0.119999997,
+        "view_frustum_far_clipping_distance": 4.11999989,
+        "stop_integration_at_max_weight": "true"
     },
     "surfel_scene_parameters": {
-        "surfel_delta_radius": 0.5,
-        "surfel_gaussian_convergence_sigma": 0.600000024,
-        "surfel_max_merge_angle": 0.34906584,
-        "surfel_max_merge_distance": 0.00999999978,
-        "surfel_max_radius": 0.00400000019,
-        "surfel_min_radius_overlap_factor": 3.5,
-        "stable_surfel_confidence": 25,
-        "surfel_supersampling_factor": 4,
-        "tracking_surfel_max_depth": 1,
-        "tracking_surfel_min_confidence": 5,
-        "unstable_surfel_period": 20,
-        "unstable_surfel_z_offset": 10000000,
-        "disable_gaussian_sample_confidence": "false",
-        "disable_surfel_merging": "false"
+        "surfel_delta_radius": 0.400000006,
+        "surfel_gaussian_convergence_sigma": 0.5,
+        "surfel_max_merge_angle": 0.383972436,
+        "surfel_max_merge_distance": 0.00800000038,
+        "surfel_max_radius": 0.000300000014,
+        "surfel_min_radius_overlap_factor": 3.4000001,
+        "stable_surfel_confidence": 26,
+        "surfel_supersampling_factor": 5,
+        "tracking_surfel_max_depth": 1.10000002,
+        "tracking_surfel_min_confidence": 4.5,
+        "unstable_surfel_period": 21,
+        "unstable_surfel_z_offset": 300,
+        "disable_gaussian_sample_confidence": "true",
+        "disable_surfel_merging": "true"
     },
     "slavcheva": {
         "preset": "sobolev",
         "parameters": {
-            "learning_rate": 0.100000001,
-            "rigidity_enforcement_factor": 0.100000001,
-            "weight_data_term": 1,
-            "weight_smoothing_term": 0.200000003,
-            "weight_level_set_term": 0.200000003,
-            "level_set_epsilon": "9.99999975e-06"
+            "learning_rate": 0.109999999,
+            "rigidity_enforcement_factor": 0.0900000036,
+            "weight_data_term": 2,
+            "weight_smoothing_term": 0.300000012,
+            "weight_level_set_term": 0.100000001,
+            "level_set_epsilon": "9.99999997e-07"
         },
         "switches": {
-            "disable_data_term": "false",
-            "enable_level_set_term": "false",
-            "disable_smoothing_term": "false",
-            "enable_killing_term": "false",
-            "disable_gradient_smoothing": "false"
+            "disable_data_term": "true",
+            "enable_level_set_term": "true",
+            "disable_smoothing_term": "true",
+            "enable_killing_term": "true",
+            "disable_gradient_smoothing": "true"
         }
     },
     "telemetry_settings": {
-        "output": "output\/"
+        "output": "output1",
+        "focus_coordinates": [
+            20,
+            23,
+            0
+        ]
     },
     "skip_points": "true",
-    "disable_meshing": "false",
-    "device": "cuda",
-    "use_approximate_raycast": "false",
-    "use_threshold_filter": "false",
-    "failure_mode": "ignore",
-    "swapping": "disabled",
-    "mode": "dynamic",
-    "index": "hash",
-    "tracker": "type=extended,levels=rrbb,useDepth=1,minstep=1e-4,outlierSpaceC=0.1,outlierSpaceF=0.004,numiterC=20,numiterF=50,tukeyCutOff=8,framesToSkip=20,framesToWeight=50,failureDec=20.0",
-    "max_iterations": 200,
-    "vector_update_threshold": "9.99999975e-05"
+    "disable_meshing": "true",
+    "device": "cpu",
+    "use_approximate_raycast": "true",
+    "use_threshold_filter": "true",
+    "failure_mode": "relocalize",
+    "swapping": "enabled",
+    "mode": "basic",
+    "index": "array",
+    "tracker": "type=rgb,levels=rrbb",
+    "max_iterations": 300,
+    "vector_update_threshold": "7.00000019e-05"
 }

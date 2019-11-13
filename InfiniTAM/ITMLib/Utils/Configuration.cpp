@@ -612,9 +612,15 @@ pt::ptree Configuration::TelemetrySettings::ToPTree() const {
 	pt::ptree tree;
 	tree.add("output", this->output_path);
 	if (focus_coordinates_specified) {
-		tree.add("focus_coordinates", this->focus_coordinates.x);
-		tree.add("focus_coordinates", this->focus_coordinates.y);
-		tree.add("focus_coordinates", this->focus_coordinates.z);
+		pt::ptree children;
+		pt::ptree child1, child2, child3;
+		child1.put("", focus_coordinates.x);
+		child2.put("", focus_coordinates.y);
+		child3.put("", focus_coordinates.z);
+		children.push_back(std::make_pair("", child1));
+		children.push_back(std::make_pair("", child2));
+		children.push_back(std::make_pair("", child3));
+		tree.add_child("focus_coordinates", children);
 	}
 	return tree;
 }

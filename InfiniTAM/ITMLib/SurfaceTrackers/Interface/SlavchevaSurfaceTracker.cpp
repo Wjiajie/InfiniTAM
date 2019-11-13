@@ -193,7 +193,8 @@ SlavchevaSurfaceTracker::Switches::Switches(const po::variables_map& vm) : Switc
 SlavchevaSurfaceTracker::Switches::Switches(bool enableDataTerm, bool enableLevelSetTerm, bool enableSmoothingTerm,
                                             bool enableKillingRigidityEnforcementTerm,
                                             bool enableSobolevGradientSmoothing) :
-		enableDataTerm(enableDataTerm), enableLevelSetTerm(enableLevelSetTerm),
+		enableDataTerm(enableDataTerm),
+		enableLevelSetTerm(enableLevelSetTerm),
 		enableSmoothingTerm(enableSmoothingTerm),
 		enableKillingRigidityEnforcementTerm(enableKillingRigidityEnforcementTerm),
 		enableSobolevGradientSmoothing(enableSobolevGradientSmoothing) {}

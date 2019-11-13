@@ -53,8 +53,8 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			300,
 			0.00007f
 	);
-	configuration1.save_to_json_file("../../Tests/TestData/config1.json");
-//	Configuration::load_from_json_file("TestData/config1.json");
-//	BOOST_REQUIRE_EQUAL(configuration1,Configuration::get());
+	//configuration1.save_to_json_file("../../Tests/TestData/config1.json");
+	Configuration::load_from_json_file("TestData/config1.json");
+	BOOST_REQUIRE_EQUAL(configuration1,Configuration::get());
 
 }
