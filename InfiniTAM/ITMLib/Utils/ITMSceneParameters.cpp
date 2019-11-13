@@ -15,6 +15,7 @@
 //  ================================================================
 
 #include "ITMSceneParameters.h"
+#include "../Utils/json_utils.h"
 
 using namespace ITMLib;
 
@@ -25,28 +26,31 @@ ITMSceneParameters::ITMSceneParameters(float mu, int maxW, float voxelSize,
 		voxelSize(voxelSize),
 		viewFrustum_min(viewFrustum_min),
 		viewFrustum_max(viewFrustum_max),
-		stopIntegratingAtMaxW(stopIntegratingAtMaxW)
-		{}
+		stopIntegratingAtMaxW(stopIntegratingAtMaxW) {}
 
-ITMSceneParameters::ITMSceneParameters():
+ITMSceneParameters::ITMSceneParameters() :
 		mu(0.04f),
 		maxW(100),
 		voxelSize(0.004f),
 		viewFrustum_min(0.2f),
 		viewFrustum_max(3.0f),
-		stopIntegratingAtMaxW(false)
-{}
+		stopIntegratingAtMaxW(false) {}
 
-ITMSceneParameters::ITMSceneParameters(const po::variables_map& vm):
-	mu(vm["narrow_band_half_width_meters"].empty() ? ITMSceneParameters().mu : vm["narrow_band_half_width_meters"].as<float>() ),
-	maxW(vm["max_integration_weight"].empty() ? ITMSceneParameters().maxW : vm["max_integration_weight"].as<float>() ),
-	voxelSize(vm["voxel_size_meters"].empty() ? ITMSceneParameters().voxelSize : vm["voxel_size_meters"].as<float>() ),
-	viewFrustum_min(vm["view_frustum_near_clipping_distance"].empty() ? ITMSceneParameters().viewFrustum_min : vm["view_frustum_near_clipping_distance"].as<float>() ),
-	viewFrustum_max(vm["view_frustum_far_clipping_distance"].empty() ? ITMSceneParameters().viewFrustum_max : vm["view_frustum_far_clipping_distance"].as<float>() ),
-	stopIntegratingAtMaxW(vm["stop_integration_at_max_weight"].empty() ? ITMSceneParameters().stopIntegratingAtMaxW : vm["stop_integration_at_max_weight"].as<bool>() )
-{}
+ITMSceneParameters::ITMSceneParameters(const po::variables_map& vm) :
+		mu(vm["narrow_band_half_width_meters"].empty() ? ITMSceneParameters().mu
+		                                               : vm["narrow_band_half_width_meters"].as<float>()),
+		maxW(vm["max_integration_weight"].empty() ? ITMSceneParameters().maxW
+		                                          : vm["max_integration_weight"].as<float>()),
+		voxelSize(
+				vm["voxel_size_meters"].empty() ? ITMSceneParameters().voxelSize : vm["voxel_size_meters"].as<float>()),
+		viewFrustum_min(vm["view_frustum_near_clipping_distance"].empty() ? ITMSceneParameters().viewFrustum_min
+		                                                                  : vm["view_frustum_near_clipping_distance"].as<float>()),
+		viewFrustum_max(vm["view_frustum_far_clipping_distance"].empty() ? ITMSceneParameters().viewFrustum_max
+		                                                                 : vm["view_frustum_far_clipping_distance"].as<float>()),
+		stopIntegratingAtMaxW(vm["stop_integration_at_max_weight"].empty() ? ITMSceneParameters().stopIntegratingAtMaxW
+		                                                                   : vm["stop_integration_at_max_weight"].as<bool>()) {}
 
-pt::ptree ITMSceneParameters::ToPTree() {
+pt::ptree ITMSceneParameters::ToPTree() const {
 	pt::ptree tree;
 	tree.add("narrow_band_half_width_meters", mu);
 	tree.add("max_integration_weight", maxW);
@@ -68,9 +72,26 @@ ITMSceneParameters ITMSceneParameters::BuildFromPTree(const pt::ptree& tree) {
 	ITMSceneParameters default_sp;
 
 	return {mu_opt ? mu_opt.get() : default_sp.mu,
-			maxW_opt ? maxW_opt.get() : default_sp.maxW,
-			voxelSize_opt ? voxelSize_opt.get() : default_sp.voxelSize,
-			viewFrustum_min_opt ? viewFrustum_min_opt.get() : default_sp.viewFrustum_min,
-			viewFrustum_max_opt ? viewFrustum_max_opt.get() : default_sp.viewFrustum_max,
-			stopIntegratingAtMaxW_opt ? stopIntegratingAtMaxW_opt.get() : default_sp.stopIntegratingAtMaxW};
+	        maxW_opt ? maxW_opt.get() : default_sp.maxW,
+	        voxelSize_opt ? voxelSize_opt.get() : default_sp.voxelSize,
+	        viewFrustum_min_opt ? viewFrustum_min_opt.get() : default_sp.viewFrustum_min,
+	        viewFrustum_max_opt ? viewFrustum_max_opt.get() : default_sp.viewFrustum_max,
+	        stopIntegratingAtMaxW_opt ? stopIntegratingAtMaxW_opt.get() : default_sp.stopIntegratingAtMaxW};
 }
+
+namespace ITMLib{
+bool operator==(const ITMSceneParameters& p1, const ITMSceneParameters& p2) {
+	return p1.voxelSize == p2.voxelSize &&
+	       p1.viewFrustum_min == p2.viewFrustum_min &&
+	       p1.viewFrustum_max == p2.viewFrustum_max &&
+	       p1.mu == p2.mu &&
+	       p1.maxW == p2.maxW &&
+	       p1.stopIntegratingAtMaxW == p2.stopIntegratingAtMaxW;
+}
+
+std::ostream& operator<<(std::ostream& out, const ITMSceneParameters& p){
+	pt::ptree tree(p.ToPTree());
+	pt::write_json_no_quotes(out, tree, true);
+}
+
+}//namespace ITMLib

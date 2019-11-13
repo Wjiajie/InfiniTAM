@@ -71,6 +71,13 @@ struct ITMSurfelSceneParameters {
 	                         bool useGaussianSampleConfidence_, bool useSurfelMerging_);
 
 	static ITMSurfelSceneParameters BuildFromPTree(const pt::ptree& tree);
-	pt::ptree ToPTree();
+	pt::ptree ToPTree() const;
+
+	friend bool operator==(const ITMSurfelSceneParameters& p1, const ITMSurfelSceneParameters& p2);
+	friend std::ostream& operator<<(std::ostream& out, const ITMSurfelSceneParameters& p);
 };
-}
+
+bool operator==(const ITMSurfelSceneParameters& p1, const ITMSurfelSceneParameters& p2);
+std::ostream& operator<<(std::ostream& out, const ITMSurfelSceneParameters& p);
+
+} // namespace ITMLib

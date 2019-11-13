@@ -13,12 +13,21 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+
+//stdlib
 #include <unordered_map>
-#include "Configuration.h"
-#include <boost/property_tree/json_parser.hpp>
 #include <utility>
+#include <regex>
+
+//boost
+#include <boost/property_tree/json_parser.hpp>
+
+//local
+#include "Configuration.h"
+#include "json_utils.h"
 
 using namespace ITMLib;
+
 
 // region ============================= Boost variables_map processing subroutines =====================================
 
@@ -36,8 +45,11 @@ static Vector3i vector3i_from_variable_map(const po::variables_map& vm, const st
 	return vector3i_from_std_vector(int_vector);
 }
 
-template<typename TEnumType>
-static TEnumType enum_value_from_string(const std::string& string);
+template<typename TEnum>
+static TEnum enum_value_from_string(const std::string& string);
+
+template<typename TEnum>
+static std::string enum_value_to_string(const TEnum& enum_value);
 
 template<>
 MemoryDeviceType enum_value_from_string<MemoryDeviceType>(const std::string& string) {
@@ -58,6 +70,18 @@ MemoryDeviceType enum_value_from_string<MemoryDeviceType>(const std::string& str
 }
 
 template<>
+std::string enum_value_to_string<MemoryDeviceType>(const MemoryDeviceType& enum_value) {
+	switch (enum_value) {
+		case MEMORYDEVICE_CUDA:
+			return "cuda";
+		case MEMORYDEVICE_CPU:
+			return "cpu";
+		case MEMORYDEVICE_METAL:
+			return "metal";
+	}
+}
+
+template<>
 Configuration::SwappingMode enum_value_from_string<Configuration::SwappingMode>(const std::string& string) {
 	static std::unordered_map<std::string, Configuration::SwappingMode> swapping_mode_by_string = {
 			{"enabled",  Configuration::SwappingMode::SWAPPINGMODE_ENABLED},
@@ -68,6 +92,18 @@ Configuration::SwappingMode enum_value_from_string<Configuration::SwappingMode>(
 		DIEWITHEXCEPTION_REPORTLOCATION("Unrecognized swapping mode argument");
 	} else {
 		return swapping_mode_by_string[string];
+	}
+}
+
+template<>
+std::string enum_value_to_string<Configuration::SwappingMode>(const Configuration::SwappingMode& enum_value) {
+	switch (enum_value) {
+		case Configuration::SwappingMode::SWAPPINGMODE_ENABLED:
+			return "enabled";
+		case Configuration::SwappingMode::SWAPPINGMODE_DISABLED:
+			return "disabled";
+		case Configuration::SwappingMode::SWAPPINGMODE_DELETE:
+			return "delete";
 	}
 }
 
@@ -86,17 +122,43 @@ Configuration::FailureMode enum_value_from_string<Configuration::FailureMode>(co
 }
 
 template<>
+std::string enum_value_to_string<Configuration::FailureMode>(const Configuration::FailureMode& enum_value) {
+	switch (enum_value) {
+		case Configuration::FailureMode::FAILUREMODE_IGNORE:
+			return "ignore";
+		case Configuration::FailureMode::FAILUREMODE_RELOCALIZE:
+			return "relocalize";
+		case Configuration::FailureMode::FAILUREMODE_STOP_INTEGRATION:
+			return "stop_integration";
+	}
+}
+
+template<>
 Configuration::LibMode enum_value_from_string<Configuration::LibMode>(const std::string& string) {
 	static std::unordered_map<std::string, Configuration::LibMode> lib_mode_by_string = {
-			{"ignore",           Configuration::LibMode::LIBMODE_BASIC},
-			{"relocalize",       Configuration::LibMode::LIBMODE_BASIC_SURFELS},
-			{"stop_integration", Configuration::LibMode::LIBMODE_DYNAMIC},
-			{"stop_integration", Configuration::LibMode::LIBMODE_LOOPCLOSURE}
+			{"basic",        Configuration::LibMode::LIBMODE_BASIC},
+			{"surfels",      Configuration::LibMode::LIBMODE_BASIC_SURFELS},
+			{"dynamic",      Configuration::LibMode::LIBMODE_DYNAMIC},
+			{"loop_closure", Configuration::LibMode::LIBMODE_LOOPCLOSURE}
 	};
 	if (lib_mode_by_string.find(string) == lib_mode_by_string.end()) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Unrecognized failure mode argument");
 	} else {
 		return lib_mode_by_string[string];
+	}
+}
+
+template<>
+std::string enum_value_to_string<Configuration::LibMode>(const Configuration::LibMode& enum_value) {
+	switch (enum_value) {
+		case Configuration::LibMode::LIBMODE_BASIC:
+			return "basic";
+		case Configuration::LibMode::LIBMODE_BASIC_SURFELS:
+			return "surfels";
+		case Configuration::LibMode::LIBMODE_DYNAMIC:
+			return "dynamic";
+		case Configuration::LibMode::LIBMODE_LOOPCLOSURE:
+			return "loop_closure";
 	}
 }
 
@@ -116,6 +178,16 @@ Configuration::IndexingMethod enum_value_from_string<Configuration::IndexingMeth
 }
 
 template<>
+std::string enum_value_to_string<Configuration::IndexingMethod>(const Configuration::IndexingMethod& enum_value) {
+	switch (enum_value) {
+		case Configuration::IndexingMethod::INDEX_ARRAY:
+			return "array";
+		case Configuration::IndexingMethod::INDEX_HASH:
+			return "hash";
+	}
+}
+
+template<>
 SlavchevaSurfaceTracker::ConfigurationMode enum_value_from_string<SlavchevaSurfaceTracker::ConfigurationMode>(
 		const std::string& string) {
 	static std::unordered_map<std::string, SlavchevaSurfaceTracker::ConfigurationMode> indexing_method_by_string = {
@@ -128,6 +200,17 @@ SlavchevaSurfaceTracker::ConfigurationMode enum_value_from_string<SlavchevaSurfa
 		DIEWITHEXCEPTION_REPORTLOCATION("Unrecognized slavcheva mode argument");
 	} else {
 		return indexing_method_by_string[string];
+	}
+}
+
+template<>
+std::string enum_value_to_string<SlavchevaSurfaceTracker::ConfigurationMode>(
+		const SlavchevaSurfaceTracker::ConfigurationMode& enum_value) {
+	switch (enum_value) {
+		case SlavchevaSurfaceTracker::ConfigurationMode::KILLING_FUSION:
+			return "killing";
+		case SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION:
+			return "sobolev";
 	}
 }
 
@@ -199,13 +282,13 @@ Configuration::Configuration(const po::variables_map& vm) :
 		tracker_configuration(
 				vm["tracker"].empty() ? (library_mode == LIBMODE_BASIC_SURFELS ? default_surfel_tracker_configuration :
 				                         default_depth_only_extended_tracker_configuration)
-				                      : vm["tracker"].as<std::string>().c_str()),
+				                      : vm["tracker"].as<std::string>()),
 		max_iteration_threshold(vm["max_iterations"].empty() ?
 		                        Configuration().max_iteration_threshold
 		                                                     :
 		                        vm["max_iterations"].as<unsigned int>()),
 		max_update_length_threshold(vm["vector_update_threshold"].empty() ?
-		                            Configuration().max_iteration_threshold
+		                            Configuration().max_update_length_threshold
 		                                                                  :
 		                            vm["vector_update_threshold"].as<float>()) {
 #ifdef COMPILE_WITHOUT_CUDA
@@ -392,8 +475,8 @@ Configuration::Configuration(
 		Configuration::SwappingMode swapping_mode,
 		Configuration::LibMode library_mode, Configuration::IndexingMethod indexing_method,
 		std::string tracker_configuration,
-		unsigned int surface_tracking_max_optimization_iteration_count,
-		float surface_tracking_optimization_vector_update_threshold_meters) :
+		unsigned int max_iteration_threshold,
+		float max_update_length_threshold) :
 
 		scene_parameters(scene_parameters),
 		surfel_scene_parameters(surfel_scene_parameters),
@@ -411,9 +494,68 @@ Configuration::Configuration(
 		library_mode(library_mode),
 		indexing_method(indexing_method),
 		tracker_configuration(std::move(tracker_configuration)),
-		max_iteration_threshold(surface_tracking_max_optimization_iteration_count),
+		max_iteration_threshold(max_iteration_threshold),
 		max_update_length_threshold(
-				surface_tracking_optimization_vector_update_threshold_meters) {}
+				max_update_length_threshold) {}
+
+namespace ITMLib {
+bool operator==(const Configuration& c1, const Configuration& c2) {
+	return c1.scene_parameters == c2.scene_parameters &&
+	       c1.surfel_scene_parameters == c2.surfel_scene_parameters &&
+	       c1.slavcheva_parameters == c2.slavcheva_parameters &&
+	       c1.slavcheva_switches == c2.slavcheva_switches &&
+	       c1.telemetry_settings == c2.telemetry_settings &&
+	       c1.skip_points == c2.skip_points &&
+	       c1.create_meshing_engine == c2.create_meshing_engine &&
+	       c1.device_type == c2.device_type &&
+	       c1.use_approximate_raycast == c2.use_approximate_raycast &&
+	       c1.use_threshold_filter == c2.use_threshold_filter &&
+	       c1.use_bilateral_filter == c2.use_bilateral_filter &&
+	       c1.behavior_on_failure == c2.behavior_on_failure &&
+	       c1.swapping_mode == c2.swapping_mode &&
+	       c1.library_mode == c2.library_mode &&
+	       c1.indexing_method == c2.indexing_method &&
+	       c1.tracker_configuration == c2.tracker_configuration &&
+	       c1.max_iteration_threshold == c2.max_iteration_threshold &&
+	       c1.max_update_length_threshold == c2.max_update_length_threshold;
+}
+std::ostream& operator<<(std::ostream& out, const Configuration& c){
+	pt::ptree tree(c.to_ptree());
+	pt::write_json_no_quotes(out, tree, true);
+}
+}//namespace ITMLib
+
+pt::ptree Configuration::to_ptree() const{
+	pt::ptree tree;
+	tree.add_child("scene_parameters", this->scene_parameters.ToPTree());
+	tree.add_child("surfel_scene_parameters", this->surfel_scene_parameters.ToPTree());
+	tree.add("slavcheva.preset", enum_value_to_string(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION));
+	tree.add_child("slavcheva.parameters", this->slavcheva_parameters.ToPTree());
+	tree.add_child("slavcheva.switches", slavcheva_switches.ToPTree());
+	tree.add_child("telemetry_settings", this->telemetry_settings.ToPTree());
+	tree.add("skip_points", skip_points);
+	tree.add("disable_meshing", !create_meshing_engine);
+	tree.add("device", enum_value_to_string(this->device_type));
+	tree.add("use_approximate_raycast", this->use_approximate_raycast);
+	tree.add("use_threshold_filter", this->use_threshold_filter);
+	tree.add("failure_mode", enum_value_to_string(this->behavior_on_failure));
+	tree.add("swapping", enum_value_to_string(this->swapping_mode));
+	tree.add("mode", enum_value_to_string(this->library_mode));
+	tree.add("index", enum_value_to_string(this->indexing_method));
+	tree.add("tracker", this->tracker_configuration);
+	tree.add("max_iterations", this->max_iteration_threshold);
+	tree.add("vector_update_threshold", this->max_update_length_threshold);
+	return tree;
+}
+
+void Configuration::save_configuration_to_json_file(const std::string& path) {
+	pt::write_json_no_quotes(path, instance->to_ptree(), true);
+}
+
+
+void Configuration::save_to_json_file(const std::string& path) {
+	pt::write_json_no_quotes(path, this->to_ptree(), true);
+}
 
 
 Configuration::TelemetrySettings::TelemetrySettings() :
@@ -458,12 +600,34 @@ Configuration::TelemetrySettings Configuration::TelemetrySettings::BuildFromPTre
 	return {output_path_opt ? output_path_opt.get() : default_ts.output_path,
 	        (bool) focus_coords_opt,
 	        focus_coords_opt ? vector3i_from_std_vector(focus_coords_opt.get()) : default_ts.focus_coordinates};
-
-	return Configuration::TelemetrySettings();
 }
 
-Configuration::TelemetrySettings::TelemetrySettings(std::string output_path, bool focus_coordinates_specified,
+Configuration::TelemetrySettings::TelemetrySettings(std::string  output_path, bool focus_coordinates_specified,
                                                     Vector3i focus_coordinates) :
-		output_path(output_path),
+		output_path(std::move(output_path)),
 		focus_coordinates_specified(focus_coordinates_specified),
 		focus_coordinates(focus_coordinates) {}
+
+pt::ptree Configuration::TelemetrySettings::ToPTree() const {
+	pt::ptree tree;
+	tree.add("output", this->output_path);
+	if (focus_coordinates_specified) {
+		tree.add("focus_coordinates", this->focus_coordinates.x);
+		tree.add("focus_coordinates", this->focus_coordinates.y);
+		tree.add("focus_coordinates", this->focus_coordinates.z);
+	}
+	return tree;
+}
+
+namespace ITMLib {
+bool operator==(const Configuration::TelemetrySettings& ts1, const Configuration::TelemetrySettings& ts2) {
+	return ts1.output_path == ts2.output_path &&
+	       ts1.focus_coordinates_specified == ts2.focus_coordinates_specified &&
+	       (!ts1.focus_coordinates_specified || ts1.focus_coordinates == ts2.focus_coordinates);
+}
+std::ostream& operator<<(std::ostream& out, const Configuration::TelemetrySettings& ts){
+	pt::ptree tree(ts.ToPTree());
+	pt::write_json_no_quotes(out, tree, true);
+}
+
+}//namespace ITMLib

@@ -51,7 +51,10 @@ namespace ITMLib
 		ITMSceneParameters();
 		explicit ITMSceneParameters(const po::variables_map& vm);
 		static ITMSceneParameters BuildFromPTree(const pt::ptree& tree);
-		pt::ptree ToPTree();
+		pt::ptree ToPTree() const;
+
+		friend bool operator== (const ITMSceneParameters &p1, const ITMSceneParameters &p2);
+		friend std::ostream& operator<<(std::ostream& out, const ITMSceneParameters& parameters);
 
 		/**
 		 * \brief standard constructor setting all elements to passed-in values
@@ -67,5 +70,10 @@ namespace ITMLib
 
 
 
+
+
 	};
+
+	bool operator==(const ITMSceneParameters &p1, const ITMSceneParameters &p2);
+	std::ostream& operator<<(std::ostream& out, const ITMSceneParameters& parameters);
 }

@@ -79,6 +79,7 @@ if (BUILD_TESTS)
     itm_add_test(NAME WarpScene SOURCES Test_WarpScene.cpp)
     itm_add_test(NAME FuseLifeIntoCanonical SOURCES Test_FuseLifeIntoCanonical.cpp)
     itm_add_test(NAME WarpGradient_PVA_to_VBH SOURCES Test_WarpGradient_PVA_to_VBH.cpp)
+    itm_add_test(NAME Configuration SOURCES Test_Configuration.cpp)
 
     #####################################################
     # Recursively transfer test data to build directory #
@@ -89,6 +90,7 @@ if (BUILD_TESTS)
          "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.pnm"
          "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.txt"
          "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.dat"
+         "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.json"
          )
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/TestData")
     foreach (TEST_DATA_FILE ${TEST_DATA_FILES})

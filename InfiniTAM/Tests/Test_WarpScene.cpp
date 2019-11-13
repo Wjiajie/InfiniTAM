@@ -21,7 +21,6 @@
 
 //boost
 #include <boost/test/unit_test.hpp>
-#include <boost/property_tree/ptree.hpp>
 
 //local
 #include "../ITMLib/ITMLibDefines.h"
@@ -39,7 +38,6 @@
 #include "TestUtils.h"
 
 using namespace ITMLib;
-namespace pt = boost::property_tree;
 
 typedef ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray> RecoEngine_CPU_PVA;
 typedef ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMVoxelBlockHash> RecoEngine_CPU_VBH;
@@ -141,9 +139,7 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_PVA) {
 }
 
 BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_VBH) {
-	pt::ptree tree;
-
-
+	
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps;
 	loadSdfVolume(&warps, "TestData/snoopy_result_fr16-17_partial_VBH/warp_field_0_complete_",
 	              MEMORYDEVICE_CUDA);

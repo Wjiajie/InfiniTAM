@@ -28,9 +28,14 @@ public:
 	static void load_default();
 	static void load_from_variable_map(const po::variables_map& vm);
 	static void load_from_json_file(const std::string& path);
+	static void save_configuration_to_json_file(const std::string& path);
+	void save_to_json_file(const std::string& path);
+
 	static Configuration* from_property_tree(const pt::ptree& tree);
 
 	~Configuration() = default;
+
+	pt::ptree to_ptree() const;
 
 	// region ============================================== NESTED ENUMS ==============================================
 
@@ -62,10 +67,13 @@ public:
 
 	struct TelemetrySettings {
 		explicit TelemetrySettings(const po::variables_map& vm);
-		static TelemetrySettings BuildFromPTree(const pt::ptree& tree);
+		static TelemetrySettings BuildFromPTree(const pt::ptree& tree) ;
 		TelemetrySettings();
-		TelemetrySettings(std::string output_path, bool focus_coordinates_specified = false,
+		TelemetrySettings(std::string  output_path, bool focus_coordinates_specified = false,
 		                  Vector3i focus_coordinates = Vector3i(0));
+		friend bool operator==(const TelemetrySettings& ts1, const TelemetrySettings& ts2);
+		friend std::ostream& operator<<(std::ostream& out, const TelemetrySettings& ts);
+		pt::ptree ToPTree() const;
 		/// Where to write any kind of output (intended to be used application-wise)
 		const std::string output_path = "./State/";
 		/// Whether telemetry / diagnostics / logging for a trouble spot is enabled
@@ -92,8 +100,11 @@ public:
 	              Configuration::LibMode library_mode,
 	              Configuration::IndexingMethod indexing_method,
 	              std::string tracker_configuration,
-	              unsigned int surface_tracking_max_optimization_iteration_count,
-	              float surface_tracking_optimization_vector_update_threshold_meters);
+	              unsigned int max_iteration_threshold,
+	              float max_update_length_threshold);
+
+	friend bool operator==(const Configuration& c1, const Configuration& c2);
+	friend std::ostream& operator<<(std::ostream& out, const Configuration& c);
 
 	//TODO: group these settings into structs as appropriate, re-organize the structs by class usage, i.e.
 	// those settings exclusively used by a specific class should be in a public inner struct of this class
@@ -151,4 +162,9 @@ private:
 	static const std::string default_IMU_extended_tracker_configuration;
 	static const std::string default_surfel_tracker_configuration;
 };
+
+bool operator==(const Configuration::TelemetrySettings& ts1, const Configuration::TelemetrySettings& ts2);
+std::ostream& operator<<(std::ostream& out, const Configuration::TelemetrySettings& ts);
+bool operator==(const Configuration& c1, const Configuration& c2);
+std::ostream& operator<<(std::ostream& out, const Configuration& c);
 }

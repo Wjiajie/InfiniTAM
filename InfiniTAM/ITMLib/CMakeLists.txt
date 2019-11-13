@@ -669,6 +669,7 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_SOURCES
     )
 set(ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_HEADERS
 	SurfaceTrackers/Interface/SurfaceTrackerInterface.h
+	SurfaceTrackers/Interface/SlavchevaSufraceTracker.h
     )
 ##
 set(ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS
@@ -717,6 +718,7 @@ set(ITMLIB_UTILS_HEADERS
     Utils/ITMImageTypes.h
     Utils/ITMHashBlockProperties.h
     Utils/ITMVoxelFlags.h
+	Utils/json_utils.h
 	Utils/Configuration.h
     Utils/ITMMath.h
     Utils/ITMMemoryBlockTypes.h

@@ -14,6 +14,7 @@
 //  limitations under the License.
 //  ================================================================
 #include "ITMSurfelSceneParameters.h"
+#include "json_utils.h"
 
 using namespace ITMLib;
 
@@ -126,7 +127,7 @@ ITMSurfelSceneParameters::ITMSurfelSceneParameters(const po::variables_map& vm)
 		                   ITMSurfelSceneParameters().useSurfelMerging :
 		                   !vm["disable_surfel_merging"].as<bool>()) {}
 
-pt::ptree ITMSurfelSceneParameters::ToPTree() {
+pt::ptree ITMSurfelSceneParameters::ToPTree() const {
 	pt::ptree tree;
 	tree.add("surfel_delta_radius", deltaRadius);
 	tree.add("surfel_gaussian_convergence_sigma", gaussianConfidenceSigma);
@@ -178,6 +179,32 @@ ITMSurfelSceneParameters ITMSurfelSceneParameters::BuildFromPTree(const pt::ptre
 	        unstableSurfelPeriod_opt ? unstableSurfelPeriod_opt.get() : default_ssp.unstableSurfelPeriod,
 	        unstableSurfelZOffset_opt ? unstableSurfelZOffset_opt.get() : default_ssp.unstableSurfelZOffset,
 	        disableGaussianSampleConfidence_opt ? !disableGaussianSampleConfidence_opt.get() : default_ssp.useGaussianSampleConfidence,
-	        disableSurfelMerging_opt ? !disableSurfelMerging_opt.get() : default_ssp.useGaussianSampleConfidence};
+	        disableSurfelMerging_opt ? !disableSurfelMerging_opt.get() : default_ssp.useSurfelMerging};
 }
 
+namespace ITMLib {
+bool operator==(const ITMSurfelSceneParameters& p1, const ITMSurfelSceneParameters& p2) {
+	return p1.deltaRadius == p2.deltaRadius &&
+	       p1.gaussianConfidenceSigma == p2.gaussianConfidenceSigma &&
+	       p1.maxMergeAngle == p2.maxMergeAngle &&
+	       p1.maxMergeDist == p2.maxMergeDist &&
+	       p1.maxSurfelRadius == p2.maxSurfelRadius &&
+	       p1.minRadiusOverlapFactor == p2.minRadiusOverlapFactor &&
+	       p1.stableSurfelConfidence == p2.stableSurfelConfidence &&
+	       p1.minRadiusOverlapFactor == p2.minRadiusOverlapFactor &&
+	       p1.stableSurfelConfidence == p2.stableSurfelConfidence &&
+	       p1.supersamplingFactor == p2.supersamplingFactor &&
+	       p1.trackingSurfelMaxDepth == p2.trackingSurfelMaxDepth &&
+	       p1.trackingSurfelMinConfidence == p2.trackingSurfelMinConfidence &&
+	       p1.unstableSurfelPeriod == p2.unstableSurfelPeriod &&
+	       p1.unstableSurfelZOffset == p2.unstableSurfelZOffset &&
+	       p1.useGaussianSampleConfidence == p2.useGaussianSampleConfidence &&
+	       p1.useSurfelMerging == p2.useSurfelMerging;
+}
+
+std::ostream& operator<<(std::ostream& out, const ITMSurfelSceneParameters& p){
+	pt::ptree tree(p.ToPTree());
+	pt::write_json_no_quotes(out, tree, true);
+}
+
+}//namespace ITMLib
