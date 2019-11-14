@@ -239,10 +239,11 @@ static Configuration::IndexingMethod indexing_method_from_variable_map(const po:
 
 template<typename TEnum>
 static boost::optional<TEnum> optional_enum_value_from_ptree(const pt::ptree& ptree, const pt::ptree::key_type& key) {
-	if (ptree.count(key) == 0) {
-		return boost::optional<TEnum>{};
-	} else {
+	auto child = ptree.get_child_optional(key);
+	if (child) {
 		return boost::optional<TEnum>(enum_value_from_string<TEnum>(ptree.get<std::string>(key)));
+	} else {
+		return boost::optional<TEnum>{};
 	}
 }
 
@@ -389,20 +390,24 @@ void Configuration::load_from_json_file(const std::string& path) {
 
 template<typename TJsonParsable>
 static boost::optional<TJsonParsable> as_optional_parsable(const pt::ptree& tree, pt::ptree::key_type const& key) {
-	if (tree.count(key) == 0) {
+	auto subtree = tree.get_child_optional(key);
+	if (subtree) {
+		return boost::optional<TJsonParsable>(TJsonParsable::BuildFromPTree(subtree.get()));
+	} else {
 		return boost::optional<TJsonParsable>{};
 	}
-	return TJsonParsable::BuildFromPTree(tree.get_child(key));
 }
 
 template<typename TJsonParsable>
 static boost::optional<TJsonParsable>
 as_optional_parsable_slavcheva(const pt::ptree& tree, pt::ptree::key_type const& key,
                                SlavchevaSurfaceTracker::ConfigurationMode mode) {
-	if (tree.count(key) == 0) {
+	auto subtree = tree.get_child_optional(key);
+	if (subtree) {
+		return boost::optional<TJsonParsable>(TJsonParsable::BuildFromPTree(subtree.get(), mode));
+	} else {
 		return boost::optional<TJsonParsable>{};
 	}
-	return TJsonParsable::BuildFromPTree(tree.get_child(key), mode);
 }
 
 
@@ -519,13 +524,14 @@ bool operator==(const Configuration& c1, const Configuration& c2) {
 	       c1.max_iteration_threshold == c2.max_iteration_threshold &&
 	       c1.max_update_length_threshold == c2.max_update_length_threshold;
 }
-std::ostream& operator<<(std::ostream& out, const Configuration& c){
+
+std::ostream& operator<<(std::ostream& out, const Configuration& c) {
 	pt::ptree tree(c.to_ptree());
 	pt::write_json_no_quotes(out, tree, true);
 }
 }//namespace ITMLib
 
-pt::ptree Configuration::to_ptree() const{
+pt::ptree Configuration::to_ptree() const {
 	pt::ptree tree;
 	tree.add_child("scene_parameters", this->scene_parameters.ToPTree());
 	tree.add_child("surfel_scene_parameters", this->surfel_scene_parameters.ToPTree());
@@ -538,13 +544,14 @@ pt::ptree Configuration::to_ptree() const{
 	tree.add("device", enum_value_to_string(this->device_type));
 	tree.add("use_approximate_raycast", this->use_approximate_raycast);
 	tree.add("use_threshold_filter", this->use_threshold_filter);
+	tree.add("use_bilateral_filter", this->use_bilateral_filter);
 	tree.add("failure_mode", enum_value_to_string(this->behavior_on_failure));
 	tree.add("swapping", enum_value_to_string(this->swapping_mode));
 	tree.add("mode", enum_value_to_string(this->library_mode));
 	tree.add("index", enum_value_to_string(this->indexing_method));
 	tree.add("tracker", this->tracker_configuration);
-	tree.add("max_iterations", this->max_iteration_threshold);
-	tree.add("vector_update_threshold", this->max_update_length_threshold);
+	tree.add("surface_tracking.max_iterations", this->max_iteration_threshold);
+	tree.add("surface_tracking.vector_update_threshold", this->max_update_length_threshold);
 	return tree;
 }
 
@@ -602,7 +609,7 @@ Configuration::TelemetrySettings Configuration::TelemetrySettings::BuildFromPTre
 	        focus_coords_opt ? vector3i_from_std_vector(focus_coords_opt.get()) : default_ts.focus_coordinates};
 }
 
-Configuration::TelemetrySettings::TelemetrySettings(std::string  output_path, bool focus_coordinates_specified,
+Configuration::TelemetrySettings::TelemetrySettings(std::string output_path, bool focus_coordinates_specified,
                                                     Vector3i focus_coordinates) :
 		output_path(std::move(output_path)),
 		focus_coordinates_specified(focus_coordinates_specified),
@@ -631,7 +638,8 @@ bool operator==(const Configuration::TelemetrySettings& ts1, const Configuration
 	       ts1.focus_coordinates_specified == ts2.focus_coordinates_specified &&
 	       (!ts1.focus_coordinates_specified || ts1.focus_coordinates == ts2.focus_coordinates);
 }
-std::ostream& operator<<(std::ostream& out, const Configuration::TelemetrySettings& ts){
+
+std::ostream& operator<<(std::ostream& out, const Configuration::TelemetrySettings& ts) {
 	pt::ptree tree(ts.ToPTree());
 	pt::write_json_no_quotes(out, tree, true);
 }

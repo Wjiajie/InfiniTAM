@@ -54,11 +54,14 @@
     "device": "cpu",
     "use_approximate_raycast": "true",
     "use_threshold_filter": "true",
+    "use_bilateral_filter": "true",
     "failure_mode": "relocalize",
     "swapping": "enabled",
     "mode": "basic",
     "index": "array",
     "tracker": "type=rgb,levels=rrbb",
-    "max_iterations": 300,
-    "vector_update_threshold": "7.00000019e-05"
+    "surface_tracking": {
+        "max_iterations": 300,
+        "vector_update_threshold": "7.00000019e-05"
+    }
 }
