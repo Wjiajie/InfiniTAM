@@ -29,15 +29,14 @@
 #include "../../../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 
 
-
 using namespace ITMLib;
 
-namespace ITMLib{
-	enum Statistic{
-		MINIMUM,
-		MAXIMUM,
-		MEAN
-	};
+namespace ITMLib {
+enum Statistic {
+	MINIMUM,
+	MAXIMUM,
+	MEAN
+};
 }
 
 //================================================ VECTOR/GRADIENT FIELDS ==============================================
@@ -53,27 +52,30 @@ struct ComputeFlowWarpLengthStatisticFunctor<false, TVoxel, TIndex, TDeviceType,
 	}
 };
 
-template <typename TVoxel, Statistic TStatistic>
+template<typename TVoxel, Statistic TStatistic>
 struct HandleAggregate;
-template <typename TVoxel>
-struct HandleAggregate<TVoxel, MINIMUM>{
+template<typename TVoxel>
+struct HandleAggregate<TVoxel, MINIMUM> {
 	_DEVICE_WHEN_AVAILABLE_
-	inline static void aggregateStatistic(ATOMIC_ARGUMENT(double) value, ATOMIC_ARGUMENT(unsigned int) count, TVoxel& voxel){
+	inline static void
+	aggregateStatistic(ATOMIC_ARGUMENT(double) value, ATOMIC_ARGUMENT(unsigned int) count, TVoxel& voxel) {
 		ATOMIC_MIN(value, static_cast<double>(ORUtils::length(voxel.flow_warp)));
 
 	}
 };
-template <typename TVoxel>
-struct HandleAggregate<TVoxel, MAXIMUM>{
+template<typename TVoxel>
+struct HandleAggregate<TVoxel, MAXIMUM> {
 	_DEVICE_WHEN_AVAILABLE_
-	inline static void aggregateStatistic(ATOMIC_ARGUMENT(double) value, ATOMIC_ARGUMENT(unsigned int) count, TVoxel& voxel){
+	inline static void
+	aggregateStatistic(ATOMIC_ARGUMENT(double) value, ATOMIC_ARGUMENT(unsigned int) count, TVoxel& voxel) {
 		ATOMIC_MAX(value, static_cast<double>(ORUtils::length(voxel.flow_warp)));
 	}
 };
-template <typename TVoxel>
-struct HandleAggregate<TVoxel, MEAN>{
+template<typename TVoxel>
+struct HandleAggregate<TVoxel, MEAN> {
 	_DEVICE_WHEN_AVAILABLE_
-	inline static void aggregateStatistic(ATOMIC_ARGUMENT(double) value, ATOMIC_ARGUMENT(unsigned int) count, TVoxel& voxel){
+	inline static void
+	aggregateStatistic(ATOMIC_ARGUMENT(double) value, ATOMIC_ARGUMENT(unsigned int) count, TVoxel& voxel) {
 		ATOMIC_ADD(value, static_cast<double>(ORUtils::length(voxel.flow_warp)));
 		ATOMIC_ADD(count, 1u);
 	}
@@ -83,9 +85,8 @@ struct HandleAggregate<TVoxel, MEAN>{
 template<typename TVoxel, typename TIndex, MemoryDeviceType TDeviceType, Statistic TStatistic>
 struct ComputeFlowWarpLengthStatisticFunctor<true, TVoxel, TIndex, TDeviceType, TStatistic> {
 
-	~ComputeFlowWarpLengthStatisticFunctor(){
-		CLEAN_UP_ATOMIC(aggregate);
-		CLEAN_UP_ATOMIC(count);
+	~ComputeFlowWarpLengthStatisticFunctor() {
+		CLEAN_UP_ATOMIC(aggregate);CLEAN_UP_ATOMIC(count);
 	}
 
 	static double compute(ITMVoxelVolume<TVoxel, TIndex>* scene) {
@@ -95,9 +96,9 @@ struct ComputeFlowWarpLengthStatisticFunctor<true, TVoxel, TIndex, TDeviceType, 
 		ITMSceneTraversalEngine<TVoxel, TIndex, TDeviceType>::VoxelTraversal(scene, instance);
 		double aggregate = GET_ATOMIC_VALUE_CPU(instance.aggregate);
 		unsigned int count = GET_ATOMIC_VALUE_CPU(instance.count);
-		if(TStatistic == MEAN){
+		if (TStatistic == MEAN) {
 			return aggregate / count;
-		}else{
+		} else {
 			return aggregate;
 		}
 	}
@@ -107,7 +108,7 @@ struct ComputeFlowWarpLengthStatisticFunctor<true, TVoxel, TIndex, TDeviceType, 
 
 	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& voxel) {
-		HandleAggregate<TVoxel,TStatistic>::aggregateStatistic(aggregate, count, voxel);
+		HandleAggregate<TVoxel, TStatistic>::aggregateStatistic(aggregate, count, voxel);
 	}
 };
 
@@ -118,10 +119,11 @@ struct ComputeVoxelCountWithSpecificValue;
 
 template<class TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
 struct ComputeVoxelCountWithSpecificValue<true, TVoxel, TIndex, TMemoryDeviceType> {
-	explicit ComputeVoxelCountWithSpecificValue(float value): value(value){
+	explicit ComputeVoxelCountWithSpecificValue(float value) : value(value) {
 		INITIALIZE_ATOMIC(unsigned int, count, 0u);
 	}
-	~ComputeVoxelCountWithSpecificValue(){
+
+	~ComputeVoxelCountWithSpecificValue() {
 		CLEAN_UP_ATOMIC(count);
 	}
 
@@ -136,15 +138,16 @@ struct ComputeVoxelCountWithSpecificValue<true, TVoxel, TIndex, TMemoryDeviceTyp
 
 	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& voxel) {
-		ATOMIC_ADD(count, (unsigned int)(TVoxel::valueToFloat(voxel.sdf) == value));
+		ATOMIC_ADD(count, (unsigned int) (TVoxel::valueToFloat(voxel.sdf) == value));
 	}
 };
 
 template<class TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
 struct ComputeVoxelCountWithSpecificValue<false, TVoxel, TIndex, TMemoryDeviceType> {
 	static int compute(ITMVoxelVolume<TVoxel, TIndex>* scene, float value) {
-		DIEWITHEXCEPTION("Voxel volume issued to count voxels with specific SDF value appears to have no sdf information. "
-		                 "Voxels need to have sdf information.");
+		DIEWITHEXCEPTION(
+				"Voxel volume issued to count voxels with specific SDF value appears to have no sdf information. "
+				"Voxels need to have sdf information.");
 		return 0;
 	}
 };
@@ -152,28 +155,31 @@ struct ComputeVoxelCountWithSpecificValue<false, TVoxel, TIndex, TMemoryDeviceTy
 
 //================================================== SUM OF TOTAL SDF ==================================================
 
-template<bool hasSemanticInformation, typename TVoxel, typename TIndex>
+template<bool hasSemanticInformation, typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
 struct SumSDFFunctor;
 
-template<class TVoxel, typename TIndex>
-struct SumSDFFunctor<false, TVoxel, TIndex> {
+template<class TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+struct SumSDFFunctor<false, TVoxel, TIndex, TMemoryDeviceType> {
+
 	static double compute(ITMVoxelVolume<TVoxel, TIndex>* scene, ITMLib::VoxelFlags voxelType) {
 		DIEWITHEXCEPTION_REPORTLOCATION(
 				"Voxels need to have semantic information to be marked as truncated or non-truncated.");
 		return 0.0;
 	}
 };
-template<class TVoxel, typename TIndex>
-struct SumSDFFunctor<true, TVoxel, TIndex> {
-	explicit SumSDFFunctor(ITMLib::VoxelFlags voxelType) : voxelType(voxelType){
+template<class TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+struct SumSDFFunctor<true, TVoxel, TIndex, TMemoryDeviceType> {
+	explicit SumSDFFunctor(ITMLib::VoxelFlags voxelType) : voxelType(voxelType) {
 		INITIALIZE_ATOMIC(double, sum, 0.0);
 	}
-	~SumSDFFunctor(){
+
+	~SumSDFFunctor() {
 		CLEAN_UP_ATOMIC(sum);
 	}
+
 	static double compute(ITMVoxelVolume<TVoxel, TIndex>* scene, ITMLib::VoxelFlags voxelType) {
 		SumSDFFunctor instance(voxelType);
-		ITMSceneTraversalEngine<TVoxel, TIndex, MEMORYDEVICE_CPU>::VoxelTraversal(scene, instance);
+		ITMSceneTraversalEngine<TVoxel, TIndex, TMemoryDeviceType>::VoxelTraversal(scene, instance);
 		return GET_ATOMIC_VALUE_CPU(instance.sum);
 	}
 
@@ -195,7 +201,8 @@ struct IsAlteredCountFunctor {
 	IsAlteredCountFunctor() {
 		INITIALIZE_ATOMIC(unsigned int, count, 0u);
 	};
-	~IsAlteredCountFunctor(){
+
+	~IsAlteredCountFunctor() {
 		CLEAN_UP_ATOMIC(count);
 	}
 
@@ -206,9 +213,78 @@ struct IsAlteredCountFunctor {
 		}
 	}
 
-	unsigned int GetCount(){
+	unsigned int GetCount() {
 		return GET_ATOMIC_VALUE_CPU(count);
 	}
 
 	DECLARE_ATOMIC(unsigned int, count);
+};
+
+//============================================ BOUNDING BOX COMPUTATIONS ===============================================
+template<bool hasSemanticInformation, typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+struct FlagMatchBBoxFunctor;
+
+template<class TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+struct FlagMatchBBoxFunctor<false, TVoxel, TIndex, TMemoryDeviceType> {
+
+	static Extent3D compute(ITMVoxelVolume<TVoxel, TIndex>* scene, ITMLib::VoxelFlags voxelType) {
+		DIEWITHEXCEPTION_REPORTLOCATION(
+				"Voxels need to have semantic information to be marked as truncated or non-truncated.");
+		return {};
+	}
+};
+template<class TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+struct FlagMatchBBoxFunctor<true, TVoxel, TIndex, TMemoryDeviceType> {
+	explicit FlagMatchBBoxFunctor(ITMLib::VoxelFlags voxelType) : voxelType(voxelType) {
+		INITIALIZE_ATOMIC(int, min_x, std::numeric_limits<int>::max());
+		INITIALIZE_ATOMIC(int, min_y, std::numeric_limits<int>::max());
+		INITIALIZE_ATOMIC(int, min_z, std::numeric_limits<int>::max());
+		INITIALIZE_ATOMIC(int, max_x, std::numeric_limits<int>::min());
+		INITIALIZE_ATOMIC(int, max_y, std::numeric_limits<int>::min());
+		INITIALIZE_ATOMIC(int, max_z, std::numeric_limits<int>::min());
+
+	}
+
+	~FlagMatchBBoxFunctor() {
+		//@formatter:off
+		CLEAN_UP_ATOMIC(min_x);
+		CLEAN_UP_ATOMIC(min_y);
+		CLEAN_UP_ATOMIC(min_z);
+		CLEAN_UP_ATOMIC(max_x);
+		CLEAN_UP_ATOMIC(max_y);
+		CLEAN_UP_ATOMIC(max_z);
+		//@formatter:on
+	}
+
+
+	static Extent3D compute(ITMVoxelVolume<TVoxel, TIndex>* scene, ITMLib::VoxelFlags voxelType) {
+		FlagMatchBBoxFunctor instance(voxelType);
+		ITMSceneTraversalEngine<TVoxel, TIndex, TMemoryDeviceType>::VoxelPositionTraversal(scene, instance);
+		return {GET_ATOMIC_VALUE_CPU(instance.min_x),
+		        GET_ATOMIC_VALUE_CPU(instance.min_y),
+		        GET_ATOMIC_VALUE_CPU(instance.min_z),
+		        GET_ATOMIC_VALUE_CPU(instance.max_x),
+		        GET_ATOMIC_VALUE_CPU(instance.max_y),
+		        GET_ATOMIC_VALUE_CPU(instance.max_z)};
+	}
+
+	DECLARE_ATOMIC(int, min_x);
+	DECLARE_ATOMIC(int, min_y);
+	DECLARE_ATOMIC(int, min_z);
+	DECLARE_ATOMIC(int, max_x);
+	DECLARE_ATOMIC(int, max_y);
+	DECLARE_ATOMIC(int, max_z);
+	ITMLib::VoxelFlags voxelType;
+
+	_DEVICE_WHEN_AVAILABLE_
+	void operator()(TVoxel& voxel, Vector3i voxelPosition) {
+		if (voxelType == (ITMLib::VoxelFlags) voxel.flags) {
+			ATOMIC_MIN(min_x, voxelPosition.x);
+			ATOMIC_MIN(min_y, voxelPosition.y);
+			ATOMIC_MIN(min_z, voxelPosition.z);
+			ATOMIC_MAX(max_x, voxelPosition.x);
+			ATOMIC_MAX(max_y, voxelPosition.y);
+			ATOMIC_MAX(max_z, voxelPosition.z);
+		}
+	}
 };

@@ -176,21 +176,21 @@ int ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeNonTruncatedVoxelC
 template<typename TVoxel, typename TIndex>
 unsigned int ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::CountVoxelsWithSpecificSdfValue(
 		ITMVoxelVolume<TVoxel, TIndex>* scene, float value) {
-	return ComputeVoxelCountWithSpecificValue<TVoxel::hasSDFInformation, TVoxel, TIndex, MEMORYDEVICE_CPU>::compute(
+	return ComputeVoxelCountWithSpecificValue<TVoxel::hasSDFInformation, TVoxel, TIndex, MEMORYDEVICE_CUDA>::compute(
 			scene, value);
 }
 
 template<typename TVoxel, typename TIndex>
 double ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeNonTruncatedVoxelAbsSdfSum(
 		ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene,
+	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex, MEMORYDEVICE_CUDA>::compute(scene,
 	                                                                              VoxelFlags::VOXEL_NONTRUNCATED);
 }
 
 template<typename TVoxel, typename TIndex>
 double ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeTruncatedVoxelAbsSdfSum(
 		ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene, VoxelFlags::VOXEL_TRUNCATED);
+	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex, MEMORYDEVICE_CUDA>::compute(scene, VoxelFlags::VOXEL_TRUNCATED);
 }
 
 
@@ -233,6 +233,13 @@ template<typename TVoxel, typename TIndex>
 double ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::ComputeFlowWarpMean(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CUDA, MEAN>::compute(
 			scene);
+}
+
+template<typename TVoxel, typename TIndex>
+Extent3D ITMSceneStatisticsCalculator_CUDA<TVoxel, TIndex>::FindMinimumNonTruncatedBoundingBox(
+		ITMVoxelVolume<TVoxel, TIndex>* scene) {
+	return FlagMatchBBoxFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex, MEMORYDEVICE_CUDA>::
+	compute(scene, VoxelFlags::VOXEL_NONTRUNCATED);
 }
 
 namespace {

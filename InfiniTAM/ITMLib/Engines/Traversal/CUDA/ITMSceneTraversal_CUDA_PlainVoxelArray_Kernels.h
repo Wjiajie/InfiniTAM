@@ -51,6 +51,26 @@ voxelTraversal_device(TVoxel* voxels, const ITMLib::ITMPlainVoxelArray::ITMVoxel
 	(*functor)(voxel);
 }
 
+template<typename TFunctor, typename TVoxel>
+__global__ void
+voxelPositionTraversal_device(TVoxel* voxels, const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+                      TFunctor* functor) {
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y;
+	int z = blockIdx.z * blockDim.z + threadIdx.z;
+
+	if (x >= arrayInfo->size.x || y >= arrayInfo->size.y || z >= arrayInfo->size.z) return;
+
+	Vector3i voxelPosition(
+			x + arrayInfo->offset.x,
+			y + arrayInfo->offset.y,
+			z + arrayInfo->offset.z);
+
+	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
+	TVoxel& voxel = voxels[locId];
+	(*functor)(voxel, voxelPosition);
+}
+
 template<typename TStaticFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
 __global__ void
 staticDualVoxelTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
@@ -102,11 +122,10 @@ dualVoxelPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 
 	int locId = x + y * arrayInfo->size.x + z * arrayInfo->size.x * arrayInfo->size.y;
 
-	Vector3i voxelPosition;
-
-	voxelPosition.x = x + arrayInfo->offset.x;
-	voxelPosition.y = y + arrayInfo->offset.y;
-	voxelPosition.z = z + arrayInfo->offset.z;
+	Vector3i voxelPosition(
+	x + arrayInfo->offset.x,
+	y + arrayInfo->offset.y,
+	z + arrayInfo->offset.z);
 
 	TVoxelPrimary& voxelPrimary = primaryVoxels[locId];
 	TVoxelSecondary& voxelSecondary = secondaryVoxels[locId];

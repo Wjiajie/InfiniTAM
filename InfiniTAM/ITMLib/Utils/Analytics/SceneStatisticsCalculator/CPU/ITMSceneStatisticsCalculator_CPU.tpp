@@ -163,8 +163,8 @@ template<typename TVoxel, typename TIndex>
 double
 ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeNonTruncatedVoxelAbsSdfSum(
 		ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene,
-	                                                                              VoxelFlags::VOXEL_NONTRUNCATED);
+	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex, MEMORYDEVICE_CPU>::compute(
+			scene, VoxelFlags::VOXEL_NONTRUNCATED);
 
 }
 
@@ -172,7 +172,8 @@ template<typename TVoxel, typename TIndex>
 double
 ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeTruncatedVoxelAbsSdfSum(
 		ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex>::compute(scene, VoxelFlags::VOXEL_TRUNCATED);
+	return SumSDFFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex, MEMORYDEVICE_CPU>::
+	compute(scene, VoxelFlags::VOXEL_TRUNCATED);
 }
 
 //======================================================================================================================
@@ -301,7 +302,6 @@ ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::FindMaxGradient1LengthAndPosit
 }
 
 
-
 template<typename TVoxel, typename TIndex>
 unsigned int
 ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeAlteredVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) {
@@ -326,6 +326,13 @@ template<typename TVoxel, typename TIndex>
 double ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::ComputeFlowWarpMean(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CPU, MEAN>::compute(
 			scene);
+}
+
+template<typename TVoxel, typename TIndex>
+Vector6i ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::FindMinimumNonTruncatedBoundingBox(
+		ITMVoxelVolume<TVoxel, TIndex>* scene) {
+	return FlagMatchBBoxFunctor<TVoxel::hasSemanticInformation, TVoxel, TIndex, MEMORYDEVICE_CPU>::
+	        compute(scene, VoxelFlags::VOXEL_NONTRUNCATED);
 }
 
 // endregion ===========================================================================================================

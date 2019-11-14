@@ -37,6 +37,7 @@ public:
 	virtual double ComputeFlowWarpMax(ITMVoxelVolume<TVoxel,TIndex>* scene) = 0;
 	virtual double ComputeFlowWarpMean(ITMVoxelVolume<TVoxel,TIndex>* scene) = 0;
 
+	virtual Extent3D FindMinimumNonTruncatedBoundingBox(ITMVoxelVolume <TVoxel, TIndex>* scene) = 0;
 
 	virtual float FindMaxGradient0LengthAndPosition(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector3i& positionOut) = 0;
 	virtual float FindMaxGradient1LengthAndPosition(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector3i& positionOut) = 0;

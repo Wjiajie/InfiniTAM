@@ -48,6 +48,8 @@ public:
 	double ComputeFlowWarpMax(ITMVoxelVolume<TVoxel,TIndex>* scene) override;
 	double ComputeFlowWarpMean(ITMVoxelVolume<TVoxel,TIndex>* scene) override;
 
+	Extent3D FindMinimumNonTruncatedBoundingBox(ITMVoxelVolume <TVoxel, TIndex>* scene) override;
+
 	float FindMaxGradient0LengthAndPosition(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector3i& positionOut) override;
 	float FindMaxGradient1LengthAndPosition(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector3i& positionOut) override;
 private:

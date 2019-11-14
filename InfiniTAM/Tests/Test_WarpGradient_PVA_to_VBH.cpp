@@ -28,6 +28,7 @@
 #include "../ITMLib/Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
+#include "../ITMLib/SurfaceTrackers/CUDA/SurfaceTracker_CUDA.h"
 
 #include "TestUtils.h"
 
@@ -36,35 +37,126 @@ using namespace ITMLib;
 typedef ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMPlainVoxelArray> RecoEngine_CUDA_PVA;
 typedef ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash> RecoEngine_CUDA_VBH;
 
+struct Fixture {
+	template<typename TIndex>
+	typename TIndex::InitializationParameters InitParams();
 
-BOOST_AUTO_TEST_CASE(Test_WarpScene_PVA_VBH) {
-	{
+
+};
+
+template<>
+ITMPlainVoxelArray::InitializationParameters Fixture::InitParams<ITMPlainVoxelArray>() {
+	return {Vector3i(80, 96, 248), Vector3i(-64, -24, 64)};
+}
+
+template<>
+ITMVoxelBlockHash::InitializationParameters Fixture::InitParams<ITMVoxelBlockHash>() {
+	return {800, 0x20000};
+}
+
+BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH, Fixture) {
+
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_16;
 	buildSdfVolumeFromImage(&volume_PVA_16, "TestData/snoopy_depth_000016.png",
 	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
-	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA);
+	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
+	                        InitParams<ITMPlainVoxelArray>());
 
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_17;
-	buildSdfVolumeFromImage(&volume_PVA_17, "TestData/snoopy_depth_000016.png",
-	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
-	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA);
-	}
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_16;
 	buildSdfVolumeFromImage(&volume_VBH_16, "TestData/snoopy_depth_000016.png",
 	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
-	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA);
+	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
+	                        InitParams<ITMVoxelBlockHash>());
 
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_VBH_17;
-	buildSdfVolumeFromImage(&volume_VBH_17, "TestData/snoopy_depth_000016.png",
-	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
-	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA);
+	std::cout << SceneStatCalc_CUDA_PVA_Voxel::Instance().FindMinimumNonTruncatedBoundingBox(volume_PVA_16)
+	          << std::endl;
+	std::cout << SceneStatCalc_CUDA_VBH_Voxel::Instance().FindMinimumNonTruncatedBoundingBox(volume_VBH_16)
+	          << std::endl;
 
 	float absoluteTolerance = 1e-7;
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(volume_PVA_16, volume_VBH_16, absoluteTolerance));
 
-	delete volume_PVA_16;
 	delete volume_VBH_16;
-	delete volume_PVA_17;
-	delete volume_VBH_17;
+	delete volume_PVA_16;
+}
 
+BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH, Fixture) {
+
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_17;
+	buildSdfVolumeFromImage(&volume_PVA_17, "TestData/snoopy_depth_000017.png",
+	                        "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
+	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
+	                        InitParams<ITMPlainVoxelArray>());
+
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_17;
+	buildSdfVolumeFromImage(&volume_VBH_17, "TestData/snoopy_depth_000017.png",
+	                        "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
+	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
+	                        InitParams<ITMVoxelBlockHash>());
+
+	std::cout << SceneStatCalc_CUDA_PVA_Voxel::Instance().FindMinimumNonTruncatedBoundingBox(volume_PVA_17)
+	          << std::endl;
+	std::cout << SceneStatCalc_CUDA_VBH_Voxel::Instance().FindMinimumNonTruncatedBoundingBox(volume_VBH_17)
+	          << std::endl;
+
+	float absoluteTolerance = 1e-7;
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(volume_PVA_17, volume_VBH_17, absoluteTolerance));
+
+	delete volume_VBH_17;
+	delete volume_PVA_17;
+}
+
+
+BOOST_FIXTURE_TEST_CASE(Test_Warp_PVA_VBH_SelfConsistency_DataTermOnly, Fixture) {
+	{
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_16;
+		buildSdfVolumeFromImage(&volume_PVA_16, "TestData/snoopy_depth_000016.png",
+		                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
+		                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
+		                        InitParams<ITMPlainVoxelArray>());
+
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_17;
+		buildSdfVolumeFromImage(&volume_PVA_17, "TestData/snoopy_depth_000016.png",
+		                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
+		                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
+		                        InitParams<ITMPlainVoxelArray>());
+
+		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CUDA1(&Configuration::get().scene_parameters,
+		                                                             Configuration::get().swapping_mode ==
+		                                                             Configuration::SWAPPINGMODE_ENABLED,
+		                                                             MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
+		ManipulationEngine_CUDA_PVA_Warp::Inst().ResetScene(&warp_field_CUDA1);
+
+		auto motionTracker_PVA_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>(
+				SlavchevaSurfaceTracker::Switches(true, false, false, false, false)
+		);
+		motionTracker_PVA_CUDA->CalculateWarpGradient(volume_PVA_16, volume_PVA_17, &warp_field_CUDA1);
+		motionTracker_PVA_CUDA->UpdateWarps(volume_PVA_16,volume_PVA_17,&warp_field_CUDA1);
+
+
+
+
+		delete volume_PVA_16;
+		delete volume_PVA_17;
+	}
+
+	{
+		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_16;
+		buildSdfVolumeFromImage(&volume_VBH_16, "TestData/snoopy_depth_000016.png",
+		                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
+		                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
+		                        InitParams<ITMVoxelBlockHash>());
+
+		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_17;
+		buildSdfVolumeFromImage(&volume_VBH_17, "TestData/snoopy_depth_000016.png",
+		                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
+		                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
+		                        InitParams<ITMVoxelBlockHash>());
+
+		float absoluteTolerance = 1e-7;
+
+
+		delete volume_VBH_16;
+		delete volume_VBH_17;
+	}
 }
