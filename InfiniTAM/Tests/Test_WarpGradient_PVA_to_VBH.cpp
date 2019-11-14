@@ -38,19 +38,33 @@ typedef ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMVoxelBloc
 
 
 BOOST_AUTO_TEST_CASE(Test_WarpScene_PVA_VBH) {
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA;
-	buildSdfVolumeFromImage(&volume_PVA, "TestData/snoopy_depth_000016.png",
-			"TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
-			"TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA);
+	{
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_16;
+	buildSdfVolumeFromImage(&volume_PVA_16, "TestData/snoopy_depth_000016.png",
+	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
+	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA);
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH;
-	buildSdfVolumeFromImage(&volume_VBH, "TestData/snoopy_depth_000016.png",
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_17;
+	buildSdfVolumeFromImage(&volume_PVA_17, "TestData/snoopy_depth_000016.png",
+	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
+	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA);
+	}
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_16;
+	buildSdfVolumeFromImage(&volume_VBH_16, "TestData/snoopy_depth_000016.png",
+	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
+	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA);
+
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_VBH_17;
+	buildSdfVolumeFromImage(&volume_VBH_17, "TestData/snoopy_depth_000016.png",
 	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
 	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA);
 
 	float absoluteTolerance = 1e-7;
-	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(volume_PVA, volume_VBH, absoluteTolerance));
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(volume_PVA_16, volume_VBH_16, absoluteTolerance));
 
-	delete volume_PVA;
-	delete volume_VBH;
+	delete volume_PVA_16;
+	delete volume_VBH_16;
+	delete volume_PVA_17;
+	delete volume_VBH_17;
+
 }
