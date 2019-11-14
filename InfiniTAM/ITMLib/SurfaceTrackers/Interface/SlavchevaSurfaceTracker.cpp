@@ -109,10 +109,10 @@ SlavchevaSurfaceTracker::Parameters::Parameters(const po::variables_map& vm, Con
 				vm["weight_smoothing_term"].empty() ?
 				Parameters(mode).weightSmoothingTerm : vm["weight_smoothing_term"].as<float>()),
 		weightLevelSetTerm(
-				!vm["weight_level_set_term"].empty() ?
+				vm["weight_level_set_term"].empty() ?
 				Parameters(mode).weightLevelSetTerm : vm["weight_level_set_term"].as<float>()),
 		epsilon(
-				!vm["level_set_epsilon"].empty() ?
+				vm["level_set_epsilon"].empty() ?
 				Parameters(mode).epsilon : vm["level_set_epsilon"].as<float>()) {}
 
 SlavchevaSurfaceTracker::Parameters::Parameters(const po::variables_map& vm) :
