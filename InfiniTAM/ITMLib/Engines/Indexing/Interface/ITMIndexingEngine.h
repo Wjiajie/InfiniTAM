@@ -23,12 +23,11 @@
 
 namespace ITMLib {
 /**
- * \brief A utility for allocating hash blocks in a voxel volume based on various inputs
- * \tparam TVoxelA type of voxels A (typically reserved for voxels holding TSDF information)
- * \tparam TVoxelB type of voxels B (typically reserved for voxels holing warp information , i.e. vectors used to map
- * voxels between different locations)
+ * \brief A utility for allocating additional space within or around a voxel volume (expanding it) based on various inputs
+ * \tparam TVoxel type of voxels A (typically reserved for voxels holding TSDF information)
+ * \tparam TIndex type of index
  */
-template<typename TVoxel>
+template<typename TVoxel, typename TIndex>
 class ITMIndexingEngineInterface {
 
 	/**
@@ -43,7 +42,7 @@ class ITMIndexingEngineInterface {
 	 * \param resetVisibleList  [in] reset visibility list upon completion
 	 */
 	virtual void AllocateFromDepth(
-			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
+			ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
 			const ITMTrackingState* trackingState, const ITMRenderState* renderState,
 			bool onlyUpdateVisibleList, bool resetVisibleList) = 0;
 

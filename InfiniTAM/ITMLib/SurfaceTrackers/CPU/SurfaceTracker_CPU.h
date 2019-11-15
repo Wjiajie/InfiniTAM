@@ -17,7 +17,7 @@
 
 #include "../Interface/SurfaceTrackerInterface.h"
 #include "../../Utils/ITMHashBlockProperties.h"
-#include "../../Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU.h"
+#include "../../Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
 
 
 namespace ITMLib {

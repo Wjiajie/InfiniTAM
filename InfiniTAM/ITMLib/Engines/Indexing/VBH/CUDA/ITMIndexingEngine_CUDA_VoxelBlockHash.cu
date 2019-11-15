@@ -29,7 +29,7 @@
 //  limitations under the License.
 //  ================================================================
 
-#include "ITMIndexingEngine_CUDA.tcu"
+#include "ITMIndexingEngine_CUDA_VoxelBlockHash.tcu"
 #include "../ITMIndexingEngine_VoxelBlockHash.tpp"
 #include "../../../../ITMLibDefines.h"
 

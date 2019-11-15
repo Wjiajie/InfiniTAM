@@ -249,21 +249,24 @@ set(ITMLIB_ENGINES_INDEXING_HEADERS
 
 ##
 set(ITMLIB_ENGINES_INDEXING_CPU_SOURCES
-	Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU.tpp
-    Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU.cpp
+	Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.tpp
+	Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.cpp
+	Engines/Indexing/PVA/CPU/ITMIndexingEngine_CPU_PlainVoxelArray.tpp
+	Engines/Indexing/PVA/CPU/ITMIndexingEngine_CPU_PlainVoxelArray.cpp
     )
 
 set(ITMLIB_ENGINES_INDEXING_CPU_HEADERS
-	Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU.h
+	Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h
+	Engines/Indexing/PVA/CPU/ITMIndexingEngine_CPU_PlainVoxelArray.h
     )
 ##
 set(ITMLIB_ENGINES_INDEXING_CUDA_SOURCES
-	Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA.tcu
-	Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA.cu
+	Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.tcu
+	Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.cu
     )
 
 set(ITMLIB_ENGINES_INDEXING_CUDA_HEADERS
-	Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_Kernels.h
+	Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash_Kernels.h
     )
 
 ##
@@ -677,6 +680,7 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS
 	SurfaceTrackers/Shared/ITMSceneMotionTracker_Debug.h
 	SurfaceTrackers/Shared/ITMSceneMotionTracker_Functors.h
 	SurfaceTrackers/Shared/ITMCalculateWarpGradientFunctor.h
+	SurfaceTrackers/Shared/ITMOptimizedSlavchevaFusionFunctor.h
 	SurfaceTrackers/Shared/ITMSceneMotionOptimizationParameters.h
 	SurfaceTrackers/Shared/ITMWarpGradientRoutines.h
 	SurfaceTrackers/Shared/ITMWarpGradientAggregates.h

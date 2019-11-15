@@ -16,8 +16,8 @@
 
 #include "ITMVoxelBlockHash.h"
 #include "../../ITMLibDefines.h"
-#include "../../Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU.h"
-#include "../../Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA.h"
+#include "../../Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
+#include "../../Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
 
 namespace ITMLib {
 ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt_CPU(const Vector3s& pos) const {

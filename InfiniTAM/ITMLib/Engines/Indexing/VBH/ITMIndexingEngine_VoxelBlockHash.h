@@ -20,7 +20,7 @@
 namespace ITMLib{
 template<typename TVoxel, MemoryDeviceType TMemoryDeviceType, typename TDerivedClass>
 class ITMIndexingEngine_VoxelBlockHash:
-		public ITMIndexingEngineInterface<TVoxel> {
+		public ITMIndexingEngineInterface<TVoxel, ITMVoxelBlockHash> {
 
 public:
 	virtual void AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,

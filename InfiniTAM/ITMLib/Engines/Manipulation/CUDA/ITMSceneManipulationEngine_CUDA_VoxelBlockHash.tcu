@@ -23,7 +23,7 @@
 #include "../../../Utils/Geometry/ITMGeometryBooleanOpernations.h"
 #include "../../../Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
 #include "ITMSceneManipulationEngine_CUDA_VoxelBlockHash_Kernels.h"
-#include "../../Indexing/VBH/CUDA/ITMIndexingEngine_CUDA.h"
+#include "../../Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
 
 #include <cstring>
 #include <limits>

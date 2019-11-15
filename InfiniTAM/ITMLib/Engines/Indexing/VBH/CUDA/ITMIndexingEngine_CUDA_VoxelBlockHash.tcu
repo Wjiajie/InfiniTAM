@@ -15,10 +15,10 @@
 //  ================================================================
 #pragma once
 
-#include "ITMIndexingEngine_CUDA.h"
+#include "ITMIndexingEngine_CUDA_VoxelBlockHash.h"
 #include "../../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../Shared/ITMIndexingEngine_Shared.h"
-#include "ITMIndexingEngine_CUDA_Kernels.h"
+#include "ITMIndexingEngine_CUDA_VoxelBlockHash_Kernels.h"
 
 
 using namespace ITMLib;

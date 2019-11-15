@@ -16,7 +16,7 @@
 #pragma once
 
 #include "../Interface/SurfaceTrackerInterface.h"
-#include "../../Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA.h"
+#include "../../Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
 
 namespace ITMLib {
 

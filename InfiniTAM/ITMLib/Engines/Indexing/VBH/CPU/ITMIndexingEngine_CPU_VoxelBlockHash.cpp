@@ -14,7 +14,7 @@
 //  limitations under the License.
 //  ================================================================
 
-#include "ITMIndexingEngine_CPU.tpp"
+#include "ITMIndexingEngine_CPU_VoxelBlockHash.tpp"
 #include "../ITMIndexingEngine_VoxelBlockHash.tpp"
 #include "../../../../ITMLibDefines.h"
 
