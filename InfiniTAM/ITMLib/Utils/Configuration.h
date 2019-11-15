@@ -26,8 +26,8 @@ public:
 	static Configuration& get();
 
 	static void load_default();
-	static void load_from_variable_map(const po::variables_map& vm);
-	static void load_from_json_file(const std::string& path);
+	static void load_configuration_from_variable_map(const po::variables_map& vm);
+	static void load_configuration_from_json_file(const std::string& path);
 	static void save_configuration_to_json_file(const std::string& path);
 	void save_to_json_file(const std::string& path);
 

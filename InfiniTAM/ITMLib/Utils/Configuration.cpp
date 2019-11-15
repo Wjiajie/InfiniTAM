@@ -20,6 +20,7 @@
 #include <regex>
 
 //boost
+#include <boost/filesystem.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
 //local
@@ -370,7 +371,7 @@ const std::string Configuration::default_surfel_tracker_configuration =
 std::unique_ptr<Configuration> Configuration::instance = std::unique_ptr<Configuration>(new Configuration());
 
 
-void Configuration::load_from_variable_map(const po::variables_map& vm) {
+void Configuration::load_configuration_from_variable_map(const po::variables_map& vm) {
 	instance.reset(new Configuration(vm));
 }
 
@@ -382,9 +383,25 @@ Configuration& Configuration::get() {
 	return *instance;
 }
 
-void Configuration::load_from_json_file(const std::string& path) {
+namespace fs = boost::filesystem;
+
+std::string preprocess_output_path(const std::string& output_path, const std::string& config_path) {
+	if (output_path == "<CONFIGURATION_DIRECTORY>") {
+		fs::path fs_config_path(config_path);
+		return fs_config_path.parent_path().string();
+	} else {
+		return output_path;
+	}
+}
+
+void Configuration::load_configuration_from_json_file(const std::string& path) {
 	pt::ptree tree;
 	pt::read_json(path, tree);
+	boost::optional<std::string> output_dir_opt  = tree.get_optional<std::string>("telemetry_settings.output");
+	if(output_dir_opt){
+		std::string output_path = preprocess_output_path(output_dir_opt.get(), path);
+		tree.put("telemetry_settings.output", output_path);
+	}
 	instance.reset(from_property_tree(tree));
 }
 

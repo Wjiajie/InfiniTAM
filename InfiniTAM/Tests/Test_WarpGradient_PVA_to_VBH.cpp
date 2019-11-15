@@ -158,7 +158,7 @@ BOOST_FIXTURE_TEST_CASE(Test_Warp_PVA_VBH_SelfConsistency_DataTermOnly, Fixture)
 
 			motionTracker_PVA_CUDA.CalculateWarpGradient(volume_PVA_16, warped_fields[source_warped_field_ix], &warp_field_CUDA1);
 			motionTracker_PVA_CUDA.UpdateWarps(volume_PVA_16, warped_fields[source_warped_field_ix], &warp_field_CUDA1);
-			recoEngine.WarpScene_FlowWarps(&warp_field_CUDA1, volume_PVA_17, warped_fields[0]);
+			recoEngine.WarpScene_FlowWarps(&warp_field_CUDA1, warped_fields[source_warped_field_ix], warped_fields[target_warped_field]);
 		}
 
 

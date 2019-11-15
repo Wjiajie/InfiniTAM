@@ -2,9 +2,7 @@
 
 //TODO: not supported on platforms besides Linux, adjust via CMake -Greg(GitHub: Algomorph)
 #ifndef WIN32
-
 #include <X11/Xlib.h>
-
 #endif
 
 //stdlib
@@ -13,20 +11,16 @@
 #include <string>
 #include <thread>
 
-
 #define BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE
 //boost
 #include <boost/program_options.hpp>
-
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 //VTK
-#include <vtkSmartPointer.h>
-#include <vtkContextView.h>
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
-#include <vtkRenderWindowInteractor.h>
 #include <vtkContextScene.h>
-#include <vtkChartXY.h>
 
 //ITMLib
 #include "../../ITMLib/ITMLibDefines.h"
@@ -42,7 +36,6 @@
 #include "prettyprint.hpp"
 #include "CreateDefaultImageSource.h"
 
-
 // *** namespaces ***
 
 using namespace InfiniTAM::Engine;
@@ -50,6 +43,7 @@ using namespace InputSource;
 using namespace ITMLib;
 
 namespace po = boost::program_options;
+namespace pt = boost::property_tree;
 
 
 ITMDynamicFusionLogger_Interface& GetLogger(Configuration::IndexingMethod method) {
@@ -62,6 +56,28 @@ ITMDynamicFusionLogger_Interface& GetLogger(Configuration::IndexingMethod method
 		}
 	}
 };
+
+void process_UI_options_CLI(int& processNFramesOnLaunch, int& skipFirstNFrames, const po::variables_map& vm){
+	if (!vm["process_N_frames"].empty()) {
+		processNFramesOnLaunch = vm["process_N_frames"].as<int>();
+	}
+	if (!vm["start_from_frame_ix"].empty()) {
+		skipFirstNFrames = vm["start_from_frame_ix"].as<int>();
+	}
+}
+
+void process_UI_options_JSON(int& processNFramesOnLaunch, int& skipFirstNFrames, std::string config_path) {
+	pt::ptree tree;
+	pt::read_json(config_path, tree);
+	boost::optional<int> processNFramesOnLaunch_opt = tree.get_optional<int>("input.process_N_frames");
+	boost::optional<int> skipFirstNFrames_opt = tree.get_optional<int>("input.start_from_frame_ix");
+	if (processNFramesOnLaunch_opt) {
+		processNFramesOnLaunch = processNFramesOnLaunch_opt.get();
+	}
+	if (skipFirstNFrames_opt) {
+		skipFirstNFrames = skipFirstNFrames_opt.get();
+	}
+}
 
 int main(int argc, char** argv) {
 	try {
@@ -101,6 +117,7 @@ int main(int argc, char** argv) {
 		//@formatter:off
 		arguments.add_options()
 				("help,h", "Print help screen")
+				("halp,h", "Funkaaay")
 				( "config,cfg", po::value<std::string>(),
 				        "Configuration file in JSON format, e.g.  ./default_config.json "
 			                      "WARNING: using this option will invalidate any other command line arguments.")
@@ -275,14 +292,20 @@ int main(int argc, char** argv) {
 			return EXIT_SUCCESS;
 		}
 
+		int processNFramesOnLaunch = 0;
+		int skipFirstNFrames = 0;
 		if (vm["config"].empty()) {
+			process_UI_options_CLI(processNFramesOnLaunch, skipFirstNFrames, vm);
 			inputPaths = InputPaths::FromVariablesMap(vm, printHelp);
-			Configuration::load_from_variable_map(vm);
+			Configuration::load_configuration_from_variable_map(vm);
 		} else {
 			std::string configPath = vm["config"].as<std::string>();
+			process_UI_options_JSON(processNFramesOnLaunch, skipFirstNFrames, configPath);
 			inputPaths = InputPaths::FromJsonFile(configPath);
-			Configuration::load_from_json_file(configPath);
+			Configuration::load_configuration_from_json_file(configPath);
 		}
+
+
 
 		printf("initialising ...\n");
 		ImageSourceEngine* imageSource = nullptr;
@@ -381,15 +404,7 @@ int main(int argc, char** argv) {
 
 // endregion
 // region =========================== SET UI ENGINE SETTINGS WITH CLI ARGUMENTS ========================================
-		int processNFramesOnLaunch = 0;
-		if (!vm["process_N_frames"].empty()) {
-			processNFramesOnLaunch = vm["process_N_frames"].as<int>();
-		}
 
-		int skipFirstNFrames = 0;
-		if (!vm["start_from_frame_ix"].empty()) {
-			skipFirstNFrames = vm["start_from_frame_ix"].as<int>();
-		}
 
 		//TODO (see top of file)
 #ifndef WIN32

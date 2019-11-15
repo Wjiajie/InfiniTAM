@@ -30,7 +30,7 @@ using namespace ITMLib;
 BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	Configuration default_configuration;
 	//default_configuration.save_to_json_file("../../Tests/TestData/default_config.json");
-	Configuration::load_from_json_file("TestData/default_config.json");
+	Configuration::load_configuration_from_json_file("TestData/default_config.json");
 	BOOST_REQUIRE_EQUAL(default_configuration, Configuration::get());
 	Configuration configuration1(
 			ITMSceneParameters(0.05, 200, 0.005, 0.12, 4.12, true),
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			0.00007f
 	);
 	//configuration1.save_to_json_file("../../Tests/TestData/config1.json");
-	Configuration::load_from_json_file("TestData/config1.json");
+	Configuration::load_configuration_from_json_file("TestData/config1.json");
 	BOOST_REQUIRE_EQUAL(configuration1.scene_parameters,Configuration::get().scene_parameters);
 	BOOST_REQUIRE_EQUAL(configuration1.surfel_scene_parameters,Configuration::get().surfel_scene_parameters);
 	BOOST_REQUIRE_EQUAL(configuration1.slavcheva_parameters,Configuration::get().slavcheva_parameters);
