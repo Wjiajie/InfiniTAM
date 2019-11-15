@@ -124,20 +124,48 @@ BOOST_FIXTURE_TEST_CASE(Test_Warp_PVA_VBH_SelfConsistency_DataTermOnly, Fixture)
 		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CUDA1(&Configuration::get().scene_parameters,
 		                                                             Configuration::get().swapping_mode ==
 		                                                             Configuration::SWAPPINGMODE_ENABLED,
-		                                                             MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
+		                                                             MEMORYDEVICE_CUDA,
+		                                                             InitParams<ITMPlainVoxelArray>());
 		ManipulationEngine_CUDA_PVA_Warp::Inst().ResetScene(&warp_field_CUDA1);
 
-		auto motionTracker_PVA_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>(
+		SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA> motionTracker_PVA_CUDA(
 				SlavchevaSurfaceTracker::Switches(true, false, false, false, false)
 		);
-		motionTracker_PVA_CUDA->CalculateWarpGradient(volume_PVA_16, volume_PVA_17, &warp_field_CUDA1);
-		motionTracker_PVA_CUDA->UpdateWarps(volume_PVA_16,volume_PVA_17,&warp_field_CUDA1);
+		motionTracker_PVA_CUDA.CalculateWarpGradient(volume_PVA_16, volume_PVA_17, &warp_field_CUDA1);
+		motionTracker_PVA_CUDA.UpdateWarps(volume_PVA_16, volume_PVA_17, &warp_field_CUDA1);
 
+		ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMPlainVoxelArray> recoEngine;
 
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* warped_fields[2] = {
+				new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(&Configuration::get().scene_parameters,
+				                                             Configuration::get().swapping_mode ==
+				                                             Configuration::SWAPPINGMODE_ENABLED,
+				                                             MEMORYDEVICE_CUDA,
+				                                             InitParams<ITMPlainVoxelArray>()),
+				new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(&Configuration::get().scene_parameters,
+				                                             Configuration::get().swapping_mode ==
+				                                             Configuration::SWAPPINGMODE_ENABLED,
+				                                             MEMORYDEVICE_CUDA,
+				                                             InitParams<ITMPlainVoxelArray>())
+		};
+
+		recoEngine.WarpScene_FlowWarps(&warp_field_CUDA1, volume_PVA_17, warped_fields[0]);
+
+		const int iteration_limit = 10;
+		for(int iteration = 1; iteration < iteration_limit; iteration ++){
+			int source_warped_field_ix = iteration % 2;
+			int target_warped_field = (iteration + 1) % 2;
+
+			motionTracker_PVA_CUDA.CalculateWarpGradient(volume_PVA_16, warped_fields[source_warped_field_ix], &warp_field_CUDA1);
+			motionTracker_PVA_CUDA.UpdateWarps(volume_PVA_16, warped_fields[source_warped_field_ix], &warp_field_CUDA1);
+			recoEngine.WarpScene_FlowWarps(&warp_field_CUDA1, volume_PVA_17, warped_fields[0]);
+		}
 
 
 		delete volume_PVA_16;
 		delete volume_PVA_17;
+		delete warped_fields[0];
+		delete warped_fields[1];
 	}
 
 	{
