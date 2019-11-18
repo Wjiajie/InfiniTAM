@@ -19,31 +19,31 @@
 
 namespace ITMLib {
 template
-class ITMIndexingEngine<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CPU>;
+class ITMIndexingEngine<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>;
 template
-class ITMIndexingEngine<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>;
+class ITMIndexingEngine<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>;
 
 
-template void ITMIndexingEngine<ITMVoxel,ITMPlainVoxelArray,MEMORYDEVICE_CPU>::AllocateUsingOtherVolume(
+template void ITMIndexingEngine<ITMVoxel,ITMPlainVoxelArray,MEMORYDEVICE_CUDA>::AllocateUsingOtherVolume(
 		ITMLib::ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* targetVolume,
 		ITMLib::ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* sourceVolume);
-template void ITMIndexingEngine<ITMVoxel,ITMPlainVoxelArray,MEMORYDEVICE_CPU>::AllocateUsingOtherVolume(
+template void ITMIndexingEngine<ITMVoxel,ITMPlainVoxelArray,MEMORYDEVICE_CUDA>::AllocateUsingOtherVolume(
 		ITMLib::ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* targetVolume,
 		ITMLib::ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* sourceVolume);
 
-template void ITMIndexingEngine<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
+template void ITMIndexingEngine<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::
 AllocateFromWarpedVolume<WarpType::WARP_CUMULATIVE>(
 		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warpField,
 		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* sourceTSDF,
 		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* targetTSDF
 );
-template void ITMIndexingEngine<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
+template void ITMIndexingEngine<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::
 AllocateFromWarpedVolume<WarpType::WARP_FLOW>(
 		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warpField,
 		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* sourceTSDF,
 		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* targetTSDF
 );
-template void ITMIndexingEngine<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
+template void ITMIndexingEngine<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::
 AllocateFromWarpedVolume<WarpType::WARP_UPDATE>(
 		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warpField,
 		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* sourceTSDF,

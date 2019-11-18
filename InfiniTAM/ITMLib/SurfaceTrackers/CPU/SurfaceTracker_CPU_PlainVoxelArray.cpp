@@ -15,7 +15,7 @@
 //  ================================================================
 
 #include "../../ITMLibDefines.h"
-#include "SurfaceTracker_CPU_PlainVoxelArray.tpp"
+#include "../Interface/SurfaceTracker.tpp"
 
 
 namespace ITMLib {

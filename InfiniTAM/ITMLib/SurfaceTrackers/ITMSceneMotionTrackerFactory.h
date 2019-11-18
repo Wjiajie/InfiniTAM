@@ -16,14 +16,9 @@
 #pragma once
 
 #include "Interface/SurfaceTrackerInterface.h"
-#include "CPU/SurfaceTracker_CPU.h"
+#include "Interface/SurfaceTracker.h"
 #include "Shared/ITMCalculateWarpGradientFunctor.h"
 
-#ifndef COMPILE_WITHOUT_CUDA
-
-#include "CUDA/SurfaceTracker_CUDA.h"
-
-#endif
 #ifdef COMPILE_WITH_METAL
 #error "NOT CURRENTLY SUPPORTED"
 #endif

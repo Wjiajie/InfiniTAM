@@ -28,7 +28,7 @@
 #include "../ITMLib/Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
-#include "../ITMLib/SurfaceTrackers/CUDA/SurfaceTracker_CUDA.h"
+#include "../ITMLib/SurfaceTrackers/Interface/SurfaceTracker.h"
 
 #include "TestUtils.h"
 

@@ -63,8 +63,7 @@ public:
 
 };
 
-template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TMemoryDeviceType>
-class SurfaceTracker;
+
 
 }//namespace ITMLib
 

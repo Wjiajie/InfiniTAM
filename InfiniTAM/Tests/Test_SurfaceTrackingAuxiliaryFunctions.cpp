@@ -26,11 +26,10 @@
 #include "../ITMLib/Objects/Scene/ITMVoxelVolume.h"
 
 #include "TestUtils.h"
-#include "../ITMLib/SurfaceTrackers/CPU/SurfaceTracker_CPU.h"
+#include "../ITMLib/SurfaceTrackers/Interface/SurfaceTracker.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 
 #ifndef COMPILE_WITHOUT_CUDA
-#include "../ITMLib/SurfaceTrackers/CUDA/SurfaceTracker_CUDA.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
 #endif
 

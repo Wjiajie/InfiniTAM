@@ -644,40 +644,36 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_HEADERS
     )
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_SOURCES
-	SurfaceTrackers/Shared/ITMWarpGradientCommon.h
-	SurfaceTrackers/CPU/SurfaceTracker_CPU_VoxelBlockHash.tpp
+
 	SurfaceTrackers/CPU/SurfaceTracker_CPU_VoxelBlockHash.cpp
-	SurfaceTrackers/CPU/SurfaceTracker_CPU_PlainVoxelArray.tpp
 	SurfaceTrackers/CPU/SurfaceTracker_CPU_PlainVoxelArray.cpp
     )
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_HEADERS
-	SurfaceTrackers/CPU/SurfaceTracker_CPU.h
     )
 ##
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_SOURCES
-	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_PlainVoxelArray.tcu
 	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_PlainVoxelArray.cu
-	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_VoxelBlockHash.tcu
 	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_VoxelBlockHash.cu
     )
 set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_HEADERS
-	SurfaceTrackers/CUDA/SurfaceTracker_CUDA.h
-	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_PlainVoxelArray_Kernels.h
-	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_VoxelBlockHash_Kernels.h
-    )
+
+	)
 ##
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_SOURCES
 	SurfaceTrackers/Interface/SlavchevaSurfaceTracker.cpp
+	SurfaceTrackers/Interface/SurfaceTracker.tpp
     )
 set(ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_HEADERS
 	SurfaceTrackers/Interface/SurfaceTrackerInterface.h
 	SurfaceTrackers/Interface/SlavchevaSufraceTracker.h
+	SurfaceTrackers/Interface/SurfaceTracker.h
     )
 ##
 set(ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS
+	SurfaceTrackers/Shared/ITMWarpGradientCommon.h
 	SurfaceTrackers/Shared/ITMSceneMotionTracker_Shared.h
 	SurfaceTrackers/Shared/ITMSceneMotionTracker_Debug.h
 	SurfaceTrackers/Shared/ITMSceneMotionTracker_Functors.h
