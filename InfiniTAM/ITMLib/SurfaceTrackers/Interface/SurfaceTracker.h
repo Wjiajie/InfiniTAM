@@ -16,12 +16,13 @@
 #pragma once
 
 #include "SurfaceTrackerInterface.h"
+#include "../WarpGradientFunctors/WarpGradientFunctor.h"
 
 namespace ITMLib{
 
 
 
-template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TMemoryDeviceType, GradientFunctorType TGradientFunctorType>
 class SurfaceTracker :
 		public SurfaceTrackerInterface<TVoxel, TWarp, TIndex>, public SlavchevaSurfaceTracker {
 public:

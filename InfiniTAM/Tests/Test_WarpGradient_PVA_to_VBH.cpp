@@ -128,7 +128,8 @@ BOOST_FIXTURE_TEST_CASE(Test_Warp_PVA_VBH_SelfConsistency_DataTermOnly, Fixture)
 		                                                             InitParams<ITMPlainVoxelArray>());
 		ManipulationEngine_CUDA_PVA_Warp::Inst().ResetScene(&warp_field_CUDA1);
 
-		SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA> motionTracker_PVA_CUDA(
+		SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA, TRACKER_SLAVCHEVA_DIAGNOSTIC>
+		motionTracker_PVA_CUDA(
 				SlavchevaSurfaceTracker::Switches(true, false, false, false, false)
 		);
 		motionTracker_PVA_CUDA.CalculateWarpGradient(volume_PVA_16, volume_PVA_17, &warp_field_CUDA1);

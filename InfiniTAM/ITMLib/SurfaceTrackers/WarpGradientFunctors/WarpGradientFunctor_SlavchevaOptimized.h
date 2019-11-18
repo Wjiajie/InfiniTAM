@@ -22,40 +22,42 @@
 #include <iomanip>
 
 //local
-#include "ITMSceneMotionTracker_Shared.h"
-#include "ITMSceneMotionTracker_Debug.h"
-#include "../../Utils/ITMVoxelFlags.h"
-#include "../../../ORUtils/PlatformIndependentAtomics.h"
-#include "ITMWarpGradientAggregates.h"
-#include "../../Utils/ITMCPrintHelpers.h"
-#include "ITMWarpGradientCommon.h"
-#include "../../Engines/Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
+#include "WarpGradientFunctor.h"
 #include "../Interface/SlavchevaSufraceTracker.h"
+#include "../../../ORUtils/PlatformIndependentAtomics.h"
+#include "../Shared/ITMSceneMotionTracker_Shared.h"
+#include "../Shared/ITMSceneMotionTracker_Debug.h"
+#include "../Shared/ITMWarpGradientAggregates.h"
+#include "../Shared/ITMWarpGradientCommon.h"
+#include "../../Utils/ITMVoxelFlags.h"
+#include "../../Utils/ITMCPrintHelpers.h"
+#include "../../Engines/Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
+#include "../../Objects/Scene/ITMVoxelVolume.h"
 
 
 namespace ITMLib {
 
 
-template<typename TVoxel, typename TWarp, typename TIndexData, typename TCache>
-struct ITMOptimizedSlavchevaFusionFunctor {
+template<typename TVoxel, typename TWarp, typename TIndex>
+struct WarpGradientFunctor<TVoxel, TWarp, TIndex, TRACKER_SLAVCHEVA_OPTIMIZED>{
 private:
 
 
 public:
 
 	// region ========================================= CONSTRUCTOR ====================================================
-	ITMOptimizedSlavchevaFusionFunctor(SlavchevaSurfaceTracker::Parameters parameters,
-	                                   SlavchevaSurfaceTracker::Switches switches,
-	                                   TVoxel* liveVoxels, const TIndexData* liveIndexData,
-	                                   TVoxel* canonicalVoxels, const TIndexData* canonicalIndexData,
-	                                   TWarp* warps, const TIndexData* warpIndexData, float voxelSize,
-	                                   float narrowBandHalfWidth) :
+	WarpGradientFunctor(SlavchevaSurfaceTracker::Parameters parameters,
+	                    SlavchevaSurfaceTracker::Switches switches,
+	                    ITMVoxelVolume<TVoxel,TIndex>* liveVolume,
+	                    ITMVoxelVolume<TVoxel,TIndex>* canonicalVolume,
+	                    ITMVoxelVolume<TWarp,TIndex>* warpField,
+	                    float voxelSize, float narrowBandHalfWidth) :
 			parameters(parameters), switches(switches),
-			liveVoxels(liveVoxels), liveIndexData(liveIndexData),
-			warps(warps), warpIndexData(warpIndexData),
-			canonicalVoxels(canonicalVoxels), canonicalIndexData(canonicalIndexData),
+			liveVoxels(liveVolume->localVBA.GetVoxelBlocks()), liveIndexData(liveVolume->index.GetIndexData()),
+			warps(warpField->localVBA.GetVoxelBlocks()), warpIndexData(warpField->index.GetIndexData()),
+			canonicalVoxels(canonicalVolume->localVBA.GetVoxelBlocks()), canonicalIndexData(canonicalVolume->index.GetIndexData()),
 			liveCache(), canonicalCache(),
-			sdfUnity(voxelSize / narrowBandHalfWidth) {}
+			sdfUnity(voxelSize/narrowBandHalfWidth){}
 
 	// endregion =======================================================================================================
 
@@ -89,9 +91,6 @@ public:
 				// φ_{global} = φ_{global}(x, y, z)
 				localDataEnergyGradient =
 						parameters.weightDataTerm * sdfDifferenceBetweenLiveAndCanonical * liveSdfJacobian;
-
-				float localDataEnergy = parameters.weightDataTerm * 0.5f *
-				                        (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
 			}
 
 			// endregion =======================================================================================
@@ -106,8 +105,6 @@ public:
 				localLevelSetEnergyGradient = parameters.weightLevelSetTerm * sdfJacobianNormMinusUnity *
 				                              (liveSdfHessian * liveSdfJacobian) /
 				                              (sdfJacobianNorm + parameters.epsilon);
-				float localLevelSetEnergy = parameters.weightLevelSetTerm *
-				                            0.5f * (sdfJacobianNormMinusUnity * sdfJacobianNormMinusUnity);
 			}
 			// endregion =======================================================================================
 		}
@@ -188,12 +185,6 @@ public:
 				                                neighborFlowWarps);
 				//∇E_{reg}(Ψ) = −[∆U ∆V ∆W]' ,
 				localSmoothingEnergyGradient = -parameters.weightSmoothingTerm * framewiseWarpLaplacian;
-				float localTikhonovEnergy = parameters.weightSmoothingTerm *
-				                            dot(framewiseWarpJacobian.getColumn(0),
-				                                framewiseWarpJacobian.getColumn(0)) +
-				                            dot(framewiseWarpJacobian.getColumn(1),
-				                                framewiseWarpJacobian.getColumn(1)) +
-				                            dot(framewiseWarpJacobian.getColumn(2), framewiseWarpJacobian.getColumn(2));
 			}
 		}
 		// endregion
@@ -218,16 +209,16 @@ private:
 
 	// *** data structure accessors
 	const TVoxel* liveVoxels;
-	const TIndexData* liveIndexData;
-	TCache liveCache;
+	const typename TIndex::IndexData* liveIndexData;
+	typename TIndex::IndexCache liveCache;
 
 	const TVoxel* canonicalVoxels;
-	const TIndexData* canonicalIndexData;
-	TCache canonicalCache;
+	const typename TIndex::IndexData* canonicalIndexData;
+	typename TIndex::IndexCache canonicalCache;
 
 	TWarp* warps;
-	const TIndexData* warpIndexData;
-	TCache warpCache;
+	const typename TIndex::IndexData* warpIndexData;
+	typename TIndex::IndexCache warpCache;
 
 
 	const SlavchevaSurfaceTracker::Parameters parameters;

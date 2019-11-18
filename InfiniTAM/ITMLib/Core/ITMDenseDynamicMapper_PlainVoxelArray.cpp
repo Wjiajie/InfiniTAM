@@ -16,5 +16,6 @@
 
 
 #include "ITMDenseDynamicMapper.tpp"
-
+namespace ITMLib{
 template class ITMDenseDynamicMapper<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;
+}//namespace ITMLib

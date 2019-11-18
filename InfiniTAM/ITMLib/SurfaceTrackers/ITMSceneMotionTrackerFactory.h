@@ -17,7 +17,7 @@
 
 #include "Interface/SurfaceTrackerInterface.h"
 #include "Interface/SurfaceTracker.h"
-#include "Shared/ITMCalculateWarpGradientFunctor.h"
+#include "WarpGradientFunctors/WarpGradientFunctor_SlavchevaDiagnostic.h"
 
 #ifdef COMPILE_WITH_METAL
 #error "NOT CURRENTLY SUPPORTED"
@@ -38,11 +38,11 @@ public:
 		auto& settings = Configuration::get();
 		switch (settings.device_type) {
 			case MEMORYDEVICE_CPU:
-				motionTracker = new SurfaceTracker<TVoxel, TWarp, TIndex, MEMORYDEVICE_CPU>();
+				motionTracker = new SurfaceTracker<TVoxel, TWarp, TIndex, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>();
 				break;
 			case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-				motionTracker = new SurfaceTracker<TVoxel, TWarp, TIndex, MEMORYDEVICE_CUDA>();
+				motionTracker = new SurfaceTracker<TVoxel, TWarp, TIndex, MEMORYDEVICE_CUDA, TRACKER_SLAVCHEVA_DIAGNOSTIC>();
 #endif
 				break;
 			case MEMORYDEVICE_METAL:

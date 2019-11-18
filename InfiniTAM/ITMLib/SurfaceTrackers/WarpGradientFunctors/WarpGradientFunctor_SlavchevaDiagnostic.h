@@ -20,13 +20,14 @@
 #include <iomanip>
 
 //local
-#include "ITMSceneMotionTracker_Shared.h"
-#include "ITMSceneMotionTracker_Debug.h"
-#include "../../Utils/ITMVoxelFlags.h"
+#include "WarpGradientFunctor.h"
 #include "../../../ORUtils/PlatformIndependentAtomics.h"
-#include "ITMWarpGradientAggregates.h"
+#include "../Shared/ITMSceneMotionTracker_Shared.h"
+#include "../Shared/ITMSceneMotionTracker_Debug.h"
+#include "../Shared/ITMWarpGradientAggregates.h"
+#include "../Shared/ITMWarpGradientCommon.h"
+#include "../../Utils/ITMVoxelFlags.h"
 #include "../../Utils/ITMCPrintHelpers.h"
-#include "ITMWarpGradientCommon.h"
 #include "../../Engines/Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
 
 
@@ -71,8 +72,8 @@ struct SetGradientFunctor<TWarp, true> {
 };
 
 
-template<typename TVoxel, typename TWarp, typename TIndexData, typename TCache>
-struct ITMCalculateWarpGradientFunctor {
+template<typename TVoxel, typename TWarp, typename TIndex>
+struct WarpGradientFunctor<TVoxel, TWarp, TIndex, TRACKER_SLAVCHEVA_DIAGNOSTIC> {
 private:
 
 	_CPU_AND_GPU_CODE_
@@ -98,15 +99,16 @@ public:
 
 	// region ========================================= CONSTRUCTOR ====================================================
 
-	ITMCalculateWarpGradientFunctor(SlavchevaSurfaceTracker::Parameters parameters,
-	                                SlavchevaSurfaceTracker::Switches switches,
-	                                TVoxel* liveVoxels, const TIndexData* liveIndexData,
-	                                TVoxel* canonicalVoxels, const TIndexData* canonicalIndexData,
-	                                TWarp* warps, const TIndexData* warpIndexData, float voxelSize, float narrowBandHalfWidth) :
+	WarpGradientFunctor(SlavchevaSurfaceTracker::Parameters parameters,
+	                    SlavchevaSurfaceTracker::Switches switches,
+	                    ITMVoxelVolume<TVoxel,TIndex>* liveVolume,
+	                    ITMVoxelVolume<TVoxel,TIndex>* canonicalVolume,
+	                    ITMVoxelVolume<TWarp,TIndex>* warpField,
+	                    float voxelSize, float narrowBandHalfWidth) :
 			parameters(parameters), switches(switches),
-			liveVoxels(liveVoxels), liveIndexData(liveIndexData),
-			warps(warps), warpIndexData(warpIndexData),
-			canonicalVoxels(canonicalVoxels), canonicalIndexData(canonicalIndexData),
+			liveVoxels(liveVolume->localVBA.GetVoxelBlocks()), liveIndexData(liveVolume->index.GetIndexData()),
+			warps(warpField->localVBA.GetVoxelBlocks()), warpIndexData(warpField->index.GetIndexData()),
+			canonicalVoxels(canonicalVolume->localVBA.GetVoxelBlocks()), canonicalIndexData(canonicalVolume->index.GetIndexData()),
 			liveCache(), canonicalCache(),
 			hasFocusCoordinates(Configuration::get().telemetry_settings.focus_coordinates_specified),
 			focusCoordinates(Configuration::get().telemetry_settings.focus_coordinates),
@@ -337,16 +339,16 @@ private:
 
 	// *** data structure accessors
 	const TVoxel* liveVoxels;
-	const TIndexData* liveIndexData;
-	TCache liveCache;
+	const typename TIndex::IndexData* liveIndexData;
+	typename TIndex::IndexCache liveCache;
 
 	const TVoxel* canonicalVoxels;
-	const TIndexData* canonicalIndexData;
-	TCache canonicalCache;
+	const typename TIndex::IndexData* canonicalIndexData;
+	typename TIndex::IndexCache canonicalCache;
 
 	TWarp* warps;
-	const TIndexData* warpIndexData;
-	TCache warpCache;
+	const typename TIndex::IndexData* warpIndexData;
+	typename TIndex::IndexCache warpCache;
 
 	AdditionalGradientAggregates aggregates;
 	ComponentEnergies energies;

@@ -663,6 +663,8 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_HEADERS
 ##
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_SOURCES
+	SurfaceTrackers/WarpGradientFunctors/WarpGradientFunctor.h
+
 	SurfaceTrackers/Interface/SlavchevaSurfaceTracker.cpp
 	SurfaceTrackers/Interface/SurfaceTracker.tpp
     )
@@ -673,12 +675,13 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_HEADERS
     )
 ##
 set(ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS
+	SurfaceTrackers/WarpGradientFunctors/WarpGradientFunctor_SlavchevaDiagnostic.h
+	SurfaceTrackers/WarpGradientFunctors/WarpGradientFunctor_SlavchevaOptimized.h
+
 	SurfaceTrackers/Shared/ITMWarpGradientCommon.h
 	SurfaceTrackers/Shared/ITMSceneMotionTracker_Shared.h
 	SurfaceTrackers/Shared/ITMSceneMotionTracker_Debug.h
 	SurfaceTrackers/Shared/ITMSceneMotionTracker_Functors.h
-	SurfaceTrackers/Shared/ITMCalculateWarpGradientFunctor.h
-	SurfaceTrackers/Shared/ITMOptimizedSlavchevaFusionFunctor.h
 	SurfaceTrackers/Shared/ITMSceneMotionOptimizationParameters.h
 	SurfaceTrackers/Shared/ITMWarpGradientRoutines.h
 	SurfaceTrackers/Shared/ITMWarpGradientAggregates.h
