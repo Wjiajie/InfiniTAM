@@ -640,7 +640,7 @@ set(ITMLIB_CAMERA_TRACKERS_SHARED_HEADERS
     )
 # ============================================== SCENE MOTION TRACKERS =================================================
 set(ITMLIB_SCENE_MOTION_TRACKERS_HEADERS
-	SurfaceTrackers/ITMSceneMotionTrackerFactory.h
+	SurfaceTrackers/SurfaceTrackerFactory.h
     )
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_SOURCES

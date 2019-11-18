@@ -24,7 +24,7 @@
 #endif
 
 namespace ITMLib {
-class ITMSceneMotionTrackerFactory {
+class SurfaceTrackerFactory {
 public:
 /**
 * \brief Makes a scene motion tracker.
@@ -38,11 +38,27 @@ public:
 		auto& settings = Configuration::get();
 		switch (settings.device_type) {
 			case MEMORYDEVICE_CPU:
-				motionTracker = new SurfaceTracker<TVoxel, TWarp, TIndex, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>();
+				switch (settings.surface_tracker_type){
+					case TRACKER_SLAVCHEVA_OPTIMIZED:
+						motionTracker = new SurfaceTracker<TVoxel, TWarp, TIndex, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_OPTIMIZED>();
+						break;
+					case TRACKER_SLAVCHEVA_DIAGNOSTIC:
+						motionTracker = new SurfaceTracker<TVoxel, TWarp, TIndex, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>();
+						break;
+				}
 				break;
 			case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-				motionTracker = new SurfaceTracker<TVoxel, TWarp, TIndex, MEMORYDEVICE_CUDA, TRACKER_SLAVCHEVA_DIAGNOSTIC>();
+				switch (settings.surface_tracker_type) {
+					case TRACKER_SLAVCHEVA_OPTIMIZED:
+						motionTracker = new SurfaceTracker<TVoxel, TWarp, TIndex, MEMORYDEVICE_CUDA, TRACKER_SLAVCHEVA_OPTIMIZED>();
+						break;
+					case TRACKER_SLAVCHEVA_DIAGNOSTIC:
+						motionTracker = new SurfaceTracker<TVoxel, TWarp, TIndex, MEMORYDEVICE_CUDA, TRACKER_SLAVCHEVA_DIAGNOSTIC>();
+						break;
+				}
+#else
+				DIEWITHEXCEPTION_REPORTLOCATION("Not built with CUDA but CUDA type requested, aborting!");
 #endif
 				break;
 			case MEMORYDEVICE_METAL:

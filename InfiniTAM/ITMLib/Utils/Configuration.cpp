@@ -421,7 +421,7 @@ Configuration& Configuration::get() {
 namespace fs = boost::filesystem;
 
 std::string preprocess_output_path(const std::string& output_path, const std::string& config_path) {
-	if (output_path == "<CONFIGURATION_DIRECTORY>") {
+	if (output_path == "<CONFIGURATION_DIRECTORY>" || output_path == "<CONFIG_DIRECTORY>") {
 		fs::path fs_config_path(config_path);
 		return fs_config_path.parent_path().string();
 	} else {

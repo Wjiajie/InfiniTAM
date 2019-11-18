@@ -24,7 +24,7 @@
 #include "ITMDenseDynamicMapper.h"
 #include "../Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../Engines/Swapping/ITMSwappingEngineFactory.h"
-#include "../SurfaceTrackers/ITMSceneMotionTrackerFactory.h"
+#include "../SurfaceTrackers/SurfaceTrackerFactory.h"
 #include "../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "../Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
@@ -70,7 +70,7 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ITMDenseDynamicMapper(const TIndex
 				ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel, TWarp, TIndex>
 						(Configuration::get().device_type)),
 		sceneMotionTracker(
-				ITMSceneMotionTrackerFactory::MakeSceneMotionTracker<TVoxel, TWarp, TIndex>()),
+				SurfaceTrackerFactory::MakeSceneMotionTracker<TVoxel, TWarp, TIndex>()),
 		swappingEngine(Configuration::get().swapping_mode != Configuration::SWAPPINGMODE_DISABLED
 		               ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxel, TIndex>(
 						Configuration::get().device_type, index)
