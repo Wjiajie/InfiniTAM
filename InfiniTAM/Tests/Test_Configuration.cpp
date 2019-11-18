@@ -49,6 +49,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			Configuration::SWAPPINGMODE_ENABLED,
 			Configuration::LIBMODE_BASIC,
 			Configuration::INDEX_ARRAY,
+			GradientFunctorType::TRACKER_SLAVCHEVA_OPTIMIZED,
 			"type=rgb,levels=rrbb",
 			300,
 			0.00007f

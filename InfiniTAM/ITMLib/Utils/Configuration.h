@@ -16,6 +16,7 @@
 #include "../../ORUtils/MemoryDeviceType.h"
 #include "ITMMath.h"
 #include "../SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
+#include "../SurfaceTrackers/WarpGradientFunctors/WarpGradientFunctor.h"
 
 namespace po = boost::program_options;
 namespace pt = boost::property_tree;
@@ -99,6 +100,7 @@ public:
 	              Configuration::SwappingMode swapping_mode,
 	              Configuration::LibMode library_mode,
 	              Configuration::IndexingMethod indexing_method,
+	              GradientFunctorType surface_tracker_type,
 	              std::string tracker_configuration,
 	              unsigned int max_iteration_threshold,
 	              float max_update_length_threshold);
@@ -138,6 +140,8 @@ public:
 	const LibMode library_mode;
 	/// switch between different types of indexing for the spatial data structures
 	const IndexingMethod indexing_method;
+	/// switch between different versions of the tracker
+	const GradientFunctorType surface_tracker_type;
 	/*Note: library_mode declaration has to precede that of tracker_configuration,
 	 since the latter uses the former for initialization in lists*/
 	/// tracker configuration string

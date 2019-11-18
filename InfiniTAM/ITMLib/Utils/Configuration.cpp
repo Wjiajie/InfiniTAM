@@ -215,6 +215,33 @@ std::string enum_value_to_string<SlavchevaSurfaceTracker::ConfigurationMode>(
 	}
 }
 
+template<>
+GradientFunctorType enum_value_from_string<GradientFunctorType>(const std::string& string){
+	static std::unordered_map<std::string, GradientFunctorType> surface_tracking_functor_by_string = {
+			{"slavcheva_diagnostic", GradientFunctorType::TRACKER_SLAVCHEVA_DIAGNOSTIC},
+			{"slavcheva_optimized", GradientFunctorType::TRACKER_SLAVCHEVA_OPTIMIZED},
+			{"Slavcheva_diagnostic", GradientFunctorType::TRACKER_SLAVCHEVA_DIAGNOSTIC},
+			{"Slavcheva_optimized", GradientFunctorType::TRACKER_SLAVCHEVA_OPTIMIZED}
+	};
+	if (surface_tracking_functor_by_string.find(string) == surface_tracking_functor_by_string.end()) {
+		DIEWITHEXCEPTION_REPORTLOCATION("Unrecognized slavcheva mode argument");
+	} else {
+		return surface_tracking_functor_by_string[string];
+	}
+}
+
+
+template<>
+std::string enum_value_to_string<GradientFunctorType>(
+		const GradientFunctorType& enum_value) {
+	switch (enum_value) {
+		case GradientFunctorType::TRACKER_SLAVCHEVA_OPTIMIZED:
+			return "slavcheva_optimized";
+		case GradientFunctorType::TRACKER_SLAVCHEVA_DIAGNOSTIC:
+			return "slavcheva_diagnostic";
+	}
+}
+
 static MemoryDeviceType memory_device_type_from_variable_map(const po::variables_map& vm, const std::string& argument) {
 	return enum_value_from_string<MemoryDeviceType>(vm[argument].as<std::string>());
 }
@@ -236,6 +263,11 @@ static Configuration::LibMode lib_mode_from_variable_map(const po::variables_map
 static Configuration::IndexingMethod indexing_method_from_variable_map(const po::variables_map& vm,
                                                                        const std::string& argument) {
 	return enum_value_from_string<Configuration::IndexingMethod>(vm[argument].as<std::string>());
+}
+
+static GradientFunctorType surface_tracker_type_from_variable_map(const po::variables_map& vm,
+                                                                       const std::string& argument) {
+	return enum_value_from_string<GradientFunctorType>(vm[argument].as<std::string>());
 }
 
 template<typename TEnum>
@@ -281,6 +313,8 @@ Configuration::Configuration(const po::variables_map& vm) :
 		             lib_mode_from_variable_map(vm, "mode")),
 		indexing_method(vm["index"].empty() ? Configuration().indexing_method :
 		                indexing_method_from_variable_map(vm, "index")),
+		surface_tracker_type(vm["surface_tracker_type"].empty() ? Configuration().surface_tracker_type :
+		                surface_tracker_type_from_variable_map(vm, "index")),
 		tracker_configuration(
 				vm["tracker"].empty() ? (library_mode == LIBMODE_BASIC_SURFELS ? default_surfel_tracker_configuration :
 				                         default_depth_only_extended_tracker_configuration)
@@ -328,6 +362,7 @@ Configuration::Configuration()
 		swapping_mode(SWAPPINGMODE_DISABLED),
 		library_mode(LIBMODE_DYNAMIC),
 		indexing_method(INDEX_HASH),
+		surface_tracker_type(TRACKER_SLAVCHEVA_DIAGNOSTIC),
 		tracker_configuration(library_mode == LIBMODE_BASIC_SURFELS ? default_surfel_tracker_configuration :
 		                      default_depth_only_extended_tracker_configuration),
 		max_iteration_threshold(200),
@@ -458,6 +493,8 @@ Configuration* Configuration::from_property_tree(const pt::ptree& tree) {
 	boost::optional<Configuration::LibMode> library_mode = optional_enum_value_from_ptree<LibMode>(tree, "mode");
 	boost::optional<Configuration::IndexingMethod> indexing_method = optional_enum_value_from_ptree<IndexingMethod>(
 			tree, "index");
+	boost::optional<GradientFunctorType> surface_tracker_type = optional_enum_value_from_ptree<GradientFunctorType>(
+			tree, "surface_tracking.functor_type");
 	boost::optional<std::string> tracker_configuration = tree.get_optional<std::string>("tracker");
 	boost::optional<unsigned int> max_iteration_threshold =
 			tree.get_optional<unsigned int>("surface_tracking.max_iterations");
@@ -482,6 +519,7 @@ Configuration* Configuration::from_property_tree(const pt::ptree& tree) {
 			swapping_mode ? swapping_mode.get() : default_config.swapping_mode,
 			library_mode ? library_mode.get() : default_config.library_mode,
 			indexing_method ? indexing_method.get() : default_config.indexing_method,
+			surface_tracker_type ? surface_tracker_type.get() : default_config.surface_tracker_type,
 			tracker_configuration ? tracker_configuration.get() : default_config.tracker_configuration,
 			max_iteration_threshold ? max_iteration_threshold.get() : default_config.max_iteration_threshold,
 			max_update_length_threshold ? max_update_length_threshold.get() : default_config.max_update_length_threshold
@@ -493,9 +531,12 @@ Configuration::Configuration(
 		SlavchevaSurfaceTracker::Parameters slavcheva_parameters, SlavchevaSurfaceTracker::Switches slavcheva_switches,
 		Configuration::TelemetrySettings telemetry_settings, bool skip_points, bool create_meshing_engine,
 		MemoryDeviceType device_type, bool use_approximate_raycast, bool use_threshold_filter,
-		bool use_bilateral_filter, Configuration::FailureMode behavior_on_failure,
+		bool use_bilateral_filter,
+		Configuration::FailureMode behavior_on_failure,
 		Configuration::SwappingMode swapping_mode,
-		Configuration::LibMode library_mode, Configuration::IndexingMethod indexing_method,
+		Configuration::LibMode library_mode,
+		Configuration::IndexingMethod indexing_method,
+		GradientFunctorType surface_tracker_type,
 		std::string tracker_configuration,
 		unsigned int max_iteration_threshold,
 		float max_update_length_threshold) :
@@ -515,6 +556,7 @@ Configuration::Configuration(
 		swapping_mode(swapping_mode),
 		library_mode(library_mode),
 		indexing_method(indexing_method),
+		surface_tracker_type(surface_tracker_type),
 		tracker_configuration(std::move(tracker_configuration)),
 		max_iteration_threshold(max_iteration_threshold),
 		max_update_length_threshold(
@@ -537,6 +579,7 @@ bool operator==(const Configuration& c1, const Configuration& c2) {
 	       c1.swapping_mode == c2.swapping_mode &&
 	       c1.library_mode == c2.library_mode &&
 	       c1.indexing_method == c2.indexing_method &&
+	       c1.surface_tracker_type == c2.surface_tracker_type &&
 	       c1.tracker_configuration == c2.tracker_configuration &&
 	       c1.max_iteration_threshold == c2.max_iteration_threshold &&
 	       c1.max_update_length_threshold == c2.max_update_length_threshold;
@@ -566,6 +609,7 @@ pt::ptree Configuration::to_ptree() const {
 	tree.add("swapping", enum_value_to_string(this->swapping_mode));
 	tree.add("mode", enum_value_to_string(this->library_mode));
 	tree.add("index", enum_value_to_string(this->indexing_method));
+	tree.add("surface_tracking.functor_type", enum_value_to_string(this->surface_tracker_type));
 	tree.add("tracker", this->tracker_configuration);
 	tree.add("surface_tracking.max_iterations", this->max_iteration_threshold);
 	tree.add("surface_tracking.vector_update_threshold", this->max_update_length_threshold);
