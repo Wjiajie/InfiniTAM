@@ -20,6 +20,7 @@
 #include "../../../Objects/Views/ITMView.h"
 #include "../../../Objects/Tracking/ITMTrackingState.h"
 #include "../../../Objects/RenderStates/ITMRenderState.h"
+#include "../../Common/ITMWarpEnums.h"
 
 namespace ITMLib {
 /**
@@ -49,7 +50,37 @@ class ITMIndexingEngineInterface {
 };
 
 template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
-class ITMIndexingEngine;
+class ITMIndexingEngine :
+		public ITMIndexingEngineInterface<TVoxel, TIndex>{
+private:
+	ITMIndexingEngine() = default;
+public:
+	static ITMIndexingEngine& Instance() {
+		static ITMIndexingEngine instance; // Guaranteed to be destroyed.
+		// Instantiated on first use.
+		return instance;
+	}
+
+	ITMIndexingEngine(ITMIndexingEngine const&) = delete;
+	void operator=(ITMIndexingEngine const&) = delete;
+
+	void AllocateFromDepth(
+			ITMVoxelVolume <TVoxel, TIndex>* scene, const ITMView* view,
+			const ITMTrackingState* trackingState, const ITMRenderState* renderState,
+			bool onlyUpdateVisibleList, bool resetVisibleList) override;
+
+
+	template<typename TVoxelTarget, typename TVoxelSource>
+	void AllocateUsingOtherVolume(ITMVoxelVolume<TVoxelTarget, TIndex>* targetVolume,
+	                              ITMVoxelVolume<TVoxelSource, TIndex>* sourceVolume);
+
+	template<WarpType TWarpType, typename TWarp>
+	void AllocateFromWarpedVolume(
+			ITMVoxelVolume <TWarp, TIndex>* warpField,
+			ITMVoxelVolume <TVoxel, TIndex>* sourceTSDF,
+			ITMVoxelVolume <TVoxel, TIndex>* targetTSDF);
+};
+
 
 }//namespace ITMLib
 

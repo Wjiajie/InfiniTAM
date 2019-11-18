@@ -251,18 +251,17 @@ set(ITMLIB_ENGINES_INDEXING_HEADERS
 set(ITMLIB_ENGINES_INDEXING_CPU_SOURCES
 	Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.tpp
 	Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.cpp
-	Engines/Indexing/PVA/CPU/ITMIndexingEngine_CPU_PlainVoxelArray.tpp
 	Engines/Indexing/PVA/CPU/ITMIndexingEngine_CPU_PlainVoxelArray.cpp
     )
 
 set(ITMLIB_ENGINES_INDEXING_CPU_HEADERS
 	Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h
-	Engines/Indexing/PVA/CPU/ITMIndexingEngine_CPU_PlainVoxelArray.h
-    )
+	)
 ##
 set(ITMLIB_ENGINES_INDEXING_CUDA_SOURCES
 	Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.tcu
 	Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.cu
+	Engines/Indexing/PVA/CUDA/ITMIndexingEngine_CUDA_PlainVoxelArray.cu
     )
 
 set(ITMLIB_ENGINES_INDEXING_CUDA_HEADERS
@@ -273,6 +272,9 @@ set(ITMLIB_ENGINES_INDEXING_CUDA_HEADERS
 set(ITMLIB_ENGINES_INDEXING_INTERFACE_HEADERS
     Engines/Indexing/Interface/ITMIndexingEngine.h
 
+	)
+set(ITMLIB_ENGINES_INDEXING_INTERFACE_SOURCES
+	Engines/Indexing/Interface/ITMIndexingEngine.tpp
 	)
 
 set(ITMLIB_ENGINES_INDEXING_SHARED_HEADERS
