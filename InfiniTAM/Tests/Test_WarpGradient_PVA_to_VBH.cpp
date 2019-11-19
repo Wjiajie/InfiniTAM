@@ -205,74 +205,74 @@ BOOST_FIXTURE_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly, Fixture) {
 	                                                               InitParams<ITMVoxelBlockHash>());
 	float absoluteTolerance = 1e-7;
 	{
-//		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_16;
-//		buildSdfVolumeFromImage(&volume_PVA_16, "TestData/snoopy_depth_000016.png",
-//		                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
-//		                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
-//		                        InitParams<ITMPlainVoxelArray>());
-//
-//		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_17;
-//		buildSdfVolumeFromImage(&volume_PVA_17, "TestData/snoopy_depth_000016.png",
-//		                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
-//		                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
-//		                        InitParams<ITMPlainVoxelArray>());
-//
-//
-//		ManipulationEngine_CUDA_PVA_Warp::Inst().ResetScene(&warp_field_CUDA_PVA);
-//
-//		SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA, TRACKER_SLAVCHEVA_DIAGNOSTIC>
-//				motionTracker_PVA_CUDA(
-//				SlavchevaSurfaceTracker::Switches(true, false, false, false, false)
-//		);
-//		motionTracker_PVA_CUDA.CalculateWarpGradient(volume_PVA_16, volume_PVA_17, &warp_field_CUDA_PVA);
-//		motionTracker_PVA_CUDA.UpdateWarps(volume_PVA_16, volume_PVA_17, &warp_field_CUDA_PVA);
-////		warp_field_CUDA_PVA.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_warps/data_only_iter_0_");
-//		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* data_only_iter_0_gt;
-//		loadSdfVolume(&data_only_iter_0_gt, "TestData/snoopy_result_fr16-17_warps/data_only_iter_0_",
-//		              MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>(), Configuration::get().swapping_mode);
-//		BOOST_REQUIRE(contentAlmostEqual_CUDA(data_only_iter_0_gt, &warp_field_CUDA_PVA, absoluteTolerance));
-//		delete data_only_iter_0_gt;
-//
-//		ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMPlainVoxelArray> recoEngine;
-//
-//		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* warped_volumes[2] = {
-//				new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(&Configuration::get().scene_parameters,
-//				                                                 Configuration::get().swapping_mode ==
-//				                                                 Configuration::SWAPPINGMODE_ENABLED,
-//				                                                 MEMORYDEVICE_CUDA,
-//				                                                 InitParams<ITMPlainVoxelArray>()),
-//				new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(&Configuration::get().scene_parameters,
-//				                                                 Configuration::get().swapping_mode ==
-//				                                                 Configuration::SWAPPINGMODE_ENABLED,
-//				                                                 MEMORYDEVICE_CUDA,
-//				                                                 InitParams<ITMPlainVoxelArray>())
-//		};
-//		ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(warped_volumes[0]);
-//		ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(warped_volumes[1]);
-//
-//		recoEngine.WarpScene_FlowWarps(&warp_field_CUDA_PVA, volume_PVA_17, warped_volumes[0]);
-//
-//		const int iteration_limit = 10;
-//		for (int iteration = 1; iteration < iteration_limit; iteration++) {
-//			int source_warped_field_ix = iteration % 2;
-//			int target_warped_field = (iteration + 1) % 2;
-//
-//			motionTracker_PVA_CUDA.CalculateWarpGradient(volume_PVA_16, warped_volumes[source_warped_field_ix],
-//			                                             &warp_field_CUDA_PVA);
-//			motionTracker_PVA_CUDA.UpdateWarps(volume_PVA_16, warped_volumes[source_warped_field_ix],
-//			                                   &warp_field_CUDA_PVA);
-//			recoEngine.WarpScene_FlowWarps(&warp_field_CUDA_PVA, warped_volumes[source_warped_field_ix],
-//			                               warped_volumes[target_warped_field]);
-////			std::string path = std::string("../../Tests/TestData/snoopy_result_fr16-17_warps/data_only_iter_") +
-////					std::to_string(iteration) + "_";
-////			warp_field_CUDA_PVA.SaveToDirectory(path);
-//		}
-//
-//
-//		delete volume_PVA_16;
-//		delete volume_PVA_17;
-//		delete warped_volumes[0];
-//		delete warped_volumes[1];
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_16;
+		buildSdfVolumeFromImage(&volume_PVA_16, "TestData/snoopy_depth_000016.png",
+		                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
+		                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
+		                        InitParams<ITMPlainVoxelArray>());
+
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_17;
+		buildSdfVolumeFromImage(&volume_PVA_17, "TestData/snoopy_depth_000016.png",
+		                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
+		                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
+		                        InitParams<ITMPlainVoxelArray>());
+
+
+		ManipulationEngine_CUDA_PVA_Warp::Inst().ResetScene(&warp_field_CUDA_PVA);
+
+		SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA, TRACKER_SLAVCHEVA_DIAGNOSTIC>
+				motionTracker_PVA_CUDA(
+				SlavchevaSurfaceTracker::Switches(true, false, false, false, false)
+		);
+		motionTracker_PVA_CUDA.CalculateWarpGradient(volume_PVA_16, volume_PVA_17, &warp_field_CUDA_PVA);
+		motionTracker_PVA_CUDA.UpdateWarps(volume_PVA_16, volume_PVA_17, &warp_field_CUDA_PVA);
+//		warp_field_CUDA_PVA.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_warps/data_only_iter_0_");
+		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* data_only_iter_0_gt;
+		loadSdfVolume(&data_only_iter_0_gt, "TestData/snoopy_result_fr16-17_warps/data_only_iter_0_",
+		              MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>(), Configuration::get().swapping_mode);
+		BOOST_REQUIRE(contentAlmostEqual_CUDA(data_only_iter_0_gt, &warp_field_CUDA_PVA, absoluteTolerance));
+		delete data_only_iter_0_gt;
+
+		ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMPlainVoxelArray> recoEngine;
+
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* warped_volumes[2] = {
+				new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(&Configuration::get().scene_parameters,
+				                                                 Configuration::get().swapping_mode ==
+				                                                 Configuration::SWAPPINGMODE_ENABLED,
+				                                                 MEMORYDEVICE_CUDA,
+				                                                 InitParams<ITMPlainVoxelArray>()),
+				new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(&Configuration::get().scene_parameters,
+				                                                 Configuration::get().swapping_mode ==
+				                                                 Configuration::SWAPPINGMODE_ENABLED,
+				                                                 MEMORYDEVICE_CUDA,
+				                                                 InitParams<ITMPlainVoxelArray>())
+		};
+		ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(warped_volumes[0]);
+		ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(warped_volumes[1]);
+
+		recoEngine.WarpScene_FlowWarps(&warp_field_CUDA_PVA, volume_PVA_17, warped_volumes[0]);
+
+		const int iteration_limit = 10;
+		for (int iteration = 1; iteration < iteration_limit; iteration++) {
+			int source_warped_field_ix = iteration % 2;
+			int target_warped_field = (iteration + 1) % 2;
+
+			motionTracker_PVA_CUDA.CalculateWarpGradient(volume_PVA_16, warped_volumes[source_warped_field_ix],
+			                                             &warp_field_CUDA_PVA);
+			motionTracker_PVA_CUDA.UpdateWarps(volume_PVA_16, warped_volumes[source_warped_field_ix],
+			                                   &warp_field_CUDA_PVA);
+			recoEngine.WarpScene_FlowWarps(&warp_field_CUDA_PVA, warped_volumes[source_warped_field_ix],
+			                               warped_volumes[target_warped_field]);
+//			std::string path = std::string("../../Tests/TestData/snoopy_result_fr16-17_warps/data_only_iter_") +
+//					std::to_string(iteration) + "_";
+//			warp_field_CUDA_PVA.SaveToDirectory(path);
+		}
+
+
+		delete volume_PVA_16;
+		delete volume_PVA_17;
+		delete warped_volumes[0];
+		delete warped_volumes[1];
 	}
 
 	{
@@ -336,9 +336,9 @@ BOOST_FIXTURE_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly, Fixture) {
 			                                   &warp_field_CUDA_VBH);
 			recoEngine.WarpScene_FlowWarps(&warp_field_CUDA_VBH, warped_volumes[source_warped_field_ix],
 			                               warped_volumes[target_warped_field]);
-			std::string path = std::string("../../Tests/TestData/snoopy_result_fr16-17_warps/data_only_iter_") +
-			                   std::to_string(iteration) + "_";
-			warp_field_CUDA_VBH.SaveToDirectory(path);
+//			std::string path = std::string("../../Tests/TestData/snoopy_result_fr16-17_warps/data_only_iter_") +
+//			                   std::to_string(iteration) + "_";
+//			warp_field_CUDA_VBH.SaveToDirectory(path);
 		}
 
 
