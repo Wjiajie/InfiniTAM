@@ -93,22 +93,13 @@ SurfaceTracker<TVoxel, TWarp, TIndex, TMemoryDeviceType, TGradientFunctorType>::
 	ITMSceneTraversalEngine<TWarp, TIndex, TMemoryDeviceType>::template
 	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TWarp>>(warpField);
 
-	std::cout << "live: " << ITMSceneStatisticsCalculator<TVoxel, TIndex, TMemoryDeviceType>::Instance()
-			.ComputeAllocatedHashBlockCount(liveScene) << std::endl;
-
 	ITMIndexingEngine<TVoxel, TIndex, TMemoryDeviceType>::Instance()
 			.AllocateUsingOtherVolume(canonicalScene, liveScene);
-
-	std::cout << "canonical after alloc: " << ITMSceneStatisticsCalculator<TVoxel, TIndex, TMemoryDeviceType>::Instance()
-			.ComputeAllocatedHashBlockCount(canonicalScene) << std::endl;
 
 	ITMIndexingEngine<TVoxel, TIndex, TMemoryDeviceType>::Instance()
 			.AllocateUsingOtherVolume(warpField, liveScene);
 
-	std::cout << "warp after alloc: " << ITMSceneStatisticsCalculator<TWarp, TIndex, TMemoryDeviceType>::Instance()
-			.ComputeAllocatedHashBlockCount(warpField) << std::endl;
-
-	WarpGradientFunctor<TVoxel, TWarp, TIndex, TGradientFunctorType>
+	WarpGradientFunctor<TVoxel, TWarp, TIndex, TMemoryDeviceType, TGradientFunctorType>
 			calculateGradientFunctor(this->parameters, this->switches,
 			                         liveScene, canonicalScene, warpField,
 			                         canonicalScene->sceneParams->voxelSize, canonicalScene->sceneParams->mu);

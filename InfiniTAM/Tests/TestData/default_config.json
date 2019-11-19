@@ -42,7 +42,7 @@
         }
     },
     "telemetry_settings": {
-        "output": "<CONFIG_DIRECTORY>"
+        "output": "output/"
     },
     "skip_points": "true",
     "disable_meshing": "false",

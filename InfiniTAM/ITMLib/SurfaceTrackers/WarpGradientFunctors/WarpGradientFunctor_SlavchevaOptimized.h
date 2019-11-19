@@ -38,8 +38,8 @@
 namespace ITMLib {
 
 
-template<typename TVoxel, typename TWarp, typename TIndex>
-struct WarpGradientFunctor<TVoxel, TWarp, TIndex, TRACKER_SLAVCHEVA_OPTIMIZED>{
+template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+struct WarpGradientFunctor<TVoxel, TWarp, TIndex, TMemoryDeviceType, TRACKER_SLAVCHEVA_OPTIMIZED>{
 private:
 
 

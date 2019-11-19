@@ -72,8 +72,8 @@ struct SetGradientFunctor<TWarp, true> {
 };
 
 
-template<typename TVoxel, typename TWarp, typename TIndex>
-struct WarpGradientFunctor<TVoxel, TWarp, TIndex, TRACKER_SLAVCHEVA_DIAGNOSTIC> {
+template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+struct WarpGradientFunctor<TVoxel, TWarp, TIndex, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC> {
 private:
 
 	_CPU_AND_GPU_CODE_
@@ -126,12 +126,8 @@ public:
 		float liveSdf = TVoxel::valueToFloat(voxelLive.sdf);
 		float canonicalSdf = TVoxel::valueToFloat(voxelCanonical.sdf);
 
-		// region =============================== DECLARATIONS & DEFAULTS FOR ALL TERMS ====================
-
+		// term gradient results are stored here before being added up
 		Vector3f localSmoothingEnergyGradient(0.0f), localDataEnergyGradient(0.0f), localLevelSetEnergyGradient(0.0f);
-
-		// endregion
-
 
 		bool printVoxelResult = false;
 		this->SetUpFocusVoxelPrinting(printVoxelResult, voxelPosition, framewiseWarp, canonicalSdf, liveSdf);
@@ -139,9 +135,6 @@ public:
 			printf("%sLive 6-connected neighbor information:%s\n", c_blue, c_reset);
 			print6ConnectedNeighborInfo(voxelPosition, liveVoxels, liveIndexData, liveCache);
 		}
-
-		//_DEBUG
-
 
 		// region =============================== DATA TERM ================================================
 		if (computeDataAndLevelSetTerms) {
@@ -167,7 +160,6 @@ public:
 
 				ATOMIC_ADD(aggregates.dataVoxelCount, 1u);
 
-				//printf(*energies.totalDataEnergy);
 				if (printVoxelResult) {
 					_DEBUG_PrintDataTermStuff(liveSdfJacobian);
 				}
@@ -350,8 +342,8 @@ private:
 	const typename TIndex::IndexData* warpIndexData;
 	typename TIndex::IndexCache warpCache;
 
-	AdditionalGradientAggregates aggregates;
-	ComponentEnergies energies;
+	AdditionalGradientAggregates<TMemoryDeviceType> aggregates;
+	ComponentEnergies<TMemoryDeviceType> energies;
 
 	// *** debugging / analysis variables
 	bool hasFocusCoordinates{};

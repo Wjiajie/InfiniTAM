@@ -21,6 +21,6 @@ enum GradientFunctorType{
 	TRACKER_SLAVCHEVA_OPTIMIZED
 };
 
-template<typename TVoxel, typename TWarp, typename TIndex, GradientFunctorType TGradientFunctorType>
+template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TMemoryDeviceType, GradientFunctorType TGradientFunctorType>
 struct WarpGradientFunctor;
 } // namespace ITMLib

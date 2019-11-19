@@ -16,6 +16,7 @@
 #pragma once
 #include "../../../ORUtils/PlatformIndependentAtomics.h"
 
+template<MemoryDeviceType TMemoryDeviceType>
 struct AdditionalGradientAggregates{
 	AdditionalGradientAggregates(){
 		INITIALIZE_ATOMIC(float, cumulativeCanonicalSdf, 0.f);
@@ -48,6 +49,7 @@ struct AdditionalGradientAggregates{
 	DECLARE_ATOMIC_UINT(levelSetVoxelCount);
 };
 
+template<MemoryDeviceType TMemoryDeviceType>
 struct ComponentEnergies{
 	ComponentEnergies(){
 		INITIALIZE_ATOMIC(float, totalDataEnergy, 0.f);

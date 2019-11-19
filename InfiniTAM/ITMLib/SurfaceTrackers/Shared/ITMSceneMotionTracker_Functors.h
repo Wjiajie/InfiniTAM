@@ -69,7 +69,7 @@ struct ClearOutGradientStaticFunctor {
 };
 
 
-template<typename TVoxel, typename TWarp>
+template<typename TVoxel, typename TWarp, MemoryDeviceType TMemoryDeviceType>
 struct WarpUpdateFunctor {
 	WarpUpdateFunctor(float learningRate, bool gradientSmoothingEnabled) :
 			learningRate(learningRate), gradientSmoothingEnabled(gradientSmoothingEnabled),
@@ -329,7 +329,7 @@ inline float UpdateWarps_common(
 		ITMLib::ITMVoxelVolume<TWarp, TIndex>* warpField,
 		float gradientDescentLearningRate,
 		bool gradeintSmoothingEnabled) {
-	WarpUpdateFunctor<TVoxel, TWarp>
+	WarpUpdateFunctor<TVoxel, TWarp, TDeviceType>
 			warpUpdateFunctor(gradientDescentLearningRate, gradeintSmoothingEnabled);
 
 	ITMLib::ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, TIndex, TDeviceType>::
