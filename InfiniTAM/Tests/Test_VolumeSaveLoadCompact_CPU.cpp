@@ -34,8 +34,6 @@ using namespace ITMLib;
 
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray> SceneFileIOEngine_PVA;
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
-typedef ITMSceneStatisticsCalculator_CPU<ITMVoxel, ITMPlainVoxelArray> SceneStatisticsCalculator_PVA;
-typedef ITMSceneStatisticsCalculator_CPU<ITMVoxel, ITMVoxelBlockHash> SceneStatisticsCalculator_VBH;
 
 BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 
@@ -59,7 +57,7 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 	SceneFileIOEngine_PVA::LoadFromDirectoryCompact(&scene2, path);
 
 	float tolerance = 1e-8;
-	BOOST_REQUIRE_EQUAL( SceneStatisticsCalculator_PVA::Instance().ComputeNonTruncatedVoxelCount(&scene2), 19456);
+	BOOST_REQUIRE_EQUAL(SceneStatCalc_CPU_PVA_Voxel::Instance().ComputeNonTruncatedVoxelCount(&scene2), 19456);
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene2, tolerance));
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(
@@ -76,7 +74,7 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene4);
 	SceneFileIOEngine_VBH::LoadFromDirectoryCompact(&scene4, path);
 
-	BOOST_REQUIRE_EQUAL( SceneStatisticsCalculator_VBH::Instance().ComputeNonTruncatedVoxelCount(&scene4), 19456);
+	BOOST_REQUIRE_EQUAL(SceneStatCalc_CPU_VBH_Voxel::Instance().ComputeNonTruncatedVoxelCount(&scene4), 19456);
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene3, &scene4, tolerance));
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene4, tolerance));
 }

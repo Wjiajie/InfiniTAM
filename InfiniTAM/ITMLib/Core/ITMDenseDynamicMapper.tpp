@@ -41,11 +41,12 @@ namespace bench = ITMLib::Bench;
 
 // region ========================================= DEBUG PRINTING =====================================================
 //_DEBUG
-template<typename TVoxel, typename TIndex>
+template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
 inline static void PrintSceneStatistics(
 		ITMVoxelVolume<TVoxel, TIndex>* scene,
 		std::string description) {
-	ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>& calculator = ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::Instance();
+	ITMSceneStatisticsCalculator<TVoxel, TIndex, TMemoryDeviceType>& calculator =
+			ITMSceneStatisticsCalculator<TVoxel, TIndex, TMemoryDeviceType>::Instance();
 	std::cout << green << "=== Stats for scene '" << description << "' ===" << reset << std::endl;
 	std::cout << "    Total voxel count: " << calculator.ComputeAllocatedVoxelCount(scene) << std::endl;
 	std::cout << "    NonTruncated voxel count: " << calculator.ComputeNonTruncatedVoxelCount(scene) << std::endl;

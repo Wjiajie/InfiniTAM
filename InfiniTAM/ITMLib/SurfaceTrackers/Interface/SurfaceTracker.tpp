@@ -25,6 +25,7 @@
 #include "../../Engines/Indexing/Interface/ITMIndexingEngine.h"
 
 #include "../../Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
+
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 #include "../../Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
@@ -32,13 +33,12 @@
 
 #ifdef __CUDACC__
 #include "../../Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
+
 #include "../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h"
 #include "../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
 #include "../../Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
 #include "../../Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #endif
-
-
 
 
 using namespace ITMLib;
@@ -64,11 +64,12 @@ void SurfaceTracker<TVoxel, TWarp, TIndex, TMemoryDeviceType, TGradientFunctorTy
 
 // endregion ===========================================================================================================
 
-template<typename TVoxel, typename TIndex>
+template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
 inline static void PrintSceneStatistics(
 		ITMVoxelVolume<TVoxel, TIndex>* scene,
 		std::string description) {
-	ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>& calculator = ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::Instance();
+	ITMSceneStatisticsCalculator<TVoxel, TIndex, TMemoryDeviceType>& calculator =
+			ITMSceneStatisticsCalculator<TVoxel, TIndex, TMemoryDeviceType>::Instance();
 	std::cout << green << "=== Stats for scene '" << description << "' ===" << reset << std::endl;
 	std::cout << "    Total voxel count: " << calculator.ComputeAllocatedVoxelCount(scene) << std::endl;
 	std::cout << "    NonTruncated voxel count: " << calculator.ComputeNonTruncatedVoxelCount(scene) << std::endl;
@@ -91,14 +92,25 @@ SurfaceTracker<TVoxel, TWarp, TIndex, TMemoryDeviceType, TGradientFunctorType>::
 	// manage hash
 	ITMSceneTraversalEngine<TWarp, TIndex, TMemoryDeviceType>::template
 	StaticVoxelTraversal<ClearOutGradientStaticFunctor<TWarp>>(warpField);
+
+	std::cout << "live: " << ITMSceneStatisticsCalculator<TVoxel, TIndex, TMemoryDeviceType>::Instance()
+			.ComputeAllocatedHashBlockCount(liveScene) << std::endl;
+
 	ITMIndexingEngine<TVoxel, TIndex, TMemoryDeviceType>::Instance()
 			.AllocateUsingOtherVolume(canonicalScene, liveScene);
+
+	std::cout << "canonical after alloc: " << ITMSceneStatisticsCalculator<TVoxel, TIndex, TMemoryDeviceType>::Instance()
+			.ComputeAllocatedHashBlockCount(canonicalScene) << std::endl;
+
 	ITMIndexingEngine<TVoxel, TIndex, TMemoryDeviceType>::Instance()
 			.AllocateUsingOtherVolume(warpField, liveScene);
 
+	std::cout << "warp after alloc: " << ITMSceneStatisticsCalculator<TWarp, TIndex, TMemoryDeviceType>::Instance()
+			.ComputeAllocatedHashBlockCount(warpField) << std::endl;
+
 	WarpGradientFunctor<TVoxel, TWarp, TIndex, TGradientFunctorType>
 			calculateGradientFunctor(this->parameters, this->switches,
-			                         liveScene,canonicalScene, warpField,
+			                         liveScene, canonicalScene, warpField,
 			                         canonicalScene->sceneParams->voxelSize, canonicalScene->sceneParams->mu);
 
 	ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, TIndex, TMemoryDeviceType>::

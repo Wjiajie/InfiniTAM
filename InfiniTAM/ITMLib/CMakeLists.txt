@@ -747,7 +747,7 @@ set(ITMLIB_UTILS_HEADERS
 ## ================================================ UTILS - SCENE STATISTICS CALCULATOR ================================
 
 set(ITMLIB_UTILS_STATCALC_INTERFACE_HEADERS
-    Utils/Analytics/SceneStatisticsCalculator/Interface/ITMSceneStatisticsCalculator.h
+	Utils/Analytics/SceneStatisticsCalculator/Interface/ITMSceneStatisticsCalculatorInterface.h
     )
 
 

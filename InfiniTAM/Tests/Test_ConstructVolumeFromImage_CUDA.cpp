@@ -40,8 +40,6 @@ using namespace ITMLib;
 
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray> SceneFileIOEngine_PVA;
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
-typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMPlainVoxelArray> SceneStatisticsCalculator_PVA;
-typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMVoxelBlockHash> SceneStatisticsCalculator_VBH;
 
 BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 	Configuration* settings = &Configuration::get();

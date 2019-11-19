@@ -164,7 +164,9 @@ inline bool MarkAsNeedingAllocationIfNotFound(ITMLib::HashEntryState* entryAlloc
 					return false;
 				}
 			}
-			if (entryAllocationTypes[hashIdx] != ITMLib::NEEDS_NO_CHANGE) {
+			if (entryAllocationTypes[hashIdx] != ITMLib::NEEDS_NO_CHANGE
+			    /*&& !IS_EQUAL3(hashBlockCoordinates[hashIdx], desiredHashBlockPosition)*/) {
+				//hash code already marked for allocation, but at different coordinates, cannot allocate
 				collisionDetected = true;
 				return false;
 			} else {
@@ -174,7 +176,9 @@ inline bool MarkAsNeedingAllocationIfNotFound(ITMLib::HashEntryState* entryAlloc
 			}
 
 		}
-		if (entryAllocationTypes[hashIdx] != ITMLib::NEEDS_NO_CHANGE) {
+		if (entryAllocationTypes[hashIdx] != ITMLib::NEEDS_NO_CHANGE
+		    /*&& !IS_EQUAL3(hashBlockCoordinates[hashIdx], desiredHashBlockPosition)*/) {
+			//hash code already marked for allocation, but at different coordinates, cannot allocate
 			collisionDetected = true;
 			return false;
 		} else {

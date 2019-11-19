@@ -115,7 +115,7 @@ void ITMSceneLogger<TVoxel, TWarp, TIndex>::GetActiveSceneBounds(Vector6i& bound
 		if (this->activeWarpLogger->isSlice) {
 			bounds = activeWarpLogger->bounds;
 		} else {
-			ITMSceneStatisticsCalculator_CPU<TWarp, TIndex>::Instance().ComputeVoxelBounds(
+			ITMSceneStatisticsCalculator<TWarp, TIndex, MEMORYDEVICE_CPU>::Instance().ComputeVoxelBounds(
 					this->activeWarpLogger->warpField);
 		}
 	}

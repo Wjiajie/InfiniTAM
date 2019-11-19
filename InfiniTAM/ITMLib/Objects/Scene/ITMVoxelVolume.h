@@ -51,6 +51,7 @@ public:
 		return this->globalCache != nullptr;
 	}
 
+
 	// Suppress the default copy constructor and assignment operator (C++11 way)
 
 	ITMVoxelVolume(const ITMVoxelVolume&) = delete;

@@ -315,7 +315,7 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopyScene(
 				destinationHashTable, sourceHashTable, tempData->countOfBlocksToCopy, copyHashIdBuffer, bounds);
 		ORcudaKernelCheck;
 	} else {
-		Vector6i bounds = ITMSceneStatisticsCalculator_CUDA<TVoxel, ITMVoxelBlockHash>::Instance().ComputeVoxelBounds(
+		Vector6i bounds = ITMSceneStatisticsCalculator<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance().ComputeVoxelBounds(
 				source);
 		tempData->success = CopySceneSlice(destination, source, bounds, offset);
 	}

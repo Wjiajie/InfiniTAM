@@ -25,7 +25,8 @@
 namespace ITMLib {
 /**
  * \brief A utility for allocating additional space within or around a voxel volume (expanding it) based on various inputs
- * \tparam TVoxel type of voxels A (typically reserved for voxels holding TSDF information)
+ * \details Note: if a volume index has strict bounds, as in the case of plain voxel array, does not grow or shrink those bounds.
+ * \tparam TVoxel type of voxels
  * \tparam TIndex type of index
  */
 template<typename TVoxel, typename TIndex>

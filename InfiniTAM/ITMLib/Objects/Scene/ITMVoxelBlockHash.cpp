@@ -36,4 +36,18 @@ ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt_CPU(const Vector3s& pos) const {
 			return ITMHashEntry();
 	}
 }
+
+ITMVoxelBlockHash::ITMVoxelBlockHash(ITMVoxelBlockHashParameters parameters, MemoryDeviceType memoryType) :
+		voxelBlockCount(parameters.voxelBlockCount),
+		excessListSize(parameters.excessListSize),
+		hashEntryCount(ORDERED_LIST_SIZE + parameters.excessListSize),
+		lastFreeExcessListId(parameters.excessListSize - 1),
+		hashEntryStates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType),
+		allocationBlockCoordinates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType),
+		memoryType(memoryType),
+		hashEntries(new ORUtils::MemoryBlock<ITMHashEntry>(hashEntryCount, memoryType)),
+		excessAllocationList(new ORUtils::MemoryBlock<int>(excessListSize, memoryType))
+		{
+	hashEntryStates.Clear(NEEDS_NO_CHANGE);
+}
 }// namespace ITMLib

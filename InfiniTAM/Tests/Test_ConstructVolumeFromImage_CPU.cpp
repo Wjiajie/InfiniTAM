@@ -39,8 +39,6 @@ using namespace ITMLib;
 
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray> SceneFileIOEngine_PVA;
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
-typedef ITMSceneStatisticsCalculator_CPU<ITMVoxel, ITMPlainVoxelArray> SceneStatisticsCalculator_PVA;
-typedef ITMSceneStatisticsCalculator_CPU<ITMVoxel, ITMVoxelBlockHash> SceneStatisticsCalculator_VBH;
 
 BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	// region ================================= CONSTRUCT VIEW =========================================================
@@ -248,5 +246,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CPU) {
 	                                                                                          scene3.index);
 	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, renderState);
 
-//	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(&scene2, &scene3, tolerance));
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(&scene2, &scene3, tolerance));
+	delete depth;
+	delete rgb;
 }

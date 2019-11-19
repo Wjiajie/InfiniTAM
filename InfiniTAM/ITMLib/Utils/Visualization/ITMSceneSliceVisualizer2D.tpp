@@ -372,7 +372,7 @@ ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>::RenderSceneSlices(ITMVoxelVolu
                                                                     const std::string& outputFolder,
                                                                     bool verbose) {
 
-	Vector6i bounds = ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::Instance().ComputeVoxelBounds(scene);
+	Vector6i bounds = ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CPU>::Instance().ComputeVoxelBounds(scene);
 	Vector3i minPoint(bounds.min_x, bounds.min_y, bounds.min_z);
 
 	int imageSizeX, imageSizeY, imageSizeZ;

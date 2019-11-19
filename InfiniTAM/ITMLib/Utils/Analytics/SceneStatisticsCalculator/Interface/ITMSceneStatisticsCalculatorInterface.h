@@ -21,7 +21,7 @@
 
 namespace ITMLib {
 template<typename TVoxel, typename TIndex>
-class ITMSceneStatisticsCalculator {
+class ITMSceneStatisticsCalculatorInterface {
 public:
 	virtual Vector6i ComputeVoxelBounds(const ITMVoxelVolume<TVoxel, TIndex>* scene) = 0;
 	virtual int ComputeAllocatedVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) = 0;
@@ -42,6 +42,9 @@ public:
 	virtual float FindMaxGradient0LengthAndPosition(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector3i& positionOut) = 0;
 	virtual float FindMaxGradient1LengthAndPosition(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector3i& positionOut) = 0;
 };
+
+template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+class ITMSceneStatisticsCalculator;
 
 }//end namespace ITMLib
 

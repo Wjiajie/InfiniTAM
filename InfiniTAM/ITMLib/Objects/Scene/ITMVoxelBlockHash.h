@@ -120,17 +120,7 @@ public:
 		return memoryType;
 	}
 
-	ITMVoxelBlockHash(ITMVoxelBlockHashParameters parameters, MemoryDeviceType memoryType) :
-			voxelBlockCount(parameters.voxelBlockCount),
-			excessListSize(parameters.excessListSize),
-			hashEntryCount(ORDERED_LIST_SIZE + parameters.excessListSize),
-			lastFreeExcessListId(parameters.excessListSize - 1),
-			hashEntryStates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType),
-			allocationBlockCoordinates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType){
-		this->memoryType = memoryType;
-		hashEntries = new ORUtils::MemoryBlock<ITMHashEntry>(hashEntryCount, memoryType);
-		excessAllocationList = new ORUtils::MemoryBlock<int>(excessListSize, memoryType);
-	}
+	ITMVoxelBlockHash(ITMVoxelBlockHashParameters parameters, MemoryDeviceType memoryType);
 
 	explicit ITMVoxelBlockHash(MemoryDeviceType memoryType) : ITMVoxelBlockHash(ITMVoxelBlockHashParameters(),
 	                                                                            memoryType) {}

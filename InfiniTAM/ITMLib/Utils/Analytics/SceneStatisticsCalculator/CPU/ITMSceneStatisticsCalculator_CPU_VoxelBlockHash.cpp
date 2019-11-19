@@ -18,7 +18,7 @@
 
 namespace ITMLib {
 template
-class ITMSceneStatisticsCalculator_CPU<ITMVoxel, ITMVoxelBlockHash>;
+class ITMSceneStatisticsCalculator<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>;
 template
-class ITMSceneStatisticsCalculator_CPU<ITMWarp, ITMVoxelBlockHash>;
+class ITMSceneStatisticsCalculator<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>;
 } // namespace ITMLib
