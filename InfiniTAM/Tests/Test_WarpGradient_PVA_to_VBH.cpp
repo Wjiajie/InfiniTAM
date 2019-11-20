@@ -44,9 +44,7 @@ typedef ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMVoxelBloc
 
 struct Fixture {
 	template<typename TIndex>
-	typename TIndex::InitializationParameters InitParams();
-
-
+	static typename TIndex::InitializationParameters InitParams();
 };
 
 template<>
@@ -191,31 +189,32 @@ BOOST_FIXTURE_TEST_CASE(Test_Warp_PVA_VBH_CPU_DataTermOnly, Fixture) {
 	delete warped_fields[1];
 }
 
-
-BOOST_FIXTURE_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly, Fixture) {
+void
+GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, const std::string& prefix, int iteration_limit = 10,
+                bool save = false) {
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CUDA_PVA(&Configuration::get().scene_parameters,
 	                                                                Configuration::get().swapping_mode ==
 	                                                                Configuration::SWAPPINGMODE_ENABLED,
 	                                                                MEMORYDEVICE_CUDA,
-	                                                                InitParams<ITMPlainVoxelArray>());
+	                                                                Fixture::InitParams<ITMPlainVoxelArray>());
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CUDA_VBH(&Configuration::get().scene_parameters,
 	                                                               Configuration::get().swapping_mode ==
 	                                                               Configuration::SWAPPINGMODE_ENABLED,
 	                                                               MEMORYDEVICE_CUDA,
-	                                                               InitParams<ITMVoxelBlockHash>());
+	                                                               Fixture::InitParams<ITMVoxelBlockHash>());
 	float absoluteTolerance = 1e-7;
 	{
 		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_16;
 		buildSdfVolumeFromImage(&volume_PVA_16, "TestData/snoopy_depth_000016.png",
 		                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
 		                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
-		                        InitParams<ITMPlainVoxelArray>());
+		                        Fixture::InitParams<ITMPlainVoxelArray>());
 
 		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_17;
 		buildSdfVolumeFromImage(&volume_PVA_17, "TestData/snoopy_depth_000016.png",
 		                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
 		                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
-		                        InitParams<ITMPlainVoxelArray>());
+		                        Fixture::InitParams<ITMPlainVoxelArray>());
 
 
 		ManipulationEngine_CUDA_PVA_Warp::Inst().ResetScene(&warp_field_CUDA_PVA);
@@ -226,12 +225,15 @@ BOOST_FIXTURE_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly, Fixture) {
 		);
 		motionTracker_PVA_CUDA.CalculateWarpGradient(volume_PVA_16, volume_PVA_17, &warp_field_CUDA_PVA);
 		motionTracker_PVA_CUDA.UpdateWarps(volume_PVA_16, volume_PVA_17, &warp_field_CUDA_PVA);
-//		warp_field_CUDA_PVA.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_warps/data_only_iter_0_");
-		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* data_only_iter_0_gt;
-		loadSdfVolume(&data_only_iter_0_gt, "TestData/snoopy_result_fr16-17_warps/data_only_iter_0_",
-		              MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>(), Configuration::get().swapping_mode);
-		BOOST_REQUIRE(contentAlmostEqual_CUDA(data_only_iter_0_gt, &warp_field_CUDA_PVA, absoluteTolerance));
-		delete data_only_iter_0_gt;
+
+		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CUDA_PVA2(&Configuration::get().scene_parameters,
+		                                                                 Configuration::get().swapping_mode ==
+		                                                                 Configuration::SWAPPINGMODE_ENABLED,
+		                                                                 MEMORYDEVICE_CUDA,
+		                                                                 Fixture::InitParams<ITMPlainVoxelArray>());
+		warp_field_CUDA_PVA2.LoadFromDirectory("TestData/snoopy_result_fr16-17_warps/"+prefix+"_iter_0_");
+		BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA_PVA2, &warp_field_CUDA_PVA, absoluteTolerance));
+
 
 		ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMPlainVoxelArray> recoEngine;
 
@@ -240,19 +242,18 @@ BOOST_FIXTURE_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly, Fixture) {
 				                                                 Configuration::get().swapping_mode ==
 				                                                 Configuration::SWAPPINGMODE_ENABLED,
 				                                                 MEMORYDEVICE_CUDA,
-				                                                 InitParams<ITMPlainVoxelArray>()),
+				                                                 Fixture::InitParams<ITMPlainVoxelArray>()),
 				new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(&Configuration::get().scene_parameters,
 				                                                 Configuration::get().swapping_mode ==
 				                                                 Configuration::SWAPPINGMODE_ENABLED,
 				                                                 MEMORYDEVICE_CUDA,
-				                                                 InitParams<ITMPlainVoxelArray>())
+				                                                 Fixture::InitParams<ITMPlainVoxelArray>())
 		};
 		ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(warped_volumes[0]);
 		ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(warped_volumes[1]);
 
 		recoEngine.WarpScene_FlowWarps(&warp_field_CUDA_PVA, volume_PVA_17, warped_volumes[0]);
 
-		const int iteration_limit = 10;
 		for (int iteration = 1; iteration < iteration_limit; iteration++) {
 			int source_warped_field_ix = iteration % 2;
 			int target_warped_field = (iteration + 1) % 2;
@@ -263,9 +264,13 @@ BOOST_FIXTURE_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly, Fixture) {
 			                                   &warp_field_CUDA_PVA);
 			recoEngine.WarpScene_FlowWarps(&warp_field_CUDA_PVA, warped_volumes[source_warped_field_ix],
 			                               warped_volumes[target_warped_field]);
-//			std::string path = std::string("../../Tests/TestData/snoopy_result_fr16-17_warps/data_only_iter_") +
-//					std::to_string(iteration) + "_";
-//			warp_field_CUDA_PVA.SaveToDirectory(path);
+			std::string path = std::string("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_") +
+			                   std::to_string(iteration) + "_";
+			if(save){
+				warp_field_CUDA_PVA.SaveToDirectory(std::string("../../Tests/") + path);
+			}
+			warp_field_CUDA_PVA2.LoadFromDirectory(path);
+			BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA_PVA, &warp_field_CUDA_PVA2, absoluteTolerance));
 		}
 
 
@@ -280,13 +285,13 @@ BOOST_FIXTURE_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly, Fixture) {
 		buildSdfVolumeFromImage(&volume_VBH_16, "TestData/snoopy_depth_000016.png",
 		                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
 		                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
-		                        InitParams<ITMVoxelBlockHash>());
+		                        Fixture::InitParams<ITMVoxelBlockHash>());
 
 		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_17;
 		buildSdfVolumeFromImage(&volume_VBH_17, "TestData/snoopy_depth_000016.png",
 		                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
 		                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
-		                        InitParams<ITMVoxelBlockHash>());
+		                        Fixture::InitParams<ITMVoxelBlockHash>());
 
 
 		ManipulationEngine_CUDA_VBH_Warp::Inst().ResetScene(&warp_field_CUDA_VBH);
@@ -298,12 +303,14 @@ BOOST_FIXTURE_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly, Fixture) {
 		motionTracker_VBH_CUDA.CalculateWarpGradient(volume_VBH_16, volume_VBH_17, &warp_field_CUDA_VBH);
 		motionTracker_VBH_CUDA.UpdateWarps(volume_VBH_16, volume_VBH_17, &warp_field_CUDA_VBH);
 
-		//warp_field_CUDA_VBH.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_warps/data_only_iter_0_");
-		ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* data_only_iter_0_gt;
-		loadSdfVolume(&data_only_iter_0_gt, "TestData/snoopy_result_fr16-17_warps/data_only_iter_0_",
-		              MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>(), Configuration::get().swapping_mode);
-		BOOST_REQUIRE(contentAlmostEqual_CUDA(data_only_iter_0_gt, &warp_field_CUDA_VBH, absoluteTolerance));
-		delete data_only_iter_0_gt;
+		ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CUDA_VBH2(&Configuration::get().scene_parameters,
+		                                                                Configuration::get().swapping_mode ==
+		                                                                Configuration::SWAPPINGMODE_ENABLED,
+		                                                                MEMORYDEVICE_CUDA,
+		                                                                Fixture::InitParams<ITMVoxelBlockHash>());
+		ManipulationEngine_CUDA_VBH_Warp::Inst().ResetScene(&warp_field_CUDA_VBH2);
+		warp_field_CUDA_VBH2.LoadFromDirectory("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_0_");
+		BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA_VBH2, &warp_field_CUDA_VBH, absoluteTolerance));
 
 
 		ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash> recoEngine;
@@ -313,19 +320,19 @@ BOOST_FIXTURE_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly, Fixture) {
 				                                                Configuration::get().swapping_mode ==
 				                                                Configuration::SWAPPINGMODE_ENABLED,
 				                                                MEMORYDEVICE_CUDA,
-				                                                InitParams<ITMVoxelBlockHash>()),
+				                                                Fixture::InitParams<ITMVoxelBlockHash>()),
 				new ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>(&Configuration::get().scene_parameters,
 				                                                Configuration::get().swapping_mode ==
 				                                                Configuration::SWAPPINGMODE_ENABLED,
 				                                                MEMORYDEVICE_CUDA,
-				                                                InitParams<ITMVoxelBlockHash>())
+				                                                Fixture::InitParams<ITMVoxelBlockHash>())
 		};
 		ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(warped_volumes[0]);
 		ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(warped_volumes[1]);
 
 		recoEngine.WarpScene_FlowWarps(&warp_field_CUDA_VBH, volume_VBH_17, warped_volumes[0]);
 
-		const int iteration_limit = 10;
+
 		for (int iteration = 1; iteration < iteration_limit; iteration++) {
 			int source_warped_field_ix = iteration % 2;
 			int target_warped_field = (iteration + 1) % 2;
@@ -336,9 +343,14 @@ BOOST_FIXTURE_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly, Fixture) {
 			                                   &warp_field_CUDA_VBH);
 			recoEngine.WarpScene_FlowWarps(&warp_field_CUDA_VBH, warped_volumes[source_warped_field_ix],
 			                               warped_volumes[target_warped_field]);
-//			std::string path = std::string("../../Tests/TestData/snoopy_result_fr16-17_warps/data_only_iter_") +
-//			                   std::to_string(iteration) + "_";
-//			warp_field_CUDA_VBH.SaveToDirectory(path);
+
+			std::string path = std::string("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_") +
+			                   std::to_string(iteration) + "_";
+			if(save){
+				warp_field_CUDA_PVA.SaveToDirectory(std::string("../../Tests/") + path);
+			}
+			warp_field_CUDA_VBH2.LoadFromDirectory(path);
+			BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA_VBH, &warp_field_CUDA_VBH2, absoluteTolerance));
 		}
 
 
@@ -349,7 +361,20 @@ BOOST_FIXTURE_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly, Fixture) {
 		delete warped_volumes[1];
 	}
 
-	warp_field_CUDA_PVA.LoadFromDirectory("TestData/snoopy_result_fr16-17_warps/data_only_iter_0_");
-	warp_field_CUDA_VBH.LoadFromDirectory("TestData/snoopy_result_fr16-17_warps/data_only_iter_0_");
-	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(&warp_field_CUDA_PVA, &warp_field_CUDA_VBH, absoluteTolerance));
+	for (int iteration = 0; iteration < iteration_limit; iteration++) {
+		warp_field_CUDA_PVA.LoadFromDirectory(
+				std::string("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_") + std::to_string(iteration) + "_");
+		warp_field_CUDA_VBH.LoadFromDirectory(
+				std::string("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_") + std::to_string(iteration) + "_");
+		BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(&warp_field_CUDA_PVA, &warp_field_CUDA_VBH, absoluteTolerance));
+	}
+}
+
+
+BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly) {
+	GenericWarpTest(SlavchevaSurfaceTracker::Switches(true,
+	                                                  false,
+	                                                  false,
+	                                                  false,
+	                                                  false), "data_only");
 }
