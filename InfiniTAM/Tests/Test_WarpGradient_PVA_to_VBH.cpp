@@ -224,6 +224,7 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, const std::st
 				SlavchevaSurfaceTracker::Switches(true, false, false, false, false)
 		);
 		motionTracker_PVA_CUDA.CalculateWarpGradient(volume_PVA_16, volume_PVA_17, &warp_field_CUDA_PVA);
+		motionTracker_PVA_CUDA.SmoothWarpGradient(volume_PVA_16, volume_PVA_17, &warp_field_CUDA_PVA);
 		motionTracker_PVA_CUDA.UpdateWarps(volume_PVA_16, volume_PVA_17, &warp_field_CUDA_PVA);
 
 		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CUDA_PVA2(&Configuration::get().scene_parameters,
@@ -231,7 +232,7 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, const std::st
 		                                                                 Configuration::SWAPPINGMODE_ENABLED,
 		                                                                 MEMORYDEVICE_CUDA,
 		                                                                 Fixture::InitParams<ITMPlainVoxelArray>());
-		warp_field_CUDA_PVA2.LoadFromDirectory("TestData/snoopy_result_fr16-17_warps/"+prefix+"_iter_0_");
+		warp_field_CUDA_PVA2.LoadFromDirectory("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_0_");
 		BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA_PVA2, &warp_field_CUDA_PVA, absoluteTolerance));
 
 
@@ -260,17 +261,20 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, const std::st
 
 			motionTracker_PVA_CUDA.CalculateWarpGradient(volume_PVA_16, warped_volumes[source_warped_field_ix],
 			                                             &warp_field_CUDA_PVA);
+			motionTracker_PVA_CUDA.SmoothWarpGradient(volume_PVA_16, warped_volumes[source_warped_field_ix],
+			                                          &warp_field_CUDA_PVA);
 			motionTracker_PVA_CUDA.UpdateWarps(volume_PVA_16, warped_volumes[source_warped_field_ix],
 			                                   &warp_field_CUDA_PVA);
 			recoEngine.WarpScene_FlowWarps(&warp_field_CUDA_PVA, warped_volumes[source_warped_field_ix],
 			                               warped_volumes[target_warped_field]);
 			std::string path = std::string("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_") +
 			                   std::to_string(iteration) + "_";
-			if(save){
+			if (save) {
 				warp_field_CUDA_PVA.SaveToDirectory(std::string("../../Tests/") + path);
+			} else {
+				warp_field_CUDA_PVA2.LoadFromDirectory(path);
+				BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA_PVA, &warp_field_CUDA_PVA2, absoluteTolerance));
 			}
-			warp_field_CUDA_PVA2.LoadFromDirectory(path);
-			BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA_PVA, &warp_field_CUDA_PVA2, absoluteTolerance));
 		}
 
 
@@ -301,6 +305,7 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, const std::st
 				SlavchevaSurfaceTracker::Switches(true, false, false, false, false)
 		);
 		motionTracker_VBH_CUDA.CalculateWarpGradient(volume_VBH_16, volume_VBH_17, &warp_field_CUDA_VBH);
+		motionTracker_VBH_CUDA.SmoothWarpGradient(volume_VBH_16, volume_VBH_17, &warp_field_CUDA_VBH);
 		motionTracker_VBH_CUDA.UpdateWarps(volume_VBH_16, volume_VBH_17, &warp_field_CUDA_VBH);
 
 		ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CUDA_VBH2(&Configuration::get().scene_parameters,
@@ -339,6 +344,8 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, const std::st
 
 			motionTracker_VBH_CUDA.CalculateWarpGradient(volume_VBH_16, warped_volumes[source_warped_field_ix],
 			                                             &warp_field_CUDA_VBH);
+			motionTracker_VBH_CUDA.SmoothWarpGradient(volume_VBH_16, warped_volumes[source_warped_field_ix],
+			                                          &warp_field_CUDA_VBH);
 			motionTracker_VBH_CUDA.UpdateWarps(volume_VBH_16, warped_volumes[source_warped_field_ix],
 			                                   &warp_field_CUDA_VBH);
 			recoEngine.WarpScene_FlowWarps(&warp_field_CUDA_VBH, warped_volumes[source_warped_field_ix],
@@ -346,11 +353,12 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, const std::st
 
 			std::string path = std::string("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_") +
 			                   std::to_string(iteration) + "_";
-			if(save){
+			if (save) {
 				warp_field_CUDA_PVA.SaveToDirectory(std::string("../../Tests/") + path);
+			} else {
+				warp_field_CUDA_VBH2.LoadFromDirectory(path);
+				BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA_VBH, &warp_field_CUDA_VBH2, absoluteTolerance));
 			}
-			warp_field_CUDA_VBH2.LoadFromDirectory(path);
-			BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA_VBH, &warp_field_CUDA_VBH2, absoluteTolerance));
 		}
 
 
@@ -361,12 +369,19 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, const std::st
 		delete warped_volumes[1];
 	}
 
-	for (int iteration = 0; iteration < iteration_limit; iteration++) {
-		warp_field_CUDA_PVA.LoadFromDirectory(
-				std::string("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_") + std::to_string(iteration) + "_");
-		warp_field_CUDA_VBH.LoadFromDirectory(
-				std::string("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_") + std::to_string(iteration) + "_");
-		BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(&warp_field_CUDA_PVA, &warp_field_CUDA_VBH, absoluteTolerance));
+	if (!save) {
+		for (int iteration = 0; iteration < iteration_limit; iteration++) {
+			warp_field_CUDA_PVA.LoadFromDirectory(
+					std::string("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_") +
+					std::to_string(iteration) +
+					"_");
+			warp_field_CUDA_VBH.LoadFromDirectory(
+					std::string("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_") +
+					std::to_string(iteration) +
+					"_");
+			BOOST_REQUIRE(
+					allocatedContentAlmostEqual_CUDA(&warp_field_CUDA_PVA, &warp_field_CUDA_VBH, absoluteTolerance));
+		}
 	}
 }
 
@@ -377,4 +392,20 @@ BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly) {
 	                                                  false,
 	                                                  false,
 	                                                  false), "data_only");
+}
+
+BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonov) {
+	GenericWarpTest(SlavchevaSurfaceTracker::Switches(true,
+	                                                  false,
+	                                                  true,
+	                                                  false,
+	                                                  false), "data_tikhonov");
+}
+
+BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonovAndSobolevSmoothing) {
+	GenericWarpTest(SlavchevaSurfaceTracker::Switches(true,
+	                                                  false,
+	                                                  true,
+	                                                  false,
+	                                                  true), "data_tikhonov_sobolev");
 }
