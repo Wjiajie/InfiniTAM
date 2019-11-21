@@ -46,8 +46,8 @@ __global__ void integrateIntoScene_device(TVoxel* voxelArray, const ITMLib::ITMP
 	pt_model.w = 1.0f;
 
 	//_DEBUG
-//	if(x == 255 & y == 256 && z == 4){
-//		printf("GOTCHA: %E %E %E\n", pt_model.x, pt_model.y, pt_model.z);
+//	if(x == 57 & y == 48 && z == 160){
+//		printf("GOTCHA: (%E, %E, %E)\n", pt_model.x, pt_model.y, pt_model.z);
 //	}
 
 	ComputeUpdatedLiveVoxelInfo<TVoxel::hasColorInformation, TVoxel::hasConfidenceInformation, TVoxel::hasSemanticInformation, TVoxel>::compute(

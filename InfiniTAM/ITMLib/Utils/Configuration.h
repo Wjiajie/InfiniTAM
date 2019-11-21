@@ -40,29 +40,29 @@ public:
 
 	// region ============================================== NESTED ENUMS ==============================================
 
-	typedef enum {
+	enum FailureMode{
 		FAILUREMODE_RELOCALIZE,
 		FAILUREMODE_IGNORE,
 		FAILUREMODE_STOP_INTEGRATION
-	} FailureMode;
+	};
 
-	typedef enum {
+	enum SwappingMode{
 		SWAPPINGMODE_DISABLED,
 		SWAPPINGMODE_ENABLED,
 		SWAPPINGMODE_DELETE
-	} SwappingMode;
+	};
 
-	typedef enum {
+	enum LibMode{
 		LIBMODE_BASIC,
 		LIBMODE_BASIC_SURFELS,
 		LIBMODE_LOOPCLOSURE,
 		LIBMODE_DYNAMIC
-	} LibMode;
+	};
 
-	typedef enum {
+	enum IndexingMethod{
 		INDEX_HASH,
 		INDEX_ARRAY
-	} IndexingMethod;
+	} ;
 
 	//endregion ========================================================================================================
 
@@ -78,9 +78,9 @@ public:
 		/// Where to write any kind of output (intended to be used application-wise)
 		const std::string output_path = "./State/";
 		/// Whether telemetry / diagnostics / logging for a trouble spot is enabled
-		const bool focus_coordinates_specified = false;
+		bool focus_coordinates_specified = false;
 		/// A trouble spot for additional telemetry / diagnostics / loggging
-		const Vector3i focus_coordinates;
+		Vector3i focus_coordinates;
 	};
 
 	Configuration();
@@ -119,7 +119,7 @@ public:
 	/// Surface tracking energy switches
 	const SlavchevaSurfaceTracker::Switches slavcheva_switches;
 	/// Telemetry / diagnostics / logging settings
-	const TelemetrySettings telemetry_settings;
+	TelemetrySettings telemetry_settings;
 	/// For ITMColorTracker: skips every other point when using the colour renderer for creating a point cloud
 	const bool skip_points;
 	/// create all the things required for marching cubes and mesh extraction (uses lots of additional memory)

@@ -78,10 +78,6 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedLiveVoxelDepthInfo(
 	voxelPointProjectedToImage.y = depthCameraProjectionParameters.y * voxelPointInCameraCoordinates.y
 	                               / voxelPointInCameraCoordinates.z + depthCameraProjectionParameters.w;
 
-	//_DEBUG
-//	if(voxelInSceneCoordinates == Vector4f(-4.000000E-03f, 0.000000E+00f, 1.600000E-02f, 1.0f)){
-//		printf("GOTCHA (%E, %E)\n", voxelPointProjectedToImage.x, voxelPointProjectedToImage.y);
-//	}
 
 	// point falls outside of the image bounds
 	if ((voxelPointProjectedToImage.x < 1) || (voxelPointProjectedToImage.x > imageSize.x - 2)
@@ -92,6 +88,11 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedLiveVoxelDepthInfo(
 	// get measured depthImage from image
 	float depthMeasure = depthImage[static_cast<int>(voxelPointProjectedToImage.x + 0.5f) +
 	                                static_cast<int>(voxelPointProjectedToImage.y + 0.5f) * imageSize.x];
+
+	//_DEBUG
+//	if(voxelInSceneCoordinates == Vector4f(-2.800000E-02, 9.600000E-02, 8.960000E-01, 1.0f)){
+//		printf("GOTCHA2 coord: (%f, %f) depth: %f, voxel depth: %f\n", voxelPointProjectedToImage.x, voxelPointProjectedToImage.y, depthMeasure, voxelPointInCameraCoordinates.z);
+//	}
 	// if depthImage is "invalid", return "unknown"
 	if (depthMeasure <= 0.0f) {
 		//keep voxel flags at ITMLib::VOXEL_UNKNOWN

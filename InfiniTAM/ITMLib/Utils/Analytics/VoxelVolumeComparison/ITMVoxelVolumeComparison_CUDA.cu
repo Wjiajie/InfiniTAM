@@ -100,9 +100,15 @@ bool allocatedContentAlmostEqual_CUDA<ITMWarp, ITMPlainVoxelArray, ITMVoxelBlock
 		float tolerance);
 
 template
+bool allocatedContentAlmostEqual_CUDA_Verbose<ITMWarp, ITMPlainVoxelArray, ITMVoxelBlockHash, float>(
+		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* b,
+		float tolerance);
+
+template
 bool allocatedContentAlmostEqual_CUDA<ITMWarp, ITMVoxelBlockHash, ITMPlainVoxelArray, float>(
 		ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* b,
 		float tolerance);
+
 
 // endregion
 

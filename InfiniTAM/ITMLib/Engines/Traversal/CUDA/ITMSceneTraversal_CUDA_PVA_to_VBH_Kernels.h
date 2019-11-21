@@ -205,4 +205,41 @@ __global__ void checkIfAllocatedHashBlocksYieldTrue(
 }
 
 
+template<typename TBooleanFunctor, typename TVoxelArray, typename TVoxelHash>
+__global__ void checkIfAllocatedHashBlocksYieldTrue_Position(
+		TVoxelArray* arrayVoxels, TVoxelHash* hashVoxels, const ITMHashEntry* hashTable,
+		int hashEntryCount, Vector6i arrayBounds, Vector3i arraySize,
+		TBooleanFunctor* functor, bool* falseEncountered) {
+
+	if (*falseEncountered || blockIdx.x > hashEntryCount || hashTable[blockIdx.x].ptr < 0) return;
+
+	const ITMHashEntry& hashEntry = hashTable[blockIdx.x];
+
+	//local (block) coords;
+	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
+	int idxInBlock = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
+
+	Vector3i globalPosition = (hashEntry.pos.toInt() * VOXEL_BLOCK_SIZE) + Vector3i(x, y, z);
+
+	if (globalPosition.x < arrayBounds.min_x || globalPosition.x >= arrayBounds.max_x ||
+	    globalPosition.y < arrayBounds.min_y || globalPosition.y >= arrayBounds.max_y ||
+	    globalPosition.z < arrayBounds.min_z || globalPosition.z >= arrayBounds.max_z) {
+		// outside of the array bounds
+		return;
+	}
+
+	Vector3i voxelPositionSansOffset =
+			globalPosition - Vector3i(arrayBounds.min_x, arrayBounds.min_y, arrayBounds.min_z);
+	int idxInArray = voxelPositionSansOffset.x + voxelPositionSansOffset.y * arraySize.x +
+	                 voxelPositionSansOffset.z * arraySize.x * arraySize.y;
+
+	TVoxelHash hashVoxel = hashVoxels[hashEntry.ptr * VOXEL_BLOCK_SIZE3 + idxInBlock];
+	TVoxelArray arrayVoxel = arrayVoxels[idxInArray];
+
+	if (!(*functor)(arrayVoxel, hashVoxel, globalPosition)) {
+		*falseEncountered = true;
+	}
+}
+
+
 } // anonymous namespace (CUDA kernels)

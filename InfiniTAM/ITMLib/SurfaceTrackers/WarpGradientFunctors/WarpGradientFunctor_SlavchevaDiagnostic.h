@@ -152,6 +152,7 @@ public:
 						parameters.weightDataTerm * sdfDifferenceBetweenLiveAndCanonical * liveSdfJacobian;
 
 				ATOMIC_ADD(aggregates.dataVoxelCount, 1u);
+
 				float localDataEnergy = parameters.weightDataTerm * 0.5f *
 				                        (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
 
@@ -159,6 +160,7 @@ public:
 				ATOMIC_ADD(energies.totalDataEnergy, localDataEnergy);
 
 				ATOMIC_ADD(aggregates.dataVoxelCount, 1u);
+				ATOMIC_ADD(aggregates.cumulativeSdfDiff, sdfDifferenceBetweenLiveAndCanonical);
 
 				if (printVoxelResult) {
 					_DEBUG_PrintDataTermStuff(liveSdfJacobian);

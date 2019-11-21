@@ -58,6 +58,8 @@ bool contentAlmostEqual_CUDA_Verbose(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxel
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
 bool allocatedContentAlmostEqual_CUDA(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<TVoxel,TIndexB>* b, ToleranceType tolerance);
 
+template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
+bool allocatedContentAlmostEqual_CUDA_Verbose(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<TVoxel,TIndexB>* b, ToleranceType tolerance);
 }// namespace ITMLib
 
 

@@ -47,5 +47,12 @@ bool allocatedContentAlmostEqual_CUDA(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxe
 	::template DualVoxelTraversal_AllTrue_AllocatedOnly(a, b, functor);
 }
 
+template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
+bool allocatedContentAlmostEqual_CUDA_Verbose(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<TVoxel,TIndexB>* b, ToleranceType tolerance){
+	VoxelEqualVerboseFunctor<TVoxel, ToleranceType> functor(tolerance);
+	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, MEMORYDEVICE_CUDA>
+	::template DualVoxelPositionTraversal_AllTrue_AllocatedOnly(a, b, functor);
+}
+
 }// namespace ITMLib
 
