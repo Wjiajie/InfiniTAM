@@ -17,14 +17,14 @@ It could be that some detail is missing from the implementation, and could be th
 2. Capability to run the optimization in-reverse, in order to forward-animate the more-complete canonical mesh.
 3. OpenMP-parallelized CPU implementation currently has a bug
 4. ~CUDA implementation is incomplete and has all sorts of bugs~ *[Update]* CUDA implementation is now complete for both the plain voxel array and the voxel block hash indexing and has no difference from the signle-threaded CPU version if you believe the unit tests.
-5. VTK 8.1 & OpenCV are currently dependencies, making them optional is in the plan. This is especially critical in regards to VTK 8.1, which, as far as I know of, has to be built from source on Ubuntu.
+5. VTK 8.1 & OpenCV are currently dependencies, making them optional is in the plan. This is especially critical in regards to VTK 8.1, which, as far as I know, has to be built from source on Ubuntu.
 
 ## How do I try this code out?
 
-1. You need to be somewhat well-versed in using CMake. 3rd-party requirements are all open-source, and you can glean what you're missing by running the CMake generator.
+1. You need to be somewhat well-versed in using CMake. 3rd-party requirements are all open-source, and you can glean what you're missing by running the CMake generator. The most daunting right now is that you have to build VTK 8.1 from source, a dependency I plan to make optional shortly, as it's only used for certain visualizations.
 2. Linux currently is the only officially supported OS. All of the required CMake packages and this code in theory should work on any major platform, so you can try on MacOS or Windows at your own risk, and let me know if you'd like to fix things that are not working on your platform. If this project achieves greater success, then I'll probably start officially supporting the other systems.
 3. Build without OpenMP (use CMake to disable it) since it's buggy at the time of writing! I also recommend building with FFMPEG, since that will enable visual debugging/video recording.
-4. To obtain the result shown above, download the (original snoopy sequence)[http://campar.in.tum.de/personal/slavcheva/deformable-dataset/index.html], and run like this (modify the paths for your environment):
+4. To obtain the result shown above, download the [original snoopy sequence](http://campar.in.tum.de/personal/slavcheva/deformable-dataset/index.html), and run like this (modify the paths for your environment):
 
 <build_folder>/Apps/InfiniTAM_bpo/InfiniTAM_bpo "snoopy/snoopy_calib.txt" "snoopy/frames/color_%06i.png" "snoopy/frames/depth_%06i.png" "snoopy/frames/omask_%06i.png" --output debug_output/snoopy --start_from_frame_ix 16 --process_N_frames 50 --record_reconstruction_video --max_iterations 300 --weight_data_term 2.0
 
