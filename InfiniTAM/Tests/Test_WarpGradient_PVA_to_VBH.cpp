@@ -232,7 +232,12 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, const std::st
 		                                                                 Configuration::SWAPPINGMODE_ENABLED,
 		                                                                 MEMORYDEVICE_CUDA,
 		                                                                 Fixture::InitParams<ITMPlainVoxelArray>());
-		warp_field_CUDA_PVA2.LoadFromDirectory("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_0_");
+		std::string path = "TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_0_";
+		if (save) {
+			warp_field_CUDA_PVA.SaveToDirectory(std::string("../../Tests/") + path);
+		} else {
+			warp_field_CUDA_PVA2.LoadFromDirectory(path);
+		}
 		BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA_PVA2, &warp_field_CUDA_PVA, absoluteTolerance));
 
 
@@ -313,8 +318,13 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, const std::st
 		                                                                Configuration::SWAPPINGMODE_ENABLED,
 		                                                                MEMORYDEVICE_CUDA,
 		                                                                Fixture::InitParams<ITMVoxelBlockHash>());
+		std::string path = "TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_0_";
 		ManipulationEngine_CUDA_VBH_Warp::Inst().ResetScene(&warp_field_CUDA_VBH2);
-		warp_field_CUDA_VBH2.LoadFromDirectory("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_0_");
+		if (save) {
+			warp_field_CUDA_VBH.SaveToDirectory(std::string("../../Tests/") + path);
+		} else {
+			warp_field_CUDA_VBH2.LoadFromDirectory(path);
+		}
 		BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA_VBH2, &warp_field_CUDA_VBH, absoluteTolerance));
 
 
@@ -354,7 +364,7 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, const std::st
 			std::string path = std::string("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_") +
 			                   std::to_string(iteration) + "_";
 			if (save) {
-				warp_field_CUDA_PVA.SaveToDirectory(std::string("../../Tests/") + path);
+				warp_field_CUDA_VBH.SaveToDirectory(std::string("../../Tests/") + path);
 			} else {
 				warp_field_CUDA_VBH2.LoadFromDirectory(path);
 				BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA_VBH, &warp_field_CUDA_VBH2, absoluteTolerance));
@@ -399,7 +409,7 @@ BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonov) {
 	                                                  false,
 	                                                  true,
 	                                                  false,
-	                                                  false), "data_tikhonov");
+	                                                  false), "data_tikhonov");//, 10, true);
 }
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonovAndSobolevSmoothing) {
@@ -407,5 +417,5 @@ BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonovAndSobolevSmoothing) {
 	                                                  false,
 	                                                  true,
 	                                                  false,
-	                                                  true), "data_tikhonov_sobolev");
+	                                                  true), "data_tikhonov_sobolev");//, 10, true);
 }
