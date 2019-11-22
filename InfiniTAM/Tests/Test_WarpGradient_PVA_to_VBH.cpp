@@ -109,6 +109,33 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH, Fixture) {
 	delete volume_PVA_17;
 }
 
+
+BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CPU, Fixture) {
+
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_17;
+	buildSdfVolumeFromImage(&volume_PVA_17, "TestData/snoopy_depth_000017.png",
+	                        "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
+	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
+	                        InitParams<ITMPlainVoxelArray>());
+
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_17;
+	buildSdfVolumeFromImage(&volume_VBH_17, "TestData/snoopy_depth_000017.png",
+	                        "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
+	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
+	                        InitParams<ITMVoxelBlockHash>());
+
+	std::cout << SceneStatCalc_CUDA_PVA_Voxel::Instance().FindMinimumNonTruncatedBoundingBox(volume_PVA_17)
+	          << std::endl;
+	std::cout << SceneStatCalc_CUDA_VBH_Voxel::Instance().FindMinimumNonTruncatedBoundingBox(volume_VBH_17)
+	          << std::endl;
+
+	float absoluteTolerance = 1e-7;
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(volume_PVA_17, volume_VBH_17, absoluteTolerance));
+
+	delete volume_VBH_17;
+	delete volume_PVA_17;
+}
+
 enum GenericWarpTestMode {
 	SAVE_SUCCESSIVE_ITERATIONS,
 	SAVE_FINAL_ITERATION_AND_FUSION,
@@ -314,7 +341,7 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, const std::st
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly) {
 	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
-	Configuration::get().telemetry_settings.focus_coordinates = Vector3i(-7,23, 224);
+	Configuration::get().telemetry_settings.focus_coordinates = Vector3i(-48, 67, 223);
 	GenericWarpTest(SlavchevaSurfaceTracker::Switches(true,
 	                                                  false,
 	                                                  false,

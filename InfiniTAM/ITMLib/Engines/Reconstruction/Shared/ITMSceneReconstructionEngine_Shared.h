@@ -273,57 +273,64 @@ struct ComputeUpdatedVoxelInfo<true, true, true, TVoxel> {
 
 _CPU_AND_GPU_CODE_ inline void
 buildHashAllocAndVisibleTypePP(ITMLib::HashEntryState* hashEntryStates, uchar* entriesVisibleType, int x, int y, Vector3s* blockCoords,
-                               const CONSTPTR(float)* depth, Matrix4f invM_d, Vector4f projParams_d, float mu,
-                               Vector2i imgSize, float oneOverVoxelSize, const CONSTPTR(ITMHashEntry)* hashTable,
-                               float viewFrustum_min, float viewFrustum_max, bool& collisionDetected)
+                               const CONSTPTR(float)* depth, Matrix4f invertedCameraTransform, Vector4f projParams_d, float mu,
+                               Vector2i imgSize, float oneOverHashEntrySizeMeters, const CONSTPTR(ITMHashEntry)* hashTable,
+                               float viewFrustum_min, float viewFrustum_max, bool& collisionDetected, float backBandFactor = 1.5f)
 {
-	float depth_measure; unsigned int hashIdx; int noSteps;
-	Vector4f pt_camera_f; Vector3f bandEndHashEntryPosition, bandStartHashEntryPosition, direction; Vector3s hashEntryPosition;
+	float depth_measure; unsigned int hashIdx; int stepCount;
+	Vector4f pt_camera_f; Vector3f bandEndHashBlockPosition, currentHashBlockPosition, directionOrStep; Vector3s hashBlockPosition;
 
 	depth_measure = depth[x + y * imgSize.x];
 	if (depth_measure <= 0 || (depth_measure - mu) < 0 || (depth_measure - mu) < viewFrustum_min || (depth_measure + mu) > viewFrustum_max) return;
 
+	//_DEBUG
+	if(x == 209 && y == 395){
+		int i = 1;
+	}
 
-	pt_camera_f.z = depth_measure;
+	pt_camera_f.z = depth_measure; // (orthogonal) distance to the point from the image plane
 	pt_camera_f.x = pt_camera_f.z * ((float(x) - projParams_d.z) * projParams_d.x);
 	pt_camera_f.y = pt_camera_f.z * ((float(y) - projParams_d.w) * projParams_d.y);
 
+	// distance to the point along camera ray
 	float norm = sqrtf(pt_camera_f.x * pt_camera_f.x + pt_camera_f.y * pt_camera_f.y + pt_camera_f.z * pt_camera_f.z);
 
 	Vector4f pt_buff;
 
 	pt_buff = pt_camera_f * (1.0f - mu / norm); pt_buff.w = 1.0f;
-	bandStartHashEntryPosition = TO_VECTOR3(invM_d * pt_buff) * oneOverVoxelSize;
+	//position along ray in hash blocks (here -- starting point)
+	currentHashBlockPosition = TO_VECTOR3(invertedCameraTransform * pt_buff) * oneOverHashEntrySizeMeters;
 
-	pt_buff = pt_camera_f * (1.0f + mu / norm); pt_buff.w = 1.0f;
-	bandEndHashEntryPosition = TO_VECTOR3(invM_d * pt_buff) * oneOverVoxelSize;
+	pt_buff = pt_camera_f * (1.0f + (mu * backBandFactor) / norm); pt_buff.w = 1.0f;
+	//end position along ray in hash blocks
+	bandEndHashBlockPosition = TO_VECTOR3(invertedCameraTransform * pt_buff) * oneOverHashEntrySizeMeters;
 
 	// segment from start of the (truncated SDF) band, through the observed point, and to the opposite (occluded)
 	// end of the (truncated SDF) band, along the ray cast from the camera through the point, in camera space
-	direction = bandEndHashEntryPosition - bandStartHashEntryPosition;
+	directionOrStep = bandEndHashBlockPosition - currentHashBlockPosition;
 
-	norm = sqrtf(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
+	norm = sqrtf(directionOrStep.x * directionOrStep.x + directionOrStep.y * directionOrStep.y + directionOrStep.z * directionOrStep.z);
 	// number of steps to take along the truncated SDF band
-	noSteps = (int)std::ceil(2.0f*norm);
+	stepCount = (int)std::ceil(2.0f * norm);
 
 	// a single stride along the sdf band segment from one step to the next
-	direction /= (float)(noSteps - 1);
+	directionOrStep /= (float)(stepCount - 1);
 
 	//add neighbouring blocks
-	for (int i = 0; i < noSteps; i++)
+	for (int i = 0; i < stepCount; i++)
 	{
 		//find block position at current step
-		hashEntryPosition = TO_SHORT_FLOOR3(bandStartHashEntryPosition);
+		hashBlockPosition = TO_SHORT_FLOOR3(currentHashBlockPosition);
 
 		//compute index in hash table
-		hashIdx = static_cast<unsigned int>(hashIndex(hashEntryPosition));
+		hashIdx = static_cast<unsigned int>(hashIndex(hashBlockPosition));
 
 		//check if hash table contains entry
 		bool isFound = false;
 
 		ITMHashEntry hashEntry = hashTable[hashIdx];
 
-		if (IS_EQUAL3(hashEntry.pos, hashEntryPosition) && hashEntry.ptr >= -1)
+		if (IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1)
 		{
 			//entry has been streamed out but is visible or in memory and visible
 			entriesVisibleType[hashIdx] = (hashEntry.ptr == -1) ? (uchar)2 : (uchar)1;
@@ -341,7 +348,7 @@ buildHashAllocAndVisibleTypePP(ITMLib::HashEntryState* hashEntryStates, uchar* e
 					hashIdx = static_cast<unsigned int>(ORDERED_LIST_SIZE + hashEntry.offset - 1);
 					hashEntry = hashTable[hashIdx];
 
-					if (IS_EQUAL3(hashEntry.pos, hashEntryPosition) && hashEntry.ptr >= -1)
+					if (IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1)
 					{
 						//entry has been streamed out but is visible or in memory and visible
 						entriesVisibleType[hashIdx] = (hashEntry.ptr == -1) ? (uchar)2 : (uchar)1;
@@ -363,11 +370,118 @@ buildHashAllocAndVisibleTypePP(ITMLib::HashEntryState* hashEntryStates, uchar* e
 					hashEntryStates[hashIdx] = isExcess ?
 					                           ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST : ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST;
 					if (!isExcess) entriesVisibleType[hashIdx] = 1; //new entry is visible
-					blockCoords[hashIdx] = hashEntryPosition;
+					blockCoords[hashIdx] = hashBlockPosition;
 				}
 			}
 		}
-		bandStartHashEntryPosition += direction;
+		currentHashBlockPosition += directionOrStep;
+	}
+}
+
+_CPU_AND_GPU_CODE_ inline void
+buildHashAllocAndVisibleTypePP_Precise(ITMLib::HashEntryState* hashEntryStates, uchar* entriesVisibleType, int x, int y, Vector3s* blockCoords,
+                               const CONSTPTR(float)* depth, Matrix4f invertedCameraTransform, Vector4f projParams_d, float mu,
+                               Vector2i imgSize, float oneOverHashEntrySizeMeters, const CONSTPTR(ITMHashEntry)* hashTable,
+                               float viewFrustum_min, float viewFrustum_max, bool& collisionDetected, float backBandFactor = 1.5f)
+{
+	float depth_measure; unsigned int hashIdx; int stepCount;
+	Vector4f pt_camera_f; Vector3f bandEndHashBlockPosition, currentHashBlockPosition, tracePathOrStep; Vector3s hashBlockPosition;
+
+	depth_measure = depth[x + y * imgSize.x];
+	if (depth_measure <= 0 || (depth_measure - mu) < 0 || (depth_measure - mu) < viewFrustum_min || (depth_measure + mu) > viewFrustum_max) return;
+
+	//_DEBUG
+//	if(x == 209 && y == 395){
+//		int i = 1;
+//	}
+
+	pt_camera_f.z = depth_measure; // (orthogonal) distance to the point from the image plane
+	pt_camera_f.x = pt_camera_f.z * ((float(x) - projParams_d.z) * projParams_d.x);
+	pt_camera_f.y = pt_camera_f.z * ((float(y) - projParams_d.w) * projParams_d.y);
+
+	// distance to the point along camera ray
+	float norm = sqrtf(pt_camera_f.x * pt_camera_f.x + pt_camera_f.y * pt_camera_f.y + pt_camera_f.z * pt_camera_f.z);
+
+	Vector4f pt_buff;
+
+	pt_buff = pt_camera_f * (1.0f - mu / norm); pt_buff.w = 1.0f;
+	//position along ray in hash blocks (here -- starting point)
+	currentHashBlockPosition = TO_VECTOR3(invertedCameraTransform * pt_buff) * oneOverHashEntrySizeMeters;
+
+	pt_buff = pt_camera_f * (1.0f + (mu * backBandFactor) / norm); pt_buff.w = 1.0f;
+	//end position along ray in hash blocks
+	bandEndHashBlockPosition = TO_VECTOR3(invertedCameraTransform * pt_buff) * oneOverHashEntrySizeMeters;
+
+	// segment from start of the (truncated SDF) band, through the observed point, and to the opposite (occluded)
+	// end of the (truncated SDF) band, along the ray cast from the camera through the point, in camera space
+	tracePathOrStep = bandEndHashBlockPosition - currentHashBlockPosition;
+
+	norm = sqrtf(tracePathOrStep.x * tracePathOrStep.x + tracePathOrStep.y * tracePathOrStep.y + tracePathOrStep.z * tracePathOrStep.z);
+	// number of steps to take along the truncated SDF band
+	stepCount = (int)std::ceil(2.0f * norm);
+
+	// a single stride along the sdf band segment from one step to the next
+	tracePathOrStep /= (float)(stepCount - 1);
+
+	//add neighbouring blocks
+	for (int i = 0; i < stepCount; i++)
+	{
+		//find block position at current step
+		hashBlockPosition = TO_SHORT_FLOOR3(currentHashBlockPosition);
+
+		//compute index in hash table
+		hashIdx = static_cast<unsigned int>(hashIndex(hashBlockPosition));
+
+		//check if hash table contains entry
+		bool isFound = false;
+
+		ITMHashEntry hashEntry = hashTable[hashIdx];
+
+		if (IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1)
+		{
+			//entry has been streamed out but is visible or in memory and visible
+			entriesVisibleType[hashIdx] = (hashEntry.ptr == -1) ? (uchar)2 : (uchar)1;
+
+			isFound = true;
+		}
+
+		if (!isFound)
+		{
+			bool isExcess = false;
+			if (hashEntry.ptr >= -1) //search excess list only if there is no room in ordered part
+			{
+				while (hashEntry.offset >= 1)
+				{
+					hashIdx = static_cast<unsigned int>(ORDERED_LIST_SIZE + hashEntry.offset - 1);
+					hashEntry = hashTable[hashIdx];
+
+					if (IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1)
+					{
+						//entry has been streamed out but is visible or in memory and visible
+						entriesVisibleType[hashIdx] = (hashEntry.ptr == -1) ? (uchar)2 : (uchar)1;
+
+						isFound = true;
+						break;
+					}
+				}
+
+				isExcess = true;
+			}
+
+			if (!isFound) //still not found
+			{
+				if(hashEntryStates[hashIdx] != ITMLib::NEEDS_NO_CHANGE){
+					collisionDetected = true;
+				}else{
+					//needs allocation
+					hashEntryStates[hashIdx] = isExcess ?
+					                           ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST : ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST;
+					if (!isExcess) entriesVisibleType[hashIdx] = 1; //new entry is visible
+					blockCoords[hashIdx] = hashBlockPosition;
+				}
+			}
+		}
+		currentHashBlockPosition += tracePathOrStep;
 	}
 }
 

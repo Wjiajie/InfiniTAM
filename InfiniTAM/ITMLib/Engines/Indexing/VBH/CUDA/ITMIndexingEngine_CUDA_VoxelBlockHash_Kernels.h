@@ -162,15 +162,15 @@ void buildHashAllocationTypeList_VolumeToVolume(ITMLib::HashEntryState* entriesA
 
 
 __global__ void buildHashAllocAndVisibleType_device(ITMLib::HashEntryState *hashEntryStates, uchar *entriesVisibleType, Vector3s *blockCoords, const float *depth,
-                                                    Matrix4f invM_d, Vector4f projParams_d, float mu, Vector2i _imgSize, float _voxelSize, ITMHashEntry *hashTable, float viewFrustum_min,
+                                                    Matrix4f invertedCameraTransform, Vector4f projParams_d, float mu, Vector2i _imgSize, float oneOverHashBlockSizeMeters, ITMHashEntry *hashTable, float viewFrustum_min,
                                                     float viewFrustum_max, bool* collisionDetected)
 {
 	int x = threadIdx.x + blockIdx.x * blockDim.x, y = threadIdx.y + blockIdx.y * blockDim.y;
 
 	if (x > _imgSize.x - 1 || y > _imgSize.y - 1) return;
 
-	buildHashAllocAndVisibleTypePP(hashEntryStates, entriesVisibleType, x, y, blockCoords, depth, invM_d, projParams_d,
-	                               mu, _imgSize, _voxelSize,
+	buildHashAllocAndVisibleTypePP(hashEntryStates, entriesVisibleType, x, y, blockCoords, depth, invertedCameraTransform, projParams_d,
+	                               mu, _imgSize, oneOverHashBlockSizeMeters,
 	                               hashTable, viewFrustum_min, viewFrustum_max, *collisionDetected);
 }
 
