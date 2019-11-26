@@ -70,6 +70,11 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 		pt_model.z = (float) (z + arrayInfo->offset.z) * voxelSize;
 		pt_model.w = 1.0f;
 
+		//	_DEBUG
+		if(x == 40 & y == 87 && z == 176){
+			printf("GOTCHA: (%E, %E, %E)\n", pt_model.x, pt_model.y, pt_model.z);
+		}
+
 		ComputeUpdatedLiveVoxelInfo<
 				TVoxel::hasColorInformation,
 				TVoxel::hasConfidenceInformation,

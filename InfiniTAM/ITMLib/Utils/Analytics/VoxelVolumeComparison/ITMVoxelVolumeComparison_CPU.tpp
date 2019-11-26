@@ -57,5 +57,14 @@ bool allocatedContentAlmostEqual_CPU(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxe
 
 }
 
+template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
+bool allocatedContentAlmostEqual_CPU_Verbose(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b,
+                                     ToleranceType tolerance){
+	VoxelEqualVerboseFunctor<TVoxel, ToleranceType> functor(tolerance);
+	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, MEMORYDEVICE_CPU>
+	::template DualVoxelPositionTraversal_AllTrue_AllocatedOnly(a, b, functor);
+
+}
+
 //endregion
 }

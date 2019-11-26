@@ -26,7 +26,7 @@ __global__ void integrateIntoScene_device(TVoxel *voxelArray, const ITMPlainVoxe
 
 __global__ void buildHashAllocAndVisibleType_device(
 		ITMLib::HashEntryState* hashEntryStates, uchar* entriesVisibleType, Vector3s* blockCoords, const float* depth,
-		Matrix4f invM_d, Vector4f projParams_d, float mu, Vector2i _imgSize, float _voxelSize, ITMHashEntry* hashTable,
+		Matrix4f invM_d, Vector4f projParams_d, float mu, Vector2i _imgSize, float oneOverHashBlockSize_Meters, ITMHashEntry* hashTable,
 		float viewFrustum_min, float viewFrustum_max);
 
 __global__ void allocateVoxelBlocksList_device(int *voxelAllocationList, int *excessAllocationList,
@@ -369,7 +369,7 @@ __global__ void integrateIntoScene_device(TVoxel *localVBA, const ITMHashEntry *
 
 __global__ void buildHashAllocAndVisibleType_device(
 		ITMLib::HashEntryState* hashEntryStates, uchar* entriesVisibleType, Vector3s* blockCoords, const float* depth,
-		Matrix4f invM_d, Vector4f projParams_d, float mu, Vector2i _imgSize, float _voxelSize, ITMHashEntry* hashTable,
+		Matrix4f invM_d, Vector4f projParams_d, float mu, Vector2i _imgSize, float oneOverHashBlockSize_Meters, ITMHashEntry* hashTable,
 		float viewFrustum_min, float viewFrustum_max)
 {
 	int x = threadIdx.x + blockIdx.x * blockDim.x, y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -378,7 +378,7 @@ __global__ void buildHashAllocAndVisibleType_device(
 
 	bool collisionDetected = false;
 	buildHashAllocAndVisibleTypePP(hashEntryStates, entriesVisibleType, x, y, blockCoords, depth, invM_d, projParams_d,
-	                               mu, _imgSize, _voxelSize,
+	                               mu, _imgSize, oneOverHashBlockSize_Meters,
 	                               hashTable, viewFrustum_min, viewFrustum_max, collisionDetected);
 }
 

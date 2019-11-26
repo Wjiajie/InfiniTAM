@@ -31,19 +31,19 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 	Vector2i depthImgSize = view->depth->noDims;
 	float voxelSize = scene->sceneParams->voxelSize;
 
-	Matrix4f M_d, invM_d;
-	Vector4f projParams_d, invProjParams_d;
+	Matrix4f cameraPose, invertedCameraPose;
+	Vector4f projParams_d, invertedCameraProjectionParameters;
 
 	ITMRenderState_VH* renderState_vh = (ITMRenderState_VH*) renderState;
 	if (resetVisibleList) renderState_vh->noVisibleEntries = 0;
 
-	M_d = trackingState->pose_d->GetM();
-	M_d.inv(invM_d);
+	cameraPose = trackingState->pose_d->GetM();
+	cameraPose.inv(invertedCameraPose);
 
 	projParams_d = view->calib.intrinsics_d.projectionParamsSimple.all;
-	invProjParams_d = projParams_d;
-	invProjParams_d.x = 1.0f / invProjParams_d.x;
-	invProjParams_d.y = 1.0f / invProjParams_d.y;
+	invertedCameraProjectionParameters = projParams_d;
+	invertedCameraProjectionParameters.x = 1.0f / invertedCameraProjectionParameters.x;
+	invertedCameraProjectionParameters.y = 1.0f / invertedCameraProjectionParameters.y;
 
 	float mu = scene->sceneParams->mu;
 
@@ -77,7 +77,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 			int x = locId - y * depthImgSize.x;
 
 			buildHashAllocAndVisibleTypePP(hashEntryStates_device, hashBlockVisibilityTypes, x, y,
-			                               allocationBlockCoordinates, depth, invM_d, invProjParams_d, mu, depthImgSize,
+			                               allocationBlockCoordinates, depth, invertedCameraPose, invertedCameraProjectionParameters, mu, depthImgSize,
 			                               oneOverHashEntrySize,
 			                               hashTable, scene->sceneParams->viewFrustum_min,
 			                               scene->sceneParams->viewFrustum_max, collisionDetected);
@@ -102,11 +102,11 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 			bool isVisibleEnlarged, isVisible;
 
 			if (useSwapping) {
-				checkBlockVisibility<true>(isVisible, isVisibleEnlarged, hashEntry.pos, M_d, projParams_d,
+				checkBlockVisibility<true>(isVisible, isVisibleEnlarged, hashEntry.pos, cameraPose, projParams_d,
 				                           voxelSize, depthImgSize);
 				if (!isVisibleEnlarged) hashVisibleType = 0;
 			} else {
-				checkBlockVisibility<false>(isVisible, isVisibleEnlarged, hashEntry.pos, M_d, projParams_d,
+				checkBlockVisibility<false>(isVisible, isVisibleEnlarged, hashEntry.pos, cameraPose, projParams_d,
 				                            voxelSize, depthImgSize);
 				if (!isVisible) { hashVisibleType = 0; }
 			}

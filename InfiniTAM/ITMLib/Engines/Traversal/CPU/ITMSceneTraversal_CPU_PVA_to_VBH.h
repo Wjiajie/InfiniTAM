@@ -29,6 +29,60 @@ namespace ITMLib {
 
 template<typename TVoxelPrimary, typename TVoxelSecondary>
 class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelArray, ITMVoxelBlockHash, MEMORYDEVICE_CPU> {
+private:
+	template<typename TFunctor, typename TFunctionCall>
+	inline static bool
+	DualVoxelTraversal_AllTrue_AllocatedOnly_Generic(
+			ITMVoxelVolume <TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
+			ITMVoxelVolume <TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
+			TFunctor& functor, TFunctionCall&& functionCall) {
+		volatile bool foundMismatch = false;
+		int totalHashEntryCount = secondaryVolume->index.hashEntryCount;
+		TVoxelSecondary* secondaryVoxels = secondaryVolume->localVBA.GetVoxelBlocks();
+		TVoxelPrimary* primaryVoxels = primaryVolume->localVBA.GetVoxelBlocks();
+		const ITMVoxelBlockHash::IndexData* hashTable = secondaryVolume->index.GetIndexData();
+		const ITMPlainVoxelArray::IndexData* pvaIndexData = primaryVolume->index.GetIndexData();
+		Vector3i startVoxel = pvaIndexData->offset;
+		Vector3i pvaSize = pvaIndexData->size;
+		Vector3i endVoxel = startVoxel + pvaSize; // open last traversal bound (this voxel doesn't get processed)
+		Vector6i pvaBounds(startVoxel.x, startVoxel.y, startVoxel.z, endVoxel.x, endVoxel.y, endVoxel.z);
+
+#ifdef WITH_OPENMP
+#pragma omp parallel for
+#endif
+		for (int hash = 0; hash < totalHashEntryCount; hash++) {
+			if (foundMismatch) continue;
+			ITMHashEntry secondaryHashEntry = hashTable[hash];
+			if (secondaryHashEntry.ptr < 0  ) continue;
+			Vector3i voxelBlockMinPoint = secondaryHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+			Vector3i hashEntryMaxPoint = voxelBlockMinPoint + Vector3i(VOXEL_BLOCK_SIZE);
+			if (HashBlockDoesNotIntersectBounds(voxelBlockMinPoint, hashEntryMaxPoint, pvaBounds)) {
+				continue;
+			}
+			TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
+			Vector6i localBounds = computeLocalBounds(voxelBlockMinPoint, hashEntryMaxPoint, pvaBounds);
+			for (int z = localBounds.min_z; z < localBounds.max_z; z++) {
+				for (int y = localBounds.min_y; y < localBounds.max_y; y++) {
+					for (int x = localBounds.min_x; x < localBounds.max_x; x++) {
+						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
+						Vector3i voxelCoordinateWithinBlock = Vector3i(x, y, z);
+						Vector3i voxelAbsolutePosition = voxelBlockMinPoint + voxelCoordinateWithinBlock;
+						Vector3i voxelPositionSansOffset = voxelAbsolutePosition - startVoxel;
+						int linearIndex = voxelPositionSansOffset.x + voxelPositionSansOffset.y * pvaSize.x +
+						                  voxelPositionSansOffset.z * pvaSize.x * pvaSize.y;
+						TVoxelSecondary& secondaryVoxel = secondaryVoxelBlock[locId];
+						TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
+
+						if (!std::forward<TFunctionCall>(functionCall)(functor, primaryVoxel, secondaryVoxel, voxelAbsolutePosition)) {
+							foundMismatch = true;
+							break;
+						}
+					}
+				}
+			}
+		}
+		return !foundMismatch;
+	}
 public:
 	/**
 	 * \brief Routine allowing some kind of comparison function call on voxel pairs from the two scenes where both
@@ -173,51 +227,35 @@ public:
 			ITMVoxelVolume <TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
 			ITMVoxelVolume <TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
 			TFunctor& functor) {
-		volatile bool foundMismatch = false;
-		int totalHashEntryCount = secondaryVolume->index.hashEntryCount;
-		TVoxelSecondary* secondaryVoxels = secondaryVolume->localVBA.GetVoxelBlocks();
-		TVoxelPrimary* primaryVoxels = primaryVolume->localVBA.GetVoxelBlocks();
-		const ITMVoxelBlockHash::IndexData* hashTable = secondaryVolume->index.GetIndexData();
-		const ITMPlainVoxelArray::IndexData* pvaIndexData = primaryVolume->index.GetIndexData();
-		Vector3i startVoxel = pvaIndexData->offset;
-		Vector3i pvaSize = pvaIndexData->size;
-		Vector3i endVoxel = startVoxel + pvaSize; // open last traversal bound (this voxel doesn't get processed)
-		Vector6i pvaBounds(startVoxel.x, startVoxel.y, startVoxel.z, endVoxel.x, endVoxel.y, endVoxel.z);
-
-#ifdef WITH_OPENMP
-#pragma omp parallel for
-#endif
-		for (int hash = 0; hash < totalHashEntryCount; hash++) {
-			if (foundMismatch) continue;
-			ITMHashEntry secondaryHashEntry = hashTable[hash];
-			if (secondaryHashEntry.ptr < 0  ) continue;
-			Vector3i hashEntryMinPoint = secondaryHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
-			Vector3i hashEntryMaxPoint = hashEntryMinPoint + Vector3i(VOXEL_BLOCK_SIZE);
-			if (HashBlockDoesNotIntersectBounds(hashEntryMinPoint, hashEntryMaxPoint, pvaBounds)) {
-				continue;
-			}
-			TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3)]);
-			Vector6i localBounds = computeLocalBounds(hashEntryMinPoint, hashEntryMaxPoint, pvaBounds);
-			for (int z = localBounds.min_z; z < localBounds.max_z; z++) {
-				for (int y = localBounds.min_y; y < localBounds.max_y; y++) {
-					for (int x = localBounds.min_x; x < localBounds.max_x; x++) {
-						int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
-						Vector3i voxelBlockPosition = Vector3i(x, y, z);
-						Vector3i voxelAbsolutePosition = hashEntryMinPoint + voxelBlockPosition;
-						Vector3i voxelPositionSansOffset = voxelAbsolutePosition - startVoxel;
-						int linearIndex = voxelPositionSansOffset.x + voxelPositionSansOffset.y * pvaSize.x +
-						                  voxelPositionSansOffset.z * pvaSize.x * pvaSize.y;
-						TVoxelSecondary& secondaryVoxel = secondaryVoxelBlock[locId];
-						TVoxelPrimary& primaryVoxel = primaryVoxels[linearIndex];
-						if (!(functor(primaryVoxel, secondaryVoxel))) {
-							foundMismatch = true;
-							break;
-						}
-					}
-				}
-			}
-		}
-		return !foundMismatch;
+		return DualVoxelTraversal_AllTrue_AllocatedOnly_Generic(primaryVolume, secondaryVolume, functor, []
+		(TFunctor& functor, TVoxelPrimary& voxelPrimary, TVoxelSecondary& voxelSecondary, Vector3i& voxelPosition){
+			return functor(voxelPrimary, voxelSecondary);
+		});
+	}
+	/**
+	 * \brief Routine allowing some kind of comparison function call on voxel pairs from the two scenes where both
+	 * voxels share the same spatial location, which ignores unallocated spaces in either scene.
+	 * \details voxels that are not modified / have default value (see isModified for how that works) in the primary
+	 * voxel volume are ignored if the voxel hash block at this location at the secondary voxel volume has not been
+	 * allocated. Areas where either or both of the scenes don't have allocated voxels are
+	 * ignored, even if only one of the volumes does, in fact, have potentially-altered voxels there.
+	 * \tparam TFunctor type of the function object (see parameter description)
+	 * \param primaryVolume the primary volume -- indexed using plain voxel array (PVA)
+	 * \param secondaryVolume the secondary volume -- indexed using voxel block hash table (VBH)
+	 * \param functor a function object accepting two voxels and their mutually shared position by reference as arguments
+	 * and returning true/false
+	 * \return true if the matching functor returns "true" for all allocated voxels, false otherwise.
+	 */
+	template<typename TFunctor>
+	inline static bool
+	DualVoxelPositionTraversal_AllTrue_AllocatedOnly(
+			ITMVoxelVolume <TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
+			ITMVoxelVolume <TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
+			TFunctor& functor) {
+		return DualVoxelTraversal_AllTrue_AllocatedOnly_Generic(primaryVolume, secondaryVolume, functor, []
+				(TFunctor& functor, TVoxelPrimary& voxelPrimary, TVoxelSecondary& voxelSecondary, Vector3i& voxelPosition){
+			return functor(voxelPrimary, voxelSecondary, voxelPosition);
+		});
 	}
 };
 

@@ -117,7 +117,7 @@ public:
 	// endregion =======================================================================================================
 
 	_DEVICE_WHEN_AVAILABLE_
-	void operator()(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, Vector3i voxelPosition) {
+	void operator()(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, const Vector3i& voxelPosition) {
 
 		if (!VoxelIsConsideredForTracking(voxelCanonical, voxelLive)) return;
 		bool computeDataAndLevelSetTerms = VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive);

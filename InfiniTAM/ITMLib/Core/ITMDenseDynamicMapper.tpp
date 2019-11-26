@@ -40,7 +40,7 @@ using namespace ITMLib;
 namespace bench = ITMLib::Bench;
 
 // region ========================================= DEBUG PRINTING =====================================================
-//_DEBUG
+
 template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
 inline static void PrintSceneStatistics(
 		ITMVoxelVolume<TVoxel, TIndex>* scene,

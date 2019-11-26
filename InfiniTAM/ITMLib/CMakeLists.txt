@@ -717,6 +717,8 @@ set(ITMLIB_UTILS_HEADERS
     Utils/Geometry/ITMGeometryBooleanOpernations.h
     Utils/Geometry/ITMGeometryConversionOperations.h
     Utils/Geometry/ITM3DIndexConversions.h
+	Utils/Geometry/ITMIntersectionChecks.h
+	Utils/Geometry/ITMSegment.h
 
     Utils/ITMCUDAUtils.h
     Utils/ITMValuePosition.h

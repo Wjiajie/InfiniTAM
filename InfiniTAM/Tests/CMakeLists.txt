@@ -80,6 +80,7 @@ if (BUILD_TESTS)
     itm_add_test(NAME FuseLifeIntoCanonical SOURCES Test_FuseLifeIntoCanonical.cpp)
     itm_add_test(NAME WarpGradient_PVA_to_VBH SOURCES Test_WarpGradient_PVA_to_VBH.cpp)
     itm_add_test(NAME Configuration SOURCES Test_Configuration.cpp)
+    itm_add_test(NAME GeometryUtilities SOURCES Test_GeometryUtilities.cpp)
 
     #####################################################
     # Recursively transfer test data to build directory #
