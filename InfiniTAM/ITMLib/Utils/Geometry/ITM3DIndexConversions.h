@@ -52,3 +52,17 @@ ComputePositionVectorFromLinearIndex_PlainVoxelArray(const ITMLib::ITMPlainVoxel
 	int x = tmp - y * indexData->size.x;
 	return {x + indexData->offset.x, y + indexData->offset.y, z + indexData->offset.z};
 }
+
+_CPU_AND_GPU_CODE_
+inline static Vector3i
+ComputePositionVectorFromLinearIndex_VoxelBlockHash( Vector3s blockPosition_Blocks,
+                                                     int linearIndex) {
+	int z = linearIndex / (VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE);
+	int tmp = linearIndex - z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
+	int y = tmp / VOXEL_BLOCK_SIZE;
+	int x = tmp - y * VOXEL_BLOCK_SIZE;
+	return {x + blockPosition_Blocks.x * VOXEL_BLOCK_SIZE,
+		 y + blockPosition_Blocks.y * VOXEL_BLOCK_SIZE,
+		 z + blockPosition_Blocks.z * VOXEL_BLOCK_SIZE};
+}
+

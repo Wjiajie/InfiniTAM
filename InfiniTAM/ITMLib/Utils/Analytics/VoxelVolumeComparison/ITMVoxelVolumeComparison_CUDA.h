@@ -16,6 +16,7 @@
 #pragma once
 
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
+#include "../../../Utils/ITMVoxelFlags.h"
 
 namespace ITMLib{
 /**
@@ -37,6 +38,12 @@ bool contentAlmostEqual_CUDA(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<T
 
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
 bool contentAlmostEqual_CUDA_Verbose(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<TVoxel,TIndexB>* b, ToleranceType tolerance);
+
+template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
+bool contentForFlagsAlmostEqual_CUDA(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<TVoxel,TIndexB>* b, VoxelFlags flags, ToleranceType tolerance);
+
+template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
+bool contentForFlagsAlmostEqual_CUDA_Verbose(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<TVoxel,TIndexB>* b, VoxelFlags flags, ToleranceType tolerance);
 
 /**
  * \brief Determine if every pair of corresponding voxels within the two voxel volumes is within the provided tolerance

@@ -14,6 +14,7 @@
 //  limitations under the License.
 //  ================================================================
 #pragma once
+
 #include "ITMVoxelVolumeComparison_CUDA.h"
 #include "../../../../ORUtils/PlatformIndependence.h"
 #include "../../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
@@ -22,33 +23,98 @@
 #include "ITMVoxelVolumeComparison_Functors.h"
 
 
-namespace ITMLib{
+namespace ITMLib {
 
 
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
-bool contentAlmostEqual_CUDA(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<TVoxel,TIndexB>* b, ToleranceType tolerance){
+bool contentAlmostEqual_CUDA(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b,
+                             ToleranceType tolerance) {
 	VoxelEqualFunctor<TVoxel, ToleranceType> functor(tolerance);
 	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, MEMORYDEVICE_CUDA>
 	::template DualVoxelTraversal_AllTrue(a, b, functor);
 }
 
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
-bool contentAlmostEqual_CUDA_Verbose(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<TVoxel,TIndexB>* b, ToleranceType tolerance){
+bool contentAlmostEqual_CUDA_Verbose(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b,
+                                     ToleranceType tolerance) {
 	VoxelEqualVerboseFunctor<TVoxel, ToleranceType> functor(tolerance);
 	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, MEMORYDEVICE_CUDA>
 	::template DualVoxelPositionTraversal_AllTrue(a, b, functor);
 }
 
+// region ============================ COMPARISON OF VOXELS WITH SPECIFIC FLAGS WITHIN BOTH VOLUMES ====================
+
+template<bool TBothVoxelTypesHaveFlags, typename TVoxel, typename TIndexA,
+		typename TIndexB, typename ToleranceType>
+struct FlaggedVoxelComparisonUtility;
 
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
-bool allocatedContentAlmostEqual_CUDA(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<TVoxel,TIndexB>* b, ToleranceType tolerance){
+struct FlaggedVoxelComparisonUtility<true, TVoxel, TIndexA, TIndexB, ToleranceType> {
+	static
+	bool compare(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b, VoxelFlags flags,
+	             ToleranceType tolerance) {
+		VoxelEqualFunctor<TVoxel, ToleranceType> functor(tolerance);
+		return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, MEMORYDEVICE_CUDA>
+		::template DualVoxelTraversal_AllTrue_MatchingFlags(a, b, flags, functor);
+	}
+
+	static
+	bool compare_Verbose(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b, VoxelFlags flags,
+	                     ToleranceType tolerance) {
+		VoxelEqualVerboseFunctor<TVoxel, ToleranceType> functor(tolerance);
+		return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, MEMORYDEVICE_CUDA>
+		::template DualVoxelPositionTraversal_AllTrue_MatchingFlags(a, b, flags, functor);
+	}
+};
+
+template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
+struct FlaggedVoxelComparisonUtility<false, TVoxel, TIndexA, TIndexB, ToleranceType> {
+	static
+	bool compare(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b, VoxelFlags flags,
+	             ToleranceType tolerance) {
+		std::cout << "Warning: flagged voxel comparison called on volumes where the voxel type doesn't have flags. "
+		             "Defaulting to exact comparison for all voxels." << std::endl;
+		return contentAlmostEqual_CUDA(a, b, tolerance);
+	}
+
+	static
+	bool compare_Verbose(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b, VoxelFlags flags,
+	                     ToleranceType tolerance) {
+		std::cout << "Warning: flagged voxel comparison called on volumes where the voxel type doesn't have flags. "
+		             " Defaulting to exact comparison for all voxels." << std::endl;
+		return contentAlmostEqual_CUDA_Verbose(a, b, tolerance);
+	}
+};
+
+
+template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
+bool contentForFlagsAlmostEqual_CUDA(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b,
+                                     VoxelFlags flags, ToleranceType tolerance) {
+	return FlaggedVoxelComparisonUtility<TVoxel::hasSemanticInformation, TVoxel, TIndexA, TIndexB, ToleranceType>::
+	compare(a, b, flags, tolerance);
+}
+
+template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
+bool contentForFlagsAlmostEqual_CUDA_Verbose(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b,
+                                             VoxelFlags flags, ToleranceType tolerance) {
+	return FlaggedVoxelComparisonUtility<TVoxel::hasSemanticInformation, TVoxel, TIndexA, TIndexB, ToleranceType>::
+	compare_Verbose(a, b, flags, tolerance);
+
+}
+
+// endregion ===========================================================================================================
+
+template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
+bool allocatedContentAlmostEqual_CUDA(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b,
+                                      ToleranceType tolerance) {
 	VoxelEqualFunctor<TVoxel, ToleranceType> functor(tolerance);
 	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, MEMORYDEVICE_CUDA>
 	::template DualVoxelTraversal_AllTrue_AllocatedOnly(a, b, functor);
 }
 
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
-bool allocatedContentAlmostEqual_CUDA_Verbose(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<TVoxel,TIndexB>* b, ToleranceType tolerance){
+bool allocatedContentAlmostEqual_CUDA_Verbose(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b,
+                                              ToleranceType tolerance) {
 	VoxelEqualVerboseFunctor<TVoxel, ToleranceType> functor(tolerance);
 	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, MEMORYDEVICE_CUDA>
 	::template DualVoxelPositionTraversal_AllTrue_AllocatedOnly(a, b, functor);

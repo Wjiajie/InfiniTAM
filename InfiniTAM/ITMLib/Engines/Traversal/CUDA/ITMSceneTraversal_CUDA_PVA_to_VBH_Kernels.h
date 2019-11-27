@@ -29,18 +29,40 @@ namespace {
 __global__ void findBlocksNotSpannedByArray(
 		const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
 		const ITMHashEntry* hashTable, int hashEntryCount,
-		int* hashesNotSpanned, int* countHashesNotSpanned) {
-	int hash = static_cast<int>(blockIdx.x * blockDim.x + threadIdx.x);
-	if (hash > hashEntryCount) return;
+		int* hashCodesNotSpanned, int* countBlocksNotSpanned) {
+	int hashCode = static_cast<int>(blockIdx.x * blockDim.x + threadIdx.x);
+	if (hashCode > hashEntryCount) return;
+	const ITMHashEntry& hashEntry = hashTable[hashCode];
+	Vector3i blockMinVoxels = hashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
+	Vector3i blockMaxVoxels = blockMinVoxels + Vector3i(VOXEL_BLOCK_SIZE);
+	Vector3i arrayMinVoxels = arrayInfo->offset;
+	Vector3i arrayMaxVoxels = arrayInfo->offset + arrayInfo->size;
+
+	if (blockMaxVoxels.x < arrayMinVoxels.x || blockMinVoxels.x > arrayMaxVoxels.x ||
+	    blockMaxVoxels.y < arrayMinVoxels.y || blockMinVoxels.y > arrayMaxVoxels.y ||
+	    blockMaxVoxels.z < arrayMinVoxels.z || blockMinVoxels.z > arrayMaxVoxels.z) {
+		int unspannedHashCodeIndex = atomicAdd(countBlocksNotSpanned, 1);
+		hashCodesNotSpanned[unspannedHashCodeIndex] = hashCode;
+	}
+}
+
+
+template<typename TVoxel>
+__global__ void
+checkIfHashVoxelBlocksHaveAlteredVoxelsWithSpecificFlags(const TVoxel* voxels, const ITMHashEntry* hashTable,
+                                                         int* hashesToCheck, int countHashesToCheck,
+                                                         bool* alteredBlockEncountered,
+                                                         const ITMLib::VoxelFlags& flags) {
+	if (*alteredBlockEncountered) return;
+	int hashToCheckIdx = static_cast<int>(blockIdx.x);
+	if (hashToCheckIdx > countHashesToCheck) return;
+	int hash = hashesToCheck[hashToCheckIdx];
 	const ITMHashEntry& hashEntry = hashTable[hash];
-	Vector3i blockPosVoxels = hashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
-	Vector3i arrayMinCoord = arrayInfo->offset;
-	Vector3i arrayMaxCoord = arrayInfo->offset + arrayInfo->size;
-	if (blockPosVoxels.x + VOXEL_BLOCK_SIZE < arrayMinCoord.x || blockPosVoxels.x > arrayMaxCoord.x ||
-	    blockPosVoxels.y + VOXEL_BLOCK_SIZE < arrayMinCoord.y || blockPosVoxels.y > arrayMaxCoord.y ||
-	    blockPosVoxels.z + VOXEL_BLOCK_SIZE < arrayMinCoord.z || blockPosVoxels.z > arrayMaxCoord.z) {
-		int unspannedHashIdx = atomicAdd(countHashesNotSpanned, 1);
-		hashesNotSpanned[unspannedHashIdx] = hash;
+	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
+	int locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
+	const TVoxel& voxel = voxels[hashEntry.ptr * VOXEL_BLOCK_SIZE3 + locId];
+	if (isAltered(voxel) && voxel.flags == flags) {
+		*alteredBlockEncountered = true;
 	}
 }
 
@@ -59,6 +81,7 @@ checkIfHashVoxelBlocksAreAltered(const TVoxel* voxels, const ITMHashEntry* hashT
 		*alteredBlockEncountered = true;
 	}
 }
+
 
 template<typename TBooleanFunctor, typename TVoxelArray, typename TVoxelHash>
 __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue(
@@ -112,8 +135,9 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue(
 	}
 }
 
+
 template<typename TBooleanFunctor, typename TVoxelArray, typename TVoxelHash>
-__global__ void checkIfArrayContentIsUnalteredOrYieldsTruePosition(
+__global__ void checkIfArrayContentIsUnalteredOrYieldsTrue_Position_Verbose(
 		TVoxelArray* arrayVoxels,
 		const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
 		TVoxelHash* hashVoxels, const ITMHashEntry* hashTable,
@@ -142,7 +166,7 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTruePosition(
 	    zVoxel < minArrayCoord.z || zVoxel >= maxArrayCoord.z) {
 		if (FindHashAtPosition(hash, blockPosition, hashTable) &&
 		    isAltered_VerbosePositionHash(hashVoxels[hashTable[hash].ptr * VOXEL_BLOCK_SIZE3 + idxInBlock],
-		                                  voxelPosition, hash, blockPosition, "In voxel-block-hashed volume: ")) {
+		                                  voxelPosition, hash, blockPosition, "In voxel-block-hash volume: ")) {
 			// voxel falls just outside of array BUT is still in hash block, if it's altered -- return false
 			*falseOrAlteredEncountered = true;
 			return;
@@ -164,6 +188,130 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTruePosition(
 	} else {
 		if (isAltered_VerbosePosition(arrayVoxels[idxInArray], voxelPosition, "In plain-voxel-array volume: ")) {
 			*falseOrAlteredEncountered = true;
+		}
+	}
+}
+
+
+template<typename TBooleanFunctor, typename TVoxelArray, typename TVoxelHash>
+__global__ void checkIfArrayContentIsUnalteredOrYieldsTrue_SemanticFlags(
+		TVoxelArray* arrayVoxels,
+		const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+		TVoxelHash* hashVoxels, const ITMHashEntry* hashTable,
+		const Vector3i minArrayCoord,
+		const Vector3i maxArrayCoord, const Vector3s minBlockPos,
+		TBooleanFunctor* functor, ITMLib::VoxelFlags semanticFlags,
+		bool* falseOrAlteredUnmatchedEncountered) {
+
+	if (*falseOrAlteredUnmatchedEncountered) return;
+
+	int xVoxel = static_cast<int>(blockIdx.x * blockDim.x + threadIdx.x);
+	int yVoxel = static_cast<int>(blockIdx.y * blockDim.y + threadIdx.y);
+	int zVoxel = static_cast<int>(blockIdx.z * blockDim.z + threadIdx.z);
+
+	Vector3i indexingCoord(xVoxel, yVoxel, zVoxel);
+	//local (block) coords;
+	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
+	int idxInBlock = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
+
+	Vector3s blockPosition(blockIdx.x, blockIdx.y, blockIdx.z);
+	blockPosition += minBlockPos;
+
+	int hash;
+	if (xVoxel < minArrayCoord.x || xVoxel >= maxArrayCoord.x ||
+	    yVoxel < minArrayCoord.y || yVoxel >= maxArrayCoord.y ||
+	    zVoxel < minArrayCoord.z || zVoxel >= maxArrayCoord.z) {
+		if (FindHashAtPosition(hash, blockPosition, hashTable)) {
+			TVoxelHash& voxel = hashVoxels[hashTable[hash].ptr * VOXEL_BLOCK_SIZE3 + idxInBlock];
+			if (voxel.flags == semanticFlags && isAltered(voxel)) {
+				// voxel falls just outside of array BUT is still in hash block, if it's altered & has same flags -- return false
+				*falseOrAlteredUnmatchedEncountered = true;
+				return;
+			}
+		}
+
+		return;
+	}
+
+	Vector3i arrayCoord = indexingCoord - minArrayCoord;
+	int idxInArray = arrayCoord.x + arrayCoord.y * arrayInfo->size.x +
+	                 arrayCoord.z * arrayInfo->size.x * arrayInfo->size.y;
+
+	if (FindHashAtPosition(hash, blockPosition, hashTable)) {
+		TVoxelHash& voxelHash = hashVoxels[hashTable[hash].ptr * VOXEL_BLOCK_SIZE3 + idxInBlock];
+		TVoxelArray& voxelArray = arrayVoxels[idxInArray];
+		if ((voxelHash.flags == semanticFlags || voxelArray.flags == semanticFlags) &&
+		    (!(*functor)(voxelArray, voxelHash) || voxelHash.flags != voxelArray.flags)) {
+			*falseOrAlteredUnmatchedEncountered = true;
+		}
+	} else {
+		TVoxelArray& voxelArray = arrayVoxels[idxInArray];
+		if (isAltered(voxelArray)) {
+			*falseOrAlteredUnmatchedEncountered = true;
+		}
+	}
+}
+
+
+template<typename TBooleanFunctor, typename TVoxelArray, typename TVoxelHash>
+__global__ void checkIfArrayContentIsUnalteredOrYieldsTrue_SemanticFlags_Position_Verbose(
+		TVoxelArray* arrayVoxels,
+		const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+		TVoxelHash* hashVoxels, const ITMHashEntry* hashTable,
+		const Vector3i minArrayCoord,
+		const Vector3i maxArrayCoord, const Vector3s minBlockPos,
+		TBooleanFunctor* functor, ITMLib::VoxelFlags semanticFlags,
+		bool* falseOrAlteredUnmatchedEncountered) {
+
+	if (*falseOrAlteredUnmatchedEncountered) return;
+
+	int xVoxel = static_cast<int>(blockIdx.x * blockDim.x + threadIdx.x);
+	int yVoxel = static_cast<int>(blockIdx.y * blockDim.y + threadIdx.y);
+	int zVoxel = static_cast<int>(blockIdx.z * blockDim.z + threadIdx.z);
+
+	Vector3i indexingCoord(xVoxel, yVoxel, zVoxel);
+	//local (block) coords;
+	int x = threadIdx.x, y = threadIdx.y, z = threadIdx.z;
+	int idxInBlock = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
+
+	Vector3s blockPosition(blockIdx.x, blockIdx.y, blockIdx.z);
+	blockPosition += minBlockPos;
+	Vector3i voxelPosition = blockPosition.toInt() * VOXEL_BLOCK_SIZE + Vector3i(x, y, z);
+
+	int hash;
+	if (xVoxel < minArrayCoord.x || xVoxel >= maxArrayCoord.x ||
+	    yVoxel < minArrayCoord.y || yVoxel >= maxArrayCoord.y ||
+	    zVoxel < minArrayCoord.z || zVoxel >= maxArrayCoord.z) {
+		if (FindHashAtPosition(hash, blockPosition, hashTable)) {
+			TVoxelHash& voxel = hashVoxels[hashTable[hash].ptr * VOXEL_BLOCK_SIZE3 + idxInBlock];
+
+			if (voxel.flags == semanticFlags &&
+			    isAltered_VerbosePositionHash(voxel, voxelPosition, hash, blockPosition,
+			                                  "In voxel-block-hash volume: ")) {
+				// voxel falls just outside of array BUT is still in hash block, if it's altered & has same flags -- return false
+				*falseOrAlteredUnmatchedEncountered = true;
+				return;
+			}
+		}
+
+		return;
+	}
+
+	Vector3i arrayCoord = indexingCoord - minArrayCoord;
+	int idxInArray = arrayCoord.x + arrayCoord.y * arrayInfo->size.x +
+	                 arrayCoord.z * arrayInfo->size.x * arrayInfo->size.y;
+
+	if (FindHashAtPosition(hash, blockPosition, hashTable)) {
+		TVoxelHash& voxelHash = hashVoxels[hashTable[hash].ptr * VOXEL_BLOCK_SIZE3 + idxInBlock];
+		TVoxelArray& voxelArray = arrayVoxels[idxInArray];
+		if ((voxelHash.flags == semanticFlags || voxelArray.flags == semanticFlags) &&
+		    (!(*functor)(voxelArray, voxelHash, voxelPosition) || voxelHash.flags != voxelArray.flags)) {
+			*falseOrAlteredUnmatchedEncountered = true;
+		}
+	} else {
+		TVoxelArray& voxelArray = arrayVoxels[idxInArray];
+		if (isAltered_VerbosePosition(voxelArray, voxelPosition, "In plain-voxel-array volume: ")) {
+			*falseOrAlteredUnmatchedEncountered = true;
 		}
 	}
 }

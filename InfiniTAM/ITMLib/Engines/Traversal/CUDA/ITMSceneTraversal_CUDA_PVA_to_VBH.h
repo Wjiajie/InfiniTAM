@@ -31,10 +31,10 @@ template<typename TVoxelPrimary, typename TVoxelSecondary>
 class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelArray, ITMVoxelBlockHash, MEMORYDEVICE_CUDA> {
 	template<typename TBooleanFunctor, typename TDeviceFunction>
 	inline static bool
-	DualVoxelTraversal_AllTrue_Generic(
-			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
-			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
-			TBooleanFunctor& functor, TDeviceFunction&& deviceFunction) {
+	DualVoxelTraversal_AllTrue_MatchingFlags_Generic(ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
+	                                                 ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
+	                                                 VoxelFlags semanticFlags, TBooleanFunctor& functor,
+	                                                 TDeviceFunction&& deviceFunction) {
 		ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryVolume->index.GetIndexData();
 		int hashEntryCount = secondaryVolume->index.hashEntryCount;
 		ITMHashEntry* hashTable = secondaryVolume->index.GetIndexData();
@@ -58,6 +58,99 @@ class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelA
 		int countHashesNotSpanned_host = *countHashesNotSpanned.GetData(MEMORYDEVICE_CPU);
 
 		//*** used in the next two kernels
+		ORUtils::MemoryBlock<bool> falseOrAlteredUnmatchedEncountered(1, true, true);
+		*falseOrAlteredUnmatchedEncountered.GetData(MEMORYDEVICE_CPU) = false;
+		falseOrAlteredUnmatchedEncountered.UpdateDeviceFromHost();
+		dim3 cudaBlockSize_BlockVoxelPerThread(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
+		TVoxelSecondary* voxelsHash = secondaryVolume->localVBA.GetVoxelBlocks();
+
+		if (countHashesNotSpanned_host > 0) {
+			// if there are any blocks in the hash that are not spanned by the array volume, we must check
+			// whether any of them are altered
+			dim3 gridSize_UnspannedHashBlocks(static_cast<int>(ceil(static_cast<float>(countHashesNotSpanned_host) /
+			                                                        static_cast<float>(cudaBlockSize_HashPerThread.x))));
+			checkIfHashVoxelBlocksHaveAlteredVoxelsWithSpecificFlags
+					<< < gridSize_UnspannedHashBlocks, cudaBlockSize_BlockVoxelPerThread >> >
+			                                           (voxelsHash, hashTable, hashesNotSpanned.GetData(
+					                                           MEMORYDEVICE_CUDA),
+					                                           countHashesNotSpanned_host,
+					                                           falseOrAlteredUnmatchedEncountered.GetData(
+							                                           MEMORYDEVICE_CUDA), semanticFlags);
+			ORcudaKernelCheck;
+		}
+		falseOrAlteredUnmatchedEncountered.UpdateHostFromDevice();
+		if (*falseOrAlteredUnmatchedEncountered.GetData(MEMORYDEVICE_CPU)) {
+			return false;
+		}
+
+		TVoxelPrimary* voxelsArray = primaryVolume->localVBA.GetVoxelBlocks();
+		Vector3i arrayOffset = primaryVolume->index.GetVolumeOffset();
+		Vector3i arraySize = primaryVolume->index.GetVolumeSize();
+
+		Vector3s minBlockPos(
+				static_cast<int>(floor(static_cast<float>(arrayOffset.x) / VOXEL_BLOCK_SIZE)),
+				static_cast<int>(floor(static_cast<float>(arrayOffset.y) / VOXEL_BLOCK_SIZE)),
+				static_cast<int>(floor(static_cast<float>(arrayOffset.z) / VOXEL_BLOCK_SIZE)));
+		Vector3i minIndexCoord(minBlockPos.x * VOXEL_BLOCK_SIZE,
+		                       minBlockPos.y * VOXEL_BLOCK_SIZE,
+		                       minBlockPos.z * VOXEL_BLOCK_SIZE);
+		Vector3i minArrayCoord = arrayOffset - minIndexCoord; // inclusive
+		Vector3i maxArrayCoord = minArrayCoord + arraySize; // exclusive
+
+		// transfer functor from RAM to VRAM (has to be done manually, i.e. without MemoryBlock at this point)
+		TBooleanFunctor* functor_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TBooleanFunctor)));
+		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TBooleanFunctor), cudaMemcpyHostToDevice));
+
+		dim3 gridSize_ArrayBlockEnvelope(
+				static_cast<int>(ceil(static_cast<float>(maxArrayCoord.x) / VOXEL_BLOCK_SIZE)),
+				static_cast<int>(ceil(static_cast<float>(maxArrayCoord.y) / VOXEL_BLOCK_SIZE)),
+				static_cast<int>(ceil(static_cast<float>(maxArrayCoord.z) / VOXEL_BLOCK_SIZE))
+		);
+
+		std::forward<TDeviceFunction>(deviceFunction)(
+				gridSize_ArrayBlockEnvelope, cudaBlockSize_BlockVoxelPerThread, voxelsArray, arrayInfo, voxelsHash,
+				hashTable, minArrayCoord, maxArrayCoord, minBlockPos, functor_device, semanticFlags,
+				falseOrAlteredUnmatchedEncountered.GetData(MEMORYDEVICE_CUDA));
+		ORcudaKernelCheck;
+
+		// transfer functor from VRAM back to RAM (in case there was any alteration to the functor object)
+		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TBooleanFunctor), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(functor_device));
+		falseOrAlteredUnmatchedEncountered.UpdateHostFromDevice();
+
+		return !(*falseOrAlteredUnmatchedEncountered.GetData(MEMORYDEVICE_CPU));
+	}
+
+
+	template<typename TBooleanFunctor, typename TDeviceFunction>
+	inline static bool
+	DualVoxelTraversal_AllTrue_Generic(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
+			TBooleanFunctor& functor, TDeviceFunction&& deviceFunction) {
+		ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryVolume->index.GetIndexData();
+		int hashEntryCount = secondaryVolume->index.hashEntryCount;
+		ITMHashEntry* hashTable = secondaryVolume->index.GetIndexData();
+
+		ORUtils::MemoryBlock<int> hashCodesNotSpanned(hashEntryCount, true, true);
+		ORUtils::MemoryBlock<int> countBlocksNotSpanned(1, true, true);
+		*countBlocksNotSpanned.GetData(MEMORYDEVICE_CPU) = 0;
+		countBlocksNotSpanned.UpdateDeviceFromHost();
+
+		dim3 cudaBlockSize_HashPerThread(256);
+		dim3 gridSize_MultipleHashBlocks(static_cast<int>(ceil(static_cast<float>(hashEntryCount) /
+		                                                       static_cast<float>(cudaBlockSize_HashPerThread.x))));
+		findBlocksNotSpannedByArray
+				<< < gridSize_MultipleHashBlocks, cudaBlockSize_HashPerThread >> >
+		                                          (arrayInfo, hashTable, hashEntryCount,
+		                                          		hashCodesNotSpanned.GetData(MEMORYDEVICE_CUDA),
+				                                          countBlocksNotSpanned.GetData(MEMORYDEVICE_CUDA));
+		ORcudaKernelCheck;
+		countBlocksNotSpanned.UpdateHostFromDevice();
+		int countHashesNotSpanned_host = *countBlocksNotSpanned.GetData(MEMORYDEVICE_CPU);
+
+		//*** used in the next two kernels
 		ORUtils::MemoryBlock<bool> falseOrAlteredEncountered(1, true, true);
 		*falseOrAlteredEncountered.GetData(MEMORYDEVICE_CPU) = false;
 		falseOrAlteredEncountered.UpdateDeviceFromHost();
@@ -71,7 +164,7 @@ class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelA
 			                                                        static_cast<float>(cudaBlockSize_HashPerThread.x))));
 			checkIfHashVoxelBlocksAreAltered
 					<< < gridSize_UnspannedHashBlocks, cudaBlockSize_BlockVoxelPerThread >> >
-			                                           (voxelsHash, hashTable, hashesNotSpanned.GetData(
+			                                           (voxelsHash, hashTable, hashCodesNotSpanned.GetData(
 					                                           MEMORYDEVICE_CUDA),
 					                                           countHashesNotSpanned_host,
 					                                           falseOrAlteredEncountered.GetData(
@@ -199,6 +292,82 @@ public:
 
 	/**
 	 * \brief Routine allowing some kind of comparison function call on voxel pairs from the two scenes where both
+	 * voxels share the same spatial location and the same semantic flags.
+	 *
+	 * \details voxels that are not modified / have default value (see isModified for how that works) or don't have
+	 * the specified semantic flags in the primary voxel volume are ignored if the voxel hash block at this location at
+	 * the secondary voxel volume has not been allocated. Likewise, if hash blocks in the secondary volume fall outside
+	 * the dense 3D array of the primary volume, their voxels are checked for alterations and flags. If they are not
+	 * altered or their flags don't match the specified flags, they are ignored.
+	 * \note works only for voxels that have semantic flags defined.
+	 *
+	 * \tparam TFunctor type of the function object (see parameter description)
+	 * \param primaryVolume the primary volume -- indexed using plain voxel array (PVA)
+	 * \param secondaryVolume the secondary volume -- indexed using voxel block hash table (VBH)
+	 * \param semanticFlags semantic flags to match
+	 * \param functor a function object accepting two voxels by reference as arguments and returning true/false
+	 * \return true if the matching functor returns "true" for all allocated voxels, false otherwise.
+	 */
+	template<typename TBooleanFunctor>
+	inline static bool
+	DualVoxelTraversal_AllTrue_MatchingFlags(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
+			VoxelFlags semanticFlags, TBooleanFunctor& functor) {
+
+		return DualVoxelTraversal_AllTrue_MatchingFlags_Generic(primaryVolume, secondaryVolume, semanticFlags, functor,
+		                                                        []
+				                                                        (dim3 gridSize_ArrayBlockEnvelope,
+				                                                         dim3 cudaBlockSize_BlockVoxelPerThread,
+				                                                         TVoxelPrimary* voxelsArray,
+				                                                         ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+				                                                         TVoxelSecondary* voxelsHash,
+				                                                         ITMHashEntry* hashTable,
+				                                                         Vector3i minArrayCoord,
+				                                                         Vector3i maxArrayCoord, Vector3s minBlockPos,
+				                                                         TBooleanFunctor* functor_device,
+				                                                         VoxelFlags semanticFlags,
+				                                                         bool* falseOrAlteredEncountered_device) {
+			                                                        checkIfArrayContentIsUnalteredOrYieldsTrue_SemanticFlags
+					                                                        << < gridSize_ArrayBlockEnvelope,
+					                                                        cudaBlockSize_BlockVoxelPerThread >> >
+					                                                        (voxelsArray, arrayInfo, voxelsHash, hashTable,
+							                                                        minArrayCoord, maxArrayCoord, minBlockPos, functor_device,
+							                                                        semanticFlags, falseOrAlteredEncountered_device);
+		                                                        });
+	}
+
+	template<typename TBooleanFunctor>
+	inline static bool
+	DualVoxelPositionTraversal_AllTrue_MatchingFlags(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
+			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
+			VoxelFlags semanticFlags, TBooleanFunctor& functor) {
+
+		return DualVoxelTraversal_AllTrue_MatchingFlags_Generic(primaryVolume, secondaryVolume, semanticFlags, functor,
+		                                                        []
+				                                                        (dim3 gridSize_ArrayBlockEnvelope,
+				                                                         dim3 cudaBlockSize_BlockVoxelPerThread,
+				                                                         TVoxelPrimary* voxelsArray,
+				                                                         ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+				                                                         TVoxelSecondary* voxelsHash,
+				                                                         ITMHashEntry* hashTable,
+				                                                         Vector3i minArrayCoord,
+				                                                         Vector3i maxArrayCoord, Vector3s minBlockPos,
+				                                                         TBooleanFunctor* functor_device,
+				                                                         VoxelFlags semanticFlags,
+				                                                         bool* falseOrAlteredEncountered_device) {
+			                                                        checkIfArrayContentIsUnalteredOrYieldsTrue_SemanticFlags_Position_Verbose
+					                                                        << < gridSize_ArrayBlockEnvelope,
+					                                                        cudaBlockSize_BlockVoxelPerThread >> >
+					                                                        (voxelsArray, arrayInfo, voxelsHash, hashTable,
+							                                                        minArrayCoord, maxArrayCoord, minBlockPos, functor_device,
+							                                                        semanticFlags, falseOrAlteredEncountered_device);
+		                                                        });
+	}
+
+	/**
+	 * \brief Routine allowing some kind of comparison function call on voxel pairs from the two scenes where both
 	 * voxels share the same spatial location (variant with functor accepting voxel position).
 	 * \details voxels that are not modified / have default value (see isModified for how that works) in the primary
 	 * voxel volume are ignored if the voxel hash block at this location at the secondary voxel volume has not been
@@ -223,7 +392,7 @@ public:
 				 TVoxelSecondary* voxelsHash, ITMHashEntry* hashTable, Vector3i minArrayCoord,
 				 Vector3i maxArrayCoord, Vector3s minBlockPos, TBooleanFunctor* functor_device,
 				 bool* falseOrAlteredEncountered_device) {
-			checkIfArrayContentIsUnalteredOrYieldsTruePosition
+			checkIfArrayContentIsUnalteredOrYieldsTrue_Position_Verbose
 					<< < gridSize_ArrayBlockEnvelope, cudaBlockSize_BlockVoxelPerThread >> >
 			                                          (voxelsArray, arrayInfo, voxelsHash, hashTable,
 					                                          minArrayCoord, maxArrayCoord, minBlockPos, functor_device,
@@ -259,9 +428,10 @@ public:
 				 TVoxelSecondary* hashVoxels, const ITMHashEntry* hashTable,
 				 int hashEntryCount, Vector6i arrayBounds, Vector3i arraySize,
 				 TBooleanFunctor* functor_device, bool* falseEncountered_device) {
-			checkIfAllocatedHashBlocksYieldTrue_Position << < gridSize_HashPerBlock, cudaBlockSize_BlockVoxelPerThread >> >
-			                                                                (arrayVoxels, hashVoxels, hashTable, hashEntryCount, arrayBounds,
-					                                                                arraySize, functor_device, falseEncountered_device);
+			checkIfAllocatedHashBlocksYieldTrue_Position << < gridSize_HashPerBlock,
+					cudaBlockSize_BlockVoxelPerThread >> >
+					(arrayVoxels, hashVoxels, hashTable, hashEntryCount, arrayBounds,
+							arraySize, functor_device, falseEncountered_device);
 		});
 	}
 

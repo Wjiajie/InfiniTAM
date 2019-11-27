@@ -58,3 +58,4 @@ inline
 Extent3D maximumExtent(const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo& box1, const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo& box2){
 	return maximumExtent(PVA_InfoToExtent(box1),PVA_InfoToExtent(box2));
 }
+
