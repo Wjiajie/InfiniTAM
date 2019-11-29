@@ -86,7 +86,6 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH_CUDA, Fixture) {
 	delete volume_PVA_16;
 }
 
-
 BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH_CPU, Fixture) {
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_16;

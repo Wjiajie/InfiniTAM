@@ -140,3 +140,16 @@ isVoxelBlockAltered(TVoxel* voxelBlock) {
 	return false;
 }
 
+template<typename TVoxel, typename TOneVoxelPredicate>
+inline static bool
+isVoxelBlockAlteredPredicate(TVoxel* voxelBlock,
+                             TOneVoxelPredicate&& oneVoxelPredicate) {
+	for (int locId = 0; locId < VOXEL_BLOCK_SIZE3; locId++) {
+		TVoxel& voxel = voxelBlock[locId];
+		if (std::forward<TOneVoxelPredicate>(oneVoxelPredicate)(voxel) && isAltered(voxel)) {
+			return true;
+		}
+	}
+	return false;
+}
+

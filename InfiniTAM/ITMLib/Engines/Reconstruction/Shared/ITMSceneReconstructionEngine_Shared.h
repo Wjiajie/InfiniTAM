@@ -328,81 +328,6 @@ markForAllocationAndSetVisibilityTypeIfNotFound(Vector3s hashBlockPosition, cons
 	}
 }
 
-
-_CPU_AND_GPU_CODE_ inline void
-buildHashAllocAndVisibleTypePP_Approx(ITMLib::HashEntryState* hashEntryStates, uchar* entriesVisibleType, int x, int y,
-                                      Vector3s* blockCoords,
-                                      const CONSTPTR(float)* depth, Matrix4f invertedCameraPose,
-                                      Vector4f invertedCameraProjectionParameters, float mu,
-                                      Vector2i imgSize, float oneOverVoxelBlockSize_Meters,
-                                      const CONSTPTR(ITMHashEntry)* hashTable,
-                                      float viewFrustum_min, float viewFrustum_max, bool& collisionDetected,
-                                      float backBandFactor = 1.5f) {
-	float depth_measure;
-	unsigned int hashIdx;
-	int stepCount;
-	Vector4f pt_camera_f;
-	Vector3f endCheckPosition_HashBlocks, currentCheckPosition_HashBlocks, marchVectorOrStep;
-	Vector3s hashBlockPosition;
-
-
-	depth_measure = depth[x + y * imgSize.x];
-	if (depth_measure <= 0 || (depth_measure - mu) < 0 || (depth_measure - mu) < viewFrustum_min ||
-	    (depth_measure + mu) > viewFrustum_max)
-		return;
-
-
-	pt_camera_f.z = depth_measure; // (orthogonal) distance to the point from the image plane (meters)
-	pt_camera_f.x =
-			pt_camera_f.z * ((float(x) - invertedCameraProjectionParameters.z) * invertedCameraProjectionParameters.x);
-	pt_camera_f.y =
-			pt_camera_f.z * ((float(y) - invertedCameraProjectionParameters.w) * invertedCameraProjectionParameters.y);
-
-	// distance to the point along camera ray
-	float norm = sqrtf(pt_camera_f.x * pt_camera_f.x + pt_camera_f.y * pt_camera_f.y + pt_camera_f.z * pt_camera_f.z);
-
-	Vector4f pt_buff;
-
-	//Vector3f offset(-halfVoxelSize);
-	pt_buff = pt_camera_f * (1.0f - mu / norm);
-	pt_buff.w = 1.0f;
-	//position along segment to march along ray in hash blocks (here -- starting point)
-	// account for the fact that voxel coordinates represent the voxel center, and we need the extreme corner position of
-	// the hash block, i.e. 0.5 voxel (1/16 block) offset from the position along the ray
-	currentCheckPosition_HashBlocks = (TO_VECTOR3(invertedCameraPose * pt_buff)) * oneOverVoxelBlockSize_Meters
-	                                  + Vector3f(1.0f / (2.0f * VOXEL_BLOCK_SIZE));
-
-	pt_buff = pt_camera_f * (1.0f + (mu * backBandFactor) / norm);
-	pt_buff.w = 1.0f;
-	//end position of the segment to march along the ray
-	endCheckPosition_HashBlocks = (TO_VECTOR3(invertedCameraPose * pt_buff)) * oneOverVoxelBlockSize_Meters
-	                              + Vector3f(1.0f / (2.0f * VOXEL_BLOCK_SIZE));
-
-	// segment from start of the (truncated SDF) band, through the observed point, and to the opposite (occluded)
-	// end of the (truncated SDF) band (increased by backBandFactor), along the ray cast from the camera through the
-	// point, in camera space
-	marchVectorOrStep = endCheckPosition_HashBlocks - currentCheckPosition_HashBlocks;
-
-	norm = sqrtf(marchVectorOrStep.x * marchVectorOrStep.x + marchVectorOrStep.y * marchVectorOrStep.y +
-	             marchVectorOrStep.z * marchVectorOrStep.z);
-	// number of steps to take along the truncated SDF band
-	stepCount = (int) std::ceil(2.0f * norm);
-
-	// a single stride along the sdf band segment from one step to the next
-	marchVectorOrStep /= (float) (stepCount - 1);
-
-
-	//add neighbouring blocks
-	for (int i = 0; i < stepCount; i++) {
-		//find block position at current step
-		hashBlockPosition = TO_SHORT_FLOOR3(currentCheckPosition_HashBlocks);
-		markForAllocationAndSetVisibilityTypeIfNotFound(hashBlockPosition, hashTable, hashEntryStates,
-		                                                entriesVisibleType,
-		                                                blockCoords, collisionDetected);
-		currentCheckPosition_HashBlocks += marchVectorOrStep;
-	}
-}
-
 _CPU_AND_GPU_CODE_ inline int getIncrementCount(Vector3s coord1, Vector3s coord2) {
 	return static_cast<int>(coord1.x != coord2.x) +
 	       static_cast<int>(coord1.y != coord2.y) +
@@ -423,9 +348,9 @@ buildHashAllocAndVisibleTypePP(ITMLib::HashEntryState* hashEntryStates, uchar* e
 	Vector4f pt_camera_f;
 
 	//_DEBUG
-	if (x == 268 && y == 376) {
-		int i = 1;
-	}
+//	if (x == 268 && y == 376) {
+//		int i = 1;
+//	}
 
 	depth_measure = depth[x + y * imgSize.x];
 	if (depth_measure <= 0 || (depth_measure - mu) < 0 || (depth_measure - mu) < viewFrustum_min ||

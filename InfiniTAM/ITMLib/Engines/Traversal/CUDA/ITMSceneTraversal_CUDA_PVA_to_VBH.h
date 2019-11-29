@@ -29,6 +29,8 @@ namespace ITMLib {
 
 template<typename TVoxelPrimary, typename TVoxelSecondary>
 class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelArray, ITMVoxelBlockHash, MEMORYDEVICE_CUDA> {
+	//TODO: combine DualVoxelTraversal_AllTrue_MatchingFlags_Generic with DualVoxelTraversal_AllTrue_Generic the same
+	// way as done in the the CPU version to avoid DRY violations
 	template<typename TBooleanFunctor, typename TDeviceFunction>
 	inline static bool
 	DualVoxelTraversal_AllTrue_MatchingFlags_Generic(ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
