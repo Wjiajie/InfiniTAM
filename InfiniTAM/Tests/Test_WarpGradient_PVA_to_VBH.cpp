@@ -104,7 +104,7 @@ GenericWarpConsistencySubtest_CPU(const SlavchevaSurfaceTracker::Switches& switc
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, TIndex>(MEMORYDEVICE_CPU);
 
-	reconstructionEngine->GenerateRawLiveSceneFromView(volume_17, view, &trackingState, renderState);
+	reconstructionEngine->IntegrateIntoScene(volume_17, view, &trackingState, renderState);
 //	buildSdfVolumeFromImage(&volume_17, "TestData/snoopy_depth_000017.png",
 //	                        "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
 //	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
