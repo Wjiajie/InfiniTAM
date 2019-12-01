@@ -241,7 +241,6 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU_ITMVoxel) {
 	std::uniform_int_distribution<int> coordinate_distribution(0, extentEndVoxel.x - 1);
 
 	const int modifiedVoxelCount = 120;
-	//const int modifiedVoxelCount = 1;
 
 	singleVoxelTests();
 
@@ -253,7 +252,6 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU_ITMVoxel) {
 		                    coordinate_distribution(generator),
 		                    coordinate_distribution(generator));
 
-		//coordinate = Vector3i(6,5,1);
 
 		ManipulationEngine_CPU_PVA_Voxel::Inst().SetVoxel(&scene_PVA1, coordinate, voxel);
 		ManipulationEngine_CPU_PVA_Voxel::Inst().SetVoxel(&scene_PVA2, coordinate, voxel);

@@ -191,6 +191,69 @@ public:
 
 template<typename TVoxelPrimary, typename TVoxelSecondary>
 class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelArray, ITMPlainVoxelArray, MEMORYDEVICE_CPU> {
+private:
+
+	template<typename TFunctor, typename TFunctionCall>
+	inline static bool
+	DualVoxelTraversal_AllTrue_AllocatedOnly_Generic(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryVolume,
+			TFunctor& functor, TFunctionCall&& functionCall) {
+
+		//1) Maximum bbox of volume union
+		//2) Traverse that, check matching parts with functor, check rest with "isAltered"
+// *** traversal vars
+
+		TVoxelSecondary* secondaryVoxels = secondaryVolume->localVBA.GetVoxelBlocks();
+		const ITMPlainVoxelArray::IndexData* secondaryVolumeBox = secondaryVolume->index.GetIndexData();
+		TVoxelPrimary* primaryVoxels = primaryVolume->localVBA.GetVoxelBlocks();
+		const ITMPlainVoxelArray::IndexData* primaryVolumeBox = primaryVolume->index.GetIndexData();
+
+		const Extent3D boundingExtent = maximumExtent(*primaryVolumeBox, *secondaryVolumeBox);
+
+		volatile bool mismatchFound = false;
+#ifdef WITH_OPENMP
+#pragma omp parallel for default(none) shared(mismatchFound)
+#endif
+		for (int z = boundingExtent.min_z; z < boundingExtent.max_z; z++) {
+			if (mismatchFound) continue;
+			for (int y = boundingExtent.min_y; y < boundingExtent.max_y; y++) {
+				if (mismatchFound) continue;
+				for (int x = boundingExtent.min_x; x < boundingExtent.max_x; x++) {
+					Vector3i position(x, y, z);
+					if (isPointInBounds(position, *primaryVolumeBox)) {
+						int primaryLinearIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(primaryVolumeBox,
+						                                                                        position);
+						TVoxelPrimary& primaryVoxel = primaryVoxels[primaryLinearIndex];
+						if (isPointInBounds(position, *secondaryVolumeBox)) {
+							int secondaryLinearIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(
+									secondaryVolumeBox, position);
+							TVoxelSecondary& secondaryVoxel = secondaryVoxels[secondaryLinearIndex];
+							if (!std::forward<TFunctionCall>(functionCall)(primaryVoxel, secondaryVoxel, position)) {
+								mismatchFound = true;
+							}
+						} else {
+							if (isAltered(primaryVoxel)) {
+								mismatchFound = true;
+							}
+						}
+					} else {
+						if (isPointInBounds(position, *secondaryVolumeBox)) {
+							int secondaryLinearIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(
+									secondaryVolumeBox, position);
+							TVoxelSecondary& secondaryVoxel = secondaryVoxels[secondaryLinearIndex];
+							if (isAltered(secondaryVoxel)) {
+								mismatchFound = true;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return !mismatchFound;
+	}
+
 public:
 // region ================================ STATIC TWO-SCENE TRAVERSAL ==================================================
 
@@ -377,61 +440,39 @@ public:
 			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
 			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryVolume,
 			TFunctor& functor) {
-		//TODO
-
-		//1) Maximum bbox of volume union
-		//2) Traverse that, check matching parts with functor, check rest with "isAltered"
-// *** traversal vars
-
-		TVoxelSecondary* secondaryVoxels = secondaryVolume->localVBA.GetVoxelBlocks();
-		const ITMPlainVoxelArray::IndexData* secondaryVolumeBox = primaryVolume->index.GetIndexData();
-		TVoxelPrimary* primaryVoxels = primaryVolume->localVBA.GetVoxelBlocks();
-		const ITMPlainVoxelArray::IndexData* primaryVolumeBox = primaryVolume->index.GetIndexData();
-
-		const Extent3D boundingExtent = maximumExtent(*primaryVolumeBox, *secondaryVolumeBox);
-
-		volatile bool mismatchFound = false;
-#ifdef WITH_OPENMP
-#pragma omp parallel for
-#endif
-		for (int z = boundingExtent.min_z; z < boundingExtent.max_z; z++) {
-			if (mismatchFound) continue;
-			for (int y = boundingExtent.min_y; y < boundingExtent.max_y; y++) {
-				for (int x = boundingExtent.min_x; x < boundingExtent.max_x; x++) {
-					Vector3i position(x, y, z);
-					if (isPointInBounds(position, *primaryVolumeBox)) {
-						int primaryLinearIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(primaryVolumeBox,
-						                                                                        position);
-						TVoxelPrimary& primaryVoxel = primaryVoxels[primaryLinearIndex];
-						if (isPointInBounds(position, *secondaryVolumeBox)) {
-							int secondaryLinearIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(
-									secondaryVolumeBox, position);
-							TVoxelSecondary& secondaryVoxel = secondaryVoxels[secondaryLinearIndex];
-							if (!(functor(primaryVoxel, secondaryVoxel))) {
-								mismatchFound = true;
-							}
-						} else {
-							if (isAltered(primaryVoxel)){
-								mismatchFound = true;
-							}
-						}
-					} else {
-						if (isPointInBounds(position, *secondaryVolumeBox)) {
-							int secondaryLinearIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(
-									secondaryVolumeBox, position);
-							TVoxelSecondary& secondaryVoxel = secondaryVoxels[secondaryLinearIndex];
-							if(isAltered(secondaryVoxel)){
-								mismatchFound = true;
-							}
-						}
-					}
+		return DualVoxelTraversal_AllTrue_AllocatedOnly_Generic(
+				primaryVolume, secondaryVolume, functor,
+				[&functor](TVoxelPrimary& voxelPrimary,
+				           TVoxelSecondary& voxelSecondary,
+				           const Vector3i& position) {
+					return functor(voxelPrimary, voxelSecondary);
 				}
-			}
-		}
-
-		return !mismatchFound;
+		);
 	}
-
+/**
+	 * \brief Runs a functor returning true/false pairs of voxels within the allocation bounds of both
+	 * voxel volumes until such locations are exhausted or one of the runs returns false.
+	 * \tparam TFunctor
+	 * \param primaryVolume
+	 * \param secondaryVolume
+	 * \param functor
+	 * \return
+	 */
+	template<typename TFunctor>
+	inline static bool
+	DualVoxelPositionTraversal_AllTrue_AllocatedOnly(
+			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
+			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryVolume,
+			TFunctor& functor) {
+		return DualVoxelTraversal_AllTrue_AllocatedOnly_Generic(
+				primaryVolume, secondaryVolume, functor,
+				[&functor](TVoxelPrimary& voxelPrimary,
+				           TVoxelSecondary& voxelSecondary,
+				           const Vector3i& position) {
+					return functor(voxelPrimary, voxelSecondary, position);
+				}
+		);
+	}
 
 	template<typename TFunctor>
 	inline static void
@@ -534,7 +575,7 @@ public:
 			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* secondaryScene,
 			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField) {
 		assert(primaryScene->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize() &&
-				       primaryScene->index.GetVolumeSize() == warpField->index.GetVolumeSize());
+		       primaryScene->index.GetVolumeSize() == warpField->index.GetVolumeSize());
 // *** traversal vars
 		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
@@ -597,7 +638,7 @@ public:
 			TFunctor& functor) {
 
 		assert(primaryScene->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize() &&
-				       primaryScene->index.GetVolumeSize() == warpField->index.GetVolumeSize());
+		       primaryScene->index.GetVolumeSize() == warpField->index.GetVolumeSize());
 // *** traversal vars
 		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
@@ -627,7 +668,7 @@ public:
 			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 			TFunctor& functor) {
 		assert(primaryScene->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize() &&
-				       warpField->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize());
+		       warpField->index.GetVolumeSize() == secondaryScene->index.GetVolumeSize());
 		// *** traversal vars
 		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
