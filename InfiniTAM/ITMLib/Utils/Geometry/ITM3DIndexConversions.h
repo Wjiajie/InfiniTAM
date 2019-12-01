@@ -23,8 +23,8 @@ _CPU_AND_GPU_CODE_
 inline static int
 ComputeLinearIndexFromPosition_PlainVoxelArray(const ITMLib::ITMPlainVoxelArray::IndexData* data, const Vector3i& position) {
 	Vector3i positionIn3DArray = position - data->offset;
-	return positionIn3DArray.z * (data->size.z * data->size.y)
-	       + positionIn3DArray.y * (data->size.x + positionIn3DArray.x);
+	return positionIn3DArray.z * (data->size.y * data->size.x)
+	       + positionIn3DArray.y * data->size.x + positionIn3DArray.x;
 };
 
 _CPU_AND_GPU_CODE_

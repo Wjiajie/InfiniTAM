@@ -330,7 +330,7 @@ public:
 
 		std::vector<Extent3D> nonZeroExtents;
 		for (int i_margin = 0; i_margin < margins.size(); i_margin++) {
-			if (margins[i_margin] > 0) nonZeroExtents.push_back(nonZeroExtents[i_margin]);
+			if (margins[i_margin] > 0) nonZeroExtents.push_back(allExtents[i_margin]);
 		}
 		// add central extent
 		centerExtent = {margin_near_x_end, margin_near_y_end, margin_near_z_end,
