@@ -156,7 +156,7 @@ private:
 					int yVoxelStart = yBlock * VOXEL_BLOCK_SIZE, yVoxelEnd = yVoxelStart + VOXEL_BLOCK_SIZE;
 					for (int xBlock = hashBlockExtent.min_x; xBlock < hashBlockExtent.max_x; xBlock++) {
 						if (mismatchFound) continue;
-						int xVoxelStart = zBlock * VOXEL_BLOCK_SIZE, xVoxelEnd = xVoxelStart + VOXEL_BLOCK_SIZE;
+						int xVoxelStart = xBlock * VOXEL_BLOCK_SIZE, xVoxelEnd = xVoxelStart + VOXEL_BLOCK_SIZE;
 						Vector3s voxelBlockCoords(xBlock, yBlock, zBlock);
 						int hash;
 						TArrayVoxel* hashBlockVoxels = nullptr;
@@ -289,13 +289,13 @@ public:
 
 		// compute how many voxels on each side of the array extend past the first hash block fully inside the array.
 		// these are the margin thicknesses, in voxels
-		int margin_near_z = -arrayExtentMin.z % VOXEL_BLOCK_SIZE + (arrayExtentMin.z < 0.0f ? 0.0f : VOXEL_BLOCK_SIZE);
-		int margin_near_y = -arrayExtentMin.y % VOXEL_BLOCK_SIZE + (arrayExtentMin.y < 0.0f ? 0.0f : VOXEL_BLOCK_SIZE);
-		int margin_near_x = -arrayExtentMin.x % VOXEL_BLOCK_SIZE + (arrayExtentMin.x < 0.0f ? 0.0f : VOXEL_BLOCK_SIZE);
+		int margin_near_z = -arrayExtentMin.z % VOXEL_BLOCK_SIZE + (arrayExtentMin.z <= 0 ? 0 : VOXEL_BLOCK_SIZE);
+		int margin_near_y = -arrayExtentMin.y % VOXEL_BLOCK_SIZE + (arrayExtentMin.y <= 0 ? 0 : VOXEL_BLOCK_SIZE);
+		int margin_near_x = -arrayExtentMin.x % VOXEL_BLOCK_SIZE + (arrayExtentMin.x <= 0 ? 0 : VOXEL_BLOCK_SIZE);
 		Vector3i arrayExtentMax = arrayExtentMin + arrayInfo.size;
-		int margin_far_z = arrayExtentMax.z % VOXEL_BLOCK_SIZE + (arrayExtentMax.z < 0.0f ? VOXEL_BLOCK_SIZE : 0.0);
-		int margin_far_y = arrayExtentMax.y % VOXEL_BLOCK_SIZE + (arrayExtentMax.y < 0.0f ? VOXEL_BLOCK_SIZE : 0.0);
-		int margin_far_x = arrayExtentMax.x % VOXEL_BLOCK_SIZE + (arrayExtentMax.x < 0.0f ? VOXEL_BLOCK_SIZE : 0.0);
+		int margin_far_z = arrayExtentMax.z % VOXEL_BLOCK_SIZE + (arrayExtentMax.z <= 0 ? VOXEL_BLOCK_SIZE : 0);
+		int margin_far_y = arrayExtentMax.y % VOXEL_BLOCK_SIZE + (arrayExtentMax.y <= 0 ? VOXEL_BLOCK_SIZE : 0);
+		int margin_far_x = arrayExtentMax.x % VOXEL_BLOCK_SIZE + (arrayExtentMax.x <= 0 ? VOXEL_BLOCK_SIZE : 0);
 
 		// use the margin thicknesses to construct the 6 blocks, one for each face. The boxes should not overlap.
 		int margin_near_x_end = arrayExtentMin.x + margin_near_x;
@@ -334,7 +334,7 @@ public:
 		}
 		// add central extent
 		centerExtent = {margin_near_x_end, margin_near_y_end, margin_near_z_end,
-		                margin_far_x_start, margin_far_z_start, margin_far_z_start};
+		                margin_far_x_start, margin_far_y_start, margin_far_z_start};
 		return nonZeroExtents;
 	}
 
