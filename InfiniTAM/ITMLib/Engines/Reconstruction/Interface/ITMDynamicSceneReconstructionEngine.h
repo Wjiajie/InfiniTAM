@@ -104,8 +104,6 @@ public:
 	                                   ITMVoxelVolume<TVoxel, TIndex>* sourceTSDF,
 	                                   ITMVoxelVolume<TVoxel, TIndex>* targetTSDF) = 0;
 
-protected:
-
 	/** Update the voxel blocks by integrating depth and
 	possibly colour information from the given view.*/
 	virtual void IntegrateIntoScene(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,

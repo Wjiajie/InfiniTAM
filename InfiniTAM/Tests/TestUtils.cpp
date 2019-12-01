@@ -82,23 +82,23 @@ ITMVoxelBlockHash::InitializationParameters GetFrame17PartialIndexParameters<ITM
 }
 
 template<>
-typename ITMPlainVoxelArray::InitializationParameters GetStandard512IndexParameters<ITMPlainVoxelArray>(){
+typename ITMPlainVoxelArray::InitializationParameters GetStandard512IndexParameters<ITMPlainVoxelArray>() {
 	return {Vector3i(512), Vector3i(-256, -256, 0)};
 }
 
 template<>
-typename ITMVoxelBlockHash::InitializationParameters GetStandard512IndexParameters<ITMVoxelBlockHash>(){
+typename ITMVoxelBlockHash::InitializationParameters GetStandard512IndexParameters<ITMVoxelBlockHash>() {
 	return {0x40000, 0x20000};
 }
 
 
 template<>
-typename ITMPlainVoxelArray::InitializationParameters GetStandard128IndexParameters<ITMPlainVoxelArray>(){
+typename ITMPlainVoxelArray::InitializationParameters GetStandard128IndexParameters<ITMPlainVoxelArray>() {
 	return {Vector3i(128), Vector3i(-64, -64, 0)};
 }
 
 template<>
-typename ITMVoxelBlockHash::InitializationParameters GetStandard128IndexParameters<ITMVoxelBlockHash>(){
+typename ITMVoxelBlockHash::InitializationParameters GetStandard128IndexParameters<ITMVoxelBlockHash>() {
 	return {0x2000, 0x20000};
 }
 
@@ -135,10 +135,47 @@ template void loadSdfVolume<ITMWarp, ITMVoxelBlockHash>(ITMVoxelVolume<ITMWarp, 
                                                         ITMVoxelBlockHash::InitializationParameters initializationParameters,
                                                         Configuration::SwappingMode swappingMode);
 
+void updateView(const std::string& depth_path,
+                const std::string& color_path,
+                const std::string& mask_path,
+                const std::string& calibration_path,
+                MemoryDeviceType memoryDevice,
+                ITMView** view){
+	ITMRGBDCalib calibrationData;
+	readRGBDCalib(calibration_path.c_str(), calibrationData);
+	static ITMViewBuilder* viewBuilder = nullptr;
+	if (viewBuilder == nullptr) viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calibrationData, memoryDevice);
+	Vector2i imageSize(640, 480);
+	auto* rgb = new ITMUChar4Image(true, false);
+	auto* depth = new ITMShortImage(true, false);
+	auto* mask = new ITMUCharImage(true, false);
+	BOOST_REQUIRE(ReadImageFromFile(rgb, color_path.c_str()));
+	BOOST_REQUIRE(ReadImageFromFile(depth, depth_path.c_str()));
+	BOOST_REQUIRE(ReadImageFromFile(mask, mask_path.c_str()));
+	rgb->ApplyMask(*mask, Vector4u((unsigned char) 0));
+	depth->ApplyMask(*mask, 0);
+	viewBuilder->UpdateView(view, rgb, depth, false, false, false, true);
+	delete rgb;
+	delete depth;
+	delete mask;
+}
+
 template
 void buildSdfVolumeFromImage<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>** volume,
-                                                           const std::string& depth_path, const std::string& color_path, 
-                                                           const std::string& mask_path, const std::string& calibration_path,
+                                                           ITMView** view,
+                                                           const std::string& depth_path, const std::string& color_path,
+                                                           const std::string& mask_path,
+                                                           const std::string& calibration_path,
+                                                           MemoryDeviceType memoryDevice,
+                                                           ITMPlainVoxelArray::InitializationParameters initializationParameters,
+                                                           Configuration::SwappingMode swappingMode,
+                                                           bool useBilateralFilter);
+
+template
+void buildSdfVolumeFromImage<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>** volume,
+                                                           const std::string& depth_path, const std::string& color_path,
+                                                           const std::string& mask_path,
+                                                           const std::string& calibration_path,
                                                            MemoryDeviceType memoryDevice,
                                                            ITMPlainVoxelArray::InitializationParameters initializationParameters,
                                                            Configuration::SwappingMode swappingMode,
@@ -146,10 +183,22 @@ void buildSdfVolumeFromImage<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVox
 
 template
 void buildSdfVolumeFromImage<ITMVoxel, ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>** volume,
-                             const std::string& depth_path, const std::string& color_path, const std::string& mask_path,
-                             const std::string& calibration_path,
-                             MemoryDeviceType memoryDevice,
-                             ITMVoxelBlockHash::InitializationParameters initializationParameters,
-                             Configuration::SwappingMode swappingMode,
-                             bool useBilateralFilter);
+                                                          ITMView** view,
+                                                          const std::string& depth_path, const std::string& color_path,
+                                                          const std::string& mask_path,
+                                                          const std::string& calibration_path,
+                                                          MemoryDeviceType memoryDevice,
+                                                          ITMVoxelBlockHash::InitializationParameters initializationParameters,
+                                                          Configuration::SwappingMode swappingMode,
+                                                          bool useBilateralFilter);
+
+template
+void buildSdfVolumeFromImage<ITMVoxel, ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>** volume,
+                                                          const std::string& depth_path, const std::string& color_path,
+                                                          const std::string& mask_path,
+                                                          const std::string& calibration_path,
+                                                          MemoryDeviceType memoryDevice,
+                                                          ITMVoxelBlockHash::InitializationParameters initializationParameters,
+                                                          Configuration::SwappingMode swappingMode,
+                                                          bool useBilateralFilter);
 

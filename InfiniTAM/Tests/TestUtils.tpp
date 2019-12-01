@@ -206,34 +206,40 @@ void loadSdfVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& p
 	(*volume)->LoadFromDirectory(path);
 }
 
+
+
+template<typename TVoxel, typename TIndex>
+void initializeVolume(ITMVoxelVolume<TVoxel, TIndex>** volume,  typename TIndex::InitializationParameters initializationParameters, MemoryDeviceType memoryDevice,  Configuration::SwappingMode swappingMode){
+	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&Configuration::get().scene_parameters, swappingMode,
+	                                               memoryDevice, initializationParameters);
+	switch (memoryDevice) {
+		case MEMORYDEVICE_CUDA:
+			ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(*volume);
+			break;
+		case MEMORYDEVICE_CPU:
+			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(*volume);
+			break;
+	}
+}
+
+
 template<typename TVoxel, typename TIndex>
 void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
-                             const std::string& depth_path, const std::string& color_path, const std::string& mask_path,
+                             ITMView** view,
+                             const std::string& depth_path,
+                             const std::string& color_path,
+                             const std::string& mask_path,
                              const std::string& calibration_path,
                              MemoryDeviceType memoryDevice,
                              typename TIndex::InitializationParameters initializationParameters,
                              Configuration::SwappingMode swappingMode,
-                             bool useBilateralFilter) {
+                             bool useBilateralFilter
+) {
 
 	// region ================================= CONSTRUCT VIEW =========================================================
-	ITMRGBDCalib calibrationData;
-	readRGBDCalib(calibration_path.c_str(), calibrationData);
-
-	ITMViewBuilder* viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calibrationData, memoryDevice);
 	Vector2i imageSize(640, 480);
-	ITMView* view = nullptr;
-
-	auto* rgb = new ITMUChar4Image(true, false);
-	auto* depth = new ITMShortImage(true, false);
-	auto* mask = new ITMUCharImage(true, false);
-	BOOST_REQUIRE(ReadImageFromFile(rgb, color_path.c_str()));
-	BOOST_REQUIRE(ReadImageFromFile(depth, depth_path.c_str()));
-	BOOST_REQUIRE(ReadImageFromFile(mask, mask_path.c_str()));
-	rgb->ApplyMask(*mask, Vector4u((unsigned char) 0));
-	depth->ApplyMask(*mask, 0);
-
-	viewBuilder->UpdateView(&view, rgb, depth, false, false, false, true);
-
+	updateView(depth_path,color_path,mask_path,calibration_path,memoryDevice,view);
+	initializeVolume(volume, initializationParameters,memoryDevice,swappingMode);
 	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&Configuration::get().scene_parameters, swappingMode,
 	                                               memoryDevice, initializationParameters);
 	switch (memoryDevice) {
@@ -250,15 +256,34 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
 	                                                                               (*volume)->index);
 	ITMTrackingState trackingState(imageSize, memoryDevice);
 
-	ITMDynamicSceneReconstructionEngine<TVoxel, ITMWarp, TIndex>* reconstructionEngine_PVA =
+	ITMDynamicSceneReconstructionEngine<TVoxel, ITMWarp, TIndex>* reconstructionEngine =
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<TVoxel, ITMWarp, TIndex>(memoryDevice);
 
-	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(*volume, view, &trackingState, renderState);
+	reconstructionEngine->GenerateRawLiveSceneFromView(*volume, *view, &trackingState, renderState);
 
-	delete reconstructionEngine_PVA;
-	delete rgb;
-	delete depth;
-	delete mask;
+	delete reconstructionEngine;
 }
 
+
+template<typename TVoxel, typename TIndex>
+void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
+                             const std::string& depth_path, const std::string& color_path, const std::string& mask_path,
+                             const std::string& calibration_path,
+                             MemoryDeviceType memoryDevice,
+                             typename TIndex::InitializationParameters initializationParameters,
+                             Configuration::SwappingMode swappingMode,
+                             bool useBilateralFilter) {
+
+	// region ================================= CONSTRUCT VIEW =========================================================
+
+	ITMView* view = nullptr;
+	buildSdfVolumeFromImage(volume,&view,
+			depth_path,
+			color_path,
+			mask_path,
+			calibration_path,
+			memoryDevice,
+			initializationParameters,swappingMode, useBilateralFilter);
+	delete view;
+}

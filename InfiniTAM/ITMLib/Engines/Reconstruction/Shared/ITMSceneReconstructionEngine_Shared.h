@@ -348,9 +348,9 @@ buildHashAllocAndVisibleTypePP(ITMLib::HashEntryState* hashEntryStates, uchar* e
 	Vector4f pt_camera_f;
 
 	//_DEBUG
-//	if (x == 268 && y == 376) {
-//		int i = 1;
-//	}
+	if (x == 268 && y == 378) {
+		int i = 1;
+	}
 
 	depth_measure = depth[x + y * imgSize.x];
 	if (depth_measure <= 0 || (depth_measure - mu) < 0 || (depth_measure - mu) < viewFrustum_min ||

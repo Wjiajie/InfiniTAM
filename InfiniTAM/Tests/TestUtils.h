@@ -76,8 +76,30 @@ void loadSdfVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& p
                    typename TIndex::InitializationParameters initializationParameters = GetFrame17PartialIndexParameters<TIndex>(),
                    Configuration::SwappingMode swappingMode = Configuration::SWAPPINGMODE_DISABLED);
 
+void updateView(const std::string& depth_path,
+                const std::string& color_path,
+                const std::string& mask_path,
+                const std::string& calibration_path,
+                MemoryDeviceType memoryDevice,
+                ITMView** view);
+template<typename TVoxel, typename TIndex>
+void initializeVolume(ITMVoxelVolume<TVoxel, TIndex>** volume,
+                      typename TIndex::InitializationParameters initializationParameters = GetStandard512IndexParameters<TIndex>(),
+                      MemoryDeviceType memoryDevice = MEMORYDEVICE_CUDA,
+                      Configuration::SwappingMode swappingMode = Configuration::SWAPPINGMODE_DISABLED);
+
 template<typename TVoxel, typename TIndex>
 void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
+                             const std::string& depth_path, const std::string& color_path, const std::string& mask_path,
+                             const std::string& calibration_path = "TestData/snoopy_calib.txt",
+                             MemoryDeviceType memoryDevice = MEMORYDEVICE_CUDA,
+                             typename TIndex::InitializationParameters initializationParameters = GetStandard512IndexParameters<TIndex>(),
+                             Configuration::SwappingMode swappingMode = Configuration::SWAPPINGMODE_DISABLED,
+                             bool useBilateralFilter = false);
+
+template<typename TVoxel, typename TIndex>
+void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
+                             ITMView** view,
                              const std::string& depth_path, const std::string& color_path, const std::string& mask_path,
                              const std::string& calibration_path = "TestData/snoopy_calib.txt",
                              MemoryDeviceType memoryDevice = MEMORYDEVICE_CUDA,

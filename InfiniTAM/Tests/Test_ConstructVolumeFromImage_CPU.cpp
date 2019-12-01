@@ -36,6 +36,7 @@
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "TestUtils.h"
+#include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 
 using namespace ITMLib;
 
@@ -86,11 +87,11 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CPU, Fixture) {
 	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
 	                        InitParams<ITMVoxelBlockHash>());
 
-	Vector3i voxelPosition(-24, -2, 87);
-	ITMVoxel voxelPVA = ManipulationEngine_CPU_PVA_Voxel::Inst().ReadVoxel(volume_PVA_17, voxelPosition);
-	voxelPVA.print_self();
-	ITMVoxel voxelVBH = ManipulationEngine_CPU_VBH_Voxel::Inst().ReadVoxel(volume_VBH_17, voxelPosition);
-	voxelVBH.print_self();
+//	Vector3i voxelPosition(-24, 64, 240);
+//	ITMVoxel voxelPVA = ManipulationEngine_CPU_PVA_Voxel::Inst().ReadVoxel(volume_PVA_17, voxelPosition);
+//	voxelPVA.print_self();
+//	ITMVoxel voxelVBH = ManipulationEngine_CPU_VBH_Voxel::Inst().ReadVoxel(volume_VBH_17, voxelPosition);
+//	voxelVBH.print_self();
 
 	float absoluteTolerance = 1e-7;
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(volume_PVA_17, volume_VBH_17, absoluteTolerance));

@@ -51,9 +51,10 @@ public:
 	void WarpScene_WarpUpdates(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
-protected:
+
 	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);
+protected:
 	template<WarpType TWarpSource>
 	void WarpScene(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
@@ -93,7 +94,7 @@ public:
 
 	ITMDynamicSceneReconstructionEngine_CUDA() = default;
 	~ITMDynamicSceneReconstructionEngine_CUDA() = default;
-protected:
+
 	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
 	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);
 private:

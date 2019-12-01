@@ -71,7 +71,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 		pt_model.w = 1.0f;
 
 		//	_DEBUG
-		if(x == 40 & y == 87 && z == 176){
+		if(x + arrayInfo->offset.x == -24 & y + arrayInfo->offset.y == 63 && z + arrayInfo->offset.z == 240){
 			printf("GOTCHA: (%E, %E, %E)\n", pt_model.x, pt_model.y, pt_model.z);
 		}
 
