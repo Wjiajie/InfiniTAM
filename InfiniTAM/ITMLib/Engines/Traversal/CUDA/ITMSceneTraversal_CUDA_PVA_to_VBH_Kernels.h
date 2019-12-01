@@ -246,7 +246,7 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue_SemanticFlags(
 		}
 	} else {
 		TVoxelArray& voxelArray = arrayVoxels[idxInArray];
-		if (isAltered(voxelArray)) {
+		if (voxelArray.flags == semanticFlags && isAltered(voxelArray)) {
 			*falseOrAlteredUnmatchedEncountered = true;
 		}
 	}
@@ -310,7 +310,7 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue_SemanticFlags_Positio
 		}
 	} else {
 		TVoxelArray& voxelArray = arrayVoxels[idxInArray];
-		if (isAltered_VerbosePosition(voxelArray, voxelPosition, "In plain-voxel-array volume: ")) {
+		if (voxelArray.flags == semanticFlags && isAltered_VerbosePosition(voxelArray, voxelPosition, "In plain-voxel-array volume: ")) {
 			*falseOrAlteredUnmatchedEncountered = true;
 		}
 	}

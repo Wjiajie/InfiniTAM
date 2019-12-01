@@ -37,133 +37,15 @@
 
 
 #include "TestUtils.h"
+#include "TestUtilsForSnoopyFrames16And17.h"
 
 using namespace ITMLib;
 
 typedef ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMPlainVoxelArray> RecoEngine_CUDA_PVA;
 typedef ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash> RecoEngine_CUDA_VBH;
 
-struct Fixture {
-	template<typename TIndex>
-	static typename TIndex::InitializationParameters InitParams();
-};
-
-template<>
-ITMPlainVoxelArray::InitializationParameters Fixture::InitParams<ITMPlainVoxelArray>() {
-	return {Vector3i(80, 96, 248), Vector3i(-64, -24, 64)};
-}
-
-template<>
-ITMVoxelBlockHash::InitializationParameters Fixture::InitParams<ITMVoxelBlockHash>() {
-	return {1200, 0x20000};
-}
 
 //TODO: move the construction checks into Test_ConstructVolumeFromImage test files as appropriate 
-
-BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH_CUDA, Fixture) {
-
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_16;
-	buildSdfVolumeFromImage(&volume_PVA_16, "TestData/snoopy_depth_000016.png",
-	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
-	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
-	                        InitParams<ITMPlainVoxelArray>());
-
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_16;
-	buildSdfVolumeFromImage(&volume_VBH_16, "TestData/snoopy_depth_000016.png",
-	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
-	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
-	                        InitParams<ITMVoxelBlockHash>());
-
-	ITMVoxel voxelPVA = ManipulationEngine_CUDA_PVA_Voxel::Inst().ReadVoxel(volume_PVA_16, Vector3i(-24,63,240));
-	voxelPVA.print_self();
-	ITMVoxel voxelVBH = ManipulationEngine_CUDA_VBH_Voxel::Inst().ReadVoxel(volume_VBH_16, Vector3i(-24,63,240));
-	voxelVBH.print_self();
-
-	float absoluteTolerance = 1e-7;
-	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(volume_PVA_16, volume_VBH_16, absoluteTolerance));
-
-	delete volume_VBH_16;
-	delete volume_PVA_16;
-}
-
-BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH_CPU, Fixture) {
-
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_16;
-	buildSdfVolumeFromImage(&volume_PVA_16, "TestData/snoopy_depth_000016.png",
-	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
-	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
-	                        InitParams<ITMPlainVoxelArray>());
-
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_16;
-	buildSdfVolumeFromImage(&volume_VBH_16, "TestData/snoopy_depth_000016.png",
-	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
-	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
-	                        InitParams<ITMVoxelBlockHash>());
-
-	ITMVoxel voxelPVA = ManipulationEngine_CPU_PVA_Voxel::Inst().ReadVoxel(volume_PVA_16, Vector3i(-24,63,240));
-	voxelPVA.print_self();
-	ITMVoxel voxelVBH = ManipulationEngine_CPU_VBH_Voxel::Inst().ReadVoxel(volume_VBH_16, Vector3i(-24,63,240));
-	voxelVBH.print_self();
-
-	float absoluteTolerance = 1e-7;
-	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(volume_PVA_16, volume_VBH_16, absoluteTolerance));
-
-	delete volume_VBH_16;
-	delete volume_PVA_16;
-}
-
-BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CUDA, Fixture) {
-
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_17;
-	buildSdfVolumeFromImage(&volume_PVA_17, "TestData/snoopy_depth_000017.png",
-	                        "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
-	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
-	                        InitParams<ITMPlainVoxelArray>());
-
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_17;
-	buildSdfVolumeFromImage(&volume_VBH_17, "TestData/snoopy_depth_000017.png",
-	                        "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
-	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
-	                        InitParams<ITMVoxelBlockHash>());
-
-	ITMVoxel voxelPVA = ManipulationEngine_CUDA_PVA_Voxel::Inst().ReadVoxel(volume_PVA_17, Vector3i(-24,63,240));
-	voxelPVA.print_self();
-	ITMVoxel voxelVBH = ManipulationEngine_CUDA_VBH_Voxel::Inst().ReadVoxel(volume_VBH_17, Vector3i(-24,63,240));
-	voxelVBH.print_self();
-
-	float absoluteTolerance = 1e-7;
-	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(volume_PVA_17, volume_VBH_17, absoluteTolerance));
-
-	delete volume_VBH_17;
-	delete volume_PVA_17;
-}
-
-
-BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CPU, Fixture) {
-
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_17;
-	buildSdfVolumeFromImage(&volume_PVA_17, "TestData/snoopy_depth_000017.png",
-	                        "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
-	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
-	                        InitParams<ITMPlainVoxelArray>());
-
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_17;
-	buildSdfVolumeFromImage(&volume_VBH_17, "TestData/snoopy_depth_000017.png",
-	                        "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
-	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
-	                        InitParams<ITMVoxelBlockHash>());
-
-	ITMVoxel voxelPVA = ManipulationEngine_CPU_PVA_Voxel::Inst().ReadVoxel(volume_PVA_17, Vector3i(-24,63,240));
-	voxelPVA.print_self();
-	ITMVoxel voxelVBH = ManipulationEngine_CPU_VBH_Voxel::Inst().ReadVoxel(volume_VBH_17, Vector3i(-24,63,240));
-	voxelVBH.print_self();
-
-	float absoluteTolerance = 1e-7;
-	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(volume_PVA_17, volume_VBH_17, absoluteTolerance));
-
-	delete volume_VBH_17;
-	delete volume_PVA_17;
-}
 
 enum GenericWarpTestMode {
 	SAVE_SUCCESSIVE_ITERATIONS,
