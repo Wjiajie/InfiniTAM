@@ -714,7 +714,7 @@ set(ITMLIB_UTILS_HEADERS
     Utils/Collections/ITM3DNestedMapOfArrays.h
     Utils/Collections/ITM3DNestedMap.h
 
-    Utils/Geometry/ITMGeometryBooleanOpernations.h
+    Utils/Geometry/ITMGeometryBooleanOperations.h
     Utils/Geometry/ITMGeometryConversionOperations.h
     Utils/Geometry/ITM3DIndexConversions.h
 	Utils/Geometry/ITMIntersectionChecks.h

@@ -28,7 +28,7 @@ bool isPointInBounds(const Vector3i& point, const ITMLib::ITMPlainVoxelArray::IT
 	       point.z >= box.offset.z &&
 	       point.x < box.offset.x + box.size.x &&
 	       point.y < box.offset.y + box.size.y &&
-	       point.z < box.offset.z + box.offset.z;
+	       point.z < box.offset.z + box.size.z;
 }
 
 _CPU_AND_GPU_CODE_

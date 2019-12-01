@@ -27,7 +27,7 @@
 #include "../../../Utils/Geometry/ITM3DIndexConversions.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../Shared/ITMSceneTraversal_Shared.h"
-#include "../../../Utils/Geometry/ITMGeometryBooleanOpernations.h"
+#include "../../../Utils/Geometry/ITMGeometryBooleanOperations.h"
 
 namespace ITMLib {
 

@@ -18,7 +18,7 @@
 #include "../../../../ORUtils/JetbrainsCUDASyntax.hpp"
 #include "../Shared/ITMSceneManipulationEngine_Shared.h"
 #include "../../../Utils/ITMHashBlockProperties.h"
-#include "../../../Utils/Geometry/ITMGeometryBooleanOpernations.h"
+#include "../../../Utils/Geometry/ITMGeometryBooleanOperations.h"
 
 using namespace ITMLib;
 

@@ -175,9 +175,11 @@ private:
 										int vmIndex;
 										TArrayVoxel& arrayVoxel = arrayVoxels[linearArrayIndex];
 										THashVoxel& hashVoxel = hashBlockVoxels[idWithinBlock];
-										std::forward<TTwoVoxelAndPositionPredicate>(twoVoxelAndPositionPredicate)(
+										if(!std::forward<TTwoVoxelAndPositionPredicate>(twoVoxelAndPositionPredicate)(
 												twoVoxelBooleanFunctor, arrayVoxel, hashVoxel,
-												positionAbsolute);
+												positionAbsolute)){
+											mismatchFound = true;
+										}
 									}
 								}
 							}
