@@ -481,7 +481,7 @@ GenericWarpTest_CPU(const SlavchevaSurfaceTracker::Switches& switches, const std
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CPU) {
 	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
-	Configuration::get().telemetry_settings.focus_coordinates = Vector3i(-24, 63, 240);
+	Configuration::get().telemetry_settings.focus_coordinates = Vector3i(-33, 57, 242);
 	GenericWarpTest_CPU(SlavchevaSurfaceTracker::Switches(true,
 	                                                      false,
 	                                                      false,
@@ -489,7 +489,7 @@ BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CPU) {
 	                                                      false),
 	                    "data_only",
 	                    2,
-	                    TEST_SUCCESSIVE_ITERATIONS);
+	                    SAVE_SUCCESSIVE_ITERATIONS);
 }
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CUDA) {

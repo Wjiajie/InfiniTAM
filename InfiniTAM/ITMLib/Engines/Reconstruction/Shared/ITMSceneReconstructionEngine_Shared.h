@@ -348,7 +348,7 @@ buildHashAllocAndVisibleTypePP(ITMLib::HashEntryState* hashEntryStates, uchar* e
 	Vector4f pt_camera_f;
 
 	//_DEBUG
-	if (x == 268 && y == 378) {
+	if (x == 268 && y == 376) {
 		int i = 1;
 	}
 

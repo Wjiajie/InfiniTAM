@@ -78,15 +78,21 @@ private:
 
 	_CPU_AND_GPU_CODE_
 	void SetUpFocusVoxelPrinting(bool& printVoxelResult, const Vector3i& voxelPosition,
-	                             const Vector3f& voxelWarp, const float& canonicalSdf, const float& liveSdf) {
+	                             const Vector3f& voxelWarp, const TVoxel& canonicalVoxel, const TVoxel& liveVoxel,
+	                             bool computeDataTerm) {
 		if (hasFocusCoordinates && voxelPosition == focusCoordinates) {
 			int x = 0, y = 0, z = 0, vmIndex = 0, locId = 0;
 			GetVoxelHashLocals(vmIndex, locId, x, y, z, liveIndexData, liveCache, voxelPosition);
 
-			printf("\n%s *** Printing voxel at (%d, %d, %d) ***%s\n", c_bright_cyan,
+			printf("\n%s *** Printing gradient computation data for voxel at (%d, %d, %d) ***%s\n", c_bright_cyan,
 			       voxelPosition.x, voxelPosition.y, voxelPosition.z, c_reset);
+			printf("Computing data term: %s\n", (computeDataTerm ? "true" : "false"));
 			printf("Position within block (x,y,z): (%d, %d, %d)\n", x, y, z);
-			printf("Canonical TSDF of %f vs. live TSDF of %f.\n", canonicalSdf, liveSdf);
+			printf("Canonical vs. Live: \n");
+			printf("TSDF: %f vs %f.\n", canonicalVoxel.sdf, liveVoxel.sdf);
+			printf("Flags: %s vs. %s\n", VoxelFlagsAsCString(static_cast<VoxelFlags>(canonicalVoxel.flags)),
+			       VoxelFlagsAsCString(static_cast<VoxelFlags>(liveVoxel.flags)));
+			printf("===================\n");
 			printf("Warp: %s%f, %f, %f%s\n", c_green, voxelWarp.x, voxelWarp.y, voxelWarp.z, c_reset);
 			printf("Warp length: %s%f%s\n", c_green, ORUtils::length(voxelWarp), c_reset);
 
@@ -130,7 +136,7 @@ public:
 		Vector3f localSmoothingEnergyGradient(0.0f), localDataEnergyGradient(0.0f), localLevelSetEnergyGradient(0.0f);
 
 		bool printVoxelResult = false;
-		this->SetUpFocusVoxelPrinting(printVoxelResult, voxelPosition, framewiseWarp, canonicalSdf, liveSdf);
+		this->SetUpFocusVoxelPrinting(printVoxelResult, voxelPosition, framewiseWarp, voxelCanonical, voxelLive, computeDataAndLevelSetTerms);
 		if (printVoxelResult) {
 			printf("%sLive 6-connected neighbor information:%s\n", c_blue, c_reset);
 			print6ConnectedNeighborInfo(voxelPosition, liveVoxels, liveIndexData, liveCache);
