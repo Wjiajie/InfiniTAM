@@ -67,14 +67,14 @@ typename TIndex::InitializationParameters GetStandard128IndexParameters();
 // Then restore or delete this depending on the decision. If the decision is negative, provide a constructor that loads from path instead.
 //
 //template<typename TVoxelA, typename TIndex>
-//ITMVoxelVolume<TVoxelA, TIndex> loadSdfVolume (const std::string& path, MemoryDeviceType memoryDeviceType,
+//ITMVoxelVolume<TVoxelA, TIndex> loadVolume (const std::string& path, MemoryDeviceType memoryDeviceType,
 //		typename TIndex::InitializationParameters initializationParameters = GetFrame17PartialIndexParameters<TIndex>(),
 //		Configuration::SwappingMode swapping_mode = Configuration::SWAPPINGMODE_DISABLED);
 
 template<typename TVoxel, typename TIndex>
-void loadSdfVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& path, MemoryDeviceType memoryDeviceType,
-                   typename TIndex::InitializationParameters initializationParameters = GetFrame17PartialIndexParameters<TIndex>(),
-                   Configuration::SwappingMode swappingMode = Configuration::SWAPPINGMODE_DISABLED);
+void loadVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& path, MemoryDeviceType memoryDeviceType,
+                typename TIndex::InitializationParameters initializationParameters = GetFrame17PartialIndexParameters<TIndex>(),
+                Configuration::SwappingMode swappingMode = Configuration::SWAPPINGMODE_DISABLED);
 
 void updateView(const std::string& depth_path,
                 const std::string& color_path,

@@ -82,7 +82,7 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 	clearFields_device<TVoxel> << < gridSize, cudaBlockSize >> >
 	                                          (targetVoxels, arrayInfo);
 	ORcudaKernelCheck;
-	interpolateTriliearlyUsingWarps<TVoxel, TWarp, WarpVoxelStaticFunctor<TWarp, TWarpType>>
+	interpolateTriliearlyUsingWarps<TVoxel, TWarp, TWarpType>
 			<< < gridSize, cudaBlockSize >> > (warpVoxels, sourceVoxels, targetVoxels, arrayInfo);
 	ORcudaKernelCheck;
 }

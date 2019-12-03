@@ -123,8 +123,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 	FieldClearFunctor<TVoxel> flagClearFunctor;
 	ITMSceneTraversalEngine<TVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::VoxelTraversal(targetTSDF,flagClearFunctor);
 
-	TrilinearInterpolationFunctor<TVoxel, TWarp, ITMPlainVoxelArray,
-			WarpVoxelStaticFunctor<TWarp, TWarpType>, MEMORYDEVICE_CPU>
+	TrilinearInterpolationFunctor<TVoxel, TWarp, ITMPlainVoxelArray, TWarpType, MEMORYDEVICE_CPU>
 			trilinearInterpolationFunctor(sourceTSDF, warpField);
 
 //	 Interpolate to obtain the new live frame values (at target index)

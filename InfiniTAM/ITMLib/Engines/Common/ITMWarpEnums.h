@@ -21,4 +21,4 @@ enum WarpType{
 	WARP_FLOW = 1,
 	WARP_UPDATE = 2
 };
-}
+} // end namespace ITMLib

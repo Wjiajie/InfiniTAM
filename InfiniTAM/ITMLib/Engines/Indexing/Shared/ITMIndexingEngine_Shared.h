@@ -40,7 +40,7 @@ struct AllocationTempData {
 	int noVisibleEntries;
 };
 
-template<typename TWarp, typename TVoxel, typename TLookupPositionFunctor>
+template<typename TWarp, typename TVoxel, WarpType TWarpType>
 struct WarpBasedAllocationMarkerFunctor {
 	WarpBasedAllocationMarkerFunctor(
 			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceVolume,
@@ -65,14 +65,19 @@ struct WarpBasedAllocationMarkerFunctor {
 
 	_CPU_AND_GPU_CODE_
 	inline
-	void operator()(TWarp& warp, Vector3i voxelPosition, Vector3s hashBlockPosition) {
-		Vector3f warpedPosition = TLookupPositionFunctor::GetWarpedPosition(warp, voxelPosition);
+	void operator()(TWarp& warpVoxel, Vector3i voxelPosition, Vector3s hashBlockPosition) {
+		Vector3f warpVector = ITMLib::WarpVoxelStaticFunctor<TWarp, TWarpType>::GetWarp(warpVoxel);
+
+		//if(ORUtils::length(warpVector) < 1e-5f) return;
+
+		Vector3f warpedPosition = warpVector +  TO_FLOAT3(voxelPosition);
 		Vector3i warpedPositionTruncated = warpedPosition.toInt();
 		//_DEBUG
-		if (voxelPosition == Vector3i(-39, -9, 175)){
-			//GOTCHA3
-			int i = 10;
-		}
+//		Vector3i test_pos(-57, -9, 195);
+//		if (voxelPosition == test_pos){
+//			//GOTCHA3
+//			int i = 10;
+//		}
 		// perform lookup in source volume
 		int vmIndex;
 #if !defined(__CUDACC__) &&!defined(WITH_OPENMP)
@@ -84,8 +89,8 @@ struct WarpBasedAllocationMarkerFunctor {
 		                                                warpedPositionTruncated,
 		                                                vmIndex);
 #endif
-		// skip truncated voxels in source scene
-		if (sourceTSDFVoxelAtWarp.flags == ITMLib::VOXEL_UNKNOWN) return;
+		// skip unknown voxels in source scene
+		//if (sourceTSDFVoxelAtWarp.flags == ITMLib::VOXEL_UNKNOWN) return;
 
 
 		int targetBlockHash = hashIndex(hashBlockPosition);
@@ -190,10 +195,10 @@ buildHashAllocAndVisibleTypePP(ITMLib::HashEntryState* hashEntryStates, uchar* e
 	int stepCount;
 	Vector4f pt_camera_f;
 
-	//_DEBUG
-	if (x == 268 && y == 376) {
-		int i = 1;
-	}
+//	//_DEBUG
+//	if (x == 268 && y == 376) {
+//		int i = 1;
+//	}
 
 	depth_measure = depth[x + y * imgSize.x];
 	if (depth_measure <= 0 || (depth_measure - mu) < 0 || (depth_measure - mu) < viewFrustum_min ||

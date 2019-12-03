@@ -20,6 +20,8 @@
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Utils/Configuration.h"
 #include "../../../../ORUtils/PlatformIndependentAtomics.h"
+#include "../../Common/ITMWarpEnums.h"
+#include "../../Common/ITMCommonFunctors.h"
 
 
 template<typename TVoxel>
@@ -46,7 +48,7 @@ private:
 };
 
 
-template<typename TVoxel, typename TWarp, typename TIndex, typename TLookupPositionFunctor, MemoryDeviceType deviceType>
+template<typename TVoxel, typename TWarp, typename TIndex, ITMLib::WarpType TWarpType, MemoryDeviceType deviceType>
 struct TrilinearInterpolationFunctor {
 	/**
 	 * \brief Initialize to transfer data from source sdf scene to a target sdf scene using the warps in the warp source scene
@@ -74,15 +76,10 @@ struct TrilinearInterpolationFunctor {
 	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& destinationVoxel, TWarp& warp,
 	                Vector3i warpAndDestinationVoxelPosition) {
-		//_DEBUG
-//		if (warpAndDestinationVoxelPosition == Vector3i(-39, -9, 175)){
-//			//GOTCHA3
-//			int i = 10;
-//		}
+
 		bool printResult = hasFocusCoordinates && warpAndDestinationVoxelPosition == focusCoordinates;
 
-
-		interpolateTSDFVolume<TVoxel, TWarp, TIndex, TLookupPositionFunctor>(
+		interpolateTSDFVolume<TVoxel, TWarp, TIndex, TWarpType>(
 				sdfSourceVoxels, sdfSourceIndexData, sdfSourceCache, warp, destinationVoxel,
 				warpAndDestinationVoxelPosition, printResult);
 	}

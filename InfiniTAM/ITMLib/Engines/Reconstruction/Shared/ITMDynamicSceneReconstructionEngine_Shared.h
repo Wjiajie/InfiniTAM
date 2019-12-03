@@ -356,27 +356,42 @@ _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxel
 
 // endregion ===========================================================================================================
 // region ====================== TRILINEAR INTERPOLATION BASED ON WARP VECTOR ==========================================
-template<typename TVoxel, typename TWarp, typename TIndex, typename TLookupPositionFunctor>
+template<typename TVoxel, typename TWarp, typename TIndex, ITMLib::WarpType TWarpType>
 _CPU_AND_GPU_CODE_
 inline void interpolateTSDFVolume(TVoxel* sdfSourceVoxels,
                                   const typename TIndex::IndexData* sdfSourceIndexData,
-                                  typename TIndex::IndexCache& sdfSourceCache,
-                                  const TWarp& warp,
+                                  typename TIndex::IndexCache& sourceTSDFCache,
+                                  const TWarp& warpVoxel,
                                   TVoxel& destinationVoxel,
                                   const Vector3i& warpAndDestinationVoxelPosition,
                                   bool printResult) {
 
-	Vector3f warpedPosition =
-			TLookupPositionFunctor::GetWarpedPosition(warp, warpAndDestinationVoxelPosition);
+	Vector3f warpVector = ITMLib::WarpVoxelStaticFunctor<TWarp, TWarpType>::GetWarp(warpVoxel);
+	if(ORUtils::length(warpVector) < 1e-5f) {
+		int vmIndex;
+#if !defined(__CUDACC__) &&!defined(WITH_OPENMP)
+		const TVoxel& sourceTSDFVoxelAtSameLocation = readVoxel(sdfSourceVoxels, sdfSourceIndexData,
+		                                                        warpAndDestinationVoxelPosition,
+		                                                        vmIndex, sourceTSDFCache);
+#else //don't use cache when multithreading!
+		const TVoxel& sourceTSDFVoxelAtSameLocation = readVoxel(sdfSourceVoxels, sdfSourceIndexData,
+		                                                warpAndDestinationVoxelPosition,
+		                                                vmIndex);
+#endif
+		destinationVoxel.sdf = sourceTSDFVoxelAtSameLocation.sdf;
+		destinationVoxel.flags = sourceTSDFVoxelAtSameLocation.flags;
+		return;
+	}
+	Vector3f warpedPosition = TO_FLOAT3(warpAndDestinationVoxelPosition) + warpVector;
 	bool struckKnown;
 
 	//_DEBUG
-//	if (warpAndDestinationVoxelPosition == Vector3i(-39, -9, 175)){
-//		//GOTCHA3
-//		int i = 10;
+//	Vector3i test_pos(-57, -9, 195);
+//	if (warpAndDestinationVoxelPosition == test_pos){
+//		printf("GOTCHA3\n");
 //	}
 	float sdf = _DEBUG_InterpolateTrilinearly_StruckKnown(
-			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sdfSourceCache, struckKnown, printResult);
+			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sourceTSDFCache, struckKnown, printResult);
 
 	// Update flags
 	if (struckKnown) {

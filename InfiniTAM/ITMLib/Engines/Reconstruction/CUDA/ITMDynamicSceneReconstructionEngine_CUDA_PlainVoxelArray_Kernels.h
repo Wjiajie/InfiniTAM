@@ -16,6 +16,7 @@
 #pragma once
 
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
+#include "../../Common/ITMWarpEnums.h"
 
 
 //TODO: refactor this to use CUDA-based traversal methods where applicable -Greg (GitHub: Algomorph)
@@ -81,7 +82,7 @@ clearFields_device(TVoxel* voxelArray, const ITMLib::ITMPlainVoxelArray::ITMVoxe
 	voxel.sdf = TVoxel::SDF_initialValue();
 }
 
-template<typename TVoxel, typename TWarp, typename TLookupPositionFunctor>
+template<typename TVoxel, typename TWarp, ITMLib::WarpType TWarpType>
 __global__ void interpolateTriliearlyUsingWarps(
 		TWarp* warpSourceVoxels,
 		TVoxel* sdfSourceVoxels,
@@ -104,7 +105,7 @@ __global__ void interpolateTriliearlyUsingWarps(
 	warpAndDestinationVoxelPosition.y = y + sdfSourceIndexData->offset.y;
 	warpAndDestinationVoxelPosition.z = z + sdfSourceIndexData->offset.z;
 
-	interpolateTSDFVolume<TVoxel, TWarp, ITMPlainVoxelArray, TLookupPositionFunctor>(
+	interpolateTSDFVolume<TVoxel, TWarp, ITMPlainVoxelArray, TWarpType>(
 			sdfSourceVoxels, sdfSourceIndexData, sdfSourceCache,
 			warp, destinationVoxel,
 			warpAndDestinationVoxelPosition, false);

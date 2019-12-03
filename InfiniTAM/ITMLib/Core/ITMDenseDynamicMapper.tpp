@@ -32,7 +32,6 @@
 #include "../Utils/Visualization/ITMSceneSliceVisualizer2D.h"
 #include "../Utils/Analytics/ITMBenchmarkUtils.h"
 #include "../Utils/FileIO/ITMSceneLogger.h"
-#include "../../Tests/TestUtils.h"
 
 
 using namespace ITMLib;
