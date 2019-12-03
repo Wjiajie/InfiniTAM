@@ -25,15 +25,30 @@
 
 template<class TVoxel>
 _CPU_AND_GPU_CODE_ inline void updateSdfAndFlagsBasedOnDistanceSurfaceToVoxel(
-		DEVICEPTR(TVoxel)& voxel, float signedDistanceSurfaceToVoxelAlongCameraRay, float narrowBandHalfWidth) {
+		DEVICEPTR(TVoxel)& voxel, float signedDistanceSurfaceToVoxelAlongCameraRay, float narrowBandHalfWidth,
+		float effectiveRangeCutoff) {
 	if (signedDistanceSurfaceToVoxelAlongCameraRay < -narrowBandHalfWidth + 4e-07) {
-		//the voxel is beyond the narrow band, on the other side of the surface. Set SDF to -1.0
-		voxel.sdf = TVoxel::floatToValue(-1.0);
-		voxel.flags = ITMLib::VOXEL_TRUNCATED;
+		if (signedDistanceSurfaceToVoxelAlongCameraRay < -effectiveRangeCutoff) {
+			//the voxel is beyond the narrow band, on the other side of the surface, but also really far away.
+			//exclude from computation.
+			voxel.sdf = TVoxel::floatToValue(-1.0);
+			voxel.flags = ITMLib::VOXEL_UNKNOWN;
+		} else {
+			//the voxel is beyond the narrow band, on the other side of the surface. Set SDF to -1.0
+			voxel.sdf = TVoxel::floatToValue(-1.0);
+			voxel.flags = ITMLib::VOXEL_TRUNCATED;
+		}
 	} else if (signedDistanceSurfaceToVoxelAlongCameraRay > narrowBandHalfWidth - 4e-07) {
-		//the voxel is in front of the narrow band, between the surface and the camera. Set SDF to 1.0
-		voxel.sdf = TVoxel::floatToValue(1.0);
-		voxel.flags = ITMLib::VOXEL_TRUNCATED;
+		if (signedDistanceSurfaceToVoxelAlongCameraRay > effectiveRangeCutoff) {
+			//the voxel is in front of the narrow band, between the surface and the camera, but also really far away.
+			//exclude from computation.
+			voxel.sdf = TVoxel::floatToValue(1.0);
+			voxel.flags = ITMLib::VOXEL_UNKNOWN;
+		} else {
+			//the voxel is in front of the narrow band, between the surface and the camera. Set SDF to 1.0
+			voxel.sdf = TVoxel::floatToValue(1.0);
+			voxel.flags = ITMLib::VOXEL_TRUNCATED;
+		}
 	} else {
 		// The voxel lies within the narrow band, between truncation boundaries.
 		// Update SDF in proportion to the distance from surface.
@@ -63,7 +78,8 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedLiveVoxelDepthInfo(
 		const CONSTPTR(Vector4f)& depthCameraProjectionParameters,
 		float narrowBandHalfWidth,
 		const CONSTPTR(float)* depthImage,
-		const CONSTPTR(Vector2i)& imageSize) {
+		const CONSTPTR(Vector2i)& imageSize,
+		float effectiveRangeCutoff = 0.08f) {
 
 	// project point into image (voxel point in camera coordinates)
 	Vector4f voxelPointInCameraCoordinates = depthCameraSceneMatrix * voxelInSceneCoordinates;
@@ -89,8 +105,9 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedLiveVoxelDepthInfo(
 	                                static_cast<int>(voxelPointProjectedToImage.y + 0.5f) * imageSize.x];
 
 	//_DEBUG
-	if(voxelInSceneCoordinates == Vector4f(-0.0960000008, 0.252000004, 0.960000038, 1.0f)){
-		printf("GOTCHA2 coord: (%f, %f) depth: %f, voxel depth: %f\n", voxelPointProjectedToImage.x, voxelPointProjectedToImage.y, depthMeasure, voxelPointInCameraCoordinates.z);
+	if (voxelInSceneCoordinates == Vector4f(-0.0960000008, 0.252000004, 0.960000038, 1.0f)) {
+		printf("GOTCHA2 coord: (%f, %f) depth: %f, voxel depth: %f\n", voxelPointProjectedToImage.x,
+		       voxelPointProjectedToImage.y, depthMeasure, voxelPointInCameraCoordinates.z);
 	}
 	// if depthImage is "invalid", return "unknown"
 	if (depthMeasure <= 0.0f) {
@@ -103,7 +120,7 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedLiveVoxelDepthInfo(
 	// effectively, eta is the distance between measured surface & voxel point
 	float signedDistanceSurfaceToVoxelAlongCameraRay = depthMeasure - voxelPointInCameraCoordinates.z;
 	updateSdfAndFlagsBasedOnDistanceSurfaceToVoxel(voxel, signedDistanceSurfaceToVoxelAlongCameraRay,
-	                                               narrowBandHalfWidth);
+	                                               narrowBandHalfWidth, effectiveRangeCutoff);
 	return signedDistanceSurfaceToVoxelAlongCameraRay;
 }
 
@@ -131,7 +148,8 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedLiveVoxelDepthInfo(
 		float narrowBandHalfWidth,
 		const CONSTPTR(float)* depthImage,
 		const CONSTPTR(float)* confidencesAtPixels,
-		const CONSTPTR(Vector2i)& imageSize) {
+		const CONSTPTR(Vector2i)& imageSize,
+		float effectiveRangeCutoff = 0.08f) {
 
 
 	// project point into image
@@ -165,7 +183,8 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedLiveVoxelDepthInfo(
 	float signedSurfaceToVoxelAlongCameraRay = depthMeasure - voxelPointInCameraCoordinates.z;
 	voxel.confidence = TVoxel::floatToValue(confidencesAtPixels[pixelIndex]);
 
-	updateSdfAndFlagsBasedOnDistanceSurfaceToVoxel(voxel, signedSurfaceToVoxelAlongCameraRay, narrowBandHalfWidth);
+	updateSdfAndFlagsBasedOnDistanceSurfaceToVoxel(voxel, signedSurfaceToVoxelAlongCameraRay, narrowBandHalfWidth,
+	                                               effectiveRangeCutoff);
 	return signedSurfaceToVoxelAlongCameraRay;
 }
 

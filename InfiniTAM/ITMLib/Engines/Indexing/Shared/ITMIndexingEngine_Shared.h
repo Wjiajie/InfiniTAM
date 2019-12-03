@@ -180,7 +180,7 @@ buildHashAllocAndVisibleTypePP(ITMLib::HashEntryState* hashEntryStates, uchar* e
                                Vector2i imgSize, float oneOverVoxelBlockSize_Meters,
                                const CONSTPTR(ITMHashEntry)* hashTable,
                                float viewFrustum_min, float viewFrustum_max, bool& collisionDetected,
-                               float backBandFactor = 2.0f) {
+                               float bandFactor = 2.0f) {
 	float depth_measure;
 	int stepCount;
 	Vector4f pt_camera_f;
@@ -208,7 +208,7 @@ buildHashAllocAndVisibleTypePP(ITMLib::HashEntryState* hashEntryStates, uchar* e
 	Vector4f pt_buff;
 
 	//Vector3f offset(-halfVoxelSize);
-	pt_buff = pt_camera_f * (1.0f - mu / norm);
+	pt_buff = pt_camera_f * (1.0f - (mu * bandFactor) / norm);
 	pt_buff.w = 1.0f;
 	//position along segment to march along ray in hash blocks (here -- starting point)
 	// account for the fact that voxel coordinates represent the voxel center, and we need the extreme corner position of
@@ -216,7 +216,7 @@ buildHashAllocAndVisibleTypePP(ITMLib::HashEntryState* hashEntryStates, uchar* e
 	Vector3f currentCheckPosition_HashBlocks = (TO_VECTOR3(invertedCameraPose * pt_buff)) * oneOverVoxelBlockSize_Meters
 	                                           + Vector3f(1.0f / (2.0f * VOXEL_BLOCK_SIZE));
 
-	pt_buff = pt_camera_f * (1.0f + (mu * backBandFactor) / norm);
+	pt_buff = pt_camera_f * (1.0f + (mu * bandFactor) / norm);
 	pt_buff.w = 1.0f;
 	//end position of the segment to march along the ray
 	Vector3f endCheckPosition_HashBlocks = (TO_VECTOR3(invertedCameraPose * pt_buff)) * oneOverVoxelBlockSize_Meters

@@ -63,7 +63,7 @@ void
 GenericWarpConsistencySubtest_CPU(const SlavchevaSurfaceTracker::Switches& switches, const std::string& prefix,
                                   int iteration_limit = 10,
                                   GenericWarpTestMode mode = TEST_SUCCESSIVE_ITERATIONS,
-                                  float absolute_tolerance = 1e-7) {
+                                  float absolute_tolerance = 1e-7, bool allocateLiveFromBothImages = false) {
 	if (iteration_limit < 2) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Iteration limit must be at least 2");
 	}
@@ -93,8 +93,10 @@ GenericWarpConsistencySubtest_CPU(const SlavchevaSurfaceTracker::Switches& switc
 	                                                                               MEMORYDEVICE_CPU,
 	                                                                               volume_17->index);
 	ITMTrackingState trackingState(imageSize, MEMORYDEVICE_CPU);
-	ITMIndexingEngine<ITMVoxel, TIndex, MEMORYDEVICE_CPU>::Instance().AllocateFromDepth(volume_17, view, &trackingState,
-	                                                                                    renderState, false, false);
+	if(allocateLiveFromBothImages){
+		ITMIndexingEngine<ITMVoxel, TIndex, MEMORYDEVICE_CPU>::Instance().AllocateFromDepth(volume_17, view, &trackingState,
+		                                                                                    renderState, false, false);
+	}
 	updateView("TestData/snoopy_depth_000017.png",
 	           "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
 	           "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU, &view);
@@ -158,6 +160,22 @@ GenericWarpConsistencySubtest_CPU(const SlavchevaSurfaceTracker::Switches& switc
 	ITMSceneManipulationEngine_CPU<ITMVoxel, TIndex>::Inst().ResetScene(warped_volumes[1]);
 
 	recoEngine.WarpScene_FlowWarps(&warp_field_CPU, volume_17, warped_volumes[1]);
+	path = std::string("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_") +
+	       std::to_string(0) + "_";
+	std::string path_warped_live = path + "warped_live_";
+	switch (mode){
+		case SAVE_SUCCESSIVE_ITERATIONS:
+			warped_volumes[1]->SaveToDirectory(std::string("../../Tests/") + path_warped_live);
+			break;
+		case TEST_SUCCESSIVE_ITERATIONS:
+			ITMSceneManipulationEngine_CPU<ITMVoxel, TIndex>::Inst().ResetScene(volume_17);
+			volume_17->LoadFromDirectory(path_warped_live);
+			BOOST_REQUIRE(contentAlmostEqual_CPU(volume_17,warped_volumes[1], absolute_tolerance));
+			break;
+		default:
+			break;
+	}
+
 	int source_warped_field_ix = 0;
 	int target_warped_field_ix = 0;
 	for (int iteration = 1; iteration < iteration_limit; iteration++) {
@@ -171,20 +189,26 @@ GenericWarpConsistencySubtest_CPU(const SlavchevaSurfaceTracker::Switches& switc
 		                               warped_volumes[target_warped_field_ix]);
 		path = std::string("TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_") +
 		       std::to_string(iteration) + "_";
+		path_warped_live = path + "warped_live_";
 		switch (mode) {
 			case SAVE_SUCCESSIVE_ITERATIONS:
+				warped_volumes[target_warped_field_ix]->SaveToDirectory(std::string("../../Tests/") +path_warped_live);
 				warp_field_CPU.SaveToDirectory(std::string("../../Tests/") + path);
 				break;
 			case TEST_SUCCESSIVE_ITERATIONS:
+				ITMSceneManipulationEngine_CPU<ITMWarp, TIndex>::Inst().ResetScene(&warp_field_CPU2);
 				warp_field_CPU2.LoadFromDirectory(path);
 				BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU, &warp_field_CPU2, absolute_tolerance));
+				ITMSceneManipulationEngine_CPU<ITMVoxel, TIndex>::Inst().ResetScene(volume_17);
+				volume_17->LoadFromDirectory(path_warped_live);
+				BOOST_REQUIRE(contentAlmostEqual_CPU(volume_17,warped_volumes[target_warped_field_ix], absolute_tolerance));
 				break;
 			default:
 				break;
 		}
 	}
 	path = "TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_" + std::to_string(iteration_limit - 1) + "_";
-	std::string path_warped_live = path + "warped_live_";
+	path_warped_live = path + "warped_live_";
 	std::string path_fused = path + "fused_";
 	switch (mode) {
 		case SAVE_FINAL_ITERATION_AND_FUSION:
@@ -194,6 +218,7 @@ GenericWarpConsistencySubtest_CPU(const SlavchevaSurfaceTracker::Switches& switc
 			volume_16->SaveToDirectory(std::string("../../Tests/") + path_fused);
 			break;
 		case TEST_FINAL_ITERATION_AND_FUSION:
+			ITMSceneManipulationEngine_CPU<ITMWarp, TIndex>::Inst().ResetScene(&warp_field_CPU2);
 			warp_field_CPU2.LoadFromDirectory(path);
 			BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU, &warp_field_CPU2, absolute_tolerance));
 			warped_volumes[source_warped_field_ix]->LoadFromDirectory(path_warped_live);
@@ -258,13 +283,14 @@ GenericWarpConsistencySubtest_CUDA(const SlavchevaSurfaceTracker::Switches& swit
 	                                                 Configuration::SWAPPINGMODE_ENABLED,
 	                                                 MEMORYDEVICE_CUDA,
 	                                                 Fixture::InitParams<TIndex>());
-	ITMSceneManipulationEngine_CUDA<ITMWarp, TIndex>::Inst().ResetScene(&warp_field_CUDA2);
+
 	path = "TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_0_";
 	switch (mode) {
 		case SAVE_SUCCESSIVE_ITERATIONS:
 			warp_field_CUDA.SaveToDirectory(std::string("../../Tests/") + path);
 			break;
 		case TEST_SUCCESSIVE_ITERATIONS:
+			ITMSceneManipulationEngine_CUDA<ITMWarp, TIndex>::Inst().ResetScene(&warp_field_CUDA2);
 			warp_field_CUDA2.LoadFromDirectory(path);
 			BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA, &warp_field_CUDA2, absolute_tolerance));
 			break;
@@ -308,6 +334,7 @@ GenericWarpConsistencySubtest_CUDA(const SlavchevaSurfaceTracker::Switches& swit
 				warp_field_CUDA.SaveToDirectory(std::string("../../Tests/") + path);
 				break;
 			case TEST_SUCCESSIVE_ITERATIONS:
+				ITMSceneManipulationEngine_CUDA<ITMWarp, TIndex>::Inst().ResetScene(&warp_field_CUDA2);
 				warp_field_CUDA2.LoadFromDirectory(path);
 				BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA, &warp_field_CUDA2, absolute_tolerance));
 				break;
@@ -326,6 +353,7 @@ GenericWarpConsistencySubtest_CUDA(const SlavchevaSurfaceTracker::Switches& swit
 			volume_16->SaveToDirectory(std::string("../../Tests/") + path_fused);
 			break;
 		case TEST_FINAL_ITERATION_AND_FUSION:
+			ITMSceneManipulationEngine_CUDA<ITMWarp, TIndex>::Inst().ResetScene(&warp_field_CUDA2);
 			warp_field_CUDA2.LoadFromDirectory(path);
 			BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA, &warp_field_CUDA2, absolute_tolerance));
 			warped_volumes[source_warped_field_ix]->LoadFromDirectory(path_warped_live);
@@ -372,7 +400,7 @@ GenericWarpTest_CUDA(const SlavchevaSurfaceTracker::Switches& switches, const st
 			                                                               Configuration::SWAPPINGMODE_ENABLED,
 			                                                               MEMORYDEVICE_CUDA,
 			                                                               Fixture::InitParams<ITMVoxelBlockHash>());
-			ManipulationEngine_CUDA_VBH_Warp::Inst().ResetScene(&warp_field_CUDA_VBH);
+
 			for (int iteration = 0; iteration < iteration_limit; iteration++) {
 				path = "TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_" + std::to_string(iteration) + "_";
 				warp_field_CUDA_PVA.LoadFromDirectory(path);
@@ -425,6 +453,16 @@ GenericWarpTest_CPU(const SlavchevaSurfaceTracker::Switches& switches, const std
 
 	std::string path;
 	std::string path_warped_live;
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> volume_PVA(&Configuration::get().scene_parameters,
+	                                                        Configuration::get().swapping_mode ==
+	                                                        Configuration::SWAPPINGMODE_ENABLED,
+	                                                        MEMORYDEVICE_CPU,
+	                                                        Fixture::InitParams<ITMPlainVoxelArray>());
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH(&Configuration::get().scene_parameters,
+	                                                       Configuration::get().swapping_mode ==
+	                                                       Configuration::SWAPPINGMODE_ENABLED,
+	                                                       MEMORYDEVICE_CPU,
+	                                                       Fixture::InitParams<ITMVoxelBlockHash>());
 	switch (mode) {
 		case TEST_SUCCESSIVE_ITERATIONS: {
 
@@ -438,28 +476,25 @@ GenericWarpTest_CPU(const SlavchevaSurfaceTracker::Switches& switches, const std
 			                                                              Configuration::SWAPPINGMODE_ENABLED,
 			                                                              MEMORYDEVICE_CPU,
 			                                                              Fixture::InitParams<ITMVoxelBlockHash>());
-			ManipulationEngine_CPU_VBH_Warp::Inst().ResetScene(&warp_field_CPU_VBH);
+
 			for (int iteration = 0; iteration < iteration_limit; iteration++) {
 				std::cout << "Testing iteration " << iteration << std::endl;
 				path = "TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_" + std::to_string(iteration) + "_";
+				path_warped_live = path + "warped_live_";
 				warp_field_CPU_PVA.LoadFromDirectory(path);
+				ManipulationEngine_CPU_VBH_Warp::Inst().ResetScene(&warp_field_CPU_VBH);
 				warp_field_CPU_VBH.LoadFromDirectory(path);
 				BOOST_REQUIRE(allocatedContentAlmostEqual_CPU_Verbose(&warp_field_CPU_PVA, &warp_field_CPU_VBH,
 				                                                      absoluteTolerance));
+				ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&volume_VBH);
+				volume_PVA.LoadFromDirectory(path_warped_live);
+				volume_VBH.LoadFromDirectory(path_warped_live);
+				BOOST_REQUIRE(contentForFlagsAlmostEqual_CUDA(&volume_PVA, &volume_VBH, VOXEL_NONTRUNCATED, absoluteTolerance));
 			}
 		}
 			break;
 		case TEST_FINAL_ITERATION_AND_FUSION: {
-			ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> volume_PVA(&Configuration::get().scene_parameters,
-			                                                        Configuration::get().swapping_mode ==
-			                                                        Configuration::SWAPPINGMODE_ENABLED,
-			                                                        MEMORYDEVICE_CPU,
-			                                                        Fixture::InitParams<ITMPlainVoxelArray>());
-			ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH(&Configuration::get().scene_parameters,
-			                                                       Configuration::get().swapping_mode ==
-			                                                       Configuration::SWAPPINGMODE_ENABLED,
-			                                                       MEMORYDEVICE_CPU,
-			                                                       Fixture::InitParams<ITMVoxelBlockHash>());
+
 			ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&volume_VBH);
 			path = "TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_" + std::to_string(iteration_limit - 1) +
 			       "_";
@@ -467,10 +502,10 @@ GenericWarpTest_CPU(const SlavchevaSurfaceTracker::Switches& switches, const std
 			std::string path_fused = path + "fused_";
 			volume_PVA.LoadFromDirectory(path_warped_live);
 			volume_VBH.LoadFromDirectory(path_warped_live);
-			BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(&volume_PVA, &volume_VBH, absoluteTolerance));
+			BOOST_REQUIRE(contentForFlagsAlmostEqual_CUDA(&volume_PVA, &volume_VBH, VOXEL_NONTRUNCATED, absoluteTolerance));
 			volume_PVA.LoadFromDirectory(path_fused);
 			volume_VBH.LoadFromDirectory(path_fused);
-			BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(&volume_PVA, &volume_VBH, absoluteTolerance));
+			BOOST_REQUIRE(contentForFlagsAlmostEqual_CUDA(&volume_PVA, &volume_VBH, VOXEL_NONTRUNCATED, absoluteTolerance));
 		}
 			break;
 		default:
@@ -481,7 +516,7 @@ GenericWarpTest_CPU(const SlavchevaSurfaceTracker::Switches& switches, const std
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CPU) {
 	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
-	Configuration::get().telemetry_settings.focus_coordinates = Vector3i(-33, 57, 242);
+	Configuration::get().telemetry_settings.focus_coordinates = Vector3i(-41, 54, 217);
 	GenericWarpTest_CPU(SlavchevaSurfaceTracker::Switches(true,
 	                                                      false,
 	                                                      false,
@@ -489,7 +524,7 @@ BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CPU) {
 	                                                      false),
 	                    "data_only",
 	                    2,
-	                    SAVE_SUCCESSIVE_ITERATIONS);
+	                    TEST_SUCCESSIVE_ITERATIONS);
 }
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CUDA) {

@@ -43,7 +43,7 @@ using namespace ITMLib;
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray> SceneFileIOEngine_PVA;
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
 
-
+//#define SAVE_TEST_DATA
 BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH_CPU, Fixture) {
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_16;
@@ -62,6 +62,13 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH_CPU, Fixture) {
 //	voxelPVA.print_self();
 //	ITMVoxel voxelVBH = ManipulationEngine_CPU_VBH_Voxel::Inst().ReadVoxel(volume_VBH_16, Vector3i(-24,63,240));
 //	voxelVBH.print_self();
+
+#ifdef SAVE_TEST_DATA
+	std::string path_PVA = "TestData/snoopy_result_fr16-17_partial_PVA/snoopy_partial_frame_16_";
+	volume_PVA_16->SaveToDirectory(std::string("../../Tests/") +path_PVA);
+	std::string path_VBH = "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_16_";
+	volume_VBH_16->SaveToDirectory(std::string("../../Tests/") +path_VBH);
+#endif
 
 	float absoluteTolerance = 1e-7;
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(volume_PVA_16, volume_VBH_16, absoluteTolerance));
@@ -92,6 +99,13 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CPU, Fixture) {
 //	voxelPVA.print_self();
 //	ITMVoxel voxelVBH = ManipulationEngine_CPU_VBH_Voxel::Inst().ReadVoxel(volume_VBH_17, voxelPosition);
 //	voxelVBH.print_self();
+
+#ifdef SAVE_TEST_DATA
+	std::string path_PVA = "TestData/snoopy_result_fr16-17_partial_PVA/snoopy_partial_frame_17_";
+	volume_PVA_17->SaveToDirectory(std::string("../../Tests/") +path_PVA);
+	std::string path_VBH = "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_17_";
+	volume_VBH_17->SaveToDirectory(std::string("../../Tests/") +path_VBH);
+#endif
 
 	float absoluteTolerance = 1e-7;
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(volume_PVA_17, volume_VBH_17, absoluteTolerance));

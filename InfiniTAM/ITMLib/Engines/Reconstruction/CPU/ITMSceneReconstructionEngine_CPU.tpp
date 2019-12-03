@@ -4,7 +4,7 @@
 
 #include "../Shared/ITMSceneReconstructionEngine_Shared.h"
 #include "../../Indexing/Shared/ITMIndexingEngine_Shared.h"
-#include "../../../Objects/RenderStates/ITMRenderState_VH.h"
+
 using namespace ITMLib;
 template<class TVoxel>
 void ITMSceneReconstructionEngine_CPU<TVoxel,ITMVoxelBlockHash>::ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene)
