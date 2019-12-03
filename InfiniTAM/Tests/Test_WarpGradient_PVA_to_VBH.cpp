@@ -28,6 +28,8 @@
 //local
 #include "../ITMLib/ITMLibDefines.h"
 #include "../ITMLib/Objects/Scene/ITMVoxelVolume.h"
+#include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison.h"
+
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "../ITMLib/SurfaceTrackers/Interface/SurfaceTracker.h"
@@ -559,8 +561,8 @@ BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonovAndSobolevSmoothing_Fusion
 	                     GenericWarpTestMode::SAVE_FINAL_ITERATION_AND_FUSION);
 }
 
-
-void Warp_PVA_VBH_simple_CPU_subtest(int iteration, SlavchevaSurfaceTracker::Switches trackerSwitches) {
+template<MemoryDeviceType TMemoryDeviceType>
+void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switches trackerSwitches) {
 
 	if (iteration < 0) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Expecting iteration >= 0, got less than that, aborting.");
@@ -578,15 +580,15 @@ void Warp_PVA_VBH_simple_CPU_subtest(int iteration, SlavchevaSurfaceTracker::Swi
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps_VBH;
 	if (iteration > 0) {
 		std::string path_warps = get_path_warps(prefix, iteration - 1);
-		loadVolume(&warps_PVA, path_warps, MEMORYDEVICE_CPU,
+		loadVolume(&warps_PVA, path_warps, TMemoryDeviceType,
 		           Frame16And17Fixture::InitParams<ITMPlainVoxelArray>());
-		loadVolume(&warps_VBH, path_warps, MEMORYDEVICE_CPU,
+		loadVolume(&warps_VBH, path_warps, TMemoryDeviceType,
 		           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
-		BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(warps_PVA, warps_VBH, absoluteTolerance));
+		BOOST_REQUIRE(allocatedContentAlmostEqual(warps_PVA, warps_VBH, absoluteTolerance, TMemoryDeviceType));
 	} else {
-		initializeVolume(&warps_PVA, Frame16And17Fixture::InitParams<ITMPlainVoxelArray>(), MEMORYDEVICE_CPU);
-		initializeVolume(&warps_VBH, Frame16And17Fixture::InitParams<ITMVoxelBlockHash>(), MEMORYDEVICE_CPU);
-		BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(warps_PVA, warps_VBH, absoluteTolerance));
+		initializeVolume(&warps_PVA, Frame16And17Fixture::InitParams<ITMPlainVoxelArray>(), TMemoryDeviceType);
+		initializeVolume(&warps_VBH, Frame16And17Fixture::InitParams<ITMVoxelBlockHash>(), TMemoryDeviceType);
+		BOOST_REQUIRE(allocatedContentAlmostEqual(warps_PVA, warps_VBH, absoluteTolerance, TMemoryDeviceType));
 	}
 
 	// *** load warped live scene
@@ -598,14 +600,14 @@ void Warp_PVA_VBH_simple_CPU_subtest(int iteration, SlavchevaSurfaceTracker::Swi
 
 	if (iteration > 0) {
 		std::string path_warped_live = get_path_warped_live(prefix, iteration - 1);
-		loadVolume(&warped_live_PVA, path_warped_live, MEMORYDEVICE_CPU,
+		loadVolume(&warped_live_PVA, path_warped_live, TMemoryDeviceType,
 		           Frame16And17Fixture::InitParams<ITMPlainVoxelArray>());
-		loadVolume(&warped_live_VBH, path_warped_live, MEMORYDEVICE_CPU,
+		loadVolume(&warped_live_VBH, path_warped_live, TMemoryDeviceType,
 		           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
 	} else {
-		loadVolume(&warped_live_PVA, path_frame_17_PVA, MEMORYDEVICE_CPU,
+		loadVolume(&warped_live_PVA, path_frame_17_PVA, TMemoryDeviceType,
 		           Frame16And17Fixture::InitParams<ITMPlainVoxelArray>());
-		loadVolume(&warped_live_VBH, path_frame_17_VBH, MEMORYDEVICE_CPU,
+		loadVolume(&warped_live_VBH, path_frame_17_VBH, TMemoryDeviceType,
 		           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
 	}
 
@@ -613,50 +615,50 @@ void Warp_PVA_VBH_simple_CPU_subtest(int iteration, SlavchevaSurfaceTracker::Swi
 	Vector3i test_pos(-57, -9, 195);
 	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
 	Configuration::get().telemetry_settings.focus_coordinates = test_pos;
-	ITMVoxel voxelPVA = ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray>::Inst()
-			.ReadVoxel(warped_live_PVA,test_pos);
-	voxelPVA.print_self();
-	ITMVoxel voxelVBH = ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash>::Inst()
-			.ReadVoxel(warped_live_VBH, test_pos);
-	voxelVBH.print_self();
+//	ITMVoxel voxelPVA = ITMSceneManipulationEngine<ITMVoxel, ITMPlainVoxelArray>::Inst()
+//			.ReadVoxel(warped_live_PVA,test_pos);
+//	voxelPVA.print_self();
+//	ITMVoxel voxelVBH = ITMSceneManipulationEngine<ITMVoxel, ITMVoxelBlockHash>::Inst()
+//			.ReadVoxel(warped_live_VBH, test_pos);
+//	voxelVBH.print_self();
 
 	// *** load canonical volume as the two different data structures
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_16_PVA;
-	loadVolume(&volume_16_PVA, path_frame_16_PVA, MEMORYDEVICE_CPU,
+	loadVolume(&volume_16_PVA, path_frame_16_PVA, TMemoryDeviceType,
 	           Frame16And17Fixture::InitParams<ITMPlainVoxelArray>());
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_16_VBH;
-	loadVolume(&volume_16_VBH, path_frame_16_VBH, MEMORYDEVICE_CPU,
+	loadVolume(&volume_16_VBH, path_frame_16_VBH, TMemoryDeviceType,
 	           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
 
 	// *** perform the warp gradient computation and warp updates
 
 
-	SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>
-			motionTracker_CPU_PVA(trackerSwitches);
+	SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC>
+			motionTracker_PVA(trackerSwitches);
 
-	motionTracker_CPU_PVA.CalculateWarpGradient(volume_16_PVA, warped_live_PVA, warps_PVA);
-	motionTracker_CPU_PVA.SmoothWarpGradient(volume_16_PVA, warped_live_PVA, warps_PVA);
-	motionTracker_CPU_PVA.UpdateWarps(volume_16_PVA, warped_live_PVA, warps_PVA);
+	motionTracker_PVA.CalculateWarpGradient(volume_16_PVA, warped_live_PVA, warps_PVA);
+	motionTracker_PVA.SmoothWarpGradient(volume_16_PVA, warped_live_PVA, warps_PVA);
+	motionTracker_PVA.UpdateWarps(volume_16_PVA, warped_live_PVA, warps_PVA);
 
-	SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>
-			motionTracker_CPU_VBH(trackerSwitches);
+	SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC>
+			motionTracker_VBH(trackerSwitches);
 
-	motionTracker_CPU_VBH.CalculateWarpGradient(volume_16_VBH, warped_live_VBH, warps_VBH);
-	motionTracker_CPU_VBH.SmoothWarpGradient(volume_16_VBH, warped_live_VBH, warps_VBH);
-	motionTracker_CPU_VBH.UpdateWarps(volume_16_VBH, warped_live_VBH, warps_VBH);
+	motionTracker_VBH.CalculateWarpGradient(volume_16_VBH, warped_live_VBH, warps_VBH);
+	motionTracker_VBH.SmoothWarpGradient(volume_16_VBH, warped_live_VBH, warps_VBH);
+	motionTracker_VBH.UpdateWarps(volume_16_VBH, warped_live_VBH, warps_VBH);
 
 	// *** test content
 
-	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU_Verbose(warps_PVA, warps_VBH, absoluteTolerance));
+	BOOST_REQUIRE(allocatedContentAlmostEqual_Verbose(warps_PVA, warps_VBH, absoluteTolerance, TMemoryDeviceType));
 
 
 	//_DEBUG
-	ITMWarp warpPVA = ITMSceneManipulationEngine_CPU<ITMWarp, ITMPlainVoxelArray>::Inst()
-			.ReadVoxel(warps_PVA, test_pos);
-	warpPVA.print_self();
-	ITMWarp warpVBH = ITMSceneManipulationEngine_CPU<ITMWarp, ITMVoxelBlockHash>::Inst()
-			.ReadVoxel(warps_VBH, test_pos);
-	warpVBH.print_self();
+//	ITMWarp warpPVA = ITMSceneManipulationEngine<ITMWarp, ITMPlainVoxelArray>::Inst()
+//			.ReadVoxel(warps_PVA, test_pos);
+//	warpPVA.print_self();
+//	ITMWarp warpVBH = ITMSceneManipulationEngine<ITMWarp, ITMVoxelBlockHash>::Inst()
+//			.ReadVoxel(warps_VBH, test_pos);
+//	warpVBH.print_self();
 
 	delete volume_16_PVA;
 	delete volume_16_VBH;
@@ -666,13 +668,13 @@ void Warp_PVA_VBH_simple_CPU_subtest(int iteration, SlavchevaSurfaceTracker::Swi
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* loaded_warps_PVA;
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* loaded_warps_VBH;
 	std::string path_loaded_warps = get_path_warps(prefix, iteration);
-	loadVolume(&loaded_warps_PVA, path_loaded_warps, MEMORYDEVICE_CPU,
+	loadVolume(&loaded_warps_PVA, path_loaded_warps, TMemoryDeviceType,
 	           Frame16And17Fixture::InitParams<ITMPlainVoxelArray>());
-	loadVolume(&loaded_warps_VBH, path_loaded_warps, MEMORYDEVICE_CPU,
+	loadVolume(&loaded_warps_VBH, path_loaded_warps, TMemoryDeviceType,
 	           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
 
-	BOOST_REQUIRE(contentAlmostEqual_CPU_Verbose(warps_PVA, loaded_warps_PVA, absoluteTolerance));
-	BOOST_REQUIRE(contentAlmostEqual_CPU_Verbose(warps_VBH, loaded_warps_VBH, absoluteTolerance));
+	BOOST_REQUIRE(contentAlmostEqual_Verbose(warps_PVA, loaded_warps_PVA, absoluteTolerance, TMemoryDeviceType));
+	BOOST_REQUIRE(contentAlmostEqual_Verbose(warps_VBH, loaded_warps_VBH, absoluteTolerance, TMemoryDeviceType));
 
 	delete warps_PVA;
 	delete warps_VBH;
@@ -682,5 +684,5 @@ void Warp_PVA_VBH_simple_CPU_subtest(int iteration, SlavchevaSurfaceTracker::Swi
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_simple_CPU) {
 	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);
-	Warp_PVA_VBH_simple_CPU_subtest(0, switches);
+	Warp_PVA_VBH_simple_subtest<MEMORYDEVICE_CPU>(0, switches);
 }

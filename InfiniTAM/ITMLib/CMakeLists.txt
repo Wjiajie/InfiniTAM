@@ -741,6 +741,7 @@ set(ITMLIB_UTILS_HEADERS
     Utils/Analytics/ITMIsAltered.h
     Utils/Analytics/ITMNeighborVoxelIterationInfo.h
 
+	Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison.h
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_Functors.h
