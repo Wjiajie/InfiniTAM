@@ -370,6 +370,11 @@ inline void interpolateTSDFVolume(TVoxel* sdfSourceVoxels,
 			TLookupPositionFunctor::GetWarpedPosition(warp, warpAndDestinationVoxelPosition);
 	bool struckKnown;
 
+	//_DEBUG
+//	if (warpAndDestinationVoxelPosition == Vector3i(-39, -9, 175)){
+//		//GOTCHA3
+//		int i = 10;
+//	}
 	float sdf = _DEBUG_InterpolateTrilinearly_StruckKnown(
 			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sdfSourceCache, struckKnown, printResult);
 

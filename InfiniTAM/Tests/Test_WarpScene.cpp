@@ -136,6 +136,8 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_VBH_to_PVA, Frame16And17Fixture) {
 	ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray> recoEngine_PVA;
 	ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMVoxelBlockHash> recoEngine_VBH;
 
+	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
+	Configuration::get().telemetry_settings.focus_coordinates = Vector3i(-39, -9, 175);
 	
 	recoEngine_PVA.WarpScene_FlowWarps(warps_PVA, frame17_PVA, target_PVA);
 	recoEngine_VBH.WarpScene_FlowWarps(warps_VBH, frame17_VBH, target_VBH);

@@ -121,8 +121,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {
 //	 Clear out the flags at target index
 	FieldClearFunctor<TVoxel> flagClearFunctor;
-	ITMSceneTraversalEngine<TVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::VoxelTraversal(targetTSDF,
-	                                                                                                      flagClearFunctor);
+	ITMSceneTraversalEngine<TVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::VoxelTraversal(targetTSDF,flagClearFunctor);
 
 	TrilinearInterpolationFunctor<TVoxel, TWarp, ITMPlainVoxelArray,
 			WarpVoxelStaticFunctor<TWarp, TWarpType>, MEMORYDEVICE_CPU>

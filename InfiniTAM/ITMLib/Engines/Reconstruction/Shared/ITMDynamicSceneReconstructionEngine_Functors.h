@@ -74,6 +74,11 @@ struct TrilinearInterpolationFunctor {
 	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& destinationVoxel, TWarp& warp,
 	                Vector3i warpAndDestinationVoxelPosition) {
+		//_DEBUG
+//		if (warpAndDestinationVoxelPosition == Vector3i(-39, -9, 175)){
+//			//GOTCHA3
+//			int i = 10;
+//		}
 		bool printResult = hasFocusCoordinates && warpAndDestinationVoxelPosition == focusCoordinates;
 
 

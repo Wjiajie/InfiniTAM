@@ -65,9 +65,14 @@ struct WarpBasedAllocationMarkerFunctor {
 
 	_CPU_AND_GPU_CODE_
 	inline
-	void operator()(TWarp& voxel, Vector3i voxelPosition, Vector3s hashBlockPosition) {
-		Vector3f warpedPosition = TLookupPositionFunctor::GetWarpedPosition(voxel, voxelPosition);
+	void operator()(TWarp& warp, Vector3i voxelPosition, Vector3s hashBlockPosition) {
+		Vector3f warpedPosition = TLookupPositionFunctor::GetWarpedPosition(warp, voxelPosition);
 		Vector3i warpedPositionTruncated = warpedPosition.toInt();
+		//_DEBUG
+		if (voxelPosition == Vector3i(-39, -9, 175)){
+			//GOTCHA3
+			int i = 10;
+		}
 		// perform lookup in source volume
 		int vmIndex;
 #if !defined(__CUDACC__) &&!defined(WITH_OPENMP)
@@ -80,7 +85,7 @@ struct WarpBasedAllocationMarkerFunctor {
 		                                                vmIndex);
 #endif
 		// skip truncated voxels in source scene
-		if (sourceTSDFVoxelAtWarp.flags != ITMLib::VOXEL_NONTRUNCATED) return;
+		if (sourceTSDFVoxelAtWarp.flags == ITMLib::VOXEL_UNKNOWN) return;
 
 
 		int targetBlockHash = hashIndex(hashBlockPosition);
