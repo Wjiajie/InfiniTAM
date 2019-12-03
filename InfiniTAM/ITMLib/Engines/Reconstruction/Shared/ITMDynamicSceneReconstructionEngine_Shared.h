@@ -105,10 +105,11 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedLiveVoxelDepthInfo(
 	                                static_cast<int>(voxelPointProjectedToImage.y + 0.5f) * imageSize.x];
 
 	//_DEBUG
-	if (voxelInSceneCoordinates == Vector4f(-0.0960000008, 0.252000004, 0.960000038, 1.0f)) {
-		printf("GOTCHA2 coord: (%f, %f) depth: %f, voxel depth: %f\n", voxelPointProjectedToImage.x,
-		       voxelPointProjectedToImage.y, depthMeasure, voxelPointInCameraCoordinates.z);
-	}
+//	if (voxelInSceneCoordinates == Vector4f(-0.0960000008, 0.252000004, 0.960000038, 1.0f)) {
+//		printf("GOTCHA2 coord: (%f, %f) depth: %f, voxel depth: %f\n", voxelPointProjectedToImage.x,
+//		       voxelPointProjectedToImage.y, depthMeasure, voxelPointInCameraCoordinates.z);
+//	}
+
 	// if depthImage is "invalid", return "unknown"
 	if (depthMeasure <= 0.0f) {
 		//keep voxel flags at ITMLib::VOXEL_UNKNOWN

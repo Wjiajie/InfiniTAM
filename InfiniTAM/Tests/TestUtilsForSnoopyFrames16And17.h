@@ -21,17 +21,17 @@
 
 using namespace ITMLib;
 
-struct Fixture {
+struct Frame16And17Fixture {
 	template<typename TIndex>
 	static typename TIndex::InitializationParameters InitParams();
 };
 
 template<>
-ITMPlainVoxelArray::InitializationParameters Fixture::InitParams<ITMPlainVoxelArray>() {
+ITMPlainVoxelArray::InitializationParameters Frame16And17Fixture::InitParams<ITMPlainVoxelArray>() {
 	return {Vector3i(80, 96, 248), Vector3i(-64, -24, 64)};
 }
 
 template<>
-ITMVoxelBlockHash::InitializationParameters Fixture::InitParams<ITMVoxelBlockHash>() {
+ITMVoxelBlockHash::InitializationParameters Frame16And17Fixture::InitParams<ITMVoxelBlockHash>() {
 	return {1200, 0x20000};
 }

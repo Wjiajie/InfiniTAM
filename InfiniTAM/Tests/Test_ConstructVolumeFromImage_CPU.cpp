@@ -44,7 +44,7 @@ typedef ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray> SceneFileIOEngine_PVA
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
 
 //#define SAVE_TEST_DATA
-BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH_CPU, Fixture) {
+BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH_CPU, Frame16And17Fixture) {
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_16;
 	buildSdfVolumeFromImage(&volume_PVA_16, "TestData/snoopy_depth_000016.png",
@@ -80,7 +80,7 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH_CPU, Fixture) {
 }
 
 
-BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CPU, Fixture) {
+BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CPU, Frame16And17Fixture) {
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_17;
 	buildSdfVolumeFromImage(&volume_PVA_17, "TestData/snoopy_depth_000017.png",
