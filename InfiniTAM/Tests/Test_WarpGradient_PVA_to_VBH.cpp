@@ -363,7 +363,7 @@ GenericWarpConsistencySubtest_CUDA(const SlavchevaSurfaceTracker::Switches& swit
 			case TEST_SUCCESSIVE_ITERATIONS:
 				ITMSceneManipulationEngine_CUDA<ITMWarp, TIndex>::Inst().ResetScene(&warp_field_CUDA2);
 				warp_field_CUDA2.LoadFromDirectory(get_path_warps(prefix, iteration));
-				BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA, &warp_field_CUDA2, absolute_tolerance));
+				BOOST_REQUIRE(contentAlmostEqual_CUDA_Verbose(&warp_field_CUDA, &warp_field_CUDA2, absolute_tolerance));
 				break;
 			default:
 				break;
@@ -406,7 +406,7 @@ void
 GenericWarpTest_CUDA(const SlavchevaSurfaceTracker::Switches& switches, int iteration_limit = 10,
                      GenericWarpTestMode mode = TEST_SUCCESSIVE_ITERATIONS) {
 
-	float absoluteTolerance = 1e-7;
+	float absoluteTolerance = 1e-5;
 	GenericWarpConsistencySubtest_CUDA<ITMPlainVoxelArray>(switches, iteration_limit, mode, absoluteTolerance);
 	GenericWarpConsistencySubtest_CUDA<ITMVoxelBlockHash>(switches, iteration_limit, mode, absoluteTolerance);
 
@@ -529,10 +529,10 @@ GenericWarpTest_CPU(const SlavchevaSurfaceTracker::Switches& switches, int itera
 
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CPU) {
-	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
-	Configuration::get().telemetry_settings.focus_coordinates = Vector3i(-15, 6, 170);
+//	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
+//	Configuration::get().telemetry_settings.focus_coordinates = Vector3i(-15, 6, 170);
 	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);
-	GenericWarpTest_CPU(switches, 2, TEST_SUCCESSIVE_ITERATIONS);
+	GenericWarpTest_CPU(switches, 10, TEST_SUCCESSIVE_ITERATIONS);
 }
 
 
@@ -540,7 +540,7 @@ BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CUDA) {
 //	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
 //	Configuration::get().telemetry_settings.focus_coordinates = Vector3i(-24, 63, 240);
 	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);
-	GenericWarpTest_CUDA(switches, 2, TEST_SUCCESSIVE_ITERATIONS);
+	GenericWarpTest_CUDA(switches, 10, TEST_SUCCESSIVE_ITERATIONS);
 }
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonov) {
