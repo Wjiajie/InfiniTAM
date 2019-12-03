@@ -19,7 +19,7 @@
 #include "../../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
 #include "../../../../Objects/RenderStates/ITMRenderState_VH.h"
-#include "../../../Reconstruction/Shared/ITMSceneReconstructionEngine_Shared.h"
+#include "../../Shared/ITMIndexingEngine_Shared.h"
 
 using namespace ITMLib;
 

@@ -16,7 +16,6 @@
 #pragma once
 
 #include "../../../../../ORUtils/JetbrainsCUDASyntax.hpp"
-#include "../../../Reconstruction/Shared/ITMSceneReconstructionEngine_Shared.h"
 #include "../../../../Utils/ITMCUDAUtils.h"
 #include "../../../../Objects/Scene/ITMGlobalCache.h"
 #include "../../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
