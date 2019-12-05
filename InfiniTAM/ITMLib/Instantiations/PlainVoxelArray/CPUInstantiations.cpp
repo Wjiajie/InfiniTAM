@@ -11,17 +11,17 @@
 #include "../../Engines/Meshing/CPU/ITMMeshingEngine_CPU.tpp"
 #include "../../Engines/Meshing/CPU/ITMMultiMeshingEngine_CPU.tpp"
 #include "../../Engines/MultiScene/ITMMapGraphManager.tpp"
-#include "../../Engines/Visualisation/CPU/ITMMultiVisualisationEngine_CPU.tpp"
+#include "../../Engines/Visualization/CPU/ITMMultiVisualizationEngine_CPU.tpp"
 #include "../../Engines/Reconstruction/ITMSurfelSceneReconstructionEngineFactory.tpp"
 #include "../../Engines/Reconstruction/CPU/ITMSceneReconstructionEngine_CPU.tpp"
 #include "../../Engines/Reconstruction/CPU/ITMSurfelSceneReconstructionEngine_CPU.tpp"
 #include "../../Engines/Reconstruction/Interface/ITMSurfelSceneReconstructionEngine.tpp"
 #include "../../Engines/Swapping/CPU/ITMSwappingEngine_CPU.tpp"
-#include "../../Engines/Visualisation/ITMSurfelVisualisationEngineFactory.tpp"
-#include "../../Engines/Visualisation/CPU/ITMSurfelVisualisationEngine_CPU.tpp"
-#include "../../Engines/Visualisation/CPU/ITMVisualisationEngine_CPU.tpp"
-#include "../../Engines/Visualisation/Interface/ITMSurfelVisualisationEngine.tpp"
-#include "../../Engines/Visualisation/Interface/ITMVisualisationEngine.h"
+#include "../../Engines/Visualization/ITMSurfelVisualizationEngineFactory.tpp"
+#include "../../Engines/Visualization/CPU/ITMSurfelVisualisationEngine_CPU.tpp"
+#include "../../Engines/Visualization/CPU/ITMVisualisationEngine_CPU.tpp"
+#include "../../Engines/Visualization/Interface/ITMSurfelVisualisationEngine.tpp"
+#include "../../Engines/Visualization/Interface/ITMVisualisationEngine.h"
 #include "../../CameraTrackers/ITMCameraTrackerFactory.h"
 
 
@@ -34,7 +34,7 @@ namespace ITMLib
 	template class ITMMultiEngine<ITMVoxel, ITMPlainVoxelArray>;
 	template class ITMDenseMapper<ITMVoxel, ITMPlainVoxelArray>;
 	template class ITMVoxelMapGraphManager<ITMVoxel, ITMPlainVoxelArray>;
-	template class ITMVisualisationEngine_CPU<ITMVoxel, ITMPlainVoxelArray>;
+	template class ITMVisualizationEngine_CPU<ITMVoxel, ITMPlainVoxelArray>;
 	template class ITMMeshingEngine_CPU<ITMVoxel, ITMPlainVoxelArray>;
 	template class ITMMultiMeshingEngine_CPU<ITMVoxel, ITMPlainVoxelArray>;
 	template class ITMSwappingEngine_CPU<ITMVoxel, ITMPlainVoxelArray>;
@@ -50,8 +50,8 @@ namespace ITMLib
 	template struct ITMSurfelSceneReconstructionEngineFactory<ITMSurfel_rgb>;
 	template class ITMSurfelVisualisationEngine<ITMSurfel_grey>;
 	template class ITMSurfelVisualisationEngine<ITMSurfel_rgb>;
-	template class ITMSurfelVisualisationEngine_CPU<ITMSurfel_grey>;
-	template class ITMSurfelVisualisationEngine_CPU<ITMSurfel_rgb>;
-	template struct ITMSurfelVisualisationEngineFactory<ITMSurfel_grey>;
-	template struct ITMSurfelVisualisationEngineFactory<ITMSurfel_rgb>;
+	template class ITMSurfelVisualizationEngine_CPU<ITMSurfel_grey>;
+	template class ITMSurfelVisualizationEngine_CPU<ITMSurfel_rgb>;
+	template struct ITMSurfelVisualizationEngineFactory<ITMSurfel_grey>;
+	template struct ITMSurfelVisualizationEngineFactory<ITMSurfel_rgb>;
 }

@@ -50,11 +50,11 @@ bool contentAlmostEqual_CPU_Verbose(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxel
 // region ============================ COMPARISON OF VOXELS WITH SPECIFIC FLAGS WITHIN BOTH VOLUMES ====================
 
 template<bool TBothVoxelTypesHaveFlags, typename TVoxel, typename TIndexA,
-		typename TIndexB, typename ToleranceType>
+		typename TIndexB, typename ToleranceType, MemoryDeviceType TMemoryDeviceType>
 struct FlaggedVoxelComparisonUtility;
 
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
-struct FlaggedVoxelComparisonUtility<true, TVoxel, TIndexA, TIndexB, ToleranceType> {
+struct FlaggedVoxelComparisonUtility<true, TVoxel, TIndexA, TIndexB, ToleranceType, MEMORYDEVICE_CPU> {
 	static
 	bool compare(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b, VoxelFlags flags,
 	             ToleranceType tolerance) {
@@ -73,7 +73,7 @@ struct FlaggedVoxelComparisonUtility<true, TVoxel, TIndexA, TIndexB, ToleranceTy
 };
 
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
-struct FlaggedVoxelComparisonUtility<false, TVoxel, TIndexA, TIndexB, ToleranceType> {
+struct FlaggedVoxelComparisonUtility<false, TVoxel, TIndexA, TIndexB, ToleranceType, MEMORYDEVICE_CPU> {
 	static
 	bool compare(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TVoxel, TIndexB>* b, VoxelFlags flags,
 	             ToleranceType tolerance) {
@@ -93,13 +93,13 @@ struct FlaggedVoxelComparisonUtility<false, TVoxel, TIndexA, TIndexB, ToleranceT
 
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
 bool contentForFlagsAlmostEqual_CPU(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<TVoxel,TIndexB>* b, VoxelFlags flags, ToleranceType tolerance){
-	return FlaggedVoxelComparisonUtility<TVoxel::hasSemanticInformation, TVoxel, TIndexA, TIndexB, ToleranceType>::
+	return FlaggedVoxelComparisonUtility<TVoxel::hasSemanticInformation, TVoxel, TIndexA, TIndexB, ToleranceType, MEMORYDEVICE_CPU>::
 	compare(a, b, flags, tolerance);
 }
 
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
 bool contentForFlagsAlmostEqual_CPU_Verbose(ITMVoxelVolume<TVoxel,TIndexA>* a, ITMVoxelVolume<TVoxel,TIndexB>* b, VoxelFlags flags, ToleranceType tolerance){
-	return FlaggedVoxelComparisonUtility<TVoxel::hasSemanticInformation, TVoxel, TIndexA, TIndexB, ToleranceType>::
+	return FlaggedVoxelComparisonUtility<TVoxel::hasSemanticInformation, TVoxel, TIndexA, TIndexB, ToleranceType, MEMORYDEVICE_CPU>::
 	compare_Verbose(a, b, flags, tolerance);
 }
 

@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "CPU/ITMMultiVisualisationEngine_CPU.h"
+#include "CPU/ITMMultiVisualizationEngine_CPU.h"
 #ifndef COMPILE_WITHOUT_CUDA
-#include "CUDA/ITMMultiVisualisationEngine_CUDA.h"
+#include "CUDA/ITMMultiVisualizationEngine_CUDA.h"
 #endif
 #ifdef COMPILE_WITH_METAL
 //#include "Metal/ITMMultiVisualisationEngine_Metal.h"
@@ -16,7 +16,7 @@ namespace ITMLib
 	/**
 	 * \brief This struct provides functions that can be used to construct visualisation engines.
 	 */
-	struct ITMMultiVisualisationEngineFactory
+	struct ITMMultiVisualizationEngineFactory
 	{
 		//#################### PUBLIC STATIC MEMBER FUNCTIONS ####################
 
@@ -33,11 +33,11 @@ namespace ITMLib
 			switch (deviceType)
 			{
 			case MEMORYDEVICE_CPU:
-				visualisationEngine = new ITMMultiVisualisationEngine_CPU<TVoxel, TIndex>;
+				visualisationEngine = new ITMMultiVisualizationEngine_CPU<TVoxel, TIndex>;
 				break;
 			case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-				visualisationEngine = new ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>;
+				visualisationEngine = new ITMMultiVisualizationEngine_CUDA<TVoxel, TIndex>;
 #endif
 				break;
 			case MEMORYDEVICE_METAL:

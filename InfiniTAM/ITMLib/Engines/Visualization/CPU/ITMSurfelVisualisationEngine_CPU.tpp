@@ -1,6 +1,6 @@
 // InfiniTAM: Surffuse. Copyright (c) Torr Vision Group and the authors of InfiniTAM, 2016.
 
-#include "ITMSurfelVisualisationEngine_CPU.h"
+#include "ITMSurfelVisualizationEngine_CPU.h"
 
 #include <stdexcept>
 
@@ -12,7 +12,7 @@ namespace ITMLib
 //#################### PUBLIC MEMBER FUNCTIONS ####################
 
 template <typename TSurfel>
-void ITMSurfelVisualisationEngine_CPU<TSurfel>::CopyCorrespondencesToBuffers(const ITMSurfelScene<TSurfel> *scene, float *newPositions, float *oldPositions, float *correspondences) const
+void ITMSurfelVisualizationEngine_CPU<TSurfel>::CopyCorrespondencesToBuffers(const ITMSurfelScene<TSurfel> *scene, float *newPositions, float *oldPositions, float *correspondences) const
 {
   const int surfelCount = static_cast<int>(scene->GetSurfelCount());
   const TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CPU);
@@ -27,7 +27,7 @@ void ITMSurfelVisualisationEngine_CPU<TSurfel>::CopyCorrespondencesToBuffers(con
 }
 
 template <typename TSurfel>
-void ITMSurfelVisualisationEngine_CPU<TSurfel>::CopySceneToBuffers(const ITMSurfelScene<TSurfel> *scene, float *positions, unsigned char *normals, unsigned char *colours) const
+void ITMSurfelVisualizationEngine_CPU<TSurfel>::CopySceneToBuffers(const ITMSurfelScene<TSurfel> *scene, float *positions, unsigned char *normals, unsigned char *colours) const
 {
   const int surfelCount = static_cast<int>(scene->GetSurfelCount());
   const TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CPU);
@@ -42,7 +42,7 @@ void ITMSurfelVisualisationEngine_CPU<TSurfel>::CopySceneToBuffers(const ITMSurf
 }
 
 template <typename TSurfel>
-void ITMSurfelVisualisationEngine_CPU<TSurfel>::CreateICPMaps(const ITMSurfelScene<TSurfel> *scene, const ITMSurfelRenderState *renderState, ITMTrackingState *trackingState) const
+void ITMSurfelVisualizationEngine_CPU<TSurfel>::CreateICPMaps(const ITMSurfelScene<TSurfel> *scene, const ITMSurfelRenderState *renderState, ITMTrackingState *trackingState) const
 {
   const Matrix4f& invT = trackingState->pose_d->GetM();
   Vector4f *normalsMap = trackingState->pointCloud->colours->GetData(MEMORYDEVICE_CPU);
@@ -62,7 +62,7 @@ void ITMSurfelVisualisationEngine_CPU<TSurfel>::CreateICPMaps(const ITMSurfelSce
 }
 
 template <typename TSurfel>
-void ITMSurfelVisualisationEngine_CPU<TSurfel>::RenderDepthImage(const ITMSurfelScene<TSurfel> *scene, const ORUtils::SE3Pose *pose,
+void ITMSurfelVisualizationEngine_CPU<TSurfel>::RenderDepthImage(const ITMSurfelScene<TSurfel> *scene, const ORUtils::SE3Pose *pose,
                                                                  const ITMSurfelRenderState *renderState, ITMFloatImage *outputImage) const
 {
   const Vector3f cameraPosition = pose->GetT();
@@ -81,7 +81,7 @@ void ITMSurfelVisualisationEngine_CPU<TSurfel>::RenderDepthImage(const ITMSurfel
 }
 
 template <typename TSurfel>
-void ITMSurfelVisualisationEngine_CPU<TSurfel>::RenderImage(const ITMSurfelScene<TSurfel> *scene, const ORUtils::SE3Pose *pose, const ITMSurfelRenderState *renderState,
+void ITMSurfelVisualizationEngine_CPU<TSurfel>::RenderImage(const ITMSurfelScene<TSurfel> *scene, const ORUtils::SE3Pose *pose, const ITMSurfelRenderState *renderState,
                                                             ITMUChar4Image *outputImage, RenderImageType type) const
 {
   // Prevent colour rendering if the surfels don't store colour information.
@@ -159,13 +159,13 @@ void ITMSurfelVisualisationEngine_CPU<TSurfel>::RenderImage(const ITMSurfelScene
 //#################### PRIVATE MEMBER FUNCTIONS ####################
 
 template <typename TSurfel>
-MemoryDeviceType ITMSurfelVisualisationEngine_CPU<TSurfel>::GetMemoryType() const
+MemoryDeviceType ITMSurfelVisualizationEngine_CPU<TSurfel>::GetMemoryType() const
 {
   return MEMORYDEVICE_CPU;
 }
 
 template <typename TSurfel>
-void ITMSurfelVisualisationEngine_CPU<TSurfel>::MakeIndexImage(const ITMSurfelScene<TSurfel> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics,
+void ITMSurfelVisualizationEngine_CPU<TSurfel>::MakeIndexImage(const ITMSurfelScene<TSurfel> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics,
                                                                int width, int height, int scaleFactor, unsigned int *surfelIndexImage, bool useRadii,
                                                                UnstableSurfelRenderingMode unstableSurfelRenderingMode, int *depthBuffer) const
 {

@@ -1,6 +1,6 @@
 // Copyright 2014-2017 Oxford University Innovation Limited and the authors of InfiniTAM
 
-#include "ITMMultiVisualisationEngine_CPU.h"
+#include "ITMMultiVisualizationEngine_CPU.h"
 
 #include "../../../Objects/RenderStates/ITMRenderStateMultiScene.h"
 #include "../../../Objects/Scene/ITMMultiSceneAccess.h"
@@ -10,19 +10,19 @@
 using namespace ITMLib;
 
 template<class TVoxel, class TIndex>
-ITMRenderState* ITMMultiVisualisationEngine_CPU<TVoxel, TIndex>::CreateRenderState(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Vector2i & imgSize) const
+ITMRenderState* ITMMultiVisualizationEngine_CPU<TVoxel, TIndex>::CreateRenderState(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Vector2i & imgSize) const
 {
 	return new ITMRenderStateMultiScene<TVoxel, TIndex>(imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CPU);
 }
 
 template<class TVoxel>
-ITMRenderState* ITMMultiVisualisationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CreateRenderState(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const
+ITMRenderState* ITMMultiVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CreateRenderState(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const
 {
 	return new ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>(imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CPU);
 }
 
 template<class TVoxel, class TIndex>
-void ITMMultiVisualisationEngine_CPU<TVoxel, TIndex>::PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, TIndex> & mapManager, ITMRenderState *_state)
+void ITMMultiVisualizationEngine_CPU<TVoxel, TIndex>::PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, TIndex> & mapManager, ITMRenderState *_state)
 {
 	ITMRenderStateMultiScene<TVoxel, TIndex> *state = (ITMRenderStateMultiScene<TVoxel, TIndex>*)_state;
 
@@ -30,19 +30,19 @@ void ITMMultiVisualisationEngine_CPU<TVoxel, TIndex>::PrepareRenderState(const I
 }
 
 template<class TVoxel>
-void ITMMultiVisualisationEngine_CPU<TVoxel, ITMVoxelBlockHash>::PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, ITMVoxelBlockHash> & mapManager, ITMRenderState *_state){
+void ITMMultiVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, ITMVoxelBlockHash> & mapManager, ITMRenderState *_state){
 	ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash> *state = (ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>*)_state;
 	state->PrepareLocalMaps(mapManager);
 }
 
 
 template<class TVoxel, class TIndex>
-void ITMMultiVisualisationEngine_CPU<TVoxel, TIndex>::CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
+void ITMMultiVisualizationEngine_CPU<TVoxel, TIndex>::CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
 {
 }
 
 template<class TVoxel>
-void ITMMultiVisualisationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
+void ITMMultiVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
 {
 	ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash> *renderState = (ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>*)_renderState;
 
@@ -236,13 +236,13 @@ static void RenderImage_common(const ORUtils::SE3Pose *pose, const ITMIntrinsics
 };
 
 template<class TVoxel, class TIndex>
-void ITMMultiVisualisationEngine_CPU<TVoxel, TIndex>::RenderImage(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type) const
+void ITMMultiVisualizationEngine_CPU<TVoxel, TIndex>::RenderImage(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type) const
 {
 	RenderImage_common<TVoxel,TIndex>(pose,intrinsics,_renderState,outputImage,type);
 }
 
 template<class TVoxel>
-void ITMMultiVisualisationEngine_CPU<TVoxel, ITMVoxelBlockHash>::RenderImage(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type) const
+void ITMMultiVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::RenderImage(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type) const
 {
 	RenderImage_common<TVoxel,ITMVoxelBlockHash>(pose,intrinsics,_renderState,outputImage,type);
 }

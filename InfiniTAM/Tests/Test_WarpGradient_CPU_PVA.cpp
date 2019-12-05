@@ -83,11 +83,12 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_PVA, DataFixture) {
 		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
 	}, "Calculate Warp Gradient - PVA CPU data term");
 
+	//warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_data_");
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
-	BOOST_REQUIRE_EQUAL(functor.count.load(), 36627u);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 37525);
 
 	float tolerance = 1e-5;
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_term, tolerance));
@@ -102,16 +103,17 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_PVA, DataFixture) {
 	AlteredGradientCountFunctor<ITMWarp> agcFunctor;
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_copy, agcFunctor);
-	BOOST_REQUIRE_EQUAL(agcFunctor.count.load(), 36627u);
+	BOOST_REQUIRE_EQUAL(agcFunctor.count.load(), 37525u);
 
 
 	float maxWarp = motionTracker_PVA_CPU->UpdateWarps(canonical_volume, live_volume, &warp_field_copy);
-	BOOST_REQUIRE_CLOSE(maxWarp, 0.0870865062f, 1e-7);
+	//warp_field_copy.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_data_flow_warps_");
+	BOOST_REQUIRE_CLOSE(maxWarp, 0.242487013f, 1e-7);
 
 	AlteredFlowWarpCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_copy, functor);
-	BOOST_REQUIRE_EQUAL(functor.count.load(), 36627u);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 37525u);
 
 	float tolerance = 1e-8;
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_copy, warp_field_iter0, tolerance));
@@ -145,12 +147,13 @@ BOOST_FIXTURE_TEST_CASE(testDataAndTikhonovTerm_CPU_PVA, DataFixture) {
 	TimeIt([&]() {
 		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
 	}, "Calculate Warp Gradient - PVA CPU data + tikhonov term");
+//	warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_1_data_and_tikhonov_");
 
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
-	BOOST_REQUIRE_EQUAL(functor.count.load(), 42417);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 57416);
 
 	float tolerance = 1e-8;
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_and_tikhonov_term, tolerance));
@@ -169,12 +172,12 @@ BOOST_FIXTURE_TEST_CASE(testDataAndKillingTerm_CPU_PVA, DataFixture) {
 	TimeIt([&]() {
 		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
 	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
-
+	//warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_1_data_and_killing_");
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
-	BOOST_REQUIRE_EQUAL(functor.count.load(), 42670);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 59093);
 
 	float tolerance = 1e-8;
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_and_killing_term, tolerance));
@@ -194,12 +197,12 @@ BOOST_FIXTURE_TEST_CASE(testDataAndLevelSetTerm_CPU_PVA, DataFixture) {
 	TimeIt([&]() {
 		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
 	}, "Calculate Warp Gradient - PVA CPU data term + level set term");
-
+//	warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_1_data_and_level_set_");
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
-	BOOST_REQUIRE_EQUAL(functor.count.load(), 41275);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 55369);
 
 	float tolerance = 1e-7;
 	BOOST_REQUIRE(contentAlmostEqual_CPU_Verbose(&warp_field_CPU1, warp_field_data_and_level_set_term, tolerance));

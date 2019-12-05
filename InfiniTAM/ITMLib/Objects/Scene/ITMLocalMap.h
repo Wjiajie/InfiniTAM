@@ -4,7 +4,7 @@
 
 #include <map>
 
-#include "../../Engines/Visualisation/Interface/ITMVisualisationEngine.h"
+#include "../../Engines/Visualization/Interface/ITMVisualisationEngine.h"
 #include "../../Objects/RenderStates/ITMRenderState.h"
 #include "ITMVoxelVolume.h"
 #include "../../Objects/Tracking/ITMTrackingState.h"

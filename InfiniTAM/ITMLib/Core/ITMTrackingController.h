@@ -4,8 +4,8 @@
 
 #include <stdexcept>
 
-#include "../Engines/Visualisation/Interface/ITMSurfelVisualisationEngine.h"
-#include "../Engines/Visualisation/Interface/ITMVisualisationEngine.h"
+#include "../Engines/Visualization/Interface/ITMSurfelVisualisationEngine.h"
+#include "../Engines/Visualization/Interface/ITMVisualisationEngine.h"
 #include "../CameraTrackers/Interface/ITMCameraTracker.h"
 #include "../Utils/Configuration.h"
 #include "../CameraTrackers/Interface/ITMCameraTracker.h"

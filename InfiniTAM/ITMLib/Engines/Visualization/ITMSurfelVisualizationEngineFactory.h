@@ -11,7 +11,7 @@ namespace ITMLib
    * \brief An instantiation of this struct can be used to construct surfel visualisation engines.
    */
   template <typename TSurfel>
-  struct ITMSurfelVisualisationEngineFactory
+  struct ITMSurfelVisualizationEngineFactory
   {
     //#################### PUBLIC STATIC MEMBER FUNCTIONS ####################
 

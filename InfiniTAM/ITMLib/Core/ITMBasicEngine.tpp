@@ -5,7 +5,7 @@
 #include "../Engines/LowLevel/ITMLowLevelEngineFactory.h"
 #include "../Engines/Meshing/ITMMeshingEngineFactory.h"
 #include "../Engines/ViewBuilding/ITMViewBuilderFactory.h"
-#include "../Engines/Visualisation/ITMVisualisationEngineFactory.h"
+#include "../Engines/Visualization/ITMVisualizationEngineFactory.h"
 #include "../Objects/RenderStates/ITMRenderStateFactory.h"
 #include "../CameraTrackers/ITMCameraTrackerFactory.h"
 
@@ -30,7 +30,7 @@ ITMBasicEngine<TVoxel,TIndex>::ITMBasicEngine(const ITMRGBDCalib& calib, Vector2
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
-	visualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxel,TIndex>(deviceType);
+	visualisationEngine = ITMVisualizationEngineFactory::MakeVisualisationEngine<TVoxel,TIndex>(deviceType);
 
 	meshingEngine = NULL;
 	if (settings.create_meshing_engine)

@@ -367,29 +367,39 @@ inline void interpolateTSDFVolume(TVoxel* sdfSourceVoxels,
                                   bool printResult) {
 
 	Vector3f warpVector = ITMLib::WarpVoxelStaticFunctor<TWarp, TWarpType>::GetWarp(warpVoxel);
-	if(ORUtils::length(warpVector) < 1e-5f) {
+	//_DEBUG
+//	Vector3i test_pos(2, 28, 185);
+//	if (warpAndDestinationVoxelPosition == test_pos) {
+//		printf("GOTCHA3-1 voxel %d %d %d, warp vector length: %E\n", test_pos.x, test_pos.y, test_pos.z,
+//		       ORUtils::length(warpVector));
+//	}
+	if (ORUtils::length(warpVector) < 1e-5f) {
 		int vmIndex;
-#if !defined(__CUDACC__) &&!defined(WITH_OPENMP)
+#if !defined(__CUDACC__) && !defined(WITH_OPENMP)
 		const TVoxel& sourceTSDFVoxelAtSameLocation = readVoxel(sdfSourceVoxels, sdfSourceIndexData,
 		                                                        warpAndDestinationVoxelPosition,
 		                                                        vmIndex, sourceTSDFCache);
 #else //don't use cache when multithreading!
 		const TVoxel& sourceTSDFVoxelAtSameLocation = readVoxel(sdfSourceVoxels, sdfSourceIndexData,
-		                                                warpAndDestinationVoxelPosition,
-		                                                vmIndex);
+														warpAndDestinationVoxelPosition,
+														vmIndex);
 #endif
 		destinationVoxel.sdf = sourceTSDFVoxelAtSameLocation.sdf;
 		destinationVoxel.flags = sourceTSDFVoxelAtSameLocation.flags;
+		//_DEBUG
+		Vector3i test_pos(2, 28, 185);
+		if (warpAndDestinationVoxelPosition == test_pos) {
+			printf("GOTCHA3-2 voxel %d %d %d, source TSDF: %E, source flags: %d\n",
+			       test_pos.x, test_pos.y, test_pos.z,
+			       sourceTSDFVoxelAtSameLocation.sdf,
+			       sourceTSDFVoxelAtSameLocation.flags);
+		}
 		return;
 	}
 	Vector3f warpedPosition = TO_FLOAT3(warpAndDestinationVoxelPosition) + warpVector;
 	bool struckKnown;
 
-	//_DEBUG
-//	Vector3i test_pos(-57, -9, 195);
-//	if (warpAndDestinationVoxelPosition == test_pos){
-//		printf("GOTCHA3\n");
-//	}
+
 	float sdf = _DEBUG_InterpolateTrilinearly_StruckKnown(
 			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sourceTSDFCache, struckKnown, printResult);
 

@@ -4,14 +4,19 @@
 
 #include "../Interface/ITMVisualisationEngine.h"
 
+struct RenderingBlock;
+
 namespace ITMLib
 {
 	template<class TVoxel, class TIndex>
-	class ITMVisualisationEngine_CPU : public ITMVisualisationEngine < TVoxel, TIndex >
+	class ITMVisualizationEngine_CUDA : public ITMVisualisationEngine < TVoxel, TIndex >
 	{
+	private:
+		uint *noTotalPoints_device;
+
 	public:
-		explicit ITMVisualisationEngine_CPU(void) { }
-		~ITMVisualisationEngine_CPU(void) { }
+		explicit ITMVisualizationEngine_CUDA(void);
+		~ITMVisualizationEngine_CUDA(void);
 
 		ITMRenderState* CreateRenderState(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Vector2i & imgSize) const;
 		void FindVisibleBlocks(const ITMVoxelVolume<TVoxel,TIndex> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *renderState) const;
@@ -27,11 +32,16 @@ namespace ITMLib
 	};
 
 	template<class TVoxel>
-	class ITMVisualisationEngine_CPU<TVoxel, ITMVoxelBlockHash> : public ITMVisualisationEngine < TVoxel, ITMVoxelBlockHash >
+	class ITMVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash> : public ITMVisualisationEngine < TVoxel, ITMVoxelBlockHash >
 	{
+	private:
+		uint *noTotalPoints_device;
+		RenderingBlock *renderingBlockList_device;
+		uint *noTotalBlocks_device;
+		int *noVisibleEntries_device;
 	public:
-		explicit ITMVisualisationEngine_CPU(void) { }
-		~ITMVisualisationEngine_CPU(void) { }
+		explicit ITMVisualizationEngine_CUDA(void);
+		~ITMVisualizationEngine_CUDA(void);
 
 		ITMRenderState_VH* CreateRenderState(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const;
 		void FindVisibleBlocks(const ITMVoxelVolume<TVoxel,ITMVoxelBlockHash> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *renderState) const;

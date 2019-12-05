@@ -27,6 +27,11 @@ bool contentAlmostEqual_CUDA<ITMVoxel, ITMPlainVoxelArray, ITMPlainVoxelArray, f
 		float tolerance);
 
 template
+bool contentAlmostEqual_CUDA_Verbose<ITMVoxel, ITMPlainVoxelArray, ITMPlainVoxelArray, float>(
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* b,
+		float tolerance);
+
+template
 bool contentAlmostEqual_CUDA<ITMVoxel, ITMVoxelBlockHash, ITMVoxelBlockHash, float>(
 		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
 		float tolerance);

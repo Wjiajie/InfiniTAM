@@ -7,11 +7,11 @@
 namespace ITMLib 
 {
 	template<class TVoxel, class TIndex>
-	class ITMMultiVisualisationEngine_CPU : public ITMMultiVisualisationEngine<TVoxel, TIndex>
+	class ITMMultiVisualizationEngine_CPU : public ITMMultiVisualisationEngine<TVoxel, TIndex>
 	{
 	public:
-		ITMMultiVisualisationEngine_CPU(void) {}
-		~ITMMultiVisualisationEngine_CPU(void) {}
+		ITMMultiVisualizationEngine_CPU(void) {}
+		~ITMMultiVisualizationEngine_CPU(void) {}
 
 		ITMRenderState* CreateRenderState(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Vector2i & imgSize) const;
 
@@ -23,11 +23,11 @@ namespace ITMLib
 	};
 
 template<class TVoxel>
-class ITMMultiVisualisationEngine_CPU<TVoxel,ITMVoxelBlockHash> : public ITMMultiVisualisationEngine<TVoxel, ITMVoxelBlockHash>
+class ITMMultiVisualizationEngine_CPU<TVoxel,ITMVoxelBlockHash> : public ITMMultiVisualisationEngine<TVoxel, ITMVoxelBlockHash>
 {
 public:
-	ITMMultiVisualisationEngine_CPU(void) {}
-	~ITMMultiVisualisationEngine_CPU(void) {}
+	ITMMultiVisualizationEngine_CPU(void) {}
+	~ITMMultiVisualizationEngine_CPU(void) {}
 
 	ITMRenderState* CreateRenderState(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const;
 

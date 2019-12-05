@@ -1,11 +1,11 @@
 // InfiniTAM: Surffuse. Copyright (c) Torr Vision Group and the authors of InfiniTAM, 2016.
 
-#include "ITMSurfelVisualisationEngineFactory.h"
+#include "ITMSurfelVisualizationEngineFactory.h"
 
-#include "CPU/ITMSurfelVisualisationEngine_CPU.h"
+#include "CPU/ITMSurfelVisualizationEngine_CPU.h"
 
 #ifndef COMPILE_WITHOUT_CUDA
-#include "CUDA/ITMSurfelVisualisationEngine_CUDA.h"
+#include "CUDA/ITMSurfelVisualizationEngine_CUDA.h"
 #endif
 
 namespace ITMLib
@@ -15,21 +15,21 @@ namespace ITMLib
 
 template <typename TSurfel>
 ITMSurfelVisualisationEngine<TSurfel> *
-ITMSurfelVisualisationEngineFactory<TSurfel>::make_surfel_visualisation_engine(MemoryDeviceType deviceType)
+ITMSurfelVisualizationEngineFactory<TSurfel>::make_surfel_visualisation_engine(MemoryDeviceType deviceType)
 {
   ITMSurfelVisualisationEngine<TSurfel> *visualisationEngine = NULL;
 
   if(deviceType == MEMORYDEVICE_CUDA)
   {
 #ifndef COMPILE_WITHOUT_CUDA
-    visualisationEngine = new ITMSurfelVisualisationEngine_CUDA<TSurfel>;
+    visualisationEngine = new ITMSurfelVisualizationEngine_CUDA<TSurfel>;
 #else
     throw std::runtime_error("Error: CUDA support not currently available. Reconfigure in CMake with the WITH_CUDA option set to on.");
 #endif
   }
   else
   {
-    visualisationEngine = new ITMSurfelVisualisationEngine_CPU<TSurfel>;
+    visualisationEngine = new ITMSurfelVisualizationEngine_CPU<TSurfel>;
   }
 
   return visualisationEngine;

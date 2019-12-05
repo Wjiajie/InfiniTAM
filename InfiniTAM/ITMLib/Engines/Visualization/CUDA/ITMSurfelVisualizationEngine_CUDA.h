@@ -10,7 +10,7 @@ namespace ITMLib
    * \brief An instance of an instantiation of a class template deriving from this one can be used to render a surfel-based 3D scene using CUDA.
    */
   template <typename TSurfel>
-  class ITMSurfelVisualisationEngine_CUDA : public ITMSurfelVisualisationEngine<TSurfel>
+  class ITMSurfelVisualizationEngine_CUDA : public ITMSurfelVisualisationEngine<TSurfel>
   {
     //#################### TYPEDEFS & USINGS ####################
   private:

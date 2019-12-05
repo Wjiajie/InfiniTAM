@@ -9,13 +9,13 @@ struct RenderingBlock;
 namespace ITMLib {
 
 	template<class TVoxel, class TIndex>
-	class ITMMultiVisualisationEngine_CUDA : public ITMMultiVisualisationEngine<TVoxel, TIndex>
+	class ITMMultiVisualizationEngine_CUDA : public ITMMultiVisualisationEngine<TVoxel, TIndex>
 	{
 	private:
 
 	public:
-		ITMMultiVisualisationEngine_CUDA(void);
-		~ITMMultiVisualisationEngine_CUDA(void);
+		ITMMultiVisualizationEngine_CUDA(void);
+		~ITMMultiVisualizationEngine_CUDA(void);
 
 		ITMRenderState* CreateRenderState(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Vector2i & imgSize) const;
 
@@ -27,15 +27,15 @@ namespace ITMLib {
 	};
 
 	template<class TVoxel>
-	class ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash> : public ITMMultiVisualisationEngine<TVoxel, ITMVoxelBlockHash>
+	class ITMMultiVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash> : public ITMMultiVisualisationEngine<TVoxel, ITMVoxelBlockHash>
 	{
 	private:
 		RenderingBlock *renderingBlockList_device;
 		uint *noTotalBlocks_device;
 
 	public:
-		ITMMultiVisualisationEngine_CUDA(void);
-		~ITMMultiVisualisationEngine_CUDA(void);
+		ITMMultiVisualizationEngine_CUDA(void);
+		~ITMMultiVisualizationEngine_CUDA(void);
 
 		ITMRenderState* CreateRenderState(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const;
 

@@ -1,6 +1,6 @@
 // InfiniTAM: Surffuse. Copyright (c) Torr Vision Group and the authors of InfiniTAM, 2016.
 
-#include "ITMSurfelVisualisationEngine_CUDA.h"
+#include "ITMSurfelVisualizationEngine_CUDA.h"
 
 #include <stdexcept>
 
@@ -136,7 +136,7 @@ ck_update_index_image_for_surfel(int surfelCount, const TSurfel* surfels, Matrix
 //#################### PUBLIC MEMBER FUNCTIONS ####################
 
 template <typename TSurfel>
-void ITMSurfelVisualisationEngine_CUDA<TSurfel>::CopyCorrespondencesToBuffers(const ITMSurfelScene<TSurfel> *scene, float *newPositions, float *oldPositions, float *correspondences) const
+void ITMSurfelVisualizationEngine_CUDA<TSurfel>::CopyCorrespondencesToBuffers(const ITMSurfelScene<TSurfel> *scene, float *newPositions, float *oldPositions, float *correspondences) const
 {
   const int surfelCount = static_cast<int>(scene->GetSurfelCount());
 
@@ -154,7 +154,7 @@ void ITMSurfelVisualisationEngine_CUDA<TSurfel>::CopyCorrespondencesToBuffers(co
 }
 
 template <typename TSurfel>
-void ITMSurfelVisualisationEngine_CUDA<TSurfel>::CopySceneToBuffers(const ITMSurfelScene<TSurfel> *scene, float *positions, unsigned char *normals, unsigned char *colours) const
+void ITMSurfelVisualizationEngine_CUDA<TSurfel>::CopySceneToBuffers(const ITMSurfelScene<TSurfel> *scene, float *positions, unsigned char *normals, unsigned char *colours) const
 {
   const int surfelCount = static_cast<int>(scene->GetSurfelCount());
 
@@ -172,7 +172,7 @@ void ITMSurfelVisualisationEngine_CUDA<TSurfel>::CopySceneToBuffers(const ITMSur
 }
 
 template <typename TSurfel>
-void ITMSurfelVisualisationEngine_CUDA<TSurfel>::CreateICPMaps(const ITMSurfelScene<TSurfel> *scene, const ITMSurfelRenderState *renderState, ITMTrackingState *trackingState) const
+void ITMSurfelVisualizationEngine_CUDA<TSurfel>::CreateICPMaps(const ITMSurfelScene<TSurfel> *scene, const ITMSurfelRenderState *renderState, ITMTrackingState *trackingState) const
 {
   const Matrix4f& invT = trackingState->pose_d->GetM();
   const int pixelCount = static_cast<int>(renderState->GetIndexImage()->dataSize);
@@ -195,7 +195,7 @@ void ITMSurfelVisualisationEngine_CUDA<TSurfel>::CreateICPMaps(const ITMSurfelSc
 }
 
 template <typename TSurfel>
-void ITMSurfelVisualisationEngine_CUDA<TSurfel>::RenderDepthImage(const ITMSurfelScene<TSurfel> *scene, const ORUtils::SE3Pose *pose,
+void ITMSurfelVisualizationEngine_CUDA<TSurfel>::RenderDepthImage(const ITMSurfelScene<TSurfel> *scene, const ORUtils::SE3Pose *pose,
                                                                   const ITMSurfelRenderState *renderState, ITMFloatImage *outputImage) const
 {
   const Vector3f cameraPosition = pose->GetT();
@@ -218,7 +218,7 @@ void ITMSurfelVisualisationEngine_CUDA<TSurfel>::RenderDepthImage(const ITMSurfe
 }
 
 template <typename TSurfel>
-void ITMSurfelVisualisationEngine_CUDA<TSurfel>::RenderImage(const ITMSurfelScene<TSurfel> *scene, const ORUtils::SE3Pose *pose, const ITMSurfelRenderState *renderState,
+void ITMSurfelVisualizationEngine_CUDA<TSurfel>::RenderImage(const ITMSurfelScene<TSurfel> *scene, const ORUtils::SE3Pose *pose, const ITMSurfelRenderState *renderState,
                                                              ITMUChar4Image *outputImage, RenderImageType type) const
 {
   // Prevent colour rendering if the surfels don't store colour information.
@@ -278,13 +278,13 @@ void ITMSurfelVisualisationEngine_CUDA<TSurfel>::RenderImage(const ITMSurfelScen
 //#################### PRIVATE MEMBER FUNCTIONS ####################
 
 template <typename TSurfel>
-MemoryDeviceType ITMSurfelVisualisationEngine_CUDA<TSurfel>::GetMemoryType() const
+MemoryDeviceType ITMSurfelVisualizationEngine_CUDA<TSurfel>::GetMemoryType() const
 {
   return MEMORYDEVICE_CUDA;
 }
 
 template <typename TSurfel>
-void ITMSurfelVisualisationEngine_CUDA<TSurfel>::MakeIndexImage(const ITMSurfelScene<TSurfel> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics,
+void ITMSurfelVisualizationEngine_CUDA<TSurfel>::MakeIndexImage(const ITMSurfelScene<TSurfel> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics,
                                                                 int width, int height, int scaleFactor, unsigned int *surfelIndexImage, bool useRadii,
                                                                 UnstableSurfelRenderingMode unstableSurfelRenderingMode, int *depthBuffer) const
 {

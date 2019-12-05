@@ -4,7 +4,7 @@
 
 #ifndef __METALC__
 
-#include "../CPU/ITMVisualisationEngine_CPU.h"
+#include "../CPU/ITMVisualizationEngine_CPU.h"
 
 namespace ITMLib
 {

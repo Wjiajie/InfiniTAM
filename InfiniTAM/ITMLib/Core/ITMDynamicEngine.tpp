@@ -5,7 +5,7 @@
 #include "../Engines/LowLevel/ITMLowLevelEngineFactory.h"
 #include "../Engines/Meshing/ITMMeshingEngineFactory.h"
 #include "../Engines/ViewBuilding/ITMViewBuilderFactory.h"
-#include "../Engines/Visualisation/ITMVisualisationEngineFactory.h"
+#include "../Engines/Visualization/ITMVisualizationEngineFactory.h"
 #include "../Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../Objects/RenderStates/ITMRenderStateFactory.h"
 #include "../CameraTrackers/ITMCameraTrackerFactory.h"
@@ -33,9 +33,9 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
-	liveVisualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxel, TIndex>(deviceType);
+	liveVisualisationEngine = ITMVisualizationEngineFactory::MakeVisualisationEngine<TVoxel, TIndex>(deviceType);
 	canonicalVisualisationEngine =
-			ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxel, TIndex>(deviceType);
+			ITMVisualizationEngineFactory::MakeVisualisationEngine<TVoxel, TIndex>(deviceType);
 
 	meshingEngine = nullptr;
 	if (settings.create_meshing_engine)

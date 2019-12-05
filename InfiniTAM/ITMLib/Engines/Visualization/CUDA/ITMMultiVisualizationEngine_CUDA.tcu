@@ -1,55 +1,55 @@
 // Copyright 2014-2017 Oxford University Innovation Limited and the authors of InfiniTAM
 
-#include "ITMMultiVisualisationEngine_CUDA.h"
+#include "ITMMultiVisualizationEngine_CUDA.h"
 
 #include "../../../Objects/RenderStates/ITMRenderStateMultiScene.h"
 #include "../../../Objects/Scene/ITMMultiSceneAccess.h"
 
 #include "../Shared/ITMVisualisationEngine_Shared.h"
-#include "ITMVisualisationHelpers_CUDA.h"
+#include "ITMVisualizationHelpers_CUDA.h"
 
 using namespace ITMLib;
 
 template<class TVoxel, class TIndex>
-ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::ITMMultiVisualisationEngine_CUDA(void)
+ITMMultiVisualizationEngine_CUDA<TVoxel, TIndex>::ITMMultiVisualizationEngine_CUDA(void)
 {
 
 }
 
 template<class TVoxel, class TIndex>
-ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::~ITMMultiVisualisationEngine_CUDA(void)
+ITMMultiVisualizationEngine_CUDA<TVoxel, TIndex>::~ITMMultiVisualizationEngine_CUDA(void)
 {
 
 }
 
 template<class TVoxel>
-ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ITMMultiVisualisationEngine_CUDA(void)
+ITMMultiVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ITMMultiVisualizationEngine_CUDA(void)
 {
 	ORcudaSafeCall(cudaMalloc((void**)&renderingBlockList_device, sizeof(RenderingBlock) * MAX_RENDERING_BLOCKS));
 	ORcudaSafeCall(cudaMalloc((void**)&noTotalBlocks_device, sizeof(uint)));
 }
 
 template<class TVoxel>
-ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::~ITMMultiVisualisationEngine_CUDA(void)
+ITMMultiVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::~ITMMultiVisualizationEngine_CUDA(void)
 {
 	ORcudaSafeCall(cudaFree(noTotalBlocks_device));
 	ORcudaSafeCall(cudaFree(renderingBlockList_device));
 }
 
 template<class TVoxel, class TIndex>
-ITMRenderState* ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::CreateRenderState(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Vector2i & imgSize) const
+ITMRenderState* ITMMultiVisualizationEngine_CUDA<TVoxel, TIndex>::CreateRenderState(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Vector2i & imgSize) const
 {
 	return new ITMRenderStateMultiScene<TVoxel, TIndex>(imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CUDA);
 }
 
 template<class TVoxel>
-ITMRenderState* ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CreateRenderState(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const
+ITMRenderState* ITMMultiVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CreateRenderState(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const
 {
 	return new ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>(imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CUDA);
 }
 
 template<class TVoxel, class TIndex>
-void ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, TIndex> & mapManager, ITMRenderState *_state)
+void ITMMultiVisualizationEngine_CUDA<TVoxel, TIndex>::PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, TIndex> & mapManager, ITMRenderState *_state)
 {
 	ITMRenderStateMultiScene<TVoxel, TIndex> *state = (ITMRenderStateMultiScene<TVoxel, TIndex>*)_state;
 
@@ -57,7 +57,7 @@ void ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::PrepareRenderState(const 
 }
 
 template<class TVoxel>
-void ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, ITMVoxelBlockHash> & mapManager, ITMRenderState *_state)
+void ITMMultiVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, ITMVoxelBlockHash> & mapManager, ITMRenderState *_state)
 {
 	ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash> *state = (ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>*)_state;
 
@@ -65,7 +65,7 @@ void ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::PrepareRenderS
 }
 
 template<class TVoxel, class TIndex>
-void ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
+void ITMMultiVisualizationEngine_CUDA<TVoxel, TIndex>::CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
 {
 	ITMRenderStateMultiScene<TVoxel, TIndex> *renderState = (ITMRenderStateMultiScene<TVoxel, TIndex>*)_renderState;
 
@@ -78,7 +78,7 @@ void ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::CreateExpectedDepths(cons
 }
 
 template<class TVoxel>
-void ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
+void ITMMultiVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
 {
 	auto *renderState = (ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>*)_renderState;
 
@@ -201,13 +201,13 @@ static void RenderImage_common(const ORUtils::SE3Pose *pose, const ITMIntrinsics
 };
 
 template<class TVoxel, class TIndex>
-void ITMMultiVisualisationEngine_CUDA<TVoxel, TIndex>::RenderImage(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type) const
+void ITMMultiVisualizationEngine_CUDA<TVoxel, TIndex>::RenderImage(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type) const
 {
 	RenderImage_common<TVoxel,TIndex>(pose, intrinsics, _renderState, outputImage, type);
 }
 
 template<class TVoxel>
-void ITMMultiVisualisationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::RenderImage(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type) const
+void ITMMultiVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::RenderImage(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type) const
 {
 	RenderImage_common<TVoxel,ITMVoxelBlockHash>(pose, intrinsics, _renderState, outputImage, type);
 }

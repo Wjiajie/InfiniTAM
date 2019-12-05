@@ -24,6 +24,7 @@
 #include "../ITMLib/Engines/Manipulation/Interface/ITMSceneManipulationEngine.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
+#include "TestUtilsForSnoopyFrames16And17.h"
 
 using namespace ITMLib;
 
@@ -41,26 +42,13 @@ std::string getIndexSuffix<ITMPlainVoxelArray>() {
 }
 
 
-template <typename TIndex>
-typename TIndex::InitializationParameters GetIndexParameters();
-
-template <>
-ITMPlainVoxelArray::InitializationParameters GetIndexParameters<ITMPlainVoxelArray>(){
-	return {Vector3i(80, 96, 144), Vector3i(-64, -24, 168)};
-}
-
-template <>
-ITMVoxelBlockHash::InitializationParameters GetIndexParameters<ITMVoxelBlockHash>(){
-	return { 0x800, 0x20000};
-}
-
 template<MemoryDeviceType TMemoryType, typename TIndex>
 struct WarpGradientDataFixture {
 	WarpGradientDataFixture() :
 			settings(nullptr),
 			warp_field_data_term(nullptr), canonical_volume(nullptr), live_volume(nullptr),
 			pathToData("TestData/snoopy_result_fr16-17_partial_" + getIndexSuffix<TIndex>() + "/"),
-			indexParameters(GetIndexParameters<TIndex>()){
+			indexParameters(Frame16And17Fixture::InitParams<TIndex>()){
 		Configuration::load_default();
 		settings = &Configuration::get();
 
@@ -83,12 +71,12 @@ struct WarpGradientDataFixture {
 			PrepareVoxelVolumeForLoading(*scene, TMemoryType);
 			(*scene)->LoadFromDirectory(pathToData + pathSuffix);
 		};
-		loadSdfVolume(&live_volume, "live");
-		loadSdfVolume(&canonical_volume, "canonical");
+		loadSdfVolume(&live_volume, "snoopy_partial_frame_17_");
+		loadSdfVolume(&canonical_volume, "snoopy_partial_frame_16_");
 		loadWarpVolume(&warp_field_data_term, "warp_field_0_data_");
-		loadWarpVolume(&warp_field_data_term_smoothed, "warp_field_0_smoothed_");
 		loadWarpVolume(&warp_field_iter0, "warp_field_0_data_flow_warps_");
-		loadWarpVolume(&warp_field_tikhonov_term, "warp_field_1_tikhonov_");
+		loadWarpVolume(&warp_field_data_term_smoothed, "warp_field_0_smoothed_");
+//		loadWarpVolume(&warp_field_tikhonov_term, "warp_field_1_tikhonov_");
 		loadWarpVolume(&warp_field_data_and_tikhonov_term, "warp_field_1_data_and_tikhonov_");
 		loadWarpVolume(&warp_field_data_and_killing_term, "warp_field_1_data_and_killing_");
 		loadWarpVolume(&warp_field_data_and_level_set_term, "warp_field_1_data_and_level_set_");
@@ -99,9 +87,9 @@ struct WarpGradientDataFixture {
 		delete live_volume;
 		delete canonical_volume;
 		delete warp_field_data_term;
-		delete warp_field_data_term_smoothed;
 		delete warp_field_iter0;
-		delete warp_field_tikhonov_term;
+		delete warp_field_data_term_smoothed;
+//		delete warp_field_tikhonov_term;
 		delete warp_field_data_and_tikhonov_term;
 		delete warp_field_data_and_killing_term;
 		delete warp_field_data_and_level_set_term;

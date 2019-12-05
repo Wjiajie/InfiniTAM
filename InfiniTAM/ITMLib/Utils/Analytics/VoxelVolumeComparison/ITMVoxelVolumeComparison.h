@@ -91,13 +91,13 @@ contentForFlagsAlmostEqual(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<TV
                                ToleranceType tolerance, MemoryDeviceType memoryDeviceType){
 	switch (memoryDeviceType) {
 		case MEMORYDEVICE_CPU:
-			return contentForFlagsAlmostEqual_CPU(a, b, tolerance);
+			return contentForFlagsAlmostEqual_CPU(a, b, flags, tolerance);
 		case MEMORYDEVICE_CUDA:
 #ifdef COMPILE_WITHOUT_CUDA
 			printf("WARNING: trying to run CUDA volume comparison while compiled without CUDA\n");
 			return false;
 #else
-			return contentForFlagsAlmostEqual_CUDA(a, b, tolerance);
+			return contentForFlagsAlmostEqual_CUDA(a, b, flags, tolerance);
 #endif
 		case MEMORYDEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
@@ -114,13 +114,13 @@ bool contentForFlagsAlmostEqual_Verbose(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMV
                                             VoxelFlags flags, ToleranceType tolerance, MemoryDeviceType memoryDeviceType){
 	switch (memoryDeviceType) {
 		case MEMORYDEVICE_CPU:
-			return contentForFlagsAlmostEqual_CPU_Verbose(a, b, tolerance);
+			return contentForFlagsAlmostEqual_CPU_Verbose(a, b, flags, tolerance);
 		case MEMORYDEVICE_CUDA:
 #ifdef COMPILE_WITHOUT_CUDA
 			printf("WARNING: trying to run CUDA volume comparison while compiled without CUDA\n");
 			return false;
 #else
-			return contentForFlagsAlmostEqual_CUDA_Verbose(a, b, tolerance);
+			return contentForFlagsAlmostEqual_CUDA_Verbose(a, b, flags, tolerance);
 #endif
 		case MEMORYDEVICE_METAL:
 #ifdef COMPILE_WITH_METAL

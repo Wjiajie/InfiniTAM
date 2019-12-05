@@ -4,8 +4,8 @@
 
 #include "../Engines/LowLevel/ITMLowLevelEngineFactory.h"
 #include "../Engines/ViewBuilding/ITMViewBuilderFactory.h"
-#include "../Engines/Visualisation/ITMVisualisationEngineFactory.h"
-#include "../Engines/Visualisation/ITMMultiVisualisationEngineFactory.h"
+#include "../Engines/Visualization/ITMVisualizationEngineFactory.h"
+#include "../Engines/Visualization/ITMMultiVisualizationEngineFactory.h"
 #include "../CameraTrackers/ITMCameraTrackerFactory.h"
 
 #include "../../MiniSlamGraphLib/QuaternionHelpers.h"
@@ -33,7 +33,7 @@ ITMMultiEngine<TVoxel, TIndex>::ITMMultiEngine(const ITMRGBDCalib& calib, Vector
 	const MemoryDeviceType deviceType = settings.device_type;
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
-	visualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxel, TIndex>(deviceType);
+	visualisationEngine = ITMVisualizationEngineFactory::MakeVisualisationEngine<TVoxel, TIndex>(deviceType);
 
 	tracker = ITMCameraTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, lowLevelEngine, imuCalibrator,
 	                                                   &settings.scene_parameters);
@@ -63,7 +63,7 @@ ITMMultiEngine<TVoxel, TIndex>::ITMMultiEngine(const ITMRGBDCalib& calib, Vector
 	mScheduleGlobalAdjustment = false;
 	if (separateThreadGlobalAdjustment) mGlobalAdjustmentEngine->startSeparateThread();
 
-	multiVisualisationEngine = ITMMultiVisualisationEngineFactory::MakeVisualisationEngine<TVoxel,TIndex>(deviceType);
+	multiVisualisationEngine = ITMMultiVisualizationEngineFactory::MakeVisualisationEngine<TVoxel,TIndex>(deviceType);
 	renderState_multiscene = NULL;
 }
 
