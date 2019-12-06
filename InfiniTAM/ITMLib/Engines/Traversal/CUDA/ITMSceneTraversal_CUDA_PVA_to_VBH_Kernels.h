@@ -52,7 +52,7 @@ __global__ void
 checkIfHashVoxelBlocksHaveAlteredVoxelsWithSpecificFlags(const TVoxel* voxels, const ITMHashEntry* hashTable,
                                                          int* hashesToCheck, int countHashesToCheck,
                                                          bool* alteredBlockEncountered,
-                                                         const ITMLib::VoxelFlags& flags) {
+                                                         ITMLib::VoxelFlags flags) {
 	if (*alteredBlockEncountered) return;
 	int hashToCheckIdx = static_cast<int>(blockIdx.x);
 	if (hashToCheckIdx > countHashesToCheck) return;

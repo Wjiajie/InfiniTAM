@@ -238,7 +238,7 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_VBH_to_PVA, Frame16And17Fixture) {
 	recoEngine_PVA.WarpScene_FlowWarps(warps_PVA, source_volume_PVA, target_PVA);
 	recoEngine_VBH.WarpScene_FlowWarps(warps_VBH, source_volume_VBH, target_VBH);
 //_DEBUG
-	Vector3i test_pos(2, 28, 185);
+	Vector3i test_pos(-20, 20, 191);
 	ITMVoxel voxelPVA = ITMSceneManipulationEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>::Inst()
 			.ReadVoxel(target_PVA, test_pos);
 	voxelPVA.print_self();
