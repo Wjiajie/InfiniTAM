@@ -53,6 +53,7 @@ public:
 	                                                 uchar* hashBlockVisibilityTypes_device) override;
 
 	ITMHashEntry FindHashEntry(const ITMVoxelBlockHash& index, const Vector3s& coordinates) override;
+	ITMHashEntry FindHashEntry(const ITMVoxelBlockHash& index, const Vector3s& coordinates, int& hashCode);
 
 	template<typename TVoxelATarget, typename TVoxelASource>
 	void AllocateUsingOtherVolume(ITMVoxelVolume <TVoxelATarget, ITMVoxelBlockHash>* targetVolume,

@@ -37,6 +37,7 @@ void ITMIndexingEngine_VoxelBlockHash<TVoxel, TMemoryDeviceType, TDerivedClass>:
 	//Mark up hash entries in the target scene that will need allocation
 	WarpBasedAllocationMarkerFunctor<TWarp, TVoxel, TWarpType>
 			hashMarkerFunctor(sourceTSDF, targetTSDF, blockCoordinates_device, hashEntryStates_device);
+
 	do{
 		//reset allocation flags
 		targetTSDF->index.ClearHashEntryStates();

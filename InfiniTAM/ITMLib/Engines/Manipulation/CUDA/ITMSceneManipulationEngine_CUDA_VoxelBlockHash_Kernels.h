@@ -130,8 +130,10 @@ __global__ void readVoxel_device(TVoxel* voxelArray, const ITMHashEntry* hashTab
 	int arrayIndex = findVoxel(hashTable, at, vmIndex, *cache);
 	if (arrayIndex < 0) {
 		result->found = false;
+		result->index = -1;
 	} else {
 		result->found = true;
+		result->index = arrayIndex;
 		result->voxel = voxelArray[arrayIndex];
 	}
 }

@@ -166,7 +166,7 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_VBH_to_PVA, Frame16And17Fixture) {
 //			contentForFlagsAlmostEqual_CPU_Verbose(target_PVA, target_VBH, VOXEL_TRUNCATED, absoluteTolerance));
 
 //_DEBUG
-	Vector3i test_pos(2, 28, 185);
+	Vector3i test_pos(  -53, -3, 160);
 	ITMVoxel voxelPVA = ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray>::Inst()
 			.ReadVoxel(target_PVA, test_pos);
 	voxelPVA.print_self();
@@ -191,8 +191,10 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_VBH_to_PVA, Frame16And17Fixture) {
 	const int iteration = 0;
 	// *** load warps
 	std::string path_warps = "TestData/snoopy_result_fr16-17_warps/data_only_iter_" + std::to_string(iteration) + "_";
-	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warps_PVA;
-	loadVolume(&warps_PVA, path_warps, MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
+//	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warps_PVA;
+//	loadVolume(&warps_PVA, path_warps, MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
+	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps_VBH_CPU;
+	loadVolume(&warps_VBH_CPU, path_warps, MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps_VBH;
 	loadVolume(&warps_VBH, path_warps, MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
 
@@ -204,7 +206,7 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_VBH_to_PVA, Frame16And17Fixture) {
 	std::string source_path_PVA;
 	std::string source_path_VBH;
 	if (iteration == 0) {
-		source_path_PVA = path_frame_17_PVA;
+//		source_path_PVA = path_frame_17_PVA;
 		source_path_VBH = path_frame_17_VBH;
 	} else {
 		source_path_PVA =
@@ -216,50 +218,73 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_VBH_to_PVA, Frame16And17Fixture) {
 	}
 
 	// *** load same frame scene as the two different data structures
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* source_volume_PVA;
-	loadVolume(&source_volume_PVA, source_path_PVA, MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
+//	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* source_volume_PVA;
+//	loadVolume(&source_volume_PVA, source_path_PVA, MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* source_volume_VBH_CPU;
+	loadVolume(&source_volume_VBH_CPU, source_path_VBH, MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* source_volume_VBH;
 	loadVolume(&source_volume_VBH, source_path_VBH, MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
 
 	// *** initialize target scenes
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* target_PVA;
+//	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* target_PVA;
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* target_VBH_CPU;
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* target_VBH;
-	initializeVolume(&target_PVA, InitParams<ITMPlainVoxelArray>(), MEMORYDEVICE_CUDA);
+//	initializeVolume(&target_PVA, InitParams<ITMPlainVoxelArray>(), MEMORYDEVICE_CUDA);
+	initializeVolume(&target_VBH_CPU, InitParams<ITMVoxelBlockHash>(), MEMORYDEVICE_CPU);
 	initializeVolume(&target_VBH, InitParams<ITMVoxelBlockHash>(), MEMORYDEVICE_CUDA);
 
 	// *** perform the warping
 	ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMPlainVoxelArray> recoEngine_PVA;
+	ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMVoxelBlockHash> recoEngine_VBH_CPU;
 	ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash> recoEngine_VBH;
 
 //_DEBUG
 //	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
 //	Configuration::get().telemetry_settings.focus_coordinates = Vector3i(-39, -9, 175);
 
-	recoEngine_PVA.WarpScene_FlowWarps(warps_PVA, source_volume_PVA, target_PVA);
+//	recoEngine_PVA.WarpScene_FlowWarps(warps_PVA, source_volume_PVA, target_PVA);
+	recoEngine_VBH_CPU.WarpScene_FlowWarps(warps_VBH_CPU, source_volume_VBH_CPU, target_VBH_CPU);
 	recoEngine_VBH.WarpScene_FlowWarps(warps_VBH, source_volume_VBH, target_VBH);
 //_DEBUG
-	Vector3i test_pos(-20, 20, 191);
-	ITMVoxel voxelPVA = ITMSceneManipulationEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>::Inst()
-			.ReadVoxel(target_PVA, test_pos);
-	voxelPVA.print_self();
+	Vector3i test_pos(  -53, -3, 160);
+
+	int hashCode;
+	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance().FindHashEntry(target_VBH->index, Vector3s(-7, -1, 20), hashCode);
+	std::cout  << "hash code: " << hashCode << std::endl;
+
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> target_VBH_copy(*target_VBH, MEMORYDEVICE_CPU);
+
+//	ITMVoxel voxelPVA = ITMSceneManipulationEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>::Inst()
+//			.ReadVoxel(target_PVA, test_pos);
+//	voxelPVA.print_self();
 	ITMVoxel voxelVBH = ITMSceneManipulationEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>::Inst()
 			.ReadVoxel(target_VBH, test_pos);
 	voxelVBH.print_self();
+	ITMVoxel voxelVBH_CPU = ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash>::Inst()
+			.ReadVoxel(target_VBH_CPU, test_pos);
+	voxelVBH_CPU.print_self();
 
 	// *** test content
 	float absoluteTolerance = 1e-7;
+
+
+
 	BOOST_REQUIRE(
-			contentForFlagsAlmostEqual_CUDA_Verbose(target_PVA, target_VBH, VOXEL_NONTRUNCATED, absoluteTolerance));
+			contentAlmostEqual_CPU_Verbose(&target_VBH_copy, target_VBH_CPU, absoluteTolerance));
+//	BOOST_REQUIRE(
+//			allocatedContentAlmostEqual_CUDA_Verbose(target_PVA, target_VBH, absoluteTolerance));
 //	BOOST_REQUIRE(
 //			contentForFlagsAlmostEqual_CUDA_Verbose(target_PVA, target_VBH, VOXEL_TRUNCATED, absoluteTolerance));
 
 
-
-	delete warps_PVA;
+//	delete warps_PVA;
+	delete warps_VBH_CPU;
 	delete warps_VBH;
-	delete source_volume_PVA;
+//	delete source_volume_PVA;
+	delete  source_volume_VBH_CPU;
 	delete source_volume_VBH;
-	delete target_PVA;
+//	delete target_PVA;
+	delete target_VBH_CPU;
 	delete target_VBH;
 }
 

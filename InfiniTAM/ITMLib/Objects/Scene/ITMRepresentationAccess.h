@@ -52,6 +52,11 @@ _CPU_AND_GPU_CODE_ inline int findVoxel(const CONSTPTR(ITMLib::ITMVoxelBlockHash
 
 		if (IS_EQUAL3(hashEntry.pos, blockPos) && hashEntry.ptr >= 0)
 		{
+			Vector3i test_pos(-53, -3, 160);
+			if(point == test_pos){
+				printf("GOTCHA3-5 voxel %d %d %d, target hashCode: %d\n",
+				       test_pos.x, test_pos.y, test_pos.z, hashIdx);
+			}
 			vmIndex = true;
 			cache.blockPos = blockPos; cache.blockPtr = hashEntry.ptr * VOXEL_BLOCK_SIZE3;
 			return cache.blockPtr + linearIdx;

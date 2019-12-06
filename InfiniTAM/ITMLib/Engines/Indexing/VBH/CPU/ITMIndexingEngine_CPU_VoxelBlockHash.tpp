@@ -20,6 +20,8 @@
 #include "../../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
 #include "../../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../Shared/ITMIndexingEngine_Shared.h"
+#include "../CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
+
 
 using namespace ITMLib;
 
@@ -311,3 +313,4 @@ ITMHashEntry ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Fin
 		return entries[hashCode];
 	}
 }
+

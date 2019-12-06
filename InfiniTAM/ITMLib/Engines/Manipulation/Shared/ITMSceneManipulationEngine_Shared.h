@@ -31,6 +31,7 @@ struct CopyAllocationTempData {
 template<typename TVoxel>
 struct ReadVoxelResult {
 	TVoxel voxel;
+	int index;
 	bool found;
 };
 

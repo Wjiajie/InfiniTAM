@@ -238,13 +238,14 @@ __global__ void reAllocateSwappedOutVoxelBlocks_device(int *voxelAllocationList,
 	}
 }
 
-__global__ void findHashEntry_device(const ITMHashEntry*& entry, const ITMHashEntry* hashTable, Vector3s pos){
+__global__ void findHashEntry_device(ITMHashEntry* entry, const ITMHashEntry* hashTable, Vector3s pos, int* hashCode){
 
-	int hashCode = FindHashCodeAt(hashTable, pos);
-	if (hashCode == -1) {
-		entry = nullptr;
-	} else {
-		entry = &hashTable[hashCode];
+	*hashCode = FindHashCodeAt(hashTable, pos);
+	if (*hashCode != -1) {
+		const ITMHashEntry& targetEntry = hashTable[*hashCode];
+		entry->offset = targetEntry.offset;
+		entry->ptr = targetEntry.ptr;
+		entry->pos = targetEntry.pos;
 	}
 }
 

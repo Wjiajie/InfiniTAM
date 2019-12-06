@@ -152,6 +152,31 @@ ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVo
 	}
 }
 
+
+template<typename TVoxel>
+TVoxel
+ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
+                                                                      Vector3i at, int& where,
+                                                                      ITMVoxelBlockHash::IndexCache& cache) {
+	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry* hashTable = scene->index.GetEntries();
+
+	readVoxel_device<TVoxel> << < 1, 1 >> >
+	                                 (localVBA, hashTable, at, (ReadVoxelResult<TVoxel>*) readVoxelResult_device, &cache);
+	ReadVoxelResult<TVoxel>* readVoxelResult = (ReadVoxelResult<TVoxel>*) readVoxelResult_host;
+	ORcudaSafeCall(cudaMemcpy(readVoxelResult_host, readVoxelResult_device, sizeof(ReadVoxelResult<TVoxel>),
+	                          cudaMemcpyDeviceToHost));
+
+	if (readVoxelResult->found) {
+		where = readVoxelResult->index;
+		return readVoxelResult->voxel;
+	} else {
+		TVoxel voxel;
+		return voxel;
+	}
+}
+
+
 template<typename TVoxel>
 void ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::OffsetWarps(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,

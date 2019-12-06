@@ -48,7 +48,7 @@ private:
 };
 
 
-template<typename TVoxel, typename TWarp, typename TIndex, ITMLib::WarpType TWarpType, MemoryDeviceType deviceType>
+template<typename TVoxel, typename TWarp, typename TIndex, ITMLib::WarpType TWarpType, MemoryDeviceType TMemoryDeviceType>
 struct TrilinearInterpolationFunctor {
 	/**
 	 * \brief Initialize to transfer data from source sdf scene to a target sdf scene using the warps in the warp source scene
@@ -71,7 +71,13 @@ struct TrilinearInterpolationFunctor {
 
 			hasFocusCoordinates(ITMLib::Configuration::get().telemetry_settings.focus_coordinates_specified),
 			focusCoordinates(ITMLib::Configuration::get().telemetry_settings.focus_coordinates)
-	{}
+	{
+		INITIALIZE_ATOMIC(int, hedgehog, 0);
+	}
+
+	~TrilinearInterpolationFunctor(){
+		CLEAN_UP_ATOMIC(hedgehog);
+	}
 
 	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& destinationVoxel, TWarp& warp,
@@ -81,9 +87,22 @@ struct TrilinearInterpolationFunctor {
 
 		interpolateTSDFVolume<TVoxel, TWarp, TIndex, TWarpType>(
 				sdfSourceVoxels, sdfSourceIndexData, sdfSourceCache, warp, destinationVoxel,
-				warpAndDestinationVoxelPosition, printResult);
-	}
+				warpAndDestinationVoxelPosition, printResult, checkVoxelIndex);
 
+		if(TMemoryDeviceType == MEMORYDEVICE_CUDA){
+			TVoxel& voxToCheck = targetVoxelBlocks[checkVoxelIndex];
+			int x;
+			if(voxToCheck.sdf != 1.0f && (x = ATOMIC_ADD(hedgehog, 1)) == 0){
+				printf("Disaster! %d %d %d", warpAndDestinationVoxelPosition.x, warpAndDestinationVoxelPosition.y, warpAndDestinationVoxelPosition.z);
+			}
+		}
+
+
+	}
+//_DEBUG
+	int checkVoxelIndex;
+	TVoxel* targetVoxelBlocks;
+	DECLARE_ATOMIC_INT(hedgehog);
 private:
 
 
@@ -96,6 +115,8 @@ private:
 	TWarp* warpSourceVoxels;
 	typename TIndex::IndexData* warpSourceHashEntries;
 	typename TIndex::IndexCache warpSourceCache;
+
+
 
 	//_DEBUG
 	bool hasFocusCoordinates;

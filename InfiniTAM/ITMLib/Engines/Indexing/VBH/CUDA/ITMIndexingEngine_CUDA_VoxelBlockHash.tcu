@@ -260,13 +260,37 @@ ITMHashEntry
 ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::FindHashEntry(const ITMVoxelBlockHash& index,
                                                                                const Vector3s& coordinates) {
 	const ITMHashEntry* entries = index.GetEntries();
-	const ITMHashEntry* entry_device = nullptr;
-	findHashEntry_device << < 1, 1 >> > (entry_device, entries, coordinates);
-	if (entry_device == nullptr) {
+	ORUtils::MemoryBlock<int> hashCode(1,true,true);
+	ORUtils::MemoryBlock<ITMHashEntry> hashEntry(1,true,true);
+	findHashEntry_device << < 1, 1 >> > (hashEntry.GetData(MEMORYDEVICE_CUDA), entries, coordinates, hashCode.GetData(MEMORYDEVICE_CUDA));
+	hashEntry.UpdateHostFromDevice();
+	hashCode.UpdateHostFromDevice();
+	int hashCode_CPU = *hashCode.GetData(MEMORYDEVICE_CPU);
+	if (hashCode_CPU == -1) {
 		return {Vector3s(0, 0, 0), 0, -2};
 	} else {
-		ITMHashEntry entry;
-		ORcudaSafeCall(cudaMemcpy(&entry, entry_device,sizeof(ITMHashEntry),cudaMemcpyDeviceToHost));
+		ITMHashEntry entry = *hashEntry.GetData(MEMORYDEVICE_CPU);
+		return entry;
+	}
+}
+
+
+template<typename TVoxel>
+ITMHashEntry
+ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::FindHashEntry(const ITMVoxelBlockHash& index,
+                                                                               const Vector3s& coordinates,
+                                                                               int& hashCode_CPU) {
+	const ITMHashEntry* entries = index.GetEntries();
+	ORUtils::MemoryBlock<int> hashCode(1,true,true);
+	ORUtils::MemoryBlock<ITMHashEntry> hashEntry(1,true,true);
+	findHashEntry_device << < 1, 1 >> > (hashEntry.GetData(MEMORYDEVICE_CUDA), entries, coordinates, hashCode.GetData(MEMORYDEVICE_CUDA));
+	hashEntry.UpdateHostFromDevice();
+	hashCode.UpdateHostFromDevice();
+	hashCode_CPU = *hashCode.GetData(MEMORYDEVICE_CPU);
+	if (hashCode_CPU == -1) {
+		return {Vector3s(0, 0, 0), 0, -2};
+	} else {
+		ITMHashEntry entry = *hashEntry.GetData(MEMORYDEVICE_CPU);
 		return entry;
 	}
 }

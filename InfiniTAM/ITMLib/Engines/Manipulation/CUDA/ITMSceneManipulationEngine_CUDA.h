@@ -88,6 +88,9 @@ public:
 	TVoxel
 	ReadVoxel(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* scene, Vector3i at,
 	          ITMVoxelBlockHash::IndexCache& cache) override;
+	TVoxel
+	ReadVoxel(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, int& where,
+	          ITMVoxelBlockHash::IndexCache& cache);
 
 	void OffsetWarps(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset) override;
 	bool CopySceneSlice(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* destination, ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* source,

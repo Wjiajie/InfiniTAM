@@ -466,12 +466,12 @@ bool almostEqualVerbose_Position<ITMVoxel_f_flags, float>(const ITMVoxel_f_flags
 		return false;
 	}
 	if(a.w_depth != b.w_depth){
-		printf("Position %d, %d, %d: mismatch between voxel:{sdf: %E, w_depth: %d, flags: %d} and voxel:{sdf: %E, w_depth: %d, flags: %d}. The w_depth values are different.",
+		printf("Position %d, %d, %d: mismatch between voxel:{sdf: %E, w_depth: %d, flags: %d} and voxel:{sdf: %E, w_depth: %d, flags: %d}. The w_depth values are different.\n",
 		       position.x, position.y, position.z, a.sdf, a.w_depth, a.flags, b.sdf, b.w_depth, b.flags);
 		return false;
 	}
 	if(a.flags != b.flags) {
-		printf("Position %d, %d, %d: mismatch between voxel:{sdf: %E, w_depth: %d, flags: %d} and voxel:{sdf: %E, w_depth: %d, flags: %d}. The flags are different.",
+		printf("Position %d, %d, %d: mismatch between voxel:{sdf: %E, w_depth: %d, flags: %d} and voxel:{sdf: %E, w_depth: %d, flags: %d}. The flags are different.\n",
 		       position.x, position.y, position.z, a.sdf, a.w_depth, a.flags, b.sdf, b.w_depth, b.flags);
 		return false;
 	}

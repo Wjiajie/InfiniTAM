@@ -364,15 +364,15 @@ inline void interpolateTSDFVolume(TVoxel* sdfSourceVoxels,
                                   const TWarp& warpVoxel,
                                   TVoxel& destinationVoxel,
                                   const Vector3i& warpAndDestinationVoxelPosition,
-                                  bool printResult) {
+                                  bool printResult, int checkPosition) {
 
 	Vector3f warpVector = ITMLib::WarpVoxelStaticFunctor<TWarp, TWarpType>::GetWarp(warpVoxel);
 	//_DEBUG
-//	Vector3i test_pos(2, 28, 185);
-//	if (warpAndDestinationVoxelPosition == test_pos) {
-//		printf("GOTCHA3-1 voxel %d %d %d, warp vector length: %E\n", test_pos.x, test_pos.y, test_pos.z,
-//		       ORUtils::length(warpVector));
-//	}
+	Vector3i test_pos(-53, -3, 160);
+	if (warpAndDestinationVoxelPosition == test_pos) {
+		printf("GOTCHA3-1 voxel %d %d %d, warp vector length: %E\n", test_pos.x, test_pos.y, test_pos.z,
+		       ORUtils::length(warpVector));
+	}
 	if (ORUtils::length(warpVector) < 1e-5f) {
 		int vmIndex;
 #if !defined(__CUDACC__) && !defined(WITH_OPENMP)
@@ -387,7 +387,7 @@ inline void interpolateTSDFVolume(TVoxel* sdfSourceVoxels,
 		destinationVoxel.sdf = sourceTSDFVoxelAtSameLocation.sdf;
 		destinationVoxel.flags = sourceTSDFVoxelAtSameLocation.flags;
 		//_DEBUG
-		Vector3i test_pos(2, 28, 185);
+		Vector3i test_pos(-53, -3, 160);
 		if (warpAndDestinationVoxelPosition == test_pos) {
 			printf("GOTCHA3-2 voxel %d %d %d, source TSDF: %E, source flags: %d\n",
 			       test_pos.x, test_pos.y, test_pos.z,

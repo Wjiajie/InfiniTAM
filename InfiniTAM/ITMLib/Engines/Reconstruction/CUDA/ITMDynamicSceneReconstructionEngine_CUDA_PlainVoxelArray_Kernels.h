@@ -105,10 +105,11 @@ __global__ void interpolateTriliearlyUsingWarps(
 	warpAndDestinationVoxelPosition.y = y + sdfSourceIndexData->offset.y;
 	warpAndDestinationVoxelPosition.z = z + sdfSourceIndexData->offset.z;
 
+	int dummy = 0;
 	interpolateTSDFVolume<TVoxel, TWarp, ITMPlainVoxelArray, TWarpType>(
 			sdfSourceVoxels, sdfSourceIndexData, sdfSourceCache,
 			warp, destinationVoxel,
-			warpAndDestinationVoxelPosition, false);
+			warpAndDestinationVoxelPosition, false, dummy);
 }
 
 template<typename TVoxelMulti>
