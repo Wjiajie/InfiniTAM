@@ -222,6 +222,9 @@ AllocateHashEntriesUsingLists(
 			voxelAllocationList, excessAllocationList, allocationTempData.GetData(MEMORYDEVICE_CUDA),
 					hashTable, hashEntryCount, hashEntryStates_device,
 					blockCoordinates_device);
+	allocationTempData.UpdateHostFromDevice();
+	scene->localVBA.lastFreeBlockId = allocationTempData_host->noAllocatedVoxelEntries;
+	scene->index.SetLastFreeExcessListId(allocationTempData_host->noAllocatedExcessEntries);
 }
 
 
@@ -253,6 +256,9 @@ AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxelA, ITMVoxelBloc
 			voxelAllocationList, excessAllocationList, allocationTempData.GetData(MEMORYDEVICE_CUDA),
 					hashTable, hashEntryCount, hashEntryStates_device,
 					blockCoordinates_device, hashBlockVisibilityTypes_device);
+	allocationTempData.UpdateHostFromDevice();
+	scene->localVBA.lastFreeBlockId = allocationTempData_host->noAllocatedVoxelEntries;
+	scene->index.SetLastFreeExcessListId(allocationTempData_host->noAllocatedExcessEntries);
 }
 
 template<typename TVoxel>

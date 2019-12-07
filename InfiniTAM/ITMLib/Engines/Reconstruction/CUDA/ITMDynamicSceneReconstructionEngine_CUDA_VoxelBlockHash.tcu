@@ -80,6 +80,7 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>:
 	ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::Inst().ReadVoxel(targetTSDF, test_pos, checkIndex, cache);
 	trilinearInterpolationFunctor.checkVoxelIndex = checkIndex;
 	trilinearInterpolationFunctor.targetVoxelBlocks = targetTSDF->localVBA.GetVoxelBlocks();
+	trilinearInterpolationFunctor.targetEntries = targetTSDF->index.GetEntries();
 
 	// Interpolate to obtain the new live frame values (at target index)
 	ITMDualSceneTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::

@@ -22,11 +22,13 @@
 #include "../../../../ORUtils/PlatformIndependentAtomics.h"
 #include "../../Common/ITMWarpEnums.h"
 #include "../../Common/ITMCommonFunctors.h"
+#include "../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
 
 
 template<typename TVoxel>
 struct FieldClearFunctor {
 	FieldClearFunctor() {}
+
 	_CPU_AND_GPU_CODE_
 	void operator()(TVoxel& voxel) {
 		voxel.flags = ITMLib::VOXEL_UNKNOWN;
@@ -35,14 +37,16 @@ struct FieldClearFunctor {
 };
 
 
-template <typename TVoxel>
-struct TSDFFusionFunctor{
+template<typename TVoxel>
+struct TSDFFusionFunctor {
 	TSDFFusionFunctor(int maximumWeight) :
-			maximumWeight(maximumWeight){}
+			maximumWeight(maximumWeight) {}
+
 	_CPU_AND_GPU_CODE_
-	void operator()(TVoxel& liveVoxel, TVoxel& canonicalVoxel){
+	void operator()(TVoxel& liveVoxel, TVoxel& canonicalVoxel) {
 		fuseLiveVoxelIntoCanonical(liveVoxel, maximumWeight, canonicalVoxel);
 	}
+
 private:
 	const int maximumWeight;
 };
@@ -70,12 +74,11 @@ struct TrilinearInterpolationFunctor {
 			warpSourceCache(),
 
 			hasFocusCoordinates(ITMLib::Configuration::get().telemetry_settings.focus_coordinates_specified),
-			focusCoordinates(ITMLib::Configuration::get().telemetry_settings.focus_coordinates)
-	{
+			focusCoordinates(ITMLib::Configuration::get().telemetry_settings.focus_coordinates) {
 		INITIALIZE_ATOMIC(int, hedgehog, 0);
 	}
 
-	~TrilinearInterpolationFunctor(){
+	~TrilinearInterpolationFunctor() {
 		CLEAN_UP_ATOMIC(hedgehog);
 	}
 
@@ -89,19 +92,30 @@ struct TrilinearInterpolationFunctor {
 				sdfSourceVoxels, sdfSourceIndexData, sdfSourceCache, warp, destinationVoxel,
 				warpAndDestinationVoxelPosition, printResult, checkVoxelIndex);
 
-		if(TMemoryDeviceType == MEMORYDEVICE_CUDA){
+		if (TMemoryDeviceType == MEMORYDEVICE_CUDA) {
 			TVoxel& voxToCheck = targetVoxelBlocks[checkVoxelIndex];
 			int x;
-			if(voxToCheck.sdf != 1.0f && (x = ATOMIC_ADD(hedgehog, 1)) == 0){
-				printf("Disaster! %d %d %d", warpAndDestinationVoxelPosition.x, warpAndDestinationVoxelPosition.y, warpAndDestinationVoxelPosition.z);
+			if (voxToCheck.sdf != 1.0f && 0 == (x = ATOMIC_ADD(hedgehog, 1))) {
+
+				Vector3s blockA(-7, -1, 20);
+				Vector3s blockB(-1, 1, 25);
+				int codeA = FindHashCodeAt(targetEntries, blockA);
+				int codeB = FindHashCodeAt(targetEntries, blockB);
+
+				printf("DISASTA! Reported on voxel %d %d %d. Entry A: %d %d. Entry B: %d %d\n",
+						warpAndDestinationVoxelPosition.x, warpAndDestinationVoxelPosition.y,
+				       warpAndDestinationVoxelPosition.z,
+				       codeA, targetEntries[codeA].ptr, codeB, targetEntries[codeB].ptr);
 			}
 		}
 
 
 	}
+
 //_DEBUG
 	int checkVoxelIndex;
 	TVoxel* targetVoxelBlocks;
+	ITMHashEntry* targetEntries;
 	DECLARE_ATOMIC_INT(hedgehog);
 private:
 
@@ -117,15 +131,15 @@ private:
 	typename TIndex::IndexCache warpSourceCache;
 
 
-
 	//_DEBUG
 	bool hasFocusCoordinates;
 	Vector3i focusCoordinates;
 };
 
 template<typename TVoxel>
-struct CopySceneFunctor{
+struct CopySceneFunctor {
 	CopySceneFunctor() = default;
+
 	static void run(TVoxel& sourceVoxel, TVoxel& destinationVoxel, Vector3i voxelPosition) {
 		destinationVoxel.sdf = sourceVoxel.sdf;
 		destinationVoxel.flags = sourceVoxel.flags;

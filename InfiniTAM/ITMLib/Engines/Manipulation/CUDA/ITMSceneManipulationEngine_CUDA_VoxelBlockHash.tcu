@@ -140,6 +140,7 @@ ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVo
 
 	readVoxel_device<TVoxel> << < 1, 1 >> >
 	                                 (localVBA, hashTable, at, (ReadVoxelResult<TVoxel>*) readVoxelResult_device, &cache);
+	ORcudaKernelCheck;
 	ReadVoxelResult<TVoxel>* readVoxelResult = (ReadVoxelResult<TVoxel>*) readVoxelResult_host;
 	ORcudaSafeCall(cudaMemcpy(readVoxelResult_host, readVoxelResult_device, sizeof(ReadVoxelResult<TVoxel>),
 	                          cudaMemcpyDeviceToHost));
@@ -163,6 +164,7 @@ ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVo
 
 	readVoxel_device<TVoxel> << < 1, 1 >> >
 	                                 (localVBA, hashTable, at, (ReadVoxelResult<TVoxel>*) readVoxelResult_device, &cache);
+	ORcudaKernelCheck;
 	ReadVoxelResult<TVoxel>* readVoxelResult = (ReadVoxelResult<TVoxel>*) readVoxelResult_host;
 	ORcudaSafeCall(cudaMemcpy(readVoxelResult_host, readVoxelResult_device, sizeof(ReadVoxelResult<TVoxel>),
 	                          cudaMemcpyDeviceToHost));

@@ -62,9 +62,9 @@ class ITMVoxelBlockHash {
 public:
 	struct ITMVoxelBlockHashParameters {
 	private:
-		static const int defaultVoxelBlockCount = 0x40000;
+		static const int defaultVoxelBlockCount = 0x40000; // 262144
 
-		static const int defaultExcessListSize = 0x20000;
+		static const int defaultExcessListSize = 0x20000; // 131072, entries in [1048576, 1179648)
 	public:
 		const int voxelBlockCount;
 		/** Size of excess list, used to handle collisions. Also max offset (unsigned short) value. **/

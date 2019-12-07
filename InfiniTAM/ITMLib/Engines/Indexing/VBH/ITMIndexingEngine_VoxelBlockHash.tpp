@@ -38,7 +38,7 @@ void ITMIndexingEngine_VoxelBlockHash<TVoxel, TMemoryDeviceType, TDerivedClass>:
 	WarpBasedAllocationMarkerFunctor<TWarp, TVoxel, TWarpType>
 			hashMarkerFunctor(sourceTSDF, targetTSDF, blockCoordinates_device, hashEntryStates_device);
 
-	do{
+	do {
 		//reset allocation flags
 		targetTSDF->index.ClearHashEntryStates();
 		hashMarkerFunctor.collisionDetected = false;
@@ -47,8 +47,9 @@ void ITMIndexingEngine_VoxelBlockHash<TVoxel, TMemoryDeviceType, TDerivedClass>:
 
 		//Allocate the hash entries that will potentially have any data
 
-		static_cast<TDerivedClass*>(this)->AllocateHashEntriesUsingLists(targetTSDF, hashEntryStates_device, blockCoordinates_device);
-	}while(hashMarkerFunctor.collisionDetected);
+		static_cast<TDerivedClass*>(this)->AllocateHashEntriesUsingLists(targetTSDF, hashEntryStates_device,
+		                                                                 blockCoordinates_device);
+	} while (hashMarkerFunctor.collisionDetected);
 }
 
 

@@ -124,10 +124,10 @@ __global__ void readVoxel_device(TVoxel* voxelArray, const ITMHashEntry* hashTab
 
 template<class TVoxel>
 __global__ void readVoxel_device(TVoxel* voxelArray, const ITMHashEntry* hashTable,
-                                 const Vector3i& at, ReadVoxelResult<TVoxel>* result,
+                                 Vector3i at, ReadVoxelResult<TVoxel>* result,
                                  ITMLib::ITMVoxelBlockHash::IndexCache* cache) {
 	int vmIndex = 0;
-	int arrayIndex = findVoxel(hashTable, at, vmIndex, *cache);
+	int arrayIndex = findVoxel(hashTable, at, vmIndex);
 	if (arrayIndex < 0) {
 		result->found = false;
 		result->index = -1;
