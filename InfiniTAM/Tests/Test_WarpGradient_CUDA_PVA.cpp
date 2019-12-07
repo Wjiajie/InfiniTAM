@@ -59,6 +59,8 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CUDA_PVA, DataFixture) {
 		motionTracker_PVA_CUDA->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CUDA1);
 	}, "Calculate Warp Gradient - PVA CPU data term");
 
+	//warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_data_");
+
 	float tolerance = 1e-5;
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_data_term, tolerance));
 }
@@ -70,6 +72,7 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CUDA_PVA, DataFixture) {
 	                                                            MemoryDeviceType::MEMORYDEVICE_CUDA);
 
 	float maxWarp = motionTracker_PVA_CUDA->UpdateWarps(canonical_volume, live_volume, &warp_field_copy);
+	//warp_field_copy.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_data_flow_warps_");
 	BOOST_REQUIRE_CLOSE(maxWarp, 0.0870865062f, 1e-7);
 
 	float tolerance = 1e-8;
