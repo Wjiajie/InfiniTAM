@@ -75,12 +75,8 @@ struct TrilinearInterpolationFunctor {
 
 			hasFocusCoordinates(ITMLib::Configuration::get().telemetry_settings.focus_coordinates_specified),
 			focusCoordinates(ITMLib::Configuration::get().telemetry_settings.focus_coordinates) {
-		INITIALIZE_ATOMIC(int, hedgehog, 0);
 	}
 
-	~TrilinearInterpolationFunctor() {
-		CLEAN_UP_ATOMIC(hedgehog);
-	}
 
 	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& destinationVoxel, TWarp& warp,
@@ -90,33 +86,9 @@ struct TrilinearInterpolationFunctor {
 
 		interpolateTSDFVolume<TVoxel, TWarp, TIndex, TWarpType>(
 				sdfSourceVoxels, sdfSourceIndexData, sdfSourceCache, warp, destinationVoxel,
-				warpAndDestinationVoxelPosition, printResult, checkVoxelIndex);
-
-		if (TMemoryDeviceType == MEMORYDEVICE_CUDA) {
-			TVoxel& voxToCheck = targetVoxelBlocks[checkVoxelIndex];
-			int x;
-			if (voxToCheck.sdf != 1.0f && 0 == (x = ATOMIC_ADD(hedgehog, 1))) {
-
-				Vector3s blockA(-7, -1, 20);
-				Vector3s blockB(-1, 1, 25);
-				int codeA = FindHashCodeAt(targetEntries, blockA);
-				int codeB = FindHashCodeAt(targetEntries, blockB);
-
-				printf("DISASTA! Reported on voxel %d %d %d. Entry A: %d %d. Entry B: %d %d\n",
-						warpAndDestinationVoxelPosition.x, warpAndDestinationVoxelPosition.y,
-				       warpAndDestinationVoxelPosition.z,
-				       codeA, targetEntries[codeA].ptr, codeB, targetEntries[codeB].ptr);
-			}
-		}
-
-
+				warpAndDestinationVoxelPosition, printResult);
 	}
 
-//_DEBUG
-	int checkVoxelIndex;
-	TVoxel* targetVoxelBlocks;
-	ITMHashEntry* targetEntries;
-	DECLARE_ATOMIC_INT(hedgehog);
 private:
 
 

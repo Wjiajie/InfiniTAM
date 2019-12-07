@@ -67,11 +67,7 @@ struct WarpBasedAllocationMarkerFunctor {
 	inline
 	void operator()(TWarp& warpVoxel, Vector3i voxelPosition, Vector3s hashBlockPosition) {
 
-		//_DEBUG
 		Vector3f warpVector = ITMLib::WarpVoxelStaticFunctor<TWarp, TWarpType>::GetWarp(warpVoxel);
-
-		//if(ORUtils::length(warpVector) < 1e-5f) return;
-
 		Vector3f warpedPosition = warpVector +  TO_FLOAT3(voxelPosition);
 		Vector3i warpedPositionTruncated = warpedPosition.toInt();
 
@@ -86,14 +82,6 @@ struct WarpBasedAllocationMarkerFunctor {
 		                                                warpedPositionTruncated,
 		                                                vmIndex);
 #endif
-		// skip unknown voxels in source scene
-		//if (sourceTSDFVoxelAtWarp.flags == ITMLib::VOXEL_UNKNOWN) return;
-		//_DEBUG
-//		Vector3i test_pos(2, 28, 185);
-//		if (voxelPosition == test_pos){
-//			//GOTCHA3
-//			printf("GOTCHA3-0 source TSDF voxel at warp flags: %d, warp vector length: %E\n", sourceTSDFVoxelAtWarp.flags, ORUtils::length(warpVector));
-//		}
 
 		int targetBlockHash = hashIndex(hashBlockPosition);
 
@@ -196,11 +184,6 @@ buildHashAllocAndVisibleTypePP(ITMLib::HashEntryState* hashEntryStates, uchar* e
 	float depth_measure;
 	int stepCount;
 	Vector4f pt_camera_f;
-
-//	//_DEBUG
-//	if (x == 268 && y == 376) {
-//		int i = 1;
-//	}
 
 	depth_measure = depth[x + y * imgSize.x];
 	if (depth_measure <= 0 || (depth_measure - mu) < 0 || (depth_measure - mu) < viewFrustum_min ||

@@ -46,11 +46,6 @@ __global__ void integrateIntoScene_device(TVoxel* voxelArray, const ITMLib::ITMP
 	pt_model.z = (float) (z + arrayInfo->offset.z) * _voxelSize;
 	pt_model.w = 1.0f;
 
-//	_DEBUG
-//	if(x == 16 & y == 91 && z == 160){
-//		printf("GOTCHA: (%E, %E, %E)\n", pt_model.x, pt_model.y, pt_model.z);
-//	}
-
 	ComputeUpdatedLiveVoxelInfo<TVoxel::hasColorInformation, TVoxel::hasConfidenceInformation, TVoxel::hasSemanticInformation, TVoxel>::compute(
 			voxelArray[locId], pt_model, M_d,
 			projParams_d, M_rgb, projParams_rgb, mu, maxW, depth, confidence,
@@ -105,11 +100,10 @@ __global__ void interpolateTriliearlyUsingWarps(
 	warpAndDestinationVoxelPosition.y = y + sdfSourceIndexData->offset.y;
 	warpAndDestinationVoxelPosition.z = z + sdfSourceIndexData->offset.z;
 
-	int dummy = 0;
 	interpolateTSDFVolume<TVoxel, TWarp, ITMPlainVoxelArray, TWarpType>(
 			sdfSourceVoxels, sdfSourceIndexData, sdfSourceCache,
 			warp, destinationVoxel,
-			warpAndDestinationVoxelPosition, false, dummy);
+			warpAndDestinationVoxelPosition, false);
 }
 
 template<typename TVoxelMulti>

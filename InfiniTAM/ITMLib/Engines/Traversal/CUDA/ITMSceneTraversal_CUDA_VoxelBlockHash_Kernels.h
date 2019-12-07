@@ -294,12 +294,6 @@ dualVoxelPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 	TVoxelPrimary& voxelPrimary = primaryVoxels[primaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3) + linearIndexInBlock];
 	TVoxelSecondary& voxelSecondary = secondaryVoxels[secondaryHashEntry.ptr * (VOXEL_BLOCK_SIZE3) + linearIndexInBlock];
 
-	Vector3i test_pos(-53, -3, 160);
-	if(voxelPosition == test_pos){
-		printf("GOTCHA3-4 voxel %d %d %d, target hashCode: %d\n",
-		       test_pos.x, test_pos.y, test_pos.z, hashCode);
-	}
-
 	(*functor)(voxelPrimary, voxelSecondary, voxelPosition);
 }
 

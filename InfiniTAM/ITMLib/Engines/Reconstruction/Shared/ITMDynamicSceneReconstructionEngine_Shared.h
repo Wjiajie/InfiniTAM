@@ -104,12 +104,6 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedLiveVoxelDepthInfo(
 	float depthMeasure = depthImage[static_cast<int>(voxelPointProjectedToImage.x + 0.5f) +
 	                                static_cast<int>(voxelPointProjectedToImage.y + 0.5f) * imageSize.x];
 
-	//_DEBUG
-//	if (voxelInSceneCoordinates == Vector4f(-0.0960000008, 0.252000004, 0.960000038, 1.0f)) {
-//		printf("GOTCHA2 coord: (%f, %f) depth: %f, voxel depth: %f\n", voxelPointProjectedToImage.x,
-//		       voxelPointProjectedToImage.y, depthMeasure, voxelPointInCameraCoordinates.z);
-//	}
-
 	// if depthImage is "invalid", return "unknown"
 	if (depthMeasure <= 0.0f) {
 		//keep voxel flags at ITMLib::VOXEL_UNKNOWN
@@ -364,15 +358,10 @@ inline void interpolateTSDFVolume(TVoxel* sdfSourceVoxels,
                                   const TWarp& warpVoxel,
                                   TVoxel& destinationVoxel,
                                   const Vector3i& warpAndDestinationVoxelPosition,
-                                  bool printResult, int checkPosition) {
+                                  bool printResult) {
 
 	Vector3f warpVector = ITMLib::WarpVoxelStaticFunctor<TWarp, TWarpType>::GetWarp(warpVoxel);
-	//_DEBUG
-	Vector3i test_pos(-53, -3, 160);
-	if (warpAndDestinationVoxelPosition == test_pos) {
-		printf("GOTCHA3-1 voxel %d %d %d, warp vector length: %E\n", test_pos.x, test_pos.y, test_pos.z,
-		       ORUtils::length(warpVector));
-	}
+
 	if (ORUtils::length(warpVector) < 1e-5f) {
 		int vmIndex;
 #if !defined(__CUDACC__) && !defined(WITH_OPENMP)
@@ -386,14 +375,6 @@ inline void interpolateTSDFVolume(TVoxel* sdfSourceVoxels,
 #endif
 		destinationVoxel.sdf = sourceTSDFVoxelAtSameLocation.sdf;
 		destinationVoxel.flags = sourceTSDFVoxelAtSameLocation.flags;
-		//_DEBUG
-		Vector3i test_pos(-53, -3, 160);
-		if (warpAndDestinationVoxelPosition == test_pos) {
-			printf("GOTCHA3-2 voxel %d %d %d, source TSDF: %E, source flags: %d\n",
-			       test_pos.x, test_pos.y, test_pos.z,
-			       sourceTSDFVoxelAtSameLocation.sdf,
-			       sourceTSDFVoxelAtSameLocation.flags);
-		}
 		return;
 	}
 	Vector3f warpedPosition = TO_FLOAT3(warpAndDestinationVoxelPosition) + warpVector;
