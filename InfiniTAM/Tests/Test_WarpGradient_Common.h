@@ -15,7 +15,13 @@
 //  ================================================================
 #pragma once
 
+//stdlib
 #include <unordered_map>
+
+//local
+#include "TestUtilsForSnoopyFrames16And17.h"
+#include "TestUtils.h"
+
 #include "../ORUtils/MemoryDeviceType.h"
 #include "../ITMLib/ITMLibDefines.h"
 #include "../ITMLib/Utils/Configuration.h"
@@ -24,7 +30,6 @@
 #include "../ITMLib/Engines/Manipulation/ITMSceneManipulationEngineFactory.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
-#include "TestUtilsForSnoopyFrames16And17.h"
 #include "../ITMLib/SurfaceTrackers/Interface/SurfaceTracker.h"
 
 using namespace ITMLib;
@@ -77,7 +82,7 @@ struct WarpGradientDataFixture {
 		loadWarpVolume(&warp_field_data_term, "warp_field_0_data_");
 		loadWarpVolume(&warp_field_iter0, "warp_field_0_data_flow_warps_");
 		loadWarpVolume(&warp_field_data_term_smoothed, "warp_field_0_smoothed_");
-//		loadWarpVolume(&warp_field_tikhonov_term, "warp_field_1_tikhonov_");
+		loadWarpVolume(&warp_field_tikhonov_term, "warp_field_1_tikhonov_");
 		loadWarpVolume(&warp_field_data_and_tikhonov_term, "warp_field_1_data_and_tikhonov_");
 		loadWarpVolume(&warp_field_data_and_killing_term, "warp_field_1_data_and_killing_");
 		loadWarpVolume(&warp_field_data_and_level_set_term, "warp_field_1_data_and_level_set_");
@@ -90,7 +95,7 @@ struct WarpGradientDataFixture {
 		delete warp_field_data_term;
 		delete warp_field_iter0;
 		delete warp_field_data_term_smoothed;
-//		delete warp_field_tikhonov_term;
+		delete warp_field_tikhonov_term;
 		delete warp_field_data_and_tikhonov_term;
 		delete warp_field_data_and_killing_term;
 		delete warp_field_data_and_level_set_term;
@@ -130,8 +135,9 @@ void GenerateTestData() {
 
 	ITMVoxelVolume<ITMVoxel, TIndex>* canonical_volume;
 	ITMVoxelVolume<ITMVoxel, TIndex>* live_volume;
-	loadSdfVolume(&live_volume, "snoopy_partial_frame_17_");
-	loadSdfVolume(&canonical_volume, "snoopy_partial_frame_16_");
+	loadVolume(&live_volume, output_directory + "snoopy_partial_frame_17_", TMemoryDeviceType, Frame16And17Fixture::InitParams<TIndex>());
+	loadVolume(&canonical_volume, output_directory + "snoopy_partial_frame_16_", TMemoryDeviceType,
+	           Frame16And17Fixture::InitParams<TIndex>());
 
 	SlavchevaSurfaceTracker::Switches data_only_switches(true, false, false, false, false);
 	std::string data_only_filename = "warp_field_0_data_";
@@ -151,21 +157,20 @@ void GenerateTestData() {
 	};
 
 
-
 	ITMVoxelVolume<ITMWarp, TIndex> warp_field(&Configuration::get().scene_parameters,
 	                                           Configuration::get().swapping_mode ==
 	                                           Configuration::SWAPPINGMODE_ENABLED,
-	                                           MEMORYDEVICE_CUDA, Frame16And17Fixture::InitParams<TIndex>());
+	                                           TMemoryDeviceType, Frame16And17Fixture::InitParams<TIndex>());
 	ITMSceneManipulationEngineFactory::Instance<ITMWarp, TIndex, TMemoryDeviceType>().ResetScene(&warp_field);
 
 	SurfaceTracker<ITMVoxel, ITMWarp, TIndex, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC> dataOnlyMotionTracker(
 			data_only_switches);
-	dataOnlyMotionTracker->CalculateWarpGradient(canonical_volume, live_volume, &warp_field);
+	dataOnlyMotionTracker.CalculateWarpGradient(canonical_volume, live_volume, &warp_field);
 	warp_field.SaveToDirectory(output_directory + data_only_filename);
 
 	SurfaceTracker<ITMVoxel, ITMWarp, TIndex, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC> dataSmoothedMotionTracker(
 			data_smoothed_switches);
-	dataSmoothedMotionTracker.SmoothWarpGradient(canonical_volume,live_volume, &warp_field);
+	dataSmoothedMotionTracker.SmoothWarpGradient(canonical_volume, live_volume, &warp_field);
 	warp_field.SaveToDirectory(output_directory + data_smoothed_filename);
 
 	ITMSceneManipulationEngineFactory::Instance<ITMWarp, TIndex, TMemoryDeviceType>().ResetScene(&warp_field);

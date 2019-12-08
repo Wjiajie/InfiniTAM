@@ -253,3 +253,10 @@ BOOST_FIXTURE_TEST_CASE(testDataAndLevelSetTerm_CPU_VBH, DataFixture) {
 	float tolerance = 1e-7;
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_and_level_set_term, tolerance));
 }
+
+//#define GENERATE_DATA
+#ifdef GENERATE_DATA
+BOOST_AUTO_TEST_CASE(Test_WarpGradient_CUDA_VBH_GenerateTestData){
+	GenerateTestData<ITMVoxelBlockHash,MEMORYDEVICE_CPU>();
+}
+#endif

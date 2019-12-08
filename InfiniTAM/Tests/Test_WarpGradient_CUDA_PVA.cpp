@@ -73,7 +73,7 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CUDA_PVA, DataFixture) {
 
 	float maxWarp = motionTracker_PVA_CUDA->UpdateWarps(canonical_volume, live_volume, &warp_field_copy);
 	//warp_field_copy.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_data_flow_warps_");
-	BOOST_REQUIRE_CLOSE(maxWarp, 0.0870865062f, 1e-7);
+	BOOST_REQUIRE_CLOSE(maxWarp, 0.242487013f, 1e-7);
 
 	float tolerance = 1e-8;
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_copy, warp_field_iter0, tolerance));
@@ -172,3 +172,9 @@ BOOST_FIXTURE_TEST_CASE(testDataAndLevelSetTerm_CUDA, DataFixture) {
 	float tolerance = 1e-7;
 	BOOST_REQUIRE(contentAlmostEqual_CUDA_Verbose(&warp_field_CUDA1, warp_field_data_and_level_set_term, tolerance));
 }
+
+#ifdef GENERATE_DATA
+BOOST_AUTO_TEST_CASE(Test_WarpGradient_CUDA_PVA_GenerateTestData){
+	GenerateTestData<ITMPlainVoxelArray,MEMORYDEVICE_CUDA>();
+}
+#endif
