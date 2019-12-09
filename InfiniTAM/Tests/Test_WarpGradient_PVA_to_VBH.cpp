@@ -340,28 +340,24 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, int iteration
 
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CPU) {
-//	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
-//	Configuration::get().telemetry_settings.focus_coordinates = Vector3i(-15, 6, 170);
 	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);
 	GenericWarpTest<MEMORYDEVICE_CPU>(switches, 10, TEST_SUCCESSIVE_ITERATIONS);
 }
 
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CUDA) {
-//	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
-//	Configuration::get().telemetry_settings.focus_coordinates = Vector3i(-24, 63, 240);
 	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);
 	GenericWarpTest<MEMORYDEVICE_CUDA>(switches, 10, TEST_SUCCESSIVE_ITERATIONS, 1e-5);
 }
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonov_CUDA){
 	SlavchevaSurfaceTracker::Switches switches(true, false, true, false, false);
-	GenericWarpTest<MEMORYDEVICE_CUDA>(switches, 2, TEST_SUCCESSIVE_ITERATIONS);
+	GenericWarpTest<MEMORYDEVICE_CUDA>(switches, 5, TEST_SUCCESSIVE_ITERATIONS, 1e-7);
 }
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonovAndSobolevSmoothing_CUDA) {
 	SlavchevaSurfaceTracker::Switches switches(true, false, true, false, true);
-	GenericWarpTest<MEMORYDEVICE_CUDA>(switches, 2, TEST_SUCCESSIVE_ITERATIONS);
+	GenericWarpTest<MEMORYDEVICE_CUDA>(switches, 5, TEST_SUCCESSIVE_ITERATIONS, 1e-7);
 }
 
 
