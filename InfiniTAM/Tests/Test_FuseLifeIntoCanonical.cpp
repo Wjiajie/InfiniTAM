@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(Test_FuseLifeIntoCanonical_CUDA_PVA) {
 
 	RecoEngine_CUDA_PVA recoEngine;
 	recoEngine.FuseLiveIntoCanonicalSdf(canonical_volume, warped_live_volume);
-	//canonical_volume->SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/fused_canonical_");
+//	canonical_volume->SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/fused_canonical_");
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* fused_canonical_volume_gt;
 	loadVolume(&fused_canonical_volume_gt, "TestData/snoopy_result_fr16-17_partial_PVA/fused_canonical_",
