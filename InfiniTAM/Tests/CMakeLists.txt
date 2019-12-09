@@ -81,6 +81,7 @@ if (BUILD_TESTS)
     itm_add_test(NAME WarpGradient_PVA_to_VBH SOURCES Test_WarpGradient_PVA_to_VBH.cpp TestUtilsForSnoopyFrames16And17.h)
     itm_add_test(NAME Configuration SOURCES Test_Configuration.cpp)
     itm_add_test(NAME GeometryUtilities SOURCES Test_GeometryUtilities.cpp)
+    itm_add_test(NAME SmoothWarpGradient SOURCES Test_SmoothWarpGradient.cpp TestUtilsForSnoopyFrames16And17.h)
 
     #####################################################
     # Recursively transfer test data to build directory #
