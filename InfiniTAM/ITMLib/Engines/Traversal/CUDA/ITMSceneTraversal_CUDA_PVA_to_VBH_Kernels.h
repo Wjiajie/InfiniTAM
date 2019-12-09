@@ -33,6 +33,8 @@ __global__ void findBlocksNotSpannedByArray(
 	int hashCode = static_cast<int>(blockIdx.x * blockDim.x + threadIdx.x);
 	if (hashCode > hashEntryCount) return;
 	const ITMHashEntry& hashEntry = hashTable[hashCode];
+	if (hashEntry.ptr < 0)
+		return;
 	Vector3i blockMinVoxels = hashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 	Vector3i blockMaxVoxels = blockMinVoxels + Vector3i(VOXEL_BLOCK_SIZE);
 	Vector3i arrayMinVoxels = arrayInfo->offset;
