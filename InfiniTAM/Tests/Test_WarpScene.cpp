@@ -173,9 +173,12 @@ typedef ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMVoxelBloc
 
 
 BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_VBH_to_PVA, Frame16And17Fixture) {
-	const int iteration = 0;
+	const int iteration = 1;
+	//std::string prefix = "data_only";
+	std::string prefix = "data_tikhonov";
 	// *** load warps
-	std::string path_warps = "TestData/snoopy_result_fr16-17_warps/data_only_iter_" + std::to_string(iteration) + "_";
+	std::string path_warps =
+			"TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_" + std::to_string(iteration) + "_";
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warps_PVA;
 	loadVolume(&warps_PVA, path_warps, MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps_VBH_CPU;
@@ -193,10 +196,10 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_VBH_to_PVA, Frame16And17Fixture) {
 		source_path_VBH = path_frame_17_VBH;
 	} else {
 		source_path_PVA =
-				"TestData/snoopy_result_fr16-17_warps/data_only_iter_" + std::to_string(iteration - 1) +
+				"TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_" + std::to_string(iteration - 1) +
 				"_warped_live_";
 		source_path_VBH =
-				"TestData/snoopy_result_fr16-17_warps/data_only_iter_" + std::to_string(iteration - 1) +
+				"TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_" + std::to_string(iteration - 1) +
 				"_warped_live_";
 	}
 
@@ -232,7 +235,6 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_VBH_to_PVA, Frame16And17Fixture) {
 	float absoluteTolerance = 1e-6;
 
 
-
 	BOOST_REQUIRE(
 			contentAlmostEqual_CPU_Verbose(&target_VBH_copy, target_VBH_CPU, absoluteTolerance));
 	BOOST_REQUIRE(
@@ -243,7 +245,7 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_VBH_to_PVA, Frame16And17Fixture) {
 	delete warps_VBH_CPU;
 	delete warps_VBH;
 	delete source_volume_PVA;
-	delete  source_volume_VBH_CPU;
+	delete source_volume_VBH_CPU;
 	delete source_volume_VBH;
 	delete target_PVA;
 	delete target_VBH_CPU;

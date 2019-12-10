@@ -46,7 +46,7 @@ public:
 	}
 
 	void ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) override;
-	bool SetVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel) override;
+	bool SetVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, Vector3i at, TVoxel voxel) override;
 	bool SetVoxelNoAllocation(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
 	TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at) override;
 	TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at,

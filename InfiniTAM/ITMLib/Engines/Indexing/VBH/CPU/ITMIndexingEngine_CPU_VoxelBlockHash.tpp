@@ -21,6 +21,7 @@
 #include "../../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../Shared/ITMIndexingEngine_Shared.h"
 #include "../CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
+#include "../../Interface/ITMIndexingEngine.h"
 
 
 using namespace ITMLib;
@@ -79,7 +80,8 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 			int x = locId - y * depthImgSize.x;
 
 			buildHashAllocAndVisibleTypePP(hashEntryStates_device, hashBlockVisibilityTypes, x, y,
-			                               allocationBlockCoordinates, depth, invertedCameraPose, invertedCameraProjectionParameters, mu, depthImgSize,
+			                               allocationBlockCoordinates, depth, invertedCameraPose,
+			                               invertedCameraProjectionParameters, mu, depthImgSize,
 			                               oneOverHashEntrySize,
 			                               hashTable, scene->sceneParams->viewFrustum_min,
 			                               scene->sceneParams->viewFrustum_max, collisionDetected);
@@ -184,12 +186,59 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateUsi
 		}
 
 		ITMIndexingEngine<TVoxelATarget, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
-				.AllocateHashEntriesUsingLists(targetVolume, hashEntryStates_device,
-				                               blockCoordinates_device);
+				.AllocateHashEntriesUsingLists(targetVolume, hashEntryStates_device, blockCoordinates_device);
 	} while (collisionDetected);
 
 }
 
+static std::vector<Vector3s> neighborOffsets = []{ // NOLINT(cert-err58-cpp)
+	std::vector<Vector3s> offsets;
+	for (short zOffset = -1; zOffset < 2; zOffset++) {
+		for (short yOffset = -1; yOffset < 2; yOffset++) {
+			for (short xOffset = -1; xOffset < 2; xOffset++) {
+				Vector3s neighborOffset(xOffset, yOffset, zOffset);
+				if (neighborOffset != Vector3s(0, 0, 0)) {
+					offsets.push_back(neighborOffset);
+				}
+			}
+		}
+	}
+	return offsets;
+}();
+
+template<typename TVoxel>
+void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::ExpandAllocation(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume) {
+	int hashEntryCount = volume->index.hashEntryCount;
+	ITMHashEntry* hashTable = volume->index.GetEntries();
+
+	HashEntryState* hashEntryStates_device = volume->index.GetHashEntryStates();
+	Vector3s* blockCoordinates_device = volume->index.GetAllocationBlockCoordinates();
+
+	bool collision_detected;
+	do {
+		collision_detected = false;
+		volume->index.ClearHashEntryStates();
+#ifdef WITH_OPENMP
+#pragma omp parallel for default(none) shared(hashEntryCount, hashTable, hashEntryStates_device, blockCoordinates_device, collision_detected)
+#endif
+		for (int hashCode = 0; hashCode < hashEntryCount; hashCode++) {
+			const ITMHashEntry& hashEntry = hashTable[hashCode];
+			// skip empty blocks
+			if (hashEntry.ptr < 0) continue;
+			for (auto& neighborOffset : neighborOffsets) {
+				Vector3s neighborBlockCoordinates = hashEntry.pos + neighborOffset;
+				// try to find a corresponding canonical block, and mark it for allocation if not found
+				int targetHash = hashIndex(neighborBlockCoordinates);
+				MarkAsNeedingAllocationIfNotFound(hashEntryStates_device, blockCoordinates_device,
+				                                  targetHash, neighborBlockCoordinates, hashTable,
+				                                  collision_detected);
+			}
+		}
+		DIEWITHEXCEPTION_REPORTLOCATION("This needs to be modified to allocate *based* on the allocation in another volume");
+		AllocateHashEntriesUsingLists(volume, hashEntryStates_device, blockCoordinates_device);
+	} while (collision_detected);
+}
 
 template<typename TVoxel>
 void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
@@ -303,8 +352,9 @@ AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxelA, ITMVoxelBloc
 }
 
 template<typename TVoxel>
-ITMHashEntry ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::FindHashEntry(const ITMVoxelBlockHash& index,
-                                                                                            const Vector3s& coordinates) {
+ITMHashEntry
+ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::FindHashEntry(const ITMVoxelBlockHash& index,
+                                                                              const Vector3s& coordinates) {
 	const ITMHashEntry* entries = index.GetEntries();
 	int hashCode = FindHashCodeAt(entries, coordinates);
 	if (hashCode == -1) {
@@ -314,3 +364,36 @@ ITMHashEntry ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Fin
 	}
 }
 
+template<typename TVoxel>
+ITMHashEntry
+ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::FindHashEntry(const ITMVoxelBlockHash& index,
+                                                                              const Vector3s& coordinates,
+                                                                              int& hashCode) {
+	const ITMHashEntry* entries = index.GetEntries();
+	hashCode = FindHashCodeAt(entries, coordinates);
+	if (hashCode == -1) {
+		return {Vector3s(0, 0, 0), 0, -2};
+	} else {
+		return entries[hashCode];
+	}
+}
+
+template<typename TVoxel>
+bool ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateHashBlockAt(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, Vector3s at, int& hashCode) {
+
+	ITMHashEntry* hashTable = volume->index.GetEntries();
+	int lastFreeVoxelBlockId = volume->localVBA.lastFreeBlockId;
+	int lastFreeExcessListId = volume->index.GetLastFreeExcessListId();
+	int* voxelAllocationList = volume->localVBA.GetAllocationList();
+	int* excessAllocationList = volume->index.GetExcessAllocationList();
+	ITMHashEntry* entry = nullptr;
+	hashCode = -1;
+	if (!FindOrAllocateHashEntry(at, hashTable, entry, lastFreeVoxelBlockId, lastFreeExcessListId,
+	                             voxelAllocationList, excessAllocationList, hashCode)) {
+		return false;
+	}
+	volume->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
+	volume->index.SetLastFreeExcessListId(lastFreeExcessListId);
+	return true;
+}

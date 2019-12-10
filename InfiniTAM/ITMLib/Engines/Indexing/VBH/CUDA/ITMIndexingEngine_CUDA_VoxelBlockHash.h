@@ -52,8 +52,11 @@ public:
 	                                                 Vector3s* blockCoordinates_device,
 	                                                 uchar* hashBlockVisibilityTypes_device) override;
 
+	void ExpandAllocation(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume) override;
+
 	ITMHashEntry FindHashEntry(const ITMVoxelBlockHash& index, const Vector3s& coordinates) override;
 	ITMHashEntry FindHashEntry(const ITMVoxelBlockHash& index, const Vector3s& coordinates, int& hashCode);
+	bool AllocateHashBlockAt(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, Vector3s at, int& hashCode) override;
 
 	template<typename TVoxelATarget, typename TVoxelASource>
 	void AllocateUsingOtherVolume(ITMVoxelVolume <TVoxelATarget, ITMVoxelBlockHash>* targetVolume,

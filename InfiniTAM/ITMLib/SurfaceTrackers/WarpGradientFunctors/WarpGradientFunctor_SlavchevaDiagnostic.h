@@ -213,8 +213,8 @@ public:
 					warps, warpIndexData, warpCache, canonicalVoxels, canonicalIndexData, canonicalCache);
 
 			for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
-				if (!neighborAllocated[iNeighbor]) {
-					//assign current warp to neighbor warp if the neighbor is not allocated
+				if (!neighborKnown[iNeighbor]) {
+					//assign current warp to neighbor warp if the neighbor is not known
 					neighborFlowWarps[iNeighbor] = framewiseWarp;
 				}
 			}

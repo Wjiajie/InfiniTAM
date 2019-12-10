@@ -40,3 +40,8 @@ void ITMIndexingEngine<TVoxel, TIndex, TMemoryDeviceType>::AllocateFromWarpedVol
 		ITMVoxelVolume<TWarp, TIndex>* warpField,
 		ITMVoxelVolume<TVoxel, TIndex>* sourceTSDF,
 		ITMVoxelVolume<TVoxel, TIndex>* targetTSDF) {}
+
+
+template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+void ITMIndexingEngine<TVoxel, TIndex, TMemoryDeviceType>::ExpandAllocation(
+		ITMVoxelVolume<TVoxel, TIndex>* scene) {}

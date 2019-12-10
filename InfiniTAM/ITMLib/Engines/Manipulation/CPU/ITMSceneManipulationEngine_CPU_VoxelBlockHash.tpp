@@ -21,6 +21,7 @@
 #include "../../Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../../Traversal/Shared/ITMSceneTraversal_Shared.h"
 #include "../Shared/ITMSceneManipulationEngine_Shared.h"
+#include "../../Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
 
 namespace ITMLib {
 
@@ -51,28 +52,23 @@ void ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(
 
 template<typename TVoxel>
 bool
-ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
+ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume,
                                                                     Vector3i at, TVoxel voxel) {
-	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
-	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
-	ITMHashEntry* hashTable = scene->index.GetEntries();
-	ITMHashEntry* entry = nullptr;
-	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
-	int* voxelAllocationList = scene->localVBA.GetAllocationList();
-	int* excessAllocationList = scene->index.GetExcessAllocationList();
-	Vector3i blockPos;
-	int linearIdx = pointToVoxelBlockPos(at, blockPos);
-	int hash;
-	if (FindOrAllocateHashEntry(TO_SHORT_FLOOR3(blockPos), hashTable, entry, lastFreeVoxelBlockId, lastFreeExcessListId,
-	                            voxelAllocationList, excessAllocationList, hash)) {
-		TVoxel* localVoxelBlock = &(voxels[entry->ptr * (VOXEL_BLOCK_SIZE3)]);
-		localVoxelBlock[linearIdx] = voxel;
+
+	ITMHashEntry* hashTable = volume->index.GetEntries();
+	TVoxel* voxels = volume->localVBA.GetVoxelBlocks();
+	int hashCode = -1;
+	Vector3s blockPos;
+	int voxelIndexInBlock = pointToVoxelBlockPos(at, blockPos);
+	if (ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
+			.AllocateHashBlockAt(volume, blockPos, hashCode)) {
+		ITMHashEntry& entry = hashTable[hashCode];
+		TVoxel* localVoxelBlock = &(voxels[entry.ptr * (VOXEL_BLOCK_SIZE3)]);
+		localVoxelBlock[voxelIndexInBlock] = voxel;
+		return true;
 	} else {
 		return false;
 	}
-	scene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
-	scene->index.SetLastFreeExcessListId(lastFreeExcessListId);
-	return true;
 }
 
 template<typename TVoxel>
@@ -294,7 +290,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 
 
 			ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance().
-			AllocateHashEntriesUsingLists(destination, hashEntryStates_device, blockCoordinates_device);
+					AllocateHashEntriesUsingLists(destination, hashEntryStates_device, blockCoordinates_device);
 		} while (collisionDetected);
 #ifdef WITH_OPENMP
 #pragma omp parallel for default(none)

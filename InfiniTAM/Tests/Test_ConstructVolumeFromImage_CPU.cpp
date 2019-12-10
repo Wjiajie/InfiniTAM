@@ -57,10 +57,10 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH_CPU, Frame16And17Fixture) 
 	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
 	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
 	                        InitParams<ITMVoxelBlockHash>());
-//
-//	ITMVoxel voxelPVA = ManipulationEngine_CPU_PVA_Voxel::Inst().ReadVoxel(volume_PVA_16, Vector3i(-24,63,240));
+//	Vector3i test_pos = Vector3i(-57, -9, 196);
+//	ITMVoxel voxelPVA = ManipulationEngine_CPU_PVA_Voxel::Inst().ReadVoxel(volume_PVA_16, test_pos);
 //	voxelPVA.print_self();
-//	ITMVoxel voxelVBH = ManipulationEngine_CPU_VBH_Voxel::Inst().ReadVoxel(volume_VBH_16, Vector3i(-24,63,240));
+//	ITMVoxel voxelVBH = ManipulationEngine_CPU_VBH_Voxel::Inst().ReadVoxel(volume_VBH_16, test_pos);
 //	voxelVBH.print_self();
 
 #ifdef SAVE_TEST_DATA
@@ -94,7 +94,7 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CPU, Frame16And17Fixture) 
 	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
 	                        InitParams<ITMVoxelBlockHash>());
 
-//	Vector3i voxelPosition(-24, 64, 240);
+//	Vector3i voxelPosition(-57, -9, 196);
 //	ITMVoxel voxelPVA = ManipulationEngine_CPU_PVA_Voxel::Inst().ReadVoxel(volume_PVA_17, voxelPosition);
 //	voxelPVA.print_self();
 //	ITMVoxel voxelVBH = ManipulationEngine_CPU_VBH_Voxel::Inst().ReadVoxel(volume_VBH_17, voxelPosition);

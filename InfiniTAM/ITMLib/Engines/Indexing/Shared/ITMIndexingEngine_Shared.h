@@ -371,3 +371,62 @@ _CPU_AND_GPU_CODE_ inline void checkBlockVisibility(THREADPTR(bool)& isVisible, 
 	checkPointVisibility<useSwapping>(isVisible, isVisibleEnlarged, pt_image, M_d, projParams_d, imgSize);
 	if (isVisible) return;
 }
+
+
+_CPU_AND_GPU_CODE_
+inline
+bool FindOrAllocateHashEntry(const Vector3s& hashEntryPosition, ITMHashEntry* hashTable, ITMHashEntry*& resultEntry,
+                             int& lastFreeVoxelBlockId, int& lastFreeExcessListId, const int* voxelAllocationList,
+                             const int* excessAllocationList, int& hash) {
+	hash = hashIndex(hashEntryPosition);
+	ITMHashEntry hashEntry = hashTable[hash];
+	if (!IS_EQUAL3(hashEntry.pos, hashEntryPosition) || hashEntry.ptr < -1) {
+		bool isExcess = false;
+		//search excess list only if there is no room in ordered part
+		if (hashEntry.ptr >= -1) {
+			while (hashEntry.offset >= 1) {
+				hash = ORDERED_LIST_SIZE + hashEntry.offset - 1;
+				hashEntry = hashTable[hash];
+				if (IS_EQUAL3(hashEntry.pos, hashEntryPosition) && hashEntry.ptr >= -1) {
+					resultEntry = &hashTable[hash];
+					return true;
+				}
+			}
+			isExcess = true;
+
+		}
+		//still not found, allocate
+		if (isExcess && lastFreeVoxelBlockId >= 0 && lastFreeExcessListId >= 0) {
+			//there is room in the voxel block array and excess list
+			ITMHashEntry newHashEntry;
+			newHashEntry.pos = hashEntryPosition;
+			newHashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
+			newHashEntry.offset = 0;
+			int exlOffset = excessAllocationList[lastFreeExcessListId];
+			hashTable[hash].offset = exlOffset + 1; //connect to child
+			hashTable[ORDERED_LIST_SIZE +
+			          exlOffset] = newHashEntry; //add child to the excess list
+			resultEntry = &hashTable[ORDERED_LIST_SIZE +
+			                         exlOffset];
+			lastFreeVoxelBlockId--;
+			lastFreeExcessListId--;
+			return true;
+		} else if (lastFreeVoxelBlockId >= 0) {
+			//there is room in the voxel block array
+			ITMHashEntry newHashEntry;
+			newHashEntry.pos = hashEntryPosition;
+			newHashEntry.ptr = voxelAllocationList[lastFreeVoxelBlockId];
+			newHashEntry.offset = 0;
+			hashTable[hash] = newHashEntry;
+			resultEntry = &hashTable[hash];
+			lastFreeVoxelBlockId--;
+			return true;
+		} else {
+			return false;
+		}
+	} else {
+		//HashEntry already exists, return the pointer to it
+		resultEntry = &hashTable[hash];
+		return true;
+	}
+}

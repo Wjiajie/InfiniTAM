@@ -48,6 +48,8 @@ class ITMIndexingEngineInterface {
 			const ITMTrackingState* trackingState, const ITMRenderState* renderState,
 			bool onlyUpdateVisibleList, bool resetVisibleList) = 0;
 
+	virtual void ExpandAllocation(ITMVoxelVolume<TVoxel, TIndex>* scene) = 0;
+
 };
 
 template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
@@ -65,7 +67,7 @@ public:
 	ITMIndexingEngine(ITMIndexingEngine const&) = delete;
 	void operator=(ITMIndexingEngine const&) = delete;
 
-	void AllocateFromDepth(
+	virtual void AllocateFromDepth(
 			ITMVoxelVolume <TVoxel, TIndex>* scene, const ITMView* view,
 			const ITMTrackingState* trackingState, const ITMRenderState* renderState,
 			bool onlyUpdateVisibleList, bool resetVisibleList) override;
@@ -80,6 +82,8 @@ public:
 			ITMVoxelVolume <TWarp, TIndex>* warpField,
 			ITMVoxelVolume <TVoxel, TIndex>* sourceTSDF,
 			ITMVoxelVolume <TVoxel, TIndex>* targetTSDF);
+
+	virtual void ExpandAllocation(ITMVoxelVolume<TVoxel, TIndex>* volume);
 };
 
 
