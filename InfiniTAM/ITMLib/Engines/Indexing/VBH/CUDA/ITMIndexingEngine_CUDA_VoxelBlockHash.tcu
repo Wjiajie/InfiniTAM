@@ -266,9 +266,10 @@ ITMHashEntry
 ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::FindHashEntry(const ITMVoxelBlockHash& index,
                                                                                const Vector3s& coordinates) {
 	const ITMHashEntry* entries = index.GetEntries();
-	ORUtils::MemoryBlock<int> hashCode(1,true,true);
-	ORUtils::MemoryBlock<ITMHashEntry> hashEntry(1,true,true);
-	findHashEntry_device << < 1, 1 >> > (hashEntry.GetData(MEMORYDEVICE_CUDA), entries, coordinates, hashCode.GetData(MEMORYDEVICE_CUDA));
+	ORUtils::MemoryBlock<int> hashCode(1, true, true);
+	ORUtils::MemoryBlock<ITMHashEntry> hashEntry(1, true, true);
+	findHashEntry_device << < 1, 1 >> > (hashEntry.GetData(MEMORYDEVICE_CUDA), entries, coordinates, hashCode.GetData(
+			MEMORYDEVICE_CUDA));
 	hashEntry.UpdateHostFromDevice();
 	hashCode.UpdateHostFromDevice();
 	int hashCode_CPU = *hashCode.GetData(MEMORYDEVICE_CPU);
@@ -287,9 +288,10 @@ ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::FindHashEntry(c
                                                                                const Vector3s& coordinates,
                                                                                int& hashCode_CPU) {
 	const ITMHashEntry* entries = index.GetEntries();
-	ORUtils::MemoryBlock<int> hashCode(1,true,true);
-	ORUtils::MemoryBlock<ITMHashEntry> hashEntry(1,true,true);
-	findHashEntry_device << < 1, 1 >> > (hashEntry.GetData(MEMORYDEVICE_CUDA), entries, coordinates, hashCode.GetData(MEMORYDEVICE_CUDA));
+	ORUtils::MemoryBlock<int> hashCode(1, true, true);
+	ORUtils::MemoryBlock<ITMHashEntry> hashEntry(1, true, true);
+	findHashEntry_device << < 1, 1 >> > (hashEntry.GetData(MEMORYDEVICE_CUDA), entries, coordinates, hashCode.GetData(
+			MEMORYDEVICE_CUDA));
 	hashEntry.UpdateHostFromDevice();
 	hashCode.UpdateHostFromDevice();
 	hashCode_CPU = *hashCode.GetData(MEMORYDEVICE_CPU);
@@ -306,13 +308,65 @@ template<typename TVoxelTarget, typename TVoxelSource>
 void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateUsingOtherVolumeExpanded(
 		ITMVoxelVolume<TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
 		ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* sourceVolume) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	assert(sourceVolume->index.hashEntryCount == targetVolume->index.hashEntryCount);
+
+	int hashEntryCount = targetVolume->index.hashEntryCount;
+	ITMHashEntry* targetHashTable = targetVolume->index.GetEntries();
+	ITMHashEntry* sourceHashTable = sourceVolume->index.GetEntries();
+
+	HashEntryState* hashEntryStates_device = targetVolume->index.GetHashEntryStates();
+	Vector3s* blockCoordinates_device = targetVolume->index.GetAllocationBlockCoordinates();
+
+	ORUtils::MemoryBlock<bool> collision_detected(1, true, true);
+	dim3 cudaBlockSize_27Neighborhood(3, 3, 3);
+	dim3 gridSize_AllHashEntries(hashEntryCount);
+	do {
+		*collision_detected.GetData(MEMORYDEVICE_CPU) = false;
+		collision_detected.UpdateDeviceFromHost();
+		targetVolume->index.ClearHashEntryStates();
+		markForAllocationBasedOnOneRingAroundAnotherAllocation_device
+				<< <gridSize_AllHashEntries, cudaBlockSize_27Neighborhood >> >
+				(hashEntryStates_device, blockCoordinates_device,
+				 collision_detected.GetData(MEMORYDEVICE_CUDA),
+				 sourceHashTable, targetHashTable, hashEntryCount);
+		ORcudaKernelCheck;
+		collision_detected.UpdateHostFromDevice();
+		ITMIndexingEngine<TVoxelTarget, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance()
+				.AllocateHashEntriesUsingLists(targetVolume, hashEntryStates_device, blockCoordinates_device);
+	} while (*collision_detected.GetData(MEMORYDEVICE_CPU));
 }
 
 template<typename TVoxel>
 bool ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateHashBlockAt(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, Vector3s at, int& hashCode) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
-	return false;
+	ITMHashEntry* hashTable = volume->index.GetEntries();
+
+	ORUtils::MemoryBlock<SingleHashAllocationData> data(1,true,true);
+
+	SingleHashAllocationData* data_CPU = data.GetData(MEMORYDEVICE_CPU);
+	data_CPU->lastFreeVoxelBlockId = volume->localVBA.lastFreeBlockId;
+	data_CPU->lastFreeExcessListId = volume->index.GetLastFreeExcessListId();
+	data_CPU->hashCode = -1;
+	data_CPU->success = false;
+	data.UpdateDeviceFromHost();
+
+	int* voxelAllocationList = volume->localVBA.GetAllocationList();
+	int* excessAllocationList = volume->index.GetExcessAllocationList();
+
+	allocateHashEntry_device << <1, 1>> >
+		(data.GetData(MEMORYDEVICE_CUDA), at, hashTable, voxelAllocationList, excessAllocationList);
+
+	ORcudaKernelCheck;
+	data.UpdateHostFromDevice();
+
+	if (!data_CPU->success) {
+		return false;
+	}
+
+	hashCode = data_CPU->hashCode;
+
+	volume->localVBA.lastFreeBlockId = data_CPU->lastFreeVoxelBlockId;
+	volume->index.SetLastFreeExcessListId(data_CPU->lastFreeExcessListId);
+	return true;
 }
 

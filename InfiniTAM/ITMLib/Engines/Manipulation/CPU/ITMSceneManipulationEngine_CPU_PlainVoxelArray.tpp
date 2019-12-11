@@ -22,7 +22,7 @@
 #include "../Shared/ITMSceneManipulationEngine_Functors.h"
 
 
-namespace ITMLib {
+using namespace ITMLib;
 
 
 // region ==================================== Voxel Array Scene Manipulation Engine ===================================
@@ -210,6 +210,3 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopyScene(
 }
 
 //endregion ============================================================================================================
-
-
-}//namespace ITMLib

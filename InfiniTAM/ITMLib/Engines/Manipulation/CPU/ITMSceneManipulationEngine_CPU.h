@@ -16,9 +16,9 @@
 #pragma once
 
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
+#include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../../ITMLibDefines.h"
 #include "../../../Utils/ITMHashBlockProperties.h"
-#include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../../Utils/ITMPrintHelpers.h"
 #include "../Interface/ITMSceneManipulationEngine.h"
 
@@ -137,41 +137,5 @@ ComputeCopyRanges(int& xRangeStart, int& xRangeEnd, int& yRangeStart, int& yRang
 }
 
 // endregion ===========================================================================================================
-
-template<typename TVoxelSource, typename TVoxelDestination, typename TIndex>
-class ITMTwoSceneManipulationEngine_CPU {
-};
-
-template<typename TVoxelSource, typename TVoxelDestination>
-class ITMTwoSceneManipulationEngine_CPU<TVoxelSource, TVoxelDestination, ITMVoxelBlockHash> {
-public:
-	/**
-	 * \brief Copies all the sdf & flag values from the source scene to the destination scene with the desired offset
-	 * \param destination destination scene
-	 * \param source source scene
-	 * \param offset offset to use when copying the values
-	 */
-	static void CopySceneSDFandFlagsWithOffset_CPU(ITMVoxelVolume<TVoxelDestination, ITMVoxelBlockHash>* destination,
-	                                               ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* source,
-	                                               Vector3i offset);
-
-
-};
-
-
-template<typename TVoxelSource, typename TVoxelDestination>
-class ITMTwoSceneManipulationEngine_CPU<TVoxelSource, TVoxelDestination, ITMPlainVoxelArray> {
-public:
-	/**
-	 * \brief Copies all the sdf & flag values from the source scene to the destination scene with the desired offset
-	 * \param destination destination scene
-	 * \param source source scene
-	 * \param offset offset to use when copying the values
-	 */
-	static void CopySceneSDFandFlagsWithOffset_CPU(ITMVoxelVolume<TVoxelDestination, ITMPlainVoxelArray>* destination,
-	                                               ITMVoxelVolume<TVoxelSource, ITMPlainVoxelArray>* source,
-	                                               Vector3i offset);
-};
-
 
 }//namespace ITMLib

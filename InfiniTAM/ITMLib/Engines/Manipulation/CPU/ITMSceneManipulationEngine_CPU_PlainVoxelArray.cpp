@@ -27,6 +27,4 @@ template
 class ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray>;
 template
 class ITMSceneManipulationEngine_CPU<ITMWarp, ITMPlainVoxelArray>;
-template
-class ITMTwoSceneManipulationEngine_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;
 } // namespace ITMLib

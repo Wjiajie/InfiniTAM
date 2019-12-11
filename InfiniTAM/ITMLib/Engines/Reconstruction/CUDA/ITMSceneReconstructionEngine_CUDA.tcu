@@ -34,7 +34,7 @@ __global__ void allocateVoxelBlocksList_device(int *voxelAllocationList, int *ex
                                                AllocationTempData *allocData, HashEntryState* hashEntryStates,
                                                uchar *entriesVisibleType, Vector3s* blockCoordinates);
 
-__global__ void reAllocateSwappedOutVoxelBlocks_device(int *voxelAllocationList, ITMHashEntry *hashTable, int noTotalEntries,
+__global__ void reAllocateSwappedOutVoxelBlocks_device(int *voxelAllocationList, ITMHashEntry *hashTable, int hashEntryCount,
                                                        AllocationTempData *allocData, uchar *entriesVisibleType);
 
 __global__ void setToType3(uchar *entriesVisibleType, int *visibleEntryIDs, int noVisibleEntries);

@@ -25,8 +25,7 @@ namespace {
 //CUDA kernels
 
 //TODO: provide a better nomenclature for hash block visibility, i.e. an enum inheriting from unsigned char
-__global__ void setToType3(uchar *entriesVisibleType, int *visibleEntryIDs, int noVisibleEntries)
-{
+__global__ void setToType3(uchar* entriesVisibleType, int* visibleEntryIDs, int noVisibleEntries) {
 	int entryId = threadIdx.x + blockIdx.x * blockDim.x;
 	if (entryId > noVisibleEntries - 1) return;
 	entriesVisibleType[visibleEntryIDs[entryId]] = 3;
@@ -89,7 +88,6 @@ void allocateHashedVoxelBlocksUsingLists_SetVisibility_device(
 }
 
 
-
 __global__
 void allocateHashedVoxelBlocksUsingLists_device(
 		int* voxelAllocationList, int* excessAllocationList,
@@ -145,40 +143,44 @@ void allocateHashedVoxelBlocksUsingLists_device(
 }
 
 __global__
-void buildHashAllocationTypeList_VolumeToVolume(ITMLib::HashEntryState* entriesAllocType, Vector3s* blockCoords,
-					ITMHashEntry* targetHashTable, const ITMHashEntry* sourceHashTable, int hashEntryCount,
-					bool* collisionDetected){
+void buildHashAllocationTypeList_VolumeToVolume(ITMLib::HashEntryState* hashEntryStates, Vector3s* blockCoordinates,
+                                                ITMHashEntry* targetHashTable, const ITMHashEntry* sourceHashTable,
+                                                int hashEntryCount,
+                                                bool* collisionDetected) {
 	int hashCode = threadIdx.x + blockIdx.x * blockDim.x;
 	if (hashCode >= hashEntryCount) return;
 	const ITMHashEntry& sourceHashEntry = sourceHashTable[hashCode];
-	if(sourceHashEntry.ptr < 0) return;
+	if (sourceHashEntry.ptr < 0) return;
 	Vector3s sourceBlockCoordinates = sourceHashEntry.pos;
 	int targetHash = hashIndex(sourceBlockCoordinates);
-	MarkAsNeedingAllocationIfNotFound(entriesAllocType, blockCoords,
+	MarkAsNeedingAllocationIfNotFound(hashEntryStates, blockCoordinates,
 	                                  targetHash, sourceBlockCoordinates, targetHashTable,
 	                                  *collisionDetected);
 }
 
 
-__global__ void buildHashAllocAndVisibleType_device(ITMLib::HashEntryState *hashEntryStates, uchar *entriesVisibleType, Vector3s *blockCoords, const float *depth,
-                                                    Matrix4f invertedCameraTransform, Vector4f projParams_d, float mu, Vector2i _imgSize, float oneOverHashBlockSizeMeters, ITMHashEntry *hashTable, float viewFrustum_min,
-                                                    float viewFrustum_max, bool* collisionDetected)
-{
+__global__ void buildHashAllocAndVisibleType_device(ITMLib::HashEntryState* hashEntryStates, uchar* entriesVisibleType,
+                                                    Vector3s* blockCoords, const float* depth,
+                                                    Matrix4f invertedCameraTransform, Vector4f projParams_d, float mu,
+                                                    Vector2i _imgSize, float oneOverHashBlockSizeMeters,
+                                                    ITMHashEntry* hashTable, float viewFrustum_min,
+                                                    float viewFrustum_max, bool* collisionDetected) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x, y = threadIdx.y + blockIdx.y * blockDim.y;
 
 	if (x > _imgSize.x - 1 || y > _imgSize.y - 1) return;
 
-	buildHashAllocAndVisibleTypePP(hashEntryStates, entriesVisibleType, x, y, blockCoords, depth, invertedCameraTransform, projParams_d,
+	buildHashAllocAndVisibleTypePP(hashEntryStates, entriesVisibleType, x, y, blockCoords, depth,
+	                               invertedCameraTransform, projParams_d,
 	                               mu, _imgSize, oneOverHashBlockSizeMeters,
 	                               hashTable, viewFrustum_min, viewFrustum_max, *collisionDetected);
 }
 
 
 template<bool useSwapping>
-__global__ void buildVisibleList_device(ITMHashEntry *hashTable, ITMLib::ITMHashSwapState *swapStates, int noTotalEntries,
-                                        int *visibleEntryIDs, AllocationTempData *allocData, uchar *entriesVisibleType,
-                                        Matrix4f M_d, Vector4f projParams_d, Vector2i depthImgSize, float voxelSize)
-{
+__global__ void
+buildVisibleList_device(ITMHashEntry* hashTable, ITMLib::ITMHashSwapState* swapStates, int noTotalEntries,
+                        int* visibleEntryIDs, AllocationTempData* allocData, uchar* entriesVisibleType,
+                        Matrix4f M_d, Vector4f projParams_d, Vector2i depthImgSize, float voxelSize) {
 	int targetIdx = threadIdx.x + blockIdx.x * blockDim.x;
 	if (targetIdx > noTotalEntries - 1) return;
 
@@ -187,18 +189,18 @@ __global__ void buildVisibleList_device(ITMHashEntry *hashTable, ITMLib::ITMHash
 	__syncthreads();
 
 	unsigned char hashVisibleType = entriesVisibleType[targetIdx];
-	const ITMHashEntry & hashEntry = hashTable[targetIdx];
+	const ITMHashEntry& hashEntry = hashTable[targetIdx];
 
-	if (hashVisibleType == 3)
-	{
+	if (hashVisibleType == 3) {
 		bool isVisibleEnlarged, isVisible;
 
-		if (useSwapping)
-		{
-			checkBlockVisibility<true>(isVisible, isVisibleEnlarged, hashEntry.pos, M_d, projParams_d, voxelSize, depthImgSize);
+		if (useSwapping) {
+			checkBlockVisibility<true>(isVisible, isVisibleEnlarged, hashEntry.pos, M_d, projParams_d, voxelSize,
+			                           depthImgSize);
 			if (!isVisibleEnlarged) hashVisibleType = 0;
 		} else {
-			checkBlockVisibility<false>(isVisible, isVisibleEnlarged, hashEntry.pos, M_d, projParams_d, voxelSize, depthImgSize);
+			checkBlockVisibility<false>(isVisible, isVisibleEnlarged, hashEntry.pos, M_d, projParams_d, voxelSize,
+			                            depthImgSize);
 			if (!isVisible) hashVisibleType = 0;
 		}
 		entriesVisibleType[targetIdx] = hashVisibleType;
@@ -206,39 +208,40 @@ __global__ void buildVisibleList_device(ITMHashEntry *hashTable, ITMLib::ITMHash
 
 	if (hashVisibleType > 0) shouldPrefix = true;
 
-	if (useSwapping)
-	{
+	if (useSwapping) {
 		if (hashVisibleType > 0 && swapStates[targetIdx].state != 2) swapStates[targetIdx].state = 1;
 	}
 
 	__syncthreads();
 
-	if (shouldPrefix)
-	{
-		int offset = computePrefixSum_device<int>(hashVisibleType > 0, &allocData->noVisibleEntries, blockDim.x * blockDim.y, threadIdx.x);
+	if (shouldPrefix) {
+		int offset = computePrefixSum_device<int>(hashVisibleType > 0, &allocData->noVisibleEntries,
+		                                          blockDim.x * blockDim.y, threadIdx.x);
 		if (offset != -1) visibleEntryIDs[offset] = targetIdx;
 	}
 
 }
 
-__global__ void reAllocateSwappedOutVoxelBlocks_device(int *voxelAllocationList, ITMHashEntry *hashTable, int noTotalEntries,
-                                                       AllocationTempData *allocData, /*int *countOfAllocatedOrderedEntries,*/ uchar *entriesVisibleType)
-{
-	int targetIdx = threadIdx.x + blockIdx.x * blockDim.x;
-	if (targetIdx > noTotalEntries - 1) return;
+__global__ void
+reAllocateSwappedOutVoxelBlocks_device(int* voxelAllocationList, ITMHashEntry* hashTable, int hashEntryCount,
+                                       AllocationTempData* allocData, /*int *countOfAllocatedOrderedEntries,*/
+                                       uchar* entriesVisibleType) {
+	int hashCode = threadIdx.x + blockIdx.x * blockDim.x;
+	if (hashCode >= hashEntryCount) return;
 
 	int vbaIdx;
-	int hashEntry_ptr = hashTable[targetIdx].ptr;
+	int hashEntry_ptr = hashTable[hashCode].ptr;
 
-	if (entriesVisibleType[targetIdx] > 0 && hashEntry_ptr == -1) //it is visible and has been previously allocated inside the hash, but deallocated from VBA
+	if (entriesVisibleType[hashCode] > 0 &&
+	    hashEntry_ptr == -1) //it is visible and has been previously allocated inside the hash, but deallocated from VBA
 	{
 		vbaIdx = atomicSub(&allocData->noAllocatedVoxelEntries, 1);
-		if (vbaIdx >= 0) hashTable[targetIdx].ptr = voxelAllocationList[vbaIdx];
+		if (vbaIdx >= 0) hashTable[hashCode].ptr = voxelAllocationList[vbaIdx];
 		else atomicAdd(&allocData->noAllocatedVoxelEntries, 1);
 	}
 }
 
-__global__ void findHashEntry_device(ITMHashEntry* entry, const ITMHashEntry* hashTable, Vector3s pos, int* hashCode){
+__global__ void findHashEntry_device(ITMHashEntry* entry, const ITMHashEntry* hashTable, Vector3s pos, int* hashCode) {
 
 	*hashCode = FindHashCodeAt(hashTable, pos);
 	if (*hashCode != -1) {
@@ -248,5 +251,40 @@ __global__ void findHashEntry_device(ITMHashEntry* entry, const ITMHashEntry* ha
 		entry->pos = targetEntry.pos;
 	}
 }
+
+__global__ void markForAllocationBasedOnOneRingAroundAnotherAllocation_device(
+		ITMLib::HashEntryState* hashEntryStates, Vector3s* blockCoordinates, bool* collisionDetected,
+		const ITMHashEntry* sourceHashTable, const ITMHashEntry* targetHashTable, int hashEntryCount) {
+
+	if (*collisionDetected) return;
+	int hashCode = blockIdx.x;
+
+	if (hashCode >= hashEntryCount) return;
+	const ITMHashEntry& sourceHashEntry = sourceHashTable[hashCode];
+	if (sourceHashEntry.ptr < 0) return;
+
+	Vector3s targetBlockCoordinates = sourceHashEntry.pos + Vector3s(threadIdx.x - 1, threadIdx.y - 1, threadIdx.z -1);
+
+	int targetHash = hashIndex(targetBlockCoordinates);
+	MarkAsNeedingAllocationIfNotFound(hashEntryStates, blockCoordinates,
+	                                  targetHash, targetBlockCoordinates, targetHashTable,
+	                                  *collisionDetected);
+}
+
+struct SingleHashAllocationData {
+	int lastFreeVoxelBlockId;
+	int lastFreeExcessListId;
+	int hashCode;
+	bool success;
+};
+
+__global__ void allocateHashEntry_device(SingleHashAllocationData* data,
+                                         const Vector3s at, ITMHashEntry* hashTable,
+                                         const int* voxelAllocationList, const int* excessAllocationList) {
+	ITMHashEntry* entry;
+	data->success = FindOrAllocateHashEntry(at, hashTable, entry, data->lastFreeVoxelBlockId,
+	                                        data->lastFreeExcessListId, voxelAllocationList, excessAllocationList,
+	                                        data->hashCode);
+};
 
 } // end anonymous namespace (CUDA kernels)

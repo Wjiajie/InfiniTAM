@@ -15,12 +15,13 @@
 //  ================================================================
 
 #include "ITMSceneManipulationEngine_CUDA.h"
-#include "../Shared/ITMSceneManipulationEngine_Shared.h"
-#include "../../../../ORUtils/PlatformIndependence.h"
-#include "../../../Utils/ITMCUDAUtils.h"
-#include "../../../../ORUtils/JetbrainsCUDASyntax.hpp"
-#include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "ITMSceneManipulationEngine_CUDA_PlainVoxelArray_Kernels.h"
+#include "../../../../ORUtils/PlatformIndependence.h"
+#include "../../../../ORUtils/JetbrainsCUDASyntax.hpp"
+#include "../../../Utils/ITMCUDAUtils.h"
+#include "../../../Objects/Scene/ITMRepresentationAccess.h"
+#include "../Shared/ITMSceneManipulationEngine_Shared.h"
+
 
 #include <cstring>
 #include <iostream>

@@ -23,7 +23,7 @@
 #include "../Shared/ITMSceneManipulationEngine_Shared.h"
 #include "../../Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
 
-namespace ITMLib {
+using namespace ITMLib;
 
 // region ==================================== Voxel Hash Scene Manipulation Engine ====================================
 
@@ -344,5 +344,3 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 
 // endregion ===========================================================================================================
 
-
-}//namespace ITMLib
