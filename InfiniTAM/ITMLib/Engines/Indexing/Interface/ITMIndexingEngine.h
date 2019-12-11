@@ -47,14 +47,11 @@ class ITMIndexingEngineInterface {
 			ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
 			const ITMTrackingState* trackingState, const ITMRenderState* renderState,
 			bool onlyUpdateVisibleList, bool resetVisibleList) = 0;
-
-	virtual void ExpandAllocation(ITMVoxelVolume<TVoxel, TIndex>* scene) = 0;
-
 };
 
 template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
 class ITMIndexingEngine :
-		public ITMIndexingEngineInterface<TVoxel, TIndex>{
+		public ITMIndexingEngineInterface<TVoxel, TIndex> {
 private:
 	ITMIndexingEngine() = default;
 public:
@@ -68,7 +65,7 @@ public:
 	void operator=(ITMIndexingEngine const&) = delete;
 
 	virtual void AllocateFromDepth(
-			ITMVoxelVolume <TVoxel, TIndex>* scene, const ITMView* view,
+			ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
 			const ITMTrackingState* trackingState, const ITMRenderState* renderState,
 			bool onlyUpdateVisibleList, bool resetVisibleList) override;
 
@@ -77,13 +74,16 @@ public:
 	void AllocateUsingOtherVolume(ITMVoxelVolume<TVoxelTarget, TIndex>* targetVolume,
 	                              ITMVoxelVolume<TVoxelSource, TIndex>* sourceVolume);
 
+	template<typename TVoxelTarget, typename TVoxelSource>
+	void AllocateUsingOtherVolumeExpanded(ITMVoxelVolume<TVoxelTarget, TIndex>* targetVolume,
+	                                      ITMVoxelVolume<TVoxelSource, TIndex>* sourceVolume);
+
 	template<WarpType TWarpType, typename TWarp>
 	void AllocateFromWarpedVolume(
-			ITMVoxelVolume <TWarp, TIndex>* warpField,
-			ITMVoxelVolume <TVoxel, TIndex>* sourceTSDF,
-			ITMVoxelVolume <TVoxel, TIndex>* targetTSDF);
+			ITMVoxelVolume<TWarp, TIndex>* warpField,
+			ITMVoxelVolume<TVoxel, TIndex>* sourceTSDF,
+			ITMVoxelVolume<TVoxel, TIndex>* targetTSDF);
 
-	virtual void ExpandAllocation(ITMVoxelVolume<TVoxel, TIndex>* volume);
 };
 
 

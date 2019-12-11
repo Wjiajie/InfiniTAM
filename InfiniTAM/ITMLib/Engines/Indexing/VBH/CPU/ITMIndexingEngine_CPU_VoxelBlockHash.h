@@ -55,13 +55,15 @@ public:
 	ITMHashEntry FindHashEntry(const ITMVoxelBlockHash& index, const Vector3s& coordinates) override;
 	ITMHashEntry FindHashEntry(const ITMVoxelBlockHash& index, const Vector3s& coordinates, int& hashCode);
 
-	void ExpandAllocation(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume) override;
+
 	bool AllocateHashBlockAt(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, Vector3s at, int& hashCode) override;
 
-	template<typename TVoxelATarget, typename TVoxelASource>
-	void AllocateUsingOtherVolume(ITMVoxelVolume<TVoxelATarget, ITMVoxelBlockHash>* targetVolume,
-	                              ITMVoxelVolume<TVoxelASource, ITMVoxelBlockHash>* sourceVolume);
-
+	template<typename TVoxelTarget, typename TVoxelSource>
+	void AllocateUsingOtherVolume(ITMVoxelVolume<TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
+	                              ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* sourceVolume);
+	template<typename TVoxelTarget, typename TVoxelSource>
+	void AllocateUsingOtherVolumeExpanded(ITMVoxelVolume<TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
+	                                      ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* sourceVolume);
 
 };
 } //namespace ITMLib

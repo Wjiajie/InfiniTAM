@@ -302,8 +302,10 @@ ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::FindHashEntry(c
 }
 
 template<typename TVoxel>
-void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::ExpandAllocation(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
+template<typename TVoxelTarget, typename TVoxelSource>
+void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateUsingOtherVolumeExpanded(
+		ITMVoxelVolume<TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
+		ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* sourceVolume) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
 }
 
@@ -311,5 +313,6 @@ template<typename TVoxel>
 bool ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateHashBlockAt(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, Vector3s at, int& hashCode) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	return false;
 }
 
