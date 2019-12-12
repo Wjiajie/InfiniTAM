@@ -333,6 +333,8 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateUs
 		collision_detected.UpdateHostFromDevice();
 		ITMIndexingEngine<TVoxelTarget, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance()
 				.AllocateHashEntriesUsingLists(targetVolume, hashEntryStates_device, blockCoordinates_device);
+		bool collision = *collision_detected.GetData(MEMORYDEVICE_CPU);
+		std::cout << "collision: " << (collision ? "true" : "false") << std::endl;
 	} while (*collision_detected.GetData(MEMORYDEVICE_CPU));
 }
 

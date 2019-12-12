@@ -109,6 +109,7 @@ void allocateHashedVoxelBlocksUsingLists_device(
 				hashEntry.pos = blockCoords[hashCode];
 				hashEntry.ptr = voxelAllocationList[vbaIdx];
 				hashEntry.offset = 0;
+				printf("hash entry being allocated: %d %d %d, code %d\n", hashEntry.pos.x, hashEntry.pos.y, hashEntry.pos.z, hashCode);
 				hashTable[hashCode] = hashEntry;
 			} else {
 				// Restore the previous value to avoid leaks.
@@ -132,6 +133,7 @@ void allocateHashedVoxelBlocksUsingLists_device(
 				hashTable[hashCode].offset = exlOffset + 1; //connect to child
 
 				hashTable[ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
+				printf("hash entry being allocated: %d %d %d, code %d\n", hashEntry.pos.x, hashEntry.pos.y, hashEntry.pos.z, hashCode);
 			} else {
 				// Restore the previous values to avoid leaks.
 				atomicAdd(&allocData->noAllocatedVoxelEntries, 1);
@@ -266,9 +268,14 @@ __global__ void markForAllocationBasedOnOneRingAroundAnotherAllocation_device(
 	Vector3s targetBlockCoordinates = sourceHashEntry.pos + Vector3s(threadIdx.x - 1, threadIdx.y - 1, threadIdx.z -1);
 
 	int targetHash = hashIndex(targetBlockCoordinates);
-	MarkAsNeedingAllocationIfNotFound(hashEntryStates, blockCoordinates,
+
+	bool allocate = MarkAsNeedingAllocationIfNotFound(hashEntryStates, blockCoordinates,
 	                                  targetHash, targetBlockCoordinates, targetHashTable,
 	                                  *collisionDetected);
+//_DEBUG EXPAND
+//	printf("Allocating block: %d %d %d, hash: %d, collision: %s, allocate %s\n",
+//			targetBlockCoordinates.x, targetBlockCoordinates.y, targetBlockCoordinates.z, targetHash, *collisionDetected ? "true" : "false",
+//			allocate ? "true": "false");
 }
 
 struct SingleHashAllocationData {

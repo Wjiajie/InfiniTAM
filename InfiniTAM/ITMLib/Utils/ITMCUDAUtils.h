@@ -133,6 +133,25 @@ __device__ double atomicAdd(double* address, double val)
 }
 #endif
 
+__device__ char atomicCAS(char* address, char assumed, char val)
+
+{
+	unsigned int *base_address = (unsigned int *)((char *)address - ((size_t)address & 3));
+	unsigned int selectors[] = {0x3214, 0x3240, 0x3410, 0x4210};
+	unsigned int sel = selectors[(size_t)address & 3];
+	unsigned int old;//, min_, new_;
+
+	old = *base_address;
+
+	unsigned int uint32_val = __byte_perm(old, val, sel);
+	unsigned int uint32_assumed = __byte_perm(old, assumed, sel);
+
+	//min_ = min(val, (char)__byte_perm(old, 0, ((size_t)address & 3)));
+	//new_ = __byte_perm(old, min_, sel);
+	old = atomicCAS(base_address, uint32_assumed, uint32_val);
+	return old;
+}
+
 template<typename T>
 __global__ void memsetKernel_device(T *devPtr, const T val, size_t nwords)
 {
