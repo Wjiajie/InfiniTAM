@@ -32,6 +32,7 @@
 #ifndef COMPLIE_WITHOUT_CUDA
 #include "../ITMLib/Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
 #include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
+#include "Test_AtomicCAS_char.h"
 #endif
 
 
@@ -236,4 +237,9 @@ BOOST_AUTO_TEST_CASE(ExpandVolume_CUDA) {
 	entry = indexing_engine.FindHashEntry(volume2.index, test_position, search_hash_code);
 	BOOST_REQUIRE_EQUAL(search_hash_code, -1);
 }
+
+BOOST_AUTO_TEST_CASE(AtomicCAS_char){
+	run_CAS_test();
+}
+
 #endif

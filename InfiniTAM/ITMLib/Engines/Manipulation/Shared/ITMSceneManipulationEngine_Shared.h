@@ -19,9 +19,9 @@
 #include "../../../Utils/ITMMath.h"
 #include "../../../Objects/Scene/ITMVoxelBlockHash.h"
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
-#ifdef __CUDACC__
-#include "../../../Utils/ITMCUDAUtils.h"
-#endif
+//#ifdef __CUDACC__
+//#include "../../../Utils/ITMCUDAUtils.h"
+//#endif
 
 
 struct CopyAllocationTempData {
@@ -124,7 +124,8 @@ inline bool MarkAsNeedingAllocationIfNotFound(ITMLib::HashEntryState* entryAlloc
 			}
 
 		}
-		if (atomicCAS((char*)entryAllocationTypes + hashIdx, (char) ITMLib::NEEDS_NO_CHANGE, (char)ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST) == 0
+		if (entryAllocationTypes[hashIdx] != ITMLib::NEEDS_NO_CHANGE
+				//atomicCAS((char*)entryAllocationTypes + hashIdx, (char) ITMLib::NEEDS_NO_CHANGE, (char)ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST) == 0
 		    /*&& !IS_EQUAL3(hashBlockCoordinates[hashIdx], desiredHashBlockPosition)*/) {
 			//hash code already marked for allocation, but at different coordinates, cannot allocate
 			collisionDetected = true;

@@ -133,23 +133,31 @@ __device__ double atomicAdd(double* address, double val)
 }
 #endif
 
-__device__ char atomicCAS(char* address, char assumed, char val)
+__device__ static inline char atomicCAS(char* address, char assumed, char val)
 
 {
 	unsigned int *base_address = (unsigned int *)((char *)address - ((size_t)address & 3));
 	unsigned int selectors[] = {0x3214, 0x3240, 0x3410, 0x4210};
 	unsigned int sel = selectors[(size_t)address & 3];
-	unsigned int old;//, min_, new_;
+	unsigned int _old, _new, _assumed;
 
-	old = *base_address;
+	_old = *base_address;
+	_new = val;
+	_assumed = assumed;
 
-	unsigned int uint32_val = __byte_perm(old, val, sel);
-	unsigned int uint32_assumed = __byte_perm(old, assumed, sel);
+	// replace bits in _old that pertain to the char address with those from val
+	unsigned int uint32_val = __byte_perm(_old, _new, sel);
+	// replace bits in _old that pertain to the char address with those from assumed
+	unsigned int uint32_assumed = __byte_perm(_old, _assumed, sel);
 
-	//min_ = min(val, (char)__byte_perm(old, 0, ((size_t)address & 3)));
-	//new_ = __byte_perm(old, min_, sel);
-	old = atomicCAS(base_address, uint32_assumed, uint32_val);
-	return old;
+	printf("thread: %d, block: %d, assumed: %d, val: %d, _new: %d, (size_t)address & 3: %d, _old: %d, uint32_val: %d, uint32_assumed: %d \n",
+			threadIdx.x, blockIdx.x,
+           (int)assumed, (int)val, _new,
+			(size_t)address & 3, _old, uint32_val, uint32_assumed);
+
+	_old = atomicCAS(base_address, uint32_assumed, uint32_val);
+
+	return (char)__byte_perm(_old, 0, ((size_t) address & 3));
 }
 
 template<typename T>
