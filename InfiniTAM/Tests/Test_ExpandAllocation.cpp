@@ -25,14 +25,20 @@
 //local
 #include "../ITMLib/ITMLibDefines.h"
 #include "../ITMLib/Utils/Configuration.h"
+#include "TestUtilsForSnoopyFrames16And17.h"
+#include "../ITMLib/Objects/RenderStates/ITMRenderStateFactory.h"
 //local - CPU
 #include "../ITMLib/Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 //local - CUDA
 #ifndef COMPLIE_WITHOUT_CUDA
+
 #include "../ITMLib/Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
 #include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "CUDAAtomicTesting.h"
+#include "../ITMLib/Engines/Manipulation/ITMSceneManipulationEngineFactory.h"
+#include "TestUtils.h"
+
 #endif
 
 
@@ -132,9 +138,42 @@ BOOST_AUTO_TEST_CASE(ExpandVolume_CPU) {
 		}
 	}
 
-	Vector3s test_position(0,2,2);
+	Vector3s test_position(0, 2, 2);
 	entry = indexing_engine.FindHashEntry(volume2.index, test_position, search_hash_code);
 	BOOST_REQUIRE_EQUAL(search_hash_code, -1);
+}
+
+template<MemoryDeviceType TMemoryDeviceType>
+void TestAllocateBasedOnVolumeExpanded_Generic() {
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume1(&Configuration::get().scene_parameters,
+	                                                    Configuration::get().swapping_mode ==
+	                                                    Configuration::SWAPPINGMODE_ENABLED,
+	                                                    TMemoryDeviceType,
+	                                                    Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
+	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(&volume1);
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume2(&Configuration::get().scene_parameters,
+	                                                    Configuration::get().swapping_mode ==
+	                                                    Configuration::SWAPPINGMODE_ENABLED,
+	                                                    TMemoryDeviceType,
+	                                                    Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
+	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(&volume2);
+	ITMView* view = nullptr;
+	updateView("TestData/snoopy_depth_000017.png",
+	           "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
+	           "TestData/snoopy_calib.txt", TMemoryDeviceType, &view);
+	Vector2i imageSize(640, 480);
+	ITMTrackingState trackingState(imageSize, TMemoryDeviceType);
+	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(
+			imageSize, &Configuration::get().scene_parameters, TMemoryDeviceType, volume1.index);
+	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>::Instance().AllocateFromDepth(
+			&volume1, view, &trackingState, renderState, false, false);
+	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>::Instance()
+			.AllocateUsingOtherVolumeExpanded(&volume2, &volume1);
+
+}
+
+BOOST_AUTO_TEST_CASE(TestAllocateBasedOnVolumeExpanded_CPU){
+	TestAllocateBasedOnVolumeExpanded_Generic<MEMORYDEVICE_CPU>();
 }
 
 #ifndef COMPILE_WITHOUT_CUDA
@@ -233,7 +272,7 @@ BOOST_AUTO_TEST_CASE(ExpandVolume_CUDA) {
 		}
 	}
 
-	Vector3s test_position(0,2,2);
+	Vector3s test_position(0, 2, 2);
 	entry = indexing_engine.FindHashEntry(volume2.index, test_position, search_hash_code);
 	BOOST_REQUIRE_EQUAL(search_hash_code, -1);
 }

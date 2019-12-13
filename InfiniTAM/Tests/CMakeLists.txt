@@ -82,7 +82,7 @@ if (BUILD_TESTS)
     itm_add_test(NAME Configuration SOURCES Test_Configuration.cpp)
     itm_add_test(NAME GeometryUtilities SOURCES Test_GeometryUtilities.cpp)
     itm_add_test(NAME SmoothWarpGradient SOURCES Test_SmoothWarpGradient.cpp TestUtilsForSnoopyFrames16And17.h)
-    itm_add_test(NAME ExpandAllocation SOURCES Test_ExpandAllocation.cpp )
+    itm_add_test(NAME ExpandAllocation SOURCES Test_ExpandAllocation.cpp TestUtilsForSnoopyFrames16And17.h)
     itm_add_test(NAME CUDA_Atomics SOURCES Test_CUDA_Atomics.cpp CUDAAtomicTesting.h CUDAAtomicTesting.cu TemporaryCUDA_Atomics.h)
 
     #####################################################

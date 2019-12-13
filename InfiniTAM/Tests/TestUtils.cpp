@@ -143,8 +143,8 @@ void updateView(const std::string& depth_path,
                 ITMView** view){
 	ITMRGBDCalib calibrationData;
 	readRGBDCalib(calibration_path.c_str(), calibrationData);
-	static ITMViewBuilder* viewBuilder = nullptr;
-	if (viewBuilder == nullptr) viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calibrationData, memoryDevice);
+	static std::unique_ptr<ITMViewBuilder> viewBuilder = nullptr;
+	if (viewBuilder.get() == nullptr) viewBuilder.reset(ITMViewBuilderFactory::MakeViewBuilder(calibrationData, memoryDevice));
 	Vector2i imageSize(640, 480);
 	auto* rgb = new ITMUChar4Image(true, false);
 	auto* depth = new ITMShortImage(true, false);
