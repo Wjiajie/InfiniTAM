@@ -15,9 +15,7 @@
 //  ================================================================
 #pragma once
 
-#include "ITMIndexingEngine_VoxelBlockHash.h"
-#include "../../Common/ITMCommonFunctors.h"
-#include "../Shared/ITMIndexingEngine_Shared.h"
+#include "../../Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 
 namespace ITMLib {
 

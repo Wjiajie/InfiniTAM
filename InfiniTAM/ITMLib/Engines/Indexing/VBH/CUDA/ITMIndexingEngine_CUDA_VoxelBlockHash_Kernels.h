@@ -109,7 +109,6 @@ void allocateHashedVoxelBlocksUsingLists_device(
 				hashEntry.pos = blockCoords[hashCode];
 				hashEntry.ptr = voxelAllocationList[vbaIdx];
 				hashEntry.offset = 0;
-				printf("hash entry being allocated: %d %d %d, code %d\n", hashEntry.pos.x, hashEntry.pos.y, hashEntry.pos.z, hashCode);
 				hashTable[hashCode] = hashEntry;
 			} else {
 				// Restore the previous value to avoid leaks.
@@ -133,7 +132,6 @@ void allocateHashedVoxelBlocksUsingLists_device(
 				hashTable[hashCode].offset = exlOffset + 1; //connect to child
 
 				hashTable[ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
-				printf("hash entry being allocated: %d %d %d, code %d\n", hashEntry.pos.x, hashEntry.pos.y, hashEntry.pos.z, hashCode);
 			} else {
 				// Restore the previous values to avoid leaks.
 				atomicAdd(&allocData->noAllocatedVoxelEntries, 1);
@@ -254,6 +252,54 @@ __global__ void findHashEntry_device(ITMHashEntry* entry, const ITMHashEntry* ha
 	}
 }
 
+__device__
+inline bool MarkAsNeedingAllocationIfNotFound_CUDA(ITMLib::HashEntryState* entryAllocationTypes,
+                                              Vector3s* hashBlockCoordinates, int& hashIdx,
+                                              const CONSTPTR(Vector3s)& desiredHashBlockPosition,
+                                              const CONSTPTR(ITMHashEntry)* hashTable, bool& collisionDetected) {
+
+	ITMHashEntry hashEntry = hashTable[hashIdx];
+	//check if hash table contains entry
+
+	if (!(IS_EQUAL3(hashEntry.pos, desiredHashBlockPosition) && hashEntry.ptr >= -1)) {
+		if (hashEntry.ptr >= -1) {
+			//search excess list only if there is no room in ordered part
+			while (hashEntry.offset >= 1) {
+				hashIdx = ORDERED_LIST_SIZE + hashEntry.offset - 1;
+				hashEntry = hashTable[hashIdx];
+
+				if (IS_EQUAL3(hashEntry.pos, desiredHashBlockPosition) && hashEntry.ptr >= -1) {
+					return false;
+				}
+			}
+			if (atomicCAS((char*) entryAllocationTypes + hashIdx,
+			              (char) ITMLib::NEEDS_NO_CHANGE,
+			              (char) ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST) != ITMLib::NEEDS_NO_CHANGE) {
+				//hash code already marked for allocation, but at different coordinates, cannot allocate
+				collisionDetected = true;
+				return false;
+			} else {
+				hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
+				return true;
+			}
+
+		}
+		if (atomicCAS((char*) entryAllocationTypes + hashIdx,
+		              (char) ITMLib::NEEDS_NO_CHANGE,
+		              (char) ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST) != ITMLib::NEEDS_NO_CHANGE){
+			//hash code already marked for allocation, but at different coordinates, cannot allocate
+			collisionDetected = true;
+			return false;
+		} else {
+			hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
+			return true;
+		}
+	}
+	// already have hash block, no allocation needed
+	return false;
+
+};
+
 __global__ void markForAllocationBasedOnOneRingAroundAnotherAllocation_device(
 		ITMLib::HashEntryState* hashEntryStates, Vector3s* blockCoordinates, bool* collisionDetected,
 		const ITMHashEntry* sourceHashTable, const ITMHashEntry* targetHashTable, int hashEntryCount) {
@@ -269,13 +315,9 @@ __global__ void markForAllocationBasedOnOneRingAroundAnotherAllocation_device(
 
 	int targetHash = hashIndex(targetBlockCoordinates);
 
-	bool allocate = MarkAsNeedingAllocationIfNotFound(hashEntryStates, blockCoordinates,
+	bool allocate = MarkAsNeedingAllocationIfNotFound_CUDA(hashEntryStates, blockCoordinates,
 	                                  targetHash, targetBlockCoordinates, targetHashTable,
 	                                  *collisionDetected);
-//_DEBUG EXPAND
-//	printf("Allocating block: %d %d %d, hash: %d, collision: %s, allocate %s\n",
-//			targetBlockCoordinates.x, targetBlockCoordinates.y, targetBlockCoordinates.z, targetHash, *collisionDetected ? "true" : "false",
-//			allocate ? "true": "false");
 }
 
 struct SingleHashAllocationData {

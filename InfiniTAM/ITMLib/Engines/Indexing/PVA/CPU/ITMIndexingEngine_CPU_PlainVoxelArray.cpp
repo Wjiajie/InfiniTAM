@@ -30,6 +30,12 @@ template void ITMIndexingEngine<ITMVoxel,ITMPlainVoxelArray,MEMORYDEVICE_CPU>::A
 template void ITMIndexingEngine<ITMVoxel,ITMPlainVoxelArray,MEMORYDEVICE_CPU>::AllocateUsingOtherVolume(
 		ITMLib::ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* targetVolume,
 		ITMLib::ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* sourceVolume);
+template void ITMIndexingEngine<ITMVoxel,ITMPlainVoxelArray,MEMORYDEVICE_CPU>::AllocateUsingOtherVolumeExpanded(
+		ITMLib::ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* targetVolume,
+		ITMLib::ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* sourceVolume);
+template void ITMIndexingEngine<ITMVoxel,ITMPlainVoxelArray,MEMORYDEVICE_CPU>::AllocateUsingOtherVolumeExpanded(
+		ITMLib::ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* targetVolume,
+		ITMLib::ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* sourceVolume);
 
 template void ITMIndexingEngine<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 AllocateFromWarpedVolume<WarpType::WARP_CUMULATIVE>(

@@ -21,7 +21,7 @@
 #include "../../Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../../Traversal/Shared/ITMSceneTraversal_Shared.h"
 #include "../Shared/ITMSceneManipulationEngine_Shared.h"
-#include "../../Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
+#include "../../Indexing/Shared/ITMIndexingEngine_Shared.h"
 
 using namespace ITMLib;
 
@@ -143,6 +143,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 	if (offset == Vector3i(0)) {
 		// *** allocate missing entries in target hash table
 		// traverse source hash blocks, see which ones are at least partially inside the specified bounds
+		//TODO: move this functionality to indexing engine and call that instead
 		for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
 			const ITMHashEntry& currentSourceHashEntry = sourceHashTable[sourceHash];
 			if (currentSourceHashEntry.ptr < 0) continue;

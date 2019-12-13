@@ -101,16 +101,22 @@ std::string switches_to_prefix(const SlavchevaSurfaceTracker::Switches& switches
 	return prefix_by_switches_map[switches_to_int_code(switches)];
 }
 
-template<typename TIndex> std::string getIndexString();
-template<> std::string getIndexString<ITMPlainVoxelArray>() {return "PVA"; }
-template<> std::string getIndexString<ITMVoxelBlockHash>() {return "VBH"; }
+template<typename TIndex>
+std::string getIndexString();
+
+template<>
+std::string getIndexString<ITMPlainVoxelArray>() { return "PVA"; }
+
+template<>
+std::string getIndexString<ITMVoxelBlockHash>() { return "VBH"; }
 
 template<typename TIndex, MemoryDeviceType TMemoryDeviceType>
 void
 GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
                               int iteration_limit = 10,
                               GenericWarpTestMode mode = TEST_SUCCESSIVE_ITERATIONS,
-                              float absolute_tolerance = 1e-7, bool allocateLiveFromBothImages = false) {
+                              float absolute_tolerance = 1e-7, bool allocateLiveFromBothImages = false,
+                              bool expand_raw_live_allocation = true) {
 
 	std::string prefix = switches_to_prefix(switches);
 	if (iteration_limit < 2) {
@@ -133,30 +139,52 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 	                        TMemoryDeviceType,
 	                        Frame16And17Fixture::InitParams<TIndex>());
 
-	ITMVoxelVolume<ITMVoxel, TIndex>* volume_17;
-	initializeVolume(&volume_17, Frame16And17Fixture::InitParams<TIndex>(), TMemoryDeviceType);
+	ITMVoxelVolume<ITMVoxel, TIndex>* warped_volumes[2] = {
+			new ITMVoxelVolume<ITMVoxel, TIndex>(&Configuration::get().scene_parameters,
+			                                     Configuration::get().swapping_mode ==
+			                                     Configuration::SWAPPINGMODE_ENABLED,
+			                                     TMemoryDeviceType,
+			                                     Frame16And17Fixture::InitParams<TIndex>()),
+			new ITMVoxelVolume<ITMVoxel, TIndex>(&Configuration::get().scene_parameters,
+			                                     Configuration::get().swapping_mode ==
+			                                     Configuration::SWAPPINGMODE_ENABLED,
+			                                     TMemoryDeviceType,
+			                                     Frame16And17Fixture::InitParams<TIndex>())
+	};
+	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, TIndex, TMemoryDeviceType>().ResetScene(warped_volumes[0]);
+	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, TIndex, TMemoryDeviceType>().ResetScene(warped_volumes[1]);
+
 	Vector2i imageSize(640, 480);
 	ITMRenderState* renderState = ITMRenderStateFactory<TIndex>::CreateRenderState(imageSize,
 	                                                                               &Configuration::get().scene_parameters,
 	                                                                               TMemoryDeviceType,
-	                                                                               volume_17->index);
+	                                                                               warped_volumes[1]->index);
 	ITMTrackingState trackingState(imageSize, TMemoryDeviceType);
 	if (allocateLiveFromBothImages) {
-		ITMIndexingEngine<ITMVoxel, TIndex, TMemoryDeviceType>::Instance().AllocateFromDepth(volume_17, view,
-		                                                                                     &trackingState,
-		                                                                                     renderState, false, false);
+		ITMIndexingEngine<ITMVoxel, TIndex, TMemoryDeviceType>::Instance().AllocateFromDepth(
+				warped_volumes[1], view, &trackingState, renderState, false, false);
 	}
+
 	updateView("TestData/snoopy_depth_000017.png",
 	           "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
 	           "TestData/snoopy_calib.txt", TMemoryDeviceType, &view);
-	ITMIndexingEngine<ITMVoxel, TIndex, TMemoryDeviceType>::Instance().AllocateFromDepth(volume_17, view,
-	                                                                                     &trackingState,
-	                                                                                     renderState, false, false);
+	ITMIndexingEngine<ITMVoxel, TIndex, TMemoryDeviceType>::Instance().AllocateFromDepth(
+			warped_volumes[1], view, &trackingState, renderState, false, false);
+
+	int scene_to_integrate_raw_depth_index = 1;
+
+	if (expand_raw_live_allocation) {
+		scene_to_integrate_raw_depth_index = 0;
+		ITMIndexingEngine<ITMVoxel, TIndex, TMemoryDeviceType>::Instance().AllocateUsingOtherVolumeExpanded(
+				warped_volumes[0], warped_volumes[1]);
+	}
+
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, TIndex>* reconstructionEngine =
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, TIndex>(TMemoryDeviceType);
 
-	reconstructionEngine->IntegrateIntoScene(volume_17, view, &trackingState, renderState);
+	reconstructionEngine->IntegrateIntoScene(warped_volumes[scene_to_integrate_raw_depth_index], view, &trackingState,
+	                                         renderState);
 
 	ITMSceneManipulationEngineFactory::Instance<ITMWarp, TIndex, TMemoryDeviceType>().ResetScene(&warp_field);
 
@@ -164,9 +192,9 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 			motionTracker(switches);
 
 	std::cout << "Subtest " << getIndexString<TIndex>() << " iteration 0" << std::endl;
-	motionTracker.CalculateWarpGradient(volume_16, volume_17, &warp_field);
-	motionTracker.SmoothWarpGradient(volume_16, volume_17, &warp_field);
-	motionTracker.UpdateWarps(volume_16, volume_17, &warp_field);
+	motionTracker.CalculateWarpGradient(volume_16, warped_volumes[scene_to_integrate_raw_depth_index], &warp_field);
+	motionTracker.SmoothWarpGradient(volume_16, warped_volumes[scene_to_integrate_raw_depth_index], &warp_field);
+	motionTracker.UpdateWarps(volume_16, warped_volumes[scene_to_integrate_raw_depth_index], &warp_field);
 
 	ITMVoxelVolume<ITMWarp, TIndex> warp_field2(&Configuration::get().scene_parameters,
 	                                            Configuration::get().swapping_mode ==
@@ -190,41 +218,33 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, TIndex>(
 					TMemoryDeviceType);
 
-	ITMVoxelVolume<ITMVoxel, TIndex>* warped_volumes[2] = {
-			new ITMVoxelVolume<ITMVoxel, TIndex>(&Configuration::get().scene_parameters,
-			                                     Configuration::get().swapping_mode ==
-			                                     Configuration::SWAPPINGMODE_ENABLED,
-			                                     TMemoryDeviceType,
-			                                     Frame16And17Fixture::InitParams<TIndex>()),
-			new ITMVoxelVolume<ITMVoxel, TIndex>(&Configuration::get().scene_parameters,
-			                                     Configuration::get().swapping_mode ==
-			                                     Configuration::SWAPPINGMODE_ENABLED,
-			                                     TMemoryDeviceType,
-			                                     Frame16And17Fixture::InitParams<TIndex>())
-	};
-	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, TIndex, TMemoryDeviceType>().ResetScene(warped_volumes[0]);
-	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, TIndex, TMemoryDeviceType>().ResetScene(warped_volumes[1]);
+	int source_warped_field_ix = scene_to_integrate_raw_depth_index;
+	int target_warped_field_ix = (scene_to_integrate_raw_depth_index + 1) % 2;
+	recoEngine->WarpScene_FlowWarps(&warp_field, warped_volumes[source_warped_field_ix],warped_volumes[target_warped_field_ix]);
 
-	recoEngine->WarpScene_FlowWarps(&warp_field, volume_17, warped_volumes[1]);
+	ITMVoxelVolume<ITMVoxel, TIndex>* ground_truth_warped_live = new ITMVoxelVolume<ITMVoxel, TIndex>(&Configuration::get().scene_parameters,
+	                                                                                     Configuration::get().swapping_mode ==
+	                                                                                     Configuration::SWAPPINGMODE_ENABLED,
+	                                                                                                  TMemoryDeviceType,
+	                                                                                                  Frame16And17Fixture::InitParams<TIndex>());
+
 	switch (mode) {
 		case SAVE_SUCCESSIVE_ITERATIONS:
 			warped_volumes[1]->SaveToDirectory(std::string("../../Tests/") + get_path_warped_live(prefix, 0));
 			break;
 		case TEST_SUCCESSIVE_ITERATIONS:
-			ITMSceneManipulationEngineFactory::Instance<ITMVoxel, TIndex, TMemoryDeviceType>().ResetScene(volume_17);
-			volume_17->LoadFromDirectory(get_path_warped_live(prefix, 0));
+			ITMSceneManipulationEngineFactory::Instance<ITMVoxel, TIndex, TMemoryDeviceType>().ResetScene(ground_truth_warped_live);
+			ground_truth_warped_live->LoadFromDirectory(get_path_warped_live(prefix, 0));
 			BOOST_REQUIRE(
-					contentAlmostEqual_Verbose(volume_17, warped_volumes[1], absolute_tolerance, TMemoryDeviceType));
+					contentAlmostEqual_Verbose(ground_truth_warped_live, warped_volumes[target_warped_field_ix], absolute_tolerance, TMemoryDeviceType));
 			break;
 		default:
 			break;
 	}
 
-	int source_warped_field_ix = 0;
-	int target_warped_field_ix = 0;
+
 	for (int iteration = 1; iteration < iteration_limit; iteration++) {
-		source_warped_field_ix = iteration % 2;
-		target_warped_field_ix = (iteration + 1) % 2;
+		std::swap(source_warped_field_ix, target_warped_field_ix);
 		std::cout << "Subtest " << getIndexString<TIndex>() << " iteration " << std::to_string(iteration) << std::endl;
 		motionTracker.CalculateWarpGradient(volume_16, warped_volumes[source_warped_field_ix], &warp_field);
 		motionTracker.SmoothWarpGradient(volume_16, warped_volumes[source_warped_field_ix], &warp_field);
@@ -244,9 +264,9 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 				warp_field2.LoadFromDirectory(path);
 				BOOST_REQUIRE(contentAlmostEqual(&warp_field, &warp_field2, absolute_tolerance, TMemoryDeviceType));
 				ITMSceneManipulationEngineFactory::Instance<ITMVoxel, TIndex, TMemoryDeviceType>().ResetScene(
-						volume_17);
-				volume_17->LoadFromDirectory(path_warped_live);
-				BOOST_REQUIRE(contentAlmostEqual(volume_17, warped_volumes[target_warped_field_ix],
+						ground_truth_warped_live);
+				ground_truth_warped_live->LoadFromDirectory(path_warped_live);
+				BOOST_REQUIRE(contentAlmostEqual(ground_truth_warped_live, warped_volumes[target_warped_field_ix],
 				                                 absolute_tolerance, TMemoryDeviceType));
 				break;
 			default:
@@ -281,7 +301,7 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 	}
 
 	delete volume_16;
-	delete volume_17;
+	delete ground_truth_warped_live;
 	delete warped_volumes[0];
 	delete warped_volumes[1];
 	delete recoEngine;
@@ -336,7 +356,7 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, int iteration
 				volume_PVA.LoadFromDirectory(get_path_warped_live(prefix, iteration));
 				volume_VBH.LoadFromDirectory(get_path_warped_live(prefix, iteration));
 				BOOST_REQUIRE(contentForFlagsAlmostEqual_Verbose(&volume_PVA, &volume_VBH, VOXEL_NONTRUNCATED,
-				                                         absoluteTolerance, TMemoryDeviceType));
+				                                                 absoluteTolerance, TMemoryDeviceType));
 			}
 		}
 			break;
@@ -365,7 +385,7 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, int iteration
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CPU) {
 	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);
-	GenericWarpTest<MEMORYDEVICE_CPU>(switches, 10, TEST_SUCCESSIVE_ITERATIONS);
+	GenericWarpTest<MEMORYDEVICE_CPU>(switches, 10, SAVE_SUCCESSIVE_ITERATIONS);
 }
 
 

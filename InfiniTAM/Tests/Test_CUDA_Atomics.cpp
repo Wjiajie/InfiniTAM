@@ -13,6 +13,33 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#pragma once
+#define BOOST_TEST_MODULE CUDA_Atomics
+#ifndef WIN32
+#define BOOST_TEST_DYN_LINK
+#endif
 
-bool run_CAS_test();
+//stdlib
+#include <iostream>
+
+//boost
+#include <boost/test/unit_test.hpp>
+#include <iostream>
+
+//local
+#include "CUDAAtomicTesting.h"
+
+
+BOOST_AUTO_TEST_CASE(TestAtomicAddChar){
+	std::cout << "*** Atomic add test on char ***" << std::endl << std::endl;
+	BOOST_REQUIRE(AtomicAddCharTest());
+}
+
+BOOST_AUTO_TEST_CASE(TestAtomicAddShort){
+	std::cout << "*** Atomic add test on short ***" << std::endl << std::endl;
+	BOOST_REQUIRE(AtomicAddShortTest());
+}
+
+BOOST_AUTO_TEST_CASE(TestAtomicCASChar){
+	std::cout << "*** Atomic add test on short ***" << std::endl << std::endl;
+	BOOST_REQUIRE(AtomicCASCharTest());
+}

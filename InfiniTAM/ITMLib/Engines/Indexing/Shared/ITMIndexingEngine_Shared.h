@@ -16,18 +16,17 @@
 #pragma once
 
 #include "../../../../ORUtils/PlatformIndependence.h"
-#include "../../../Utils/ITMMath.h"
 #include "../../../Objects/Scene/ITMVoxelBlockHash.h"
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../Common/ITMCommonFunctors.h"
-#include "../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
-#include "../../Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#include "../../../Utils/ITMMath.h"
 #include "../../../Utils/ITMPixelUtils.h"
 #include "../../../Utils/ITMVoxelFlags.h"
 #include "../../../Utils/ITMHashBlockProperties.h"
 #include "../../../Utils/Geometry/ITMIntersectionChecks.h"
 
 #ifdef __CUDACC__
+#include "../../../Utils/ITMCUDAUtils.h"
 #include "../../Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h"
 #endif
 
@@ -39,6 +38,84 @@ struct AllocationTempData {
 	int noAllocatedExcessEntries;
 	int noVisibleEntries;
 };
+
+
+
+/**
+ * \brief Determines whether the hash block at the specified block position needs it's voxels to be allocated, as well
+ * as whether they should be allocated in the excess list or the ordered list of the hash table.
+ * If any of these are true, marks the corresponding entry in \param hashEntryStates
+ * \param[in,out] hashEntryStates  array where to set the allocation type at final hashIdx index
+ * \param[in,out] hashBlockCoordinates  array block coordinates for the new hash blocks at final hashIdx index
+ * \param[in,out] hashIdx  takes in original index assuming coords, i.e. \refitem hashIndex(\param desiredHashBlockPosition),
+ * returns final index of the hash block to be allocated (may be updated based on hash closed chaining)
+ * \param[in] desiredHashBlockPosition  position of the hash block to check / allocate
+ * \param[in] hashTable  hash table with existing blocks
+ * \param[in] collisionDetected set to true if a block with the same hashcode has already been marked for allocation ( a collision occured )
+ * \return true if the block needs allocation, false otherwise
+ */
+_CPU_AND_GPU_CODE_
+inline bool MarkAsNeedingAllocationIfNotFound(ITMLib::HashEntryState* hashEntryStates,
+                                              Vector3s* hashBlockCoordinates, int& hashIdx,
+                                              const CONSTPTR(Vector3s)& desiredHashBlockPosition,
+                                              const CONSTPTR(ITMHashEntry)* hashTable, bool& collisionDetected) {
+
+	ITMHashEntry hashEntry = hashTable[hashIdx];
+	//check if hash table contains entry
+
+	if (!(IS_EQUAL3(hashEntry.pos, desiredHashBlockPosition) && hashEntry.ptr >= -1)) {
+
+		auto setHashEntryState = [&](HashEntryState state){
+#if defined(__CUDACC__) && defined(__CUDA_ARCH__)
+			if (atomicCAS((char*) hashEntryStates + hashIdx,
+		              (char) ITMLib::NEEDS_NO_CHANGE,
+		              (char) state) != ITMLib::NEEDS_NO_CHANGE){
+			//hash code already marked for allocation, but at different coordinates, cannot allocate
+			collisionDetected = true;
+			return false;
+		} else {
+			hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
+			return true;
+		}
+#else
+			//TODO: come up with an atomics-based solution for OpenMP
+#ifdef WITH_OPENMP
+#pragma omp critical
+#endif
+			{
+				//single-threaded version
+				if (hashEntryStates[hashIdx] != ITMLib::NEEDS_NO_CHANGE
+					/*&& !IS_EQUAL3(hashBlockCoordinates[hashIdx], desiredHashBlockPosition)*/) {
+					//hash code already marked for allocation, but at different coordinates, cannot allocate
+					collisionDetected = true;
+					return false;
+				} else {
+					hashEntryStates[hashIdx] = state;
+					hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
+					return true;
+				}
+			}
+#endif
+		};
+		if (hashEntry.ptr >= -1) {
+			//search excess list only if there is no room in ordered part
+			while (hashEntry.offset >= 1) {
+				hashIdx = ORDERED_LIST_SIZE + hashEntry.offset - 1;
+				hashEntry = hashTable[hashIdx];
+
+				if (IS_EQUAL3(hashEntry.pos, desiredHashBlockPosition) && hashEntry.ptr >= -1) {
+					return false;
+				}
+			}
+			return setHashEntryState(ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST);
+		}
+		return setHashEntryState(ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST);
+	}
+	// already have hash block, no allocation needed
+	return false;
+
+};
+
 
 template<typename TWarp, typename TVoxel, WarpType TWarpType>
 struct WarpBasedAllocationMarkerFunctor {
@@ -68,19 +145,19 @@ struct WarpBasedAllocationMarkerFunctor {
 	void operator()(TWarp& warpVoxel, Vector3i voxelPosition, Vector3s hashBlockPosition) {
 
 		Vector3f warpVector = ITMLib::WarpVoxelStaticFunctor<TWarp, TWarpType>::GetWarp(warpVoxel);
-		Vector3f warpedPosition = warpVector +  TO_FLOAT3(voxelPosition);
+		Vector3f warpedPosition = warpVector + TO_FLOAT3(voxelPosition);
 		Vector3i warpedPositionTruncated = warpedPosition.toInt();
 
 		// perform lookup in source volume
 		int vmIndex;
-#if !defined(__CUDACC__) &&!defined(WITH_OPENMP)
+#if !defined(__CUDACC__) && !defined(WITH_OPENMP)
 		const TVoxel& sourceTSDFVoxelAtWarp = readVoxel(sourceTSDFVoxels, sourceTSDFHashEntries,
 		                                                warpedPositionTruncated,
 		                                                vmIndex, sourceTSDFCache);
 #else //don't use cache when multithreading!
 		const TVoxel& sourceTSDFVoxelAtWarp = readVoxel(sourceTSDFVoxels, sourceTSDFHashEntries,
-		                                                warpedPositionTruncated,
-		                                                vmIndex);
+														warpedPositionTruncated,
+														vmIndex);
 #endif
 
 		int targetBlockHash = hashIndex(hashBlockPosition);
@@ -241,30 +318,33 @@ buildHashAllocAndVisibleTypePP(ITMLib::HashEntryState* hashEntryStates, uchar* e
 					if (currentHashBlockPosition.values[iDirection] != previousHashBlockPosition.values[iDirection]) {
 						Vector3s potentiallyMissedBlockPosition = previousHashBlockPosition;
 						potentiallyMissedBlockPosition.values[iDirection] = currentHashBlockPosition.values[iDirection];
-						if(SegmentIntersectsGridAlignedCube3D(marchSegment, TO_FLOAT3(potentiallyMissedBlockPosition),
-						                                      1.0f)){
-							markForAllocationAndSetVisibilityTypeIfNotFound(potentiallyMissedBlockPosition, hashTable, hashEntryStates,
+						if (SegmentIntersectsGridAlignedCube3D(marchSegment, TO_FLOAT3(potentiallyMissedBlockPosition),
+						                                       1.0f)) {
+							markForAllocationAndSetVisibilityTypeIfNotFound(potentiallyMissedBlockPosition, hashTable,
+							                                                hashEntryStates,
 							                                                entriesVisibleType,
 							                                                blockCoords, collisionDetected);
 						}
 					}
 				}
-			}else {
+			} else {
 				//incrementCount == 3
-				for(int iDirection = 0; iDirection < 3; iDirection++){
+				for (int iDirection = 0; iDirection < 3; iDirection++) {
 					Vector3s potentiallyMissedBlockPosition = previousHashBlockPosition;
 					potentiallyMissedBlockPosition.values[iDirection] = currentHashBlockPosition.values[iDirection];
-					if(SegmentIntersectsGridAlignedCube3D(marchSegment, TO_FLOAT3(potentiallyMissedBlockPosition),
-					                                      1.0f)){
-						markForAllocationAndSetVisibilityTypeIfNotFound(potentiallyMissedBlockPosition, hashTable, hashEntryStates,
+					if (SegmentIntersectsGridAlignedCube3D(marchSegment, TO_FLOAT3(potentiallyMissedBlockPosition),
+					                                       1.0f)) {
+						markForAllocationAndSetVisibilityTypeIfNotFound(potentiallyMissedBlockPosition, hashTable,
+						                                                hashEntryStates,
 						                                                entriesVisibleType,
 						                                                blockCoords, collisionDetected);
 					}
 					potentiallyMissedBlockPosition = currentHashBlockPosition;
 					potentiallyMissedBlockPosition.values[iDirection] = previousHashBlockPosition.values[iDirection];
-					if(SegmentIntersectsGridAlignedCube3D(marchSegment, TO_FLOAT3(potentiallyMissedBlockPosition),
-					                                      1.0f)){
-						markForAllocationAndSetVisibilityTypeIfNotFound(potentiallyMissedBlockPosition, hashTable, hashEntryStates,
+					if (SegmentIntersectsGridAlignedCube3D(marchSegment, TO_FLOAT3(potentiallyMissedBlockPosition),
+					                                       1.0f)) {
+						markForAllocationAndSetVisibilityTypeIfNotFound(potentiallyMissedBlockPosition, hashTable,
+						                                                hashEntryStates,
 						                                                entriesVisibleType,
 						                                                blockCoords, collisionDetected);
 					}
@@ -279,9 +359,6 @@ buildHashAllocAndVisibleTypePP(ITMLib::HashEntryState* hashEntryStates, uchar* e
 		previousHashBlockPosition = currentHashBlockPosition;
 	}
 }
-
-
-
 
 
 template<bool useSwapping>
