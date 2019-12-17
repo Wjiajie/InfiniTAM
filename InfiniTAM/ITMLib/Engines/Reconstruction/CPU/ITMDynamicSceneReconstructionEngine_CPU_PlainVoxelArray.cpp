@@ -17,5 +17,7 @@
 #include "../../../ITMLibDefines.h"
 
 namespace ITMLib{
+
 template class ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;
+
 } // namespace ITMLib

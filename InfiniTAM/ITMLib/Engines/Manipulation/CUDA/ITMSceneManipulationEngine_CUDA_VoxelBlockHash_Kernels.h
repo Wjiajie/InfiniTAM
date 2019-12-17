@@ -150,7 +150,7 @@ __global__ void determineDestinationAllocationForNoOffsetCopy_device(
 		ITMHashEntry* destinationHashTable,
 		const ITMHashEntry* sourceHashTable,
 		int noTotalEntries,
-		ITMLib::HashEntryState* entriesAllocType,
+		ITMLib::HashEntryAllocationState* entriesAllocType,
 		Vector3s* allocationBlockCoords,
 		CopyAllocationTempData* allocData,
 		CopyHashBlockPairInfo* copyHashIdBuffer,
@@ -167,7 +167,7 @@ __global__ void determineDestinationAllocationForNoOffsetCopy_device(
 		isPartiallyInRange = IsHashBlockPartiallyInRange(originalHashBlockPosition, bounds);
 		if (!isPartiallyInRange) return;
 	}
-	int destinationHash = hashIndex(currentSourceHashEntry.pos);
+	int destinationHash = HashCodeFromBlockPosition(currentSourceHashEntry.pos);
 	bool collisionDetected = false;
 	// see if the block in the destination hash structure needs allocation. If so, mark it as such in entriesAllocType
 	// and record its spatial coordinates (in blocks) in allocationBlockCoords.
@@ -188,7 +188,7 @@ __global__ void determineDestinationAllocationForNoOffsetCopy_device(
 		ITMHashEntry* destinationHashTable,
 		const ITMHashEntry* sourceHashTable,
 		const int noTotalEntries,
-		ITMLib::HashEntryState* entriesAllocType,
+		ITMLib::HashEntryAllocationState* entriesAllocType,
 		Vector3s* allocationBlockCoords,
 		CopyAllocationTempData* allocData,
 		CopyHashBlockPairInfo* copyHashIdBuffer) {
@@ -197,7 +197,7 @@ __global__ void determineDestinationAllocationForNoOffsetCopy_device(
 
 	const ITMHashEntry& currentSourceHashEntry = sourceHashTable[sourceHash];
 	if (currentSourceHashEntry.ptr < 0) return;
-	int destinationHash = hashIndex(currentSourceHashEntry.pos);
+	int destinationHash = HashCodeFromBlockPosition(currentSourceHashEntry.pos);
 	bool collisionDetected = false;
 	// see if the block in the destination hash structure needs allocation. If so, mark it as such in entriesAllocType
 	// and record its spatial coordinates (in blocks) in allocationBlockCoords.
@@ -216,7 +216,7 @@ __global__ void determineDestinationAllocationForNoOffsetCopy_device(
 __global__ void determineDestinationAllocationForOffsetCopy_device(
 		ITMHashEntry* destinationHashTable,
 		const ITMHashEntry* sourceHashTable,
-		ITMLib::HashEntryState* entriesAllocType,
+		ITMLib::HashEntryAllocationState* entriesAllocType,
 		Vector3s* allocationBlockCoords,
 		CopyAllocationTempData* allocData,
 		OffsetCopyHashBlockInfo* copyHashIdBuffer,
@@ -239,7 +239,7 @@ __global__ void determineDestinationAllocationForOffsetCopy_device(
 		return;
 	}
 
-	int destinationHash = hashIndex(destinationBlockPos);
+	int destinationHash = HashCodeFromBlockPosition(destinationBlockPos);
 	bool collisionDetected = false;
 	bool needs_alloc = MarkAsNeedingAllocationIfNotFound(entriesAllocType, allocationBlockCoords, destinationHash,
 	                                  destinationBlockPos, destinationHashTable, collisionDetected);

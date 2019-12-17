@@ -93,38 +93,29 @@ public:
 	const CONSTPTR(int) hashEntryCount;
 	const CONSTPTR(int) voxelBlockSize = VOXEL_BLOCK_SIZE3;
 
-	//const CONSTPTR
-
-#ifndef __METALC__
 private:
 
 	int lastFreeExcessListId;
 
-	/** The actual data in the hash table. */
-	ORUtils::MemoryBlock<ITMHashEntry>* hashEntries;
-	ORUtils::MemoryBlock<HashEntryState> hashEntryStates;
+	/** The actual hash entries in the hash table, ordered by their hash codes. */
+	ORUtils::MemoryBlock<ITMHashEntry> hashEntries;
+	/** States of hash entries during allocation procedures */
+	ORUtils::MemoryBlock<HashEntryAllocationState> hashEntryAllocationStates;
+	/** Voxel coordinates assigned to new hash blocks during allocation procedures */
 	ORUtils::MemoryBlock<Vector3s> allocationBlockCoordinates;
-
-
 	/** Identifies which entries of the overflow
 	list are allocated. This is used if too
 	many hash collisions caused the buckets to
 	overflow. */
-	ORUtils::MemoryBlock<int>* excessAllocationList;
-
-	MemoryDeviceType memoryType;
-
+	ORUtils::MemoryBlock<int> excessAllocationList;
 
 public:
-	MemoryDeviceType getMemoryType() const {
-		return memoryType;
-	}
+	const MemoryDeviceType memoryType;
 
 	ITMVoxelBlockHash(ITMVoxelBlockHashParameters parameters, MemoryDeviceType memoryType);
 
 	explicit ITMVoxelBlockHash(MemoryDeviceType memoryType) : ITMVoxelBlockHash(ITMVoxelBlockHashParameters(),
 	                                                                            memoryType) {}
-
 
 	ITMVoxelBlockHash(const ITMVoxelBlockHash& other, MemoryDeviceType memoryType) :
 			ITMVoxelBlockHash({other.voxelBlockCount, other.excessListSize}, memoryType) {
@@ -133,47 +124,33 @@ public:
 
 	void SetFrom(const ITMVoxelBlockHash& other) {
 		MemoryCopyDirection memoryCopyDirection = determineMemoryCopyDirection(this->memoryType, other.memoryType);
-		this->hashEntryStates.SetFrom(&other.hashEntryStates, memoryCopyDirection);
-		this->hashEntries->SetFrom(other.hashEntries, memoryCopyDirection);
-		this->excessAllocationList->SetFrom(other.excessAllocationList, memoryCopyDirection);
+		this->hashEntryAllocationStates.SetFrom(&other.hashEntryAllocationStates, memoryCopyDirection);
+		this->hashEntries.SetFrom(&other.hashEntries, memoryCopyDirection);
+		this->excessAllocationList.SetFrom(&other.excessAllocationList, memoryCopyDirection);
 	}
 
-	~ITMVoxelBlockHash() {
-		delete hashEntries;
-		delete excessAllocationList;
-	}
+	~ITMVoxelBlockHash() = default;
 
 	/** Get the list of actual entries in the hash table. */
-	const ITMHashEntry* GetEntries() const { return hashEntries->GetData(memoryType); }
-
-	ITMHashEntry* GetEntries() { return hashEntries->GetData(memoryType); }
-
-	ITMHashEntry GetHashEntry_CPU(int index) const {
-		return hashEntries->GetElement(index, memoryType);
+	const ITMHashEntry* GetEntries() const { return hashEntries.GetData(memoryType); }
+	ITMHashEntry* GetEntries() { return hashEntries.GetData(memoryType); }
+	/** Get the list of actual entries in the hash table (alternative to GetEntries). */
+	const IndexData* GetIndexData() const { return hashEntries.GetData(memoryType); }
+	IndexData* GetIndexData() { return hashEntries.GetData(memoryType); }
+	ITMHashEntry GetHashEntry_CPU(int hashCode) const {
+		return hashEntries.GetElement(hashCode, memoryType);
 	}
-
 	ITMHashEntry GetHashEntryAt_CPU(const Vector3s& pos) const;
-
 	ITMHashEntry GetHashEntryAt_CPU(int x, int y, int z) const{
 		Vector3s coord(x,y,z);
 		return GetHashEntryAt_CPU(coord);
 	}
 
-	/**Get the memory type used for storage.**/
-	MemoryDeviceType GetMemoryType() const {
-		return this->memoryType;
-	}
-
-	/** Get the list of actual entries in the hash table (alternative to GetEntries). */
-	const IndexData* GetIndexData() const { return hashEntries->GetData(memoryType); }
-
-	IndexData* GetIndexData() { return hashEntries->GetData(memoryType); }
-
 	//(VBH-specific)
 	/** Get a list of temporary hash entry state flags**/
-	const HashEntryState* GetHashEntryStates() const { return hashEntryStates.GetData(memoryType); }
-	HashEntryState* GetHashEntryStates() { return hashEntryStates.GetData(memoryType); }
-	void ClearHashEntryStates() { hashEntryStates.Clear(NEEDS_NO_CHANGE);}
+	const HashEntryAllocationState* GetHashEntryAllocationStates() const { return hashEntryAllocationStates.GetData(memoryType); }
+	HashEntryAllocationState* GetHashEntryAllocationStates() { return hashEntryAllocationStates.GetData(memoryType); }
+	void ClearHashEntryAllocationStates() { hashEntryAllocationStates.Clear(NEEDS_NO_CHANGE);}
 	const Vector3s* GetAllocationBlockCoordinates() const { return allocationBlockCoordinates.GetData(memoryType); }
 	/** Get a temporary list for coordinates of voxel blocks to be soon allocated**/
 	Vector3s* GetAllocationBlockCoordinates() { return allocationBlockCoordinates.GetData(memoryType); }
@@ -182,65 +159,29 @@ public:
 	overflow list are allocated. This is used if too
 	many hash collisions caused the buckets to overflow.
 	*/
-	const int* GetExcessAllocationList() const { return excessAllocationList->GetData(memoryType); }
-
-	int* GetExcessAllocationList() { return excessAllocationList->GetData(memoryType); }
-
+	const int* GetExcessAllocationList() const { return excessAllocationList.GetData(memoryType); }
+	int* GetExcessAllocationList() { return excessAllocationList.GetData(memoryType); }
 	int GetLastFreeExcessListId() const { return lastFreeExcessListId; }
-
 	void SetLastFreeExcessListId(int newLastFreeExcessListId) { this->lastFreeExcessListId = newLastFreeExcessListId; }
 
 	/*VBH-specific*/
 	int GetExcessListSize() const { return this->excessListSize; }
 
-#ifdef COMPILE_WITH_METAL
-	const void* GetEntries_MB(void) { return hashEntries->GetMetalBuffer(); }
-		const void* GetExcessAllocationList_MB(void) { return excessAllocationList->GetMetalBuffer(); }
-		const void* getIndexData_MB(void) const { return hashEntries->GetMetalBuffer(); }
-#endif
-
 	/** Number of allocated blocks. */
 	int GetAllocatedBlockCount() const { return this->voxelBlockCount; }
-
 	int GetVoxelBlockSize() const { return this->voxelBlockSize; }
-
 	unsigned int GetMaxVoxelCount() const {
 		return static_cast<unsigned int>(this->voxelBlockCount)
 		       * static_cast<unsigned int>(this->voxelBlockSize);
 	}
 
+	void SaveToDirectory(const std::string& outputDirectory) const;
 
-	void SaveToDirectory(const std::string& outputDirectory) const {
-		std::string hashEntriesFileName = outputDirectory + "hash.dat";
-		std::string excessAllocationListFileName = outputDirectory + "excess.dat";
-		std::string lastFreeExcessListIdFileName = outputDirectory + "last.txt";
-
-		std::ofstream ofs(lastFreeExcessListIdFileName.c_str());
-		if (!ofs) throw std::runtime_error("Could not open " + lastFreeExcessListIdFileName + " for writing");
-
-		ofs << lastFreeExcessListId;
-		ORUtils::MemoryBlockPersister::SaveMemoryBlock(hashEntriesFileName, *hashEntries, memoryType);
-		ORUtils::MemoryBlockPersister::SaveMemoryBlock(excessAllocationListFileName, *excessAllocationList, memoryType);
-	}
-
-	void LoadFromDirectory(const std::string& inputDirectory) {
-		std::string hashEntriesFileName = inputDirectory + "hash.dat";
-		std::string excessAllocationListFileName = inputDirectory + "excess.dat";
-		std::string lastFreeExcessListIdFileName = inputDirectory + "last.txt";
-
-		std::ifstream ifs(lastFreeExcessListIdFileName.c_str());
-		if (!ifs) throw std::runtime_error("Count not open " + lastFreeExcessListIdFileName + " for reading");
-
-		ifs >> this->lastFreeExcessListId;
-		ORUtils::MemoryBlockPersister::LoadMemoryBlock(hashEntriesFileName, *hashEntries, memoryType);
-		ORUtils::MemoryBlockPersister::LoadMemoryBlock(excessAllocationListFileName, *excessAllocationList,
-		                                               memoryType);
-	}
+	void LoadFromDirectory(const std::string& inputDirectory);
 
 	// Suppress the default copy constructor and assignment operator
 	ITMVoxelBlockHash(const ITMVoxelBlockHash&) = delete;
 	ITMVoxelBlockHash& operator=(const ITMVoxelBlockHash&) = delete;
-#endif
 };
 
-}
+} //namespace ITMLib

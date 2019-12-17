@@ -82,17 +82,17 @@ void ITMVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::FindVisibleBlocks(c
 	dim3 cudaBlockSizeAL(256, 1);
 	dim3 gridSizeAL((int)ceil((float)noTotalEntries / (float)cudaBlockSizeAL.x));
 	buildCompleteVisibleList_device << <gridSizeAL, cudaBlockSizeAL >> >(hashTable, /*cacheStates, this->scene->useSwapping,*/ noTotalEntries,
-		renderState_vh->GetVisibleEntryIDs(), noVisibleEntries_device, renderState_vh->GetEntriesVisibleType(), M, projParams, 
+			renderState_vh->GetVisibleBlockHashCodes(), noVisibleEntries_device, renderState_vh->GetBlockVisibilityTypes(), M, projParams,
 		imgSize, voxelSize);
 	ORcudaKernelCheck;
 
 	/*	if (this->scene->useSwapping)
 			{
 			reAllocateSwappedOutVoxelBlocks_device << <gridSizeAL, cudaBlockSizeAL >> >(voxelAllocationList, hashTable, hashEntryCount,
-			noAllocatedVoxelEntries_device, entriesVisibleType);
+			noAllocatedVoxelEntries_device, blockVisibilityTypes);
 			}*/
 
-	ORcudaSafeCall(cudaMemcpy(&renderState_vh->noVisibleEntries, noVisibleEntries_device, sizeof(int), cudaMemcpyDeviceToHost));
+	ORcudaSafeCall(cudaMemcpy(&renderState_vh->visibleHashBlockCount, noVisibleEntries_device, sizeof(int), cudaMemcpyDeviceToHost));
 }
 
 template<class TVoxel, class TIndex>
@@ -106,8 +106,8 @@ int ITMVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CountVisibleBlocks(c
 {
 	const ITMRenderState_VH *renderState_vh = (const ITMRenderState_VH*)renderState;
 
-	int noVisibleEntries = renderState_vh->noVisibleEntries;
-	const int *visibleEntryIDs_device = renderState_vh->GetVisibleEntryIDs();
+	int noVisibleEntries = renderState_vh->visibleHashBlockCount;
+	const int *visibleEntryIDs_device = renderState_vh->GetVisibleBlockHashCodes();
 
 	ORcudaSafeCall(cudaMemset(noTotalBlocks_device, 0, sizeof(uint)));
 
@@ -154,8 +154,8 @@ void ITMVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CreateExpectedDepth
 	//go through list of visible 8x8x8 blocks
 	{
 		const ITMHashEntry *hash_entries = scene->index.GetEntries();
-		const int *visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
-		int noVisibleEntries = renderState_vh->noVisibleEntries;
+		const int *visibleEntryIDs = renderState_vh->GetVisibleBlockHashCodes();
+		int noVisibleEntries = renderState_vh->visibleHashBlockCount;
 		if (noVisibleEntries == 0) return;
 
 		dim3 blockSize(256);
@@ -187,17 +187,17 @@ static void GenericRaycast(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Ve
 	float voxelSize = scene->sceneParams->voxelSize;
 	float oneOverVoxelSize = 1.0f / voxelSize;
 
-	uchar *entriesVisibleType = NULL;
-	if (updateVisibleList&&(dynamic_cast<const ITMRenderState_VH*>(renderState)!=NULL))
+	HashBlockVisibility* blockVisibilityTypes = nullptr;
+	if (updateVisibleList&&(dynamic_cast<const ITMRenderState_VH*>(renderState)!= nullptr))
 	{
-		entriesVisibleType = ((ITMRenderState_VH*)renderState)->GetEntriesVisibleType();
+		blockVisibilityTypes = ((ITMRenderState_VH*) renderState)->GetBlockVisibilityTypes();
 	}
 
 	dim3 cudaBlockSize(16, 12);
 	dim3 gridSize((int)ceil((float)imgSize.x / (float)cudaBlockSize.x), (int)ceil((float)imgSize.y / (float)cudaBlockSize.y));
-	if (entriesVisibleType!=NULL) genericRaycast_device<TVoxel, TIndex, true> << <gridSize, cudaBlockSize >> >(
+	if (blockVisibilityTypes != nullptr) genericRaycast_device<TVoxel, TIndex, true> << < gridSize, cudaBlockSize >> > (
 			renderState->raycastResult->GetData(MEMORYDEVICE_CUDA),
-			entriesVisibleType,
+			blockVisibilityTypes,
 			scene->localVBA.GetVoxelBlocks(),
 			scene->index.GetIndexData(),
 			imgSize,
@@ -209,7 +209,7 @@ static void GenericRaycast(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Ve
 		);
 	else genericRaycast_device<TVoxel, TIndex, false> << <gridSize, cudaBlockSize >> >(
 			renderState->raycastResult->GetData(MEMORYDEVICE_CUDA),
-			NULL,
+					nullptr,
 			scene->localVBA.GetVoxelBlocks(),
 			scene->index.GetIndexData(),
 			imgSize,

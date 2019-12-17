@@ -116,6 +116,42 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CPU, Frame16And17Fixture) 
 	delete volume_PVA_17;
 }
 
+BOOST_FIXTURE_TEST_CASE(Test_SceneConstructExpanded17_PVA_VBH_CPU, Frame16And17Fixture) {
+
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_17;
+	buildSdfVolumeFromImage(&volume_PVA_17, "TestData/snoopy_depth_000017.png",
+	                        "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
+	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
+	                        InitParams<ITMPlainVoxelArray>());
+
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_17;
+	buildSdfVolumeFromImage(&volume_VBH_17, "TestData/snoopy_depth_000017.png",
+	                        "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
+	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
+	                        InitParams<ITMVoxelBlockHash>());
+
+//	Vector3i voxelPosition(-57, -9, 196);
+//	ITMVoxel voxelPVA = ManipulationEngine_CPU_PVA_Voxel::Inst().ReadVoxel(volume_PVA_17, voxelPosition);
+//	voxelPVA.print_self();
+//	ITMVoxel voxelVBH = ManipulationEngine_CPU_VBH_Voxel::Inst().ReadVoxel(volume_VBH_17, voxelPosition);
+//	voxelVBH.print_self();
+
+#ifdef SAVE_TEST_DATA
+	std::string path_PVA = "TestData/snoopy_result_fr16-17_partial_PVA/snoopy_partial_frame_17_";
+	volume_PVA_17->SaveToDirectory(std::string("../../Tests/") +path_PVA);
+	std::string path_VBH = "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_17_";
+	volume_VBH_17->SaveToDirectory(std::string("../../Tests/") +path_VBH);
+#endif
+
+	float absoluteTolerance = 1e-7;
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(volume_PVA_17, volume_VBH_17, absoluteTolerance));
+	BOOST_REQUIRE(contentForFlagsAlmostEqual_CPU(volume_PVA_17, volume_VBH_17, VoxelFlags::VOXEL_NONTRUNCATED,
+	                                             absoluteTolerance));
+
+	delete volume_VBH_17;
+	delete volume_PVA_17;
+}
+
 
 BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	// region ================================= CONSTRUCT VIEW =========================================================

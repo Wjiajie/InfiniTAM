@@ -25,13 +25,3 @@ struct Frame16And17Fixture {
 	template<typename TIndex>
 	static typename TIndex::InitializationParameters InitParams();
 };
-
-template<>
-ITMPlainVoxelArray::InitializationParameters Frame16And17Fixture::InitParams<ITMPlainVoxelArray>() {
-	return {Vector3i(80, 96, 248), Vector3i(-64, -24, 64)};
-}
-
-template<>
-ITMVoxelBlockHash::InitializationParameters Frame16And17Fixture::InitParams<ITMVoxelBlockHash>() {
-	return {1800, 0x20000};
-}

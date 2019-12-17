@@ -42,9 +42,12 @@ public:
 	void WarpScene_WarpUpdates(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
-	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
+	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view);
+	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view,
 	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);
 private:
+	void IntegrateIntoScene_Helper(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view,
+									Matrix4f camera_depth_matrix = Matrix4f::Identity());
 	template<WarpType TWarpType>
 	void WarpScene(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
@@ -75,16 +78,20 @@ public:
 	void WarpScene_WarpUpdates(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 	                           ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
 	                           ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) override;
-	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
+	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view);
+	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view,
 	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);
 
 	ITMDynamicSceneReconstructionEngine_CPU() = default;
 	~ITMDynamicSceneReconstructionEngine_CPU() = default;
 private:
+	void IntegrateIntoScene_Helper(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view,
+	                               Matrix4f camera_depth_matrix = Matrix4f::Identity());
 	template<WarpType TWarpType>
 	void WarpScene(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 	               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
 	               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF);
-	ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>& sceneManager = ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::Inst();
+	ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>& sceneManager =
+			ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::Inst();
 };
-}
+} // namespace ITMLib

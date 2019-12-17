@@ -87,7 +87,7 @@ bool IsHashBlockPartiallyInRange(const Vector3i& hashBlockPositionVoxels, const 
 _CPU_AND_GPU_CODE_
 inline int
 FindHashCodeAt(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, const THREADPTR(Vector3s)& at) {
-	int hash = hashIndex(at);
+	int hash = HashCodeFromBlockPosition(at);
 	while (true) {
 		ITMHashEntry hashEntry = voxelIndex[hash];
 
@@ -235,7 +235,7 @@ void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, 
 		vmIndex = true;
 	}
 
-	int hashIdx = hashIndex(blockPos);
+	int hashIdx = HashCodeFromBlockPosition(blockPos);
 
 	while (true) {
 		ITMHashEntry hashEntry = hashEntries[hashIdx];

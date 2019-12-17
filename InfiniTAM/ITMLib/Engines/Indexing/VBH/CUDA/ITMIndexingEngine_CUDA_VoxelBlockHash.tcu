@@ -37,7 +37,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 	Vector4f projParams_d, invProjParams_d;
 
 	ITMRenderState_VH* renderState_vh = (ITMRenderState_VH*) renderState;
-	if (resetVisibleList) renderState_vh->noVisibleEntries = 0;
+	if (resetVisibleList) renderState_vh->visibleHashBlockCount = 0;
 
 	cameraTransform = trackingState->pose_d->GetM();
 	cameraTransform.inv(invertedCameraTransform);
@@ -55,13 +55,13 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 	ITMHashEntry* hashTable = scene->index.GetEntries();
 	ITMHashSwapState* swapStates = scene->Swapping() ? scene->globalCache->GetSwapStates(true) : 0;
 
-	ITMLib::HashEntryState* hashEntryStates_device = scene->index.GetHashEntryStates();
+	ITMLib::HashEntryAllocationState* hashEntryStates_device = scene->index.GetHashEntryAllocationStates();
 	Vector3s* allocationBlockCoordinates_device = scene->index.GetAllocationBlockCoordinates();
 
 	int noTotalEntries = scene->index.hashEntryCount;
 
-	int* visibleEntryIDs_device = renderState_vh->GetVisibleEntryIDs();
-	uchar* hashBlockVisibilityTypes_device = renderState_vh->GetEntriesVisibleType();
+	int* visibleEntryIDs_device = renderState_vh->GetVisibleBlockHashCodes();
+	HashBlockVisibility* hashBlockVisibilityTypes_device = renderState_vh->GetBlockVisibilityTypes();
 
 	dim3 cudaBlockSizeHV(16, 16);
 	dim3 gridSizeHV((int) ceil((float) depthImgSize.x / (float) cudaBlockSizeHV.x),
@@ -71,7 +71,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 	dim3 gridSizeAL((int) ceil((float) noTotalEntries / (float) cudaBlockSizeAL.x));
 
 	dim3 cudaBlockSizeVS(256, 1);
-	dim3 gridSizeVS((int) ceil((float) renderState_vh->noVisibleEntries / (float) cudaBlockSizeVS.x));
+	dim3 gridSizeVS((int) ceil((float) renderState_vh->visibleHashBlockCount / (float) cudaBlockSizeVS.x));
 
 	float oneOverHashBlockSizeMeters = 1.0f / (voxelSize * VOXEL_BLOCK_SIZE);//m
 
@@ -85,14 +85,14 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 	allocationTempData.UpdateDeviceFromHost();
 
 	if (gridSizeVS.x > 0) {
-		setToType3 << < gridSizeVS, cudaBlockSizeVS >> > (hashBlockVisibilityTypes_device,
-				visibleEntryIDs_device, renderState_vh->noVisibleEntries);
+		setVisibleEntriesToVisibleAtPreviousFrameAndUnstreamed << < gridSizeVS, cudaBlockSizeVS >> > (hashBlockVisibilityTypes_device,
+				visibleEntryIDs_device, renderState_vh->visibleHashBlockCount);
 		ORcudaKernelCheck;
 	}
 
 	bool useSwapping = scene->globalCache != nullptr;
 	do {
-		scene->index.ClearHashEntryStates();
+		scene->index.ClearHashEntryAllocationStates();
 		*collisionDetected.GetData(MEMORYDEVICE_CPU) = false;
 		collisionDetected.UpdateDeviceFromHost();
 
@@ -141,7 +141,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 	}
 
 	allocationTempData.UpdateHostFromDevice();
-	renderState_vh->noVisibleEntries = allocationTempData_host->noVisibleEntries;
+	renderState_vh->visibleHashBlockCount = allocationTempData_host->noVisibleEntries;
 	scene->localVBA.lastFreeBlockId = allocationTempData_host->noAllocatedVoxelEntries;
 	scene->index.SetLastFreeExcessListId(allocationTempData_host->noAllocatedExcessEntries);
 
@@ -162,7 +162,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateUs
 	int* excessAllocationList = targetVolume->index.GetExcessAllocationList();
 	int hashEntryCount = targetVolume->index.hashEntryCount;
 
-	HashEntryState* hashEntryStates_device = targetVolume->index.GetHashEntryStates();
+	HashEntryAllocationState* hashEntryStates_device = targetVolume->index.GetHashEntryAllocationStates();
 	Vector3s* blockCoordinates_device = targetVolume->index.GetAllocationBlockCoordinates();
 
 	ORUtils::MemoryBlock<bool> collisionDetected(1, true, true);
@@ -178,7 +178,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateUs
 	dim3 gridSizeAL((int) ceil((float) hashEntryCount / (float) cudaBlockSizeAL.x));
 
 	do {
-		targetVolume->index.ClearHashEntryStates();
+		targetVolume->index.ClearHashEntryAllocationStates();
 		*collisionDetected.GetData(MEMORYDEVICE_CPU) = false;
 		collisionDetected.UpdateDeviceFromHost();
 
@@ -199,7 +199,7 @@ template<typename TVoxel>
 void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::
 AllocateHashEntriesUsingLists(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
-		const HashEntryState* hashEntryStates_device,
+		const HashEntryAllocationState* hashEntryStates_device,
 		Vector3s* blockCoordinates_device) {
 
 	const int hashEntryCount = scene->index.hashEntryCount;
@@ -231,9 +231,9 @@ AllocateHashEntriesUsingLists(
 template<typename TVoxelA>
 void ITMIndexingEngine<TVoxelA, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::
 AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxelA, ITMVoxelBlockHash>* scene,
-                                            const ITMLib::HashEntryState* hashEntryStates_device,
+                                            const ITMLib::HashEntryAllocationState* hashEntryStates_device,
                                             Vector3s* blockCoordinates_device,
-                                            uchar* hashBlockVisibilityTypes_device) {
+                                            HashBlockVisibility* hashBlockVisibilityTypes_device) {
 
 
 	const int hashEntryCount = scene->index.hashEntryCount;
@@ -314,7 +314,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateUs
 	ITMHashEntry* targetHashTable = targetVolume->index.GetEntries();
 	ITMHashEntry* sourceHashTable = sourceVolume->index.GetEntries();
 
-	HashEntryState* hashEntryStates_device = targetVolume->index.GetHashEntryStates();
+	HashEntryAllocationState* hashEntryStates_device = targetVolume->index.GetHashEntryAllocationStates();
 	Vector3s* blockCoordinates_device = targetVolume->index.GetAllocationBlockCoordinates();
 
 	ORUtils::MemoryBlock<bool> collision_detected(1, true, true);
@@ -323,7 +323,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateUs
 	do {
 		*collision_detected.GetData(MEMORYDEVICE_CPU) = false;
 		collision_detected.UpdateDeviceFromHost();
-		targetVolume->index.ClearHashEntryStates();
+		targetVolume->index.ClearHashEntryAllocationStates();
 		markForAllocationBasedOnOneRingAroundAnotherAllocation_device
 				<< <gridSize_AllHashEntries, cudaBlockSize_27Neighborhood >> >
 				(hashEntryStates_device, blockCoordinates_device,

@@ -22,45 +22,46 @@
 using namespace ITMLib;
 
 // region ========================================= PLAIN VOXEL ARRAY ==================================================
+
+
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateIntoScene(
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
-		const ITMTrackingState* trackingState, const ITMRenderState* renderState) {
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateIntoScene_Helper(
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view, Matrix4f camera_depth_matrix){
+
 	Vector2i rgbImgSize = view->rgb->noDims;
 	Vector2i depthImgSize = view->depth->noDims;
-	float voxelSize = scene->sceneParams->voxelSize;
+	float voxelSize = volume->sceneParams->voxelSize;
 
-	Matrix4f M_d, M_rgb;
+	Matrix4f camera_rgb_matrix;
 	Vector4f projParams_d, projParams_rgb;
 
-	M_d = trackingState->pose_d->GetM();
-	if (TVoxel::hasColorInformation) M_rgb = view->calib.trafo_rgb_to_depth.calib_inv * M_d;
+	if (TVoxel::hasColorInformation) camera_rgb_matrix = view->calib.trafo_rgb_to_depth.calib_inv * camera_depth_matrix;
 
 	projParams_d = view->calib.intrinsics_d.projectionParamsSimple.all;
 	projParams_rgb = view->calib.intrinsics_rgb.projectionParamsSimple.all;
 
-	float mu = scene->sceneParams->mu;
-	int maxW = scene->sceneParams->maxW;
+	float mu = volume->sceneParams->mu;
+	int maxW = volume->sceneParams->maxW;
 
 	float* depth = view->depth->GetData(MEMORYDEVICE_CPU);
 	Vector4u* rgb = view->rgb->GetData(MEMORYDEVICE_CPU);
-	TVoxel* voxelArray = scene->localVBA.GetVoxelBlocks();
+	TVoxel* voxelArray = volume->localVBA.GetVoxelBlocks();
 
-	const ITMPlainVoxelArray::IndexData* arrayInfo = scene->index.GetIndexData();
+	const ITMPlainVoxelArray::IndexData* arrayInfo = volume->index.GetIndexData();
 
 	float* confidence = view->depthConfidence->GetData(MEMORYDEVICE_CPU);
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
-	for (int locId = 0; locId < scene->index.GetVolumeSize().x * scene->index.GetVolumeSize().y *
-	                            scene->index.GetVolumeSize().z; ++locId) {
+	for (int locId = 0; locId < volume->index.GetVolumeSize().x * volume->index.GetVolumeSize().y *
+	                            volume->index.GetVolumeSize().z; ++locId) {
 
 
-		int z = locId / (scene->index.GetVolumeSize().x * scene->index.GetVolumeSize().y);
-		int tmp = locId - z * scene->index.GetVolumeSize().x * scene->index.GetVolumeSize().y;
-		int y = tmp / scene->index.GetVolumeSize().x;
-		int x = tmp - y * scene->index.GetVolumeSize().x;
+		int z = locId / (volume->index.GetVolumeSize().x * volume->index.GetVolumeSize().y);
+		int tmp = locId - z * volume->index.GetVolumeSize().x * volume->index.GetVolumeSize().y;
+		int y = tmp / volume->index.GetVolumeSize().x;
+		int x = tmp - y * volume->index.GetVolumeSize().x;
 
 		Vector4f pt_model;
 
@@ -74,10 +75,23 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 				TVoxel::hasColorInformation,
 				TVoxel::hasConfidenceInformation,
 				TVoxel::hasSemanticInformation,
-				TVoxel>::compute(voxelArray[locId], pt_model, M_d,
-		                         projParams_d, M_rgb, projParams_rgb, mu, maxW, depth, confidence,
+				TVoxel>::compute(voxelArray[locId], pt_model, camera_depth_matrix,
+		                         projParams_d, camera_rgb_matrix, projParams_rgb, mu, maxW, depth, confidence,
 		                         depthImgSize, rgb, rgbImgSize);
 	}
+}
+
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateIntoScene(
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view,
+		const ITMTrackingState* trackingState, const ITMRenderState* renderState) {
+	IntegrateIntoScene_Helper(volume, view, trackingState->pose_d->GetM());
+}
+
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateIntoScene(
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view){
+	IntegrateIntoScene_Helper(volume, view);
 }
 
 template<typename TVoxel, typename TWarp>

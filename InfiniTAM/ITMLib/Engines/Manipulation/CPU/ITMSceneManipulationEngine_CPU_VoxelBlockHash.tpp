@@ -127,8 +127,8 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 
 	//temporary stuff
 	const int hashEntryCount = source->index.hashEntryCount;
-	ORUtils::MemoryBlock<HashEntryState> hashEntryStates(hashEntryCount, MEMORYDEVICE_CPU);
-	HashEntryState* hashEntryStates_device = hashEntryStates.GetData(MEMORYDEVICE_CPU);
+	ORUtils::MemoryBlock<HashEntryAllocationState> hashEntryStates(hashEntryCount, MEMORYDEVICE_CPU);
+	HashEntryAllocationState* hashEntryStates_device = hashEntryStates.GetData(MEMORYDEVICE_CPU);
 	ORUtils::MemoryBlock<Vector3s> blockCoords(hashEntryCount, MEMORYDEVICE_CPU);
 	Vector3s* blockCoords_device = blockCoords.GetData(MEMORYDEVICE_CPU);
 
@@ -150,7 +150,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 			Vector3i originalHashBlockPosition = currentSourceHashEntry.pos.toInt() * VOXEL_BLOCK_SIZE;
 			if (IsHashBlockFullyInRange(originalHashBlockPosition, bounds) ||
 			    IsHashBlockPartiallyInRange(originalHashBlockPosition, bounds)) {
-				int destinationHash = hashIndex(currentSourceHashEntry.pos);
+				int destinationHash = HashCodeFromBlockPosition(currentSourceHashEntry.pos);
 				bool collisionDetected = false;
 				MarkAsNeedingAllocationIfNotFound(hashEntryStates_device, blockCoords_device, destinationHash,
 				                                  currentSourceHashEntry.pos, destinationHashTable, collisionDetected);
@@ -211,7 +211,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 			for (int block_y = minPointBlock.y; block_y < maxPointBlock.y; block_y++) {
 				for (int block_x = minPointBlock.x; block_x < maxPointBlock.x; block_x++) {
 					Vector3i blockPos(block_x, block_y, block_x);
-					int destinationHash = hashIndex(blockPos);
+					int destinationHash = HashCodeFromBlockPosition(blockPos);
 					bool collisionDetected = false;
 					MarkAsNeedingAllocationIfNotFound(hashEntryStates_device, blockCoords_device, destinationHash,
 					                                  blockPos.toShortFloor(), destinationHashTable, collisionDetected);
@@ -255,9 +255,9 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 	const int hashEntryCount = source->index.hashEntryCount;
 
 	//temporary stuff
-	ORUtils::MemoryBlock<HashEntryState> hashEntryStates(hashEntryCount, MEMORYDEVICE_CPU);
+	ORUtils::MemoryBlock<HashEntryAllocationState> hashEntryStates(hashEntryCount, MEMORYDEVICE_CPU);
 	ORUtils::MemoryBlock<Vector3s> blockCoordinates(hashEntryCount, MEMORYDEVICE_CPU);
-	HashEntryState* hashEntryStates_device = hashEntryStates.GetData(MEMORYDEVICE_CPU);
+	HashEntryAllocationState* hashEntryStates_device = hashEntryStates.GetData(MEMORYDEVICE_CPU);
 	Vector3s* blockCoordinates_device = blockCoordinates.GetData(MEMORYDEVICE_CPU);
 
 	TVoxel* sourceVoxels = source->localVBA.GetVoxelBlocks();
@@ -283,7 +283,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 
 				const ITMHashEntry& currentSourceHashEntry = sourceHashTable[sourceHash];
 				if (currentSourceHashEntry.ptr < 0) continue;
-				int destinationHash = hashIndex(currentSourceHashEntry.pos);
+				int destinationHash = HashCodeFromBlockPosition(currentSourceHashEntry.pos);
 
 				MarkAsNeedingAllocationIfNotFound(hashEntryStates_device, blockCoordinates_device, destinationHash,
 				                                  currentSourceHashEntry.pos, destinationHashTable, collisionDetected);

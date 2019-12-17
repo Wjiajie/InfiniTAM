@@ -55,7 +55,7 @@ _CPU_AND_GPU_CODE_
 inline bool FindHashAtPosition(THREADPTR(int)& hashIdx,
                                const CONSTPTR(Vector3s)& hashBlockPosition,
                                const CONSTPTR(ITMHashEntry)* hashTable) {
-	hashIdx = hashIndex(hashBlockPosition);
+	hashIdx = HashCodeFromBlockPosition(hashBlockPosition);
 	ITMHashEntry hashEntry = hashTable[hashIdx];
 
 	if (!(IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1)) {

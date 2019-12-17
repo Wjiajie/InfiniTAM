@@ -29,7 +29,7 @@ void ITMIndexingEngine_VoxelBlockHash<TVoxel, TMemoryDeviceType, TDerivedClass>:
 	assert(warpField->index.hashEntryCount == sourceTSDF->index.hashEntryCount &&
 	       sourceTSDF->index.hashEntryCount == targetTSDF->index.hashEntryCount);
 
-	HashEntryState* hashEntryStates_device = targetTSDF->index.GetHashEntryStates();
+	HashEntryAllocationState* hashEntryStates_device = targetTSDF->index.GetHashEntryAllocationStates();
 	Vector3s* blockCoordinates_device = targetTSDF->index.GetAllocationBlockCoordinates();
 
 	//Mark up hash entries in the target scene that will need allocation
@@ -38,7 +38,7 @@ void ITMIndexingEngine_VoxelBlockHash<TVoxel, TMemoryDeviceType, TDerivedClass>:
 
 	do {
 		//reset allocation flags
-		targetTSDF->index.ClearHashEntryStates();
+		targetTSDF->index.ClearHashEntryAllocationStates();
 		hashMarkerFunctor.collisionDetected = false;
 		ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, TMemoryDeviceType>::VoxelAndHashBlockPositionTraversal(
 				warpField, hashMarkerFunctor);

@@ -51,12 +51,12 @@ void ITMVisualizationEngine_CPU<TVoxel,ITMVoxelBlockHash>::FindVisibleBlocks(con
 	ITMRenderState_VH *renderState_vh = (ITMRenderState_VH*)renderState;
 
 	int noVisibleEntries = 0;
-	int *visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
+	int *visibleEntryIDs = renderState_vh->GetVisibleBlockHashCodes();
 
 	//build visible list
 	for (int targetIdx = 0; targetIdx < noTotalEntries; targetIdx++)
 	{
-		unsigned char hashVisibleType = 0;// = entriesVisibleType[targetIdx];
+		unsigned char hashVisibleType = 0;// = blockVisibilityTypes[targetIdx];
 		const ITMHashEntry &hashEntry = hashTable[targetIdx];
 
 		if (hashEntry.ptr >= 0)
@@ -73,7 +73,7 @@ void ITMVisualizationEngine_CPU<TVoxel,ITMVoxelBlockHash>::FindVisibleBlocks(con
 		}
 	}
 
-	renderState_vh->noVisibleEntries = noVisibleEntries;
+	renderState_vh->visibleHashBlockCount = noVisibleEntries;
 }
 
 template<class TVoxel, class TIndex>
@@ -87,8 +87,8 @@ int ITMVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CountVisibleBlocks(co
 {
 	const ITMRenderState_VH *renderState_vh = (const ITMRenderState_VH*)renderState;
 
-	int noVisibleEntries = renderState_vh->noVisibleEntries;
-	const int *visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
+	int noVisibleEntries = renderState_vh->visibleHashBlockCount;
+	const int *visibleEntryIDs = renderState_vh->GetVisibleBlockHashCodes();
 
 	int ret = 0;
 	for (int i = 0; i < noVisibleEntries; ++i) {
@@ -133,8 +133,8 @@ void ITMVisualizationEngine_CPU<TVoxel,ITMVoxelBlockHash>::CreateExpectedDepths(
 
 	ITMRenderState_VH* renderState_vh = (ITMRenderState_VH*)renderState;
 
-	const int *visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
-	int noVisibleEntries = renderState_vh->noVisibleEntries;
+	const int *visibleEntryIDs = renderState_vh->GetVisibleBlockHashCodes();
+	int noVisibleEntries = renderState_vh->visibleHashBlockCount;
 
 	//go through list of visible 8x8x8 blocks
 	for (int blockNo = 0; blockNo < noVisibleEntries; ++blockNo) {
@@ -183,10 +183,10 @@ static void GenericRaycast(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Ve
 	Vector4f *pointsRay = renderState->raycastResult->GetData(MEMORYDEVICE_CPU);
 	const TVoxel *voxelData = scene->localVBA.GetVoxelBlocks();
 	const typename TIndex::IndexData *voxelIndex = scene->index.GetIndexData();
-	uchar *entriesVisibleType = NULL;
+	HashBlockVisibility *entriesVisibleType = NULL;
 	if (updateVisibleList&&(dynamic_cast<const ITMRenderState_VH*>(renderState)!=NULL))
 	{
-		entriesVisibleType = ((ITMRenderState_VH*)renderState)->GetEntriesVisibleType();
+		entriesVisibleType = ((ITMRenderState_VH*) renderState)->GetBlockVisibilityTypes();
 	}
 
 #ifdef WITH_OPENMP

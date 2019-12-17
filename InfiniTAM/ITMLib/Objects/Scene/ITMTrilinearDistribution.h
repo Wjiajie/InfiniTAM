@@ -34,7 +34,7 @@ ReadVoxelRef(THREADPTR(TVoxel)* voxelData, const CONSTPTR(ITMLib::ITMVoxelBlockH
 		return voxelData[cache.blockPtr + linearIdx];
 	}
 
-	int hashIdx = hashIndex(blockPos);
+	int hashIdx = HashCodeFromBlockPosition(blockPos);
 
 	while (true) {
 		ITMHashEntry hashEntry = voxelIndex[hashIdx];

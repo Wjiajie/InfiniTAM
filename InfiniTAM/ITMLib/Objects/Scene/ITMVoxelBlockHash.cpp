@@ -42,12 +42,40 @@ ITMVoxelBlockHash::ITMVoxelBlockHash(ITMVoxelBlockHashParameters parameters, Mem
 		excessListSize(parameters.excessListSize),
 		hashEntryCount(ORDERED_LIST_SIZE + parameters.excessListSize),
 		lastFreeExcessListId(parameters.excessListSize - 1),
-		hashEntryStates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType),
+		hashEntryAllocationStates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType),
 		allocationBlockCoordinates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType),
 		memoryType(memoryType),
-		hashEntries(new ORUtils::MemoryBlock<ITMHashEntry>(hashEntryCount, memoryType)),
-		excessAllocationList(new ORUtils::MemoryBlock<int>(excessListSize, memoryType))
+		hashEntries(hashEntryCount, memoryType),
+		excessAllocationList(excessListSize, memoryType)
 		{
-	hashEntryStates.Clear(NEEDS_NO_CHANGE);
+	hashEntryAllocationStates.Clear(NEEDS_NO_CHANGE);
 }
+
+void ITMVoxelBlockHash::SaveToDirectory(const std::string& outputDirectory) const {
+	std::string hashEntriesFileName = outputDirectory + "hash.dat";
+	std::string excessAllocationListFileName = outputDirectory + "excess.dat";
+	std::string lastFreeExcessListIdFileName = outputDirectory + "last.txt";
+
+	std::ofstream ofs(lastFreeExcessListIdFileName.c_str());
+	if (!ofs) throw std::runtime_error("Could not open " + lastFreeExcessListIdFileName + " for writing");
+
+	ofs << lastFreeExcessListId;
+	ORUtils::MemoryBlockPersister::SaveMemoryBlock(hashEntriesFileName, hashEntries, memoryType);
+	ORUtils::MemoryBlockPersister::SaveMemoryBlock(excessAllocationListFileName, excessAllocationList, memoryType);
+}
+
+void ITMVoxelBlockHash::LoadFromDirectory(const std::string& inputDirectory) {
+	std::string hashEntriesFileName = inputDirectory + "hash.dat";
+	std::string excessAllocationListFileName = inputDirectory + "excess.dat";
+	std::string lastFreeExcessListIdFileName = inputDirectory + "last.txt";
+
+	std::ifstream ifs(lastFreeExcessListIdFileName.c_str());
+	if (!ifs) throw std::runtime_error("Count not open " + lastFreeExcessListIdFileName + " for reading");
+
+	ifs >> this->lastFreeExcessListId;
+	ORUtils::MemoryBlockPersister::LoadMemoryBlock(hashEntriesFileName, hashEntries, memoryType);
+	ORUtils::MemoryBlockPersister::LoadMemoryBlock(excessAllocationListFileName, excessAllocationList,
+	                                               memoryType);
+}
+
 }// namespace ITMLib

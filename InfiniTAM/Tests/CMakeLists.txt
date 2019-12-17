@@ -64,26 +64,39 @@ if (BUILD_TESTS)
 
     itm_add_test(NAME SetCopyCompare_CPU SOURCES Test_SetCopyCompare_CPU.cpp)
     itm_add_test(NAME SetCopyCompare_CUDA SOURCES Test_SetCopyCompare_CUDA.cpp)
-    itm_add_test(NAME ConstructVolumeFromImage_CPU SOURCES Test_ConstructVolumeFromImage_CPU.cpp TestUtilsForSnoopyFrames16And17.h)
-    itm_add_test(NAME ConstructVolumeFromImage_CUDA SOURCES Test_ConstructVolumeFromImage_CUDA.cpp TestUtilsForSnoopyFrames16And17.h)
+    itm_add_test(NAME ConstructVolumeFromImage_CPU SOURCES Test_ConstructVolumeFromImage_CPU.cpp
+                 TestUtilsForSnoopyFrames16And17.h TestUtilsForSnoopyFrames16And17.cpp)
+    itm_add_test(NAME ConstructVolumeFromImage_CUDA SOURCES Test_ConstructVolumeFromImage_CUDA.cpp
+                 TestUtilsForSnoopyFrames16And17.h TestUtilsForSnoopyFrames16And17.cpp)
     itm_add_test(NAME VolumeSaveLoadCompact_CPU SOURCES Test_VolumeSaveLoadCompact_CPU.cpp)
     itm_add_test(NAME VolumeSaveLoadCompact_CUDA SOURCES Test_VolumeSaveLoadCompact_CUDA.cpp)
     itm_add_test(NAME IntArrayMap3D SOURCES Test_IntArrayMap3D.cpp)
     itm_add_test(NAME ImageMaskReader SOURCES Test_ImageMaskReader.cpp)
-    itm_add_test(NAME WarpGradient_CPU_PVA SOURCES Test_WarpGradient_CPU_PVA.cpp Test_WarpGradient_Common.h TestUtilsForSnoopyFrames16And17.h)
-    itm_add_test(NAME WarpGradient_CPU_VBH SOURCES Test_WarpGradient_CPU_VBH.cpp Test_WarpGradient_Common.h TestUtilsForSnoopyFrames16And17.h)
-    itm_add_test(NAME WarpGradient_CUDA_PVA SOURCES Test_WarpGradient_CUDA_PVA.cpp Test_WarpGradient_Common.h TestUtilsForSnoopyFrames16And17.h)
-    itm_add_test(NAME WarpGradient_CUDA_VBH SOURCES Test_WarpGradient_CUDA_VBH.cpp Test_WarpGradient_Common.h TestUtilsForSnoopyFrames16And17.h)
+    itm_add_test(NAME WarpGradient_CPU_PVA SOURCES Test_WarpGradient_CPU_PVA.cpp Test_WarpGradient_Common.h
+                 TestUtilsForSnoopyFrames16And17.h TestUtilsForSnoopyFrames16And17.cpp)
+    itm_add_test(NAME WarpGradient_CPU_VBH SOURCES Test_WarpGradient_CPU_VBH.cpp Test_WarpGradient_Common.h
+                 TestUtilsForSnoopyFrames16And17.h TestUtilsForSnoopyFrames16And17.cpp)
+    itm_add_test(NAME WarpGradient_CUDA_PVA SOURCES Test_WarpGradient_CUDA_PVA.cpp Test_WarpGradient_Common.h
+                 TestUtilsForSnoopyFrames16And17.h TestUtilsForSnoopyFrames16And17.cpp)
+    itm_add_test(NAME WarpGradient_CUDA_VBH SOURCES Test_WarpGradient_CUDA_VBH.cpp Test_WarpGradient_Common.h
+                 TestUtilsForSnoopyFrames16And17.h TestUtilsForSnoopyFrames16And17.cpp)
     itm_add_test(NAME SceneSlicingPVA_CPU SOURCES Test_SceneSlicingPVA_CPU.cpp)
-    itm_add_test(NAME SurfaceTrackingAuxiliaryFunctions SOURCES Test_SurfaceTrackingAuxiliaryFunctions.cpp)
-    itm_add_test(NAME WarpScene SOURCES Test_WarpScene.cpp TestUtilsForSnoopyFrames16And17.h)
+    itm_add_test(NAME SurfaceTrackingAuxiliaryFunctions SOURCES Test_SurfaceTrackingAuxiliaryFunctions.cpp
+                 TestUtilsForSnoopyFrames16And17.h TestUtilsForSnoopyFrames16And17.cpp)
+    itm_add_test(NAME WarpScene SOURCES Test_WarpScene.cpp TestUtilsForSnoopyFrames16And17.h
+                 TestUtilsForSnoopyFrames16And17.cpp)
     itm_add_test(NAME FuseLifeIntoCanonical SOURCES Test_FuseLifeIntoCanonical.cpp)
-    itm_add_test(NAME WarpGradient_PVA_to_VBH SOURCES Test_WarpGradient_PVA_to_VBH.cpp TestUtilsForSnoopyFrames16And17.h)
+    itm_add_test(NAME WarpGradient_PVA_to_VBH SOURCES Test_WarpGradient_PVA_to_VBH.cpp
+                 TestUtilsForSnoopyFrames16And17.h TestUtilsForSnoopyFrames16And17.cpp
+                 WarpAdvancedTestingUtilities.h WarpAdvancedTestingUtilities.tpp WarpAdvancedTestingUtilities.cpp)
     itm_add_test(NAME Configuration SOURCES Test_Configuration.cpp)
     itm_add_test(NAME GeometryUtilities SOURCES Test_GeometryUtilities.cpp)
-    itm_add_test(NAME SmoothWarpGradient SOURCES Test_SmoothWarpGradient.cpp TestUtilsForSnoopyFrames16And17.h)
-    itm_add_test(NAME ExpandAllocation SOURCES Test_ExpandAllocation.cpp TestUtilsForSnoopyFrames16And17.h)
-    itm_add_test(NAME CUDA_Atomics SOURCES Test_CUDA_Atomics.cpp CUDAAtomicTesting.h CUDAAtomicTesting.cu TemporaryCUDA_Atomics.h)
+    itm_add_test(NAME SmoothWarpGradient SOURCES Test_SmoothWarpGradient.cpp
+                 TestUtilsForSnoopyFrames16And17.h TestUtilsForSnoopyFrames16And17.cpp)
+    itm_add_test(NAME ExpandAllocation SOURCES Test_ExpandAllocation.cpp
+                 TestUtilsForSnoopyFrames16And17.h TestUtilsForSnoopyFrames16And17.cpp)
+    itm_add_test(NAME CUDA_Atomics SOURCES Test_CUDA_Atomics.cpp CUDAAtomicTesting.h
+                 CUDAAtomicTesting.cu TemporaryCUDA_Atomics.h)
 
     #####################################################
     # Recursively transfer test data to build directory #

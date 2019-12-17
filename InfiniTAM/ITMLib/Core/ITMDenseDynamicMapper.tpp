@@ -137,9 +137,9 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessInitialFrame(
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene, ITMVoxelVolume<TVoxel, TIndex>* liveScene,
 		ITMRenderState* renderState) {
 	PrintOperationStatus("Generating raw live frame from view...");
-	bench::StartTimer("GenerateRawLiveFrame");
+	bench::StartTimer("GenerateRawLiveAndCanonicalVolumes");
 	sceneReconstructor->GenerateRawLiveSceneFromView(liveScene, view, trackingState, renderState);
-	bench::StopTimer("GenerateRawLiveFrame");
+	bench::StopTimer("GenerateRawLiveAndCanonicalVolumes");
 	//** prepare canonical for new frame
 	PrintOperationStatus("Fusing data from live frame into canonical frame...");
 	//** fuse the live into canonical directly
@@ -156,9 +156,9 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::InitializeProcessing(
 
 
 	PrintOperationStatus("Generating raw live frame from view...");
-	bench::StartTimer("GenerateRawLiveFrame");
+	bench::StartTimer("GenerateRawLiveAndCanonicalVolumes");
 	sceneReconstructor->GenerateRawLiveSceneFromView(liveScene, view, trackingState, renderState);
-	bench::StopTimer("GenerateRawLiveFrame");
+	bench::StopTimer("GenerateRawLiveAndCanonicalVolumes");
 
 
 //	PrintOperationStatus(

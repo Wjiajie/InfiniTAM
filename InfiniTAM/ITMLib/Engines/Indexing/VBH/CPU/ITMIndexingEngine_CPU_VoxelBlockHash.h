@@ -43,14 +43,14 @@ public:
 
 
 	void AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
-	                                   const HashEntryState* hashEntryStates_device,
+	                                   const HashEntryAllocationState* hashEntryStates_device,
 	                                   Vector3s* blockCoordinates_device) override;
 
 
 	void AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
-	                                                 const HashEntryState* hashEntryStates_device,
+	                                                 const HashEntryAllocationState* hashEntryStates_device,
 	                                                 Vector3s* blockCoordinates_device,
-	                                                 uchar* hashBlockVisibilityTypes_device) override;
+	                                                 HashBlockVisibility* hashBlockVisibilityTypes_device) override;
 
 	ITMHashEntry FindHashEntry(const ITMVoxelBlockHash& index, const Vector3s& coordinates) override;
 	ITMHashEntry FindHashEntry(const ITMVoxelBlockHash& index, const Vector3s& coordinates, int& hashCode);

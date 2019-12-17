@@ -208,7 +208,7 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 			                cudaMemcpyHostToDevice));
 
 	// allocate space for intermediate results
-	HashEntryState* hashEntryStates_device = destination->index.GetHashEntryStates();
+	HashEntryAllocationState* hashEntryStates_device = destination->index.GetHashEntryAllocationStates();
 	Vector3s* blockCoordinates_device = destination->index.GetAllocationBlockCoordinates();
 
 	Vector6i destinationBounds(bounds.min_x + offset.x, bounds.min_y + offset.y, bounds.min_z + offset.z,
@@ -311,7 +311,7 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopyScene(
 			cudaMemcpyAsync(allocationTempData_device, tempData, sizeof(CopyAllocationTempData),
 			                cudaMemcpyHostToDevice));
 
-	HashEntryState* hashEntryStates_device = destination->index.GetHashEntryStates();
+	HashEntryAllocationState* hashEntryStates_device = destination->index.GetHashEntryAllocationStates();
 	Vector3s* blockCoordinates_device = destination->index.GetAllocationBlockCoordinates();
 
 	if (offset == Vector3i(0)) {

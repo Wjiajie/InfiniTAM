@@ -42,7 +42,7 @@ ReadVoxelAndLinearIndex(const CONSTPTR(TVoxel)* voxelData,
 		return voxelData[cache.blockPtr + linearIdx];
 	}
 
-	int hashIdx = hashIndex(blockPos);
+	int hashIdx = HashCodeFromBlockPosition(blockPos);
 
 	while (true) {
 		ITMHashEntry hashEntry = voxelIndex[hashIdx];

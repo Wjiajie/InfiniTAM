@@ -18,12 +18,9 @@
 
 #include "TestUtils.h"
 #include "../ITMLib/Utils/Configuration.h"
-#include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
 #include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
-#include "../ITMLib/Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
 #include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../ITMLib/Engines/ViewBuilding/ITMViewBuilderFactory.h"
-#include "../ITMLib/Engines/Reconstruction/Interface/ITMDynamicSceneReconstructionEngine.h"
 #include "../ORUtils/FileUtils.h"
 #include "../ITMLib/Objects/RenderStates/ITMRenderStateFactory.h"
 

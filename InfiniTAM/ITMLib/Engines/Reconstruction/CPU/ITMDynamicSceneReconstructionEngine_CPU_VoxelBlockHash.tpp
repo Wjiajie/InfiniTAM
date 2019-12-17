@@ -16,11 +16,11 @@ using namespace ITMLib;
 
 template<typename TVoxel, typename TWarp>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::IntegrateIntoScene(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view,
 		const ITMTrackingState* trackingState, const ITMRenderState* renderState) {
 	Vector2i rgbImgSize = view->rgb->noDims;
 	Vector2i depthImgSize = view->depth->noDims;
-	float voxelSize = scene->sceneParams->voxelSize;
+	float voxelSize = volume->sceneParams->voxelSize;
 
 	Matrix4f M_d, M_rgb;
 	Vector4f projParams_d, projParams_rgb;
@@ -33,23 +33,23 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 	projParams_d = view->calib.intrinsics_d.projectionParamsSimple.all;
 	projParams_rgb = view->calib.intrinsics_rgb.projectionParamsSimple.all;
 
-	float mu = scene->sceneParams->mu;
-	int maxW = scene->sceneParams->maxW;
+	float mu = volume->sceneParams->mu;
+	int maxW = volume->sceneParams->maxW;
 
 	float* depth = view->depth->GetData(MEMORYDEVICE_CPU);
 	float* confidence = view->depthConfidence->GetData(MEMORYDEVICE_CPU);
 	Vector4u* rgb = view->rgb->GetData(MEMORYDEVICE_CPU);
-	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
-	ITMHashEntry* hashTable = scene->index.GetEntries();
+	TVoxel* localVBA = volume->localVBA.GetVoxelBlocks();
+	ITMHashEntry* hashTable = volume->index.GetEntries();
 
-	int* visibleEntryIds = renderState_vh->GetVisibleEntryIDs();
-	int noVisibleEntries = renderState_vh->noVisibleEntries;
+	int* visibleEntryIds = renderState_vh->GetVisibleBlockHashCodes();
+	int visibleEntryCount = renderState_vh->visibleHashBlockCount;
 
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for default(none)
 #endif
-	for (int visibleHash = 0; visibleHash < noVisibleEntries; visibleHash++) {
+	for (int visibleHash = 0; visibleHash < visibleEntryCount; visibleHash++) {
 		Vector3i globalPos;
 		int hash = visibleEntryIds[visibleHash];
 		const ITMHashEntry& currentHashEntry = hashTable[hash];

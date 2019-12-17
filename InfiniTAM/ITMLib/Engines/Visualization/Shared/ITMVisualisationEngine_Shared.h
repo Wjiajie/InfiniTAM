@@ -3,6 +3,7 @@
 #pragma once
 
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
+#include "../../../Utils/ITMHashBlockProperties.h"
 
 static const CONSTPTR(int) MAX_RENDERING_BLOCKS = 65536*4;
 //static const int MAX_RENDERING_BLOCKS = 16384;
@@ -126,7 +127,7 @@ struct ReadWithConfidenceFromSdfFloatInterpolated<false,true, TVoxel,TIndex,TCac
 
 
 template<class TVoxel, class TIndex, bool modifyVisibleEntries>
-_CPU_AND_GPU_CODE_ inline bool castRay(DEVICEPTR(Vector4f) &pt_out, DEVICEPTR(uchar) *entriesVisibleType, 
+_CPU_AND_GPU_CODE_ inline bool castRay(DEVICEPTR(Vector4f) &pt_out, DEVICEPTR(ITMLib::HashBlockVisibility)* blockVisibilityTypes,
 	int x, int y, const CONSTPTR(TVoxel) *voxelData, const CONSTPTR(typename TIndex::IndexData) *voxelIndex, 
 	Matrix4f invM, Vector4f invProjParams, float oneOverVoxelSize, float mu, const CONSTPTR(Vector2f) & viewFrustum_minmax)
 {
@@ -165,7 +166,7 @@ _CPU_AND_GPU_CODE_ inline bool castRay(DEVICEPTR(Vector4f) &pt_out, DEVICEPTR(uc
 
 		if (modifyVisibleEntries)
 		{
-			if (vmIndex) entriesVisibleType[vmIndex - 1] = 1;
+			if (vmIndex) blockVisibilityTypes[vmIndex - 1] = ITMLib::HashBlockVisibility::IN_MEMORY_AND_VISIBLE;
 		}
 
 		if (!vmIndex) {

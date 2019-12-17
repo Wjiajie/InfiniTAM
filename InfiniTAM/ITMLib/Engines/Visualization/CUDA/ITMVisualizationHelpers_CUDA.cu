@@ -7,10 +7,10 @@ using namespace ITMLib;
 
 //device implementations
 
-__global__ void ITMLib::countVisibleBlocks_device(const int *visibleEntryIDs, int noVisibleEntries, const ITMHashEntry *hashTable, uint *noBlocks, int minBlockId, int maxBlockId)
+__global__ void ITMLib::countVisibleBlocks_device(const int *visibleEntryIDs, int visibleBlockCount, const ITMHashEntry *hashTable, uint *noBlocks, int minBlockId, int maxBlockId)
 {
 	int globalIdx = threadIdx.x + blockIdx.x * blockDim.x;
-	if (globalIdx >= noVisibleEntries) return;
+	if (globalIdx >= visibleBlockCount) return;
 
 	int entryId = visibleEntryIDs[globalIdx];
 	int blockId = hashTable[entryId].ptr;
@@ -18,14 +18,14 @@ __global__ void ITMLib::countVisibleBlocks_device(const int *visibleEntryIDs, in
 }
 
 __global__ void ITMLib::buildCompleteVisibleList_device(const ITMHashEntry *hashTable, /*ITMHashCacheState *cacheStates, bool useSwapping,*/ int noTotalEntries,
-	int *visibleEntryIDs, int *noVisibleEntries, uchar *entriesVisibleType, Matrix4f M, Vector4f projParams, Vector2i imgSize, float voxelSize)
+                                                        int *visibleEntryIDs, int *visibleBlockCount, HashBlockVisibility *entriesVisibleType, Matrix4f M, Vector4f projParams, Vector2i imgSize, float voxelSize)
 {
 	int targetIdx = threadIdx.x + blockIdx.x * blockDim.x;
 	if (targetIdx > noTotalEntries - 1) return;
 
 	__shared__ bool shouldPrefix;
 
-	unsigned char hashVisibleType = 0; //entriesVisibleType[targetIdx];
+	unsigned char hashVisibleType = 0; //blockVisibilityTypes[targetIdx];
 	const ITMHashEntry &hashEntry = hashTable[targetIdx];
 
 	shouldPrefix = false;
@@ -47,12 +47,12 @@ __global__ void ITMLib::buildCompleteVisibleList_device(const ITMHashEntry *hash
 
 	if (shouldPrefix)
 	{
-		int offset = computePrefixSum_device<int>(hashVisibleType > 0, noVisibleEntries, blockDim.x * blockDim.y, threadIdx.x);
+		int offset = computePrefixSum_device<int>(hashVisibleType > 0, visibleBlockCount, blockDim.x * blockDim.y, threadIdx.x);
 		if (offset != -1) visibleEntryIDs[offset] = targetIdx;
 	}
 }
 
-__global__ void ITMLib::projectAndSplitBlocks_device(const ITMHashEntry *hashEntries, const int *visibleEntryIDs, int noVisibleEntries,
+__global__ void ITMLib::projectAndSplitBlocks_device(const ITMHashEntry *hashEntries, const int *visibleEntryIDs, int visibleBlockCount,
 	const Matrix4f pose_M, const Vector4f intrinsics, const Vector2i imgSize, float voxelSize, RenderingBlock *renderingBlocks,
 	uint *noTotalBlocks)
 {
@@ -63,7 +63,7 @@ __global__ void ITMLib::projectAndSplitBlocks_device(const ITMHashEntry *hashEnt
 	Vector2i upperLeft, lowerRight;
 	Vector2f zRange;
 	bool validProjection = false;
-	if (in_offset < noVisibleEntries) if (blockData.ptr >= 0)
+	if (in_offset < visibleBlockCount) if (blockData.ptr >= 0)
 		validProjection = ProjectSingleBlock(blockData.pos, pose_M, intrinsics, imgSize, voxelSize, upperLeft, lowerRight, zRange);
 
 	Vector2i requiredRenderingBlocks(ceilf((float)(lowerRight.x - upperLeft.x + 1) / renderingBlockSizeX),

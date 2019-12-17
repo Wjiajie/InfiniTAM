@@ -94,7 +94,7 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>:
 	Vector4f projParams_d, projParams_rgb;
 
 	ITMRenderState_VH* renderState_vh = (ITMRenderState_VH*) renderState;
-	if (renderState_vh->noVisibleEntries == 0) return;
+	if (renderState_vh->visibleHashBlockCount == 0) return;
 
 	M_d = trackingState->pose_d->GetM();
 	// compute modelview matrix of the RGB camera
@@ -112,10 +112,10 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>:
 	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* hashTable = scene->index.GetEntries();
 
-	int* visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
+	int* visibleEntryIDs = renderState_vh->GetVisibleBlockHashCodes();
 
 	dim3 cudaBlockSize(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
-	dim3 gridSize(renderState_vh->noVisibleEntries);
+	dim3 gridSize(renderState_vh->visibleHashBlockCount);
 
 	integrateIntoScene_device<TVoxel> << < gridSize, cudaBlockSize >> > (localVBA, hashTable, visibleEntryIDs,
 			rgb, rgbImgSize, depth, confidence, depthImgSize, M_d, M_rgb, projParams_d, projParams_rgb, voxelSize, mu, maxW);

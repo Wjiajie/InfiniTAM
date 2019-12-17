@@ -76,6 +76,12 @@ namespace ORUtils {
 			this->m20 = a20; this->m21 = a21; this->m22 = a22; this->m23 = a23;
 			this->m30 = a30; this->m31 = a31; this->m32 = a32; this->m33 = a33;
 		}
+		_CPU_AND_GPU_CODE_ static Matrix4 Identity(){
+			return {(T)1, (T)0, (T)0, (T)0,
+		            (T)0, (T)1, (T)0, (T)0,
+		            (T)0, (T)0, (T)1, (T)0,
+		            (T)0, (T)0, (T)0, (T)1};
+		}
 
 		_CPU_AND_GPU_CODE_ inline void getValues(T *mp) const	{ memcpy(mp, this->m, sizeof(T) * 16); }
 		_CPU_AND_GPU_CODE_ inline const T *getValues() const { return this->m; }
