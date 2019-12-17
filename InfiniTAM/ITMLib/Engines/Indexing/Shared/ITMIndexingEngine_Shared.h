@@ -36,7 +36,7 @@ using namespace ITMLib;
 struct AllocationTempData {
 	int noAllocatedVoxelEntries;
 	int noAllocatedExcessEntries;
-	int noVisibleEntries;
+	int visibleBlockCount;
 };
 
 

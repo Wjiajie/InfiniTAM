@@ -66,7 +66,7 @@ namespace ITMLib
 		appropriate visualisation state object, created
 		previously using allocateInternalState().
 		*/
-		virtual void FindVisibleBlocks(const ITMVoxelVolume<TVoxel,TIndex> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics,
+		virtual void FindVisibleBlocks(ITMVoxelVolume<TVoxel,TIndex> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics,
 		                               ITMRenderState *renderState) const = 0;
 
 		/** Given a render state, Count the number of visible blocks
@@ -82,23 +82,23 @@ namespace ITMLib
 		                                  ITMRenderState *renderState) const = 0;
 
 		/** This will render an image using raycasting. */
-		virtual void RenderImage(const ITMVoxelVolume<TVoxel,TIndex> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics,
+		virtual void RenderImage(ITMVoxelVolume<TVoxel,TIndex> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics,
 		                         const ITMRenderState *renderState, ITMUChar4Image *outputImage, RenderImageType type = RENDER_SHADED_GREYSCALE, RenderRaycastSelection raycastType = RENDER_FROM_NEW_RAYCAST) const = 0;
 
 		/** Finds the scene surface using raycasting. */
-		virtual void FindSurface(const ITMVoxelVolume<TVoxel,TIndex> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics,
+		virtual void FindSurface(ITMVoxelVolume<TVoxel,TIndex> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics,
 		                         const ITMRenderState *renderState) const = 0;
 
 		/** Create a point cloud as required by the
 		ITMLib::Engine::ITMColorTracker classes.
 		*/
-		virtual void CreatePointCloud(const ITMVoxelVolume<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState,
+		virtual void CreatePointCloud(ITMVoxelVolume<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState,
 		                              ITMRenderState *renderState, bool skipPoints) const = 0;
 
 		/** Create an image of reference points and normals as
 		required by the ITMLib::Engine::ITMDepthTracker classes.
 		*/
-		virtual void CreateICPMaps(const ITMVoxelVolume<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState,
+		virtual void CreateICPMaps(ITMVoxelVolume<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState,
 		                           ITMRenderState *renderState) const = 0;
 
 		/** Create an image of reference points and normals as

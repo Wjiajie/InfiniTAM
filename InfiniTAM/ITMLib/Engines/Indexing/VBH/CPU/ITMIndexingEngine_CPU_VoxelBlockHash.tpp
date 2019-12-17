@@ -38,7 +38,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 	Vector4f projParams_d, invertedCameraProjectionParameters;
 
 	ITMRenderState_VH* renderState_vh = (ITMRenderState_VH*) renderState;
-	if (resetVisibleList) renderState_vh->visibleHashBlockCount = 0;
+	if (resetVisibleList) scene->index.SetVisibleHashBlockCount(0);
 
 	cameraPose = trackingState->pose_d->GetM();
 	cameraPose.inv(invertedCameraPose);
@@ -54,8 +54,8 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 	int* voxelAllocationList = scene->localVBA.GetAllocationList();
 	ITMHashEntry* hashTable = scene->index.GetEntries();
 	ITMHashSwapState* swapStates = scene->Swapping() ? scene->globalCache->GetSwapStates(false) : 0;
-	int* visibleEntryIDs = renderState_vh->GetVisibleBlockHashCodes();
-	HashBlockVisibility* hashBlockVisibilityTypes = renderState_vh->GetBlockVisibilityTypes();
+	int* visibleEntryHashCodes = scene->index.GetVisibleBlockHashCodes();
+	HashBlockVisibility* hashBlockVisibilityTypes = scene->index.GetBlockVisibilityTypes();
 	int hashEntryCount = scene->index.hashEntryCount;
 
 	HashEntryAllocationState* hashEntryStates_device = scene->index.GetHashEntryAllocationStates();
@@ -69,8 +69,8 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 	do {
 		scene->index.ClearHashEntryAllocationStates();
 		collisionDetected = false;
-		for (int i = 0; i < renderState_vh->visibleHashBlockCount; i++)
-			hashBlockVisibilityTypes[visibleEntryIDs[i]] = HashBlockVisibility::VISIBLE_AT_PREVIOUS_FRAME_AND_UNSTREAMED;
+		for (int i = 0; i < scene->index.GetVisibleHashBlockCount(); i++)
+			hashBlockVisibilityTypes[visibleEntryHashCodes[i]] = HashBlockVisibility::VISIBLE_AT_PREVIOUS_FRAME_AND_UNSTREAMED;
 #ifdef WITH_OPENMP
 #pragma omp parallel for default(none)
 #endif
@@ -95,7 +95,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 		}
 	} while (collisionDetected);
 
-	int noVisibleEntries = 0;
+	int visibleEntryCount = 0;
 	//build visible list
 	for (int targetIdx = 0; targetIdx < hashEntryCount; targetIdx++) {
 		HashBlockVisibility hashVisibleType = hashBlockVisibilityTypes[targetIdx];
@@ -121,8 +121,8 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 		}
 
 		if (hashVisibleType > 0) {
-			visibleEntryIDs[noVisibleEntries] = targetIdx;
-			noVisibleEntries++;
+			visibleEntryHashCodes[visibleEntryCount] = targetIdx;
+			visibleEntryCount++;
 		}
 	}
 
@@ -139,7 +139,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 			}
 		}
 	}
-	renderState_vh->visibleHashBlockCount = noVisibleEntries;
+	scene->index.SetVisibleHashBlockCount(visibleEntryCount);
 	scene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
 }
 

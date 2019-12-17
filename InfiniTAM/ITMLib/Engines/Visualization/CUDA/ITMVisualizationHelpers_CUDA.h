@@ -13,8 +13,8 @@ namespace ITMLib {
 // declaration of device functions
 
 __global__ void buildCompleteVisibleList_device(
-		const ITMHashEntry* hashTable, /*ITMHashCacheState *cacheStates, bool useSwapping,*/ int noTotalEntries,
-		int* visibleEntryIDs, int* visibleBlockCount, HashBlockVisibility* entriesVisibleType, Matrix4f M,
+		const ITMHashEntry* hashTable, /*ITMHashCacheState *cacheStates, bool useSwapping,*/ int hashBlockCount,
+		int* visibleBlockHashCodes, int* visibleBlockCount, HashBlockVisibility* blockVisibilityTypes, Matrix4f M,
 		Vector4f projParams, Vector2i imgSize, float voxelSize);
 
 __global__ void

@@ -17,11 +17,11 @@ __global__ void ITMLib::countVisibleBlocks_device(const int *visibleEntryIDs, in
 	if ((blockId >= minBlockId) && (blockId <= maxBlockId)) atomicAdd(noBlocks, 1);
 }
 
-__global__ void ITMLib::buildCompleteVisibleList_device(const ITMHashEntry *hashTable, /*ITMHashCacheState *cacheStates, bool useSwapping,*/ int noTotalEntries,
-                                                        int *visibleEntryIDs, int *visibleBlockCount, HashBlockVisibility *entriesVisibleType, Matrix4f M, Vector4f projParams, Vector2i imgSize, float voxelSize)
+__global__ void ITMLib::buildCompleteVisibleList_device(const ITMHashEntry *hashTable, /*ITMHashCacheState *cacheStates, bool useSwapping,*/ int hashBlockCount,
+                                                        int *visibleBlockHashCodes, int *visibleBlockCount, HashBlockVisibility* blockVisibilityTypes, Matrix4f M, Vector4f projParams, Vector2i imgSize, float voxelSize)
 {
 	int targetIdx = threadIdx.x + blockIdx.x * blockDim.x;
-	if (targetIdx > noTotalEntries - 1) return;
+	if (targetIdx > hashBlockCount - 1) return;
 
 	__shared__ bool shouldPrefix;
 
@@ -48,7 +48,7 @@ __global__ void ITMLib::buildCompleteVisibleList_device(const ITMHashEntry *hash
 	if (shouldPrefix)
 	{
 		int offset = computePrefixSum_device<int>(hashVisibleType > 0, visibleBlockCount, blockDim.x * blockDim.y, threadIdx.x);
-		if (offset != -1) visibleEntryIDs[offset] = targetIdx;
+		if (offset != -1) visibleBlockHashCodes[offset] = targetIdx;
 	}
 }
 

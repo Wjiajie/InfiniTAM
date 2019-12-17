@@ -64,7 +64,7 @@ namespace ITMLib
 		}
 
 		/**
-		 * \brief
+		 * \brief Do whatever the hell this does, great job on the docs and procedure naming / coupling, InfiniTAM team
 		 * \tparam TVoxel
 		 * \tparam TIndex
 		 * \param trackingState
@@ -74,7 +74,7 @@ namespace ITMLib
 		 * \param renderState
 		 */
 		template <typename TVoxel, typename TIndex>
-		void Prepare(ITMTrackingState *trackingState, const ITMVoxelVolume<TVoxel,TIndex> *scene, const ITMView *view,
+		void Prepare(ITMTrackingState *trackingState, ITMVoxelVolume<TVoxel,TIndex> *scene, const ITMView *view,
 		             const ITMVisualisationEngine<TVoxel,TIndex> *visualisationEngine, ITMRenderState *renderState)
 		{
 			if (!tracker->requiresPointCloudRendering())

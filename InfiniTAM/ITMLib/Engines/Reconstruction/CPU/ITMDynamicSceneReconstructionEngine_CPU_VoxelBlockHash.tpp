@@ -42,16 +42,15 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 	TVoxel* localVBA = volume->localVBA.GetVoxelBlocks();
 	ITMHashEntry* hashTable = volume->index.GetEntries();
 
-	int* visibleEntryIds = renderState_vh->GetVisibleBlockHashCodes();
-	int visibleEntryCount = renderState_vh->visibleHashBlockCount;
-
+	int* visibleEntryHashCodes = volume->index.GetVisibleBlockHashCodes();
+	int visibleEntryCount = volume->index.GetVisibleHashBlockCount();
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for default(none)
 #endif
 	for (int visibleHash = 0; visibleHash < visibleEntryCount; visibleHash++) {
 		Vector3i globalPos;
-		int hash = visibleEntryIds[visibleHash];
+		int hash = visibleEntryHashCodes[visibleHash];
 		const ITMHashEntry& currentHashEntry = hashTable[hash];
 
 		if (currentHashEntry.ptr < 0) continue;

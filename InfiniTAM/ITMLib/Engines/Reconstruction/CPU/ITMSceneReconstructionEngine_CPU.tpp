@@ -56,18 +56,18 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 	TVoxel *localVBA = scene->localVBA.GetVoxelBlocks();
 	ITMHashEntry *hashTable = scene->index.GetEntries();
 
-	int *visibleEntryIds = renderState_vh->GetVisibleBlockHashCodes();
-	int noVisibleEntries = renderState_vh->visibleHashBlockCount;
+	int *visibleBlockHashCodes = scene->index.GetVisibleBlockHashCodes();
+	int visibleHashBlockCount = scene->index.GetVisibleHashBlockCount();
 
 	bool stopIntegratingAtMaxW = scene->sceneParams->stopIntegratingAtMaxW;
 
 #ifdef WITH_OPENMP
 	#pragma omp parallel for
 #endif
-	for (int visibleHash = 0; visibleHash < noVisibleEntries; visibleHash++)
+	for (int visibleHash = 0; visibleHash < visibleHashBlockCount; visibleHash++)
 	{
 		Vector3i globalPos;
-		int hash = visibleEntryIds[visibleHash];
+		int hash = visibleBlockHashCodes[visibleHash];
 
 		const ITMHashEntry &currentHashEntry = hashTable[hash];
 
@@ -114,7 +114,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 	Vector4f projParams_d, invProjParams_d;
 
 	ITMRenderState_VH *renderState_vh = (ITMRenderState_VH*)renderState;
-	if (resetVisibleList) renderState_vh->visibleHashBlockCount = 0;
+	if (resetVisibleList) scene->index.SetVisibleHashBlockCount(0);
 
 	M_d = trackingState->pose_d->GetM(); M_d.inv(invM_d);
 
@@ -130,8 +130,8 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 	int *excessAllocationList = scene->index.GetExcessAllocationList();
 	ITMHashEntry *hashTable = scene->index.GetEntries();
 	ITMHashSwapState *swapStates = scene->Swapping() ? scene->globalCache->GetSwapStates(false) : 0;
-	int *visibleEntryIDs = renderState_vh->GetVisibleBlockHashCodes();
-	HashBlockVisibility *entriesVisibleType = renderState_vh->GetBlockVisibilityTypes();
+	int* visibleBlockHashCodes = scene->index.GetVisibleBlockHashCodes();
+	HashBlockVisibility* hashBlockVisibilityTypes = scene->index.GetBlockVisibilityTypes();
 
 	int hashEntryCount = scene->index.hashEntryCount;
 	HashEntryAllocationState* hashEntryStates_device = scene->index.GetHashEntryAllocationStates();
@@ -145,12 +145,12 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
 	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
 
-	int noVisibleEntries = 0;
+	int visibleHashBlockCount = 0;
 
 	scene->index.ClearHashEntryAllocationStates();
 
-	for (int i = 0; i < renderState_vh->visibleHashBlockCount; i++)
-		entriesVisibleType[visibleEntryIDs[i]] = VISIBLE_AT_PREVIOUS_FRAME_AND_UNSTREAMED;
+	for (int i = 0; i < scene->index.GetVisibleHashBlockCount(); i++)
+		hashBlockVisibilityTypes[visibleBlockHashCodes[i]] = VISIBLE_AT_PREVIOUS_FRAME_AND_UNSTREAMED;
 
 	//build hashVisibility
 #ifdef WITH_OPENMP
@@ -161,7 +161,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 		int y = locId / depthImgSize.x;
 		int x = locId - y * depthImgSize.x;
 		bool collisionDetected = false;
-		buildHashAllocAndVisibleTypePP(hashEntryStates_device, entriesVisibleType, x, y, blockCoords_device, depth, invM_d,
+		buildHashAllocAndVisibleTypePP(hashEntryStates_device, hashBlockVisibilityTypes, x, y, blockCoords_device, depth, invM_d,
 		                               invProjParams_d, mu, depthImgSize, oneOverHashEntrySize,
 		                               hashTable, scene->sceneParams->viewFrustum_min,
 		                               scene->sceneParams->viewFrustum_max, collisionDetected);
@@ -193,7 +193,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 				else
 				{
 					// Mark entry as not visible since we couldn't allocate it but buildHashAllocAndVisibleTypePP changed its state.
-					entriesVisibleType[targetIdx] = INVISIBLE;
+					hashBlockVisibilityTypes[targetIdx] = INVISIBLE;
 
 					// Restore previous value to avoid leaks.
 					lastFreeVoxelBlockId++;
@@ -217,7 +217,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 
 					hashTable[ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
 
-					entriesVisibleType[ORDERED_LIST_SIZE + exlOffset] = IN_MEMORY_AND_VISIBLE;
+					hashBlockVisibilityTypes[ORDERED_LIST_SIZE + exlOffset] = IN_MEMORY_AND_VISIBLE;
 				}
 				else
 				{
@@ -235,7 +235,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 	//build visible list
 	for (int targetIdx = 0; targetIdx < hashEntryCount; targetIdx++)
 	{
-		HashBlockVisibility hashVisibleType = entriesVisibleType[targetIdx];
+		HashBlockVisibility hashVisibleType = hashBlockVisibilityTypes[targetIdx];
 		const ITMHashEntry &hashEntry = hashTable[targetIdx];
 
 		if (hashVisibleType == 3)
@@ -250,7 +250,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 				checkBlockVisibility<false>(isVisible, isVisibleEnlarged, hashEntry.pos, M_d, projParams_d, voxelSize, depthImgSize);
 				if (!isVisible) { hashVisibleType = INVISIBLE; }
 			}
-			entriesVisibleType[targetIdx] = hashVisibleType;
+			hashBlockVisibilityTypes[targetIdx] = hashVisibleType;
 		}
 
 		if (useSwapping)
@@ -260,18 +260,10 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 
 		if (hashVisibleType > 0)
 		{
-			visibleEntryIDs[noVisibleEntries] = targetIdx;
-			noVisibleEntries++;
+			visibleBlockHashCodes[visibleHashBlockCount] = targetIdx;
+			visibleHashBlockCount++;
 		}
 
-#if 0
-		// "active list", currently disabled
-		if (hashVisibleType == 1)
-		{
-			activeEntryIDs[noActiveEntries] = targetIdx;
-			noActiveEntries++;
-		}
-#endif
 	}
 
 	//reallocate deleted ones from previous swap operation
@@ -282,7 +274,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 			int vbaIdx;
 			ITMHashEntry hashEntry = hashTable[targetIdx];
 
-			if (entriesVisibleType[targetIdx] > 0 && hashEntry.ptr == -1)
+			if (hashBlockVisibilityTypes[targetIdx] > 0 && hashEntry.ptr == -1)
 			{
 				vbaIdx = lastFreeVoxelBlockId; lastFreeVoxelBlockId--;
 				if (vbaIdx >= 0) hashTable[targetIdx].ptr = voxelAllocationList[vbaIdx];
@@ -291,8 +283,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 		}
 	}
 
-	renderState_vh->visibleHashBlockCount = noVisibleEntries;
-
+	scene->index.SetVisibleHashBlockCount(visibleHashBlockCount);
 	scene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
 	scene->index.SetLastFreeExcessListId(lastFreeExcessListId);
 }

@@ -102,7 +102,7 @@ void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::SaveToGlobalMemory(ITMVox
 	ITMHashSwapState *swapStates = globalCache->GetSwapStates(false);
 
 	ITMHashEntry *hashTable = scene->index.GetEntries();
-	HashBlockVisibility *entriesVisibleType = ((ITMRenderState_VH*) renderState)->GetBlockVisibilityTypes();
+	HashBlockVisibility *blockVisibilityTypes = scene->index.GetBlockVisibilityTypes();
 
 	TVoxel *syncedVoxelBlocks_local = globalCache->GetSyncedVoxelBlocks(false);
 	bool *hasSyncedData_local = globalCache->GetHasSyncedData(false);
@@ -127,7 +127,7 @@ void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::SaveToGlobalMemory(ITMVox
 		int localPtr = hashTable[entryDestId].ptr;
 		ITMHashSwapState &swapState = swapStates[entryDestId];
 
-		if (swapState.state == 2 && localPtr >= 0 && entriesVisibleType[entryDestId] == 0)
+		if (swapState.state == 2 && localPtr >= 0 && blockVisibilityTypes[entryDestId] == 0)
 		{
 			TVoxel *localVBALocation = localVBA + localPtr * VOXEL_BLOCK_SIZE3;
 
@@ -170,7 +170,7 @@ template<class TVoxel>
 void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::CleanLocalMemory(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState)
 {
 	ITMHashEntry *hashTable = scene->index.GetEntries();
-	HashBlockVisibility *entriesVisibleType = ((ITMRenderState_VH*) renderState)->GetBlockVisibilityTypes();
+	HashBlockVisibility *blockVisibilityTypes = scene->index.GetBlockVisibilityTypes();
 
 	TVoxel *localVBA = scene->localVBA.GetVoxelBlocks();
 	int *voxelAllocationList = scene->localVBA.GetAllocationList();
@@ -186,7 +186,7 @@ void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::CleanLocalMemory(ITMVoxel
 
 		int localPtr = hashTable[entryDestId].ptr;
 
-		if (localPtr >= 0 && entriesVisibleType[entryDestId] == 0)
+		if (localPtr >= 0 && blockVisibilityTypes[entryDestId] == 0)
 		{
 			TVoxel *localVBALocation = localVBA + localPtr * VOXEL_BLOCK_SIZE3;
 

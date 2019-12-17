@@ -142,7 +142,7 @@ void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SaveToGlobalMemory(ITMVo
 	ITMHashSwapState *swapStates = globalCache->GetSwapStates(true);
 
 	ITMHashEntry *hashTable = scene->index.GetEntries();
-	HashBlockVisibility *entriesVisibleType = ((ITMRenderState_VH*) renderState)->GetBlockVisibilityTypes();
+	HashBlockVisibility* blockVisibilityTypes = scene->index.GetBlockVisibilityTypes();
 
 	TVoxel *syncedVoxelBlocks_local = globalCache->GetSyncedVoxelBlocks(true);
 	bool *hasSyncedData_local = globalCache->GetHasSyncedData(true);
@@ -167,7 +167,7 @@ void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SaveToGlobalMemory(ITMVo
 		ORcudaSafeCall(cudaMemset(noNeededEntries_device, 0, sizeof(int)));
 
 		buildListToSwapOut_device << <gridSize, blockSize >> >(neededEntryIDs_local, noNeededEntries_device, swapStates,
-			hashTable, entriesVisibleType, hashEntryCount);
+			hashTable, blockVisibilityTypes, hashEntryCount);
 		ORcudaKernelCheck;
 
 		ORcudaSafeCall(cudaMemcpy(&noNeededEntries, noNeededEntries_device, sizeof(int), cudaMemcpyDeviceToHost));
@@ -216,7 +216,7 @@ template<class TVoxel>
 void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CleanLocalMemory(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState)
 {
 	ITMHashEntry *hashTable = scene->index.GetEntries();
-	HashBlockVisibility *entriesVisibleType = ((ITMRenderState_VH*) renderState)->GetBlockVisibilityTypes();
+	HashBlockVisibility* blockVisibilityTypes = scene->index.GetBlockVisibilityTypes();
 
 	TVoxel *localVBA = scene->localVBA.GetVoxelBlocks();
 	int *voxelAllocationList = scene->localVBA.GetAllocationList();
@@ -230,7 +230,7 @@ void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CleanLocalMemory(ITMVoxe
 
 		ORcudaSafeCall(cudaMemset(noNeededEntries_device, 0, sizeof(int)));
 
-		buildListToClean_device << <gridSize, blockSize >> >(entriesToClean_device, noNeededEntries_device, hashTable, entriesVisibleType, scene->index.hashEntryCount);
+		buildListToClean_device << <gridSize, blockSize >> >(entriesToClean_device, noNeededEntries_device, hashTable, blockVisibilityTypes, scene->index.hashEntryCount);
 
 		ORcudaSafeCall(cudaMemcpy(&noNeededEntries, noNeededEntries_device, sizeof(int), cudaMemcpyDeviceToHost));
 	}

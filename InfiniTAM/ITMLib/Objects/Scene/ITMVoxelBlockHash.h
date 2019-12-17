@@ -94,8 +94,8 @@ public:
 	const CONSTPTR(int) voxelBlockSize = VOXEL_BLOCK_SIZE3;
 
 private:
-
 	int lastFreeExcessListId;
+	int visibleHashBlockCount;
 
 	/** The actual hash entries in the hash table, ordered by their hash codes. */
 	ORUtils::MemoryBlock<ITMHashEntry> hashEntries;
@@ -108,9 +108,14 @@ private:
 	many hash collisions caused the buckets to
 	overflow. */
 	ORUtils::MemoryBlock<int> excessAllocationList;
+	/** A list of hash codes for "visible entries" */
+	ORUtils::MemoryBlock<int> visibleBlockHashCodes;
+	/** Visibility types of "visible entries", ordered by hashCode */
+	ORUtils::MemoryBlock<HashBlockVisibility> blockVisibilityTypes;
 
 public:
 	const MemoryDeviceType memoryType;
+
 
 	ITMVoxelBlockHash(ITMVoxelBlockHashParameters parameters, MemoryDeviceType memoryType);
 
@@ -146,7 +151,6 @@ public:
 		return GetHashEntryAt_CPU(coord);
 	}
 
-	//(VBH-specific)
 	/** Get a list of temporary hash entry state flags**/
 	const HashEntryAllocationState* GetHashEntryAllocationStates() const { return hashEntryAllocationStates.GetData(memoryType); }
 	HashEntryAllocationState* GetHashEntryAllocationStates() { return hashEntryAllocationStates.GetData(memoryType); }
@@ -154,6 +158,10 @@ public:
 	const Vector3s* GetAllocationBlockCoordinates() const { return allocationBlockCoordinates.GetData(memoryType); }
 	/** Get a temporary list for coordinates of voxel blocks to be soon allocated**/
 	Vector3s* GetAllocationBlockCoordinates() { return allocationBlockCoordinates.GetData(memoryType); }
+	const int* GetVisibleBlockHashCodes() const { return visibleBlockHashCodes.GetData(memoryType); }
+	int* GetVisibleBlockHashCodes() { return visibleBlockHashCodes.GetData(memoryType); }
+	HashBlockVisibility* GetBlockVisibilityTypes() { return blockVisibilityTypes.GetData(memoryType); }
+	const HashBlockVisibility* GetBlockVisibilityTypes() const { return blockVisibilityTypes.GetData(memoryType); }
 
 	/** Get the list that identifies which entries of the
 	overflow list are allocated. This is used if too
@@ -163,6 +171,8 @@ public:
 	int* GetExcessAllocationList() { return excessAllocationList.GetData(memoryType); }
 	int GetLastFreeExcessListId() const { return lastFreeExcessListId; }
 	void SetLastFreeExcessListId(int newLastFreeExcessListId) { this->lastFreeExcessListId = newLastFreeExcessListId; }
+	int GetVisibleHashBlockCount() const { return this->visibleHashBlockCount; }
+	void SetVisibleHashBlockCount(int visibleHashBlockCount) { this->visibleHashBlockCount = visibleHashBlockCount; }
 
 	/*VBH-specific*/
 	int GetExcessListSize() const { return this->excessListSize; }
@@ -178,6 +188,7 @@ public:
 	void SaveToDirectory(const std::string& outputDirectory) const;
 
 	void LoadFromDirectory(const std::string& inputDirectory);
+
 
 	// Suppress the default copy constructor and assignment operator
 	ITMVoxelBlockHash(const ITMVoxelBlockHash&) = delete;

@@ -216,7 +216,7 @@ buildVisibleList_device(ITMHashEntry* hashTable, ITMLib::ITMHashSwapState* swapS
 	__syncthreads();
 
 	if (shouldPrefix) {
-		int offset = computePrefixSum_device<int>(hashVisibleType > 0, &allocData->noVisibleEntries,
+		int offset = computePrefixSum_device<int>(hashVisibleType > 0, &allocData->visibleBlockCount,
 		                                          blockDim.x * blockDim.y, threadIdx.x);
 		if (offset != -1) visibleEntryIDs[offset] = targetIdx;
 	}

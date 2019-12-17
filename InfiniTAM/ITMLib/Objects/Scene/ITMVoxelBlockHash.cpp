@@ -44,11 +44,15 @@ ITMVoxelBlockHash::ITMVoxelBlockHash(ITMVoxelBlockHashParameters parameters, Mem
 		lastFreeExcessListId(parameters.excessListSize - 1),
 		hashEntryAllocationStates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType),
 		allocationBlockCoordinates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType),
+		visibleBlockHashCodes(parameters.voxelBlockCount, memoryType),
+		blockVisibilityTypes(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType),
 		memoryType(memoryType),
 		hashEntries(hashEntryCount, memoryType),
-		excessAllocationList(excessListSize, memoryType)
+		excessAllocationList(excessListSize, memoryType),
+		visibleHashBlockCount(0)
 		{
 	hashEntryAllocationStates.Clear(NEEDS_NO_CHANGE);
+
 }
 
 void ITMVoxelBlockHash::SaveToDirectory(const std::string& outputDirectory) const {

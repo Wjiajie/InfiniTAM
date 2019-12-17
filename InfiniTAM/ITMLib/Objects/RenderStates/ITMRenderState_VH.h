@@ -19,16 +19,6 @@ namespace ITMLib
 	private:
 		MemoryDeviceType memoryType;
 
-		/** A list of "visible entries", that are currently
-		being processed by the tracker.
-		*/
-		ORUtils::MemoryBlock<int> *visibleBlockHashCodes;
-
-		/** A list of "visible entries", that are
-		currently being processed by integration
-		and tracker.
-		*/
-		ORUtils::MemoryBlock<HashBlockVisibility> *blockVisibilityTypes;
            
 	public:
 		/** Number of entries in the live list. */
@@ -38,28 +28,23 @@ namespace ITMLib
 		ITMRenderState_VH(const int hashEntryCount, const int voxelBlockCount, const Vector2i & imgSize, float vf_min, float vf_max, MemoryDeviceType memoryType = MEMORYDEVICE_CPU)
 			: ITMRenderState(imgSize, vf_min, vf_max, memoryType), hashEntryCount(hashEntryCount)
 		{
-			this->memoryType = memoryType;
-
-			visibleBlockHashCodes = new ORUtils::MemoryBlock<int>(voxelBlockCount, memoryType);
-			blockVisibilityTypes = new ORUtils::MemoryBlock<HashBlockVisibility>(hashEntryCount, memoryType);
-
-			visibleHashBlockCount = 0;
+//			this->memoryType = memoryType;
+//
+//			visibleBlockHashCodes = new ORUtils::MemoryBlock<int>(voxelBlockCount, memoryType);
+//			blockVisibilityTypes = new ORUtils::MemoryBlock<HashBlockVisibility>(hashEntryCount, memoryType);
+//
+//			visibleHashBlockCount = 0;
 		}
 		~ITMRenderState_VH()
 		{
-			delete visibleBlockHashCodes;
-			delete blockVisibilityTypes;
+//			delete visibleBlockHashCodes;
+//			delete blockVisibilityTypes;
 		}
-		/** Get the list of "visible entries", that are currently
-		processed by the tracker.
-		*/
-		const int *GetVisibleBlockHashCodes(void) const { return visibleBlockHashCodes->GetData(memoryType); }
-		int *GetVisibleBlockHashCodes(void) { return visibleBlockHashCodes->GetData(memoryType); }
 
-		/** Get the list of "visible entries", that are
-		currently processed by integration and tracker.
-		*/
-		HashBlockVisibility *GetBlockVisibilityTypes(void) { return blockVisibilityTypes->GetData(memoryType); }
+//		const int *GetVisibleBlockHashCodes(void) const { return visibleBlockHashCodes->GetData(memoryType); }
+//		int *GetVisibleBlockHashCodes(void) { return visibleBlockHashCodes->GetData(memoryType); }
+//
+//		HashBlockVisibility *GetBlockVisibilityTypes(void) { return blockVisibilityTypes->GetData(memoryType); }
 
 #ifdef COMPILE_WITH_METAL
 		const void* GetVisibleEntryIDs_MB(void) { return visibleBlockHashCodes->GetMetalBuffer(); }

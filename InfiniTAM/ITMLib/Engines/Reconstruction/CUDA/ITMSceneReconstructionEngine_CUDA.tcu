@@ -102,7 +102,7 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateScene
 
 	ITMRenderState_VH* renderState_vh = (ITMRenderState_VH*) renderState;
 
-	if (resetVisibleList) renderState_vh->visibleHashBlockCount = 0;
+	if (resetVisibleList) scene->index.SetVisibleHashBlockCount(0);
 
 	M_d = trackingState->pose_d->GetM();
 	M_d.inv(invM_d);
@@ -122,8 +122,8 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateScene
 
 	const int hashEntryCount = scene->index.hashEntryCount;
 
-	int* visibleEntryIDs = renderState_vh->GetVisibleBlockHashCodes();
-	HashBlockVisibility* entriesVisibleType = renderState_vh->GetBlockVisibilityTypes();
+	int* visibleBlockHashCodes = scene->index.GetVisibleBlockHashCodes();
+	HashBlockVisibility* blockVisibilityTypes = scene->index.GetBlockVisibilityTypes();
 
 	dim3 cudaBlockSizeHV(16, 16);
 	dim3 gridSizeHV((int) ceil((float) depthImgSize.x / (float) cudaBlockSizeHV.x),
@@ -133,14 +133,14 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateScene
 	dim3 gridSizeAL((int) ceil((float) hashEntryCount / (float) cudaBlockSizeAL.x));
 
 	dim3 cudaBlockSizeVS(256, 1);
-	dim3 gridSizeVS((int) ceil((float) renderState_vh->visibleHashBlockCount / (float) cudaBlockSizeVS.x));
+	dim3 gridSizeVS((int) ceil((float) scene->index.GetVisibleHashBlockCount() / (float) cudaBlockSizeVS.x));
 
 	float oneOverVoxelSize = 1.0f / (voxelSize * VOXEL_BLOCK_SIZE);
 
 	AllocationTempData* tempData = (AllocationTempData*) allocationTempData_host;
 	tempData->noAllocatedVoxelEntries = scene->localVBA.lastFreeBlockId;
 	tempData->noAllocatedExcessEntries = scene->index.GetLastFreeExcessListId();
-	tempData->noVisibleEntries = 0;
+	tempData->visibleBlockCount = 0;
 	ORcudaSafeCall(
 			cudaMemcpyAsync(allocationTempData_device, tempData, sizeof(AllocationTempData), cudaMemcpyHostToDevice));
 
@@ -150,12 +150,12 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateScene
 
 	if (gridSizeVS.x > 0) {
 		setVisibleEntriesToVisibleAtPreviousFrameAndUnstreamed << < gridSizeVS, cudaBlockSizeVS >> >
-		                                                                        (entriesVisibleType, visibleEntryIDs, renderState_vh->visibleHashBlockCount);
+		                                                                        (blockVisibilityTypes, visibleBlockHashCodes, scene->index.GetVisibleHashBlockCount());
 		ORcudaKernelCheck;
 	}
 
 	buildHashAllocAndVisibleType_device << < gridSizeHV, cudaBlockSizeHV >> >
-	                                                     (hashEntryStates_device, entriesVisibleType,
+	                                                     (hashEntryStates_device, blockVisibilityTypes,
 			                                                     blockCoordinates_device, depth, invM_d, invProjParams_d, mu, depthImgSize, oneOverVoxelSize, hashTable,
 			                                                     scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max);
 	ORcudaKernelCheck;
@@ -166,7 +166,7 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateScene
 		allocateVoxelBlocksList_device << < gridSizeAL, cudaBlockSizeAL >> > (
 				voxelAllocationList, excessAllocationList, hashTable,
 						hashEntryCount, (AllocationTempData*) allocationTempData_device,
-						hashEntryStates_device, entriesVisibleType,
+						hashEntryStates_device, blockVisibilityTypes,
 						blockCoordinates_device);
 		ORcudaKernelCheck;
 	}
@@ -176,25 +176,25 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateScene
 
 	if (useSwapping) {
 		buildVisibleList_device<true> << < gridSizeAL, cudaBlockSizeAL >> >
-		                                               (hashTable, swapStates, hashEntryCount, visibleEntryIDs,
-				                                               (AllocationTempData*) allocationTempData_device, entriesVisibleType, M_d, projParams_d, depthImgSize, voxelSize);
+		                                               (hashTable, swapStates, hashEntryCount, visibleBlockHashCodes,
+				                                               (AllocationTempData*) allocationTempData_device, blockVisibilityTypes, M_d, projParams_d, depthImgSize, voxelSize);
 		ORcudaKernelCheck;
 	} else {
 		buildVisibleList_device<false> << < gridSizeAL, cudaBlockSizeAL >> >
-		                                                (hashTable, swapStates, hashEntryCount, visibleEntryIDs,
-				                                                (AllocationTempData*) allocationTempData_device, entriesVisibleType, M_d, projParams_d, depthImgSize, voxelSize);
+		                                                (hashTable, swapStates, hashEntryCount, visibleBlockHashCodes,
+				                                                (AllocationTempData*) allocationTempData_device, blockVisibilityTypes, M_d, projParams_d, depthImgSize, voxelSize);
 		ORcudaKernelCheck;
 	}
 
 	if (useSwapping) {
 		reAllocateSwappedOutVoxelBlocks_device << < gridSizeAL, cudaBlockSizeAL >> >
 		                                                        (voxelAllocationList, hashTable, hashEntryCount,
-				                                                        (AllocationTempData*) allocationTempData_device, entriesVisibleType);
+				                                                        (AllocationTempData*) allocationTempData_device, blockVisibilityTypes);
 		ORcudaKernelCheck;
 	}
 
 	ORcudaSafeCall(cudaMemcpy(tempData, allocationTempData_device, sizeof(AllocationTempData), cudaMemcpyDeviceToHost));
-	renderState_vh->visibleHashBlockCount = tempData->noVisibleEntries;
+	scene->index.SetVisibleHashBlockCount(tempData->visibleBlockCount);
 	scene->localVBA.lastFreeBlockId = tempData->noAllocatedVoxelEntries;
 	scene->index.SetLastFreeExcessListId(tempData->noAllocatedExcessEntries);
 
@@ -212,7 +212,7 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::IntegrateInto
 	Vector4f projParams_d, projParams_rgb;
 
 	ITMRenderState_VH* renderState_vh = (ITMRenderState_VH*) renderState;
-	if (renderState_vh->visibleHashBlockCount == 0) return;
+	if (scene->index.GetVisibleHashBlockCount()== 0) return;
 
 	M_d = trackingState->pose_d->GetM();
 	// compute modelview matrix of the RGB camera
@@ -230,18 +230,18 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::IntegrateInto
 	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* hashTable = scene->index.GetEntries();
 
-	int* visibleEntryIDs = renderState_vh->GetVisibleBlockHashCodes();
+	int* visibleBlockHashCodes = scene->index.GetVisibleBlockHashCodes();
 
 	dim3 cudaBlockSize(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
-	dim3 gridSize(renderState_vh->visibleHashBlockCount);
+	dim3 gridSize(scene->index.GetVisibleHashBlockCount());
 
 	if (scene->sceneParams->stopIntegratingAtMaxW) {
-		integrateIntoScene_device<TVoxel, true> << < gridSize, cudaBlockSize >> > (localVBA, hashTable, visibleEntryIDs,
+		integrateIntoScene_device<TVoxel, true> << < gridSize, cudaBlockSize >> > (localVBA, hashTable, visibleBlockHashCodes,
 				rgb, rgbImgSize, depth, confidence, depthImgSize, M_d, M_rgb, projParams_d, projParams_rgb, voxelSize, mu, maxW);
 		ORcudaKernelCheck;
 	} else {
 		integrateIntoScene_device<TVoxel, false> << < gridSize, cudaBlockSize >> >
-		                                                        (localVBA, hashTable, visibleEntryIDs,
+		                                                        (localVBA, hashTable, visibleBlockHashCodes,
 				                                                        rgb, rgbImgSize, depth, confidence, depthImgSize, M_d, M_rgb, projParams_d, projParams_rgb, voxelSize, mu, maxW);
 		ORcudaKernelCheck;
 	}
@@ -519,7 +519,7 @@ __global__ void buildVisibleList_device(ITMHashEntry* hashTable, ITMHashSwapStat
 	__syncthreads();
 
 	if (shouldPrefix) {
-		int offset = computePrefixSum_device<int>(hashVisibleType > 0, &allocData->noVisibleEntries,
+		int offset = computePrefixSum_device<int>(hashVisibleType > 0, &allocData->visibleBlockCount,
 		                                          blockDim.x * blockDim.y, threadIdx.x);
 		if (offset != -1) visibleEntryIDs[offset] = hashCode;
 	}
