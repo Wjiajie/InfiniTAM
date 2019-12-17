@@ -239,7 +239,6 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateUsi
 				                                  collision_detected);
 			}
 		}
-
 		ITMIndexingEngine<TVoxelTarget, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
 				.AllocateHashEntriesUsingLists(targetVolume, hashEntryStates_device, blockCoordinates_device);
 	} while (collision_detected);

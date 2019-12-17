@@ -30,6 +30,7 @@
 //local - CPU
 #include "../ITMLib/Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 //local - CUDA
 #ifndef COMPLIE_WITHOUT_CUDA
 
@@ -38,6 +39,7 @@
 #include "CUDAAtomicTesting.h"
 #include "../ITMLib/Engines/Manipulation/ITMSceneManipulationEngineFactory.h"
 #include "TestUtils.h"
+#include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
 
 #endif
 
@@ -170,10 +172,17 @@ void TestAllocateBasedOnVolumeExpanded_Generic() {
 	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>::Instance()
 			.AllocateUsingOtherVolumeExpanded(&volume2, &volume1);
 
+	BOOST_REQUIRE_EQUAL((ITMSceneStatisticsCalculator<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>::Instance()
+			.ComputeAllocatedHashBlockCount(&volume2)), 1625);
+
 }
 
-BOOST_AUTO_TEST_CASE(TestAllocateBasedOnVolumeExpanded_CPU){
+BOOST_AUTO_TEST_CASE(TestAllocateBasedOnVolumeExpanded_CPU) {
 	TestAllocateBasedOnVolumeExpanded_Generic<MEMORYDEVICE_CPU>();
+}
+
+BOOST_AUTO_TEST_CASE(TestAllocateBasedOnVolumeExpanded_CUDA) {
+	TestAllocateBasedOnVolumeExpanded_Generic<MEMORYDEVICE_CUDA>();
 }
 
 #ifndef COMPILE_WITHOUT_CUDA
