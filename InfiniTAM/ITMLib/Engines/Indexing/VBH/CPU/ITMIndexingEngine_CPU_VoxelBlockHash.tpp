@@ -25,22 +25,19 @@
 
 using namespace ITMLib;
 
-
 template<typename TVoxel>
-void
-ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFromDepth(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
-		bool onlyUpdateVisibleList, bool resetVisibleList) {
+void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFromDepth(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
+		const Matrix4f& depth_camera_matrix, bool onlyUpdateVisibleList, bool resetVisibleList) {
 	Vector2i depthImgSize = view->depth->noDims;
 	float voxelSize = scene->sceneParams->voxelSize;
 
-	Matrix4f cameraPose, invertedCameraPose;
+	Matrix4f inverted_depth_camera_matrix;
 	Vector4f projParams_d, invertedCameraProjectionParameters;
 
 	if (resetVisibleList) scene->index.SetVisibleHashBlockCount(0);
 
-	cameraPose = trackingState->pose_d->GetM();
-	cameraPose.inv(invertedCameraPose);
+	depth_camera_matrix.inv(inverted_depth_camera_matrix);
 
 	projParams_d = view->calib.intrinsics_d.projectionParamsSimple.all;
 	invertedCameraProjectionParameters = projParams_d;
@@ -78,7 +75,7 @@ ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFromDept
 			int x = locId - y * depthImgSize.x;
 
 			buildHashAllocAndVisibleTypePP(hashEntryStates_device, hashBlockVisibilityTypes, x, y,
-			                               allocationBlockCoordinates, depth, invertedCameraPose,
+			                               allocationBlockCoordinates, depth, inverted_depth_camera_matrix,
 			                               invertedCameraProjectionParameters, mu, depthImgSize,
 			                               oneOverHashEntrySize,
 			                               hashTable, scene->sceneParams->viewFrustum_min,
@@ -104,11 +101,11 @@ ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFromDept
 			bool isVisibleEnlarged, isVisible;
 
 			if (useSwapping) {
-				checkBlockVisibility<true>(isVisible, isVisibleEnlarged, hashEntry.pos, cameraPose, projParams_d,
+				checkBlockVisibility<true>(isVisible, isVisibleEnlarged, hashEntry.pos, depth_camera_matrix, projParams_d,
 				                           voxelSize, depthImgSize);
 				if (!isVisibleEnlarged) hashVisibleType = INVISIBLE;
 			} else {
-				checkBlockVisibility<false>(isVisible, isVisibleEnlarged, hashEntry.pos, cameraPose, projParams_d,
+				checkBlockVisibility<false>(isVisible, isVisibleEnlarged, hashEntry.pos, depth_camera_matrix, projParams_d,
 				                            voxelSize, depthImgSize);
 				if (!isVisible) { hashVisibleType = INVISIBLE; }
 			}
@@ -140,6 +137,13 @@ ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFromDept
 	}
 	scene->index.SetVisibleHashBlockCount(visibleEntryCount);
 	scene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
+}
+
+template<typename TVoxel>
+void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFromDepth(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
+		bool onlyUpdateVisibleList, bool resetVisibleList) {
+	AllocateFromDepth(scene, view, trackingState->pose_d->GetM(), onlyUpdateVisibleList, resetVisibleList);
 }
 
 template<typename TVoxel>

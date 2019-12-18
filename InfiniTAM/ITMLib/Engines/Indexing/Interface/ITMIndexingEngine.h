@@ -38,7 +38,7 @@ class ITMIndexingEngineInterface {
 		table so that the new image data can be integrated.
 	 * \param scene [out] the scene whose hash needs additional allocations
 	 * \param view [in] a view with a new depth image
-	 * \param trackingState [in] tracking state from previous frame to new frame that corresponds to the given view
+	 * \param trackingState [in] tracking state that corresponds to the given view
 	 * \param renderState [in] the current renderState with information about which hash entries are visible
 	 * \param onlyUpdateVisibleList [in] whether we want to allocate only the hash entry blocks currently visible
 	 * \param resetVisibleList  [in] reset visibility list upon completion
@@ -46,6 +46,23 @@ class ITMIndexingEngineInterface {
 	virtual void
 	AllocateFromDepth(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 	                  bool onlyUpdateVisibleList, bool resetVisibleList) = 0;
+
+	/**
+	 * \brief Given a view with a new depth image, compute the
+		visible blocks, allocate them and update the hash
+		table so that the new image data can be integrated.
+	 * \param scene [out] the scene whose hash needs additional allocations
+	 * \param view [in] a view with a new depth image
+	 * \param depth_camera_matrix [in] transformation of the camera from world origin (initial position) to
+	 * where the camera was at the given view's frame
+	 * \param renderState [in] the current renderState with information about which hash entries are visible
+	 * \param onlyUpdateVisibleList [in] whether we want to allocate only the hash entry blocks currently visible
+	 * \param resetVisibleList  [in] reset visibility list upon completion
+	 */
+	virtual void
+	AllocateFromDepth(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
+	                  const Matrix4f& depth_camera_matrix = Matrix4f::Identity(),
+	                  bool onlyUpdateVisibleList = false, bool resetVisibleList = false) = 0;
 };
 
 template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
@@ -64,7 +81,12 @@ public:
 	void operator=(ITMIndexingEngine const&) = delete;
 
 	virtual void AllocateFromDepth(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
-			const ITMTrackingState* trackingState, bool onlyUpdateVisibleList, bool resetVisibleList) override;
+	                               const ITMTrackingState* trackingState, bool onlyUpdateVisibleList,
+	                               bool resetVisibleList) override;
+
+	virtual void AllocateFromDepth(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
+	                  const Matrix4f& depth_camera_matrix = Matrix4f::Identity(),
+	                  bool onlyUpdateVisibleList = false, bool resetVisibleList = false) override;
 
 
 	template<typename TVoxelTarget, typename TVoxelSource>

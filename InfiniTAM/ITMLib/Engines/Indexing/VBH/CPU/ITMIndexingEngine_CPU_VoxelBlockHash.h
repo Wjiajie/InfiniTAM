@@ -39,6 +39,10 @@ public:
 	void AllocateFromDepth(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 			const ITMTrackingState* trackingState, bool onlyUpdateVisibleList, bool resetVisibleList) override;
 
+	void AllocateFromDepth(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
+	                  const Matrix4f& depth_camera_matrix = Matrix4f::Identity(),
+	                  bool onlyUpdateVisibleList = false, bool resetVisibleList = false) override;
+
 	void AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
 	                                   const HashEntryAllocationState* hashEntryStates_device,
 	                                   Vector3s* blockCoordinates_device) override;

@@ -29,6 +29,14 @@ void ITMIndexingEngine<TVoxel, TIndex, TMemoryDeviceType>::AllocateFromDepth(ITM
                                                                              bool onlyUpdateVisibleList,
                                                                              bool resetVisibleList) {}
 
+
+template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+void ITMIndexingEngine<TVoxel, TIndex, TMemoryDeviceType>::AllocateFromDepth(ITMVoxelVolume<TVoxel, TIndex>* scene,
+                                                                             const ITMView* view,
+                                                                             const Matrix4f& depth_camera_matrix,
+                                                                             bool onlyUpdateVisibleList,
+                                                                             bool resetVisibleList) {}
+
 template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
 template<typename TVoxelTarget, typename TVoxelSource>
 void ITMIndexingEngine<TVoxel, TIndex, TMemoryDeviceType>::AllocateUsingOtherVolume(
