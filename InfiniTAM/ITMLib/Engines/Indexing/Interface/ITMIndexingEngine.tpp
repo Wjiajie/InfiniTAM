@@ -23,9 +23,11 @@ using namespace ITMLib;
 
 
 template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
-void ITMIndexingEngine<TVoxel, TIndex, TMemoryDeviceType>::AllocateFromDepth(
-		ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view, const ITMTrackingState* trackingState,
-		const ITMRenderState* renderState, bool onlyUpdateVisibleList, bool resetVisibleList) {}
+void ITMIndexingEngine<TVoxel, TIndex, TMemoryDeviceType>::AllocateFromDepth(ITMVoxelVolume<TVoxel, TIndex>* scene,
+                                                                             const ITMView* view,
+                                                                             const ITMTrackingState* trackingState,
+                                                                             bool onlyUpdateVisibleList,
+                                                                             bool resetVisibleList) {}
 
 template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
 template<typename TVoxelTarget, typename TVoxelSource>

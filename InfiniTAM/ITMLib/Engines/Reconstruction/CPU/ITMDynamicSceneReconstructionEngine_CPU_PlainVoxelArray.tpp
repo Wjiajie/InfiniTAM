@@ -25,7 +25,7 @@ using namespace ITMLib;
 
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateIntoScene_Helper(
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateDepthImageIntoTsdfVolume_Helper(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view, Matrix4f camera_depth_matrix){
 
 	Vector2i rgbImgSize = view->rgb->noDims;
@@ -82,20 +82,20 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateIntoScene(
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateDepthImageIntoTsdfVolume(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view,
-		const ITMTrackingState* trackingState, const ITMRenderState* renderState) {
-	IntegrateIntoScene_Helper(volume, view, trackingState->pose_d->GetM());
+		const ITMTrackingState* trackingState) {
+	IntegrateDepthImageIntoTsdfVolume_Helper(volume, view, trackingState->pose_d->GetM());
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateIntoScene(
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateDepthImageIntoTsdfVolume(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view){
-	IntegrateIntoScene_Helper(volume, view);
+	IntegrateDepthImageIntoTsdfVolume_Helper(volume, view);
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::FuseLiveIntoCanonicalSdf(
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::FuseOneTsdfVolumeIntoAnother(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene) {
 	TSDFFusionFunctor<TVoxel> fusionFunctor(canonicalScene->sceneParams->maxW);
@@ -105,12 +105,11 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 
 template<typename TVoxel, typename TWarp>
 void
-ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::GenerateRawLiveSceneFromView(
+ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::GenerateTsdfVolumeFromView(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
-		const ITMTrackingState* trackingState,
-		const ITMRenderState* renderState) {
+		const ITMTrackingState* trackingState) {
 	this->sceneManager.ResetScene(scene);
-	this->IntegrateIntoScene(scene, view, trackingState, renderState);
+	this->IntegrateDepthImageIntoTsdfVolume(scene, view, trackingState);
 }
 
 template<typename TVoxel, typename TWarp>

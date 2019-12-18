@@ -167,7 +167,7 @@ void TestAllocateBasedOnVolumeExpanded_Generic() {
 	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.viewFrustum_min,
 	                           Configuration::get().scene_parameters.viewFrustum_max, TMemoryDeviceType);
 	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>::Instance().AllocateFromDepth(
-			&volume1, view, &trackingState, &renderState, false, false);
+			&volume1, view, &trackingState, false, false);
 	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>::Instance()
 			.AllocateUsingOtherVolumeExpanded(&volume2, &volume1);
 

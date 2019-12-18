@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(Test_FuseLifeIntoCanonical_CPU_PVA) {
 	           MEMORYDEVICE_CPU);
 
 	RecoEngine_CPU_PVA recoEngine;
-	recoEngine.FuseLiveIntoCanonicalSdf(canonical_volume, warped_live_volume);
+	recoEngine.FuseOneTsdfVolumeIntoAnother(canonical_volume, warped_live_volume);
 	//canonical_volume->SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/fused_canonical_");
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* fused_canonical_volume_gt;
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(Test_FuseLifeIntoCanonical_CPU_VBH) {
 	           MEMORYDEVICE_CPU);
 
 	RecoEngine_CPU_VBH recoEngine;
-	recoEngine.FuseLiveIntoCanonicalSdf(canonical_volume, warped_live_volume);
+	recoEngine.FuseOneTsdfVolumeIntoAnother(canonical_volume, warped_live_volume);
 //	canonical_volume->SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/fused_canonical_");
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* fused_canonical_volume_gt;
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(Test_FuseLifeIntoCanonical_CUDA_PVA) {
 	           MEMORYDEVICE_CUDA);
 
 	RecoEngine_CUDA_PVA recoEngine;
-	recoEngine.FuseLiveIntoCanonicalSdf(canonical_volume, warped_live_volume);
+	recoEngine.FuseOneTsdfVolumeIntoAnother(canonical_volume, warped_live_volume);
 //	canonical_volume->SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/fused_canonical_");
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* fused_canonical_volume_gt;
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(Test_FuseLifeIntoCanonical_CUDA_VBH) {
 	           MEMORYDEVICE_CUDA);
 
 	RecoEngine_CUDA_VBH recoEngine;
-	recoEngine.FuseLiveIntoCanonicalSdf(canonical_volume, warped_live_volume);
+	recoEngine.FuseOneTsdfVolumeIntoAnother(canonical_volume, warped_live_volume);
 //	canonical_volume->SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/fused_canonical_");
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* fused_canonical_volume_gt;

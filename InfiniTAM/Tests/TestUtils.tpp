@@ -254,7 +254,7 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<TVoxel, ITMWarp, TIndex>(memoryDevice);
 
-	reconstructionEngine->GenerateRawLiveSceneFromView(*volume, *view, &trackingState, &renderState);
+	reconstructionEngine->GenerateTsdfVolumeFromView(*volume, *view, &trackingState);
 
 	delete reconstructionEngine;
 }

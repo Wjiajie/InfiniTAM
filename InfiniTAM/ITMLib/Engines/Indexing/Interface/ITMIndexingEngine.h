@@ -43,10 +43,9 @@ class ITMIndexingEngineInterface {
 	 * \param onlyUpdateVisibleList [in] whether we want to allocate only the hash entry blocks currently visible
 	 * \param resetVisibleList  [in] reset visibility list upon completion
 	 */
-	virtual void AllocateFromDepth(
-			ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
-			const ITMTrackingState* trackingState, const ITMRenderState* renderState,
-			bool onlyUpdateVisibleList, bool resetVisibleList) = 0;
+	virtual void
+	AllocateFromDepth(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view, const ITMTrackingState* trackingState,
+	                  bool onlyUpdateVisibleList, bool resetVisibleList) = 0;
 };
 
 template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
@@ -64,10 +63,8 @@ public:
 	ITMIndexingEngine(ITMIndexingEngine const&) = delete;
 	void operator=(ITMIndexingEngine const&) = delete;
 
-	virtual void AllocateFromDepth(
-			ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
-			const ITMTrackingState* trackingState, const ITMRenderState* renderState,
-			bool onlyUpdateVisibleList, bool resetVisibleList) override;
+	virtual void AllocateFromDepth(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
+			const ITMTrackingState* trackingState, bool onlyUpdateVisibleList, bool resetVisibleList) override;
 
 
 	template<typename TVoxelTarget, typename TVoxelSource>

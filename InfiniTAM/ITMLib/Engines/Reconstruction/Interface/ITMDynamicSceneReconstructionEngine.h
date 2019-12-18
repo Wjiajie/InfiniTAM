@@ -53,20 +53,19 @@ public:
 	 * \param trackingState state of tracking
 	 * \param renderState state of rendering the stuff
 	 */
-	virtual void GenerateRawLiveSceneFromView(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
-	                                          const ITMTrackingState* trackingState,
-	                                          const ITMRenderState* renderState) = 0;
+	virtual void GenerateTsdfVolumeFromView(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
+	                                        const ITMTrackingState* trackingState) = 0;
 
 	/**
 	 * \brief Fuses the live scene into the canonical scene
-	 * \details Operation happens after the motion is tracked, at this point liveScene should be as close to the canonical
+	 * \details Operation happens after the motion is tracked, at this point sourceTsdfVolume should be as close to the canonical
 	 * as possible
-	 * \param canonicalScene the canonical voxel grid, representing the state at the beginning of the sequence
-	 * \param liveScene the live voxel grid, a TSDF generated from a single recent depth image
+	 * \param targetTsdfVolume the canonical voxel grid, representing the state at the beginning of the sequence
+	 * \param sourceTsdfVolume the live voxel grid, a TSDF generated from a single recent depth image
 	 * \param liveSourceFieldIndex index of the sdf field to use at live scene voxels
 	 */
-	virtual void FuseLiveIntoCanonicalSdf(ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
-	                                      ITMVoxelVolume<TVoxel, TIndex>* liveScene) = 0;
+	virtual void FuseOneTsdfVolumeIntoAnother(ITMVoxelVolume<TVoxel, TIndex>* targetTsdfVolume,
+	                                          ITMVoxelVolume<TVoxel, TIndex>* sourceTsdfVolume) = 0;
 
 	/**
 	 * \brief apply warp vectors to live scene: compute the the target SDF fields in live scene using trilinear lookup
@@ -103,15 +102,16 @@ public:
 	virtual void WarpScene_WarpUpdates(ITMVoxelVolume<TWarp, TIndex>* warpField,
 	                                   ITMVoxelVolume<TVoxel, TIndex>* sourceTSDF,
 	                                   ITMVoxelVolume<TVoxel, TIndex>* targetTSDF) = 0;
-
-/** Update the voxel blocks by integrating depth and
-	possibly colour information from the given view.*/
-//	virtual void IntegrateIntoScene(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view) = 0;
+	/**
+	 * \brief Update the voxel blocks by integrating depth and possibly color information from the given view. Assume
+	 * camera is at world origin.
+	 */
+	virtual void IntegrateDepthImageIntoTsdfVolume(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view) = 0;
 
 	/** Update the voxel blocks by integrating depth and
 	possibly colour information from the given view.*/
-	virtual void IntegrateIntoScene(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
-	                                const ITMTrackingState* trackingState, const ITMRenderState* renderState) = 0;
+	virtual void IntegrateDepthImageIntoTsdfVolume(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
+	                                               const ITMTrackingState* trackingState) = 0;
 
 };
 }//namespace ITMLib

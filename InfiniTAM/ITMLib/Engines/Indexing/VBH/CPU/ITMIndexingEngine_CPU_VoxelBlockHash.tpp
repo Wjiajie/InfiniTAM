@@ -27,9 +27,10 @@ using namespace ITMLib;
 
 
 template<typename TVoxel>
-void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFromDepth(
+void
+ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFromDepth(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
-		const ITMRenderState* renderState, bool onlyUpdateVisibleList, bool resetVisibleList) {
+		bool onlyUpdateVisibleList, bool resetVisibleList) {
 	Vector2i depthImgSize = view->depth->noDims;
 	float voxelSize = scene->sceneParams->voxelSize;
 
@@ -188,7 +189,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateUsi
 
 }
 
-static std::vector<Vector3s> neighborOffsets = []{ // NOLINT(cert-err58-cpp)
+static std::vector<Vector3s> neighborOffsets = [] { // NOLINT(cert-err58-cpp)
 	std::vector<Vector3s> offsets;
 	for (short zOffset = -1; zOffset < 2; zOffset++) {
 		for (short yOffset = -1; yOffset < 2; yOffset++) {

@@ -36,16 +36,12 @@ public:
 	ITMIndexingEngine(ITMIndexingEngine const&) = delete;
 	void operator=(ITMIndexingEngine const&) = delete;
 
-	void AllocateFromDepth(
-			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
-			const ITMTrackingState* trackingState, const ITMRenderState* renderState,
-			bool onlyUpdateVisibleList, bool resetVisibleList) override;
-
+	void AllocateFromDepth(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
+			const ITMTrackingState* trackingState, bool onlyUpdateVisibleList, bool resetVisibleList) override;
 
 	void AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
 	                                   const HashEntryAllocationState* hashEntryStates_device,
 	                                   Vector3s* blockCoordinates_device) override;
-
 
 	void AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
 	                                                 const HashEntryAllocationState* hashEntryStates_device,

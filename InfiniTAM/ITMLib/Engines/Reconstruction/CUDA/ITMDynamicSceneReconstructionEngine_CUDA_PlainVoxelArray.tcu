@@ -34,15 +34,15 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 
 template<typename TVoxel, typename TWarp>
 void
-ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::GenerateRawLiveSceneFromView(
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view, const ITMTrackingState* trackingState,
-		const ITMRenderState* renderState) {
+ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::GenerateTsdfVolumeFromView(
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
+		const ITMTrackingState* trackingState) {
 	liveSceneManager.ResetScene(scene);
-	this->IntegrateIntoScene(scene, view, trackingState, renderState);
+	this->IntegrateDepthImageIntoTsdfVolume(scene, view, trackingState);
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::FuseLiveIntoCanonicalSdf(
+void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::FuseOneTsdfVolumeIntoAnother(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene) {
 
@@ -87,41 +87,53 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 	ORcudaKernelCheck;
 }
 
+
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateIntoScene(
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view, const ITMTrackingState* trackingState,
-		const ITMRenderState* renderState) {
+void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateDepthImageIntoTsdfVolume_Helper(
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view, Matrix4f depth_camera_matrix) {
+
 	Vector2i rgbImgSize = view->rgb->noDims;
 	Vector2i depthImgSize = view->depth->noDims;
-	float voxelSize = scene->sceneParams->voxelSize;
+	float voxelSize = volume->sceneParams->voxelSize;
 
-	Matrix4f M_d, M_rgb;
+	Matrix4f rgb_camera_matrix;
 	Vector4f projParams_d, projParams_rgb;
 
-	M_d = trackingState->pose_d->GetM();
-	if (TVoxel::hasColorInformation) M_rgb = view->calib.trafo_rgb_to_depth.calib_inv * M_d;
+	if (TVoxel::hasColorInformation) rgb_camera_matrix = view->calib.trafo_rgb_to_depth.calib_inv * depth_camera_matrix;
 
 	projParams_d = view->calib.intrinsics_d.projectionParamsSimple.all;
 	projParams_rgb = view->calib.intrinsics_rgb.projectionParamsSimple.all;
 
-	float mu = scene->sceneParams->mu;
-	int maxW = scene->sceneParams->maxW;
+	float mu = volume->sceneParams->mu;
+	int maxW = volume->sceneParams->maxW;
 
 	float* depth = view->depth->GetData(MEMORYDEVICE_CUDA);
 	float* confidence = view->depthConfidence->GetData(MEMORYDEVICE_CUDA);
 	Vector4u* rgb = view->rgb->GetData(MEMORYDEVICE_CUDA);
-	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.GetIndexData();
+	TVoxel* localVBA = volume->localVBA.GetVoxelBlocks();
+	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = volume->index.GetIndexData();
 
 	dim3 cudaBlockSize(8, 8, 8);
-	dim3 gridSize(scene->index.GetVolumeSize().x / cudaBlockSize.x,
-	              scene->index.GetVolumeSize().y / cudaBlockSize.y,
-	              scene->index.GetVolumeSize().z / cudaBlockSize.z);
+	dim3 gridSize(volume->index.GetVolumeSize().x / cudaBlockSize.x,
+	              volume->index.GetVolumeSize().y / cudaBlockSize.y,
+	              volume->index.GetVolumeSize().z / cudaBlockSize.z);
 
 	integrateIntoScene_device<TVoxel> << < gridSize, cudaBlockSize >> > (localVBA, arrayInfo,
-			rgb, rgbImgSize, depth, confidence, depthImgSize, M_d, M_rgb, projParams_d, projParams_rgb, voxelSize, mu, maxW);
+			rgb, rgbImgSize, depth, confidence, depthImgSize, depth_camera_matrix, rgb_camera_matrix, projParams_d, projParams_rgb, voxelSize, mu, maxW);
 	ORcudaKernelCheck;
 
+}
+
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateDepthImageIntoTsdfVolume(
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view, const ITMTrackingState* trackingState) {
+	IntegrateDepthImageIntoTsdfVolume_Helper(volume, view, trackingState->pose_d->GetM());
+}
+
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateDepthImageIntoTsdfVolume(
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view) {
+	IntegrateDepthImageIntoTsdfVolume_Helper(volume, view);
 }
 
 template<typename TVoxel, typename TWarp>
@@ -148,3 +160,4 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {
 	this->template WarpScene<WARP_UPDATE>(warpField, sourceTSDF, targetTSDF);
 }
+

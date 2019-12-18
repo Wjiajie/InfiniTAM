@@ -101,9 +101,7 @@ private:
 
 	bool SceneMotionOptimizationConditionNotReached();
 	void InitializeProcessing(const ITMView* view, const ITMTrackingState* trackingState,
-	                          ITMVoxelVolume<TWarp, TIndex>* warpField,
-	                          ITMVoxelVolume<TVoxel, TIndex>* liveScene,
-	                          ITMRenderState* renderState);
+	                          ITMVoxelVolume<TWarp, TIndex>* warpField, ITMVoxelVolume<TVoxel, TIndex>* liveScene);
 	void FinalizeProcessing(ITMVoxelVolume <TVoxel, TIndex>* canonicalScene,
 	                        ITMVoxelVolume <TVoxel, TIndex>* liveScene, ITMRenderState* renderState);
 	void PerformSingleOptimizationStep(

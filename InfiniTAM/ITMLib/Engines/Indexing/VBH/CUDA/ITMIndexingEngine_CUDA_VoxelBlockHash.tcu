@@ -25,8 +25,7 @@ using namespace ITMLib;
 
 template<typename TVoxel>
 void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFromDepth(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
-		const ITMView* view, const ITMTrackingState* trackingState, const ITMRenderState* renderState,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		bool onlyUpdateVisibleList, bool resetVisibleList) {
 
 	Vector2i depthImgSize = view->depth->noDims;

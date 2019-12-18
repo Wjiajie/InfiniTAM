@@ -50,20 +50,18 @@ GenerateRawLiveAndCanonicalVolumes(bool allocateLiveFromBothImages,
 	                        Frame16And17Fixture::InitParams<TIndex>());
 
 	Vector2i imageSize(640, 480);
-	ITMRenderState renderState(
-			imageSize, Configuration::get().scene_parameters.viewFrustum_min,
-			Configuration::get().scene_parameters.viewFrustum_max, TMemoryDeviceType);
+
 	ITMTrackingState trackingState(imageSize, TMemoryDeviceType);
 	if (allocateLiveFromBothImages) {
 		ITMIndexingEngine<ITMVoxel, TIndex, TMemoryDeviceType>::Instance().AllocateFromDepth(
-				live_volumes[1], view, &trackingState, &renderState, false, false);
+				live_volumes[1], view, &trackingState, false, false);
 	}
 
 	updateView("TestData/snoopy_depth_000017.png",
 	           "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
 	           "TestData/snoopy_calib.txt", TMemoryDeviceType, &view);
 	ITMIndexingEngine<ITMVoxel, TIndex, TMemoryDeviceType>::Instance().AllocateFromDepth(
-			live_volumes[1], view, &trackingState, &renderState, false, false);
+			live_volumes[1], view, &trackingState, false, false);
 
 	live_index_to_start_from = expand_raw_live_allocation ? 0 : 1;
 	if (expand_raw_live_allocation) {
@@ -73,8 +71,7 @@ GenerateRawLiveAndCanonicalVolumes(bool allocateLiveFromBothImages,
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, TIndex>* reconstructionEngine =
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, TIndex>(TMemoryDeviceType);
-	reconstructionEngine->IntegrateIntoScene(live_volumes[live_index_to_start_from], view, &trackingState,
-	                                         &renderState);
+	reconstructionEngine->IntegrateDepthImageIntoTsdfVolume(live_volumes[live_index_to_start_from], view, &trackingState);
 	ITMSceneStatisticsCalculator<ITMVoxel,TIndex,TMemoryDeviceType>& calculator =
 			ITMSceneStatisticsCalculator<ITMVoxel,TIndex,TMemoryDeviceType>::Instance();
 	BOOST_REQUIRE_EQUAL(calculator.ComputeAlteredVoxelCount(live_volumes[live_index_to_start_from]), 116110);
@@ -181,7 +178,7 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 			warp_field.SaveToDirectory(std::string("../../Tests/") + get_path_warps(prefix, iteration_limit - 1));
 			live_volumes[target_warped_field_ix]->SaveToDirectory(
 					std::string("../../Tests/") + get_path_warped_live(prefix, iteration_limit - 1));
-			recoEngine->FuseLiveIntoCanonicalSdf(canonical_volume, live_volumes[target_warped_field_ix]);
+			recoEngine->FuseOneTsdfVolumeIntoAnother(canonical_volume, live_volumes[target_warped_field_ix]);
 			canonical_volume->SaveToDirectory(
 					std::string("../../Tests/") + get_path_fused(prefix, iteration_limit - 1));
 			break;
@@ -195,7 +192,7 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 					get_path_warped_live(prefix, iteration_limit - 1));
 			BOOST_REQUIRE(contentAlmostEqual(live_volumes[target_warped_field_ix], &ground_truth_sdf_volume,
 			                                 absolute_tolerance, TMemoryDeviceType));
-			recoEngine->FuseLiveIntoCanonicalSdf(canonical_volume, live_volumes[target_warped_field_ix]);
+			recoEngine->FuseOneTsdfVolumeIntoAnother(canonical_volume, live_volumes[target_warped_field_ix]);
 			ground_truth_sdf_volume.LoadFromDirectory(get_path_fused(prefix, iteration_limit - 1));
 			BOOST_REQUIRE(contentAlmostEqual(canonical_volume, &ground_truth_sdf_volume, absolute_tolerance,
 			                                 TMemoryDeviceType));
