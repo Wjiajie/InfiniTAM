@@ -4,8 +4,6 @@
 
 #import "MetalContext.h"
 
-#include "../../../Objects/RenderStates/ITMRenderState_VH.h"
-
 #include "ITMSceneReconstructionEngine_Metal.h"
 #include "../Shared/ITMSceneReconstructionEngine_Shared.h"
 
@@ -45,8 +43,6 @@ void ITMSceneReconstructionEngine_Metal<TVoxel,ITMVoxelBlockHash>::IntegrateInto
 {
     id<MTLCommandBuffer> commandBuffer = [[[MetalContext instance]commandQueue]commandBuffer];
     id<MTLComputeCommandEncoder> commandEncoder = [commandBuffer computeCommandEncoder];
-
-    ITMRenderState_VH *renderState_vh = (ITMRenderState_VH*)renderState;
 
     IntegrateIntoScene_VH_Params *params = (IntegrateIntoScene_VH_Params*)[sr_metalBits.paramsBuffer contents];
     params->rgbImgSize = view->rgb->noDims;

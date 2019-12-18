@@ -18,7 +18,6 @@
 #include "ITMIndexingEngine_CPU_VoxelBlockHash.h"
 #include "../../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
-#include "../../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../Shared/ITMIndexingEngine_Shared.h"
 #include "../CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
 #include "../../Interface/ITMIndexingEngine.h"
@@ -37,7 +36,6 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 	Matrix4f cameraPose, invertedCameraPose;
 	Vector4f projParams_d, invertedCameraProjectionParameters;
 
-	ITMRenderState_VH* renderState_vh = (ITMRenderState_VH*) renderState;
 	if (resetVisibleList) scene->index.SetVisibleHashBlockCount(0);
 
 	cameraPose = trackingState->pose_d->GetM();

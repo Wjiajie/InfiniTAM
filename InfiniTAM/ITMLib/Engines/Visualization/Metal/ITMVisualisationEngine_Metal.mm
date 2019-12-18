@@ -6,7 +6,6 @@
 
 #include "ITMVisualisationEngine_Metal.h"
 #include "../Shared/ITMVisualisationEngine_Shared.h"
-#include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 
 #include <vector>
 

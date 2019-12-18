@@ -13,19 +13,19 @@ inline dim3 getGridSize(dim3 taskSize, dim3 blockSize)
 inline dim3 getGridSize(Vector2i taskSize, dim3 blockSize) { return getGridSize(dim3(taskSize.x, taskSize.y), blockSize); }
 
 template<class TVoxel, class TIndex>
-ITMVisualizationEngine_CUDA<TVoxel, TIndex>::ITMVisualizationEngine_CUDA(void)
+ITMVisualizationEngine_CUDA<TVoxel, TIndex>::ITMVisualizationEngine_CUDA()
 {
 	ORcudaSafeCall(cudaMalloc((void**)&noTotalPoints_device, sizeof(uint)));
 }
 
 template<class TVoxel, class TIndex>
-ITMVisualizationEngine_CUDA<TVoxel, TIndex>::~ITMVisualizationEngine_CUDA(void)
+ITMVisualizationEngine_CUDA<TVoxel, TIndex>::~ITMVisualizationEngine_CUDA()
 {
 	ORcudaSafeCall(cudaFree(noTotalPoints_device));
 }
 
 template<class TVoxel>
-ITMVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ITMVisualizationEngine_CUDA(void)
+ITMVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ITMVisualizationEngine_CUDA()
 {
 	ORcudaSafeCall(cudaMalloc((void**)&renderingBlockList_device, sizeof(RenderingBlock) * MAX_RENDERING_BLOCKS));
 	ORcudaSafeCall(cudaMalloc((void**)&noTotalBlocks_device, sizeof(uint)));
@@ -34,29 +34,11 @@ ITMVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ITMVisualizationEngine_C
 }
 
 template<class TVoxel>
-ITMVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::~ITMVisualizationEngine_CUDA(void)
-{
+ITMVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::~ITMVisualizationEngine_CUDA() {
 	ORcudaSafeCall(cudaFree(noTotalPoints_device));
 	ORcudaSafeCall(cudaFree(noTotalBlocks_device));
 	ORcudaSafeCall(cudaFree(renderingBlockList_device));
 	ORcudaSafeCall(cudaFree(visibleEntryCount_device));
-}
-
-template<class TVoxel, class TIndex>
-ITMRenderState* ITMVisualizationEngine_CUDA<TVoxel, TIndex>::CreateRenderState(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Vector2i & imgSize) const
-{
-	return new ITMRenderState(
-		imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CUDA
-	);
-}
-
-template<class TVoxel>
-ITMRenderState_VH* ITMVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CreateRenderState(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const
-{
-	return new ITMRenderState_VH(
-			scene->index.hashEntryCount, scene->index.voxelBlockCount,
-			imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CUDA
-	);
 }
 
 template<class TVoxel, class TIndex>
@@ -74,8 +56,6 @@ void ITMVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::FindVisibleBlocks(I
 
 	Matrix4f M = pose->GetM();
 	Vector4f projParams = intrinsics->projectionParamsSimple.all;
-
-	ITMRenderState_VH *renderState_vh = (ITMRenderState_VH*)renderState;
 
 	ORcudaSafeCall(cudaMemset(visibleEntryCount_device, 0, sizeof(int)));
 
@@ -106,8 +86,6 @@ int ITMVisualizationEngine_CUDA<TVoxel, TIndex>::CountVisibleBlocks(const ITMVox
 template<class TVoxel>
 int ITMVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CountVisibleBlocks(const ITMVoxelVolume<TVoxel,ITMVoxelBlockHash> *scene, const ITMRenderState *renderState, int minBlockId, int maxBlockId) const
 {
-	const ITMRenderState_VH *renderState_vh = (const ITMRenderState_VH*)renderState;
-
 	int visibleEntryCount = scene->index.GetVisibleHashBlockCount();
 	const int *visibleEntryIDs_device = scene->index.GetVisibleBlockHashCodes();
 
@@ -150,8 +128,6 @@ void ITMVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CreateExpectedDepth
 	Vector2f init;
 	init.x = FAR_AWAY; init.y = VERY_CLOSE;
 	memsetKernel<Vector2f>(minmaxData, init, renderState->renderingRangeImage->dataSize);
-
-	ITMRenderState_VH* renderState_vh = (ITMRenderState_VH*)renderState;
 
 	//go through list of visible 8x8x8 blocks
 	{

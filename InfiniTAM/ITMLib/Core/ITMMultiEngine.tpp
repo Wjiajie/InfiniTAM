@@ -9,6 +9,7 @@
 #include "../CameraTrackers/ITMCameraTrackerFactory.h"
 
 #include "../../MiniSlamGraphLib/QuaternionHelpers.h"
+#include "../Objects/RenderStates/ITMRenderStateMultiScene.h"
 
 using namespace ITMLib;
 
@@ -226,7 +227,7 @@ ITMTrackingState::TrackingResult ITMMultiEngine<TVoxel, TIndex>::ProcessFrame(IT
 		currentLocalMap = mapManager->getLocalMap(currentLocalMapIdx);
 
 		// if a new relocalization/loop closure is started, this will do the initial raycasting before tracking can start
-		if (todoList[i].preprepare) 
+		if (todoList[i].preprepare)
 		{
 			denseMapper->UpdateVisibleList(view, currentLocalMap->trackingState, currentLocalMap->scene, currentLocalMap->renderState);
 			trackingController->Prepare(currentLocalMap->trackingState, currentLocalMap->scene, view, visualisationEngine, currentLocalMap->renderState);
@@ -288,9 +289,9 @@ ITMTrackingState::TrackingResult ITMMultiEngine<TVoxel, TIndex>::ProcessFrame(IT
 
 	mScheduleGlobalAdjustment |= mActiveDataManager->maintainActiveData();
 
-	if (mScheduleGlobalAdjustment) 
+	if (mScheduleGlobalAdjustment)
 	{
-		if (mGlobalAdjustmentEngine->updateMeasurements(*mapManager)) 
+		if (mGlobalAdjustmentEngine->updateMeasurements(*mapManager))
 		{
 			if (separateThreadGlobalAdjustment) mGlobalAdjustmentEngine->wakeupSeparateThread();
 			else mGlobalAdjustmentEngine->runGlobalAdjustment();
@@ -312,7 +313,7 @@ void ITMMultiEngine<TVoxel, TIndex>::SaveSceneToMesh(const char *modelFileName)
 
 	meshingEngine->MeshScene(mesh, *mapManager);
 	mesh->WriteSTL(modelFileName);
-	
+
 	delete mesh;
 }
 
@@ -370,7 +371,7 @@ void ITMMultiEngine<TVoxel, TIndex>::GetImage(ITMUChar4Image *out, GetImageType 
 		else raycastType = IITMVisualisationEngine::RENDER_FROM_OLD_FORWARDPROJ;
 
 		IITMVisualisationEngine::RenderImageType imageType;
-		switch (getImageType) 
+		switch (getImageType)
 		{
 		case ITMMultiEngine::InfiniTAM_IMAGE_COLOUR_FROM_CONFIDENCE:
 			imageType = IITMVisualisationEngine::RENDER_COLOUR_FROM_CONFIDENCE;
@@ -401,10 +402,11 @@ void ITMMultiEngine<TVoxel, TIndex>::GetImage(ITMUChar4Image *out, GetImageType 
 		else if (getImageType == ITMMultiEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_NORMAL) type = IITMVisualisationEngine::RENDER_COLOUR_FROM_NORMAL;
 		else if (getImageType == ITMMultiEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_CONFIDENCE) type = IITMVisualisationEngine::RENDER_COLOUR_FROM_CONFIDENCE;
 
-		if (freeviewLocalMapIdx >= 0) 
-		{
+		if (freeviewLocalMapIdx >= 0){
 			ITMLocalMap<TVoxel, TIndex> *activeData = mapManager->getLocalMap(freeviewLocalMapIdx);
-			if (renderState_freeview == NULL) renderState_freeview = visualisationEngine->CreateRenderState(activeData->scene, out->noDims);
+			if (renderState_freeview == NULL) renderState_freeview =
+					new ITMRenderStateMultiScene<TVoxel,TIndex>( out->noDims, activeData->scene->sceneParams->viewFrustum_min,
+							activeData->scene->sceneParams->viewFrustum_max,settings.device_type);
 
 			visualisationEngine->FindVisibleBlocks(activeData->scene, pose, intrinsics, renderState_freeview);
 			visualisationEngine->CreateExpectedDepths(activeData->scene, pose, intrinsics, renderState_freeview);
@@ -414,11 +416,14 @@ void ITMMultiEngine<TVoxel, TIndex>::GetImage(ITMUChar4Image *out, GetImageType 
 				out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CUDA_TO_CPU);
 			else out->SetFrom(renderState_freeview->raycastImage, MemoryCopyDirection::CPU_TO_CPU);
 		}
-		else 
+		else
 		{
-			if (renderState_multiscene == NULL) renderState_multiscene = multiVisualisationEngine->CreateRenderState(mapManager->getLocalMap(0)->scene, out->noDims);
+			const ITMSceneParameters& params = *mapManager->getLocalMap(0)->scene->sceneParams;
+			if (renderState_multiscene == NULL) renderState_multiscene =
+						new ITMRenderStateMultiScene<TVoxel, TIndex>(out->noDims, params.viewFrustum_min,
+						                                             params.viewFrustum_max, settings.device_type);
 			multiVisualisationEngine->PrepareRenderState(*mapManager, renderState_multiscene);
-			multiVisualisationEngine->CreateExpectedDepths(pose, intrinsics, renderState_multiscene);
+			multiVisualisationEngine->CreateExpectedDepths(*mapManager, pose, intrinsics, renderState_multiscene);
 			multiVisualisationEngine->RenderImage(pose, intrinsics, renderState_multiscene, renderState_multiscene->raycastImage, type);
 			if (settings.device_type == MEMORYDEVICE_CUDA)
 				out->SetFrom(renderState_multiscene->raycastImage, MemoryCopyDirection::CUDA_TO_CPU);

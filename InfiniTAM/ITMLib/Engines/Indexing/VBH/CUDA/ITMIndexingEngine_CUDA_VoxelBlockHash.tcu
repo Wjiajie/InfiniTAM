@@ -16,7 +16,6 @@
 #pragma once
 
 #include "ITMIndexingEngine_CUDA_VoxelBlockHash.h"
-#include "../../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../Shared/ITMIndexingEngine_Shared.h"
 #include "ITMIndexingEngine_CUDA_VoxelBlockHash_Kernels.h"
 
@@ -36,7 +35,6 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 	Matrix4f cameraTransform, invertedCameraTransform;
 	Vector4f projParams_d, invProjParams_d;
 
-	ITMRenderState_VH* renderState_vh = (ITMRenderState_VH*) renderState;
 	if (resetVisibleList) scene->index.SetVisibleHashBlockCount(0);
 
 	cameraTransform = trackingState->pose_d->GetM();

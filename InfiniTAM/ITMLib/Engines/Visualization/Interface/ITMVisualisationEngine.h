@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "../../../Objects/RenderStates/ITMRenderState_VH.h"
+#include "../../../Objects/RenderStates/ITMRenderState.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Objects/Tracking/ITMTrackingState.h"
 #include "../../../Objects/Views/ITMView.h"
@@ -38,7 +38,7 @@ namespace ITMLib
 	};
 
 	template<class TIndex> struct IndexToRenderState { typedef ITMRenderState type; };
-	template<> struct IndexToRenderState<ITMVoxelBlockHash> { typedef ITMRenderState_VH type; };
+	template<> struct IndexToRenderState<ITMVoxelBlockHash> { typedef ITMRenderState type; };
 
 	/** \brief
 		Interface to engines helping with the visualisation of
@@ -56,10 +56,6 @@ namespace ITMLib
 	class ITMVisualisationEngine : public IITMVisualisationEngine
 	{
 	public:
-		/** Creates a render state, containing rendering info
-		for the scene.
-		*/
-		virtual typename IndexToRenderState<TIndex>::type *CreateRenderState(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Vector2i & imgSize) const = 0;
 
 		/** Given a scene, pose and intrinsics, compute the
 		visible subset of the scene and store it in an

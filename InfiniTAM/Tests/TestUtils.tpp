@@ -22,7 +22,6 @@
 #include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../ITMLib/Engines/ViewBuilding/ITMViewBuilderFactory.h"
 #include "../ORUtils/FileUtils.h"
-#include "../ITMLib/Objects/RenderStates/ITMRenderStateFactory.h"
 
 
 using namespace ITMLib;
@@ -247,17 +246,15 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
 			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(*volume);
 			break;
 	}
-	ITMRenderState* renderState = ITMRenderStateFactory<TIndex>::CreateRenderState(imageSize,
-	                                                                               &Configuration::get().scene_parameters,
-	                                                                               memoryDevice,
-	                                                                               (*volume)->index);
+	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.viewFrustum_min,
+	                           Configuration::get().scene_parameters.viewFrustum_max, memoryDevice);
 	ITMTrackingState trackingState(imageSize, memoryDevice);
 
 	ITMDynamicSceneReconstructionEngine<TVoxel, ITMWarp, TIndex>* reconstructionEngine =
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<TVoxel, ITMWarp, TIndex>(memoryDevice);
 
-	reconstructionEngine->GenerateRawLiveSceneFromView(*volume, *view, &trackingState, renderState);
+	reconstructionEngine->GenerateRawLiveSceneFromView(*volume, *view, &trackingState, &renderState);
 
 	delete reconstructionEngine;
 }

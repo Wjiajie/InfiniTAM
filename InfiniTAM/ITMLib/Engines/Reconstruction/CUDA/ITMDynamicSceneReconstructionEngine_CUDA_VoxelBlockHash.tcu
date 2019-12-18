@@ -19,7 +19,6 @@
 
 #include "../../Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
 #include "ITMDynamicSceneReconstructionEngine_CUDA_VoxelBlockHash_Kernels.h"
-#include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Functors.h"
 #include "../../Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h"
 #include "../../../Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
@@ -93,7 +92,6 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>:
 	Matrix4f M_d, M_rgb;
 	Vector4f projParams_d, projParams_rgb;
 
-	ITMRenderState_VH* renderState_vh = (ITMRenderState_VH*) renderState;
 	if (scene->index.GetVisibleHashBlockCount() == 0) return;
 
 	M_d = trackingState->pose_d->GetM();

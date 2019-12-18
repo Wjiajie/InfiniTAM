@@ -524,9 +524,7 @@ set(ITMLIB_OBJECTS_RENDERSTATES_SOURCES
 set(ITMLIB_OBJECTS_RENDERSTATES_HEADERS
     Objects/RenderStates/ITMRenderState.h
     Objects/RenderStates/ITMRenderStateMultiScene.h
-    Objects/RenderStates/ITMRenderState_VH.h
-    Objects/RenderStates/ITMRenderStateFactory.h
-    Objects/RenderStates/ITMSurfelRenderState.h
+	Objects/RenderStates/ITMSurfelRenderState.h
     )
 
 ##

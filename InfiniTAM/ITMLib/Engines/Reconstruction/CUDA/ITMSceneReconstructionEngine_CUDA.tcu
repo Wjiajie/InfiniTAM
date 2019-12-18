@@ -3,7 +3,6 @@
 #include "ITMSceneReconstructionEngine_CUDA.h"
 
 #include "../Shared/ITMSceneReconstructionEngine_Shared.h"
-#include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../../Utils/ITMCUDAUtils.h"
 #include "../../../../ORUtils/JetbrainsCUDASyntax.hpp"
 #include "../../Indexing/Shared/ITMIndexingEngine_Shared.h"
@@ -99,8 +98,6 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateScene
 
 	Matrix4f M_d, invM_d;
 	Vector4f projParams_d, invProjParams_d;
-
-	ITMRenderState_VH* renderState_vh = (ITMRenderState_VH*) renderState;
 
 	if (resetVisibleList) scene->index.SetVisibleHashBlockCount(0);
 
@@ -211,7 +208,6 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::IntegrateInto
 	Matrix4f M_d, M_rgb;
 	Vector4f projParams_d, projParams_rgb;
 
-	ITMRenderState_VH* renderState_vh = (ITMRenderState_VH*) renderState;
 	if (scene->index.GetVisibleHashBlockCount()== 0) return;
 
 	M_d = trackingState->pose_d->GetM();

@@ -1,5 +1,9 @@
 // Copyright 2014-2017 Oxford University Innovation Limited and the authors of InfiniTAM
 
+//stdlib
+#include <vector>
+
+//local
 #include "ITMMultiVisualizationEngine_CPU.h"
 
 #include "../../../Objects/RenderStates/ITMRenderStateMultiScene.h"
@@ -8,18 +12,6 @@
 #include "../Shared/ITMVisualisationEngine_Shared.h"
 
 using namespace ITMLib;
-
-template<class TVoxel, class TIndex>
-ITMRenderState* ITMMultiVisualizationEngine_CPU<TVoxel, TIndex>::CreateRenderState(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Vector2i & imgSize) const
-{
-	return new ITMRenderStateMultiScene<TVoxel, TIndex>(imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CPU);
-}
-
-template<class TVoxel>
-ITMRenderState* ITMMultiVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CreateRenderState(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const
-{
-	return new ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>(imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CPU);
-}
 
 template<class TVoxel, class TIndex>
 void ITMMultiVisualizationEngine_CPU<TVoxel, TIndex>::PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, TIndex> & mapManager, ITMRenderState *_state)
@@ -37,12 +29,12 @@ void ITMMultiVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::PrepareRenderSt
 
 
 template<class TVoxel, class TIndex>
-void ITMMultiVisualizationEngine_CPU<TVoxel, TIndex>::CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
+void ITMMultiVisualizationEngine_CPU<TVoxel, TIndex>::CreateExpectedDepths(const ITMVoxelMapGraphManager<TVoxel, TIndex> & sceneManager, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
 {
 }
 
 template<class TVoxel>
-void ITMMultiVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
+void ITMMultiVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CreateExpectedDepths(const ITMVoxelMapGraphManager<TVoxel, ITMVoxelBlockHash> & sceneManager, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
 {
 	ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash> *renderState = (ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>*)_renderState;
 
@@ -62,7 +54,7 @@ void ITMMultiVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CreateExpectedD
 	{
 		float voxelSize = renderState->voxelSize;
 		const ITMHashEntry *hash_entries = renderState->indexData_host.index[localMapId];
-		int hashEntryCount = dynamic_cast<ITMRenderState_VH*>(renderState)->hashEntryCount;
+		int hashEntryCount = sceneManager.getLocalMap(0)->scene->index.hashEntryCount;
 
 		std::vector<RenderingBlock> renderingBlocks(MAX_RENDERING_BLOCKS);
 		int numRenderingBlocks = 0;

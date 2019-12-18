@@ -23,7 +23,6 @@
 #include "TestUtils.h"
 #include "TestUtilsForSnoopyFrames16And17.h"
 
-#include "../ITMLib/Objects/RenderStates/ITMRenderStateFactory.h"
 #include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../ITMLib/Engines/Manipulation/ITMSceneManipulationEngineFactory.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison.h"
@@ -51,19 +50,20 @@ GenerateRawLiveAndCanonicalVolumes(bool allocateLiveFromBothImages,
 	                        Frame16And17Fixture::InitParams<TIndex>());
 
 	Vector2i imageSize(640, 480);
-	ITMRenderState* renderState = ITMRenderStateFactory<TIndex>::CreateRenderState(
-			imageSize, &Configuration::get().scene_parameters, TMemoryDeviceType, live_volumes[1]->index);
+	ITMRenderState renderState(
+			imageSize, Configuration::get().scene_parameters.viewFrustum_min,
+			Configuration::get().scene_parameters.viewFrustum_max, TMemoryDeviceType);
 	ITMTrackingState trackingState(imageSize, TMemoryDeviceType);
 	if (allocateLiveFromBothImages) {
 		ITMIndexingEngine<ITMVoxel, TIndex, TMemoryDeviceType>::Instance().AllocateFromDepth(
-				live_volumes[1], view, &trackingState, renderState, false, false);
+				live_volumes[1], view, &trackingState, &renderState, false, false);
 	}
 
 	updateView("TestData/snoopy_depth_000017.png",
 	           "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
 	           "TestData/snoopy_calib.txt", TMemoryDeviceType, &view);
 	ITMIndexingEngine<ITMVoxel, TIndex, TMemoryDeviceType>::Instance().AllocateFromDepth(
-			live_volumes[1], view, &trackingState, renderState, false, false);
+			live_volumes[1], view, &trackingState, &renderState, false, false);
 
 	live_index_to_start_from = expand_raw_live_allocation ? 0 : 1;
 	if (expand_raw_live_allocation) {
@@ -74,7 +74,7 @@ GenerateRawLiveAndCanonicalVolumes(bool allocateLiveFromBothImages,
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, TIndex>(TMemoryDeviceType);
 	reconstructionEngine->IntegrateIntoScene(live_volumes[live_index_to_start_from], view, &trackingState,
-	                                         renderState);
+	                                         &renderState);
 	ITMSceneStatisticsCalculator<ITMVoxel,TIndex,TMemoryDeviceType>& calculator =
 			ITMSceneStatisticsCalculator<ITMVoxel,TIndex,TMemoryDeviceType>::Instance();
 	BOOST_REQUIRE_EQUAL(calculator.ComputeAlteredVoxelCount(live_volumes[live_index_to_start_from]), 116110);

@@ -5,12 +5,8 @@
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
 #include "../../Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Functors.h"
-#include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 
 using namespace ITMLib;
-
-
-
 
 // region ======================================= MODIFY VOXELS BASED ON VIEW ==========================================
 
@@ -24,8 +20,6 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 
 	Matrix4f M_d, M_rgb;
 	Vector4f projParams_d, projParams_rgb;
-
-	ITMRenderState_VH* renderState_vh = (ITMRenderState_VH*) renderState;
 
 	M_d = trackingState->pose_d->GetM();
 	if (TVoxel::hasColorInformation) M_rgb = view->calib.trafo_rgb_to_depth.calib_inv * M_d;

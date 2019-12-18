@@ -37,18 +37,6 @@ ITMMultiVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::~ITMMultiVisualizat
 }
 
 template<class TVoxel, class TIndex>
-ITMRenderState* ITMMultiVisualizationEngine_CUDA<TVoxel, TIndex>::CreateRenderState(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Vector2i & imgSize) const
-{
-	return new ITMRenderStateMultiScene<TVoxel, TIndex>(imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CUDA);
-}
-
-template<class TVoxel>
-ITMRenderState* ITMMultiVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CreateRenderState(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const
-{
-	return new ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>(imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CUDA);
-}
-
-template<class TVoxel, class TIndex>
 void ITMMultiVisualizationEngine_CUDA<TVoxel, TIndex>::PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, TIndex> & mapManager, ITMRenderState *_state)
 {
 	ITMRenderStateMultiScene<TVoxel, TIndex> *state = (ITMRenderStateMultiScene<TVoxel, TIndex>*)_state;
@@ -65,7 +53,7 @@ void ITMMultiVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::PrepareRenderS
 }
 
 template<class TVoxel, class TIndex>
-void ITMMultiVisualizationEngine_CUDA<TVoxel, TIndex>::CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
+void ITMMultiVisualizationEngine_CUDA<TVoxel, TIndex>::CreateExpectedDepths(const ITMVoxelMapGraphManager<TVoxel, TIndex> & sceneManager, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
 {
 	ITMRenderStateMultiScene<TVoxel, TIndex> *renderState = (ITMRenderStateMultiScene<TVoxel, TIndex>*)_renderState;
 
@@ -78,7 +66,7 @@ void ITMMultiVisualizationEngine_CUDA<TVoxel, TIndex>::CreateExpectedDepths(cons
 }
 
 template<class TVoxel>
-void ITMMultiVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CreateExpectedDepths(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
+void ITMMultiVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CreateExpectedDepths(const ITMVoxelMapGraphManager<TVoxel, ITMVoxelBlockHash> & sceneManager, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
 {
 	auto *renderState = (ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>*)_renderState;
 
@@ -86,8 +74,7 @@ void ITMMultiVisualizationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CreateExpected
 	Vector2i imgSize = renderState->renderingRangeImage->noDims;
 	Vector2f *minmaxData = renderState->renderingRangeImage->GetData(MEMORYDEVICE_CUDA);
 
-	ITMRenderState_VH* renderStateVh = dynamic_cast<ITMRenderState_VH*>(renderState);
-	const int hashEntryCount = renderStateVh->hashEntryCount;
+	const int hashEntryCount = sceneManager.getLocalMap(0)->scene->index.hashEntryCount;
 
 	Vector2f init;
 	init.x = FAR_AWAY; init.y = VERY_CLOSE;

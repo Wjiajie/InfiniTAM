@@ -6,7 +6,6 @@
 #include "../Engines/Meshing/ITMMeshingEngineFactory.h"
 #include "../Engines/ViewBuilding/ITMViewBuilderFactory.h"
 #include "../Engines/Visualization/ITMVisualizationEngineFactory.h"
-#include "../Objects/RenderStates/ITMRenderStateFactory.h"
 #include "../CameraTrackers/ITMCameraTrackerFactory.h"
 
 #include "../../ORUtils/NVTimer.h"
@@ -46,7 +45,7 @@ ITMBasicEngine<TVoxel,TIndex>::ITMBasicEngine(const ITMRGBDCalib& calib, Vector2
 
 	Vector2i trackedImageSize = trackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
 
-	renderState_live = ITMRenderStateFactory<TIndex>::CreateRenderState(trackedImageSize, scene->sceneParams, memoryType, scene->index);
+	renderState_live =  new ITMRenderState(imgSize_d, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, memoryType);
 	renderState_freeview = NULL; //will be created if needed
 
 	trackingState = new ITMTrackingState(trackedImageSize, memoryType);
@@ -428,7 +427,7 @@ void ITMBasicEngine<TVoxel,TIndex>::GetImage(ITMUChar4Image *out, GetImageType g
 
 		if (renderState_freeview == NULL)
 		{
-			renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims, scene->sceneParams, settings.device_type, scene->index);
+			renderState_freeview = new ITMRenderState(out->noDims, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, settings.device_type);
 		}
 
 		visualisationEngine->FindVisibleBlocks(scene, pose, intrinsics, renderState_freeview);

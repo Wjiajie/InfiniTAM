@@ -3,7 +3,6 @@
 #include "ITMSwappingEngine_CPU.h"
 
 #include "../Shared/ITMSwappingEngine_Shared.h"
-#include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 using namespace ITMLib;
 
 

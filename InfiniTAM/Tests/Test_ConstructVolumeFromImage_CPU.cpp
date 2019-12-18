@@ -32,7 +32,6 @@
 #include "../ITMLib/Utils/Analytics/ITMAlmostEqual.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ORUtils/FileUtils.h"
-#include "../ITMLib/Objects/RenderStates/ITMRenderStateFactory.h"
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "TestUtils.h"
@@ -252,11 +251,11 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(MEMORYDEVICE_CPU);
 
-	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize,
-	                                                                                          &Configuration::get().scene_parameters,
-	                                                                                          MEMORYDEVICE_CPU,
-	                                                                                          scene2.index);
-	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene2, view, &trackingState, renderState);
+	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.viewFrustum_min,
+	                           Configuration::get().scene_parameters.viewFrustum_max,
+	                           MEMORYDEVICE_CPU);
+
+	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene2, view, &trackingState, &renderState);
 
 	tolerance = 1e-5;
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(&scene1, &scene2, tolerance));
@@ -272,7 +271,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	                                                   Configuration::SWAPPINGMODE_ENABLED,
 	                                                   MEMORYDEVICE_CPU, {0x800, 0x20000});
 	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene4);
-	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene4, view, &trackingState, renderState);
+	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene4, view, &trackingState, &renderState);
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene2, &scene4, tolerance));
 
 	Vector3i coordinate = zeroLevelSetCoords[0];
@@ -326,8 +325,8 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CPU) {
 	//Vector3i volumeSize(512, 512, 512), volumeOffset(-volumeSize.x / 2, -volumeSize.y / 2, 0);
 	Vector3i volumeSize(512, 112, 360), volumeOffset(-512, -24, 152);
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> generated_volume(&Configuration::get().scene_parameters,
-	                                                    Configuration::get().swapping_mode ==
-	                                                    Configuration::SWAPPINGMODE_ENABLED,
+	                                                              Configuration::get().swapping_mode ==
+	                                                              Configuration::SWAPPINGMODE_ENABLED,
 	                                                              MEMORYDEVICE_CPU, {volumeSize, volumeOffset});
 
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&generated_volume);
@@ -340,8 +339,8 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CPU) {
 	//generated_volume.SaveToDirectory("../../Tests/TestData/test_PVA_ConstructFromImage2_");
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> loaded_volume(&Configuration::get().scene_parameters,
-	                                                          Configuration::get().swapping_mode ==
-	                                                          Configuration::SWAPPINGMODE_ENABLED,
+	                                                           Configuration::get().swapping_mode ==
+	                                                           Configuration::SWAPPINGMODE_ENABLED,
 	                                                           MEMORYDEVICE_CPU,
 	                                                           {volumeSize, volumeOffset});
 
@@ -362,11 +361,9 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CPU) {
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(MEMORYDEVICE_CPU);
 
-	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize,
-	                                                                                          &Configuration::get().scene_parameters,
-	                                                                                          MEMORYDEVICE_CPU,
-	                                                                                          scene3.index);
-	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, renderState);
+	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.viewFrustum_min,
+	                           Configuration::get().scene_parameters.viewFrustum_max, MEMORYDEVICE_CPU);
+	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, &renderState);
 
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(&loaded_volume, &scene3, tolerance));
 	delete depth;

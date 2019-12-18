@@ -33,7 +33,6 @@
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h"
 #include "../ORUtils/FileUtils.h"
-#include "../ITMLib/Objects/RenderStates/ITMRenderStateFactory.h"
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
 #include "TestUtils.h"
@@ -42,7 +41,6 @@ using namespace ITMLib;
 
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray> SceneFileIOEngine_PVA;
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
-
 
 
 BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH_CUDA, Frame16And17Fixture) {
@@ -66,7 +64,8 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH_CUDA, Frame16And17Fixture)
 
 	float absoluteTolerance = 1e-7;
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(volume_PVA_16, volume_VBH_16, absoluteTolerance));
-	BOOST_REQUIRE(contentForFlagsAlmostEqual_CUDA(volume_PVA_16, volume_VBH_16, VoxelFlags::VOXEL_NONTRUNCATED, absoluteTolerance));
+	BOOST_REQUIRE(contentForFlagsAlmostEqual_CUDA(volume_PVA_16, volume_VBH_16, VoxelFlags::VOXEL_NONTRUNCATED,
+	                                              absoluteTolerance));
 
 	delete volume_VBH_16;
 	delete volume_PVA_16;
@@ -94,7 +93,8 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CUDA, Frame16And17Fixture)
 
 	float absoluteTolerance = 1e-7;
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(volume_PVA_17, volume_VBH_17, absoluteTolerance));
-	BOOST_REQUIRE(contentForFlagsAlmostEqual_CUDA(volume_PVA_17, volume_VBH_17, VoxelFlags::VOXEL_NONTRUNCATED, absoluteTolerance));
+	BOOST_REQUIRE(contentForFlagsAlmostEqual_CUDA(volume_PVA_17, volume_VBH_17, VoxelFlags::VOXEL_NONTRUNCATED,
+	                                              absoluteTolerance));
 
 	delete volume_VBH_17;
 	delete volume_PVA_17;
@@ -204,11 +204,9 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(MEMORYDEVICE_CUDA);
 
-	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize,
-	                                                                                          &Configuration::get().scene_parameters,
-	                                                                                          settings->device_type,
-	                                                                                          scene2.index);
-	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene2, view, &trackingState, renderState);
+	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.viewFrustum_min,
+	                           Configuration::get().scene_parameters.viewFrustum_max, settings->device_type);
+	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene2, view, &trackingState, &renderState);
 
 	tolerance = 1e-5;
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
@@ -225,7 +223,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 	                                                   Configuration::SWAPPINGMODE_ENABLED,
 	                                                   settings->device_type, {0x800, 0x20000});
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene4);
-	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene4, view, &trackingState, renderState);
+	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene4, view, &trackingState, &renderState);
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene2, &scene4, tolerance));
 
 	Vector3i coordinate = zeroLevelSetCoords[0];
@@ -318,11 +316,9 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CUDA) {
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(MEMORYDEVICE_CUDA);
 
-	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize,
-	                                                                                          &Configuration::get().scene_parameters,
-	                                                                                          settings->device_type,
-	                                                                                          scene3.index);
-	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, renderState);
+	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.viewFrustum_min,
+	                           Configuration::get().scene_parameters.viewFrustum_max, settings->device_type);
+	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, &renderState);
 
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(&scene2, &scene3, tolerance));
 

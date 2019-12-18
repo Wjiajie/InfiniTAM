@@ -26,7 +26,6 @@
 #include "../ITMLib/ITMLibDefines.h"
 #include "../ITMLib/Utils/Configuration.h"
 #include "TestUtilsForSnoopyFrames16And17.h"
-#include "../ITMLib/Objects/RenderStates/ITMRenderStateFactory.h"
 //local - CPU
 #include "../ITMLib/Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
 #include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
@@ -165,10 +164,10 @@ void TestAllocateBasedOnVolumeExpanded_Generic() {
 	           "TestData/snoopy_calib.txt", TMemoryDeviceType, &view);
 	Vector2i imageSize(640, 480);
 	ITMTrackingState trackingState(imageSize, TMemoryDeviceType);
-	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(
-			imageSize, &Configuration::get().scene_parameters, TMemoryDeviceType, volume1.index);
+	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.viewFrustum_min,
+	                           Configuration::get().scene_parameters.viewFrustum_max, TMemoryDeviceType);
 	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>::Instance().AllocateFromDepth(
-			&volume1, view, &trackingState, renderState, false, false);
+			&volume1, view, &trackingState, &renderState, false, false);
 	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>::Instance()
 			.AllocateUsingOtherVolumeExpanded(&volume2, &volume1);
 

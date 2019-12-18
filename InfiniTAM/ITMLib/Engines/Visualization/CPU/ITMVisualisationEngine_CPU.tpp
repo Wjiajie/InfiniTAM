@@ -15,23 +15,6 @@ static int RenderPointCloud(Vector4u *outRendering, Vector4f *locations, Vector4
 	Vector2i imgSize, Vector3f lightSource);
 
 template<class TVoxel, class TIndex>
-ITMRenderState* ITMVisualizationEngine_CPU<TVoxel, TIndex>::CreateRenderState(const ITMVoxelVolume<TVoxel, TIndex> *scene, const Vector2i & imgSize) const
-{
-	return new ITMRenderState(
-		imgSize, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CPU
-	);
-}
-
-template<class TVoxel>
-ITMRenderState_VH* ITMVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CreateRenderState(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const Vector2i & imgSize) const
-{
-	return new ITMRenderState_VH(
-			scene->index.hashEntryCount, scene->index.voxelBlockCount, imgSize, scene->sceneParams->viewFrustum_min,
-			scene->sceneParams->viewFrustum_max, MEMORYDEVICE_CPU
-	);
-}
-
-template<class TVoxel, class TIndex>
 void ITMVisualizationEngine_CPU<TVoxel, TIndex>::FindVisibleBlocks(ITMVoxelVolume<TVoxel,TIndex> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *renderState) const
 {
 }
@@ -48,8 +31,6 @@ void ITMVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::FindVisibleBlocks(
 
 	Matrix4f M = pose->GetM();
 	Vector4f projParams = intrinsics->projectionParamsSimple.all;
-
-	ITMRenderState_VH *renderState_vh = (ITMRenderState_VH*)renderState;
 
 	int visibleBlockCount = 0;
 	int* visibleBlockHashCodes = scene->index.GetVisibleBlockHashCodes();
@@ -85,7 +66,6 @@ int ITMVisualizationEngine_CPU<TVoxel, TIndex>::CountVisibleBlocks(const ITMVoxe
 template<class TVoxel>
 int ITMVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CountVisibleBlocks(const ITMVoxelVolume<TVoxel,ITMVoxelBlockHash> *scene, const ITMRenderState *renderState, int minBlockId, int maxBlockId) const
 {
-	const ITMRenderState_VH *renderState_vh = (const ITMRenderState_VH*)renderState;
 
 	int visibleBlockCount = scene->index.GetVisibleHashBlockCount();
 	const int *visibleBlockHashCodes = scene->index.GetVisibleBlockHashCodes();
@@ -100,7 +80,8 @@ int ITMVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CountVisibleBlocks(co
 }
 
 template<class TVoxel, class TIndex>
-void ITMVisualizationEngine_CPU<TVoxel, TIndex>::CreateExpectedDepths(const ITMVoxelVolume<TVoxel,TIndex> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *renderState) const
+void ITMVisualizationEngine_CPU<TVoxel, TIndex>::CreateExpectedDepths(const ITMVoxelVolume<TVoxel,TIndex> *scene,
+		const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *renderState) const
 {
 	Vector2i imgSize = renderState->renderingRangeImage->noDims;
 	Vector2f *minmaxData = renderState->renderingRangeImage->GetData(MEMORYDEVICE_CPU);
@@ -130,8 +111,6 @@ void ITMVisualizationEngine_CPU<TVoxel,ITMVoxelBlockHash>::CreateExpectedDepths(
 
 	std::vector<RenderingBlock> renderingBlocks(MAX_RENDERING_BLOCKS);
 	int numRenderingBlocks = 0;
-
-	ITMRenderState_VH* renderState_vh = (ITMRenderState_VH*)renderState;
 
 	const int *visibleBlockHashCodes = scene->index.GetVisibleBlockHashCodes();
 	int visibleEntryCount = scene->index.GetVisibleHashBlockCount();

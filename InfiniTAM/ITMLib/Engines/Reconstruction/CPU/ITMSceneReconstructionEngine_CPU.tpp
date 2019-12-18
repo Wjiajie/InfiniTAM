@@ -40,8 +40,6 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 	Matrix4f M_d, M_rgb;
 	Vector4f projParams_d, projParams_rgb;
 
-	ITMRenderState_VH *renderState_vh = (ITMRenderState_VH*)renderState;
-
 	M_d = trackingState->pose_d->GetM();
 	if (TVoxel::hasColorInformation) M_rgb = view->calib.trafo_rgb_to_depth.calib_inv * M_d;
 
@@ -113,7 +111,6 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 	Matrix4f M_d, invM_d;
 	Vector4f projParams_d, invProjParams_d;
 
-	ITMRenderState_VH *renderState_vh = (ITMRenderState_VH*)renderState;
 	if (resetVisibleList) scene->index.SetVisibleHashBlockCount(0);
 
 	M_d = trackingState->pose_d->GetM(); M_d.inv(invM_d);
