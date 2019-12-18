@@ -34,14 +34,19 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>:
 }
 
 template<typename TVoxel, typename TWarp>
-void
-ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::GenerateTsdfVolumeFromView(
+void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::GenerateTsdfVolumeFromView(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 		const ITMTrackingState* trackingState) {
+	GenerateTsdfVolumeFromView(scene,view,trackingState->pose_d->GetM());
+}
+
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>::GenerateTsdfVolumeFromView(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const Matrix4f& depth_camera_matrix) {
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(scene);
 	ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance()
-			.AllocateFromDepth(scene, view, trackingState, false, false);
-	this->IntegrateDepthImageIntoTsdfVolume(scene, view, trackingState);
+			.AllocateFromDepth(scene, view, depth_camera_matrix, false, false);
+	this->IntegrateDepthImageIntoTsdfVolume_Helper(scene, view, depth_camera_matrix);
 }
 
 template<typename TVoxel, typename TWarp>
@@ -152,5 +157,6 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMVoxelBlockHash>:
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
 	this->template WarpScene<WARP_UPDATE>(warpField, sourceTSDF, targetTSDF);
 }
+
 
 

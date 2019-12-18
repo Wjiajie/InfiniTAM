@@ -39,6 +39,8 @@ public:
 	                       bool resetVisibleList) override;
 	void GenerateTsdfVolumeFromView(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 	                                const ITMTrackingState* trackingState) override;
+	void GenerateTsdfVolumeFromView(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
+	                                const Matrix4f& depth_camera_matrix = Matrix4f::Identity()) override;
 	void FuseOneTsdfVolumeIntoAnother(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTsdfVolume,
 	                              ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveTsdfVolume) override;
 	void WarpScene_CumulativeWarps(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
@@ -77,6 +79,8 @@ public:
 	                       bool resetVisibleList) override;
 	void GenerateTsdfVolumeFromView(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
 	                                const ITMTrackingState* trackingState) override;
+	void GenerateTsdfVolumeFromView(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
+	                                const Matrix4f& depth_camera_matrix = Matrix4f::Identity()) override;
 	void FuseOneTsdfVolumeIntoAnother(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 	                              ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene) override;
 	void WarpScene_CumulativeWarps(

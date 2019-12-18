@@ -48,13 +48,24 @@ public:
 	/**
 	 * \brief Clears given scene, then uses the depth image from provided live view to generate an SDF
 	 * voxel representation
-	 * \param scene output scene
+	 * \param volume output scene
 	 * \param view input view
 	 * \param trackingState state of tracking
 	 * \param renderState state of rendering the stuff
 	 */
-	virtual void GenerateTsdfVolumeFromView(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
+	virtual void GenerateTsdfVolumeFromView(ITMVoxelVolume<TVoxel, TIndex>* volume, const ITMView* view,
 	                                        const ITMTrackingState* trackingState) = 0;
+
+	/**
+	 * \brief Clears given scene, then uses the depth image from provided live view to generate an SDF
+	 * voxel representation
+	 * \param volume output scene
+	 * \param view input view
+	 * \param depth_camera_matrix transformation matrix from world origin to depth camera in current view
+	 * \param renderState state of rendering the stuff
+	 */
+	virtual void GenerateTsdfVolumeFromView(ITMVoxelVolume<TVoxel, TIndex>* volume, const ITMView* view,
+	                                        const Matrix4f& depth_camera_matrix = Matrix4f::Identity()) = 0;
 
 	/**
 	 * \brief Fuses the live scene into the canonical scene

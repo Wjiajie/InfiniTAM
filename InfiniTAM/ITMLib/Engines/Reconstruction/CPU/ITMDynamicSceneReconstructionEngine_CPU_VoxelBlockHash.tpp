@@ -12,7 +12,8 @@ using namespace ITMLib;
 
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::IntegrateDepthImageIntoTsdfVolume_Helper(
+void
+ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::IntegrateDepthImageIntoTsdfVolume_Helper(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view, Matrix4f depth_camera_matrix) {
 	Vector2i rgbImgSize = view->rgb->noDims;
 	Vector2i depthImgSize = view->depth->noDims;
@@ -76,7 +77,8 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 							TVoxel::hasConfidenceInformation,
 							TVoxel::hasSemanticInformation,
 							TVoxel>::compute(localVoxelBlock[locId], pt_model, depth_camera_matrix,
-					                         projParams_d, RGB_camera_matrix, projParams_rgb, mu, maxW, depth, confidence,
+					                         projParams_d, RGB_camera_matrix, projParams_rgb, mu, maxW, depth,
+					                         confidence,
 					                         depthImgSize, rgb, rgbImgSize);
 				}
 	}
@@ -114,10 +116,17 @@ void
 ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::GenerateTsdfVolumeFromView(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 		const ITMTrackingState* trackingState) {
+	GenerateTsdfVolumeFromView(scene, view, trackingState->pose_d->GetM());
+}
+
+
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::GenerateTsdfVolumeFromView(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const Matrix4f& depth_camera_matrix) {
 	this->sceneManager.ResetScene(scene);
 	ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
-			.AllocateFromDepth(scene, view, trackingState, false, false);
-	this->IntegrateDepthImageIntoTsdfVolume(scene, view, trackingState);
+			.AllocateFromDepth(scene, view, depth_camera_matrix, false, false);
+	this->IntegrateDepthImageIntoTsdfVolume_Helper(scene, view, depth_camera_matrix);
 }
 
 // endregion ===========================================================================================================
@@ -166,7 +175,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 	// Interpolate to obtain the new live frame values (at target index)
 	ITMDualSceneTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	//DualVoxelPositionTraversal_DefaultForMissingSecondary(targetTSDF, warpField, trilinearInterpolationFunctor);
-	DualVoxelPositionTraversal(targetTSDF,warpField,trilinearInterpolationFunctor);
+	DualVoxelPositionTraversal(targetTSDF, warpField, trilinearInterpolationFunctor);
 }
 
 template<typename TVoxel, typename TWarp>
@@ -200,6 +209,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
 	this->template WarpScene<WARP_UPDATE>(warpField, sourceTSDF, targetTSDF);
 }
+
 
 
 
