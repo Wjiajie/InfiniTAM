@@ -28,6 +28,7 @@
 #include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../ITMLib/Engines/ViewBuilding/Interface/ITMViewBuilder.h"
 #include "../ITMLib/Engines/ViewBuilding/ITMViewBuilderFactory.h"
+#include "../ITMLib/Engines/Manipulation/ITMSceneManipulationEngineFactory.h"
 #include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Utils/Analytics/ITMAlmostEqual.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
@@ -158,15 +159,29 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstructExpanded17_PVA_VBH_Expnaded_CPU, Fram
 	           "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
 	           "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU);
 
+	// *** construct volumes ***
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> volume_PVA_17(MEMORYDEVICE_CPU, InitParams<ITMPlainVoxelArray>());
+	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CPU>().ResetScene(&volume_PVA_17);
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine_PVA =
+			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(MEMORYDEVICE_CPU);
+	reconstructionEngine_PVA->GenerateTsdfVolumeFromView(&volume_PVA_17, view);
 
 
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17(MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
+	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>().ResetScene(&volume_VBH_17);
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17_aux(MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
+	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>().ResetScene(&volume_VBH_17_aux);
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_17;
-	buildSdfVolumeFromImage(&volume_VBH_17, "TestData/snoopy_depth_000017.png",
-	                        "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
-	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
-	                        InitParams<ITMVoxelBlockHash>());
+	ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash, MEMORYDEVICE_CPU>& indexer =
+	ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance();
+	indexer.AllocateFromDepth(&volume_VBH_17_aux, view);
+	indexer.AllocateUsingOtherVolumeExpanded(&volume_VBH_17, &volume_VBH_17);
+
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
+			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(MEMORYDEVICE_CPU);
+	reconstructionEngine_VBH->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17, view);
+	// ***
+
 
 //	Vector3i voxelPosition(-57, -9, 196);
 //	ITMVoxel voxelPVA = ManipulationEngine_CPU_PVA_Voxel::Inst().ReadVoxel(volume_PVA_17, voxelPosition);
@@ -182,11 +197,12 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstructExpanded17_PVA_VBH_Expnaded_CPU, Fram
 #endif
 
 	float absoluteTolerance = 1e-7;
-	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(&volume_PVA_17, volume_VBH_17, absoluteTolerance));
-	BOOST_REQUIRE(contentForFlagsAlmostEqual_CPU(&volume_PVA_17, volume_VBH_17, VoxelFlags::VOXEL_NONTRUNCATED,
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(&volume_PVA_17, &volume_VBH_17, absoluteTolerance));
+	BOOST_REQUIRE(contentForFlagsAlmostEqual_CPU(&volume_PVA_17, &volume_VBH_17, VoxelFlags::VOXEL_NONTRUNCATED,
 	                                             absoluteTolerance));
 
-	delete volume_VBH_17;
+	delete reconstructionEngine_PVA;
+	delete reconstructionEngine_VBH;
 }
 
 
