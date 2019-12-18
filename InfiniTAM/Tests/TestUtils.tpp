@@ -234,7 +234,7 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
 
 	// region ================================= CONSTRUCT VIEW =========================================================
 	Vector2i imageSize(640, 480);
-	updateView(depth_path,color_path,mask_path,calibration_path,memoryDevice,view);
+	updateView(view, depth_path, color_path, mask_path, calibration_path, memoryDevice);
 	initializeVolume(volume, initializationParameters,memoryDevice,swappingMode);
 	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&Configuration::get().scene_parameters, swappingMode,
 	                                               memoryDevice, initializationParameters);

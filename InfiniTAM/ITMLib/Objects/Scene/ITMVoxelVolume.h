@@ -36,6 +36,7 @@ public:
 
 	ITMVoxelVolume(const ITMSceneParameters *_sceneParams, bool _useSwapping, MemoryDeviceType _memoryType,
 	               typename TIndex::InitializationParameters indexParameters = typename TIndex::InitializationParameters());
+	ITMVoxelVolume(MemoryDeviceType memoryDeviceType, typename TIndex::InitializationParameters indexParameters = typename TIndex::InitializationParameters());
 
 	ITMVoxelVolume(const ITMVoxelVolume& other, MemoryDeviceType _memoryType);
 

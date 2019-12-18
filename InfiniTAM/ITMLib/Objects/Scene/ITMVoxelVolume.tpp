@@ -16,6 +16,7 @@
 
 #include "ITMVoxelVolume.h"
 #include "../../Engines/SceneFileIO/ITMSceneFileIOEngine.h"
+#include "../../Utils/Configuration.h"
 
 namespace ITMLib {
 
@@ -39,6 +40,14 @@ ITMVoxelVolume<TVoxel,TIndex>::ITMVoxelVolume(const ITMSceneParameters* _scenePa
 	if (_useSwapping) globalCache = new ITMGlobalCache<TVoxel,TIndex>(this->index);
 	else globalCache = nullptr;
 }
+
+
+template<class TVoxel, class TIndex>
+ITMVoxelVolume<TVoxel, TIndex>::ITMVoxelVolume(MemoryDeviceType memoryDeviceType,
+		typename TIndex::InitializationParameters indexParameters) :
+	ITMVoxelVolume(&Configuration::get().scene_parameters,
+			Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			memoryDeviceType, indexParameters) {}
 
 template<class TVoxel, class TIndex>
 ITMVoxelVolume<TVoxel, TIndex>::ITMVoxelVolume(const ITMVoxelVolume& other, MemoryDeviceType _memoryType)
@@ -73,5 +82,6 @@ template<class TVoxel, class TIndex>
 void ITMVoxelVolume<TVoxel, TIndex>::LoadFromDirectory(const std::string& outputDirectory) {
 	ITMSceneFileIOEngine<TVoxel,TIndex>::LoadFromDirectoryCompact(this, outputDirectory);
 }
+
 
 }  // namespace ITMLib

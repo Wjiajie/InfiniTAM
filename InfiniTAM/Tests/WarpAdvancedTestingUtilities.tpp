@@ -57,9 +57,9 @@ GenerateRawLiveAndCanonicalVolumes(bool allocateLiveFromBothImages,
 				live_volumes[1], view, &trackingState, false, false);
 	}
 
-	updateView("TestData/snoopy_depth_000017.png",
+	updateView(&view, "TestData/snoopy_depth_000017.png",
 	           "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
-	           "TestData/snoopy_calib.txt", TMemoryDeviceType, &view);
+	           "TestData/snoopy_calib.txt", TMemoryDeviceType);
 	ITMIndexingEngine<ITMVoxel, TIndex, TMemoryDeviceType>::Instance().AllocateFromDepth(
 			live_volumes[1], view, &trackingState, false, false);
 

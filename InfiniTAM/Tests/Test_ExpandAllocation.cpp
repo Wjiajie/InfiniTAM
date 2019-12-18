@@ -159,9 +159,9 @@ void TestAllocateBasedOnVolumeExpanded_Generic() {
 	                                                    Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
 	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(&volume2);
 	ITMView* view = nullptr;
-	updateView("TestData/snoopy_depth_000017.png",
+	updateView(&view, "TestData/snoopy_depth_000017.png",
 	           "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
-	           "TestData/snoopy_calib.txt", TMemoryDeviceType, &view);
+	           "TestData/snoopy_calib.txt", TMemoryDeviceType);
 	Vector2i imageSize(640, 480);
 	ITMTrackingState trackingState(imageSize, TMemoryDeviceType);
 	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.viewFrustum_min,

@@ -135,16 +135,11 @@ template void loadVolume<ITMWarp, ITMVoxelBlockHash>(ITMVoxelVolume<ITMWarp, ITM
                                                         ITMVoxelBlockHash::InitializationParameters initializationParameters,
                                                         Configuration::SwappingMode swappingMode);
 
-void updateView(const std::string& depth_path,
-                const std::string& color_path,
-                const std::string& mask_path,
-                const std::string& calibration_path,
-                MemoryDeviceType memoryDevice,
-                ITMView** view){
-	ITMRGBDCalib calibrationData;
-	readRGBDCalib(calibration_path.c_str(), calibrationData);
+void
+updateView(ITMView** view, const std::string& depth_path, const std::string& color_path, const std::string& mask_path,
+           const std::string& calibration_path, MemoryDeviceType memoryDevice) {
 	static std::unique_ptr<ITMViewBuilder> viewBuilder = nullptr;
-	if (viewBuilder.get() == nullptr) viewBuilder.reset(ITMViewBuilderFactory::MakeViewBuilder(calibrationData, memoryDevice));
+	if (viewBuilder.get() == nullptr) viewBuilder.reset(ITMViewBuilderFactory::MakeViewBuilder(calibration_path.c_str(), memoryDevice));
 	Vector2i imageSize(640, 480);
 	auto* rgb = new ITMUChar4Image(true, false);
 	auto* depth = new ITMShortImage(true, false);

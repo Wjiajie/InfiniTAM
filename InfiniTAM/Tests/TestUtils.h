@@ -76,12 +76,9 @@ void loadVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& path
                 typename TIndex::InitializationParameters initializationParameters = GetFrame17PartialIndexParameters<TIndex>(),
                 Configuration::SwappingMode swappingMode = Configuration::SWAPPINGMODE_DISABLED);
 
-void updateView(const std::string& depth_path,
-                const std::string& color_path,
-                const std::string& mask_path,
-                const std::string& calibration_path,
-                MemoryDeviceType memoryDevice,
-                ITMView** view);
+void
+updateView(ITMView** view, const std::string& depth_path, const std::string& color_path, const std::string& mask_path,
+           const std::string& calibration_path, MemoryDeviceType memoryDevice);
 template<typename TVoxel, typename TIndex>
 void initializeVolume(ITMVoxelVolume<TVoxel, TIndex>** volume,
                       typename TIndex::InitializationParameters initializationParameters = GetStandard512IndexParameters<TIndex>(),
