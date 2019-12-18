@@ -51,10 +51,12 @@ public:
 	void WarpScene_WarpUpdates(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 	                           ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
-
+	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view);
 	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
 	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);
 protected:
+	void IntegrateIntoScene_Helper(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view,
+	                               Matrix4f camera_depth_matrix = Matrix4f::Identity());
 	template<WarpType TWarpSource>
 	void WarpScene(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
@@ -94,11 +96,13 @@ public:
 
 	ITMDynamicSceneReconstructionEngine_CUDA() = default;
 	~ITMDynamicSceneReconstructionEngine_CUDA() = default;
-
+	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view);
 	void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
 	                        const ITMTrackingState* trackingState, const ITMRenderState* renderState);
 private:
 	ITMSceneManipulationEngine_CUDA<TVoxel, ITMPlainVoxelArray> liveSceneManager;
+	void IntegrateIntoScene_Helper(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view,
+	                               Matrix4f camera_depth_matrix = Matrix4f::Identity());
 
 	template<WarpType TWarpSource>
 	void WarpScene(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
