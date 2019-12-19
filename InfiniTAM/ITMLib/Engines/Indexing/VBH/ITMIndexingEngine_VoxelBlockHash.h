@@ -23,14 +23,8 @@ class ITMIndexingEngine_VoxelBlockHash:
 		public ITMIndexingEngineInterface<TVoxel, ITMVoxelBlockHash> {
 
 public:
-	virtual void AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
-	                                           const HashEntryAllocationState* hashEntryStates_device,
-	                                           Vector3s* blockCoordinates_device) = 0;
-
-	virtual void AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
-	                                                         const HashEntryAllocationState* hashEntryStates_device,
-	                                                         Vector3s* blockCoordinates_device,
-	                                                         HashBlockVisibility* hashBlockVisibilityTypes_device) = 0;
+	virtual void AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume) = 0;
+	virtual void AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume) = 0;
 	virtual ITMHashEntry FindHashEntry(const ITMVoxelBlockHash& index, const Vector3s& coordinates) = 0;
 	virtual bool AllocateHashBlockAt(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, Vector3s at, int& hashCode) = 0;
 

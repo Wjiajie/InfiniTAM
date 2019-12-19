@@ -20,21 +20,27 @@
 #include "../../Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
 
 namespace ITMLib {
-ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt_CPU(const Vector3s& pos) const {
+
+
+ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt_CPU(const Vector3s& pos, int& hashCode) const {
 	const ITMHashEntry* entries = this->GetEntries();
 	switch (memoryType) {
 		case MEMORYDEVICE_CPU:
 			return ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
-					.FindHashEntry(*this,pos);
+					.FindHashEntry(*this,pos,hashCode);
 #ifndef COMPILE_WITHOUT_CUDA
 		case MEMORYDEVICE_CUDA:
 			return ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance()
-					.FindHashEntry(*this,pos);
+					.FindHashEntry(*this,pos, hashCode);
 #endif
 		default:
 			DIEWITHEXCEPTION_REPORTLOCATION("Unsupported device type.");
 			return ITMHashEntry();
 	}
+}
+ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt_CPU(const Vector3s& pos) const {
+	int hashCode = 0;
+	return GetHashEntryAt_CPU(pos, hashCode);
 }
 
 ITMVoxelBlockHash::ITMVoxelBlockHash(ITMVoxelBlockHashParameters parameters, MemoryDeviceType memoryType) :

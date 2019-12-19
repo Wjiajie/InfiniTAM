@@ -479,7 +479,7 @@ public:
 	DualVoxelTraversal_AllTrue(
 			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
 			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
-			TFunctor& functor) {
+			TFunctor& functor, bool verbose) {
 
 // *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
@@ -488,26 +488,30 @@ public:
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
-		int noTotalEntries = primaryScene->index.hashEntryCount;
+		int hashEntryCount = primaryScene->index.hashEntryCount;
 
 		bool mismatchFound = false;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
-		for (int hash = 0; hash < noTotalEntries; hash++) {
+		for (int hashCode = 0; hashCode < hashEntryCount; hashCode++) {
 			if (mismatchFound) continue;
-			const ITMHashEntry& primaryHashEntry = primaryHashTable[hash];
-			ITMHashEntry secondaryHashEntry = secondaryHashTable[hash];
+			const ITMHashEntry& primaryHashEntry = primaryHashTable[hashCode];
+			ITMHashEntry secondaryHashEntry = secondaryHashTable[hashCode];
 
-			auto secondaryHashEntryHasMatchingPrimary = [&]() {
+			auto secondaryHashEntryHasMatchingPrimary = [&](int secondaryHashCode) {
 				int alternativePrimaryHash;
 				if (!FindHashAtPosition(alternativePrimaryHash, secondaryHashEntry.pos, primaryHashTable)) {
 					// could not find primary block corresponding to the secondary hash
 					TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr *
 					                                                         (VOXEL_BLOCK_SIZE3)]);
 					// if the secondary block is unaltered anyway, so no need to match and we're good, so return "true"
-					return !isVoxelBlockAltered(secondaryVoxelBlock);
+					if(verbose){
+						return !isVoxelBlockAltered(secondaryVoxelBlock, true, "Second hash voxel unmatched in first hash: ", secondaryHashEntry.pos, secondaryHashCode);
+					}else{
+						return !isVoxelBlockAltered(secondaryVoxelBlock);
+					}
 				} else {
 					// alternative primary hash found, skip this primary hash since the corresponding secondary
 					// block will be (or has been) processed with the alternative primary hash.
@@ -519,7 +523,7 @@ public:
 				if (secondaryHashEntry.ptr < 0) {
 					continue;
 				} else {
-					if (!secondaryHashEntryHasMatchingPrimary()) {
+					if (!secondaryHashEntryHasMatchingPrimary(hashCode)) {
 						mismatchFound = true;
 						continue;
 					} else {
@@ -532,7 +536,7 @@ public:
 			// we have a hash bucket miss, find the secondary voxel block with the matching coordinates
 			if (secondaryHashEntry.pos != primaryHashEntry.pos) {
 				if (secondaryHashEntry.ptr >= 0) {
-					if (!secondaryHashEntryHasMatchingPrimary()) {
+					if (!secondaryHashEntryHasMatchingPrimary(hashCode)) {
 						mismatchFound = true;
 						continue;
 					}
@@ -639,7 +643,7 @@ public:
 	DualVoxelPositionTraversal_AllTrue(
 			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
 			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
-			TFunctor& functor) {
+			TFunctor& functor, bool verbose) {
 
 // *** traversal vars
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
@@ -648,26 +652,30 @@ public:
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		ITMHashEntry* primaryHashTable = primaryScene->index.GetEntries();
-		int noTotalEntries = primaryScene->index.hashEntryCount;
+		int hashEntryCount = primaryScene->index.hashEntryCount;
 
 		bool mismatchFound = false;
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for
 #endif
-		for (int hash = 0; hash < noTotalEntries; hash++) {
+		for (int hashCode = 0; hashCode < hashEntryCount; hashCode++) {
 			if (mismatchFound) continue;
-			const ITMHashEntry& primaryHashEntry = primaryHashTable[hash];
-			ITMHashEntry secondaryHashEntry = secondaryHashTable[hash];
+			const ITMHashEntry& primaryHashEntry = primaryHashTable[hashCode];
+			ITMHashEntry secondaryHashEntry = secondaryHashTable[hashCode];
 
-			auto secondaryHashEntryHasMatchingPrimary = [&]() {
+			auto secondaryHashEntryHasMatchingPrimary = [&](int secondaryHashCode) {
 				int alternativePrimaryHash;
 				if (!FindHashAtPosition(alternativePrimaryHash, secondaryHashEntry.pos, primaryHashTable)) {
 					// could not find primary block corresponding to the secondary hash
 					TVoxelSecondary* secondaryVoxelBlock = &(secondaryVoxels[secondaryHashEntry.ptr *
 					                                                         (VOXEL_BLOCK_SIZE3)]);
 					// if the secondary block is unaltered anyway, so no need to match and we're good, so return "true"
-					return !isVoxelBlockAltered(secondaryVoxelBlock);
+					if(verbose){
+						return !isVoxelBlockAltered(secondaryVoxelBlock, true, "Second hash voxel unmatched in first hash: ", secondaryHashEntry.pos, secondaryHashCode);
+					}else{
+						return !isVoxelBlockAltered(secondaryVoxelBlock);
+					}
 				} else {
 					// alternative primary hash found, skip this primary hash since the corresponding secondary
 					// block will be (or has been) processed with the alternative primary hash.
@@ -679,7 +687,7 @@ public:
 				if (secondaryHashEntry.ptr < 0) {
 					continue;
 				} else {
-					if (!secondaryHashEntryHasMatchingPrimary()) {
+					if (!secondaryHashEntryHasMatchingPrimary(hashCode)) {
 						mismatchFound = true;
 						continue;
 					} else {
@@ -692,7 +700,7 @@ public:
 			// we have a hash bucket miss, find the secondary voxel block with the matching coordinates
 			if (secondaryHashEntry.pos != primaryHashEntry.pos) {
 				if (secondaryHashEntry.ptr >= 0) {
-					if (!secondaryHashEntryHasMatchingPrimary()) {
+					if (!secondaryHashEntryHasMatchingPrimary(hashCode)) {
 						mismatchFound = true;
 						continue;
 					}

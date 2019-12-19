@@ -17,6 +17,10 @@
 #include "ITMVoxelVolume.h"
 #include "../../Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../../Utils/Configuration.h"
+#include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#ifndef COMPILE_WITHOUT_CUDA
+#include "../../Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
+#endif
 
 namespace ITMLib {
 
@@ -59,6 +63,21 @@ ITMVoxelVolume<TVoxel, TIndex>::ITMVoxelVolume(const ITMVoxelVolume& other, Memo
     if(other.globalCache != nullptr){
 	    this->globalCache = new ITMGlobalCache<TVoxel,TIndex>(*other.globalCache);
     }
+}
+template<class TVoxel, class TIndex>
+void ITMVoxelVolume<TVoxel, TIndex>::Reset(){
+	switch (this->index.memoryType) {
+		case MEMORYDEVICE_CPU:
+			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(this);
+			break;
+#ifndef COMPILE_WITHOUT_CUDA
+		case MEMORYDEVICE_CUDA:
+			ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(this);
+			break;
+#endif
+		default:
+			DIEWITHEXCEPTION_REPORTLOCATION("Unsupported device type.");
+	}
 }
 
 template<class TVoxel, class TIndex>

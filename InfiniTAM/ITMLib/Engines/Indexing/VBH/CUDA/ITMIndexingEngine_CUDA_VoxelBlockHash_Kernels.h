@@ -179,18 +179,18 @@ __global__ void buildHashAllocAndVisibleType_device(ITMLib::HashEntryAllocationS
 
 template<bool useSwapping>
 __global__ void
-buildVisibleList_device(ITMHashEntry* hashTable, ITMLib::ITMHashSwapState* swapStates, int noTotalEntries,
-                        int* visibleEntryIDs, AllocationTempData* allocData, HashBlockVisibility* blockVisibilityTypes,
-                        Matrix4f M_d, Vector4f projParams_d, Vector2i depthImgSize, float voxelSize) {
-	int targetIdx = threadIdx.x + blockIdx.x * blockDim.x;
-	if (targetIdx > noTotalEntries - 1) return;
+buildVisibilityList_device(ITMHashEntry* hashTable, ITMLib::ITMHashSwapState* swapStates, int hashEntryCount,
+                           int* visibleEntryIDs, int* visibleBlockCount, HashBlockVisibility* blockVisibilityTypes,
+                           Matrix4f M_d, Vector4f projParams_d, Vector2i depthImgSize, float voxelSize) {
+	int hashCode = threadIdx.x + blockIdx.x * blockDim.x;
+	if (hashCode >= hashEntryCount) return;
 
 	__shared__ bool shouldPrefix;
 	shouldPrefix = false;
 	__syncthreads();
 
-	HashBlockVisibility hashVisibleType = blockVisibilityTypes[targetIdx];
-	const ITMHashEntry& hashEntry = hashTable[targetIdx];
+	HashBlockVisibility hashVisibleType = blockVisibilityTypes[hashCode];
+	const ITMHashEntry& hashEntry = hashTable[hashCode];
 
 	if (hashVisibleType == VISIBLE_AT_PREVIOUS_FRAME_AND_UNSTREAMED) {
 		bool isVisibleEnlarged, isVisible;
@@ -204,21 +204,21 @@ buildVisibleList_device(ITMHashEntry* hashTable, ITMLib::ITMHashSwapState* swapS
 			                            depthImgSize);
 			if (!isVisible) hashVisibleType = INVISIBLE;
 		}
-		blockVisibilityTypes[targetIdx] = hashVisibleType;
+		blockVisibilityTypes[hashCode] = hashVisibleType;
 	}
 
 	if (hashVisibleType > 0) shouldPrefix = true;
 
 	if (useSwapping) {
-		if (hashVisibleType > 0 && swapStates[targetIdx].state != 2) swapStates[targetIdx].state = 1;
+		if (hashVisibleType > 0 && swapStates[hashCode].state != 2) swapStates[hashCode].state = 1;
 	}
 
 	__syncthreads();
 
 	if (shouldPrefix) {
-		int offset = computePrefixSum_device<int>(hashVisibleType > 0, &allocData->visibleBlockCount,
+		int offset = computePrefixSum_device<int>(hashVisibleType > 0, visibleBlockCount,
 		                                          blockDim.x * blockDim.y, threadIdx.x);
-		if (offset != -1) visibleEntryIDs[offset] = targetIdx;
+		if (offset != -1) visibleEntryIDs[offset] = hashCode;
 	}
 
 }

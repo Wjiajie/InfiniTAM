@@ -90,3 +90,16 @@ struct ITMFlipArgumentBooleanFunctor {
 	TFunctor functor;
 };
 
+
+template<typename TVoxel, typename TPredicateFunctor>
+inline static bool
+voxelBlockSatisfiesPredicate(TVoxel* voxelBlock,
+                             TPredicateFunctor& oneVoxelPredicateFunctor) {
+	for (int locId = 0; locId < VOXEL_BLOCK_SIZE3; locId++) {
+		TVoxel& voxel = voxelBlock[locId];
+		if (!oneVoxelPredicateFunctor(voxel)) {
+			return false;
+		}
+	}
+	return true;
+}

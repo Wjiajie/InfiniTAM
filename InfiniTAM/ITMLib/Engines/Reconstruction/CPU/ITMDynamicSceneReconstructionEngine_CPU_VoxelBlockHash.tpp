@@ -45,6 +45,10 @@ ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::Integ
 	for (int visibleHash = 0; visibleHash < visibleEntryCount; visibleHash++) {
 		Vector3i globalPos;
 		int hash = visibleEntryHashCodes[visibleHash];
+		//_DEBUG ALLOC
+//		if(hash == 1924){
+//			int i = 10;
+//		}
 		const ITMHashEntry& currentHashEntry = hashTable[hash];
 
 		if (currentHashEntry.ptr < 0) continue;
@@ -69,8 +73,11 @@ ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::Integ
 					pt_model.z = (float) (globalPos.z + z) * voxelSize;
 					pt_model.w = 1.0f;
 
-					Vector3i pos(globalPos.x + x, globalPos.y + y, globalPos.z + z);
-
+					//_DEBUG ALLOC
+//					Vector3i pos(globalPos.x + x, globalPos.y + y, globalPos.z + z);
+//					if(pos == Vector3i(-40,56,192)){
+//						int i = 10;
+//					}
 
 					ComputeUpdatedLiveVoxelInfo<
 							TVoxel::hasColorInformation,

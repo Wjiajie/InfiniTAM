@@ -370,7 +370,7 @@ public:
 	DualVoxelTraversal_AllTrue(
 			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
 			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryVolume,
-			TFunctor& functor) {
+			TFunctor& functor, bool verbose) {
 
 		assert(primaryVolume->index.GetVolumeSize() == secondaryVolume->index.GetVolumeSize());
 // *** traversal vars
@@ -399,7 +399,7 @@ public:
 	DualVoxelPositionTraversal_AllTrue(
 			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
 			ITMVoxelVolume<TVoxelSecondary, ITMPlainVoxelArray>* secondaryVolume,
-			TFunctor& functor) {
+			TFunctor& functor, bool verbose) {
 
 		assert(primaryVolume->index.GetVolumeSize() == secondaryVolume->index.GetVolumeSize());
 // *** traversal vars

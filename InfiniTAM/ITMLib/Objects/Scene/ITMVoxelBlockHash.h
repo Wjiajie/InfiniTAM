@@ -146,9 +146,14 @@ public:
 		return hashEntries.GetElement(hashCode, memoryType);
 	}
 	ITMHashEntry GetHashEntryAt_CPU(const Vector3s& pos) const;
+	ITMHashEntry GetHashEntryAt_CPU(const Vector3s& pos, int& hashCode) const;
 	ITMHashEntry GetHashEntryAt_CPU(int x, int y, int z) const{
 		Vector3s coord(x,y,z);
 		return GetHashEntryAt_CPU(coord);
+	}
+	ITMHashEntry GetHashEntryAt_CPU(int x, int y, int z, int& hashCode) const{
+		Vector3s coord(x,y,z);
+		return GetHashEntryAt_CPU(coord, hashCode);
 	}
 
 	/** Get a list of temporary hash entry state flags**/

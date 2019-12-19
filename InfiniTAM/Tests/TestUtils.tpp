@@ -203,9 +203,10 @@ void loadVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& path
 }
 
 
-
 template<typename TVoxel, typename TIndex>
-void initializeVolume(ITMVoxelVolume<TVoxel, TIndex>** volume,  typename TIndex::InitializationParameters initializationParameters, MemoryDeviceType memoryDevice,  Configuration::SwappingMode swappingMode){
+void initializeVolume(ITMVoxelVolume<TVoxel, TIndex>** volume,
+                      typename TIndex::InitializationParameters initializationParameters, MemoryDeviceType memoryDevice,
+                      Configuration::SwappingMode swappingMode) {
 	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&Configuration::get().scene_parameters, swappingMode,
 	                                               memoryDevice, initializationParameters);
 	switch (memoryDevice) {
@@ -235,7 +236,7 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
 	// region ================================= CONSTRUCT VIEW =========================================================
 	Vector2i imageSize(640, 480);
 	updateView(view, depth_path, color_path, mask_path, calibration_path, memoryDevice);
-	initializeVolume(volume, initializationParameters,memoryDevice,swappingMode);
+	initializeVolume(volume, initializationParameters, memoryDevice, swappingMode);
 	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&Configuration::get().scene_parameters, swappingMode,
 	                                               memoryDevice, initializationParameters);
 	switch (memoryDevice) {
@@ -272,12 +273,12 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
 	// region ================================= CONSTRUCT VIEW =========================================================
 
 	ITMView* view = nullptr;
-	buildSdfVolumeFromImage(volume,&view,
-			depth_path,
-			color_path,
-			mask_path,
-			calibration_path,
-			memoryDevice,
-			initializationParameters,swappingMode, useBilateralFilter);
+	buildSdfVolumeFromImage(volume, &view,
+	                        depth_path,
+	                        color_path,
+	                        mask_path,
+	                        calibration_path,
+	                        memoryDevice,
+	                        initializationParameters, swappingMode, useBilateralFilter);
 	delete view;
 }

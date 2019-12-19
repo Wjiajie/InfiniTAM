@@ -39,7 +39,9 @@ private:
 			ITMVoxelVolume <THashVoxel, ITMVoxelBlockHash>* hashVolume,
 			TTwoVoxelBooleanFunctor& twoVoxelBooleanFunctor,
 			TTwoVoxelAndPositionPredicate&& twoVoxelAndPositionPredicate,
-			TArrayVoxelPredicate&& arrayVoxelAlteredCheckPredicate, THashVoxelPredicate&& hashVoxelAlteredCheckPredicate
+			TArrayVoxelPredicate&& arrayVoxelAlteredCheckPredicate,
+			THashVoxelPredicate&& hashVoxelAlteredCheckPredicate,
+			bool verbose
 	) {
 
 
@@ -60,9 +62,9 @@ private:
 #ifdef WITH_OPENMP
 #pragma omp parallel for default(none), shared(mismatchFound)
 #endif
-		for (int hash = 0; hash < hashEntryCount; hash++) {
+		for (int hashCode = 0; hashCode < hashEntryCount; hashCode++) {
 			if (mismatchFound) continue;
-			ITMHashEntry& hashEntry = hashTable[hash];
+			ITMHashEntry& hashEntry = hashTable[hashCode];
 			if (hashEntry.ptr < 0) {
 				continue;
 			}
@@ -71,9 +73,17 @@ private:
 			if (blockMaxVoxels.x < arrayMinVoxels.x || blockMinVoxels.x > arrayMaxVoxels.x ||
 			    blockMaxVoxels.y < arrayMinVoxels.y || blockMinVoxels.y > arrayMaxVoxels.y ||
 			    blockMaxVoxels.z < arrayMinVoxels.z || blockMinVoxels.z > arrayMaxVoxels.z) {
-				if (isVoxelBlockAlteredPredicate(hashVoxels + hashEntry.ptr * VOXEL_BLOCK_SIZE3,
-				                                 arrayVoxelAlteredCheckPredicate)) {
-					mismatchFound = true;
+				if (verbose) {
+					if (isVoxelBlockAlteredPredicate(hashVoxels + hashEntry.ptr * VOXEL_BLOCK_SIZE3,
+					                                 arrayVoxelAlteredCheckPredicate, true,
+					                                 "Hash voxel unmatched in array: ", hashEntry.pos, hashCode)) {
+						mismatchFound = true;
+					}
+				} else {
+					if (isVoxelBlockAlteredPredicate(hashVoxels + hashEntry.ptr * VOXEL_BLOCK_SIZE3,
+					                                 arrayVoxelAlteredCheckPredicate)) {
+						mismatchFound = true;
+					}
 				}
 			} else if (blockMaxVoxels.x > arrayMaxVoxels.x || blockMinVoxels.x < arrayMinVoxels.x ||
 			           blockMaxVoxels.y > arrayMaxVoxels.y || blockMinVoxels.y < arrayMinVoxels.y ||
@@ -96,6 +106,10 @@ private:
 								mismatchFound = true;
 							}
 						} else {
+							if (verbose) {
+								isAltered_VerbosePositionHash(hashVoxel, voxelPosition, hashCode, hashEntry.pos,
+								                              "Hash voxel unmatched in array: ");
+							}
 							mismatchFound = true;
 						}
 					}
@@ -129,10 +143,19 @@ private:
 #endif
 						// no hash block intersecting array at this point, yet voxel is altered: fail
 						TArrayVoxel& arrayVoxel = arrayVoxels[linearArrayIndex];
-						if (hashVoxelIndex == -1
-						    && std::forward<TArrayVoxelPredicate>(arrayVoxelAlteredCheckPredicate)(arrayVoxel)
-						    && isAltered(arrayVoxel)) {
-							mismatchFound = true;
+						if (verbose) {
+							if (hashVoxelIndex == -1
+							    && std::forward<TArrayVoxelPredicate>(arrayVoxelAlteredCheckPredicate)(arrayVoxel)
+							    &&
+							    isAltered_VerbosePosition(arrayVoxel, position, "Array voxel not matched in hash: ")) {
+								mismatchFound = true;
+							}
+						} else {
+							if (hashVoxelIndex == -1
+							    && std::forward<TArrayVoxelPredicate>(arrayVoxelAlteredCheckPredicate)(arrayVoxel)
+							    && isAltered(arrayVoxel)) {
+								mismatchFound = true;
+							}
 						}
 					}
 				}
@@ -175,9 +198,9 @@ private:
 										int vmIndex;
 										TArrayVoxel& arrayVoxel = arrayVoxels[linearArrayIndex];
 										THashVoxel& hashVoxel = hashBlockVoxels[idWithinBlock];
-										if(!std::forward<TTwoVoxelAndPositionPredicate>(twoVoxelAndPositionPredicate)(
+										if (!std::forward<TTwoVoxelAndPositionPredicate>(twoVoxelAndPositionPredicate)(
 												twoVoxelBooleanFunctor, arrayVoxel, hashVoxel,
-												positionAbsolute)){
+												positionAbsolute)) {
 											mismatchFound = true;
 										}
 									}
@@ -195,9 +218,18 @@ private:
 										int vmIndex;
 										// no hash block intersecting array at this point, yet voxel is altered: fail
 										TArrayVoxel& arrayVoxel = arrayVoxels[linearArrayIndex];
-										if (std::forward<TArrayVoxelPredicate>(arrayVoxelAlteredCheckPredicate)(
-												arrayVoxel) && isAltered(arrayVoxel)) {
-											mismatchFound = true;
+										if (verbose) {
+											if (std::forward<TArrayVoxelPredicate>(arrayVoxelAlteredCheckPredicate)(
+													arrayVoxel)
+											    && isAltered_VerbosePosition(arrayVoxel, positionAbsolute,
+											                                 "Array voxel not matched in hash: ")) {
+												mismatchFound = true;
+											}
+										} else {
+											if (std::forward<TArrayVoxelPredicate>(arrayVoxelAlteredCheckPredicate)(
+													arrayVoxel) && isAltered(arrayVoxel)) {
+												mismatchFound = true;
+											}
 										}
 									}
 								}
@@ -355,12 +387,12 @@ public:
 	DualVoxelTraversal_AllTrue(
 			ITMVoxelVolume <TArrayVoxel, ITMPlainVoxelArray>* arrayVolume,
 			ITMVoxelVolume <THashVoxel, ITMVoxelBlockHash>* hashVolume,
-			TFunctor& functor) {
+			TFunctor& functor, bool verbose) {
 		return DualVoxelTraversal_AllTrue_Generic(arrayVolume, hashVolume, functor, []
 				(TFunctor& functor1, TArrayVoxel& voxelArray,
 				 THashVoxel& voxelHash, const Vector3i& voxelPosition) {
 			return functor1(voxelArray, voxelHash);
-		}, [](TArrayVoxel& arrayVoxel) { return true; }, [](THashVoxel& hashVoxel) { return true; });
+		}, [](TArrayVoxel& arrayVoxel) { return true; }, [](THashVoxel& hashVoxel) { return true; }, verbose);
 	}
 
 
@@ -369,12 +401,12 @@ public:
 	DualVoxelPositionTraversal_AllTrue(
 			ITMVoxelVolume <TArrayVoxel, ITMPlainVoxelArray>* primaryVolume,
 			ITMVoxelVolume <THashVoxel, ITMVoxelBlockHash>* secondaryVolume,
-			TFunctor& functor) {
+			TFunctor& functor, bool verbose) {
 		return DualVoxelTraversal_AllTrue_Generic(primaryVolume, secondaryVolume, functor, []
 				(TFunctor& functor, TArrayVoxel& voxelPrimary, THashVoxel& voxelSecondary,
 				 const Vector3i& voxelPosition) {
 			return functor(voxelPrimary, voxelSecondary, voxelPosition);
-		}, [](TArrayVoxel& arrayVoxel) { return true; }, [](THashVoxel& hashVoxel) { return true; });
+		}, [](TArrayVoxel& arrayVoxel) { return true; }, [](THashVoxel& hashVoxel) { return true; }, verbose);
 	}
 
 	template<typename TFunctor>
@@ -383,7 +415,7 @@ public:
 			ITMVoxelVolume <TArrayVoxel, ITMPlainVoxelArray>* arrayVolume,
 			ITMVoxelVolume <THashVoxel, ITMVoxelBlockHash>* hashVolume,
 			VoxelFlags flags,
-			TFunctor& functor) {
+			TFunctor& functor, bool verbose) {
 		return DualVoxelTraversal_AllTrue_Generic(
 				arrayVolume, hashVolume, functor,
 				[&flags](TFunctor& functor1,
@@ -391,7 +423,7 @@ public:
 					return (voxelArray.flags != flags && hashVoxel.flags != flags) || functor1(voxelArray, hashVoxel);
 				},
 				[&flags](TArrayVoxel& arrayVoxel) { return arrayVoxel.flags == flags; },
-				[&flags](THashVoxel& hashVoxel) { return hashVoxel.flags == flags; });
+				[&flags](THashVoxel& hashVoxel) { return hashVoxel.flags == flags; }, verbose);
 	}
 
 
@@ -400,7 +432,7 @@ public:
 	DualVoxelPositionTraversal_AllTrue_MatchingFlags(
 			ITMVoxelVolume <TArrayVoxel, ITMPlainVoxelArray>* primaryVolume,
 			ITMVoxelVolume <THashVoxel, ITMVoxelBlockHash>* secondaryVolume,
-			VoxelFlags flags, TFunctor& functor) {
+			VoxelFlags flags, TFunctor& functor, bool verbose) {
 		return DualVoxelTraversal_AllTrue_Generic(
 				primaryVolume, secondaryVolume, functor,
 				[&flags](TFunctor& functor,
@@ -409,7 +441,7 @@ public:
 					       functor(arrayVoxel, hashVoxel, voxelPosition);
 				},
 				[&flags](TArrayVoxel& arrayVoxel) { return arrayVoxel.flags == flags; },
-				[&flags](THashVoxel& hashVoxel) { return hashVoxel.flags == flags; });
+				[&flags](THashVoxel& hashVoxel) { return hashVoxel.flags == flags; }, verbose);
 	}
 
 	/**
@@ -489,10 +521,10 @@ public:
 	DualVoxelTraversal_AllTrue(
 			ITMVoxelVolume <TVoxelPrimary, ITMVoxelBlockHash>* primaryVolume,
 			ITMVoxelVolume <TVoxelSecondary, ITMPlainVoxelArray>* secondaryVolume,
-			TFunctor& functor) {
+			TFunctor& functor, bool verbose) {
 		ITMFlipArgumentBooleanFunctor<TVoxelPrimary, TVoxelSecondary, TFunctor> flipFunctor(functor);
 		return ITMDualSceneTraversalEngine<TVoxelSecondary, TVoxelPrimary, ITMPlainVoxelArray, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
-		DualVoxelTraversal_AllTrue(secondaryVolume, primaryVolume, flipFunctor);
+		DualVoxelTraversal_AllTrue(secondaryVolume, primaryVolume, flipFunctor, verbose);
 
 	}
 

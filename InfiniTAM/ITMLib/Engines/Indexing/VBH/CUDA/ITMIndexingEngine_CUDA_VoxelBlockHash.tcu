@@ -26,16 +26,16 @@ using namespace ITMLib;
 
 template<typename TVoxel>
 void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFromDepth(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view,
 		const Matrix4f& depth_camera_matrix, bool onlyUpdateVisibleList, bool resetVisibleList) {
 
 	Vector2i depthImgSize = view->depth->noDims;
-	float voxelSize = scene->sceneParams->voxelSize;
+	float voxelSize = volume->sceneParams->voxelSize;
 
 	Matrix4f inverted_depth_camera_matrix;
 	Vector4f projParams_d, invProjParams_d;
 
-	if (resetVisibleList) scene->index.SetVisibleHashBlockCount(0);
+	if (resetVisibleList) volume->index.SetVisibleHashBlockCount(0);
 
 	depth_camera_matrix.inv(inverted_depth_camera_matrix);
 
@@ -44,31 +44,28 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 	invProjParams_d.x = 1.0f / invProjParams_d.x;
 	invProjParams_d.y = 1.0f / invProjParams_d.y;
 
-	float mu = scene->sceneParams->mu;
+	float mu = volume->sceneParams->mu;
 
 	float* depth = view->depth->GetData(MEMORYDEVICE_CUDA);
-	int* voxelAllocationList = scene->localVBA.GetAllocationList();
-	int* excessAllocationList = scene->index.GetExcessAllocationList();
-	ITMHashEntry* hashTable = scene->index.GetEntries();
-	ITMHashSwapState* swapStates = scene->Swapping() ? scene->globalCache->GetSwapStates(true) : 0;
+	int* voxelAllocationList = volume->localVBA.GetAllocationList();
+	int* excessAllocationList = volume->index.GetExcessAllocationList();
+	ITMHashEntry* hashTable = volume->index.GetEntries();
+	ITMHashSwapState* swapStates = volume->Swapping() ? volume->globalCache->GetSwapStates(true) : 0;
 
-	ITMLib::HashEntryAllocationState* hashEntryStates_device = scene->index.GetHashEntryAllocationStates();
-	Vector3s* allocationBlockCoordinates_device = scene->index.GetAllocationBlockCoordinates();
+	ITMLib::HashEntryAllocationState* hashEntryStates_device = volume->index.GetHashEntryAllocationStates();
+	Vector3s* allocationBlockCoordinates_device = volume->index.GetAllocationBlockCoordinates();
 
-	int noTotalEntries = scene->index.hashEntryCount;
+	int hashEntryCount = volume->index.hashEntryCount;
 
-	int* visibleEntryHashCodes_device = scene->index.GetVisibleBlockHashCodes();
-	HashBlockVisibility* hashBlockVisibilityTypes_device = scene->index.GetBlockVisibilityTypes();
+	int* visibleBlockHashCodes_device = volume->index.GetVisibleBlockHashCodes();
+	HashBlockVisibility* hashBlockVisibilityTypes_device = volume->index.GetBlockVisibilityTypes();
 
 	dim3 cudaBlockSizeHV(16, 16);
 	dim3 gridSizeHV((int) ceil((float) depthImgSize.x / (float) cudaBlockSizeHV.x),
 	                (int) ceil((float) depthImgSize.y / (float) cudaBlockSizeHV.y));
 
 	dim3 cudaBlockSizeAL(256, 1);
-	dim3 gridSizeAL((int) ceil((float) noTotalEntries / (float) cudaBlockSizeAL.x));
-
-	dim3 cudaBlockSizeVS(256, 1);
-	dim3 gridSizeVS((int) ceil((float) scene->index.GetVisibleHashBlockCount() / (float) cudaBlockSizeVS.x));
+	dim3 gridSizeAL((int) ceil((float) hashEntryCount / (float) cudaBlockSizeAL.x));
 
 	float oneOverHashBlockSizeMeters = 1.0f / (voxelSize * VOXEL_BLOCK_SIZE);//m
 
@@ -76,21 +73,16 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 
 	ORUtils::MemoryBlock<AllocationTempData> allocationTempData(1, true, true);
 	AllocationTempData* allocationTempData_host = allocationTempData.GetData(MEMORYDEVICE_CPU);
-	allocationTempData_host->noAllocatedVoxelEntries = scene->localVBA.lastFreeBlockId;
-	allocationTempData_host->noAllocatedExcessEntries = scene->index.GetLastFreeExcessListId();
-	allocationTempData_host->visibleBlockCount = 0;
+	allocationTempData_host->noAllocatedVoxelEntries = volume->localVBA.lastFreeBlockId;
+	allocationTempData_host->noAllocatedExcessEntries = volume->index.GetLastFreeExcessListId();
 	allocationTempData.UpdateDeviceFromHost();
 
-	if (gridSizeVS.x > 0) {
-		setVisibleEntriesToVisibleAtPreviousFrameAndUnstreamed << < gridSizeVS, cudaBlockSizeVS >> >
-		                                                                        (hashBlockVisibilityTypes_device,
-				                                                                        visibleEntryHashCodes_device, scene->index.GetVisibleHashBlockCount());
-		ORcudaKernelCheck;
-	}
+	SetVisibilityToVisibleAtPreviousFrameAndUnstreamed(hashBlockVisibilityTypes_device, visibleBlockHashCodes_device,
+	                                                   volume->index.GetVisibleHashBlockCount());
 
-	bool useSwapping = scene->globalCache != nullptr;
+	bool useSwapping = volume->globalCache != nullptr;
 	do {
-		scene->index.ClearHashEntryAllocationStates();
+		volume->index.ClearHashEntryAllocationStates();
 		*collisionDetected.GetData(MEMORYDEVICE_CPU) = false;
 		collisionDetected.UpdateDeviceFromHost();
 
@@ -98,7 +90,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 		buildHashAllocAndVisibleType_device << < gridSizeHV, cudaBlockSizeHV >> > (hashEntryStates_device,
 				hashBlockVisibilityTypes_device,
 				allocationBlockCoordinates_device, depth, inverted_depth_camera_matrix, invProjParams_d, mu, depthImgSize, oneOverHashBlockSizeMeters, hashTable,
-				scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max,
+				volume->sceneParams->viewFrustum_min, volume->sceneParams->viewFrustum_max,
 				collisionDetected.GetData(MEMORYDEVICE_CUDA));
 		ORcudaKernelCheck;
 
@@ -109,39 +101,26 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 		} else {
 			allocateHashedVoxelBlocksUsingLists_SetVisibility_device << < gridSizeAL, cudaBlockSizeAL >> > (
 					voxelAllocationList, excessAllocationList, allocationTempData.GetData(MEMORYDEVICE_CUDA),
-							hashTable, noTotalEntries, hashEntryStates_device,
+							hashTable, hashEntryCount, hashEntryStates_device,
 							allocationBlockCoordinates_device, hashBlockVisibilityTypes_device);
 			ORcudaKernelCheck;
 		}
 		collisionDetected.UpdateHostFromDevice();
 	} while (*collisionDetected.GetData(MEMORYDEVICE_CPU));
 
-	if (useSwapping) {
-		buildVisibleList_device<true> << < gridSizeAL, cudaBlockSizeAL >> >
-		                                               (hashTable, swapStates, noTotalEntries, visibleEntryHashCodes_device,
-				                                               allocationTempData.GetData(
-						                                               MEMORYDEVICE_CUDA), hashBlockVisibilityTypes_device, depth_camera_matrix, projParams_d, depthImgSize, voxelSize);
-		ORcudaKernelCheck;
-	} else {
-		buildVisibleList_device<false> << < gridSizeAL, cudaBlockSizeAL >> >
-		                                                (hashTable, swapStates, noTotalEntries, visibleEntryHashCodes_device,
-				                                                allocationTempData.GetData(
-						                                                MEMORYDEVICE_CUDA), hashBlockVisibilityTypes_device, depth_camera_matrix, projParams_d, depthImgSize, voxelSize);
-		ORcudaKernelCheck;
-	}
+	BuildVisibilityList(volume, view, depth_camera_matrix);
 
 	if (useSwapping) {
 		reAllocateSwappedOutVoxelBlocks_device << < gridSizeAL, cudaBlockSizeAL >> >
-		                                                        (voxelAllocationList, hashTable, noTotalEntries,
+		                                                        (voxelAllocationList, hashTable, hashEntryCount,
 				                                                        allocationTempData.GetData(
 						                                                        MEMORYDEVICE_CUDA), hashBlockVisibilityTypes_device);
 		ORcudaKernelCheck;
 	}
 
 	allocationTempData.UpdateHostFromDevice();
-	scene->index.SetVisibleHashBlockCount(allocationTempData_host->visibleBlockCount);
-	scene->localVBA.lastFreeBlockId = allocationTempData_host->noAllocatedVoxelEntries;
-	scene->index.SetLastFreeExcessListId(allocationTempData_host->noAllocatedExcessEntries);
+	volume->localVBA.lastFreeBlockId = allocationTempData_host->noAllocatedVoxelEntries;
+	volume->index.SetLastFreeExcessListId(allocationTempData_host->noAllocatedExcessEntries);
 }
 
 template<typename TVoxel>
@@ -175,7 +154,6 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateUs
 	AllocationTempData* allocationTempData_host = allocationTempData.GetData(MEMORYDEVICE_CPU);
 	allocationTempData_host->noAllocatedVoxelEntries = targetVolume->localVBA.lastFreeBlockId;
 	allocationTempData_host->noAllocatedExcessEntries = targetVolume->index.GetLastFreeExcessListId();
-	allocationTempData_host->visibleBlockCount = 0;
 	allocationTempData.UpdateDeviceFromHost();
 
 	dim3 cudaBlockSizeAL(256, 1);
@@ -201,22 +179,20 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateUs
 
 template<typename TVoxel>
 void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::
-AllocateHashEntriesUsingLists(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
-		const HashEntryAllocationState* hashEntryStates_device,
-		Vector3s* blockCoordinates_device) {
+AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume) {
 
-	const int hashEntryCount = scene->index.hashEntryCount;
+	const HashEntryAllocationState* hashEntryAllocationStates_device = volume->index.GetHashEntryAllocationStates();
+	Vector3s* allocationBlockCoordinates_device = volume->index.GetAllocationBlockCoordinates();
 
-	int* voxelAllocationList = scene->localVBA.GetAllocationList();
-	int* excessAllocationList = scene->index.GetExcessAllocationList();
-	ITMHashEntry* hashTable = scene->index.GetIndexData();
+	const int hashEntryCount = volume->index.hashEntryCount;
+	int* voxelAllocationList = volume->localVBA.GetAllocationList();
+	int* excessAllocationList = volume->index.GetExcessAllocationList();
+	ITMHashEntry* hashTable = volume->index.GetIndexData();
 
 	ORUtils::MemoryBlock<AllocationTempData> allocationTempData(1, true, true);
 	AllocationTempData* allocationTempData_host = allocationTempData.GetData(MEMORYDEVICE_CPU);
-	allocationTempData_host->noAllocatedVoxelEntries = scene->localVBA.lastFreeBlockId;
-	allocationTempData_host->noAllocatedExcessEntries = scene->index.GetLastFreeExcessListId();
-	allocationTempData_host->visibleBlockCount = 0;
+	allocationTempData_host->noAllocatedVoxelEntries = volume->localVBA.lastFreeBlockId;
+	allocationTempData_host->noAllocatedExcessEntries = volume->index.GetLastFreeExcessListId();
 	allocationTempData.UpdateDeviceFromHost();
 
 	dim3 cudaBlockSizeAL(256, 1);
@@ -224,33 +200,32 @@ AllocateHashEntriesUsingLists(
 
 	allocateHashedVoxelBlocksUsingLists_device << < gridSizeAL, cudaBlockSizeAL >> > (
 			voxelAllocationList, excessAllocationList, allocationTempData.GetData(MEMORYDEVICE_CUDA),
-					hashTable, hashEntryCount, hashEntryStates_device,
-					blockCoordinates_device);
+					hashTable, hashEntryCount, hashEntryAllocationStates_device,
+					allocationBlockCoordinates_device);
 	allocationTempData.UpdateHostFromDevice();
-	scene->localVBA.lastFreeBlockId = allocationTempData_host->noAllocatedVoxelEntries;
-	scene->index.SetLastFreeExcessListId(allocationTempData_host->noAllocatedExcessEntries);
+	volume->localVBA.lastFreeBlockId = allocationTempData_host->noAllocatedVoxelEntries;
+	volume->index.SetLastFreeExcessListId(allocationTempData_host->noAllocatedExcessEntries);
 }
 
 
-template<typename TVoxelA>
-void ITMIndexingEngine<TVoxelA, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::
-AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxelA, ITMVoxelBlockHash>* scene,
-                                            const ITMLib::HashEntryAllocationState* hashEntryStates_device,
-                                            Vector3s* blockCoordinates_device,
-                                            HashBlockVisibility* hashBlockVisibilityTypes_device) {
+template<typename TVoxel>
+void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::
+AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume) {
 
+	const HashEntryAllocationState* hashEntryAllocationStates_device = volume->index.GetHashEntryAllocationStates();
+	Vector3s* allocationBlockCoordinates_device = volume->index.GetAllocationBlockCoordinates();
+	HashBlockVisibility* hashBlockVisibilityTypes_device = volume->index.GetBlockVisibilityTypes();
 
-	const int hashEntryCount = scene->index.hashEntryCount;
+	const int hashEntryCount = volume->index.hashEntryCount;
 
-	int* voxelAllocationList = scene->localVBA.GetAllocationList();
-	int* excessAllocationList = scene->index.GetExcessAllocationList();
-	ITMHashEntry* hashTable = scene->index.GetIndexData();
+	int* voxelAllocationList = volume->localVBA.GetAllocationList();
+	int* excessAllocationList = volume->index.GetExcessAllocationList();
+	ITMHashEntry* hashTable = volume->index.GetIndexData();
 
 	ORUtils::MemoryBlock<AllocationTempData> allocationTempData(1, true, true);
 	AllocationTempData* allocationTempData_host = allocationTempData.GetData(MEMORYDEVICE_CPU);
-	allocationTempData_host->noAllocatedVoxelEntries = scene->localVBA.lastFreeBlockId;
-	allocationTempData_host->noAllocatedExcessEntries = scene->index.GetLastFreeExcessListId();
-	allocationTempData_host->visibleBlockCount = 0;
+	allocationTempData_host->noAllocatedVoxelEntries = volume->localVBA.lastFreeBlockId;
+	allocationTempData_host->noAllocatedExcessEntries = volume->index.GetLastFreeExcessListId();
 	allocationTempData.UpdateDeviceFromHost();
 
 	dim3 cudaBlockSizeAL(256, 1);
@@ -258,11 +233,66 @@ AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxelA, ITMVoxelBloc
 
 	allocateHashedVoxelBlocksUsingLists_SetVisibility_device << < gridSizeAL, cudaBlockSizeAL >> > (
 			voxelAllocationList, excessAllocationList, allocationTempData.GetData(MEMORYDEVICE_CUDA),
-					hashTable, hashEntryCount, hashEntryStates_device,
-					blockCoordinates_device, hashBlockVisibilityTypes_device);
+					hashTable, hashEntryCount, hashEntryAllocationStates_device,
+					allocationBlockCoordinates_device, hashBlockVisibilityTypes_device);
 	allocationTempData.UpdateHostFromDevice();
-	scene->localVBA.lastFreeBlockId = allocationTempData_host->noAllocatedVoxelEntries;
-	scene->index.SetLastFreeExcessListId(allocationTempData_host->noAllocatedExcessEntries);
+	volume->localVBA.lastFreeBlockId = allocationTempData_host->noAllocatedVoxelEntries;
+	volume->index.SetLastFreeExcessListId(allocationTempData_host->noAllocatedExcessEntries);
+}
+
+template<typename TVoxel>
+void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::BuildVisibilityList(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view,
+		const Matrix4f& depth_camera_matrix) {
+
+	// ** volume data **
+	const int hashEntryCount = volume->index.hashEntryCount;
+	HashBlockVisibility* hashBlockVisibilityTypes_device = volume->index.GetBlockVisibilityTypes();
+	int* visibleBlockHashCodes_device = volume->index.GetVisibleBlockHashCodes();
+	ITMHashEntry* hashTable = volume->index.GetEntries();
+	bool useSwapping = volume->globalCache != nullptr;
+	ITMHashSwapState* swapStates = volume->Swapping() ? volume->globalCache->GetSwapStates(false) : 0;
+
+	// ** view data **
+	Vector4f depthCameraProjectionParameters = view->calib.intrinsics_d.projectionParamsSimple.all;
+	Vector2i depthImgSize = view->depth->noDims;
+	float voxelSize = volume->sceneParams->voxelSize;
+
+
+	// ** CUDA data **
+	ORUtils::MemoryBlock<int> visibleBlockCount(1, true, true);
+	dim3 cudaBlockSizeAL(256, 1);
+	dim3 gridSizeAL((int) ceil((float) hashEntryCount / (float) cudaBlockSizeAL.x));
+
+	if (useSwapping) {
+		buildVisibilityList_device < true > << <gridSizeAL, cudaBlockSizeAL >> >
+		(hashTable, swapStates, hashEntryCount, visibleBlockHashCodes_device,
+				visibleBlockCount.GetData(
+						MEMORYDEVICE_CUDA), hashBlockVisibilityTypes_device, depth_camera_matrix, depthCameraProjectionParameters, depthImgSize, voxelSize);
+		ORcudaKernelCheck;
+	} else {
+		buildVisibilityList_device < false > << <gridSizeAL, cudaBlockSizeAL >> >
+		(hashTable, swapStates, hashEntryCount, visibleBlockHashCodes_device,
+				visibleBlockCount.GetData(
+						MEMORYDEVICE_CUDA), hashBlockVisibilityTypes_device, depth_camera_matrix, depthCameraProjectionParameters, depthImgSize, voxelSize);
+		ORcudaKernelCheck;
+	}
+	visibleBlockCount.UpdateHostFromDevice();
+	volume->index.SetVisibleHashBlockCount(*visibleBlockCount.GetData(MEMORYDEVICE_CPU));
+}
+
+template<typename TVoxel>
+void
+ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::SetVisibilityToVisibleAtPreviousFrameAndUnstreamed(
+		HashBlockVisibility* hashBlockVisibilityTypes, const int* visibleBlockHashCodes, int visibleHashBlockCount) {
+	dim3 cudaBlockSizeVS(256, 1);
+	dim3 gridSizeVS((int) ceil((float) visibleHashBlockCount / (float) cudaBlockSizeVS.x));
+	if (gridSizeVS.x > 0) {
+		setVisibleEntriesToVisibleAtPreviousFrameAndUnstreamed << < gridSizeVS, cudaBlockSizeVS >> >
+		                                                                        (hashBlockVisibilityTypes,
+				                                                                        visibleBlockHashCodes, visibleHashBlockCount);
+		ORcudaKernelCheck;
+	}
 }
 
 template<typename TVoxel>
@@ -338,6 +368,15 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateUs
 		ITMIndexingEngine<TVoxelTarget, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance()
 				.AllocateHashEntriesUsingLists(targetVolume, hashEntryStates_device, blockCoordinates_device);
 	} while (*collision_detected.GetData(MEMORYDEVICE_CPU));
+}
+
+template<typename TVoxel>
+template<typename TVoxelTarget, typename TVoxelSource>
+void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateUsingOtherVolumeAndSetVisibilityExpanded(
+		ITMVoxelVolume<TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
+		ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* sourceVolume,
+		ITMView* view, const Matrix4f depth_camera_matrix) {
+
 }
 
 

@@ -35,7 +35,8 @@ class ITMIndexingEngineInterface {
 	/**
 	 * \brief Given a view with a new depth image, compute the
 		visible blocks, allocate them and update the hash
-		table so that the new image data can be integrated.
+		table, as well as the visible block list,
+	    so that the new image data can be integrated.
 	 * \param scene [out] the scene whose hash needs additional allocations
 	 * \param view [in] a view with a new depth image
 	 * \param trackingState [in] tracking state that corresponds to the given view
@@ -84,9 +85,9 @@ public:
 	                               const ITMTrackingState* trackingState, bool onlyUpdateVisibleList,
 	                               bool resetVisibleList) override;
 
-	virtual void AllocateFromDepth(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
-	                  const Matrix4f& depth_camera_matrix = Matrix4f::Identity(),
-	                  bool onlyUpdateVisibleList = false, bool resetVisibleList = false) override;
+	virtual void AllocateFromDepth(ITMVoxelVolume<TVoxel, TIndex>* volume, const ITMView* view,
+	                               const Matrix4f& depth_camera_matrix = Matrix4f::Identity(),
+	                               bool onlyUpdateVisibleList = false, bool resetVisibleList = false) override;
 
 
 	template<typename TVoxelTarget, typename TVoxelSource>

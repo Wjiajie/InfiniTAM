@@ -30,31 +30,26 @@ public:
 	/** "Global" content -- stored on in host memory only */
 	ITMGlobalCache<TVoxel, TIndex>* globalCache;
 
-	void SaveToDirectory(const std::string &outputDirectory) const;
-
-	void LoadFromDirectory(const std::string &outputDirectory);
-
 	ITMVoxelVolume(const ITMSceneParameters *_sceneParams, bool _useSwapping, MemoryDeviceType _memoryType,
 	               typename TIndex::InitializationParameters indexParameters = typename TIndex::InitializationParameters());
 	ITMVoxelVolume(MemoryDeviceType memoryDeviceType, typename TIndex::InitializationParameters indexParameters = typename TIndex::InitializationParameters());
-
 	ITMVoxelVolume(const ITMVoxelVolume& other, MemoryDeviceType _memoryType);
-
 	~ITMVoxelVolume()
 	{
 		if (globalCache != nullptr) delete globalCache;
 	}
 
+	void Reset();
 	void SetFrom(const ITMVoxelVolume& other);
+	void SaveToDirectory(const std::string &outputDirectory) const;
+	void LoadFromDirectory(const std::string &outputDirectory);
 
 	/** Return whether this scene is using swapping mechanism or not. **/
 	bool Swapping() const{
 		return this->globalCache != nullptr;
 	}
 
-
 	// Suppress the default copy constructor and assignment operator (C++11 way)
-
 	ITMVoxelVolume(const ITMVoxelVolume&) = delete;
 	//ITMVoxelVolume(ITMVoxelVolume&&) noexcept = default;
 	ITMVoxelVolume& operator=(const ITMVoxelVolume&) = delete;

@@ -35,7 +35,7 @@ bool contentAlmostEqual_CPU(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxelVolume<T
                             ToleranceType tolerance) {
 	VoxelEqualFunctor<TVoxel, ToleranceType> functor(tolerance);
 	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, MEMORYDEVICE_CPU>
-	::template DualVoxelTraversal_AllTrue(a, b, functor);
+	::template DualVoxelTraversal_AllTrue(a, b, functor, false);
 }
 
 template<typename TVoxel, typename TIndexA, typename TIndexB, typename ToleranceType>
@@ -43,7 +43,7 @@ bool contentAlmostEqual_CPU_Verbose(ITMVoxelVolume<TVoxel, TIndexA>* a, ITMVoxel
                             ToleranceType tolerance) {
 	VoxelEqualVerboseFunctor<TVoxel, ToleranceType> functor(tolerance);
 	return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, MEMORYDEVICE_CPU>
-	::template DualVoxelPositionTraversal_AllTrue(a, b, functor);
+	::template DualVoxelPositionTraversal_AllTrue(a, b, functor, true);
 }
 
 
@@ -60,7 +60,7 @@ struct FlaggedVoxelComparisonUtility<true, TVoxel, TIndexA, TIndexB, ToleranceTy
 	             ToleranceType tolerance) {
 		VoxelEqualFunctor<TVoxel, ToleranceType> functor(tolerance);
 		return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, MEMORYDEVICE_CPU>
-		::template DualVoxelTraversal_AllTrue_MatchingFlags(a, b, flags, functor);
+		::template DualVoxelTraversal_AllTrue_MatchingFlags(a, b, flags, functor, false);
 	}
 
 	static
@@ -68,7 +68,7 @@ struct FlaggedVoxelComparisonUtility<true, TVoxel, TIndexA, TIndexB, ToleranceTy
 	                     ToleranceType tolerance) {
 		VoxelEqualVerboseFunctor<TVoxel, ToleranceType> functor(tolerance);
 		return ITMDualSceneTraversalEngine<TVoxel, TVoxel, TIndexA, TIndexB, MEMORYDEVICE_CPU>
-		::template DualVoxelPositionTraversal_AllTrue_MatchingFlags(a, b, flags, functor);
+		::template DualVoxelPositionTraversal_AllTrue_MatchingFlags(a, b, flags, functor, true);
 	}
 };
 
