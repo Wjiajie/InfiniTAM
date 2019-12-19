@@ -54,3 +54,11 @@ template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
 template<typename TVoxelTarget, typename TVoxelSource>
 void ITMIndexingEngine<TVoxel, TIndex, TMemoryDeviceType>::AllocateUsingOtherVolumeExpanded(
 		ITMVoxelVolume<TVoxelTarget, TIndex>* targetVolume, ITMVoxelVolume<TVoxelSource, TIndex>* sourceVolume) {}
+
+template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+template<typename TVoxelTarget, typename TVoxelSource>
+void ITMIndexingEngine<TVoxel, TIndex, TMemoryDeviceType>::AllocateUsingOtherVolumeAndSetVisibilityExpanded(
+		ITMVoxelVolume<TVoxelTarget, TIndex>* targetVolume,
+		ITMVoxelVolume<TVoxelSource, TIndex>* sourceVolume,
+		ITMView* view, const Matrix4f& depth_camera_matrix) {}
+

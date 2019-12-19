@@ -230,7 +230,7 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 				           cudaMemcpyDeviceToHost));
 		if (tempData->countOfBlocksToCopy == 0) return false; //source volume empty in bounds or destination hash full
 		ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance()
-				.AllocateHashEntriesUsingLists(destination, hashEntryStates_device, blockCoordinates_device);
+				.AllocateHashEntriesUsingLists(destination);
 
 
 		dim3 cudaBlockSizeCP(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
@@ -275,7 +275,7 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 		dim3 gridSizeAL((int) ceil((float) hashEntryCount / (float) cudaBlockSizeAL.x));
 
 		ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance()
-				.AllocateHashEntriesUsingLists(destination, hashEntryStates_device, blockCoordinates_device);
+				.AllocateHashEntriesUsingLists(destination);
 
 
 		dim3 cudaBlockSizeCP(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
@@ -328,7 +328,7 @@ bool ITMSceneManipulationEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CopyScene(
 		ORcudaKernelCheck;
 		// allocate the necessary voxel blocks in the destination structure.
 		ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance()
-				.AllocateHashEntriesUsingLists(destination, hashEntryStates_device, blockCoordinates_device);
+				.AllocateHashEntriesUsingLists(destination);
 
 
 		dim3 cudaBlockSizeCP(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);

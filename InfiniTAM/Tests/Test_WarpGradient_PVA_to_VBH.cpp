@@ -129,12 +129,10 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, int iteration
 	}
 }
 
-
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CPU) {
 	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);
-	GenericWarpTest<MEMORYDEVICE_CPU>(switches, 2, SAVE_SUCCESSIVE_ITERATIONS);
+	GenericWarpTest<MEMORYDEVICE_CPU>(switches, 10, TEST_SUCCESSIVE_ITERATIONS);
 }
-
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CUDA) {
 	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);

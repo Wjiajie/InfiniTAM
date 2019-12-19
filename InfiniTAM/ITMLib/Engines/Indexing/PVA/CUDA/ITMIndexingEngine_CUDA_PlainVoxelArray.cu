@@ -36,6 +36,15 @@ template void ITMIndexingEngine<ITMVoxel,ITMPlainVoxelArray,MEMORYDEVICE_CUDA>::
 template void ITMIndexingEngine<ITMVoxel,ITMPlainVoxelArray,MEMORYDEVICE_CUDA>::AllocateUsingOtherVolumeExpanded(
 		ITMLib::ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* targetVolume,
 		ITMLib::ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* sourceVolume);
+template void ITMIndexingEngine<ITMVoxel,ITMPlainVoxelArray,MEMORYDEVICE_CUDA>::AllocateUsingOtherVolumeAndSetVisibilityExpanded(
+		ITMLib::ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* targetVolume,
+		ITMLib::ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* sourceVolume,
+		ITMView* view, const Matrix4f& depth_camera_matrix);
+template void ITMIndexingEngine<ITMVoxel,ITMPlainVoxelArray,MEMORYDEVICE_CUDA>::AllocateUsingOtherVolumeAndSetVisibilityExpanded(
+		ITMLib::ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* targetVolume,
+		ITMLib::ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* sourceVolume,
+		ITMView* view, const Matrix4f& depth_camera_matrix);
+
 
 template void ITMIndexingEngine<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>::
 AllocateFromWarpedVolume<WarpType::WARP_CUMULATIVE>(

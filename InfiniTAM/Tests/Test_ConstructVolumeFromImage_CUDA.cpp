@@ -36,6 +36,7 @@
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
 #include "TestUtils.h"
+#include "../ITMLib/Engines/Manipulation/ITMSceneManipulationEngineFactory.h"
 
 using namespace ITMLib;
 
@@ -98,6 +99,56 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CUDA, Frame16And17Fixture)
 
 	delete volume_VBH_17;
 	delete volume_PVA_17;
+}
+
+BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_Expnaded_CPU, Frame16And17Fixture) {
+
+	ITMView* view = nullptr;
+	updateView(&view, "TestData/snoopy_depth_000017.png",
+	           "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
+	           "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA);
+
+	// *** construct volumes ***
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> volume_PVA_17(MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
+	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>().ResetScene(&volume_PVA_17);
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine_PVA =
+			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(MEMORYDEVICE_CUDA);
+	reconstructionEngine_PVA->GenerateTsdfVolumeFromView(&volume_PVA_17, view);
+
+
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17(MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
+	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>().ResetScene(&volume_VBH_17);
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17_depth_allocation(MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
+	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>().ResetScene(&volume_VBH_17_depth_allocation);
+
+	ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash, MEMORYDEVICE_CUDA>& indexer =
+			ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance();
+	indexer.AllocateFromDepth(&volume_VBH_17_depth_allocation, view);
+	indexer.AllocateUsingOtherVolumeAndSetVisibilityExpanded(&volume_VBH_17, &volume_VBH_17_depth_allocation, view);
+
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
+			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(MEMORYDEVICE_CUDA);
+	reconstructionEngine_VBH->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17, view);
+	reconstructionEngine_VBH->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17_depth_allocation, view);
+
+	float absoluteTolerance = 1e-7;
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA_Verbose(&volume_PVA_17, &volume_VBH_17_depth_allocation, absoluteTolerance));
+	BOOST_REQUIRE(contentForFlagsAlmostEqual_CUDA_Verbose(&volume_PVA_17, &volume_VBH_17_depth_allocation, VoxelFlags::VOXEL_NONTRUNCATED,
+	                                                     absoluteTolerance));
+
+//	std::cout << SceneStatCalc_CUDA_VBH_Voxel::Instance().ComputeAllocatedHashBlockCount(&volume_VBH_17_depth_allocation) << std::endl;
+//	std::cout << SceneStatCalc_CUDA_VBH_Voxel::Instance().ComputeAllocatedHashBlockCount(&volume_VBH_17) << std::endl;
+//	int hashCode;
+//	ITMHashEntry entry = volume_VBH_17.index.GetHashEntryAt_CUDA(-5, 7, 24, hashCode);
+
+
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA_Verbose(&volume_PVA_17, &volume_VBH_17, absoluteTolerance));
+	BOOST_REQUIRE(contentForFlagsAlmostEqual_CUDA_Verbose(&volume_PVA_17, &volume_VBH_17, VoxelFlags::VOXEL_NONTRUNCATED,
+	                                                     absoluteTolerance));
+
+	delete reconstructionEngine_PVA;
+	delete reconstructionEngine_VBH;
+	delete view;
 }
 
 BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {

@@ -158,7 +158,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 		}
 
 		ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance().
-				AllocateHashEntriesUsingLists(destination, hashEntryStates_device, blockCoords_device);
+				AllocateHashEntriesUsingLists(destination);
 
 		//iterate over source hash blocks & fill in the target hash blocks
 		for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
@@ -220,7 +220,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 		}
 
 		ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance().
-				AllocateHashEntriesUsingLists(destination, hashEntryStates_device, blockCoords_device);
+				AllocateHashEntriesUsingLists(destination);
 		ITMVoxelBlockHash::IndexCache source_cache;
 
 		for (int source_z = bounds.min_z; source_z < bounds.max_z; source_z++) {
@@ -291,7 +291,7 @@ bool ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 
 
 			ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance().
-					AllocateHashEntriesUsingLists(destination, hashEntryStates_device, blockCoordinates_device);
+					AllocateHashEntriesUsingLists(destination);
 		} while (collisionDetected);
 #ifdef WITH_OPENMP
 #pragma omp parallel for default(none)

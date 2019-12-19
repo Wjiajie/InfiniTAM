@@ -36,6 +36,7 @@ using namespace ITMLib;
 struct AllocationTempData {
 	int noAllocatedVoxelEntries;
 	int noAllocatedExcessEntries;
+	int visibleBlockCount;
 };
 
 
@@ -118,11 +119,11 @@ inline bool MarkAsNeedingAllocationIfNotFound(ITMLib::HashEntryAllocationState* 
 
 
 _CPU_AND_GPU_CODE_ inline void
-MarkForAllocationAndSetVisibilityTypeIfNotFound(Vector3s desiredHashBlockPosition,
-                                                const CONSTPTR(ITMHashEntry)* hashTable,
-                                                ITMLib::HashEntryAllocationState* hashEntryStates,
+MarkForAllocationAndSetVisibilityTypeIfNotFound(ITMLib::HashEntryAllocationState* hashEntryStates,
+                                                Vector3s* hashBlockCoordinates,
                                                 HashBlockVisibility* blockVisibilityTypes,
-                                                Vector3s* hashBlockCoordinates, bool& collisionDetected) {
+                                                Vector3s desiredHashBlockPosition,
+                                                const CONSTPTR(ITMHashEntry)* hashTable, bool& collisionDetected) {
 
 	int hashCode = HashCodeFromBlockPosition(desiredHashBlockPosition);
 
@@ -329,9 +330,10 @@ buildHashAllocAndVisibleTypePP(ITMLib::HashEntryAllocationState* hashEntryStates
 						potentiallyMissedBlockPosition.values[iDirection] = currentHashBlockPosition.values[iDirection];
 						if (SegmentIntersectsGridAlignedCube3D(marchSegment, TO_FLOAT3(potentiallyMissedBlockPosition),
 						                                       1.0f)) {
-							MarkForAllocationAndSetVisibilityTypeIfNotFound(potentiallyMissedBlockPosition, hashTable,
-							                                                hashEntryStates, blockVisibilityTypes,
-							                                                blockCoords, collisionDetected);
+							MarkForAllocationAndSetVisibilityTypeIfNotFound(
+									hashEntryStates,
+									blockCoords, blockVisibilityTypes, potentiallyMissedBlockPosition, hashTable,
+									collisionDetected);
 						}
 					}
 				}
@@ -342,24 +344,27 @@ buildHashAllocAndVisibleTypePP(ITMLib::HashEntryAllocationState* hashEntryStates
 					potentiallyMissedBlockPosition.values[iDirection] = currentHashBlockPosition.values[iDirection];
 					if (SegmentIntersectsGridAlignedCube3D(marchSegment, TO_FLOAT3(potentiallyMissedBlockPosition),
 					                                       1.0f)) {
-						MarkForAllocationAndSetVisibilityTypeIfNotFound(potentiallyMissedBlockPosition, hashTable,
-						                                                hashEntryStates, blockVisibilityTypes,
-						                                                blockCoords, collisionDetected);
+						MarkForAllocationAndSetVisibilityTypeIfNotFound(
+								hashEntryStates,
+								blockCoords, blockVisibilityTypes, potentiallyMissedBlockPosition, hashTable,
+								collisionDetected);
 					}
 					potentiallyMissedBlockPosition = currentHashBlockPosition;
 					potentiallyMissedBlockPosition.values[iDirection] = previousHashBlockPosition.values[iDirection];
 					if (SegmentIntersectsGridAlignedCube3D(marchSegment, TO_FLOAT3(potentiallyMissedBlockPosition),
 					                                       1.0f)) {
-						MarkForAllocationAndSetVisibilityTypeIfNotFound(potentiallyMissedBlockPosition, hashTable,
-						                                                hashEntryStates, blockVisibilityTypes,
-						                                                blockCoords, collisionDetected);
+						MarkForAllocationAndSetVisibilityTypeIfNotFound(
+								hashEntryStates,
+								blockCoords, blockVisibilityTypes, potentiallyMissedBlockPosition, hashTable,
+								collisionDetected);
 					}
 				}
 			}
 		}
-		MarkForAllocationAndSetVisibilityTypeIfNotFound(currentHashBlockPosition, hashTable, hashEntryStates,
-		                                                blockVisibilityTypes,
-		                                                blockCoords, collisionDetected);
+		MarkForAllocationAndSetVisibilityTypeIfNotFound(hashEntryStates,
+		                                                blockCoords,
+		                                                blockVisibilityTypes, currentHashBlockPosition, hashTable,
+		                                                collisionDetected);
 
 		currentCheckPosition_HashBlocks += strideVector;
 		previousHashBlockPosition = currentHashBlockPosition;

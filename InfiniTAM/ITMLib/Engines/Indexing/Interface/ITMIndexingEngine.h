@@ -98,6 +98,12 @@ public:
 	void AllocateUsingOtherVolumeExpanded(ITMVoxelVolume<TVoxelTarget, TIndex>* targetVolume,
 	                                      ITMVoxelVolume<TVoxelSource, TIndex>* sourceVolume);
 
+
+	template<typename TVoxelTarget, typename TVoxelSource>
+	void AllocateUsingOtherVolumeAndSetVisibilityExpanded(ITMVoxelVolume<TVoxelTarget, TIndex>* targetVolume,
+	                                                      ITMVoxelVolume<TVoxelSource, TIndex>* sourceVolume,
+	                                                      ITMView* view, const Matrix4f& depth_camera_matrix = Matrix4f::Identity());
+
 	template<WarpType TWarpType, typename TWarp>
 	void AllocateFromWarpedVolume(
 			ITMVoxelVolume<TWarp, TIndex>* warpField,

@@ -28,9 +28,6 @@ class ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA> :
 private:
 	ITMIndexingEngine() = default;
 
-	void BuildVisibilityList(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view,
-	                         const Matrix4f& depth_camera_matrix = Matrix4f::Identity());
-
 	void SetVisibilityToVisibleAtPreviousFrameAndUnstreamed(HashBlockVisibility* hashBlockVisibilityTypes,
 	                                                        const int* visibleBlockHashCodes,
 	                                                        int visibleHashBlockCount);
@@ -55,6 +52,9 @@ public:
 
 	void AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* volume) override;
 
+	void BuildVisibilityList(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view,
+	                         const Matrix4f& depth_camera_matrix = Matrix4f::Identity());
+
 	ITMHashEntry FindHashEntry(const ITMVoxelBlockHash& index, const Vector3s& coordinates) override;
 	ITMHashEntry FindHashEntry(const ITMVoxelBlockHash& index, const Vector3s& coordinates, int& hashCode);
 	bool AllocateHashBlockAt(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, Vector3s at, int& hashCode) override;
@@ -70,7 +70,7 @@ public:
 	template<typename TVoxelTarget, typename TVoxelSource>
 	void AllocateUsingOtherVolumeAndSetVisibilityExpanded(ITMVoxelVolume<TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
 	                                                      ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* sourceVolume,
-	                                                      ITMView* view, const Matrix4f depth_camera_matrix = Matrix4f::Identity());
+	                                                      ITMView* view, const Matrix4f& depth_camera_matrix = Matrix4f::Identity());
 };
 } //namespace ITMLib
 

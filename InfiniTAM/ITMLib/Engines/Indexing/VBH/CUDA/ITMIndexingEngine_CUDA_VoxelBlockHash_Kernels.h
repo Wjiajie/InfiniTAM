@@ -26,10 +26,10 @@ namespace {
 
 //TODO: provide a better nomenclature for hash block visibility, i.e. an enum inheriting from unsigned char
 __global__ void setVisibleEntriesToVisibleAtPreviousFrameAndUnstreamed(HashBlockVisibility* entriesVisibleType,
-		int* visibleEntryIDs, int visibleEntryCount) {
+                                                                       const int* visibleBlockHashCodes, int visibleEntryCount) {
 	int entryId = threadIdx.x + blockIdx.x * blockDim.x;
 	if (entryId > visibleEntryCount - 1) return;
-	entriesVisibleType[visibleEntryIDs[entryId]] = VISIBLE_AT_PREVIOUS_FRAME_AND_UNSTREAMED;
+	entriesVisibleType[visibleBlockHashCodes[entryId]] = VISIBLE_AT_PREVIOUS_FRAME_AND_UNSTREAMED;
 }
 
 __global__
@@ -144,7 +144,8 @@ void allocateHashedVoxelBlocksUsingLists_device(
 }
 
 __global__
-void buildHashAllocationTypeList_VolumeToVolume(ITMLib::HashEntryAllocationState* hashEntryStates, Vector3s* blockCoordinates,
+void buildHashAllocationTypeList_VolumeToVolume(ITMLib::HashEntryAllocationState* hashEntryStates,
+                                                Vector3s* blockCoordinates,
                                                 ITMHashEntry* targetHashTable, const ITMHashEntry* sourceHashTable,
                                                 int hashEntryCount,
                                                 bool* collisionDetected) {
@@ -160,7 +161,8 @@ void buildHashAllocationTypeList_VolumeToVolume(ITMLib::HashEntryAllocationState
 }
 
 
-__global__ void buildHashAllocAndVisibleType_device(ITMLib::HashEntryAllocationState* hashEntryStates, HashBlockVisibility* blockVisibilityTypes,
+__global__ void buildHashAllocAndVisibleType_device(ITMLib::HashEntryAllocationState* hashEntryStates,
+                                                    HashBlockVisibility* blockVisibilityTypes,
                                                     Vector3s* blockCoords, const float* depth,
                                                     Matrix4f invertedCameraTransform, Vector4f projParams_d, float mu,
                                                     Vector2i _imgSize, float oneOverHashBlockSizeMeters,
@@ -253,57 +255,11 @@ __global__ void findHashEntry_device(ITMHashEntry* entry, const ITMHashEntry* ha
 	}
 }
 
-__device__
-inline bool MarkAsNeedingAllocationIfNotFound_CUDA(ITMLib::HashEntryAllocationState* entryAllocationTypes,
-                                              Vector3s* hashBlockCoordinates, int& hashIdx,
-                                              const CONSTPTR(Vector3s)& desiredHashBlockPosition,
-                                              const CONSTPTR(ITMHashEntry)* hashTable, bool& collisionDetected) {
-
-	ITMHashEntry hashEntry = hashTable[hashIdx];
-	//check if hash table contains entry
-
-	if (!(IS_EQUAL3(hashEntry.pos, desiredHashBlockPosition) && hashEntry.ptr >= -1)) {
-		if (hashEntry.ptr >= -1) {
-			//search excess list only if there is no room in ordered part
-			while (hashEntry.offset >= 1) {
-				hashIdx = ORDERED_LIST_SIZE + hashEntry.offset - 1;
-				hashEntry = hashTable[hashIdx];
-
-				if (IS_EQUAL3(hashEntry.pos, desiredHashBlockPosition) && hashEntry.ptr >= -1) {
-					return false;
-				}
-			}
-			if (atomicCAS((char*) entryAllocationTypes + hashIdx,
-			              (char) ITMLib::NEEDS_NO_CHANGE,
-			              (char) ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST) != ITMLib::NEEDS_NO_CHANGE) {
-				//hash code already marked for allocation, but at different coordinates, cannot allocate
-				collisionDetected = true;
-				return false;
-			} else {
-				hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
-				return true;
-			}
-
-		}
-		if (atomicCAS((char*) entryAllocationTypes + hashIdx,
-		              (char) ITMLib::NEEDS_NO_CHANGE,
-		              (char) ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST) != ITMLib::NEEDS_NO_CHANGE){
-			//hash code already marked for allocation, but at different coordinates, cannot allocate
-			collisionDetected = true;
-			return false;
-		} else {
-			hashBlockCoordinates[hashIdx] = desiredHashBlockPosition;
-			return true;
-		}
-	}
-	// already have hash block, no allocation needed
-	return false;
-
-};
 
 __global__ void markForAllocationBasedOnOneRingAroundAnotherAllocation_device(
-		ITMLib::HashEntryAllocationState* hashEntryStates, Vector3s* blockCoordinates, bool* collisionDetected,
-		const ITMHashEntry* sourceHashTable, const ITMHashEntry* targetHashTable, int hashEntryCount) {
+		ITMLib::HashEntryAllocationState* hashEntryStates, Vector3s* blockCoordinates,
+		const ITMHashEntry* sourceHashTable, const ITMHashEntry* targetHashTable, int hashEntryCount,
+		bool* collisionDetected) {
 
 	if (*collisionDetected) return;
 	int hashCode = blockIdx.x;
@@ -312,13 +268,29 @@ __global__ void markForAllocationBasedOnOneRingAroundAnotherAllocation_device(
 	const ITMHashEntry& sourceHashEntry = sourceHashTable[hashCode];
 	if (sourceHashEntry.ptr < 0) return;
 
-	Vector3s targetBlockCoordinates = sourceHashEntry.pos + Vector3s(threadIdx.x - 1, threadIdx.y - 1, threadIdx.z -1);
+	Vector3s targetBlockCoordinates = sourceHashEntry.pos + Vector3s(threadIdx.x - 1, threadIdx.y - 1, threadIdx.z - 1);
 
 	int targetHash = HashCodeFromBlockPosition(targetBlockCoordinates);
+	MarkAsNeedingAllocationIfNotFound(hashEntryStates, blockCoordinates, targetHash, targetBlockCoordinates,
+	                                  targetHashTable, *collisionDetected);
+}
 
-	bool allocate = MarkAsNeedingAllocationIfNotFound_CUDA(hashEntryStates, blockCoordinates,
-	                                  targetHash, targetBlockCoordinates, targetHashTable,
-	                                  *collisionDetected);
+__global__ void markForAllocationAndSetVisibilityBasedOnOneRingAroundAnotherAllocation_device(
+		ITMLib::HashEntryAllocationState* hashEntryStates, Vector3s* blockCoordinates,
+		HashBlockVisibility* hashBlockVisibilityTypes,
+		const ITMHashEntry* sourceHashTable, const ITMHashEntry* targetHashTable, int hashEntryCount,
+		bool* collisionDetected) {
+
+	if (*collisionDetected) return;
+	int hashCode = blockIdx.x;
+
+	if (hashCode >= hashEntryCount) return;
+	const ITMHashEntry& sourceHashEntry = sourceHashTable[hashCode];
+	if (sourceHashEntry.ptr < 0) return;
+
+	Vector3s targetBlockCoordinates = sourceHashEntry.pos + Vector3s(threadIdx.x - 1, threadIdx.y - 1, threadIdx.z - 1);
+	MarkForAllocationAndSetVisibilityTypeIfNotFound(hashEntryStates, blockCoordinates, hashBlockVisibilityTypes,
+	                                                targetBlockCoordinates, targetHashTable, *collisionDetected);
 }
 
 struct SingleHashAllocationData {

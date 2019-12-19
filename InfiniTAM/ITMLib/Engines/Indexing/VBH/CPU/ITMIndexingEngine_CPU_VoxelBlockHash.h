@@ -27,13 +27,9 @@ class ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU> :
 private:
 	ITMIndexingEngine() = default;
 
-	void BuildVisibilityList(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view,
-	                         const Matrix4f& depth_camera_matrix = Matrix4f::Identity());
-
 	void SetVisibilityToVisibleAtPreviousFrameAndUnstreamed(HashBlockVisibility* hashBlockVisibilityTypes,
 	                                                        const int* visibleBlockHashCodes,
 	                                                        int visibleHashBlockCount);
-
 public:
 	static ITMIndexingEngine& Instance() {
 		static ITMIndexingEngine instance; // Guaranteed to be destroyed.
@@ -52,6 +48,9 @@ public:
 	                       const Matrix4f& depth_camera_matrix = Matrix4f::Identity(),
 	                       bool onlyUpdateVisibleList = false, bool resetVisibleList = false) override;
 
+	void BuildVisibilityList(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view,
+	                         const Matrix4f& depth_camera_matrix = Matrix4f::Identity());
+
 	void AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume) override;
 
 	void AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume) override;
@@ -65,14 +64,34 @@ public:
 	template<typename TVoxelTarget, typename TVoxelSource>
 	void AllocateUsingOtherVolume(ITMVoxelVolume<TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
 	                              ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* sourceVolume);
+	/**
+	 * \brief Allocate the same blocks in the target volume as are allocated in the source volume, plus an additional
+	 * one-ring of blocks around them. Does not modify previously-existing allocation in the target volume.
+	 * \tparam TVoxelTarget voxel type of the target volume
+	 * \tparam TVoxelSource voxel type of the source volume
+	 * \param targetVolume target volume
+	 * \param sourceVolume source volume
+	 */
 	template<typename TVoxelTarget, typename TVoxelSource>
 	void AllocateUsingOtherVolumeExpanded(ITMVoxelVolume<TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
 	                                      ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* sourceVolume);
 
+	/**
+	 * \brief Allocate the same blocks in the target volume as are allocated in the source volume, plus an additional
+	 * one-ring of blocks around them, and set their visibility relative to the provided view assuming the provided
+	 * depth camera matrix. Does not modify previously-existing allocation in the target volume.
+	 * \tparam TVoxelTarget voxel type of the target volume
+	 * \tparam TVoxelSource voxel type of the source volume
+	 * \param targetVolume target volume
+	 * \param sourceVolume source volume
+	 * \param view the view (assumed to be the view that was used to allocate blocks in the source volume)
+	 * \param depth_camera_matrix transformation of the camera from world origin to it's position that corresponds to
+	 * the provided view
+	 */
 	template<typename TVoxelTarget, typename TVoxelSource>
 	void AllocateUsingOtherVolumeAndSetVisibilityExpanded(ITMVoxelVolume<TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
 	                                                      ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* sourceVolume,
-	                                                      ITMView* view, const Matrix4f depth_camera_matrix = Matrix4f::Identity());
+	                                                      ITMView* view, const Matrix4f& depth_camera_matrix = Matrix4f::Identity());
 
 };
 } //namespace ITMLib
