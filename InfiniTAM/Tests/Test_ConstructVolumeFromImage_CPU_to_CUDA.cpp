@@ -43,48 +43,67 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_VBH_Expnaded_CPU_CUDA, Frame16And1
 	           "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
 	           "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU);
 
-// *** construct volumes ***
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> volume_PVA_17(MEMORYDEVICE_CPU, InitParams<ITMPlainVoxelArray>());
-	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CPU>().ResetScene(
-			&volume_PVA_17);
-	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine_PVA =
-			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(
-					MEMORYDEVICE_CPU);
-	reconstructionEngine_PVA->GenerateTsdfVolumeFromView(&volume_PVA_17, view_CPU);
+	ITMView* view_CUDA = nullptr;
+	updateView(&view_CUDA, "TestData/snoopy_depth_000017.png",
+	           "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
+	           "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA);
 
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17(MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
-	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>().ResetScene(
-			&volume_VBH_17);
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17_depth_allocation(MEMORYDEVICE_CPU,
-	                                                                           InitParams<ITMVoxelBlockHash>());
-	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>().ResetScene(
-			&volume_VBH_17_depth_allocation);
-
-	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>& indexer =
+// *** initialize volumes ***
+	// CPU
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17_CPU(MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
+	volume_VBH_17_CPU.Reset();
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17_CPU_depth_allocation(MEMORYDEVICE_CPU,
+	                                                                               InitParams<ITMVoxelBlockHash>());
+	volume_VBH_17_CPU_depth_allocation.Reset();
+	// CUDA
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17_CUDA(MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
+	volume_VBH_17_CUDA.Reset();
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17_CUDA_depth_allocation(MEMORYDEVICE_CUDA,
+	                                                                               InitParams<ITMVoxelBlockHash>());
+	volume_VBH_17_CUDA_depth_allocation.Reset();
+	// comparison volume
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_CUDA_to_CPU(MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
+	volume_CUDA_to_CPU.Reset();
+	
+// *** allocate hash blocks ***
+	// CPU
+	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>& indexer_CPU =
 			ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance();
-	indexer.AllocateFromDepth(&volume_VBH_17_depth_allocation, view_CPU);
-	indexer.AllocateUsingOtherVolumeAndSetVisibilityExpanded(&volume_VBH_17, &volume_VBH_17_depth_allocation, view_CPU);
+	indexer_CPU.AllocateFromDepth(&volume_VBH_17_CPU_depth_allocation, view_CPU);
+	indexer_CPU.AllocateUsingOtherVolumeAndSetVisibilityExpanded(&volume_VBH_17_CPU, &volume_VBH_17_CPU_depth_allocation, view_CPU);
+	// CUDA
+	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>& indexer_CUDA =
+			ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance();
+	indexer_CUDA.AllocateFromDepth(&volume_VBH_17_CUDA_depth_allocation, view_CUDA);
+	indexer_CUDA.AllocateUsingOtherVolumeAndSetVisibilityExpanded(&volume_VBH_17_CUDA, &volume_VBH_17_CUDA_depth_allocation, view_CUDA);
 
-	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
+
+// *** compare before depth integration ***
+	volume_CUDA_to_CPU.SetFrom(volume_VBH_17_CUDA);
+	float absoluteTolerance = 1e-7;
+	BOOST_REQUIRE(contentAlmostEqual_CPU_Verbose(&volume_CUDA_to_CPU, &volume_VBH_17_CPU, absoluteTolerance));
+
+// *** integrate depth ***
+	// CPU
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH_CPU =
 			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(
 					MEMORYDEVICE_CPU);
-	reconstructionEngine_VBH->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17, view_CPU);
-	reconstructionEngine_VBH->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17_depth_allocation, view_CPU);
+	reconstructionEngine_VBH_CPU->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17_CPU, view_CPU);
+	reconstructionEngine_VBH_CPU->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17_CPU_depth_allocation, view_CPU);
+	// CUDA
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH_CUDA =
+			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(
+					MEMORYDEVICE_CUDA);
+	reconstructionEngine_VBH_CUDA->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17_CUDA, view_CUDA);
+	reconstructionEngine_VBH_CUDA->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17_CUDA_depth_allocation, view_CUDA);
 
+// *** compare after depth integration ***
+	volume_CUDA_to_CPU.SetFrom(volume_VBH_17_CUDA);
+	BOOST_REQUIRE(contentAlmostEqual_CPU_Verbose(&volume_CUDA_to_CPU, &volume_VBH_17_CPU, absoluteTolerance));
 
-	float absoluteTolerance = 1e-7;
-	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU_Verbose(&volume_PVA_17, &volume_VBH_17_depth_allocation,
-	                                                      absoluteTolerance));
-	BOOST_REQUIRE(contentForFlagsAlmostEqual_CPU_Verbose(&volume_PVA_17, &volume_VBH_17_depth_allocation,
-	                                                     VoxelFlags::VOXEL_NONTRUNCATED,
-	                                                     absoluteTolerance));
-
-	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU_Verbose(&volume_PVA_17, &volume_VBH_17, absoluteTolerance));
-	BOOST_REQUIRE(contentForFlagsAlmostEqual_CPU_Verbose(&volume_PVA_17, &volume_VBH_17, VoxelFlags::VOXEL_NONTRUNCATED,
-	                                                     absoluteTolerance));
-
-	delete reconstructionEngine_PVA;
-	delete reconstructionEngine_VBH;
+	delete reconstructionEngine_VBH_CUDA;
+	delete reconstructionEngine_VBH_CPU;
+	delete view_CUDA;
 	delete view_CPU;
 }
