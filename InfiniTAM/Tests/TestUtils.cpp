@@ -138,9 +138,22 @@ template void loadVolume<ITMWarp, ITMVoxelBlockHash>(ITMVoxelVolume<ITMWarp, ITM
 void
 updateView(ITMView** view, const std::string& depth_path, const std::string& color_path, const std::string& mask_path,
            const std::string& calibration_path, MemoryDeviceType memoryDevice) {
-	static std::unique_ptr<ITMViewBuilder> viewBuilder = nullptr;
-	if (viewBuilder.get() == nullptr) viewBuilder.reset(ITMViewBuilderFactory::MakeViewBuilder(calibration_path.c_str(), memoryDevice));
-	Vector2i imageSize(640, 480);
+	static std::unique_ptr<ITMViewBuilder> viewBuilder_CPU = nullptr;
+	static std::unique_ptr<ITMViewBuilder> viewBuilder_CUDA = nullptr;
+	ITMViewBuilder* viewBuilderToUse;
+	switch(memoryDevice){
+		case MEMORYDEVICE_CPU:
+			if (viewBuilder_CPU == nullptr) viewBuilder_CPU.reset(ITMViewBuilderFactory::MakeViewBuilder(calibration_path, memoryDevice));
+			viewBuilderToUse = viewBuilder_CPU.get();
+			break;
+		case MEMORYDEVICE_CUDA:
+			if (viewBuilder_CUDA == nullptr) viewBuilder_CUDA.reset(ITMViewBuilderFactory::MakeViewBuilder(calibration_path, memoryDevice));
+			viewBuilderToUse = viewBuilder_CUDA.get();
+			break;
+		default:
+			DIEWITHEXCEPTION_REPORTLOCATION("unsupported memory device type!");
+	}
+
 	auto* rgb = new ITMUChar4Image(true, false);
 	auto* depth = new ITMShortImage(true, false);
 	auto* mask = new ITMUCharImage(true, false);
@@ -149,7 +162,7 @@ updateView(ITMView** view, const std::string& depth_path, const std::string& col
 	BOOST_REQUIRE(ReadImageFromFile(mask, mask_path.c_str()));
 	rgb->ApplyMask(*mask, Vector4u((unsigned char) 0));
 	depth->ApplyMask(*mask, 0);
-	viewBuilder->UpdateView(view, rgb, depth, false, false, false, true);
+	viewBuilderToUse->UpdateView(view, rgb, depth, false, false, false, true);
 	delete rgb;
 	delete depth;
 	delete mask;
