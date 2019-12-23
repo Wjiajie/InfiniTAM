@@ -1059,6 +1059,7 @@ source_group(Utils\\SceneStatisticsCalculator\\CUDA FILES ${ITMLIB_UTILS_STATCAL
 ##########################################
 
 include(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
 
 #TODO: make these optional and consistent with the overal CMake package usage in the project -Greg (GitHub: Algomorph)
 ##########################################
@@ -1067,17 +1068,6 @@ include(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
 
 find_package(OpenCV REQUIRED core highgui imgproc imgcodecs)
 
-set(Boost_FIND_REQUIRED TRUE)
-set(Boost_FIND_QUIETLY TRUE)
-set(Boost_USE_MULTITHREADED TRUE)
-if (CMAKE_CXX_COMPILER_ID EQUAL MSVC)
-    set(Boost_USE_STATIC_LIBS TRUE)
-    set(Boost_USE_STATIC_RUNTIME OFF)
-endif ()
-find_package(Boost REQUIRED COMPONENTS filesystem iostreams program_options)
-if (CMAKE_CXX_COMPILER_ID MATCHES MSVC)
-    target_compile_definitions(${targetname} PUBLIC -DBOOST_ALL_NO_LIB -DBOOST_SYSTEM_NO_DEPRECATED)
-endif ()
 
 if (WITH_VTK)
     target_compile_definitions(${targetname} PUBLIC -DWITH_VTK)
@@ -1089,7 +1079,6 @@ if (CMAKE_CXX_COMPILER_ID MATCHES MSVC)
     link_directories(${Boost_LIBRARY_DIRS})
 endif ()
 
-target_compile_definitions(${targetname} PUBLIC WITH_BOOST)
 
 #fix potential warning causing from error in VTK compile definitions
 # "<command-line>:0:20: warning: ISO C++11 requires whitespace after the macro name"

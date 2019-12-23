@@ -227,18 +227,38 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 
 	//_DEBUG
 	Vector3i test_pos(-5, 8, 195);
+	Vector3s voxel_block_pos = TO_SHORT_FLOOR3(test_pos / VOXEL_BLOCK_SIZE);
 	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
 	Configuration::get().telemetry_settings.focus_coordinates = test_pos;
+	ITMVoxel voxelPVA_canonical = volume_16_PVA->GetValueAt(test_pos);
+	std::cout << "PVA canonical voxel of interest: ";
+	voxelPVA_canonical.print_self();
+	ITMVoxel voxelVBH_canonical = volume_16_VBH->GetValueAt(test_pos);
+	std::cout << "VBH canonical voxel of interest: ";
+	voxelVBH_canonical.print_self();
+	int hashCode;
+	volume_16_VBH->index.GetHashEntryAt(voxel_block_pos, hashCode);
+	std::cout << "VBH canonical hash block: " << voxel_block_pos << " code " << hashCode;
 	ITMVoxel voxelPVA = warped_live_PVA->GetValueAt(test_pos);
+	std::cout << "PVA live voxel of interest: ";
 	voxelPVA.print_self();
 	ITMVoxel voxelVBH = warped_live_VBH->GetValueAt(test_pos);
+	std::cout << "VBH live voxel of interest: ";
 	voxelVBH.print_self();
+
+	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>::Instance()
+			.AllocateUsingOtherVolume(volume_16_VBH, warped_live_VBH);
+	voxelVBH_canonical = volume_16_VBH->GetValueAt(test_pos);
+	std::cout << "VBH canonical voxel of interest (after allocation): ";
+	voxelVBH_canonical.print_self();
+	volume_16_VBH->index.GetHashEntryAt(voxel_block_pos, hashCode);
+	std::cout << "VBH canonical hash block: " << voxel_block_pos << " code " << hashCode;
 
 	// *** perform the warp gradient computation and warp updates
 	SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC>
 			motionTracker_PVA(trackerSwitches);
 
-	std::cout << "==== CALCULATE PVA WARPS === " << std::endl;
+	std::cout << "==== CALCULATE PVA WARPS === " << (expanded_allocation ? "(expanded)" : "") << std::endl;
 	motionTracker_PVA.CalculateWarpGradient(volume_16_PVA, warped_live_PVA, warps_PVA);
 	motionTracker_PVA.SmoothWarpGradient(volume_16_PVA, warped_live_PVA, warps_PVA);
 	motionTracker_PVA.UpdateWarps(volume_16_PVA, warped_live_PVA, warps_PVA);
@@ -246,7 +266,8 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 	SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC>
 			motionTracker_VBH(trackerSwitches);
 
-	std::cout << "==== CALCULATE VBH WARPS === " << std::endl;
+
+	std::cout << "==== CALCULATE VBH WARPS === " << (expanded_allocation ? "(expanded)" : "") << std::endl;
 	motionTracker_VBH.CalculateWarpGradient(volume_16_VBH, warped_live_VBH, warps_VBH);
 	motionTracker_VBH.SmoothWarpGradient(volume_16_VBH, warped_live_VBH, warps_VBH);
 	motionTracker_VBH.UpdateWarps(volume_16_VBH, warped_live_VBH, warps_VBH);

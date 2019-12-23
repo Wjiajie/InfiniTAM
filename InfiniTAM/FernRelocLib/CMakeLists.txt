@@ -44,3 +44,5 @@ SOURCE_GROUP("" FILES ${sources} ${headers})
 ##########################################
 
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
+
+include(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)

@@ -9,6 +9,8 @@
 #ifdef WITH_BOOST
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
+#else
+#error compiling without BOOST FLAG
 #endif
 
 #include "MemoryBlock.h"
