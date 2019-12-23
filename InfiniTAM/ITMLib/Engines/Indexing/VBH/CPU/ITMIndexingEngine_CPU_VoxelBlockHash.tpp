@@ -294,6 +294,8 @@ AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume)
 					hashEntry.offset = 0;
 					hashTable[hashCode] = hashEntry;
 					lastFreeVoxelBlockId--;
+				} else {
+					DIEWITHEXCEPTION_REPORTLOCATION("Not enough space in ordered list.");
 				}
 
 				break;
@@ -311,6 +313,8 @@ AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume)
 					hashTable[ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
 					lastFreeVoxelBlockId--;
 					lastFreeExcessListId--;
+				} else {
+					DIEWITHEXCEPTION_REPORTLOCATION("Not enough space in excess list.");
 				}
 				break;
 			default:

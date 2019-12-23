@@ -51,21 +51,35 @@ public:
 	 * \param volume output scene
 	 * \param view input view
 	 * \param trackingState state of tracking
-	 * \param renderState state of rendering the stuff
 	 */
 	virtual void GenerateTsdfVolumeFromView(ITMVoxelVolume<TVoxel, TIndex>* volume, const ITMView* view,
 	                                        const ITMTrackingState* trackingState) = 0;
 
 	/**
-	 * \brief Clears given scene, then uses the depth image from provided live view to generate an SDF
+	 * \brief Clears given volume, then uses the depth image from provided live view to generate an SDF
 	 * voxel representation
-	 * \param volume output scene
-	 * \param view input view
-	 * \param depth_camera_matrix transformation matrix from world origin to depth camera in current view
-	 * \param renderState state of rendering the stuff
+	 * \param[out] volume output volume
+	 * \param[in] view input view
+	 * \param[in] depth_camera_matrix current transformation matrix of the camera relative to world origin
 	 */
 	virtual void GenerateTsdfVolumeFromView(ITMVoxelVolume<TVoxel, TIndex>* volume, const ITMView* view,
 	                                        const Matrix4f& depth_camera_matrix = Matrix4f::Identity()) = 0;
+
+	/**
+	 * \brief Clears given scene, then uses the depth image from provided live view to generate a TSDF
+	 * voxel representation. Allocation (if any is necessary by the data structure holding the TSDF) is done by
+	 * expanding allocation required for just simple depth-image-based allocation by some kind of "sleeve", e.g.
+	 * 1-ring of voxel blocks in the case of voxel hash blocks.
+	 * \param[out] volume output volume
+	 * \param temporaryAllocationVolume used for temporary allocation, may also be reset on being passed in
+	 * \param[in] view input view
+	 * \param[in] depth_camera_matrix current transformation matrix of the camera relative to world origin
+	 */
+	virtual void GenerateTsdfVolumeFromViewExpanded(ITMVoxelVolume<TVoxel, TIndex>* volume,
+	                                                ITMVoxelVolume<TVoxel, TIndex>* temporaryAllocationVolume,
+	                                                const ITMView* view,
+	                                                const Matrix4f& depth_camera_matrix = Matrix4f::Identity()) = 0;
+
 
 	/**
 	 * \brief Fuses the live scene into the canonical scene
@@ -102,13 +116,13 @@ public:
 	                                 ITMVoxelVolume<TVoxel, TIndex>* sourceTSDF,
 	                                 ITMVoxelVolume<TVoxel, TIndex>* targetTSDF) = 0;
 
+	//TODO: find a better way to write this doc (I think it's not clear from first glance)
 	/**
-	 * \brief apply warp update vectors to live scene: compute the the target SDF fields in live scene using trilinear lookup
-	 * at corresponding warp updates from the source SDF fields in live scene
-	 * \param canonicalScene canonical scene, where the warp update vectors are specified
-	 * \param liveScene live scene (voxel grid)
-	 * \param sourceSdfIndex index of the source SDF field in each live voxel
-	 * \param targetSdfIndex index of the target SDF field in each live voxel
+	 * \brief apply warp update vectors to live scene: compute the the target SDF fields in live scene using trilinear
+	 * lookup at corresponding position + warp updates from the source TSDF to the target TSDF grid
+	 * \param warpField where the warp update / interpolation vectors are specified
+	 * \param sourceTSDF this volume will be updated based on interpolated values
+	 * \param targetTSDF this volume serves a source for interpolation
 	 */
 	virtual void WarpScene_WarpUpdates(ITMVoxelVolume<TWarp, TIndex>* warpField,
 	                                   ITMVoxelVolume<TVoxel, TIndex>* sourceTSDF,
@@ -117,11 +131,11 @@ public:
 	 * \brief Update the voxel blocks by integrating depth and possibly color information from the given view. Assume
 	 * camera is at world origin.
 	 */
-	virtual void IntegrateDepthImageIntoTsdfVolume(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view) = 0;
+	virtual void IntegrateDepthImageIntoTsdfVolume(ITMVoxelVolume<TVoxel, TIndex>* volume, const ITMView* view) = 0;
 
 	/** Update the voxel blocks by integrating depth and
 	possibly colour information from the given view.*/
-	virtual void IntegrateDepthImageIntoTsdfVolume(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
+	virtual void IntegrateDepthImageIntoTsdfVolume(ITMVoxelVolume<TVoxel, TIndex>* volume, const ITMView* view,
 	                                               const ITMTrackingState* trackingState) = 0;
 
 };

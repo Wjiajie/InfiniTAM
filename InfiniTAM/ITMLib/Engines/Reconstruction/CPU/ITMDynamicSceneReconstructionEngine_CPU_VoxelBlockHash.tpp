@@ -126,7 +126,6 @@ ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::Gener
 	GenerateTsdfVolumeFromView(scene, view, trackingState->pose_d->GetM());
 }
 
-
 template<typename TVoxel, typename TWarp>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::GenerateTsdfVolumeFromView(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const Matrix4f& depth_camera_matrix) {
@@ -134,6 +133,22 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 	ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
 			.AllocateFromDepth(scene, view, depth_camera_matrix, false, false);
 	this->IntegrateDepthImageIntoTsdfVolume_Helper(scene, view, depth_camera_matrix);
+}
+
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::GenerateTsdfVolumeFromViewExpanded(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* temporaryAllocationVolume, const ITMView* view,
+		const Matrix4f& depth_camera_matrix) {
+	volume->Reset();
+	temporaryAllocationVolume->Reset();
+	ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>& indexer =
+			ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance();
+	// Allocate blocks based on depth
+	indexer.AllocateFromDepth(temporaryAllocationVolume, view, depth_camera_matrix, false, false);
+	// Expand allocation by 1-ring of blocks
+	indexer.AllocateUsingOtherVolumeExpanded(volume,temporaryAllocationVolume);
+	this->IntegrateDepthImageIntoTsdfVolume_Helper(volume, view, depth_camera_matrix);
 }
 
 // endregion ===========================================================================================================
@@ -216,6 +231,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
 	this->template WarpScene<WARP_UPDATE>(warpField, sourceTSDF, targetTSDF);
 }
+
 
 
 

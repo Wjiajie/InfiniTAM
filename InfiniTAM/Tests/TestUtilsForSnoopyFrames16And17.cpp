@@ -23,5 +23,5 @@ ITMPlainVoxelArray::InitializationParameters Frame16And17Fixture::InitParams<ITM
 
 template<>
 ITMVoxelBlockHash::InitializationParameters Frame16And17Fixture::InitParams<ITMVoxelBlockHash>() {
-	return {1800, 0x20000};
+	return {0x800, 0x20000};
 }

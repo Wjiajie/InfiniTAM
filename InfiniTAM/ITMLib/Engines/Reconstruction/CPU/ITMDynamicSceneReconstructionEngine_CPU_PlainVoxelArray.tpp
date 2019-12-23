@@ -118,6 +118,15 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 	this->IntegrateDepthImageIntoTsdfVolume_Helper(scene, view, depth_camera_matrix);
 }
 
+
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::GenerateTsdfVolumeFromViewExpanded(
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume,
+		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* temporaryAllocationVolume, const ITMView* view,
+		const Matrix4f& depth_camera_matrix) {
+	GenerateTsdfVolumeFromView(volume, view, depth_camera_matrix);
+}
+
 template<typename TVoxel, typename TWarp>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::UpdateVisibleList(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
@@ -169,5 +178,6 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {
 	this->template WarpScene<WARP_UPDATE>(warpField, sourceTSDF, targetTSDF);
 }
+
 
 // endregion ===========================================================================================================

@@ -116,6 +116,8 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CPU, Frame16And17Fixture) 
 	delete volume_PVA_17;
 }
 
+
+//#define SAVE_TEST_DATA
 BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_Expnaded_CPU, Frame16And17Fixture) {
 
 	ITMView* view = nullptr;
@@ -151,6 +153,11 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_Expnaded_CPU, Frame16And17
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU_Verbose(&volume_PVA_17, &volume_VBH_17_depth_allocation, absoluteTolerance));
 	BOOST_REQUIRE(contentForFlagsAlmostEqual_CPU_Verbose(&volume_PVA_17, &volume_VBH_17_depth_allocation, VoxelFlags::VOXEL_NONTRUNCATED,
 	                                                     absoluteTolerance));
+
+#ifdef SAVE_TEST_DATA
+	std::string path_VBH = "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_17_expanded_";
+	volume_VBH_17.SaveToDirectory(std::string("../../Tests/") + path_VBH);
+#endif
 
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU_Verbose(&volume_PVA_17, &volume_VBH_17, absoluteTolerance));
 	BOOST_REQUIRE(contentForFlagsAlmostEqual_CPU_Verbose(&volume_PVA_17, &volume_VBH_17, VoxelFlags::VOXEL_NONTRUNCATED,

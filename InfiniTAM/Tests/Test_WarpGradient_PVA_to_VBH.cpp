@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonovAndSobolevSmoothing_Fusion
 }
 
 template<MemoryDeviceType TMemoryDeviceType>
-void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switches trackerSwitches) {
+void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switches trackerSwitches, bool expanded_allocation = false) {
 
 	if (iteration < 0) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Expecting iteration >= 0, got less than that, aborting.");
@@ -173,6 +173,10 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 	std::string path_frame_16_PVA = "TestData/snoopy_result_fr16-17_partial_PVA/snoopy_partial_frame_16_";
 	std::string path_frame_17_VBH = "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_17_";
 	std::string path_frame_16_VBH = "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_16_";
+
+	if(expanded_allocation){
+		path_frame_17_VBH += "expanded_";
+	}
 
 	std::string prefix = switches_to_prefix(trackerSwitches);
 	float absoluteTolerance = 1e-7;
@@ -286,10 +290,10 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_simple_CPU_data_only) {
 	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);
-	Warp_PVA_VBH_simple_subtest<MEMORYDEVICE_CPU>(0, switches);
+	Warp_PVA_VBH_simple_subtest<MEMORYDEVICE_CPU>(0, switches, true);
 }
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_simple_CUDA_data_only) {
 	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);
-	Warp_PVA_VBH_simple_subtest<MEMORYDEVICE_CUDA>(9, switches);
+	Warp_PVA_VBH_simple_subtest<MEMORYDEVICE_CUDA>(0, switches, true);
 }
