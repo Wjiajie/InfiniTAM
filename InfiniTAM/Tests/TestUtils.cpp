@@ -18,7 +18,7 @@
 
 
 #include "../ITMLib/Utils/Configuration.h"
-#include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
 #include "../ITMLib/Utils/FileIO/ITMSceneLogger.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 
@@ -46,10 +46,10 @@ template<>
 void PrepareVoxelVolumeForLoading(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume, MemoryDeviceType deviceType) {
 	switch (deviceType) {
 		case MEMORYDEVICE_CPU:
-			ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(volume);
+			VolumeEditAndCopyEngine_CPU<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(volume);
 			break;
 		case MEMORYDEVICE_CUDA:
-			ITMSceneManipulationEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(volume);
+			VolumeEditAndCopyEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(volume);
 			break;
 		default:
 			DIEWITHEXCEPTION_REPORTLOCATION("Memory/Device type not supported");
@@ -60,10 +60,10 @@ template<>
 void PrepareVoxelVolumeForLoading(ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* volume, MemoryDeviceType deviceType) {
 	switch (deviceType) {
 		case MEMORYDEVICE_CPU:
-			ITMSceneManipulationEngine_CPU<ITMWarp, ITMVoxelBlockHash>::Inst().ResetScene(volume);
+			VolumeEditAndCopyEngine_CPU<ITMWarp, ITMVoxelBlockHash>::Inst().ResetScene(volume);
 			break;
 		case MEMORYDEVICE_CUDA:
-			ITMSceneManipulationEngine_CUDA<ITMWarp, ITMVoxelBlockHash>::Inst().ResetScene(volume);
+			VolumeEditAndCopyEngine_CUDA<ITMWarp, ITMVoxelBlockHash>::Inst().ResetScene(volume);
 			break;
 		default:
 			DIEWITHEXCEPTION_REPORTLOCATION("Memory/Device type not supported");

@@ -1,6 +1,6 @@
 //  ================================================================
-//  Created by Gregory Kramida on 11/3/17.
-//  Copyright (c) 2017-2025 Gregory Kramida
+//  Created by Gregory Kramida on 5/22/18.
+//  Copyright (c) 2018-2025 Gregory Kramida
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
 //  You may obtain a copy of the License at
@@ -13,19 +13,18 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "ITMSceneManipulationEngine_CPU.h"
-#include "../../../Utils/ITMMath.h"
-#include "../../../Objects/Scene/ITMVoxelBlockHash.h"
-#include "../../../Objects/Scene/ITMRepresentationAccess.h"
+
 #include "../../../ITMLibDefines.h"
+
+//Note: ".tpp" files have to be included for all explicit instantiations in order to link properly
+#include "VolumeEditAndCopyEngine_CPU_PlainVoxelArray.tpp"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
-#include "../../../Utils/Configuration.h"
-#include "../../Reconstruction/Interface/ITMSceneReconstructionEngine.h"
-#include "../../Reconstruction/ITMSceneReconstructionEngineFactory.h"
+
+using namespace ITMLib;
 
 namespace ITMLib {
-
-
-
-
-}//namespace ITMLib
+template
+class VolumeEditAndCopyEngine_CPU<ITMVoxel, ITMPlainVoxelArray>;
+template
+class VolumeEditAndCopyEngine_CPU<ITMWarp, ITMPlainVoxelArray>;
+} // namespace ITMLib

@@ -28,7 +28,7 @@
 #include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../ITMLib/Engines/ViewBuilding/Interface/ITMViewBuilder.h"
 #include "../ITMLib/Engines/ViewBuilding/ITMViewBuilderFactory.h"
-#include "../ITMLib/Engines/Manipulation/ITMSceneManipulationEngineFactory.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/ITMSceneManipulationEngineFactory.h"
 #include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Utils/Analytics/ITMAlmostEqual.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
@@ -79,7 +79,7 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH_CPU, Frame16And17Fixture) 
 	delete volume_PVA_16;
 }
 
-
+//#define SAVE_TEST_DATA
 BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CPU, Frame16And17Fixture) {
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_17;

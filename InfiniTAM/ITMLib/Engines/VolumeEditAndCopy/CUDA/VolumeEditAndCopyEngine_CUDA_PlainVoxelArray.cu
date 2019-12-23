@@ -17,14 +17,12 @@
 #include "../../../ITMLibDefines.h"
 
 //Note: ".tpp" files have to be included for all explicit instantiations in order to link properly
-#include "ITMSceneManipulationEngine_CPU_PlainVoxelArray.tpp"
+#include "VolumeEditAndCopyEngine_CUDA_PlainVoxelArray.tcu"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
-
-using namespace ITMLib;
 
 namespace ITMLib {
 template
-class ITMSceneManipulationEngine_CPU<ITMVoxel, ITMPlainVoxelArray>;
+class VolumeEditAndCopyEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
 template
-class ITMSceneManipulationEngine_CPU<ITMWarp, ITMPlainVoxelArray>;
-} // namespace ITMLib
+class VolumeEditAndCopyEngine_CUDA<ITMWarp, ITMPlainVoxelArray>;
+} //namespace ITMLib

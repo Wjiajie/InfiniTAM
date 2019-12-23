@@ -39,8 +39,8 @@
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h"
 #include "../ITMLib/Utils/Analytics/ITMAlmostEqual.h"
 
-#include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
 #include "../ITMLib/Engines/ViewBuilding/ITMViewBuilderFactory.h"
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../ITMLib/Engines/Reconstruction/Interface/ITMDynamicSceneReconstructionEngine.h"
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_VoxelBlockHash_CUDA) {
 	                                                   Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
 	                                                   MEMORYDEVICE_CUDA);
 
-	typedef ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash> SceneManipulationEngine;
+	typedef VolumeEditAndCopyEngine_CPU<ITMVoxel, ITMVoxelBlockHash> SceneManipulationEngine;
 
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene1);
 

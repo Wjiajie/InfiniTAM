@@ -17,7 +17,7 @@
 
 #include "../../../../ORUtils/JetbrainsCUDASyntax.hpp"
 #include "../../Indexing/Shared/ITMIndexingEngine_Shared.h"
-#include "../Shared/ITMSceneManipulationEngine_Shared.h"
+#include "../Shared/VolumeEditAndCopyEngine_Shared.h"
 #include "../../../Utils/ITMHashBlockProperties.h"
 #include "../../../Utils/Geometry/ITMGeometryBooleanOperations.h"
 

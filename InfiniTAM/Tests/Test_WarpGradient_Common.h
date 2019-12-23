@@ -26,16 +26,16 @@
 #include "../ITMLib/ITMLibDefines.h"
 #include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Objects/Scene/ITMVoxelVolume.h"
-#include "../ITMLib/Engines/Manipulation/Interface/ITMSceneManipulationEngine.h"
-#include "../ITMLib/Engines/Manipulation/ITMSceneManipulationEngineFactory.h"
-#include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/Interface/VolumeEditAndCopyEngineInterface.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/ITMSceneManipulationEngineFactory.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
 #include "../ITMLib/SurfaceTrackers/Interface/SurfaceTracker.h"
 #include "../ITMLib/Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
 
 #ifndef COMPILE_WITHOUT_CUDA
 #include "../ITMLib/Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
 #include "../ITMLib/Engines/Indexing/Interface/ITMIndexingEngine.h"
-#include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
 #endif
 
 using namespace ITMLib;

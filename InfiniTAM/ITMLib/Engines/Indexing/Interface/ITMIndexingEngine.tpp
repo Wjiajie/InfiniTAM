@@ -17,7 +17,7 @@
 
 #include "ITMIndexingEngine.h"
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
-#include "../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
+#include "../../VolumeEditAndCopy/Shared/VolumeEditAndCopyEngine_Shared.h"
 
 using namespace ITMLib;
 

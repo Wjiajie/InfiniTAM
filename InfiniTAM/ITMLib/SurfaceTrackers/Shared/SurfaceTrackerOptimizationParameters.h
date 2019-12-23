@@ -17,7 +17,7 @@
 
 //============================= PARAMETER/SWITCH DATA STRUCTURES FOR PRECONFIGURED OPTIMIZATION SETTINGS ===============
 namespace ITMLib{
-	struct ITMSceneMotionOptimizationParameters {
+	struct SurfaceTrackerOptimizationParameters {
 		const float gradientDescentLearningRate;// = 0.1f;
 		const float rigidityEnforcementFactor;// = 0.1f;
 		const float weightDataTerm;

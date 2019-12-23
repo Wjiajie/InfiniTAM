@@ -14,8 +14,8 @@
 //  limitations under the License.
 //  ================================================================
 
-#include "ITMSceneManipulationEngine_CUDA.h"
-#include "../Shared/ITMSceneManipulationEngine_Shared.h"
+#include "VolumeEditAndCopyEngine_CUDA.h"
+#include "../Shared/VolumeEditAndCopyEngine_Shared.h"
 #include "../../../../ORUtils/PlatformIndependence.h"
 #include "../../../Utils/ITMCUDAUtils.h"
 #include "../../../../ORUtils/JetbrainsCUDASyntax.hpp"

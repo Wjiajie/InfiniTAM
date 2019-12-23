@@ -22,7 +22,7 @@
 #include "../../../../ORUtils/PlatformIndependentAtomics.h"
 #include "../../Common/ITMWarpEnums.h"
 #include "../../Common/ITMCommonFunctors.h"
-#include "../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
+#include "../../VolumeEditAndCopy/Shared/VolumeEditAndCopyEngine_Shared.h"
 
 
 template<typename TVoxel>

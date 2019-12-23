@@ -22,13 +22,13 @@
 //local
 #include "WarpGradientFunctor.h"
 #include "../../../ORUtils/PlatformIndependentAtomics.h"
-#include "../Shared/ITMSceneMotionTracker_Shared.h"
-#include "../Shared/ITMSceneMotionTracker_Debug.h"
+#include "../Shared/SurfaceTrackerSharedRoutines.h"
+#include "../Shared/SurfaceTrackerDiagnosticRoutines.h"
 #include "../Shared/ITMWarpGradientAggregates.h"
 #include "../Shared/ITMWarpGradientCommon.h"
 #include "../../Utils/ITMVoxelFlags.h"
 #include "../../Utils/ITMCPrintHelpers.h"
-#include "../../Engines/Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
+#include "../../Engines/VolumeEditAndCopy/Shared/VolumeEditAndCopyEngine_Shared.h"
 
 
 namespace ITMLib {

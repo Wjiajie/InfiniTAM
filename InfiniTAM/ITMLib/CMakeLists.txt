@@ -148,44 +148,44 @@ set(ITMLIB_ENGINES_TRAVERSAL_CUDA_HEADERS
 
 #====================================== SCENE MANIPULATION ENGINES =====================================================
 set(ITMLIB_ENGINES_MANIPULATION_HEADERS
-	Engines/Manipulation/ITMSceneManipulationEngineFactory.h
+	Engines/VolumeEditAndCopy/ITMSceneManipulationEngineFactory.h
 	)
 
 ##
 set(ITMLIB_ENGINES_MANIPULATION_INTERFACE_HEADERS
-    Engines/Manipulation/Interface/ITMSceneManipulationEngine.h
+	Engines/VolumeEditAndCopy/Interface/VolumeEditAndCopyEngineInterface.h
     )
 ##
 set(ITMLIB_ENGINES_MANIPULATION_SHARED_HEADERS
-    Engines/Manipulation/Shared/ITMSceneManipulationEngine_Shared.h
-    Engines/Manipulation/Shared/ITMSceneManipulationEngine_Functors.h
+	Engines/VolumeEditAndCopy/Shared/VolumeEditAndCopyEngine_Shared.h
+	Engines/VolumeEditAndCopy/Shared/VolumeEditAndCopyEngine_Functors.h
     )
 
 ##
 set(ITMLIB_ENGINES_MANIPULATION_CPU_SOURCES
-    Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.cpp
-    Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU_VoxelBlockHash.tpp
-    Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU_PlainVoxelArray.tpp
-    Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU_VoxelBlockHash.cpp
-    Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU_PlainVoxelArray.cpp
+	Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.cpp
+	Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU_VoxelBlockHash.tpp
+	Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU_PlainVoxelArray.tpp
+	Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU_VoxelBlockHash.cpp
+	Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU_PlainVoxelArray.cpp
     )
 
 set(ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS
-    Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h
+	Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h
     )
 
 ##
 set(ITMLIB_ENGINES_MANIPULATION_CUDA_SOURCES
-    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_VoxelBlockHash.tcu
-    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_PlainVoxelArray.tcu
-    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_VoxelBlockHash.cu
-    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_PlainVoxelArray.cu
+	Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA_VoxelBlockHash.tcu
+	Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA_PlainVoxelArray.tcu
+	Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA_VoxelBlockHash.cu
+	Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA_PlainVoxelArray.cu
     )
 
 set(ITMLIB_ENGINES_MANIPULATION_CUDA_HEADERS
-    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h
-    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_VoxelBlockHash_Kernels.h
-    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_PlainVoxelArray_Kernels.h
+	Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h
+	Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA_VoxelBlockHash_Kernels.h
+	Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA_PlainVoxelArray_Kernels.h
     )
 
 #====================================== MESHING ENGINES ================================================================
@@ -680,10 +680,10 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS
 	SurfaceTrackers/WarpGradientFunctors/WarpGradientFunctor_SlavchevaOptimized.h
 
 	SurfaceTrackers/Shared/ITMWarpGradientCommon.h
-	SurfaceTrackers/Shared/ITMSceneMotionTracker_Shared.h
-	SurfaceTrackers/Shared/ITMSceneMotionTracker_Debug.h
-	SurfaceTrackers/Shared/ITMSceneMotionTracker_Functors.h
-	SurfaceTrackers/Shared/ITMSceneMotionOptimizationParameters.h
+	SurfaceTrackers/Shared/SurfaceTrackerSharedRoutines.h
+	SurfaceTrackers/Shared/SurfaceTrackerDiagnosticRoutines.h
+	SurfaceTrackers/Shared/SurfaceTrackerSharedFunctors.h
+    SurfaceTrackers/Shared/SurfaceTrackerOptimizationParameters.h
 	SurfaceTrackers/Shared/ITMWarpGradientRoutines.h
 	SurfaceTrackers/Shared/ITMWarpGradientAggregates.h
     )

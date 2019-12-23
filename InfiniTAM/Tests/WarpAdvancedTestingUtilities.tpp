@@ -24,7 +24,7 @@
 #include "TestUtilsForSnoopyFrames16And17.h"
 
 #include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
-#include "../ITMLib/Engines/Manipulation/ITMSceneManipulationEngineFactory.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/ITMSceneManipulationEngineFactory.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison.h"
 
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"

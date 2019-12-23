@@ -17,7 +17,7 @@
 
 #include "ITMIndexingEngine_CPU_VoxelBlockHash.h"
 #include "../../../../Objects/Scene/ITMRepresentationAccess.h"
-#include "../../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
+#include "../../../VolumeEditAndCopy/Shared/VolumeEditAndCopyEngine_Shared.h"
 #include "../../Shared/ITMIndexingEngine_Shared.h"
 #include "../CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
 #include "../../Interface/ITMIndexingEngine.h"
@@ -266,7 +266,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateUsi
 	ITMIndexingEngine<TVoxelTarget, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance().BuildVisibilityList(targetVolume, view, depth_camera_matrix);
 }
 
-
+// #define EXCEPT_ON_OUT_OF_SPACE
 template<typename TVoxel>
 void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume) {
@@ -294,9 +294,12 @@ AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume)
 					hashEntry.offset = 0;
 					hashTable[hashCode] = hashEntry;
 					lastFreeVoxelBlockId--;
-				} else {
+				}
+#ifdef EXCEPT_ON_OUT_OF_SPACE
+				else {
 					DIEWITHEXCEPTION_REPORTLOCATION("Not enough space in ordered list.");
 				}
+#endif
 
 				break;
 			case NEEDS_ALLOCATION_IN_EXCESS_LIST:
@@ -313,9 +316,12 @@ AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume)
 					hashTable[ORDERED_LIST_SIZE + exlOffset] = hashEntry; //add child to the excess list
 					lastFreeVoxelBlockId--;
 					lastFreeExcessListId--;
-				} else {
+				}
+#ifdef EXCEPT_ON_OUT_OF_SPACE
+				else {
 					DIEWITHEXCEPTION_REPORTLOCATION("Not enough space in excess list.");
 				}
+#endif
 				break;
 			default:
 				break;

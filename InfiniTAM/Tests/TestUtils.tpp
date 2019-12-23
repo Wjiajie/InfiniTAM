@@ -18,7 +18,7 @@
 
 #include "TestUtils.h"
 #include "../ITMLib/Utils/Configuration.h"
-#include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
 #include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../ITMLib/Engines/ViewBuilding/ITMViewBuilderFactory.h"
 #include "../ORUtils/FileUtils.h"
@@ -28,7 +28,7 @@ using namespace ITMLib;
 
 template<class TVoxel, class TIndex>
 void GenerateTestScene_CPU(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(scene);
+	VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(scene);
 	const int narrowBandThicknessVoxels = 10;
 	int xOffset = 8;
 	int surfaceSizeVoxelsZ = 16;
@@ -44,8 +44,8 @@ void GenerateTestScene_CPU(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 
 		for (int z = 0; z < surfaceSizeVoxelsZ; z++) {
 			for (int y = 0; y < surfaceSizeVoxelsY; y++) {
-				ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().SetVoxel(scene, Vector3i(xPos, y, z), voxelPos);
-				ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().SetVoxel(scene, Vector3i(xNeg, y, z), voxelNeg);
+				VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().SetVoxel(scene, Vector3i(xPos, y, z), voxelPos);
+				VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().SetVoxel(scene, Vector3i(xNeg, y, z), voxelNeg);
 			}
 		}
 	}
@@ -54,7 +54,7 @@ void GenerateTestScene_CPU(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 
 template<class TVoxel, class TIndex>
 void GenerateTestScene_CUDA(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(scene);
+	VolumeEditAndCopyEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(scene);
 	const int narrowBandThicknessVoxels = 10;
 	int xOffset = 8;
 	int surfaceSizeVoxelsZ = 16;
@@ -70,8 +70,8 @@ void GenerateTestScene_CUDA(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 
 		for (int z = 0; z < surfaceSizeVoxelsZ; z++) {
 			for (int y = 0; y < surfaceSizeVoxelsY; y++) {
-				ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst().SetVoxel(scene, Vector3i(xPos, y, z), voxelPos);
-				ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst().SetVoxel(scene, Vector3i(xNeg, y, z), voxelNeg);
+				VolumeEditAndCopyEngine_CUDA<TVoxel, TIndex>::Inst().SetVoxel(scene, Vector3i(xPos, y, z), voxelPos);
+				VolumeEditAndCopyEngine_CUDA<TVoxel, TIndex>::Inst().SetVoxel(scene, Vector3i(xNeg, y, z), voxelNeg);
 			}
 		}
 	}
@@ -211,10 +211,10 @@ void initializeVolume(ITMVoxelVolume<TVoxel, TIndex>** volume,
 	                                               memoryDevice, initializationParameters);
 	switch (memoryDevice) {
 		case MEMORYDEVICE_CUDA:
-			ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(*volume);
+			VolumeEditAndCopyEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(*volume);
 			break;
 		case MEMORYDEVICE_CPU:
-			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(*volume);
+			VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(*volume);
 			break;
 	}
 }
@@ -241,10 +241,10 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
 	                                               memoryDevice, initializationParameters);
 	switch (memoryDevice) {
 		case MEMORYDEVICE_CUDA:
-			ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(*volume);
+			VolumeEditAndCopyEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(*volume);
 			break;
 		case MEMORYDEVICE_CPU:
-			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(*volume);
+			VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(*volume);
 			break;
 	}
 	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.viewFrustum_min,

@@ -18,7 +18,7 @@
 #include "../../../../../ORUtils/JetbrainsCUDASyntax.hpp"
 #include "../../../../Utils/ITMCUDAUtils.h"
 #include "../../../../Objects/Scene/ITMGlobalCache.h"
-#include "../../../Manipulation/Shared/ITMSceneManipulationEngine_Shared.h"
+#include "../../../VolumeEditAndCopy/Shared/VolumeEditAndCopyEngine_Shared.h"
 #include "../../Shared/ITMIndexingEngine_Shared.h"
 
 namespace {
@@ -26,7 +26,8 @@ namespace {
 
 //TODO: provide a better nomenclature for hash block visibility, i.e. an enum inheriting from unsigned char
 __global__ void setVisibleEntriesToVisibleAtPreviousFrameAndUnstreamed(HashBlockVisibility* entriesVisibleType,
-                                                                       const int* visibleBlockHashCodes, int visibleEntryCount) {
+                                                                       const int* visibleBlockHashCodes,
+                                                                       int visibleEntryCount) {
 	int entryId = threadIdx.x + blockIdx.x * blockDim.x;
 	if (entryId > visibleEntryCount - 1) return;
 	entriesVisibleType[visibleBlockHashCodes[entryId]] = VISIBLE_AT_PREVIOUS_FRAME_AND_UNSTREAMED;
@@ -98,17 +99,16 @@ void allocateHashedVoxelBlocksUsingLists_device(
 	int hashCode = threadIdx.x + blockIdx.x * blockDim.x;
 	if (hashCode >= hashEntryCount) return;
 
-	int vbaIdx, exlIdx;
+	int voxelBlockIndex, exlIdx;
 
 	switch (hashEntryStates[hashCode]) {
 		case ITMLib::NEEDS_ALLOCATION_IN_ORDERED_LIST: //needs allocation, fits in the ordered list
-			vbaIdx = atomicSub(&allocData->noAllocatedVoxelEntries, 1);
-
-			if (vbaIdx >= 0) //there is room in the voxel block array
+			voxelBlockIndex = atomicSub(&allocData->noAllocatedVoxelEntries, 1);
+			if (voxelBlockIndex >= 0) //there is room in the voxel block array
 			{
 				ITMHashEntry hashEntry;
 				hashEntry.pos = blockCoords[hashCode];
-				hashEntry.ptr = voxelAllocationList[vbaIdx];
+				hashEntry.ptr = voxelAllocationList[voxelBlockIndex];
 				hashEntry.offset = 0;
 				hashTable[hashCode] = hashEntry;
 			} else {
@@ -118,14 +118,14 @@ void allocateHashedVoxelBlocksUsingLists_device(
 			break;
 
 		case ITMLib::NEEDS_ALLOCATION_IN_EXCESS_LIST: //needs allocation in the excess list
-			vbaIdx = atomicSub(&allocData->noAllocatedVoxelEntries, 1);
+			voxelBlockIndex = atomicSub(&allocData->noAllocatedVoxelEntries, 1);
 			exlIdx = atomicSub(&allocData->noAllocatedExcessEntries, 1);
 
-			if (vbaIdx >= 0 && exlIdx >= 0) //there is room in the voxel block array and excess list
+			if (voxelBlockIndex >= 0 && exlIdx >= 0) //there is room in the voxel block array and excess list
 			{
 				ITMHashEntry hashEntry;
 				hashEntry.pos = blockCoords[hashCode];
-				hashEntry.ptr = voxelAllocationList[vbaIdx];
+				hashEntry.ptr = voxelAllocationList[voxelBlockIndex];
 				hashEntry.offset = 0;
 
 				int exlOffset = excessAllocationList[exlIdx];

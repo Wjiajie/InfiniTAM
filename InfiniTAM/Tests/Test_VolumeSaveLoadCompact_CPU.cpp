@@ -24,7 +24,7 @@
 #include "../ITMLib/ITMLibDefines.h"
 #include "../ITMLib/Objects/Scene/ITMVoxelVolume.h"
 #include "../ITMLib/Utils/Configuration.h"
-#include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
 #include "TestUtils.h"
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"

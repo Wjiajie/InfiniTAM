@@ -19,7 +19,7 @@
 //local
 #include "SurfaceTracker.h"
 
-#include "../Shared/ITMSceneMotionTracker_Functors.h"
+#include "../Shared/SurfaceTrackerSharedFunctors.h"
 #include "../WarpGradientFunctors/WarpGradientFunctor_SlavchevaOptimized.h"
 #include "../WarpGradientFunctors/WarpGradientFunctor_SlavchevaDiagnostic.h"
 #include "../../Engines/Indexing/Interface/ITMIndexingEngine.h"
@@ -29,7 +29,7 @@
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 #include "../../Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
-#include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../../Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
 
 #ifdef __CUDACC__
 #include "../../Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
@@ -37,7 +37,7 @@
 #include "../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h"
 #include "../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
 #include "../../Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
-#include "../../Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
+#include "../../Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
 #endif
 
 
@@ -80,7 +80,8 @@ inline static void PrintSceneStatistics(
 	std::cout << "    Truncated SDF sum: " << calculator.ComputeTruncatedVoxelAbsSdfSum(scene) << std::endl;
 };
 
-// region ===================================== CALCULATE GRADIENT SMOOTHING ===========================================
+// region ===================================== CALCULATE WARPS ========================================================
+
 
 template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TMemoryDeviceType, GradientFunctorType TGradientFunctorType>
 void

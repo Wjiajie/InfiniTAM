@@ -23,7 +23,7 @@
 
 //local
 #include "../Interface/ITMSceneTraversal.h"
-#include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../../VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
 #include "../../../Utils/Geometry/ITM3DIndexConversions.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../Shared/ITMSceneTraversal_Shared.h"

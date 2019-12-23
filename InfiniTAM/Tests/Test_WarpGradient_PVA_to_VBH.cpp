@@ -38,7 +38,7 @@
 //local CPU
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
-#include "../ITMLib/Engines/Manipulation/ITMSceneManipulationEngineFactory.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/ITMSceneManipulationEngineFactory.h"
 #include "../ITMLib/Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU.h"
 
 //local CUDA
@@ -217,17 +217,6 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 		           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
 	}
 
-	//_DEBUG
-	Vector3i test_pos(-57, -9, 195);
-	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
-	Configuration::get().telemetry_settings.focus_coordinates = test_pos;
-//	ITMVoxel voxelPVA = ITMSceneManipulationEngine<ITMVoxel, ITMPlainVoxelArray>::Inst()
-//			.ReadVoxel(warped_live_PVA,test_pos);
-//	voxelPVA.print_self();
-//	ITMVoxel voxelVBH = ITMSceneManipulationEngine<ITMVoxel, ITMVoxelBlockHash>::Inst()
-//			.ReadVoxel(warped_live_VBH, test_pos);
-//	voxelVBH.print_self();
-
 	// *** load canonical volume as the two different data structures
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_16_PVA;
 	loadVolume(&volume_16_PVA, path_frame_16_PVA, TMemoryDeviceType,
@@ -236,12 +225,20 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 	loadVolume(&volume_16_VBH, path_frame_16_VBH, TMemoryDeviceType,
 	           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
 
+	//_DEBUG
+	Vector3i test_pos(-5, 8, 195);
+	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
+	Configuration::get().telemetry_settings.focus_coordinates = test_pos;
+	ITMVoxel voxelPVA = warped_live_PVA->GetValueAt(test_pos);
+	voxelPVA.print_self();
+	ITMVoxel voxelVBH = warped_live_VBH->GetValueAt(test_pos);
+	voxelVBH.print_self();
+
 	// *** perform the warp gradient computation and warp updates
-
-
 	SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC>
 			motionTracker_PVA(trackerSwitches);
 
+	std::cout << "==== CALCULATE PVA WARPS === " << std::endl;
 	motionTracker_PVA.CalculateWarpGradient(volume_16_PVA, warped_live_PVA, warps_PVA);
 	motionTracker_PVA.SmoothWarpGradient(volume_16_PVA, warped_live_PVA, warps_PVA);
 	motionTracker_PVA.UpdateWarps(volume_16_PVA, warped_live_PVA, warps_PVA);
@@ -249,6 +246,7 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 	SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC>
 			motionTracker_VBH(trackerSwitches);
 
+	std::cout << "==== CALCULATE VBH WARPS === " << std::endl;
 	motionTracker_VBH.CalculateWarpGradient(volume_16_VBH, warped_live_VBH, warps_VBH);
 	motionTracker_VBH.SmoothWarpGradient(volume_16_VBH, warped_live_VBH, warps_VBH);
 	motionTracker_VBH.UpdateWarps(volume_16_VBH, warped_live_VBH, warps_VBH);
@@ -259,10 +257,10 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 
 
 	//_DEBUG
-//	ITMWarp warpPVA = ITMSceneManipulationEngine<ITMWarp, ITMPlainVoxelArray>::Inst()
+//	ITMWarp warpPVA = VolumeEditAndCopyEngineInterface<ITMWarp, ITMPlainVoxelArray>::Inst()
 //			.ReadVoxel(warps_PVA, test_pos);
 //	warpPVA.print_self();
-//	ITMWarp warpVBH = ITMSceneManipulationEngine<ITMWarp, ITMVoxelBlockHash>::Inst()
+//	ITMWarp warpVBH = VolumeEditAndCopyEngineInterface<ITMWarp, ITMVoxelBlockHash>::Inst()
 //			.ReadVoxel(warps_VBH, test_pos);
 //	warpVBH.print_self();
 
@@ -288,7 +286,12 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 	delete loaded_warps_VBH;
 }
 
-BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_simple_CPU_data_only) {
+BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_simple_CPU_data_only_basic) {
+	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);
+	Warp_PVA_VBH_simple_subtest<MEMORYDEVICE_CPU>(0, switches, false);
+}
+
+BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_simple_CPU_data_only_expanded) {
 	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);
 	Warp_PVA_VBH_simple_subtest<MEMORYDEVICE_CPU>(0, switches, true);
 }

@@ -28,15 +28,15 @@
 #include "TestUtilsForSnoopyFrames16And17.h"
 //local - CPU
 #include "../ITMLib/Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
-#include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 //local - CUDA
 #ifndef COMPLIE_WITHOUT_CUDA
 
 #include "../ITMLib/Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
-#include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
 #include "CUDAAtomicTesting.h"
-#include "../ITMLib/Engines/Manipulation/ITMSceneManipulationEngineFactory.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/ITMSceneManipulationEngineFactory.h"
 #include "TestUtils.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
 
@@ -54,14 +54,14 @@ BOOST_AUTO_TEST_CASE(ExpandVolume_CPU) {
 	                                                    Configuration::SWAPPINGMODE_ENABLED,
 	                                                    MEMORYDEVICE_CPU,
 	                                                    {1200, 0x20000});
-	ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(&volume1);
+	VolumeEditAndCopyEngine_CPU<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(&volume1);
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume2(&Configuration::get().scene_parameters,
 	                                                    Configuration::get().swapping_mode ==
 	                                                    Configuration::SWAPPINGMODE_ENABLED,
 	                                                    MEMORYDEVICE_CPU,
 	                                                    {1200, 0x20000});
-	ITMSceneManipulationEngine_CPU<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(&volume2);
+	VolumeEditAndCopyEngine_CPU<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(&volume2);
 
 	int hash_code = -1;
 	Vector3s initial_block_pos(0, 0, 0);
@@ -195,14 +195,14 @@ BOOST_AUTO_TEST_CASE(ExpandVolume_CUDA) {
 	                                                    Configuration::SWAPPINGMODE_ENABLED,
 	                                                    MEMORYDEVICE_CUDA,
 	                                                    {1200, 0x20000});
-	ITMSceneManipulationEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(&volume1);
+	VolumeEditAndCopyEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(&volume1);
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume2(&Configuration::get().scene_parameters,
 	                                                    Configuration::get().swapping_mode ==
 	                                                    Configuration::SWAPPINGMODE_ENABLED,
 	                                                    MEMORYDEVICE_CUDA,
 	                                                    {1200, 0x20000});
-	ITMSceneManipulationEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(&volume2);
+	VolumeEditAndCopyEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(&volume2);
 
 	int hash_code = -1;
 	Vector3s initial_block_pos(0, 0, 0);

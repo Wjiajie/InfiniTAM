@@ -22,7 +22,7 @@
 namespace ITMLib {
 
 
-ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt_CPU(const Vector3s& pos, int& hashCode) const {
+ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt(const Vector3s& pos, int& hashCode) const {
 	const ITMHashEntry* entries = this->GetEntries();
 	switch (memoryType) {
 		case MEMORYDEVICE_CPU:
@@ -38,9 +38,9 @@ ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt_CPU(const Vector3s& pos, int& has
 			return ITMHashEntry();
 	}
 }
-ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt_CPU(const Vector3s& pos) const {
+ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt(const Vector3s& pos) const {
 	int hashCode = 0;
-	return GetHashEntryAt_CPU(pos, hashCode);
+	return GetHashEntryAt(pos, hashCode);
 }
 
 ITMVoxelBlockHash::ITMVoxelBlockHash(ITMVoxelBlockHashParameters parameters, MemoryDeviceType memoryType) :

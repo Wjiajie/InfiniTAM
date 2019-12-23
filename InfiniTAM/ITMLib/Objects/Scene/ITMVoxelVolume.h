@@ -43,6 +43,11 @@ public:
 	void SetFrom(const ITMVoxelVolume& other);
 	void SaveToDirectory(const std::string &outputDirectory) const;
 	void LoadFromDirectory(const std::string &outputDirectory);
+	TVoxel GetValueAt(const Vector3i& pos);
+	TVoxel GetValueAt(int x, int y, int z){
+		Vector3i pos(x,y,z);
+		return GetValueAt(pos);
+	}
 
 	/** Return whether this scene is using swapping mechanism or not. **/
 	bool Swapping() const{

@@ -19,7 +19,7 @@
 #include "../../Utils/ITMMath.h"
 #include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../Utils/Configuration.h"
-#include "ITMSceneMotionTracker_Shared.h"
+#include "SurfaceTrackerSharedRoutines.h"
 #include "../../../ORUtils/PlatformIndependentAtomics.h"
 
 

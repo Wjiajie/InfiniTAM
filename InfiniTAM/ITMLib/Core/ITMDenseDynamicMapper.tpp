@@ -25,8 +25,8 @@
 #include "../Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../Engines/Swapping/ITMSwappingEngineFactory.h"
 #include "../SurfaceTrackers/SurfaceTrackerFactory.h"
-#include "../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "../Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
+#include "../Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
+#include "../Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
 #include "../Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "../Utils/ITMPrintHelpers.h"
 #include "../Utils/Visualization/ITMSceneSliceVisualizer2D.h"
@@ -99,11 +99,11 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetTSDFVolume(
 		ITMVoxelVolume<TVoxel, TIndex>* volume) const {
 	switch (Configuration::get().device_type) {
 		case MEMORYDEVICE_CPU:
-			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(volume);
+			VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(volume);
 			break;
 		case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-			ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(volume);
+			VolumeEditAndCopyEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(volume);
 #endif
 			break;
 		case MEMORYDEVICE_METAL:
@@ -117,11 +117,11 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetWarpVolume(
 		ITMVoxelVolume<TWarp, TIndex>* warpVolume) const {
 	switch (Configuration::get().device_type) {
 		case MEMORYDEVICE_CPU:
-			ITMSceneManipulationEngine_CPU<TWarp, TIndex>::Inst().ResetScene(warpVolume);
+			VolumeEditAndCopyEngine_CPU<TWarp, TIndex>::Inst().ResetScene(warpVolume);
 			break;
 		case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-			ITMSceneManipulationEngine_CUDA<TWarp, TIndex>::Inst().ResetScene(warpVolume);
+			VolumeEditAndCopyEngine_CUDA<TWarp, TIndex>::Inst().ResetScene(warpVolume);
 #endif
 			break;
 		case MEMORYDEVICE_METAL:

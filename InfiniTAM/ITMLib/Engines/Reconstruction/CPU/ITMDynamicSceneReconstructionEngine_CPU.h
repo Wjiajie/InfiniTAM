@@ -5,7 +5,7 @@
 #include "../../../SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
 #include "../Interface/ITMDynamicSceneReconstructionEngine.h"
 #include "../../../Objects/Scene/ITMPlainVoxelArray.h"
-#include "../../Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../../VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
 #include "../../Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
 #include "../../Common/ITMWarpEnums.h"
 
@@ -57,7 +57,7 @@ private:
 	void WarpScene(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF);
-	ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>& sceneManager = ITMSceneManipulationEngine_CPU<TVoxel, ITMVoxelBlockHash>::Inst();
+	VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>& sceneManager = VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::Inst();
 
 };
 
@@ -101,7 +101,7 @@ private:
 	void WarpScene(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 	               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
 	               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF);
-	ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>& sceneManager =
-			ITMSceneManipulationEngine_CPU<TVoxel, ITMPlainVoxelArray>::Inst();
+	VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>& sceneManager =
+			VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::Inst();
 };
 } // namespace ITMLib

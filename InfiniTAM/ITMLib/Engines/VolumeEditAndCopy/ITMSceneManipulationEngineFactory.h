@@ -15,23 +15,23 @@
 //  ================================================================
 
 //local
-#include "Interface/ITMSceneManipulationEngine.h"
-#include "CPU/ITMSceneManipulationEngine_CPU.h"
-#include "CUDA/ITMSceneManipulationEngine_CUDA.h"
+#include "Interface/VolumeEditAndCopyEngineInterface.h"
+#include "CPU/VolumeEditAndCopyEngine_CPU.h"
+#include "CUDA/VolumeEditAndCopyEngine_CUDA.h"
 
 #pragma once
 namespace ITMLib {
 
 struct ITMSceneManipulationEngineFactory {
 	template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
-	static ITMSceneManipulationEngine<TVoxel, TIndex>& Instance() {
+	static VolumeEditAndCopyEngineInterface<TVoxel, TIndex>& Instance() {
 		switch (TMemoryDeviceType) {
 			default:
 			case MEMORYDEVICE_CPU:
-				return ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst();
+				return VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst();
 			case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-				return ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst();
+				return VolumeEditAndCopyEngine_CUDA<TVoxel, TIndex>::Inst();
 #else
 			std::cerr << "Warning: compiled without CUDA but requesting an instance of CUDA manipulation engine. "
 				"Defaulting to CPU manipulation engine." << std::endl;
@@ -43,7 +43,7 @@ struct ITMSceneManipulationEngineFactory {
 #else
 				std::cerr << "Warning: compiled without METAL but requesting an instance of METAL manipulation engine. "
 				             "Defaulting to CPU manipulation engine." << std::endl;
-				return ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst();
+				return VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst();
 #endif
 
 		}

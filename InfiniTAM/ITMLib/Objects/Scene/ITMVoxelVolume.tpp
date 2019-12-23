@@ -17,9 +17,9 @@
 #include "ITMVoxelVolume.h"
 #include "../../Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../../Utils/Configuration.h"
-#include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../../Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
 #ifndef COMPILE_WITHOUT_CUDA
-#include "../../Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
+#include "../../Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
 #endif
 
 namespace ITMLib {
@@ -68,11 +68,11 @@ template<class TVoxel, class TIndex>
 void ITMVoxelVolume<TVoxel, TIndex>::Reset(){
 	switch (this->index.memoryType) {
 		case MEMORYDEVICE_CPU:
-			ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(this);
+			VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(this);
 			break;
 #ifndef COMPILE_WITHOUT_CUDA
 		case MEMORYDEVICE_CUDA:
-			ITMSceneManipulationEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(this);
+			VolumeEditAndCopyEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(this);
 			break;
 #endif
 		default:
@@ -100,6 +100,22 @@ void ITMVoxelVolume<TVoxel, TIndex>::SaveToDirectory(const std::string& outputDi
 template<class TVoxel, class TIndex>
 void ITMVoxelVolume<TVoxel, TIndex>::LoadFromDirectory(const std::string& outputDirectory) {
 	ITMSceneFileIOEngine<TVoxel,TIndex>::LoadFromDirectoryCompact(this, outputDirectory);
+}
+
+template<class TVoxel, class TIndex>
+TVoxel ITMVoxelVolume<TVoxel, TIndex>::GetValueAt(const Vector3i& pos) {
+	switch (this->index.memoryType) {
+		case MEMORYDEVICE_CPU:
+			VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ReadVoxel(this, pos);
+			break;
+#ifndef COMPILE_WITHOUT_CUDA
+		case MEMORYDEVICE_CUDA:
+			VolumeEditAndCopyEngine_CUDA<TVoxel, TIndex>::Inst().ReadVoxel(this, pos);
+			break;
+#endif
+		default:
+			DIEWITHEXCEPTION_REPORTLOCATION("Unsupported device type.");
+	}
 }
 
 
