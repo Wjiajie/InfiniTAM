@@ -227,7 +227,7 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 
 	//_DEBUG
 	Vector3i test_pos(-5, 8, 195);
-	Vector3s voxel_block_pos = TO_SHORT_FLOOR3(test_pos / VOXEL_BLOCK_SIZE);
+	Vector3s voxel_block_pos = TO_SHORT_FLOOR3(test_pos.toFloat() / VOXEL_BLOCK_SIZE);
 	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
 	Configuration::get().telemetry_settings.focus_coordinates = test_pos;
 	ITMVoxel voxelPVA_canonical = volume_16_PVA->GetValueAt(test_pos);
@@ -238,7 +238,7 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 	voxelVBH_canonical.print_self();
 	int hashCode;
 	volume_16_VBH->index.GetHashEntryAt(voxel_block_pos, hashCode);
-	std::cout << "VBH canonical hash block: " << voxel_block_pos << " code " << hashCode;
+	std::cout << "VBH canonical hash block: " << voxel_block_pos << " code " << hashCode << std::endl;
 	ITMVoxel voxelPVA = warped_live_PVA->GetValueAt(test_pos);
 	std::cout << "PVA live voxel of interest: ";
 	voxelPVA.print_self();
@@ -252,7 +252,7 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 	std::cout << "VBH canonical voxel of interest (after allocation): ";
 	voxelVBH_canonical.print_self();
 	volume_16_VBH->index.GetHashEntryAt(voxel_block_pos, hashCode);
-	std::cout << "VBH canonical hash block: " << voxel_block_pos << " code " << hashCode;
+	std::cout << "VBH canonical hash block: " << voxel_block_pos << " code " << hashCode << std::endl;;
 
 	// *** perform the warp gradient computation and warp updates
 	SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC>
