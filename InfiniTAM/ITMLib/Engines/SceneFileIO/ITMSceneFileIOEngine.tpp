@@ -55,9 +55,11 @@ void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(
 	int noTotalEntries = scene->index.hashEntryCount;
 
 	int lastExcessListId = scene->index.GetLastFreeExcessListId();
+	int visibleHashBlockCount = scene->index.GetVisibleHashBlockCount();
 	outFilter.write(reinterpret_cast<const char* >(&scene->localVBA.lastFreeBlockId), sizeof(int));
 	outFilter.write(reinterpret_cast<const char* >(&scene->localVBA.allocatedSize), sizeof(int));
 	outFilter.write(reinterpret_cast<const char* >(&lastExcessListId), sizeof(int));
+	outFilter.write(reinterpret_cast<const char* >(&visibleHashBlockCount), sizeof(int));
 	//count filled entries
 	int allocatedHashEntryCount = 0;
 #ifdef WITH_OPENMP
@@ -110,14 +112,17 @@ ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(
 
 	TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* hashTable = scene->index.GetEntries();
-	int noTotalEntries = scene->index.hashEntryCount;
 	int lastExcessListId;
 	int lastOrderedListId;
+	int visibleHashBlockCount;
 	inFilter.read(reinterpret_cast<char* >(&lastOrderedListId), sizeof(int));
 	inFilter.read(reinterpret_cast<char* >(&scene->localVBA.allocatedSize), sizeof(int));
 	inFilter.read(reinterpret_cast<char* >(&lastExcessListId), sizeof(int));
+	inFilter.read(reinterpret_cast<char* >(&visibleHashBlockCount), sizeof(int));
 	scene->index.SetLastFreeExcessListId(lastExcessListId);
+	scene->index.SetVisibleHashBlockCount(visibleHashBlockCount);
 	scene->localVBA.lastFreeBlockId = lastOrderedListId;
+
 
 	//count filled entries
 	int allocatedHashEntryCount;

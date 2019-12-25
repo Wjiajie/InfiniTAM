@@ -106,12 +106,10 @@ template<class TVoxel, class TIndex>
 TVoxel ITMVoxelVolume<TVoxel, TIndex>::GetValueAt(const Vector3i& pos) {
 	switch (this->index.memoryType) {
 		case MEMORYDEVICE_CPU:
-			VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ReadVoxel(this, pos);
-			break;
+			return VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ReadVoxel(this, pos);
 #ifndef COMPILE_WITHOUT_CUDA
 		case MEMORYDEVICE_CUDA:
-			VolumeEditAndCopyEngine_CUDA<TVoxel, TIndex>::Inst().ReadVoxel(this, pos);
-			break;
+			return VolumeEditAndCopyEngine_CUDA<TVoxel, TIndex>::Inst().ReadVoxel(this, pos);
 #endif
 		default:
 			DIEWITHEXCEPTION_REPORTLOCATION("Unsupported device type.");

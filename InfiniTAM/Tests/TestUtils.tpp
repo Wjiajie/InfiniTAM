@@ -207,16 +207,8 @@ template<typename TVoxel, typename TIndex>
 void initializeVolume(ITMVoxelVolume<TVoxel, TIndex>** volume,
                       typename TIndex::InitializationParameters initializationParameters, MemoryDeviceType memoryDevice,
                       Configuration::SwappingMode swappingMode) {
-	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&Configuration::get().scene_parameters, swappingMode,
-	                                               memoryDevice, initializationParameters);
-	switch (memoryDevice) {
-		case MEMORYDEVICE_CUDA:
-			VolumeEditAndCopyEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(*volume);
-			break;
-		case MEMORYDEVICE_CPU:
-			VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(*volume);
-			break;
-	}
+	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(memoryDevice, initializationParameters);
+	(*volume)->Reset();
 }
 
 

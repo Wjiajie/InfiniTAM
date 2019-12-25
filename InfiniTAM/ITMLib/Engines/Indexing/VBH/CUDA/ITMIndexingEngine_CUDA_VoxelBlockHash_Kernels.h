@@ -155,6 +155,7 @@ void buildHashAllocationTypeList_VolumeToVolume(ITMLib::HashEntryAllocationState
 	if (sourceHashEntry.ptr < 0) return;
 	Vector3s sourceBlockCoordinates = sourceHashEntry.pos;
 	int targetHash = HashCodeFromBlockPosition(sourceBlockCoordinates);
+
 	MarkAsNeedingAllocationIfNotFound(hashEntryStates, blockCoordinates,
 	                                  targetHash, sourceBlockCoordinates, targetHashTable,
 	                                  *collisionDetected);

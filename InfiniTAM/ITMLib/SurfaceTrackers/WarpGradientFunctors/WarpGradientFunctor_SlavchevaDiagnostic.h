@@ -319,7 +319,6 @@ public:
 			                                 localSmoothingEnergyGradient, warp.gradient0, energyGradientLength);
 		}
 		// endregion ===================================================================================================
-
 	}
 
 

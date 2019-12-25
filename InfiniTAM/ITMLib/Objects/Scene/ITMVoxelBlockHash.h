@@ -132,6 +132,8 @@ public:
 		this->hashEntryAllocationStates.SetFrom(&other.hashEntryAllocationStates, memoryCopyDirection);
 		this->hashEntries.SetFrom(&other.hashEntries, memoryCopyDirection);
 		this->excessAllocationList.SetFrom(&other.excessAllocationList, memoryCopyDirection);
+		this->lastFreeExcessListId = other.lastFreeExcessListId;
+		this->visibleHashBlockCount = other.visibleHashBlockCount;
 	}
 
 	~ITMVoxelBlockHash() = default;
@@ -142,7 +144,7 @@ public:
 	/** Get the list of actual entries in the hash table (alternative to GetEntries). */
 	const IndexData* GetIndexData() const { return hashEntries.GetData(memoryType); }
 	IndexData* GetIndexData() { return hashEntries.GetData(memoryType); }
-	ITMHashEntry GetHashEntry_CPU(int hashCode) const {
+	ITMHashEntry GetHashEntry(int hashCode) const {
 		return hashEntries.GetElement(hashCode, memoryType);
 	}
 	ITMHashEntry GetHashEntryAt(const Vector3s& pos) const;
