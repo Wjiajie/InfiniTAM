@@ -326,8 +326,9 @@ dualVoxelWarpPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecond
 			       hashCode, primaryHashEntry.pos.x, primaryHashEntry.pos.y, primaryHashEntry.pos.z);
 			DIEWITHEXCEPTION_REPORTLOCATION("No hash block with corresponding position found in warp hash table.");
 		}
-		secondaryHashEntry = secondaryHashTable[warpHashCode];
+		warpHashEntry = warpHashTable[warpHashCode];
 	}
+
 
 	int x = threadIdx.x;
 	int y = threadIdx.y;

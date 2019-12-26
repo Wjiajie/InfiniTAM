@@ -101,7 +101,7 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CUDA, Frame16And17Fixture)
 	delete volume_PVA_17;
 }
 
-BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_Expnaded_CPU, Frame16And17Fixture) {
+BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_Expnaded_CUDA, Frame16And17Fixture) {
 
 	ITMView* view = nullptr;
 	updateView(&view, "TestData/snoopy_depth_000017.png",
@@ -135,11 +135,6 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_Expnaded_CPU, Frame16And17
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA_Verbose(&volume_PVA_17, &volume_VBH_17_depth_allocation, absoluteTolerance));
 	BOOST_REQUIRE(contentForFlagsAlmostEqual_CUDA_Verbose(&volume_PVA_17, &volume_VBH_17_depth_allocation, VoxelFlags::VOXEL_NONTRUNCATED,
 	                                                     absoluteTolerance));
-
-//	std::cout << SceneStatCalc_CUDA_VBH_Voxel::Instance().ComputeAllocatedHashBlockCount(&volume_VBH_17_depth_allocation) << std::endl;
-//	std::cout << SceneStatCalc_CUDA_VBH_Voxel::Instance().ComputeAllocatedHashBlockCount(&volume_VBH_17) << std::endl;
-//	int hashCode;
-//	ITMHashEntry entry = volume_VBH_17.index.GetHashEntryAt_CUDA(-5, 7, 24, hashCode);
 
 
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA_Verbose(&volume_PVA_17, &volume_VBH_17, absoluteTolerance));

@@ -140,9 +140,6 @@ BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CUDA) {
 }
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonov_CPU) {
-	Vector3i test_pos(-57, -9, 196);
-	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
-	Configuration::get().telemetry_settings.focus_coordinates = test_pos;
 	SlavchevaSurfaceTracker::Switches switches(true, false, true, false, false);
 	GenericWarpTest<MEMORYDEVICE_CPU>(switches, 5, TEST_SUCCESSIVE_ITERATIONS, 1e-7);
 }
@@ -226,24 +223,22 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 	           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
 
 	//_DEBUG
-//	Vector3i test_pos(11, -3, 199);
+//	Vector3i test_pos(8, -4, 202);
 //	Vector3s voxel_block_pos = TO_SHORT_FLOOR3(test_pos.toFloat() / VOXEL_BLOCK_SIZE);
 //	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
 //	Configuration::get().telemetry_settings.focus_coordinates = test_pos;
-
+//
+//	int hashCode;
+//	ITMHashEntry entry = volume_16_VBH->index.GetHashEntryAt(voxel_block_pos, hashCode);
+//	printf("Entry %d %d %d: %d\n", voxel_block_pos.x, voxel_block_pos.y, voxel_block_pos.z, hashCode);
+//
 //	ITMVoxel voxelPVA_canonical = volume_16_PVA->GetValueAt(test_pos);
 //	std::cout << "PVA canonical voxel of interest: ";
 //	voxelPVA_canonical.print_self();
 //	ITMVoxel voxelVBH_canonical = volume_16_VBH->GetValueAt(test_pos);
 //	std::cout << "VBH canonical voxel of interest: ";
 //	voxelVBH_canonical.print_self();
-//	int hashCode;
-//	ITMHashEntry entry = volume_16_VBH->index.GetHashEntryAt(voxel_block_pos, hashCode);
-//	int alternative_index = 1179609;
-//	std::cout << "VBH canonical hash block: " << voxel_block_pos << " code " << hashCode << " ptr: " << entry.ptr << std::endl;
-//	ITMHashEntry alternative_entry = volume_16_VBH->index.GetHashEntry(alternative_index);
-//	std::cout << "VBH canonical " << alternative_index << " hash block ptr: " << alternative_entry.ptr << std::endl;
-
+//
 //	ITMVoxel voxelPVA = warped_live_PVA->GetValueAt(test_pos);
 //	std::cout << "PVA live voxel of interest: ";
 //	voxelPVA.print_self();

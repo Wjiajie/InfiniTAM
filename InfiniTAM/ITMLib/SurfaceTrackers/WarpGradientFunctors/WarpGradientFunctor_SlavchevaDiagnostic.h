@@ -125,22 +125,24 @@ public:
 	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& voxelLive, TVoxel& voxelCanonical, TWarp& warp, const Vector3i& voxelPosition) {
 
-		if (!VoxelIsConsideredForTracking(voxelCanonical, voxelLive)) return;
-		bool computeDataAndLevelSetTerms = VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive);
 
+		bool printVoxelResult = false;
 		Vector3f& framewiseWarp = warp.flow_warp;
+		bool computeDataAndLevelSetTerms = VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive);
+		this->SetUpFocusVoxelPrinting(printVoxelResult, voxelPosition, framewiseWarp, voxelCanonical, voxelLive, computeDataAndLevelSetTerms);
+		if (printVoxelResult) {
+			printf("%sLive 6-connected neighbor information:%s\n", c_blue, c_reset);
+			print6ConnectedNeighborInfo(voxelPosition, liveVoxels, liveIndexData, liveCache);
+		}
+		if (!VoxelIsConsideredForTracking(voxelCanonical, voxelLive)) return;
+
 		float liveSdf = TVoxel::valueToFloat(voxelLive.sdf);
 		float canonicalSdf = TVoxel::valueToFloat(voxelCanonical.sdf);
 
 		// term gradient results are stored here before being added up
 		Vector3f localSmoothingEnergyGradient(0.0f), localDataEnergyGradient(0.0f), localLevelSetEnergyGradient(0.0f);
 
-		bool printVoxelResult = false;
-		this->SetUpFocusVoxelPrinting(printVoxelResult, voxelPosition, framewiseWarp, voxelCanonical, voxelLive, computeDataAndLevelSetTerms);
-		if (printVoxelResult) {
-			printf("%sLive 6-connected neighbor information:%s\n", c_blue, c_reset);
-			print6ConnectedNeighborInfo(voxelPosition, liveVoxels, liveIndexData, liveCache);
-		}
+
 
 		// region =============================== DATA TERM ================================================
 		if (computeDataAndLevelSetTerms) {
@@ -299,6 +301,7 @@ public:
 		// region =============================== COMPUTE ENERGY GRADIENT ==================================
 		SetGradientFunctor<TWarp, TWarp::hasDebugInformation>::SetGradient(
 				warp, localDataEnergyGradient, localLevelSetEnergyGradient, localSmoothingEnergyGradient);
+
 		// endregion
 		// region =============================== AGGREGATE VOXEL STATISTICS ===============================
 

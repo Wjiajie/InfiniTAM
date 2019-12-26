@@ -51,17 +51,16 @@ GenerateRawLiveAndCanonicalVolumes(bool allocateLiveFromBothImages,
 
 	Vector2i imageSize(640, 480);
 
-	ITMTrackingState trackingState(imageSize, TMemoryDeviceType);
 	if (allocateLiveFromBothImages) {
 		ITMIndexingEngine<ITMVoxel, TIndex, TMemoryDeviceType>::Instance().AllocateFromDepth(
-				live_volumes[1], view, &trackingState, false, false);
+				live_volumes[1], view);
 	}
 
 	updateView(&view, "TestData/snoopy_depth_000017.png",
 	           "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
 	           "TestData/snoopy_calib.txt", TMemoryDeviceType);
 	ITMIndexingEngine<ITMVoxel, TIndex, TMemoryDeviceType>::Instance().AllocateFromDepth(
-			live_volumes[1], view, &trackingState, false, false);
+			live_volumes[1], view);
 
 	live_index_to_start_from = expand_raw_live_allocation ? 0 : 1;
 	if (expand_raw_live_allocation) {
@@ -71,11 +70,11 @@ GenerateRawLiveAndCanonicalVolumes(bool allocateLiveFromBothImages,
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, TIndex>* reconstructionEngine =
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, TIndex>(TMemoryDeviceType);
-	reconstructionEngine->IntegrateDepthImageIntoTsdfVolume(live_volumes[live_index_to_start_from], view, &trackingState);
+	reconstructionEngine->IntegrateDepthImageIntoTsdfVolume(live_volumes[live_index_to_start_from], view);
 	ITMSceneStatisticsCalculator<ITMVoxel,TIndex,TMemoryDeviceType>& calculator =
 			ITMSceneStatisticsCalculator<ITMVoxel,TIndex,TMemoryDeviceType>::Instance();
-	//BOOST_REQUIRE_EQUAL(calculator.ComputeAlteredVoxelCount(live_volumes[live_index_to_start_from]), 116880);
 }
+
 
 template<typename TIndex, MemoryDeviceType TMemoryDeviceType>
 void
@@ -111,8 +110,8 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 			                                     TMemoryDeviceType,
 			                                     Frame16And17Fixture::InitParams<TIndex>())
 	};
-	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, TIndex, TMemoryDeviceType>().ResetScene(live_volumes[0]);
-	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, TIndex, TMemoryDeviceType>().ResetScene(live_volumes[1]);
+	live_volumes[0]->Reset();
+	live_volumes[1]->Reset();
 
 	int live_index_to_start_from;
 	GenerateRawLiveAndCanonicalVolumes<TIndex, TMemoryDeviceType>(allocateLiveFromBothImages,
@@ -161,7 +160,8 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 				ITMSceneManipulationEngineFactory::Instance<ITMWarp, TIndex, TMemoryDeviceType>().ResetScene(
 						&ground_truth_warp_field);
 				ground_truth_warp_field.LoadFromDirectory(path);
-				BOOST_REQUIRE(contentAlmostEqual(&warp_field, &ground_truth_warp_field, absolute_tolerance,
+
+				BOOST_REQUIRE(contentAlmostEqual_Verbose(&warp_field, &ground_truth_warp_field, absolute_tolerance,
 				                                 TMemoryDeviceType));
 				ITMSceneManipulationEngineFactory::Instance<ITMVoxel, TIndex, TMemoryDeviceType>().ResetScene(
 						&ground_truth_sdf_volume);
