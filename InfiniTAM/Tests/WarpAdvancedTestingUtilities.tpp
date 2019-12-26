@@ -173,6 +173,7 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 				break;
 		}
 	}
+	std::cout << getIndexString<TIndex>() << " fusion test" << std::endl;
 	switch (mode) {
 		case SAVE_FINAL_ITERATION_AND_FUSION:
 			warp_field.SaveToDirectory(std::string("../../Tests/") + get_path_warps(prefix, iteration_limit - 1));
@@ -205,4 +206,167 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 	delete live_volumes[0];
 	delete live_volumes[1];
 	delete recoEngine;
+}
+
+
+template<MemoryDeviceType TMemoryDeviceType>
+void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switches trackerSwitches, bool expanded_allocation) {
+
+	if (iteration < 0) {
+		DIEWITHEXCEPTION_REPORTLOCATION("Expecting iteration >= 0, got less than that, aborting.");
+	}
+	std::string path_frame_17_PVA = "TestData/snoopy_result_fr16-17_partial_PVA/snoopy_partial_frame_17_";
+	std::string path_frame_16_PVA = "TestData/snoopy_result_fr16-17_partial_PVA/snoopy_partial_frame_16_";
+	std::string path_frame_17_VBH = "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_17_";
+	std::string path_frame_16_VBH = "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_16_";
+
+	if(expanded_allocation){
+		path_frame_17_VBH += "expanded_";
+	}
+
+	std::string prefix = switches_to_prefix(trackerSwitches);
+	float absoluteTolerance = 1e-7;
+
+	// *** initialize/load warps
+	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warps_PVA;
+	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps_VBH;
+	if (iteration > 0) {
+		std::string path_warps = get_path_warps(prefix, iteration - 1);
+		loadVolume(&warps_PVA, path_warps, TMemoryDeviceType,
+		           Frame16And17Fixture::InitParams<ITMPlainVoxelArray>());
+		loadVolume(&warps_VBH, path_warps, TMemoryDeviceType,
+		           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
+		BOOST_REQUIRE(allocatedContentAlmostEqual(warps_PVA, warps_VBH, absoluteTolerance, TMemoryDeviceType));
+	} else {
+		initializeVolume(&warps_PVA, Frame16And17Fixture::InitParams<ITMPlainVoxelArray>(), TMemoryDeviceType);
+		initializeVolume(&warps_VBH, Frame16And17Fixture::InitParams<ITMVoxelBlockHash>(), TMemoryDeviceType);
+		BOOST_REQUIRE(allocatedContentAlmostEqual(warps_PVA, warps_VBH, absoluteTolerance, TMemoryDeviceType));
+	}
+
+	// *** load warped live scene
+
+
+
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* warped_live_PVA;
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* warped_live_VBH;
+
+	if (iteration > 0) {
+		std::string path_warped_live = get_path_warped_live(prefix, iteration - 1);
+		loadVolume(&warped_live_PVA, path_warped_live, TMemoryDeviceType,
+		           Frame16And17Fixture::InitParams<ITMPlainVoxelArray>());
+		loadVolume(&warped_live_VBH, path_warped_live, TMemoryDeviceType,
+		           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
+	} else {
+		loadVolume(&warped_live_PVA, path_frame_17_PVA, TMemoryDeviceType,
+		           Frame16And17Fixture::InitParams<ITMPlainVoxelArray>());
+		loadVolume(&warped_live_VBH, path_frame_17_VBH, TMemoryDeviceType,
+		           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
+	}
+
+	// *** load canonical volume as the two different data structures
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_16_PVA;
+	loadVolume(&volume_16_PVA, path_frame_16_PVA, TMemoryDeviceType,
+	           Frame16And17Fixture::InitParams<ITMPlainVoxelArray>());
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_16_VBH;
+	loadVolume(&volume_16_VBH, path_frame_16_VBH, TMemoryDeviceType,
+	           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
+
+	//_DEBUG
+//	Vector3i test_pos(8, -4, 202);
+//	Vector3s voxel_block_pos = TO_SHORT_FLOOR3(test_pos.toFloat() / VOXEL_BLOCK_SIZE);
+//	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
+//	Configuration::get().telemetry_settings.focus_coordinates = test_pos;
+//
+//	int hashCode;
+//	ITMHashEntry entry = volume_16_VBH->index.GetHashEntryAt(voxel_block_pos, hashCode);
+//	printf("Entry %d %d %d: %d\n", voxel_block_pos.x, voxel_block_pos.y, voxel_block_pos.z, hashCode);
+//
+//	ITMVoxel voxelPVA_canonical = volume_16_PVA->GetValueAt(test_pos);
+//	std::cout << "PVA canonical voxel of interest: ";
+//	voxelPVA_canonical.print_self();
+//	ITMVoxel voxelVBH_canonical = volume_16_VBH->GetValueAt(test_pos);
+//	std::cout << "VBH canonical voxel of interest: ";
+//	voxelVBH_canonical.print_self();
+//
+//	ITMVoxel voxelPVA = warped_live_PVA->GetValueAt(test_pos);
+//	std::cout << "PVA live voxel of interest: ";
+//	voxelPVA.print_self();
+//	ITMVoxel voxelVBH = warped_live_VBH->GetValueAt(test_pos);
+//	std::cout << "VBH live voxel of interest: ";
+//	voxelVBH.print_self();
+
+
+//	voxelVBH_canonical = volume_16_VBH->GetValueAt(test_pos);
+//	std::cout << "VBH canonical voxel of interest (after allocation): ";
+//	voxelVBH_canonical.print_self();
+//	entry = volume_16_VBH->index.GetHashEntryAt(voxel_block_pos, hashCode);
+//	std::cout << "VBH canonical hash block: " << voxel_block_pos << " code " << hashCode << " ptr: " << entry.ptr << std::endl;
+
+//	alternative_entry = volume_16_VBH->index.GetHashEntry(alternative_index);
+//	std::cout << "VBH canonical " << alternative_index << " hash block ptr: " << alternative_entry.ptr << std::endl;
+//	ITMWarp warpPVA = warps_PVA->GetValueAt(test_pos);
+//	std::cout << "PVA Warp value of interest: ";
+//	warpPVA.print_self();
+//	ITMWarp warpVBH = warps_VBH->GetValueAt(test_pos);
+//	std::cout << "VBH Warp value of interest: ";
+//	warpVBH.print_self();
+
+	// *** perform the warp gradient computation and warp updates
+	SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC>
+			motionTracker_PVA(trackerSwitches);
+
+	std::cout << "==== CALCULATE PVA WARPS === " << (expanded_allocation ? "(expanded)" : "") << std::endl;
+	motionTracker_PVA.CalculateWarpGradient(volume_16_PVA, warped_live_PVA, warps_PVA);
+	motionTracker_PVA.SmoothWarpGradient(volume_16_PVA, warped_live_PVA, warps_PVA);
+	motionTracker_PVA.UpdateWarps(volume_16_PVA, warped_live_PVA, warps_PVA);
+
+	SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC>
+			motionTracker_VBH(trackerSwitches);
+
+
+	std::cout << "==== CALCULATE VBH WARPS === " << (expanded_allocation ? "(expanded)" : "") << std::endl;
+	motionTracker_VBH.CalculateWarpGradient(volume_16_VBH, warped_live_VBH, warps_VBH);
+	motionTracker_VBH.SmoothWarpGradient(volume_16_VBH, warped_live_VBH, warps_VBH);
+	motionTracker_VBH.UpdateWarps(volume_16_VBH, warped_live_VBH, warps_VBH);
+
+	// *** test content
+
+//	ITMWarp warpPVA = warps_PVA->GetValueAt(test_pos);
+//	std::cout << "PVA Warp value of interest: ";
+//	warpPVA.print_self();
+//	ITMWarp warpVBH = warps_VBH->GetValueAt(test_pos);
+//	std::cout << "VBH Warp value of interest: ";
+//	warpVBH.print_self();
+
+	BOOST_REQUIRE(allocatedContentAlmostEqual_Verbose(warps_PVA, warps_VBH, absoluteTolerance, TMemoryDeviceType));
+
+
+	//_DEBUG
+//	ITMWarp warpPVA = VolumeEditAndCopyEngineInterface<ITMWarp, ITMPlainVoxelArray>::Inst()
+//			.ReadVoxel(warps_PVA, test_pos);
+//	warpPVA.print_self();
+//	ITMWarp warpVBH = VolumeEditAndCopyEngineInterface<ITMWarp, ITMVoxelBlockHash>::Inst()
+//			.ReadVoxel(warps_VBH, test_pos);
+//	warpVBH.print_self();
+
+	delete volume_16_PVA;
+	delete volume_16_VBH;
+	delete warped_live_PVA;
+	delete warped_live_VBH;
+
+	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* loaded_warps_PVA;
+	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* loaded_warps_VBH;
+	std::string path_loaded_warps = get_path_warps(prefix, iteration);
+	loadVolume(&loaded_warps_PVA, path_loaded_warps, TMemoryDeviceType,
+	           Frame16And17Fixture::InitParams<ITMPlainVoxelArray>());
+	loadVolume(&loaded_warps_VBH, path_loaded_warps, TMemoryDeviceType,
+	           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
+
+	BOOST_REQUIRE(contentAlmostEqual_Verbose(warps_PVA, loaded_warps_PVA, absoluteTolerance, TMemoryDeviceType));
+	BOOST_REQUIRE(contentAlmostEqual_Verbose(warps_VBH, loaded_warps_VBH, absoluteTolerance, TMemoryDeviceType));
+
+	delete warps_PVA;
+	delete warps_VBH;
+	delete loaded_warps_PVA;
+	delete loaded_warps_VBH;
 }

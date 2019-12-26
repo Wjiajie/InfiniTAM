@@ -20,14 +20,6 @@
 template
 void
 GenericWarpConsistencySubtest<ITMPlainVoxelArray, MEMORYDEVICE_CPU>(const SlavchevaSurfaceTracker::Switches& switches,
-                              int iteration_limit,
-                              GenericWarpTestMode mode,
-                              float absolute_tolerance,
-                              bool allocateLiveFromBothImages,
-                              bool expand_raw_live_allocation);
-template
-void
-GenericWarpConsistencySubtest<ITMVoxelBlockHash, MEMORYDEVICE_CPU>(const SlavchevaSurfaceTracker::Switches& switches,
                                                                     int iteration_limit,
                                                                     GenericWarpTestMode mode,
                                                                     float absolute_tolerance,
@@ -35,21 +27,37 @@ GenericWarpConsistencySubtest<ITMVoxelBlockHash, MEMORYDEVICE_CPU>(const Slavche
                                                                     bool expand_raw_live_allocation);
 template
 void
-GenericWarpConsistencySubtest<ITMPlainVoxelArray, MEMORYDEVICE_CUDA>(const SlavchevaSurfaceTracker::Switches& switches,
+GenericWarpConsistencySubtest<ITMVoxelBlockHash, MEMORYDEVICE_CPU>(const SlavchevaSurfaceTracker::Switches& switches,
                                                                    int iteration_limit,
                                                                    GenericWarpTestMode mode,
                                                                    float absolute_tolerance,
                                                                    bool allocateLiveFromBothImages,
                                                                    bool expand_raw_live_allocation);
-
 template
 void
-GenericWarpConsistencySubtest<ITMVoxelBlockHash, MEMORYDEVICE_CUDA>(const SlavchevaSurfaceTracker::Switches& switches,
+GenericWarpConsistencySubtest<ITMPlainVoxelArray, MEMORYDEVICE_CUDA>(const SlavchevaSurfaceTracker::Switches& switches,
                                                                      int iteration_limit,
                                                                      GenericWarpTestMode mode,
                                                                      float absolute_tolerance,
                                                                      bool allocateLiveFromBothImages,
                                                                      bool expand_raw_live_allocation);
+
+template
+void
+GenericWarpConsistencySubtest<ITMVoxelBlockHash, MEMORYDEVICE_CUDA>(const SlavchevaSurfaceTracker::Switches& switches,
+                                                                    int iteration_limit,
+                                                                    GenericWarpTestMode mode,
+                                                                    float absolute_tolerance,
+                                                                    bool allocateLiveFromBothImages,
+                                                                    bool expand_raw_live_allocation);
+
+template
+void Warp_PVA_VBH_simple_subtest<MEMORYDEVICE_CPU>(int iteration, SlavchevaSurfaceTracker::Switches trackerSwitches,
+                                                   bool expanded_allocation);
+
+template
+void Warp_PVA_VBH_simple_subtest<MEMORYDEVICE_CUDA>(int iteration, SlavchevaSurfaceTracker::Switches trackerSwitches,
+                                                    bool expanded_allocation);
 
 std::string get_path_warps(std::string prefix, int iteration) {
 	return "TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_" + std::to_string(iteration) + "_";
