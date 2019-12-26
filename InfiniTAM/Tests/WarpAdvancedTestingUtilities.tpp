@@ -166,7 +166,7 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 				ITMSceneManipulationEngineFactory::Instance<ITMVoxel, TIndex, TMemoryDeviceType>().ResetScene(
 						&ground_truth_sdf_volume);
 				ground_truth_sdf_volume.LoadFromDirectory(path_warped_live);
-				BOOST_REQUIRE(contentAlmostEqual(live_volumes[target_warped_field_ix], &ground_truth_sdf_volume,
+				BOOST_REQUIRE(contentAlmostEqual_Verbose(live_volumes[target_warped_field_ix], &ground_truth_sdf_volume,
 				                                 absolute_tolerance, TMemoryDeviceType));
 				break;
 			default:
