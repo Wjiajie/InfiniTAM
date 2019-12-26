@@ -34,7 +34,7 @@ inline void write_json_no_quotes(std::basic_ostream<
 >& stream, const pt::ptree& ptree, bool pretty = true) {
 	std::ostringstream oss;
 	pt::write_json(oss, ptree, pretty);
-	std::regex reg("\\\"([0-9]+\\.{0,1}[0-9]*)\\\"");
+	std::regex reg("\\\"([0-9]+\\.{0,1}[0-9]*|true|false)\\\"");
 	std::string result = std::regex_replace(oss.str(), reg, "$1");
 	stream << result;
 }
@@ -42,7 +42,7 @@ inline void write_json_no_quotes(std::basic_ostream<
 inline void write_json_no_quotes(const std::string& path, const pt::ptree& ptree, bool pretty = true) {
 	std::ostringstream oss;
 	pt::write_json(oss, ptree, pretty);
-	std::regex reg("\\\"([0-9]+\\.{0,1}[0-9]*)\\\"");
+	std::regex reg("\\\"([0-9]+\\.{0,1}[0-9]*|true|false)\\\"");
 	std::string result = std::regex_replace(oss.str(), reg, "$1");
 
 	std::ofstream file;

@@ -4,7 +4,7 @@
 
 #include "../Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
 #include "../Engines/Swapping/ITMSwappingEngineFactory.h"
-#include "../Objects/RenderStates/ITMRenderState_VH.h"
+
 using namespace ITMLib;
 
 template<class TVoxel, class TIndex>

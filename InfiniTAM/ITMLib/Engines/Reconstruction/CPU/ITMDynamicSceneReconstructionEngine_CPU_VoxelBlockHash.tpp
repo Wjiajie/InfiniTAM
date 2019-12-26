@@ -5,54 +5,47 @@
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
 #include "../../Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Functors.h"
-#include "../../../Objects/RenderStates/ITMRenderState_VH.h"
-#include "../../../Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 
 using namespace ITMLib;
 
-
-
-
 // region ======================================= MODIFY VOXELS BASED ON VIEW ==========================================
 
+
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::IntegrateIntoScene(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
-		const ITMTrackingState* trackingState, const ITMRenderState* renderState) {
+void
+ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::IntegrateDepthImageIntoTsdfVolume_Helper(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view, Matrix4f depth_camera_matrix) {
 	Vector2i rgbImgSize = view->rgb->noDims;
 	Vector2i depthImgSize = view->depth->noDims;
-	float voxelSize = scene->sceneParams->voxelSize;
+	float voxelSize = volume->sceneParams->voxelSize;
 
-	Matrix4f M_d, M_rgb;
+	Matrix4f RGB_camera_matrix;
 	Vector4f projParams_d, projParams_rgb;
 
-	ITMRenderState_VH* renderState_vh = (ITMRenderState_VH*) renderState;
-
-	M_d = trackingState->pose_d->GetM();
-	if (TVoxel::hasColorInformation) M_rgb = view->calib.trafo_rgb_to_depth.calib_inv * M_d;
+	if (TVoxel::hasColorInformation) RGB_camera_matrix = view->calib.trafo_rgb_to_depth.calib_inv * depth_camera_matrix;
 
 	projParams_d = view->calib.intrinsics_d.projectionParamsSimple.all;
 	projParams_rgb = view->calib.intrinsics_rgb.projectionParamsSimple.all;
 
-	float mu = scene->sceneParams->mu;
-	int maxW = scene->sceneParams->maxW;
+	float mu = volume->sceneParams->mu;
+	int maxW = volume->sceneParams->maxW;
 
 	float* depth = view->depth->GetData(MEMORYDEVICE_CPU);
 	float* confidence = view->depthConfidence->GetData(MEMORYDEVICE_CPU);
 	Vector4u* rgb = view->rgb->GetData(MEMORYDEVICE_CPU);
-	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
-	ITMHashEntry* hashTable = scene->index.GetEntries();
+	TVoxel* localVBA = volume->localVBA.GetVoxelBlocks();
+	ITMHashEntry* hashTable = volume->index.GetEntries();
 
-	int* visibleEntryIds = renderState_vh->GetVisibleEntryIDs();
-	int noVisibleEntries = renderState_vh->noVisibleEntries;
-
+	int* visibleEntryHashCodes = volume->index.GetVisibleBlockHashCodes();
+	int visibleEntryCount = volume->index.GetVisibleHashBlockCount();
 
 #ifdef WITH_OPENMP
 #pragma omp parallel for default(none)
 #endif
-	for (int visibleHash = 0; visibleHash < noVisibleEntries; visibleHash++) {
+	for (int visibleHash = 0; visibleHash < visibleEntryCount; visibleHash++) {
 		Vector3i globalPos;
-		int hash = visibleEntryIds[visibleHash];
+		int hash = visibleEntryHashCodes[visibleHash];
+
 		const ITMHashEntry& currentHashEntry = hashTable[hash];
 
 		if (currentHashEntry.ptr < 0) continue;
@@ -77,24 +70,36 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 					pt_model.z = (float) (globalPos.z + z) * voxelSize;
 					pt_model.w = 1.0f;
 
-					Vector3i pos(globalPos.x + x, globalPos.y + y, globalPos.z + z);
-
-
 					ComputeUpdatedLiveVoxelInfo<
 							TVoxel::hasColorInformation,
 							TVoxel::hasConfidenceInformation,
 							TVoxel::hasSemanticInformation,
-							TVoxel>::compute(localVoxelBlock[locId], pt_model, M_d,
-					                         projParams_d, M_rgb, projParams_rgb, mu, maxW, depth, confidence,
+							TVoxel>::compute(localVoxelBlock[locId], pt_model, depth_camera_matrix,
+					                         projParams_d, RGB_camera_matrix, projParams_rgb, mu, maxW, depth,
+					                         confidence,
 					                         depthImgSize, rgb, rgbImgSize);
 				}
 	}
+}
+
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::IntegrateDepthImageIntoTsdfVolume(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view,
+		const ITMTrackingState* trackingState) {
+	IntegrateDepthImageIntoTsdfVolume_Helper(volume, view, trackingState->pose_d->GetM());
+}
+
+
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::IntegrateDepthImageIntoTsdfVolume(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view) {
+	IntegrateDepthImageIntoTsdfVolume_Helper(volume, view);
 }
 // endregion ===========================================================================================================
 // region =================================== FUSION ===================================================================
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::FuseLiveIntoCanonicalSdf(
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::FuseOneTsdfVolumeIntoAnother(
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene) {
 	ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
@@ -106,13 +111,35 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 
 template<typename TVoxel, typename TWarp>
 void
-ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::GenerateRawLiveSceneFromView(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
-		const ITMRenderState* renderState) {
+ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::GenerateTsdfVolumeFromView(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
+		const ITMTrackingState* trackingState) {
+	GenerateTsdfVolumeFromView(scene, view, trackingState->pose_d->GetM());
+}
+
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::GenerateTsdfVolumeFromView(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const Matrix4f& depth_camera_matrix) {
 	this->sceneManager.ResetScene(scene);
 	ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
-			.AllocateFromDepth(scene, view, trackingState, renderState, false, false);
-	this->IntegrateIntoScene(scene, view, trackingState, renderState);
+			.AllocateFromDepth(scene, view, depth_camera_matrix, false, false);
+	this->IntegrateDepthImageIntoTsdfVolume_Helper(scene, view, depth_camera_matrix);
+}
+
+template<typename TVoxel, typename TWarp>
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::GenerateTsdfVolumeFromViewExpanded(
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* temporaryAllocationVolume, const ITMView* view,
+		const Matrix4f& depth_camera_matrix) {
+	volume->Reset();
+	temporaryAllocationVolume->Reset();
+	ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>& indexer =
+			ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance();
+	// Allocate blocks based on depth
+	indexer.AllocateFromDepth(temporaryAllocationVolume, view, depth_camera_matrix, false, false);
+	// Expand allocation by 1-ring of blocks
+	indexer.AllocateUsingOtherVolumeExpanded(volume,temporaryAllocationVolume);
+	this->IntegrateDepthImageIntoTsdfVolume_Helper(volume, view, depth_camera_matrix);
 }
 
 // endregion ===========================================================================================================
@@ -155,13 +182,13 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 	ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance().template AllocateFromWarpedVolume<TWarpType>(
 			warpField, sourceTSDF, targetTSDF);
 
-	TrilinearInterpolationFunctor<TVoxel, TWarp, ITMVoxelBlockHash, WarpVoxelStaticFunctor<TWarp, TWarpType>, MEMORYDEVICE_CPU>
+	TrilinearInterpolationFunctor<TVoxel, TWarp, ITMVoxelBlockHash, TWarpType, MEMORYDEVICE_CPU>
 			trilinearInterpolationFunctor(sourceTSDF, warpField);
 
 	// Interpolate to obtain the new live frame values (at target index)
 	ITMDualSceneTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	//DualVoxelPositionTraversal_DefaultForMissingSecondary(targetTSDF, warpField, trilinearInterpolationFunctor);
-	DualVoxelPositionTraversal(targetTSDF,warpField,trilinearInterpolationFunctor);
+	DualVoxelPositionTraversal(targetTSDF, warpField, trilinearInterpolationFunctor);
 }
 
 template<typename TVoxel, typename TWarp>
@@ -169,7 +196,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view, const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState, bool resetVisibleList) {
 	ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
-			.AllocateFromDepth(scene, view, trackingState, renderState, true, resetVisibleList);
+			.AllocateFromDepth(scene, view, trackingState, true, resetVisibleList);
 }
 
 template<typename TVoxel, typename TWarp>
@@ -195,5 +222,9 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
 	this->template WarpScene<WARP_UPDATE>(warpField, sourceTSDF, targetTSDF);
 }
+
+
+
+
 
 // endregion ===========================================================================================================

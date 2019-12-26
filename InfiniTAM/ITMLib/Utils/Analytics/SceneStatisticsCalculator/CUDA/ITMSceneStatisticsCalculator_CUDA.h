@@ -18,21 +18,21 @@
 #include <vector>
 #include "../../../ITMMath.h"
 #include "../../../../Objects/Scene/ITMVoxelVolume.h"
-#include "../Interface/ITMSceneStatisticsCalculator.h"
+#include "../Interface/ITMSceneStatisticsCalculatorInterface.h"
 #include "../../../../ITMLibDefines.h"
 
 namespace ITMLib {
 template<typename TVoxel, typename TIndex>
-class ITMSceneStatisticsCalculator_CUDA :
-		public ITMSceneStatisticsCalculator<TVoxel, TIndex> {
+class ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA> :
+		public ITMSceneStatisticsCalculatorInterface<TVoxel, TIndex> {
 public:
-	static ITMSceneStatisticsCalculator_CUDA& Instance() {
-		static ITMSceneStatisticsCalculator_CUDA instance;
+	static ITMSceneStatisticsCalculator& Instance() {
+		static ITMSceneStatisticsCalculator instance;
 		return instance;
 	}
 
-	ITMSceneStatisticsCalculator_CUDA(ITMSceneStatisticsCalculator_CUDA const&) = delete;
-	void operator=(ITMSceneStatisticsCalculator_CUDA const&) = delete;
+	ITMSceneStatisticsCalculator(ITMSceneStatisticsCalculator const&) = delete;
+	void operator=(ITMSceneStatisticsCalculator const&) = delete;
 
 	Vector6i ComputeVoxelBounds(const ITMVoxelVolume<TVoxel, TIndex>* scene) override;
 	int ComputeAllocatedVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) override;
@@ -48,17 +48,19 @@ public:
 	double ComputeFlowWarpMax(ITMVoxelVolume<TVoxel,TIndex>* scene) override;
 	double ComputeFlowWarpMean(ITMVoxelVolume<TVoxel,TIndex>* scene) override;
 
+	Extent3D FindMinimumNonTruncatedBoundingBox(ITMVoxelVolume <TVoxel, TIndex>* scene) override;
+
 	float FindMaxGradient0LengthAndPosition(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector3i& positionOut) override;
 	float FindMaxGradient1LengthAndPosition(ITMVoxelVolume<TVoxel, TIndex>* scene, Vector3i& positionOut) override;
 private:
-	ITMSceneStatisticsCalculator_CUDA() = default;
-	~ITMSceneStatisticsCalculator_CUDA() = default;
+	ITMSceneStatisticsCalculator() = default;
+	~ITMSceneStatisticsCalculator() = default;
 };
 
 
-typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMVoxelBlockHash> SceneStatCalc_CUDA_VBH_Voxel;
-typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMPlainVoxelArray> SceneStatCalc_CUDA_PVA_Voxel;
-typedef ITMSceneStatisticsCalculator_CUDA<ITMWarp, ITMVoxelBlockHash> SceneStatCalc_CUDA_VBH_Warp;
-typedef ITMSceneStatisticsCalculator_CUDA<ITMWarp, ITMPlainVoxelArray> SceneStatCalc_CUDA_PVA_Warp;
+typedef ITMSceneStatisticsCalculator<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA> SceneStatCalc_CUDA_VBH_Voxel;
+typedef ITMSceneStatisticsCalculator<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CUDA> SceneStatCalc_CUDA_PVA_Voxel;
+typedef ITMSceneStatisticsCalculator<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CUDA> SceneStatCalc_CUDA_VBH_Warp;
+typedef ITMSceneStatisticsCalculator<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA> SceneStatCalc_CUDA_PVA_Warp;
 
 } // namespace ITMLib

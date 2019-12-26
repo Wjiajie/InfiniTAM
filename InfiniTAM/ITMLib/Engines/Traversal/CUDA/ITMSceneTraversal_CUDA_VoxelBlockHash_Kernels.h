@@ -313,17 +313,22 @@ dualVoxelWarpPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecond
 	if (secondaryHashEntry.pos != primaryHashEntry.pos) {
 		int secondaryHashCode = 0;
 		if(!FindHashAtPosition(secondaryHashCode, primaryHashEntry.pos, secondaryHashTable)){
-			DIEWITHEXCEPTION_REPORTLOCATION("No hash block with corresponding position found in hash table.");
+			printf("Attempted traversal of primary hash block %d at %d %d %d, but this block is absent from secondary volume.\n",
+					hashCode, primaryHashEntry.pos.x, primaryHashEntry.pos.y, primaryHashEntry.pos.z);
+			DIEWITHEXCEPTION_REPORTLOCATION("No hash block with corresponding position found in secondary hash table.");
 		}
 		secondaryHashEntry = secondaryHashTable[secondaryHashCode];
 	}
 	if (warpHashEntry.pos != primaryHashEntry.pos) {
 		int warpHashCode = 0;
 		if(!FindHashAtPosition(warpHashCode, primaryHashEntry.pos, warpHashTable)){
-			DIEWITHEXCEPTION_REPORTLOCATION("No hash block with corresponding position found in hash table.");
+			printf("Attempted traversal of primary hash block %d at %d %d %d, but this block is absent from warp volume.\n",
+			       hashCode, primaryHashEntry.pos.x, primaryHashEntry.pos.y, primaryHashEntry.pos.z);
+			DIEWITHEXCEPTION_REPORTLOCATION("No hash block with corresponding position found in warp hash table.");
 		}
-		secondaryHashEntry = secondaryHashTable[warpHashCode];
+		warpHashEntry = warpHashTable[warpHashCode];
 	}
+
 
 	int x = threadIdx.x;
 	int y = threadIdx.y;

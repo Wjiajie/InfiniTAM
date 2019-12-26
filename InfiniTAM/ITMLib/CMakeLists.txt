@@ -147,42 +147,45 @@ set(ITMLIB_ENGINES_TRAVERSAL_CUDA_HEADERS
 
 
 #====================================== SCENE MANIPULATION ENGINES =====================================================
+set(ITMLIB_ENGINES_MANIPULATION_HEADERS
+    Engines/VolumeEditAndCopy/VolumeEditAndCopyEngineFactory.h
+	)
 
 ##
 set(ITMLIB_ENGINES_MANIPULATION_INTERFACE_HEADERS
-    Engines/Manipulation/Interface/ITMSceneManipulationEngine.h
+	Engines/VolumeEditAndCopy/Interface/VolumeEditAndCopyEngineInterface.h
     )
 ##
 set(ITMLIB_ENGINES_MANIPULATION_SHARED_HEADERS
-    Engines/Manipulation/Shared/ITMSceneManipulationEngine_Shared.h
-    Engines/Manipulation/Shared/ITMSceneManipulationEngine_Functors.h
+	Engines/VolumeEditAndCopy/Shared/VolumeEditAndCopyEngine_Shared.h
+	Engines/VolumeEditAndCopy/Shared/VolumeEditAndCopyEngine_Functors.h
     )
 
 ##
 set(ITMLIB_ENGINES_MANIPULATION_CPU_SOURCES
-    Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.cpp
-    Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU_VoxelBlockHash.tpp
-    Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU_PlainVoxelArray.tpp
-    Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU_VoxelBlockHash.cpp
-    Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU_PlainVoxelArray.cpp
+	Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.cpp
+	Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU_VoxelBlockHash.tpp
+	Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU_PlainVoxelArray.tpp
+	Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU_VoxelBlockHash.cpp
+	Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU_PlainVoxelArray.cpp
     )
 
 set(ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS
-    Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h
+	Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h
     )
 
 ##
 set(ITMLIB_ENGINES_MANIPULATION_CUDA_SOURCES
-    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_VoxelBlockHash.tcu
-    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_PlainVoxelArray.tcu
-    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_VoxelBlockHash.cu
-    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_PlainVoxelArray.cu
+	Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA_VoxelBlockHash.tcu
+	Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA_PlainVoxelArray.tcu
+	Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA_VoxelBlockHash.cu
+	Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA_PlainVoxelArray.cu
     )
 
 set(ITMLIB_ENGINES_MANIPULATION_CUDA_HEADERS
-    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h
-    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_VoxelBlockHash_Kernels.h
-    Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA_PlainVoxelArray_Kernels.h
+	Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h
+	Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA_VoxelBlockHash_Kernels.h
+	Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA_PlainVoxelArray_Kernels.h
     )
 
 #====================================== MESHING ENGINES ================================================================
@@ -249,27 +252,32 @@ set(ITMLIB_ENGINES_INDEXING_HEADERS
 
 ##
 set(ITMLIB_ENGINES_INDEXING_CPU_SOURCES
-	Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU.tpp
-    Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU.cpp
+	Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.tpp
+	Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.cpp
+	Engines/Indexing/PVA/CPU/ITMIndexingEngine_CPU_PlainVoxelArray.cpp
     )
 
 set(ITMLIB_ENGINES_INDEXING_CPU_HEADERS
-	Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU.h
-    )
+	Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h
+	)
 ##
 set(ITMLIB_ENGINES_INDEXING_CUDA_SOURCES
-	Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA.tcu
-	Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA.cu
+	Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.tcu
+	Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.cu
+	Engines/Indexing/PVA/CUDA/ITMIndexingEngine_CUDA_PlainVoxelArray.cu
     )
 
 set(ITMLIB_ENGINES_INDEXING_CUDA_HEADERS
-	Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_Kernels.h
+	Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash_Kernels.h
     )
 
 ##
 set(ITMLIB_ENGINES_INDEXING_INTERFACE_HEADERS
     Engines/Indexing/Interface/ITMIndexingEngine.h
 
+	)
+set(ITMLIB_ENGINES_INDEXING_INTERFACE_SOURCES
+	Engines/Indexing/Interface/ITMIndexingEngine.tpp
 	)
 
 set(ITMLIB_ENGINES_INDEXING_SHARED_HEADERS
@@ -426,60 +434,60 @@ set(ITMLIB_ENGINES_VIEWBUILDING_SHARED_HEADERS
 ## ======================================== VISUALIATION ENGINES =======================================================
 ##
 set(ITMLIB_ENGINES_VISUALISATION_SOURCES
-    Engines/Visualisation/ITMSurfelVisualisationEngineFactory.tpp
+	Engines/Visualization/ITMSurfelVisualizationEngineFactory.tpp
     )
 
 set(ITMLIB_ENGINES_VISUALISATION_HEADERS
-    Engines/Visualisation/ITMMultiVisualisationEngineFactory.h
-    Engines/Visualisation/ITMSurfelVisualisationEngineFactory.h
-    Engines/Visualisation/ITMVisualisationEngineFactory.h
+	Engines/Visualization/ITMMultiVisualizationEngineFactory.h
+	Engines/Visualization/ITMSurfelVisualizationEngineFactory.h
+	Engines/Visualization/ITMVisualizationEngineFactory.h
     )
 
 ##
 set(ITMLIB_ENGINES_VISUALISATION_CPU_SOURCES
-    Engines/Visualisation/CPU/ITMMultiVisualisationEngine_CPU.tpp
-    Engines/Visualisation/CPU/ITMSurfelVisualisationEngine_CPU.tpp
-    Engines/Visualisation/CPU/ITMVisualisationEngine_CPU.tpp
+	Engines/Visualization/CPU/ITMMultiVisualizationEngine_CPU.tpp
+	Engines/Visualization/CPU/ITMSurfelVisualisationEngine_CPU.tpp
+	Engines/Visualization/CPU/ITMVisualisationEngine_CPU.tpp
     )
 
 set(ITMLIB_ENGINES_VISUALISATION_CPU_HEADERS
-    Engines/Visualisation/CPU/ITMMultiVisualisationEngine_CPU.h
-    Engines/Visualisation/CPU/ITMSurfelVisualisationEngine_CPU.h
-    Engines/Visualisation/CPU/ITMVisualisationEngine_CPU.h
+	Engines/Visualization/CPU/ITMMultiVisualizationEngine_CPU.h
+	Engines/Visualization/CPU/ITMSurfelVisualizationEngine_CPU.h
+	Engines/Visualization/CPU/ITMVisualizationEngine_CPU.h
     )
 
 ##
 set(ITMLIB_ENGINES_VISUALISATION_CUDA_SOURCES
-    Engines/Visualisation/CUDA/ITMMultiVisualisationEngine_CUDA.tcu
-    Engines/Visualisation/CUDA/ITMSurfelVisualisationEngine_CUDA.tcu
-    Engines/Visualisation/CUDA/ITMVisualisationEngine_CUDA.tcu
-    Engines/Visualisation/CUDA/ITMVisualisationHelpers_CUDA.cu
+	Engines/Visualization/CUDA/ITMMultiVisualizationEngine_CUDA.tcu
+	Engines/Visualization/CUDA/ITMSurfelVisualizationEngine_CUDA.tcu
+	Engines/Visualization/CUDA/ITMVisualizationEngine_CUDA.tcu
+	Engines/Visualization/CUDA/ITMVisualizationHelpers_CUDA.cu
     )
 
 set(ITMLIB_ENGINES_VISUALISATION_CUDA_HEADERS
-    Engines/Visualisation/CUDA/ITMMultiVisualisationEngine_CUDA.h
-    Engines/Visualisation/CUDA/ITMSurfelVisualisationEngine_CUDA.h
-    Engines/Visualisation/CUDA/ITMVisualisationEngine_CUDA.h
-    Engines/Visualisation/CUDA/ITMVisualisationHelpers_CUDA.h
+	Engines/Visualization/CUDA/ITMMultiVisualizationEngine_CUDA.h
+	Engines/Visualization/CUDA/ITMSurfelVisualizationEngine_CUDA.h
+	Engines/Visualization/CUDA/ITMVisualizationEngine_CUDA.h
+	Engines/Visualization/CUDA/ITMVisualizationHelpers_CUDA.h
     )
 
 ##
 set(ITMLIB_ENGINES_VISUALISATION_INTERFACE_SOURCES
-    Engines/Visualisation/Interface/ITMSurfelVisualisationEngine.tpp
-    Engines/Visualisation/Interface/ITMVisualisationEngine.cpp
+	Engines/Visualization/Interface/ITMSurfelVisualisationEngine.tpp
+	Engines/Visualization/Interface/ITMVisualisationEngine.cpp
     )
 
 set(ITMLIB_ENGINES_VISUALISATION_INTERFACE_HEADERS
-    Engines/Visualisation/Interface/ITMMultiVisualisationEngine.h
-    Engines/Visualisation/Interface/ITMSurfelVisualisationEngine.h
-    Engines/Visualisation/Interface/ITMVisualisationEngine.h
+	Engines/Visualization/Interface/ITMMultiVisualisationEngine.h
+	Engines/Visualization/Interface/ITMSurfelVisualisationEngine.h
+	Engines/Visualization/Interface/ITMVisualisationEngine.h
     )
 
 ##
 set(ITMLIB_ENGINES_VISUALISATION_SHARED_HEADERS
-    Engines/Visualisation/Shared/ITMSurfelVisualisationEngine_Settings.h
-    Engines/Visualisation/Shared/ITMSurfelVisualisationEngine_Shared.h
-    Engines/Visualisation/Shared/ITMVisualisationEngine_Shared.h
+	Engines/Visualization/Shared/ITMSurfelVisualisationEngine_Settings.h
+	Engines/Visualization/Shared/ITMSurfelVisualisationEngine_Shared.h
+	Engines/Visualization/Shared/ITMVisualisationEngine_Shared.h
     )
 
 ## ================================================== OBJECTS ==========================================================
@@ -516,9 +524,7 @@ set(ITMLIB_OBJECTS_RENDERSTATES_SOURCES
 set(ITMLIB_OBJECTS_RENDERSTATES_HEADERS
     Objects/RenderStates/ITMRenderState.h
     Objects/RenderStates/ITMRenderStateMultiScene.h
-    Objects/RenderStates/ITMRenderState_VH.h
-    Objects/RenderStates/ITMRenderStateFactory.h
-    Objects/RenderStates/ITMSurfelRenderState.h
+	Objects/RenderStates/ITMSurfelRenderState.h
     )
 
 ##
@@ -635,49 +641,49 @@ set(ITMLIB_CAMERA_TRACKERS_SHARED_HEADERS
     )
 # ============================================== SCENE MOTION TRACKERS =================================================
 set(ITMLIB_SCENE_MOTION_TRACKERS_HEADERS
-	SurfaceTrackers/ITMSceneMotionTrackerFactory.h
+	SurfaceTrackers/SurfaceTrackerFactory.h
     )
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_SOURCES
-	SurfaceTrackers/Shared/ITMWarpGradientCommon.h
-	SurfaceTrackers/CPU/SurfaceTracker_CPU_VoxelBlockHash.tpp
+
 	SurfaceTrackers/CPU/SurfaceTracker_CPU_VoxelBlockHash.cpp
-	SurfaceTrackers/CPU/SurfaceTracker_CPU_PlainVoxelArray.tpp
 	SurfaceTrackers/CPU/SurfaceTracker_CPU_PlainVoxelArray.cpp
     )
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CPU_HEADERS
-	SurfaceTrackers/CPU/SurfaceTracker_CPU.h
     )
 ##
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_SOURCES
-	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_PlainVoxelArray.tcu
 	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_PlainVoxelArray.cu
-	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_VoxelBlockHash.tcu
 	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_VoxelBlockHash.cu
     )
 set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_HEADERS
-	SurfaceTrackers/CUDA/SurfaceTracker_CUDA.h
-	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_PlainVoxelArray_Kernels.h
-	SurfaceTrackers/CUDA/SurfaceTracker_CUDA_VoxelBlockHash_Kernels.h
-    )
+
+	)
 ##
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_SOURCES
+	SurfaceTrackers/WarpGradientFunctors/WarpGradientFunctor.h
+
 	SurfaceTrackers/Interface/SlavchevaSurfaceTracker.cpp
+	SurfaceTrackers/Interface/SurfaceTracker.tpp
     )
 set(ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_HEADERS
 	SurfaceTrackers/Interface/SurfaceTrackerInterface.h
 	SurfaceTrackers/Interface/SlavchevaSufraceTracker.h
+	SurfaceTrackers/Interface/SurfaceTracker.h
     )
 ##
 set(ITMLIB_SCENE_MOTION_TRACKERS_SHARED_HEADERS
-	SurfaceTrackers/Shared/ITMSceneMotionTracker_Shared.h
-	SurfaceTrackers/Shared/ITMSceneMotionTracker_Debug.h
-	SurfaceTrackers/Shared/ITMSceneMotionTracker_Functors.h
-	SurfaceTrackers/Shared/ITMCalculateWarpGradientFunctor.h
-	SurfaceTrackers/Shared/ITMSceneMotionOptimizationParameters.h
+	SurfaceTrackers/WarpGradientFunctors/WarpGradientFunctor_SlavchevaDiagnostic.h
+	SurfaceTrackers/WarpGradientFunctors/WarpGradientFunctor_SlavchevaOptimized.h
+
+	SurfaceTrackers/Shared/ITMWarpGradientCommon.h
+	SurfaceTrackers/Shared/SurfaceTrackerSharedRoutines.h
+	SurfaceTrackers/Shared/SurfaceTrackerDiagnosticRoutines.h
+	SurfaceTrackers/Shared/SurfaceTrackerSharedFunctors.h
+    SurfaceTrackers/Shared/SurfaceTrackerOptimizationParameters.h
 	SurfaceTrackers/Shared/ITMWarpGradientRoutines.h
 	SurfaceTrackers/Shared/ITMWarpGradientAggregates.h
     )
@@ -709,9 +715,11 @@ set(ITMLIB_UTILS_HEADERS
     Utils/Collections/ITM3DNestedMapOfArrays.h
     Utils/Collections/ITM3DNestedMap.h
 
-    Utils/Geometry/ITMGeometryBooleanOpernations.h
+    Utils/Geometry/ITMGeometryBooleanOperations.h
     Utils/Geometry/ITMGeometryConversionOperations.h
     Utils/Geometry/ITM3DIndexConversions.h
+	Utils/Geometry/ITMIntersectionChecks.h
+	Utils/Geometry/ITMSegment.h
 
     Utils/ITMCUDAUtils.h
     Utils/ITMValuePosition.h
@@ -734,6 +742,7 @@ set(ITMLIB_UTILS_HEADERS
     Utils/Analytics/ITMIsAltered.h
     Utils/Analytics/ITMNeighborVoxelIterationInfo.h
 
+	Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison.h
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_Functors.h
@@ -742,7 +751,7 @@ set(ITMLIB_UTILS_HEADERS
 ## ================================================ UTILS - SCENE STATISTICS CALCULATOR ================================
 
 set(ITMLIB_UTILS_STATCALC_INTERFACE_HEADERS
-    Utils/Analytics/SceneStatisticsCalculator/Interface/ITMSceneStatisticsCalculator.h
+	Utils/Analytics/SceneStatisticsCalculator/Interface/ITMSceneStatisticsCalculatorInterface.h
     )
 
 
@@ -880,6 +889,7 @@ set(headers
     ${ITMLIB_ENGINES_LOWLEVEL_HEADERS}
     ${ITMLIB_ENGINES_LOWLEVEL_CPU_HEADERS}
     ${ITMLIB_ENGINES_LOWLEVEL_CUDA_HEADERS}
+	${ITMLIB_ENGINES_MANIPULATION_HEADERS}
     ${ITMLIB_ENGINES_MANIPULATION_INTERFACE_HEADERS}
     ${ITMLIB_ENGINES_MANIPULATION_SHARED_HEADERS}
     ${ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS}
@@ -961,6 +971,7 @@ source_group(Engines\\LowLevel\\CUDA FILES ${ITMLIB_ENGINES_LOWLEVEL_CUDA_SOURCE
 source_group(Engines\\LowLevel\\Interface FILES ${ITMLIB_ENGINES_LOWLEVEL_INTERFACE_HEADERS})
 source_group(Engines\\LowLevel\\Shared FILES ${ITMLIB_ENGINES_LOWLEVEL_SHARED_HEADERS})
 
+source_group(Engines\\Manipulation FILES ${ITMLIB_ENGINES_MANIPULATION_HEADERS})
 source_group(Engines\\Manipulation\\Interface FILES ${ITMLIB_ENGINES_MANIPULATION_INTERFACE_HEADERS})
 source_group(Engines\\Manipulation\\CPU FILES ${ITMLIB_ENGINES_MANIPULATION_CPU_SOURCES} ${ITMLIB_ENGINES_MANIPULATION_CPU_HEADERS})
 source_group(Engines\\Manipulation\\CUDA FILES ${ITMLIB_ENGINES_MANIPULATION_CUDA_SOURCES} ${ITMLIB_ENGINES_MANIPULATION_CUDA_HEADERS})
@@ -1048,6 +1059,7 @@ source_group(Utils\\SceneStatisticsCalculator\\CUDA FILES ${ITMLIB_UTILS_STATCAL
 ##########################################
 
 include(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
 
 #TODO: make these optional and consistent with the overal CMake package usage in the project -Greg (GitHub: Algomorph)
 ##########################################
@@ -1056,17 +1068,6 @@ include(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
 
 find_package(OpenCV REQUIRED core highgui imgproc imgcodecs)
 
-set(Boost_FIND_REQUIRED TRUE)
-set(Boost_FIND_QUIETLY TRUE)
-set(Boost_USE_MULTITHREADED TRUE)
-if (CMAKE_CXX_COMPILER_ID EQUAL MSVC)
-    set(Boost_USE_STATIC_LIBS TRUE)
-    set(Boost_USE_STATIC_RUNTIME OFF)
-endif ()
-find_package(Boost REQUIRED COMPONENTS filesystem iostreams program_options)
-if (CMAKE_CXX_COMPILER_ID MATCHES MSVC)
-    target_compile_definitions(${targetname} PUBLIC -DBOOST_ALL_NO_LIB -DBOOST_SYSTEM_NO_DEPRECATED)
-endif ()
 
 if (WITH_VTK)
     target_compile_definitions(${targetname} PUBLIC -DWITH_VTK)
@@ -1078,7 +1079,6 @@ if (CMAKE_CXX_COMPILER_ID MATCHES MSVC)
     link_directories(${Boost_LIBRARY_DIRS})
 endif ()
 
-target_compile_definitions(${targetname} PUBLIC WITH_BOOST)
 
 #fix potential warning causing from error in VTK compile definitions
 # "<command-line>:0:20: warning: ISO C++11 requires whitespace after the macro name"

@@ -4,8 +4,6 @@
 
 #import "MetalContext.h"
 
-#include "../../../Objects/RenderStates/ITMRenderState_VH.h"
-
 #include "ITMSceneReconstructionEngine_Metal.h"
 #include "../Shared/ITMSceneReconstructionEngine_Shared.h"
 
@@ -46,8 +44,6 @@ void ITMSceneReconstructionEngine_Metal<TVoxel,ITMVoxelBlockHash>::IntegrateInto
     id<MTLCommandBuffer> commandBuffer = [[[MetalContext instance]commandQueue]commandBuffer];
     id<MTLComputeCommandEncoder> commandEncoder = [commandBuffer computeCommandEncoder];
 
-    ITMRenderState_VH *renderState_vh = (ITMRenderState_VH*)renderState;
-
     IntegrateIntoScene_VH_Params *params = (IntegrateIntoScene_VH_Params*)[sr_metalBits.paramsBuffer contents];
     params->rgbImgSize = view->rgb->noDims;
     params->depthImgSize = view->depth->noDims;
@@ -64,13 +60,13 @@ void ITMSceneReconstructionEngine_Metal<TVoxel,ITMVoxelBlockHash>::IntegrateInto
     [commandEncoder setComputePipelineState:sr_metalBits.p_integrateIntoScene_vh_device];
     [commandEncoder setBuffer:(__bridge id<MTLBuffer>) scene->localVBA.GetVoxelBlocks_MB()      offset:0 atIndex:0];
     [commandEncoder setBuffer:(__bridge id<MTLBuffer>) scene->index.GetEntries_MB()             offset:0 atIndex:1];
-    [commandEncoder setBuffer:(__bridge id<MTLBuffer>) renderState_vh->GetVisibleEntryIDs_MB()  offset:0 atIndex:2];
+    [commandEncoder setBuffer:(__bridge id<MTLBuffer>) scene->index.GetVisibleBlockHashCodes_MB()  offset:0 atIndex:2];
     [commandEncoder setBuffer:(__bridge id<MTLBuffer>) view->rgb->GetMetalBuffer()              offset:0 atIndex:3];
     [commandEncoder setBuffer:(__bridge id<MTLBuffer>) view->depth->GetMetalBuffer()            offset:0 atIndex:4];
     [commandEncoder setBuffer:sr_metalBits.paramsBuffer                                         offset:0 atIndex:5];
 
     MTLSize blockSize = {SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE};
-    MTLSize gridSize = {(NSUInteger)renderState_vh->noVisibleEntries, 1, 1};
+    MTLSize gridSize = {(NSUInteger)CUDAnoVisibleEntries, 1, 1};
 
     [commandEncoder dispatchThreadgroups:gridSize threadsPerThreadgroup:blockSize];
     [commandEncoder endEncoding];
@@ -109,14 +105,14 @@ void ITMSceneReconstructionEngine_Metal<TVoxel,ITMVoxelBlockHash>::BuildAllocAnd
     memset(this->entriesAllocType->GetData(MEMORYDEVICE_CPU), 0, scene->index.hashEntryCount);
     memset(this->blockCoords->GetData(MEMORYDEVICE_CPU), 0, scene->index.hashEntryCount * sizeof(Vector4s));
 
-    uchar *entriesVisibleType = renderState_vh->GetEntriesVisibleType();
-    int *visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
-    for (int i = 0; i < renderState_vh->noVisibleEntries; i++)
+    uchar *entriesVisibleType = scene->index.GetHashBlockVisibilityTypes();
+    int *visibleEntryIDs = scene->index.GetVisibleBlockHashCodes();
+    for (int i = 0; i < CUDAnoVisibleEntries; i++)
         entriesVisibleType[visibleEntryIDs[i]] = 3; // visible at previous frame and unstreamed
 
     [commandEncoder setComputePipelineState:sr_metalBits.p_buildAllocAndVisibleType_vh_device];
     [commandEncoder setBuffer:(__bridge id<MTLBuffer>) this->entriesAllocType->GetMetalBuffer()     offset:0 atIndex:0];
-    [commandEncoder setBuffer:(__bridge id<MTLBuffer>) renderState_vh->GetEntriesVisibleType_MB()   offset:0 atIndex:1];
+    [commandEncoder setBuffer:(__bridge id<MTLBuffer>) scene->index.GetHashBlockVisibilityTypes_MB()   offset:0 atIndex:1];
     [commandEncoder setBuffer:(__bridge id<MTLBuffer>) this->blockCoords->GetMetalBuffer()          offset:0 atIndex:2];
     [commandEncoder setBuffer:(__bridge id<MTLBuffer>) scene->index.GetEntries_MB()                 offset:0 atIndex:3];
     [commandEncoder setBuffer:(__bridge id<MTLBuffer>) view->depth->GetMetalBuffer()                offset:0 atIndex:4];
@@ -146,7 +142,7 @@ void ITMSceneReconstructionEngine_Metal<TVoxel, ITMVoxelBlockHash>::AllocateScen
     Vector4f projParams_d, invProjParams_d;
 
     ITMRenderState_VH *renderState_vh = (ITMRenderState_VH*)renderState;
-    if (resetVisibleList) renderState_vh->noVisibleEntries = 0;
+    if (resetVisibleList) CUDAnoVisibleEntries = 0;
 
     M_d = trackingState->pose_d->GetM(); M_d.inv(invM_d);
 
@@ -162,8 +158,8 @@ void ITMSceneReconstructionEngine_Metal<TVoxel, ITMVoxelBlockHash>::AllocateScen
     int *excessAllocationList = scene->index.GetExcessAllocationList();
     ITMHashEntry *hashTable = scene->index.GetEntries();
     ITMHashSwapState *swapStates = scene->useSwapping ? scene->globalCache->GetSwapStates(false) : 0;
-    int *visibleEntryIDs = renderState_vh->GetVisibleEntryIDs();
-    uchar *entriesVisibleType = renderState_vh->GetEntriesVisibleType();
+    int *visibleEntryIDs = scene->index.GetVisibleEntryIDs();
+    uchar *entriesVisibleType = scene->index.GetEntriesVisibleType();
     uchar *entriesAllocType = this->entriesAllocType->GetData(MEMORYDEVICE_CPU);
     Vector4s *blockCoords = this->blockCoords->GetData(MEMORYDEVICE_CPU);
     int noTotalEntries = scene->index.hashEntryCount;
@@ -179,7 +175,7 @@ void ITMSceneReconstructionEngine_Metal<TVoxel, ITMVoxelBlockHash>::AllocateScen
 
     memset(entriesAllocType, 0, noTotalEntries);
 
-    for (int i = 0; i < renderState_vh->noVisibleEntries; i++)
+    for (int i = 0; i < scene->index.noVisibleEntries; i++)
         entriesVisibleType[visibleEntryIDs[i]] = 3; // visible at previous frame and unstreamed
 
     //build hashVisibility
@@ -297,7 +293,7 @@ void ITMSceneReconstructionEngine_Metal<TVoxel, ITMVoxelBlockHash>::AllocateScen
         }
     }
 
-    renderState_vh->noVisibleEntries = noVisibleEntries;
+    scene->index.noVisibleEntries = noVisibleEntries;
 
     scene->localVBA.lastFreeBlockId = lastFreeVoxelBlockId;
     scene->index.SetLastFreeExcessListId(lastFreeExcessListId);

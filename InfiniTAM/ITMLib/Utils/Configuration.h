@@ -16,6 +16,7 @@
 #include "../../ORUtils/MemoryDeviceType.h"
 #include "ITMMath.h"
 #include "../SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
+#include "../SurfaceTrackers/WarpGradientFunctors/WarpGradientFunctor.h"
 
 namespace po = boost::program_options;
 namespace pt = boost::property_tree;
@@ -26,8 +27,8 @@ public:
 	static Configuration& get();
 
 	static void load_default();
-	static void load_from_variable_map(const po::variables_map& vm);
-	static void load_from_json_file(const std::string& path);
+	static void load_configuration_from_variable_map(const po::variables_map& vm);
+	static void load_configuration_from_json_file(const std::string& path);
 	static void save_configuration_to_json_file(const std::string& path);
 	void save_to_json_file(const std::string& path);
 
@@ -39,29 +40,29 @@ public:
 
 	// region ============================================== NESTED ENUMS ==============================================
 
-	typedef enum {
+	enum FailureMode{
 		FAILUREMODE_RELOCALIZE,
 		FAILUREMODE_IGNORE,
 		FAILUREMODE_STOP_INTEGRATION
-	} FailureMode;
+	};
 
-	typedef enum {
+	enum SwappingMode{
 		SWAPPINGMODE_DISABLED,
 		SWAPPINGMODE_ENABLED,
 		SWAPPINGMODE_DELETE
-	} SwappingMode;
+	};
 
-	typedef enum {
+	enum LibMode{
 		LIBMODE_BASIC,
 		LIBMODE_BASIC_SURFELS,
 		LIBMODE_LOOPCLOSURE,
 		LIBMODE_DYNAMIC
-	} LibMode;
+	};
 
-	typedef enum {
+	enum IndexingMethod{
 		INDEX_HASH,
 		INDEX_ARRAY
-	} IndexingMethod;
+	} ;
 
 	//endregion ========================================================================================================
 
@@ -77,9 +78,9 @@ public:
 		/// Where to write any kind of output (intended to be used application-wise)
 		const std::string output_path = "./State/";
 		/// Whether telemetry / diagnostics / logging for a trouble spot is enabled
-		const bool focus_coordinates_specified = false;
+		bool focus_coordinates_specified = false;
 		/// A trouble spot for additional telemetry / diagnostics / loggging
-		const Vector3i focus_coordinates;
+		Vector3i focus_coordinates;
 	};
 
 	Configuration();
@@ -99,6 +100,7 @@ public:
 	              Configuration::SwappingMode swapping_mode,
 	              Configuration::LibMode library_mode,
 	              Configuration::IndexingMethod indexing_method,
+	              GradientFunctorType surface_tracker_type,
 	              std::string tracker_configuration,
 	              unsigned int max_iteration_threshold,
 	              float max_update_length_threshold);
@@ -117,7 +119,7 @@ public:
 	/// Surface tracking energy switches
 	const SlavchevaSurfaceTracker::Switches slavcheva_switches;
 	/// Telemetry / diagnostics / logging settings
-	const TelemetrySettings telemetry_settings;
+	TelemetrySettings telemetry_settings;
 	/// For ITMColorTracker: skips every other point when using the colour renderer for creating a point cloud
 	const bool skip_points;
 	/// create all the things required for marching cubes and mesh extraction (uses lots of additional memory)
@@ -138,6 +140,8 @@ public:
 	const LibMode library_mode;
 	/// switch between different types of indexing for the spatial data structures
 	const IndexingMethod indexing_method;
+	/// switch between different versions of the tracker
+	const GradientFunctorType surface_tracker_type;
 	/*Note: library_mode declaration has to precede that of tracker_configuration,
 	 since the latter uses the former for initialization in lists*/
 	/// tracker configuration string

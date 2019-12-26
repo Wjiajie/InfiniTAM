@@ -5,7 +5,7 @@
 #include "ITMVoxelBlockHash.h"
 #include "ITMVoxelTypes.h"
 
-template<typename T> _CPU_AND_GPU_CODE_ inline int hashIndex(const THREADPTR(T) & blockPos) {
+template<typename T> _CPU_AND_GPU_CODE_ inline int HashCodeFromBlockPosition(const THREADPTR(T) & blockPos) {
 	return (((uint)blockPos.x * 73856093u) ^ ((uint)blockPos.y * 19349669u) ^ ((uint)blockPos.z * 83492791u)) & (uint)VOXEL_HASH_MASK;
 }
 
@@ -44,7 +44,7 @@ _CPU_AND_GPU_CODE_ inline int findVoxel(const CONSTPTR(ITMLib::ITMVoxelBlockHash
 		return cache.blockPtr + linearIdx;
 	}
 
-	int hashIdx = hashIndex(blockPos);
+	int hashIdx = HashCodeFromBlockPosition(blockPos);
 
 	while (true)
 	{
@@ -95,7 +95,7 @@ _CPU_AND_GPU_CODE_ inline TVoxel readVoxel(const CONSTPTR(TVoxel) *voxelData, co
 		return voxelData[cache.blockPtr + linearIdx];
 	}
 
-	int hashIdx = hashIndex(blockPos);
+	int hashIdx = HashCodeFromBlockPosition(blockPos);
 
 	while (true)
 	{

@@ -13,7 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#define BOOST_TEST_MODULE SceneConstruction
+#define BOOST_TEST_MODULE VolumeFromImageConstruction_CUDA
 #ifndef WIN32
 #define BOOST_TEST_DYN_LINK
 #endif
@@ -22,6 +22,7 @@
 #include <boost/test/unit_test.hpp>
 
 //ITMLib
+#include "TestUtilsForSnoopyFrames16And17.h"
 #include "../ITMLib/ITMLibDefines.h"
 #include "../ITMLib/Engines/Reconstruction/Interface/ITMDynamicSceneReconstructionEngine.h"
 #include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
@@ -32,16 +33,118 @@
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h"
 #include "../ORUtils/FileUtils.h"
-#include "../ITMLib/Objects/RenderStates/ITMRenderStateFactory.h"
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
+#include "TestUtils.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/VolumeEditAndCopyEngineFactory.h"
 
 using namespace ITMLib;
 
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray> SceneFileIOEngine_PVA;
 typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
-typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMPlainVoxelArray> SceneStatisticsCalculator_PVA;
-typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMVoxelBlockHash> SceneStatisticsCalculator_VBH;
+
+
+BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH_CUDA, Frame16And17Fixture) {
+
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_16;
+	buildSdfVolumeFromImage(&volume_PVA_16, "TestData/snoopy_depth_000016.png",
+	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
+	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
+	                        InitParams<ITMPlainVoxelArray>());
+
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_16;
+	buildSdfVolumeFromImage(&volume_VBH_16, "TestData/snoopy_depth_000016.png",
+	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
+	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
+	                        InitParams<ITMVoxelBlockHash>());
+//
+//	ITMVoxel voxelPVA = ManipulationEngine_CUDA_PVA_Voxel::Inst().ReadVoxel(volume_PVA_16, Vector3i(-24,63,240));
+//	voxelPVA.print_self();
+//	ITMVoxel voxelVBH = ManipulationEngine_CUDA_VBH_Voxel::Inst().ReadVoxel(volume_VBH_16, Vector3i(-24,63,240));
+//	voxelVBH.print_self();
+
+	float absoluteTolerance = 1e-7;
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(volume_PVA_16, volume_VBH_16, absoluteTolerance));
+	BOOST_REQUIRE(contentForFlagsAlmostEqual_CUDA(volume_PVA_16, volume_VBH_16, VoxelFlags::VOXEL_NONTRUNCATED,
+	                                              absoluteTolerance));
+
+	delete volume_VBH_16;
+	delete volume_PVA_16;
+}
+
+BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CUDA, Frame16And17Fixture) {
+
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_PVA_17;
+	buildSdfVolumeFromImage(&volume_PVA_17, "TestData/snoopy_depth_000017.png",
+	                        "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
+	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
+	                        InitParams<ITMPlainVoxelArray>());
+
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_17;
+	buildSdfVolumeFromImage(&volume_VBH_17, "TestData/snoopy_depth_000017.png",
+	                        "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
+	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
+	                        InitParams<ITMVoxelBlockHash>());
+
+//	Vector3i voxelPosition(-24, -2, 87);
+//	ITMVoxel voxelPVA = ManipulationEngine_CUDA_PVA_Voxel::Inst().ReadVoxel(volume_PVA_17, voxelPosition);
+//	voxelPVA.print_self();
+//	ITMVoxel voxelVBH = ManipulationEngine_CUDA_VBH_Voxel::Inst().ReadVoxel(volume_VBH_17, voxelPosition);
+//	voxelVBH.print_self();
+
+	float absoluteTolerance = 1e-7;
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(volume_PVA_17, volume_VBH_17, absoluteTolerance));
+	BOOST_REQUIRE(contentForFlagsAlmostEqual_CUDA(volume_PVA_17, volume_VBH_17, VoxelFlags::VOXEL_NONTRUNCATED,
+	                                              absoluteTolerance));
+
+	delete volume_VBH_17;
+	delete volume_PVA_17;
+}
+
+BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_Expanded_CUDA, Frame16And17Fixture) {
+
+	ITMView* view = nullptr;
+	updateView(&view, "TestData/snoopy_depth_000017.png",
+	           "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
+	           "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA);
+
+	// *** construct volumes ***
+	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> volume_PVA_17(MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
+	volume_PVA_17.Reset();
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine_PVA =
+			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(MEMORYDEVICE_CUDA);
+	reconstructionEngine_PVA->GenerateTsdfVolumeFromView(&volume_PVA_17, view);
+
+
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17(MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
+	volume_VBH_17.Reset();
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17_depth_allocation(MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
+	volume_VBH_17_depth_allocation.Reset();
+
+	ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash, MEMORYDEVICE_CUDA>& indexer =
+			ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance();
+	indexer.AllocateFromDepth(&volume_VBH_17_depth_allocation, view);
+	indexer.AllocateUsingOtherVolumeAndSetVisibilityExpanded(&volume_VBH_17, &volume_VBH_17_depth_allocation, view);
+
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
+			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(MEMORYDEVICE_CUDA);
+	reconstructionEngine_VBH->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17, view);
+	reconstructionEngine_VBH->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17_depth_allocation, view);
+
+	float absoluteTolerance = 1e-7;
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA_Verbose(&volume_PVA_17, &volume_VBH_17_depth_allocation, absoluteTolerance));
+	BOOST_REQUIRE(contentForFlagsAlmostEqual_CUDA_Verbose(&volume_PVA_17, &volume_VBH_17_depth_allocation, VoxelFlags::VOXEL_NONTRUNCATED,
+	                                                     absoluteTolerance));
+
+
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA_Verbose(&volume_PVA_17, &volume_VBH_17, absoluteTolerance));
+	BOOST_REQUIRE(contentForFlagsAlmostEqual_CUDA_Verbose(&volume_PVA_17, &volume_VBH_17, VoxelFlags::VOXEL_NONTRUNCATED,
+	                                                     absoluteTolerance));
+
+	delete reconstructionEngine_PVA;
+	delete reconstructionEngine_VBH;
+	delete view;
+}
 
 BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 	Configuration* settings = &Configuration::get();
@@ -79,7 +182,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine_PVA =
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(MEMORYDEVICE_CUDA);
-	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(&scene1, view, &trackingState, nullptr);
+	reconstructionEngine_PVA->GenerateTsdfVolumeFromView(&scene1, view, &trackingState);
 
 	const int num_stripes = 62;
 
@@ -147,11 +250,9 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(MEMORYDEVICE_CUDA);
 
-	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize,
-	                                                                                          &Configuration::get().scene_parameters,
-	                                                                                          settings->device_type,
-	                                                                                          scene2.index);
-	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene2, view, &trackingState, renderState);
+	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.viewFrustum_min,
+	                           Configuration::get().scene_parameters.viewFrustum_max, settings->device_type);
+	reconstructionEngine_VBH->GenerateTsdfVolumeFromView(&scene2, view, &trackingState);
 
 	tolerance = 1e-5;
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
@@ -161,14 +262,14 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 	                                                    settings->device_type,
 	                                                    {volumeSize, volumeOffset});
 	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(&scene3);
-	reconstructionEngine_PVA->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, nullptr);
+	reconstructionEngine_PVA->GenerateTsdfVolumeFromView(&scene3, view, &trackingState);
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene3, tolerance));
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(&Configuration::get().scene_parameters,
 	                                                   Configuration::get().swapping_mode ==
 	                                                   Configuration::SWAPPINGMODE_ENABLED,
 	                                                   settings->device_type, {0x800, 0x20000});
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(&scene4);
-	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene4, view, &trackingState, renderState);
+	reconstructionEngine_VBH->GenerateTsdfVolumeFromView(&scene4, view, &trackingState);
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene2, &scene4, tolerance));
 
 	Vector3i coordinate = zeroLevelSetCoords[0];
@@ -221,7 +322,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CUDA) {
 
 	// endregion =======================================================================================================
 
-	Vector3i volumeSize(512, 512, 512), volumeOffset(-volumeSize.x / 2, -volumeSize.y / 2, 0);
+	Vector3i volumeSize(512, 112, 360), volumeOffset(-512, -24, 152);
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(&Configuration::get().scene_parameters,
 	                                                    Configuration::get().swapping_mode ==
 	                                                    Configuration::SWAPPINGMODE_ENABLED,
@@ -246,7 +347,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CUDA) {
 		ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine_PVA =
 				ITMDynamicSceneReconstructionEngineFactory
 				::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(MEMORYDEVICE_CUDA);
-		reconstructionEngine_PVA->GenerateRawLiveSceneFromView(&scene1, view, &trackingState, nullptr);
+		reconstructionEngine_PVA->GenerateTsdfVolumeFromView(&scene1, view, &trackingState);
 
 		BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
 	}
@@ -261,11 +362,9 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CUDA) {
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(MEMORYDEVICE_CUDA);
 
-	ITMRenderState* renderState = ITMRenderStateFactory<ITMVoxelBlockHash>::CreateRenderState(imageSize,
-	                                                                                          &Configuration::get().scene_parameters,
-	                                                                                          settings->device_type,
-	                                                                                          scene3.index);
-	reconstructionEngine_VBH->GenerateRawLiveSceneFromView(&scene3, view, &trackingState, renderState);
+	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.viewFrustum_min,
+	                           Configuration::get().scene_parameters.viewFrustum_max, settings->device_type);
+	reconstructionEngine_VBH->GenerateTsdfVolumeFromView(&scene3, view, &trackingState);
 
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(&scene2, &scene3, tolerance));
 

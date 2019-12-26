@@ -30,9 +30,7 @@
 #include "TestUtils.h"
 #include "Test_WarpGradient_Common.h"
 #include "../ITMLib/Utils/Configuration.h"
-#include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
-#include "../ITMLib/SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
-#include "../ITMLib/SurfaceTrackers/CPU/SurfaceTracker_CPU.h"
+#include "../ITMLib/SurfaceTrackers/Interface/SurfaceTracker.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ITMLib/Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 
@@ -75,7 +73,7 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_PVA, DataFixture) {
 	ManipulationEngine_CPU_PVA_Warp::Inst().ResetScene(&warp_field_CPU1);
 
 
-	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>(
+	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(true, false, false, false, false));
 
 
@@ -83,18 +81,19 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_PVA, DataFixture) {
 		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
 	}, "Calculate Warp Gradient - PVA CPU data term");
 
+	//warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_data_");
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
-	BOOST_REQUIRE_EQUAL(functor.count.load(), 36627u);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 37525);
 
 	float tolerance = 1e-5;
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_term, tolerance));
 }
 
 BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_PVA, DataFixture) {
-	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>(
+	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(true, false, false, false, false));
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_copy(*warp_field_data_term,
 	                                                            MemoryDeviceType::MEMORYDEVICE_CPU);
@@ -102,16 +101,17 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_PVA, DataFixture) {
 	AlteredGradientCountFunctor<ITMWarp> agcFunctor;
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_copy, agcFunctor);
-	BOOST_REQUIRE_EQUAL(agcFunctor.count.load(), 36627u);
+	BOOST_REQUIRE_EQUAL(agcFunctor.count.load(), 37525u);
 
 
 	float maxWarp = motionTracker_PVA_CPU->UpdateWarps(canonical_volume, live_volume, &warp_field_copy);
-	BOOST_REQUIRE_CLOSE(maxWarp, 0.0870865062f, 1e-7);
+	//warp_field_copy.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_data_flow_warps_");
+	BOOST_REQUIRE_CLOSE(maxWarp, 0.242487013f, 1e-7);
 
 	AlteredFlowWarpCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_copy, functor);
-	BOOST_REQUIRE_EQUAL(functor.count.load(), 36627u);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 37525u);
 
 	float tolerance = 1e-8;
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_copy, warp_field_iter0, tolerance));
@@ -121,7 +121,7 @@ BOOST_FIXTURE_TEST_CASE(testSmoothWarpGradient_CPU_PVA, DataFixture) {
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(*warp_field_data_term, MEMORYDEVICE_CPU);
 
 
-	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>(
+	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(false, false, false, false, true));
 
 	TimeIt([&]() {
@@ -137,7 +137,7 @@ BOOST_FIXTURE_TEST_CASE(testDataAndTikhonovTerm_CPU_PVA, DataFixture) {
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(*warp_field_iter0, MEMORYDEVICE_CPU);
 
 
-	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>(
+	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(true, false, true, false, false)
 	);
 
@@ -145,12 +145,13 @@ BOOST_FIXTURE_TEST_CASE(testDataAndTikhonovTerm_CPU_PVA, DataFixture) {
 	TimeIt([&]() {
 		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
 	}, "Calculate Warp Gradient - PVA CPU data + tikhonov term");
+//	warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_1_data_and_tikhonov_");
 
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
-	BOOST_REQUIRE_EQUAL(functor.count.load(), 42417);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 57416);
 
 	float tolerance = 1e-8;
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_and_tikhonov_term, tolerance));
@@ -161,7 +162,7 @@ BOOST_FIXTURE_TEST_CASE(testDataAndKillingTerm_CPU_PVA, DataFixture) {
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(*warp_field_iter0, MEMORYDEVICE_CPU);
 
 
-	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>(
+	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(true, false, true, true, false)
 	);
 
@@ -169,12 +170,12 @@ BOOST_FIXTURE_TEST_CASE(testDataAndKillingTerm_CPU_PVA, DataFixture) {
 	TimeIt([&]() {
 		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
 	}, "Calculate Warp Gradient - PVA CPU data term + tikhonov term");
-
+	//warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_1_data_and_killing_");
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
-	BOOST_REQUIRE_EQUAL(functor.count.load(), 42670);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 59093);
 
 	float tolerance = 1e-8;
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_and_killing_term, tolerance));
@@ -186,7 +187,7 @@ BOOST_FIXTURE_TEST_CASE(testDataAndLevelSetTerm_CPU_PVA, DataFixture) {
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CPU1(*warp_field_iter0, MEMORYDEVICE_CPU);
 
 
-	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>(
+	auto motionTracker_PVA_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(true, true, false, false, false)
 	);
 
@@ -194,13 +195,20 @@ BOOST_FIXTURE_TEST_CASE(testDataAndLevelSetTerm_CPU_PVA, DataFixture) {
 	TimeIt([&]() {
 		motionTracker_PVA_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
 	}, "Calculate Warp Gradient - PVA CPU data term + level set term");
-
+//	warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_1_data_and_level_set_");
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
-	BOOST_REQUIRE_EQUAL(functor.count.load(), 41275);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 55369);
 
 	float tolerance = 1e-7;
 	BOOST_REQUIRE(contentAlmostEqual_CPU_Verbose(&warp_field_CPU1, warp_field_data_and_level_set_term, tolerance));
 }
+
+//#define GENERATE_DATA
+#ifdef GENERATE_DATA
+BOOST_AUTO_TEST_CASE(Test_WarpGradient_CPU_PVA_GenerateTestData){
+	GenerateTestData<ITMPlainVoxelArray,MEMORYDEVICE_CPU>();
+}
+#endif

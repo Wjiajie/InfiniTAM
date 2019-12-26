@@ -20,16 +20,33 @@
 #include "../../../Objects/Views/ITMView.h"
 #include "../../../Objects/Tracking/ITMTrackingState.h"
 #include "../../../Objects/RenderStates/ITMRenderState.h"
+#include "../../Common/ITMWarpEnums.h"
 
 namespace ITMLib {
 /**
- * \brief A utility for allocating hash blocks in a voxel volume based on various inputs
- * \tparam TVoxelA type of voxels A (typically reserved for voxels holding TSDF information)
- * \tparam TVoxelB type of voxels B (typically reserved for voxels holing warp information , i.e. vectors used to map
- * voxels between different locations)
+ * \brief A utility for allocating additional space within or around a voxel volume (expanding it) based on various inputs
+ * \details Note: if a volume index has strict bounds, as in the case of plain voxel array, does not grow or shrink those bounds.
+ * \tparam TVoxel type of voxels
+ * \tparam TIndex type of index
  */
-template<typename TVoxel>
+template<typename TVoxel, typename TIndex>
 class ITMIndexingEngineInterface {
+
+	/**
+	 * \brief Given a view with a new depth image, compute the
+		visible blocks, allocate them and update the hash
+		table, as well as the visible block list,
+	    so that the new image data can be integrated.
+	 * \param scene [out] the scene whose hash needs additional allocations
+	 * \param view [in] a view with a new depth image
+	 * \param trackingState [in] tracking state that corresponds to the given view
+	 * \param renderState [in] the current renderState with information about which hash entries are visible
+	 * \param onlyUpdateVisibleList [in] whether we want to allocate only the hash entry blocks currently visible
+	 * \param resetVisibleList  [in] reset visibility list upon completion
+	 */
+	virtual void
+	AllocateFromDepth(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view, const ITMTrackingState* trackingState,
+	                  bool onlyUpdateVisibleList, bool resetVisibleList) = 0;
 
 	/**
 	 * \brief Given a view with a new depth image, compute the
@@ -37,20 +54,64 @@ class ITMIndexingEngineInterface {
 		table so that the new image data can be integrated.
 	 * \param scene [out] the scene whose hash needs additional allocations
 	 * \param view [in] a view with a new depth image
-	 * \param trackingState [in] tracking state from previous frame to new frame that corresponds to the given view
+	 * \param depth_camera_matrix [in] transformation of the camera from world origin (initial position) to
+	 * where the camera was at the given view's frame
 	 * \param renderState [in] the current renderState with information about which hash entries are visible
 	 * \param onlyUpdateVisibleList [in] whether we want to allocate only the hash entry blocks currently visible
 	 * \param resetVisibleList  [in] reset visibility list upon completion
 	 */
-	virtual void AllocateFromDepth(
-			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
-			const ITMTrackingState* trackingState, const ITMRenderState* renderState,
-			bool onlyUpdateVisibleList, bool resetVisibleList) = 0;
-
+	virtual void
+	AllocateFromDepth(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
+	                  const Matrix4f& depth_camera_matrix = Matrix4f::Identity(),
+	                  bool onlyUpdateVisibleList = false, bool resetVisibleList = false) = 0;
 };
 
 template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
-class ITMIndexingEngine;
+class ITMIndexingEngine :
+		public ITMIndexingEngineInterface<TVoxel, TIndex> {
+private:
+	ITMIndexingEngine() = default;
+public:
+	static ITMIndexingEngine& Instance() {
+		static ITMIndexingEngine instance; // Guaranteed to be destroyed.
+		// Instantiated on first use.
+		return instance;
+	}
+
+	ITMIndexingEngine(ITMIndexingEngine const&) = delete;
+	void operator=(ITMIndexingEngine const&) = delete;
+
+	virtual void AllocateFromDepth(ITMVoxelVolume<TVoxel, TIndex>* scene, const ITMView* view,
+	                               const ITMTrackingState* trackingState, bool onlyUpdateVisibleList,
+	                               bool resetVisibleList) override;
+
+	virtual void AllocateFromDepth(ITMVoxelVolume<TVoxel, TIndex>* volume, const ITMView* view,
+	                               const Matrix4f& depth_camera_matrix = Matrix4f::Identity(),
+	                               bool onlyUpdateVisibleList = false, bool resetVisibleList = false) override;
+
+
+	template<typename TVoxelTarget, typename TVoxelSource>
+	void AllocateUsingOtherVolume(ITMVoxelVolume<TVoxelTarget, TIndex>* targetVolume,
+	                              ITMVoxelVolume<TVoxelSource, TIndex>* sourceVolume);
+
+	template<typename TVoxelTarget, typename TVoxelSource>
+	void AllocateUsingOtherVolumeExpanded(ITMVoxelVolume<TVoxelTarget, TIndex>* targetVolume,
+	                                      ITMVoxelVolume<TVoxelSource, TIndex>* sourceVolume);
+
+
+	template<typename TVoxelTarget, typename TVoxelSource>
+	void AllocateUsingOtherVolumeAndSetVisibilityExpanded(ITMVoxelVolume<TVoxelTarget, TIndex>* targetVolume,
+	                                                      ITMVoxelVolume<TVoxelSource, TIndex>* sourceVolume,
+	                                                      ITMView* view, const Matrix4f& depth_camera_matrix = Matrix4f::Identity());
+
+	template<WarpType TWarpType, typename TWarp>
+	void AllocateFromWarpedVolume(
+			ITMVoxelVolume<TWarp, TIndex>* warpField,
+			ITMVoxelVolume<TVoxel, TIndex>* sourceTSDF,
+			ITMVoxelVolume<TVoxel, TIndex>* targetTSDF);
+
+};
+
 
 }//namespace ITMLib
 

@@ -25,15 +25,30 @@
 
 template<class TVoxel>
 _CPU_AND_GPU_CODE_ inline void updateSdfAndFlagsBasedOnDistanceSurfaceToVoxel(
-		DEVICEPTR(TVoxel)& voxel, float signedDistanceSurfaceToVoxelAlongCameraRay, float narrowBandHalfWidth) {
+		DEVICEPTR(TVoxel)& voxel, float signedDistanceSurfaceToVoxelAlongCameraRay, float narrowBandHalfWidth,
+		float effectiveRangeCutoff) {
 	if (signedDistanceSurfaceToVoxelAlongCameraRay < -narrowBandHalfWidth + 4e-07) {
-		//the voxel is beyond the narrow band, on the other side of the surface. Set SDF to -1.0
-		voxel.sdf = TVoxel::floatToValue(-1.0);
-		voxel.flags = ITMLib::VOXEL_TRUNCATED;
+		if (signedDistanceSurfaceToVoxelAlongCameraRay < -effectiveRangeCutoff) {
+			//the voxel is beyond the narrow band, on the other side of the surface, but also really far away.
+			//exclude from computation.
+			voxel.sdf = TVoxel::floatToValue(-1.0);
+			voxel.flags = ITMLib::VOXEL_UNKNOWN;
+		} else {
+			//the voxel is beyond the narrow band, on the other side of the surface. Set SDF to -1.0
+			voxel.sdf = TVoxel::floatToValue(-1.0);
+			voxel.flags = ITMLib::VOXEL_TRUNCATED;
+		}
 	} else if (signedDistanceSurfaceToVoxelAlongCameraRay > narrowBandHalfWidth - 4e-07) {
-		//the voxel is in front of the narrow band, between the surface and the camera. Set SDF to 1.0
-		voxel.sdf = TVoxel::floatToValue(1.0);
-		voxel.flags = ITMLib::VOXEL_TRUNCATED;
+		if (signedDistanceSurfaceToVoxelAlongCameraRay > effectiveRangeCutoff) {
+			//the voxel is in front of the narrow band, between the surface and the camera, but also really far away.
+			//exclude from computation.
+			voxel.sdf = TVoxel::floatToValue(1.0);
+			voxel.flags = ITMLib::VOXEL_UNKNOWN;
+		} else {
+			//the voxel is in front of the narrow band, between the surface and the camera. Set SDF to 1.0
+			voxel.sdf = TVoxel::floatToValue(1.0);
+			voxel.flags = ITMLib::VOXEL_TRUNCATED;
+		}
 	} else {
 		// The voxel lies within the narrow band, between truncation boundaries.
 		// Update SDF in proportion to the distance from surface.
@@ -63,7 +78,8 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedLiveVoxelDepthInfo(
 		const CONSTPTR(Vector4f)& depthCameraProjectionParameters,
 		float narrowBandHalfWidth,
 		const CONSTPTR(float)* depthImage,
-		const CONSTPTR(Vector2i)& imageSize) {
+		const CONSTPTR(Vector2i)& imageSize,
+		float effectiveRangeCutoff = 0.08f) {
 
 	// project point into image (voxel point in camera coordinates)
 	Vector4f voxelPointInCameraCoordinates = depthCameraSceneMatrix * voxelInSceneCoordinates;
@@ -78,11 +94,6 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedLiveVoxelDepthInfo(
 	voxelPointProjectedToImage.y = depthCameraProjectionParameters.y * voxelPointInCameraCoordinates.y
 	                               / voxelPointInCameraCoordinates.z + depthCameraProjectionParameters.w;
 
-	//_DEBUG
-//	if(voxelInSceneCoordinates == Vector4f(-4.000000E-03f, 0.000000E+00f, 1.600000E-02f, 1.0f)){
-//		printf("GOTCHA (%E, %E)\n", voxelPointProjectedToImage.x, voxelPointProjectedToImage.y);
-//	}
-
 	// point falls outside of the image bounds
 	if ((voxelPointProjectedToImage.x < 1) || (voxelPointProjectedToImage.x > imageSize.x - 2)
 	    || (voxelPointProjectedToImage.y < 1) || (voxelPointProjectedToImage.y > imageSize.y - 2)) {
@@ -92,6 +103,7 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedLiveVoxelDepthInfo(
 	// get measured depthImage from image
 	float depthMeasure = depthImage[static_cast<int>(voxelPointProjectedToImage.x + 0.5f) +
 	                                static_cast<int>(voxelPointProjectedToImage.y + 0.5f) * imageSize.x];
+
 	// if depthImage is "invalid", return "unknown"
 	if (depthMeasure <= 0.0f) {
 		//keep voxel flags at ITMLib::VOXEL_UNKNOWN
@@ -103,7 +115,7 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedLiveVoxelDepthInfo(
 	// effectively, eta is the distance between measured surface & voxel point
 	float signedDistanceSurfaceToVoxelAlongCameraRay = depthMeasure - voxelPointInCameraCoordinates.z;
 	updateSdfAndFlagsBasedOnDistanceSurfaceToVoxel(voxel, signedDistanceSurfaceToVoxelAlongCameraRay,
-	                                               narrowBandHalfWidth);
+	                                               narrowBandHalfWidth, effectiveRangeCutoff);
 	return signedDistanceSurfaceToVoxelAlongCameraRay;
 }
 
@@ -131,7 +143,8 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedLiveVoxelDepthInfo(
 		float narrowBandHalfWidth,
 		const CONSTPTR(float)* depthImage,
 		const CONSTPTR(float)* confidencesAtPixels,
-		const CONSTPTR(Vector2i)& imageSize) {
+		const CONSTPTR(Vector2i)& imageSize,
+		float effectiveRangeCutoff = 0.08f) {
 
 
 	// project point into image
@@ -165,7 +178,8 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedLiveVoxelDepthInfo(
 	float signedSurfaceToVoxelAlongCameraRay = depthMeasure - voxelPointInCameraCoordinates.z;
 	voxel.confidence = TVoxel::floatToValue(confidencesAtPixels[pixelIndex]);
 
-	updateSdfAndFlagsBasedOnDistanceSurfaceToVoxel(voxel, signedSurfaceToVoxelAlongCameraRay, narrowBandHalfWidth);
+	updateSdfAndFlagsBasedOnDistanceSurfaceToVoxel(voxel, signedSurfaceToVoxelAlongCameraRay, narrowBandHalfWidth,
+	                                               effectiveRangeCutoff);
 	return signedSurfaceToVoxelAlongCameraRay;
 }
 
@@ -336,22 +350,39 @@ _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxel
 
 // endregion ===========================================================================================================
 // region ====================== TRILINEAR INTERPOLATION BASED ON WARP VECTOR ==========================================
-template<typename TVoxel, typename TWarp, typename TIndex, typename TLookupPositionFunctor>
+template<typename TVoxel, typename TWarp, typename TIndex, ITMLib::WarpType TWarpType>
 _CPU_AND_GPU_CODE_
 inline void interpolateTSDFVolume(TVoxel* sdfSourceVoxels,
                                   const typename TIndex::IndexData* sdfSourceIndexData,
-                                  typename TIndex::IndexCache& sdfSourceCache,
-                                  const TWarp& warp,
+                                  typename TIndex::IndexCache& sourceTSDFCache,
+                                  const TWarp& warpVoxel,
                                   TVoxel& destinationVoxel,
                                   const Vector3i& warpAndDestinationVoxelPosition,
                                   bool printResult) {
 
-	Vector3f warpedPosition =
-			TLookupPositionFunctor::GetWarpedPosition(warp, warpAndDestinationVoxelPosition);
+	Vector3f warpVector = ITMLib::WarpVoxelStaticFunctor<TWarp, TWarpType>::GetWarp(warpVoxel);
+
+	if (ORUtils::length(warpVector) < 1e-5f) {
+		int vmIndex;
+#if !defined(__CUDACC__) && !defined(WITH_OPENMP)
+		const TVoxel& sourceTSDFVoxelAtSameLocation = readVoxel(sdfSourceVoxels, sdfSourceIndexData,
+		                                                        warpAndDestinationVoxelPosition,
+		                                                        vmIndex, sourceTSDFCache);
+#else //don't use cache when multithreading!
+		const TVoxel& sourceTSDFVoxelAtSameLocation = readVoxel(sdfSourceVoxels, sdfSourceIndexData,
+														warpAndDestinationVoxelPosition,
+														vmIndex);
+#endif
+		destinationVoxel.sdf = sourceTSDFVoxelAtSameLocation.sdf;
+		destinationVoxel.flags = sourceTSDFVoxelAtSameLocation.flags;
+		return;
+	}
+	Vector3f warpedPosition = TO_FLOAT3(warpAndDestinationVoxelPosition) + warpVector;
 	bool struckKnown;
 
+
 	float sdf = _DEBUG_InterpolateTrilinearly_StruckKnown(
-			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sdfSourceCache, struckKnown, printResult);
+			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sourceTSDFCache, struckKnown, printResult);
 
 	// Update flags
 	if (struckKnown) {

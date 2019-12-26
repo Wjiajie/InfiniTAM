@@ -11,7 +11,7 @@ namespace ITMLib
 {
 	/** \brief
 		Stores the render state used by the SceneReconstruction
-		and Visualisation engines.
+		and Visualization engines.
 		*/
 	class ITMRenderState
 	{

@@ -22,7 +22,7 @@
 #include "../../Utils/FileIO/ITMSceneLogger.h"
 #include "../../Utils/ITMPrintHelpers.h"
 #include "../../Utils/ITMVoxelFlags.h"
-#include "../Shared/ITMSceneMotionOptimizationParameters.h"
+#include "../Shared/SurfaceTrackerOptimizationParameters.h"
 #include "SlavchevaSufraceTracker.h"
 
 namespace  ITMLib{
@@ -63,8 +63,7 @@ public:
 
 };
 
-template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TMemoryDeviceType>
-class SurfaceTracker;
+
 
 }//namespace ITMLib
 

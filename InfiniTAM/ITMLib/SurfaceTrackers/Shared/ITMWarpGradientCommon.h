@@ -55,14 +55,14 @@ void PrintEnergyStatistics(const bool& enableDataTerm,
 	}
 	std::cout << green << " Total: " << totalEnergy << reset << std::endl;
 }
-
+template <MemoryDeviceType TMemoryDeviceType>
 inline static
 void PrintEnergyStatistics(const bool& enableDataTerm,
                            const bool& enableLevelSetTerm,
                            const bool& enableSmoothingTerm,
                            const bool& enableRigidityTerm,
                            const float& gamma,
-                           ComponentEnergies& energies) {
+                           ComponentEnergies<TMemoryDeviceType>& energies) {
 	float totalDataEnergy = GET_ATOMIC_VALUE_CPU(energies.totalDataEnergy);
 	float totalLevelSetEnergy = GET_ATOMIC_VALUE_CPU(energies.totalLevelSetEnergy);
 	float totalTikhonovEnergy = GET_ATOMIC_VALUE_CPU(energies.totalTikhonovEnergy);
@@ -115,10 +115,11 @@ void CalculateAndPrintAdditionalStatistics(const bool& enableDataTerm,
 	          std::endl;
 }
 
+template<MemoryDeviceType TMemoryDeviceType>
 inline static
 void CalculateAndPrintAdditionalStatistics(const bool& enableDataTerm,
                                            const bool& enableLevelSetTerm,
-                                           AdditionalGradientAggregates& aggregates,
+                                           AdditionalGradientAggregates<TMemoryDeviceType>& aggregates,
                                            const unsigned int usedHashblockCount = 0) {
 
 	unsigned int consideredVoxelCount = GET_ATOMIC_VALUE_CPU(aggregates.consideredVoxelCount);

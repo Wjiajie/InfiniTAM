@@ -22,6 +22,7 @@ struct ITMViewBuilderFactory
    * \param deviceType  The device on which the view builder should operate.
    */
   static ITMViewBuilder *MakeViewBuilder(const ITMRGBDCalib& calib, MemoryDeviceType deviceType);
+  static ITMViewBuilder *MakeViewBuilder(const std::string& calibration_path, MemoryDeviceType deviceType);
 };
 
 }

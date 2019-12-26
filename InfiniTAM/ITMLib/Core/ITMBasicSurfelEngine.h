@@ -7,7 +7,7 @@
 #include "ITMTrackingController.h"
 #include "../Engines/LowLevel/Interface/ITMLowLevelEngine.h"
 #include "../Engines/ViewBuilding/Interface/ITMViewBuilder.h"
-#include "../Engines/Visualisation/Interface/ITMSurfelVisualisationEngine.h"
+#include "../Engines/Visualization/Interface/ITMSurfelVisualisationEngine.h"
 #include "../Objects/Misc/ITMIMUCalibrator.h"
 
 #include "../../FernRelocLib/Relocaliser.h"

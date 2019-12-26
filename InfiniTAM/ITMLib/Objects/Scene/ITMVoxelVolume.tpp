@@ -16,6 +16,11 @@
 
 #include "ITMVoxelVolume.h"
 #include "../../Engines/SceneFileIO/ITMSceneFileIOEngine.h"
+#include "../../Utils/Configuration.h"
+#include "../../Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
+#ifndef COMPILE_WITHOUT_CUDA
+#include "../../Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
+#endif
 
 namespace ITMLib {
 
@@ -40,6 +45,14 @@ ITMVoxelVolume<TVoxel,TIndex>::ITMVoxelVolume(const ITMSceneParameters* _scenePa
 	else globalCache = nullptr;
 }
 
+
+template<class TVoxel, class TIndex>
+ITMVoxelVolume<TVoxel, TIndex>::ITMVoxelVolume(MemoryDeviceType memoryDeviceType,
+		typename TIndex::InitializationParameters indexParameters) :
+	ITMVoxelVolume(&Configuration::get().scene_parameters,
+			Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			memoryDeviceType, indexParameters) {}
+
 template<class TVoxel, class TIndex>
 ITMVoxelVolume<TVoxel, TIndex>::ITMVoxelVolume(const ITMVoxelVolume& other, MemoryDeviceType _memoryType)
 	: sceneParams(other.sceneParams),
@@ -50,6 +63,21 @@ ITMVoxelVolume<TVoxel, TIndex>::ITMVoxelVolume(const ITMVoxelVolume& other, Memo
     if(other.globalCache != nullptr){
 	    this->globalCache = new ITMGlobalCache<TVoxel,TIndex>(*other.globalCache);
     }
+}
+template<class TVoxel, class TIndex>
+void ITMVoxelVolume<TVoxel, TIndex>::Reset(){
+	switch (this->index.memoryType) {
+		case MEMORYDEVICE_CPU:
+			VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(this);
+			break;
+#ifndef COMPILE_WITHOUT_CUDA
+		case MEMORYDEVICE_CUDA:
+			VolumeEditAndCopyEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(this);
+			break;
+#endif
+		default:
+			DIEWITHEXCEPTION_REPORTLOCATION("Unsupported device type.");
+	}
 }
 
 template<class TVoxel, class TIndex>
@@ -73,5 +101,20 @@ template<class TVoxel, class TIndex>
 void ITMVoxelVolume<TVoxel, TIndex>::LoadFromDirectory(const std::string& outputDirectory) {
 	ITMSceneFileIOEngine<TVoxel,TIndex>::LoadFromDirectoryCompact(this, outputDirectory);
 }
+
+template<class TVoxel, class TIndex>
+TVoxel ITMVoxelVolume<TVoxel, TIndex>::GetValueAt(const Vector3i& pos) {
+	switch (this->index.memoryType) {
+		case MEMORYDEVICE_CPU:
+			return VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ReadVoxel(this, pos);
+#ifndef COMPILE_WITHOUT_CUDA
+		case MEMORYDEVICE_CUDA:
+			return VolumeEditAndCopyEngine_CUDA<TVoxel, TIndex>::Inst().ReadVoxel(this, pos);
+#endif
+		default:
+			DIEWITHEXCEPTION_REPORTLOCATION("Unsupported device type.");
+	}
+}
+
 
 }  // namespace ITMLib

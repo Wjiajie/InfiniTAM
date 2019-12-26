@@ -16,6 +16,7 @@
 #pragma once
 
 #include <iostream>
+#include "../../ORUtils/PlatformIndependence.h"
 
 namespace ITMLib {
 /**
@@ -31,6 +32,7 @@ enum VoxelFlags : unsigned char{
 	VOXEL_REGISTERED = 3
 };
 
+_CPU_AND_GPU_CODE_
 inline
 const char* VoxelFlagsAsCString(VoxelFlags flags){
 	switch (flags){
@@ -41,8 +43,8 @@ const char* VoxelFlagsAsCString(VoxelFlags flags){
 		case VOXEL_NONTRUNCATED:
 			return "VOXEL_NONTRUNCATED";
 		default:
-		std::cerr<< "Unknown voxel category: " << flags << "." << std::endl;
-			return ("UNRECOGNIZED VOXEL FLAG " + std::to_string(flags)).c_str();
+			printf("Unknown voxel flags value: %d.\n",flags);
+			return ("UNRECOGNIZED VOXEL FLAG");
 	}
 }
 

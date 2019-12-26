@@ -2,7 +2,7 @@
 
 #include "../ITMLibDefines.h"
 #include "../Engines/Reconstruction/Metal/ITMSceneReconstructionEngine_Metal.mm"
-#include "../Engines/Visualisation/Metal/ITMVisualisationEngine_Metal.mm"
+#include "../Engines/Visualization/Metal/ITMVisualisationEngine_Metal.mm"
 
 namespace ITMLib
 {

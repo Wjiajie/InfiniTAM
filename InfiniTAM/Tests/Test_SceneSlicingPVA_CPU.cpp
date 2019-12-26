@@ -24,7 +24,7 @@
 //local
 #include "TestUtils.h"
 #include "../ITMLib/Utils/Configuration.h"
-#include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 
@@ -81,7 +81,9 @@ BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 			&canonical_scene_slice_different_dimensions_CPU), nonTruncatedVoxelCount);
 	BOOST_REQUIRE_CLOSE(SceneStatCalc_CPU_PVA_Voxel::Instance().ComputeNonTruncatedVoxelAbsSdfSum(
 			&canonical_scene_slice_different_dimensions_CPU), 17063.5, 0.001);
-	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU(&canonical_scene_CPU,
+	BOOST_REQUIRE_CLOSE(SceneStatCalc_CPU_PVA_Voxel::Instance().ComputeNonTruncatedVoxelAbsSdfSum(
+			&canonical_scene_CPU), 17063.5, 0.001);
+	BOOST_REQUIRE(allocatedContentAlmostEqual_CPU_Verbose(&canonical_scene_CPU,
 	                                              &canonical_scene_slice_different_dimensions_CPU, tolerance));
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> canonical_scene_slice_from_disk_CPU(

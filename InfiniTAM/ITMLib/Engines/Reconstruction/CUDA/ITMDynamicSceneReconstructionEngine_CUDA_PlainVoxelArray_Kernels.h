@@ -16,6 +16,7 @@
 #pragma once
 
 #include "../Shared/ITMDynamicSceneReconstructionEngine_Shared.h"
+#include "../../Common/ITMWarpEnums.h"
 
 
 //TODO: refactor this to use CUDA-based traversal methods where applicable -Greg (GitHub: Algomorph)
@@ -44,11 +45,6 @@ __global__ void integrateIntoScene_device(TVoxel* voxelArray, const ITMLib::ITMP
 	pt_model.y = (float) (y + arrayInfo->offset.y) * _voxelSize;
 	pt_model.z = (float) (z + arrayInfo->offset.z) * _voxelSize;
 	pt_model.w = 1.0f;
-
-	//_DEBUG
-//	if(x == 255 & y == 256 && z == 4){
-//		printf("GOTCHA: %E %E %E\n", pt_model.x, pt_model.y, pt_model.z);
-//	}
 
 	ComputeUpdatedLiveVoxelInfo<TVoxel::hasColorInformation, TVoxel::hasConfidenceInformation, TVoxel::hasSemanticInformation, TVoxel>::compute(
 			voxelArray[locId], pt_model, M_d,
@@ -81,7 +77,7 @@ clearFields_device(TVoxel* voxelArray, const ITMLib::ITMPlainVoxelArray::ITMVoxe
 	voxel.sdf = TVoxel::SDF_initialValue();
 }
 
-template<typename TVoxel, typename TWarp, typename TLookupPositionFunctor>
+template<typename TVoxel, typename TWarp, ITMLib::WarpType TWarpType>
 __global__ void interpolateTriliearlyUsingWarps(
 		TWarp* warpSourceVoxels,
 		TVoxel* sdfSourceVoxels,
@@ -104,7 +100,7 @@ __global__ void interpolateTriliearlyUsingWarps(
 	warpAndDestinationVoxelPosition.y = y + sdfSourceIndexData->offset.y;
 	warpAndDestinationVoxelPosition.z = z + sdfSourceIndexData->offset.z;
 
-	interpolateTSDFVolume<TVoxel, TWarp, ITMPlainVoxelArray, TLookupPositionFunctor>(
+	interpolateTSDFVolume<TVoxel, TWarp, ITMPlainVoxelArray, TWarpType>(
 			sdfSourceVoxels, sdfSourceIndexData, sdfSourceCache,
 			warp, destinationVoxel,
 			warpAndDestinationVoxelPosition, false);

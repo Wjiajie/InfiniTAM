@@ -33,9 +33,9 @@
 #include "Test_WarpGradient_Common.h"
 #include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
-#include "../ITMLib/Engines/Manipulation/CUDA/ITMSceneManipulationEngine_CUDA.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
 #include "../ITMLib/SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
-#include "../ITMLib/SurfaceTrackers/CUDA/SurfaceTracker_CUDA.h"
+#include "../ITMLib/SurfaceTrackers/Interface/SurfaceTracker.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
 
@@ -51,7 +51,7 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CUDA_PVA, DataFixture) {
 	ManipulationEngine_CUDA_PVA_Warp::Inst().ResetScene(&warp_field_CUDA1);
 
 
-	auto motionTracker_PVA_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>(
+	auto motionTracker_PVA_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA , TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(true, false, false, false, false));
 
 
@@ -59,18 +59,21 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CUDA_PVA, DataFixture) {
 		motionTracker_PVA_CUDA->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CUDA1);
 	}, "Calculate Warp Gradient - PVA CPU data term");
 
+	//warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_data_");
+
 	float tolerance = 1e-5;
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_data_term, tolerance));
 }
 
 BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CUDA_PVA, DataFixture) {
-	auto motionTracker_PVA_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>(
+	auto motionTracker_PVA_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA , TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(false, false, false, false, false));
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_copy(*warp_field_data_term,
 	                                                            MemoryDeviceType::MEMORYDEVICE_CUDA);
 
 	float maxWarp = motionTracker_PVA_CUDA->UpdateWarps(canonical_volume, live_volume, &warp_field_copy);
-	BOOST_REQUIRE_CLOSE(maxWarp, 0.0870865062f, 1e-7);
+	//warp_field_copy.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_data_flow_warps_");
+	BOOST_REQUIRE_CLOSE(maxWarp, 0.242487013f, 1e-7);
 
 	float tolerance = 1e-8;
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_copy, warp_field_iter0, tolerance));
@@ -78,7 +81,7 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CUDA_PVA, DataFixture) {
 
 BOOST_FIXTURE_TEST_CASE(testSmoothWarpGradient_CUDA_PVA, DataFixture) {
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CUDA1(*warp_field_data_term, MEMORYDEVICE_CUDA);
-	auto motionTracker_PVA_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>(
+	auto motionTracker_PVA_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA , TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(false, false, false, false, true)
 			);
 
@@ -87,7 +90,7 @@ BOOST_FIXTURE_TEST_CASE(testSmoothWarpGradient_CUDA_PVA, DataFixture) {
 	}, "Smooth Warp Gradient - PVA CUDA");
 //	warp_field_CUDA1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_smoothed_");
 
-	float tolerance = 1e-8;
+	float tolerance = 1e-6;
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_data_term_smoothed, tolerance));
 }
 
@@ -95,7 +98,7 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CUDA_PVA, DataFixture) {
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CUDA1(*warp_field_iter0, MEMORYDEVICE_CUDA);
 
 
-	auto motionTracker_PVA_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>(
+	auto motionTracker_PVA_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA , TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(false, false, true, false, false));
 
 
@@ -109,7 +112,7 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CUDA_PVA, DataFixture) {
 	ITMWarp warp1 = ManipulationEngine_CUDA_PVA_Warp::Inst().ReadVoxel(&warp_field_CUDA1, Vector3i(-29, 17, 195));
 	ITMWarp warp2 = ManipulationEngine_CUDA_PVA_Warp::Inst().ReadVoxel(warp_field_tikhonov_term,
 	                                                                   Vector3i(-29, 17, 195));
-	float tolerance = 1e-8;
+	float tolerance = 1e-7;
 	BOOST_REQUIRE_CLOSE(warp1.gradient0.x, warp2.gradient0.x, tolerance);
 	BOOST_REQUIRE_CLOSE(warp1.gradient0.y, warp2.gradient0.y, tolerance);
 	BOOST_REQUIRE_CLOSE(warp1.gradient0.z, warp2.gradient0.z, tolerance);
@@ -120,7 +123,7 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CUDA_PVA, DataFixture) {
 BOOST_FIXTURE_TEST_CASE(testDataAndTikhonovTerm_CUDA, DataFixture) {
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CUDA1(*warp_field_iter0, MEMORYDEVICE_CUDA);
 
-	auto motionTracker_PVA_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>(
+	auto motionTracker_PVA_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA , TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(true, false, true, false, false)
 			);
 
@@ -130,7 +133,7 @@ BOOST_FIXTURE_TEST_CASE(testDataAndTikhonovTerm_CUDA, DataFixture) {
 	}, "Calculate Warp Gradient - PVA CPU data term + Tikhonov term");
 
 
-	float tolerance = 1e-8;
+	float tolerance = 1e-6;
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_data_and_tikhonov_term, tolerance));
 }
 
@@ -138,7 +141,7 @@ BOOST_FIXTURE_TEST_CASE(testDataAndTikhonovTerm_CUDA, DataFixture) {
 BOOST_FIXTURE_TEST_CASE(testDataAndKillingTerm_CUDA, DataFixture) {
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CUDA1(*warp_field_iter0, MEMORYDEVICE_CUDA);
 
-	auto motionTracker_PVA_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>(
+	auto motionTracker_PVA_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA , TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(true, false, true, true, false)
 			);
 
@@ -148,7 +151,7 @@ BOOST_FIXTURE_TEST_CASE(testDataAndKillingTerm_CUDA, DataFixture) {
 	}, "Calculate Warp Gradient - PVA CPU data term + Killing term");
 
 
-	float tolerance = 1e-8;
+	float tolerance = 1e-7;
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_data_and_killing_term, tolerance));
 }
 
@@ -156,7 +159,7 @@ BOOST_FIXTURE_TEST_CASE(testDataAndKillingTerm_CUDA, DataFixture) {
 BOOST_FIXTURE_TEST_CASE(testDataAndLevelSetTerm_CUDA, DataFixture) {
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CUDA1(*warp_field_iter0, MEMORYDEVICE_CUDA);
 
-	auto motionTracker_PVA_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>(
+	auto motionTracker_PVA_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CUDA , TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(true, true, false, false, false));
 
 
@@ -166,6 +169,12 @@ BOOST_FIXTURE_TEST_CASE(testDataAndLevelSetTerm_CUDA, DataFixture) {
 	}, "Calculate Warp Gradient - PVA CPU data term + level set term");
 
 
-	float tolerance = 1e-7;
-	BOOST_REQUIRE(contentAlmostEqual_CUDA_Verbose(&warp_field_CUDA1, warp_field_data_and_level_set_term, tolerance));
+	float tolerance = 1e-6;
+	BOOST_REQUIRE(contentAlmostEqual_CUDA(&warp_field_CUDA1, warp_field_data_and_level_set_term, tolerance));
 }
+
+#ifdef GENERATE_DATA
+BOOST_AUTO_TEST_CASE(Test_WarpGradient_CUDA_PVA_GenerateTestData){
+	GenerateTestData<ITMPlainVoxelArray,MEMORYDEVICE_CUDA>();
+}
+#endif

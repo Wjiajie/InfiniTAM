@@ -7,9 +7,9 @@
 #include "../../Engines/Reconstruction/CUDA/ITMSceneReconstructionEngine_CUDA.tcu"
 #include "../../Engines/Reconstruction/CUDA/ITMSurfelSceneReconstructionEngine_CUDA.tcu"
 #include "../../Engines/Swapping/CUDA/ITMSwappingEngine_CUDA.tcu"
-#include "../../Engines/Visualisation/CUDA/ITMSurfelVisualisationEngine_CUDA.tcu"
-#include "../../Engines/Visualisation/CUDA/ITMVisualisationEngine_CUDA.tcu"
-#include "../../Engines/Visualisation/CUDA/ITMMultiVisualisationEngine_CUDA.tcu"
+#include "../../Engines/Visualization/CUDA/ITMSurfelVisualizationEngine_CUDA.tcu"
+#include "../../Engines/Visualization/CUDA/ITMVisualizationEngine_CUDA.tcu"
+#include "../../Engines/Visualization/CUDA/ITMMultiVisualizationEngine_CUDA.tcu"
 
 namespace ITMLib
 {
@@ -17,12 +17,12 @@ namespace ITMLib
 	template class ITMMultiMeshingEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
 	template class ITMSceneReconstructionEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
 	template class ITMSwappingEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
-	template class ITMVisualisationEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
-	template class ITMMultiVisualisationEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
+	template class ITMVisualizationEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
+	template class ITMMultiVisualizationEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
 
 	template class ITMSurfelSceneReconstructionEngine_CUDA<ITMSurfel_grey>;
 	template class ITMSurfelSceneReconstructionEngine_CUDA<ITMSurfel_rgb>;
-	template class ITMSurfelVisualisationEngine_CUDA<ITMSurfel_grey>;
-	template class ITMSurfelVisualisationEngine_CUDA<ITMSurfel_rgb>;
+	template class ITMSurfelVisualizationEngine_CUDA<ITMSurfel_grey>;
+	template class ITMSurfelVisualizationEngine_CUDA<ITMSurfel_rgb>;
 
 }

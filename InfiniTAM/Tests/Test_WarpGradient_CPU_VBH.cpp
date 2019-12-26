@@ -32,12 +32,13 @@
 #include "TestUtils.h"
 #include "Test_WarpGradient_Common.h"
 #include "../ITMLib/Utils/Configuration.h"
-#include "../ITMLib/Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
 #include "../ITMLib/SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
-#include "../ITMLib/SurfaceTrackers/CPU/SurfaceTracker_CPU.h"
+#include "../ITMLib/SurfaceTrackers/Interface/SurfaceTracker.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "../ITMLib/Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
+#include "../ITMLib/Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
 
 using namespace ITMLib;
 
@@ -78,7 +79,7 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_VBH, DataFixture) {
 	ManipulationEngine_CPU_VBH_Warp::Inst().ResetScene(&warp_field_CPU1);
 
 
-	auto motionTracker_VBH_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>(
+	auto motionTracker_VBH_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(true, false, false, false, false));
 
 
@@ -86,12 +87,12 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_VBH, DataFixture) {
 		motionTracker_VBH_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
 	}, "Calculate Warp Gradient - VBH CPU data term");
 
-	BOOST_REQUIRE_EQUAL(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeAllocatedHashBlockCount(&warp_field_CPU1), 366);
+	BOOST_REQUIRE_EQUAL(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeAllocatedHashBlockCount(&warp_field_CPU1), 589);
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
-	BOOST_REQUIRE_EQUAL(functor.count.load(), 36618u);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 37525u);
 
 //	warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_data_");
 	float tolerance = 1e-7;
@@ -100,7 +101,7 @@ BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_VBH, DataFixture) {
 
 BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_VBH, DataFixture) {
 
-	auto motionTracker_VBH_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>(
+	auto motionTracker_VBH_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(false, false, false, false, false));
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_copy(*warp_field_data_term,
 	                                                           MemoryDeviceType::MEMORYDEVICE_CPU);
@@ -108,19 +109,20 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_VBH, DataFixture) {
 	AlteredGradientCountFunctor<ITMWarp> agcFunctor;
 	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_copy, agcFunctor);
-	BOOST_REQUIRE_EQUAL(agcFunctor.count.load(), 36618u);
-	BOOST_REQUIRE_EQUAL(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeAllocatedHashBlockCount(&warp_field_copy), 366);
+	BOOST_REQUIRE_EQUAL(agcFunctor.count.load(), 37525u);
+	BOOST_REQUIRE_EQUAL(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeAllocatedHashBlockCount(&warp_field_copy), 589);
 
+	ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash,MEMORYDEVICE_CPU>::Instance().AllocateUsingOtherVolume(canonical_volume, live_volume);
 
 	float maxWarp = motionTracker_VBH_CPU->UpdateWarps(canonical_volume, live_volume, &warp_field_copy);
 //	warp_field_copy.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warp_iter0");
-	BOOST_REQUIRE_CLOSE(maxWarp, 0.0213166066f, 1e-7f);
+	BOOST_REQUIRE_CLOSE(maxWarp, 0.242487013f, 1e-7f);
 
 
 	AlteredFlowWarpCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_copy, functor);
-	BOOST_REQUIRE_EQUAL(functor.count.load(), 36618u);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 37525u);
 
 	float tolerance = 1e-8;
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_copy, warp_field_iter0, tolerance));
@@ -132,7 +134,7 @@ BOOST_FIXTURE_TEST_CASE(testSmoothWarpGradient_CPU_VBH, DataFixture) {
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CPU1(*warp_field_data_term, MEMORYDEVICE_CPU);
 
 
-	auto motionTracker_VBH_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>(
+	auto motionTracker_VBH_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(false, false, false, false, true)
 	);
 
@@ -150,7 +152,7 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU_VBH, DataFixture) {
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CPU1(*warp_field_iter0, MEMORYDEVICE_CPU);
 
 
-	auto motionTracker_VBH_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>(
+	auto motionTracker_VBH_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(false, false, true, false, false)
 	);
 	Vector3i testPosition(-40, 60, 200);
@@ -158,14 +160,14 @@ BOOST_FIXTURE_TEST_CASE(testTikhonovTerm_CPU_VBH, DataFixture) {
 	TimeIt([&]() {
 		motionTracker_VBH_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
 	}, "Calculate Warp Gradient - VBH CPU data term + tikhonov term");
-	BOOST_REQUIRE_EQUAL(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeAllocatedHashBlockCount(&warp_field_CPU1), 366);
+	BOOST_REQUIRE_EQUAL(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeAllocatedHashBlockCount(&warp_field_CPU1), 589);
 	//warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warp_field_1_tikhonov_");
 
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
-	BOOST_REQUIRE_EQUAL(functor.count.load(), 42493);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 57413);
 
 
 	ITMWarp warp1 = ManipulationEngine_CPU_VBH_Warp::Inst().ReadVoxel(&warp_field_CPU1, testPosition);
@@ -182,20 +184,20 @@ BOOST_FIXTURE_TEST_CASE(testDataAndTikhonovTerm_CPU_VBH, DataFixture) {
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CPU1(*warp_field_iter0, MEMORYDEVICE_CPU);
 
 
-	auto motionTracker_VBH_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>(
+	auto motionTracker_VBH_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(true, false, true, false, false));
 
 	TimeIt([&]() {
 		motionTracker_VBH_CPU->CalculateWarpGradient(canonical_volume, live_volume, &warp_field_CPU1);
 	}, "Calculate Warp Gradient - VBH CPU data term + tikhonov term");
-	BOOST_REQUIRE_EQUAL(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeAllocatedHashBlockCount(&warp_field_CPU1), 366);
+	BOOST_REQUIRE_EQUAL(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeAllocatedHashBlockCount(&warp_field_CPU1), 589);
 //	warp_field_CPU1.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/gradient0_tikhonov_");
 
 
 	AlteredGradientCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
-	BOOST_REQUIRE_EQUAL(functor.count.load(), 42493);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 57413);
 
 	Vector3i testPosition(-40, 60, 200);
 	ITMWarp warp1 = ManipulationEngine_CPU_VBH_Warp::Inst().ReadVoxel(&warp_field_CPU1, testPosition);
@@ -214,7 +216,7 @@ BOOST_FIXTURE_TEST_CASE(testDataAndKillingTerm_CPU_VBH, DataFixture) {
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CPU1(*warp_field_iter0, MEMORYDEVICE_CPU);
 
 
-	auto motionTracker_VBH_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>(
+	auto motionTracker_VBH_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(true, false, true, true, false));
 
 
@@ -226,7 +228,7 @@ BOOST_FIXTURE_TEST_CASE(testDataAndKillingTerm_CPU_VBH, DataFixture) {
 	AlteredGradientCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
-	BOOST_REQUIRE_EQUAL(functor.count.load(), 42757);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 59083);
 
 	float tolerance = 1e-8;
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_and_killing_term, tolerance));
@@ -236,7 +238,7 @@ BOOST_FIXTURE_TEST_CASE(testDataAndKillingTerm_CPU_VBH, DataFixture) {
 BOOST_FIXTURE_TEST_CASE(testDataAndLevelSetTerm_CPU_VBH, DataFixture) {
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CPU1(*warp_field_iter0, MEMORYDEVICE_CPU);
 
-	auto motionTracker_VBH_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>(
+	auto motionTracker_VBH_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>(
 			SlavchevaSurfaceTracker::Switches(true, true, false, false, false));
 
 
@@ -248,8 +250,15 @@ BOOST_FIXTURE_TEST_CASE(testDataAndLevelSetTerm_CPU_VBH, DataFixture) {
 	AlteredGradientCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_CPU1, functor);
-	BOOST_REQUIRE_EQUAL(functor.count.load(), 41377);
+	BOOST_REQUIRE_EQUAL(functor.count.load(), 55369);
 
 	float tolerance = 1e-7;
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&warp_field_CPU1, warp_field_data_and_level_set_term, tolerance));
 }
+
+//#define GENERATE_DATA
+#ifdef GENERATE_DATA
+BOOST_AUTO_TEST_CASE(Test_WarpGradient_CUDA_VBH_GenerateTestData){
+	GenerateTestData<ITMVoxelBlockHash,MEMORYDEVICE_CPU>();
+}
+#endif

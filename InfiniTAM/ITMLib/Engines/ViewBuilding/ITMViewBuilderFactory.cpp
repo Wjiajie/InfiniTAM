@@ -14,7 +14,7 @@ namespace ITMLib
 
 ITMViewBuilder *ITMViewBuilderFactory::MakeViewBuilder(const ITMRGBDCalib& calib, MemoryDeviceType deviceType)
 {
-  ITMViewBuilder *viewBuilder = NULL;
+  ITMViewBuilder *viewBuilder = nullptr;
 
   switch(deviceType)
   {
@@ -34,6 +34,33 @@ ITMViewBuilder *ITMViewBuilderFactory::MakeViewBuilder(const ITMRGBDCalib& calib
   }
 
   return viewBuilder;
+}
+
+ITMViewBuilder *ITMViewBuilderFactory::MakeViewBuilder(const std::string& calibration_path, MemoryDeviceType deviceType)
+{
+	ITMViewBuilder *viewBuilder = nullptr;
+
+	ITMRGBDCalib calibrationData;
+	readRGBDCalib(calibration_path.c_str(), calibrationData);
+
+	switch(deviceType)
+	{
+		case MEMORYDEVICE_CPU:
+			viewBuilder = new ITMViewBuilder_CPU(calibrationData);
+			break;
+		case MEMORYDEVICE_CUDA:
+#ifndef COMPILE_WITHOUT_CUDA
+			viewBuilder = new ITMViewBuilder_CUDA(calibrationData);
+#endif
+			break;
+		case MEMORYDEVICE_METAL:
+#ifdef COMPILE_WITH_METAL
+			viewBuilder = new ITMViewBuilder_CPU(calibrationData);
+#endif
+			break;
+	}
+
+	return viewBuilder;
 }
 
 }

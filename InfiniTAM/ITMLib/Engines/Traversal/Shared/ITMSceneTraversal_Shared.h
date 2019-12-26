@@ -55,7 +55,7 @@ _CPU_AND_GPU_CODE_
 inline bool FindHashAtPosition(THREADPTR(int)& hashIdx,
                                const CONSTPTR(Vector3s)& hashBlockPosition,
                                const CONSTPTR(ITMHashEntry)* hashTable) {
-	hashIdx = hashIndex(hashBlockPosition);
+	hashIdx = HashCodeFromBlockPosition(hashBlockPosition);
 	ITMHashEntry hashEntry = hashTable[hashIdx];
 
 	if (!(IS_EQUAL3(hashEntry.pos, hashBlockPosition) && hashEntry.ptr >= -1)) {
@@ -90,3 +90,16 @@ struct ITMFlipArgumentBooleanFunctor {
 	TFunctor functor;
 };
 
+
+template<typename TVoxel, typename TPredicateFunctor>
+inline static bool
+voxelBlockSatisfiesPredicate(TVoxel* voxelBlock,
+                             TPredicateFunctor& oneVoxelPredicateFunctor) {
+	for (int locId = 0; locId < VOXEL_BLOCK_SIZE3; locId++) {
+		TVoxel& voxel = voxelBlock[locId];
+		if (!oneVoxelPredicateFunctor(voxel)) {
+			return false;
+		}
+	}
+	return true;
+}

@@ -5,9 +5,8 @@
 #include "../Engines/LowLevel/ITMLowLevelEngineFactory.h"
 #include "../Engines/Meshing/ITMMeshingEngineFactory.h"
 #include "../Engines/ViewBuilding/ITMViewBuilderFactory.h"
-#include "../Engines/Visualisation/ITMVisualisationEngineFactory.h"
+#include "../Engines/Visualization/ITMVisualizationEngineFactory.h"
 #include "../Engines/SceneFileIO/ITMSceneFileIOEngine.h"
-#include "../Objects/RenderStates/ITMRenderStateFactory.h"
 #include "../CameraTrackers/ITMCameraTrackerFactory.h"
 
 #include "../../ORUtils/NVTimer.h"
@@ -16,7 +15,7 @@
 //#define OUTPUT_TRAJECTORY_QUATERNIONS
 
 #include "../../ORUtils/FileUtils.h"
-#include "../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
 
 using namespace ITMLib;
 
@@ -33,9 +32,9 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
-	liveVisualisationEngine = ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxel, TIndex>(deviceType);
+	liveVisualisationEngine = ITMVisualizationEngineFactory::MakeVisualisationEngine<TVoxel, TIndex>(deviceType);
 	canonicalVisualisationEngine =
-			ITMVisualisationEngineFactory::MakeVisualisationEngine<TVoxel, TIndex>(deviceType);
+			ITMVisualizationEngineFactory::MakeVisualisationEngine<TVoxel, TIndex>(deviceType);
 
 	meshingEngine = nullptr;
 	if (settings.create_meshing_engine)
@@ -43,7 +42,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 
 	denseMapper = new ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>(canonicalScene->index);
 	denseMapper->ResetTSDFVolume(canonicalScene);
-	for (int iScene = 0; iScene < ITMDynamicEngine<TVoxel, TWarp, TIndex>::liveSceneCount; iScene++){
+	for (int iScene = 0; iScene < ITMDynamicEngine<TVoxel, TWarp, TIndex>::liveSceneCount; iScene++) {
 		denseMapper->ResetTSDFVolume(liveScenes[iScene]);
 	}
 	denseMapper->ResetWarpVolume(warpField);
@@ -55,8 +54,9 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 
 	Vector2i trackedImageSize = cameraTrackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
 
-	renderState_live = ITMRenderStateFactory<TIndex>::CreateRenderState(trackedImageSize, canonicalScene->sceneParams,
-	                                                                    memoryType, liveScenes[0]->index);
+	renderState_live = new ITMRenderState(trackedImageSize, canonicalScene->sceneParams->viewFrustum_min,
+	                                      canonicalScene->sceneParams->viewFrustum_max, settings.device_type);
+
 	renderState_freeview = nullptr; //will be created if needed
 
 	trackingState = new ITMTrackingState(trackedImageSize, memoryType);
@@ -65,8 +65,9 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 	view = nullptr; // will be allocated by the view builder
 
 	if (settings.behavior_on_failure == settings.FAILUREMODE_RELOCALIZE)
-		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.scene_parameters.viewFrustum_min,
-		                                                                       settings.scene_parameters.viewFrustum_max),
+		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d,
+		                                                   Vector2f(settings.scene_parameters.viewFrustum_min,
+		                                                            settings.scene_parameters.viewFrustum_max),
 		                                                   0.2f, 500, 4);
 	else relocaliser = nullptr;
 
@@ -81,7 +82,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-void ITMDynamicEngine<TVoxel, TWarp, TIndex>::InitializeScenes(){
+void ITMDynamicEngine<TVoxel, TWarp, TIndex>::InitializeScenes() {
 	Configuration& settings = Configuration::get();
 	MemoryDeviceType memoryType = settings.device_type;
 	this->canonicalScene = new ITMVoxelVolume<TVoxel, TIndex>(
@@ -406,10 +407,9 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 				type = IITMVisualisationEngine::RENDER_COLOUR_FROM_CONFIDENCE;
 
 			if (renderState_freeview == nullptr) {
-				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
-				                                                                        liveScenes[0]->sceneParams,
-				                                                                        settings.device_type,
-				                                                                        liveScenes[0]->index);
+				renderState_freeview = new ITMRenderState(out->noDims, liveScenes[0]->sceneParams->viewFrustum_min,
+				                                          liveScenes[0]->sceneParams->viewFrustum_max,
+				                                          settings.device_type);
 			}
 
 			liveVisualisationEngine->FindVisibleBlocks(liveScenes[0], pose, intrinsics, renderState_freeview);
@@ -425,10 +425,9 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 		case ITMMainEngine::InfiniTAM_IMAGE_STEP_BY_STEP: {
 
 			if (renderState_freeview == nullptr) {
-				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
-				                                                                        liveScenes[0]->sceneParams,
-				                                                                        settings.device_type,
-				                                                                        liveScenes[0]->index);
+				renderState_freeview = new ITMRenderState(out->noDims, liveScenes[0]->sceneParams->viewFrustum_min,
+				                                          liveScenes[0]->sceneParams->viewFrustum_max,
+				                                          settings.device_type);
 			}
 
 			liveVisualisationEngine->FindVisibleBlocks(liveScenes[0], pose, intrinsics, renderState_freeview);
@@ -454,10 +453,9 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			IITMVisualisationEngine::RenderImageType type = IITMVisualisationEngine::RENDER_SHADED_GREYSCALE;
 
 			if (renderState_freeview == nullptr) {
-				renderState_freeview = ITMRenderStateFactory<TIndex>::CreateRenderState(out->noDims,
-				                                                                        canonicalScene->sceneParams,
-				                                                                        settings.device_type,
-				                                                                        canonicalScene->index);
+				renderState_freeview = new ITMRenderState(out->noDims, canonicalScene->sceneParams->viewFrustum_min,
+				                                          canonicalScene->sceneParams->viewFrustum_max,
+				                                          settings.device_type);
 			}
 
 			canonicalVisualisationEngine->FindVisibleBlocks(canonicalScene, pose, intrinsics, renderState_freeview);

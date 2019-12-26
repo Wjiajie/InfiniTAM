@@ -115,7 +115,7 @@ void ITMSceneLogger<TVoxel, TWarp, TIndex>::GetActiveSceneBounds(Vector6i& bound
 		if (this->activeWarpLogger->isSlice) {
 			bounds = activeWarpLogger->bounds;
 		} else {
-			ITMSceneStatisticsCalculator_CPU<TWarp, TIndex>::Instance().ComputeVoxelBounds(
+			ITMSceneStatisticsCalculator<TWarp, TIndex, MEMORYDEVICE_CPU>::Instance().ComputeVoxelBounds(
 					this->activeWarpLogger->warpField);
 		}
 	}
@@ -267,7 +267,7 @@ bool ITMSceneLogger<TVoxel, TWarp, TIndex>::LoadScenesCompact() {
 	}
 	std::cout << "Loading scenes for current frame (this might take awhile)..." << std::endl;
 	std::cout.flush();
-	ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(liveScene);
+	VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(liveScene);
 	ITMSceneFileIOEngine<TVoxel, TIndex>::LoadFromDirectoryCompact(liveScene, livePath.string());
 	if (!activeWarpLogger->isSlice || !activeWarpLogger->sliceLoaded) {
 		activeWarpLogger->LoadCompact();

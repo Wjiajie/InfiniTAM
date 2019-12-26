@@ -25,7 +25,7 @@
 //ITMLib
 #include "ITMSceneLogger.h"
 #include "../Configuration.h"
-#include "../../Engines/Manipulation/CPU/ITMSceneManipulationEngine_CPU.h"
+#include "../../Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 #include "ITMWriteAndReadFunctors.h"
@@ -70,7 +70,7 @@ ITMSceneLogger<TVoxel, TWarp, TIndex>::MakeSlice(const Vector3i& extremum1, cons
 		return false;
 	}
 	auto logger = new ITMWarpFieldLogger<TWarp, TIndex>(bounds, this->path);
-	if (!ITMSceneManipulationEngine_CPU<TWarp, TIndex>::Inst().CopySceneSlice(
+	if (!VolumeEditAndCopyEngine_CPU<TWarp, TIndex>::Inst().CopySceneSlice(
 			logger->warpField, fullWarpLogger->warpField, bounds)) {
 		return false;
 	}

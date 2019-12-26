@@ -15,10 +15,12 @@
 //  ================================================================
 
 #include "../../ITMLibDefines.h"
-#include "SurfaceTracker_CPU_PlainVoxelArray.tpp"
+#include "../Interface/SurfaceTracker.tpp"
 
 
 namespace ITMLib {
 template
-class SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>;
+class SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_OPTIMIZED>;
+template
+class SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>;
 } // namespace ITMLib

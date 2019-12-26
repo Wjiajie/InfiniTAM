@@ -74,6 +74,31 @@ public:
 		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TFunctor), cudaMemcpyDeviceToHost));
 		ORcudaSafeCall(cudaFree(functor_device));
 	}
+
+	template<typename TFunctor>
+	inline static void
+	VoxelPositionTraversal(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
+		TVoxel* voxelArray = scene->localVBA.GetVoxelBlocks();
+		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.GetIndexData();
+
+		dim3 cudaBlockSize(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
+		dim3 gridSize(scene->index.GetVolumeSize().x / cudaBlockSize.x,
+		              scene->index.GetVolumeSize().y / cudaBlockSize.y,
+		              scene->index.GetVolumeSize().z / cudaBlockSize.z);
+
+		// transfer functor from RAM to VRAM
+		TFunctor* functor_device = nullptr;
+		ORcudaSafeCall(cudaMalloc((void**) &functor_device, sizeof(TFunctor)));
+		ORcudaSafeCall(cudaMemcpy(functor_device, &functor, sizeof(TFunctor), cudaMemcpyHostToDevice));
+
+		voxelPositionTraversal_device<TFunctor, TVoxel> << < gridSize, cudaBlockSize >> >
+		                                                       (voxelArray, arrayInfo, functor_device);
+		ORcudaKernelCheck;
+
+		// transfer functor from VRAM back to RAM
+		ORcudaSafeCall(cudaMemcpy(&functor, functor_device, sizeof(TFunctor), cudaMemcpyDeviceToHost));
+		ORcudaSafeCall(cudaFree(functor_device));
+	}
 // endregion ===========================================================================================================
 };
 

@@ -4,8 +4,8 @@
 
 #include <stdexcept>
 
-#include "../Engines/Visualisation/Interface/ITMSurfelVisualisationEngine.h"
-#include "../Engines/Visualisation/Interface/ITMVisualisationEngine.h"
+#include "../Engines/Visualization/Interface/ITMSurfelVisualisationEngine.h"
+#include "../Engines/Visualization/Interface/ITMVisualisationEngine.h"
 #include "../CameraTrackers/Interface/ITMCameraTracker.h"
 #include "../Utils/Configuration.h"
 #include "../CameraTrackers/Interface/ITMCameraTracker.h"
@@ -64,7 +64,7 @@ namespace ITMLib
 		}
 
 		/**
-		 * \brief
+		 * \brief Do whatever the hell this does, great job on the docs and procedure naming / coupling, InfiniTAM team
 		 * \tparam TVoxel
 		 * \tparam TIndex
 		 * \param trackingState
@@ -74,7 +74,7 @@ namespace ITMLib
 		 * \param renderState
 		 */
 		template <typename TVoxel, typename TIndex>
-		void Prepare(ITMTrackingState *trackingState, const ITMVoxelVolume<TVoxel,TIndex> *scene, const ITMView *view,
+		void Prepare(ITMTrackingState *trackingState, ITMVoxelVolume<TVoxel,TIndex> *scene, const ITMView *view,
 		             const ITMVisualisationEngine<TVoxel,TIndex> *visualisationEngine, ITMRenderState *renderState)
 		{
 			if (!tracker->requiresPointCloudRendering())

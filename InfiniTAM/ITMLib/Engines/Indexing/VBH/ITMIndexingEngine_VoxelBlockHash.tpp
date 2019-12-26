@@ -15,9 +15,7 @@
 //  ================================================================
 #pragma once
 
-#include "ITMIndexingEngine_VoxelBlockHash.h"
-#include "../../Common/ITMCommonFunctors.h"
-#include "../Shared/ITMIndexingEngine_Shared.h"
+#include "../../Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 
 namespace ITMLib {
 
@@ -31,23 +29,24 @@ void ITMIndexingEngine_VoxelBlockHash<TVoxel, TMemoryDeviceType, TDerivedClass>:
 	assert(warpField->index.hashEntryCount == sourceTSDF->index.hashEntryCount &&
 	       sourceTSDF->index.hashEntryCount == targetTSDF->index.hashEntryCount);
 
-	HashEntryState* hashEntryStates_device = targetTSDF->index.GetHashEntryStates();
+	HashEntryAllocationState* hashEntryStates_device = targetTSDF->index.GetHashEntryAllocationStates();
 	Vector3s* blockCoordinates_device = targetTSDF->index.GetAllocationBlockCoordinates();
 
 	//Mark up hash entries in the target scene that will need allocation
-	WarpBasedAllocationMarkerFunctor<TWarp, TVoxel, WarpVoxelStaticFunctor<TWarp, TWarpType>>
+	WarpBasedAllocationMarkerFunctor<TWarp, TVoxel, TWarpType>
 			hashMarkerFunctor(sourceTSDF, targetTSDF, blockCoordinates_device, hashEntryStates_device);
-	do{
+
+	do {
 		//reset allocation flags
-		targetTSDF->index.ClearHashEntryStates();
+		targetTSDF->index.ClearHashEntryAllocationStates();
 		hashMarkerFunctor.collisionDetected = false;
 		ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, TMemoryDeviceType>::VoxelAndHashBlockPositionTraversal(
 				warpField, hashMarkerFunctor);
 
 		//Allocate the hash entries that will potentially have any data
 
-		static_cast<TDerivedClass*>(this)->AllocateHashEntriesUsingLists(targetTSDF, hashEntryStates_device, blockCoordinates_device);
-	}while(hashMarkerFunctor.collisionDetected);
+		static_cast<TDerivedClass*>(this)->AllocateHashEntriesUsingLists(targetTSDF);
+	} while (hashMarkerFunctor.collisionDetected);
 }
 
 

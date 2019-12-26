@@ -16,24 +16,76 @@
 
 #include "ITMVoxelBlockHash.h"
 #include "../../ITMLibDefines.h"
-#include "../../Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU.h"
-#include "../../Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA.h"
+#include "../../Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
+#include "../../Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
 
 namespace ITMLib {
-ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt_CPU(const Vector3s& pos) const {
+
+
+ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt(const Vector3s& pos, int& hashCode) const {
 	const ITMHashEntry* entries = this->GetEntries();
 	switch (memoryType) {
 		case MEMORYDEVICE_CPU:
 			return ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
-					.FindHashEntry(*this,pos);
+					.FindHashEntry(*this,pos,hashCode);
 #ifndef COMPILE_WITHOUT_CUDA
 		case MEMORYDEVICE_CUDA:
 			return ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance()
-					.FindHashEntry(*this,pos);
+					.FindHashEntry(*this,pos, hashCode);
 #endif
 		default:
 			DIEWITHEXCEPTION_REPORTLOCATION("Unsupported device type.");
 			return ITMHashEntry();
 	}
 }
+ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt(const Vector3s& pos) const {
+	int hashCode = 0;
+	return GetHashEntryAt(pos, hashCode);
+}
+
+ITMVoxelBlockHash::ITMVoxelBlockHash(ITMVoxelBlockHashParameters parameters, MemoryDeviceType memoryType) :
+		voxelBlockCount(parameters.voxelBlockCount),
+		excessListSize(parameters.excessListSize),
+		hashEntryCount(ORDERED_LIST_SIZE + parameters.excessListSize),
+		lastFreeExcessListId(parameters.excessListSize - 1),
+		hashEntryAllocationStates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType),
+		allocationBlockCoordinates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType),
+		visibleBlockHashCodes(parameters.voxelBlockCount, memoryType),
+		blockVisibilityTypes(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType),
+		memoryType(memoryType),
+		hashEntries(hashEntryCount, memoryType),
+		excessAllocationList(excessListSize, memoryType),
+		visibleHashBlockCount(0)
+		{
+	hashEntryAllocationStates.Clear(NEEDS_NO_CHANGE);
+
+}
+
+void ITMVoxelBlockHash::SaveToDirectory(const std::string& outputDirectory) const {
+	std::string hashEntriesFileName = outputDirectory + "hash.dat";
+	std::string excessAllocationListFileName = outputDirectory + "excess.dat";
+	std::string lastFreeExcessListIdFileName = outputDirectory + "last.txt";
+
+	std::ofstream ofs(lastFreeExcessListIdFileName.c_str());
+	if (!ofs) throw std::runtime_error("Could not open " + lastFreeExcessListIdFileName + " for writing");
+
+	ofs << lastFreeExcessListId;
+	ORUtils::MemoryBlockPersister::SaveMemoryBlock(hashEntriesFileName, hashEntries, memoryType);
+	ORUtils::MemoryBlockPersister::SaveMemoryBlock(excessAllocationListFileName, excessAllocationList, memoryType);
+}
+
+void ITMVoxelBlockHash::LoadFromDirectory(const std::string& inputDirectory) {
+	std::string hashEntriesFileName = inputDirectory + "hash.dat";
+	std::string excessAllocationListFileName = inputDirectory + "excess.dat";
+	std::string lastFreeExcessListIdFileName = inputDirectory + "last.txt";
+
+	std::ifstream ifs(lastFreeExcessListIdFileName.c_str());
+	if (!ifs) throw std::runtime_error("Count not open " + lastFreeExcessListIdFileName + " for reading");
+
+	ifs >> this->lastFreeExcessListId;
+	ORUtils::MemoryBlockPersister::LoadMemoryBlock(hashEntriesFileName, hashEntries, memoryType);
+	ORUtils::MemoryBlockPersister::LoadMemoryBlock(excessAllocationListFileName, excessAllocationList,
+	                                               memoryType);
+}
+
 }// namespace ITMLib

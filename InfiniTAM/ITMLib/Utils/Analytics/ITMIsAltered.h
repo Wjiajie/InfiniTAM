@@ -18,6 +18,7 @@
 #include "../../../ORUtils/PlatformIndependence.h"
 #include "../ITMVoxelFlags.h"
 #include "../ITMMath.h"
+#include "../Geometry/ITM3DIndexConversions.h"
 
 // region =========================== FUNCTIONS TO DETERMINE WHETHER A VOXEL HAS BEEN ALTERED FROM DEFAULT =============
 
@@ -26,11 +27,11 @@ template<bool hasSDFInformation,
 		bool hasFlowWarpInformation,
 		bool hasWarpUpdateInformation,
 		typename TVoxel>
-struct IsAlteredFunctor;
+struct IsAlteredUtility;
 
 
 template<typename TVoxel>
-struct IsAlteredFunctor<true, false, false, false, TVoxel> {
+struct IsAlteredUtility<true, false, false, false, TVoxel> {
 	_CPU_AND_GPU_CODE_
 	static inline
 	bool evaluate(const TVoxel& voxel) {
@@ -39,7 +40,7 @@ struct IsAlteredFunctor<true, false, false, false, TVoxel> {
 };
 
 template<typename TVoxel>
-struct IsAlteredFunctor<true, true, false, false, TVoxel> {
+struct IsAlteredUtility<true, true, false, false, TVoxel> {
 	_CPU_AND_GPU_CODE_
 	static inline
 	bool evaluate(const TVoxel& voxel) {
@@ -48,7 +49,7 @@ struct IsAlteredFunctor<true, true, false, false, TVoxel> {
 };
 
 template<typename TVoxel>
-struct IsAlteredFunctor<false, true, false, false, TVoxel> {
+struct IsAlteredUtility<false, true, false, false, TVoxel> {
 	_CPU_AND_GPU_CODE_
 	static inline
 	bool evaluate(const TVoxel& voxel) {
@@ -57,7 +58,7 @@ struct IsAlteredFunctor<false, true, false, false, TVoxel> {
 };
 
 template<typename TVoxel>
-struct IsAlteredFunctor<false, false, true, true, TVoxel> {
+struct IsAlteredUtility<false, false, true, true, TVoxel> {
 	_CPU_AND_GPU_CODE_
 	static inline
 	bool evaluate(const TVoxel& voxel) {
@@ -76,7 +77,7 @@ template<typename TVoxel>
 _CPU_AND_GPU_CODE_
 inline
 bool isAltered(TVoxel& voxel) {
-	return IsAlteredFunctor<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFlowWarp,
+	return IsAlteredUtility<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFlowWarp,
 			TVoxel::hasWarpUpdate, TVoxel>::evaluate(voxel);
 }
 
@@ -93,7 +94,7 @@ _CPU_AND_GPU_CODE_
 inline
 bool isAltered_VerbosePosition(TVoxel& voxel, Vector3i position, const char* message = "") {
 
-	bool altered = IsAlteredFunctor<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFlowWarp,
+	bool altered = IsAlteredUtility<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFlowWarp,
 			TVoxel::hasWarpUpdate, TVoxel>::evaluate(voxel);
 	if (altered) {
 		printf("%sVoxel altered at position %d, %d, %d.\n", message, position.x, position.y, position.z);
@@ -116,7 +117,7 @@ inline
 bool isAltered_VerbosePositionHash(TVoxel& voxel, Vector3i position, int hashCode, Vector3s blockPosition,
                                    const char* message = "") {
 
-	bool altered = IsAlteredFunctor<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFlowWarp,
+	bool altered = IsAlteredUtility<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFlowWarp,
 			TVoxel::hasWarpUpdate, TVoxel>::evaluate(voxel);
 
 	if (altered) {
@@ -127,16 +128,85 @@ bool isAltered_VerbosePositionHash(TVoxel& voxel, Vector3i position, int hashCod
 	return altered;
 }
 
+template<typename TVoxel>
+struct IsAlteredFunctor {
+	_CPU_AND_GPU_CODE_
+	bool operator()(const TVoxel& voxel) {
+		return isAltered(voxel);
+	}
+
+};
+
+template<typename TVoxel>
+struct IsAlteredPositionFunctor {
+	_CPU_AND_GPU_CODE_
+	bool operator()(const TVoxel& voxel, const Vector3i& position) {
+		return isAltered_VerbosePosition(voxel, position);
+	}
+};
+
+template<typename TVoxel>
+struct IsAlteredPositionHashFunctor {
+	_CPU_AND_GPU_CODE_
+	bool operator()(const TVoxel& voxel, const Vector3i& position, int hashCode, Vector3s blockPosition) {
+		return isAltered_VerbosePositionHash(voxel, position, hashCode, blockPosition);
+	}
+};
+
 
 template<typename TVoxel>
 inline static bool
-isVoxelBlockAltered(TVoxel* voxelBlock) {
-	for (int locId = 0; locId < VOXEL_BLOCK_SIZE3; locId++) {
-		TVoxel& voxel = voxelBlock[locId];
-		if (isAltered(voxel)) {
-			return true;
+isVoxelBlockAltered(TVoxel* voxelBlock, bool verbose = false,
+                    std::string message = "",
+                    Vector3s blockSpatialPosition = Vector3s((short) 0),
+                    int hashCode = 0) {
+	if(verbose){
+		for (int linearIndexInBlock = 0; linearIndexInBlock < VOXEL_BLOCK_SIZE3; linearIndexInBlock++) {
+			TVoxel& voxel = voxelBlock[linearIndexInBlock];
+			Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_VoxelBlockHash(blockSpatialPosition,
+			                                                                             linearIndexInBlock);
+			if (isAltered_VerbosePositionHash(voxel, voxelPosition, hashCode, blockSpatialPosition, message.c_str())) {
+				return true;
+			}
+		}
+	}else{
+		for (int linearIndexInBlock = 0; linearIndexInBlock < VOXEL_BLOCK_SIZE3; linearIndexInBlock++) {
+			TVoxel& voxel = voxelBlock[linearIndexInBlock];
+			if (isAltered(voxel)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+template<typename TVoxel, typename TOneVoxelPredicate>
+inline static bool
+isVoxelBlockAlteredPredicate(TVoxel* voxelBlock,
+                             TOneVoxelPredicate&& oneVoxelPredicate, bool verbose = false,
+                             std::string message = "",
+                             Vector3s blockSpatialPosition = Vector3s((short) 0),
+                             int hashCode = 0) {
+	if (verbose) {
+		for (int linearIndexInBlock = 0; linearIndexInBlock < VOXEL_BLOCK_SIZE3; linearIndexInBlock++) {
+			TVoxel& voxel = voxelBlock[linearIndexInBlock];
+			Vector3i voxelPosition = ComputePositionVectorFromLinearIndex_VoxelBlockHash(blockSpatialPosition,
+			                                                                             linearIndexInBlock);
+			if (std::forward<TOneVoxelPredicate>(oneVoxelPredicate)(voxel) &&
+			    isAltered_VerbosePositionHash(voxel, voxelPosition, hashCode, blockSpatialPosition, message.c_str())) {
+				return true;
+			}
+		}
+	} else {
+		for (int linearIndexInBlock = 0; linearIndexInBlock < VOXEL_BLOCK_SIZE3; linearIndexInBlock++) {
+			TVoxel& voxel = voxelBlock[linearIndexInBlock];
+			if (std::forward<TOneVoxelPredicate>(oneVoxelPredicate)(voxel) && isAltered(voxel)) {
+				return true;
+			}
 		}
 	}
 	return false;
 }
+
 

@@ -3,8 +3,8 @@
 #include "ITMSwappingEngine_CUDA.h"
 
 #include "../Shared/ITMSwappingEngine_Shared.h"
-#include "../../../Objects/RenderStates/ITMRenderState_VH.h"
 #include "../../../Utils/ITMCUDAUtils.h"
+
 using namespace ITMLib;
 
 namespace
@@ -17,9 +17,9 @@ namespace
 		int *neededEntryIDs_local, ITMHashEntry *hashTable, int maxW);
 
 	__global__ void buildListToSwapOut_device(int *neededEntryIDs, int *noNeededEntries, ITMHashSwapState *swapStates,
-		ITMHashEntry *hashTable, uchar *entriesVisibleType, int noTotalEntries);
+		ITMHashEntry *hashTable, HashBlockVisibility* entriesVisibleType, int noTotalEntries);
 
-	__global__ void buildListToClean_device(int *neededEntryIDs, int *noNeededEntries, ITMHashEntry *hashTable, uchar *entriesVisibleType, int noTotalEntries);
+	__global__ void buildListToClean_device(int *neededEntryIDs, int *noNeededEntries, ITMHashEntry *hashTable, HashBlockVisibility* blockVisibilityTypes, int noTotalEntries);
 
 	template<class TVoxel>
 	__global__ void cleanMemory_device(int *voxelAllocationList, int *noAllocatedVoxelEntries, ITMHashSwapState *swapStates,
@@ -142,7 +142,7 @@ void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SaveToGlobalMemory(ITMVo
 	ITMHashSwapState *swapStates = globalCache->GetSwapStates(true);
 
 	ITMHashEntry *hashTable = scene->index.GetEntries();
-	uchar *entriesVisibleType = ((ITMRenderState_VH*)renderState)->GetEntriesVisibleType();
+	HashBlockVisibility* blockVisibilityTypes = scene->index.GetBlockVisibilityTypes();
 
 	TVoxel *syncedVoxelBlocks_local = globalCache->GetSyncedVoxelBlocks(true);
 	bool *hasSyncedData_local = globalCache->GetHasSyncedData(true);
@@ -167,7 +167,7 @@ void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SaveToGlobalMemory(ITMVo
 		ORcudaSafeCall(cudaMemset(noNeededEntries_device, 0, sizeof(int)));
 
 		buildListToSwapOut_device << <gridSize, blockSize >> >(neededEntryIDs_local, noNeededEntries_device, swapStates,
-			hashTable, entriesVisibleType, hashEntryCount);
+			hashTable, blockVisibilityTypes, hashEntryCount);
 		ORcudaKernelCheck;
 
 		ORcudaSafeCall(cudaMemcpy(&noNeededEntries, noNeededEntries_device, sizeof(int), cudaMemcpyDeviceToHost));
@@ -216,7 +216,7 @@ template<class TVoxel>
 void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CleanLocalMemory(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState)
 {
 	ITMHashEntry *hashTable = scene->index.GetEntries();
-	uchar *entriesVisibleType = ((ITMRenderState_VH*)renderState)->GetEntriesVisibleType();
+	HashBlockVisibility* blockVisibilityTypes = scene->index.GetBlockVisibilityTypes();
 
 	TVoxel *localVBA = scene->localVBA.GetVoxelBlocks();
 	int *voxelAllocationList = scene->localVBA.GetAllocationList();
@@ -230,7 +230,7 @@ void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::CleanLocalMemory(ITMVoxe
 
 		ORcudaSafeCall(cudaMemset(noNeededEntries_device, 0, sizeof(int)));
 
-		buildListToClean_device << <gridSize, blockSize >> >(entriesToClean_device, noNeededEntries_device, hashTable, entriesVisibleType, scene->index.hashEntryCount);
+		buildListToClean_device << <gridSize, blockSize >> >(entriesToClean_device, noNeededEntries_device, hashTable, blockVisibilityTypes, scene->index.hashEntryCount);
 
 		ORcudaSafeCall(cudaMemcpy(&noNeededEntries, noNeededEntries_device, sizeof(int), cudaMemcpyDeviceToHost));
 	}
@@ -285,10 +285,11 @@ namespace
 	}
 
 	__global__ void buildListToSwapOut_device(int *neededEntryIDs, int *noNeededEntries, ITMHashSwapState *swapStates,
-		ITMHashEntry *hashTable, uchar *entriesVisibleType, int noTotalEntries)
+	                                          ITMHashEntry *hashTable, HashBlockVisibility* blockVisibilityTypes,
+	                                          int hashEntryCount)
 	{
 		int targetIdx = threadIdx.x + blockIdx.x * blockDim.x;
-		if (targetIdx > noTotalEntries - 1) return;
+		if (targetIdx > hashEntryCount - 1) return;
 
 		__shared__ bool shouldPrefix;
 
@@ -298,7 +299,7 @@ namespace
 		ITMHashSwapState &swapState = swapStates[targetIdx];
 
 		bool isNeededId = (swapState.state == 2 &&
-			hashTable[targetIdx].ptr >= 0 && entriesVisibleType[targetIdx] == 0);
+			hashTable[targetIdx].ptr >= 0 && blockVisibilityTypes[targetIdx] == INVISIBLE);
 
 		if (isNeededId) shouldPrefix = true;
 		__syncthreads();
@@ -331,7 +332,7 @@ namespace
 		}
 	}
 
-	__global__ void buildListToClean_device(int *neededEntryIDs, int *noNeededEntries, ITMHashEntry *hashTable, uchar *entriesVisibleType, int noTotalEntries)
+	__global__ void buildListToClean_device(int *neededEntryIDs, int *noNeededEntries, ITMHashEntry *hashTable, HashBlockVisibility* blockVisibilityTypes, int noTotalEntries)
 	{
 		int targetIdx = threadIdx.x + blockIdx.x * blockDim.x;
 		if (targetIdx > noTotalEntries - 1) return;
@@ -341,7 +342,7 @@ namespace
 		shouldPrefix = false;
 		__syncthreads();
 
-		bool isNeededId = hashTable[targetIdx].ptr >= 0 && entriesVisibleType[targetIdx] == 0;
+		bool isNeededId = hashTable[targetIdx].ptr >= 0 && blockVisibilityTypes[targetIdx] == 0;
 
 		if (isNeededId) shouldPrefix = true;
 		__syncthreads();

@@ -40,10 +40,8 @@ public:
 private:
 	ORUtils::MemoryBlock<IndexData>* indexData;
 
-	MemoryDeviceType memoryType;
-
-
 public:
+	const MemoryDeviceType memoryType;
 
 	ITMPlainVoxelArray(ITMPlainVoxelArray::InitializationParameters info, MemoryDeviceType memoryType) :
 			memoryType(memoryType),

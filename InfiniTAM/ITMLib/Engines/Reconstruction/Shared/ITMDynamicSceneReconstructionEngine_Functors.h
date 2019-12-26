@@ -20,11 +20,15 @@
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Utils/Configuration.h"
 #include "../../../../ORUtils/PlatformIndependentAtomics.h"
+#include "../../Common/ITMWarpEnums.h"
+#include "../../Common/ITMCommonFunctors.h"
+#include "../../VolumeEditAndCopy/Shared/VolumeEditAndCopyEngine_Shared.h"
 
 
 template<typename TVoxel>
 struct FieldClearFunctor {
 	FieldClearFunctor() {}
+
 	_CPU_AND_GPU_CODE_
 	void operator()(TVoxel& voxel) {
 		voxel.flags = ITMLib::VOXEL_UNKNOWN;
@@ -33,20 +37,22 @@ struct FieldClearFunctor {
 };
 
 
-template <typename TVoxel>
-struct TSDFFusionFunctor{
+template<typename TVoxel>
+struct TSDFFusionFunctor {
 	TSDFFusionFunctor(int maximumWeight) :
-			maximumWeight(maximumWeight){}
+			maximumWeight(maximumWeight) {}
+
 	_CPU_AND_GPU_CODE_
-	void operator()(TVoxel& liveVoxel, TVoxel& canonicalVoxel){
+	void operator()(TVoxel& liveVoxel, TVoxel& canonicalVoxel) {
 		fuseLiveVoxelIntoCanonical(liveVoxel, maximumWeight, canonicalVoxel);
 	}
+
 private:
 	const int maximumWeight;
 };
 
 
-template<typename TVoxel, typename TWarp, typename TIndex, typename TLookupPositionFunctor, MemoryDeviceType deviceType>
+template<typename TVoxel, typename TWarp, typename TIndex, ITMLib::WarpType TWarpType, MemoryDeviceType TMemoryDeviceType>
 struct TrilinearInterpolationFunctor {
 	/**
 	 * \brief Initialize to transfer data from source sdf scene to a target sdf scene using the warps in the warp source scene
@@ -68,16 +74,17 @@ struct TrilinearInterpolationFunctor {
 			warpSourceCache(),
 
 			hasFocusCoordinates(ITMLib::Configuration::get().telemetry_settings.focus_coordinates_specified),
-			focusCoordinates(ITMLib::Configuration::get().telemetry_settings.focus_coordinates)
-	{}
+			focusCoordinates(ITMLib::Configuration::get().telemetry_settings.focus_coordinates) {
+	}
+
 
 	_DEVICE_WHEN_AVAILABLE_
 	void operator()(TVoxel& destinationVoxel, TWarp& warp,
 	                Vector3i warpAndDestinationVoxelPosition) {
+
 		bool printResult = hasFocusCoordinates && warpAndDestinationVoxelPosition == focusCoordinates;
 
-
-		interpolateTSDFVolume<TVoxel, TWarp, TIndex, TLookupPositionFunctor>(
+		interpolateTSDFVolume<TVoxel, TWarp, TIndex, TWarpType>(
 				sdfSourceVoxels, sdfSourceIndexData, sdfSourceCache, warp, destinationVoxel,
 				warpAndDestinationVoxelPosition, printResult);
 	}
@@ -95,14 +102,16 @@ private:
 	typename TIndex::IndexData* warpSourceHashEntries;
 	typename TIndex::IndexCache warpSourceCache;
 
+
 	//_DEBUG
 	bool hasFocusCoordinates;
 	Vector3i focusCoordinates;
 };
 
 template<typename TVoxel>
-struct CopySceneFunctor{
+struct CopySceneFunctor {
 	CopySceneFunctor() = default;
+
 	static void run(TVoxel& sourceVoxel, TVoxel& destinationVoxel, Vector3i voxelPosition) {
 		destinationVoxel.sdf = sourceVoxel.sdf;
 		destinationVoxel.flags = sourceVoxel.flags;

@@ -46,9 +46,24 @@ bool contentAlmostEqual_CPU<ITMVoxel, ITMPlainVoxelArray, ITMVoxelBlockHash, flo
 		float tolerance);
 
 template
+bool contentAlmostEqual_CPU_Verbose<ITMVoxel, ITMPlainVoxelArray, ITMVoxelBlockHash, float>(
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
+		float tolerance);
+
+template
 bool contentAlmostEqual_CPU<ITMVoxel, ITMVoxelBlockHash, ITMPlainVoxelArray, float>(
 		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* b,
 		float tolerance);
+
+template
+bool contentForFlagsAlmostEqual_CPU<ITMVoxel, ITMPlainVoxelArray, ITMVoxelBlockHash, float>(
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
+		VoxelFlags flags, float tolerance);
+
+template
+bool contentForFlagsAlmostEqual_CPU_Verbose<ITMVoxel, ITMPlainVoxelArray, ITMVoxelBlockHash, float>(
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
+		VoxelFlags flags, float tolerance);
 
 
 template
@@ -57,7 +72,17 @@ bool allocatedContentAlmostEqual_CPU<ITMVoxel, ITMPlainVoxelArray, ITMPlainVoxel
 		float tolerance);
 
 template
+bool allocatedContentAlmostEqual_CPU_Verbose<ITMVoxel, ITMPlainVoxelArray, ITMPlainVoxelArray, float>(
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* b,
+		float tolerance);
+
+template
 bool allocatedContentAlmostEqual_CPU<ITMVoxel, ITMPlainVoxelArray, ITMVoxelBlockHash, float>(
+		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
+		float tolerance);
+
+template
+bool allocatedContentAlmostEqual_CPU_Verbose<ITMVoxel, ITMPlainVoxelArray, ITMVoxelBlockHash, float>(
 		ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
 		float tolerance);
 
@@ -85,6 +110,11 @@ bool contentAlmostEqual_CPU<ITMWarp, ITMVoxelBlockHash, ITMVoxelBlockHash, float
 		float tolerance);
 
 template
+bool contentAlmostEqual_CPU_Verbose<ITMWarp, ITMVoxelBlockHash, ITMVoxelBlockHash, float>(
+		ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* b,
+		float tolerance);
+
+template
 bool contentAlmostEqual_CPU<ITMWarp, ITMPlainVoxelArray, ITMVoxelBlockHash, float>(
 		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* b,
 		float tolerance);
@@ -96,6 +126,11 @@ bool contentAlmostEqual_CPU<ITMWarp, ITMVoxelBlockHash, ITMPlainVoxelArray, floa
 
 template
 bool allocatedContentAlmostEqual_CPU<ITMWarp, ITMPlainVoxelArray, ITMVoxelBlockHash, float>(
+		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* b,
+		float tolerance);
+
+template
+bool allocatedContentAlmostEqual_CPU_Verbose<ITMWarp, ITMPlainVoxelArray, ITMVoxelBlockHash, float>(
 		ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* b,
 		float tolerance);
 

@@ -6,7 +6,7 @@
 
 #include "../../Objects/Scene/ITMLocalMap.h"
 #include "../../Core/ITMDenseMapper.h"
-#include "../../Engines/Visualisation/Interface/ITMVisualisationEngine.h"
+#include "../../Engines/Visualization/Interface/ITMVisualisationEngine.h"
 
 namespace ITMLib
 {

@@ -233,8 +233,8 @@ void ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>::MarkWarpedSceneImageAroun
 		ITMVoxelVolume<TVoxel, TIndex>* scene, ITMVoxelVolume<TWarp, TIndex>* warpField, cv::Mat& imageToMarkOn,
 		Vector3i positionOfVoxelToMark) {
 	bool vmIndex;
-	TVoxel voxel = ITMSceneManipulationEngine_CPU<TVoxel, TIndex>::Inst().ReadVoxel(scene, positionOfVoxelToMark);
-	TWarp warp = ITMSceneManipulationEngine_CPU<TWarp, TIndex>::Inst().ReadVoxel(warpField, positionOfVoxelToMark);
+	TVoxel voxel = VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ReadVoxel(scene, positionOfVoxelToMark);
+	TWarp warp = VolumeEditAndCopyEngine_CPU<TWarp, TIndex>::Inst().ReadVoxel(warpField, positionOfVoxelToMark);
 
 	Vector3f projectedPosition = positionOfVoxelToMark.toFloat() + warp.flow_warp;
 	Vector3i projectedPositionFloored = projectedPosition.toIntFloor();
@@ -372,7 +372,7 @@ ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>::RenderSceneSlices(ITMVoxelVolu
                                                                     const std::string& outputFolder,
                                                                     bool verbose) {
 
-	Vector6i bounds = ITMSceneStatisticsCalculator_CPU<TVoxel, TIndex>::Instance().ComputeVoxelBounds(scene);
+	Vector6i bounds = ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CPU>::Instance().ComputeVoxelBounds(scene);
 	Vector3i minPoint(bounds.min_x, bounds.min_y, bounds.min_z);
 
 	int imageSizeX, imageSizeY, imageSizeZ;

@@ -20,18 +20,13 @@
 namespace ITMLib{
 template<typename TVoxel, MemoryDeviceType TMemoryDeviceType, typename TDerivedClass>
 class ITMIndexingEngine_VoxelBlockHash:
-		public ITMIndexingEngineInterface<TVoxel> {
+		public ITMIndexingEngineInterface<TVoxel, ITMVoxelBlockHash> {
 
 public:
-	virtual void AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
-	                                           const HashEntryState* hashEntryStates_device,
-	                                           Vector3s* blockCoordinates_device) = 0;
-
-	virtual void AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
-	                                                         const HashEntryState* hashEntryStates_device,
-	                                                         Vector3s* blockCoordinates_device,
-	                                                         uchar* hashBlockVisibilityTypes_device) = 0;
+	virtual void AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume) = 0;
+	virtual void AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume) = 0;
 	virtual ITMHashEntry FindHashEntry(const ITMVoxelBlockHash& index, const Vector3s& coordinates) = 0;
+	virtual bool AllocateHashBlockAt(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, Vector3s at, int& hashCode) = 0;
 
 /**
  * \brief method which looks at voxel grid with warps and an SDF voxel grid and allocates all hash blocks in the

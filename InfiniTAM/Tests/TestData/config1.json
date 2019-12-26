@@ -5,7 +5,7 @@
         "voxel_size_meters": 0.00499999989,
         "view_frustum_near_clipping_distance": 0.119999997,
         "view_frustum_far_clipping_distance": 4.11999989,
-        "stop_integration_at_max_weight": "true"
+        "stop_integration_at_max_weight": true
     },
     "surfel_scene_parameters": {
         "surfel_delta_radius": 0.400000006,
@@ -20,8 +20,8 @@
         "tracking_surfel_min_confidence": 4.5,
         "unstable_surfel_period": 21,
         "unstable_surfel_z_offset": 300,
-        "disable_gaussian_sample_confidence": "true",
-        "disable_surfel_merging": "true"
+        "disable_gaussian_sample_confidence": true,
+        "disable_surfel_merging": true
     },
     "slavcheva": {
         "preset": "sobolev",
@@ -34,11 +34,11 @@
             "level_set_epsilon": "9.99999997e-07"
         },
         "switches": {
-            "disable_data_term": "true",
-            "enable_level_set_term": "true",
-            "disable_smoothing_term": "true",
-            "enable_killing_term": "true",
-            "disable_gradient_smoothing": "true"
+            "disable_data_term": true,
+            "enable_level_set_term": true,
+            "disable_smoothing_term": true,
+            "enable_killing_term": true,
+            "disable_gradient_smoothing": true
         }
     },
     "telemetry_settings": {
@@ -49,19 +49,20 @@
             0
         ]
     },
-    "skip_points": "true",
-    "disable_meshing": "true",
+    "skip_points": true,
+    "disable_meshing": true,
     "device": "cpu",
-    "use_approximate_raycast": "true",
-    "use_threshold_filter": "true",
-    "use_bilateral_filter": "true",
+    "use_approximate_raycast": true,
+    "use_threshold_filter": true,
+    "use_bilateral_filter": true,
     "failure_mode": "relocalize",
     "swapping": "enabled",
     "mode": "basic",
     "index": "array",
-    "tracker": "type=rgb,levels=rrbb",
     "surface_tracking": {
+        "functor_type": "slavcheva_optimized",
         "max_iterations": 300,
         "vector_update_threshold": "7.00000019e-05"
-    }
+    },
+    "tracker": "type=rgb,levels=rrbb"
 }

@@ -17,6 +17,8 @@ void ITMViewBuilder_CPU::UpdateView(ITMView** view_ptr, ITMUChar4Image* rgbImage
 	if (*view_ptr == NULL)
 	{
 		*view_ptr = new ITMView(calib, rgbImage->noDims, rawDepthImage->noDims, false);
+		//TODO: This is very bad coding practice, assumes that there's ever only one ViewBuilder updating a single view... \
+		// Most likely, these "shortImage" and "floatImage" should be a part of ITMView itself, while this class should have no state but parameters
 		if (this->shortImage != NULL) delete this->shortImage;
 		this->shortImage = new ITMShortImage(rawDepthImage->noDims, true, false);
 		if (this->floatImage != NULL) delete this->floatImage;
