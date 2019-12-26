@@ -30,6 +30,9 @@ template void ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash,MEMORYDEVICE_CPU>::Al
 template void ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolume(
 		ITMLib::ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* targetVolume,
 		ITMLib::ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* sourceVolume);
+template void ITMIndexingEngine<ITMWarp,ITMVoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolume(
+		ITMLib::ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* targetVolume,
+		ITMLib::ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* sourceVolume);
 template void ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolumeExpanded(
 		ITMLib::ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* targetVolume,
 		ITMLib::ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* sourceVolume);

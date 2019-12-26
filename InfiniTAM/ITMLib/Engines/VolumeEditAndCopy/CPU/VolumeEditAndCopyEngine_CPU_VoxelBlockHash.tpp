@@ -244,13 +244,13 @@ bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 
 template<typename TVoxel>
 bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
+		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* target, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
 		const Vector3i& offset) {
 
-	assert(destination->index.hashEntryCount == source->index.hashEntryCount);
+	assert(target->index.hashEntryCount == source->index.hashEntryCount);
 
 	//reset destination scene
-	VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(destination);
+	VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(target);
 
 	const int hashEntryCount = source->index.hashEntryCount;
 
@@ -263,36 +263,13 @@ bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 	TVoxel* sourceVoxels = source->localVBA.GetVoxelBlocks();
 	const ITMHashEntry* sourceHashTable = source->index.GetEntries();
 
-	ITMHashEntry* destinationHashTable = destination->index.GetEntries();
-	TVoxel* destinationVoxels = destination->localVBA.GetVoxelBlocks();
+	ITMHashEntry* destinationHashTable = target->index.GetEntries();
+	TVoxel* destinationVoxels = target->localVBA.GetVoxelBlocks();
 
 	bool voxelsWereCopied = false;
 
 	if (offset == Vector3i(0)) {
-		// traverse source hash blocks, see which ones need to be allocated in destination
-		bool collisionDetected;
-		do {
-			collisionDetected = false;
-			//reset target allocation states
-			memset(hashEntryStates_device, ITMLib::NEEDS_NO_CHANGE,
-			       static_cast<size_t>(hashEntryCount));
-#ifdef WITH_OPENMP
-#pragma omp parallel for default(none)
-#endif
-			for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
-
-				const ITMHashEntry& currentSourceHashEntry = sourceHashTable[sourceHash];
-				if (currentSourceHashEntry.ptr < 0) continue;
-				int destinationHash = HashCodeFromBlockPosition(currentSourceHashEntry.pos);
-
-				MarkAsNeedingAllocationIfNotFound(hashEntryStates_device, blockCoordinates_device, destinationHash,
-				                                  currentSourceHashEntry.pos, destinationHashTable, collisionDetected);
-			}
-
-
-			ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance().
-					AllocateHashEntriesUsingLists(destination);
-		} while (collisionDetected);
+		ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance().AllocateUsingOtherVolume(target, source);
 #ifdef WITH_OPENMP
 #pragma omp parallel for default(none)
 #endif
@@ -333,7 +310,7 @@ bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 						locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						TVoxel sourceVoxel = localSourceVoxelBlock[locId];
 						VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::
-						SetVoxel(destination, destinationPoint, sourceVoxel);
+						SetVoxel(target, destinationPoint, sourceVoxel);
 						voxelsWereCopied = true;
 					}
 				}

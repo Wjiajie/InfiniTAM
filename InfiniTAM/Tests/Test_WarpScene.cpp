@@ -44,27 +44,29 @@ using namespace ITMLib;
 typedef ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray> RecoEngine_CPU_PVA;
 typedef ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMVoxelBlockHash> RecoEngine_CPU_VBH;
 
-BOOST_AUTO_TEST_CASE(Test_WarpScene_CPU_PVA) {
+//#define SAVE_TEST_DATA
+BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_PVA, Frame16And17Fixture) {
 	const Configuration& settings = Configuration::get();
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warps;
 	loadVolume(&warps, "TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_complete_",
-	           MEMORYDEVICE_CPU);
+	           MEMORYDEVICE_CPU, InitParams<ITMPlainVoxelArray>());
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* live_volume;
-	loadVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_PVA/live",
-	           MEMORYDEVICE_CPU);
+	loadVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_PVA/snoopy_partial_frame_17_",
+	           MEMORYDEVICE_CPU, InitParams<ITMPlainVoxelArray>());
 	auto warped_live_volume = new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(
-			&settings.scene_parameters, false, MEMORYDEVICE_CPU,
-			{live_volume->index.GetVolumeSize(), live_volume->index.GetVolumeOffset()});
-	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(warped_live_volume);
+			&settings.scene_parameters, false, MEMORYDEVICE_CPU, InitParams<ITMPlainVoxelArray>());
+	warped_live_volume->Reset();
 
 	RecoEngine_CPU_PVA recoEngine;
 
 	recoEngine.WarpScene_FlowWarps(warps, live_volume, warped_live_volume);
-	//warped_live_volume->SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warped_live_");
+#ifdef SAVE_TEST_DATA
+	warped_live_volume->SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warped_live_");
+#endif
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* warped_live_volume_gt;
 	loadVolume(&warped_live_volume_gt, "TestData/snoopy_result_fr16-17_partial_PVA/warped_live_",
-	           MEMORYDEVICE_CPU);
+	           MEMORYDEVICE_CPU, InitParams<ITMPlainVoxelArray>());
 
 	float absoluteTolerance = 1e-7;
 	BOOST_REQUIRE(!contentAlmostEqual_CPU(warped_live_volume, live_volume, absoluteTolerance));
@@ -75,27 +77,28 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CPU_PVA) {
 	delete warped_live_volume;
 }
 
-BOOST_AUTO_TEST_CASE(Test_WarpScene_CPU_VBH) {
+BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_VBH, Frame16And17Fixture) {
 	const Configuration& settings = Configuration::get();
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps;
 	loadVolume(&warps, "TestData/snoopy_result_fr16-17_partial_VBH/warp_field_0_complete_",
-	           MEMORYDEVICE_CPU);
+	           MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* live_volume;
-	loadVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_VBH/live",
-	           MEMORYDEVICE_CPU);
+	loadVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_17_",
+	           MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
 	auto warped_live_volume = new ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>(
-			&settings.scene_parameters, false, MEMORYDEVICE_CPU,
-			{live_volume->index.GetAllocatedBlockCount(), live_volume->index.GetExcessListSize()});
-	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(warped_live_volume);
+			&settings.scene_parameters, false, MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
+	warped_live_volume->Reset();
 
 	RecoEngine_CPU_VBH recoEngine;
 
 	recoEngine.WarpScene_FlowWarps(warps, live_volume, warped_live_volume);
-	//warped_live_volume->SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warped_live_");
+#ifdef SAVE_TEST_DATA
+	warped_live_volume->SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warped_live_");
+#endif
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* warped_live_volume_gt;
 	loadVolume(&warped_live_volume_gt, "TestData/snoopy_result_fr16-17_partial_VBH/warped_live_",
-	           MEMORYDEVICE_CPU);
+	           MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
 
 
 	float absoluteTolerance = 1e-7;
@@ -252,16 +255,15 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_VBH_to_PVA, Frame16And17Fixture) {
 	delete target_VBH;
 }
 
-BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_PVA) {
+BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_PVA, Frame16And17Fixture) {
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warps;
 	loadVolume(&warps, "TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_complete_",
-	           MEMORYDEVICE_CUDA);
+	           MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* live_volume;
-	loadVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_PVA/live",
-	           MEMORYDEVICE_CUDA);
+	loadVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_PVA/snoopy_partial_frame_17_",
+	           MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
 	auto warped_live_volume = new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(
-			&Configuration::get().scene_parameters, false, MEMORYDEVICE_CUDA,
-			{live_volume->index.GetVolumeSize(), live_volume->index.GetVolumeOffset()});
+			&Configuration::get().scene_parameters, false, MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
 	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(warped_live_volume);
 
 	RecoEngine_CUDA_PVA recoEngine;
@@ -271,9 +273,9 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_PVA) {
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* warped_live_volume_gt;
 	loadVolume(&warped_live_volume_gt, "TestData/snoopy_result_fr16-17_partial_PVA/warped_live_",
-	           MEMORYDEVICE_CUDA);
+	           MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
 
-	float absoluteTolerance = 1e-7;
+	float absoluteTolerance = 1e-5;
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(warped_live_volume, warped_live_volume_gt, absoluteTolerance));
 
 	delete warps;
@@ -281,17 +283,16 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_PVA) {
 	delete warped_live_volume;
 }
 
-BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_VBH) {
+BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_VBH, Frame16And17Fixture) {
 
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps;
 	loadVolume(&warps, "TestData/snoopy_result_fr16-17_partial_VBH/warp_field_0_complete_",
-	           MEMORYDEVICE_CUDA);
+	           MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* live_volume;
-	loadVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_VBH/live",
-	           MEMORYDEVICE_CUDA);
+	loadVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_17_",
+	           MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
 	auto warped_live_volume = new ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>(
-			&Configuration::get().scene_parameters, false, MEMORYDEVICE_CUDA,
-			{live_volume->index.GetAllocatedBlockCount(), live_volume->index.GetExcessListSize()});
+			&Configuration::get().scene_parameters, false, MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(warped_live_volume);
 
 	RecoEngine_CUDA_VBH recoEngine;
@@ -301,9 +302,9 @@ BOOST_AUTO_TEST_CASE(Test_WarpScene_CUDA_VBH) {
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* warped_live_volume_gt;
 	loadVolume(&warped_live_volume_gt, "TestData/snoopy_result_fr16-17_partial_VBH/warped_live_",
-	           MEMORYDEVICE_CUDA);
+	           MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
 
-	float absoluteTolerance = 1e-7;
+	float absoluteTolerance = 1e-5;
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(warped_live_volume, warped_live_volume_gt, absoluteTolerance));
 
 	delete warps;

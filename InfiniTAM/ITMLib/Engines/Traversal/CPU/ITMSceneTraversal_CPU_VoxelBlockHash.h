@@ -508,7 +508,7 @@ public:
 					                                                         (VOXEL_BLOCK_SIZE3)]);
 					// if the secondary block is unaltered anyway, so no need to match and we're good, so return "true"
 					if(verbose){
-						return !isVoxelBlockAltered(secondaryVoxelBlock, true, "Second hash voxel unmatched in first hash: ", secondaryHashEntry.pos, secondaryHashCode);
+						return !isVoxelBlockAltered(secondaryVoxelBlock, true, "Second-hash voxel unmatched in first hash: ", secondaryHashEntry.pos, secondaryHashCode);
 					}else{
 						return !isVoxelBlockAltered(secondaryVoxelBlock);
 					}
@@ -672,7 +672,7 @@ public:
 					                                                         (VOXEL_BLOCK_SIZE3)]);
 					// if the secondary block is unaltered anyway, so no need to match and we're good, so return "true"
 					if(verbose){
-						return !isVoxelBlockAltered(secondaryVoxelBlock, true, "Second hash voxel unmatched in first hash: ", secondaryHashEntry.pos, secondaryHashCode);
+						return !isVoxelBlockAltered(secondaryVoxelBlock, true, "Second-hash voxel unmatched in first hash: ", secondaryHashEntry.pos, secondaryHashCode);
 					}else{
 						return !isVoxelBlockAltered(secondaryVoxelBlock);
 					}

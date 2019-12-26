@@ -138,17 +138,27 @@ template void loadVolume<ITMWarp, ITMVoxelBlockHash>(ITMVoxelVolume<ITMWarp, ITM
 void
 updateView(ITMView** view, const std::string& depth_path, const std::string& color_path, const std::string& mask_path,
            const std::string& calibration_path, MemoryDeviceType memoryDevice) {
-	static std::unique_ptr<ITMViewBuilder> viewBuilder_CPU = nullptr;
-	static std::unique_ptr<ITMViewBuilder> viewBuilder_CUDA = nullptr;
+//	static std::unique_ptr<ITMViewBuilder> viewBuilder_CPU = nullptr;
+//	static std::unique_ptr<ITMViewBuilder> viewBuilder_CUDA = nullptr;
+	static ITMViewBuilder* viewBuilder_CPU = nullptr;
+	static ITMViewBuilder* viewBuilder_CUDA = nullptr;
 	ITMViewBuilder* viewBuilderToUse;
 	switch(memoryDevice){
+//		case MEMORYDEVICE_CPU:
+//			if (viewBuilder_CPU == nullptr) viewBuilder_CPU.reset(ITMViewBuilderFactory::MakeViewBuilder(calibration_path, memoryDevice));
+//			viewBuilderToUse = viewBuilder_CPU.get();
+//			break;
+//		case MEMORYDEVICE_CUDA:
+//			if (viewBuilder_CUDA == nullptr) viewBuilder_CUDA.reset(ITMViewBuilderFactory::MakeViewBuilder(calibration_path, memoryDevice));
+//			viewBuilderToUse = viewBuilder_CUDA.get();
+//			break;
 		case MEMORYDEVICE_CPU:
-			if (viewBuilder_CPU == nullptr) viewBuilder_CPU.reset(ITMViewBuilderFactory::MakeViewBuilder(calibration_path, memoryDevice));
-			viewBuilderToUse = viewBuilder_CPU.get();
+			if (viewBuilder_CPU == nullptr) viewBuilder_CPU = ITMViewBuilderFactory::MakeViewBuilder(calibration_path, memoryDevice);
+			viewBuilderToUse = viewBuilder_CPU;
 			break;
 		case MEMORYDEVICE_CUDA:
-			if (viewBuilder_CUDA == nullptr) viewBuilder_CUDA.reset(ITMViewBuilderFactory::MakeViewBuilder(calibration_path, memoryDevice));
-			viewBuilderToUse = viewBuilder_CUDA.get();
+			if (viewBuilder_CUDA == nullptr) viewBuilder_CUDA = ITMViewBuilderFactory::MakeViewBuilder(calibration_path, memoryDevice);
+			viewBuilderToUse = viewBuilder_CUDA;
 			break;
 		default:
 			DIEWITHEXCEPTION_REPORTLOCATION("unsupported memory device type!");

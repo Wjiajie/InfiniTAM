@@ -23,5 +23,9 @@ using namespace ITMLib;
 
 struct Frame16And17Fixture {
 	template<typename TIndex>
+	static std::string partial_frame_16_path();
+	template<typename TIndex>
+	static std::string partial_frame_17_path(bool expanded_allocation = false);
+	template<typename TIndex>
 	static typename TIndex::InitializationParameters InitParams();
 };

@@ -56,7 +56,7 @@ public:
 	CopySceneSlice(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination,
 	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
 	               Vector6i bounds, const Vector3i& offset = Vector3i(0)) override;
-	bool CopyScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination,
+	bool CopyScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* target,
 	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
 	               const Vector3i& offset = Vector3i(0)) override;
 	virtual ~VolumeEditAndCopyEngine_CPU() = default;

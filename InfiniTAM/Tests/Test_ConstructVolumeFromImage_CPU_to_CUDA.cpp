@@ -26,7 +26,7 @@
 #include "../ITMLib/ITMLibDefines.h"
 #include "../ITMLib/Engines/Reconstruction/Interface/ITMDynamicSceneReconstructionEngine.h"
 #include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
-#include "../ITMLib/Engines/VolumeEditAndCopy/ITMSceneManipulationEngineFactory.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/VolumeEditAndCopyEngineFactory.h"
 #include "../ITMLib/Utils/Analytics/ITMAlmostEqual.h"
 #include "TestUtils.h"
 //(cpu)

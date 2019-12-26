@@ -38,7 +38,7 @@
 //local CPU
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
-#include "../ITMLib/Engines/VolumeEditAndCopy/ITMSceneManipulationEngineFactory.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/VolumeEditAndCopyEngineFactory.h"
 #include "../ITMLib/Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU.h"
 
 //local CUDA
@@ -93,12 +93,12 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, int iteration
 			for (int iteration = 0; iteration < iteration_limit; iteration++) {
 				std::cout << "Testing iteration " << iteration << std::endl;
 				warp_field_PVA.LoadFromDirectory(get_path_warps(prefix, iteration));
-				ITMSceneManipulationEngineFactory::Instance<ITMWarp, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(
+				VolumeEditAndCopyEngineFactory::Instance<ITMWarp, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(
 						&warp_field_VBH);
 				warp_field_VBH.LoadFromDirectory(get_path_warps(prefix, iteration));
 				BOOST_REQUIRE(allocatedContentAlmostEqual_Verbose(&warp_field_PVA, &warp_field_VBH,
 				                                                  absoluteTolerance, TMemoryDeviceType));
-				ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(
+				VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(
 						&volume_VBH);
 				volume_PVA.LoadFromDirectory(get_path_warped_live(prefix, iteration));
 				volume_VBH.LoadFromDirectory(get_path_warped_live(prefix, iteration));
@@ -109,14 +109,14 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, int iteration
 			break;
 		case TEST_FINAL_ITERATION_AND_FUSION: {
 			volume_PVA.LoadFromDirectory(get_path_warped_live(prefix, iteration_limit - 1));
-			ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(
+			VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(
 					&volume_VBH);
 			volume_VBH.LoadFromDirectory(get_path_warped_live(prefix, iteration_limit - 1));
 			BOOST_REQUIRE(
 					contentForFlagsAlmostEqual(&volume_PVA, &volume_VBH, VOXEL_NONTRUNCATED, absoluteTolerance,
 					                           TMemoryDeviceType));
 			volume_PVA.LoadFromDirectory(get_path_fused(prefix, iteration_limit - 1));
-			ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(
+			VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(
 					&volume_VBH);
 			volume_VBH.LoadFromDirectory(get_path_fused(prefix, iteration_limit - 1));
 			BOOST_REQUIRE(

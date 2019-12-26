@@ -22,7 +22,7 @@
 #pragma once
 namespace ITMLib {
 
-struct ITMSceneManipulationEngineFactory {
+struct VolumeEditAndCopyEngineFactory {
 	template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
 	static VolumeEditAndCopyEngineInterface<TVoxel, TIndex>& Instance() {
 		switch (TMemoryDeviceType) {

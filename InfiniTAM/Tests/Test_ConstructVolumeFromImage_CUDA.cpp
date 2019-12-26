@@ -13,7 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#define BOOST_TEST_MODULE SceneConstruction
+#define BOOST_TEST_MODULE VolumeFromImageConstruction_CUDA
 #ifndef WIN32
 #define BOOST_TEST_DYN_LINK
 #endif
@@ -36,7 +36,7 @@
 #include "../ITMLib/Engines/SceneFileIO/ITMSceneFileIOEngine.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
 #include "TestUtils.h"
-#include "../ITMLib/Engines/VolumeEditAndCopy/ITMSceneManipulationEngineFactory.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/VolumeEditAndCopyEngineFactory.h"
 
 using namespace ITMLib;
 
@@ -86,11 +86,11 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CUDA, Frame16And17Fixture)
 	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CUDA,
 	                        InitParams<ITMVoxelBlockHash>());
 
-	Vector3i voxelPosition(-24, -2, 87);
-	ITMVoxel voxelPVA = ManipulationEngine_CUDA_PVA_Voxel::Inst().ReadVoxel(volume_PVA_17, voxelPosition);
-	voxelPVA.print_self();
-	ITMVoxel voxelVBH = ManipulationEngine_CUDA_VBH_Voxel::Inst().ReadVoxel(volume_VBH_17, voxelPosition);
-	voxelVBH.print_self();
+//	Vector3i voxelPosition(-24, -2, 87);
+//	ITMVoxel voxelPVA = ManipulationEngine_CUDA_PVA_Voxel::Inst().ReadVoxel(volume_PVA_17, voxelPosition);
+//	voxelPVA.print_self();
+//	ITMVoxel voxelVBH = ManipulationEngine_CUDA_VBH_Voxel::Inst().ReadVoxel(volume_VBH_17, voxelPosition);
+//	voxelVBH.print_self();
 
 	float absoluteTolerance = 1e-7;
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(volume_PVA_17, volume_VBH_17, absoluteTolerance));
@@ -101,7 +101,7 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CUDA, Frame16And17Fixture)
 	delete volume_PVA_17;
 }
 
-BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_Expnaded_CUDA, Frame16And17Fixture) {
+BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_Expanded_CUDA, Frame16And17Fixture) {
 
 	ITMView* view = nullptr;
 	updateView(&view, "TestData/snoopy_depth_000017.png",
@@ -110,16 +110,16 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_Expnaded_CUDA, Frame16And1
 
 	// *** construct volumes ***
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> volume_PVA_17(MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
-	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CUDA>().ResetScene(&volume_PVA_17);
+	volume_PVA_17.Reset();
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine_PVA =
 			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(MEMORYDEVICE_CUDA);
 	reconstructionEngine_PVA->GenerateTsdfVolumeFromView(&volume_PVA_17, view);
 
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17(MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
-	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>().ResetScene(&volume_VBH_17);
+	volume_VBH_17.Reset();
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17_depth_allocation(MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
-	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>().ResetScene(&volume_VBH_17_depth_allocation);
+	volume_VBH_17_depth_allocation.Reset();
 
 	ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash, MEMORYDEVICE_CUDA>& indexer =
 			ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance();

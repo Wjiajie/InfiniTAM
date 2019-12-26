@@ -27,7 +27,7 @@
 #include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Objects/Scene/ITMVoxelVolume.h"
 #include "../ITMLib/Engines/VolumeEditAndCopy/Interface/VolumeEditAndCopyEngineInterface.h"
-#include "../ITMLib/Engines/VolumeEditAndCopy/ITMSceneManipulationEngineFactory.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/VolumeEditAndCopyEngineFactory.h"
 #include "../ITMLib/Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
 #include "../ITMLib/SurfaceTrackers/Interface/SurfaceTracker.h"
 #include "../ITMLib/Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
@@ -151,6 +151,8 @@ void GenerateTestData() {
 	SlavchevaSurfaceTracker::Switches data_smoothed_switches(false, false, false, false, true);
 	std::string data_smoothed_filename = "warp_field_0_smoothed_";
 	std::string flow_warps_filename = "warp_field_0_data_flow_warps_";
+	SlavchevaSurfaceTracker::Switches warp_complete_switches(true, false, true, false, true);
+	std::string warp_complete_filename = "warp_field_0_complete_";
 
 	std::vector<std::tuple<std::string, SlavchevaSurfaceTracker::Switches>> configurationPairs = {
 			std::make_tuple(std::string("warp_field_1_tikhonov_"),
@@ -168,7 +170,7 @@ void GenerateTestData() {
 	                                           Configuration::get().swapping_mode ==
 	                                           Configuration::SWAPPINGMODE_ENABLED,
 	                                           TMemoryDeviceType, Frame16And17Fixture::InitParams<TIndex>());
-	ITMSceneManipulationEngineFactory::Instance<ITMWarp, TIndex, TMemoryDeviceType>().ResetScene(&warp_field);
+	warp_field.Reset();
 
 	SurfaceTracker<ITMVoxel, ITMWarp, TIndex, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC> dataOnlyMotionTracker(
 			data_only_switches);
@@ -180,7 +182,15 @@ void GenerateTestData() {
 	dataSmoothedMotionTracker.SmoothWarpGradient(canonical_volume, live_volume, &warp_field);
 	warp_field.SaveToDirectory(output_directory + data_smoothed_filename);
 
-	ITMSceneManipulationEngineFactory::Instance<ITMWarp, TIndex, TMemoryDeviceType>().ResetScene(&warp_field);
+	warp_field.Reset();
+	SurfaceTracker<ITMVoxel, ITMWarp, TIndex, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC> completeMotionTracker(
+			warp_complete_switches);
+	completeMotionTracker.CalculateWarpGradient(canonical_volume, live_volume, &warp_field);
+	completeMotionTracker.SmoothWarpGradient(canonical_volume, live_volume, &warp_field);
+	completeMotionTracker.UpdateWarps(canonical_volume, live_volume, &warp_field);
+	warp_field.SaveToDirectory(output_directory + warp_complete_filename);
+
+	warp_field.Reset();
 	warp_field.LoadFromDirectory(output_directory + data_only_filename);
 
 	dataOnlyMotionTracker.UpdateWarps(canonical_volume, live_volume, &warp_field);
@@ -188,7 +198,7 @@ void GenerateTestData() {
 
 
 	for (auto& pair : configurationPairs) {
-		ITMSceneManipulationEngineFactory::Instance<ITMWarp, TIndex, TMemoryDeviceType>().ResetScene(&warp_field);
+		VolumeEditAndCopyEngineFactory::Instance<ITMWarp, TIndex, TMemoryDeviceType>().ResetScene(&warp_field);
 		warp_field.LoadFromDirectory(output_directory + flow_warps_filename);
 		std::string filename = std::get<0>(pair);
 		SurfaceTracker<ITMVoxel, ITMWarp, TIndex, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC> tracker(

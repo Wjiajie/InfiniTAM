@@ -28,7 +28,7 @@
 #include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../ITMLib/Engines/ViewBuilding/Interface/ITMViewBuilder.h"
 #include "../ITMLib/Engines/ViewBuilding/ITMViewBuilderFactory.h"
-#include "../ITMLib/Engines/VolumeEditAndCopy/ITMSceneManipulationEngineFactory.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/VolumeEditAndCopyEngineFactory.h"
 #include "../ITMLib/Utils/Configuration.h"
 #include "../ITMLib/Utils/Analytics/ITMAlmostEqual.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.h"
@@ -127,16 +127,16 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_Expnaded_CPU, Frame16And17
 
 	// *** construct volumes ***
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> volume_PVA_17(MEMORYDEVICE_CPU, InitParams<ITMPlainVoxelArray>());
-	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CPU>().ResetScene(&volume_PVA_17);
+	VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CPU>().ResetScene(&volume_PVA_17);
 	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>* reconstructionEngine_PVA =
 			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(MEMORYDEVICE_CPU);
 	reconstructionEngine_PVA->GenerateTsdfVolumeFromView(&volume_PVA_17, view);
 
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17(MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
-	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>().ResetScene(&volume_VBH_17);
+	VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>().ResetScene(&volume_VBH_17);
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17_depth_allocation(MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
-	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>().ResetScene(&volume_VBH_17_depth_allocation);
+	VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>().ResetScene(&volume_VBH_17_depth_allocation);
 
 	ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash, MEMORYDEVICE_CPU>& indexer =
 	ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance();

@@ -148,7 +148,7 @@ set(ITMLIB_ENGINES_TRAVERSAL_CUDA_HEADERS
 
 #====================================== SCENE MANIPULATION ENGINES =====================================================
 set(ITMLIB_ENGINES_MANIPULATION_HEADERS
-	Engines/VolumeEditAndCopy/ITMSceneManipulationEngineFactory.h
+    Engines/VolumeEditAndCopy/VolumeEditAndCopyEngineFactory.h
 	)
 
 ##

@@ -36,7 +36,7 @@
 #include "../ITMLib/Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
 #include "../ITMLib/Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
 #include "CUDAAtomicTesting.h"
-#include "../ITMLib/Engines/VolumeEditAndCopy/ITMSceneManipulationEngineFactory.h"
+#include "../ITMLib/Engines/VolumeEditAndCopy/VolumeEditAndCopyEngineFactory.h"
 #include "TestUtils.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
 
@@ -151,13 +151,13 @@ void TestAllocateBasedOnVolumeExpanded_Generic() {
 	                                                    Configuration::SWAPPINGMODE_ENABLED,
 	                                                    TMemoryDeviceType,
 	                                                    Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
-	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(&volume1);
+	VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(&volume1);
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume2(&Configuration::get().scene_parameters,
 	                                                    Configuration::get().swapping_mode ==
 	                                                    Configuration::SWAPPINGMODE_ENABLED,
 	                                                    TMemoryDeviceType,
 	                                                    Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
-	ITMSceneManipulationEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(&volume2);
+	VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(&volume2);
 	ITMView* view = nullptr;
 	updateView(&view, "TestData/snoopy_depth_000017.png",
 	           "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
