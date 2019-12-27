@@ -506,8 +506,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::BeginProcessingFrameInStepByStepMo
 	if ((lastTrackerResult == ITMTrackingState::TRACKING_GOOD || !trackingInitialised) && (fusionActive) &&
 	    (relocalisationCount == 0)) {
 		canFuse = true;
-		denseMapper->BeginProcessingFrameInStepByStepMode(view, trackingState, warpField, liveScenes[0],
-		                                                  renderState_live);
+		denseMapper->BeginProcessingFrameInStepByStepMode(view, trackingState, warpField, liveScenes);
 	}
 }
 

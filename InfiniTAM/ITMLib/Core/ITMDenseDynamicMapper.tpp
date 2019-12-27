@@ -153,25 +153,14 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::InitializeProcessing(const ITMView* view,
                                                                         const ITMTrackingState* trackingState,
                                                                         ITMVoxelVolume<TWarp, TIndex>* warpField,
-                                                                        ITMVoxelVolume<TVoxel, TIndex>* liveScene) {
+                                                                        ITMVoxelVolume<TVoxel, TIndex>** liveScenePair) {
 
 
 	PrintOperationStatus("Generating raw live frame from view...");
 	bench::StartTimer("GenerateRawLiveAndCanonicalVolumes");
-	sceneReconstructor->GenerateTsdfVolumeFromView(liveScene, view, trackingState);
+	sceneReconstructor->GenerateTsdfVolumeFromViewExpanded(liveScenePair[0],liveScenePair[1], view, trackingState->pose_d->GetM());
 	bench::StopTimer("GenerateRawLiveAndCanonicalVolumes");
-
-
-//	PrintOperationStatus(
-//			"Initializing live frame SDF by mapping from raw "
-//			"live SDF to warped SDF based on previous-frame warp...");
-//	bench::StartTimer("TrackMotion_35_Initialize");
-	//sceneReconstructor->WarpScene(canonicalScene, liveScene, 0, 1);
-	//sceneReconstructor->UpdateWarpedScene(canonicalScene, liveScene, 0, 1);
-
 	sceneMotionTracker->ClearOutFlowWarp(warpField);
-//	bench::StopTimer("TrackMotion_35_Initialize");
-
 	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().InitializeFrameRecording();
 	maxVectorUpdate = std::numeric_limits<float>::infinity();
 };
@@ -207,7 +196,7 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessFrame(const ITMView* view, 
 	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Cannot track motion for full frame when in step-by-step mode");
 	}
-	InitializeProcessing(view, trackingState, warpField, liveScenePair[0]);
+	InitializeProcessing(view, trackingState, warpField, liveScenePair);
 	bench::StartTimer("TrackMotion");
 	ITMVoxelVolume<TVoxel, TIndex>* finalWarpedLiveScene = TrackFrameMotion(canonicalScene, liveScenePair, warpField);
 	bench::StopTimer("TrackMotion");
@@ -324,12 +313,12 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 void
 ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::BeginProcessingFrameInStepByStepMode(
 		const ITMView* view, const ITMTrackingState* trackingState, ITMVoxelVolume<TWarp, TIndex>* warpField,
-		ITMVoxelVolume<TVoxel, TIndex>* liveScene, ITMRenderState* renderState) {
+		ITMVoxelVolume<TVoxel, TIndex>** liveScenePair) {
 	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Already in step-by-step tracking mode, cannot restart.");
 	}
 	inStepByStepProcessingMode = true;
-	InitializeProcessing(view, trackingState, warpField, liveScene);
+	InitializeProcessing(view, trackingState, warpField, liveScenePair);
 	iteration = 0;
 }
 
