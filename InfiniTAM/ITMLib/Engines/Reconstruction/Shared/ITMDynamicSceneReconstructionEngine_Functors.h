@@ -107,13 +107,3 @@ private:
 	bool hasFocusCoordinates;
 	Vector3i focusCoordinates;
 };
-
-template<typename TVoxel>
-struct CopySceneFunctor {
-	CopySceneFunctor() = default;
-
-	static void run(TVoxel& sourceVoxel, TVoxel& destinationVoxel, Vector3i voxelPosition) {
-		destinationVoxel.sdf = sourceVoxel.sdf;
-		destinationVoxel.flags = sourceVoxel.flags;
-	}
-};
