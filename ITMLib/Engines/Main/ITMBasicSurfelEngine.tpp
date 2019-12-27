@@ -2,13 +2,13 @@
 
 #include "ITMBasicSurfelEngine.h"
 
-#include "../Engines/LowLevel/ITMLowLevelEngineFactory.h"
-#include "../Engines/ViewBuilding/ITMViewBuilderFactory.h"
-#include "../Engines/Visualization/ITMSurfelVisualizationEngineFactory.h"
-#include "../CameraTrackers/ITMCameraTrackerFactory.h"
+#include "../LowLevel/ITMLowLevelEngineFactory.h"
+#include "../ViewBuilding/ITMViewBuilderFactory.h"
+#include "../Visualization/ITMSurfelVisualizationEngineFactory.h"
+#include "../../CameraTrackers/ITMCameraTrackerFactory.h"
 
-#include "../../ORUtils/NVTimer.h"
-#include "../../ORUtils/FileUtils.h"
+#include "../../../ORUtils/NVTimer.h"
+#include "../../../ORUtils/FileUtils.h"
 
 //#define OUTPUT_TRAJECTORY_QUATERNIONS
 

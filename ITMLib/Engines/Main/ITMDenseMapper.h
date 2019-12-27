@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "../Engines/Reconstruction/Interface/ITMSceneReconstructionEngine.h"
-#include "../Engines/Swapping/Interface/ITMSwappingEngine.h"
-#include "../Utils/Configuration.h"
+#include "../Reconstruction/Interface/ITMSceneReconstructionEngine.h"
+#include "../Swapping/Interface/ITMSwappingEngine.h"
+#include "../../Utils/Configuration.h"
 
 namespace ITMLib
 {

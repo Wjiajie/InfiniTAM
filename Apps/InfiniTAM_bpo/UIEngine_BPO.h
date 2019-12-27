@@ -6,12 +6,13 @@
 #include "../../InputSource/ImageSourceEngine.h"
 #include "../../InputSource/IMUSourceEngine.h"
 #include "../../InputSource/FFMPEGWriter.h"
-#include "../../ITMLib/Core/ITMMainEngine.h"
+#include "../../ITMLib/Engines/Main/ITMMainEngine.h"
 #include "../../ITMLib/Objects/Tracking/ITMTrackingState.h"
 #include "../../ITMLib/Utils/Configuration.h"
 #include "../../ORUtils/FileUtils.h"
 #include "../../ORUtils/NVTimer.h"
 #include "../../ITMLib/Utils/FileIO/ITMDynamicFusionLogger.h"
+#include "ProgramOptions.h"
 
 //stdlib
 #include <vector>
@@ -44,7 +45,7 @@ private:
 
 	int autoIntervalFrameStart;
 	int autoIntervalFrameCount;
-	bool saveAfterAutoprocessing = false;
+	bool saveAfterInitialProcessing = false;
 	int startedProcessingFromFrameIx = 0;
 
 	InputSource::ImageSourceEngine* imageSource;
@@ -109,11 +110,10 @@ public:
 	ITMLib::ITMDynamicFusionLogger_Interface* logger;
 	ITMLib::Configuration::IndexingMethod indexingMethod;
 
-	void Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource, InputSource::IMUSourceEngine* imuSource,
-		                ITMLib::ITMMainEngine* mainEngine, const char* outFolder, MemoryDeviceType deviceType,
-		                int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult, bool startInStepByStep,
-		                bool saveAfterFirstNFrames, bool loadBeforeProcessing, ITMLib::ITMDynamicFusionLogger_Interface* logger,
-		                ITMLib::Configuration::IndexingMethod indexingMethod);
+	void Initialize(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource, InputSource::IMUSourceEngine* imuSource,
+	                ITMLib::ITMMainEngine* mainEngine, const char* outFolder, MemoryDeviceType deviceType,
+	                int frameIntervalLength, int skipFirstNFrames, const RunOptions& options, ITMLib::ITMDynamicFusionLogger_Interface* logger,
+	                ITMLib::Configuration::IndexingMethod indexingMethod);
 	void Shutdown();
 
 	void Run();

@@ -2,38 +2,35 @@
 
 #pragma once
 
-#include "ITMDenseMapper.h"
+#include "ITMDenseSurfelMapper.h"
 #include "ITMMainEngine.h"
 #include "ITMTrackingController.h"
-#include "../Engines/LowLevel/Interface/ITMLowLevelEngine.h"
-#include "../Engines/Meshing/Interface/ITMMeshingEngine.h"
-#include "../Engines/ViewBuilding/Interface/ITMViewBuilder.h"
-#include "../Engines/Visualization/Interface/ITMVisualisationEngine.h"
-#include "../Objects/Misc/ITMIMUCalibrator.h"
+#include "../LowLevel/Interface/ITMLowLevelEngine.h"
+#include "../ViewBuilding/Interface/ITMViewBuilder.h"
+#include "../Visualization/Interface/ITMSurfelVisualisationEngine.h"
+#include "../../Objects/Misc/ITMIMUCalibrator.h"
 
-#include "../../FernRelocLib/Relocaliser.h"
+#include "../../../FernRelocLib/Relocaliser.h"
 
 namespace ITMLib
 {
-	template <typename TVoxel, typename TIndex>
-	class ITMBasicEngine : public ITMMainEngine
+	template <typename TSurfel>
+	class ITMBasicSurfelEngine : public ITMMainEngine
 	{
 	private:
 		bool trackingActive, fusionActive, mainProcessingActive, trackingInitialised;
 		int framesProcessed, relocalisationCount;
 
 		ITMLowLevelEngine *lowLevelEngine;
-		ITMVisualisationEngine<TVoxel, TIndex> *visualisationEngine;
-
-		ITMMeshingEngine<TVoxel, TIndex> *meshingEngine;
+		ITMSurfelVisualisationEngine<TSurfel> *surfelVisualisationEngine;
 
 		ITMViewBuilder *viewBuilder;
-		ITMDenseMapper<TVoxel, TIndex> *denseMapper;
+		ITMDenseSurfelMapper<TSurfel> *denseSurfelMapper;
 		ITMTrackingController *trackingController;
 
-		ITMVoxelVolume<TVoxel, TIndex> *scene;
-		ITMRenderState *renderState_live;
-		ITMRenderState *renderState_freeview;
+		ITMSurfelScene<TSurfel> *surfelScene;
+		ITMSurfelRenderState *surfelRenderState_live;
+		ITMSurfelRenderState *surfelRenderState_freeview;
 
 		ITMCameraTracker *tracker;
 		ITMIMUCalibrator *imuCalibrator;
@@ -47,12 +44,11 @@ namespace ITMLib
 		/// Pointer to the current camera pose and additional tracking information
 		ITMTrackingState *trackingState;
 
+		static typename ITMSurfelVisualisationEngine<TSurfel>::RenderImageType ToSurfelImageType(GetImageType getImageType);
+
 	public:
 		ITMView* GetView(void) { return view; }
 		ITMTrackingState* GetTrackingState(void) { return trackingState; }
-
-		/// Gives access to the internal world representation
-		ITMVoxelVolume<TVoxel, TIndex>* GetScene(void) { return scene; }
 
 		ITMTrackingState::TrackingResult ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement = NULL);
 
@@ -87,7 +83,7 @@ namespace ITMLib
 			Omitting a separate image size for the depth images
 			will assume same resolution as for the RGB images.
 		*/
-		ITMBasicEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb, Vector2i imgSize_d);
-		~ITMBasicEngine();
+		ITMBasicSurfelEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb, Vector2i imgSize_d);
+		~ITMBasicSurfelEngine();
 	};
 }

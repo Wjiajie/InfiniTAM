@@ -13,12 +13,12 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include "../ITMLibDefines.h"
+#include "../../ITMLibDefines.h"
 #include "ITMDynamicEngine.tpp"
 
 namespace ITMLib {
 template
-class ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>;
+class ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;
 } // namespace ITMLib
 
 

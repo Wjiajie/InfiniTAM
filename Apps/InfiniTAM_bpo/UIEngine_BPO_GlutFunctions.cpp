@@ -14,11 +14,9 @@
 //  limitations under the License.
 //  ================================================================
 #include "UIEngine_BPO.h"
-#include "../../ITMLib/ITMLibDefines.h"
 #include "../../ITMLib/Utils/Analytics/ITMBenchmarkUtils.h"
-#include "../../ITMLib/Core/ITMMultiEngine.h"
-#include "../../ITMLib/Core/ITMBasicEngine.h"
-#include "../../ITMLib/Core/ITMBasicSurfelEngine.h"
+#include "../../ITMLib/Engines/Main/ITMMultiEngine.h"
+#include "../../ITMLib/Engines/Main/ITMBasicEngine.h"
 #include "../../ITMLib/Utils/FileIO/ITMDynamicFusionLogger.h"
 
 
@@ -228,7 +226,7 @@ void UIEngine_BPO::GlutIdleFunction() {
 			uiEngine.needsRefresh = true;
 			if ((uiEngine.processedFrameNo - uiEngine.autoIntervalFrameStart) >= uiEngine.autoIntervalFrameCount) {
 				uiEngine.mainLoopAction = PROCESS_PAUSED;
-				if (uiEngine.saveAfterAutoprocessing) {
+				if (uiEngine.saveAfterInitialProcessing) {
 					uiEngine.mainEngine->SaveToFile();
 				}
 				bench::PrintAllCumulativeTimes();

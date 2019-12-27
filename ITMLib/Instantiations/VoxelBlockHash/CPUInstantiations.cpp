@@ -3,11 +3,11 @@
 #include "../../ITMLibDefines.h"
 //Note: ".tpp" files have to be included for all explicit instantiations in order to link properly
 
-#include "../../Core/ITMBasicEngine.tpp"
-#include "../../Core/ITMBasicSurfelEngine.tpp"
-#include "../../Core/ITMMultiEngine.tpp"
-#include "../../Core/ITMDenseMapper.tpp"
-#include "../../Core/ITMDenseSurfelMapper.tpp"
+#include "../../Engines/Main/ITMBasicEngine.tpp"
+#include "../../Engines/Main/ITMBasicSurfelEngine.tpp"
+#include "../../Engines/Main/ITMMultiEngine.tpp"
+#include "../../Engines/Main/ITMDenseMapper.tpp"
+#include "../../Engines/Main/ITMDenseSurfelMapper.tpp"
 #include "../../Engines/Meshing/CPU/ITMMeshingEngine_CPU.tpp"
 #include "../../Engines/Meshing/CPU/ITMMultiMeshingEngine_CPU.tpp"
 #include "../../Engines/MultiScene/ITMMapGraphManager.tpp"

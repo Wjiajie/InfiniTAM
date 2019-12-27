@@ -28,14 +28,14 @@
 
 //ITMLib
 #include "../../ITMLib/ITMLibDefines.h"
-#include "../../ITMLib/Core/ITMBasicEngine.h"
-#include "../../ITMLib/Core/ITMBasicSurfelEngine.h"
-#include "../../ITMLib/Core/ITMMultiEngine.h"
+#include "../../ITMLib/Engines/Main/ITMBasicEngine.h"
+#include "../../ITMLib/Engines/Main/ITMBasicSurfelEngine.h"
+#include "../../ITMLib/Engines/Main/ITMMultiEngine.h"
+#include "../../ITMLib/Engines/Main/ITMDynamicEngine.h"
 
 #include "../../ORUtils/FileUtils.h"
 #include "../../InputSource/FFMPEGWriter.h"
 #include "../../ITMLib/Utils/Analytics/ITMBenchmarkUtils.h"
-#include "../../ITMLib/Core/ITMDynamicEngine.h"
 #include "../../ITMLib/Utils/ITMPrintHelpers.h"
 
 #include <opencv2/imgcodecs.hpp>
@@ -67,20 +67,19 @@ namespace bench = ITMLib::Bench;
  * \param recordReconstructionResult start recording the reconstruction result into a video files as soon as the next frame is processed
  * set interval to this number of frames
  */
-void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
+void UIEngine_BPO::Initialize(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
                               InputSource::IMUSourceEngine* imuSource,
                               ITMLib::ITMMainEngine* mainEngine, const char* outFolder,
                               MemoryDeviceType deviceType,
-                              int frameIntervalLength, int skipFirstNFrames, bool recordReconstructionResult,
-                              bool startInStepByStep,
-                              bool saveAfterFirstNFrames, bool loadBeforeProcessing,
+                              int frameIntervalLength, int skipFirstNFrames,
+                              const RunOptions& options,
                               ITMLib::ITMDynamicFusionLogger_Interface* logger,
                               ITMLib::Configuration::IndexingMethod indexingMethod) {
 	this->logger = logger;
 	this->indexingMethod = indexingMethod;
 
 	this->inStepByStepMode = false;
-	this->saveAfterAutoprocessing = saveAfterFirstNFrames;
+	this->saveAfterInitialProcessing = options.saveAfterInitialProcessing;
 
 	this->freeviewActive = true;
 	this->integrationActive = true;
@@ -180,7 +179,7 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 		SkipFrames(skipFirstNFrames);
 	}
 
-	if (startInStepByStep) {
+	if (options.startInStepByStep) {
 		mainLoopAction = autoIntervalFrameCount ? PROCESS_STEPS_CONTINUOUS : PROCESS_SINGLE_STEP;
 		outImageType[0] = this->colourMode_stepByStep.type;
 	} else {
@@ -189,11 +188,11 @@ void UIEngine_BPO::Initialise(int& argc, char** argv, InputSource::ImageSourceEn
 		                                       : this->colourModes_main[this->currentColourMode].type;
 	}
 
-	if (recordReconstructionResult) {
+	if (options.recordReconstructionToVideo) {
 		this->reconstructionVideoWriter = new FFMPEGWriter();
 	}
 
-	if (loadBeforeProcessing) {
+	if (options.loadVolumeBeforeProcessing) {
 		if(logger->NeedsFramewiseOutputFolder()){
 			logger->SetOutputDirectory(
 					this->GenerateCurrentFrameOutputDirectory());

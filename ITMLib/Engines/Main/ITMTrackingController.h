@@ -4,11 +4,11 @@
 
 #include <stdexcept>
 
-#include "../Engines/Visualization/Interface/ITMSurfelVisualisationEngine.h"
-#include "../Engines/Visualization/Interface/ITMVisualisationEngine.h"
-#include "../CameraTrackers/Interface/ITMCameraTracker.h"
-#include "../Utils/Configuration.h"
-#include "../CameraTrackers/Interface/ITMCameraTracker.h"
+#include "../Visualization/Interface/ITMSurfelVisualisationEngine.h"
+#include "../Visualization/Interface/ITMVisualisationEngine.h"
+#include "../../CameraTrackers/Interface/ITMCameraTracker.h"
+#include "../../Utils/Configuration.h"
+#include "../../CameraTrackers/Interface/ITMCameraTracker.h"
 
 namespace ITMLib
 {

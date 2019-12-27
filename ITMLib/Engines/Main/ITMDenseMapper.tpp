@@ -2,8 +2,8 @@
 
 #include "ITMDenseMapper.h"
 
-#include "../Engines/Reconstruction/ITMSceneReconstructionEngineFactory.h"
-#include "../Engines/Swapping/ITMSwappingEngineFactory.h"
+#include "../Reconstruction/ITMSceneReconstructionEngineFactory.h"
+#include "../Swapping/ITMSwappingEngineFactory.h"
 
 using namespace ITMLib;
 

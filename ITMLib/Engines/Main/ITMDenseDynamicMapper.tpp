@@ -22,16 +22,16 @@
 
 //local
 #include "ITMDenseDynamicMapper.h"
-#include "../Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
-#include "../Engines/Swapping/ITMSwappingEngineFactory.h"
-#include "../SurfaceTrackers/SurfaceTrackerFactory.h"
-#include "../Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
-#include "../Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
-#include "../Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
-#include "../Utils/ITMPrintHelpers.h"
-#include "../Utils/Visualization/ITMSceneSliceVisualizer2D.h"
-#include "../Utils/Analytics/ITMBenchmarkUtils.h"
-#include "../Utils/FileIO/ITMSceneLogger.h"
+#include "../Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
+#include "../Swapping/ITMSwappingEngineFactory.h"
+#include "../../SurfaceTrackers/SurfaceTrackerFactory.h"
+#include "../VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
+#include "../VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
+#include "../../Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
+#include "../../Utils/ITMPrintHelpers.h"
+#include "../../Utils/Visualization/ITMSceneSliceVisualizer2D.h"
+#include "../../Utils/Analytics/ITMBenchmarkUtils.h"
+#include "../../Utils/FileIO/ITMSceneLogger.h"
 
 
 using namespace ITMLib;

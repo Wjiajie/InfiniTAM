@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "../Objects/Misc/ITMIMUMeasurement.h"
-#include "../CameraTrackers/Interface/ITMCameraTracker.h"
-#include "../Utils/Configuration.h"
+#include "../../Objects/Misc/ITMIMUMeasurement.h"
+#include "../../CameraTrackers/Interface/ITMCameraTracker.h"
+#include "../../Utils/Configuration.h"
 
 /** \mainpage
     This is the API reference documentation for InfiniTAM. For a general

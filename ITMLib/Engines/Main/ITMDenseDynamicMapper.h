@@ -15,11 +15,11 @@
 //  ================================================================
 #pragma once
 
-#include "../Engines/Reconstruction/Interface/ITMDynamicSceneReconstructionEngine.h"
-#include "../Utils/Configuration.h"
-#include "../Engines/Swapping/Interface/ITMSwappingEngine.h"
-#include "../Utils/FileIO/ITMDynamicFusionLogger.h"
-#include "../SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
+#include "../Reconstruction/Interface/ITMDynamicSceneReconstructionEngine.h"
+#include "../../Utils/Configuration.h"
+#include "../Swapping/Interface/ITMSwappingEngine.h"
+#include "../../Utils/FileIO/ITMDynamicFusionLogger.h"
+#include "../../SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
 
 namespace ITMLib {
 template<typename TVoxel, typename TWarp, typename TIndex>

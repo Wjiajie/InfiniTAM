@@ -2,14 +2,14 @@
 
 #include "ITMMultiEngine.h"
 
-#include "../Engines/LowLevel/ITMLowLevelEngineFactory.h"
-#include "../Engines/ViewBuilding/ITMViewBuilderFactory.h"
-#include "../Engines/Visualization/ITMVisualizationEngineFactory.h"
-#include "../Engines/Visualization/ITMMultiVisualizationEngineFactory.h"
-#include "../CameraTrackers/ITMCameraTrackerFactory.h"
+#include "../LowLevel/ITMLowLevelEngineFactory.h"
+#include "../ViewBuilding/ITMViewBuilderFactory.h"
+#include "../Visualization/ITMVisualizationEngineFactory.h"
+#include "../Visualization/ITMMultiVisualizationEngineFactory.h"
+#include "../../CameraTrackers/ITMCameraTrackerFactory.h"
 
-#include "../../MiniSlamGraphLib/QuaternionHelpers.h"
-#include "../Objects/RenderStates/ITMRenderStateMultiScene.h"
+#include "../../../MiniSlamGraphLib/QuaternionHelpers.h"
+#include "../../Objects/RenderStates/ITMRenderStateMultiScene.h"
 
 using namespace ITMLib;
 

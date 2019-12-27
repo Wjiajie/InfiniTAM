@@ -43,29 +43,30 @@ set(ITMLIB_TOPLEVEL_HEADERS
 
 ##
 set(ITMLIB_CORE_SOURCES
-    Core/ITMBasicEngine.tpp
-    Core/ITMBasicSurfelEngine.tpp
-    Core/ITMDenseMapper.tpp
-    Core/ITMDenseSurfelMapper.tpp
-    Core/ITMDenseDynamicMapper.tpp
-    Core/ITMDenseDynamicMapper_PlainVoxelArray.cpp
-    Core/ITMDenseDynamicMapper_VoxelBlockHash.cpp
-    Core/ITMMultiEngine.tpp
-    Core/ITMDynamicEngine.tpp
-    Core/ITMDynamicEngine_VoxelBlockHash.cpp
-    Core/ITMDynamicEngine_PlainVoxelArray.cpp
+	Engines/Main/ITMBasicEngine.tpp
+	Engines/Main/ITMBasicSurfelEngine.tpp
+	Engines/Main/ITMDenseMapper.tpp
+	Engines/Main/ITMDenseSurfelMapper.tpp
+	Engines/Main/ITMDenseDynamicMapper.tpp
+	Engines/Main/ITMDenseDynamicMapper_PlainVoxelArray.cpp
+	Engines/Main/ITMDenseDynamicMapper_VoxelBlockHash.cpp
+	Engines/Main/ITMMultiEngine.tpp
+	Engines/Main/ITMDynamicEngine.tpp
+	Engines/Main/ITMDynamicEngine_VoxelBlockHash.cpp
+	Engines/Main/ITMDynamicEngine_PlainVoxelArray.cpp
     )
 
 set(ITMLIB_CORE_HEADERS
-    Core/ITMBasicEngine.h
-    Core/ITMBasicSurfelEngine.h
-    Core/ITMDenseMapper.h
-    Core/ITMDenseSurfelMapper.h
-    Core/ITMDenseDynamicMapper.h
-    Core/ITMMainEngine.h
-    Core/ITMMultiEngine.h
-    Core/ITMTrackingController.h
-    Core/ITMDynamicEngine.h
+	Engines/Main/ITMBasicEngine.h
+	Engines/Main/ITMBasicSurfelEngine.h
+	Engines/Main/ITMDenseMapper.h
+	Engines/Main/ITMDenseSurfelMapper.h
+	Engines/Main/ITMDenseDynamicMapper.h
+	Engines/Main/ITMMainEngine.h
+	Engines/Main/ITMMultiEngine.h
+	Engines/Main/ITMTrackingController.h
+	Engines/Main/ITMDynamicEngine.h
+	Engines/Main/MianEngineFactory.h
     )
 
 #======================================= COMMON TO MULTIPLE ENGINES ====================================================

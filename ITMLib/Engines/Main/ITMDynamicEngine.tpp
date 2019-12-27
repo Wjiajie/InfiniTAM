@@ -2,20 +2,20 @@
 
 #include "ITMDynamicEngine.h"
 
-#include "../Engines/LowLevel/ITMLowLevelEngineFactory.h"
-#include "../Engines/Meshing/ITMMeshingEngineFactory.h"
-#include "../Engines/ViewBuilding/ITMViewBuilderFactory.h"
-#include "../Engines/Visualization/ITMVisualizationEngineFactory.h"
-#include "../Engines/SceneFileIO/ITMSceneFileIOEngine.h"
-#include "../CameraTrackers/ITMCameraTrackerFactory.h"
+#include "../LowLevel/ITMLowLevelEngineFactory.h"
+#include "../Meshing/ITMMeshingEngineFactory.h"
+#include "../ViewBuilding/ITMViewBuilderFactory.h"
+#include "../Visualization/ITMVisualizationEngineFactory.h"
+#include "../SceneFileIO/ITMSceneFileIOEngine.h"
+#include "../../CameraTrackers/ITMCameraTrackerFactory.h"
 
-#include "../../ORUtils/NVTimer.h"
-#include "../../ORUtils/FileUtils.h"
+#include "../../../ORUtils/NVTimer.h"
+#include "../../../ORUtils/FileUtils.h"
 
 //#define OUTPUT_TRAJECTORY_QUATERNIONS
 
-#include "../../ORUtils/FileUtils.h"
-#include "../Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
+#include "../../../ORUtils/FileUtils.h"
+#include "../VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
 
 using namespace ITMLib;
 

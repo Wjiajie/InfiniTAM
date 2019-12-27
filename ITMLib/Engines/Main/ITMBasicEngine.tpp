@@ -2,14 +2,14 @@
 
 #include "ITMBasicEngine.h"
 
-#include "../Engines/LowLevel/ITMLowLevelEngineFactory.h"
-#include "../Engines/Meshing/ITMMeshingEngineFactory.h"
-#include "../Engines/ViewBuilding/ITMViewBuilderFactory.h"
-#include "../Engines/Visualization/ITMVisualizationEngineFactory.h"
-#include "../CameraTrackers/ITMCameraTrackerFactory.h"
+#include "../LowLevel/ITMLowLevelEngineFactory.h"
+#include "../Meshing/ITMMeshingEngineFactory.h"
+#include "../ViewBuilding/ITMViewBuilderFactory.h"
+#include "../Visualization/ITMVisualizationEngineFactory.h"
+#include "../../CameraTrackers/ITMCameraTrackerFactory.h"
 
-#include "../../ORUtils/NVTimer.h"
-#include "../../ORUtils/FileUtils.h"
+#include "../../../ORUtils/NVTimer.h"
+#include "../../../ORUtils/FileUtils.h"
 
 //#define OUTPUT_TRAJECTORY_QUATERNIONS
 
