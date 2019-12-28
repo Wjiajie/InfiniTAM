@@ -42,12 +42,18 @@
         }
     },
     "telemetry_settings": {
-        "output": "output1",
         "focus_coordinates": [
             20,
             23,
             0
         ]
+    },
+    "input_and_output_settings": {
+        "output": "output1",
+        "calibration_file_path": "calib_file1.txt",
+        "rgb_image_path_mask": "frame_color_%%06i.png",
+        "depth_image_path_mask":"frame_depth_%%06i.png",
+        "mask_image_path_mask": "frame_mask_%%06i.png"
     },
     "skip_points": true,
     "disable_meshing": true,

@@ -38,7 +38,12 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			                         1.1f, 4.5f, 21, 300, false, false),
 			SlavchevaSurfaceTracker::Parameters(0.11f, 0.09f, 2.0f, 0.3f, 0.1f, 1e-6f),
 			SlavchevaSurfaceTracker::Switches(false, true, false, true, false),
-			Configuration::TelemetrySettings("output1", true, Vector3i(20, 23, 0)),
+			Configuration::TelemetrySettings(true, Vector3i(20, 23, 0)),
+			Configuration::InputAndOutputSettings("output1", "calib_file1.txt",
+			                                      "", "", "",
+			                                      "frame_color_%%06i.png",
+			                                      "frame_depth_%%06i.png",
+			                                      "frame_mask_%%06i.png"),
 			true,
 			false,
 			MEMORYDEVICE_CPU,
@@ -56,11 +61,11 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	);
 	//configuration1.save_to_json_file("../../Tests/TestData/config1.json");
 	Configuration::load_configuration_from_json_file("TestData/config1.json");
-	BOOST_REQUIRE_EQUAL(configuration1.scene_parameters,Configuration::get().scene_parameters);
-	BOOST_REQUIRE_EQUAL(configuration1.surfel_scene_parameters,Configuration::get().surfel_scene_parameters);
-	BOOST_REQUIRE_EQUAL(configuration1.slavcheva_parameters,Configuration::get().slavcheva_parameters);
-	BOOST_REQUIRE_EQUAL(configuration1.slavcheva_switches,Configuration::get().slavcheva_switches);
-	BOOST_REQUIRE_EQUAL(configuration1.telemetry_settings,Configuration::get().telemetry_settings);
-	BOOST_REQUIRE_EQUAL(configuration1,Configuration::get());
+	BOOST_REQUIRE_EQUAL(configuration1.scene_parameters, Configuration::get().scene_parameters);
+	BOOST_REQUIRE_EQUAL(configuration1.surfel_scene_parameters, Configuration::get().surfel_scene_parameters);
+	BOOST_REQUIRE_EQUAL(configuration1.slavcheva_parameters, Configuration::get().slavcheva_parameters);
+	BOOST_REQUIRE_EQUAL(configuration1.slavcheva_switches, Configuration::get().slavcheva_switches);
+	BOOST_REQUIRE_EQUAL(configuration1.telemetry_settings, Configuration::get().telemetry_settings);
+	BOOST_REQUIRE_EQUAL(configuration1, Configuration::get());
 
 }

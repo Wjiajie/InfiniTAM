@@ -60,20 +60,18 @@ find_package(Boost REQUIRED COMPONENTS program_options)
 # Specify the project files #
 #############################
 
-SET(sources
+set(sources
     InfiniTAM_bpo.cpp
     UIEngine_BPO.cpp
     UIEngine_BPO_GlutFunctions.cpp
     CreateDefaultImageSource.cpp
-	InputPaths.cpp
 	ProgramOptions.cpp
 )
 
-SET(headers
+set(headers
     UIEngine_BPO.h
     prettyprint.hpp
     CreateDefaultImageSource.h
-	InputPaths.h
 	ProgramOptions.h
 )
 

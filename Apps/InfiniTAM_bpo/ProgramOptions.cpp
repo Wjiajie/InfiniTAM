@@ -24,7 +24,7 @@ void PopulateOptionsDescription(po::options_description& arguments, RunOptions& 
 			( "config,cfg", po::value<std::string>(),
 			  "Configuration file in JSON format, e.g.  ./default_config.json "
 			  "WARNING: using this option will invalidate any other command line arguments.")
-			("calib_file,c", po::value<std::string>(), "Full path to the calibration file, e.g.: ./Files/Teddy/calib.txt")
+			("calibration_file,c", po::value<std::string>(), "Full path to the calibration file, e.g.: ./Files/Teddy/calib.txt")
 
 			("input_path,i", po::value<std::vector<std::string>>(), "Input files/paths. 0-3 total arguments. "
 			                                                        "Usage scenarios:\n\n"

@@ -216,12 +216,12 @@ std::string enum_value_to_string<SlavchevaSurfaceTracker::ConfigurationMode>(
 }
 
 template<>
-GradientFunctorType enum_value_from_string<GradientFunctorType>(const std::string& string){
+GradientFunctorType enum_value_from_string<GradientFunctorType>(const std::string& string) {
 	static std::unordered_map<std::string, GradientFunctorType> surface_tracking_functor_by_string = {
 			{"slavcheva_diagnostic", GradientFunctorType::TRACKER_SLAVCHEVA_DIAGNOSTIC},
-			{"slavcheva_optimized", GradientFunctorType::TRACKER_SLAVCHEVA_OPTIMIZED},
+			{"slavcheva_optimized",  GradientFunctorType::TRACKER_SLAVCHEVA_OPTIMIZED},
 			{"Slavcheva_diagnostic", GradientFunctorType::TRACKER_SLAVCHEVA_DIAGNOSTIC},
-			{"Slavcheva_optimized", GradientFunctorType::TRACKER_SLAVCHEVA_OPTIMIZED}
+			{"Slavcheva_optimized",  GradientFunctorType::TRACKER_SLAVCHEVA_OPTIMIZED}
 	};
 	if (surface_tracking_functor_by_string.find(string) == surface_tracking_functor_by_string.end()) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Unrecognized slavcheva mode argument");
@@ -266,7 +266,7 @@ static Configuration::IndexingMethod indexing_method_from_variable_map(const po:
 }
 
 static GradientFunctorType surface_tracker_type_from_variable_map(const po::variables_map& vm,
-                                                                       const std::string& argument) {
+                                                                  const std::string& argument) {
 	return enum_value_from_string<GradientFunctorType>(vm[argument].as<std::string>());
 }
 
@@ -288,6 +288,7 @@ Configuration::Configuration(const po::variables_map& vm) :
 		slavcheva_parameters(vm),
 		slavcheva_switches(vm),
 		telemetry_settings(vm),
+		input_and_output_settings(vm),
 		skip_points(vm["skip_points"].empty() ?
 		            Configuration().skip_points :
 		            vm["skip_points"].as<bool>()),
@@ -314,7 +315,7 @@ Configuration::Configuration(const po::variables_map& vm) :
 		indexing_method(vm["index"].empty() ? Configuration().indexing_method :
 		                indexing_method_from_variable_map(vm, "index")),
 		surface_tracker_type(vm["surface_tracker_type"].empty() ? Configuration().surface_tracker_type :
-		                surface_tracker_type_from_variable_map(vm, "index")),
+		                     surface_tracker_type_from_variable_map(vm, "index")),
 		tracker_configuration(
 				vm["tracker"].empty() ? (library_mode == LIBMODE_BASIC_SURFELS ? default_surfel_tracker_configuration :
 				                         default_depth_only_extended_tracker_configuration)
@@ -348,6 +349,7 @@ Configuration::Configuration()
 		slavcheva_parameters(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION),
 		slavcheva_switches(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION),
 		telemetry_settings(),
+		input_and_output_settings(),
 		skip_points(true),
 		create_meshing_engine(true),
 #ifndef COMPILE_WITHOUT_CUDA
@@ -432,10 +434,10 @@ std::string preprocess_output_path(const std::string& output_path, const std::st
 void Configuration::load_configuration_from_json_file(const std::string& path) {
 	pt::ptree tree;
 	pt::read_json(path, tree);
-	boost::optional<std::string> output_dir_opt  = tree.get_optional<std::string>("telemetry_settings.output");
-	if(output_dir_opt){
+	boost::optional<std::string> output_dir_opt = tree.get_optional<std::string>("input_and_output_settings.output");
+	if (output_dir_opt) {
 		std::string output_path = preprocess_output_path(output_dir_opt.get(), path);
-		tree.put("telemetry_settings.output", output_path);
+		tree.put("input_and_output_settings.output", output_path);
 	}
 	instance.reset(from_property_tree(tree));
 }
@@ -478,8 +480,11 @@ Configuration* Configuration::from_property_tree(const pt::ptree& tree) {
 			as_optional_parsable_slavcheva<SlavchevaSurfaceTracker::Parameters>(tree, "slavcheva.parameters", mode);
 	boost::optional<SlavchevaSurfaceTracker::Switches> slavcheva_switches =
 			as_optional_parsable_slavcheva<SlavchevaSurfaceTracker::Switches>(tree, "slavcheva.switches", mode);
-	boost::optional<TelemetrySettings> telemetry_settings = as_optional_parsable<TelemetrySettings>(tree,
-	                                                                                                "telemetry_settings");
+	boost::optional<TelemetrySettings> telemetry_settings =
+			as_optional_parsable<TelemetrySettings>(tree, "telemetry_settings");
+	boost::optional<InputAndOutputSettings> input_and_output_settings =
+			as_optional_parsable<InputAndOutputSettings>(tree, "input_and_output_settings");
+
 	boost::optional<bool> skip_points = tree.get_optional<bool>("skip_points");
 	boost::optional<bool> disable_meshing = tree.get_optional<bool>("disable_meshing");
 	boost::optional<MemoryDeviceType> device_type = optional_enum_value_from_ptree<MemoryDeviceType>(tree, "device");
@@ -509,6 +514,7 @@ Configuration* Configuration::from_property_tree(const pt::ptree& tree) {
 			slavcheva_parameters ? slavcheva_parameters.get() : default_config.slavcheva_parameters,
 			slavcheva_switches ? slavcheva_switches.get() : default_config.slavcheva_switches,
 			telemetry_settings ? telemetry_settings.get() : default_config.telemetry_settings,
+			input_and_output_settings ? input_and_output_settings.get() : default_config.input_and_output_settings,
 			skip_points ? skip_points.get() : default_config.skip_points,
 			disable_meshing ? !disable_meshing.get() : default_config.create_meshing_engine,
 			device_type ? device_type.get() : default_config.device_type,
@@ -529,9 +535,11 @@ Configuration* Configuration::from_property_tree(const pt::ptree& tree) {
 Configuration::Configuration(
 		ITMSceneParameters scene_parameters, ITMSurfelSceneParameters surfel_scene_parameters,
 		SlavchevaSurfaceTracker::Parameters slavcheva_parameters, SlavchevaSurfaceTracker::Switches slavcheva_switches,
-		Configuration::TelemetrySettings telemetry_settings, bool skip_points, bool create_meshing_engine,
-		MemoryDeviceType device_type, bool use_approximate_raycast, bool use_threshold_filter,
-		bool use_bilateral_filter,
+		Configuration::TelemetrySettings telemetry_settings,
+		Configuration::InputAndOutputSettings input_and_output_settings,
+		bool skip_points, bool create_meshing_engine,
+		MemoryDeviceType device_type,
+		bool use_approximate_raycast, bool use_threshold_filter, bool use_bilateral_filter,
 		Configuration::FailureMode behavior_on_failure,
 		Configuration::SwappingMode swapping_mode,
 		Configuration::LibMode library_mode,
@@ -545,7 +553,8 @@ Configuration::Configuration(
 		surfel_scene_parameters(surfel_scene_parameters),
 		slavcheva_parameters(slavcheva_parameters),
 		slavcheva_switches(slavcheva_switches),
-		telemetry_settings(std::move(telemetry_settings)),
+		telemetry_settings(telemetry_settings),
+		input_and_output_settings(std::move(input_and_output_settings)),
 		skip_points(skip_points),
 		create_meshing_engine(create_meshing_engine),
 		device_type(device_type),
@@ -569,6 +578,7 @@ bool operator==(const Configuration& c1, const Configuration& c2) {
 	       c1.slavcheva_parameters == c2.slavcheva_parameters &&
 	       c1.slavcheva_switches == c2.slavcheva_switches &&
 	       c1.telemetry_settings == c2.telemetry_settings &&
+	       c1.input_and_output_settings == c2.input_and_output_settings &&
 	       c1.skip_points == c2.skip_points &&
 	       c1.create_meshing_engine == c2.create_meshing_engine &&
 	       c1.device_type == c2.device_type &&
@@ -589,6 +599,8 @@ std::ostream& operator<<(std::ostream& out, const Configuration& c) {
 	pt::ptree tree(c.to_ptree());
 	pt::write_json_no_quotes(out, tree, true);
 }
+
+
 }//namespace ITMLib
 
 pt::ptree Configuration::to_ptree() const {
@@ -599,6 +611,7 @@ pt::ptree Configuration::to_ptree() const {
 	tree.add_child("slavcheva.parameters", this->slavcheva_parameters.ToPTree());
 	tree.add_child("slavcheva.switches", slavcheva_switches.ToPTree());
 	tree.add_child("telemetry_settings", this->telemetry_settings.ToPTree());
+	tree.add_child("input_and_output_settings", this->input_and_output_settings.ToPTree());
 	tree.add("skip_points", skip_points);
 	tree.add("disable_meshing", !create_meshing_engine);
 	tree.add("device", enum_value_to_string(this->device_type));
@@ -625,28 +638,6 @@ void Configuration::save_to_json_file(const std::string& path) {
 	pt::write_json_no_quotes(path, this->to_ptree(), true);
 }
 
-
-Configuration::TelemetrySettings::TelemetrySettings() :
-		output_path("output/"),
-		focus_coordinates_specified(false),
-		focus_coordinates(Vector3i(0)) {}
-
-
-Configuration::TelemetrySettings::TelemetrySettings(const po::variables_map& vm) :
-		output_path(vm["output"].empty() ? TelemetrySettings().output_path : vm["output"].as<std::string>().c_str()),
-		focus_coordinates_specified(!vm["focus_coordinates"].empty()),
-		focus_coordinates(vm["focus_coordinates"].empty() ? TelemetrySettings().focus_coordinates :
-		                  vector3i_from_variable_map(vm, "focus_coordinates")) {}
-
-template<typename T>
-static
-std::vector<T> as_vector(pt::ptree const& pt, pt::ptree::key_type const& key) {
-	std::vector<T> r;
-	for (auto& item : pt.get_child(key))
-		r.push_back(item.second.get_value<T>());
-	return r;
-}
-
 template<typename T>
 static
 boost::optional<std::vector<T>> as_optional_vector(pt::ptree const& pt, pt::ptree::key_type const& key) {
@@ -659,26 +650,189 @@ boost::optional<std::vector<T>> as_optional_vector(pt::ptree const& pt, pt::ptre
 	return boost::optional<std::vector<T>>(r);
 }
 
-Configuration::TelemetrySettings Configuration::TelemetrySettings::BuildFromPTree(const pt::ptree& tree) {
+template<typename T>
+static
+std::vector<T> as_vector(pt::ptree const& pt, pt::ptree::key_type const& key) {
+	std::vector<T> r;
+	for (auto& item : pt.get_child(key))
+		r.push_back(item.second.get_value<T>());
+	return r;
+}
+
+// region ====================================== INPUT AND OUTPUT SETTINGS =============================================
+
+bool isPathMask(const std::string& arg) {
+	return arg.find('%') != std::string::npos;
+}
+
+Configuration::InputAndOutputSettings::InputAndOutputSettings(const po::variables_map& vm) :
+		output_path(vm["output"].empty() ? InputAndOutputSettings().output_path : vm["output"].as<std::string>()),
+		calibration_file_path(vm["calibration_file"].empty() ? InputAndOutputSettings().calibration_file_path
+		                                                     : vm["calibration_file"].as<std::string>()) {
+	std::vector<std::string> inputPaths;
+	if (vm.count("input_path")) {
+		inputPaths = vm["input_path"].as<std::vector<std::string>>();
+	}
+	auto inputFileCount = inputPaths.size();
+	switch (inputFileCount) {
+		case 0:
+			//no input files
+			break;
+		case 1:
+			//a single OpenNI file
+			openni_file_path = inputPaths[0];
+			break;
+		case 3:
+		default:
+			if (isPathMask(inputPaths[2])) { mask_image_path_mask = inputPaths[2]; }
+			else { imu_input_path = inputPaths[2]; }
+		case 2:
+			if (isPathMask(inputPaths[0]) && isPathMask(inputPaths[1])) {
+				rgb_image_path_mask = inputPaths[0];
+				depth_image_path_mask = inputPaths[1];
+			} else if (!isPathMask(inputPaths[0]) && !isPathMask(inputPaths[1])) {
+				rgb_video_file_path = inputPaths[0];
+				depth_video_file_path = inputPaths[1];
+			} else {
+				std::cerr << "The first & second input_path arguments need to either both be masks or both be"
+				             " paths to video files." << std::endl;
+
+				throw std::runtime_error("Could not parse command-line arguments");
+			}
+			break;
+	}
+}
+
+Configuration::InputAndOutputSettings::InputAndOutputSettings() :
+		output_path("output/"),
+		calibration_file_path("calib.txt") {}
+
+Configuration::InputAndOutputSettings::InputAndOutputSettings(std::string output_path,
+                                                              std::string calibration_file_path,
+                                                              std::string openni_file_path,
+                                                              std::string rgb_video_file_path,
+                                                              std::string depth_video_file_path,
+                                                              std::string rgb_image_path_mask,
+                                                              std::string depth_image_path_mask,
+                                                              std::string mask_image_path_mask,
+                                                              std::string imu_input_path) :
+		output_path(std::move(output_path)),
+		calibration_file_path(std::move(calibration_file_path)),
+		openni_file_path(std::move(openni_file_path)),
+		rgb_video_file_path(std::move(rgb_video_file_path)),
+		depth_video_file_path(std::move(depth_video_file_path)),
+		rgb_image_path_mask(std::move(rgb_image_path_mask)),
+		depth_image_path_mask(std::move(depth_image_path_mask)),
+		mask_image_path_mask(std::move(mask_image_path_mask)),
+		imu_input_path(std::move(imu_input_path)) {}
+
+
+Configuration::InputAndOutputSettings Configuration::InputAndOutputSettings::BuildFromPTree(const pt::ptree& tree) {
 	boost::optional<std::string> output_path_opt = tree.get_optional<std::string>("output");
+	std::string output_path,
+			calibration_file_path,
+			openni_file_path,
+			rgb_video_file_path,
+			depth_video_file_path,
+			rgb_image_path_mask,
+			depth_image_path_mask,
+			mask_image_path_mask,
+			imu_input_path;
+	auto value_or_empty_string = [](boost::optional<std::string> optional) {
+		return optional ? optional.get() : "";
+	};
+	calibration_file_path = value_or_empty_string(tree.get_optional<std::string>("calibration_file_path"));
+	openni_file_path = value_or_empty_string(tree.get_optional<std::string>("openni_file_path"));
+	rgb_video_file_path = value_or_empty_string(tree.get_optional<std::string>("rgb_video_file_path"));
+	depth_video_file_path = value_or_empty_string(tree.get_optional<std::string>("depth_video_file_path"));
+	rgb_image_path_mask = value_or_empty_string(tree.get_optional<std::string>("rgb_image_path_mask"));
+	depth_image_path_mask = value_or_empty_string(tree.get_optional<std::string>("depth_image_path_mask"));
+	mask_image_path_mask = value_or_empty_string(tree.get_optional<std::string>("mask_image_path_mask"));
+	imu_input_path = value_or_empty_string(tree.get_optional<std::string>("imp_input_path"));
+	InputAndOutputSettings default_io_settings;
+
+	return {output_path_opt ? output_path_opt.get() : default_io_settings.output_path,
+	        calibration_file_path,
+	        openni_file_path,
+	        rgb_video_file_path,
+	        depth_video_file_path,
+	        rgb_image_path_mask,
+	        depth_image_path_mask,
+	        mask_image_path_mask,
+	        imu_input_path};
+}
+
+pt::ptree Configuration::InputAndOutputSettings::ToPTree() const {
+	pt::ptree tree;
+	tree.add("output", this->output_path);
+	auto add_to_tree_if_not_empty = [](pt::ptree& tree, const std::string& key, const std::string& string) {
+		if (string != "") {
+			tree.add(key, string);
+		}
+	};
+	add_to_tree_if_not_empty(tree, "calibration_file_path", calibration_file_path);
+	add_to_tree_if_not_empty(tree, "openni_file_path", openni_file_path);
+	add_to_tree_if_not_empty(tree, "rgb_video_file_path", rgb_video_file_path);
+	add_to_tree_if_not_empty(tree, "depth_video_file_path", depth_video_file_path);
+	add_to_tree_if_not_empty(tree, "rgb_image_path_mask", rgb_image_path_mask);
+	add_to_tree_if_not_empty(tree, "depth_image_path_mask", depth_image_path_mask);
+	add_to_tree_if_not_empty(tree, "mask_image_path_mask", mask_image_path_mask);
+	add_to_tree_if_not_empty(tree, "imu_input_path", imu_input_path);
+	return tree;
+}
+
+namespace ITMLib {
+
+bool operator==(const Configuration::InputAndOutputSettings& ios1, const Configuration::InputAndOutputSettings& ios2) {
+	return ios1.output_path == ios2.output_path &&
+	       ios1.calibration_file_path == ios2.calibration_file_path &&
+	       ios1.openni_file_path == ios2.openni_file_path &&
+	       ios1.rgb_video_file_path == ios2.rgb_video_file_path &&
+	       ios1.depth_video_file_path == ios2.depth_video_file_path &&
+	       ios1.rgb_image_path_mask == ios2.rgb_image_path_mask &&
+	       ios1.depth_image_path_mask == ios2.depth_image_path_mask &&
+	       ios1.mask_image_path_mask == ios2.mask_image_path_mask &&
+	       ios1.imu_input_path == ios2.imu_input_path;
+}
+
+std::ostream& operator<<(std::ostream& out, const Configuration::InputAndOutputSettings& ios) {
+	pt::ptree tree(ios.ToPTree());
+	pt::write_json_no_quotes(out, tree, true);
+}
+} // namespace ITMLib
+
+// endregion ===========================================================================================================
+
+// region =============================== Telemetry Settings ===========================================================
+
+Configuration::TelemetrySettings::TelemetrySettings() :
+		focus_coordinates_specified(false),
+		focus_coordinates(Vector3i(0)) {}
+
+
+Configuration::TelemetrySettings::TelemetrySettings(const po::variables_map& vm) :
+		focus_coordinates_specified(!vm["focus_coordinates"].empty()),
+		focus_coordinates(vm["focus_coordinates"].empty() ? TelemetrySettings().focus_coordinates :
+		                  vector3i_from_variable_map(vm, "focus_coordinates")) {}
+
+
+Configuration::TelemetrySettings Configuration::TelemetrySettings::BuildFromPTree(const pt::ptree& tree) {
+
 	boost::optional<std::vector<int>> focus_coords_opt = as_optional_vector<int>(tree, "focus_coordinates");
 
 	TelemetrySettings default_ts;
 
-	return {output_path_opt ? output_path_opt.get() : default_ts.output_path,
-	        (bool) focus_coords_opt,
+	return {(bool) focus_coords_opt,
 	        focus_coords_opt ? vector3i_from_std_vector(focus_coords_opt.get()) : default_ts.focus_coordinates};
 }
 
-Configuration::TelemetrySettings::TelemetrySettings(std::string output_path, bool focus_coordinates_specified,
+Configuration::TelemetrySettings::TelemetrySettings(bool focus_coordinates_specified,
                                                     Vector3i focus_coordinates) :
-		output_path(std::move(output_path)),
 		focus_coordinates_specified(focus_coordinates_specified),
 		focus_coordinates(focus_coordinates) {}
 
 pt::ptree Configuration::TelemetrySettings::ToPTree() const {
 	pt::ptree tree;
-	tree.add("output", this->output_path);
 	if (focus_coordinates_specified) {
 		pt::ptree children;
 		pt::ptree child1, child2, child3;
@@ -695,8 +849,7 @@ pt::ptree Configuration::TelemetrySettings::ToPTree() const {
 
 namespace ITMLib {
 bool operator==(const Configuration::TelemetrySettings& ts1, const Configuration::TelemetrySettings& ts2) {
-	return ts1.output_path == ts2.output_path &&
-	       ts1.focus_coordinates_specified == ts2.focus_coordinates_specified &&
+	return ts1.focus_coordinates_specified == ts2.focus_coordinates_specified &&
 	       (!ts1.focus_coordinates_specified || ts1.focus_coordinates == ts2.focus_coordinates);
 }
 
@@ -704,5 +857,6 @@ std::ostream& operator<<(std::ostream& out, const Configuration::TelemetrySettin
 	pt::ptree tree(ts.ToPTree());
 	pt::write_json_no_quotes(out, tree, true);
 }
-
 }//namespace ITMLib
+
+// endregion ===========================================================================================================

@@ -40,43 +40,71 @@ public:
 
 	// region ============================================== NESTED ENUMS ==============================================
 
-	enum FailureMode{
+	enum FailureMode {
 		FAILUREMODE_RELOCALIZE,
 		FAILUREMODE_IGNORE,
 		FAILUREMODE_STOP_INTEGRATION
 	};
 
-	enum SwappingMode{
+	enum SwappingMode {
 		SWAPPINGMODE_DISABLED,
 		SWAPPINGMODE_ENABLED,
 		SWAPPINGMODE_DELETE
 	};
 
-	enum LibMode{
+	enum LibMode {
 		LIBMODE_BASIC,
 		LIBMODE_BASIC_SURFELS,
 		LIBMODE_LOOPCLOSURE,
 		LIBMODE_DYNAMIC
 	};
 
-	enum IndexingMethod{
+	enum IndexingMethod {
 		INDEX_HASH,
 		INDEX_ARRAY
-	} ;
+	};
 
 	//endregion ========================================================================================================
 
+	struct InputAndOutputSettings {
+		/// Where to write any kind of output (intended to be used application-wise)
+		const std::string output_path;
+		std::string calibration_file_path;
+		std::string openni_file_path = "";
+		std::string rgb_video_file_path = "";
+		std::string depth_video_file_path = "";
+		std::string rgb_image_path_mask = "";
+		std::string depth_image_path_mask = "";
+		std::string mask_image_path_mask = "";
+		std::string imu_input_path = "";
+
+		explicit InputAndOutputSettings(const po::variables_map& vm);
+		static InputAndOutputSettings BuildFromPTree(const pt::ptree& tree);
+		InputAndOutputSettings();
+		InputAndOutputSettings(std::string output_path,
+		                       std::string calibration_file_path = "",
+		                       std::string openni_file_path = "",
+		                       std::string rgb_video_file_path = "",
+		                       std::string depth_video_file_path = "",
+		                       std::string rgb_image_path_mask = "",
+		                       std::string depth_image_path_mask = "",
+		                       std::string mask_image_path_mask = "",
+		                       std::string imu_input_path = "");
+		friend bool operator==(const InputAndOutputSettings& ts1, const InputAndOutputSettings& ts2);
+		friend std::ostream& operator<<(std::ostream& out, const InputAndOutputSettings& ts);
+		pt::ptree ToPTree() const;
+	};
+
 	struct TelemetrySettings {
 		explicit TelemetrySettings(const po::variables_map& vm);
-		static TelemetrySettings BuildFromPTree(const pt::ptree& tree) ;
+		static TelemetrySettings BuildFromPTree(const pt::ptree& tree);
 		TelemetrySettings();
-		TelemetrySettings(std::string  output_path, bool focus_coordinates_specified = false,
+		TelemetrySettings(bool focus_coordinates_specified,
 		                  Vector3i focus_coordinates = Vector3i(0));
 		friend bool operator==(const TelemetrySettings& ts1, const TelemetrySettings& ts2);
 		friend std::ostream& operator<<(std::ostream& out, const TelemetrySettings& ts);
 		pt::ptree ToPTree() const;
-		/// Where to write any kind of output (intended to be used application-wise)
-		const std::string output_path = "./State/";
+
 		/// Whether telemetry / diagnostics / logging for a trouble spot is enabled
 		bool focus_coordinates_specified = false;
 		/// A trouble spot for additional telemetry / diagnostics / loggging
@@ -90,6 +118,7 @@ public:
 	              SlavchevaSurfaceTracker::Parameters slavcheva_parameters,
 	              SlavchevaSurfaceTracker::Switches slavcheva_switches,
 	              Configuration::TelemetrySettings telemetry_settings,
+	              Configuration::InputAndOutputSettings input_and_output_settings,
 	              bool skip_points,
 	              bool create_meshing_engine,
 	              MemoryDeviceType device_type,
@@ -120,6 +149,8 @@ public:
 	const SlavchevaSurfaceTracker::Switches slavcheva_switches;
 	/// Telemetry / diagnostics / logging settings
 	TelemetrySettings telemetry_settings;
+	/// Input / output paths
+	InputAndOutputSettings input_and_output_settings;
 	/// For ITMColorTracker: skips every other point when using the colour renderer for creating a point cloud
 	const bool skip_points;
 	/// create all the things required for marching cubes and mesh extraction (uses lots of additional memory)

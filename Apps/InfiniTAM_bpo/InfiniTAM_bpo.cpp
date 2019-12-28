@@ -29,13 +29,13 @@
 #include "../../ITMLib/Engines/Main/ITMMultiEngine.h"
 #include "../../ITMLib/Engines/Main/ITMDynamicEngine.h"
 #include "../../ITMLib/Utils/Visualization/ITMVisualizationWindowManager.h"
+#include "../../ITMLib/Engines/Main/MianEngineFactory.h"
 
 //local
 #include "UIEngine_BPO.h"
 #include "prettyprint.hpp"
 #include "CreateDefaultImageSource.h"
 #include "ProgramOptions.h"
-#include "../../ITMLib/Engines/Main/MianEngineFactory.h"
 
 // *** namespaces ***
 
@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
 		PopulateOptionsDescription(arguments,runOptions,loggingOptions);
 
 
-		positional_arguments.add("calib_file", 1);
+		positional_arguments.add("calibration_file", 1);
 		positional_arguments.add("input_path", 3);
 
 		po::variables_map vm;
@@ -99,7 +99,6 @@ int main(int argc, char** argv) {
 				po::command_line_style::unix_style ^ po::command_line_style::allow_short).run(), vm);
 		po::notify(vm);
 
-		InputPaths inputPaths;
 
 		auto printHelp = [&arguments, &positional_arguments, &argv]() {
 			std::cout << arguments << std::endl;
@@ -126,20 +125,19 @@ int main(int argc, char** argv) {
 		int skipFirstNFrames = 0;
 		if (vm["config"].empty()) {
 			process_UI_options_CLI(processNFramesOnLaunch, skipFirstNFrames, vm);
-			inputPaths = InputPaths::FromVariablesMap(vm, printHelp);
 			Configuration::load_configuration_from_variable_map(vm);
 		} else {
 			std::string configPath = vm["config"].as<std::string>();
 			process_UI_options_JSON(processNFramesOnLaunch, skipFirstNFrames, configPath);
-			inputPaths = InputPaths::FromJsonFile(configPath);
 			Configuration::load_configuration_from_json_file(configPath);
 		}
+		auto& settings = Configuration::get();
 
 		printf("initialising ...\n");
 		ImageSourceEngine* imageSource = nullptr;
 		IMUSourceEngine* imuSource = nullptr;
 
-		CreateDefaultImageSource(imageSource, imuSource, inputPaths);
+		CreateDefaultImageSource(imageSource, imuSource, settings.input_and_output_settings);
 		if (imageSource == nullptr) {
 			std::cerr << "Failed to open any image stream." << std::endl;
 			printHelp();
@@ -147,7 +145,6 @@ int main(int argc, char** argv) {
 		}
 
 // region ================================ BUILD MAIN ENGINE ========================================================
-		auto& settings = Configuration::get();
 		Configuration::IndexingMethod chosenIndexingMethod = settings.indexing_method;
 		ITMDynamicFusionLogger_Interface& logger = GetLogger(chosenIndexingMethod);
 		ITMMainEngine* mainEngine = BuildMainEngine(imageSource->getCalib(),
@@ -168,7 +165,7 @@ int main(int argc, char** argv) {
 		if (settings.telemetry_settings.focus_coordinates_specified) {
 			logger.SetFocusCoordinates(settings.telemetry_settings.focus_coordinates);
 		}
-		logger.SetOutputDirectory(settings.telemetry_settings.output_path);
+		logger.SetOutputDirectory(settings.input_and_output_settings.output_path);
 
 		logger.SetPlaneFor2Dand3DSlices(loggingOptions.planeFor2Dand3DSlices);
 		logger.Set3DSliceInPlaneRadius(loggingOptions._3DSliceRadius);
@@ -183,7 +180,7 @@ int main(int argc, char** argv) {
 		XInitThreads();
 #endif
 		UIEngine_BPO::Instance().Initialize(argc, argv, imageSource, imuSource, mainEngine,
-		                                    settings.telemetry_settings.output_path.c_str(), settings.device_type,
+		                                    settings.input_and_output_settings.output_path.c_str(), settings.device_type,
 		                                    processNFramesOnLaunch, skipFirstNFrames, runOptions,
 		                                    &logger, chosenIndexingMethod);
 
