@@ -32,11 +32,11 @@ public:
 	static void save_configuration_to_json_file(const std::string& path);
 	void save_to_json_file(const std::string& path);
 
-	static Configuration* from_property_tree(const pt::ptree& tree);
+	static Configuration* from_json_file(const std::string& path);
 
 	~Configuration() = default;
 
-	pt::ptree to_ptree() const;
+	pt::ptree to_ptree(const std::string& path) const;
 
 	// region ============================================== NESTED ENUMS ==============================================
 
@@ -79,7 +79,7 @@ public:
 		std::string imu_input_path = "";
 
 		explicit InputAndOutputSettings(const po::variables_map& vm);
-		static InputAndOutputSettings BuildFromPTree(const pt::ptree& tree);
+		static InputAndOutputSettings BuildFromPTree(const pt::ptree& tree, const std::string& config_path);
 		InputAndOutputSettings();
 		InputAndOutputSettings(std::string output_path,
 		                       std::string calibration_file_path = "",
@@ -92,7 +92,7 @@ public:
 		                       std::string imu_input_path = "");
 		friend bool operator==(const InputAndOutputSettings& ts1, const InputAndOutputSettings& ts2);
 		friend std::ostream& operator<<(std::ostream& out, const InputAndOutputSettings& ts);
-		pt::ptree ToPTree() const;
+		pt::ptree ToPTree(const std::string& path) const;
 	};
 
 	struct TelemetrySettings {

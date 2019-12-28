@@ -30,21 +30,7 @@
 using namespace ITMLib;
 
 
-// region ============================= Boost variables_map processing subroutines =====================================
-
-static Vector3i vector3i_from_std_vector(const std::vector<int>& int_vector) {
-	Vector3i vec;
-	if (int_vector.size() != 3) {
-		DIEWITHEXCEPTION_REPORTLOCATION("Could not parse argument as exactly 3 integers, \"x y z\"");
-	}
-	memcpy(vec.values, int_vector.data(), sizeof(int) * 3);
-	return vec;
-}
-
-static Vector3i vector3i_from_variable_map(const po::variables_map& vm, const std::string& argument) {
-	std::vector<int> int_vector = vm[argument].as<std::vector<int>>();
-	return vector3i_from_std_vector(int_vector);
-}
+// region =============== ENUM<--->STRING CONVERSIONS ==================================================================
 
 template<typename TEnum>
 static TEnum enum_value_from_string(const std::string& string);
@@ -241,6 +227,23 @@ std::string enum_value_to_string<GradientFunctorType>(
 			return "slavcheva_diagnostic";
 	}
 }
+// endregion ===========================================================================================================
+
+// region ====================================== boost::variables_map PROCESSING ROUTINES ==============================
+
+static Vector3i vector3i_from_std_vector(const std::vector<int>& int_vector) {
+	Vector3i vec;
+	if (int_vector.size() != 3) {
+		DIEWITHEXCEPTION_REPORTLOCATION("Could not parse argument as exactly 3 integers, \"x y z\"");
+	}
+	memcpy(vec.values, int_vector.data(), sizeof(int) * 3);
+	return vec;
+}
+
+static Vector3i vector3i_from_variable_map(const po::variables_map& vm, const std::string& argument) {
+	std::vector<int> int_vector = vm[argument].as<std::vector<int>>();
+	return vector3i_from_std_vector(int_vector);
+}
 
 static MemoryDeviceType memory_device_type_from_variable_map(const po::variables_map& vm, const std::string& argument) {
 	return enum_value_from_string<MemoryDeviceType>(vm[argument].as<std::string>());
@@ -270,6 +273,11 @@ static GradientFunctorType surface_tracker_type_from_variable_map(const po::vari
 	return enum_value_from_string<GradientFunctorType>(vm[argument].as<std::string>());
 }
 
+
+// endregion ===========================================================================================================
+
+// region ================================== boost::property_tree::ptree PROCESSING ROUTINES ===========================
+
 template<typename TEnum>
 static boost::optional<TEnum> optional_enum_value_from_ptree(const pt::ptree& ptree, const pt::ptree::key_type& key) {
 	auto child = ptree.get_child_optional(key);
@@ -280,7 +288,60 @@ static boost::optional<TEnum> optional_enum_value_from_ptree(const pt::ptree& pt
 	}
 }
 
-// endregion
+template<typename T>
+static
+boost::optional<std::vector<T>> as_optional_vector(pt::ptree const& pt, pt::ptree::key_type const& key) {
+	if (pt.count(key) == 0) {
+		return boost::optional<std::vector<T>>{};
+	}
+	std::vector<T> r;
+	for (auto& item : pt.get_child(key))
+		r.push_back(item.second.get_value<T>());
+	return boost::optional<std::vector<T>>(r);
+}
+
+template<typename T>
+static
+std::vector<T> as_vector(pt::ptree const& pt, pt::ptree::key_type const& key) {
+	std::vector<T> r;
+	for (auto& item : pt.get_child(key))
+		r.push_back(item.second.get_value<T>());
+	return r;
+}
+// endregion ===========================================================================================================
+
+// region ======================================= CONFIGURATION CONSTRUCTORS ===========================================
+
+Configuration::Configuration()
+		:   //mu(m), maxW, voxel size(m), clipping min, clipping max, stopIntegratingAtMaxW
+		scene_parameters(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG
+		//scene_parameters(0.02f, 100, 0.005f, 0.2f, 3.0f, false),//standard InfiniTAM values
+		surfel_scene_parameters(0.5f, 0.6f, static_cast<float>(20 * M_PI / 180), 0.01f, 0.004f, 3.5f, 25.0f, 4, 1.0f,
+		                        5.0f, 20, 10000000, true, true),
+		slavcheva_parameters(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION),
+		slavcheva_switches(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION),
+		telemetry_settings(),
+		input_and_output_settings(),
+		skip_points(true),
+		create_meshing_engine(true),
+#ifndef COMPILE_WITHOUT_CUDA
+		device_type(MEMORYDEVICE_CUDA),
+#else
+		device_type(MEMORYDEVICE_CPU),
+#endif
+		use_approximate_raycast(false),
+		use_threshold_filter(false),
+		use_bilateral_filter(false),
+		behavior_on_failure(FAILUREMODE_IGNORE),
+		swapping_mode(SWAPPINGMODE_DISABLED),
+		library_mode(LIBMODE_DYNAMIC),
+		indexing_method(INDEX_HASH),
+		surface_tracker_type(TRACKER_SLAVCHEVA_DIAGNOSTIC),
+		tracker_configuration(library_mode == LIBMODE_BASIC_SURFELS ? default_surfel_tracker_configuration :
+		                      default_depth_only_extended_tracker_configuration),
+		max_iteration_threshold(200),
+		max_update_length_threshold(0.0001f) {
+}
 
 Configuration::Configuration(const po::variables_map& vm) :
 		scene_parameters(vm),
@@ -340,36 +401,49 @@ Configuration::Configuration(const po::variables_map& vm) :
 #endif
 }
 
-Configuration::Configuration()
-		:   //mu(m), maxW, voxel size(m), clipping min, clipping max, stopIntegratingAtMaxW
-		scene_parameters(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG
-		//scene_parameters(0.02f, 100, 0.005f, 0.2f, 3.0f, false),//standard InfiniTAM values
-		surfel_scene_parameters(0.5f, 0.6f, static_cast<float>(20 * M_PI / 180), 0.01f, 0.004f, 3.5f, 25.0f, 4, 1.0f,
-		                        5.0f, 20, 10000000, true, true),
-		slavcheva_parameters(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION),
-		slavcheva_switches(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION),
-		telemetry_settings(),
-		input_and_output_settings(),
-		skip_points(true),
-		create_meshing_engine(true),
-#ifndef COMPILE_WITHOUT_CUDA
-		device_type(MEMORYDEVICE_CUDA),
-#else
-		device_type(MEMORYDEVICE_CPU),
-#endif
-		use_approximate_raycast(false),
-		use_threshold_filter(false),
-		use_bilateral_filter(false),
-		behavior_on_failure(FAILUREMODE_IGNORE),
-		swapping_mode(SWAPPINGMODE_DISABLED),
-		library_mode(LIBMODE_DYNAMIC),
-		indexing_method(INDEX_HASH),
-		surface_tracker_type(TRACKER_SLAVCHEVA_DIAGNOSTIC),
-		tracker_configuration(library_mode == LIBMODE_BASIC_SURFELS ? default_surfel_tracker_configuration :
-		                      default_depth_only_extended_tracker_configuration),
-		max_iteration_threshold(200),
-		max_update_length_threshold(0.0001f) {
-}
+
+Configuration::Configuration(
+		ITMSceneParameters scene_parameters, ITMSurfelSceneParameters surfel_scene_parameters,
+		SlavchevaSurfaceTracker::Parameters slavcheva_parameters, SlavchevaSurfaceTracker::Switches slavcheva_switches,
+		Configuration::TelemetrySettings telemetry_settings,
+		Configuration::InputAndOutputSettings input_and_output_settings,
+		bool skip_points, bool create_meshing_engine,
+		MemoryDeviceType device_type,
+		bool use_approximate_raycast, bool use_threshold_filter, bool use_bilateral_filter,
+		Configuration::FailureMode behavior_on_failure,
+		Configuration::SwappingMode swapping_mode,
+		Configuration::LibMode library_mode,
+		Configuration::IndexingMethod indexing_method,
+		GradientFunctorType surface_tracker_type,
+		std::string tracker_configuration,
+		unsigned int max_iteration_threshold,
+		float max_update_length_threshold) :
+
+		scene_parameters(scene_parameters),
+		surfel_scene_parameters(surfel_scene_parameters),
+		slavcheva_parameters(slavcheva_parameters),
+		slavcheva_switches(slavcheva_switches),
+		telemetry_settings(telemetry_settings),
+		input_and_output_settings(std::move(input_and_output_settings)),
+		skip_points(skip_points),
+		create_meshing_engine(create_meshing_engine),
+		device_type(device_type),
+		use_approximate_raycast(use_approximate_raycast),
+		use_threshold_filter(use_threshold_filter),
+		use_bilateral_filter(use_bilateral_filter),
+		behavior_on_failure(behavior_on_failure),
+		swapping_mode(swapping_mode),
+		library_mode(library_mode),
+		indexing_method(indexing_method),
+		surface_tracker_type(surface_tracker_type),
+		tracker_configuration(std::move(tracker_configuration)),
+		max_iteration_threshold(max_iteration_threshold),
+		max_update_length_threshold(max_update_length_threshold)
+		{}
+
+// endregion ===========================================================================================================
+
+// region ===================================== CONFIGURATION CONSTANT DEFINITIONS =====================================
 
 const std::string Configuration::default_ICP_tracker_configuration =
 		"type=icp,levels=rrrbb,minstep=1e-3,"
@@ -405,6 +479,10 @@ const std::string Configuration::default_surfel_tracker_configuration =
 		"extended,levels=rrbb,minstep=1e-4,outlierSpaceC=0.1,outlierSpaceF=0.004,"
 		"numiterC=20,numiterF=20,tukeyCutOff=8,framesToSkip=0,framesToWeight=1,failureDec=20.0";
 
+// endregion ===========================================================================================================
+
+// region ==== CONFIGURATION SINGLETON HANDLING, variables_map & ptree CONVERSIONS, COMPARISONS ========================
+
 std::unique_ptr<Configuration> Configuration::instance = std::unique_ptr<Configuration>(new Configuration());
 
 
@@ -422,24 +500,20 @@ Configuration& Configuration::get() {
 
 namespace fs = boost::filesystem;
 
-std::string preprocess_output_path(const std::string& output_path, const std::string& config_path) {
-	if (output_path == "<CONFIGURATION_DIRECTORY>" || output_path == "<CONFIG_DIRECTORY>") {
-		fs::path fs_config_path(config_path);
-		return fs_config_path.parent_path().string();
-	} else {
-		return output_path;
-	}
-}
+
 
 void Configuration::load_configuration_from_json_file(const std::string& path) {
-	pt::ptree tree;
-	pt::read_json(path, tree);
-	boost::optional<std::string> output_dir_opt = tree.get_optional<std::string>("input_and_output_settings.output");
-	if (output_dir_opt) {
-		std::string output_path = preprocess_output_path(output_dir_opt.get(), path);
-		tree.put("input_and_output_settings.output", output_path);
+	instance.reset(from_json_file(path));
+}
+
+template<typename TJsonParsable>
+static boost::optional<TJsonParsable> as_optional_parsable_config_path(const pt::ptree& tree, pt::ptree::key_type const& key, const std::string& config_path) {
+	auto subtree = tree.get_child_optional(key);
+	if (subtree) {
+		return boost::optional<TJsonParsable>(TJsonParsable::BuildFromPTree(subtree.get(), config_path));
+	} else {
+		return boost::optional<TJsonParsable>{};
 	}
-	instance.reset(from_property_tree(tree));
 }
 
 template<typename TJsonParsable>
@@ -464,8 +538,10 @@ as_optional_parsable_slavcheva(const pt::ptree& tree, pt::ptree::key_type const&
 	}
 }
 
+Configuration* Configuration::from_json_file(const std::string& path) {
+	pt::ptree tree;
+	pt::read_json(path, tree);
 
-Configuration* Configuration::from_property_tree(const pt::ptree& tree) {
 	Configuration default_configuration;
 
 	boost::optional<ITMSceneParameters> scene_parameters =
@@ -483,7 +559,7 @@ Configuration* Configuration::from_property_tree(const pt::ptree& tree) {
 	boost::optional<TelemetrySettings> telemetry_settings =
 			as_optional_parsable<TelemetrySettings>(tree, "telemetry_settings");
 	boost::optional<InputAndOutputSettings> input_and_output_settings =
-			as_optional_parsable<InputAndOutputSettings>(tree, "input_and_output_settings");
+			as_optional_parsable_config_path<InputAndOutputSettings>(tree, "input_and_output_settings", path);
 
 	boost::optional<bool> skip_points = tree.get_optional<bool>("skip_points");
 	boost::optional<bool> disable_meshing = tree.get_optional<bool>("disable_meshing");
@@ -532,44 +608,43 @@ Configuration* Configuration::from_property_tree(const pt::ptree& tree) {
 	);
 }
 
-Configuration::Configuration(
-		ITMSceneParameters scene_parameters, ITMSurfelSceneParameters surfel_scene_parameters,
-		SlavchevaSurfaceTracker::Parameters slavcheva_parameters, SlavchevaSurfaceTracker::Switches slavcheva_switches,
-		Configuration::TelemetrySettings telemetry_settings,
-		Configuration::InputAndOutputSettings input_and_output_settings,
-		bool skip_points, bool create_meshing_engine,
-		MemoryDeviceType device_type,
-		bool use_approximate_raycast, bool use_threshold_filter, bool use_bilateral_filter,
-		Configuration::FailureMode behavior_on_failure,
-		Configuration::SwappingMode swapping_mode,
-		Configuration::LibMode library_mode,
-		Configuration::IndexingMethod indexing_method,
-		GradientFunctorType surface_tracker_type,
-		std::string tracker_configuration,
-		unsigned int max_iteration_threshold,
-		float max_update_length_threshold) :
 
-		scene_parameters(scene_parameters),
-		surfel_scene_parameters(surfel_scene_parameters),
-		slavcheva_parameters(slavcheva_parameters),
-		slavcheva_switches(slavcheva_switches),
-		telemetry_settings(telemetry_settings),
-		input_and_output_settings(std::move(input_and_output_settings)),
-		skip_points(skip_points),
-		create_meshing_engine(create_meshing_engine),
-		device_type(device_type),
-		use_approximate_raycast(use_approximate_raycast),
-		use_threshold_filter(use_threshold_filter),
-		use_bilateral_filter(use_bilateral_filter),
-		behavior_on_failure(behavior_on_failure),
-		swapping_mode(swapping_mode),
-		library_mode(library_mode),
-		indexing_method(indexing_method),
-		surface_tracker_type(surface_tracker_type),
-		tracker_configuration(std::move(tracker_configuration)),
-		max_iteration_threshold(max_iteration_threshold),
-		max_update_length_threshold(
-				max_update_length_threshold) {}
+
+pt::ptree Configuration::to_ptree(const std::string& path) const {
+	pt::ptree tree;
+	tree.add_child("scene_parameters", this->scene_parameters.ToPTree());
+	tree.add_child("surfel_scene_parameters", this->surfel_scene_parameters.ToPTree());
+	tree.add("slavcheva.preset", enum_value_to_string(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION));
+	tree.add_child("slavcheva.parameters", this->slavcheva_parameters.ToPTree());
+	tree.add_child("slavcheva.switches", slavcheva_switches.ToPTree());
+	tree.add_child("telemetry_settings", this->telemetry_settings.ToPTree());
+	tree.add_child("input_and_output_settings", this->input_and_output_settings.ToPTree(path));
+	tree.add("skip_points", skip_points);
+	tree.add("disable_meshing", !create_meshing_engine);
+	tree.add("device", enum_value_to_string(this->device_type));
+	tree.add("use_approximate_raycast", this->use_approximate_raycast);
+	tree.add("use_threshold_filter", this->use_threshold_filter);
+	tree.add("use_bilateral_filter", this->use_bilateral_filter);
+	tree.add("failure_mode", enum_value_to_string(this->behavior_on_failure));
+	tree.add("swapping", enum_value_to_string(this->swapping_mode));
+	tree.add("mode", enum_value_to_string(this->library_mode));
+	tree.add("index", enum_value_to_string(this->indexing_method));
+	tree.add("surface_tracking.functor_type", enum_value_to_string(this->surface_tracker_type));
+	tree.add("tracker", this->tracker_configuration);
+	tree.add("surface_tracking.max_iterations", this->max_iteration_threshold);
+	tree.add("surface_tracking.vector_update_threshold", this->max_update_length_threshold);
+	return tree;
+}
+
+void Configuration::save_configuration_to_json_file(const std::string& path) {
+	pt::write_json_no_quotes(path, instance->to_ptree(path), true);
+}
+
+
+void Configuration::save_to_json_file(const std::string& path) {
+	pt::write_json_no_quotes(path, this->to_ptree(path), true);
+}
+
 
 namespace ITMLib {
 bool operator==(const Configuration& c1, const Configuration& c2) {
@@ -596,68 +671,13 @@ bool operator==(const Configuration& c1, const Configuration& c2) {
 }
 
 std::ostream& operator<<(std::ostream& out, const Configuration& c) {
-	pt::ptree tree(c.to_ptree());
-	pt::write_json_no_quotes(out, tree, true);
+	pt::write_json_no_quotes(out, c.to_ptree(""), true);
+	out << "";
 }
 
 
 }//namespace ITMLib
-
-pt::ptree Configuration::to_ptree() const {
-	pt::ptree tree;
-	tree.add_child("scene_parameters", this->scene_parameters.ToPTree());
-	tree.add_child("surfel_scene_parameters", this->surfel_scene_parameters.ToPTree());
-	tree.add("slavcheva.preset", enum_value_to_string(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION));
-	tree.add_child("slavcheva.parameters", this->slavcheva_parameters.ToPTree());
-	tree.add_child("slavcheva.switches", slavcheva_switches.ToPTree());
-	tree.add_child("telemetry_settings", this->telemetry_settings.ToPTree());
-	tree.add_child("input_and_output_settings", this->input_and_output_settings.ToPTree());
-	tree.add("skip_points", skip_points);
-	tree.add("disable_meshing", !create_meshing_engine);
-	tree.add("device", enum_value_to_string(this->device_type));
-	tree.add("use_approximate_raycast", this->use_approximate_raycast);
-	tree.add("use_threshold_filter", this->use_threshold_filter);
-	tree.add("use_bilateral_filter", this->use_bilateral_filter);
-	tree.add("failure_mode", enum_value_to_string(this->behavior_on_failure));
-	tree.add("swapping", enum_value_to_string(this->swapping_mode));
-	tree.add("mode", enum_value_to_string(this->library_mode));
-	tree.add("index", enum_value_to_string(this->indexing_method));
-	tree.add("surface_tracking.functor_type", enum_value_to_string(this->surface_tracker_type));
-	tree.add("tracker", this->tracker_configuration);
-	tree.add("surface_tracking.max_iterations", this->max_iteration_threshold);
-	tree.add("surface_tracking.vector_update_threshold", this->max_update_length_threshold);
-	return tree;
-}
-
-void Configuration::save_configuration_to_json_file(const std::string& path) {
-	pt::write_json_no_quotes(path, instance->to_ptree(), true);
-}
-
-
-void Configuration::save_to_json_file(const std::string& path) {
-	pt::write_json_no_quotes(path, this->to_ptree(), true);
-}
-
-template<typename T>
-static
-boost::optional<std::vector<T>> as_optional_vector(pt::ptree const& pt, pt::ptree::key_type const& key) {
-	if (pt.count(key) == 0) {
-		return boost::optional<std::vector<T>>{};
-	}
-	std::vector<T> r;
-	for (auto& item : pt.get_child(key))
-		r.push_back(item.second.get_value<T>());
-	return boost::optional<std::vector<T>>(r);
-}
-
-template<typename T>
-static
-std::vector<T> as_vector(pt::ptree const& pt, pt::ptree::key_type const& key) {
-	std::vector<T> r;
-	for (auto& item : pt.get_child(key))
-		r.push_back(item.second.get_value<T>());
-	return r;
-}
+// endregion ===========================================================================================================
 
 // region ====================================== INPUT AND OUTPUT SETTINGS =============================================
 
@@ -726,8 +746,32 @@ Configuration::InputAndOutputSettings::InputAndOutputSettings(std::string output
 		mask_image_path_mask(std::move(mask_image_path_mask)),
 		imu_input_path(std::move(imu_input_path)) {}
 
+std::string preprocess_path(const std::string& path, const std::string& config_path) {
+	const std::regex configuration_directory_regex("^<CONFIGURATION_DIRECTORY>");
+	std::string resulting_path;
+	if(std::regex_search(path, configuration_directory_regex)){
+		std::string cleared = std::regex_replace(path, configuration_directory_regex,  "");
+		resulting_path = (fs::path(config_path).parent_path() / fs::path(cleared)).string();
+	}else{
+		resulting_path = path;
+	}
+	return resulting_path;
+}
 
-Configuration::InputAndOutputSettings Configuration::InputAndOutputSettings::BuildFromPTree(const pt::ptree& tree) {
+std::string postprocess_path(const std::string& path, const std::string& config_path) {
+	if(config_path.empty() ) return path;
+	const std::string configuration_directory_substitute ="<CONFIGURATION_DIRECTORY>";
+	std::regex configuration_directory_regex(fs::path(config_path).parent_path().string());
+	std::string resulting_path;
+	if(std::regex_search(path, configuration_directory_regex)){
+		resulting_path = std::regex_replace(path, configuration_directory_regex,  configuration_directory_substitute);
+	}else{
+		resulting_path = path;
+	}
+	return resulting_path;
+}
+
+Configuration::InputAndOutputSettings Configuration::InputAndOutputSettings::BuildFromPTree(const pt::ptree& tree, const std::string& config_path) {
 	boost::optional<std::string> output_path_opt = tree.get_optional<std::string>("output");
 	std::string output_path,
 			calibration_file_path,
@@ -738,8 +782,8 @@ Configuration::InputAndOutputSettings Configuration::InputAndOutputSettings::Bui
 			depth_image_path_mask,
 			mask_image_path_mask,
 			imu_input_path;
-	auto value_or_empty_string = [](boost::optional<std::string> optional) {
-		return optional ? optional.get() : "";
+	auto value_or_empty_string = [&config_path](boost::optional<std::string> optional) {
+		return optional ? preprocess_path(optional.get(), config_path) : "";
 	};
 	calibration_file_path = value_or_empty_string(tree.get_optional<std::string>("calibration_file_path"));
 	openni_file_path = value_or_empty_string(tree.get_optional<std::string>("openni_file_path"));
@@ -751,7 +795,7 @@ Configuration::InputAndOutputSettings Configuration::InputAndOutputSettings::Bui
 	imu_input_path = value_or_empty_string(tree.get_optional<std::string>("imp_input_path"));
 	InputAndOutputSettings default_io_settings;
 
-	return {output_path_opt ? output_path_opt.get() : default_io_settings.output_path,
+	return {output_path_opt ? preprocess_path(output_path_opt.get(), config_path) : default_io_settings.output_path,
 	        calibration_file_path,
 	        openni_file_path,
 	        rgb_video_file_path,
@@ -762,12 +806,12 @@ Configuration::InputAndOutputSettings Configuration::InputAndOutputSettings::Bui
 	        imu_input_path};
 }
 
-pt::ptree Configuration::InputAndOutputSettings::ToPTree() const {
+pt::ptree Configuration::InputAndOutputSettings::ToPTree(const std::string& path) const {
 	pt::ptree tree;
 	tree.add("output", this->output_path);
-	auto add_to_tree_if_not_empty = [](pt::ptree& tree, const std::string& key, const std::string& string) {
+	auto add_to_tree_if_not_empty = [&path](pt::ptree& tree, const std::string& key, const std::string& string) {
 		if (string != "") {
-			tree.add(key, string);
+			tree.add(key, postprocess_path(string, path));
 		}
 	};
 	add_to_tree_if_not_empty(tree, "calibration_file_path", calibration_file_path);
@@ -784,8 +828,8 @@ pt::ptree Configuration::InputAndOutputSettings::ToPTree() const {
 namespace ITMLib {
 
 bool operator==(const Configuration::InputAndOutputSettings& ios1, const Configuration::InputAndOutputSettings& ios2) {
-	return ios1.output_path == ios2.output_path &&
-	       ios1.calibration_file_path == ios2.calibration_file_path &&
+	return ios1.output_path == ios2.output_path;// &&
+	       ios1.calibration_file_path == ios2.calibration_file_path; // &&
 	       ios1.openni_file_path == ios2.openni_file_path &&
 	       ios1.rgb_video_file_path == ios2.rgb_video_file_path &&
 	       ios1.depth_video_file_path == ios2.depth_video_file_path &&
@@ -796,14 +840,14 @@ bool operator==(const Configuration::InputAndOutputSettings& ios1, const Configu
 }
 
 std::ostream& operator<<(std::ostream& out, const Configuration::InputAndOutputSettings& ios) {
-	pt::ptree tree(ios.ToPTree());
+	pt::ptree tree(ios.ToPTree(""));
 	pt::write_json_no_quotes(out, tree, true);
 }
 } // namespace ITMLib
 
 // endregion ===========================================================================================================
 
-// region =============================== Telemetry Settings ===========================================================
+// region =============================== TELEMETRY SETTINGS ===========================================================
 
 Configuration::TelemetrySettings::TelemetrySettings() :
 		focus_coordinates_specified(false),

@@ -31,7 +31,8 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	Configuration default_configuration;
 	//default_configuration.save_to_json_file("../../Tests/TestData/default_config.json");
 	Configuration::load_configuration_from_json_file("TestData/default_config.json");
-	BOOST_REQUIRE_EQUAL(default_configuration, Configuration::get());
+	Configuration& current_config = Configuration::get();
+	BOOST_REQUIRE_EQUAL(default_configuration, current_config);
 	Configuration configuration1(
 			ITMSceneParameters(0.05, 200, 0.005, 0.12, 4.12, true),
 			ITMSurfelSceneParameters(0.4f, 0.5f, static_cast<float>(22 * M_PI / 180), 0.008f, 0.0003f, 3.4f, 26.0f, 5,
@@ -39,11 +40,12 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			SlavchevaSurfaceTracker::Parameters(0.11f, 0.09f, 2.0f, 0.3f, 0.1f, 1e-6f),
 			SlavchevaSurfaceTracker::Switches(false, true, false, true, false),
 			Configuration::TelemetrySettings(true, Vector3i(20, 23, 0)),
-			Configuration::InputAndOutputSettings("output1", "calib_file1.txt",
+			Configuration::InputAndOutputSettings("TestData/output1",
+			                                      "TestData/calib_file1.txt",
 			                                      "", "", "",
-			                                      "frame_color_%%06i.png",
-			                                      "frame_depth_%%06i.png",
-			                                      "frame_mask_%%06i.png"),
+			                                      "TestData/frame_color_%%06i.png",
+			                                      "TestData/frame_depth_%%06i.png",
+			                                      "TestData/frame_mask_%%06i.png"),
 			true,
 			false,
 			MEMORYDEVICE_CPU,
@@ -66,6 +68,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	BOOST_REQUIRE_EQUAL(configuration1.slavcheva_parameters, Configuration::get().slavcheva_parameters);
 	BOOST_REQUIRE_EQUAL(configuration1.slavcheva_switches, Configuration::get().slavcheva_switches);
 	BOOST_REQUIRE_EQUAL(configuration1.telemetry_settings, Configuration::get().telemetry_settings);
+	BOOST_REQUIRE_EQUAL(configuration1.input_and_output_settings, Configuration::get().input_and_output_settings);
 	BOOST_REQUIRE_EQUAL(configuration1, Configuration::get());
 
 }
