@@ -18,9 +18,9 @@
 #endif
 
 #include "../../ITMLib/ITMLibDefines.h"
-#include "../../ITMLib/Core/ITMBasicEngine.h"
-#include "../../ITMLib/Core/ITMBasicSurfelEngine.h"
-#include "../../ITMLib/Core/ITMMultiEngine.h"
+#include "../../ITMLib/Engines/Main/ITMBasicEngine.h"
+#include "../../ITMLib/Engines/Main/ITMBasicSurfelEngine.h"
+#include "../../ITMLib/Engines/Main/ITMMultiEngine.h"
 
 #include "../../ORUtils/FileUtils.h"
 #include "../../InputSource/FFMPEGWriter.h"

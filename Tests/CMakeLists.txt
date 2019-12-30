@@ -64,20 +64,16 @@ if (BUILD_TESTS)
 
     find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 
+    ####################################
+    # Specify test targets and sources #
+    ####################################
     itm_add_test(NAME SetCopyCompare_CPU SOURCES Test_SetCopyCompare_CPU.cpp)
-    itm_add_test(NAME SetCopyCompare_CUDA SOURCES Test_SetCopyCompare_CUDA.cpp)
     itm_add_test(NAME ConstructVolumeFromImage_CPU SOURCES Test_ConstructVolumeFromImage_CPU.cpp)
-    itm_add_test(NAME ConstructVolumeFromImage_CUDA SOURCES Test_ConstructVolumeFromImage_CUDA.cpp)
-    itm_add_test(NAME ConstructVolumeFromImage_CPU_to_CUDA SOURCES
-                 Test_ConstructVolumeFromImage_CPU_to_CUDA.cpp)
     itm_add_test(NAME VolumeSaveLoadCompact_CPU SOURCES Test_VolumeSaveLoadCompact_CPU.cpp)
-    itm_add_test(NAME VolumeSaveLoadCompact_CUDA SOURCES Test_VolumeSaveLoadCompact_CUDA.cpp)
     itm_add_test(NAME IntArrayMap3D SOURCES Test_IntArrayMap3D.cpp)
     itm_add_test(NAME ImageMaskReader SOURCES Test_ImageMaskReader.cpp)
     itm_add_test(NAME WarpGradient_CPU_PVA SOURCES Test_WarpGradient_CPU_PVA.cpp Test_WarpGradient_Common.h)
     itm_add_test(NAME WarpGradient_CPU_VBH SOURCES Test_WarpGradient_CPU_VBH.cpp Test_WarpGradient_Common.h)
-    itm_add_test(NAME WarpGradient_CUDA_PVA SOURCES Test_WarpGradient_CUDA_PVA.cpp Test_WarpGradient_Common.h)
-    itm_add_test(NAME WarpGradient_CUDA_VBH SOURCES Test_WarpGradient_CUDA_VBH.cpp Test_WarpGradient_Common.h)
     itm_add_test(NAME SceneSlicingPVA_CPU SOURCES Test_SceneSlicingPVA_CPU.cpp)
     itm_add_test(NAME SurfaceTrackingAuxiliaryFunctions SOURCES Test_SurfaceTrackingAuxiliaryFunctions.cpp)
     itm_add_test(NAME WarpScene SOURCES Test_WarpScene.cpp )
@@ -86,10 +82,21 @@ if (BUILD_TESTS)
                  WarpAdvancedTestingUtilities.h WarpAdvancedTestingUtilities.tpp WarpAdvancedTestingUtilities.cpp)
     itm_add_test(NAME Configuration SOURCES Test_Configuration.cpp)
     itm_add_test(NAME GeometryUtilities SOURCES Test_GeometryUtilities.cpp)
-    itm_add_test(NAME SmoothWarpGradient SOURCES Test_SmoothWarpGradient.cpp)
     itm_add_test(NAME ExpandAllocation SOURCES Test_ExpandAllocation.cpp)
-    itm_add_test(NAME CUDA_Atomics SOURCES Test_CUDA_Atomics.cpp CUDAAtomicTesting.h
-                 CUDAAtomicTesting.cu TemporaryCUDA_Atomics.h)
+
+    # *** CUDA-only tests
+    if(WITH_CUDA)
+        itm_add_test(NAME SetCopyCompare_CUDA SOURCES Test_SetCopyCompare_CUDA.cpp)
+        itm_add_test(NAME ConstructVolumeFromImage_CUDA SOURCES Test_ConstructVolumeFromImage_CUDA.cpp)
+        itm_add_test(NAME ConstructVolumeFromImage_CPU_to_CUDA SOURCES
+                     Test_ConstructVolumeFromImage_CPU_to_CUDA.cpp)
+        itm_add_test(NAME VolumeSaveLoadCompact_CUDA SOURCES Test_VolumeSaveLoadCompact_CUDA.cpp)
+        itm_add_test(NAME WarpGradient_CUDA_PVA SOURCES Test_WarpGradient_CUDA_PVA.cpp Test_WarpGradient_Common.h)
+        itm_add_test(NAME WarpGradient_CUDA_VBH SOURCES Test_WarpGradient_CUDA_VBH.cpp Test_WarpGradient_Common.h)
+        itm_add_test(NAME CUDA_Atomics SOURCES Test_CUDA_Atomics.cpp CUDAAtomicTesting.h
+                     CUDAAtomicTesting.cu TemporaryCUDA_Atomics.h)
+        itm_add_test(NAME SmoothWarpGradient SOURCES Test_SmoothWarpGradient_CPU_CUDA.cpp)
+    endif()
 
     #####################################################
     # Recursively transfer test data to build directory #

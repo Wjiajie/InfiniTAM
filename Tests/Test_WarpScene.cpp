@@ -30,10 +30,8 @@
 
 
 #ifndef COMPILE_WITHOUT_CUDA
-
 #include "../ITMLib/Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h"
-
 #endif
 
 #include "TestUtils.h"

@@ -71,7 +71,7 @@ struct WarpGradientDataFixture {
 			                                              Configuration::SWAPPINGMODE_ENABLED,
 			                                              TMemoryType,
 			                                              indexParameters);
-			PrepareVoxelVolumeForLoading(*scene, TMemoryType);
+			PrepareVoxelVolumeForLoading(*scene);
 			(*scene)->LoadFromDirectory(pathToData + pathSuffix);
 		};
 		auto loadWarpVolume = [&](ITMVoxelVolume<ITMWarp, TIndex>** scene, const std::string& pathSuffix) {
@@ -80,7 +80,7 @@ struct WarpGradientDataFixture {
 			                                             Configuration::SWAPPINGMODE_ENABLED,
 			                                             TMemoryType,
 			                                             indexParameters);
-			PrepareVoxelVolumeForLoading(*scene, TMemoryType);
+			PrepareVoxelVolumeForLoading(*scene);
 			(*scene)->LoadFromDirectory(pathToData + pathSuffix);
 		};
 		loadSdfVolume(&live_volume, "snoopy_partial_frame_17_");

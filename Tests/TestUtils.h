@@ -28,8 +28,10 @@ using namespace ITMLib;
 template<class TVoxel, class TIndex>
 void GenerateTestScene_CPU(ITMVoxelVolume<TVoxel, TIndex>* scene);
 
+#ifndef COMPILE_WITHOUT_CUDA
 template<class TVoxel, class TIndex>
 void GenerateTestScene_CUDA(ITMVoxelVolume<TVoxel, TIndex>* scene);
+#endif
 
 void GenerateAndLogKillingScene01();
 
@@ -51,7 +53,7 @@ void TimeIt(std::function<void(void)> function, const std::string& description =
 
 
 template<typename TVoxel, typename TIndex>
-void PrepareVoxelVolumeForLoading(ITMVoxelVolume<TVoxel, TIndex>* volume, MemoryDeviceType deviceType);
+void PrepareVoxelVolumeForLoading(ITMVoxelVolume<TVoxel, TIndex>* volume);
 
 
 template<typename TIndex>

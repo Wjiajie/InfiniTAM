@@ -14,15 +14,15 @@
 //  limitations under the License.
 //  ================================================================
 #include <random>
-#include <boost/test/test_tools.hpp>
 
 #include "TestUtils.h"
 #include "../ITMLib/Utils/Configuration.h"
-#include "../ITMLib/Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
 #include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
-#include "../ITMLib/Engines/ViewBuilding/ITMViewBuilderFactory.h"
 #include "../ORUtils/FileUtils.h"
 
+#ifndef COMPILE_WITHOUT_CUDA
+#include "../ITMLib/Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
+#endif
 
 using namespace ITMLib;
 
@@ -52,6 +52,7 @@ void GenerateTestScene_CPU(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 
 }
 
+#ifndef COMPILE_WITHOUT_CUDA
 template<class TVoxel, class TIndex>
 void GenerateTestScene_CUDA(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	VolumeEditAndCopyEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(scene);
@@ -77,7 +78,7 @@ void GenerateTestScene_CUDA(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	}
 
 }
-
+#endif
 
 template<bool hasSemanticInformation, typename TVoxel>
 struct HandleSDFBasedFlagsAlterationFunctor;
@@ -198,7 +199,7 @@ void loadVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& path
 	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&settings.scene_parameters,
 	                                               swappingMode,
 	                                               memoryDeviceType, initializationParameters);
-	PrepareVoxelVolumeForLoading(*volume, memoryDeviceType);
+	PrepareVoxelVolumeForLoading(*volume);
 	(*volume)->LoadFromDirectory(path);
 }
 
@@ -232,11 +233,21 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
 	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&Configuration::get().scene_parameters, swappingMode,
 	                                               memoryDevice, initializationParameters);
 	switch (memoryDevice) {
+
 		case MEMORYDEVICE_CUDA:
+#ifndef COMPILE_WITHOUT_CUDA
 			VolumeEditAndCopyEngine_CUDA<TVoxel, TIndex>::Inst().ResetScene(*volume);
+#else
+			DIEWITHEXCEPTION_REPORTLOCATION("Trying to construct a volume in CUDA memory while code was build "
+								   "without CUDA support, aborting.");
+#endif
 			break;
+
 		case MEMORYDEVICE_CPU:
 			VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(*volume);
+			break;
+		case MEMORYDEVICE_METAL:
+			DIEWITHEXCEPTION_REPORTLOCATION("Metal framework not fully supported.");
 			break;
 	}
 	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.viewFrustum_min,

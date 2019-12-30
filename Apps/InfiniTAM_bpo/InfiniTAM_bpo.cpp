@@ -17,10 +17,15 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
+#ifdef WITH_VTK
 //VTK
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
 #include <vtkContextScene.h>
+
+//ITMLib/VTK
+#include "../../ITMLib/Utils/Visualization/ITMVisualizationWindowManager.h"
+#endif
 
 //ITMLib
 #include "../../ITMLib/ITMLibDefines.h"
@@ -28,7 +33,6 @@
 #include "../../ITMLib/Engines/Main/ITMBasicSurfelEngine.h"
 #include "../../ITMLib/Engines/Main/ITMMultiEngine.h"
 #include "../../ITMLib/Engines/Main/ITMDynamicEngine.h"
-#include "../../ITMLib/Utils/Visualization/ITMVisualizationWindowManager.h"
 #include "../../ITMLib/Engines/Main/MianEngineFactory.h"
 
 //local
@@ -176,7 +180,7 @@ int main(int argc, char** argv) {
 
 
 		//TODO (see top of file)
-#ifndef WIN32
+#if !defined(WIN32) && defined(WITH_VTK)
 		XInitThreads();
 #endif
 		UIEngine_BPO::Instance().Initialize(argc, argv, imageSource, imuSource, mainEngine,

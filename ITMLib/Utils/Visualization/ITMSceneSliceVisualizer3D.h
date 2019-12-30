@@ -20,14 +20,6 @@
 #include <condition_variable>
 #include <unordered_map>
 
-//VTK
-#include <vtkSmartPointer.h>
-#include <vtkExtractPolyDataGeometry.h>
-#include <vtkSphereSource.h>
-#include <vtkCubeSource.h>
-#include <vtkPointSet.h>
-
-
 //ITMLib
 #include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "../FileIO/ITMSceneLogger.h"
@@ -35,6 +27,14 @@
 #include "ITMVisualizationWindowManager.h"
 #include "ITMVisualizationCommon.h"
 #include "../../ITMLibDefines.h"
+
+//VTK
+#include <vtkSmartPointer.h>
+#include <vtkExtractPolyDataGeometry.h>
+#include <vtkSphereSource.h>
+#include <vtkCubeSource.h>
+#include <vtkPointSet.h>
+
 
 class vtkPoints;
 class vtkPolyData;

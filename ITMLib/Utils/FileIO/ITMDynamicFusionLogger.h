@@ -17,10 +17,13 @@
 
 #include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "ITMSceneLogger.h"
-#include "../Visualization/ITMSceneSliceVisualizer1D.h"
 #include "../Visualization/ITMSceneSliceVisualizer2D.h"
+#ifdef WITH_VTK
+#include "../Visualization/ITMSceneSliceVisualizer1D.h"
 #include "../Visualization/ITMSceneSliceVisualizer3D.h"
 #include "../Visualization/ITMSceneTrackingEnergyPlotter.h"
+#endif
+
 
 namespace ITMLib {
 
@@ -173,10 +176,12 @@ private:
 	void MakeOrClearOutputDirectoriesFor2DSceneSlices() const;
 
 	// various loggers & visualizers
-	std::unique_ptr<ITMSceneSliceVisualizer1D> scene1DSliceVisualizer;
 	std::unique_ptr<ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>> scene2DSliceVisualizer;
+#ifdef WITH_VTK
+	std::unique_ptr<ITMSceneSliceVisualizer1D> scene1DSliceVisualizer;
 	std::unique_ptr<ITMSceneSliceVisualizer3D<TVoxel, TWarp, TIndex>> scene3DSliceVisualizer;
 	std::unique_ptr<ITMSceneTrackingEnergyPlotter> energyPlotter;
+#endif
 	ITMSceneLogger<TVoxel, TWarp, TIndex>* scene3DLogger = nullptr;
 
 	// internal references to the scenes

@@ -4,7 +4,7 @@
 #include "../../../InputSource/OpenNIEngine.h"
 #include "../../../InputSource/IMUSourceEngine.h"
 
-#include "../../../ITMLib/Core/ITMBasicEngine.h"
+#include "../../../ITMLib/Engines/Main/ITMBasicEngine.h"
 #include "../../../ITMLib/ITMLibDefines.h"
 
 #include <GLES/gl.h>

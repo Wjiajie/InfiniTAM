@@ -32,14 +32,12 @@
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 //local - CUDA
 #ifndef COMPLIE_WITHOUT_CUDA
-
 #include "../ITMLib/Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
 #include "../ITMLib/Engines/VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
 #include "CUDAAtomicTesting.h"
 #include "../ITMLib/Engines/VolumeEditAndCopy/VolumeEditAndCopyEngineFactory.h"
 #include "TestUtils.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
-
 #endif
 
 
@@ -180,11 +178,11 @@ BOOST_AUTO_TEST_CASE(TestAllocateBasedOnVolumeExpanded_CPU) {
 	TestAllocateBasedOnVolumeExpanded_Generic<MEMORYDEVICE_CPU>();
 }
 
+#ifndef COMPILE_WITHOUT_CUDA
+
 BOOST_AUTO_TEST_CASE(TestAllocateBasedOnVolumeExpanded_CUDA) {
 	TestAllocateBasedOnVolumeExpanded_Generic<MEMORYDEVICE_CUDA>();
 }
-
-#ifndef COMPILE_WITHOUT_CUDA
 
 BOOST_AUTO_TEST_CASE(ExpandVolume_CUDA) {
 	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>& indexing_engine

@@ -1271,7 +1271,7 @@
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "../../ITMLib/Core/ITMMainEngine.h"
+            filePath = "../../ITMLib/Engines/Main/ITMMainEngine.h"
             timestampString = "482674596.69949"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"

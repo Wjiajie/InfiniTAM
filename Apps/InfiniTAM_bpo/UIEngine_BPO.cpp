@@ -22,9 +22,11 @@
 #endif
 #endif
 
+#ifdef WITH_VTK
 //VTK
 #include <vtkCommand.h>
 #include <vtkRenderWindowInteractor.h>
+#endif
 
 //ITMLib
 #include "../../ITMLib/ITMLibDefines.h"

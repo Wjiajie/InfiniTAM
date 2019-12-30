@@ -13,6 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+#include <boost/test/test_tools.hpp>
 #include "TestUtils.h"
 #include "TestUtils.tpp"
 
@@ -21,13 +22,17 @@
 #include "../ITMLib/Engines/VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
 #include "../ITMLib/Utils/FileIO/ITMSceneLogger.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
+#include "../ITMLib/Engines/ViewBuilding/Interface/ITMViewBuilder.h"
+#include "../ITMLib/Engines/ViewBuilding/ITMViewBuilderFactory.h"
 
 using namespace ITMLib;
 
 template void GenerateTestScene_CPU<ITMVoxel, ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* scene);
 template void GenerateTestScene_CPU<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* scene);
+#ifndef COMPILE_WITHOUT_CUDA
 template void GenerateTestScene_CUDA<ITMVoxel, ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* scene);
 template void GenerateTestScene_CUDA<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* scene);
+#endif
 
 template void simulateVoxelAlteration<ITMVoxel>(ITMVoxel& voxel, float newSdfValue);
 template void simulateRandomVoxelAlteration<ITMVoxel>(ITMVoxel& voxel);
@@ -36,40 +41,20 @@ template void simulateRandomVoxelAlteration<ITMWarp>(ITMWarp& voxel);
 
 //have nothing to prep for PVA -- everything gets copied off the disk exactly
 template<>
-void PrepareVoxelVolumeForLoading(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume, MemoryDeviceType deviceType) {}
+void PrepareVoxelVolumeForLoading(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume) {}
 
 template<>
-void PrepareVoxelVolumeForLoading(ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* volume, MemoryDeviceType deviceType) {}
+void PrepareVoxelVolumeForLoading(ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* volume) {}
 
-//for VBH, the scene has to be reset -- there may be
+//for VBH, the scene has to be reset before loading
 template<>
-void PrepareVoxelVolumeForLoading(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume, MemoryDeviceType deviceType) {
-	switch (deviceType) {
-		case MEMORYDEVICE_CPU:
-			VolumeEditAndCopyEngine_CPU<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(volume);
-			break;
-		case MEMORYDEVICE_CUDA:
-			VolumeEditAndCopyEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(volume);
-			break;
-		default:
-			DIEWITHEXCEPTION_REPORTLOCATION("Memory/Device type not supported");
-	}
+void PrepareVoxelVolumeForLoading(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume) {
+	volume->Reset();
 }
-
 template<>
-void PrepareVoxelVolumeForLoading(ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* volume, MemoryDeviceType deviceType) {
-	switch (deviceType) {
-		case MEMORYDEVICE_CPU:
-			VolumeEditAndCopyEngine_CPU<ITMWarp, ITMVoxelBlockHash>::Inst().ResetScene(volume);
-			break;
-		case MEMORYDEVICE_CUDA:
-			VolumeEditAndCopyEngine_CUDA<ITMWarp, ITMVoxelBlockHash>::Inst().ResetScene(volume);
-			break;
-		default:
-			DIEWITHEXCEPTION_REPORTLOCATION("Memory/Device type not supported");
-	}
+void PrepareVoxelVolumeForLoading(ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* volume) {
+	volume->Reset();
 }
-
 
 template<>
 ITMPlainVoxelArray::InitializationParameters GetFrame17PartialIndexParameters<ITMPlainVoxelArray>() {
@@ -119,46 +104,42 @@ typename ITMVoxelBlockHash::InitializationParameters GetStandard128IndexParamete
 //                                                         Configuration::SwappingMode swapping_mode);
 
 template void loadVolume<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>** volume,
-                                                          const std::string& path, MemoryDeviceType memoryDeviceType,
-                                                          ITMPlainVoxelArray::InitializationParameters initializationParameters,
-                                                          Configuration::SwappingMode swappingMode);
+                                                       const std::string& path, MemoryDeviceType memoryDeviceType,
+                                                       ITMPlainVoxelArray::InitializationParameters initializationParameters,
+                                                       Configuration::SwappingMode swappingMode);
 template void loadVolume<ITMVoxel, ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>** volume,
-                                                         const std::string& path, MemoryDeviceType memoryDeviceType,
-                                                         ITMVoxelBlockHash::InitializationParameters initializationParameters,
-                                                         Configuration::SwappingMode swappingMode);
+                                                      const std::string& path, MemoryDeviceType memoryDeviceType,
+                                                      ITMVoxelBlockHash::InitializationParameters initializationParameters,
+                                                      Configuration::SwappingMode swappingMode);
 template void loadVolume<ITMWarp, ITMPlainVoxelArray>(ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>** volume,
-                                                         const std::string& path, MemoryDeviceType memoryDeviceType,
-                                                         ITMPlainVoxelArray::InitializationParameters initializationParameters,
-                                                         Configuration::SwappingMode swappingMode);
+                                                      const std::string& path, MemoryDeviceType memoryDeviceType,
+                                                      ITMPlainVoxelArray::InitializationParameters initializationParameters,
+                                                      Configuration::SwappingMode swappingMode);
 template void loadVolume<ITMWarp, ITMVoxelBlockHash>(ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>** volume,
-                                                        const std::string& path, MemoryDeviceType memoryDeviceType,
-                                                        ITMVoxelBlockHash::InitializationParameters initializationParameters,
-                                                        Configuration::SwappingMode swappingMode);
+                                                     const std::string& path, MemoryDeviceType memoryDeviceType,
+                                                     ITMVoxelBlockHash::InitializationParameters initializationParameters,
+                                                     Configuration::SwappingMode swappingMode);
 
 void
 updateView(ITMView** view, const std::string& depth_path, const std::string& color_path, const std::string& mask_path,
            const std::string& calibration_path, MemoryDeviceType memoryDevice) {
-//	static std::unique_ptr<ITMViewBuilder> viewBuilder_CPU = nullptr;
-//	static std::unique_ptr<ITMViewBuilder> viewBuilder_CUDA = nullptr;
 	static ITMViewBuilder* viewBuilder_CPU = nullptr;
 	static ITMViewBuilder* viewBuilder_CUDA = nullptr;
 	ITMViewBuilder* viewBuilderToUse;
-	switch(memoryDevice){
-//		case MEMORYDEVICE_CPU:
-//			if (viewBuilder_CPU == nullptr) viewBuilder_CPU.reset(ITMViewBuilderFactory::MakeViewBuilder(calibration_path, memoryDevice));
-//			viewBuilderToUse = viewBuilder_CPU.get();
-//			break;
-//		case MEMORYDEVICE_CUDA:
-//			if (viewBuilder_CUDA == nullptr) viewBuilder_CUDA.reset(ITMViewBuilderFactory::MakeViewBuilder(calibration_path, memoryDevice));
-//			viewBuilderToUse = viewBuilder_CUDA.get();
-//			break;
+	switch (memoryDevice) {
 		case MEMORYDEVICE_CPU:
-			if (viewBuilder_CPU == nullptr) viewBuilder_CPU = ITMViewBuilderFactory::MakeViewBuilder(calibration_path, memoryDevice);
+			if (viewBuilder_CPU == nullptr)
+				viewBuilder_CPU = ITMViewBuilderFactory::MakeViewBuilder(calibration_path, memoryDevice);
 			viewBuilderToUse = viewBuilder_CPU;
 			break;
 		case MEMORYDEVICE_CUDA:
-			if (viewBuilder_CUDA == nullptr) viewBuilder_CUDA = ITMViewBuilderFactory::MakeViewBuilder(calibration_path, memoryDevice);
+#ifndef COMPILE_WITHOUT_CUDA
+			if (viewBuilder_CUDA == nullptr)
+				viewBuilder_CUDA = ITMViewBuilderFactory::MakeViewBuilder(calibration_path, memoryDevice);
 			viewBuilderToUse = viewBuilder_CUDA;
+#else
+			DIEWITHEXCEPTION_REPORTLOCATION("Attmpted to update CUDA view while build without CUDA support, aborting.");
+#endif
 			break;
 		default:
 			DIEWITHEXCEPTION_REPORTLOCATION("unsupported memory device type!");
@@ -221,10 +202,22 @@ void buildSdfVolumeFromImage<ITMVoxel, ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxe
                                                           bool useBilateralFilter);
 
 template
-void initializeVolume<ITMVoxel, ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>** volume,  ITMVoxelBlockHash::InitializationParameters initializationParameters, MemoryDeviceType memoryDevice,  Configuration::SwappingMode swappingMode);
+void initializeVolume<ITMVoxel, ITMVoxelBlockHash>(ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>** volume,
+                                                   ITMVoxelBlockHash::InitializationParameters initializationParameters,
+                                                   MemoryDeviceType memoryDevice,
+                                                   Configuration::SwappingMode swappingMode);
 template
-void initializeVolume<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>** volume,  ITMPlainVoxelArray::InitializationParameters initializationParameters, MemoryDeviceType memoryDevice,  Configuration::SwappingMode swappingMode);
+void initializeVolume<ITMVoxel, ITMPlainVoxelArray>(ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>** volume,
+                                                    ITMPlainVoxelArray::InitializationParameters initializationParameters,
+                                                    MemoryDeviceType memoryDevice,
+                                                    Configuration::SwappingMode swappingMode);
 template
-void initializeVolume<ITMWarp, ITMVoxelBlockHash>(ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>** volume,  ITMVoxelBlockHash::InitializationParameters initializationParameters, MemoryDeviceType memoryDevice,  Configuration::SwappingMode swappingMode);
+void initializeVolume<ITMWarp, ITMVoxelBlockHash>(ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>** volume,
+                                                  ITMVoxelBlockHash::InitializationParameters initializationParameters,
+                                                  MemoryDeviceType memoryDevice,
+                                                  Configuration::SwappingMode swappingMode);
 template
-void initializeVolume<ITMWarp, ITMPlainVoxelArray>(ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>** volume,  ITMPlainVoxelArray::InitializationParameters initializationParameters, MemoryDeviceType memoryDevice,  Configuration::SwappingMode swappingMode);
+void initializeVolume<ITMWarp, ITMPlainVoxelArray>(ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>** volume,
+                                                   ITMPlainVoxelArray::InitializationParameters initializationParameters,
+                                                   MemoryDeviceType memoryDevice,
+                                                   Configuration::SwappingMode swappingMode);

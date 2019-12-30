@@ -56,7 +56,8 @@ void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::SetScenes(
 	this->canonicalScene = canonicalScene;
 	this->liveScene = liveScene;
 	this->warpField = warpField;
-	this->scene3DLogger = new ITMSceneLogger<TVoxel, TWarp, TIndex>(canonicalScene, liveScene, warpField, outputDirectory);
+	this->scene3DLogger = new ITMSceneLogger<TVoxel, TWarp, TIndex>(canonicalScene, liveScene, warpField,
+	                                                                outputDirectory);
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
@@ -249,7 +250,9 @@ bool ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::IsPlottingEnergies() const {
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 bool ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::NeedsFramewiseOutputFolder() const {
-	return (this->recording3DSceneAndWarpProgression || this->recordingScene2DSlicesWithUpdates || this->recordingScene1DSlicesWithUpdates || this->recordingCanonicalSceneAs2DSlices || this->recordingLiveSceneAs2DSlices || this->recordingScene3DSlicesWithUpdates) && this->hasFocusCoordinates;
+	return (this->recording3DSceneAndWarpProgression || this->recordingScene2DSlicesWithUpdates ||
+	        this->recordingScene1DSlicesWithUpdates || this->recordingCanonicalSceneAs2DSlices ||
+	        this->recordingLiveSceneAs2DSlices || this->recordingScene3DSlicesWithUpdates) && this->hasFocusCoordinates;
 }
 
 // endregion ===========================================================================================================
@@ -257,7 +260,6 @@ bool ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::NeedsFramewiseOutputFolder()
 template<typename TVoxel, typename TWarp, typename TIndex>
 ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::ITMDynamicFusionLogger() :
 		focusSliceRadius(3),
-		scene1DSliceVisualizer(),
 		scene2DSliceVisualizer() {}
 
 template<typename TVoxel, typename TWarp, typename TIndex>
@@ -269,16 +271,22 @@ void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::InitializeFrameRecording() {
 	// region ================================== 1D/2D SLICE RECORDING =================================================
 	if (hasFocusCoordinates) {
 
+
 		if (recordingScene1DSlicesWithUpdates) {
+#ifdef WITH_VTK
 			this->scene1DSliceVisualizer.reset(new ITMSceneSliceVisualizer1D(focusCoordinates, AXIS_X, 16));
 			scene1DSliceVisualizer->Plot1DSceneSlice(canonicalScene, Vector4i(97, 181, 193, 255), 3.0);
 			scene1DSliceVisualizer->Plot1DSceneSlice(liveScene, Vector4i(183, 115, 46, 255), 3.0);
+#else
+			std::cerr << "Warning: code built without VTK support, hence ignoring the attempt to record 1D volume slices"
+				" with updates" << std::endl;
+#endif
 		}
 
 		scene2DSliceVisualizer.reset(
 				new ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>(focusCoordinates, 100,
-				                                                                   16.0,
-				                                                                   planeFor2Dand3DSlices));
+				                                                     16.0,
+				                                                     planeFor2Dand3DSlices));
 		MakeOrClearOutputDirectoriesFor2DSceneSlices();
 		if (recordingCanonicalSceneAs2DSlices) {
 			scene2DSliceVisualizer->SaveSceneSlicesAs2DImages_AllDirections(
@@ -297,14 +305,19 @@ void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::InitializeFrameRecording() {
 		}
 
 		if (recordingScene3DSlicesWithUpdates) {
+#ifdef WITH_VTK
 			if (!scene3DSliceVisualizer) {
 				scene3DSliceVisualizer.reset(new ITMSceneSliceVisualizer3D<TVoxel, TWarp, TIndex>
-						                             (canonicalScene, liveScene, warpField, focusCoordinates,
-						                              planeFor2Dand3DSlices, _3dSliceInPlaneRadius,
-						                              _3dSliceOutOfPlaneRadius));
+													 (canonicalScene, liveScene, warpField, focusCoordinates,
+													  planeFor2Dand3DSlices, _3dSliceInPlaneRadius,
+													  _3dSliceOutOfPlaneRadius));
 			} else {
 				scene3DSliceVisualizer->TriggerRebuildSlices();
 			}
+#else
+			std::cerr << "Warning: code compiled without VTK support, "
+			             "hence ignoring the attempt to record scene 3D slices with updates" << std::endl;
+#endif
 		}
 
 	} else {
@@ -316,7 +329,12 @@ void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::InitializeFrameRecording() {
 	}
 	// endregion
 	if (plottingEnergies) {
+#ifdef WITH_VTK
 		this->energyPlotter.reset(new ITMSceneTrackingEnergyPlotter());
+#else
+		std::cerr << "Warning: code built without VTK support, hence ignoring the attempt to plot energies on graphs"
+		<< std::endl;
+#endif
 	}
 
 	// region ========================= INITIALIZE WARP RECORDING ======================================================
@@ -364,7 +382,8 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::SaveWarpSlices(int iteration) {
 	if (hasFocusCoordinates) {
 		if (recordingScene2DSlicesWithUpdates) {
-			cv::Mat warpImg = scene2DSliceVisualizer->DrawWarpedSceneImageAroundPoint(canonicalScene, warpField) * 255.0f;
+			cv::Mat warpImg =
+					scene2DSliceVisualizer->DrawWarpedSceneImageAroundPoint(canonicalScene, warpField) * 255.0f;
 			cv::Mat warpImgChannel, warpImgOut, mask, liveImgChannel, markChannel;
 			blank.copyTo(markChannel);
 			scene2DSliceVisualizer->MarkWarpedSceneImageAroundFocusPoint(canonicalScene, warpField, markChannel);
@@ -390,12 +409,23 @@ void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::SaveWarpSlices(int iteration
 			            ".png", liveImgOut);
 		}
 		if (recordingScene1DSlicesWithUpdates) {
+#ifdef WITH_VTK
 			scene1DSliceVisualizer->Plot1DSceneSlice(liveScene, Vector4i(0, 0, 0, 255), 1.0);
 			scene1DSliceVisualizer->Draw1DWarpUpdateVector(canonicalScene, warpField, Vector4i(255, 0, 0, 255));
+#else
+			std::cerr <<"Warning: code build without VTK support, hence ignoring the attempt to record 1D volume slices"
+			   " with updates" << std::endl;
+#endif
 		}
 		if (recordingScene3DSlicesWithUpdates) {
+#ifdef WITH_VTK
+
 			scene3DSliceVisualizer->TriggerDrawWarpUpdates();
 			scene3DSliceVisualizer->TriggerUpdateLiveState();
+#else
+			std::cerr << "Warning: code compiled without VTK support, "
+			             "hence ignoring the attempt to record scene 3D slices with updates" << std::endl;
+#endif
 		}
 	}
 }
@@ -421,15 +451,27 @@ void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::FinalizeFrameRecording() {
 		}
 	}
 	if (plottingEnergies) {
+#ifdef WITH_VTK
 		energyPlotter->SaveScreenshot(this->outputDirectory + "/energy_plot.png");
 		energyPlotter.reset();
+#else
+		std::cerr << "Warning: code built without VTK support, hence ignoring the attempt to plot energies on graphs"
+		<< std::endl;
+#endif
 	}
 	if (hasFocusCoordinates) {
 		if (recordingScene3DSlicesWithUpdates) {
+#ifdef WITH_VTK
 			scene3DSliceVisualizer->TriggerBuildFusedCanonical();
+#else
+			std::cerr << "Warning: code compiled without VTK support, "
+			             "hence ignoring the attempt to record scene 3D slices with updates" << std::endl;
+#endif
 		}
 	}
+#ifdef WITH_VTK
 	scene1DSliceVisualizer.reset();
+#endif
 	scene2DSliceVisualizer.reset();
 	energyStatisticsFile.close();
 }
@@ -443,19 +485,24 @@ void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::SaveWarps() {
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::RecordAndPlotEnergies(double totalDataEnergy,
-                                                                                        double totalLevelSetEnergy,
-                                                                                        double totalKillingEnergy,
-                                                                                        double totalSmoothnessEnergy,
-                                                                                        double totalEnergy) {
+                                                                          double totalLevelSetEnergy,
+                                                                          double totalKillingEnergy,
+                                                                          double totalSmoothnessEnergy,
+                                                                          double totalEnergy) {
 	if (this->recordingEnergiesToFile) {
 		energyStatisticsFile << totalDataEnergy << ", " << totalLevelSetEnergy << ", " << totalKillingEnergy << ", "
 		                     << totalSmoothnessEnergy << ", " << totalEnergy << std::endl;
 	}
 	if (this->plottingEnergies) {
+#ifdef WITH_VTK
 		this->energyPlotter->AddDataPoints(static_cast<float>(totalDataEnergy),
 		                                   static_cast<float>(totalSmoothnessEnergy),
 		                                   static_cast<float>(totalLevelSetEnergy),
 		                                   static_cast<float>(totalKillingEnergy));
+#else
+		std::cerr << "Warning: code built without VTK support, hence ignoring the attempt to plot energies on graphs"
+		          << std::endl;
+#endif
 	}
 }
 
@@ -471,7 +518,7 @@ bool ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::IsRecordingWarps() {
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::LogHighlight(int hash, int locId,
-                                                                               ITMHighlightIterationInfo info) {
+                                                                 ITMHighlightIterationInfo info) {
 	scene3DLogger->LogHighlight(hash, locId, 0, info);
 }
 

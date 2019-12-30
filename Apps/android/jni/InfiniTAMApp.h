@@ -4,7 +4,7 @@
 
 #include "../../../InputSource/IMUSourceEngine.h"
 #include "../../../InputSource/ImageSourceEngine.h"
-#include "../../../ITMLib/Core/ITMMainEngine.h"
+#include "../../../ITMLib/Engines/Main/ITMMainEngine.h"
 #include "../../../ORUtils/NVTimer.h"
 
 #include "../../../InputSource/FFMPEGWriter.h"

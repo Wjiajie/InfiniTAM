@@ -11,8 +11,8 @@
 #include "../../../ORUtils/MetalContext.h"
 
 #include "../../../ITMLib/ITMLibDefines.h"
-#include "../../../ITMLib/Core/ITMMainEngine.h"
-#include "../../../ITMLib/Core/ITMBasicEngine.h"
+#include "../../../ITMLib/Engines/Main/ITMMainEngine.h"
+#include "../../../ITMLib/Engines/Main/ITMBasicEngine.h"
 
 #include "../../../InputSource/ImageSourceEngine.h"
 #include "../../../InputSource/IMUSourceEngine.h"

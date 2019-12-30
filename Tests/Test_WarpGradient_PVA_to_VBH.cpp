@@ -41,18 +41,16 @@
 #include "../ITMLib/Engines/VolumeEditAndCopy/VolumeEditAndCopyEngineFactory.h"
 #include "../ITMLib/Engines/Reconstruction/CPU/ITMDynamicSceneReconstructionEngine_CPU.h"
 
+#ifndef COMPILE_WITHOUT_CUDA
 //local CUDA
 #include "../ITMLib/Engines/Reconstruction/CUDA/ITMDynamicSceneReconstructionEngine_CUDA.h"
 #include "../ITMLib/Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.h"
 #include "../ITMLib/Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
 #include "../ITMLib/Engines/Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
+#endif
 
 
 using namespace ITMLib;
-
-typedef ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMPlainVoxelArray> RecoEngine_CUDA_PVA;
-typedef ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash> RecoEngine_CUDA_VBH;
-
 
 ///CAUTION: SAVE modes require the build directory to be immediately inside the root source directory.
 template<MemoryDeviceType TMemoryDeviceType>
@@ -134,19 +132,9 @@ BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CPU) {
 	GenericWarpTest<MEMORYDEVICE_CPU>(switches, 10, TEST_SUCCESSIVE_ITERATIONS);
 }
 
-BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CUDA) {
-	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);
-	GenericWarpTest<MEMORYDEVICE_CUDA>(switches, 10, TEST_SUCCESSIVE_ITERATIONS, 1e-5);
-}
-
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonov_CPU) {
 	SlavchevaSurfaceTracker::Switches switches(true, false, true, false, false);
 	GenericWarpTest<MEMORYDEVICE_CPU>(switches, 5, TEST_SUCCESSIVE_ITERATIONS, 1e-7);
-}
-
-BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonov_CUDA) {
-	SlavchevaSurfaceTracker::Switches switches(true, false, true, false, false);
-	GenericWarpTest<MEMORYDEVICE_CUDA>(switches, 5, TEST_SUCCESSIVE_ITERATIONS, 1e-5);
 }
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonovAndSobolevSmoothing_CPU) {
@@ -154,22 +142,32 @@ BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonovAndSobolevSmoothing_CPU) {
 	GenericWarpTest<MEMORYDEVICE_CPU>(switches, 5, TEST_SUCCESSIVE_ITERATIONS, 1e-7);
 }
 
+BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonovAndSobolevSmoothing_Fusion_CPU) {
+	GenericWarpTest<MEMORYDEVICE_CPU>(SlavchevaSurfaceTracker::Switches(true, false, true, false, true),
+	                                  5,GenericWarpTestMode::TEST_FINAL_ITERATION_AND_FUSION);
+}
+
+#ifndef COMPILE_WITHOUT_CUDA
+BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CUDA) {
+	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);
+	GenericWarpTest<MEMORYDEVICE_CUDA>(switches, 10, TEST_SUCCESSIVE_ITERATIONS, 1e-5);
+}
+
+BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonov_CUDA) {
+	SlavchevaSurfaceTracker::Switches switches(true, false, true, false, false);
+	GenericWarpTest<MEMORYDEVICE_CUDA>(switches, 5, TEST_SUCCESSIVE_ITERATIONS, 1e-5);
+}
+
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonovAndSobolevSmoothing_CUDA) {
 	SlavchevaSurfaceTracker::Switches switches(true, false, true, false, true);
 	GenericWarpTest<MEMORYDEVICE_CUDA>(switches, 5, TEST_SUCCESSIVE_ITERATIONS, 1e-5);
 }
 
-BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonovAndSobolevSmoothing_Fusion_CPU) {
-	GenericWarpTest<MEMORYDEVICE_CPU>(SlavchevaSurfaceTracker::Switches(true, false, true, false, true),
-			5,GenericWarpTestMode::TEST_FINAL_ITERATION_AND_FUSION);
-}
-
-
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonovAndSobolevSmoothing_Fusion_CUDA) {
 	GenericWarpTest<MEMORYDEVICE_CUDA>(SlavchevaSurfaceTracker::Switches(true, false, true, false, true),
 	                                   5, GenericWarpTestMode::TEST_FINAL_ITERATION_AND_FUSION, 1e-5);
 }
-
+#endif
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_simple_CPU_data_only_basic) {
 	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);
@@ -186,6 +184,7 @@ BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_simple_CPU_data_and_tikhonov_expanded) {
 	Warp_PVA_VBH_simple_subtest<MEMORYDEVICE_CPU>(0, switches, true);
 }
 
+#ifndef COMPILE_WITHOUT_CUDA
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_simple_CUDA_data_only_expanded) {
 	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);
 	Warp_PVA_VBH_simple_subtest<MEMORYDEVICE_CUDA>(0, switches, true);
@@ -195,3 +194,4 @@ BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_simple_CUDA_data_and_tikhonov_expanded) {
 	SlavchevaSurfaceTracker::Switches switches(true, false, true, false, false);
 	Warp_PVA_VBH_simple_subtest<MEMORYDEVICE_CUDA>(0, switches, true);
 }
+#endif

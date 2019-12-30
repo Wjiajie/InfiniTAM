@@ -802,29 +802,39 @@ set(ITMLIB_UTILS_VISUALIZATION_SOURCES
     Utils/Visualization/ITMSceneSliceVisualizer2D.tpp
     Utils/Visualization/ITMSceneSliceVisualizer2D_PlainVoxelArray.cpp
     Utils/Visualization/ITMSceneSliceVisualizer2D_VoxelBlockHash.cpp
-    Utils/Visualization/ITMSceneSliceVisualizer1D.cpp
-    Utils/Visualization/ITMSceneSliceVisualizer1D.tpp
-    Utils/Visualization/ITMVisualizationCommon.cpp
-    Utils/Visualization/ITMVisualizationWindowManager.cpp
-    Utils/Visualization/ITMSceneTrackingEnergyPlotter.cpp
-    Utils/Visualization/ITMSceneSliceVisualizer3D.tpp
-    Utils/Visualization/ITMSceneSliceVisualizer3DInteractorStyle.tpp
-    Utils/Visualization/ITMSceneSliceVisualizer3DCommon.cpp
-    Utils/Visualization/ITMSceneSliceVisualizer3D_PlainVoxelArray.cpp
-    Utils/Visualization/ITMSceneSliceVisualizer3D_VoxelBlockHash.cpp
+
+	Utils/Visualization/ITMVisualizationCommon.cpp
     )
+if(WITH_VTK)
+	list(APPEND ITMLIB_UTILS_VISUALIZATION_SOURCES
+		 Utils/Visualization/ITMSceneSliceVisualizer1D.cpp
+		 Utils/Visualization/ITMSceneSliceVisualizer1D.tpp
+		 Utils/Visualization/ITMSceneSliceVisualizer3D.tpp
+		 Utils/Visualization/ITMSceneSliceVisualizer3DInteractorStyle.tpp
+		 Utils/Visualization/ITMSceneSliceVisualizer3DCommon.cpp
+		 Utils/Visualization/ITMSceneSliceVisualizer3D_PlainVoxelArray.cpp
+		 Utils/Visualization/ITMSceneSliceVisualizer3D_VoxelBlockHash.cpp
+		 Utils/Visualization/ITMSceneTrackingEnergyPlotter.cpp
+		 Utils/Visualization/ITMVisualizationWindowManager.cpp
+		 )
+endif()
 
 set(ITMLIB_UTILS_VISUALIZATION_HEADERS
     Utils/Visualization/ITMSceneSliceVisualizerCommon.h
-    Utils/Visualization/ITMSceneSliceVisualizer1D.h
-    Utils/Visualization/ITMSceneSliceVisualizer2D.h
-    Utils/Visualization/ITMSceneSliceVisualizer3D.h
-    Utils/Visualization/ITMSceneSliceVisualizer3DInteractorStyle.h
-    Utils/Visualization/ITMSceneSliceVisualizer3DCommon.h
+	Utils/Visualization/ITMSceneSliceVisualizer2D.h
+
     Utils/Visualization/ITMVisualizationCommon.h
-    Utils/Visualization/ITMVisualizationWindowManager.h
-    Utils/Visualization/ITMSceneTrackingEnergyPlotter.h
     )
+if(WITH_VTK)
+	list(APPEND ITMLIB_UTILS_VISUALIZATION_HEADERS
+		 Utils/Visualization/ITMSceneSliceVisualizer1D.h
+		 Utils/Visualization/ITMSceneSliceVisualizer3D.h
+		 Utils/Visualization/ITMSceneSliceVisualizer3DInteractorStyle.h
+		 Utils/Visualization/ITMSceneSliceVisualizer3DCommon.h
+		 Utils/Visualization/ITMSceneTrackingEnergyPlotter.h
+		 Utils/Visualization/ITMVisualizationWindowManager.h
+		 )
+endif()
 #################################################################
 # Collect the project files into sources, headers and templates #
 #################################################################

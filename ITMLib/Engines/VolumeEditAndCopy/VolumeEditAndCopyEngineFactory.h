@@ -35,7 +35,7 @@ struct VolumeEditAndCopyEngineFactory {
 #else
 			std::cerr << "Warning: compiled without CUDA but requesting an instance of CUDA manipulation engine. "
 				"Defaulting to CPU manipulation engine." << std::endl;
-			return ITMSceneManipulationEngine_CPU<TVoxel,TIndex>::Inst();
+			return VolumeEditAndCopyEngine_CPU<TVoxel,TIndex>::Inst();
 #endif
 			case MEMORYDEVICE_METAL:
 #ifdef COMPILE_WITH_METAL

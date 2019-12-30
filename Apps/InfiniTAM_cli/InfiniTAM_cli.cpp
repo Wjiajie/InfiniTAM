@@ -9,7 +9,7 @@
 #include "../../InputSource/Kinect2Engine.h"
 
 #include "../../ITMLib/ITMLibDefines.h"
-#include "../../ITMLib/Core/ITMBasicEngine.h"
+#include "../../ITMLib/Engines/Main/ITMBasicEngine.h"
 
 using namespace InfiniTAM::Engine;
 using namespace InputSource;
