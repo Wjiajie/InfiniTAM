@@ -112,7 +112,7 @@ public:
 
 	void Initialize(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource, InputSource::IMUSourceEngine* imuSource,
 	                ITMLib::ITMMainEngine* mainEngine, const char* outFolder, MemoryDeviceType deviceType,
-	                int frameIntervalLength, int skipFirstNFrames, const RunOptions& options, ITMLib::ITMDynamicFusionLogger_Interface* logger,
+	                int number_of_frames_to_process_after_launch, int index_of_first_frame, const RunOptions& options, ITMLib::ITMDynamicFusionLogger_Interface* logger,
 	                ITMLib::Configuration::IndexingMethod indexingMethod);
 	void Shutdown();
 

@@ -110,6 +110,18 @@ public:
 		/// A trouble spot for additional telemetry / diagnostics / loggging
 		Vector3i focus_coordinates;
 	};
+	
+	struct UIEngineSettings{
+		explicit UIEngineSettings(const po::variables_map& vm);
+		static UIEngineSettings BuildFromPTree(const pt::ptree& tree);
+		UIEngineSettings();
+		UIEngineSettings(int number_of_frames_to_process_after_launch, int index_of_frame_to_start_at);
+		friend bool operator==(const UIEngineSettings& uiEngineSettings1, const UIEngineSettings& uiEngineSettings2);
+		friend std::ostream& operator<<(std::ostream& out, const UIEngineSettings& uiEngineSettings);
+		pt::ptree ToPTree() const;
+		int number_of_frames_to_process_after_launch;
+		int index_of_frame_to_start_at;
+	};
 
 	Configuration();
 	explicit Configuration(const po::variables_map& vm);
@@ -119,6 +131,7 @@ public:
 	              SlavchevaSurfaceTracker::Switches slavcheva_switches,
 	              Configuration::TelemetrySettings telemetry_settings,
 	              Configuration::InputAndOutputSettings input_and_output_settings,
+	              Configuration::UIEngineSettings ui_engine_settings,
 	              bool skip_points,
 	              bool create_meshing_engine,
 	              MemoryDeviceType device_type,
@@ -151,6 +164,7 @@ public:
 	TelemetrySettings telemetry_settings;
 	/// Input / output paths
 	InputAndOutputSettings input_and_output_settings;
+	UIEngineSettings ui_engine_settings;
 	/// For ITMColorTracker: skips every other point when using the colour renderer for creating a point cloud
 	const bool skip_points;
 	/// create all the things required for marching cubes and mesh extraction (uses lots of additional memory)

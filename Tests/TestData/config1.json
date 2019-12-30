@@ -55,6 +55,10 @@
         "depth_image_path_mask":"<CONFIGURATION_DIRECTORY>/frame_depth_%%06i.png",
         "mask_image_path_mask": "<CONFIGURATION_DIRECTORY>/frame_mask_%%06i.png"
     },
+    "ui_engine_settings": {
+        "number_of_frames_to_process_after_launch": 50,
+        "index_of_frame_to_start_at": 16
+    },
     "skip_points": true,
     "disable_meshing": true,
     "device": "cpu",

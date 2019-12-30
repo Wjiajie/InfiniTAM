@@ -322,6 +322,7 @@ Configuration::Configuration()
 		slavcheva_switches(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION),
 		telemetry_settings(),
 		input_and_output_settings(),
+		ui_engine_settings(),
 		skip_points(true),
 		create_meshing_engine(true),
 #ifndef COMPILE_WITHOUT_CUDA
@@ -350,6 +351,7 @@ Configuration::Configuration(const po::variables_map& vm) :
 		slavcheva_switches(vm),
 		telemetry_settings(vm),
 		input_and_output_settings(vm),
+		ui_engine_settings(vm),
 		skip_points(vm["skip_points"].empty() ?
 		            Configuration().skip_points :
 		            vm["skip_points"].as<bool>()),
@@ -407,6 +409,7 @@ Configuration::Configuration(
 		SlavchevaSurfaceTracker::Parameters slavcheva_parameters, SlavchevaSurfaceTracker::Switches slavcheva_switches,
 		Configuration::TelemetrySettings telemetry_settings,
 		Configuration::InputAndOutputSettings input_and_output_settings,
+		Configuration::UIEngineSettings ui_engine_settings,
 		bool skip_points, bool create_meshing_engine,
 		MemoryDeviceType device_type,
 		bool use_approximate_raycast, bool use_threshold_filter, bool use_bilateral_filter,
@@ -424,6 +427,7 @@ Configuration::Configuration(
 		slavcheva_parameters(slavcheva_parameters),
 		slavcheva_switches(slavcheva_switches),
 		telemetry_settings(telemetry_settings),
+		ui_engine_settings(ui_engine_settings),
 		input_and_output_settings(std::move(input_and_output_settings)),
 		skip_points(skip_points),
 		create_meshing_engine(create_meshing_engine),
@@ -438,8 +442,7 @@ Configuration::Configuration(
 		surface_tracker_type(surface_tracker_type),
 		tracker_configuration(std::move(tracker_configuration)),
 		max_iteration_threshold(max_iteration_threshold),
-		max_update_length_threshold(max_update_length_threshold)
-		{}
+		max_update_length_threshold(max_update_length_threshold) {}
 
 // endregion ===========================================================================================================
 
@@ -501,13 +504,14 @@ Configuration& Configuration::get() {
 namespace fs = boost::filesystem;
 
 
-
 void Configuration::load_configuration_from_json_file(const std::string& path) {
 	instance.reset(from_json_file(path));
 }
 
 template<typename TJsonParsable>
-static boost::optional<TJsonParsable> as_optional_parsable_config_path(const pt::ptree& tree, pt::ptree::key_type const& key, const std::string& config_path) {
+static boost::optional<TJsonParsable>
+as_optional_parsable_config_path(const pt::ptree& tree, pt::ptree::key_type const& key,
+                                 const std::string& config_path) {
 	auto subtree = tree.get_child_optional(key);
 	if (subtree) {
 		return boost::optional<TJsonParsable>(TJsonParsable::BuildFromPTree(subtree.get(), config_path));
@@ -560,6 +564,8 @@ Configuration* Configuration::from_json_file(const std::string& path) {
 			as_optional_parsable<TelemetrySettings>(tree, "telemetry_settings");
 	boost::optional<InputAndOutputSettings> input_and_output_settings =
 			as_optional_parsable_config_path<InputAndOutputSettings>(tree, "input_and_output_settings", path);
+	boost::optional<UIEngineSettings> ui_engine_settings =
+			as_optional_parsable<UIEngineSettings>(tree,"ui_engine_settings");
 
 	boost::optional<bool> skip_points = tree.get_optional<bool>("skip_points");
 	boost::optional<bool> disable_meshing = tree.get_optional<bool>("disable_meshing");
@@ -591,6 +597,7 @@ Configuration* Configuration::from_json_file(const std::string& path) {
 			slavcheva_switches ? slavcheva_switches.get() : default_config.slavcheva_switches,
 			telemetry_settings ? telemetry_settings.get() : default_config.telemetry_settings,
 			input_and_output_settings ? input_and_output_settings.get() : default_config.input_and_output_settings,
+			ui_engine_settings ? ui_engine_settings.get() : default_config.ui_engine_settings,
 			skip_points ? skip_points.get() : default_config.skip_points,
 			disable_meshing ? !disable_meshing.get() : default_config.create_meshing_engine,
 			device_type ? device_type.get() : default_config.device_type,
@@ -607,7 +614,6 @@ Configuration* Configuration::from_json_file(const std::string& path) {
 			max_update_length_threshold ? max_update_length_threshold.get() : default_config.max_update_length_threshold
 	);
 }
-
 
 
 pt::ptree Configuration::to_ptree(const std::string& path) const {
@@ -654,6 +660,7 @@ bool operator==(const Configuration& c1, const Configuration& c2) {
 	       c1.slavcheva_switches == c2.slavcheva_switches &&
 	       c1.telemetry_settings == c2.telemetry_settings &&
 	       c1.input_and_output_settings == c2.input_and_output_settings &&
+	       c1.ui_engine_settings == c2.ui_engine_settings &&
 	       c1.skip_points == c2.skip_points &&
 	       c1.create_meshing_engine == c2.create_meshing_engine &&
 	       c1.device_type == c2.device_type &&
@@ -674,8 +681,6 @@ std::ostream& operator<<(std::ostream& out, const Configuration& c) {
 	pt::write_json_no_quotes(out, c.to_ptree(""), true);
 	out << "";
 }
-
-
 }//namespace ITMLib
 // endregion ===========================================================================================================
 
@@ -749,29 +754,30 @@ Configuration::InputAndOutputSettings::InputAndOutputSettings(std::string output
 std::string preprocess_path(const std::string& path, const std::string& config_path) {
 	const std::regex configuration_directory_regex("^<CONFIGURATION_DIRECTORY>");
 	std::string resulting_path;
-	if(std::regex_search(path, configuration_directory_regex)){
-		std::string cleared = std::regex_replace(path, configuration_directory_regex,  "");
+	if (std::regex_search(path, configuration_directory_regex)) {
+		std::string cleared = std::regex_replace(path, configuration_directory_regex, "");
 		resulting_path = (fs::path(config_path).parent_path() / fs::path(cleared)).string();
-	}else{
+	} else {
 		resulting_path = path;
 	}
 	return resulting_path;
 }
 
 std::string postprocess_path(const std::string& path, const std::string& config_path) {
-	if(config_path.empty() ) return path;
-	const std::string configuration_directory_substitute ="<CONFIGURATION_DIRECTORY>";
+	if (config_path.empty()) return path;
+	const std::string configuration_directory_substitute = "<CONFIGURATION_DIRECTORY>";
 	std::regex configuration_directory_regex(fs::path(config_path).parent_path().string());
 	std::string resulting_path;
-	if(std::regex_search(path, configuration_directory_regex)){
-		resulting_path = std::regex_replace(path, configuration_directory_regex,  configuration_directory_substitute);
-	}else{
+	if (std::regex_search(path, configuration_directory_regex)) {
+		resulting_path = std::regex_replace(path, configuration_directory_regex, configuration_directory_substitute);
+	} else {
 		resulting_path = path;
 	}
 	return resulting_path;
 }
 
-Configuration::InputAndOutputSettings Configuration::InputAndOutputSettings::BuildFromPTree(const pt::ptree& tree, const std::string& config_path) {
+Configuration::InputAndOutputSettings
+Configuration::InputAndOutputSettings::BuildFromPTree(const pt::ptree& tree, const std::string& config_path) {
 	boost::optional<std::string> output_path_opt = tree.get_optional<std::string>("output");
 	std::string output_path,
 			calibration_file_path,
@@ -829,14 +835,14 @@ namespace ITMLib {
 
 bool operator==(const Configuration::InputAndOutputSettings& ios1, const Configuration::InputAndOutputSettings& ios2) {
 	return ios1.output_path == ios2.output_path;// &&
-	       ios1.calibration_file_path == ios2.calibration_file_path; // &&
-	       ios1.openni_file_path == ios2.openni_file_path &&
-	       ios1.rgb_video_file_path == ios2.rgb_video_file_path &&
-	       ios1.depth_video_file_path == ios2.depth_video_file_path &&
-	       ios1.rgb_image_path_mask == ios2.rgb_image_path_mask &&
-	       ios1.depth_image_path_mask == ios2.depth_image_path_mask &&
-	       ios1.mask_image_path_mask == ios2.mask_image_path_mask &&
-	       ios1.imu_input_path == ios2.imu_input_path;
+	ios1.calibration_file_path == ios2.calibration_file_path; // &&
+	ios1.openni_file_path == ios2.openni_file_path &&
+	ios1.rgb_video_file_path == ios2.rgb_video_file_path &&
+	ios1.depth_video_file_path == ios2.depth_video_file_path &&
+	ios1.rgb_image_path_mask == ios2.rgb_image_path_mask &&
+	ios1.depth_image_path_mask == ios2.depth_image_path_mask &&
+	ios1.mask_image_path_mask == ios2.mask_image_path_mask &&
+	ios1.imu_input_path == ios2.imu_input_path;
 }
 
 std::ostream& operator<<(std::ostream& out, const Configuration::InputAndOutputSettings& ios) {
@@ -902,5 +908,52 @@ std::ostream& operator<<(std::ostream& out, const Configuration::TelemetrySettin
 	pt::write_json_no_quotes(out, tree, true);
 }
 }//namespace ITMLib
+
+// endregion ===========================================================================================================
+
+// region ======================================== UI ENGINE SETTINGS ==================================================
+Configuration::UIEngineSettings::UIEngineSettings() : number_of_frames_to_process_after_launch(0),
+                                                      index_of_frame_to_start_at(0) {}
+
+Configuration::UIEngineSettings::UIEngineSettings(int number_of_frames_to_process_after_launch,
+                                                  int index_of_frame_to_start_at) :
+		number_of_frames_to_process_after_launch(number_of_frames_to_process_after_launch),
+		index_of_frame_to_start_at(index_of_frame_to_start_at) {}
+
+Configuration::UIEngineSettings::UIEngineSettings(const po::variables_map& vm) :
+		number_of_frames_to_process_after_launch(
+				vm["process_N_frames"].empty() ? UIEngineSettings().number_of_frames_to_process_after_launch
+				                               : vm["process_N_frames"].as<int>()),
+		index_of_frame_to_start_at(vm["start_from_frame_ix"].empty() ? UIEngineSettings().index_of_frame_to_start_at
+		                                                             : vm["start_from_frame_ix"].as<int>()) {}
+
+Configuration::UIEngineSettings Configuration::UIEngineSettings::BuildFromPTree(const pt::ptree& tree) {
+	boost::optional<int> nfpal = tree.get_optional<int>("number_of_frames_to_process_after_launch");
+	boost::optional<int> ifs = tree.get_optional<int>("index_of_frame_to_start_at");
+	UIEngineSettings default_ui_engine_settings;
+	return {nfpal ? nfpal.get() : default_ui_engine_settings.number_of_frames_to_process_after_launch,
+	        ifs ? ifs.get() : default_ui_engine_settings.index_of_frame_to_start_at};
+}
+
+pt::ptree Configuration::UIEngineSettings::ToPTree() const {
+	pt::ptree tree;
+	tree.add("number_of_frames_to_process_after_launch", number_of_frames_to_process_after_launch);
+	tree.add("index_of_frame_to_start_at", index_of_frame_to_start_at);
+
+}
+namespace ITMLib {
+bool operator==(const Configuration::UIEngineSettings& uiEngineSettings1,
+                        const Configuration::UIEngineSettings& uiEngineSettings2) {
+	return uiEngineSettings1.number_of_frames_to_process_after_launch ==
+	       uiEngineSettings2.number_of_frames_to_process_after_launch &&
+	       uiEngineSettings1.index_of_frame_to_start_at == uiEngineSettings2.index_of_frame_to_start_at;
+}
+
+std::ostream& operator<<(std::ostream& out, const Configuration::UIEngineSettings& uiEngineSettings) {
+	pt::ptree tree(uiEngineSettings.ToPTree());
+	pt::write_json_no_quotes(out, tree, true);
+
+}
+} // end namespace ITMLib
 
 // endregion ===========================================================================================================

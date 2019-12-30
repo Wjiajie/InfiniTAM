@@ -62,28 +62,6 @@ ITMDynamicFusionLogger_Interface& GetLogger(Configuration::IndexingMethod method
 	}
 };
 
-void process_UI_options_CLI(int& processNFramesOnLaunch, int& skipFirstNFrames, const po::variables_map& vm){
-	if (!vm["process_N_frames"].empty()) {
-		processNFramesOnLaunch = vm["process_N_frames"].as<int>();
-	}
-	if (!vm["start_from_frame_ix"].empty()) {
-		skipFirstNFrames = vm["start_from_frame_ix"].as<int>();
-	}
-}
-
-void process_UI_options_JSON(int& processNFramesOnLaunch, int& skipFirstNFrames, std::string config_path) {
-	pt::ptree tree;
-	pt::read_json(config_path, tree);
-	boost::optional<int> processNFramesOnLaunch_opt = tree.get_optional<int>("input.process_N_frames");
-	boost::optional<int> skipFirstNFrames_opt = tree.get_optional<int>("input.start_from_frame_ix");
-	if (processNFramesOnLaunch_opt) {
-		processNFramesOnLaunch = processNFramesOnLaunch_opt.get();
-	}
-	if (skipFirstNFrames_opt) {
-		skipFirstNFrames = skipFirstNFrames_opt.get();
-	}
-}
-
 int main(int argc, char** argv) {
 	try {
 		po::options_description arguments{"Arguments"};
@@ -91,9 +69,7 @@ int main(int argc, char** argv) {
 		RunOptions runOptions;
 		LoggingOptions loggingOptions;
 
-
 		PopulateOptionsDescription(arguments,runOptions,loggingOptions);
-
 
 		positional_arguments.add("calibration_file", 1);
 		positional_arguments.add("input_path", 3);
@@ -125,14 +101,10 @@ int main(int argc, char** argv) {
 			return EXIT_SUCCESS;
 		}
 
-		int processNFramesOnLaunch = 0;
-		int skipFirstNFrames = 0;
 		if (vm["config"].empty()) {
-			process_UI_options_CLI(processNFramesOnLaunch, skipFirstNFrames, vm);
 			Configuration::load_configuration_from_variable_map(vm);
 		} else {
 			std::string configPath = vm["config"].as<std::string>();
-			process_UI_options_JSON(processNFramesOnLaunch, skipFirstNFrames, configPath);
 			Configuration::load_configuration_from_json_file(configPath);
 		}
 		auto& settings = Configuration::get();
@@ -185,7 +157,8 @@ int main(int argc, char** argv) {
 #endif
 		UIEngine_BPO::Instance().Initialize(argc, argv, imageSource, imuSource, mainEngine,
 		                                    settings.input_and_output_settings.output_path.c_str(), settings.device_type,
-		                                    processNFramesOnLaunch, skipFirstNFrames, runOptions,
+		                                    settings.ui_engine_settings.number_of_frames_to_process_after_launch,
+		                                    settings.ui_engine_settings.index_of_frame_to_start_at, runOptions,
 		                                    &logger, chosenIndexingMethod);
 
 

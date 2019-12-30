@@ -64,8 +64,8 @@ namespace bench = ITMLib::Bench;
  * \param mainEngine main engine to process the frames
  * \param outFolder output folder for saving results
  * \param deviceType type of device to use for some tasks
- * \param frameIntervalLength automatically process this number of frames after launching the UIEngine,
- * \param skipFirstNFrames skip this number of frames before beginning to process
+ * \param number_of_frames_to_process_after_launch automatically process this number of frames after launching the UIEngine,
+ * \param index_of_first_frame skip this number of frames before beginning to process
  * \param recordReconstructionResult start recording the reconstruction result into a video files as soon as the next frame is processed
  * set interval to this number of frames
  */
@@ -73,7 +73,8 @@ void UIEngine_BPO::Initialize(int& argc, char** argv, InputSource::ImageSourceEn
                               InputSource::IMUSourceEngine* imuSource,
                               ITMLib::ITMMainEngine* mainEngine, const char* outFolder,
                               MemoryDeviceType deviceType,
-                              int frameIntervalLength, int skipFirstNFrames,
+                              int number_of_frames_to_process_after_launch,
+                              int index_of_first_frame,
                               const RunOptions& options,
                               ITMLib::ITMDynamicFusionLogger_Interface* logger,
                               ITMLib::Configuration::IndexingMethod indexingMethod) {
@@ -86,7 +87,7 @@ void UIEngine_BPO::Initialize(int& argc, char** argv, InputSource::ImageSourceEn
 	this->freeviewActive = true;
 	this->integrationActive = true;
 	this->currentColourMode = 0;
-	this->autoIntervalFrameCount = frameIntervalLength;
+	this->autoIntervalFrameCount = number_of_frames_to_process_after_launch;
 
 	this->colourModes_main.emplace_back("shaded greyscale", ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST);
 	this->colourModes_main.emplace_back("integrated colours", ITMMainEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME);
@@ -176,9 +177,9 @@ void UIEngine_BPO::Initialize(int& argc, char** argv, InputSource::ImageSourceEn
 	sdkCreateTimer(&timer_average);
 
 	sdkResetTimer(&timer_average);
-	if (skipFirstNFrames > 0) {
-		printf("Skipping the first %d frames.\n", skipFirstNFrames);
-		SkipFrames(skipFirstNFrames);
+	if (index_of_first_frame > 0) {
+		printf("Skipping the first %d frames.\n", index_of_first_frame);
+		SkipFrames(index_of_first_frame);
 	}
 
 	if (options.startInStepByStep) {

@@ -74,6 +74,7 @@ ITMMainEngine* BuildMainEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb, 
 		             "(attempting to disable tracking)." << std::endl;
 		mainEngine->turnOffTracking();
 	}
+	return mainEngine;
 }
 
 }

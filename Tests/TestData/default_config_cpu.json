@@ -46,6 +46,10 @@
         "output": "output/",
         "calibration_file_path": "calib.txt"
     },
+    "ui_engine_settings": {
+        "number_of_frames_to_process_after_launch": 0,
+        "index_of_frame_to_start_at": 0
+    },
     "skip_points": true,
     "disable_meshing": false,
     "device": "cpu",

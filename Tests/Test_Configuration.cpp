@@ -51,6 +51,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			                                      "TestData/frame_color_%%06i.png",
 			                                      "TestData/frame_depth_%%06i.png",
 			                                      "TestData/frame_mask_%%06i.png"),
+			Configuration::UIEngineSettings(50,16),
 			true,
 			false,
 			MEMORYDEVICE_CPU,
