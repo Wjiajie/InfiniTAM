@@ -22,7 +22,7 @@ void PopulateOptionsDescription(po::options_description& arguments, RunOptions& 
 			("help,h", "Print help screen")
 			("halp,h", "Funkaaay")
 			( "config,cfg", po::value<std::string>(),
-			  "Configuration file in JSON format, e.g.  ./default_config.json "
+			  "Configuration file in JSON format, e.g.  ./default_config_cuda.json "
 			  "WARNING: using this option will invalidate any other command line arguments.")
 			("calibration_file,c", po::value<std::string>(), "Full path to the calibration file, e.g.: ./Files/Teddy/calib.txt")
 

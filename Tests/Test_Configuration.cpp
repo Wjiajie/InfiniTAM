@@ -29,8 +29,13 @@ using namespace ITMLib;
 
 BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	Configuration default_configuration;
-	//default_configuration.save_to_json_file("../../Tests/TestData/default_config.json");
-	Configuration::load_configuration_from_json_file("TestData/default_config.json");
+#ifdef COMPILE_WITHOUT_CUDA
+	//default_configuration.save_to_json_file("../../Tests/TestData/default_config_cpu.json");
+	Configuration::load_configuration_from_json_file("TestData/default_config_cpu.json");
+#else
+	//default_configuration.save_to_json_file("../../Tests/TestData/default_config_cuda.json");
+	Configuration::load_configuration_from_json_file("TestData/default_config_cuda.json");
+#endif
 	Configuration& current_config = Configuration::get();
 	BOOST_REQUIRE_EQUAL(default_configuration, current_config);
 	Configuration configuration1(
