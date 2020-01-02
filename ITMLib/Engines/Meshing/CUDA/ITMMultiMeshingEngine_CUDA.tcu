@@ -50,13 +50,13 @@ void ITMMultiMeshingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMMesh* m
 		indexData_host.numLocalMaps = numLocalMaps;
 		for (int localMapId = 0; localMapId < numLocalMaps; ++localMapId) {
 			indexData_host.poses_vs[localMapId] = sceneManager.getEstimatedGlobalPose(localMapId).GetM();
-			indexData_host.poses_vs[localMapId].m30 /= sceneParams.voxelSize;
-			indexData_host.poses_vs[localMapId].m31 /= sceneParams.voxelSize;
-			indexData_host.poses_vs[localMapId].m32 /= sceneParams.voxelSize;
+			indexData_host.poses_vs[localMapId].m30 /= sceneParams.voxel_size;
+			indexData_host.poses_vs[localMapId].m31 /= sceneParams.voxel_size;
+			indexData_host.poses_vs[localMapId].m32 /= sceneParams.voxel_size;
 			indexData_host.posesInv[localMapId] = sceneManager.getEstimatedGlobalPose(localMapId).GetInvM();
-			indexData_host.posesInv[localMapId].m30 /= sceneParams.voxelSize;
-			indexData_host.posesInv[localMapId].m31 /= sceneParams.voxelSize;
-			indexData_host.posesInv[localMapId].m32 /= sceneParams.voxelSize;
+			indexData_host.posesInv[localMapId].m30 /= sceneParams.voxel_size;
+			indexData_host.posesInv[localMapId].m31 /= sceneParams.voxel_size;
+			indexData_host.posesInv[localMapId].m32 /= sceneParams.voxel_size;
 			indexData_host.index[localMapId] = sceneManager.getLocalMap(localMapId)->scene->index.GetIndexData();
 			voxelData_host.voxels[localMapId] = sceneManager.getLocalMap(localMapId)->scene->localVBA.GetVoxelBlocks();
 		}
@@ -73,7 +73,7 @@ void ITMMultiMeshingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMMesh* m
 	int noMaxTriangles = mesh->noMaxTriangles;
 	const int hashEntryCount = sceneManager.getLocalMap(0)->scene->index.hashEntryCount;
 	const unsigned int voxelBlockCount = sceneManager.getLocalMap(0)->scene->index.voxelBlockCount;
-	float factor = sceneParams.voxelSize;
+	float factor = sceneParams.voxel_size;
 	ORcudaSafeCall(cudaMemset(noTriangles_device, 0, sizeof(unsigned int)));
 	ORcudaSafeCall(cudaMemset(visibleBlockGlobalPos_device, 0, sizeof(Vector4s) * voxelBlockCount));
 

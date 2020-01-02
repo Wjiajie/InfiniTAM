@@ -30,7 +30,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view,
 		const Matrix4f& depth_camera_matrix, bool onlyUpdateVisibleList, bool resetVisibleList) {
 	Vector2i depthImgSize = view->depth->noDims;
-	float voxelSize = volume->sceneParams->voxelSize;
+	float voxelSize = volume->sceneParams->voxel_size;
 
 	Matrix4f inverted_depth_camera_matrix;
 	Vector4f depthCameraProjectionParameters, invertedDepthCameraProjectionParameters;
@@ -43,7 +43,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 	invertedDepthCameraProjectionParameters.x = 1.0f / invertedDepthCameraProjectionParameters.x;
 	invertedDepthCameraProjectionParameters.y = 1.0f / invertedDepthCameraProjectionParameters.y;
 
-	float mu = volume->sceneParams->mu;
+	float mu = volume->sceneParams->narrow_band_half_width;
 
 	float* depth = view->depth->GetData(MEMORYDEVICE_CPU);
 	int* voxelAllocationList = volume->localVBA.GetAllocationList();
@@ -78,8 +78,8 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 			                               allocationBlockCoordinates, depth, inverted_depth_camera_matrix,
 			                               invertedDepthCameraProjectionParameters, mu, depthImgSize,
 			                               oneOverHashEntrySize,
-			                               hashTable, volume->sceneParams->viewFrustum_min,
-			                               volume->sceneParams->viewFrustum_max, collisionDetected);
+			                               hashTable, volume->sceneParams->near_clipping_distance,
+			                               volume->sceneParams->far_clipping_distance, collisionDetected);
 		}
 
 		if (onlyUpdateVisibleList) {
@@ -407,7 +407,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::BuildVisibi
 	// ** view data **
 	Vector4f depthCameraProjectionParameters = view->calib.intrinsics_d.projectionParamsSimple.all;
 	Vector2i depthImgSize = view->depth->noDims;
-	float voxelSize = volume->sceneParams->voxelSize;
+	float voxelSize = volume->sceneParams->voxel_size;
 
 	int visibleEntryCount = 0;
 	//build visible list

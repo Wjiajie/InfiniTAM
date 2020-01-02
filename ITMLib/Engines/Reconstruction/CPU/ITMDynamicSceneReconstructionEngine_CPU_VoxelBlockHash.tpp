@@ -17,7 +17,7 @@ ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::Integ
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view, Matrix4f depth_camera_matrix) {
 	Vector2i rgbImgSize = view->rgb->noDims;
 	Vector2i depthImgSize = view->depth->noDims;
-	float voxelSize = volume->sceneParams->voxelSize;
+	float voxelSize = volume->sceneParams->voxel_size;
 
 	Matrix4f RGB_camera_matrix;
 	Vector4f projParams_d, projParams_rgb;
@@ -27,8 +27,8 @@ ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::Integ
 	projParams_d = view->calib.intrinsics_d.projectionParamsSimple.all;
 	projParams_rgb = view->calib.intrinsics_rgb.projectionParamsSimple.all;
 
-	float mu = volume->sceneParams->mu;
-	int maxW = volume->sceneParams->maxW;
+	float mu = volume->sceneParams->narrow_band_half_width;
+	int maxW = volume->sceneParams->max_integration_weight;
 
 	float* depth = view->depth->GetData(MEMORYDEVICE_CPU);
 	float* confidence = view->depthConfidence->GetData(MEMORYDEVICE_CPU);
@@ -104,7 +104,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMVoxelBlockHash>::
 		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* liveScene) {
 	ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
 			.AllocateUsingOtherVolume(canonicalScene, liveScene);
-	TSDFFusionFunctor<TVoxel> fusionFunctor(canonicalScene->sceneParams->maxW);
+	TSDFFusionFunctor<TVoxel> fusionFunctor(canonicalScene->sceneParams->max_integration_weight);
 	ITMDualSceneTraversalEngine<TVoxel, TVoxel, ITMVoxelBlockHash, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	DualVoxelTraversal(liveScene, canonicalScene, fusionFunctor);
 }

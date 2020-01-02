@@ -19,74 +19,74 @@
 
 using namespace ITMLib;
 
-VoxelVolumeParameters::VoxelVolumeParameters(float mu, int maxW, float voxelSize,
-                                             float viewFrustum_min, float viewFrustum_max, bool stopIntegratingAtMaxW) :
-		mu(mu),
-		maxW(maxW),
-		voxelSize(voxelSize),
-		viewFrustum_min(viewFrustum_min),
-		viewFrustum_max(viewFrustum_max),
-		stopIntegratingAtMaxW(stopIntegratingAtMaxW) {}
+VoxelVolumeParameters::VoxelVolumeParameters(float narrow_band_half_width, int max_integration_weight, float voxel_size,
+                                             float near_clipping_distance, float far_clipping_distance, bool stop_integration_at_max_weight) :
+		narrow_band_half_width(narrow_band_half_width),
+		max_integration_weight(max_integration_weight),
+		voxel_size(voxel_size),
+		near_clipping_distance(near_clipping_distance),
+		far_clipping_distance(far_clipping_distance),
+		stop_integration_at_max_weight(stop_integration_at_max_weight) {}
 
 VoxelVolumeParameters::VoxelVolumeParameters() :
-		mu(0.04f),
-		maxW(100),
-		voxelSize(0.004f),
-		viewFrustum_min(0.2f),
-		viewFrustum_max(3.0f),
-		stopIntegratingAtMaxW(false) {}
+		narrow_band_half_width(0.04f),
+		max_integration_weight(100),
+		voxel_size(0.004f),
+		near_clipping_distance(0.2f),
+		far_clipping_distance(3.0f),
+		stop_integration_at_max_weight(false) {}
 
 VoxelVolumeParameters::VoxelVolumeParameters(const po::variables_map& vm) :
-		mu(vm["narrow_band_half_width_meters"].empty() ? VoxelVolumeParameters().mu
-		                                               : vm["narrow_band_half_width_meters"].as<float>()),
-		maxW(vm["max_integration_weight"].empty() ? VoxelVolumeParameters().maxW
-		                                          : vm["max_integration_weight"].as<float>()),
-		voxelSize(
-				vm["voxel_size_meters"].empty() ? VoxelVolumeParameters().voxelSize : vm["voxel_size_meters"].as<float>()),
-		viewFrustum_min(vm["view_frustum_near_clipping_distance"].empty() ? VoxelVolumeParameters().viewFrustum_min
-		                                                                  : vm["view_frustum_near_clipping_distance"].as<float>()),
-		viewFrustum_max(vm["view_frustum_far_clipping_distance"].empty() ? VoxelVolumeParameters().viewFrustum_max
-		                                                                 : vm["view_frustum_far_clipping_distance"].as<float>()),
-		stopIntegratingAtMaxW(vm["stop_integration_at_max_weight"].empty() ? VoxelVolumeParameters().stopIntegratingAtMaxW
-		                                                                   : vm["stop_integration_at_max_weight"].as<bool>()) {}
+		narrow_band_half_width(vm["narrow_band_half_width"].empty() ? VoxelVolumeParameters().narrow_band_half_width
+		                                                                   : vm["narrow_band_half_width"].as<float>()),
+		max_integration_weight(vm["max_integration_weight"].empty() ? VoxelVolumeParameters().max_integration_weight
+		                                                            : vm["max_integration_weight"].as<float>()),
+		voxel_size(
+				vm["voxel_size"].empty() ? VoxelVolumeParameters().voxel_size : vm["voxel_size"].as<float>()),
+		near_clipping_distance(vm["near_clipping_distance"].empty() ? VoxelVolumeParameters().near_clipping_distance
+		                                                                         : vm["near_clipping_distance"].as<float>()),
+		far_clipping_distance(vm["far_clipping_distance"].empty() ? VoxelVolumeParameters().far_clipping_distance
+		                                                                       : vm["far_clipping_distance"].as<float>()),
+		stop_integration_at_max_weight(vm["stop_integration_at_max_weight"].empty() ? VoxelVolumeParameters().stop_integration_at_max_weight
+		                                                                            : vm["stop_integration_at_max_weight"].as<bool>()) {}
 
 pt::ptree VoxelVolumeParameters::ToPTree() const {
 	pt::ptree tree;
-	tree.add("narrow_band_half_width_meters", mu);
-	tree.add("max_integration_weight", maxW);
-	tree.add("voxel_size_meters", voxelSize);
-	tree.add("view_frustum_near_clipping_distance", viewFrustum_min);
-	tree.add("view_frustum_far_clipping_distance", viewFrustum_max);
-	tree.add("stop_integration_at_max_weight", stopIntegratingAtMaxW);
+	tree.add("narrow_band_half_width", narrow_band_half_width);
+	tree.add("max_integration_weight", max_integration_weight);
+	tree.add("voxel_size", voxel_size);
+	tree.add("near_clipping_distance", near_clipping_distance);
+	tree.add("far_clipping_distance", far_clipping_distance);
+	tree.add("stop_integration_at_max_weight", stop_integration_at_max_weight);
 	return tree;
 }
 
 VoxelVolumeParameters VoxelVolumeParameters::BuildFromPTree(const pt::ptree& tree) {
-	boost::optional<float> mu_opt = tree.get_optional<float>("narrow_band_half_width_meters");
+	boost::optional<float> mu_opt = tree.get_optional<float>("narrow_band_half_width");
 	boost::optional<int> maxW_opt = tree.get_optional<int>("max_integration_weight");
-	boost::optional<float> voxelSize_opt = tree.get_optional<float>("voxel_size_meters");
-	boost::optional<float> viewFrustum_min_opt = tree.get_optional<float>("view_frustum_near_clipping_distance");
-	boost::optional<float> viewFrustum_max_opt = tree.get_optional<float>("view_frustum_far_clipping_distance");
+	boost::optional<float> voxelSize_opt = tree.get_optional<float>("voxel_size");
+	boost::optional<float> viewFrustum_min_opt = tree.get_optional<float>("near_clipping_distance");
+	boost::optional<float> viewFrustum_max_opt = tree.get_optional<float>("far_clipping_distance");
 	boost::optional<bool> stopIntegratingAtMaxW_opt = tree.get_optional<bool>("stop_integration_at_max_weight");
 
 	VoxelVolumeParameters default_sp;
 
-	return {mu_opt ? mu_opt.get() : default_sp.mu,
-	        maxW_opt ? maxW_opt.get() : default_sp.maxW,
-	        voxelSize_opt ? voxelSize_opt.get() : default_sp.voxelSize,
-	        viewFrustum_min_opt ? viewFrustum_min_opt.get() : default_sp.viewFrustum_min,
-	        viewFrustum_max_opt ? viewFrustum_max_opt.get() : default_sp.viewFrustum_max,
-	        stopIntegratingAtMaxW_opt ? stopIntegratingAtMaxW_opt.get() : default_sp.stopIntegratingAtMaxW};
+	return {mu_opt ? mu_opt.get() : default_sp.narrow_band_half_width,
+	        maxW_opt ? maxW_opt.get() : default_sp.max_integration_weight,
+	        voxelSize_opt ? voxelSize_opt.get() : default_sp.voxel_size,
+	        viewFrustum_min_opt ? viewFrustum_min_opt.get() : default_sp.near_clipping_distance,
+	        viewFrustum_max_opt ? viewFrustum_max_opt.get() : default_sp.far_clipping_distance,
+	        stopIntegratingAtMaxW_opt ? stopIntegratingAtMaxW_opt.get() : default_sp.stop_integration_at_max_weight};
 }
 
 namespace ITMLib{
 bool operator==(const VoxelVolumeParameters& p1, const VoxelVolumeParameters& p2) {
-	return p1.voxelSize == p2.voxelSize &&
-	       p1.viewFrustum_min == p2.viewFrustum_min &&
-	       p1.viewFrustum_max == p2.viewFrustum_max &&
-	       p1.mu == p2.mu &&
-	       p1.maxW == p2.maxW &&
-	       p1.stopIntegratingAtMaxW == p2.stopIntegratingAtMaxW;
+	return p1.voxel_size == p2.voxel_size &&
+	       p1.near_clipping_distance == p2.near_clipping_distance &&
+	       p1.far_clipping_distance == p2.far_clipping_distance &&
+	       p1.narrow_band_half_width == p2.narrow_band_half_width &&
+	       p1.max_integration_weight == p2.max_integration_weight &&
+	       p1.stop_integration_at_max_weight == p2.stop_integration_at_max_weight;
 }
 
 std::ostream& operator<<(std::ostream& out, const VoxelVolumeParameters& p){

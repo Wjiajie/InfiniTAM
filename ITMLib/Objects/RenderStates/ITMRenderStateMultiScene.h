@@ -54,8 +54,8 @@ namespace ITMLib {
 
 		void PrepareLocalMaps(const MultiSceneManager & sceneManager)
 		{
-			voxelSize = sceneManager.getLocalMap(0)->scene->sceneParams->voxelSize;
-			mu = sceneManager.getLocalMap(0)->scene->sceneParams->mu;
+			voxelSize = sceneManager.getLocalMap(0)->scene->sceneParams->voxel_size;
+			mu = sceneManager.getLocalMap(0)->scene->sceneParams->narrow_band_half_width;
 
 			int num = (int)sceneManager.numLocalMaps();
 			if (num > MAX_NUM_LOCALMAPS) num = MAX_NUM_LOCALMAPS;

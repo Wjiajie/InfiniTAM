@@ -45,7 +45,7 @@ ITMBasicEngine<TVoxel,TIndex>::ITMBasicEngine(const ITMRGBDCalib& calib, Vector2
 
 	Vector2i trackedImageSize = trackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
 
-	renderState_live =  new ITMRenderState(imgSize_d, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, memoryType);
+	renderState_live =  new ITMRenderState(imgSize_d, scene->sceneParams->near_clipping_distance, scene->sceneParams->far_clipping_distance, memoryType);
 	renderState_freeview = NULL; //will be created if needed
 
 	trackingState = new ITMTrackingState(trackedImageSize, memoryType);
@@ -54,7 +54,7 @@ ITMBasicEngine<TVoxel,TIndex>::ITMBasicEngine(const ITMRGBDCalib& calib, Vector2
 	view = NULL; // will be allocated by the view builder
 	
 	if (settings.behavior_on_failure == settings.FAILUREMODE_RELOCALIZE)
-		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.scene_parameters.viewFrustum_min, settings.scene_parameters.viewFrustum_max), 0.2f, 500, 4);
+		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.scene_parameters.near_clipping_distance, settings.scene_parameters.far_clipping_distance), 0.2f, 500, 4);
 	else relocaliser = NULL;
 
 	kfRaycast = new ITMUChar4Image(imgSize_d, memoryType);
@@ -139,7 +139,7 @@ void ITMBasicEngine<TVoxel, TIndex>::LoadFromFile()
 
 	try // load relocaliser
 	{
-		FernRelocLib::Relocaliser<float> *relocaliser_temp = new FernRelocLib::Relocaliser<float>(view->depth->noDims, Vector2f(settings.scene_parameters.viewFrustum_min, settings.scene_parameters.viewFrustum_max), 0.2f, 500, 4);
+		FernRelocLib::Relocaliser<float> *relocaliser_temp = new FernRelocLib::Relocaliser<float>(view->depth->noDims, Vector2f(settings.scene_parameters.near_clipping_distance, settings.scene_parameters.far_clipping_distance), 0.2f, 500, 4);
 
 		relocaliser_temp->LoadFromDirectory(relocaliserInputDirectory);
 
@@ -427,7 +427,7 @@ void ITMBasicEngine<TVoxel,TIndex>::GetImage(ITMUChar4Image *out, GetImageType g
 
 		if (renderState_freeview == NULL)
 		{
-			renderState_freeview = new ITMRenderState(out->noDims, scene->sceneParams->viewFrustum_min, scene->sceneParams->viewFrustum_max, settings.device_type);
+			renderState_freeview = new ITMRenderState(out->noDims, scene->sceneParams->near_clipping_distance, scene->sceneParams->far_clipping_distance, settings.device_type);
 		}
 
 		visualisationEngine->FindVisibleBlocks(scene, pose, intrinsics, renderState_freeview);

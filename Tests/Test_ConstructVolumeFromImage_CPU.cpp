@@ -228,12 +228,12 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 				0.0f,
 				static_cast<float>(zero_level_set_voxel_z_coords_mm[iVoxel]) / 1000.0f
 		);
-		zeroLevelSetCoords.push_back(getVoxelCoord(coordinateMeters, Configuration::get().scene_parameters.voxelSize));
+		zeroLevelSetCoords.push_back(getVoxelCoord(coordinateMeters, Configuration::get().scene_parameters.voxel_size));
 	}
 
 	float tolerance = 1e-4;
 	int narrowBandHalfwidthVoxels = static_cast<int>(std::round(
-			scene1.sceneParams->mu / scene1.sceneParams->voxelSize));
+			scene1.sceneParams->narrow_band_half_width / scene1.sceneParams->voxel_size));
 	float maxSdfStep = 1.0f / narrowBandHalfwidthVoxels;
 
 	// check constructed scene integrity

@@ -1,10 +1,10 @@
 {
     "scene_parameters": {
-        "narrow_band_half_width_meters": 0.04,
+        "narrow_band_half_width": 0.04,
         "max_integration_weight": 100,
-        "voxel_size_meters": 0.004,
-        "view_frustum_near_clipping_distance": 0.2,
-        "view_frustum_far_clipping_distance": 3,
+        "voxel_size": 0.004,
+        "near_clipping_distance": 0.2,
+        "far_clipping_distance": 3,
         "stop_integration_at_max_weight": false
     },
     "surfel_scene_parameters": {

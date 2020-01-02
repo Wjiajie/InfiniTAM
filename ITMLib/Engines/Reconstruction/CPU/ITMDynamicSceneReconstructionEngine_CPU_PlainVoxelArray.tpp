@@ -30,7 +30,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 
 	Vector2i rgbImgSize = view->rgb->noDims;
 	Vector2i depthImgSize = view->depth->noDims;
-	float voxelSize = volume->sceneParams->voxelSize;
+	float voxelSize = volume->sceneParams->voxel_size;
 
 	Matrix4f camera_rgb_matrix;
 	Vector4f projParams_d, projParams_rgb;
@@ -40,8 +40,8 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 	projParams_d = view->calib.intrinsics_d.projectionParamsSimple.all;
 	projParams_rgb = view->calib.intrinsics_rgb.projectionParamsSimple.all;
 
-	float mu = volume->sceneParams->mu;
-	int maxW = volume->sceneParams->maxW;
+	float mu = volume->sceneParams->narrow_band_half_width;
+	int maxW = volume->sceneParams->max_integration_weight;
 
 	float* depth = view->depth->GetData(MEMORYDEVICE_CPU);
 	Vector4u* rgb = view->rgb->GetData(MEMORYDEVICE_CPU);
@@ -98,7 +98,7 @@ template<typename TVoxel, typename TWarp>
 void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::FuseOneTsdfVolumeIntoAnother(
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene) {
-	TSDFFusionFunctor<TVoxel> fusionFunctor(canonicalScene->sceneParams->maxW);
+	TSDFFusionFunctor<TVoxel> fusionFunctor(canonicalScene->sceneParams->max_integration_weight);
 	ITMDualSceneTraversalEngine<TVoxel, TVoxel, ITMPlainVoxelArray, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	DualVoxelTraversal(liveScene, canonicalScene, fusionFunctor);
 }

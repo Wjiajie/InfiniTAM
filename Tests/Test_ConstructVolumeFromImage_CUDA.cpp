@@ -210,12 +210,12 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 				0.0f,
 				static_cast<float>(zero_level_set_voxel_z_coords_mm[iVoxel]) / 1000.0f
 		);
-		zeroLevelSetCoords.push_back(getVoxelCoord(coordinateMeters, settings->scene_parameters.voxelSize));
+		zeroLevelSetCoords.push_back(getVoxelCoord(coordinateMeters, settings->scene_parameters.voxel_size));
 	}
 
 	float tolerance = 1e-4;
 	int narrowBandHalfwidthVoxels = static_cast<int>(std::round(
-			scene1.sceneParams->mu / scene1.sceneParams->voxelSize));
+			scene1.sceneParams->narrow_band_half_width / scene1.sceneParams->voxel_size));
 	float maxSdfStep = 1.0f / narrowBandHalfwidthVoxels;
 
 	// check constructed scene integrity
@@ -250,8 +250,8 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(MEMORYDEVICE_CUDA);
 
-	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.viewFrustum_min,
-	                           Configuration::get().scene_parameters.viewFrustum_max, settings->device_type);
+	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.near_clipping_distance,
+	                           Configuration::get().scene_parameters.far_clipping_distance, settings->device_type);
 	reconstructionEngine_VBH->GenerateTsdfVolumeFromView(&scene2, view, &trackingState);
 
 	tolerance = 1e-5;
@@ -362,8 +362,8 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CUDA) {
 			ITMDynamicSceneReconstructionEngineFactory
 			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(MEMORYDEVICE_CUDA);
 
-	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.viewFrustum_min,
-	                           Configuration::get().scene_parameters.viewFrustum_max, settings->device_type);
+	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.near_clipping_distance,
+	                           Configuration::get().scene_parameters.far_clipping_distance, settings->device_type);
 	reconstructionEngine_VBH->GenerateTsdfVolumeFromView(&scene3, view, &trackingState);
 
 	BOOST_REQUIRE(allocatedContentAlmostEqual_CUDA(&scene2, &scene3, tolerance));

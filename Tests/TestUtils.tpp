@@ -250,8 +250,8 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
 			DIEWITHEXCEPTION_REPORTLOCATION("Metal framework not fully supported.");
 			break;
 	}
-	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.viewFrustum_min,
-	                           Configuration::get().scene_parameters.viewFrustum_max, memoryDevice);
+	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.near_clipping_distance,
+	                           Configuration::get().scene_parameters.far_clipping_distance, memoryDevice);
 	ITMTrackingState trackingState(imageSize, memoryDevice);
 
 	ITMDynamicSceneReconstructionEngine<TVoxel, ITMWarp, TIndex>* reconstructionEngine =

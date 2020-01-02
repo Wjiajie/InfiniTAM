@@ -50,8 +50,8 @@ ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMRGBDCalib& calib, V
 	view = NULL; // will be allocated by the view builder
 
 	if (settings.behavior_on_failure == settings.FAILUREMODE_RELOCALIZE)
-		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.scene_parameters.viewFrustum_min,
-		                                                                       settings.scene_parameters.viewFrustum_max),
+		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.scene_parameters.near_clipping_distance,
+		                                                                       settings.scene_parameters.far_clipping_distance),
 		                                                   0.2f, 500, 4);
 	else relocaliser = NULL;
 

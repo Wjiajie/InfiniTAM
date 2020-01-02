@@ -162,8 +162,8 @@ void TestAllocateBasedOnVolumeExpanded_Generic() {
 	           "TestData/snoopy_calib.txt", TMemoryDeviceType);
 	Vector2i imageSize(640, 480);
 	ITMTrackingState trackingState(imageSize, TMemoryDeviceType);
-	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.viewFrustum_min,
-	                           Configuration::get().scene_parameters.viewFrustum_max, TMemoryDeviceType);
+	ITMRenderState renderState(imageSize, Configuration::get().scene_parameters.near_clipping_distance,
+	                           Configuration::get().scene_parameters.far_clipping_distance, TMemoryDeviceType);
 	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>::Instance().AllocateFromDepth(
 			&volume1, view, &trackingState, false, false);
 	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>::Instance()

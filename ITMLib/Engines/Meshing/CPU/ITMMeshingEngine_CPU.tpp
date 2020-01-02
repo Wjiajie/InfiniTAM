@@ -13,7 +13,7 @@ void ITMMeshingEngine_CPU<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMMesh *mesh, c
 	const ITMHashEntry *hashTable = scene->index.GetEntries();
 
 	int noTriangles = 0, noMaxTriangles = mesh->noMaxTriangles, noTotalEntries = scene->index.hashEntryCount;
-	float factor = scene->sceneParams->voxelSize;
+	float factor = scene->sceneParams->voxel_size;
 
 	mesh->triangles->Clear();
 

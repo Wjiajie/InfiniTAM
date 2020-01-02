@@ -103,7 +103,7 @@ SurfaceTracker<TVoxel, TWarp, TIndex, TMemoryDeviceType, TGradientFunctorType>::
 	WarpGradientFunctor<TVoxel, TWarp, TIndex, TMemoryDeviceType, TGradientFunctorType>
 			calculateGradientFunctor(this->parameters, this->switches,
 			                         liveScene, canonicalScene, warpField,
-			                         canonicalScene->sceneParams->voxelSize, canonicalScene->sceneParams->mu);
+			                         canonicalScene->sceneParams->voxel_size, canonicalScene->sceneParams->narrow_band_half_width);
 
 	ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, TIndex, TMemoryDeviceType>::
 	DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, calculateGradientFunctor);

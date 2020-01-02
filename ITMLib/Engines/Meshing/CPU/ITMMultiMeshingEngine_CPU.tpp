@@ -20,14 +20,14 @@ inline void ITMMultiMeshingEngine_CPU<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMM
 	for (int localMapId = 0; localMapId < numLocalMaps; ++localMapId)
 	{
 		hashTables.poses_vs[localMapId] = sceneManager.getEstimatedGlobalPose(localMapId).GetM();
-		hashTables.poses_vs[localMapId].m30 /= sceneParams.voxelSize;
-		hashTables.poses_vs[localMapId].m31 /= sceneParams.voxelSize;
-		hashTables.poses_vs[localMapId].m32 /= sceneParams.voxelSize;
+		hashTables.poses_vs[localMapId].m30 /= sceneParams.voxel_size;
+		hashTables.poses_vs[localMapId].m31 /= sceneParams.voxel_size;
+		hashTables.poses_vs[localMapId].m32 /= sceneParams.voxel_size;
 		
 		hashTables.posesInv[localMapId] = sceneManager.getEstimatedGlobalPose(localMapId).GetInvM();
-		hashTables.posesInv[localMapId].m30 /= sceneParams.voxelSize;
-		hashTables.posesInv[localMapId].m31 /= sceneParams.voxelSize;
-		hashTables.posesInv[localMapId].m32 /= sceneParams.voxelSize;
+		hashTables.posesInv[localMapId].m30 /= sceneParams.voxel_size;
+		hashTables.posesInv[localMapId].m31 /= sceneParams.voxel_size;
+		hashTables.posesInv[localMapId].m32 /= sceneParams.voxel_size;
 
 		hashTables.index[localMapId] = sceneManager.getLocalMap(localMapId)->scene->index.GetIndexData();
 		localVBAs.voxels[localMapId] = sceneManager.getLocalMap(localMapId)->scene->localVBA.GetVoxelBlocks();
@@ -38,7 +38,7 @@ inline void ITMMultiMeshingEngine_CPU<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMM
 
 	int noTriangles = 0, noMaxTriangles = mesh->noMaxTriangles;
 	int noTotalEntriesPerLocalMap = sceneManager.getLocalMap(0)->scene->index.hashEntryCount;
-	float factor = sceneParams.voxelSize;
+	float factor = sceneParams.voxel_size;
 
 	// very dumb rendering -- likely to generate lots of duplicates
 	for (int localMapId = 0; localMapId < numLocalMaps; ++localMapId)

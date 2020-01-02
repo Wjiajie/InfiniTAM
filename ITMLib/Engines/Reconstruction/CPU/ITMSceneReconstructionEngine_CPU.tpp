@@ -35,7 +35,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 {
 	Vector2i rgbImgSize = view->rgb->noDims;
 	Vector2i depthImgSize = view->depth->noDims;
-	float voxelSize = scene->sceneParams->voxelSize;
+	float voxelSize = scene->sceneParams->voxel_size;
 
 	Matrix4f M_d, M_rgb;
 	Vector4f projParams_d, projParams_rgb;
@@ -46,7 +46,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 	projParams_d = view->calib.intrinsics_d.projectionParamsSimple.all;
 	projParams_rgb = view->calib.intrinsics_rgb.projectionParamsSimple.all;
 
-	float mu = scene->sceneParams->mu; int maxW = scene->sceneParams->maxW;
+	float mu = scene->sceneParams->narrow_band_half_width; int maxW = scene->sceneParams->max_integration_weight;
 
 	float *depth = view->depth->GetData(MEMORYDEVICE_CPU);
 	float *confidence = view->depthConfidence->GetData(MEMORYDEVICE_CPU);
@@ -57,7 +57,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 	int *visibleBlockHashCodes = scene->index.GetVisibleBlockHashCodes();
 	int visibleHashBlockCount = scene->index.GetVisibleHashBlockCount();
 
-	bool stopIntegratingAtMaxW = scene->sceneParams->stopIntegratingAtMaxW;
+	bool stopIntegratingAtMaxW = scene->sceneParams->stop_integration_at_max_weight;
 
 #ifdef WITH_OPENMP
 	#pragma omp parallel for
@@ -106,7 +106,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
                                                                                          const ITMTrackingState *trackingState, const ITMRenderState *renderState, bool onlyUpdateVisibleList, bool resetVisibleList)
 {
 	Vector2i depthImgSize = view->depth->noDims;
-	float voxelSize = scene->sceneParams->voxelSize;
+	float voxelSize = scene->sceneParams->voxel_size;
 
 	Matrix4f M_d, invM_d;
 	Vector4f projParams_d, invProjParams_d;
@@ -120,7 +120,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 	invProjParams_d.x = 1.0f / invProjParams_d.x;
 	invProjParams_d.y = 1.0f / invProjParams_d.y;
 
-	float mu = scene->sceneParams->mu;
+	float mu = scene->sceneParams->narrow_band_half_width;
 
 	float *depth = view->depth->GetData(MEMORYDEVICE_CPU);
 	int *voxelAllocationList = scene->localVBA.GetAllocationList();
@@ -160,8 +160,8 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 		bool collisionDetected = false;
 		buildHashAllocAndVisibleTypePP(hashEntryStates_device, hashBlockVisibilityTypes, x, y, blockCoords_device, depth, invM_d,
 		                               invProjParams_d, mu, depthImgSize, oneOverHashEntrySize,
-		                               hashTable, scene->sceneParams->viewFrustum_min,
-		                               scene->sceneParams->viewFrustum_max, collisionDetected);
+		                               hashTable, scene->sceneParams->near_clipping_distance,
+		                               scene->sceneParams->far_clipping_distance, collisionDetected);
 	}
 
 	if (onlyUpdateVisibleList) useSwapping = false;
@@ -317,7 +317,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMPlainVoxelArray>::IntegrateInto
 {
 	Vector2i rgbImgSize = view->rgb->noDims;
 	Vector2i depthImgSize = view->depth->noDims;
-	float voxelSize = scene->sceneParams->voxelSize;
+	float voxelSize = scene->sceneParams->voxel_size;
 
 	Matrix4f M_d, M_rgb;
 	Vector4f projParams_d, projParams_rgb;
@@ -328,7 +328,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMPlainVoxelArray>::IntegrateInto
 	projParams_d = view->calib.intrinsics_d.projectionParamsSimple.all;
 	projParams_rgb = view->calib.intrinsics_rgb.projectionParamsSimple.all;
 
-	float mu = scene->sceneParams->mu; int maxW = scene->sceneParams->maxW;
+	float mu = scene->sceneParams->narrow_band_half_width; int maxW = scene->sceneParams->max_integration_weight;
 
 	float *depth = view->depth->GetData(MEMORYDEVICE_CPU);
 	float *confidence = view->depthConfidence->GetData(MEMORYDEVICE_CPU);
@@ -337,7 +337,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMPlainVoxelArray>::IntegrateInto
 
 	const ITMPlainVoxelArray::IndexData *arrayInfo = scene->index.GetIndexData();
 
-	bool stopIntegratingAtMaxW = scene->sceneParams->stopIntegratingAtMaxW;
+	bool stopIntegratingAtMaxW = scene->sceneParams->stop_integration_at_max_weight;
 	//bool approximateIntegration = !trackingState->requiresFullRendering;
 
 #ifdef WITH_OPENMP

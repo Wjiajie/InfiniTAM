@@ -358,8 +358,8 @@ public:
 				                       static_cast<int>(levels.size()),
 				                       smallStepSizeCriterion,
 				                       failureDetectorThd,
-				                       sceneParams->viewFrustum_min,
-				                       sceneParams->viewFrustum_max,
+				                       sceneParams->near_clipping_distance,
+				                       sceneParams->far_clipping_distance,
 				                       minColourGradient,
 				                       tukeyCutOff,
 				                       framesToSkip,
@@ -377,8 +377,8 @@ public:
 				                        static_cast<int>(levels.size()),
 				                        smallStepSizeCriterion,
 				                        failureDetectorThd,
-				                        sceneParams->viewFrustum_min,
-				                        sceneParams->viewFrustum_max,
+				                        sceneParams->near_clipping_distance,
+				                        sceneParams->far_clipping_distance,
 				                        minColourGradient,
 				                        tukeyCutOff,
 				                        framesToSkip,
@@ -389,7 +389,7 @@ public:
 			case MEMORYDEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
 				ret = new TTracker_METAL(imgSize_d, imgSize_rgb, useDepth, useColour, colourWeight, &(levels[0]), static_cast<int>(levels.size()), smallStepSizeCriterion, failureDetectorThd,
-				scene->scene_parameters->viewFrustum_min, scene->scene_parameters->viewFrustum_max, tukeyCutOff, framesToSkip, framesToWeight, lowLevelEngine);
+				scene->scene_parameters->near_clipping_distance, scene->scene_parameters->far_clipping_distance, tukeyCutOff, framesToSkip, framesToWeight, lowLevelEngine);
 #endif
 				break;
 		}

@@ -17,36 +17,36 @@ namespace ITMLib
 	{
 	public:
 		/// Size of a voxel, usually given in meters.
-		const float voxelSize;
+		const float voxel_size;
 
 		/** @{ */
 		/** \brief
 		    Fallback parameters: consider only parts of the
-		    scene from @p viewFrustum_min in front of the camera
-		    to a distance of @p viewFrustum_max. Usually the
+		    scene from @p near_clipping_distance in front of the camera
+		    to a distance of @p far_clipping_distance. Usually the
 		    actual depth range should be determined
 		    automatically by a ITMLib::Engine::ITMVisualisationEngine.
 		*/
-		const float viewFrustum_min, viewFrustum_max;
+		const float near_clipping_distance, far_clipping_distance;
 
 		/** @} */
 		/** \brief
 		    Encodes the width of the band of the truncated
 		    signed distance transform that is actually stored
 		    in the volume. This is again usually specified in
-		    meters. The resulting width in voxels is @ref mu
-		    divided by @ref voxelSize.
+		    meters. The resulting width in voxels is @ref narrow_band_half_width
+		    divided by @ref voxel_size.
 		*/
-		const float mu;
+		const float narrow_band_half_width;
 
 		/** \brief
-		    Up to @ref maxW observations per voxel are averaged.
+		    Up to @ref max_integration_weight observations per voxel are averaged.
 		    Beyond that a sliding average is computed.
 		*/
-		const int maxW;
+		const int max_integration_weight;
 
-		/** Stop integration/fusion once maxW has been reached. */
-		const bool stopIntegratingAtMaxW;
+		/** Stop integration/fusion once max_integration_weight has been reached. */
+		const bool stop_integration_at_max_weight;
 
 		VoxelVolumeParameters();
 		explicit VoxelVolumeParameters(const po::variables_map& vm);
@@ -58,15 +58,15 @@ namespace ITMLib
 
 		/**
 		 * \brief standard constructor setting all elements to passed-in values
-		 * \param mu width of the band (in meters) of the truncated signed distance transform
-		 * \param maxW maximum number of observations per voxel which are averaged, after this a sliding average is computed
-		 * \param voxelSize voxelSize (in meters)
-		 * \param viewFrustum_min distance (in meters) to near clipping plane of the view frustum, closer than which nothing is considered
-		 * \param viewFrustum_max distance (in meters) to far clipping plane of the view frustum, farther than which nothing is considered
-		 * \param stopIntegratingAtMaxW defines behavior after maxW observations have been gathered for a specific point
+		 * \param narrow_band_half_width width of the band (in meters) of the truncated signed distance transform
+		 * \param max_integration_weight maximum number of observations per voxel which are averaged, after this a sliding average is computed
+		 * \param voxel_size voxel_size (in meters)
+		 * \param near_clipping_distance distance (in meters) to near clipping plane of the view frustum, closer than which nothing is considered
+		 * \param far_clipping_distance distance (in meters) to far clipping plane of the view frustum, farther than which nothing is considered
+		 * \param stop_integration_at_max_weight defines behavior after max_integration_weight observations have been gathered for a specific point
 		 */
-		VoxelVolumeParameters(float mu, int maxW, float voxelSize,
-		                      float viewFrustum_min, float viewFrustum_max, bool stopIntegratingAtMaxW);
+		VoxelVolumeParameters(float narrow_band_half_width, int max_integration_weight, float voxel_size,
+		                      float near_clipping_distance, float far_clipping_distance, bool stop_integration_at_max_weight);
 
 
 

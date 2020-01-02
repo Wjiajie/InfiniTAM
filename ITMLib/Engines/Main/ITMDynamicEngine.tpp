@@ -54,8 +54,8 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 
 	Vector2i trackedImageSize = cameraTrackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
 
-	renderState_live = new ITMRenderState(trackedImageSize, canonicalScene->sceneParams->viewFrustum_min,
-	                                      canonicalScene->sceneParams->viewFrustum_max, settings.device_type);
+	renderState_live = new ITMRenderState(trackedImageSize, canonicalScene->sceneParams->near_clipping_distance,
+	                                      canonicalScene->sceneParams->far_clipping_distance, settings.device_type);
 
 	renderState_freeview = nullptr; //will be created if needed
 
@@ -66,8 +66,8 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 
 	if (settings.behavior_on_failure == settings.FAILUREMODE_RELOCALIZE)
 		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d,
-		                                                   Vector2f(settings.scene_parameters.viewFrustum_min,
-		                                                            settings.scene_parameters.viewFrustum_max),
+		                                                   Vector2f(settings.scene_parameters.near_clipping_distance,
+		                                                            settings.scene_parameters.far_clipping_distance),
 		                                                   0.2f, 500, 4);
 	else relocaliser = nullptr;
 
@@ -168,8 +168,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::LoadFromFile() {
 			FernRelocLib::Relocaliser<float>* relocaliser_temp =
 					new FernRelocLib::Relocaliser<float>(view->depth->noDims,
 					                                     Vector2f(
-							                                     settings.scene_parameters.viewFrustum_min,
-							                                     settings.scene_parameters.viewFrustum_max),
+							                                     settings.scene_parameters.near_clipping_distance,
+							                                     settings.scene_parameters.far_clipping_distance),
 					                                     0.2f, 500, 4);
 
 			relocaliser_temp->LoadFromDirectory(relocaliserInputDirectory);
@@ -407,8 +407,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 				type = IITMVisualisationEngine::RENDER_COLOUR_FROM_CONFIDENCE;
 
 			if (renderState_freeview == nullptr) {
-				renderState_freeview = new ITMRenderState(out->noDims, liveScenes[0]->sceneParams->viewFrustum_min,
-				                                          liveScenes[0]->sceneParams->viewFrustum_max,
+				renderState_freeview = new ITMRenderState(out->noDims, liveScenes[0]->sceneParams->near_clipping_distance,
+				                                          liveScenes[0]->sceneParams->far_clipping_distance,
 				                                          settings.device_type);
 			}
 
@@ -425,8 +425,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 		case ITMMainEngine::InfiniTAM_IMAGE_STEP_BY_STEP: {
 
 			if (renderState_freeview == nullptr) {
-				renderState_freeview = new ITMRenderState(out->noDims, liveScenes[0]->sceneParams->viewFrustum_min,
-				                                          liveScenes[0]->sceneParams->viewFrustum_max,
+				renderState_freeview = new ITMRenderState(out->noDims, liveScenes[0]->sceneParams->near_clipping_distance,
+				                                          liveScenes[0]->sceneParams->far_clipping_distance,
 				                                          settings.device_type);
 			}
 
@@ -453,8 +453,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			IITMVisualisationEngine::RenderImageType type = IITMVisualisationEngine::RENDER_SHADED_GREYSCALE;
 
 			if (renderState_freeview == nullptr) {
-				renderState_freeview = new ITMRenderState(out->noDims, canonicalScene->sceneParams->viewFrustum_min,
-				                                          canonicalScene->sceneParams->viewFrustum_max,
+				renderState_freeview = new ITMRenderState(out->noDims, canonicalScene->sceneParams->near_clipping_distance,
+				                                          canonicalScene->sceneParams->far_clipping_distance,
 				                                          settings.device_type);
 			}
 

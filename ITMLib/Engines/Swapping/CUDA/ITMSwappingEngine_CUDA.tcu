@@ -122,7 +122,7 @@ void ITMSwappingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::IntegrateGlobalIntoLocal
 
 	int noNeededEntries = this->LoadFromGlobalMemory(scene);
 
-	int maxW = scene->sceneParams->maxW;
+	int maxW = scene->sceneParams->max_integration_weight;
 
 	if (noNeededEntries > 0) {
 		dim3 blockSize(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);

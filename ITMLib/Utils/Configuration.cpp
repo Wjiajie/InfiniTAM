@@ -313,7 +313,7 @@ std::vector<T> as_vector(pt::ptree const& pt, pt::ptree::key_type const& key) {
 // region ======================================= CONFIGURATION CONSTRUCTORS ===========================================
 
 Configuration::Configuration()
-		:   //mu(m), maxW, voxel size(m), clipping min, clipping max, stopIntegratingAtMaxW
+		:   //narrow_band_half_width(m), max_integration_weight, voxel size(m), clipping min, clipping max, stop_integration_at_max_weight
 		scene_parameters(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG
 		//scene_parameters(0.02f, 100, 0.005f, 0.2f, 3.0f, false),//standard InfiniTAM values
 		surfel_scene_parameters(0.5f, 0.6f, static_cast<float>(20 * M_PI / 180), 0.01f, 0.004f, 3.5f, 25.0f, 4, 1.0f,

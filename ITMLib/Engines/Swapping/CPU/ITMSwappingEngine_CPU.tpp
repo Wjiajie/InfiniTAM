@@ -72,7 +72,7 @@ void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateGlobalIntoLocal(
 
 	int noNeededEntries = this->LoadFromGlobalMemory(scene);
 
-	int maxW = scene->sceneParams->maxW;
+	int maxW = scene->sceneParams->max_integration_weight;
 
 	for (int i = 0; i < noNeededEntries; i++)
 	{

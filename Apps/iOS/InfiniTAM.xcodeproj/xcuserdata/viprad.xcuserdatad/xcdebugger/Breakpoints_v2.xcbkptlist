@@ -1261,7 +1261,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "398"
             endingLineNumber = "398"
-            landmarkName = "processPixelGrey_ImageNormals(DEVICEPTR(Vector4u) *outRendering, const CONSTPTR(Vector4f) *pointsRay, const THREADPTR(Vector2i) &amp;imgSize, const THREADPTR(int) &amp;x, const THREADPTR(int) &amp;y, float voxelSize, const THREADPTR(Vector3f) &amp;lightSource)"
+            landmarkName = "processPixelGrey_ImageNormals(DEVICEPTR(Vector4u) *outRendering, const CONSTPTR(Vector4f) *pointsRay, const THREADPTR(Vector2i) &amp;imgSize, const THREADPTR(int) &amp;x, const THREADPTR(int) &amp;y, float voxel_size, const THREADPTR(Vector3f) &amp;lightSource)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

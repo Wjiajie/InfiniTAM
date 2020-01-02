@@ -58,7 +58,7 @@ ITMMultiEngine<TVoxel, TIndex>::ITMMultiEngine(const ITMRGBDCalib& calib, Vector
 
 	view = NULL; // will be allocated by the view builder
 
-	relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.scene_parameters.viewFrustum_min, settings.scene_parameters.viewFrustum_max), 0.1f, 1000, 4);
+	relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.scene_parameters.near_clipping_distance, settings.scene_parameters.far_clipping_distance), 0.1f, 1000, 4);
 
 	mGlobalAdjustmentEngine = new ITMGlobalAdjustmentEngine();
 	mScheduleGlobalAdjustment = false;
@@ -405,8 +405,8 @@ void ITMMultiEngine<TVoxel, TIndex>::GetImage(ITMUChar4Image *out, GetImageType 
 		if (freeviewLocalMapIdx >= 0){
 			ITMLocalMap<TVoxel, TIndex> *activeData = mapManager->getLocalMap(freeviewLocalMapIdx);
 			if (renderState_freeview == NULL) renderState_freeview =
-					new ITMRenderStateMultiScene<TVoxel,TIndex>( out->noDims, activeData->scene->sceneParams->viewFrustum_min,
-							activeData->scene->sceneParams->viewFrustum_max,settings.device_type);
+					new ITMRenderStateMultiScene<TVoxel,TIndex>(out->noDims, activeData->scene->sceneParams->near_clipping_distance,
+					                                            activeData->scene->sceneParams->far_clipping_distance, settings.device_type);
 
 			visualisationEngine->FindVisibleBlocks(activeData->scene, pose, intrinsics, renderState_freeview);
 			visualisationEngine->CreateExpectedDepths(activeData->scene, pose, intrinsics, renderState_freeview);
@@ -420,8 +420,8 @@ void ITMMultiEngine<TVoxel, TIndex>::GetImage(ITMUChar4Image *out, GetImageType 
 		{
 			const VoxelVolumeParameters& params = *mapManager->getLocalMap(0)->scene->sceneParams;
 			if (renderState_multiscene == NULL) renderState_multiscene =
-						new ITMRenderStateMultiScene<TVoxel, TIndex>(out->noDims, params.viewFrustum_min,
-						                                             params.viewFrustum_max, settings.device_type);
+						new ITMRenderStateMultiScene<TVoxel, TIndex>(out->noDims, params.near_clipping_distance,
+						                                             params.far_clipping_distance, settings.device_type);
 			multiVisualisationEngine->PrepareRenderState(*mapManager, renderState_multiscene);
 			multiVisualisationEngine->CreateExpectedDepths(*mapManager, pose, intrinsics, renderState_multiscene);
 			multiVisualisationEngine->RenderImage(pose, intrinsics, renderState_multiscene, renderState_multiscene->raycastImage, type);

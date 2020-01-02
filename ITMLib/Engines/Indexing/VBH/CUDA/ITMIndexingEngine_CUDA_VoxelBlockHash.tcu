@@ -30,7 +30,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 		const Matrix4f& depth_camera_matrix, bool onlyUpdateVisibleList, bool resetVisibleList) {
 
 	Vector2i depthImgSize = view->depth->noDims;
-	float voxelSize = volume->sceneParams->voxelSize;
+	float voxelSize = volume->sceneParams->voxel_size;
 
 	Matrix4f inverted_depth_camera_matrix;
 	Vector4f projParams_d, invProjParams_d;
@@ -44,7 +44,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 	invProjParams_d.x = 1.0f / invProjParams_d.x;
 	invProjParams_d.y = 1.0f / invProjParams_d.y;
 
-	float mu = volume->sceneParams->mu;
+	float mu = volume->sceneParams->narrow_band_half_width;
 
 	float* depth = view->depth->GetData(MEMORYDEVICE_CUDA);
 	int* voxelAllocationList = volume->localVBA.GetAllocationList();
@@ -84,7 +84,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 		buildHashAllocAndVisibleType_device << < gridSizeHV, cudaBlockSizeHV >> > (hashEntryStates_device,
 				hashBlockVisibilityTypes_device,
 				allocationBlockCoordinates_device, depth, inverted_depth_camera_matrix, invProjParams_d, mu, depthImgSize, oneOverHashBlockSizeMeters, hashTable,
-				volume->sceneParams->viewFrustum_min, volume->sceneParams->viewFrustum_max,
+				volume->sceneParams->near_clipping_distance, volume->sceneParams->far_clipping_distance,
 				collisionDetected.GetData(MEMORYDEVICE_CUDA));
 		ORcudaKernelCheck;
 
@@ -248,7 +248,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::BuildVisib
 	// ** view data **
 	Vector4f depthCameraProjectionParameters = view->calib.intrinsics_d.projectionParamsSimple.all;
 	Vector2i depthImgSize = view->depth->noDims;
-	float voxelSize = volume->sceneParams->voxelSize;
+	float voxelSize = volume->sceneParams->voxel_size;
 
 
 	// ** CUDA data **
