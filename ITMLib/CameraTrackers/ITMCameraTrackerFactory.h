@@ -41,7 +41,7 @@ private:
 	//#################### TYPEDEFS ####################
 	typedef ITMCameraTracker* MakerFunc(const Vector2i&, const Vector2i&, MemoryDeviceType,
 	                              const ORUtils::KeyValueConfig&, const ITMLowLevelEngine*, ITMIMUCalibrator*,
-	                              const ITMSceneParameters*);
+	                              const VoxelVolumeParameters*);
 
 	/// Tracker types
 	typedef enum {
@@ -110,7 +110,7 @@ public:
 	 */
 	ITMCameraTracker* Make(MemoryDeviceType deviceType, const char* trackerConfig, const Vector2i& imgSize_rgb,
 	                       const Vector2i& imgSize_d, const ITMLowLevelEngine* lowLevelEngine,
-	                       ITMIMUCalibrator* imuCalibrator, const ITMSceneParameters* sceneParams) const {
+	                       ITMIMUCalibrator* imuCalibrator, const VoxelVolumeParameters* sceneParams) const {
 		ORUtils::KeyValueConfig cfg(trackerConfig);
 		int verbose = 0;
 		if (cfg.getProperty("help") != NULL) if (verbose < 10) verbose = 10;
@@ -143,7 +143,7 @@ public:
 	 * \brief Makes a tracker of the type specified in the settings.
 	 */
 	ITMCameraTracker* Make(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, const ITMLowLevelEngine* lowLevelEngine,
-	                       ITMIMUCalibrator* imuCalibrator, const ITMSceneParameters* sceneParams) const {
+	                       ITMIMUCalibrator* imuCalibrator, const VoxelVolumeParameters* sceneParams) const {
 		auto& settings = Configuration::get();
 		return Make(settings.device_type, settings.tracker_configuration.c_str(), imgSize_rgb, imgSize_d, lowLevelEngine,
 		            imuCalibrator, sceneParams);
@@ -188,7 +188,7 @@ public:
 	MakeColourTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, MemoryDeviceType deviceType,
 	                  const ORUtils::KeyValueConfig& cfg,
 	                  const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
-	                  const ITMSceneParameters* sceneParams) {
+	                  const VoxelVolumeParameters* sceneParams) {
 		int verbose = 0;
 		if (cfg.getProperty("help") != NULL) if (verbose < 10) verbose = 10;
 
@@ -226,7 +226,7 @@ public:
 	MakeICPTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, MemoryDeviceType deviceType,
 	               const ORUtils::KeyValueConfig& cfg,
 	               const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
-	               const ITMSceneParameters* sceneParams) {
+	               const VoxelVolumeParameters* sceneParams) {
 		const char* levelSetup = "rrrbb";
 		float smallStepSizeCriterion = 1e-3f;
 		float outlierDistanceFine = 0.002f;
@@ -286,7 +286,7 @@ public:
 	                                           MemoryDeviceType deviceType,
 	                                           const ORUtils::KeyValueConfig& cfg,
 	                                           const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
-	                                           const ITMSceneParameters* sceneParams) {
+	                                           const VoxelVolumeParameters* sceneParams) {
 
 		//ensure template arguments derive from correct types
 		static_assert(std::is_base_of<ITMExtendedTracker_CPU, TTracker_CPU>::value,
@@ -407,7 +407,7 @@ public:
 	MakeExtendedTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, MemoryDeviceType deviceType,
 	                    const ORUtils::KeyValueConfig& cfg,
 	                    const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
-	                    const ITMSceneParameters* sceneParams) {
+	                    const VoxelVolumeParameters* sceneParams) {
 		return
 				MakeExtendedLikeTracker<
 						ITMExtendedTracker_CPU
@@ -429,7 +429,7 @@ public:
 	                                      MemoryDeviceType deviceType,
 	                                      const ORUtils::KeyValueConfig& cfg,
 	                                      const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
-	                                      const ITMSceneParameters* sceneParams) {
+	                                      const VoxelVolumeParameters* sceneParams) {
 		return MakeExtendedLikeTracker<
 				ITMDynamicCameraTracker_CPU
 #ifndef COMPILE_WITHOUT_CUDA
@@ -448,7 +448,7 @@ public:
 	MakeIMUTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, MemoryDeviceType deviceType,
 	               const ORUtils::KeyValueConfig& cfg,
 	               const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
-	               const ITMSceneParameters* sceneParams) {
+	               const VoxelVolumeParameters* sceneParams) {
 		const char* levelSetup = "tb";
 		float smallStepSizeCriterion = 1e-3f;
 		float outlierDistanceFine = 0.005f;
@@ -507,7 +507,7 @@ public:
 	static ITMCameraTracker* MakeExtendedIMUTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d,
 	                                                MemoryDeviceType deviceType, const ORUtils::KeyValueConfig& cfg,
 	                                                const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
-	                                                const ITMSceneParameters* sceneParams) {
+	                                                const VoxelVolumeParameters* sceneParams) {
 		ITMCameraTracker* dTracker = MakeExtendedTracker(imgSize_rgb, imgSize_d, deviceType, cfg,
 		                                           lowLevelEngine, imuCalibrator, sceneParams);
 		if (dTracker == NULL) DIEWITHEXCEPTION("Failed to make extended tracker"); // Should never happen though
@@ -525,7 +525,7 @@ public:
 	MakeFileBasedTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, MemoryDeviceType deviceType,
 	                     const ORUtils::KeyValueConfig& cfg,
 	                     const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
-	                     const ITMSceneParameters* sceneParams) {
+	                     const VoxelVolumeParameters* sceneParams) {
 		int verbose = 0;
 		if (cfg.getProperty("help") && verbose < 10) verbose = 10;
 
@@ -542,7 +542,7 @@ public:
 	MakeForceFailTracker(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, MemoryDeviceType deviceType,
 	                     const ORUtils::KeyValueConfig& cfg,
 	                     const ITMLowLevelEngine* lowLevelEngine, ITMIMUCalibrator* imuCalibrator,
-	                     const ITMSceneParameters* sceneParams) {
+	                     const VoxelVolumeParameters* sceneParams) {
 		return new ITMForceFailTracker;
 	}
 

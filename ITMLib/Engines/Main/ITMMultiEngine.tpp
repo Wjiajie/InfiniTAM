@@ -418,7 +418,7 @@ void ITMMultiEngine<TVoxel, TIndex>::GetImage(ITMUChar4Image *out, GetImageType 
 		}
 		else
 		{
-			const ITMSceneParameters& params = *mapManager->getLocalMap(0)->scene->sceneParams;
+			const VoxelVolumeParameters& params = *mapManager->getLocalMap(0)->scene->sceneParams;
 			if (renderState_multiscene == NULL) renderState_multiscene =
 						new ITMRenderStateMultiScene<TVoxel, TIndex>(out->noDims, params.viewFrustum_min,
 						                                             params.viewFrustum_max, settings.device_type);

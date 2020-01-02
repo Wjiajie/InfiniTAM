@@ -13,7 +13,7 @@ namespace ITMLib
 	/** \brief
 	    Stores parameters of a scene like voxel size
 	*/
-	class ITMSceneParameters
+	class VoxelVolumeParameters
 	{
 	public:
 		/// Size of a voxel, usually given in meters.
@@ -48,13 +48,13 @@ namespace ITMLib
 		/** Stop integration/fusion once maxW has been reached. */
 		const bool stopIntegratingAtMaxW;
 
-		ITMSceneParameters();
-		explicit ITMSceneParameters(const po::variables_map& vm);
-		static ITMSceneParameters BuildFromPTree(const pt::ptree& tree);
+		VoxelVolumeParameters();
+		explicit VoxelVolumeParameters(const po::variables_map& vm);
+		static VoxelVolumeParameters BuildFromPTree(const pt::ptree& tree);
 		pt::ptree ToPTree() const;
 
-		friend bool operator== (const ITMSceneParameters &p1, const ITMSceneParameters &p2);
-		friend std::ostream& operator<<(std::ostream& out, const ITMSceneParameters& parameters);
+		friend bool operator== (const VoxelVolumeParameters &p1, const VoxelVolumeParameters &p2);
+		friend std::ostream& operator<<(std::ostream& out, const VoxelVolumeParameters& parameters);
 
 		/**
 		 * \brief standard constructor setting all elements to passed-in values
@@ -65,8 +65,8 @@ namespace ITMLib
 		 * \param viewFrustum_max distance (in meters) to far clipping plane of the view frustum, farther than which nothing is considered
 		 * \param stopIntegratingAtMaxW defines behavior after maxW observations have been gathered for a specific point
 		 */
-		ITMSceneParameters(float mu, int maxW, float voxelSize,
-		                   float viewFrustum_min, float viewFrustum_max, bool stopIntegratingAtMaxW);
+		VoxelVolumeParameters(float mu, int maxW, float voxelSize,
+		                      float viewFrustum_min, float viewFrustum_max, bool stopIntegratingAtMaxW);
 
 
 
@@ -74,6 +74,6 @@ namespace ITMLib
 
 	};
 
-	bool operator==(const ITMSceneParameters &p1, const ITMSceneParameters &p2);
-	std::ostream& operator<<(std::ostream& out, const ITMSceneParameters& parameters);
+	bool operator==(const VoxelVolumeParameters &p1, const VoxelVolumeParameters &p2);
+	std::ostream& operator<<(std::ostream& out, const VoxelVolumeParameters& parameters);
 }

@@ -323,6 +323,7 @@ Configuration::Configuration()
 		telemetry_settings(),
 		input_and_output_settings(),
 		ui_engine_settings(),
+		non_rigid_tracking_parameters(),
 		skip_points(true),
 		create_meshing_engine(true),
 #ifndef COMPILE_WITHOUT_CUDA
@@ -339,9 +340,7 @@ Configuration::Configuration()
 		indexing_method(INDEX_HASH),
 		surface_tracker_type(TRACKER_SLAVCHEVA_DIAGNOSTIC),
 		tracker_configuration(library_mode == LIBMODE_BASIC_SURFELS ? default_surfel_tracker_configuration :
-		                      default_depth_only_extended_tracker_configuration),
-		max_iteration_threshold(200),
-		max_update_length_threshold(0.0001f) {
+		                      default_depth_only_extended_tracker_configuration) {
 }
 
 Configuration::Configuration(const po::variables_map& vm) :
@@ -352,6 +351,7 @@ Configuration::Configuration(const po::variables_map& vm) :
 		telemetry_settings(vm),
 		input_and_output_settings(vm),
 		ui_engine_settings(vm),
+		non_rigid_tracking_parameters(vm),
 		skip_points(vm["skip_points"].empty() ?
 		            Configuration().skip_points :
 		            vm["skip_points"].as<bool>()),
@@ -382,15 +382,7 @@ Configuration::Configuration(const po::variables_map& vm) :
 		tracker_configuration(
 				vm["tracker"].empty() ? (library_mode == LIBMODE_BASIC_SURFELS ? default_surfel_tracker_configuration :
 				                         default_depth_only_extended_tracker_configuration)
-				                      : vm["tracker"].as<std::string>()),
-		max_iteration_threshold(vm["max_iterations"].empty() ?
-		                        Configuration().max_iteration_threshold
-		                                                     :
-		                        vm["max_iterations"].as<unsigned int>()),
-		max_update_length_threshold(vm["vector_update_threshold"].empty() ?
-		                            Configuration().max_update_length_threshold
-		                                                                  :
-		                            vm["vector_update_threshold"].as<float>()) {
+				                      : vm["tracker"].as<std::string>()){
 #ifdef COMPILE_WITHOUT_CUDA
 	if(device_type == MEMORYDEVICE_CUDA){
 		DIEWITHEXCEPTION_REPORTLOCATION("CUDA compilation disabled, unable to use CUDA device type. Aborting!");
@@ -405,11 +397,12 @@ Configuration::Configuration(const po::variables_map& vm) :
 
 
 Configuration::Configuration(
-		ITMSceneParameters scene_parameters, ITMSurfelSceneParameters surfel_scene_parameters,
+		VoxelVolumeParameters scene_parameters, ITMSurfelSceneParameters surfel_scene_parameters,
 		SlavchevaSurfaceTracker::Parameters slavcheva_parameters, SlavchevaSurfaceTracker::Switches slavcheva_switches,
 		Configuration::TelemetrySettings telemetry_settings,
 		Configuration::InputAndOutputSettings input_and_output_settings,
 		Configuration::UIEngineSettings ui_engine_settings,
+		NonRigidTrackingParameters non_rigid_tracking_parameters,
 		bool skip_points, bool create_meshing_engine,
 		MemoryDeviceType device_type,
 		bool use_approximate_raycast, bool use_threshold_filter, bool use_bilateral_filter,
@@ -418,9 +411,7 @@ Configuration::Configuration(
 		Configuration::LibMode library_mode,
 		Configuration::IndexingMethod indexing_method,
 		GradientFunctorType surface_tracker_type,
-		std::string tracker_configuration,
-		unsigned int max_iteration_threshold,
-		float max_update_length_threshold) :
+		std::string tracker_configuration) :
 
 		scene_parameters(scene_parameters),
 		surfel_scene_parameters(surfel_scene_parameters),
@@ -428,6 +419,7 @@ Configuration::Configuration(
 		slavcheva_switches(slavcheva_switches),
 		telemetry_settings(telemetry_settings),
 		ui_engine_settings(ui_engine_settings),
+		non_rigid_tracking_parameters(non_rigid_tracking_parameters),
 		input_and_output_settings(std::move(input_and_output_settings)),
 		skip_points(skip_points),
 		create_meshing_engine(create_meshing_engine),
@@ -440,9 +432,7 @@ Configuration::Configuration(
 		library_mode(library_mode),
 		indexing_method(indexing_method),
 		surface_tracker_type(surface_tracker_type),
-		tracker_configuration(std::move(tracker_configuration)),
-		max_iteration_threshold(max_iteration_threshold),
-		max_update_length_threshold(max_update_length_threshold) {}
+		tracker_configuration(std::move(tracker_configuration)) {}
 
 // endregion ===========================================================================================================
 
@@ -548,8 +538,8 @@ Configuration* Configuration::from_json_file(const std::string& path) {
 
 	Configuration default_configuration;
 
-	boost::optional<ITMSceneParameters> scene_parameters =
-			as_optional_parsable<ITMSceneParameters>(tree, "scene_parameters");
+	boost::optional<VoxelVolumeParameters> scene_parameters =
+			as_optional_parsable<VoxelVolumeParameters>(tree, "scene_parameters");
 	boost::optional<ITMSurfelSceneParameters> surfel_scene_parameters =
 			as_optional_parsable<ITMSurfelSceneParameters>(tree, "surfel_scene_parameters");
 	boost::optional<SlavchevaSurfaceTracker::ConfigurationMode> mode_opt =
@@ -566,6 +556,8 @@ Configuration* Configuration::from_json_file(const std::string& path) {
 			as_optional_parsable_config_path<InputAndOutputSettings>(tree, "input_and_output_settings", path);
 	boost::optional<UIEngineSettings> ui_engine_settings =
 			as_optional_parsable<UIEngineSettings>(tree,"ui_engine_settings");
+	boost::optional<NonRigidTrackingParameters> non_rigid_tracking_parameters =
+			as_optional_parsable<NonRigidTrackingParameters>(tree,"non_rigid_tracking_parameters");
 
 	boost::optional<bool> skip_points = tree.get_optional<bool>("skip_points");
 	boost::optional<bool> disable_meshing = tree.get_optional<bool>("disable_meshing");
@@ -581,7 +573,7 @@ Configuration* Configuration::from_json_file(const std::string& path) {
 	boost::optional<Configuration::IndexingMethod> indexing_method = optional_enum_value_from_ptree<IndexingMethod>(
 			tree, "index");
 	boost::optional<GradientFunctorType> surface_tracker_type = optional_enum_value_from_ptree<GradientFunctorType>(
-			tree, "surface_tracking.functor_type");
+			tree, "non_rigid_tracking_parameters.functor_type");
 	boost::optional<std::string> tracker_configuration = tree.get_optional<std::string>("tracker");
 	boost::optional<unsigned int> max_iteration_threshold =
 			tree.get_optional<unsigned int>("surface_tracking.max_iterations");
@@ -598,6 +590,7 @@ Configuration* Configuration::from_json_file(const std::string& path) {
 			telemetry_settings ? telemetry_settings.get() : default_config.telemetry_settings,
 			input_and_output_settings ? input_and_output_settings.get() : default_config.input_and_output_settings,
 			ui_engine_settings ? ui_engine_settings.get() : default_config.ui_engine_settings,
+			non_rigid_tracking_parameters ? non_rigid_tracking_parameters.get() : default_config.non_rigid_tracking_parameters,
 			skip_points ? skip_points.get() : default_config.skip_points,
 			disable_meshing ? !disable_meshing.get() : default_config.create_meshing_engine,
 			device_type ? device_type.get() : default_config.device_type,
@@ -609,9 +602,7 @@ Configuration* Configuration::from_json_file(const std::string& path) {
 			library_mode ? library_mode.get() : default_config.library_mode,
 			indexing_method ? indexing_method.get() : default_config.indexing_method,
 			surface_tracker_type ? surface_tracker_type.get() : default_config.surface_tracker_type,
-			tracker_configuration ? tracker_configuration.get() : default_config.tracker_configuration,
-			max_iteration_threshold ? max_iteration_threshold.get() : default_config.max_iteration_threshold,
-			max_update_length_threshold ? max_update_length_threshold.get() : default_config.max_update_length_threshold
+			tracker_configuration ? tracker_configuration.get() : default_config.tracker_configuration
 	);
 }
 
@@ -625,6 +616,8 @@ pt::ptree Configuration::to_ptree(const std::string& path) const {
 	tree.add_child("slavcheva.switches", slavcheva_switches.ToPTree());
 	tree.add_child("telemetry_settings", this->telemetry_settings.ToPTree());
 	tree.add_child("input_and_output_settings", this->input_and_output_settings.ToPTree(path));
+	tree.add_child("non_rigid_tracking_parameters", this->non_rigid_tracking_parameters.ToPTree());
+	tree.add("non_rigid_tracking_parameters.functor_type", enum_value_to_string(this->surface_tracker_type));
 	tree.add("skip_points", skip_points);
 	tree.add("disable_meshing", !create_meshing_engine);
 	tree.add("device", enum_value_to_string(this->device_type));
@@ -635,10 +628,7 @@ pt::ptree Configuration::to_ptree(const std::string& path) const {
 	tree.add("swapping", enum_value_to_string(this->swapping_mode));
 	tree.add("mode", enum_value_to_string(this->library_mode));
 	tree.add("index", enum_value_to_string(this->indexing_method));
-	tree.add("surface_tracking.functor_type", enum_value_to_string(this->surface_tracker_type));
 	tree.add("tracker", this->tracker_configuration);
-	tree.add("surface_tracking.max_iterations", this->max_iteration_threshold);
-	tree.add("surface_tracking.vector_update_threshold", this->max_update_length_threshold);
 	return tree;
 }
 
@@ -661,6 +651,7 @@ bool operator==(const Configuration& c1, const Configuration& c2) {
 	       c1.telemetry_settings == c2.telemetry_settings &&
 	       c1.input_and_output_settings == c2.input_and_output_settings &&
 	       c1.ui_engine_settings == c2.ui_engine_settings &&
+	       c1.non_rigid_tracking_parameters == c2.non_rigid_tracking_parameters &&
 	       c1.skip_points == c2.skip_points &&
 	       c1.create_meshing_engine == c2.create_meshing_engine &&
 	       c1.device_type == c2.device_type &&
@@ -672,14 +663,13 @@ bool operator==(const Configuration& c1, const Configuration& c2) {
 	       c1.library_mode == c2.library_mode &&
 	       c1.indexing_method == c2.indexing_method &&
 	       c1.surface_tracker_type == c2.surface_tracker_type &&
-	       c1.tracker_configuration == c2.tracker_configuration &&
-	       c1.max_iteration_threshold == c2.max_iteration_threshold &&
-	       c1.max_update_length_threshold == c2.max_update_length_threshold;
+	       c1.tracker_configuration == c2.tracker_configuration;
 }
 
 std::ostream& operator<<(std::ostream& out, const Configuration& c) {
 	pt::write_json_no_quotes(out, c.to_ptree(""), true);
 	out << "";
+	return out;
 }
 }//namespace ITMLib
 // endregion ===========================================================================================================
@@ -834,8 +824,8 @@ pt::ptree Configuration::InputAndOutputSettings::ToPTree(const std::string& path
 namespace ITMLib {
 
 bool operator==(const Configuration::InputAndOutputSettings& ios1, const Configuration::InputAndOutputSettings& ios2) {
-	return ios1.output_path == ios2.output_path;// &&
-	ios1.calibration_file_path == ios2.calibration_file_path; // &&
+	return ios1.output_path == ios2.output_path &&
+	ios1.calibration_file_path == ios2.calibration_file_path &&
 	ios1.openni_file_path == ios2.openni_file_path &&
 	ios1.rgb_video_file_path == ios2.rgb_video_file_path &&
 	ios1.depth_video_file_path == ios2.depth_video_file_path &&
@@ -848,6 +838,7 @@ bool operator==(const Configuration::InputAndOutputSettings& ios1, const Configu
 std::ostream& operator<<(std::ostream& out, const Configuration::InputAndOutputSettings& ios) {
 	pt::ptree tree(ios.ToPTree(""));
 	pt::write_json_no_quotes(out, tree, true);
+	return out;
 }
 } // namespace ITMLib
 
@@ -906,6 +897,7 @@ bool operator==(const Configuration::TelemetrySettings& ts1, const Configuration
 std::ostream& operator<<(std::ostream& out, const Configuration::TelemetrySettings& ts) {
 	pt::ptree tree(ts.ToPTree());
 	pt::write_json_no_quotes(out, tree, true);
+	return out;
 }
 }//namespace ITMLib
 
@@ -939,7 +931,7 @@ pt::ptree Configuration::UIEngineSettings::ToPTree() const {
 	pt::ptree tree;
 	tree.add("number_of_frames_to_process_after_launch", number_of_frames_to_process_after_launch);
 	tree.add("index_of_frame_to_start_at", index_of_frame_to_start_at);
-
+	return tree;
 }
 namespace ITMLib {
 bool operator==(const Configuration::UIEngineSettings& uiEngineSettings1,
@@ -952,7 +944,7 @@ bool operator==(const Configuration::UIEngineSettings& uiEngineSettings1,
 std::ostream& operator<<(std::ostream& out, const Configuration::UIEngineSettings& uiEngineSettings) {
 	pt::ptree tree(uiEngineSettings.ToPTree());
 	pt::write_json_no_quotes(out, tree, true);
-
+	return out;
 }
 } // end namespace ITMLib
 

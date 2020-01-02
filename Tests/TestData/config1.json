@@ -59,6 +59,11 @@
         "number_of_frames_to_process_after_launch": 50,
         "index_of_frame_to_start_at": 16
     },
+    "non_rigid_tracking_parameters": {
+        "functor_type": "slavcheva_diagnostic",
+        "max_iteration_threshold": 300,
+        "max_update_length_threshold": 0.0002
+    },
     "skip_points": true,
     "disable_meshing": true,
     "device": "cpu",
@@ -69,10 +74,5 @@
     "swapping": "enabled",
     "mode": "basic",
     "index": "array",
-    "surface_tracking": {
-        "functor_type": "slavcheva_optimized",
-        "max_iterations": 300,
-        "vector_update_threshold": "7.00000019e-05"
-    },
     "tracker": "type=rgb,levels=rrbb"
 }

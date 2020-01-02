@@ -14,13 +14,13 @@
 //  limitations under the License.
 //  ================================================================
 
-#include "ITMSceneParameters.h"
+#include "VoxelVolumeParameters.h"
 #include "../Utils/json_utils.h"
 
 using namespace ITMLib;
 
-ITMSceneParameters::ITMSceneParameters(float mu, int maxW, float voxelSize,
-                                       float viewFrustum_min, float viewFrustum_max, bool stopIntegratingAtMaxW) :
+VoxelVolumeParameters::VoxelVolumeParameters(float mu, int maxW, float voxelSize,
+                                             float viewFrustum_min, float viewFrustum_max, bool stopIntegratingAtMaxW) :
 		mu(mu),
 		maxW(maxW),
 		voxelSize(voxelSize),
@@ -28,7 +28,7 @@ ITMSceneParameters::ITMSceneParameters(float mu, int maxW, float voxelSize,
 		viewFrustum_max(viewFrustum_max),
 		stopIntegratingAtMaxW(stopIntegratingAtMaxW) {}
 
-ITMSceneParameters::ITMSceneParameters() :
+VoxelVolumeParameters::VoxelVolumeParameters() :
 		mu(0.04f),
 		maxW(100),
 		voxelSize(0.004f),
@@ -36,21 +36,21 @@ ITMSceneParameters::ITMSceneParameters() :
 		viewFrustum_max(3.0f),
 		stopIntegratingAtMaxW(false) {}
 
-ITMSceneParameters::ITMSceneParameters(const po::variables_map& vm) :
-		mu(vm["narrow_band_half_width_meters"].empty() ? ITMSceneParameters().mu
+VoxelVolumeParameters::VoxelVolumeParameters(const po::variables_map& vm) :
+		mu(vm["narrow_band_half_width_meters"].empty() ? VoxelVolumeParameters().mu
 		                                               : vm["narrow_band_half_width_meters"].as<float>()),
-		maxW(vm["max_integration_weight"].empty() ? ITMSceneParameters().maxW
+		maxW(vm["max_integration_weight"].empty() ? VoxelVolumeParameters().maxW
 		                                          : vm["max_integration_weight"].as<float>()),
 		voxelSize(
-				vm["voxel_size_meters"].empty() ? ITMSceneParameters().voxelSize : vm["voxel_size_meters"].as<float>()),
-		viewFrustum_min(vm["view_frustum_near_clipping_distance"].empty() ? ITMSceneParameters().viewFrustum_min
+				vm["voxel_size_meters"].empty() ? VoxelVolumeParameters().voxelSize : vm["voxel_size_meters"].as<float>()),
+		viewFrustum_min(vm["view_frustum_near_clipping_distance"].empty() ? VoxelVolumeParameters().viewFrustum_min
 		                                                                  : vm["view_frustum_near_clipping_distance"].as<float>()),
-		viewFrustum_max(vm["view_frustum_far_clipping_distance"].empty() ? ITMSceneParameters().viewFrustum_max
+		viewFrustum_max(vm["view_frustum_far_clipping_distance"].empty() ? VoxelVolumeParameters().viewFrustum_max
 		                                                                 : vm["view_frustum_far_clipping_distance"].as<float>()),
-		stopIntegratingAtMaxW(vm["stop_integration_at_max_weight"].empty() ? ITMSceneParameters().stopIntegratingAtMaxW
+		stopIntegratingAtMaxW(vm["stop_integration_at_max_weight"].empty() ? VoxelVolumeParameters().stopIntegratingAtMaxW
 		                                                                   : vm["stop_integration_at_max_weight"].as<bool>()) {}
 
-pt::ptree ITMSceneParameters::ToPTree() const {
+pt::ptree VoxelVolumeParameters::ToPTree() const {
 	pt::ptree tree;
 	tree.add("narrow_band_half_width_meters", mu);
 	tree.add("max_integration_weight", maxW);
@@ -61,7 +61,7 @@ pt::ptree ITMSceneParameters::ToPTree() const {
 	return tree;
 }
 
-ITMSceneParameters ITMSceneParameters::BuildFromPTree(const pt::ptree& tree) {
+VoxelVolumeParameters VoxelVolumeParameters::BuildFromPTree(const pt::ptree& tree) {
 	boost::optional<float> mu_opt = tree.get_optional<float>("narrow_band_half_width_meters");
 	boost::optional<int> maxW_opt = tree.get_optional<int>("max_integration_weight");
 	boost::optional<float> voxelSize_opt = tree.get_optional<float>("voxel_size_meters");
@@ -69,7 +69,7 @@ ITMSceneParameters ITMSceneParameters::BuildFromPTree(const pt::ptree& tree) {
 	boost::optional<float> viewFrustum_max_opt = tree.get_optional<float>("view_frustum_far_clipping_distance");
 	boost::optional<bool> stopIntegratingAtMaxW_opt = tree.get_optional<bool>("stop_integration_at_max_weight");
 
-	ITMSceneParameters default_sp;
+	VoxelVolumeParameters default_sp;
 
 	return {mu_opt ? mu_opt.get() : default_sp.mu,
 	        maxW_opt ? maxW_opt.get() : default_sp.maxW,
@@ -80,7 +80,7 @@ ITMSceneParameters ITMSceneParameters::BuildFromPTree(const pt::ptree& tree) {
 }
 
 namespace ITMLib{
-bool operator==(const ITMSceneParameters& p1, const ITMSceneParameters& p2) {
+bool operator==(const VoxelVolumeParameters& p1, const VoxelVolumeParameters& p2) {
 	return p1.voxelSize == p2.voxelSize &&
 	       p1.viewFrustum_min == p2.viewFrustum_min &&
 	       p1.viewFrustum_max == p2.viewFrustum_max &&
@@ -89,7 +89,7 @@ bool operator==(const ITMSceneParameters& p1, const ITMSceneParameters& p2) {
 	       p1.stopIntegratingAtMaxW == p2.stopIntegratingAtMaxW;
 }
 
-std::ostream& operator<<(std::ostream& out, const ITMSceneParameters& p){
+std::ostream& operator<<(std::ostream& out, const VoxelVolumeParameters& p){
 	pt::ptree tree(p.ToPTree());
 	pt::write_json_no_quotes(out, tree, true);
 }

@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	Configuration& current_config = Configuration::get();
 	BOOST_REQUIRE_EQUAL(default_configuration, current_config);
 	Configuration configuration1(
-			ITMSceneParameters(0.05, 200, 0.005, 0.12, 4.12, true),
+			VoxelVolumeParameters(0.05, 200, 0.005, 0.12, 4.12, true),
 			ITMSurfelSceneParameters(0.4f, 0.5f, static_cast<float>(22 * M_PI / 180), 0.008f, 0.0003f, 3.4f, 26.0f, 5,
 			                         1.1f, 4.5f, 21, 300, false, false),
 			SlavchevaSurfaceTracker::Parameters(0.11f, 0.09f, 2.0f, 0.3f, 0.1f, 1e-6f),
@@ -52,6 +52,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			                                      "TestData/frame_depth_%%06i.png",
 			                                      "TestData/frame_mask_%%06i.png"),
 			Configuration::UIEngineSettings(50,16),
+			NonRigidTrackingParameters(300,0.0002f),
 			true,
 			false,
 			MEMORYDEVICE_CPU,
@@ -62,10 +63,8 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			Configuration::SWAPPINGMODE_ENABLED,
 			Configuration::LIBMODE_BASIC,
 			Configuration::INDEX_ARRAY,
-			GradientFunctorType::TRACKER_SLAVCHEVA_OPTIMIZED,
-			"type=rgb,levels=rrbb",
-			300,
-			0.00007f
+			GradientFunctorType::TRACKER_SLAVCHEVA_DIAGNOSTIC,
+			"type=rgb,levels=rrbb"
 	);
 	//configuration1.save_to_json_file("../../Tests/TestData/config1.json");
 	Configuration::load_configuration_from_json_file("TestData/config1.json");

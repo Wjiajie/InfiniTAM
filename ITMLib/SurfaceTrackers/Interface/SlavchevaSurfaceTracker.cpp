@@ -240,6 +240,7 @@ bool operator==(const SlavchevaSurfaceTracker::Parameters& p1, const SlavchevaSu
 std::ostream& operator<<(std::ostream& out, const SlavchevaSurfaceTracker::Switches& s){
 	pt::ptree tree(s.ToPTree());
 	pt::write_json_no_quotes(out, tree, true);
+	return out;
 }
 
 bool operator==(const SlavchevaSurfaceTracker::Switches& s1, const SlavchevaSurfaceTracker::Switches& s2) {
@@ -252,5 +253,6 @@ bool operator==(const SlavchevaSurfaceTracker::Switches& s1, const SlavchevaSurf
 std::ostream& operator<<(std::ostream& out, const SlavchevaSurfaceTracker::Parameters& p){
 	pt::ptree tree(p.ToPTree());
 	pt::write_json_no_quotes(out, tree, true);
+	return out;
 }
 }//namespace ITMLib

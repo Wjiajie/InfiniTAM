@@ -50,6 +50,7 @@ set(ITMLIB_CORE_SOURCES
 	Engines/Main/ITMDenseDynamicMapper.tpp
 	Engines/Main/ITMDenseDynamicMapper_PlainVoxelArray.cpp
 	Engines/Main/ITMDenseDynamicMapper_VoxelBlockHash.cpp
+	Engines/Main/NonRigidTrackingParameters.h
 	Engines/Main/ITMMultiEngine.tpp
 	Engines/Main/ITMDynamicEngine.tpp
 	Engines/Main/ITMDynamicEngine_VoxelBlockHash.cpp
@@ -701,7 +702,7 @@ set(ITMLIB_UTILS_SOURCES
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.tcu
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.cu
 
-	Utils/ITMSceneParameters.cpp
+	Utils/VoxelVolumeParameters.cpp
 	Utils/ITMSurfelSceneParameters.cpp
 
 	Utils/Configuration.cpp
@@ -718,6 +719,10 @@ set(ITMLIB_UTILS_HEADERS
 	Utils/Geometry/ITMIntersectionChecks.h
 	Utils/Geometry/ITMSegment.h
 
+	Utils/Serialization/Serialization.h
+	Utils/Serialization/SerializationDetails.h
+	Utils/Serialization/SerializationSequenceMacros.h
+
     Utils/ITMCUDAUtils.h
     Utils/ITMValuePosition.h
     Utils/ITMImageTypes.h
@@ -729,7 +734,7 @@ set(ITMLIB_UTILS_HEADERS
     Utils/ITMMemoryBlockTypes.h
     Utils/ITMPixelUtils.h
     Utils/ITMProjectionUtils.h
-    Utils/ITMSceneParameters.h
+	Utils/VoxelVolumeParameters.h
 	Utils/ITMSurfelSceneParameters.h
     Utils/ITMPrintHelpers.h
     Utils/ITMCPrintHelpers.h

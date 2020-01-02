@@ -20,8 +20,11 @@
 #include "../Swapping/Interface/ITMSwappingEngine.h"
 #include "../../Utils/FileIO/ITMDynamicFusionLogger.h"
 #include "../../SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
+#include "NonRigidTrackingParameters.h"
+
 
 namespace ITMLib {
+
 template<typename TVoxel, typename TWarp, typename TIndex>
 class ITMDenseDynamicMapper {
 
@@ -29,7 +32,7 @@ public:
 	// region ============================================ CONSTRUCTORS / DESTRUCTORS ==================================
 
 	/** \brief Constructor
-		Ommitting a separate image size for the depth images
+		Omitting a separate image size for the depth images
 		will assume same resolution as for the RGB images.
 	*/
 	explicit ITMDenseDynamicMapper(const TIndex& index);
@@ -37,12 +40,8 @@ public:
 	// endregion
 	// region ========================================= INTERNAL DATA STRUCTURES =======================================
 
-	struct Parameters {
-		const unsigned int maxIterationCount;// = 200;
-		const float maxVectorUpdateThresholdMeters;// = 0.0001f;//m //original for KillingFusion
-		const float maxVectorUpdateThresholdVoxels;
-	};
-	struct AnalysisFlags{
+
+	struct AnalysisFlags {
 		bool hasFocusCoordinates;
 	};
 
@@ -118,13 +117,15 @@ private:
 
 	Configuration::SwappingMode swappingMode;
 
+	// state (//TODO: make private, add getters where necessary)
 	unsigned int iteration = 0;
 	float maxVectorUpdate;
-	bool inStepByStepProcessingMode = false;
-	int sourceSdfIndex = 0;
-	int targetSdfIndex = 1;
 
-	const Parameters parameters;
+	bool inStepByStepProcessingMode = false;
+
+	const NonRigidTrackingParameters parameters;
+	// needs to be declared after "parameters", derives value from it
+	const float maxVectorUpdateThresholdVoxels;
 	const AnalysisFlags analysisFlags;
 	const Vector3i focusCoordinates;
 

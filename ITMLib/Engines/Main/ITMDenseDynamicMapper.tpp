@@ -76,12 +76,11 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ITMDenseDynamicMapper(const TIndex
 						Configuration::get().device_type, index)
 		               : nullptr),
 		swappingMode(Configuration::get().swapping_mode),
-		parameters{Configuration::get().max_iteration_threshold,
-		           Configuration::get().max_update_length_threshold,
-		           Configuration::get().max_update_length_threshold /
-		           Configuration::get().scene_parameters.voxelSize},
+		parameters(Configuration::get().non_rigid_tracking_parameters),
+		maxVectorUpdateThresholdVoxels(parameters.max_update_length_threshold /
+		                                    Configuration::get().scene_parameters.voxelSize),
 		analysisFlags{Configuration::get().telemetry_settings.focus_coordinates_specified},
-		focusCoordinates(Configuration::get().telemetry_settings.focus_coordinates) {}
+		focusCoordinates(Configuration::get().telemetry_settings.focus_coordinates) { }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::~ITMDenseDynamicMapper() {
@@ -281,7 +280,7 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::PerformSingleOptimizationStep
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 bool ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::SceneMotionOptimizationConditionNotReached() {
-	return maxVectorUpdate > parameters.maxVectorUpdateThresholdVoxels && iteration < parameters.maxIterationCount;
+	return maxVectorUpdate > this->maxVectorUpdateThresholdVoxels && iteration < parameters.max_iteration_threshold;
 }
 
 //endregion ============================================================================================================
@@ -353,8 +352,8 @@ bool ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::TakeNextStepInStepByStepMode(
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::PrintSettings() {
 	std::cout << bright_cyan << "*** ITMDenseDynamicMapper Settings: ***" << reset << std::endl;
-	std::cout << "Max iteration count: " << this->parameters.maxIterationCount << std::endl;
-	std::cout << "Warp vector update threshold: " << this->parameters.maxVectorUpdateThresholdMeters << " m, ";
-	std::cout << this->parameters.maxVectorUpdateThresholdVoxels << " voxels" << std::endl;
+	std::cout << "Max iteration count: " << this->parameters.max_iteration_threshold << std::endl;
+	std::cout << "Warp vector update threshold: " << this->parameters.max_update_length_threshold << " m, ";
+	std::cout << this->maxVectorUpdateThresholdVoxels << " voxels" << std::endl;
 	std::cout << bright_cyan << "*** *********************************** ***" << reset << std::endl;
 }

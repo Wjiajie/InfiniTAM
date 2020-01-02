@@ -1,18 +1,18 @@
 {
     "scene_parameters": {
-        "narrow_band_half_width_meters": 0.0399999991,
+        "narrow_band_half_width_meters": 0.04,
         "max_integration_weight": 100,
-        "voxel_size_meters": 0.00400000019,
-        "view_frustum_near_clipping_distance": 0.200000003,
+        "voxel_size_meters": 0.004,
+        "view_frustum_near_clipping_distance": 0.2,
         "view_frustum_far_clipping_distance": 3,
         "stop_integration_at_max_weight": false
     },
     "surfel_scene_parameters": {
         "surfel_delta_radius": 0.5,
-        "surfel_gaussian_convergence_sigma": 0.600000024,
+        "surfel_gaussian_convergence_sigma": 0.6,
         "surfel_max_merge_angle": 0.34906584,
-        "surfel_max_merge_distance": 0.00999999978,
-        "surfel_max_radius": 0.00400000019,
+        "surfel_max_merge_distance": 0.01,
+        "surfel_max_radius": 0.004,
         "surfel_min_radius_overlap_factor": 3.5,
         "stable_surfel_confidence": 25,
         "surfel_supersampling_factor": 4,
@@ -26,12 +26,12 @@
     "slavcheva": {
         "preset": "sobolev",
         "parameters": {
-            "learning_rate": 0.100000001,
-            "rigidity_enforcement_factor": 0.100000001,
+            "learning_rate": 0.1,
+            "rigidity_enforcement_factor": 0.1,
             "weight_data_term": 1,
-            "weight_smoothing_term": 0.200000003,
-            "weight_level_set_term": 0.200000003,
-            "level_set_epsilon": "9.99999975e-06"
+            "weight_smoothing_term": 0.2,
+            "weight_level_set_term": 0.2,
+            "level_set_epsilon": 9.99999975e-06
         },
         "switches": {
             "disable_data_term": false,
@@ -50,6 +50,11 @@
         "number_of_frames_to_process_after_launch": 0,
         "index_of_frame_to_start_at": 0
     },
+    "non_rigid_tracking_parameters": {
+        "functor_type": "slavcheva_diagnostic",
+        "max_iteration_threshold": 200,
+        "max_update_length_threshold": 0.0001
+    },
     "skip_points": true,
     "disable_meshing": false,
     "device": "cuda",
@@ -60,10 +65,5 @@
     "swapping": "disabled",
     "mode": "dynamic",
     "index": "hash",
-    "surface_tracking": {
-        "functor_type": "slavcheva_diagnostic",
-        "max_iterations": 200,
-        "vector_update_threshold": "9.99999975e-05"
-    },
     "tracker": "type=extended,levels=rrbb,useDepth=1,minstep=1e-4,outlierSpaceC=0.1,outlierSpaceF=0.004,numiterC=20,numiterF=50,tukeyCutOff=8,framesToSkip=20,framesToWeight=50,failureDec=20.0"
 }

@@ -11,12 +11,13 @@
 #include <boost/property_tree/ptree.hpp>
 
 //local
-#include "ITMSceneParameters.h"
+#include "VoxelVolumeParameters.h"
 #include "ITMSurfelSceneParameters.h"
 #include "../../ORUtils/MemoryDeviceType.h"
 #include "ITMMath.h"
 #include "../SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
 #include "../SurfaceTrackers/WarpGradientFunctors/WarpGradientFunctor.h"
+#include "../Engines/Main/NonRigidTrackingParameters.h"
 
 namespace po = boost::program_options;
 namespace pt = boost::property_tree;
@@ -24,19 +25,7 @@ namespace pt = boost::property_tree;
 namespace ITMLib {
 class Configuration {
 public:
-	static Configuration& get();
 
-	static void load_default();
-	static void load_configuration_from_variable_map(const po::variables_map& vm);
-	static void load_configuration_from_json_file(const std::string& path);
-	static void save_configuration_to_json_file(const std::string& path);
-	void save_to_json_file(const std::string& path);
-
-	static Configuration* from_json_file(const std::string& path);
-
-	~Configuration() = default;
-
-	pt::ptree to_ptree(const std::string& path) const;
 
 	// region ============================================== NESTED ENUMS ==============================================
 
@@ -112,26 +101,29 @@ public:
 	};
 	
 	struct UIEngineSettings{
-		explicit UIEngineSettings(const po::variables_map& vm);
-		static UIEngineSettings BuildFromPTree(const pt::ptree& tree);
 		UIEngineSettings();
 		UIEngineSettings(int number_of_frames_to_process_after_launch, int index_of_frame_to_start_at);
+		explicit UIEngineSettings(const po::variables_map& vm);
+		static UIEngineSettings BuildFromPTree(const pt::ptree& tree);
+		pt::ptree ToPTree() const;
 		friend bool operator==(const UIEngineSettings& uiEngineSettings1, const UIEngineSettings& uiEngineSettings2);
 		friend std::ostream& operator<<(std::ostream& out, const UIEngineSettings& uiEngineSettings);
-		pt::ptree ToPTree() const;
 		int number_of_frames_to_process_after_launch;
 		int index_of_frame_to_start_at;
 	};
 
 	Configuration();
+	~Configuration() = default;
+	static Configuration& get();
 	explicit Configuration(const po::variables_map& vm);
-	Configuration(ITMSceneParameters scene_parameters,
+	Configuration(VoxelVolumeParameters scene_parameters,
 	              ITMSurfelSceneParameters surfel_scene_parameters,
 	              SlavchevaSurfaceTracker::Parameters slavcheva_parameters,
 	              SlavchevaSurfaceTracker::Switches slavcheva_switches,
 	              Configuration::TelemetrySettings telemetry_settings,
 	              Configuration::InputAndOutputSettings input_and_output_settings,
 	              Configuration::UIEngineSettings ui_engine_settings,
+	              NonRigidTrackingParameters non_rigid_tracking_parameters,
 	              bool skip_points,
 	              bool create_meshing_engine,
 	              MemoryDeviceType device_type,
@@ -143,9 +135,17 @@ public:
 	              Configuration::LibMode library_mode,
 	              Configuration::IndexingMethod indexing_method,
 	              GradientFunctorType surface_tracker_type,
-	              std::string tracker_configuration,
-	              unsigned int max_iteration_threshold,
-	              float max_update_length_threshold);
+	              std::string tracker_configuration);
+
+	static void load_default();
+	static void load_configuration_from_variable_map(const po::variables_map& vm);
+	static void load_configuration_from_json_file(const std::string& path);
+	static void save_configuration_to_json_file(const std::string& path);
+	void save_to_json_file(const std::string& path);
+
+	static Configuration* from_json_file(const std::string& path);
+	pt::ptree to_ptree(const std::string& path) const;
+
 
 	friend bool operator==(const Configuration& c1, const Configuration& c2);
 	friend std::ostream& operator<<(std::ostream& out, const Configuration& c);
@@ -154,7 +154,7 @@ public:
 	// those settings exclusively used by a specific class should be in a public inner struct of this class
 
 	/// Scene-specific parameters such as voxel size
-	const ITMSceneParameters scene_parameters;
+	const VoxelVolumeParameters scene_parameters;
 	const ITMSurfelSceneParameters surfel_scene_parameters;
 	/// Surface tracking energy parameters
 	const SlavchevaSurfaceTracker::Parameters slavcheva_parameters;
@@ -163,8 +163,9 @@ public:
 	/// Telemetry / diagnostics / logging settings
 	TelemetrySettings telemetry_settings;
 	/// Input / output paths
-	InputAndOutputSettings input_and_output_settings;
-	UIEngineSettings ui_engine_settings;
+	const InputAndOutputSettings input_and_output_settings;
+	const UIEngineSettings ui_engine_settings;
+	const NonRigidTrackingParameters non_rigid_tracking_parameters;
 	/// For ITMColorTracker: skips every other point when using the colour renderer for creating a point cloud
 	const bool skip_points;
 	/// create all the things required for marching cubes and mesh extraction (uses lots of additional memory)
@@ -192,11 +193,6 @@ public:
 	/// tracker configuration string
 	/// (see Tracker documentation & code for details, code for this class for default "examples")
 	std::string tracker_configuration;
-	//TODO: group and refactor->rename the below two
-	/// Surface tracking optimization termination parameters - iteration threshold
-	const unsigned int max_iteration_threshold;
-	/// Surface tracking optimization termination parameters - threshold on minimal warp update (in meters)
-	const float max_update_length_threshold;
 
 
 private:
