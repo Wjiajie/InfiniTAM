@@ -1,4 +1,20 @@
-// Copyright 2014-2017 Oxford University Innovation Limited and the authors of InfiniTAM
+//  ================================================================
+//  Created by Gregory Kramida on 11/12/19.
+//  Copyright (c) 2019 Gregory Kramida
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+
+//  http://www.apache.org/licenses/LICENSE-2.0
+
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//  ================================================================
+
+// Inspired in part by InfiniTAM/ITMLib/Utils/ITMLibSettings of the original InfiniTAM repository, Oxford University
 
 #pragma once
 
@@ -116,8 +132,8 @@ public:
 	~Configuration() = default;
 	static Configuration& get();
 	explicit Configuration(const po::variables_map& vm);
-	Configuration(VoxelVolumeParameters scene_parameters,
-	              ITMSurfelSceneParameters surfel_scene_parameters,
+	Configuration(VoxelVolumeParameters voxel_volume_parameters,
+	              ITMSurfelSceneParameters surfel_volume_parameters,
 	              SlavchevaSurfaceTracker::Parameters slavcheva_parameters,
 	              SlavchevaSurfaceTracker::Switches slavcheva_switches,
 	              Configuration::TelemetrySettings telemetry_settings,
@@ -154,8 +170,8 @@ public:
 	// those settings exclusively used by a specific class should be in a public inner struct of this class
 
 	/// Scene-specific parameters such as voxel size
-	const VoxelVolumeParameters scene_parameters;
-	const ITMSurfelSceneParameters surfel_scene_parameters;
+	const VoxelVolumeParameters voxel_volume_parameters;
+	const ITMSurfelSceneParameters surfel_volume_parameters;
 	/// Surface tracking energy parameters
 	const SlavchevaSurfaceTracker::Parameters slavcheva_parameters;
 	/// Surface tracking energy switches

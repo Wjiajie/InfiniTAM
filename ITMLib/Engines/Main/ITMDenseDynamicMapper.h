@@ -122,7 +122,7 @@ private:
 	float maxVectorUpdate;
 
 	bool inStepByStepProcessingMode = false;
-
+	bool use_expanded_allocation_during_TSDF_construction = false;
 	const NonRigidTrackingParameters parameters;
 	// needs to be declared after "parameters", derives value from it
 	const float maxVectorUpdateThresholdVoxels;

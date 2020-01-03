@@ -389,7 +389,7 @@ public:
 			case MEMORYDEVICE_METAL:
 #ifdef COMPILE_WITH_METAL
 				ret = new TTracker_METAL(imgSize_d, imgSize_rgb, useDepth, useColour, colourWeight, &(levels[0]), static_cast<int>(levels.size()), smallStepSizeCriterion, failureDetectorThd,
-				scene->scene_parameters->near_clipping_distance, scene->scene_parameters->far_clipping_distance, tukeyCutOff, framesToSkip, framesToWeight, lowLevelEngine);
+				scene->voxel_volume_parameters->near_clipping_distance, scene->voxel_volume_parameters->far_clipping_distance, tukeyCutOff, framesToSkip, framesToWeight, lowLevelEngine);
 #endif
 				break;
 		}

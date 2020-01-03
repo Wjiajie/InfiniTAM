@@ -314,9 +314,9 @@ std::vector<T> as_vector(pt::ptree const& pt, pt::ptree::key_type const& key) {
 
 Configuration::Configuration()
 		:   //narrow_band_half_width(m), max_integration_weight, voxel size(m), clipping min, clipping max, stop_integration_at_max_weight
-		scene_parameters(0.04f, 100, 0.004f, 0.2f, 3.0f, false),//corresponds to KillingFusion article //_DEBUG
-		//scene_parameters(0.02f, 100, 0.005f, 0.2f, 3.0f, false),//standard InfiniTAM values
-		surfel_scene_parameters(0.5f, 0.6f, static_cast<float>(20 * M_PI / 180), 0.01f, 0.004f, 3.5f, 25.0f, 4, 1.0f,
+		voxel_volume_parameters(),
+		//voxel_volume_parameters(0.02f, 100, 0.005f, 0.2f, 3.0f, false),//standard InfiniTAM values
+		surfel_volume_parameters(0.5f, 0.6f, static_cast<float>(20 * M_PI / 180), 0.01f, 0.004f, 3.5f, 25.0f, 4, 1.0f,
 		                        5.0f, 20, 10000000, true, true),
 		slavcheva_parameters(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION),
 		slavcheva_switches(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION),
@@ -344,8 +344,8 @@ Configuration::Configuration()
 }
 
 Configuration::Configuration(const po::variables_map& vm) :
-		scene_parameters(vm),
-		surfel_scene_parameters(vm),
+		voxel_volume_parameters(vm),
+		surfel_volume_parameters(vm),
 		slavcheva_parameters(vm),
 		slavcheva_switches(vm),
 		telemetry_settings(vm),
@@ -397,7 +397,7 @@ Configuration::Configuration(const po::variables_map& vm) :
 
 
 Configuration::Configuration(
-		VoxelVolumeParameters scene_parameters, ITMSurfelSceneParameters surfel_scene_parameters,
+		VoxelVolumeParameters voxel_volume_parameters, ITMSurfelSceneParameters surfel_volume_parameters,
 		SlavchevaSurfaceTracker::Parameters slavcheva_parameters, SlavchevaSurfaceTracker::Switches slavcheva_switches,
 		Configuration::TelemetrySettings telemetry_settings,
 		Configuration::InputAndOutputSettings input_and_output_settings,
@@ -413,8 +413,8 @@ Configuration::Configuration(
 		GradientFunctorType surface_tracker_type,
 		std::string tracker_configuration) :
 
-		scene_parameters(scene_parameters),
-		surfel_scene_parameters(surfel_scene_parameters),
+		voxel_volume_parameters(voxel_volume_parameters),
+		surfel_volume_parameters(surfel_volume_parameters),
 		slavcheva_parameters(slavcheva_parameters),
 		slavcheva_switches(slavcheva_switches),
 		telemetry_settings(telemetry_settings),
@@ -538,10 +538,10 @@ Configuration* Configuration::from_json_file(const std::string& path) {
 
 	Configuration default_configuration;
 
-	boost::optional<VoxelVolumeParameters> scene_parameters =
-			as_optional_parsable<VoxelVolumeParameters>(tree, "scene_parameters");
-	boost::optional<ITMSurfelSceneParameters> surfel_scene_parameters =
-			as_optional_parsable<ITMSurfelSceneParameters>(tree, "surfel_scene_parameters");
+	boost::optional<VoxelVolumeParameters> voxel_volume_parameters =
+			as_optional_parsable<VoxelVolumeParameters>(tree, "voxel_volume_parameters");
+	boost::optional<ITMSurfelSceneParameters> surfel_volume_parameters =
+			as_optional_parsable<ITMSurfelSceneParameters>(tree, "surfel_volume_parameters");
 	boost::optional<SlavchevaSurfaceTracker::ConfigurationMode> mode_opt =
 			optional_enum_value_from_ptree<SlavchevaSurfaceTracker::ConfigurationMode>(tree, "slavcheva.preset");
 	SlavchevaSurfaceTracker::ConfigurationMode mode = mode_opt ? mode_opt.get()
@@ -583,8 +583,8 @@ Configuration* Configuration::from_json_file(const std::string& path) {
 	Configuration default_config;
 
 	return new Configuration(
-			scene_parameters ? scene_parameters.get() : default_config.scene_parameters,
-			surfel_scene_parameters ? surfel_scene_parameters.get() : default_config.surfel_scene_parameters,
+			voxel_volume_parameters ? voxel_volume_parameters.get() : default_config.voxel_volume_parameters,
+			surfel_volume_parameters ? surfel_volume_parameters.get() : default_config.surfel_volume_parameters,
 			slavcheva_parameters ? slavcheva_parameters.get() : default_config.slavcheva_parameters,
 			slavcheva_switches ? slavcheva_switches.get() : default_config.slavcheva_switches,
 			telemetry_settings ? telemetry_settings.get() : default_config.telemetry_settings,
@@ -609,8 +609,8 @@ Configuration* Configuration::from_json_file(const std::string& path) {
 
 pt::ptree Configuration::to_ptree(const std::string& path) const {
 	pt::ptree tree;
-	tree.add_child("scene_parameters", this->scene_parameters.ToPTree());
-	tree.add_child("surfel_scene_parameters", this->surfel_scene_parameters.ToPTree());
+	tree.add_child("voxel_volume_parameters", this->voxel_volume_parameters.ToPTree());
+	tree.add_child("surfel_volume_parameters", this->surfel_volume_parameters.ToPTree());
 	tree.add("slavcheva.preset", enum_value_to_string(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION));
 	tree.add_child("slavcheva.parameters", this->slavcheva_parameters.ToPTree());
 	tree.add_child("slavcheva.switches", slavcheva_switches.ToPTree());
@@ -644,8 +644,8 @@ void Configuration::save_to_json_file(const std::string& path) {
 
 namespace ITMLib {
 bool operator==(const Configuration& c1, const Configuration& c2) {
-	return c1.scene_parameters == c2.scene_parameters &&
-	       c1.surfel_scene_parameters == c2.surfel_scene_parameters &&
+	return c1.voxel_volume_parameters == c2.voxel_volume_parameters &&
+	       c1.surfel_volume_parameters == c2.surfel_volume_parameters &&
 	       c1.slavcheva_parameters == c2.slavcheva_parameters &&
 	       c1.slavcheva_switches == c2.slavcheva_switches &&
 	       c1.telemetry_settings == c2.telemetry_settings &&

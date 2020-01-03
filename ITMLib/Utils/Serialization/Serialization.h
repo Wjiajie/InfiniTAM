@@ -16,6 +16,19 @@
 #pragma once
 #include "SerializationDetails.h"
 /// Macros for making serializable stucts and enums
+
+/**
+ * \brief Generate declaration and definition of a  struct that has utilities to be generated from program arguments or
+ * a .json tree
+ * \details default constructor, constructor with all members in order, constructor based
+ * on boost::program_options::variables_map, BuildFromPropertyTree static member function that returns an instance,
+ * and a ToPtree static member function, that returns a boost::property_tree::ptree holding all the data.
+ *
+ * Usage:
+ * @ref GENERATE_SERIALIZABLE_STRUCT( MyWonderfulUnicorn, (float, age, 5.0f), (float, horn_length, 0.33f) )
+ * Generates a struct called "MyWonderfulUnicorn" with two fields, i.e. public member variables, called
+ * "age" and "horn_length". Both are typed as floats and have their respective default values set at 5.0f and 0.33f.
+ */
 #define GENERATE_SERIALIZABLE_STRUCT( struct_name, ... )              \
 	SERIALIZABLE_STRUCT_IMPL( struct_name, __VA_ARGS__)
 

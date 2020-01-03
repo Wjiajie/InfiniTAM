@@ -77,8 +77,9 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ITMDenseDynamicMapper(const TIndex
 		               : nullptr),
 		swappingMode(Configuration::get().swapping_mode),
 		parameters(Configuration::get().non_rigid_tracking_parameters),
+		use_expanded_allocation_during_TSDF_construction(Configuration::get().voxel_volume_parameters.add_extra_block_ring_during_allocation),
 		maxVectorUpdateThresholdVoxels(parameters.max_update_length_threshold /
-		                                    Configuration::get().scene_parameters.voxel_size),
+		                                    Configuration::get().voxel_volume_parameters.voxel_size),
 		analysisFlags{Configuration::get().telemetry_settings.focus_coordinates_specified},
 		focusCoordinates(Configuration::get().telemetry_settings.focus_coordinates) { }
 
@@ -157,7 +158,11 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::InitializeProcessing(const IT
 
 	PrintOperationStatus("Generating raw live frame from view...");
 	bench::StartTimer("GenerateRawLiveAndCanonicalVolumes");
-	sceneReconstructor->GenerateTsdfVolumeFromViewExpanded(liveScenePair[0],liveScenePair[1], view, trackingState->pose_d->GetM());
+	if(this->use_expanded_allocation_during_TSDF_construction){
+		sceneReconstructor->GenerateTsdfVolumeFromViewExpanded(liveScenePair[0],liveScenePair[1], view, trackingState->pose_d->GetM());
+	}else{
+		sceneReconstructor->GenerateTsdfVolumeFromView(liveScenePair[0], view, trackingState->pose_d->GetM());
+	}
 	bench::StopTimer("GenerateRawLiveAndCanonicalVolumes");
 	sceneMotionTracker->ClearOutFlowWarp(warpField);
 	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().InitializeFrameRecording();

@@ -264,17 +264,17 @@ _CPU_AND_GPU_CODE_ inline void
 buildHashAllocAndVisibleTypePP(ITMLib::HashEntryAllocationState* hashEntryStates,
                                HashBlockVisibility* blockVisibilityTypes, int x, int y,
                                Vector3s* blockCoords, const CONSTPTR(float)* depth, Matrix4f invertedCameraPose,
-                               Vector4f invertedCameraProjectionParameters, float mu,
+                               Vector4f invertedCameraProjectionParameters, float surface_distance_cutoff,
                                Vector2i imgSize, float oneOverVoxelBlockSize_Meters,
                                const CONSTPTR(ITMHashEntry)* hashTable, float viewFrustum_min, float viewFrustum_max,
-                               bool& collisionDetected, float bandFactor = 2.0f) {
+                               bool& collisionDetected) {
 	float depth_measure;
 	int stepCount;
 	Vector4f pt_camera_f;
 
 	depth_measure = depth[x + y * imgSize.x];
-	if (depth_measure <= 0 || (depth_measure - mu) < 0 || (depth_measure - mu) < viewFrustum_min ||
-	    (depth_measure + mu) > viewFrustum_max)
+	if (depth_measure <= 0 || (depth_measure - surface_distance_cutoff) < 0 || (depth_measure - surface_distance_cutoff) < viewFrustum_min ||
+	    (depth_measure + surface_distance_cutoff) > viewFrustum_max)
 		return;
 
 
@@ -290,7 +290,7 @@ buildHashAllocAndVisibleTypePP(ITMLib::HashEntryAllocationState* hashEntryStates
 	Vector4f pt_buff;
 
 	//Vector3f offset(-halfVoxelSize);
-	pt_buff = pt_camera_f * (1.0f - (mu * bandFactor) / norm);
+	pt_buff = pt_camera_f * (1.0f - surface_distance_cutoff / norm);
 	pt_buff.w = 1.0f;
 	//position along segment to march along ray in hash blocks (here -- starting point)
 	// account for the fact that voxel coordinates represent the voxel center, and we need the extreme corner position of
@@ -298,7 +298,7 @@ buildHashAllocAndVisibleTypePP(ITMLib::HashEntryAllocationState* hashEntryStates
 	Vector3f currentCheckPosition_HashBlocks = (TO_VECTOR3(invertedCameraPose * pt_buff)) * oneOverVoxelBlockSize_Meters
 	                                           + Vector3f(1.0f / (2.0f * VOXEL_BLOCK_SIZE));
 
-	pt_buff = pt_camera_f * (1.0f + (mu * bandFactor) / norm);
+	pt_buff = pt_camera_f * (1.0f + surface_distance_cutoff / norm);
 	pt_buff.w = 1.0f;
 	//end position of the segment to march along the ray
 	Vector3f endCheckPosition_HashBlocks = (TO_VECTOR3(invertedCameraPose * pt_buff)) * oneOverVoxelBlockSize_Meters

@@ -702,7 +702,6 @@ set(ITMLIB_UTILS_SOURCES
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.tcu
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.cu
 
-	Utils/VoxelVolumeParameters.cpp
 	Utils/ITMSurfelSceneParameters.cpp
 
 	Utils/Configuration.cpp

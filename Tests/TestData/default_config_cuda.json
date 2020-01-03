@@ -1,5 +1,5 @@
 {
-    "scene_parameters": {
+    "voxel_volume_parameters": {
         "narrow_band_half_width": 0.04,
         "max_integration_weight": 100,
         "voxel_size": 0.004,
@@ -7,7 +7,7 @@
         "far_clipping_distance": 3,
         "stop_integration_at_max_weight": false
     },
-    "surfel_scene_parameters": {
+    "surfel_volume_parameters": {
         "surfel_delta_radius": 0.5,
         "surfel_gaussian_convergence_sigma": 0.6,
         "surfel_max_merge_angle": 0.34906584,

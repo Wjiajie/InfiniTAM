@@ -90,7 +90,7 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 		DIEWITHEXCEPTION_REPORTLOCATION("Iteration limit must be at least 2");
 	}
 
-	ITMVoxelVolume<ITMWarp, TIndex> warp_field(&Configuration::get().scene_parameters,
+	ITMVoxelVolume<ITMWarp, TIndex> warp_field(&Configuration::get().voxel_volume_parameters,
 	                                           Configuration::get().swapping_mode ==
 	                                           Configuration::SWAPPINGMODE_ENABLED,
 	                                           TMemoryDeviceType,
@@ -99,12 +99,12 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 
 	ITMVoxelVolume<ITMVoxel, TIndex>* canonical_volume;
 	ITMVoxelVolume<ITMVoxel, TIndex>* live_volumes[2] = {
-			new ITMVoxelVolume<ITMVoxel, TIndex>(&Configuration::get().scene_parameters,
+			new ITMVoxelVolume<ITMVoxel, TIndex>(&Configuration::get().voxel_volume_parameters,
 			                                     Configuration::get().swapping_mode ==
 			                                     Configuration::SWAPPINGMODE_ENABLED,
 			                                     TMemoryDeviceType,
 			                                     Frame16And17Fixture::InitParams<TIndex>()),
-			new ITMVoxelVolume<ITMVoxel, TIndex>(&Configuration::get().scene_parameters,
+			new ITMVoxelVolume<ITMVoxel, TIndex>(&Configuration::get().voxel_volume_parameters,
 			                                     Configuration::get().swapping_mode ==
 			                                     Configuration::SWAPPINGMODE_ENABLED,
 			                                     TMemoryDeviceType,
@@ -123,11 +123,11 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 			motionTracker(switches);
 
 	ITMVoxelVolume<ITMWarp, TIndex> ground_truth_warp_field(
-			&Configuration::get().scene_parameters,
+			&Configuration::get().voxel_volume_parameters,
 			Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
 			TMemoryDeviceType, Frame16And17Fixture::InitParams<TIndex>());
 	ITMVoxelVolume<ITMVoxel, TIndex> ground_truth_sdf_volume(
-			&Configuration::get().scene_parameters,
+			&Configuration::get().voxel_volume_parameters,
 			Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
 			TMemoryDeviceType, Frame16And17Fixture::InitParams<TIndex>());
 

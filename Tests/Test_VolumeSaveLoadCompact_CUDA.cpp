@@ -44,11 +44,11 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CUDA) {
 	Vector3i volumeOffset(-20, 0, 0);
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(
-			&Configuration::get().scene_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			&Configuration::get().voxel_volume_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
 			MEMORYDEVICE_CUDA, {volumeSize, volumeOffset});
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(
-			&Configuration::get().scene_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			&Configuration::get().voxel_volume_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
 			MEMORYDEVICE_CUDA, {volumeSize, volumeOffset});
 
 	GenerateTestScene_CUDA(&scene1);
@@ -62,11 +62,11 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CUDA) {
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(
-			&Configuration::get().scene_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			&Configuration::get().voxel_volume_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
 			MEMORYDEVICE_CUDA, {0x800, 0x20000});
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(
-			&Configuration::get().scene_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			&Configuration::get().voxel_volume_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
 			MEMORYDEVICE_CUDA, {0x800, 0x20000});
 
 	GenerateTestScene_CUDA(&scene3);

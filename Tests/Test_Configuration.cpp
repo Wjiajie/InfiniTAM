@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	Configuration& current_config = Configuration::get();
 	BOOST_REQUIRE_EQUAL(default_configuration, current_config);
 	Configuration configuration1(
-			VoxelVolumeParameters(0.05, 200, 0.005, 0.12, 4.12, true),
+			VoxelVolumeParameters(0.005, 0.12, 4.12, 0.05, 200, true, true, 1.2f),
 			ITMSurfelSceneParameters(0.4f, 0.5f, static_cast<float>(22 * M_PI / 180), 0.008f, 0.0003f, 3.4f, 26.0f, 5,
 			                         1.1f, 4.5f, 21, 300, false, false),
 			SlavchevaSurfaceTracker::Parameters(0.11f, 0.09f, 2.0f, 0.3f, 0.1f, 1e-6f),
@@ -68,8 +68,8 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	);
 	//configuration1.save_to_json_file("../../Tests/TestData/config1.json");
 	Configuration::load_configuration_from_json_file("TestData/config1.json");
-	BOOST_REQUIRE_EQUAL(configuration1.scene_parameters, Configuration::get().scene_parameters);
-	BOOST_REQUIRE_EQUAL(configuration1.surfel_scene_parameters, Configuration::get().surfel_scene_parameters);
+	BOOST_REQUIRE_EQUAL(configuration1.voxel_volume_parameters, Configuration::get().voxel_volume_parameters);
+	BOOST_REQUIRE_EQUAL(configuration1.surfel_volume_parameters, Configuration::get().surfel_volume_parameters);
 	BOOST_REQUIRE_EQUAL(configuration1.slavcheva_parameters, Configuration::get().slavcheva_parameters);
 	BOOST_REQUIRE_EQUAL(configuration1.slavcheva_switches, Configuration::get().slavcheva_switches);
 	BOOST_REQUIRE_EQUAL(configuration1.telemetry_settings, Configuration::get().telemetry_settings);

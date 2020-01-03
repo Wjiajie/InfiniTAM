@@ -1,13 +1,15 @@
 {
-    "scene_parameters": {
-        "narrow_band_half_width": 0.0500000007,
+    "voxel_volume_parameters": {
+        "narrow_band_half_width": 0.05,
         "max_integration_weight": 200,
         "voxel_size": 0.00499999989,
         "near_clipping_distance": 0.119999997,
         "far_clipping_distance": 4.11999989,
-        "stop_integration_at_max_weight": true
+        "stop_integration_at_max_weight": true,
+        "add_extra_block_ring_during_allocation": true,
+        "block_allocation_band_factor": 1.2
     },
-    "surfel_scene_parameters": {
+    "surfel_volume_parameters": {
         "surfel_delta_radius": 0.400000006,
         "surfel_gaussian_convergence_sigma": 0.5,
         "surfel_max_merge_angle": 0.383972436,

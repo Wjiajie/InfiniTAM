@@ -6,6 +6,7 @@
 #include "../../../Utils/ITMCUDAUtils.h"
 #include "../../../../ORUtils/JetbrainsCUDASyntax.hpp"
 #include "../../Indexing/Shared/ITMIndexingEngine_Shared.h"
+#include "../../../Utils/Configuration.h"
 
 
 using namespace ITMLib;
@@ -28,8 +29,8 @@ __global__ void integrateIntoScene_device(TVoxel* voxelArray, const ITMPlainVoxe
 
 __global__ void buildHashAllocAndVisibleType_device(
 		ITMLib::HashEntryAllocationState* hashEntryStates, HashBlockVisibility* blockVisibilityTypes,
-		Vector3s* blockCoords, const float* depth, Matrix4f invM_d, Vector4f projParams_d, float mu, Vector2i _imgSize,
-		float oneOverHashBlockSize_Meters, ITMHashEntry* hashTable, float viewFrustum_min, float viewFrustum_max);
+		Vector3s* blockCoords, const float* depth, Matrix4f invM_d, Vector4f projParams_d, float surface_cutoff_distance, Vector2i _imgSize,
+		float oneOverHashBlockSize_Meters, ITMHashEntry* hashTable, float near_clipping_distance, float far_clipping_distance);
 
 __global__ void allocateVoxelBlocksList_device(int* voxelAllocationList, int* excessAllocationList,
                                                ITMHashEntry* hashTable, const int hashEntryCount,
@@ -132,7 +133,8 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateScene
 	dim3 cudaBlockSizeVS(256, 1);
 	dim3 gridSizeVS((int) ceil((float) scene->index.GetVisibleHashBlockCount() / (float) cudaBlockSizeVS.x));
 
-	float oneOverVoxelSize = 1.0f / (voxelSize * VOXEL_BLOCK_SIZE);
+	float oneOverHashBlockSize = 1.0f / (voxelSize * VOXEL_BLOCK_SIZE);
+	float surface_cutoff_distance = Configuration::get().voxel_volume_parameters.block_allocation_band_factor * mu;
 
 	AllocationTempData* tempData = (AllocationTempData*) allocationTempData_host;
 	tempData->noAllocatedVoxelEntries = scene->localVBA.lastFreeBlockId;
@@ -153,7 +155,7 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateScene
 
 	buildHashAllocAndVisibleType_device << < gridSizeHV, cudaBlockSizeHV >> >
 	                                                     (hashEntryStates_device, blockVisibilityTypes,
-			                                                     blockCoordinates_device, depth, invM_d, invProjParams_d, mu, depthImgSize, oneOverVoxelSize, hashTable,
+			                                                     blockCoordinates_device, depth, invM_d, invProjParams_d, surface_cutoff_distance, depthImgSize, oneOverHashBlockSize, hashTable,
 			                                                     scene->sceneParams->near_clipping_distance, scene->sceneParams->far_clipping_distance);
 	ORcudaKernelCheck;
 
@@ -376,17 +378,17 @@ __global__ void integrateIntoScene_device(TVoxel* localVBA, const ITMHashEntry* 
 __global__ void buildHashAllocAndVisibleType_device(
 		ITMLib::HashEntryAllocationState* hashEntryStates, HashBlockVisibility* blockVisibilityTypes, Vector3s* blockCoords,
 		const float* depth,
-		Matrix4f invM_d, Vector4f projParams_d, float mu, Vector2i _imgSize, float oneOverHashBlockSize_Meters,
+		Matrix4f invM_d, Vector4f projParams_d, float surface_cutoff_distance, Vector2i _imgSize, float oneOverHashBlockSize_Meters,
 		ITMHashEntry* hashTable,
-		float viewFrustum_min, float viewFrustum_max) {
+		float near_clipping_distance, float far_clipping_distance) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x, y = threadIdx.y + blockIdx.y * blockDim.y;
 
 	if (x > _imgSize.x - 1 || y > _imgSize.y - 1) return;
 
 	bool collisionDetected = false;
 	buildHashAllocAndVisibleTypePP(hashEntryStates, blockVisibilityTypes, x, y, blockCoords, depth, invM_d, projParams_d,
-	                               mu, _imgSize, oneOverHashBlockSize_Meters,
-	                               hashTable, viewFrustum_min, viewFrustum_max, collisionDetected);
+	                               surface_cutoff_distance, _imgSize, oneOverHashBlockSize_Meters,
+	                               hashTable, near_clipping_distance, far_clipping_distance, collisionDetected);
 }
 
 __global__ void setVisibleEntriesToVisibleAtPreviousFrameAndUnstreamed(HashBlockVisibility* blockVisibilityTypes,

@@ -66,8 +66,8 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 
 	if (settings.behavior_on_failure == settings.FAILUREMODE_RELOCALIZE)
 		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d,
-		                                                   Vector2f(settings.scene_parameters.near_clipping_distance,
-		                                                            settings.scene_parameters.far_clipping_distance),
+		                                                   Vector2f(settings.voxel_volume_parameters.near_clipping_distance,
+		                                                            settings.voxel_volume_parameters.far_clipping_distance),
 		                                                   0.2f, 500, 4);
 	else relocaliser = nullptr;
 
@@ -86,15 +86,15 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::InitializeScenes() {
 	Configuration& settings = Configuration::get();
 	MemoryDeviceType memoryType = settings.device_type;
 	this->canonicalScene = new ITMVoxelVolume<TVoxel, TIndex>(
-			&settings.scene_parameters, settings.swapping_mode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
+			&settings.voxel_volume_parameters, settings.swapping_mode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
 	this->liveScenes = new ITMVoxelVolume<TVoxel, TIndex>* [2];
 	for (int iLiveScene = 0; iLiveScene < ITMDynamicEngine<TVoxel, TWarp, TIndex>::liveSceneCount; iLiveScene++) {
-		this->liveScenes[iLiveScene] = new ITMVoxelVolume<TVoxel, TIndex>(&settings.scene_parameters,
+		this->liveScenes[iLiveScene] = new ITMVoxelVolume<TVoxel, TIndex>(&settings.voxel_volume_parameters,
 		                                                                  settings.swapping_mode ==
 		                                                                  Configuration::SWAPPINGMODE_ENABLED,
 		                                                                  memoryType);
 	}
-	this->warpField = new ITMVoxelVolume<TWarp, TIndex>(&settings.scene_parameters,
+	this->warpField = new ITMVoxelVolume<TWarp, TIndex>(&settings.voxel_volume_parameters,
 	                                                    settings.swapping_mode ==
 	                                                    Configuration::SWAPPINGMODE_ENABLED,
 	                                                    memoryType);
@@ -168,8 +168,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::LoadFromFile() {
 			FernRelocLib::Relocaliser<float>* relocaliser_temp =
 					new FernRelocLib::Relocaliser<float>(view->depth->noDims,
 					                                     Vector2f(
-							                                     settings.scene_parameters.near_clipping_distance,
-							                                     settings.scene_parameters.far_clipping_distance),
+							                                     settings.voxel_volume_parameters.near_clipping_distance,
+							                                     settings.voxel_volume_parameters.far_clipping_distance),
 					                                     0.2f, 500, 4);
 
 			relocaliser_temp->LoadFromDirectory(relocaliserInputDirectory);

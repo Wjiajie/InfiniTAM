@@ -19,6 +19,7 @@
 #include "../../Shared/ITMIndexingEngine_Shared.h"
 #include "ITMIndexingEngine_CUDA_VoxelBlockHash_Kernels.h"
 #include "../../Interface/ITMIndexingEngine.h"
+#include "../../../../Utils/Configuration.h"
 
 
 using namespace ITMLib;
@@ -68,6 +69,7 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 	dim3 gridSizeAL((int) ceil((float) hashEntryCount / (float) cudaBlockSizeAL.x));
 
 	float oneOverHashBlockSizeMeters = 1.0f / (voxelSize * VOXEL_BLOCK_SIZE);//m
+	float surface_cutoff_distance = Configuration::get().voxel_volume_parameters.block_allocation_band_factor * mu;
 
 	ORUtils::MemoryBlock<bool> collisionDetected(1, true, true);
 
@@ -83,7 +85,8 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFr
 
 		buildHashAllocAndVisibleType_device << < gridSizeHV, cudaBlockSizeHV >> > (hashEntryStates_device,
 				hashBlockVisibilityTypes_device,
-				allocationBlockCoordinates_device, depth, inverted_depth_camera_matrix, invProjParams_d, mu, depthImgSize, oneOverHashBlockSizeMeters, hashTable,
+				allocationBlockCoordinates_device, depth, inverted_depth_camera_matrix, invProjParams_d,
+				surface_cutoff_distance, depthImgSize, oneOverHashBlockSizeMeters, hashTable,
 				volume->sceneParams->near_clipping_distance, volume->sceneParams->far_clipping_distance,
 				collisionDetected.GetData(MEMORYDEVICE_CUDA));
 		ORcudaKernelCheck;

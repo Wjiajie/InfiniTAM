@@ -21,6 +21,7 @@
 #include "../../Shared/ITMIndexingEngine_Shared.h"
 #include "../CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
 #include "../../Interface/ITMIndexingEngine.h"
+#include "../../../../Utils/Configuration.h"
 
 
 using namespace ITMLib;
@@ -55,8 +56,9 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 	HashEntryAllocationState* hashEntryStates_device = volume->index.GetHashEntryAllocationStates();
 	Vector3s* allocationBlockCoordinates = volume->index.GetAllocationBlockCoordinates();
 
-	float oneOverHashEntrySize = 1.0f / (voxelSize * VOXEL_BLOCK_SIZE);//m
-
+	float oneOverHashBlockSize = 1.0f / (voxelSize * VOXEL_BLOCK_SIZE);//m
+	float band_factor = Configuration::get().voxel_volume_parameters.block_allocation_band_factor;
+	float surface_cutoff_distance = band_factor * mu;
 	bool collisionDetected;
 
 	bool useSwapping = volume->globalCache != nullptr;
@@ -76,8 +78,8 @@ void ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFro
 
 			buildHashAllocAndVisibleTypePP(hashEntryStates_device, hashBlockVisibilityTypes, x, y,
 			                               allocationBlockCoordinates, depth, inverted_depth_camera_matrix,
-			                               invertedDepthCameraProjectionParameters, mu, depthImgSize,
-			                               oneOverHashEntrySize,
+			                               invertedDepthCameraProjectionParameters, surface_cutoff_distance, depthImgSize,
+			                               oneOverHashBlockSize,
 			                               hashTable, volume->sceneParams->near_clipping_distance,
 			                               volume->sceneParams->far_clipping_distance, collisionDetected);
 		}

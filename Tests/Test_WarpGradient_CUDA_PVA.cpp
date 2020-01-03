@@ -44,7 +44,7 @@ using namespace ITMLib;
 typedef WarpGradientDataFixture<MemoryDeviceType::MEMORYDEVICE_CUDA, ITMPlainVoxelArray> DataFixture;
 BOOST_FIXTURE_TEST_CASE(testDataTerm_CUDA_PVA, DataFixture) {
 
-	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CUDA1(&Configuration::get().scene_parameters,
+	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> warp_field_CUDA1(&Configuration::get().voxel_volume_parameters,
 	                                                             Configuration::get().swapping_mode ==
 	                                                             Configuration::SWAPPINGMODE_ENABLED,
 	                                                             MEMORYDEVICE_CUDA, indexParameters);

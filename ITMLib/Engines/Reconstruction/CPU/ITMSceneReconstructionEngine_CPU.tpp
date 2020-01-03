@@ -134,10 +134,11 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 	HashEntryAllocationState* hashEntryStates_device = scene->index.GetHashEntryAllocationStates();
 	Vector3s* blockCoords_device = scene->index.GetAllocationBlockCoordinates();
 
-
 	bool useSwapping = scene->Swapping();
 
 	float oneOverHashEntrySize = 1.0f / (voxelSize * VOXEL_BLOCK_SIZE);//m
+	float band_factor = Configuration::get().voxel_volume_parameters.block_allocation_band_factor;
+	float surface_cutoff_distance = mu * band_factor;
 
 	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;
 	int lastFreeExcessListId = scene->index.GetLastFreeExcessListId();
@@ -159,7 +160,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 		int x = locId - y * depthImgSize.x;
 		bool collisionDetected = false;
 		buildHashAllocAndVisibleTypePP(hashEntryStates_device, hashBlockVisibilityTypes, x, y, blockCoords_device, depth, invM_d,
-		                               invProjParams_d, mu, depthImgSize, oneOverHashEntrySize,
+		                               invProjParams_d, surface_cutoff_distance, depthImgSize, oneOverHashEntrySize,
 		                               hashTable, scene->sceneParams->near_clipping_distance,
 		                               scene->sceneParams->far_clipping_distance, collisionDetected);
 	}

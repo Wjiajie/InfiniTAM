@@ -66,7 +66,7 @@ struct WarpGradientDataFixture {
 
 		BOOST_TEST_MESSAGE("setup fixture");
 		auto loadSdfVolume = [&](ITMVoxelVolume<ITMVoxel, TIndex>** scene, const std::string& pathSuffix) {
-			*scene = new ITMVoxelVolume<ITMVoxel, TIndex>(&Configuration::get().scene_parameters,
+			*scene = new ITMVoxelVolume<ITMVoxel, TIndex>(&Configuration::get().voxel_volume_parameters,
 			                                              settings->swapping_mode ==
 			                                              Configuration::SWAPPINGMODE_ENABLED,
 			                                              TMemoryType,
@@ -75,7 +75,7 @@ struct WarpGradientDataFixture {
 			(*scene)->LoadFromDirectory(pathToData + pathSuffix);
 		};
 		auto loadWarpVolume = [&](ITMVoxelVolume<ITMWarp, TIndex>** scene, const std::string& pathSuffix) {
-			*scene = new ITMVoxelVolume<ITMWarp, TIndex>(&Configuration::get().scene_parameters,
+			*scene = new ITMVoxelVolume<ITMWarp, TIndex>(&Configuration::get().voxel_volume_parameters,
 			                                             settings->swapping_mode ==
 			                                             Configuration::SWAPPINGMODE_ENABLED,
 			                                             TMemoryType,
@@ -166,7 +166,7 @@ void GenerateTestData() {
 	};
 
 
-	ITMVoxelVolume<ITMWarp, TIndex> warp_field(&Configuration::get().scene_parameters,
+	ITMVoxelVolume<ITMWarp, TIndex> warp_field(&Configuration::get().voxel_volume_parameters,
 	                                           Configuration::get().swapping_mode ==
 	                                           Configuration::SWAPPINGMODE_ENABLED,
 	                                           TMemoryDeviceType, Frame16And17Fixture::InitParams<TIndex>());

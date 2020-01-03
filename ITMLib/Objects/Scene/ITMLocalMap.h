@@ -53,9 +53,9 @@ namespace ITMLib {
 		{
 			auto& settings = Configuration::get();
 			MemoryDeviceType memoryType = settings.device_type == MEMORYDEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU;
-			scene = new ITMVoxelVolume<TVoxel, TIndex>(&settings.scene_parameters, settings.swapping_mode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
-			renderState = new ITMRenderState(trackedImageSize, settings.scene_parameters.near_clipping_distance,
-			                                 settings.scene_parameters.far_clipping_distance, memoryType);
+			scene = new ITMVoxelVolume<TVoxel, TIndex>(&settings.voxel_volume_parameters, settings.swapping_mode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
+			renderState = new ITMRenderState(trackedImageSize, settings.voxel_volume_parameters.near_clipping_distance,
+			                                 settings.voxel_volume_parameters.far_clipping_distance, memoryType);
 			trackingState = new ITMTrackingState(trackedImageSize, memoryType);
 		}
 		~ITMLocalMap()
