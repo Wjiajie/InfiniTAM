@@ -38,6 +38,8 @@
 namespace po = boost::program_options;
 namespace pt = boost::property_tree;
 
+GENERATE_SERIALIZABLE_ENUM(VerbosityLevel, (HELLO, "hello"));
+
 namespace ITMLib {
 class Configuration {
 public:
@@ -68,6 +70,8 @@ public:
 		INDEX_HASH,
 		INDEX_ARRAY
 	};
+
+
 
 	//endregion ========================================================================================================
 
@@ -209,7 +213,6 @@ public:
 	/// tracker configuration string
 	/// (see Tracker documentation & code for details, code for this class for default "examples")
 	std::string tracker_configuration;
-
 
 private:
 

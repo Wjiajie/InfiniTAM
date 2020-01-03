@@ -15,7 +15,7 @@
 //  ================================================================
 #pragma once
 
-#define SERIALIZABLE_STRUCT_IMPL_ARG_N(                                                           \
+#define ITM_SERIALIZATION_IMPL_ARG_N(                                                           \
     _1, _2, _3, _4, _5, _6, _7, _8, _9, _10,                                            \
     _11, _12, _13, _14, _15, _16, _17, _18, _19, _20,                                   \
     _21, _22, _23, _24, _25, _26, _27, _28, _29, _30,                                   \
@@ -45,7 +45,7 @@
   )                                                                                     \
   N                                                                                     \
 
-#define SERIALIZABLE_STRUCT_IMPL_RSEQ_N()                                                         \
+#define ITM_SERIALIZATION_IMPL_RSEQ_N()                                                         \
   256, 255, 254, 253, 252, 251, 250, 249, 248, 247,                                     \
   246, 245, 244, 243, 242, 241, 240, 239, 238, 237,                                     \
   236, 235, 234, 233, 232, 231, 230, 229, 228, 227,                                     \
@@ -73,791 +73,791 @@
   16, 15, 14, 13, 12, 11, 10, 9, 8, 7,                                                  \
   6, 5, 4, 3, 2, 1, 0                                                                   \
   
-#define SERIALIZABLE_STRUCT_IMPL_IIF(c) SERIALIZABLE_STRUCT_IMPL_CAT(SERIALIZABLE_STRUCT_IMPL_IIF_, c)
-#define SERIALIZABLE_STRUCT_IMPL_IIF_0(t, f) f
-#define SERIALIZABLE_STRUCT_IMPL_IIF_1(t, f) t
+#define ITM_SERIALIZATION_IMPL_IIF(c) ITM_SERIALIZATION_IMPL_CAT(ITM_SERIALIZATION_IMPL_IIF_, c)
+#define ITM_SERIALIZATION_IMPL_IIF_0(t, f) f
+#define ITM_SERIALIZATION_IMPL_IIF_1(t, f) t
 
-#define SERIALIZABLE_STRUCT_IMPL_CHECK_N(x, n, ...) n
-#define SERIALIZABLE_STRUCT_IMPL_CHECK(...) SERIALIZABLE_STRUCT_IMPL_CHECK_N(__VA_ARGS__, 0, )
-#define SERIALIZABLE_STRUCT_IMPL_PROBE(x) x, 1,
+#define ITM_SERIALIZATION_IMPL_CHECK_N(x, n, ...) n
+#define ITM_SERIALIZATION_IMPL_CHECK(...) ITM_SERIALIZATION_IMPL_CHECK_N(__VA_ARGS__, 0, )
+#define ITM_SERIALIZATION_IMPL_PROBE(x) x, 1,
 
-#define SERIALIZABLE_STRUCT_IMPL_IS_PAREN(x)                                             \
-  SERIALIZABLE_STRUCT_IMPL_CHECK(SERIALIZABLE_STRUCT_IMPL_IS_PAREN_PROBE x)
-#define SERIALIZABLE_STRUCT_IMPL_IS_PAREN_PROBE(...) SERIALIZABLE_STRUCT_IMPL_PROBE(~)
+#define ITM_SERIALIZATION_IMPL_IS_PAREN(x)                                             \
+  ITM_SERIALIZATION_IMPL_CHECK(ITM_SERIALIZATION_IMPL_IS_PAREN_PROBE x)
+#define ITM_SERIALIZATION_IMPL_IS_PAREN_PROBE(...) ITM_SERIALIZATION_IMPL_PROBE(~)
 
-#define SERIALIZABLE_STRUCT_IMPL_SIMPLE_PASTE(...) __VA_ARGS__
-#define SERIALIZABLE_STRUCT_IMPL_SIMPLE_RECOMBINE(C, x) (C, SERIALIZABLE_STRUCT_IMPL_SIMPLE_PASTE x)
+#define ITM_SERIALIZATION_IMPL_SIMPLE_PASTE(...) __VA_ARGS__
+#define ITM_SERIALIZATION_IMPL_SIMPLE_RECOMBINE(C, x) (C, ITM_SERIALIZATION_IMPL_SIMPLE_PASTE x)
 
-#define SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x)                                                                       \
-  SERIALIZABLE_STRUCT_IMPL_IIF(SERIALIZABLE_STRUCT_IMPL_IS_PAREN(x))                                                   \
-  (M SERIALIZABLE_STRUCT_IMPL_SIMPLE_RECOMBINE (C, x), M(C,x))
+#define ITM_SERIALIZATION_IMPL_UNPACK(M, C, x)                                                                       \
+  ITM_SERIALIZATION_IMPL_IIF(ITM_SERIALIZATION_IMPL_IS_PAREN(x))                                                   \
+  (M ITM_SERIALIZATION_IMPL_SIMPLE_RECOMBINE (C, x), M(C,x))
 
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_1(M, C, D, x) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x)
+#define ITM_SERIALIZATION_IMPL_LOOP_1(M, C, D, x) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_2(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                              \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_1(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_2(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                              \
+  ITM_SERIALIZATION_IMPL_LOOP_1(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_3(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                              \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_2(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_3(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                              \
+  ITM_SERIALIZATION_IMPL_LOOP_2(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_4(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                              \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_3(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_4(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                              \
+  ITM_SERIALIZATION_IMPL_LOOP_3(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_5(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                              \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_4(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_5(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                              \
+  ITM_SERIALIZATION_IMPL_LOOP_4(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_6(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                              \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_5(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_6(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                              \
+  ITM_SERIALIZATION_IMPL_LOOP_5(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_7(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                              \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_6(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_7(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                              \
+  ITM_SERIALIZATION_IMPL_LOOP_6(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_8(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                              \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_7(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_8(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                              \
+  ITM_SERIALIZATION_IMPL_LOOP_7(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_9(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                              \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_8(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_9(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                              \
+  ITM_SERIALIZATION_IMPL_LOOP_8(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_10(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_9(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_10(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_9(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_11(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_10(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_11(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_10(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_12(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_11(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_12(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_11(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_13(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_12(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_13(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_12(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_14(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_13(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_14(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_13(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_15(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_14(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_15(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_14(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_16(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_15(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_16(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_15(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_17(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_16(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_17(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_16(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_18(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_17(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_18(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_17(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_19(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_18(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_19(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_18(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_20(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_19(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_20(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_19(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_21(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_20(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_21(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_20(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_22(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_21(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_22(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_21(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_23(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_22(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_23(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_22(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_24(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_23(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_24(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_23(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_25(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_24(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_25(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_24(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_26(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_25(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_26(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_25(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_27(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_26(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_27(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_26(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_28(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_27(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_28(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_27(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_29(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_28(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_29(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_28(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_30(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_29(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_30(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_29(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_31(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_30(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_31(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_30(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_32(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_31(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_32(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_31(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_33(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_32(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_33(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_32(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_34(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_33(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_34(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_33(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_35(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_34(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_35(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_34(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_36(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_35(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_36(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_35(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_37(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_36(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_37(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_36(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_38(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_37(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_38(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_37(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_39(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_38(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_39(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_38(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_40(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_39(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_40(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_39(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_41(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_40(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_41(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_40(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_42(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_41(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_42(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_41(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_43(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_42(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_43(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_42(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_44(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_43(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_44(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_43(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_45(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_44(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_45(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_44(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_46(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_45(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_46(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_45(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_47(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_46(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_47(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_46(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_48(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_47(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_48(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_47(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_49(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_48(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_49(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_48(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_50(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_49(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_50(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_49(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_51(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_50(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_51(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_50(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_52(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_51(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_52(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_51(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_53(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_52(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_53(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_52(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_54(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_53(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_54(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_53(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_55(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_54(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_55(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_54(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_56(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_55(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_56(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_55(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_57(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_56(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_57(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_56(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_58(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_57(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_58(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_57(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_59(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_58(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_59(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_58(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_60(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_59(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_60(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_59(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_61(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_60(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_61(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_60(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_62(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_61(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_62(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_61(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_63(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_62(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_63(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_62(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_64(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_63(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_64(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_63(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_65(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_64(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_65(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_64(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_66(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_65(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_66(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_65(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_67(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_66(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_67(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_66(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_68(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_67(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_68(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_67(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_69(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_68(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_69(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_68(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_70(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_69(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_70(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_69(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_71(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_70(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_71(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_70(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_72(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_71(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_72(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_71(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_73(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_72(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_73(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_72(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_74(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_73(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_74(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_73(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_75(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_74(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_75(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_74(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_76(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_75(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_76(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_75(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_77(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_76(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_77(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_76(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_78(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_77(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_78(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_77(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_79(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_78(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_79(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_78(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_80(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_79(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_80(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_79(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_81(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_80(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_81(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_80(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_82(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_81(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_82(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_81(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_83(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_82(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_83(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_82(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_84(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_83(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_84(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_83(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_85(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_84(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_85(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_84(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_86(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_85(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_86(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_85(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_87(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_86(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_87(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_86(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_88(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_87(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_88(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_87(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_89(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_88(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_89(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_88(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_90(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_89(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_90(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_89(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_91(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_90(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_91(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_90(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_92(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_91(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_92(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_91(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_93(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_92(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_93(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_92(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_94(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_93(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_94(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_93(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_95(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_94(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_95(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_94(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_96(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_95(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_96(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_95(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_97(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_96(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_97(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_96(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_98(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_97(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_98(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_97(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_99(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                             \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_98(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_99(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                             \
+  ITM_SERIALIZATION_IMPL_LOOP_98(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_100(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_99(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_100(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_99(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_101(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_100(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_101(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_100(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_102(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_101(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_102(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_101(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_103(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_102(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_103(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_102(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_104(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_103(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_104(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_103(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_105(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_104(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_105(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_104(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_106(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_105(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_106(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_105(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_107(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_106(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_107(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_106(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_108(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_107(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_108(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_107(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_109(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_108(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_109(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_108(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_110(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_109(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_110(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_109(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_111(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_110(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_111(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_110(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_112(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_111(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_112(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_111(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_113(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_112(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_113(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_112(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_114(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_113(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_114(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_113(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_115(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_114(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_115(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_114(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_116(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_115(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_116(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_115(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_117(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_116(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_117(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_116(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_118(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_117(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_118(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_117(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_119(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_118(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_119(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_118(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_120(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_119(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_120(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_119(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_121(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_120(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_121(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_120(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_122(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_121(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_122(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_121(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_123(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_122(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_123(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_122(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_124(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_123(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_124(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_123(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_125(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_124(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_125(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_124(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_126(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_125(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_126(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_125(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_127(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_126(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_127(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_126(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_128(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_127(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_128(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_127(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_129(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_128(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_129(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_128(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_130(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_129(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_130(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_129(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_131(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_130(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_131(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_130(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_132(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_131(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_132(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_131(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_133(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_132(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_133(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_132(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_134(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_133(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_134(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_133(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_135(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_134(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_135(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_134(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_136(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_135(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_136(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_135(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_137(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_136(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_137(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_136(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_138(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_137(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_138(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_137(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_139(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_138(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_139(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_138(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_140(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_139(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_140(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_139(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_141(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_140(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_141(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_140(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_142(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_141(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_142(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_141(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_143(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_142(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_143(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_142(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_144(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_143(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_144(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_143(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_145(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_144(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_145(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_144(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_146(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_145(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_146(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_145(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_147(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_146(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_147(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_146(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_148(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_147(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_148(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_147(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_149(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_148(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_149(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_148(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_150(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_149(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_150(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_149(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_151(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_150(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_151(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_150(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_152(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_151(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_152(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_151(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_153(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_152(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_153(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_152(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_154(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_153(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_154(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_153(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_155(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_154(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_155(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_154(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_156(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_155(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_156(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_155(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_157(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_156(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_157(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_156(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_158(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_157(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_158(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_157(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_159(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_158(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_159(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_158(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_160(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_159(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_160(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_159(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_161(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_160(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_161(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_160(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_162(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_161(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_162(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_161(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_163(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_162(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_163(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_162(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_164(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_163(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_164(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_163(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_165(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_164(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_165(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_164(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_166(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_165(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_166(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_165(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_167(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_166(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_167(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_166(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_168(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_167(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_168(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_167(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_169(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_168(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_169(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_168(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_170(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_169(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_170(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_169(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_171(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_170(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_171(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_170(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_172(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_171(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_172(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_171(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_173(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_172(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_173(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_172(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_174(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_173(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_174(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_173(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_175(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_174(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_175(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_174(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_176(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_175(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_176(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_175(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_177(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_176(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_177(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_176(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_178(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_177(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_178(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_177(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_179(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_178(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_179(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_178(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_180(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_179(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_180(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_179(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_181(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_180(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_181(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_180(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_182(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_181(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_182(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_181(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_183(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_182(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_183(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_182(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_184(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_183(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_184(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_183(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_185(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_184(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_185(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_184(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_186(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_185(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_186(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_185(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_187(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_186(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_187(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_186(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_188(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_187(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_188(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_187(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_189(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_188(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_189(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_188(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_190(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_189(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_190(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_189(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_191(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_190(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_191(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_190(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_192(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_191(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_192(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_191(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_193(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_192(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_193(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_192(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_194(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_193(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_194(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_193(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_195(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_194(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_195(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_194(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_196(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_195(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_196(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_195(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_197(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_196(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_197(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_196(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_198(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_197(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_198(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_197(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_199(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_198(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_199(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_198(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_200(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_199(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_200(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_199(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_201(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_200(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_201(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_200(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_202(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_201(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_202(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_201(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_203(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_202(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_203(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_202(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_204(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_203(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_204(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_203(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_205(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_204(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_205(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_204(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_206(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_205(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_206(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_205(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_207(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_206(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_207(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_206(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_208(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_207(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_208(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_207(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_209(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_208(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_209(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_208(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_210(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_209(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_210(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_209(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_211(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_210(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_211(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_210(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_212(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_211(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_212(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_211(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_213(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_212(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_213(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_212(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_214(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_213(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_214(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_213(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_215(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_214(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_215(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_214(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_216(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_215(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_216(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_215(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_217(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_216(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_217(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_216(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_218(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_217(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_218(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_217(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_219(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_218(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_219(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_218(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_220(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_219(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_220(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_219(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_221(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_220(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_221(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_220(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_222(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_221(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_222(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_221(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_223(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_222(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_223(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_222(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_224(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_223(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_224(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_223(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_225(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_224(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_225(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_224(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_226(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_225(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_226(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_225(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_227(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_226(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_227(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_226(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_228(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_227(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_228(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_227(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_229(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_228(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_229(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_228(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_230(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_229(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_230(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_229(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_231(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_230(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_231(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_230(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_232(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_231(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_232(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_231(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_233(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_232(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_233(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_232(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_234(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_233(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_234(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_233(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_235(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_234(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_235(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_234(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_236(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_235(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_236(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_235(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_237(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_236(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_237(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_236(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_238(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_237(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_238(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_237(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_239(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_238(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_239(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_238(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_240(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_239(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_240(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_239(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_241(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_240(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_241(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_240(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_242(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_241(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_242(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_241(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_243(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_242(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_243(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_242(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_244(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_243(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_244(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_243(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_245(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_244(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_245(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_244(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_246(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_245(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_246(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_245(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_247(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_246(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_247(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_246(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_248(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_247(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_248(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_247(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_249(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_248(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_249(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_248(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_250(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_249(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_250(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_249(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_251(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_250(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_251(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_250(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_252(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_251(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_252(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_251(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_253(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_252(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_253(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_252(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_254(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_253(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_254(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_253(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_255(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_254(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_255(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_254(M, C, D, __VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_LOOP_256(M, C, D, x, ...) SERIALIZABLE_STRUCT_IMPL_UNPACK(M, C, x) D()                            \
-  SERIALIZABLE_STRUCT_IMPL_LOOP_255(M, C, D, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_LOOP_256(M, C, D, x, ...) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x) D()                            \
+  ITM_SERIALIZATION_IMPL_LOOP_255(M, C, D, __VA_ARGS__)
 
 

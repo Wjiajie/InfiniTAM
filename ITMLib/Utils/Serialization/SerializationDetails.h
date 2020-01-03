@@ -15,6 +15,9 @@
 //  ================================================================
 #pragma once
 
+//stdlib
+#include <string>
+
 //boost
 #include <boost/program_options/variables_map.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -22,23 +25,24 @@
 // local
 #include "SerializationSequenceMacros.h"
 #include "../json_utils.h"
-
+#include "../../../ORUtils/PlatformIndependence.h"
 
 // region ==== LOW-LEVEL MACROS
-#define SERIALIZABLE_STRUCT_IMPL_SEMICOLON() ;
-#define SERIALIZABLE_STRUCT_IMPL_COMMA() ,
-#define SERIALIZABLE_STRUCT_IMPL_AND() &&
-#define SERIALIZABLE_STRUCT_IMPL_NOTHING()
+#define ITM_SERIALIZATION_IMPL_SEMICOLON() ;
+#define ITM_SERIALIZATION_IMPL_COMMA() ,
+#define ITM_SERIALIZATION_IMPL_AND() &&
+#define ITM_SERIALIZATION_IMPL_NOTHING()
 
-#define SERIALIZABLE_STRUCT_IMPL_NARG(...)                                                                             \
-  SERIALIZABLE_STRUCT_IMPL_NARG_(__VA_ARGS__, SERIALIZABLE_STRUCT_IMPL_RSEQ_N())
-#define SERIALIZABLE_STRUCT_IMPL_NARG_(...) SERIALIZABLE_STRUCT_IMPL_ARG_N(__VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_NARG(...)                                                                               \
+  ITM_SERIALIZATION_IMPL_NARG_(__VA_ARGS__, ITM_SERIALIZATION_IMPL_RSEQ_N())
+#define ITM_SERIALIZATION_IMPL_NARG_(...) ITM_SERIALIZATION_IMPL_ARG_N(__VA_ARGS__)
 
-#define SERIALIZABLE_STRUCT_IMPL_PRIMITIVE_CAT(a, ...) a##__VA_ARGS__
-#define SERIALIZABLE_STRUCT_IMPL_CAT(a, ...) SERIALIZABLE_STRUCT_IMPL_PRIMITIVE_CAT(a, __VA_ARGS__)
+#define ITM_SERIALIZATION_IMPL_PRIMITIVE_CAT(a, ...) a##__VA_ARGS__
+#define ITM_SERIALIZATION_IMPL_CAT(a, ...) ITM_SERIALIZATION_IMPL_PRIMITIVE_CAT(a, __VA_ARGS__)
 
 // endregion
-// region ==== PER-FIELD MACROS ===========
+// region ===== SERIALIZABLE STRUCT PER-FIELD MACROS ===========
+
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_DECL(_, type, field_name, ...) type field_name = __VA_ARGS__;
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_VM_INIT(struct_name, type, field_name, default_value)                           \
 	field_name(vm[ #field_name ].empty() ? struct_name (). field_name : vm[#field_name].as<type>())
@@ -50,45 +54,45 @@
 	field_name ? field_name.get() : default_instance. field_name
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE(_, type, field_name, ...)                                           \
 	tree.add( #field_name , field_name );
-#define SERIALIZABLE_STRUCT_IMPL_FIELD_COMPARISON(_, type, field_name, ...)                                           \
+#define SERIALIZABLE_STRUCT_IMPL_FIELD_COMPARISON(_, type, field_name, ...)                                            \
 	instance1. field_name == instance2. field_name
 // endregion
 
-// region ==== TOP-LEVEL MACROS ===========
+// region ==== SERIALIZABLE STRUCT TOP-LEVEL MACROS ===========
 
 #define SERIALIZABLE_STRUCT_IMPL( struct_name, ...)                                                                    \
-	SERIALIZABLE_STRUCT_IMPL_2(struct_name, SERIALIZABLE_STRUCT_IMPL_NARG(__VA_ARGS__), __VA_ARGS__)
+	SERIALIZABLE_STRUCT_IMPL_2(struct_name, ITM_SERIALIZATION_IMPL_NARG(__VA_ARGS__), __VA_ARGS__)
 
 #define SERIALIZABLE_STRUCT_IMPL_2( struct_name, field_count, ...)                                                     \
 	SERIALIZABLE_STRUCT_IMPL_3(struct_name, field_count,                                                               \
-							 SERIALIZABLE_STRUCT_IMPL_CAT(SERIALIZABLE_STRUCT_IMPL_LOOP_, field_count), __VA_ARGS__)
+							 ITM_SERIALIZATION_IMPL_CAT(ITM_SERIALIZATION_IMPL_LOOP_, field_count), __VA_ARGS__)
 
 
 #define SERIALIZABLE_STRUCT_IMPL_3( struct_name, field_count, loop, ...)                                               \
 	struct struct_name {                                                                                               \
-		loop(SERIALIZABLE_STRUCT_IMPL_FIELD_DECL, _, SERIALIZABLE_STRUCT_IMPL_NOTHING, __VA_ARGS__)                    \
+		loop(SERIALIZABLE_STRUCT_IMPL_FIELD_DECL, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)                      \
 		struct_name () = default;                                                                                      \
-		struct_name(loop(SERIALIZABLE_STRUCT_IMPL_TYPED_FIELD, _, SERIALIZABLE_STRUCT_IMPL_COMMA, __VA_ARGS__)):       \
-			loop(SERIALIZABLE_STRUCT_IMPL_INIT_FIELD_ARG, _, SERIALIZABLE_STRUCT_IMPL_COMMA, __VA_ARGS__)              \
+		struct_name(loop(SERIALIZABLE_STRUCT_IMPL_TYPED_FIELD, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)):         \
+			loop(SERIALIZABLE_STRUCT_IMPL_INIT_FIELD_ARG, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)                \
 			{}                                                                                                         \
 		explicit struct_name (const boost::program_options::variables_map& vm) :                                       \
-			loop(SERIALIZABLE_STRUCT_IMPL_FIELD_VM_INIT, struct_name, SERIALIZABLE_STRUCT_IMPL_COMMA, __VA_ARGS__)     \
+			loop(SERIALIZABLE_STRUCT_IMPL_FIELD_VM_INIT, struct_name, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)       \
 		{}                                                                                                             \
 		static struct_name BuildFromPTree(const boost::property_tree::ptree& tree){                                    \
-			loop(SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE, _, SERIALIZABLE_STRUCT_IMPL_NOTHING, __VA_ARGS__)  \
+			loop(SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)    \
 			struct_name default_instance;                                                                              \
 			return {                                                                                                   \
-				loop(SERIALIZABLE_STRUCT_IMPL_FIELD_FROM_OPTIONAL, _, SERIALIZABLE_STRUCT_IMPL_COMMA, __VA_ARGS__)     \
+				loop(SERIALIZABLE_STRUCT_IMPL_FIELD_FROM_OPTIONAL, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)       \
 			};																									       \
 		}																											   \
 		boost::property_tree::ptree ToPTree() const {                                                                  \
 			boost::property_tree::ptree tree;                                                                          \
-			loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE, _, SERIALIZABLE_STRUCT_IMPL_NOTHING, __VA_ARGS__)         \
+			loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)           \
 			return tree;                                                                                               \
 		}                                                                                                              \
 		friend bool operator==(const struct_name & instance1, const struct_name & instance2){                          \
 			return                                                                                                     \
-			loop(SERIALIZABLE_STRUCT_IMPL_FIELD_COMPARISON, _, SERIALIZABLE_STRUCT_IMPL_AND, __VA_ARGS__);             \
+			loop(SERIALIZABLE_STRUCT_IMPL_FIELD_COMPARISON, _, ITM_SERIALIZATION_IMPL_AND, __VA_ARGS__);               \
 		}                                                                                                              \
 		friend std::ostream& operator<<(std::ostream& out, const struct_name& instance) {                              \
 			boost::property_tree::ptree tree(instance.ToPTree());                                                      \
@@ -97,5 +101,75 @@
 		}                                                                                                              \
 	};
 
-//endregion
+// endregion
+// region ================== SERIALIZABLE ENUM TEMPLATED FUNCTION DECLARATIONS ===
 
+template<typename TEnum>
+static TEnum string_to_enumerator(const std::string& string);
+
+template<typename TEnum>
+static std::string enumerator_to_string(const TEnum& enum_value);
+
+template<typename TEnum>
+static TEnum variable_map_to_enumerator(const boost::program_options::variables_map& vm, const std::string& argument){
+	return string_to_enumerator<TEnum>(vm[argument].as<std::string>());
+}
+
+template<typename TEnum>
+static boost::optional<TEnum> ptree_to_optional_enumerator(const pt::ptree& ptree, const pt::ptree::key_type& key) {
+	auto child = ptree.get_child_optional(key);
+	if (child) {
+		return boost::optional<TEnum>(string_to_enumerator<TEnum>(ptree.get<std::string>(key)));
+	} else {
+		return boost::optional<TEnum>{};
+	}
+}
+// endregion
+// region ================== SERIALIZABLE ENUM PER-ENUMERATOR MACROS =============
+
+// this top one is per-token, not per-enumerator
+#define SERIALIZABLE_ENUM_IMPL_GEN_TOKEN_MAPPINGS(full_enumerator, token, ...) { #token , full_enumerator }
+
+#define SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATORS(_, enumerator, ...) enumerator
+#define SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS(_, enumerator, ... )                              		               \
+	SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS_2(enum_name, enumerator, ITM_SERIALIZATION_IMPL_NARG(__VA_ARGS__), __VA_ARGS__)
+#define SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS_2(enum_name, enumerator, token_count, ... )                             \
+	SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS_3(enum_name, enumerator,													   \
+	 										 ITM_SERIALIZATION_IMPL_CAT(ITM_SERIALIZATION_IMPL_LOOP_, token_count), ...)
+#define SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS_3(enum_name, enumerator, loop, ... )                                    \
+	loop(SERIALIZABLE_ENUM_IMPL_GEN_TOKEN_MAPPINGS, enum_name :: enumerator, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)
+#define SERIALIZABLE_ENUM_IMPL_STRING_SWITCH_CASE(_, enumerator, first_token, ... )                                    \
+	case enumerator : return first_token;
+// endregion
+// region ================== SERIALIZABLE ENUM TOP-LEVEL MACROS ==================
+
+#define SERIALIZABLE_ENUM_IMPL( enum_name, ...)                                                                        \
+	SERIALIZABLE_ENUM_IMPL_2(enum_name, ITM_SERIALIZATION_IMPL_NARG(__VA_ARGS__), __VA_ARGS__)
+
+#define SERIALIZABLE_ENUM_IMPL_2( enum_name, field_count, ...)                                                         \
+	SERIALIZABLE_ENUM_IMPL_3(enum_name, field_count,                                                                   \
+							 ITM_SERIALIZATION_IMPL_CAT(ITM_SERIALIZATION_IMPL_LOOP_, field_count), __VA_ARGS__)
+
+
+#define SERIALIZABLE_ENUM_IMPL_3( enum_name, field_count, loop, ...)                                                   \
+	enum enum_name {                                                                                                   \
+		loop(SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATORS, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)                    \
+	};                                                                                                                 \
+	template<>                                                                                                         \
+	enum_name string_to_enumerator< enum_name >(const std::string& string) {                                           \
+		static std::unordered_map<std::string, enum_name > enumerator_by_string = {                                    \
+				loop(SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS, enum_name, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)     \
+		};                                                                                                             \
+		if (enumerator_by_string.find(string) == enumerator_by_string.end()) {                                         \
+			DIEWITHEXCEPTION_REPORTLOCATION("Unrecognized memory device type argument");                               \
+		} else {                                                                                                       \
+			return enumerator_by_string[string];                                                                       \
+		}                                                                                                              \
+	}                                                                                                                  \
+	template<>                                                                                                         \
+	std::string enumerator_to_string< enum_name >( const enum_name & value)	{                                          \
+		switch(value) {                                                                                                \
+			loop(SERIALIZABLE_ENUM_IMPL_STRING_SWITCH_CASE, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)            \
+	    }                                                                                                              \
+    }
+// endregion

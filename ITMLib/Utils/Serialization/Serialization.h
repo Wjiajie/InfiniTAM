@@ -25,6 +25,9 @@
  * and a ToPtree static member function, that returns a boost::property_tree::ptree holding all the data.
  *
  * Usage:
+ * The first argument specifies the struct name. The subsequent arguments should be triplets of values, in parenthesis,
+ * one for each field. Each triplet should have the form (<type>, <name>, <default value>).
+ *
  * @ref GENERATE_SERIALIZABLE_STRUCT( MyWonderfulUnicorn, (float, age, 5.0f), (float, horn_length, 0.33f) )
  * Generates a struct called "MyWonderfulUnicorn" with two fields, i.e. public member variables, called
  * "age" and "horn_length". Both are typed as floats and have their respective default values set at 5.0f and 0.33f.
@@ -32,3 +35,4 @@
 #define GENERATE_SERIALIZABLE_STRUCT( struct_name, ... )              \
 	SERIALIZABLE_STRUCT_IMPL( struct_name, __VA_ARGS__)
 
+#define GENERATE_SERIALIZABLE_ENUM( enum_name, ... ) SERIALIZABLE_ENUM_IMPL( enum_name, __VA_ARGS__ )
