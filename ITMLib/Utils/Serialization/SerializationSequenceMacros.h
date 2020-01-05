@@ -14,6 +14,7 @@
 //  limitations under the License.
 //  ================================================================
 #pragma once
+#include "SerializationSequenceLevel2Macros.h"
 
 #define ITM_SERIALIZATION_IMPL_ARG_N(                                                           \
     _1, _2, _3, _4, _5, _6, _7, _8, _9, _10,                                            \
@@ -90,8 +91,7 @@
 
 #define ITM_SERIALIZATION_IMPL_UNPACK(M, C, x)                                                                       \
   ITM_SERIALIZATION_IMPL_IIF(ITM_SERIALIZATION_IMPL_IS_PAREN(x))                                                   \
-  (M ITM_SERIALIZATION_IMPL_SIMPLE_RECOMBINE (C, x), M(C,x))
-
+  (M ITM_SERIALIZATION_IMPL_SIMPLE_RECOMBINE (C, x), M (C,x))
 
 #define ITM_SERIALIZATION_IMPL_LOOP_1(M, C, D, x) ITM_SERIALIZATION_IMPL_UNPACK(M, C, x)
 

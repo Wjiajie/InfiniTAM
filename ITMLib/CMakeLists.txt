@@ -721,6 +721,7 @@ set(ITMLIB_UTILS_HEADERS
 	Utils/Serialization/Serialization.h
 	Utils/Serialization/SerializationDetails.h
 	Utils/Serialization/SerializationSequenceMacros.h
+	Utils/Serialization/SerializationSequenceLevel2Macros.h
 
     Utils/ITMCUDAUtils.h
     Utils/ITMValuePosition.h

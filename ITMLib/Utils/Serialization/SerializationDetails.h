@@ -17,10 +17,12 @@
 
 //stdlib
 #include <string>
+#include <unordered_map>
 
 //boost
 #include <boost/program_options/variables_map.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <boost/preprocessor/stringize.hpp>
 
 // local
 #include "SerializationSequenceMacros.h"
@@ -127,19 +129,25 @@ static boost::optional<TEnum> ptree_to_optional_enumerator(const pt::ptree& ptre
 // endregion
 // region ================== SERIALIZABLE ENUM PER-ENUMERATOR MACROS =============
 
+# define EMPTY(...)
+# define DEFER(...) __VA_ARGS__ EMPTY()
+# define OBSTRUCT(...) __VA_ARGS__ DEFER(EMPTY)()
+# define EXPAND(...) __VA_ARGS__
+
 // this top one is per-token, not per-enumerator
-#define SERIALIZABLE_ENUM_IMPL_GEN_TOKEN_MAPPINGS(full_enumerator, token, ...) { #token , full_enumerator }
+#define SERIALIZABLE_ENUM_IMPL_GEN_TOKEN_MAPPINGS(qualified_enumerator, token) { #token , qualified_enumerator }
 
 #define SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATORS(_, enumerator, ...) enumerator
-#define SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS(_, enumerator, ... )                              		               \
+#define SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS(enum_name, enumerator, ... )                              		       \
 	SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS_2(enum_name, enumerator, ITM_SERIALIZATION_IMPL_NARG(__VA_ARGS__), __VA_ARGS__)
 #define SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS_2(enum_name, enumerator, token_count, ... )                             \
-	SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS_3(enum_name, enumerator,													   \
-	 										 ITM_SERIALIZATION_IMPL_CAT(ITM_SERIALIZATION_IMPL_LOOP_, token_count), ...)
+	SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS_3(enum_name, enumerator,												   \
+	 										 ITM_SERIALIZATION_IMPL_CAT(ITM_SERIALIZATION_IMPL_LOOP2_, token_count), __VA_ARGS__)
 #define SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS_3(enum_name, enumerator, loop, ... )                                    \
-	loop(SERIALIZABLE_ENUM_IMPL_GEN_TOKEN_MAPPINGS, enum_name :: enumerator, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)
+	loop(SERIALIZABLE_ENUM_IMPL_GEN_TOKEN_MAPPINGS, enum_name::enumerator, ITM_SERIALIZATION_IMPL_COMMA,__VA_ARGS__)
+
 #define SERIALIZABLE_ENUM_IMPL_STRING_SWITCH_CASE(_, enumerator, first_token, ... )                                    \
-	case enumerator : return first_token;
+	case enumerator : token = #first_token; break;
 // endregion
 // region ================== SERIALIZABLE ENUM TOP-LEVEL MACROS ==================
 
@@ -161,15 +169,17 @@ static boost::optional<TEnum> ptree_to_optional_enumerator(const pt::ptree& ptre
 				loop(SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS, enum_name, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)     \
 		};                                                                                                             \
 		if (enumerator_by_string.find(string) == enumerator_by_string.end()) {                                         \
-			DIEWITHEXCEPTION_REPORTLOCATION("Unrecognized memory device type argument");                               \
-		} else {                                                                                                       \
-			return enumerator_by_string[string];                                                                       \
+			DIEWITHEXCEPTION_REPORTLOCATION("Unrecognized string token for enum " #enum_name);                         \
 		}                                                                                                              \
+		return enumerator_by_string[string];                                                                           \
+		                                                                                                               \
 	}                                                                                                                  \
 	template<>                                                                                                         \
 	std::string enumerator_to_string< enum_name >( const enum_name & value)	{                                          \
+		std::string token = "";                                                                                        \
 		switch(value) {                                                                                                \
 			loop(SERIALIZABLE_ENUM_IMPL_STRING_SWITCH_CASE, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)            \
 	    }                                                                                                              \
+	    return token;                                                                                                  \
     }
 // endregion

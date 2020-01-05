@@ -38,7 +38,10 @@
 namespace po = boost::program_options;
 namespace pt = boost::property_tree;
 
-GENERATE_SERIALIZABLE_ENUM(VerbosityLevel, (HELLO, "hello"));
+
+
+GENERATE_SERIALIZABLE_ENUM(VerbosityLevel, (HELLO, "hello"))
+
 
 namespace ITMLib {
 class Configuration {
