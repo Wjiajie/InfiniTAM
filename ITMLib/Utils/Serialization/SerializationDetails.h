@@ -129,13 +129,8 @@ static boost::optional<TEnum> ptree_to_optional_enumerator(const pt::ptree& ptre
 // endregion
 // region ================== SERIALIZABLE ENUM PER-ENUMERATOR MACROS =============
 
-# define EMPTY(...)
-# define DEFER(...) __VA_ARGS__ EMPTY()
-# define OBSTRUCT(...) __VA_ARGS__ DEFER(EMPTY)()
-# define EXPAND(...) __VA_ARGS__
-
 // this top one is per-token, not per-enumerator
-#define SERIALIZABLE_ENUM_IMPL_GEN_TOKEN_MAPPINGS(qualified_enumerator, token) { #token , qualified_enumerator }
+#define SERIALIZABLE_ENUM_IMPL_GEN_TOKEN_MAPPINGS(qualified_enumerator, token) { token , qualified_enumerator }
 
 #define SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATORS(_, enumerator, ...) enumerator
 #define SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS(enum_name, enumerator, ... )                              		       \
@@ -146,27 +141,42 @@ static boost::optional<TEnum> ptree_to_optional_enumerator(const pt::ptree& ptre
 #define SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS_3(enum_name, enumerator, loop, ... )                                    \
 	loop(SERIALIZABLE_ENUM_IMPL_GEN_TOKEN_MAPPINGS, enum_name::enumerator, ITM_SERIALIZATION_IMPL_COMMA,__VA_ARGS__)
 
-#define SERIALIZABLE_ENUM_IMPL_STRING_SWITCH_CASE(_, enumerator, first_token, ... )                                    \
-	case enumerator : token = #first_token; break;
+//#define SERIALIZABLE_ENUM_IMPL_STRING_SWITCH_CASE(A, B )                                    \
+//	case A : token = #B; break;
+#define SERIALIZABLE_ENUM_IMPL_STRING_SWITCH_CASE(enum_name, enumerator, first_token, ... )                                    \
+	case enum_name::enumerator : token = first_token; break;
 // endregion
 // region ================== SERIALIZABLE ENUM TOP-LEVEL MACROS ==================
 
-#define SERIALIZABLE_ENUM_IMPL( enum_name, ...)                                                                        \
-	SERIALIZABLE_ENUM_IMPL_2(enum_name, ITM_SERIALIZATION_IMPL_NARG(__VA_ARGS__), __VA_ARGS__)
+//** declaration
+#define SERIALIZABLE_ENUM_DECL_IMPL( enum_name, ...)                                                                   \
+	SERIALIZABLE_ENUM_DECL_IMPL_2(enum_name, ITM_SERIALIZATION_IMPL_NARG(__VA_ARGS__), __VA_ARGS__)
 
-#define SERIALIZABLE_ENUM_IMPL_2( enum_name, field_count, ...)                                                         \
-	SERIALIZABLE_ENUM_IMPL_3(enum_name, field_count,                                                                   \
+#define SERIALIZABLE_ENUM_DECL_IMPL_2( enum_name, field_count, ...)                                                    \
+	SERIALIZABLE_ENUM_DECL_IMPL_3(enum_name, field_count,                                                              \
 							 ITM_SERIALIZATION_IMPL_CAT(ITM_SERIALIZATION_IMPL_LOOP_, field_count), __VA_ARGS__)
 
 
-#define SERIALIZABLE_ENUM_IMPL_3( enum_name, field_count, loop, ...)                                                   \
+#define SERIALIZABLE_ENUM_DECL_IMPL_3( enum_name, field_count, loop, ...)                                              \
 	enum enum_name {                                                                                                   \
 		loop(SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATORS, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)                    \
-	};                                                                                                                 \
+	};                                                                                                                 
+	
+
+//** definition
+#define SERIALIZABLE_ENUM_DEFN_IMPL( enum_name, ...)                                                                   \
+	SERIALIZABLE_ENUM_DEFN_IMPL_2(enum_name, ITM_SERIALIZATION_IMPL_NARG(__VA_ARGS__), __VA_ARGS__)
+
+#define SERIALIZABLE_ENUM_DEFN_IMPL_2( enum_name, field_count, ...)                                                    \
+	SERIALIZABLE_ENUM_DEFN_IMPL_3(enum_name, field_count,                                                              \
+							 ITM_SERIALIZATION_IMPL_CAT(ITM_SERIALIZATION_IMPL_LOOP_, field_count), __VA_ARGS__)
+
+
+#define SERIALIZABLE_ENUM_DEFN_IMPL_3( enum_name, field_count, loop, ...)                                              \
 	template<>                                                                                                         \
 	enum_name string_to_enumerator< enum_name >(const std::string& string) {                                           \
 		static std::unordered_map<std::string, enum_name > enumerator_by_string = {                                    \
-				loop(SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS, enum_name, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)     \
+				loop(SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS, enum_name, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)\
 		};                                                                                                             \
 		if (enumerator_by_string.find(string) == enumerator_by_string.end()) {                                         \
 			DIEWITHEXCEPTION_REPORTLOCATION("Unrecognized string token for enum " #enum_name);                         \
@@ -178,8 +188,12 @@ static boost::optional<TEnum> ptree_to_optional_enumerator(const pt::ptree& ptre
 	std::string enumerator_to_string< enum_name >( const enum_name & value)	{                                          \
 		std::string token = "";                                                                                        \
 		switch(value) {                                                                                                \
-			loop(SERIALIZABLE_ENUM_IMPL_STRING_SWITCH_CASE, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)            \
+			loop(SERIALIZABLE_ENUM_IMPL_STRING_SWITCH_CASE, enum_name, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)       \
 	    }                                                                                                              \
 	    return token;                                                                                                  \
     }
+
+#define SERIALIZABLE_ENUM_IMPL( enum_name, ...)                                                                        \
+	SERIALIZABLE_ENUM_DECL_IMPL(enum_name, __VA_ARGS__)                                                                \
+	SERIALIZABLE_ENUM_DEFN_IMPL(enum_name, __VA_ARGS__)
 // endregion

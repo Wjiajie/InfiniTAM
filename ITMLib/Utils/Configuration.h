@@ -38,16 +38,15 @@
 namespace po = boost::program_options;
 namespace pt = boost::property_tree;
 
-
-
-GENERATE_SERIALIZABLE_ENUM(VerbosityLevel, (HELLO, "hello"))
-
+#define VERBOSITY_LEVEL_ENUM_DESCRIPTION VerbosityLevel, \
+	(VERBOSITY_SILENT, "silent", "SILENT", "VERBOSITY_SILENT"), \
+	(VERBOSITY_TOP_LEVEL, "top_level", "TOP_LEVEL", "Top-level operations", "VERBOSITY_TOP_LEVEL", "top-level", "top-level operations"), \
+	(VERBOSITY_PER_FRAME, "per_frame", "PER_FRAME", "Per-frame operations", "VERBOSITY_PER_FRAME", "per-frame", "per-frame operations"), \
+	(VERBOSITY_PER_ITERATION, "per_iteration", "PER_ITERATION", "Per-iteration operations", "VERBOSITY_PER_ITERATION", "per-iteration", "per-iteration operations")
 
 namespace ITMLib {
 class Configuration {
 public:
-
-
 	// region ============================================== NESTED ENUMS ==============================================
 
 	enum FailureMode {
@@ -74,7 +73,7 @@ public:
 		INDEX_ARRAY
 	};
 
-
+	DECLARE_SERIALIZABLE_ENUM(VERBOSITY_LEVEL_ENUM_DESCRIPTION )
 
 	//endregion ========================================================================================================
 

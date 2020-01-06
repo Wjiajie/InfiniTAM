@@ -22,6 +22,7 @@
 //boost
 #include <boost/filesystem.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/preprocessor/stringize.hpp>
 
 //local
 #include "Configuration.h"
@@ -29,6 +30,10 @@
 
 using namespace ITMLib;
 
+
+
+//** serializable enum definitions
+DEFINE_SERIALIZABLE_ENUM( Configuration:: VERBOSITY_LEVEL_ENUM_DESCRIPTION )
 
 // region =============== ENUM<--->STRING CONVERSIONS ==================================================================
 

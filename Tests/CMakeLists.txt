@@ -67,6 +67,8 @@ if (BUILD_TESTS)
     ####################################
     # Specify test targets and sources #
     ####################################
+
+    # *** CPU-only tests
     itm_add_test(NAME SetCopyCompare_CPU SOURCES Test_SetCopyCompare_CPU.cpp)
     itm_add_test(NAME ConstructVolumeFromImage_CPU SOURCES Test_ConstructVolumeFromImage_CPU.cpp)
     itm_add_test(NAME VolumeSaveLoadCompact_CPU SOURCES Test_VolumeSaveLoadCompact_CPU.cpp)
@@ -83,8 +85,9 @@ if (BUILD_TESTS)
     itm_add_test(NAME Configuration SOURCES Test_Configuration.cpp)
     itm_add_test(NAME GeometryUtilities SOURCES Test_GeometryUtilities.cpp)
     itm_add_test(NAME ExpandAllocation SOURCES Test_ExpandAllocation.cpp)
+    itm_add_test(NAME Serialization SOURCES Test_Serialization.cpp)
 
-    # *** CUDA-only tests
+    # *** tests that require CUDA
     if(WITH_CUDA)
         itm_add_test(NAME SetCopyCompare_CUDA SOURCES Test_SetCopyCompare_CUDA.cpp)
         itm_add_test(NAME ConstructVolumeFromImage_CUDA SOURCES Test_ConstructVolumeFromImage_CUDA.cpp)
