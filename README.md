@@ -16,19 +16,19 @@ It could be that some detail is missing from the implementation, and could be th
 1. SDF-2-SDF rigid alignment (InfiniTAM's trackers are used instead)
 2. Capability to run the optimization in-reverse, in order to forward-animate the more-complete canonical mesh.
 3. OpenMP-parallelized CPU implementation currently has a bug
-4. ~CUDA implementation is incomplete and has all sorts of bugs~ *[Update]* CUDA implementation is now complete for both the plain voxel array and the voxel block hash indexing and has no difference from the signle-threaded CPU version if you believe the unit tests.
-5. VTK 8.1 & OpenCV are currently dependencies, making them optional is in the plan. This is especially critical in regards to VTK 8.1, which, as far as I know, has to be built from source on Ubuntu.
+4. ~CUDA implementation is incomplete and has all sorts of bugs~ *[Update]* CUDA implementation is now complete for both the plain voxel array and the voxel block hash indexing and has no difference from the signle-threaded CPU version if you believe the unit tests. However, expanded allocation should be turned on to get 100% match from CPU to GPU during runtime, which slows down the CUDA implementation significantly.
+5. OpenCV dependency still needs to be made optional, like the VTK dependency.
 
 ## How do I try this code out?
 
-1. You need to be somewhat well-versed in using CMake. 3rd-party requirements are all open-source, and you can glean what you're missing by running the CMake generator. The most daunting right now is that you have to build VTK 8.1 from source, a dependency I plan to make optional shortly, as it's only used for certain visualizations.
+1. You need to be somewhat well-versed in using CMake. 3rd-party requirements are all open-source, and you can glean what you're missing by running the CMake generator.
 2. Linux currently is the only officially supported OS. All of the required CMake packages and this code in theory should work on any major platform, so you can try on MacOS or Windows at your own risk, and let me know if you'd like to fix things that are not working on your platform. If this project achieves greater success, then I'll probably start officially supporting the other systems.
 3. Build without OpenMP (use CMake to disable it) since it's buggy at the time of writing! I also recommend building with FFMPEG, since that will enable visual debugging/video recording.
-4. To obtain the result shown above, download the [original snoopy sequence](http://campar.in.tum.de/personal/slavcheva/deformable-dataset/index.html), and run like this (modify the paths for your environment):
+4. To obtain the result shown above, download the [original Snoopy sequence](http://campar.in.tum.de/personal/slavcheva/deformable-dataset/index.html), modify Files/infinitam_snoopy_config.json with proper paths for input_and_output_settings, and run like this (modify the path to point to infinitam_snoopy_config.json):
 
-<build_folder>/Apps/InfiniTAM_bpo/InfiniTAM_bpo "snoopy/snoopy_calib.txt" "snoopy/frames/color_%06i.png" "snoopy/frames/depth_%06i.png" "snoopy/frames/omask_%06i.png" --output debug_output/snoopy --start_from_frame_ix 16 --process_N_frames 50 --record_reconstruction_video --max_iterations 300 --weight_data_term 2.0
+<build_folder>/Apps/InfiniTAM_bpo/InfiniTAM_bpo --config=Files/infinitam_snoopy_config.json --record_reconstruction_video
 
-**Note**: If you build with FFMPEG, this will also record a video in the folder specified, here shown as "debug_output/snoopy", which shows the reconstruction result in the canonical pose of successive frames.
+**Note**: If you build with FFMPEG, this will also record a video in the output folder specified in the config file.
 
 ## Is this code being worked on / maintained?
 
