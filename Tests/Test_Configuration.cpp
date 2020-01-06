@@ -64,6 +64,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			Configuration::LIBMODE_BASIC,
 			Configuration::INDEX_ARRAY,
 			GradientFunctorType::TRACKER_SLAVCHEVA_DIAGNOSTIC,
+			Configuration::VERBOSITY_SILENT,
 			"type=rgb,levels=rrbb"
 	);
 	//configuration1.save_to_json_file("../../Tests/TestData/config1.json");

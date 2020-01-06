@@ -254,6 +254,7 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::PerformSingleOptimizationStep
 		int iteration) {
 
 	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().SaveWarpSlices(iteration);
+
 	std::cout << red << "Iteration: " << iteration << reset << std::endl;
 	//** warp update gradient computation
 	PrintOperationStatus("Calculating warp energy gradient...");

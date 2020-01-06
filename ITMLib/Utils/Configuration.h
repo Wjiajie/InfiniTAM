@@ -157,6 +157,7 @@ public:
 	              Configuration::LibMode library_mode,
 	              Configuration::IndexingMethod indexing_method,
 	              GradientFunctorType surface_tracker_type,
+	              Configuration::VerbosityLevel verbosity_level,
 	              std::string tracker_configuration);
 
 	static void load_default();
@@ -210,6 +211,8 @@ public:
 	const IndexingMethod indexing_method;
 	/// switch between different versions of the tracker
 	const GradientFunctorType surface_tracker_type;
+	/// control how much diagnostic text is output by the program
+	const VerbosityLevel verbosity_level;
 	/*Note: library_mode declaration has to precede that of tracker_configuration,
 	 since the latter uses the former for initialization in lists*/
 	/// tracker configuration string

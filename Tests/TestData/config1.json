@@ -76,5 +76,6 @@
     "swapping": "enabled",
     "mode": "basic",
     "index": "array",
+    "verbosity_level": "silent",
     "tracker": "type=rgb,levels=rrbb"
 }

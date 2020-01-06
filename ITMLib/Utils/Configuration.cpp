@@ -37,14 +37,8 @@ DEFINE_SERIALIZABLE_ENUM( Configuration:: VERBOSITY_LEVEL_ENUM_DESCRIPTION )
 
 // region =============== ENUM<--->STRING CONVERSIONS ==================================================================
 
-template<typename TEnum>
-static TEnum enum_value_from_string(const std::string& string);
-
-template<typename TEnum>
-static std::string enum_value_to_string(const TEnum& enum_value);
-
 template<>
-MemoryDeviceType enum_value_from_string<MemoryDeviceType>(const std::string& string) {
+MemoryDeviceType string_to_enumerator<MemoryDeviceType>(const std::string& string) {
 	static std::unordered_map<std::string, MemoryDeviceType> memory_device_type_by_string = {
 			{"CPU",   MEMORYDEVICE_CPU},
 			{"CUDA",  MEMORYDEVICE_CUDA},
@@ -62,7 +56,7 @@ MemoryDeviceType enum_value_from_string<MemoryDeviceType>(const std::string& str
 }
 
 template<>
-std::string enum_value_to_string<MemoryDeviceType>(const MemoryDeviceType& enum_value) {
+std::string enumerator_to_string<MemoryDeviceType>(const MemoryDeviceType& enum_value) {
 	switch (enum_value) {
 		case MEMORYDEVICE_CUDA:
 			return "cuda";
@@ -74,7 +68,7 @@ std::string enum_value_to_string<MemoryDeviceType>(const MemoryDeviceType& enum_
 }
 
 template<>
-Configuration::SwappingMode enum_value_from_string<Configuration::SwappingMode>(const std::string& string) {
+Configuration::SwappingMode string_to_enumerator<Configuration::SwappingMode>(const std::string& string) {
 	static std::unordered_map<std::string, Configuration::SwappingMode> swapping_mode_by_string = {
 			{"enabled",  Configuration::SwappingMode::SWAPPINGMODE_ENABLED},
 			{"disabled", Configuration::SwappingMode::SWAPPINGMODE_DISABLED},
@@ -88,7 +82,7 @@ Configuration::SwappingMode enum_value_from_string<Configuration::SwappingMode>(
 }
 
 template<>
-std::string enum_value_to_string<Configuration::SwappingMode>(const Configuration::SwappingMode& enum_value) {
+std::string enumerator_to_string<Configuration::SwappingMode>(const Configuration::SwappingMode& enum_value) {
 	switch (enum_value) {
 		case Configuration::SwappingMode::SWAPPINGMODE_ENABLED:
 			return "enabled";
@@ -100,7 +94,7 @@ std::string enum_value_to_string<Configuration::SwappingMode>(const Configuratio
 }
 
 template<>
-Configuration::FailureMode enum_value_from_string<Configuration::FailureMode>(const std::string& string) {
+Configuration::FailureMode string_to_enumerator<Configuration::FailureMode>(const std::string& string) {
 	static std::unordered_map<std::string, Configuration::FailureMode> failure_mode_by_string = {
 			{"ignore",           Configuration::FailureMode::FAILUREMODE_IGNORE},
 			{"relocalize",       Configuration::FailureMode::FAILUREMODE_RELOCALIZE},
@@ -114,7 +108,7 @@ Configuration::FailureMode enum_value_from_string<Configuration::FailureMode>(co
 }
 
 template<>
-std::string enum_value_to_string<Configuration::FailureMode>(const Configuration::FailureMode& enum_value) {
+std::string enumerator_to_string<Configuration::FailureMode>(const Configuration::FailureMode& enum_value) {
 	switch (enum_value) {
 		case Configuration::FailureMode::FAILUREMODE_IGNORE:
 			return "ignore";
@@ -126,7 +120,7 @@ std::string enum_value_to_string<Configuration::FailureMode>(const Configuration
 }
 
 template<>
-Configuration::LibMode enum_value_from_string<Configuration::LibMode>(const std::string& string) {
+Configuration::LibMode string_to_enumerator<Configuration::LibMode>(const std::string& string) {
 	static std::unordered_map<std::string, Configuration::LibMode> lib_mode_by_string = {
 			{"basic",        Configuration::LibMode::LIBMODE_BASIC},
 			{"surfels",      Configuration::LibMode::LIBMODE_BASIC_SURFELS},
@@ -141,7 +135,7 @@ Configuration::LibMode enum_value_from_string<Configuration::LibMode>(const std:
 }
 
 template<>
-std::string enum_value_to_string<Configuration::LibMode>(const Configuration::LibMode& enum_value) {
+std::string enumerator_to_string<Configuration::LibMode>(const Configuration::LibMode& enum_value) {
 	switch (enum_value) {
 		case Configuration::LibMode::LIBMODE_BASIC:
 			return "basic";
@@ -155,7 +149,7 @@ std::string enum_value_to_string<Configuration::LibMode>(const Configuration::Li
 }
 
 template<>
-Configuration::IndexingMethod enum_value_from_string<Configuration::IndexingMethod>(const std::string& string) {
+Configuration::IndexingMethod string_to_enumerator<Configuration::IndexingMethod>(const std::string& string) {
 	static std::unordered_map<std::string, Configuration::IndexingMethod> indexing_method_by_string = {
 			{"array", Configuration::IndexingMethod::INDEX_ARRAY},
 			{"hash",  Configuration::IndexingMethod::INDEX_HASH},
@@ -170,7 +164,7 @@ Configuration::IndexingMethod enum_value_from_string<Configuration::IndexingMeth
 }
 
 template<>
-std::string enum_value_to_string<Configuration::IndexingMethod>(const Configuration::IndexingMethod& enum_value) {
+std::string enumerator_to_string<Configuration::IndexingMethod>(const Configuration::IndexingMethod& enum_value) {
 	switch (enum_value) {
 		case Configuration::IndexingMethod::INDEX_ARRAY:
 			return "array";
@@ -180,7 +174,7 @@ std::string enum_value_to_string<Configuration::IndexingMethod>(const Configurat
 }
 
 template<>
-SlavchevaSurfaceTracker::ConfigurationMode enum_value_from_string<SlavchevaSurfaceTracker::ConfigurationMode>(
+SlavchevaSurfaceTracker::ConfigurationMode string_to_enumerator<SlavchevaSurfaceTracker::ConfigurationMode>(
 		const std::string& string) {
 	static std::unordered_map<std::string, SlavchevaSurfaceTracker::ConfigurationMode> indexing_method_by_string = {
 			{"killing", SlavchevaSurfaceTracker::ConfigurationMode::KILLING_FUSION},
@@ -196,7 +190,7 @@ SlavchevaSurfaceTracker::ConfigurationMode enum_value_from_string<SlavchevaSurfa
 }
 
 template<>
-std::string enum_value_to_string<SlavchevaSurfaceTracker::ConfigurationMode>(
+std::string enumerator_to_string<SlavchevaSurfaceTracker::ConfigurationMode>(
 		const SlavchevaSurfaceTracker::ConfigurationMode& enum_value) {
 	switch (enum_value) {
 		case SlavchevaSurfaceTracker::ConfigurationMode::KILLING_FUSION:
@@ -207,7 +201,7 @@ std::string enum_value_to_string<SlavchevaSurfaceTracker::ConfigurationMode>(
 }
 
 template<>
-GradientFunctorType enum_value_from_string<GradientFunctorType>(const std::string& string) {
+GradientFunctorType string_to_enumerator<GradientFunctorType>(const std::string& string) {
 	static std::unordered_map<std::string, GradientFunctorType> surface_tracking_functor_by_string = {
 			{"slavcheva_diagnostic", GradientFunctorType::TRACKER_SLAVCHEVA_DIAGNOSTIC},
 			{"slavcheva_optimized",  GradientFunctorType::TRACKER_SLAVCHEVA_OPTIMIZED},
@@ -223,7 +217,7 @@ GradientFunctorType enum_value_from_string<GradientFunctorType>(const std::strin
 
 
 template<>
-std::string enum_value_to_string<GradientFunctorType>(
+std::string enumerator_to_string<GradientFunctorType>(
 		const GradientFunctorType& enum_value) {
 	switch (enum_value) {
 		case GradientFunctorType::TRACKER_SLAVCHEVA_OPTIMIZED:
@@ -250,33 +244,39 @@ static Vector3i vector3i_from_variable_map(const po::variables_map& vm, const st
 	return vector3i_from_std_vector(int_vector);
 }
 
-static MemoryDeviceType memory_device_type_from_variable_map(const po::variables_map& vm, const std::string& argument) {
-	return enum_value_from_string<MemoryDeviceType>(vm[argument].as<std::string>());
+template<typename TEnum>
+static TEnum enumerator_from_variable_map(const po::variables_map& vm, const std::string& argument){
+	return string_to_enumerator<TEnum>(vm[argument].as<std::string>());
 }
-
-static Configuration::SwappingMode
-swapping_mode_from_variable_map(const po::variables_map& vm, const std::string& argument) {
-	return enum_value_from_string<Configuration::SwappingMode>(vm[argument].as<std::string>());
-}
-
-static Configuration::FailureMode
-failure_mode_from_variable_map(const po::variables_map& vm, const std::string& argument) {
-	return enum_value_from_string<Configuration::FailureMode>(vm[argument].as<std::string>());
-}
-
-static Configuration::LibMode lib_mode_from_variable_map(const po::variables_map& vm, const std::string& argument) {
-	return enum_value_from_string<Configuration::LibMode>(vm[argument].as<std::string>());
-}
-
-static Configuration::IndexingMethod indexing_method_from_variable_map(const po::variables_map& vm,
-                                                                       const std::string& argument) {
-	return enum_value_from_string<Configuration::IndexingMethod>(vm[argument].as<std::string>());
-}
-
-static GradientFunctorType surface_tracker_type_from_variable_map(const po::variables_map& vm,
-                                                                  const std::string& argument) {
-	return enum_value_from_string<GradientFunctorType>(vm[argument].as<std::string>());
-}
+//
+//
+//static MemoryDeviceType memory_device_type_from_variable_map(const po::variables_map& vm, const std::string& argument) {
+//	return string_to_enumerator<MemoryDeviceType>(vm[argument].as<std::string>());
+//}
+//
+//static Configuration::SwappingMode
+//swapping_mode_from_variable_map(const po::variables_map& vm, const std::string& argument) {
+//	return string_to_enumerator<Configuration::SwappingMode>(vm[argument].as<std::string>());
+//}
+//
+//static Configuration::FailureMode
+//failure_mode_from_variable_map(const po::variables_map& vm, const std::string& argument) {
+//	return string_to_enumerator<Configuration::FailureMode>(vm[argument].as<std::string>());
+//}
+//
+//static Configuration::LibMode lib_mode_from_variable_map(const po::variables_map& vm, const std::string& argument) {
+//	return string_to_enumerator<Configuration::LibMode>(vm[argument].as<std::string>());
+//}
+//
+//static Configuration::IndexingMethod indexing_method_from_variable_map(const po::variables_map& vm,
+//                                                                       const std::string& argument) {
+//	return string_to_enumerator<Configuration::IndexingMethod>(vm[argument].as<std::string>());
+//}
+//
+//static GradientFunctorType surface_tracker_type_from_variable_map(const po::variables_map& vm,
+//                                                                  const std::string& argument) {
+//	return string_to_enumerator<GradientFunctorType>(vm[argument].as<std::string>());
+//}
 
 
 // endregion ===========================================================================================================
@@ -287,7 +287,7 @@ template<typename TEnum>
 static boost::optional<TEnum> optional_enum_value_from_ptree(const pt::ptree& ptree, const pt::ptree::key_type& key) {
 	auto child = ptree.get_child_optional(key);
 	if (child) {
-		return boost::optional<TEnum>(enum_value_from_string<TEnum>(ptree.get<std::string>(key)));
+		return boost::optional<TEnum>(string_to_enumerator<TEnum>(ptree.get<std::string>(key)));
 	} else {
 		return boost::optional<TEnum>{};
 	}
@@ -344,6 +344,7 @@ Configuration::Configuration()
 		library_mode(LIBMODE_DYNAMIC),
 		indexing_method(INDEX_HASH),
 		surface_tracker_type(TRACKER_SLAVCHEVA_DIAGNOSTIC),
+		verbosity_level(VERBOSITY_PER_FRAME),
 		tracker_configuration(library_mode == LIBMODE_BASIC_SURFELS ? default_surfel_tracker_configuration :
 		                      default_depth_only_extended_tracker_configuration) {
 }
@@ -364,7 +365,7 @@ Configuration::Configuration(const po::variables_map& vm) :
 		                      Configuration().create_meshing_engine :
 		                      !vm["disable_meshing"].as<bool>()),
 		device_type(vm["device"].empty() ? Configuration().device_type :
-		            memory_device_type_from_variable_map(vm, "device")),
+		            enumerator_from_variable_map<MemoryDeviceType>(vm, "device")),
 		use_approximate_raycast(vm["use_approximate_raycast"].empty() ?
 		                        Configuration().use_approximate_raycast :
 		                        !vm["use_approximate_raycast"].as<bool>()),
@@ -375,15 +376,17 @@ Configuration::Configuration(const po::variables_map& vm) :
 		                     Configuration().use_bilateral_filter :
 		                     !vm["use_bilateral_filter"].as<bool>()),
 		behavior_on_failure(vm["failure_mode"].empty() ? Configuration().behavior_on_failure :
-		                    failure_mode_from_variable_map(vm, "failure_mode")),
+		                    enumerator_from_variable_map<Configuration::FailureMode>(vm, "failure_mode")),
 		swapping_mode(vm["swapping"].empty() ? Configuration().swapping_mode :
-		              swapping_mode_from_variable_map(vm, "swapping")),
+		              enumerator_from_variable_map<Configuration::SwappingMode>(vm, "swapping")),
 		library_mode(vm["mode"].empty() ? Configuration().library_mode :
-		             lib_mode_from_variable_map(vm, "mode")),
+		             enumerator_from_variable_map<Configuration::LibMode>(vm, "mode")),
 		indexing_method(vm["index"].empty() ? Configuration().indexing_method :
-		                indexing_method_from_variable_map(vm, "index")),
+		                enumerator_from_variable_map<Configuration::IndexingMethod>(vm, "index")),
 		surface_tracker_type(vm["surface_tracker_type"].empty() ? Configuration().surface_tracker_type :
-		                     surface_tracker_type_from_variable_map(vm, "index")),
+		                     enumerator_from_variable_map<GradientFunctorType>(vm, "surface_tracker_type")),
+        verbosity_level(vm["verbosity_level"].empty() ? Configuration().verbosity_level :
+                        enumerator_from_variable_map<Configuration::VerbosityLevel>(vm, "verbosity_level")),
 		tracker_configuration(
 				vm["tracker"].empty() ? (library_mode == LIBMODE_BASIC_SURFELS ? default_surfel_tracker_configuration :
 				                         default_depth_only_extended_tracker_configuration)
@@ -416,6 +419,7 @@ Configuration::Configuration(
 		Configuration::LibMode library_mode,
 		Configuration::IndexingMethod indexing_method,
 		GradientFunctorType surface_tracker_type,
+		Configuration::VerbosityLevel verbosity_level,
 		std::string tracker_configuration) :
 
 		voxel_volume_parameters(voxel_volume_parameters),
@@ -437,6 +441,7 @@ Configuration::Configuration(
 		library_mode(library_mode),
 		indexing_method(indexing_method),
 		surface_tracker_type(surface_tracker_type),
+		verbosity_level(verbosity_level),
 		tracker_configuration(std::move(tracker_configuration)) {}
 
 // endregion ===========================================================================================================
@@ -579,11 +584,9 @@ Configuration* Configuration::from_json_file(const std::string& path) {
 			tree, "index");
 	boost::optional<GradientFunctorType> surface_tracker_type = optional_enum_value_from_ptree<GradientFunctorType>(
 			tree, "non_rigid_tracking_parameters.functor_type");
+	boost::optional<Configuration::VerbosityLevel> verbosity_level = optional_enum_value_from_ptree<VerbosityLevel>(tree, "verbosity_level");
 	boost::optional<std::string> tracker_configuration = tree.get_optional<std::string>("tracker");
-	boost::optional<unsigned int> max_iteration_threshold =
-			tree.get_optional<unsigned int>("surface_tracking.max_iterations");
-	boost::optional<float> max_update_length_threshold =
-			tree.get_optional<float>("surface_tracking.vector_update_threshold");
+
 
 	Configuration default_config;
 
@@ -607,6 +610,7 @@ Configuration* Configuration::from_json_file(const std::string& path) {
 			library_mode ? library_mode.get() : default_config.library_mode,
 			indexing_method ? indexing_method.get() : default_config.indexing_method,
 			surface_tracker_type ? surface_tracker_type.get() : default_config.surface_tracker_type,
+			verbosity_level ? verbosity_level.get() : default_config.verbosity_level,
 			tracker_configuration ? tracker_configuration.get() : default_config.tracker_configuration
 	);
 }
@@ -616,23 +620,24 @@ pt::ptree Configuration::to_ptree(const std::string& path) const {
 	pt::ptree tree;
 	tree.add_child("voxel_volume_parameters", this->voxel_volume_parameters.ToPTree());
 	tree.add_child("surfel_volume_parameters", this->surfel_volume_parameters.ToPTree());
-	tree.add("slavcheva.preset", enum_value_to_string(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION));
+	tree.add("slavcheva.preset", enumerator_to_string(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION));
 	tree.add_child("slavcheva.parameters", this->slavcheva_parameters.ToPTree());
 	tree.add_child("slavcheva.switches", slavcheva_switches.ToPTree());
 	tree.add_child("telemetry_settings", this->telemetry_settings.ToPTree());
 	tree.add_child("input_and_output_settings", this->input_and_output_settings.ToPTree(path));
 	tree.add_child("non_rigid_tracking_parameters", this->non_rigid_tracking_parameters.ToPTree());
-	tree.add("non_rigid_tracking_parameters.functor_type", enum_value_to_string(this->surface_tracker_type));
 	tree.add("skip_points", skip_points);
 	tree.add("disable_meshing", !create_meshing_engine);
-	tree.add("device", enum_value_to_string(this->device_type));
+	tree.add("device", enumerator_to_string(this->device_type));
 	tree.add("use_approximate_raycast", this->use_approximate_raycast);
 	tree.add("use_threshold_filter", this->use_threshold_filter);
 	tree.add("use_bilateral_filter", this->use_bilateral_filter);
-	tree.add("failure_mode", enum_value_to_string(this->behavior_on_failure));
-	tree.add("swapping", enum_value_to_string(this->swapping_mode));
-	tree.add("mode", enum_value_to_string(this->library_mode));
-	tree.add("index", enum_value_to_string(this->indexing_method));
+	tree.add("failure_mode", enumerator_to_string(this->behavior_on_failure));
+	tree.add("swapping", enumerator_to_string(this->swapping_mode));
+	tree.add("mode", enumerator_to_string(this->library_mode));
+	tree.add("index", enumerator_to_string(this->indexing_method));
+	tree.add("non_rigid_tracking_parameters.functor_type", enumerator_to_string(this->surface_tracker_type));
+	tree.add("verbosity_level", enumerator_to_string(this->verbosity_level));
 	tree.add("tracker", this->tracker_configuration);
 	return tree;
 }
@@ -668,6 +673,7 @@ bool operator==(const Configuration& c1, const Configuration& c2) {
 	       c1.library_mode == c2.library_mode &&
 	       c1.indexing_method == c2.indexing_method &&
 	       c1.surface_tracker_type == c2.surface_tracker_type &&
+	       c1.verbosity_level == c2.verbosity_level &&
 	       c1.tracker_configuration == c2.tracker_configuration;
 }
 
