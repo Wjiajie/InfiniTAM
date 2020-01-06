@@ -118,7 +118,9 @@ public:
 			liveCache(), canonicalCache(),
 			hasFocusCoordinates(Configuration::get().telemetry_settings.focus_coordinates_specified),
 			focusCoordinates(Configuration::get().telemetry_settings.focus_coordinates),
-			sdfUnity(voxelSize/narrowBandHalfWidth){}
+			sdfUnity(voxelSize/narrowBandHalfWidth),
+			verbosity_level(Configuration::get().verbosity_level)
+			{}
 
 	// endregion =======================================================================================================
 
@@ -326,6 +328,7 @@ public:
 
 
 	void PrintStatistics() {
+		if(verbosity_level < Configuration::VERBOSITY_PER_ITERATION) return;
 		std::cout << bright_cyan << "*** Non-rigid Alignment Iteration Statistics ***" << reset << std::endl;
 		PrintEnergyStatistics(this->switches.enableDataTerm, this->switches.enableLevelSetTerm,
 		                      this->switches.enableSmoothingTerm, this->switches.enableKillingRigidityEnforcementTerm,
@@ -361,6 +364,8 @@ private:
 
 	const SlavchevaSurfaceTracker::Parameters parameters;
 	const SlavchevaSurfaceTracker::Switches switches;
+
+	const Configuration::VerbosityLevel verbosity_level;
 };
 
 }// namespace ITMLib

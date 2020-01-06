@@ -128,6 +128,7 @@ private:
 	const float maxVectorUpdateThresholdVoxels;
 	const AnalysisFlags analysisFlags;
 	const Vector3i focusCoordinates;
+	const Configuration::VerbosityLevel verbosity_level;
 
 	// endregion =======================================================================================================
 

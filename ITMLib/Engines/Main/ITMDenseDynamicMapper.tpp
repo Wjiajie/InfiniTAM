@@ -81,7 +81,8 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ITMDenseDynamicMapper(const TIndex
 		maxVectorUpdateThresholdVoxels(parameters.max_update_length_threshold /
 		                                    Configuration::get().voxel_volume_parameters.voxel_size),
 		analysisFlags{Configuration::get().telemetry_settings.focus_coordinates_specified},
-		focusCoordinates(Configuration::get().telemetry_settings.focus_coordinates) { }
+		focusCoordinates(Configuration::get().telemetry_settings.focus_coordinates),
+		verbosity_level(Configuration::get().verbosity_level){ }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::~ITMDenseDynamicMapper() {
@@ -255,29 +256,35 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::PerformSingleOptimizationStep
 
 	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().SaveWarpSlices(iteration);
 
-	std::cout << red << "Iteration: " << iteration << reset << std::endl;
-	//** warp update gradient computation
-	PrintOperationStatus("Calculating warp energy gradient...");
+	if(verbosity_level >= Configuration::VERBOSITY_PER_ITERATION){
+		std::cout << red << "Iteration: " << iteration << reset << std::endl;
+		//** warp update gradient computation
+		PrintOperationStatus("Calculating warp energy gradient...");
+	}
+
 	bench::StartTimer("TrackMotion_31_CalculateWarpUpdate");
-
-
 	sceneMotionTracker->CalculateWarpGradient(canonicalScene, initialLiveScene, warpField);
-
-
 	bench::StopTimer("TrackMotion_31_CalculateWarpUpdate");
 
-	PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");
+	if(verbosity_level >= Configuration::VERBOSITY_PER_ITERATION){
+		PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");
+	}
+
 	bench::StartTimer("TrackMotion_32_ApplySmoothingToGradient");
 	sceneMotionTracker->SmoothWarpGradient(canonicalScene, initialLiveScene, warpField);
 	bench::StopTimer("TrackMotion_32_ApplySmoothingToGradient");
 
-	PrintOperationStatus("Applying warp update (based on energy gradient) to the cumulative warp...");
+	if(verbosity_level >= Configuration::VERBOSITY_PER_ITERATION) {
+		PrintOperationStatus("Applying warp update (based on energy gradient) to the cumulative warp...");
+	}
 	bench::StartTimer("TrackMotion_33_UpdateWarps");
 	maxVectorUpdate = sceneMotionTracker->UpdateWarps(canonicalScene, initialLiveScene, warpField);
 	bench::StopTimer("TrackMotion_33_UpdateWarps");
 
-	PrintOperationStatus(
-			"Updating live frame SDF by mapping from raw live SDF to new warped SDF based on latest warp...");
+	if(verbosity_level >= Configuration::VERBOSITY_PER_ITERATION) {
+		PrintOperationStatus(
+				"Updating live frame SDF by mapping from raw live SDF to new warped SDF based on latest warp...");
+	}
 	bench::StartTimer("TrackMotion_35_WarpLiveScene");
 	sceneReconstructor->WarpScene_FlowWarps(warpField, initialLiveScene, finalLiveScene);
 	bench::StopTimer("TrackMotion_35_WarpLiveScene");

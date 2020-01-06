@@ -107,7 +107,6 @@ SurfaceTracker<TVoxel, TWarp, TIndex, TMemoryDeviceType, TGradientFunctorType>::
 
 	ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, TIndex, TMemoryDeviceType>::
 	DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, calculateGradientFunctor);
-
 	calculateGradientFunctor.PrintStatistics();
 }
 
