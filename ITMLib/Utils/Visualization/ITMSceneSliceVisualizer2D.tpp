@@ -150,7 +150,7 @@ struct DrawSceneVoxelAtWarpedPositionFunctor {
 
 	void operator()(TVoxel& voxel, TWarp& warp, Vector3i& position) {
 
-		Vector3f projectedPosition = position.toFloat() + warp.flow_warp;
+		Vector3f projectedPosition = position.toFloat() + warp.framewise_warp;
 		Vector3i projectedPositionFloored = projectedPosition.toIntFloor();
 		switch (plane) {
 			case PLANE_XY:
@@ -236,7 +236,7 @@ void ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>::MarkWarpedSceneImageAroun
 	TVoxel voxel = VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ReadVoxel(scene, positionOfVoxelToMark);
 	TWarp warp = VolumeEditAndCopyEngine_CPU<TWarp, TIndex>::Inst().ReadVoxel(warpField, positionOfVoxelToMark);
 
-	Vector3f projectedPosition = positionOfVoxelToMark.toFloat() + warp.flow_warp;
+	Vector3f projectedPosition = positionOfVoxelToMark.toFloat() + warp.framewise_warp;
 	Vector3i projectedPositionFloored = projectedPosition.toIntFloor();
 	switch (plane) {
 		case PLANE_XY:

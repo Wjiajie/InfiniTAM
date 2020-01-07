@@ -33,9 +33,9 @@ public:
 	virtual unsigned int CountVoxelsWithSpecificSdfValue(ITMVoxelVolume<TVoxel, TIndex>* scene, float value) = 0;
 	virtual double ComputeNonTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene) = 0;
 	virtual double ComputeTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene) = 0;
-	virtual double ComputeFlowWarpMin(ITMVoxelVolume<TVoxel,TIndex>* scene) = 0;
-	virtual double ComputeFlowWarpMax(ITMVoxelVolume<TVoxel,TIndex>* scene) = 0;
-	virtual double ComputeFlowWarpMean(ITMVoxelVolume<TVoxel,TIndex>* scene) = 0;
+	virtual double ComputeFramewiseWarpMin(ITMVoxelVolume<TVoxel,TIndex>* scene) = 0;
+	virtual double ComputeFramewiseWarpMax(ITMVoxelVolume<TVoxel,TIndex>* scene) = 0;
+	virtual double ComputeFramewiseWarpMean(ITMVoxelVolume<TVoxel,TIndex>* scene) = 0;
 
 	virtual Extent3D FindMinimumNonTruncatedBoundingBox(ITMVoxelVolume <TVoxel, TIndex>* scene) = 0;
 

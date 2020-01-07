@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			                                      "TestData/frame_depth_%%06i.png",
 			                                      "TestData/frame_mask_%%06i.png"),
 			Configuration::UIEngineSettings(50,16),
-			NonRigidTrackingParameters(300,0.0002f),
+			NonRigidTrackingParameters(300,0.0002f,0.4f),
 			true,
 			false,
 			MEMORYDEVICE_CPU,

@@ -20,6 +20,7 @@ namespace ITMLib{
 
 GENERATE_SERIALIZABLE_STRUCT(NonRigidTrackingParameters,
                              (unsigned int, max_iteration_threshold, 200),
-                             (float, max_update_length_threshold, 0.0001f));
+                             (float, max_update_length_threshold, 0.0001f),
+                             (float, momentum_weight, 0.5f));
 
 } // namespace ITMLib

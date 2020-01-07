@@ -308,7 +308,7 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CUDA_ITMWarp) {
 	auto singleVoxelTests = [&]() {
 		std::uniform_int_distribution<int> coordinate_distribution2(volumeOffset.x, 0);
 		ITMWarp warp;
-		warp.flow_warp = Vector3f(-0.1);
+		warp.framewise_warp = Vector3f(-0.1);
 
 		Vector3i coordinate(coordinate_distribution2(generator), coordinate_distribution2(generator), 0);
 
@@ -347,8 +347,8 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CUDA_ITMWarp) {
 //	generate only in the positive coordinates' volume, to make sure that the unneeded voxel hash blocks are properly dismissed
 	for (int iWarp = 0; iWarp < modifiedWarpCount; iWarp++) {
 		ITMWarp warp;
-		Vector3f flow_warp(warp_distribution(generator), warp_distribution(generator), warp_distribution(generator));
-		warp.flow_warp = flow_warp;
+		Vector3f framewise_warp(warp_distribution(generator), warp_distribution(generator), warp_distribution(generator));
+		warp.framewise_warp = framewise_warp;
 
 		Vector3i coordinate(coordinate_distribution(generator),
 		                    coordinate_distribution(generator),

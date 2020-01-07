@@ -24,7 +24,7 @@
 
 template<bool hasSDFInformation,
 		bool hasSemanticInformation,
-		bool hasFlowWarpInformation,
+		bool hasFramewiseWarpInformation,
 		bool hasWarpUpdateInformation,
 		typename TVoxel>
 struct IsAlteredUtility;
@@ -62,7 +62,7 @@ struct IsAlteredUtility<false, false, true, true, TVoxel> {
 	_CPU_AND_GPU_CODE_
 	static inline
 	bool evaluate(const TVoxel& voxel) {
-		return voxel.flow_warp != Vector3f(0.0f) || voxel.warp_update != Vector3f(0.0f);
+		return voxel.framewise_warp != Vector3f(0.0f) || voxel.warp_update != Vector3f(0.0f);
 	}
 };
 // endregion
@@ -77,7 +77,7 @@ template<typename TVoxel>
 _CPU_AND_GPU_CODE_
 inline
 bool isAltered(TVoxel& voxel) {
-	return IsAlteredUtility<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFlowWarp,
+	return IsAlteredUtility<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFramewiseWarp,
 			TVoxel::hasWarpUpdate, TVoxel>::evaluate(voxel);
 }
 
@@ -94,7 +94,7 @@ _CPU_AND_GPU_CODE_
 inline
 bool isAltered_VerbosePosition(TVoxel& voxel, Vector3i position, const char* message = "") {
 
-	bool altered = IsAlteredUtility<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFlowWarp,
+	bool altered = IsAlteredUtility<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFramewiseWarp,
 			TVoxel::hasWarpUpdate, TVoxel>::evaluate(voxel);
 	if (altered) {
 		printf("%sVoxel altered at position %d, %d, %d.\n", message, position.x, position.y, position.z);
@@ -117,7 +117,7 @@ inline
 bool isAltered_VerbosePositionHash(TVoxel& voxel, Vector3i position, int hashCode, Vector3s blockPosition,
                                    const char* message = "") {
 
-	bool altered = IsAlteredUtility<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFlowWarp,
+	bool altered = IsAlteredUtility<TVoxel::hasSDFInformation, TVoxel::hasSemanticInformation, TVoxel::hasFramewiseWarp,
 			TVoxel::hasWarpUpdate, TVoxel>::evaluate(voxel);
 
 	if (altered) {

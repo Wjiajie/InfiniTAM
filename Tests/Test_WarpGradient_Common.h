@@ -87,7 +87,7 @@ struct WarpGradientDataFixture {
 		loadSdfVolume(&canonical_volume, "snoopy_partial_frame_16_");
 		ITMIndexingEngine<ITMVoxel,TIndex,TMemoryType>::Instance().AllocateUsingOtherVolume(canonical_volume, live_volume);
 		loadWarpVolume(&warp_field_data_term, "warp_field_0_data_");
-		loadWarpVolume(&warp_field_iter0, "warp_field_0_data_flow_warps_");
+		loadWarpVolume(&warp_field_iter0, "warp_field_0_data_framewise_warps_");
 		loadWarpVolume(&warp_field_data_term_smoothed, "warp_field_0_smoothed_");
 		loadWarpVolume(&warp_field_tikhonov_term, "warp_field_1_tikhonov_");
 		loadWarpVolume(&warp_field_data_and_tikhonov_term, "warp_field_1_data_and_tikhonov_");
@@ -150,7 +150,7 @@ void GenerateTestData() {
 	std::string data_only_filename = "warp_field_0_data_";
 	SlavchevaSurfaceTracker::Switches data_smoothed_switches(false, false, false, false, true);
 	std::string data_smoothed_filename = "warp_field_0_smoothed_";
-	std::string flow_warps_filename = "warp_field_0_data_flow_warps_";
+	std::string framewise_warps_filename = "warp_field_0_data_framewise_warps_";
 	SlavchevaSurfaceTracker::Switches warp_complete_switches(true, false, true, false, true);
 	std::string warp_complete_filename = "warp_field_0_complete_";
 
@@ -194,12 +194,12 @@ void GenerateTestData() {
 	warp_field.LoadFromDirectory(output_directory + data_only_filename);
 
 	dataOnlyMotionTracker.UpdateWarps(canonical_volume, live_volume, &warp_field);
-	warp_field.SaveToDirectory(output_directory + flow_warps_filename);
+	warp_field.SaveToDirectory(output_directory + framewise_warps_filename);
 
 
 	for (auto& pair : configurationPairs) {
 		VolumeEditAndCopyEngineFactory::Instance<ITMWarp, TIndex, TMemoryDeviceType>().ResetScene(&warp_field);
-		warp_field.LoadFromDirectory(output_directory + flow_warps_filename);
+		warp_field.LoadFromDirectory(output_directory + framewise_warps_filename);
 		std::string filename = std::get<0>(pair);
 		SurfaceTracker<ITMVoxel, ITMWarp, TIndex, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC> tracker(
 				std::get<1>(pair));

@@ -19,7 +19,7 @@ struct ITMVoxel_f_rgb
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
-	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasFramewiseWarp = false;
 	static const CONSTPTR(bool) hasWarpUpdate = false;
 	static const CONSTPTR(bool) hasCumulativeWarp = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
@@ -61,7 +61,7 @@ struct ITMVoxel_s_rgb
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
-	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasFramewiseWarp = false;
 	static const CONSTPTR(bool) hasWarpUpdate = false;
 	static const CONSTPTR(bool) hasCumulativeWarp = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
@@ -102,7 +102,7 @@ struct ITMVoxel_s
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
-	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasFramewiseWarp = false;
 	static const CONSTPTR(bool) hasWarpUpdate = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 
@@ -135,7 +135,7 @@ struct ITMVoxel_f
 	static const CONSTPTR(bool) hasConfidenceInformation = false;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
-	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasFramewiseWarp = false;
 	static const CONSTPTR(bool) hasWarpUpdate = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 
@@ -168,7 +168,7 @@ struct ITMVoxel_f_conf
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
-	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasFramewiseWarp = false;
 	static const CONSTPTR(bool) hasWarpUpdate = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 
@@ -205,7 +205,7 @@ struct ITMVoxel_s_rgb_conf
 	static const CONSTPTR(bool) hasConfidenceInformation = true;
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
-	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasFramewiseWarp = false;
 	static const CONSTPTR(bool) hasCumulativeWarp = false;
 	static const CONSTPTR(bool) hasWarpUpdate = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
@@ -249,7 +249,7 @@ struct ITMVoxel_f_rgb_conf
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = true;
 	static const CONSTPTR(bool) hasCumulativeWarp = false;
-	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasFramewiseWarp = false;
 	static const CONSTPTR(bool) hasWarpUpdate = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 
@@ -288,11 +288,11 @@ struct ITMVoxel_f_warp{
 	static const CONSTPTR(bool) hasSemanticInformation = false;
 	static const CONSTPTR(bool) hasWeightInformation = false;
 	static const CONSTPTR(bool) hasCumulativeWarp = false;
-	static const CONSTPTR(bool) hasFlowWarp = true;
+	static const CONSTPTR(bool) hasFramewiseWarp = true;
 	static const CONSTPTR(bool) hasWarpUpdate = true;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 	/** vector translating the current point to a different location **/
-	Vector3f flow_warp;
+	Vector3f framewise_warp;
 	/** intermediate results for computing the gradient & the points motion**/
 	union{
 		Vector3f gradient0;
@@ -302,13 +302,13 @@ struct ITMVoxel_f_warp{
 	Vector3f gradient1;
 
 	_CPU_AND_GPU_CODE_ ITMVoxel_f_warp():
-		flow_warp(0.0f),
+		framewise_warp(0.0f),
 		gradient0(0.0f),
 		gradient1(0.0f)
 		{}
 	_CPU_AND_GPU_CODE_ void print_self(){
-		printf("warp:{flow_warp: [%f, %f, %f], gradient0: [%f, %f, %f], gradient1: [%f, %f, %f]}\n",
-		       flow_warp.x, flow_warp.y, flow_warp.z, gradient0.x, gradient0.y, gradient0.z,
+		printf("warp:{framewise_warp: [%f, %f, %f], gradient0: [%f, %f, %f], gradient1: [%f, %f, %f]}\n",
+		       framewise_warp.x, framewise_warp.y, framewise_warp.z, gradient0.x, gradient0.y, gradient0.z,
 		       gradient1.x, gradient1.y, gradient1.z);
 	}
 };
@@ -326,7 +326,7 @@ struct ITMVoxel_f_flags
 	static const CONSTPTR(bool) hasSemanticInformation = true;
 	static const CONSTPTR(bool) hasWeightInformation = true;
 	static const CONSTPTR(bool) hasCumulativeWarp = false;
-	static const CONSTPTR(bool) hasFlowWarp = false;
+	static const CONSTPTR(bool) hasFramewiseWarp = false;
 	static const CONSTPTR(bool) hasWarpUpdate = false;
 	static const CONSTPTR(bool) hasDebugInformation = false;
 

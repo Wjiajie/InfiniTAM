@@ -112,7 +112,7 @@ public:
 	 * \param sourceSdfIndex index of the source SDF field in each live voxel
 	 * \param targetSdfIndex index of the target SDF field in each live voxel
 	 */
-	virtual void WarpScene_FlowWarps(ITMVoxelVolume<TWarp, TIndex>* warpField,
+	virtual void WarpScene_FramewiseWarps(ITMVoxelVolume<TWarp, TIndex>* warpField,
 	                                 ITMVoxelVolume<TVoxel, TIndex>* sourceTSDF,
 	                                 ITMVoxelVolume<TVoxel, TIndex>* targetTSDF) = 0;
 

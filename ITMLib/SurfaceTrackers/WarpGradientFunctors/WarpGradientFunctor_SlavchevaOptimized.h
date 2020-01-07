@@ -67,7 +67,7 @@ public:
 		if (!VoxelIsConsideredForTracking(voxelCanonical, voxelLive)) return;
 		bool computeDataAndLevelSetTerms = VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive);
 
-		Vector3f& framewiseWarp = warp.flow_warp;
+		Vector3f& framewiseWarp = warp.framewise_warp;
 		float liveSdf = TVoxel::valueToFloat(voxelLive.sdf);
 		float canonicalSdf = TVoxel::valueToFloat(voxelCanonical.sdf);
 
@@ -115,19 +115,19 @@ public:
 			// region ============================== RETRIEVE NEIGHBOR'S WARPS =========================================
 
 			const int neighborhoodSize = 9;
-			Vector3f neighborFlowWarps[neighborhoodSize];
+			Vector3f neighborFramewiseWarps[neighborhoodSize];
 			bool neighborKnown[neighborhoodSize], neighborTruncated[neighborhoodSize], neighborAllocated[neighborhoodSize];
 
 			//    0        1        2          3         4         5           6         7         8
 			//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
-			findPoint2ndDerivativeNeighborhoodFlowWarp(
-					neighborFlowWarps/*x9*/, neighborKnown, neighborTruncated, neighborAllocated, voxelPosition,
+			findPoint2ndDerivativeNeighborhoodFramewiseWarp(
+					neighborFramewiseWarps/*x9*/, neighborKnown, neighborTruncated, neighborAllocated, voxelPosition,
 					warps, warpIndexData, warpCache, canonicalVoxels, canonicalIndexData, canonicalCache);
 
 			for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
 				if (!neighborAllocated[iNeighbor]) {
 					//assign current warp to neighbor warp if the neighbor is not allocated
-					neighborFlowWarps[iNeighbor] = framewiseWarp;
+					neighborFramewiseWarps[iNeighbor] = framewiseWarp;
 				}
 			}
 			//endregion=================================================================================================
@@ -135,7 +135,7 @@ public:
 			if (switches.enableKillingRigidityEnforcementTerm) {
 				Matrix3f framewiseWarpJacobian(0.0f);
 				Matrix3f framewiseWarpHessian[3] = {Matrix3f(0.0f), Matrix3f(0.0f), Matrix3f(0.0f)};
-				ComputePerVoxelWarpJacobianAndHessian(framewiseWarp, neighborFlowWarps, framewiseWarpJacobian,
+				ComputePerVoxelWarpJacobianAndHessian(framewiseWarp, neighborFramewiseWarps, framewiseWarpJacobian,
 				                                      framewiseWarpHessian);
 
 				float gamma = parameters.rigidityEnforcementFactor;
@@ -182,7 +182,7 @@ public:
 				Matrix3f framewiseWarpJacobian(0.0f);
 				Vector3f framewiseWarpLaplacian;
 				ComputeWarpLaplacianAndJacobian(framewiseWarpLaplacian, framewiseWarpJacobian, framewiseWarp,
-				                                neighborFlowWarps);
+				                                neighborFramewiseWarps);
 				//∇E_{reg}(Ψ) = −[∆U ∆V ∆W]' ,
 				localSmoothingEnergyGradient = -parameters.weightSmoothingTerm * framewiseWarpLaplacian;
 			}

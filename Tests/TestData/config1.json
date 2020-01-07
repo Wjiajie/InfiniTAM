@@ -64,7 +64,8 @@
     "non_rigid_tracking_parameters": {
         "functor_type": "slavcheva_diagnostic",
         "max_iteration_threshold": 300,
-        "max_update_length_threshold": 0.0002
+        "max_update_length_threshold": 0.0002,
+        "momentum_weight": 0.4
     },
     "skip_points": true,
     "disable_meshing": true,

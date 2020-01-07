@@ -56,11 +56,11 @@ struct AlteredGradientCountFunctor {
 };
 
 template<typename TVoxel>
-struct AlteredFlowWarpCountFunctor {
-	AlteredFlowWarpCountFunctor() : count(0) {};
+struct AlteredFramewiseWarpCountFunctor {
+	AlteredFramewiseWarpCountFunctor() : count(0) {};
 
 	void operator()(const TVoxel& voxel) {
-		if (voxel.flow_warp != Vector3f(0.0f)) {
+		if (voxel.framewise_warp != Vector3f(0.0f)) {
 			count.fetch_add(1u);
 		}
 	}
@@ -119,7 +119,7 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_VBH, DataFixture) {
 	BOOST_REQUIRE_CLOSE(maxWarp, 0.242487013f, 1e-7f);
 
 
-	AlteredFlowWarpCountFunctor<ITMWarp> functor;
+	AlteredFramewiseWarpCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_copy, functor);
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 37525u);

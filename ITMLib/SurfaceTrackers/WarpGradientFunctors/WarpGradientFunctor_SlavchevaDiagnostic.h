@@ -129,7 +129,7 @@ public:
 
 
 		bool printVoxelResult = false;
-		Vector3f& framewiseWarp = warp.flow_warp;
+		Vector3f& framewiseWarp = warp.framewise_warp;
 		bool computeDataAndLevelSetTerms = VoxelIsConsideredForDataTerm(voxelCanonical, voxelLive);
 		this->SetUpFocusVoxelPrinting(printVoxelResult, voxelPosition, framewiseWarp, voxelCanonical, voxelLive, computeDataAndLevelSetTerms);
 		if (printVoxelResult) {
@@ -207,19 +207,19 @@ public:
 			// region ============================== RETRIEVE NEIGHBOR'S WARPS =========================================
 
 			const int neighborhoodSize = 9;
-			Vector3f neighborFlowWarps[neighborhoodSize];
+			Vector3f neighborFramewiseWarps[neighborhoodSize];
 			bool neighborKnown[neighborhoodSize], neighborTruncated[neighborhoodSize], neighborAllocated[neighborhoodSize];
 
 			//    0        1        2          3         4         5           6         7         8
 			//(-1,0,0) (0,-1,0) (0,0,-1)   (1, 0, 0) (0, 1, 0) (0, 0, 1)   (1, 1, 0) (0, 1, 1) (1, 0, 1)
-			findPoint2ndDerivativeNeighborhoodFlowWarp(
-					neighborFlowWarps/*x9*/, neighborKnown, neighborTruncated, neighborAllocated, voxelPosition,
+			findPoint2ndDerivativeNeighborhoodFramewiseWarp(
+					neighborFramewiseWarps/*x9*/, neighborKnown, neighborTruncated, neighborAllocated, voxelPosition,
 					warps, warpIndexData, warpCache, canonicalVoxels, canonicalIndexData, canonicalCache);
 
 			for (int iNeighbor = 0; iNeighbor < neighborhoodSize; iNeighbor++) {
 				if (!neighborKnown[iNeighbor]) {
 					//assign current warp to neighbor warp if the neighbor is not known
-					neighborFlowWarps[iNeighbor] = framewiseWarp;
+					neighborFramewiseWarps[iNeighbor] = framewiseWarp;
 				}
 			}
 			//endregion=================================================================================================
@@ -227,12 +227,12 @@ public:
 			if (switches.enableKillingRigidityEnforcementTerm) {
 				Matrix3f framewiseWarpJacobian(0.0f);
 				Matrix3f framewiseWarpHessian[3] = {Matrix3f(0.0f), Matrix3f(0.0f), Matrix3f(0.0f)};
-				ComputePerVoxelWarpJacobianAndHessian(framewiseWarp, neighborFlowWarps, framewiseWarpJacobian,
+				ComputePerVoxelWarpJacobianAndHessian(framewiseWarp, neighborFramewiseWarps, framewiseWarpJacobian,
 				                                      framewiseWarpHessian);
 //TODO rewrite function to be used within CUDA code, remove guards
 #ifndef __CUDACC__
 				if (printVoxelResult) {
-					_DEBUG_PrintKillingTermStuff(neighborFlowWarps, neighborKnown, neighborTruncated,
+					_DEBUG_PrintKillingTermStuff(neighborFramewiseWarps, neighborKnown, neighborTruncated,
 					                             framewiseWarpJacobian, framewiseWarpHessian);
 				}
 #endif
@@ -283,11 +283,11 @@ public:
 				Matrix3f framewiseWarpJacobian(0.0f);
 				Vector3f framewiseWarpLaplacian;
 				ComputeWarpLaplacianAndJacobian(framewiseWarpLaplacian, framewiseWarpJacobian, framewiseWarp,
-				                                neighborFlowWarps);
+				                                neighborFramewiseWarps);
 
 
 				if (printVoxelResult) {
-					_DEBUG_PrintTikhonovTermStuff(neighborFlowWarps, framewiseWarpLaplacian);
+					_DEBUG_PrintTikhonovTermStuff(neighborFramewiseWarps, framewiseWarpLaplacian);
 				}
 
 				//∇E_{reg}(Ψ) = −[∆U ∆V ∆W]' ,
@@ -308,7 +308,7 @@ public:
 		// region =============================== AGGREGATE VOXEL STATISTICS ===============================
 
 
-		float warpLength = ORUtils::length(warp.flow_warp);
+		float warpLength = ORUtils::length(warp.framewise_warp);
 
 		ATOMIC_ADD(aggregates.cumulativeCanonicalSdf, canonicalSdf);
 		ATOMIC_ADD(aggregates.cumulativeLiveSdf, liveSdf);

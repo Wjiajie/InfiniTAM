@@ -119,7 +119,7 @@ void ITMSceneSliceVisualizer1D::Draw1DWarpUpdateVector(
 	TWarp warp = VolumeEditAndCopyEngine_CPU<TWarp, TIndex>::Inst().ReadVoxel(warpField, focusCoordinates);
 	TVoxel voxel = VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ReadVoxel(TSDF, focusCoordinates);
 
-	float warp1D = warp.flow_warp[axis];
+	float warp1D = warp.framewise_warp[axis];
 	float warpUpdate1D = warp.gradient0[axis];
 	float startPoint = static_cast<float>(focusCoordinates[axis]) + warp1D - warpUpdate1D;
 	float endPoint = static_cast<float>(focusCoordinates[axis]) + warp1D;

@@ -139,14 +139,14 @@ struct HandleSDFAlterationFunctor<false, TVoxel> {
 	inline static void setRandom(TVoxel& voxel) {}
 };
 
-template<bool hasFlowWarp, typename TVoxel>
-struct HandleFlowWarpAlterationFunctor;
+template<bool hasFramewiseWarp, typename TVoxel>
+struct HandleFramewiseWarpAlterationFunctor;
 
 template<typename TVoxel>
-struct HandleFlowWarpAlterationFunctor<true, TVoxel> {
+struct HandleFramewiseWarpAlterationFunctor<true, TVoxel> {
 	_CPU_AND_GPU_CODE_
 	inline static void setValue(TVoxel& voxel, Vector3f value) {
-		voxel.flow_warp = value;
+		voxel.framewise_warp = value;
 	}
 
 	_CPU_AND_GPU_CODE_
@@ -158,7 +158,7 @@ struct HandleFlowWarpAlterationFunctor<true, TVoxel> {
 };
 
 template<typename TVoxel>
-struct HandleFlowWarpAlterationFunctor<false, TVoxel> {
+struct HandleFramewiseWarpAlterationFunctor<false, TVoxel> {
 	_CPU_AND_GPU_CODE_
 	inline static void setValue(TVoxel& voxel, float value) {}
 
@@ -175,7 +175,7 @@ void simulateVoxelAlteration(TVoxel& voxel, float newSdfValue) {
 template<typename TVoxel>
 void simulateRandomVoxelAlteration(TVoxel& voxel) {
 	HandleSDFAlterationFunctor<TVoxel::hasSDFInformation, TVoxel>::setRandom(voxel);
-	HandleFlowWarpAlterationFunctor<TVoxel::hasFlowWarp, TVoxel>::setRandom(voxel);
+	HandleFramewiseWarpAlterationFunctor<TVoxel::hasFramewiseWarp, TVoxel>::setRandom(voxel);
 }
 
 // FIXME: see TODO in header

@@ -44,9 +44,9 @@ public:
 	unsigned int CountVoxelsWithSpecificSdfValue(ITMVoxelVolume<TVoxel, TIndex>* scene, float value) override;
 	double ComputeNonTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene) override;
 	double ComputeTruncatedVoxelAbsSdfSum(ITMVoxelVolume<TVoxel, TIndex>* scene) override;
-	double ComputeFlowWarpMin(ITMVoxelVolume<TVoxel,TIndex>* scene) override;
-	double ComputeFlowWarpMax(ITMVoxelVolume<TVoxel,TIndex>* scene) override;
-	double ComputeFlowWarpMean(ITMVoxelVolume<TVoxel,TIndex>* scene) override;
+	double ComputeFramewiseWarpMin(ITMVoxelVolume<TVoxel,TIndex>* scene) override;
+	double ComputeFramewiseWarpMax(ITMVoxelVolume<TVoxel,TIndex>* scene) override;
+	double ComputeFramewiseWarpMean(ITMVoxelVolume<TVoxel,TIndex>* scene) override;
 
 	Extent3D FindMinimumNonTruncatedBoundingBox(ITMVoxelVolume <TVoxel, TIndex>* scene) override;
 

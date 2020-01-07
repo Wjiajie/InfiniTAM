@@ -29,9 +29,9 @@ public:
 	using SlavchevaSurfaceTracker::SlavchevaSurfaceTracker;
 	virtual ~SurfaceTracker() = default;
 
-	void ClearOutFlowWarp(ITMVoxelVolume <TWarp, TIndex>* warpField) override;
-	void AddFlowWarpToWarp(
-			ITMVoxelVolume <TWarp, TIndex>* warpField, bool clearFlowWarp) override;
+	void ClearOutFramewiseWarp(ITMVoxelVolume <TWarp, TIndex>* warpField) override;
+	void AddFramewiseWarpToWarp(
+			ITMVoxelVolume <TWarp, TIndex>* warpField, bool clearFramewiseWarp) override;
 	void CalculateWarpGradient(ITMVoxelVolume <TVoxel, TIndex>* canonicalScene,
 	                           ITMVoxelVolume <TVoxel, TIndex>* liveScene,
 	                           ITMVoxelVolume <TWarp, TIndex>* warpField) override;

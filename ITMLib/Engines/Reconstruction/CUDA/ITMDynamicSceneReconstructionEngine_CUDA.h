@@ -50,7 +50,7 @@ public:
 	void WarpScene_CumulativeWarps(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	                               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 	                               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
-	void WarpScene_FlowWarps(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+	void WarpScene_FramewiseWarps(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
 	                         ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
 	                         ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) override;
 	void WarpScene_WarpUpdates(ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
@@ -95,7 +95,7 @@ public:
 			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
 			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) override;
-	void WarpScene_FlowWarps(
+	void WarpScene_FramewiseWarps(
 			ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
 			ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) override;

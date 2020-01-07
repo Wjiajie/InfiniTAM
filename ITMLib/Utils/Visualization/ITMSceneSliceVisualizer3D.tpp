@@ -499,7 +499,7 @@ public:
 
 	void operator()(const TWarp& warp, const Vector3i& position) {
 
-		Vector3f updateStartPoint = position.toFloat() + warp.flow_warp - warp.warp_update;
+		Vector3f updateStartPoint = position.toFloat() + warp.framewise_warp - warp.warp_update;
 		Vector3f updateVector = warp.warp_update;
 		updatePoints->InsertNextPoint(updateStartPoint.x, updateStartPoint.y, updateStartPoint.z);
 		updateVectors->InsertNextTuple(updateVector.values);
@@ -540,7 +540,7 @@ public:
 		std::string positionAsString = stringifyVoxelCoordinate(position);
 
 		// whole update vector
-		Vector3f updateStartPoint = position.toFloat() + voxel.flow_warp - voxel.warp_update;
+		Vector3f updateStartPoint = position.toFloat() + voxel.framewise_warp - voxel.warp_update;
 		Vector3f updateVector = voxel.warp_update;
 		updatePoints->InsertNextPoint(updateStartPoint.x, updateStartPoint.y, updateStartPoint.z);
 		updateVectors->InsertNextTuple(updateVector.values);

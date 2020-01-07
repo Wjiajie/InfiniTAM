@@ -42,10 +42,10 @@ enum Statistic {
 //================================================ VECTOR/GRADIENT FIELDS ==============================================
 
 template<bool hasCumulativeWarp, typename TVoxel, typename TIndex, MemoryDeviceType TDeviceType, Statistic TStatistic>
-struct ComputeFlowWarpLengthStatisticFunctor;
+struct ComputeFramewiseWarpLengthStatisticFunctor;
 
 template<typename TVoxel, typename TIndex, MemoryDeviceType TDeviceType, Statistic TStatistic>
-struct ComputeFlowWarpLengthStatisticFunctor<false, TVoxel, TIndex, TDeviceType, TStatistic> {
+struct ComputeFramewiseWarpLengthStatisticFunctor<false, TVoxel, TIndex, TDeviceType, TStatistic> {
 	static int compute(ITMVoxelVolume<TVoxel, TIndex>* scene) {
 		DIEWITHEXCEPTION("Voxels need to have flow warp information to get flow warp statistics.");
 		return 0;
@@ -59,7 +59,7 @@ struct HandleAggregate<TVoxel, MINIMUM> {
 	_DEVICE_WHEN_AVAILABLE_
 	inline static void
 	aggregateStatistic(ATOMIC_ARGUMENT(double) value, ATOMIC_ARGUMENT(unsigned int) count, TVoxel& voxel) {
-		ATOMIC_MIN(value, static_cast<double>(ORUtils::length(voxel.flow_warp)));
+		ATOMIC_MIN(value, static_cast<double>(ORUtils::length(voxel.framewise_warp)));
 
 	}
 };
@@ -68,7 +68,7 @@ struct HandleAggregate<TVoxel, MAXIMUM> {
 	_DEVICE_WHEN_AVAILABLE_
 	inline static void
 	aggregateStatistic(ATOMIC_ARGUMENT(double) value, ATOMIC_ARGUMENT(unsigned int) count, TVoxel& voxel) {
-		ATOMIC_MAX(value, static_cast<double>(ORUtils::length(voxel.flow_warp)));
+		ATOMIC_MAX(value, static_cast<double>(ORUtils::length(voxel.framewise_warp)));
 	}
 };
 template<typename TVoxel>
@@ -76,21 +76,21 @@ struct HandleAggregate<TVoxel, MEAN> {
 	_DEVICE_WHEN_AVAILABLE_
 	inline static void
 	aggregateStatistic(ATOMIC_ARGUMENT(double) value, ATOMIC_ARGUMENT(unsigned int) count, TVoxel& voxel) {
-		ATOMIC_ADD(value, static_cast<double>(ORUtils::length(voxel.flow_warp)));
+		ATOMIC_ADD(value, static_cast<double>(ORUtils::length(voxel.framewise_warp)));
 		ATOMIC_ADD(count, 1u);
 	}
 };
 
 
 template<typename TVoxel, typename TIndex, MemoryDeviceType TDeviceType, Statistic TStatistic>
-struct ComputeFlowWarpLengthStatisticFunctor<true, TVoxel, TIndex, TDeviceType, TStatistic> {
+struct ComputeFramewiseWarpLengthStatisticFunctor<true, TVoxel, TIndex, TDeviceType, TStatistic> {
 
-	~ComputeFlowWarpLengthStatisticFunctor() {
+	~ComputeFramewiseWarpLengthStatisticFunctor() {
 		CLEAN_UP_ATOMIC(aggregate);CLEAN_UP_ATOMIC(count);
 	}
 
 	static double compute(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-		ComputeFlowWarpLengthStatisticFunctor instance;
+		ComputeFramewiseWarpLengthStatisticFunctor instance;
 		INITIALIZE_ATOMIC(double, instance.aggregate, 0.0);
 		INITIALIZE_ATOMIC(unsigned int, instance.count, 0u);
 		ITMSceneTraversalEngine<TVoxel, TIndex, TDeviceType>::VoxelTraversal(scene, instance);

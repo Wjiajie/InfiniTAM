@@ -164,7 +164,7 @@ ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::Warp
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::WarpScene_FlowWarps(
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::WarpScene_FramewiseWarps(
 		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
 		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {

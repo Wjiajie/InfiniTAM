@@ -37,7 +37,7 @@ using namespace ITMLib;
 // region ======================================== STATIC CONSTANTS ====================================================
 
 template<typename TWarp, typename TIndex>
-const size_t ITMWarpFieldLogger<TWarp, TIndex>::warpByteSize = sizeof(TWarp::flow_warp);
+const size_t ITMWarpFieldLogger<TWarp, TIndex>::warpByteSize = sizeof(TWarp::framewise_warp);
 
 template<typename TVoxel, typename TIndex>
 const size_t ITMWarpFieldLogger<TVoxel, TIndex>::warpFloatSize =

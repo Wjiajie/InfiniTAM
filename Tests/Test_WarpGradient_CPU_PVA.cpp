@@ -50,11 +50,11 @@ struct AlteredGradientCountFunctor {
 };
 
 template<typename TVoxel>
-struct AlteredFlowWarpCountFunctor {
-	AlteredFlowWarpCountFunctor() : count(0) {};
+struct AlteredFramewiseWarpCountFunctor {
+	AlteredFramewiseWarpCountFunctor() : count(0) {};
 
 	void operator()(const TVoxel& voxel) {
-		if (voxel.flow_warp != Vector3f(0.0f)) {
+		if (voxel.framewise_warp != Vector3f(0.0f)) {
 			count.fetch_add(1u);
 		}
 	}
@@ -105,10 +105,10 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_PVA, DataFixture) {
 
 
 	float maxWarp = motionTracker_PVA_CPU->UpdateWarps(canonical_volume, live_volume, &warp_field_copy);
-	//warp_field_copy.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_data_flow_warps_");
+	//warp_field_copy.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_data_framewise_warps_");
 	BOOST_REQUIRE_CLOSE(maxWarp, 0.242487013f, 1e-7);
 
-	AlteredFlowWarpCountFunctor<ITMWarp> functor;
+	AlteredFramewiseWarpCountFunctor<ITMWarp> functor;
 	ITMSceneTraversalEngine<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
 	VoxelTraversal(&warp_field_copy, functor);
 	BOOST_REQUIRE_EQUAL(functor.count.load(), 37525u);

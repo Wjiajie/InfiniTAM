@@ -112,7 +112,7 @@ inline void FindHighlightNeighborInfo(std::array<ITMLib::ITMNeighborVoxelIterati
 			vmIndex = highlightHash + 1;//reset
 		}
 		info.localId = localId;
-		info.warp = voxelCanonical.flow_warp;
+		info.warp = voxelCanonical.framewise_warp;
 		info.warpGradient = voxelCanonical.gradient0;
 		info.sdf = TVoxelCanonical::valueToFloat(voxelCanonical.sdf);
 		info.liveSdf = TVoxelLive::valueToFloat(voxelLive.sdf);

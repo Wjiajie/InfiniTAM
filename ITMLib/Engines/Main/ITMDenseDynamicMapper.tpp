@@ -165,7 +165,7 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::InitializeProcessing(const IT
 		sceneReconstructor->GenerateTsdfVolumeFromView(liveScenePair[0], view, trackingState->pose_d->GetM());
 	}
 	bench::StopTimer("GenerateRawLiveAndCanonicalVolumes");
-	sceneMotionTracker->ClearOutFlowWarp(warpField);
+	sceneMotionTracker->ClearOutFramewiseWarp(warpField);
 	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().InitializeFrameRecording();
 	maxVectorUpdate = std::numeric_limits<float>::infinity();
 };
@@ -180,9 +180,9 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::FinalizeProcessing(
 	sceneReconstructor->FuseOneTsdfVolumeIntoAnother(canonicalScene, liveScene);
 	bench::StopTimer("FuseOneTsdfVolumeIntoAnother");
 
-	//bench::StartTimer("AddFlowWarpToWarp");
-	//sceneMotionTracker->AddFlowWarpToWarp(canonicalScene, true);
-	//bench::StopTimer("AddFlowWarpToWarp");
+	//bench::StartTimer("AddFramewiseWarpToWarp");
+	//sceneMotionTracker->AddFramewiseWarpToWarp(canonicalScene, true);
+	//bench::StopTimer("AddFramewiseWarpToWarp");
 
 	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().FinalizeFrameRecording();
 
@@ -286,7 +286,7 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::PerformSingleOptimizationStep
 				"Updating live frame SDF by mapping from raw live SDF to new warped SDF based on latest warp...");
 	}
 	bench::StartTimer("TrackMotion_35_WarpLiveScene");
-	sceneReconstructor->WarpScene_FlowWarps(warpField, initialLiveScene, finalLiveScene);
+	sceneReconstructor->WarpScene_FramewiseWarps(warpField, initialLiveScene, finalLiveScene);
 	bench::StopTimer("TrackMotion_35_WarpLiveScene");
 	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().SaveWarps();
 }

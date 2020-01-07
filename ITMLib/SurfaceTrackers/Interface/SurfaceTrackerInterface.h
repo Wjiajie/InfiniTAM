@@ -55,9 +55,9 @@ public:
 	virtual float UpdateWarps(ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
 	                          ITMVoxelVolume<TVoxel, TIndex>* liveScene,
 	                          ITMVoxelVolume<TWarp, TIndex>* warpField) = 0;
-	virtual void ClearOutFlowWarp(ITMVoxelVolume<TWarp, TIndex>* warpField) = 0;
-	virtual void AddFlowWarpToWarp(
-			ITMVoxelVolume<TWarp, TIndex>* warpField, bool clearFlowWarp) = 0;
+	virtual void ClearOutFramewiseWarp(ITMVoxelVolume<TWarp, TIndex>* warpField) = 0;
+	virtual void AddFramewiseWarpToWarp(
+			ITMVoxelVolume<TWarp, TIndex>* warpField, bool clearFramewiseWarp) = 0;
 	virtual void ResetWarps(ITMVoxelVolume<TWarp, TIndex>* warpField) = 0;
 
 

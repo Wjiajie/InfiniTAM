@@ -27,7 +27,7 @@ struct WarpAndUpdateWriteFunctor {
 	                                                   updateByteSize(updateByteSize) {}
 
 	void operator()(TVoxel& voxel) {
-		warpOFStream->write(reinterpret_cast<const char* >(&voxel.flow_warp), warpByteSize);
+		warpOFStream->write(reinterpret_cast<const char* >(&voxel.framewise_warp), warpByteSize);
 		warpOFStream->write(reinterpret_cast<const char* >(&voxel.warp_update), updateByteSize);
 	}
 
@@ -61,7 +61,7 @@ struct WarpAndUpdateReadFunctor {
 	                                                  updateByteSize(updateByteSize) {}
 
 	void operator()(TVoxel& voxel) {
-		warpIFStream->read(reinterpret_cast<char*>(&voxel.flow_warp), warpByteSize);
+		warpIFStream->read(reinterpret_cast<char*>(&voxel.framewise_warp), warpByteSize);
 		warpIFStream->read(reinterpret_cast<char*>(&voxel.warp_update), updateByteSize);
 	}
 

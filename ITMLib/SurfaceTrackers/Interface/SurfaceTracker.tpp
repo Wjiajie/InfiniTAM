@@ -55,10 +55,10 @@ void SurfaceTracker<TVoxel, TWarp, TIndex, TMemoryDeviceType, TGradientFunctorTy
 
 
 template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TMemoryDeviceType, GradientFunctorType TGradientFunctorType>
-void SurfaceTracker<TVoxel, TWarp, TIndex, TMemoryDeviceType, TGradientFunctorType>::ClearOutFlowWarp(
+void SurfaceTracker<TVoxel, TWarp, TIndex, TMemoryDeviceType, TGradientFunctorType>::ClearOutFramewiseWarp(
 		ITMVoxelVolume<TWarp, TIndex>* warpField) {
 	ITMSceneTraversalEngine<TWarp, TIndex, TMemoryDeviceType>::template
-	StaticVoxelTraversal<ClearOutFlowWarpStaticFunctor<TWarp>>(warpField);
+	StaticVoxelTraversal<ClearOutFramewiseWarpStaticFunctor<TWarp>>(warpField);
 }
 
 
@@ -140,9 +140,9 @@ float SurfaceTracker<TVoxel, TWarp, TIndex, TMemoryDeviceType, TGradientFunctorT
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TMemoryDeviceType, GradientFunctorType TGradientFunctorType>
-void SurfaceTracker<TVoxel, TWarp, TIndex, TMemoryDeviceType, TGradientFunctorType>::AddFlowWarpToWarp(
-		ITMVoxelVolume<TWarp, TIndex>* warpField, bool clearFlowWarp) {
-	AddFlowWarpToWarp_common<TWarp, TIndex, TMemoryDeviceType>(warpField, clearFlowWarp);
+void SurfaceTracker<TVoxel, TWarp, TIndex, TMemoryDeviceType, TGradientFunctorType>::AddFramewiseWarpToWarp(
+		ITMVoxelVolume<TWarp, TIndex>* warpField, bool clearFramewiseWarp) {
+	AddFramewiseWarpToWarp_common<TWarp, TIndex, TMemoryDeviceType>(warpField, clearFramewiseWarp);
 }
 
 //endregion ============================================================================================================

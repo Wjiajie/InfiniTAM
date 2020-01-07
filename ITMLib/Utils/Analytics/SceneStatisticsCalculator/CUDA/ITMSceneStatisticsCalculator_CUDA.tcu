@@ -217,21 +217,21 @@ ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA>::ComputeAlteredV
 }
 
 template<typename TVoxel, typename TIndex>
-double ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA>::ComputeFlowWarpMin(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CUDA, MINIMUM>::compute(
+double ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA>::ComputeFramewiseWarpMin(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+	return ComputeFramewiseWarpLengthStatisticFunctor<TVoxel::hasFramewiseWarp, TVoxel, TIndex, MEMORYDEVICE_CUDA, MINIMUM>::compute(
 			scene);
 }
 
 
 template<typename TVoxel, typename TIndex>
-double ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA>::ComputeFlowWarpMax(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CUDA, MAXIMUM>::compute(
+double ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA>::ComputeFramewiseWarpMax(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+	return ComputeFramewiseWarpLengthStatisticFunctor<TVoxel::hasFramewiseWarp, TVoxel, TIndex, MEMORYDEVICE_CUDA, MAXIMUM>::compute(
 			scene);
 }
 
 template<typename TVoxel, typename TIndex>
-double ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA>::ComputeFlowWarpMean(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return ComputeFlowWarpLengthStatisticFunctor<TVoxel::hasFlowWarp, TVoxel, TIndex, MEMORYDEVICE_CUDA, MEAN>::compute(
+double ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA>::ComputeFramewiseWarpMean(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+	return ComputeFramewiseWarpLengthStatisticFunctor<TVoxel::hasFramewiseWarp, TVoxel, TIndex, MEMORYDEVICE_CUDA, MEAN>::compute(
 			scene);
 }
 
