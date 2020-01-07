@@ -13,95 +13,121 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
-#include <map>
 
+// stdlib
+#include <map>
 #include <chrono>
 #include <iostream>
+
+// Boost
+#include <boost/filesystem/path.hpp>
+
+// local
 #include "../../../ORUtils/PlatformIndependence.h"
 #include "ITMBenchmarkUtils.h"
 #include "../ITMPrintHelpers.h"
+#include "../Configuration.h"
 
-namespace ITMLib{
-namespace Bench{
-	std::map<std::string, std::pair<double, std::chrono::time_point<std::chrono::steady_clock>>> timers;
+namespace fs = boost::filesystem;
 
-	/**
-	 * \brief Starts the timer with the specified name (creates it if it doesn't yet exist)
-	 * \details Not thread-safe
-	 * \param name name of the timer
-	 */
-	void StartTimer(std::string name) {
-		auto itr = timers.find(name);
-		if (itr != timers.end()) {
-			(*itr).second.second = std::chrono::steady_clock::now();
-		} else {
-			timers[name] = std::make_pair(0.0, std::chrono::steady_clock::now());
-		}
+namespace ITMLib {
+namespace Bench {
+std::map<std::string, std::pair<double, std::chrono::time_point<std::chrono::steady_clock>>> timers;
+
+/**
+ * \brief Starts the timer with the specified name (creates it if it doesn't yet exist)
+ * \details Not thread-safe
+ * \param name name of the timer
+ */
+void StartTimer(std::string name) {
+	auto itr = timers.find(name);
+	if (itr != timers.end()) {
+		(*itr).second.second = std::chrono::steady_clock::now();
+	} else {
+		timers[name] = std::make_pair(0.0, std::chrono::steady_clock::now());
 	}
+}
 
-	/**
-	 * \brief Stops timer with the specified name
-	 * \details Not thread-safe
-	 * \param name name of the timer
-	 */
-	void StopTimer(std::string name){
-		auto itr = timers.find(name);
-		if (itr != timers.end()) {
-			double cumulativeTime = std::get<0>((*itr).second);
-			auto start = std::get<1>((*itr).second);
-			auto end = std::chrono::steady_clock::now();
-			auto diff = end - start;
-			cumulativeTime += std::chrono::duration<double, std::milli>(diff).count();
-			(*itr).second.first = cumulativeTime;
-		} else {
-			std::cerr << "Timer name: " << name << std::endl;
-			DIEWITHEXCEPTION_REPORTLOCATION("Timer with this name not found.");
-		}
+/**
+ * \brief Stops timer with the specified name
+ * \details Not thread-safe
+ * \param name name of the timer
+ */
+void StopTimer(std::string name) {
+	auto itr = timers.find(name);
+	if (itr != timers.end()) {
+		double cumulativeTime = std::get<0>((*itr).second);
+		auto start = std::get<1>((*itr).second);
+		auto end = std::chrono::steady_clock::now();
+		auto diff = end - start;
+		cumulativeTime += std::chrono::duration<double, std::milli>(diff).count();
+		(*itr).second.first = cumulativeTime;
+	} else {
+		std::cerr << "Timer name: " << name << std::endl;
+		DIEWITHEXCEPTION_REPORTLOCATION("Timer with this name not found.");
 	}
+}
 
-	/**
-	 * \brief Print all cumulative times for timers recorded so far.
-	 * \details Not thread-safe
-	 */
-	void PrintAllCumulativeTimes(){
-		std::cout << green << "Logged cumulative runtimes:" << reset << std::endl;
-		for (auto timer_pair : timers){
-			std::cout << "  " << timer_pair.first << ": " << timer_pair.second.first <<std::endl;
-		}
+/**
+ * \brief Print all cumulative times for timers recorded so far.
+ * \details Not thread-safe
+ */
+void all_times_to_stream(std::ostream& out, bool colors_enabled) {
+	if (colors_enabled) {
+		out << green << "Logged cumulative runtimes:" << reset << std::endl;
+	} else {
+		out << "Logged cumulative runtimes:" << std::endl;
 	}
+	for (const auto& timer_pair : timers) {
+		out << "  " << timer_pair.first << ": " << timer_pair.second.first << std::endl;
+	}
+}
 
-	double StopTimerAndGetCumulativeTime(std::string name) {
-		StopTimer(name);
-		return GetCumulativeTime(name);
-	}
+void PrintAllCumulativeTimes() {
+	all_times_to_stream(std::cout, true);
+}
 
-	double StopTimerAndGetLastTime(std::string name) {
-		auto itr = timers.find(name);
-		if (itr != timers.end()) {
-			double cumulativeTime = std::get<0>((*itr).second);
-			auto start = std::get<1>((*itr).second);
-			auto end = std::chrono::steady_clock::now();
-			auto diff = end - start;
-			double lastTime = std::chrono::duration<double, std::milli>(diff).count();
-			cumulativeTime += lastTime;
-			(*itr).second.first = cumulativeTime;
-			return lastTime;
-		} else {
-			std::cerr << "Timer name: " << name << std::endl;
-			DIEWITHEXCEPTION_REPORTLOCATION("Timer with this name not found.");
-		}
-	}
+void SaveAllCumulativeTimesToDisk() {
+	std::ofstream output_file;
+	std::string path = (fs::path(Configuration::get().input_and_output_settings_paths.output_path) / "benchmark.txt").string();
+	output_file.open(path);
+	all_times_to_stream(output_file,false);
+	output_file.close();
+}
 
-	double GetCumulativeTime(std::string name) {
-		auto itr = timers.find(name);
-		if (itr != timers.end()) {
-			double cumulativeTime = std::get<0>((*itr).second);
-			return cumulativeTime;
-		} else {
-			std::cerr << "Timer name: " << name << std::endl;
-			DIEWITHEXCEPTION_REPORTLOCATION("Timer with this name not found.");
-		}
+
+double StopTimerAndGetCumulativeTime(std::string name) {
+	StopTimer(name);
+	return GetCumulativeTime(name);
+}
+
+double StopTimerAndGetLastTime(std::string name) {
+	auto itr = timers.find(name);
+	if (itr != timers.end()) {
+		double cumulativeTime = std::get<0>((*itr).second);
+		auto start = std::get<1>((*itr).second);
+		auto end = std::chrono::steady_clock::now();
+		auto diff = end - start;
+		double lastTime = std::chrono::duration<double, std::milli>(diff).count();
+		cumulativeTime += lastTime;
+		(*itr).second.first = cumulativeTime;
+		return lastTime;
+	} else {
+		std::cerr << "Timer name: " << name << std::endl;
+		DIEWITHEXCEPTION_REPORTLOCATION("Timer with this name not found.");
 	}
+}
+
+double GetCumulativeTime(std::string name) {
+	auto itr = timers.find(name);
+	if (itr != timers.end()) {
+		double cumulativeTime = std::get<0>((*itr).second);
+		return cumulativeTime;
+	} else {
+		std::cerr << "Timer name: " << name << std::endl;
+		DIEWITHEXCEPTION_REPORTLOCATION("Timer with this name not found.");
+	}
+}
 
 }//namespace Bench
 }//namespace ITMLib

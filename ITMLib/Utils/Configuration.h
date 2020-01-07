@@ -77,7 +77,10 @@ public:
 
 	//endregion ========================================================================================================
 
-	struct InputAndOutputSettings {
+	// region ======================================== NESTED SERIALIZABLE STRUCTS =====================================
+	GENERATE_SERIALIZABLE_STRUCT(InputAndOutputSettings,(bool, record_reconstruction_video, false), (bool, save_benchmarks_to_disk, false));
+
+	struct InputAndOutputSettings_Paths {
 		/// Where to write any kind of output (intended to be used application-wise)
 		const std::string output_path;
 		std::string calibration_file_path;
@@ -88,24 +91,22 @@ public:
 		std::string depth_image_path_mask = "";
 		std::string mask_image_path_mask = "";
 		std::string imu_input_path = "";
-		bool record_reconstruction_video = false;
 
-		InputAndOutputSettings();
-		InputAndOutputSettings(std::string output_path,
-		                       std::string calibration_file_path,
-		                       std::string openni_file_path,
-		                       std::string rgb_video_file_path,
-		                       std::string depth_video_file_path,
-		                       std::string rgb_image_path_mask,
-		                       std::string depth_image_path_mask,
-		                       std::string mask_image_path_mask,
-		                       std::string imu_input_path,
-		                       bool record_reconstruction_video);
-		explicit InputAndOutputSettings(const po::variables_map& vm);
-		static InputAndOutputSettings BuildFromPTree(const pt::ptree& tree, const std::string& config_path);
+		InputAndOutputSettings_Paths();
+		InputAndOutputSettings_Paths(std::string output_path,
+		                             std::string calibration_file_path,
+		                             std::string openni_file_path,
+		                             std::string rgb_video_file_path,
+		                             std::string depth_video_file_path,
+		                             std::string rgb_image_path_mask,
+		                             std::string depth_image_path_mask,
+		                             std::string mask_image_path_mask,
+		                             std::string imu_input_path);
+		explicit InputAndOutputSettings_Paths(const po::variables_map& vm);
+		static InputAndOutputSettings_Paths BuildFromPTree(const pt::ptree& tree, const std::string& config_path);
 
-		friend bool operator==(const InputAndOutputSettings& ts1, const InputAndOutputSettings& ts2);
-		friend std::ostream& operator<<(std::ostream& out, const InputAndOutputSettings& ts);
+		friend bool operator==(const InputAndOutputSettings_Paths& ts1, const InputAndOutputSettings_Paths& ts2);
+		friend std::ostream& operator<<(std::ostream& out, const InputAndOutputSettings_Paths& ts);
 		pt::ptree ToPTree(const std::string& path) const;
 	};
 
@@ -147,21 +148,16 @@ public:
 	              SlavchevaSurfaceTracker::Switches slavcheva_switches,
 	              Configuration::TelemetrySettings telemetry_settings,
 	              Configuration::InputAndOutputSettings input_and_output_settings,
+	              Configuration::InputAndOutputSettings_Paths input_and_output_settings_paths,
 	              Configuration::UIEngineSettings ui_engine_settings,
-	              NonRigidTrackingParameters non_rigid_tracking_parameters,
-	              bool skip_points,
-	              bool create_meshing_engine,
-	              MemoryDeviceType device_type,
-	              bool use_approximate_raycast,
-	              bool use_threshold_filter,
-	              bool use_bilateral_filter,
+	              NonRigidTrackingParameters non_rigid_tracking_parameters, bool skip_points,
+	              bool create_meshing_engine, MemoryDeviceType device_type, bool use_approximate_raycast,
+	              bool use_threshold_filter, bool use_bilateral_filter,
 	              Configuration::FailureMode behavior_on_failure,
-	              Configuration::SwappingMode swapping_mode,
-	              Configuration::LibMode library_mode,
+	              Configuration::SwappingMode swapping_mode, Configuration::LibMode library_mode,
 	              Configuration::IndexingMethod indexing_method,
 	              GradientFunctorType surface_tracker_type,
-	              Configuration::VerbosityLevel verbosity_level,
-	              std::string tracker_configuration);
+	              Configuration::VerbosityLevel verbosity_level, std::string tracker_configuration);
 
 	static void load_default();
 	static void load_configuration_from_variable_map(const po::variables_map& vm);
@@ -190,6 +186,7 @@ public:
 	TelemetrySettings telemetry_settings;
 	/// Input / output paths
 	const InputAndOutputSettings input_and_output_settings;
+	const InputAndOutputSettings_Paths input_and_output_settings_paths;
 	const UIEngineSettings ui_engine_settings;
 	const NonRigidTrackingParameters non_rigid_tracking_parameters;
 	/// For ITMColorTracker: skips every other point when using the colour renderer for creating a point cloud

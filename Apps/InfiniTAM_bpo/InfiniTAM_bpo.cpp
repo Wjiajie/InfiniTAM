@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
 		ImageSourceEngine* imageSource = nullptr;
 		IMUSourceEngine* imuSource = nullptr;
 
-		CreateDefaultImageSource(imageSource, imuSource, settings.input_and_output_settings);
+		CreateDefaultImageSource(imageSource, imuSource, settings.input_and_output_settings_paths);
 		if (imageSource == nullptr) {
 			std::cerr << "Failed to open any image stream." << std::endl;
 			printHelp();
@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
 		if (settings.telemetry_settings.focus_coordinates_specified) {
 			logger.SetFocusCoordinates(settings.telemetry_settings.focus_coordinates);
 		}
-		logger.SetOutputDirectory(settings.input_and_output_settings.output_path);
+		logger.SetOutputDirectory(settings.input_and_output_settings_paths.output_path);
 
 		logger.SetPlaneFor2Dand3DSlices(loggingOptions.planeFor2Dand3DSlices);
 		logger.Set3DSliceInPlaneRadius(loggingOptions._3DSliceRadius);

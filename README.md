@@ -24,7 +24,7 @@ It could be that some detail is missing from the implementation, and could be th
 1. You need to be somewhat well-versed in using CMake. 3rd-party requirements are all open-source, and you can glean what you're missing by running the CMake generator.
 2. Linux currently is the only officially supported OS. All of the required CMake packages and this code in theory should work on any major platform, so you can try on MacOS or Windows at your own risk, and let me know if you'd like to fix things that are not working on your platform. If this project achieves greater success, then I'll probably start officially supporting the other systems.
 3. Build without OpenMP (use CMake to disable it) since it's buggy at the time of writing! I also recommend building with FFMPEG, since that will enable visual debugging/video recording.
-4. To obtain the result shown above, download the [original Snoopy sequence](http://campar.in.tum.de/personal/slavcheva/deformable-dataset/index.html), modify Files/infinitam_snoopy_config.json with proper paths for input_and_output_settings, and run like this (modify the path to point to infinitam_snoopy_config.json):
+4. To obtain the result shown above, download the [original Snoopy sequence](http://campar.in.tum.de/personal/slavcheva/deformable-dataset/index.html), modify Files/infinitam_snoopy_config.json with proper paths for input_and_output_settings_paths, and run like this (modify the path to point to infinitam_snoopy_config.json):
 
 <build_folder>/Apps/InfiniTAM_bpo/InfiniTAM_bpo --config=Files/infinitam_snoopy_config.json --record_reconstruction_video
 

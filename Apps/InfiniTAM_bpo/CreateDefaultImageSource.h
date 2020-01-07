@@ -39,4 +39,4 @@ using namespace InputSource;
     @para arg4 the IMU images. If images are omitted, some live sources will
     be tried.
 */
-void CreateDefaultImageSource(ImageSourceEngine*& imageSource, IMUSourceEngine*& imuSource, const ITMLib::Configuration::InputAndOutputSettings& inputPaths);
+void CreateDefaultImageSource(ImageSourceEngine*& imageSource, IMUSourceEngine*& imuSource, const ITMLib::Configuration::InputAndOutputSettings_Paths& inputPaths);

@@ -51,12 +51,15 @@
         ]
     },
     "input_and_output_settings": {
-        "output": "<CONFIGURATION_DIRECTORY>/output1",
-        "calibration_file_path": "<CONFIGURATION_DIRECTORY>/calib_file1.txt",
-        "rgb_image_path_mask": "<CONFIGURATION_DIRECTORY>/frame_color_%%06i.png",
-        "depth_image_path_mask":"<CONFIGURATION_DIRECTORY>/frame_depth_%%06i.png",
-        "mask_image_path_mask": "<CONFIGURATION_DIRECTORY>/frame_mask_%%06i.png",
-        "record_reconstruction_video": true
+        "paths": {
+            "output": "<CONFIGURATION_DIRECTORY>/output1",
+            "calibration_file_path": "<CONFIGURATION_DIRECTORY>/calib_file1.txt",
+            "rgb_image_path_mask": "<CONFIGURATION_DIRECTORY>/frame_color_%%06i.png",
+            "depth_image_path_mask": "<CONFIGURATION_DIRECTORY>/frame_depth_%%06i.png",
+            "mask_image_path_mask": "<CONFIGURATION_DIRECTORY>/frame_mask_%%06i.png"
+        },
+        "record_reconstruction_video": true,
+        "save_benchmarks_to_disk": true
     },
     "ui_engine_settings": {
         "number_of_frames_to_process_after_launch": 50,

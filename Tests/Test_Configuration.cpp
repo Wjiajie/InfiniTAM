@@ -45,16 +45,16 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			SlavchevaSurfaceTracker::Parameters(0.11f, 0.09f, 2.0f, 0.3f, 0.1f, 1e-6f),
 			SlavchevaSurfaceTracker::Switches(false, true, false, true, false),
 			Configuration::TelemetrySettings(true, Vector3i(20, 23, 0)),
-			Configuration::InputAndOutputSettings("TestData/output1",
-			                                      "TestData/calib_file1.txt",
-			                                      "", "", "",
-			                                      "TestData/frame_color_%%06i.png",
-			                                      "TestData/frame_depth_%%06i.png",
-			                                      "TestData/frame_mask_%%06i.png",
-			                                      "",
-			                                      true),
-			Configuration::UIEngineSettings(50,16),
-			NonRigidTrackingParameters(300,0.0002f,0.4f),
+			Configuration::InputAndOutputSettings(true, true),
+			Configuration::InputAndOutputSettings_Paths("TestData/output1",
+			                                            "TestData/calib_file1.txt",
+			                                            "", "", "",
+			                                            "TestData/frame_color_%%06i.png",
+			                                            "TestData/frame_depth_%%06i.png",
+			                                            "TestData/frame_mask_%%06i.png",
+			                                            ""),
+			Configuration::UIEngineSettings(50, 16),
+			NonRigidTrackingParameters(300, 0.0002f, 0.4f),
 			true,
 			false,
 			MEMORYDEVICE_CPU,
@@ -77,6 +77,20 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	BOOST_REQUIRE_EQUAL(configuration1.slavcheva_switches, Configuration::get().slavcheva_switches);
 	BOOST_REQUIRE_EQUAL(configuration1.telemetry_settings, Configuration::get().telemetry_settings);
 	BOOST_REQUIRE_EQUAL(configuration1.input_and_output_settings, Configuration::get().input_and_output_settings);
+	BOOST_REQUIRE_EQUAL(configuration1.input_and_output_settings_paths, Configuration::get().input_and_output_settings_paths);
+	BOOST_REQUIRE_EQUAL(configuration1.ui_engine_settings, Configuration::get().ui_engine_settings);
 	BOOST_REQUIRE_EQUAL(configuration1, Configuration::get());
+	configuration1.save_to_json_file("TestData/config2.json");
+	Configuration::load_configuration_from_json_file("TestData/config2.json");
+	BOOST_REQUIRE_EQUAL(configuration1.voxel_volume_parameters, Configuration::get().voxel_volume_parameters);
+	BOOST_REQUIRE_EQUAL(configuration1.surfel_volume_parameters, Configuration::get().surfel_volume_parameters);
+	BOOST_REQUIRE_EQUAL(configuration1.slavcheva_parameters, Configuration::get().slavcheva_parameters);
+	BOOST_REQUIRE_EQUAL(configuration1.slavcheva_switches, Configuration::get().slavcheva_switches);
+	BOOST_REQUIRE_EQUAL(configuration1.telemetry_settings, Configuration::get().telemetry_settings);
+	BOOST_REQUIRE_EQUAL(configuration1.input_and_output_settings, Configuration::get().input_and_output_settings);
+	BOOST_REQUIRE_EQUAL(configuration1.input_and_output_settings_paths, Configuration::get().input_and_output_settings_paths);
+	BOOST_REQUIRE_EQUAL(configuration1.ui_engine_settings, Configuration::get().ui_engine_settings);
+	BOOST_REQUIRE_EQUAL(configuration1, Configuration::get());
+
 
 }

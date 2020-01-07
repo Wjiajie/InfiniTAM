@@ -106,7 +106,7 @@ void UIEngine_BPO::Initialize(int& argc, char** argv,
 	this->imageSource = imageSource;
 	this->imuSource = imuSource;
 	this->mainEngine = mainEngine;
-	this->output_path = configuration.input_and_output_settings.output_path;
+	this->output_path = configuration.input_and_output_settings_paths.output_path;
 
 	int textHeight = 60; // Height of text area, 2 lines
 

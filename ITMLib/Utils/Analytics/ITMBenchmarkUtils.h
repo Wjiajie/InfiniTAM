@@ -15,14 +15,17 @@
 //  ================================================================
 #pragma once
 
-
+//stdlib
 #include <string>
+#include <ostream>
 
 namespace ITMLib {
 namespace Bench {
 void StartTimer(std::string name);
 void StopTimer(std::string name);
+void all_times_to_stream(std::ostream& out, bool colors_enabled);
 void PrintAllCumulativeTimes();
+void SaveAllCumulativeTimesToDisk();
 double StopTimerAndGetCumulativeTime(std::string name);
 double StopTimerAndGetLastTime(std::string name);
 double GetCumulativeTime(std::string name);

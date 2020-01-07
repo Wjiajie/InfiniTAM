@@ -230,6 +230,9 @@ void UIEngine_BPO::GlutIdleFunction() {
 					uiEngine.mainEngine->SaveToFile();
 				}
 				bench::PrintAllCumulativeTimes();
+				if (Configuration::get().input_and_output_settings.save_benchmarks_to_disk){
+					bench::SaveAllCumulativeTimesToDisk();
+				}
 			}
 			break;
 		case EXIT:

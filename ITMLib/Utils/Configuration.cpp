@@ -248,37 +248,6 @@ template<typename TEnum>
 static TEnum enumerator_from_variable_map(const po::variables_map& vm, const std::string& argument){
 	return string_to_enumerator<TEnum>(vm[argument].as<std::string>());
 }
-//
-//
-//static MemoryDeviceType memory_device_type_from_variable_map(const po::variables_map& vm, const std::string& argument) {
-//	return string_to_enumerator<MemoryDeviceType>(vm[argument].as<std::string>());
-//}
-//
-//static Configuration::SwappingMode
-//swapping_mode_from_variable_map(const po::variables_map& vm, const std::string& argument) {
-//	return string_to_enumerator<Configuration::SwappingMode>(vm[argument].as<std::string>());
-//}
-//
-//static Configuration::FailureMode
-//failure_mode_from_variable_map(const po::variables_map& vm, const std::string& argument) {
-//	return string_to_enumerator<Configuration::FailureMode>(vm[argument].as<std::string>());
-//}
-//
-//static Configuration::LibMode lib_mode_from_variable_map(const po::variables_map& vm, const std::string& argument) {
-//	return string_to_enumerator<Configuration::LibMode>(vm[argument].as<std::string>());
-//}
-//
-//static Configuration::IndexingMethod indexing_method_from_variable_map(const po::variables_map& vm,
-//                                                                       const std::string& argument) {
-//	return string_to_enumerator<Configuration::IndexingMethod>(vm[argument].as<std::string>());
-//}
-//
-//static GradientFunctorType surface_tracker_type_from_variable_map(const po::variables_map& vm,
-//                                                                  const std::string& argument) {
-//	return string_to_enumerator<GradientFunctorType>(vm[argument].as<std::string>());
-//}
-
-
 // endregion ===========================================================================================================
 
 // region ================================== boost::property_tree::ptree PROCESSING ROUTINES ===========================
@@ -327,6 +296,7 @@ Configuration::Configuration()
 		slavcheva_switches(SlavchevaSurfaceTracker::ConfigurationMode::SOBOLEV_FUSION),
 		telemetry_settings(),
 		input_and_output_settings(),
+		input_and_output_settings_paths(),
 		ui_engine_settings(),
 		non_rigid_tracking_parameters(),
 		skip_points(true),
@@ -356,6 +326,7 @@ Configuration::Configuration(const po::variables_map& vm) :
 		slavcheva_switches(vm),
 		telemetry_settings(vm),
 		input_and_output_settings(vm),
+		input_and_output_settings_paths(vm),
 		ui_engine_settings(vm),
 		non_rigid_tracking_parameters(vm),
 		skip_points(vm["skip_points"].empty() ?
@@ -385,7 +356,7 @@ Configuration::Configuration(const po::variables_map& vm) :
 		                enumerator_from_variable_map<Configuration::IndexingMethod>(vm, "index")),
 		surface_tracker_type(vm["surface_tracker_type"].empty() ? Configuration().surface_tracker_type :
 		                     enumerator_from_variable_map<GradientFunctorType>(vm, "surface_tracker_type")),
-        verbosity_level(vm["verbosity_level"].empty() ? Configuration().verbosity_level :
+		verbosity_level(vm["verbosity_level"].empty() ? Configuration().verbosity_level :
                         enumerator_from_variable_map<Configuration::VerbosityLevel>(vm, "verbosity_level")),
 		tracker_configuration(
 				vm["tracker"].empty() ? (library_mode == LIBMODE_BASIC_SURFELS ? default_surfel_tracker_configuration :
@@ -404,23 +375,23 @@ Configuration::Configuration(const po::variables_map& vm) :
 }
 
 
-Configuration::Configuration(
-		VoxelVolumeParameters voxel_volume_parameters, ITMSurfelSceneParameters surfel_volume_parameters,
-		SlavchevaSurfaceTracker::Parameters slavcheva_parameters, SlavchevaSurfaceTracker::Switches slavcheva_switches,
-		Configuration::TelemetrySettings telemetry_settings,
-		Configuration::InputAndOutputSettings input_and_output_settings,
-		Configuration::UIEngineSettings ui_engine_settings,
-		NonRigidTrackingParameters non_rigid_tracking_parameters,
-		bool skip_points, bool create_meshing_engine,
-		MemoryDeviceType device_type,
-		bool use_approximate_raycast, bool use_threshold_filter, bool use_bilateral_filter,
-		Configuration::FailureMode behavior_on_failure,
-		Configuration::SwappingMode swapping_mode,
-		Configuration::LibMode library_mode,
-		Configuration::IndexingMethod indexing_method,
-		GradientFunctorType surface_tracker_type,
-		Configuration::VerbosityLevel verbosity_level,
-		std::string tracker_configuration) :
+Configuration::Configuration(VoxelVolumeParameters voxel_volume_parameters,
+                             ITMSurfelSceneParameters surfel_volume_parameters,
+                             SlavchevaSurfaceTracker::Parameters slavcheva_parameters,
+                             SlavchevaSurfaceTracker::Switches slavcheva_switches,
+                             Configuration::TelemetrySettings telemetry_settings,
+                             Configuration::InputAndOutputSettings input_and_output_settings,
+                             Configuration::InputAndOutputSettings_Paths input_and_output_settings_paths,
+                             Configuration::UIEngineSettings ui_engine_settings,
+                             NonRigidTrackingParameters non_rigid_tracking_parameters, bool skip_points,
+                             bool create_meshing_engine, MemoryDeviceType device_type, bool use_approximate_raycast,
+                             bool use_threshold_filter, bool use_bilateral_filter,
+                             Configuration::FailureMode behavior_on_failure,
+                             Configuration::SwappingMode swapping_mode, Configuration::LibMode library_mode,
+                             Configuration::IndexingMethod indexing_method,
+                             GradientFunctorType surface_tracker_type,
+                             Configuration::VerbosityLevel verbosity_level,
+                             std::string tracker_configuration) :
 
 		voxel_volume_parameters(voxel_volume_parameters),
 		surfel_volume_parameters(surfel_volume_parameters),
@@ -429,7 +400,8 @@ Configuration::Configuration(
 		telemetry_settings(telemetry_settings),
 		ui_engine_settings(ui_engine_settings),
 		non_rigid_tracking_parameters(non_rigid_tracking_parameters),
-		input_and_output_settings(std::move(input_and_output_settings)),
+		input_and_output_settings(input_and_output_settings),
+		input_and_output_settings_paths(std::move(input_and_output_settings_paths)),
 		skip_points(skip_points),
 		create_meshing_engine(create_meshing_engine),
 		device_type(device_type),
@@ -562,8 +534,12 @@ Configuration* Configuration::from_json_file(const std::string& path) {
 			as_optional_parsable_slavcheva<SlavchevaSurfaceTracker::Switches>(tree, "slavcheva.switches", mode);
 	boost::optional<TelemetrySettings> telemetry_settings =
 			as_optional_parsable<TelemetrySettings>(tree, "telemetry_settings");
+
 	boost::optional<InputAndOutputSettings> input_and_output_settings =
-			as_optional_parsable_config_path<InputAndOutputSettings>(tree, "input_and_output_settings", path);
+			as_optional_parsable<InputAndOutputSettings>(tree, "input_and_output_settings");
+	boost::optional<InputAndOutputSettings_Paths> input_and_output_settings_paths =
+			as_optional_parsable_config_path<InputAndOutputSettings_Paths>(tree, "input_and_output_settings.paths", path);
+
 	boost::optional<UIEngineSettings> ui_engine_settings =
 			as_optional_parsable<UIEngineSettings>(tree,"ui_engine_settings");
 	boost::optional<NonRigidTrackingParameters> non_rigid_tracking_parameters =
@@ -597,8 +573,11 @@ Configuration* Configuration::from_json_file(const std::string& path) {
 			slavcheva_switches ? slavcheva_switches.get() : default_config.slavcheva_switches,
 			telemetry_settings ? telemetry_settings.get() : default_config.telemetry_settings,
 			input_and_output_settings ? input_and_output_settings.get() : default_config.input_and_output_settings,
+			input_and_output_settings_paths ? input_and_output_settings_paths.get()
+			                                : default_config.input_and_output_settings_paths,
 			ui_engine_settings ? ui_engine_settings.get() : default_config.ui_engine_settings,
-			non_rigid_tracking_parameters ? non_rigid_tracking_parameters.get() : default_config.non_rigid_tracking_parameters,
+			non_rigid_tracking_parameters ? non_rigid_tracking_parameters.get()
+			                              : default_config.non_rigid_tracking_parameters,
 			skip_points ? skip_points.get() : default_config.skip_points,
 			disable_meshing ? !disable_meshing.get() : default_config.create_meshing_engine,
 			device_type ? device_type.get() : default_config.device_type,
@@ -624,7 +603,9 @@ pt::ptree Configuration::to_ptree(const std::string& path) const {
 	tree.add_child("slavcheva.parameters", this->slavcheva_parameters.ToPTree());
 	tree.add_child("slavcheva.switches", slavcheva_switches.ToPTree());
 	tree.add_child("telemetry_settings", this->telemetry_settings.ToPTree());
-	tree.add_child("input_and_output_settings", this->input_and_output_settings.ToPTree(path));
+	tree.add_child("input_and_output_settings", this->input_and_output_settings.ToPTree());
+	tree.add_child("input_and_output_settings.paths", this->input_and_output_settings_paths.ToPTree(path));
+	tree.add_child("ui_engine_settings", this->ui_engine_settings.ToPTree());
 	tree.add_child("non_rigid_tracking_parameters", this->non_rigid_tracking_parameters.ToPTree());
 	tree.add("skip_points", skip_points);
 	tree.add("disable_meshing", !create_meshing_engine);
@@ -660,6 +641,7 @@ bool operator==(const Configuration& c1, const Configuration& c2) {
 	       c1.slavcheva_switches == c2.slavcheva_switches &&
 	       c1.telemetry_settings == c2.telemetry_settings &&
 	       c1.input_and_output_settings == c2.input_and_output_settings &&
+	       c1.input_and_output_settings_paths == c2.input_and_output_settings_paths &&
 	       c1.ui_engine_settings == c2.ui_engine_settings &&
 	       c1.non_rigid_tracking_parameters == c2.non_rigid_tracking_parameters &&
 	       c1.skip_points == c2.skip_points &&
@@ -691,12 +673,10 @@ bool isPathMask(const std::string& arg) {
 	return arg.find('%') != std::string::npos;
 }
 
-Configuration::InputAndOutputSettings::InputAndOutputSettings(const po::variables_map& vm) :
-		output_path(vm["output"].empty() ? InputAndOutputSettings().output_path : vm["output"].as<std::string>()),
-		calibration_file_path(vm["calibration_file"].empty() ? InputAndOutputSettings().calibration_file_path
-		                                                     : vm["calibration_file"].as<std::string>()),
-         record_reconstruction_video(vm["record_reconstruction_video"].empty() ?
-         InputAndOutputSettings().record_reconstruction_video  : vm["record_reconstruction_video"].as<bool>())
+Configuration::InputAndOutputSettings_Paths::InputAndOutputSettings_Paths(const po::variables_map& vm) :
+		output_path(vm["output"].empty() ? InputAndOutputSettings_Paths().output_path : vm["output"].as<std::string>()),
+		calibration_file_path(vm["calibration_file"].empty() ? InputAndOutputSettings_Paths().calibration_file_path
+		                                                     : vm["calibration_file"].as<std::string>())
         {
 	std::vector<std::string> inputPaths;
 	if (vm.count("input_path")) {
@@ -732,21 +712,19 @@ Configuration::InputAndOutputSettings::InputAndOutputSettings(const po::variable
 	}
 }
 
-Configuration::InputAndOutputSettings::InputAndOutputSettings() :
+Configuration::InputAndOutputSettings_Paths::InputAndOutputSettings_Paths() :
 		output_path("output/"),
-		calibration_file_path("calib.txt"),
-		record_reconstruction_video(false){}
+		calibration_file_path("calib.txt"){}
 
-Configuration::InputAndOutputSettings::InputAndOutputSettings(std::string output_path,
-                                                              std::string calibration_file_path,
-                                                              std::string openni_file_path,
-                                                              std::string rgb_video_file_path,
-                                                              std::string depth_video_file_path,
-                                                              std::string rgb_image_path_mask,
-                                                              std::string depth_image_path_mask,
-                                                              std::string mask_image_path_mask,
-                                                              std::string imu_input_path,
-                                                              bool record_reconstruction_video) :
+Configuration::InputAndOutputSettings_Paths::InputAndOutputSettings_Paths(std::string output_path,
+                                                                          std::string calibration_file_path,
+                                                                          std::string openni_file_path,
+                                                                          std::string rgb_video_file_path,
+                                                                          std::string depth_video_file_path,
+                                                                          std::string rgb_image_path_mask,
+                                                                          std::string depth_image_path_mask,
+                                                                          std::string mask_image_path_mask,
+                                                                          std::string imu_input_path) :
 		output_path(std::move(output_path)),
 		calibration_file_path(std::move(calibration_file_path)),
 		openni_file_path(std::move(openni_file_path)),
@@ -755,8 +733,7 @@ Configuration::InputAndOutputSettings::InputAndOutputSettings(std::string output
 		rgb_image_path_mask(std::move(rgb_image_path_mask)),
 		depth_image_path_mask(std::move(depth_image_path_mask)),
 		mask_image_path_mask(std::move(mask_image_path_mask)),
-		imu_input_path(std::move(imu_input_path)),
-		record_reconstruction_video(record_reconstruction_video)
+		imu_input_path(std::move(imu_input_path))
 		{}
 
 std::string preprocess_path(const std::string& path, const std::string& config_path) {
@@ -784,8 +761,8 @@ std::string postprocess_path(const std::string& path, const std::string& config_
 	return resulting_path;
 }
 
-Configuration::InputAndOutputSettings
-Configuration::InputAndOutputSettings::BuildFromPTree(const pt::ptree& tree, const std::string& config_path) {
+Configuration::InputAndOutputSettings_Paths
+Configuration::InputAndOutputSettings_Paths::BuildFromPTree(const pt::ptree& tree, const std::string& config_path) {
 	boost::optional<std::string> output_path_opt = tree.get_optional<std::string>("output");
 	std::string output_path,
 			calibration_file_path,
@@ -807,8 +784,7 @@ Configuration::InputAndOutputSettings::BuildFromPTree(const pt::ptree& tree, con
 	depth_image_path_mask = value_or_empty_string(tree.get_optional<std::string>("depth_image_path_mask"));
 	mask_image_path_mask = value_or_empty_string(tree.get_optional<std::string>("mask_image_path_mask"));
 	imu_input_path = value_or_empty_string(tree.get_optional<std::string>("imp_input_path"));
-	auto record_reconstruction_video = tree.get_optional<bool>("record_reconstruction_video");
-	InputAndOutputSettings default_io_settings;
+	InputAndOutputSettings_Paths default_io_settings;
 
 	return {output_path_opt ? preprocess_path(output_path_opt.get(), config_path) : default_io_settings.output_path,
 	        calibration_file_path,
@@ -818,11 +794,10 @@ Configuration::InputAndOutputSettings::BuildFromPTree(const pt::ptree& tree, con
 	        rgb_image_path_mask,
 	        depth_image_path_mask,
 	        mask_image_path_mask,
-	        imu_input_path,
-	        record_reconstruction_video ? record_reconstruction_video.get() : default_io_settings.record_reconstruction_video};
+	        imu_input_path};
 }
 
-pt::ptree Configuration::InputAndOutputSettings::ToPTree(const std::string& path) const {
+pt::ptree Configuration::InputAndOutputSettings_Paths::ToPTree(const std::string& path) const {
 	pt::ptree tree;
 	tree.add("output", this->output_path);
 	auto add_to_tree_if_not_empty = [&path](pt::ptree& tree, const std::string& key, const std::string& string) {
@@ -838,13 +813,12 @@ pt::ptree Configuration::InputAndOutputSettings::ToPTree(const std::string& path
 	add_to_tree_if_not_empty(tree, "depth_image_path_mask", depth_image_path_mask);
 	add_to_tree_if_not_empty(tree, "mask_image_path_mask", mask_image_path_mask);
 	add_to_tree_if_not_empty(tree, "imu_input_path", imu_input_path);
-	tree.add("record_reconstruction_video", this->record_reconstruction_video);
 	return tree;
 }
 
 namespace ITMLib {
 
-bool operator==(const Configuration::InputAndOutputSettings& ios1, const Configuration::InputAndOutputSettings& ios2) {
+bool operator==(const Configuration::InputAndOutputSettings_Paths& ios1, const Configuration::InputAndOutputSettings_Paths& ios2) {
 	return ios1.output_path == ios2.output_path &&
 	ios1.calibration_file_path == ios2.calibration_file_path &&
 	ios1.openni_file_path == ios2.openni_file_path &&
@@ -853,12 +827,11 @@ bool operator==(const Configuration::InputAndOutputSettings& ios1, const Configu
 	ios1.rgb_image_path_mask == ios2.rgb_image_path_mask &&
 	ios1.depth_image_path_mask == ios2.depth_image_path_mask &&
 	ios1.mask_image_path_mask == ios2.mask_image_path_mask &&
-	ios1.imu_input_path == ios2.imu_input_path &&
-	ios1.record_reconstruction_video == ios2.record_reconstruction_video
+	ios1.imu_input_path == ios2.imu_input_path
 	;
 }
 
-std::ostream& operator<<(std::ostream& out, const Configuration::InputAndOutputSettings& ios) {
+std::ostream& operator<<(std::ostream& out, const Configuration::InputAndOutputSettings_Paths& ios) {
 	pt::ptree tree(ios.ToPTree(""));
 	pt::write_json_no_quotes(out, tree, true);
 	return out;
