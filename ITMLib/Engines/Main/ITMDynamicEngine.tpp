@@ -40,7 +40,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 	if (settings.create_meshing_engine)
 		meshingEngine = ITMMeshingEngineFactory::MakeMeshingEngine<TVoxel, TIndex>(deviceType, canonicalScene->index);
 
-	denseMapper = new ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>(canonicalScene->index);
+	denseMapper = new DenseDynamicMapper<TVoxel, TWarp, TIndex>(canonicalScene->index);
 	denseMapper->ResetTSDFVolume(canonicalScene);
 	for (int iScene = 0; iScene < ITMDynamicEngine<TVoxel, TWarp, TIndex>::liveSceneCount; iScene++) {
 		denseMapper->ResetTSDFVolume(liveScenes[iScene]);

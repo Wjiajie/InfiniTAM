@@ -4,7 +4,7 @@
 #pragma once
 
 #include <array>
-#include "ITMDenseDynamicMapper.h"
+#include "DenseDynamicMapper.h"
 #include "ITMMainEngine.h"
 #include "ITMTrackingController.h"
 #include "../LowLevel/Interface/ITMLowLevelEngine.h"
@@ -86,7 +86,7 @@ namespace ITMLib
 		ITMMeshingEngine<TVoxel, TIndex>* meshingEngine;
 
 		ITMViewBuilder* viewBuilder;
-		ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>* denseMapper;
+		DenseDynamicMapper<TVoxel, TWarp, TIndex>* denseMapper;
 		ITMTrackingController* cameraTrackingController;
 
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene;

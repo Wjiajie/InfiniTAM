@@ -21,7 +21,7 @@
 #include <boost/filesystem.hpp>
 
 //local
-#include "ITMDenseDynamicMapper.h"
+#include "DenseDynamicMapper.h"
 #include "../Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../Swapping/ITMSwappingEngineFactory.h"
 #include "../../SurfaceTrackers/SurfaceTrackerFactory.h"
@@ -65,7 +65,7 @@ inline static void PrintOperationStatus(const char* status) {
 // region ===================================== CONSTRUCTORS / DESTRUCTORS =============================================
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ITMDenseDynamicMapper(const TIndex& index) :
+DenseDynamicMapper<TVoxel, TWarp, TIndex>::DenseDynamicMapper(const TIndex& index) :
 		sceneReconstructor(
 				ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel, TWarp, TIndex>
 						(Configuration::get().device_type)),
@@ -85,7 +85,7 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ITMDenseDynamicMapper(const TIndex
 		verbosity_level(Configuration::get().verbosity_level){ }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::~ITMDenseDynamicMapper() {
+DenseDynamicMapper<TVoxel, TWarp, TIndex>::~DenseDynamicMapper() {
 	delete sceneReconstructor;
 	delete swappingEngine;
 	delete sceneMotionTracker;
@@ -96,7 +96,7 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::~ITMDenseDynamicMapper() {
 //TODO: deprecate in favor of SceneManipulation
 template<typename TVoxel, typename TWarp, typename TIndex>
 void
-ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetTSDFVolume(
+DenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetTSDFVolume(
 		ITMVoxelVolume<TVoxel, TIndex>* volume) const {
 	switch (Configuration::get().device_type) {
 		case MEMORYDEVICE_CPU:
@@ -114,7 +114,7 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetTSDFVolume(
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetWarpVolume(
+void DenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetWarpVolume(
 		ITMVoxelVolume<TWarp, TIndex>* warpVolume) const {
 	switch (Configuration::get().device_type) {
 		case MEMORYDEVICE_CPU:
@@ -133,7 +133,7 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetWarpVolume(
 
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessInitialFrame(
+void DenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessInitialFrame(
 		const ITMView* view, const ITMTrackingState* trackingState,
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene, ITMVoxelVolume<TVoxel, TIndex>* liveScene,
 		ITMRenderState* renderState) {
@@ -151,10 +151,10 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessInitialFrame(
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::InitializeProcessing(const ITMView* view,
-                                                                        const ITMTrackingState* trackingState,
-                                                                        ITMVoxelVolume<TWarp, TIndex>* warpField,
-                                                                        ITMVoxelVolume<TVoxel, TIndex>** liveScenePair) {
+void DenseDynamicMapper<TVoxel, TWarp, TIndex>::InitializeProcessing(const ITMView* view,
+                                                                     const ITMTrackingState* trackingState,
+                                                                     ITMVoxelVolume<TWarp, TIndex>* warpField,
+                                                                     ITMVoxelVolume<TVoxel, TIndex>** liveScenePair) {
 
 
 	PrintOperationStatus("Generating raw live frame from view...");
@@ -171,7 +171,7 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::InitializeProcessing(const IT
 };
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::FinalizeProcessing(
+void DenseDynamicMapper<TVoxel, TWarp, TIndex>::FinalizeProcessing(
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene, ITMVoxelVolume<TVoxel, TIndex>* liveScene,
 		ITMRenderState* renderState) {
 
@@ -191,11 +191,11 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::FinalizeProcessing(
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 void
-ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessFrame(const ITMView* view, const ITMTrackingState* trackingState,
-                                                           ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
-                                                           ITMVoxelVolume<TVoxel, TIndex>** liveScenePair,
-                                                           ITMVoxelVolume<TWarp, TIndex>* warpField,
-                                                           ITMRenderState* renderState) {
+DenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessFrame(const ITMView* view, const ITMTrackingState* trackingState,
+                                                        ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
+                                                        ITMVoxelVolume<TVoxel, TIndex>** liveScenePair,
+                                                        ITMVoxelVolume<TWarp, TIndex>* warpField,
+                                                        ITMRenderState* renderState) {
 
 
 	if (inStepByStepProcessingMode) {
@@ -209,7 +209,7 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessFrame(const ITMView* view, 
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::UpdateVisibleList(
+void DenseDynamicMapper<TVoxel, TWarp, TIndex>::UpdateVisibleList(
 		const ITMView* view,
 		const ITMTrackingState* trackingState,
 		ITMVoxelVolume<TVoxel, TIndex>* scene, ITMRenderState* renderState,
@@ -226,7 +226,7 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::UpdateVisibleList(
  * \param liveScene the live voxel grid (typcially obtained by integrating a single depth image into an empty TSDF grid)
  */
 template<typename TVoxel, typename TWarp, typename TIndex>
-ITMVoxelVolume<TVoxel, TIndex>* ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::TrackFrameMotion(
+ITMVoxelVolume<TVoxel, TIndex>* DenseDynamicMapper<TVoxel, TWarp, TIndex>::TrackFrameMotion(
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
 		ITMVoxelVolume<TVoxel, TIndex>** liveScenePair,
 		ITMVoxelVolume<TWarp, TIndex>* warpField) {
@@ -247,7 +247,7 @@ ITMVoxelVolume<TVoxel, TIndex>* ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::Tr
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::PerformSingleOptimizationStep(
+void DenseDynamicMapper<TVoxel, TWarp, TIndex>::PerformSingleOptimizationStep(
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
 		ITMVoxelVolume<TVoxel, TIndex>* initialLiveScene,
 		ITMVoxelVolume<TVoxel, TIndex>* finalLiveScene,
@@ -292,14 +292,14 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::PerformSingleOptimizationStep
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-bool ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::SceneMotionOptimizationConditionNotReached() {
+bool DenseDynamicMapper<TVoxel, TWarp, TIndex>::SceneMotionOptimizationConditionNotReached() {
 	return maxVectorUpdate > this->maxVectorUpdateThresholdVoxels && iteration < parameters.max_iteration_threshold;
 }
 
 //endregion ============================================================================================================
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessSwapping(
+void DenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessSwapping(
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene, ITMRenderState* renderState) {
 	if (swappingEngine != nullptr) {
 		// swapping: CPU -> CUDA
@@ -323,7 +323,7 @@ void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessSwapping(
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 void
-ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::BeginProcessingFrameInStepByStepMode(
+DenseDynamicMapper<TVoxel, TWarp, TIndex>::BeginProcessingFrameInStepByStepMode(
 		const ITMView* view, const ITMTrackingState* trackingState, ITMVoxelVolume<TWarp, TIndex>* warpField,
 		ITMVoxelVolume<TVoxel, TIndex>** liveScenePair) {
 	if (inStepByStepProcessingMode) {
@@ -335,7 +335,7 @@ ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::BeginProcessingFrameInStepByStepMo
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-bool ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::TakeNextStepInStepByStepMode(
+bool DenseDynamicMapper<TVoxel, TWarp, TIndex>::TakeNextStepInStepByStepMode(
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
 		ITMVoxelVolume<TVoxel, TIndex>** liveScenePair,
 		ITMVoxelVolume<TWarp, TIndex>* warpField,
@@ -363,8 +363,8 @@ bool ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::TakeNextStepInStepByStepMode(
 // endregion
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-void ITMDenseDynamicMapper<TVoxel, TWarp, TIndex>::PrintSettings() {
-	std::cout << bright_cyan << "*** ITMDenseDynamicMapper Settings: ***" << reset << std::endl;
+void DenseDynamicMapper<TVoxel, TWarp, TIndex>::PrintSettings() {
+	std::cout << bright_cyan << "*** DenseDynamicMapper Settings: ***" << reset << std::endl;
 	std::cout << "Max iteration count: " << this->parameters.max_iteration_threshold << std::endl;
 	std::cout << "Warp vector update threshold: " << this->parameters.max_update_length_threshold << " m, ";
 	std::cout << this->maxVectorUpdateThresholdVoxels << " voxels" << std::endl;

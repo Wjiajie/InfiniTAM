@@ -26,7 +26,7 @@
 namespace ITMLib {
 
 template<typename TVoxel, typename TWarp, typename TIndex>
-class ITMDenseDynamicMapper {
+class DenseDynamicMapper {
 
 public:
 	// region ============================================ CONSTRUCTORS / DESTRUCTORS ==================================
@@ -35,8 +35,8 @@ public:
 		Omitting a separate image size for the depth images
 		will assume same resolution as for the RGB images.
 	*/
-	explicit ITMDenseDynamicMapper(const TIndex& index);
-	~ITMDenseDynamicMapper();
+	explicit DenseDynamicMapper(const TIndex& index);
+	~DenseDynamicMapper();
 	// endregion
 	// region ========================================= INTERNAL DATA STRUCTURES =======================================
 

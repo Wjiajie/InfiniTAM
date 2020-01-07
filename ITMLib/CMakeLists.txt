@@ -62,7 +62,7 @@ set(ITMLIB_CORE_HEADERS
 	Engines/Main/ITMBasicSurfelEngine.h
 	Engines/Main/ITMDenseMapper.h
 	Engines/Main/ITMDenseSurfelMapper.h
-	Engines/Main/ITMDenseDynamicMapper.h
+    Engines/Main/DenseDynamicMapper.h
 	Engines/Main/ITMMainEngine.h
 	Engines/Main/ITMMultiEngine.h
 	Engines/Main/ITMTrackingController.h
