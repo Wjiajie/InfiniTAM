@@ -58,12 +58,8 @@ void PopulateOptionsDescription(po::options_description& arguments, RunOptions& 
 			("start_in_step_by_step_mode", po::bool_switch(&runOptions.startInStepByStep)->default_value(false),
 			 "Whether to start in step-by-step mode (dynamic fusion only).")
 
-
-
 			("fix_camera", po::bool_switch(&runOptions.fixCamera)->default_value(false),
 			 "Whether or not to turn of the camera tracking (fix the virtual camera position)")
-
-
 
 			/* Ranges for frame skipping or automated processing on launch */
 			("process_N_frames,N", po::value<int>(), "Launch immediately and process the specified number of "

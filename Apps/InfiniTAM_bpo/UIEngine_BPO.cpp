@@ -444,11 +444,11 @@ void UIEngine_BPO::RecordDepthAndRGBInputToImages() {
 	if (isRecordingImages) {
 		char str[250];
 
-		sprintf(str, "%s/%04d.pgm", output_path, currentFrameNo);
+		sprintf(str, "%s/%04d.pgm", output_path.c_str(), currentFrameNo);
 		SaveImageToFile(inputRawDepthImage, str);
 
 		if (inputRGBImage->noDims != Vector2i(0, 0)) {
-			sprintf(str, "%s/%04d.ppm", output_path, currentFrameNo);
+			sprintf(str, "%s/%04d.ppm", output_path.c_str(), currentFrameNo);
 			SaveImageToFile(inputRGBImage, str);
 		}
 	}
