@@ -44,7 +44,7 @@ private:
 	int currentColourMode;
 
 	int autoIntervalFrameStart;
-	int autoIntervalFrameCount;
+	int number_of_frames_to_process_after_launch;
 	bool saveAfterInitialProcessing = false;
 	int startedProcessingFromFrameIx = 0;
 
@@ -101,7 +101,7 @@ public:
 	float processedTime;
 	int processedFrameNo;
 	ITMLib::ITMTrackingState::TrackingResult trackingResult;
-	char* outFolder;
+	std::string output_path;
 	bool needsRefresh;
 
 	bool allocateGPU;
@@ -111,9 +111,11 @@ public:
 	ITMLib::Configuration::IndexingMethod indexingMethod;
 
 	void Initialize(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource, InputSource::IMUSourceEngine* imuSource,
-	                ITMLib::ITMMainEngine* mainEngine, const char* outFolder, MemoryDeviceType deviceType,
-	                int number_of_frames_to_process_after_launch, int index_of_first_frame, const RunOptions& options, ITMLib::ITMDynamicFusionLogger_Interface* logger,
-	                ITMLib::Configuration::IndexingMethod indexingMethod);
+	                ITMLib::ITMMainEngine* mainEngine,
+
+	                const ITMLib::Configuration& configuration,
+
+	                const RunOptions& options, ITMLib::ITMDynamicFusionLogger_Interface* logger);
 	void Shutdown();
 
 	void Run();

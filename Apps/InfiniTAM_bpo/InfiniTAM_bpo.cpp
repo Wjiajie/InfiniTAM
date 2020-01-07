@@ -156,10 +156,9 @@ int main(int argc, char** argv) {
 		XInitThreads();
 #endif
 		UIEngine_BPO::Instance().Initialize(argc, argv, imageSource, imuSource, mainEngine,
-		                                    settings.input_and_output_settings.output_path.c_str(), settings.device_type,
-		                                    settings.ui_engine_settings.number_of_frames_to_process_after_launch,
-		                                    settings.ui_engine_settings.index_of_frame_to_start_at, runOptions,
-		                                    &logger, chosenIndexingMethod);
+		                                    settings,
+		                                    runOptions,
+		                                    &logger);
 
 
 // endregion ===========================================================================================================

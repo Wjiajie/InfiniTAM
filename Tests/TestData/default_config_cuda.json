@@ -46,7 +46,8 @@
     "telemetry_settings": "",
     "input_and_output_settings": {
         "output": "output/",
-        "calibration_file_path": "calib.txt"
+        "calibration_file_path": "calib.txt",
+        "record_reconstruction_video": false
     },
     "ui_engine_settings": {
         "number_of_frames_to_process_after_launch": 0,

@@ -170,7 +170,7 @@ void UIEngine_BPO::GlutDisplayFunction() {
 		glRasterPos2f(-0.98f, -0.95f);
 		sprintf(str,
 		        "i: %d frames \t d: one step \t p: pause \t v: write video %s \t w: log 3D warps %s \t Alt+w: log 2D warps %s",
-		        uiEngine.autoIntervalFrameCount,
+		        uiEngine.number_of_frames_to_process_after_launch,
 		        uiEngine.depthVideoWriter != nullptr ? "off" : "on",
 		        uiEngine.logger->IsRecording3DSceneAndWarpProgression() ? "off" : "on",
 		        uiEngine.logger->IsRecordingScene2DSlicesWithUpdates() ? "off" : "on");
@@ -203,7 +203,7 @@ void UIEngine_BPO::GlutIdleFunction() {
 					// increment the frame counter
 					uiEngine.processedFrameNo++;
 					if ((uiEngine.processedFrameNo - uiEngine.autoIntervalFrameStart) >=
-					    uiEngine.autoIntervalFrameCount) {
+					    uiEngine.number_of_frames_to_process_after_launch) {
 						/* check whether we're done with all the frames for the automated interval processing, and,
 						 * if so, pause the program */
 						uiEngine.mainLoopAction = PROCESS_PAUSED;
@@ -224,7 +224,7 @@ void UIEngine_BPO::GlutIdleFunction() {
 			uiEngine.ProcessFrame();
 			uiEngine.processedFrameNo++;
 			uiEngine.needsRefresh = true;
-			if ((uiEngine.processedFrameNo - uiEngine.autoIntervalFrameStart) >= uiEngine.autoIntervalFrameCount) {
+			if ((uiEngine.processedFrameNo - uiEngine.autoIntervalFrameStart) >= uiEngine.number_of_frames_to_process_after_launch) {
 				uiEngine.mainLoopAction = PROCESS_PAUSED;
 				if (uiEngine.saveAfterInitialProcessing) {
 					uiEngine.mainEngine->SaveToFile();
@@ -271,7 +271,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 		switch (key) {
 			//TODO: rearrange in asciibeditc order (except fall-through cases) to make maintenance easier
 			case 'i':
-				printf("processing %d frames ...\n", uiEngine.autoIntervalFrameCount);
+				printf("processing %d frames ...\n", uiEngine.number_of_frames_to_process_after_launch);
 				uiEngine.autoIntervalFrameStart = uiEngine.processedFrameNo;
 				uiEngine.mainLoopAction = UIEngine_BPO::PROCESS_N_FRAMES;
 				break;

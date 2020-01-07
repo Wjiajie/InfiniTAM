@@ -69,17 +69,17 @@ namespace bench = ITMLib::Bench;
  * \param recordReconstructionResult start recording the reconstruction result into a video files as soon as the next frame is processed
  * set interval to this number of frames
  */
-void UIEngine_BPO::Initialize(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource,
+void UIEngine_BPO::Initialize(int& argc, char** argv,
+							  InputSource::ImageSourceEngine* imageSource,
                               InputSource::IMUSourceEngine* imuSource,
-                              ITMLib::ITMMainEngine* mainEngine, const char* outFolder,
-                              MemoryDeviceType deviceType,
-                              int number_of_frames_to_process_after_launch,
-                              int index_of_first_frame,
+                              ITMLib::ITMMainEngine* mainEngine,
+
+                              const Configuration& configuration,
+
                               const RunOptions& options,
-                              ITMLib::ITMDynamicFusionLogger_Interface* logger,
-                              ITMLib::Configuration::IndexingMethod indexingMethod) {
+                              ITMLib::ITMDynamicFusionLogger_Interface* logger) {
 	this->logger = logger;
-	this->indexingMethod = indexingMethod;
+	this->indexingMethod = configuration.indexing_method;
 
 	this->inStepByStepMode = false;
 	this->saveAfterInitialProcessing = options.saveAfterInitialProcessing;
@@ -87,7 +87,7 @@ void UIEngine_BPO::Initialize(int& argc, char** argv, InputSource::ImageSourceEn
 	this->freeviewActive = true;
 	this->integrationActive = true;
 	this->currentColourMode = 0;
-	this->autoIntervalFrameCount = number_of_frames_to_process_after_launch;
+	this->number_of_frames_to_process_after_launch = configuration.ui_engine_settings.number_of_frames_to_process_after_launch;
 
 	this->colourModes_main.emplace_back("shaded greyscale", ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST);
 	this->colourModes_main.emplace_back("integrated colours", ITMMainEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME);
@@ -106,11 +106,7 @@ void UIEngine_BPO::Initialize(int& argc, char** argv, InputSource::ImageSourceEn
 	this->imageSource = imageSource;
 	this->imuSource = imuSource;
 	this->mainEngine = mainEngine;
-	{
-		size_t len = strlen(outFolder);
-		this->outFolder = new char[len + 1];
-		strcpy(this->outFolder, outFolder);
-	}
+	this->output_path = configuration.input_and_output_settings.output_path;
 
 	int textHeight = 60; // Height of text area, 2 lines
 
@@ -143,8 +139,7 @@ void UIEngine_BPO::Initialize(int& argc, char** argv, InputSource::ImageSourceEn
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, 1);
 #endif
 
-	allocateGPU = false;
-	if (deviceType == MEMORYDEVICE_CUDA) allocateGPU = true;
+	allocateGPU = configuration.device_type == MEMORYDEVICE_CUDA;
 
 	for (int w = 0; w < NUM_WIN; w++) {
 		outImage[w] = new ITMUChar4Image(imageSource->getDepthImageSize(), true, allocateGPU);
@@ -177,21 +172,21 @@ void UIEngine_BPO::Initialize(int& argc, char** argv, InputSource::ImageSourceEn
 	sdkCreateTimer(&timer_average);
 
 	sdkResetTimer(&timer_average);
-	if (index_of_first_frame > 0) {
-		printf("Skipping the first %d frames.\n", index_of_first_frame);
-		SkipFrames(index_of_first_frame);
+	if (configuration.ui_engine_settings.index_of_frame_to_start_at > 0) {
+		printf("Skipping the first %d frames.\n", configuration.ui_engine_settings.index_of_frame_to_start_at);
+		SkipFrames(configuration.ui_engine_settings.index_of_frame_to_start_at);
 	}
 
 	if (options.startInStepByStep) {
-		mainLoopAction = autoIntervalFrameCount ? PROCESS_STEPS_CONTINUOUS : PROCESS_SINGLE_STEP;
+		mainLoopAction = number_of_frames_to_process_after_launch ? PROCESS_STEPS_CONTINUOUS : PROCESS_SINGLE_STEP;
 		outImageType[0] = this->colourMode_stepByStep.type;
 	} else {
-		mainLoopAction = autoIntervalFrameCount ? PROCESS_N_FRAMES : PROCESS_PAUSED;
+		mainLoopAction = number_of_frames_to_process_after_launch ? PROCESS_N_FRAMES : PROCESS_PAUSED;
 		outImageType[0] = this->freeviewActive ? this->colourModes_freeview[this->currentColourMode].type
 		                                       : this->colourModes_main[this->currentColourMode].type;
 	}
 
-	if (options.recordReconstructionToVideo) {
+	if (configuration.input_and_output_settings.record_reconstruction_video) {
 		this->reconstructionVideoWriter = new FFMPEGWriter();
 	}
 
@@ -295,7 +290,6 @@ void UIEngine_BPO::Shutdown() {
 	delete inputRawDepthImage;
 	delete inputIMUMeasurement;
 
-	delete[] outFolder;
 	delete saveImage;
 }
 
@@ -353,7 +347,7 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 }
 
 std::string UIEngine_BPO::GenerateNextFrameOutputPath() const {
-	fs::path path(std::string(this->outFolder) + "/Frame_" + std::to_string(GetCurrentFrameIndex() + 1));
+	fs::path path(std::string(this->output_path) + "/Frame_" + std::to_string(GetCurrentFrameIndex() + 1));
 	if (!fs::exists(path)) {
 		fs::create_directories(path);
 	}
@@ -361,7 +355,7 @@ std::string UIEngine_BPO::GenerateNextFrameOutputPath() const {
 }
 
 std::string UIEngine_BPO::GenerateCurrentFrameOutputDirectory() const {
-	fs::path path(std::string(this->outFolder) + "/Frame_" + std::to_string(GetCurrentFrameIndex()));
+	fs::path path(std::string(this->output_path) + "/Frame_" + std::to_string(GetCurrentFrameIndex()));
 	if (!fs::exists(path)) {
 		fs::create_directories(path);
 	}
@@ -412,12 +406,12 @@ void UIEngine_BPO::RecordReconstructionToVideo() {
 		mainEngine->GetImage(outImage[0], outImageType[0], &this->freeviewPose, &freeviewIntrinsics);
 		if (outImage[0]->noDims.x != 0) {
 			if (!reconstructionVideoWriter->isOpen())
-				reconstructionVideoWriter->open((std::string(this->outFolder) + "/out_reconstruction.avi").c_str(),
+				reconstructionVideoWriter->open((std::string(this->output_path) + "/out_reconstruction.avi").c_str(),
 				                                outImage[0]->noDims.x, outImage[0]->noDims.y,
 				                                false, 30);
 			//TODO This image saving/reading/saving is a production hack -Greg (GitHub:Algomorph)
 			//TODO move to a separate function and apply to all recorded video
-			std::string fileName = (std::string(this->outFolder) + "/out_reconstruction.png");
+			std::string fileName = (std::string(this->output_path) + "/out_reconstruction.png");
 			SaveImageToFile(outImage[0], fileName.c_str());
 			cv::Mat img = cv::imread(fileName, cv::IMREAD_UNCHANGED);
 			cv::putText(img, std::to_string(GetCurrentFrameIndex()), cv::Size(10, 50), cv::FONT_HERSHEY_SIMPLEX,
@@ -434,13 +428,13 @@ void UIEngine_BPO::RecordReconstructionToVideo() {
 void UIEngine_BPO::RecordDepthAndRGBInputToVideo() {
 	if ((rgbVideoWriter != nullptr) && (inputRGBImage->noDims.x != 0)) {
 		if (!rgbVideoWriter->isOpen())
-			rgbVideoWriter->open((std::string(this->outFolder) + "/out_rgb.avi").c_str(),
+			rgbVideoWriter->open((std::string(this->output_path) + "/out_rgb.avi").c_str(),
 			                     inputRGBImage->noDims.x, inputRGBImage->noDims.y, false, 30);
 		rgbVideoWriter->writeFrame(inputRGBImage);
 	}
 	if ((depthVideoWriter != nullptr) && (inputRawDepthImage->noDims.x != 0)) {
 		if (!depthVideoWriter->isOpen())
-			depthVideoWriter->open((std::string(this->outFolder) + "/out_depth.avi").c_str(),
+			depthVideoWriter->open((std::string(this->output_path) + "/out_depth.avi").c_str(),
 			                       inputRawDepthImage->noDims.x, inputRawDepthImage->noDims.y, true, 30);
 		depthVideoWriter->writeFrame(inputRawDepthImage);
 	}
@@ -450,11 +444,11 @@ void UIEngine_BPO::RecordDepthAndRGBInputToImages() {
 	if (isRecordingImages) {
 		char str[250];
 
-		sprintf(str, "%s/%04d.pgm", outFolder, currentFrameNo);
+		sprintf(str, "%s/%04d.pgm", output_path, currentFrameNo);
 		SaveImageToFile(inputRawDepthImage, str);
 
 		if (inputRGBImage->noDims != Vector2i(0, 0)) {
-			sprintf(str, "%s/%04d.ppm", outFolder, currentFrameNo);
+			sprintf(str, "%s/%04d.ppm", output_path, currentFrameNo);
 			SaveImageToFile(inputRGBImage, str);
 		}
 	}

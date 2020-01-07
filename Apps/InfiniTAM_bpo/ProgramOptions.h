@@ -27,7 +27,6 @@ namespace po = boost::program_options;
 
 struct RunOptions{
 	bool fixCamera = false;
-	bool recordReconstructionToVideo = false;
 	bool saveAfterInitialProcessing = false;
 	bool loadVolumeBeforeProcessing = false;
 	bool startInStepByStep = false;

@@ -88,19 +88,22 @@ public:
 		std::string depth_image_path_mask = "";
 		std::string mask_image_path_mask = "";
 		std::string imu_input_path = "";
+		bool record_reconstruction_video = false;
 
-		explicit InputAndOutputSettings(const po::variables_map& vm);
-		static InputAndOutputSettings BuildFromPTree(const pt::ptree& tree, const std::string& config_path);
 		InputAndOutputSettings();
 		InputAndOutputSettings(std::string output_path,
-		                       std::string calibration_file_path = "",
-		                       std::string openni_file_path = "",
-		                       std::string rgb_video_file_path = "",
-		                       std::string depth_video_file_path = "",
-		                       std::string rgb_image_path_mask = "",
-		                       std::string depth_image_path_mask = "",
-		                       std::string mask_image_path_mask = "",
-		                       std::string imu_input_path = "");
+		                       std::string calibration_file_path,
+		                       std::string openni_file_path,
+		                       std::string rgb_video_file_path,
+		                       std::string depth_video_file_path,
+		                       std::string rgb_image_path_mask,
+		                       std::string depth_image_path_mask,
+		                       std::string mask_image_path_mask,
+		                       std::string imu_input_path,
+		                       bool record_reconstruction_video);
+		explicit InputAndOutputSettings(const po::variables_map& vm);
+		static InputAndOutputSettings BuildFromPTree(const pt::ptree& tree, const std::string& config_path);
+
 		friend bool operator==(const InputAndOutputSettings& ts1, const InputAndOutputSettings& ts2);
 		friend std::ostream& operator<<(std::ostream& out, const InputAndOutputSettings& ts);
 		pt::ptree ToPTree(const std::string& path) const;

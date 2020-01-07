@@ -25,7 +25,6 @@ void PopulateOptionsDescription(po::options_description& arguments, RunOptions& 
 			  "Configuration file in JSON format, e.g.  ./default_config_cuda.json "
 			  "WARNING: using this option will invalidate any other command line arguments.")
 			("calibration_file,c", po::value<std::string>(), "Full path to the calibration file, e.g.: ./Files/Teddy/calib.txt")
-
 			("input_path,i", po::value<std::vector<std::string>>(), "Input files/paths. 0-3 total arguments. "
 			                                                        "Usage scenarios:\n\n"
 			                                                        "(0) No arguments: tries to get frames from attached device (OpenNI, "
@@ -54,7 +53,7 @@ void PopulateOptionsDescription(po::options_description& arguments, RunOptions& 
 			("index", po::value<std::string>()->default_value("hash"), "Indexing method. May be one of [hash, array].")
 			("device", po::value<std::string>()->default_value("CPU"), "Compute device. May be one of [CPU, CUDA]")
 
-			("record_reconstruction_video", po::bool_switch(&runOptions.recordReconstructionToVideo)->default_value(false),
+			("record_reconstruction_video", po::bool_switch()->default_value(false),
 			 "Whether to record the reconstruction rendering to video after each frame is processed.")
 			("start_in_step_by_step_mode", po::bool_switch(&runOptions.startInStepByStep)->default_value(false),
 			 "Whether to start in step-by-step mode (dynamic fusion only).")

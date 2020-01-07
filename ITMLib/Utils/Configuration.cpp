@@ -694,7 +694,10 @@ bool isPathMask(const std::string& arg) {
 Configuration::InputAndOutputSettings::InputAndOutputSettings(const po::variables_map& vm) :
 		output_path(vm["output"].empty() ? InputAndOutputSettings().output_path : vm["output"].as<std::string>()),
 		calibration_file_path(vm["calibration_file"].empty() ? InputAndOutputSettings().calibration_file_path
-		                                                     : vm["calibration_file"].as<std::string>()) {
+		                                                     : vm["calibration_file"].as<std::string>()),
+         record_reconstruction_video(vm["record_reconstruction_video"].empty() ?
+         InputAndOutputSettings().record_reconstruction_video  : vm["record_reconstruction_video"].as<bool>())
+        {
 	std::vector<std::string> inputPaths;
 	if (vm.count("input_path")) {
 		inputPaths = vm["input_path"].as<std::vector<std::string>>();
@@ -731,7 +734,8 @@ Configuration::InputAndOutputSettings::InputAndOutputSettings(const po::variable
 
 Configuration::InputAndOutputSettings::InputAndOutputSettings() :
 		output_path("output/"),
-		calibration_file_path("calib.txt") {}
+		calibration_file_path("calib.txt"),
+		record_reconstruction_video(false){}
 
 Configuration::InputAndOutputSettings::InputAndOutputSettings(std::string output_path,
                                                               std::string calibration_file_path,
@@ -741,7 +745,8 @@ Configuration::InputAndOutputSettings::InputAndOutputSettings(std::string output
                                                               std::string rgb_image_path_mask,
                                                               std::string depth_image_path_mask,
                                                               std::string mask_image_path_mask,
-                                                              std::string imu_input_path) :
+                                                              std::string imu_input_path,
+                                                              bool record_reconstruction_video) :
 		output_path(std::move(output_path)),
 		calibration_file_path(std::move(calibration_file_path)),
 		openni_file_path(std::move(openni_file_path)),
@@ -750,7 +755,9 @@ Configuration::InputAndOutputSettings::InputAndOutputSettings(std::string output
 		rgb_image_path_mask(std::move(rgb_image_path_mask)),
 		depth_image_path_mask(std::move(depth_image_path_mask)),
 		mask_image_path_mask(std::move(mask_image_path_mask)),
-		imu_input_path(std::move(imu_input_path)) {}
+		imu_input_path(std::move(imu_input_path)),
+		record_reconstruction_video(record_reconstruction_video)
+		{}
 
 std::string preprocess_path(const std::string& path, const std::string& config_path) {
 	const std::regex configuration_directory_regex("^<CONFIGURATION_DIRECTORY>");
@@ -800,6 +807,7 @@ Configuration::InputAndOutputSettings::BuildFromPTree(const pt::ptree& tree, con
 	depth_image_path_mask = value_or_empty_string(tree.get_optional<std::string>("depth_image_path_mask"));
 	mask_image_path_mask = value_or_empty_string(tree.get_optional<std::string>("mask_image_path_mask"));
 	imu_input_path = value_or_empty_string(tree.get_optional<std::string>("imp_input_path"));
+	auto record_reconstruction_video = tree.get_optional<bool>("record_reconstruction_video");
 	InputAndOutputSettings default_io_settings;
 
 	return {output_path_opt ? preprocess_path(output_path_opt.get(), config_path) : default_io_settings.output_path,
@@ -810,7 +818,8 @@ Configuration::InputAndOutputSettings::BuildFromPTree(const pt::ptree& tree, con
 	        rgb_image_path_mask,
 	        depth_image_path_mask,
 	        mask_image_path_mask,
-	        imu_input_path};
+	        imu_input_path,
+	        record_reconstruction_video ? record_reconstruction_video.get() : default_io_settings.record_reconstruction_video};
 }
 
 pt::ptree Configuration::InputAndOutputSettings::ToPTree(const std::string& path) const {
@@ -829,6 +838,7 @@ pt::ptree Configuration::InputAndOutputSettings::ToPTree(const std::string& path
 	add_to_tree_if_not_empty(tree, "depth_image_path_mask", depth_image_path_mask);
 	add_to_tree_if_not_empty(tree, "mask_image_path_mask", mask_image_path_mask);
 	add_to_tree_if_not_empty(tree, "imu_input_path", imu_input_path);
+	tree.add("record_reconstruction_video", this->record_reconstruction_video);
 	return tree;
 }
 
@@ -843,7 +853,9 @@ bool operator==(const Configuration::InputAndOutputSettings& ios1, const Configu
 	ios1.rgb_image_path_mask == ios2.rgb_image_path_mask &&
 	ios1.depth_image_path_mask == ios2.depth_image_path_mask &&
 	ios1.mask_image_path_mask == ios2.mask_image_path_mask &&
-	ios1.imu_input_path == ios2.imu_input_path;
+	ios1.imu_input_path == ios2.imu_input_path &&
+	ios1.record_reconstruction_video == ios2.record_reconstruction_video
+	;
 }
 
 std::ostream& operator<<(std::ostream& out, const Configuration::InputAndOutputSettings& ios) {
@@ -851,6 +863,7 @@ std::ostream& operator<<(std::ostream& out, const Configuration::InputAndOutputS
 	pt::write_json_no_quotes(out, tree, true);
 	return out;
 }
+
 } // namespace ITMLib
 
 // endregion ===========================================================================================================
