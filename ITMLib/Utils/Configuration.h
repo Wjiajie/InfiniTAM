@@ -39,11 +39,11 @@ namespace po = boost::program_options;
 namespace pt = boost::property_tree;
 
 #define VERBOSITY_LEVEL_ENUM_DESCRIPTION VerbosityLevel, \
-	(VERBOSITY_SILENT, "silent", "SILENT", "VERBOSITY_SILENT"), \
-	(VERBOSITY_TOP_LEVEL, "top_level", "TOP_LEVEL", "Top-level operations", "VERBOSITY_TOP_LEVEL", "top-level", "top-level operations"), \
-	(VERBOSITY_PER_FRAME, "per_frame", "PER_FRAME", "Per-frame operations", "VERBOSITY_PER_FRAME", "per-frame", "per-frame operations"), \
-	(VERBOSITY_PER_ITERATION, "per_iteration", "PER_ITERATION", "Per-iteration operations", "VERBOSITY_PER_ITERATION", "per-iteration", "per-iteration operations"), \
-	(VERBOSITY_FOCUS_SPOTS, "focus_spots", "FOCUS_SPOTS", "focus_coordinates", "Interesting details", "trouble spots")
+    (VERBOSITY_SILENT, "silent", "SILENT", "VERBOSITY_SILENT"), \
+    (VERBOSITY_TOP_LEVEL, "top_level", "TOP_LEVEL", "Top-level operations", "VERBOSITY_TOP_LEVEL", "top-level", "top-level operations"), \
+    (VERBOSITY_PER_FRAME, "per_frame", "PER_FRAME", "Per-frame operations", "VERBOSITY_PER_FRAME", "per-frame", "per-frame operations"), \
+    (VERBOSITY_PER_ITERATION, "per_iteration", "PER_ITERATION", "Per-iteration operations", "VERBOSITY_PER_ITERATION", "per-iteration", "per-iteration operations"), \
+    (VERBOSITY_FOCUS_SPOTS, "focus_spots", "FOCUS_SPOTS", "focus_coordinates", "Interesting details", "trouble spots")
 
 namespace ITMLib {
 class Configuration {
@@ -74,7 +74,7 @@ public:
 		INDEX_ARRAY
 	};
 
-	DECLARE_SERIALIZABLE_ENUM(VERBOSITY_LEVEL_ENUM_DESCRIPTION )
+	DECLARE_SERIALIZABLE_ENUM(VERBOSITY_LEVEL_ENUM_DESCRIPTION)
 
 	//endregion ========================================================================================================
 
@@ -85,69 +85,30 @@ public:
 			(bool, save_benchmarks_to_disk, false, PRIMITIVE)
 	);
 
-	struct InputAndOutputSettings_Paths {
-		/// Where to write any kind of output (intended to be used application-wise)
-		const std::string output_path;
-		std::string calibration_file_path;
-		std::string openni_file_path = "";
-		std::string rgb_video_file_path = "";
-		std::string depth_video_file_path = "";
-		std::string rgb_image_path_mask = "";
-		std::string depth_image_path_mask = "";
-		std::string mask_image_path_mask = "";
-		std::string imu_input_path = "";
-
-		InputAndOutputSettings_Paths();
-		InputAndOutputSettings_Paths(std::string output_path,
-		                             std::string calibration_file_path,
-		                             std::string openni_file_path,
-		                             std::string rgb_video_file_path,
-		                             std::string depth_video_file_path,
-		                             std::string rgb_image_path_mask,
-		                             std::string depth_image_path_mask,
-		                             std::string mask_image_path_mask,
-		                             std::string imu_input_path);
-		explicit InputAndOutputSettings_Paths(const po::variables_map& vm);
-		static InputAndOutputSettings_Paths BuildFromPTree(const pt::ptree& tree, const std::string& config_path);
-
-		friend bool operator==(const InputAndOutputSettings_Paths& ts1, const InputAndOutputSettings_Paths& ts2);
-		friend std::ostream& operator<<(std::ostream& out, const InputAndOutputSettings_Paths& ts);
-		pt::ptree ToPTree(const std::string& config_path) const;
-	};
+	GENERATE_SERIALIZABLE_STRUCT(
+		Paths,
+		(std::string, output_path , "", PATH),
+		(std::string, calibration_file_path , "", PATH),
+		(std::string, openni_file_path , "", PATH),
+		(std::string, rgb_video_file_path , "", PATH),
+		(std::string, depth_video_file_path , "", PATH),
+		(std::string, rgb_image_path_mask , "", PATH),
+		(std::string, depth_image_path_mask , "", PATH),
+		(std::string, mask_image_path_mask , "", PATH),
+		(std::string, imu_input_path , "", PATH)
+	);
 
 	GENERATE_SERIALIZABLE_STRUCT(
 			TelemetrySettings,
-			///For focus_coordinates to be used, VerbosityLevel must be set to VERBOSITY_FOCUS_SPOTS or above
+	///For focus_coordinates to be used, VerbosityLevel must be set to VERBOSITY_FOCUS_SPOTS or above
 			(Vector3i, focus_coordinates, Vector3i(0), VECTOR)
 	);
 
-//	struct TelemetrySettings {
-//		explicit TelemetrySettings(const po::variables_map& vm);
-//		static TelemetrySettings BuildFromPTree(const pt::ptree& tree);
-//		TelemetrySettings();
-//		TelemetrySettings(bool focus_coordinates_specified,
-//		                  Vector3i focus_coordinates = Vector3i(0));
-//		friend bool operator==(const TelemetrySettings& ts1, const TelemetrySettings& ts2);
-//		friend std::ostream& operator<<(std::ostream& out, const TelemetrySettings& ts);
-//		pt::ptree ToPTree() const;
-//
-//		/// Whether telemetry / diagnostics / logging for a trouble spot is enabled
-//		bool focus_coordinates_specified = false;
-//		/// A trouble spot for additional telemetry / diagnostics / loggging
-//		Vector3i focus_coordinates;
-//	};
-	
-	struct UIEngineSettings{
-		UIEngineSettings();
-		UIEngineSettings(int number_of_frames_to_process_after_launch, int index_of_frame_to_start_at);
-		explicit UIEngineSettings(const po::variables_map& vm);
-		static UIEngineSettings BuildFromPTree(const pt::ptree& tree);
-		pt::ptree ToPTree() const;
-		friend bool operator==(const UIEngineSettings& uiEngineSettings1, const UIEngineSettings& uiEngineSettings2);
-		friend std::ostream& operator<<(std::ostream& out, const UIEngineSettings& uiEngineSettings);
-		int number_of_frames_to_process_after_launch;
-		int index_of_frame_to_start_at;
-	};
+	GENERATE_SERIALIZABLE_STRUCT(
+			UIEngineSettings,
+			(int, number_of_frames_to_process_after_launch, 0, PRIMITIVE),
+			(int, index_of_frame_to_start_at, 0, PRIMITIVE)
+	);
 
 	Configuration();
 	~Configuration() = default;
@@ -159,7 +120,7 @@ public:
 	              SlavchevaSurfaceTracker::Switches slavcheva_switches,
 	              Configuration::TelemetrySettings telemetry_settings,
 	              Configuration::InputAndOutputSettings input_and_output_settings,
-	              Configuration::InputAndOutputSettings_Paths input_and_output_settings_paths,
+	              Configuration::Paths input_and_output_settings_paths,
 	              Configuration::UIEngineSettings ui_engine_settings,
 	              NonRigidTrackingParameters non_rigid_tracking_parameters, bool skip_points,
 	              bool create_meshing_engine, MemoryDeviceType device_type, bool use_approximate_raycast,
@@ -197,7 +158,7 @@ public:
 	TelemetrySettings telemetry_settings;
 	/// Input / output paths
 	const InputAndOutputSettings input_and_output_settings;
-	const InputAndOutputSettings_Paths input_and_output_settings_paths;
+	const Paths input_and_output_settings_paths;
 	const UIEngineSettings ui_engine_settings;
 	const NonRigidTrackingParameters non_rigid_tracking_parameters;
 	/// For ITMColorTracker: skips every other point when using the colour renderer for creating a point cloud
