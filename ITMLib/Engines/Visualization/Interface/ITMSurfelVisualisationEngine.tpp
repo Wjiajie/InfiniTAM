@@ -43,7 +43,7 @@ void ITMSurfelVisualisationEngine<TSurfel>::FindSurfaceSuper(const ITMSurfelScen
     intrinsics,
     renderState->GetIndexImageSuper()->noDims.x,
     renderState->GetIndexImageSuper()->noDims.y,
-    scene->GetParams().supersamplingFactor,
+    scene->GetParams().supersampling_factor,
     renderState->GetIndexImageSuper()->GetData(memoryType),
     false,
     unstableSurfelRenderingMode,

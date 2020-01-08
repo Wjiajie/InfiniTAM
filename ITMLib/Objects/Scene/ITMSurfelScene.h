@@ -5,7 +5,7 @@
 #include <cassert>
 
 #include "../../../ORUtils/MemoryBlock.h"
-#include "../../Utils/ITMSurfelSceneParameters.h"
+#include "../../Utils/SurfelVolumeParameters.h"
 
 namespace ITMLib
 {
@@ -28,7 +28,7 @@ namespace ITMLib
     MemoryDeviceType m_memoryType;
 
     /** The scene parameters. */
-    const ITMSurfelSceneParameters *m_params;
+    const SurfelVolumeParameters *m_params;
 
     /** The number of surfels currently in the scene. */
     size_t m_surfelCount;
@@ -44,7 +44,7 @@ namespace ITMLib
      * \param params      The scene parameters.
      * \param memoryType  The type of memory in which to store the scene.
      */
-    ITMSurfelScene(const ITMSurfelSceneParameters *params, MemoryDeviceType memoryType)
+    ITMSurfelScene(const SurfelVolumeParameters *params, MemoryDeviceType memoryType)
       : m_memoryType(memoryType),
         m_params(params),
         m_surfelCount(0),
@@ -101,7 +101,7 @@ namespace ITMLib
      *
      * \return  The scene parameters.
      */
-    const ITMSurfelSceneParameters& GetParams() const
+    const SurfelVolumeParameters& GetParams() const
     {
       return *m_params;
     }

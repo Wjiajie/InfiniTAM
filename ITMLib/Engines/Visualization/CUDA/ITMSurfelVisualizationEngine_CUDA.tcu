@@ -176,7 +176,7 @@ void ITMSurfelVisualizationEngine_CUDA<TSurfel>::CreateICPMaps(const ITMSurfelSc
 {
   const Matrix4f& invT = trackingState->pose_d->GetM();
   const int pixelCount = static_cast<int>(renderState->GetIndexImage()->dataSize);
-  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
+  const SurfelVolumeParameters& sceneParams = scene->GetParams();
 
   int threadsPerBlock = 256;
   int numBlocks = (pixelCount + threadsPerBlock - 1) / threadsPerBlock;
@@ -186,8 +186,8 @@ void ITMSurfelVisualizationEngine_CUDA<TSurfel>::CreateICPMaps(const ITMSurfelSc
     scene->GetSurfels()->GetData(MEMORYDEVICE_CUDA),
     renderState->GetIndexImage()->GetData(MEMORYDEVICE_CUDA),
     invT,
-    sceneParams.trackingSurfelMaxDepth,
-    sceneParams.trackingSurfelMinConfidence,
+    sceneParams.tracking_surfel_max_depth,
+    sceneParams.tracking_surfel_min_confidence,
     trackingState->pointCloud->locations->GetData(MEMORYDEVICE_CUDA),
     trackingState->pointCloud->colours->GetData(MEMORYDEVICE_CUDA)
   );
@@ -226,7 +226,7 @@ void ITMSurfelVisualizationEngine_CUDA<TSurfel>::RenderImage(const ITMSurfelScen
 
   Vector4u *outputImagePtr = outputImage->GetData(MEMORYDEVICE_CUDA);
   const int pixelCount = static_cast<int>(outputImage->dataSize);
-  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
+  const SurfelVolumeParameters& sceneParams = scene->GetParams();
   const unsigned int *surfelIndexImagePtr = renderState->GetIndexImage()->GetData(MEMORYDEVICE_CUDA);
   const TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CUDA);
 
@@ -243,7 +243,7 @@ void ITMSurfelVisualizationEngine_CUDA<TSurfel>::RenderImage(const ITMSurfelScen
     }
     case Base::RENDER_CONFIDENCE:
     {
-      ck_shade_pixel_confidence<<<numBlocks,threadsPerBlock>>>(pixelCount, surfelIndexImagePtr, surfels, sceneParams.stableSurfelConfidence, outputImagePtr);
+      ck_shade_pixel_confidence<<<numBlocks,threadsPerBlock>>>(pixelCount, surfelIndexImagePtr, surfels, sceneParams.stable_surfel_confidence, outputImagePtr);
       ORcudaKernelCheck;
       break;
     }
@@ -300,7 +300,7 @@ void ITMSurfelVisualizationEngine_CUDA<TSurfel>::MakeIndexImage(const ITMSurfelS
   );
   ORcudaKernelCheck;
 
-  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
+  const SurfelVolumeParameters& sceneParams = scene->GetParams();
   const int surfelCount = static_cast<int>(scene->GetSurfelCount());
   if(surfelCount == 0) return;
 
@@ -316,8 +316,8 @@ void ITMSurfelVisualizationEngine_CUDA<TSurfel>::MakeIndexImage(const ITMSurfelS
     scaleFactor,
     useRadii,
     unstableSurfelRenderingMode,
-    sceneParams.stableSurfelConfidence,
-    sceneParams.unstableSurfelZOffset,
+    sceneParams.stable_surfel_confidence,
+    sceneParams.unstable_surfel_z_offset,
     depthBuffer
   );
   ORcudaKernelCheck;
@@ -333,8 +333,8 @@ void ITMSurfelVisualizationEngine_CUDA<TSurfel>::MakeIndexImage(const ITMSurfelS
     depthBuffer,
     useRadii,
     unstableSurfelRenderingMode,
-    sceneParams.stableSurfelConfidence,
-    sceneParams.unstableSurfelZOffset,
+    sceneParams.stable_surfel_confidence,
+    sceneParams.unstable_surfel_z_offset,
     surfelIndexImage
   );
   ORcudaKernelCheck;

@@ -40,7 +40,7 @@ namespace ITMLib
     virtual void MergeSimilarSurfels(ITMSurfelScene<TSurfel> *scene, const ITMSurfelRenderState *renderState) const;
 
     /** Override */
-    virtual void PreprocessDepthMap(const ITMView *view, const ITMSurfelSceneParameters& sceneParams) const;
+    virtual void PreprocessDepthMap(const ITMView *view, const SurfelVolumeParameters& sceneParams) const;
 
     /** Override */
     virtual void RemoveMarkedSurfels(ITMSurfelScene<TSurfel> *scene) const;

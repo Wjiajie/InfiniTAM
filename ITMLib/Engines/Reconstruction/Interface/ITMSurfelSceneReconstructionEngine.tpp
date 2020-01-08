@@ -52,7 +52,7 @@ void ITMSurfelSceneReconstructionEngine<TSurfel>::IntegrateIntoScene(ITMSurfelSc
   FuseMatchedPoints(scene, view, trackingState);
   AddNewSurfels(scene, view, trackingState);
   MarkBadSurfels(scene);
-  if(scene->GetParams().useSurfelMerging) MergeSimilarSurfels(scene, renderState);
+  if(scene->GetParams().use_surfel_merging) MergeSimilarSurfels(scene, renderState);
   RemoveMarkedSurfels(scene);
 
   ++m_timestamp;

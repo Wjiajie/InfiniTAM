@@ -28,7 +28,7 @@
 
 //local
 #include "VoxelVolumeParameters.h"
-#include "ITMSurfelSceneParameters.h"
+#include "SurfelVolumeParameters.h"
 #include "../../ORUtils/MemoryDeviceType.h"
 #include "ITMMath.h"
 #include "../SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
@@ -147,7 +147,7 @@ public:
 	static Configuration& get();
 	explicit Configuration(const po::variables_map& vm);
 	Configuration(VoxelVolumeParameters voxel_volume_parameters,
-	              ITMSurfelSceneParameters surfel_volume_parameters,
+	              SurfelVolumeParameters surfel_volume_parameters,
 	              SlavchevaSurfaceTracker::Parameters slavcheva_parameters,
 	              SlavchevaSurfaceTracker::Switches slavcheva_switches,
 	              Configuration::TelemetrySettings telemetry_settings,
@@ -181,7 +181,7 @@ public:
 
 	/// Scene-specific parameters such as voxel size
 	const VoxelVolumeParameters voxel_volume_parameters;
-	const ITMSurfelSceneParameters surfel_volume_parameters;
+	const SurfelVolumeParameters surfel_volume_parameters;
 	/// Surface tracking energy parameters
 	const SlavchevaSurfaceTracker::Parameters slavcheva_parameters;
 	/// Surface tracking energy switches

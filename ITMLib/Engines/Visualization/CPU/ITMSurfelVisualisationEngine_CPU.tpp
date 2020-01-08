@@ -48,7 +48,7 @@ void ITMSurfelVisualizationEngine_CPU<TSurfel>::CreateICPMaps(const ITMSurfelSce
   Vector4f *normalsMap = trackingState->pointCloud->colours->GetData(MEMORYDEVICE_CPU);
   const int pixelCount = static_cast<int>(renderState->GetIndexImage()->dataSize);
   Vector4f *pointsMap = trackingState->pointCloud->locations->GetData(MEMORYDEVICE_CPU);
-  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
+  const SurfelVolumeParameters& sceneParams = scene->GetParams();
   const unsigned int *surfelIndexImage = renderState->GetIndexImage()->GetData(MEMORYDEVICE_CPU);
   const TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CPU);
 
@@ -57,7 +57,7 @@ void ITMSurfelVisualizationEngine_CPU<TSurfel>::CreateICPMaps(const ITMSurfelSce
 #endif
   for(int locId = 0; locId < pixelCount; ++locId)
   {
-    copy_surfel_data_to_icp_maps(locId, surfels, surfelIndexImage, invT, sceneParams.trackingSurfelMaxDepth, sceneParams.trackingSurfelMinConfidence, pointsMap, normalsMap);
+    copy_surfel_data_to_icp_maps(locId, surfels, surfelIndexImage, invT, sceneParams.tracking_surfel_max_depth, sceneParams.tracking_surfel_min_confidence, pointsMap, normalsMap);
   }
 }
 
@@ -89,7 +89,7 @@ void ITMSurfelVisualizationEngine_CPU<TSurfel>::RenderImage(const ITMSurfelScene
 
   Vector4u *outputImagePtr = outputImage->GetData(MEMORYDEVICE_CPU);
   const int pixelCount = static_cast<int>(outputImage->dataSize);
-  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
+  const SurfelVolumeParameters& sceneParams = scene->GetParams();
   const unsigned int *surfelIndexImagePtr = renderState->GetIndexImage()->GetData(MEMORYDEVICE_CPU);
   const TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CPU);
 
@@ -113,7 +113,7 @@ void ITMSurfelVisualizationEngine_CPU<TSurfel>::RenderImage(const ITMSurfelScene
 #endif
       for(int locId = 0; locId < pixelCount; ++locId)
       {
-        shade_pixel_confidence(locId, surfelIndexImagePtr, surfels, sceneParams.stableSurfelConfidence, outputImagePtr);
+        shade_pixel_confidence(locId, surfelIndexImagePtr, surfels, sceneParams.stable_surfel_confidence, outputImagePtr);
       }
       break;
     }
@@ -180,7 +180,7 @@ void ITMSurfelVisualizationEngine_CPU<TSurfel>::MakeIndexImage(const ITMSurfelSc
   }
 
   const Matrix4f& invT = pose->GetM();
-  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
+  const SurfelVolumeParameters& sceneParams = scene->GetParams();
   const int surfelCount = static_cast<int>(scene->GetSurfelCount());
   const TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CPU);
 
@@ -189,7 +189,7 @@ void ITMSurfelVisualizationEngine_CPU<TSurfel>::MakeIndexImage(const ITMSurfelSc
   {
     update_depth_buffer_for_surfel(
       surfelId, surfels, invT, *intrinsics, width, height, scaleFactor, useRadii, unstableSurfelRenderingMode,
-      sceneParams.stableSurfelConfidence, sceneParams.unstableSurfelZOffset, depthBuffer
+      sceneParams.stable_surfel_confidence, sceneParams.unstable_surfel_z_offset, depthBuffer
     );
   }
 
@@ -198,7 +198,7 @@ void ITMSurfelVisualizationEngine_CPU<TSurfel>::MakeIndexImage(const ITMSurfelSc
   {
     update_index_image_for_surfel(
       surfelId, surfels, invT, *intrinsics, width, height, scaleFactor, depthBuffer, useRadii, unstableSurfelRenderingMode,
-      sceneParams.stableSurfelConfidence, sceneParams.unstableSurfelZOffset, surfelIndexImage
+      sceneParams.stable_surfel_confidence, sceneParams.unstable_surfel_z_offset, surfelIndexImage
     );
   }
 }

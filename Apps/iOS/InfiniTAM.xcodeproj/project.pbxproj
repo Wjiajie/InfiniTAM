@@ -370,7 +370,7 @@
 		A6AC2BFF1CBD34A7000CC89D /* ITMMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMMath.h; sourceTree = "<group>"; };
 		A6AC2C001CBD34A7000CC89D /* ITMPixelUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMPixelUtils.h; sourceTree = "<group>"; };
 		A6AC2C011CBD34A7000CC89D /* VoxelVolumeParameters.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VoxelVolumeParameters.h; sourceTree = "<group>"; };
-		A6AC2C021CBD34A7000CC89D /* ITMSurfelSceneParameters.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMSurfelSceneParameters.h; sourceTree = "<group>"; };
+		A6AC2C021CBD34A7000CC89D /* SurfelVolumeParameters.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SurfelVolumeParameters.h; sourceTree = "<group>"; };
 		A6AC2C481CBD3ADF000CC89D /* MetalInstantiations.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MetalInstantiations.mm; sourceTree = "<group>"; };
 		A6CA7EF81A0FDE0C0070848F /* iPhone_Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = iPhone_Main.storyboard; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -1145,7 +1145,7 @@
 				A6AC2BFF1CBD34A7000CC89D /* ITMMath.h */,
 				A6AC2C001CBD34A7000CC89D /* ITMPixelUtils.h */,
 				A6AC2C011CBD34A7000CC89D /* VoxelVolumeParameters.h */,
-				A6AC2C021CBD34A7000CC89D /* ITMSurfelSceneParameters.h */,
+				A6AC2C021CBD34A7000CC89D /* SurfelVolumeParameters.h */,
 			);
 			path = Utils;
 			sourceTree = "<group>";

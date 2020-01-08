@@ -159,7 +159,7 @@ ptree_to_optional_serializable_struct(const pt::ptree& tree, pt::ptree::key_type
 			boost::property_tree::write_json_no_quotes(out, tree, true);                                               \
 			return out;                                                                                                \
 		}                                                                                                              \
-	};
+	}
 
 // endregion
 // region ================== SERIALIZABLE ENUM TEMPLATED FUNCTION DEFINITIONS ===
@@ -189,35 +189,11 @@ static boost::optional<TEnum> ptree_to_optional_enumerator(const pt::ptree& ptre
 
 // region ================== SERIALIZABLE PATH FUNCTION DEFINITIONS ==============
 
-std::string preprocess_path(const std::string& path, const std::string& origin) {
-	const std::regex configuration_directory_regex("^<CONFIGURATION_DIRECTORY>");
-	std::string resulting_path;
-	if (origin != "" && std::regex_search(path, configuration_directory_regex)) {
-		std::string cleared = std::regex_replace(path, configuration_directory_regex, "");
-		resulting_path = (boost::filesystem::path(origin).parent_path() / boost::filesystem::path(cleared)).string();
-	} else {
-		resulting_path = path;
-	}
-	return resulting_path;
-}
+std::string preprocess_path(const std::string& path, const std::string& origin);
 
-std::string postprocess_path(const std::string& path, const std::string& origin) {
-	if (origin.empty()) return path;
-	const std::string configuration_directory_substitute = "<CONFIGURATION_DIRECTORY>";
-	std::regex configuration_directory_regex(boost::filesystem::path(origin).parent_path().string());
-	std::string resulting_path;
-	if (origin != "" && std::regex_search(path, configuration_directory_regex)) {
-		resulting_path = std::regex_replace(path, configuration_directory_regex, configuration_directory_substitute);
-	} else {
-		resulting_path = path;
-	}
-	return resulting_path;
-}
+std::string postprocess_path(const std::string& path, const std::string& origin);
 
-boost::optional<std::string> ptree_to_optional_path(const boost::property_tree::ptree& tree, const pt::ptree::key_type& key, const std::string& origin ){
-	boost::optional<std::string> optional = tree.get_optional<std::string>(key);
-	return optional ? boost::optional<std::string>(preprocess_path(optional.get(), origin)) : boost::optional<std::string>{};
-}
+boost::optional<std::string> ptree_to_optional_path(const boost::property_tree::ptree& tree, const pt::ptree::key_type& key, const std::string& origin );
 
 // endregion
 // region ================== SERIALIZABLE ENUM PER-ENUMERATOR MACROS =============

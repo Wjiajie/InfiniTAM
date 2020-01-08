@@ -376,7 +376,7 @@ Configuration::Configuration(const po::variables_map& vm) :
 
 
 Configuration::Configuration(VoxelVolumeParameters voxel_volume_parameters,
-                             ITMSurfelSceneParameters surfel_volume_parameters,
+                             SurfelVolumeParameters surfel_volume_parameters,
                              SlavchevaSurfaceTracker::Parameters slavcheva_parameters,
                              SlavchevaSurfaceTracker::Switches slavcheva_switches,
                              Configuration::TelemetrySettings telemetry_settings,
@@ -522,8 +522,8 @@ Configuration* Configuration::from_json_file(const std::string& path) {
 
 	boost::optional<VoxelVolumeParameters> voxel_volume_parameters =
 			as_optional_parsable<VoxelVolumeParameters>(tree, "voxel_volume_parameters");
-	boost::optional<ITMSurfelSceneParameters> surfel_volume_parameters =
-			as_optional_parsable<ITMSurfelSceneParameters>(tree, "surfel_volume_parameters");
+	boost::optional<SurfelVolumeParameters> surfel_volume_parameters =
+			as_optional_parsable<SurfelVolumeParameters>(tree, "surfel_volume_parameters");
 	boost::optional<SlavchevaSurfaceTracker::ConfigurationMode> mode_opt =
 			optional_enum_value_from_ptree<SlavchevaSurfaceTracker::ConfigurationMode>(tree, "slavcheva.preset");
 	SlavchevaSurfaceTracker::ConfigurationMode mode = mode_opt ? mode_opt.get()

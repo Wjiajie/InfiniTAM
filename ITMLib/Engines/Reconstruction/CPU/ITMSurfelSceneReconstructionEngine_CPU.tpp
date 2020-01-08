@@ -40,7 +40,7 @@ void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::AddNewSurfels(ITMSurfelSce
   const Vector3f *normalMap = this->m_normalMapMB->GetData(MEMORYDEVICE_CPU);
   const Vector4f& projParamsRGB = view->calib.intrinsics_rgb.projectionParamsSimple.all;
   const float *radiusMap = this->m_radiusMapMB->GetData(MEMORYDEVICE_CPU);
-  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
+  const SurfelVolumeParameters& sceneParams = scene->GetParams();
   const Matrix4f T = trackingState->pose_d->GetInvM();
   const Vector4f *vertexMap = this->m_vertexMapMB->GetData(MEMORYDEVICE_CPU);
 
@@ -52,8 +52,8 @@ void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::AddNewSurfels(ITMSurfelSce
     add_new_surfel(
       locId, T, this->m_timestamp, newPointsMask, newPointsPrefixSum, vertexMap, normalMap, radiusMap, colourMap,
       view->depth->noDims.x, view->depth->noDims.y, view->rgb->noDims.x, view->rgb->noDims.y,
-      depthToRGB, projParamsRGB, sceneParams.useGaussianSampleConfidence, sceneParams.gaussianConfidenceSigma,
-      sceneParams.maxSurfelRadius, newSurfels
+      depthToRGB, projParamsRGB, sceneParams.use_gaussian_sample_confidence, sceneParams.gaussian_confidence_sigma,
+      sceneParams.max_surfel_radius, newSurfels
     );
   }
 }
@@ -70,7 +70,7 @@ void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::FindCorrespondingSurfels(c
   unsigned short *newPointsMask = this->m_newPointsMaskMB->GetData(MEMORYDEVICE_CPU);
   const Vector3f *normalMap = this->m_normalMapMB->GetData(MEMORYDEVICE_CPU);
   const int pixelCount = static_cast<int>(view->depth->dataSize);
-  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
+  const SurfelVolumeParameters& sceneParams = scene->GetParams();
   const TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CPU);
 
 #ifdef WITH_OPENMP
@@ -78,7 +78,7 @@ void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::FindCorrespondingSurfels(c
 #endif
   for(int locId = 0; locId < pixelCount; ++locId)
   {
-    find_corresponding_surfel(locId, invT, depthMap, depthMapWidth, normalMap, indexImageSuper, sceneParams.supersamplingFactor, surfels, correspondenceMap, newPointsMask);
+    find_corresponding_surfel(locId, invT, depthMap, depthMapWidth, normalMap, indexImageSuper, sceneParams.supersampling_factor, surfels, correspondenceMap, newPointsMask);
   }
 }
 
@@ -96,7 +96,7 @@ void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::FuseMatchedPoints(ITMSurfe
   const int pixelCount = static_cast<int>(view->depth->dataSize);
   const Vector4f& projParamsRGB = view->calib.intrinsics_rgb.projectionParamsSimple.all;
   const float *radiusMap = this->m_radiusMapMB->GetData(MEMORYDEVICE_CPU);
-  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
+  const SurfelVolumeParameters& sceneParams = scene->GetParams();
   TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CPU);
   const Matrix4f T = trackingState->pose_d->GetInvM();
   const Vector4f *vertexMap = this->m_vertexMapMB->GetData(MEMORYDEVICE_CPU);
@@ -108,7 +108,7 @@ void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::FuseMatchedPoints(ITMSurfe
   {
     fuse_matched_point(
       locId, correspondenceMap, T, this->m_timestamp, vertexMap, normalMap, radiusMap, colourMap, depthMapWidth, depthMapHeight, colourMapWidth, colourMapHeight,
-      depthToRGB, projParamsRGB, sceneParams.deltaRadius, sceneParams.useGaussianSampleConfidence, sceneParams.gaussianConfidenceSigma, sceneParams.maxSurfelRadius,
+      depthToRGB, projParamsRGB, sceneParams.delta_radius, sceneParams.use_gaussian_sample_confidence, sceneParams.gaussian_confidence_sigma, sceneParams.max_surfel_radius,
       surfels
     );
   }
@@ -122,7 +122,7 @@ void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::MarkBadSurfels(ITMSurfelSc
   // If the scene is empty, early out.
   if(surfelCount == 0) return;
 
-  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
+  const SurfelVolumeParameters& sceneParams = scene->GetParams();
   unsigned int *surfelRemovalMask = this->m_surfelRemovalMaskMB->GetData(MEMORYDEVICE_CPU);
   const TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CPU);
 
@@ -145,8 +145,8 @@ void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::MarkBadSurfels(ITMSurfelSc
       surfelId,
       surfels,
       this->m_timestamp,
-      sceneParams.stableSurfelConfidence,
-      sceneParams.unstableSurfelPeriod,
+      sceneParams.stable_surfel_confidence,
+      sceneParams.unstable_surfel_period,
       surfelRemovalMask
     );
   }
@@ -161,7 +161,7 @@ void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::MergeSimilarSurfels(ITMSur
   const int indexImageWidth = renderState->GetIndexImage()->noDims.x;
   unsigned int *mergeTargetMap = this->m_mergeTargetMapMB->GetData(MEMORYDEVICE_CPU);
   const int pixelCount = static_cast<int>(renderState->GetIndexImage()->dataSize);
-  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
+  const SurfelVolumeParameters& sceneParams = scene->GetParams();
   TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CPU);
   unsigned int *surfelRemovalMask = this->m_surfelRemovalMaskMB->GetData(MEMORYDEVICE_CPU);
 
@@ -182,8 +182,8 @@ void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::MergeSimilarSurfels(ITMSur
   {
     find_mergeable_surfel(
       locId, indexImage, indexImageWidth, indexImageHeight, correspondenceMap, surfels,
-      sceneParams.stableSurfelConfidence, sceneParams.maxMergeDist, sceneParams.maxMergeAngle,
-      sceneParams.minRadiusOverlapFactor, mergeTargetMap
+      sceneParams.stable_surfel_confidence, sceneParams.max_merge_dist, sceneParams.max_merge_angle,
+      sceneParams.min_radius_overlap_factor, mergeTargetMap
     );
   }
 
@@ -202,12 +202,12 @@ void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::MergeSimilarSurfels(ITMSur
 #endif
   for(int locId = 0; locId < pixelCount; ++locId)
   {
-    perform_surfel_merge(locId, mergeTargetMap, surfels, surfelRemovalMask, indexImage, sceneParams.maxSurfelRadius);
+    perform_surfel_merge(locId, mergeTargetMap, surfels, surfelRemovalMask, indexImage, sceneParams.max_surfel_radius);
   }
 }
 
 template <typename TSurfel>
-void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::PreprocessDepthMap(const ITMView *view, const ITMSurfelSceneParameters& sceneParams) const
+void ITMSurfelSceneReconstructionEngine_CPU<TSurfel>::PreprocessDepthMap(const ITMView *view, const SurfelVolumeParameters& sceneParams) const
 {
   const float *depthMap = view->depth->GetData(MEMORYDEVICE_CPU);
   const int height = view->depth->noDims.y;

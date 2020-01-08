@@ -40,8 +40,8 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	BOOST_REQUIRE_EQUAL(default_configuration, current_config);
 	Configuration configuration1(
 			VoxelVolumeParameters(0.005, 0.12, 4.12, 0.05, 200, true, true, 1.2f),
-			ITMSurfelSceneParameters(0.4f, 0.5f, static_cast<float>(22 * M_PI / 180), 0.008f, 0.0003f, 3.4f, 26.0f, 5,
-			                         1.1f, 4.5f, 21, 300, false, false),
+			SurfelVolumeParameters(0.4f, 0.5f, static_cast<float>(22 * M_PI / 180), 0.008f, 0.0003f, 3.4f, 26.0f, 5,
+			                       1.1f, 4.5f, 21, 300, false, false),
 			SlavchevaSurfaceTracker::Parameters(0.11f, 0.09f, 2.0f, 0.3f, 0.1f, 1e-6f),
 			SlavchevaSurfaceTracker::Switches(false, true, false, true, false),
 			Configuration::TelemetrySettings(true, Vector3i(20, 23, 0)),

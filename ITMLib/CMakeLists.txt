@@ -694,6 +694,8 @@ set(ITMLIB_UTILS_SOURCES
     Utils/Collections/ITM3DNestedMap.tpp
     Utils/Collections/ITM3DNestedMap.cpp
 
+	Utils/Serialization/SerializationDetails.cpp
+
     Utils/Analytics/ITMNeighborVoxelIterationInfo.cpp
     Utils/Analytics/ITMBenchmarkUtils.cpp
 
@@ -701,8 +703,6 @@ set(ITMLIB_UTILS_SOURCES
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CPU.cpp
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.tcu
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.cu
-
-	Utils/ITMSurfelSceneParameters.cpp
 
 	Utils/Configuration.cpp
     Utils/ITMPrintHelpers.cpp
@@ -735,7 +735,7 @@ set(ITMLIB_UTILS_HEADERS
     Utils/ITMPixelUtils.h
     Utils/ITMProjectionUtils.h
 	Utils/VoxelVolumeParameters.h
-	Utils/ITMSurfelSceneParameters.h
+    Utils/SurfelVolumeParameters.h
     Utils/ITMPrintHelpers.h
     Utils/ITMCPrintHelpers.h
 

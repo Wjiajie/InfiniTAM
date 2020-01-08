@@ -194,7 +194,7 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::AddNewSurfels(ITMSurfelSc
   // Add the new surfels to the scene.
   const size_t newSurfelCount = static_cast<size_t>(this->m_newPointsPrefixSumMB->GetElement(pixelCount, MEMORYDEVICE_CUDA));
   TSurfel *newSurfels = scene->AllocateSurfels(newSurfelCount);
-  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
+  const SurfelVolumeParameters& sceneParams = scene->GetParams();
   if(newSurfels == NULL) return;
 
   int threadsPerBlock = 256;
@@ -216,9 +216,9 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::AddNewSurfels(ITMSurfelSc
     view->rgb->noDims.y,
     view->calib.trafo_rgb_to_depth.calib_inv,
     view->calib.intrinsics_rgb.projectionParamsSimple.all,
-    sceneParams.useGaussianSampleConfidence,
-    sceneParams.gaussianConfidenceSigma,
-    sceneParams.maxSurfelRadius,
+    sceneParams.use_gaussian_sample_confidence,
+    sceneParams.gaussian_confidence_sigma,
+    sceneParams.max_surfel_radius,
     newSurfels
   );
   ORcudaKernelCheck;
@@ -244,7 +244,7 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::FindCorrespondingSurfels(
     view->depth->noDims.x,
     this->m_normalMapMB->GetData(MEMORYDEVICE_CUDA),
     renderState->GetIndexImageSuper()->GetData(MEMORYDEVICE_CUDA),
-    scene->GetParams().supersamplingFactor,
+    scene->GetParams().supersampling_factor,
     scene->GetSurfels()->GetData(MEMORYDEVICE_CUDA),
     this->m_correspondenceMapMB->GetData(MEMORYDEVICE_CUDA),
     this->m_newPointsMaskMB->GetData(MEMORYDEVICE_CUDA)
@@ -265,7 +265,7 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::FuseMatchedPoints(ITMSurf
   int threadsPerBlock = 256;
   int numBlocks = (pixelCount + threadsPerBlock - 1) / threadsPerBlock;
 
-  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
+  const SurfelVolumeParameters& sceneParams = scene->GetParams();
 
   ck_fuse_matched_point<<<numBlocks,threadsPerBlock>>>(
     pixelCount,
@@ -282,10 +282,10 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::FuseMatchedPoints(ITMSurf
     view->rgb->noDims.y,
     view->calib.trafo_rgb_to_depth.calib_inv,
     view->calib.intrinsics_rgb.projectionParamsSimple.all,
-    sceneParams.deltaRadius,
-    sceneParams.useGaussianSampleConfidence,
-    sceneParams.gaussianConfidenceSigma,
-    sceneParams.maxSurfelRadius,
+    sceneParams.delta_radius,
+    sceneParams.use_gaussian_sample_confidence,
+    sceneParams.gaussian_confidence_sigma,
+    sceneParams.max_surfel_radius,
     scene->GetSurfels()->GetData(MEMORYDEVICE_CUDA)
   );
   ORcudaKernelCheck;
@@ -299,7 +299,7 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::MarkBadSurfels(ITMSurfelS
   // If the scene is empty, early out.
   if(surfelCount == 0) return;
 
-  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
+  const SurfelVolumeParameters& sceneParams = scene->GetParams();
   unsigned int *surfelRemovalMask = this->m_surfelRemovalMaskMB->GetData(MEMORYDEVICE_CUDA);
   TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CUDA);
 
@@ -318,8 +318,8 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::MarkBadSurfels(ITMSurfelS
     surfelCount,
     surfels,
     this->m_timestamp,
-    sceneParams.stableSurfelConfidence,
-    sceneParams.unstableSurfelPeriod,
+    sceneParams.stable_surfel_confidence,
+    sceneParams.unstable_surfel_period,
     surfelRemovalMask
   );
   ORcudaKernelCheck;
@@ -339,7 +339,7 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::MergeSimilarSurfels(ITMSu
   const int indexImageWidth = renderState->GetIndexImage()->noDims.x;
   unsigned int *mergeTargetMap = this->m_mergeTargetMapMB->GetData(MEMORYDEVICE_CUDA);
   const int pixelCount = static_cast<int>(renderState->GetIndexImage()->dataSize);
-  const ITMSurfelSceneParameters& sceneParams = scene->GetParams();
+  const SurfelVolumeParameters& sceneParams = scene->GetParams();
   TSurfel *surfels = scene->GetSurfels()->GetData(MEMORYDEVICE_CUDA);
   unsigned int *surfelRemovalMask = this->m_surfelRemovalMaskMB->GetData(MEMORYDEVICE_CUDA);
 
@@ -358,10 +358,10 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::MergeSimilarSurfels(ITMSu
     indexImageHeight,
     correspondenceMap,
     surfels,
-    sceneParams.stableSurfelConfidence,
-    sceneParams.maxMergeDist,
-    sceneParams.maxMergeAngle,
-    sceneParams.minRadiusOverlapFactor,
+    sceneParams.stable_surfel_confidence,
+    sceneParams.max_merge_dist,
+    sceneParams.max_merge_angle,
+    sceneParams.min_radius_overlap_factor,
     mergeTargetMap
   );
   ORcudaKernelCheck;
@@ -371,12 +371,12 @@ void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::MergeSimilarSurfels(ITMSu
   ORcudaKernelCheck;
 
   // Merge the relevant surfels.
-  ck_perform_surfel_merge<<<numBlocks,threadsPerBlock>>>(pixelCount, mergeTargetMap, surfels, surfelRemovalMask, indexImage, sceneParams.maxSurfelRadius);
+  ck_perform_surfel_merge<<<numBlocks,threadsPerBlock>>>(pixelCount, mergeTargetMap, surfels, surfelRemovalMask, indexImage, sceneParams.max_surfel_radius);
   ORcudaKernelCheck;
 }
 
 template <typename TSurfel>
-void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::PreprocessDepthMap(const ITMView *view, const ITMSurfelSceneParameters& sceneParams) const
+void ITMSurfelSceneReconstructionEngine_CUDA<TSurfel>::PreprocessDepthMap(const ITMView *view, const SurfelVolumeParameters& sceneParams) const
 {
   const float *depthMap = view->depth->GetData(MEMORYDEVICE_CUDA);
   const int height = view->depth->noDims.y;

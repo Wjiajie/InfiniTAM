@@ -41,7 +41,7 @@ ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMRGBDCalib& calib, V
 	Vector2i trackedImageSize = trackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
 
 	surfelRenderState_live = new ITMSurfelRenderState(trackedImageSize,
-	                                                  settings.surfel_volume_parameters.supersamplingFactor);
+	                                                  settings.surfel_volume_parameters.supersampling_factor);
 	surfelRenderState_freeview = NULL; //will be created if needed
 
 	trackingState = new ITMTrackingState(trackedImageSize, memoryType);
@@ -360,7 +360,7 @@ void ITMBasicSurfelEngine<TSurfel>::GetImage(ITMUChar4Image* out, GetImageType g
 		case ITMBasicSurfelEngine::InfiniTAM_IMAGE_FREECAMERA_COLOUR_FROM_CONFIDENCE: {
 			if (!surfelRenderState_freeview)
 				surfelRenderState_freeview = new ITMSurfelRenderState(view->depth->noDims,
-				                                                      surfelScene->GetParams().supersamplingFactor);
+				                                                      surfelScene->GetParams().supersampling_factor);
 			const bool useRadii = true;
 			surfelVisualisationEngine->FindSurface(surfelScene, pose, intrinsics, useRadii, USR_DONOTRENDER,
 			                                       surfelRenderState_freeview);
