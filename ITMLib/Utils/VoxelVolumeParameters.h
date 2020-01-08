@@ -35,7 +35,7 @@ namespace ITMLib {
 */
 GENERATE_SERIALIZABLE_STRUCT(VoxelVolumeParameters,
         /** Size of a voxel, usually given in meters.*/
-                             (float, voxel_size, 0.004),
+                             (float, voxel_size, 0.004, PRIMITIVE),
 		/** \brief
 		    Fallback parameters: consider only parts of the
 		    scene from @p near_clipping_distance in front of the camera
@@ -43,8 +43,8 @@ GENERATE_SERIALIZABLE_STRUCT(VoxelVolumeParameters,
 		    actual depth range should be determined
 		    automatically by a ITMLib::Engine::ITMVisualisationEngine.
 		*/
-                             (float, near_clipping_distance, 0.2f),
-                             (float, far_clipping_distance, 3.0f),
+                             (float, near_clipping_distance, 0.2f, PRIMITIVE),
+                             (float, far_clipping_distance, 3.0f, PRIMITIVE),
 
 		/** \brief
 		    Encodes the width of the band of the truncated
@@ -53,25 +53,25 @@ GENERATE_SERIALIZABLE_STRUCT(VoxelVolumeParameters,
 		    meters. The resulting width in voxels is @ref narrow_band_half_width
 		    divided by @ref voxel_size.
 		*/
-                             (float, narrow_band_half_width, 0.04f),
+                             (float, narrow_band_half_width, 0.04f, PRIMITIVE),
 		/** \brief
 		 * Up to @ref max_integration_weight observations per voxel are averaged.
 		 * Beyond that a sliding average is computed.
 		 */
-                             (int, max_integration_weight, 100),
+                             (int, max_integration_weight, 100, PRIMITIVE),
         /** Stop integration/fusion once max_integration_weight has been reached. */
-                             (bool, stop_integration_at_max_weight, false),
+                             (bool, stop_integration_at_max_weight, false, PRIMITIVE),
         /**
          * \brief (voxel block hash indexing only) allocates an extra 1-ring of hash blocks around
          * the depth-based ones
          */
-                             (bool, add_extra_block_ring_during_allocation, false),
+                             (bool, add_extra_block_ring_during_allocation, false, PRIMITIVE),
          /**
           * \brief (voxel block hash indexing only) factor of narrow band width that will be
           * considered for depth-based allocation. For instance, a factor of 2 will make sure that blocks that are twice
           * as far from the surface as the boundary of the narrow (non-truncated) TSDF band will be allocated
           */
-                             (float, block_allocation_band_factor, 2.0f)
+                             (float, block_allocation_band_factor, 2.0f, PRIMITIVE)
 );
 
 } // namespace ITMLib

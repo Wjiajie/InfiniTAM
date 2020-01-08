@@ -736,30 +736,6 @@ Configuration::InputAndOutputSettings_Paths::InputAndOutputSettings_Paths(std::s
 		imu_input_path(std::move(imu_input_path))
 		{}
 
-std::string preprocess_path(const std::string& path, const std::string& config_path) {
-	const std::regex configuration_directory_regex("^<CONFIGURATION_DIRECTORY>");
-	std::string resulting_path;
-	if (std::regex_search(path, configuration_directory_regex)) {
-		std::string cleared = std::regex_replace(path, configuration_directory_regex, "");
-		resulting_path = (fs::path(config_path).parent_path() / fs::path(cleared)).string();
-	} else {
-		resulting_path = path;
-	}
-	return resulting_path;
-}
-
-std::string postprocess_path(const std::string& path, const std::string& config_path) {
-	if (config_path.empty()) return path;
-	const std::string configuration_directory_substitute = "<CONFIGURATION_DIRECTORY>";
-	std::regex configuration_directory_regex(fs::path(config_path).parent_path().string());
-	std::string resulting_path;
-	if (std::regex_search(path, configuration_directory_regex)) {
-		resulting_path = std::regex_replace(path, configuration_directory_regex, configuration_directory_substitute);
-	} else {
-		resulting_path = path;
-	}
-	return resulting_path;
-}
 
 Configuration::InputAndOutputSettings_Paths
 Configuration::InputAndOutputSettings_Paths::BuildFromPTree(const pt::ptree& tree, const std::string& config_path) {
@@ -797,12 +773,12 @@ Configuration::InputAndOutputSettings_Paths::BuildFromPTree(const pt::ptree& tre
 	        imu_input_path};
 }
 
-pt::ptree Configuration::InputAndOutputSettings_Paths::ToPTree(const std::string& path) const {
+pt::ptree Configuration::InputAndOutputSettings_Paths::ToPTree(const std::string& config_path) const {
 	pt::ptree tree;
 	tree.add("output", this->output_path);
-	auto add_to_tree_if_not_empty = [&path](pt::ptree& tree, const std::string& key, const std::string& string) {
+	auto add_to_tree_if_not_empty = [&config_path](pt::ptree& tree, const std::string& key, const std::string& string) {
 		if (string != "") {
-			tree.add(key, postprocess_path(string, path));
+			tree.add(key, postprocess_path(string, config_path));
 		}
 	};
 	add_to_tree_if_not_empty(tree, "calibration_file_path", calibration_file_path);

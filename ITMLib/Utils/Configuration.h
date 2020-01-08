@@ -78,7 +78,11 @@ public:
 	//endregion ========================================================================================================
 
 	// region ======================================== NESTED SERIALIZABLE STRUCTS =====================================
-	GENERATE_SERIALIZABLE_STRUCT(InputAndOutputSettings,(bool, record_reconstruction_video, false), (bool, save_benchmarks_to_disk, false));
+	GENERATE_SERIALIZABLE_STRUCT(
+			InputAndOutputSettings,
+			(bool, record_reconstruction_video, false, PRIMITIVE),
+			(bool, save_benchmarks_to_disk, false, PRIMITIVE)
+	);
 
 	struct InputAndOutputSettings_Paths {
 		/// Where to write any kind of output (intended to be used application-wise)
@@ -107,7 +111,7 @@ public:
 
 		friend bool operator==(const InputAndOutputSettings_Paths& ts1, const InputAndOutputSettings_Paths& ts2);
 		friend std::ostream& operator<<(std::ostream& out, const InputAndOutputSettings_Paths& ts);
-		pt::ptree ToPTree(const std::string& path) const;
+		pt::ptree ToPTree(const std::string& config_path) const;
 	};
 
 	struct TelemetrySettings {
