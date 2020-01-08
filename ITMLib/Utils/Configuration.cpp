@@ -818,61 +818,61 @@ std::ostream& operator<<(std::ostream& out, const Configuration::InputAndOutputS
 // endregion ===========================================================================================================
 
 // region =============================== TELEMETRY SETTINGS ===========================================================
-
-Configuration::TelemetrySettings::TelemetrySettings() :
-		focus_coordinates_specified(false),
-		focus_coordinates(Vector3i(0)) {}
-
-
-Configuration::TelemetrySettings::TelemetrySettings(const po::variables_map& vm) :
-		focus_coordinates_specified(!vm["focus_coordinates"].empty()),
-		focus_coordinates(vm["focus_coordinates"].empty() ? TelemetrySettings().focus_coordinates :
-		                  vector3i_from_variable_map(vm, "focus_coordinates")) {}
-
-
-Configuration::TelemetrySettings Configuration::TelemetrySettings::BuildFromPTree(const pt::ptree& tree) {
-
-	boost::optional<std::vector<int>> focus_coords_opt = as_optional_vector<int>(tree, "focus_coordinates");
-
-	TelemetrySettings default_ts;
-
-	return {(bool) focus_coords_opt,
-	        focus_coords_opt ? vector3i_from_std_vector(focus_coords_opt.get()) : default_ts.focus_coordinates};
-}
-
-Configuration::TelemetrySettings::TelemetrySettings(bool focus_coordinates_specified,
-                                                    Vector3i focus_coordinates) :
-		focus_coordinates_specified(focus_coordinates_specified),
-		focus_coordinates(focus_coordinates) {}
-
-pt::ptree Configuration::TelemetrySettings::ToPTree() const {
-	pt::ptree tree;
-	if (focus_coordinates_specified) {
-		pt::ptree children;
-		pt::ptree child1, child2, child3;
-		child1.put("", focus_coordinates.x);
-		child2.put("", focus_coordinates.y);
-		child3.put("", focus_coordinates.z);
-		children.push_back(std::make_pair("", child1));
-		children.push_back(std::make_pair("", child2));
-		children.push_back(std::make_pair("", child3));
-		tree.add_child("focus_coordinates", children);
-	}
-	return tree;
-}
-
-namespace ITMLib {
-bool operator==(const Configuration::TelemetrySettings& ts1, const Configuration::TelemetrySettings& ts2) {
-	return ts1.focus_coordinates_specified == ts2.focus_coordinates_specified &&
-	       (!ts1.focus_coordinates_specified || ts1.focus_coordinates == ts2.focus_coordinates);
-}
-
-std::ostream& operator<<(std::ostream& out, const Configuration::TelemetrySettings& ts) {
-	pt::ptree tree(ts.ToPTree());
-	pt::write_json_no_quotes(out, tree, true);
-	return out;
-}
-}//namespace ITMLib
+//
+//Configuration::TelemetrySettings::TelemetrySettings() :
+//		focus_coordinates_specified(false),
+//		focus_coordinates(Vector3i(0)) {}
+//
+//
+//Configuration::TelemetrySettings::TelemetrySettings(const po::variables_map& vm) :
+//		focus_coordinates_specified(!vm["focus_coordinates"].empty()),
+//		focus_coordinates(vm["focus_coordinates"].empty() ? TelemetrySettings().focus_coordinates :
+//		                  vector3i_from_variable_map(vm, "focus_coordinates")) {}
+//
+//
+//Configuration::TelemetrySettings Configuration::TelemetrySettings::BuildFromPTree(const pt::ptree& tree) {
+//
+//	boost::optional<std::vector<int>> focus_coords_opt = as_optional_vector<int>(tree, "focus_coordinates");
+//
+//	TelemetrySettings default_ts;
+//
+//	return {(bool) focus_coords_opt,
+//	        focus_coords_opt ? vector3i_from_std_vector(focus_coords_opt.get()) : default_ts.focus_coordinates};
+//}
+//
+//Configuration::TelemetrySettings::TelemetrySettings(bool focus_coordinates_specified,
+//                                                    Vector3i focus_coordinates) :
+//		focus_coordinates_specified(focus_coordinates_specified),
+//		focus_coordinates(focus_coordinates) {}
+//
+//pt::ptree Configuration::TelemetrySettings::ToPTree() const {
+//	pt::ptree tree;
+//	if (focus_coordinates_specified) {
+//		pt::ptree children;
+//		pt::ptree child1, child2, child3;
+//		child1.put("", focus_coordinates.x);
+//		child2.put("", focus_coordinates.y);
+//		child3.put("", focus_coordinates.z);
+//		children.push_back(std::make_pair("", child1));
+//		children.push_back(std::make_pair("", child2));
+//		children.push_back(std::make_pair("", child3));
+//		tree.add_child("focus_coordinates", children);
+//	}
+//	return tree;
+//}
+//
+//namespace ITMLib {
+//bool operator==(const Configuration::TelemetrySettings& ts1, const Configuration::TelemetrySettings& ts2) {
+//	return ts1.focus_coordinates_specified == ts2.focus_coordinates_specified &&
+//	       (!ts1.focus_coordinates_specified || ts1.focus_coordinates == ts2.focus_coordinates);
+//}
+//
+//std::ostream& operator<<(std::ostream& out, const Configuration::TelemetrySettings& ts) {
+//	pt::ptree tree(ts.ToPTree());
+//	pt::write_json_no_quotes(out, tree, true);
+//	return out;
+//}
+//}//namespace ITMLib
 
 // endregion ===========================================================================================================
 

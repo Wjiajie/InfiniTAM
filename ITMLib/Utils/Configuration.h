@@ -42,7 +42,8 @@ namespace pt = boost::property_tree;
 	(VERBOSITY_SILENT, "silent", "SILENT", "VERBOSITY_SILENT"), \
 	(VERBOSITY_TOP_LEVEL, "top_level", "TOP_LEVEL", "Top-level operations", "VERBOSITY_TOP_LEVEL", "top-level", "top-level operations"), \
 	(VERBOSITY_PER_FRAME, "per_frame", "PER_FRAME", "Per-frame operations", "VERBOSITY_PER_FRAME", "per-frame", "per-frame operations"), \
-	(VERBOSITY_PER_ITERATION, "per_iteration", "PER_ITERATION", "Per-iteration operations", "VERBOSITY_PER_ITERATION", "per-iteration", "per-iteration operations")
+	(VERBOSITY_PER_ITERATION, "per_iteration", "PER_ITERATION", "Per-iteration operations", "VERBOSITY_PER_ITERATION", "per-iteration", "per-iteration operations"), \
+	(VERBOSITY_FOCUS_SPOTS, "focus_spots", "FOCUS_SPOTS", "focus_coordinates", "Interesting details", "trouble spots")
 
 namespace ITMLib {
 class Configuration {
@@ -114,21 +115,27 @@ public:
 		pt::ptree ToPTree(const std::string& config_path) const;
 	};
 
-	struct TelemetrySettings {
-		explicit TelemetrySettings(const po::variables_map& vm);
-		static TelemetrySettings BuildFromPTree(const pt::ptree& tree);
-		TelemetrySettings();
-		TelemetrySettings(bool focus_coordinates_specified,
-		                  Vector3i focus_coordinates = Vector3i(0));
-		friend bool operator==(const TelemetrySettings& ts1, const TelemetrySettings& ts2);
-		friend std::ostream& operator<<(std::ostream& out, const TelemetrySettings& ts);
-		pt::ptree ToPTree() const;
+	GENERATE_SERIALIZABLE_STRUCT(
+			TelemetrySettings,
+			///For focus_coordinates to be used, VerbosityLevel must be set to VERBOSITY_FOCUS_SPOTS or above
+			(Vector3i, focus_coordinates, Vector3i(0), VECTOR)
+	);
 
-		/// Whether telemetry / diagnostics / logging for a trouble spot is enabled
-		bool focus_coordinates_specified = false;
-		/// A trouble spot for additional telemetry / diagnostics / loggging
-		Vector3i focus_coordinates;
-	};
+//	struct TelemetrySettings {
+//		explicit TelemetrySettings(const po::variables_map& vm);
+//		static TelemetrySettings BuildFromPTree(const pt::ptree& tree);
+//		TelemetrySettings();
+//		TelemetrySettings(bool focus_coordinates_specified,
+//		                  Vector3i focus_coordinates = Vector3i(0));
+//		friend bool operator==(const TelemetrySettings& ts1, const TelemetrySettings& ts2);
+//		friend std::ostream& operator<<(std::ostream& out, const TelemetrySettings& ts);
+//		pt::ptree ToPTree() const;
+//
+//		/// Whether telemetry / diagnostics / logging for a trouble spot is enabled
+//		bool focus_coordinates_specified = false;
+//		/// A trouble spot for additional telemetry / diagnostics / loggging
+//		Vector3i focus_coordinates;
+//	};
 	
 	struct UIEngineSettings{
 		UIEngineSettings();

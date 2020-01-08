@@ -274,7 +274,7 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 	//_DEBUG
 //	Vector3i test_pos(8, -4, 202);
 //	Vector3s voxel_block_pos = TO_SHORT_FLOOR3(test_pos.toFloat() / VOXEL_BLOCK_SIZE);
-//	Configuration::get().telemetry_settings.focus_coordinates_specified = true;
+//	Configuration::get().verbosity_level >= Configuration::VERBOSITY_FOCUS_SPOTS = true;
 //	Configuration::get().telemetry_settings.focus_coordinates = test_pos;
 //
 //	int hashCode;

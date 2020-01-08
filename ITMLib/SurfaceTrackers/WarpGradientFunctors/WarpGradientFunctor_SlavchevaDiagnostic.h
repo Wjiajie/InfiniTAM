@@ -80,7 +80,7 @@ private:
 	void SetUpFocusVoxelPrinting(bool& printVoxelResult, const Vector3i& voxelPosition,
 	                             const Vector3f& voxelWarp, const TVoxel& canonicalVoxel, const TVoxel& liveVoxel,
 	                             bool computeDataTerm) {
-		if (hasFocusCoordinates && voxelPosition == focusCoordinates) {
+		if (useFocusCoordinates && voxelPosition == focusCoordinates) {
 			int x = 0, y = 0, z = 0, vmIndex = 0, locId = 0;
 			GetVoxelHashLocals(vmIndex, locId, x, y, z, liveIndexData, liveCache, voxelPosition);
 
@@ -116,7 +116,7 @@ public:
 			warps(warpField->localVBA.GetVoxelBlocks()), warpIndexData(warpField->index.GetIndexData()),
 			canonicalVoxels(canonicalVolume->localVBA.GetVoxelBlocks()), canonicalIndexData(canonicalVolume->index.GetIndexData()),
 			liveCache(), canonicalCache(),
-			hasFocusCoordinates(Configuration::get().telemetry_settings.focus_coordinates_specified),
+			useFocusCoordinates(Configuration::get().verbosity_level >= Configuration::VERBOSITY_FOCUS_SPOTS),
 			focusCoordinates(Configuration::get().telemetry_settings.focus_coordinates),
 			sdfUnity(voxelSize/narrowBandHalfWidth),
 			verbosity_level(Configuration::get().verbosity_level)
@@ -359,7 +359,7 @@ private:
 	ComponentEnergies<TMemoryDeviceType> energies;
 
 	// *** debugging / analysis variables
-	bool hasFocusCoordinates{};
+	bool useFocusCoordinates{};
 	Vector3i focusCoordinates;
 
 	const SlavchevaSurfaceTracker::Parameters parameters;

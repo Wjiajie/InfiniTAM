@@ -62,6 +62,8 @@
   	field_name(vm[ #field_name ].empty() ? struct_name (). field_name : string_to_enumerator< type >(vm[ #field_name ].as<std::string>()))
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_VM_INIT_STRUCT(struct_name, type, field_name, default_value)                    \
   	field_name(vm)
+#define SERIALIZABLE_STRUCT_IMPL_FIELD_VM_INIT_VECTOR(struct_name, type, field_name, default_value)                   \
+  	field_name(vm[ #field_name ].empty() ? struct_name (). field_name : variables_map_to_vector <type> (vm, #field_name))
 
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_VM_INIT(struct_name, type, field_name, default_value, serialization_type)       \
 	ITM_SERIALIZATION_IMPL_CAT(SERIALIZABLE_STRUCT_IMPL_FIELD_VM_INIT_, serialization_type)(struct_name, type, field_name, default_value)
@@ -74,7 +76,9 @@
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE_ENUM(type, field_name, default_value)                        \
 	boost::optional< type > field_name = ptree_to_optional_enumerator< tree >( tree, #field_name );	
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE_STRUCT(type, field_name, default_value)                      \
-	boost::optional< type > field_name = ptree_to_optional_serializable_struct< tree >( tree, #field_name, origin );	
+	boost::optional< type > field_name = ptree_to_optional_serializable_struct< type >( tree, #field_name, origin );	
+#define SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE_VECTOR(type, field_name, default_value)                      \
+	boost::optional< type > field_name = ptree_to_optional_serializable_vector< type >(tree, #field_name);
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE(_, type, field_name, default_value, serialization_type)      \
 	ITM_SERIALIZATION_IMPL_CAT(SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE_, serialization_type)(type, field_name, default_value)
 
@@ -82,16 +86,18 @@
 	field_name ? field_name.get() : default_instance. field_name
 
 // *** value --> ptree ***
-#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_PRIMITIVE(_, type, field_name, ...)                                 \
+#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_PRIMITIVE(type, field_name)                                         \
 	tree.add( #field_name , field_name );
-#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_PATH(_, type, field_name, ...)                                      \
+#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_PATH(type, field_name)                                              \
 	tree.add( #field_name , postprocess_path( field_name, origin ));
-#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_ENUM(_, type, field_name, ...)                                      \
+#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_ENUM(type, field_name)                                              \
 	tree.add( #field_name , enumerator_to_string( field_name ));
-#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_STRUCT(_, type, field_name, ...)                                    \
+#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_STRUCT(type, field_name)                                            \
 	tree.add_child( #field_name , field_name .ToPtree(origin));
+#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_VECTOR(type, field_name)                                            \
+	tree.add_child( #field_name , serializable_vector_to_ptree ( field_name ));
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE(_, type, field_name, default_value, serialization_type)             \
-	ITM_SERIALIZATION_IMPL_CAT(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_, serialization_type)(type, field_name, default_value)
+	ITM_SERIALIZATION_IMPL_CAT(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_, serialization_type)(type, field_name)
 
 // *** compare fields ***
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_COMPARISON(_, type, field_name, ...)                                            \
@@ -171,7 +177,7 @@ template<typename TEnum>
 static std::string enumerator_to_string(const TEnum& enum_value);
 
 template<typename TEnum>
-static TEnum variable_map_to_enumerator(const boost::program_options::variables_map& vm, const std::string& argument){
+static TEnum variables_map_to_enumerator(const boost::program_options::variables_map& vm, const std::string& argument){
 	return string_to_enumerator<TEnum>(vm[argument].as<std::string>());
 }
 
@@ -187,7 +193,7 @@ static boost::optional<TEnum> ptree_to_optional_enumerator(const pt::ptree& ptre
 
 // endregion
 
-// region ================== SERIALIZABLE PATH FUNCTION DEFINITIONS ==============
+// region ================== SERIALIZABLE PATH FUNCTION DECLARATIONS ==============
 
 std::string preprocess_path(const std::string& path, const std::string& origin);
 
@@ -196,6 +202,47 @@ std::string postprocess_path(const std::string& path, const std::string& origin)
 boost::optional<std::string> ptree_to_optional_path(const boost::property_tree::ptree& tree, const pt::ptree::key_type& key, const std::string& origin );
 
 // endregion
+// region ================== SERIALIZABLE VECTOR FUNCTION DEFINITIONS ===========
+template <typename TVector>
+TVector std_vector_to_serializable_vector(const std::vector<typename TVector::value_type>& std_vector){
+	TVector vector;
+	if(std_vector.size() != TVector::size()){
+		DIEWITHEXCEPTION_REPORTLOCATION("Wrong number of elements in parsed vector.");
+	}
+	memcpy(vector.values, std_vector.data(), sizeof(typename TVector::value_type) * TVector::size());
+	return vector;
+}
+
+template <typename TVector>
+TVector variables_map_to_vector(const boost::program_options::variables_map& vm, const std::string& argument){
+	std::vector<typename TVector::value_type> std_vector = vm[argument].as<std::vector<typename TVector::value_type>>();
+	return std_vector_to_serializable_vector<TVector>(std_vector);
+}
+
+template <typename TVector>
+boost::optional<TVector> ptree_to_optional_serializable_vector(pt::ptree const& pt, pt::ptree::key_type const& key) {
+	TVector vector;
+	if (pt.count(key) == 0) {
+		return boost::optional<TVector>{};
+	}
+	std::vector<typename TVector::value_type> std_vector;
+	for (auto& item : pt.get_child(key)){
+		std_vector.push_back(item.second.get_value<typename TVector::value_type>());
+	}
+	return std_vector_to_serializable_vector<TVector>(std_vector);;
+}
+template <typename TVector>
+boost::property_tree::ptree serializable_vector_to_ptree(TVector vector){
+	boost::property_tree::ptree tree;
+	for (int i_element = 0; i_element < TVector::size(); i_element++){
+		boost::property_tree::ptree child;
+		child.put("", vector.values[i_element]);
+		tree.push_back(std::make_pair("",child));
+	}
+	return tree;
+}
+
+
 // region ================== SERIALIZABLE ENUM PER-ENUMERATOR MACROS =============
 
 // this top one is per-token, not per-enumerator

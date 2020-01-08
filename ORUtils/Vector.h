@@ -61,7 +61,7 @@ namespace ORUtils {
 	{
 	public:
 		typedef T value_type;
-		_CPU_AND_GPU_CODE_ inline int size() const { return 2; }
+		_CPU_AND_GPU_CODE_ static inline int size() { return 2; }
 
 		////////////////////////////////////////////////////////
 		//  Constructors
@@ -200,7 +200,7 @@ namespace ORUtils {
 	{
 	public:
 		typedef T value_type;
-		_CPU_AND_GPU_CODE_ inline int size() const { return 3; }
+		_CPU_AND_GPU_CODE_ static inline int size() { return 3; }
 
 		////////////////////////////////////////////////////////
 		//  Constructors
@@ -395,7 +395,7 @@ namespace ORUtils {
 	{
 	public:
 		typedef T value_type;
-		_CPU_AND_GPU_CODE_ inline int size() const { return 4; }
+		_CPU_AND_GPU_CODE_ static inline int size() { return 4; }
 
 		////////////////////////////////////////////////////////
 		//  Constructors
@@ -537,7 +537,7 @@ namespace ORUtils {
 	{
 	public:
 		typedef T value_type;
-		_CPU_AND_GPU_CODE_ inline int size() const { return 6; }
+		_CPU_AND_GPU_CODE_ static inline int size() { return 6; }
 
 		////////////////////////////////////////////////////////
 		//  Constructors
@@ -674,7 +674,7 @@ namespace ORUtils {
 	public:
 		typedef T value_type;
 		enum { value_size = s };
-		_CPU_AND_GPU_CODE_ inline int size() const { return value_size; }
+		_CPU_AND_GPU_CODE_ static inline int size() { return value_size; }
 
 		////////////////////////////////////////////////////////
 		//  Constructors

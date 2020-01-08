@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
 		if (loggingOptions.record1DSlices) logger.TurnRecordingScene1DSlicesWithUpdatesOn();
 		if (loggingOptions.record2DSlices) logger.TurnRecordingScene2DSlicesWithUpdatesOn();
 		if (loggingOptions.record3DSlices) logger.TurnRecordingScene3DSlicesWithUpdatesOn();
-		if (settings.telemetry_settings.focus_coordinates_specified) {
+		if (Configuration::get().verbosity_level >= Configuration::VERBOSITY_FOCUS_SPOTS) {
 			logger.SetFocusCoordinates(settings.telemetry_settings.focus_coordinates);
 		}
 		logger.SetOutputDirectory(settings.input_and_output_settings_paths.output_path);

@@ -73,7 +73,7 @@ struct TrilinearInterpolationFunctor {
 			warpSourceHashEntries(warpField->index.GetIndexData()),
 			warpSourceCache(),
 
-			hasFocusCoordinates(ITMLib::Configuration::get().telemetry_settings.focus_coordinates_specified),
+			useFocusCoordinates(ITMLib::Configuration::get().verbosity_level >= ITMLib::Configuration::VERBOSITY_FOCUS_SPOTS),
 			focusCoordinates(ITMLib::Configuration::get().telemetry_settings.focus_coordinates) {
 	}
 
@@ -82,7 +82,7 @@ struct TrilinearInterpolationFunctor {
 	void operator()(TVoxel& destinationVoxel, TWarp& warp,
 	                Vector3i warpAndDestinationVoxelPosition) {
 
-		bool printResult = hasFocusCoordinates && warpAndDestinationVoxelPosition == focusCoordinates;
+		bool printResult = useFocusCoordinates && warpAndDestinationVoxelPosition == focusCoordinates;
 
 		interpolateTSDFVolume<TVoxel, TWarp, TIndex, TWarpType>(
 				sdfSourceVoxels, sdfSourceIndexData, sdfSourceCache, warp, destinationVoxel,
@@ -104,6 +104,6 @@ private:
 
 
 	//_DEBUG
-	bool hasFocusCoordinates;
+	bool useFocusCoordinates;
 	Vector3i focusCoordinates;
 };
