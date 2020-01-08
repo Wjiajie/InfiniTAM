@@ -81,9 +81,19 @@
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_FROM_OPTIONAL(_, type, field_name, ...)                                         \
 	field_name ? field_name.get() : default_instance. field_name
 
-//TODO: break up by serialization_type
-#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE(_, type, field_name, ...)                                           \
+// *** value --> ptree ***
+#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_PRIMITIVE(_, type, field_name, ...)                                 \
 	tree.add( #field_name , field_name );
+#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_PATH(_, type, field_name, ...)                                      \
+	tree.add( #field_name , postprocess_path( field_name, origin ));
+#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_ENUM(_, type, field_name, ...)                                      \
+	tree.add( #field_name , enumerator_to_string( field_name ));
+#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_STRUCT(_, type, field_name, ...)                                    \
+	tree.add_child( #field_name , field_name .ToPtree(origin));
+#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE(_, type, field_name, default_value, serialization_type)             \
+	ITM_SERIALIZATION_IMPL_CAT(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_, serialization_type)(type, field_name, default_value)
+
+// *** compare fields ***
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_COMPARISON(_, type, field_name, ...)                                            \
 	instance1. field_name == instance2. field_name
 // endregion
