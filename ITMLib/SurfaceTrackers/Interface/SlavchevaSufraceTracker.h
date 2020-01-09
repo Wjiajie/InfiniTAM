@@ -19,8 +19,8 @@
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 
-namespace po = boost::program_options;
-namespace pt = boost::property_tree;
+//local
+#include "../../Utils/Serialization/Serialization.h"
 
 namespace ITMLib {
 
@@ -37,15 +37,16 @@ public:
 	DECLARE_SERIALIZABLE_STRUCT(PARAMETERS_STRUCT_DESCRIPTION);
 
 #define SWITCHES_STRUCT_DESCRIPTION Switches, \
-		(bool, enableDataTerm, true, PRIMITIVE) \
-		(bool, enableLevelSetTerm, false, PRIMITIVE) \
-		(bool, enableSmoothingTerm, true, PRIMITIVE) \
-		(bool, enableKillingRigidityEnforcementTerm, false, PRIMITIVE) \
-		(bool, enableSobolevGradientSmoothing, true, PRIMITIVE)
+        (bool, enableDataTerm, true, PRIMITIVE), \
+        (bool, enableLevelSetTerm, false, PRIMITIVE), \
+        (bool, enableSmoothingTerm, true, PRIMITIVE), \
+        (bool, enableKillingRigidityEnforcementTerm, false, PRIMITIVE), \
+        (bool, enableSobolevGradientSmoothing, true, PRIMITIVE)
 
-	DECLARE_SERIALIZABLE_STRUCT(SWITCHES_STRUCT_DESCRIPTION);
+	DECLARE_SERIALIZABLE_STRUCT( SWITCHES_STRUCT_DESCRIPTION );
 
-	const Parameters parameters;
+	const Parameters
+	parameters;
 	const Switches switches;
 
 	explicit SlavchevaSurfaceTracker();

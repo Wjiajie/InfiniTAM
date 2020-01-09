@@ -63,7 +63,7 @@ try
 		return -1;
 	}
 
-	Configuration *internalSettings = &Configuration::get();
+	Configuration *internalSettings = &configuration::get();
 
 	ITMMainEngine *mainEngine = NULL;
 	switch (internalSettings->library_mode)

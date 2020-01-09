@@ -18,12 +18,12 @@ using namespace ITMLib;
 template <typename TVoxel, typename TIndex>
 ITMBasicEngine<TVoxel,TIndex>::ITMBasicEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb, Vector2i imgSize_d)
 {
-	auto& settings = Configuration::get();
+	auto& settings = configuration::get();
 
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 
 	MemoryDeviceType memoryType = settings.device_type;
-	this->scene = new ITMVoxelVolume<TVoxel,TIndex>(&settings.voxel_volume_parameters, settings.swapping_mode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
+	this->scene = new ITMVoxelVolume<TVoxel,TIndex>(&settings.voxel_volume_parameters, settings.swapping_mode == configuration::SWAPPINGMODE_ENABLED, memoryType);
 
 	const MemoryDeviceType deviceType = settings.device_type;
 
@@ -31,7 +31,7 @@ ITMBasicEngine<TVoxel,TIndex>::ITMBasicEngine(const ITMRGBDCalib& calib, Vector2
 	viewBuilder = ITMViewBuilderFactory::MakeViewBuilder(calib, deviceType);
 	visualisationEngine = ITMVisualizationEngineFactory::MakeVisualisationEngine<TVoxel,TIndex>(deviceType);
 
-	meshingEngine = NULL;
+	meshingEngine = nullptr;
 	if (settings.create_meshing_engine)
 		meshingEngine = ITMMeshingEngineFactory::MakeMeshingEngine<TVoxel,TIndex>(deviceType, scene->index);
 
@@ -46,16 +46,16 @@ ITMBasicEngine<TVoxel,TIndex>::ITMBasicEngine(const ITMRGBDCalib& calib, Vector2
 	Vector2i trackedImageSize = trackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
 
 	renderState_live =  new ITMRenderState(imgSize_d, scene->sceneParams->near_clipping_distance, scene->sceneParams->far_clipping_distance, memoryType);
-	renderState_freeview = NULL; //will be created if needed
+	renderState_freeview = nullptr; //will be created if needed
 
 	trackingState = new ITMTrackingState(trackedImageSize, memoryType);
 	tracker->UpdateInitialPose(trackingState);
 
-	view = NULL; // will be allocated by the view builder
+	view = nullptr; // will be allocated by the view builder
 	
-	if (settings.behavior_on_failure == settings.FAILUREMODE_RELOCALIZE)
+	if (settings.behavior_on_failure == configuration::FAILUREMODE_RELOCALIZE)
 		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.voxel_volume_parameters.near_clipping_distance, settings.voxel_volume_parameters.far_clipping_distance), 0.2f, 500, 4);
-	else relocaliser = NULL;
+	else relocaliser = nullptr;
 
 	kfRaycast = new ITMUChar4Image(imgSize_d, memoryType);
 
@@ -100,7 +100,7 @@ void ITMBasicEngine<TVoxel,TIndex>::SaveSceneToMesh(const char *objFileName)
 {
 	if (meshingEngine == NULL) return;
 
-	ITMMesh *mesh = new ITMMesh(Configuration::get().device_type, scene->index.GetMaxVoxelCount());
+	ITMMesh *mesh = new ITMMesh(configuration::get().device_type, scene->index.GetMaxVoxelCount());
 
 	meshingEngine->MeshScene(mesh, scene);
 	mesh->WriteSTL(objFileName);
@@ -128,7 +128,7 @@ void ITMBasicEngine<TVoxel, TIndex>::SaveToFile()
 template <typename TVoxel, typename TIndex>
 void ITMBasicEngine<TVoxel, TIndex>::LoadFromFile()
 {
-	auto& settings = Configuration::get();
+	auto& settings = configuration::get();
 	std::string saveInputDirectory = "State/";
 	std::string relocaliserInputDirectory = saveInputDirectory + "Relocaliser/", sceneInputDirectory = saveInputDirectory + "Scene/";
 
@@ -245,7 +245,7 @@ static void QuaternionFromRotationMatrix(const double *matrix, double *q) {
 template <typename TVoxel, typename TIndex>
 ITMTrackingState::TrackingResult ITMBasicEngine<TVoxel,TIndex>::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement)
 {
-	auto& settings = Configuration::get();
+	auto& settings = configuration::get();
 	// prepare image and turn it into a depth image
 	if (imuMeasurement == NULL)
 		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings.use_threshold_filter,
@@ -262,10 +262,10 @@ ITMTrackingState::TrackingResult ITMBasicEngine<TVoxel,TIndex>::ProcessFrame(ITM
 
 	ITMTrackingState::TrackingResult trackerResult = ITMTrackingState::TRACKING_GOOD;
 	switch (settings.behavior_on_failure) {
-	case Configuration::FAILUREMODE_RELOCALIZE:
+	case configuration::FAILUREMODE_RELOCALIZE:
 		trackerResult = trackingState->trackerResult;
 		break;
-	case Configuration::FAILUREMODE_STOP_INTEGRATION:
+	case configuration::FAILUREMODE_STOP_INTEGRATION:
 		if (trackingState->trackerResult != ITMTrackingState::TRACKING_FAILED)
 			trackerResult = trackingState->trackerResult;
 		else trackerResult = ITMTrackingState::TRACKING_POOR;
@@ -276,7 +276,7 @@ ITMTrackingState::TrackingResult ITMBasicEngine<TVoxel,TIndex>::ProcessFrame(ITM
 
 	//relocalisation
 	int addKeyframeIdx = -1;
-	if (settings.behavior_on_failure == Configuration::FAILUREMODE_RELOCALIZE)
+	if (settings.behavior_on_failure == configuration::FAILUREMODE_RELOCALIZE)
 	{
 		if (trackerResult == ITMTrackingState::TRACKING_GOOD && relocalisationCount > 0) relocalisationCount--;
 
@@ -358,7 +358,7 @@ void ITMBasicEngine<TVoxel,TIndex>::GetImage(ITMUChar4Image *out, GetImageType g
 {
 	if (view == NULL) return;
 
-	auto& settings = Configuration::get();
+	auto& settings = configuration::get();
 
 	out->Clear();
 

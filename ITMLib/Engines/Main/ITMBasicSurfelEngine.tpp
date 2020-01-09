@@ -16,7 +16,7 @@ using namespace ITMLib;
 
 template<typename TSurfel>
 ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb, Vector2i imgSize_d) {
-	auto& settings = Configuration::get();
+	auto& settings = configuration::get();
 
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 
@@ -49,7 +49,7 @@ ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMRGBDCalib& calib, V
 
 	view = NULL; // will be allocated by the view builder
 
-	if (settings.behavior_on_failure == settings.FAILUREMODE_RELOCALIZE)
+	if (settings.behavior_on_failure == configuration::FAILUREMODE_RELOCALIZE)
 		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.voxel_volume_parameters.near_clipping_distance,
 		                                                                       settings.voxel_volume_parameters.far_clipping_distance),
 		                                                   0.2f, 500, 4);
@@ -188,7 +188,7 @@ template<typename TSurfel>
 ITMTrackingState::TrackingResult
 ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITMUChar4Image* rgbImage, ITMShortImage* rawDepthImage,
                                             ITMIMUMeasurement* imuMeasurement) {
-	auto& settings = Configuration::get();
+	auto& settings = configuration::get();
 	// prepare image and turn it into a depth image
 	if (imuMeasurement == NULL)
 		viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings.use_threshold_filter,
@@ -205,10 +205,10 @@ ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITMUChar4Image* rgbImage, ITMShortIm
 
 	ITMTrackingState::TrackingResult trackerResult = ITMTrackingState::TRACKING_GOOD;
 	switch (settings.behavior_on_failure) {
-		case Configuration::FAILUREMODE_RELOCALIZE:
+		case configuration::FAILUREMODE_RELOCALIZE:
 			trackerResult = trackingState->trackerResult;
 			break;
-		case Configuration::FAILUREMODE_STOP_INTEGRATION:
+		case configuration::FAILUREMODE_STOP_INTEGRATION:
 			if (trackingState->trackerResult != ITMTrackingState::TRACKING_FAILED)
 				trackerResult = trackingState->trackerResult;
 			else trackerResult = ITMTrackingState::TRACKING_POOR;
@@ -222,7 +222,7 @@ ITMBasicSurfelEngine<TSurfel>::ProcessFrame(ITMUChar4Image* rgbImage, ITMShortIm
 #if 0 //TODO: explain not compiled block in comment (see below)? --Greg(GitHub:Algomorph)
 	int addKeyframeIdx = -1;
 #endif
-	if (settings.behavior_on_failure == Configuration::FAILUREMODE_RELOCALIZE) {
+	if (settings.behavior_on_failure == configuration::FAILUREMODE_RELOCALIZE) {
 		if (trackerResult == ITMTrackingState::TRACKING_GOOD && relocalisationCount > 0) relocalisationCount--;
 
 		int NN;
@@ -325,7 +325,7 @@ template<typename TSurfel>
 void ITMBasicSurfelEngine<TSurfel>::GetImage(ITMUChar4Image* out, GetImageType getImageType, ORUtils::SE3Pose* pose,
                                              ITMIntrinsics* intrinsics) {
 
-	auto& settings = Configuration::get();
+	auto& settings = configuration::get();
 	if (view == NULL) return;
 
 	out->Clear();

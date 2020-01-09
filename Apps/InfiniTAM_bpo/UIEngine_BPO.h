@@ -108,12 +108,12 @@ public:
 	bool shutdownRequested = false;
 	ITMUChar4Image* saveImage;
 	ITMLib::ITMDynamicFusionLogger_Interface* logger;
-	ITMLib::Configuration::IndexingMethod indexingMethod;
+	ITMLib::configuration::IndexingMethod indexingMethod;
 
 	void Initialize(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource, InputSource::IMUSourceEngine* imuSource,
 	                ITMLib::ITMMainEngine* mainEngine,
 
-	                const ITMLib::Configuration& configuration,
+	                const ITMLib::configuration::Configuration& configuration,
 
 	                const RunOptions& options, ITMLib::ITMDynamicFusionLogger_Interface* logger);
 	void Shutdown();

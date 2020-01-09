@@ -230,7 +230,7 @@ void UIEngine_BPO::GlutIdleFunction() {
 					uiEngine.mainEngine->SaveToFile();
 				}
 				bench::PrintAllCumulativeTimes();
-				if (Configuration::get().input_and_output_settings.save_benchmarks_to_disk){
+				if (configuration::get().telemetry_settings.save_benchmarks_to_disk){
 					bench::SaveAllCumulativeTimesToDisk();
 				}
 			}
@@ -345,7 +345,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 					}
 
 					switch (uiEngine.indexingMethod) {
-						case Configuration::INDEX_HASH: {
+						case configuration::INDEX_HASH: {
 							auto* multiEngine = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMVoxelBlockHash>*>(uiEngine.mainEngine);
 							if (multiEngine != nullptr) {
 								int idx = multiEngine->findPrimaryLocalMapIdx();
@@ -354,7 +354,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 							}
 						}
 							break;
-						case Configuration::INDEX_ARRAY:
+						case configuration::INDEX_ARRAY:
 							auto* multiEngine = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMPlainVoxelArray>*>(uiEngine.mainEngine);
 							if (multiEngine != nullptr) {
 								int idx = multiEngine->findPrimaryLocalMapIdx();

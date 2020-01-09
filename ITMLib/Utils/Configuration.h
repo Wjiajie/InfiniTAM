@@ -58,6 +58,13 @@ DECLARE_SERIALIZABLE_ENUM(VERBOSITY_LEVEL_ENUM_DESCRIPTION)
 
 DECLARE_SERIALIZABLE_ENUM(FAILUREMODE_ENUM_DESCRIPTION)
 
+#define SWAPPINGMODE_ENUM_DESCRIPTION SwappingMode, \
+    (SWAPPINGMODE_DISABLED, "enabled"), \
+    (SWAPPINGMODE_ENABLED, "disabled"), \
+    (SWAPPINGMODE_DELETE, "delete")
+
+DECLARE_SERIALIZABLE_ENUM(SWAPPINGMODE_ENUM_DESCRIPTION)
+
 #define LIBMODE_ENUM_DESCRIPTION LibMode, \
     (LIBMODE_BASIC, "basic"), \
     (LIBMODE_BASIC_SURFELS, "surfels"), \
@@ -101,75 +108,55 @@ DECLARE_SERIALIZABLE_STRUCT(TELEMETRY_SETTINGS_STRUCT_DESCRIPTION);
 
 DECLARE_SERIALIZABLE_STRUCT(UI_ENGINE_SETTINGS_STRUCT_DESCRIPTION);
 
+#ifndef COMPILE_WITHOUT_CUDA
+#define DEFAULT_DEVICE MEMORYDEVICE_CUDA
+#else
+#define DEFAULT_DEVICE MEMORYDEVICE_CPU
+#endif
+
+struct TrackerConfigurationStringPresets{
+	static const std::string default_ICP_tracker_configuration;
+	static const std::string default_ICP_tracker_configuration_loop_closure;
+	static const std::string default_depth_only_extended_tracker_configuration;
+	static const std::string default_intensity_depth_extended_tracker_configuration;
+	static const std::string default_color_only_tracker_configuration;
+	static const std::string default_IMU_ICP_tracker_configuration;
+	static const std::string default_IMU_extended_tracker_configuration;
+	static const std::string default_surfel_tracker_configuration;
+};
+
 #define CONFIGURATION_STRUCT_DESCRIPTION Configuration, \
 	(VoxelVolumeParameters, voxel_volume_parameters, VoxelVolumeParameters(), STRUCT),\
 	(SurfelVolumeParameters, surfel_volume_parameters, SurfelVolumeParameters(), STRUCT),\
-	()
+	(SlavchevaSurfaceTracker::Parameters, slavcheva_parameters, SlavchevaSurfaceTracker::Parameters(), STRUCT),\
+	(SlavchevaSurfaceTracker::Switches, slavcheva_switches, SlavchevaSurfaceTracker::Switches(), STRUCT),\
+	(TelemetrySettings, telemetry_settings, TelemetrySettings(), STRUCT),\
+	(Paths, paths, Paths(), STRUCT),\
+	(UIEngineSettings, ui_engine_settings, UIEngineSettings(), STRUCT),\
+	(NonRigidTrackingParameters, non_rigid_tracking_parameters, NonRigidTrackingParameters(), STRUCT ),\
+	(bool, skip_points, true, PRIMITIVE),\
+	(bool, create_meshing_engine, true, PRIMITIVE),\
+	(MemoryDeviceType, device_type, DEFAULT_DEVICE, ENUM),\
+	(bool, use_approximate_raycast, true, PRIMITIVE),\
+	(bool, use_threshold_filter, true, PRIMITIVE),\
+	(bool, use_bilateral_filter, true, PRIMITIVE),\
+	(FailureMode, behavior_on_failure, FAILUREMODE_IGNORE, ENUM),\
+	(SwappingMode, swapping_mode, SWAPPINGMODE_DISABLED, ENUM),\
+	(LibMode, library_mode, LIBMODE_DYNAMIC, ENUM),\
+	(IndexingMethod, indexing_method, INDEX_HASH, ENUM),\
+	(GradientFunctorType, surface_tracker_type, ITMLib::TRACKER_SLAVCHEVA_DIAGNOSTIC, ENUM),\
+	(VerbosityLevel, verbosity_level, VERBOSITY_PER_FRAME, ENUM),\
+	(std::string, tracker_configuration, TrackerConfigurationStringPresets::default_depth_only_extended_tracker_configuration, PRIMITIVE)
+
 
 DECLARE_SERIALIZABLE_STRUCT(CONFIGURATION_STRUCT_DESCRIPTION);
 
+Configuration& get();
+void load_configuration_from_variable_map(const po::variables_map& vm);
+void load_default();
+void load_configuration_from_json_file(const std::string& path);
+void save_configuration_to_json_file(const std::string& path);
+void save_configuration_to_json_file(const std::string& path, const Configuration& configuration);
 
-/// Scene-specific parameters such as voxel size
-const VoxelVolumeParameters voxel_volume_parameters;
-const SurfelVolumeParameters surfel_volume_parameters;
-/// Surface tracking energy parameters
-const SlavchevaSurfaceTracker::Parameters slavcheva_parameters;
-/// Surface tracking energy switches
-const SlavchevaSurfaceTracker::Switches slavcheva_switches;
-/// Telemetry / diagnostics / logging settings
-TelemetrySettings telemetry_settings;
-/// Input / output paths
-const InputAndOutputSettings input_and_output_settings;
-const Paths input_and_output_settings_paths;
-const UIEngineSettings ui_engine_settings;
-const NonRigidTrackingParameters non_rigid_tracking_parameters;
-/// For ITMColorTracker: skips every other point when using the colour renderer for creating a point cloud
-const bool skip_points;
-/// create all the things required for marching cubes and mesh extraction (uses lots of additional memory)
-const bool create_meshing_engine;
-/// Select the type of device to use
-const MemoryDeviceType device_type;
-/// enables or disables approximate raycast
-const bool use_approximate_raycast;
-/// enable or disable threshold depth filtering
-const bool use_threshold_filter;
-/// enable or disable bilateral depth filtering
-const bool use_bilateral_filter;
-/// what to do on tracker failure: ignore, relocalize or stop integration - not supported in loop closure version
-const FailureMode behavior_on_failure;
-/// how swapping works: disabled, fully enabled (still with dragons) and delete what's not visible - not supported in loop closure version
-const SwappingMode swapping_mode;
-/// switch between various library modes - basic, with loop closure, etc.
-const LibMode library_mode;
-/// switch between different types of indexing for the spatial data structures
-const IndexingMethod indexing_method;
-/// switch between different versions of the tracker
-const GradientFunctorType surface_tracker_type;
-/// control how much diagnostic text is output by the program
-const VerbosityLevel verbosity_level;
-/*Note: library_mode declaration has to precede that of tracker_configuration,
- since the latter uses the former for initialization in lists*/
-/// tracker configuration string
-/// (see Tracker documentation & code for details, code for this class for default "examples")
-std::string tracker_configuration;
-
-private:
-
-static std::unique_ptr<Configuration> instance;
-struct TrackerConfigurationStringDefaults{
-static const std::string default_ICP_tracker_configuration;
-static const std::string default_ICP_tracker_configuration_loop_closure;
-static const std::string default_depth_only_extended_tracker_configuration;
-static const std::string default_intensity_depth_extended_tracker_configuration;
-static const std::string default_color_only_tracker_configuration;
-static const std::string default_IMU_ICP_tracker_configuration;
-static const std::string default_IMU_extended_tracker_configuration;
-static const std::string default_surfel_tracker_configuration;
-};
-
-bool operator==(const Configuration::TelemetrySettings& ts1, const Configuration::TelemetrySettings& ts2);
-std::ostream& operator<<(std::ostream& out, const Configuration::TelemetrySettings& ts);
-bool operator==(const Configuration& c1, const Configuration& c2);
-std::ostream& operator<<(std::ostream& out, const Configuration& c);
 } // namespace configuration
 } // namespace ITMLib

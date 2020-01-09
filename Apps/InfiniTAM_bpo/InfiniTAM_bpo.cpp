@@ -51,12 +51,12 @@ namespace po = boost::program_options;
 namespace pt = boost::property_tree;
 
 
-ITMDynamicFusionLogger_Interface& GetLogger(Configuration::IndexingMethod method) {
+ITMDynamicFusionLogger_Interface& GetLogger(configuration::IndexingMethod method) {
 	switch (method) {
-		case Configuration::INDEX_HASH: {
+		case configuration::INDEX_HASH: {
 			return static_cast<ITMDynamicFusionLogger_Interface&>(ITMDynamicFusionLogger<ITMVoxel, ITMWarp, ITMVoxelBlockHash>::Instance());
 		}
-		case Configuration::INDEX_ARRAY: {
+		case configuration::INDEX_ARRAY: {
 			return static_cast<ITMDynamicFusionLogger_Interface&>(ITMDynamicFusionLogger<ITMVoxel, ITMWarp, ITMPlainVoxelArray>::Instance());
 		}
 	}
@@ -102,18 +102,18 @@ int main(int argc, char** argv) {
 		}
 
 		if (vm["config"].empty()) {
-			Configuration::load_configuration_from_variable_map(vm);
+			configuration::load_configuration_from_variable_map(vm);
 		} else {
 			std::string configPath = vm["config"].as<std::string>();
-			Configuration::load_configuration_from_json_file(configPath);
+			configuration::load_configuration_from_json_file(configPath);
 		}
-		auto& settings = Configuration::get();
+		auto& settings = configuration::get();
 
 		printf("initialising ...\n");
 		ImageSourceEngine* imageSource = nullptr;
 		IMUSourceEngine* imuSource = nullptr;
 
-		CreateDefaultImageSource(imageSource, imuSource, settings.input_and_output_settings_paths);
+		CreateDefaultImageSource(imageSource, imuSource, settings.paths);
 		if (imageSource == nullptr) {
 			std::cerr << "Failed to open any image stream." << std::endl;
 			printHelp();
@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
 		}
 
 // region ================================ BUILD MAIN ENGINE ========================================================
-		Configuration::IndexingMethod chosenIndexingMethod = settings.indexing_method;
+		configuration::IndexingMethod chosenIndexingMethod = settings.indexing_method;
 		ITMDynamicFusionLogger_Interface& logger = GetLogger(chosenIndexingMethod);
 		ITMMainEngine* mainEngine = BuildMainEngine(imageSource->getCalib(),
 		                                            imageSource->getRGBImageSize(),
@@ -138,10 +138,10 @@ int main(int argc, char** argv) {
 		if (loggingOptions.record1DSlices) logger.TurnRecordingScene1DSlicesWithUpdatesOn();
 		if (loggingOptions.record2DSlices) logger.TurnRecordingScene2DSlicesWithUpdatesOn();
 		if (loggingOptions.record3DSlices) logger.TurnRecordingScene3DSlicesWithUpdatesOn();
-		if (Configuration::get().verbosity_level >= Configuration::VERBOSITY_FOCUS_SPOTS) {
+		if (configuration::get().verbosity_level >= configuration::VERBOSITY_FOCUS_SPOTS) {
 			logger.SetFocusCoordinates(settings.telemetry_settings.focus_coordinates);
 		}
-		logger.SetOutputDirectory(settings.input_and_output_settings_paths.output_path);
+		logger.SetOutputDirectory(settings.paths.output_path);
 
 		logger.SetPlaneFor2Dand3DSlices(loggingOptions.planeFor2Dand3DSlices);
 		logger.Set3DSliceInPlaneRadius(loggingOptions._3DSliceRadius);

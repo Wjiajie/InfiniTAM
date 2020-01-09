@@ -62,22 +62,22 @@ struct WarpGradientDataFixture {
 			pathToData("TestData/snoopy_result_fr16-17_partial_" + getIndexSuffix<TIndex>() + "/"),
 			indexParameters(Frame16And17Fixture::InitParams<TIndex>()) {
 		Configuration::load_default();
-		settings = &Configuration::get();
+		settings = &configuration::get();
 
 		BOOST_TEST_MESSAGE("setup fixture");
 		auto loadSdfVolume = [&](ITMVoxelVolume<ITMVoxel, TIndex>** scene, const std::string& pathSuffix) {
-			*scene = new ITMVoxelVolume<ITMVoxel, TIndex>(&Configuration::get().voxel_volume_parameters,
+			*scene = new ITMVoxelVolume<ITMVoxel, TIndex>(&configuration::get().voxel_volume_parameters,
 			                                              settings->swapping_mode ==
-			                                              Configuration::SWAPPINGMODE_ENABLED,
+			                                              configuration::SWAPPINGMODE_ENABLED,
 			                                              TMemoryType,
 			                                              indexParameters);
 			PrepareVoxelVolumeForLoading(*scene);
 			(*scene)->LoadFromDirectory(pathToData + pathSuffix);
 		};
 		auto loadWarpVolume = [&](ITMVoxelVolume<ITMWarp, TIndex>** scene, const std::string& pathSuffix) {
-			*scene = new ITMVoxelVolume<ITMWarp, TIndex>(&Configuration::get().voxel_volume_parameters,
+			*scene = new ITMVoxelVolume<ITMWarp, TIndex>(&configuration::get().voxel_volume_parameters,
 			                                             settings->swapping_mode ==
-			                                             Configuration::SWAPPINGMODE_ENABLED,
+			                                             configuration::SWAPPINGMODE_ENABLED,
 			                                             TMemoryType,
 			                                             indexParameters);
 			PrepareVoxelVolumeForLoading(*scene);
@@ -166,9 +166,9 @@ void GenerateTestData() {
 	};
 
 
-	ITMVoxelVolume<ITMWarp, TIndex> warp_field(&Configuration::get().voxel_volume_parameters,
-	                                           Configuration::get().swapping_mode ==
-	                                           Configuration::SWAPPINGMODE_ENABLED,
+	ITMVoxelVolume<ITMWarp, TIndex> warp_field(&configuration::get().voxel_volume_parameters,
+	                                           configuration::get().swapping_mode ==
+	                                           configuration::SWAPPINGMODE_ENABLED,
 	                                           TMemoryDeviceType, Frame16And17Fixture::InitParams<TIndex>());
 	warp_field.Reset();
 

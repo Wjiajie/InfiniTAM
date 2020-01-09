@@ -115,7 +115,7 @@ private:
 	ITMSwappingEngine<TVoxel, TIndex>* swappingEngine;
 	SurfaceTrackerInterface<TVoxel, TWarp, TIndex>* sceneMotionTracker;
 
-	Configuration::SwappingMode swappingMode;
+	configuration::SwappingMode swappingMode;
 
 	// state (//TODO: make private, add getters where necessary)
 	unsigned int iteration = 0;
@@ -128,7 +128,7 @@ private:
 	const float maxVectorUpdateThresholdVoxels;
 	const AnalysisFlags analysisFlags;
 	const Vector3i focusCoordinates;
-	const Configuration::VerbosityLevel verbosity_level;
+	const configuration::VerbosityLevel verbosity_level;
 
 	// endregion =======================================================================================================
 

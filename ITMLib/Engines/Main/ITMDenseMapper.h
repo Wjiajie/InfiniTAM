@@ -17,7 +17,7 @@ namespace ITMLib
 		ITMSceneReconstructionEngine<TVoxel,TIndex> *sceneRecoEngine;
 		ITMSwappingEngine<TVoxel,TIndex> *swappingEngine;
 
-		Configuration::SwappingMode swappingMode;
+		configuration::SwappingMode swappingMode;
 
 	public:
 		void ResetScene(ITMVoxelVolume<TVoxel,TIndex> *scene) const;

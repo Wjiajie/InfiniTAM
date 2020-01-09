@@ -47,16 +47,16 @@ BOOST_AUTO_TEST_CASE(ExpandVolume_CPU) {
 	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>& indexing_engine
 			= ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance();
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume1(&Configuration::get().voxel_volume_parameters,
-	                                                    Configuration::get().swapping_mode ==
-	                                                    Configuration::SWAPPINGMODE_ENABLED,
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume1(&configuration::get().voxel_volume_parameters,
+	                                                    configuration::get().swapping_mode ==
+	                                                    configuration::SWAPPINGMODE_ENABLED,
 	                                                    MEMORYDEVICE_CPU,
 	                                                    {1200, 0x20000});
 	VolumeEditAndCopyEngine_CPU<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(&volume1);
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume2(&Configuration::get().voxel_volume_parameters,
-	                                                    Configuration::get().swapping_mode ==
-	                                                    Configuration::SWAPPINGMODE_ENABLED,
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume2(&configuration::get().voxel_volume_parameters,
+	                                                    configuration::get().swapping_mode ==
+	                                                    configuration::SWAPPINGMODE_ENABLED,
 	                                                    MEMORYDEVICE_CPU,
 	                                                    {1200, 0x20000});
 	VolumeEditAndCopyEngine_CPU<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(&volume2);
@@ -144,15 +144,15 @@ BOOST_AUTO_TEST_CASE(ExpandVolume_CPU) {
 
 template<MemoryDeviceType TMemoryDeviceType>
 void TestAllocateBasedOnVolumeExpanded_Generic() {
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume1(&Configuration::get().voxel_volume_parameters,
-	                                                    Configuration::get().swapping_mode ==
-	                                                    Configuration::SWAPPINGMODE_ENABLED,
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume1(&configuration::get().voxel_volume_parameters,
+	                                                    configuration::get().swapping_mode ==
+	                                                    configuration::SWAPPINGMODE_ENABLED,
 	                                                    TMemoryDeviceType,
 	                                                    Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
 	VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(&volume1);
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume2(&Configuration::get().voxel_volume_parameters,
-	                                                    Configuration::get().swapping_mode ==
-	                                                    Configuration::SWAPPINGMODE_ENABLED,
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume2(&configuration::get().voxel_volume_parameters,
+	                                                    configuration::get().swapping_mode ==
+	                                                    configuration::SWAPPINGMODE_ENABLED,
 	                                                    TMemoryDeviceType,
 	                                                    Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
 	VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(&volume2);
@@ -162,8 +162,8 @@ void TestAllocateBasedOnVolumeExpanded_Generic() {
 	           "TestData/snoopy_calib.txt", TMemoryDeviceType);
 	Vector2i imageSize(640, 480);
 	ITMTrackingState trackingState(imageSize, TMemoryDeviceType);
-	ITMRenderState renderState(imageSize, Configuration::get().voxel_volume_parameters.near_clipping_distance,
-	                           Configuration::get().voxel_volume_parameters.far_clipping_distance, TMemoryDeviceType);
+	ITMRenderState renderState(imageSize, configuration::get().voxel_volume_parameters.near_clipping_distance,
+	                           configuration::get().voxel_volume_parameters.far_clipping_distance, TMemoryDeviceType);
 	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>::Instance().AllocateFromDepth(
 			&volume1, view, &trackingState, false, false);
 	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>::Instance()
@@ -188,16 +188,16 @@ BOOST_AUTO_TEST_CASE(ExpandVolume_CUDA) {
 	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>& indexing_engine
 			= ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance();
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume1(&Configuration::get().voxel_volume_parameters,
-	                                                    Configuration::get().swapping_mode ==
-	                                                    Configuration::SWAPPINGMODE_ENABLED,
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume1(&configuration::get().voxel_volume_parameters,
+	                                                    configuration::get().swapping_mode ==
+	                                                    configuration::SWAPPINGMODE_ENABLED,
 	                                                    MEMORYDEVICE_CUDA,
 	                                                    {1200, 0x20000});
 	VolumeEditAndCopyEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(&volume1);
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume2(&Configuration::get().voxel_volume_parameters,
-	                                                    Configuration::get().swapping_mode ==
-	                                                    Configuration::SWAPPINGMODE_ENABLED,
+	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume2(&configuration::get().voxel_volume_parameters,
+	                                                    configuration::get().swapping_mode ==
+	                                                    configuration::SWAPPINGMODE_ENABLED,
 	                                                    MEMORYDEVICE_CUDA,
 	                                                    {1200, 0x20000});
 	VolumeEditAndCopyEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(&volume2);

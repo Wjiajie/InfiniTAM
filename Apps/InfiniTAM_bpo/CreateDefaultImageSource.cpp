@@ -17,7 +17,7 @@
 #include "CreateDefaultImageSource.h"
 
 void CreateDefaultImageSource(ImageSourceEngine*& imageSource, IMUSourceEngine*& imuSource,
-		const ITMLib::Configuration::Paths& inputPaths) {
+		const ITMLib::configuration::Paths& inputPaths) {
 
 
 	if (inputPaths.calibration_file_path == "viewer") {

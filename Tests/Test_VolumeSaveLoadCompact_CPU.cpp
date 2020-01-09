@@ -37,17 +37,17 @@ typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
 
 BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 
-	Configuration* settings = &Configuration::get();
+	Configuration* settings = &configuration::get();
 
 	Vector3i volumeSize(40, 68, 20);
 	Vector3i volumeOffset(-20, 0, 0);
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> generated_test_scene_PVA(
-			&Configuration::get().voxel_volume_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			&configuration::get().voxel_volume_parameters, configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 			MEMORYDEVICE_CPU, {volumeSize, volumeOffset});
 
 	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> loaded_test_scene_PVA(
-			&Configuration::get().voxel_volume_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			&configuration::get().voxel_volume_parameters, configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 			MEMORYDEVICE_CPU, {volumeSize, volumeOffset});
 
 	GenerateTestScene_CPU(&generated_test_scene_PVA);
@@ -62,11 +62,11 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&generated_test_scene_PVA, &loaded_test_scene_PVA, tolerance));
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> generated_test_scene_VBH(
-			&Configuration::get().voxel_volume_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			&configuration::get().voxel_volume_parameters, configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 			MEMORYDEVICE_CPU);
 
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> loaded_test_scene_VBH(
-			&Configuration::get().voxel_volume_parameters, Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			&configuration::get().voxel_volume_parameters, configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 			MEMORYDEVICE_CPU);
 
 	GenerateTestScene_CPU(&generated_test_scene_VBH);

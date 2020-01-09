@@ -17,7 +17,7 @@ namespace ITMLib
 	class ITMTrackingController
 	{
 	private:
-		const Configuration *settings;
+		const configuration::Configuration *settings;
 		ITMCameraTracker *tracker;
 
 	public:

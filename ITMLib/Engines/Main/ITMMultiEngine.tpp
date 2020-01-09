@@ -29,7 +29,7 @@ ITMMultiEngine<TVoxel, TIndex>::ITMMultiEngine(const ITMRGBDCalib& calib, Vector
 {
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 
-	auto& settings = Configuration::get();
+	auto& settings = configuration::get();
 
 	const MemoryDeviceType deviceType = settings.device_type;
 	lowLevelEngine = ITMLowLevelEngineFactory::MakeLowLevelEngine(deviceType);
@@ -144,7 +144,7 @@ struct TodoListEntry {
 template <typename TVoxel, typename TIndex>
 ITMTrackingState::TrackingResult ITMMultiEngine<TVoxel, TIndex>::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement)
 {
-	auto& settings = Configuration::get();
+	auto& settings = configuration::get();
 	std::vector<TodoListEntry> todoList;
 	ITMTrackingState::TrackingResult primaryLocalMapTrackingResult = ITMTrackingState::TrackingResult::TRACKING_FAILED;
 
@@ -309,7 +309,7 @@ void ITMMultiEngine<TVoxel, TIndex>::SaveSceneToMesh(const char *modelFileName)
 {
 	if (meshingEngine == NULL) return;
 
-	ITMMesh *mesh = new ITMMesh(Configuration::get().device_type, mapManager->getLocalMap(0)->scene->index.GetMaxVoxelCount());
+	ITMMesh *mesh = new ITMMesh(configuration::get().device_type, mapManager->getLocalMap(0)->scene->index.GetMaxVoxelCount());
 
 	meshingEngine->MeshScene(mesh, *mapManager);
 	mesh->WriteSTL(modelFileName);
@@ -339,7 +339,7 @@ template <typename TVoxel, typename TIndex>
 void ITMMultiEngine<TVoxel, TIndex>::GetImage(ITMUChar4Image *out, GetImageType getImageType, ORUtils::SE3Pose *pose, ITMIntrinsics *intrinsics)
 {
 	if (view == NULL) return;
-	auto& settings = Configuration::get();
+	auto& settings = configuration::get();
 
 	out->Clear();
 

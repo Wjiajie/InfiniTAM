@@ -182,7 +182,7 @@ void simulateRandomVoxelAlteration(TVoxel& voxel) {
 //template<typename TVoxelA, typename TIndex>
 //ITMVoxelVolume<TVoxelA, TIndex> loadVolume (const std::string& path, MemoryDeviceType memoryDeviceType,
 //                    typename TIndex::InitializationParameters initializationParameters, Configuration::SwappingMode swapping_mode){
-//	Configuration& settings = Configuration::get();
+//	Configuration& settings = configuration::get();
 //	ITMVoxelVolume<TVoxelA, TIndex> scene(&settings.voxel_volume_parameters,
 //	                                              swapping_mode,
 //	                                              memoryDeviceType,initializationParameters);
@@ -195,7 +195,7 @@ template<typename TVoxel, typename TIndex>
 void loadVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& path, MemoryDeviceType memoryDeviceType,
                 typename TIndex::InitializationParameters initializationParameters,
                 Configuration::SwappingMode swappingMode) {
-	Configuration& settings = Configuration::get();
+	Configuration& settings = configuration::get();
 	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&settings.voxel_volume_parameters,
 	                                               swappingMode,
 	                                               memoryDeviceType, initializationParameters);
@@ -230,7 +230,7 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
 	Vector2i imageSize(640, 480);
 	updateView(view, depth_path, color_path, mask_path, calibration_path, memoryDevice);
 	initializeVolume(volume, initializationParameters, memoryDevice, swappingMode);
-	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&Configuration::get().voxel_volume_parameters, swappingMode,
+	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&configuration::get().voxel_volume_parameters, swappingMode,
 	                                               memoryDevice, initializationParameters);
 	switch (memoryDevice) {
 
@@ -250,8 +250,8 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
 			DIEWITHEXCEPTION_REPORTLOCATION("Metal framework not fully supported.");
 			break;
 	}
-	ITMRenderState renderState(imageSize, Configuration::get().voxel_volume_parameters.near_clipping_distance,
-	                           Configuration::get().voxel_volume_parameters.far_clipping_distance, memoryDevice);
+	ITMRenderState renderState(imageSize, configuration::get().voxel_volume_parameters.near_clipping_distance,
+	                           configuration::get().voxel_volume_parameters.far_clipping_distance, memoryDevice);
 	ITMTrackingState trackingState(imageSize, memoryDevice);
 
 	ITMDynamicSceneReconstructionEngine<TVoxel, ITMWarp, TIndex>* reconstructionEngine =

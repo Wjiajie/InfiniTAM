@@ -44,7 +44,7 @@ typedef ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMVoxelBlock
 
 //#define SAVE_TEST_DATA
 BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_PVA, Frame16And17Fixture) {
-	const Configuration& settings = Configuration::get();
+	const Configuration& settings = configuration::get();
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warps;
 	loadVolume(&warps, "TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_complete_",
 	           MEMORYDEVICE_CPU, InitParams<ITMPlainVoxelArray>());
@@ -76,7 +76,7 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_PVA, Frame16And17Fixture) {
 }
 
 BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_VBH, Frame16And17Fixture) {
-	const Configuration& settings = Configuration::get();
+	const Configuration& settings = configuration::get();
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps;
 	loadVolume(&warps, "TestData/snoopy_result_fr16-17_partial_VBH/warp_field_0_complete_",
 	           MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
@@ -261,7 +261,7 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_PVA, Frame16And17Fixture) {
 	loadVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_PVA/snoopy_partial_frame_17_",
 	           MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
 	auto warped_live_volume = new ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>(
-			&Configuration::get().voxel_volume_parameters, false, MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
+			&configuration::get().voxel_volume_parameters, false, MEMORYDEVICE_CUDA, InitParams<ITMPlainVoxelArray>());
 	ManipulationEngine_CUDA_PVA_Voxel::Inst().ResetScene(warped_live_volume);
 
 	RecoEngine_CUDA_PVA recoEngine;
@@ -290,7 +290,7 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_VBH, Frame16And17Fixture) {
 	loadVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_17_",
 	           MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
 	auto warped_live_volume = new ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>(
-			&Configuration::get().voxel_volume_parameters, false, MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
+			&configuration::get().voxel_volume_parameters, false, MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(warped_live_volume);
 
 	RecoEngine_CUDA_VBH recoEngine;

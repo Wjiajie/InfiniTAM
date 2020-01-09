@@ -74,7 +74,7 @@ void UIEngine_BPO::Initialize(int& argc, char** argv,
                               InputSource::IMUSourceEngine* imuSource,
                               ITMLib::ITMMainEngine* mainEngine,
 
-                              const Configuration& configuration,
+                              const configuration::Configuration& configuration,
 
                               const RunOptions& options,
                               ITMLib::ITMDynamicFusionLogger_Interface* logger) {
@@ -106,7 +106,7 @@ void UIEngine_BPO::Initialize(int& argc, char** argv,
 	this->imageSource = imageSource;
 	this->imuSource = imuSource;
 	this->mainEngine = mainEngine;
-	this->output_path = configuration.input_and_output_settings_paths.output_path;
+	this->output_path = configuration.paths.output_path;
 
 	int textHeight = 60; // Height of text area, 2 lines
 
@@ -186,7 +186,7 @@ void UIEngine_BPO::Initialize(int& argc, char** argv,
 		                                       : this->colourModes_main[this->currentColourMode].type;
 	}
 
-	if (configuration.input_and_output_settings.record_reconstruction_video) {
+	if (configuration.telemetry_settings.record_reconstruction_video) {
 		this->reconstructionVideoWriter = new FFMPEGWriter();
 	}
 
@@ -297,12 +297,12 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 	if (!imageSource->hasMoreImages()) return false;
 
 	switch (indexingMethod) {
-		case Configuration::INDEX_HASH: {
+		case configuration::INDEX_HASH: {
 			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 		}
 			break;
-		case Configuration::INDEX_ARRAY: {
+		case configuration::INDEX_ARRAY: {
 			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 		}
@@ -325,7 +325,7 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 
 	//actual processing on the mailEngine
 	switch (indexingMethod) {
-		case Configuration::INDEX_HASH: {
+		case configuration::INDEX_HASH: {
 			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>*>(mainEngine);
 			if (imuSource != nullptr)
 				dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage,
@@ -333,7 +333,7 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 			else dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage);
 		}
 			break;
-		case Configuration::INDEX_ARRAY: {
+		case configuration::INDEX_ARRAY: {
 			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>*>(mainEngine);
 			if (imuSource != nullptr)
 				dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage,
@@ -365,7 +365,7 @@ std::string UIEngine_BPO::GenerateCurrentFrameOutputDirectory() const {
 bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 	bool keepProcessingFrame = false;
 	switch (indexingMethod) {
-		case Configuration::INDEX_HASH: {
+		case configuration::INDEX_HASH: {
 			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 			keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();
@@ -380,7 +380,7 @@ bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 			}
 		}
 			break;
-		case Configuration::INDEX_ARRAY: {
+		case configuration::INDEX_ARRAY: {
 			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 			keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();

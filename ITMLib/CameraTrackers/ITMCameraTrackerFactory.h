@@ -144,7 +144,7 @@ public:
 	 */
 	ITMCameraTracker* Make(const Vector2i& imgSize_rgb, const Vector2i& imgSize_d, const ITMLowLevelEngine* lowLevelEngine,
 	                       ITMIMUCalibrator* imuCalibrator, const VoxelVolumeParameters* sceneParams) const {
-		auto& settings = Configuration::get();
+		auto& settings = configuration::get();
 		return Make(settings.device_type, settings.tracker_configuration.c_str(), imgSize_rgb, imgSize_d, lowLevelEngine,
 		            imuCalibrator, sceneParams);
 	}

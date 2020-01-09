@@ -68,21 +68,21 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 DenseDynamicMapper<TVoxel, TWarp, TIndex>::DenseDynamicMapper(const TIndex& index) :
 		sceneReconstructor(
 				ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel, TWarp, TIndex>
-						(Configuration::get().device_type)),
+						(configuration::get().device_type)),
 		sceneMotionTracker(
 				SurfaceTrackerFactory::MakeSceneMotionTracker<TVoxel, TWarp, TIndex>()),
-		swappingEngine(Configuration::get().swapping_mode != Configuration::SWAPPINGMODE_DISABLED
+		swappingEngine(configuration::get().swapping_mode != configuration::SWAPPINGMODE_DISABLED
 		               ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxel, TIndex>(
-						Configuration::get().device_type, index)
+						configuration::get().device_type, index)
 		               : nullptr),
-		swappingMode(Configuration::get().swapping_mode),
-		parameters(Configuration::get().non_rigid_tracking_parameters),
-		use_expanded_allocation_during_TSDF_construction(Configuration::get().voxel_volume_parameters.add_extra_block_ring_during_allocation),
+		swappingMode(configuration::get().swapping_mode),
+		parameters(configuration::get().non_rigid_tracking_parameters),
+		use_expanded_allocation_during_TSDF_construction(configuration::get().voxel_volume_parameters.add_extra_block_ring_during_allocation),
 		maxVectorUpdateThresholdVoxels(parameters.max_update_length_threshold /
-		                                    Configuration::get().voxel_volume_parameters.voxel_size),
-		analysisFlags{Configuration::get().verbosity_level >= Configuration::VERBOSITY_FOCUS_SPOTS},
-		focusCoordinates(Configuration::get().telemetry_settings.focus_coordinates),
-		verbosity_level(Configuration::get().verbosity_level){ }
+		                                    configuration::get().voxel_volume_parameters.voxel_size),
+		analysisFlags{configuration::get().verbosity_level >= configuration::VERBOSITY_FOCUS_SPOTS},
+		focusCoordinates(configuration::get().telemetry_settings.focus_coordinates),
+		verbosity_level(configuration::get().verbosity_level){ }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 DenseDynamicMapper<TVoxel, TWarp, TIndex>::~DenseDynamicMapper() {
@@ -98,7 +98,7 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 void
 DenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetTSDFVolume(
 		ITMVoxelVolume<TVoxel, TIndex>* volume) const {
-	switch (Configuration::get().device_type) {
+	switch (configuration::get().device_type) {
 		case MEMORYDEVICE_CPU:
 			VolumeEditAndCopyEngine_CPU<TVoxel, TIndex>::Inst().ResetScene(volume);
 			break;
@@ -116,7 +116,7 @@ DenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetTSDFVolume(
 template<typename TVoxel, typename TWarp, typename TIndex>
 void DenseDynamicMapper<TVoxel, TWarp, TIndex>::ResetWarpVolume(
 		ITMVoxelVolume<TWarp, TIndex>* warpVolume) const {
-	switch (Configuration::get().device_type) {
+	switch (configuration::get().device_type) {
 		case MEMORYDEVICE_CPU:
 			VolumeEditAndCopyEngine_CPU<TWarp, TIndex>::Inst().ResetScene(warpVolume);
 			break;
@@ -256,7 +256,7 @@ void DenseDynamicMapper<TVoxel, TWarp, TIndex>::PerformSingleOptimizationStep(
 
 	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().SaveWarpSlices(iteration);
 
-	if(verbosity_level >= Configuration::VERBOSITY_PER_ITERATION){
+	if(verbosity_level >= configuration::VERBOSITY_PER_ITERATION){
 		std::cout << red << "Iteration: " << iteration << reset << std::endl;
 		//** warp update gradient computation
 		PrintOperationStatus("Calculating warp energy gradient...");
@@ -266,7 +266,7 @@ void DenseDynamicMapper<TVoxel, TWarp, TIndex>::PerformSingleOptimizationStep(
 	sceneMotionTracker->CalculateWarpGradient(canonicalScene, initialLiveScene, warpField);
 	bench::StopTimer("TrackMotion_31_CalculateWarpUpdate");
 
-	if(verbosity_level >= Configuration::VERBOSITY_PER_ITERATION){
+	if(verbosity_level >= configuration::VERBOSITY_PER_ITERATION){
 		PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");
 	}
 
@@ -274,14 +274,14 @@ void DenseDynamicMapper<TVoxel, TWarp, TIndex>::PerformSingleOptimizationStep(
 	sceneMotionTracker->SmoothWarpGradient(canonicalScene, initialLiveScene, warpField);
 	bench::StopTimer("TrackMotion_32_ApplySmoothingToGradient");
 
-	if(verbosity_level >= Configuration::VERBOSITY_PER_ITERATION) {
+	if(verbosity_level >= configuration::VERBOSITY_PER_ITERATION) {
 		PrintOperationStatus("Applying warp update (based on energy gradient) to the cumulative warp...");
 	}
 	bench::StartTimer("TrackMotion_33_UpdateWarps");
 	maxVectorUpdate = sceneMotionTracker->UpdateWarps(canonicalScene, initialLiveScene, warpField);
 	bench::StopTimer("TrackMotion_33_UpdateWarps");
 
-	if(verbosity_level >= Configuration::VERBOSITY_PER_ITERATION) {
+	if(verbosity_level >= configuration::VERBOSITY_PER_ITERATION) {
 		PrintOperationStatus(
 				"Updating live frame SDF by mapping from raw live SDF to new warped SDF based on latest warp...");
 	}
@@ -303,18 +303,18 @@ void DenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessSwapping(
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene, ITMRenderState* renderState) {
 	if (swappingEngine != nullptr) {
 		// swapping: CPU -> CUDA
-		if (swappingMode == Configuration::SWAPPINGMODE_ENABLED)
+		if (swappingMode == configuration::SWAPPINGMODE_ENABLED)
 			swappingEngine->IntegrateGlobalIntoLocal(canonicalScene, renderState);
 
 		// swapping: CUDA -> CPU
 		switch (swappingMode) {
-			case Configuration::SWAPPINGMODE_ENABLED:
+			case configuration::SWAPPINGMODE_ENABLED:
 				swappingEngine->SaveToGlobalMemory(canonicalScene, renderState);
 				break;
-			case Configuration::SWAPPINGMODE_DELETE:
+			case configuration::SWAPPINGMODE_DELETE:
 				swappingEngine->CleanLocalMemory(canonicalScene, renderState);
 				break;
-			case Configuration::SWAPPINGMODE_DISABLED:
+			case configuration::SWAPPINGMODE_DISABLED:
 				break;
 		}
 	}

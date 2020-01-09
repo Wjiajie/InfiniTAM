@@ -90,23 +90,23 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 		DIEWITHEXCEPTION_REPORTLOCATION("Iteration limit must be at least 2");
 	}
 
-	ITMVoxelVolume<ITMWarp, TIndex> warp_field(&Configuration::get().voxel_volume_parameters,
-	                                           Configuration::get().swapping_mode ==
-	                                           Configuration::SWAPPINGMODE_ENABLED,
+	ITMVoxelVolume<ITMWarp, TIndex> warp_field(&configuration::get().voxel_volume_parameters,
+	                                           configuration::get().swapping_mode ==
+	                                           configuration::SWAPPINGMODE_ENABLED,
 	                                           TMemoryDeviceType,
 	                                           Frame16And17Fixture::InitParams<TIndex>());
 	VolumeEditAndCopyEngineFactory::Instance<ITMWarp, TIndex, TMemoryDeviceType>().ResetScene(&warp_field);
 
 	ITMVoxelVolume<ITMVoxel, TIndex>* canonical_volume;
 	ITMVoxelVolume<ITMVoxel, TIndex>* live_volumes[2] = {
-			new ITMVoxelVolume<ITMVoxel, TIndex>(&Configuration::get().voxel_volume_parameters,
-			                                     Configuration::get().swapping_mode ==
-			                                     Configuration::SWAPPINGMODE_ENABLED,
+			new ITMVoxelVolume<ITMVoxel, TIndex>(&configuration::get().voxel_volume_parameters,
+			                                     configuration::get().swapping_mode ==
+			                                     configuration::SWAPPINGMODE_ENABLED,
 			                                     TMemoryDeviceType,
 			                                     Frame16And17Fixture::InitParams<TIndex>()),
-			new ITMVoxelVolume<ITMVoxel, TIndex>(&Configuration::get().voxel_volume_parameters,
-			                                     Configuration::get().swapping_mode ==
-			                                     Configuration::SWAPPINGMODE_ENABLED,
+			new ITMVoxelVolume<ITMVoxel, TIndex>(&configuration::get().voxel_volume_parameters,
+			                                     configuration::get().swapping_mode ==
+			                                     configuration::SWAPPINGMODE_ENABLED,
 			                                     TMemoryDeviceType,
 			                                     Frame16And17Fixture::InitParams<TIndex>())
 	};
@@ -123,12 +123,12 @@ GenericWarpConsistencySubtest(const SlavchevaSurfaceTracker::Switches& switches,
 			motionTracker(switches);
 
 	ITMVoxelVolume<ITMWarp, TIndex> ground_truth_warp_field(
-			&Configuration::get().voxel_volume_parameters,
-			Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			&configuration::get().voxel_volume_parameters,
+			configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 			TMemoryDeviceType, Frame16And17Fixture::InitParams<TIndex>());
 	ITMVoxelVolume<ITMVoxel, TIndex> ground_truth_sdf_volume(
-			&Configuration::get().voxel_volume_parameters,
-			Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+			&configuration::get().voxel_volume_parameters,
+			configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 			TMemoryDeviceType, Frame16And17Fixture::InitParams<TIndex>());
 
 	VolumeEditAndCopyEngineFactory::Instance<ITMWarp, TIndex, TMemoryDeviceType>().ResetScene(
@@ -274,8 +274,8 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 	//_DEBUG
 //	Vector3i test_pos(8, -4, 202);
 //	Vector3s voxel_block_pos = TO_SHORT_FLOOR3(test_pos.toFloat() / VOXEL_BLOCK_SIZE);
-//	Configuration::get().verbosity_level >= Configuration::VERBOSITY_FOCUS_SPOTS = true;
-//	Configuration::get().telemetry_settings.focus_coordinates = test_pos;
+//	configuration::get().verbosity_level >= Configuration::VERBOSITY_FOCUS_SPOTS = true;
+//	configuration::get().telemetry_settings.focus_coordinates = test_pos;
 //
 //	int hashCode;
 //	ITMHashEntry entry = volume_16_VBH->index.GetHashEntryAt(voxel_block_pos, hashCode);

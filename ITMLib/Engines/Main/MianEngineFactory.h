@@ -27,40 +27,40 @@
 namespace ITMLib{
 
 ITMMainEngine* BuildMainEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb, Vector2i imgSize_d, bool fix_camera = false){
-	auto& settings = Configuration::get();
-	Configuration::IndexingMethod chosenIndexingMethod = settings.indexing_method;
+	auto& settings = configuration::get();
+	configuration::IndexingMethod chosenIndexingMethod = settings.indexing_method;
 	ITMMainEngine* mainEngine = nullptr;
 
 	switch (settings.library_mode) {
-		case Configuration::LIBMODE_BASIC:
+		case configuration::LIBMODE_BASIC:
 			switch (chosenIndexingMethod) {
-				case Configuration::INDEX_HASH:
+				case configuration::INDEX_HASH:
 					mainEngine = new ITMBasicEngine<ITMVoxel, ITMVoxelBlockHash>(calib, imgSize_rgb, imgSize_d);
 					break;
-				case Configuration::INDEX_ARRAY:
+				case configuration::INDEX_ARRAY:
 					mainEngine = new ITMBasicEngine<ITMVoxel, ITMPlainVoxelArray>(calib, imgSize_rgb, imgSize_d);
 					break;
 			}
 			break;
-		case Configuration::LIBMODE_BASIC_SURFELS:
+		case configuration::LIBMODE_BASIC_SURFELS:
 			mainEngine = new ITMBasicSurfelEngine<ITMSurfelT>(calib, imgSize_rgb, imgSize_d);
 			break;
-		case Configuration::LIBMODE_LOOPCLOSURE:
+		case configuration::LIBMODE_LOOPCLOSURE:
 			switch (chosenIndexingMethod) {
-				case Configuration::INDEX_HASH:
+				case configuration::INDEX_HASH:
 					mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelBlockHash>(calib, imgSize_rgb, imgSize_d);
 					break;
-				case Configuration::INDEX_ARRAY:
+				case configuration::INDEX_ARRAY:
 					mainEngine = new ITMMultiEngine<ITMVoxel, ITMPlainVoxelArray>(calib, imgSize_rgb, imgSize_d);
 					break;
 			}
 			break;
-		case Configuration::LIBMODE_DYNAMIC:
+		case configuration::LIBMODE_DYNAMIC:
 			switch (chosenIndexingMethod) {
-				case Configuration::INDEX_HASH:
+				case configuration::INDEX_HASH:
 					mainEngine = new ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(calib, imgSize_rgb, imgSize_d);
 					break;
-				case Configuration::INDEX_ARRAY:
+				case configuration::INDEX_ARRAY:
 					mainEngine = new ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(calib, imgSize_rgb, imgSize_d);
 					break;
 			}
@@ -77,5 +77,5 @@ ITMMainEngine* BuildMainEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb, 
 	return mainEngine;
 }
 
-}
+} // namespace ITMLib
 

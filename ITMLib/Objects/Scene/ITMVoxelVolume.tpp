@@ -49,8 +49,8 @@ ITMVoxelVolume<TVoxel,TIndex>::ITMVoxelVolume(const VoxelVolumeParameters* _scen
 template<class TVoxel, class TIndex>
 ITMVoxelVolume<TVoxel, TIndex>::ITMVoxelVolume(MemoryDeviceType memoryDeviceType,
 		typename TIndex::InitializationParameters indexParameters) :
-	ITMVoxelVolume(&Configuration::get().voxel_volume_parameters,
-			Configuration::get().swapping_mode == Configuration::SWAPPINGMODE_ENABLED,
+	ITMVoxelVolume(&configuration::get().voxel_volume_parameters,
+			configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 			memoryDeviceType, indexParameters) {}
 
 template<class TVoxel, class TIndex>

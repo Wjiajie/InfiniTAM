@@ -10,9 +10,9 @@ using namespace ITMLib;
 template<class TVoxel, class TIndex>
 ITMDenseMapper<TVoxel, TIndex>::ITMDenseMapper(const TIndex& index)
 {
-	auto& settings = Configuration::get();
+	auto& settings = configuration::get();
 	sceneRecoEngine = ITMSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<TVoxel,TIndex>(settings.device_type);
-	swappingEngine = settings.swapping_mode != Configuration::SWAPPINGMODE_DISABLED ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxel,TIndex>(settings.device_type, index) : nullptr;
+	swappingEngine = settings.swapping_mode != configuration::SWAPPINGMODE_DISABLED ? ITMSwappingEngineFactory::MakeSwappingEngine<TVoxel,TIndex>(settings.device_type, index) : nullptr;
 
 	swappingMode = settings.swapping_mode;
 }
@@ -41,18 +41,18 @@ void ITMDenseMapper<TVoxel,TIndex>::ProcessFrame(const ITMView *view, const ITMT
 
 	if (swappingEngine != NULL) {
 		// swapping: CPU -> CUDA
-		if (swappingMode == Configuration::SWAPPINGMODE_ENABLED) swappingEngine->IntegrateGlobalIntoLocal(scene, renderState);
+		if (swappingMode == configuration::SWAPPINGMODE_ENABLED) swappingEngine->IntegrateGlobalIntoLocal(scene, renderState);
 
 		// swapping: CUDA -> CPU
 		switch (swappingMode)
 		{
-		case Configuration::SWAPPINGMODE_ENABLED:
+		case configuration::SWAPPINGMODE_ENABLED:
 			swappingEngine->SaveToGlobalMemory(scene, renderState);
 			break;
-		case Configuration::SWAPPINGMODE_DELETE:
+		case configuration::SWAPPINGMODE_DELETE:
 			swappingEngine->CleanLocalMemory(scene, renderState);
 			break;
-		case Configuration::SWAPPINGMODE_DISABLED:
+		case configuration::SWAPPINGMODE_DISABLED:
 			break;
 		} 
 	}

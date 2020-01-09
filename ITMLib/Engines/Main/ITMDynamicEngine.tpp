@@ -24,7 +24,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
                                                           Vector2i imgSize_d) {
 
 	this->InitializeScenes();
-	Configuration& settings = Configuration::get();
+	configuration::Configuration& settings = configuration::get();
 	const MemoryDeviceType deviceType = settings.device_type;
 	MemoryDeviceType memoryType = settings.device_type;
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
@@ -64,7 +64,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 
 	view = nullptr; // will be allocated by the view builder
 
-	if (settings.behavior_on_failure == settings.FAILUREMODE_RELOCALIZE)
+	if (settings.behavior_on_failure == configuration::FAILUREMODE_RELOCALIZE)
 		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d,
 		                                                   Vector2f(settings.voxel_volume_parameters.near_clipping_distance,
 		                                                            settings.voxel_volume_parameters.far_clipping_distance),
@@ -83,20 +83,20 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDynamicEngine<TVoxel, TWarp, TIndex>::InitializeScenes() {
-	Configuration& settings = Configuration::get();
+	configuration::Configuration& settings = configuration::get();
 	MemoryDeviceType memoryType = settings.device_type;
 	this->canonicalScene = new ITMVoxelVolume<TVoxel, TIndex>(
-			&settings.voxel_volume_parameters, settings.swapping_mode == Configuration::SWAPPINGMODE_ENABLED, memoryType);
+			&settings.voxel_volume_parameters, settings.swapping_mode == configuration::SWAPPINGMODE_ENABLED, memoryType);
 	this->liveScenes = new ITMVoxelVolume<TVoxel, TIndex>* [2];
 	for (int iLiveScene = 0; iLiveScene < ITMDynamicEngine<TVoxel, TWarp, TIndex>::liveSceneCount; iLiveScene++) {
 		this->liveScenes[iLiveScene] = new ITMVoxelVolume<TVoxel, TIndex>(&settings.voxel_volume_parameters,
 		                                                                  settings.swapping_mode ==
-		                                                                  Configuration::SWAPPINGMODE_ENABLED,
+		                                                                  configuration::SWAPPINGMODE_ENABLED,
 		                                                                  memoryType);
 	}
 	this->warpField = new ITMVoxelVolume<TWarp, TIndex>(&settings.voxel_volume_parameters,
 	                                                    settings.swapping_mode ==
-	                                                    Configuration::SWAPPINGMODE_ENABLED,
+	                                                    configuration::SWAPPINGMODE_ENABLED,
 	                                                    memoryType);
 }
 
@@ -135,7 +135,7 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::~ITMDynamicEngine() {
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDynamicEngine<TVoxel, TWarp, TIndex>::SaveSceneToMesh(const char* objFileName) {
 	if (meshingEngine == nullptr) return;
-	ITMMesh* mesh = new ITMMesh(Configuration::get().device_type, canonicalScene->index.GetMaxVoxelCount());
+	ITMMesh* mesh = new ITMMesh(configuration::get().device_type, canonicalScene->index.GetMaxVoxelCount());
 	meshingEngine->MeshScene(mesh, canonicalScene);
 	mesh->WriteSTL(objFileName);
 	delete mesh;
@@ -164,7 +164,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::LoadFromFile() {
 	if (view != nullptr) {
 		try // load relocaliser
 		{
-			auto& settings = Configuration::get();
+			auto& settings = configuration::get();
 			FernRelocLib::Relocaliser<float>* relocaliser_temp =
 					new FernRelocLib::Relocaliser<float>(view->depth->noDims,
 					                                     Vector2f(
@@ -336,7 +336,7 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetImageType getImageType,
                                                        ORUtils::SE3Pose* pose,
                                                        ITMIntrinsics* intrinsics) {
-	auto& settings = Configuration::get();
+	auto& settings = configuration::get();
 	if (view == nullptr) return;
 
 	out->Clear();
@@ -549,7 +549,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::BeginProcessingFrame(ITMUChar4Imag
                                                                    ITMShortImage* rawDepthImage,
                                                                    ITMIMUMeasurement* imuMeasurement) {
 
-	auto& settings = Configuration::get();
+	auto& settings = configuration::get();
 
 	// prepare image and turn it into a depth image
 	if (imuMeasurement == nullptr)
@@ -571,7 +571,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::BeginProcessingFrame(ITMUChar4Imag
 	lastTrackerResult = ITMTrackingState::TRACKING_GOOD;
 
 	switch (settings.behavior_on_failure) {
-		case Configuration::FAILUREMODE_RELOCALIZE:
+		case configuration::FAILUREMODE_RELOCALIZE:
 			//relocalisation
 			lastTrackerResult = trackingState->trackerResult;
 			if (lastTrackerResult == ITMTrackingState::TRACKING_GOOD && relocalisationCount > 0)
@@ -609,7 +609,7 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::BeginProcessingFrame(ITMUChar4Imag
 				}
 			}
 			break;
-		case Configuration::FAILUREMODE_STOP_INTEGRATION:
+		case configuration::FAILUREMODE_STOP_INTEGRATION:
 			if (trackingState->trackerResult != ITMTrackingState::TRACKING_FAILED)
 				lastTrackerResult = trackingState->trackerResult;
 			else lastTrackerResult = ITMTrackingState::TRACKING_POOR;

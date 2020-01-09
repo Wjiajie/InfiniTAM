@@ -89,7 +89,7 @@ void PrintAllCumulativeTimes() {
 
 void SaveAllCumulativeTimesToDisk() {
 	std::ofstream output_file;
-	std::string path = (fs::path(Configuration::get().input_and_output_settings_paths.output_path) / "benchmark.txt").string();
+	std::string path = (fs::path(configuration::get().paths.output_path) / "benchmark.txt").string();
 	output_file.open(path);
 	all_times_to_stream(output_file,false);
 	output_file.close();

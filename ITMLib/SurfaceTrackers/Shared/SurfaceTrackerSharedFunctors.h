@@ -332,7 +332,7 @@ inline float UpdateWarps_common(
 		float gradientDescentLearningRate,
 		bool gradeintSmoothingEnabled) {
 	WarpUpdateFunctor<TVoxel, TWarp, TDeviceType>
-			warpUpdateFunctor(gradientDescentLearningRate, ITMLib::Configuration::get().non_rigid_tracking_parameters.momentum_weight, gradeintSmoothingEnabled);
+			warpUpdateFunctor(gradientDescentLearningRate, ITMLib::configuration::get().non_rigid_tracking_parameters.momentum_weight, gradeintSmoothingEnabled);
 
 	ITMLib::ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, TIndex, TDeviceType>::
 	DualVoxelPositionTraversal(liveScene, canonicalScene, warpField, warpUpdateFunctor);

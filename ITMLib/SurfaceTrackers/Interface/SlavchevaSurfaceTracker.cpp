@@ -25,17 +25,20 @@
 
 using namespace ITMLib;
 
-DEFINE_SERIALIZABLE_STRUCT(SlavchevaSurfaceTracker::PARAMETERS_STRUCT_DESCRIPTION)
-DEFINE_SERIALIZABLE_STRUCT(SlavchevaSurfaceTracker::SWITCHES_STRUCT_DESCRIPTION)
+//#pragma message BOOST_PP_STRINGIZE((DEFINE_INNER_SERIALIZABLE_STRUCT(SlavchevaSurfaceTracker, SWITCHES_STRUCT_DESCRIPTION)))
+
+DEFINE_INNER_SERIALIZABLE_STRUCT(SlavchevaSurfaceTracker, PARAMETERS_STRUCT_DESCRIPTION)
+DEFINE_INNER_SERIALIZABLE_STRUCT(SlavchevaSurfaceTracker, SWITCHES_STRUCT_DESCRIPTION)
+
 
 SlavchevaSurfaceTracker::SlavchevaSurfaceTracker() :
-		parameters(Configuration::get().slavcheva_parameters),
-		switches(Configuration::get().slavcheva_switches) {
+		parameters(configuration::get().slavcheva_parameters),
+		switches(configuration::get().slavcheva_switches) {
 	PrintSettings();
 }
 
-
-SlavchevaSurfaceTracker::SlavchevaSurfaceTracker(Switches switches, Parameters parameters) :
+SlavchevaSurfaceTracker::SlavchevaSurfaceTracker(SlavchevaSurfaceTracker::Switches switches,
+                                                 SlavchevaSurfaceTracker::Parameters parameters) :
 		parameters(parameters), switches(switches) {}
 
 void SlavchevaSurfaceTracker::PrintSettings() {
@@ -56,5 +59,3 @@ void SlavchevaSurfaceTracker::PrintSettings() {
 	std::cout << "Epsilon for the level set term: " << this->parameters.epsilon << std::endl;
 	std::cout << bright_cyan << "*** *********************************** ***" << reset << std::endl;
 }
-
-}//namespace ITMLib

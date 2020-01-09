@@ -72,9 +72,9 @@ struct AlteredFramewiseWarpCountFunctor {
 typedef WarpGradientDataFixture<MemoryDeviceType::MEMORYDEVICE_CPU, ITMVoxelBlockHash> DataFixture;
 BOOST_FIXTURE_TEST_CASE(testDataTerm_CPU_VBH, DataFixture) {
 
-	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CPU1(&Configuration::get().voxel_volume_parameters,
-	                                                           Configuration::get().swapping_mode ==
-	                                                           Configuration::SWAPPINGMODE_ENABLED,
+	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash> warp_field_CPU1(&configuration::get().voxel_volume_parameters,
+	                                                           configuration::get().swapping_mode ==
+	                                                           configuration::SWAPPINGMODE_ENABLED,
 	                                                           MEMORYDEVICE_CPU, indexParameters);
 	ManipulationEngine_CPU_VBH_Warp::Inst().ResetScene(&warp_field_CPU1);
 
