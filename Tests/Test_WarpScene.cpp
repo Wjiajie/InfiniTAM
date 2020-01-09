@@ -44,7 +44,7 @@ typedef ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMVoxelBlock
 
 //#define SAVE_TEST_DATA
 BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_PVA, Frame16And17Fixture) {
-	const Configuration& settings = configuration::get();
+	const configuration::Configuration& settings = configuration::get();
 	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warps;
 	loadVolume(&warps, "TestData/snoopy_result_fr16-17_partial_PVA/warp_field_0_complete_",
 	           MEMORYDEVICE_CPU, InitParams<ITMPlainVoxelArray>());
@@ -76,7 +76,7 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_PVA, Frame16And17Fixture) {
 }
 
 BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_VBH, Frame16And17Fixture) {
-	const Configuration& settings = configuration::get();
+	const configuration::Configuration& settings = configuration::get();
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps;
 	loadVolume(&warps, "TestData/snoopy_result_fr16-17_partial_VBH/warp_field_0_complete_",
 	           MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());

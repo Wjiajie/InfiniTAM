@@ -61,7 +61,7 @@ struct WarpGradientDataFixture {
 			warp_field_data_term(nullptr), canonical_volume(nullptr), live_volume(nullptr),
 			pathToData("TestData/snoopy_result_fr16-17_partial_" + getIndexSuffix<TIndex>() + "/"),
 			indexParameters(Frame16And17Fixture::InitParams<TIndex>()) {
-		Configuration::load_default();
+		configuration::load_default();
 		settings = &configuration::get();
 
 		BOOST_TEST_MESSAGE("setup fixture");
@@ -108,7 +108,7 @@ struct WarpGradientDataFixture {
 		delete warp_field_data_and_level_set_term;
 	}
 
-	Configuration* settings;
+	configuration::Configuration* settings;
 	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_data_term;
 	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_data_term_smoothed;
 	ITMVoxelVolume<ITMWarp, TIndex>* warp_field_iter0;

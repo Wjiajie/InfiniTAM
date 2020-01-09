@@ -46,7 +46,7 @@ try
 	}
 
 	printf("initialising ...\n");
-	Configuration *internalSettings = &configuration::get();
+	configuration::Configuration *internalSettings = &configuration::get();
 
 	ImageSourceEngine *imageSource;
 	IMUSourceEngine *imuSource = NULL;

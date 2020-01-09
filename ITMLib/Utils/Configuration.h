@@ -108,11 +108,7 @@ DECLARE_SERIALIZABLE_STRUCT(TELEMETRY_SETTINGS_STRUCT_DESCRIPTION);
 
 DECLARE_SERIALIZABLE_STRUCT(UI_ENGINE_SETTINGS_STRUCT_DESCRIPTION);
 
-#ifndef COMPILE_WITHOUT_CUDA
-#define DEFAULT_DEVICE MEMORYDEVICE_CUDA
-#else
-#define DEFAULT_DEVICE MEMORYDEVICE_CPU
-#endif
+#define NON_RIGID_TRACKING_PARAMETERS_STRUCT_DESCRIPTION
 
 struct TrackerConfigurationStringPresets{
 	static const std::string default_ICP_tracker_configuration;
@@ -124,6 +120,12 @@ struct TrackerConfigurationStringPresets{
 	static const std::string default_IMU_extended_tracker_configuration;
 	static const std::string default_surfel_tracker_configuration;
 };
+
+#ifndef COMPILE_WITHOUT_CUDA
+#define DEFAULT_DEVICE MEMORYDEVICE_CUDA
+#else
+#define DEFAULT_DEVICE MEMORYDEVICE_CPU
+#endif
 
 #define CONFIGURATION_STRUCT_DESCRIPTION Configuration, \
 	(VoxelVolumeParameters, voxel_volume_parameters, VoxelVolumeParameters(), STRUCT),\

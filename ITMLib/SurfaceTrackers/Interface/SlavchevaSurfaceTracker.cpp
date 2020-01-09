@@ -23,12 +23,15 @@
 #include "../../Utils/Configuration.h"
 #include "../../Utils/json_utils.h"
 
-using namespace ITMLib;
-
-//#pragma message BOOST_PP_STRINGIZE((DEFINE_INNER_SERIALIZABLE_STRUCT(SlavchevaSurfaceTracker, SWITCHES_STRUCT_DESCRIPTION)))
+namespace ITMLib{
 
 DEFINE_INNER_SERIALIZABLE_STRUCT(SlavchevaSurfaceTracker, PARAMETERS_STRUCT_DESCRIPTION)
 DEFINE_INNER_SERIALIZABLE_STRUCT(SlavchevaSurfaceTracker, SWITCHES_STRUCT_DESCRIPTION)
+
+} // namespace ITMLib
+
+using namespace ITMLib;
+
 
 
 SlavchevaSurfaceTracker::SlavchevaSurfaceTracker() :

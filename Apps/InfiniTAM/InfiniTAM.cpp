@@ -63,26 +63,26 @@ try
 		return -1;
 	}
 
-	Configuration *internalSettings = &configuration::get();
+	configuration::Configuration *internalSettings = &configuration::get();
 
 	ITMMainEngine *mainEngine = NULL;
 	switch (internalSettings->library_mode)
 	{
-	case Configuration::LIBMODE_BASIC:
+	case configuration::LIBMODE_BASIC:
 		mainEngine = new ITMBasicEngine<ITMVoxel, ITMVoxelIndex>(imageSource->getCalib(),
 		                                                         imageSource->getRGBImageSize(),
 		                                                         imageSource->getDepthImageSize());
 		break;
-	case Configuration::LIBMODE_BASIC_SURFELS:
+	case configuration::LIBMODE_BASIC_SURFELS:
 		mainEngine = new ITMBasicSurfelEngine<ITMSurfelT>(imageSource->getCalib(), imageSource->getRGBImageSize(),
 		                                                  imageSource->getDepthImageSize());
 		break;
-	case Configuration::LIBMODE_LOOPCLOSURE:
+	case configuration::LIBMODE_LOOPCLOSURE:
 		mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelIndex>(imageSource->getCalib(),
 		                                                         imageSource->getRGBImageSize(),
 		                                                         imageSource->getDepthImageSize());
 		break;
-	case Configuration::LIBMODE_DYNAMIC:
+	case configuration::LIBMODE_DYNAMIC:
 		mainEngine = new ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelIndex>(imageSource->getCalib(),
 		                                                                     imageSource->getRGBImageSize(),
 		                                                                     imageSource->getDepthImageSize());

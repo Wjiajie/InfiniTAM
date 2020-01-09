@@ -189,7 +189,7 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector){
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE_PATH(type, field_name, default_value)                        \
 	boost::optional< type > field_name = ptree_to_optional_path( tree, #field_name, origin );	
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE_ENUM(type, field_name, default_value)                        \
-	boost::optional< type > field_name = ptree_to_optional_enumerator< tree >( tree, #field_name );	
+	boost::optional< type > field_name = ptree_to_optional_enumerator< type >( tree, #field_name );
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE_STRUCT(type, field_name, default_value)                      \
 	boost::optional< type > field_name = ptree_to_optional_serializable_struct< type >( tree, #field_name, origin );	
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE_VECTOR(type, field_name, default_value)                      \
@@ -208,7 +208,7 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector){
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_ENUM(type, field_name)                                              \
 	tree.add( #field_name , enumerator_to_string( field_name ));
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_STRUCT(type, field_name)                                            \
-	tree.add_child( #field_name , field_name .ToPtree(origin));
+	tree.add_child( #field_name , field_name .ToPTree(origin));
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_VECTOR(type, field_name)                                            \
 	tree.add_child( #field_name , serializable_vector_to_ptree ( field_name ));
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE(_, type, field_name, default_value, serialization_type)             \

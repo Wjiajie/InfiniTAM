@@ -147,7 +147,7 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_Expanded_CUDA, Frame16And1
 }
 
 BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
-	Configuration* settings = &configuration::get();
+	configuration::Configuration* settings = &configuration::get();
 
 	// region ================================= CONSTRUCT VIEW =========================================================
 
@@ -302,7 +302,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 }
 
 BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CUDA) {
-	Configuration* settings = &configuration::get();
+	configuration::Configuration* settings = &configuration::get();
 
 	// region ================================= CONSTRUCT VIEW =========================================================
 

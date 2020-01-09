@@ -181,7 +181,7 @@ void simulateRandomVoxelAlteration(TVoxel& voxel) {
 // FIXME: see TODO in header
 //template<typename TVoxelA, typename TIndex>
 //ITMVoxelVolume<TVoxelA, TIndex> loadVolume (const std::string& path, MemoryDeviceType memoryDeviceType,
-//                    typename TIndex::InitializationParameters initializationParameters, Configuration::SwappingMode swapping_mode){
+//                    typename TIndex::InitializationParameters initializationParameters, configuration::SwappingMode swapping_mode){
 //	Configuration& settings = configuration::get();
 //	ITMVoxelVolume<TVoxelA, TIndex> scene(&settings.voxel_volume_parameters,
 //	                                              swapping_mode,
@@ -194,8 +194,8 @@ void simulateRandomVoxelAlteration(TVoxel& voxel) {
 template<typename TVoxel, typename TIndex>
 void loadVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& path, MemoryDeviceType memoryDeviceType,
                 typename TIndex::InitializationParameters initializationParameters,
-                Configuration::SwappingMode swappingMode) {
-	Configuration& settings = configuration::get();
+                configuration::SwappingMode swappingMode) {
+	configuration::Configuration& settings = configuration::get();
 	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(&settings.voxel_volume_parameters,
 	                                               swappingMode,
 	                                               memoryDeviceType, initializationParameters);
@@ -207,7 +207,7 @@ void loadVolume(ITMVoxelVolume<TVoxel, TIndex>** volume, const std::string& path
 template<typename TVoxel, typename TIndex>
 void initializeVolume(ITMVoxelVolume<TVoxel, TIndex>** volume,
                       typename TIndex::InitializationParameters initializationParameters, MemoryDeviceType memoryDevice,
-                      Configuration::SwappingMode swappingMode) {
+                      configuration::SwappingMode swappingMode) {
 	(*volume) = new ITMVoxelVolume<TVoxel, TIndex>(memoryDevice, initializationParameters);
 	(*volume)->Reset();
 }
@@ -222,7 +222,7 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
                              const std::string& calibration_path,
                              MemoryDeviceType memoryDevice,
                              typename TIndex::InitializationParameters initializationParameters,
-                             Configuration::SwappingMode swappingMode,
+                             configuration::SwappingMode swappingMode,
                              bool useBilateralFilter
 ) {
 
@@ -270,7 +270,7 @@ void buildSdfVolumeFromImage(ITMVoxelVolume<TVoxel, TIndex>** volume,
                              const std::string& calibration_path,
                              MemoryDeviceType memoryDevice,
                              typename TIndex::InitializationParameters initializationParameters,
-                             Configuration::SwappingMode swappingMode,
+                             configuration::SwappingMode swappingMode,
                              bool useBilateralFilter) {
 
 	// region ================================= CONSTRUCT VIEW =========================================================

@@ -32,26 +32,36 @@
 using namespace ITMLib::configuration;
 
 // *** serializable enum definitions ***
-
 DEFINE_SERIALIZABLE_ENUM(VERBOSITY_LEVEL_ENUM_DESCRIPTION)
+
 DEFINE_SERIALIZABLE_ENUM(FAILUREMODE_ENUM_DESCRIPTION)
+
 DEFINE_SERIALIZABLE_ENUM(SWAPPINGMODE_ENUM_DESCRIPTION)
+
 DEFINE_SERIALIZABLE_ENUM(LIBMODE_ENUM_DESCRIPTION)
+
 DEFINE_SERIALIZABLE_ENUM(INDEXING_METHOD_DESCRIPTION)
 
 // defined in other headers or externally
 DEFINE_SERIALIZABLE_ENUM(MemoryDeviceType,
-		(MEMORYDEVICE_CPU, "cpu", "CPU", "MEMORYDEVICE_CPU"),
-		(MEMORYDEVICE_CUDA, "cuda", "CUDA", "MEMORYDEVICE_CUDA"),
-		(MEMORYDEVICE_METAL, "metal", "METAL", "MEMORYDEVICE_METAL")
+                         (MEMORYDEVICE_CPU, "cpu", "CPU", "MEMORYDEVICE_CPU"),
+                         (MEMORYDEVICE_CUDA, "cuda", "CUDA", "MEMORYDEVICE_CUDA"),
+                         (MEMORYDEVICE_METAL, "metal", "METAL", "MEMORYDEVICE_METAL")
 )
+
 DEFINE_SERIALIZABLE_ENUM(ITMLib::GRADIENT_FUNCTOR_TYPE_ENUM_DESCRIPTION)
+
+namespace ITMLib {
+namespace configuration {
 
 // *** serializable struct definitions ***
 DEFINE_SERIALIZABLE_STRUCT(PATHS_STRUCT_DESCRIPTION)
+
 DEFINE_SERIALIZABLE_STRUCT(TELEMETRY_SETTINGS_STRUCT_DESCRIPTION)
+
 DEFINE_SERIALIZABLE_STRUCT(UI_ENGINE_SETTINGS_STRUCT_DESCRIPTION)
 
+DEFINE_SERIALIZABLE_STRUCT(CONFIGURATION_STRUCT_DESCRIPTION)
 
 // region ======================================= CONFIGURATION CONSTRUCTORS ===========================================
 
@@ -99,7 +109,7 @@ const std::string TrackerConfigurationStringPresets::default_surfel_tracker_conf
 
 std::unique_ptr<Configuration> instance = std::unique_ptr<Configuration>(new Configuration());
 
-Configuration& get(){
+Configuration& get() {
 	return *instance;
 }
 
@@ -117,7 +127,7 @@ void load_configuration_from_json_file(const std::string& path) {
 	pt::ptree tree;
 	pt::read_json(path, tree);
 	Configuration new_configuration = Configuration::BuildFromPTree(tree, path);
-	memcpy(instance.get(),&new_configuration,sizeof(Configuration));
+	memcpy(instance.get(), &new_configuration, sizeof(Configuration));
 }
 
 void save_configuration_to_json_file(const std::string& path) {
@@ -128,3 +138,5 @@ void save_configuration_to_json_file(const std::string& path, const Configuratio
 	pt::write_json_no_quotes(path, configuration.ToPTree(path), true);
 }
 // endregion ===========================================================================================================
+} // namespace ITMLib::configuration
+} // namespace ITMLib
