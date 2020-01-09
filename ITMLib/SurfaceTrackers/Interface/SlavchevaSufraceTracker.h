@@ -24,60 +24,26 @@ namespace pt = boost::property_tree;
 
 namespace ITMLib {
 
-//TODO: move to separate header
 class SlavchevaSurfaceTracker {
 public:
+#define PARAMETERS_STRUCT_DESCRIPTION Parameters, \
+        (float, gradientDescentLearningRate, 0.1f, PRIMITIVE), \
+        (float, rigidityEnforcementFactor, 0.1f, PRIMITIVE), \
+        (float, weightDataTerm, 1.0f, PRIMITIVE), \
+        (float, weightSmoothingTerm, 0.2f, PRIMITIVE), \
+        (float, weightLevelSetTerm, 0.2f, PRIMITIVE), \
+        (float, epsilon, 1e-5f, PRIMITIVE)
 
-	enum ConfigurationMode {
-		KILLING_FUSION,
-		SOBOLEV_FUSION
-	};
+	DECLARE_SERIALIZABLE_STRUCT(PARAMETERS_STRUCT_DESCRIPTION);
 
-	struct Parameters {
-		Parameters();
-		explicit Parameters(ConfigurationMode mode);
-		explicit Parameters(const po::variables_map& vm);
-		Parameters(float gradientDescentLearningRate,
-		           float rigidityEnforcementFactor,
-		           float weightDataTerm,
-		           float weightSmoothingTerm,
-		           float weightLevelSetTerm,
-		           float epsilon);
-		static Parameters BuildFromPTree(const pt::ptree& tree, ConfigurationMode mode = SOBOLEV_FUSION);
-		pt::ptree ToPTree() const;
-		friend bool operator== (const Parameters &p1, const Parameters &p2);
+#define SWITCHES_STRUCT_DESCRIPTION Switches, \
+		(bool, enableDataTerm, true, PRIMITIVE) \
+		(bool, enableLevelSetTerm, false, PRIMITIVE) \
+		(bool, enableSmoothingTerm, true, PRIMITIVE) \
+		(bool, enableKillingRigidityEnforcementTerm, false, PRIMITIVE) \
+		(bool, enableSobolevGradientSmoothing, true, PRIMITIVE)
 
-		const float gradientDescentLearningRate;// = 0.1f;
-		const float rigidityEnforcementFactor;// = 0.1f;
-		const float weightDataTerm;// = 1.0f
-		const float weightSmoothingTerm;// = 0.2f; //0.2 is default for SobolevFusion, 0.5 is default for KillingFusion
-		const float weightLevelSetTerm;// = 0.2f;
-		const float epsilon;// = 1e-5f;
-
-	private:
-
-		Parameters(const po::variables_map& vm, ConfigurationMode mode);
-	};
-
-	struct Switches {
-		Switches();
-		explicit Switches(ConfigurationMode mode);
-		explicit Switches(const po::variables_map& vm);
-		Switches(bool enableDataTerm, bool enableLevelSetTerm, bool enableSmoothingTerm,
-		         bool enableKillingRigidityEnforcementTerm, bool enableSobolevGradientSmoothing);
-		static Switches BuildFromPTree(const pt::ptree& tree, ConfigurationMode mode = SOBOLEV_FUSION);
-		friend bool operator== (const Switches &s1, const Switches &s2);
-		friend std::ostream& operator<<(std::ostream& out, const Switches& s);
-
-		pt::ptree ToPTree() const;
-		const bool enableDataTerm;
-		const bool enableLevelSetTerm;
-		const bool enableSmoothingTerm;
-		const bool enableKillingRigidityEnforcementTerm;
-		const bool enableSobolevGradientSmoothing;
-	private:
-		Switches(const po::variables_map& vm, ConfigurationMode mode);
-	};
+	DECLARE_SERIALIZABLE_STRUCT(SWITCHES_STRUCT_DESCRIPTION);
 
 	const Parameters parameters;
 	const Switches switches;
@@ -88,9 +54,4 @@ public:
 private:
 	void PrintSettings();
 };
-
-bool operator== (const SlavchevaSurfaceTracker::Parameters &p1, const SlavchevaSurfaceTracker::Parameters &p2);
-std::ostream& operator<<(std::ostream& out, const SlavchevaSurfaceTracker::Switches& s);
-bool operator== (const SlavchevaSurfaceTracker::Switches &s1, const SlavchevaSurfaceTracker::Switches &s2);
-std::ostream& operator<<(std::ostream& out, const SlavchevaSurfaceTracker::Parameters& p);
 }//namespace ITMLib

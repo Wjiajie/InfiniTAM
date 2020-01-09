@@ -32,9 +32,11 @@
  * Generates a struct called "MyWonderfulUnicorn" with two fields, i.e. public member variables, called
  * "age" and "horn_length". Both are typed as floats and have their respective default values set at 5.0f and 0.33f.
  */
-#define GENERATE_SERIALIZABLE_STRUCT( struct_name, ... )              \
-	SERIALIZABLE_STRUCT_IMPL( struct_name, __VA_ARGS__)
+#define GENERATE_SERIALIZABLE_STRUCT(...) SERIALIZABLE_STRUCT_IMPL( __VA_ARGS__ )
+#define DECLARE_SERIALIZABLE_STRUCT(...) SERIALIZABLE_STRUCT_DECL_IMPL( __VA_ARGS__ )
+#define DEFINE_SERIALIZABLE_STRUCT(...) SERIALIZABLE_STRUCT_DEFN_IMPL( __VA_ARGS__ )
+
 
 #define GENERATE_SERIALIZABLE_ENUM(...) SERIALIZABLE_ENUM_IMPL( __VA_ARGS__ )
-#define DECLARE_SERIALIZABLE_ENUM(...) SERIALIZABLE_ENUM_DECL_IMPL( __VA_ARGS__)
-#define DEFINE_SERIALIZABLE_ENUM(...) SERIALIZABLE_ENUM_DEFN_IMPL( __VA_ARGS__)
+#define DECLARE_SERIALIZABLE_ENUM(...) SERIALIZABLE_ENUM_DECL_IMPL( __VA_ARGS__ )
+#define DEFINE_SERIALIZABLE_ENUM(...) SERIALIZABLE_ENUM_DEFN_IMPL( __VA_ARGS__ )
