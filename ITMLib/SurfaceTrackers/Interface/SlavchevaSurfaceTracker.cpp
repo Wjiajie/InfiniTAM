@@ -46,19 +46,19 @@ SlavchevaSurfaceTracker::SlavchevaSurfaceTracker(SlavchevaSurfaceTracker::Switch
 
 void SlavchevaSurfaceTracker::PrintSettings() {
 	std::cout << bright_cyan << "*** Scene Motion Tracker Settings: ***" << reset << std::endl;
-	std::cout << "Data term enabled: " << printBool(this->switches.enableDataTerm) << std::endl;
-	std::cout << "Smoothing term enabled: " << printBool(this->switches.enableSmoothingTerm) << std::endl;
-	std::cout << "Level Set term enabled: " << printBool(this->switches.enableLevelSetTerm) << std::endl;
-	std::cout << "Killing term enabled: " << printBool(this->switches.enableKillingRigidityEnforcementTerm)
+	std::cout << "Data term enabled: " << printBool(this->switches.enable_data_term) << std::endl;
+	std::cout << "Smoothing term enabled: " << printBool(this->switches.enable_smoothing_term) << std::endl;
+	std::cout << "Level Set term enabled: " << printBool(this->switches.enable_level_set_term) << std::endl;
+	std::cout << "Killing term enabled: " << printBool(this->switches.enable_killing_rigidity_enforcement_term)
 	          << std::endl;
-	std::cout << "Gradient smoothing enabled: " << printBool(this->switches.enableSobolevGradientSmoothing) << std::endl
+	std::cout << "Gradient smoothing enabled: " << printBool(this->switches.enable_sobolev_gradient_smoothing) << std::endl
 	          << std::endl;
 
-	std::cout << "Gradient descent learning rate: " << this->parameters.gradientDescentLearningRate << std::endl;
-	std::cout << "Rigidity enforcement factor: " << this->parameters.rigidityEnforcementFactor << std::endl;
-	std::cout << "Weight of the data term: " << this->parameters.weightDataTerm << std::endl;
-	std::cout << "Weight of the smoothness term: " << this->parameters.weightSmoothingTerm << std::endl;
-	std::cout << "Weight of the level set term: " << this->parameters.weightLevelSetTerm << std::endl;
+	std::cout << "Gradient descent learning rate: " << this->parameters.learning_rate << std::endl;
+	std::cout << "Rigidity enforcement factor: " << this->parameters.rigidity_enforcement_factor << std::endl;
+	std::cout << "Weight of the data term: " << this->parameters.weight_data_term << std::endl;
+	std::cout << "Weight of the smoothness term: " << this->parameters.weight_smoothing_term << std::endl;
+	std::cout << "Weight of the level set term: " << this->parameters.weight_level_set_term << std::endl;
 	std::cout << "Epsilon for the level set term: " << this->parameters.epsilon << std::endl;
 	std::cout << bright_cyan << "*** *********************************** ***" << reset << std::endl;
 }

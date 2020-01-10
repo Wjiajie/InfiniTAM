@@ -120,7 +120,7 @@ void SurfaceTracker<TVoxel, TWarp, TIndex, TMemoryDeviceType, TGradientFunctorTy
 		ITMVoxelVolume<TVoxel, TIndex>* liveScene,
 		ITMVoxelVolume<TWarp, TIndex>* warpField) {
 
-	if (this->switches.enableSobolevGradientSmoothing) {
+	if (this->switches.enable_sobolev_gradient_smoothing) {
 		SmoothWarpGradient_common<TVoxel, TWarp, TIndex, TMemoryDeviceType>
 				(liveScene, canonicalScene, warpField);
 	}
@@ -135,8 +135,8 @@ float SurfaceTracker<TVoxel, TWarp, TIndex, TMemoryDeviceType, TGradientFunctorT
 		ITMVoxelVolume<TVoxel, TIndex>* liveScene,
 		ITMVoxelVolume<TWarp, TIndex>* warpField) {
 	return UpdateWarps_common<TVoxel, TWarp, TIndex, TMemoryDeviceType>(
-			canonicalScene, liveScene, warpField, this->parameters.gradientDescentLearningRate,
-			this->switches.enableSobolevGradientSmoothing);
+			canonicalScene, liveScene, warpField, this->parameters.learning_rate,
+			this->switches.enable_sobolev_gradient_smoothing);
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TMemoryDeviceType, GradientFunctorType TGradientFunctorType>

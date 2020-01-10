@@ -82,36 +82,43 @@ DECLARE_SERIALIZABLE_ENUM(INDEXING_METHOD_DESCRIPTION)
 
 // region ======================================== SERIALIZABLE STRUCTS ============================================
 #define PATHS_STRUCT_DESCRIPTION Paths,\
-	(std::string, output_path, "output", PATH, blah),\
-	(std::string, calibration_file_path, "calib.txt", PATH, blah),\
-	(std::string, openni_file_path, "", PATH, blah),\
-	(std::string, rgb_video_file_path, "", PATH, blah),\
-	(std::string, depth_video_file_path, "", PATH, blah),\
-	(std::string, rgb_image_path_mask, "", PATH, blah),\
-	(std::string, depth_image_path_mask, "", PATH, blah),\
-	(std::string, mask_image_path_mask, "", PATH, blah),\
-	(std::string, imu_input_path, "", PATH, blah)
+    (std::string, output_path, "output", PATH, "Path used for any diagnostic/experimental output."),\
+    (std::string, calibration_file_path, "calib.txt", PATH, "Path to the calibration file."),\
+    (std::string, openni_file_path, "", PATH, "Path to an openni recording to read from."),\
+    (std::string, rgb_video_file_path, "", PATH, "Path to an RGB video file (must be used in combination with depth_video_file_path)"),\
+    (std::string, depth_video_file_path, "", PATH, "Path to a depth video file (pixel intensity change of 1 signifies depth change of 1 mm), must be used in combibation with rgb_video_file_path"),\
+    (std::string, rgb_image_path_mask, "", PATH, "Path to rgb image files (ex. %06i is a frame number bask for files with 6 digit frame numbers)."),\
+    (std::string, depth_image_path_mask, "", PATH, \
+        "Path to depth image files (ex. %06i is a frame number bask for files with 6 digit frame numbers, "\
+        "where frame numbers must start with 000000)."),\
+    (std::string, mask_image_path_mask, "", PATH,\
+		"Path to mask image files. These must be binary images. RGB and depth pixels where mask pixels have 0" \
+		" intensity will be ignored. (Formatting rules are the same as depth_image_path_mask)."),\
+    (std::string, imu_input_path, "", PATH, "Path to imu input file/handle.")
 
 DECLARE_SERIALIZABLE_STRUCT(PATHS_STRUCT_DESCRIPTION);
 
 
 ///For focus_coordinates to be used, VerbosityLevel must be set to VERBOSITY_FOCUS_SPOTS or above
 #define TELEMETRY_SETTINGS_STRUCT_DESCRIPTION TelemetrySettings, \
-	(Vector3i, focus_coordinates, Vector3i(0), VECTOR), \
-	(bool, record_reconstruction_video, false, PRIMITIVE), \
-	(bool, save_benchmarks_to_disk, false, PRIMITIVE)
+    (Vector3i, focus_coordinates, Vector3i(0), VECTOR, \
+    "Focus 3d coordinates (integer) that specify the voxel to print additional diagnostic information about. "\
+    "Only effective when verbosity_level is set to focus_spots (alt. VERBOSITY_FOCUS_SPOTS) or above."), \
+    (bool, record_reconstruction_video, false, PRIMITIVE, \
+    		"Whether to record video of the canonical reconsturction during automatic run "\
+    		"(see number_of_frames_to_process_after_launch and index_of_frame_to_start_at)."), \
+    (bool, save_benchmarks_to_disk, false, PRIMITIVE, "Whether to save runtime benchmarks to disk after automatic run.")
 
 DECLARE_SERIALIZABLE_STRUCT(TELEMETRY_SETTINGS_STRUCT_DESCRIPTION);
 
 #define UI_ENGINE_SETTINGS_STRUCT_DESCRIPTION UIEngineSettings, \
-	(int, number_of_frames_to_process_after_launch, 0, PRIMITIVE), \
-	(int, index_of_frame_to_start_at, 0, PRIMITIVE)
+    (int, number_of_frames_to_process_after_launch, 0, PRIMITIVE, "This number of frames will be processed automatically after the program is launched."), \
+    (int, index_of_frame_to_start_at, 0, PRIMITIVE, "Index of the first frame (or frame set) to read from disk. The remaining frames will be read in order.")
 
 DECLARE_SERIALIZABLE_STRUCT(UI_ENGINE_SETTINGS_STRUCT_DESCRIPTION);
 
-#define NON_RIGID_TRACKING_PARAMETERS_STRUCT_DESCRIPTION
 
-struct TrackerConfigurationStringPresets{
+struct TrackerConfigurationStringPresets {
 	static const std::string default_ICP_tracker_configuration;
 	static const std::string default_ICP_tracker_configuration_loop_closure;
 	static const std::string default_depth_only_extended_tracker_configuration;
@@ -129,26 +136,26 @@ struct TrackerConfigurationStringPresets{
 #endif
 
 #define CONFIGURATION_STRUCT_DESCRIPTION Configuration, \
-	(VoxelVolumeParameters, voxel_volume_parameters, VoxelVolumeParameters(), STRUCT),\
-	(SurfelVolumeParameters, surfel_volume_parameters, SurfelVolumeParameters(), STRUCT),\
-	(SlavchevaSurfaceTracker::Parameters, slavcheva_parameters, SlavchevaSurfaceTracker::Parameters(), STRUCT),\
-	(SlavchevaSurfaceTracker::Switches, slavcheva_switches, SlavchevaSurfaceTracker::Switches(), STRUCT),\
-	(TelemetrySettings, telemetry_settings, TelemetrySettings(), STRUCT),\
-	(Paths, paths, Paths(), STRUCT),\
-	(UIEngineSettings, ui_engine_settings, UIEngineSettings(), STRUCT),\
-	(NonRigidTrackingParameters, non_rigid_tracking_parameters, NonRigidTrackingParameters(), STRUCT ),\
-	(bool, skip_points, true, PRIMITIVE),\
-	(bool, create_meshing_engine, true, PRIMITIVE),\
-	(MemoryDeviceType, device_type, DEFAULT_DEVICE, ENUM),\
-	(bool, use_approximate_raycast, true, PRIMITIVE),\
-	(bool, use_threshold_filter, true, PRIMITIVE),\
-	(bool, use_bilateral_filter, true, PRIMITIVE),\
-	(FailureMode, behavior_on_failure, FAILUREMODE_IGNORE, ENUM),\
-	(SwappingMode, swapping_mode, SWAPPINGMODE_DISABLED, ENUM),\
-	(LibMode, library_mode, LIBMODE_DYNAMIC, ENUM),\
-	(IndexingMethod, indexing_method, INDEX_HASH, ENUM),\
-	(VerbosityLevel, verbosity_level, VERBOSITY_PER_FRAME, ENUM),\
-	(std::string, tracker_configuration, TrackerConfigurationStringPresets::default_depth_only_extended_tracker_configuration, PRIMITIVE)
+    (VoxelVolumeParameters, voxel_volume_parameters, VoxelVolumeParameters(), STRUCT,"Voxel volume parameters, such as voxel size."),\
+    (SurfelVolumeParameters, surfel_volume_parameters, SurfelVolumeParameters(), STRUCT,"Surfel volume parameters, such as surfel radius."),\
+    (SlavchevaSurfaceTracker::Parameters, slavcheva_parameters, SlavchevaSurfaceTracker::Parameters(), STRUCT,"Parameters pertaining to energy tuning for dynamic surface tracking."),\
+    (SlavchevaSurfaceTracker::Switches, slavcheva_switches, SlavchevaSurfaceTracker::Switches(), STRUCT,"Switches pertaining to optimization for dynamic surface tracking."),\
+    (TelemetrySettings, telemetry_settings, TelemetrySettings(), STRUCT, "Telemetry / diagnostics / logging settings"),\
+    (Paths, paths, Paths(), STRUCT,"Input / output paths"),\
+    (UIEngineSettings, ui_engine_settings, UIEngineSettings(), STRUCT,"UI settings"),\
+    (NonRigidTrackingParameters, non_rigid_tracking_parameters, NonRigidTrackingParameters(), STRUCT,"Parameters pertaining to stopping conditions, gradient functor type, and momentum weight that are used for dynamic surface tracking."),\
+    (bool, skip_points, true, PRIMITIVE, "For ITMColorTracker: skips every other point when using the colour renderer for creating a point cloud"),\
+    (bool, create_meshing_engine, true, PRIMITIVE, "Create all the things required for marching cubes and mesh extraction (uses lots of additional memory)"),\
+    (MemoryDeviceType, device_type, DEFAULT_DEVICE, ENUM, "Type of device to use, i.e. CPU/GPU/Metal"),\
+    (bool, use_approximate_raycast, true, PRIMITIVE, "Enables or disables approximate raycast."),\
+    (bool, use_threshold_filter, true, PRIMITIVE, "Enables or disables threshold filtering, i.e. filtering out pixels whose difference from their neighbors exceeds a certain threshold"),\
+    (bool, use_bilateral_filter, true, PRIMITIVE, "Enables or disables bilateral filtering on depth input images."),\
+    (FailureMode, behavior_on_failure, FAILUREMODE_IGNORE, ENUM, "What to do on tracker failure: ignore, relocalize or stop integration - not supported in loop closure or dynamic libmode"),\
+    (SwappingMode, swapping_mode, SWAPPINGMODE_DISABLED, ENUM, "Determines how swapping works: disabled, fully enabled (still with dragons) and delete what's not visible - not supported in loop closure version"),\
+    (LibMode, library_mode, LIBMODE_DYNAMIC, ENUM, "Switch between various library modes - basic, with loop closure, etc."),\
+    (IndexingMethod, indexing_method, INDEX_HASH, ENUM, "Indexing method to use in the 3D volumes, i.e. array or hash."),\
+    (VerbosityLevel, verbosity_level, VERBOSITY_PER_FRAME, ENUM, "Verbosity level. "),\
+    (std::string, tracker_configuration, TrackerConfigurationStringPresets::default_depth_only_extended_tracker_configuration, PRIMITIVE, "Tracker configuration. (Better description still needs to be provided for this, already in TODO / issues)")
 
 
 DECLARE_SERIALIZABLE_STRUCT(CONFIGURATION_STRUCT_DESCRIPTION);

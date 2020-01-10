@@ -18,21 +18,21 @@
 //============================= PARAMETER/SWITCH DATA STRUCTURES FOR PRECONFIGURED OPTIMIZATION SETTINGS ===============
 namespace ITMLib{
 	struct SurfaceTrackerOptimizationParameters {
-		const float gradientDescentLearningRate;// = 0.1f;
-		const float rigidityEnforcementFactor;// = 0.1f;
-		const float weightDataTerm;
-		const float weightSmoothingTerm;// = 0.2f; //0.2 is default for SobolevFusion, 0.5 is default for KillingFusion
-		const float weightLevelSetTerm;// = 0.2f;
+		const float learning_rate;// = 0.1f;
+		const float rigidity_enforcement_factor;// = 0.1f;
+		const float weight_data_term;
+		const float weight_smoothing_term;// = 0.2f; //0.2 is default for SobolevFusion, 0.5 is default for KillingFusion
+		const float weight_level_set_term;// = 0.2f;
 		const float epsilon;// = 1e-5f;
 		const float unity; // voxel_size / narrow_band_half_width, i.e. 1 / [narrow-band half-width in voxels] or [voxel size in metric units] / [narrow-band half-width in metric units]
 	};
 
 	struct ITMSceneMotionOptimizationSwitches {
-		const bool enableDataTerm;
-		const bool enableLevelSetTerm;
+		const bool enable_data_term;
+		const bool enable_level_set_term;
 		const bool enableTikhonovTerm;
-		const bool enableKillingRigidityEnforcementTerm;
-		const bool enableSobolevGradientSmoothing;
+		const bool enable_killing_rigidity_enforcement_term;
+		const bool enable_sobolev_gradient_smoothing;
 	};
 } // namespace ITMLib
 

@@ -151,7 +151,7 @@ public:
 			Vector3f liveSdfJacobian;
 			ComputeLiveJacobian_CentralDifferences(
 					liveSdfJacobian, voxelPosition, liveVoxels, liveIndexData, liveCache);
-			if (switches.enableDataTerm) {
+			if (switches.enable_data_term) {
 
 				// Compute data term error / energy
 				float sdfDifferenceBetweenLiveAndCanonical = liveSdf - canonicalSdf;
@@ -159,11 +159,11 @@ public:
 				// φ_n(Ψ) = φ_n(x+u, y+v, z+w), where u = u(x,y,z), v = v(x,y,z), w = w(x,y,z)
 				// φ_{global} = φ_{global}(x, y, z)
 				localDataEnergyGradient =
-						parameters.weightDataTerm * sdfDifferenceBetweenLiveAndCanonical * liveSdfJacobian;
+						parameters.weight_data_term * sdfDifferenceBetweenLiveAndCanonical * liveSdfJacobian;
 
 				ATOMIC_ADD(aggregates.dataVoxelCount, 1u);
 
-				float localDataEnergy = parameters.weightDataTerm * 0.5f *
+				float localDataEnergy = parameters.weight_data_term * 0.5f *
 				                        (sdfDifferenceBetweenLiveAndCanonical * sdfDifferenceBetweenLiveAndCanonical);
 
 
@@ -181,17 +181,17 @@ public:
 
 			// region =============================== LEVEL SET TERM ===========================================
 
-			if (switches.enableLevelSetTerm) {
+			if (switches.enable_level_set_term) {
 				Matrix3f liveSdfHessian;
 				ComputeSdfHessian(liveSdfHessian, voxelPosition, liveSdf, liveVoxels, liveIndexData, liveCache);
 
 				float sdfJacobianNorm = ORUtils::length(liveSdfJacobian);
 				float sdfJacobianNormMinusUnity = sdfJacobianNorm - sdfUnity;
-				localLevelSetEnergyGradient = parameters.weightLevelSetTerm * sdfJacobianNormMinusUnity *
+				localLevelSetEnergyGradient = parameters.weight_level_set_term * sdfJacobianNormMinusUnity *
 				                              (liveSdfHessian * liveSdfJacobian) /
 				                              (sdfJacobianNorm + parameters.epsilon);
 				ATOMIC_ADD(aggregates.levelSetVoxelCount, 1u);
-				float localLevelSetEnergy = parameters.weightLevelSetTerm *
+				float localLevelSetEnergy = parameters.weight_level_set_term *
 						0.5f * (sdfJacobianNormMinusUnity * sdfJacobianNormMinusUnity);
 				ATOMIC_ADD(energies.totalLevelSetEnergy, localLevelSetEnergy);
 				if (printVoxelResult) {
@@ -203,7 +203,7 @@ public:
 
 		// region =============================== SMOOTHING TERM (TIKHONOV & KILLING) ======================
 
-		if (switches.enableSmoothingTerm) {
+		if (switches.enable_smoothing_term) {
 			// region ============================== RETRIEVE NEIGHBOR'S WARPS =========================================
 
 			const int neighborhoodSize = 9;
@@ -224,7 +224,7 @@ public:
 			}
 			//endregion=================================================================================================
 
-			if (switches.enableKillingRigidityEnforcementTerm) {
+			if (switches.enable_killing_rigidity_enforcement_term) {
 				Matrix3f framewiseWarpJacobian(0.0f);
 				Matrix3f framewiseWarpHessian[3] = {Matrix3f(0.0f), Matrix3f(0.0f), Matrix3f(0.0f)};
 				ComputePerVoxelWarpJacobianAndHessian(framewiseWarp, neighborFramewiseWarps, framewiseWarpJacobian,
@@ -237,7 +237,7 @@ public:
 				}
 #endif
 
-				float gamma = parameters.rigidityEnforcementFactor;
+				float gamma = parameters.rigidity_enforcement_factor;
 				float onePlusGamma = 1.0f + gamma;
 				// |0, 3, 6|     |m00, m10, m20|      |u_xx, u_xy, u_xz|
 				// |1, 4, 7|     |m01, m11, m21|      |u_xy, u_yy, u_yz|
@@ -258,19 +258,19 @@ public:
 				                        gamma * H_u.xz);
 
 				localSmoothingEnergyGradient =
-						parameters.weightSmoothingTerm * Vector3f(KillingDeltaEu, KillingDeltaEv, KillingDeltaEw);
+						parameters.weight_smoothing_term * Vector3f(KillingDeltaEu, KillingDeltaEv, KillingDeltaEw);
 				//=================================== ENERGY ===============================================
 				// KillingTerm Energy
 				Matrix3f warpJacobianTranspose = framewiseWarpJacobian.t();
 
-				float localTikhonovEnergy = parameters.weightSmoothingTerm *
+				float localTikhonovEnergy = parameters.weight_smoothing_term *
 				                            dot(framewiseWarpJacobian.getColumn(0),
 				                                framewiseWarpJacobian.getColumn(0)) +
 				                            dot(framewiseWarpJacobian.getColumn(1),
 				                                framewiseWarpJacobian.getColumn(1)) +
 				                            dot(framewiseWarpJacobian.getColumn(2), framewiseWarpJacobian.getColumn(2));
 
-				float localRigidityEnergy = gamma * parameters.weightSmoothingTerm *
+				float localRigidityEnergy = gamma * parameters.weight_smoothing_term *
 				                            (dot(warpJacobianTranspose.getColumn(0),
 				                                 framewiseWarpJacobian.getColumn(0)) +
 				                             dot(warpJacobianTranspose.getColumn(1),
@@ -291,8 +291,8 @@ public:
 				}
 
 				//∇E_{reg}(Ψ) = −[∆U ∆V ∆W]' ,
-				localSmoothingEnergyGradient = -parameters.weightSmoothingTerm * framewiseWarpLaplacian;
-				float localTikhonovEnergy = parameters.weightSmoothingTerm *
+				localSmoothingEnergyGradient = -parameters.weight_smoothing_term * framewiseWarpLaplacian;
+				float localTikhonovEnergy = parameters.weight_smoothing_term *
 						dot(framewiseWarpJacobian.getColumn(0), framewiseWarpJacobian.getColumn(0)) +
 						dot(framewiseWarpJacobian.getColumn(1), framewiseWarpJacobian.getColumn(1)) +
 						dot(framewiseWarpJacobian.getColumn(2), framewiseWarpJacobian.getColumn(2));
@@ -330,11 +330,11 @@ public:
 	void PrintStatistics() {
 		if(verbosity_level < configuration::VERBOSITY_PER_ITERATION) return;
 		std::cout << bright_cyan << "*** Non-rigid Alignment Iteration Statistics ***" << reset << std::endl;
-		PrintEnergyStatistics(this->switches.enableDataTerm, this->switches.enableLevelSetTerm,
-		                      this->switches.enableSmoothingTerm, this->switches.enableKillingRigidityEnforcementTerm,
-		                      this->parameters.rigidityEnforcementFactor, energies);
+		PrintEnergyStatistics(this->switches.enable_data_term, this->switches.enable_level_set_term,
+		                      this->switches.enable_smoothing_term, this->switches.enable_killing_rigidity_enforcement_term,
+		                      this->parameters.rigidity_enforcement_factor, energies);
 		CalculateAndPrintAdditionalStatistics(
-				this->switches.enableDataTerm, this->switches.enableLevelSetTerm, aggregates);
+				this->switches.enable_data_term, this->switches.enable_level_set_term, aggregates);
 	}
 
 

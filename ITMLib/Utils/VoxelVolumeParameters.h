@@ -34,44 +34,27 @@ namespace ITMLib {
 	Stores parameters of a voxel volume, such as voxel size
 */
 GENERATE_SERIALIZABLE_STRUCT(VoxelVolumeParameters,
-        /** Size of a voxel, usually given in meters.*/
-                             (float, voxel_size, 0.004, PRIMITIVE),
-		/** \brief
-		    Fallback parameters: consider only parts of the
-		    scene from @p near_clipping_distance in front of the camera
-		    to a distance of @p far_clipping_distance. Usually the
-		    actual depth range should be determined
-		    automatically by a ITMLib::Engine::ITMVisualisationEngine.
-		*/
-                             (float, near_clipping_distance, 0.2f, PRIMITIVE),
-                             (float, far_clipping_distance, 3.0f, PRIMITIVE),
-
-		/** \brief
-		    Encodes the width of the band of the truncated
-		    signed distance transform that is actually stored
-		    in the volume. This is again usually specified in
-		    meters. The resulting width in voxels is @ref narrow_band_half_width
-		    divided by @ref voxel_size.
-		*/
-                             (float, narrow_band_half_width, 0.04f, PRIMITIVE),
-		/** \brief
-		 * Up to @ref max_integration_weight observations per voxel are averaged.
-		 * Beyond that a sliding average is computed.
-		 */
-                             (int, max_integration_weight, 100, PRIMITIVE),
-        /** Stop integration/fusion once max_integration_weight has been reached. */
-                             (bool, stop_integration_at_max_weight, false, PRIMITIVE),
-        /**
-         * \brief (voxel block hash indexing only) allocates an extra 1-ring of hash blocks around
-         * the depth-based ones
-         */
-                             (bool, add_extra_block_ring_during_allocation, false, PRIMITIVE),
-         /**
-          * \brief (voxel block hash indexing only) factor of narrow band width that will be
-          * considered for depth-based allocation. For instance, a factor of 2 will make sure that blocks that are twice
-          * as far from the surface as the boundary of the narrow (non-truncated) TSDF band will be allocated
-          */
-                             (float, block_allocation_band_factor, 2.0f, PRIMITIVE)
+                             (float, voxel_size, 0.004, PRIMITIVE, "Size of a voxel, usually given in meters"),
+                             (float, near_clipping_distance, 0.2f, PRIMITIVE,
+		                             "Consider only depth values between near_clipping_distance to far_clipping_distance."),
+                             (float, far_clipping_distance, 3.0f, PRIMITIVE,
+		                             "Consider only depth values between near_clipping_distance to far_clipping_distance."),
+                             (float, narrow_band_half_width, 0.04f, PRIMITIVE,
+		                             "Encodes the width of the band of the truncated signed distance transform that is actually stored in the "
+		                             "volume. This is again usually specified in meters. "
+		                             "The resulting width in voxels isnarrow_band_half_width divided by voxel_size."),
+                             (int, max_integration_weight, 100, PRIMITIVE,
+		                             "Up to max_integration_weight observations per voxel are averaged. "
+		                             "Beyond that a sliding average is computed."),
+                             (bool, stop_integration_at_max_weight, false, PRIMITIVE,
+		                             "Whether to stop integration for a given voxel when its max_integration_weight is reached."),
+                             (bool, add_extra_block_ring_during_allocation, false, PRIMITIVE,
+		                             "(Voxel block hash indexing only) allocates an extra 1-ring of hash blocks around "
+		                             "the depth-based ones."),
+                             (float, block_allocation_band_factor, 2.0f, PRIMITIVE,
+		                             "(Voxel block hash indexing only) factor of narrow band width that will be "
+		                             "considered for depth-based allocation. For instance, a factor of 2 will make "
+		                             "sure that blocks that are twice as far from the surface as the boundary of the "
+		                             "narrow (non-truncated) TSDF band will be allocated")
 );
-
 } // namespace ITMLib

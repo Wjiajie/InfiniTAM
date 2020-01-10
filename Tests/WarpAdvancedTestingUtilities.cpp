@@ -76,11 +76,11 @@ std::string get_path_fused(std::string prefix, int iteration) {
 
 unsigned int switches_to_int_code(const SlavchevaSurfaceTracker::Switches& switches) {
 	unsigned int code = 0;
-	code |= static_cast<unsigned int>(switches.enableDataTerm) << 0u;
-	code |= static_cast<unsigned int>(switches.enableLevelSetTerm) << 1u;
-	code |= static_cast<unsigned int>(switches.enableSmoothingTerm) << 2u;
-	code |= static_cast<unsigned int>(switches.enableKillingRigidityEnforcementTerm) << 3u;
-	code |= static_cast<unsigned int>(switches.enableSobolevGradientSmoothing) << 4u;
+	code |= static_cast<unsigned int>(switches.enable_data_term) << 0u;
+	code |= static_cast<unsigned int>(switches.enable_level_set_term) << 1u;
+	code |= static_cast<unsigned int>(switches.enable_smoothing_term) << 2u;
+	code |= static_cast<unsigned int>(switches.enable_killing_rigidity_enforcement_term) << 3u;
+	code |= static_cast<unsigned int>(switches.enable_sobolev_gradient_smoothing) << 4u;
 	return code;
 }
 

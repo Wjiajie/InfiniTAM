@@ -27,21 +27,26 @@ namespace ITMLib {
 class SlavchevaSurfaceTracker {
 public:
 #define PARAMETERS_STRUCT_DESCRIPTION Parameters, \
-        (float, gradientDescentLearningRate, 0.1f, PRIMITIVE), \
-        (float, rigidityEnforcementFactor, 0.1f, PRIMITIVE), \
-        (float, weightDataTerm, 1.0f, PRIMITIVE), \
-        (float, weightSmoothingTerm, 0.2f, PRIMITIVE), \
-        (float, weightLevelSetTerm, 0.2f, PRIMITIVE), \
-        (float, epsilon, 1e-5f, PRIMITIVE)
+        (float, learning_rate, 0.1f, PRIMITIVE, "Used in dynamic surface tracking optimization. Gradient descent step magnitude / learning rate."), \
+        (float, rigidity_enforcement_factor, 0.1f, PRIMITIVE, "Used in dynamic surface tracking optimization when the Killing regularization term is enabled."), \
+        (float, weight_data_term, 1.0f, PRIMITIVE, "Used in dynamic surface tracking optimization when the data term is enabled."), \
+        (float, weight_smoothing_term, 0.2f, PRIMITIVE, "Used in dynamic surface tracking optimization when the smoothness regularization term is enabled."), \
+        (float, weight_level_set_term, 0.2f, PRIMITIVE, \
+        	"Used in dynamic surface tracking optimization when the level set regularization term is enabled." \
+			" Greater values penalize deformations resulting in non-SDF-like voxel grid."), \
+        (float, epsilon, 1e-5f, PRIMITIVE, "Small value to avoid division by zero when computing level set term in dynamic surface tracking optimization.")
 
 	DECLARE_SERIALIZABLE_STRUCT(PARAMETERS_STRUCT_DESCRIPTION);
 
 #define SWITCHES_STRUCT_DESCRIPTION Switches, \
-        (bool, enableDataTerm, true, PRIMITIVE), \
-        (bool, enableLevelSetTerm, false, PRIMITIVE), \
-        (bool, enableSmoothingTerm, true, PRIMITIVE), \
-        (bool, enableKillingRigidityEnforcementTerm, false, PRIMITIVE), \
-        (bool, enableSobolevGradientSmoothing, true, PRIMITIVE)
+        (bool, enable_data_term, true, PRIMITIVE, "Whether to enable or disable data term of Slavcheva-based dynamic surface tracking energy."), \
+        (bool, enable_level_set_term, false, PRIMITIVE, "Whether to enable or disable level-set of Slavcheva-based dynamic surface tracking energy. (see KillingFusion by Slavcheva et. all.)"), \
+        (bool, enable_smoothing_term, true, PRIMITIVE, \
+        		"Whether to enable or disable smoothing regularization term of Slavcheva-based dynamic surface " \
+		        "tracking energy. When rigidity-enforcement factor is enabled, acts as Killing term in KillingFusion,"\
+		        " when it is not, acts as Tikhonov term in SobolevFusion (both articles by Slavcheva et al.)"), \
+        (bool, enable_killing_rigidity_enforcement_term, false, PRIMITIVE, "Whether to enable or disable the non-isometric motion penalizing portion of the Killing term of Slavcheva-based dynamic surface tracking energy (see KillingFusion by Slavcheva et. all."), \
+        (bool, enable_sobolev_gradient_smoothing, true, PRIMITIVE, "Whether to enable or disable Sobolev-space gradient smoothing of Slavcheva-based dynamic surface tracking (see SobolevFusion article by Slavcheva et al.).")
 
 	DECLARE_SERIALIZABLE_STRUCT( SWITCHES_STRUCT_DESCRIPTION );
 

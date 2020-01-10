@@ -16,7 +16,8 @@
 
 #include "ProgramOptions.h"
 
-void PopulateOptionsDescription(po::options_description& arguments, RunOptions& runOptions, LoggingOptions& loggingOptions){
+void
+PopulateOptionsDescription(po::options_description& arguments, RunOptions& runOptions, LoggingOptions& loggingOptions) {
 	//@formatter:off
 	arguments.add_options()
 			("help,h", "Print help screen")

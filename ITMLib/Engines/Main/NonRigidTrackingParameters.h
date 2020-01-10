@@ -14,11 +14,12 @@
 //  limitations under the License.
 //  ================================================================
 #pragma once
+
 #include "../../Utils/Serialization/Serialization.h"
 #include "../../SurfaceTrackers/WarpGradientFunctors/WarpGradientFunctor.h"
 
 
-namespace ITMLib{
+namespace ITMLib {
 
 GENERATE_SERIALIZABLE_STRUCT(NonRigidTrackingParameters,
                              (GradientFunctorType, functor_type, ITMLib::TRACKER_SLAVCHEVA_DIAGNOSTIC, ENUM, blah),
