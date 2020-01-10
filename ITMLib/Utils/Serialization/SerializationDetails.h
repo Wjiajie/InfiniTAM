@@ -166,7 +166,7 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector){
 // this top one is per-token, not per-enumerator
 #define SERIALIZABLE_ENUM_IMPL_GEN_TOKEN_MAPPINGS(qualified_enumerator, token) { token , qualified_enumerator }
 
-#define SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATORS(_, enumerator, ...) enumerator
+#define SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATOR(_, enumerator, ...) enumerator
 #define SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS(enum_name, enumerator, ... )                              		       \
 	SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS_2(enum_name, enumerator, ITM_SERIALIZATION_IMPL_NARG(__VA_ARGS__), __VA_ARGS__)
 #define SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS_2(enum_name, enumerator, token_count, ... )                             \
@@ -182,19 +182,15 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector){
 // endregion
 // region ================== SERIALIZABLE ENUM TOP-LEVEL MACROS ==================
 
+#define SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATORS( ... )                                                                 \
+	ITM_SERIALIZATION_IMPL_CAT(ITM_SERIALIZATION_IMPL_LOOP_, ITM_SERIALIZATION_IMPL_NARG(__VA_ARGS__))(SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATOR, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)
+
 //** declaration
 #define SERIALIZABLE_ENUM_DECL_IMPL( enum_name, ...)                                                                   \
-	SERIALIZABLE_ENUM_DECL_IMPL_2(enum_name, ITM_SERIALIZATION_IMPL_NARG(__VA_ARGS__), __VA_ARGS__)
-
-#define SERIALIZABLE_ENUM_DECL_IMPL_2( enum_name, field_count, ...)                                                    \
-	SERIALIZABLE_ENUM_DECL_IMPL_3(enum_name, field_count,                                                              \
-							 ITM_SERIALIZATION_IMPL_CAT(ITM_SERIALIZATION_IMPL_LOOP_, field_count), __VA_ARGS__)
-
-
-#define SERIALIZABLE_ENUM_DECL_IMPL_3(enum_name, field_count, loop, ...)                                               \
 	enum enum_name {                                                                                                   \
-		loop(SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATORS, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)                    \
-	};                                                                                                                 
+		SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATORS(__VA_ARGS__)                                                           \
+	};  
+	                                                                                                               
 
 
 //** definition
@@ -234,8 +230,14 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector){
 
 // region ===== SERIALIZABLE STRUCT PER-FIELD MACROS ===========
 
+#define BACK_STAR(s) s##*
+#define FRONT_STAR(s) *##s
+#define START_COMMENT BACK_STAR(/)
+#define END_COMMENT FRONT_STAR(/)	
+
 // *** used to declare fields & defaults ***
-#define SERIALIZABLE_STRUCT_IMPL_FIELD_DECL(_, type, field_name, default_value, serialization_type) type field_name = default_value;
+#define SERIALIZABLE_STRUCT_IMPL_FIELD_DECL(_, type, field_name, default_value, serialization_type, ...)               \
+	type field_name = default_value;
 
 // *** used for a generic constructor that contains all fields ***
 #define SERIALIZABLE_STRUCT_IMPL_TYPED_FIELD(_, type, field_name, ...) type field_name
@@ -267,6 +269,7 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector){
 	boost::optional< type > field_name = ptree_to_optional_serializable_struct< type >( tree, #field_name, origin );	
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE_VECTOR(type, field_name, default_value)                      \
 	boost::optional< type > field_name = ptree_to_optional_serializable_vector< type >(tree, #field_name);
+
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE(_, type, field_name, default_value, serialization_type, ...) \
 	ITM_SERIALIZATION_IMPL_CAT(SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE_, serialization_type)(type, field_name, default_value)
 
@@ -284,7 +287,8 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector){
 	tree.add_child( #field_name , field_name .ToPTree(origin));
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_VECTOR(type, field_name)                                            \
 	tree.add_child( #field_name , serializable_vector_to_ptree ( field_name ));
-#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE(_, type, field_name, default_value, serialization_type)             \
+
+#define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE(_, type, field_name, default_value, serialization_type, ...)        \
 	ITM_SERIALIZATION_IMPL_CAT(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE_, serialization_type)(type, field_name)
 
 // *** compare fields ***
@@ -314,6 +318,7 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector){
 		boost::property_tree::ptree ToPTree(std::string origin = "") const;                                            \
 		friend bool operator==(const struct_name & instance1, const struct_name & instance2);                          \
 		friend std::ostream& operator<<(std::ostream& out, const struct_name& instance);                               \
+		void AddToOptionsDescription(po::options_description& od);                                                     \
 	}
 // *** definition-only ***
 #define SERIALIZABLE_STRUCT_DEFN_IMPL( outer_class, struct_name, ...)                                                  \
@@ -360,7 +365,8 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector){
 		boost::property_tree::ptree tree(instance.ToPTree());                                                          \
 		boost::property_tree::write_json_no_quotes(out, tree, true);                                                   \
 		return out;                                                                                                    \
-	}                                                                                                              
+	}                                                                                                                  \
+	void AddProgramOptions                                                                                                              
 
 
 #define SERIALIZABLE_STRUCT_IMPL( struct_name, ...)                                                                    \

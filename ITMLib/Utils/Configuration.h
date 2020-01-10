@@ -82,15 +82,15 @@ DECLARE_SERIALIZABLE_ENUM(INDEXING_METHOD_DESCRIPTION)
 
 // region ======================================== SERIALIZABLE STRUCTS ============================================
 #define PATHS_STRUCT_DESCRIPTION Paths,\
-	(std::string, output_path, "output", PATH),\
-	(std::string, calibration_file_path, "calib.txt", PATH),\
-	(std::string, openni_file_path, "", PATH),\
-	(std::string, rgb_video_file_path, "", PATH),\
-	(std::string, depth_video_file_path, "", PATH),\
-	(std::string, rgb_image_path_mask, "", PATH),\
-	(std::string, depth_image_path_mask, "", PATH),\
-	(std::string, mask_image_path_mask, "", PATH),\
-	(std::string, imu_input_path, "", PATH)
+	(std::string, output_path, "output", PATH, blah),\
+	(std::string, calibration_file_path, "calib.txt", PATH, blah),\
+	(std::string, openni_file_path, "", PATH, blah),\
+	(std::string, rgb_video_file_path, "", PATH, blah),\
+	(std::string, depth_video_file_path, "", PATH, blah),\
+	(std::string, rgb_image_path_mask, "", PATH, blah),\
+	(std::string, depth_image_path_mask, "", PATH, blah),\
+	(std::string, mask_image_path_mask, "", PATH, blah),\
+	(std::string, imu_input_path, "", PATH, blah)
 
 DECLARE_SERIALIZABLE_STRUCT(PATHS_STRUCT_DESCRIPTION);
 
