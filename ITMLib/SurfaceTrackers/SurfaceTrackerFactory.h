@@ -38,7 +38,7 @@ public:
 		auto& settings = configuration::get();
 		switch (settings.device_type) {
 			case MEMORYDEVICE_CPU:
-				switch (settings.surface_tracker_type){
+				switch (settings.non_rigid_tracking_parameters.functor_type){
 					case TRACKER_SLAVCHEVA_OPTIMIZED:
 						motionTracker = new SurfaceTracker<TVoxel, TWarp, TIndex, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_OPTIMIZED>();
 						break;
@@ -49,7 +49,7 @@ public:
 				break;
 			case MEMORYDEVICE_CUDA:
 #ifndef COMPILE_WITHOUT_CUDA
-				switch (settings.surface_tracker_type) {
+				switch (settings.non_rigid_tracking_parameters.functor_type) {
 					case TRACKER_SLAVCHEVA_OPTIMIZED:
 						motionTracker = new SurfaceTracker<TVoxel, TWarp, TIndex, MEMORYDEVICE_CUDA, TRACKER_SLAVCHEVA_OPTIMIZED>();
 						break;

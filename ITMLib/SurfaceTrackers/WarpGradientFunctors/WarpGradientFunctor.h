@@ -16,15 +16,18 @@
 #pragma once
 
 #include "../../Utils/Serialization/Serialization.h"
+#include "../../../ORUtils/MemoryDeviceType.h"
 
-namespace ITMLib{
+namespace ITMLib {
 
 #define GRADIENT_FUNCTOR_TYPE_ENUM_DESCRIPTION GradientFunctorType, \
-	(TRACKER_SLAVCHEVA_DIAGNOSTIC, "slavcheva_diagnostic", "SLAVCHEVA_DIAGNOSTIC"),\
-	(TRACKER_SLAVCHEVA_OPTIMIZED, "slavcheva_optimized", "SLAVCHEVA_OPTIMIZED")
+    (TRACKER_SLAVCHEVA_DIAGNOSTIC, "slavcheva_diagnostic", "SLAVCHEVA_DIAGNOSTIC"),\
+    (TRACKER_SLAVCHEVA_OPTIMIZED, "slavcheva_optimized", "SLAVCHEVA_OPTIMIZED")
 
 DECLARE_SERIALIZABLE_ENUM(GRADIENT_FUNCTOR_TYPE_ENUM_DESCRIPTION)
 
 template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TMemoryDeviceType, GradientFunctorType TGradientFunctorType>
 struct WarpGradientFunctor;
 } // namespace ITMLib
+
+DEFINE_INLINE_SERIALIZABLE_ENUM(ITMLib::GRADIENT_FUNCTOR_TYPE_ENUM_DESCRIPTION)

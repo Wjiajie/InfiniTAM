@@ -82,8 +82,8 @@ DECLARE_SERIALIZABLE_ENUM(INDEXING_METHOD_DESCRIPTION)
 
 // region ======================================== SERIALIZABLE STRUCTS ============================================
 #define PATHS_STRUCT_DESCRIPTION Paths,\
-	(std::string, output_path, "", PATH),\
-	(std::string, calibration_file_path, "", PATH),\
+	(std::string, output_path, "output", PATH),\
+	(std::string, calibration_file_path, "calib.txt", PATH),\
 	(std::string, openni_file_path, "", PATH),\
 	(std::string, rgb_video_file_path, "", PATH),\
 	(std::string, depth_video_file_path, "", PATH),\
@@ -93,6 +93,7 @@ DECLARE_SERIALIZABLE_ENUM(INDEXING_METHOD_DESCRIPTION)
 	(std::string, imu_input_path, "", PATH)
 
 DECLARE_SERIALIZABLE_STRUCT(PATHS_STRUCT_DESCRIPTION);
+
 
 ///For focus_coordinates to be used, VerbosityLevel must be set to VERBOSITY_FOCUS_SPOTS or above
 #define TELEMETRY_SETTINGS_STRUCT_DESCRIPTION TelemetrySettings, \
@@ -146,7 +147,6 @@ struct TrackerConfigurationStringPresets{
 	(SwappingMode, swapping_mode, SWAPPINGMODE_DISABLED, ENUM),\
 	(LibMode, library_mode, LIBMODE_DYNAMIC, ENUM),\
 	(IndexingMethod, indexing_method, INDEX_HASH, ENUM),\
-	(GradientFunctorType, surface_tracker_type, ITMLib::TRACKER_SLAVCHEVA_DIAGNOSTIC, ENUM),\
 	(VerbosityLevel, verbosity_level, VERBOSITY_PER_FRAME, ENUM),\
 	(std::string, tracker_configuration, TrackerConfigurationStringPresets::default_depth_only_extended_tracker_configuration, PRIMITIVE)
 

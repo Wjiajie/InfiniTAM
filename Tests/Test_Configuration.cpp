@@ -38,7 +38,14 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	configuration::load_configuration_from_json_file("TestData/default_config_cuda.json");
 #endif
 	configuration::Configuration& current_config = configuration::get();
-	BOOST_REQUIRE_EQUAL(default_configuration, current_config);
+	BOOST_REQUIRE_EQUAL(default_configuration.voxel_volume_parameters, configuration::get().voxel_volume_parameters);
+	BOOST_REQUIRE_EQUAL(default_configuration.surfel_volume_parameters, configuration::get().surfel_volume_parameters);
+	BOOST_REQUIRE_EQUAL(default_configuration.slavcheva_parameters, configuration::get().slavcheva_parameters);
+	BOOST_REQUIRE_EQUAL(default_configuration.slavcheva_switches, configuration::get().slavcheva_switches);
+	BOOST_REQUIRE_EQUAL(default_configuration.telemetry_settings, configuration::get().telemetry_settings);
+	BOOST_REQUIRE_EQUAL(default_configuration.paths, configuration::get().paths);
+	BOOST_REQUIRE_EQUAL(default_configuration.ui_engine_settings, configuration::get().ui_engine_settings);
+	BOOST_REQUIRE_EQUAL(default_configuration, configuration::get());
 	configuration::Configuration configuration1(
 			VoxelVolumeParameters(0.005, 0.12, 4.12, 0.05, 200, true, true, 1.2f),
 			SurfelVolumeParameters(0.4f, 0.5f, static_cast<float>(22 * M_PI / 180), 0.008f, 0.0003f, 3.4f, 26.0f, 5,
@@ -54,7 +61,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			                     "TestData/frame_mask_%%06i.png",
 			                     ""),
 			UIEngineSettings(50, 16),
-			NonRigidTrackingParameters(300, 0.0002f, 0.4f),
+			NonRigidTrackingParameters(ITMLib::TRACKER_SLAVCHEVA_DIAGNOSTIC, 300, 0.0002f, 0.4f),
 			true,
 			false,
 			MEMORYDEVICE_CPU,
@@ -65,7 +72,6 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			configuration::SWAPPINGMODE_ENABLED,
 			configuration::LIBMODE_BASIC,
 			configuration::INDEX_ARRAY,
-			GradientFunctorType::TRACKER_SLAVCHEVA_DIAGNOSTIC,
 			configuration::VERBOSITY_SILENT,
 			"type=rgb,levels=rrbb"
 	);

@@ -25,32 +25,28 @@
         "disable_gaussian_sample_confidence": false,
         "disable_surfel_merging": false
     },
-    "slavcheva": {
-        "preset": "sobolev",
-        "parameters": {
-            "learning_rate": 0.1,
-            "rigidity_enforcement_factor": 0.1,
-            "weight_data_term": 1,
-            "weight_smoothing_term": 0.2,
-            "weight_level_set_term": 0.2,
-            "level_set_epsilon": 9.99999975e-06
-        },
-        "switches": {
-            "disable_data_term": false,
-            "enable_level_set_term": false,
-            "disable_smoothing_term": false,
-            "enable_killing_term": false,
-            "disable_gradient_smoothing": false
-        }
+    "slavcheva_parameters": {
+        "learning_rate": 0.1,
+        "rigidity_enforcement_factor": 0.1,
+        "weight_data_term": 1,
+        "weight_smoothing_term": 0.2,
+        "weight_level_set_term": 0.2,
+        "level_set_epsilon": 9.99999975e-06
     },
-    "telemetry_settings": "",
-    "input_and_output_settings": {
-        "paths": {
-            "output": "output/",
-            "calibration_file_path": "calib.txt"
-        },
+    "slavcheva_switches": {
+        "disable_data_term": false,
+        "enable_level_set_term": false,
+        "disable_smoothing_term": false,
+        "enable_killing_term": false,
+        "disable_gradient_smoothing": false
+    },
+    "telemetry_settings": {
         "record_reconstruction_video": false,
         "save_benchmarks_to_disk": false
+    },
+    "paths": {
+        "output_path": "output",
+        "calibration_file_path": "calib.txt"
     },
     "ui_engine_settings": {
         "number_of_frames_to_process_after_launch": 0,

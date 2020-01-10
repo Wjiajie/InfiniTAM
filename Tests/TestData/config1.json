@@ -25,41 +25,36 @@
         "disable_gaussian_sample_confidence": true,
         "disable_surfel_merging": true
     },
-    "slavcheva": {
-        "preset": "sobolev",
-        "parameters": {
+    "slavcheva_parameters": {
             "learning_rate": 0.109999999,
             "rigidity_enforcement_factor": 0.0900000036,
             "weight_data_term": 2,
             "weight_smoothing_term": 0.300000012,
             "weight_level_set_term": 0.100000001,
             "level_set_epsilon": "9.99999997e-07"
-        },
-        "switches": {
+    },
+    "slavcheva_switches": {
             "disable_data_term": true,
             "enable_level_set_term": true,
             "disable_smoothing_term": true,
             "enable_killing_term": true,
             "disable_gradient_smoothing": true
-        }
     },
     "telemetry_settings": {
         "focus_coordinates": [
             20,
             23,
             0
-        ]
-    },
-    "input_and_output_settings": {
-        "paths": {
-            "output": "<CONFIGURATION_DIRECTORY>/output1",
-            "calibration_file_path": "<CONFIGURATION_DIRECTORY>/calib_file1.txt",
-            "rgb_image_path_mask": "<CONFIGURATION_DIRECTORY>/frame_color_%%06i.png",
-            "depth_image_path_mask": "<CONFIGURATION_DIRECTORY>/frame_depth_%%06i.png",
-            "mask_image_path_mask": "<CONFIGURATION_DIRECTORY>/frame_mask_%%06i.png"
-        },
+        ],
         "record_reconstruction_video": true,
         "save_benchmarks_to_disk": true
+    },
+    "paths": {
+        "output": "<CONFIGURATION_DIRECTORY>/output1",
+        "calibration_file_path": "<CONFIGURATION_DIRECTORY>/calib_file1.txt",
+        "rgb_image_path_mask": "<CONFIGURATION_DIRECTORY>/frame_color_%%06i.png",
+        "depth_image_path_mask": "<CONFIGURATION_DIRECTORY>/frame_depth_%%06i.png",
+        "mask_image_path_mask": "<CONFIGURATION_DIRECTORY>/frame_mask_%%06i.png"
     },
     "ui_engine_settings": {
         "number_of_frames_to_process_after_launch": 50,

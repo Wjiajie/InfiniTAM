@@ -662,12 +662,11 @@ set(ITMLIB_SCENE_MOTION_TRACKERS_CUDA_HEADERS
 ##
 
 set(ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_SOURCES
-	SurfaceTrackers/WarpGradientFunctors/WarpGradientFunctor.h
-
 	SurfaceTrackers/Interface/SlavchevaSurfaceTracker.cpp
 	SurfaceTrackers/Interface/SurfaceTracker.tpp
     )
 set(ITMLIB_SCENE_MOTION_TRACKERS_INTERFACE_HEADERS
+	SurfaceTrackers/WarpGradientFunctors/WarpGradientFunctor.h
 	SurfaceTrackers/Interface/SurfaceTrackerInterface.h
 	SurfaceTrackers/Interface/SlavchevaSufraceTracker.h
 	SurfaceTrackers/Interface/SurfaceTracker.h

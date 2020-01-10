@@ -27,7 +27,6 @@
 //local
 #include "Configuration.h"
 #include "json_utils.h"
-#include "../SurfaceTrackers/WarpGradientFunctors/WarpGradientFunctor.h"
 
 using namespace ITMLib::configuration;
 
@@ -49,8 +48,6 @@ DEFINE_SERIALIZABLE_ENUM(MemoryDeviceType,
                          (MEMORYDEVICE_METAL, "metal", "METAL", "MEMORYDEVICE_METAL")
 )
 
-DEFINE_SERIALIZABLE_ENUM(ITMLib::GRADIENT_FUNCTOR_TYPE_ENUM_DESCRIPTION)
-
 namespace ITMLib {
 namespace configuration {
 
@@ -63,11 +60,7 @@ DEFINE_SERIALIZABLE_STRUCT(UI_ENGINE_SETTINGS_STRUCT_DESCRIPTION)
 
 DEFINE_SERIALIZABLE_STRUCT(CONFIGURATION_STRUCT_DESCRIPTION)
 
-// region ======================================= CONFIGURATION CONSTRUCTORS ===========================================
-
-// endregion ===========================================================================================================
-
-// region ===================================== CONFIGURATION CONSTANT DEFINITIONS =====================================
+// region ===================================== TRACKING PRESET DEFINITIONS ============================================
 
 const std::string TrackerConfigurationStringPresets::default_ICP_tracker_configuration =
 		"type=icp,levels=rrrbb,minstep=1e-3,"
@@ -105,20 +98,20 @@ const std::string TrackerConfigurationStringPresets::default_surfel_tracker_conf
 
 // endregion ===========================================================================================================
 
-// region ==== CONFIGURATION SINGLETON HANDLING, variables_map & ptree CONVERSIONS, COMPARISONS ========================
+// region ==== CONFIGURATION SINGLETON HANDLING ========================================================================
 
-std::unique_ptr<Configuration> instance = std::unique_ptr<Configuration>(new Configuration());
+Configuration instance;
 
 Configuration& get() {
-	return *instance;
+	return instance;
 }
 
 void load_configuration_from_variable_map(const po::variables_map& vm) {
-	instance.reset(new Configuration(vm));
+	instance = Configuration(vm);
 }
 
 void load_default() {
-	instance.reset(new Configuration);
+	instance = Configuration();
 }
 
 namespace fs = boost::filesystem;
@@ -126,12 +119,11 @@ namespace fs = boost::filesystem;
 void load_configuration_from_json_file(const std::string& path) {
 	pt::ptree tree;
 	pt::read_json(path, tree);
-	Configuration new_configuration = Configuration::BuildFromPTree(tree, path);
-	memcpy(instance.get(), &new_configuration, sizeof(Configuration));
+	instance = Configuration::BuildFromPTree(tree, path);
 }
 
 void save_configuration_to_json_file(const std::string& path) {
-	pt::write_json_no_quotes(path, instance->ToPTree(path), true);
+	pt::write_json_no_quotes(path, instance.ToPTree(path), true);
 }
 
 void save_configuration_to_json_file(const std::string& path, const Configuration& configuration) {
