@@ -15,7 +15,8 @@ GENERATE_SERIALIZABLE_STRUCT(
 		(float, delta_radius, 0.5f, PRIMITIVE, "The maximum fraction by which a new surfel can have a larger radius "
 		                                       "than the surfel into which it is being fused if full fusion is to occur"),
 		(float, gaussian_confidence_sigma, 0.6f, PRIMITIVE, "The sigma value for the Gaussian used when calculating the sample confidence."),
-		(float, max_merge_angle, (20.f * M_PI / 180.f), PRIMITIVE, "The maximum angle allowed between the normals of a pair of surfels if they are to be merged."),
+		(float, max_merge_angle, (20.f * M_PI /
+		                          180.f), PRIMITIVE, "The maximum angle allowed between the normals of a pair of surfels if they are to be merged."),
 		(float, max_merge_dist, 0.01f, PRIMITIVE,
 				"The maximum distance allowed between a pair of surfels if they are to be merged."),
 		(float, max_surfel_radius, 0.0004f, PRIMITIVE, "The maximum radius a surfel is allowed to have."),

@@ -318,18 +318,18 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
 // *** value --> options_description ***
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION_PRIMITIVE(type, field_name, default_value_in, description)\
 	od.add_options()(generate_cli_argument_identifiers_snake_case(#field_name, od).c_str(),                            \
-	po::value< type >()->default_value( default_value_in ), #description);
+	boost::program_options::value< type >()->default_value( default_value_in ), #description);
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION_PATH(type, field_name, default_value_in, description)\
 	od.add_options()(generate_cli_argument_identifiers_snake_case(#field_name, od).c_str(),                            \
-	po::value< type >()->default_value( default_value_in ), #description);
+	boost::program_options::value< type >()->default_value( default_value_in ), #description);
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION_ENUM(type, field_name, default_value_in, description)\
 	od.add_options()(generate_cli_argument_identifiers_snake_case(#field_name, od).c_str(),                            \
-	po::value< std::string >()->default_value( enumerator_to_string(default_value_in) ), (std::string(#description) + enumerator_bracketed_list< type>()).c_str());
+	boost::program_options::value< std::string >()->default_value( enumerator_to_string(default_value_in) ), (std::string(#description) + enumerator_bracketed_list< type>()).c_str());
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION_STRUCT(type, field_name, default_value, description)\
 	type :: AddToOptionsDescription(od);
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION_VECTOR(type, field_name, default_value_in, description)\
 	od.add_options()(generate_cli_argument_identifiers_snake_case(#field_name, od).c_str(),                            \
-	po::value< std::vector< type::value_type> >()->                                                                    \
+	boost::program_options::value< std::vector< type::value_type> >()->                                                                    \
     multitoken()->default_value(serializable_vector_to_std_vector(default_value_in)), #description);
 
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION(_, type, field_name, default_value, serialization_type, description) \
