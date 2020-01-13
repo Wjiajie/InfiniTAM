@@ -12,7 +12,6 @@
 #include "../../ORUtils/FileUtils.h"
 #include "../../ORUtils/NVTimer.h"
 #include "../../ITMLib/Utils/FileIO/ITMDynamicFusionLogger.h"
-#include "ProgramOptions.h"
 
 //stdlib
 #include <vector>
@@ -111,11 +110,8 @@ public:
 	ITMLib::configuration::IndexingMethod indexingMethod;
 
 	void Initialize(int& argc, char** argv, InputSource::ImageSourceEngine* imageSource, InputSource::IMUSourceEngine* imuSource,
-	                ITMLib::ITMMainEngine* mainEngine,
-
-	                const ITMLib::configuration::Configuration& configuration,
-
-	                const RunOptions& options, ITMLib::ITMDynamicFusionLogger_Interface* logger);
+	                ITMLib::ITMMainEngine* mainEngine, const ITMLib::configuration::Configuration& configuration,
+	                ITMLib::ITMDynamicFusionLogger_Interface* logger);
 	void Shutdown();
 
 	void Run();

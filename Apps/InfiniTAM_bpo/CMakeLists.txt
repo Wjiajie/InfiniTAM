@@ -43,15 +43,13 @@ set(sources
     UIEngine_BPO.cpp
     UIEngine_BPO_GlutFunctions.cpp
     CreateDefaultImageSource.cpp
-	ProgramOptions.cpp
-)
+    )
 
 set(headers
     UIEngine_BPO.h
     prettyprint.hpp
     CreateDefaultImageSource.h
-	ProgramOptions.h
-)
+    )
 
 #############################
 # Specify the source groups #

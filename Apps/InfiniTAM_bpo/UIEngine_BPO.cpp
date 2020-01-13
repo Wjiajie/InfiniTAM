@@ -75,14 +75,20 @@ void UIEngine_BPO::Initialize(int& argc, char** argv,
                               ITMLib::ITMMainEngine* mainEngine,
 
                               const configuration::Configuration& configuration,
-
-                              const RunOptions& options,
                               ITMLib::ITMDynamicFusionLogger_Interface* logger) {
+
+	//TODO: somehow incorporate the following "constant" settings into Configuration struct, Configuration.h in ITMLib
+	const bool fix_camera = false;
+	const bool load_volume_before_automatic_run = false;
+	const bool save_volume_after_automatic_run = false;
+	const bool start_in_step_by_step_mode = false;
+
+
 	this->logger = logger;
 	this->indexingMethod = configuration.indexing_method;
 
 	this->inStepByStepMode = false;
-	this->saveAfterInitialProcessing = options.saveAfterInitialProcessing;
+	this->saveAfterInitialProcessing = save_volume_after_automatic_run;
 
 	this->freeviewActive = true;
 	this->integrationActive = true;
@@ -177,7 +183,7 @@ void UIEngine_BPO::Initialize(int& argc, char** argv,
 		SkipFrames(configuration.ui_engine_settings.index_of_frame_to_start_at);
 	}
 
-	if (options.startInStepByStep) {
+	if (start_in_step_by_step_mode) {
 		mainLoopAction = number_of_frames_to_process_after_launch ? PROCESS_STEPS_CONTINUOUS : PROCESS_SINGLE_STEP;
 		outImageType[0] = this->colourMode_stepByStep.type;
 	} else {
@@ -190,7 +196,7 @@ void UIEngine_BPO::Initialize(int& argc, char** argv,
 		this->reconstructionVideoWriter = new FFMPEGWriter();
 	}
 
-	if (options.loadVolumeBeforeProcessing) {
+	if (load_volume_before_automatic_run) {
 		if(logger->NeedsFramewiseOutputFolder()){
 			logger->SetOutputDirectory(
 					this->GenerateCurrentFrameOutputDirectory());

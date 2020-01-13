@@ -39,7 +39,6 @@
 #include "UIEngine_BPO.h"
 #include "prettyprint.hpp"
 #include "CreateDefaultImageSource.h"
-#include "ProgramOptions.h"
 
 // *** namespaces ***
 
@@ -66,10 +65,15 @@ int main(int argc, char** argv) {
 	try {
 		po::options_description arguments{"Arguments"};
 		po::positional_options_description positional_arguments;
-		RunOptions runOptions;
-		LoggingOptions loggingOptions;
 
-		PopulateOptionsDescription(arguments,runOptions,loggingOptions);
+		arguments.add_options()
+				("help,h", "Print help screen")
+				("halp,h", "Funkaaay")
+				( "config,cfg", po::value<std::string>(),
+				  "Configuration file in JSON format, e.g.  ./default_config_cuda.json "
+				  "WARNING: using this option will invalidate any other command line arguments.");
+
+		ITMLib::configuration::Configuration::AddToOptionsDescription(arguments);
 
 		positional_arguments.add("calibration_file", 1);
 		positional_arguments.add("input_path", 3);
@@ -107,13 +111,13 @@ int main(int argc, char** argv) {
 			std::string configPath = vm["config"].as<std::string>();
 			configuration::load_configuration_from_json_file(configPath);
 		}
-		auto& settings = configuration::get();
+		auto& configuration = configuration::get();
 
 		printf("initialising ...\n");
 		ImageSourceEngine* imageSource = nullptr;
 		IMUSourceEngine* imuSource = nullptr;
 
-		CreateDefaultImageSource(imageSource, imuSource, settings.paths);
+		CreateDefaultImageSource(imageSource, imuSource, configuration.paths);
 		if (imageSource == nullptr) {
 			std::cerr << "Failed to open any image stream." << std::endl;
 			printHelp();
@@ -121,31 +125,31 @@ int main(int argc, char** argv) {
 		}
 
 // region ================================ BUILD MAIN ENGINE ========================================================
-		configuration::IndexingMethod chosenIndexingMethod = settings.indexing_method;
+		configuration::IndexingMethod chosenIndexingMethod = configuration.indexing_method;
 		ITMDynamicFusionLogger_Interface& logger = GetLogger(chosenIndexingMethod);
 		ITMMainEngine* mainEngine = BuildMainEngine(imageSource->getCalib(),
 		                                            imageSource->getRGBImageSize(),
 		                                            imageSource->getDepthImageSize(),
-		                                            runOptions.fixCamera);
+		                                            false);
 
 // endregion ===========================================================================================================
 // region =========================== SET LOGGER / VISUALIZERS WITH CLI ARGUMENTS ======================================
 		//NB: Logger's focus coordinates set above together with main engine settings, if provided
-		if (loggingOptions.plotEnergies) logger.TurnPlottingEnergiesOn();
-		if (loggingOptions.record3DSceneAndWarps) logger.TurnRecording3DSceneAndWarpProgressionOn();
-		if (loggingOptions.recordCanonicalSceneAsSlices) logger.TurnRecordingCanonicalSceneAs2DSlicesOn();
-		if (loggingOptions.recordLiveSceneAsSlices) logger.TurnRecordingLiveSceneAs2DSlicesOn();
-		if (loggingOptions.record1DSlices) logger.TurnRecordingScene1DSlicesWithUpdatesOn();
-		if (loggingOptions.record2DSlices) logger.TurnRecordingScene2DSlicesWithUpdatesOn();
-		if (loggingOptions.record3DSlices) logger.TurnRecordingScene3DSlicesWithUpdatesOn();
-		if (configuration::get().verbosity_level >= configuration::VERBOSITY_FOCUS_SPOTS) {
-			logger.SetFocusCoordinates(settings.telemetry_settings.focus_coordinates);
-		}
-		logger.SetOutputDirectory(settings.paths.output_path);
-
-		logger.SetPlaneFor2Dand3DSlices(loggingOptions.planeFor2Dand3DSlices);
-		logger.Set3DSliceInPlaneRadius(loggingOptions._3DSliceRadius);
-		logger.Set3DSliceOutOfPlaneRadius(loggingOptions._3DSliceExtraThicknessMargin);
+//		if (loggingOptions.plotEnergies) logger.TurnPlottingEnergiesOn();
+//		if (loggingOptions.record3DSceneAndWarps) logger.TurnRecording3DSceneAndWarpProgressionOn();
+//		if (loggingOptions.recordCanonicalSceneAsSlices) logger.TurnRecordingCanonicalSceneAs2DSlicesOn();
+//		if (loggingOptions.recordLiveSceneAsSlices) logger.TurnRecordingLiveSceneAs2DSlicesOn();
+//		if (loggingOptions.record1DSlices) logger.TurnRecordingScene1DSlicesWithUpdatesOn();
+//		if (loggingOptions.record2DSlices) logger.TurnRecordingScene2DSlicesWithUpdatesOn();
+//		if (loggingOptions.record3DSlices) logger.TurnRecordingScene3DSlicesWithUpdatesOn();
+//		if (configuration::get().verbosity_level >= configuration::VERBOSITY_FOCUS_SPOTS) {
+//			logger.SetFocusCoordinates(settings.telemetry_settings.focus_coordinates);
+//		}
+//		logger.SetOutputDirectory(settings.paths.output_path);
+//
+//		logger.SetPlaneFor2Dand3DSlices(loggingOptions.planeFor2Dand3DSlices);
+//		logger.Set3DSliceInPlaneRadius(loggingOptions._3DSliceRadius);
+//		logger.Set3DSliceOutOfPlaneRadius(loggingOptions._3DSliceExtraThicknessMargin);
 
 // endregion
 // region =========================== SET UI ENGINE SETTINGS WITH CLI ARGUMENTS ========================================
@@ -155,10 +159,7 @@ int main(int argc, char** argv) {
 #if !defined(WIN32) && defined(WITH_VTK)
 		XInitThreads();
 #endif
-		UIEngine_BPO::Instance().Initialize(argc, argv, imageSource, imuSource, mainEngine,
-		                                    settings,
-		                                    runOptions,
-		                                    &logger);
+		UIEngine_BPO::Instance().Initialize(argc, argv, imageSource, imuSource, mainEngine, configuration, &logger);
 
 
 // endregion ===========================================================================================================
