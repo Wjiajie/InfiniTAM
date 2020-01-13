@@ -31,13 +31,10 @@ using namespace ITMLib::configuration;
 BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	configuration::Configuration default_configuration;
 #ifdef COMPILE_WITHOUT_CUDA
-	//default_configuration.save_to_json_file("../../Tests/TestData/default_config_cpu.json");
 	Configuration::load_configuration_from_json_file("TestData/default_config_cpu.json");
 #else
-	//default_configuration.save_to_json_file("../../Tests/TestData/default_config_cuda.json");
 	configuration::load_configuration_from_json_file("TestData/default_config_cuda.json");
 #endif
-	configuration::Configuration& current_config = configuration::get();
 	BOOST_REQUIRE_EQUAL(default_configuration.voxel_volume_parameters, configuration::get().voxel_volume_parameters);
 	BOOST_REQUIRE_EQUAL(default_configuration.surfel_volume_parameters, configuration::get().surfel_volume_parameters);
 	BOOST_REQUIRE_EQUAL(default_configuration.slavcheva_parameters, configuration::get().slavcheva_parameters);
@@ -75,7 +72,9 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			configuration::VERBOSITY_SILENT,
 			"type=rgb,levels=rrbb"
 	);
-	//configuration1.save_to_json_file("../../Tests/TestData/config1.json");
+	//configuration::save_configuration_to_json_file("../../Tests/TestData/default_config_cpu.json", default_configuration);
+	//configuration::save_configuration_to_json_file("../../Tests/TestData/default_config_cuda.json", default_configuration);
+	//configuration::save_configuration_to_json_file("../../Tests/TestData/config1.json", configuration1);
 	configuration::load_configuration_from_json_file("TestData/config1.json");
 	BOOST_REQUIRE_EQUAL(configuration1.voxel_volume_parameters, configuration::get().voxel_volume_parameters);
 	BOOST_REQUIRE_EQUAL(configuration1.surfel_volume_parameters, configuration::get().surfel_volume_parameters);
@@ -85,7 +84,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	BOOST_REQUIRE_EQUAL(configuration1.paths, configuration::get().paths);
 	BOOST_REQUIRE_EQUAL(configuration1.ui_engine_settings, configuration::get().ui_engine_settings);
 	BOOST_REQUIRE_EQUAL(configuration1, configuration::get());
-	configuration::save_configuration_to_json_file("TestData/config2.json",configuration1);
+	configuration::save_configuration_to_json_file("TestData/config2.json", configuration1);
 	configuration::load_configuration_from_json_file("TestData/config2.json");
 	BOOST_REQUIRE_EQUAL(configuration1.voxel_volume_parameters, configuration::get().voxel_volume_parameters);
 	BOOST_REQUIRE_EQUAL(configuration1.surfel_volume_parameters, configuration::get().surfel_volume_parameters);

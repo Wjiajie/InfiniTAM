@@ -1,44 +1,44 @@
 {
     "voxel_volume_parameters": {
-        "narrow_band_half_width": 0.05,
-        "max_integration_weight": 200,
         "voxel_size": 0.00499999989,
         "near_clipping_distance": 0.119999997,
         "far_clipping_distance": 4.11999989,
+        "narrow_band_half_width": 0.0500000007,
+        "max_integration_weight": 200,
         "stop_integration_at_max_weight": true,
         "add_extra_block_ring_during_allocation": true,
-        "block_allocation_band_factor": 1.2
+        "block_allocation_band_factor": 1.20000005
     },
     "surfel_volume_parameters": {
-        "surfel_delta_radius": 0.400000006,
-        "surfel_gaussian_convergence_sigma": 0.5,
-        "surfel_max_merge_angle": 0.383972436,
-        "surfel_max_merge_distance": 0.00800000038,
-        "surfel_max_radius": 0.000300000014,
-        "surfel_min_radius_overlap_factor": 3.4000001,
+        "delta_radius": 0.400000006,
+        "gaussian_confidence_sigma": 0.5,
+        "max_merge_angle": 0.383972436,
+        "max_merge_dist": 0.00800000038,
+        "max_surfel_radius": 0.000300000014,
+        "min_radius_overlap_factor": 3.4000001,
         "stable_surfel_confidence": 26,
-        "surfel_supersampling_factor": 5,
+        "supersampling_factor": 5,
         "tracking_surfel_max_depth": 1.10000002,
         "tracking_surfel_min_confidence": 4.5,
         "unstable_surfel_period": 21,
         "unstable_surfel_z_offset": 300,
-        "disable_gaussian_sample_confidence": true,
-        "disable_surfel_merging": true
+        "use_gaussian_sample_confidence": false,
+        "use_surfel_merging": false
     },
     "slavcheva_parameters": {
-            "learning_rate": 0.109999999,
-            "rigidity_enforcement_factor": 0.0900000036,
-            "weight_data_term": 2,
-            "weight_smoothing_term": 0.300000012,
-            "weight_level_set_term": 0.100000001,
-            "level_set_epsilon": "9.99999997e-07"
+        "learning_rate": 0.109999999,
+        "rigidity_enforcement_factor": 0.0900000036,
+        "weight_data_term": 2,
+        "weight_smoothing_term": 0.300000012,
+        "weight_level_set_term": 0.100000001,
+        "epsilon": "9.99999997e-07"
     },
     "slavcheva_switches": {
-            "disable_data_term": true,
-            "enable_level_set_term": true,
-            "disable_smoothing_term": true,
-            "enable_killing_term": true,
-            "disable_gradient_smoothing": true
+        "enable_data_term": false,
+        "enable_level_set_term": true,
+        "enable_smoothing_term": false,
+        "enable_killing_rigidity_enforcement_term": true,
+        "enable_sobolev_gradient_smoothing": false
     },
     "telemetry_settings": {
         "focus_coordinates": [
@@ -50,11 +50,15 @@
         "save_benchmarks_to_disk": true
     },
     "paths": {
-        "output": "<CONFIGURATION_DIRECTORY>/output1",
-        "calibration_file_path": "<CONFIGURATION_DIRECTORY>/calib_file1.txt",
-        "rgb_image_path_mask": "<CONFIGURATION_DIRECTORY>/frame_color_%%06i.png",
-        "depth_image_path_mask": "<CONFIGURATION_DIRECTORY>/frame_depth_%%06i.png",
-        "mask_image_path_mask": "<CONFIGURATION_DIRECTORY>/frame_mask_%%06i.png"
+        "output_path": "TestData\/output1",
+        "calibration_file_path": "TestData\/calib_file1.txt",
+        "openni_file_path": "",
+        "rgb_video_file_path": "",
+        "depth_video_file_path": "",
+        "rgb_image_path_mask": "TestData\/frame_color_%%06i.png",
+        "depth_image_path_mask": "TestData\/frame_depth_%%06i.png",
+        "mask_image_path_mask": "TestData\/frame_mask_%%06i.png",
+        "imu_input_path": ""
     },
     "ui_engine_settings": {
         "number_of_frames_to_process_after_launch": 50,
@@ -63,19 +67,19 @@
     "non_rigid_tracking_parameters": {
         "functor_type": "slavcheva_diagnostic",
         "max_iteration_threshold": 300,
-        "max_update_length_threshold": 0.0002,
-        "momentum_weight": 0.4
+        "max_update_length_threshold": 0.000199999995,
+        "momentum_weight": 0.400000006
     },
     "skip_points": true,
-    "disable_meshing": true,
-    "device": "cpu",
+    "create_meshing_engine": false,
+    "device_type": "cpu",
     "use_approximate_raycast": true,
     "use_threshold_filter": true,
     "use_bilateral_filter": true,
-    "failure_mode": "relocalize",
-    "swapping": "enabled",
-    "mode": "basic",
-    "index": "array",
+    "behavior_on_failure": "relocalize",
+    "swapping_mode": "disabled",
+    "library_mode": "basic",
+    "indexing_method": "array",
     "verbosity_level": "silent",
-    "tracker": "type=rgb,levels=rrbb"
+    "tracker_configuration": "type=rgb,levels=rrbb"
 }
