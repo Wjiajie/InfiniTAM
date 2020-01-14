@@ -70,25 +70,6 @@ struct ComputeVoxelBoundsFunctor<TVoxel, ITMPlainVoxelArray> {
 	}
 };
 
-template<typename TVoxel, typename TIndex>
-Vector6i
-ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA>::ComputeVoxelBounds(const ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	return ComputeVoxelBoundsFunctor<TVoxel, TIndex>::Compute(scene);
-}
-
-template<typename TVoxel, typename TIndex>
-int
-ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA>::ComputeAllocatedVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
-	return 0;
-}
-
-template<typename TVoxel, typename TIndex>
-std::vector<int>
-ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA>::GetFilledHashBlockIds(ITMVoxelVolume<TVoxel, TIndex>* scene) {
-	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
-	return std::vector<int>();
-}
 
 
 template<typename TIndex>
@@ -124,6 +105,47 @@ template<typename TVoxel, typename TIndex>
 int ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA>::ComputeAllocatedHashBlockCount(
 		ITMVoxelVolume<TVoxel, TIndex>* scene) {
 	return ComputeAllocatedHashBlockCountFunctor<TIndex>::compute(scene->index);
+}
+
+
+template<typename TVoxel, typename TIndex>
+Vector6i
+ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA>::ComputeVoxelBounds(const ITMVoxelVolume<TVoxel, TIndex>* scene) {
+	return ComputeVoxelBoundsFunctor<TVoxel, TIndex>::Compute(scene);
+}
+
+
+template<typename TIndex>
+struct ComputeAllocatedVoxelCountFunctor;
+
+template<>
+struct ComputeAllocatedVoxelCountFunctor<ITMPlainVoxelArray> {
+	inline
+	static int compute(const ITMPlainVoxelArray& index) {
+		return index.GetVolumeSize().x * index.GetVolumeSize().y * index.GetVolumeSize().z;
+	}
+};
+
+template<>
+struct ComputeAllocatedVoxelCountFunctor<ITMVoxelBlockHash> {
+	inline
+	static int compute(const ITMVoxelBlockHash& index) {
+		return ComputeAllocatedHashBlockCountFunctor<ITMVoxelBlockHash>::compute(index) * VOXEL_BLOCK_SIZE3;
+	}
+};
+
+
+template<typename TVoxel, typename TIndex>
+int
+ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA>::ComputeAllocatedVoxelCount(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+	return ComputeAllocatedVoxelCountFunctor<TIndex>::compute(scene->index);
+}
+
+template<typename TVoxel, typename TIndex>
+std::vector<int>
+ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA>::GetFilledHashBlockIds(ITMVoxelVolume<TVoxel, TIndex>* scene) {
+	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented");
+	return std::vector<int>();
 }
 
 

@@ -25,13 +25,18 @@
 #include "../Reconstruction/ITMDynamicSceneReconstructionEngineFactory.h"
 #include "../Swapping/ITMSwappingEngineFactory.h"
 #include "../../SurfaceTrackers/SurfaceTrackerFactory.h"
-#include "../VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
-#include "../VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
-#include "../../Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
 #include "../../Utils/ITMPrintHelpers.h"
 #include "../../Utils/Visualization/ITMSceneSliceVisualizer2D.h"
 #include "../../Utils/Analytics/ITMBenchmarkUtils.h"
 #include "../../Utils/FileIO/ITMSceneLogger.h"
+//** CPU **
+#include "../VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
+#include "../../Utils/Analytics/SceneStatisticsCalculator/CPU/ITMSceneStatisticsCalculator_CPU.h"
+//** CUDA **
+#ifndef COMPILE_WITHOUT_CUDA
+#include "../VolumeEditAndCopy/CUDA/VolumeEditAndCopyEngine_CUDA.h"
+#include "../../Utils/Analytics/SceneStatisticsCalculator/CUDA/ITMSceneStatisticsCalculator_CUDA.h"
+#endif
 
 
 using namespace ITMLib;
@@ -40,20 +45,30 @@ namespace bench = ITMLib::Bench;
 
 // region ========================================= DEBUG PRINTING =====================================================
 
-template<typename TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
+template<typename TVoxel, typename TIndex>
 inline static void PrintSceneStatistics(
 		ITMVoxelVolume<TVoxel, TIndex>* scene,
 		std::string description) {
-	ITMSceneStatisticsCalculator<TVoxel, TIndex, TMemoryDeviceType>& calculator =
-			ITMSceneStatisticsCalculator<TVoxel, TIndex, TMemoryDeviceType>::Instance();
+	ITMSceneStatisticsCalculatorInterface<TVoxel, TIndex>* calculator = nullptr;
+	switch (scene->index.memoryType){
+		case MEMORYDEVICE_CPU:
+			calculator = &ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CPU>::Instance();
+			break;
+		case MEMORYDEVICE_CUDA:
+			calculator = &ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA>::Instance();
+			break;
+		case MEMORYDEVICE_METAL:
+			DIEWITHEXCEPTION_REPORTLOCATION("Metal framework not supported for this.");
+	}
+			
 	std::cout << green << "=== Stats for scene '" << description << "' ===" << reset << std::endl;
-	std::cout << "    Total voxel count: " << calculator.ComputeAllocatedVoxelCount(scene) << std::endl;
-	std::cout << "    NonTruncated voxel count: " << calculator.ComputeNonTruncatedVoxelCount(scene) << std::endl;
-	std::cout << "    +1.0 voxel count: " << calculator.CountVoxelsWithSpecificSdfValue(scene, 1.0f) << std::endl;
-	std::vector<int> allocatedHashes = calculator.GetFilledHashBlockIds(scene);
-	std::cout << "    Allocated hash count: " << allocatedHashes.size() << std::endl;
-	std::cout << "    NonTruncated SDF sum: " << calculator.ComputeNonTruncatedVoxelAbsSdfSum(scene) << std::endl;
-	std::cout << "    Truncated SDF sum: " << calculator.ComputeTruncatedVoxelAbsSdfSum(scene) << std::endl;
+	std::cout << "    Total voxel count: " << calculator->ComputeAllocatedVoxelCount(scene) << std::endl;
+	std::cout << "    NonTruncated voxel count: " << calculator->ComputeNonTruncatedVoxelCount(scene) << std::endl;
+	std::cout << "    +1.0 voxel count: " << calculator->CountVoxelsWithSpecificSdfValue(scene, 1.0f) << std::endl;
+	//std::vector<int> allocatedHashes = calculator->GetFilledHashBlockIds(scene);
+	std::cout << "    Allocated hash count: " << calculator->ComputeAllocatedHashBlockCount(scene) << std::endl;
+	std::cout << "    NonTruncated SDF sum: " << calculator->ComputeNonTruncatedVoxelAbsSdfSum(scene) << std::endl;
+	std::cout << "    Truncated SDF sum: " << calculator->ComputeTruncatedVoxelAbsSdfSum(scene) << std::endl;
 
 };
 
@@ -202,9 +217,11 @@ DenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessFrame(const ITMView* view, con
 		DIEWITHEXCEPTION_REPORTLOCATION("Cannot track motion for full frame when in step-by-step mode");
 	}
 	InitializeProcessing(view, trackingState, warpField, liveScenePair);
+	PrintSceneStatistics(liveScenePair[0], "[[live frame before tracking]]");
 	bench::StartTimer("TrackMotion");
 	ITMVoxelVolume<TVoxel, TIndex>* finalWarpedLiveScene = TrackFrameMotion(canonicalScene, liveScenePair, warpField);
 	bench::StopTimer("TrackMotion");
+	PrintSceneStatistics(finalWarpedLiveScene, "[[live frame after tracking]]");
 	FinalizeProcessing(canonicalScene, finalWarpedLiveScene, renderState);
 }
 
