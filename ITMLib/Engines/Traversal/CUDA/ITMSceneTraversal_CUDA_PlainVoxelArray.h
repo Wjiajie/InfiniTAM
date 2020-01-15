@@ -37,7 +37,7 @@ public:
 	template<typename TStaticFunctor>
 	inline static void StaticVoxelTraversal(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) {
 		TVoxel* voxelArray = scene->localVBA.GetVoxelBlocks();
-		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.GetIndexData();
+		const ITMPlainVoxelArray::GridAlignedBox* arrayInfo = scene->index.GetIndexData();
 
 		dim3 cudaBlockSize(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
 		dim3 gridSize(scene->index.GetVolumeSize().x / cudaBlockSize.x,
@@ -54,7 +54,7 @@ public:
 	inline static void
 	VoxelTraversal(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
 		TVoxel* voxelArray = scene->localVBA.GetVoxelBlocks();
-		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.GetIndexData();
+		const ITMPlainVoxelArray::GridAlignedBox* arrayInfo = scene->index.GetIndexData();
 
 		dim3 cudaBlockSize(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
 		dim3 gridSize(scene->index.GetVolumeSize().x / cudaBlockSize.x,
@@ -79,7 +79,7 @@ public:
 	inline static void
 	VoxelPositionTraversal(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, TFunctor& functor) {
 		TVoxel* voxelArray = scene->localVBA.GetVoxelBlocks();
-		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.GetIndexData();
+		const ITMPlainVoxelArray::GridAlignedBox* arrayInfo = scene->index.GetIndexData();
 
 		dim3 cudaBlockSize(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
 		dim3 gridSize(scene->index.GetVolumeSize().x / cudaBlockSize.x,
@@ -128,7 +128,7 @@ private:
 		// perform traversal on the CUDA
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
-		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.GetIndexData();
+		const ITMPlainVoxelArray::GridAlignedBox* arrayInfo = primaryScene->index.GetIndexData();
 		dim3 cudaBlockSize(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
 		dim3 gridSize(
 				static_cast<int>(ceil(static_cast<float>(primaryScene->index.GetVolumeSize().x) / cudaBlockSize.x)),
@@ -166,7 +166,7 @@ public:
 
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
-		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.GetIndexData();
+		const ITMPlainVoxelArray::GridAlignedBox* arrayInfo = primaryScene->index.GetIndexData();
 		dim3 cudaBlockSize(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
 		dim3 gridSize(
 				static_cast<int>(ceil(static_cast<float>(primaryScene->index.GetVolumeSize().x) / cudaBlockSize.x)),
@@ -206,7 +206,7 @@ public:
 		// perform traversal on the CUDA
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
-		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.GetIndexData();
+		const ITMPlainVoxelArray::GridAlignedBox* arrayInfo = primaryScene->index.GetIndexData();
 		dim3 cudaBlockSize(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
 		dim3 gridSize(
 				static_cast<int>(ceil(static_cast<float>(primaryScene->index.GetVolumeSize().x) / cudaBlockSize.x)),
@@ -235,7 +235,7 @@ public:
 				primaryScene, secondaryScene, functor,
 				[&](const dim3& gridSize, const dim3& cudaBlockSize,
 				    TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-				    const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+				    const ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
 				    TBooleanFunctor* functor_device, bool* falseEncountered_device) {
 					dualVoxelTraversal_AllTrue_device<TBooleanFunctor, TVoxelPrimary, TVoxelSecondary>
 							<< < gridSize, cudaBlockSize >> >
@@ -254,7 +254,7 @@ public:
 				primaryScene, secondaryScene, functor,
 				[&](const dim3& gridSize, const dim3& cudaBlockSize,
 				    TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-				    const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+				    const ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
 				    TBooleanFunctor* functor_device, bool* falseEncountered_device) {
 					dualVoxelPositionTraversal_AllTrue_device<TBooleanFunctor, TVoxelPrimary, TVoxelSecondary>
 							<< < gridSize, cudaBlockSize >> >
@@ -280,7 +280,7 @@ public:
 		// perform traversal on the CUDA
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
-		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.GetIndexData();
+		const ITMPlainVoxelArray::GridAlignedBox* arrayInfo = primaryScene->index.GetIndexData();
 		dim3 cudaBlockSize(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
 		dim3 gridSize(
 				static_cast<int>(ceil(static_cast<float>(primaryScene->index.GetVolumeSize().x) / cudaBlockSize.x)),
@@ -325,7 +325,7 @@ public:
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 
-		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.GetIndexData();
+		const ITMPlainVoxelArray::GridAlignedBox* arrayInfo = primaryScene->index.GetIndexData();
 
 		dim3 cudaBlockSize(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
 		dim3 gridSize(
@@ -359,7 +359,7 @@ public:
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 
-		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.GetIndexData();
+		const ITMPlainVoxelArray::GridAlignedBox* arrayInfo = primaryScene->index.GetIndexData();
 
 		dim3 cudaBlockSize(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
 		dim3 gridSize(
@@ -396,7 +396,7 @@ public:
 		TVoxel* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
 
-		const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryScene->index.GetIndexData();
+		const ITMPlainVoxelArray::GridAlignedBox* arrayInfo = primaryScene->index.GetIndexData();
 
 		dim3 cudaBlockSize(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE);
 		dim3 gridSize(

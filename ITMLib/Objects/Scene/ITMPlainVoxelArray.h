@@ -5,6 +5,7 @@
 #ifndef __METALC__
 
 #include "../../Utils/ITMMath.h"
+#include "../../Utils/Serialization/Serialization.h"
 #include "../../../ORUtils/MemoryBlock.h"
 
 namespace ITMLib {
@@ -16,24 +17,14 @@ a pointer to the data structure on the GPU.
 class ITMPlainVoxelArray {
 public:
 
-	struct ITMVoxelArrayInfo {
-		/// Size in voxels
-		Vector3i size;
-		/// offset of the lower left front corner of the volume in voxels
-		Vector3i offset;
+	GENERATE_SERIALIZABLE_STRUCT(
+			GridAlignedBox,
+			(Vector3i, size, Vector3i(512), VECTOR, "Size, in voxels."),
+			(Vector3i, offset, Vector3i(-256, -256, 0), VECTOR, "Offset of the lower left front corner of the volume, in voxels")
+	);
 
-		ITMVoxelArrayInfo() {
-			size.x = size.y = size.z = 512;
-			offset.x = -256;
-			offset.y = -256;
-			offset.z = 0;
-		}
-
-		ITMVoxelArrayInfo(Vector3i size, Vector3i offset) : size(size), offset(offset) {}
-	};
-
-	typedef ITMVoxelArrayInfo IndexData;
-	typedef ITMVoxelArrayInfo InitializationParameters;
+	typedef GridAlignedBox IndexData;
+	typedef GridAlignedBox InitializationParameters;
 	struct IndexCache {
 	};
 

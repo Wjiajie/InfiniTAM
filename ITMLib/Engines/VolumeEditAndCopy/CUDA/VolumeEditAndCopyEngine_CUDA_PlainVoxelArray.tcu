@@ -64,7 +64,7 @@ bool
 VolumeEditAndCopyEngine_CUDA<TVoxel, ITMPlainVoxelArray>::SetVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
                                                                    Vector3i at, TVoxel voxel) {
 	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.GetIndexData();
+	const ITMPlainVoxelArray::GridAlignedBox* arrayInfo = scene->index.GetIndexData();
 	ORUtils::MemoryBlock<bool> success(1, true, true);
 	*success.GetData(MEMORYDEVICE_CPU) = true;
 	success.UpdateDeviceFromHost();
@@ -81,7 +81,7 @@ VolumeEditAndCopyEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ReadVoxel(
 		Vector3i at) {
 
 	TVoxel* localVBA = scene->localVBA.GetVoxelBlocks();
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.GetIndexData();
+	const ITMPlainVoxelArray::GridAlignedBox* arrayInfo = scene->index.GetIndexData();
 
 	readVoxel_device<TVoxel> << < 1, 1 >> >
 	                                 (localVBA, arrayInfo, at, (ReadVoxelResult<TVoxel>*) readVoxelResult_device);
@@ -123,7 +123,7 @@ VolumeEditAndCopyEngine_CUDA<TVoxel, ITMPlainVoxelArray>::IsPointInBounds(
 	bool* in_bounds_CUDA;
 	ORcudaSafeCall(cudaMalloc((void**) &in_bounds_CUDA, sizeof(bool)));
 	bool in_bounds;
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = scene->index.GetIndexData();
+	const ITMPlainVoxelArray::GridAlignedBox* arrayInfo = scene->index.GetIndexData();
 	isPointInBounds_device << < 1, 1 >> > (arrayInfo, at, in_bounds_CUDA);
 	ORcudaKernelCheck;
 	ORcudaSafeCall(cudaMemcpy(&in_bounds, in_bounds_CUDA, sizeof(bool), cudaMemcpyDeviceToHost));

@@ -22,7 +22,7 @@
 
 _CPU_AND_GPU_CODE_
 inline
-bool isPointInBounds(const Vector3i& point, const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo& box) {
+bool isPointInBounds(const Vector3i& point, const ITMLib::ITMPlainVoxelArray::GridAlignedBox& box) {
 	return point.x >= box.offset.x &&
 	       point.y >= box.offset.y &&
 	       point.z >= box.offset.z &&
@@ -55,7 +55,7 @@ Extent3D maximumExtent(const Extent3D& extent1, const Extent3D& extent2) {
 
 _CPU_AND_GPU_CODE_
 inline
-Extent3D maximumExtent(const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo& box1, const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo& box2){
+Extent3D maximumExtent(const ITMLib::ITMPlainVoxelArray::GridAlignedBox& box1, const ITMLib::ITMPlainVoxelArray::GridAlignedBox& box2){
 	return maximumExtent(PVA_InfoToExtent(box1),PVA_InfoToExtent(box2));
 }
 

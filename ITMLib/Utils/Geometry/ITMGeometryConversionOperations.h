@@ -24,7 +24,7 @@
 
 _CPU_AND_GPU_CODE_
 inline
-Vector6i PVA_InfoToExtent(const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo& info) {
+Vector6i PVA_InfoToExtent(const ITMLib::ITMPlainVoxelArray::GridAlignedBox& info) {
 	return {info.offset.x, info.offset.y, info.offset.z, info.offset.x + info.size.x, info.offset.y + info.size.y,
 	        info.offset.z + info.size.z};
 }

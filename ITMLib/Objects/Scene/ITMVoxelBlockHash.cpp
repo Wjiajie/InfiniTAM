@@ -43,15 +43,15 @@ ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt(const Vector3s& pos) const {
 	return GetHashEntryAt(pos, hashCode);
 }
 
-ITMVoxelBlockHash::ITMVoxelBlockHash(ITMVoxelBlockHashParameters parameters, MemoryDeviceType memoryType) :
-		voxelBlockCount(parameters.voxelBlockCount),
-		excessListSize(parameters.excessListSize),
-		hashEntryCount(ORDERED_LIST_SIZE + parameters.excessListSize),
-		lastFreeExcessListId(parameters.excessListSize - 1),
-		hashEntryAllocationStates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType),
-		allocationBlockCoordinates(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType),
-		visibleBlockHashCodes(parameters.voxelBlockCount, memoryType),
-		blockVisibilityTypes(ORDERED_LIST_SIZE + parameters.excessListSize, memoryType),
+ITMVoxelBlockHash::ITMVoxelBlockHash(VoxelBlockHashParameters parameters, MemoryDeviceType memoryType) :
+		voxelBlockCount(parameters.voxel_block_count),
+		excessListSize(parameters.excess_list_size),
+		hashEntryCount(ORDERED_LIST_SIZE + parameters.excess_list_size),
+		lastFreeExcessListId(parameters.excess_list_size - 1),
+		hashEntryAllocationStates(ORDERED_LIST_SIZE + parameters.excess_list_size, memoryType),
+		allocationBlockCoordinates(ORDERED_LIST_SIZE + parameters.excess_list_size, memoryType),
+		visibleBlockHashCodes(parameters.voxel_block_count, memoryType),
+		blockVisibilityTypes(ORDERED_LIST_SIZE + parameters.excess_list_size, memoryType),
 		memoryType(memoryType),
 		hashEntries(hashEntryCount, memoryType),
 		excessAllocationList(excessListSize, memoryType),

@@ -14,6 +14,7 @@
 #include "../../../ORUtils/MemoryBlock.h"
 #include "../../../ORUtils/MemoryBlockPersister.h"
 #include "../../Utils/ITMHashBlockProperties.h"
+#include "../../Utils/Serialization/Serialization.h"
 
 #define VOXEL_BLOCK_SIZE 8
 // VOXEL_BLOCK_SIZE3 = VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE
@@ -60,25 +61,33 @@ and a pointer to the data structure on the GPU.
 */
 class ITMVoxelBlockHash {
 public:
-	struct ITMVoxelBlockHashParameters {
-	public:
-		static const int defaultVoxelBlockCount = 0x40000; // 262144
 
-		static const int defaultExcessListSize = 0x20000; // 131072, entries in [1048576, 1179648)
-
-		const int voxelBlockCount;
-		/** Size of excess list, used to handle collisions. Also max offset (unsigned short) value. **/
-		const int excessListSize;
-
-		ITMVoxelBlockHashParameters() : voxelBlockCount(defaultVoxelBlockCount),
-		                                excessListSize(defaultExcessListSize) {}
-
-		ITMVoxelBlockHashParameters(int voxelBlockCount, int excessListSize) :
-				voxelBlockCount(voxelBlockCount), excessListSize(excessListSize) {}
-
-
-	};
-	typedef ITMVoxelBlockHashParameters InitializationParameters;
+//	struct VoxelBlockHashParameters {
+//	public:
+//		static const int defaultVoxelBlockCount = 0x40000; // 262144
+//
+//		static const int defaultExcessListSize = 0x20000; // 131072, entries in [1048576, 1179648)
+//
+//		const int voxel_block_count;
+//		/** Size of excess list, used to handle collisions. Also max offset (unsigned short) value. **/
+//		const int excess_list_size;
+//
+//		VoxelBlockHashParameters() : voxel_block_count(defaultVoxelBlockCount),
+//		                             excess_list_size(defaultExcessListSize) {}
+//
+//		VoxelBlockHashParameters(int voxelBlockCount, int excessListSize) :
+//				voxel_block_count(voxelBlockCount), excess_list_size(excessListSize) {}
+//
+//
+//	};
+	GENERATE_SERIALIZABLE_STRUCT(
+			VoxelBlockHashParameters,
+			(int, voxel_block_count, 0x40000, PRIMITIVE, "Total count of voxel hash blocks to preallocate."),
+			(int, excess_list_size, 0x20000, PRIMITIVE,
+					"Total count of voxel hash block entries in excess list of the hash table. "
+					"The excess list is used during hash collisions.")
+	);
+	typedef VoxelBlockHashParameters InitializationParameters;
 	typedef ITMHashEntry IndexData;
 
 	struct IndexCache {
@@ -117,9 +126,9 @@ public:
 	const MemoryDeviceType memoryType;
 
 
-	ITMVoxelBlockHash(ITMVoxelBlockHashParameters parameters, MemoryDeviceType memoryType);
+	ITMVoxelBlockHash(VoxelBlockHashParameters parameters, MemoryDeviceType memoryType);
 
-	explicit ITMVoxelBlockHash(MemoryDeviceType memoryType) : ITMVoxelBlockHash(ITMVoxelBlockHashParameters(),
+	explicit ITMVoxelBlockHash(MemoryDeviceType memoryType) : ITMVoxelBlockHash(VoxelBlockHashParameters(),
 	                                                                            memoryType) {}
 
 	ITMVoxelBlockHash(const ITMVoxelBlockHash& other, MemoryDeviceType memoryType) :
@@ -140,34 +149,51 @@ public:
 
 	/** Get the list of actual entries in the hash table. */
 	const ITMHashEntry* GetEntries() const { return hashEntries.GetData(memoryType); }
+
 	ITMHashEntry* GetEntries() { return hashEntries.GetData(memoryType); }
+
 	/** Get the list of actual entries in the hash table (alternative to GetEntries). */
 	const IndexData* GetIndexData() const { return hashEntries.GetData(memoryType); }
+
 	IndexData* GetIndexData() { return hashEntries.GetData(memoryType); }
+
 	ITMHashEntry GetHashEntry(int hashCode) const {
 		return hashEntries.GetElement(hashCode, memoryType);
 	}
+
 	ITMHashEntry GetHashEntryAt(const Vector3s& pos) const;
 	ITMHashEntry GetHashEntryAt(const Vector3s& pos, int& hashCode) const;
-	ITMHashEntry GetHashEntryAt(int x, int y, int z) const{
-		Vector3s coord(x,y,z);
+
+	ITMHashEntry GetHashEntryAt(int x, int y, int z) const {
+		Vector3s coord(x, y, z);
 		return GetHashEntryAt(coord);
 	}
-	ITMHashEntry GetHashEntryAt(int x, int y, int z, int& hashCode) const{
-		Vector3s coord(x,y,z);
+
+	ITMHashEntry GetHashEntryAt(int x, int y, int z, int& hashCode) const {
+		Vector3s coord(x, y, z);
 		return GetHashEntryAt(coord, hashCode);
 	}
 
 	/** Get a list of temporary hash entry state flags**/
-	const HashEntryAllocationState* GetHashEntryAllocationStates() const { return hashEntryAllocationStates.GetData(memoryType); }
+	const HashEntryAllocationState* GetHashEntryAllocationStates() const {
+		return hashEntryAllocationStates.GetData(memoryType);
+	}
+
 	HashEntryAllocationState* GetHashEntryAllocationStates() { return hashEntryAllocationStates.GetData(memoryType); }
-	void ClearHashEntryAllocationStates() { hashEntryAllocationStates.Clear(NEEDS_NO_CHANGE);}
+
+	void ClearHashEntryAllocationStates() { hashEntryAllocationStates.Clear(NEEDS_NO_CHANGE); }
+
 	const Vector3s* GetAllocationBlockCoordinates() const { return allocationBlockCoordinates.GetData(memoryType); }
+
 	/** Get a temporary list for coordinates of voxel blocks to be soon allocated**/
 	Vector3s* GetAllocationBlockCoordinates() { return allocationBlockCoordinates.GetData(memoryType); }
+
 	const int* GetVisibleBlockHashCodes() const { return visibleBlockHashCodes.GetData(memoryType); }
+
 	int* GetVisibleBlockHashCodes() { return visibleBlockHashCodes.GetData(memoryType); }
+
 	HashBlockVisibility* GetBlockVisibilityTypes() { return blockVisibilityTypes.GetData(memoryType); }
+
 	const HashBlockVisibility* GetBlockVisibilityTypes() const { return blockVisibilityTypes.GetData(memoryType); }
 
 	/** Get the list that identifies which entries of the
@@ -175,10 +201,15 @@ public:
 	many hash collisions caused the buckets to overflow.
 	*/
 	const int* GetExcessAllocationList() const { return excessAllocationList.GetData(memoryType); }
+
 	int* GetExcessAllocationList() { return excessAllocationList.GetData(memoryType); }
+
 	int GetLastFreeExcessListId() const { return lastFreeExcessListId; }
+
 	void SetLastFreeExcessListId(int newLastFreeExcessListId) { this->lastFreeExcessListId = newLastFreeExcessListId; }
+
 	int GetVisibleHashBlockCount() const { return this->visibleHashBlockCount; }
+
 	void SetVisibleHashBlockCount(int visibleHashBlockCount) { this->visibleHashBlockCount = visibleHashBlockCount; }
 
 	/*VBH-specific*/
@@ -186,7 +217,9 @@ public:
 
 	/** Number of allocated blocks. */
 	int GetAllocatedBlockCount() const { return this->voxelBlockCount; }
+
 	int GetVoxelBlockSize() const { return this->voxelBlockSize; }
+
 	unsigned int GetMaxVoxelCount() const {
 		return static_cast<unsigned int>(this->voxelBlockCount)
 		       * static_cast<unsigned int>(this->voxelBlockSize);
