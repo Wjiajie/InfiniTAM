@@ -7,7 +7,10 @@
         "max_integration_weight": 100,
         "stop_integration_at_max_weight": false,
         "add_extra_block_ring_during_allocation": false,
-        "block_allocation_band_factor": 2
+        "block_allocation_band_factor": 2,
+        "canonical_voxel_block_count": 262144,
+        "live_voxel_block_count": 131072,
+        "warp_voxel_block_count": 131072
     },
     "surfel_volume_parameters": {
         "delta_radius": 0.5,

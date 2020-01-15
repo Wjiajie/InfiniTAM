@@ -27,7 +27,7 @@ namespace {
 // CUDA kernels
 
 template<typename TVoxel>
-__global__ void integrateIntoScene_device(TVoxel* voxelArray, const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+__global__ void integrateIntoScene_device(TVoxel* voxelArray, const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
                                           const Vector4u* rgb, Vector2i rgbImgSize, const float* depth,
                                           const float* confidence,
                                           Vector2i depthImgSize, Matrix4f M_d, Matrix4f M_rgb, Vector4f projParams_d,
@@ -54,7 +54,7 @@ __global__ void integrateIntoScene_device(TVoxel* voxelArray, const ITMLib::ITMP
 
 template<typename TVoxel>
 __global__ void fuseSdf2Sdf_device(TVoxel* voxelArrayLive, TVoxel* voxelArrayCanonical,
-                                   const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo, int maximumWeight) {
+                                   const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo, int maximumWeight) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
@@ -66,7 +66,7 @@ __global__ void fuseSdf2Sdf_device(TVoxel* voxelArrayLive, TVoxel* voxelArrayCan
 
 template<typename TVoxel>
 __global__ void
-clearFields_device(TVoxel* voxelArray, const ITMLib::ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo) {
+clearFields_device(TVoxel* voxelArray, const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
@@ -110,7 +110,7 @@ template<typename TVoxelMulti>
 __global__ void
 copyScene_device(TVoxelMulti* sourceVoxels,
                  TVoxelMulti* targetVoxels,
-                 const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo) {
+                 const ITMPlainVoxelArray::GridAlignedBox* arrayInfo) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;

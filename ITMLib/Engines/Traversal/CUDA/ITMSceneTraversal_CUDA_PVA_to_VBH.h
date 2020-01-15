@@ -37,7 +37,7 @@ class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelA
 	                                                 ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
 	                                                 VoxelFlags semanticFlags, TBooleanFunctor& functor,
 	                                                 TDeviceFunction&& deviceFunction) {
-		ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryVolume->index.GetIndexData();
+		ITMPlainVoxelArray::GridAlignedBox* arrayInfo = primaryVolume->index.GetIndexData();
 		int hashEntryCount = secondaryVolume->index.hashEntryCount;
 		ITMHashEntry* hashTable = secondaryVolume->index.GetIndexData();
 
@@ -131,7 +131,7 @@ class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMPlainVoxelA
 			ITMVoxelVolume<TVoxelPrimary, ITMPlainVoxelArray>* primaryVolume,
 			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryVolume,
 			TBooleanFunctor& functor, TDeviceFunction&& deviceFunction) {
-		ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = primaryVolume->index.GetIndexData();
+		ITMPlainVoxelArray::GridAlignedBox* arrayInfo = primaryVolume->index.GetIndexData();
 		int hashEntryCount = secondaryVolume->index.hashEntryCount;
 		ITMHashEntry* hashTable = secondaryVolume->index.GetIndexData();
 
@@ -280,7 +280,7 @@ public:
 
 		return DualVoxelTraversal_AllTrue_Generic(primaryVolume, secondaryVolume, functor, []
 				(dim3 gridSize_ArrayBlockEnvelope, dim3 cudaBlockSize_BlockVoxelPerThread,
-				 TVoxelPrimary* voxelsArray, ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+				 TVoxelPrimary* voxelsArray, ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
 				 TVoxelSecondary* voxelsHash, ITMHashEntry* hashTable, Vector3i minArrayCoord,
 				 Vector3i maxArrayCoord, Vector3s minBlockPos, TBooleanFunctor* functor_device,
 				 bool* falseOrAlteredEncountered_device) {
@@ -322,7 +322,7 @@ public:
 				                                                        (dim3 gridSize_ArrayBlockEnvelope,
 				                                                         dim3 cudaBlockSize_BlockVoxelPerThread,
 				                                                         TVoxelPrimary* voxelsArray,
-				                                                         ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+				                                                         ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
 				                                                         TVoxelSecondary* voxelsHash,
 				                                                         ITMHashEntry* hashTable,
 				                                                         Vector3i minArrayCoord,
@@ -351,7 +351,7 @@ public:
 				                                                        (dim3 gridSize_ArrayBlockEnvelope,
 				                                                         dim3 cudaBlockSize_BlockVoxelPerThread,
 				                                                         TVoxelPrimary* voxelsArray,
-				                                                         ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+				                                                         ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
 				                                                         TVoxelSecondary* voxelsHash,
 				                                                         ITMHashEntry* hashTable,
 				                                                         Vector3i minArrayCoord,
@@ -390,7 +390,7 @@ public:
 
 		return DualVoxelTraversal_AllTrue_Generic(primaryVolume, secondaryVolume, functor, []
 				(dim3 gridSize_ArrayBlockEnvelope, dim3 cudaBlockSize_BlockVoxelPerThread,
-				 TVoxelPrimary* voxelsArray, ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+				 TVoxelPrimary* voxelsArray, ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
 				 TVoxelSecondary* voxelsHash, ITMHashEntry* hashTable, Vector3i minArrayCoord,
 				 Vector3i maxArrayCoord, Vector3s minBlockPos, TBooleanFunctor* functor_device,
 				 bool* falseOrAlteredEncountered_device) {

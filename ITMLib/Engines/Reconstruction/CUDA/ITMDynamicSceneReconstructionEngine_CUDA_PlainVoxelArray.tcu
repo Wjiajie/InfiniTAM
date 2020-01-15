@@ -63,7 +63,7 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 
 	TVoxel* liveVoxels = liveScene->localVBA.GetVoxelBlocks();
 	TVoxel* canonicalVoxels = canonicalScene->localVBA.GetVoxelBlocks();
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = canonicalScene->index.GetIndexData();
+	const ITMPlainVoxelArray::GridAlignedBox* arrayInfo = canonicalScene->index.GetIndexData();
 	int maxW = canonicalScene->sceneParams->max_integration_weight;
 
 	dim3 cudaBlockSize(8, 8, 8);
@@ -87,7 +87,7 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 	TVoxel* sourceVoxels = sourceTSDF->localVBA.GetVoxelBlocks();
 	TVoxel* targetVoxels = targetTSDF->localVBA.GetVoxelBlocks();
 	TWarp* warpVoxels = warpField->localVBA.GetVoxelBlocks();
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = sourceTSDF->index.GetIndexData();
+	const ITMPlainVoxelArray::GridAlignedBox* arrayInfo = sourceTSDF->index.GetIndexData();
 
 	dim3 cudaBlockSize(8, 8, 8);
 	dim3 gridSize(sourceTSDF->index.GetVolumeSize().x / cudaBlockSize.x,
@@ -126,7 +126,7 @@ void ITMDynamicSceneReconstructionEngine_CUDA<TVoxel, TWarp, ITMPlainVoxelArray>
 	float* confidence = view->depthConfidence->GetData(MEMORYDEVICE_CUDA);
 	Vector4u* rgb = view->rgb->GetData(MEMORYDEVICE_CUDA);
 	TVoxel* localVBA = volume->localVBA.GetVoxelBlocks();
-	const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo = volume->index.GetIndexData();
+	const ITMPlainVoxelArray::GridAlignedBox* arrayInfo = volume->index.GetIndexData();
 
 	dim3 cudaBlockSize(8, 8, 8);
 	dim3 gridSize(volume->index.GetVolumeSize().x / cudaBlockSize.x,

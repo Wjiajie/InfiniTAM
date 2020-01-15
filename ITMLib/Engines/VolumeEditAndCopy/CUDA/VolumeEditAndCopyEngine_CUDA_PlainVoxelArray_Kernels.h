@@ -31,7 +31,7 @@ namespace {
 // device functions
 
 template<class TVoxel>
-__global__ void setVoxel_device(TVoxel* voxelArray, const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+__global__ void setVoxel_device(TVoxel* voxelArray, const ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
                                 const Vector3i location, TVoxel value, bool* success) {
 	int vmIndex;
 	int linearIndex = findVoxel(arrayInfo, location, vmIndex);
@@ -45,7 +45,7 @@ __global__ void setVoxel_device(TVoxel* voxelArray, const ITMPlainVoxelArray::IT
 }
 
 template<class TVoxel>
-__global__ void readVoxel_device(TVoxel* voxelArray, const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo,
+__global__ void readVoxel_device(TVoxel* voxelArray, const ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
                                  const Vector3i at, ReadVoxelResult<TVoxel>* result) {
 	int vmIndex = 0;
 	int arrayIndex = findVoxel(arrayInfo, at, vmIndex);
@@ -58,7 +58,7 @@ __global__ void readVoxel_device(TVoxel* voxelArray, const ITMPlainVoxelArray::I
 }
 
 __global__ void isPointInBounds_device(
-		const ITMPlainVoxelArray::ITMVoxelArrayInfo* index_bounds,
+		const ITMPlainVoxelArray::GridAlignedBox* index_bounds,
 		const Vector3i at, bool* answer) {
 	Vector3i point2 = at - index_bounds->offset;
 	*answer = !((point2.x < 0) || (point2.x >= index_bounds->size.x) ||
@@ -69,7 +69,7 @@ __global__ void isPointInBounds_device(
 
 template<class TVoxel>
 __global__ void directCopy_device(TVoxel* destinationArray, const TVoxel* sourceArray,
-                                  const ITMPlainVoxelArray::ITMVoxelArrayInfo* arrayInfo) {
+                                  const ITMPlainVoxelArray::GridAlignedBox* arrayInfo) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
@@ -80,8 +80,8 @@ __global__ void directCopy_device(TVoxel* destinationArray, const TVoxel* source
 
 template<class TVoxel>
 __global__ void offsetCopy_device(TVoxel* destinationArray, const TVoxel* sourceArray,
-                                  const ITMPlainVoxelArray::ITMVoxelArrayInfo* destinationIndexData,
-                                  const ITMPlainVoxelArray::ITMVoxelArrayInfo* sourceIndexData,
+                                  const ITMPlainVoxelArray::GridAlignedBox* destinationIndexData,
+                                  const ITMPlainVoxelArray::GridAlignedBox* sourceIndexData,
                                   const Vector3i offset, const Vector3i minPointSourceSansOffset,
                                   const Vector3i extent) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;

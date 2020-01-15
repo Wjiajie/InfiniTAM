@@ -166,8 +166,8 @@ BOOST_FIXTURE_TEST_CASE(testCopyToDifferentlyInitializedVolume_VBH_CPU, Frame16A
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene2(&configuration::get().voxel_volume_parameters,
 	                                                   configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 	                                                   MEMORYDEVICE_CPU,
-	                                                   {InitParams<ITMVoxelBlockHash>().voxelBlockCount*2,
-	                                                    InitParams<ITMVoxelBlockHash>().excessListSize});
+	                                                   {InitParams<ITMVoxelBlockHash>().voxel_block_count * 2,
+	                                                    InitParams<ITMVoxelBlockHash>().excess_list_size});
 	scene2.Reset();
 	ManipulationEngine_CPU_VBH_Voxel::Inst().CopyScene(&scene2, &scene1);
 	float tolerance = 1e-8;

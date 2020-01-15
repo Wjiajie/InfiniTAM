@@ -73,6 +73,16 @@ ITM_SERIALIZATION_IMPL_PRIMITIVE_ISEMPTY(                               \
 
 // endregion
 // region ==== OPTIONS_DESCRIPTION HELPER FUNCTIONS ============================
+namespace std {
+//definition required by boost::program_options to output default values of vector types
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec) {
+	for (auto item : vec) {
+		os << item << " ";
+	}
+	return os;
+}
+}//namespace std
 
 static std::string generate_cli_argument_identifiers_snake_case(std::string variable_name,
                                                                 const boost::program_options::options_description& opt) {
@@ -162,10 +172,10 @@ ptree_to_optional_path(const boost::property_tree::ptree& tree, const pt::ptree:
 
 // endregion
 // region ================== SERIALIZABLE VECTOR FUNCTION DEFINITIONS ===========
-template <typename TVector>
-std::vector<typename TVector::value_type> serializable_vector_to_std_vector(TVector vector){
+template<typename TVector>
+std::vector<typename TVector::value_type> serializable_vector_to_std_vector(TVector vector) {
 	std::vector<typename TVector::value_type> std_vector;
-	for(int i_element = 0; i_element < TVector::size(); i_element++){
+	for (int i_element = 0; i_element < TVector::size(); i_element++) {
 		std_vector.push_back(vector.values[i_element]);
 	}
 	return std_vector;
@@ -276,7 +286,7 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
     }                                                                                                                  \
     template<>                                                                                                         \
     INLINE std::string enumerator_bracketed_list< enum_name >(){                                                       \
-    	return "[" BOOST_PP_STRINGIZE(BOOST_PP_CAT2(SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATORS(__VA_ARGS__))) "]";        \
+        return "[" BOOST_PP_STRINGIZE(BOOST_PP_CAT2(SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATORS(__VA_ARGS__))) "]";        \
     }
 
 
@@ -317,23 +327,23 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
 
 // *** value --> options_description ***
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION_PRIMITIVE(type, field_name, default_value_in, description)\
-	od.add_options()(generate_cli_argument_identifiers_snake_case(#field_name, od).c_str(),                            \
-	boost::program_options::value< type >()->default_value( default_value_in ), #description);
+    od.add_options()(generate_cli_argument_identifiers_snake_case(#field_name, od).c_str(),                            \
+    boost::program_options::value< type >()->default_value( default_value_in ), #description);
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION_PATH(type, field_name, default_value_in, description)\
-	od.add_options()(generate_cli_argument_identifiers_snake_case(#field_name, od).c_str(),                            \
-	boost::program_options::value< type >()->default_value( default_value_in ), #description);
+    od.add_options()(generate_cli_argument_identifiers_snake_case(#field_name, od).c_str(),                            \
+    boost::program_options::value< type >()->default_value( default_value_in ), #description);
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION_ENUM(type, field_name, default_value_in, description)\
-	od.add_options()(generate_cli_argument_identifiers_snake_case(#field_name, od).c_str(),                            \
-	boost::program_options::value< std::string >()->default_value( enumerator_to_string(default_value_in) ), (std::string(#description) + enumerator_bracketed_list< type>()).c_str());
+    od.add_options()(generate_cli_argument_identifiers_snake_case(#field_name, od).c_str(),                            \
+    boost::program_options::value< std::string >()->default_value( enumerator_to_string(default_value_in) ), (std::string(#description) + enumerator_bracketed_list< type>()).c_str());
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION_STRUCT(type, field_name, default_value, description)\
-	type :: AddToOptionsDescription(od);
+    type :: AddToOptionsDescription(od);
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION_VECTOR(type, field_name, default_value_in, description)\
-	od.add_options()(generate_cli_argument_identifiers_snake_case(#field_name, od).c_str(),                            \
-	boost::program_options::value< std::vector< type::value_type> >()->                                                                    \
+    od.add_options()(generate_cli_argument_identifiers_snake_case(#field_name, od).c_str(),                            \
+    boost::program_options::value< std::vector< type::value_type> >()->                                                                    \
     multitoken()->default_value(serializable_vector_to_std_vector(default_value_in)), #description);
 
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION(_, type, field_name, default_value, serialization_type, description) \
-	ITM_SERIALIZATION_IMPL_CAT(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION_, serialization_type)(type, field_name, default_value, description)
+    ITM_SERIALIZATION_IMPL_CAT(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION_, serialization_type)(type, field_name, default_value, description)
 
 // *** ptree --> value ***
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE_PRIMITIVE(type, field_name, default_value)                   \
@@ -446,7 +456,7 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
         return out;                                                                                                    \
     }                                                                                                                  \
     void outer_class struct_name::AddToOptionsDescription(boost::program_options::options_description& od) {           \
-		loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)\
+        loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)\
     }
 
 
@@ -494,7 +504,7 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
             return out;                                                                                                \
         }                                                                                                              \
         static void AddToOptionsDescription(boost::program_options::options_description& od) {       \
-			loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__);\
+            loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__);\
         }                                                                                                              \
     }
 
