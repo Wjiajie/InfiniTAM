@@ -75,8 +75,8 @@ struct ComputeVoxelBoundsFunctor<TVoxel, ITMVoxelBlockHash> {
 };
 
 template<typename TVoxel>
-struct ComputeVoxelBoundsFunctor<TVoxel, ITMPlainVoxelArray> {
-	static Vector6i Compute(const ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) {
+struct ComputeVoxelBoundsFunctor<TVoxel, PlainVoxelArray> {
+	static Vector6i Compute(const ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene) {
 		Vector3i offset = scene->index.GetVolumeOffset();
 		Vector3i size = scene->index.GetVolumeSize();
 		return {offset.x, offset.y, offset.z,
@@ -114,8 +114,8 @@ struct ComputeAllocatedVoxelCountFunctor<TVoxel, ITMVoxelBlockHash> {
 };
 
 template<typename TVoxel>
-struct ComputeAllocatedVoxelCountFunctor<TVoxel, ITMPlainVoxelArray> {
-	static int Compute(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) {
+struct ComputeAllocatedVoxelCountFunctor<TVoxel, PlainVoxelArray> {
+	static int Compute(ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene) {
 		return scene->index.GetVolumeSize().x * scene->index.GetVolumeSize().y * scene->index.GetVolumeSize().z;
 	}
 };
@@ -184,12 +184,12 @@ ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CPU>::ComputeTruncated
 template<typename TVoxel, typename TIndex>
 struct HashOnlyStatisticsFunctor;
 template<typename TVoxel>
-struct HashOnlyStatisticsFunctor<TVoxel, ITMPlainVoxelArray> {
-	static std::vector<int> GetFilledHashBlockIds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) {
+struct HashOnlyStatisticsFunctor<TVoxel, PlainVoxelArray> {
+	static std::vector<int> GetFilledHashBlockIds(ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene) {
 		return std::vector<int>();
 	}
 
-	static int ComputeAllocatedHashBlockCount(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) {
+	static int ComputeAllocatedHashBlockCount(ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene) {
 		return 0;
 	}
 };

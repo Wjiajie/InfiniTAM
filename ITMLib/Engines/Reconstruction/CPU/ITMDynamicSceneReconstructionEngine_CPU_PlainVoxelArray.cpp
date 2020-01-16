@@ -18,6 +18,6 @@
 
 namespace ITMLib{
 
-template class ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;
+template class ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, PlainVoxelArray>;
 
 } // namespace ITMLib

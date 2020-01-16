@@ -49,7 +49,7 @@ std::string getIndexSuffix<ITMVoxelBlockHash>() {
 }
 
 template<>
-std::string getIndexSuffix<ITMPlainVoxelArray>() {
+std::string getIndexSuffix<PlainVoxelArray>() {
 	return "PVA";
 }
 
@@ -130,7 +130,7 @@ template<>
 std::string GetIndexFolderSuffix<ITMVoxelBlockHash>() { return "VBH"; }
 
 template<>
-std::string GetIndexFolderSuffix<ITMPlainVoxelArray>() { return "PVA"; }
+std::string GetIndexFolderSuffix<PlainVoxelArray>() { return "PVA"; }
 
 /// Warning: has to be used when executable is within and two directories deep from the root source folder!! e.g. <root>/build/Tests
 template<typename TIndex, MemoryDeviceType TMemoryDeviceType>

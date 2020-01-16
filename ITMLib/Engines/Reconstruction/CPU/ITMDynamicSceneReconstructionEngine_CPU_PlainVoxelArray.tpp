@@ -25,8 +25,8 @@ using namespace ITMLib;
 
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateDepthImageIntoTsdfVolume_Helper(
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view, Matrix4f camera_depth_matrix){
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, PlainVoxelArray>::IntegrateDepthImageIntoTsdfVolume_Helper(
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* volume, const ITMView* view, Matrix4f camera_depth_matrix){
 
 	Vector2i rgbImgSize = view->rgb->noDims;
 	Vector2i depthImgSize = view->depth->noDims;
@@ -47,7 +47,7 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 	Vector4u* rgb = view->rgb->GetData(MEMORYDEVICE_CPU);
 	TVoxel* voxelArray = volume->localVBA.GetVoxelBlocks();
 
-	const ITMPlainVoxelArray::IndexData* arrayInfo = volume->index.GetIndexData();
+	const PlainVoxelArray::IndexData* arrayInfo = volume->index.GetIndexData();
 
 	float* confidence = view->depthConfidence->GetData(MEMORYDEVICE_CPU);
 
@@ -82,54 +82,54 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateDepthImageIntoTsdfVolume(
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view,
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, PlainVoxelArray>::IntegrateDepthImageIntoTsdfVolume(
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* volume, const ITMView* view,
 		const ITMTrackingState* trackingState) {
 	IntegrateDepthImageIntoTsdfVolume_Helper(volume, view, trackingState->pose_d->GetM());
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::IntegrateDepthImageIntoTsdfVolume(
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view){
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, PlainVoxelArray>::IntegrateDepthImageIntoTsdfVolume(
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* volume, const ITMView* view){
 	IntegrateDepthImageIntoTsdfVolume_Helper(volume, view);
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::FuseOneTsdfVolumeIntoAnother(
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene) {
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, PlainVoxelArray>::FuseOneTsdfVolumeIntoAnother(
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* canonicalScene,
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* liveScene) {
 	TSDFFusionFunctor<TVoxel> fusionFunctor(canonicalScene->sceneParams->max_integration_weight);
-	ITMDualSceneTraversalEngine<TVoxel, TVoxel, ITMPlainVoxelArray, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
+	ITMDualSceneTraversalEngine<TVoxel, TVoxel, PlainVoxelArray, PlainVoxelArray, MEMORYDEVICE_CPU>::
 	DualVoxelTraversal(liveScene, canonicalScene, fusionFunctor);
 }
 
 template<typename TVoxel, typename TWarp>
 void
-ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::GenerateTsdfVolumeFromView(
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
+ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, PlainVoxelArray>::GenerateTsdfVolumeFromView(
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene, const ITMView* view,
 		const ITMTrackingState* trackingState) {
 	GenerateTsdfVolumeFromView(scene, view, trackingState->pose_d->GetM());
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::GenerateTsdfVolumeFromView(
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view, const Matrix4f& depth_camera_matrix) {
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, PlainVoxelArray>::GenerateTsdfVolumeFromView(
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene, const ITMView* view, const Matrix4f& depth_camera_matrix) {
 	this->sceneManager.ResetScene(scene);
 	this->IntegrateDepthImageIntoTsdfVolume_Helper(scene, view, depth_camera_matrix);
 }
 
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::GenerateTsdfVolumeFromViewExpanded(
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume,
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* temporaryAllocationVolume, const ITMView* view,
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, PlainVoxelArray>::GenerateTsdfVolumeFromViewExpanded(
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* volume,
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* temporaryAllocationVolume, const ITMView* view,
 		const Matrix4f& depth_camera_matrix) {
 	GenerateTsdfVolumeFromView(volume, view, depth_camera_matrix);
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::UpdateVisibleList(
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, PlainVoxelArray>::UpdateVisibleList(
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene, const ITMView* view,
 		const ITMTrackingState* trackingState,
 		const ITMRenderState* renderState, bool resetVisibleList) {
 	//do nothing
@@ -138,44 +138,44 @@ void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>:
 
 template<typename TVoxel, typename TWarp>
 template<WarpType TWarpType>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::WarpScene(
-		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, PlainVoxelArray>::WarpScene(
+		ITMVoxelVolume<TWarp, PlainVoxelArray>* warpField,
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* sourceTSDF,
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* targetTSDF) {
 //	 Clear out the flags at target index
 	FieldClearFunctor<TVoxel> flagClearFunctor;
-	ITMSceneTraversalEngine<TVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::VoxelTraversal(targetTSDF,flagClearFunctor);
+	ITMSceneTraversalEngine<TVoxel, PlainVoxelArray, MEMORYDEVICE_CPU>::VoxelTraversal(targetTSDF,flagClearFunctor);
 
-	TrilinearInterpolationFunctor<TVoxel, TWarp, ITMPlainVoxelArray, TWarpType, MEMORYDEVICE_CPU>
+	TrilinearInterpolationFunctor<TVoxel, TWarp, PlainVoxelArray, TWarpType, MEMORYDEVICE_CPU>
 			trilinearInterpolationFunctor(sourceTSDF, warpField);
 
 //	 Interpolate to obtain the new live frame values (at target index)
-	ITMDualSceneTraversalEngine<TVoxel, TWarp, ITMPlainVoxelArray, ITMPlainVoxelArray, MEMORYDEVICE_CPU>::
+	ITMDualSceneTraversalEngine<TVoxel, TWarp, PlainVoxelArray, PlainVoxelArray, MEMORYDEVICE_CPU>::
 	DualVoxelPositionTraversal(targetTSDF, warpField, trilinearInterpolationFunctor);
 }
 
 template<typename TVoxel, typename TWarp>
 void
-ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::WarpScene_CumulativeWarps(
-		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {
+ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, PlainVoxelArray>::WarpScene_CumulativeWarps(
+		ITMVoxelVolume<TWarp, PlainVoxelArray>* warpField,
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* sourceTSDF,
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* targetTSDF) {
 	this->template WarpScene<WARP_CUMULATIVE>(warpField, sourceTSDF, targetTSDF);
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::WarpScene_FramewiseWarps(
-		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, PlainVoxelArray>::WarpScene_FramewiseWarps(
+		ITMVoxelVolume<TWarp, PlainVoxelArray>* warpField,
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* sourceTSDF,
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* targetTSDF) {
 	this->template WarpScene<WARP_FLOW>(warpField, sourceTSDF, targetTSDF);
 }
 
 template<typename TVoxel, typename TWarp>
-void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>::WarpScene_WarpUpdates(
-		ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) {
+void ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, PlainVoxelArray>::WarpScene_WarpUpdates(
+		ITMVoxelVolume<TWarp, PlainVoxelArray>* warpField,
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* sourceTSDF,
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* targetTSDF) {
 	this->template WarpScene<WARP_UPDATE>(warpField, sourceTSDF, targetTSDF);
 }
 

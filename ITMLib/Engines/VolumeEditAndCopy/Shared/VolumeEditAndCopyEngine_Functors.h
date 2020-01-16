@@ -16,7 +16,7 @@
 #pragma once
 
 #include "../../../Objects/Scene/ITMVoxelBlockHash.h"
-#include "../../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../../../Objects/Scene/PlainVoxelArray.h"
 
 namespace ITMLib {
 // region ==================================== Offset Warp Functor =====================================================
@@ -51,8 +51,8 @@ struct OffsetWarpsFunctor<TVoxel, ITMVoxelBlockHash, true> {
 
 
 template<typename TVoxel>
-struct OffsetWarpsFunctor<TVoxel, ITMPlainVoxelArray, true> {
-	static void OffsetWarps(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset) {
+struct OffsetWarpsFunctor<TVoxel, PlainVoxelArray, true> {
+	static void OffsetWarps(ITMVoxelVolume <TVoxel, PlainVoxelArray>* scene, Vector3f offset) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 #ifdef WITH_OPENMP
 #pragma omp parallel for
@@ -72,8 +72,8 @@ struct OffsetWarpsFunctor<TVoxel, ITMVoxelBlockHash, false> {
 	}
 };
 template<typename TVoxel>
-struct OffsetWarpsFunctor<TVoxel, ITMPlainVoxelArray, false> {
-	static void OffsetWarps(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset) {
+struct OffsetWarpsFunctor<TVoxel, PlainVoxelArray, false> {
+	static void OffsetWarps(ITMVoxelVolume <TVoxel, PlainVoxelArray>* scene, Vector3f offset) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Warps not defined for scene of using this voxel type.");
 	}
 };

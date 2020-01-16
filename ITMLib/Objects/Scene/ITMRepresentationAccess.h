@@ -660,9 +660,9 @@ struct VoxelColorReader<true, TVoxel, TIndex> {
 
 #ifndef __METALC__
 
-#include "ITMPlainVoxelArray.h"
+#include "PlainVoxelArray.h"
 
-_CPU_AND_GPU_CODE_ inline int findVoxel(const CONSTPTR(ITMLib::ITMPlainVoxelArray::IndexData) *voxelIndex, const THREADPTR(Vector3i) & point_orig,
+_CPU_AND_GPU_CODE_ inline int findVoxel(const CONSTPTR(ITMLib::PlainVoxelArray::IndexData) *voxelIndex, const THREADPTR(Vector3i) & point_orig,
 	THREADPTR(int) &vmIndex)
 {
 	Vector3i point = point_orig - voxelIndex->offset;
@@ -680,15 +680,15 @@ _CPU_AND_GPU_CODE_ inline int findVoxel(const CONSTPTR(ITMLib::ITMPlainVoxelArra
 	return linearIdx;
 }
 
-_CPU_AND_GPU_CODE_ inline int findVoxel(const CONSTPTR(ITMLib::ITMPlainVoxelArray::IndexData) *voxelIndex, const THREADPTR(Vector3i) & point_orig,
-	THREADPTR(int) &vmIndex, THREADPTR(ITMLib::ITMPlainVoxelArray::IndexCache) & cache)
+_CPU_AND_GPU_CODE_ inline int findVoxel(const CONSTPTR(ITMLib::PlainVoxelArray::IndexData) *voxelIndex, const THREADPTR(Vector3i) & point_orig,
+	THREADPTR(int) &vmIndex, THREADPTR(ITMLib::PlainVoxelArray::IndexCache) & cache)
 {
 	return findVoxel(voxelIndex, point_orig, vmIndex);
 }
 
 
 template<class TVoxel>
-_CPU_AND_GPU_CODE_ inline TVoxel readVoxel(const CONSTPTR(TVoxel) *voxelData, const CONSTPTR(ITMLib::ITMPlainVoxelArray::IndexData) *voxelIndex,
+_CPU_AND_GPU_CODE_ inline TVoxel readVoxel(const CONSTPTR(TVoxel) *voxelData, const CONSTPTR(ITMLib::PlainVoxelArray::IndexData) *voxelIndex,
 	const THREADPTR(Vector3i) & point_orig, THREADPTR(int) &vmIndex)
 {
 	int voxelAddress = findVoxel(voxelIndex, point_orig, vmIndex);
@@ -696,8 +696,8 @@ _CPU_AND_GPU_CODE_ inline TVoxel readVoxel(const CONSTPTR(TVoxel) *voxelData, co
 }
 
 template<class TVoxel>
-_CPU_AND_GPU_CODE_ inline TVoxel readVoxel(const CONSTPTR(TVoxel) *voxelData, const CONSTPTR(ITMLib::ITMPlainVoxelArray::IndexData) *voxelIndex,
-	const THREADPTR(Vector3i) & point_orig, THREADPTR(int) &vmIndex, THREADPTR(ITMLib::ITMPlainVoxelArray::IndexCache) & cache)
+_CPU_AND_GPU_CODE_ inline TVoxel readVoxel(const CONSTPTR(TVoxel) *voxelData, const CONSTPTR(ITMLib::PlainVoxelArray::IndexData) *voxelIndex,
+	const THREADPTR(Vector3i) & point_orig, THREADPTR(int) &vmIndex, THREADPTR(ITMLib::PlainVoxelArray::IndexCache) & cache)
 {
 	return readVoxel(voxelData, voxelIndex, point_orig, vmIndex);
 }

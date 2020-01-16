@@ -76,15 +76,15 @@ void ITMMeshingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMMesh* mesh,
 }
 
 template<class TVoxel>
-ITMMeshingEngine_CUDA<TVoxel, ITMPlainVoxelArray>::ITMMeshingEngine_CUDA(const ITMPlainVoxelArray& index):
-		ITMMeshingEngine<TVoxel, ITMPlainVoxelArray>(index) {}
+ITMMeshingEngine_CUDA<TVoxel, PlainVoxelArray>::ITMMeshingEngine_CUDA(const PlainVoxelArray& index):
+		ITMMeshingEngine<TVoxel, PlainVoxelArray>(index) {}
 
 template<class TVoxel>
-ITMMeshingEngine_CUDA<TVoxel, ITMPlainVoxelArray>::~ITMMeshingEngine_CUDA(void) {}
+ITMMeshingEngine_CUDA<TVoxel, PlainVoxelArray>::~ITMMeshingEngine_CUDA(void) {}
 
 template<class TVoxel>
-void ITMMeshingEngine_CUDA<TVoxel, ITMPlainVoxelArray>::MeshScene(ITMMesh* mesh,
-                                                                  const ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) {}
+void ITMMeshingEngine_CUDA<TVoxel, PlainVoxelArray>::MeshScene(ITMMesh* mesh,
+                                                                  const ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene) {}
 
 
 template<class TVoxel>

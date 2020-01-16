@@ -28,16 +28,16 @@
 namespace ITMLib
 {
 	//voxel fusion
-	template class ITMBasicEngine<ITMVoxel, ITMPlainVoxelArray>;
+	template class ITMBasicEngine<ITMVoxel, PlainVoxelArray>;
 	template class ITMBasicSurfelEngine<ITMSurfel_grey>;
 	template class ITMBasicSurfelEngine<ITMSurfel_rgb>;
-	template class ITMMultiEngine<ITMVoxel, ITMPlainVoxelArray>;
-	template class ITMDenseMapper<ITMVoxel, ITMPlainVoxelArray>;
-	template class ITMVoxelMapGraphManager<ITMVoxel, ITMPlainVoxelArray>;
-	template class ITMVisualizationEngine_CPU<ITMVoxel, ITMPlainVoxelArray>;
-	template class ITMMeshingEngine_CPU<ITMVoxel, ITMPlainVoxelArray>;
-	template class ITMMultiMeshingEngine_CPU<ITMVoxel, ITMPlainVoxelArray>;
-	template class ITMSwappingEngine_CPU<ITMVoxel, ITMPlainVoxelArray>;
+	template class ITMMultiEngine<ITMVoxel, PlainVoxelArray>;
+	template class ITMDenseMapper<ITMVoxel, PlainVoxelArray>;
+	template class ITMVoxelMapGraphManager<ITMVoxel, PlainVoxelArray>;
+	template class ITMVisualizationEngine_CPU<ITMVoxel, PlainVoxelArray>;
+	template class ITMMeshingEngine_CPU<ITMVoxel, PlainVoxelArray>;
+	template class ITMMultiMeshingEngine_CPU<ITMVoxel, PlainVoxelArray>;
+	template class ITMSwappingEngine_CPU<ITMVoxel, PlainVoxelArray>;
 
 	//surfel fusion
 	template class ITMDenseSurfelMapper<ITMSurfel_grey>;

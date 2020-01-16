@@ -355,7 +355,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 						}
 							break;
 						case configuration::INDEX_ARRAY:
-							auto* multiEngine = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMPlainVoxelArray>*>(uiEngine.mainEngine);
+							auto* multiEngine = dynamic_cast<ITMMultiEngine<ITMVoxel, PlainVoxelArray>*>(uiEngine.mainEngine);
 							if (multiEngine != nullptr) {
 								int idx = multiEngine->findPrimaryLocalMapIdx();
 								if (idx < 0) idx = 0;
@@ -448,7 +448,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 					multiEngineVBH->changeFreeviewLocalMapIdx(&(uiEngine.freeviewPose), idx);
 					uiEngine.needsRefresh = true;
 				}
-				auto* multiEnginePVA = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMPlainVoxelArray>*>(uiEngine.mainEngine);
+				auto* multiEnginePVA = dynamic_cast<ITMMultiEngine<ITMVoxel, PlainVoxelArray>*>(uiEngine.mainEngine);
 				if (multiEnginePVA != nullptr) {
 					int idx = multiEnginePVA->getFreeviewLocalMapIdx();
 					if (key == '[') idx--;

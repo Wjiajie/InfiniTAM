@@ -3,7 +3,7 @@
 #pragma once
 
 #include "../Interface/ITMSceneReconstructionEngine.h"
-#include "../../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../../../Objects/Scene/PlainVoxelArray.h"
 
 namespace ITMLib
 {
@@ -29,15 +29,15 @@ namespace ITMLib
 	};
 
 	template<class TVoxel>
-	class ITMSceneReconstructionEngine_CPU<TVoxel, ITMPlainVoxelArray> : public ITMSceneReconstructionEngine < TVoxel, ITMPlainVoxelArray >
+	class ITMSceneReconstructionEngine_CPU<TVoxel, PlainVoxelArray> : public ITMSceneReconstructionEngine < TVoxel, PlainVoxelArray >
 	{
 	public:
-		void ResetScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray> *scene);
+		void ResetScene(ITMVoxelVolume<TVoxel, PlainVoxelArray> *scene);
 
-		void AllocateSceneFromDepth(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray> *scene, const ITMView *view, const ITMTrackingState *trackingState,
+		void AllocateSceneFromDepth(ITMVoxelVolume<TVoxel, PlainVoxelArray> *scene, const ITMView *view, const ITMTrackingState *trackingState,
 		                            const ITMRenderState *renderState, bool onlyUpdateVisibleList = false, bool resetVisibleList = false);
 
-		void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray> *scene, const ITMView *view, const ITMTrackingState *trackingState,
+		void IntegrateIntoScene(ITMVoxelVolume<TVoxel, PlainVoxelArray> *scene, const ITMView *view, const ITMTrackingState *trackingState,
 		                        const ITMRenderState *renderState);
 
 		ITMSceneReconstructionEngine_CPU(void);

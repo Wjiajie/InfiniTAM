@@ -38,7 +38,7 @@ ITMMainEngine* BuildMainEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb, 
 					mainEngine = new ITMBasicEngine<ITMVoxel, ITMVoxelBlockHash>(calib, imgSize_rgb, imgSize_d);
 					break;
 				case configuration::INDEX_ARRAY:
-					mainEngine = new ITMBasicEngine<ITMVoxel, ITMPlainVoxelArray>(calib, imgSize_rgb, imgSize_d);
+					mainEngine = new ITMBasicEngine<ITMVoxel, PlainVoxelArray>(calib, imgSize_rgb, imgSize_d);
 					break;
 			}
 			break;
@@ -51,7 +51,7 @@ ITMMainEngine* BuildMainEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb, 
 					mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelBlockHash>(calib, imgSize_rgb, imgSize_d);
 					break;
 				case configuration::INDEX_ARRAY:
-					mainEngine = new ITMMultiEngine<ITMVoxel, ITMPlainVoxelArray>(calib, imgSize_rgb, imgSize_d);
+					mainEngine = new ITMMultiEngine<ITMVoxel, PlainVoxelArray>(calib, imgSize_rgb, imgSize_d);
 					break;
 			}
 			break;
@@ -61,7 +61,7 @@ ITMMainEngine* BuildMainEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb, 
 					mainEngine = new ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(calib, imgSize_rgb, imgSize_d);
 					break;
 				case configuration::INDEX_ARRAY:
-					mainEngine = new ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>(calib, imgSize_rgb, imgSize_d);
+					mainEngine = new ITMDynamicEngine<ITMVoxel, ITMWarp, PlainVoxelArray>(calib, imgSize_rgb, imgSize_d);
 					break;
 			}
 			break;

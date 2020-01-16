@@ -198,8 +198,8 @@ HashBlockAllocatedAtOffset(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)*
 _CPU_AND_GPU_CODE_
 inline
 void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, int& zInBlock,
-                        const CONSTPTR(ITMLib::ITMPlainVoxelArray::IndexData)* indexData,
-                        ITMLib::ITMPlainVoxelArray::IndexCache& cache, const CONSTPTR(Vector3i)& point) {
+                        const CONSTPTR(ITMLib::PlainVoxelArray::IndexData)* indexData,
+                        ITMLib::PlainVoxelArray::IndexCache& cache, const CONSTPTR(Vector3i)& point) {
 	locId = findVoxel(indexData, point, vmIndex);
 	xInBlock = point.x;
 	yInBlock = point.y;

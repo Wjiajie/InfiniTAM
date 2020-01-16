@@ -15,7 +15,7 @@
 //  ================================================================
 #pragma once
 
-#include "../../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../../../Objects/Scene/PlainVoxelArray.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../Interface/VolumeEditAndCopyEngineInterface.h"
 #include "../../../Utils/ITMHashBlockProperties.h"
@@ -30,8 +30,8 @@ class VolumeEditAndCopyEngine_CUDA : public VolumeEditAndCopyEngineInterface<TVo
 
 
 template<typename TVoxel>
-class VolumeEditAndCopyEngine_CUDA<TVoxel, ITMPlainVoxelArray> :
-		public VolumeEditAndCopyEngineInterface<TVoxel, ITMPlainVoxelArray> {
+class VolumeEditAndCopyEngine_CUDA<TVoxel, PlainVoxelArray> :
+		public VolumeEditAndCopyEngineInterface<TVoxel, PlainVoxelArray> {
 private:
 	void* readVoxelResult_device;
 	void* readVoxelResult_host;
@@ -41,24 +41,24 @@ public:
 	~VolumeEditAndCopyEngine_CUDA();
 	//can be used as a singleton, but doesn't HAVE TO be
 	static VolumeEditAndCopyEngine_CUDA& Inst() {
-		static VolumeEditAndCopyEngine_CUDA<TVoxel, ITMPlainVoxelArray> instance; // Guaranteed to be destroyed.
+		static VolumeEditAndCopyEngine_CUDA<TVoxel, PlainVoxelArray> instance; // Guaranteed to be destroyed.
 		// Instantiated on first use.
 		return instance;
 	}
 
-	void ResetScene(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* scene) override ;
-	bool SetVoxel(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, TVoxel voxel) override ;
-	TVoxel ReadVoxel(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* scene, Vector3i at);
-	TVoxel ReadVoxel(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* scene, Vector3i at,
-	                 ITMPlainVoxelArray::IndexCache& cache) override;
-	bool IsPointInBounds(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* scene, const Vector3i& at);
-	void OffsetWarps(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset) override;
+	void ResetScene(ITMVoxelVolume <TVoxel, PlainVoxelArray>* scene) override ;
+	bool SetVoxel(ITMVoxelVolume <TVoxel, PlainVoxelArray>* scene, Vector3i at, TVoxel voxel) override ;
+	TVoxel ReadVoxel(ITMVoxelVolume <TVoxel, PlainVoxelArray>* scene, Vector3i at);
+	TVoxel ReadVoxel(ITMVoxelVolume <TVoxel, PlainVoxelArray>* scene, Vector3i at,
+	                 PlainVoxelArray::IndexCache& cache) override;
+	bool IsPointInBounds(ITMVoxelVolume <TVoxel, PlainVoxelArray>* scene, const Vector3i& at);
+	void OffsetWarps(ITMVoxelVolume <TVoxel, PlainVoxelArray>* scene, Vector3f offset) override;
 	bool CopySceneSlice(
-			ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* destination,
-			ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* source,
+			ITMVoxelVolume <TVoxel, PlainVoxelArray>* destination,
+			ITMVoxelVolume <TVoxel, PlainVoxelArray>* source,
 			Vector6i bounds, const Vector3i& offset) override;
-	bool CopyScene(ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* destination,
-	               ITMVoxelVolume <TVoxel, ITMPlainVoxelArray>* source,
+	bool CopyScene(ITMVoxelVolume <TVoxel, PlainVoxelArray>* destination,
+	               ITMVoxelVolume <TVoxel, PlainVoxelArray>* source,
 	               const Vector3i& offset = Vector3i(0)) override;
 };
 
@@ -102,9 +102,9 @@ public:
 
 };
 
-typedef VolumeEditAndCopyEngine_CUDA<ITMVoxel, ITMPlainVoxelArray> ManipulationEngine_CUDA_PVA_Voxel;
+typedef VolumeEditAndCopyEngine_CUDA<ITMVoxel, PlainVoxelArray> ManipulationEngine_CUDA_PVA_Voxel;
 typedef VolumeEditAndCopyEngine_CUDA<ITMVoxel, ITMVoxelBlockHash> ManipulationEngine_CUDA_VBH_Voxel;
-typedef VolumeEditAndCopyEngine_CUDA<ITMWarp, ITMPlainVoxelArray> ManipulationEngine_CUDA_PVA_Warp;
+typedef VolumeEditAndCopyEngine_CUDA<ITMWarp, PlainVoxelArray> ManipulationEngine_CUDA_PVA_Warp;
 typedef VolumeEditAndCopyEngine_CUDA<ITMWarp, ITMVoxelBlockHash> ManipulationEngine_CUDA_VBH_Warp;
 
 

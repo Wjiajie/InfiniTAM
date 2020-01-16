@@ -3,7 +3,7 @@
 #pragma once
 
 #include "../Interface/ITMMeshingEngine.h"
-#include "../../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../../../Objects/Scene/PlainVoxelArray.h"
 
 namespace ITMLib
 {
@@ -25,12 +25,12 @@ namespace ITMLib
 	};
 
 	template<class TVoxel>
-	class ITMMeshingEngine_CUDA<TVoxel, ITMPlainVoxelArray> : public ITMMeshingEngine < TVoxel, ITMPlainVoxelArray >
+	class ITMMeshingEngine_CUDA<TVoxel, PlainVoxelArray> : public ITMMeshingEngine < TVoxel, PlainVoxelArray >
 	{
 	public:
-		void MeshScene(ITMMesh *mesh, const ITMVoxelVolume<TVoxel, ITMPlainVoxelArray> *scene) override;
+		void MeshScene(ITMMesh *mesh, const ITMVoxelVolume<TVoxel, PlainVoxelArray> *scene) override;
 
-		explicit ITMMeshingEngine_CUDA(const ITMPlainVoxelArray& index);
+		explicit ITMMeshingEngine_CUDA(const PlainVoxelArray& index);
 		~ITMMeshingEngine_CUDA();
 	};
 }

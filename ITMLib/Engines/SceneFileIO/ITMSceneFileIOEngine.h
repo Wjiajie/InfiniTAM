@@ -16,7 +16,7 @@
 #pragma once
 
 #include "../../Objects/Scene/ITMVoxelBlockHash.h"
-#include "../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../../Objects/Scene/PlainVoxelArray.h"
 #include "../../Objects/Scene/ITMVoxelVolume.h"
 
 namespace ITMLib{
@@ -35,10 +35,10 @@ public:
 
 
 template<typename TVoxel>
-class ITMSceneFileIOEngine<TVoxel,ITMPlainVoxelArray>{
+class ITMSceneFileIOEngine<TVoxel,PlainVoxelArray>{
 public:
-	static void SaveToDirectoryCompact(const ITMVoxelVolume<TVoxel,ITMPlainVoxelArray>* scene, const std::string& outputDirectory);
-	static void LoadFromDirectoryCompact(ITMVoxelVolume<TVoxel,ITMPlainVoxelArray>* scene, const std::string& outputDirectory);
+	static void SaveToDirectoryCompact(const ITMVoxelVolume<TVoxel,PlainVoxelArray>* scene, const std::string& outputDirectory);
+	static void LoadFromDirectoryCompact(ITMVoxelVolume<TVoxel,PlainVoxelArray>* scene, const std::string& outputDirectory);
 };
 
 

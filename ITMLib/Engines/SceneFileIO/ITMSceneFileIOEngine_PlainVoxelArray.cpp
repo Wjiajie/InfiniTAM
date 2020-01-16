@@ -18,7 +18,7 @@
 
 namespace ITMLib {
 template
-class ITMSceneFileIOEngine<ITMVoxel, ITMPlainVoxelArray>;
+class ITMSceneFileIOEngine<ITMVoxel, PlainVoxelArray>;
 template
-class ITMSceneFileIOEngine<ITMWarp, ITMPlainVoxelArray>;
+class ITMSceneFileIOEngine<ITMWarp, PlainVoxelArray>;
 } // namespace ITMLib

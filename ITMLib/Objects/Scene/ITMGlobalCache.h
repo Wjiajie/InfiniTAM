@@ -9,7 +9,7 @@
 
 
 #include "ITMVoxelBlockHash.h"
-#include "ITMPlainVoxelArray.h"
+#include "PlainVoxelArray.h"
 #include "../../../ORUtils/CUDADefines.h"
 
 namespace ITMLib
@@ -29,9 +29,9 @@ namespace ITMLib
 	};
 
 	template<typename TVoxel>
-	class ITMGlobalCache<TVoxel, ITMPlainVoxelArray>{
+	class ITMGlobalCache<TVoxel, PlainVoxelArray>{
 	public:
-		explicit ITMGlobalCache(const ITMPlainVoxelArray& index){
+		explicit ITMGlobalCache(const PlainVoxelArray& index){
 			DIEWITHEXCEPTION_REPORTLOCATION("Swappling / global cache not implemented for plain voxel array indexing.");
 		}
 	};

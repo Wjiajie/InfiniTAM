@@ -157,7 +157,7 @@ template<typename TIndex> static inline HashBlockVisibility* GetBlockVisibilityT
 template<> inline HashBlockVisibility* GetBlockVisibilityTypes<ITMVoxelBlockHash>(ITMVoxelBlockHash& index){
 	return index.GetBlockVisibilityTypes();
 }
-template<> inline HashBlockVisibility* GetBlockVisibilityTypes<ITMPlainVoxelArray>(ITMPlainVoxelArray& index){
+template<> inline HashBlockVisibility* GetBlockVisibilityTypes<PlainVoxelArray>(PlainVoxelArray& index){
 	return nullptr;
 }
 

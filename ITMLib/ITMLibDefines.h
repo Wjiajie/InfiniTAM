@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Objects/Scene/ITMPlainVoxelArray.h"
+#include "Objects/Scene/PlainVoxelArray.h"
 #include "Objects/Scene/ITMSurfelTypes.h"
 #include "Objects/Scene/ITMVoxelBlockHash.h"
 #include "Objects/Scene/ITMVoxelTypes.h"
@@ -21,7 +21,7 @@ typedef ITMVoxel_f_warp ITMWarp;
 
 
 /** This chooses the way the voxels are addressed and indexed. At the moment,
-    valid options are ITMVoxelBlockHash and ITMPlainVoxelArray.
+    valid options are ITMVoxelBlockHash and PlainVoxelArray.
 */
 typedef ITMLib::ITMVoxelBlockHash ITMVoxelIndex;
-//typedef ITMLib::ITMPlainVoxelArray ITMVoxelIndex;
+//typedef ITMLib::PlainVoxelArray ITMVoxelIndex;

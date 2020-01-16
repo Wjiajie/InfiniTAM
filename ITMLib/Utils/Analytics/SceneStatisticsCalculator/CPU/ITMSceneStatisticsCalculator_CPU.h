@@ -58,9 +58,9 @@ private:
 };
 
 typedef ITMSceneStatisticsCalculator<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU> SceneStatCalc_CPU_VBH_Voxel;
-typedef ITMSceneStatisticsCalculator<ITMVoxel, ITMPlainVoxelArray, MEMORYDEVICE_CPU> SceneStatCalc_CPU_PVA_Voxel;
+typedef ITMSceneStatisticsCalculator<ITMVoxel, PlainVoxelArray, MEMORYDEVICE_CPU> SceneStatCalc_CPU_PVA_Voxel;
 typedef ITMSceneStatisticsCalculator<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU> SceneStatCalc_CPU_VBH_Warp;
-typedef ITMSceneStatisticsCalculator<ITMWarp, ITMPlainVoxelArray, MEMORYDEVICE_CPU> SceneStatCalc_CPU_PVA_Warp;
+typedef ITMSceneStatisticsCalculator<ITMWarp, PlainVoxelArray, MEMORYDEVICE_CPU> SceneStatCalc_CPU_PVA_Warp;
 
 }//end namespace ITMLib
 

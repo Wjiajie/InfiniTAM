@@ -18,7 +18,7 @@
 //local
 #include "../Interface/ITMSceneTraversal.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
-#include "../../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../../../Objects/Scene/PlainVoxelArray.h"
 #include "../../../Objects/Scene/ITMVoxelBlockHash.h"
 #include "../Shared/ITMSceneTraversal_Shared.h"
 #include "../../../Utils/Analytics/ITMIsAltered.h"
@@ -27,7 +27,7 @@ namespace {
 //CUDA kernels
 
 __global__ void findBlocksNotSpannedByArray(
-		const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
+		const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo,
 		const ITMHashEntry* hashTable, int hashEntryCount,
 		int* hashCodesNotSpanned, int* countBlocksNotSpanned) {
 	int hashCode = static_cast<int>(blockIdx.x * blockDim.x + threadIdx.x);
@@ -88,7 +88,7 @@ checkIfHashVoxelBlocksAreAltered(const TVoxel* voxels, const ITMHashEntry* hashT
 template<typename TBooleanFunctor, typename TVoxelArray, typename TVoxelHash>
 __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue(
 		TVoxelArray* arrayVoxels,
-		const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
+		const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo,
 		TVoxelHash* hashVoxels, const ITMHashEntry* hashTable,
 		const Vector3i minArrayCoord,
 		const Vector3i maxArrayCoord, const Vector3s minBlockPos,
@@ -141,7 +141,7 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue(
 template<typename TBooleanFunctor, typename TVoxelArray, typename TVoxelHash>
 __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue_Position_Verbose(
 		TVoxelArray* arrayVoxels,
-		const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
+		const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo,
 		TVoxelHash* hashVoxels, const ITMHashEntry* hashTable,
 		const Vector3i minArrayCoord,
 		const Vector3i maxArrayCoord, const Vector3s minBlockPos,
@@ -198,7 +198,7 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue_Position_Verbose(
 template<typename TBooleanFunctor, typename TVoxelArray, typename TVoxelHash>
 __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue_SemanticFlags(
 		TVoxelArray* arrayVoxels,
-		const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
+		const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo,
 		TVoxelHash* hashVoxels, const ITMHashEntry* hashTable,
 		const Vector3i minArrayCoord,
 		const Vector3i maxArrayCoord, const Vector3s minBlockPos,
@@ -258,7 +258,7 @@ __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue_SemanticFlags(
 template<typename TBooleanFunctor, typename TVoxelArray, typename TVoxelHash>
 __global__ void checkIfArrayContentIsUnalteredOrYieldsTrue_SemanticFlags_Position_Verbose(
 		TVoxelArray* arrayVoxels,
-		const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
+		const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo,
 		TVoxelHash* hashVoxels, const ITMHashEntry* hashTable,
 		const Vector3i minArrayCoord,
 		const Vector3i maxArrayCoord, const Vector3s minBlockPos,

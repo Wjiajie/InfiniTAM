@@ -24,7 +24,7 @@ using namespace ITMLib;
 
 namespace ITMLib {
 template
-class VolumeEditAndCopyEngine_CPU<ITMVoxel, ITMPlainVoxelArray>;
+class VolumeEditAndCopyEngine_CPU<ITMVoxel, PlainVoxelArray>;
 template
-class VolumeEditAndCopyEngine_CPU<ITMWarp, ITMPlainVoxelArray>;
+class VolumeEditAndCopyEngine_CPU<ITMWarp, PlainVoxelArray>;
 } // namespace ITMLib

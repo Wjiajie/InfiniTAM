@@ -22,7 +22,7 @@
 
 namespace ITMLib {
 template
-class VolumeEditAndCopyEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
+class VolumeEditAndCopyEngine_CUDA<ITMVoxel, PlainVoxelArray>;
 template
-class VolumeEditAndCopyEngine_CUDA<ITMWarp, ITMPlainVoxelArray>;
+class VolumeEditAndCopyEngine_CUDA<ITMWarp, PlainVoxelArray>;
 } //namespace ITMLib

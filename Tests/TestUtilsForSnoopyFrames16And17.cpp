@@ -16,7 +16,7 @@
 #include "TestUtilsForSnoopyFrames16And17.h"
 
 template<>
-std::string Frame16And17Fixture::partial_frame_16_path<ITMPlainVoxelArray>(){
+std::string Frame16And17Fixture::partial_frame_16_path<PlainVoxelArray>(){
 	return "TestData/snoopy_result_fr16-17_partial_PVA/snoopy_partial_frame_16_";
 }
 template<>
@@ -24,7 +24,7 @@ std::string Frame16And17Fixture::partial_frame_16_path<ITMVoxelBlockHash>(){
 	return "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_16_";
 }
 template<>
-std::string Frame16And17Fixture::partial_frame_17_path<ITMPlainVoxelArray>(bool expanded_allocation){
+std::string Frame16And17Fixture::partial_frame_17_path<PlainVoxelArray>(bool expanded_allocation){
 	return "TestData/snoopy_result_fr16-17_partial_PVA/snoopy_partial_frame_17_";
 }
 template<>
@@ -34,7 +34,7 @@ std::string Frame16And17Fixture::partial_frame_17_path<ITMVoxelBlockHash>(bool e
 }
 
 template<>
-ITMPlainVoxelArray::InitializationParameters Frame16And17Fixture::InitParams<ITMPlainVoxelArray>() {
+PlainVoxelArray::InitializationParameters Frame16And17Fixture::InitParams<PlainVoxelArray>() {
 	return {Vector3i(80, 96, 248), Vector3i(-64, -24, 64)};
 }
 

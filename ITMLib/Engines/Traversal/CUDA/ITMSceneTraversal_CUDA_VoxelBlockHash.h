@@ -19,7 +19,7 @@
 #include "../../../../ORUtils/JetbrainsCUDASyntax.hpp"
 #include "ITMSceneTraversal_CUDA_VoxelBlockHash_Kernels.h"
 #include "../Interface/ITMSceneTraversal.h"
-#include "../../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../../../Objects/Scene/PlainVoxelArray.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 
 namespace ITMLib {

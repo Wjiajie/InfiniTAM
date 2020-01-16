@@ -14,7 +14,7 @@ This is the central class for the original fixed size volume
 representation. It contains the data needed on the CPU and
 a pointer to the data structure on the GPU.
 */
-class ITMPlainVoxelArray {
+class PlainVoxelArray {
 public:
 
 	GENERATE_SERIALIZABLE_STRUCT(
@@ -34,28 +34,28 @@ private:
 public:
 	const MemoryDeviceType memoryType;
 
-	ITMPlainVoxelArray(ITMPlainVoxelArray::InitializationParameters info, MemoryDeviceType memoryType) :
+	PlainVoxelArray(PlainVoxelArray::InitializationParameters info, MemoryDeviceType memoryType) :
 			memoryType(memoryType),
 			indexData(new ORUtils::MemoryBlock<IndexData>(1, true, true)) {
 		indexData->GetData(MEMORYDEVICE_CPU)[0] = info;
 		indexData->UpdateDeviceFromHost();
 	}
 
-	explicit ITMPlainVoxelArray(MemoryDeviceType memoryType, Vector3i size = Vector3i(512),
-	                            Vector3i offset = Vector3i(-256, -256, 0)) : ITMPlainVoxelArray({size, offset},
+	explicit PlainVoxelArray(MemoryDeviceType memoryType, Vector3i size = Vector3i(512),
+	                            Vector3i offset = Vector3i(-256, -256, 0)) : PlainVoxelArray({size, offset},
 	                                                                                            memoryType) {}
 
-	ITMPlainVoxelArray(const ITMPlainVoxelArray& other, MemoryDeviceType memoryType) :
-			ITMPlainVoxelArray({other.GetVolumeSize(), other.GetVolumeOffset()}, memoryType) {
+	PlainVoxelArray(const PlainVoxelArray& other, MemoryDeviceType memoryType) :
+			PlainVoxelArray({other.GetVolumeSize(), other.GetVolumeOffset()}, memoryType) {
 		this->SetFrom(other);
 	}
 
-	void SetFrom(const ITMPlainVoxelArray& other) {
+	void SetFrom(const PlainVoxelArray& other) {
 		MemoryCopyDirection memoryCopyDirection = determineMemoryCopyDirection(this->memoryType, other.memoryType);
 		this->indexData->SetFrom(other.indexData, memoryCopyDirection);
 	}
 
-	~ITMPlainVoxelArray() {
+	~PlainVoxelArray() {
 		delete indexData;
 	}
 
@@ -103,8 +103,8 @@ public:
 #endif
 
 	// Suppress the default copy constructor and assignment operator
-	ITMPlainVoxelArray(const ITMPlainVoxelArray&) = delete;
-	ITMPlainVoxelArray& operator=(const ITMPlainVoxelArray&) = delete;
+	PlainVoxelArray(const PlainVoxelArray&) = delete;
+	PlainVoxelArray& operator=(const PlainVoxelArray&) = delete;
 };
 }
 

@@ -63,37 +63,37 @@ public:
 };
 
 template<typename TVoxel>
-class VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray> :
-		public VolumeEditAndCopyEngineInterface<TVoxel, ITMPlainVoxelArray> {
+class VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray> :
+		public VolumeEditAndCopyEngineInterface<TVoxel, PlainVoxelArray> {
 public:
 	// can use this as singleton, but don't have to
 	static VolumeEditAndCopyEngine_CPU& Inst() {
-		static VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray> instance; // Guaranteed to be destroyed.
+		static VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray> instance; // Guaranteed to be destroyed.
 		// Instantiated on first use.
 		return instance;
 	}
 
-	void ResetScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) override;
-	bool SetVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at, TVoxel voxel) override;
-	TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at) override;
-	TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3i at,
-	                 ITMPlainVoxelArray::IndexCache& cache) override;
-	bool IsPointInBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const Vector3i& at);
-	void OffsetWarps(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, Vector3f offset) override;
-	bool CopySceneSlice(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* destination,
-	                    ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source,
+	void ResetScene(ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene) override;
+	bool SetVoxel(ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene, Vector3i at, TVoxel voxel) override;
+	TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene, Vector3i at) override;
+	TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene, Vector3i at,
+	                 PlainVoxelArray::IndexCache& cache) override;
+	bool IsPointInBounds(ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene, const Vector3i& at);
+	void OffsetWarps(ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene, Vector3f offset) override;
+	bool CopySceneSlice(ITMVoxelVolume<TVoxel, PlainVoxelArray>* destination,
+	                    ITMVoxelVolume<TVoxel, PlainVoxelArray>* source,
 	                    Vector6i bounds, const Vector3i& offset = Vector3i(0)) override;
-	bool CopyScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* destination,
-	               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source,
+	bool CopyScene(ITMVoxelVolume<TVoxel, PlainVoxelArray>* destination,
+	               ITMVoxelVolume<TVoxel, PlainVoxelArray>* source,
 	               const Vector3i& offset = Vector3i(0)) override;
 
 };
 
 // endregion ================= SCENE MANIPULATION ENGINE ===============================================================
 
-typedef VolumeEditAndCopyEngine_CPU<ITMVoxel, ITMPlainVoxelArray> ManipulationEngine_CPU_PVA_Voxel;
+typedef VolumeEditAndCopyEngine_CPU<ITMVoxel, PlainVoxelArray> ManipulationEngine_CPU_PVA_Voxel;
 typedef VolumeEditAndCopyEngine_CPU<ITMVoxel, ITMVoxelBlockHash> ManipulationEngine_CPU_VBH_Voxel;
-typedef VolumeEditAndCopyEngine_CPU<ITMWarp, ITMPlainVoxelArray> ManipulationEngine_CPU_PVA_Warp;
+typedef VolumeEditAndCopyEngine_CPU<ITMWarp, PlainVoxelArray> ManipulationEngine_CPU_PVA_Warp;
 typedef VolumeEditAndCopyEngine_CPU<ITMWarp, ITMVoxelBlockHash> ManipulationEngine_CPU_VBH_Warp;
 
 // region ======================================== HELPER RANGE COMPUTATION / CHECK ROUTINES ===========================

@@ -228,17 +228,17 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 	float absoluteTolerance = 1e-7;
 
 	// *** initialize/load warps
-	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* warps_PVA;
+	ITMVoxelVolume<ITMWarp, PlainVoxelArray>* warps_PVA;
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps_VBH;
 	if (iteration > 0) {
 		std::string path_warps = get_path_warps(prefix, iteration - 1);
 		loadVolume(&warps_PVA, path_warps, TMemoryDeviceType,
-		           Frame16And17Fixture::InitParams<ITMPlainVoxelArray>());
+		           Frame16And17Fixture::InitParams<PlainVoxelArray>());
 		loadVolume(&warps_VBH, path_warps, TMemoryDeviceType,
 		           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
 		BOOST_REQUIRE(allocatedContentAlmostEqual(warps_PVA, warps_VBH, absoluteTolerance, TMemoryDeviceType));
 	} else {
-		initializeVolume(&warps_PVA, Frame16And17Fixture::InitParams<ITMPlainVoxelArray>(), TMemoryDeviceType);
+		initializeVolume(&warps_PVA, Frame16And17Fixture::InitParams<PlainVoxelArray>(), TMemoryDeviceType);
 		initializeVolume(&warps_VBH, Frame16And17Fixture::InitParams<ITMVoxelBlockHash>(), TMemoryDeviceType);
 		BOOST_REQUIRE(allocatedContentAlmostEqual(warps_PVA, warps_VBH, absoluteTolerance, TMemoryDeviceType));
 	}
@@ -247,26 +247,26 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 
 
 
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* warped_live_PVA;
+	ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* warped_live_PVA;
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* warped_live_VBH;
 
 	if (iteration > 0) {
 		std::string path_warped_live = get_path_warped_live(prefix, iteration - 1);
 		loadVolume(&warped_live_PVA, path_warped_live, TMemoryDeviceType,
-		           Frame16And17Fixture::InitParams<ITMPlainVoxelArray>());
+		           Frame16And17Fixture::InitParams<PlainVoxelArray>());
 		loadVolume(&warped_live_VBH, path_warped_live, TMemoryDeviceType,
 		           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
 	} else {
 		loadVolume(&warped_live_PVA, path_frame_17_PVA, TMemoryDeviceType,
-		           Frame16And17Fixture::InitParams<ITMPlainVoxelArray>());
+		           Frame16And17Fixture::InitParams<PlainVoxelArray>());
 		loadVolume(&warped_live_VBH, path_frame_17_VBH, TMemoryDeviceType,
 		           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
 	}
 
 	// *** load canonical volume as the two different data structures
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray>* volume_16_PVA;
+	ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* volume_16_PVA;
 	loadVolume(&volume_16_PVA, path_frame_16_PVA, TMemoryDeviceType,
-	           Frame16And17Fixture::InitParams<ITMPlainVoxelArray>());
+	           Frame16And17Fixture::InitParams<PlainVoxelArray>());
 	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_16_VBH;
 	loadVolume(&volume_16_VBH, path_frame_16_VBH, TMemoryDeviceType,
 	           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
@@ -312,7 +312,7 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 //	warpVBH.print_self();
 
 	// *** perform the warp gradient computation and warp updates
-	SurfaceTracker<ITMVoxel, ITMWarp, ITMPlainVoxelArray, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC>
+	SurfaceTracker<ITMVoxel, ITMWarp, PlainVoxelArray, TMemoryDeviceType, TRACKER_SLAVCHEVA_DIAGNOSTIC>
 			motionTracker_PVA(trackerSwitches);
 
 	std::cout << "==== CALCULATE PVA WARPS === " << (expanded_allocation ? "(expanded)" : "") << std::endl;
@@ -342,7 +342,7 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 
 
 	//_DEBUG
-//	ITMWarp warpPVA = VolumeEditAndCopyEngineInterface<ITMWarp, ITMPlainVoxelArray>::Inst()
+//	ITMWarp warpPVA = VolumeEditAndCopyEngineInterface<ITMWarp, PlainVoxelArray>::Inst()
 //			.ReadVoxel(warps_PVA, test_pos);
 //	warpPVA.print_self();
 //	ITMWarp warpVBH = VolumeEditAndCopyEngineInterface<ITMWarp, ITMVoxelBlockHash>::Inst()
@@ -354,11 +354,11 @@ void Warp_PVA_VBH_simple_subtest(int iteration, SlavchevaSurfaceTracker::Switche
 	delete warped_live_PVA;
 	delete warped_live_VBH;
 
-	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray>* loaded_warps_PVA;
+	ITMVoxelVolume<ITMWarp, PlainVoxelArray>* loaded_warps_PVA;
 	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* loaded_warps_VBH;
 	std::string path_loaded_warps = get_path_warps(prefix, iteration);
 	loadVolume(&loaded_warps_PVA, path_loaded_warps, TMemoryDeviceType,
-	           Frame16And17Fixture::InitParams<ITMPlainVoxelArray>());
+	           Frame16And17Fixture::InitParams<PlainVoxelArray>());
 	loadVolume(&loaded_warps_VBH, path_loaded_warps, TMemoryDeviceType,
 	           Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
 

@@ -17,5 +17,5 @@
 #include "../../../ITMLibDefines.h"
 
 namespace ITMLib{
-template class ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;
+template class ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, PlainVoxelArray>;
 } // namespace ITMLib

@@ -544,7 +544,7 @@ set(ITMLIB_OBJECTS_SCENE_HEADERS
     Objects/Scene/ITMLocalMap.h
     Objects/Scene/ITMLocalVBA.h
     Objects/Scene/ITMMultiSceneAccess.h
-    Objects/Scene/ITMPlainVoxelArray.h
+	Objects/Scene/PlainVoxelArray.h
     Objects/Scene/ITMRepresentationAccess.h
     Objects/Scene/ITMTrilinearInterpolation.h
     Objects/Scene/ITMTrilinearDistribution.h

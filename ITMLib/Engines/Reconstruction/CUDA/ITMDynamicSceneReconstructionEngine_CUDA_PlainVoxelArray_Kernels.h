@@ -27,7 +27,7 @@ namespace {
 // CUDA kernels
 
 template<typename TVoxel>
-__global__ void integrateIntoScene_device(TVoxel* voxelArray, const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
+__global__ void integrateIntoScene_device(TVoxel* voxelArray, const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo,
                                           const Vector4u* rgb, Vector2i rgbImgSize, const float* depth,
                                           const float* confidence,
                                           Vector2i depthImgSize, Matrix4f M_d, Matrix4f M_rgb, Vector4f projParams_d,
@@ -54,7 +54,7 @@ __global__ void integrateIntoScene_device(TVoxel* voxelArray, const ITMLib::ITMP
 
 template<typename TVoxel>
 __global__ void fuseSdf2Sdf_device(TVoxel* voxelArrayLive, TVoxel* voxelArrayCanonical,
-                                   const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo, int maximumWeight) {
+                                   const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo, int maximumWeight) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
@@ -66,7 +66,7 @@ __global__ void fuseSdf2Sdf_device(TVoxel* voxelArrayLive, TVoxel* voxelArrayCan
 
 template<typename TVoxel>
 __global__ void
-clearFields_device(TVoxel* voxelArray, const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo) {
+clearFields_device(TVoxel* voxelArray, const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
@@ -82,7 +82,7 @@ __global__ void interpolateTriliearlyUsingWarps(
 		TWarp* warpSourceVoxels,
 		TVoxel* sdfSourceVoxels,
 		TVoxel* sdfTargetVoxels,
-		const ITMPlainVoxelArray::IndexData* sdfSourceIndexData) {
+		const PlainVoxelArray::IndexData* sdfSourceIndexData) {
 
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -92,7 +92,7 @@ __global__ void interpolateTriliearlyUsingWarps(
 
 	TVoxel& destinationVoxel = sdfTargetVoxels[locId];
 	TWarp& warp = warpSourceVoxels[locId];
-	ITMPlainVoxelArray::IndexCache sdfSourceCache;
+	PlainVoxelArray::IndexCache sdfSourceCache;
 
 	Vector3i warpAndDestinationVoxelPosition;
 
@@ -100,7 +100,7 @@ __global__ void interpolateTriliearlyUsingWarps(
 	warpAndDestinationVoxelPosition.y = y + sdfSourceIndexData->offset.y;
 	warpAndDestinationVoxelPosition.z = z + sdfSourceIndexData->offset.z;
 
-	interpolateTSDFVolume<TVoxel, TWarp, ITMPlainVoxelArray, TWarpType>(
+	interpolateTSDFVolume<TVoxel, TWarp, PlainVoxelArray, TWarpType>(
 			sdfSourceVoxels, sdfSourceIndexData, sdfSourceCache,
 			warp, destinationVoxel,
 			warpAndDestinationVoxelPosition, false);
@@ -110,7 +110,7 @@ template<typename TVoxelMulti>
 __global__ void
 copyScene_device(TVoxelMulti* sourceVoxels,
                  TVoxelMulti* targetVoxels,
-                 const ITMPlainVoxelArray::GridAlignedBox* arrayInfo) {
+                 const PlainVoxelArray::GridAlignedBox* arrayInfo) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;

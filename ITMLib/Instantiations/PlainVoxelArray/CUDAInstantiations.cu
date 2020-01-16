@@ -13,12 +13,12 @@
 
 namespace ITMLib
 {
-	template class ITMMeshingEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
-	template class ITMMultiMeshingEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
-	template class ITMSceneReconstructionEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
-	template class ITMSwappingEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
-	template class ITMVisualizationEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
-	template class ITMMultiVisualizationEngine_CUDA<ITMVoxel, ITMPlainVoxelArray>;
+	template class ITMMeshingEngine_CUDA<ITMVoxel, PlainVoxelArray>;
+	template class ITMMultiMeshingEngine_CUDA<ITMVoxel, PlainVoxelArray>;
+	template class ITMSceneReconstructionEngine_CUDA<ITMVoxel, PlainVoxelArray>;
+	template class ITMSwappingEngine_CUDA<ITMVoxel, PlainVoxelArray>;
+	template class ITMVisualizationEngine_CUDA<ITMVoxel, PlainVoxelArray>;
+	template class ITMMultiVisualizationEngine_CUDA<ITMVoxel, PlainVoxelArray>;
 
 	template class ITMSurfelSceneReconstructionEngine_CUDA<ITMSurfel_grey>;
 	template class ITMSurfelSceneReconstructionEngine_CUDA<ITMSurfel_rgb>;

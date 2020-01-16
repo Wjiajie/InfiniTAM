@@ -19,12 +19,12 @@
 #include "../../../ORUtils/MathUtils.h"
 //TODO: separate out common geometry object, i.e. PVA info is the logical equivalent of a box, make a separate Box geometry class
 // (need to eliminate as much interdependence between classes in folders as possible, i.e. reduce coupling & increase cohesion)
-#include "../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../../Objects/Scene/PlainVoxelArray.h"
 #include "../ITMMath.h"
 
 _CPU_AND_GPU_CODE_
 inline
-Vector6i PVA_InfoToExtent(const ITMLib::ITMPlainVoxelArray::GridAlignedBox& info) {
+Vector6i PVA_InfoToExtent(const ITMLib::PlainVoxelArray::GridAlignedBox& info) {
 	return {info.offset.x, info.offset.y, info.offset.z, info.offset.x + info.size.x, info.offset.y + info.size.y,
 	        info.offset.z + info.size.z};
 }

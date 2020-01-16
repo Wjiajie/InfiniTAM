@@ -16,7 +16,7 @@
 #pragma once
 
 //local
-#include "../../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../../../Objects/Scene/PlainVoxelArray.h"
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 
 

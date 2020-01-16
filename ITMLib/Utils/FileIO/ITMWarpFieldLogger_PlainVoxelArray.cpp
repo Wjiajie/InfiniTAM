@@ -17,5 +17,5 @@
 
 namespace ITMLib {
 template
-class ITMWarpFieldLogger<ITMWarp, ITMPlainVoxelArray>;
+class ITMWarpFieldLogger<ITMWarp, PlainVoxelArray>;
 } // namespace ITMLib

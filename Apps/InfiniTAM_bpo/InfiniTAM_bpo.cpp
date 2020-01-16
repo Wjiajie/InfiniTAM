@@ -56,7 +56,7 @@ ITMDynamicFusionLogger_Interface& GetLogger(configuration::IndexingMethod method
 			return static_cast<ITMDynamicFusionLogger_Interface&>(ITMDynamicFusionLogger<ITMVoxel, ITMWarp, ITMVoxelBlockHash>::Instance());
 		}
 		case configuration::INDEX_ARRAY: {
-			return static_cast<ITMDynamicFusionLogger_Interface&>(ITMDynamicFusionLogger<ITMVoxel, ITMWarp, ITMPlainVoxelArray>::Instance());
+			return static_cast<ITMDynamicFusionLogger_Interface&>(ITMDynamicFusionLogger<ITMVoxel, ITMWarp, PlainVoxelArray>::Instance());
 		}
 	}
 };

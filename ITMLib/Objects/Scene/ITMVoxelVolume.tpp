@@ -31,8 +31,8 @@ namespace ITMLib {
  * When on, keeps a larger global scene in main memory and a smaller, working part in VRAM, and continuously updates
  * the former from the latter
  * \param _memoryType DRAM to use -- GPU or CPU
- * \param size (optional) size of the scene -- affects only bounded index types, such as ITMPlainVoxelArray
- * \param offset (optional) offset of the scene -- affects only bounded index types, such as ITMPlainVoxelArray
+ * \param size (optional) size of the scene -- affects only bounded index types, such as PlainVoxelArray
+ * \param offset (optional) offset of the scene -- affects only bounded index types, such as PlainVoxelArray
  */
 template<typename TVoxel, typename TIndex>
 ITMVoxelVolume<TVoxel,TIndex>::ITMVoxelVolume(const VoxelVolumeParameters* _sceneParams, bool _useSwapping, MemoryDeviceType _memoryType,

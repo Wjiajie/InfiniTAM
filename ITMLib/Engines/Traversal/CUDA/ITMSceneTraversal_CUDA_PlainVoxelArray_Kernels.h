@@ -18,13 +18,13 @@
 //local
 #include "../Interface/ITMSceneTraversal.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
-#include "../../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../../../Objects/Scene/PlainVoxelArray.h"
 
 namespace {
 //CUDA device functions
 template<typename TStaticFunctor, typename TVoxel>
 __global__ void
-staticVoxelTraversal_device(TVoxel* voxels, const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo) {
+staticVoxelTraversal_device(TVoxel* voxels, const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
@@ -38,7 +38,7 @@ staticVoxelTraversal_device(TVoxel* voxels, const ITMLib::ITMPlainVoxelArray::Gr
 
 template<typename TFunctor, typename TVoxel>
 __global__ void
-voxelTraversal_device(TVoxel* voxels, const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
+voxelTraversal_device(TVoxel* voxels, const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo,
                       TFunctor* functor) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -53,7 +53,7 @@ voxelTraversal_device(TVoxel* voxels, const ITMLib::ITMPlainVoxelArray::GridAlig
 
 template<typename TFunctor, typename TVoxel>
 __global__ void
-voxelPositionTraversal_device(TVoxel* voxels, const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
+voxelPositionTraversal_device(TVoxel* voxels, const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo,
                       TFunctor* functor) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -74,7 +74,7 @@ voxelPositionTraversal_device(TVoxel* voxels, const ITMLib::ITMPlainVoxelArray::
 template<typename TStaticFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
 __global__ void
 staticDualVoxelTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-                                const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo) {
+                                const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
@@ -89,7 +89,7 @@ staticDualVoxelTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* s
 template<typename TStaticBooleanFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
 __global__ void
 staticDualVoxelTraversal_AllTrue_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-                                        const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
+                                        const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo,
                                         bool* falseEncountered) {
 
 	if (*falseEncountered) return;
@@ -112,7 +112,7 @@ staticDualVoxelTraversal_AllTrue_device(TVoxelPrimary* primaryVoxels, TVoxelSeco
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
 __global__ void
 dualVoxelPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-                                  const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
+                                  const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo,
                                   TFunctor* functor) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -136,7 +136,7 @@ dualVoxelPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
 __global__ void
 dualVoxelTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-                          const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
+                          const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo,
                           TFunctor* functor) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -155,7 +155,7 @@ dualVoxelTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* seconda
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
 __global__ void
 dualVoxelTraversal_AllTrue_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-                                  const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
+                                  const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo,
                                   TFunctor* functor, bool* falseEncountered) {
 	if(*falseEncountered) return;
 
@@ -177,7 +177,7 @@ dualVoxelTraversal_AllTrue_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary*
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary>
 __global__ void
 dualVoxelPositionTraversal_AllTrue_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-                                  const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
+                                  const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo,
                                   TFunctor* functor, bool* falseEncountered) {
 	if(*falseEncountered) return;
 
@@ -206,7 +206,7 @@ dualVoxelPositionTraversal_AllTrue_device(TVoxelPrimary* primaryVoxels, TVoxelSe
 template<typename TStaticFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TWarp>
 __global__ void
 staticDualVoxelWarpTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-                                    TWarp* warpVoxels, const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo) {
+                                    TWarp* warpVoxels, const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
@@ -227,7 +227,7 @@ template<typename TStaticFunctor, typename TVoxelPrimary, typename TVoxelSeconda
 __global__ void
 staticDualVoxelWarpPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
                                             TWarp* warpVoxels,
-                                            const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo) {
+                                            const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int z = blockIdx.z * blockDim.z + threadIdx.z;
@@ -254,7 +254,7 @@ staticDualVoxelWarpPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxel
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TWarp>
 __global__ void
 dualVoxelWarpTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-                              TWarp* warpVoxels, const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
+                              TWarp* warpVoxels, const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo,
                               TFunctor& functor) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -273,7 +273,7 @@ dualVoxelWarpTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* sec
 template<typename TFunctor, typename TVoxelPrimary, typename TVoxelSecondary, typename TWarp>
 __global__ void
 dualVoxelWarpPositionTraversal_device(TVoxelPrimary* primaryVoxels, TVoxelSecondary* secondaryVoxels,
-                                      TWarp* warpVoxels, const ITMLib::ITMPlainVoxelArray::GridAlignedBox* arrayInfo,
+                                      TWarp* warpVoxels, const ITMLib::PlainVoxelArray::GridAlignedBox* arrayInfo,
                                       TFunctor* functor) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;

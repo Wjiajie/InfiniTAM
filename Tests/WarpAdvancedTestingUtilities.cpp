@@ -19,7 +19,7 @@
 
 template
 void
-GenericWarpConsistencySubtest<ITMPlainVoxelArray, MEMORYDEVICE_CPU>(const SlavchevaSurfaceTracker::Switches& switches,
+GenericWarpConsistencySubtest<PlainVoxelArray, MEMORYDEVICE_CPU>(const SlavchevaSurfaceTracker::Switches& switches,
                                                                     int iteration_limit,
                                                                     GenericWarpTestMode mode,
                                                                     float absolute_tolerance,
@@ -40,7 +40,7 @@ void Warp_PVA_VBH_simple_subtest<MEMORYDEVICE_CPU>(int iteration, SlavchevaSurfa
 #ifndef COMPILE_WITHOUT_CUDA
 template
 void
-GenericWarpConsistencySubtest<ITMPlainVoxelArray, MEMORYDEVICE_CUDA>(const SlavchevaSurfaceTracker::Switches& switches,
+GenericWarpConsistencySubtest<PlainVoxelArray, MEMORYDEVICE_CUDA>(const SlavchevaSurfaceTracker::Switches& switches,
                                                                      int iteration_limit,
                                                                      GenericWarpTestMode mode,
                                                                      float absolute_tolerance,
@@ -100,7 +100,7 @@ std::string switches_to_prefix(const SlavchevaSurfaceTracker::Switches& switches
 
 
 template<>
-std::string getIndexString<ITMPlainVoxelArray>() { return "PVA"; }
+std::string getIndexString<PlainVoxelArray>() { return "PVA"; }
 
 template<>
 std::string getIndexString<ITMVoxelBlockHash>() { return "VBH"; }

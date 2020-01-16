@@ -145,8 +145,8 @@ ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(
 
 template<typename TVoxel>
 void
-ITMSceneFileIOEngine<TVoxel, ITMPlainVoxelArray>::SaveToDirectoryCompact(
-		const ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
+ITMSceneFileIOEngine<TVoxel, PlainVoxelArray>::SaveToDirectoryCompact(
+		const ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene,
 		const std::string& outputDirectory) {
 	scene->localVBA.SaveToDirectory(outputDirectory);
 	scene->index.SaveToDirectory(outputDirectory);
@@ -155,8 +155,8 @@ ITMSceneFileIOEngine<TVoxel, ITMPlainVoxelArray>::SaveToDirectoryCompact(
 
 template<typename TVoxel>
 void
-ITMSceneFileIOEngine<TVoxel, ITMPlainVoxelArray>::LoadFromDirectoryCompact(
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
+ITMSceneFileIOEngine<TVoxel, PlainVoxelArray>::LoadFromDirectoryCompact(
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene,
 		const std::string& outputDirectory) {
 	scene->localVBA.LoadFromDirectory(outputDirectory);
 	scene->index.LoadFromDirectory(outputDirectory);

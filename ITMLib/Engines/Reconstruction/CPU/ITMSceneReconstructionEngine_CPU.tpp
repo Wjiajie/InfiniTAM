@@ -287,15 +287,15 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneF
 }
 
 template<class TVoxel>
-ITMSceneReconstructionEngine_CPU<TVoxel,ITMPlainVoxelArray>::ITMSceneReconstructionEngine_CPU(void)
+ITMSceneReconstructionEngine_CPU<TVoxel,PlainVoxelArray>::ITMSceneReconstructionEngine_CPU(void)
 {}
 
 template<class TVoxel>
-ITMSceneReconstructionEngine_CPU<TVoxel,ITMPlainVoxelArray>::~ITMSceneReconstructionEngine_CPU(void)
+ITMSceneReconstructionEngine_CPU<TVoxel,PlainVoxelArray>::~ITMSceneReconstructionEngine_CPU(void)
 {}
 
 template<class TVoxel>
-void ITMSceneReconstructionEngine_CPU<TVoxel,ITMPlainVoxelArray>::ResetScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray> *scene)
+void ITMSceneReconstructionEngine_CPU<TVoxel,PlainVoxelArray>::ResetScene(ITMVoxelVolume<TVoxel, PlainVoxelArray> *scene)
 {
 	int numBlocks = scene->index.GetAllocatedBlockCount();
 	int blockSize = scene->index.GetVoxelBlockSize();
@@ -308,12 +308,12 @@ void ITMSceneReconstructionEngine_CPU<TVoxel,ITMPlainVoxelArray>::ResetScene(ITM
 }
 
 template<class TVoxel>
-void ITMSceneReconstructionEngine_CPU<TVoxel, ITMPlainVoxelArray>::AllocateSceneFromDepth(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray> *scene, const ITMView *view,
+void ITMSceneReconstructionEngine_CPU<TVoxel, PlainVoxelArray>::AllocateSceneFromDepth(ITMVoxelVolume<TVoxel, PlainVoxelArray> *scene, const ITMView *view,
                                                                                           const ITMTrackingState *trackingState, const ITMRenderState *renderState, bool onlyUpdateVisibleList, bool resetVisibleList)
 {}
 
 template<class TVoxel>
-void ITMSceneReconstructionEngine_CPU<TVoxel, ITMPlainVoxelArray>::IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray> *scene, const ITMView *view,
+void ITMSceneReconstructionEngine_CPU<TVoxel, PlainVoxelArray>::IntegrateIntoScene(ITMVoxelVolume<TVoxel, PlainVoxelArray> *scene, const ITMView *view,
                                                                                       const ITMTrackingState *trackingState, const ITMRenderState *renderState)
 {
 	Vector2i rgbImgSize = view->rgb->noDims;
@@ -336,7 +336,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMPlainVoxelArray>::IntegrateInto
 	Vector4u *rgb = view->rgb->GetData(MEMORYDEVICE_CPU);
 	TVoxel *voxelArray = scene->localVBA.GetVoxelBlocks();
 
-	const ITMPlainVoxelArray::IndexData *arrayInfo = scene->index.GetIndexData();
+	const PlainVoxelArray::IndexData *arrayInfo = scene->index.GetIndexData();
 
 	bool stopIntegratingAtMaxW = scene->sceneParams->stop_integration_at_max_weight;
 	//bool approximateIntegration = !trackingState->requiresFullRendering;

@@ -4,7 +4,7 @@
 
 #include "../../../SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
 #include "../Interface/ITMDynamicSceneReconstructionEngine.h"
-#include "../../../Objects/Scene/ITMPlainVoxelArray.h"
+#include "../../../Objects/Scene/PlainVoxelArray.h"
 #include "../../VolumeEditAndCopy/CPU/VolumeEditAndCopyEngine_CPU.h"
 #include "../../Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
 #include "../../Common/ITMWarpEnums.h"
@@ -62,46 +62,46 @@ private:
 };
 
 template<typename TVoxel, typename TWarp>
-class ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, ITMPlainVoxelArray>
-		: public ITMDynamicSceneReconstructionEngine<TVoxel, TWarp, ITMPlainVoxelArray> {
+class ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, PlainVoxelArray>
+		: public ITMDynamicSceneReconstructionEngine<TVoxel, TWarp, PlainVoxelArray> {
 public:
-	void UpdateVisibleList(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
+	void UpdateVisibleList(ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene, const ITMView* view,
 	                       const ITMTrackingState* trackingState, const ITMRenderState* renderState,
 	                       bool resetVisibleList) override;
-	void GenerateTsdfVolumeFromView(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
+	void GenerateTsdfVolumeFromView(ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene, const ITMView* view,
 	                                const ITMTrackingState* trackingState) override;
-	void GenerateTsdfVolumeFromView(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const ITMView* view,
+	void GenerateTsdfVolumeFromView(ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene, const ITMView* view,
 	                                const Matrix4f& depth_camera_matrix=Matrix4f::Identity()) override;
-	void GenerateTsdfVolumeFromViewExpanded(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume,
-	                                        ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* temporaryAllocationVolume,
+	void GenerateTsdfVolumeFromViewExpanded(ITMVoxelVolume<TVoxel, PlainVoxelArray>* volume,
+	                                        ITMVoxelVolume<TVoxel, PlainVoxelArray>* temporaryAllocationVolume,
 	                                        const ITMView* view,
 	                                        const Matrix4f& depth_camera_matrix = Matrix4f::Identity()) override;
-	void FuseOneTsdfVolumeIntoAnother(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* canonicalScene,
-	                              ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* liveScene) override;
+	void FuseOneTsdfVolumeIntoAnother(ITMVoxelVolume<TVoxel, PlainVoxelArray>* canonicalScene,
+	                              ITMVoxelVolume<TVoxel, PlainVoxelArray>* liveScene) override;
 
-	void WarpScene_CumulativeWarps(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
-	                               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
-	                               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) override;
-	void WarpScene_FramewiseWarps(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
-	                         ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
-	                         ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) override;
-	void WarpScene_WarpUpdates(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
-	                           ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
-	                           ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF) override;
-	void IntegrateDepthImageIntoTsdfVolume(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view);
-	void IntegrateDepthImageIntoTsdfVolume(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view,
+	void WarpScene_CumulativeWarps(ITMVoxelVolume<TWarp, PlainVoxelArray>* warpField,
+	                               ITMVoxelVolume<TVoxel, PlainVoxelArray>* sourceTSDF,
+	                               ITMVoxelVolume<TVoxel, PlainVoxelArray>* targetTSDF) override;
+	void WarpScene_FramewiseWarps(ITMVoxelVolume<TWarp, PlainVoxelArray>* warpField,
+	                         ITMVoxelVolume<TVoxel, PlainVoxelArray>* sourceTSDF,
+	                         ITMVoxelVolume<TVoxel, PlainVoxelArray>* targetTSDF) override;
+	void WarpScene_WarpUpdates(ITMVoxelVolume<TWarp, PlainVoxelArray>* warpField,
+	                           ITMVoxelVolume<TVoxel, PlainVoxelArray>* sourceTSDF,
+	                           ITMVoxelVolume<TVoxel, PlainVoxelArray>* targetTSDF) override;
+	void IntegrateDepthImageIntoTsdfVolume(ITMVoxelVolume<TVoxel, PlainVoxelArray>* volume, const ITMView* view);
+	void IntegrateDepthImageIntoTsdfVolume(ITMVoxelVolume<TVoxel, PlainVoxelArray>* volume, const ITMView* view,
 	                                      const ITMTrackingState* trackingState);
 
 	ITMDynamicSceneReconstructionEngine_CPU() = default;
 	~ITMDynamicSceneReconstructionEngine_CPU() = default;
 private:
-	void IntegrateDepthImageIntoTsdfVolume_Helper(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* volume, const ITMView* view,
+	void IntegrateDepthImageIntoTsdfVolume_Helper(ITMVoxelVolume<TVoxel, PlainVoxelArray>* volume, const ITMView* view,
 	                                             Matrix4f camera_depth_matrix = Matrix4f::Identity());
 	template<WarpType TWarpType>
-	void WarpScene(ITMVoxelVolume<TWarp, ITMPlainVoxelArray>* warpField,
-	               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* sourceTSDF,
-	               ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* targetTSDF);
-	VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>& sceneManager =
-			VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::Inst();
+	void WarpScene(ITMVoxelVolume<TWarp, PlainVoxelArray>* warpField,
+	               ITMVoxelVolume<TVoxel, PlainVoxelArray>* sourceTSDF,
+	               ITMVoxelVolume<TVoxel, PlainVoxelArray>* targetTSDF);
+	VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray>& sceneManager =
+			VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray>::Inst();
 };
 } // namespace ITMLib

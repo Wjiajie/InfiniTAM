@@ -28,8 +28,8 @@ using namespace ITMLib;
 // region ==================================== Voxel Array Scene VolumeEditAndCopy Engine ===================================
 
 template<typename TVoxel>
-void ITMLib::VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::ResetScene(
-		ITMLib::ITMVoxelVolume<TVoxel, ITMLib::ITMPlainVoxelArray>* scene) {
+void ITMLib::VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray>::ResetScene(
+		ITMLib::ITMVoxelVolume<TVoxel, ITMLib::PlainVoxelArray>* scene) {
 	int numBlocks = scene->index.GetAllocatedBlockCount();
 	int blockSize = scene->index.GetVoxelBlockSize();
 
@@ -42,7 +42,7 @@ void ITMLib::VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::ResetScene
 
 template<typename TVoxel>
 bool
-VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::SetVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
+VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray>::SetVoxel(ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene,
                                                                   Vector3i at, TVoxel voxel) {
 	int vmIndex = 0;
 	int arrayIndex = findVoxel(scene->index.GetIndexData(), at, vmIndex);
@@ -57,7 +57,7 @@ VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::SetVoxel(ITMVoxelVolume
 
 template<typename TVoxel>
 TVoxel
-VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
+VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray>::ReadVoxel(ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene,
                                                                    Vector3i at) {
 	int vmIndex = 0;
 	int arrayIndex = findVoxel(scene->index.GetIndexData(), at, vmIndex);
@@ -70,9 +70,9 @@ VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMVoxelVolum
 
 template<typename TVoxel>
 TVoxel
-VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
+VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray>::ReadVoxel(ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene,
                                                                    Vector3i at,
-                                                                   ITMPlainVoxelArray::IndexCache& cache) {
+                                                                   PlainVoxelArray::IndexCache& cache) {
 	int vmIndex = 0;
 	int arrayIndex = findVoxel(scene->index.GetIndexData(), at, vmIndex);
 	if (arrayIndex < 0) {
@@ -83,9 +83,9 @@ VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::ReadVoxel(ITMVoxelVolum
 }
 
 template<typename TVoxel>
-bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::
-IsPointInBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const Vector3i& point) {
-	ITMLib::ITMPlainVoxelArray::IndexData* index_bounds = scene->index.GetIndexData();
+bool VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray>::
+IsPointInBounds(ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene, const Vector3i& point) {
+	ITMLib::PlainVoxelArray::IndexData* index_bounds = scene->index.GetIndexData();
 	Vector3i point2 = point - index_bounds->offset;
 	return !((point2.x < 0) || (point2.x >= index_bounds->size.x) ||
 	         (point2.y < 0) || (point2.y >= index_bounds->size.y) ||
@@ -95,23 +95,23 @@ IsPointInBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene, const Vector3
 
 template<typename TVoxel>
 void
-VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::OffsetWarps(
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene,
+VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray>::OffsetWarps(
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene,
 		Vector3f offset) {
-	OffsetWarpsFunctor<TVoxel, ITMPlainVoxelArray, TVoxel::hasCumulativeWarp>::OffsetWarps(scene, offset);
+	OffsetWarpsFunctor<TVoxel, PlainVoxelArray, TVoxel::hasCumulativeWarp>::OffsetWarps(scene, offset);
 }
 
 
 template<typename TVoxel>
-bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopySceneSlice(
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* destination, ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source,
+bool VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray>::CopySceneSlice(
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* destination, ITMVoxelVolume<TVoxel, PlainVoxelArray>* source,
 		Vector6i bounds, const Vector3i& offset) {
 
 	Vector3i min_pt_source = Vector3i(bounds.min_x, bounds.min_y, bounds.min_z);
 	Vector3i max_pt_source = Vector3i(bounds.max_x - 1, bounds.max_y - 1, bounds.max_z - 1);
 
-	if (!VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::IsPointInBounds(source, min_pt_source) ||
-	    !VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::IsPointInBounds(source, max_pt_source)) {
+	if (!VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray>::IsPointInBounds(source, min_pt_source) ||
+	    !VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray>::IsPointInBounds(source, max_pt_source)) {
 		DIEWITHEXCEPTION_REPORTLOCATION(
 				"Specified source volume is at least partially out of bounds of the source scene.");
 	}
@@ -130,16 +130,16 @@ bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopySceneSlice(
 	Vector3i max_pt_destination = Vector3i(bounds_destination.max_x - 1, bounds_destination.max_y - 1,
 	                                       bounds_destination.max_z - 1);
 
-	if (!VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::IsPointInBounds(destination, min_pt_destination) ||
-	    !VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::IsPointInBounds(destination, max_pt_destination)) {
+	if (!VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray>::IsPointInBounds(destination, min_pt_destination) ||
+	    !VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray>::IsPointInBounds(destination, max_pt_destination)) {
 		DIEWITHEXCEPTION_REPORTLOCATION(
 				"Targeted volume is at least partially out of bounds of the destination scene.");
 	}
 	TVoxel* sourceVoxels = source->localVBA.GetVoxelBlocks();
 	TVoxel* destinationVoxels = destination->localVBA.GetVoxelBlocks();
 	if (offset == Vector3i(0)) {
-		const ITMPlainVoxelArray::IndexData* sourceIndexData = source->index.GetIndexData();
-		const ITMPlainVoxelArray::IndexData* destinationIndexData = destination->index.GetIndexData();
+		const PlainVoxelArray::IndexData* sourceIndexData = source->index.GetIndexData();
+		const PlainVoxelArray::IndexData* destinationIndexData = destination->index.GetIndexData();
 		for (int source_z = bounds.min_z; source_z < bounds.max_z; source_z++) {
 			for (int source_y = bounds.min_y; source_y < bounds.max_y; source_y++) {
 				for (int source_x = bounds.min_x; source_x < bounds.max_x; source_x++) {
@@ -151,8 +151,8 @@ bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopySceneSlice(
 			}
 		}
 	} else {
-		const ITMPlainVoxelArray::IndexData* sourceIndexData = source->index.GetIndexData();
-		const ITMPlainVoxelArray::IndexData* destinationIndexData = destination->index.GetIndexData();
+		const PlainVoxelArray::IndexData* sourceIndexData = source->index.GetIndexData();
+		const PlainVoxelArray::IndexData* destinationIndexData = destination->index.GetIndexData();
 		for (int source_z = bounds.min_z; source_z < bounds.max_z; source_z++) {
 			for (int source_y = bounds.min_y; source_y < bounds.max_y; source_y++) {
 				for (int source_x = bounds.min_x; source_x < bounds.max_x; source_x++) {
@@ -173,8 +173,8 @@ bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopySceneSlice(
 }
 
 template<typename TVoxel>
-inline static Vector6i GetSceneBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source) {
-	ITMPlainVoxelArray::IndexData* indexData = source->index.GetIndexData();
+inline static Vector6i GetSceneBounds(ITMVoxelVolume<TVoxel, PlainVoxelArray>* source) {
+	PlainVoxelArray::IndexData* indexData = source->index.GetIndexData();
 	return {indexData->offset.x, indexData->offset.y, indexData->offset.z,
 	        indexData->offset.x + indexData->size.x,
 	        indexData->offset.y + indexData->size.y,
@@ -183,11 +183,11 @@ inline static Vector6i GetSceneBounds(ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>
 
 
 template<typename TVoxel>
-bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopyScene(
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* destination,
-		ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* source,
+bool VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray>::CopyScene(
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* destination,
+		ITMVoxelVolume<TVoxel, PlainVoxelArray>* source,
 		const Vector3i& offset) {
-	VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::ResetScene(destination);
+	VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray>::ResetScene(destination);
 	//TODO: this bounds treatment isn't quite correct -- it assumes same bounds for source & dest. Need to fix.
 	Vector6i bounds = GetSceneBounds(source);
 	if (offset.x > 0) {
@@ -205,7 +205,7 @@ bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopyScene(
 	} else {
 		bounds.min_z -= offset.z;
 	}
-	return VolumeEditAndCopyEngine_CPU<TVoxel, ITMPlainVoxelArray>::CopySceneSlice(destination, source, bounds,
+	return VolumeEditAndCopyEngine_CPU<TVoxel, PlainVoxelArray>::CopySceneSlice(destination, source, bounds,
 	                                                                               offset);
 }
 

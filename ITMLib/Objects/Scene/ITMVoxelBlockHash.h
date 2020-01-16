@@ -62,24 +62,6 @@ and a pointer to the data structure on the GPU.
 class ITMVoxelBlockHash {
 public:
 
-//	struct VoxelBlockHashParameters {
-//	public:
-//		static const int defaultVoxelBlockCount = 0x40000; // 262144
-//
-//		static const int defaultExcessListSize = 0x20000; // 131072, entries in [1048576, 1179648)
-//
-//		const int voxel_block_count;
-//		/** Size of excess list, used to handle collisions. Also max offset (unsigned short) value. **/
-//		const int excess_list_size;
-//
-//		VoxelBlockHashParameters() : voxel_block_count(defaultVoxelBlockCount),
-//		                             excess_list_size(defaultExcessListSize) {}
-//
-//		VoxelBlockHashParameters(int voxelBlockCount, int excessListSize) :
-//				voxel_block_count(voxelBlockCount), excess_list_size(excessListSize) {}
-//
-//
-//	};
 	GENERATE_SERIALIZABLE_STRUCT(
 			VoxelBlockHashParameters,
 			(int, voxel_block_count, 0x40000, PRIMITIVE, "Total count of voxel hash blocks to preallocate."),

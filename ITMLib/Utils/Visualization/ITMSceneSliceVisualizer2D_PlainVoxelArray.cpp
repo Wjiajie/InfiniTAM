@@ -17,5 +17,5 @@
 #include "../../Utils/Visualization/ITMSceneSliceVisualizer2D.tpp"
 
 namespace ITMLib{
-template class ITMSceneSliceVisualizer2D<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;
+template class ITMSceneSliceVisualizer2D<ITMVoxel, ITMWarp, PlainVoxelArray>;
 } // namespace ITMLib

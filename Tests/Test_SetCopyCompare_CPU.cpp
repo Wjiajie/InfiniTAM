@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_PlainVoxelArray_CPU) {
 	Vector3i volumeSize(20);
 	Vector3i volumeOffset(-10, -10, 0);
 
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene1(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMVoxel, PlainVoxelArray> scene1(&configuration::get().voxel_volume_parameters,
 	                                                    configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 	                                                    MEMORYDEVICE_CPU,
 	                                                    {volumeSize, volumeOffset});
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_PlainVoxelArray_CPU) {
 	BOOST_REQUIRE(out.sdf == voxelZero.sdf);
 
 	Vector3i offset(-2, 3, 4);
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene2(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMVoxel, PlainVoxelArray> scene2(&configuration::get().voxel_volume_parameters,
 	                                                    configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 	                                                    MEMORYDEVICE_CPU, {volumeSize, volumeOffset});
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&scene2);
@@ -181,12 +181,12 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU_ITMVoxel) {
 	Vector3i volumeOffset(-20, -20, 0);
 	Vector3i extentEndVoxel = volumeOffset + volumeSize;
 
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene_PVA1(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMVoxel, PlainVoxelArray> scene_PVA1(&configuration::get().voxel_volume_parameters,
 	                                                    configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 	                                                        MEMORYDEVICE_CPU,
 	                                                        {volumeSize, volumeOffset});
 	scene_PVA1.Reset();
-	ITMVoxelVolume<ITMVoxel, ITMPlainVoxelArray> scene_PVA2(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMVoxel, PlainVoxelArray> scene_PVA2(&configuration::get().voxel_volume_parameters,
 	                                                    configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 	                                                        MEMORYDEVICE_CPU,
 	                                                        {volumeSize, volumeOffset});
@@ -281,12 +281,12 @@ BOOST_AUTO_TEST_CASE(testCompareVoxelVolumes_CPU_ITMWarp) {
 	Vector3i volumeOffset(-20, -20, 0);
 	Vector3i extentEndVoxel = volumeOffset + volumeSize;
 
-	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> scene1(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMWarp, PlainVoxelArray> scene1(&configuration::get().voxel_volume_parameters,
 	                                                   configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 	                                                   MEMORYDEVICE_CPU,
 	                                                   {volumeSize, volumeOffset});
 	ManipulationEngine_CPU_PVA_Warp::Inst().ResetScene(&scene1);
-	ITMVoxelVolume<ITMWarp, ITMPlainVoxelArray> scene2(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMWarp, PlainVoxelArray> scene2(&configuration::get().voxel_volume_parameters,
 	                                                   configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 	                                                   MEMORYDEVICE_CPU,
 	                                                   {volumeSize, volumeOffset});

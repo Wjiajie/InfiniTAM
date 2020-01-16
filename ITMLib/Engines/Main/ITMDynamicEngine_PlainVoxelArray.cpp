@@ -18,7 +18,7 @@
 
 namespace ITMLib {
 template
-class ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;
+class ITMDynamicEngine<ITMVoxel, ITMWarp, PlainVoxelArray>;
 } // namespace ITMLib
 
 

@@ -18,5 +18,5 @@
 #include "ITMDynamicFusionLogger.tpp"
 
 namespace ITMLib{
-template class ITMDynamicFusionLogger<ITMVoxel, ITMWarp, ITMPlainVoxelArray>;
+template class ITMDynamicFusionLogger<ITMVoxel, ITMWarp, PlainVoxelArray>;
 } // namespace ITMLib

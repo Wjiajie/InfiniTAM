@@ -61,9 +61,9 @@ struct ComputeVoxelBoundsFunctor<TVoxel, ITMVoxelBlockHash> {
 };
 
 template<typename TVoxel>
-struct ComputeVoxelBoundsFunctor<TVoxel, ITMPlainVoxelArray> {
-	static Vector6i Compute(const ITMVoxelVolume<TVoxel, ITMPlainVoxelArray>* scene) {
-		const ITMPlainVoxelArray::IndexData* indexData = scene->index.GetIndexData();
+struct ComputeVoxelBoundsFunctor<TVoxel, PlainVoxelArray> {
+	static Vector6i Compute(const ITMVoxelVolume<TVoxel, PlainVoxelArray>* scene) {
+		const PlainVoxelArray::IndexData* indexData = scene->index.GetIndexData();
 		return Vector6i(indexData->offset.x, indexData->offset.y, indexData->offset.z,
 		                indexData->offset.x + indexData->size.x, indexData->offset.y + indexData->size.y,
 		                indexData->offset.z + indexData->size.z);
@@ -76,9 +76,9 @@ template<typename TIndex>
 struct ComputeAllocatedHashBlockCountFunctor;
 
 template<>
-struct ComputeAllocatedHashBlockCountFunctor<ITMPlainVoxelArray> {
+struct ComputeAllocatedHashBlockCountFunctor<PlainVoxelArray> {
 	inline
-	static int compute(const ITMPlainVoxelArray& index) {
+	static int compute(const PlainVoxelArray& index) {
 		return 0;
 	}
 };
@@ -119,9 +119,9 @@ template<typename TIndex>
 struct ComputeAllocatedVoxelCountFunctor;
 
 template<>
-struct ComputeAllocatedVoxelCountFunctor<ITMPlainVoxelArray> {
+struct ComputeAllocatedVoxelCountFunctor<PlainVoxelArray> {
 	inline
-	static int compute(const ITMPlainVoxelArray& index) {
+	static int compute(const PlainVoxelArray& index) {
 		return index.GetVolumeSize().x * index.GetVolumeSize().y * index.GetVolumeSize().z;
 	}
 };

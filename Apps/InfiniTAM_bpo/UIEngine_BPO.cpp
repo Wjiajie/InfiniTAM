@@ -309,7 +309,7 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 		}
 			break;
 		case configuration::INDEX_ARRAY: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, PlainVoxelArray>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 		}
 			break;
@@ -340,7 +340,7 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 		}
 			break;
 		case configuration::INDEX_ARRAY: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, PlainVoxelArray>*>(mainEngine);
 			if (imuSource != nullptr)
 				dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage,
 				                                                    inputIMUMeasurement);
@@ -387,7 +387,7 @@ bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 		}
 			break;
 		case configuration::INDEX_ARRAY: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMPlainVoxelArray>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, PlainVoxelArray>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 			keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();
 			if (!keepProcessingFrame) {
