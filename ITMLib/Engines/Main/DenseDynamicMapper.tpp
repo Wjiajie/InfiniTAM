@@ -218,17 +218,17 @@ DenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessFrame(const ITMView* view, con
 	}
 
 	InitializeProcessing(view, trackingState, warpField, liveScenePair);
-	if(configuration::get().verbosity_level >= configuration::VERBOSITY_PER_FRAME) {
+	if(this->print_volume_statistics) {
 		PrintSceneStatistics(liveScenePair[0], "[[live frame before tracking]]");
 	}
 	bench::StartTimer("TrackMotion");
 	ITMVoxelVolume<TVoxel, TIndex>* finalWarpedLiveScene = TrackFrameMotion(canonicalScene, liveScenePair, warpField);
 	bench::StopTimer("TrackMotion");
-	if(configuration::get().verbosity_level >= configuration::VERBOSITY_PER_FRAME) {
+	if(this->print_volume_statistics) {
 		PrintSceneStatistics(finalWarpedLiveScene, "[[live frame after tracking]]");
 	}
 	FinalizeProcessing(canonicalScene, finalWarpedLiveScene, renderState);
-	if(configuration::get().verbosity_level >= configuration::VERBOSITY_PER_FRAME) {
+	if(this->print_volume_statistics) {
 		PrintSceneStatistics(canonicalScene, "[[canonical frame after fusion]]");
 	}
 }
@@ -281,7 +281,7 @@ void DenseDynamicMapper<TVoxel, TWarp, TIndex>::PerformSingleOptimizationStep(
 
 	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().SaveWarpSlices(iteration);
 
-	if(this->print_volume_statistics){
+	if(configuration::get().verbosity_level >= configuration::VERBOSITY_PER_ITERATION){
 		std::cout << red << "Iteration: " << iteration << reset << std::endl;
 		//** warp update gradient computation
 		PrintOperationStatus("Calculating warp energy gradient...");
