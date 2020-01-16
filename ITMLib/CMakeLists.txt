@@ -47,9 +47,9 @@ set(ITMLIB_CORE_SOURCES
 	Engines/Main/ITMBasicSurfelEngine.tpp
 	Engines/Main/ITMDenseMapper.tpp
 	Engines/Main/ITMDenseSurfelMapper.tpp
-	Engines/Main/ITMDenseDynamicMapper.tpp
-	Engines/Main/ITMDenseDynamicMapper_PlainVoxelArray.cpp
-	Engines/Main/ITMDenseDynamicMapper_VoxelBlockHash.cpp
+    Engines/Main/DenseDynamicMapper.tpp
+	Engines/Main/DenseDynamicMapper_PlainVoxelArray.cpp
+	Engines/Main/DenseDynamicMapper_VoxelBlockHash.cpp
 	Engines/Main/NonRigidTrackingParameters.h
 	Engines/Main/ITMMultiEngine.tpp
 	Engines/Main/ITMDynamicEngine.tpp

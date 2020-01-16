@@ -107,7 +107,8 @@ DECLARE_SERIALIZABLE_STRUCT(PATHS_STRUCT_DESCRIPTION);
     (bool, record_reconstruction_video, false, PRIMITIVE, \
     		"Whether to record video of the canonical reconsturction during automatic run "\
     		"(see number_of_frames_to_process_after_launch and index_of_frame_to_start_at)."), \
-    (bool, save_benchmarks_to_disk, false, PRIMITIVE, "Whether to save runtime benchmarks to disk after automatic run.")
+    (bool, save_benchmarks_to_disk, false, PRIMITIVE, "Whether to save runtime benchmarks to disk after automatic run."),\
+	(bool, log_volume_statistics, false, PRIMITIVE, "Whether to output various volume statistics after some operations.")
 
 DECLARE_SERIALIZABLE_STRUCT(TELEMETRY_SETTINGS_STRUCT_DESCRIPTION);
 

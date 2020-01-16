@@ -25,6 +25,8 @@
 //local
 #include "../ITMLib/Utils/Configuration.h"
 
+namespace pt = boost::property_tree;
+
 using namespace ITMLib;
 using namespace ITMLib::configuration;
 
@@ -35,6 +37,8 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 #else
 	configuration::load_configuration_from_json_file("TestData/default_config_cuda.json");
 #endif
+
+
 	BOOST_REQUIRE_EQUAL(default_configuration.voxel_volume_parameters, configuration::get().voxel_volume_parameters);
 	BOOST_REQUIRE_EQUAL(default_configuration.surfel_volume_parameters, configuration::get().surfel_volume_parameters);
 	BOOST_REQUIRE_EQUAL(default_configuration.slavcheva_parameters, configuration::get().slavcheva_parameters);
@@ -42,6 +46,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	BOOST_REQUIRE_EQUAL(default_configuration.telemetry_settings, configuration::get().telemetry_settings);
 	BOOST_REQUIRE_EQUAL(default_configuration.paths, configuration::get().paths);
 	BOOST_REQUIRE_EQUAL(default_configuration.ui_engine_settings, configuration::get().ui_engine_settings);
+	BOOST_REQUIRE_EQUAL(default_configuration.non_rigid_tracking_parameters, configuration::get().non_rigid_tracking_parameters);
 	BOOST_REQUIRE_EQUAL(default_configuration, configuration::get());
 	configuration::Configuration configuration1(
 			VoxelVolumeParameters(0.005, 0.12, 4.12, 0.05, 200, true, true, 1.2f),
@@ -49,7 +54,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			                       1.1f, 4.5f, 21, 300, false, false),
 			SlavchevaSurfaceTracker::Parameters(0.11f, 0.09f, 2.0f, 0.3f, 0.1f, 1e-6f),
 			SlavchevaSurfaceTracker::Switches(false, true, false, true, false),
-			TelemetrySettings(Vector3i(20, 23, 0), true, true),
+			TelemetrySettings(Vector3i(20, 23, 0), true, true, true),
 			Paths("TestData/output1",
 			                     "TestData/calib_file1.txt",
 			                     "", "", "",
@@ -83,6 +88,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	BOOST_REQUIRE_EQUAL(configuration1.telemetry_settings, configuration::get().telemetry_settings);
 	BOOST_REQUIRE_EQUAL(configuration1.paths, configuration::get().paths);
 	BOOST_REQUIRE_EQUAL(configuration1.ui_engine_settings, configuration::get().ui_engine_settings);
+	BOOST_REQUIRE_EQUAL(configuration1.non_rigid_tracking_parameters, configuration::get().non_rigid_tracking_parameters);
 	BOOST_REQUIRE_EQUAL(configuration1, configuration::get());
 	configuration::save_configuration_to_json_file("TestData/config2.json", configuration1);
 	configuration::load_configuration_from_json_file("TestData/config2.json");
@@ -93,6 +99,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	BOOST_REQUIRE_EQUAL(configuration1.telemetry_settings, configuration::get().telemetry_settings);
 	BOOST_REQUIRE_EQUAL(configuration1.paths, configuration::get().paths);
 	BOOST_REQUIRE_EQUAL(configuration1.ui_engine_settings, configuration::get().ui_engine_settings);
+	BOOST_REQUIRE_EQUAL(configuration1.non_rigid_tracking_parameters, configuration::get().non_rigid_tracking_parameters);
 	BOOST_REQUIRE_EQUAL(configuration1, configuration::get());
 
 

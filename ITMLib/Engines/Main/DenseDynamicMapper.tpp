@@ -281,7 +281,7 @@ void DenseDynamicMapper<TVoxel, TWarp, TIndex>::PerformSingleOptimizationStep(
 
 	ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::Instance().SaveWarpSlices(iteration);
 
-	if(verbosity_level >= configuration::VERBOSITY_PER_ITERATION){
+	if(this->print_volume_statistics){
 		std::cout << red << "Iteration: " << iteration << reset << std::endl;
 		//** warp update gradient computation
 		PrintOperationStatus("Calculating warp energy gradient...");
@@ -291,7 +291,7 @@ void DenseDynamicMapper<TVoxel, TWarp, TIndex>::PerformSingleOptimizationStep(
 	sceneMotionTracker->CalculateWarpGradient(canonicalScene, initialLiveScene, warpField);
 	bench::StopTimer("TrackMotion_31_CalculateWarpUpdate");
 
-	if(verbosity_level >= configuration::VERBOSITY_PER_ITERATION){
+	if(configuration::get().verbosity_level >= configuration::VERBOSITY_PER_ITERATION){
 		PrintOperationStatus("Applying Sobolev smoothing to energy gradient...");
 	}
 

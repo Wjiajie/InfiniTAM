@@ -15,6 +15,6 @@
 //  ================================================================
 
 
-#include "ITMDenseDynamicMapper.tpp"
+#include "DenseDynamicMapper.tpp"
 
 template class DenseDynamicMapper<ITMVoxel, ITMWarp, ITMVoxelBlockHash>;

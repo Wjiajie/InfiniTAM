@@ -128,6 +128,7 @@ private:
 	const float maxVectorUpdateThresholdVoxels;
 	const AnalysisFlags analysisFlags;
 	const Vector3i focusCoordinates;
+	const bool print_volume_statistics = configuration::get().verbosity_level >= configuration::VERBOSITY_PER_ITERATION && configuration::get().telemetry_settings.log_volume_statistics;
 	const configuration::VerbosityLevel verbosity_level;
 
 	// endregion =======================================================================================================
