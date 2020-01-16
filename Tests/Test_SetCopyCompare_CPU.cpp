@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(testSetVoxelAndCopy_PlainVoxelArray_CPU) {
 	ITMVoxelVolume<ITMVoxel, PlainVoxelArray> scene1(&configuration::get().general_voxel_volume_parameters,
 	                                                    configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 	                                                    MEMORYDEVICE_CPU,
-	                                                    {volumeSize, volumeOffset});
+	                                                    PlainVoxelArray::InitializationParameters(volumeSize, volumeOffset, ""));
 
 
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&scene1);

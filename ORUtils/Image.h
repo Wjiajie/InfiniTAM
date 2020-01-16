@@ -123,7 +123,7 @@ void Image<T>::ApplyMask(const Image<TMask>& maskImage, T blankElement) {
 		DIEWITHEXCEPTION("Source and mask image dimensions must match.");
 	}
 #ifdef WITH_OPENMP
-#pragma omp parallel for default(none)
+#pragma omp parallel for default(none) shared(maskImage, blankElement)
 #endif
 	for (int iElement = 0; iElement < maskImage.dataSize; iElement++) {
 		if(!maskImage.GetElement(iElement,MEMORYDEVICE_CPU)){

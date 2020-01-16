@@ -80,22 +80,25 @@ inline bool MarkAsNeedingAllocationIfNotFound(ITMLib::HashEntryAllocationState* 
 		}
 #else
 			//TODO: come up with an atomics-based solution for OpenMP
+			bool success = false;
 #ifdef WITH_OPENMP
 #pragma omp critical
 #endif
 			{
 				//single-threaded version
 				if (hashEntryStates[hashCode] != ITMLib::NEEDS_NO_CHANGE) {
-					if (IS_EQUAL3(hashBlockCoordinates[hashCode], desiredHashBlockPosition)) return false;
-					//hash code already marked for allocation, but at different coordinates, cannot allocate
-					collisionDetected = true;
-					return false;
+					if (!IS_EQUAL3(hashBlockCoordinates[hashCode], desiredHashBlockPosition)){
+						//hash code already marked for allocation, but at different coordinates, cannot allocate
+						collisionDetected = true;
+					}
+					success = false;
 				} else {
 					hashEntryStates[hashCode] = state;
 					hashBlockCoordinates[hashCode] = desiredHashBlockPosition;
-					return true;
+					success = true;
 				}
 			}
+			return success;
 #endif
 		};
 		if (hashEntry.ptr >= -1) {

@@ -40,7 +40,8 @@ ITMDynamicSceneReconstructionEngine_CPU<TVoxel, TWarp, VoxelBlockHash>::Integrat
 	int visibleEntryCount = volume->index.GetVisibleHashBlockCount();
 
 #ifdef WITH_OPENMP
-#pragma omp parallel for default(none)
+#pragma omp parallel for default(none) shared(visibleEntryCount, visibleEntryHashCodes, localVBA, hashTable, voxelSize,\
+	rgb, rgbImgSize, depth, depthImgSize, mu, maxW, depth_camera_matrix, projParams_d, RGB_camera_matrix, projParams_rgb, confidence)
 #endif
 	for (int visibleHash = 0; visibleHash < visibleEntryCount; visibleHash++) {
 		Vector3i globalPos;

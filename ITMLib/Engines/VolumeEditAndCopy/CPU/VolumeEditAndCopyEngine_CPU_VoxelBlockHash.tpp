@@ -271,7 +271,7 @@ bool VolumeEditAndCopyEngine_CPU<TVoxel, VoxelBlockHash>::CopyScene(
 	if (offset == Vector3i(0)) {
 		ITMIndexingEngine<TVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>::Instance().AllocateUsingOtherVolume(target, source);
 #ifdef WITH_OPENMP
-#pragma omp parallel for default(none)
+#pragma omp parallel for default(none) shared(sourceHashTable,destinationHashTable,sourceVoxels,destinationVoxels,voxelsWereCopied)
 #endif
 		for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
 			const ITMHashEntry& sourceHashEntry = sourceHashTable[sourceHash];
@@ -288,6 +288,9 @@ bool VolumeEditAndCopyEngine_CPU<TVoxel, VoxelBlockHash>::CopyScene(
 			voxelsWereCopied = true;
 		}
 	} else {
+#ifdef WITH_OPENMP
+#pragma omp parallel for default(none) shared(sourceHashTable,sourceVoxels,voxelsWereCopied,offset,target)
+#endif
 		// traverse source hash blocks
 		for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
 			const ITMHashEntry& currentSourceHashEntry = sourceHashTable[sourceHash];

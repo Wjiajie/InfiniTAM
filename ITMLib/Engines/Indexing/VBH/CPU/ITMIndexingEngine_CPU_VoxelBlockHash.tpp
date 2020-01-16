@@ -70,7 +70,9 @@ void ITMIndexingEngine<TVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFromDe
 		volume->index.ClearHashEntryAllocationStates();
 		collisionDetected = false;
 #ifdef WITH_OPENMP
-#pragma omp parallel for default(none)
+#pragma omp parallel for default(none) shared(depthImgSize, collisionDetected, volume, surface_cutoff_distance, \
+		hashTable, oneOverHashBlockSize, invertedDepthCameraProjectionParameters, inverted_depth_camera_matrix, \
+		depth, allocationBlockCoordinates, hashBlockVisibilityTypes, hashEntryStates_device)
 #endif
 		for (int locId = 0; locId < depthImgSize.x * depthImgSize.y; locId++) {
 			int y = locId / depthImgSize.x;
@@ -139,7 +141,8 @@ void ITMIndexingEngine<TVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>::AllocateUsingO
 		//reset target allocation states
 		targetVolume->index.ClearHashEntryAllocationStates();
 #ifdef WITH_OPENMP
-#pragma omp parallel for default(none)
+#pragma omp parallel for default(none) shared(sourceHashEntries, hashEntryStates_device, blockCoordinates_device, \
+		targetHashEntries, collisionDetected)
 #endif
 		for (int sourceHash = 0; sourceHash < hashEntryCount; sourceHash++) {
 
@@ -196,7 +199,7 @@ void AllocateUsingOtherVolumeExpanded_Generic(ITMVoxelVolume<TVoxelTarget, Voxel
 		collision_detected = false;
 		targetVolume->index.ClearHashEntryAllocationStates();
 #ifdef WITH_OPENMP
-#pragma omp parallel for default(none) shared(hashEntryCount, sourceHashTable, targetHashTable, hashEntryStates_device, blockCoordinates_device, collision_detected)
+#pragma omp parallel for default(shared)
 #endif
 		for (int hashCode = 0; hashCode < hashEntryCount; hashCode++) {
 			const ITMHashEntry& hashEntry = sourceHashTable[hashCode];

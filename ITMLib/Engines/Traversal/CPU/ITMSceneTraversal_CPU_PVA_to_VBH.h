@@ -60,7 +60,7 @@ private:
 		// *** find voxel blocks in hash not spanned by array and inspect if any are altered ***
 		// *** also find blocks partially overlapping array, and inspect if those outside array are altered and those inside match ***
 #ifdef WITH_OPENMP
-#pragma omp parallel for default(none), shared(mismatchFound)
+#pragma omp parallel for //default(none), shared(mismatchFound, hashTable, arrayMinVoxels, arrayMaxVoxels, verbose)
 #endif
 		for (int hashCode = 0; hashCode < hashEntryCount; hashCode++) {
 			if (mismatchFound) continue;
@@ -127,7 +127,7 @@ private:
 		// *** Checks whether voxels on the margin of the array that don't overlap any voxel blocks are altered ***
 		auto marginExtentHasMismatch = [&](const Extent3D& extent) {
 #ifdef WITH_OPENMP
-#pragma omp parallel for default(none) shared(mismatchFound)
+#pragma omp parallel for default(shared)
 #endif
 			for (int z = extent.min_z; z < extent.max_z; z++) {
 				if (mismatchFound) continue;
@@ -146,8 +146,7 @@ private:
 						if (verbose) {
 							if (hashVoxelIndex == -1
 							    && std::forward<TArrayVoxelPredicate>(arrayVoxelAlteredCheckPredicate)(arrayVoxel)
-							    &&
-							    isAltered_VerbosePosition(arrayVoxel, position, "Array voxel not matched in hash: ")) {
+							    && isAltered_VerbosePosition(arrayVoxel, position, "Array voxel not matched in hash: ")) {
 								mismatchFound = true;
 							}
 						} else {
@@ -169,7 +168,7 @@ private:
 		auto centralExtentHasMismatch = [&](const Extent3D& extent) {
 			Extent3D hashBlockExtent = extent / VOXEL_BLOCK_SIZE;
 #ifdef WITH_OPENMP
-#pragma omp parallel for default(none) shared(mismatchFound)
+#pragma omp parallel for default(shared)
 #endif
 			for (int zBlock = hashBlockExtent.min_z; zBlock < hashBlockExtent.max_z; zBlock++) {
 				if (mismatchFound) continue;
@@ -269,7 +268,7 @@ private:
 		Vector6i pvaBounds(startVoxel.x, startVoxel.y, startVoxel.z, endVoxel.x, endVoxel.y, endVoxel.z);
 
 #ifdef WITH_OPENMP
-#pragma omp parallel for default(none) shared(foundMismatch)
+#pragma omp parallel for default(shared)
 #endif
 		for (int hash = 0; hash < totalHashEntryCount; hash++) {
 			if (foundMismatch) continue;

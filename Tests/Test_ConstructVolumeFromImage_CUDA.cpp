@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CUDA) {
 				0.0f,
 				static_cast<float>(zero_level_set_voxel_z_coords_mm[iVoxel]) / 1000.0f
 		);
-		zeroLevelSetCoords.push_back(getVoxelCoord(coordinateMeters, settings->voxel_volume_parameters.voxel_size));
+		zeroLevelSetCoords.push_back(getVoxelCoord(coordinateMeters, settings->general_voxel_volume_parameters.voxel_size));
 	}
 
 	float tolerance = 1e-4;

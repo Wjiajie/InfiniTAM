@@ -213,7 +213,7 @@ private:
 
 		volatile bool mismatchFound = false;
 #ifdef WITH_OPENMP
-#pragma omp parallel for default(none) shared(mismatchFound)
+#pragma omp parallel for default(shared)
 #endif
 		for (int z = boundingExtent.min_z; z < boundingExtent.max_z; z++) {
 			if (mismatchFound) continue;
