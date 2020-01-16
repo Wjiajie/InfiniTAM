@@ -216,13 +216,21 @@ DenseDynamicMapper<TVoxel, TWarp, TIndex>::ProcessFrame(const ITMView* view, con
 	if (inStepByStepProcessingMode) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Cannot track motion for full frame when in step-by-step mode");
 	}
+
 	InitializeProcessing(view, trackingState, warpField, liveScenePair);
-	PrintSceneStatistics(liveScenePair[0], "[[live frame before tracking]]");
+	if(configuration::get().verbosity_level >= configuration::VERBOSITY_PER_FRAME) {
+		PrintSceneStatistics(liveScenePair[0], "[[live frame before tracking]]");
+	}
 	bench::StartTimer("TrackMotion");
 	ITMVoxelVolume<TVoxel, TIndex>* finalWarpedLiveScene = TrackFrameMotion(canonicalScene, liveScenePair, warpField);
 	bench::StopTimer("TrackMotion");
-	PrintSceneStatistics(finalWarpedLiveScene, "[[live frame after tracking]]");
+	if(configuration::get().verbosity_level >= configuration::VERBOSITY_PER_FRAME) {
+		PrintSceneStatistics(finalWarpedLiveScene, "[[live frame after tracking]]");
+	}
 	FinalizeProcessing(canonicalScene, finalWarpedLiveScene, renderState);
+	if(configuration::get().verbosity_level >= configuration::VERBOSITY_PER_FRAME) {
+		PrintSceneStatistics(canonicalScene, "[[canonical frame after fusion]]");
+	}
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>

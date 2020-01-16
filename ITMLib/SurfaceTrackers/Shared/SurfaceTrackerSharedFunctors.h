@@ -330,7 +330,8 @@ inline float UpdateWarps_common(
 		ITMLib::ITMVoxelVolume<TVoxel, TIndex>* liveScene,
 		ITMLib::ITMVoxelVolume<TWarp, TIndex>* warpField,
 		float learning_rate,
-		bool gradeintSmoothingEnabled) {
+		bool gradeintSmoothingEnabled,
+		bool print_histogram) {
 	WarpUpdateFunctor<TVoxel, TWarp, TDeviceType>
 			warpUpdateFunctor(learning_rate, ITMLib::configuration::get().non_rigid_tracking_parameters.momentum_weight, gradeintSmoothingEnabled);
 
@@ -340,12 +341,14 @@ inline float UpdateWarps_common(
 	//TODO: move histogram printing / logging to a separate function
 	//don't compute histogram in CUDA version
 #ifndef __CUDACC__
-	WarpHistogramFunctor<TVoxel, TWarp>
-			warpHistogramFunctor(warpUpdateFunctor.maxFramewiseWarpLength, warpUpdateFunctor.maxWarpUpdateLength);
-	ITMLib::ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, TIndex, TDeviceType>::
-	DualVoxelTraversal(liveScene, canonicalScene, warpField, warpHistogramFunctor);
-	warpHistogramFunctor.PrintHistogram();
-	warpUpdateFunctor.PrintWarp();
+	if(print_histogram){
+		WarpHistogramFunctor<TVoxel, TWarp>
+				warpHistogramFunctor(warpUpdateFunctor.maxFramewiseWarpLength, warpUpdateFunctor.maxWarpUpdateLength);
+		ITMLib::ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, TIndex, TDeviceType>::
+		DualVoxelTraversal(liveScene, canonicalScene, warpField, warpHistogramFunctor);
+		warpHistogramFunctor.PrintHistogram();
+		warpUpdateFunctor.PrintWarp();
+	}
 #endif
 	//return warpUpdateFunctor.maxWarpUpdateLength;
 	return GET_ATOMIC_VALUE_CPU(warpUpdateFunctor.maxFramewiseWarpLength);

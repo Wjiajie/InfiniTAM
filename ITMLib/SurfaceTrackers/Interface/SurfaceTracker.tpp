@@ -136,7 +136,8 @@ float SurfaceTracker<TVoxel, TWarp, TIndex, TMemoryDeviceType, TGradientFunctorT
 		ITMVoxelVolume<TWarp, TIndex>* warpField) {
 	return UpdateWarps_common<TVoxel, TWarp, TIndex, TMemoryDeviceType>(
 			canonicalScene, liveScene, warpField, this->parameters.learning_rate,
-			this->switches.enable_sobolev_gradient_smoothing);
+			this->switches.enable_sobolev_gradient_smoothing,
+			this->histograms_enabled);
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex, MemoryDeviceType TMemoryDeviceType, GradientFunctorType TGradientFunctorType>

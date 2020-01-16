@@ -17,6 +17,7 @@
 
 #include "SurfaceTrackerInterface.h"
 #include "../WarpGradientFunctors/WarpGradientFunctor.h"
+#include "../../Utils/Configuration.h"
 
 namespace ITMLib{
 
@@ -28,6 +29,12 @@ class SurfaceTracker :
 public:
 	using SlavchevaSurfaceTracker::SlavchevaSurfaceTracker;
 	virtual ~SurfaceTracker() = default;
+
+#ifndef __CUDACC__
+	bool const histograms_enabled = configuration::get().verbosity_level >= configuration::VERBOSITY_PER_ITERATION;
+#else
+	bool const histograms_enabled = false;
+#endif
 
 	void ClearOutFramewiseWarp(ITMVoxelVolume <TWarp, TIndex>* warpField) override;
 	void AddFramewiseWarpToWarp(
