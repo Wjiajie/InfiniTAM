@@ -28,8 +28,8 @@ namespace b_ios = boost::iostreams;
 
 
 template<typename TVoxel>
-void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(
-		const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
+void ITMSceneFileIOEngine<TVoxel, VoxelBlockHash>::SaveToDirectoryCompact(
+		const ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene,
 		const std::string& outputDirectory) {
 
 
@@ -44,7 +44,7 @@ void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(
 	bool tempSceneUsed = false;
 	if (scene->localVBA.GetMemoryType() == MEMORYDEVICE_CUDA) {
 		// we cannot access CUDA blocks directly, so the easiest solution here is to make a local main-memory copy first
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene_cpu_copy = new ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>(
+		ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene_cpu_copy = new ITMVoxelVolume<TVoxel, VoxelBlockHash>(
 				*scene, MEMORYDEVICE_CPU);
 		scene = scene_cpu_copy;
 		tempSceneUsed = true;
@@ -90,8 +90,8 @@ void ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::SaveToDirectoryCompact(
 
 template<typename TVoxel>
 void
-ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
+ITMSceneFileIOEngine<TVoxel, VoxelBlockHash>::LoadFromDirectoryCompact(
+		ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene,
 		const std::string& outputDirectory) {
 	std::string path = outputDirectory + "compact.dat";
 	std::ifstream ifStream = std::ifstream(path.c_str(), std::ios_base::binary | std::ios_base::in);
@@ -100,12 +100,12 @@ ITMSceneFileIOEngine<TVoxel, ITMVoxelBlockHash>::LoadFromDirectoryCompact(
 	inFilter.push(b_ios::zlib_decompressor());
 	inFilter.push(ifStream);
 
-	ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetScene = scene;
+	ITMVoxelVolume<TVoxel, VoxelBlockHash>* targetScene = scene;
 	bool copyToCUDA = false;
 	if (scene->localVBA.GetMemoryType() == MEMORYDEVICE_CUDA) {
 		// we cannot access CUDA blocks directly, so the easiest solution here is to make a local main-memory copy
 		// first, read it in from disk, and then copy it over into the target
-		auto scene_cpu_copy = new ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>(*scene, MEMORYDEVICE_CPU);
+		auto scene_cpu_copy = new ITMVoxelVolume<TVoxel, VoxelBlockHash>(*scene, MEMORYDEVICE_CPU);
 		scene = scene_cpu_copy;
 		copyToCUDA = true;
 	}

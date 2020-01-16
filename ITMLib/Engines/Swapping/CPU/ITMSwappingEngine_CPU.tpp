@@ -7,9 +7,9 @@ using namespace ITMLib;
 
 
 template<class TVoxel>
-int ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::LoadFromGlobalMemory(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene)
+int ITMSwappingEngine_CPU<TVoxel, VoxelBlockHash>::LoadFromGlobalMemory(ITMVoxelVolume<TVoxel, VoxelBlockHash> *scene)
 {
-	ITMGlobalCache<TVoxel, ITMVoxelBlockHash> *globalCache = scene->globalCache;
+	ITMGlobalCache<TVoxel, VoxelBlockHash> *globalCache = scene->globalCache;
 
 	ITMHashSwapState *swapStates = globalCache->GetSwapStates(false);
 
@@ -56,9 +56,9 @@ int ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::LoadFromGlobalMemory(ITMVo
 }
 
 template<class TVoxel>
-void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateGlobalIntoLocal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState)
+void ITMSwappingEngine_CPU<TVoxel, VoxelBlockHash>::IntegrateGlobalIntoLocal(ITMVoxelVolume<TVoxel, VoxelBlockHash> *scene, ITMRenderState *renderState)
 {
-	ITMGlobalCache<TVoxel, ITMVoxelBlockHash> *globalCache = scene->globalCache;
+	ITMGlobalCache<TVoxel, VoxelBlockHash> *globalCache = scene->globalCache;
 
 	ITMHashEntry *hashTable = scene->index.GetEntries();
 
@@ -94,9 +94,9 @@ void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateGlobalIntoLocal(
 }
 
 template<class TVoxel>
-void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::SaveToGlobalMemory(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState)
+void ITMSwappingEngine_CPU<TVoxel, VoxelBlockHash>::SaveToGlobalMemory(ITMVoxelVolume<TVoxel, VoxelBlockHash> *scene, ITMRenderState *renderState)
 {
-	ITMGlobalCache<TVoxel, ITMVoxelBlockHash> *globalCache = scene->globalCache;
+	ITMGlobalCache<TVoxel, VoxelBlockHash> *globalCache = scene->globalCache;
 
 	ITMHashSwapState *swapStates = globalCache->GetSwapStates(false);
 
@@ -166,7 +166,7 @@ void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::SaveToGlobalMemory(ITMVox
 }
 
 template<class TVoxel>
-void ITMSwappingEngine_CPU<TVoxel, ITMVoxelBlockHash>::CleanLocalMemory(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, ITMRenderState *renderState)
+void ITMSwappingEngine_CPU<TVoxel, VoxelBlockHash>::CleanLocalMemory(ITMVoxelVolume<TVoxel, VoxelBlockHash> *scene, ITMRenderState *renderState)
 {
 	ITMHashEntry *hashTable = scene->index.GetEntries();
 	HashBlockVisibility *blockVisibilityTypes = scene->index.GetBlockVisibilityTypes();

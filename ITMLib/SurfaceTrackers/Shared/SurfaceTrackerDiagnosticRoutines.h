@@ -32,9 +32,9 @@ using namespace ITMLib;
 template<class TVoxel>
 _CPU_AND_GPU_CODE_ inline TVoxel
 ReadVoxelAndLinearIndex(const CONSTPTR(TVoxel)* voxelData,
-                        const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex,
+                        const CONSTPTR(ITMLib::VoxelBlockHash::IndexData)* voxelIndex,
                         const THREADPTR(Vector3i)& point, THREADPTR(int)& vmIndex,
-                        THREADPTR(ITMLib::ITMVoxelBlockHash::IndexCache)& cache, THREADPTR(int)& linearIdx) {
+                        THREADPTR(ITMLib::VoxelBlockHash::IndexCache)& cache, THREADPTR(int)& linearIdx) {
 	Vector3i blockPos;
 	linearIdx = pointToVoxelBlockPos(point, blockPos);
 

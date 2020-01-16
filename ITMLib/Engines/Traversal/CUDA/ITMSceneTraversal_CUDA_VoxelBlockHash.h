@@ -15,7 +15,7 @@
 //  ================================================================
 #pragma once
 
-#include "../../../Objects/Scene/ITMVoxelBlockHash.h"
+#include "../../../Objects/Scene/VoxelBlockHash.h"
 #include "../../../../ORUtils/JetbrainsCUDASyntax.hpp"
 #include "ITMSceneTraversal_CUDA_VoxelBlockHash_Kernels.h"
 #include "../Interface/ITMSceneTraversal.h"
@@ -31,11 +31,11 @@ namespace ITMLib {
 // functor.
 
 template<typename TVoxel>
-class ITMSceneTraversalEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA> {
+class ITMSceneTraversalEngine<TVoxel, VoxelBlockHash, MEMORYDEVICE_CUDA> {
 private:
 	template<typename TFunctor, typename TDeviceFunction>
 	inline static void
-	VoxelTraversal_Generic(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor, TDeviceFunction&& deviceFunction) {
+	VoxelTraversal_Generic(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene, TFunctor& functor, TDeviceFunction&& deviceFunction) {
 		TVoxel* voxelArray = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetIndexData();
 		int hashEntryCount = scene->index.hashEntryCount;
@@ -60,7 +60,7 @@ private:
 public:
 // region ================================ STATIC SINGLE-SCENE TRAVERSAL ===============================================
 	template<typename TStaticFunctor>
-	inline static void StaticVoxelTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
+	inline static void StaticVoxelTraversal(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene) {
 		TVoxel* voxelArray = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetIndexData();
 		int hashEntryCount = scene->index.hashEntryCount;
@@ -77,7 +77,7 @@ public:
 // region ================================ DYNAMIC SINGLE-SCENE TRAVERSAL ==============================================
 	template<typename TFunctor>
 	inline static void
-	VoxelTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
+	VoxelTraversal(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene, TFunctor& functor) {
 		VoxelTraversal_Generic(scene, functor, [](dim3 gridSize_HashPerBlock, dim3 cudaBlockSize_BlockVoxelPerThread,
 				TVoxel* voxelArray, const ITMHashEntry* hashTable, TFunctor* functor_device){
 			voxelTraversal_device<TFunctor, TVoxel>
@@ -87,7 +87,7 @@ public:
 	}
 	template<typename TFunctor>
 	inline static void
-	VoxelPositionTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
+	VoxelPositionTraversal(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene, TFunctor& functor) {
 		VoxelTraversal_Generic(scene, functor, [](dim3 gridSize_HashPerBlock, dim3 cudaBlockSize_BlockVoxelPerThread,
 		                                          TVoxel* voxelArray, const ITMHashEntry* hashTable, TFunctor* functor_device){
 			voxelPositionTraversal_device<TFunctor, TVoxel>
@@ -97,7 +97,7 @@ public:
 	}
 	template<typename TFunctor>
 	inline static void
-	VoxelAndHashBlockPositionTraversal(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, TFunctor& functor) {
+	VoxelAndHashBlockPositionTraversal(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene, TFunctor& functor) {
 		VoxelTraversal_Generic(scene, functor, [](dim3 gridSize_HashPerBlock, dim3 cudaBlockSize_BlockVoxelPerThread,
 		                                          TVoxel* voxelArray, const ITMHashEntry* hashTable, TFunctor* functor_device){
 			voxelAndHashBlockPositionTraversal_device<TFunctor, TVoxel>
@@ -109,14 +109,14 @@ public:
 };
 
 template<typename TVoxelPrimary, typename TVoxelSecondary>
-class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, ITMVoxelBlockHash, ITMVoxelBlockHash, MEMORYDEVICE_CUDA> {
+class ITMDualSceneTraversalEngine<TVoxelPrimary, TVoxelSecondary, VoxelBlockHash, VoxelBlockHash, MEMORYDEVICE_CUDA> {
 private:
 
 	template<typename TFunctor, typename TDeviceTraversalFunction>
 	inline static void
 	DualVoxelTraversal_Generic(
-			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
-			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TVoxelPrimary, VoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, VoxelBlockHash>* secondaryScene,
 			TFunctor& functor, TDeviceTraversalFunction&& deviceTraversalFunction) {
 		TVoxelPrimary* primaryVoxels = primaryScene->localVBA.GetVoxelBlocks();
 		TVoxelSecondary* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();
@@ -145,8 +145,8 @@ private:
 	template<typename TBooleanFunctor, typename TDeviceTraversalFunction>
 	inline static bool
 	DualVoxelTraversal_AllTrue_Generic(
-			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
-			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TVoxelPrimary, VoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, VoxelBlockHash>* secondaryScene,
 			TBooleanFunctor& functor, TDeviceTraversalFunction&& deviceTraversalFunction) {
 		// assumes functor is allocated in main memory
 
@@ -233,8 +233,8 @@ public:
 	template<typename TBooleanFunctor>
 	inline static bool
 	DualVoxelTraversal_AllTrue(
-			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
-			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TVoxelPrimary, VoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, VoxelBlockHash>* secondaryScene,
 			TBooleanFunctor& functor) {
 
 		return DualVoxelTraversal_AllTrue_Generic(
@@ -256,8 +256,8 @@ public:
 	template<typename TBooleanFunctor>
 	inline static bool
 	DualVoxelPositionTraversal_AllTrue(
-			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
-			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TVoxelPrimary, VoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, VoxelBlockHash>* secondaryScene,
 			TBooleanFunctor& functor) {
 
 		return DualVoxelTraversal_AllTrue_Generic(
@@ -279,8 +279,8 @@ public:
 	template<typename TFunctor>
 	inline static void
 	DualVoxelTraversal(
-			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
-			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TVoxelPrimary, VoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, VoxelBlockHash>* secondaryScene,
 			TFunctor& functor) {
 		DualVoxelTraversal_Generic(primaryScene,secondaryScene,functor, [](
 				dim3 gridSize_HashPerBlock, dim3 cudaBlockSize_BlockVoxelPerThread,
@@ -296,8 +296,8 @@ public:
 	template<typename TFunctor>
 	inline static void
 	DualVoxelPositionTraversal(
-			ITMVoxelVolume<TVoxelPrimary, ITMVoxelBlockHash>* primaryScene,
-			ITMVoxelVolume<TVoxelSecondary, ITMVoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TVoxelPrimary, VoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxelSecondary, VoxelBlockHash>* secondaryScene,
 			TFunctor& functor) {
 		DualVoxelTraversal_Generic(primaryScene,secondaryScene,functor, [](
 				dim3 gridSize_HashPerBlock, dim3 cudaBlockSize_BlockVoxelPerThread,
@@ -314,7 +314,7 @@ public:
 
 
 template<typename TVoxel, typename TWarp>
-class ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, ITMVoxelBlockHash, MEMORYDEVICE_CUDA> {
+class ITMDualSceneWarpTraversalEngine<TVoxel, TWarp, VoxelBlockHash, MEMORYDEVICE_CUDA> {
 	/**
 	 * \brief Concurrent traversal of 2 scenes with the same voxel type and a warp field
 	 */
@@ -325,9 +325,9 @@ public:
 	template<typename TFunctor>
 	inline static void
 	DualVoxelPositionTraversal(
-			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* primaryScene,
-			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* secondaryScene,
-			ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
+			ITMVoxelVolume<TVoxel, VoxelBlockHash>* primaryScene,
+			ITMVoxelVolume<TVoxel, VoxelBlockHash>* secondaryScene,
+			ITMVoxelVolume<TWarp, VoxelBlockHash>* warpField,
 			TFunctor& functor) {
 // *** traversal vars
 		TVoxel* secondaryVoxels = secondaryScene->localVBA.GetVoxelBlocks();

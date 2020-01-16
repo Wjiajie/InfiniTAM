@@ -21,15 +21,15 @@ namespace ITMLib
 	};
 
 template<class TVoxel>
-class ITMMultiVisualizationEngine_CPU<TVoxel,ITMVoxelBlockHash> : public ITMMultiVisualisationEngine<TVoxel, ITMVoxelBlockHash>
+class ITMMultiVisualizationEngine_CPU<TVoxel,VoxelBlockHash> : public ITMMultiVisualisationEngine<TVoxel, VoxelBlockHash>
 {
 public:
 	ITMMultiVisualizationEngine_CPU(void) {}
 	~ITMMultiVisualizationEngine_CPU(void) {}
 
-	void PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, ITMVoxelBlockHash> & sceneManager, ITMRenderState *state);
+	void PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, VoxelBlockHash> & sceneManager, ITMRenderState *state);
 
-	void CreateExpectedDepths(const ITMVoxelMapGraphManager<TVoxel, ITMVoxelBlockHash> & sceneManager, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *renderState) const;
+	void CreateExpectedDepths(const ITMVoxelMapGraphManager<TVoxel, VoxelBlockHash> & sceneManager, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *renderState) const;
 
 	void RenderImage(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type) const;
 };

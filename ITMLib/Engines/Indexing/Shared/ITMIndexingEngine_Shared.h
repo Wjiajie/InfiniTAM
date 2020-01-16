@@ -16,7 +16,7 @@
 #pragma once
 
 #include "../../../../ORUtils/PlatformIndependence.h"
-#include "../../../Objects/Scene/ITMVoxelBlockHash.h"
+#include "../../../Objects/Scene/VoxelBlockHash.h"
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../Common/ITMCommonFunctors.h"
 #include "../../../Utils/ITMMath.h"
@@ -188,8 +188,8 @@ MarkForAllocationAndSetVisibilityTypeIfNotFound(ITMLib::HashEntryAllocationState
 template<typename TWarp, typename TVoxel, WarpType TWarpType>
 struct WarpBasedAllocationMarkerFunctor {
 	WarpBasedAllocationMarkerFunctor(
-			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceVolume,
-			ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volumeToAllocate,
+			ITMVoxelVolume<TVoxel, VoxelBlockHash>* sourceVolume,
+			ITMVoxelVolume<TVoxel, VoxelBlockHash>* volumeToAllocate,
 			Vector3s* allocationBlockCoords,
 			HashEntryAllocationState* warpedEntryAllocationStates) :
 
@@ -239,15 +239,15 @@ struct WarpBasedAllocationMarkerFunctor {
 private:
 
 
-	ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDFScene;
+	ITMVoxelVolume<TVoxel, VoxelBlockHash>* targetTSDFScene;
 	TVoxel* targetTSDFVoxels;
 	ITMHashEntry* targetTSDFHashEntries;
-	ITMVoxelBlockHash::IndexCache targetTSDFCache;
+	VoxelBlockHash::IndexCache targetTSDFCache;
 
-	ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDFScene;
+	ITMVoxelVolume<TVoxel, VoxelBlockHash>* sourceTSDFScene;
 	TVoxel* sourceTSDFVoxels;
 	ITMHashEntry* sourceTSDFHashEntries;
-	ITMVoxelBlockHash::IndexCache sourceTSDFCache;
+	VoxelBlockHash::IndexCache sourceTSDFCache;
 
 	Vector3s* allocationBlockCoords;
 	HashEntryAllocationState* warpedEntryAllocationStates;

@@ -22,8 +22,8 @@ void ITMMultiVisualizationEngine_CPU<TVoxel, TIndex>::PrepareRenderState(const I
 }
 
 template<class TVoxel>
-void ITMMultiVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, ITMVoxelBlockHash> & mapManager, ITMRenderState *_state){
-	ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash> *state = (ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>*)_state;
+void ITMMultiVisualizationEngine_CPU<TVoxel, VoxelBlockHash>::PrepareRenderState(const ITMVoxelMapGraphManager<TVoxel, VoxelBlockHash> & mapManager, ITMRenderState *_state){
+	ITMRenderStateMultiScene<TVoxel, VoxelBlockHash> *state = (ITMRenderStateMultiScene<TVoxel, VoxelBlockHash>*)_state;
 	state->PrepareLocalMaps(mapManager);
 }
 
@@ -34,9 +34,9 @@ void ITMMultiVisualizationEngine_CPU<TVoxel, TIndex>::CreateExpectedDepths(const
 }
 
 template<class TVoxel>
-void ITMMultiVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CreateExpectedDepths(const ITMVoxelMapGraphManager<TVoxel, ITMVoxelBlockHash> & sceneManager, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
+void ITMMultiVisualizationEngine_CPU<TVoxel, VoxelBlockHash>::CreateExpectedDepths(const ITMVoxelMapGraphManager<TVoxel, VoxelBlockHash> & sceneManager, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState) const
 {
-	ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash> *renderState = (ITMRenderStateMultiScene<TVoxel, ITMVoxelBlockHash>*)_renderState;
+	ITMRenderStateMultiScene<TVoxel, VoxelBlockHash> *renderState = (ITMRenderStateMultiScene<TVoxel, VoxelBlockHash>*)_renderState;
 
 	// reset min max image
 	Vector2i imgSize = renderState->renderingRangeImage->noDims;
@@ -234,8 +234,8 @@ void ITMMultiVisualizationEngine_CPU<TVoxel, TIndex>::RenderImage(const ORUtils:
 }
 
 template<class TVoxel>
-void ITMMultiVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::RenderImage(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type) const
+void ITMMultiVisualizationEngine_CPU<TVoxel, VoxelBlockHash>::RenderImage(const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics, ITMRenderState *_renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type) const
 {
-	RenderImage_common<TVoxel,ITMVoxelBlockHash>(pose,intrinsics,_renderState,outputImage,type);
+	RenderImage_common<TVoxel,VoxelBlockHash>(pose,intrinsics,_renderState,outputImage,type);
 }
 

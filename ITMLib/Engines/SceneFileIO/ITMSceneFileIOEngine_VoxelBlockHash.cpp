@@ -19,7 +19,7 @@
 namespace ITMLib {
 
 template
-class ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash>;
+class ITMSceneFileIOEngine<ITMVoxel, VoxelBlockHash>;
 template
-class ITMSceneFileIOEngine<ITMWarp, ITMVoxelBlockHash>;
+class ITMSceneFileIOEngine<ITMWarp, VoxelBlockHash>;
 } // namespace ITMLib

@@ -35,8 +35,8 @@ template<typename TVoxel, typename TIndex>
 struct ComputeVoxelBoundsFunctor;
 
 template<typename TVoxel>
-struct ComputeVoxelBoundsFunctor<TVoxel, ITMVoxelBlockHash> {
-	static Vector6i Compute(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
+struct ComputeVoxelBoundsFunctor<TVoxel, VoxelBlockHash> {
+	static Vector6i Compute(const ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene) {
 
 		Vector6i bounds = Vector6i(0);
 		const TVoxel* voxelBlocks = scene->localVBA.GetVoxelBlocks();
@@ -84,9 +84,9 @@ struct ComputeAllocatedHashBlockCountFunctor<PlainVoxelArray> {
 };
 
 template<>
-struct ComputeAllocatedHashBlockCountFunctor<ITMVoxelBlockHash> {
+struct ComputeAllocatedHashBlockCountFunctor<VoxelBlockHash> {
 	inline
-	static int compute(const ITMVoxelBlockHash& index) {
+	static int compute(const VoxelBlockHash& index) {
 		dim3 cudaBlockSize(256, 1);
 		dim3 cudaGridSize((int) ceil((float) index.hashEntryCount / (float) cudaBlockSize.x));
 		ORUtils::MemoryBlock<int> result(1, true, true);
@@ -127,10 +127,10 @@ struct ComputeAllocatedVoxelCountFunctor<PlainVoxelArray> {
 };
 
 template<>
-struct ComputeAllocatedVoxelCountFunctor<ITMVoxelBlockHash> {
+struct ComputeAllocatedVoxelCountFunctor<VoxelBlockHash> {
 	inline
-	static int compute(const ITMVoxelBlockHash& index) {
-		return ComputeAllocatedHashBlockCountFunctor<ITMVoxelBlockHash>::compute(index) * VOXEL_BLOCK_SIZE3;
+	static int compute(const VoxelBlockHash& index) {
+		return ComputeAllocatedHashBlockCountFunctor<VoxelBlockHash>::compute(index) * VOXEL_BLOCK_SIZE3;
 	}
 };
 

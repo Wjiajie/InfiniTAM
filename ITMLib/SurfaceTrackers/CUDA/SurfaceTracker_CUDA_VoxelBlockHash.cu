@@ -19,7 +19,7 @@
 
 namespace ITMLib {
 template
-class SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CUDA, TRACKER_SLAVCHEVA_OPTIMIZED>;
+class SurfaceTracker<ITMVoxel, ITMWarp, VoxelBlockHash, MEMORYDEVICE_CUDA, TRACKER_SLAVCHEVA_OPTIMIZED>;
 template
-class SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CUDA, TRACKER_SLAVCHEVA_DIAGNOSTIC>;
+class SurfaceTracker<ITMVoxel, ITMWarp, VoxelBlockHash, MEMORYDEVICE_CUDA, TRACKER_SLAVCHEVA_DIAGNOSTIC>;
 } // namespace ITMLib

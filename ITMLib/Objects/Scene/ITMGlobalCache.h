@@ -8,7 +8,7 @@
 #include <cstdio>
 
 
-#include "ITMVoxelBlockHash.h"
+#include "VoxelBlockHash.h"
 #include "PlainVoxelArray.h"
 #include "../../../ORUtils/CUDADefines.h"
 
@@ -37,7 +37,7 @@ namespace ITMLib
 	};
 
 	template<typename TVoxel>
-	class ITMGlobalCache<TVoxel, ITMVoxelBlockHash>
+	class ITMGlobalCache<TVoxel, VoxelBlockHash>
 	{
 	private:
 		bool *hasStoredData;
@@ -93,7 +93,7 @@ namespace ITMLib
 #endif
 		}
 
-		explicit ITMGlobalCache(const ITMVoxelBlockHash& index) : ITMGlobalCache(index.hashEntryCount){}
+		explicit ITMGlobalCache(const VoxelBlockHash& index) : ITMGlobalCache(index.hashEntryCount){}
 
 		explicit ITMGlobalCache(const ITMGlobalCache& other) : ITMGlobalCache(other.hashEntryCount)
 		{

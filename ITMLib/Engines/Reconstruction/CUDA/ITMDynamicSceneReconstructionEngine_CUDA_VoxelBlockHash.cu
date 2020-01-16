@@ -18,5 +18,5 @@
 
 namespace ITMLib {
 template
-class ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash>;
+class ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, VoxelBlockHash>;
 }

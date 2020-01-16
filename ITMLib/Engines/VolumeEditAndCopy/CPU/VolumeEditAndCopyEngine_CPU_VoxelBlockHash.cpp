@@ -19,7 +19,7 @@
 
 namespace ITMLib {
 template
-class VolumeEditAndCopyEngine_CPU<ITMVoxel, ITMVoxelBlockHash>;
+class VolumeEditAndCopyEngine_CPU<ITMVoxel, VoxelBlockHash>;
 template
-class VolumeEditAndCopyEngine_CPU<ITMWarp, ITMVoxelBlockHash>;
+class VolumeEditAndCopyEngine_CPU<ITMWarp, VoxelBlockHash>;
 } // namespace ITMLib

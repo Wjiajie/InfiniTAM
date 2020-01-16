@@ -33,7 +33,7 @@
 using namespace ITMLib;
 
 typedef ITMSceneFileIOEngine<ITMVoxel, PlainVoxelArray> SceneFileIOEngine_PVA;
-typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
+typedef ITMSceneFileIOEngine<ITMVoxel, VoxelBlockHash> SceneFileIOEngine_VBH;
 
 BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 
@@ -61,11 +61,11 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CPU) {
 	BOOST_REQUIRE_EQUAL(SceneStatCalc_CPU_PVA_Voxel::Instance().ComputeNonTruncatedVoxelCount(&loaded_test_scene_PVA), 19456);
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&generated_test_scene_PVA, &loaded_test_scene_PVA, tolerance));
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> generated_test_scene_VBH(
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> generated_test_scene_VBH(
 			&configuration::get().voxel_volume_parameters, configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 			MEMORYDEVICE_CPU);
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> loaded_test_scene_VBH(
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> loaded_test_scene_VBH(
 			&configuration::get().voxel_volume_parameters, configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 			MEMORYDEVICE_CPU);
 

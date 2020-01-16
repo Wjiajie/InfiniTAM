@@ -319,7 +319,7 @@
 		A6AC2BB71CBD34A7000CC89D /* ITMVoxelVolume.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMVoxelVolume.h; sourceTree = "<group>"; };
 		A6AC2BB81CBD34A7000CC89D /* ITMSurfelScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMSurfelScene.h; sourceTree = "<group>"; };
 		A6AC2BB91CBD34A7000CC89D /* ITMSurfelTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMSurfelTypes.h; sourceTree = "<group>"; };
-		A6AC2BBA1CBD34A7000CC89D /* ITMVoxelBlockHash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMVoxelBlockHash.h; sourceTree = "<group>"; };
+		A6AC2BBA1CBD34A7000CC89D /* VoxelBlockHash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VoxelBlockHash.h; sourceTree = "<group>"; };
 		A6AC2BBB1CBD34A7000CC89D /* ITMVoxelTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMVoxelTypes.h; sourceTree = "<group>"; };
 		A6AC2BBD1CBD34A7000CC89D /* ITMExtendedHierarchyLevel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMExtendedHierarchyLevel.h; sourceTree = "<group>"; };
 		A6AC2BBE1CBD34A7000CC89D /* ITMImageHierarchy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITMImageHierarchy.h; sourceTree = "<group>"; };
@@ -1023,7 +1023,7 @@
 				A6AC2BB71CBD34A7000CC89D /* ITMVoxelVolume.h */,
 				A6AC2BB81CBD34A7000CC89D /* ITMSurfelScene.h */,
 				A6AC2BB91CBD34A7000CC89D /* ITMSurfelTypes.h */,
-				A6AC2BBA1CBD34A7000CC89D /* ITMVoxelBlockHash.h */,
+				A6AC2BBA1CBD34A7000CC89D /* VoxelBlockHash.h */,
 				A6AC2BBB1CBD34A7000CC89D /* ITMVoxelTypes.h */,
 			);
 			path = Scene;

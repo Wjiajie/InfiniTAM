@@ -12,16 +12,16 @@ namespace ITMLib
 	{};
 
 	template<class TVoxel>
-	class ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash> : public ITMSceneReconstructionEngine < TVoxel, ITMVoxelBlockHash >
+	class ITMSceneReconstructionEngine_CPU<TVoxel, VoxelBlockHash> : public ITMSceneReconstructionEngine < TVoxel, VoxelBlockHash >
 	{
 
 	public:
-		void ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene);
+		void ResetScene(ITMVoxelVolume<TVoxel, VoxelBlockHash> *scene);
 
-		void AllocateSceneFromDepth(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const ITMView *view, const ITMTrackingState *trackingState,
+		void AllocateSceneFromDepth(ITMVoxelVolume<TVoxel, VoxelBlockHash> *scene, const ITMView *view, const ITMTrackingState *trackingState,
 		                            const ITMRenderState *renderState, bool onlyUpdateVisibleList = false, bool resetVisibleList = false) override;
 
-		void IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const ITMView *view, const ITMTrackingState *trackingState,
+		void IntegrateIntoScene(ITMVoxelVolume<TVoxel, VoxelBlockHash> *scene, const ITMView *view, const ITMTrackingState *trackingState,
 		                        const ITMRenderState *renderState);
 
 		ITMSceneReconstructionEngine_CPU() = default;

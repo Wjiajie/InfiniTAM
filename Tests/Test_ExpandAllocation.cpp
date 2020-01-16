@@ -44,22 +44,22 @@
 using namespace ITMLib;
 
 BOOST_AUTO_TEST_CASE(ExpandVolume_CPU) {
-	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>& indexing_engine
-			= ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance();
+	ITMIndexingEngine<ITMVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>& indexing_engine
+			= ITMIndexingEngine<ITMVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>::Instance();
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume1(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> volume1(&configuration::get().voxel_volume_parameters,
 	                                                    configuration::get().swapping_mode ==
 	                                                    configuration::SWAPPINGMODE_ENABLED,
 	                                                    MEMORYDEVICE_CPU,
 	                                                    {1200, 0x20000});
-	VolumeEditAndCopyEngine_CPU<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(&volume1);
+	VolumeEditAndCopyEngine_CPU<ITMVoxel, VoxelBlockHash>::Inst().ResetScene(&volume1);
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume2(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> volume2(&configuration::get().voxel_volume_parameters,
 	                                                    configuration::get().swapping_mode ==
 	                                                    configuration::SWAPPINGMODE_ENABLED,
 	                                                    MEMORYDEVICE_CPU,
 	                                                    {1200, 0x20000});
-	VolumeEditAndCopyEngine_CPU<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(&volume2);
+	VolumeEditAndCopyEngine_CPU<ITMVoxel, VoxelBlockHash>::Inst().ResetScene(&volume2);
 
 	int hash_code = -1;
 	Vector3s initial_block_pos(0, 0, 0);
@@ -144,18 +144,18 @@ BOOST_AUTO_TEST_CASE(ExpandVolume_CPU) {
 
 template<MemoryDeviceType TMemoryDeviceType>
 void TestAllocateBasedOnVolumeExpanded_Generic() {
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume1(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> volume1(&configuration::get().voxel_volume_parameters,
 	                                                    configuration::get().swapping_mode ==
 	                                                    configuration::SWAPPINGMODE_ENABLED,
 	                                                    TMemoryDeviceType,
-	                                                    Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
-	VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(&volume1);
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume2(&configuration::get().voxel_volume_parameters,
+	                                                    Frame16And17Fixture::InitParams<VoxelBlockHash>());
+	VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, VoxelBlockHash, TMemoryDeviceType>().ResetScene(&volume1);
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> volume2(&configuration::get().voxel_volume_parameters,
 	                                                    configuration::get().swapping_mode ==
 	                                                    configuration::SWAPPINGMODE_ENABLED,
 	                                                    TMemoryDeviceType,
-	                                                    Frame16And17Fixture::InitParams<ITMVoxelBlockHash>());
-	VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>().ResetScene(&volume2);
+	                                                    Frame16And17Fixture::InitParams<VoxelBlockHash>());
+	VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, VoxelBlockHash, TMemoryDeviceType>().ResetScene(&volume2);
 	ITMView* view = nullptr;
 	updateView(&view, "TestData/snoopy_depth_000017.png",
 	           "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
@@ -164,12 +164,12 @@ void TestAllocateBasedOnVolumeExpanded_Generic() {
 	ITMTrackingState trackingState(imageSize, TMemoryDeviceType);
 	ITMRenderState renderState(imageSize, configuration::get().voxel_volume_parameters.near_clipping_distance,
 	                           configuration::get().voxel_volume_parameters.far_clipping_distance, TMemoryDeviceType);
-	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>::Instance().AllocateFromDepth(
+	ITMIndexingEngine<ITMVoxel, VoxelBlockHash, TMemoryDeviceType>::Instance().AllocateFromDepth(
 			&volume1, view, &trackingState, false, false);
-	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>::Instance()
+	ITMIndexingEngine<ITMVoxel, VoxelBlockHash, TMemoryDeviceType>::Instance()
 			.AllocateUsingOtherVolumeExpanded(&volume2, &volume1);
 
-	BOOST_REQUIRE_EQUAL((ITMSceneStatisticsCalculator<ITMVoxel, ITMVoxelBlockHash, TMemoryDeviceType>::Instance()
+	BOOST_REQUIRE_EQUAL((ITMSceneStatisticsCalculator<ITMVoxel, VoxelBlockHash, TMemoryDeviceType>::Instance()
 			.ComputeAllocatedHashBlockCount(&volume2)), 1625);
 
 }
@@ -185,22 +185,22 @@ BOOST_AUTO_TEST_CASE(TestAllocateBasedOnVolumeExpanded_CUDA) {
 }
 
 BOOST_AUTO_TEST_CASE(ExpandVolume_CUDA) {
-	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>& indexing_engine
-			= ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance();
+	ITMIndexingEngine<ITMVoxel, VoxelBlockHash, MEMORYDEVICE_CUDA>& indexing_engine
+			= ITMIndexingEngine<ITMVoxel, VoxelBlockHash, MEMORYDEVICE_CUDA>::Instance();
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume1(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> volume1(&configuration::get().voxel_volume_parameters,
 	                                                    configuration::get().swapping_mode ==
 	                                                    configuration::SWAPPINGMODE_ENABLED,
 	                                                    MEMORYDEVICE_CUDA,
 	                                                    {1200, 0x20000});
-	VolumeEditAndCopyEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(&volume1);
+	VolumeEditAndCopyEngine_CUDA<ITMVoxel, VoxelBlockHash>::Inst().ResetScene(&volume1);
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume2(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> volume2(&configuration::get().voxel_volume_parameters,
 	                                                    configuration::get().swapping_mode ==
 	                                                    configuration::SWAPPINGMODE_ENABLED,
 	                                                    MEMORYDEVICE_CUDA,
 	                                                    {1200, 0x20000});
-	VolumeEditAndCopyEngine_CUDA<ITMVoxel, ITMVoxelBlockHash>::Inst().ResetScene(&volume2);
+	VolumeEditAndCopyEngine_CUDA<ITMVoxel, VoxelBlockHash>::Inst().ResetScene(&volume2);
 
 	int hash_code = -1;
 	Vector3s initial_block_pos(0, 0, 0);

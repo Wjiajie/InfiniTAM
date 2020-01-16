@@ -16,13 +16,13 @@ namespace ITMLib
 	};
 
 	template<class TVoxel>
-	class ITMMultiMeshingEngine_CPU<TVoxel, ITMVoxelBlockHash> : public ITMMultiMeshingEngine < TVoxel, ITMVoxelBlockHash >
+	class ITMMultiMeshingEngine_CPU<TVoxel, VoxelBlockHash> : public ITMMultiMeshingEngine < TVoxel, VoxelBlockHash >
 	{
 	public:
-		explicit ITMMultiMeshingEngine_CPU(const ITMVoxelBlockHash& index){};
-		typedef typename ITMMultiIndex<ITMVoxelBlockHash>::IndexData MultiIndexData;
+		explicit ITMMultiMeshingEngine_CPU(const VoxelBlockHash& index){};
+		typedef typename ITMMultiIndex<VoxelBlockHash>::IndexData MultiIndexData;
 		typedef ITMMultiVoxel<TVoxel> MultiVoxelData;
-		typedef ITMVoxelMapGraphManager<TVoxel, ITMVoxelBlockHash> MultiSceneManager;
+		typedef ITMVoxelMapGraphManager<TVoxel, VoxelBlockHash> MultiSceneManager;
 		void MeshScene(ITMMesh *mesh, const MultiSceneManager & sceneManager);
 	};
 }

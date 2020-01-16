@@ -535,7 +535,7 @@ set(ITMLIB_OBJECTS_SCENE_SOURCES
     Objects/Scene/ITMVoxelVolume.cpp
     Objects/Scene/ITMLocalVBA.tpp
     Objects/Scene/ITMLocalVBA.cpp
-	Objects/Scene/ITMVoxelBlockHash.cpp
+	Objects/Scene/VoxelBlockHash.cpp
     )
 
 ##
@@ -551,7 +551,7 @@ set(ITMLIB_OBJECTS_SCENE_HEADERS
     Objects/Scene/ITMVoxelVolume.h
     Objects/Scene/ITMSurfelScene.h
     Objects/Scene/ITMSurfelTypes.h
-    Objects/Scene/ITMVoxelBlockHash.h
+	Objects/Scene/VoxelBlockHash.h
     Objects/Scene/ITMVoxelTypes.h
     )
 

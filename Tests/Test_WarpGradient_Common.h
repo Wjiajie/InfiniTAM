@@ -44,7 +44,7 @@ template<typename TIndex>
 std::string getIndexSuffix();
 
 template<>
-std::string getIndexSuffix<ITMVoxelBlockHash>() {
+std::string getIndexSuffix<VoxelBlockHash>() {
 	return "VBH";
 }
 
@@ -127,7 +127,7 @@ template<typename TIndex>
 std::string GetIndexFolderSuffix();
 
 template<>
-std::string GetIndexFolderSuffix<ITMVoxelBlockHash>() { return "VBH"; }
+std::string GetIndexFolderSuffix<VoxelBlockHash>() { return "VBH"; }
 
 template<>
 std::string GetIndexFolderSuffix<PlainVoxelArray>() { return "PVA"; }

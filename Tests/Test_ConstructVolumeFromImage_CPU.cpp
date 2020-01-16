@@ -41,7 +41,7 @@
 using namespace ITMLib;
 
 typedef ITMSceneFileIOEngine<ITMVoxel, PlainVoxelArray> SceneFileIOEngine_PVA;
-typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
+typedef ITMSceneFileIOEngine<ITMVoxel, VoxelBlockHash> SceneFileIOEngine_VBH;
 
 //#define SAVE_TEST_DATA
 BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH_CPU, Frame16And17Fixture) {
@@ -52,11 +52,11 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct16_PVA_VBH_CPU, Frame16And17Fixture) 
 	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
 	                        InitParams<PlainVoxelArray>());
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_16;
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* volume_VBH_16;
 	buildSdfVolumeFromImage(&volume_VBH_16, "TestData/snoopy_depth_000016.png",
 	                        "TestData/snoopy_color_000016.png", "TestData/snoopy_omask_000016.png",
 	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
-	                        InitParams<ITMVoxelBlockHash>());
+	                        InitParams<VoxelBlockHash>());
 //	Vector3i test_pos = Vector3i(-57, -9, 196);
 //	ITMVoxel voxelPVA = ManipulationEngine_CPU_PVA_Voxel::Inst().ReadVoxel(volume_PVA_16, test_pos);
 //	voxelPVA.print_self();
@@ -88,11 +88,11 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_CPU, Frame16And17Fixture) 
 	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
 	                        InitParams<PlainVoxelArray>());
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* volume_VBH_17;
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* volume_VBH_17;
 	buildSdfVolumeFromImage(&volume_VBH_17, "TestData/snoopy_depth_000017.png",
 	                        "TestData/snoopy_color_000017.png", "TestData/snoopy_omask_000017.png",
 	                        "TestData/snoopy_calib.txt", MEMORYDEVICE_CPU,
-	                        InitParams<ITMVoxelBlockHash>());
+	                        InitParams<VoxelBlockHash>());
 
 //	Vector3i voxelPosition(-57, -9, 196);
 //	ITMVoxel voxelPVA = ManipulationEngine_CPU_PVA_Voxel::Inst().ReadVoxel(volume_PVA_17, voxelPosition);
@@ -133,18 +133,18 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_PVA_VBH_Expnaded_CPU, Frame16And17
 	reconstructionEngine_PVA->GenerateTsdfVolumeFromView(&volume_PVA_17, view);
 
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17(MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
-	VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>().ResetScene(&volume_VBH_17);
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17_depth_allocation(MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
-	VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>().ResetScene(&volume_VBH_17_depth_allocation);
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> volume_VBH_17(MEMORYDEVICE_CPU, InitParams<VoxelBlockHash>());
+	VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>().ResetScene(&volume_VBH_17);
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> volume_VBH_17_depth_allocation(MEMORYDEVICE_CPU, InitParams<VoxelBlockHash>());
+	VolumeEditAndCopyEngineFactory::Instance<ITMVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>().ResetScene(&volume_VBH_17_depth_allocation);
 
-	ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash, MEMORYDEVICE_CPU>& indexer =
-	ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance();
+	ITMIndexingEngine<ITMVoxel,VoxelBlockHash, MEMORYDEVICE_CPU>& indexer =
+	ITMIndexingEngine<ITMVoxel,VoxelBlockHash, MEMORYDEVICE_CPU>::Instance();
 	indexer.AllocateFromDepth(&volume_VBH_17_depth_allocation, view);
 	indexer.AllocateUsingOtherVolumeAndSetVisibilityExpanded(&volume_VBH_17, &volume_VBH_17_depth_allocation, view);
 
-	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
-			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(MEMORYDEVICE_CPU);
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, VoxelBlockHash>* reconstructionEngine_VBH =
+			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, VoxelBlockHash>(MEMORYDEVICE_CPU);
 	reconstructionEngine_VBH->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17, view);
 	reconstructionEngine_VBH->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17_depth_allocation, view);
 
@@ -258,15 +258,15 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 		}
 	}
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene2(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> scene2(&configuration::get().voxel_volume_parameters,
 	                                                   configuration::get().swapping_mode ==
 	                                                   configuration::SWAPPINGMODE_ENABLED,
 	                                                   MEMORYDEVICE_CPU);
 	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene2);
 
-	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, VoxelBlockHash>* reconstructionEngine_VBH =
 			ITMDynamicSceneReconstructionEngineFactory
-			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(MEMORYDEVICE_CPU);
+			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, VoxelBlockHash>(MEMORYDEVICE_CPU);
 
 	reconstructionEngine_VBH->GenerateTsdfVolumeFromView(&scene2, view, &trackingState);
 
@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&scene3);
 	reconstructionEngine_PVA->GenerateTsdfVolumeFromView(&scene3, view, &trackingState);
 	BOOST_REQUIRE(contentAlmostEqual_CPU(&scene1, &scene3, tolerance));
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> scene4(&configuration::get().voxel_volume_parameters,
 	                                                   configuration::get().swapping_mode ==
 	                                                   configuration::SWAPPINGMODE_ENABLED,
 	                                                   MEMORYDEVICE_CPU, {0x800, 0x20000});
@@ -297,7 +297,7 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage_CPU) {
 	BOOST_REQUIRE(!contentAlmostEqual_CPU(&scene2, &scene4, tolerance));
 	BOOST_REQUIRE(!allocatedContentAlmostEqual_CPU(&scene1, &scene2, tolerance));
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene5(
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> scene5(
 			&configuration::get().voxel_volume_parameters,
 			configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 			MEMORYDEVICE_CPU);
@@ -364,15 +364,15 @@ BOOST_AUTO_TEST_CASE(testConstructVoxelVolumeFromImage2_CPU) {
 	float tolerance = 1e-5;
 	BOOST_REQUIRE(contentAlmostEqual_CPU_Verbose(&generated_volume, &loaded_volume, tolerance));
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> scene3(&configuration::get().voxel_volume_parameters,
 	                                                   configuration::get().swapping_mode ==
 	                                                   configuration::SWAPPINGMODE_ENABLED,
 	                                                   MEMORYDEVICE_CPU);
 	ManipulationEngine_CPU_VBH_Voxel::Inst().ResetScene(&scene3);
 
-	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH =
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, VoxelBlockHash>* reconstructionEngine_VBH =
 			ITMDynamicSceneReconstructionEngineFactory
-			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(MEMORYDEVICE_CPU);
+			::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, VoxelBlockHash>(MEMORYDEVICE_CPU);
 
 	reconstructionEngine_VBH->GenerateTsdfVolumeFromView(&scene3, view, &trackingState);
 

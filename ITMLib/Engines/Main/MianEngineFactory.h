@@ -35,7 +35,7 @@ ITMMainEngine* BuildMainEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb, 
 		case configuration::LIBMODE_BASIC:
 			switch (chosenIndexingMethod) {
 				case configuration::INDEX_HASH:
-					mainEngine = new ITMBasicEngine<ITMVoxel, ITMVoxelBlockHash>(calib, imgSize_rgb, imgSize_d);
+					mainEngine = new ITMBasicEngine<ITMVoxel, VoxelBlockHash>(calib, imgSize_rgb, imgSize_d);
 					break;
 				case configuration::INDEX_ARRAY:
 					mainEngine = new ITMBasicEngine<ITMVoxel, PlainVoxelArray>(calib, imgSize_rgb, imgSize_d);
@@ -48,7 +48,7 @@ ITMMainEngine* BuildMainEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb, 
 		case configuration::LIBMODE_LOOPCLOSURE:
 			switch (chosenIndexingMethod) {
 				case configuration::INDEX_HASH:
-					mainEngine = new ITMMultiEngine<ITMVoxel, ITMVoxelBlockHash>(calib, imgSize_rgb, imgSize_d);
+					mainEngine = new ITMMultiEngine<ITMVoxel, VoxelBlockHash>(calib, imgSize_rgb, imgSize_d);
 					break;
 				case configuration::INDEX_ARRAY:
 					mainEngine = new ITMMultiEngine<ITMVoxel, PlainVoxelArray>(calib, imgSize_rgb, imgSize_d);
@@ -58,7 +58,7 @@ ITMMainEngine* BuildMainEngine(const ITMRGBDCalib& calib, Vector2i imgSize_rgb, 
 		case configuration::LIBMODE_DYNAMIC:
 			switch (chosenIndexingMethod) {
 				case configuration::INDEX_HASH:
-					mainEngine = new ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(calib, imgSize_rgb, imgSize_d);
+					mainEngine = new ITMDynamicEngine<ITMVoxel, ITMWarp, VoxelBlockHash>(calib, imgSize_rgb, imgSize_d);
 					break;
 				case configuration::INDEX_ARRAY:
 					mainEngine = new ITMDynamicEngine<ITMVoxel, ITMWarp, PlainVoxelArray>(calib, imgSize_rgb, imgSize_d);

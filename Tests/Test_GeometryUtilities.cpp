@@ -24,7 +24,7 @@
 
 //local
 #include "../ITMLib/Utils/Geometry/ITMIntersectionChecks.h"
-#include "../ITMLib/Objects/Scene/ITMVoxelBlockHash.h"
+#include "../ITMLib/Objects/Scene/VoxelBlockHash.h"
 
 
 using namespace ITMLib;

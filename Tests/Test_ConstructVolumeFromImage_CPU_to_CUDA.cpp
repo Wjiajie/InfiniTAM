@@ -51,30 +51,30 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_VBH_Expnaded_CPU_CUDA, Frame16And1
 
 // *** initialize volumes ***
 	// CPU
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17_CPU(MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> volume_VBH_17_CPU(MEMORYDEVICE_CPU, InitParams<VoxelBlockHash>());
 	volume_VBH_17_CPU.Reset();
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17_CPU_depth_allocation(MEMORYDEVICE_CPU,
-	                                                                               InitParams<ITMVoxelBlockHash>());
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> volume_VBH_17_CPU_depth_allocation(MEMORYDEVICE_CPU,
+	                                                                               InitParams<VoxelBlockHash>());
 	volume_VBH_17_CPU_depth_allocation.Reset();
 	// CUDA
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17_CUDA(MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> volume_VBH_17_CUDA(MEMORYDEVICE_CUDA, InitParams<VoxelBlockHash>());
 	volume_VBH_17_CUDA.Reset();
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_VBH_17_CUDA_depth_allocation(MEMORYDEVICE_CUDA,
-	                                                                               InitParams<ITMVoxelBlockHash>());
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> volume_VBH_17_CUDA_depth_allocation(MEMORYDEVICE_CUDA,
+	                                                                               InitParams<VoxelBlockHash>());
 	volume_VBH_17_CUDA_depth_allocation.Reset();
 	// comparison volume
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> volume_CUDA_to_CPU(MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> volume_CUDA_to_CPU(MEMORYDEVICE_CPU, InitParams<VoxelBlockHash>());
 	volume_CUDA_to_CPU.Reset();
 	
 // *** allocate hash blocks ***
 	// CPU
-	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>& indexer_CPU =
-			ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance();
+	ITMIndexingEngine<ITMVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>& indexer_CPU =
+			ITMIndexingEngine<ITMVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>::Instance();
 	indexer_CPU.AllocateFromDepth(&volume_VBH_17_CPU_depth_allocation, view_CPU);
 	indexer_CPU.AllocateUsingOtherVolumeAndSetVisibilityExpanded(&volume_VBH_17_CPU, &volume_VBH_17_CPU_depth_allocation, view_CPU);
 	// CUDA
-	ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>& indexer_CUDA =
-			ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance();
+	ITMIndexingEngine<ITMVoxel, VoxelBlockHash, MEMORYDEVICE_CUDA>& indexer_CUDA =
+			ITMIndexingEngine<ITMVoxel, VoxelBlockHash, MEMORYDEVICE_CUDA>::Instance();
 	indexer_CUDA.AllocateFromDepth(&volume_VBH_17_CUDA_depth_allocation, view_CUDA);
 	indexer_CUDA.AllocateUsingOtherVolumeAndSetVisibilityExpanded(&volume_VBH_17_CUDA, &volume_VBH_17_CUDA_depth_allocation, view_CUDA);
 
@@ -86,14 +86,14 @@ BOOST_FIXTURE_TEST_CASE(Test_SceneConstruct17_VBH_Expnaded_CPU_CUDA, Frame16And1
 
 // *** integrate depth ***
 	// CPU
-	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH_CPU =
-			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, VoxelBlockHash>* reconstructionEngine_VBH_CPU =
+			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, VoxelBlockHash>(
 					MEMORYDEVICE_CPU);
 	reconstructionEngine_VBH_CPU->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17_CPU, view_CPU);
 	reconstructionEngine_VBH_CPU->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17_CPU_depth_allocation, view_CPU);
 	// CUDA
-	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>* reconstructionEngine_VBH_CUDA =
-			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>(
+	ITMDynamicSceneReconstructionEngine<ITMVoxel, ITMWarp, VoxelBlockHash>* reconstructionEngine_VBH_CUDA =
+			ITMDynamicSceneReconstructionEngineFactory::MakeSceneReconstructionEngine<ITMVoxel, ITMWarp, VoxelBlockHash>(
 					MEMORYDEVICE_CUDA);
 	reconstructionEngine_VBH_CUDA->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17_CUDA, view_CUDA);
 	reconstructionEngine_VBH_CUDA->IntegrateDepthImageIntoTsdfVolume(&volume_VBH_17_CUDA_depth_allocation, view_CUDA);

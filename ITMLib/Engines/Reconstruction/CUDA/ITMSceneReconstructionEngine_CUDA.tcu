@@ -55,20 +55,20 @@ __global__ void buildVisibleList_device(ITMHashEntry* hashTable, ITMHashSwapStat
 // host methods
 
 template<class TVoxel>
-ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ITMSceneReconstructionEngine_CUDA(void) {
+ITMSceneReconstructionEngine_CUDA<TVoxel, VoxelBlockHash>::ITMSceneReconstructionEngine_CUDA(void) {
 	ORcudaSafeCall(cudaMalloc((void**) &allocationTempData_device, sizeof(AllocationTempData)));
 	ORcudaSafeCall(cudaMallocHost((void**) &allocationTempData_host, sizeof(AllocationTempData)));
 }
 
 template<class TVoxel>
-ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::~ITMSceneReconstructionEngine_CUDA(void) {
+ITMSceneReconstructionEngine_CUDA<TVoxel, VoxelBlockHash>::~ITMSceneReconstructionEngine_CUDA(void) {
 	ORcudaSafeCall(cudaFreeHost(allocationTempData_host));
 	ORcudaSafeCall(cudaFree(allocationTempData_device));
 }
 
 template<class TVoxel>
-void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ResetScene(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
+void ITMSceneReconstructionEngine_CUDA<TVoxel, VoxelBlockHash>::ResetScene(
+		ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene) {
 	int numBlocks = scene->index.GetAllocatedBlockCount();
 	int blockSize = scene->index.GetVoxelBlockSize();
 
@@ -90,8 +90,8 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::ResetScene(
 }
 
 template<class TVoxel>
-void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateSceneFromDepth(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
+void ITMSceneReconstructionEngine_CUDA<TVoxel, VoxelBlockHash>::AllocateSceneFromDepth(
+		ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene, const ITMView* view,
 		const ITMTrackingState* trackingState, const ITMRenderState* renderState, bool onlyUpdateVisibleList,
 		bool resetVisibleList) {
 	Vector2i depthImgSize = view->depth->noDims;
@@ -200,8 +200,8 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::AllocateScene
 }
 
 template<class TVoxel>
-void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::IntegrateIntoScene(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
+void ITMSceneReconstructionEngine_CUDA<TVoxel, VoxelBlockHash>::IntegrateIntoScene(
+		ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene, const ITMView* view,
 		const ITMTrackingState* trackingState, const ITMRenderState* renderState) {
 	Vector2i rgbImgSize = view->rgb->noDims;
 	Vector2i depthImgSize = view->depth->noDims;

@@ -53,7 +53,7 @@ namespace pt = boost::property_tree;
 ITMDynamicFusionLogger_Interface& GetLogger(configuration::IndexingMethod method) {
 	switch (method) {
 		case configuration::INDEX_HASH: {
-			return static_cast<ITMDynamicFusionLogger_Interface&>(ITMDynamicFusionLogger<ITMVoxel, ITMWarp, ITMVoxelBlockHash>::Instance());
+			return static_cast<ITMDynamicFusionLogger_Interface&>(ITMDynamicFusionLogger<ITMVoxel, ITMWarp, VoxelBlockHash>::Instance());
 		}
 		case configuration::INDEX_ARRAY: {
 			return static_cast<ITMDynamicFusionLogger_Interface&>(ITMDynamicFusionLogger<ITMVoxel, ITMWarp, PlainVoxelArray>::Instance());

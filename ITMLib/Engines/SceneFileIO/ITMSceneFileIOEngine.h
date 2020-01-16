@@ -15,7 +15,7 @@
 //  ================================================================
 #pragma once
 
-#include "../../Objects/Scene/ITMVoxelBlockHash.h"
+#include "../../Objects/Scene/VoxelBlockHash.h"
 #include "../../Objects/Scene/PlainVoxelArray.h"
 #include "../../Objects/Scene/ITMVoxelVolume.h"
 
@@ -27,10 +27,10 @@ template<typename TVoxel, typename TIndex>
 class ITMSceneFileIOEngine;
 
 template<typename TVoxel>
-class ITMSceneFileIOEngine<TVoxel,ITMVoxelBlockHash>{
+class ITMSceneFileIOEngine<TVoxel,VoxelBlockHash>{
 public:
-	static void SaveToDirectoryCompact(const ITMVoxelVolume<TVoxel,ITMVoxelBlockHash>* scene, const std::string& outputDirectory);
-	static void LoadFromDirectoryCompact(ITMVoxelVolume<TVoxel,ITMVoxelBlockHash>* scene, const std::string& outputDirectory);
+	static void SaveToDirectoryCompact(const ITMVoxelVolume<TVoxel,VoxelBlockHash>* scene, const std::string& outputDirectory);
+	static void LoadFromDirectoryCompact(ITMVoxelVolume<TVoxel,VoxelBlockHash>* scene, const std::string& outputDirectory);
 };
 
 

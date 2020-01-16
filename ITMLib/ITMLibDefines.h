@@ -4,7 +4,7 @@
 
 #include "Objects/Scene/PlainVoxelArray.h"
 #include "Objects/Scene/ITMSurfelTypes.h"
-#include "Objects/Scene/ITMVoxelBlockHash.h"
+#include "Objects/Scene/VoxelBlockHash.h"
 #include "Objects/Scene/ITMVoxelTypes.h"
 
 /** This chooses the information stored at each surfel. At the moment, valid
@@ -21,7 +21,7 @@ typedef ITMVoxel_f_warp ITMWarp;
 
 
 /** This chooses the way the voxels are addressed and indexed. At the moment,
-    valid options are ITMVoxelBlockHash and PlainVoxelArray.
+    valid options are VoxelBlockHash and PlainVoxelArray.
 */
-typedef ITMLib::ITMVoxelBlockHash ITMVoxelIndex;
+typedef ITMLib::VoxelBlockHash ITMVoxelIndex;
 //typedef ITMLib::PlainVoxelArray ITMVoxelIndex;

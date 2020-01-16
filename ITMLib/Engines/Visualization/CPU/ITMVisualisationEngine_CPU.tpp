@@ -20,8 +20,8 @@ void ITMVisualizationEngine_CPU<TVoxel, TIndex>::FindVisibleBlocks(ITMVoxelVolum
 }
 
 template<class TVoxel>
-void ITMVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::FindVisibleBlocks(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ORUtils::SE3Pose* pose, const ITMIntrinsics* intrinsics,
+void ITMVisualizationEngine_CPU<TVoxel, VoxelBlockHash>::FindVisibleBlocks(
+		ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene, const ORUtils::SE3Pose* pose, const ITMIntrinsics* intrinsics,
 		ITMRenderState* renderState) const
 {
 	const ITMHashEntry *hashTable = scene->index.GetEntries();
@@ -64,7 +64,7 @@ int ITMVisualizationEngine_CPU<TVoxel, TIndex>::CountVisibleBlocks(const ITMVoxe
 }
 
 template<class TVoxel>
-int ITMVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::CountVisibleBlocks(const ITMVoxelVolume<TVoxel,ITMVoxelBlockHash> *scene, const ITMRenderState *renderState, int minBlockId, int maxBlockId) const
+int ITMVisualizationEngine_CPU<TVoxel, VoxelBlockHash>::CountVisibleBlocks(const ITMVoxelVolume<TVoxel,VoxelBlockHash> *scene, const ITMRenderState *renderState, int minBlockId, int maxBlockId) const
 {
 
 	int visibleBlockCount = scene->index.GetVisibleHashBlockCount();
@@ -95,7 +95,7 @@ void ITMVisualizationEngine_CPU<TVoxel, TIndex>::CreateExpectedDepths(const ITMV
 }
 
 template<class TVoxel>
-void ITMVisualizationEngine_CPU<TVoxel,ITMVoxelBlockHash>::CreateExpectedDepths(const ITMVoxelVolume<TVoxel,ITMVoxelBlockHash> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics,
+void ITMVisualizationEngine_CPU<TVoxel,VoxelBlockHash>::CreateExpectedDepths(const ITMVoxelVolume<TVoxel,VoxelBlockHash> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics,
                                                                                 ITMRenderState *renderState) const
 {
 	Vector2i imgSize = renderState->renderingRangeImage->noDims;
@@ -154,7 +154,7 @@ void ITMVisualizationEngine_CPU<TVoxel,ITMVoxelBlockHash>::CreateExpectedDepths(
 }
 
 template<typename TIndex> static inline HashBlockVisibility* GetBlockVisibilityTypes(TIndex& index);
-template<> inline HashBlockVisibility* GetBlockVisibilityTypes<ITMVoxelBlockHash>(ITMVoxelBlockHash& index){
+template<> inline HashBlockVisibility* GetBlockVisibilityTypes<VoxelBlockHash>(VoxelBlockHash& index){
 	return index.GetBlockVisibilityTypes();
 }
 template<> inline HashBlockVisibility* GetBlockVisibilityTypes<PlainVoxelArray>(PlainVoxelArray& index){
@@ -455,7 +455,7 @@ void ITMVisualizationEngine_CPU<TVoxel,TIndex>::RenderImage(ITMVoxelVolume<TVoxe
 }
 
 template<class TVoxel>
-void ITMVisualizationEngine_CPU<TVoxel,ITMVoxelBlockHash>::RenderImage(ITMVoxelVolume<TVoxel,ITMVoxelBlockHash> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics,
+void ITMVisualizationEngine_CPU<TVoxel,VoxelBlockHash>::RenderImage(ITMVoxelVolume<TVoxel,VoxelBlockHash> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics,
                                                                        const ITMRenderState *renderState, ITMUChar4Image *outputImage, IITMVisualisationEngine::RenderImageType type,
                                                                        IITMVisualisationEngine::RenderRaycastSelection raycastType) const
 {
@@ -471,7 +471,7 @@ void ITMVisualizationEngine_CPU<TVoxel, TIndex>::FindSurface(ITMVoxelVolume<TVox
 }
 
 template<class TVoxel>
-void ITMVisualizationEngine_CPU<TVoxel,ITMVoxelBlockHash>::FindSurface(ITMVoxelVolume<TVoxel,ITMVoxelBlockHash> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics,
+void ITMVisualizationEngine_CPU<TVoxel,VoxelBlockHash>::FindSurface(ITMVoxelVolume<TVoxel,VoxelBlockHash> *scene, const ORUtils::SE3Pose *pose, const ITMIntrinsics *intrinsics,
                                                                        const ITMRenderState *renderState) const
 {
 	// this one is generally done for freeview visualisation, so no, do not
@@ -487,7 +487,7 @@ void ITMVisualizationEngine_CPU<TVoxel,TIndex>::CreatePointCloud(ITMVoxelVolume<
 }
 
 template<class TVoxel>
-void ITMVisualizationEngine_CPU<TVoxel,ITMVoxelBlockHash>::CreatePointCloud(ITMVoxelVolume<TVoxel,ITMVoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState,
+void ITMVisualizationEngine_CPU<TVoxel,VoxelBlockHash>::CreatePointCloud(ITMVoxelVolume<TVoxel,VoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState,
                                                                             ITMRenderState *renderState, bool skipPoints) const
 {
 	CreatePointCloud_common(scene, view, trackingState, renderState, skipPoints);
@@ -500,7 +500,7 @@ void ITMVisualizationEngine_CPU<TVoxel,TIndex>::CreateICPMaps(ITMVoxelVolume<TVo
 }
 
 template<class TVoxel>
-void ITMVisualizationEngine_CPU<TVoxel,ITMVoxelBlockHash>::CreateICPMaps(ITMVoxelVolume<TVoxel,ITMVoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState,
+void ITMVisualizationEngine_CPU<TVoxel,VoxelBlockHash>::CreateICPMaps(ITMVoxelVolume<TVoxel,VoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState,
                                                                          ITMRenderState *renderState) const
 {
 	CreateICPMaps_common(scene, view, trackingState, renderState);
@@ -514,7 +514,7 @@ void ITMVisualizationEngine_CPU<TVoxel, TIndex>::ForwardRender(const ITMVoxelVol
 }
 
 template<class TVoxel>
-void ITMVisualizationEngine_CPU<TVoxel, ITMVoxelBlockHash>::ForwardRender(const ITMVoxelVolume<TVoxel,ITMVoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState,
+void ITMVisualizationEngine_CPU<TVoxel, VoxelBlockHash>::ForwardRender(const ITMVoxelVolume<TVoxel,VoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState,
                                                                           ITMRenderState *renderState) const
 {
 	ForwardRender_common(scene, view, trackingState, renderState);

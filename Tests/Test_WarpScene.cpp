@@ -40,7 +40,7 @@
 using namespace ITMLib;
 
 typedef ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, PlainVoxelArray> RecoEngine_CPU_PVA;
-typedef ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMVoxelBlockHash> RecoEngine_CPU_VBH;
+typedef ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, VoxelBlockHash> RecoEngine_CPU_VBH;
 
 //#define SAVE_TEST_DATA
 BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_PVA, Frame16And17Fixture) {
@@ -77,14 +77,14 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_PVA, Frame16And17Fixture) {
 
 BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_VBH, Frame16And17Fixture) {
 	const configuration::Configuration& settings = configuration::get();
-	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps;
+	ITMVoxelVolume<ITMWarp, VoxelBlockHash>* warps;
 	loadVolume(&warps, "TestData/snoopy_result_fr16-17_partial_VBH/warp_field_0_complete_",
-	           MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* live_volume;
+	           MEMORYDEVICE_CPU, InitParams<VoxelBlockHash>());
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* live_volume;
 	loadVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_17_",
-	           MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
-	auto warped_live_volume = new ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>(
-			&settings.voxel_volume_parameters, false, MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
+	           MEMORYDEVICE_CPU, InitParams<VoxelBlockHash>());
+	auto warped_live_volume = new ITMVoxelVolume<ITMVoxel, VoxelBlockHash>(
+			&settings.voxel_volume_parameters, false, MEMORYDEVICE_CPU, InitParams<VoxelBlockHash>());
 	warped_live_volume->Reset();
 
 	RecoEngine_CPU_VBH recoEngine;
@@ -94,9 +94,9 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_VBH, Frame16And17Fixture) {
 	warped_live_volume->SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warped_live_");
 #endif
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* warped_live_volume_gt;
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* warped_live_volume_gt;
 	loadVolume(&warped_live_volume_gt, "TestData/snoopy_result_fr16-17_partial_VBH/warped_live_",
-	           MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
+	           MEMORYDEVICE_CPU, InitParams<VoxelBlockHash>());
 
 
 	float absoluteTolerance = 1e-7;
@@ -114,8 +114,8 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_VBH_to_PVA, Frame16And17Fixture) {
 	std::string path_warps = "TestData/snoopy_result_fr16-17_warps/data_only_iter_" + std::to_string(iteration) + "_";
 	ITMVoxelVolume<ITMWarp, PlainVoxelArray>* warps_PVA;
 	loadVolume(&warps_PVA, path_warps, MEMORYDEVICE_CPU, InitParams<PlainVoxelArray>());
-	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps_VBH;
-	loadVolume(&warps_VBH, path_warps, MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
+	ITMVoxelVolume<ITMWarp, VoxelBlockHash>* warps_VBH;
+	loadVolume(&warps_VBH, path_warps, MEMORYDEVICE_CPU, InitParams<VoxelBlockHash>());
 
 	std::string path_frame_17_PVA = "TestData/snoopy_result_fr16-17_partial_PVA/snoopy_partial_frame_17_";
 	std::string path_frame_17_VBH = "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_17_";
@@ -137,18 +137,18 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_VBH_to_PVA, Frame16And17Fixture) {
 	// *** load same frame scene as the two different data structures
 	ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* source_volume_PVA;
 	loadVolume(&source_volume_PVA, source_path_PVA, MEMORYDEVICE_CPU, InitParams<PlainVoxelArray>());
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* source_volume_VBH;
-	loadVolume(&source_volume_VBH, source_path_VBH, MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* source_volume_VBH;
+	loadVolume(&source_volume_VBH, source_path_VBH, MEMORYDEVICE_CPU, InitParams<VoxelBlockHash>());
 
 	// *** initialize target scenes
 	ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* target_PVA;
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* target_VBH;
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* target_VBH;
 	initializeVolume(&target_PVA, InitParams<PlainVoxelArray>(), MEMORYDEVICE_CPU);
-	initializeVolume(&target_VBH, InitParams<ITMVoxelBlockHash>(), MEMORYDEVICE_CPU);
+	initializeVolume(&target_VBH, InitParams<VoxelBlockHash>(), MEMORYDEVICE_CPU);
 
 	// *** perform the warping
 	ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, PlainVoxelArray> recoEngine_PVA;
-	ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMVoxelBlockHash> recoEngine_VBH;
+	ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, VoxelBlockHash> recoEngine_VBH;
 
 
 	recoEngine_PVA.WarpScene_FramewiseWarps(warps_PVA, source_volume_PVA, target_PVA);
@@ -170,7 +170,7 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_VBH_to_PVA, Frame16And17Fixture) {
 
 #ifndef COMPILE_WITHOUT_CUDA
 typedef ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, PlainVoxelArray> RecoEngine_CUDA_PVA;
-typedef ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash> RecoEngine_CUDA_VBH;
+typedef ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, VoxelBlockHash> RecoEngine_CUDA_VBH;
 
 
 BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_VBH_to_PVA, Frame16And17Fixture) {
@@ -182,10 +182,10 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_VBH_to_PVA, Frame16And17Fixture) {
 			"TestData/snoopy_result_fr16-17_warps/" + prefix + "_iter_" + std::to_string(iteration) + "_";
 	ITMVoxelVolume<ITMWarp, PlainVoxelArray>* warps_PVA;
 	loadVolume(&warps_PVA, path_warps, MEMORYDEVICE_CUDA, InitParams<PlainVoxelArray>());
-	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps_VBH_CPU;
-	loadVolume(&warps_VBH_CPU, path_warps, MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
-	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps_VBH;
-	loadVolume(&warps_VBH, path_warps, MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
+	ITMVoxelVolume<ITMWarp, VoxelBlockHash>* warps_VBH_CPU;
+	loadVolume(&warps_VBH_CPU, path_warps, MEMORYDEVICE_CPU, InitParams<VoxelBlockHash>());
+	ITMVoxelVolume<ITMWarp, VoxelBlockHash>* warps_VBH;
+	loadVolume(&warps_VBH, path_warps, MEMORYDEVICE_CUDA, InitParams<VoxelBlockHash>());
 
 	std::string path_frame_17_PVA = "TestData/snoopy_result_fr16-17_partial_PVA/snoopy_partial_frame_17_";
 	std::string path_frame_17_VBH = "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_17_";
@@ -207,30 +207,30 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_VBH_to_PVA, Frame16And17Fixture) {
 	// *** load same frame scene as the two different data structures
 	ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* source_volume_PVA;
 	loadVolume(&source_volume_PVA, source_path_PVA, MEMORYDEVICE_CUDA, InitParams<PlainVoxelArray>());
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* source_volume_VBH_CPU;
-	loadVolume(&source_volume_VBH_CPU, source_path_VBH, MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* source_volume_VBH;
-	loadVolume(&source_volume_VBH, source_path_VBH, MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* source_volume_VBH_CPU;
+	loadVolume(&source_volume_VBH_CPU, source_path_VBH, MEMORYDEVICE_CPU, InitParams<VoxelBlockHash>());
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* source_volume_VBH;
+	loadVolume(&source_volume_VBH, source_path_VBH, MEMORYDEVICE_CUDA, InitParams<VoxelBlockHash>());
 
 	// *** initialize target scenes
 	ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* target_PVA;
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* target_VBH_CPU;
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* target_VBH;
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* target_VBH_CPU;
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* target_VBH;
 	initializeVolume(&target_PVA, InitParams<PlainVoxelArray>(), MEMORYDEVICE_CUDA);
-	initializeVolume(&target_VBH_CPU, InitParams<ITMVoxelBlockHash>(), MEMORYDEVICE_CPU);
-	initializeVolume(&target_VBH, InitParams<ITMVoxelBlockHash>(), MEMORYDEVICE_CUDA);
+	initializeVolume(&target_VBH_CPU, InitParams<VoxelBlockHash>(), MEMORYDEVICE_CPU);
+	initializeVolume(&target_VBH, InitParams<VoxelBlockHash>(), MEMORYDEVICE_CUDA);
 
 	// *** perform the warping
 	ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, PlainVoxelArray> recoEngine_PVA;
-	ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMVoxelBlockHash> recoEngine_VBH_CPU;
-	ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, ITMVoxelBlockHash> recoEngine_VBH;
+	ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, VoxelBlockHash> recoEngine_VBH_CPU;
+	ITMDynamicSceneReconstructionEngine_CUDA<ITMVoxel, ITMWarp, VoxelBlockHash> recoEngine_VBH;
 
 
 	recoEngine_PVA.WarpScene_FramewiseWarps(warps_PVA, source_volume_PVA, target_PVA);
 	recoEngine_VBH_CPU.WarpScene_FramewiseWarps(warps_VBH_CPU, source_volume_VBH_CPU, target_VBH_CPU);
 	recoEngine_VBH.WarpScene_FramewiseWarps(warps_VBH, source_volume_VBH, target_VBH);
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> target_VBH_copy(*target_VBH, MEMORYDEVICE_CPU);
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> target_VBH_copy(*target_VBH, MEMORYDEVICE_CPU);
 
 	// *** test content
 	float absoluteTolerance = 1e-6;
@@ -283,14 +283,14 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_PVA, Frame16And17Fixture) {
 
 BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_VBH, Frame16And17Fixture) {
 
-	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps;
+	ITMVoxelVolume<ITMWarp, VoxelBlockHash>* warps;
 	loadVolume(&warps, "TestData/snoopy_result_fr16-17_partial_VBH/warp_field_0_complete_",
-	           MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* live_volume;
+	           MEMORYDEVICE_CUDA, InitParams<VoxelBlockHash>());
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* live_volume;
 	loadVolume(&live_volume, "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_17_",
-	           MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
-	auto warped_live_volume = new ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>(
-			&configuration::get().voxel_volume_parameters, false, MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
+	           MEMORYDEVICE_CUDA, InitParams<VoxelBlockHash>());
+	auto warped_live_volume = new ITMVoxelVolume<ITMVoxel, VoxelBlockHash>(
+			&configuration::get().voxel_volume_parameters, false, MEMORYDEVICE_CUDA, InitParams<VoxelBlockHash>());
 	ManipulationEngine_CUDA_VBH_Voxel::Inst().ResetScene(warped_live_volume);
 
 	RecoEngine_CUDA_VBH recoEngine;
@@ -298,9 +298,9 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CUDA_VBH, Frame16And17Fixture) {
 	recoEngine.WarpScene_FramewiseWarps(warps, live_volume, warped_live_volume);
 	//warped_live_volume->SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warped_live_");
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* warped_live_volume_gt;
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* warped_live_volume_gt;
 	loadVolume(&warped_live_volume_gt, "TestData/snoopy_result_fr16-17_partial_VBH/warped_live_",
-	           MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
+	           MEMORYDEVICE_CUDA, InitParams<VoxelBlockHash>());
 
 	float absoluteTolerance = 1e-5;
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(warped_live_volume, warped_live_volume_gt, absoluteTolerance));

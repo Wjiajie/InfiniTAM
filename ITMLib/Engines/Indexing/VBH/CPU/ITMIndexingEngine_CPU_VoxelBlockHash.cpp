@@ -20,54 +20,54 @@
 
 namespace ITMLib {
 template
-class ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>;
+class ITMIndexingEngine<ITMVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>;
 template
-class ITMIndexingEngine<ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU>;
+class ITMIndexingEngine<ITMWarp, VoxelBlockHash, MEMORYDEVICE_CPU>;
 
-template void ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolume(
-		ITMLib::ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* targetVolume,
-		ITMLib::ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* sourceVolume);
-template void ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolume(
-		ITMLib::ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* targetVolume,
-		ITMLib::ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* sourceVolume);
-template void ITMIndexingEngine<ITMWarp,ITMVoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolume(
-		ITMLib::ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* targetVolume,
-		ITMLib::ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* sourceVolume);
-template void ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolumeExpanded(
-		ITMLib::ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* targetVolume,
-		ITMLib::ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* sourceVolume);
-template void ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolumeExpanded(
-		ITMLib::ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* targetVolume,
-		ITMLib::ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* sourceVolume);
-template void ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolumeAndSetVisibilityExpanded(
-		ITMLib::ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* targetVolume,
-		ITMLib::ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* sourceVolume,
+template void ITMIndexingEngine<ITMVoxel,VoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolume(
+		ITMLib::ITMVoxelVolume<ITMWarp, VoxelBlockHash>* targetVolume,
+		ITMLib::ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* sourceVolume);
+template void ITMIndexingEngine<ITMVoxel,VoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolume(
+		ITMLib::ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* targetVolume,
+		ITMLib::ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* sourceVolume);
+template void ITMIndexingEngine<ITMWarp,VoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolume(
+		ITMLib::ITMVoxelVolume<ITMWarp, VoxelBlockHash>* targetVolume,
+		ITMLib::ITMVoxelVolume<ITMWarp, VoxelBlockHash>* sourceVolume);
+template void ITMIndexingEngine<ITMVoxel,VoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolumeExpanded(
+		ITMLib::ITMVoxelVolume<ITMWarp, VoxelBlockHash>* targetVolume,
+		ITMLib::ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* sourceVolume);
+template void ITMIndexingEngine<ITMVoxel,VoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolumeExpanded(
+		ITMLib::ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* targetVolume,
+		ITMLib::ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* sourceVolume);
+template void ITMIndexingEngine<ITMVoxel,VoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolumeAndSetVisibilityExpanded(
+		ITMLib::ITMVoxelVolume<ITMWarp, VoxelBlockHash>* targetVolume,
+		ITMLib::ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* sourceVolume,
 		ITMView* view, const Matrix4f& depth_camera_matrix);
-template void ITMIndexingEngine<ITMVoxel,ITMVoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolumeAndSetVisibilityExpanded(
-		ITMLib::ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* targetVolume,
-		ITMLib::ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* sourceVolume,
+template void ITMIndexingEngine<ITMVoxel,VoxelBlockHash,MEMORYDEVICE_CPU>::AllocateUsingOtherVolumeAndSetVisibilityExpanded(
+		ITMLib::ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* targetVolume,
+		ITMLib::ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* sourceVolume,
 		ITMView* view, const Matrix4f& depth_camera_matrix);
 
 template void ITMIndexingEngine_VoxelBlockHash<ITMVoxel, MEMORYDEVICE_CPU,
-		ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>>::
+		ITMIndexingEngine<ITMVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>>::
 AllocateFromWarpedVolume<WarpType::WARP_CUMULATIVE>(
-		ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warpField,
-		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* sourceTSDF,
-		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* targetTSDF
+		ITMVoxelVolume<ITMWarp, VoxelBlockHash>* warpField,
+		ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* sourceTSDF,
+		ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* targetTSDF
 );
 template void ITMIndexingEngine_VoxelBlockHash<ITMVoxel, MEMORYDEVICE_CPU,
-		ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>>::
+		ITMIndexingEngine<ITMVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>>::
 AllocateFromWarpedVolume<WarpType::WARP_FLOW>(
-		ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warpField,
-		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* sourceTSDF,
-		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* targetTSDF
+		ITMVoxelVolume<ITMWarp, VoxelBlockHash>* warpField,
+		ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* sourceTSDF,
+		ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* targetTSDF
 );
 template void ITMIndexingEngine_VoxelBlockHash<ITMVoxel, MEMORYDEVICE_CPU,
-		ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>>::
+		ITMIndexingEngine<ITMVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>>::
 AllocateFromWarpedVolume<WarpType::WARP_UPDATE>(
-		ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warpField,
-		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* sourceTSDF,
-		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* targetTSDF
+		ITMVoxelVolume<ITMWarp, VoxelBlockHash>* warpField,
+		ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* sourceTSDF,
+		ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* targetTSDF
 );
 
 }//namespace ITMLib

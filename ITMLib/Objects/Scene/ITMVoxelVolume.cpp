@@ -20,7 +20,7 @@
 // Explicit template instantiations for ITMVoxelVolume
 namespace ITMLib {
 	template class ITMVoxelVolume<ITMVoxel, PlainVoxelArray>;
-	template class ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>;
+	template class ITMVoxelVolume<ITMVoxel, VoxelBlockHash>;
 	template class ITMVoxelVolume<ITMWarp, PlainVoxelArray>;
-	template class ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>;
+	template class ITMVoxelVolume<ITMWarp, VoxelBlockHash>;
 }  // namespace ITMLib

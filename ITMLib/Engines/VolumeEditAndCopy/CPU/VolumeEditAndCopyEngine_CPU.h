@@ -35,29 +35,29 @@ class VolumeEditAndCopyEngine_CPU : public VolumeEditAndCopyEngineInterface<TVox
 
 
 template<typename TVoxel>
-class VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>
-		: public VolumeEditAndCopyEngineInterface<TVoxel, ITMVoxelBlockHash> {
+class VolumeEditAndCopyEngine_CPU<TVoxel, VoxelBlockHash>
+		: public VolumeEditAndCopyEngineInterface<TVoxel, VoxelBlockHash> {
 public:
 	//can be used as a singleton, but doesn't HAVE TO be
 	static VolumeEditAndCopyEngine_CPU& Inst() {
-		static VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash> instance; // Guaranteed to be destroyed.
+		static VolumeEditAndCopyEngine_CPU<TVoxel, VoxelBlockHash> instance; // Guaranteed to be destroyed.
 		// Instantiated on first use.
 		return instance;
 	}
 
-	void ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) override;
-	bool SetVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, Vector3i at, TVoxel voxel) override;
-	bool SetVoxelNoAllocation(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
-	TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at) override;
-	TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3i at,
-	                 ITMVoxelBlockHash::IndexCache& cache) override;
-	void OffsetWarps(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset) override;
+	void ResetScene(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene) override;
+	bool SetVoxel(ITMVoxelVolume<TVoxel, VoxelBlockHash>* volume, Vector3i at, TVoxel voxel) override;
+	bool SetVoxelNoAllocation(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene, Vector3i at, TVoxel voxel);
+	TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene, Vector3i at) override;
+	TVoxel ReadVoxel(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene, Vector3i at,
+	                 VoxelBlockHash::IndexCache& cache) override;
+	void OffsetWarps(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene, Vector3f offset) override;
 	bool
-	CopySceneSlice(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination,
-	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
+	CopySceneSlice(ITMVoxelVolume<TVoxel, VoxelBlockHash>* destination,
+	               ITMVoxelVolume<TVoxel, VoxelBlockHash>* source,
 	               Vector6i bounds, const Vector3i& offset = Vector3i(0)) override;
-	bool CopyScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* target,
-	               ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
+	bool CopyScene(ITMVoxelVolume<TVoxel, VoxelBlockHash>* target,
+	               ITMVoxelVolume<TVoxel, VoxelBlockHash>* source,
 	               const Vector3i& offset = Vector3i(0)) override;
 	virtual ~VolumeEditAndCopyEngine_CPU() = default;
 };
@@ -92,9 +92,9 @@ public:
 // endregion ================= SCENE MANIPULATION ENGINE ===============================================================
 
 typedef VolumeEditAndCopyEngine_CPU<ITMVoxel, PlainVoxelArray> ManipulationEngine_CPU_PVA_Voxel;
-typedef VolumeEditAndCopyEngine_CPU<ITMVoxel, ITMVoxelBlockHash> ManipulationEngine_CPU_VBH_Voxel;
+typedef VolumeEditAndCopyEngine_CPU<ITMVoxel, VoxelBlockHash> ManipulationEngine_CPU_VBH_Voxel;
 typedef VolumeEditAndCopyEngine_CPU<ITMWarp, PlainVoxelArray> ManipulationEngine_CPU_PVA_Warp;
-typedef VolumeEditAndCopyEngine_CPU<ITMWarp, ITMVoxelBlockHash> ManipulationEngine_CPU_VBH_Warp;
+typedef VolumeEditAndCopyEngine_CPU<ITMWarp, VoxelBlockHash> ManipulationEngine_CPU_VBH_Warp;
 
 // region ======================================== HELPER RANGE COMPUTATION / CHECK ROUTINES ===========================
 // =====================================================================================================================

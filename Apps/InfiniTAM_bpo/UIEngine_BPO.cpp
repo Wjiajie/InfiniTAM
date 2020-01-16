@@ -304,7 +304,7 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 
 	switch (indexingMethod) {
 		case configuration::INDEX_HASH: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, VoxelBlockHash>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 		}
 			break;
@@ -332,7 +332,7 @@ bool UIEngine_BPO::BeginStepByStepMode() {
 	//actual processing on the mailEngine
 	switch (indexingMethod) {
 		case configuration::INDEX_HASH: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, VoxelBlockHash>*>(mainEngine);
 			if (imuSource != nullptr)
 				dynamicEngine->BeginProcessingFrameInStepByStepMode(inputRGBImage, inputRawDepthImage,
 				                                                    inputIMUMeasurement);
@@ -372,7 +372,7 @@ bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 	bool keepProcessingFrame = false;
 	switch (indexingMethod) {
 		case configuration::INDEX_HASH: {
-			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, ITMVoxelBlockHash>*>(mainEngine);
+			auto* dynamicEngine = dynamic_cast<ITMDynamicEngine<ITMVoxel, ITMWarp, VoxelBlockHash>*>(mainEngine);
 			if (dynamicEngine == nullptr) return false;
 			keepProcessingFrame = dynamicEngine->UpdateCurrentFrameSingleStep();
 			if (!keepProcessingFrame) {

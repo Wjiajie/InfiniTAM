@@ -20,13 +20,13 @@
 namespace ITMLib{
 template<typename TVoxel, MemoryDeviceType TMemoryDeviceType, typename TDerivedClass>
 class ITMIndexingEngine_VoxelBlockHash:
-		public ITMIndexingEngineInterface<TVoxel, ITMVoxelBlockHash> {
+		public ITMIndexingEngineInterface<TVoxel, VoxelBlockHash> {
 
 public:
-	virtual void AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume) = 0;
-	virtual void AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume) = 0;
-	virtual ITMHashEntry FindHashEntry(const ITMVoxelBlockHash& index, const Vector3s& coordinates) = 0;
-	virtual bool AllocateHashBlockAt(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, Vector3s at, int& hashCode) = 0;
+	virtual void AllocateHashEntriesUsingLists(ITMVoxelVolume<TVoxel, VoxelBlockHash>* volume) = 0;
+	virtual void AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume<TVoxel, VoxelBlockHash>* volume) = 0;
+	virtual ITMHashEntry FindHashEntry(const VoxelBlockHash& index, const Vector3s& coordinates) = 0;
+	virtual bool AllocateHashBlockAt(ITMVoxelVolume<TVoxel, VoxelBlockHash>* volume, Vector3s at, int& hashCode) = 0;
 
 /**
  * \brief method which looks at voxel grid with warps and an SDF voxel grid and allocates all hash blocks in the
@@ -41,9 +41,9 @@ public:
  */
 	template<WarpType TWarpType, typename TWarp>
 	void AllocateFromWarpedVolume(
-			ITMVoxelVolume <TWarp, ITMVoxelBlockHash>* warpField,
-			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* sourceTSDF,
-			ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* targetTSDF);
+			ITMVoxelVolume <TWarp, VoxelBlockHash>* warpField,
+			ITMVoxelVolume <TVoxel, VoxelBlockHash>* sourceTSDF,
+			ITMVoxelVolume <TVoxel, VoxelBlockHash>* targetTSDF);
 };
 
 }// namespace ITMLib

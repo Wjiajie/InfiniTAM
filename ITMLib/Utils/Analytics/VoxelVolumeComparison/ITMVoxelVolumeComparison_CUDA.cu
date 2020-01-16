@@ -32,53 +32,53 @@ bool contentAlmostEqual_CUDA_Verbose<ITMVoxel, PlainVoxelArray, PlainVoxelArray,
 		float tolerance);
 
 template
-bool contentAlmostEqual_CUDA<ITMVoxel, ITMVoxelBlockHash, ITMVoxelBlockHash, float>(
-		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
+bool contentAlmostEqual_CUDA<ITMVoxel, VoxelBlockHash, VoxelBlockHash, float>(
+		ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* a, ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* b,
 		float tolerance);
 
 template
-bool contentAlmostEqual_CUDA_Verbose<ITMVoxel, ITMVoxelBlockHash, ITMVoxelBlockHash, float>(
-		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
+bool contentAlmostEqual_CUDA_Verbose<ITMVoxel, VoxelBlockHash, VoxelBlockHash, float>(
+		ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* a, ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* b,
 		float tolerance);
 
 template
-bool contentAlmostEqual_CUDA<ITMVoxel, PlainVoxelArray, ITMVoxelBlockHash, float>(
-		ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
+bool contentAlmostEqual_CUDA<ITMVoxel, PlainVoxelArray, VoxelBlockHash, float>(
+		ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* b,
 		float tolerance);
 
 template
-bool contentAlmostEqual_CUDA_Verbose<ITMVoxel, PlainVoxelArray, ITMVoxelBlockHash, float>(
-		ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
+bool contentAlmostEqual_CUDA_Verbose<ITMVoxel, PlainVoxelArray, VoxelBlockHash, float>(
+		ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* b,
 		float tolerance);
 
 template
-bool contentAlmostEqual_CUDA<ITMVoxel, ITMVoxelBlockHash, PlainVoxelArray, float>(
-		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* b,
+bool contentAlmostEqual_CUDA<ITMVoxel, VoxelBlockHash, PlainVoxelArray, float>(
+		ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* a, ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* b,
 		float tolerance);
 
 template
-bool contentForFlagsAlmostEqual_CUDA<ITMVoxel, PlainVoxelArray, ITMVoxelBlockHash, float>(
-		ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
+bool contentForFlagsAlmostEqual_CUDA<ITMVoxel, PlainVoxelArray, VoxelBlockHash, float>(
+		ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* b,
 		VoxelFlags flags, float tolerance);
 
 template
-bool contentForFlagsAlmostEqual_CUDA_Verbose<ITMVoxel, PlainVoxelArray, ITMVoxelBlockHash, float>(
-		ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
+bool contentForFlagsAlmostEqual_CUDA_Verbose<ITMVoxel, PlainVoxelArray, VoxelBlockHash, float>(
+		ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* b,
 		VoxelFlags flags, float tolerance);
 
 template
-bool allocatedContentAlmostEqual_CUDA<ITMVoxel, PlainVoxelArray, ITMVoxelBlockHash, float>(
-		ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
+bool allocatedContentAlmostEqual_CUDA<ITMVoxel, PlainVoxelArray, VoxelBlockHash, float>(
+		ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* b,
 		float tolerance);
 
 template
-bool allocatedContentAlmostEqual_CUDA_Verbose<ITMVoxel, PlainVoxelArray, ITMVoxelBlockHash, float>(
-		ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* b,
+bool allocatedContentAlmostEqual_CUDA_Verbose<ITMVoxel, PlainVoxelArray, VoxelBlockHash, float>(
+		ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* a, ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* b,
 		float tolerance);
 
 template
-bool allocatedContentAlmostEqual_CUDA<ITMVoxel, ITMVoxelBlockHash, PlainVoxelArray, float>(
-		ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* b,
+bool allocatedContentAlmostEqual_CUDA<ITMVoxel, VoxelBlockHash, PlainVoxelArray, float>(
+		ITMVoxelVolume<ITMVoxel, VoxelBlockHash>* a, ITMVoxelVolume<ITMVoxel, PlainVoxelArray>* b,
 		float tolerance);
 
 //endregion
@@ -95,49 +95,49 @@ bool contentAlmostEqual_CUDA_Verbose<ITMWarp, PlainVoxelArray, PlainVoxelArray, 
 		float tolerance);
 
 template
-bool contentAlmostEqual_CUDA<ITMWarp, ITMVoxelBlockHash, ITMVoxelBlockHash, float>(
-		ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* b,
+bool contentAlmostEqual_CUDA<ITMWarp, VoxelBlockHash, VoxelBlockHash, float>(
+		ITMVoxelVolume<ITMWarp, VoxelBlockHash>* a, ITMVoxelVolume<ITMWarp, VoxelBlockHash>* b,
 		float tolerance);
 
 template
-bool contentAlmostEqual_CUDA_Verbose<ITMWarp, ITMVoxelBlockHash, ITMVoxelBlockHash, float>(
-		ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* b,
+bool contentAlmostEqual_CUDA_Verbose<ITMWarp, VoxelBlockHash, VoxelBlockHash, float>(
+		ITMVoxelVolume<ITMWarp, VoxelBlockHash>* a, ITMVoxelVolume<ITMWarp, VoxelBlockHash>* b,
 		float tolerance);
 
 
 template
-bool contentAlmostEqual_CUDA<ITMWarp, PlainVoxelArray, ITMVoxelBlockHash, float>(
-		ITMVoxelVolume<ITMWarp, PlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* b,
+bool contentAlmostEqual_CUDA<ITMWarp, PlainVoxelArray, VoxelBlockHash, float>(
+		ITMVoxelVolume<ITMWarp, PlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, VoxelBlockHash>* b,
 		float tolerance);
 
 template
-bool contentAlmostEqual_CUDA<ITMWarp, ITMVoxelBlockHash, PlainVoxelArray, float>(
-		ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMWarp, PlainVoxelArray>* b,
+bool contentAlmostEqual_CUDA<ITMWarp, VoxelBlockHash, PlainVoxelArray, float>(
+		ITMVoxelVolume<ITMWarp, VoxelBlockHash>* a, ITMVoxelVolume<ITMWarp, PlainVoxelArray>* b,
 		float tolerance);
 
 template
-bool contentForFlagsAlmostEqual_CUDA<ITMWarp, PlainVoxelArray, ITMVoxelBlockHash, float>(
-		ITMVoxelVolume<ITMWarp, PlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* b,
+bool contentForFlagsAlmostEqual_CUDA<ITMWarp, PlainVoxelArray, VoxelBlockHash, float>(
+		ITMVoxelVolume<ITMWarp, PlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, VoxelBlockHash>* b,
 		VoxelFlags flags, float tolerance);
 
 template
-bool contentForFlagsAlmostEqual_CUDA_Verbose<ITMWarp, PlainVoxelArray, ITMVoxelBlockHash, float>(
-		ITMVoxelVolume<ITMWarp, PlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* b,
+bool contentForFlagsAlmostEqual_CUDA_Verbose<ITMWarp, PlainVoxelArray, VoxelBlockHash, float>(
+		ITMVoxelVolume<ITMWarp, PlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, VoxelBlockHash>* b,
 		VoxelFlags flags, float tolerance);
 
 template
-bool allocatedContentAlmostEqual_CUDA<ITMWarp, PlainVoxelArray, ITMVoxelBlockHash, float>(
-		ITMVoxelVolume<ITMWarp, PlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* b,
+bool allocatedContentAlmostEqual_CUDA<ITMWarp, PlainVoxelArray, VoxelBlockHash, float>(
+		ITMVoxelVolume<ITMWarp, PlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, VoxelBlockHash>* b,
 		float tolerance);
 
 template
-bool allocatedContentAlmostEqual_CUDA_Verbose<ITMWarp, PlainVoxelArray, ITMVoxelBlockHash, float>(
-		ITMVoxelVolume<ITMWarp, PlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* b,
+bool allocatedContentAlmostEqual_CUDA_Verbose<ITMWarp, PlainVoxelArray, VoxelBlockHash, float>(
+		ITMVoxelVolume<ITMWarp, PlainVoxelArray>* a, ITMVoxelVolume<ITMWarp, VoxelBlockHash>* b,
 		float tolerance);
 
 template
-bool allocatedContentAlmostEqual_CUDA<ITMWarp, ITMVoxelBlockHash, PlainVoxelArray, float>(
-		ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* a, ITMVoxelVolume<ITMWarp, PlainVoxelArray>* b,
+bool allocatedContentAlmostEqual_CUDA<ITMWarp, VoxelBlockHash, PlainVoxelArray, float>(
+		ITMVoxelVolume<ITMWarp, VoxelBlockHash>* a, ITMVoxelVolume<ITMWarp, PlainVoxelArray>* b,
 		float tolerance);
 
 

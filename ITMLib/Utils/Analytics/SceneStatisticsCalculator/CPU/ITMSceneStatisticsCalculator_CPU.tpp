@@ -15,7 +15,7 @@
 //  ================================================================
 //local
 #include "ITMSceneStatisticsCalculator_CPU.h"
-#include "../../../../Objects/Scene/ITMVoxelBlockHash.h"
+#include "../../../../Objects/Scene/VoxelBlockHash.h"
 #include "../../../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"
 #include "../../../../Objects/Scene/ITMVoxelTypes.h"
 #include "../Shared/ITMSceneStatisticsCalculator_Functors.h"
@@ -30,8 +30,8 @@ template<typename TVoxel, typename TIndex>
 struct ComputeVoxelBoundsFunctor;
 
 template<typename TVoxel>
-struct ComputeVoxelBoundsFunctor<TVoxel, ITMVoxelBlockHash> {
-	static Vector6i Compute(const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
+struct ComputeVoxelBoundsFunctor<TVoxel, VoxelBlockHash> {
+	static Vector6i Compute(const ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene) {
 
 		Vector6i bounds = Vector6i(0);
 
@@ -95,8 +95,8 @@ template<typename TVoxel, typename TIndex>
 struct ComputeAllocatedVoxelCountFunctor;
 
 template<typename TVoxel>
-struct ComputeAllocatedVoxelCountFunctor<TVoxel, ITMVoxelBlockHash> {
-	static int Compute(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
+struct ComputeAllocatedVoxelCountFunctor<TVoxel, VoxelBlockHash> {
+	static int Compute(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene) {
 		int count = 0;
 
 		const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
@@ -194,8 +194,8 @@ struct HashOnlyStatisticsFunctor<TVoxel, PlainVoxelArray> {
 	}
 };
 template<typename TVoxel>
-struct HashOnlyStatisticsFunctor<TVoxel, ITMVoxelBlockHash> {
-	static std::vector<int> GetFilledHashBlockIds(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
+struct HashOnlyStatisticsFunctor<TVoxel, VoxelBlockHash> {
+	static std::vector<int> GetFilledHashBlockIds(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene) {
 		std::vector<int> ids;
 		const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
 		int noTotalEntries = scene->index.hashEntryCount;
@@ -207,7 +207,7 @@ struct HashOnlyStatisticsFunctor<TVoxel, ITMVoxelBlockHash> {
 		return ids;
 	}
 
-	static int ComputeAllocatedHashBlockCount(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
+	static int ComputeAllocatedHashBlockCount(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene) {
 		int count = 0;
 		const ITMHashEntry* canonicalHashTable = scene->index.GetEntries();
 		int noTotalEntries = scene->index.hashEntryCount;

@@ -59,7 +59,7 @@ This is the central class for the voxel block hash
 implementation. It contains all the data needed on the CPU
 and a pointer to the data structure on the GPU.
 */
-class ITMVoxelBlockHash {
+class VoxelBlockHash {
 public:
 
 	GENERATE_SERIALIZABLE_STRUCT(
@@ -108,17 +108,17 @@ public:
 	const MemoryDeviceType memoryType;
 
 
-	ITMVoxelBlockHash(VoxelBlockHashParameters parameters, MemoryDeviceType memoryType);
+	VoxelBlockHash(VoxelBlockHashParameters parameters, MemoryDeviceType memoryType);
 
-	explicit ITMVoxelBlockHash(MemoryDeviceType memoryType) : ITMVoxelBlockHash(VoxelBlockHashParameters(),
+	explicit VoxelBlockHash(MemoryDeviceType memoryType) : VoxelBlockHash(VoxelBlockHashParameters(),
 	                                                                            memoryType) {}
 
-	ITMVoxelBlockHash(const ITMVoxelBlockHash& other, MemoryDeviceType memoryType) :
-			ITMVoxelBlockHash({other.voxelBlockCount, other.excessListSize}, memoryType) {
+	VoxelBlockHash(const VoxelBlockHash& other, MemoryDeviceType memoryType) :
+			VoxelBlockHash({other.voxelBlockCount, other.excessListSize}, memoryType) {
 		this->SetFrom(other);
 	}
 
-	void SetFrom(const ITMVoxelBlockHash& other) {
+	void SetFrom(const VoxelBlockHash& other) {
 		MemoryCopyDirection memoryCopyDirection = determineMemoryCopyDirection(this->memoryType, other.memoryType);
 		this->hashEntryAllocationStates.SetFrom(&other.hashEntryAllocationStates, memoryCopyDirection);
 		this->hashEntries.SetFrom(&other.hashEntries, memoryCopyDirection);
@@ -127,7 +127,7 @@ public:
 		this->visibleHashBlockCount = other.visibleHashBlockCount;
 	}
 
-	~ITMVoxelBlockHash() = default;
+	~VoxelBlockHash() = default;
 
 	/** Get the list of actual entries in the hash table. */
 	const ITMHashEntry* GetEntries() const { return hashEntries.GetData(memoryType); }
@@ -213,8 +213,8 @@ public:
 
 
 	// Suppress the default copy constructor and assignment operator
-	ITMVoxelBlockHash(const ITMVoxelBlockHash&) = delete;
-	ITMVoxelBlockHash& operator=(const ITMVoxelBlockHash&) = delete;
+	VoxelBlockHash(const VoxelBlockHash&) = delete;
+	VoxelBlockHash& operator=(const VoxelBlockHash&) = delete;
 };
 
 } //namespace ITMLib

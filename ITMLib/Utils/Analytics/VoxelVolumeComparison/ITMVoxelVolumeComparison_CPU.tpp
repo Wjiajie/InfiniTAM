@@ -17,7 +17,7 @@
 
 #include "ITMVoxelVolumeComparison_CPU.h"
 #include "../../../Objects/Scene/PlainVoxelArray.h"
-#include "../../../Objects/Scene/ITMVoxelBlockHash.h"
+#include "../../../Objects/Scene/VoxelBlockHash.h"
 #include "../../../../ORUtils/MemoryDeviceType.h"
 #include "../../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_PlainVoxelArray.h"
 #include "../../../Engines/Traversal/CPU/ITMSceneTraversal_CPU_VoxelBlockHash.h"

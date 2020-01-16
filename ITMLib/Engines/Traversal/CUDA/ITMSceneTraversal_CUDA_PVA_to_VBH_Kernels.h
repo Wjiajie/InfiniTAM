@@ -19,7 +19,7 @@
 #include "../Interface/ITMSceneTraversal.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Objects/Scene/PlainVoxelArray.h"
-#include "../../../Objects/Scene/ITMVoxelBlockHash.h"
+#include "../../../Objects/Scene/VoxelBlockHash.h"
 #include "../Shared/ITMSceneTraversal_Shared.h"
 #include "../../../Utils/Analytics/ITMIsAltered.h"
 

@@ -22,6 +22,6 @@
 
 namespace ITMLib{
 //scene manipulation functions
-template class VolumeEditAndCopyEngine_CUDA<ITMVoxel,ITMVoxelBlockHash>;
-template class VolumeEditAndCopyEngine_CUDA<ITMWarp,ITMVoxelBlockHash>;
+template class VolumeEditAndCopyEngine_CUDA<ITMVoxel,VoxelBlockHash>;
+template class VolumeEditAndCopyEngine_CUDA<ITMWarp,VoxelBlockHash>;
 }

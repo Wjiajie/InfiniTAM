@@ -20,7 +20,7 @@ std::string Frame16And17Fixture::partial_frame_16_path<PlainVoxelArray>(){
 	return "TestData/snoopy_result_fr16-17_partial_PVA/snoopy_partial_frame_16_";
 }
 template<>
-std::string Frame16And17Fixture::partial_frame_16_path<ITMVoxelBlockHash>(){
+std::string Frame16And17Fixture::partial_frame_16_path<VoxelBlockHash>(){
 	return "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_16_";
 }
 template<>
@@ -28,7 +28,7 @@ std::string Frame16And17Fixture::partial_frame_17_path<PlainVoxelArray>(bool exp
 	return "TestData/snoopy_result_fr16-17_partial_PVA/snoopy_partial_frame_17_";
 }
 template<>
-std::string Frame16And17Fixture::partial_frame_17_path<ITMVoxelBlockHash>(bool expanded_allocation){
+std::string Frame16And17Fixture::partial_frame_17_path<VoxelBlockHash>(bool expanded_allocation){
 	std::string path = "TestData/snoopy_result_fr16-17_partial_VBH/snoopy_partial_frame_17_";
 	return expanded_allocation ? path + "expanded_" : path;
 }
@@ -39,6 +39,6 @@ PlainVoxelArray::InitializationParameters Frame16And17Fixture::InitParams<PlainV
 }
 
 template<>
-ITMVoxelBlockHash::InitializationParameters Frame16And17Fixture::InitParams<ITMVoxelBlockHash>() {
+VoxelBlockHash::InitializationParameters Frame16And17Fixture::InitParams<VoxelBlockHash>() {
 	return {0x0800, 0x20000};
 }

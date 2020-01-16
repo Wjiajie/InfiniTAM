@@ -17,7 +17,7 @@
 
 
 #include "../../../Utils/ITMMath.h"
-#include "../../../Objects/Scene/ITMVoxelBlockHash.h"
+#include "../../../Objects/Scene/VoxelBlockHash.h"
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 //#ifdef __CUDACC__
 //#include "../../../Utils/ITMCUDAUtils.h"
@@ -86,7 +86,7 @@ bool IsHashBlockPartiallyInRange(const Vector3i& hashBlockPositionVoxels, const 
  */
 _CPU_AND_GPU_CODE_
 inline int
-FindHashCodeAt(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex, const THREADPTR(Vector3s)& at) {
+FindHashCodeAt(const CONSTPTR(ITMLib::VoxelBlockHash::IndexData)* voxelIndex, const THREADPTR(Vector3s)& at) {
 	int hash = HashCodeFromBlockPosition(at);
 	while (true) {
 		ITMHashEntry hashEntry = voxelIndex[hash];
@@ -149,7 +149,7 @@ ComputeVoxelBlockOffsetRange(const CONSTPTR(Vector3i)& offset,
  */
 _CPU_AND_GPU_CODE_
 inline bool
-HashBlockAllocatedAtOffset(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* targetIndex,
+HashBlockAllocatedAtOffset(const CONSTPTR(ITMLib::VoxelBlockHash::IndexData)* targetIndex,
                            const THREADPTR(Vector3s)& blockCoord,
                            const CONSTPTR(Vector3i)& offset) {
 	Vector6i blockRange;
@@ -177,7 +177,7 @@ HashBlockAllocatedAtOffset(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)*
  */
 _CPU_AND_GPU_CODE_
 inline bool
-HashBlockAllocatedAtOffset(const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* targetIndex,
+HashBlockAllocatedAtOffset(const CONSTPTR(ITMLib::VoxelBlockHash::IndexData)* targetIndex,
                            const THREADPTR(Vector3s)& blockCoord,
                            const CONSTPTR(Vector6i)& offsetBlockRange) {
 
@@ -222,8 +222,8 @@ void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, 
 _CPU_AND_GPU_CODE_
 inline
 void GetVoxelHashLocals(int& vmIndex, int& locId, int& xInBlock, int& yInBlock, int& zInBlock,
-                        const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* hashEntries,
-                        ITMLib::ITMVoxelBlockHash::IndexCache& cache, const CONSTPTR(Vector3i)& point) {
+                        const CONSTPTR(ITMLib::VoxelBlockHash::IndexData)* hashEntries,
+                        ITMLib::VoxelBlockHash::IndexCache& cache, const CONSTPTR(Vector3i)& point) {
 	Vector3i blockPos;
 	int linearIdx = pointToVoxelBlockPos(point, blockPos);
 	zInBlock = linearIdx / (VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE);

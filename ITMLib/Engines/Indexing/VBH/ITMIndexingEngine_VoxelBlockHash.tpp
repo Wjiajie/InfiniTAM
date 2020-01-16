@@ -22,9 +22,9 @@ namespace ITMLib {
 template<typename TVoxel, MemoryDeviceType TMemoryDeviceType, typename TDerivedClass>
 template<WarpType TWarpType, typename TWarp>
 void ITMIndexingEngine_VoxelBlockHash<TVoxel, TMemoryDeviceType, TDerivedClass>::AllocateFromWarpedVolume(
-		ITMVoxelVolume<TWarp, ITMVoxelBlockHash>* warpField,
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* sourceTSDF,
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* targetTSDF) {
+		ITMVoxelVolume<TWarp, VoxelBlockHash>* warpField,
+		ITMVoxelVolume<TVoxel, VoxelBlockHash>* sourceTSDF,
+		ITMVoxelVolume<TVoxel, VoxelBlockHash>* targetTSDF) {
 
 	assert(warpField->index.hashEntryCount == sourceTSDF->index.hashEntryCount &&
 	       sourceTSDF->index.hashEntryCount == targetTSDF->index.hashEntryCount);
@@ -40,7 +40,7 @@ void ITMIndexingEngine_VoxelBlockHash<TVoxel, TMemoryDeviceType, TDerivedClass>:
 		//reset allocation flags
 		targetTSDF->index.ClearHashEntryAllocationStates();
 		hashMarkerFunctor.collisionDetected = false;
-		ITMSceneTraversalEngine<TWarp, ITMVoxelBlockHash, TMemoryDeviceType>::VoxelAndHashBlockPositionTraversal(
+		ITMSceneTraversalEngine<TWarp, VoxelBlockHash, TMemoryDeviceType>::VoxelAndHashBlockPositionTraversal(
 				warpField, hashMarkerFunctor);
 
 		//Allocate the hash entries that will potentially have any data

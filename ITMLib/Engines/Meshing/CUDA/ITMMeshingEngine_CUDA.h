@@ -11,16 +11,16 @@ namespace ITMLib
 	class ITMMeshingEngine_CUDA : public ITMMeshingEngine < TVoxel, TIndex >{};
 
 	template<class TVoxel>
-	class ITMMeshingEngine_CUDA<TVoxel, ITMVoxelBlockHash> : public ITMMeshingEngine < TVoxel, ITMVoxelBlockHash >
+	class ITMMeshingEngine_CUDA<TVoxel, VoxelBlockHash> : public ITMMeshingEngine < TVoxel, VoxelBlockHash >
 	{
 	private:
 		unsigned int  *noTriangles_device;
 		Vector4s *visibleBlockGlobalPos_device;
 
 	public:
-		void MeshScene(ITMMesh *mesh, const ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene) override;
+		void MeshScene(ITMMesh *mesh, const ITMVoxelVolume<TVoxel, VoxelBlockHash> *scene) override;
 
-		explicit ITMMeshingEngine_CUDA(const ITMVoxelBlockHash& index);
+		explicit ITMMeshingEngine_CUDA(const VoxelBlockHash& index);
 		~ITMMeshingEngine_CUDA();
 	};
 

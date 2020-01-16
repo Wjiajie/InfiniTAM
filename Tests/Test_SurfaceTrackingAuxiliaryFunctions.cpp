@@ -53,14 +53,14 @@ BOOST_FIXTURE_TEST_CASE(Test_ClearOutFramewiseWarp_CPU_PVA, Frame16And17Fixture)
 }
 
 BOOST_FIXTURE_TEST_CASE(Test_ClearOutFramewiseWarp_CPU_VBH, Frame16And17Fixture){
-	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps_VBH;
+	ITMVoxelVolume<ITMWarp, VoxelBlockHash>* warps_VBH;
 	loadVolume(&warps_VBH, "TestData/snoopy_result_fr16-17_partial_VBH/warp_field_0_data_framewise_warps_",
-			MEMORYDEVICE_CPU, InitParams<ITMVoxelBlockHash>());
+			MEMORYDEVICE_CPU, InitParams<VoxelBlockHash>());
 	float relativeTolerance = 0.1f;//percent
 	BOOST_REQUIRE_CLOSE(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeFramewiseWarpMax(warps_VBH), 0.24248701333999634f, relativeTolerance);
 	BOOST_REQUIRE_CLOSE(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeFramewiseWarpMin(warps_VBH), 0.0f, relativeTolerance);
 
-	auto motionTracker_VBH_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>();
+	auto motionTracker_VBH_CPU = new SurfaceTracker<ITMVoxel, ITMWarp, VoxelBlockHash, MEMORYDEVICE_CPU, TRACKER_SLAVCHEVA_DIAGNOSTIC>();
 
 	motionTracker_VBH_CPU->ClearOutFramewiseWarp(warps_VBH);
 	BOOST_REQUIRE_CLOSE(SceneStatCalc_CPU_VBH_Warp::Instance().ComputeFramewiseWarpMax(warps_VBH), 0.0f, relativeTolerance);
@@ -89,14 +89,14 @@ BOOST_FIXTURE_TEST_CASE(Test_ClearOutFramewiseWarp_CUDA_PVA, Frame16And17Fixture
 }
 
 BOOST_FIXTURE_TEST_CASE(Test_ClearOutFramewiseWarp_CUDA_VBH, Frame16And17Fixture){
-	ITMVoxelVolume<ITMWarp, ITMVoxelBlockHash>* warps_VBH;
+	ITMVoxelVolume<ITMWarp, VoxelBlockHash>* warps_VBH;
 	loadVolume(&warps_VBH, "TestData/snoopy_result_fr16-17_partial_VBH/warp_field_0_data_framewise_warps_",
-	           MEMORYDEVICE_CUDA, InitParams<ITMVoxelBlockHash>());
+	           MEMORYDEVICE_CUDA, InitParams<VoxelBlockHash>());
 	float relativeTolerance = 0.1f;//percent
 	BOOST_REQUIRE_CLOSE(SceneStatCalc_CUDA_VBH_Warp::Instance().ComputeFramewiseWarpMax(warps_VBH), 0.24248701333999634f, relativeTolerance);
 	BOOST_REQUIRE_CLOSE(SceneStatCalc_CUDA_VBH_Warp::Instance().ComputeFramewiseWarpMin(warps_VBH), 0.0f, relativeTolerance);
 
-	auto motionTracker_VBH_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, ITMVoxelBlockHash, MEMORYDEVICE_CUDA, TRACKER_SLAVCHEVA_DIAGNOSTIC>();
+	auto motionTracker_VBH_CUDA = new SurfaceTracker<ITMVoxel, ITMWarp, VoxelBlockHash, MEMORYDEVICE_CUDA, TRACKER_SLAVCHEVA_DIAGNOSTIC>();
 
 	motionTracker_VBH_CUDA->ClearOutFramewiseWarp(warps_VBH);
 	BOOST_REQUIRE_CLOSE(SceneStatCalc_CUDA_VBH_Warp::Instance().ComputeFramewiseWarpMax(warps_VBH), 0.0f, relativeTolerance);

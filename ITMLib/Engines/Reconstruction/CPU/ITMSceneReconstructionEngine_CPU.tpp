@@ -7,7 +7,7 @@
 
 using namespace ITMLib;
 template<class TVoxel>
-void ITMSceneReconstructionEngine_CPU<TVoxel,ITMVoxelBlockHash>::ResetScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene)
+void ITMSceneReconstructionEngine_CPU<TVoxel,VoxelBlockHash>::ResetScene(ITMVoxelVolume<TVoxel, VoxelBlockHash> *scene)
 {
 	int numBlocks = scene->index.GetAllocatedBlockCount();
 	int blockSize = scene->index.GetVoxelBlockSize();
@@ -30,7 +30,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel,ITMVoxelBlockHash>::ResetScene(ITMV
 }
 
 template<class TVoxel>
-void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoScene(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const ITMView *view,
+void ITMSceneReconstructionEngine_CPU<TVoxel, VoxelBlockHash>::IntegrateIntoScene(ITMVoxelVolume<TVoxel, VoxelBlockHash> *scene, const ITMView *view,
                                                                                      const ITMTrackingState *trackingState, const ITMRenderState *renderState)
 {
 	Vector2i rgbImgSize = view->rgb->noDims;
@@ -102,7 +102,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 }
 
 template<class TVoxel>
-void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::AllocateSceneFromDepth(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash> *scene, const ITMView *view,
+void ITMSceneReconstructionEngine_CPU<TVoxel, VoxelBlockHash>::AllocateSceneFromDepth(ITMVoxelVolume<TVoxel, VoxelBlockHash> *scene, const ITMView *view,
                                                                                          const ITMTrackingState *trackingState, const ITMRenderState *renderState, bool onlyUpdateVisibleList, bool resetVisibleList)
 {
 	Vector2i depthImgSize = view->depth->noDims;

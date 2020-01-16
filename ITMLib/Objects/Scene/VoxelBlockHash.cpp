@@ -14,7 +14,7 @@
 //  limitations under the License.
 //  ================================================================
 
-#include "ITMVoxelBlockHash.h"
+#include "VoxelBlockHash.h"
 #include "../../ITMLibDefines.h"
 #include "../../Engines/Indexing/VBH/CPU/ITMIndexingEngine_CPU_VoxelBlockHash.h"
 #include "../../Engines/Indexing/VBH/CUDA/ITMIndexingEngine_CUDA_VoxelBlockHash.h"
@@ -22,15 +22,15 @@
 namespace ITMLib {
 
 
-ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt(const Vector3s& pos, int& hashCode) const {
+ITMHashEntry VoxelBlockHash::GetHashEntryAt(const Vector3s& pos, int& hashCode) const {
 	const ITMHashEntry* entries = this->GetEntries();
 	switch (memoryType) {
 		case MEMORYDEVICE_CPU:
-			return ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
+			return ITMIndexingEngine<ITMVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
 					.FindHashEntry(*this,pos,hashCode);
 #ifndef COMPILE_WITHOUT_CUDA
 		case MEMORYDEVICE_CUDA:
-			return ITMIndexingEngine<ITMVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA>::Instance()
+			return ITMIndexingEngine<ITMVoxel, VoxelBlockHash, MEMORYDEVICE_CUDA>::Instance()
 					.FindHashEntry(*this,pos, hashCode);
 #endif
 		default:
@@ -38,12 +38,12 @@ ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt(const Vector3s& pos, int& hashCod
 			return ITMHashEntry();
 	}
 }
-ITMHashEntry ITMVoxelBlockHash::GetHashEntryAt(const Vector3s& pos) const {
+ITMHashEntry VoxelBlockHash::GetHashEntryAt(const Vector3s& pos) const {
 	int hashCode = 0;
 	return GetHashEntryAt(pos, hashCode);
 }
 
-ITMVoxelBlockHash::ITMVoxelBlockHash(VoxelBlockHashParameters parameters, MemoryDeviceType memoryType) :
+VoxelBlockHash::VoxelBlockHash(VoxelBlockHashParameters parameters, MemoryDeviceType memoryType) :
 		voxelBlockCount(parameters.voxel_block_count),
 		excessListSize(parameters.excess_list_size),
 		hashEntryCount(ORDERED_LIST_SIZE + parameters.excess_list_size),
@@ -61,7 +61,7 @@ ITMVoxelBlockHash::ITMVoxelBlockHash(VoxelBlockHashParameters parameters, Memory
 
 }
 
-void ITMVoxelBlockHash::SaveToDirectory(const std::string& outputDirectory) const {
+void VoxelBlockHash::SaveToDirectory(const std::string& outputDirectory) const {
 	std::string hashEntriesFileName = outputDirectory + "hash.dat";
 	std::string excessAllocationListFileName = outputDirectory + "excess.dat";
 	std::string lastFreeExcessListIdFileName = outputDirectory + "last.txt";
@@ -74,7 +74,7 @@ void ITMVoxelBlockHash::SaveToDirectory(const std::string& outputDirectory) cons
 	ORUtils::MemoryBlockPersister::SaveMemoryBlock(excessAllocationListFileName, excessAllocationList, memoryType);
 }
 
-void ITMVoxelBlockHash::LoadFromDirectory(const std::string& inputDirectory) {
+void VoxelBlockHash::LoadFromDirectory(const std::string& inputDirectory) {
 	std::string hashEntriesFileName = inputDirectory + "hash.dat";
 	std::string excessAllocationListFileName = inputDirectory + "excess.dat";
 	std::string lastFreeExcessListIdFileName = inputDirectory + "last.txt";

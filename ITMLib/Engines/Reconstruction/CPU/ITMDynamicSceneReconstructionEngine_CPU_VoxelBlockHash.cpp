@@ -17,5 +17,5 @@
 #include "../../../ITMLibDefines.h"
 
 namespace ITMLib{
-template class ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, ITMVoxelBlockHash>;
+template class ITMDynamicSceneReconstructionEngine_CPU<ITMVoxel, ITMWarp, VoxelBlockHash>;
 }

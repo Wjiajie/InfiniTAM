@@ -22,9 +22,9 @@
 namespace ITMLib {
 
 template<typename TVoxel>
-class ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA> :
+class ITMIndexingEngine<TVoxel, VoxelBlockHash, MEMORYDEVICE_CUDA> :
 		public ITMIndexingEngine_VoxelBlockHash<TVoxel, MEMORYDEVICE_CUDA,
-		ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CUDA> > {
+		ITMIndexingEngine<TVoxel, VoxelBlockHash, MEMORYDEVICE_CUDA> > {
 private:
 	ITMIndexingEngine() = default;
 
@@ -41,35 +41,35 @@ public:
 	ITMIndexingEngine(ITMIndexingEngine const&) = delete;
 	void operator=(ITMIndexingEngine const&) = delete;
 
-	void AllocateFromDepth(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene, const ITMView* view,
+	void AllocateFromDepth(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene, const ITMView* view,
 			const ITMTrackingState* trackingState, bool onlyUpdateVisibleList, bool resetVisibleList) override;
 
-	void AllocateFromDepth(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view,
+	void AllocateFromDepth(ITMVoxelVolume<TVoxel, VoxelBlockHash>* volume, const ITMView* view,
 	                       const Matrix4f& depth_camera_matrix = Matrix4f::Identity(),
 	                       bool onlyUpdateVisibleList = false, bool resetVisibleList = false) override;
 
-	void AllocateHashEntriesUsingLists(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* volume) override;
+	void AllocateHashEntriesUsingLists(ITMVoxelVolume <TVoxel, VoxelBlockHash>* volume) override;
 
-	void AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* volume) override;
+	void AllocateHashEntriesUsingLists_SetVisibility(ITMVoxelVolume <TVoxel, VoxelBlockHash>* volume) override;
 
-	void BuildVisibilityList(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, const ITMView* view,
+	void BuildVisibilityList(ITMVoxelVolume<TVoxel, VoxelBlockHash>* volume, const ITMView* view,
 	                         const Matrix4f& depth_camera_matrix = Matrix4f::Identity());
 
-	ITMHashEntry FindHashEntry(const ITMVoxelBlockHash& index, const Vector3s& coordinates) override;
-	ITMHashEntry FindHashEntry(const ITMVoxelBlockHash& index, const Vector3s& coordinates, int& hashCode);
-	bool AllocateHashBlockAt(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume, Vector3s at, int& hashCode) override;
+	ITMHashEntry FindHashEntry(const VoxelBlockHash& index, const Vector3s& coordinates) override;
+	ITMHashEntry FindHashEntry(const VoxelBlockHash& index, const Vector3s& coordinates, int& hashCode);
+	bool AllocateHashBlockAt(ITMVoxelVolume<TVoxel, VoxelBlockHash>* volume, Vector3s at, int& hashCode) override;
 
 	template<typename TVoxelATarget, typename TVoxelASource>
-	void AllocateUsingOtherVolume(ITMVoxelVolume <TVoxelATarget, ITMVoxelBlockHash>* targetVolume,
-	                              ITMVoxelVolume <TVoxelASource, ITMVoxelBlockHash>* sourceVolume);
+	void AllocateUsingOtherVolume(ITMVoxelVolume <TVoxelATarget, VoxelBlockHash>* targetVolume,
+	                              ITMVoxelVolume <TVoxelASource, VoxelBlockHash>* sourceVolume);
 
 	template<typename TVoxelTarget, typename TVoxelSource>
-	void AllocateUsingOtherVolumeExpanded(ITMVoxelVolume<TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
-	                                      ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* sourceVolume);
+	void AllocateUsingOtherVolumeExpanded(ITMVoxelVolume<TVoxelTarget, VoxelBlockHash>* targetVolume,
+	                                      ITMVoxelVolume<TVoxelSource, VoxelBlockHash>* sourceVolume);
 
 	template<typename TVoxelTarget, typename TVoxelSource>
-	void AllocateUsingOtherVolumeAndSetVisibilityExpanded(ITMVoxelVolume<TVoxelTarget, ITMVoxelBlockHash>* targetVolume,
-	                                                      ITMVoxelVolume<TVoxelSource, ITMVoxelBlockHash>* sourceVolume,
+	void AllocateUsingOtherVolumeAndSetVisibilityExpanded(ITMVoxelVolume<TVoxelTarget, VoxelBlockHash>* targetVolume,
+	                                                      ITMVoxelVolume<TVoxelSource, VoxelBlockHash>* sourceVolume,
 	                                                      ITMView* view, const Matrix4f& depth_camera_matrix = Matrix4f::Identity());
 };
 } //namespace ITMLib

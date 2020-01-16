@@ -16,16 +16,16 @@
 #pragma once
 
 
-#include "ITMVoxelBlockHash.h"
+#include "VoxelBlockHash.h"
 #include "ITMRepresentationAccess.h"
 #include "../../../ORUtils/PlatformIndependence.h"
 #include "../../Utils/ITMVoxelFlags.h"
 
 template<class TVoxel>
 _CPU_AND_GPU_CODE_ inline TVoxel&
-ReadVoxelRef(THREADPTR(TVoxel)* voxelData, const CONSTPTR(ITMLib::ITMVoxelBlockHash::IndexData)* voxelIndex,
+ReadVoxelRef(THREADPTR(TVoxel)* voxelData, const CONSTPTR(ITMLib::VoxelBlockHash::IndexData)* voxelIndex,
              const THREADPTR(Vector3i)& point, THREADPTR(int)& vmIndex,
-             THREADPTR(ITMLib::ITMVoxelBlockHash::IndexCache)& cache) {
+             THREADPTR(ITMLib::VoxelBlockHash::IndexCache)& cache) {
 	Vector3i blockPos;
 	int linearIdx = pointToVoxelBlockPos(point, blockPos);
 

@@ -550,7 +550,7 @@
                   shouldBeEnabled = "No"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "ITMLib::Engine::ITMVisualisationEngine_Metal&lt;ITMVoxel_s, ITMLib::Objects::ITMVoxelBlockHash&gt;::~ITMVisualisationEngine_Metal()"
+                  symbolName = "ITMLib::Engine::ITMVisualisationEngine_Metal&lt;ITMVoxel_s, ITMLib::Objects::VoxelBlockHash&gt;::~ITMVisualisationEngine_Metal()"
                   moduleName = "InfiniTAM"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/viprad/Documents/Projects/InfiniTAM/Viewer/ITMLib/Engine/DeviceSpecific/Metal/ITMVisualisationEngine_Metal.mm"
@@ -565,7 +565,7 @@
                   shouldBeEnabled = "No"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "ITMLib::Engine::ITMVisualisationEngine_Metal&lt;ITMVoxel_s, ITMLib::Objects::ITMVoxelBlockHash&gt;::~ITMVisualisationEngine_Metal()"
+                  symbolName = "ITMLib::Engine::ITMVisualisationEngine_Metal&lt;ITMVoxel_s, ITMLib::Objects::VoxelBlockHash&gt;::~ITMVisualisationEngine_Metal()"
                   moduleName = "InfiniTAM"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/viprad/Documents/Projects/InfiniTAM/Viewer/ITMLib/Engine/DeviceSpecific/Metal/ITMVisualisationEngine_Metal.mm"
@@ -861,7 +861,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "26"
             endingLineNumber = "26"
-            landmarkName = "ITMSceneReconstructionEngine_CPU&lt;TVoxelCanonical,ITMVoxelBlockHash&gt;()"
+            landmarkName = "ITMSceneReconstructionEngine_CPU&lt;TVoxelCanonical,VoxelBlockHash&gt;()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

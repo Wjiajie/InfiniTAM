@@ -15,7 +15,7 @@
 //  ================================================================
 #pragma once
 
-#include "../../../Objects/Scene/ITMVoxelBlockHash.h"
+#include "../../../Objects/Scene/VoxelBlockHash.h"
 #include "../../../Objects/Scene/PlainVoxelArray.h"
 
 namespace ITMLib {
@@ -25,8 +25,8 @@ template<typename TVoxel, typename TIndex, bool hasCumulativeWarp>
 struct OffsetWarpsFunctor;
 
 template<typename TVoxel>
-struct OffsetWarpsFunctor<TVoxel, ITMVoxelBlockHash, true> {
-	static void OffsetWarps(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset) {
+struct OffsetWarpsFunctor<TVoxel, VoxelBlockHash, true> {
+	static void OffsetWarps(ITMVoxelVolume <TVoxel, VoxelBlockHash>* scene, Vector3f offset) {
 		TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 		const ITMHashEntry* hashTable = scene->index.GetEntries();
 		int noTotalEntries = scene->index.hashEntryCount;
@@ -66,8 +66,8 @@ struct OffsetWarpsFunctor<TVoxel, PlainVoxelArray, true> {
 };
 
 template<typename TVoxel>
-struct OffsetWarpsFunctor<TVoxel, ITMVoxelBlockHash, false> {
-	static void OffsetWarps(ITMVoxelVolume <TVoxel, ITMVoxelBlockHash>* scene, Vector3f offset) {
+struct OffsetWarpsFunctor<TVoxel, VoxelBlockHash, false> {
+	static void OffsetWarps(ITMVoxelVolume <TVoxel, VoxelBlockHash>* scene, Vector3f offset) {
 		DIEWITHEXCEPTION_REPORTLOCATION("Warps not defined for scene of using this voxel type.");
 	}
 };

@@ -15,7 +15,7 @@
 //  ================================================================
 #include "VolumeEditAndCopyEngine_CPU.h"
 #include "../../../Utils/ITMMath.h"
-#include "../../../Objects/Scene/ITMVoxelBlockHash.h"
+#include "../../../Objects/Scene/VoxelBlockHash.h"
 #include "../../../Objects/Scene/ITMRepresentationAccess.h"
 #include "../../../ITMLibDefines.h"
 #include "../../../Objects/Scene/ITMVoxelVolume.h"

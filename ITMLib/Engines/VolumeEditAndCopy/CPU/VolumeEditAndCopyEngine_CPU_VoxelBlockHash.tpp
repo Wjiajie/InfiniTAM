@@ -28,8 +28,8 @@ using namespace ITMLib;
 // region ==================================== Voxel Hash Scene VolumeEditAndCopy Engine ====================================
 
 template<typename TVoxel>
-void VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene) {
+void VolumeEditAndCopyEngine_CPU<TVoxel, VoxelBlockHash>::ResetScene(
+		ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene) {
 	int numBlocks = scene->index.GetAllocatedBlockCount();
 	int blockSize = scene->index.GetVoxelBlockSize();
 
@@ -52,7 +52,7 @@ void VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(
 
 template<typename TVoxel>
 bool
-VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* volume,
+VolumeEditAndCopyEngine_CPU<TVoxel, VoxelBlockHash>::SetVoxel(ITMVoxelVolume<TVoxel, VoxelBlockHash>* volume,
                                                                  Vector3i at, TVoxel voxel) {
 
 	ITMHashEntry* hashTable = volume->index.GetEntries();
@@ -60,7 +60,7 @@ VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMVoxelVolume<
 	int hashCode = -1;
 	Vector3s blockPos;
 	int voxelIndexInBlock = pointToVoxelBlockPos(at, blockPos);
-	if (ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
+	if (ITMIndexingEngine<TVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>::Instance()
 			.AllocateHashBlockAt(volume, blockPos, hashCode)) {
 		ITMHashEntry& entry = hashTable[hashCode];
 		TVoxel* localVoxelBlock = &(voxels[entry.ptr * (VOXEL_BLOCK_SIZE3)]);
@@ -72,8 +72,8 @@ VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::SetVoxel(ITMVoxelVolume<
 }
 
 template<typename TVoxel>
-bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::SetVoxelNoAllocation(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
+bool VolumeEditAndCopyEngine_CPU<TVoxel, VoxelBlockHash>::SetVoxelNoAllocation(
+		ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene,
 		Vector3i at, TVoxel voxel) {
 	ITMHashEntry* hashTable = scene->index.GetEntries();
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
@@ -92,7 +92,7 @@ bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::SetVoxelNoAllocatio
 
 template<typename TVoxel>
 TVoxel
-VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
+VolumeEditAndCopyEngine_CPU<TVoxel, VoxelBlockHash>::ReadVoxel(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene,
                                                                   Vector3i at) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* hashTable = scene->index.GetEntries();
@@ -102,9 +102,9 @@ VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVolume
 
 template<typename TVoxel>
 TVoxel
-VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
+VolumeEditAndCopyEngine_CPU<TVoxel, VoxelBlockHash>::ReadVoxel(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene,
                                                                   Vector3i at,
-                                                                  ITMVoxelBlockHash::IndexCache& cache) {
+                                                                  VoxelBlockHash::IndexCache& cache) {
 	TVoxel* voxels = scene->localVBA.GetVoxelBlocks();
 	ITMHashEntry* hashTable = scene->index.GetEntries();
 	int vmIndex;
@@ -113,14 +113,14 @@ VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::ReadVoxel(ITMVoxelVolume
 
 template<typename TVoxel>
 void
-VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::OffsetWarps(ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* scene,
+VolumeEditAndCopyEngine_CPU<TVoxel, VoxelBlockHash>::OffsetWarps(ITMVoxelVolume<TVoxel, VoxelBlockHash>* scene,
                                                                     Vector3f offset) {
 	DIEWITHEXCEPTION_REPORTLOCATION("Not implemented!");
 }
 
 template<typename TVoxel>
-bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* destination, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
+bool VolumeEditAndCopyEngine_CPU<TVoxel, VoxelBlockHash>::CopySceneSlice(
+		ITMVoxelVolume<TVoxel, VoxelBlockHash>* destination, ITMVoxelVolume<TVoxel, VoxelBlockHash>* source,
 		Vector6i bounds, const Vector3i& offset) {
 
 	assert(destination->index.hashEntryCount == source->index.hashEntryCount);
@@ -157,7 +157,7 @@ bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 			}
 		}
 
-		ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance().
+		ITMIndexingEngine<TVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>::Instance().
 				AllocateHashEntriesUsingLists(destination);
 
 		//iterate over source hash blocks & fill in the target hash blocks
@@ -219,9 +219,9 @@ bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 			}
 		}
 
-		ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance().
+		ITMIndexingEngine<TVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>::Instance().
 				AllocateHashEntriesUsingLists(destination);
-		ITMVoxelBlockHash::IndexCache source_cache;
+		VoxelBlockHash::IndexCache source_cache;
 
 		for (int source_z = bounds.min_z; source_z < bounds.max_z; source_z++) {
 			for (int source_y = bounds.min_y; source_y < bounds.min_y; source_y++) {
@@ -229,9 +229,9 @@ bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 					Vector3i source_point(source_x, source_y, source_z);
 					Vector3i destination_point = source_point + offset;
 					TVoxel source_voxel =
-							VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::
+							VolumeEditAndCopyEngine_CPU<TVoxel, VoxelBlockHash>::
 							ReadVoxel(source, source_point, source_cache);
-					VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::
+					VolumeEditAndCopyEngine_CPU<TVoxel, VoxelBlockHash>::
 					SetVoxelNoAllocation(destination, destination_point, source_voxel);
 					voxelsWereCopied = true;
 				}
@@ -243,14 +243,14 @@ bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopySceneSlice(
 }
 
 template<typename TVoxel>
-bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
-		ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* target, ITMVoxelVolume<TVoxel, ITMVoxelBlockHash>* source,
+bool VolumeEditAndCopyEngine_CPU<TVoxel, VoxelBlockHash>::CopyScene(
+		ITMVoxelVolume<TVoxel, VoxelBlockHash>* target, ITMVoxelVolume<TVoxel, VoxelBlockHash>* source,
 		const Vector3i& offset) {
 
 	assert(target->index.hashEntryCount == source->index.hashEntryCount);
 
 	//reset destination scene
-	VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::ResetScene(target);
+	VolumeEditAndCopyEngine_CPU<TVoxel, VoxelBlockHash>::ResetScene(target);
 
 	const int hashEntryCount = source->index.hashEntryCount;
 
@@ -269,7 +269,7 @@ bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 	bool voxelsWereCopied = false;
 
 	if (offset == Vector3i(0)) {
-		ITMIndexingEngine<TVoxel, ITMVoxelBlockHash, MEMORYDEVICE_CPU>::Instance().AllocateUsingOtherVolume(target, source);
+		ITMIndexingEngine<TVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>::Instance().AllocateUsingOtherVolume(target, source);
 #ifdef WITH_OPENMP
 #pragma omp parallel for default(none)
 #endif
@@ -309,7 +309,7 @@ bool VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::CopyScene(
 						Vector3i destinationPoint = sourcePoint + offset;
 						locId = x + y * VOXEL_BLOCK_SIZE + z * VOXEL_BLOCK_SIZE * VOXEL_BLOCK_SIZE;
 						TVoxel sourceVoxel = localSourceVoxelBlock[locId];
-						VolumeEditAndCopyEngine_CPU<TVoxel, ITMVoxelBlockHash>::
+						VolumeEditAndCopyEngine_CPU<TVoxel, VoxelBlockHash>::
 						SetVoxel(target, destinationPoint, sourceVoxel);
 						voxelsWereCopied = true;
 					}

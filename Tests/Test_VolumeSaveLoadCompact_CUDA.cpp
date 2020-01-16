@@ -33,9 +33,9 @@
 using namespace ITMLib;
 
 typedef ITMSceneFileIOEngine<ITMVoxel, PlainVoxelArray> SceneFileIOEngine_PVA;
-typedef ITMSceneFileIOEngine<ITMVoxel, ITMVoxelBlockHash> SceneFileIOEngine_VBH;
+typedef ITMSceneFileIOEngine<ITMVoxel, VoxelBlockHash> SceneFileIOEngine_VBH;
 //typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, PlainVoxelArray> SceneStatisticsCalculator_PVA;
-//typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, ITMVoxelBlockHash> SceneStatCalc_CPU_VBH_Voxel;
+//typedef ITMSceneStatisticsCalculator_CUDA<ITMVoxel, VoxelBlockHash> SceneStatCalc_CPU_VBH_Voxel;
 
 BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CUDA) {
 
@@ -61,11 +61,11 @@ BOOST_AUTO_TEST_CASE(testSaveSceneCompact_CUDA) {
 	BOOST_REQUIRE_EQUAL( SceneStatCalc_CUDA_PVA_Voxel ::Instance().ComputeNonTruncatedVoxelCount(&scene2), 19456);
 	BOOST_REQUIRE(contentAlmostEqual_CUDA(&scene1, &scene2, tolerance));
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene3(
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> scene3(
 			&configuration::get().voxel_volume_parameters, configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 			MEMORYDEVICE_CUDA, {0x800, 0x20000});
 
-	ITMVoxelVolume<ITMVoxel, ITMVoxelBlockHash> scene4(
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> scene4(
 			&configuration::get().voxel_volume_parameters, configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 			MEMORYDEVICE_CUDA, {0x800, 0x20000});
 

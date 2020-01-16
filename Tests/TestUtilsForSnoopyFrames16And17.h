@@ -17,7 +17,7 @@
 #pragma once
 
 #include "../ITMLib/Objects/Scene/PlainVoxelArray.h"
-#include "../ITMLib/Objects/Scene/ITMVoxelBlockHash.h"
+#include "../ITMLib/Objects/Scene/VoxelBlockHash.h"
 
 using namespace ITMLib;
 

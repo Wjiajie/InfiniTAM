@@ -20,7 +20,7 @@ public:
 
 	/**
 	 * \brief An indexing method for access to the volume's voxels.
-	 * \details For instance, if ITMVoxelBlockHash is used as TIndex, this is a hash table to reference the 8x8x8
+	 * \details For instance, if VoxelBlockHash is used as TIndex, this is a hash table to reference the 8x8x8
 	 * blocks. If it's an PlainVoxelArray, it's just a dense regular 3D array. */
 	TIndex index;
 

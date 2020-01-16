@@ -346,7 +346,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 
 					switch (uiEngine.indexingMethod) {
 						case configuration::INDEX_HASH: {
-							auto* multiEngine = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMVoxelBlockHash>*>(uiEngine.mainEngine);
+							auto* multiEngine = dynamic_cast<ITMMultiEngine<ITMVoxel, VoxelBlockHash>*>(uiEngine.mainEngine);
 							if (multiEngine != nullptr) {
 								int idx = multiEngine->findPrimaryLocalMapIdx();
 								if (idx < 0) idx = 0;
@@ -440,7 +440,7 @@ void UIEngine_BPO::GlutKeyUpFunction(unsigned char key, int x, int y) {
 				break;
 			case '[':
 			case ']': {
-				auto* multiEngineVBH = dynamic_cast<ITMMultiEngine<ITMVoxel, ITMVoxelBlockHash>*>(uiEngine.mainEngine);
+				auto* multiEngineVBH = dynamic_cast<ITMMultiEngine<ITMVoxel, VoxelBlockHash>*>(uiEngine.mainEngine);
 				if (multiEngineVBH != nullptr) {
 					int idx = multiEngineVBH->getFreeviewLocalMapIdx();
 					if (key == '[') idx--;

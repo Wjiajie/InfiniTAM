@@ -27,7 +27,7 @@ GenericWarpConsistencySubtest<PlainVoxelArray, MEMORYDEVICE_CPU>(const Slavcheva
                                                                     bool expand_raw_live_allocation);
 template
 void
-GenericWarpConsistencySubtest<ITMVoxelBlockHash, MEMORYDEVICE_CPU>(const SlavchevaSurfaceTracker::Switches& switches,
+GenericWarpConsistencySubtest<VoxelBlockHash, MEMORYDEVICE_CPU>(const SlavchevaSurfaceTracker::Switches& switches,
                                                                    int iteration_limit,
                                                                    GenericWarpTestMode mode,
                                                                    float absolute_tolerance,
@@ -49,7 +49,7 @@ GenericWarpConsistencySubtest<PlainVoxelArray, MEMORYDEVICE_CUDA>(const Slavchev
 
 template
 void
-GenericWarpConsistencySubtest<ITMVoxelBlockHash, MEMORYDEVICE_CUDA>(const SlavchevaSurfaceTracker::Switches& switches,
+GenericWarpConsistencySubtest<VoxelBlockHash, MEMORYDEVICE_CUDA>(const SlavchevaSurfaceTracker::Switches& switches,
                                                                     int iteration_limit,
                                                                     GenericWarpTestMode mode,
                                                                     float absolute_tolerance,
@@ -103,4 +103,4 @@ template<>
 std::string getIndexString<PlainVoxelArray>() { return "PVA"; }
 
 template<>
-std::string getIndexString<ITMVoxelBlockHash>() { return "VBH"; }
+std::string getIndexString<VoxelBlockHash>() { return "VBH"; }
