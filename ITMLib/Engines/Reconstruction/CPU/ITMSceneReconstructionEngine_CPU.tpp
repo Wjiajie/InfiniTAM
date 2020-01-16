@@ -137,7 +137,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, VoxelBlockHash>::AllocateSceneFrom
 	bool useSwapping = scene->Swapping();
 
 	float oneOverHashEntrySize = 1.0f / (voxelSize * VOXEL_BLOCK_SIZE);//m
-	float band_factor = configuration::get().voxel_volume_parameters.block_allocation_band_factor;
+	float band_factor = configuration::get().general_voxel_volume_parameters.block_allocation_band_factor;
 	float surface_cutoff_distance = mu * band_factor;
 
 	int lastFreeVoxelBlockId = scene->localVBA.lastFreeBlockId;

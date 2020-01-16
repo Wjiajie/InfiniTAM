@@ -134,7 +134,7 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, VoxelBlockHash>::AllocateSceneFro
 	dim3 gridSizeVS((int) ceil((float) scene->index.GetVisibleHashBlockCount() / (float) cudaBlockSizeVS.x));
 
 	float oneOverHashBlockSize = 1.0f / (voxelSize * VOXEL_BLOCK_SIZE);
-	float surface_cutoff_distance = configuration::get().voxel_volume_parameters.block_allocation_band_factor * mu;
+	float surface_cutoff_distance = configuration::get().general_voxel_volume_parameters.block_allocation_band_factor * mu;
 
 	AllocationTempData* tempData = (AllocationTempData*) allocationTempData_host;
 	tempData->noAllocatedVoxelEntries = scene->localVBA.lastFreeBlockId;

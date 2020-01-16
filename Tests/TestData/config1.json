@@ -1,5 +1,5 @@
 {
-    "voxel_volume_parameters": {
+    "general_voxel_volume_parameters": {
         "voxel_size": 0.00499999989,
         "near_clipping_distance": 0.119999997,
         "far_clipping_distance": 4.11999989,
@@ -9,7 +9,7 @@
         "add_extra_block_ring_during_allocation": true,
         "block_allocation_band_factor": 1.20000005
     },
-    "surfel_volume_parameters": {
+    "general_surfel_volume_parameters": {
         "delta_radius": 0.400000006,
         "gaussian_confidence_sigma": 0.5,
         "max_merge_angle": 0.383972436,
@@ -24,6 +24,60 @@
         "unstable_surfel_z_offset": 300,
         "use_gaussian_sample_confidence": false,
         "use_surfel_merging": false
+    },
+    "specific_volume_parameters": {
+        "array": {
+            "canonical": {
+                "size": [
+                    512,
+                    512,
+                    512
+                ],
+                "offset": [
+                    -256,
+                    -256,
+                    0
+                ]
+            },
+            "live": {
+                "size": [
+                    512,
+                    512,
+                    512
+                ],
+                "offset": [
+                    -256,
+                    -256,
+                    0
+                ]
+            },
+            "warp": {
+                "size": [
+                    512,
+                    512,
+                    512
+                ],
+                "offset": [
+                    -256,
+                    -256,
+                    0
+                ]
+            }
+        },
+        "hash": {
+            "canonical": {
+                "voxel_block_count": 262144,
+                "excess_list_size": 131072
+            },
+            "live": {
+                "voxel_block_count": 131072,
+                "excess_list_size": 131072
+            },
+            "warp": {
+                "voxel_block_count": 131072,
+                "excess_list_size": 131072
+            }
+        }
     },
     "slavcheva_parameters": {
         "learning_rate": 0.109999999,

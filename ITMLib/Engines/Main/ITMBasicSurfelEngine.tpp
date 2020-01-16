@@ -21,7 +21,7 @@ ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMRGBDCalib& calib, V
 	if ((imgSize_d.x == -1) || (imgSize_d.y == -1)) imgSize_d = imgSize_rgb;
 
 	MemoryDeviceType memoryType = settings.device_type;
-	this->surfelScene = new ITMSurfelScene<TSurfel>(&settings.surfel_volume_parameters, memoryType);
+	this->surfelScene = new ITMSurfelScene<TSurfel>(&settings.general_surfel_volume_parameters, memoryType);
 
 	const MemoryDeviceType deviceType = settings.device_type;
 
@@ -35,13 +35,13 @@ ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMRGBDCalib& calib, V
 
 	imuCalibrator = new ITMIMUCalibrator_iPad();
 	tracker = ITMCameraTrackerFactory::Instance().Make(imgSize_rgb, imgSize_d, lowLevelEngine, imuCalibrator,
-	                                                   &settings.voxel_volume_parameters);
+	                                                   &settings.general_voxel_volume_parameters);
 	trackingController = new ITMTrackingController(tracker);
 
 	Vector2i trackedImageSize = trackingController->GetTrackedImageSize(imgSize_rgb, imgSize_d);
 
 	surfelRenderState_live = new ITMSurfelRenderState(trackedImageSize,
-	                                                  settings.surfel_volume_parameters.supersampling_factor);
+	                                                  settings.general_surfel_volume_parameters.supersampling_factor);
 	surfelRenderState_freeview = NULL; //will be created if needed
 
 	trackingState = new ITMTrackingState(trackedImageSize, memoryType);
@@ -50,8 +50,8 @@ ITMBasicSurfelEngine<TSurfel>::ITMBasicSurfelEngine(const ITMRGBDCalib& calib, V
 	view = NULL; // will be allocated by the view builder
 
 	if (settings.behavior_on_failure == configuration::FAILUREMODE_RELOCALIZE)
-		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.voxel_volume_parameters.near_clipping_distance,
-		                                                                       settings.voxel_volume_parameters.far_clipping_distance),
+		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings.general_voxel_volume_parameters.near_clipping_distance,
+		                                                                       settings.general_voxel_volume_parameters.far_clipping_distance),
 		                                                   0.2f, 500, 4);
 	else relocaliser = NULL;
 

@@ -57,7 +57,7 @@ void ITMIndexingEngine<TVoxel, VoxelBlockHash, MEMORYDEVICE_CPU>::AllocateFromDe
 	Vector3s* allocationBlockCoordinates = volume->index.GetAllocationBlockCoordinates();
 
 	float oneOverHashBlockSize = 1.0f / (voxelSize * VOXEL_BLOCK_SIZE);//m
-	float band_factor = configuration::get().voxel_volume_parameters.block_allocation_band_factor;
+	float band_factor = configuration::get().general_voxel_volume_parameters.block_allocation_band_factor;
 	float surface_cutoff_distance = band_factor * mu;
 	bool collisionDetected;
 

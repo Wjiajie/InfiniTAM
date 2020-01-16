@@ -69,7 +69,7 @@ void ITMIndexingEngine<TVoxel, VoxelBlockHash, MEMORYDEVICE_CUDA>::AllocateFromD
 	dim3 gridSizeAL((int) ceil((float) hashEntryCount / (float) cudaBlockSizeAL.x));
 
 	float oneOverHashBlockSizeMeters = 1.0f / (voxelSize * VOXEL_BLOCK_SIZE);//m
-	float surface_cutoff_distance = configuration::get().voxel_volume_parameters.block_allocation_band_factor * mu;
+	float surface_cutoff_distance = configuration::get().general_voxel_volume_parameters.block_allocation_band_factor * mu;
 
 	ORUtils::MemoryBlock<bool> collisionDetected(1, true, true);
 

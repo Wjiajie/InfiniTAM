@@ -703,6 +703,8 @@ set(ITMLIB_UTILS_SOURCES
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.tcu
     Utils/Analytics/VoxelVolumeComparison/ITMVoxelVolumeComparison_CUDA.cu
 
+	Utils/json_utils.cpp
+
 	Utils/Configuration.cpp
     Utils/ITMPrintHelpers.cpp
     )
@@ -722,12 +724,13 @@ set(ITMLIB_UTILS_HEADERS
 	Utils/Serialization/SerializationSequenceMacros.h
 	Utils/Serialization/SerializationSequenceLevel2Macros.h
 
-    Utils/ITMCUDAUtils.h
+	Utils/json_utils.h
+
+	Utils/ITMCUDAUtils.h
     Utils/ITMValuePosition.h
     Utils/ITMImageTypes.h
     Utils/ITMHashBlockProperties.h
     Utils/ITMVoxelFlags.h
-	Utils/json_utils.h
 	Utils/Configuration.h
     Utils/ITMMath.h
     Utils/ITMMemoryBlockTypes.h

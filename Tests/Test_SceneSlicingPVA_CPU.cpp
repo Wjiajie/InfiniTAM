@@ -32,7 +32,7 @@ using namespace ITMLib;
 
 
 BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
-	ITMVoxelVolume<ITMVoxel, PlainVoxelArray> canonical_scene_CPU(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMVoxel, PlainVoxelArray> canonical_scene_CPU(&configuration::get().general_voxel_volume_parameters,
 	                                                                 configuration::get().swapping_mode ==
 	                                                                 configuration::SWAPPINGMODE_ENABLED,
 	                                                                 MEMORYDEVICE_CPU);
@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 
 
 	ITMVoxelVolume<ITMVoxel, PlainVoxelArray> canonical_scene_slice_same_dimensions_CPU(
-			&configuration::get().voxel_volume_parameters, configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
+			&configuration::get().general_voxel_volume_parameters, configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 			MEMORYDEVICE_CPU);
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&canonical_scene_slice_same_dimensions_CPU);
 
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 	Vector3i sizeSlice(bounds.max_x - bounds.min_x, bounds.max_y - bounds.min_y, bounds.max_z - bounds.min_z);
 
 	ITMVoxelVolume<ITMVoxel, PlainVoxelArray> canonical_scene_slice_different_dimensions_CPU(
-			&configuration::get().voxel_volume_parameters, configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
+			&configuration::get().general_voxel_volume_parameters, configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 			MEMORYDEVICE_CPU, {sizeSlice, offsetSlice});
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&canonical_scene_slice_different_dimensions_CPU);
 
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(testPVASceneSlice_CPU) {
 	                                              &canonical_scene_slice_different_dimensions_CPU, tolerance));
 
 	ITMVoxelVolume<ITMVoxel, PlainVoxelArray> canonical_scene_slice_from_disk_CPU(
-			&configuration::get().voxel_volume_parameters, configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
+			&configuration::get().general_voxel_volume_parameters, configuration::get().swapping_mode == configuration::SWAPPINGMODE_ENABLED,
 			MEMORYDEVICE_CPU, {sizeSlice, offsetSlice});
 	ManipulationEngine_CPU_PVA_Voxel::Inst().ResetScene(&canonical_scene_slice_from_disk_CPU);
 

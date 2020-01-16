@@ -34,6 +34,8 @@
 #include "../SurfaceTrackers/Interface/SurfaceTrackerInterface.h"
 #include "../SurfaceTrackers/WarpGradientFunctors/WarpGradientFunctor.h"
 #include "../Engines/Main/NonRigidTrackingParameters.h"
+#include "../Objects/Scene/VoxelBlockHash.h"
+#include "../Objects/Scene/PlainVoxelArray.h"
 
 namespace po = boost::program_options;
 namespace pt = boost::property_tree;
@@ -73,11 +75,18 @@ DECLARE_SERIALIZABLE_ENUM(SWAPPINGMODE_ENUM_DESCRIPTION)
 
 DECLARE_SERIALIZABLE_ENUM(LIBMODE_ENUM_DESCRIPTION)
 
-#define INDEXING_METHOD_DESCRIPTION IndexingMethod, \
+#define INDEXING_METHOD_ENUM_DESCRIPTION IndexingMethod, \
     (INDEX_HASH, "hash", "HASH"), \
     (INDEX_ARRAY, "array", "ARRAY")
 
-DECLARE_SERIALIZABLE_ENUM(INDEXING_METHOD_DESCRIPTION)
+DECLARE_SERIALIZABLE_ENUM(INDEXING_METHOD_ENUM_DESCRIPTION)
+
+#define VOLUME_ROLE_ENUM_DESCRIPTION VolumeRole, \
+	(VOLUME_CANONICAL, "canonical", "CANONICAL"), \
+	(VOLUME_LIVE, "live", "LIVE"), \
+	(VOLUME_WARP, "warp", "WARP")
+
+DECLARE_SERIALIZABLE_ENUM(VOLUME_ROLE_ENUM_DESCRIPTION)
 //endregion ========================================================================================================
 
 // region ======================================== SERIALIZABLE STRUCTS ============================================
@@ -108,7 +117,7 @@ DECLARE_SERIALIZABLE_STRUCT(PATHS_STRUCT_DESCRIPTION);
     		"Whether to record video of the canonical reconsturction during automatic run "\
     		"(see number_of_frames_to_process_after_launch and index_of_frame_to_start_at)."), \
     (bool, save_benchmarks_to_disk, false, PRIMITIVE, "Whether to save runtime benchmarks to disk after automatic run."),\
-	(bool, log_volume_statistics, false, PRIMITIVE, "Whether to output various volume statistics after some operations.")
+	(bool, log_volume_statistics, false, PRIMITIVE, "Whether to output various volume statistics after some operations (used only when verbosity_level is set at or above PER_FRAME).")
 
 DECLARE_SERIALIZABLE_STRUCT(TELEMETRY_SETTINGS_STRUCT_DESCRIPTION);
 
@@ -136,9 +145,33 @@ struct TrackerConfigurationStringPresets {
 #define DEFAULT_DEVICE MEMORYDEVICE_CPU
 #endif
 
+#define ARRAY_VOLUME_PARAMETERS_STRUCT_DESCRIPTION \
+	ArrayVolumeParameters, \
+	(PlainVoxelArray::GridAlignedBox, canonical, PlainVoxelArray::GridAlignedBox(), STRUCT, "Parameters specific to the canonical (target / reference) volume in array indexing configuration."), \
+	(PlainVoxelArray::GridAlignedBox, live, PlainVoxelArray::GridAlignedBox(), STRUCT, "Parameters specific to the live (source) volume in array indexing configuration."), \
+	(PlainVoxelArray::GridAlignedBox, warp, PlainVoxelArray::GridAlignedBox(), STRUCT, "Parameters specific to the volume holding warp vectors (motion information) in array indexing configuration.")
+
+DECLARE_SERIALIZABLE_STRUCT(ARRAY_VOLUME_PARAMETERS_STRUCT_DESCRIPTION);
+
+#define HASH_VOLUME_PARAMETERS_STRUCT_DESCRIPTION \
+	HashVolumeParameters, \
+	(VoxelBlockHash::VoxelBlockHashParameters, canonical, VoxelBlockHash::VoxelBlockHashParameters(), STRUCT, "Parameters specific to the canonical (target / reference) volume in voxel block hash indexing configuration."), \
+	(VoxelBlockHash::VoxelBlockHashParameters, live, VoxelBlockHash::VoxelBlockHashParameters(), STRUCT, "Parameters specific to the live (source) volume in voxel block hash indexing configuration."), \
+	(VoxelBlockHash::VoxelBlockHashParameters, warp, VoxelBlockHash::VoxelBlockHashParameters(), STRUCT, "Parameters specific to the volume holding warp vectors (motion information) in voxel block hash indexing configuration.")
+
+DECLARE_SERIALIZABLE_STRUCT(HASH_VOLUME_PARAMETERS_STRUCT_DESCRIPTION);
+
+#define SPECIFIC_VOLUME_PARAMETERS_STRUCT_DESCRIPTION \
+	SpecificVolumeParameters, \
+	(ArrayVolumeParameters, array, ArrayVolumeParameters(), STRUCT, "Specific parameters to use for different volumes with the array indexing method."), \
+	(HashVolumeParameters, hash, HashVolumeParameters(), STRUCT, "Specific parameters to use for different volumes with the hash indexing method.")
+
+DECLARE_SERIALIZABLE_STRUCT(SPECIFIC_VOLUME_PARAMETERS_STRUCT_DESCRIPTION);
+
 #define CONFIGURATION_STRUCT_DESCRIPTION Configuration, \
-    (VoxelVolumeParameters, voxel_volume_parameters, VoxelVolumeParameters(), STRUCT,"Voxel volume parameters, such as voxel size."),\
-    (SurfelVolumeParameters, surfel_volume_parameters, SurfelVolumeParameters(), STRUCT,"Surfel volume parameters, such as surfel radius."),\
+    (VoxelVolumeParameters, general_voxel_volume_parameters, VoxelVolumeParameters(), STRUCT, "Voxel volume parameters, such as voxel size."),\
+    (SurfelVolumeParameters, general_surfel_volume_parameters, SurfelVolumeParameters(), STRUCT, "Surfel volume parameters, such as surfel radius."),\
+    (SpecificVolumeParameters, specific_volume_parameters, SpecificVolumeParameters(), STRUCT, "Parameters for specific volumes (multiple volumes are used in dynamic mode), may include information for different indexing methods."), \
     (SlavchevaSurfaceTracker::Parameters, slavcheva_parameters, SlavchevaSurfaceTracker::Parameters(), STRUCT,"Parameters pertaining to energy tuning for dynamic surface tracking."),\
     (SlavchevaSurfaceTracker::Switches, slavcheva_switches, SlavchevaSurfaceTracker::Switches(), STRUCT,"Switches pertaining to optimization for dynamic surface tracking."),\
     (TelemetrySettings, telemetry_settings, TelemetrySettings(), STRUCT, "Telemetry / diagnostics / logging settings"),\
@@ -162,6 +195,8 @@ struct TrackerConfigurationStringPresets {
 DECLARE_SERIALIZABLE_STRUCT(CONFIGURATION_STRUCT_DESCRIPTION);
 
 Configuration& get();
+template<typename TIndex>
+typename TIndex::InitializationParameters for_volume_role(VolumeRole role);
 void load_configuration_from_variable_map(const po::variables_map& vm);
 void load_default();
 void load_configuration_from_json_file(const std::string& path);

@@ -39,7 +39,7 @@ DEFINE_SERIALIZABLE_ENUM(SWAPPINGMODE_ENUM_DESCRIPTION)
 
 DEFINE_SERIALIZABLE_ENUM(LIBMODE_ENUM_DESCRIPTION)
 
-DEFINE_SERIALIZABLE_ENUM(INDEXING_METHOD_DESCRIPTION)
+DEFINE_SERIALIZABLE_ENUM(INDEXING_METHOD_ENUM_DESCRIPTION)
 
 // defined in other headers or externally
 DEFINE_SERIALIZABLE_ENUM(MemoryDeviceType,
@@ -47,6 +47,8 @@ DEFINE_SERIALIZABLE_ENUM(MemoryDeviceType,
                          (MEMORYDEVICE_CUDA, "cuda", "CUDA", "MEMORYDEVICE_CUDA"),
                          (MEMORYDEVICE_METAL, "metal", "METAL", "MEMORYDEVICE_METAL")
 )
+
+DEFINE_SERIALIZABLE_ENUM(VOLUME_ROLE_ENUM_DESCRIPTION)
 
 namespace ITMLib {
 namespace configuration {
@@ -57,6 +59,12 @@ DEFINE_SERIALIZABLE_STRUCT(PATHS_STRUCT_DESCRIPTION)
 DEFINE_SERIALIZABLE_STRUCT(TELEMETRY_SETTINGS_STRUCT_DESCRIPTION)
 
 DEFINE_SERIALIZABLE_STRUCT(UI_ENGINE_SETTINGS_STRUCT_DESCRIPTION)
+
+DEFINE_SERIALIZABLE_STRUCT(ARRAY_VOLUME_PARAMETERS_STRUCT_DESCRIPTION)
+
+DEFINE_SERIALIZABLE_STRUCT(HASH_VOLUME_PARAMETERS_STRUCT_DESCRIPTION)
+
+DEFINE_SERIALIZABLE_STRUCT(SPECIFIC_VOLUME_PARAMETERS_STRUCT_DESCRIPTION)
 
 //#pragma message BOOST_PP_STRINGIZE((DEFINE_SERIALIZABLE_STRUCT(CONFIGURATION_STRUCT_DESCRIPTION)))
 
@@ -107,6 +115,29 @@ Configuration instance;
 
 Configuration& get() {
 	return instance;
+}
+
+template<>
+typename VoxelBlockHash::InitializationParameters for_volume_role<VoxelBlockHash>(VolumeRole role){
+	switch(role){
+		case VOLUME_CANONICAL:
+			return instance.specific_volume_parameters.hash.canonical;
+		case VOLUME_LIVE:
+			return instance.specific_volume_parameters.hash.live;
+		case VOLUME_WARP:
+			return instance.specific_volume_parameters.hash.warp;
+	}
+}
+template<>
+typename PlainVoxelArray::InitializationParameters for_volume_role<PlainVoxelArray>(VolumeRole role){
+	switch(role){
+		case VOLUME_CANONICAL:
+			return instance.specific_volume_parameters.array.canonical;
+		case VOLUME_LIVE:
+			return instance.specific_volume_parameters.array.live;
+		case VOLUME_WARP:
+			return instance.specific_volume_parameters.array.warp;
+	}
 }
 
 void load_configuration_from_variable_map(const po::variables_map& vm) {

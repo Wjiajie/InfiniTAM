@@ -66,8 +66,9 @@ ITMDynamicEngine<TVoxel, TWarp, TIndex>::ITMDynamicEngine(const ITMRGBDCalib& ca
 
 	if (settings.behavior_on_failure == configuration::FAILUREMODE_RELOCALIZE)
 		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d,
-		                                                   Vector2f(settings.voxel_volume_parameters.near_clipping_distance,
-		                                                            settings.voxel_volume_parameters.far_clipping_distance),
+		                                                   Vector2f(
+				                                                   settings.general_voxel_volume_parameters.near_clipping_distance,
+				                                                   settings.general_voxel_volume_parameters.far_clipping_distance),
 		                                                   0.2f, 500, 4);
 	else relocaliser = nullptr;
 
@@ -86,18 +87,19 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::InitializeScenes() {
 	configuration::Configuration& settings = configuration::get();
 	MemoryDeviceType memoryType = settings.device_type;
 	this->canonicalScene = new ITMVoxelVolume<TVoxel, TIndex>(
-			&settings.voxel_volume_parameters, settings.swapping_mode == configuration::SWAPPINGMODE_ENABLED, memoryType);
+			&settings.general_voxel_volume_parameters, settings.swapping_mode == configuration::SWAPPINGMODE_ENABLED,
+			memoryType, configuration::for_volume_role<TIndex>(configuration::VOLUME_CANONICAL));
 	this->liveScenes = new ITMVoxelVolume<TVoxel, TIndex>* [2];
 	for (int iLiveScene = 0; iLiveScene < ITMDynamicEngine<TVoxel, TWarp, TIndex>::liveSceneCount; iLiveScene++) {
-		this->liveScenes[iLiveScene] = new ITMVoxelVolume<TVoxel, TIndex>(&settings.voxel_volume_parameters,
-		                                                                  settings.swapping_mode ==
-		                                                                  configuration::SWAPPINGMODE_ENABLED,
-		                                                                  memoryType);
+		this->liveScenes[iLiveScene] = new ITMVoxelVolume<TVoxel, TIndex>(
+				&settings.general_voxel_volume_parameters,
+				settings.swapping_mode == configuration::SWAPPINGMODE_ENABLED,
+				memoryType, configuration::for_volume_role<TIndex>(configuration::VOLUME_LIVE));
 	}
-	this->warpField = new ITMVoxelVolume<TWarp, TIndex>(&settings.voxel_volume_parameters,
-	                                                    settings.swapping_mode ==
-	                                                    configuration::SWAPPINGMODE_ENABLED,
-	                                                    memoryType);
+	this->warpField = new ITMVoxelVolume<TWarp, TIndex>(
+			&settings.general_voxel_volume_parameters,
+			settings.swapping_mode == configuration::SWAPPINGMODE_ENABLED,
+			memoryType, configuration::for_volume_role<TIndex>(configuration::VOLUME_WARP));
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
@@ -168,8 +170,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::LoadFromFile() {
 			FernRelocLib::Relocaliser<float>* relocaliser_temp =
 					new FernRelocLib::Relocaliser<float>(view->depth->noDims,
 					                                     Vector2f(
-							                                     settings.voxel_volume_parameters.near_clipping_distance,
-							                                     settings.voxel_volume_parameters.far_clipping_distance),
+							                                     settings.general_voxel_volume_parameters.near_clipping_distance,
+							                                     settings.general_voxel_volume_parameters.far_clipping_distance),
 					                                     0.2f, 500, 4);
 
 			relocaliser_temp->LoadFromDirectory(relocaliserInputDirectory);
@@ -407,7 +409,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 				type = IITMVisualisationEngine::RENDER_COLOUR_FROM_CONFIDENCE;
 
 			if (renderState_freeview == nullptr) {
-				renderState_freeview = new ITMRenderState(out->noDims, liveScenes[0]->sceneParams->near_clipping_distance,
+				renderState_freeview = new ITMRenderState(out->noDims,
+				                                          liveScenes[0]->sceneParams->near_clipping_distance,
 				                                          liveScenes[0]->sceneParams->far_clipping_distance,
 				                                          settings.device_type);
 			}
@@ -425,7 +428,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 		case ITMMainEngine::InfiniTAM_IMAGE_STEP_BY_STEP: {
 
 			if (renderState_freeview == nullptr) {
-				renderState_freeview = new ITMRenderState(out->noDims, liveScenes[0]->sceneParams->near_clipping_distance,
+				renderState_freeview = new ITMRenderState(out->noDims,
+				                                          liveScenes[0]->sceneParams->near_clipping_distance,
 				                                          liveScenes[0]->sceneParams->far_clipping_distance,
 				                                          settings.device_type);
 			}
@@ -453,7 +457,8 @@ void ITMDynamicEngine<TVoxel, TWarp, TIndex>::GetImage(ITMUChar4Image* out, GetI
 			IITMVisualisationEngine::RenderImageType type = IITMVisualisationEngine::RENDER_SHADED_GREYSCALE;
 
 			if (renderState_freeview == nullptr) {
-				renderState_freeview = new ITMRenderState(out->noDims, canonicalScene->sceneParams->near_clipping_distance,
+				renderState_freeview = new ITMRenderState(out->noDims,
+				                                          canonicalScene->sceneParams->near_clipping_distance,
 				                                          canonicalScene->sceneParams->far_clipping_distance,
 				                                          settings.device_type);
 			}

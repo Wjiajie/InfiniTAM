@@ -64,12 +64,12 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, int iteration
 	GenericWarpConsistencySubtest<VoxelBlockHash, TMemoryDeviceType>(switches, iteration_limit, mode,
 	                                                                    absoluteTolerance);
 
-	ITMVoxelVolume<ITMVoxel, PlainVoxelArray> volume_PVA(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMVoxel, PlainVoxelArray> volume_PVA(&configuration::get().general_voxel_volume_parameters,
 	                                                        configuration::get().swapping_mode ==
 	                                                        configuration::SWAPPINGMODE_ENABLED,
 	                                                        TMemoryDeviceType,
 	                                                        Frame16And17Fixture::InitParams<PlainVoxelArray>());
-	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> volume_VBH(&configuration::get().voxel_volume_parameters,
+	ITMVoxelVolume<ITMVoxel, VoxelBlockHash> volume_VBH(&configuration::get().general_voxel_volume_parameters,
 	                                                       configuration::get().swapping_mode ==
 	                                                       configuration::SWAPPINGMODE_ENABLED,
 	                                                       TMemoryDeviceType,
@@ -77,12 +77,12 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, int iteration
 	switch (mode) {
 		case TEST_SUCCESSIVE_ITERATIONS: {
 
-			ITMVoxelVolume<ITMWarp, PlainVoxelArray> warp_field_PVA(&configuration::get().voxel_volume_parameters,
+			ITMVoxelVolume<ITMWarp, PlainVoxelArray> warp_field_PVA(&configuration::get().general_voxel_volume_parameters,
 			                                                           configuration::get().swapping_mode ==
 			                                                           configuration::SWAPPINGMODE_ENABLED,
 			                                                           TMemoryDeviceType,
 			                                                           Frame16And17Fixture::InitParams<PlainVoxelArray>());
-			ITMVoxelVolume<ITMWarp, VoxelBlockHash> warp_field_VBH(&configuration::get().voxel_volume_parameters,
+			ITMVoxelVolume<ITMWarp, VoxelBlockHash> warp_field_VBH(&configuration::get().general_voxel_volume_parameters,
 			                                                          configuration::get().swapping_mode ==
 			                                                          configuration::SWAPPINGMODE_ENABLED,
 			                                                          TMemoryDeviceType,
