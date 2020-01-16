@@ -135,7 +135,13 @@ configuration::Configuration generate_default_snoopy_configuration(){
 							VoxelBlockHash::VoxelBlockHashParameters(0x20000, 0x20000),
 							VoxelBlockHash::VoxelBlockHashParameters(0x20000, 0x20000))
 			),
-			SlavchevaSurfaceTracker::Parameters(0.1f, 0.1f, 4.0f, 0.4f, 0.2f, 1e-5f),
+			SlavchevaSurfaceTracker::Parameters(
+					0.2f,
+					0.1f,
+					2.0f,
+					0.2f,
+					0.2f,
+					1e-5f),
 			SlavchevaSurfaceTracker::Switches(true, false, true, false, true),
 			TelemetrySettings(Vector3i(0), true, true, true),
 			Paths("<CONFIGURATION_DIRECTORY>",
@@ -146,7 +152,11 @@ configuration::Configuration generate_default_snoopy_configuration(){
 			      "<CONFIGURATION_DIRECTORY>/frames/omask_%06i.png",
 			      ""),
 			UIEngineSettings(50, 16),
-			NonRigidTrackingParameters(ITMLib::TRACKER_SLAVCHEVA_OPTIMIZED, 300, 1e-06, 0.5f),
+			NonRigidTrackingParameters(
+					ITMLib::TRACKER_SLAVCHEVA_OPTIMIZED,
+					300,
+					1e-06,
+					0.5f),
 			false,
 			true,
 			MEMORYDEVICE_CUDA,
