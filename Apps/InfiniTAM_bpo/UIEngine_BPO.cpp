@@ -40,8 +40,10 @@
 #include "../../ITMLib/Utils/Analytics/ITMBenchmarkUtils.h"
 #include "../../ITMLib/Utils/ITMPrintHelpers.h"
 
+#ifdef WITH_OPENCV
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+#endif
 
 
 //TODO: we should never have to downcast the main engine to some other engine type, architecture needs to be altered
