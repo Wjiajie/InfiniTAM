@@ -17,7 +17,7 @@ a pointer to the data structure on the GPU.
 class PlainVoxelArray {
 public:
 
-	GENERATE_SERIALIZABLE_STRUCT(
+	GENERATE_PATHLESS_SERIALIZABLE_STRUCT(
 			GridAlignedBox,
 			(Vector3i, size, Vector3i(512), VECTOR, "Size, in voxels."),
 			(Vector3i, offset, Vector3i(-256, -256, 0), VECTOR, "Offset of the lower left front corner of the volume, in voxels")
@@ -37,7 +37,7 @@ public:
 	PlainVoxelArray(PlainVoxelArray::InitializationParameters info, MemoryDeviceType memoryType) :
 			memoryType(memoryType),
 			indexData(new ORUtils::MemoryBlock<IndexData>(1, true, true)) {
-		indexData->GetData(MEMORYDEVICE_CPU)[0] = info;
+		*(indexData->GetData(MEMORYDEVICE_CPU)) = info;
 		indexData->UpdateDeviceFromHost();
 	}
 

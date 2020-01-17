@@ -116,7 +116,7 @@ BOOST_FIXTURE_TEST_CASE(testUpdateWarps_CPU_VBH, DataFixture) {
 
 	float maxWarp = motionTracker_VBH_CPU->UpdateWarps(canonical_volume, live_volume, &warp_field_copy);
 //	warp_field_copy.SaveToDirectory("../../Tests/TestData/snoopy_result_fr16-17_partial_VBH/warp_iter0");
-	BOOST_REQUIRE_CLOSE(maxWarp, 0.242487013f, 1e-7f);
+	BOOST_REQUIRE_CLOSE(maxWarp, 0.18186526f, 1e-7f);
 
 
 	AlteredFramewiseWarpCountFunctor<ITMWarp> functor;

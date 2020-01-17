@@ -62,7 +62,7 @@ and a pointer to the data structure on the GPU.
 class VoxelBlockHash {
 public:
 
-	GENERATE_SERIALIZABLE_STRUCT(
+	GENERATE_PATHLESS_SERIALIZABLE_STRUCT(
 			VoxelBlockHashParameters,
 			(int, voxel_block_count, 0x40000, PRIMITIVE, "Total count of voxel hash blocks to preallocate."),
 			(int, excess_list_size, 0x20000, PRIMITIVE,
