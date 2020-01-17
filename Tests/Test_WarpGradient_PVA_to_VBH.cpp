@@ -127,24 +127,42 @@ GenericWarpTest(const SlavchevaSurfaceTracker::Switches& switches, int iteration
 	}
 }
 
+//#define GENERATE_TEST_DATA
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataTermOnly_CPU) {
 	SlavchevaSurfaceTracker::Switches switches(true, false, false, false, false);
+#ifdef GENERATE_TEST_DATA
+	GenericWarpTest<MEMORYDEVICE_CPU>(switches, 10, SAVE_SUCCESSIVE_ITERATIONS);
+#else
 	GenericWarpTest<MEMORYDEVICE_CPU>(switches, 10, TEST_SUCCESSIVE_ITERATIONS);
+#endif
 }
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonov_CPU) {
 	SlavchevaSurfaceTracker::Switches switches(true, false, true, false, false);
+#ifdef GENERATE_TEST_DATA
+	GenericWarpTest<MEMORYDEVICE_CPU>(switches, 5, SAVE_SUCCESSIVE_ITERATIONS);
+#else
 	GenericWarpTest<MEMORYDEVICE_CPU>(switches, 5, TEST_SUCCESSIVE_ITERATIONS, 1e-7);
+#endif
 }
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonovAndSobolevSmoothing_CPU) {
 	SlavchevaSurfaceTracker::Switches switches(true, false, true, false, true);
+#ifdef GENERATE_TEST_DATA
+	GenericWarpTest<MEMORYDEVICE_CPU>(switches, 5, SAVE_SUCCESSIVE_ITERATIONS);
+#else
 	GenericWarpTest<MEMORYDEVICE_CPU>(switches, 5, TEST_SUCCESSIVE_ITERATIONS, 1e-7);
+#endif
 }
 
 BOOST_AUTO_TEST_CASE(Test_Warp_PVA_VBH_DataAndTikhonovAndSobolevSmoothing_Fusion_CPU) {
+#ifdef GENERATE_TEST_DATA
+	GenericWarpTest<MEMORYDEVICE_CPU>(SlavchevaSurfaceTracker::Switches(true, false, true, false, true),
+	                                  5,GenericWarpTestMode::SAVE_FINAL_ITERATION_AND_FUSION);
+#else
 	GenericWarpTest<MEMORYDEVICE_CPU>(SlavchevaSurfaceTracker::Switches(true, false, true, false, true),
 	                                  5,GenericWarpTestMode::TEST_FINAL_ITERATION_AND_FUSION);
+#endif
 }
 
 #ifndef COMPILE_WITHOUT_CUDA
