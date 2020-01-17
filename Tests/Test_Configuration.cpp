@@ -33,7 +33,6 @@ using namespace ITMLib::configuration;
 configuration::Configuration generate_default_snoopy_configuration();
 
 //#define SAVE_TEST_DATA
-
 BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	configuration::Configuration default_configuration;
 
@@ -58,7 +57,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			      "TestData/frame_depth_%%06i.png",
 			      "TestData/frame_mask_%%06i.png",
 			      ""),
-			UIEngineSettings(50, 16),
+			AutomaticRunSettings(50, 16, true),
 			NonRigidTrackingParameters(ITMLib::TRACKER_SLAVCHEVA_DIAGNOSTIC, 300, 0.0002f, 0.4f),
 			true,
 			false,
@@ -95,7 +94,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	BOOST_REQUIRE_EQUAL(default_configuration.slavcheva_switches, configuration::get().slavcheva_switches);
 	BOOST_REQUIRE_EQUAL(default_configuration.telemetry_settings, configuration::get().telemetry_settings);
 	BOOST_REQUIRE_EQUAL(default_configuration.paths, configuration::get().paths);
-	BOOST_REQUIRE_EQUAL(default_configuration.ui_engine_settings, configuration::get().ui_engine_settings);
+	BOOST_REQUIRE_EQUAL(default_configuration.automatic_run_settings, configuration::get().automatic_run_settings);
 	BOOST_REQUIRE_EQUAL(default_configuration.non_rigid_tracking_parameters, configuration::get().non_rigid_tracking_parameters);
 	BOOST_REQUIRE_EQUAL(default_configuration, configuration::get());
 
@@ -106,7 +105,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	BOOST_REQUIRE_EQUAL(configuration1.slavcheva_switches, configuration::get().slavcheva_switches);
 	BOOST_REQUIRE_EQUAL(configuration1.telemetry_settings, configuration::get().telemetry_settings);
 	BOOST_REQUIRE_EQUAL(configuration1.paths, configuration::get().paths);
-	BOOST_REQUIRE_EQUAL(configuration1.ui_engine_settings, configuration::get().ui_engine_settings);
+	BOOST_REQUIRE_EQUAL(configuration1.automatic_run_settings, configuration::get().automatic_run_settings);
 	BOOST_REQUIRE_EQUAL(configuration1.non_rigid_tracking_parameters, configuration::get().non_rigid_tracking_parameters);
 	BOOST_REQUIRE_EQUAL(configuration1, configuration::get());
 	configuration::save_configuration_to_json_file("TestData/config2.json", configuration1);
@@ -117,7 +116,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	BOOST_REQUIRE_EQUAL(configuration1.slavcheva_switches, configuration::get().slavcheva_switches);
 	BOOST_REQUIRE_EQUAL(configuration1.telemetry_settings, configuration::get().telemetry_settings);
 	BOOST_REQUIRE_EQUAL(configuration1.paths, configuration::get().paths);
-	BOOST_REQUIRE_EQUAL(configuration1.ui_engine_settings, configuration::get().ui_engine_settings);
+	BOOST_REQUIRE_EQUAL(configuration1.automatic_run_settings, configuration::get().automatic_run_settings);
 	BOOST_REQUIRE_EQUAL(configuration1.non_rigid_tracking_parameters, configuration::get().non_rigid_tracking_parameters);
 	BOOST_REQUIRE_EQUAL(configuration1, configuration::get());
 
@@ -151,7 +150,7 @@ configuration::Configuration generate_default_snoopy_configuration(){
 			      "<CONFIGURATION_DIRECTORY>/frames/depth_%06i.png",
 			      "<CONFIGURATION_DIRECTORY>/frames/omask_%06i.png",
 			      ""),
-			UIEngineSettings(50, 16),
+			AutomaticRunSettings(50, 16, false),
 			NonRigidTrackingParameters(
 					ITMLib::TRACKER_SLAVCHEVA_OPTIMIZED,
 					300,

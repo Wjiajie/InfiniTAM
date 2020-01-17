@@ -180,6 +180,9 @@ void UIEngine_BPO::GlutDisplayFunction() {
 	uiEngine.needsRefresh = false;
 }
 
+void handle_check_end_automatic_run(UIEngine_BPO& engine){
+
+}
 
 void UIEngine_BPO::GlutIdleFunction() {
 	UIEngine_BPO& uiEngine = UIEngine_BPO::Instance();
@@ -206,7 +209,7 @@ void UIEngine_BPO::GlutIdleFunction() {
 					    uiEngine.number_of_frames_to_process_after_launch) {
 						/* check whether we're done with all the frames for the automated interval processing, and,
 						 * if so, pause the program */
-						uiEngine.mainLoopAction = PROCESS_PAUSED;
+						uiEngine.mainLoopAction = uiEngine.exit_after_automatic_run ? EXIT : PROCESS_PAUSED;;
 					}
 				}
 			} else {
@@ -225,8 +228,8 @@ void UIEngine_BPO::GlutIdleFunction() {
 			uiEngine.processedFrameNo++;
 			uiEngine.needsRefresh = true;
 			if ((uiEngine.processedFrameNo - uiEngine.autoIntervalFrameStart) >= uiEngine.number_of_frames_to_process_after_launch) {
-				uiEngine.mainLoopAction = PROCESS_PAUSED;
-				if (uiEngine.saveAfterInitialProcessing) {
+				uiEngine.mainLoopAction = uiEngine.exit_after_automatic_run ? EXIT : PROCESS_PAUSED;
+				if (uiEngine.save_after_automatic_run) {
 					uiEngine.mainEngine->SaveToFile();
 				}
 				bench::PrintAllCumulativeTimes();

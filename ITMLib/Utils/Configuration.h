@@ -121,11 +121,12 @@ DECLARE_SERIALIZABLE_STRUCT(PATHS_STRUCT_DESCRIPTION);
 
 DECLARE_SERIALIZABLE_STRUCT(TELEMETRY_SETTINGS_STRUCT_DESCRIPTION);
 
-#define UI_ENGINE_SETTINGS_STRUCT_DESCRIPTION UIEngineSettings, \
-    (int, number_of_frames_to_process_after_launch, 0, PRIMITIVE, "This number of frames will be processed automatically after the program is launched."), \
-    (int, index_of_frame_to_start_at, 0, PRIMITIVE, "Index of the first frame (or frame set) to read from disk. The remaining frames will be read in order.")
+#define AUTOMATIC_RUN_SETTINGS_STRUCT_DESCRIPTION AutomaticRunSettings, \
+    (int, number_of_frames_to_process, 0, PRIMITIVE, "This number of frames will be processed automatically after the program is launched (launches automatic run)."), \
+    (int, index_of_frame_to_start_at, 0, PRIMITIVE, "Index of the first frame (or frame set) to read from disk (or, how many frames to skip). The remaining frames will be read in order."), \
+    (bool, exit_after_automatic_processing, false, PRIMITIVE, "Whether to exit the program after the automatic run.")
 
-DECLARE_SERIALIZABLE_STRUCT(UI_ENGINE_SETTINGS_STRUCT_DESCRIPTION);
+DECLARE_SERIALIZABLE_STRUCT(AUTOMATIC_RUN_SETTINGS_STRUCT_DESCRIPTION);
 
 
 struct TrackerConfigurationStringPresets {
@@ -176,7 +177,7 @@ DECLARE_SERIALIZABLE_STRUCT(SPECIFIC_VOLUME_PARAMETERS_STRUCT_DESCRIPTION);
     (SlavchevaSurfaceTracker::Switches, slavcheva_switches, SlavchevaSurfaceTracker::Switches(), STRUCT,"Switches pertaining to optimization for dynamic surface tracking."),\
     (TelemetrySettings, telemetry_settings, TelemetrySettings(), STRUCT, "Telemetry / diagnostics / logging settings"),\
     (Paths, paths, Paths(), STRUCT,"Input / output paths"),\
-    (UIEngineSettings, ui_engine_settings, UIEngineSettings(), STRUCT,"UI settings"),\
+    (AutomaticRunSettings, automatic_run_settings, AutomaticRunSettings(), STRUCT, "Settings that dictate how the experiment is run, i.e. such as how much data to process automatically, how to behave after the automatic run, etc."),\
     (NonRigidTrackingParameters, non_rigid_tracking_parameters, NonRigidTrackingParameters(), STRUCT,"Parameters pertaining to stopping conditions, gradient functor type, and momentum weight that are used for dynamic surface tracking."),\
     (bool, skip_points, false, PRIMITIVE, "For ITMColorTracker: skips every other point when using the colour renderer for creating a point cloud"),\
     (bool, create_meshing_engine, true, PRIMITIVE, "Create all the things required for marching cubes and mesh extraction (uses lots of additional memory)"),\

@@ -115,9 +115,10 @@
         "mask_image_path_mask": "",
         "imu_input_path": ""
     },
-    "ui_engine_settings": {
-        "number_of_frames_to_process_after_launch": 0,
-        "index_of_frame_to_start_at": 0
+    "automatic_run_settings": {
+        "number_of_frames_to_process": 0,
+        "index_of_frame_to_start_at": 0,
+        "exit_after_automatic_processing": 0
     },
     "non_rigid_tracking_parameters": {
         "functor_type": "slavcheva_diagnostic",

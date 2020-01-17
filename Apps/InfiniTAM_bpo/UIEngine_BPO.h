@@ -44,7 +44,8 @@ private:
 
 	int autoIntervalFrameStart;
 	int number_of_frames_to_process_after_launch;
-	bool saveAfterInitialProcessing = false;
+	bool exit_after_automatic_run = false;
+	bool save_after_automatic_run = false;
 	int startedProcessingFromFrameIx = 0;
 
 	InputSource::ImageSourceEngine* imageSource;

@@ -88,12 +88,13 @@ void UIEngine_BPO::Initialize(int& argc, char** argv,
 	this->indexingMethod = configuration.indexing_method;
 
 	this->inStepByStepMode = false;
-	this->saveAfterInitialProcessing = save_volume_after_automatic_run;
+	this->save_after_automatic_run = save_volume_after_automatic_run;
+	this->exit_after_automatic_run = configuration.automatic_run_settings.exit_after_automatic_processing;
 
 	this->freeviewActive = true;
 	this->integrationActive = true;
 	this->currentColourMode = 0;
-	this->number_of_frames_to_process_after_launch = configuration.ui_engine_settings.number_of_frames_to_process_after_launch;
+	this->number_of_frames_to_process_after_launch = configuration.automatic_run_settings.number_of_frames_to_process;
 
 	this->colourModes_main.emplace_back("shaded greyscale", ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST);
 	this->colourModes_main.emplace_back("integrated colours", ITMMainEngine::InfiniTAM_IMAGE_COLOUR_FROM_VOLUME);
@@ -178,9 +179,9 @@ void UIEngine_BPO::Initialize(int& argc, char** argv,
 	sdkCreateTimer(&timer_average);
 
 	sdkResetTimer(&timer_average);
-	if (configuration.ui_engine_settings.index_of_frame_to_start_at > 0) {
-		printf("Skipping the first %d frames.\n", configuration.ui_engine_settings.index_of_frame_to_start_at);
-		SkipFrames(configuration.ui_engine_settings.index_of_frame_to_start_at);
+	if (configuration.automatic_run_settings.index_of_frame_to_start_at > 0) {
+		printf("Skipping the first %d frames.\n", configuration.automatic_run_settings.index_of_frame_to_start_at);
+		SkipFrames(configuration.automatic_run_settings.index_of_frame_to_start_at);
 	}
 
 	if (start_in_step_by_step_mode) {
