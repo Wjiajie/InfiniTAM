@@ -1,4 +1,5 @@
 # temporarily disable online tests (VTK build is too slow -- causes overtime -- need to make VTK optional first)
+build: on
 test: on
 
 image:
