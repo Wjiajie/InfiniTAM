@@ -128,7 +128,7 @@ public:
 	void SaveScreenshot(const char* filename) const;
 
 	void SkipFrames(int numberOfFramesToSkip);
-	void RecordReconstructionToVideo();
+	void RecordCurrentReconstructionFrameToVideo();
 	void RecordDepthAndRGBInputToVideo();
 	void RecordDepthAndRGBInputToImages();
 	int GetCurrentFrameIndex() const;

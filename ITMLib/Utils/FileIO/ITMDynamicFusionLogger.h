@@ -18,6 +18,7 @@
 #include "../../Objects/Scene/ITMVoxelVolume.h"
 #include "ITMSceneLogger.h"
 #include "../Visualization/ITMSceneSliceVisualizer2D.h"
+#include "../Visualization/ITMVisualizationCommon.h"
 #ifdef WITH_VTK
 #include "../Visualization/ITMSceneSliceVisualizer1D.h"
 #include "../Visualization/ITMSceneSliceVisualizer3D.h"
@@ -176,7 +177,9 @@ private:
 	void MakeOrClearOutputDirectoriesFor2DSceneSlices() const;
 
 	// various loggers & visualizers
+#ifdef WITH_OPENCV
 	std::unique_ptr<ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>> scene2DSliceVisualizer;
+#endif
 #ifdef WITH_VTK
 	std::unique_ptr<ITMSceneSliceVisualizer1D> scene1DSliceVisualizer;
 	std::unique_ptr<ITMSceneSliceVisualizer3D<TVoxel, TWarp, TIndex>> scene3DSliceVisualizer;
@@ -192,8 +195,10 @@ private:
 	std::ofstream energyStatisticsFile;
 
 	// templates //TODO outsource to ITMScene2DSliceLogger
+#ifdef WITH_OPENCV
 	cv::Mat blank;
 	cv::Mat liveImgTemplate;
+#endif
 
 	// state flags
 	bool recordingLiveSceneAs2DSlices = false;

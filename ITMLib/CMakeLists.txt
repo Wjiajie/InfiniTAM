@@ -15,6 +15,7 @@ set(targetname ITMLib)
 include(${PROJECT_SOURCE_DIR}/cmake/UseCUDA.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/UseOpenMP.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/UseVTK.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseOpenCV.cmake)
 
 
 #############################
@@ -989,9 +990,6 @@ include(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
 ##########################################
 # Find and link extra packages #
 ##########################################
-
-find_package(OpenCV REQUIRED core highgui imgproc imgcodecs)
-
 
 if (WITH_VTK)
     target_compile_definitions(${targetname} PUBLIC -DWITH_VTK)

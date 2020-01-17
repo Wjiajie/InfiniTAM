@@ -17,9 +17,11 @@
 //stdlib
 #include "iomanip"
 
+#ifdef WITH_OPENCV
 //OpenCV
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgcodecs.hpp>
+#endif
 
 //local
 #include "ITMDynamicFusionLogger.h"
@@ -259,8 +261,11 @@ bool ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::NeedsFramewiseOutputFolder()
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::ITMDynamicFusionLogger() :
-		focusSliceRadius(3),
-		scene2DSliceVisualizer() {}
+		focusSliceRadius(3)
+#ifdef WITH_OPENCV
+        , scene2DSliceVisualizer()
+#endif
+		{}
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::InitializeFrameRecording() {
@@ -282,11 +287,12 @@ void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::InitializeFrameRecording() {
 				" with updates" << std::endl;
 #endif
 		}
-
+#ifdef WITH_OPENCV
 		scene2DSliceVisualizer.reset(
 				new ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>(focusCoordinates, 100,
 				                                                     16.0,
 				                                                     planeFor2Dand3DSlices));
+
 		MakeOrClearOutputDirectoriesFor2DSceneSlices();
 		if (recordingCanonicalSceneAs2DSlices) {
 			scene2DSliceVisualizer->SaveSceneSlicesAs2DImages_AllDirections(
@@ -296,6 +302,7 @@ void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::InitializeFrameRecording() {
 			scene2DSliceVisualizer->SaveSceneSlicesAs2DImages_AllDirections(
 					liveScene, GetOutputDirectoryPrefixForLiveSceneAsSlices());
 		}
+#endif
 		if (recordingScene2DSlicesWithUpdates) {
 			std::cout << yellow << "Recording 2D scene slices with warps & warped live scene progression as images in "
 			          << GetOutputDirectoryFor2DSceneSlicesWithWarps() << " and "
@@ -362,7 +369,7 @@ template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::InitializeWarp2DSliceRecording(
 		ITMVoxelVolume<TVoxel, TIndex>* canonicalScene,
 		ITMVoxelVolume<TVoxel, TIndex>* sourceLiveScene) {
-
+#ifdef WITH_OPENCV
 	cv::Mat canonicalImg = scene2DSliceVisualizer->DrawSceneImageAroundPoint(canonicalScene) * 255.0f;
 	cv::Mat canonicalImgOut;
 	canonicalImg.convertTo(canonicalImgOut, CV_8UC1);
@@ -376,12 +383,14 @@ void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::InitializeWarp2DSliceRecordi
 	cv::imwrite(GetOutputDirectoryFor2DSceneSlicesWithWarps() + "/live.png", liveImgOut);
 	//TODO: this is kinda backwards. Just build this in the constructor using constants from rasterizer for size. -Greg (GitHub: Algomorph)
 	blank = cv::Mat::zeros(liveImg.rows, liveImg.cols, CV_8UC1);
+#endif
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::SaveWarpSlices(int iteration) {
 	if (hasFocusCoordinates) {
 		if (recordingScene2DSlicesWithUpdates) {
+#ifdef WITH_OPENCV
 			cv::Mat warpImg =
 					scene2DSliceVisualizer->DrawWarpedSceneImageAroundPoint(canonicalScene, warpField) * 255.0f;
 			cv::Mat warpImgChannel, warpImgOut, mask, liveImgChannel, markChannel;
@@ -407,6 +416,10 @@ void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::SaveWarpSlices(int iteration
 			cv::cvtColor(liveImgOut, liveImgOut, cv::COLOR_GRAY2BGR);
 			cv::imwrite(GetOutputDirectoryFor2DLiveSceneSliceProgression() + "/live " + numStringStream.str() +
 			            ".png", liveImgOut);
+#else
+			std::cerr <<"Warning: code build without OpenCV support, hence ignoring the attempt to record 2D volume slices"
+			<< std::endl;
+#endif
 		}
 		if (recordingScene1DSlicesWithUpdates) {
 #ifdef WITH_VTK
@@ -472,7 +485,9 @@ void ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::FinalizeFrameRecording() {
 #ifdef WITH_VTK
 	scene1DSliceVisualizer.reset();
 #endif
+#ifdef WITH_OPENCV
 	scene2DSliceVisualizer.reset();
+#endif
 	energyStatisticsFile.close();
 }
 
@@ -534,17 +549,25 @@ ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::~ITMDynamicFusionLogger() {
 template<typename TVoxel, typename TWarp, typename TIndex>
 std::string
 ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::GetOutputDirectoryFor2DSceneSlicesWithWarps() const {
+#ifdef WITH_OPENCV
 	fs::path path(fs::path(this->outputDirectory) / (iterationFramesFolderName + "_" +
 	                                                 PlaneToString(this->scene2DSliceVisualizer->GetPlane())));
 	return path.string();
+#else
+	return "";
+#endif
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>
 std::string
 ITMDynamicFusionLogger<TVoxel, TWarp, TIndex>::GetOutputDirectoryFor2DLiveSceneSliceProgression() const {
+#ifdef WITH_OPENCV
 	fs::path path(fs::path(this->outputDirectory) / (liveIterationFramesFolderName + "_" +
 	                                                 PlaneToString(this->scene2DSliceVisualizer->GetPlane())));
 	return path.string();
+#else
+	return "";
+#endif
 }
 
 template<typename TVoxel, typename TWarp, typename TIndex>

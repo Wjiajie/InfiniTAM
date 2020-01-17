@@ -2,7 +2,6 @@
 # UseVTK.cmake #
 ###################
 
-# TODO allow proper support for build w/o VTK, then set the default to off
 option(WITH_VTK "Enable VTK support ?(required for real-time visualization and some recording functions)" OFF)
 
 if(WITH_VTK)

@@ -15,6 +15,7 @@
 //  ================================================================
 #pragma once
 
+#ifdef WITH_OPENCV
 // OpenCV
 #include <opencv2/core/core.hpp>
 
@@ -90,4 +91,4 @@ private:
 
 }//namespace ITMLib
 
-
+#endif // #ifdef WITH_OPENCV

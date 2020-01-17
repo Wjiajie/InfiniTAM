@@ -269,7 +269,7 @@ void UIEngine_BPO::ProcessFrame() {
 	//processedTime = sdkGetTimerValue(&timer_instant);
 	processedTime = sdkGetAverageTimerValue(&timer_average);
 
-	RecordReconstructionToVideo();
+	RecordCurrentReconstructionFrameToVideo();
 
 	currentFrameNo++;
 }
@@ -383,7 +383,7 @@ bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 #endif
 				currentFrameNo++;
 			} else {
-				RecordReconstructionToVideo();
+				RecordCurrentReconstructionFrameToVideo();
 			}
 		}
 			break;
@@ -398,7 +398,7 @@ bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 #endif
 				currentFrameNo++;
 			} else {
-				RecordReconstructionToVideo();
+				RecordCurrentReconstructionFrameToVideo();
 			}
 		}
 			break;
@@ -408,7 +408,7 @@ bool UIEngine_BPO::ContinueStepByStepModeForFrame() {
 }
 
 //TODO: Group all recording & make it toggleable with a single keystroke / command flag
-void UIEngine_BPO::RecordReconstructionToVideo() {
+void UIEngine_BPO::RecordCurrentReconstructionFrameToVideo() {
 	if ((reconstructionVideoWriter != nullptr)) {
 		mainEngine->GetImage(outImage[0], outImageType[0], &this->freeviewPose, &freeviewIntrinsics);
 		if (outImage[0]->noDims.x != 0) {
@@ -418,6 +418,8 @@ void UIEngine_BPO::RecordReconstructionToVideo() {
 				                                false, 30);
 			//TODO This image saving/reading/saving is a production hack -Greg (GitHub:Algomorph)
 			//TODO move to a separate function and apply to all recorded video
+			//TODO write alternative without OpenCV dependency
+#ifdef WITH_OPENCV
 			std::string fileName = (std::string(this->output_path) + "/out_reconstruction.png");
 			SaveImageToFile(outImage[0], fileName.c_str());
 			cv::Mat img = cv::imread(fileName, cv::IMREAD_UNCHANGED);
@@ -428,6 +430,9 @@ void UIEngine_BPO::RecordReconstructionToVideo() {
 			ReadImageFromFile(imageWithText, fileName.c_str());
 			reconstructionVideoWriter->writeFrame(imageWithText);
 			delete imageWithText;
+#else
+			reconstructionVideoWriter->writeFrame(outImage[0]);
+#endif
 		}
 	}
 }

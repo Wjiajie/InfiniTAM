@@ -13,9 +13,10 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //  ================================================================
+#ifdef WITH_OPENCV
 #include "../../ITMLibDefines.h"
 #include "../../Utils/Visualization/ITMSceneSliceVisualizer2D.tpp"
-
 namespace ITMLib{
 template class ITMSceneSliceVisualizer2D<ITMVoxel, ITMWarp, VoxelBlockHash>;
 } // namespace ITMLib
+#endif // #ifdef WITH_OPENCV

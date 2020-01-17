@@ -14,6 +14,8 @@
 //  limitations under the License.
 //  ================================================================
 //stdlib
+
+#ifdef WITH_OPENCV
 #include <unordered_set>
 #include <iomanip>
 
@@ -462,7 +464,7 @@ Plane ITMSceneSliceVisualizer2D<TVoxel, TWarp, TIndex>::GetPlane() const {
 	return this->plane;
 }
 
-
+#endif // #ifdef WITH_OPENCV
 
 
 
