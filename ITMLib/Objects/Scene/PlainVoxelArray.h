@@ -17,6 +17,12 @@ a pointer to the data structure on the GPU.
 class PlainVoxelArray {
 public:
 
+#pragma message BOOST_PP_STRINGIZE(GENERATE_PATHLESS_SERIALIZABLE_STRUCT(\
+	GridAlignedBox,\
+		(Vector3i, size, Vector3i(512), VECTOR, "Size, in voxels."),\
+		(Vector3i, offset, Vector3i(-256, -256, 0), VECTOR, "Offset of the lower left front corner of the volume, in voxels")\
+		);)
+
 	GENERATE_PATHLESS_SERIALIZABLE_STRUCT(
 			GridAlignedBox,
 			(Vector3i, size, Vector3i(512), VECTOR, "Size, in voxels."),

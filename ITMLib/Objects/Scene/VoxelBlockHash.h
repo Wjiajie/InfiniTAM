@@ -61,14 +61,18 @@ and a pointer to the data structure on the GPU.
 */
 class VoxelBlockHash {
 public:
+#define VOXEL_BLOCK_HASH_PARAMETERS_STRUCT_DESCRIPTION \
+	VoxelBlockHashParameters, \
+	(int, voxel_block_count, 0x40000, PRIMITIVE, "Total count of voxel hash blocks to preallocate."), \
+	(int, excess_list_size, 0x20000, PRIMITIVE, \
+	"Total count of voxel hash block entries in excess list of the hash table. " \
+	"The excess list is used during hash collisions.")
 
-	GENERATE_PATHLESS_SERIALIZABLE_STRUCT(
-			VoxelBlockHashParameters,
-			(int, voxel_block_count, 0x40000, PRIMITIVE, "Total count of voxel hash blocks to preallocate."),
-			(int, excess_list_size, 0x20000, PRIMITIVE,
-					"Total count of voxel hash block entries in excess list of the hash table. "
-					"The excess list is used during hash collisions.")
-	);
+
+//#pragma message BOOST_PP_STRINGIZE(GENERATE_PATHLESS_SERIALIZABLE_STRUCT(VOXEL_BLOCK_HASH_PARAMETERS_STRUCT_DESCRIPTION))
+
+	// ===
+	GENERATE_PATHLESS_SERIALIZABLE_STRUCT(VOXEL_BLOCK_HASH_PARAMETERS_STRUCT_DESCRIPTION);
 	typedef VoxelBlockHashParameters InitializationParameters;
 	typedef ITMHashEntry IndexData;
 

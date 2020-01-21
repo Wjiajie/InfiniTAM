@@ -39,9 +39,6 @@
 #define ITM_SERIALIZATION_IMPL_AND() &&
 #define ITM_SERIALIZATION_IMPL_NOTHING()
 
-#define ITM_SERIALIZATION_IMPL_NARG(...)                                                                               \
-  ITM_SERIALIZATION_IMPL_NARG_(__VA_ARGS__, ITM_SERIALIZATION_IMPL_RSEQ_N())
-#define ITM_SERIALIZATION_IMPL_NARG_(...) ITM_SERIALIZATION_IMPL_ARG_N(__VA_ARGS__)
 
 #define ITM_SERIALIZATION_IMPL_PRIMITIVE_CAT(a, ...) a##__VA_ARGS__
 #define ITM_SERIALIZATION_IMPL_CAT(a, ...) ITM_SERIALIZATION_IMPL_PRIMITIVE_CAT(a, __VA_ARGS__)
@@ -297,11 +294,6 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
 
 // region ===== SERIALIZABLE STRUCT PER-FIELD MACROS ===========
 
-#define BACK_STAR(s) s##*
-#define FRONT_STAR(s) *##s
-#define START_COMMENT BACK_STAR(/)
-#define END_COMMENT FRONT_STAR(/)
-
 // *** used to declare fields & defaults ***
 #define SERIALIZABLE_STRUCT_IMPL_FIELD_DECL(_, type, field_name, default_value, serialization_type, ...)               \
     type field_name = default_value;
@@ -470,7 +462,7 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
 //TODO: to avoid DRY violations, make individual function definitions into defines used both here and in SERIALIZABLE_STRUCT_DEFN_IMPL_3
 #define SERIALIZABLE_STRUCT_IMPL_3(struct_name, field_count, loop, ...)                                                \
     struct struct_name {                                                                                               \
-        loop(SERIALIZABLE_STRUCT_IMPL_FIELD_DECL, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)                      \
+        ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_DECL, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__))                      \
         std::string origin = "";                                                                                       \
         struct_name () = default;                                                                                      \
         struct_name(loop(SERIALIZABLE_STRUCT_IMPL_TYPED_FIELD, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__), const std::string& origin = ""):\

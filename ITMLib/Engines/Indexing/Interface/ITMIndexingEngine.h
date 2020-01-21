@@ -15,12 +15,16 @@
 //  ================================================================
 #pragma once
 
+//local
 #include "../../../Objects/Scene/ITMVoxelVolume.h"
 #include "../../../Utils/ITMHashBlockProperties.h"
 #include "../../../Objects/Views/ITMView.h"
 #include "../../../Objects/Tracking/ITMTrackingState.h"
 #include "../../../Objects/RenderStates/ITMRenderState.h"
 #include "../../Common/ITMWarpEnums.h"
+#include "../../../../ORUtils/MemoryDeviceType.h"
+
+//ORUtils
 
 namespace ITMLib {
 /**

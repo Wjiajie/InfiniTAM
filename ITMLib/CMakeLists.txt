@@ -724,6 +724,7 @@ set(ITMLIB_UTILS_HEADERS
 	Utils/Serialization/SerializationDetails.h
 	Utils/Serialization/SerializationSequenceMacros.h
 	Utils/Serialization/SerializationSequenceLevel2Macros.h
+    Utils/Serialization/PreprocessorNargs.h
 
 	Utils/json_utils.h
 
@@ -997,8 +998,11 @@ endif ()
 target_include_directories(${targetname} PUBLIC ${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 target_link_libraries(${targetname} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${VTK_LIBRARIES})
 
+# windows-specific stuff
 if (CMAKE_CXX_COMPILER_ID MATCHES MSVC)
     link_directories(${Boost_LIBRARY_DIRS})
+	# disable warnings about too few arguments for function-like macro invocation -- these stem from branches in the preprocessor code that are never taken
+	target_compile_options(${targetname} PUBLIC /wd4003)
 endif ()
 
 
