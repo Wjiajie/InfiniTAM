@@ -6,26 +6,27 @@
 # Specify the target name #
 ###########################
 
-SET(targetname FernRelocLib)
+set(targetname FernRelocLib)
 
 ################################
 # Specify the libraries to use #
 ################################
 
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseCUDA.cmake)
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseOpenMP.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseCUDA.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseOpenMP.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
 
 #############################
 # Specify the project files #
 #############################
 
-SET(sources
+set(sources
 FernConservatory.cpp
 PoseDatabase.cpp
 RelocDatabase.cpp
 )
 
-SET(headers
+set(headers
 FernConservatory.h
 PixelUtils.h
 PoseDatabase.h
@@ -37,12 +38,18 @@ Relocaliser.h
 # Specify the source groups #
 #############################
 
-SOURCE_GROUP("" FILES ${sources} ${headers})
+source_group("" FILES ${sources} ${headers})
 
 ##########################################
 # Specify the target and where to put it #
 ##########################################
 
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
 
-include(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
+##########################################
+# Link external dependency libraries     #
+##########################################
+
+include(${PROJECT_SOURCE_DIR}/cmake/LinkBoost.cmake)
+get_target_property(OUT ${targetname} LINK_LIBRARIES)
+message(STATUS "Libs / FernRelocLib: ${OUT}")

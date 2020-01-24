@@ -45,12 +45,12 @@ bool isPointInBounds(const Vector3i& point, const Extent3D& bounds) {
 _CPU_AND_GPU_CODE_
 inline
 Extent3D maximumExtent(const Extent3D& extent1, const Extent3D& extent2) {
-	return {MIN(extent1.min_x, extent2.min_x),
-	        MIN(extent1.min_y, extent2.min_y),
-	        MIN(extent1.min_z, extent2.min_z),
-	        MAX(extent1.max_x, extent2.max_x),
-	        MAX(extent1.max_y, extent2.max_y),
-	        MAX(extent1.max_z, extent2.max_z)};
+	return {ORUTILS_MIN(extent1.min_x, extent2.min_x),
+	        ORUTILS_MIN(extent1.min_y, extent2.min_y),
+	        ORUTILS_MIN(extent1.min_z, extent2.min_z),
+	        ORUTILS_MAX(extent1.max_x, extent2.max_x),
+	        ORUTILS_MAX(extent1.max_y, extent2.max_y),
+	        ORUTILS_MAX(extent1.max_z, extent2.max_z)};
 }
 
 _CPU_AND_GPU_CODE_

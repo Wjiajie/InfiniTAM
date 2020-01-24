@@ -36,12 +36,12 @@ _CPU_AND_GPU_CODE_
 inline
 Vector6i computeLocalBounds(const Vector3i& hashEntryMinPoint, const Vector3i& hashEntryMaxPoint,
                             const Vector6i& bounds) {
-	return Vector6i(MAX(0, bounds.min_x - hashEntryMinPoint.x),
-	                MAX(0, bounds.min_y - hashEntryMinPoint.y),
-	                MAX(0, bounds.min_z - hashEntryMinPoint.z),
-	                MIN(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE - (hashEntryMaxPoint.x - bounds.max_x)),
-	                MIN(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE - (hashEntryMaxPoint.y - bounds.max_y)),
-	                MIN(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE - (hashEntryMaxPoint.z - bounds.max_z)));
+	return Vector6i(ORUTILS_MAX(0, bounds.min_x - hashEntryMinPoint.x),
+	                ORUTILS_MAX(0, bounds.min_y - hashEntryMinPoint.y),
+	                ORUTILS_MAX(0, bounds.min_z - hashEntryMinPoint.z),
+	                ORUTILS_MIN(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE - (hashEntryMaxPoint.x - bounds.max_x)),
+	                ORUTILS_MIN(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE - (hashEntryMaxPoint.y - bounds.max_y)),
+	                ORUTILS_MIN(VOXEL_BLOCK_SIZE, VOXEL_BLOCK_SIZE - (hashEntryMaxPoint.z - bounds.max_z)));
 }
 
 /**

@@ -17,12 +17,6 @@ a pointer to the data structure on the GPU.
 class PlainVoxelArray {
 public:
 
-#pragma message BOOST_PP_STRINGIZE(GENERATE_PATHLESS_SERIALIZABLE_STRUCT(\
-	GridAlignedBox,\
-		(Vector3i, size, Vector3i(512), VECTOR, "Size, in voxels."),\
-		(Vector3i, offset, Vector3i(-256, -256, 0), VECTOR, "Offset of the lower left front corner of the volume, in voxels")\
-		);)
-
 	GENERATE_PATHLESS_SERIALIZABLE_STRUCT(
 			GridAlignedBox,
 			(Vector3i, size, Vector3i(512), VECTOR, "Size, in voxels."),
@@ -96,14 +90,16 @@ public:
 	void SaveToDirectory(const std::string& outputDirectory) const {
 	}
 
+#ifndef _MSC_VER
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "MemberFunctionCanBeStatic"
+#endif
 
 	void LoadFromDirectory(const std::string& outputDirectory) {
 	}
-
+#ifndef _MSC_VER
 #pragma clang diagnostic pop
-
+#endif
 #ifdef COMPILE_WITH_METAL
 	const void *getIndexData_MB() const { return indexData->GetMetalBuffer(); }
 #endif

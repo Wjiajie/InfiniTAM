@@ -46,7 +46,7 @@ namespace ORUtils
 			}
 
 			kappa_hat *= domega;
-			kappa_hat = MAX(kappa_hat, 0.0f);
+			kappa_hat = ORUTILS_MAX(kappa_hat, 0.0f);
 
 			return kappa_hat;
 		}
@@ -58,7 +58,7 @@ namespace ORUtils
 
 			period = 8.80f * sqrt(order + 4.44f) - 12.6f;
 
-			period = MAX(period, 1.0f);
+			period = ORUTILS_MAX(period, 1.0f);
 
 			gamma = 1.0f;
 			this->order = order;

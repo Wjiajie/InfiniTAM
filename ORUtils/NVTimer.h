@@ -55,9 +55,14 @@ class StopWatchInterface
 #ifdef WIN32
 // includes, system
 #define WINDOWS_LEAN_AND_MEAN
+// workaround for bad macros, see https://stackoverflow.com/a/15913187/844728
+#ifdef NOMINMAX
 #include <windows.h>
-#undef min
-#undef max
+#else
+#define NOMINMAX
+#include <windows.h>
+#undef NOMINMAX
+#endif
 
 //! Windows specific implementation of StopWatch
 class StopWatchWin : public StopWatchInterface

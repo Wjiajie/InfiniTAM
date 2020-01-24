@@ -17,7 +17,7 @@ _CPU_AND_GPU_CODE_ inline void combineVoxelDepthInformation(const CONSTPTR(TVoxe
 	newF = oldW * oldF + newW * newF;
 	newW = oldW + newW;
 	newF /= newW;
-	newW = MIN(newW, maxW);
+	newW = ORUTILS_MIN(newW, maxW);
 
 	dst.w_depth = newW;
 	dst.sdf = TVoxel::floatToValue(newF);
@@ -36,7 +36,7 @@ _CPU_AND_GPU_CODE_ inline void combineVoxelColorInformation(const CONSTPTR(TVoxe
 	newC = oldC * (float)oldW + newC * (float)newW;
 	newW = oldW + newW;
 	newC /= (float)newW;
-	newW = MIN(newW, maxW);
+	newW = ORUTILS_MIN(newW, maxW);
 
 	dst.clr = TO_UCHAR3(newC * 255.0f);
 	dst.w_color = (uchar)newW;

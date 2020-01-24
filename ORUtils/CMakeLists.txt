@@ -15,6 +15,7 @@ SET(targetname ORUtils)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseCUDA.cmake)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseOpenMP.cmake)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UsePNG.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
 
 #############################
 # Specify the project files #
@@ -59,4 +60,12 @@ SOURCE_GROUP("" FILES ${sources} ${headers})
 ##########################################
 
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
-include(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
+
+##########################################
+# Link external dependency libraries     #
+##########################################
+
+include(${PROJECT_SOURCE_DIR}/cmake/LinkBoost.cmake)
+
+get_target_property(OUT ${targetname} LINK_LIBRARIES)
+message(STATUS "Libs  / ORUtils: ${OUT}")

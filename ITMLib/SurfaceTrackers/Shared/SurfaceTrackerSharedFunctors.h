@@ -152,12 +152,12 @@ struct WarpHistogramFunctor {
 		const int histBinCount = WarpHistogramFunctor<TVoxel, TWarp>::histBinCount;
 		int binIdx = 0;
 		if (maxWarpLength > 0) {
-			binIdx = MIN(histBinCount - 1, (int) (framewiseWarpLength * histBinCount / maxWarpLength));
+			binIdx = ORUTILS_MIN(histBinCount - 1, (int) (framewiseWarpLength * histBinCount / maxWarpLength));
 		}
 		warpBins[binIdx]++;
 		if (maxWarpUpdateLength > 0) {
-			binIdx = MIN(histBinCount - 1,
-			             (int) (warpUpdateLength * histBinCount / maxWarpUpdateLength));
+			binIdx = ORUTILS_MIN(histBinCount - 1,
+			                     (int) (warpUpdateLength * histBinCount / maxWarpUpdateLength));
 		}
 		updateBins[binIdx]++;
 	}

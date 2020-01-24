@@ -73,7 +73,7 @@ _CPU_AND_GPU_CODE_ inline void thresholdDepth(DEVICEPTR(float) *imageData_out, c
 		}
 	}
 
-	imageData_out[x + y*imgDims.x] = ABS(sum / count - z) < DIFFERENCE_THRESHOLD ? z : -1.0f;
+	imageData_out[x + y*imgDims.x] = ORUTILS_ABS(sum / count - z) < DIFFERENCE_THRESHOLD ? z : -1.0f;
 }
 
 

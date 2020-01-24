@@ -176,7 +176,7 @@ _CPU_AND_GPU_CODE_ inline bool castRay(DEVICEPTR(Vector4f) &pt_out, DEVICEPTR(IT
 				sdfValue = readFromSDF_float_interpolated(voxelData, voxelIndex, pt_result, vmIndex, cache);
 			}
 			if (sdfValue <= 0.0f) break;
-			stepLength = MAX(sdfValue * stepScale, 1.0f);
+			stepLength = ORUTILS_MAX(sdfValue * stepScale, 1.0f);
 		}
 
 		pt_result += stepLength * rayDirection; totalLength += stepLength;
@@ -270,7 +270,7 @@ _CPU_AND_GPU_CODE_ inline void computeNormalAndAngle(THREADPTR(bool) & foundPoin
 	{
 		diff_x = xp1_y - xm1_y, diff_y = x_yp1 - x_ym1;
 
-		float length_diff = MAX(diff_x.x * diff_x.x + diff_x.y * diff_x.y + diff_x.z * diff_x.z,
+		float length_diff = ORUTILS_MAX(diff_x.x * diff_x.x + diff_x.y * diff_x.y + diff_x.z * diff_x.z,
 			diff_y.x * diff_y.x + diff_y.y * diff_y.y + diff_y.z * diff_y.z);
 
 		if (length_diff * voxelSize * voxelSize > (0.15f * 0.15f)) doPlus1 = true;

@@ -261,7 +261,8 @@ bool ITMSceneLogger<TVoxel, TWarp, TIndex>::SwitchActiveScene(std::string sliceI
 	if (isLoadingWarps) {
 		activeWarpLogger->StartLoadingWarpState();
 		//set cursor to the *previous* iteration
-		activeWarpLogger->SetIterationCursor(static_cast<unsigned int>(std::max(--iterationCursor, 0)));
+		//(std::max) in parenthesis because of some <insert descripitive curseword> Microsoft compiler quirk concerning min/max macros
+		activeWarpLogger->SetIterationCursor(static_cast<unsigned int>((std::max)(--iterationCursor, 0)));
 	}
 	return true;
 }

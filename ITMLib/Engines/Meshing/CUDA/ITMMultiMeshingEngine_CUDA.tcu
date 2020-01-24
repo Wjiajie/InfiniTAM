@@ -99,7 +99,7 @@ void ITMMultiMeshingEngine_CUDA<TVoxel, VoxelBlockHash>::MeshScene(ITMMesh* mesh
 
 		ORcudaSafeCall(
 				cudaMemcpy(&mesh->noTotalTriangles, noTriangles_device, sizeof(unsigned int), cudaMemcpyDeviceToHost));
-		mesh->noTotalTriangles = MIN(mesh->noTotalTriangles, mesh->noMaxTriangles);
+		mesh->noTotalTriangles = ORUTILS_MIN(mesh->noTotalTriangles, mesh->noMaxTriangles);
 	}
 }
 

@@ -33,7 +33,7 @@ void IITMVisualisationEngine::DepthToUchar4(ITMUChar4Image *dst, const ITMFloatI
 	for (int idx = 0; idx < dataSize; idx++)
 	{
 		float sourceVal = source[idx];
-		if (sourceVal > 0.0f) { lims[0] = MIN(lims[0], sourceVal); lims[1] = MAX(lims[1], sourceVal); }
+		if (sourceVal > 0.0f) { lims[0] = ORUTILS_MIN(lims[0], sourceVal); lims[1] = ORUTILS_MAX(lims[1], sourceVal); }
 	}
 
 	scale = ((lims[1] - lims[0]) != 0) ? 1.0f / (lims[1] - lims[0]) : 1.0f / lims[1];
@@ -86,7 +86,7 @@ void IITMVisualisationEngine::WeightToUchar4(ITMUChar4Image *dst, const ITMFloat
 
 	float mindepth = 1000;
 	for (size_t i = 0; i < src->dataSize; i++)
-		if (source[i]>0) mindepth = MIN(mindepth, source[i]);
+		if (source[i]>0) mindepth = ORUTILS_MIN(mindepth, source[i]);
 
 	memset(dst->GetData(MEMORYDEVICE_CPU), 0, dataSize * 4);
 	{

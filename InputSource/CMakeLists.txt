@@ -18,22 +18,23 @@ INCLUDE(${PROJECT_SOURCE_DIR}/cmake/OfferInputMirroring.cmake)
 # Specify the libraries to use #
 ################################
 
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseCUDA.cmake)
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseFFmpeg.cmake)
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseGLUT.cmake)
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseKinect2.cmake)
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseLibRoyale.cmake)
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseOpenGL.cmake)
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseOpenMP.cmake)
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseOpenNI.cmake)
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseRealSense.cmake)
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseUVC.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseCUDA.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseFFmpeg.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseGLUT.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseKinect2.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseLibRoyale.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseOpenGL.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseOpenMP.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseOpenNI.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseRealSense.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseUVC.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
 
 #############################
 # Specify the project files #
 #############################
 
-SET(sources
+set(sources
 CompositeImageSourceEngine.cpp
 FFMPEGReader.cpp
 FFMPEGWriter.cpp
@@ -63,11 +64,16 @@ RealSenseEngine.h
 # Specify the source groups #
 #############################
 
-SOURCE_GROUP("" FILES ${sources} ${headers})
+source_group("" FILES ${sources} ${headers})
 
 ##########################################
 # Specify the target and where to put it #
 ##########################################
 
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
-include(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
+
+##########################################
+# Link external dependency libraries     #
+##########################################
+
+include(${PROJECT_SOURCE_DIR}/cmake/LinkBoost.cmake)

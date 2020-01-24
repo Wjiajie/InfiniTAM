@@ -1,7 +1,6 @@
 ####################
 # LinkOpenNI.cmake #
 ####################
-
 IF(WITH_OPENNI)
   TARGET_LINK_LIBRARIES(${targetname} ${OPENNI_LIBRARY})
 

@@ -57,13 +57,13 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(
 	oldF = TVoxel::valueToFloat(voxel.sdf);
 	oldW = voxel.w_depth;
 
-	newF = MIN(1.0f, eta / mu);
+	newF = ORUTILS_MIN(1.0f, eta / mu);
 	newW = 1;
 
 	newF = oldW * oldF + newW * newF;
 	newW = oldW + newW;
 	newF /= newW;
-	newW = MIN(newW, maxW);
+	newW = ORUTILS_MIN(newW, maxW);
 
 	// write back
 	voxel.sdf = TVoxel::floatToValue(newF);
@@ -125,13 +125,13 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(
 	// compute updated SDF value and reliability
 	oldF = TVoxel::valueToFloat(voxel.sdf);
 	oldW = voxel.w_depth;
-	newF = MIN(1.0f, eta / mu);
+	newF = ORUTILS_MIN(1.0f, eta / mu);
 	newW = 1;
 
 	newF = oldW * oldF + newW * newF;
 	newW = oldW + newW;
 	newF /= newW;
-	newW = MIN(newW, maxW);
+	newW = ORUTILS_MIN(newW, maxW);
 
 	// write back^
 	voxel.sdf = TVoxel::floatToValue(newF);
@@ -176,7 +176,7 @@ _CPU_AND_GPU_CODE_ inline void computeUpdatedVoxelColorInfo(
 	newC = oldC * oldW + rgb_measure * newW;
 	newW = oldW + newW;
 	newC /= newW;
-	newW = MIN(newW, maxW);
+	newW = ORUTILS_MIN(newW, maxW);
 
 	voxel.clr = TO_UCHAR3(newC * 255.0f);
 	voxel.w_color = (uchar) newW;

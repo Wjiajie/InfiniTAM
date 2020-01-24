@@ -22,7 +22,14 @@
 
 #ifdef _WIN32
 #  define WINDOWS_LEAN_AND_MEAN
-#  include <windows.h>
+// workaround for bad macros, see https://stackoverflow.com/a/15913187/844728
+#ifdef NOMINMAX
+#include <windows.h>
+#else
+#define NOMINMAX
+#include <windows.h>
+#undef NOMINMAX
+#endif
 #endif
 
 #ifndef ORcudaSafeCall

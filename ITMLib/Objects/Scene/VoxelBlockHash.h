@@ -68,10 +68,6 @@ public:
 	"Total count of voxel hash block entries in excess list of the hash table. " \
 	"The excess list is used during hash collisions.")
 
-
-//#pragma message BOOST_PP_STRINGIZE(GENERATE_PATHLESS_SERIALIZABLE_STRUCT(VOXEL_BLOCK_HASH_PARAMETERS_STRUCT_DESCRIPTION))
-
-	// ===
 	GENERATE_PATHLESS_SERIALIZABLE_STRUCT(VOXEL_BLOCK_HASH_PARAMETERS_STRUCT_DESCRIPTION);
 	typedef VoxelBlockHashParameters InitializationParameters;
 	typedef ITMHashEntry IndexData;

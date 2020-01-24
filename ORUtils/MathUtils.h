@@ -2,20 +2,20 @@
 
 #pragma once
 
-#ifndef MIN
-#define MIN(a,b) ((a < b) ? a : b)
+#ifndef ORUTILS_MIN
+#define ORUTILS_MIN(a,b) ((a < b) ? a : b)
 #endif
 
-#ifndef MAX
-#define MAX(a,b) ((a < b) ? b : a)
+#ifndef ORUTILS_MAX
+#define ORUTILS_MAX(a,b) ((a < b) ? b : a)
 #endif
 
-#ifndef ABS
-#define ABS(a) ((a < 0) ? -a : a)
+#ifndef ORUTILS_ABS
+#define ORUTILS_ABS(a) ((a < 0) ? -a : a)
 #endif
 
 #ifndef CLAMP
-#define CLAMP(x,a,b) MAX((a), MIN((b), (x)))
+#define CLAMP(x,a,b) ORUTILS_MAX((a), ORUTILS_MIN((b), (x)))
 #endif
 
 #ifndef ROUND

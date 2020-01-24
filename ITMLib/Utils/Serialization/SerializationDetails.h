@@ -30,6 +30,7 @@
 
 // local
 #include "SerializationSequenceMacros.h"
+#include "PreprocessorNargs.h"
 #include "../json_utils.h"
 #include "../../../ORUtils/PlatformIndependence.h"
 
@@ -39,13 +40,11 @@
 #define ITM_SERIALIZATION_IMPL_AND() &&
 #define ITM_SERIALIZATION_IMPL_NOTHING()
 
-
 #define ITM_SERIALIZATION_IMPL_PRIMITIVE_CAT(a, ...) a##__VA_ARGS__
 #define ITM_SERIALIZATION_IMPL_CAT(a, ...) ITM_SERIALIZATION_IMPL_PRIMITIVE_CAT(a, __VA_ARGS__)
 
-
 #define ITM_SERIALIZATION_IMPL_ARG16(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, ...) _15
-#define ITM_SERIALIZATION_IMPL_HAS_COMMA(...) ITM_SERIALIZATION_IMPL_ARG16(__VA_ARGS__, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
+#define ITM_SERIALIZATION_IMPL_HAS_COMMA(...) ITM_SERIALIZATION_IMPL_EXPAND(ITM_SERIALIZATION_IMPL_ARG16(__VA_ARGS__, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0))
 #define ITM_SERIALIZATION_IMPL_TRIGGER_PARENTHESIS_(...) ,
 
 #define ITM_SERIALIZATION_IMPL_ISEMPTY(...)                             \
@@ -232,17 +231,18 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
     SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS_3(enum_name, enumerator,                                                   \
                                              ITM_SERIALIZATION_IMPL_CAT(ITM_SERIALIZATION_IMPL_LOOP2_, token_count), __VA_ARGS__)
 #define SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS_3(enum_name, enumerator, loop, ...)                                    \
-    loop(SERIALIZABLE_ENUM_IMPL_GEN_TOKEN_MAPPINGS, enum_name::enumerator, ITM_SERIALIZATION_IMPL_COMMA,__VA_ARGS__)
+    ITM_SERIALIZATION_IMPL_EXPAND2(loop(SERIALIZABLE_ENUM_IMPL_GEN_TOKEN_MAPPINGS, enum_name::enumerator, ITM_SERIALIZATION_IMPL_COMMA,__VA_ARGS__))
 
 //#define SERIALIZABLE_ENUM_IMPL_STRING_SWITCH_CASE(A, B )                                    \
 //	case A : token = #B; break;
-#define SERIALIZABLE_ENUM_IMPL_STRING_SWITCH_CASE(enum_name, enumerator, first_token, ...)                                    \
+#define SERIALIZABLE_ENUM_IMPL_STRING_SWITCH_CASE(enum_name, enumerator, first_token, ...)                            \
     case enum_name::enumerator : token = first_token; break;
 // endregion
 // region ================== SERIALIZABLE ENUM TOP-LEVEL MACROS ==================
 
-#define SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATORS(...)                                                                 \
-    ITM_SERIALIZATION_IMPL_CAT(ITM_SERIALIZATION_IMPL_LOOP_, ITM_SERIALIZATION_IMPL_NARG(__VA_ARGS__))(SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATOR, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)
+#define SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATORS(...)                                                                   \
+    ITM_SERIALIZATION_IMPL_CAT(ITM_SERIALIZATION_IMPL_LOOP_, ITM_SERIALIZATION_IMPL_NARG(__VA_ARGS__))                 \
+                (SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATOR, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)
 
 //** declaration
 #define SERIALIZABLE_ENUM_DECL_IMPL(enum_name, ...)                                                                    \
@@ -250,13 +250,11 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
         SERIALIZABLE_ENUM_IMPL_LIST_ENUMERATORS(__VA_ARGS__)                                                           \
     };
 
-
-
 //** definition
 #define SERIALIZABLE_ENUM_DEFN_IMPL(INLINE, enum_name, ...)                                                            \
     SERIALIZABLE_ENUM_DEFN_IMPL_2(INLINE, enum_name, ITM_SERIALIZATION_IMPL_NARG(__VA_ARGS__), __VA_ARGS__)
 
-#define SERIALIZABLE_ENUM_DEFN_IMPL_2(INLINE, enum_name, field_count, ...)                                            \
+#define SERIALIZABLE_ENUM_DEFN_IMPL_2(INLINE, enum_name, field_count, ...)                                             \
     SERIALIZABLE_ENUM_DEFN_IMPL_3(INLINE, enum_name, field_count,                                                      \
                              ITM_SERIALIZATION_IMPL_CAT(ITM_SERIALIZATION_IMPL_LOOP_, field_count), __VA_ARGS__)
 
@@ -265,7 +263,8 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
     template<>                                                                                                         \
     INLINE enum_name string_to_enumerator< enum_name >(const std::string& string) {                                    \
         static std::unordered_map<std::string, enum_name > enumerator_by_string = {                                    \
-                loop(SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS, enum_name, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)\
+                ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_ENUM_IMPL_STRING_MAPPINGS, enum_name,                  \
+                	                               ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__))                         \
         };                                                                                                             \
         if (enumerator_by_string.find(string) == enumerator_by_string.end()) {                                         \
             DIEWITHEXCEPTION_REPORTLOCATION("Unrecognized string token for enum " #enum_name);                         \
@@ -277,7 +276,8 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
     INLINE std::string enumerator_to_string< enum_name >( const enum_name & value)    {                                \
         std::string token;                                                                                             \
         switch(value) {                                                                                                \
-            loop(SERIALIZABLE_ENUM_IMPL_STRING_SWITCH_CASE, enum_name, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)    \
+            ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_ENUM_IMPL_STRING_SWITCH_CASE, enum_name,                   \
+            	                               ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__))                           \
         }                                                                                                              \
         return token;                                                                                                  \
     }                                                                                                                  \
@@ -326,12 +326,13 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
     boost::program_options::value< type >()->default_value( default_value_in ), #description);
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION_ENUM(type, field_name, default_value_in, description)\
     od.add_options()(generate_cli_argument_identifiers_snake_case(#field_name, od).c_str(),                            \
-    boost::program_options::value< std::string >()->default_value( enumerator_to_string(default_value_in) ), (std::string(#description) + enumerator_bracketed_list< type>()).c_str());
+    boost::program_options::value< std::string >()->default_value( enumerator_to_string(default_value_in) ),           \
+    (std::string(#description) + enumerator_bracketed_list< type>()).c_str());
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION_STRUCT(type, field_name, default_value, description)\
     type :: AddToOptionsDescription(od);
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION_VECTOR(type, field_name, default_value_in, description)\
     od.add_options()(generate_cli_argument_identifiers_snake_case(#field_name, od).c_str(),                            \
-    boost::program_options::value< std::vector< type::value_type> >()->                                                                    \
+    boost::program_options::value< std::vector< type::value_type> >()->                                                \
     multitoken()->default_value(serializable_vector_to_std_vector(default_value_in)), #description);
 
 #define SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION(_, type, field_name, default_value, serialization_type, description) \
@@ -389,10 +390,12 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
 
 #define SERIALIZABLE_STRUCT_DECL_IMPL_3(struct_name, field_count, loop, ...)                                           \
     struct struct_name {                                                                                               \
-        loop(SERIALIZABLE_STRUCT_IMPL_FIELD_DECL, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)                      \
+        ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_DECL, _,                                     \
+        	                               ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__))                               \
         std::string origin = "";                                                                                       \
         struct_name () {};                                                                                             \
-        struct_name(loop(SERIALIZABLE_STRUCT_IMPL_TYPED_FIELD, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__),          \
+        struct_name(ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_TYPED_FIELD, _,                        \
+        	                                           ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)),                    \
             std::string origin = "");                                                                                  \
         explicit struct_name (const boost::program_options::variables_map& vm, std::string origin = "");               \
         static struct_name BuildFromPTree(const boost::property_tree::ptree& tree, std::string origin = "");           \
@@ -416,31 +419,40 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
 
 
 #define SERIALIZABLE_STRUCT_DEFN_IMPL_3(outer_class, struct_name, field_count, loop, ...)                              \
-    outer_class struct_name::struct_name(loop(SERIALIZABLE_STRUCT_IMPL_TYPED_FIELD, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__), \
+    outer_class struct_name::struct_name(                                                                              \
+    	ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_TYPED_FIELD, _, ITM_SERIALIZATION_IMPL_COMMA,      \
+    		                               __VA_ARGS__)),                                                              \
         std::string origin):                                                                                           \
-            loop(SERIALIZABLE_STRUCT_IMPL_INIT_FIELD_ARG, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__),               \
+            ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_INIT_FIELD_ARG, _,                             \
+            	                               ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)),                            \
             origin(origin)                                                                                             \
             {}                                                                                                         \
     outer_class struct_name::struct_name(const boost::program_options::variables_map& vm, std::string origin) :        \
-            loop(SERIALIZABLE_STRUCT_IMPL_FIELD_VM_INIT, struct_name, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__),      \
+            ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_VM_INIT, struct_name,                    \
+            	                               ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)),                            \
             origin(std::move(origin))                                                                                  \
         {}                                                                                                             \
-    outer_class struct_name outer_class struct_name::BuildFromPTree(const boost::property_tree::ptree& tree, std::string origin){  \
+    outer_class struct_name outer_class struct_name::BuildFromPTree(const boost::property_tree::ptree& tree,           \
+    	                                                            std::string origin){                               \
         struct_name default_instance;                                                                                  \
-        loop(SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)        \
+        ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE, _,                       \
+        	                               ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__))                               \
         return {                                                                                                       \
-            loop(SERIALIZABLE_STRUCT_IMPL_FIELD_FROM_OPTIONAL, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__),          \
+            ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_FROM_OPTIONAL, _,                        \
+            	                               ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)),                            \
             origin                                                                                                     \
         };                                                                                                             \
     }                                                                                                                  \
     boost::property_tree::ptree outer_class struct_name::ToPTree(std::string origin) const {                           \
         boost::property_tree::ptree tree;                                                                              \
-        loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)               \
+        ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE, _,                              \
+        	                               ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__))                               \
         return tree;                                                                                                   \
     }                                                                                                                  \
     bool operator==(const outer_class struct_name & instance1, const outer_class struct_name & instance2){             \
         return                                                                                                         \
-        loop(SERIALIZABLE_STRUCT_IMPL_FIELD_COMPARISON, _, ITM_SERIALIZATION_IMPL_AND, __VA_ARGS__);                   \
+        ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_COMPARISON, _, ITM_SERIALIZATION_IMPL_AND,   \
+        	                               __VA_ARGS__));                                                              \
     }                                                                                                                  \
     std::ostream& operator<<(std::ostream& out, const outer_class struct_name& instance) {                             \
         boost::property_tree::ptree tree(instance.ToPTree());                                                          \
@@ -448,7 +460,8 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
         return out;                                                                                                    \
     }                                                                                                                  \
     void outer_class struct_name::AddToOptionsDescription(boost::program_options::options_description& od) {           \
-        loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)\
+        ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION, _,               \
+        	                               ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__))                               \
     }
 
 
@@ -462,41 +475,50 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
 //TODO: to avoid DRY violations, make individual function definitions into defines used both here and in SERIALIZABLE_STRUCT_DEFN_IMPL_3
 #define SERIALIZABLE_STRUCT_IMPL_3(struct_name, field_count, loop, ...)                                                \
     struct struct_name {                                                                                               \
-        ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_DECL, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__))                      \
+        ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_DECL, _, ITM_SERIALIZATION_IMPL_NOTHING,     \
+        		                           __VA_ARGS__))                                                               \
         std::string origin = "";                                                                                       \
         struct_name () = default;                                                                                      \
-        struct_name(loop(SERIALIZABLE_STRUCT_IMPL_TYPED_FIELD, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__), const std::string& origin = ""):\
-            loop(SERIALIZABLE_STRUCT_IMPL_INIT_FIELD_ARG, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__),               \
+        struct_name(ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_TYPED_FIELD, _,                        \
+                                          ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)), const std::string& origin = ""):\
+            ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_INIT_FIELD_ARG, _, ITM_SERIALIZATION_IMPL_COMMA,\
+                                               __VA_ARGS__)),                                                          \
             origin(origin)                                                                                             \
             {}                                                                                                         \
         explicit struct_name (const boost::program_options::variables_map& vm, const std::string& origin = "") :       \
-            loop(SERIALIZABLE_STRUCT_IMPL_FIELD_VM_INIT, struct_name, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__),      \
+            ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_VM_INIT, struct_name,                    \
+                                               ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)),                            \
             origin(origin)                                                                                             \
         {}                                                                                                             \
         static struct_name BuildFromPTree(const boost::property_tree::ptree& tree, const std::string& origin = ""){    \
             struct_name default_instance;                                                                              \
-            loop(SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)    \
+            ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE, _,                   \
+                                               ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__))                           \
             return {                                                                                                   \
-                loop(SERIALIZABLE_STRUCT_IMPL_FIELD_FROM_OPTIONAL, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__),      \
+                ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_FROM_OPTIONAL, _,                    \
+                		                           ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)),                        \
                 origin                                                                                                 \
             };                                                                                                         \
         }                                                                                                              \
         boost::property_tree::ptree ToPTree(const std::string& origin = "") const {                                    \
             boost::property_tree::ptree tree;                                                                          \
-            loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)           \
+            ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE, _,                          \
+                                               ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__))                           \
             return tree;                                                                                               \
         }                                                                                                              \
         friend bool operator==(const struct_name & instance1, const struct_name & instance2){                          \
             return                                                                                                     \
-            loop(SERIALIZABLE_STRUCT_IMPL_FIELD_COMPARISON, _, ITM_SERIALIZATION_IMPL_AND, __VA_ARGS__);               \
+            ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_COMPARISON, _,                           \
+            		                                           ITM_SERIALIZATION_IMPL_AND, __VA_ARGS__));              \
         }                                                                                                              \
         friend std::ostream& operator<<(std::ostream& out, const struct_name& instance) {                              \
             boost::property_tree::ptree tree(instance.ToPTree());                                                      \
             boost::property_tree::write_json_no_quotes(out, tree, true);                                               \
             return out;                                                                                                \
         }                                                                                                              \
-        static void AddToOptionsDescription(boost::program_options::options_description& od) {       \
-            loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__);\
+        static void AddToOptionsDescription(boost::program_options::options_description& od) {                         \
+            ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION, _,           \
+            		                           ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__))                           \
         }                                                                                                              \
     }
 
@@ -512,37 +534,47 @@ boost::property_tree::ptree serializable_vector_to_ptree(TVector vector) {
 
 #define PATHLESS_SERIALIZABLE_STRUCT_IMPL_3(struct_name, field_count, loop, ...)                                       \
     struct struct_name {                                                                                               \
-        loop(SERIALIZABLE_STRUCT_IMPL_FIELD_DECL, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)                      \
+        ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_DECL, _, ITM_SERIALIZATION_IMPL_NOTHING,     \
+        		                                                                    __VA_ARGS__))                      \
         struct_name () = default;                                                                                      \
-        struct_name(loop(SERIALIZABLE_STRUCT_IMPL_TYPED_FIELD, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__), const std::string& origin = ""):\
-            loop(SERIALIZABLE_STRUCT_IMPL_INIT_FIELD_ARG, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)                \
+        struct_name(ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_TYPED_FIELD, _,                        \
+        	                                           ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)),                    \
+                    const std::string& origin = ""):                                                                   \
+            ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_INIT_FIELD_ARG, _,                             \
+            	                               ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__))                             \
             {}                                                                                                         \
         explicit struct_name (const boost::program_options::variables_map& vm, const std::string& origin = "") :       \
-            loop(SERIALIZABLE_STRUCT_IMPL_FIELD_VM_INIT, struct_name, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)       \
+            ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_VM_INIT, struct_name,                    \
+            	                               ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__))                             \
         {}                                                                                                             \
         static struct_name BuildFromPTree(const boost::property_tree::ptree& tree, const std::string& origin = ""){    \
             struct_name default_instance;                                                                              \
-            loop(SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)    \
+            ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_OPTIONAL_FROM_TREE, _,                   \
+            	                               ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__))                           \
             return {                                                                                                   \
-                loop(SERIALIZABLE_STRUCT_IMPL_FIELD_FROM_OPTIONAL, _, ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__)       \
+                ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_FROM_OPTIONAL, _,                    \
+                	                               ITM_SERIALIZATION_IMPL_COMMA, __VA_ARGS__))                         \
             };                                                                                                         \
         }                                                                                                              \
         boost::property_tree::ptree ToPTree(const std::string& origin = "") const {                                    \
             boost::property_tree::ptree tree;                                                                          \
-            loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__)           \
+            ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_TREE, _,                          \
+            	                               ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__))                           \
             return tree;                                                                                               \
         }                                                                                                              \
         friend bool operator==(const struct_name & instance1, const struct_name & instance2){                          \
             return                                                                                                     \
-            loop(SERIALIZABLE_STRUCT_IMPL_FIELD_COMPARISON, _, ITM_SERIALIZATION_IMPL_AND, __VA_ARGS__);               \
+            ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_FIELD_COMPARISON, _,                           \
+            	                               ITM_SERIALIZATION_IMPL_AND, __VA_ARGS__));                              \
         }                                                                                                              \
         friend std::ostream& operator<<(std::ostream& out, const struct_name& instance) {                              \
             boost::property_tree::ptree tree(instance.ToPTree());                                                      \
             boost::property_tree::write_json_no_quotes(out, tree, true);                                               \
             return out;                                                                                                \
         }                                                                                                              \
-        static void AddToOptionsDescription(boost::program_options::options_description& od) {       \
-            loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION, _, ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__);\
+        static void AddToOptionsDescription(boost::program_options::options_description& od) {                         \
+            ITM_SERIALIZATION_IMPL_EXPAND(loop(SERIALIZABLE_STRUCT_IMPL_ADD_FIELD_TO_OPTIONS_DESCRIPTION, _,           \
+            	                               ITM_SERIALIZATION_IMPL_NOTHING, __VA_ARGS__));                          \
         }                                                                                                              \
     }
 

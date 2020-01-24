@@ -50,7 +50,7 @@ _CPU_AND_GPU_CODE_ inline float tukey_rho_deriv2(float r, float c)
 _CPU_AND_GPU_CODE_ inline float rho(float r, float huber_b)
 {
 	float tmp = fabs(r) - huber_b;
-	tmp = MAX(tmp, 0.0f);
+	tmp = ORUTILS_MAX(tmp, 0.0f);
 	return r*r - tmp*tmp;
 }
 
@@ -109,7 +109,7 @@ _CPU_AND_GPU_CODE_ inline bool computePerPointGH_exDepth_Ab(THREADPTR(float) *A,
 	corr3Dnormal = interpolateBilinear_withHoles(normalsMap, tmp2Dpoint, sceneImageSize);
 	//if (corr3Dnormal.w < 0.0f) return false;
 
-	depthWeight = MAX(0.0f, 1.0f - (depth - viewFrustum_min) / (viewFrustum_max - viewFrustum_min));
+	depthWeight = ORUTILS_MAX(0.0f, 1.0f - (depth - viewFrustum_min) / (viewFrustum_max - viewFrustum_min));
 	depthWeight *= depthWeight;
 
 	if (useWeights)
@@ -271,7 +271,7 @@ _CPU_AND_GPU_CODE_ inline bool computePerPointGH_exRGB_inv_Ab(
 
 	// Weigh less the points far away from the camera
 	float depthWeight = 1.0f - (pt_curr.z - viewFrustum_min) / (viewFrustum_max - viewFrustum_min);
-	depthWeight = MAX(depthWeight, 0.f);
+	depthWeight = ORUTILS_MAX(depthWeight, 0.f);
 	depthWeight *= depthWeight;
 
 	// Compute the residual

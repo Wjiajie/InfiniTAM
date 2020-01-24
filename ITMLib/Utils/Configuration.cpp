@@ -53,6 +53,7 @@ DEFINE_SERIALIZABLE_ENUM(VOLUME_ROLE_ENUM_DESCRIPTION)
 namespace ITMLib {
 namespace configuration {
 
+// =====
 // *** serializable struct definitions ***
 DEFINE_SERIALIZABLE_STRUCT(PATHS_STRUCT_DESCRIPTION)
 

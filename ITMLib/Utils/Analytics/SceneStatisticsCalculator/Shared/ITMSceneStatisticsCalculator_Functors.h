@@ -15,12 +15,15 @@
 //  ================================================================
 #pragma once
 
+//stdlib
+#include <limits>
+
+//local
 #ifdef __CUDACC__
 #include "../../../../Utils/ITMCUDAUtils.h"
 #include "../../../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_PlainVoxelArray.h"
 #include "../../../../Engines/Traversal/CUDA/ITMSceneTraversal_CUDA_VoxelBlockHash.h"
 #endif
-
 #include "../../../../../ORUtils/PlatformIndependentAtomics.h"
 #include "../../../../../ORUtils/PlatformIndependence.h"
 #include "../../../Configuration.h"
@@ -236,13 +239,12 @@ struct FlagMatchBBoxFunctor<false, TVoxel, TIndex, TMemoryDeviceType> {
 template<class TVoxel, typename TIndex, MemoryDeviceType TMemoryDeviceType>
 struct FlagMatchBBoxFunctor<true, TVoxel, TIndex, TMemoryDeviceType> {
 	explicit FlagMatchBBoxFunctor(ITMLib::VoxelFlags voxelType) : voxelType(voxelType) {
-		INITIALIZE_ATOMIC(int, min_x, std::numeric_limits<int>::max());
-		INITIALIZE_ATOMIC(int, min_y, std::numeric_limits<int>::max());
-		INITIALIZE_ATOMIC(int, min_z, std::numeric_limits<int>::max());
-		INITIALIZE_ATOMIC(int, max_x, std::numeric_limits<int>::min());
-		INITIALIZE_ATOMIC(int, max_y, std::numeric_limits<int>::min());
-		INITIALIZE_ATOMIC(int, max_z, std::numeric_limits<int>::min());
-
+		INITIALIZE_ATOMIC(int, min_x, INT_MAX);
+		INITIALIZE_ATOMIC(int, min_y, INT_MAX);
+		INITIALIZE_ATOMIC(int, min_z, INT_MAX);
+		INITIALIZE_ATOMIC(int, max_x, INT_MIN);
+		INITIALIZE_ATOMIC(int, max_y, INT_MIN);
+		INITIALIZE_ATOMIC(int, max_z, INT_MIN);
 	}
 
 	~FlagMatchBBoxFunctor() {

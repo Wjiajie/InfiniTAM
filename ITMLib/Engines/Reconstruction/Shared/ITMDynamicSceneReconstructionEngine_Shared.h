@@ -337,7 +337,7 @@ _CPU_AND_GPU_CODE_ inline void fuseLiveVoxelIntoCanonical(const DEVICEPTR(TVoxel
 	float newSdf = oldWDepth * oldSdf + liveSdf;
 	float newWDepth = oldWDepth + 1.0f;
 	newSdf /= newWDepth;
-	newWDepth = MIN(newWDepth, maximumWeight);
+	newWDepth = ORUTILS_MIN(newWDepth, maximumWeight);
 
 	canonicalVoxel.sdf = TVoxelCanonical::floatToValue(newSdf);
 	canonicalVoxel.w_depth = (uchar) newWDepth;

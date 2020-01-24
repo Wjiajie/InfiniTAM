@@ -128,12 +128,12 @@ inline
 void
 ComputeCopyRanges(int& xRangeStart, int& xRangeEnd, int& yRangeStart, int& yRangeEnd, int& zRangeStart, int& zRangeEnd,
                   const Vector3i& hashBlockPositionVoxels, const Vector6i& bounds) {
-	zRangeStart = MAX(0, bounds.min_z - hashBlockPositionVoxels.z);
-	zRangeEnd = MIN(VOXEL_BLOCK_SIZE, bounds.max_z - hashBlockPositionVoxels.z + 1);
-	yRangeStart = MAX(0, bounds.min_y - hashBlockPositionVoxels.y);
-	yRangeEnd = MIN(VOXEL_BLOCK_SIZE, bounds.max_y - hashBlockPositionVoxels.y + 1);
-	xRangeStart = MAX(0, bounds.min_x - hashBlockPositionVoxels.x);
-	xRangeEnd = MIN(VOXEL_BLOCK_SIZE, bounds.max_x - hashBlockPositionVoxels.x + 1);
+	zRangeStart = ORUTILS_MAX(0, bounds.min_z - hashBlockPositionVoxels.z);
+	zRangeEnd = ORUTILS_MIN(VOXEL_BLOCK_SIZE, bounds.max_z - hashBlockPositionVoxels.z + 1);
+	yRangeStart = ORUTILS_MAX(0, bounds.min_y - hashBlockPositionVoxels.y);
+	yRangeEnd = ORUTILS_MIN(VOXEL_BLOCK_SIZE, bounds.max_y - hashBlockPositionVoxels.y + 1);
+	xRangeStart = ORUTILS_MAX(0, bounds.min_x - hashBlockPositionVoxels.x);
+	xRangeEnd = ORUTILS_MIN(VOXEL_BLOCK_SIZE, bounds.max_x - hashBlockPositionVoxels.x + 1);
 }
 
 // endregion ===========================================================================================================

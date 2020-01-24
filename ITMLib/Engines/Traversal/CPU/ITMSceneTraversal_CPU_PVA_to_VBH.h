@@ -192,14 +192,12 @@ private:
 									for (int xAbsolute = xVoxelStart;
 									     xAbsolute < xVoxelEnd; xAbsolute++, idWithinBlock++) {
 										Vector3i positionAbsolute(xAbsolute, yAbsolute, zAbsolute);
-										int linearArrayIndex = ComputeLinearIndexFromPosition_PlainVoxelArray(arrayInfo,
-										                                                                      positionAbsolute);
-										int vmIndex;
+										int linearArrayIndex =
+												ComputeLinearIndexFromPosition_PlainVoxelArray(arrayInfo, positionAbsolute);
 										TArrayVoxel& arrayVoxel = arrayVoxels[linearArrayIndex];
 										THashVoxel& hashVoxel = hashBlockVoxels[idWithinBlock];
 										if (!std::forward<TTwoVoxelAndPositionPredicate>(twoVoxelAndPositionPredicate)(
-												twoVoxelBooleanFunctor, arrayVoxel, hashVoxel,
-												positionAbsolute)) {
+												twoVoxelBooleanFunctor, arrayVoxel, hashVoxel, positionAbsolute)) {
 											mismatchFound = true;
 										}
 									}

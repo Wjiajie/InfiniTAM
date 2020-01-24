@@ -309,7 +309,7 @@ static ORUtils::SE3Pose estimateRelativePose(const std::vector<Matrix4f> & obser
 		inlierTrafo += observations[i];
 		++inliers;
 	}
-	if (out_inlierPose) out_inlierPose->SetM(inlierTrafo / (float)MAX(inliers, 1));
+	if (out_inlierPose) out_inlierPose->SetM(inlierTrafo / (float)ORUTILS_MAX(inliers, 1));
 	if (out_numInliers) *out_numInliers = inliers;
 
 	return ORUtils::SE3Pose(params);

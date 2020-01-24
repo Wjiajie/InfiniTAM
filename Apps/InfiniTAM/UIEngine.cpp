@@ -534,8 +534,8 @@ void UIEngine::Initialise(int & argc, char** argv, ImageSourceEngine *imageSourc
 
 	//Vector2i winSize;
 	//int textHeight = 30; // Height of text area
-	//winSize.x = 2 * MAX(imageSource->getRGBImageSize().x, imageSource->getDepthImageSize().x);
-	//winSize.y = MAX(imageSource->getRGBImageSize().y, imageSource->getDepthImageSize().y) + textHeight;
+	//winSize.x = 2 * ORUTILS_MAX(imageSource->getRGBImageSize().x, imageSource->getDepthImageSize().x);
+	//winSize.y = ORUTILS_MAX(imageSource->getRGBImageSize().y, imageSource->getDepthImageSize().y) + textHeight;
 	//float h1 = textHeight / (float)winSize.y, h2 = (1.f + h1) / 2;
 	//winReg[0] = Vector4f(0, h1, 0.5, 1); // Main render
 	//winReg[1] = Vector4f(0.5, h2, 0.75, 1); // Side sub window 0
@@ -544,8 +544,8 @@ void UIEngine::Initialise(int & argc, char** argv, ImageSourceEngine *imageSourc
 	//winReg[4] = Vector4f(0.75, h1, 1, h2); // Side sub window 3
 
 	int textHeight = 30; // Height of text area
-	//winSize.x = (int)(1.5f * (float)MAX(imageSource->getImageSize().x, imageSource->getDepthImageSize().x));
-	//winSize.y = MAX(imageSource->getRGBImageSize().y, imageSource->getDepthImageSize().y) + textHeight;
+	//winSize.x = (int)(1.5f * (float)ORUTILS_MAX(imageSource->getImageSize().x, imageSource->getDepthImageSize().x));
+	//winSize.y = ORUTILS_MAX(imageSource->getRGBImageSize().y, imageSource->getDepthImageSize().y) + textHeight;
 	winSize.x = (int)(1.5f * (float)(imageSource->getDepthImageSize().x));
 	winSize.y = imageSource->getDepthImageSize().y + textHeight;
 	float h1 = textHeight / (float)winSize.y, h2 = (1.f + h1) / 2;

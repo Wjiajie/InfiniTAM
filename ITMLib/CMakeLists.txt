@@ -16,7 +16,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/UseCUDA.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/UseOpenMP.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/UseVTK.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/UseOpenCV.cmake)
-
+include(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
 
 #############################
 # Specify the project files #
@@ -985,7 +985,7 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${sources} ${headers})
 ##########################################
 
 include(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
-include(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
+
 
 #TODO: make these optional and consistent with the overal CMake package usage in the project -Greg (GitHub: Algomorph)
 ##########################################
@@ -995,15 +995,10 @@ include(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
 if (WITH_VTK)
     target_compile_definitions(${targetname} PUBLIC -DWITH_VTK)
 endif ()
-target_include_directories(${targetname} PUBLIC ${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
-target_link_libraries(${targetname} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${VTK_LIBRARIES})
+target_include_directories(${targetname} PUBLIC ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(${targetname} ${OpenCV_LIBS} ${VTK_LIBRARIES})
 
-# windows-specific stuff
-if (CMAKE_CXX_COMPILER_ID MATCHES MSVC)
-    link_directories(${Boost_LIBRARY_DIRS})
-	# disable warnings about too few arguments for function-like macro invocation -- these stem from branches in the preprocessor code that are never taken
-	target_compile_options(${targetname} PUBLIC /wd4003)
-endif ()
+include(${PROJECT_SOURCE_DIR}/cmake/LinkBoost.cmake)
 
 
 #fix potential warning causing from error in VTK compile definitions
@@ -1016,3 +1011,6 @@ if (NOT INDEX EQUAL -1)
     #replace with the same properties with spaces after the macro name
     set_property(DIRECTORY PROPERTY COMPILE_DEFINITIONS ${COMPILE_DEFINITIONS_PROPERTY})
 endif ()
+
+get_target_property(OUT ${targetname} LINK_LIBRARIES)
+message(STATUS "Libs / ITMLib: ${OUT}")

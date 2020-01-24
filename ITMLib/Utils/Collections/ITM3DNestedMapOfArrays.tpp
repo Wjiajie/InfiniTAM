@@ -16,6 +16,8 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <string>
+
 #include "ITM3DNestedMapOfArrays.h"
 
 using namespace ITMLib;

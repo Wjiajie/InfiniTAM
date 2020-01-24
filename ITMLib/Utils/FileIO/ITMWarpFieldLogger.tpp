@@ -352,7 +352,8 @@ bool ITMWarpFieldLogger<TVoxel, TIndex>::LoadHighlights(bool applyFilters, std::
 template<typename TVoxel, typename TIndex>
 void ITMWarpFieldLogger<TVoxel, TIndex>::FilterHighlights(int anomalyFrameCountMinimum) {
 	fs::path rootPath = fs::path(warpPath).parent_path();
-	minHighlightRecurrenceCount = std::max(minHighlightRecurrenceCount, anomalyFrameCountMinimum);
+	//(std::max) in parenthesis because of some <insert descripitive curseword> Microsoft compiler quirk concerning min/max macros
+	minHighlightRecurrenceCount = (std::max)(minHighlightRecurrenceCount, anomalyFrameCountMinimum);
 	highlights = highlights.FilterBasedOnLevel0Lengths(anomalyFrameCountMinimum);
 	std::ofstream highlightFilterInfoNote((rootPath / fs::path(highlightFilterInfoFilename)).c_str(),
 	                                      std::ios_base::out);
