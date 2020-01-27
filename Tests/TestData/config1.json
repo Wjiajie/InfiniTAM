@@ -118,7 +118,7 @@
     "automatic_run_settings": {
         "number_of_frames_to_process": 50,
         "index_of_frame_to_start_at": 16,
-        "exit_after_automatic_processing": 1
+        "exit_after_automatic_processing": true
     },
     "non_rigid_tracking_parameters": {
         "functor_type": "slavcheva_diagnostic",

@@ -12,7 +12,7 @@
     "general_surfel_volume_parameters": {
         "delta_radius": 0.5,
         "gaussian_confidence_sigma": 0.600000024,
-        "max_merge_angle": 0.34906584,
+        "max_merge_angle": 0.34906587,
         "max_merge_dist": 0.00999999978,
         "max_surfel_radius": 0.00039999999,
         "min_radius_overlap_factor": 3.5,
@@ -118,7 +118,7 @@
     "automatic_run_settings": {
         "number_of_frames_to_process": 0,
         "index_of_frame_to_start_at": 0,
-        "exit_after_automatic_processing": 0
+        "exit_after_automatic_processing": false
     },
     "non_rigid_tracking_parameters": {
         "functor_type": "slavcheva_diagnostic",

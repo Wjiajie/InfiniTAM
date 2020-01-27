@@ -33,6 +33,11 @@ using namespace ITMLib::configuration;
 configuration::Configuration generate_default_snoopy_configuration();
 
 //#define SAVE_TEST_DATA
+#ifdef _MSC_VER
+#define SOURCE_DIRECTORY "../../../"
+#else
+#define SOURCE_DIRECTORY "../../"
+#endif
 BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 	configuration::Configuration default_configuration;
 
@@ -73,13 +78,14 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 			"type=rgb,levels=rrbb"
 	);
 #ifdef SAVE_TEST_DATA
+	std::cout << "Saving test data..." << std::endl;
 	configuration::Configuration default_snoopy_configuration = generate_default_snoopy_configuration();
-	configuration::save_configuration_to_json_file("../../Files/infinitam_snoopy_config.json", default_snoopy_configuration);
+	configuration::save_configuration_to_json_file(SOURCE_DIRECTORY "Files/infinitam_snoopy_config.json", default_snoopy_configuration);
 	default_configuration.device_type = MEMORYDEVICE_CPU;
-	configuration::save_configuration_to_json_file("../../Tests/TestData/default_config_cpu.json", default_configuration);
+	configuration::save_configuration_to_json_file(SOURCE_DIRECTORY "Tests/TestData/default_config_cpu.json", default_configuration);
 	default_configuration.device_type = MEMORYDEVICE_CUDA;
-	configuration::save_configuration_to_json_file("../../Tests/TestData/default_config_cuda.json", default_configuration);
-	configuration::save_configuration_to_json_file("../../Tests/TestData/config1.json", configuration1);
+	configuration::save_configuration_to_json_file(SOURCE_DIRECTORY "Tests/TestData/default_config_cuda.json", default_configuration);
+	configuration::save_configuration_to_json_file(SOURCE_DIRECTORY "Tests/TestData/config1.json", configuration1);
 #endif
 
 #ifdef COMPILE_WITHOUT_CUDA

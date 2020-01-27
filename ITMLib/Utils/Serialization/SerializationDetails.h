@@ -89,9 +89,10 @@ static std::string generate_cli_argument_identifiers_snake_case(std::string vari
 	std::string short_argument_identifier;
 	while ((pos = variable_name.find(delimiter)) != std::string::npos) {
 		token = variable_name.substr(0, pos);
-		short_argument_identifier += token;
+		short_argument_identifier += token[0];
 		variable_name.erase(0, pos + delimiter.length());
 	}
+    short_argument_identifier += variable_name[0];
 	const int maximum_similar_shorthands_allowed = 5;
 	std::string base_short_argument_identifier = short_argument_identifier;
 	for (int try_count = 0; opt.find_nothrow(short_argument_identifier, false, false, false) != nullptr &&

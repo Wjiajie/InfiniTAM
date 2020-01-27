@@ -79,8 +79,10 @@ int main(int argc, char** argv) {
 		positional_arguments.add("input_path", 3);
 
 		po::variables_map vm;
+
 		po::store(po::command_line_parser(argc, argv).options(arguments).positional(positional_arguments).style(
 				po::command_line_style::unix_style ^ po::command_line_style::allow_short).run(), vm);
+
 		po::notify(vm);
 
 
