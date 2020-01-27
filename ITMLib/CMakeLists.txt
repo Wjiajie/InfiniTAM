@@ -1011,6 +1011,3 @@ if (NOT INDEX EQUAL -1)
     #replace with the same properties with spaces after the macro name
     set_property(DIRECTORY PROPERTY COMPILE_DEFINITIONS ${COMPILE_DEFINITIONS_PROPERTY})
 endif ()
-
-get_target_property(OUT ${targetname} LINK_LIBRARIES)
-message(STATUS "Libs / ITMLib: ${OUT}")

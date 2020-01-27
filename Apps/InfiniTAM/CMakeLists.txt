@@ -21,6 +21,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/UseOpenNI.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/UsePNG.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/UseRealSense.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/UseUVC.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
 
 
 #############################
@@ -67,6 +68,5 @@ include(${PROJECT_SOURCE_DIR}/cmake/LinkOpenNI.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/LinkPNG.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/LinkRealSense.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/LinkUVC.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/LinkBoost.cmake)
 
-get_target_property(OUT ${targetname} LINK_LIBRARIES)
-message(STATUS "Libs / InfiniTAM: ${OUT}")

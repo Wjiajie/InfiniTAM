@@ -54,8 +54,13 @@ inline static void PrintSceneStatistics(
 		case MEMORYDEVICE_CPU:
 			calculator = &ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CPU>::Instance();
 			break;
+
 		case MEMORYDEVICE_CUDA:
+#ifndef COMPILE_WITHOUT_CUDA
 			calculator = &ITMSceneStatisticsCalculator<TVoxel, TIndex, MEMORYDEVICE_CUDA>::Instance();
+#else
+			DIEWITHEXCEPTION_REPORTLOCATION("Built without CUDA support, aborting.");
+#endif
 			break;
 		case MEMORYDEVICE_METAL:
 			DIEWITHEXCEPTION_REPORTLOCATION("Metal framework not supported for this.");

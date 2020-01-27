@@ -55,7 +55,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if (MSVC_IDE)
     add_definitions(-DUSING_CMAKE=1)
-    add_compile_options("/MP")
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/MP>)
 endif ()
 
 

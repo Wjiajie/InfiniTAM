@@ -65,7 +65,5 @@ INCLUDE(${PROJECT_SOURCE_DIR}/cmake/SetCUDALibTarget.cmake)
 # Link external dependency libraries     #
 ##########################################
 
+include(${PROJECT_SOURCE_DIR}/cmake/LinkPNG.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/LinkBoost.cmake)
-
-get_target_property(OUT ${targetname} LINK_LIBRARIES)
-message(STATUS "Libs  / ORUtils: ${OUT}")
