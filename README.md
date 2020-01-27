@@ -1,6 +1,6 @@
 # InfiniTAM-Based Experiment With Dynamic-scene Reconstruction
 
-This project started out about two years ago with a graduate student (me) trying to replicate the results of the KillingFusion (Slavcheva et al., CVPR2017) and, later, the SobolevFusion (Slavcheva et al., CVPR2018) algorithms, without any access to the source code and little guidance from the original authors. It does not currently fully replicate the results, i.e. there is significant drift on the "Snoopy" depth video sequence originally used by the Killing/SobolevFusion authors, as the below figure demonstrates.
+This project started out with trying to replicate the results of the KillingFusion (Slavcheva et al., CVPR2017) and, later, the SobolevFusion (Slavcheva et al., CVPR2018) algorithms, without any access to the source code and little guidance from the original authors. It does not currently fully replicate the results, i.e. there is significant drift on the "Snoopy" depth video sequence originally used by the Killing/SobolevFusion authors, as the below figure demonstrates.
 
 The image on the left shows the reconstruction result in the canonical pose for frames 15-65 of the Snoopy sequence. The image on the right shows the continued reconstruction after frame 135, with the noise resulting from drift highlighted.
 ![Figure showing the result before drift on the left and with significant drift on the right](https://i.ibb.co/x2gj8Q0/snoopy.png)
@@ -26,7 +26,7 @@ It could be that some detail is missing from the implementation, and could be th
 3. Build without OpenMP (use CMake to disable it) since it's buggy at the time of writing! I also recommend building with FFMPEG, since that will enable visual debugging/video recording.
 4. To obtain the result shown above, download the [original Snoopy sequence](http://campar.in.tum.de/personal/slavcheva/deformable-dataset/index.html), modify Files/infinitam_snoopy_config.json with proper paths for input_and_output_settings_paths, and run like this (modify the path to point to infinitam_snoopy_config.json):
 
-<build_folder>/Apps/InfiniTAM_bpo/InfiniTAM_bpo --config=Files/infinitam_snoopy_config.json --record_reconstruction_video
+<build_folder>/Apps/InfiniTAM/InfiniTAM --config=Files/infinitam_snoopy_config.json
 
 **Note**: If you build with FFMPEG, this will also record a video in the output folder specified in the config file.
 

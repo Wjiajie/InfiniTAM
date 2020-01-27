@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(ConfigurationTest) {
 #endif
 
 #ifdef COMPILE_WITHOUT_CUDA
-	Configuration::load_configuration_from_json_file("TestData/default_config_cpu.json");
+	configuration::load_configuration_from_json_file("TestData/default_config_cpu.json");
 #else
 	configuration::load_configuration_from_json_file("TestData/default_config_cuda.json");
 #endif

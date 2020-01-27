@@ -344,7 +344,7 @@ end:
 
 void FFMPEGWriter::PrivateData::allocFrame(bool isDepth)
 {
-	AVCodecContext *enc_ctx = ofmt_ctx->streams[0]->codec; 
+	AVCodecParameters *enc_ctx = ofmt_ctx->streams[0]->codecpar;
 	int ret = 0;
 
 	frame = av_frame_alloc();
