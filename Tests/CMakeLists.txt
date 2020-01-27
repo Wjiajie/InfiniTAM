@@ -153,5 +153,5 @@ if (BUILD_TESTS)
                     COPYONLY
             )
         endforeach (TEST_DATA_FILE)
-    endforeach (TEST_DATA_DIRS)
+    endforeach (TEST_DATA_DIR)
 endif ()
