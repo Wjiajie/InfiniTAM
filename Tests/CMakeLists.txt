@@ -120,9 +120,9 @@ if (BUILD_TESTS)
         itm_add_test(NAME SmoothWarpGradient SOURCES Test_SmoothWarpGradient_CPU_CUDA.cpp)
     endif()
 
-    #####################################################
-    # Recursively transfer test data to build directory #
-    #####################################################
+    #######################################################
+    # Recursively transfer test data to build directories #
+    #######################################################
 
     file(GLOB_RECURSE TEST_DATA_FILES
          "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.png"
@@ -131,15 +131,27 @@ if (BUILD_TESTS)
          "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.dat"
          "${CMAKE_CURRENT_SOURCE_DIR}/TestData/*.json"
          )
-    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/TestData")
-    foreach (TEST_DATA_FILE ${TEST_DATA_FILES})
-        string(REPLACE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} NEW_FILE ${TEST_DATA_FILE})
-        get_filename_component(TARGET_DIR ${NEW_FILE} DIRECTORY)
-        file(MAKE_DIRECTORY ${TARGET_DIR})
-        configure_file(
-                ${TEST_DATA_FILE}
-                ${NEW_FILE}
-                COPYONLY
-        )
-    endforeach (TEST_DATA_FILE)
+    set(TEST_DATA_DIRS)
+    if(MSVC_IDE)
+        foreach (CONFIGURATION_TYPE ${CMAKE_CONFIGURATION_TYPES})
+            file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${CONFIGURATION_TYPE}")
+            file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${CONFIGURATION_TYPE}/TestData")
+            list(APPEND TEST_DATA_DIRS "${CMAKE_CURRENT_BINARY_DIR}/${CONFIGURATION_TYPE}/TestData")
+        endforeach (CONFIGURATION_TYPE)
+    else()
+        file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/TestData")
+        list(APPEND TEST_DATA_DIRS "${CMAKE_CURRENT_BINARY_DIR}/TestData")
+    endif()
+    foreach (TEST_DATA_DIR ${TEST_DATA_DIRS})
+        foreach (TEST_DATA_FILE ${TEST_DATA_FILES})
+            string(REPLACE ${CMAKE_CURRENT_SOURCE_DIR}/TestData ${TEST_DATA_DIR} NEW_FILE ${TEST_DATA_FILE})
+            get_filename_component(TARGET_DIR ${NEW_FILE} DIRECTORY)
+            file(MAKE_DIRECTORY ${TARGET_DIR})
+            configure_file(
+                    ${TEST_DATA_FILE}
+                    ${NEW_FILE}
+                    COPYONLY
+            )
+        endforeach (TEST_DATA_FILE)
+    endforeach (TEST_DATA_DIRS)
 endif ()
