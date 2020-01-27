@@ -24,7 +24,7 @@ matrix:
   #     only:
   #       - image: Visual Studio 2017
   #   clone_folder: c:\projects\InfiniTAM
-
+ 
 # scripts that run after cloning repository
 install:
   # Ubuntu
