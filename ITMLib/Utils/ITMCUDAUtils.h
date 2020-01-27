@@ -36,11 +36,11 @@ inline __device__ void warpReduce3(volatile float* sdata, int tid) {
 }
 
 template <typename T> 
-__device__ int computePrefixSum_device(uint element, T *sum, int localSize, int localId)
+__device__ int computePrefixSum_device(unsigned int element, T *sum, int localSize, int localId)
 {
 	// TODO: should be localSize...
-	__shared__ uint prefixBuffer[16 * 16];
-	__shared__ uint groupOffset;
+	__shared__ unsigned int prefixBuffer[16 * 16];
+	__shared__ unsigned int groupOffset;
 
 	prefixBuffer[localId] = element;
 	__syncthreads();
