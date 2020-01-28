@@ -73,6 +73,7 @@ inline void ComputeTrilinearCoefficents(const CONSTPTR(Vector3f)& point, THREADP
 	coefficients[5] = ratios.x *        inverseRatios.y * ratios.z;        //101
 	coefficients[6] = inverseRatios.x * ratios.y *        ratios.z;        //011
 	coefficients[7] = ratios.x *        ratios.y *        ratios.z;        //111
+//@formatter:on
 }
 
 
@@ -111,7 +112,7 @@ inline float _DEBUG_InterpolateTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* v
 
 	if (verbose) {
 		printf("%s*** Printing interpolation data for point (%f, %f, %f) ***%s)\nTruncated position: (%d, %d, %d).\n",
-				c_bright_cyan, point.x, point.y, point.z, c_reset, pos.x, pos.y, pos.z);
+		       c_bright_cyan, point.x, point.y, point.z, c_reset, pos.x, pos.y, pos.z);
 	}
 
 	struckKnownVoxels = false;
@@ -125,7 +126,7 @@ inline float _DEBUG_InterpolateTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* v
 		if (verbose) {
 			const Vector3i& npos = positions[iNeighbor];
 			printf("Neighbor position: (%d, %d, %d) Sdf: %E Weight: %E\n", npos.x, npos.y, npos.z,
-					sdf, weight);
+			       sdf, weight);
 		}
 
 	}
@@ -1198,25 +1199,27 @@ inline float InterpolateTrilinearly_StruckKnown(const CONSTPTR(TVoxel)* voxelDat
 	Vector3i pos;
 	struckKnown = false;
 	TO_INT_FLOOR3(pos, coeff, point);
-#define PROCESS_VOXEL(suffix, coord)\
-    {\
-        const TVoxel& v = readVoxel(voxelData, indexData, pos + (coord), vmIndex, cache);\
-        sdfV##suffix = TVoxel::valueToFloat(v.sdf);\
-        struckKnown |= (v.flags != ITMLib::VoxelFlags::VOXEL_UNKNOWN);\
-    }
-	PROCESS_VOXEL(1, Vector3i(0, 0, 0))
-	PROCESS_VOXEL(2, Vector3i(1, 0, 0))
+	auto process_voxel = [&voxelData, &indexData, &pos, &vmIndex, &cache, &struckKnown](float& sdfV, const Vector3i& coord){
+#if !defined(__CUDACC__) && !defined(WITH_OPENMP)
+		const TVoxel& v = readVoxel(voxelData, indexData, pos + coord, vmIndex, cache);
+#else
+		const TVoxel& v = readVoxel(voxelData, indexData, pos + coord, vmIndex);
+#endif
+	    sdfV = TVoxel::valueToFloat(v.sdf);
+        struckKnown |= (v.flags != ITMLib::VoxelFlags::VOXEL_UNKNOWN);
+	};
+	process_voxel(sdfV1, Vector3i(0, 0, 0));
+	process_voxel(sdfV2, Vector3i(1, 0, 0));
 	sdfRes1 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
-	PROCESS_VOXEL(1, Vector3i(0, 1, 0))
-	PROCESS_VOXEL(2, Vector3i(1, 1, 0))
+	process_voxel(sdfV1, Vector3i(0, 1, 0));
+	process_voxel(sdfV2, Vector3i(1, 1, 0));
 	sdfRes1 = (1.0f - coeff.y) * sdfRes1 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
-	PROCESS_VOXEL(1, Vector3i(0, 0, 1))
-	PROCESS_VOXEL(2, Vector3i(1, 0, 1))
+	process_voxel(sdfV1, Vector3i(0, 0, 1));
+	process_voxel(sdfV2, Vector3i(1, 0, 1));
 	sdfRes2 = (1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2;
-	PROCESS_VOXEL(1, Vector3i(0, 1, 1))
-	PROCESS_VOXEL(2, Vector3i(1, 1, 1))
+	process_voxel(sdfV1, Vector3i(0, 1, 1));
+	process_voxel(sdfV2, Vector3i(1, 1, 1));
 	sdfRes2 = (1.0f - coeff.y) * sdfRes2 + coeff.y * ((1.0f - coeff.x) * sdfV1 + coeff.x * sdfV2);
-#undef PROCESS_VOXEL
 	float sdf = (1.0f - coeff.z) * sdfRes1 + coeff.z * sdfRes2;
 
 	return sdf;

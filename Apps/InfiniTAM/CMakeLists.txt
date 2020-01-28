@@ -29,24 +29,28 @@ include(${PROJECT_SOURCE_DIR}/cmake/UseVTK.cmake)
 # Specify the project files #
 #############################
 
-set(sources
-    InfiniTAM_bpo.cpp
-    UIEngine_BPO.cpp
-    UIEngine_BPO_GlutFunctions.cpp
-    CreateDefaultImageSource.cpp
-    )
+set(
+        sources
 
-set(headers
-    UIEngine_BPO.h
-    prettyprint.hpp
-    CreateDefaultImageSource.h
-    )
+        InfiniTAM_bpo.cpp
+        UIEngine_BPO.cpp
+        UIEngine_BPO_GlutFunctions.cpp
+        CreateDefaultImageSource.cpp
+)
+
+set(
+        headers
+
+        UIEngine_BPO.h
+        prettyprint.hpp
+        CreateDefaultImageSource.h
+)
 
 #############################
 # Specify the source groups #
 #############################
 
-SOURCE_GROUP("" FILES ${sources} ${headers})
+source_group("" FILES ${sources} ${headers})
 
 ##########################################
 # Specify the target and where to put it #
@@ -58,7 +62,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/SetCUDAAppTarget.cmake)
 # Specify the libraries to link #
 #################################
 
-TARGET_LINK_LIBRARIES(${targetname} InputSource ITMLib MiniSlamGraphLib ORUtils FernRelocLib)
+target_link_libraries(${targetname} InputSource ITMLib MiniSlamGraphLib ORUtils FernRelocLib)
 include(${PROJECT_SOURCE_DIR}/cmake/LinkFFmpeg.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/LinkGLUT.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/LinkLibRoyale.cmake)

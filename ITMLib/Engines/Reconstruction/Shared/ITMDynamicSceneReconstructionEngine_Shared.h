@@ -380,11 +380,6 @@ inline void interpolateTSDFVolume(TVoxel* sdfSourceVoxels,
 	Vector3f warpedPosition = TO_FLOAT3(warpAndDestinationVoxelPosition) + warpVector;
 	bool struckKnown;
 
-
-	//_DEBUG
-//	float sdf = _DEBUG_InterpolateTrilinearly_StruckKnown(
-//			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sourceTSDFCache, struckKnown, printResult
-//	);
 	float sdf = InterpolateTrilinearly_StruckKnown(
 			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sourceTSDFCache, struckKnown
 	);
