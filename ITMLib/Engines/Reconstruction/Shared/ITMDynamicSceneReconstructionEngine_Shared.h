@@ -366,12 +366,12 @@ inline void interpolateTSDFVolume(TVoxel* sdfSourceVoxels,
 		int vmIndex;
 #if !defined(__CUDACC__) && !defined(WITH_OPENMP)
 		const TVoxel& sourceTSDFVoxelAtSameLocation = readVoxel(sdfSourceVoxels, sdfSourceIndexData,
-		                                                        warpAndDestinationVoxelPosition,
-		                                                        vmIndex, sourceTSDFCache);
+																warpAndDestinationVoxelPosition,
+																vmIndex, sourceTSDFCache);
 #else //don't use cache when multithreading!
 		const TVoxel& sourceTSDFVoxelAtSameLocation = readVoxel(sdfSourceVoxels, sdfSourceIndexData,
-														warpAndDestinationVoxelPosition,
-														vmIndex);
+		                                                        warpAndDestinationVoxelPosition,
+		                                                        vmIndex);
 #endif
 		destinationVoxel.sdf = sourceTSDFVoxelAtSameLocation.sdf;
 		destinationVoxel.flags = sourceTSDFVoxelAtSameLocation.flags;
@@ -381,8 +381,13 @@ inline void interpolateTSDFVolume(TVoxel* sdfSourceVoxels,
 	bool struckKnown;
 
 
-	float sdf = _DEBUG_InterpolateTrilinearly_StruckKnown(
-			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sourceTSDFCache, struckKnown, printResult);
+	//_DEBUG
+//	float sdf = _DEBUG_InterpolateTrilinearly_StruckKnown(
+//			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sourceTSDFCache, struckKnown, printResult
+//	);
+	float sdf = InterpolateTrilinearly_StruckKnown(
+			sdfSourceVoxels, sdfSourceIndexData, warpedPosition, sourceTSDFCache, struckKnown
+	);
 
 	// Update flags
 	if (struckKnown) {

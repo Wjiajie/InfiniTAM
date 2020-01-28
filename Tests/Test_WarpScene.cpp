@@ -99,9 +99,9 @@ BOOST_FIXTURE_TEST_CASE(Test_WarpScene_CPU_VBH, Frame16And17Fixture) {
 	           MEMORYDEVICE_CPU, InitParams<VoxelBlockHash>());
 
 
-	float absoluteTolerance = 1e-7;
+	float absoluteTolerance = 1e-6;
 	BOOST_REQUIRE(!contentAlmostEqual_CPU(warped_live_volume, live_volume, absoluteTolerance));
-	BOOST_REQUIRE(contentAlmostEqual_CPU(warped_live_volume, warped_live_volume_gt, absoluteTolerance));
+	BOOST_REQUIRE(contentAlmostEqual_CPU_Verbose(warped_live_volume, warped_live_volume_gt, absoluteTolerance));
 
 	delete warps;
 	delete live_volume;
