@@ -81,7 +81,7 @@ Several 3rd party libraries are needed for compiling InfiniTAM. The given versio
     available at http://www.cmake.org/
 
   - OpenGL / GLUT (e.g. freeglut 2.8.0 or 3.0.0)
-    REQUIRED for the visualisation
+    REQUIRED for the Visualization
     the library should run without
     available at http://freeglut.sourceforge.net/
 
@@ -153,7 +153,7 @@ Some sensors may need a small change to work correctly with OpenNI, the changes 
 
 # 2. Sample Programs
 
-The build process should result in an executable InfiniTAM, which is the main sample program. For a version without visualisation, try InfiniTAM_cli. If compiled with OpenNI support, both should run out-of-the-box without problems for live reconstruction. If you have calibration information for your specific device, you can pass it as the first argument to the program, e.g.:
+The build process should result in an executable InfiniTAM, which is the main sample program. For a version without Visualization, try InfiniTAM_cli. If compiled with OpenNI support, both should run out-of-the-box without problems for live reconstruction. If you have calibration information for your specific device, you can pass it as the first argument to the program, e.g.:
 ```
   $ ./InfiniTAM Teddy/calib.txt
 ```
