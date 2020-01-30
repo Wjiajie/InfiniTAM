@@ -4,7 +4,7 @@ This is an ongoing project that aims to integrate voxel hashing techniques for r
 
 ## What details are currently missing that I know of, and what are some known issues?
 
-1. SDF-2-SDF rigid alignment (InfiniTAM's trackers are used instead)
+1. SDF-2-SDF rigid alignment (InfiniTAM's camera trackers are used instead)
 2. Capability to run the optimization in-reverse, in order to forward-animate the more-complete canonical mesh.
 3. CUDA implementation is currently slow, three times as slow as the OpenMP-parallelized CPU implementation: probably because I'm not using explicit lists of allocated voxel blocks and lots of CUDA blocks (where each CUDA block corresponds to a single spatial hash block) terminate almost as soon as they are started.
 4. Allocations for spatial hash blocks are not perfect, neither in optimization nor in algorithmic sense. See issue #195, where I'm working on solving this.
